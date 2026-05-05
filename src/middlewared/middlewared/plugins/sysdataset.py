@@ -193,9 +193,13 @@ class SystemDatasetService(ConfigService):
     async def do_update(self, job, data):
         """Update System Dataset Service Configuration.
 
-        Records the user's pool selection in the datastore and triggers
-        setup. setup_impl detects pool changes (configured-vs-mounted) and
-        runs the migration; do_update itself does not.
+        Records the user's pool selection in the datastore, runs the data
+        migration, then triggers setup. The migration MUST happen here
+        and not from setup_impl: setup_impl can detect a mount/config
+        mismatch but cannot tell user-initiated pool changes (where the
+        currently-mounted pool's data is authoritative and must be
+        copied) from fallback recovery (where the target pool's data is
+        authoritative and the current mount is a transient overlay).
         """
         data.setdefault('pool_exclude', None)
         config = await self.config()
@@ -205,11 +209,24 @@ class SystemDatasetService(ConfigService):
             'datastore.update', 'system.systemdataset', config['id'],
             {'pool': new_pool or ''}, {'prefix': 'sys_'},
         )
+        new = await self.config()
+
+        if config['pool'] != new['pool']:
+            await self.middleware.call(
+                'systemdataset.migrate', config['pool'], new['pool'],
+            )
+
         await self.middleware.call('systemdataset.setup', data['pool_exclude'])
         return await self.config()
 
     async def _validate_and_select_pool(self, data, config):
-        """Validate the requested pool and return the pool name to record."""
+        """Validate the requested pool and return the pool name to record.
+
+        If the caller explicitly passes pool=None (e.g. pool_pre_export
+        clearing the selection), pick the first usable data pool that
+        isn't excluded. Returning '' lets the DB record the empty value
+        and config_extend fall back to the boot pool.
+        """
         verrors = ValidationErrors()
         new_pool = data.get('pool', config['pool'])
 
@@ -217,11 +234,26 @@ class SystemDatasetService(ConfigService):
             if error := await self.destination_pool_error(new_pool):
                 verrors.add('sysdataset_update.pool', error)
 
-        if new_pool and new_pool not in await self.pool_choices(False):
-            verrors.add(
-                'sysdataset_update.pool',
-                'The system dataset cannot be placed on this pool.',
-            )
+        if new_pool:
+            if new_pool not in await self.pool_choices(False):
+                verrors.add(
+                    'sysdataset_update.pool',
+                    'The system dataset cannot be placed on this pool.',
+                )
+        else:
+            # Caller passed None — pick a data pool ourselves so that
+            # do_update has a concrete `new_pool` to migrate to.
+            for pool in await self.middleware.call(
+                'systemdataset.query_pools_for_system_dataset', data['pool_exclude'],
+            ):
+                if await self.destination_pool_error(pool):
+                    continue
+                new_pool = pool
+                break
+            else:
+                # No usable data pool — clear the field so config_extend
+                # falls back to the boot pool.
+                new_pool = ''
 
         verrors.check()
         return new_pool
@@ -275,7 +307,9 @@ class SystemDatasetService(ConfigService):
           do_update holds the sysdataset_update job lock and re-entering
           would deadlock.)
         - If something is mounted at SYSDATASET_PATH from a different
-          pool, run migrate to move the data over.
+          pool, decide whether to migrate or abandon-and-remount based
+          on whether *we* just persisted a pool change. See the mismatch
+          handler below.
         - Otherwise ensure spec datasets exist with right properties and
           mount whatever isn't mounted yet.
         - Run post-mount setup: ACL check + cores→coredump bind.
@@ -292,6 +326,7 @@ class SystemDatasetService(ConfigService):
             preferred_pool=preferred_pool, exclude_pool=exclude_pool,
         )
 
+        db_just_persisted = False
         if target_pool != config['pool'] and not is_fallback:
             self.logger.debug(
                 'Updating system dataset pool from %r to %r', config['pool'], target_pool,
@@ -301,6 +336,7 @@ class SystemDatasetService(ConfigService):
                 {'pool': target_pool}, {'prefix': 'sys_'},
             )
             config = self.middleware.call_sync('systemdataset.config')
+            db_just_persisted = True
         elif is_fallback:
             self.force_pool = target_pool
             config = self.middleware.call_sync('systemdataset.config')
@@ -318,12 +354,35 @@ class SystemDatasetService(ConfigService):
         except FileNotFoundError:
             mounted_pool = None
 
-        # Wrong pool's dataset is mounted — migrate.
         if mounted_pool and mounted_pool != target_pool:
-            self.logger.debug(
-                'Migrating system dataset from %r to %r', mounted_pool, target_pool,
-            )
-            self.migrate(mounted_pool, target_pool)
+            if db_just_persisted:
+                # We just selected and persisted a new pool to host the
+                # sysdataset (no prior selection — pool.post_create with
+                # an empty DB, or pool_pre_export's setup pass clearing
+                # the field). The currently-mounted pool's data is what
+                # we want to carry over. Migrate.
+                self.logger.debug(
+                    'Migrating system dataset from %r to %r', mounted_pool, target_pool,
+                )
+                self.migrate(mounted_pool, target_pool)
+            else:
+                # The DB has been stable; the mount mismatch is a
+                # transient state (force_pool fallback that just
+                # recovered, stale mount from a prior failure). Target
+                # holds the authoritative data — abandon the current
+                # mount and remount target without copying data, which
+                # would destroy target_pool's real sysdataset by
+                # overlaying the fallback's brief writes.
+                #
+                # User-initiated pool changes go through do_update,
+                # which calls migrate explicitly before reaching here,
+                # so by the time setup_impl runs the mount already
+                # matches and this branch isn't taken.
+                self.logger.info(
+                    'Abandoning sysdataset mount on %r in favor of %r (no data copy)',
+                    mounted_pool, target_pool,
+                )
+                self._abandon_and_remount(target_pool, config['uuid'])
             return self.middleware.call_sync('systemdataset.config')
 
         # Same pool (or nothing mounted) — ensure datasets and mount.
@@ -512,7 +571,7 @@ class SystemDatasetService(ConfigService):
 
     @private
     def migrate(self, _from, _to):
-        """Migrate the system dataset from `_from` to `_to`.
+        """Migrate the system dataset from `_from` to `_to`, copying data.
 
         With no source: just create + mount at SYSDATASET_PATH.
 
@@ -521,12 +580,13 @@ class SystemDatasetService(ConfigService):
         - Replicate via lzc.send | lzc.receive (source stays live).
         - Run setup_datasets to create any spec entries the source didn't
           have and reconcile property drift.
-        - Mount the populated tree under a tmpdir on /var/db (so the
-          staging mount inherits MS_PRIVATE from /var, required for
-          MOVE_MOUNT_BENEATH).
-        - Quiesce daemons, drop the cores→coredump bind, and atomically
-          swap the staged tree under SYSDATASET_PATH.
-        - Run finalize and destroy the old pool's datasets.
+        - Stage the populated tree and atomically swap into SYSDATASET_PATH.
+        - Destroy the old pool's datasets.
+
+        Caller (typically do_update) is responsible for ensuring this is
+        actually the data-migration case — setup_impl chooses between
+        migrate() and _abandon_and_remount() based on whether the mount
+        mismatch reflects an explicit user request or a transient state.
         """
         config = self.middleware.call_sync('systemdataset.config')
         os.makedirs(SYSDATASET_PATH, mode=0o755, exist_ok=True)
@@ -557,6 +617,45 @@ class SystemDatasetService(ConfigService):
             'systemdataset.setup_datasets', _to, config['uuid'],
         )
 
+        self._stage_and_swap(datasets)
+        self._finalize_datasets(datasets)
+        self._post_mount_setup()
+
+        try:
+            self.call_sync2(
+                self.s.zfs.resource.destroy_impl, f'{_from}/.system',
+                recursive=True, bypass=True,
+            )
+        except Exception:
+            self.logger.warning(
+                'Failed to destroy old system datasets on %r', _from, exc_info=True,
+            )
+
+    @private
+    def _abandon_and_remount(self, target_pool, uid):
+        """Switch SYSDATASET_PATH from the currently-mounted pool to
+        target_pool's existing sysdataset, without copying data.
+
+        Used when target_pool's data is authoritative and the current
+        mount is a transient overlay (boot-pool fallback that has now
+        recovered, stale mount from a prior failure). Critically, this
+        does NOT call replicate or destroy target_pool/.system — doing
+        so would obliterate the very data we're trying to restore
+        access to. The currently-mounted pool's data is discarded.
+        """
+        datasets = self.middleware.call_sync(
+            'systemdataset.setup_datasets', target_pool, uid,
+        )
+        self._stage_and_swap(datasets)
+        self._finalize_datasets(datasets)
+        self._post_mount_setup()
+
+    def _stage_and_swap(self, datasets):
+        """Mount `datasets` at a staging path under /var/db, then
+        atomically swap the staged tree under SYSDATASET_PATH using
+        MOVE_MOUNT_BENEATH. Daemons that hold open handles into the
+        sysdataset are quiesced for the swap.
+        """
         # Stage on /var/db so the new mounts inherit MS_PRIVATE (set on
         # /var at boot) — MOVE_MOUNT_BENEATH requires the source mount to
         # be MS_PRIVATE or it returns EINVAL.
@@ -583,19 +682,6 @@ class SystemDatasetService(ConfigService):
             )
             if stat.stx_attributes & truenas_os.STATX_ATTR_MOUNT_ROOT:
                 umount(staging, force=True, recursive=True)
-
-        self._finalize_datasets(datasets)
-        self._post_mount_setup()
-
-        try:
-            self.call_sync2(
-                self.s.zfs.resource.destroy_impl, f'{_from}/.system',
-                recursive=True, bypass=True,
-            )
-        except Exception:
-            self.logger.warning(
-                'Failed to destroy old system datasets on %r', _from, exc_info=True,
-            )
 
     @contextmanager
     @private
