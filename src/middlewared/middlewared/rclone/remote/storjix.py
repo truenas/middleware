@@ -3,9 +3,11 @@ import io
 from urllib.parse import urlparse
 import xml.etree.ElementTree as ET
 
-from aws_requests_auth.aws_auth import AWSRequestsAuth
 import boto3
 import botocore
+from botocore.auth import SigV4Auth
+from botocore.awsrequest import AWSRequest
+from botocore.credentials import Credentials
 import requests
 
 from middlewared.rclone.base import BaseRcloneRemote
@@ -44,25 +46,28 @@ class StorjIxRcloneRemote(BaseRcloneRemote):
         except s3_client.exceptions.BucketAlreadyExists as e:
             raise CallError(str(e), errno=errno.EEXIST)
         except botocore.exceptions.ParamValidationError as e:
-            raise StorjIxError("The bucket name can only contain lowercase letters, numbers, and hyphens.",
-                               errno.EINVAL, str(e))
+            raise StorjIxError(
+                "The bucket name can only contain lowercase letters, numbers, and hyphens.", errno.EINVAL, str(e)
+            )
         except botocore.exceptions.ClientError as e:
             if "InvalidBucketName" in e.args[0]:
-                raise StorjIxError("The bucket name must be between 3-63 characters in length and cannot contain "
-                                   "uppercase.", errno.EINVAL, str(e))
+                raise StorjIxError(
+                    "The bucket name must be between 3-63 characters in length and cannot contain uppercase.",
+                    errno.EINVAL,
+                    str(e),
+                )
             raise
 
     def list_buckets(self, credentials):
         provider = credentials["provider"]
         endpoint = provider["endpoint"]
+        url = f"{endpoint}?attribution"
 
-        auth = AWSRequestsAuth(aws_access_key=provider["access_key_id"],
-                               aws_secret_access_key=provider["secret_access_key"],
-                               aws_host=urlparse(endpoint).hostname,
-                               aws_region="",
-                               aws_service="s3")
+        creds = Credentials(provider["access_key_id"], provider["secret_access_key"])
+        request = AWSRequest(method="GET", url=url)
+        SigV4Auth(creds, "s3", "").add_auth(request)
 
-        r = requests.get(f"{endpoint}?attribution", auth=auth, timeout=INTERNET_TIMEOUT)
+        r = requests.get(url, headers=dict(request.headers), timeout=INTERNET_TIMEOUT)
         r.raise_for_status()
 
         ns = "{http://s3.amazonaws.com/doc/2006-03-01/}"
