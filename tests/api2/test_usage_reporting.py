@@ -3,14 +3,15 @@ import time
 
 import pytest
 
-from auto_config import password, pool_name, user
+from auto_config import pool_name
 from middlewared.test.integration.assets.ftp import ftp_server
 from middlewared.test.integration.assets.nfs import nfs_server
 from middlewared.test.integration.assets.pool import dataset as nfs_dataset
 from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.utils.client import truenas_server, client
 from middlewared.test.integration.utils.shell import webshell_exec
-from protocols import SSH_NFS, ftp_connection, nfs_share
+from protocols import ftp_connection, nfs_share
+from protocols.pynfs_proto import PynfsClient3
 
 
 class GatherTypes:
@@ -71,9 +72,11 @@ def test_nfs_reporting(get_usage_sample):
                 time.sleep(2)
                 baseline_sample = call('usage.gather')['NFS']['num_clients']
 
-                # Establish a new connection.
-                with SSH_NFS(truenas_server.ip, nfs_path,
-                             user=user, password=password, ip=truenas_server.ip):
+                # Establish a new v3 connection.  pynfs's
+                # ``PynfsClient3`` does the actual MOUNT + portmapper
+                # bind, which the appliance counts as a v3 client
+                # exactly the way kernel ``mount.nfs`` did.
+                with PynfsClient3(truenas_server.ip, nfs_path):
                     usage_sample = call('usage.gather')
                     assert usage_sample['NFS']['num_clients'] == baseline_sample + 1
 
