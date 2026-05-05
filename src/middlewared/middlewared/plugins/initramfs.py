@@ -17,16 +17,16 @@ called from:
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass
+import dataclasses
 import json
 import os
 import sqlite3
-from typing import TYPE_CHECKING
+import typing
 
 from truenas_os_pyutils.io import atomic_write
 from truenas_pylibvirt.utils.gpu import get_gpus
 
-if TYPE_CHECKING:
+if typing.TYPE_CHECKING:
     from middlewared.main import Middleware
 
 
@@ -36,7 +36,7 @@ ZFS_MODPROBE_PATH = f"{BASE}/truenas_zfs_modprobe.conf"
 VFIO_PCI_IDS_PATH = f"{BASE}/truenas_vfio_pci_ids"
 
 
-@dataclass(frozen=True, slots=True)
+@dataclasses.dataclass(frozen=True, slots=True)
 class InitramfsConfig:
     """Snapshot of every TrueNAS configuration value that affects the initrd,
     as read in a single pass from one source (live datastore or sqlite file)."""
