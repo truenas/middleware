@@ -1,9 +1,9 @@
 from collections import defaultdict
+from datetime import datetime
 import errno
 import subprocess
 
 from dateutil.tz import tzlocal
-import isodate
 from zettarepl.snapshot.list import list_snapshots
 from zettarepl.snapshot.name import parse_snapshot_name
 from zettarepl.snapshot.task.snapshot_owner import PeriodicSnapshotTaskSnapshotOwner
@@ -43,7 +43,7 @@ class ZettareplService(Service):
             snapshot_pool = snapshot.split("/")[0]
 
             try:
-                destroy_at = isodate.parse_datetime(destroy_at)
+                destroy_at = datetime.fromisoformat(destroy_at)
             except Exception as e:
                 self.middleware.logger.warning("Error parsing snapshot %r %s: %r", snapshot, property_name, e)
                 continue
@@ -154,7 +154,7 @@ class ZettareplService(Service):
 
             if property_name in sup:
                 try:
-                    property_destroy_at = isodate.parse_datetime(sup[property_name])
+                    property_destroy_at = datetime.fromisoformat(sup[property_name])
                 except Exception:
                     self.logger.warning(
                         "Error parsing snapshot %r %s",

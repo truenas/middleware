@@ -3,7 +3,6 @@ from __future__ import annotations
 import datetime
 from typing import Any
 
-import isodate
 from sqlalchemy import CHAR, Boolean, ForeignKey, Index, Integer, SmallInteger, String, Table, Text, UniqueConstraint
 from sqlalchemy import JSON as NativeJSON
 from sqlalchemy import Column as _Column
@@ -156,18 +155,18 @@ class Time(UserDefinedType[datetime.time]):
             return None
 
         if isinstance(value, str):
-            parsed = isodate.parse_time(value)
+            parsed = datetime.time.fromisoformat(value)
         else:
             parsed = value
 
-        return parsed.isoformat()  # type: ignore[no-any-return]
+        return parsed.isoformat()
 
     def bind_processor(self, dialect: Any) -> Any:
         return self._bind_processor
 
     def _result_processor(self, value: str) -> datetime.time:
         try:
-            return isodate.parse_time(value)  # type: ignore[no-any-return]
+            return datetime.time.fromisoformat(value)
         except Exception:
             return datetime.time()
 
