@@ -79,6 +79,7 @@ from middlewared.utils.account.authenticator import AccountFlag, UserPamAuthenti
 from middlewared.utils.account.faillock import reset_tally, tally_locked_users
 from middlewared.utils.crypto import check_unixhash, generate_nt_hash, generate_string, sha512_crypt
 from middlewared.utils.directoryservices.constants import DSStatus, DSType
+from middlewared.utils.filesystem import attrs as fs_attrs
 from middlewared.utils.filter_list import filter_list
 from middlewared.utils.nss import grp, pwd
 from middlewared.utils.nss.nss_common import NssModule
@@ -2560,10 +2561,11 @@ async def setup(middleware):
     try:
         # ensure that our default home path is always immutable. If it's not immutable then
         # pam_mkhomedir will start creating dirs within it on user login
-        await middleware.call('filesystem.set_zfs_attributes', {
-            'path': DEFAULT_HOME_PATH,
-            'zfs_file_attributes': {'immutable': True}
-        })
+        await middleware.run_in_thread(
+            fs_attrs.set_zfs_file_attributes_dict,
+            DEFAULT_HOME_PATH,
+            {'immutable': True},
+        )
     except Exception:
         middleware.logger.error('Failed to set immutable property on %r', DEFAULT_HOME_PATH, exc_info=True)
 

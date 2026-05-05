@@ -22,7 +22,6 @@ from middlewared.api.current import (
     FilesystemSetpermResult,
 )
 from middlewared.service import Service, ValidationErrors, job, private
-from middlewared.service.decorators import pass_thread_local_storage
 from middlewared.service_exception import CallError, MatchNotFound, ValidationError
 from middlewared.utils.filesystem.acl import (
     ACL_UNDEFINED_ID,
@@ -179,9 +178,8 @@ class FilesystemService(Service):
         roles=['FILESYSTEM_ATTRS_WRITE'],
         audit='Filesystem change owner', audit_extended=lambda data: data['path']
     )
-    @pass_thread_local_storage
     @job(lock="perm_change")
-    def chown(self, job, tls, data):
+    def chown(self, job, data):
         """
         Change owner or group of file at `path`.
 
@@ -229,7 +227,7 @@ class FilesystemService(Service):
             os.fchown(fd, uid, gid)
             if options['recursive']:
                 job.set_progress(10, f'Recursively changing owner of {data["path"]}.')
-                AclTool(fd, AclToolAction.CHOWN, uid, gid, ATChownOptions(traverse=options['traverse']), job, tls).run()
+                AclTool(fd, AclToolAction.CHOWN, uid, gid, ATChownOptions(traverse=options['traverse']), job).run()
         finally:
             os.close(fd)
         job.set_progress(100, 'Finished changing owner.')
@@ -239,9 +237,8 @@ class FilesystemService(Service):
         roles=['FILESYSTEM_ATTRS_WRITE'],
         audit='Filesystem set permission', audit_extended=lambda data: data['path']
     )
-    @pass_thread_local_storage
     @job(lock="perm_change")
-    def setperm(self, job, tls, data):
+    def setperm(self, job, data):
         """
         Set unix permissions on given `path`.
 
@@ -330,7 +327,7 @@ class FilesystemService(Service):
             if options['recursive']:
                 job.set_progress(10, f'Recursively setting permissions on {data["path"]}.')
                 AclTool(fd, AclToolAction.STRIP, uid, gid,
-                        ATPermOptions(traverse=options['traverse'], target_mode=mode), job, tls).run()
+                        ATPermOptions(traverse=options['traverse'], target_mode=mode), job).run()
         finally:
             os.close(fd)
         job.set_progress(100, 'Finished setting permissions.')
@@ -498,7 +495,7 @@ class FilesystemService(Service):
             )
 
     @private
-    def setacl_nfs4(self, job, tls, current_acl, data):
+    def setacl_nfs4(self, job, current_acl, data):
         job.set_progress(0, 'Preparing to set acl.')
         recursive = data['options'].get('recursive', False)
         do_strip = data['options'].get('stripacl', False)
@@ -545,14 +542,14 @@ class FilesystemService(Service):
 
             os.fchown(fd, data['uid'], data['gid'])
             if recursive:
-                AclTool(fd, action, data['uid'], data['gid'], acl_opts, job, tls).run()
+                AclTool(fd, action, data['uid'], data['gid'], acl_opts, job).run()
         finally:
             os.close(fd)
 
         job.set_progress(100, 'Finished setting NFSv4 ACL.')
 
     @private
-    def setacl_posix1e(self, job, tls, current_acl, data):
+    def setacl_posix1e(self, job, current_acl, data):
         job.set_progress(0, 'Preparing to set acl.')
         options = data['options']
         recursive = options.get('recursive', False)
@@ -629,7 +626,7 @@ class FilesystemService(Service):
 
             os.fchown(fd, data['uid'], data['gid'])
             if recursive:
-                AclTool(fd, action, data['uid'], data['gid'], acl_opts, job, tls).run()
+                AclTool(fd, action, data['uid'], data['gid'], acl_opts, job).run()
         finally:
             os.close(fd)
 
@@ -642,9 +639,8 @@ class FilesystemService(Service):
         audit='Filesystem set ACL',
         audit_extended=lambda data: data['path']
     )
-    @pass_thread_local_storage
     @job(lock="perm_change")
-    def setacl(self, job, tls, data):
+    def setacl(self, job, data):
         """
         Set ACL of a given path. Takes the following parameters:
         `path` full path to directory or file.
@@ -812,9 +808,9 @@ class FilesystemService(Service):
 
         match current_acl['acltype']:
             case FS_ACL_Type.NFS4:
-                self.setacl_nfs4(job, tls, current_acl, data)
+                self.setacl_nfs4(job, current_acl, data)
             case FS_ACL_Type.POSIX1E:
-                self.setacl_posix1e(job, tls, current_acl, data)
+                self.setacl_posix1e(job, current_acl, data)
             case FS_ACL_Type.DISABLED:
                 raise CallError(f"{data['path']}: ACLs disabled on path.", errno.EOPNOTSUPP)
             case _:
