@@ -473,7 +473,11 @@ class SystemDatasetService(ConfigService):
                 )
             elif is_cores_ds and datasets_prop[dataset]['used']['value'] >= 1024 ** 3:
                 try:
-                    await self.call2(self.s.zfs.resource.destroy_impl, dataset, recursive=True)
+                    # bypass=True: <pool>/.system/cores is protected.
+                    await self.call2(
+                        self.s.zfs.resource.destroy_impl, dataset,
+                        recursive=True, bypass=True,
+                    )
                     await self.middleware.call(
                         'pool.dataset.create_impl',
                         CreateImplArgs(name=dataset, ztype='FILESYSTEM', zprops=props),
@@ -539,10 +543,12 @@ class SystemDatasetService(ConfigService):
         # clean slate. The dataset not existing (first migration to this
         # pool) is the expected case; any other error here means the pool
         # is unhealthy and we should not blindly proceed to replicate
-        # over it.
+        # over it. bypass=True because <pool>/.system is on the protected
+        # paths list — we're a legitimate internal caller.
         with suppress(ZFSPathNotFoundException):
             self.call_sync2(
-                self.s.zfs.resource.destroy_impl, f'{_to}/.system', recursive=True,
+                self.s.zfs.resource.destroy_impl, f'{_to}/.system',
+                recursive=True, bypass=True,
             )
 
         replicate(_from, _to, config['uuid'])
@@ -583,7 +589,8 @@ class SystemDatasetService(ConfigService):
 
         try:
             self.call_sync2(
-                self.s.zfs.resource.destroy_impl, f'{_from}/.system', recursive=True,
+                self.s.zfs.resource.destroy_impl, f'{_from}/.system',
+                recursive=True, bypass=True,
             )
         except Exception:
             self.logger.warning(
