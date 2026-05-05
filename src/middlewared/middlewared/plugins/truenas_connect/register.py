@@ -9,7 +9,6 @@ from urllib.parse import urlencode
 from truenas_connect_utils.status import Status
 from truenas_connect_utils.urls import get_registration_uri
 
-
 from middlewared.service import CallError, ServiceContext
 from middlewared.utils.crypto import ssl_uuid4
 

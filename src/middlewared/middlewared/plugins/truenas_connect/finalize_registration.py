@@ -12,8 +12,7 @@ from middlewared.service import ServiceContext
 
 from .internal import config_internal, set_status
 from .request import tnc_request
-from .utils import calculate_sleep, CLAIM_TOKEN_CACHE_KEY, decode_and_validate_token
-
+from .utils import CLAIM_TOKEN_CACHE_KEY, calculate_sleep, decode_and_validate_token
 
 logger = logging.getLogger('truenas_connect')
 

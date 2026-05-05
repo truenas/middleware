@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Any, cast, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from truenas_connect_utils.exceptions import CallError as TNCCallError
 from truenas_connect_utils.hostname import hostname_config, register_system_config, register_update_ips
 
-from middlewared.service import CallError, private, Service
+from middlewared.service import CallError, Service, private
 
 from .internal import config_internal, get_effective_ips, ha_vips
 from .utils import CONFIGURED_TNC_STATES, TNC_IPS_CACHE_KEY
@@ -38,7 +38,7 @@ class TNCHostnameService(Service):
 
     @private
     async def config(self) -> dict[str, Any]:
-        return cast(dict[str, Any], await hostname_config(await config_internal(self.context)))
+        return await hostname_config(await config_internal(self.context))
 
     async def register_update_ips(
         self, ips: list[str] | None = None, create_wildcard: bool = False,
@@ -52,7 +52,7 @@ class TNCHostnameService(Service):
             ips = (await ha_vips(self.context)) + ips
 
         try:
-            return cast(dict[str, Any], await register_update_ips(tnc_config, ips, create_wildcard))
+            return await register_update_ips(tnc_config, ips, create_wildcard)
         except TNCCallError as e:
             raise CallError(str(e))
 
@@ -62,7 +62,7 @@ class TNCHostnameService(Service):
         tnc_config = await config_internal(self.context)
 
         try:
-            return cast(dict[str, Any], await register_system_config(tnc_config, websocket_port))
+            return await register_system_config(tnc_config, websocket_port)
         except TNCCallError as e:
             raise CallError(str(e))
 

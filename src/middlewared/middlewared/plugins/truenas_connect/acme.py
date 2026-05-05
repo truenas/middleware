@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import logging
-import uuid
 from datetime import datetime, timezone
-from typing import Any, cast, TYPE_CHECKING
+import logging
+from typing import TYPE_CHECKING, Any
+import uuid
 
 from truenas_acme_utils.ari import fetch_renewal_info
 from truenas_connect_utils.acme import acme_config, create_cert
@@ -12,7 +12,7 @@ from truenas_connect_utils.status import Status
 from truenas_crypto_utils.read import get_cert_id
 
 from middlewared.plugins.certificate.utils import CERT_TYPE_EXISTING
-from middlewared.service import CallError, job, private, Service
+from middlewared.service import CallError, Service, job, private
 
 from .internal import config_internal, set_status
 from .utils import CERT_RENEW_DAYS, TNC_CERT_PREFIX
@@ -33,7 +33,7 @@ class TNCACMEService(Service):
 
     @private
     async def config(self) -> dict[str, Any]:
-        return cast(dict[str, Any], await acme_config(await config_internal(self.context)))
+        return await acme_config(await config_internal(self.context))
 
     @private
     async def update_ui(self, start_heartbeat: bool = True) -> None:
@@ -115,7 +115,8 @@ class TNCACMEService(Service):
         else:
             logger.debug('TNC certificate renewed successfully, updating database')
             # renewal_job.wait(raise_error=True) above guarantees a successful result.
-            cert_details = cast(dict[str, Any], renewal_job.result)
+            assert renewal_job.result is not None
+            cert_details = renewal_job.result
             await self.middleware.call(
                 'datastore.update',
                 'system.certificate',
@@ -202,7 +203,9 @@ class TNCACMEService(Service):
         if cert_job.error:
             raise CallError(cert_job.error)
 
-        return cast(dict[str, Any], cert_job.result)
+        # cert_job.error checked above guarantees a result.
+        assert cert_job.result is not None
+        return cert_job.result
 
     @private
     @job(lock='tn_connect_cert_generation')
@@ -211,11 +214,12 @@ class TNCACMEService(Service):
     ) -> dict[str, Any]:
         csr_details: dict[str, Any] | None = None
         if cert_id is not None:
-            cert_list = await self.middleware.call2(
-                self.s.certificate.query, [['id', '=', cert_id]],
-            )
-            if cert_list:
-                cert = cert_list[0]
+            try:
+                cert = await self.middleware.call2(self.s.certificate.get_instance, cert_id)
+            except CallError:
+                # Cert no longer exists; fall through with csr_details=None.
+                pass
+            else:
                 csr_details = {
                     'csr': cert.CSR,
                     'private_key': cert.privatekey.get_secret_value() if cert.privatekey is not None else None,
@@ -223,10 +227,10 @@ class TNCACMEService(Service):
 
         resp = await self.call2(self.s.tn_connect.hostname.register_update_ips, None, True)
         try:
-            return cast(dict[str, Any], await create_cert(
+            return await create_cert(
                 await config_internal(self.context), resp['response'] or {},
                 csr_details, cert_renewal_id,
-            ))
+            )
         except TNCCallError as e:
             raise CallError(str(e))
 

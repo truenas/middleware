@@ -19,7 +19,7 @@ from middlewared.utils.disks_.disk_class import iterate_disks
 from middlewared.utils.version import parse_version_string
 
 from .internal import config_internal, delete_cert, unset_registration_details
-from .request import auth_headers, Mode, tnc_request
+from .request import Mode, auth_headers, tnc_request
 from .utils import (
     CONFIGURED_TNC_STATES,
     HEARTBEAT_INTERVAL,

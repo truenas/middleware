@@ -1,15 +1,20 @@
 from __future__ import annotations
 
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-from middlewared.api import api_method, Event
+from middlewared.api import Event, api_method
 from middlewared.api.current import (
-    TrueNASConnectEntry,
-    TrueNASConnectUpdate, TrueNASConnectUpdateArgs, TrueNASConnectUpdateResult,
-    TrueNASConnectGetRegistrationUriArgs, TrueNASConnectGetRegistrationUriResult,
-    TrueNASConnectGenerateClaimTokenArgs, TrueNASConnectGenerateClaimTokenResult,
-    TrueNASConnectIpsWithHostnamesArgs, TrueNASConnectIpsWithHostnamesResult,
     TrueNASConnectConfigChangedEvent,
+    TrueNASConnectEntry,
+    TrueNASConnectGenerateClaimTokenArgs,
+    TrueNASConnectGenerateClaimTokenResult,
+    TrueNASConnectGetRegistrationUriArgs,
+    TrueNASConnectGetRegistrationUriResult,
+    TrueNASConnectIpsWithHostnamesArgs,
+    TrueNASConnectIpsWithHostnamesResult,
+    TrueNASConnectUpdate,
+    TrueNASConnectUpdateArgs,
+    TrueNASConnectUpdateResult,
 )
 from middlewared.service import GenericConfigService, job, private
 
@@ -22,7 +27,8 @@ from .hostname import TNCHostnameService, on_general_config_update, update_ips
 from .post_install import post_install_process_impl
 from .private_models import (
     TrueNASConnectUpdateEnvironment,
-    TrueNASConnectUpdateEnvironmentArgs, TrueNASConnectUpdateEnvironmentResult,
+    TrueNASConnectUpdateEnvironmentArgs,
+    TrueNASConnectUpdateEnvironmentResult,
 )
 from .register import generate_claim_token_impl, get_registration_uri_impl
 from .state import state_check_impl

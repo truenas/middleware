@@ -1,22 +1,13 @@
-<<<<<<< HEAD
-from unittest.mock import AsyncMock, MagicMock, patch
-
-import pytest
-
-=======
-import pytest
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
+
 from middlewared.api.current import TrueNASConnectEntry
 from middlewared.plugins.truenas_connect.config import TrueNASConnectConfigServicePart
->>>>>>> 28a0a31c34 (Initial pass at making tnc plugin typesafe)
 from middlewared.plugins.truenas_connect.hostname import TNCHostnameService
-from middlewared.plugins.truenas_connect.update import TrueNASConnectService
 from middlewared.plugins.truenas_connect.utils import TNC_IPS_CACHE_KEY
 from middlewared.service import ValidationErrors
-<<<<<<< HEAD
-=======
 
 
 def make_tnc_entry(**overrides: Any) -> TrueNASConnectEntry:
@@ -36,7 +27,6 @@ def make_tnc_entry(**overrides: Any) -> TrueNASConnectEntry:
         last_heartbeat_failure_datetime=None,
     )
     return TrueNASConnectEntry(**(defaults | overrides))
->>>>>>> 28a0a31c34 (Initial pass at making tnc plugin typesafe)
 
 
 @pytest.fixture
