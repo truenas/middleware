@@ -33,7 +33,6 @@ EXPECTED_FA_RESOURCES = frozenset({
     'config.save',
     'core.ping_remote',
     'core.arp',
-    'core.debug',
 })
 
 

@@ -13,8 +13,6 @@ import time
 import traceback
 import uuid
 
-from remote_pdb import RemotePdb
-
 from middlewared.api import Event, api_method
 from middlewared.api.base.jsonschema import get_json_schema
 from middlewared.api.current import (
@@ -22,8 +20,6 @@ from middlewared.api.current import (
     CoreArpResult,
     CoreBulkArgs,
     CoreBulkResult,
-    CoreDebugArgs,
-    CoreDebugResult,
     CoreDownloadArgs,
     CoreDownloadResult,
     CoreGetJobsAddedEvent,
@@ -614,28 +610,6 @@ class CoreService(Service):
             t.start()
             t.join()
         return True
-
-    @api_method(CoreDebugArgs, CoreDebugResult, roles=['FULL_ADMIN'])
-    async def debug(self, data):
-        """
-        Setup middlewared for remote debugging.
-
-        engine currently used:
-          - REMOTE_PDB: Remote vanilla PDB (over TCP sockets)
-
-        options:
-            - bind_address: local ip address to bind the remote debug session to
-            - bind_port: local port to listen on
-            - threaded: run debugger in a new thread instead of the main event loop
-        """
-        if data['threaded']:
-            self.middleware.create_task(
-                self.middleware.run_in_thread(
-                    RemotePdb, data['bind_address'], data['bind_port']
-                )
-            )
-        else:
-            RemotePdb(data['bind_address'], data['bind_port']).set_trace()
 
     @private
     async def profile(self, method, params=None):

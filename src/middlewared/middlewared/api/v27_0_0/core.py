@@ -24,7 +24,6 @@ __all__ = [
     "CorePingRemoteArgs", "CorePingRemoteResult",
     "CoreArpArgs", "CoreArpResult",
     "CoreDownloadArgs", "CoreDownloadResult",
-    "CoreDebugArgs", "CoreDebugResult",
     "CoreBulkArgs", "CoreBulkResult",
     "CoreSetOptionsArgs", "CoreSetOptionsResult",
     "CoreSubscribeArgs", "CoreSubscribeResult",
@@ -261,21 +260,6 @@ class CoreDownloadResult(BaseModel):
 
     * First element: Job ID that can be used with `core.get_jobs` to monitor progress
     * Second element: Download URL in the format `/_download/{job_id}?auth_token={token}`"""
-
-
-@single_argument_args("options")
-class CoreDebugArgs(BaseModel):
-    bind_address: str = "0.0.0.0"
-    """IP address to bind the debug server to."""
-    bind_port: int = 3000
-    """Port number to bind the debug server to."""
-    threaded: bool = False
-    """Whether to enable threaded debugging support."""
-
-
-class CoreDebugResult(BaseModel):
-    result: None
-    """Returns `null` when the debug server is successfully started."""
 
 
 class CoreBulkArgs(BaseModel):
