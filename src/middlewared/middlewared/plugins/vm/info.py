@@ -89,10 +89,13 @@ def supports_virtualization() -> bool:
 
 
 def amd_supports_svm() -> bool:
-    with open('/proc/cpuinfo', 'r') as f:
-        for line in f:
-            if line.startswith('flags') and 'svm' in line.split():
-                return True
+    try:
+        with open('/proc/cpuinfo', 'r') as f:
+            for line in f:
+                if line.startswith('flags') and 'svm' in line.split():
+                    return True
+    except Exception:
+        pass
     return False
 
 
@@ -138,7 +141,7 @@ async def vm_flags(context: ServiceContext) -> VMFlags:
         await context.middleware.run_in_thread(read_unrestricted_guest)
     elif RE_VENDOR_AMD.findall(cp.stdout.decode()):
         flags.amd_rvi = True
-        flags.amd_asids = await context.to_thread(amd_supports_svm)
+        flags.amd_asids = await context.middleware.run_in_thread(amd_supports_svm)
 
     return flags
 
