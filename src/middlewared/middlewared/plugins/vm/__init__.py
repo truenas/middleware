@@ -85,7 +85,6 @@ from middlewared.api.current import (
     VMVirtualizationDetailsResult,
 )
 from middlewared.service import GenericCRUDService, job, private
-from middlewared.utils.cpu import cpu_info
 from middlewared.utils.libvirt.utils import NGINX_PREFIX
 from truenas_pylibvirt.utils import kvm_supported
 
