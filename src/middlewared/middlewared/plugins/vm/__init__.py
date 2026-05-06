@@ -3,6 +3,8 @@ from __future__ import annotations
 import functools
 import typing
 
+from truenas_pylibvirt.utils import kvm_supported
+
 from middlewared.api import api_method
 from middlewared.api.current import (
     VMBootloaderOptions,
@@ -86,7 +88,6 @@ from middlewared.api.current import (
 )
 from middlewared.service import GenericCRUDService, job, private
 from middlewared.utils.libvirt.utils import NGINX_PREFIX
-from truenas_pylibvirt.utils import kvm_supported
 
 from .capabilities import guest_architecture_and_machine_choices
 from .clone import clone_vm
