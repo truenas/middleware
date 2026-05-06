@@ -85,7 +85,9 @@ from middlewared.api.current import (
     VMVirtualizationDetailsResult,
 )
 from middlewared.service import GenericCRUDService, job, private
+from middlewared.utils.cpu import cpu_info
 from middlewared.utils.libvirt.utils import NGINX_PREFIX
+from truenas_pylibvirt.utils import kvm_supported
 
 from .capabilities import guest_architecture_and_machine_choices
 from .clone import clone_vm
@@ -103,7 +105,6 @@ from .info import (
     port_wizard,
     random_mac,
     resolution_choices,
-    supports_virtualization,
     virtualization_details,
     vm_flags,
 )
@@ -278,11 +279,11 @@ class VMService(GenericCRUDService[VMEntry]):
         return cpu_model_choices()
 
     @api_method(VMFlagsArgs, VMFlagsResult, roles=['VM_READ'], check_annotations=True)
-    async def flags(self) -> VMFlags:
+    def flags(self) -> VMFlags:
         """
         Returns a dictionary with CPU flags for the hypervisor.
         """
-        return await vm_flags(self.context)
+        return vm_flags()
 
     @api_method(VMGetAvailableMemoryArgs, VMGetAvailableMemoryResult, roles=['VM_READ'], check_annotations=True)
     async def get_available_memory(self, overcommit: bool) -> int:
@@ -501,7 +502,7 @@ class VMService(GenericCRUDService[VMEntry]):
         """
         Returns "true" if system supports virtualization, "false" otherwise
         """
-        return supports_virtualization()
+        return kvm_supported()
 
     @api_method(VMSuspendArgs, VMSuspendResult, roles=['VM_WRITE'], check_annotations=True)
     def suspend(self, id_: int) -> None:

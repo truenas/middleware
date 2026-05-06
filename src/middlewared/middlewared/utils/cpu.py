@@ -29,6 +29,10 @@ sensors = None
 class CpuInfo(typing.TypedDict):
     cpu_model: str | None
     """The CPU model"""
+    vendor_id: str | None
+    """The CPU vendor id (e.g. 'GenuineIntel', 'AuthenticAMD')"""
+    cpu_flags: tuple[str, ...]
+    """The CPU feature flags as reported in /proc/cpuinfo"""
     core_count: int | None
     """The total number of online CPUs"""
     physical_core_count: int
@@ -50,11 +54,19 @@ def cpu_info() -> CpuInfo:
 def cpu_info_impl() -> CpuInfo:
     cc = os.sysconf('SC_NPROCESSORS_ONLN') or None
 
-    cm = None
+    cm: str | None = None
+    vid: str | None = None
+    cf: tuple[str, ...] = ()
     with open('/proc/cpuinfo', 'rb') as f:
-        for line in filter(lambda x: x.startswith(b'model name'), f):
-            cm = line.split(b':')[-1].strip().decode() or None
-            break
+        for line in f:
+            if cm is None and line.startswith(b'model name'):
+                cm = line.split(b':', 1)[-1].strip().decode() or None
+            elif vid is None and line.startswith(b'vendor_id'):
+                vid = line.split(b':', 1)[-1].strip().decode() or None
+            elif not cf and line.startswith(b'flags'):
+                cf = tuple(line.split(b':', 1)[-1].strip().decode().split())
+            if cm is not None and vid is not None and cf:
+                break
 
     pcc: set[str] = set()
     ht_map: dict[str, str] = dict()
@@ -95,6 +107,8 @@ def cpu_info_impl() -> CpuInfo:
 
     return CpuInfo(
         cpu_model=cm,
+        vendor_id=vid,
+        cpu_flags=cf,
         core_count=cc,
         physical_core_count=len(pcc),
         ht_map=ht_map,

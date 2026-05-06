@@ -1,5 +1,5 @@
 import logging
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -68,7 +68,7 @@ async def test_vm_creation_for_licensed_and_unlicensed_systems(is_licensed):
     m['system.feature_enabled'] = lambda *args: is_licensed
     m['datastore.query'] = lambda *args, **kwargs: []
 
-    with patch('middlewared.plugins.vm.crud.vm_flags', new=AsyncMock(return_value=VM_FLAGS)):
+    with patch('middlewared.plugins.vm.crud.vm_flags', new=MagicMock(return_value=VM_FLAGS)):
         verrors = ValidationErrors()
         data = VMCreate(**VM_PAYLOAD)
         await vm_svc._svc_part.validate(verrors, 'vm_create', data)
@@ -108,7 +108,7 @@ async def test_vm_secure_boot_ovmf_validation(enable_secure_boot, bootloader_ovm
     data = VMCreate(**payload)
 
     with (
-        patch('middlewared.plugins.vm.crud.vm_flags', new=AsyncMock(return_value=VM_FLAGS)),
+        patch('middlewared.plugins.vm.crud.vm_flags', new=MagicMock(return_value=VM_FLAGS)),
         patch('middlewared.plugins.vm.crud.bootloader_ovmf_choices', return_value=ovmf_choices),
         patch.object(vm_svc._svc_part, '_create', new=mock_result),
     ):
