@@ -34,7 +34,6 @@ BOOT_LOADER_OPTIONS = {
     'UEFI_CSM': 'Legacy BIOS',
 }
 MAXIMUM_SUPPORTED_VCPUS = 255
-RE_AMD_NASID = re.compile(r'NASID:.*\((.*)\)')
 RE_VENDOR_AMD = re.compile(r'AuthenticAMD')
 RE_VENDOR_INTEL = re.compile(r'GenuineIntel')
 
@@ -89,6 +88,14 @@ def supports_virtualization() -> bool:
     return kvm_supported()
 
 
+def amd_supports_svm() -> bool:
+    with open('/proc/cpuinfo', 'r') as f:
+        for line in f:
+            if line.startswith('flags') and 'svm' in line.split():
+                return True
+    return False
+
+
 async def license_active(context: ServiceContext) -> bool:
     can_run_vms = True
     if await context.middleware.call('system.is_ha_capable'):
@@ -131,11 +138,7 @@ async def vm_flags(context: ServiceContext) -> VMFlags:
         await context.middleware.run_in_thread(read_unrestricted_guest)
     elif RE_VENDOR_AMD.findall(cp.stdout.decode()):
         flags.amd_rvi = True
-        cp = await run(['cpuid', '-l', '0x8000000A'], check=False)
-        if cp.returncode:
-            context.logger.error('Failed to execute "cpuid -l 0x8000000A": %s', cp.stderr.decode())
-        else:
-            flags.amd_asids = all(v != '0' for v in (RE_AMD_NASID.findall(cp.stdout.decode()) or ['0']) if v)
+        flags.amd_asids = await context.to_thread(amd_supports_svm)
 
     return flags
 
