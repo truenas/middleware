@@ -13,6 +13,7 @@ from truenas_crypto_utils.read import get_cert_id
 
 from middlewared.plugins.certificate.utils import CERT_TYPE_EXISTING
 from middlewared.service import CallError, Service, job, private
+from middlewared.service_exception import InstanceNotFound
 
 from .internal import config_internal, set_status
 from .utils import CERT_RENEW_DAYS, TNC_CERT_PREFIX
@@ -216,7 +217,7 @@ class TNCACMEService(Service):
         if cert_id is not None:
             try:
                 cert = await self.middleware.call2(self.s.certificate.get_instance, cert_id)
-            except CallError:
+            except InstanceNotFound:
                 # Cert no longer exists; fall through with csr_details=None.
                 pass
             else:

@@ -64,7 +64,6 @@ def renew_certs(context: ServiceContext, job: Job) -> None:
             context.create_task(
                 context.call2(context.s.tn_connect.acme.renew_cert)
             )
-            context.create_task(context.middleware.call("tn_connect.acme.renew_cert"))
             continue
         elif not cert.acme:
             cert_str, key = generate_self_signed_certificate()
