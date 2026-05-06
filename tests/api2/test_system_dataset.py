@@ -1,13 +1,23 @@
 import errno
 import os
+import time
+import uuid
+
+from auto_config import ha
 import pytest
 
 from middlewared.service_exception import CallError
 from middlewared.test.integration.assets.pool import another_pool
-from middlewared.test.integration.utils import call, pool
-
+from middlewared.test.integration.utils import call, pool, ssh
+from middlewared.test.integration.utils.client import client
 
 PASSPHRASE = 'passphrase'
+
+# Subpath that lives under <pool>/.system/samba4 — a child dataset that
+# travels with the parent in every migration scenario, so it's a stable
+# sentinel location.
+SENTINEL_REL_PATH = 'samba4/_sysds_test_sentinel'
+SENTINEL_FULL_PATH = f'/var/db/system/{SENTINEL_REL_PATH}'
 
 
 @pytest.fixture(scope="module")
@@ -94,3 +104,79 @@ def test_netdata_post_mount_action():
     assert ds_stats["uid"] == 999, ds_stats
     assert ds_stats["gid"] == 997, ds_stats
     assert ds_stats["mode"] & 0o777 == 0o755, ds_stats
+
+
+def _wait_for_standby_backup(ws_client, max_wait_time=300):
+    """Wait for the remote (standby) controller to reconnect and report
+    BACKUP after a sysdataset migration that triggered its reboot.
+
+    Same pattern as tests/api2/test_006_pool_and_sysds.py::wait_for_standby.
+    """
+    time.sleep(5)
+    sleep_time = 1
+
+    waited = 0
+    while waited < max_wait_time:
+        if ws_client.call('failover.remote_connected'):
+            break
+        time.sleep(sleep_time)
+        waited += sleep_time
+    else:
+        raise AssertionError(f'Standby did not reconnect after {max_wait_time}s')
+
+    waited = 0
+    while waited < max_wait_time:
+        try:
+            if ws_client.call('failover.call_remote', 'failover.status') == 'BACKUP':
+                return
+        except Exception:
+            pass
+        time.sleep(sleep_time)
+        waited += sleep_time
+
+    raise AssertionError(f'Standby did not reach BACKUP after {max_wait_time}s')
+
+
+@pytest.mark.skipif(not ha, reason='HA-only test')
+def test_ha_migration_preserves_partner_data():
+    """When the user changes the system dataset pool on an HA cluster,
+    data must round-trip cleanly through the migration plus the standby
+    reboot. After standby comes back as BACKUP, its setup_impl runs
+    against a state where mount/config may diverge — exercising the
+    `_abandon_and_remount` path that preserves the partner's authoritative
+    `<pool>/.system` data instead of replicating fallback writes onto it.
+
+    This is the integration check for the recently-fixed data-loss bug
+    in the fallback-recovery path.
+    """
+    sentinel_value = f'ha-roundtrip-{uuid.uuid4().hex}'
+
+    with client() as ws_client:
+        original_pool = ws_client.call('systemdataset.config')['pool']
+        assert original_pool == pool, (
+            f'unexpected starting pool {original_pool!r}, expected {pool!r}'
+        )
+
+        with another_pool() as extra:
+            # Write sentinel on the current sysdataset.
+            ssh(f'mkdir -p {os.path.dirname(SENTINEL_FULL_PATH)}')
+            ssh(f'printf %s {sentinel_value!r} > {SENTINEL_FULL_PATH}')
+
+            # Migrate to extra. This triggers the standby reboot.
+            ws_client.call('systemdataset.update', {'pool': extra['name']}, job=True)
+            _wait_for_standby_backup(ws_client)
+
+            # Sentinel must round-trip via lzc.send/lzc.receive.
+            assert ssh(f'cat {SENTINEL_FULL_PATH}').strip() == sentinel_value
+            assert ws_client.call('systemdataset.config')['pool'] == extra['name']
+
+            # Migrate back. Standby reboots again.
+            ws_client.call('systemdataset.update', {'pool': original_pool}, job=True)
+            _wait_for_standby_backup(ws_client)
+
+            # Sentinel still intact on the original pool.
+            assert ssh(f'cat {SENTINEL_FULL_PATH}').strip() == sentinel_value
+            assert ws_client.call('systemdataset.config')['pool'] == original_pool
+
+            # Cleanup the sentinel before another_pool teardown.
+            ssh(f'rm -f {SENTINEL_FULL_PATH}')

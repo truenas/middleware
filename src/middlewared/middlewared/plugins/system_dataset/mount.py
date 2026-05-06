@@ -13,26 +13,25 @@ plus `move_mount(MOVE_MOUNT_BENEATH)` for atomic swaps:
   layer to expose the new tree. The destination is never bare during the
   swap — the only race-free way to replace a live mount.
 
-Replication uses libzfs_core send/receive piped between threads:
+Replication uses libzfs_core's single-call `lzc.local_replicate`:
 
-- `replicate` is the entry point. It takes one atomic lzc_snapshot covering
-  the entire source hierarchy (point-in-time consistent), then for each
-  source dataset that exists, streams its snapshot to the matching
-  destination dataset. lzc_send is non-recursive (recursion is a libzfs
-  userspace construct), so we iterate parent-first and rely on
-  lzc.receive to create the destination dataset from each stream.
-- `_send_recv_one` runs the actual transfer: a sender thread calls
-  lzc.send writing into a pipe; the calling thread runs lzc.receive
-  reading from the other end. The pipe is enlarged to 1 MiB before any
-  I/O (kernel bug 212295 deadlocks F_SETPIPE_SZ on a pipe with data, but
-  we own the lifecycle so the resize is safe). Each fd has exactly one
-  closer — sender owns the write end, the calling thread owns the read end.
+- `replicate` is the entry point. It takes one atomic lzc_snapshot
+  covering the entire source hierarchy (point-in-time consistent), then
+  for each source dataset that exists, calls `lzc.local_replicate` to
+  stream the snapshot into its destination. lzc_send is non-recursive
+  (recursion is a libzfs userspace construct), so we iterate parent-first
+  and rely on the receive side of `local_replicate` to create the
+  destination dataset from each stream.
+- `local_replicate` runs send and receive in one C call: an internal
+  pipe carries data between a background send thread (with SIGPIPE
+  blocked, so a downstream EPIPE turns into errno rather than process
+  termination) and the calling-thread receive. Both sides release the
+  GIL. Pipe-size enlargement, fd ownership, and error precedence are
+  handled inside the library.
 """
 
 from contextlib import suppress
-import fcntl
 import os
-import threading
 import uuid
 
 import truenas_os
@@ -152,13 +151,13 @@ def replicate(_from: str, _to: str, uid: str) -> None:
 
     Source remains live and mounted throughout. A single atomic
     lzc_snapshot ioctl covers every source dataset point-in-time; each
-    snapshot is then streamed via lzc.send | lzc.receive to its
+    snapshot is then streamed via `lzc.local_replicate` to its
     destination counterpart. Datasets in the spec that don't exist on the
     source (e.g. one added in a later release) are skipped — the caller's
     setup_datasets will create them empty afterwards.
 
-    Caller is responsible for clearing any prior `{_to}/.system` so
-    receive lands on a clean slate (no force flag needed).
+    Caller is responsible for clearing any prior `{_to}/.system` so each
+    `local_replicate` call lands on a clean slate (no force flag needed).
     """
     spec = get_system_dataset_spec(_to, uid)
     prefix_to, prefix_from = f"{_to}/", f"{_from}/"
@@ -183,56 +182,24 @@ def replicate(_from: str, _to: str, uid: str) -> None:
     src_snaps = [f"{src}@{snap_tag}" for src, _ in pairs]
     dst_snaps = [f"{dest}@{snap_tag}" for _, dest in pairs]
 
+    # One atomic snapshot of the whole source hierarchy keeps every
+    # per-dataset stream point-in-time consistent.
     truenas_pylibzfs.lzc.create_snapshots(snapshot_names=src_snaps)
     try:
         for src, dest in pairs:
-            _send_recv_one(f"{src}@{snap_tag}", f"{dest}@{snap_tag}")
+            # local_replicate handles the pipe, sender thread, SIGPIPE
+            # masking, GIL release on both sides, and error precedence
+            # (recv error wins over send error). We just iterate the
+            # hierarchy parent-first; lzc.receive creates the destination
+            # dataset from each full stream.
+            truenas_pylibzfs.lzc.local_replicate(
+                source=f"{src}@{snap_tag}",
+                dest=f"{dest}@{snap_tag}",
+            )
     finally:
+        # Destroy snapshots on both sides. ENOENT for snaps that never
+        # got created (mid-failure) is harmless and squashed by suppress.
         with suppress(Exception):
             truenas_pylibzfs.lzc.destroy_snapshots(snapshot_names=src_snaps)
         with suppress(Exception):
             truenas_pylibzfs.lzc.destroy_snapshots(snapshot_names=dst_snaps)
-
-
-def _send_recv_one(src_snap: str, dest_snap: str) -> None:
-    """Stream one ZFS snapshot from `src_snap` to `dest_snap` via os.pipe.
-
-    Sender thread runs lzc.send writing into the pipe write end; calling
-    thread runs lzc.receive reading from the pipe read end. Both ioctls
-    release the GIL so the threads run truly concurrent.
-
-    Pipe is enlarged to 1 MiB before any I/O — bigger buffer means fewer
-    block/wake cycles between the threads. F_SETPIPE_SZ on a pipe that
-    already has data deadlocks (kernel bug 212295), so we resize while
-    the pipe is empty. Best-effort: if the kernel caps below our request
-    we keep the smaller value.
-
-    fd ownership: sender's finally closes the write end (that's what
-    delivers EOF to receive); the calling thread closes the read end.
-    No shared closes — avoids the fd-reuse race in multi-threaded code.
-    """
-    r, w = os.pipe()
-    with suppress(OSError):
-        fcntl.fcntl(w, fcntl.F_SETPIPE_SZ, 1024 * 1024)
-
-    send_err: list[BaseException] = []
-
-    def _send() -> None:
-        try:
-            truenas_pylibzfs.lzc.send(snapname=src_snap, fd=w)
-        except BaseException as e:
-            send_err.append(e)
-        finally:
-            with suppress(OSError):
-                os.close(w)
-
-    sender = threading.Thread(target=_send, name=f"sysds-send:{src_snap}")
-    sender.start()
-    try:
-        truenas_pylibzfs.lzc.receive(snapname=dest_snap, fd=r)
-    finally:
-        with suppress(OSError):
-            os.close(r)
-        sender.join()
-    if send_err:
-        raise send_err[0]
