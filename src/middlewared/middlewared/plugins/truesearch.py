@@ -28,7 +28,7 @@ class TrueSearchService(Service):
             reasons.append('The system dataset must not reside on the boot pool.')
 
         if await self.call2(self.s.truenas.license.info_private) is None:
-            if (await self.middleware.call('tn_connect.config'))['status'] != 'CONFIGURED':
+            if (await self.call2(self.s.tn_connect.config)).status != 'CONFIGURED':
                 reasons.append(
                     'The system must be connected to TrueNAS Connect, or have an Enterprise License key installed.'
                 )

@@ -62,7 +62,7 @@ class PostInstallService(Service):
                 os.unlink(PATH)
 
     def process_data(self, data):
-        self.middleware.call_sync("tn_connect.post_install.process", data)
+        self.middleware.call_sync2(self.middleware.services.tn_connect.post_install_process, data)
         for interface in data.get("network_interfaces", []):
             try:
                 self.middleware.call_sync("interface.update", interface["name"], {

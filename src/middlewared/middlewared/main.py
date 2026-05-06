@@ -116,6 +116,7 @@ from middlewared.plugins.ntp import NTPServerService
 from middlewared.plugins.ports import PortService
 from middlewared.plugins.snapshot import PeriodicSnapshotTaskService
 from middlewared.plugins.truenas import TrueNASService
+from middlewared.plugins.truenas_connect import TrueNASConnectService
 from middlewared.plugins.truesearch import TrueSearchService
 from middlewared.plugins.tunable import TunableService
 from middlewared.plugins.update_ import UpdateService
@@ -231,6 +232,7 @@ class ServiceContainer(BaseServiceContainer):
         self.port = PortService(middleware)
         self.sharing = SharingServicesContainer(middleware)
         self.system = SystemServicesContainer(middleware)
+        self.tn_connect = TrueNASConnectService(middleware)
         self.truenas = TrueNASService(middleware)
         self.truesearch = TrueSearchService(middleware)
         self.tunable = TunableService(middleware)
