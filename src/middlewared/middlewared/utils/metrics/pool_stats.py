@@ -1,10 +1,11 @@
 import json
 import subprocess
+from typing import Any
 
 from middlewared.utils.zfs import guid_fast_impl
 
 
-def get_pool_dataset_stats() -> dict[str, dict]:
+def get_pool_dataset_stats() -> dict[str, dict[str, Any]]:
     pool_stats = {}
 
     zfs_data = json.loads(subprocess.run(

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Any
 
 from truenas_pylibvirt.utils.usb import find_usb_device_by_ids
@@ -22,16 +24,16 @@ def _extract_identity(device: dict[str, Any]) -> str | None:
         case 'DISK' | 'RAW' | 'CDROM':
             return translate_device(device)
         case 'FILESYSTEM':
-            return device['attributes'].get('target')
+            return device['attributes'].get('target')  # type: ignore[no-any-return]
         case 'PCI':
-            return device['attributes'].get('pptdev')
+            return device['attributes'].get('pptdev')  # type: ignore[no-any-return]
         case 'GPU':
-            return device['attributes'].get('pci_address')
+            return device['attributes'].get('pci_address')  # type: ignore[no-any-return]
         case 'NIC':
-            return device['attributes'].get('mac')
+            return device['attributes'].get('mac')  # type: ignore[no-any-return]
         case 'USB':
             if device['attributes'].get('device'):
-                return device['attributes']['device']
+                return device['attributes']['device']  # type: ignore[no-any-return]
             usb = device['attributes'].get('usb')
             if usb and usb.get('vendor_id') and usb.get('product_id'):
                 return find_usb_device_by_ids(usb['vendor_id'], usb['product_id'])

@@ -50,7 +50,11 @@ jobs:
             middlewared/plugins/ups/ \
             middlewared/plugins/vm/ \
             middlewared/plugins/zfs/ \
+            middlewared/utils/ \
             middlewared/test/integration/runner/ \
             --exclude middlewared/etc_files \
+            --exclude middlewared/utils/directoryservices \
+            --exclude middlewared/utils/lio \
+            --exclude middlewared/utils/nvmet \
             --follow-imports silent \
             --strict
