@@ -1,3 +1,5 @@
+from typing import Any
+
 ANA_OPTIMIZED_STATE = 'optimized'
 ANA_INACCESSIBLE_STATE = 'inaccessible'
 ANA_PORT_INDEX_OFFSET = 5000
@@ -10,8 +12,10 @@ NVMET_NODE_A_MAX_CONTROLLER_ID = 31999
 NVMET_NODE_B_MIN_CONTROLLER_ID = 32000
 
 
-def addr_traddr_to_address(index, addr_trtype, addr_traddr, render_ctx):
-    result = addr_traddr
+def addr_traddr_to_address(
+    index: int, addr_trtype: str, addr_traddr: str, render_ctx: dict[str, Any]
+) -> str:
+    result: str = addr_traddr
     if index > ANA_PORT_INDEX_OFFSET:
         choices = render_ctx[f'{addr_trtype.lower()}.nvmet.port.transport_address_choices']
         pair = choices[addr_traddr].split('/')
@@ -23,7 +27,7 @@ def addr_traddr_to_address(index, addr_trtype, addr_traddr, render_ctx):
     return result
 
 
-def port_subsys_index(entry, render_ctx) -> int | None:
+def port_subsys_index(entry: dict[str, Any], render_ctx: dict[str, Any]) -> int | None:
     # Because we have elected to support overriding the global ANA
     # setting for individual subsystems this has two knock-on effects
     # 1. Additional ANA-specific port indexes are injected
@@ -31,7 +35,8 @@ def port_subsys_index(entry, render_ctx) -> int | None:
     #    port index.
     # However, if we're on the standby node we never want to setup
     # a link to the VIP port.
-    raw_index = entry['port']['index']
+    raw_index: int = entry['port']['index']
+    index: int
     # Now check whether ANA is playing a part.
     match entry['subsys']['ana']:
         case True:
@@ -48,11 +53,11 @@ def port_subsys_index(entry, render_ctx) -> int | None:
     return index
 
 
-def ana_state(render_ctx):
+def ana_state(render_ctx: dict[str, Any]) -> str:
     return ANA_OPTIMIZED_STATE if render_ctx['failover.status'] == 'MASTER' else ANA_INACCESSIBLE_STATE
 
 
-def ana_grpid(render_ctx):
+def ana_grpid(render_ctx: dict[str, Any]) -> int:
     match render_ctx['failover.node']:
         case 'A':
             return NVMET_NODE_A_ANA_GRPID
@@ -62,7 +67,7 @@ def ana_grpid(render_ctx):
             return NVMET_DEFAULT_ANA_GRPID
 
 
-def subsys_ana(subsys, render_ctx) -> bool:
+def subsys_ana(subsys: dict[str, Any], render_ctx: dict[str, Any]) -> bool:
     if not render_ctx['failover.licensed']:
         return False
 
@@ -76,7 +81,7 @@ def subsys_ana(subsys, render_ctx) -> bool:
         return False
 
 
-def subsys_visible(subsys, render_ctx) -> bool:
+def subsys_visible(subsys: dict[str, Any], render_ctx: dict[str, Any]) -> bool:  # type: ignore[return]
     match render_ctx['failover.status']:
         case 'SINGLE' | 'MASTER':
             return True

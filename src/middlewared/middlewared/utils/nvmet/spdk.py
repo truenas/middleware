@@ -1,10 +1,12 @@
+from collections.abc import Iterator
 from contextlib import contextmanager
 import copy
 import hashlib
 import os
 import tempfile
+from typing import Any
 
-from spdk.rpc.client import JSONRPCClient
+from spdk.rpc.client import JSONRPCClient  # type: ignore[import-untyped]
 
 from middlewared.plugins.nvmet.constants import (
     NAMESPACE_DEVICE_TYPE,
@@ -36,15 +38,16 @@ SPDK_RPC_CONN_RETRIES = 0
 SPDK_KEY_DIR = '/var/run/spdk/keys'
 
 
-def host_config_key(config_item, key_type):
+def host_config_key(config_item: dict[str, Any], key_type: str) -> str | None:
     if key_value := config_item[key_type]:
         md5_hash = hashlib.md5()
         md5_hash.update(key_value.encode('utf-8'))
         # Colon confuses things, replace
         return f'{key_type}-{config_item["hostnqn"].replace(":", "-")}-{md5_hash.hexdigest()}'
+    return None
 
 
-def nvmf_ready(cheap=False):
+def nvmf_ready(cheap: bool = False) -> bool:
     if os.path.exists(SPDK_RPC_SERVER_ADDR):
         if cheap:
             return True
@@ -59,25 +62,27 @@ def nvmf_ready(cheap=False):
 
 class NvmetConfig:
     DEBUG = False
+    query: str
+    query_key: str
 
-    def config_key(self, config_item, render_ctx):
+    def config_key(self, config_item: dict[str, Any], render_ctx: dict[str, Any]) -> str | None:
         return str(config_item[self.query_key])
 
-    def config_dict(self, render_ctx):
+    def config_dict(self, render_ctx: dict[str, Any]) -> dict[str, Any]:
         # Implement so that any class can skip entries by returning
         # a config_key of None
-        result = {}
+        result: dict[str, Any] = {}
         for entry in render_ctx[self.query]:
             if (key := self.config_key(entry, render_ctx)) is not None:
                 result[key] = entry
         return result
 
-    def debug_title(self, title):
+    def debug_title(self, title: str) -> None:
         outstr = f'{title} ({self.__class__.__name__})'
         print(outstr)
         print('=' * len(outstr))
 
-    def debug(self, live, config):
+    def debug(self, live: dict[str, Any], config: dict[str, Any]) -> None:
         if self.DEBUG:
             import pprint
             self.debug_title('LIVE')
@@ -89,8 +94,8 @@ class NvmetConfig:
             print()
 
     @contextmanager
-    def render(self, client, render_ctx: dict):
-        live = self.get_live(client, render_ctx)
+    def render(self, client: Any, render_ctx: dict[str, Any]) -> Iterator[None]:
+        live = self.get_live(client, render_ctx)  # type: ignore[attr-defined]
         config = self.config_dict(render_ctx)
         config_keys = set(config.keys())
         live_keys = set(live.keys())
@@ -102,31 +107,32 @@ class NvmetConfig:
         self.debug(live, config)
 
         for item in add_keys:
-            self.add(client, config[item], render_ctx)
+            self.add(client, config[item], render_ctx)  # type: ignore[attr-defined]
 
         for item in update_keys:
-            self.update(client, config[item], live[item], render_ctx)
+            self.update(client, config[item], live[item], render_ctx)  # type: ignore[attr-defined]
 
         yield
 
         for item in remove_keys:
-            self.delete(client, live[item], render_ctx)
+            self.delete(client, live[item], render_ctx)  # type: ignore[attr-defined]
 
 
 class NvmetSubsysConfig(NvmetConfig):
     query = 'nvmet.subsys.query'
     query_key = 'subnqn'
 
-    def config_key(self, config_item, render_ctx):
+    def config_key(self, config_item: dict[str, Any], render_ctx: dict[str, Any]) -> str | None:
         if subsys_visible(config_item, render_ctx):
             return str(config_item[self.query_key])
+        return None
 
-    def get_live(self, client, render_ctx):
+    def get_live(self, client: Any, render_ctx: dict[str, Any]) -> dict[str, Any]:
         return {subsys['nqn']: subsys for subsys in client.call('nvmf_get_subsystems')}
 
-    def add(self, client, config_item, render_ctx):
+    def add(self, client: Any, config_item: dict[str, Any], render_ctx: dict[str, Any]) -> None:
 
-        params = {
+        params: dict[str, Any] = {
             'nqn': config_item['subnqn'],
             'serial_number': config_item['serial'],
             'allow_any_host': config_item['allow_any_host'],
@@ -145,7 +151,9 @@ class NvmetSubsysConfig(NvmetConfig):
 
         client.call('nvmf_create_subsystem', params)
 
-    def update(self, client, config_item, live_item, render_ctx):
+    def update(
+        self, client: Any, config_item: dict[str, Any], live_item: dict[str, Any], render_ctx: dict[str, Any]
+    ) -> None:
         if config_item['allow_any_host'] != live_item['allow_any_host']:
             client.call(
                 'nvmf_subsystem_allow_any_host',
@@ -155,7 +163,7 @@ class NvmetSubsysConfig(NvmetConfig):
                 }
             )
 
-    def delete(self, client, live_item, render_ctx):
+    def delete(self, client: Any, live_item: dict[str, Any], render_ctx: dict[str, Any]) -> None:
         client.call(
             'nvmf_delete_subsystem',
             {
@@ -170,7 +178,7 @@ class NvmetTransportConfig:
     we will simply add them if necessary.
     """
     @contextmanager
-    def render(self, client, render_ctx: dict):
+    def render(self, client: Any, render_ctx: dict[str, Any]) -> Iterator[None]:
         # Create a set of the transports demanded by the config
         required = set([port['addr_trtype'] for port in render_ctx['nvmet.port.query']])
         current = set([transport['trtype'] for transport in client.call('nvmf_get_transports')])
@@ -195,10 +203,10 @@ class NvmetPortConfig(NvmetConfig):
     query = 'nvmet.port.query'
     query_key = 'subnqn'
 
-    def config_dict(self, render_ctx):
+    def config_dict(self, render_ctx: dict[str, Any]) -> dict[str, Any]:
         # For ports we may want to inject or remove ports wrt the ANA
         # settings.  ANA ports will be offset by ANA_PORT_INDEX_OFFSET (5000).
-        config = {}
+        config: dict[str, Any] = {}
         non_ana_port_ids = render_ctx['nvmet.port.usage']['non_ana_port_ids']
         ana_port_ids = render_ctx['nvmet.port.usage']['ana_port_ids']
         for entry in render_ctx[self.query]:
@@ -210,7 +218,9 @@ class NvmetPortConfig(NvmetConfig):
                 config[str(new_index)] = entry | {'index': new_index}
         return config
 
-    def live_to_index(self, addr_trtype, addr_traddr, addr_trsvcid, render_ctx):
+    def live_to_index(
+        self, addr_trtype: str, addr_traddr: str, addr_trsvcid: Any, render_ctx: dict[str, Any]
+    ) -> str | None:
         for entry in render_ctx['nvmet.port.query']:
             if addr_trtype != entry['addr_trtype'] or str(addr_trsvcid) != str(entry['addr_trsvcid']):
                 continue
@@ -223,8 +233,9 @@ class NvmetPortConfig(NvmetConfig):
                 render_ctx
             ):
                 return str(entry['index'] + ANA_PORT_INDEX_OFFSET)
+        return None
 
-    def live_address_to_key(self, laddr, render_ctx):
+    def live_address_to_key(self, laddr: dict[str, Any], render_ctx: dict[str, Any]) -> str:
         if index := self.live_to_index(laddr['trtype'], laddr['traddr'], laddr['trsvcid'], render_ctx):
             return index
         else:
@@ -235,11 +246,11 @@ class NvmetPortConfig(NvmetConfig):
                     # Keep a trailing colon here to simply logic that depends on split()
                     return f"{laddr['trtype']}:{laddr['traddr']}:"
 
-    def config_key(self, config_item, render_ctx):
+    def config_key(self, config_item: dict[str, Any], render_ctx: dict[str, Any]) -> str | None:
         return config_item['index']
 
-    def get_live(self, client, render_ctx):
-        live = {}
+    def get_live(self, client: Any, render_ctx: dict[str, Any]) -> dict[str, Any]:
+        live: dict[str, Any] = {}
         listeners = client.call(
             'nvmf_subsystem_get_listeners',
             {'nqn': NVMET_DISCOVERY_NQN}
@@ -248,8 +259,10 @@ class NvmetPortConfig(NvmetConfig):
             live[self.live_address_to_key(entry['address'], render_ctx)] = entry
         return live
 
-    def add_to_nqn(self, client, config_item, nqn, render_ctx):
-        params = {
+    def add_to_nqn(
+        self, client: Any, config_item: dict[str, Any], nqn: str, render_ctx: dict[str, Any]
+    ) -> None:
+        params: dict[str, Any] = {
             'nqn': nqn,
             'listen_address': {
                 'trtype': config_item['addr_trtype'],
@@ -271,10 +284,10 @@ class NvmetPortConfig(NvmetConfig):
             params.update({'anagrpid': ana_grpid(render_ctx)})
             client.call('nvmf_subsystem_listener_set_ana_state', params)
 
-    def add(self, client, config_item, render_ctx):
+    def add(self, client: Any, config_item: dict[str, Any], render_ctx: dict[str, Any]) -> None:
         self.add_to_nqn(client, config_item, NVMET_DISCOVERY_NQN, render_ctx)
 
-    def address_match(self, config_item, live_address):
+    def address_match(self, config_item: dict[str, Any], live_address: dict[str, Any]) -> bool:
         if (
             config_item['addr_trtype'] != live_address['trtype']
             or config_item['addr_traddr'] != live_address['traddr']
@@ -283,16 +296,20 @@ class NvmetPortConfig(NvmetConfig):
             return False
         return True
 
-    def update(self, client, config_item, live_item, render_ctx):
+    def update(
+        self, client: Any, config_item: dict[str, Any], live_item: dict[str, Any], render_ctx: dict[str, Any]
+    ) -> None:
         if not self.address_match(config_item, live_item['address']):
             self.delete(client, live_item, render_ctx)
             self.add(client, config_item, render_ctx)
 
-    def delete_from_nqn(self, client, laddr, nqn, render_ctx):
+    def delete_from_nqn(
+        self, client: Any, laddr: dict[str, Any], nqn: str, render_ctx: dict[str, Any]
+    ) -> None:
         params = {'nqn': nqn, 'listen_address': laddr}
         client.call('nvmf_subsystem_remove_listener', params)
 
-    def delete(self, client, live_item, render_ctx):
+    def delete(self, client: Any, live_item: dict[str, Any], render_ctx: dict[str, Any]) -> None:
         self.delete_from_nqn(client, live_item['address'], NVMET_DISCOVERY_NQN, render_ctx)
 
 

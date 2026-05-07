@@ -1198,7 +1198,7 @@ async def check_permission(middleware: Middleware, app: RpcWebSocketApp) -> None
         # We can bypass more complex privilege composition for internal root sessions
         authenticator = UnixPamAuthenticator(username='root', origin=origin)
         user = await middleware.call('auth.authenticate_root')
-        resp = await middleware.run_in_thread(authenticator.authenticate, 'root')
+        resp = await middleware.run_in_thread(authenticator.authenticate, 'root', '')
         if resp.code != PAMCode.PAM_SUCCESS:
             middleware.logger.error('root: AF_UNIX authentication for user failed: %s', resp.reason)
     else:
@@ -1211,7 +1211,7 @@ async def check_permission(middleware: Middleware, app: RpcWebSocketApp) -> None
             return
 
         authenticator = UnixPamAuthenticator(username=user_info['pw_name'], origin=origin)
-        resp = await middleware.run_in_thread(authenticator.authenticate, user_info['pw_name'])
+        resp = await middleware.run_in_thread(authenticator.authenticate, user_info['pw_name'], '')
         if resp.code != PAMCode.PAM_SUCCESS:
             middleware.logger.error('%s: AF_UNIX authentication for user failed: %s',
                                     user_info['pw_name'], resp.reason)
