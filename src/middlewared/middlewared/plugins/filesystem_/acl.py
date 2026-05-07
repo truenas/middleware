@@ -180,7 +180,7 @@ class FilesystemService(Service):
         audit='Filesystem change owner', audit_extended=lambda data: data['path']
     )
     @pass_thread_local_storage
-    @job(lock="perm_change")
+    @job()
     def chown(self, job, tls, data):
         """
         Change owner or group of file at `path`.
@@ -226,10 +226,15 @@ class FilesystemService(Service):
             data['path'], flags=os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS
         )
         try:
-            os.fchown(fd, uid, gid)
             if options['recursive']:
                 job.set_progress(10, f'Recursively changing owner of {data["path"]}.')
-                AclTool(fd, AclToolAction.CHOWN, uid, gid, ATChownOptions(traverse=options['traverse']), job, tls).run()
+                AclTool(
+                    fd, AclToolAction.CHOWN, uid, gid,
+                    ATChownOptions(traverse=options['traverse']), job, tls,
+                    root_fn=lambda fd: os.fchown(fd, uid, gid),
+                ).run()
+            else:
+                os.fchown(fd, uid, gid)
         finally:
             os.close(fd)
         job.set_progress(100, 'Finished changing owner.')
@@ -240,7 +245,7 @@ class FilesystemService(Service):
         audit='Filesystem set permission', audit_extended=lambda data: data['path']
     )
     @pass_thread_local_storage
-    @job(lock="perm_change")
+    @job()
     def setperm(self, job, tls, data):
         """
         Set unix permissions on given `path`.
@@ -318,19 +323,22 @@ class FilesystemService(Service):
 
         strip_acl_path(data['path'])
 
+        def _root_fn(fd):
+            if mode:
+                os.fchmod(fd, mode)
+            os.fchown(fd, uid, gid)
+
         fd = truenas_os.openat2(
             data['path'], flags=os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS
         )
         try:
-            if mode:
-                os.fchmod(fd, mode)
-
-            os.fchown(fd, uid, gid)
-
             if options['recursive']:
                 job.set_progress(10, f'Recursively setting permissions on {data["path"]}.')
                 AclTool(fd, AclToolAction.STRIP, uid, gid,
-                        ATPermOptions(traverse=options['traverse'], target_mode=mode), job, tls).run()
+                        ATPermOptions(traverse=options['traverse'], target_mode=mode), job, tls,
+                        root_fn=_root_fn).run()
+            else:
+                _root_fn(fd)
         finally:
             os.close(fd)
         job.set_progress(100, 'Finished setting permissions.')
@@ -533,19 +541,26 @@ class FilesystemService(Service):
                 except ValueError as e:
                     verrors.add('filesystem_acl.dacl', str(e))
                     verrors.check()
-                try:
-                    truenas_os.fsetacl(fd, acl_obj)
-                except (OSError, ValueError) as e:
-                    raise CallError(str(e))
                 acl_opts = ATAclOptions(traverse=data['options']['traverse'], target_acl=acl_obj)
+
+                def _root_fn(fd):
+                    try:
+                        truenas_os.fsetacl(fd, acl_obj)
+                    except (OSError, ValueError) as e:
+                        raise CallError(str(e))
+                    os.fchown(fd, data['uid'], data['gid'])
             else:
                 # target_mode=None: no explicit chmod; the resulting mode is the
                 # POSIX representation of the ACL that the kernel derives on strip.
                 acl_opts = ATPermOptions(traverse=data['options']['traverse'])
 
-            os.fchown(fd, data['uid'], data['gid'])
+                def _root_fn(fd):
+                    os.fchown(fd, data['uid'], data['gid'])
+
             if recursive:
-                AclTool(fd, action, data['uid'], data['gid'], acl_opts, job, tls).run()
+                AclTool(fd, action, data['uid'], data['gid'], acl_opts, job, tls, root_fn=_root_fn).run()
+            else:
+                _root_fn(fd)
         finally:
             os.close(fd)
 
@@ -617,19 +632,26 @@ class FilesystemService(Service):
                 except ValueError as e:
                     verrors.add('filesystem_acl.dacl', str(e))
                     verrors.check()
-                try:
-                    truenas_os.fsetacl(fd, acl_obj)
-                except (OSError, ValueError) as e:
-                    raise CallError(f'Failed to set ACL on path [{data["path"]}]: {e}')
                 acl_opts = ATAclOptions(traverse=options['traverse'], target_acl=acl_obj)
+
+                def _root_fn(fd):
+                    try:
+                        truenas_os.fsetacl(fd, acl_obj)
+                    except (OSError, ValueError) as e:
+                        raise CallError(f'Failed to set ACL on path [{data["path"]}]: {e}')
+                    os.fchown(fd, data['uid'], data['gid'])
             else:
                 # target_mode=None: no explicit chmod; the resulting mode is the
                 # POSIX representation of the ACL that the kernel derives on strip.
                 acl_opts = ATPermOptions(traverse=options['traverse'])
 
-            os.fchown(fd, data['uid'], data['gid'])
+                def _root_fn(fd):
+                    os.fchown(fd, data['uid'], data['gid'])
+
             if recursive:
-                AclTool(fd, action, data['uid'], data['gid'], acl_opts, job, tls).run()
+                AclTool(fd, action, data['uid'], data['gid'], acl_opts, job, tls, root_fn=_root_fn).run()
+            else:
+                _root_fn(fd)
         finally:
             os.close(fd)
 
@@ -643,7 +665,7 @@ class FilesystemService(Service):
         audit_extended=lambda data: data['path']
     )
     @pass_thread_local_storage
-    @job(lock="perm_change")
+    @job()
     def setacl(self, job, tls, data):
         """
         Set ACL of a given path. Takes the following parameters:
