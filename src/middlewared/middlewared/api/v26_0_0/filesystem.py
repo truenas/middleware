@@ -373,17 +373,30 @@ class ZFSFileAttrsData(BaseModel):
     """ SPARSE MS-DOS attribute. Is presented to SMB clients, but has no impact on local filesystem. """
 
 
+FilesystemZFSAttrRecursiveTarget = Literal['FILES', 'DIRECTORIES']
+
+
+class FilesystemSetZfsAttributesOptions(BaseModel):
+    recursive: list[FilesystemZFSAttrRecursiveTarget] | None = None
+    """If set, walk the tree under `path` and apply attributes to entries whose type \
+    appears in the list (`FILES`, `DIRECTORIES`, or both). The root `path` is included \
+    only if its type matches the filter. `null` means no recursion (operate on `path` \
+    only). An empty list is rejected."""
+
+
 @single_argument_args('set_zfs_file_attributes')
 class FilesystemSetZfsAttributesArgs(BaseModel):
     path: NonEmptyString
-    """Path to the file to set ZFS attributes on."""
+    """Path to the file or directory to set ZFS attributes on."""
     zfs_file_attributes: ZFSFileAttrsData
     """ZFS file attributes to set."""
+    options: FilesystemSetZfsAttributesOptions = Field(default=FilesystemSetZfsAttributesOptions())
+    """Additional options including recursion behavior."""
 
 
 class FilesystemSetZfsAttributesResult(BaseModel):
     result: ZFSFileAttrsData
-    """The updated ZFS file attributes."""
+    """The updated ZFS file attributes for the root `path`."""
 
 
 class FilesystemGetZfsAttributesArgs(BaseModel):

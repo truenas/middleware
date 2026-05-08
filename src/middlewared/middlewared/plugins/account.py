@@ -86,6 +86,7 @@ from middlewared.plugins.idmap_ import idmap_sss
 from threading import Lock
 from truenas_pypam import PAMCode
 
+from middlewared.utils.filesystem import attrs as fs_attrs
 
 SYNC_NEXT_UID_LOCK = Lock()
 ASYNC_NEXT_GID_LOCK = AsyncioLock()
@@ -2543,10 +2544,11 @@ async def setup(middleware):
     try:
         # ensure that our default home path is always immutable. If it's not immutable then
         # pam_mkhomedir will start creating dirs within it on user login
-        await middleware.call('filesystem.set_zfs_attributes', {
-            'path': DEFAULT_HOME_PATH,
-            'zfs_file_attributes': {'immutable': True}
-        })
+        await middleware.run_in_thread(
+            fs_attrs.set_zfs_file_attributes_dict,
+            DEFAULT_HOME_PATH,
+            {'immutable': True},
+        )
     except Exception:
         middleware.logger.error('Failed to set immutable property on %r', DEFAULT_HOME_PATH, exc_info=True)
 
