@@ -2,6 +2,8 @@ from base64 import b64decode
 import errno
 import subprocess
 
+import wbclient
+
 from middlewared.plugins.idmap_.idmap_winbind import WBClient
 from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.utils.directoryservices.ad import get_domain_info
@@ -24,6 +26,22 @@ from middlewared.utils.directoryservices.krb5_constants import (
 from middlewared.utils.directoryservices.krb5_error import KRB5ErrCode, KRB5Error
 
 
+# NTSTATUS strings embedded in a WBC_ERR_AUTH_ERROR message from wbcPingDc2 that
+# plausibly indicate a bad/missing secrets.tdb machine-account secret. The
+# message format is set by samba/nsswitch/py_wbclient.c:540 as
+# "...error code was {NT_STATUS_*} (0x...)". Other ping_dc failure modes
+# (transport timeouts, downgrade detection, RPC plumbing) cannot be refined by
+# rerunning a kinit, so we skip the expensive password test for those. See
+# samba/source3/winbindd/winbindd_cm.c (cm_connect_netlogon) and
+# samba/libcli/auth/netlogon_creds_cli.c for the originating call sites.
+_AUTH_NTSTATUS_SUGGEST_BAD_SECRET = frozenset({
+    'NT_STATUS_ACCESS_DENIED',
+    'NT_STATUS_CANT_ACCESS_DOMAIN_INFO',
+    'NT_STATUS_NO_TRUST_LSA_SECRET',
+    'NT_STATUS_NO_TRUST_SAM_ACCOUNT',
+})
+
+
 class ADHealthMixin:
 
     def _test_machine_account_password(
@@ -39,13 +57,16 @@ class ADHealthMixin:
         domain = ds_config['kerberos_realm'] or ds_config['configuration']['domain']
 
         # Write temporary krb5.conf targeting kdc. Since this is a health check we
-        # don't want to introduce a server affinity
+        # don't want to introduce a server affinity. Mirror the AD-specific defaults
+        # the system krb5.conf uses (NAS-138687) so the test runs under equivalent rules.
         krbconf = KRB5Conf()
         krbconf.add_libdefaults({
             str(KRB_LibDefaults.DEFAULT_REALM): domain.upper(),
             str(KRB_LibDefaults.DNS_LOOKUP_REALM): 'false',
             str(KRB_LibDefaults.FORWARDABLE): 'true',
-            str(KRB_LibDefaults.DEFAULT_CCACHE_NAME): PERSISTENT_KEYRING_PREFIX + '%{uid}'
+            str(KRB_LibDefaults.DEFAULT_CCACHE_NAME): PERSISTENT_KEYRING_PREFIX + '%{uid}',
+            str(KRB_LibDefaults.RDNS): 'false',
+            str(KRB_LibDefaults.DNS_CANONICALIZE_HOSTNAME): 'false',
         })
         krbconf.add_realms([{
             'realm': domain.upper(),
@@ -63,30 +84,34 @@ class ADHealthMixin:
         }
 
         try:
-            kinit_with_cred(cred, ccache=krb5ccache.TEMP.value)
-        except CallError as exc:
-            if exc.errno != errno.ENOENT:
-                raise
+            try:
+                kinit_with_cred(cred, ccache=krb5ccache.TEMP.value)
+            except CallError as exc:
+                if exc.errno != errno.ENOENT:
+                    raise
 
-            # This is a spurious error raised because of issues with python-gssapi
-            # kinit_with_cred attempts to return details from the generated ccache.
-            # We get a CallError with ENOENT if the kinit was *successful* but the
-            # subsequent attempt to read the ccache failed. This happens periodically
-            # during the health check and is hard to predict. Since the error occurs
-            # after a successful kinit, we can safely ignore here because the goal
-            # is to simply validate credentials.
-            pass
+                # This is a spurious error raised because of issues with python-gssapi
+                # kinit_with_cred attempts to return details from the generated ccache.
+                # We get a CallError with ENOENT if the kinit was *successful* but the
+                # subsequent attempt to read the ccache failed. This happens periodically
+                # during the health check and is hard to predict. Since the error occurs
+                # after a successful kinit, we can safely ignore here because the goal
+                # is to simply validate credentials.
+                pass
+        finally:
+            # remove our ticket and restore the system krb5.conf even if kinit raised
+            # KRB5Error -- otherwise the temporary minimal config remains as the system
+            # krb5.conf and pollutes downstream operations until the next unrelated
+            # kerberos regeneration triggers.
+            try:
+                self.middleware.call_sync('kerberos.kdestroy', {'ccache': 'TEMP'})
+            except Exception:
+                # This ccache path is not world-readable and so worst-case we have an
+                # extra file on tmpfs
+                self.logger.debug('Failed to destroy temporary ccache', exc_info=True)
 
-        # remove our ticket
-        try:
-            self.middleware.call_sync('kerberos.kdestroy', {'ccache': 'TEMP'})
-        except Exception:
-            # This ccache path is not world-readable and so worst-case we have an
-            # extra file on tmpfs
-            self.logger.debug('Failed to destroy temporary ccache', exc_info=True)
-
-        # regenerate krb5.conf
-        self.middleware.call_sync('etc.generate', 'kerberos')
+            # regenerate krb5.conf
+            self.middleware.call_sync('etc.generate', 'kerberos')
 
     def _recover_keytab(self) -> None:
         """
@@ -127,9 +152,12 @@ class ADHealthMixin:
             smb_config['workgroup']
         )
 
-        # libads may select a different KDC than the one we used for join. This can happen if we fail over shortly
-        # after joining AD or a machine account password change.
-        kdc_override = kdc_saf_cache_get() or domain_info['kdc_server']
+        # Prefer the KDC pinned in the SAF cache (set during bind / last successful kinit) over
+        # whatever libads picks now -- this avoids an RDNS lookup against potentially shaky domain
+        # DNS and keeps us talking to the same DC across recovery operations.
+        # Only the IP is usable as a krb5 kdc= override; hostnames are not.
+        saf_entry = kdc_saf_cache_get()
+        kdc_override = (saf_entry and saf_entry.get('ip')) or domain_info['kdc_server']
 
         try:
             self._test_machine_account_password(kdc_override, machine_pass)
@@ -144,11 +172,11 @@ class ADHealthMixin:
                         "controllers do not agree about the list of computer accounts. "
                         "You may need to re-join TrueNAS to Active Directory. "
                     )
-                case KRB5ErrCode.KRB5_PREAUTH_FAILED:
+                case KRB5ErrCode.KRB5KDC_ERR_PREAUTH_FAILED:
                     faulted_reason = (
                         f"The domain controller at {kdc_override} said that the "
                         "TrueNAS computer account credentials are not valid. This means that "
-                        "saved credentials on TrueNAS do not match the credentials expected by"
+                        "saved credentials on TrueNAS do not match the credentials expected by "
                         "the domain controller. This can happen if the TrueNAS configuration was "
                         "restored from a backup, if the domain controllers in the domain do "
                         "not agree about the credentials, or if someone changed the TrueNAS "
@@ -238,25 +266,6 @@ class ADHealthMixin:
                 faulted_reason
             )
 
-        if domain_info:
-            try:
-                self._test_machine_account_password(
-                    domain_info['kdc_server'],
-                    machine_pass
-                )
-            except (CallError, KRB5Error):
-                self.logger.warning('Check for machine account password validity failed', exc_info=True)
-
-                faulted_reason = (
-                    'Stored machine account secret is invalid. This may indicate that '
-                    'the machine account password was reset in Active Directory without '
-                    'corresponding changes being made to the TrueNAS server configuration.'
-                )
-                raise ADHealthError(
-                    ADHealthCheckFailReason.AD_SECRET_INVALID,
-                    faulted_reason
-                )
-
         try:
             self.middleware.call_sync('kerberos.keytab.query', [
                 ['name', '=', MACHINE_ACCOUNT_KT_NAME]
@@ -298,9 +307,72 @@ class ADHealthMixin:
         # false reports of being up
         try:
             ctx.ping_dc()
-        except Exception as e:
-            faulted_reason = str(e)
+        except wbclient.WBCError as e:
+            netlogon_err = str(e)
+
+            # Only refine the diagnosis by running a kinit against the DC when the
+            # winbind error is plausibly caused by an incorrect machine-account
+            # secret. _test_machine_account_password rewrites /etc/krb5.conf and
+            # forces an etc.generate kerberos in finally -- running it on every
+            # ping_dc failure (e.g. transport timeouts, DC unreachable, schannel
+            # downgrade) is just churn since rerunning a kinit against the same
+            # KDC reproduces the same failure with no diagnostic value.
+            is_auth_error = (
+                getattr(e, 'error_code', None) == wbclient.WBC_ERR_AUTH_ERROR
+            )
+            suggests_bad_secret = is_auth_error and any(
+                s in netlogon_err for s in _AUTH_NTSTATUS_SUGGEST_BAD_SECRET
+            )
+
+            if suggests_bad_secret and domain_info:
+                # Prefer the KDC pinned in the SAF cache (set during bind / last
+                # successful kinit) over whatever libads picks now -- avoids RDNS
+                # lookups in domains with broken or partial reverse DNS, and keeps
+                # us talking to the same DC across health-check runs. Only the IP
+                # is usable as a krb5 kdc= override; hostnames are not.
+                saf_entry = kdc_saf_cache_get()
+                kdc_override = (saf_entry and saf_entry.get('ip')) or domain_info['kdc_server']
+                try:
+                    self._test_machine_account_password(kdc_override, machine_pass)
+                except KRB5Error as krberr:
+                    if krberr.krb5_code is KRB5ErrCode.KRB5KDC_ERR_PREAUTH_FAILED:
+                        self.logger.warning(
+                            'Machine account password validation failed after '
+                            'netlogon ping reported %s', netlogon_err, exc_info=True,
+                        )
+                        raise ADHealthError(
+                            ADHealthCheckFailReason.AD_SECRET_INVALID,
+                            'Stored machine account secret is invalid. This may '
+                            'indicate that the machine account password was reset '
+                            'in Active Directory without corresponding changes '
+                            'being made to the TrueNAS server configuration.'
+                        )
+                    # Other KRB5 errors don't pin the diagnosis to "secret invalid";
+                    # fall through and report the original netlogon failure.
+                except CallError:
+                    # Spurious password-test failure (e.g. the python-gssapi ENOENT
+                    # bug or a network blip on the temp kinit). Don't override the
+                    # netlogon diagnosis with a less-actionable inner error.
+                    self.logger.debug(
+                        'Password-test refinement after netlogon failure raised '
+                        'CallError; falling through to AD_NETLOGON_FAILURE',
+                        exc_info=True,
+                    )
+
             raise ADHealthError(
                 ADHealthCheckFailReason.AD_NETLOGON_FAILURE,
-                faulted_reason
+                netlogon_err,
+            )
+        except Exception as e:
+            # libwbclient is expected to always raise WBCError, but if it ever
+            # surfaces something else (e.g. corrupted handle, ImportError-derived
+            # AttributeError, packaging mismatch) we must still produce a structured
+            # ADHealthError for the alert framework. Skip the refinement -- we
+            # cannot trust the message structure to drive the NTSTATUS allowlist.
+            self.logger.warning(
+                'Unexpected non-WBCError from ping_dc', exc_info=True,
+            )
+            raise ADHealthError(
+                ADHealthCheckFailReason.AD_NETLOGON_FAILURE,
+                str(e),
             )
