@@ -21,6 +21,7 @@ from nfs4client import NFS4Client
 from rpc.rpc_const import AUTH_SYS
 from xdrdef.nfs4_const import (
     FATTR4_FILEID, FATTR4_MODE, FATTR4_XATTR_SUPPORT,
+    NFS4ERR_EXIST, NFS4ERR_NOXATTR,
     OPEN4_CREATE, OPEN4_SHARE_ACCESS_BOTH, OPEN4_SHARE_DENY_NONE,
     OPEN4_SHARE_ACCESS_WANT_NO_DELEG,
     GUARDED4, CLAIM_NULL,
@@ -203,8 +204,8 @@ def test_xattr_roundtrip_on_file(start_nfs, session42, nfs_dataset):
             # Pre-set: empty list, GETXATTR returns NOXATTR.
             assert _listxattrs(sess, file_path) == ([], True)
             res = _getxattr(sess, file_path, key)
-            # NFS4ERR_NOXATTR = 10095 in RFC 8276.
-            assert res.status != 0
+            assert res.status == NFS4ERR_NOXATTR, (
+                f"expected NFS4ERR_NOXATTR, got status={res.status}")
 
             # Set it.
             _setxattr(sess, file_path, key, value)
@@ -229,7 +230,8 @@ def test_xattr_roundtrip_on_file(start_nfs, session42, nfs_dataset):
             _removexattr(sess, file_path, key)
             assert _listxattrs(sess, file_path) == ([], True)
             res = _getxattr(sess, file_path, key)
-            assert res.status != 0
+            assert res.status == NFS4ERR_NOXATTR, (
+                f"expected NFS4ERR_NOXATTR, got status={res.status}")
 
 
 def test_xattr_roundtrip_on_directory(start_nfs, session42, nfs_dataset):
@@ -282,7 +284,9 @@ def test_setxattr_create_replace_modes(start_nfs, session42, nfs_dataset):
             res = sess.compound(
                 nfs4lib.use_obj(_components(file_path))
                 + [op.setxattr(SETXATTR4_REPLACE, key, b"v1")])
-            assert res.status != 0, "REPLACE on missing xattr should fail"
+            assert res.status == NFS4ERR_NOXATTR, (
+                f"REPLACE on missing xattr: expected NFS4ERR_NOXATTR, "
+                f"got status={res.status}")
 
             # CREATE on a missing key -> ok.
             _setxattr(sess, file_path, key, b"v1", SETXATTR4_CREATE)
@@ -291,7 +295,9 @@ def test_setxattr_create_replace_modes(start_nfs, session42, nfs_dataset):
             res = sess.compound(
                 nfs4lib.use_obj(_components(file_path))
                 + [op.setxattr(SETXATTR4_CREATE, key, b"v2")])
-            assert res.status != 0, "CREATE on existing xattr should fail"
+            assert res.status == NFS4ERR_EXIST, (
+                f"CREATE on existing xattr: expected NFS4ERR_EXIST, "
+                f"got status={res.status}")
 
             # REPLACE on existing key -> ok, value updated.
             _setxattr(sess, file_path, key, b"v3", SETXATTR4_REPLACE)

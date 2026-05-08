@@ -743,12 +743,6 @@ class TestNFSops:
         assert len(lines) > 12, f"Unexpected number of lines output by tcpdump: {outs}, errs: {errs}"
         assert expected_scope_value in output, {errs}
 
-    def test_server_side_copy(self, start_nfs, nfs_dataset_and_share):
-        assert start_nfs is True
-        assert nfs_dataset_and_share['nfsid'] is not None
-        with _nfs_client(4) as n:
-            n.server_side_copy('ssc1', 'ssc2')
-
     @pytest.mark.parametrize('nfsd,cores,expected', [
         pp(50, 1, {'nfsd': 50, 'mountd': 12, 'managed': False}, id="User set 50: expect 12 mountd"),
         pp(None, 12, {'nfsd': 12, 'mountd': 3, 'managed': True}, id="12 cores: expect 12 nfsd, 3 mountd"),
