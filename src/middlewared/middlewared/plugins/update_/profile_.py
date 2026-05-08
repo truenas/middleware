@@ -18,7 +18,7 @@ class UpdateProfiles(enum.IntEnum):
     GENERAL = 2
     MISSION_CRITICAL = 3
 
-    def describe(self, is_enterprise: bool, available: bool) -> UpdateProfileChoice:
+    def describe(self, is_enterprise: bool = False, available: bool = True) -> UpdateProfileChoice:
         return {
             UpdateProfiles.DEVELOPER: UpdateProfileChoice(
                 name='Developer',
