@@ -248,7 +248,7 @@ def set_immutable_state(path: str, want_immutable=True):
     call('filesystem.set_zfs_attributes', {
         'path': path,
         'zfs_file_attributes': {'immutable': want_immutable}
-    })
+    }, job=True)
     is_immutable = 'IMMUTABLE' in call('filesystem.stat', '/etc/exports.d')['attributes']
 
     assert is_immutable is want_immutable, f"Expected mutable filesystem: {want_immutable}"
