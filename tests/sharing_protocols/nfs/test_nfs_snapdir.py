@@ -1,21 +1,15 @@
+from time import sleep
+
 import pytest
 
+from middlewared.service_exception import InstanceNotFound, ValidationErrors
 from middlewared.test.integration.assets.filesystem import directory
-from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.product import product_type
-from middlewared.test.integration.utils import call, ssh, password
+from middlewared.test.integration.utils import call, pool, ssh
 from middlewared.test.integration.utils.client import truenas_server
-from middlewared.service_exception import ValidationErrors
-from protocols import SSH_NFS
+from protocols.pynfs_proto import PynfsClient, PynfsClient3
 
 SNAPDIR_EXPORTS_ENTRY = 'zfs_snapdir'
-
-
-@pytest.fixture(scope='module')
-def start_nfs():
-    call('service.control', 'START', 'nfs', job=True)
-    yield
-    call('service.control', 'STOP', 'nfs', job=True)
 
 
 @pytest.fixture(scope='function')
@@ -26,10 +20,35 @@ def enterprise():
 
 @pytest.fixture(scope='module')
 def nfs_dataset():
-    with dataset('nfs_snapdir') as ds:
-        ssh(f'echo -n Cats > /mnt/{ds}/canary')
-        call('pool.snapshot.create', {'dataset': ds, 'name': 'now'})
-        yield ds
+    """Module-scoped dataset with EZFS_BUSY-tolerant cleanup -- the
+    standard ``dataset`` asset does a single-shot ``pool.dataset.delete``
+    and races with NFS server-side state release after pynfs sessions
+    close."""
+    name = f"{pool}/nfs_snapdir"
+    call("pool.dataset.create", {"name": name})
+    try:
+        ssh(f'echo -n Cats > /mnt/{name}/canary')
+        call('pool.snapshot.create', {'dataset': name, 'name': 'now'})
+        yield name
+    finally:
+        deleted = False
+        try:
+            call("pool.dataset.delete", name, {"recursive": True})
+            deleted = True
+        except InstanceNotFound:
+            deleted = True
+        except Exception:
+            pass
+        if not deleted:
+            sleep(2)
+            for _ in range(6):
+                try:
+                    call("pool.dataset.delete", name, {"recursive": True})
+                    break
+                except InstanceNotFound:
+                    break
+                except Exception:
+                    sleep(10)
 
 
 @pytest.fixture(scope='function')
@@ -112,15 +131,25 @@ def test__snapdir_functional(start_nfs, enterprise, nfs_dataset, nfs_export, ver
     assert share['expose_snapshots'] is True
     call('service.control', 'STOP', 'nfs', job=True)
     call('service.control', 'START', 'nfs', {'silent': False}, job=True)
-    with SSH_NFS(
-        hostname=truenas_server.ip,
-        path=f'/mnt/{nfs_dataset}',
-        vers=vers,
-        user='root',
-        password=password(),
-        ip=truenas_server.ip
-    ) as n:
+    if int(vers) == 4:
+        # Restarting nfsd puts it into a ~90 s grace period during
+        # which state-changing NFSv4 ops are rejected with
+        # NFS4ERR_GRACE.  Linux nfsd exposes a knob to end grace
+        # immediately, but right after restart the write can return
+        # EBUSY while the kernel's per-net state finishes coming up,
+        # so poll briefly.  NFSv3 readdir doesn't trip grace.
+        for _ in range(40):
+            r = ssh('echo Y > /proc/fs/nfsd/v4_end_grace',
+                    check=False, complete_response=True)
+            if r['result']:
+                break
+            sleep(0.25)
+        else:
+            pytest.fail(f'v4_end_grace still busy after 10s: {r["output"]}')
 
+    export = f'/mnt/{nfs_dataset}'
+    cls = PynfsClient3 if int(vers) == 3 else PynfsClient
+    with cls(truenas_server.ip, export, vers=vers) as n:
         contents = n.ls('.')
         assert 'canary' in contents
 
