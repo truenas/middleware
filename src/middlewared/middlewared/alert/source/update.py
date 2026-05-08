@@ -2,6 +2,7 @@ from datetime import timedelta
 
 from middlewared.alert.base import Alert, AlertClass, AlertCategory, AlertLevel, AlertSource
 from middlewared.alert.schedule import IntervalSchedule
+from middlewared.plugins.update_.profile_ import UpdateProfiles
 
 
 class CurrentlyRunningVersionDoesNotMatchProfileAlertClass(AlertClass):
@@ -20,6 +21,13 @@ class HasUpdateAlertClass(AlertClass):
     text = "A system update is available. Go to System → Update to download and apply the update."
 
 
+def _profile_display_name(name: str) -> str:
+    try:
+        return UpdateProfiles[name].display_name
+    except KeyError:
+        return "<Unknown>"
+
+
 class HasUpdateAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(hours=1))
     run_on_backup_node = False
@@ -30,21 +38,10 @@ class HasUpdateAlertSource(AlertSource):
             if update_status.status:
                 if not update_status.status.current_version.matches_profile:
                     config = await self.call2(self.s.update.config)
-                    profile_choices = await self.call2(self.s.update.profile_choices)
-
-                    if running_profile := profile_choices.get(update_status.status.current_version.profile):
-                        running = running_profile.name
-                    else:
-                        running = "<Unknown>"
-
-                    if selected_profile := profile_choices.get(config.profile):
-                        selected = selected_profile.name
-                    else:
-                        selected = "<Unknown>"
 
                     return Alert(CurrentlyRunningVersionDoesNotMatchProfileAlertClass, {
-                        "running": running,
-                        "selected": selected,
+                        "running": _profile_display_name(update_status.status.current_version.profile),
+                        "selected": _profile_display_name(config.profile),
                     })
 
                 if update_status.status.new_version:
