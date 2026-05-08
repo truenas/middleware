@@ -6,6 +6,7 @@ copy that silently fell back to a byte-for-byte transfer would still
 pass a protocol-only smoke check but wouldn't move pool
 ``bcloneused``.
 """
+
 import secrets
 
 import pytest
@@ -30,10 +31,13 @@ PAYLOAD_SIZE = 1 << 20
 
 def _bcloneused():
     """Return pool ``bcloneused`` (bytes) via the zpool query API."""
-    res = call("zpool.query_impl", {
-        "pool_names": [pool],
-        "properties": ["bcloneused"],
-    })
+    res = call(
+        "zpool.query_impl",
+        {
+            "pool_names": [pool],
+            "properties": ["bcloneused"],
+        },
+    )
     return int(res[0]["properties"]["bcloneused"]["value"])
 
 
@@ -69,4 +73,5 @@ def test_server_side_copy(start_nfs, nfs_dataset):
 
             assert after > before, (
                 f"bcloneused did not increase after OP_CLONE: "
-                f"before={before} after={after}")
+                f"before={before} after={after}"
+            )

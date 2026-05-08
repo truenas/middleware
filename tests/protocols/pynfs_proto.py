@@ -183,8 +183,9 @@ class PynfsClient:
         # gids=[] avoids pynfs's default supplementary GIDs of [3, 17, 100],
         # which would otherwise grant the caller spurious group-membership
         # access in DAC/ACL checks.
-        c.set_cred(sec.init_cred(
-            uid=self._uid, gid=self._gid, name=b"truenas-test", gids=[]))
+        c.set_cred(
+            sec.init_cred(uid=self._uid, gid=self._gid, name=b"truenas-test", gids=[])
+        )
         clt = None
         sess = None
         try:
