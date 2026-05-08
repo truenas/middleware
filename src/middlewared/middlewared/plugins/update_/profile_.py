@@ -19,7 +19,7 @@ class UpdateProfiles(enum.IntEnum):
     MISSION_CRITICAL = 3
 
     @property
-    def formatted_name(self) -> str:
+    def display_name(self) -> str:
         return self.describe(False, True).name
 
     def describe(self, is_enterprise: bool, available: bool) -> UpdateProfileChoice:
