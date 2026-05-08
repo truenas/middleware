@@ -431,8 +431,12 @@ def test_dacl_setattr_roundtrip(start_nfs, minorversion, nfs_dataset):
                 assert fs["aclflags"]["protected"] is True, fs["aclflags"]
                 assert fs["aclflags"]["autoinherit"] is False
                 assert fs["aclflags"]["defaulted"] is False
-                # Same ACE count - content equivalence checked above via NFS.
-                assert len(fs["acl"]) == len(aces)
+                # Content equivalence: convert filesystem.getacl's dict ACEs
+                # back to the wire shape and compare against the ACEs we set.
+                fs_aces_wire = [_dict_to_ace(d) for d in fs["acl"]]
+                assert _aces_equivalent(fs_aces_wire, aces), (
+                    f"filesystem.getacl ACE list does not match what was set "
+                    f"via NFS\n  got={fs['acl']}\n  expected={TEST_ACL}")
             finally:
                 _close_session(c, clt, sess)
 

@@ -180,7 +180,11 @@ class PynfsClient:
             self._host, 2049, minorversion=self._minorversion, secure=self._secure
         )
         sec = rpc.security.instance(AUTH_SYS)
-        c.set_cred(sec.init_cred(uid=self._uid, gid=self._gid, name=b"truenas-test"))
+        # gids=[] avoids pynfs's default supplementary GIDs of [3, 17, 100],
+        # which would otherwise grant the caller spurious group-membership
+        # access in DAC/ACL checks.
+        c.set_cred(sec.init_cred(
+            uid=self._uid, gid=self._gid, name=b"truenas-test", gids=[]))
         clt = None
         sess = None
         try:
@@ -278,7 +282,6 @@ class PynfsClient:
                     openflag,
                     openclaim,
                 ),
-                op.getfh(),
             ]
         )
         self._expect_ok(res, f"create({path!r})")
@@ -322,31 +325,35 @@ class PynfsClient:
         self._expect_ok(res, f"ls({path!r})")
         return [e.name.decode() for e in res.resarray[-1].reply.entries]
 
-    def server_side_copy(self, src, dst):
-        """NFSv4.2 OP_CLONE.  Source must already exist; dest is
-        created if needed (we OPEN+CREATE it).  Mirrors SSH_NFS's
-        helper which writes 'canary' and copy_file_range's it; here
-        we use the protocol-native CLONE op."""
+    def write(self, path, data, offset=0):
+        """OP_WRITE ``data`` to existing ``path`` at ``offset`` with
+        stable=FILE_SYNC4.  ``path`` must already exist."""
+        self._validate_rel(path)
+        if isinstance(data, str):
+            data = data.encode()
+        with self._open_for_write(path) as state:
+            res = self._sess.compound(
+                nfs4lib.use_obj(self._full_components(path))
+                + [op.write(state, offset, 2, data)]  # stable=2 -> FILE_SYNC4
+            )
+            self._expect_ok(res, f"write({path!r})")
+
+    def clone(self, src, dst):
+        """NFSv4.2 OP_CLONE: clone existing src to existing dst.  Both
+        files must already exist (caller's responsibility).  Length 0
+        means clone-to-EOF."""
         self._validate_rel(src)
         self._validate_rel(dst)
-        # Pre-populate src so there's something to copy.
-        self.create(src)
-        with self._open_for_write(src) as src_state:
-            self._sess.compound(
-                nfs4lib.use_obj(self._full_components(src))
-                + [op.write(src_state, 0, 2, b"canary")]
-            )  # FILE_SYNC4
-        self.create(dst)
+        src_state = self._open_stateid(src)
+        dst_state = self._open_stateid(dst)
         # OP_CLONE: src_fh is saved, dst_fh is current.
-        src_state2 = self._open_stateid(src)
-        dst_state2 = self._open_stateid(dst)
         res = self._sess.compound(
             nfs4lib.use_obj(self._full_components(src))
             + [op.savefh()]
             + nfs4lib.use_obj(self._full_components(dst))
-            + [op.clone(src_state2, dst_state2, 0, 0, 0)]
+            + [op.clone(src_state, dst_state, 0, 0, 0)]
         )
-        self._expect_ok(res, f"server_side_copy({src!r}, {dst!r})")
+        self._expect_ok(res, f"clone({src!r}, {dst!r})")
 
     # --- xattr (NFSv4.2) -----------------------------------------------
 
@@ -671,7 +678,8 @@ class PynfsClient3:
         # the connection, and sets up Mnt3Client for mountd.
         c = nfs3client.NFS3Client(self._host, secureport=self._secureport)
         sec = rpc.security.instance(AUTH_SYS)
-        c.set_cred(sec.init_cred(uid=self._uid, gid=self._gid))
+        # gids=[] avoids pynfs's default supplementary GIDs of [3, 17, 100].
+        c.set_cred(sec.init_cred(uid=self._uid, gid=self._gid, gids=[]))
 
         # Get the export's root file handle from mountd.  We can't
         # use ``c.mntclnt.get_rootfh`` -- it wraps the path as a
