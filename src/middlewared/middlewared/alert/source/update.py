@@ -23,7 +23,7 @@ class HasUpdateAlertClass(AlertClass):
 
 def _profile_display_name(name: str) -> str:
     try:
-        return UpdateProfiles[name].describe().name
+        return UpdateProfiles[name].name
     except KeyError:
         return "<Unknown>"
 
