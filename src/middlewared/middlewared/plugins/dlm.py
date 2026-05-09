@@ -452,11 +452,6 @@ class DistributedLockManagerService(Service):
                     if await self.middleware.call('dlm.kernel.lockspace_is_stopped', lockspace):
                         self.logger.warning('Starting stopped lockspace %r', lockspace)
                         await self.middleware.call('dlm.kernel.lockspace_start', lockspace)
-
-                self.logger.debug('Logout all HA targets')
-                remote_ip = await self.middleware.call('failover.remote_ip')
-                await self.middleware.call('iscsi.target.logout_all', remote_ip)
-                self.logger.debug('Logged out all HA targets')
             finally:
                 DistributedLockManagerService.resetting = False
         finally:
