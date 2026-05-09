@@ -806,5 +806,13 @@ class iSCSITargetAluaService(Service):
     async def reset_active(self, job):
         """Job to be run on the ACTIVE node before the STANDBY node will join."""
         self.standby_starting = False
-        dlm_ra = await self.middleware.call('dlm.reset_active')
-        await job.wrap(dlm_ra)
+        try:
+            dlm_ra = await self.middleware.call('dlm.reset_active')
+            await job.wrap(dlm_ra)
+        finally:
+            # Release any LUN-replace cleanup that was parked by
+            # enable_async_lun_replace. dlm.reset_active does eject_peer
+            # before any of its other steps, so by the time we get here the
+            # peer is already out of the DLM lockspaces -- which is the only
+            # prerequisite the parked work has.
+            await self.middleware.call('iscsi.scst.disable_async_lun_replace')
