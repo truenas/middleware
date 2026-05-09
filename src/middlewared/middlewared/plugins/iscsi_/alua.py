@@ -804,5 +804,27 @@ class iSCSITargetAluaService(Service):
     async def reset_active(self, job):
         """Job to be run on the ACTIVE node before the STANDBY node will join."""
         self.standby_starting = False
-        dlm_ra = await self.middleware.call('dlm.reset_active')
-        await job.wrap(dlm_ra)
+        try:
+            dlm_ra = await self.middleware.call('dlm.reset_active')
+            await job.wrap(dlm_ra)
+        finally:
+            # Release any LUN-replace cleanup that was parked by
+            # enable_async_lun_replace. dlm.reset_active does eject_peer
+            # before any of its other steps, so by the time we get here the
+            # peer is already out of the DLM lockspaces -- which is the only
+            # prerequisite the parked work has.
+            await self.middleware.call('iscsi.scst.disable_async_lun_replace')
+
+        # Log out any leftover HA iSCSI sessions to the (former) peer. The
+        # failover event's handle_alua block defers this logout to reset_active
+        # so the ALUA tgt_dev filter stays in place across the LUN replace.
+        # It also keeps dlm.remote_down's logged_in_extents guard from tripping
+        # later: without this, lingering sessions die only when their NOP-out
+        # timer expires, which can keep remote_down skipping reset_active for
+        # minutes. Swallow failures -- the NOP-out timeout is the backstop.
+        try:
+            remote_ip = await self.middleware.call('failover.remote_ip')
+            if remote_ip:
+                await self.middleware.call('iscsi.target.logout_all', remote_ip)
+        except Exception:
+            self.logger.warning('reset_active: logout_all failed', exc_info=True)
