@@ -112,7 +112,7 @@ def test_clone_partial_range_preserves_surroundings(start_nfs, nfs_dataset):
     outside the clone window keep their pre-existing contents.
     Offsets and count must be recordsize-aligned for ZFS BRT cloning."""
     src_a = bytes([0xAA]) * RECORDSIZE
-    src_b = bytes([0xBB]) * RECORDSIZE      # the slice we clone
+    src_b = bytes([0xBB]) * RECORDSIZE  # the slice we clone
     src_c = bytes([0xCC]) * RECORDSIZE
     src_d = bytes([0xDD]) * RECORDSIZE
     src_payload = src_a + src_b + src_c + src_d
@@ -129,7 +129,8 @@ def test_clone_partial_range_preserves_surroundings(start_nfs, nfs_dataset):
                 n.write("dst", dst_pre)
                 # Clone src[1*rs : 2*rs] -> dst[1*rs : 2*rs]
                 n.clone(
-                    "src", "dst",
+                    "src",
+                    "dst",
                     src_offset=RECORDSIZE,
                     dst_offset=RECORDSIZE,
                     count=RECORDSIZE,
@@ -137,9 +138,9 @@ def test_clone_partial_range_preserves_surroundings(start_nfs, nfs_dataset):
                 got = n.read("dst")
 
     expected = (
-        dst_pre[:RECORDSIZE]                 # untouched head
-        + src_b                              # cloned region
-        + dst_pre[2 * RECORDSIZE :]          # untouched tail
+        dst_pre[:RECORDSIZE]  # untouched head
+        + src_b  # cloned region
+        + dst_pre[2 * RECORDSIZE :]  # untouched tail
     )
     assert got == expected
 
@@ -159,7 +160,8 @@ def test_clone_overlapping_same_file_fails(start_nfs, nfs_dataset):
                 # Same file, ranges [1rs, 3rs) and [2rs, 4rs) overlap
                 # in [2rs, 3rs).
                 n.clone(
-                    "f", "f",
+                    "f",
+                    "f",
                     src_offset=RECORDSIZE,
                     dst_offset=2 * RECORDSIZE,
                     count=2 * RECORDSIZE,
@@ -184,8 +186,11 @@ def test_clone_count_past_eof_fails(start_nfs, nfs_dataset):
                 n.create("dst")
                 # Ask to clone 8192 bytes from a 4096-byte source.
                 n.clone(
-                    "src", "dst",
-                    src_offset=0, dst_offset=0, count=8192,
+                    "src",
+                    "dst",
+                    src_offset=0,
+                    dst_offset=0,
+                    count=8192,
                     expect_status=NFS4ERR_INVAL,
                 )
 
@@ -206,15 +211,11 @@ def test_clone_cross_dataset_returns_xdev(start_nfs, nfs_dataset):
     Both files are opened via one pynfs session in absolute-path
     mode so the pair of stateids can be used in a single CLONE
     compound."""
-    with nfs_dataset("nfs_clone_xds_a") as ds_a, \
-            nfs_dataset("nfs_clone_xds_b") as ds_b:
+    with nfs_dataset("nfs_clone_xds_a") as ds_a, nfs_dataset("nfs_clone_xds_b") as ds_b:
         path_a = f"/mnt/{ds_a}"
         path_b = f"/mnt/{ds_b}"
-        with nfs_share(path_a, NFS_SHARE_OPTS), \
-                nfs_share(path_b, NFS_SHARE_OPTS):
-            with PynfsClient(
-                truenas_server.ip, export_path=None, vers=4.2
-            ) as n:
+        with nfs_share(path_a, NFS_SHARE_OPTS), nfs_share(path_b, NFS_SHARE_OPTS):
+            with PynfsClient(truenas_server.ip, export_path=None, vers=4.2) as n:
                 src = f"{path_a}/src"
                 dst = f"{path_b}/dst"
                 n.create(src)

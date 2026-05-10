@@ -286,9 +286,7 @@ class PynfsClient:
         sess = None
         try:
             clt = c.new_client(self._owner_name)
-            big_attrs = channel_attrs4(
-                0, _MAX_REQ, _MAX_REQ, _MAX_REQ, 128, 8, []
-            )
+            big_attrs = channel_attrs4(0, _MAX_REQ, _MAX_REQ, _MAX_REQ, 128, 8, [])
             create_flags = (
                 CREATE_SESSION4_FLAG_CONN_BACK_CHAN
                 if self._on_cb_offload is not None
@@ -357,9 +355,7 @@ class PynfsClient:
                 )
         else:
             if path.startswith("/"):
-                raise ValueError(
-                    f"{path}: absolute paths not supported; pass relative"
-                )
+                raise ValueError(f"{path}: absolute paths not supported; pass relative")
 
     def _full_components(self, rel):
         """Combine the export path and ``rel`` into component bytes.
@@ -507,11 +503,7 @@ class PynfsClient:
             cur = offset
             remaining = count
             while remaining is None or remaining > 0:
-                want = (
-                    self._chunk
-                    if remaining is None
-                    else min(self._chunk, remaining)
-                )
+                want = self._chunk if remaining is None else min(self._chunk, remaining)
                 res = self._sess.compound(
                     nfs4lib.use_obj(self._full_components(path))
                     + [op.read(state, cur, want)]
@@ -542,24 +534,37 @@ class PynfsClient:
         self._validate_rel(dst)
         src_state, src_components = self._open_stateid(src)
         if src == dst:
-            return src_state, src_components, src_state, src_components, [
-                (src_components, src_state, "clone-shared-close"),
-            ]
+            return (
+                src_state,
+                src_components,
+                src_state,
+                src_components,
+                [
+                    (src_components, src_state, "clone-shared-close"),
+                ],
+            )
         dst_state, dst_components = self._open_stateid(dst)
-        return src_state, src_components, dst_state, dst_components, [
-            (src_components, src_state, "clone-src-close"),
-            (dst_components, dst_state, "clone-dst-close"),
-        ]
+        return (
+            src_state,
+            src_components,
+            dst_state,
+            dst_components,
+            [
+                (src_components, src_state, "clone-src-close"),
+                (dst_components, dst_state, "clone-dst-close"),
+            ],
+        )
 
-    def clone(self, src, dst, src_offset=0, dst_offset=0, count=0,
-              expect_status=NFS4_OK):
+    def clone(
+        self, src, dst, src_offset=0, dst_offset=0, count=0, expect_status=NFS4_OK
+    ):
         """NFSv4.2 OP_CLONE: clone ``[src_offset, src_offset+count)`` of
         ``src`` to ``[dst_offset, dst_offset+count)`` of ``dst``.  Both
         files must already exist.  ``count=0`` means clone-to-EOF (RFC
         7862 §15.13).  Returns the COMPOUND status (always equals
         ``expect_status`` because the call asserts otherwise)."""
-        src_state, src_components, dst_state, dst_components, closers = (
-            self._open_pair(src, dst)
+        src_state, src_components, dst_state, dst_components, closers = self._open_pair(
+            src, dst
         )
         try:
             # OP_CLONE: src_fh is saved, dst_fh is current.
@@ -570,7 +575,8 @@ class PynfsClient:
                 + [op.clone(src_state, dst_state, src_offset, dst_offset, count)]
             )
             self._expect_status(
-                res, expect_status,
+                res,
+                expect_status,
                 f"clone({src!r}, {dst!r}, src_off={src_offset}, "
                 f"dst_off={dst_offset}, count={count})",
             )
@@ -579,15 +585,23 @@ class PynfsClient:
             for components, state, label in closers:
                 self._close_stateid(components, state, label)
 
-    def copy(self, src, dst, src_offset=0, dst_offset=0, count=0,
-             synchronous=True, expect_status=NFS4_OK):
+    def copy(
+        self,
+        src,
+        dst,
+        src_offset=0,
+        dst_offset=0,
+        count=0,
+        synchronous=True,
+        expect_status=NFS4_OK,
+    ):
         """NFSv4.2 OP_COPY: copy ``[src_offset, src_offset+count)`` of
         ``src`` into ``dst`` starting at ``dst_offset``.  ``count=0``
         means copy-to-EOF (RFC 7862 §15.2).  Returns a ``CopyResult``
         with the wire status, byte count, commit level, verifier, and
         - for asynchronous offload - the callback stateid."""
-        src_state, src_components, dst_state, dst_components, closers = (
-            self._open_pair(src, dst)
+        src_state, src_components, dst_state, dst_components, closers = self._open_pair(
+            src, dst
         )
         try:
             res = self._sess.compound(
@@ -601,14 +615,15 @@ class PynfsClient:
                         src_offset,
                         dst_offset,
                         count,
-                        False,           # ca_consecutive (server is always consecutive)
+                        False,  # ca_consecutive (server is always consecutive)
                         bool(synchronous),
-                        [],              # ca_source_server: empty -> intra-server
+                        [],  # ca_source_server: empty -> intra-server
                     )
                 ]
             )
             self._expect_status(
-                res, expect_status,
+                res,
+                expect_status,
                 f"copy({src!r}, {dst!r}, src_off={src_offset}, "
                 f"dst_off={dst_offset}, count={count}, sync={synchronous})",
             )
@@ -832,9 +847,7 @@ class PynfsClient:
         def __exit__(self, *_):
             # CLOSE requires CURRENT_FH = the opened file, not the
             # parent dir, so walk all the way to the file.
-            self.sess.compound(
-                self.file_walker + [op.close(0, self.state)]
-            )
+            self.sess.compound(self.file_walker + [op.close(0, self.state)])
 
     def _open_for_write(self, path):
         parent, name = self._split_parent_name(path)

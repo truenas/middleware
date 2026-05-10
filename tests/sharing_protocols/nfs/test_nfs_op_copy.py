@@ -148,7 +148,9 @@ def test_copy_sync_increments_bcloneused(start_nfs, nfs_dataset):
                 _sync_pool()
                 after = _bcloneused()
 
-            assert after > before, f"bcloneused did not increase after sync OP_COPY: before={before} after={after}"
+            assert after > before, (
+                f"bcloneused did not increase after sync OP_COPY: before={before} after={after}"
+            )
 
 
 @pytest.mark.timeout(300)
@@ -189,5 +191,3 @@ def test_copy_sync_cross_dataset_same_pool(start_nfs, nfs_dataset):
                 f"cross-dataset sync OP_COPY did not increase "
                 f"bcloneused: before={before} after={after}"
             )
-
-
