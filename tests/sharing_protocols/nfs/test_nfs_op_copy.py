@@ -25,6 +25,16 @@ NFS_SHARE_OPTS = {"mapall_user": "root", "mapall_group": "root"}
 # cap, so a single sync call returns the full count.
 SYNC_PAYLOAD_SIZE = 1 << 20  # 1 MiB
 
+# Recordsize is pinned on dataset creation (passed through
+# ``nfs_dataset(..., data=RECORDSIZE_PROP)``) rather than inherited
+# from the pool, so the alignment math below isn't at the mercy of
+# whatever ``recordsize`` happens to be set on the test pool.  Sub-
+# range OP_COPY paths through ``zfs_clone_range`` require recordsize-
+# aligned offsets and counts; non-aligned partial copies fall back to
+# splice and don't move ``bcloneused``.
+RECORDSIZE = 128 * 1024
+RECORDSIZE_PROP = {"recordsize": "128K"}
+
 
 def _bcloneused():
     res = call(
@@ -49,7 +59,7 @@ def test_copy_sync_full_file_data_matches(start_nfs, nfs_dataset):
     source contents to dst byte-for-byte and reports
     ``wr_count == size`` plus ``cr_synchronous==True``."""
     payload = secrets.token_bytes(SYNC_PAYLOAD_SIZE)
-    with nfs_dataset("nfs_copy_full") as ds:
+    with nfs_dataset("nfs_copy_full", RECORDSIZE_PROP) as ds:
         path = f"/mnt/{ds}"
         with nfs_share(path, NFS_SHARE_OPTS):
             with PynfsClient(truenas_server.ip, path, vers=4.2) as n:
@@ -69,7 +79,7 @@ def test_copy_sync_count_zero_copies_to_eof(start_nfs, nfs_dataset):
     """RFC 7862 §15.2: ``ca_count == 0`` means copy from
     ``ca_src_offset`` through end-of-file."""
     payload = secrets.token_bytes(SYNC_PAYLOAD_SIZE)
-    with nfs_dataset("nfs_copy_eof") as ds:
+    with nfs_dataset("nfs_copy_eof", RECORDSIZE_PROP) as ds:
         path = f"/mnt/{ds}"
         with nfs_share(path, NFS_SHARE_OPTS):
             with PynfsClient(truenas_server.ip, path, vers=4.2) as n:
@@ -81,20 +91,16 @@ def test_copy_sync_count_zero_copies_to_eof(start_nfs, nfs_dataset):
                 assert n.read("dst") == payload
 
 
-# Default ZFS recordsize.  Sub-range OP_COPY paths through
-# zfs_clone_range require recordsize-aligned offsets and counts; non-
-# aligned partial copies fall back to splice and don't move
-# ``bcloneused``.  Use this for the partial-range and bcloneused tests.
-RECORDSIZE = 128 * 1024
-
-
 @pytest.mark.timeout(300)
 def test_copy_sync_partial_range_preserves_surroundings(start_nfs, nfs_dataset):
     """OP_COPY of a sub-range copies only that range; bytes on dst
     outside the copy window keep their pre-existing contents.
     Offsets and count are recordsize-aligned so the BRT path is
-    eligible (the surroundings check passes regardless of which
-    code path the kernel picks)."""
+    eligible -- and we also assert ``bcloneused`` rises, because
+    sub-range OP_COPY is the case most likely to silently slip into
+    the splice fallback if alignment math regresses (the splice
+    fallback would still satisfy the data-equality assertion but
+    leave the BRT counter flat)."""
     src_a = bytes([0x11]) * RECORDSIZE
     src_b = bytes([0x22]) * RECORDSIZE  # the slice we copy
     src_c = bytes([0x33]) * RECORDSIZE
@@ -103,7 +109,7 @@ def test_copy_sync_partial_range_preserves_surroundings(start_nfs, nfs_dataset):
 
     dst_pre = bytes([0x55]) * (4 * RECORDSIZE)
 
-    with nfs_dataset("nfs_copy_partial") as ds:
+    with nfs_dataset("nfs_copy_partial", RECORDSIZE_PROP) as ds:
         path = f"/mnt/{ds}"
         with nfs_share(path, NFS_SHARE_OPTS):
             with PynfsClient(truenas_server.ip, path, vers=4.2) as n:
@@ -111,6 +117,10 @@ def test_copy_sync_partial_range_preserves_surroundings(start_nfs, nfs_dataset):
                 n.write("src", src_payload)
                 n.create("dst")
                 n.write("dst", dst_pre)
+
+                _sync_pool()
+                before = _bcloneused()
+
                 res = n.copy(
                     "src",
                     "dst",
@@ -119,10 +129,19 @@ def test_copy_sync_partial_range_preserves_surroundings(start_nfs, nfs_dataset):
                     count=RECORDSIZE,
                 )
                 assert res.bytes_written == RECORDSIZE
+
+                _sync_pool()
+                after = _bcloneused()
+
                 got = n.read("dst")
 
     expected = dst_pre[:RECORDSIZE] + src_b + dst_pre[2 * RECORDSIZE :]
     assert got == expected
+    assert after > before, (
+        f"bcloneused did not increase after partial-range sync "
+        f"OP_COPY: before={before} after={after} -- the kernel "
+        f"likely fell back to splice instead of taking the BRT path"
+    )
 
 
 @pytest.mark.timeout(300)
@@ -131,7 +150,7 @@ def test_copy_sync_increments_bcloneused(start_nfs, nfs_dataset):
     ZFS's ``zfs_copy_file_range``, which uses the BRT under the
     hood, so ``bcloneused`` rises after the operation commits."""
     payload = secrets.token_bytes(SYNC_PAYLOAD_SIZE)
-    with nfs_dataset("nfs_copy_bcl") as ds:
+    with nfs_dataset("nfs_copy_bcl", RECORDSIZE_PROP) as ds:
         path = f"/mnt/{ds}"
         with nfs_share(path, NFS_SHARE_OPTS):
             with PynfsClient(truenas_server.ip, path, vers=4.2) as n:
@@ -165,7 +184,10 @@ def test_copy_sync_cross_dataset_same_pool(start_nfs, nfs_dataset):
     same-pool with matching properties hits the BRT clone path and
     ``bcloneused`` rises after the operation commits."""
     payload = secrets.token_bytes(SYNC_PAYLOAD_SIZE)
-    with nfs_dataset("nfs_copy_xds_a") as ds_a, nfs_dataset("nfs_copy_xds_b") as ds_b:
+    with (
+        nfs_dataset("nfs_copy_xds_a", RECORDSIZE_PROP) as ds_a,
+        nfs_dataset("nfs_copy_xds_b", RECORDSIZE_PROP) as ds_b,
+    ):
         path_a = f"/mnt/{ds_a}"
         path_b = f"/mnt/{ds_b}"
         with nfs_share(path_a, NFS_SHARE_OPTS), nfs_share(path_b, NFS_SHARE_OPTS):
