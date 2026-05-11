@@ -7,7 +7,7 @@ import logging
 import subprocess
 import time
 import typing
-from typing import Any, Callable, Iterable, Sequence, TypeVar
+from typing import Any, Sequence
 
 from .prctl import die_with_parent
 
@@ -38,23 +38,9 @@ BRAND = ProductName.PRODUCT_NAME
 
 logger = logging.getLogger(__name__)
 
-_V = TypeVar('_V')
-
 
 class UnexpectedFailure(Exception):
     pass
-
-
-def bisect(condition: Callable[[_V], Any], iterable: Iterable[_V]) -> tuple[list[_V], list[_V]]:
-    a = []
-    b = []
-    for val in iterable:
-        if condition(val):
-            a.append(val)
-        else:
-            b.append(val)
-
-    return a, b
 
 
 currently_running_subprocesses: set[str] = set()
