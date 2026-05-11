@@ -1,5 +1,5 @@
 import asyncio
-from dataclasses import dataclass
+import dataclasses
 import errno
 import functools
 import json
@@ -13,13 +13,13 @@ from .prctl import die_with_parent
 
 
 # Define Product Strings
-@dataclass(slots=True, frozen=True)
+@dataclasses.dataclass(slots=True, frozen=True)
 class ProductTypes:
     COMMUNITY_EDITION: str = 'COMMUNITY_EDITION'
     ENTERPRISE: str = 'ENTERPRISE'
 
 
-@dataclass(slots=True, frozen=True)
+@dataclasses.dataclass(slots=True, frozen=True)
 class ProductNames:
     PRODUCT_NAME: str = 'TrueNAS'
 
@@ -80,7 +80,7 @@ async def run(*args: Any, **kwargs: Any) -> subprocess.CompletedProcess[bytes] |
         raise
 
 
-@dataclass(slots=True, frozen=True, kw_only=True)
+@dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
 class SwInfo:
     stable: bool
     version: str
@@ -155,14 +155,3 @@ def are_indices_in_consecutive_order(arr: Sequence[int]) -> bool:
         if arr[i] != arr[i - 1] + 1:
             return False
     return True
-
-
-class Nid:
-
-    def __init__(self, _id: int):
-        self._id = _id
-
-    def __call__(self) -> int:
-        num = self._id
-        self._id += 1
-        return num
