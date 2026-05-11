@@ -1,4 +1,6 @@
 # -*- coding=utf-8 -*-
+from __future__ import annotations
+
 import errno
 import logging
 from typing import TYPE_CHECKING
@@ -22,12 +24,12 @@ class MethodNotFoundError(CallError):
         self.service = service
         super().__init__(f'Method {method_name!r} not found in {service!r}', CallError.ENOMETHOD)
 
-    def __reduce__(self):
+    def __reduce__(self) -> tuple[type[MethodNotFoundError], tuple[str, str]]:
         return (type(self), (self.method_name, self.service))
 
 
 class ServiceCallMixin:
-    def get_method(self, name: str) -> tuple['Service', 'MethodType']:
+    def get_method(self, name: str) -> tuple[Service, MethodType]:
         if '.' not in name:
             raise CallError('Invalid method name', errno.EBADMSG)
 

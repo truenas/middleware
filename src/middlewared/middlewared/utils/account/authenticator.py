@@ -1,10 +1,13 @@
+from __future__ import annotations
+
 import enum
 from json import dumps
 import os
 from socket import AF_INET, AF_INET6, AF_UNIX
+from typing import Any
 from uuid import UUID
 
-from truenas_authenticator import AuthenticatorResponse as TrueNASAuthenticatorResponse
+from truenas_authenticator import AuthenticatorResponse as _TrueNASAuthenticatorResponse
 from truenas_authenticator import AuthenticatorStage as TrueNASAuthenticatorStage
 from truenas_authenticator import UserPamAuthenticator as TrueNASUserPamAuthenticator
 from truenas_pypam import MSGStyle, PAMCode
@@ -16,7 +19,7 @@ from middlewared.utils.directoryservices.constants import DSType
 from middlewared.utils.directoryservices.health import DSHealthObj
 from middlewared.utils.nss.grp import getgrgid
 from middlewared.utils.nss.nss_common import NssModule
-from middlewared.utils.nss.pwd import getpwnam
+from middlewared.utils.nss.pwd import PasswdDict, getpwnam
 from middlewared.utils.origin import ConnectionOrigin
 
 from .faillock import is_tally_locked
@@ -33,7 +36,7 @@ class TruenasPamFile(enum.StrEnum):
     """ session-related modules common to all middleware authenticators """
 
     @property
-    def service(self):
+    def service(self) -> str:
         return os.path.basename(self.value)
 
 
@@ -54,6 +57,15 @@ class AccountFlag(enum.StrEnum):
     PASSWORD_CHANGE_REQUIRED = 'PASSWORD_CHANGE_REQUIRED'  # Password change for account is required
 
 
+class UserPamAuthenticatorPasswdDict(PasswdDict):
+    grouplist: tuple[int,]
+    local: bool
+    account_attributes: list[AccountFlag]
+
+
+TrueNASAuthenticatorResponse = _TrueNASAuthenticatorResponse[UserPamAuthenticatorPasswdDict]
+
+
 DEFAULT_LOGIN_SUCCESS = TrueNASAuthenticatorResponse(
     TrueNASAuthenticatorStage.LOGIN, PAMCode.PAM_SUCCESS, None
 )
@@ -71,12 +83,14 @@ DEFAULT_LOGOUT_FAIL = TrueNASAuthenticatorResponse(
 )
 
 
-class UserPamAuthenticator(TrueNASUserPamAuthenticator):
+class UserPamAuthenticator(TrueNASUserPamAuthenticator[UserPamAuthenticatorPasswdDict]):
     """ TrueNAS authenticator object. These are allocated per middleware session and hold an
     open pam handle with state information about the particular session. This includes the
     utmp entry generated for the authenticated user. """
 
-    def _get_pam_session_info(self, origin: ConnectionOrigin) -> None:
+    passwd: UserPamAuthenticatorPasswdDict
+
+    def _get_pam_session_info(self, origin: ConnectionOrigin) -> dict[str, Any]:
         """ Set the connection origin and other middleware-session metadata into
         pam environmental variable `pam_truenas_session_data`. This will then be inserted
         into our sessions keyring that is used for tracking sessions in general. """
@@ -112,7 +126,7 @@ class UserPamAuthenticator(TrueNASUserPamAuthenticator):
 
         return session_data
 
-    def _get_user_obj(self, username):
+    def _get_user_obj(self, username: str) -> UserPamAuthenticatorPasswdDict:
         # populate our internal passwd reference. This should only be called once during authentication
         passwd = getpwnam(username, as_dict=True)
         grouplist = []
@@ -131,50 +145,54 @@ class UserPamAuthenticator(TrueNASUserPamAuthenticator):
             'grouplist': tuple(grouplist),
             'local': passwd['source'] == NssModule.FILES.name,
             'account_attributes': []
-        }
-
-        passwd = self.passwd
+        }  # type: ignore  # FIXME
 
         # Swap out the NSS module name with strings middleware expects and begin populating account flags
-        match passwd['source']:
+        match self.passwd['source']:
             case NssModule.FILES.name:
-                passwd['source'] = 'LOCAL'
-                passwd['account_attributes'] = [AccountFlag.LOCAL]
+                self.passwd['source'] = 'LOCAL'
+                self.passwd['account_attributes'] = [AccountFlag.LOCAL]
             case NssModule.WINBIND.name:
-                passwd['source'] = 'ACTIVEDIRECTORY'
-                passwd['account_attributes'] = [
+                self.passwd['source'] = 'ACTIVEDIRECTORY'
+                self.passwd['account_attributes'] = [
                     AccountFlag.DIRECTORY_SERVICE, AccountFlag.ACTIVE_DIRECTORY
                 ]
             case NssModule.SSS.name:
-                passwd['source'] = 'LDAP'
+                self.passwd['source'] = 'LDAP'
                 if DSHealthObj.dstype is DSType.IPA:
-                    passwd['account_attributes'] = [AccountFlag.DIRECTORY_SERVICE, AccountFlag.IPA]
+                    self.passwd['account_attributes'] = [AccountFlag.DIRECTORY_SERVICE, AccountFlag.IPA]
                 else:
-                    passwd['account_attributes'] = [AccountFlag.DIRECTORY_SERVICE, AccountFlag.LDAP]
+                    self.passwd['account_attributes'] = [AccountFlag.DIRECTORY_SERVICE, AccountFlag.LDAP]
 
         if self.state.service == TruenasPamFile.API_KEY.service:
-            passwd['account_attributes'].append(AccountFlag.API_KEY)
+            self.passwd['account_attributes'].append(AccountFlag.API_KEY)
 
         # Compare normalized username from NSS with usernames in the /etc/users.oath file
         if self.twofactor_user:
-            passwd['account_attributes'].append(AccountFlag.TWOFACTOR)
+            self.passwd['account_attributes'].append(AccountFlag.TWOFACTOR)
 
         if passwd['pw_uid'] in (0, ADMIN_UID):
-            passwd['account_attributes'].append(AccountFlag.SYS_ADMIN)
-            if not passwd['local']:
+            self.passwd['account_attributes'].append(AccountFlag.SYS_ADMIN)
+            if not self.passwd['local']:
                 raise ValueError("System administrator account is being provided by non-local source")
 
         # Retrieve via property getter to ensure we're returning a proper copy
         return self.truenas_user_obj
 
-    def __init__(self, *, username: str, origin: ConnectionOrigin, service=TruenasPamFile.DEFAULT):
+    def __init__(
+        self,
+        *,
+        username: str,
+        origin: ConnectionOrigin,
+        service: TruenasPamFile = TruenasPamFile.DEFAULT,
+    ) -> None:
         # NOTE: we are limiting ourselves to non-blocking calls here because these objects are
         # created potentially in async co-routines. This means we input the username as sent by client.
         # We can later normalize when processing authentication requests.
         session_info = self._get_pam_session_info(origin)
         self._twofactor_user = False
         self._service = service
-        self.session_error = None
+        self.session_error: str | None = None
 
         super().__init__(
             username=username,
@@ -183,10 +201,11 @@ class UserPamAuthenticator(TrueNASUserPamAuthenticator):
             pam_env={'pam_truenas_session_data': dumps(session_info)}
         )
         self.otpw_possible = True
-        self._session_uuid = None
+        self._session_uuid: UUID | None = None
 
     def login(self) -> TrueNASAuthenticatorResponse:
         resp = super().login()
+        assert self.ctx is not None
         if resp.code == PAMCode.PAM_SUCCESS:
             # On successful session open, pam_truenas will set a pam environmental variable containing the
             # session_uuid it assigned the session in the user keyring.
@@ -210,7 +229,7 @@ class UserPamAuthenticator(TrueNASUserPamAuthenticator):
         return self._session_uuid
 
     @property
-    def truenas_user_obj(self):
+    def truenas_user_obj(self) -> UserPamAuthenticatorPasswdDict:
         """ Create a copy of the stored passwd dict for user. """
         if not getattr(self, 'passwd') or self.passwd is None:
             raise ValueError('passwd entry not set')
@@ -219,16 +238,21 @@ class UserPamAuthenticator(TrueNASUserPamAuthenticator):
         out['account_attributes'] = out['account_attributes'].copy()
         return out
 
-    def __otpw_authenticate(self, password, passwd_entry):
+    def __otpw_authenticate(
+        self,
+        password: str,
+        passwd_entry: UserPamAuthenticatorPasswdDict,
+    ) -> tuple[PAMCode, str | None] | None:
         """ When autenticated uses may generate a single-use password for an account. If
         regular PAM auth fails for non-api-key case, we should check it against our single-use
         passwords. """
         if not self.otpw_possible:
-            return
+            return None
 
         otpw_resp = OTPW_MANAGER.authenticate(passwd_entry['pw_uid'], password)
         match otpw_resp.code:
             case OTPWResponseCode.SUCCESS:
+                assert otpw_resp.data is not None
                 self.passwd['account_attributes'].append(AccountFlag.OTPW)
                 # PASSWORD_CHANGE_REQUIRED can only be set for local accounts. We don't allow
                 # password changes through middleware currently for directory services.
@@ -242,7 +266,7 @@ class UserPamAuthenticator(TrueNASUserPamAuthenticator):
                 reason = 'Onetime password is expired'
             case OTPWResponseCode.NO_KEY:
                 # Indicate to caller to send original PAM response
-                return
+                return None
             case _:
                 code = PAMCode.PAM_AUTH_ERR
                 reason = f'Onetime password authentication failed: {otpw_resp.code}'
@@ -273,7 +297,7 @@ class UserPamAuthenticator(TrueNASUserPamAuthenticator):
         while resp.code == PAMCode.PAM_CONV_AGAIN:
             if resp.reason:
                 # Auto-respond to prompts based on username / password combination
-                responses = []
+                responses: list[str | None] = []
                 for msg in resp.reason:
                     if msg.msg_style == MSGStyle.PAM_PROMPT_ECHO_OFF:
                         # Check for pam_oath prompt
@@ -303,7 +327,7 @@ class UserPamAuthenticator(TrueNASUserPamAuthenticator):
         return resp
 
     @property
-    def twofactor_user(self):
+    def twofactor_user(self) -> bool:
         return self._twofactor_user
 
     def authenticate_oath(self, twofactor_token: str) -> TrueNASAuthenticatorResponse:
@@ -314,6 +338,7 @@ class UserPamAuthenticator(TrueNASUserPamAuthenticator):
 
         resp = self.auth_continue([twofactor_token])
         if resp.code == PAMCode.PAM_SUCCESS:
+            assert resp.user_info is not None
             # Grab fresh copy since account flags may have changed due to OTPW login
             pw = self.truenas_user_obj
             assert pw['pw_name'] == resp.user_info['pw_name']
@@ -328,9 +353,6 @@ class UserPamAuthenticator(TrueNASUserPamAuthenticator):
             pw = self._get_user_obj(username)
         except KeyError:
             return TrueNASAuthenticatorResponse(stage, PAMCode.PAM_AUTH_ERR, f'{username}: user does not exist')
-
-        code = None
-        reason = None
 
         # Compare normalized username from NSS with usernames in the /etc/users.oath file
         if not os.path.exists(self._service):
@@ -378,12 +400,14 @@ class UserPamAuthenticator(TrueNASUserPamAuthenticator):
                 resp.code = acct_resp.code
                 resp.reason = acct_resp.reason
                 if acct_resp.code == PAMCode.PAM_AUTH_ERR:
+                    assert self.ctx is not None
                     pam_messages = self.ctx.messages()
                     if pam_messages and any([m.msg.startswith('Your account has expired') for m in pam_messages[-1]]):
                         resp.code = PAMCode.PAM_ACCT_EXPIRED
                         resp.reason = 'Account expired due to aging rules'
 
         if resp.code == PAMCode.PAM_SUCCESS:
+            assert resp.user_info is not None
             # Grab fresh copy since account flags may have changed due to OTPW login
             pw = self.truenas_user_obj
             assert pw['pw_name'] == resp.user_info['pw_name']
@@ -405,7 +429,8 @@ class ApiKeyPamAuthenticator(UserPamAuthenticator):
     def authenticate(self, username: str, password: str) -> TrueNASAuthenticatorResponse:
         """ Split up API key into DBID and actual key material then pass to backend """
         try:
-            dbid, key = password.split('-', 1)
+            s_dbid, key = password.split('-', 1)
+            dbid = int(s_dbid)
         except ValueError:
             # Not a valid API key, but let the backend do the erroring out
             return super().authenticate(username, password)
@@ -426,7 +451,7 @@ class ScramPamAuthenticator(UserPamAuthenticator):
             # so that we can minimally provide reasonable error responses to subsequent
             # calls and not fial in init.
             super().__init__(username='nobody', origin=origin, service=TruenasPamFile.API_KEY)
-            self.scram_error = exc
+            self.scram_error: Exception | None = exc
             self.sent_server_first = False
             self.sent_server_final = False
             return
@@ -442,7 +467,7 @@ class ScramPamAuthenticator(UserPamAuthenticator):
         self.otpw_possible = False
         self.dbid = self.client_first.api_key_id
 
-    def authenticate(self, username: str, password: str):
+    def authenticate(self, username: str, password: str) -> TrueNASAuthenticatorResponse:
         raise NotImplementedError("Plain authentication is not supported for SCRAM authentication")
 
     def handle_first_message(self) -> TrueNASAuthenticatorResponse:
@@ -539,7 +564,7 @@ class InternalPamAuthenticator(UserPamAuthenticator):
         super().__init__(username=username, origin=origin, service=TruenasPamFile.UNIX)
         self.otpw_possible = False
 
-    def authenticate(self, username: str) -> TrueNASAuthenticatorResponse:
+    def authenticate(self, username: str, password: str) -> TrueNASAuthenticatorResponse:
         """ Authentication for our unix socket is somewhat different. We just simply
         verify username exists and set up pam handle
 
