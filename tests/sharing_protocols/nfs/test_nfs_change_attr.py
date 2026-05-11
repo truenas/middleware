@@ -82,6 +82,12 @@ def test_create_compound_cinfo_strictly_monotonic(start_nfs, nfs_dataset):
     ``after > before`` and the chain links cleanly
     (``cinfo[i].before == cinfo[i-1].after``).
     """
+    # 8 is well below knfsd's NFSD_MAX_OPS_PER_COMPOUND (200) and is
+    # plenty to demonstrate the failure: pre-fix collisions show up
+    # whenever >= 2 CREATEs land in the same coarse-ctime tick (jiffies
+    # resolution, ~1-10ms depending on HZ), and 8 ops complete in
+    # microseconds.  Raise the count freely if more evidence in the
+    # cinfos=... assertion message is ever desired.
     n_creates = 8
     with nfs_dataset("nfs_chg_compound") as ds:
         path = f"/mnt/{ds}"
@@ -243,16 +249,17 @@ def test_file_change_attr_advances_on_chmod_loop(start_nfs, nfs_dataset):
     ``zfs_acl_chmod_setattr`` independent of the new code in
     ``zfs_vnops_os.c``, but this co-located coverage point catches a
     regression in either path leaking through to the wire."""
-    iterations = 4
+    # Alternate modes so each chmod is a real change -- a no-op chmod
+    # short-circuits in ZFS and won't bump z_seq, which would mask the
+    # behavior under test.
+    modes = [0o644, 0o600, 0o644, 0o600]
     with nfs_dataset("nfs_chg_chmod") as ds:
         path = f"/mnt/{ds}"
         with nfs_share(path, NFS_SHARE_OPTS):
             with PynfsClient(truenas_server.ip, path) as n:
                 n.create("file")
                 prev = n.getchange("file")
-                # Alternate modes to make each chmod a real change.
-                modes = [0o644, 0o600, 0o644, 0o600]
-                for i, mode in enumerate(modes[:iterations]):
+                for i, mode in enumerate(modes):
                     n.chmod("file", mode)
                     cur = n.getchange("file")
                     assert cur > prev, (
