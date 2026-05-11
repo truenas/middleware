@@ -16,25 +16,20 @@ def _available_zones() -> frozenset[str]:
     # the lifetime of the process; if the admin installs `tzdata-legacy`,
     # restart middlewared to refresh.
     found: set[str] = set()
-
-    def walk(rel: str) -> None:
+    pending: list[str] = [""]
+    while pending:
+        rel = pending.pop()
         path = os.path.join(ZONEINFO_DIR, rel) if rel else ZONEINFO_DIR
-        try:
-            scan = os.scandir(path)
-        except OSError:
-            return
-        with scan as it:
+        with os.scandir(path) as it:
             for entry in it:
                 name = f"{rel}/{entry.name}" if rel else entry.name
                 if entry.is_dir(follow_symlinks=False):
-                    walk(name)
+                    pending.append(name)
                 elif entry.is_file(follow_symlinks=True):
                     # is_file(follow_symlinks=True) is False for dangling
                     # symlinks because the underlying stat() fails -- exactly
                     # the filter we want.
                     found.add(name)
-
-    walk("")
     return frozenset(found)
 
 
