@@ -23,11 +23,23 @@ from xdrdef.nfs4_const import NFS4ERR_INVAL, NFS4ERR_XDEV
 # ::test_share_maproot for the squash behavior we're avoiding.
 NFS_SHARE_OPTS = {"mapall_user": "root", "mapall_group": "root"}
 
-# 1 MiB - large enough to span multiple ZFS records at the default
-# 128 KiB recordsize, so block cloning has something to dedup.  A
-# few-byte payload would clone successfully but wouldn't move
+# 1 MiB - large enough to span multiple ZFS records at the 128 KiB
+# recordsize we pin below, so block cloning has something to dedup.
+# A few-byte payload would clone successfully but wouldn't move
 # ``bcloneused``.
 PAYLOAD_SIZE = 1 << 20
+
+# Recordsize is pinned on dataset creation (passed through
+# ``nfs_dataset(..., data=RECORDSIZE_PROP)``) rather than inherited
+# from the pool, so the alignment math below isn't at the mercy of
+# whatever ``recordsize`` happens to be set on the test pool.
+# ``zfs_clone_range`` rejects offsets and counts that aren't
+# recordsize-aligned with EINVAL ("Offsets and len must be at block
+# boundaries"), so partial-range clone tests must use multiples of
+# this value -- and bcloneused-checking tests need the BRT path to
+# fire, which also requires alignment.
+RECORDSIZE = 128 * 1024
+RECORDSIZE_PROP = {"recordsize": "128K"}
 
 
 def _bcloneused():
@@ -51,7 +63,7 @@ def test_clone_full_file_increments_bcloneused(start_nfs, nfs_dataset):
     """Full NFSv4.2 OP_CLONE of a multi-record random payload bumps
     ``bcloneused`` - confirms the operation actually goes through the
     ZFS BRT and isn't being satisfied by a byte-for-byte fallback."""
-    with nfs_dataset("nfs_clone_bcl") as ds:
+    with nfs_dataset("nfs_clone_bcl", RECORDSIZE_PROP) as ds:
         path = f"/mnt/{ds}"
         with nfs_share(path, NFS_SHARE_OPTS):
             with PynfsClient(truenas_server.ip, path, vers=4.2) as n:
@@ -86,7 +98,7 @@ def test_clone_full_file_increments_bcloneused(start_nfs, nfs_dataset):
 def test_clone_full_file_data_matches(start_nfs, nfs_dataset):
     """OP_CLONE with count=0 (clone-to-EOF) produces a destination
     whose contents byte-for-byte match the source."""
-    with nfs_dataset("nfs_clone_eq") as ds:
+    with nfs_dataset("nfs_clone_eq", RECORDSIZE_PROP) as ds:
         path = f"/mnt/{ds}"
         with nfs_share(path, NFS_SHARE_OPTS):
             with PynfsClient(truenas_server.ip, path, vers=4.2) as n:
@@ -97,13 +109,6 @@ def test_clone_full_file_data_matches(start_nfs, nfs_dataset):
                 n.clone("src", "dst")
                 got = n.read("dst")
             assert got == payload
-
-
-# Default ZFS recordsize.  ``zfs_clone_range`` rejects offsets and
-# counts that aren't recordsize-aligned with EINVAL ("Offsets and len
-# must be at block boundaries"), so partial-range clone tests must
-# use multiples of this value.
-RECORDSIZE = 128 * 1024
 
 
 @pytest.mark.timeout(300)
@@ -119,7 +124,7 @@ def test_clone_partial_range_preserves_surroundings(start_nfs, nfs_dataset):
 
     dst_pre = bytes([0xEE]) * (4 * RECORDSIZE)
 
-    with nfs_dataset("nfs_clone_partial") as ds:
+    with nfs_dataset("nfs_clone_partial", RECORDSIZE_PROP) as ds:
         path = f"/mnt/{ds}"
         with nfs_share(path, NFS_SHARE_OPTS):
             with PynfsClient(truenas_server.ip, path, vers=4.2) as n:
@@ -151,7 +156,7 @@ def test_clone_overlapping_same_file_fails(start_nfs, nfs_dataset):
     destination ranges is rejected by ZFS (``zfs_clone_range``
     explicitly rejects overlap), surfacing as NFS4ERR_INVAL."""
     payload = secrets.token_bytes(4 * RECORDSIZE)
-    with nfs_dataset("nfs_clone_overlap") as ds:
+    with nfs_dataset("nfs_clone_overlap", RECORDSIZE_PROP) as ds:
         path = f"/mnt/{ds}"
         with nfs_share(path, NFS_SHARE_OPTS):
             with PynfsClient(truenas_server.ip, path, vers=4.2) as n:
@@ -174,23 +179,28 @@ def test_clone_count_past_eof_fails(start_nfs, nfs_dataset):
     """OP_CLONE with ``cl_src_offset + cl_count > src_size`` returns
     NFS4ERR_INVAL.  ZFS rejects (or returns a partial count, which
     nfsd then surfaces as EINVAL because the wire-level requirement
-    is full count - cloned bytes equality)."""
-    src_size = 4096
+    is full count - cloned bytes equality).
+
+    Use a recordsize-aligned source and count so the EINVAL is
+    unambiguously the past-EOF check: a sub-recordsize payload would
+    also trip ZFS's "offsets and len must be at block boundaries"
+    check and the failure-cause attribution would be muddied."""
+    src_size = RECORDSIZE
     payload = secrets.token_bytes(src_size)
-    with nfs_dataset("nfs_clone_eof") as ds:
+    with nfs_dataset("nfs_clone_eof", RECORDSIZE_PROP) as ds:
         path = f"/mnt/{ds}"
         with nfs_share(path, NFS_SHARE_OPTS):
             with PynfsClient(truenas_server.ip, path, vers=4.2) as n:
                 n.create("src")
                 n.write("src", payload)
                 n.create("dst")
-                # Ask to clone 8192 bytes from a 4096-byte source.
+                # Ask to clone 2*RECORDSIZE bytes from a RECORDSIZE source.
                 n.clone(
                     "src",
                     "dst",
                     src_offset=0,
                     dst_offset=0,
-                    count=8192,
+                    count=2 * RECORDSIZE,
                     expect_status=NFS4ERR_INVAL,
                 )
 
@@ -211,7 +221,10 @@ def test_clone_cross_dataset_returns_xdev(start_nfs, nfs_dataset):
     Both files are opened via one pynfs session in absolute-path
     mode so the pair of stateids can be used in a single CLONE
     compound."""
-    with nfs_dataset("nfs_clone_xds_a") as ds_a, nfs_dataset("nfs_clone_xds_b") as ds_b:
+    with (
+        nfs_dataset("nfs_clone_xds_a", RECORDSIZE_PROP) as ds_a,
+        nfs_dataset("nfs_clone_xds_b", RECORDSIZE_PROP) as ds_b,
+    ):
         path_a = f"/mnt/{ds_a}"
         path_b = f"/mnt/{ds_b}"
         with nfs_share(path_a, NFS_SHARE_OPTS), nfs_share(path_b, NFS_SHARE_OPTS):

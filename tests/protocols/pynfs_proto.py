@@ -48,6 +48,7 @@ binds the back-channel and routes CB_OFFLOAD into the supplied hook.
 
 import secrets
 import typing
+import warnings
 
 import nfs3client
 from nfs4client import NFS4Client
@@ -94,6 +95,9 @@ from xdrdef.nfs4_const import (
     NF4DIR,
     NFS4_OK,
     OP_CB_OFFLOAD,
+    OP_CLONE,
+    OP_COPY,
+    OP_OFFLOAD_CANCEL,
     OPEN4_CREATE,
     OPEN4_SHARE_ACCESS_BOTH,
     OPEN4_SHARE_ACCESS_WANT_NO_DELEG,
@@ -381,10 +385,27 @@ class PynfsClient:
         assert res.status == 0, f"{label} failed: status={res.status}"
         return res
 
-    def _expect_status(self, res, expected, label):
+    def _expect_status(self, res, expected, label, expected_op=None):
+        """Assert the COMPOUND status matches ``expected``.
+
+        When checking a non-OK status, also verify the last response
+        is the op we expected to fail (``expected_op``).  Without that
+        check, a setup op (PUTFH / LOOKUP / SAVEFH) failing with the
+        same status would falsely satisfy the assertion -- the caller
+        thinks the targeted op failed for the targeted reason, when
+        in reality it never executed.
+        """
         assert res.status == expected, (
             f"{label}: expected status={expected}, got={res.status}"
         )
+        if expected != NFS4_OK and expected_op is not None:
+            assert res.resarray and res.resarray[-1].resop == expected_op, (
+                f"{label}: status={expected} matched but the failing op "
+                f"was not {expected_op}; resarray="
+                f"{[r.resop for r in res.resarray]}.  An earlier op "
+                f"returned the expected status -- the targeted op "
+                f"never executed."
+            )
         return res
 
     # --- op methods (mirroring SSH_NFS) --------------------------------
@@ -488,7 +509,17 @@ class PynfsClient:
                     + [op.write(state, offset + written, 2, chunk)]  # FILE_SYNC4
                 )
                 self._expect_ok(res, f"write({path!r}, off={offset + written})")
-                written += len(chunk)
+                # RFC 7530 §16.36.4 allows the server to write fewer
+                # bytes than requested even for FILE_SYNC4; advance by
+                # the count it reports and re-issue the remainder.
+                # Floor at 1 byte: a zero-count success would loop
+                # forever, so treat it as a bug and bail.
+                got = res.resarray[-1].count
+                assert got > 0, (
+                    f"write({path!r}, off={offset + written}): server "
+                    f"reported wr_count=0 with NFS4_OK; would loop"
+                )
+                written += got
 
     def read(self, path, offset=0, count=None):
         """OP_READ ``count`` bytes from ``path`` starting at ``offset``.
@@ -543,7 +574,13 @@ class PynfsClient:
                     (src_components, src_state, "clone-shared-close"),
                 ],
             )
-        dst_state, dst_components = self._open_stateid(dst)
+        try:
+            dst_state, dst_components = self._open_stateid(dst)
+        except Exception:
+            # Close the src open we already took so a dst-open failure
+            # doesn't cascade into NFS4ERR_CLIENTID_BUSY at teardown.
+            self._close_stateid(src_components, src_state, "clone-src-close-on-error")
+            raise
         return (
             src_state,
             src_components,
@@ -579,6 +616,7 @@ class PynfsClient:
                 expect_status,
                 f"clone({src!r}, {dst!r}, src_off={src_offset}, "
                 f"dst_off={dst_offset}, count={count})",
+                expected_op=OP_CLONE,
             )
             return res.status
         finally:
@@ -626,6 +664,7 @@ class PynfsClient:
                 expect_status,
                 f"copy({src!r}, {dst!r}, src_off={src_offset}, "
                 f"dst_off={dst_offset}, count={count}, sync={synchronous})",
+                expected_op=OP_COPY,
             )
             if res.status != NFS4_OK:
                 return CopyResult(
@@ -688,7 +727,12 @@ class PynfsClient:
             nfs4lib.use_obj(self._full_components(dst))
             + [op.offload_cancel(cb_stateid)]
         )
-        self._expect_status(res, expect_status, f"offload_cancel({dst!r})")
+        self._expect_status(
+            res,
+            expect_status,
+            f"offload_cancel({dst!r})",
+            expected_op=OP_OFFLOAD_CANCEL,
+        )
         return res.status
 
     # --- xattr (NFSv4.2) -----------------------------------------------
@@ -807,14 +851,16 @@ class PynfsClient:
             nfs4lib.use_obj(file_components) + [op.close(0, stateid)]
         )
         # Best-effort: don't raise if the CLOSE itself fails (the
-        # state will be reaped via the laundromat eventually); but
-        # do surface non-OK statuses for debugging.
+        # state will be reaped via the laundromat eventually) so the
+        # primary test result isn't masked by a teardown error -- but
+        # do warn so the leak is visible in test output.
         if res.status != NFS4_OK:
-            # Re-raise as an explicit assertion only if the caller
-            # asked for strict checking via _expect_ok.  For now,
-            # fall through silently - the open is still leaked but
-            # the test result isn't masked by a teardown error.
-            pass
+            warnings.warn(
+                f"{label}: CLOSE failed with status={res.status}; "
+                f"open stateid leaked, server-side state will be "
+                f"reaped via the laundromat",
+                stacklevel=2,
+            )
 
     class _StateCtx:
         def __init__(self, owner, parent_walker, file_walker, sess, path):
