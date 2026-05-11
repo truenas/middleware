@@ -5,9 +5,9 @@ import logging
 import os
 import typing
 
-from middlewared.plugins.config import UPLOADED_DB_PATH
 from middlewared.service import CallError, ServiceContext
 from middlewared.utils import sw_info
+from middlewared.utils.db import UPLOADED_DB_PATH
 
 from .utils import can_update
 from .utils_linux import mount_update
