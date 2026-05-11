@@ -10,7 +10,6 @@ import typing
 from typing import Any, Callable, Iterable, Sequence, TypeVar
 
 from .prctl import die_with_parent
-from .threading import io_thread_pool_executor
 
 
 # Define Product Strings
@@ -81,15 +80,11 @@ async def run(*args: Any, **kwargs: Any) -> subprocess.CompletedProcess[bytes] |
     kwargs.setdefault('close_fds', True)
     kwargs['preexec_fn'] = die_with_parent
 
-    loop = asyncio.get_event_loop()
     subprocess_identifier = f"{time.monotonic()}: {args!r}"
     try:
         currently_running_subprocesses.add(subprocess_identifier)
         try:
-            return await loop.run_in_executor(
-                io_thread_pool_executor,
-                functools.partial(subprocess.run, args, **kwargs),
-            )
+            return await asyncio.to_thread(subprocess.run, args, **kwargs)
         finally:
             currently_running_subprocesses.discard(subprocess_identifier)
     except OSError as e:
