@@ -55,6 +55,7 @@ from middlewared.alert.source import (  # noqa: F401
     snapshot_count,
     ssh_login_failures,
     syslog_ng,
+    timezone,
     truecommand,
     truenas_connect,
     truenas_verify,
