@@ -52,11 +52,10 @@ from middlewared.plugins.failover_.remote import NETWORK_ERRORS
 from middlewared.service import Service, job, periodic, private
 from middlewared.service_exception import CallError, NetworkActivityDisabled
 import middlewared.sqlalchemy as sa
-from middlewared.utils import bisect
 from middlewared.utils.time_utils import utc_now
 
 if typing.TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Iterable
 
     from middlewared.main import Middleware
 
@@ -175,6 +174,22 @@ def get_alert_level(alert: Alert[Any], classes: dict[str, Any]) -> AlertLevel:
 
 def get_alert_policy(alert: Alert[Any], classes: dict[str, Any]) -> str:
     return classes.get(alert.instance.config.name, {}).get("policy", DEFAULT_POLICY)  # type: ignore
+
+
+def partition[T](predicate: Callable[[T], Any], iterable: Iterable[T]) -> tuple[list[T], list[T]]:
+    """Split *iterable* into ``(matching, non_matching)`` lists by *predicate*.
+
+    Order within each list is preserved from the input. The predicate is
+    evaluated exactly once per item.
+    """
+    matching: list[T] = []
+    non_matching: list[T] = []
+    for item in iterable:
+        if predicate(item):
+            matching.append(item)
+        else:
+            non_matching.append(item)
+    return matching, non_matching
 
 
 class AlertSerializer:
@@ -469,7 +484,7 @@ class AlertService(Service):
             return
 
         if isinstance(alert.instance, DismissableAlertClass):
-            related_alerts, unrelated_alerts = bisect(
+            related_alerts, unrelated_alerts = partition(
                 lambda a: (a.node, a.instance.config.name) == (alert.node, alert.instance.config.name),
                 self.alerts,
             )
@@ -1041,7 +1056,7 @@ class AlertService(Service):
             if not issubclass(klass_type, OneShotAlertClass):
                 raise CallError(f"Alert class {klassname!r} is not a one-shot alert class")
 
-            related_alerts, unrelated_alerts = bisect(
+            related_alerts, unrelated_alerts = partition(
                 lambda a: (a.node, a.instance.config.name) == (self.node, klass_type.config.name),
                 self.alerts
             )
