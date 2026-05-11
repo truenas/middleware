@@ -20,7 +20,7 @@ from middlewared.api.current import (
     ConfigUploadResult,
 )
 from middlewared.service import CallError, Service, job, private
-from middlewared.utils.db import FREENAS_DATABASE
+from middlewared.utils.db import FREENAS_DATABASE, UPLOADED_DB_PATH
 from middlewared.utils.privilege import credential_has_full_admin
 from middlewared.utils.pwenc import PWENC_FILE_SECRET, PWENC_FILE_SECRET_MODE, pwenc_generate_secret, pwenc_rename
 
@@ -32,7 +32,6 @@ CONFIG_FILES = {
     'snmp_engine_id': '/data/subsystems/snmp/truenas_pysnmp.conf',
 }
 RE_CONFIG_BACKUP = re.compile(r'.*(\d{4}-\d{2}-\d{2})-(\d+)\.db$')
-UPLOADED_DB_PATH = '/data/uploaded.db'
 PWENC_UPLOADED = '/data/pwenc_secret_uploaded'
 ADMIN_KEYS_UPLOADED = '/data/admin_authorized_keys_uploaded'
 TRUENAS_ADMIN_KEYS_UPLOADED = '/data/truenas_admin_authorized_keys_uploaded'
