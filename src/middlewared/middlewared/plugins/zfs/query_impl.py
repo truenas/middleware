@@ -25,6 +25,8 @@ class CallbackState:
     """Current recursion depth."""
     pool_special_cache: dict[str, bool] = dataclasses.field(default_factory=dict)
     """Cache of {pool_name -> has_special_vdevs} populated during iteration."""
+    tier_enabled: bool = False
+    """True only when the caller requested get_tier and zfs.tier.config.enabled is True."""
 
 
 def __query_impl_callback(hdl: Any, state: CallbackState) -> bool:
@@ -45,7 +47,7 @@ def __query_impl_callback(hdl: Any, state: CallbackState) -> bool:
     )
     info["children"] = None
 
-    if state.query_args.get('get_tier') and info.get('type') == 'FILESYSTEM':
+    if state.tier_enabled and info.get('type') == 'FILESYSTEM':
         info['tier'] = get_dataset_tier_info_cached(hdl, state.pool_special_cache)
 
     state.results.append(info)
@@ -69,6 +71,7 @@ def __query_impl_callback(hdl: Any, state: CallbackState) -> bool:
             eip=state.eip,
             current_depth=state.current_depth + 1,
             pool_special_cache=state.pool_special_cache,
+            tier_enabled=state.tier_enabled,
         )
         hdl.iter_filesystems(callback=__query_impl_callback, state=child_state)
     return True
@@ -107,7 +110,7 @@ def __should_exclude_internal_paths(data: dict[str, Any]) -> bool:
     return data.get("exclude_internal_paths", True)  # type: ignore
 
 
-def query_impl(hdl: Any, data: dict[str, Any]) -> list[dict[str, Any]]:
+def query_impl(hdl: Any, data: dict[str, Any], tier_enabled: bool = False) -> list[dict[str, Any]]:
     if data["max_depth"] > 0 and data["get_children"] is False:
         # If max_depth > 0, enable get_children implicitly
         data["get_children"] = True
@@ -119,6 +122,7 @@ def query_impl(hdl: Any, data: dict[str, Any]) -> list[dict[str, Any]]:
         eip=__should_exclude_internal_paths(data),
         current_depth=0,
         pool_special_cache={},
+        tier_enabled=tier_enabled,
     )
     if state.query_args["paths"]:
         __query_impl_paths(hdl, state)

@@ -375,7 +375,7 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
                 field, "ZFS tiering is globally disabled", errno.EINVAL
             )
 
-        tier_map = await self.call2(self.bulk_get_tier_info, [dataset_name])
+        tier_map = await self.call2(self._bulk_tier_info_with_sentinel, [dataset_name])
         current_info = tier_map.get(dataset_name)
         if current_info is _DATASET_NOT_FOUND:
             raise ValidationError(
@@ -450,7 +450,9 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
         """List files that failed to be rewritten during a rewrite job."""
         dataset_name, job_uuid = self._parse_tier_job_id(data["tier_job_id"])
         try:
-            resolved = get_resolved_failures(dataset_name, job_uuid)
+            resolved = await self.middleware.run_in_thread(
+                get_resolved_failures, dataset_name, job_uuid
+            )
         except Exception as e:
             raise CallError(f"Failed to get job failures: {e}")
 
@@ -589,7 +591,7 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
                 "zfs_tier_dataset_set_tier", "ZFS tiering is globally disabled", errno.EINVAL
             )
 
-        tier_map = await self.call2(self.bulk_get_tier_info, [dataset_name])
+        tier_map = await self.call2(self._bulk_tier_info_with_sentinel, [dataset_name])
         current_info = tier_map.get(dataset_name)
 
         if current_info is _DATASET_NOT_FOUND:
@@ -695,19 +697,33 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
 
     @private
     @pass_thread_local_storage
-    def bulk_get_tier_info(
+    def _bulk_tier_info_with_sentinel(
         self, tls: typing.Any, dataset_names: list[str]
     ) -> dict[str, typing.Any]:
         """
-        Efficiently returns {dataset_name: TierInfo|None} for multiple datasets.
-        Checks license and enabled flag once; groups by pool for a single pool
-        property check.
+        Internal: returns {dataset_name: TierInfo|None|_DATASET_NOT_FOUND}. The
+        sentinel lets callers distinguish a missing dataset from a pool with no
+        SPECIAL vdev (None).
         """
         config = self.call_sync2(self.s.zfs.tier.config)
         if not config.enabled:
             return {ds: None for ds in dataset_names}
 
         return _bulk_tier_map(tls.lzh, dataset_names, self.logger)
+
+    @private
+    @pass_thread_local_storage
+    def bulk_get_tier_info(
+        self, tls: typing.Any, dataset_names: list[str]
+    ) -> dict[str, typing.Any]:
+        """
+        Returns {dataset_name: TierInfo|None} for multiple datasets. Missing
+        datasets and pools without a SPECIAL vdev both map to None — the sentinel
+        is not part of the public contract because it is neither JSON-serializable
+        nor a valid TierInfo for Pydantic validation.
+        """
+        raw = self._bulk_tier_info_with_sentinel(tls, dataset_names)
+        return {ds: (None if v is _DATASET_NOT_FOUND else v) for ds, v in raw.items()}
 
 
 async def setup(middleware: Middleware) -> None:
