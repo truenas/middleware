@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from collections import defaultdict, namedtuple
+from collections.abc import Callable, Iterable
 import copy
 from datetime import datetime, timezone
 import errno
@@ -46,7 +47,6 @@ from middlewared.service import (
 )
 from middlewared.service_exception import CallError, NetworkActivityDisabled
 import middlewared.sqlalchemy as sa
-from middlewared.utils import bisect
 from middlewared.utils.plugins import load_modules, load_classes
 from middlewared.utils.python import get_middlewared_dir
 from middlewared.utils.time_utils import utc_now
@@ -162,6 +162,22 @@ def get_alert_level(alert, classes):
 
 def get_alert_policy(alert, classes):
     return classes.get(alert.klass.name, {}).get("policy", DEFAULT_POLICY)
+
+
+def partition[T](predicate: Callable[[T], Any], iterable: Iterable[T]) -> tuple[list[T], list[T]]:
+    """Split *iterable* into ``(matching, non_matching)`` lists by *predicate*.
+
+    Order within each list is preserved from the input. The predicate is
+    evaluated exactly once per item.
+    """
+    matching: list[T] = []
+    non_matching: list[T] = []
+    for item in iterable:
+        if predicate(item):
+            matching.append(item)
+        else:
+            non_matching.append(item)
+    return matching, non_matching
 
 
 class AlertSerializer:
@@ -442,8 +458,8 @@ class AlertService(Service):
             return
 
         if issubclass(alert.klass, DismissableAlertClass):
-            related_alerts, unrelated_alerts = bisect(lambda a: (a.node, a.klass) == (alert.node, alert.klass),
-                                                      self.alerts)
+            related_alerts, unrelated_alerts = partition(lambda a: (a.node, a.klass) == (alert.node, alert.klass),
+                                                         self.alerts)
             left_alerts = await alert.klass(self.middleware).dismiss(related_alerts, alert)
             for deleted_alert in related_alerts:
                 if deleted_alert not in left_alerts:
@@ -1007,8 +1023,8 @@ class AlertService(Service):
             if not issubclass(klass, OneShotAlertClass):
                 raise CallError(f"Alert class {klassname!r} is not a one-shot alert source")
 
-            related_alerts, unrelated_alerts = bisect(lambda a: (a.node, a.klass) == (self.node, klass),
-                                                      self.alerts)
+            related_alerts, unrelated_alerts = partition(lambda a: (a.node, a.klass) == (self.node, klass),
+                                                         self.alerts)
             left_alerts = await klass(self.middleware).delete(related_alerts, query)
             for deleted_alert in related_alerts:
                 if deleted_alert not in left_alerts:
