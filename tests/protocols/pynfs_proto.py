@@ -57,6 +57,47 @@ import nfs4lib
 import nfs_ops
 import rpc
 from rpc.rpc_const import AUTH_SYS
+from xdrdef.nfs4_const import (
+    FATTR4_CHANGE,
+    FATTR4_DACL,
+    FATTR4_ACL,
+    FATTR4_FILEID,
+    FATTR4_MODE,
+    OPEN4_CREATE,
+    OPEN4_SHARE_ACCESS_BOTH,
+    OPEN4_SHARE_DENY_NONE,
+    OPEN4_SHARE_ACCESS_WANT_NO_DELEG,
+    GUARDED4,
+    CLAIM_NULL,
+    NF4DIR,
+    SETXATTR4_CREATE,
+    SETXATTR4_REPLACE,
+    SETXATTR4_EITHER,
+    ACL4_AUTO_INHERIT,
+    ACL4_PROTECTED,
+    ACL4_DEFAULTED,
+)
+from xdrdef.nfs4_type import (
+    openflag4,
+    createhow4,
+    open_claim4,
+    open_owner4,
+    createtype4,
+    nfsacl41,
+    nfsace4,
+)
+from xdrdef.nfs3_const import (
+    NFSPROC3_LOOKUP,
+    NFSPROC3_READDIR,
+    NFSPROC3_CREATE,
+    NFSPROC3_MKDIR,
+    NFSPROC3_REMOVE,
+    NFSPROC3_RMDIR,
+    NFSPROC3_RENAME,
+    NFS3_OK,
+    UNCHECKED,
+    DONT_CHANGE,
+)
 from xdrdef.mnt3_const import MOUNTPROC3_MNT
 from xdrdef.nfs3_const import (
     DONT_CHANGE,
@@ -70,6 +111,28 @@ from xdrdef.nfs3_const import (
     NFSPROC3_RMDIR,
     UNCHECKED,
 )
+from xdrdef.nfs4_type import (
+    openflag4,
+    createhow4,
+    open_claim4,
+    open_owner4,
+    createtype4,
+    nfsacl41,
+    nfsace4,
+)
+from xdrdef.nfs3_const import (
+    NFSPROC3_LOOKUP,
+    NFSPROC3_READDIR,
+    NFSPROC3_CREATE,
+    NFSPROC3_MKDIR,
+    NFSPROC3_REMOVE,
+    NFSPROC3_RMDIR,
+    NFSPROC3_RENAME,
+    NFS3_OK,
+    UNCHECKED,
+    DONT_CHANGE,
+)
+from xdrdef.mnt3_const import MOUNTPROC3_MNT
 from xdrdef.nfs3_type import (
     createhow3,
     diropargs3,
@@ -734,6 +797,32 @@ class PynfsClient:
             expected_op=OP_OFFLOAD_CANCEL,
         )
         return res.status
+
+    # --- change attribute / mode (generic SETATTR/GETATTR) ------------
+
+    def getchange(self, path):
+        """Return the FATTR4_CHANGE attribute (changeid4 / u64) for
+        ``path``.  Used to verify that every modifying op produces a
+        strict increment in the NFSv4 change attribute (RFC 8881
+        Section 5.8.1.4): pre-STATX_CHANGE_COOKIE knfsd synthesises
+        this from ctime alone, which on ZFS uses a coarse-resolution
+        timer and yields collisions for ops within the same tick."""
+        self._validate_rel(path)
+        bitmap = nfs4lib.list2bitmap([FATTR4_CHANGE])
+        res = self._sess.compound(
+            nfs4lib.use_obj(self._full_components(path)) + [op.getattr(bitmap)]
+        )
+        self._expect_ok(res, f"getchange({path!r})")
+        return res.resarray[-1].obj_attributes[FATTR4_CHANGE]
+
+    def chmod(self, path, mode):
+        """SETATTR(FATTR4_MODE)."""
+        self._validate_rel(path)
+        res = self._sess.compound(
+            nfs4lib.use_obj(self._full_components(path))
+            + [op.setattr(_zero_stateid(), {FATTR4_MODE: mode})]
+        )
+        self._expect_ok(res, f"chmod({path!r}, {mode:o})")
 
     # --- xattr (NFSv4.2) -----------------------------------------------
 
