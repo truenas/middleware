@@ -722,7 +722,11 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
         is not part of the public contract because it is neither JSON-serializable
         nor a valid TierInfo for Pydantic validation.
         """
-        raw = self._bulk_tier_info_with_sentinel(tls, dataset_names)
+        config = self.call_sync2(self.s.zfs.tier.config)
+        if not config.enabled:
+            return {ds: None for ds in dataset_names}
+
+        raw = _bulk_tier_map(tls.lzh, dataset_names, self.logger)
         return {ds: (None if v is _DATASET_NOT_FOUND else v) for ds, v in raw.items()}
 
 

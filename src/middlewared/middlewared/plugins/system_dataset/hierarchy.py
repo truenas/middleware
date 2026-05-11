@@ -1,5 +1,5 @@
-import os
 from enum import StrEnum
+import os
 
 from middlewared.plugins.vm.utils import LIBVIRT_QEMU_GID, LIBVIRT_QEMU_UID
 from middlewared.utils.truesearch import TRUESEARCH_GID, TRUESEARCH_UID
