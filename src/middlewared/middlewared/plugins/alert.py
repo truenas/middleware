@@ -458,8 +458,10 @@ class AlertService(Service):
             return
 
         if issubclass(alert.klass, DismissableAlertClass):
-            related_alerts, unrelated_alerts = partition(lambda a: (a.node, a.klass) == (alert.node, alert.klass),
-                                                         self.alerts)
+            related_alerts, unrelated_alerts = partition(
+                lambda a: (a.node, a.klass) == (alert.node, alert.klass),
+                self.alerts
+            )
             left_alerts = await alert.klass(self.middleware).dismiss(related_alerts, alert)
             for deleted_alert in related_alerts:
                 if deleted_alert not in left_alerts:
@@ -1023,8 +1025,10 @@ class AlertService(Service):
             if not issubclass(klass, OneShotAlertClass):
                 raise CallError(f"Alert class {klassname!r} is not a one-shot alert source")
 
-            related_alerts, unrelated_alerts = partition(lambda a: (a.node, a.klass) == (self.node, klass),
-                                                         self.alerts)
+            related_alerts, unrelated_alerts = partition(
+                lambda a: (a.node, a.klass) == (self.node, klass),
+                self.alerts
+            )
             left_alerts = await klass(self.middleware).delete(related_alerts, query)
             for deleted_alert in related_alerts:
                 if deleted_alert not in left_alerts:
