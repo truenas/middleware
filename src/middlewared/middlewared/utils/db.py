@@ -3,6 +3,7 @@ from typing import Any
 
 FREENAS_DATABASE = '/data/freenas-v1.db'
 FREENAS_DATABASE_MODE = 0o600
+UPLOADED_DB_PATH = '/data/uploaded.db'
 
 
 def dict_factory(cursor: sqlite3.Cursor, row: sqlite3.Row) -> dict[str, Any]:
