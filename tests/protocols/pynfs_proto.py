@@ -37,73 +37,155 @@ The method names mirror ``SSH_NFS`` (``mkdir`` / ``rmdir`` / ``ls`` /
 ``unlink`` / ``create`` / ``rename`` / ``server_side_copy``) so test
 migrations are 1:1 method-name-preserving renames.  ACL/xattr surface
 exists on ``PynfsClient`` only (they're NFSv4-only attributes).
+
+NFSv4.2 server-side copy (``OP_CLONE`` / ``OP_COPY``) and the offload
+helpers (``OP_OFFLOAD_STATUS`` / ``OP_OFFLOAD_CANCEL``) are available
+via ``clone()`` / ``copy()`` / ``offload_status()`` / ``offload_cancel()``
+on ``PynfsClient``.  The CB_OFFLOAD back-channel callback is opt-in:
+pass ``on_cb_offload=callable`` to the constructor and the client
+binds the back-channel and routes CB_OFFLOAD into the supplied hook.
 """
 
 import secrets
+import typing
+import warnings
 
+import nfs3client
+from nfs4client import NFS4Client
+from nfs4commoncode import cb_encode_status_by_name
 import nfs4lib
 import nfs_ops
-import nfs3client
 import rpc
-from nfs4client import NFS4Client
 from rpc.rpc_const import AUTH_SYS
-from xdrdef.nfs4_const import (
-    FATTR4_DACL,
-    FATTR4_ACL,
-    FATTR4_FILEID,
-    FATTR4_MODE,
-    OPEN4_CREATE,
-    OPEN4_SHARE_ACCESS_BOTH,
-    OPEN4_SHARE_DENY_NONE,
-    OPEN4_SHARE_ACCESS_WANT_NO_DELEG,
-    GUARDED4,
-    CLAIM_NULL,
-    NF4DIR,
-    SETXATTR4_CREATE,
-    SETXATTR4_REPLACE,
-    SETXATTR4_EITHER,
-    ACL4_AUTO_INHERIT,
-    ACL4_PROTECTED,
-    ACL4_DEFAULTED,
-)
-from xdrdef.nfs4_type import (
-    openflag4,
-    createhow4,
-    open_claim4,
-    open_owner4,
-    createtype4,
-    nfsacl41,
-    nfsace4,
-)
-from xdrdef.nfs3_const import (
-    NFSPROC3_LOOKUP,
-    NFSPROC3_READDIR,
-    NFSPROC3_CREATE,
-    NFSPROC3_MKDIR,
-    NFSPROC3_REMOVE,
-    NFSPROC3_RMDIR,
-    NFSPROC3_RENAME,
-    NFS3_OK,
-    UNCHECKED,
-    DONT_CHANGE,
-)
 from xdrdef.mnt3_const import MOUNTPROC3_MNT
+from xdrdef.nfs3_const import (
+    DONT_CHANGE,
+    NFS3_OK,
+    NFSPROC3_CREATE,
+    NFSPROC3_LOOKUP,
+    NFSPROC3_MKDIR,
+    NFSPROC3_READDIR,
+    NFSPROC3_REMOVE,
+    NFSPROC3_RENAME,
+    NFSPROC3_RMDIR,
+    UNCHECKED,
+)
 from xdrdef.nfs3_type import (
+    createhow3,
     diropargs3,
     nfs_fh3,
     sattr3,
-    set_mode3,
-    set_uid3,
-    set_gid3,
-    set_size3,
     set_atime,
+    set_gid3,
+    set_mode3,
     set_mtime,
-    createhow3,
+    set_size3,
+    set_uid3,
 )
-
+from xdrdef.nfs4_const import (
+    ACL4_AUTO_INHERIT,
+    ACL4_DEFAULTED,
+    ACL4_PROTECTED,
+    CLAIM_NULL,
+    CREATE_SESSION4_FLAG_CONN_BACK_CHAN,
+    FATTR4_DACL,
+    FATTR4_FILEID,
+    FATTR4_MODE,
+    GUARDED4,
+    NF4DIR,
+    NFS4_OK,
+    OP_CB_OFFLOAD,
+    OP_CLONE,
+    OP_COPY,
+    OP_OFFLOAD_CANCEL,
+    OPEN4_CREATE,
+    OPEN4_SHARE_ACCESS_BOTH,
+    OPEN4_SHARE_ACCESS_WANT_NO_DELEG,
+    OPEN4_SHARE_DENY_NONE,
+    SETXATTR4_EITHER,
+)
+from xdrdef.nfs4_type import (
+    channel_attrs4,
+    createhow4,
+    createtype4,
+    nfsace4,
+    nfsacl41,
+    open_claim4,
+    open_owner4,
+    openflag4,
+)
 
 op = nfs_ops.NFS4ops()
 op3 = nfs_ops.NFS3ops()
+
+
+# Default ``ca_maxrequestsize`` baked into pynfs's ``create_session`` is
+# 8 KiB, which can't fit a single MiB-sized OP_WRITE payload.  Linux nfsd's
+# ``sv_max_payload`` happily grants ``≥1 MiB``, so we ask for 1 MiB up
+# front and chunk WRITE / READ accordingly (whatever ends up actually
+# negotiated is read off the session's ``fore_channel.maxrequestsize``).
+_MAX_REQ = 1 << 20
+
+# Headroom subtracted from the negotiated maxrequestsize to leave room
+# for the SEQUENCE + PUTROOTFH + LOOKUP* + WRITE op headers and the XDR
+# trailer in a single COMPOUND.
+_HEADER_SLACK = 4096
+
+
+# Pynfs ships ``CB_OFFLOAD4{args,res}`` XDR support but no
+# ``op_cb_offload`` method on ``NFS4Client``, so the back-channel
+# dispatcher returns ``NFS4ERR_NOTSUPP`` for incoming CB_OFFLOADs by
+# default.  Patch a minimal handler in once at import time so callers
+# that opt into back-channel binding (``on_cb_offload=callable`` on the
+# ``PynfsClient`` constructor) actually see the callback fire.  The
+# handler delegates the work to pynfs's pre/post hooks - the
+# user-supplied callable is registered via ``cb_post_hook(OP_CB_OFFLOAD,
+# ...)`` in ``__enter__``.
+#
+# We call ``cb_encode_status_by_name`` directly rather than
+# ``cb_encode_status``: the latter introspects the calling frame name
+# and only accepts callers whose name starts with ``op_`` (pynfs
+# convention), which doesn't survive being assigned via
+# ``NFS4Client.op_cb_offload = ...`` cleanly across all Python
+# versions.  By-name keeps the dispatch explicit.
+def _op_cb_offload(self, arg, env):
+    self.prehook(arg, env)
+    res = self.posthook(arg, env, res=NFS4_OK)
+    return cb_encode_status_by_name("cb_offload", res)
+
+
+if not hasattr(NFS4Client, "op_cb_offload"):
+    NFS4Client.op_cb_offload = _op_cb_offload
+
+
+class CopyResult(typing.NamedTuple):
+    """Subset of ``COPY4res`` exposed to callers.
+
+    ``status`` is the COMPOUND status; the remaining fields are only
+    populated when ``status == NFS4_OK``.  ``cb_stateid`` is the async
+    callback stateid (``wr_callback_id[0]``) when the server elected
+    asynchronous offload, ``None`` for synchronous COPY.
+    """
+
+    status: int
+    bytes_written: int
+    committed: int
+    verifier: bytes
+    cb_stateid: object
+    consecutive: bool
+    synchronous: bool
+
+
+class OffloadStatus(typing.NamedTuple):
+    """Result of OP_OFFLOAD_STATUS.
+
+    ``complete`` is the XDR ``nfsstat4 osr_complete<1>`` field as a
+    plain list - empty while the async copy is still running, single
+    element ``[final_status]`` once the async thread has finished.
+    """
+
+    count: int
+    complete: list
 
 
 # ----------------------------------------------------------------------
@@ -150,16 +232,32 @@ class PynfsClient:
         gid=0,
         owner_name=None,
         secure=False,
+        on_cb_offload=None,
         **_ignored,
     ):
         """``vers`` accepts 4, 4.1, 4.2 (or "4.x" string) — gets
         normalised to a minorversion int.  ``secure`` binds a
         privileged source port (<1024); default False uses an
         ephemeral port, which is what kernel ``mount.nfs -o
-        noresvport`` does.  Other SSH_NFS kwargs (``user``,
-        ``password``, ``ip``, ``localpath``, ``kerberos``,
-        ``options``) are accepted-and-ignored so callers can swap
-        ``SSH_NFS`` for ``PynfsClient`` without touching kwargs.
+        noresvport`` does.
+
+        ``export_path`` is the export-relative anchor for path
+        arguments; pass ``None`` for absolute-path mode (paths are
+        treated as server-absolute, e.g. ``"/mnt/tank/foo/bar"``) so a
+        single client/session can navigate across multiple exports for
+        cross-dataset OP_CLONE / OP_COPY tests.
+
+        ``on_cb_offload`` is an opt-in callback handler.  When set, the
+        client binds the back-channel during CREATE_SESSION and
+        registers the callable as the post-hook for ``OP_CB_OFFLOAD``;
+        otherwise the back-channel is left unbound and the server
+        won't deliver CB_OFFLOAD callbacks (most tests don't need
+        them - they poll ``OP_OFFLOAD_STATUS`` instead).
+
+        Other SSH_NFS kwargs (``user``, ``password``, ``ip``,
+        ``localpath``, ``kerberos``, ``options``) are accepted-and-
+        ignored so callers can swap ``SSH_NFS`` for ``PynfsClient``
+        without touching kwargs.
         """
         self._host = host.encode() if isinstance(host, str) else host
         self._export = export_path
@@ -170,10 +268,12 @@ class PynfsClient:
         self._owner_name = owner_name or (
             b"truenas-pynfs-" + secrets.token_hex(4).encode()
         )
+        self._on_cb_offload = on_cb_offload
         # Set in __enter__
         self._client = None
         self._clt = None
         self._sess = None
+        self._chunk = None
 
     def __enter__(self):
         c = NFS4Client(
@@ -190,12 +290,32 @@ class PynfsClient:
         sess = None
         try:
             clt = c.new_client(self._owner_name)
-            sess = clt.create_session()
+            big_attrs = channel_attrs4(0, _MAX_REQ, _MAX_REQ, _MAX_REQ, 128, 8, [])
+            create_flags = (
+                CREATE_SESSION4_FLAG_CONN_BACK_CHAN
+                if self._on_cb_offload is not None
+                else 0
+            )
+            sess = clt.create_session(
+                flags=create_flags,
+                fore_attrs=big_attrs,
+                back_attrs=big_attrs,
+            )
+            if self._on_cb_offload is not None:
+                clt.cb_post_hook(OP_CB_OFFLOAD, self._on_cb_offload)
             sess.compound([op.reclaim_complete(False)])
         except Exception:
             self._teardown(c, clt, sess)
             raise
         self._client, self._clt, self._sess = c, clt, sess
+        # Negotiated, not requested - server can cap below _MAX_REQ.
+        # Use the smaller of inbound/outbound limits so the same chunk
+        # size is safe for WRITE and READ.
+        negotiated = min(
+            sess.fore_channel.maxrequestsize,
+            sess.fore_channel.maxresponsesize,
+        )
+        self._chunk = max(4096, negotiated - _HEADER_SLACK)
         return self
 
     def __exit__(self, *exc):
@@ -232,11 +352,23 @@ class PynfsClient:
     # --- helpers -------------------------------------------------------
 
     def _validate_rel(self, path):
-        if path.startswith("/"):
-            raise ValueError(f"{path}: absolute paths not supported; pass relative")
+        if self._export is None:
+            if not path.startswith("/"):
+                raise ValueError(
+                    f"{path}: absolute paths required when export_path=None"
+                )
+        else:
+            if path.startswith("/"):
+                raise ValueError(f"{path}: absolute paths not supported; pass relative")
 
     def _full_components(self, rel):
-        """Combine the export path and ``rel`` into component bytes."""
+        """Combine the export path and ``rel`` into component bytes.
+
+        In absolute-path mode (``export_path=None``) ``rel`` is
+        already server-absolute; just decompose it.
+        """
+        if self._export is None:
+            return _components(rel)
         return _components(self._export) + _components(rel)
 
     def _split_parent_name(self, rel):
@@ -245,10 +377,35 @@ class PynfsClient:
         parts = _components(rel)
         if not parts:
             raise ValueError("empty path; need a non-root target")
+        if self._export is None:
+            return parts[:-1], parts[-1]
         return _components(self._export) + parts[:-1], parts[-1]
 
     def _expect_ok(self, res, label):
         assert res.status == 0, f"{label} failed: status={res.status}"
+        return res
+
+    def _expect_status(self, res, expected, label, expected_op=None):
+        """Assert the COMPOUND status matches ``expected``.
+
+        When checking a non-OK status, also verify the last response
+        is the op we expected to fail (``expected_op``).  Without that
+        check, a setup op (PUTFH / LOOKUP / SAVEFH) failing with the
+        same status would falsely satisfy the assertion -- the caller
+        thinks the targeted op failed for the targeted reason, when
+        in reality it never executed.
+        """
+        assert res.status == expected, (
+            f"{label}: expected status={expected}, got={res.status}"
+        )
+        if expected != NFS4_OK and expected_op is not None:
+            assert res.resarray and res.resarray[-1].resop == expected_op, (
+                f"{label}: status={expected} matched but the failing op "
+                f"was not {expected_op}; resarray="
+                f"{[r.resop for r in res.resarray]}.  An earlier op "
+                f"returned the expected status -- the targeted op "
+                f"never executed."
+            )
         return res
 
     # --- op methods (mirroring SSH_NFS) --------------------------------
@@ -272,6 +429,9 @@ class PynfsClient:
             createhow4(GUARDED4, {FATTR4_MODE: 0o644}, self._sess.c.verifier),
         )
         openclaim = open_claim4(CLAIM_NULL, name)
+        # OPEN4_CREATE returns an open stateid; close it in the same
+        # session so we don't leak nfsd_file refs on the destination
+        # dataset (which would block subsequent zfs unmount/destroy).
         res = self._sess.compound(
             nfs4lib.use_obj(parent)
             + [
@@ -286,6 +446,12 @@ class PynfsClient:
             ]
         )
         self._expect_ok(res, f"create({path!r})")
+        stateid = res.resarray[-1].stateid
+        self._close_stateid(
+            self._full_components(path),
+            stateid,
+            label=f"create-close({path!r})",
+        )
 
     def rmdir(self, path):
         self._validate_rel(path)
@@ -328,33 +494,246 @@ class PynfsClient:
 
     def write(self, path, data, offset=0):
         """OP_WRITE ``data`` to existing ``path`` at ``offset`` with
-        stable=FILE_SYNC4.  ``path`` must already exist."""
+        stable=FILE_SYNC4.  Splits the payload to fit the negotiated
+        ``maxrequestsize`` - default pynfs request is 8 KiB but
+        ``__enter__`` asks for 1 MiB.  ``path`` must already exist."""
         self._validate_rel(path)
         if isinstance(data, str):
             data = data.encode()
         with self._open_for_write(path) as state:
-            res = self._sess.compound(
-                nfs4lib.use_obj(self._full_components(path))
-                + [op.write(state, offset, 2, data)]  # stable=2 -> FILE_SYNC4
-            )
-            self._expect_ok(res, f"write({path!r})")
+            written = 0
+            while written < len(data):
+                chunk = data[written : written + self._chunk]
+                res = self._sess.compound(
+                    nfs4lib.use_obj(self._full_components(path))
+                    + [op.write(state, offset + written, 2, chunk)]  # FILE_SYNC4
+                )
+                self._expect_ok(res, f"write({path!r}, off={offset + written})")
+                # RFC 7530 §16.36.4 allows the server to write fewer
+                # bytes than requested even for FILE_SYNC4; advance by
+                # the count it reports and re-issue the remainder.
+                # Floor at 1 byte: a zero-count success would loop
+                # forever, so treat it as a bug and bail.
+                got = res.resarray[-1].count
+                assert got > 0, (
+                    f"write({path!r}, off={offset + written}): server "
+                    f"reported wr_count=0 with NFS4_OK; would loop"
+                )
+                written += got
 
-    def clone(self, src, dst):
-        """NFSv4.2 OP_CLONE: clone existing src to existing dst.  Both
-        files must already exist (caller's responsibility).  Length 0
-        means clone-to-EOF."""
+    def read(self, path, offset=0, count=None):
+        """OP_READ ``count`` bytes from ``path`` starting at ``offset``.
+
+        ``count=None`` reads to EOF.  Splits the read across multiple
+        compounds when the request exceeds the negotiated
+        ``maxresponsesize`` and stops when the server returns ``eof``.
+        """
+        self._validate_rel(path)
+        with self._open_for_write(path) as state:
+            chunks = []
+            cur = offset
+            remaining = count
+            while remaining is None or remaining > 0:
+                want = self._chunk if remaining is None else min(self._chunk, remaining)
+                res = self._sess.compound(
+                    nfs4lib.use_obj(self._full_components(path))
+                    + [op.read(state, cur, want)]
+                )
+                self._expect_ok(res, f"read({path!r}, off={cur})")
+                read_op = res.resarray[-1]
+                got = len(read_op.data)
+                chunks.append(read_op.data)
+                cur += got
+                if remaining is not None:
+                    remaining -= got
+                if read_op.eof or got == 0:
+                    break
+            return b"".join(chunks)
+
+    def _open_pair(self, src, dst):
+        """Open src and dst, returning ``(src_state, src_components,
+        dst_state, dst_components, closers)``.
+
+        When ``src == dst`` (same-file CLONE/COPY) we OPEN the file
+        only once and reuse the stateid for both arguments.  Issuing
+        a second OPEN with the same ``(clientid, openowner)`` pair
+        on the same file would bump the stateowner's seqid, which
+        invalidates the first stateid and makes any compound that
+        passes both yield ``NFS4ERR_OLD_STATEID`` instead of the
+        operation-specific error we're trying to test."""
         self._validate_rel(src)
         self._validate_rel(dst)
-        src_state = self._open_stateid(src)
-        dst_state = self._open_stateid(dst)
-        # OP_CLONE: src_fh is saved, dst_fh is current.
-        res = self._sess.compound(
-            nfs4lib.use_obj(self._full_components(src))
-            + [op.savefh()]
-            + nfs4lib.use_obj(self._full_components(dst))
-            + [op.clone(src_state, dst_state, 0, 0, 0)]
+        src_state, src_components = self._open_stateid(src)
+        if src == dst:
+            return (
+                src_state,
+                src_components,
+                src_state,
+                src_components,
+                [
+                    (src_components, src_state, "clone-shared-close"),
+                ],
+            )
+        try:
+            dst_state, dst_components = self._open_stateid(dst)
+        except Exception:
+            # Close the src open we already took so a dst-open failure
+            # doesn't cascade into NFS4ERR_CLIENTID_BUSY at teardown.
+            self._close_stateid(src_components, src_state, "clone-src-close-on-error")
+            raise
+        return (
+            src_state,
+            src_components,
+            dst_state,
+            dst_components,
+            [
+                (src_components, src_state, "clone-src-close"),
+                (dst_components, dst_state, "clone-dst-close"),
+            ],
         )
-        self._expect_ok(res, f"clone({src!r}, {dst!r})")
+
+    def clone(
+        self, src, dst, src_offset=0, dst_offset=0, count=0, expect_status=NFS4_OK
+    ):
+        """NFSv4.2 OP_CLONE: clone ``[src_offset, src_offset+count)`` of
+        ``src`` to ``[dst_offset, dst_offset+count)`` of ``dst``.  Both
+        files must already exist.  ``count=0`` means clone-to-EOF (RFC
+        7862 §15.13).  Returns the COMPOUND status (always equals
+        ``expect_status`` because the call asserts otherwise)."""
+        src_state, src_components, dst_state, dst_components, closers = self._open_pair(
+            src, dst
+        )
+        try:
+            # OP_CLONE: src_fh is saved, dst_fh is current.
+            res = self._sess.compound(
+                nfs4lib.use_obj(src_components)
+                + [op.savefh()]
+                + nfs4lib.use_obj(dst_components)
+                + [op.clone(src_state, dst_state, src_offset, dst_offset, count)]
+            )
+            self._expect_status(
+                res,
+                expect_status,
+                f"clone({src!r}, {dst!r}, src_off={src_offset}, "
+                f"dst_off={dst_offset}, count={count})",
+                expected_op=OP_CLONE,
+            )
+            return res.status
+        finally:
+            for components, state, label in closers:
+                self._close_stateid(components, state, label)
+
+    def copy(
+        self,
+        src,
+        dst,
+        src_offset=0,
+        dst_offset=0,
+        count=0,
+        synchronous=True,
+        expect_status=NFS4_OK,
+    ):
+        """NFSv4.2 OP_COPY: copy ``[src_offset, src_offset+count)`` of
+        ``src`` into ``dst`` starting at ``dst_offset``.  ``count=0``
+        means copy-to-EOF (RFC 7862 §15.2).  Returns a ``CopyResult``
+        with the wire status, byte count, commit level, verifier, and
+        - for asynchronous offload - the callback stateid."""
+        src_state, src_components, dst_state, dst_components, closers = self._open_pair(
+            src, dst
+        )
+        try:
+            res = self._sess.compound(
+                nfs4lib.use_obj(src_components)
+                + [op.savefh()]
+                + nfs4lib.use_obj(dst_components)
+                + [
+                    op.copy(
+                        src_state,
+                        dst_state,
+                        src_offset,
+                        dst_offset,
+                        count,
+                        False,  # ca_consecutive (server is always consecutive)
+                        bool(synchronous),
+                        [],  # ca_source_server: empty -> intra-server
+                    )
+                ]
+            )
+            self._expect_status(
+                res,
+                expect_status,
+                f"copy({src!r}, {dst!r}, src_off={src_offset}, "
+                f"dst_off={dst_offset}, count={count}, sync={synchronous})",
+                expected_op=OP_COPY,
+            )
+            if res.status != NFS4_OK:
+                return CopyResult(
+                    status=res.status,
+                    bytes_written=0,
+                    committed=0,
+                    verifier=b"",
+                    cb_stateid=None,
+                    consecutive=False,
+                    synchronous=False,
+                )
+            # COPY4res switches on cr_status: NFS4_OK -> cr_resok4 (which holds
+            # both cr_response and cr_requirements), NFS4ERR_OFFLOAD_NO_REQS ->
+            # cr_requirements directly.  Read straight off cr_resok4 - the
+            # union's __getattr__ delegation works for cr_response (no name
+            # collision) but not for cr_requirements, which exists as a
+            # direct attribute on COPY4res itself and shadows the lookup.
+            resok = res.resarray[-1].cr_resok4
+            wr = resok.cr_response
+            cb_stateid = wr.wr_callback_id[0] if wr.wr_callback_id else None
+            return CopyResult(
+                status=NFS4_OK,
+                bytes_written=wr.wr_count,
+                committed=wr.wr_committed,
+                verifier=wr.wr_writeverf,
+                cb_stateid=cb_stateid,
+                consecutive=resok.cr_requirements.cr_consecutive,
+                synchronous=resok.cr_requirements.cr_synchronous,
+            )
+        finally:
+            for components, state, label in closers:
+                self._close_stateid(components, state, label)
+
+    def offload_status(self, dst, cb_stateid):
+        """OP_OFFLOAD_STATUS: poll an asynchronous COPY's progress.
+
+        RFC 7862 §15.9 requires CURRENT_FH to be the destination file;
+        we PUTFH(dst) first.  Returns an ``OffloadStatus`` with bytes
+        copied so far and the completion list (``[]`` while running;
+        ``[final_status]`` once the kernel async thread has finished).
+        """
+        self._validate_rel(dst)
+        res = self._sess.compound(
+            nfs4lib.use_obj(self._full_components(dst))
+            + [op.offload_status(cb_stateid)]
+        )
+        self._expect_ok(res, f"offload_status({dst!r})")
+        st = res.resarray[-1]
+        return OffloadStatus(count=st.osr_count, complete=list(st.osr_complete))
+
+    def offload_cancel(self, dst, cb_stateid, expect_status=NFS4_OK):
+        """OP_OFFLOAD_CANCEL: stop an asynchronous COPY.
+
+        RFC 7862 §15.8 requires CURRENT_FH to be the destination
+        file; we PUTFH(dst) first.  Returns the COMPOUND status; the
+        kernel sets ``NFSD4_COPY_F_STOPPED`` and the async thread
+        exits at the next iteration boundary."""
+        self._validate_rel(dst)
+        res = self._sess.compound(
+            nfs4lib.use_obj(self._full_components(dst))
+            + [op.offload_cancel(cb_stateid)]
+        )
+        self._expect_status(
+            res,
+            expect_status,
+            f"offload_cancel({dst!r})",
+            expected_op=OP_OFFLOAD_CANCEL,
+        )
+        return res.status
 
     # --- xattr (NFSv4.2) -----------------------------------------------
 
@@ -457,10 +836,37 @@ class PynfsClient:
 
     # --- internal: stateful OPEN -------------------------------------
 
+    def _close_stateid(self, file_components, stateid, label):
+        """OP_CLOSE with CURRENT_FH set to the opened file.
+
+        ``nfs4_check_fh`` rejects CLOSE whose CURRENT_FH doesn't
+        match the stateid's file, so we PUTROOTFH+LOOKUP all the way
+        to the file (not just the parent) before issuing CLOSE.
+        Leaked opens block ``zfs unmount`` of the parent dataset and
+        keep the client's state list non-empty, which in turn makes
+        ``DESTROY_CLIENTID`` return ``NFS4ERR_CLIENTID_BUSY`` and
+        cascades into ``EZFS_BUSY`` on the test fixture's
+        ``pool.dataset.delete`` retry loop."""
+        res = self._sess.compound(
+            nfs4lib.use_obj(file_components) + [op.close(0, stateid)]
+        )
+        # Best-effort: don't raise if the CLOSE itself fails (the
+        # state will be reaped via the laundromat eventually) so the
+        # primary test result isn't masked by a teardown error -- but
+        # do warn so the leak is visible in test output.
+        if res.status != NFS4_OK:
+            warnings.warn(
+                f"{label}: CLOSE failed with status={res.status}; "
+                f"open stateid leaked, server-side state will be "
+                f"reaped via the laundromat",
+                stacklevel=2,
+            )
+
     class _StateCtx:
-        def __init__(self, owner, parent_walker, sess, path):
+        def __init__(self, owner, parent_walker, file_walker, sess, path):
             self.owner = owner
             self.parent = parent_walker
+            self.file_walker = file_walker
             self.sess = sess
             self.path = path
             self.state = None
@@ -485,16 +891,32 @@ class PynfsClient:
             return self.state
 
         def __exit__(self, *_):
-            self.sess.compound(self.parent + [op.close(0, self.state)])
+            # CLOSE requires CURRENT_FH = the opened file, not the
+            # parent dir, so walk all the way to the file.
+            self.sess.compound(self.file_walker + [op.close(0, self.state)])
 
     def _open_for_write(self, path):
         parent, name = self._split_parent_name(path)
         owner = open_owner4(self._clt.clientid, b"pynfs-write-owner")
-        return self._StateCtx(owner, nfs4lib.use_obj(parent), self._sess, name)
+        return self._StateCtx(
+            owner,
+            nfs4lib.use_obj(parent),
+            nfs4lib.use_obj(self._full_components(path)),
+            self._sess,
+            name,
+        )
 
     def _open_stateid(self, path):
-        """Return a current stateid for OP_CLONE."""
+        """OPEN ``path`` and return ``(stateid, file_components)``.
+
+        Caller is responsible for closing via ``_close_stateid`` once
+        the dependent op (e.g. OP_CLONE / OP_COPY) has completed.
+        Without an explicit CLOSE the open accumulates as state on
+        the server's client record, blocks the dataset from being
+        unmounted, and forces ``DESTROY_CLIENTID`` to return
+        ``NFS4ERR_CLIENTID_BUSY`` at session teardown."""
         parent, name = self._split_parent_name(path)
+        file_components = self._full_components(path)
         res = self._sess.compound(
             nfs4lib.use_obj(parent)
             + [
@@ -509,7 +931,7 @@ class PynfsClient:
             ]
         )
         self._expect_ok(res, f"_open_stateid({path!r})")
-        return res.resarray[-1].stateid
+        return res.resarray[-1].stateid, file_components
 
 
 def _normalize_minorversion(vers):
