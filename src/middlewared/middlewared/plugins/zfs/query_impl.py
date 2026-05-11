@@ -6,6 +6,7 @@ from truenas_pylibzfs import ZFSError, ZFSException
 from .exceptions import ZFSPathNotFoundException
 from .normalization import normalize_asdict_result
 from .property_management import DeterminedProperties, build_set_of_zfs_props
+from .tier import get_dataset_tier_info_cached
 from .utils import has_internal_path
 
 __all__ = ("query_impl",)
@@ -22,6 +23,10 @@ class CallbackState:
     will exclude them."""
     current_depth: int = 0
     """Current recursion depth."""
+    pool_special_cache: dict[str, bool] = dataclasses.field(default_factory=dict)
+    """Cache of {pool_name -> has_special_vdevs} populated during iteration."""
+    tier_enabled: bool = False
+    """True only when the caller requested get_tier and zfs.tier.config.enabled is True."""
 
 
 def __query_impl_callback(hdl: Any, state: CallbackState) -> bool:
@@ -41,6 +46,10 @@ def __query_impl_callback(hdl: Any, state: CallbackState) -> bool:
         normalize_source=state.query_args["get_source"],
     )
     info["children"] = None
+
+    if state.tier_enabled and info.get('type') == 'FILESYSTEM':
+        info['tier'] = get_dataset_tier_info_cached(hdl, state.pool_special_cache)
+
     state.results.append(info)
 
     # Check if we should get children based on get_children or max_depth
@@ -60,7 +69,9 @@ def __query_impl_callback(hdl: Any, state: CallbackState) -> bool:
             query_args=state.query_args,
             dp=state.dp,
             eip=state.eip,
-            current_depth=state.current_depth + 1
+            current_depth=state.current_depth + 1,
+            pool_special_cache=state.pool_special_cache,
+            tier_enabled=state.tier_enabled,
         )
         hdl.iter_filesystems(callback=__query_impl_callback, state=child_state)
     return True
@@ -99,7 +110,7 @@ def __should_exclude_internal_paths(data: dict[str, Any]) -> bool:
     return data.get("exclude_internal_paths", True)  # type: ignore
 
 
-def query_impl(hdl: Any, data: dict[str, Any]) -> list[dict[str, Any]]:
+def query_impl(hdl: Any, data: dict[str, Any], tier_enabled: bool = False) -> list[dict[str, Any]]:
     if data["max_depth"] > 0 and data["get_children"] is False:
         # If max_depth > 0, enable get_children implicitly
         data["get_children"] = True
@@ -109,7 +120,9 @@ def query_impl(hdl: Any, data: dict[str, Any]) -> list[dict[str, Any]]:
         query_args=data,
         dp=DeterminedProperties(),
         eip=__should_exclude_internal_paths(data),
-        current_depth=0
+        current_depth=0,
+        pool_special_cache={},
+        tier_enabled=tier_enabled,
     )
     if state.query_args["paths"]:
         __query_impl_paths(hdl, state)

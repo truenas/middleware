@@ -9,6 +9,8 @@ from middlewared.api.base import (
     UniqueList,
 )
 
+from .zfs_tier import TierInfo
+
 __all__ = (
     "ZFSResourceEntry",
     "ZFSResourceDestroyArgsData",
@@ -242,6 +244,8 @@ class ZFSResourceEntry(BaseModel):
     """Custom metadata properties with colon-separated names (max 256 chars)."""
     children: list | None
     """The children of this zfs resource."""
+    tier: TierInfo | None = None
+    """Tier classification for FILESYSTEM resources. None if not requested or not applicable."""
 
 
 class ZFSResourceQuery(BaseModel):
@@ -300,6 +304,9 @@ class ZFSResourceQuery(BaseModel):
     """
     exclude_internal_paths: SkipJsonSchema[bool] = True
     """Exclude internal paths."""
+    get_tier: bool = False
+    """Retrieve tier classification (REGULAR/PERFORMANCE) for FILESYSTEM resources.
+    Requires an active Enterprise license with ZFS tiering enabled."""
 
 
 class ZFSResourceDestroyArgsData(BaseModel):

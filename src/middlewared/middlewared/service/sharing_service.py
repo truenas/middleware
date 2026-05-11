@@ -30,6 +30,7 @@ class SharingTaskService[E](CRUDService[E]):
     locked_alert_class: type[OneShotAlertClass]
     share_task_type: str
     path_resolution_filters: Iterable[Sequence] | None = None
+    include_tier_info = False
     """Describe which share entries should attempt to resolve their dataset field from path when dataset=None. By
     default, all entries will attempt to resolve their datasets. Filters must use the field names found in the database
     table (including `datastore_prefix`)."""
@@ -122,9 +123,16 @@ class SharingTaskService[E](CRUDService[E]):
         if self._config.datastore_extend_context:
             se = await self.middleware.call(self._config.datastore_extend_context, rows, extra)
 
+        tier_map = {}
+        if self.include_tier_info:
+            datasets = [r['dataset'] for r in rows if r.get('dataset')]
+            if datasets:
+                tier_map = await self.call2(self.s.zfs.tier.bulk_get_tier_info, datasets)
+
         return {
             'service_extend': se,
-            'retrieve_locked_info': extra.get('retrieve_locked_info', True)
+            'retrieve_locked_info': extra.get('retrieve_locked_info', True),
+            'tier_map': tier_map,
         }
 
     @private
@@ -214,6 +222,9 @@ class SharingTaskService[E](CRUDService[E]):
         else:
             data[self.locked_field] = None
 
+        if self.include_tier_info and 'tier' not in data:
+            data['tier'] = context['tier_map'].get(data.get('dataset'))
+
         return data
 
     @private
@@ -272,6 +283,7 @@ class SharingTaskService[E](CRUDService[E]):
 
 class SharingService[E](SharingTaskService[E]):
     locked_alert_class = ShareLockedAlert
+    include_tier_info = False
 
     @private
     async def human_identifier(self, share_task):
