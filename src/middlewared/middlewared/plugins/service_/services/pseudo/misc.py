@@ -5,6 +5,7 @@ from middlewared.plugins.service_.services.base import SimpleService
 from middlewared.plugins.service_.services.dbus_router import system_dbus
 from middlewared.plugins.service_.services.base_interface import ServiceInterface
 from middlewared.plugins.service_.services.base_state import ServiceState
+from middlewared.utils.timezone_choices import effective_timezone
 
 
 class PseudoServiceBase(ServiceInterface):
@@ -211,7 +212,9 @@ class TimeservicesService(PseudoServiceBase):
         await (await self.middleware.call("service.control", "RESTART", "ntpd")).wait(raise_error=True)
 
         settings = await self.middleware.call("datastore.config", "system.settings")
-        await self.middleware.call("core.environ_update", {"TZ": settings["stg_timezone"]})
+        await self.middleware.call(
+            "core.environ_update", {"TZ": effective_timezone(settings["stg_timezone"])}
+        )
 
 
 class UserService(PseudoServiceBase):
