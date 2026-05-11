@@ -21,10 +21,8 @@ def localtime_configuration(middleware):
             middleware.services.alert.oneshot_delete, "TimezoneNotAvailable", None
         )
     else:
-        # tzdata legacy aliases (Japan, GB, Hongkong, ...) were moved to the
-        # `tzdata-legacy` package in Debian; if the user's saved zone is one of
-        # those and that package isn't installed, the symlink target won't
-        # exist. Fall back to UTC and raise an alert so the user sees the
+        # If the user's saved zone is one where the symlink does not exist,
+        # fall back to UTC and raise an alert so the user sees the
         # divergence between their saved configuration and the running clock.
         target_tz = FALLBACK_TZ
         middleware.logger.warning(

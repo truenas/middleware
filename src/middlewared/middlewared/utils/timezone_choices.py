@@ -12,9 +12,7 @@ def _available_zones() -> frozenset[str]:
     # Walk /usr/share/zoneinfo once and collect every name that resolves to a
     # real file (regular file or non-dangling symlink). Building a set up-front
     # lets the validator and dropdown do O(1) membership checks against ~600
-    # candidates from tzdata.zi instead of one stat() per candidate. Cached for
-    # the lifetime of the process; if the admin installs `tzdata-legacy`,
-    # restart middlewared to refresh.
+    # candidates from tzdata.zi instead of one stat() per candidate.
     found: set[str] = set()
     pending: list[str] = [""]
     while pending:
@@ -40,7 +38,7 @@ def timezone_is_available(name: str) -> bool:
 def effective_timezone(name: str) -> str:
     # Used at runtime by consumers (zettarepl scheduler, TZ env var, ...) so
     # that a stale DB value left over from an upgrade -- e.g. "Japan" without
-    # tzdata-legacy installed -- cannot crash them. The user-visible alert is
+    # -- cannot crash them. The user-visible alert is
     # raised exactly once, by the localtime etc renderer.
     return name if timezone_is_available(name) else FALLBACK_TZ
 
@@ -49,8 +47,8 @@ def effective_timezone(name: str) -> str:
 def tz_choices() -> tuple[tuple[str, str], ...]:
     # Logic deduced from what timedatectl list-timezones does, with an
     # additional on-disk existence check: tzdata.zi declares all historical
-    # aliases (e.g. "Japan", "GB", "Hongkong"), but on Debian trixie those
-    # symlinks ship in `tzdata-legacy` which is not installed by default. Keep
+    # aliases (e.g. "Japan", "GB", "Hongkong"), but on Debian trixie we
+    # don't have those in by default. Keep
     # only entries whose zone file actually resolves so we never offer the user
     # a name that would produce a dangling /etc/localtime.
     available = _available_zones()

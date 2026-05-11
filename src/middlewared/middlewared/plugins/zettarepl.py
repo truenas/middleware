@@ -670,7 +670,7 @@ class ZettareplService(Service):
     async def get_definition(self):
         config = await self.middleware.call("replication.config.config")
         # Sanitize against a stale DB value left over from an upgrade (e.g. a
-        # legacy alias like "Japan" without tzdata-legacy installed) -- the
+        # legacy alias like "Japan") -- the
         # ZoneInfo lookup downstream would otherwise raise ZoneInfoNotFoundError.
         timezone = effective_timezone(
             (await self.middleware.call("system.general.config"))["timezone"]
