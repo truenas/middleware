@@ -79,6 +79,7 @@ async def unset_registration_details(
         get_account_service_url(config).format(**creds),
         "delete",
         headers=auth_headers(config),
+        get_response=False,
     )
     if response["error"]:
         if response["status_code"] == 401:
