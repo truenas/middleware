@@ -113,22 +113,20 @@ def pylibvirt_container(
     container['devices'] = devices
 
     if container['idmap']:
-        item = None
         match container['idmap']['type']:
             case 'DEFAULT':
-                item = ContainerIdmapConfigurationItem(
-                    target=CONTAINER_ROOT_UID,
-                    count=IDMAP_COUNT,
-                )
+                uid_items, gid_items = _build_default_idmap_items(context)
             case 'ISOLATED':
-                item = ContainerIdmapConfigurationItem(
-                    target=CONTAINER_ROOT_UID + container['idmap']['slice'] * IDMAP_COUNT,
-                    count=IDMAP_COUNT,
-                )
+                base_target = CONTAINER_ROOT_UID + container['idmap']['slice'] * IDMAP_COUNT
+                single = ContainerIdmapConfigurationItem(start=0, target=base_target, count=IDMAP_COUNT)
+                uid_items, gid_items = [single], [single]
             case _:
                 raise CallError(f"Unsupported idmap type {container['idmap']['type']!r}")
 
-        container['idmap'] = ContainerIdmapConfiguration(uid=item, gid=item)
+        try:
+            container['idmap'] = ContainerIdmapConfiguration(uid=uid_items, gid=gid_items)
+        except ValueError as e:
+            raise CallError(f'Invalid idmap configuration: {e}')
 
     if container['capabilities_policy']:
         container['capabilities_policy'] = ContainerCapabilitiesPolicy[container['capabilities_policy']]
@@ -144,3 +142,64 @@ def pylibvirt_container(
     })
 
     return ContainerDomain(ContainerDomainConfiguration(**container))
+
+
+def _build_default_idmap_items(
+    context: ServiceContext,
+) -> tuple[list[ContainerIdmapConfigurationItem], list[ContainerIdmapConfigurationItem]]:
+    idmap_filters = [
+        ['local', '=', True],
+        ['userns_idmap', 'nin', [0, None]],
+        ['roles', '=', []],
+    ]
+    users = context.middleware.call_sync('user.query', idmap_filters)
+    groups = context.middleware.call_sync('group.query', idmap_filters)
+
+    uid_passthroughs = [_resolve_target(u['uid'], u['userns_idmap']) for u in users]
+    gid_passthroughs = [_resolve_target(g['gid'], g['userns_idmap']) for g in groups]
+
+    return _split_base_around(uid_passthroughs), _split_base_around(gid_passthroughs)
+
+
+def _resolve_target(account_id: int, userns_idmap: typing.Any) -> tuple[int, int]:
+    container_id = account_id if userns_idmap == 'DIRECT' else userns_idmap
+    return container_id, account_id
+
+
+def _split_base_around(
+    passthroughs: list[tuple[int, int]],
+) -> list[ContainerIdmapConfigurationItem]:
+    in_range = sorted([(c, h) for c, h in passthroughs if 0 <= c < IDMAP_COUNT])
+    out_of_range = [(c, h) for c, h in passthroughs if c >= IDMAP_COUNT or c < 0]
+
+    items: list[ContainerIdmapConfigurationItem] = []
+    cursor = 0
+    for container_id, host_id in in_range:
+        if container_id < cursor:
+            raise CallError(
+                f'Duplicate container-side id {container_id} in account idmap configuration'
+            )
+        if container_id > cursor:
+            items.append(ContainerIdmapConfigurationItem(
+                start=cursor,
+                target=CONTAINER_ROOT_UID + cursor,
+                count=container_id - cursor,
+            ))
+        items.append(ContainerIdmapConfigurationItem(
+            start=container_id, target=host_id, count=1,
+        ))
+        cursor = container_id + 1
+
+    if cursor < IDMAP_COUNT:
+        items.append(ContainerIdmapConfigurationItem(
+            start=cursor,
+            target=CONTAINER_ROOT_UID + cursor,
+            count=IDMAP_COUNT - cursor,
+        ))
+
+    for container_id, host_id in out_of_range:
+        items.append(ContainerIdmapConfigurationItem(
+            start=container_id, target=host_id, count=1,
+        ))
+
+    return items

@@ -11,6 +11,7 @@ import pytest
 import websocket
 
 from truenas_api_client import ValidationErrors
+from middlewared.test.integration.assets.account import group as account_group, user as account_user
 from middlewared.test.integration.assets.pool import another_pool, pool
 from middlewared.test.integration.utils import call, host, ssh, websocket_url
 
@@ -303,6 +304,74 @@ def test_idmap(ubuntu_image, idmap_slice_1_container, target, config):
         ssh(f"mkdir {mountpoint}/playground")
         ssh(nsenter(c, "touch /playground/canary"))
         assert ssh(f"stat -c '%u %g' {mountpoint}/playground/canary").strip().split() == ["0", "0"]
+
+
+def _stat_inside(container_dict, path):
+    return ssh(nsenter(container_dict, f"stat -c '%u %g' {path}")).strip()
+
+
+def test_default_idmap_passes_apps_user_through(ubuntu_image):
+    # By default builtin sync sets userns_idmap='DIRECT' on the apps user (568)
+    # and apps group (568). DEFAULT idmap should honor those passthroughs so
+    # host UID/GID 568 is visible as the same 568 inside the container.
+    with container(ubuntu_image, {"idmap": {"type": "DEFAULT"}}, start=True) as c:
+        mountpoint = get_mountpoint(c["dataset"])
+        ssh(f"mkdir {mountpoint}/playground && chown 568:568 {mountpoint}/playground")
+        ssh(f": > {mountpoint}/playground/apps_file && chown 568:568 {mountpoint}/playground/apps_file")
+        assert _stat_inside(c, "/playground/apps_file") == "568 568"
+
+
+def test_default_idmap_picks_up_custom_user_direct(ubuntu_image):
+    with account_group({"name": "idmap_grp"}) as g:
+        with account_user({
+            "username": "idmap_user",
+            "full_name": "idmap user",
+            "group": g["id"],
+            "random_password": True,
+        }) as u:
+            uid, gid = u["uid"], g["gid"]
+            call("user.update", u["id"], {"userns_idmap": "DIRECT"})
+            call("group.update", g["id"], {"userns_idmap": "DIRECT"})
+
+            with container(ubuntu_image, {"idmap": {"type": "DEFAULT"}}, start=True) as c:
+                mountpoint = get_mountpoint(c["dataset"])
+                ssh(f"mkdir {mountpoint}/playground")
+                ssh(f": > {mountpoint}/playground/file && chown {uid}:{gid} {mountpoint}/playground/file")
+                assert _stat_inside(c, "/playground/file") == f"{uid} {gid}"
+
+
+def test_default_idmap_picks_up_custom_user_numeric(ubuntu_image):
+    target = 8675309
+    with account_user({
+        "username": "idmap_numeric",
+        "full_name": "idmap numeric",
+        "group_create": True,
+        "random_password": True,
+    }) as u:
+        uid = u["uid"]
+        call("user.update", u["id"], {"userns_idmap": target})
+
+        with container(ubuntu_image, {"idmap": {"type": "DEFAULT"}}, start=True) as c:
+            mountpoint = get_mountpoint(c["dataset"])
+            ssh(f"mkdir {mountpoint}/playground")
+            ssh(f": > {mountpoint}/playground/file && chown {uid}:0 {mountpoint}/playground/file")
+            assert _stat_inside(c, "/playground/file").split()[0] == str(target)
+
+
+def test_isolated_idmap_ignores_account_passthrough(ubuntu_image):
+    # ISOLATED idmap must NOT apply per-account passthroughs even when accounts
+    # are configured with userns_idmap. Files at host UID 568 should NOT appear
+    # as UID 568 inside an ISOLATED container.
+    with container(
+        ubuntu_image, {"idmap": {"type": "ISOLATED", "slice": 1}}, start=True,
+    ) as c:
+        mountpoint = get_mountpoint(c["dataset"])
+        ssh(f"mkdir {mountpoint}/playground && chown 568:568 {mountpoint}/playground")
+        ssh(f": > {mountpoint}/playground/apps_file && chown 568:568 {mountpoint}/playground/apps_file")
+        inside = _stat_inside(c, "/playground/apps_file")
+        assert inside != "568 568", (
+            f"ISOLATED container leaked apps passthrough: {inside}"
+        )
 
 
 @pytest.mark.parametrize("configuration,has", [
