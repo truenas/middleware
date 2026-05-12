@@ -4,11 +4,9 @@ import errno
 import os
 from typing import TYPE_CHECKING, cast
 
-from ixhardware import TRUENAS_UNKNOWN
-from ixhardware import get_chassis_hardware as _get_chassis_hardware
-
 from middlewared.api.current import SupportNewTicket, TruecommandStatus
 from middlewared.service import ServiceContext
+from middlewared.utils.chassis import TRUENAS_UNKNOWN, get_chassis_hardware
 
 if TYPE_CHECKING:
     from middlewared.job import Job
@@ -22,11 +20,6 @@ async def managed_by_truecommand(context: ServiceContext) -> bool:
     return TruecommandStatus(
         (await context.middleware.call('truecommand.config'))['status']
     ) == TruecommandStatus.CONNECTED
-
-
-def get_chassis_hardware() -> str:
-    result: str = _get_chassis_hardware()
-    return result
 
 
 async def is_ix_hardware(context: ServiceContext) -> bool:

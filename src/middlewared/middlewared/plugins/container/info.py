@@ -1,9 +1,8 @@
-from ixhardware.chassis import TRUENAS_UNKNOWN
-
 from middlewared.api.current import ZFSResourceQuery
 from middlewared.plugins.zfs.utils import get_encryption_info
 from middlewared.service import ServiceContext
 from middlewared.utils import BOOT_POOL_NAME_VALID
+from middlewared.utils.chassis import TRUENAS_UNKNOWN
 from middlewared.utils.zfs import query_imported_fast_impl
 
 

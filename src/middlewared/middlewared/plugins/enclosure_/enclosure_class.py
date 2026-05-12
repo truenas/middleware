@@ -6,7 +6,7 @@
 import logging
 from typing import Literal, TypeAlias, TypedDict
 
-from ixhardware import parse_dmi
+import truenas_pydmi
 
 from middlewared.utils.scsi_generic import inquiry
 
@@ -51,7 +51,7 @@ class EnclosureStatusDict(TypedDict):
 
 class Enclosure:
     def __init__(self, bsg: str, sg: str, enc_stat: EnclosureStatusDict):
-        self.dmi = parse_dmi()
+        self.dmi = truenas_pydmi.system()
         self.bsg, self.sg, self.pci, = bsg, sg, bsg.removeprefix('/dev/bsg/')
         self.encid, self.status = enc_stat['id'], list(enc_stat['status'])
         self.vendor, self.product, self.revision, self.encname = self._get_vendor_product_revision_and_encname()
@@ -73,7 +73,7 @@ class Enclosure:
             'name': self.encname,  # vendor, product and revision joined by whitespace
             'model': self.model,  # M60, F100, MINI-R, etc
             'controller': self.controller,  # if True, represents the "head-unit"
-            'dmi': self.dmi.system_product_name,
+            'dmi': self.dmi.product_name,
             'status': self.status,  # the overall status reported by the enclosure
             'id': self.encid,
             'vendor': self.vendor,  # t10 vendor from INQUIRY
@@ -145,7 +145,7 @@ class Enclosure:
         2. We check the t10 vendor and product strings returned from the enclosure
             using a standard inquiry command
         """
-        spn = self.dmi.system_product_name
+        spn = self.dmi.product_name
         model = parse_model(spn)
         try:
             dmi_model = ControllerModels[model]
@@ -276,7 +276,7 @@ class Enclosure:
         vers_key = 'DEFAULT'
         if not mapped_info['any_version']:
             for vers in mapped_info['versions']:
-                if self.dmi.system_version == vers:
+                if self.dmi.version == vers:
                     vers_key = vers
                     break
 
