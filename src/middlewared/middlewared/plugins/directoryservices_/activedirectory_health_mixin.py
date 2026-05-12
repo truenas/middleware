@@ -41,22 +41,6 @@ _AUTH_NTSTATUS_SUGGEST_BAD_SECRET = frozenset({
 })
 
 
-# NTSTATUS strings embedded in a WBC_ERR_AUTH_ERROR message from wbcPingDc2 that
-# plausibly indicate a bad/missing secrets.tdb machine-account secret. The
-# message format is set by samba/nsswitch/py_wbclient.c:540 as
-# "...error code was {NT_STATUS_*} (0x...)". Other ping_dc failure modes
-# (transport timeouts, downgrade detection, RPC plumbing) cannot be refined by
-# rerunning a kinit, so we skip the expensive password test for those. See
-# samba/source3/winbindd/winbindd_cm.c (cm_connect_netlogon) and
-# samba/libcli/auth/netlogon_creds_cli.c for the originating call sites.
-_AUTH_NTSTATUS_SUGGEST_BAD_SECRET = frozenset({
-    'NT_STATUS_ACCESS_DENIED',
-    'NT_STATUS_CANT_ACCESS_DOMAIN_INFO',
-    'NT_STATUS_NO_TRUST_LSA_SECRET',
-    'NT_STATUS_NO_TRUST_SAM_ACCOUNT',
-})
-
-
 class ADHealthMixin:
 
     def _test_machine_account_password(
