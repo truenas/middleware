@@ -9,7 +9,6 @@ import pathlib
 import subprocess
 
 from pyudev import Context
-
 import truenas_pydmi
 
 from middlewared.plugins.enclosure_.ses_enclosures2 import get_ses_enclosures

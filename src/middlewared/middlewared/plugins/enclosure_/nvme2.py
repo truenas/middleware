@@ -6,8 +6,8 @@
 import pathlib
 import re
 
-import truenas_pydmi
 from pyudev import Context, DeviceNotFoundAtPathError, Devices
+import truenas_pydmi
 
 from .constants import (
     DISK_FRONT_KEY,

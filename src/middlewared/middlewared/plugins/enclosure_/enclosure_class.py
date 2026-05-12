@@ -7,6 +7,7 @@ import logging
 from typing import Literal, TypeAlias, TypedDict
 
 import truenas_pydmi
+
 from middlewared.utils.scsi_generic import inquiry
 
 from .constants import (
