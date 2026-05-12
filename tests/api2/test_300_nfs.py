@@ -747,7 +747,11 @@ class TestNFSops:
         confirm_nfs_config_settings([[['nfsd', 'scope'], expected_scope_value]])
 
         # Confirm NFS reports the expected scope value
-        p = async_SSH_start("tcpdump -A -v -t -i lo -s 1514 port nfs -c12", user, password, hostip)
+        # ``-i any`` so the capture works regardless of whether the
+        # client is on the appliance (loopback, as with the older
+        # SSH_NFS path) or on the test runner (external interface,
+        # as with PynfsClient since #18912).
+        p = async_SSH_start("tcpdump -A -v -t -i any -s 1514 port nfs -c12", user, password, hostip)
         # Give some time so that the tcpdump has started before we proceed
         sleep(2)
         with _nfs_client(4):
