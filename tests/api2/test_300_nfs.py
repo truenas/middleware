@@ -584,6 +584,24 @@ def start_nfs():
         yield nfs_start
 
 
+@pytest.fixture
+def nfs_allow_nonroot():
+    """Set allow_nonroot=True for the test duration so pynfs's
+    ephemeral source ports are accepted at the RPC layer (export
+    line gets 'insecure').  Pynfs runs in the test process as the
+    test user without CAP_NET_BIND_SERVICE; without this, mountd
+    returns ACCES on v3 and nfsd squashes uid=0 to nobody on v4.
+    SSH_NFS didn't need this because mount.nfs is SETUID-root."""
+    prev = call("nfs.config")["allow_nonroot"]
+    if not prev:
+        call("nfs.update", {"allow_nonroot": True})
+    try:
+        yield
+    finally:
+        if not prev:
+            call("nfs.update", {"allow_nonroot": False})
+
+
 @pytest.fixture(scope="function")
 def nfs_running():
     """The NFS ops tests need to enter and exit with NFS running"""
@@ -691,7 +709,8 @@ class TestNFSops:
         # ----------------------------------------------------------------------
 
     @pytest.mark.parametrize('vers', [3, 4])
-    def test_basic_nfs_ops(self, start_nfs, nfs_dataset_and_share, vers):
+    def test_basic_nfs_ops(self, start_nfs, nfs_dataset_and_share,
+                           nfs_allow_nonroot, vers):
         assert start_nfs is True
         assert nfs_dataset_and_share['nfsid'] is not None
 
@@ -708,7 +727,8 @@ class TestNFSops:
             assert 'testdir' not in contents
             assert 'testfile' not in contents
 
-    def test_nfs_scope_setting(self, start_nfs, nfs_dataset_and_share):
+    def test_nfs_scope_setting(self, start_nfs, nfs_dataset_and_share,
+                               nfs_allow_nonroot):
         """
         Test NFS share with scope configuration
         Confirm the scope setting is correctd.
@@ -974,7 +994,7 @@ class TestNFSops:
                 # The entry should not be present
                 assert len(exports_hosts) == 1, str(parsed)
 
-    def test_share_ro(self, start_nfs, nfs_dataset_and_share):
+    def test_share_ro(self, start_nfs, nfs_dataset_and_share, nfs_allow_nonroot):
         """
         Verify that toggling `ro` will cause appropriate change in
         exports file. We also verify with write tests on a local mount.
@@ -1297,7 +1317,8 @@ class TestNFSops:
             assert 'rpc.mountd' not in daemon_data, \
                 f"Unexpectedly found rcp.mountd messages in daemon.log:\n{daemon_data}"
 
-    def test_client_status(self, start_nfs, nfs_dataset_and_share):
+    def test_client_status(self, start_nfs, nfs_dataset_and_share,
+                           nfs_allow_nonroot):
         """
         This test checks the function of API endpoints to list NFSv3 and
         NFSv4 clients by performing loopback mounts on the remote TrueNAS
