@@ -138,8 +138,48 @@ class TestFixtureConfiguredALUA:
                     _debug('Exception while waiting for failover event to complete')
                 sleep(10)
 
+    @pytest.fixture(scope="class")
+    def restore_active_node(self):
+        """Capture the MASTER at class entry; on class teardown reboot the
+        current MASTER if it has changed.
+
+        This is a class-scoped precursor to alua_configured (i.e.
+        alua_configured depends on it), so its setup runs first and its
+        teardown runs last -- after alua_configured has torn down ALUA,
+        the initiator/portal, and the iSCSI service. The reboot therefore
+        happens with the test-file's ALUA setup already gone, leaving the
+        cluster in a clean baseline state with the original active node
+        once again MASTER.
+
+        Tests do not need to take this fixture explicitly; depending on it
+        via alua_configured is sufficient.
+        """
+        initial_node = call("failover.node")
+        try:
+            yield
+        finally:
+            try:
+                current_node = call("failover.node")
+            except Exception:
+                current_node = None
+            if current_node and current_node != initial_node:
+                _debug(
+                    f"restore_active_node: current MASTER is Node "
+                    f"{current_node}; rebooting to restore Node {initial_node}"
+                )
+                try:
+                    call("system.reboot", "iSCSI ALUA test: restoring active node")
+                except Exception:
+                    # system.reboot may not return cleanly as the websocket
+                    # connection is torn down by the reboot itself.
+                    pass
+                self.wait_for_new_master(current_node)
+                self.wait_for_backup()
+                self.wait_for_settle()
+                _debug(f"restore_active_node: Node {initial_node} is MASTER again")
+
     @pytest.fixture(scope='class')
-    def alua_configured(self):
+    def alua_configured(self, restore_active_node):
         assert call('failover.config')['disabled'] is False
         with ensure_service_enabled(SERVICE_NAME):
             call('service.control', 'START', SERVICE_NAME, job=True)
