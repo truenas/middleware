@@ -24,13 +24,11 @@ from middlewared.api.current import (
 )
 from middlewared.job import Job
 from middlewared.service import Service, job, private
+from middlewared.utils.chassis import get_chassis_hardware as tn_get_chassis_hardware
 
 from .license import TrueNASLicenseService
 from .tn import (
     accept_eula as tn_accept_eula,
-)
-from .tn import (
-    get_chassis_hardware as tn_get_chassis_hardware,
 )
 from .tn import (
     get_eula as tn_get_eula,

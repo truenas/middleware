@@ -1,4 +1,4 @@
-from ixhardware import parse_dmi
+from truenas_pydmi import legacy_dmi_info as parse_dmi
 
 from middlewared.service import Service, private
 

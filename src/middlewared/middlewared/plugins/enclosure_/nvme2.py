@@ -6,7 +6,7 @@
 import pathlib
 import re
 
-from ixhardware import parse_dmi
+import truenas_pydmi
 from pyudev import Context, DeviceNotFoundAtPathError, Devices
 
 from .constants import (
@@ -370,7 +370,7 @@ def map_r30_r60_or_fseries(model, ctx):
 
 
 def map_nvme():
-    model = parse_model(parse_dmi().system_product_name)
+    model = parse_model(truenas_pydmi.system().product_name)
     ctx = Context()
     if model in (
         ControllerModels.R50.value,
