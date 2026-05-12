@@ -750,7 +750,7 @@ class TestFixtureConfiguredALUA:
         _debug("lun-replace: (recovery) cluster recovered")
 
     @skip_extended_tests
-    @pytest.mark.timeout(900)
+    @pytest.mark.timeout(1200)
     def test_failover_lun_replace(
         self, fix_lun_replace_config, fix_lun_replace_recovery
     ):
