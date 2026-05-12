@@ -4,7 +4,10 @@ from copy import deepcopy
 
 import pytest
 
-from middlewared.test.integration.assets.account import group as account_group, user as account_user
+from middlewared.test.integration.assets.account import (
+    group as account_group,
+    user as account_user,
+)
 from middlewared.test.integration.assets.pool import dataset, pool
 from middlewared.test.integration.utils import call, ssh
 
@@ -13,16 +16,23 @@ UBUNTU_IMAGE_NAME = "ubuntu:noble:amd64:default"
 
 @pytest.fixture(scope="module", autouse=True)
 def bridge():
-    call("lxc.update", {
-        "v4_network": "10.47.214.0/24",
-        "v6_network": "fd42:3656:7be9:e46c::0/64",
-    })
+    call(
+        "lxc.update",
+        {
+            "v4_network": "10.47.214.0/24",
+            "v6_network": "fd42:3656:7be9:e46c::0/64",
+        },
+    )
 
 
 @pytest.fixture(scope="module")
 def ubuntu_image():
     images = call("container.image.query_registry")
-    version = [image["versions"][-1]["version"] for image in images if image["name"] == UBUNTU_IMAGE_NAME][0]
+    version = [
+        image["versions"][-1]["version"]
+        for image in images
+        if image["name"] == UBUNTU_IMAGE_NAME
+    ][0]
     yield {"name": UBUNTU_IMAGE_NAME, "version": version}
 
 
@@ -32,12 +42,16 @@ def nsenter(container, command):
 
 @contextlib.contextmanager
 def _container(image, name="acltest", **options):
-    c = call("container.create", {
-        "name": name,
-        "pool": pool,
-        "image": image,
-        **options,
-    }, job=True)
+    c = call(
+        "container.create",
+        {
+            "name": name,
+            "pool": pool,
+            "image": image,
+            **options,
+        },
+        job=True,
+    )
     try:
         yield c
     finally:
@@ -55,24 +69,29 @@ def instance(ubuntu_image):
 @pytest.fixture(scope="function")
 def nfs4acl_dataset(instance):
     with account_group({"name": "testgrp"}) as g:
-        with account_user({
-            "username": "testusr",
-            "full_name": "testusr",
-            "group": g["id"],
-            "random_password": True,
-        }) as u:
+        with account_user(
+            {
+                "username": "testusr",
+                "full_name": "testusr",
+                "group": g["id"],
+                "random_password": True,
+            }
+        ) as u:
             call("user.update", u["id"], {"userns_idmap": "DIRECT"})
             call("group.update", g["id"], {"userns_idmap": "DIRECT"})
 
             with dataset("virtnfsshare", {"share_type": "SMB"}) as ds:
-                fs_device = call("container.device.create", {
-                    "container": instance["id"],
-                    "attributes": {
-                        "dtype": "FILESYSTEM",
-                        "source": f"/mnt/{ds}",
-                        "target": "/nfs4acl",
+                fs_device = call(
+                    "container.device.create",
+                    {
+                        "container": instance["id"],
+                        "attributes": {
+                            "dtype": "FILESYSTEM",
+                            "source": f"/mnt/{ds}",
+                            "target": "/nfs4acl",
+                        },
                     },
-                })
+                )
                 try:
                     call("container.start", instance["id"])
                     try:
@@ -84,7 +103,9 @@ def nfs4acl_dataset(instance):
                             "dev": "/nfs4acl",
                         }
                     finally:
-                        call("container.stop", instance["id"], {"force": True}, job=True)
+                        call(
+                            "container.stop", instance["id"], {"force": True}, job=True
+                        )
                 finally:
                     call("container.device.delete", fs_device["id"])
 
@@ -151,26 +172,28 @@ def test_container_nfs4acl_functional(nfs4acl_dataset):
         nfs4acl_dataset["group"]["gid"],
     )
 
-    path = f'/mnt/{nfs4acl_dataset["dataset"]}'
+    path = f"/mnt/{nfs4acl_dataset['dataset']}"
     acl_info = call("filesystem.getacl", path)
     assert acl_info["acltype"] == "NFS4"
     acl = deepcopy(acl_info["acl"])
-    acl.extend([
-        {
-            "tag": "GROUP",
-            "type": "ALLOW",
-            "perms": {"BASIC": "READ"},
-            "flags": {"BASIC": "INHERIT"},
-            "id": nfs4acl_dataset["group"]["gid"],
-        },
-        {
-            "tag": "USER",
-            "type": "ALLOW",
-            "perms": {"BASIC": "READ"},
-            "flags": {"BASIC": "INHERIT"},
-            "id": nfs4acl_dataset["user"]["uid"],
-        },
-    ])
+    acl.extend(
+        [
+            {
+                "tag": "GROUP",
+                "type": "ALLOW",
+                "perms": {"BASIC": "READ"},
+                "flags": {"BASIC": "INHERIT"},
+                "id": nfs4acl_dataset["group"]["gid"],
+            },
+            {
+                "tag": "USER",
+                "type": "ALLOW",
+                "perms": {"BASIC": "READ"},
+                "flags": {"BASIC": "INHERIT"},
+                "id": nfs4acl_dataset["user"]["uid"],
+            },
+        ]
+    )
 
     for username in ("larry", "curly", "moe"):
         check_access(c, nfs4acl_dataset["dev"], username, None)
@@ -215,22 +238,24 @@ def test_container_nfs4acl_functional(nfs4acl_dataset):
         check_access(c, nfs4acl_dataset["dev"], username, "READ")
 
     acl = deepcopy(acl_info["acl"])
-    acl.extend([
-        {
-            "tag": "GROUP",
-            "type": "ALLOW",
-            "perms": {"BASIC": "MODIFY"},
-            "flags": {"BASIC": "INHERIT"},
-            "id": nfs4acl_dataset["group"]["gid"],
-        },
-        {
-            "tag": "USER",
-            "type": "ALLOW",
-            "perms": {"BASIC": "MODIFY"},
-            "flags": {"BASIC": "INHERIT"},
-            "id": nfs4acl_dataset["user"]["uid"],
-        },
-    ])
+    acl.extend(
+        [
+            {
+                "tag": "GROUP",
+                "type": "ALLOW",
+                "perms": {"BASIC": "MODIFY"},
+                "flags": {"BASIC": "INHERIT"},
+                "id": nfs4acl_dataset["group"]["gid"],
+            },
+            {
+                "tag": "USER",
+                "type": "ALLOW",
+                "perms": {"BASIC": "MODIFY"},
+                "flags": {"BASIC": "INHERIT"},
+                "id": nfs4acl_dataset["user"]["uid"],
+            },
+        ]
+    )
 
     # set MODIFY ACL
     call("filesystem.setacl", {"path": path, "dacl": acl}, job=True)
@@ -239,22 +264,24 @@ def test_container_nfs4acl_functional(nfs4acl_dataset):
         check_access(c, nfs4acl_dataset["dev"], username, "MODIFY")
 
     acl = deepcopy(acl_info["acl"])
-    acl.extend([
-        {
-            "tag": "GROUP",
-            "type": "ALLOW",
-            "perms": {"BASIC": "FULL_CONTROL"},
-            "flags": {"BASIC": "INHERIT"},
-            "id": nfs4acl_dataset["group"]["gid"],
-        },
-        {
-            "tag": "USER",
-            "type": "ALLOW",
-            "perms": {"BASIC": "FULL_CONTROL"},
-            "flags": {"BASIC": "INHERIT"},
-            "id": nfs4acl_dataset["user"]["uid"],
-        },
-    ])
+    acl.extend(
+        [
+            {
+                "tag": "GROUP",
+                "type": "ALLOW",
+                "perms": {"BASIC": "FULL_CONTROL"},
+                "flags": {"BASIC": "INHERIT"},
+                "id": nfs4acl_dataset["group"]["gid"],
+            },
+            {
+                "tag": "USER",
+                "type": "ALLOW",
+                "perms": {"BASIC": "FULL_CONTROL"},
+                "flags": {"BASIC": "INHERIT"},
+                "id": nfs4acl_dataset["user"]["uid"],
+            },
+        ]
+    )
 
     # set FULL_CONTROL ACL
     call("filesystem.setacl", {"path": path, "dacl": acl}, job=True)

@@ -11,7 +11,10 @@ import pytest
 import websocket
 
 from truenas_api_client import ValidationErrors
-from middlewared.test.integration.assets.account import group as account_group, user as account_user
+from middlewared.test.integration.assets.account import (
+    group as account_group,
+    user as account_user,
+)
 from middlewared.test.integration.assets.pool import another_pool, pool
 from middlewared.test.integration.utils import call, host, ssh, websocket_url
 
@@ -51,7 +54,9 @@ def nsenter(container, command):
 
 def script_output(container):
     for i in range(30):
-        result = ssh(nsenter(container, "cat /log"), check=False, complete_response=True)
+        result = ssh(
+            nsenter(container, "cat /log"), check=False, complete_response=True
+        )
         if result["returncode"] == 0:
             return result["stdout"]
 
@@ -66,16 +71,23 @@ def bounding_set(capsh_print):
 
 @pytest.fixture(scope="module", autouse=True)
 def bridge():
-    call("lxc.update", {
-        "v4_network": "10.47.214.0/24",
-        "v6_network": "fd42:3656:7be9:e46c::0/64",
-    })
+    call(
+        "lxc.update",
+        {
+            "v4_network": "10.47.214.0/24",
+            "v6_network": "fd42:3656:7be9:e46c::0/64",
+        },
+    )
 
 
 @pytest.fixture(scope="module")
 def ubuntu_image():
     images = call("container.image.query_registry")
-    version = [image["versions"][-1]["version"] for image in images if image["name"] == UBUNTU_IMAGE_NAME][0]
+    version = [
+        image["versions"][-1]["version"]
+        for image in images
+        if image["name"] == UBUNTU_IMAGE_NAME
+    ][0]
 
     yield {"name": UBUNTU_IMAGE_NAME, "version": version}
 
@@ -83,7 +95,11 @@ def ubuntu_image():
 @pytest.fixture(scope="module")
 def alpine_image():
     images = call("container.image.query_registry")
-    version = [image["versions"][-1]["version"] for image in images if image["name"] == ALPINE_IMAGE_NAME][0]
+    version = [
+        image["versions"][-1]["version"]
+        for image in images
+        if image["name"] == ALPINE_IMAGE_NAME
+    ][0]
 
     yield {"name": ALPINE_IMAGE_NAME, "version": version}
 
@@ -92,12 +108,16 @@ def alpine_image():
 def container(image, options=None, start=False, startup_script=None):
     options = options or {}
 
-    container = call("container.create", {
-        "name": "test",
-        "pool": pool,
-        "image": image,
-        **options,
-    }, job=True)
+    container = call(
+        "container.create",
+        {
+            "name": "test",
+            "pool": pool,
+            "image": image,
+            **options,
+        },
+        job=True,
+    )
     try:
         mountpoint = get_mountpoint(container["dataset"])
         if startup_script is not None:
@@ -112,11 +132,13 @@ def container(image, options=None, start=False, startup_script=None):
             call(
                 "filesystem.file_receive",
                 f"{mountpoint}/script-wrapper.sh",
-                base64.b64encode(textwrap.dedent("""\
+                base64.b64encode(
+                    textwrap.dedent("""\
                     #!/bin/sh
                     /script.sh > /.log 2>&1
                     mv /.log /log
-                """).encode("ascii")).decode("ascii"),
+                """).encode("ascii")
+                ).decode("ascii"),
                 {"mode": 0o755},
             )
             call(
@@ -165,13 +187,20 @@ def test_container_stop(started_ubuntu_container):
     assert container["status"]["pid"] is None
     assert (
         ssh(
-            f"ps -p {started_ubuntu_container['status']['pid']}", check=False, complete_response=True,
-        )["returncode"] == 1
+            f"ps -p {started_ubuntu_container['status']['pid']}",
+            check=False,
+            complete_response=True,
+        )["returncode"]
+        == 1
     )
 
 
 def test_container_update(started_ubuntu_container):
-    call("container.update", started_ubuntu_container["id"], {"init": "/bin/sleep infinity"})
+    call(
+        "container.update",
+        started_ubuntu_container["id"],
+        {"init": "/bin/sleep infinity"},
+    )
 
     container = call("container.get_instance", started_ubuntu_container["id"])
     assert "/sbin/init" in ssh(nsenter(container, "ps -p 1 -o args"))
@@ -192,17 +221,24 @@ def test_container_rename(ubuntu_container):
 
     updated = call("container.get_instance", ubuntu_container["id"])
     assert updated["name"] == new_name
-    expected_dataset = old_dataset[:old_dataset.rfind('/') + 1] + new_name
+    expected_dataset = old_dataset[: old_dataset.rfind("/") + 1] + new_name
     assert updated["dataset"] == expected_dataset
     # Verify ZFS dataset actually exists at new path
-    result = call("zfs.resource.query", {"paths": [expected_dataset], "properties": ["mountpoint"]})
+    result = call(
+        "zfs.resource.query",
+        {"paths": [expected_dataset], "properties": ["mountpoint"]},
+    )
     assert result, f"ZFS dataset {expected_dataset!r} does not exist after rename"
 
 
 def test_container_stop_force_after_timeout(ubuntu_container):
     container = ubuntu_container
 
-    call("container.update", container["id"], {"init": "/bin/sleep infinity", "shutdown_timeout": 5})
+    call(
+        "container.update",
+        container["id"],
+        {"init": "/bin/sleep infinity", "shutdown_timeout": 5},
+    )
 
     call("container.start", container["id"])
     container = call("container.get_instance", container["id"])
@@ -210,7 +246,9 @@ def test_container_stop_force_after_timeout(ubuntu_container):
 
     call("container.stop", container["id"], job=True)
     container = call("container.get_instance", container["id"])
-    assert container["status"]["state"] == "RUNNING"  # Process with PID=1 ignores SIGTERM if it is not init
+    assert (
+        container["status"]["state"] == "RUNNING"
+    )  # Process with PID=1 ignores SIGTERM if it is not init
 
     call("container.stop", container["id"], {"force_after_timeout": True}, job=True)
     container = call("container.get_instance", container["id"])
@@ -253,10 +291,17 @@ def test_container_shell(started_ubuntu_container):
     token = call("auth.generate_token", 300, {}, False)
     ws = websocket.create_connection(websocket_url() + "/websocket/shell")
     try:
-        ws.send(json.dumps({
-            "token": token,
-            "options": {"container_id": started_ubuntu_container["id"], "command": "ls /mnt"}
-        }))
+        ws.send(
+            json.dumps(
+                {
+                    "token": token,
+                    "options": {
+                        "container_id": started_ubuntu_container["id"],
+                        "command": "ls /mnt",
+                    },
+                }
+            )
+        )
         _, msg = ws.recv_data()
         assert json.loads(msg.decode())["msg"] == "connected", msg
 
@@ -271,7 +316,7 @@ def test_container_shell(started_ubuntu_container):
 
             data += msg.decode("ascii", "ignore")
 
-        assert data.replace("\x03", "").strip().split()[-1] == f"canary"
+        assert data.replace("\x03", "").strip().split()[-1] == "canary"
     finally:
         ws.close()
 
@@ -279,31 +324,47 @@ def test_container_shell(started_ubuntu_container):
 @pytest.fixture(scope="module")
 def idmap_slice_1_container(ubuntu_image):
     # A container that uses idmap slice 2 to test idmap slice auto-allocation
-    with container(ubuntu_image, {
-        "name": "idmap-slice-1",
-        "idmap": {"type": "ISOLATED", "slice": 1},
-    }, True):
+    with container(
+        ubuntu_image,
+        {
+            "name": "idmap-slice-1",
+            "idmap": {"type": "ISOLATED", "slice": 1},
+        },
+        True,
+    ):
         yield
 
 
-@pytest.mark.parametrize("target,config", [
-    (0, None),
-    (2147000001, {"type": "DEFAULT"}),
-    (2147000001 + 65536, {"type": "ISOLATED", "slice": 1}),
-    (2147000001 + 65536 * 2, {"type": "ISOLATED", "slice": None}),
-])
+@pytest.mark.parametrize(
+    "target,config",
+    [
+        (0, None),
+        (2147000001, {"type": "DEFAULT"}),
+        (2147000001 + 65536, {"type": "ISOLATED", "slice": 1}),
+        (2147000001 + 65536 * 2, {"type": "ISOLATED", "slice": None}),
+    ],
+)
 def test_idmap(ubuntu_image, idmap_slice_1_container, target, config):
-    with container(ubuntu_image, {
-        "idmap": config,
-    }, True) as c:
-        assert ssh(f"ps -p {c['status']['pid']} -o uid,gid --no-headers").strip().split() == [
-            str(target), str(target),
+    with container(
+        ubuntu_image,
+        {
+            "idmap": config,
+        },
+        True,
+    ) as c:
+        assert ssh(
+            f"ps -p {c['status']['pid']} -o uid,gid --no-headers"
+        ).strip().split() == [
+            str(target),
+            str(target),
         ]
 
         mountpoint = get_mountpoint(c["dataset"])
         ssh(f"mkdir {mountpoint}/playground")
         ssh(nsenter(c, "touch /playground/canary"))
-        assert ssh(f"stat -c '%u %g' {mountpoint}/playground/canary").strip().split() == ["0", "0"]
+        assert ssh(
+            f"stat -c '%u %g' {mountpoint}/playground/canary"
+        ).strip().split() == ["0", "0"]
 
 
 def _stat_inside(container_dict, path):
@@ -317,44 +378,56 @@ def test_default_idmap_passes_apps_user_through(ubuntu_image):
     with container(ubuntu_image, {"idmap": {"type": "DEFAULT"}}, start=True) as c:
         mountpoint = get_mountpoint(c["dataset"])
         ssh(f"mkdir {mountpoint}/playground && chown 568:568 {mountpoint}/playground")
-        ssh(f": > {mountpoint}/playground/apps_file && chown 568:568 {mountpoint}/playground/apps_file")
+        ssh(
+            f": > {mountpoint}/playground/apps_file && chown 568:568 {mountpoint}/playground/apps_file"
+        )
         assert _stat_inside(c, "/playground/apps_file") == "568 568"
 
 
 def test_default_idmap_picks_up_custom_user_direct(ubuntu_image):
     with account_group({"name": "idmap_grp"}) as g:
-        with account_user({
-            "username": "idmap_user",
-            "full_name": "idmap user",
-            "group": g["id"],
-            "random_password": True,
-        }) as u:
+        with account_user(
+            {
+                "username": "idmap_user",
+                "full_name": "idmap user",
+                "group": g["id"],
+                "random_password": True,
+            }
+        ) as u:
             uid, gid = u["uid"], g["gid"]
             call("user.update", u["id"], {"userns_idmap": "DIRECT"})
             call("group.update", g["id"], {"userns_idmap": "DIRECT"})
 
-            with container(ubuntu_image, {"idmap": {"type": "DEFAULT"}}, start=True) as c:
+            with container(
+                ubuntu_image, {"idmap": {"type": "DEFAULT"}}, start=True
+            ) as c:
                 mountpoint = get_mountpoint(c["dataset"])
                 ssh(f"mkdir {mountpoint}/playground")
-                ssh(f": > {mountpoint}/playground/file && chown {uid}:{gid} {mountpoint}/playground/file")
+                ssh(
+                    f": > {mountpoint}/playground/file && chown {uid}:{gid} {mountpoint}/playground/file"
+                )
                 assert _stat_inside(c, "/playground/file") == f"{uid} {gid}"
 
 
 def test_default_idmap_picks_up_custom_user_numeric(ubuntu_image):
     target = 8675309
-    with account_user({
-        "username": "idmap_numeric",
-        "full_name": "idmap numeric",
-        "group_create": True,
-        "random_password": True,
-    }) as u:
+    with account_user(
+        {
+            "username": "idmap_numeric",
+            "full_name": "idmap numeric",
+            "group_create": True,
+            "random_password": True,
+        }
+    ) as u:
         uid = u["uid"]
         call("user.update", u["id"], {"userns_idmap": target})
 
         with container(ubuntu_image, {"idmap": {"type": "DEFAULT"}}, start=True) as c:
             mountpoint = get_mountpoint(c["dataset"])
             ssh(f"mkdir {mountpoint}/playground")
-            ssh(f": > {mountpoint}/playground/file && chown {uid}:0 {mountpoint}/playground/file")
+            ssh(
+                f": > {mountpoint}/playground/file && chown {uid}:0 {mountpoint}/playground/file"
+            )
             assert _stat_inside(c, "/playground/file").split()[0] == str(target)
 
 
@@ -363,30 +436,57 @@ def test_isolated_idmap_ignores_account_passthrough(ubuntu_image):
     # are configured with userns_idmap. Files at host UID 568 should NOT appear
     # as UID 568 inside an ISOLATED container.
     with container(
-        ubuntu_image, {"idmap": {"type": "ISOLATED", "slice": 1}}, start=True,
+        ubuntu_image,
+        {"idmap": {"type": "ISOLATED", "slice": 1}},
+        start=True,
     ) as c:
         mountpoint = get_mountpoint(c["dataset"])
         ssh(f"mkdir {mountpoint}/playground && chown 568:568 {mountpoint}/playground")
-        ssh(f": > {mountpoint}/playground/apps_file && chown 568:568 {mountpoint}/playground/apps_file")
+        ssh(
+            f": > {mountpoint}/playground/apps_file && chown 568:568 {mountpoint}/playground/apps_file"
+        )
         inside = _stat_inside(c, "/playground/apps_file")
         assert inside != "568 568", (
             f"ISOLATED container leaked apps passthrough: {inside}"
         )
 
 
-@pytest.mark.parametrize("configuration,has", [
-    ({}, True),
-    ({"capabilities_state": {"lease": False}}, False),
-    ({"capabilities_policy": "ALLOW"}, True),
-    ({"capabilities_policy": "ALLOW", "capabilities_state": {"lease": False}}, False),
-    ({"capabilities_policy": "DENY", "capabilities_state": {**BASIC_CAPABILITIES}}, False),
-    ({"capabilities_policy": "DENY", "capabilities_state": {**BASIC_CAPABILITIES, "lease": True}}, True),
-])
+@pytest.mark.parametrize(
+    "configuration,has",
+    [
+        ({}, True),
+        ({"capabilities_state": {"lease": False}}, False),
+        ({"capabilities_policy": "ALLOW"}, True),
+        (
+            {"capabilities_policy": "ALLOW", "capabilities_state": {"lease": False}},
+            False,
+        ),
+        (
+            {
+                "capabilities_policy": "DENY",
+                "capabilities_state": {**BASIC_CAPABILITIES},
+            },
+            False,
+        ),
+        (
+            {
+                "capabilities_policy": "DENY",
+                "capabilities_state": {**BASIC_CAPABILITIES, "lease": True},
+            },
+            True,
+        ),
+    ],
+)
 def test_capabilities(ubuntu_image, configuration, has):
-    with container(ubuntu_image, configuration, True, startup_script=textwrap.dedent("""\
+    with container(
+        ubuntu_image,
+        configuration,
+        True,
+        startup_script=textwrap.dedent("""\
         #!/bin/sh
         capsh --print
-    """)) as c:
+    """),
+    ) as c:
         s = script_output(c)
 
         if has:
@@ -414,7 +514,9 @@ def test_network(started_ubuntu_container):
         try:
             assert ssh(nsenter(started_ubuntu_container, f"ping -c 1 {host().ip}"))
             assert ssh(nsenter(started_ubuntu_container, "ping -c 1 8.8.8.8"))
-            assert "inet " in ssh(nsenter(started_ubuntu_container, "ip -4 addr show dev eth0"))
+            assert "inet " in ssh(
+                nsenter(started_ubuntu_container, "ip -4 addr show dev eth0")
+            )
             break
         except AssertionError:
             if i > 30:
@@ -434,7 +536,7 @@ def test_incorrect_image(ubuntu_image):
         with container({**ubuntu_image, "name": ubuntu_image["name"] + "_"}):
             pass
 
-    assert ve.value.errors[0].attribute == 'container_create.image.name'
+    assert ve.value.errors[0].attribute == "container_create.image.name"
 
 
 def test_incorrect_image_version(ubuntu_image):
@@ -442,14 +544,17 @@ def test_incorrect_image_version(ubuntu_image):
         with container({**ubuntu_image, "version": ubuntu_image["version"] + "_"}):
             pass
 
-    assert ve.value.errors[0].attribute == 'container_create.image.version'
+    assert ve.value.errors[0].attribute == "container_create.image.version"
 
 
 def test_container_device_nic_crud(ubuntu_container):
-    device = call("container.device.create", {
-        "container": ubuntu_container["id"],
-        "attributes": {"dtype": "NIC"},
-    })
+    device = call(
+        "container.device.create",
+        {
+            "container": ubuntu_container["id"],
+            "attributes": {"dtype": "NIC"},
+        },
+    )
     try:
         assert device["attributes"]["dtype"] == "NIC"
         assert device["attributes"]["mac"]  # auto-generated
