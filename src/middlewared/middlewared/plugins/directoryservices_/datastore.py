@@ -1,7 +1,7 @@
-import dns
-import dns.resolver
 import os
 
+import dns
+import dns.resolver
 from wbclient import WBCError
 
 from middlewared.api import api_method

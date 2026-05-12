@@ -1,9 +1,9 @@
 import errno
+import ipaddress
 import subprocess
 from time import sleep
 
 import gssapi
-import ipaddress
 import ldap
 
 from middlewared.service_exception import CallError, ValidationErrors
