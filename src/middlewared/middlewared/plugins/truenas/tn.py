@@ -4,10 +4,11 @@ import errno
 import os
 from typing import TYPE_CHECKING, cast
 
-from middlewared.api.current import SupportNewTicket, TruecommandStatus
-from middlewared.service import ServiceContext
 from truenas_pydmi.models import TRUENAS_UNKNOWN
 from truenas_pydmi.reader import read_dmi
+
+from middlewared.api.current import SupportNewTicket, TruecommandStatus
+from middlewared.service import ServiceContext
 
 if TYPE_CHECKING:
     from middlewared.job import Job
