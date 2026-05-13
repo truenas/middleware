@@ -226,6 +226,21 @@ class SystemGeneralService(ConfigService):
             await self.middleware.call('zettarepl.update_config', {'timezone': new_config['timezone']})
             await (await self.middleware.call('service.control', 'RELOAD', 'timeservices')).wait(raise_error=True)
             await (await self.middleware.call('service.control', 'RESTART', 'cron')).wait(raise_error=True)
+            # Notify systemd-timedated of the zone change. We do not do this in ix-etc because when on boot
+            # ix-etc.service runs Before sysinit.target, while systemd-timedated.service is ordered
+            # After it, so a D-Bus call from there would deadlock. By the time system.general.update
+            # runs interactively those targets have long been reached. Without this call timedatectl
+            # status and any subscriber to timedated's PropertiesChanged signal (journald, chrony,
+            # cron in some configurations) keep reporting the previous zone until the next reboot.
+            cp = await run(
+                ['timedatectl', 'set-timezone', new_config['timezone']],
+                check=False, encoding='utf-8',
+            )
+            if cp.returncode:
+                self.logger.warning(
+                    'timedatectl set-timezone %r failed: %s',
+                    new_config['timezone'], cp.stderr,
+                )
 
         if config['ds_auth'] != new_config['ds_auth']:
             await self.middleware.call('etc.generate', 'pam')

@@ -52,6 +52,7 @@ from middlewared.utils.size import format_size
 from middlewared.utils.string import make_sentence
 from middlewared.utils.threading import start_daemon_thread
 from middlewared.utils.time_utils import utc_now
+from middlewared.utils.timezone_choices import effective_timezone
 
 
 INVALID_DATASETS = (
@@ -625,7 +626,12 @@ class ZettareplService(Service):
 
     async def get_definition(self):
         config = await self.middleware.call("replication.config.config")
-        timezone = (await self.middleware.call("system.general.config"))["timezone"]
+        # Sanitize against a stale DB value left over from an upgrade (e.g. a
+        # legacy alias like "Japan") -- the
+        # ZoneInfo lookup downstream would otherwise raise ZoneInfoNotFoundError.
+        timezone = effective_timezone(
+            (await self.middleware.call("system.general.config"))["timezone"]
+        )
 
         pools = {pool["name"]: pool for pool in await self.middleware.call("pool.query")}
 
