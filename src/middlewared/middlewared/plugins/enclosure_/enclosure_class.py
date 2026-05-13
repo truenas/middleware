@@ -7,7 +7,6 @@ import logging
 from typing import Literal, TypeAlias, TypedDict
 
 from middlewared.utils.dmi import cached_dmi
-
 from middlewared.utils.scsi_generic import inquiry
 
 from .constants import (
