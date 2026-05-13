@@ -5,6 +5,7 @@ Contents
    :maxdepth: 1
 
    jsonrpc.rst
+$CHANGELOG_ENTRY
    api_methods.rst
    api_events.rst
    jobs.rst
