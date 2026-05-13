@@ -371,17 +371,46 @@ def _stat_inside(container_dict, path):
     return ssh(nsenter(container_dict, f"stat -c '%u %g' {path}")).strip()
 
 
+@contextlib.contextmanager
+def bind_share_with_file(uid, gid, fname="file"):
+    # idmap passthroughs only take effect for mounts that DON'T have a mount
+    # idmap of their own (FilesystemDevice bind-mounts). The rootfs gets a
+    # matched X-mount.idmap, which forces an identity round-trip and hides
+    # the userns mapping. So tests that verify non-DIRECT / ISOLATED behavior
+    # must use a bind-mount source, not files written into the rootfs dataset.
+    share = f"/mnt/{pool}/idmap_share_{uid}_{gid}"
+    try:
+        ssh(f"rm -rf {share}")
+        ssh(f"mkdir -p {share}")
+        ssh(f": > {share}/{fname} && chown {uid}:{gid} {share}/{fname}")
+        yield share
+    finally:
+        ssh(f"rm -rf {share}")
+
+
 def test_default_idmap_passes_apps_user_through(ubuntu_image):
     # By default builtin sync sets userns_idmap='DIRECT' on the apps user (568)
     # and apps group (568). DEFAULT idmap should honor those passthroughs so
-    # host UID/GID 568 is visible as the same 568 inside the container.
-    with container(ubuntu_image, {"idmap": {"type": "DEFAULT"}}, start=True) as c:
-        mountpoint = get_mountpoint(c["dataset"])
-        ssh(f"mkdir {mountpoint}/playground && chown 568:568 {mountpoint}/playground")
-        ssh(
-            f": > {mountpoint}/playground/apps_file && chown 568:568 {mountpoint}/playground/apps_file"
-        )
-        assert _stat_inside(c, "/playground/apps_file") == "568 568"
+    # host UID/GID 568 is visible as the same 568 inside the container via a
+    # FilesystemDevice bind-mount (where the userns extent actually decides
+    # the visible UID, not the rootfs's identity round-trip).
+    with bind_share_with_file(568, 568, fname="apps_file") as share:
+        with container(ubuntu_image, {"idmap": {"type": "DEFAULT"}}) as c:
+            call(
+                "container.device.create",
+                {
+                    "container": c["id"],
+                    "attributes": {
+                        "dtype": "FILESYSTEM",
+                        "source": share,
+                        "target": "/share",
+                    },
+                },
+            )
+            call("container.start", c["id"])
+            c = call("container.get_instance", c["id"])
+            assert c["status"]["state"] == "RUNNING"
+            assert _stat_inside(c, "/share/apps_file") == "568 568"
 
 
 def test_default_idmap_picks_up_custom_user_direct(ubuntu_image):
@@ -398,15 +427,23 @@ def test_default_idmap_picks_up_custom_user_direct(ubuntu_image):
             call("user.update", u["id"], {"userns_idmap": "DIRECT"})
             call("group.update", g["id"], {"userns_idmap": "DIRECT"})
 
-            with container(
-                ubuntu_image, {"idmap": {"type": "DEFAULT"}}, start=True
-            ) as c:
-                mountpoint = get_mountpoint(c["dataset"])
-                ssh(f"mkdir {mountpoint}/playground")
-                ssh(
-                    f": > {mountpoint}/playground/file && chown {uid}:{gid} {mountpoint}/playground/file"
-                )
-                assert _stat_inside(c, "/playground/file") == f"{uid} {gid}"
+            with bind_share_with_file(uid, gid) as share:
+                with container(ubuntu_image, {"idmap": {"type": "DEFAULT"}}) as c:
+                    call(
+                        "container.device.create",
+                        {
+                            "container": c["id"],
+                            "attributes": {
+                                "dtype": "FILESYSTEM",
+                                "source": share,
+                                "target": "/share",
+                            },
+                        },
+                    )
+                    call("container.start", c["id"])
+                    c = call("container.get_instance", c["id"])
+                    assert c["status"]["state"] == "RUNNING"
+                    assert _stat_inside(c, "/share/file") == f"{uid} {gid}"
 
 
 def test_default_idmap_picks_up_custom_user_numeric(ubuntu_image):
@@ -422,33 +459,50 @@ def test_default_idmap_picks_up_custom_user_numeric(ubuntu_image):
         uid = u["uid"]
         call("user.update", u["id"], {"userns_idmap": target})
 
-        with container(ubuntu_image, {"idmap": {"type": "DEFAULT"}}, start=True) as c:
-            mountpoint = get_mountpoint(c["dataset"])
-            ssh(f"mkdir {mountpoint}/playground")
-            ssh(
-                f": > {mountpoint}/playground/file && chown {uid}:0 {mountpoint}/playground/file"
-            )
-            assert _stat_inside(c, "/playground/file").split()[0] == str(target)
+        with bind_share_with_file(uid, 0) as share:
+            with container(ubuntu_image, {"idmap": {"type": "DEFAULT"}}) as c:
+                call(
+                    "container.device.create",
+                    {
+                        "container": c["id"],
+                        "attributes": {
+                            "dtype": "FILESYSTEM",
+                            "source": share,
+                            "target": "/share",
+                        },
+                    },
+                )
+                call("container.start", c["id"])
+                c = call("container.get_instance", c["id"])
+                assert c["status"]["state"] == "RUNNING"
+                assert _stat_inside(c, "/share/file").split()[0] == str(target)
 
 
 def test_isolated_idmap_ignores_account_passthrough(ubuntu_image):
-    # ISOLATED idmap must NOT apply per-account passthroughs even when accounts
-    # are configured with userns_idmap. Files at host UID 568 should NOT appear
-    # as UID 568 inside an ISOLATED container.
-    with container(
-        ubuntu_image,
-        {"idmap": {"type": "ISOLATED", "slice": 1}},
-        start=True,
-    ) as c:
-        mountpoint = get_mountpoint(c["dataset"])
-        ssh(f"mkdir {mountpoint}/playground && chown 568:568 {mountpoint}/playground")
-        ssh(
-            f": > {mountpoint}/playground/apps_file && chown 568:568 {mountpoint}/playground/apps_file"
-        )
-        inside = _stat_inside(c, "/playground/apps_file")
-        assert inside != "568 568", (
-            f"ISOLATED container leaked apps passthrough: {inside}"
-        )
+    # ISOLATED's userns has no extent covering host kuid/kgid 568, so a
+    # bind-mounted file at 568:568 must not show as 568:568 inside.
+    with bind_share_with_file(568, 568, fname="apps_file") as share:
+        with container(
+            ubuntu_image, {"idmap": {"type": "ISOLATED", "slice": 1}}
+        ) as c:
+            call(
+                "container.device.create",
+                {
+                    "container": c["id"],
+                    "attributes": {
+                        "dtype": "FILESYSTEM",
+                        "source": share,
+                        "target": "/share",
+                    },
+                },
+            )
+            call("container.start", c["id"])
+            c = call("container.get_instance", c["id"])
+            assert c["status"]["state"] == "RUNNING"
+            inside = _stat_inside(c, "/share/apps_file")
+            assert inside != "568 568", (
+                f"ISOLATED container leaked apps passthrough: {inside}"
+            )
 
 
 @pytest.mark.parametrize(
