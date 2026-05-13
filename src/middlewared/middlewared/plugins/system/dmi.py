@@ -1,20 +1,20 @@
-from truenas_pydmi import legacy_dmi_info as parse_dmi
-
 from middlewared.service import Service, private
+from middlewared.utils.dmi import cached_dmi
 
 
 class SystemService(Service):
     @private
     def dmidecode_info(self):
-        dmi_info = parse_dmi()
+        dmi = cached_dmi()
+        bb = dmi.baseboards[0] if dmi.baseboards else None
         return {
-            'bios-release-date': dmi_info.bios_release_date or "",
-            'ecc-memory': dmi_info.ecc_memory,
-            'baseboard-manufacturer': dmi_info.baseboard_manufacturer,
-            'baseboard-product-name': dmi_info.baseboard_product_name,
-            'system-manufacturer': dmi_info.system_manufacturer,
-            'system-product-name': dmi_info.system_product_name,
-            'system-serial-number': dmi_info.system_serial_number,
-            'system-version': dmi_info.system_version,
-            'has-ipmi': dmi_info.has_ipmi,
+            'bios-release-date': (dmi.bios.release_date if dmi.bios else None) or "",
+            'ecc-memory': dmi.ecc_memory,
+            'baseboard-manufacturer': bb.manufacturer if bb else "",
+            'baseboard-product-name': bb.product if bb else "",
+            'system-manufacturer': dmi.system.manufacturer if dmi.system else "",
+            'system-product-name': dmi.system.product_name if dmi.system else "",
+            'system-serial-number': dmi.system.serial_number if dmi.system else "",
+            'system-version': dmi.system.version if dmi.system else "",
+            'has-ipmi': dmi.has_ipmi,
         }

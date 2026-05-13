@@ -4,9 +4,11 @@ import errno
 import os
 from typing import TYPE_CHECKING, cast
 
+from truenas_pydmi.models import TRUENAS_UNKNOWN
+
 from middlewared.api.current import SupportNewTicket, TruecommandStatus
 from middlewared.service import ServiceContext
-from middlewared.utils.chassis import TRUENAS_UNKNOWN, get_chassis_hardware
+from middlewared.utils.dmi import cached_dmi
 
 if TYPE_CHECKING:
     from middlewared.job import Job
@@ -23,7 +25,8 @@ async def managed_by_truecommand(context: ServiceContext) -> bool:
 
 
 async def is_ix_hardware(context: ServiceContext) -> bool:
-    return bool(await context.to_thread(get_chassis_hardware) != TRUENAS_UNKNOWN)
+    dmi = await context.to_thread(cached_dmi)
+    return dmi.tn_model != TRUENAS_UNKNOWN
 
 
 def get_eula() -> str | None:

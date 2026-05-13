@@ -9,10 +9,10 @@ import pathlib
 import subprocess
 
 from pyudev import Context
-import truenas_pydmi
+from truenas_pydmi.models import PLATFORM_PREFIXES
 
 from middlewared.plugins.enclosure_.ses_enclosures2 import get_ses_enclosures
-from middlewared.utils.chassis import PLATFORM_PREFIXES
+from middlewared.utils.dmi import cached_dmi
 from middlewared.utils.version import parse_major_minor_version
 
 logger = logging.getLogger(__name__)
@@ -34,19 +34,19 @@ def is_vseries_v2_interconnect() -> bool:
     is not meaningful on other platforms, so this will return garbage on
     non-V-Series systems.
     """
-    rev = parse_major_minor_version(truenas_pydmi.system().version)
+    rev = parse_major_minor_version(cached_dmi().system.version)
     return rev is None or rev >= (2, 0)
 
 
 @cache
 def detect_platform() -> tuple[str, str]:
     HARDWARE = NODE = 'MANUAL'
-    dmi = truenas_pydmi.system()
-    product = dmi.product_name
-    if not product:
+    dmi = cached_dmi().system
+    if dmi is None or not dmi.product_name:
         # no reason to continue since we've got no path forward
         return HARDWARE, NODE
-    elif dmi.manufacturer == 'QEMU':
+    product = dmi.product_name
+    if dmi.manufacturer == 'QEMU':
         serial = dmi.serial_number
         if not serial.startswith('ha') and not serial.endswith(('_c1', '_c2')):
             # truenas is often installed in KVM so we need to check our specific
