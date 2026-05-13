@@ -1,12 +1,11 @@
-from truenas_pydmi.reader import read_dmi
-
 from middlewared.service import Service, private
+from middlewared.utils.dmi import cached_dmi
 
 
 class SystemService(Service):
     @private
     def dmidecode_info(self):
-        dmi = read_dmi()
+        dmi = cached_dmi()
         bb = dmi.baseboards[0] if dmi.baseboards else None
         return {
             'bios-release-date': (dmi.bios.release_date if dmi.bios else None) or "",

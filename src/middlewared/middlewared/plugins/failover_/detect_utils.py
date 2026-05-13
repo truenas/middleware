@@ -10,9 +10,9 @@ import subprocess
 
 from pyudev import Context
 from truenas_pydmi.models import PLATFORM_PREFIXES
-from truenas_pydmi.reader import read_dmi
 
 from middlewared.plugins.enclosure_.ses_enclosures2 import get_ses_enclosures
+from middlewared.utils.dmi import cached_dmi
 from middlewared.utils.version import parse_major_minor_version
 
 logger = logging.getLogger(__name__)
@@ -34,14 +34,14 @@ def is_vseries_v2_interconnect() -> bool:
     is not meaningful on other platforms, so this will return garbage on
     non-V-Series systems.
     """
-    rev = parse_major_minor_version(read_dmi().system.version)
+    rev = parse_major_minor_version(cached_dmi().system.version)
     return rev is None or rev >= (2, 0)
 
 
 @cache
 def detect_platform() -> tuple[str, str]:
     HARDWARE = NODE = 'MANUAL'
-    dmi = read_dmi().system
+    dmi = cached_dmi().system
     if dmi is None or not dmi.product_name:
         # no reason to continue since we've got no path forward
         return HARDWARE, NODE

@@ -7,7 +7,8 @@ import pathlib
 import re
 
 from pyudev import Context, DeviceNotFoundAtPathError, Devices
-from truenas_pydmi.reader import read_dmi
+
+from middlewared.utils.dmi import cached_dmi
 
 from .constants import (
     DISK_FRONT_KEY,
@@ -370,7 +371,7 @@ def map_r30_r60_or_fseries(model, ctx):
 
 
 def map_nvme():
-    model = parse_model(read_dmi().system.product_name)
+    model = parse_model(cached_dmi().system.product_name)
     ctx = Context()
     if model in (
         ControllerModels.R50.value,

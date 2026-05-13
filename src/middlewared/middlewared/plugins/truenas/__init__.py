@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from truenas_pydmi.reader import read_dmi
-
 from middlewared.api import api_method
 from middlewared.api.current import (
     SupportNewTicket,
@@ -26,6 +24,7 @@ from middlewared.api.current import (
 )
 from middlewared.job import Job
 from middlewared.service import Service, job, private
+from middlewared.utils.dmi import cached_dmi
 
 from .license import TrueNASLicenseService
 from .tn import (
@@ -83,7 +82,7 @@ class TrueNASService(Service):
     )
     def get_chassis_hardware(self) -> str:
         """Returns what type of hardware this is, detected from SMBIOS strings."""
-        return read_dmi().tn_model
+        return cached_dmi().tn_model
 
     @api_method(
         TrueNASIsIxHardwareArgs, TrueNASIsIxHardwareResult,
