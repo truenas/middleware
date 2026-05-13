@@ -76,9 +76,22 @@ def test_nfs_reporting(get_usage_sample):
                 # ``PynfsClient3`` does the actual MOUNT + portmapper
                 # bind, which the appliance counts as a v3 client
                 # exactly the way kernel ``mount.nfs`` did.
-                with PynfsClient3(truenas_server.ip, nfs_path):
-                    usage_sample = call('usage.gather')
-                    assert usage_sample['NFS']['num_clients'] == baseline_sample + 1
+                #
+                # Pynfs runs in the test process as a non-root user
+                # without CAP_NET_BIND_SERVICE, so its source port is
+                # ephemeral; flip allow_nonroot=True so the export
+                # accepts that.  SSH_NFS didn't need this because
+                # mount.nfs binds privileged ports as SETUID-root.
+                prev_allow_nonroot = call('nfs.config')['allow_nonroot']
+                if not prev_allow_nonroot:
+                    call('nfs.update', {'allow_nonroot': True})
+                try:
+                    with PynfsClient3(truenas_server.ip, nfs_path):
+                        usage_sample = call('usage.gather')
+                        assert usage_sample['NFS']['num_clients'] == baseline_sample + 1
+                finally:
+                    if not prev_allow_nonroot:
+                        call('nfs.update', {'allow_nonroot': False})
 
 
 def test_ftp_reporting(get_usage_sample):
