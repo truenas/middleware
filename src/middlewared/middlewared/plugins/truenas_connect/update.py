@@ -243,6 +243,7 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
         # We need to revoke the user account now
         response = await self._call(
             get_account_service_url(config).format(**creds), 'delete', headers=await self.auth_headers(config),
+            get_response=False,
         )
         if response['error']:
             if response['status_code'] == 401:
