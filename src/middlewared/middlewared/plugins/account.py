@@ -1486,6 +1486,31 @@ class UserService(CRUDService):
                     'User namespace idmaps may not be configured for privileged accounts.'
                 )
 
+            combined_uid = combined.get('uid')
+            if data['userns_idmap'] == 'DIRECT':
+                proposed = combined_uid
+            else:
+                proposed = data['userns_idmap']
+            if proposed is not None:
+                conflict_filters = [
+                    ['local', '=', True],
+                    ['userns_idmap', 'nin', [None, 0]],
+                ]
+                if old:
+                    conflict_filters.append(['id', '!=', old['id']])
+                for other in await self.middleware.call('user.query', conflict_filters):
+                    other_target = (
+                        other['uid'] if other['userns_idmap'] == 'DIRECT'
+                        else other['userns_idmap']
+                    )
+                    if other_target == proposed:
+                        verrors.add(
+                            f'{schema}.userns_idmap',
+                            f'User {other["username"]!r} already maps to '
+                            f'container UID {proposed}.'
+                        )
+                        break
+
         if data.get('random_password'):
             if data.get('password'):
                 verrors.add(
@@ -2398,7 +2423,8 @@ class GroupService(CRUDService):
                 f'{schema}.smb', 'SMB groups may not be configured while SMB service backend is unitialized.'
             )
 
-        if 'userns_idmap' in data and pk:
+        entry = None
+        if pk and 'userns_idmap' in data:
             entry = await self.query([['local', '=', True], ['id', '=', pk]], {'get': True})
             if entry['roles']:
                 verrors.add(
@@ -2411,6 +2437,31 @@ class GroupService(CRUDService):
                     f'{schema}.userns_idmap',
                     'User namespace idmaps may not be configured for builtin accounts.'
                 )
+
+        if data.get('userns_idmap'):
+            if data['userns_idmap'] == 'DIRECT':
+                proposed = entry['gid'] if entry else data.get('gid')
+            else:
+                proposed = data['userns_idmap']
+            if proposed is not None:
+                conflict_filters = [
+                    ['local', '=', True],
+                    ['userns_idmap', 'nin', [None, 0]],
+                ]
+                if pk:
+                    conflict_filters.append(['id', '!=', pk])
+                for other in await self.middleware.call('group.query', conflict_filters):
+                    other_target = (
+                        other['gid'] if other['userns_idmap'] == 'DIRECT'
+                        else other['userns_idmap']
+                    )
+                    if other_target == proposed:
+                        verrors.add(
+                            f'{schema}.userns_idmap',
+                            f'Group {other["name"]!r} already maps to '
+                            f'container GID {proposed}.'
+                        )
+                        break
 
         if 'name' in data:
             if data.get('smb'):

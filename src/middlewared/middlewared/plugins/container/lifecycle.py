@@ -158,19 +158,44 @@ def _build_default_idmap_items(
     uid_passthroughs = [_resolve_target(u['uid'], u['userns_idmap']) for u in users]
     gid_passthroughs = [_resolve_target(g['gid'], g['userns_idmap']) for g in groups]
 
-    return _split_base_around(uid_passthroughs), _split_base_around(gid_passthroughs)
+    return _build_idmap_items(uid_passthroughs), _build_idmap_items(gid_passthroughs)
 
 
 def _resolve_target(account_id: int, userns_idmap: typing.Any) -> tuple[int, int]:
+    """Resolve an account's userns_idmap setting to a (container_id, host_id) pair.
+
+    'DIRECT' means the host UID/GID is exposed inside the container with the same
+    numeric value (container_id == host_id). Any other value is the explicit
+    container-side ID that should map to the host's UID/GID.
+    """
     container_id = account_id if userns_idmap == 'DIRECT' else userns_idmap
     return container_id, account_id
 
 
-def _split_base_around(
+def _build_idmap_items(
     passthroughs: list[tuple[int, int]],
 ) -> list[ContainerIdmapConfigurationItem]:
-    in_range = sorted([(c, h) for c, h in passthroughs if 0 <= c < IDMAP_COUNT])
-    out_of_range = [(c, h) for c, h in passthroughs if c >= IDMAP_COUNT or c < 0]
+    """Build a complete idmap table around per-account passthroughs.
+
+    For each passthrough whose container-side ID falls in [0, IDMAP_COUNT), emit
+    a single-ID entry mapping that slot to the account's host ID. Slots not
+    covered by any passthrough are filled with mappings into the shifted
+    CONTAINER_ROOT_UID range so the container has a complete unprivileged
+    UID/GID space. Passthroughs whose container-side ID falls outside
+    [0, IDMAP_COUNT) are appended verbatim as individual one-ID entries.
+
+    Raises CallError when two passthroughs resolve to the same in-range
+    container-side ID. Account-level validation should catch this before
+    persistence; the check here is a safety net.
+    """
+    in_range: list[tuple[int, int]] = []
+    out_of_range: list[tuple[int, int]] = []
+    for c, h in passthroughs:
+        if 0 <= c < IDMAP_COUNT:
+            in_range.append((c, h))
+        else:
+            out_of_range.append((c, h))
+    in_range.sort()
 
     items: list[ContainerIdmapConfigurationItem] = []
     cursor = 0
