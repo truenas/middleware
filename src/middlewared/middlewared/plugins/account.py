@@ -694,6 +694,20 @@ class UserService(CRUDService):
         if data['uid'] is None:
             data['uid'] = self.get_next_uid()
 
+            # common_validation could not resolve a DIRECT mapping without a uid;
+            # now that one was auto-assigned, recheck against existing idmap claims.
+            idmap_verrors = ValidationErrors()
+            self.middleware.call_sync(
+                'user.validate_userns_idmap_conflict',
+                idmap_verrors, 'user_create', data.get('userns_idmap'), data['uid'], None,
+            )
+            if idmap_verrors:
+                with SYNC_NEXT_UID_LOCK:
+                    self.ReservedUids.remove_entry(data['uid'])
+                if group_created:
+                    self.middleware.call_sync('group.delete', data['group'])
+                idmap_verrors.check()
+
         new_homedir = False
         home_mode = data.pop('home_mode')
         if data['home'] and data['home'] != DEFAULT_HOME_PATH:
@@ -1461,6 +1475,45 @@ class UserService(CRUDService):
                     )
 
     @private
+    async def validate_userns_idmap_conflict(
+        self,
+        verrors: ValidationErrors,
+        schema: str,
+        userns_idmap,
+        uid: int | None,
+        exclude_id: int | None = None,
+    ) -> None:
+        """Verify the proposed userns_idmap doesn't collide with another local user's mapping.
+
+        `uid` is the user's host UID; it may be None during creation if not yet auto-assigned,
+        in which case a DIRECT mapping cannot be resolved and the check is deferred. Callers
+        that auto-assign the UID must re-invoke this check after assignment.
+        """
+        if not userns_idmap:
+            return
+        proposed = uid if userns_idmap == 'DIRECT' else userns_idmap
+        if proposed is None:
+            return
+        conflict_filters = [
+            ['local', '=', True],
+            ['userns_idmap', 'nin', [None, 0]],
+        ]
+        if exclude_id is not None:
+            conflict_filters.append(['id', '!=', exclude_id])
+        for other in await self.middleware.call('user.query', conflict_filters):
+            other_target = (
+                other['uid'] if other['userns_idmap'] == 'DIRECT'
+                else other['userns_idmap']
+            )
+            if other_target == proposed:
+                verrors.add(
+                    f'{schema}.userns_idmap',
+                    f'User {other["username"]!r} already maps to '
+                    f'container UID {proposed}.'
+                )
+                return
+
+    @private
     async def common_validation(
         self, verrors: ValidationErrors, data: dict, schema: str, group_ids: list[int], old: dict | None = None
     ) -> None:
@@ -1486,30 +1539,10 @@ class UserService(CRUDService):
                     'User namespace idmaps may not be configured for privileged accounts.'
                 )
 
-            combined_uid = combined.get('uid')
-            if data['userns_idmap'] == 'DIRECT':
-                proposed = combined_uid
-            else:
-                proposed = data['userns_idmap']
-            if proposed is not None:
-                conflict_filters = [
-                    ['local', '=', True],
-                    ['userns_idmap', 'nin', [None, 0]],
-                ]
-                if old:
-                    conflict_filters.append(['id', '!=', old['id']])
-                for other in await self.middleware.call('user.query', conflict_filters):
-                    other_target = (
-                        other['uid'] if other['userns_idmap'] == 'DIRECT'
-                        else other['userns_idmap']
-                    )
-                    if other_target == proposed:
-                        verrors.add(
-                            f'{schema}.userns_idmap',
-                            f'User {other["username"]!r} already maps to '
-                            f'container UID {proposed}.'
-                        )
-                        break
+            await self.validate_userns_idmap_conflict(
+                verrors, schema, data['userns_idmap'], combined.get('uid'),
+                exclude_id=old['id'] if old else None,
+            )
 
         if data.get('random_password'):
             if data.get('password'):
@@ -2127,6 +2160,17 @@ class GroupService(CRUDService):
         if data.get('gid') is None:
             data['gid'] = await self.get_next_gid()
 
+            # __common_validation could not resolve a DIRECT mapping without a gid;
+            # now that one was auto-assigned, recheck against existing idmap claims.
+            idmap_verrors = ValidationErrors()
+            await self.validate_userns_idmap_conflict(
+                idmap_verrors, 'group_create', data.get('userns_idmap'), data['gid'], None,
+            )
+            if idmap_verrors:
+                async with ASYNC_NEXT_GID_LOCK:
+                    self.ReservedGids.remove_entry(data['gid'])
+                idmap_verrors.check()
+
         group = data.copy()
         group['group'] = group.pop('name')
 
@@ -2414,6 +2458,45 @@ class GroupService(CRUDService):
 
         return grp_obj
 
+    @private
+    async def validate_userns_idmap_conflict(
+        self,
+        verrors: ValidationErrors,
+        schema: str,
+        userns_idmap,
+        gid: int | None,
+        exclude_id: int | None = None,
+    ) -> None:
+        """Verify the proposed userns_idmap doesn't collide with another local group's mapping.
+
+        `gid` is the group's host GID; it may be None during creation if not yet auto-assigned,
+        in which case a DIRECT mapping cannot be resolved and the check is deferred. Callers
+        that auto-assign the GID must re-invoke this check after assignment.
+        """
+        if not userns_idmap:
+            return
+        proposed = gid if userns_idmap == 'DIRECT' else userns_idmap
+        if proposed is None:
+            return
+        conflict_filters = [
+            ['local', '=', True],
+            ['userns_idmap', 'nin', [None, 0]],
+        ]
+        if exclude_id is not None:
+            conflict_filters.append(['id', '!=', exclude_id])
+        for other in await self.middleware.call('group.query', conflict_filters):
+            other_target = (
+                other['gid'] if other['userns_idmap'] == 'DIRECT'
+                else other['userns_idmap']
+            )
+            if other_target == proposed:
+                verrors.add(
+                    f'{schema}.userns_idmap',
+                    f'Group {other["name"]!r} already maps to '
+                    f'container GID {proposed}.'
+                )
+                return
+
     async def __common_validation(self, verrors, data, schema, pk=None):
 
         exclude_filter = [('id', '!=', pk)] if pk else []
@@ -2438,30 +2521,11 @@ class GroupService(CRUDService):
                     'User namespace idmaps may not be configured for builtin accounts.'
                 )
 
-        if data.get('userns_idmap'):
-            if data['userns_idmap'] == 'DIRECT':
-                proposed = entry['gid'] if entry else data.get('gid')
-            else:
-                proposed = data['userns_idmap']
-            if proposed is not None:
-                conflict_filters = [
-                    ['local', '=', True],
-                    ['userns_idmap', 'nin', [None, 0]],
-                ]
-                if pk:
-                    conflict_filters.append(['id', '!=', pk])
-                for other in await self.middleware.call('group.query', conflict_filters):
-                    other_target = (
-                        other['gid'] if other['userns_idmap'] == 'DIRECT'
-                        else other['userns_idmap']
-                    )
-                    if other_target == proposed:
-                        verrors.add(
-                            f'{schema}.userns_idmap',
-                            f'Group {other["name"]!r} already maps to '
-                            f'container GID {proposed}.'
-                        )
-                        break
+        await self.validate_userns_idmap_conflict(
+            verrors, schema, data.get('userns_idmap'),
+            entry['gid'] if entry else data.get('gid'),
+            exclude_id=pk,
+        )
 
         if 'name' in data:
             if data.get('smb'):

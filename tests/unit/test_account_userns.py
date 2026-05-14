@@ -210,3 +210,57 @@ def test__user_self_update_keeps_idmap():
                 c.call('user.update', u['id'], {'userns_idmap': 'DIRECT'})
             finally:
                 c.call('user.update', u['id'], {'userns_idmap': None})
+
+
+def test__user_create_autoassigned_uid_idmap_conflict_deny():
+    with Client() as c:
+        placeholder = c.call('user.create', {
+            'username': 'idmap_auto_placeholder', 'full_name': 'placeholder',
+            'random_password': True, 'group_create': True,
+        })
+        target_uid = placeholder['uid']
+        user_a = c.call('user.create', {
+            'username': 'idmap_auto_a', 'full_name': 'a',
+            'random_password': True, 'group_create': True,
+            'userns_idmap': target_uid,
+        })
+        # Free target_uid so the next auto-assignment returns it (smallest gap).
+        c.call('user.delete', placeholder['id'])
+        try:
+            user_b_id = None
+            try:
+                with pytest.raises(ClientException, match=f'already maps to container UID {target_uid}'):
+                    user_b_id = c.call('user.create', {
+                        'username': 'idmap_auto_b', 'full_name': 'b',
+                        'random_password': True, 'group_create': True,
+                        'userns_idmap': 'DIRECT',
+                    })
+            finally:
+                if user_b_id is not None:
+                    c.call('user.delete', user_b_id)
+        finally:
+            c.call('user.delete', user_a['id'])
+
+
+def test__group_create_autoassigned_gid_idmap_conflict_deny():
+    with Client() as c:
+        placeholder_id = c.call('group.create', {'name': 'idmap_auto_grp_placeholder'})
+        placeholder = c.call('group.query', [['id', '=', placeholder_id]], {'get': True})
+        target_gid = placeholder['gid']
+        g_a_id = c.call('group.create', {
+            'name': 'idmap_auto_grp_a', 'userns_idmap': target_gid,
+        })
+        c.call('group.delete', placeholder_id)
+        try:
+            g_b_id = None
+            try:
+                with pytest.raises(ClientException, match=f'already maps to container GID {target_gid}'):
+                    g_b_id = c.call('group.create', {
+                        'name': 'idmap_auto_grp_b',
+                        'userns_idmap': 'DIRECT',
+                    })
+            finally:
+                if g_b_id is not None:
+                    c.call('group.delete', g_b_id)
+        finally:
+            c.call('group.delete', g_a_id)
