@@ -81,11 +81,11 @@ def test__build_idmap_items_mixed_in_and_out_of_range():
 
 
 def test__build_idmap_items_duplicate_in_range_rejected():
-    with pytest.raises(CallError, match='Duplicate container-side id 42'):
+    with pytest.raises(CallError, match="Duplicate container-side id 42"):
         _build_idmap_items([(42, 3000), (42, 4000)])
 
 
 def test__build_idmap_items_duplicate_out_of_range_rejected():
     high = IDMAP_COUNT + 1
-    with pytest.raises(CallError, match=f'Duplicate container-side id {high}'):
+    with pytest.raises(CallError, match=f"Duplicate container-side id {high}"):
         _build_idmap_items([(high, 3000), (high, 4000)])
