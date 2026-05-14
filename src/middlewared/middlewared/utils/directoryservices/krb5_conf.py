@@ -26,6 +26,11 @@ APPDEFAULTS_SUPPORTED_OPTIONS = set(i.value[0] for i in KRB_AppDefaults)
 LIBDEFAULTS_SUPPORTED_OPTIONS = set(i.value[0] for i in KRB_LibDefaults)
 SUPPORTED_ETYPES = set(e.value for e in KRB_ETYPE)
 
+# Dedupe key (section_name, param, value) of lenient-mode skips already logged
+# in this process, so the renderer doesn't re-emit the same warning on every
+# etc.generate call against a legacy auxiliary_parameters value.
+_LOGGED_UNSUPPORTED_AUX: set[tuple[str, str, str]] = set()
+
 
 def format_server(address: str | None) -> str | None:
     """
@@ -110,7 +115,8 @@ def validate_krb5_parameter(section, param, value):
 def parse_krb_aux_params(
     section: KRB5ConfSection,
     section_conf: dict,
-    aux_params: str
+    aux_params: str,
+    strict: bool = True
 ):
     """
     Parse auxiliary parameters and write them to the specified `section_conf`
@@ -121,6 +127,14 @@ def parse_krb_aux_params(
     updated with configuration specified in the `aux_params`
 
     `aux_params` - auxiliary parameters text blob to be parsed and used to update `section_conf`.
+
+    `strict` - when True (default), raise ValueError on any line that fails
+    `validate_krb5_parameter`. When False (used by the etc.generate renderer),
+    log a warning once per (section, param, value) and skip the offending line.
+    Lenient mode exists to keep krb5.conf regeneration working when a
+    previously-supported option (e.g. `allow_weak_crypto`) has been removed
+    from `KRB_LibDefaults` / `KRB_AppDefaults` and is still present in
+    persisted user-supplied text.
     """
     target = section_conf
     is_subsection = False
@@ -166,7 +180,24 @@ def parse_krb_aux_params(
             continue
 
         value = entry[1].strip()
-        validate_krb5_parameter(section, param, value)
+        try:
+            validate_krb5_parameter(section, param, value)
+        except ValueError:
+            if strict:
+                raise
+
+            key = (section.name, param, value)
+            if key not in _LOGGED_UNSUPPORTED_AUX:
+                _LOGGED_UNSUPPORTED_AUX.add(key)
+                logger.warning(
+                    'Dropping unsupported krb5.conf [%s] auxiliary parameter '
+                    '%r=%r from rendered configuration. Run kerberos.update '
+                    'with a cleaned libdefaults_aux/appdefaults_aux value to '
+                    'remove the legacy line from the database.',
+                    section.name.lower(), param, value,
+                )
+            continue
+
         target[param] = value
 
 
@@ -176,14 +207,20 @@ class KRB5Conf():
         self.appdefaults = {}  # settings used by some KRB5 applications
         self.realms = {}  # realm-specific settings
 
-    def __add_parameters(self, section: str, config: dict, auxiliary_parameters: Optional[list] = None):
+    def __add_parameters(
+        self,
+        section: str,
+        config: dict,
+        auxiliary_parameters: Optional[list] = None,
+        strict: bool = True,
+    ):
         for param, value in config.items():
             validate_krb5_parameter(section, param, value)
 
         data = deepcopy(config)
 
         if auxiliary_parameters:
-            parse_krb_aux_params(section, data, auxiliary_parameters)
+            parse_krb_aux_params(section, data, auxiliary_parameters, strict=strict)
 
         match section:
             case KRB5ConfSection.APPDEFAULTS:
@@ -196,7 +233,8 @@ class KRB5Conf():
     def add_libdefaults(
         self,
         config: dict,
-        auxiliary_parameters: Optional[list] = None
+        auxiliary_parameters: Optional[list] = None,
+        strict: bool = True,
     ):
         """
         Add configuration for the [libdefaults] section of the krb5.conf file, replacing
@@ -225,13 +263,15 @@ class KRB5Conf():
         self.__add_parameters(
             KRB5ConfSection.LIBDEFAULTS,
             config,
-            auxiliary_parameters
+            auxiliary_parameters,
+            strict=strict,
         )
 
     def add_appdefaults(
         self,
         config: dict,
-        auxiliary_parameters: Optional[str] = None
+        auxiliary_parameters: Optional[str] = None,
+        strict: bool = True,
     ):
         """
         Add configuration for the [appdefaults] section of the krb5.conf file, replacing
@@ -260,7 +300,8 @@ class KRB5Conf():
         self.__add_parameters(
             KRB5ConfSection.APPDEFAULTS,
             config,
-            auxiliary_parameters
+            auxiliary_parameters,
+            strict=strict,
         )
 
     def __parse_realm(self, realm_info: dict) -> dict:
