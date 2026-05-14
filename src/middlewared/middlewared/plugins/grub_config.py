@@ -190,6 +190,11 @@ def write_grub_config(middleware: Middleware) -> bool:
     """Render the config and write both the running-BE file and the persisted
     snapshot under `/data`. Returns True if either file changed.
 
+    On HA, each node renders from its own (replicated) DB rather than shipping
+    bytes across — same pattern as hostname/hosts/sysctl/fips. Propagation to
+    the remote node is the caller's responsibility (via
+    `failover.call_remote 'etc.generate' ['grub']`), not this function's.
+
     Sync - call from a thread (`asyncio.to_thread`) when invoked from a
     coroutine."""
     content = render_grub_config(middleware)
@@ -199,15 +204,6 @@ def write_grub_config(middleware: Middleware) -> bool:
     # the grub.d directory (matches the old script's behavior).
     changed = _atomic_replace_if_changed(GRUB_CFG_PATH, content, tmppath="/etc/default")
     snapshot_changed = _atomic_replace_if_changed(GRUB_CFG_DATA_PATH, content)
-    if snapshot_changed and middleware.call_sync("failover.licensed"):
-        try:
-            middleware.call_sync("failover.send_small_file", GRUB_CFG_DATA_PATH)
-        except Exception:
-            middleware.logger.warning(
-                "failed to sync %r to standby controller",
-                GRUB_CFG_DATA_PATH,
-                exc_info=True,
-            )
     return changed or snapshot_changed
 
 
@@ -218,7 +214,22 @@ async def _event_system_ready(middleware, event_type, args):
 
 async def _reconcile(middleware):
     try:
-        await asyncio.to_thread(write_grub_config, middleware)
+        changed = await asyncio.to_thread(write_grub_config, middleware)
+        if changed:
+            # write_grub_config only updates /etc/default/grub.d/truenas.cfg
+            # (the input). etc.generate('grub') runs grub-mkconfig to compile
+            # that into /boot/grub/grub.cfg, which is what the bootloader
+            # actually reads. Without this the next boot uses stale params.
+            await middleware.call("etc.generate", "grub")
+        if await middleware.call("failover.licensed"):
+            if await middleware.call("failover.status") != "MASTER":
+                return
+            try:
+                await middleware.call("failover.call_remote", "etc.generate", ["grub"])
+            except Exception:
+                middleware.logger.error(
+                    "failed to render grub.cfg on remote node", exc_info=True
+                )
     except Exception:
         middleware.logger.error("Failed to reconcile grub config", exc_info=True)
 
