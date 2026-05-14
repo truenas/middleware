@@ -375,7 +375,7 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
                 field, "ZFS tiering is globally disabled", errno.EINVAL
             )
 
-        tier_map = await self.call2(self._bulk_tier_info_with_sentinel, [dataset_name])
+        tier_map = await self.call2(self.bulk_tier_info_with_sentinel, [dataset_name])
         current_info = tier_map.get(dataset_name)
         if current_info is _DATASET_NOT_FOUND:
             raise ValidationError(
@@ -591,7 +591,7 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
                 "zfs_tier_dataset_set_tier", "ZFS tiering is globally disabled", errno.EINVAL
             )
 
-        tier_map = await self.call2(self._bulk_tier_info_with_sentinel, [dataset_name])
+        tier_map = await self.call2(self.bulk_tier_info_with_sentinel, [dataset_name])
         current_info = tier_map.get(dataset_name)
 
         if current_info is _DATASET_NOT_FOUND:
@@ -697,7 +697,7 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
 
     @private
     @pass_thread_local_storage
-    def _bulk_tier_info_with_sentinel(
+    def bulk_tier_info_with_sentinel(
         self, tls: typing.Any, dataset_names: list[str]
     ) -> dict[str, typing.Any]:
         """
