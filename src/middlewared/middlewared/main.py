@@ -1189,7 +1189,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
     def _build_audit_message_sync(
         self,
         app: App,
-        event: typing.Literal['METHOD_CALL', 'AUTHENTICATION', 'REBOOT', 'SHUTDOWN', 'LOGOUT'],
+        event: typing.Literal['METHOD_CALL', 'AUTHENTICATION', 'REBOOT', 'SHUTDOWN', 'LOGOUT', 'WEBSHELL_AUTHENTICATION', 'WEBSHELL_LOGOUT'],
         event_data: dict,
         success: bool,
     ) -> str:
@@ -1239,7 +1239,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
     def log_audit_message_sync(
         self,
         app: App,
-        event: typing.Literal['METHOD_CALL', 'AUTHENTICATION', 'REBOOT', 'SHUTDOWN', 'LOGOUT'],
+        event: typing.Literal['METHOD_CALL', 'AUTHENTICATION', 'REBOOT', 'SHUTDOWN', 'LOGOUT', 'WEBSHELL_AUTHENTICATION', 'WEBSHELL_LOGOUT'],
         event_data: dict,
         success: bool,
     ) -> None:
@@ -1255,7 +1255,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
     async def log_audit_message(
         self,
         app: App,
-        event: typing.Literal['METHOD_CALL', 'AUTHENTICATION', 'REBOOT', 'SHUTDOWN', 'LOGOUT'],
+        event: typing.Literal['METHOD_CALL', 'AUTHENTICATION', 'REBOOT', 'SHUTDOWN', 'LOGOUT', 'WEBSHELL_AUTHENTICATION', 'WEBSHELL_LOGOUT'],
         event_data: dict,
         success: bool,
     ) -> None:

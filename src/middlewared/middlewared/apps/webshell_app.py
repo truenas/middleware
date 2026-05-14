@@ -1,6 +1,7 @@
 import asyncio
 import collections
 import contextlib
+import errno
 import fcntl
 import os
 import queue
@@ -12,14 +13,14 @@ import time
 
 from truenas_api_client import json
 
+from middlewared.api.base.server.app import App
 from middlewared.api.base.server.ws_handler.base import BaseWebSocketHandler
 from middlewared.plugins.account_.constants import DEFAULT_HOME_PATH
 from middlewared.service_exception import (
     CallError,
     ErrnoMixin,
-    MatchNotFound,
 )
-from middlewared.utils.crypto import ssl_uuid4
+from middlewared.utils.auth import ShellAppType, ShellTokenAuthError
 from middlewared.utils.os import close_fds, terminate_pid
 from middlewared.utils.threading import run_coro_threadsafe
 
@@ -28,61 +29,56 @@ __all__ = ("ShellApplication",)
 ShellResize = collections.namedtuple("ShellResize", ["cols", "rows"])
 
 
+def _audit_target(shell_type, options):
+    if shell_type is ShellAppType.VM:
+        return {"vm_id": options["vm_id"]}
+    if shell_type is ShellAppType.APP:
+        return {"app_name": options["app_name"], "container_id": options["container_id"]}
+    if shell_type is ShellAppType.CONTAINER:
+        return {"container_id": options["container_id"]}
+    return None
+
+
 class ShellWorkerThread(threading.Thread):
     """
     Worker thread responsible for forking and running the shell
     and spawning the reader and writer threads.
     """
 
-    def __init__(self, middleware, ws, input_queue, loop, username, as_root, options, homedir):
+    def __init__(self, middleware, ws, input_queue, loop, username, options, homedir):
         self.middleware = middleware
         self.ws = ws
         self.input_queue = input_queue
         self.loop = loop
         self.shell_pid = None
         self.master_fd = None
-        self.command, self.sudo_warning = self.get_command(username, as_root, options)
+        self.command = self.get_command(username, options)
         self.homedir = homedir
         self.username = username
         self._die = False
         super(ShellWorkerThread, self).__init__(daemon=True)
 
-    def get_command(self, username, as_root, options):
-        allowed_options = ("vm_id", "app_name", "container_id")
-        if all(options.get(k) for k in allowed_options):
-            raise CallError(
-                f'Only one option is supported from {", ".join(allowed_options)}'
-            )
-
+    def get_command(self, username, options):
         if options.get("vm_id"):
-            command = [
+            return [
                 "/usr/bin/virsh",
                 "-c",
                 "qemu+unix:///system?socket=/run/truenas_libvirt/libvirt-sock",
                 "console",
                 f'{options["vm_data"].uuid}',
             ]
-            if not as_root:
-                command = ["/usr/bin/sudo", "-H", "-u", username] + command
-            return command, not as_root
         elif options.get("app_name"):
-            command = [
+            return [
                 "/usr/bin/docker",
                 "exec",
                 "-it",
                 options["container_id"],
                 options.get("command", "/bin/bash"),
             ]
-            if not as_root:
-                command = ["/usr/bin/sudo", "-H", "-u", username] + command
-            return command, not as_root
         elif options.get("container_id"):
-            command = options["nsenter"] + [options["command"]]
-            if not as_root:
-                command = ["/usr/bin/sudo", "-H", "-u", username] + command
-            return command, not as_root
+            return options["nsenter"] + [options["command"]]
         else:
-            return ["/usr/bin/login", "-p", "-f", username], False
+            return ["/usr/bin/login", "-p", "-f", username]
 
     def resize(self, cols, rows):
         self.input_queue.put(ShellResize(cols, rows))
@@ -119,17 +115,6 @@ class ShellWorkerThread(threading.Thread):
         attr = termios.tcgetattr(self.master_fd)
         attr[4] = attr[5] = termios.B921600
         termios.tcsetattr(self.master_fd, termios.TCSANOW, attr)
-
-        if self.sudo_warning:
-            asyncio.run_coroutine_threadsafe(
-                self.ws.send_bytes(
-                    (
-                        f"WARNING: Your user does not have sudo privileges so {self.command[4]} command will run\r\n"
-                        f"on your behalf. This might cause permission issues.\r\n\r\n"
-                    ).encode("utf-8")
-                ),
-                loop=self.loop,
-            ).result()
 
         def reader():
             """
@@ -279,11 +264,14 @@ class ShellApplication:
         if not await self.middleware.ws_can_access(ws, origin):
             return ws
 
+        app = App(origin)
+        app.websocket = True
+
         conndata = ShellConnectionData()
-        conndata.id = str(ssl_uuid4())
+        conndata.id = app.session_id
 
         try:
-            await self.run(ws, origin, conndata)
+            await self.run(ws, app, conndata)
         except Exception:
             if conndata.t_worker:
                 await self.worker_kill(conndata.t_worker)
@@ -292,129 +280,174 @@ class ShellApplication:
             self.shells.pop(conndata.id, None)
             return ws
 
-    async def run(self, ws, origin, conndata):
+    async def run(self, ws, app, conndata):
+        origin = app.origin
         # Each connection will have its own input queue
         input_queue = queue.Queue()
         authenticated = False
+        session_audit_info = None
 
-        async for msg in ws:
-            if authenticated:
-                # Add content of every message received in input queue
-                input_queue.put(msg.data)
-            else:
-                try:
-                    data = json.loads(msg.data)
-                except json.decoder.JSONDecodeError:
-                    continue
+        try:
+            async for msg in ws:
+                if authenticated:
+                    # Add content of every message received in input queue
+                    input_queue.put(msg.data)
+                else:
+                    try:
+                        data = json.loads(msg.data)
+                    except json.decoder.JSONDecodeError:
+                        continue
 
-                token = data.get("token")
-                if not token:
-                    continue
+                    token_id = data.get("token")
+                    if not token_id:
+                        continue
 
-                token = await self.middleware.call(
-                    "auth.get_token_for_shell_application", token, origin
-                )
-                if not token:
+                    options = data.get("options", {})
+
+                    allowed_options = ("vm_id", "app_name", "container_id")
+                    if sum(1 for k in allowed_options if options.get(k)) > 1:
+                        raise CallError(
+                            f'Only one option is supported from {", ".join(allowed_options)}'
+                        )
+
+                    if options.get("vm_id"):
+                        shell_type = ShellAppType.VM
+                    elif options.get("app_name"):
+                        shell_type = ShellAppType.APP
+                    elif options.get("container_id"):
+                        shell_type = ShellAppType.CONTAINER
+                    else:
+                        shell_type = ShellAppType.HOST
+
+                    token = await self.middleware.call(
+                        "auth.get_token_for_shell_application", token_id, origin, shell_type
+                    )
+                    if not token:
+                        await self.middleware.log_audit_message(app, "WEBSHELL_AUTHENTICATION", {
+                            "shell_type": shell_type.value,
+                            "target": _audit_target(shell_type, options),
+                            "username": None,
+                            "error": "invalid token",
+                        }, False)
+                        await ws.send_json(
+                            {
+                                "msg": "failed",
+                                "error": {
+                                    "error": ErrnoMixin.ENOTAUTHENTICATED,
+                                    "reason": "Invalid token",
+                                },
+                            }
+                        )
+                        continue
+                    if token.get("error") == ShellTokenAuthError.WEB_SHELL_DENIED:
+                        app.authenticated_credentials = token["credentials"]
+                        await self.middleware.log_audit_message(app, "WEBSHELL_AUTHENTICATION", {
+                            "shell_type": shell_type.value,
+                            "target": _audit_target(shell_type, options),
+                            "username": token["username"],
+                            "error": "web_shell privilege not granted",
+                        }, False)
+                        await ws.send_json(
+                            {
+                                "msg": "failed",
+                                "error": {
+                                    "error": errno.EACCES,
+                                    "reason": "Web shell privilege not granted for this account",
+                                },
+                            }
+                        )
+                        continue
+                    if token.get("error") == ShellTokenAuthError.MISSING_ROLE:
+                        app.authenticated_credentials = token["credentials"]
+                        await self.middleware.log_audit_message(app, "WEBSHELL_AUTHENTICATION", {
+                            "shell_type": shell_type.value,
+                            "target": _audit_target(shell_type, options),
+                            "username": token["username"],
+                            "error": f"missing required role: {token['required_role']}",
+                        }, False)
+                        await ws.send_json(
+                            {
+                                "msg": "failed",
+                                "error": {
+                                    "error": errno.EACCES,
+                                    "reason": (
+                                        f"Missing required role for {shell_type.value} shell: "
+                                        f"{token['required_role']}"
+                                    ),
+                                },
+                            }
+                        )
+                        continue
+
+                    app.authenticated_credentials = token["credentials"]
+                    session_audit_info = {
+                        "shell_type": shell_type.value,
+                        "target": _audit_target(shell_type, options),
+                        "username": token["username"],
+                    }
+                    await self.middleware.log_audit_message(app, "WEBSHELL_AUTHENTICATION", {
+                        **session_audit_info,
+                        "error": None,
+                    }, True)
+
+                    authenticated = True
+
+                    if shell_type is ShellAppType.VM:
+                        options["vm_data"] = await self.middleware.call2(
+                            self.middleware.services.vm.get_instance, options["vm_id"]
+                        )
+                    elif shell_type is ShellAppType.APP:
+                        if not options.get("container_id"):
+                            raise CallError("Container id must be specified")
+                        choices = await self.middleware.call2(
+                            self.middleware.services.app.container_console_choices, options["app_name"]
+                        )
+                        if options["container_id"] not in choices.root:
+                            raise CallError("Provided container id is not valid")
+                    elif shell_type is ShellAppType.CONTAINER:
+                        options["nsenter"] = await self.middleware.call2(
+                            self.middleware.services.container.nsenter, options["container_id"],
+                        )
+                        options["command"] = options.get("command") or "/bin/sh"
+
+                    try:
+                        user_obj = await self.middleware.call("user.get_user_obj", {"username": token["username"]})
+                    except KeyError:
+                        raise CallError(f'{token["username"]}: user does not exist')
+
+                    conndata.t_worker = ShellWorkerThread(
+                        middleware=self.middleware,
+                        ws=ws,
+                        input_queue=input_queue,
+                        loop=asyncio.get_event_loop(),
+                        username=token["username"],
+                        homedir=user_obj["pw_dir"],
+                        options=options,
+                    )
+                    conndata.t_worker.start()
+
+                    self.shells[conndata.id] = conndata.t_worker
+
                     await ws.send_json(
                         {
-                            "msg": "failed",
-                            "error": {
-                                "error": ErrnoMixin.ENOTAUTHENTICATED,
-                                "reason": "Invalid token",
-                            },
+                            "msg": "connected",
+                            "id": conndata.id,
                         }
                     )
-                    continue
 
-                authenticated = True
+            # If connection was not authenticated, return earlier
+            if not authenticated:
+                return ws
 
-                options = data.get("options", {})
-                if options.get("vm_id"):
-                    options["vm_data"] = await self.middleware.call2(
-                        self.middleware.services.vm.get_instance, options["vm_id"]
-                    )
+            if conndata.t_worker:
+                self.middleware.create_task(self.worker_kill(conndata.t_worker))
 
-                if options.get("app_name"):
-                    if not options.get("container_id"):
-                        raise CallError("Container id must be specified")
-                    choices = await self.middleware.call2(
-                        self.middleware.services.app.container_console_choices, options["app_name"]
-                    )
-                    if options["container_id"] not in choices.root:
-                        raise CallError("Provided container id is not valid")
-                elif options.get("container_id"):
-                    options["nsenter"] = await self.middleware.call2(
-                        self.middleware.services.container.nsenter, options["container_id"],
-                    )
-                    options["command"] = options.get("command") or "/bin/sh"
-
-                # By default we want to run virsh with user's privileges and assume all "permission denied"
-                # errors this can cause, unless the user has a sudo permission for all commands; in that case, let's
-                # run them straight with root privileges.
-                as_root = False
-                try:
-                    user = await self.middleware.call(
-                        "user.query",
-                        [["username", "=", token["username"]], ["local", "=", True]],
-                        {"get": True},
-                    )
-                except MatchNotFound:
-                    # Currently only local users can be sudoers
-                    pass
-                else:
-                    if user["uid"] == 0:
-                        as_root = True
-                    elif (
-                        "ALL" in user["sudo_commands"]
-                        or "ALL" in user["sudo_commands_nopasswd"]
-                    ):
-                        as_root = True
-                    else:
-                        for group in await self.middleware.call(
-                            "group.query",
-                            [["id", "in", user["groups"]], ["local", "=", True]],
-                        ):
-                            if (
-                                "ALL" in group["sudo_commands"]
-                                or "ALL" in group["sudo_commands_nopasswd"]
-                            ):
-                                as_root = True
-                                break
-
-                try:
-                    user_obj = await self.middleware.call("user.get_user_obj", {"username": token["username"]})
-                except KeyError:
-                    raise CallError(f'{token["username"]}: user does not exist')
-
-                conndata.t_worker = ShellWorkerThread(
-                    middleware=self.middleware,
-                    ws=ws,
-                    input_queue=input_queue,
-                    loop=asyncio.get_event_loop(),
-                    username=token["username"],
-                    homedir=user_obj["pw_dir"],
-                    as_root=as_root,
-                    options=options,
-                )
-                conndata.t_worker.start()
-
-                self.shells[conndata.id] = conndata.t_worker
-
-                await ws.send_json(
-                    {
-                        "msg": "connected",
-                        "id": conndata.id,
-                    }
-                )
-
-        # If connection was not authenticated, return earlier
-        if not authenticated:
             return ws
-
-        if conndata.t_worker:
-            self.middleware.create_task(self.worker_kill(conndata.t_worker))
-
-        return ws
+        finally:
+            if session_audit_info is not None:
+                await self.middleware.log_audit_message(
+                    app, "WEBSHELL_LOGOUT", session_audit_info, True,
+                )
 
     async def worker_kill(self, t_worker):
         await self.middleware.run_in_thread(t_worker.abort)
