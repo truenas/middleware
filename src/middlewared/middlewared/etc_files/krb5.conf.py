@@ -110,8 +110,8 @@ def generate_krb5_conf(
     if default_realm:
         libdefaults[str(KRB_LibDefaults.DEFAULT_REALM)] = default_realm
 
-    krbconf.add_libdefaults(libdefaults, krb_config['libdefaults_aux'])
-    krbconf.add_appdefaults(appdefaults, krb_config['appdefaults_aux'])
+    krbconf.add_libdefaults(libdefaults, krb_config['libdefaults_aux'], strict=False)
+    krbconf.add_appdefaults(appdefaults, krb_config['appdefaults_aux'], strict=False)
 
     return krbconf.generate()
 

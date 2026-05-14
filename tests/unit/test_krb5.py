@@ -1,5 +1,6 @@
 import base64
 import jsonschema
+import logging
 import os
 import pytest
 
@@ -246,6 +247,74 @@ def test__krb5conf_appdefaults_aux_parser(params, expected, success):
                 data,
                 params
             )
+
+
+@pytest.fixture
+def _clear_logged_unsupported_aux():
+    krb5_conf._LOGGED_UNSUPPORTED_AUX.clear()
+    yield
+    krb5_conf._LOGGED_UNSUPPORTED_AUX.clear()
+
+
+def test__krb5conf_libdefaults_aux_parser_strict_default():
+    # Sanity check: the historical strict behavior is still the default.
+    with pytest.raises(ValueError):
+        krb5_conf.parse_krb_aux_params(
+            krb5_conf.KRB5ConfSection.LIBDEFAULTS,
+            {},
+            'allow_weak_crypto = false',
+        )
+
+
+def test__krb5conf_libdefaults_aux_parser_lenient(_clear_logged_unsupported_aux):
+    data = {}
+    krb5_conf.parse_krb_aux_params(
+        krb5_conf.KRB5ConfSection.LIBDEFAULTS,
+        data,
+        'rdns = false\nallow_weak_crypto = false\ncanonicalize = true',
+        strict=False,
+    )
+    assert data == {'rdns': 'false', 'canonicalize': 'true'}
+
+
+def test__krb5conf_libdefaults_aux_lenient_logs_once(
+    _clear_logged_unsupported_aux, caplog
+):
+    bad = 'allow_weak_crypto = false'
+    with caplog.at_level(logging.WARNING, logger=krb5_conf.logger.name):
+        krb5_conf.parse_krb_aux_params(
+            krb5_conf.KRB5ConfSection.LIBDEFAULTS, {}, bad, strict=False,
+        )
+        krb5_conf.parse_krb_aux_params(
+            krb5_conf.KRB5ConfSection.LIBDEFAULTS, {}, bad, strict=False,
+        )
+
+    matching = [r for r in caplog.records if 'allow_weak_crypto' in r.getMessage()]
+    assert len(matching) == 1, [r.getMessage() for r in matching]
+
+
+def test__krb5conf_libdefaults_aux_lenient_preserves_nested(
+    _clear_logged_unsupported_aux,
+):
+    data = {}
+    krb5_conf.parse_krb_aux_params(
+        krb5_conf.KRB5ConfSection.LIBDEFAULTS,
+        data,
+        'MYDOM.TEST = {\n    rdns = false\n    allow_weak_crypto = false\n}',
+        strict=False,
+    )
+    assert data == {'MYDOM.TEST': {'rdns': 'false'}}
+
+
+def test__krb5conf_appdefaults_aux_parser_lenient(_clear_logged_unsupported_aux):
+    data = {}
+    krb5_conf.parse_krb_aux_params(
+        krb5_conf.KRB5ConfSection.APPDEFAULTS,
+        data,
+        'forwardable = true\ncanonicalize = true',
+        strict=False,
+    )
+    assert data == {'forwardable': 'true'}
 
 
 def validate_realms_section(data):
