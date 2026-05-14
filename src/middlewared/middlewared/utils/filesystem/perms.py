@@ -41,11 +41,13 @@ def enforce_mountpoint_perms(fs_path: str, mode: int = 0o700, uid: int = 0, gid:
     fd = _open_dir_no_symlinks(fs_path)
     try:
         st = truenas_os.statx(
-            '', dir_fd=fd, flags=truenas_os.AT_EMPTY_PATH,
+            "",
+            dir_fd=fd,
+            flags=truenas_os.AT_EMPTY_PATH,
             mask=truenas_os.STATX_BASIC_STATS,
         )
         if not (st.stx_attributes & truenas_os.STATX_ATTR_MOUNT_ROOT):
-            raise OSError(errno.ENOTDIR, f'{fs_path!r} is not a mountpoint')
+            raise OSError(errno.ENOTDIR, f"{fs_path!r} is not a mountpoint")
         _apply_perms(fd, mode, uid, gid)
     finally:
         os.close(fd)
