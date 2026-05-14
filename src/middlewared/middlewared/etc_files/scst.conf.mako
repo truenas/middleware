@@ -391,6 +391,7 @@ HANDLER ${handler} {
     DEVICE ${extent['name']} {
         filename ${extent['extent_path']}
         blocksize ${extent['blocksize']}
+        bind_alua_state 1
 %       if extent['pblocksize']:
         lb_per_pb_exp 0
 %       endif
