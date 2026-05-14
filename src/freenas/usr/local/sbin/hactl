@@ -4,7 +4,7 @@ import sys
 import enum
 import errno
 
-import truenas_pydmi
+from truenas_pydmi.reader import read_dmi
 from truenas_api_client import Client, ClientException
 from middlewared.plugins.failover_.enums import DisabledReasonsEnum
 
@@ -52,7 +52,7 @@ def handle_status_command(client, status):
     failover_status = getattr(StatusEnum, status, StatusEnum.UNKNOWN).value
     print(failover_status)
 
-    print(f'This node serial: {truenas_pydmi.system().serial_number}')
+    print(f'This node serial: {read_dmi().system.serial_number}')
     timeout = 2
     connect_timeout = 2.0
     options = {'timeout': timeout, 'connect_timeout': connect_timeout}
