@@ -1,6 +1,6 @@
 import pytest
 
-from middlewared.test.integration.utils import call, client
+from middlewared.test.integration.utils import call, client, ssh
 from middlewared.test.integration.assets.apps import app
 from middlewared.test.integration.assets.docker import docker
 from middlewared.test.integration.assets.pool import another_pool
@@ -283,3 +283,43 @@ def test_delete_app_options(docker_pool):
     assert len(app_images) == 0
     volume_ds = call('app.get_app_volume_ds', 'custom-budget')
     assert volume_ds is None
+
+
+# Chokepoint lockdown — non-root host users (apps UID 568) must not be able
+# to traverse /mnt/.ix-apps. Docker overlay layers and ix_volume datasets
+# contain files owned by colliding UIDs.
+
+IX_APPS_CHOKEPOINT = '/mnt/.ix-apps'
+
+
+def _chokepoint_perms(path):
+    st = call('filesystem.stat', path)
+    return st['mode'] & 0o7777, st['uid'], st['gid']
+
+
+def test_ix_apps_chokepoint_locked(docker_pool):
+    assert _chokepoint_perms(IX_APPS_CHOKEPOINT) == (0o700, 0, 0)
+
+
+@pytest.mark.parametrize('child', ['', 'docker', 'app_mounts'])
+def test_apps_user_cannot_traverse_ix_apps(docker_pool, child):
+    target = f'{IX_APPS_CHOKEPOINT}/{child}'.rstrip('/')
+    result = ssh(
+        f'runuser -u apps -- ls {target}/',
+        check=False, complete_response=True,
+    )
+    assert result['returncode'] != 0
+    assert 'Permission denied' in result['stderr']
+
+
+def test_root_retains_access_ix_apps(docker_pool):
+    listing = set(ssh(f'ls {IX_APPS_CHOKEPOINT}/').split())
+    assert {'docker', 'app_mounts', 'app_configs', 'truenas_catalog'} <= listing
+
+
+def test_drift_repair_ix_apps(docker_pool):
+    ssh(f'chmod 0755 {IX_APPS_CHOKEPOINT}')
+    # start_service is idempotent if docker is already running, but still
+    # runs the drift-repair enforce_mountpoint_perms call.
+    call('docker.start_service')
+    assert _chokepoint_perms(IX_APPS_CHOKEPOINT) == (0o700, 0, 0)

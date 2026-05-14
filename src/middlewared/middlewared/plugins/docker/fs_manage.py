@@ -6,6 +6,7 @@ import typing
 from middlewared.api.current import ZFSResourceQuery
 from middlewared.plugins.pool_.utils import UpdateImplArgs
 from middlewared.service import CallError, ServiceContext, ValidationError
+from middlewared.utils.filesystem.perms import enforce_mountpoint_perms
 
 from .state_utils import IX_APPS_MOUNT_PATH, Status, docker_dataset_custom_props
 
@@ -74,6 +75,10 @@ async def common_func(context: ServiceContext, mount: bool) -> Job | None:
                 recursive=True,
                 force=True,
             )
+            # Restrict the apps chokepoint so non-root host users can't traverse
+            # into Docker overlay layers or ix_volume datasets (UID-collision
+            # exposure for apps user etc.).
+            await context.to_thread(enforce_mountpoint_perms, IX_APPS_MOUNT_PATH)
         else:
             try:
                 await context.call2(

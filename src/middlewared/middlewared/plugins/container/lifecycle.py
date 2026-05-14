@@ -15,10 +15,13 @@ from truenas_pylibvirt import (
 from middlewared.api.current import ContainerStopOptions, QueryOptions, ZFSResourceQuery
 from middlewared.plugins.account_.constants import CONTAINER_ROOT_UID
 from middlewared.service import CallError, ServiceContext
+from middlewared.utils.filesystem.perms import enforce_dir_perms
 
 from .bridge import configure_container_bridge, container_bridge_name
+from .dataset import CONTAINER_DS_PARENT_DIR
 from .utils import container_instance_dataset_mountpoint, update_etc_hosts, write_etc_hostname
 
+IDMAPPED_ROOT_DIR = '/run/truenas_containers/root'
 IDMAP_COUNT = 65536
 
 
@@ -38,6 +41,9 @@ def handle_shutdown(context: ServiceContext) -> None:
 
 
 def start(context: ServiceContext, id_: int) -> None:
+    enforce_dir_perms(CONTAINER_DS_PARENT_DIR)
+    enforce_dir_perms(IDMAPPED_ROOT_DIR)
+
     container = context.run_coroutine(context.call2(context.s.container.get_instance, id_))
     configure_container_bridge(context)
 

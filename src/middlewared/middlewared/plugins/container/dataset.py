@@ -3,8 +3,11 @@ import os
 from middlewared.api.current import ZFSResourceQuery
 from middlewared.plugins.pool_.utils import CreateImplArgs
 from middlewared.service import CallError, ServiceContext
+from middlewared.utils.filesystem.perms import enforce_dir_perms
 
-from .utils import container_dataset, container_dataset_mountpoint
+from .utils import CONTAINER_DS_NAME, container_dataset, container_dataset_mountpoint
+
+CONTAINER_DS_PARENT_DIR = f'/mnt/{CONTAINER_DS_NAME}'
 
 
 async def ensure_datasets(context: ServiceContext, pool: str) -> None:
@@ -35,11 +38,18 @@ async def ensure_datasets(context: ServiceContext, pool: str) -> None:
         await context.middleware.call(
             'pool.dataset.create_impl',
             CreateImplArgs(
-                name=main_dataset, ztype='FILESYSTEM', zprops={'mountpoint': main_dataset_mountpoint},
+                name=main_dataset,
+                ztype='FILESYSTEM',
+                zprops={
+                    'mountpoint': main_dataset_mountpoint,
+                    'acltype': 'posix',
+                    'aclmode': 'discard',
+                    'snapdir': 'hidden',
+                },
             )
         )
 
-    if not await context.to_thread(os.path.exists, main_dataset_mountpoint):
+    if not await context.to_thread(os.path.ismount, f'/mnt{main_dataset_mountpoint}'):
         await context.call2(context.s.zfs.resource.mount, main_dataset)
 
     for ds_name in datasets:
@@ -49,3 +59,8 @@ async def ensure_datasets(context: ServiceContext, pool: str) -> None:
                 CreateImplArgs(name=ds_name, ztype='FILESYSTEM')
             )
         await context.call2(context.s.zfs.resource.mount, ds_name)
+
+    # ZFS auto-creates CONTAINER_DS_PARENT_DIR as a side effect of mounting the
+    # per-pool dataset. Restrict it so non-root host users can't traverse to
+    # any container's on-disk rootfs (UID-collision exposure for apps user etc.).
+    await context.to_thread(enforce_dir_perms, CONTAINER_DS_PARENT_DIR)
