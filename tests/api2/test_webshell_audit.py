@@ -3,7 +3,9 @@ import json
 import pytest
 import websocket
 
-from middlewared.test.integration.assets.account import unprivileged_user as unprivileged_user_template
+from middlewared.test.integration.assets.account import (
+    unprivileged_user as unprivileged_user_template,
+)
 from middlewared.test.integration.utils import client, websocket_url
 from middlewared.test.integration.utils.audit import expect_audit_log
 
@@ -63,63 +65,81 @@ def shell_user_no_apps_role():
 
 
 def test_invalid_token_audited():
-    with expect_audit_log([{
-        "event": "WEBSHELL_AUTHENTICATION",
-        "event_data": {
-            "shell_type": "HOST",
-            "target": None,
-            "username": None,
-            "error": "invalid token",
-        },
-        "success": False,
-    }]):
+    with expect_audit_log(
+        [
+            {
+                "event": "WEBSHELL_AUTHENTICATION",
+                "event_data": {
+                    "shell_type": "HOST",
+                    "target": None,
+                    "username": None,
+                    "error": "invalid token",
+                },
+                "success": False,
+            }
+        ]
+    ):
         resp = _attempt_shell_connect("nonexistent-token-string")
         assert resp["msg"] == "failed"
 
 
 def test_missing_vm_role_audited(shell_user_no_vm_role):
     token = _make_token(shell_user_no_vm_role)
-    with expect_audit_log([{
-        "event": "WEBSHELL_AUTHENTICATION",
-        "event_data": {
-            "shell_type": "VM",
-            "target": {"vm_id": 1},
-            "username": shell_user_no_vm_role.username,
-            "error": "missing required role: VM_WRITE",
-        },
-        "success": False,
-    }]):
+    with expect_audit_log(
+        [
+            {
+                "event": "WEBSHELL_AUTHENTICATION",
+                "event_data": {
+                    "shell_type": "VM",
+                    "target": {"vm_id": 1},
+                    "username": shell_user_no_vm_role.username,
+                    "error": "missing required role: VM_WRITE",
+                },
+                "success": False,
+            }
+        ]
+    ):
         resp = _attempt_shell_connect(token, options={"vm_id": 1})
         assert resp["msg"] == "failed"
 
 
 def test_missing_container_role_audited(shell_user_no_container_role):
     token = _make_token(shell_user_no_container_role)
-    with expect_audit_log([{
-        "event": "WEBSHELL_AUTHENTICATION",
-        "event_data": {
-            "shell_type": "CONTAINER",
-            "target": {"container_id": 1},
-            "username": shell_user_no_container_role.username,
-            "error": "missing required role: CONTAINER_WRITE",
-        },
-        "success": False,
-    }]):
+    with expect_audit_log(
+        [
+            {
+                "event": "WEBSHELL_AUTHENTICATION",
+                "event_data": {
+                    "shell_type": "CONTAINER",
+                    "target": {"container_id": 1},
+                    "username": shell_user_no_container_role.username,
+                    "error": "missing required role: CONTAINER_WRITE",
+                },
+                "success": False,
+            }
+        ]
+    ):
         resp = _attempt_shell_connect(token, options={"container_id": 1})
         assert resp["msg"] == "failed"
 
 
 def test_missing_apps_role_audited(shell_user_no_apps_role):
     token = _make_token(shell_user_no_apps_role)
-    with expect_audit_log([{
-        "event": "WEBSHELL_AUTHENTICATION",
-        "event_data": {
-            "shell_type": "APP",
-            "target": {"app_name": "x", "container_id": "y"},
-            "username": shell_user_no_apps_role.username,
-            "error": "missing required role: APPS_WRITE",
-        },
-        "success": False,
-    }]):
-        resp = _attempt_shell_connect(token, options={"app_name": "x", "container_id": "y"})
+    with expect_audit_log(
+        [
+            {
+                "event": "WEBSHELL_AUTHENTICATION",
+                "event_data": {
+                    "shell_type": "APP",
+                    "target": {"app_name": "x", "container_id": "y"},
+                    "username": shell_user_no_apps_role.username,
+                    "error": "missing required role: APPS_WRITE",
+                },
+                "success": False,
+            }
+        ]
+    ):
+        resp = _attempt_shell_connect(
+            token, options={"app_name": "x", "container_id": "y"}
+        )
         assert resp["msg"] == "failed"
