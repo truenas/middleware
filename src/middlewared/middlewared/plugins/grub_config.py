@@ -21,11 +21,11 @@ upgrade_pyutils/README.md for the full motivation.
 from __future__ import annotations
 
 import asyncio
+from dataclasses import dataclass
 import json
 import math
 import os
 import typing
-from dataclasses import dataclass
 
 from truenas_os_pyutils.io import atomic_write
 
@@ -47,6 +47,7 @@ class KernelParam:
     """One entry in the default kernel command line. `reason` is mandatory
     so every param's rationale lives next to it and survives the original
     author leaving."""
+
     arg: str
     reason: str
 
@@ -70,8 +71,7 @@ KERNEL_PARAMS: tuple[KernelParam, ...] = (
     ),
     KernelParam(
         "amd_iommu=on",
-        "Required for PCI passthrough on AMD platforms (LXC container GPU "
-        "passthrough, SR-IOV networking).",
+        "Required for PCI passthrough on AMD platforms (LXC container GPU passthrough, SR-IOV networking).",
     ),
     KernelParam(
         "iommu=pt",
@@ -87,8 +87,7 @@ KERNEL_PARAMS: tuple[KernelParam, ...] = (
     ),
     KernelParam(
         "kvm_amd.avic=1",
-        "Enable Advanced Virtual Interrupt Controller on AMD; bypasses "
-        "VMEXIT for most interrupt delivery to guests.",
+        "Enable Advanced Virtual Interrupt Controller on AMD; bypasses VMEXIT for most interrupt delivery to guests.",
     ),
     KernelParam(
         "intel_iommu=on",
