@@ -5,6 +5,7 @@ from middlewared.api.current import (
     SystemAdvancedSyslogCertificateChoicesArgs,
     SystemAdvancedSyslogCertificateChoicesResult,
 )
+from middlewared.plugins.truenas_connect.utils import TNC_CERT_PREFIX
 from middlewared.service import Service
 
 
@@ -27,7 +28,11 @@ class SystemAdvancedService(Service):
             i.id: i.name
             for i in await self.middleware.call2(
                 self.s.certificate.query,
-                [['cert_type_CSR', '=', False], ['cert_type_CA', '=', False]],
+                [
+                    ['cert_type_CSR', '=', False],
+                    ['cert_type_CA', '=', False],
+                    ['name', '!^', TNC_CERT_PREFIX],
+                ],
             )
         }
 

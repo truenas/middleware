@@ -102,6 +102,13 @@ async def validate_certificate(
 
     if not any(choice.id == value for choice in await certificate_choices(context)):
         verrors.add(schema_name, 'Unable to locate certificate.')
+        return
+
+    sub_verrors = await context.call2(
+        context.s.certificate.cert_services_validation, value, schema_name, False,
+    )
+    if sub_verrors:
+        verrors.extend(sub_verrors)
 
 
 def _acl_path_has_data(path: str) -> bool:
