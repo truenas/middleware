@@ -75,9 +75,12 @@ from middlewared.utils.auth import (
     AA_LEVEL3,
     CURRENT_AAL,
     OTPW_MANAGER,
+    SHELL_APP_REQUIRED_ROLE,
     AuthenticatorAssuranceLevel,
     AuthMech,
     AuthResp,
+    ShellAppType,
+    ShellTokenAuthError,
     aal_auth_mechanism_check,
 )
 from middlewared.utils.crypto import generate_token
@@ -565,7 +568,9 @@ class AuthService(Service):
         return cred
 
     @private
-    def get_token_for_shell_application(self, token_id, origin):
+    def get_token_for_shell_application(self, token_id, origin, shell_type=ShellAppType.HOST):
+        shell_type = ShellAppType(shell_type)
+
         if (token := self.token_manager.get(token_id, origin)) is None:
             return None
 
@@ -577,13 +582,27 @@ class AuthService(Service):
             return None
 
         if not root_credentials.user['privilege']['web_shell']:
-            return None
+            return {
+                'error': ShellTokenAuthError.WEB_SHELL_DENIED,
+                'username': root_credentials.user['username'],
+                'credentials': root_credentials,
+            }
+
+        required_role = SHELL_APP_REQUIRED_ROLE[shell_type]
+        if required_role is not None and required_role not in root_credentials.user['privilege']['roles']:
+            return {
+                'error': ShellTokenAuthError.MISSING_ROLE,
+                'required_role': required_role,
+                'username': root_credentials.user['username'],
+                'credentials': root_credentials,
+            }
 
         if token.single_use:
             self.token_manager.destroy(token)
 
         return {
             'username': root_credentials.user['username'],
+            'credentials': root_credentials,
         }
 
     @api_method(AuthLoginArgs, AuthLoginResult, cli_private=True, authentication_required=False, pass_app=True)
