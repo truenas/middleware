@@ -13,13 +13,11 @@ from truenas_pylibvirt import (
 )
 
 from middlewared.api.current import ContainerStopOptions, QueryOptions, ZFSResourceQuery
-from middlewared.plugins.account_.constants import CONTAINER_ROOT_UID
+from middlewared.plugins.account_.constants import CONTAINER_ROOT_UID, IDMAP_COUNT
 from middlewared.service import CallError, ServiceContext
 
 from .bridge import configure_container_bridge, container_bridge_name
 from .utils import container_instance_dataset_mountpoint, update_etc_hosts, write_etc_hostname
-
-IDMAP_COUNT = 65536
 
 
 def start_on_boot(context: ServiceContext) -> None:
@@ -184,10 +182,19 @@ def _build_idmap_items(
     UID/GID space. Passthroughs whose container-side ID falls outside
     [0, IDMAP_COUNT) are appended verbatim as individual one-ID entries.
 
-    Raises CallError when two passthroughs resolve to the same in-range
-    container-side ID. Account-level validation should catch this before
-    persistence; the check here is a safety net.
+    Account-level validation rejects duplicate container-side IDs before
+    persistence; the deduplication check here is a safety net for stale or
+    corrupt account state. Host-side overlaps are caught downstream by
+    ContainerIdmapConfiguration validation.
     """
+    seen: set[int] = set()
+    for container_id, _ in passthroughs:
+        if container_id in seen:
+            raise CallError(
+                f'Duplicate container-side id {container_id} in account idmap configuration'
+            )
+        seen.add(container_id)
+
     in_range: list[tuple[int, int]] = []
     out_of_range: list[tuple[int, int]] = []
     for c, h in passthroughs:
@@ -200,10 +207,6 @@ def _build_idmap_items(
     items: list[ContainerIdmapConfigurationItem] = []
     cursor = 0
     for container_id, host_id in in_range:
-        if container_id < cursor:
-            raise CallError(
-                f'Duplicate container-side id {container_id} in account idmap configuration'
-            )
         if container_id > cursor:
             items.append(ContainerIdmapConfigurationItem(
                 start=cursor,

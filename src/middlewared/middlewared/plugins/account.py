@@ -57,7 +57,9 @@ from middlewared.plugins.account_.constants import (
     ADMIN_GID,
     ADMIN_UID,
     ALLOWED_BUILTIN_GIDS,
+    CONTAINER_ROOT_UID,
     DEFAULT_HOME_PATH,
+    IDMAP_COUNT,
     MIN_AUTO_XID,
     NO_LOGIN_SHELL,
     SKEL_PATH,
@@ -1539,8 +1541,23 @@ class UserService(CRUDService):
                     'User namespace idmaps may not be configured for privileged accounts.'
                 )
 
+            if old and old['builtin']:
+                verrors.add(
+                    f'{schema}.userns_idmap',
+                    'User namespace idmaps may not be configured for builtin accounts.'
+                )
+
+            combined_uid = combined.get('uid')
+            if combined_uid is not None and CONTAINER_ROOT_UID <= combined_uid < CONTAINER_ROOT_UID + IDMAP_COUNT:
+                verrors.add(
+                    f'{schema}.userns_idmap',
+                    f'User UID {combined_uid} falls within the host-side range reserved for '
+                    f'container userns mappings [{CONTAINER_ROOT_UID}, {CONTAINER_ROOT_UID + IDMAP_COUNT}); '
+                    'a user namespace idmap cannot be configured for it.'
+                )
+
             await self.validate_userns_idmap_conflict(
-                verrors, schema, data['userns_idmap'], combined.get('uid'),
+                verrors, schema, data['userns_idmap'], combined_uid,
                 exclude_id=old['id'] if old else None,
             )
 
@@ -2521,10 +2538,21 @@ class GroupService(CRUDService):
                     'User namespace idmaps may not be configured for builtin accounts.'
                 )
 
+        effective_gid = entry['gid'] if entry else data.get('gid')
+        if (
+            data.get('userns_idmap')
+            and effective_gid is not None
+            and CONTAINER_ROOT_UID <= effective_gid < CONTAINER_ROOT_UID + IDMAP_COUNT
+        ):
+            verrors.add(
+                f'{schema}.userns_idmap',
+                f'Group GID {effective_gid} falls within the host-side range reserved for '
+                f'container userns mappings [{CONTAINER_ROOT_UID}, {CONTAINER_ROOT_UID + IDMAP_COUNT}); '
+                'a user namespace idmap cannot be configured for it.'
+            )
+
         await self.validate_userns_idmap_conflict(
-            verrors, schema, data.get('userns_idmap'),
-            entry['gid'] if entry else data.get('gid'),
-            exclude_id=pk,
+            verrors, schema, data.get('userns_idmap'), effective_gid, exclude_id=pk,
         )
 
         if 'name' in data:

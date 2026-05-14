@@ -264,3 +264,28 @@ def test__group_create_autoassigned_gid_idmap_conflict_deny():
                     c.call('group.delete', g_b_id)
         finally:
             c.call('group.delete', g_a_id)
+
+
+# Host-side range [CONTAINER_ROOT_UID, CONTAINER_ROOT_UID + IDMAP_COUNT) is reserved
+# for the container userns filler. A local account with an id in that range cannot
+# also be passed through, because its (start=N, target=uid, count=1) entry would
+# host-side-overlap the filler at slot uid - CONTAINER_ROOT_UID.
+RESERVED_HOST_UID = 2147005000  # inside [2147000001, 2147065537)
+
+
+def test__user_idmap_in_reserved_host_range_deny():
+    with create_user('idmap_reserved', uid=RESERVED_HOST_UID) as u:
+        with Client() as c:
+            with pytest.raises(ClientException, match='reserved for container userns mappings'):
+                c.call('user.update', u['id'], {'userns_idmap': 'DIRECT'})
+
+
+def test__group_idmap_in_reserved_host_range_deny():
+    with Client() as c:
+        gid = RESERVED_HOST_UID
+        g_id = c.call('group.create', {'name': 'idmap_reserved_grp', 'gid': gid})
+        try:
+            with pytest.raises(ClientException, match='reserved for container userns mappings'):
+                c.call('group.update', g_id, {'userns_idmap': 'DIRECT'})
+        finally:
+            c.call('group.delete', g_id)
