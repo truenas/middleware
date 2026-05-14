@@ -46,6 +46,7 @@ pass ``on_cb_offload=callable`` to the constructor and the client
 binds the back-channel and routes CB_OFFLOAD into the supplied hook.
 """
 
+import contextlib
 import secrets
 import typing
 import warnings
@@ -85,6 +86,9 @@ from xdrdef.nfs4_type import (
     createtype4,
     nfsacl41,
     nfsace4,
+    locker4,
+    lock_owner4,
+    open_to_lock_owner4,
 )
 from xdrdef.nfs3_const import (
     NFSPROC3_LOOKUP,
@@ -160,7 +164,10 @@ from xdrdef.nfs4_const import (
     OP_CB_OFFLOAD,
     OP_CLONE,
     OP_COPY,
+    OP_LOCK,
+    OP_LOCKU,
     OP_OFFLOAD_CANCEL,
+    OP_OPEN,
     OPEN4_CREATE,
     OPEN4_SHARE_ACCESS_BOTH,
     OPEN4_SHARE_ACCESS_WANT_NO_DELEG,
@@ -923,6 +930,182 @@ class PynfsClient:
         )
         self._expect_ok(res, f"setaclflag({path!r})")
 
+    # --- share reservations (OPEN with explicit share_access / share_deny) ---
+
+    @contextlib.contextmanager
+    def open_share(
+        self,
+        path,
+        share_access,
+        share_deny,
+        owner_label=b"pynfs-share-owner",
+    ):
+        """OPEN ``path`` with explicit share modes and yield
+        ``(stateid, file_components)``; CLOSE on exit.
+
+        Use when a multi-client test needs to *hold* an OPEN across
+        an external orchestration step (e.g. signal another worker
+        that the share state is in place, then wait for that worker
+        to finish its observation before releasing).  The CLOSE in
+        ``finally`` runs no matter how the ``with`` block exits --
+        normal, return, or exception -- so server state never leaks
+        on error paths and the parent dataset can unmount cleanly at
+        teardown."""
+        stateid, file_components = self._open_stateid(
+            path, share_access, share_deny, owner_label
+        )
+        try:
+            yield stateid, file_components
+        finally:
+            self._close_stateid(
+                file_components, stateid, f"open_share-close({path!r})"
+            )
+
+    def try_open_share(
+        self,
+        path,
+        share_access,
+        share_deny,
+        owner_label=b"pynfs-share-owner",
+        expect_status=NFS4_OK,
+    ):
+        """Issue an OPEN and return the COMPOUND status int (matching
+        ``clone()`` / ``copy()`` / ``offload_cancel()`` convention).
+
+        On ``NFS4_OK`` the resulting stateid is CLOSE'd before
+        returning so no server state leaks for the common case where
+        the caller only wanted to probe whether the OPEN would be
+        accepted.  When the OPEN is expected to fail (e.g.
+        ``NFS4ERR_SHARE_DENIED``) there's no stateid to close --
+        the close branch is skipped.
+
+        ``expect_status`` semantics:
+        - int (e.g. ``NFS4_OK`` or ``NFS4ERR_SHARE_DENIED``): assert
+          the COMPOUND status equals the expected value, with
+          ``expected_op=OP_OPEN`` so a path-walk failure (PUTROOTFH /
+          LOOKUP returning the same status by coincidence) doesn't
+          falsely satisfy the assertion.
+        - ``None``: don't assert; just return the status.  Use this
+          for race tests where the outcome distribution is what's
+          asserted -- raising in individual workers would mask the
+          aggregate.
+
+        For an OPEN whose stateid the caller wants to *hold*, use the
+        ``open_share`` context manager instead."""
+        self._validate_rel(path)
+        parent, name = self._split_parent_name(path)
+        res = self._sess.compound(
+            nfs4lib.use_obj(parent)
+            + [
+                op.open(
+                    0,
+                    share_access | OPEN4_SHARE_ACCESS_WANT_NO_DELEG,
+                    share_deny,
+                    open_owner4(self._clt.clientid, owner_label),
+                    openflag4(0, None),
+                    open_claim4(CLAIM_NULL, name),
+                )
+            ]
+        )
+        if expect_status is not None:
+            self._expect_status(
+                res,
+                expect_status,
+                f"try_open_share({path!r}, access={share_access:#x}, "
+                f"deny={share_deny:#x})",
+                expected_op=OP_OPEN,
+            )
+        if res.status == NFS4_OK:
+            stateid = res.resarray[-1].stateid
+            file_components = self._full_components(path)
+            self._close_stateid(
+                file_components, stateid, f"try_open_share-close({path!r})"
+            )
+        return res.status
+
+    # --- byte-range locks (NFSv4 LOCK / LOCKU) -----------------------
+
+    def lock_range(
+        self,
+        file_components,
+        open_stateid,
+        lock_type,
+        offset,
+        length,
+        lock_owner_label=b"pynfs-lock-owner",
+        expect_status=NFS4_OK,
+    ):
+        """Acquire a byte-range lock on the file already opened via
+        ``open_share`` (or ``_open_stateid``).  ``file_components`` is
+        the path-as-components returned by the OPEN helper, and
+        ``open_stateid`` is its associated open stateid.
+
+        Returns ``(compound_status, lock_stateid_or_None)``.  The lock
+        stateid is ``None`` whenever the LOCK didn't succeed.
+
+        ``expect_status`` semantics mirror the rest of the surface
+        (``try_open_share`` etc.) with one extension: pass ``None``
+        to skip the assertion entirely and just return the status.
+        This is essential for race tests where the outcome
+        distribution is what's asserted (e.g. "exactly one OK,
+        N-1 NFS4ERR_DENIED" across all workers) -- raising in
+        individual workers would mask the aggregate."""
+        # NFSv4.1 LOCK uses the session for sequencing, so open_seqid
+        # and lock_seqid are 0.  ``new_lock_owner=True`` is the
+        # first-time form: the server pairs this lock-owner with the
+        # supplied open-owner via ``open_to_lock_owner4``.
+        # In NFSv4.1 the session identifies the client (RFC 8881
+        # §2.10), so ``lock_owner4.clientid`` is passed as 0;
+        # pynfs's own tests follow this convention.
+        open_to_lock = open_to_lock_owner4(
+            open_seqid=0,
+            open_stateid=open_stateid,
+            lock_seqid=0,
+            lock_owner=lock_owner4(0, lock_owner_label),
+        )
+        locker = locker4(open_owner=open_to_lock, new_lock_owner=True)
+        res = self._sess.compound(
+            nfs4lib.use_obj(file_components)
+            + [op.lock(lock_type, False, offset, length, locker)]
+        )
+        if expect_status is not None:
+            self._expect_status(
+                res,
+                expect_status,
+                f"lock_range(off={offset}, len={length}, type={lock_type})",
+                expected_op=OP_LOCK,
+            )
+        if res.status == NFS4_OK:
+            return res.status, res.resarray[-1].lock_stateid
+        return res.status, None
+
+    def unlock_range(
+        self,
+        file_components,
+        lock_stateid,
+        lock_type,
+        offset,
+        length,
+        expect_status=NFS4_OK,
+    ):
+        """Release a previously-acquired byte-range lock (LOCKU).
+        Returns the compound status int.
+
+        ``expect_status=None`` skips the assertion (race-test
+        friendly)."""
+        res = self._sess.compound(
+            nfs4lib.use_obj(file_components)
+            + [op.locku(lock_type, 0, lock_stateid, offset, length)]
+        )
+        if expect_status is not None:
+            self._expect_status(
+                res,
+                expect_status,
+                f"unlock_range(off={offset}, len={length}, type={lock_type})",
+                expected_op=OP_LOCKU,
+            )
+        return res.status
+
     # --- internal: stateful OPEN -------------------------------------
 
     def _close_stateid(self, file_components, stateid, label):
@@ -995,8 +1178,20 @@ class PynfsClient:
             name,
         )
 
-    def _open_stateid(self, path):
+    def _open_stateid(
+        self,
+        path,
+        share_access=OPEN4_SHARE_ACCESS_BOTH,
+        share_deny=OPEN4_SHARE_DENY_NONE,
+        owner_label=b"pynfs-clone-owner",
+    ):
         """OPEN ``path`` and return ``(stateid, file_components)``.
+
+        Defaults preserve the original behaviour (full access, no deny,
+        the historical clone-owner label) so existing callers
+        (``_open_pair`` for clone/copy) need no changes.  Public
+        share-reservation helpers (``open_share`` / ``try_open_share``)
+        pass explicit share modes and a distinct owner label.
 
         Caller is responsible for closing via ``_close_stateid`` once
         the dependent op (e.g. OP_CLONE / OP_COPY) has completed.
@@ -1011,9 +1206,9 @@ class PynfsClient:
             + [
                 op.open(
                     0,
-                    OPEN4_SHARE_ACCESS_BOTH | OPEN4_SHARE_ACCESS_WANT_NO_DELEG,
-                    OPEN4_SHARE_DENY_NONE,
-                    open_owner4(self._clt.clientid, b"pynfs-clone-owner"),
+                    share_access | OPEN4_SHARE_ACCESS_WANT_NO_DELEG,
+                    share_deny,
+                    open_owner4(self._clt.clientid, owner_label),
                     openflag4(0, None),
                     open_claim4(CLAIM_NULL, name),
                 )
