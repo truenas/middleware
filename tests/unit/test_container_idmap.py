@@ -10,7 +10,7 @@ def _as_tuples(items):
 
 
 def test__resolve_target_direct():
-    assert _resolve_target(3000, 'DIRECT') == (3000, 3000)
+    assert _resolve_target(3000, "DIRECT") == (3000, 3000)
 
 
 def test__resolve_target_explicit():
