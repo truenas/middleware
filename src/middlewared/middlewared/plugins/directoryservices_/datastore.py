@@ -11,6 +11,7 @@ from middlewared.api.current import (
     DirectoryServicesSyncKeytabArgs, DirectoryServicesSyncKeytabResult,
 )
 from middlewared.plugins.directoryservices_.util_cache import expire_cache
+from middlewared.plugins.truenas_connect.utils import TNC_CERT_PREFIX
 from middlewared.service import ConfigService, private, job
 from middlewared.service_exception import CallError, MatchNotFound, ValidationErrors
 from middlewared.utils.directoryservices.ad import get_domain_info, lookup_dc
@@ -381,9 +382,18 @@ class DirectoryServices(ConfigService):
         if new['credential'] and new['credential']['credential_type'] == DSCredType.LDAP_MTLS:
             cert_name = new['credential']['client_certificate']
             try:
-                self.middleware.call_sync('certificate.query', [['name', '=', cert_name]], {'get': True})
+                cert = self.middleware.call_sync(
+                    'certificate.query', [['name', '=', cert_name]], {'get': True}
+                )
             except MatchNotFound:
                 verrors.add(f'{SCHEMA}.credential.client_certificate', 'Unknown client certificate.')
+            else:
+                if cert['name'].startswith(TNC_CERT_PREFIX):
+                    verrors.add(
+                        f'{SCHEMA}.credential.client_certificate',
+                        f'Certificate "{cert["name"]}" is reserved for TrueNAS Connect service '
+                        'and cannot be used by other services',
+                    )
 
         if not new['enable'] and new['credential'] and new['credential']['credential_type'] == DSCredType.KERBEROS_USER:
             if new['service_type'] in (DSType.AD.value, DSType.IPA.value):
@@ -882,7 +892,8 @@ class DirectoryServices(ConfigService):
                 'certificate.query', [
                     ['cert_type', '=', 'CERTIFICATE'],
                     ['cert_type_CSR', '=', False],
-                    ['cert_type_CA', '=', False]
+                    ['cert_type_CA', '=', False],
+                    ['name', '!^', TNC_CERT_PREFIX],
                 ]
             )
         }
