@@ -10,6 +10,7 @@ from middlewared.api.current import (
     AppIpChoicesArgs, AppIpChoicesResult, AppAvailableSpaceArgs,
     AppAvailableSpaceResult, AppGpuChoicesArgs, AppGpuChoicesResult,
 )
+from middlewared.plugins.truenas_connect.utils import TNC_CERT_PREFIX
 from middlewared.plugins.zfs_.utils import paths_to_datasets_impl
 from middlewared.service import private, Service
 
@@ -55,7 +56,13 @@ class AppService(Service):
         Returns certificates which can be used by applications.
         """
         return await self.middleware.call(
-            'certificate.query', [['cert_type_CSR', '=', False], ['cert_type_CA', '=', False], ['parsed', '=', True]],
+            'certificate.query',
+            [
+                ['cert_type_CSR', '=', False],
+                ['cert_type_CA', '=', False],
+                ['parsed', '=', True],
+                ['name', '!^', TNC_CERT_PREFIX],
+            ],
             {'select': ['name', 'id']}
         )
 

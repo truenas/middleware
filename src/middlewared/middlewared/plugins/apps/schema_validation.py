@@ -90,6 +90,13 @@ class AppSchemaService(Service):
 
         if not filter_list(await self.middleware.call('app.certificate_choices'), [['id', '=', value]]):
             verrors.add(schema_name, 'Unable to locate certificate.')
+            return
+
+        sub_verrors = await self.middleware.call(
+            'certificate.cert_services_validation', value, schema_name, False,
+        )
+        if sub_verrors:
+            verrors.extend(sub_verrors)
 
     def validate_acl_entries(self, verrors, value, question, schema_name, app_data):
         try:
