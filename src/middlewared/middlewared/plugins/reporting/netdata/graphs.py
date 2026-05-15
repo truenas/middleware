@@ -486,3 +486,22 @@ class UPSTemperaturePlugin(UPSBase):
 
     def get_chart_name(self, identifier: typing.Optional[str]) -> str:
         return f'upsd_{self.UPS_IDENTIFIER}.temperature'
+
+class GPUPlugin(GraphBase):
+
+    title = 'GPU Usage'
+    uses_identifiers = False
+    vertical_label = '%GPU'
+
+    def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
+        return 'truenas_gpu_usage.gpu'
+
+class GPUTempPlugin(GraphBase):
+
+    title = 'GPU Temperature'
+    uses_identifiers = False
+    vertical_label = 'Celsius'
+    skip_zero_values_in_aggregation = True
+
+    def get_chart_name(self, identifier: typing.Optional[str]) -> str:
+        return 'gputemp.temperatures'

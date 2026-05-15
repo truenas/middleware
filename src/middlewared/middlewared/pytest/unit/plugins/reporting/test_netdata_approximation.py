@@ -3,21 +3,23 @@ import pytest
 from middlewared.plugins.reporting.utils import calculate_disk_space_for_netdata, get_metrics_approximation
 
 
-@pytest.mark.parametrize('disk_count,core_count,interface_count,pool_count,services_count,vms_count,expected_output', [
-    (4, 2, 1, 2, 10, 2, {1: 699, 300: 10}),
-    (1600, 32, 4, 4, 10, 1, {1: 8754, 300: 1612}),
-    (10, 16, 2, 2, 12, 3, {1: 838, 300: 16}),
-])
+@pytest.mark.parametrize(
+    'disk_count,core_count,gpu_count,interface_count,pool_count,services_count,vms_count,expected_output', [
+        (4, 2, 1, 1, 2, 10, 2, {1: 701, 300: 10}),
+        (1600, 32, 1, 4, 4, 10, 1, {1: 8756, 300: 1612}),
+        (10, 16, 2, 2, 2, 12, 3, {1: 842, 300: 16}),
+    ]
+)
 def test_netdata_metrics_count_approximation(
-    disk_count, core_count, interface_count, pool_count, services_count, vms_count, expected_output
+    disk_count, core_count, gpu_count, interface_count, pool_count, services_count, vms_count, expected_output
 ):
     assert get_metrics_approximation(
-        disk_count, core_count, interface_count, pool_count, vms_count, services_count
+        disk_count, core_count, gpu_count, interface_count, pool_count, vms_count, services_count
     ) == expected_output
 
 
 @pytest.mark.parametrize(
-    'disk_count,core_count,interface_count,pool_count,services_count,vms_count,days,'
+    'disk_count,core_count,gpu_count,interface_count,pool_count,services_count,vms_count,days,'
     'bytes_per_point,tier_interval,expected_output', [
         (4, 2, 1, 2, 10, 2, 7, 1, 1, 403),
         (4, 2, 1, 2, 10, 1, 7, 4, 60, 25),
@@ -30,11 +32,11 @@ def test_netdata_metrics_count_approximation(
     ],
 )
 def test_netdata_disk_space_approximation(
-        disk_count, core_count, interface_count, pool_count, services_count,
+        disk_count, core_count, gpu_count, interface_count, pool_count, services_count,
         vms_count, days, bytes_per_point, tier_interval, expected_output
 ):
     assert calculate_disk_space_for_netdata(get_metrics_approximation(
-        disk_count, core_count, interface_count, pool_count, vms_count, services_count
+        disk_count, core_count, gpu_count, interface_count, pool_count, vms_count, services_count
     ), days, bytes_per_point, tier_interval) == expected_output
 
 
@@ -55,7 +57,7 @@ def test_netdata_days_approximation(
         disk_count, core_count, interface_count, pool_count, services_count, vms_count, days, bytes_per_point,
         tier_interval):
     metric_intervals = get_metrics_approximation(
-        disk_count, core_count, interface_count, pool_count, vms_count, services_count
+        disk_count, core_count, 1, interface_count, pool_count, vms_count, services_count
     )
     disk_size = calculate_disk_space_for_netdata(metric_intervals, days, bytes_per_point, tier_interval)
     total_metrics = metric_intervals[1] + (metric_intervals[300] / 300)
