@@ -82,6 +82,19 @@ def test__privileged_user_idmap_namespace_deny(privileged_user):
             c.call('user.update', privileged_user['id'], {'userns_idmap': 'DIRECT'})
 
 
+def test__idmap_user_join_privileged_group_deny(user, privileged_group):
+    _, grp = privileged_group
+    with Client() as c:
+        c.call('user.update', user['id'], {'userns_idmap': 'DIRECT'})
+        try:
+            with pytest.raises(ClientException, match='privileged account'):
+                c.call('user.update', user['id'], {
+                    'groups': user['groups'] + [grp['id']],
+                })
+        finally:
+            c.call('user.update', user['id'], {'userns_idmap': None})
+
+
 def test__privileged_group_idmap_namespace_deny(privileged_group):
     with pytest.raises(ClientException, match='privileged account'):
         with Client() as c:
@@ -129,3 +142,163 @@ def test__update_privilege_with_idmap_group_deny(group):
                     c.call('privilege.update', priv['id'], {'local_groups': [group['gid']]})
             finally:
                 c.call('privilege.delete', priv['id'])
+
+
+def test__user_duplicate_explicit_idmap_deny():
+    with create_user('idmap_dup_a') as u1, create_user('idmap_dup_b') as u2:
+        with Client() as c:
+            c.call('user.update', u1['id'], {'userns_idmap': 12345})
+            try:
+                with pytest.raises(ClientException, match='already maps to container UID 12345'):
+                    c.call('user.update', u2['id'], {'userns_idmap': 12345})
+            finally:
+                c.call('user.update', u1['id'], {'userns_idmap': None})
+
+
+def test__user_duplicate_direct_vs_explicit_deny():
+    with create_user('idmap_dup_a') as u1, create_user('idmap_dup_b') as u2:
+        with Client() as c:
+            c.call('user.update', u1['id'], {'userns_idmap': 'DIRECT'})
+            try:
+                with pytest.raises(ClientException, match=f'already maps to container UID {u1["uid"]}'):
+                    c.call('user.update', u2['id'], {'userns_idmap': u1['uid']})
+            finally:
+                c.call('user.update', u1['id'], {'userns_idmap': None})
+
+
+def test__user_duplicate_explicit_vs_direct_deny():
+    with create_user('idmap_dup_a') as u1, create_user('idmap_dup_b') as u2:
+        with Client() as c:
+            c.call('user.update', u1['id'], {'userns_idmap': u2['uid']})
+            try:
+                with pytest.raises(ClientException, match=f'already maps to container UID {u2["uid"]}'):
+                    c.call('user.update', u2['id'], {'userns_idmap': 'DIRECT'})
+            finally:
+                c.call('user.update', u1['id'], {'userns_idmap': None})
+
+
+def test__group_duplicate_explicit_idmap_deny():
+    with Client() as c:
+        g1_id = c.call('group.create', {'name': 'idmap_dup_grp_a'})
+        try:
+            g2_id = c.call('group.create', {'name': 'idmap_dup_grp_b'})
+            try:
+                c.call('group.update', g1_id, {'userns_idmap': 23456})
+                try:
+                    with pytest.raises(ClientException, match='already maps to container GID 23456'):
+                        c.call('group.update', g2_id, {'userns_idmap': 23456})
+                finally:
+                    c.call('group.update', g1_id, {'userns_idmap': None})
+            finally:
+                c.call('group.delete', g2_id)
+        finally:
+            c.call('group.delete', g1_id)
+
+
+def test__group_duplicate_direct_vs_explicit_deny():
+    with Client() as c:
+        g1_id = c.call('group.create', {'name': 'idmap_dup_grp_a'})
+        try:
+            g1 = c.call('group.query', [['id', '=', g1_id]], {'get': True})
+            g2_id = c.call('group.create', {'name': 'idmap_dup_grp_b'})
+            try:
+                c.call('group.update', g1_id, {'userns_idmap': 'DIRECT'})
+                try:
+                    with pytest.raises(ClientException, match=f'already maps to container GID {g1["gid"]}'):
+                        c.call('group.update', g2_id, {'userns_idmap': g1['gid']})
+                finally:
+                    c.call('group.update', g1_id, {'userns_idmap': None})
+            finally:
+                c.call('group.delete', g2_id)
+        finally:
+            c.call('group.delete', g1_id)
+
+
+def test__user_self_update_keeps_idmap():
+    with create_user('idmap_self') as u:
+        with Client() as c:
+            c.call('user.update', u['id'], {'userns_idmap': 'DIRECT'})
+            try:
+                # Re-asserting the same idmap should not flag self-collision.
+                c.call('user.update', u['id'], {'userns_idmap': 'DIRECT'})
+            finally:
+                c.call('user.update', u['id'], {'userns_idmap': None})
+
+
+def test__user_create_autoassigned_uid_idmap_conflict_deny():
+    with Client() as c:
+        placeholder = c.call('user.create', {
+            'username': 'idmap_auto_placeholder', 'full_name': 'placeholder',
+            'random_password': True, 'group_create': True,
+        })
+        target_uid = placeholder['uid']
+        user_a = c.call('user.create', {
+            'username': 'idmap_auto_a', 'full_name': 'a',
+            'random_password': True, 'group_create': True,
+            'userns_idmap': target_uid,
+        })
+        # Free target_uid so the next auto-assignment returns it (smallest gap).
+        c.call('user.delete', placeholder['id'])
+        try:
+            user_b_id = None
+            try:
+                with pytest.raises(ClientException, match=f'already maps to container UID {target_uid}'):
+                    user_b_id = c.call('user.create', {
+                        'username': 'idmap_auto_b', 'full_name': 'b',
+                        'random_password': True, 'group_create': True,
+                        'userns_idmap': 'DIRECT',
+                    })
+            finally:
+                if user_b_id is not None:
+                    c.call('user.delete', user_b_id)
+        finally:
+            c.call('user.delete', user_a['id'])
+
+
+def test__group_create_autoassigned_gid_idmap_conflict_deny():
+    with Client() as c:
+        placeholder_id = c.call('group.create', {'name': 'idmap_auto_grp_placeholder'})
+        placeholder = c.call('group.query', [['id', '=', placeholder_id]], {'get': True})
+        target_gid = placeholder['gid']
+        g_a_id = c.call('group.create', {
+            'name': 'idmap_auto_grp_a', 'userns_idmap': target_gid,
+        })
+        c.call('group.delete', placeholder_id)
+        try:
+            g_b_id = None
+            try:
+                with pytest.raises(ClientException, match=f'already maps to container GID {target_gid}'):
+                    g_b_id = c.call('group.create', {
+                        'name': 'idmap_auto_grp_b',
+                        'userns_idmap': 'DIRECT',
+                    })
+            finally:
+                if g_b_id is not None:
+                    c.call('group.delete', g_b_id)
+        finally:
+            c.call('group.delete', g_a_id)
+
+
+# Host-side range [CONTAINER_ROOT_UID, CONTAINER_ROOT_UID + IDMAP_COUNT) is reserved
+# for the container userns filler. A local account with an id in that range cannot
+# also be passed through, because its (start=N, target=uid, count=1) entry would
+# host-side-overlap the filler at slot uid - CONTAINER_ROOT_UID.
+RESERVED_HOST_UID = 2147005000  # inside [2147000001, 2147065537)
+
+
+def test__user_idmap_in_reserved_host_range_deny():
+    with create_user('idmap_reserved', uid=RESERVED_HOST_UID) as u:
+        with Client() as c:
+            with pytest.raises(ClientException, match='reserved for container userns mappings'):
+                c.call('user.update', u['id'], {'userns_idmap': 'DIRECT'})
+
+
+def test__group_idmap_in_reserved_host_range_deny():
+    with Client() as c:
+        gid = RESERVED_HOST_UID
+        g_id = c.call('group.create', {'name': 'idmap_reserved_grp', 'gid': gid})
+        try:
+            with pytest.raises(ClientException, match='reserved for container userns mappings'):
+                c.call('group.update', g_id, {'userns_idmap': 'DIRECT'})
+        finally:
+            c.call('group.delete', g_id)

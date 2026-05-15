@@ -11,6 +11,10 @@ import pytest
 import websocket
 
 from truenas_api_client import ValidationErrors
+from middlewared.test.integration.assets.account import (
+    group as account_group,
+    user as account_user,
+)
 from middlewared.test.integration.assets.pool import another_pool, pool
 from middlewared.test.integration.utils import call, host, ssh, websocket_url
 
@@ -183,6 +187,23 @@ def test_container_update(started_ubuntu_container):
     assert "sleep infinity" in ssh(nsenter(container, "ps -p 1 -o args"))
 
 
+def test_container_rename(ubuntu_container):
+    old_dataset = ubuntu_container["dataset"]
+    new_name = "renamed-container"
+
+    call("container.update", ubuntu_container["id"], {"name": new_name})
+
+    updated = call("container.get_instance", ubuntu_container["id"])
+    assert updated["name"] == new_name
+    expected_dataset = old_dataset[: old_dataset.rfind("/") + 1] + new_name
+    assert updated["dataset"] == expected_dataset
+    result = call(
+        "zfs.resource.query",
+        {"paths": [expected_dataset], "properties": ["mountpoint"]},
+    )
+    assert result, f"ZFS dataset {expected_dataset!r} does not exist after rename"
+
+
 def test_container_stop_force_after_timeout(ubuntu_container):
     container = ubuntu_container
 
@@ -288,6 +309,126 @@ def test_idmap(ubuntu_image, idmap_slice_1_container, target, config):
         ssh(f"mkdir {mountpoint}/playground")
         ssh(nsenter(c, "touch /playground/canary"))
         assert ssh(f"stat -c '%u %g' {mountpoint}/playground/canary").strip().split() == ["0", "0"]
+
+
+def _stat_inside(container_dict, path):
+    return ssh(nsenter(container_dict, f"stat -c '%u %g' {path}")).strip()
+
+
+@contextlib.contextmanager
+def bind_share_with_file(uid, gid, fname="file"):
+    # idmap passthroughs only take effect for mounts that DON'T have a mount
+    # idmap of their own (FilesystemDevice bind-mounts). The rootfs gets a
+    # matched X-mount.idmap, which forces an identity round-trip and hides
+    # the userns mapping. So tests that verify non-DIRECT / ISOLATED behavior
+    # must use a bind-mount source, not files written into the rootfs dataset.
+    share = f"/mnt/{pool}/idmap_share_{uid}_{gid}"
+    try:
+        ssh(f"rm -rf {share}")
+        ssh(f"mkdir -p {share}")
+        ssh(f": > {share}/{fname} && chown {uid}:{gid} {share}/{fname}")
+        yield share
+    finally:
+        ssh(f"rm -rf {share}")
+
+
+def test_default_idmap_passes_apps_user_through(ubuntu_image):
+    # By default builtin sync sets userns_idmap='DIRECT' on the apps user (568)
+    # and apps group (568). DEFAULT idmap should honor those passthroughs so
+    # host UID/GID 568 is visible as the same 568 inside the container via a
+    # FilesystemDevice bind-mount (where the userns extent actually decides
+    # the visible UID, not the rootfs's identity round-trip).
+    with bind_share_with_file(568, 568, fname="apps_file") as share:
+        with container(ubuntu_image, {"idmap": {"type": "DEFAULT"}}) as c:
+            call("container.device.create", {
+                "container": c["id"],
+                "attributes": {
+                    "dtype": "FILESYSTEM",
+                    "source": share,
+                    "target": "/share",
+                },
+            })
+            call("container.start", c["id"])
+            c = call("container.get_instance", c["id"])
+            assert c["status"]["state"] == "RUNNING"
+            assert _stat_inside(c, "/share/apps_file") == "568 568"
+
+
+def test_default_idmap_picks_up_custom_user_direct(ubuntu_image):
+    with account_group({"name": "idmap_grp"}) as g:
+        with account_user({
+            "username": "idmap_user",
+            "full_name": "idmap user",
+            "group": g["id"],
+            "random_password": True,
+        }) as u:
+            uid, gid = u["uid"], g["gid"]
+            call("user.update", u["id"], {"userns_idmap": "DIRECT"})
+            call("group.update", g["id"], {"userns_idmap": "DIRECT"})
+
+            with bind_share_with_file(uid, gid) as share:
+                with container(ubuntu_image, {"idmap": {"type": "DEFAULT"}}) as c:
+                    call("container.device.create", {
+                        "container": c["id"],
+                        "attributes": {
+                            "dtype": "FILESYSTEM",
+                            "source": share,
+                            "target": "/share",
+                        },
+                    })
+                    call("container.start", c["id"])
+                    c = call("container.get_instance", c["id"])
+                    assert c["status"]["state"] == "RUNNING"
+                    assert _stat_inside(c, "/share/file") == f"{uid} {gid}"
+
+
+def test_default_idmap_picks_up_custom_user_numeric(ubuntu_image):
+    target = 8675309
+    with account_user({
+        "username": "idmap_numeric",
+        "full_name": "idmap numeric",
+        "group_create": True,
+        "random_password": True,
+    }) as u:
+        uid = u["uid"]
+        call("user.update", u["id"], {"userns_idmap": target})
+
+        with bind_share_with_file(uid, 0) as share:
+            with container(ubuntu_image, {"idmap": {"type": "DEFAULT"}}) as c:
+                call("container.device.create", {
+                    "container": c["id"],
+                    "attributes": {
+                        "dtype": "FILESYSTEM",
+                        "source": share,
+                        "target": "/share",
+                    },
+                })
+                call("container.start", c["id"])
+                c = call("container.get_instance", c["id"])
+                assert c["status"]["state"] == "RUNNING"
+                assert _stat_inside(c, "/share/file").split()[0] == str(target)
+
+
+def test_isolated_idmap_ignores_account_passthrough(ubuntu_image):
+    # ISOLATED's userns has no extent covering host kuid/kgid 568, so a
+    # bind-mounted file at 568:568 must not show as 568:568 inside.
+    with bind_share_with_file(568, 568, fname="apps_file") as share:
+        with container(ubuntu_image, {"idmap": {"type": "ISOLATED", "slice": 1}}) as c:
+            call("container.device.create", {
+                "container": c["id"],
+                "attributes": {
+                    "dtype": "FILESYSTEM",
+                    "source": share,
+                    "target": "/share",
+                },
+            })
+            call("container.start", c["id"])
+            c = call("container.get_instance", c["id"])
+            assert c["status"]["state"] == "RUNNING"
+            inside = _stat_inside(c, "/share/apps_file")
+            assert inside != "568 568", (
+                f"ISOLATED container leaked apps passthrough: {inside}"
+            )
 
 
 @pytest.mark.parametrize("configuration,has", [
