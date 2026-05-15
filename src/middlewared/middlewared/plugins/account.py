@@ -1530,7 +1530,11 @@ class UserService(CRUDService):
             {'prefix': 'bsdusr_'}
         )
 
-        if data.get('userns_idmap'):
+        # Privileged-roles conflict can be introduced by either changing userns_idmap or
+        # changing the user's group membership, so the check needs to run on both paths.
+        if combined.get('userns_idmap') and (
+            'userns_idmap' in data or 'group' in data or 'groups' in data
+        ):
             if await self.middleware.call('group.query', [
                 ['local', '=', True],
                 ['roles', '!=', []],
@@ -1541,6 +1545,7 @@ class UserService(CRUDService):
                     'User namespace idmaps may not be configured for privileged accounts.'
                 )
 
+        if data.get('userns_idmap'):
             if old and old['builtin']:
                 verrors.add(
                     f'{schema}.userns_idmap',

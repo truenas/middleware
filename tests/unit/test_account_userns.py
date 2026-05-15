@@ -82,6 +82,19 @@ def test__privileged_user_idmap_namespace_deny(privileged_user):
             c.call('user.update', privileged_user['id'], {'userns_idmap': 'DIRECT'})
 
 
+def test__idmap_user_join_privileged_group_deny(user, privileged_group):
+    _, grp = privileged_group
+    with Client() as c:
+        c.call('user.update', user['id'], {'userns_idmap': 'DIRECT'})
+        try:
+            with pytest.raises(ClientException, match='privileged account'):
+                c.call('user.update', user['id'], {
+                    'groups': user['groups'] + [grp['id']],
+                })
+        finally:
+            c.call('user.update', user['id'], {'userns_idmap': None})
+
+
 def test__privileged_group_idmap_namespace_deny(privileged_group):
     with pytest.raises(ClientException, match='privileged account'):
         with Client() as c:
