@@ -317,6 +317,50 @@ def test__krb5conf_appdefaults_aux_parser_lenient(_clear_logged_unsupported_aux)
     assert data == {'forwardable': 'true'}
 
 
+def test__krb5conf_add_libdefaults_lenient_call_path(_clear_logged_unsupported_aux):
+    # Exercise the same path the etc.generate renderer uses: invalid aux
+    # lines are dropped, valid config + aux entries reach the rendered output.
+    kconf = krb5_conf.KRB5Conf()
+    kconf.add_libdefaults(
+        {'default_realm': 'EXAMPLE.COM'},
+        'allow_weak_crypto = false\nrdns = false',
+        strict=False,
+    )
+
+    assert kconf.libdefaults == {'default_realm': 'EXAMPLE.COM', 'rdns': 'false'}
+
+    rendered = kconf.generate()
+    assert 'allow_weak_crypto' not in rendered
+    assert 'default_realm = EXAMPLE.COM' in rendered
+    assert 'rdns = false' in rendered
+
+
+def test__krb5conf_add_appdefaults_lenient_call_path(_clear_logged_unsupported_aux):
+    kconf = krb5_conf.KRB5Conf()
+    kconf.add_appdefaults(
+        {'forwardable': 'true'},
+        'canonicalize = true\nrenew_lifetime = 86400',
+        strict=False,
+    )
+
+    assert kconf.appdefaults == {'forwardable': 'true', 'renew_lifetime': '86400'}
+
+    rendered = kconf.generate()
+    assert 'canonicalize' not in rendered
+    assert 'forwardable = true' in rendered
+    assert 'renew_lifetime = 86400' in rendered
+
+
+def test__krb5conf_add_libdefaults_strict_default_call_path():
+    # Sanity: the wrapper preserves strict-by-default behavior.
+    kconf = krb5_conf.KRB5Conf()
+    with pytest.raises(ValueError):
+        kconf.add_libdefaults(
+            {'default_realm': 'EXAMPLE.COM'},
+            'allow_weak_crypto = false',
+        )
+
+
 def validate_realms_section(data):
     """
     data will consist of approximately following:
