@@ -34,6 +34,11 @@ ALLOWED_BUILTIN_GIDS = frozenset({
 })
 
 CONTAINER_ROOT_UID = 2147000001
+# Number of UIDs/GIDs the container userns subuid block covers. Together with
+# CONTAINER_ROOT_UID this defines [CONTAINER_ROOT_UID, CONTAINER_ROOT_UID +
+# IDMAP_COUNT) as a host-side range reserved for the container filler — no
+# local user/group may have an id in this range.
+IDMAP_COUNT = 65536
 
 SYNTHETIC_CONTAINER_ROOT = {
     'pw_name': 'truenas_container_unpriv_root',
