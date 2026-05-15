@@ -214,6 +214,9 @@ class KRB5Conf():
         auxiliary_parameters: Optional[list] = None,
         strict: bool = True,
     ):
+        # `strict` only loosens auxiliary_parameters validation. `config`
+        # comes from middleware code (not persisted user input) and is
+        # always validated strictly.
         for param, value in config.items():
             validate_krb5_parameter(section, param, value)
 
