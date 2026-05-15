@@ -73,14 +73,17 @@ class DomainConnection(
             return
 
         if kdc_affinity:
-            if isinstance(kdc_affinity, str):
-                # Legacy active controller sent a single value (historically the IP).
-                kdc_saf_cache_set(ip=kdc_affinity)
-            else:
+            try:
+                ipaddress.ip_address(kdc_affinity)
+            except (TypeError, ValueError):
+                # New dict form: {"host": ..., "ip": ...}
                 host = kdc_affinity.get('host') or None
                 ip = kdc_affinity.get('ip') or None
                 if host or ip:
                     kdc_saf_cache_set(host=host, ip=ip)
+            else:
+                # Legacy active controller sent a bare IP string.
+                kdc_saf_cache_set(ip=kdc_affinity)
 
         # This is largely the same as normal `activate()` with addition of clearing local caches
         # and replacing state file (secrets.tdb).

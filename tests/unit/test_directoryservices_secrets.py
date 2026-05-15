@@ -16,10 +16,6 @@ from unittest.mock import AsyncMock, MagicMock
 from middlewared.plugins.directoryservices_.secrets import DomainSecrets
 
 
-def _run(coro):
-    return asyncio.get_event_loop().run_until_complete(coro)
-
-
 @pytest.fixture
 def secrets_service():
     """
@@ -74,7 +70,7 @@ def test__backup_drops_stale_netbiosname_keys(secrets_service):
     secrets_service.get_db_secrets = fake_get_db_secrets
     secrets_service.middleware.call.side_effect = fake_call
 
-    _run(secrets_service.backup())
+    asyncio.run(secrets_service.backup())
 
     # The datastore.update call should contain only the current netbiosname's entry.
     saved = json.loads(captured["args"][3]["secrets"])
@@ -103,4 +99,4 @@ def test__backup_skips_when_failover_status_is_backup(secrets_service):
     secrets_service.middleware.call.side_effect = fake_call
 
     # Should return without raising and without making any non-failover.status calls.
-    _run(secrets_service.backup())
+    asyncio.run(secrets_service.backup())
