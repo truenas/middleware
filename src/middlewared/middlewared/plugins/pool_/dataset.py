@@ -21,6 +21,7 @@ from middlewared.service import (
 from middlewared.service.decorators import pass_thread_local_storage
 import middlewared.sqlalchemy as sa
 from middlewared.utils import BOOT_POOL_NAME_VALID
+from middlewared.utils.filesystem import attrs as fs_attrs
 from middlewared.utils.filter_list import filter_list
 
 from .dataset_query_utils import generic_query
@@ -894,10 +895,11 @@ class PoolDatasetService(CRUDService):
         if dataset['locked'] and mountpoint and await self.middleware.run_in_thread(os.path.exists, mountpoint):
             # We would like to remove the immutable flag in this case so that it's mountpoint can be
             # cleaned automatically when we delete the dataset
-            await self.middleware.call('filesystem.set_zfs_attributes', {
-                'path': mountpoint,
-                'zfs_file_attributes': {'immutable': False}
-            })
+            await self.middleware.run_in_thread(
+                fs_attrs.set_zfs_file_attributes_dict,
+                mountpoint,
+                {'immutable': False},
+            )
 
         async with self.s.truesearch.remove_mountpoint(mountpoint):
             await self.call2(

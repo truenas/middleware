@@ -15,6 +15,7 @@ from middlewared.api.current import (
 from middlewared.plugins.zfs.encryption import load_key
 from middlewared.service import CallError, job, private, Service, ValidationErrors
 from middlewared.service.decorators import pass_thread_local_storage
+from middlewared.utils.filesystem import attrs as fs_attrs
 from middlewared.utils.filesystem.directory import directory_is_empty
 
 from .utils import (
@@ -75,10 +76,11 @@ class PoolDatasetService(Service):
 
         if ds['mountpoint']:
             try:
-                await self.middleware.call('filesystem.set_zfs_attributes', {
-                    'path': ds['mountpoint'],
-                    'zfs_file_attributes': {'immutable': True}
-                })
+                await self.middleware.run_in_thread(
+                    fs_attrs.set_zfs_file_attributes_dict,
+                    ds['mountpoint'],
+                    {'immutable': True},
+                )
             except OSError as e:
                 # EROFS: dataset has readonly=on
                 # ENOENT: mountpoint directory doesn't exist on disk
@@ -256,10 +258,9 @@ class PoolDatasetService(Service):
                             continue
 
                     try:
-                        self.middleware.call_sync('filesystem.set_zfs_attributes', {
-                            'path': mount_path,
-                            'zfs_file_attributes': {'immutable': False}
-                        })
+                        fs_attrs.set_zfs_file_attributes_dict(
+                            mount_path, {'immutable': False},
+                        )
                     except OSError as e:
                         # It's ok to get `EROFS` because the dataset can have `readonly=on`
                         if e.errno != errno.EROFS:
@@ -291,10 +292,9 @@ class PoolDatasetService(Service):
                 else:
                     unlocked.append(ds['name'])
                     try:
-                        self.middleware.call_sync('filesystem.set_zfs_attributes', {
-                            'path': mount_path,
-                            'zfs_file_attributes': {'immutable': False}
-                        })
+                        fs_attrs.set_zfs_file_attributes_dict(
+                            mount_path, {'immutable': False},
+                        )
                     except Exception:
                         pass
 
@@ -316,10 +316,9 @@ class PoolDatasetService(Service):
                 mount_path = os.path.join('/mnt', ds)
                 if os.path.exists(mount_path):
                     try:
-                        self.middleware.call_sync('filesystem.set_zfs_attributes', {
-                            'path': mount_path,
-                            'zfs_file_attributes': {'immutable': True}
-                        })
+                        fs_attrs.set_zfs_file_attributes_dict(
+                            mount_path, {'immutable': True},
+                        )
                     except OSError as e:
                         # It's ok to get `EROFS` because the dataset can have `readonly=on`
                         if e.errno != errno.EROFS:
