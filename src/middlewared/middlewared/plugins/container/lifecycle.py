@@ -11,14 +11,11 @@ from middlewared.api.current import (
     ContainerStopArgs, ContainerStopResult,
     ZFSResourceQuery
 )
-from middlewared.plugins.account_.constants import CONTAINER_ROOT_UID
+from middlewared.plugins.account_.constants import CONTAINER_ROOT_UID, IDMAP_COUNT
 from middlewared.service import CallError, job, private, Service
 
 from .bridge import container_bridge_name, configure_container_bridge
 from .utils import container_instance_dataset_mountpoint, update_etc_hosts, write_etc_hostname
-
-
-IDMAP_COUNT = 65536
 
 
 class ContainerService(Service):
@@ -119,19 +116,18 @@ class ContainerService(Service):
         if container["idmap"]:
             match container["idmap"]["type"]:
                 case "DEFAULT":
-                    item = ContainerIdmapConfigurationItem(
-                        target=CONTAINER_ROOT_UID,
-                        count=IDMAP_COUNT,
-                    )
+                    uid_items, gid_items = self._build_default_idmap_items()
                 case "ISOLATED":
-                    item = ContainerIdmapConfigurationItem(
-                        target=CONTAINER_ROOT_UID + container["idmap"]["slice"] * IDMAP_COUNT,
-                        count=IDMAP_COUNT,
-                    )
+                    base_target = CONTAINER_ROOT_UID + container["idmap"]["slice"] * IDMAP_COUNT
+                    single = ContainerIdmapConfigurationItem(start=0, target=base_target, count=IDMAP_COUNT)
+                    uid_items, gid_items = [single], [single]
                 case _:
                     raise CallError(f"Unsupported idmap type {container['idmap']['type']!r}")
 
-            container["idmap"] = ContainerIdmapConfiguration(uid=item, gid=item)
+            try:
+                container["idmap"] = ContainerIdmapConfiguration(uid=uid_items, gid=gid_items)
+            except ValueError as e:
+                raise CallError(f"Invalid idmap configuration: {e}")
 
         if container["capabilities_policy"]:
             container["capabilities_policy"] = ContainerCapabilitiesPolicy[container["capabilities_policy"]]
@@ -147,6 +143,93 @@ class ContainerService(Service):
         })
 
         return ContainerDomain(ContainerDomainConfiguration(**container))
+
+    @private
+    def _build_default_idmap_items(self):
+        idmap_filters = [
+            ['local', '=', True],
+            ['userns_idmap', 'nin', [0, None]],
+            ['roles', '=', []],
+        ]
+        users = self.middleware.call_sync('user.query', idmap_filters)
+        groups = self.middleware.call_sync('group.query', idmap_filters)
+
+        uid_passthroughs = [_resolve_target(u['uid'], u['userns_idmap']) for u in users]
+        gid_passthroughs = [_resolve_target(g['gid'], g['userns_idmap']) for g in groups]
+
+        return _build_idmap_items(uid_passthroughs), _build_idmap_items(gid_passthroughs)
+
+
+def _resolve_target(account_id, userns_idmap):
+    """Resolve an account's userns_idmap setting to a (container_id, host_id) pair.
+
+    'DIRECT' means the host UID/GID is exposed inside the container with the same
+    numeric value (container_id == host_id). Any other value is the explicit
+    container-side ID that should map to the host's UID/GID.
+    """
+    container_id = account_id if userns_idmap == 'DIRECT' else userns_idmap
+    return container_id, account_id
+
+
+def _build_idmap_items(passthroughs):
+    """Build a complete idmap table around per-account passthroughs.
+
+    For each passthrough whose container-side ID falls in [0, IDMAP_COUNT), emit
+    a single-ID entry mapping that slot to the account's host ID. Slots not
+    covered by any passthrough are filled with mappings into the shifted
+    CONTAINER_ROOT_UID range so the container has a complete unprivileged
+    UID/GID space. Passthroughs whose container-side ID falls outside
+    [0, IDMAP_COUNT) are appended verbatim as individual one-ID entries.
+
+    Account-level validation rejects duplicate container-side IDs before
+    persistence; the deduplication check here is a safety net for stale or
+    corrupt account state. Host-side overlaps are caught downstream by
+    ContainerIdmapConfiguration validation.
+    """
+    seen = set()
+    for container_id, _ in passthroughs:
+        if container_id in seen:
+            raise CallError(
+                f'Duplicate container-side id {container_id} in account idmap configuration'
+            )
+        seen.add(container_id)
+
+    in_range = []
+    out_of_range = []
+    for c, h in passthroughs:
+        if 0 <= c < IDMAP_COUNT:
+            in_range.append((c, h))
+        else:
+            out_of_range.append((c, h))
+    in_range.sort()
+
+    items = []
+    cursor = 0
+    for container_id, host_id in in_range:
+        if container_id > cursor:
+            items.append(ContainerIdmapConfigurationItem(
+                start=cursor,
+                target=CONTAINER_ROOT_UID + cursor,
+                count=container_id - cursor,
+            ))
+        items.append(ContainerIdmapConfigurationItem(
+            start=container_id, target=host_id, count=1,
+        ))
+        cursor = container_id + 1
+
+    if cursor < IDMAP_COUNT:
+        items.append(ContainerIdmapConfigurationItem(
+            start=cursor,
+            target=CONTAINER_ROOT_UID + cursor,
+            count=IDMAP_COUNT - cursor,
+        ))
+
+    for container_id, host_id in out_of_range:
+        items.append(ContainerIdmapConfigurationItem(
+            start=container_id, target=host_id, count=1,
+        ))
+
+    return items
 
 
 async def __migrate_and_start(middleware):
