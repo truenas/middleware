@@ -75,8 +75,9 @@ class DocumentationGenerator:
         )
         result += self._render_changelog_section(
             "Methods Removed",
-            None,
+            "api_methods",
             changelog.methods_removed,
+            removed=True,
         )
         result += self._render_schema_changes_section(
             "Methods with Schema Changes",
@@ -90,8 +91,9 @@ class DocumentationGenerator:
         )
         result += self._render_changelog_section(
             "Events Removed",
-            None,
+            "api_events",
             changelog.events_removed,
+            removed=True,
         )
         result += self._render_schema_changes_section(
             "Events with Schema Changes",
@@ -102,17 +104,23 @@ class DocumentationGenerator:
         with open(f"{self.output_dir}/changelog.rst", "w") as f:
             f.write(result)
 
-    def _render_changelog_section(self, title: str, doc_prefix: str | None, names: list[str]) -> str:
+    def _render_changelog_section(self, title: str, doc_prefix: str, names: list[str],
+                                  removed: bool = False) -> str:
         if not names:
             return ""
         out = f"{title}\n{'-' * len(title)}\n\n"
         for plugin, plugin_names in self._group_by_plugin(names):
             out += f"**{plugin}**\n\n"
             for name in plugin_names:
-                if doc_prefix:
-                    out += f"- :doc:`{name} <{doc_prefix}_{name}>`\n"
+                if removed:
+                    # The method/event no longer exists in this version's build, so link to its
+                    # page in the previous version's sibling Sphinx site via a relative URL.
+                    changelog = self.changelog
+                    assert changelog is not None
+                    url = f"../{changelog.previous_version}/{doc_prefix}_{name}.html"
+                    out += f"- `{name} <{url}>`__\n"
                 else:
-                    out += f"- ``{name}``\n"
+                    out += f"- :doc:`{name} <{doc_prefix}_{name}>`\n"
             out += "\n"
         return out
 
