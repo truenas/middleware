@@ -3,8 +3,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any
 
-from lexicon.client import Client
-from lexicon.config import ConfigResolver
+import requests
 
 from middlewared.api.current import DigitalOceanSchemaArgs
 
@@ -16,36 +15,54 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+DIGITALOCEAN_API = 'https://api.digitalocean.com/v2'
 
-class _DigitalOceanLexiconClient:
-    """Compatibility wrapper for DigitalOcean Lexicon client to match the old certbot interface"""
+
+class _DigitalOceanClient:
+    """Minimal DigitalOcean DNS API client for ACME TXT challenge records."""
 
     def __init__(self, token: str, ttl: int) -> None:
-        self.token = token
         self.ttl = ttl
-
-    def _get_config(self, domain: str) -> Any:
-        config_resolver_cls: Any = ConfigResolver
-        resolver = config_resolver_cls()
-        return resolver.with_dict({
-            'provider_name': 'digitalocean',
-            'domain': domain,
-            'delegated': domain,  # Bypass Lexicon subdomain resolution
-            'ttl': self.ttl,
-            'digitalocean': {
-                'auth_token': self.token,
-            },
+        self.session = requests.Session()
+        self.session.headers.update({
+            'Authorization': f'Bearer {token}',
+            'Content-Type': 'application/json',
         })
 
+    @staticmethod
+    def _relative_name(domain: str, fqdn: str) -> str:
+        name = fqdn.rstrip('.').lower()
+        zone = domain.rstrip('.').lower()
+        if name.endswith(zone):
+            name = name[:-len(zone)].rstrip('.')
+        return name
+
     def add_txt_record(self, domain: str, validation_name: str, validation_content: str) -> None:
-        """Add a TXT record using the DigitalOcean API via Lexicon"""
-        with Client(self._get_config(domain)) as operations:
-            operations.create_record(rtype='TXT', name=validation_name, content=validation_content)
+        payload = {
+            'type': 'TXT',
+            'name': self._relative_name(domain, validation_name),
+            'data': validation_content,
+            'ttl': self.ttl,
+        }
+        response = self.session.post(f'{DIGITALOCEAN_API}/domains/{domain}/records', json=payload)
+        response.raise_for_status()
 
     def del_txt_record(self, domain: str, validation_name: str, validation_content: str) -> None:
-        """Delete a TXT record using the DigitalOcean API via Lexicon"""
-        with Client(self._get_config(domain)) as operations:
-            operations.delete_record(rtype='TXT', name=validation_name, content=validation_content)
+        relative_name = self._relative_name(domain, validation_name)
+        next_url = f'{DIGITALOCEAN_API}/domains/{domain}/records'
+        while next_url:
+            response = self.session.get(next_url)
+            response.raise_for_status()
+            payload = response.json()
+            for record in payload.get('domain_records', []):
+                if (record.get('type') == 'TXT'
+                        and record.get('name') == relative_name
+                        and record.get('data') == validation_content):
+                    delete_response = self.session.delete(
+                        f'{DIGITALOCEAN_API}/domains/{domain}/records/{record["id"]}'
+                    )
+                    delete_response.raise_for_status()
+            next_url = payload.get('links', {}).get('pages', {}).get('next')
 
 
 class DigitalOceanAuthenticator(Authenticator):
@@ -64,8 +81,8 @@ class DigitalOceanAuthenticator(Authenticator):
     def _perform(self, domain: str, validation_name: str, validation_content: str) -> None:
         self.get_client().add_txt_record(domain, validation_name, validation_content)
 
-    def get_client(self) -> _DigitalOceanLexiconClient:
-        return _DigitalOceanLexiconClient(self.digitalocean_token, 600)
+    def get_client(self) -> _DigitalOceanClient:
+        return _DigitalOceanClient(self.digitalocean_token, 600)
 
     def _cleanup(self, domain: str, validation_name: str, validation_content: str) -> None:
         self.get_client().del_txt_record(domain, validation_name, validation_content)
