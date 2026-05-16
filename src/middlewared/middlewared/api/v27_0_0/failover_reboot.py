@@ -33,6 +33,7 @@ class FailoverRebootInfo(BaseModel):
 
 class FailoverRebootInfoResult(BaseModel):
     result: FailoverRebootInfo
+    """Information about the current boot session and reboot requirements for both nodes in the failover pair."""
 
 
 class FailoverRebootOtherNodeArgs(BaseModel):
