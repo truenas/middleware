@@ -3,6 +3,7 @@ import threading
 from dataclasses import dataclass, asdict
 from random import uniform
 from time import monotonic
+from types import MappingProxyType
 from typing import Any
 from .crypto import generate_string, sha512_crypt, check_unixhash
 
@@ -27,6 +28,26 @@ class AuthResp(enum.StrEnum):
     REDIRECT = 'REDIRECT'
     SCRAM_RESPONSE = 'SCRAM_RESPONSE'
     DENIED = 'DENIED'
+
+
+class ShellAppType(enum.StrEnum):
+    HOST = 'HOST'
+    VM = 'VM'
+    CONTAINER = 'CONTAINER'
+    APP = 'APP'
+
+
+class ShellTokenAuthError(enum.StrEnum):
+    WEB_SHELL_DENIED = 'WEB_SHELL_DENIED'
+    MISSING_ROLE = 'MISSING_ROLE'
+
+
+SHELL_APP_REQUIRED_ROLE = MappingProxyType({
+    ShellAppType.HOST:      None,
+    ShellAppType.VM:        'VM_WRITE',
+    ShellAppType.CONTAINER: 'CONTAINER_WRITE',
+    ShellAppType.APP:       'APPS_WRITE',
+})
 
 
 # NIST SP 800-63B provides documentation Authenticator Assurance Levels (AAL)
