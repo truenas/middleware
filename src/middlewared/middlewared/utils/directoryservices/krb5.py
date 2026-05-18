@@ -11,6 +11,7 @@ from contextlib import contextmanager
 from datetime import timedelta
 import errno
 from functools import wraps
+import json
 import os
 import subprocess
 from tempfile import NamedTemporaryFile
@@ -547,25 +548,52 @@ def middleware_ccache_path(data: dict) -> str:
     return ccache_path
 
 
-def kdc_saf_cache_get() -> str | None:
+def kdc_saf_cache_get() -> dict | None:
+    """
+    Return a dict ``{"host": str | None, "ip": str | None}`` describing the
+    pinned KDC, or ``None`` if no entry is present, has expired, or is not
+    parseable. ``host`` and ``ip`` are populated from whichever fields were
+    recorded at set time; callers should be prepared for either to be missing.
+    """
     try:
         with open(SAF_CACHE_FILE, 'r') as f:
-            kdc, timeout = f.read().split()
-            if utc_now(naive=False).timestamp() > int(timeout.strip()):
-                # Expired
-                return None
-
-            return kdc.strip()
+            raw = f.read()
     except FileNotFoundError:
         return None
 
+    try:
+        data = json.loads(raw)
+        expires = int(data['expires'])
+    except (ValueError, KeyError, TypeError):
+        return None
 
-def kdc_saf_cache_set(kdc: str) -> None:
-    if not isinstance(kdc, str):
-        raise TypeError(f'{kdc}: not a string')
+    if utc_now(naive=False).timestamp() > expires:
+        return None
 
-    expiration = int((utc_now(naive=False) + SAF_CACHE_TIMEOUT).timestamp())
-    write_if_changed(SAF_CACHE_FILE, f'{kdc} {expiration}')
+    return {
+        'host': data.get('host') or None,
+        'ip': data.get('ip') or None,
+    }
+
+
+def kdc_saf_cache_set(*, host: str | None = None, ip: str | None = None) -> None:
+    """
+    Pin the KDC to use for ``SAF_CACHE_TIMEOUT``. ``host`` is the FQDN of the
+    DC (used by samba's ``--server`` argument and by clients that prefer
+    canonical names). ``ip`` is the dotted-quad / colon address (used in
+    ``kdc=`` lines of krb5.conf and to skip RDNS in shaky DNS environments).
+    At least one of ``host`` or ``ip`` must be supplied.
+    """
+    if host is not None and not isinstance(host, str):
+        raise TypeError(f'{host!r}: host must be a string or None')
+    if ip is not None and not isinstance(ip, str):
+        raise TypeError(f'{ip!r}: ip must be a string or None')
+    if not host and not ip:
+        raise ValueError('At least one of host or ip is required')
+
+    expires = int((utc_now(naive=False) + SAF_CACHE_TIMEOUT).timestamp())
+    payload = json.dumps({'host': host, 'ip': ip, 'expires': expires}, sort_keys=True)
+    write_if_changed(SAF_CACHE_FILE, payload)
 
 
 def kdc_saf_cache_remove() -> None:
