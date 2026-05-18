@@ -201,6 +201,12 @@ class ServiceContainer(BaseServiceContainer):
             method.__func__.__method_name__ = method_name
 
 
+_AuditEvent = typing.Literal[
+    'METHOD_CALL', 'AUTHENTICATION', 'REBOOT', 'SHUTDOWN', 'LOGOUT',
+    'WEBSHELL_AUTHENTICATION', 'WEBSHELL_LOGOUT',
+]
+
+
 class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
 
     CONSOLE_ONCE_PATH = f'{MIDDLEWARE_RUN_DIR}/.middlewared-console-once'
@@ -1140,7 +1146,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
     def _build_audit_message_sync(
         self,
         app: App,
-        event: typing.Literal['METHOD_CALL', 'AUTHENTICATION', 'REBOOT', 'SHUTDOWN', 'LOGOUT'],
+        event: _AuditEvent,
         event_data: dict,
         success: bool,
     ) -> str:
@@ -1190,7 +1196,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
     def log_audit_message_sync(
         self,
         app: App,
-        event: typing.Literal['METHOD_CALL', 'AUTHENTICATION', 'REBOOT', 'SHUTDOWN', 'LOGOUT'],
+        event: _AuditEvent,
         event_data: dict,
         success: bool,
     ) -> None:
@@ -1206,7 +1212,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
     async def log_audit_message(
         self,
         app: App,
-        event: typing.Literal['METHOD_CALL', 'AUTHENTICATION', 'REBOOT', 'SHUTDOWN', 'LOGOUT'],
+        event: _AuditEvent,
         event_data: dict,
         success: bool,
     ) -> None:
