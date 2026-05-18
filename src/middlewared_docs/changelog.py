@@ -2,10 +2,10 @@
 """Cross-version API changelog computation.
 
 Given two adjacent :class:`APIDump` objects, produce a :class:`Changelog`
-describing which methods/events were added, removed, or had their schemas
-changed. The schema diff is intentionally shallow (top-level call parameters
-and return value) — deeper changes are surfaced as a generic note pointing the
-reader at the per-method page.
+describing which methods were added, removed, or had their schemas changed.
+The schema diff is intentionally shallow (top-level call parameters and return
+value) — deeper changes are surfaced as a generic note pointing the reader at
+the per-method page.
 """
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ import dataclasses
 import typing
 
 if typing.TYPE_CHECKING:
-    from middlewared.api.base.server.doc import APIDump, APIDumpMethod, APIDumpEvent
+    from middlewared.api.base.server.doc import APIDump, APIDumpMethod
 
 
 @dataclasses.dataclass
@@ -29,15 +29,9 @@ class Changelog:
     methods_added: list[str] = dataclasses.field(default_factory=list)
     methods_removed: list[str] = dataclasses.field(default_factory=list)
     methods_changed: list[SchemaChange] = dataclasses.field(default_factory=list)
-    events_added: list[str] = dataclasses.field(default_factory=list)
-    events_removed: list[str] = dataclasses.field(default_factory=list)
-    events_changed: list[SchemaChange] = dataclasses.field(default_factory=list)
 
     def is_empty(self) -> bool:
-        return not (
-            self.methods_added or self.methods_removed or self.methods_changed or
-            self.events_added or self.events_removed or self.events_changed
-        )
+        return not (self.methods_added or self.methods_removed or self.methods_changed)
 
 
 def _type_summary(schema: dict) -> str:
@@ -129,9 +123,9 @@ def compute_schema_diff(old: dict, new: dict) -> tuple[list[str], list[str]]:
 
 
 def _diff_items(
-    previous: typing.Iterable[APIDumpMethod | APIDumpEvent], current: typing.Iterable[APIDumpMethod | APIDumpEvent],
+    previous: typing.Iterable[APIDumpMethod], current: typing.Iterable[APIDumpMethod],
 ) -> tuple[list[str], list[str], list[SchemaChange]]:
-    """Compute added/removed/changed for a list of APIDumpMethod or APIDumpEvent."""
+    """Compute added/removed/changed for a list of APIDumpMethod."""
     prev_by_name = {item.name: item for item in previous}
     cur_by_name = {item.name: item for item in current}
 
@@ -156,13 +150,9 @@ def _diff_items(
 
 def compute_changelog(previous: APIDump, current: APIDump) -> Changelog:
     methods_added, methods_removed, methods_changed = _diff_items(previous.methods, current.methods)
-    events_added, events_removed, events_changed = _diff_items(previous.events, current.events)
     return Changelog(
         previous_version=previous.version,
         methods_added=methods_added,
         methods_removed=methods_removed,
         methods_changed=methods_changed,
-        events_added=events_added,
-        events_removed=events_removed,
-        events_changed=events_changed,
     )
