@@ -605,11 +605,15 @@ class AuthService(Service):
             'credentials': root_credentials,
         }
 
-    @api_method(AuthLoginArgs, AuthLoginResult, cli_private=True, authentication_required=False, pass_app=True)
+    @api_method(AuthLoginArgs, AuthLoginResult, cli_private=True, authentication_required=False, pass_app=True,
+                removed_in='v27')
     async def login(self, app, username, password, otp_token):
         """
         Authenticate session using username and password.
         `otp_token` must be specified if two factor authentication is enabled.
+
+        Deprecated and removed in v27. Use `auth.login_ex` with `mechanism="PASSWORD_PLAIN"`
+        (and `auth.login_ex_continue` with `mechanism="OTP_TOKEN"` for the second factor).
         """
 
         resp = await self.login_ex(app, {
@@ -1060,10 +1064,13 @@ class AuthService(Service):
         return response
 
     @api_method(AuthLoginWithApiKeyArgs, AuthLoginWithApiKeyResult, cli_private=True, authentication_required=False,
-                pass_app=True)
+                pass_app=True, removed_in='v27')
     async def login_with_api_key(self, app, api_key):
         """
         Authenticate session using API Key.
+
+        Deprecated and removed in v27. Use `auth.login_ex` with `mechanism="API_KEY_PLAIN"`
+        (or `mechanism="SCRAM"` for SCRAM-based authentication).
         """
         try:
             key_id = int(api_key.split('-')[0])

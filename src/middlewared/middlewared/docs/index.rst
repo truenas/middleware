@@ -91,15 +91,20 @@ Server answers with either `connected` or `failed`.
 Authentication
 ~~~~~~~~~~~~~~
 
-Authentication happens by calling the `auth.login` method.
+Authentication happens by calling the `auth.login_ex` method with the appropriate
+``mechanism`` (e.g. ``PASSWORD_PLAIN``, ``API_KEY_PLAIN``, ``TOKEN_PLAIN``, ``SCRAM``).
 
 Request:
 
     {
       "id": "d8e715be-6bc7-11e6-8c28-00e04d680384",
       "msg": "method",
-      "method": "auth.login",
-      "params": ["username", "password"]
+      "method": "auth.login_ex",
+      "params": [{
+        "mechanism": "PASSWORD_PLAIN",
+        "username": "username",
+        "password": "password"
+      }]
     }
 
 Response:
@@ -107,5 +112,5 @@ Response:
     {
       "id": "d8e715be-6bc7-11e6-8c28-00e04d680384",
       "msg": "result",
-      "result": true,
+      "result": {"response_type": "SUCCESS", ...}
     }
