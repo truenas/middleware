@@ -598,6 +598,7 @@ class PoolService(CRUDService):
             'dataset.post_create', {'encrypted': bool(encryption_dict), **encrypted_dataset_data}
         )
         self.middleware.send_event('pool.query', 'ADDED', id=pool_id, fields=pool)
+        await self.middleware.call('zpool.send_change_event', pool['name'], 'ADDED')
         return pool
 
     @private
