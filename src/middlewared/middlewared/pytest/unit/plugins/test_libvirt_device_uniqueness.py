@@ -195,6 +195,34 @@ def test_extract_identity_filesystem_target():
     assert _extract_identity(device) == '/media'
 
 
+@pytest.mark.parametrize('target,expected', [
+    ('/mnt/tank/', '/mnt/tank'),
+    ('/mnt/tank', '/mnt/tank'),
+    ('/mnt/tank//', '/mnt/tank'),
+    ('/mnt/tank/./', '/mnt/tank'),
+    ('/mnt//tank', '/mnt/tank'),
+    ('/media/', '/media'),
+])
+def test_extract_identity_filesystem_target_normalized(target, expected):
+    device = {'attributes': {'dtype': 'FILESYSTEM', 'target': target, 'source': '/mnt/tank/shares'}}
+    assert _extract_identity(device) == expected
+
+
+def test_extract_identity_filesystem_target_missing():
+    device = {'attributes': {'dtype': 'FILESYSTEM', 'source': '/mnt/tank/shares'}}
+    assert _extract_identity(device) is None
+
+
+def test_container_filesystem_duplicate_target_trailing_slash():
+    """A FILESYSTEM whose target differs from an existing one only by trailing slash must collide."""
+    new_fs = {'attributes': {
+        'dtype': 'FILESYSTEM', 'source': '/mnt/tank/other', 'target': '/media/',
+    }}
+    assert device_uniqueness_check(
+        new_fs, CONTAINER_INSTANCE, ('DISK', 'RAW', 'CDROM', 'FILESYSTEM'),
+    ) is False
+
+
 def test_extract_identity_usb_device_path_priority():
     """Host device path should take priority over vendor:product."""
     device = {'attributes': {
