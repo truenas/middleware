@@ -34,18 +34,34 @@ class Changelog:
         return not (self.methods_added or self.methods_removed or self.methods_changed)
 
 
+def _union_branches(schema: dict) -> list[dict] | None:
+    """If `schema` is a oneOf/anyOf, return its branches; else None."""
+    if not isinstance(schema, dict):
+        return
+    for combiner in ("oneOf", "anyOf"):
+        if combiner in schema:
+            return schema[combiner]
+
+
+def _branch_name(branch: dict) -> str:
+    """Best-effort name for a union branch — prefer Pydantic's `title`, fall back to type."""
+    if isinstance(branch, dict) and (title := branch.get("title")):
+        return title
+    return _type_summary(branch)
+
+
 def _type_summary(schema: dict) -> str:
     """Render a brief human-readable type summary for a JSON-Schema fragment."""
     if not isinstance(schema, dict):
         return "unknown"
 
-    for combiner in ("anyOf", "oneOf"):
-        if combiner in schema:
-            return " | ".join(_type_summary(s) for s in schema[combiner])
+    branches = _union_branches(schema)
+    if branches is not None:
+        return " | ".join(_branch_name(b) for b in branches)
 
     t = schema.get("type")
     if isinstance(t, list):
-        return " | ".join(t)
+        return " | ".join(sorted(t))
     if t:
         return t
     if "enum" in schema:
@@ -53,6 +69,15 @@ def _type_summary(schema: dict) -> str:
     if "const" in schema:
         return "const"
     return "unknown"
+
+
+def _diff_union(old: dict, new: dict, prefix: str) -> list[str]:
+    """Diff two union schemas by branch name. Returns lines describing added/removed variants."""
+    old_names = {_branch_name(b) for b in _union_branches(old) or []}
+    new_names = {_branch_name(b) for b in _union_branches(new) or []}
+    added = [f"{prefix}: added variant `{added}`" for added in sorted(new_names - old_names)]
+    removed = [f"{prefix}: removed variant `{removed}`" for removed in sorted(old_names - new_names)]
+    return added + removed
 
 
 def _diff_object_properties(old: dict, new: dict, label: str) -> list[str]:
@@ -85,8 +110,15 @@ def _diff_call_parameters(old: dict, new: dict) -> list[str]:
     for name in sorted(k for k in old_by_name if k not in new_by_name and k is not None):
         lines.append(f"removed parameter `{name}`")
     for name in sorted(k for k in new_by_name if k in old_by_name and k is not None):
-        old_type = _type_summary(old_by_name[name])
-        new_type = _type_summary(new_by_name[name])
+        old_param = old_by_name[name]
+        new_param = new_by_name[name]
+        if _union_branches(old_param) is not None and _union_branches(new_param) is not None:
+            union_lines = _diff_union(old_param, new_param, f"parameter `{name}`")
+            if union_lines:
+                lines.extend(union_lines)
+                continue
+        old_type = _type_summary(old_param)
+        new_type = _type_summary(new_param)
         if old_type != new_type:
             lines.append(f"parameter `{name}` type changed ({old_type} → {new_type})")
     return lines
@@ -94,6 +126,10 @@ def _diff_call_parameters(old: dict, new: dict) -> list[str]:
 
 def _diff_return_value(old: dict, new: dict) -> list[str]:
     """Brief top-level diff of the `Return value` schema."""
+    if _union_branches(old) is not None and _union_branches(new) is not None:
+        union_lines = _diff_union(old, new, "return value")
+        if union_lines:
+            return union_lines
     old_type = _type_summary(old) if isinstance(old, dict) else "unknown"
     new_type = _type_summary(new) if isinstance(new, dict) else "unknown"
     if old_type != new_type:
