@@ -84,22 +84,6 @@ class DocumentationGenerator:
             "api_methods",
             changelog.methods_changed,
         )
-        result += self._render_changelog_section(
-            "Events Added",
-            "api_events",
-            changelog.events_added,
-        )
-        result += self._render_changelog_section(
-            "Events Removed",
-            "api_events",
-            changelog.events_removed,
-            removed=True,
-        )
-        result += self._render_schema_changes_section(
-            "Events with Schema Changes",
-            "api_events",
-            changelog.events_changed,
-        )
 
         with open(f"{self.output_dir}/changelog.rst", "w") as f:
             f.write(result)
