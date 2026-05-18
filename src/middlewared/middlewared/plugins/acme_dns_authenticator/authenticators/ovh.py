@@ -5,6 +5,7 @@ import json
 import logging
 import time
 from typing import TYPE_CHECKING, Any
+from urllib.parse import urlencode
 
 import requests
 
@@ -39,27 +40,28 @@ class _OVHClient:
         self.session = requests.Session()
         self._time_delta: int | None = None
 
-    def _sync_time(self) -> None:
+    def _sync_time(self) -> int:
         # OVH rejects requests whose timestamp drifts too far from server time
         if self._time_delta is None:
             server_time = self.session.get(f'{self.endpoint_api}/auth/time').json()
             self._time_delta = server_time - int(time.time())
+        return self._time_delta
 
     def _request(
-        self, method: str, path: str, data: dict | None = None, params: dict | None = None,
+        self, method: str, path: str,
+        data: dict[str, Any] | None = None,
+        params: dict[str, str] | None = None,
     ) -> Any:
-        self._sync_time()
+        time_delta = self._sync_time()
         url = self.endpoint_api + path
         body = json.dumps(data) if data is not None else ''
-        timestamp = str(int(time.time()) + self._time_delta)
+        timestamp = str(int(time.time()) + time_delta)
 
         # Signature is computed over the fully-resolved URL including query params
-        prepared_url = self.session.prepare_request(
-            requests.Request(method, url, params=params)
-        ).url
+        signed_url = f'{url}?{urlencode(params)}' if params else url
         signature_payload = '+'.join([
             self.application_secret, self.consumer_key, method.upper(),
-            prepared_url, body, timestamp,
+            signed_url, body, timestamp,
         ]).encode('utf-8')
 
         headers = {
