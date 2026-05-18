@@ -27,6 +27,13 @@ __all__ = ("ShellApplication",)
 
 ShellResize = collections.namedtuple("ShellResize", ["cols", "rows"])
 
+# /bin/sh in most app/container images is dash or busybox sh, which lack
+# readline — up-arrow / history / line. Prefer bash when the image ships it,
+# fall back to sh otherwise. Kept as a single script string so it can be
+# passed as the final argument to an existing `sh -c` (the nsenter argv
+# already ends in `/bin/sh -c`; docker exec gets its own `/bin/sh -c`).
+BASH_FALLBACK_SCRIPT = "if command -v bash >/dev/null 2>&1; then exec bash -l; else exec sh; fi"
+
 
 class ShellWorkerThread(threading.Thread):
     """
@@ -71,18 +78,30 @@ class ShellWorkerThread(threading.Thread):
                 "exec",
                 "-it",
                 options["container_id"],
-                options.get("command", "/bin/bash"),
+                "/bin/sh", "-c", self._shell_script(options),
             ]
             if not as_root:
                 command = ["/usr/bin/sudo", "-H", "-u", username] + command
             return command, not as_root
         elif options.get("container_id"):
-            command = options["nsenter"] + [options["command"]]
+            # nsenter argv already terminates with `/bin/sh -c`; append the
+            # script as the single trailing argument so it is what `sh -c`
+            # actually executes (rather than being interpreted as $0/$1).
+            command = options["nsenter"] + [self._shell_script(options)]
             if not as_root:
                 command = ["/usr/bin/sudo", "-H", "-u", username] + command
             return command, not as_root
         else:
             return ["/usr/bin/login", "-p", "-f", username], False
+
+    def _shell_script(self, options):
+        # Callers (currently only integration tests) may override the script
+        # passed to the container's `/bin/sh -c`. Default falls back to bash
+        # when available, otherwise sh.
+        cmd = options.get("command")
+        if cmd and cmd != "/bin/sh":
+            return cmd
+        return BASH_FALLBACK_SCRIPT
 
     def resize(self, cols, rows):
         self.input_queue.put(ShellResize(cols, rows))
@@ -346,7 +365,6 @@ class ShellApplication:
                     options["nsenter"] = await self.middleware.call2(
                         self.middleware.services.container.nsenter, options["container_id"],
                     )
-                    options["command"] = options.get("command") or "/bin/sh"
 
                 # By default we want to run virsh with user's privileges and assume all "permission denied"
                 # errors this can cause, unless the user has a sudo permission for all commands; in that case, let's
