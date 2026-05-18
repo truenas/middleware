@@ -50,7 +50,7 @@ class APIDumper:
             version=self.version,
             version_title=self.version_title,
             methods=await self._dump_methods(),
-            events=self._dump_events(),
+            events=await self._dump_events(),
         )
 
     async def _dump_methods(self):
@@ -146,31 +146,40 @@ class APIDumper:
             },
         }
 
-    def _dump_events(self):
+    async def _dump_events(self):
         result = []
         for event in self.api.events:
             if event.event["private"]:
                 continue
 
-            if not event.event["models"]:
+            event_dump = await self._dump_event(event)
+            if event_dump is None:
                 continue
 
-            result.append(self._dump_event(event))
+            result.append(event_dump)
 
         return sorted(result, key=lambda event: event.name)
 
-    def _dump_event(self, event: Event):
+    async def _dump_event(self, event: Event):
+        schemas = await self._dump_event_schemas(event)
+        if schemas is None:
+            return None
+
         return APIDumpEvent(
             name=event.name,
             roles=sorted(self.role_manager.atomic_roles_for_event(event.name)),
             doc=event.event["description"],
-            schemas=self._dump_event_schemas(event),
+            schemas=schemas,
             removed_in=None,
         )
 
-    def _dump_event_schemas(self, event: Event):
+    async def _dump_event_schemas(self, event: Event):
+        models = await event.models()
+        if not models:
+            return None
+
         properties = {}
-        for name, model in event.event["models"].items():
+        for name, model in models.items():
             schema = model_json_schema(model)
             schema = replace_refs(schema)
             properties[name] = schema

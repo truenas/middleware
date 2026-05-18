@@ -29,7 +29,6 @@ from aiohttp import web
 from aiohttp.http_websocket import WSCloseCode
 from aiohttp.web_exceptions import HTTPPermanentRedirect
 from aiohttp.web_middlewares import normalize_path_middleware
-from pydantic import Field, create_model
 from truenas_api_client import json
 
 import middlewared.service
@@ -41,7 +40,7 @@ from .api.base.handler.version import APIVersion, APIVersionsAdapter
 from .api.base.model import BaseModel
 from .api.base.server.api import API
 from .api.base.server.doc import APIDumper
-from .api.base.server.event import Event
+from .api.base.server.event import Event, LegacyEvent, _unwrap_event_source_result
 from .api.base.server.legacy_api_method import LegacyAPIMethod
 from .api.base.server.method import Method
 from .api.base.server.ws_handler.base import BaseWebSocketHandler
@@ -380,7 +379,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         api_versions: list[APIVersion],
         api_versions_adapter: APIVersionsAdapter
     ) -> dict[str, API]:
-        current_api = self._create_api(api_versions[-1].version, Method)
+        current_api = self._create_api(api_versions[-1].version, Method, Event)
 
         apis = {
             "current": current_api,
@@ -388,16 +387,26 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         }
 
         for version in api_versions[:-1]:
-            apis[version.version] = self._create_api(version.version, lambda middleware, method_name: LegacyAPIMethod(
-                middleware,
-                method_name,
-                version.version,
-                api_versions_adapter,
-            ))
+            method_factory = (
+                lambda middleware, method_name, _v=version.version: LegacyAPIMethod(
+                    middleware, method_name, _v, api_versions_adapter,
+                )
+            )
+            event_factory = (
+                lambda middleware, name, event, _v=version.version: LegacyEvent(
+                    middleware, name, event, _v, api_versions_adapter,
+                )
+            )
+            apis[version.version] = self._create_api(version.version, method_factory, event_factory)
 
         return apis
 
-    def _create_api(self, version: str, method_factory: typing.Callable[[Middleware, str], Method]) -> API:
+    def _create_api(
+        self,
+        version: str,
+        method_factory: typing.Callable[[Middleware, str], Method],
+        event_factory: typing.Callable[[Middleware, str, dict], Event],
+    ) -> API:
         methods = []
         for method_name, methodobj in self._get_methods():
             method = method_factory(self, method_name)
@@ -411,7 +420,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         events = []
 
         for name, event in self.events:
-            events.append(Event(self, name, event))
+            events.append(event_factory(self, name, event))
 
         for name, event_source in self.event_source_manager.event_sources.items():
             description = ''
@@ -422,16 +431,11 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
                 f'it using the name in the following format `{name}:{{"param": "value"}}`'
             )
 
-            events.append(Event(self, name, {
+            events.append(event_factory(self, name, {
                 'description': description,
                 'models': {
                     'Subscription parameters': event_source.args,
-                    'ADDED': create_model(
-                        event_source.event.__name__,
-                        __base__=(BaseModel,),
-                        __module__=event_source.__module__,
-                        fields=typing.Annotated[event_source.event.model_fields["result"].annotation, Field()],  # noqa: F821
-                    ),
+                    'ADDED': _unwrap_event_source_result(event_source.event),
                 },
                 'roles': self.role_manager.roles_for_event(name),
                 'private': False,
