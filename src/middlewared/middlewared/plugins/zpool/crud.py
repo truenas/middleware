@@ -1,6 +1,6 @@
 import threading
 
-from middlewared.api import api_method, Event
+from middlewared.api import Event, api_method
 from middlewared.api.current import (
     ZPoolEntry,
     ZPoolQueryAddedEvent,
@@ -9,11 +9,10 @@ from middlewared.api.current import (
     ZPoolQueryRemovedEvent,
     ZPoolQueryResult,
 )
-from middlewared.service import private, Service
+from middlewared.service import Service, private
 from middlewared.service.decorators import pass_thread_local_storage
 
 from .query_impl import query_impl
-
 
 # Properties baked into every emitted `zpool.query` event so that subscribers
 # receive a Pool-shaped payload without having to round-trip another call.
