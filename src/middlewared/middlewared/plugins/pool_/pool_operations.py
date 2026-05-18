@@ -130,4 +130,5 @@ class PoolService(Service):
             raise
         else:
             self.middleware.call_sync('alert.oneshot_delete', 'PoolUpgraded', pname)
+            self.middleware.call_sync('zpool.send_change_event', pname, 'CHANGED')
             return True
