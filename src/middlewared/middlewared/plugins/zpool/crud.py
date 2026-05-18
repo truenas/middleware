@@ -3,13 +3,13 @@ import threading
 from middlewared.api import api_method, Event
 from middlewared.api.current import (
     ZPoolEntry,
-    ZPoolQueryArgs,
-    ZPoolQueryResult,
     ZPoolQueryAddedEvent,
+    ZPoolQueryArgs,
     ZPoolQueryChangedEvent,
     ZPoolQueryRemovedEvent,
+    ZPoolQueryResult,
 )
-from middlewared.service import Service, private
+from middlewared.service import private, Service
 from middlewared.service.decorators import pass_thread_local_storage
 
 from .query_impl import query_impl
