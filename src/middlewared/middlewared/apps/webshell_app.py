@@ -27,10 +27,9 @@ __all__ = ("ShellApplication",)
 ShellResize = collections.namedtuple("ShellResize", ["cols", "rows"])
 
 # /bin/sh in most app/container images is dash or busybox sh, which lack
-# readline — up-arrow / history / line. Prefer bash when the image ships it,
-# fall back to sh otherwise. Kept as a single script string so it can be
-# passed as the final argument to an existing `sh -c` (the nsenter argv
-# already ends in `/bin/sh -c`; docker exec gets its own `/bin/sh -c`).
+# readline — up-arrow / history / line. Default to bash when the image
+# ships it, otherwise fall back to whatever /bin/sh is. Used as the script
+# argument to `sh -c` by both the app and container shell paths.
 BASH_FALLBACK_SCRIPT = "if command -v bash >/dev/null 2>&1; then exec bash -l; else exec sh; fi"
 
 
@@ -97,10 +96,7 @@ class ShellWorkerThread(threading.Thread):
         # Callers (currently only integration tests) may override the script
         # passed to the container's `/bin/sh -c`. Default falls back to bash
         # when available, otherwise sh.
-        cmd = options.get("command")
-        if cmd and cmd != "/bin/sh":
-            return cmd
-        return BASH_FALLBACK_SCRIPT
+        return options.get("command") or BASH_FALLBACK_SCRIPT
 
     def resize(self, cols, rows):
         self.input_queue.put(ShellResize(cols, rows))
