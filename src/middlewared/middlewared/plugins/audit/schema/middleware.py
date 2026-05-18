@@ -31,6 +31,21 @@ class AuditEventMiddlewareRebootShutdownEventData(BaseModel):
     reason: str | None
 
 
+class AuditEventMiddlewareWebshellAuthenticationEventData(BaseModel):
+    shell_type: Literal['HOST', 'VM', 'CONTAINER', 'APP']
+    target: dict | None
+    username: str | None
+    error: str | None
+    vers: AuditEventVersion
+
+
+class AuditEventMiddlewareWebshellLogoutEventData(BaseModel):
+    shell_type: Literal['HOST', 'VM', 'CONTAINER', 'APP']
+    target: dict | None
+    username: str
+    vers: AuditEventVersion
+
+
 class AuditEventMiddlewareServiceData(BaseModel):
     vers: AuditEventVersion
     origin: str | None
@@ -39,11 +54,13 @@ class AuditEventMiddlewareServiceData(BaseModel):
 
 
 class AuditEventMiddleware(AuditEvent):
-    event: Literal['AUTHENTICATION', 'METHOD_CALL', 'REBOOT', 'SHUTDOWN']
+    event: Literal['AUTHENTICATION', 'METHOD_CALL', 'REBOOT', 'SHUTDOWN', 'WEBSHELL_AUTHENTICATION', 'WEBSHELL_LOGOUT']
     event_data: (
         AuditEventMiddlewareAuthenticationEventData |
         AuditEventMiddlewareMethodCallEventData |
-        AuditEventMiddlewareRebootShutdownEventData
+        AuditEventMiddlewareRebootShutdownEventData |
+        AuditEventMiddlewareWebshellAuthenticationEventData |
+        AuditEventMiddlewareWebshellLogoutEventData
     )
     service: Literal['MIDDLEWARE']
     service_data: AuditEventMiddlewareServiceData
@@ -64,12 +81,24 @@ class AuditEventMiddlewareRebootShutdownCall(AuditEventMiddleware):
     event_data: AuditEventMiddlewareRebootShutdownEventData
 
 
+class AuditEventMiddlewareWebshellAuthentication(AuditEventMiddleware):
+    event: Literal['WEBSHELL_AUTHENTICATION']
+    event_data: AuditEventMiddlewareWebshellAuthenticationEventData
+
+
+class AuditEventMiddlewareWebshellLogout(AuditEventMiddleware):
+    event: Literal['WEBSHELL_LOGOUT']
+    event_data: AuditEventMiddlewareWebshellLogoutEventData
+
+
 AUDIT_EVENT_MIDDLEWARE_JSON_SCHEMAS = [
     add_attrs(replace_refs(model_json_schema(event_model)))
     for event_model in (
         AuditEventMiddlewareAuthentication,
         AuditEventMiddlewareMethodCall,
         AuditEventMiddlewareRebootShutdownCall,
+        AuditEventMiddlewareWebshellAuthentication,
+        AuditEventMiddlewareWebshellLogout,
     )
 ]
 
