@@ -187,3 +187,4 @@ class PoolService(Service):
 
         await self.middleware.call_hook('pool.post_export', pool=pool['name'], options=options)
         self.middleware.send_event('pool.query', 'REMOVED', id=oid)
+        await self.middleware.call('zpool.send_removed_event', oid)

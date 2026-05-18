@@ -7,6 +7,7 @@ from truenas_pylibzfs import libzfs_types, property_sets, ZFSException, ZFSError
 
 from .exceptions import ZpoolNotFoundException
 from .get_zpool_features_impl import get_zpool_features_impl
+from .is_upgraded_impl import is_upgraded_impl
 
 __all__ = ("query_impl",)
 
@@ -243,9 +244,11 @@ def _build_pool_dict(pool: libzfs_types.ZFSPool, lzh: libzfs_types.ZFS, data: di
     if data.get("expand"):
         result["expand"] = _format_expand(pool.expand_info())
 
+    features = get_zpool_features_impl(lzh, pool.name)
+    result["is_upgraded"] = is_upgraded_impl(features)
     result["features"] = None
     if data.get("features"):
-        result["features"] = _format_features(get_zpool_features_impl(lzh, pool.name))
+        result["features"] = _format_features(features)
 
     return result
 

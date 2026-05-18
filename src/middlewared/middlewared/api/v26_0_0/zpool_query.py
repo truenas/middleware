@@ -14,6 +14,9 @@ __all__ = (
     "ZPoolQuery",
     "ZPoolQueryArgs",
     "ZPoolQueryResult",
+    "ZPoolQueryAddedEvent",
+    "ZPoolQueryChangedEvent",
+    "ZPoolQueryRemovedEvent",
 )
 
 
@@ -173,6 +176,8 @@ class ZPoolFeature(BaseModel):
 
 
 class ZPoolEntry(BaseModel):
+    id: int | None = None
+    """Database id from `storage.volume`. `null` for the boot pool and for any pool not present in the database."""
     name: str
     """Name of the zpool."""
     guid: int
@@ -187,6 +192,8 @@ class ZPoolEntry(BaseModel):
     """Detailed status code (e.g., OK, ERRATA, FEAT_DISABLED, LOCKED_SED_DISKS)."""
     status_detail: str | None
     """Human-readable status description."""
+    is_upgraded: bool | None = None
+    """Whether every ZFS feature flag on the pool is enabled. `null` for OFFLINE pools."""
     properties: dict[str, ZPoolPropertyValue] | None = None
     """Pool properties, keyed by property name."""
     topology: ZPoolTopology | None = None
@@ -221,3 +228,22 @@ class ZPoolQueryArgs(BaseModel):
 
 class ZPoolQueryResult(BaseModel):
     result: list[ZPoolEntry]
+
+
+class ZPoolQueryAddedEvent(BaseModel):
+    id: int
+    """Database id of the pool."""
+    fields: ZPoolEntry
+    """Event fields."""
+
+
+class ZPoolQueryChangedEvent(BaseModel):
+    id: int
+    """Database id of the pool."""
+    fields: ZPoolEntry
+    """Event fields."""
+
+
+class ZPoolQueryRemovedEvent(BaseModel):
+    id: int
+    """Database id of the pool."""
