@@ -77,7 +77,7 @@ class ShellWorkerThread(threading.Thread):
                 "exec",
                 "-it",
                 options["container_id"],
-                "/bin/sh", "-c", BASH_FALLBACK_SCRIPT,
+                "/bin/sh", "-c", self._shell_script(options),
             ]
             if not as_root:
                 command = ["/usr/bin/sudo", "-H", "-u", username] + command
@@ -86,12 +86,21 @@ class ShellWorkerThread(threading.Thread):
             # nsenter argv already terminates with `/bin/sh -c`; append the
             # script as the single trailing argument so it is what `sh -c`
             # actually executes (rather than being interpreted as $0/$1).
-            command = options["nsenter"] + [BASH_FALLBACK_SCRIPT]
+            command = options["nsenter"] + [self._shell_script(options)]
             if not as_root:
                 command = ["/usr/bin/sudo", "-H", "-u", username] + command
             return command, not as_root
         else:
             return ["/usr/bin/login", "-p", "-f", username], False
+
+    def _shell_script(self, options):
+        # Callers (currently only integration tests) may override the script
+        # passed to the container's `/bin/sh -c`. Default falls back to bash
+        # when available, otherwise sh.
+        cmd = options.get("command")
+        if cmd and cmd != "/bin/sh":
+            return cmd
+        return BASH_FALLBACK_SCRIPT
 
     def resize(self, cols, rows):
         self.input_queue.put(ShellResize(cols, rows))
