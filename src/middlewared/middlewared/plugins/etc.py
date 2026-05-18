@@ -275,7 +275,7 @@ class EtcService(Service):
             EtcEntry(renderer_type=RendererType.MAKO, path='cron.d/middlewared', checkpoint=Checkpoint.POOL_IMPORT),
         )),
         'grub': EtcGroup(entries=(
-            EtcEntry(renderer_type=RendererType.PY, path='grub', checkpoint=Checkpoint.POST_INIT),
+            EtcEntry(renderer_type=RendererType.PY, path='grub', checkpoint=None),
         )),
         'fips': EtcGroup(entries=(
             EtcEntry(renderer_type=RendererType.PY, path='fips', checkpoint=None),
