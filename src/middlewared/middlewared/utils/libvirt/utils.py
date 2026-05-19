@@ -1,3 +1,4 @@
+import os
 from typing import Any
 
 from truenas_pylibvirt.utils.usb import find_usb_device_by_ids
@@ -22,7 +23,9 @@ def _extract_identity(device: dict[str, Any]) -> str | None:
         case 'DISK' | 'RAW' | 'CDROM':
             return translate_device(device)
         case 'FILESYSTEM':
-            return device['attributes'].get('target')
+            if target := device['attributes'].get('target'):
+                return os.path.normpath(target)
+            return None
         case 'PCI':
             return device['attributes'].get('pptdev')
         case 'GPU':
