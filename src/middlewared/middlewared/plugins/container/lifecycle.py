@@ -21,6 +21,14 @@ from .utils import container_instance_dataset_mountpoint, update_etc_hosts, writ
 
 
 def start_on_boot(context: ServiceContext) -> None:
+    # Reap orphaned runtime state under /run/truenas_containers/ before any
+    # autostart so a fresh start can't collide with a leaked staged path
+    # from a previous unclean shutdown (libvirtd or middlewared crash).
+    try:
+        context.middleware.libvirt_domains_manager.reconcile_runtime_state()
+    except Exception:
+        context.logger.error('Failed to reconcile container runtime state', exc_info=True)
+
     for container in context.call_sync2(
         context.s.container.query, [('autostart', '=', True)], QueryOptions(force_sql_filters=True)
     ):
