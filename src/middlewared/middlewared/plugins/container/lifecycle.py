@@ -21,8 +21,6 @@ from .bridge import configure_container_bridge, container_bridge_name
 from .dataset import CONTAINER_DS_PARENT_DIR
 from .utils import container_instance_dataset_mountpoint, update_etc_hosts, write_etc_hostname
 
-IDMAPPED_ROOT_DIR = "/run/truenas_containers/root"
-
 
 def start_on_boot(context: ServiceContext) -> None:
     for container in context.call_sync2(
@@ -41,7 +39,6 @@ def handle_shutdown(context: ServiceContext) -> None:
 
 def start(context: ServiceContext, id_: int) -> None:
     enforce_dir_perms(CONTAINER_DS_PARENT_DIR)
-    enforce_dir_perms(IDMAPPED_ROOT_DIR)
 
     container = context.run_coroutine(context.call2(context.s.container.get_instance, id_))
     configure_container_bridge(context)

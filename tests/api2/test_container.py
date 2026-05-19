@@ -621,7 +621,6 @@ def test_container_device_nic_crud(ubuntu_container):
 # container collide with real host accounts (DEFAULT idmap passthrough).
 
 CONTAINERS_CHOKEPOINT = "/mnt/.truenas_containers"
-IDMAPPED_ROOT_CHOKEPOINT = "/run/truenas_containers/root"
 
 
 def _chokepoint_perms(path):
@@ -633,23 +632,9 @@ def test_truenas_containers_chokepoint_locked(started_ubuntu_container):
     assert _chokepoint_perms(CONTAINERS_CHOKEPOINT) == (0o700, 0, 0)
 
 
-def test_idmapped_root_chokepoint_locked(started_ubuntu_container):
-    assert _chokepoint_perms(IDMAPPED_ROOT_CHOKEPOINT) == (0o700, 0, 0)
-
-
 def test_apps_user_cannot_traverse_containers(started_ubuntu_container):
     result = ssh(
         f"runuser -u apps -- ls {CONTAINERS_CHOKEPOINT}/",
-        check=False,
-        complete_response=True,
-    )
-    assert result["returncode"] != 0
-    assert "Permission denied" in result["stderr"]
-
-
-def test_apps_user_cannot_traverse_idmapped_root(started_ubuntu_container):
-    result = ssh(
-        f"runuser -u apps -- ls {IDMAPPED_ROOT_CHOKEPOINT}/",
         check=False,
         complete_response=True,
     )
@@ -664,13 +649,11 @@ def test_root_retains_access_containers(started_ubuntu_container):
 
 def test_drift_repair_containers(started_ubuntu_container):
     # Simulate an admin loosening perms, then confirm the next container
-    # lifecycle op re-tightens both chokepoints via the drift-repair hooks
+    # lifecycle op re-tightens the chokepoint via the drift-repair hook
     # in lifecycle.py::start().
     ssh(f"chmod 0755 {CONTAINERS_CHOKEPOINT}")
-    ssh(f"chmod 0755 {IDMAPPED_ROOT_CHOKEPOINT}")
 
     call("container.stop", started_ubuntu_container["id"], job=True)
     call("container.start", started_ubuntu_container["id"])
 
     assert _chokepoint_perms(CONTAINERS_CHOKEPOINT) == (0o700, 0, 0)
-    assert _chokepoint_perms(IDMAPPED_ROOT_CHOKEPOINT) == (0o700, 0, 0)
