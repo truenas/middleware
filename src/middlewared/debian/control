@@ -1,7 +1,7 @@
 Source: middlewared
 Section: admin
 Priority: optional
-Maintainer: William Grzybowski <william@grzy.org>
+Maintainer: TrueNAS Engineering <dev@truenas.com>
 Build-Depends: alembic,
                debhelper-compat (= 12),
                dh-python,

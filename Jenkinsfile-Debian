@@ -37,7 +37,7 @@ pipeline {
   }
   post {  
     failure {  
-      mail bcc: '', body: "<b>Jenkins: Middleware Build Failure</b><br>Project: ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br> URL build: ${env.BUILD_URL}", cc: '', charset: 'UTF-8', from: '', mimeType: 'text/html', replyTo: '', subject: "ERROR CI: Project name -> ${env.JOB_NAME}", to: "william@ixsystems.com";
+      mail bcc: '', body: "<b>Jenkins: Middleware Build Failure</b><br>Project: ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br> URL build: ${env.BUILD_URL}", cc: '', charset: 'UTF-8', from: '', mimeType: 'text/html', replyTo: '', subject: "ERROR CI: Project name -> ${env.JOB_NAME}", to: "dev@truenas.com";
      }  
   }
 }
