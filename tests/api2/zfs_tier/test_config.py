@@ -130,11 +130,8 @@ def test_max_concurrent_jobs_change_triggers_restart(tier_pool):
             "Expected truenas_zfstierd to restart after max_concurrent_jobs change "
             f"(MainPID was {pid_before}, still is)"
         )
-        # Service should be up
-        svc = call(
-            "service.query", [["service", "=", "truenas_zfstierd"]], {"get": True}
-        )
-        assert svc["state"] == "RUNNING"
+        # Service should still be up after the restart
+        assert _zfstierd_main_pid() > 0
     finally:
         call("zfs.tier.update", {"max_concurrent_jobs": original})
 

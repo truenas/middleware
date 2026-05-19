@@ -284,11 +284,12 @@ def test_rewrite_job_abort_fires_changed_event(tier_ds):
     assert changed[-1][1]["fields"]["tier_job_id"] == entry["tier_job_id"]
 
 
-def test_rewrite_job_abort_nonexistent_raises():
+def test_rewrite_job_abort_nonexistent_raises(tier_pool):
+    """tier_pool ensures the daemon is running so the JSON-RPC call lands."""
     with pytest.raises(ValidationError) as ve:
         call(
             "zfs.tier.rewrite_job_cancel",
-            {"tier_job_id": "tank/nonexistent@00000000-0000-0000-0000-000000000000"},
+            {"tier_job_id": f"{tier_pool['name']}/nonexistent@00000000-0000-0000-0000-000000000000"},
         )
     assert ve.value.errno == errno.ENOENT
 
