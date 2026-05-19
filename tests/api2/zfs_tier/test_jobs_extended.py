@@ -24,18 +24,18 @@ _FAKE_JOB_ID = "tank/nonexistent@00000000-0000-0000-0000-000000000000"
 
 
 def _stage_pending_rewrite(ds):
-    """Set tier=PERFORMANCE, create 10000 small files (each block lands on
-    SPECIAL), then flip tier=REGULAR (special_small_blocks=0). Every block
-    is now on SPECIAL but policy says NORMAL — a rewrite must walk all
-    10000 inodes and move each block. Many small files give the daemon
-    many per-file callback opportunities to flush LMDB state."""
+    """Set tier=PERFORMANCE, create 5000 1MiB files (blocks land on SPECIAL),
+    then flip tier=REGULAR (special_small_blocks=0). Every block is now on
+    SPECIAL but policy says NORMAL — a rewrite must walk all 5000 inodes
+    and move every block. Per-file callbacks flush LMDB state on the
+    daemon's 1s stats_flush_interval cadence."""
     call(
         "zfs.tier.dataset_set_tier",
         {"dataset_name": ds, "tier_type": "PERFORMANCE"},
     )
     ssh(
-        f"cd /mnt/{ds} && seq 1 10000 | "
-        "xargs -P 16 -I X dd if=/dev/urandom of=fX bs=4k count=1 2>/dev/null"
+        f"cd /mnt/{ds} && seq 1 5000 | "
+        "xargs -P 16 -I X dd if=/dev/urandom of=fX bs=1M count=1 2>/dev/null"
     )
     call(
         "zfs.tier.dataset_set_tier",

@@ -93,12 +93,12 @@ def test_dataset_set_tier_regular(tier_ds):
 
 
 def test_dataset_set_tier_with_migration(tier_ds):
-    # Many small files keep the rewrite walker busy long enough for the
-    # event source's 5s poll cycle to fire and for per-file callbacks to
-    # flush LMDB state.
+    # Many MiB-sized files keep the rewrite walker busy long enough for
+    # the event source's 5s poll cycle to fire and for per-file callbacks
+    # to flush LMDB state.
     ssh(
-        f"cd /mnt/{tier_ds} && seq 1 10000 | "
-        "xargs -P 16 -I X dd if=/dev/urandom of=fX bs=4k count=1 2>/dev/null"
+        f"cd /mnt/{tier_ds} && seq 1 5000 | "
+        "xargs -P 16 -I X dd if=/dev/urandom of=fX bs=1M count=1 2>/dev/null"
     )
 
     with client() as c:
@@ -332,5 +332,5 @@ def test_rewrite_job_status_event_source(tier_ds_with_work):
 
     assert events, "No events received from rewrite_job_status event source"
     assert events[0][0] == "CHANGED"
-    assert events[0][1]["fields"]["dataset_name"] == tier_ds
+    assert events[0][1]["fields"]["dataset_name"] == tier_ds_with_work
     assert "status" in events[0][1]["fields"]

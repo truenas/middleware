@@ -68,12 +68,24 @@ def tier_pool():
 
 @pytest.fixture()
 def tier_ds(tier_pool):
-    """A fresh dataset on the tier pool, cleaned up after each test."""
+    """A fresh dataset on the tier pool, cleaned up after each test.
+
+    Cancels any pending rewrite job on this dataset before deletion so the
+    pool.dataset.delete unmount doesn't fail with EZFS_BUSY."""
     ds_name = f"{tier_pool['name']}/tier_test_{time.monotonic_ns()}"
     call("pool.dataset.create", {"name": ds_name})
     try:
         yield ds_name
     finally:
+        for job in call("zfs.tier.rewrite_job_query", {}):
+            if job["dataset_name"] == ds_name and job["status"] in ("QUEUED", "RUNNING"):
+                try:
+                    call(
+                        "zfs.tier.rewrite_job_cancel",
+                        {"tier_job_id": job["tier_job_id"]},
+                    )
+                except Exception:
+                    pass
         call("pool.dataset.delete", ds_name, {"recursive": True})
 
 
@@ -97,17 +109,19 @@ def tier_ds_regular(tier_ds):
     return tier_ds
 
 
-def _write_many_small_files(ds, n=10000, size=4096):
-    """Create `n` separate small files so the rewrite daemon's walker visits
-    `n` inodes. The daemon's reporting_callback_interval=1 means the
-    per-file callback fires after every iterated object, and (with the
-    default stats_flush_interval=1s) at least one LMDB flush happens for
-    every second the walker is busy — many small files keep it busy long
-    enough to persist state, where a single large file gets no per-file
-    callbacks at all."""
+def _write_many_small_files(ds, n=5000, size_mb=1):
+    """Create `n` separate `size_mb`-MiB files so the rewrite walker visits
+    `n` inodes AND has actual blocks to move between vdev classes.
+
+    The daemon's reporting_callback_interval=1 means the per-file callback
+    fires after every iterated object, and (with the default
+    stats_flush_interval=1s) at least one LMDB flush happens for every
+    second the walker is busy. We need the walker busy long enough for
+    tests to observe state transitions, which is why each file is big
+    enough that moving its recordsize-sized blocks is real work."""
     ssh(
         f"cd /mnt/{ds} && seq 1 {n} | "
-        f"xargs -P 16 -I X dd if=/dev/urandom of=fX bs={size} count=1 2>/dev/null"
+        f"xargs -P 16 -I X dd if=/dev/urandom of=fX bs=1M count={size_mb} 2>/dev/null"
     )
 
 
@@ -115,12 +129,13 @@ def _write_many_small_files(ds, n=10000, size=4096):
 def tier_ds_with_work(tier_ds):
     """A dataset pre-staged so the next rewrite_job has real work to do.
 
-    Workflow: set tier=PERFORMANCE (special_small_blocks=16M, so small
-    writes land on SPECIAL), create 10000 small files, then flip
-    tier=REGULAR (special_small_blocks=0). Every block is now physically
-    on SPECIAL but should be on NORMAL — the rewrite walker has to visit
-    each file and move its block, keeping the job alive long enough for
-    the per-file callbacks to flush LMDB state."""
+    Workflow: set tier=PERFORMANCE (special_small_blocks=16M, so writes
+    land on SPECIAL), create many MiB-sized files, then flip tier=REGULAR
+    (special_small_blocks=0). Every block is now physically on SPECIAL
+    but should be on NORMAL — the rewrite walker has to visit each file
+    and move its blocks, keeping the job alive long enough for per-file
+    callbacks to flush LMDB state. Active-job cancellation on teardown
+    is handled by the nested ``tier_ds`` fixture."""
     call(
         "zfs.tier.dataset_set_tier",
         {"dataset_name": tier_ds, "tier_type": "PERFORMANCE"},
