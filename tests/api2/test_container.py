@@ -1,9 +1,7 @@
-import base64
 import contextlib
 import itertools
 import json
 import re
-import shlex
 import textwrap
 import time
 
@@ -15,12 +13,19 @@ from middlewared.test.integration.assets.account import (
     group as account_group,
     user as account_user,
 )
+from middlewared.test.integration.assets.container import (
+    ALPINE_IMAGE_NAME,
+    UBUNTU_IMAGE_NAME,
+    configure_bridge,
+    container,
+    filesystem_device,
+    get_mountpoint,
+    nsenter,
+    resolve_image,
+)
 from middlewared.test.integration.assets.pool import another_pool, pool
 from middlewared.test.integration.utils import call, host, ssh, websocket_url
 
-UBUNTU_IMAGE_NAME = "ubuntu:noble:amd64:default"
-ALPINE_IMAGE_NAME = "alpine:edge:amd64:default"
-VIRSH = "virsh -c 'lxc:///system?socket=/run/truenas_libvirt/libvirt-sock'"
 # Capabilities necessary to launch a basic LXC container from linuxcontainers.org
 BASIC_CAPABILITIES = {
     # Capabilities enabled in a default docker container
@@ -43,15 +48,6 @@ BASIC_CAPABILITIES = {
 }
 
 
-def get_mountpoint(dataset):
-    rv = call("zfs.resource.query", {"paths": [dataset], "properties": ["mountpoint"]})
-    return rv[0]["properties"]["mountpoint"]["value"]
-
-
-def nsenter(container, command):
-    return shlex.join(call("container.nsenter", container["id"]) + [command])
-
-
 def script_output(container):
     for i in range(30):
         result = ssh(
@@ -71,96 +67,17 @@ def bounding_set(capsh_print):
 
 @pytest.fixture(scope="module", autouse=True)
 def bridge():
-    call(
-        "lxc.update",
-        {
-            "v4_network": "10.47.214.0/24",
-            "v6_network": "fd42:3656:7be9:e46c::0/64",
-        },
-    )
+    configure_bridge()
 
 
 @pytest.fixture(scope="module")
 def ubuntu_image():
-    images = call("container.image.query_registry")
-    version = [
-        image["versions"][-1]["version"]
-        for image in images
-        if image["name"] == UBUNTU_IMAGE_NAME
-    ][0]
-
-    yield {"name": UBUNTU_IMAGE_NAME, "version": version}
+    yield resolve_image(UBUNTU_IMAGE_NAME)
 
 
 @pytest.fixture(scope="module")
 def alpine_image():
-    images = call("container.image.query_registry")
-    version = [
-        image["versions"][-1]["version"]
-        for image in images
-        if image["name"] == ALPINE_IMAGE_NAME
-    ][0]
-
-    yield {"name": ALPINE_IMAGE_NAME, "version": version}
-
-
-@contextlib.contextmanager
-def container(image, options=None, start=False, startup_script=None):
-    options = options or {}
-
-    container = call(
-        "container.create",
-        {
-            "name": "test",
-            "pool": pool,
-            "image": image,
-            **options,
-        },
-        job=True,
-    )
-    try:
-        mountpoint = get_mountpoint(container["dataset"])
-        if startup_script is not None:
-            ssh(f"mkdir -p {mountpoint}/var/spool/cron/crontabs")
-
-            call(
-                "filesystem.file_receive",
-                f"{mountpoint}/var/spool/cron/crontabs/root",
-                base64.b64encode(b"@reboot /script-wrapper.sh\n").decode("ascii"),
-                {"mode": 0o600},
-            )
-            call(
-                "filesystem.file_receive",
-                f"{mountpoint}/script-wrapper.sh",
-                base64.b64encode(
-                    textwrap.dedent("""\
-                    #!/bin/sh
-                    /script.sh > /.log 2>&1
-                    mv /.log /log
-                """).encode("ascii")
-                ).decode("ascii"),
-                {"mode": 0o755},
-            )
-            call(
-                "filesystem.file_receive",
-                f"{mountpoint}/script.sh",
-                base64.b64encode(startup_script.encode("ascii")).decode("ascii"),
-                {"mode": 0o755},
-            )
-
-        if start:
-            call("container.start", container["id"])
-
-            container = call("container.get_instance", container["id"])
-            assert container["status"]["state"] == "RUNNING"
-
-        yield container
-    finally:
-        call("container.delete", container["id"])
-
-        #  Id   Name   State
-        # --------------------
-        assert container["uuid"] not in ssh(f"{VIRSH} list --all")
+    yield resolve_image(ALPINE_IMAGE_NAME)
 
 
 @pytest.fixture(scope="function")
@@ -396,21 +313,11 @@ def test_default_idmap_passes_apps_user_through(ubuntu_image):
     # the visible UID, not the rootfs's identity round-trip).
     with bind_share_with_file(568, 568, fname="apps_file") as share:
         with container(ubuntu_image, {"idmap": {"type": "DEFAULT"}}) as c:
-            call(
-                "container.device.create",
-                {
-                    "container": c["id"],
-                    "attributes": {
-                        "dtype": "FILESYSTEM",
-                        "source": share,
-                        "target": "/share",
-                    },
-                },
-            )
-            call("container.start", c["id"])
-            c = call("container.get_instance", c["id"])
-            assert c["status"]["state"] == "RUNNING"
-            assert _stat_inside(c, "/share/apps_file") == "568 568"
+            with filesystem_device(c["id"], share, "/share"):
+                call("container.start", c["id"])
+                c = call("container.get_instance", c["id"])
+                assert c["status"]["state"] == "RUNNING"
+                assert _stat_inside(c, "/share/apps_file") == "568 568"
 
 
 def test_default_idmap_picks_up_custom_user_direct(ubuntu_image):
@@ -429,21 +336,11 @@ def test_default_idmap_picks_up_custom_user_direct(ubuntu_image):
 
             with bind_share_with_file(uid, gid) as share:
                 with container(ubuntu_image, {"idmap": {"type": "DEFAULT"}}) as c:
-                    call(
-                        "container.device.create",
-                        {
-                            "container": c["id"],
-                            "attributes": {
-                                "dtype": "FILESYSTEM",
-                                "source": share,
-                                "target": "/share",
-                            },
-                        },
-                    )
-                    call("container.start", c["id"])
-                    c = call("container.get_instance", c["id"])
-                    assert c["status"]["state"] == "RUNNING"
-                    assert _stat_inside(c, "/share/file") == f"{uid} {gid}"
+                    with filesystem_device(c["id"], share, "/share"):
+                        call("container.start", c["id"])
+                        c = call("container.get_instance", c["id"])
+                        assert c["status"]["state"] == "RUNNING"
+                        assert _stat_inside(c, "/share/file") == f"{uid} {gid}"
 
 
 def test_default_idmap_picks_up_custom_user_numeric(ubuntu_image):
@@ -461,21 +358,11 @@ def test_default_idmap_picks_up_custom_user_numeric(ubuntu_image):
 
         with bind_share_with_file(uid, 0) as share:
             with container(ubuntu_image, {"idmap": {"type": "DEFAULT"}}) as c:
-                call(
-                    "container.device.create",
-                    {
-                        "container": c["id"],
-                        "attributes": {
-                            "dtype": "FILESYSTEM",
-                            "source": share,
-                            "target": "/share",
-                        },
-                    },
-                )
-                call("container.start", c["id"])
-                c = call("container.get_instance", c["id"])
-                assert c["status"]["state"] == "RUNNING"
-                assert _stat_inside(c, "/share/file").split()[0] == str(target)
+                with filesystem_device(c["id"], share, "/share"):
+                    call("container.start", c["id"])
+                    c = call("container.get_instance", c["id"])
+                    assert c["status"]["state"] == "RUNNING"
+                    assert _stat_inside(c, "/share/file").split()[0] == str(target)
 
 
 def test_isolated_idmap_ignores_account_passthrough(ubuntu_image):
@@ -485,24 +372,14 @@ def test_isolated_idmap_ignores_account_passthrough(ubuntu_image):
         with container(
             ubuntu_image, {"idmap": {"type": "ISOLATED", "slice": 1}}
         ) as c:
-            call(
-                "container.device.create",
-                {
-                    "container": c["id"],
-                    "attributes": {
-                        "dtype": "FILESYSTEM",
-                        "source": share,
-                        "target": "/share",
-                    },
-                },
-            )
-            call("container.start", c["id"])
-            c = call("container.get_instance", c["id"])
-            assert c["status"]["state"] == "RUNNING"
-            inside = _stat_inside(c, "/share/apps_file")
-            assert inside != "568 568", (
-                f"ISOLATED container leaked apps passthrough: {inside}"
-            )
+            with filesystem_device(c["id"], share, "/share"):
+                call("container.start", c["id"])
+                c = call("container.get_instance", c["id"])
+                assert c["status"]["state"] == "RUNNING"
+                inside = _stat_inside(c, "/share/apps_file")
+                assert inside != "568 568", (
+                    f"ISOLATED container leaked apps passthrough: {inside}"
+                )
 
 
 @pytest.mark.parametrize(

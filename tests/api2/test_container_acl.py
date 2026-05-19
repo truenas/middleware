@@ -1,5 +1,3 @@
-import contextlib
-import shlex
 from copy import deepcopy
 
 import pytest
@@ -8,61 +6,31 @@ from middlewared.test.integration.assets.account import (
     group as account_group,
     user as account_user,
 )
-from middlewared.test.integration.assets.pool import dataset, pool
+from middlewared.test.integration.assets.container import (
+    UBUNTU_IMAGE_NAME,
+    configure_bridge,
+    container,
+    filesystem_device,
+    nsenter,
+    resolve_image,
+)
+from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call, ssh
-
-UBUNTU_IMAGE_NAME = "ubuntu:noble:amd64:default"
 
 
 @pytest.fixture(scope="module", autouse=True)
 def bridge():
-    call(
-        "lxc.update",
-        {
-            "v4_network": "10.47.214.0/24",
-            "v6_network": "fd42:3656:7be9:e46c::0/64",
-        },
-    )
+    configure_bridge()
 
 
 @pytest.fixture(scope="module")
 def ubuntu_image():
-    images = call("container.image.query_registry")
-    version = [
-        image["versions"][-1]["version"]
-        for image in images
-        if image["name"] == UBUNTU_IMAGE_NAME
-    ][0]
-    yield {"name": UBUNTU_IMAGE_NAME, "version": version}
-
-
-def nsenter(container, command):
-    return shlex.join(call("container.nsenter", container["id"]) + [command])
-
-
-@contextlib.contextmanager
-def _container(image, name="acltest", **options):
-    c = call(
-        "container.create",
-        {
-            "name": name,
-            "pool": pool,
-            "image": image,
-            **options,
-        },
-        job=True,
-    )
-    try:
-        yield c
-    finally:
-        if call("container.get_instance", c["id"])["status"]["state"] == "RUNNING":
-            call("container.stop", c["id"], {"force": True}, job=True)
-        call("container.delete", c["id"])
+    yield resolve_image(UBUNTU_IMAGE_NAME)
 
 
 @pytest.fixture(scope="module")
 def instance(ubuntu_image):
-    with _container(ubuntu_image, name="acltest") as c:
+    with container(ubuntu_image, name="acltest") as c:
         yield c
 
 
@@ -81,33 +49,15 @@ def nfs4acl_dataset(instance):
             call("group.update", g["id"], {"userns_idmap": "DIRECT"})
 
             with dataset("virtnfsshare", {"share_type": "SMB"}) as ds:
-                fs_device = call(
-                    "container.device.create",
-                    {
-                        "container": instance["id"],
-                        "attributes": {
-                            "dtype": "FILESYSTEM",
-                            "source": f"/mnt/{ds}",
-                            "target": "/nfs4acl",
-                        },
-                    },
-                )
-                try:
+                with filesystem_device(instance["id"], f"/mnt/{ds}", "/nfs4acl"):
                     call("container.start", instance["id"])
-                    try:
-                        yield {
-                            "instance": call("container.get_instance", instance["id"]),
-                            "user": u,
-                            "group": g,
-                            "dataset": ds,
-                            "dev": "/nfs4acl",
-                        }
-                    finally:
-                        call(
-                            "container.stop", instance["id"], {"force": True}, job=True
-                        )
-                finally:
-                    call("container.device.delete", fs_device["id"])
+                    yield {
+                        "instance": call("container.get_instance", instance["id"]),
+                        "user": u,
+                        "group": g,
+                        "dataset": ds,
+                        "dev": "/nfs4acl",
+                    }
 
 
 def create_container_users(c, uid, gid):
