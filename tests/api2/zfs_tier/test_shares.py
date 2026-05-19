@@ -17,7 +17,7 @@ import time
 
 import pytest
 
-from truenas_api_client import ClientException, ValidationErrors
+from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.nfs import nfs_share
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.smb import smb_share
@@ -101,7 +101,7 @@ def test_sharing_smb_update_rejects_tier_field(tier_ds):
     on SharingSMBUpdateArgs (api/v27_0_0/smb.py:840)."""
     name = _unique("smb_update_tier")
     with smb_share(f"/mnt/{tier_ds}", name) as share:
-        with pytest.raises((ValidationErrors, ClientException)):
+        with pytest.raises(ValidationErrors):
             call(
                 "sharing.smb.update",
                 share["id"],
@@ -147,7 +147,7 @@ def test_sharing_nfs_query_tier_is_null_on_pool_without_special(tier_pool):
 def test_sharing_nfs_update_rejects_tier_field(tier_ds):
     """tier is Excluded() on the NFS update model (api/v27_0_0/nfs.py:191)."""
     with nfs_share(tier_ds) as share:
-        with pytest.raises((ValidationErrors, ClientException)):
+        with pytest.raises(ValidationErrors):
             call(
                 "sharing.nfs.update",
                 share["id"],
@@ -163,17 +163,26 @@ def test_sharing_nfs_update_rejects_tier_field(tier_ds):
 
 
 def _testparm_value(parameter):
-    """Read a parameter from the live smb.conf (registry)."""
+    """Read a parameter from the live smb.conf (registry). testparm renders
+    booleans as 'Yes'/'No' or 'True'/'False' depending on version; values are
+    returned verbatim."""
     out = ssh(
         f"testparm -s --section-name=global --parameter-name='{parameter}' 2>/dev/null"
     ).strip()
-    # testparm prints either "Yes"/"No"/value or nothing.
     return out
+
+
+def _is_truthy(value):
+    return value.lower() in ("yes", "true")
+
+
+def _is_falsy_or_absent(value):
+    return value.lower() in ("", "no", "false")
 
 
 def test_smb_conf_shadow_no_dataset_traversal_when_tiering_enabled(tier_ds):
     """A running SMB server with tiering enabled should have
-    shadow:no_dataset_traversal = Yes in its loaded config."""
+    shadow:no_dataset_traversal set to a truthy value in its loaded config."""
     name = _unique("smb_conf_enabled")
     with smb_share(f"/mnt/{tier_ds}", name):
         # smb_share already started cifs; force etc.generate so the registry
@@ -181,20 +190,19 @@ def test_smb_conf_shadow_no_dataset_traversal_when_tiering_enabled(tier_ds):
         call("etc.generate", "smb")
         ssh("smbcontrol smbd reload-config 2>/dev/null || true")
         value = _testparm_value("shadow:no_dataset_traversal")
-        assert value.lower() == "yes", (
-            f"Expected shadow:no_dataset_traversal=Yes when tiering enabled, got: {value!r}"
+        assert _is_truthy(value), (
+            f"Expected shadow:no_dataset_traversal=Yes/True when tiering enabled, got: {value!r}"
         )
 
 
 def test_smb_conf_shadow_no_dataset_traversal_absent_when_disabled(tier_ds):
-    """When tiering is disabled, the option should not be set."""
+    """When tiering is disabled, the option should not be set (or set to False)."""
     name = _unique("smb_conf_disabled")
     with smb_share(f"/mnt/{tier_ds}", name):
         with _temporarily_disabled():
             call("etc.generate", "smb")
             ssh("smbcontrol smbd reload-config 2>/dev/null || true")
             value = _testparm_value("shadow:no_dataset_traversal")
-            # testparm returns empty string or "No" when the option isn't set
-            assert value.lower() in ("", "no"), (
-                f"Expected shadow:no_dataset_traversal absent/No when tiering disabled, got: {value!r}"
+            assert _is_falsy_or_absent(value), (
+                f"Expected shadow:no_dataset_traversal absent/No/False when tiering disabled, got: {value!r}"
             )

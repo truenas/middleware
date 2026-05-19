@@ -9,8 +9,7 @@ tests do require tier_pool (which itself requires Enterprise + 6 disks).
 
 import pytest
 
-from middlewared.service_exception import CallError
-from truenas_api_client import ClientException, ValidationErrors
+from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.test.integration.utils import call, ssh
 
 
@@ -24,10 +23,10 @@ _KERNEL_PARAM_PATH = "/sys/module/zfs/parameters/zfs_special_class_metadata_rese
 
 
 def _assert_bounds_rejected(payload):
-    with pytest.raises((ValidationErrors, ClientException)) as exc:
+    """Pydantic bound failures arrive as middlewared.service_exception.ValidationErrors
+    via the integration client's py_exceptions=True path."""
+    with pytest.raises(ValidationErrors) as exc:
         call("zfs.tier.update", payload)
-    # Either a ValidationErrors (Pydantic) or a ClientException carrying one.
-    # In both cases the error message refers to the field.
     return exc
 
 
@@ -64,7 +63,7 @@ def test_update_rejects_metadata_reserve_above_30():
 def test_update_requires_license_on_non_enterprise():
     if call("system.is_enterprise"):
         pytest.skip("license-required test only runs on non-enterprise builds")
-    with pytest.raises((CallError, ClientException)) as exc:
+    with pytest.raises(CallError) as exc:
         call("zfs.tier.update", {"enabled": True})
     assert "license" in str(exc.value).lower()
 
@@ -116,9 +115,13 @@ def _zfstierd_main_pid():
 
 def test_max_concurrent_jobs_change_triggers_restart(tier_pool):
     """Updating max_concurrent_jobs should restart truenas_zfstierd (PID changes)."""
+    pid_before = _zfstierd_main_pid()
+    assert pid_before > 0, (
+        "truenas_zfstierd must be running before this test (conftest starts it). "
+        f"systemctl reports MainPID={pid_before}."
+    )
     original = call("zfs.tier.config")["max_concurrent_jobs"]
     new_val = 7 if original != 7 else 6
-    pid_before = _zfstierd_main_pid()
     try:
         call("zfs.tier.update", {"max_concurrent_jobs": new_val})
         # systemd RESTART verb yields a new MainPID
@@ -138,9 +141,13 @@ def test_max_concurrent_jobs_change_triggers_restart(tier_pool):
 
 def test_max_used_percentage_change_does_not_restart(tier_pool):
     """Non-concurrency updates should RELOAD, not RESTART (PID unchanged)."""
+    pid_before = _zfstierd_main_pid()
+    assert pid_before > 0, (
+        "truenas_zfstierd must be running before this test (conftest starts it). "
+        f"systemctl reports MainPID={pid_before}."
+    )
     original = call("zfs.tier.config")["max_used_percentage"]
     new_val = 85 if original != 85 else 90
-    pid_before = _zfstierd_main_pid()
     try:
         call("zfs.tier.update", {"max_used_percentage": new_val})
         pid_after = _zfstierd_main_pid()

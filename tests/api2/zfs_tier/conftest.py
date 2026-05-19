@@ -39,6 +39,22 @@ def tier_pool():
     ) as pool:
         original_config = call("zfs.tier.config")
         call("zfs.tier.update", {"enabled": True})
+        # The middleware's do_update sends RELOAD/RESTART, but if the daemon
+        # was stopped (enabled=False at boot), nothing actually starts it.
+        # Ensure it's up before tests run.
+        svc = call(
+            "service.query",
+            [["service", "=", "truenas_zfstierd"]],
+            {"get": True},
+        )
+        if svc["state"] != "RUNNING":
+            call(
+                "service.control",
+                "START",
+                "truenas_zfstierd",
+                {"silent": False},
+                job=True,
+            )
         try:
             yield pool
         finally:

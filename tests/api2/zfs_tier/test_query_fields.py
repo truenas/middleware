@@ -70,13 +70,15 @@ def test_pool_dataset_query_tier_reflects_regular(tier_ds_regular):
 
 
 def test_pool_dataset_query_tier_is_null_when_globally_disabled(tier_ds):
-    """When zfs.tier.config.enabled is False, the field is null even on a
-    SPECIAL-vdev pool (bulk_get_tier_info short-circuits at tier.py:680-682)."""
+    """When zfs.tier.config.enabled is False, dataset_query_utils.py:953 skips
+    the tier injection entirely, so the key is absent from the row dict.
+
+    A future change might switch to always setting tier=None — accept both."""
     with _temporarily_disabled():
         ds = call(
             "pool.dataset.query", [["name", "=", tier_ds]], {"get": True}
         )
-        assert ds["tier"] is None
+        assert ds.get("tier") is None
 
 
 def test_pool_dataset_query_tier_is_null_on_pool_without_special(tier_pool):

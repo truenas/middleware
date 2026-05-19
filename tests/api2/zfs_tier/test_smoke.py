@@ -14,7 +14,6 @@ from unittest.mock import ANY
 import pytest
 
 from middlewared.service_exception import ValidationError
-from truenas_api_client import ValidationErrors
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call, client, ssh
 
@@ -134,7 +133,7 @@ def test_dataset_set_tier_globally_disabled():
     original = call("zfs.tier.config")["enabled"]
     try:
         call("zfs.tier.update", {"enabled": False})
-        with pytest.raises(ValidationErrors) as ve:
+        with pytest.raises(ValidationError) as ve:
             call(
                 "zfs.tier.dataset_set_tier",
                 {
@@ -142,8 +141,8 @@ def test_dataset_set_tier_globally_disabled():
                     "tier_type": "PERFORMANCE",
                 },
             )
-        assert ve.value.errors[0].attribute == "zfs_tier_dataset_set_tier"
-        assert ve.value.errors[0].errno == errno.EINVAL
+        assert ve.value.attribute == "zfs_tier_dataset_set_tier"
+        assert ve.value.errno == errno.EINVAL
     finally:
         call("zfs.tier.update", {"enabled": original})
 
@@ -152,7 +151,7 @@ def test_dataset_set_tier_no_special_vdev(tier_pool):
     """Returns EINVAL for a dataset on a pool without a SPECIAL vdev."""
     # Use the default test pool which has no SPECIAL vdev
     with dataset("tier_no_special_test") as ds:
-        with pytest.raises(ValidationErrors) as ve:
+        with pytest.raises(ValidationError) as ve:
             call(
                 "zfs.tier.dataset_set_tier",
                 {
@@ -160,9 +159,9 @@ def test_dataset_set_tier_no_special_vdev(tier_pool):
                     "tier_type": "PERFORMANCE",
                 },
             )
-        assert ve.value.errors[0].attribute == "zfs_tier_dataset_set_tier"
-        assert ve.value.errors[0].errno == errno.EINVAL
-        assert "SPECIAL vdev" in ve.value.errors[0].errmsg
+        assert ve.value.attribute == "zfs_tier_dataset_set_tier"
+        assert ve.value.errno == errno.EINVAL
+        assert "SPECIAL vdev" in ve.value.errmsg
 
 
 def test_rewrite_job_create_returns_queued_or_running(tier_ds):
@@ -194,11 +193,13 @@ def test_rewrite_job_create_fires_added_event(tier_ds):
 
 
 def test_rewrite_job_create_duplicate_raises_eexist(tier_ds):
-    """Creating a second job for the same dataset raises EEXIST."""
+    """Creating a second job for the same dataset raises EEXIST.
+
+    _raise_client_error maps JOB_ALREADY_EXISTS → singular ValidationError."""
     call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds})
-    with pytest.raises(ValidationErrors) as ve:
+    with pytest.raises(ValidationError) as ve:
         call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds})
-    assert ve.value.errors[0].errno == errno.EEXIST
+    assert ve.value.errno == errno.EEXIST
 
 
 def test_rewrite_job_query_returns_created_job(tier_ds):

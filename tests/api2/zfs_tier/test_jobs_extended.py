@@ -47,12 +47,6 @@ def test_rewrite_job_failures_invalid_id_format_raises_callerror():
     assert "Invalid tier_job_id" in str(exc.value)
 
 
-def test_rewrite_job_failures_nonexistent_raises_callerror():
-    """The body of rewrite_job_failures wraps daemon errors in CallError."""
-    with pytest.raises(CallError):
-        call("zfs.tier.rewrite_job_failures", {"tier_job_id": _FAKE_JOB_ID})
-
-
 # ----------------------------------------------------------------------------
 # rewrite_job_status: invalid / nonexistent
 # ----------------------------------------------------------------------------

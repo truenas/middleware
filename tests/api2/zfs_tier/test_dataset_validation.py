@@ -13,7 +13,7 @@ import time
 
 import pytest
 
-from truenas_api_client import ClientException, ValidationErrors
+from middlewared.service_exception import ValidationError, ValidationErrors
 from middlewared.test.integration.utils import call
 
 
@@ -233,7 +233,9 @@ def test_clone_with_ssb_property_override_rejected_when_tiering_enabled(
     )
     try:
         clone_name = f"{tier_ds_regular}_clone_{time.monotonic_ns()}"
-        with pytest.raises((ValidationErrors, ClientException)) as exc:
+        # snapshot_crud.clone_impl raises a single ValidationError, not a
+        # ValidationErrors collection.
+        with pytest.raises((ValidationError, ValidationErrors)) as exc:
             call(
                 "pool.snapshot.clone",
                 {
