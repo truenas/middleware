@@ -97,23 +97,35 @@ def tier_ds_regular(tier_ds):
     return tier_ds
 
 
+def _write_many_small_files(ds, n=10000, size=4096):
+    """Create `n` separate small files so the rewrite daemon's walker visits
+    `n` inodes. The daemon's reporting_callback_interval=1 means the
+    per-file callback fires after every iterated object, and (with the
+    default stats_flush_interval=1s) at least one LMDB flush happens for
+    every second the walker is busy — many small files keep it busy long
+    enough to persist state, where a single large file gets no per-file
+    callbacks at all."""
+    ssh(
+        f"cd /mnt/{ds} && seq 1 {n} | "
+        f"xargs -P 16 -I X dd if=/dev/urandom of=fX bs={size} count=1 2>/dev/null"
+    )
+
+
 @pytest.fixture()
 def tier_ds_with_work(tier_ds):
     """A dataset pre-staged so the next rewrite_job has real work to do.
 
-    Workflow: set tier=PERFORMANCE so writes land on SPECIAL, dd 100MB of
-    random data, then flip tier=REGULAR (special_small_blocks=0). The data
-    is now physically on SPECIAL but should be on NORMAL — a rewrite has
-    to move every block. Guarantees the daemon's job stays active long
-    enough to persist LMDB state and emit events at the 5s poll cadence."""
+    Workflow: set tier=PERFORMANCE (special_small_blocks=16M, so small
+    writes land on SPECIAL), create 10000 small files, then flip
+    tier=REGULAR (special_small_blocks=0). Every block is now physically
+    on SPECIAL but should be on NORMAL — the rewrite walker has to visit
+    each file and move its block, keeping the job alive long enough for
+    the per-file callbacks to flush LMDB state."""
     call(
         "zfs.tier.dataset_set_tier",
         {"dataset_name": tier_ds, "tier_type": "PERFORMANCE"},
     )
-    ssh(
-        f"dd if=/dev/urandom of=/mnt/{tier_ds}/fillfile bs=1M count=100 "
-        "conv=fdatasync 2>/dev/null"
-    )
+    _write_many_small_files(tier_ds)
     call(
         "zfs.tier.dataset_set_tier",
         {"dataset_name": tier_ds, "tier_type": "REGULAR"},

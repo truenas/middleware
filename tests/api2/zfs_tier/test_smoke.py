@@ -93,11 +93,12 @@ def test_dataset_set_tier_regular(tier_ds):
 
 
 def test_dataset_set_tier_with_migration(tier_ds):
-    # Populate with enough data that the rewrite job stays active across the
-    # event source's 5s poll window.
+    # Many small files keep the rewrite walker busy long enough for the
+    # event source's 5s poll cycle to fire and for per-file callbacks to
+    # flush LMDB state.
     ssh(
-        f"dd if=/dev/urandom of=/mnt/{tier_ds}/fillfile bs=1M count=100 "
-        "conv=fdatasync 2>/dev/null"
+        f"cd /mnt/{tier_ds} && seq 1 10000 | "
+        "xargs -P 16 -I X dd if=/dev/urandom of=fX bs=4k count=1 2>/dev/null"
     )
 
     with client() as c:
@@ -176,19 +177,7 @@ def test_rewrite_job_create_returns_queued_or_running(tier_ds):
     assert entry["status"] in ("QUEUED", "RUNNING")
 
 
-def _fill(ds):
-    """Write enough data that the daemon's job stays active long enough to
-    persist LMDB state and emit events. The daemon doesn't write LMDB state
-    on submit for RUNNING jobs, and reporting_write_interval=60s means
-    instant-completing jobs (empty/small datasets) leave no trace."""
-    ssh(
-        f"dd if=/dev/urandom of=/mnt/{ds}/fillfile bs=1M count=100 "
-        "conv=fdatasync 2>/dev/null"
-    )
-
-
-def test_rewrite_job_create_fires_added_event(tier_ds):
-    _fill(tier_ds)
+def test_rewrite_job_create_fires_added_event(tier_ds_with_work):
     with client() as c:
         events = []
         c.subscribe(
@@ -196,7 +185,7 @@ def test_rewrite_job_create_fires_added_event(tier_ds):
             lambda t, **m: events.append((t, m)),
             sync=True,
         )
-        entry = c.call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds})
+        entry = c.call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds_with_work})
         # Event source polls every 5s; wait long enough for the next tick.
         time.sleep(7)
 
@@ -206,7 +195,7 @@ def test_rewrite_job_create_fires_added_event(tier_ds):
     assert matching[0][1]["collection"] == "zfs.tier.rewrite_job_query"
     assert matching[0][1]["msg"] == "added"
     assert matching[0][1]["id"] == entry["tier_job_id"]
-    assert matching[0][1]["fields"]["dataset_name"] == tier_ds
+    assert matching[0][1]["fields"]["dataset_name"] == tier_ds_with_work
 
 
 def test_rewrite_job_create_duplicate_raises_eexist(tier_ds_with_work):
@@ -219,9 +208,14 @@ def test_rewrite_job_create_duplicate_raises_eexist(tier_ds_with_work):
     assert ve.value.errno == errno.EEXIST
 
 
-def test_rewrite_job_query_returns_created_job(tier_ds):
-    _fill(tier_ds)
-    entry = call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds})
+def test_rewrite_job_query_returns_created_job(tier_ds_with_work, wait_for_job_status):
+    entry = call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds_with_work})
+    # Wait until LMDB has the entry before querying.
+    wait_for_job_status(
+        entry["tier_job_id"],
+        {"QUEUED", "RUNNING", "COMPLETE", "CANCELLED", "STOPPED", "ERROR"},
+        timeout=30,
+    )
     jobs = call("zfs.tier.rewrite_job_query", {})
     ids = [j["tier_job_id"] for j in jobs]
     assert entry["tier_job_id"] in ids
@@ -259,7 +253,7 @@ def test_rewrite_job_status_shape(tier_ds_with_work, wait_for_job_status):
     status = call("zfs.tier.rewrite_job_status", {"tier_job_id": entry["tier_job_id"]})
 
     assert status["tier_job_id"] == entry["tier_job_id"]
-    assert status["dataset_name"] == tier_ds
+    assert status["dataset_name"] == tier_ds_with_work
     assert status["job_uuid"] == entry["job_uuid"]
     assert status["status"] in (
         "QUEUED",
@@ -322,14 +316,11 @@ def test_rewrite_job_abort_nonexistent_raises(tier_pool):
     assert ve.value.errno == errno.ENOENT
 
 
-def test_rewrite_job_status_event_source(tier_ds):
+def test_rewrite_job_status_event_source(tier_ds_with_work):
     """The polling event source emits CHANGED events while a job is active."""
-    ssh(
-        f"for i in $(seq 1 100); do dd if=/dev/urandom of=/mnt/{tier_ds}/f$i bs=4k count=1 2>/dev/null; done"
-    )
-    call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds})
+    call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds_with_work})
 
-    arg = json.dumps({"dataset_name": tier_ds})
+    arg = json.dumps({"dataset_name": tier_ds_with_work})
     with client() as c:
         events = []
         c.subscribe(
