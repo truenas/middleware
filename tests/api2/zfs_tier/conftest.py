@@ -97,6 +97,30 @@ def tier_ds_regular(tier_ds):
     return tier_ds
 
 
+@pytest.fixture()
+def tier_ds_with_work(tier_ds):
+    """A dataset pre-staged so the next rewrite_job has real work to do.
+
+    Workflow: set tier=PERFORMANCE so writes land on SPECIAL, dd 100MB of
+    random data, then flip tier=REGULAR (special_small_blocks=0). The data
+    is now physically on SPECIAL but should be on NORMAL — a rewrite has
+    to move every block. Guarantees the daemon's job stays active long
+    enough to persist LMDB state and emit events at the 5s poll cadence."""
+    call(
+        "zfs.tier.dataset_set_tier",
+        {"dataset_name": tier_ds, "tier_type": "PERFORMANCE"},
+    )
+    ssh(
+        f"dd if=/dev/urandom of=/mnt/{tier_ds}/fillfile bs=1M count=100 "
+        "conv=fdatasync 2>/dev/null"
+    )
+    call(
+        "zfs.tier.dataset_set_tier",
+        {"dataset_name": tier_ds, "tier_type": "REGULAR"},
+    )
+    return tier_ds
+
+
 @contextlib.contextmanager
 def _toggle_enabled(value):
     original = call("zfs.tier.config")["enabled"]

@@ -66,21 +66,17 @@ def test_dataset_set_tier_readonly_rejected_with_erofs(tier_ds):
         call("pool.dataset.update", tier_ds, {"readonly": "OFF"})
 
 
-def test_dataset_set_tier_with_active_job_returns_ebusy(tier_ds):
+def test_dataset_set_tier_with_active_job_returns_ebusy(tier_ds_with_work):
     """If a tier job is already RUNNING or QUEUED for the dataset, set_tier
-    refuses with EBUSY (tier.py:576-584). Pre-fill with enough data that
-    the job stays active long enough to issue a competing set_tier."""
-    ssh(
-        f"dd if=/dev/urandom of=/mnt/{tier_ds}/fillfile bs=1M count=100 "
-        "conv=fdatasync 2>/dev/null"
-    )
-    entry = call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds})
+    refuses with EBUSY (tier.py:576-584). tier_ds_with_work guarantees the
+    rewrite has real cross-class block movement to perform."""
+    entry = call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds_with_work})
 
     try:
         with pytest.raises(ValidationError) as ve:
             call(
                 "zfs.tier.dataset_set_tier",
-                {"dataset_name": tier_ds, "tier_type": "PERFORMANCE"},
+                {"dataset_name": tier_ds_with_work, "tier_type": "PERFORMANCE"},
             )
         assert ve.value.errno == errno.EBUSY, (
             f"Expected EBUSY from set_tier while job {entry['tier_job_id']!r} "
@@ -88,7 +84,6 @@ def test_dataset_set_tier_with_active_job_returns_ebusy(tier_ds):
         )
         assert "tier migration job is already in progress" in ve.value.errmsg
     finally:
-        # Try to cancel and drain the job so dataset teardown won't be blocked.
         try:
             call("zfs.tier.rewrite_job_cancel", {"tier_job_id": entry["tier_job_id"]})
         except Exception:

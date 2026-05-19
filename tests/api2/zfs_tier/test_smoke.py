@@ -9,8 +9,6 @@ import errno
 import json
 import pprint
 import time
-from unittest.mock import ANY
-
 import pytest
 
 from middlewared.service_exception import ValidationError
@@ -211,14 +209,13 @@ def test_rewrite_job_create_fires_added_event(tier_ds):
     assert matching[0][1]["fields"]["dataset_name"] == tier_ds
 
 
-def test_rewrite_job_create_duplicate_raises_eexist(tier_ds):
+def test_rewrite_job_create_duplicate_raises_eexist(tier_ds_with_work):
     """Creating a second job for the same dataset raises EEXIST.
 
     _raise_client_error maps JOB_ALREADY_EXISTS → singular ValidationError."""
-    _fill(tier_ds)
-    call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds})
+    call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds_with_work})
     with pytest.raises(ValidationError) as ve:
-        call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds})
+        call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds_with_work})
     assert ve.value.errno == errno.EEXIST
 
 
@@ -230,12 +227,15 @@ def test_rewrite_job_query_returns_created_job(tier_ds):
     assert entry["tier_job_id"] in ids
 
 
-def test_rewrite_job_query_status_filter(tier_ds):
-    _fill(tier_ds)
-    entry = call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds})
-    current_status = call(
-        "zfs.tier.rewrite_job_status", {"tier_job_id": entry["tier_job_id"]}
-    )["status"]
+def test_rewrite_job_query_status_filter(tier_ds_with_work, wait_for_job_status):
+    entry = call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds_with_work})
+    # The daemon may not write LMDB state for several seconds; wait until
+    # the status RPC can find an entry before reading current_status.
+    current_status = wait_for_job_status(
+        entry["tier_job_id"],
+        {"QUEUED", "RUNNING", "COMPLETE", "CANCELLED", "STOPPED", "ERROR"},
+        timeout=30,
+    )
 
     matching = call("zfs.tier.rewrite_job_query", {"status": [current_status]})
     assert any(j["tier_job_id"] == entry["tier_job_id"] for j in matching)
@@ -249,9 +249,13 @@ def test_rewrite_job_query_status_filter(tier_ds):
         assert all(j["tier_job_id"] != entry["tier_job_id"] for j in non_matching)
 
 
-def test_rewrite_job_status_shape(tier_ds):
-    _fill(tier_ds)
-    entry = call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds})
+def test_rewrite_job_status_shape(tier_ds_with_work, wait_for_job_status):
+    entry = call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds_with_work})
+    wait_for_job_status(
+        entry["tier_job_id"],
+        {"QUEUED", "RUNNING", "COMPLETE", "CANCELLED", "STOPPED", "ERROR"},
+        timeout=30,
+    )
     status = call("zfs.tier.rewrite_job_status", {"tier_job_id": entry["tier_job_id"]})
 
     assert status["tier_job_id"] == entry["tier_job_id"]
@@ -279,9 +283,13 @@ def test_rewrite_job_status_completes(tier_ds, wait_for_job_status):
     assert final == "COMPLETE"
 
 
-def test_rewrite_job_abort_fires_changed_event(tier_ds):
-    _fill(tier_ds)
-    entry = call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds})
+def test_rewrite_job_abort_fires_changed_event(tier_ds_with_work, wait_for_job_status):
+    entry = call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds_with_work})
+    # Give the daemon time to register the job in LMDB so the event source's
+    # first poll captures it before we cancel.
+    wait_for_job_status(
+        entry["tier_job_id"], {"QUEUED", "RUNNING"}, timeout=30
+    )
 
     with client() as c:
         events = []
@@ -290,7 +298,10 @@ def test_rewrite_job_abort_fires_changed_event(tier_ds):
             lambda t, **m: events.append((t, m)),
             sync=True,
         )
+        # First poll captures the RUNNING entry as ADDED on the initial pass.
+        time.sleep(1)
         c.call("zfs.tier.rewrite_job_cancel", {"tier_job_id": entry["tier_job_id"]})
+        # Next poll (5s) sees the CANCELLED status and emits CHANGED.
         time.sleep(7)
 
     changed = [
