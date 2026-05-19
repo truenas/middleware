@@ -107,7 +107,7 @@ def disabled_tier(tier_pool):
         yield
 
 
-def wait_for_job_status(tier_job_id, desired_statuses, timeout=60, interval=1):
+def _wait_for_job_status(tier_job_id, desired_statuses, timeout=60, interval=1):
     """Poll zfs.tier.rewrite_job_status until status is in desired_statuses."""
     deadline = time.monotonic() + timeout
     last_status = None
@@ -122,3 +122,11 @@ def wait_for_job_status(tier_job_id, desired_statuses, timeout=60, interval=1):
         f"{tier_job_id!r} did not reach {desired_statuses} within {timeout}s "
         f"(last status: {last_status!r})"
     )
+
+
+@pytest.fixture()
+def wait_for_job_status():
+    """Return the polling helper as a callable. Used as a fixture so tests
+    don't need to import from conftest.py (relative imports break when
+    pytest loads each test file as a top-level module)."""
+    return _wait_for_job_status

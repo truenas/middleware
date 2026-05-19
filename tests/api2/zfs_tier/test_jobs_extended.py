@@ -20,8 +20,6 @@ import pytest
 from middlewared.service_exception import CallError, ValidationError
 from middlewared.test.integration.utils import call, client
 
-from .conftest import wait_for_job_status
-
 
 _FAKE_JOB_ID = "tank/nonexistent@00000000-0000-0000-0000-000000000000"
 
@@ -31,7 +29,7 @@ _FAKE_JOB_ID = "tank/nonexistent@00000000-0000-0000-0000-000000000000"
 # ----------------------------------------------------------------------------
 
 
-def test_rewrite_job_failures_empty_for_clean_completed_job(tier_ds):
+def test_rewrite_job_failures_empty_for_clean_completed_job(tier_ds, wait_for_job_status):
     """A job on an empty dataset should reach COMPLETE with no failures."""
     entry = call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds})
     wait_for_job_status(entry["tier_job_id"], {"COMPLETE", "ERROR"}, timeout=60)
@@ -205,7 +203,7 @@ def test_status_event_source_no_events_for_dataset_without_job(tier_ds):
 # ----------------------------------------------------------------------------
 
 
-def test_query_event_source_complete_emits_changed(tier_ds):
+def test_query_event_source_complete_emits_changed(tier_ds, wait_for_job_status):
     """Subscribe, create a job on an empty dataset, wait — the event source
     should emit ADDED for creation and then CHANGED ending with COMPLETE.
 
@@ -246,7 +244,7 @@ def test_query_event_source_complete_emits_changed(tier_ds):
 # ----------------------------------------------------------------------------
 
 
-def test_status_after_complete_has_terminal_state_and_stats_or_none(tier_ds):
+def test_status_after_complete_has_terminal_state_and_stats_or_none(tier_ds, wait_for_job_status):
     entry = call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds})
     wait_for_job_status(entry["tier_job_id"], {"COMPLETE", "ERROR"}, timeout=60)
     status = call(

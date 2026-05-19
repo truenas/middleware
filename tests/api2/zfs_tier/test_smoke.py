@@ -18,8 +18,6 @@ from truenas_api_client import ValidationErrors
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call, client, ssh
 
-from .conftest import wait_for_job_status
-
 
 def test_config_fields():
     """zfs.tier.config returns the expected schema."""
@@ -248,7 +246,7 @@ def test_rewrite_job_status_shape(tier_ds):
     assert status["error"] is None or isinstance(status["error"], str)
 
 
-def test_rewrite_job_status_completes(tier_ds):
+def test_rewrite_job_status_completes(tier_ds, wait_for_job_status):
     """A job on an empty dataset should reach COMPLETE quickly."""
     entry = call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds})
     final = wait_for_job_status(

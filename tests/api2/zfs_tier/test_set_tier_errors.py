@@ -16,8 +16,6 @@ from truenas_api_client import ValidationErrors
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call, ssh
 
-from .conftest import wait_for_job_status
-
 
 # ----------------------------------------------------------------------------
 # dataset_set_tier error paths
@@ -174,7 +172,7 @@ def test_rewrite_job_create_readonly_dataset_rejected(tier_ds):
 # ----------------------------------------------------------------------------
 
 
-def test_rewrite_job_recover_unmounted_rejected(tier_ds):
+def test_rewrite_job_recover_unmounted_rejected(tier_ds, wait_for_job_status):
     """tier.py:479 — recover validates writable before calling the daemon."""
     # Create then complete a job so it exists; then unmount the dataset
     entry = call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds})
