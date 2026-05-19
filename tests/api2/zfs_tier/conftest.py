@@ -13,7 +13,7 @@ import time
 import pytest
 
 from middlewared.test.integration.assets.pool import another_pool
-from middlewared.test.integration.utils import call
+from middlewared.test.integration.utils import call, ssh
 
 
 @pytest.fixture(scope="module")
@@ -39,15 +39,18 @@ def tier_pool():
     ) as pool:
         original_config = call("zfs.tier.config")
         call("zfs.tier.update", {"enabled": True})
-        # zfs.tier.update sends RELOAD/RESTART but won't START a stopped
-        # daemon. Start it explicitly (idempotent if already running).
-        call(
-            "service.control",
-            "START",
-            "truenas_zfstierd",
-            {"silent": False},
-            job=True,
-        )
+        # Pool creation triggers a sysdataset migration that restarts the
+        # daemon, and zfs.tier.update issues its own RELOAD/RESTART; the two
+        # together can blow past systemd's start-rate limit. reset-failed
+        # clears that state so the explicit start below succeeds.
+        ssh("systemctl reset-failed truenas_zfstierd 2>/dev/null || true")
+        ssh("systemctl start truenas_zfstierd")
+        for _ in range(20):
+            if ssh("systemctl is-active truenas_zfstierd 2>/dev/null || true").strip() == "active":
+                break
+            time.sleep(0.5)
+        else:
+            raise AssertionError("truenas_zfstierd failed to reach 'active' state within 10s")
         try:
             yield pool
         finally:
