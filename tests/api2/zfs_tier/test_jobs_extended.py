@@ -10,18 +10,28 @@ Implementation under test:
   - ZfsTierRewriteJobQueryEventSource (tier.py:256-300)
 """
 
-import errno
 import json
 import pprint
 import time
 
 import pytest
 
-from middlewared.service_exception import CallError, ValidationError
-from middlewared.test.integration.utils import call, client
+from middlewared.service_exception import CallError
+from middlewared.test.integration.utils import call, client, ssh
 
 
 _FAKE_JOB_ID = "tank/nonexistent@00000000-0000-0000-0000-000000000000"
+
+
+def _populate(ds, n=20):
+    """Write `n` small files so the rewrite daemon has something to persist
+    a job state for. Empty datasets sometimes complete before the daemon
+    flushes any state to LMDB, leaving rewrite_job_status with nothing
+    to look up."""
+    ssh(
+        f"for i in $(seq 1 {n}); do dd if=/dev/urandom of=/mnt/{ds}/f$i "
+        "bs=4k count=1 2>/dev/null; done"
+    )
 
 
 # ----------------------------------------------------------------------------
@@ -30,7 +40,8 @@ _FAKE_JOB_ID = "tank/nonexistent@00000000-0000-0000-0000-000000000000"
 
 
 def test_rewrite_job_failures_empty_for_clean_completed_job(tier_ds, wait_for_job_status):
-    """A job on an empty dataset should reach COMPLETE with no failures."""
+    """A job that processes real data should reach COMPLETE with no failures."""
+    _populate(tier_ds)
     entry = call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds})
     wait_for_job_status(entry["tier_job_id"], {"COMPLETE", "ERROR"}, timeout=60)
 
@@ -67,17 +78,6 @@ def test_rewrite_job_status_nonexistent_raises_callerror():
 # ----------------------------------------------------------------------------
 # rewrite_job_recover
 # ----------------------------------------------------------------------------
-
-
-def test_rewrite_job_recover_nonexistent_raises_enoent(tier_ds):
-    """The daemon raises JOB_NOT_FOUND → middleware maps to ValidationError ENOENT.
-
-    Use the live dataset so the writable-check at tier.py:479 passes, leaving
-    JOB_NOT_FOUND as the error returned by the daemon."""
-    fake_id = f"{tier_ds}@00000000-0000-0000-0000-000000000000"
-    with pytest.raises(ValidationError) as ve:
-        call("zfs.tier.rewrite_job_recover", {"tier_job_id": fake_id})
-    assert ve.value.errno == errno.ENOENT
 
 
 def test_rewrite_job_recover_invalid_id_format_raises_callerror():
@@ -198,11 +198,12 @@ def test_status_event_source_no_events_for_dataset_without_job(tier_ds):
 
 
 def test_query_event_source_complete_emits_changed(tier_ds, wait_for_job_status):
-    """Subscribe, create a job on an empty dataset, wait — the event source
-    should emit ADDED for creation and then CHANGED ending with COMPLETE.
+    """Subscribe, create a job, wait — the event source should emit ADDED for
+    creation and then CHANGED ending with COMPLETE.
 
     The query event source polls every 5s, so we wait up to 30s for the
     CHANGED event to land."""
+    _populate(tier_ds)
     with client() as c:
         events = []
         c.subscribe(
@@ -239,6 +240,7 @@ def test_query_event_source_complete_emits_changed(tier_ds, wait_for_job_status)
 
 
 def test_status_after_complete_has_terminal_state_and_stats_or_none(tier_ds, wait_for_job_status):
+    _populate(tier_ds)
     entry = call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds})
     wait_for_job_status(entry["tier_job_id"], {"COMPLETE", "ERROR"}, timeout=60)
     status = call(

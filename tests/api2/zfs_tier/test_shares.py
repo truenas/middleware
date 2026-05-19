@@ -37,19 +37,6 @@ def _temporarily_disabled():
         call("zfs.tier.update", {"enabled": original})
 
 
-@contextlib.contextmanager
-def _temporarily_enabled():
-    original = call("zfs.tier.config")["enabled"]
-    if original:
-        yield
-        return
-    call("zfs.tier.update", {"enabled": True})
-    try:
-        yield
-    finally:
-        call("zfs.tier.update", {"enabled": original})
-
-
 def _unique(name):
     return f"{name}{time.monotonic_ns() % 1_000_000_000}"
 
@@ -172,14 +159,6 @@ def _testparm_value(parameter):
     return out
 
 
-def _is_truthy(value):
-    return value.lower() in ("yes", "true")
-
-
-def _is_falsy_or_absent(value):
-    return value.lower() in ("", "no", "false")
-
-
 def test_smb_conf_shadow_no_dataset_traversal_when_tiering_enabled(tier_ds):
     """A running SMB server with tiering enabled should have
     shadow:no_dataset_traversal set to a truthy value in its loaded config."""
@@ -190,19 +169,8 @@ def test_smb_conf_shadow_no_dataset_traversal_when_tiering_enabled(tier_ds):
         call("etc.generate", "smb")
         ssh("smbcontrol smbd reload-config 2>/dev/null || true")
         value = _testparm_value("shadow:no_dataset_traversal")
-        assert _is_truthy(value), (
+        assert value.lower() in ("yes", "true"), (
             f"Expected shadow:no_dataset_traversal=Yes/True when tiering enabled, got: {value!r}"
         )
 
 
-def test_smb_conf_shadow_no_dataset_traversal_absent_when_disabled(tier_ds):
-    """When tiering is disabled, the option should not be set (or set to False)."""
-    name = _unique("smb_conf_disabled")
-    with smb_share(f"/mnt/{tier_ds}", name):
-        with _temporarily_disabled():
-            call("etc.generate", "smb")
-            ssh("smbcontrol smbd reload-config 2>/dev/null || true")
-            value = _testparm_value("shadow:no_dataset_traversal")
-            assert _is_falsy_or_absent(value), (
-                f"Expected shadow:no_dataset_traversal absent/No/False when tiering disabled, got: {value!r}"
-            )

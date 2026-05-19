@@ -68,30 +68,24 @@ def test_dataset_set_tier_readonly_rejected_with_erofs(tier_ds):
 
 def test_dataset_set_tier_with_active_job_returns_ebusy(tier_ds):
     """If a tier job is already RUNNING or QUEUED for the dataset, set_tier
-    refuses with EBUSY (tier.py:576-584)."""
-    # Pre-fill the dataset so the daemon has work to do — keeps the job
-    # in RUNNING long enough for us to issue a competing set_tier call.
+    refuses with EBUSY (tier.py:576-584). Pre-fill with enough data that
+    the job stays active long enough to issue a competing set_tier."""
     ssh(
-        f"for i in $(seq 1 500); do dd if=/dev/urandom of=/mnt/{tier_ds}/f$i "
-        "bs=4k count=1 2>/dev/null; done"
+        f"for i in $(seq 1 2000); do dd if=/dev/urandom of=/mnt/{tier_ds}/f$i "
+        "bs=16k count=1 2>/dev/null; done"
     )
     entry = call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds})
 
     try:
-        status = call(
-            "zfs.tier.rewrite_job_status", {"tier_job_id": entry["tier_job_id"]}
-        )["status"]
-        assert status in ("QUEUED", "RUNNING"), (
-            f"Job reached terminal status {status!r} before EBUSY check could run — "
-            "the pre-fill (500 small files) wasn't enough to keep the job active. "
-            "Bump the workload or investigate why it completed instantly."
-        )
         with pytest.raises(ValidationError) as ve:
             call(
                 "zfs.tier.dataset_set_tier",
                 {"dataset_name": tier_ds, "tier_type": "PERFORMANCE"},
             )
-        assert ve.value.errno == errno.EBUSY
+        assert ve.value.errno == errno.EBUSY, (
+            f"Expected EBUSY from set_tier while job {entry['tier_job_id']!r} "
+            f"is active, got errno={ve.value.errno!r} errmsg={ve.value.errmsg!r}"
+        )
         assert "tier migration job is already in progress" in ve.value.errmsg
     finally:
         # Try to cancel and drain the job so dataset teardown won't be blocked.
@@ -177,7 +171,11 @@ def test_rewrite_job_create_readonly_dataset_rejected(tier_ds):
 
 def test_rewrite_job_recover_unmounted_rejected(tier_ds, wait_for_job_status):
     """tier.py:479 — recover validates writable before calling the daemon."""
-    # Create then complete a job so it exists; then unmount the dataset
+    # Write some data so the job state actually persists, then complete it.
+    ssh(
+        f"for i in $(seq 1 20); do dd if=/dev/urandom of=/mnt/{tier_ds}/f$i "
+        "bs=4k count=1 2>/dev/null; done"
+    )
     entry = call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds})
     wait_for_job_status(entry["tier_job_id"], {"COMPLETE", "ERROR"}, timeout=60)
     ssh(f"zfs unmount {tier_ds}")

@@ -137,7 +137,8 @@ def test_max_concurrent_jobs_change_triggers_restart(tier_pool):
 
 
 def test_max_used_percentage_change_does_not_restart(tier_pool):
-    """Non-concurrency updates should RELOAD, not RESTART (PID unchanged)."""
+    """Non-concurrency updates take the RELOAD path (SIGHUP via ExecReload),
+    leaving the daemon's MainPID stable."""
     pid_before = _zfstierd_main_pid()
     assert pid_before > 0, (
         "truenas_zfstierd must be running before this test (conftest starts it). "
@@ -149,7 +150,7 @@ def test_max_used_percentage_change_does_not_restart(tier_pool):
         call("zfs.tier.update", {"max_used_percentage": new_val})
         pid_after = _zfstierd_main_pid()
         assert pid_after == pid_before, (
-            "Expected truenas_zfstierd to RELOAD (PID stable) on max_used_percentage change "
+            f"Expected truenas_zfstierd to RELOAD (PID stable) on max_used_percentage change "
             f"(MainPID changed {pid_before} -> {pid_after})"
         )
     finally:

@@ -12,8 +12,10 @@ import time
 
 import pytest
 
+from middlewared.service_exception import CallError
 from middlewared.test.integration.assets.pool import another_pool
 from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.utils.system import reset_systemd_svcs
 
 
 @pytest.fixture(scope="module")
@@ -39,11 +41,7 @@ def tier_pool():
     ) as pool:
         original_config = call("zfs.tier.config")
         call("zfs.tier.update", {"enabled": True})
-        # Pool creation triggers a sysdataset migration that restarts the
-        # daemon, and zfs.tier.update issues its own RELOAD/RESTART; the two
-        # together can blow past systemd's start-rate limit. reset-failed
-        # clears that state so the explicit start below succeeds.
-        ssh("systemctl reset-failed truenas_zfstierd 2>/dev/null || true")
+        reset_systemd_svcs("truenas_zfstierd")
         ssh("systemctl start truenas_zfstierd")
         for _ in range(20):
             if ssh("systemctl is-active truenas_zfstierd 2>/dev/null || true").strip() == "active":
@@ -120,19 +118,31 @@ def disabled_tier(tier_pool):
 
 
 def _wait_for_job_status(tier_job_id, desired_statuses, timeout=60, interval=1):
-    """Poll zfs.tier.rewrite_job_status until status is in desired_statuses."""
+    """Poll zfs.tier.rewrite_job_status until status is in desired_statuses.
+
+    Tolerates a transient "entry not found" while the daemon hasn't yet
+    written initial job state to LMDB (a short window right after
+    rewrite_job_create returns, especially for small datasets)."""
     deadline = time.monotonic() + timeout
     last_status = None
+    last_err = None
     while time.monotonic() < deadline:
-        last_status = call(
-            "zfs.tier.rewrite_job_status", {"tier_job_id": tier_job_id}
-        )["status"]
+        try:
+            last_status = call(
+                "zfs.tier.rewrite_job_status", {"tier_job_id": tier_job_id}
+            )["status"]
+        except CallError as e:
+            if "entry not found" in str(e):
+                last_err = e
+                time.sleep(interval)
+                continue
+            raise
         if last_status in desired_statuses:
             return last_status
         time.sleep(interval)
     raise TimeoutError(
         f"{tier_job_id!r} did not reach {desired_statuses} within {timeout}s "
-        f"(last status: {last_status!r})"
+        f"(last status: {last_status!r}, last error: {last_err!r})"
     )
 
 
@@ -142,3 +152,13 @@ def wait_for_job_status():
     don't need to import from conftest.py (relative imports break when
     pytest loads each test file as a top-level module)."""
     return _wait_for_job_status
+
+
+@pytest.fixture(autouse=True)
+def _reset_zfstierd_rate_limit(request):
+    """Clear systemd's StartLimitBurst counter on truenas_zfstierd before each
+    test that touches it, so cascading restarts across tests can't hit the
+    unit's ``StartLimitBurst=5 / StartLimitIntervalSec=300``."""
+    if "tier_pool" not in request.fixturenames:
+        return
+    reset_systemd_svcs("truenas_zfstierd")
