@@ -1,8 +1,8 @@
-"""End-to-end tests for the zfs.tier plugin.
+"""Smoke tests for the zfs.tier plugin: core config / job / set-tier paths.
 
-Requires:
-  - At least 2 unused disks (data + special vdev)
-  - TrueNAS Enterprise license (zfs.tier.update requires it)
+The 3+3 RAIDZ1 tier pool fixture (and the Enterprise-license skip) live in
+``conftest.py`` alongside this file. Tests run on a TrueNAS box with at
+least 6 unused disks.
 """
 
 import errno
@@ -15,68 +15,10 @@ import pytest
 
 from middlewared.service_exception import ValidationError
 from truenas_api_client import ValidationErrors
-from middlewared.test.integration.assets.pool import another_pool, dataset
+from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call, client, ssh
 
-
-def _wait_for_job_status(tier_job_id, desired_statuses, timeout=30, interval=1):
-    """Poll rewrite_job_status until it reaches one of the desired_statuses."""
-    deadline = time.monotonic() + timeout
-    while time.monotonic() < deadline:
-        status = call("zfs.tier.rewrite_job_status", {"tier_job_id": tier_job_id})[
-            "status"
-        ]
-        if status in desired_statuses:
-            return status
-        time.sleep(interval)
-    raise TimeoutError(
-        f"{tier_job_id!r} did not reach {desired_statuses} within {timeout}s "
-        f"(last status: {status!r})"
-    )
-
-
-@pytest.fixture(scope="module")
-def tier_pool():
-    unused = call("disk.get_unused")
-    if len(unused) < 2:
-        pytest.skip("Need at least 2 unused disks for data + special vdev")
-
-    with another_pool(
-        {
-            "topology": {
-                "data": [{"type": "STRIPE", "disks": [unused[0]["name"]]}],
-                "special": [{"type": "STRIPE", "disks": [unused[1]["name"]]}],
-            },
-            "allow_duplicate_serials": True,
-        }
-    ) as pool:
-        if not call("system.is_enterprise"):
-            pytest.skip("ZFS tiering requires an Enterprise license")
-
-        original_config = call("zfs.tier.config")
-        call("zfs.tier.update", {"enabled": True})
-        try:
-            yield pool
-        finally:
-            call(
-                "zfs.tier.update",
-                {
-                    "enabled": original_config["enabled"],
-                    "max_concurrent_jobs": original_config["max_concurrent_jobs"],
-                    "max_used_percentage": original_config["max_used_percentage"],
-                },
-            )
-
-
-@pytest.fixture()
-def tier_ds(tier_pool):
-    """Fresh dataset on the tier pool, cleaned up after each test."""
-    ds_name = f"{tier_pool['name']}/tier_test_{int(time.monotonic() * 1000)}"
-    call("pool.dataset.create", {"name": ds_name})
-    try:
-        yield ds_name
-    finally:
-        call("pool.dataset.delete", ds_name, {"recursive": True})
+from .conftest import wait_for_job_status
 
 
 def test_config_fields():
@@ -309,7 +251,7 @@ def test_rewrite_job_status_shape(tier_ds):
 def test_rewrite_job_status_completes(tier_ds):
     """A job on an empty dataset should reach COMPLETE quickly."""
     entry = call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds})
-    final = _wait_for_job_status(
+    final = wait_for_job_status(
         entry["tier_job_id"], {"COMPLETE", "ERROR"}, timeout=60
     )
     assert final == "COMPLETE"
