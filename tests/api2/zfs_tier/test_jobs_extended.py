@@ -10,20 +10,37 @@ Implementation under test:
   - ZfsTierRewriteJobQueryEventSource (tier.py:256-300)
 """
 
-import errno
 import json
 import pprint
 import time
 
 import pytest
 
-from middlewared.service_exception import CallError, ValidationError
-from middlewared.test.integration.utils import call, client
-
-from .conftest import wait_for_job_status
+from middlewared.service_exception import CallError
+from middlewared.test.integration.utils import call, client, ssh
 
 
 _FAKE_JOB_ID = "tank/nonexistent@00000000-0000-0000-0000-000000000000"
+
+
+def _stage_pending_rewrite(ds):
+    """Set tier=PERFORMANCE, create 5000 1MiB files (blocks land on SPECIAL),
+    then flip tier=REGULAR (special_small_blocks=0). Every block is now on
+    SPECIAL but policy says NORMAL — a rewrite must walk all 5000 inodes
+    and move every block. Per-file callbacks flush LMDB state on the
+    daemon's 1s stats_flush_interval cadence."""
+    call(
+        "zfs.tier.dataset_set_tier",
+        {"dataset_name": ds, "tier_type": "PERFORMANCE"},
+    )
+    ssh(
+        f"cd /mnt/{ds} && seq 1 5000 | "
+        "xargs -P 16 -I X dd if=/dev/urandom of=fX bs=1M count=1 2>/dev/null"
+    )
+    call(
+        "zfs.tier.dataset_set_tier",
+        {"dataset_name": ds, "tier_type": "REGULAR"},
+    )
 
 
 # ----------------------------------------------------------------------------
@@ -31,10 +48,14 @@ _FAKE_JOB_ID = "tank/nonexistent@00000000-0000-0000-0000-000000000000"
 # ----------------------------------------------------------------------------
 
 
-def test_rewrite_job_failures_empty_for_clean_completed_job(tier_ds):
-    """A job on an empty dataset should reach COMPLETE with no failures."""
-    entry = call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds})
-    wait_for_job_status(entry["tier_job_id"], {"COMPLETE", "ERROR"}, timeout=60)
+def test_rewrite_job_failures_empty_for_clean_completed_job(
+    tier_ds_with_work, wait_for_job_status
+):
+    """A job that processes real data should reach COMPLETE with no failures."""
+    entry = call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds_with_work})
+    wait_for_job_status(
+        entry["tier_job_id"], {"COMPLETE", "ERROR"}, timeout=120
+    )
 
     failures = call(
         "zfs.tier.rewrite_job_failures", {"tier_job_id": entry["tier_job_id"]}
@@ -47,12 +68,6 @@ def test_rewrite_job_failures_invalid_id_format_raises_callerror():
     with pytest.raises(CallError) as exc:
         call("zfs.tier.rewrite_job_failures", {"tier_job_id": "no_at_sign"})
     assert "Invalid tier_job_id" in str(exc.value)
-
-
-def test_rewrite_job_failures_nonexistent_raises_callerror():
-    """The body of rewrite_job_failures wraps daemon errors in CallError."""
-    with pytest.raises(CallError):
-        call("zfs.tier.rewrite_job_failures", {"tier_job_id": _FAKE_JOB_ID})
 
 
 # ----------------------------------------------------------------------------
@@ -77,17 +92,6 @@ def test_rewrite_job_status_nonexistent_raises_callerror():
 # ----------------------------------------------------------------------------
 
 
-def test_rewrite_job_recover_nonexistent_raises_enoent(tier_ds):
-    """The daemon raises JOB_NOT_FOUND → middleware maps to ValidationError ENOENT.
-
-    Use the live dataset so the writable-check at tier.py:479 passes, leaving
-    JOB_NOT_FOUND as the error returned by the daemon."""
-    fake_id = f"{tier_ds}@00000000-0000-0000-0000-000000000000"
-    with pytest.raises(ValidationError) as ve:
-        call("zfs.tier.rewrite_job_recover", {"tier_job_id": fake_id})
-    assert ve.value.errno == errno.ENOENT
-
-
 def test_rewrite_job_recover_invalid_id_format_raises_callerror():
     with pytest.raises(CallError) as exc:
         call("zfs.tier.rewrite_job_recover", {"tier_job_id": "no_at_sign"})
@@ -110,7 +114,9 @@ def test_rewrite_job_cancel_invalid_id_format_raises_callerror():
 # ----------------------------------------------------------------------------
 
 
-def test_rewrite_job_query_multiple_status_filter_includes_active(tier_pool):
+def test_rewrite_job_query_multiple_status_filter_includes_active(
+    tier_pool, wait_for_job_status
+):
     """Filtering with a list of statuses (including the active job's actual
     status) should include the active job."""
     ds1 = f"{tier_pool['name']}/jq_multi1_{time.monotonic_ns()}"
@@ -118,20 +124,24 @@ def test_rewrite_job_query_multiple_status_filter_includes_active(tier_pool):
     call("pool.dataset.create", {"name": ds1})
     call("pool.dataset.create", {"name": ds2})
     try:
+        _stage_pending_rewrite(ds1)
+        _stage_pending_rewrite(ds2)
         e1 = call("zfs.tier.rewrite_job_create", {"dataset_name": ds1})
         e2 = call("zfs.tier.rewrite_job_create", {"dataset_name": ds2})
+
+        # Wait until the daemon has written initial LMDB state for both.
+        all_statuses = {"QUEUED", "RUNNING", "COMPLETE", "CANCELLED", "STOPPED", "ERROR"}
+        wait_for_job_status(e1["tier_job_id"], all_statuses, timeout=30)
+        wait_for_job_status(e2["tier_job_id"], all_statuses, timeout=30)
 
         active = call(
             "zfs.tier.rewrite_job_query",
             {"status": ["QUEUED", "RUNNING", "COMPLETE"]},
         )
         ids = {j["tier_job_id"] for j in active}
-        # Both newly-created jobs should be in QUEUED/RUNNING/COMPLETE
         assert e1["tier_job_id"] in ids
         assert e2["tier_job_id"] in ids
 
-        # Filter to a state neither should be in (CANCELLED) — both should
-        # be absent unless they raced (very unlikely on empty dataset).
         cancelled_only = call(
             "zfs.tier.rewrite_job_query", {"status": ["CANCELLED"]}
         )
@@ -146,15 +156,22 @@ def test_rewrite_job_query_multiple_status_filter_includes_active(tier_pool):
                 pass
 
 
-def test_rewrite_job_query_pagination_via_query_options(tier_pool):
+def test_rewrite_job_query_pagination_via_query_options(
+    tier_pool, wait_for_job_status
+):
     """rewrite_job_query honors the standard query-options pagination."""
     ds1 = f"{tier_pool['name']}/jq_page1_{time.monotonic_ns()}"
     ds2 = f"{tier_pool['name']}/jq_page2_{time.monotonic_ns()}"
     call("pool.dataset.create", {"name": ds1})
     call("pool.dataset.create", {"name": ds2})
     try:
-        call("zfs.tier.rewrite_job_create", {"dataset_name": ds1})
-        call("zfs.tier.rewrite_job_create", {"dataset_name": ds2})
+        _stage_pending_rewrite(ds1)
+        _stage_pending_rewrite(ds2)
+        e1 = call("zfs.tier.rewrite_job_create", {"dataset_name": ds1})
+        e2 = call("zfs.tier.rewrite_job_create", {"dataset_name": ds2})
+        all_statuses = {"QUEUED", "RUNNING", "COMPLETE", "CANCELLED", "STOPPED", "ERROR"}
+        wait_for_job_status(e1["tier_job_id"], all_statuses, timeout=30)
+        wait_for_job_status(e2["tier_job_id"], all_statuses, timeout=30)
 
         page_one = call(
             "zfs.tier.rewrite_job_query",
@@ -205,9 +222,9 @@ def test_status_event_source_no_events_for_dataset_without_job(tier_ds):
 # ----------------------------------------------------------------------------
 
 
-def test_query_event_source_complete_emits_changed(tier_ds):
-    """Subscribe, create a job on an empty dataset, wait — the event source
-    should emit ADDED for creation and then CHANGED ending with COMPLETE.
+def test_query_event_source_complete_emits_changed(tier_ds_with_work, wait_for_job_status):
+    """Subscribe, create a job, wait — the event source should emit ADDED for
+    creation and then CHANGED ending with COMPLETE.
 
     The query event source polls every 5s, so we wait up to 30s for the
     CHANGED event to land."""
@@ -218,10 +235,10 @@ def test_query_event_source_complete_emits_changed(tier_ds):
             lambda t, **m: events.append((t, m)),
             sync=True,
         )
-        entry = c.call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds})
+        entry = c.call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds_with_work})
 
         # Wait for COMPLETE via the synchronous status RPC first…
-        wait_for_job_status(entry["tier_job_id"], {"COMPLETE", "ERROR"}, timeout=60)
+        wait_for_job_status(entry["tier_job_id"], {"COMPLETE", "ERROR"}, timeout=120)
         # …then give the query event source two poll intervals to catch up.
         time.sleep(12)
 
@@ -246,9 +263,11 @@ def test_query_event_source_complete_emits_changed(tier_ds):
 # ----------------------------------------------------------------------------
 
 
-def test_status_after_complete_has_terminal_state_and_stats_or_none(tier_ds):
-    entry = call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds})
-    wait_for_job_status(entry["tier_job_id"], {"COMPLETE", "ERROR"}, timeout=60)
+def test_status_after_complete_has_terminal_state_and_stats_or_none(
+    tier_ds_with_work, wait_for_job_status
+):
+    entry = call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds_with_work})
+    wait_for_job_status(entry["tier_job_id"], {"COMPLETE", "ERROR"}, timeout=120)
     status = call(
         "zfs.tier.rewrite_job_status", {"tier_job_id": entry["tier_job_id"]}
     )

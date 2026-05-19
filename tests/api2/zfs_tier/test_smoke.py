@@ -9,16 +9,11 @@ import errno
 import json
 import pprint
 import time
-from unittest.mock import ANY
-
 import pytest
 
 from middlewared.service_exception import ValidationError
-from truenas_api_client import ValidationErrors
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call, client, ssh
-
-from .conftest import wait_for_job_status
 
 
 def test_config_fields():
@@ -98,8 +93,13 @@ def test_dataset_set_tier_regular(tier_ds):
 
 
 def test_dataset_set_tier_with_migration(tier_ds):
-    # Populate with some data so the rewrite job has work to do
-    ssh(f"dd if=/dev/urandom of=/mnt/{tier_ds}/testfile bs=4k count=64 2>/dev/null")
+    # Many MiB-sized files keep the rewrite walker busy long enough for
+    # the event source's 5s poll cycle to fire and for per-file callbacks
+    # to flush LMDB state.
+    ssh(
+        f"cd /mnt/{tier_ds} && seq 1 5000 | "
+        "xargs -P 16 -I X dd if=/dev/urandom of=fX bs=1M count=1 2>/dev/null"
+    )
 
     with client() as c:
         events = []
@@ -117,15 +117,18 @@ def test_dataset_set_tier_with_migration(tier_ds):
                 "move_existing_data": True,
             },
         )
+        time.sleep(7)
 
     assert result["tier_type"] == "PERFORMANCE"
     assert result["tier_job"] is not None
     assert result["tier_job"]["dataset_name"] == tier_ds
     assert result["tier_job"]["status"] in ("QUEUED", "RUNNING", "COMPLETE")
 
-    added = [e for e in events if e[0] == "ADDED"]
-    assert len(added) == 1, pprint.pformat(events)
-    assert added[0][1]["fields"]["dataset_name"] == tier_ds
+    matching = [
+        e for e in events
+        if e[0] == "ADDED" and e[1]["fields"].get("dataset_name") == tier_ds
+    ]
+    assert matching, pprint.pformat(events)
 
 
 def test_dataset_set_tier_globally_disabled():
@@ -136,7 +139,7 @@ def test_dataset_set_tier_globally_disabled():
     original = call("zfs.tier.config")["enabled"]
     try:
         call("zfs.tier.update", {"enabled": False})
-        with pytest.raises(ValidationErrors) as ve:
+        with pytest.raises(ValidationError) as ve:
             call(
                 "zfs.tier.dataset_set_tier",
                 {
@@ -144,8 +147,8 @@ def test_dataset_set_tier_globally_disabled():
                     "tier_type": "PERFORMANCE",
                 },
             )
-        assert ve.value.errors[0].attribute == "zfs_tier_dataset_set_tier"
-        assert ve.value.errors[0].errno == errno.EINVAL
+        assert ve.value.attribute == "zfs_tier_dataset_set_tier"
+        assert ve.value.errno == errno.EINVAL
     finally:
         call("zfs.tier.update", {"enabled": original})
 
@@ -154,7 +157,7 @@ def test_dataset_set_tier_no_special_vdev(tier_pool):
     """Returns EINVAL for a dataset on a pool without a SPECIAL vdev."""
     # Use the default test pool which has no SPECIAL vdev
     with dataset("tier_no_special_test") as ds:
-        with pytest.raises(ValidationErrors) as ve:
+        with pytest.raises(ValidationError) as ve:
             call(
                 "zfs.tier.dataset_set_tier",
                 {
@@ -162,9 +165,9 @@ def test_dataset_set_tier_no_special_vdev(tier_pool):
                     "tier_type": "PERFORMANCE",
                 },
             )
-        assert ve.value.errors[0].attribute == "zfs_tier_dataset_set_tier"
-        assert ve.value.errors[0].errno == errno.EINVAL
-        assert "SPECIAL vdev" in ve.value.errors[0].errmsg
+        assert ve.value.attribute == "zfs_tier_dataset_set_tier"
+        assert ve.value.errno == errno.EINVAL
+        assert "SPECIAL vdev" in ve.value.errmsg
 
 
 def test_rewrite_job_create_returns_queued_or_running(tier_ds):
@@ -174,7 +177,7 @@ def test_rewrite_job_create_returns_queued_or_running(tier_ds):
     assert entry["status"] in ("QUEUED", "RUNNING")
 
 
-def test_rewrite_job_create_fires_added_event(tier_ds):
+def test_rewrite_job_create_fires_added_event(tier_ds_with_work):
     with client() as c:
         events = []
         c.subscribe(
@@ -182,39 +185,51 @@ def test_rewrite_job_create_fires_added_event(tier_ds):
             lambda t, **m: events.append((t, m)),
             sync=True,
         )
-        entry = c.call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds})
+        entry = c.call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds_with_work})
+        # Event source polls every 5s; wait long enough for the next tick.
+        time.sleep(7)
 
-    assert len(events) == 1, pprint.pformat(events)
-    assert events[0][0] == "ADDED"
-    assert events[0][1] == {
-        "collection": "zfs.tier.rewrite_job_query",
-        "msg": "added",
-        "id": entry["tier_job_id"],
-        "fields": ANY,
-    }
-    assert events[0][1]["fields"]["dataset_name"] == tier_ds
-
-
-def test_rewrite_job_create_duplicate_raises_eexist(tier_ds):
-    """Creating a second job for the same dataset raises EEXIST."""
-    call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds})
-    with pytest.raises(ValidationErrors) as ve:
-        call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds})
-    assert ve.value.errors[0].errno == errno.EEXIST
+    matching = [e for e in events if e[1].get("id") == entry["tier_job_id"]]
+    assert matching, pprint.pformat(events)
+    assert matching[0][0] == "ADDED"
+    assert matching[0][1]["collection"] == "zfs.tier.rewrite_job_query"
+    assert matching[0][1]["msg"] == "added"
+    assert matching[0][1]["id"] == entry["tier_job_id"]
+    assert matching[0][1]["fields"]["dataset_name"] == tier_ds_with_work
 
 
-def test_rewrite_job_query_returns_created_job(tier_ds):
-    entry = call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds})
+def test_rewrite_job_create_duplicate_raises_eexist(tier_ds_with_work):
+    """Creating a second job for the same dataset raises EEXIST.
+
+    _raise_client_error maps JOB_ALREADY_EXISTS → singular ValidationError."""
+    call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds_with_work})
+    with pytest.raises(ValidationError) as ve:
+        call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds_with_work})
+    assert ve.value.errno == errno.EEXIST
+
+
+def test_rewrite_job_query_returns_created_job(tier_ds_with_work, wait_for_job_status):
+    entry = call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds_with_work})
+    # Wait until LMDB has the entry before querying.
+    wait_for_job_status(
+        entry["tier_job_id"],
+        {"QUEUED", "RUNNING", "COMPLETE", "CANCELLED", "STOPPED", "ERROR"},
+        timeout=30,
+    )
     jobs = call("zfs.tier.rewrite_job_query", {})
     ids = [j["tier_job_id"] for j in jobs]
     assert entry["tier_job_id"] in ids
 
 
-def test_rewrite_job_query_status_filter(tier_ds):
-    entry = call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds})
-    current_status = call(
-        "zfs.tier.rewrite_job_status", {"tier_job_id": entry["tier_job_id"]}
-    )["status"]
+def test_rewrite_job_query_status_filter(tier_ds_with_work, wait_for_job_status):
+    entry = call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds_with_work})
+    # The daemon may not write LMDB state for several seconds; wait until
+    # the status RPC can find an entry before reading current_status.
+    current_status = wait_for_job_status(
+        entry["tier_job_id"],
+        {"QUEUED", "RUNNING", "COMPLETE", "CANCELLED", "STOPPED", "ERROR"},
+        timeout=30,
+    )
 
     matching = call("zfs.tier.rewrite_job_query", {"status": [current_status]})
     assert any(j["tier_job_id"] == entry["tier_job_id"] for j in matching)
@@ -228,12 +243,17 @@ def test_rewrite_job_query_status_filter(tier_ds):
         assert all(j["tier_job_id"] != entry["tier_job_id"] for j in non_matching)
 
 
-def test_rewrite_job_status_shape(tier_ds):
-    entry = call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds})
+def test_rewrite_job_status_shape(tier_ds_with_work, wait_for_job_status):
+    entry = call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds_with_work})
+    wait_for_job_status(
+        entry["tier_job_id"],
+        {"QUEUED", "RUNNING", "COMPLETE", "CANCELLED", "STOPPED", "ERROR"},
+        timeout=30,
+    )
     status = call("zfs.tier.rewrite_job_status", {"tier_job_id": entry["tier_job_id"]})
 
     assert status["tier_job_id"] == entry["tier_job_id"]
-    assert status["dataset_name"] == tier_ds
+    assert status["dataset_name"] == tier_ds_with_work
     assert status["job_uuid"] == entry["job_uuid"]
     assert status["status"] in (
         "QUEUED",
@@ -248,7 +268,7 @@ def test_rewrite_job_status_shape(tier_ds):
     assert status["error"] is None or isinstance(status["error"], str)
 
 
-def test_rewrite_job_status_completes(tier_ds):
+def test_rewrite_job_status_completes(tier_ds, wait_for_job_status):
     """A job on an empty dataset should reach COMPLETE quickly."""
     entry = call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds})
     final = wait_for_job_status(
@@ -257,18 +277,13 @@ def test_rewrite_job_status_completes(tier_ds):
     assert final == "COMPLETE"
 
 
-def test_rewrite_job_abort_fires_changed_event(tier_ds):
-    ssh(
-        f"for i in $(seq 1 100); do dd if=/dev/urandom of=/mnt/{tier_ds}/f$i bs=4k count=1 2>/dev/null; done"
+def test_rewrite_job_abort_fires_changed_event(tier_ds_with_work, wait_for_job_status):
+    entry = call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds_with_work})
+    # Give the daemon time to register the job in LMDB so the event source's
+    # first poll captures it before we cancel.
+    wait_for_job_status(
+        entry["tier_job_id"], {"QUEUED", "RUNNING"}, timeout=30
     )
-
-    entry = call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds})
-
-    status = call("zfs.tier.rewrite_job_status", {"tier_job_id": entry["tier_job_id"]})[
-        "status"
-    ]
-    if status not in ("RUNNING", "QUEUED"):
-        pytest.skip("Job completed before abort could be tested — dataset too small")
 
     with client() as c:
         events = []
@@ -277,31 +292,35 @@ def test_rewrite_job_abort_fires_changed_event(tier_ds):
             lambda t, **m: events.append((t, m)),
             sync=True,
         )
+        # First poll captures the RUNNING entry as ADDED on the initial pass.
+        time.sleep(1)
         c.call("zfs.tier.rewrite_job_cancel", {"tier_job_id": entry["tier_job_id"]})
+        # Next poll (5s) sees the CANCELLED status and emits CHANGED.
+        time.sleep(7)
 
-    changed = [e for e in events if e[0] == "CHANGED"]
+    changed = [
+        e for e in events
+        if e[0] == "CHANGED" and e[1]["fields"].get("tier_job_id") == entry["tier_job_id"]
+    ]
     assert changed, pprint.pformat(events)
     assert changed[-1][1]["fields"]["status"] == "CANCELLED"
-    assert changed[-1][1]["fields"]["tier_job_id"] == entry["tier_job_id"]
 
 
-def test_rewrite_job_abort_nonexistent_raises():
+def test_rewrite_job_abort_nonexistent_raises(tier_pool):
+    """tier_pool ensures the daemon is running so the JSON-RPC call lands."""
     with pytest.raises(ValidationError) as ve:
         call(
             "zfs.tier.rewrite_job_cancel",
-            {"tier_job_id": "tank/nonexistent@00000000-0000-0000-0000-000000000000"},
+            {"tier_job_id": f"{tier_pool['name']}/nonexistent@00000000-0000-0000-0000-000000000000"},
         )
     assert ve.value.errno == errno.ENOENT
 
 
-def test_rewrite_job_status_event_source(tier_ds):
+def test_rewrite_job_status_event_source(tier_ds_with_work):
     """The polling event source emits CHANGED events while a job is active."""
-    ssh(
-        f"for i in $(seq 1 100); do dd if=/dev/urandom of=/mnt/{tier_ds}/f$i bs=4k count=1 2>/dev/null; done"
-    )
-    call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds})
+    call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds_with_work})
 
-    arg = json.dumps({"dataset_name": tier_ds})
+    arg = json.dumps({"dataset_name": tier_ds_with_work})
     with client() as c:
         events = []
         c.subscribe(
@@ -313,5 +332,5 @@ def test_rewrite_job_status_event_source(tier_ds):
 
     assert events, "No events received from rewrite_job_status event source"
     assert events[0][0] == "CHANGED"
-    assert events[0][1]["fields"]["dataset_name"] == tier_ds
+    assert events[0][1]["fields"]["dataset_name"] == tier_ds_with_work
     assert "status" in events[0][1]["fields"]

@@ -70,13 +70,15 @@ def test_pool_dataset_query_tier_reflects_regular(tier_ds_regular):
 
 
 def test_pool_dataset_query_tier_is_null_when_globally_disabled(tier_ds):
-    """When zfs.tier.config.enabled is False, the field is null even on a
-    SPECIAL-vdev pool (bulk_get_tier_info short-circuits at tier.py:680-682)."""
+    """When zfs.tier.config.enabled is False, dataset_query_utils.py:953 skips
+    the tier injection entirely, so the key is absent from the row dict.
+
+    A future change might switch to always setting tier=None — accept both."""
     with _temporarily_disabled():
         ds = call(
             "pool.dataset.query", [["name", "=", tier_ds]], {"get": True}
         )
-        assert ds["tier"] is None
+        assert ds.get("tier") is None
 
 
 def test_pool_dataset_query_tier_is_null_on_pool_without_special(tier_pool):
@@ -87,16 +89,24 @@ def test_pool_dataset_query_tier_is_null_on_pool_without_special(tier_pool):
         assert row["tier"] is None
 
 
-def test_pool_dataset_query_tier_job_populated_after_job_created(tier_ds):
+def test_pool_dataset_query_tier_job_populated_after_job_created(
+    tier_ds_with_work, wait_for_job_status
+):
     """After creating a rewrite job, the dataset's tier.tier_job reports
-    the job ID (matches get_last_job result)."""
-    entry = call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds})
-    ds = call("pool.dataset.query", [["name", "=", tier_ds]], {"get": True})
+    the job ID (matches get_last_job result). Waits until the daemon has
+    flushed initial job state to LMDB before reading the query field."""
+    entry = call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds_with_work})
+    wait_for_job_status(
+        entry["tier_job_id"],
+        {"QUEUED", "RUNNING", "COMPLETE", "CANCELLED", "STOPPED", "ERROR"},
+        timeout=30,
+    )
+    ds = call("pool.dataset.query", [["name", "=", tier_ds_with_work]], {"get": True})
     assert ds["tier"] is not None
     tier_job = ds["tier"]["tier_job"]
     assert tier_job is not None
     assert tier_job["tier_job_id"] == entry["tier_job_id"]
-    assert tier_job["dataset_name"] == tier_ds
+    assert tier_job["dataset_name"] == tier_ds_with_work
     assert tier_job["job_uuid"] == entry["job_uuid"]
     assert tier_job["status"] in (
         "QUEUED",

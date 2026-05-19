@@ -13,7 +13,7 @@ import time
 
 import pytest
 
-from truenas_api_client import ClientException, ValidationErrors
+from middlewared.service_exception import ValidationError, ValidationErrors
 from middlewared.test.integration.utils import call
 
 
@@ -151,32 +151,18 @@ def test_update_ssb_to_same_numeric_value_allowed_when_tiering_enabled(
     )
 
 
-def test_update_ssb_inherit_when_already_inherited_allowed(tier_ds_regular):
-    """The 'INHERIT' branch of the no-op exception only applies if the current
-    source is INHERITED/DEFAULT/NONE — not LOCAL. tier_ds_regular has LOCAL
-    source after set_tier, so this should be rejected unless we check current source."""
-    # Find current source
-    props = call(
-        "zfs.resource.query",
-        {"paths": [tier_ds_regular], "properties": ["special_small_blocks"]},
-    )
-    source = props[0]["properties"]["special_small_blocks"]["source"]
-    # After set_tier, source is LOCAL; INHERIT change is not a no-op and should be rejected.
-    if source == "LOCAL":
-        with pytest.raises(ValidationErrors) as ve:
-            call(
-                "pool.dataset.update",
-                tier_ds_regular,
-                {"special_small_block_size": "INHERIT"},
-            )
-        assert "ZFS tiering is enabled" in ve.value.errors[0].errmsg
-    else:
-        # If source was already INHERITED, the INHERIT no-op branch is exercised:
+def test_update_ssb_inherit_when_source_is_local_rejected(tier_ds_regular):
+    """tier_ds_regular has special_small_blocks set explicitly (LOCAL source)
+    by dataset_set_tier. Switching to INHERIT changes the effective value, so
+    dataset.py:330-334 rejects it — the no-op INHERIT branch only fires when
+    the property is already inherited."""
+    with pytest.raises(ValidationErrors) as ve:
         call(
             "pool.dataset.update",
             tier_ds_regular,
             {"special_small_block_size": "INHERIT"},
         )
+    assert "ZFS tiering is enabled" in ve.value.errors[0].errmsg
 
 
 # ----------------------------------------------------------------------------
@@ -233,7 +219,9 @@ def test_clone_with_ssb_property_override_rejected_when_tiering_enabled(
     )
     try:
         clone_name = f"{tier_ds_regular}_clone_{time.monotonic_ns()}"
-        with pytest.raises((ValidationErrors, ClientException)) as exc:
+        # snapshot_crud.clone_impl raises a single ValidationError, not a
+        # ValidationErrors collection.
+        with pytest.raises((ValidationError, ValidationErrors)) as exc:
             call(
                 "pool.snapshot.clone",
                 {
