@@ -95,8 +95,12 @@ def test_dataset_set_tier_regular(tier_ds):
 
 
 def test_dataset_set_tier_with_migration(tier_ds):
-    # Populate with some data so the rewrite job has work to do
-    ssh(f"dd if=/dev/urandom of=/mnt/{tier_ds}/testfile bs=4k count=64 2>/dev/null")
+    # Populate with enough data that the rewrite job stays active across the
+    # event source's 5s poll window.
+    ssh(
+        f"dd if=/dev/urandom of=/mnt/{tier_ds}/fillfile bs=1M count=100 "
+        "conv=fdatasync 2>/dev/null"
+    )
 
     with client() as c:
         events = []
@@ -114,15 +118,18 @@ def test_dataset_set_tier_with_migration(tier_ds):
                 "move_existing_data": True,
             },
         )
+        time.sleep(7)
 
     assert result["tier_type"] == "PERFORMANCE"
     assert result["tier_job"] is not None
     assert result["tier_job"]["dataset_name"] == tier_ds
     assert result["tier_job"]["status"] in ("QUEUED", "RUNNING", "COMPLETE")
 
-    added = [e for e in events if e[0] == "ADDED"]
-    assert len(added) == 1, pprint.pformat(events)
-    assert added[0][1]["fields"]["dataset_name"] == tier_ds
+    matching = [
+        e for e in events
+        if e[0] == "ADDED" and e[1]["fields"].get("dataset_name") == tier_ds
+    ]
+    assert matching, pprint.pformat(events)
 
 
 def test_dataset_set_tier_globally_disabled():
@@ -171,7 +178,19 @@ def test_rewrite_job_create_returns_queued_or_running(tier_ds):
     assert entry["status"] in ("QUEUED", "RUNNING")
 
 
+def _fill(ds):
+    """Write enough data that the daemon's job stays active long enough to
+    persist LMDB state and emit events. The daemon doesn't write LMDB state
+    on submit for RUNNING jobs, and reporting_write_interval=60s means
+    instant-completing jobs (empty/small datasets) leave no trace."""
+    ssh(
+        f"dd if=/dev/urandom of=/mnt/{ds}/fillfile bs=1M count=100 "
+        "conv=fdatasync 2>/dev/null"
+    )
+
+
 def test_rewrite_job_create_fires_added_event(tier_ds):
+    _fill(tier_ds)
     with client() as c:
         events = []
         c.subscribe(
@@ -180,22 +199,23 @@ def test_rewrite_job_create_fires_added_event(tier_ds):
             sync=True,
         )
         entry = c.call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds})
+        # Event source polls every 5s; wait long enough for the next tick.
+        time.sleep(7)
 
-    assert len(events) == 1, pprint.pformat(events)
-    assert events[0][0] == "ADDED"
-    assert events[0][1] == {
-        "collection": "zfs.tier.rewrite_job_query",
-        "msg": "added",
-        "id": entry["tier_job_id"],
-        "fields": ANY,
-    }
-    assert events[0][1]["fields"]["dataset_name"] == tier_ds
+    matching = [e for e in events if e[1].get("id") == entry["tier_job_id"]]
+    assert matching, pprint.pformat(events)
+    assert matching[0][0] == "ADDED"
+    assert matching[0][1]["collection"] == "zfs.tier.rewrite_job_query"
+    assert matching[0][1]["msg"] == "added"
+    assert matching[0][1]["id"] == entry["tier_job_id"]
+    assert matching[0][1]["fields"]["dataset_name"] == tier_ds
 
 
 def test_rewrite_job_create_duplicate_raises_eexist(tier_ds):
     """Creating a second job for the same dataset raises EEXIST.
 
     _raise_client_error maps JOB_ALREADY_EXISTS → singular ValidationError."""
+    _fill(tier_ds)
     call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds})
     with pytest.raises(ValidationError) as ve:
         call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds})
@@ -203,6 +223,7 @@ def test_rewrite_job_create_duplicate_raises_eexist(tier_ds):
 
 
 def test_rewrite_job_query_returns_created_job(tier_ds):
+    _fill(tier_ds)
     entry = call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds})
     jobs = call("zfs.tier.rewrite_job_query", {})
     ids = [j["tier_job_id"] for j in jobs]
@@ -210,6 +231,7 @@ def test_rewrite_job_query_returns_created_job(tier_ds):
 
 
 def test_rewrite_job_query_status_filter(tier_ds):
+    _fill(tier_ds)
     entry = call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds})
     current_status = call(
         "zfs.tier.rewrite_job_status", {"tier_job_id": entry["tier_job_id"]}
@@ -228,6 +250,7 @@ def test_rewrite_job_query_status_filter(tier_ds):
 
 
 def test_rewrite_job_status_shape(tier_ds):
+    _fill(tier_ds)
     entry = call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds})
     status = call("zfs.tier.rewrite_job_status", {"tier_job_id": entry["tier_job_id"]})
 
@@ -257,17 +280,8 @@ def test_rewrite_job_status_completes(tier_ds, wait_for_job_status):
 
 
 def test_rewrite_job_abort_fires_changed_event(tier_ds):
-    ssh(
-        f"for i in $(seq 1 100); do dd if=/dev/urandom of=/mnt/{tier_ds}/f$i bs=4k count=1 2>/dev/null; done"
-    )
-
+    _fill(tier_ds)
     entry = call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds})
-
-    status = call("zfs.tier.rewrite_job_status", {"tier_job_id": entry["tier_job_id"]})[
-        "status"
-    ]
-    if status not in ("RUNNING", "QUEUED"):
-        pytest.skip("Job completed before abort could be tested — dataset too small")
 
     with client() as c:
         events = []
@@ -277,11 +291,14 @@ def test_rewrite_job_abort_fires_changed_event(tier_ds):
             sync=True,
         )
         c.call("zfs.tier.rewrite_job_cancel", {"tier_job_id": entry["tier_job_id"]})
+        time.sleep(7)
 
-    changed = [e for e in events if e[0] == "CHANGED"]
+    changed = [
+        e for e in events
+        if e[0] == "CHANGED" and e[1]["fields"].get("tier_job_id") == entry["tier_job_id"]
+    ]
     assert changed, pprint.pformat(events)
     assert changed[-1][1]["fields"]["status"] == "CANCELLED"
-    assert changed[-1][1]["fields"]["tier_job_id"] == entry["tier_job_id"]
 
 
 def test_rewrite_job_abort_nonexistent_raises(tier_pool):

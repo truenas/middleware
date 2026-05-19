@@ -71,8 +71,8 @@ def test_dataset_set_tier_with_active_job_returns_ebusy(tier_ds):
     refuses with EBUSY (tier.py:576-584). Pre-fill with enough data that
     the job stays active long enough to issue a competing set_tier."""
     ssh(
-        f"for i in $(seq 1 2000); do dd if=/dev/urandom of=/mnt/{tier_ds}/f$i "
-        "bs=16k count=1 2>/dev/null; done"
+        f"dd if=/dev/urandom of=/mnt/{tier_ds}/fillfile bs=1M count=100 "
+        "conv=fdatasync 2>/dev/null"
     )
     entry = call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds})
 

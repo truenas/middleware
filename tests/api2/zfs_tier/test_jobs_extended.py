@@ -23,14 +23,14 @@ from middlewared.test.integration.utils import call, client, ssh
 _FAKE_JOB_ID = "tank/nonexistent@00000000-0000-0000-0000-000000000000"
 
 
-def _populate(ds, n=20):
-    """Write `n` small files so the rewrite daemon has something to persist
-    a job state for. Empty datasets sometimes complete before the daemon
-    flushes any state to LMDB, leaving rewrite_job_status with nothing
-    to look up."""
+def _populate(ds):
+    """Write enough data that the rewrite daemon's job stays active across
+    the event source's 5s poll cadence and reporting_write_interval=60s.
+    Empty/small datasets complete before any LMDB write happens, leaving
+    nothing for rewrite_job_status / enum_jobs to find."""
     ssh(
-        f"for i in $(seq 1 {n}); do dd if=/dev/urandom of=/mnt/{ds}/f$i "
-        "bs=4k count=1 2>/dev/null; done"
+        f"dd if=/dev/urandom of=/mnt/{ds}/fillfile bs=1M count=100 "
+        "conv=fdatasync 2>/dev/null"
     )
 
 
@@ -110,6 +110,8 @@ def test_rewrite_job_query_multiple_status_filter_includes_active(tier_pool):
     call("pool.dataset.create", {"name": ds1})
     call("pool.dataset.create", {"name": ds2})
     try:
+        _populate(ds1)
+        _populate(ds2)
         e1 = call("zfs.tier.rewrite_job_create", {"dataset_name": ds1})
         e2 = call("zfs.tier.rewrite_job_create", {"dataset_name": ds2})
 
@@ -145,6 +147,8 @@ def test_rewrite_job_query_pagination_via_query_options(tier_pool):
     call("pool.dataset.create", {"name": ds1})
     call("pool.dataset.create", {"name": ds2})
     try:
+        _populate(ds1)
+        _populate(ds2)
         call("zfs.tier.rewrite_job_create", {"dataset_name": ds1})
         call("zfs.tier.rewrite_job_create", {"dataset_name": ds2})
 
