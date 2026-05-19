@@ -36,8 +36,6 @@ class Changelog:
 
 def _union_branches(schema: dict) -> list[dict] | None:
     """If `schema` is a oneOf/anyOf, return its branches; else None."""
-    if not isinstance(schema, dict):
-        return
     for combiner in ("oneOf", "anyOf"):
         if combiner in schema:
             return schema[combiner]
@@ -45,7 +43,7 @@ def _union_branches(schema: dict) -> list[dict] | None:
 
 def _branch_name(branch: dict) -> str:
     """Best-effort name for a union branch — prefer Pydantic's `title`, fall back to type."""
-    if isinstance(branch, dict) and (title := branch.get("title")):
+    if title := branch.get("title"):
         return title
     return _type_summary(branch)
 
@@ -82,34 +80,35 @@ def _diff_union(old: dict, new: dict, prefix: str) -> list[str]:
 
 def _diff_object_properties(old: dict, new: dict, label: str) -> list[str]:
     """Diff top-level properties of two object schemas. `label` is e.g. `parameter` or `field`."""
-    old_props = old.get("properties", {}) if isinstance(old, dict) else {}
-    new_props = new.get("properties", {}) if isinstance(new, dict) else {}
-    lines = []
-    for name in sorted(set(new_props) - set(old_props)):
-        lines.append(f"added {label} `{name}`")
-    for name in sorted(set(old_props) - set(new_props)):
-        lines.append(f"removed {label} `{name}`")
-    for name in sorted(set(old_props) & set(new_props)):
-        old_type = _type_summary(old_props[name])
-        new_type = _type_summary(new_props[name])
-        if old_type != new_type:
-            lines.append(f"{label} `{name}` type changed ({old_type} → {new_type})")
-    return lines
+    old_props = old.get("properties", {})
+    new_props = new.get("properties", {})
+    return [
+        f"added {label} `{name}`"
+        for name in sorted(set(new_props) - set(old_props))
+    ] + [
+        f"removed {label} `{name}`"
+        for name in sorted(set(old_props) - set(new_props))
+    ] + [
+        f"{label} `{name}` type changed ({old_type} → {new_type})"
+        for name in sorted(set(old_props) & set(new_props))
+        if (old_type := _type_summary(old_props[name])) != (new_type := _type_summary(new_props[name]))
+    ]
 
 
 def _diff_call_parameters(old: dict, new: dict) -> list[str]:
     """Brief top-level diff of the `Call parameters` array schema."""
-    old_items = old.get("prefixItems", []) if isinstance(old, dict) else []
-    new_items = new.get("prefixItems", []) if isinstance(new, dict) else []
-    old_by_name = {item.get("title"): item for item in old_items if isinstance(item, dict)}
-    new_by_name = {item.get("title"): item for item in new_items if isinstance(item, dict)}
+    old_by_name = {item["title"]: item for item in old["prefixItems"]}
+    new_by_name = {item["title"]: item for item in new["prefixItems"]}
 
-    lines = []
-    for name in sorted(k for k in new_by_name if k not in old_by_name and k is not None):
-        lines.append(f"added parameter `{name}`")
-    for name in sorted(k for k in old_by_name if k not in new_by_name and k is not None):
-        lines.append(f"removed parameter `{name}`")
-    for name in sorted(k for k in new_by_name if k in old_by_name and k is not None):
+    lines = [
+        f"added parameter `{name}`"
+        for name in sorted(new_by_name.keys() - old_by_name.keys())
+    ] + [
+        f"removed parameter `{name}`"
+        for name in sorted(old_by_name.keys() - new_by_name.keys())
+    ]
+
+    for name in sorted(new_by_name.keys() & old_by_name.keys()):
         old_param = old_by_name[name]
         new_param = new_by_name[name]
         if _union_branches(old_param) is not None and _union_branches(new_param) is not None:
@@ -117,10 +116,12 @@ def _diff_call_parameters(old: dict, new: dict) -> list[str]:
             if union_lines:
                 lines.extend(union_lines)
                 continue
+
         old_type = _type_summary(old_param)
         new_type = _type_summary(new_param)
         if old_type != new_type:
             lines.append(f"parameter `{name}` type changed ({old_type} → {new_type})")
+
     return lines
 
 
@@ -130,12 +131,14 @@ def _diff_return_value(old: dict, new: dict) -> list[str]:
         union_lines = _diff_union(old, new, "return value")
         if union_lines:
             return union_lines
-    old_type = _type_summary(old) if isinstance(old, dict) else "unknown"
-    new_type = _type_summary(new) if isinstance(new, dict) else "unknown"
+
+    old_type = _type_summary(old)
+    new_type = _type_summary(new)
     if old_type != new_type:
         return [f"return value type changed ({old_type} → {new_type})"]
-    if isinstance(old, dict) and isinstance(new, dict) and old.get("type") == "object":
+    if old.get("type") == "object":
         return _diff_object_properties(old, new, "field")
+
     return []
 
 
@@ -144,17 +147,18 @@ def compute_schema_diff(old: dict, new: dict) -> tuple[list[str], list[str]]:
     if old == new:
         return [], []
 
-    old_props = old.get("properties", {}) if isinstance(old, dict) else {}
-    new_props = new.get("properties", {}) if isinstance(new, dict) else {}
+    old_props = old["properties"]
+    new_props = new["properties"]
 
     call_diff = _diff_call_parameters(
-        old_props.get("Call parameters", {}),
-        new_props.get("Call parameters", {}),
+        old_props["Call parameters"],
+        new_props["Call parameters"],
     )
     return_diff = _diff_return_value(
-        old_props.get("Return value", {}),
-        new_props.get("Return value", {}),
+        old_props["Return value"],
+        new_props["Return value"],
     )
+
     return call_diff, return_diff
 
 
@@ -173,12 +177,14 @@ def _diff_items(
         new_schemas = cur_by_name[name].schemas
         if old_schemas == new_schemas:
             continue
+
         call_diff, return_diff = compute_schema_diff(old_schemas, new_schemas)
         if not call_diff and not return_diff:
             # The schemas differ but our shallow diff couldn't surface anything meaningful
             # (e.g. nested-only change). Record the method as changed with a generic note.
             call_diff = []
             return_diff = ["schema changed (see method page for details)"]
+
         changed.append(SchemaChange(name=name, call_params_diff=call_diff, return_value_diff=return_diff))
 
     return added, removed, changed
