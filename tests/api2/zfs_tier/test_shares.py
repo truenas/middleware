@@ -172,5 +172,3 @@ def test_smb_conf_shadow_no_dataset_traversal_when_tiering_enabled(tier_ds):
         assert value.lower() in ("yes", "true"), (
             f"Expected shadow:no_dataset_traversal=Yes/True when tiering enabled, got: {value!r}"
         )
-
-

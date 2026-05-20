@@ -125,7 +125,8 @@ def test_dataset_set_tier_with_migration(tier_ds):
     assert result["tier_job"]["status"] in ("QUEUED", "RUNNING", "COMPLETE")
 
     matching = [
-        e for e in events
+        e
+        for e in events
         if e[0] == "ADDED" and e[1]["fields"].get("dataset_name") == tier_ds
     ]
     assert matching, pprint.pformat(events)
@@ -185,7 +186,9 @@ def test_rewrite_job_create_fires_added_event(tier_ds_with_work):
             lambda t, **m: events.append((t, m)),
             sync=True,
         )
-        entry = c.call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds_with_work})
+        entry = c.call(
+            "zfs.tier.rewrite_job_create", {"dataset_name": tier_ds_with_work}
+        )
         # Event source polls every 5s; wait long enough for the next tick.
         time.sleep(7)
 
@@ -271,9 +274,7 @@ def test_rewrite_job_status_shape(tier_ds_with_work, wait_for_job_status):
 def test_rewrite_job_status_completes(tier_ds, wait_for_job_status):
     """A job on an empty dataset should reach COMPLETE quickly."""
     entry = call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds})
-    final = wait_for_job_status(
-        entry["tier_job_id"], {"COMPLETE", "ERROR"}, timeout=60
-    )
+    final = wait_for_job_status(entry["tier_job_id"], {"COMPLETE", "ERROR"}, timeout=60)
     assert final == "COMPLETE"
 
 
@@ -281,9 +282,7 @@ def test_rewrite_job_abort_fires_changed_event(tier_ds_with_work, wait_for_job_s
     entry = call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds_with_work})
     # Give the daemon time to register the job in LMDB so the event source's
     # first poll captures it before we cancel.
-    wait_for_job_status(
-        entry["tier_job_id"], {"QUEUED", "RUNNING"}, timeout=30
-    )
+    wait_for_job_status(entry["tier_job_id"], {"QUEUED", "RUNNING"}, timeout=30)
 
     with client() as c:
         events = []
@@ -299,8 +298,10 @@ def test_rewrite_job_abort_fires_changed_event(tier_ds_with_work, wait_for_job_s
         time.sleep(7)
 
     changed = [
-        e for e in events
-        if e[0] == "CHANGED" and e[1]["fields"].get("tier_job_id") == entry["tier_job_id"]
+        e
+        for e in events
+        if e[0] == "CHANGED"
+        and e[1]["fields"].get("tier_job_id") == entry["tier_job_id"]
     ]
     assert changed, pprint.pformat(events)
     assert changed[-1][1]["fields"]["status"] == "CANCELLED"
@@ -311,7 +312,9 @@ def test_rewrite_job_abort_nonexistent_raises(tier_pool):
     with pytest.raises(ValidationError) as ve:
         call(
             "zfs.tier.rewrite_job_cancel",
-            {"tier_job_id": f"{tier_pool['name']}/nonexistent@00000000-0000-0000-0000-000000000000"},
+            {
+                "tier_job_id": f"{tier_pool['name']}/nonexistent@00000000-0000-0000-0000-000000000000"
+            },
         )
     assert ve.value.errno == errno.ENOENT
 

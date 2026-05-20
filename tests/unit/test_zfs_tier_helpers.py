@@ -53,9 +53,7 @@ def _stats():
 
 
 def _exc(code, message="boom"):
-    return RewriteClientException(
-        JSONRPCError(code=code, message=message, data=None)
-    )
+    return RewriteClientException(JSONRPCError(code=code, message=message, data=None))
 
 
 # ----------------------------------------------------------------------------
@@ -77,9 +75,7 @@ def test_parse_tier_job_id_nested_dataset_name():
 
 def test_parse_tier_job_id_real_uuid_with_dashes():
     """The daemon hands back real uuid4 strings — dashes must be preserved."""
-    ds, uuid = _parse_tier_job_id(
-        "tank/data@deadbeef-0000-1111-2222-333344445555"
-    )
+    ds, uuid = _parse_tier_job_id("tank/data@deadbeef-0000-1111-2222-333344445555")
     assert ds == "tank/data"
     assert uuid == "deadbeef-0000-1111-2222-333344445555"
 

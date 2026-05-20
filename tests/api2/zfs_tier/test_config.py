@@ -167,8 +167,6 @@ def test_update_persists_metadata_reserve(tier_pool):
     new_val = 15 if original != 15 else 17
     try:
         call("zfs.tier.update", {"special_class_metadata_reserve_pct": new_val})
-        assert (
-            call("zfs.tier.config")["special_class_metadata_reserve_pct"] == new_val
-        )
+        assert call("zfs.tier.config")["special_class_metadata_reserve_pct"] == new_val
     finally:
         call("zfs.tier.update", {"special_class_metadata_reserve_pct": original})

@@ -287,7 +287,9 @@ def _job(dataset_name, job_uuid, status):
 def test_error_job_fires_oneshot_once(mock_enum_jobs, mock_get_info):
     from truenas_zfstierd_common import RewriteJobStatus
 
-    mock_enum_jobs.return_value = iter([_job("tank/data", "abc", RewriteJobStatus.ERROR)])
+    mock_enum_jobs.return_value = iter(
+        [_job("tank/data", "abc", RewriteJobStatus.ERROR)]
+    )
     mock_get_info.return_value = SimpleNamespace(error="permission denied", stats=None)
 
     mw, calls = _make_middleware(enabled=True, pools=[])
@@ -301,7 +303,9 @@ def test_error_job_fires_oneshot_once(mock_enum_jobs, mock_get_info):
     assert "tank/data@abc" in src._fired_terminal_jobs
 
     # Second poll with the same ERROR job — must NOT re-fire.
-    mock_enum_jobs.return_value = iter([_job("tank/data", "abc", RewriteJobStatus.ERROR)])
+    mock_enum_jobs.return_value = iter(
+        [_job("tank/data", "abc", RewriteJobStatus.ERROR)]
+    )
     calls["create"].clear()
     src.check_sync()
     assert [a for a in calls["create"] if isinstance(a, TierJobErrorAlert)] == []
@@ -344,7 +348,9 @@ def test_job_leaving_error_state_clears_alert(mock_enum_jobs, mock_get_info):
     from truenas_zfstierd_common import RewriteJobStatus
 
     # First poll: job is in ERROR state, alert is fired.
-    mock_enum_jobs.return_value = iter([_job("tank/data", "abc", RewriteJobStatus.ERROR)])
+    mock_enum_jobs.return_value = iter(
+        [_job("tank/data", "abc", RewriteJobStatus.ERROR)]
+    )
     mock_get_info.return_value = SimpleNamespace(error="boom", stats=None)
     mw, calls = _make_middleware(enabled=True, pools=[])
     src = _make_source(mw)
@@ -352,7 +358,9 @@ def test_job_leaving_error_state_clears_alert(mock_enum_jobs, mock_get_info):
     assert "tank/data@abc" in src._fired_terminal_jobs
 
     # Second poll: job is now RUNNING (recovered) — clear the alert.
-    mock_enum_jobs.return_value = iter([_job("tank/data", "abc", RewriteJobStatus.RUNNING)])
+    mock_enum_jobs.return_value = iter(
+        [_job("tank/data", "abc", RewriteJobStatus.RUNNING)]
+    )
     calls["delete"].clear()
     src.check_sync()
     assert "tank/data@abc" not in src._fired_terminal_jobs
@@ -368,7 +376,9 @@ def test_job_disappearing_from_enum_drops_tracking(mock_enum_jobs, mock_get_info
     in-memory set drops it so a future re-creation would re-fire."""
     from truenas_zfstierd_common import RewriteJobStatus
 
-    mock_enum_jobs.return_value = iter([_job("tank/data", "abc", RewriteJobStatus.ERROR)])
+    mock_enum_jobs.return_value = iter(
+        [_job("tank/data", "abc", RewriteJobStatus.ERROR)]
+    )
     mock_get_info.return_value = SimpleNamespace(error="boom", stats=None)
     mw, _ = _make_middleware(enabled=True, pools=[])
     src = _make_source(mw)
@@ -385,7 +395,9 @@ def test_job_disappearing_from_enum_drops_tracking(mock_enum_jobs, mock_get_info
 # ----------------------------------------------------------------------------
 
 
-@patch("middlewared.alert.source.zfs_tier.enum_jobs", side_effect=Exception("daemon down"))
+@patch(
+    "middlewared.alert.source.zfs_tier.enum_jobs", side_effect=Exception("daemon down")
+)
 def test_job_check_failure_doesnt_block_special_vdev_check(_enum):
     mw, calls = _make_middleware(
         enabled=True,

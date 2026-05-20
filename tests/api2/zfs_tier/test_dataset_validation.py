@@ -95,9 +95,7 @@ def test_create_inherit_under_performance_parent_auto_snaps_performance(
 def test_create_inherit_under_regular_parent_auto_snaps_regular(tier_ds_regular):
     child, ssb = _child_ssb(tier_ds_regular, "reg_child")
     try:
-        assert ssb == 0, (
-            f"Expected child of REGULAR parent to inherit 0, got {ssb}"
-        )
+        assert ssb == 0, f"Expected child of REGULAR parent to inherit 0, got {ssb}"
         ds = call("pool.dataset.query", [["name", "=", child]], {"get": True})
         assert ds["tier"] is not None
         assert ds["tier"]["tier_type"] == "REGULAR"

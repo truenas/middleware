@@ -44,11 +44,16 @@ def tier_pool():
         reset_systemd_svcs("truenas_zfstierd")
         ssh("systemctl start truenas_zfstierd")
         for _ in range(20):
-            if ssh("systemctl is-active truenas_zfstierd 2>/dev/null || true").strip() == "active":
+            if (
+                ssh("systemctl is-active truenas_zfstierd 2>/dev/null || true").strip()
+                == "active"
+            ):
                 break
             time.sleep(0.5)
         else:
-            raise AssertionError("truenas_zfstierd failed to reach 'active' state within 10s")
+            raise AssertionError(
+                "truenas_zfstierd failed to reach 'active' state within 10s"
+            )
         try:
             yield pool
         finally:
@@ -78,7 +83,10 @@ def tier_ds(tier_pool):
         yield ds_name
     finally:
         for job in call("zfs.tier.rewrite_job_query", {}):
-            if job["dataset_name"] == ds_name and job["status"] in ("QUEUED", "RUNNING"):
+            if job["dataset_name"] == ds_name and job["status"] in (
+                "QUEUED",
+                "RUNNING",
+            ):
                 try:
                     call(
                         "zfs.tier.rewrite_job_cancel",

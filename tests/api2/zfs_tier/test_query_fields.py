@@ -75,9 +75,7 @@ def test_pool_dataset_query_tier_is_null_when_globally_disabled(tier_ds):
 
     A future change might switch to always setting tier=None — accept both."""
     with _temporarily_disabled():
-        ds = call(
-            "pool.dataset.query", [["name", "=", tier_ds]], {"get": True}
-        )
+        ds = call("pool.dataset.query", [["name", "=", tier_ds]], {"get": True})
         assert ds.get("tier") is None
 
 

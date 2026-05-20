@@ -328,9 +328,7 @@ def test_rewrite_job_create_args_requires_dataset_name():
 
 def test_rewrite_job_create_args_rejects_empty_dataset_name():
     with pytest.raises(ValidationError):
-        ZfsTierRewriteJobCreateArgs(
-            zfs_tier_rewrite_job_create={"dataset_name": ""}
-        )
+        ZfsTierRewriteJobCreateArgs(zfs_tier_rewrite_job_create={"dataset_name": ""})
 
 
 # ----------------------------------------------------------------------------
@@ -360,9 +358,7 @@ def test_rewrite_job_query_args_aliased_filters_and_options():
 
 def test_rewrite_job_query_args_rejects_bogus_status_in_list():
     with pytest.raises(ValidationError):
-        ZfsTierRewriteJobQueryArgs(
-            zfs_tier_rewrite_job_query={"status": ["BOGUS"]}
-        )
+        ZfsTierRewriteJobQueryArgs(zfs_tier_rewrite_job_query={"status": ["BOGUS"]})
 
 
 # ----------------------------------------------------------------------------
