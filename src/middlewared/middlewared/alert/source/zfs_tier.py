@@ -14,7 +14,6 @@ from middlewared.alert.base import (
 )
 from middlewared.plugins.zfs.tier import special_vdev_thresholds
 
-
 _TERMINAL_STATUSES = (RewriteJobStatus.ERROR, RewriteJobStatus.COMPLETE)
 
 
