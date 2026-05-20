@@ -66,6 +66,9 @@ class NVMetNamespaceModel(sa.Model):
 
 class NVMetNamespaceService(SharingService):
 
+    share_task_type = 'NVMe-oF'
+    include_tier_info = False
+
     # For SharingService
     path_field = 'device_path'
     path_resolution_filters = [['nvmet_namespace_device_type', '=', NAMESPACE_DEVICE_TYPE.FILE.db]]

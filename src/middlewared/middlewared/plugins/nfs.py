@@ -408,6 +408,7 @@ class NFSShareModel(sa.Model):
 
 class SharingNFSService(SharingService):
 
+    include_tier_info = True
     share_task_type = 'NFS'
 
     @private
@@ -955,6 +956,7 @@ class SharingNFSService(SharingService):
         data["hosts"] = " ".join(data["hosts"])
         data["security"] = [s.lower() for s in data["security"]]
         data.pop(self.locked_field, None)
+        data.pop('tier', None)
         return data
 
 

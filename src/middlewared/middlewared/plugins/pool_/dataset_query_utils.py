@@ -5,6 +5,7 @@ from typing import TypeAlias
 import truenas_pylibzfs
 
 from middlewared.plugins.container.utils import CONTAINER_DS_NAME
+from middlewared.plugins.zfs.tier import get_dataset_tier_info_cached
 from middlewared.plugins.zfs_.utils import TNUserProp
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils import BOOT_POOL_NAME_VALID
@@ -144,6 +145,10 @@ class QueryFiltersCallbackState:
     When True, system datasets matching INTERNAL_DATASETS patterns and boot
     pools will be excluded from query results. Allows for flexible control
     over when system datasets should be included in results."""
+    tier_enabled: bool = False
+    """When True, tier info is fetched per FILESYSTEM row inside generic_query_callback."""
+    pool_special_cache: dict = field(default_factory=dict)
+    """Cache of {pool_name -> has_special_vdevs} populated during iteration."""
 
 
 # FIXME: At time of writing, calling pool.dataset.query
@@ -957,6 +962,9 @@ def generic_query_callback(hdl, state: QueryFiltersCallbackState):
             # If snapshot iteration fails, initialized values remain
             pass
 
+    if state.tier_enabled and info.get('type') == 'FILESYSTEM':
+        info['tier'] = get_dataset_tier_info_cached(hdl, state.pool_special_cache)
+
     data = info
     # Note: Filtering and select will be applied at the end in generic_query function
 
@@ -1031,6 +1039,7 @@ def generic_query(
     options_in: dict,
     extra: dict,
     exclude_internal_datasets: bool = True,
+    tier_enabled: bool = False,
 ):
     """
     Generic query function for ZFS resources with filtering, pagination, and hierarchy support.
@@ -1082,6 +1091,8 @@ def generic_query(
             ),
         ),
         exclude_internal_datasets=exclude_internal_datasets,
+        tier_enabled=tier_enabled,
+        pool_special_cache={},
     )
 
     # do iteration
