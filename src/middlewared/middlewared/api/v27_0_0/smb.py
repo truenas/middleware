@@ -22,6 +22,7 @@ from middlewared.utils.lang import undefined
 from middlewared.utils.smb import SearchProtocol, SMBSharePurpose, SMBUnixCharset, validate_smb_path_suffix
 
 from .common import QueryFilters, QueryOptions
+from .zfs_tier import TierInfo
 
 __all__ = [
     'SharingSMBGetaclArgs', 'SharingSMBGetaclResult',
@@ -757,6 +758,11 @@ class SharingSMBEntry(BaseModel):
     ])
     """ Additional configuration related to the configured SMB share purpose. If null, then the default \
     options related to the share purpose will be applied. """
+    tier: TierInfo | None = None
+    """ Storage tier in which the share's underlying dataset is located. This field is read-only; \
+    configure the dataset's tier via `zfs.tier.dataset_set_tier`. \
+    NOTE: this is a licensed feature. Will be `null` if TrueNAS is unlicensed, if tiering is disabled, \
+    or if the pool has no SPECIAL vdev."""
 
     @classmethod
     def normalize_legacy_fields(cls, data_in: dict) -> dict:
@@ -832,6 +838,7 @@ class SmbShareCreate(SharingSMBEntry):
     dataset: Excluded = excluded_field()
     relative_path: Excluded = excluded_field()
     locked: Excluded = excluded_field()
+    tier: Excluded = excluded_field()
 
     @model_validator(mode='after')
     def check_purpose_options(self) -> Self:

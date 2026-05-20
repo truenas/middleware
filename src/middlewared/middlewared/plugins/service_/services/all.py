@@ -38,6 +38,7 @@ from .snmp import SNMPService
 from .ssh import SSHService
 from .sssd import SSSDService
 from .truecommand import TruecommandService
+from .truenas_zfstierd import TruenasZfstierdService
 from .truesearch import TruesearchService
 from .ups import UPSService
 from .webshare import WebShareService
@@ -83,6 +84,7 @@ all_services = [
     TimeservicesService,
     TruecommandService,
     TruesearchService,
+    TruenasZfstierdService,
     UserService,
     WebShareService,
 ]
