@@ -1,3 +1,5 @@
+import os
+
 import dns
 import dns.resolver
 import middlewared.sqlalchemy as sa
@@ -10,13 +12,17 @@ from middlewared.api.current import (
     DirectoryServicesCertificateChoicesArgs, DirectoryServicesCertificateChoicesResult,
     DirectoryServicesSyncKeytabArgs, DirectoryServicesSyncKeytabResult,
 )
+from middlewared.plugins.directoryservices_.secrets import delete_machine_account_secrets
 from middlewared.plugins.directoryservices_.util_cache import expire_cache
 from middlewared.service import ConfigService, private, job
 from middlewared.service_exception import CallError, MatchNotFound, ValidationErrors
 from middlewared.utils.directoryservices.ad import get_domain_info, lookup_dc
+from middlewared.utils.directoryservices.ad_constants import MACHINE_ACCOUNT_KT_NAME
+from middlewared.utils.directoryservices.ipa_constants import IpaConfigName
 from middlewared.utils.directoryservices.krb5 import (
     ktutil_list_impl, kdc_saf_cache_get, kdc_saf_cache_remove
 )
+from middlewared.utils.directoryservices.krb5_constants import KRB_Keytab
 from middlewared.utils.directoryservices.krb5_error import KRB5Error
 from middlewared.utils.directoryservices.constants import (
     DSCredType, DomainJoinResponse, DSStatus, DSType, DEF_SVC_OPTS
@@ -773,9 +779,17 @@ class DirectoryServices(ConfigService):
         Reset all directory services fields to null / disabled. This is an internal method
         that should not be called by other parts of middleware without careful design and
         consideration as it does not reconfigure running services.
+
+        When the prior service_type was AD or IPA we additionally clear the local
+        domain-bound state (secrets.tdb, the cifs.secrets DB backup, the kerberos realm
+        and keytab DB rows, and /etc/krb5.keytab). Without this cleanup a subsequent
+        re-enable would short-circuit on stale state via _test_is_joined / ALREADY_JOINED
+        and the user's "reset" would not actually have reset anything.
         """
         config = await self.middleware.call('datastore.config', 'directoryservices')
         pk = config.pop('id')
+        old_service_type = config.get('service_type')
+        old_kerberos_realm_id = config.get('kerberos_realm_id')
 
         for key in list(config.keys()):
             if key == 'enable':
@@ -788,8 +802,84 @@ class DirectoryServices(ConfigService):
                 config[key] = None
 
         await self.middleware.call('datastore.update', 'directoryservices', pk, config)
+
+        if old_service_type in (DSType.AD.value, DSType.IPA.value):
+            await self.middleware.call(
+                'directoryservices.reset_local_domain_state',
+                old_service_type, old_kerberos_realm_id
+            )
+
         await self.middleware.run_in_thread(expire_cache)
         await self.middleware.run_in_thread(kdc_saf_cache_remove)
+
+    @private
+    def reset_local_domain_state(self, old_service_type, old_kerberos_realm_id):
+        """ Remove on-disk and DB-stored state that ties this server to a specific
+        AD or IPA bind. Called from reset() when the old service_type was AD or IPA.
+        Each step is idempotent so a follow-up call from _ad_cleanup / _ipa_cleanup
+        is harmless. Synchronous because every step is either a quick datastore call
+        or a quick TDB op -- middleware.call() runs us in the io thread pool. """
+        smb_config = self.middleware.call_sync('smb.config')
+        workgroup = smb_config['workgroup']
+
+        realm = None
+        if old_kerberos_realm_id is not None:
+            realm_rows = self.middleware.call_sync(
+                'kerberos.realm.query', [['id', '=', old_kerberos_realm_id]]
+            )
+            if realm_rows:
+                realm = realm_rows[0]['realm']
+
+        # Samba secrets: surgical delete of the AD/IPA bind entries for this
+        # workgroup + realm, leaving local-only keys (SAM/SID, SECRETS/GUID,
+        # SECRETS/LOCAL_SCHANNEL_KEY, etc.) intact. Mirrors what samba's
+        # `secrets_delete_machine_password_ex` does on `net ads leave`.
+        delete_machine_account_secrets(
+            workgroup, realm, smb_config['stateful_failover']
+        )
+
+        # DB-stored backup of secrets.tdb. Cleared by setting cifs.secrets to NULL.
+        # The cifs row id is hardcoded as 1 (single-row table) consistent with the
+        # rest of the codebase (smb.py and secrets.py both assume id=1 for this row).
+        self.middleware.call_sync(
+            'datastore.update', 'services.cifs', 1,
+            {'secrets': None}, {'prefix': 'cifs_srv_'}
+        )
+
+        # Keytab DB entries appropriate to the prior bind type
+        if old_service_type == DSType.AD.value:
+            kt_names = (MACHINE_ACCOUNT_KT_NAME,)
+        else:
+            kt_names = (
+                IpaConfigName.IPA_HOST_KEYTAB.value,
+                IpaConfigName.IPA_SMB_KEYTAB.value,
+                IpaConfigName.IPA_NFS_KEYTAB.value,
+            )
+        for kt_name in kt_names:
+            for entry in self.middleware.call_sync(
+                'kerberos.keytab.query', [['name', '=', kt_name]]
+            ):
+                self.middleware.call_sync(
+                    'datastore.delete', 'directoryservice.kerberoskeytab', entry['id']
+                )
+
+        # Realm DB entry (look up by stored FK id rather than realm string so we
+        # don't accidentally delete a realm a different config also references)
+        if old_kerberos_realm_id is not None:
+            try:
+                self.middleware.call_sync(
+                    'datastore.delete',
+                    'directoryservice.kerberosrealm',
+                    old_kerberos_realm_id
+                )
+            except MatchNotFound:
+                pass
+
+        # System keytab on disk
+        try:
+            os.unlink(KRB_Keytab.SYSTEM.value)
+        except FileNotFoundError:
+            pass
 
     @api_method(
         DirectoryServicesLeaveArgs, DirectoryServicesLeaveResult,
