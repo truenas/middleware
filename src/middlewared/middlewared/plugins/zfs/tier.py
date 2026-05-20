@@ -65,6 +65,27 @@ _ZFS_METADATA_RESERVE_PARAM = "zfs_special_class_metadata_reserve_pct"
 _DATASET_NOT_FOUND = object()  # sentinel: dataset does not exist (distinct from None = pool has no SPECIAL vdev)
 
 
+def special_vdev_thresholds(config: typing.Any) -> tuple[int, int]:
+    """Return ``(warning, critical)`` SPECIAL-vdev fill thresholds in percent.
+
+    ``critical`` is the lower of the user's configured cap
+    (``max_used_percentage``) and the actual ZFS overflow point
+    (``100 - special_class_metadata_reserve_pct``) — beyond which the
+    kernel stops sending small blocks to SPECIAL and spills them to
+    NORMAL, so letting the user set the cap higher than that is
+    meaningless.
+
+    ``warning`` sits 10 points below critical with a floor of 50% so the
+    warning stays useful even at the minimum cap settings.
+    """
+    critical = min(
+        config.max_used_percentage,
+        100 - config.special_class_metadata_reserve_pct,
+    )
+    warning = max(critical - 10, 50)
+    return warning, critical
+
+
 def _apply_metadata_reserve_pct(middleware: Middleware, value: int, ha_propagate: bool = False) -> None:
     """Write special_class_metadata_reserve_pct to the ZFS kernel module if it differs."""
     str_value = str(value)
@@ -383,7 +404,7 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
 
         space_info = await self.get_tier_space_info(dataset_name)
         if space_info is not None:
-            self._validate_tier_space(field, dataset_name, current_info["tier_type"], space_info)
+            self._validate_tier_space(field, dataset_name, current_info["tier_type"], space_info, config)
 
         async with RewriteClient() as client:
             try:
@@ -504,7 +525,12 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
 
     @private
     def _validate_tier_space(
-        self, field: str, dataset_name: str, target_tier: str, space_info: dict[str, typing.Any]
+        self,
+        field: str,
+        dataset_name: str,
+        target_tier: str,
+        space_info: dict[str, typing.Any],
+        config: typing.Any,
     ) -> None:
         """Raise ValidationError if moving dataset_name to target_tier would exceed the space threshold."""
         dataset_used = space_info["dataset_used"]
@@ -512,12 +538,14 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
             usable = space_info["class_special_usable"]
             if usable > 0:
                 projected_pct = (space_info["class_special_used"] + dataset_used) / usable * 100
-                if projected_pct > 70:
+                warning_pct, critical_pct = special_vdev_thresholds(config)
+                if projected_pct > warning_pct:
                     raise ValidationError(
                         field,
                         f"{dataset_name!r}: moving this dataset to the PERFORMANCE tier would bring "
-                        f"special vdev utilization to {projected_pct:.1f}%, exceeding the 70% warning "
-                        f"threshold (80% is the cutoff at which ZFS stops writing to the PERFORMANCE tier)",
+                        f"special vdev utilization to {projected_pct:.1f}%, exceeding the "
+                        f"{warning_pct}% warning threshold ({critical_pct}% is the configured "
+                        f"critical cap for the SPECIAL vdev)",
                         errno.ENOSPC,
                     )
         else:
@@ -586,7 +614,7 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
         if tier_type != current_info["tier_type"]:
             space_info = await self.get_tier_space_info(dataset_name)
             if space_info is not None:
-                self._validate_tier_space(field, dataset_name, tier_type, space_info)
+                self._validate_tier_space(field, dataset_name, tier_type, space_info, config)
 
         if tier_type == "PERFORMANCE":
             new_ssb = SPECIAL_SMALL_BLOCKS_PERFORMANCE

@@ -178,9 +178,10 @@ class SharingNFSEntry(BaseModel):
     Export path must be the root directory of a ZFS dataset.
     """
     tier: TierInfo | None = None
-    """ Storage tier in which share is located. This field is read-only. Tiering configuration is currently \
-    available exclusively through `pool.dataset.update`. \
-    NOTE: this is a licensed feature. Will be `null` if TrueNAS is unlicensed or if tiering is disabled."""
+    """ Storage tier in which the share's underlying dataset is located. This field is read-only; \
+    configure the dataset's tier via `zfs.tier.dataset_set_tier`. \
+    NOTE: this is a licensed feature. Will be `null` if TrueNAS is unlicensed, if tiering is disabled, \
+    or if the pool has no SPECIAL vdev."""
 
 
 class NfsShareCreate(SharingNFSEntry):
