@@ -3,8 +3,11 @@ import os
 from middlewared.api.current import ZFSResourceQuery
 from middlewared.service import CallError, private, Service
 from middlewared.plugins.pool_.utils import CreateImplArgs
+from middlewared.utils.filesystem.perms import enforce_dir_perms
 
-from .utils import container_dataset, container_dataset_mountpoint
+from .utils import CONTAINER_DS_NAME, container_dataset, container_dataset_mountpoint
+
+CONTAINER_DS_PARENT_DIR = f'/mnt/{CONTAINER_DS_NAME}'
 
 
 class ContainerService(Service):
@@ -42,11 +45,18 @@ class ContainerService(Service):
             await self.middleware.call(
                 'pool.dataset.create_impl',
                 CreateImplArgs(
-                    name=main_dataset, ztype='FILESYSTEM', zprops={'mountpoint': main_dataset_mountpoint},
+                    name=main_dataset,
+                    ztype='FILESYSTEM',
+                    zprops={
+                        'mountpoint': main_dataset_mountpoint,
+                        'acltype': 'posix',
+                        'aclmode': 'discard',
+                        'snapdir': 'hidden',
+                    },
                 )
             )
 
-        if not await self.middleware.run_in_thread(os.path.exists, main_dataset_mountpoint):
+        if not await self.middleware.run_in_thread(os.path.ismount, f'/mnt{main_dataset_mountpoint}'):
             await self.call2(self.s.zfs.resource.mount, main_dataset)
 
         for dataset in datasets:
@@ -56,3 +66,8 @@ class ContainerService(Service):
                     CreateImplArgs(name=dataset, ztype='FILESYSTEM')
                 )
             await self.call2(self.s.zfs.resource.mount, dataset)
+
+        # ZFS auto-creates CONTAINER_DS_PARENT_DIR as a side effect of mounting the
+        # per-pool dataset. Restrict it so non-root host users can't traverse to
+        # any container's on-disk rootfs (UID-collision exposure for apps user etc.).
+        await self.middleware.run_in_thread(enforce_dir_perms, CONTAINER_DS_PARENT_DIR)
