@@ -58,7 +58,7 @@ class AccountFlag(enum.StrEnum):
 
 
 class UserPamAuthenticatorPasswdDict(PasswdDict):
-    grouplist: tuple[int,]
+    grouplist: tuple[int, ...]
     local: bool
     account_attributes: list[AccountFlag]
 
@@ -141,11 +141,12 @@ class UserPamAuthenticator(TrueNASUserPamAuthenticator[UserPamAuthenticatorPassw
 
             grouplist.append(grp)
 
-        self.passwd = passwd | {
-            'grouplist': tuple(grouplist),
-            'local': passwd['source'] == NssModule.FILES.name,
-            'account_attributes': []
-        }  # type: ignore  # FIXME
+        self.passwd = UserPamAuthenticatorPasswdDict(
+            **passwd,
+            grouplist=tuple(grouplist),
+            local=passwd['source'] == NssModule.FILES.name,
+            account_attributes=[],
+        )
 
         # Swap out the NSS module name with strings middleware expects and begin populating account flags
         match self.passwd['source']:
