@@ -26,7 +26,7 @@ def _extract_identity(device: dict[str, Any]) -> str | None:
             return translate_device(device)
         case 'FILESYSTEM':
             if target := device['attributes'].get('target'):
-                return os.path.normpath(target)
+                return os.path.normpath(target)  # type: ignore[no-any-return]
             return None
         case 'PCI':
             return device['attributes'].get('pptdev')  # type: ignore[no-any-return]

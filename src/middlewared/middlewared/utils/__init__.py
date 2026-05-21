@@ -70,7 +70,7 @@ async def run(*args: Any, **kwargs: Any) -> subprocess.CompletedProcess[bytes] |
     try:
         currently_running_subprocesses.add(subprocess_identifier)
         try:
-            return await asyncio.to_thread(subprocess.run, args, **kwargs)
+            return await asyncio.to_thread(functools.partial(subprocess.run, args, **kwargs))
         finally:
             currently_running_subprocesses.discard(subprocess_identifier)
     except OSError as e:
