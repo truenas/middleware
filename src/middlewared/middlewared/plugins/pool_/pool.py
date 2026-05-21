@@ -508,6 +508,9 @@ class PoolService(CRUDService):
             'aclmode': 'discard',
             'compression': 'lz4',
             'xattr': 'sa',
+            'exec': 'off',
+            'devices': 'off',
+            'setuid': 'off',
             'mountpoint': f'/{data["name"]}',
             **encryption_dict
         }

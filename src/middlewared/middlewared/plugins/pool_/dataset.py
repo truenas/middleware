@@ -470,6 +470,11 @@ class PoolDatasetService(CRUDService):
         """
         Creates a dataset/zvol.
 
+        For `FILESYSTEM` datasets, this method forces `devices=off` and `setuid=off`, and
+        defaults `exec=off`, to limit the blast radius of user-supplied data. `exec` may be
+        overridden at create time by passing an explicit `ON` value; `devices` and `setuid`
+        are not exposed via the API.
+
         .. examples(websocket)::
 
           Create a dataset within tank pool.
@@ -523,7 +528,13 @@ class PoolDatasetService(CRUDService):
                     data['casesensitivity'] = 'INSENSITIVE'
                     data['acltype'] = 'NFSV4'
                     data['aclmode'] = 'RESTRICTED'
-                case 'APPS' | 'MULTIPROTOCOL' | 'NFS':
+                case 'APPS':
+                    data['casesensitivity'] = 'SENSITIVE'
+                    data['atime'] = 'OFF'
+                    data['acltype'] = 'NFSV4'
+                    data['aclmode'] = 'PASSTHROUGH'
+                    data['exec'] = 'ON'
+                case 'MULTIPROTOCOL' | 'NFS':
                     data['casesensitivity'] = 'SENSITIVE'
                     data['atime'] = 'OFF'
                     data['acltype'] = 'NFSV4'
@@ -725,6 +736,11 @@ class PoolDatasetService(CRUDService):
                 uprops[i.real_name] = transformed
             else:
                 zprops[i.real_name] = transformed
+
+        if data['type'] == 'FILESYSTEM':
+            zprops.setdefault('exec', 'off')
+            zprops['devices'] = 'off'
+            zprops['setuid'] = 'off'
 
         await self.middleware.call(
             'pool.dataset.create_impl',

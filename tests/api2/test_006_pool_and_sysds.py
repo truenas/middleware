@@ -113,6 +113,20 @@ def test_002_create_permanent_zpool(request, ws_client):
         fail(f'System dataset move failed: {sysdataset_update["error"]}')
 
 
+def test_002a_pool_root_has_hardened_mount_options(request, ws_client):
+    # Newly-created pools pin exec/devices/setuid=off LOCAL on the root dataset
+    # so the hardened defaults cascade to any child that doesn't explicitly
+    # override them (system datasets, external zfs tools, etc.).
+    depends(request, ['SYSDS'])
+    props = ws_client.call(
+        'zfs.resource.query',
+        {'paths': [pool_name], 'properties': ['exec', 'devices', 'setuid']},
+    )[0]['properties']
+    for p in ('exec', 'devices', 'setuid'):
+        assert props[p]['value'] == 'off', (p, props[p])
+        assert props[p]['source']['type'] == 'LOCAL', (p, props[p])
+
+
 @pytest.mark.dependency(name='POOL_FUNCTIONALITY1')
 def test_003_verify_unused_disk_and_sysds_functionality_on_2nd_pool(ws_client, pool_data):
     """

@@ -3,6 +3,7 @@ import os
 from truenas_os_pyutils.io import atomic_write
 
 __all__ = (
+    "CONTAINER_DS_MOUNT_PROPS",
     "CONTAINER_DS_NAME",
     "container_dataset",
     "container_dataset_mountpoint",
@@ -12,6 +13,15 @@ __all__ = (
 )
 
 CONTAINER_DS_NAME = ".truenas_containers"
+
+# Pinned LOCAL on the <pool>/.truenas_containers root to break the pool-root
+# default of exec/devices/setuid=off so container runtimes can execute
+# binaries, honor setuid bits, and access /dev nodes. Children inherit.
+CONTAINER_DS_MOUNT_PROPS = {
+    "exec": "on",
+    "devices": "on",
+    "setuid": "on",
+}
 
 
 def container_dataset(pool: str) -> str:

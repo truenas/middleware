@@ -536,6 +536,39 @@ def test_drift_repair_containers(started_ubuntu_container):
     assert _chokepoint_perms(CONTAINERS_CHOKEPOINT) == (0o700, 0, 0)
 
 
+def test_container_tree_keeps_exec_devices_setuid_on(started_ubuntu_container):
+    # Pool-root defaults of exec/devices/setuid=off would break container
+    # runtimes (binaries can't run, setuid bits are dropped, /dev nodes
+    # disabled). The .truenas_containers root pins all three LOCAL;
+    # containers/images and per-container clones inherit from it.
+    container_dataset = started_ubuntu_container["dataset"]
+    root = container_dataset.split("/.truenas_containers/", 1)[0] + "/.truenas_containers"
+    children = [
+        f"{root}/containers",
+        f"{root}/images",
+        container_dataset,
+    ]
+    results = {
+        r["name"]: r["properties"]
+        for r in call(
+            "zfs.resource.query",
+            {"paths": [root] + children, "properties": ["exec", "devices", "setuid"]},
+        )
+    }
+    assert set(results) == {root, *children}
+
+    for p in ("exec", "devices", "setuid"):
+        root_prop = results[root][p]
+        assert root_prop["value"] == "on", (p, root_prop)
+        assert root_prop["source"]["type"] == "LOCAL", (p, root_prop)
+
+    for child in children:
+        for p in ("exec", "devices", "setuid"):
+            child_prop = results[child][p]
+            assert child_prop["value"] == "on", (child, p, child_prop)
+            assert child_prop["source"]["type"] == "INHERITED", (child, p, child_prop)
+
+
 # /run/truenas_containers/root/ is the idmapped-bind-mount parent. libvirt_lxc
 # switches to mapped-root (host uid CONTAINER_ROOT_UID + slice * IDMAP_COUNT)
 # *before* the pivot_root setup that creates <UUID>/.oldroot, so it needs
