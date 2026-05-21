@@ -6,6 +6,7 @@ from middlewared.api import api_method
 from middlewared.api.current import PoolExportArgs, PoolExportResult
 from middlewared.service import CallError, Service, ValidationError, job, private
 from middlewared.utils.asyncio_ import asyncio_map
+from middlewared.utils.filesystem import attrs as fs_attrs
 
 
 class PoolService(Service):
@@ -78,10 +79,11 @@ class PoolService(Service):
                 await self.middleware.run_in_thread(os.path.exists, root_ds[0]['mountpoint'])
         ):
             # We should be removing immutable flag in this case if the path exists
-            await self.middleware.call('filesystem.set_zfs_attributes', {
-               'path': root_ds[0]['mountpoint'],
-               'zfs_file_attributes': {'immutable': False}
-            })
+            await self.middleware.run_in_thread(
+                fs_attrs.set_zfs_file_attributes_dict,
+                root_ds[0]['mountpoint'],
+                {'immutable': False},
+            )
 
         pool_count = await self.middleware.call('pool.query', [], {'count': True})
         if pool_count == 1 and await self.middleware.call('failover.licensed'):
@@ -187,3 +189,4 @@ class PoolService(Service):
 
         await self.middleware.call_hook('pool.post_export', pool=pool['name'], options=options)
         self.middleware.send_event('pool.query', 'REMOVED', id=oid)
+        await self.middleware.call('zpool.send_removed_event', oid)

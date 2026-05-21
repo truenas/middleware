@@ -15,6 +15,7 @@ from middlewared.api.current import (
     SystemGeneralUiV6addressChoicesArgs,
     SystemGeneralUiV6addressChoicesResult,
 )
+from middlewared.plugins.truenas_connect.utils import TNC_CERT_PREFIX
 from middlewared.service import CallError, Service, private
 
 from .utils import HTTPS_PROTOCOLS
@@ -82,7 +83,11 @@ class SystemGeneralService(Service):
             i.id: i.name
             for i in await self.middleware.call2(
                 self.s.certificate.query,
-                [("cert_type_CSR", "=", False), ("cert_type_CA", "=", False)],
+                [
+                    ("cert_type_CSR", "=", False),
+                    ("cert_type_CA", "=", False),
+                    ("name", "!^", TNC_CERT_PREFIX),
+                ],
             )
         }
 

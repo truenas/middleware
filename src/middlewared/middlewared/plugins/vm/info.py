@@ -20,7 +20,7 @@ from middlewared.api.current import (
     VMVirtualizationDetails,
 )
 from middlewared.service import ServiceContext
-from middlewared.utils import run
+from middlewared.utils.cpu import cpu_info
 from middlewared.utils.libvirt.display import DisplayDelegate
 from middlewared.utils.libvirt.nic import NICDelegate
 
@@ -34,8 +34,6 @@ BOOT_LOADER_OPTIONS = {
     'UEFI_CSM': 'Legacy BIOS',
 }
 MAXIMUM_SUPPORTED_VCPUS = 255
-RE_VENDOR_AMD = re.compile(r'AuthenticAMD')
-RE_VENDOR_INTEL = re.compile(r'GenuineIntel')
 
 
 def resolution_choices() -> dict[str, str]:
@@ -84,21 +82,6 @@ def log_file_download(context: ServiceContext, job: Job, vm_id: int) -> None:
             shutil.copyfileobj(f, job.pipes.output.w)
 
 
-def supports_virtualization() -> bool:
-    return kvm_supported()
-
-
-def amd_supports_svm() -> bool:
-    try:
-        with open('/proc/cpuinfo', 'r') as f:
-            for line in f:
-                if line.startswith('flags') and 'svm' in line.split():
-                    return True
-    except Exception:
-        pass
-    return False
-
-
 async def license_active(context: ServiceContext) -> bool:
     can_run_vms = True
     if await context.middleware.call('system.is_ha_capable'):
@@ -108,40 +91,35 @@ async def license_active(context: ServiceContext) -> bool:
 
 
 def virtualization_details() -> VMVirtualizationDetails:
-    return VMVirtualizationDetails(
-        supported=kvm_supported(),
-        error=None if kvm_supported() else 'Your CPU does not support KVM extensions',
-    )
+    supported = kvm_supported()
+    error = None
+    if not supported:
+        error = 'Your CPU does not support KVM extensions'
+    return VMVirtualizationDetails(supported=supported, error=error)
 
 
-async def vm_flags(context: ServiceContext) -> VMFlags:
+def vm_flags() -> VMFlags:
     flags = VMFlags(
         intel_vmx=False,
         unrestricted_guest=False,
         amd_rvi=False,
         amd_asids=False,
     )
-    if not await context.to_thread(supports_virtualization):
+    if not kvm_supported():
         return flags
 
-    cp = await run(['lscpu'], check=False)
-    if cp.returncode:
-        context.logger.error('Failed to retrieve CPU details: %s', cp.stderr.decode())
-        return flags
-
-    if RE_VENDOR_INTEL.findall(cp.stdout.decode()):
-        flags.intel_vmx = True
-        unrestricted_guest_path = '/sys/module/kvm_intel/parameters/unrestricted_guest'
-
-        def read_unrestricted_guest() -> None:
-            if os.path.exists(unrestricted_guest_path):
-                with open(unrestricted_guest_path, 'r') as f:
+    ci = cpu_info()  # cpu_info() is cached
+    match ci['vendor_id']:
+        case 'GenuineIntel':
+            flags.intel_vmx = 'vmx' in ci['cpu_flags']
+            try:
+                with open('/sys/module/kvm_intel/parameters/unrestricted_guest') as f:
                     flags.unrestricted_guest = f.read().strip().lower() == 'y'
-
-        await context.middleware.run_in_thread(read_unrestricted_guest)
-    elif RE_VENDOR_AMD.findall(cp.stdout.decode()):
-        flags.amd_rvi = True
-        flags.amd_asids = await context.middleware.run_in_thread(amd_supports_svm)
+            except Exception:
+                pass
+        case 'AuthenticAMD':
+            flags.amd_rvi = 'npt' in ci['cpu_flags']
+            flags.amd_asids = 'svm' in ci['cpu_flags']
 
     return flags
 

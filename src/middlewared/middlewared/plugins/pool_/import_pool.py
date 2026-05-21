@@ -17,6 +17,7 @@ from middlewared.api.current import (
 from middlewared.plugins.container.utils import container_dataset, container_dataset_mountpoint
 from middlewared.plugins.pool_.utils import UpdateImplArgs
 from middlewared.service import CallError, InstanceNotFound, Service, ValidationError, job, private
+from middlewared.utils.filesystem import attrs as fs_attrs
 from middlewared.utils.zfs import query_imported_fast_impl
 
 from .utils import ZPOOL_CACHE_FILE
@@ -194,10 +195,11 @@ class PoolService(Service):
             encrypted_mountpoint = os.path.join('/mnt', encrypted_ds)
             if await self.middleware.run_in_thread(os.path.exists, encrypted_mountpoint):
                 try:
-                    await self.middleware.call('filesystem.set_zfs_attributes', {
-                        'path': encrypted_mountpoint,
-                        'zfs_file_attributes': {'immutable': True}
-                    })
+                    await self.middleware.run_in_thread(
+                        fs_attrs.set_zfs_file_attributes_dict,
+                        encrypted_mountpoint,
+                        {'immutable': True},
+                    )
                 except Exception as e:
                     self.logger.warning('Failed to set immutable flag at %r: %r', encrypted_mountpoint, e)
 
@@ -343,6 +345,7 @@ class PoolService(Service):
                 pass
 
         self.middleware.send_event('pool.query', event_type, id=pool['id'], fields=pool)
+        await self.middleware.call('zpool.send_change_event', pool['name'], event_type)
 
     @private
     def recursive_mount(self, name):
@@ -555,11 +558,10 @@ class PoolService(Service):
                     # setting the root path as immutable, in a perfect world, will prevent
                     # the scenario that is describe above
                     self.logger.debug('Setting immutable flag at %r', pool_mount)
-                    self.middleware.call_sync('filesystem.set_zfs_attributes', {
-                        'path': pool_mount,
-                        'zfs_file_attributes': {'immutable': True}
-                    })
-                except CallError as e:
+                    fs_attrs.set_zfs_file_attributes_dict(
+                        pool_mount, {'immutable': True},
+                    )
+                except OSError as e:
                     self.logger.error('Unable to set immutable flag at %r: %s', pool_mount, e)
 
     @private

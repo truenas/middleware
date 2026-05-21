@@ -3,9 +3,9 @@ import argparse
 import sys
 from types import SimpleNamespace
 
-from ixhardware import TRUENAS_UNKNOWN, get_chassis_hardware, parse_dmi
-
 from middlewared.plugins.tunables import zfs_parameter_value
+from truenas_pydmi.models import TRUENAS_UNKNOWN
+from truenas_pydmi.reader import read_dmi
 from middlewared.utils.db import query_table, update_table
 
 KiB = 1024 ** 1
@@ -53,7 +53,7 @@ if __name__ == "__main__":
     parser.add_argument("--skip-unknown", action="store_true")
     args = parser.parse_args()
 
-    chassis_hardware = get_chassis_hardware(parse_dmi())
+    chassis_hardware = read_dmi().tn_model
 
     if args.skip_unknown and chassis_hardware == TRUENAS_UNKNOWN:
         sys.exit(0)

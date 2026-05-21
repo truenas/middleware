@@ -12,6 +12,7 @@ from middlewared.api.current import (
 )
 from middlewared.event import TypedEventSource
 from middlewared.service import CallError
+from middlewared.utils.timezone_choices import effective_timezone
 
 from .ix_apps.docker.utils import get_docker_client
 from .ix_apps.utils import AppState
@@ -66,7 +67,7 @@ class AppContainerLogsFollowTailEventSource(
         tail_lines: int | str = self.typed_arg.tail_lines or 'all'
 
         self.validate_log_args(app_name, container_id)
-        tz = ZoneInfo(self.middleware.call_sync('system.general.config')['timezone'])
+        tz = ZoneInfo(effective_timezone(self.middleware.call_sync('system.general.config')['timezone']))
         with get_docker_client() as docker_client:
             try:
                 container = docker_client.containers.get(container_id)

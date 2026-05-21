@@ -4,6 +4,7 @@ from typing import Any
 
 from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertClassConfig, AlertLevel, AlertSource
 from middlewared.alert.schedule import IntervalSchedule
+from middlewared.plugins.update_.profile_ import UpdateProfiles
 
 
 @dataclass(kw_only=True)
@@ -30,6 +31,13 @@ class HasUpdateAlert(AlertClass):
     )
 
 
+def _profile_display_name(name: str) -> str:
+    try:
+        return UpdateProfiles[name].display_name
+    except KeyError:
+        return "<Unknown>"
+
+
 class HasUpdateAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(hours=1))
     run_on_backup_node = False
@@ -40,21 +48,10 @@ class HasUpdateAlertSource(AlertSource):
             if update_status.status:
                 if not update_status.status.current_version.matches_profile:
                     config = await self.call2(self.s.update.config)
-                    profile_choices = await self.call2(self.s.update.profile_choices)
-
-                    if running_profile := profile_choices.get(update_status.status.current_version.profile):
-                        running = running_profile.name
-                    else:
-                        running = "<Unknown>"
-
-                    if selected_profile := profile_choices.get(config.profile):
-                        selected = selected_profile.name
-                    else:
-                        selected = "<Unknown>"
 
                     return Alert(CurrentlyRunningVersionDoesNotMatchProfileAlert(
-                        running=running,
-                        selected=selected,
+                        running=_profile_display_name(update_status.status.current_version.profile),
+                        selected=_profile_display_name(config.profile),
                     ))
 
                 if update_status.status.new_version:

@@ -6,8 +6,9 @@
 import pathlib
 import re
 
-from ixhardware import parse_dmi
 from pyudev import Context, DeviceNotFoundAtPathError, Devices
+
+from middlewared.utils.dmi import cached_dmi
 
 from .constants import (
     DISK_FRONT_KEY,
@@ -370,7 +371,7 @@ def map_r30_r60_or_fseries(model, ctx):
 
 
 def map_nvme():
-    model = parse_model(parse_dmi().system_product_name)
+    model = parse_model(cached_dmi().system.product_name)
     ctx = Context()
     if model in (
         ControllerModels.R50.value,

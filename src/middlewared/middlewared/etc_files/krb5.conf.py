@@ -35,7 +35,11 @@ def generate_krb5_conf(
         raise FileShouldNotExist
 
     default_realm = ds_config['kerberos_realm']
-    kdc_override = kdc_saf_cache_get()
+    # Only the IP from the SAF cache is usable in a krb5.conf kdc= line. If we only have
+    # a hostname (legacy or IPA-only entries) we leave kdc_override unset and fall through
+    # to whatever the realm config / DNS lookup provides.
+    saf_entry = kdc_saf_cache_get()
+    kdc_override = saf_entry.get('ip') if saf_entry else None
 
     match directory_service['type']:
         case DSType.AD.value | DSType.IPA.value:
@@ -110,8 +114,8 @@ def generate_krb5_conf(
     if default_realm:
         libdefaults[str(KRB_LibDefaults.DEFAULT_REALM)] = default_realm
 
-    krbconf.add_libdefaults(libdefaults, krb_config['libdefaults_aux'])
-    krbconf.add_appdefaults(appdefaults, krb_config['appdefaults_aux'])
+    krbconf.add_libdefaults(libdefaults, krb_config['libdefaults_aux'], strict=False)
+    krbconf.add_appdefaults(appdefaults, krb_config['appdefaults_aux'], strict=False)
 
     return krbconf.generate()
 

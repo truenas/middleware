@@ -57,7 +57,9 @@ from middlewared.plugins.account_.constants import (
     ADMIN_GID,
     ADMIN_UID,
     ALLOWED_BUILTIN_GIDS,
+    CONTAINER_ROOT_UID,
     DEFAULT_HOME_PATH,
+    IDMAP_COUNT,
     MIN_AUTO_XID,
     NO_LOGIN_SHELL,
     SKEL_PATH,
@@ -79,6 +81,7 @@ from middlewared.utils.account.authenticator import AccountFlag, UserPamAuthenti
 from middlewared.utils.account.faillock import reset_tally, tally_locked_users
 from middlewared.utils.crypto import check_unixhash, generate_nt_hash, generate_string, sha512_crypt
 from middlewared.utils.directoryservices.constants import DSStatus, DSType
+from middlewared.utils.filesystem import attrs as fs_attrs
 from middlewared.utils.filter_list import filter_list
 from middlewared.utils.nss import grp, pwd
 from middlewared.utils.nss.nss_common import NssModule
@@ -692,6 +695,20 @@ class UserService(CRUDService):
 
         if data['uid'] is None:
             data['uid'] = self.get_next_uid()
+
+            # common_validation could not resolve a DIRECT mapping without a uid;
+            # now that one was auto-assigned, recheck against existing idmap claims.
+            idmap_verrors = ValidationErrors()
+            self.middleware.call_sync(
+                'user.validate_userns_idmap_conflict',
+                idmap_verrors, 'user_create', data.get('userns_idmap'), data['uid'], None,
+            )
+            if idmap_verrors:
+                with SYNC_NEXT_UID_LOCK:
+                    self.ReservedUids.remove_entry(data['uid'])
+                if group_created:
+                    self.middleware.call_sync('group.delete', data['group'])
+                idmap_verrors.check()
 
         new_homedir = False
         home_mode = data.pop('home_mode')
@@ -1460,6 +1477,45 @@ class UserService(CRUDService):
                     )
 
     @private
+    async def validate_userns_idmap_conflict(
+        self,
+        verrors: ValidationErrors,
+        schema: str,
+        userns_idmap,
+        uid: int | None,
+        exclude_id: int | None = None,
+    ) -> None:
+        """Verify the proposed userns_idmap doesn't collide with another local user's mapping.
+
+        `uid` is the user's host UID; it may be None during creation if not yet auto-assigned,
+        in which case a DIRECT mapping cannot be resolved and the check is deferred. Callers
+        that auto-assign the UID must re-invoke this check after assignment.
+        """
+        if not userns_idmap:
+            return
+        proposed = uid if userns_idmap == 'DIRECT' else userns_idmap
+        if proposed is None:
+            return
+        conflict_filters = [
+            ['local', '=', True],
+            ['userns_idmap', 'nin', [None, 0]],
+        ]
+        if exclude_id is not None:
+            conflict_filters.append(['id', '!=', exclude_id])
+        for other in await self.middleware.call('user.query', conflict_filters):
+            other_target = (
+                other['uid'] if other['userns_idmap'] == 'DIRECT'
+                else other['userns_idmap']
+            )
+            if other_target == proposed:
+                verrors.add(
+                    f'{schema}.userns_idmap',
+                    f'User {other["username"]!r} already maps to '
+                    f'container UID {proposed}.'
+                )
+                return
+
+    @private
     async def common_validation(
         self, verrors: ValidationErrors, data: dict, schema: str, group_ids: list[int], old: dict | None = None
     ) -> None:
@@ -1474,7 +1530,11 @@ class UserService(CRUDService):
             {'prefix': 'bsdusr_'}
         )
 
-        if data.get('userns_idmap'):
+        # Privileged-roles conflict can be introduced by either changing userns_idmap or
+        # changing the user's group membership, so the check needs to run on both paths.
+        if combined.get('userns_idmap') and (
+            'userns_idmap' in data or 'group' in data or 'groups' in data
+        ):
             if await self.middleware.call('group.query', [
                 ['local', '=', True],
                 ['roles', '!=', []],
@@ -1484,6 +1544,27 @@ class UserService(CRUDService):
                     f'{schema}.userns_idmap',
                     'User namespace idmaps may not be configured for privileged accounts.'
                 )
+
+        if data.get('userns_idmap'):
+            if old and old['builtin']:
+                verrors.add(
+                    f'{schema}.userns_idmap',
+                    'User namespace idmaps may not be configured for builtin accounts.'
+                )
+
+            combined_uid = combined.get('uid')
+            if combined_uid is not None and CONTAINER_ROOT_UID <= combined_uid < CONTAINER_ROOT_UID + IDMAP_COUNT:
+                verrors.add(
+                    f'{schema}.userns_idmap',
+                    f'User UID {combined_uid} falls within the host-side range reserved for '
+                    f'container userns mappings [{CONTAINER_ROOT_UID}, {CONTAINER_ROOT_UID + IDMAP_COUNT}); '
+                    'a user namespace idmap cannot be configured for it.'
+                )
+
+            await self.validate_userns_idmap_conflict(
+                verrors, schema, data['userns_idmap'], combined_uid,
+                exclude_id=old['id'] if old else None,
+            )
 
         if data.get('random_password'):
             if data.get('password'):
@@ -2101,6 +2182,17 @@ class GroupService(CRUDService):
         if data.get('gid') is None:
             data['gid'] = await self.get_next_gid()
 
+            # __common_validation could not resolve a DIRECT mapping without a gid;
+            # now that one was auto-assigned, recheck against existing idmap claims.
+            idmap_verrors = ValidationErrors()
+            await self.validate_userns_idmap_conflict(
+                idmap_verrors, 'group_create', data.get('userns_idmap'), data['gid'], None,
+            )
+            if idmap_verrors:
+                async with ASYNC_NEXT_GID_LOCK:
+                    self.ReservedGids.remove_entry(data['gid'])
+                idmap_verrors.check()
+
         group = data.copy()
         group['group'] = group.pop('name')
 
@@ -2388,6 +2480,45 @@ class GroupService(CRUDService):
 
         return grp_obj
 
+    @private
+    async def validate_userns_idmap_conflict(
+        self,
+        verrors: ValidationErrors,
+        schema: str,
+        userns_idmap,
+        gid: int | None,
+        exclude_id: int | None = None,
+    ) -> None:
+        """Verify the proposed userns_idmap doesn't collide with another local group's mapping.
+
+        `gid` is the group's host GID; it may be None during creation if not yet auto-assigned,
+        in which case a DIRECT mapping cannot be resolved and the check is deferred. Callers
+        that auto-assign the GID must re-invoke this check after assignment.
+        """
+        if not userns_idmap:
+            return
+        proposed = gid if userns_idmap == 'DIRECT' else userns_idmap
+        if proposed is None:
+            return
+        conflict_filters = [
+            ['local', '=', True],
+            ['userns_idmap', 'nin', [None, 0]],
+        ]
+        if exclude_id is not None:
+            conflict_filters.append(['id', '!=', exclude_id])
+        for other in await self.middleware.call('group.query', conflict_filters):
+            other_target = (
+                other['gid'] if other['userns_idmap'] == 'DIRECT'
+                else other['userns_idmap']
+            )
+            if other_target == proposed:
+                verrors.add(
+                    f'{schema}.userns_idmap',
+                    f'Group {other["name"]!r} already maps to '
+                    f'container GID {proposed}.'
+                )
+                return
+
     async def __common_validation(self, verrors, data, schema, pk=None):
 
         exclude_filter = [('id', '!=', pk)] if pk else []
@@ -2397,7 +2528,8 @@ class GroupService(CRUDService):
                 f'{schema}.smb', 'SMB groups may not be configured while SMB service backend is unitialized.'
             )
 
-        if 'userns_idmap' in data and pk:
+        entry = None
+        if pk and 'userns_idmap' in data:
             entry = await self.query([['local', '=', True], ['id', '=', pk]], {'get': True})
             if entry['roles']:
                 verrors.add(
@@ -2410,6 +2542,23 @@ class GroupService(CRUDService):
                     f'{schema}.userns_idmap',
                     'User namespace idmaps may not be configured for builtin accounts.'
                 )
+
+        effective_gid = entry['gid'] if entry else data.get('gid')
+        if (
+            data.get('userns_idmap')
+            and effective_gid is not None
+            and CONTAINER_ROOT_UID <= effective_gid < CONTAINER_ROOT_UID + IDMAP_COUNT
+        ):
+            verrors.add(
+                f'{schema}.userns_idmap',
+                f'Group GID {effective_gid} falls within the host-side range reserved for '
+                f'container userns mappings [{CONTAINER_ROOT_UID}, {CONTAINER_ROOT_UID + IDMAP_COUNT}); '
+                'a user namespace idmap cannot be configured for it.'
+            )
+
+        await self.validate_userns_idmap_conflict(
+            verrors, schema, data.get('userns_idmap'), effective_gid, exclude_id=pk,
+        )
 
         if 'name' in data:
             if data.get('smb'):
@@ -2560,10 +2709,11 @@ async def setup(middleware):
     try:
         # ensure that our default home path is always immutable. If it's not immutable then
         # pam_mkhomedir will start creating dirs within it on user login
-        await middleware.call('filesystem.set_zfs_attributes', {
-            'path': DEFAULT_HOME_PATH,
-            'zfs_file_attributes': {'immutable': True}
-        })
+        await middleware.run_in_thread(
+            fs_attrs.set_zfs_file_attributes_dict,
+            DEFAULT_HOME_PATH,
+            {'immutable': True},
+        )
     except Exception:
         middleware.logger.error('Failed to set immutable property on %r', DEFAULT_HOME_PATH, exc_info=True)
 

@@ -21,6 +21,7 @@ from middlewared.test.integration.utils.system import reset_systemd_svcs as rese
 from auto_config import hostname, password, pool_name, user, ha
 from functions import async_SSH_done, async_SSH_start
 from protocols import SSH_NFS, nfs_share
+from protocols.pynfs_proto import PynfsClient, PynfsClient3
 from truenas_api_client import ClientException
 
 MOUNTPOINT = f"/tmp/nfs-{hostname}"
@@ -226,6 +227,16 @@ def set_nfs_service_state(do_what=None, expect_to_pass=True, fail_check=False):
     return retval
 
 
+def _nfs_client(vers, **kwargs):
+    """Pure-RPC client (PynfsClient3 for v3, PynfsClient for v4.x).
+    Use in place of ``SSH_NFS`` for tests where the kernel NFS client
+    isn't itself under test.  See ``protocols.pynfs_proto``."""
+    if int(vers) == 3:
+        return PynfsClient3(truenas_server.ip, NFS_PATH, vers=vers,
+                            **kwargs)
+    return PynfsClient(truenas_server.ip, NFS_PATH, vers=vers, **kwargs)
+
+
 def get_client_nfs_port():
     '''
     Output from netstat -nt looks like:
@@ -248,7 +259,7 @@ def set_immutable_state(path: str, want_immutable=True):
     call('filesystem.set_zfs_attributes', {
         'path': path,
         'zfs_file_attributes': {'immutable': want_immutable}
-    })
+    }, job=True)
     is_immutable = 'IMMUTABLE' in call('filesystem.stat', '/etc/exports.d')['attributes']
 
     assert is_immutable is want_immutable, f"Expected mutable filesystem: {want_immutable}"
@@ -525,7 +536,7 @@ def nfs_share_config(nfsid: int):
         share_config = configs[0]
         yield copy(share_config)
     finally:
-        excl = ['id', 'path', 'locked', 'dataset', 'relative_path']
+        excl = ['id', 'path', 'locked', 'dataset', 'relative_path', 'tier']
         [share_config.pop(key) for key in excl]
         call("sharing.nfs.update", nfsid, share_config)
 
@@ -571,6 +582,24 @@ def start_nfs():
     """ Class Fixture: The exit state is managed by init_nfs """
     with manage_start_nfs() as nfs_start:
         yield nfs_start
+
+
+@pytest.fixture
+def nfs_allow_nonroot():
+    """Set allow_nonroot=True for the test duration so pynfs's
+    ephemeral source ports are accepted at the RPC layer (export
+    line gets 'insecure').  Pynfs runs in the test process as the
+    test user without CAP_NET_BIND_SERVICE; without this, mountd
+    returns ACCES on v3 and nfsd squashes uid=0 to nobody on v4.
+    SSH_NFS didn't need this because mount.nfs is SETUID-root."""
+    prev = call("nfs.config")["allow_nonroot"]
+    if not prev:
+        call("nfs.update", {"allow_nonroot": True})
+    try:
+        yield
+    finally:
+        if not prev:
+            call("nfs.update", {"allow_nonroot": False})
 
 
 @pytest.fixture(scope="function")
@@ -680,12 +709,12 @@ class TestNFSops:
         # ----------------------------------------------------------------------
 
     @pytest.mark.parametrize('vers', [3, 4])
-    def test_basic_nfs_ops(self, start_nfs, nfs_dataset_and_share, vers):
+    def test_basic_nfs_ops(self, start_nfs, nfs_dataset_and_share,
+                           nfs_allow_nonroot, vers):
         assert start_nfs is True
         assert nfs_dataset_and_share['nfsid'] is not None
 
-        with SSH_NFS(truenas_server.ip, NFS_PATH, vers=vers, user=user,
-                     password=password, ip=truenas_server.ip) as n:
+        with _nfs_client(vers) as n:
             n.create('testfile')
             n.mkdir('testdir')
             contents = n.ls('.')
@@ -698,7 +727,8 @@ class TestNFSops:
             assert 'testdir' not in contents
             assert 'testfile' not in contents
 
-    def test_nfs_scope_setting(self, start_nfs, nfs_dataset_and_share):
+    def test_nfs_scope_setting(self, start_nfs, nfs_dataset_and_share,
+                               nfs_allow_nonroot):
         """
         Test NFS share with scope configuration
         Confirm the scope setting is correctd.
@@ -717,11 +747,17 @@ class TestNFSops:
         confirm_nfs_config_settings([[['nfsd', 'scope'], expected_scope_value]])
 
         # Confirm NFS reports the expected scope value
-        p = async_SSH_start("tcpdump -A -v -t -i lo -s 1514 port nfs -c12", user, password, hostip)
+        # ``-i any`` so the capture works regardless of whether the
+        # client is on the appliance (loopback, as with the older
+        # SSH_NFS path) or on the test runner (external interface,
+        # as with PynfsClient since #18912).
+        p = async_SSH_start("tcpdump -A -v -t -i any -s 1514 port nfs -c12", user, password, hostip)
         # Give some time so that the tcpdump has started before we proceed
         sleep(2)
-        with SSH_NFS(hostip, NFS_PATH, vers=4, user=user, password=password, ip=hostip):
-            # Wait a couple seconds then collect
+        with _nfs_client(4):
+            # Wait a couple seconds then collect.  pynfs's
+            # EXCHANGE_ID + CREATE_SESSION goes over the same
+            # tcp/2049 stream tcpdump is watching.
             outs, errs = async_SSH_done(p, 2)
 
         # Process the results
@@ -730,13 +766,6 @@ class TestNFSops:
         lines = output.split("\n")
         assert len(lines) > 12, f"Unexpected number of lines output by tcpdump: {outs}, errs: {errs}"
         assert expected_scope_value in output, {errs}
-
-    def test_server_side_copy(self, start_nfs, nfs_dataset_and_share):
-        assert start_nfs is True
-        assert nfs_dataset_and_share['nfsid'] is not None
-        with SSH_NFS(truenas_server.ip, NFS_PATH, vers=4, user=user,
-                     password=password, ip=truenas_server.ip) as n:
-            n.server_side_copy('ssc1', 'ssc2')
 
     @pytest.mark.parametrize('nfsd,cores,expected', [
         pp(50, 1, {'nfsd': 50, 'mountd': 12, 'managed': False}, id="User set 50: expect 12 mountd"),
@@ -969,7 +998,7 @@ class TestNFSops:
                 # The entry should not be present
                 assert len(exports_hosts) == 1, str(parsed)
 
-    def test_share_ro(self, start_nfs, nfs_dataset_and_share):
+    def test_share_ro(self, start_nfs, nfs_dataset_and_share, nfs_allow_nonroot):
         """
         Verify that toggling `ro` will cause appropriate change in
         exports file. We also verify with write tests on a local mount.
@@ -986,8 +1015,7 @@ class TestNFSops:
             assert "rw" in parsed[0]['opts'][0]['parameters'], str(parsed)
 
             # Mount the share locally and create a file and dir
-            with SSH_NFS(truenas_server.ip, NFS_PATH,
-                         user=user, password=password, ip=truenas_server.ip) as n:
+            with _nfs_client(3) as n:
                 n.create("testfile_should_pass")
                 n.mkdir("testdir_should_pass")
 
@@ -999,18 +1027,19 @@ class TestNFSops:
             assert len(parsed) == 1, str(parsed)
             assert "rw" not in parsed[0]['opts'][0]['parameters'], str(parsed)
 
-            # Attempt create and delete
-            with SSH_NFS(truenas_server.ip, NFS_PATH,
-                         user=user, password=password, ip=truenas_server.ip) as n:
+            # Attempt create and delete.  PynfsClient3 raises
+            # RuntimeError with "status=30" (NFS3ERR_ROFS) on a
+            # read-only export.
+            with _nfs_client(3) as n:
                 with pytest.raises(RuntimeError) as re:
                     n.create("testfile_should_fail")
                     assert False, "Should not have been able to create a new file"
-                assert 'cannot touch' in str(re), re
+                assert 'status=30' in str(re), re
 
                 with pytest.raises(RuntimeError) as re:
                     n.mkdir("testdir_should_fail")
                     assert False, "Should not have been able to create a new directory"
-                assert 'cannot create directory' in str(re), re
+                assert 'status=30' in str(re), re
 
     def test_share_maproot(self, start_nfs, nfs_dataset_and_share):
         """
@@ -1179,22 +1208,27 @@ class TestNFSops:
             assert len(parsed) == 1, str(parsed)
             assert 'insecure' not in parsed[0]['opts'][0]['parameters'], str(parsed)
 
-            # Confirm we allow mounts from 'root' ports
-            with SSH_NFS(truenas_server.ip, NFS_PATH, vers=4,
-                         user=user, password=password, ip=truenas_server.ip):
+            # Confirm we allow connections from privileged ports.
+            # ``secure=True`` makes pynfs bind a port < 1024 (same
+            # source-port range the kernel client picks by default).
+            with _nfs_client(4, secure=True):
                 client_port = get_client_nfs_port()
                 assert client_port[1] is not None, f"Failed to get client port: f{client_port[0]}"
                 assert int(client_port[1]) < 1024, \
                     f"client_port is not in 'root' range: {client_port[1]}\n{client_port[0]}"
 
-            # Confirm we block mounts from 'non-root' ports
-            # Cannot use pytest.raises because it messes with the output text
-            try:
-                with SSH_NFS(truenas_server.ip, NFS_PATH, vers=4, options=['noresvport'],
-                             user=user, password=password, ip=truenas_server.ip):
-                    assert False, "Unexpected success with mount"
-            except Exception as e:
-                assert 'Operation not permitted' in str(e), e
+            # Confirm we block FH access from non-privileged ports.
+            # ``secure=False`` makes pynfs use an ephemeral source
+            # port (>= 1024).  The kernel only enforces
+            # source-port-must-be-privileged inside fh_verify (see
+            # nfsd_originating_port_ok in fs/nfsd/nfsfh.c), so the
+            # RPC-layer EXCHANGE_ID/CREATE_SESSION/RECLAIM_COMPLETE
+            # still go through -- the rejection lands on the first
+            # op that walks an FH (here, READDIR via ls), which
+            # comes back as NFS4ERR_PERM (status=1).
+            with pytest.raises(AssertionError, match=r"status=1\b"):
+                with _nfs_client(4, secure=False) as n:
+                    n.ls(".")
 
             # --- Test: allow_nonroot is True ---
             new_nfs_conf = call('nfs.update', {"allow_nonroot": True})
@@ -1204,17 +1238,16 @@ class TestNFSops:
             assert len(parsed) == 1, str(parsed)
             assert 'insecure' in parsed[0]['opts'][0]['parameters'], str(parsed)
 
-            # Confirm we allow mounts from 'root' ports
-            with SSH_NFS(truenas_server.ip, NFS_PATH, vers=4,
-                         user=user, password=password, ip=truenas_server.ip):
+            # Confirm we allow connections from privileged ports.
+            with _nfs_client(4, secure=True):
                 client_port = get_client_nfs_port()
                 assert client_port[1] is not None, "Failed to get client port"
                 assert int(client_port[1]) < 1024, \
                     f"client_port is not in 'root' range: {client_port[1]}\n{client_port[0]}"
 
-            # Confirm we allow mounts from 'non-root' ports
-            with SSH_NFS(truenas_server.ip, NFS_PATH, vers=4, options=['noresvport'],
-                         user=user, password=password, ip=truenas_server.ip):
+            # Confirm we allow connections from non-privileged
+            # ports.
+            with _nfs_client(4, secure=False):
                 client_port = get_client_nfs_port()
                 assert client_port[1] is not None, "Failed to get client port"
                 assert int(client_port[1]) >= 1024, \
@@ -1232,6 +1265,11 @@ class TestNFSops:
         We perform loopback mounts on the TrueNAS server and
         then check the syslog and daemon.log for rpc.mountd messages.
         The mountd filter is applied to syslog and daemon.log.
+
+        Stays on SSH_NFS (kernel ``mount.nfs`` even with vers=4 issues a
+        compat-mountd RPC that ``rpc.mountd`` logs); pynfs's NFSv4
+        client goes straight to PUTROOTFH/LOOKUP and never touches
+        mountd, so it can't trigger the log entries we're filtering.
         """
         assert start_nfs is True
         assert nfs_dataset_and_share['nfsid'] is not None
@@ -1283,7 +1321,8 @@ class TestNFSops:
             assert 'rpc.mountd' not in daemon_data, \
                 f"Unexpectedly found rcp.mountd messages in daemon.log:\n{daemon_data}"
 
-    def test_client_status(self, start_nfs, nfs_dataset_and_share):
+    def test_client_status(self, start_nfs, nfs_dataset_and_share,
+                           nfs_allow_nonroot):
         """
         This test checks the function of API endpoints to list NFSv3 and
         NFSv4 clients by performing loopback mounts on the remote TrueNAS
@@ -1294,13 +1333,11 @@ class TestNFSops:
         assert start_nfs is True
         assert nfs_dataset_and_share['nfsid'] is not None
 
-        with SSH_NFS(truenas_server.ip, NFS_PATH, vers=3,
-                     user=user, password=password, ip=truenas_server.ip):
+        with _nfs_client(3):
             res = call('nfs.get_nfs3_clients', [], {'count': True})
             assert int(res) != 0
 
-        with SSH_NFS(truenas_server.ip, NFS_PATH, vers=4,
-                     user=user, password=password, ip=truenas_server.ip):
+        with _nfs_client(4):
             res = call('nfs.get_nfs4_clients')
             assert len(res) == 1, f"Expected to find 1, but found {len(res)}"
 

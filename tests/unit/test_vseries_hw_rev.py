@@ -45,7 +45,7 @@ CASES = [
 @pytest.mark.parametrize('raw,expected', CASES)
 def test_is_vseries_v2_interconnect(raw, expected):
     with patch.object(
-        detect_utils, 'parse_dmi',
-        return_value=SimpleNamespace(system_version=raw),
+        detect_utils, 'cached_dmi',
+        return_value=SimpleNamespace(system=SimpleNamespace(version=raw)),
     ):
         assert detect_utils.is_vseries_v2_interconnect() is expected

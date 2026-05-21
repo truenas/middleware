@@ -1,5 +1,5 @@
 import asyncio
-from dataclasses import dataclass
+import dataclasses
 import errno
 import functools
 import json
@@ -7,20 +7,19 @@ import logging
 import subprocess
 import time
 import typing
-from typing import Any, Callable, Iterable, Sequence, TypeVar
+from typing import Any, Sequence
 
 from .prctl import die_with_parent
-from .threading import io_thread_pool_executor
 
 
 # Define Product Strings
-@dataclass(slots=True, frozen=True)
+@dataclasses.dataclass(slots=True, frozen=True)
 class ProductTypes:
     COMMUNITY_EDITION: str = 'COMMUNITY_EDITION'
     ENTERPRISE: str = 'ENTERPRISE'
 
 
-@dataclass(slots=True, frozen=True)
+@dataclasses.dataclass(slots=True, frozen=True)
 class ProductNames:
     PRODUCT_NAME: str = 'TrueNAS'
 
@@ -39,23 +38,9 @@ BRAND = ProductName.PRODUCT_NAME
 
 logger = logging.getLogger(__name__)
 
-_V = TypeVar('_V')
-
 
 class UnexpectedFailure(Exception):
     pass
-
-
-def bisect(condition: Callable[[_V], Any], iterable: Iterable[_V]) -> tuple[list[_V], list[_V]]:
-    a = []
-    b = []
-    for val in iterable:
-        if condition(val):
-            a.append(val)
-        else:
-            b.append(val)
-
-    return a, b
 
 
 currently_running_subprocesses: set[str] = set()
@@ -81,15 +66,11 @@ async def run(*args: Any, **kwargs: Any) -> subprocess.CompletedProcess[bytes] |
     kwargs.setdefault('close_fds', True)
     kwargs['preexec_fn'] = die_with_parent
 
-    loop = asyncio.get_event_loop()
     subprocess_identifier = f"{time.monotonic()}: {args!r}"
     try:
         currently_running_subprocesses.add(subprocess_identifier)
         try:
-            return await loop.run_in_executor(
-                io_thread_pool_executor,
-                functools.partial(subprocess.run, args, **kwargs),
-            )
+            return await asyncio.to_thread(subprocess.run, args, **kwargs)
         finally:
             currently_running_subprocesses.discard(subprocess_identifier)
     except OSError as e:
@@ -99,7 +80,7 @@ async def run(*args: Any, **kwargs: Any) -> subprocess.CompletedProcess[bytes] |
         raise
 
 
-@dataclass(slots=True, frozen=True, kw_only=True)
+@dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
 class SwInfo:
     stable: bool
     version: str
@@ -174,14 +155,3 @@ def are_indices_in_consecutive_order(arr: Sequence[int]) -> bool:
         if arr[i] != arr[i - 1] + 1:
             return False
     return True
-
-
-class Nid:
-
-    def __init__(self, _id: int):
-        self._id = _id
-
-    def __call__(self) -> int:
-        num = self._id
-        self._id += 1
-        return num

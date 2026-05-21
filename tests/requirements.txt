@@ -11,5 +11,7 @@ wheel
 cython-iscsi @ git+https://github.com/truenas/cython-iscsi.git@tester
 PYSCSI @ git+https://github.com/truenas/python-scsi.git@tester
 nvmeof-client @ git+https://github.com/truenas/truenas_pynvmeof_client.git
+pynfs @ git+https://github.com/truenas/pynfs.git@truenas-pynfs-0.5
+xdrlib3
 zeroconf
 pyotp

@@ -16,7 +16,7 @@ from middlewared.api.current import (
     PoolProcessesResult,
     ZFSResourceQuery,
 )
-from middlewared.plugins.zpool import get_zpool_disks_impl, get_zpool_features_impl
+from middlewared.plugins.zpool import get_zpool_disks_impl, get_zpool_features_impl, is_upgraded_impl
 from middlewared.service import Service, ValidationError, private
 
 
@@ -163,8 +163,4 @@ class PoolService(Service):
             )
 
         pname = pool[0]['vol_name']
-        for feat, info in get_zpool_features_impl(tls.lzh, pname).items():
-            if info.state not in ('ENABLED', 'ACTIVE'):
-                return False
-
-        return True
+        return is_upgraded_impl(get_zpool_features_impl(tls.lzh, pname))

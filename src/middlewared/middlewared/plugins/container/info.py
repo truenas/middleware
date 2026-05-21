@@ -1,4 +1,4 @@
-from ixhardware.chassis import TRUENAS_UNKNOWN
+from truenas_pydmi.models import TRUENAS_UNKNOWN
 
 from middlewared.api.current import ZFSResourceQuery
 from middlewared.plugins.zfs.utils import get_encryption_info

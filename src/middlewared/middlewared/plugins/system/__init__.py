@@ -2,6 +2,7 @@ import os
 import uuid
 
 from middlewared.utils import BOOTREADY
+from middlewared.utils.timezone_choices import effective_timezone
 
 from .utils import BOOTENV_FIRSTBOOT_SENTINEL, FIRST_INSTALL_SENTINEL, lifecycle_conf
 
@@ -45,6 +46,7 @@ async def setup(middleware):
     await middleware.run_in_thread(firstboot_after_upgrade, middleware)
 
     settings = await middleware.call('system.general.config')
-    middleware.logger.debug('Setting timezone to %r', settings['timezone'])
-    await middleware.call('core.environ_update', {'TZ': settings['timezone']})
+    tz = effective_timezone(settings['timezone'])
+    middleware.logger.debug('Setting timezone to %r', tz)
+    await middleware.call('core.environ_update', {'TZ': tz})
     await middleware.call('sysctl.set_zvol_volmode', 2)

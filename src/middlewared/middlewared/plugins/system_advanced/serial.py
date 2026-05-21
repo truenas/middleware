@@ -64,3 +64,8 @@ class SystemAdvancedService(Service):
 
         if generate_grub or restart_ttys:
             await self.middleware.call('etc.generate', 'grub')
+            if await self.middleware.call('failover.licensed'):
+                try:
+                    await self.middleware.call('failover.call_remote', 'etc.generate', ['grub'])
+                except Exception:
+                    self.logger.exception('failed to render grub.cfg on remote node')

@@ -125,6 +125,7 @@ from middlewared.plugins.vm import VMService
 from middlewared.plugins.webshare import WebshareService
 from middlewared.plugins.webshare.sharing import SharingWebshareService
 from middlewared.plugins.zfs.resource_crud import ZFSResourceService
+from middlewared.plugins.zfs.tier import ZfsTierService
 
 _SubHandler = typing.Callable[['Middleware', 'EventType', dict], typing.Awaitable[None]]
 SYSTEMD_EXTEND_USECS = 240000000  # 4mins in microseconds
@@ -208,6 +209,7 @@ class ZfsServicesContainer(BaseServiceContainer):
     def __init__(self, middleware: "Middleware"):
         super().__init__(middleware)
         self.resource = ZFSResourceService(middleware)
+        self.tier = ZfsTierService(middleware)
 
 
 class ServiceContainer(BaseServiceContainer):
@@ -245,6 +247,12 @@ class ServiceContainer(BaseServiceContainer):
         self.methods = get_methods(self)
         for method_name, method in self.methods.items():
             method.__func__.__method_name__ = method_name
+
+
+_AuditEvent = typing.Literal[
+    'METHOD_CALL', 'AUTHENTICATION', 'REBOOT', 'SHUTDOWN', 'LOGOUT',
+    'WEBSHELL_AUTHENTICATION', 'WEBSHELL_LOGOUT',
+]
 
 
 class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
@@ -1189,7 +1197,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
     def _build_audit_message_sync(
         self,
         app: App,
-        event: typing.Literal['METHOD_CALL', 'AUTHENTICATION', 'REBOOT', 'SHUTDOWN', 'LOGOUT'],
+        event: _AuditEvent,
         event_data: dict,
         success: bool,
     ) -> str:
@@ -1239,7 +1247,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
     def log_audit_message_sync(
         self,
         app: App,
-        event: typing.Literal['METHOD_CALL', 'AUTHENTICATION', 'REBOOT', 'SHUTDOWN', 'LOGOUT'],
+        event: _AuditEvent,
         event_data: dict,
         success: bool,
     ) -> None:
@@ -1255,7 +1263,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
     async def log_audit_message(
         self,
         app: App,
-        event: typing.Literal['METHOD_CALL', 'AUTHENTICATION', 'REBOOT', 'SHUTDOWN', 'LOGOUT'],
+        event: _AuditEvent,
         event_data: dict,
         success: bool,
     ) -> None:

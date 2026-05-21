@@ -55,6 +55,7 @@ from middlewared.alert.source import (  # noqa: F401
     snapshot_count,
     ssh_login_failures,
     syslog_ng,
+    timezone,
     truecommand,
     truenas_connect,
     truenas_verify,
@@ -65,5 +66,6 @@ from middlewared.alert.source import (  # noqa: F401
     vmware_snapshot,
     volume_status,
     web_ui_root_login,
+    zfs_tier,
     zpool_capacity,
 )

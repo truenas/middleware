@@ -8,6 +8,7 @@ import uuid
 
 from truenas_pylibvirt import DomainDoesNotExistError
 from truenas_pylibvirt.domain.base.configuration import parse_numeric_set
+from truenas_pylibvirt.utils import kvm_supported
 
 from middlewared.api.current import (
     QueryOptions,
@@ -30,7 +31,6 @@ from .info import (
     bootloader_ovmf_choices,
     cpu_model_choices,
     license_active,
-    supports_virtualization,
     vm_flags,
 )
 from .lifecycle import pylibvirt_vm
@@ -281,7 +281,7 @@ class VMServicePart(CRUDServicePart[VMEntry]):
 
         vcpus = data.vcpus * data.cores * data.threads
         if vcpus:
-            flags = await vm_flags(self)
+            flags = vm_flags()
             if vcpus > MAXIMUM_SUPPORTED_VCPUS:
                 verrors.add(
                     f'{schema_name}.vcpus',
@@ -295,7 +295,7 @@ class VMServicePart(CRUDServicePart[VMEntry]):
             elif flags.amd_rvi:
                 if vcpus > 1 and flags.amd_asids is False:
                     verrors.add(f'{schema_name}.vcpus', 'Only one virtual CPU is allowed in this system.')
-            elif not await self.to_thread(supports_virtualization):
+            elif not kvm_supported():
                 verrors.add(schema_name, 'This system does not support virtualization.')
 
         if data.arch_type or data.machine_type:

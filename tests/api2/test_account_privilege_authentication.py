@@ -9,6 +9,7 @@ from middlewared.service_exception import CallError
 from middlewared.test.integration.assets.account import user, unprivileged_user as unprivileged_user_template
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call, client, ssh, websocket_url
+from middlewared.test.integration.utils.audit import expect_audit_log
 from middlewared.test.integration.utils.shell import assert_shell_works
 
 logger = logging.getLogger(__name__)
@@ -178,16 +179,47 @@ def test_drop_privileges(unprivileged_user_token):
         assert ve.value.errno == errno.EACCES
 
 
-def test_token_auth_working_not_working_web_shell(unprivileged_user_token):
-    ws = websocket.create_connection(websocket_url() + "/websocket/shell")
-    try:
-        ws.send(json.dumps({"token": unprivileged_user_token}))
-        resp_opcode, msg = ws.recv_data()
-        assert json.loads(msg.decode())["msg"] == "failed"
-    finally:
-        ws.close()
+def test_token_auth_working_not_working_web_shell(unprivileged_user, unprivileged_user_token):
+    with expect_audit_log([{
+        "event": "WEBSHELL_AUTHENTICATION",
+        "event_data": {
+            "shell_type": "HOST",
+            "target": None,
+            "username": unprivileged_user.username,
+            "error": "web_shell privilege not granted",
+        },
+        "success": False,
+    }]):
+        ws = websocket.create_connection(websocket_url() + "/websocket/shell")
+        try:
+            ws.send(json.dumps({"token": unprivileged_user_token}))
+            resp_opcode, msg = ws.recv_data()
+            assert json.loads(msg.decode())["msg"] == "failed"
+        finally:
+            ws.close()
 
 
 @pytest.mark.timeout(30)
-def test_token_auth_working_web_shell(unprivileged_user_with_web_shell_token):
-    assert_shell_works(unprivileged_user_with_web_shell_token, "unprivilegedws")
+def test_token_auth_working_web_shell(unprivileged_user_with_web_shell, unprivileged_user_with_web_shell_token):
+    with expect_audit_log([
+        {
+            "event": "WEBSHELL_AUTHENTICATION",
+            "event_data": {
+                "shell_type": "HOST",
+                "target": None,
+                "username": unprivileged_user_with_web_shell.username,
+                "error": None,
+            },
+            "success": True,
+        },
+        {
+            "event": "WEBSHELL_LOGOUT",
+            "event_data": {
+                "shell_type": "HOST",
+                "target": None,
+                "username": unprivileged_user_with_web_shell.username,
+            },
+            "success": True,
+        },
+    ]):
+        assert_shell_works(unprivileged_user_with_web_shell_token, "unprivilegedws")
