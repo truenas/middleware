@@ -107,7 +107,7 @@ def __should_exclude_internal_paths(data: dict[str, Any]) -> bool:
     #   NOTE: (the `exclude_internal_paths` is a private
     #   internal argument that is set internally within
     #   middleware. It's not exposed to public.)
-    return data.get("exclude_internal_paths", True)  # type: ignore
+    return data.get("exclude_internal_paths", True)  # type: ignore[no-any-return]
 
 
 def query_impl(hdl: Any, data: dict[str, Any], tier_enabled: bool = False) -> list[dict[str, Any]]:

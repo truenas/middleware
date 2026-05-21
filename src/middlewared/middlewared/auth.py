@@ -251,7 +251,7 @@ class TokenSessionManagerCredentials(SessionManagerCredentials):
         assert self.pam_authenticated is False
 
         username = self.user['username'] if self.is_user_session else 'root'
-        pam_resp = self.authenticator.authenticate(username)
+        pam_resp = self.authenticator.authenticate(username, '')
         self.pam_authenticated = pam_resp.code == PAMCode.PAM_SUCCESS
         return pam_resp
 

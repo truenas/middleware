@@ -17,5 +17,5 @@ class ALUA_STATE(enum.IntEnum):
     OFFLINE = 14
     TRANSITIONING = 15
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.value)

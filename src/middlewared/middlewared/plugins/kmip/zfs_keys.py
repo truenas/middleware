@@ -136,11 +136,11 @@ class KMIPService(Service, KMIPServerMixin):
         conn_successful = self.middleware.call_sync('kmip.test_connection', None, True)
         if config['enabled'] and config['manage_zfs_keys']:
             if conn_successful:
-                failed = self.push_zfs_keys(tls, ids)  # type: ignore
+                failed = self.push_zfs_keys(tls, ids)
             else:
                 return
         else:
-            failed = self.pull_zfs_keys(tls)  # type: ignore
+            failed = self.pull_zfs_keys(tls)
         if failed:
             self.call_sync2(
                 self.s.alert.oneshot_create, KMIPZFSDatasetsSyncFailureAlert(datasets=','.join(failed))

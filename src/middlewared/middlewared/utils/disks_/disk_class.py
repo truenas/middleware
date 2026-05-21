@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import collections
 import contextlib
 import dataclasses
@@ -525,7 +527,7 @@ class DiskEntry:
         flags = os.O_NONBLOCK | (os.O_RDWR if writable else os.O_RDONLY)
         return os.open(self.devpath, flags), True
 
-    def sed_device_info(self, dev_fd: int | None = None) -> dict | None:
+    def sed_device_info(self, dev_fd: int | None = None) -> dict[str, typing.Any] | None:
         """Perform TCG Level 0 Discovery. No authentication required.
 
         Returns:
@@ -534,7 +536,7 @@ class DiskEntry:
         """
         fd, should_close = self._sed_open(dev_fd, writable=False)
         try:
-            return sed.get_device_info(fd)
+            return sed.get_device_info(fd)  # type: ignore[no-any-return]
         except Exception:
             return None
         finally:
@@ -546,7 +548,7 @@ class DiskEntry:
         info = self.sed_device_info(dev_fd)
         if info is None:
             return False
-        return info["locking"]["supported"]
+        return info["locking"]["supported"]  # type: ignore[no-any-return]
 
     def sed_status(self, dev_fd: int | None = None) -> str:
         """Return the SED status string for this disk.
@@ -719,7 +721,7 @@ class DiskEntry:
             if should_close:
                 os.close(fd)
 
-    def sed_locking_info(self, password: str, dev_fd: int | None = None) -> dict | None:
+    def sed_locking_info(self, password: str, dev_fd: int | None = None) -> dict[str, typing.Any] | None:
         """Query the global locking range (range 0) properties.
 
         Returns:
@@ -729,7 +731,7 @@ class DiskEntry:
         fd, should_close = self._sed_open(dev_fd, writable=False)
         try:
             info = sed.get_device_info(fd)
-            return sed.get_locking_info(fd, password.encode("utf-8"), device_info=info)
+            return sed.get_locking_info(fd, password.encode("utf-8"), device_info=info)  # type: ignore[no-any-return]
         except Exception:
             return None
         finally:

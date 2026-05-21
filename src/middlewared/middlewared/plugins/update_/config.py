@@ -27,7 +27,7 @@ class UpdateConfigPart(ConfigServicePart[UpdateEntry]):
     _default_entry = UpdateConfigSafeEntry
 
     async def config(self) -> UpdateEntry:
-        return await self.config_internal(allow_null_profile=False)  # type: ignore
+        return await self.config_internal(allow_null_profile=False)  # type: ignore[return-value]
 
     async def config_safe(self) -> UpdateConfigSafeEntry:
         return await self.config_internal(allow_null_profile=True)
