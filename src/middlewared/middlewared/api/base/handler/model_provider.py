@@ -110,6 +110,35 @@ class LazyModuleModelProvider(ModelProvider):
                 raise
 
 
+class ProxyModelProvider(ModelProvider):
+    """
+    Uses API models from another provider.
+    """
+
+    def __init__(self, model_provider: ModelProvider):
+        """
+        :param model_provider: Other `ModelProvider` instance.
+        """
+        self.model_provider = model_provider
+
+    def register_model(self, model_cls: type[BaseModel], *extra: Any) -> None:
+        """Register an API model.
+
+        :param model_cls: The model class to register.
+        :param *extra: Extra arguments are ignored.
+        """
+        pass
+
+    async def get_model(self, name: str) -> type[BaseModel]:
+        """Get API model by name.
+
+        :param name: Name of the model.
+        :return: The `BaseModel` class.
+        :raise KeyError: `name` is not a model registered with this `ModelProvider`.
+        """
+        return await self.model_provider.get_model(name)
+
+
 def models_from_module(module: ModuleType) -> dict[str, type[BaseModel]]:
     """Get all `BaseModel` subclasses that belong to a module.
 

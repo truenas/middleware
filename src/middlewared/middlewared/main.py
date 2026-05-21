@@ -34,8 +34,9 @@ from truenas_api_client import json
 
 import middlewared.service
 
+from .api.aliases import aliases as api_versions_aliases
 from .api.base.handler.dump_params import dump_params
-from .api.base.handler.model_provider import LazyModuleModelProvider, ModuleModelProvider
+from .api.base.handler.model_provider import LazyModuleModelProvider, ModuleModelProvider, ProxyModelProvider
 from .api.base.handler.result import serialize_result
 from .api.base.handler.version import APIVersion, APIVersionsAdapter
 from .api.base.model import BaseModel
@@ -351,19 +352,33 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
 
     def _load_api_versions(self) -> list[APIVersion]:
         versions = []
+
         api_dir = os.path.join(os.path.dirname(__file__), 'api')
-        api_versions = [
-            (version_dir.name.replace('_', '.'), f'middlewared.api.{version_dir.name}')
+        api_versions_with_module = {
+            version_dir.name.replace('_', '.'): f'middlewared.api.{version_dir.name}'
             for version_dir in sorted(pathlib.Path(api_dir).iterdir())
             if version_dir.name.startswith('v') and version_dir.is_dir() and (version_dir / '__init__.py').exists()
-        ]
-        for i, (version, module_name) in enumerate(api_versions):
-            if i == len(api_versions) - 1:
-                module_provider = ModuleModelProvider(module_name)
+        }
+        model_providers = {}
+        for i, (version, module_name) in enumerate(api_versions_with_module.items()):
+            if i == len(api_versions_with_module) - 1:
+                model_provider = ModuleModelProvider(module_name)
             else:
-                module_provider = LazyModuleModelProvider(io_thread_pool_executor, module_name)
+                model_provider = LazyModuleModelProvider(io_thread_pool_executor, module_name)
 
-            versions.append(APIVersion(version, module_provider))
+            model_providers[version] = model_provider
+
+        for api_version, alias in api_versions_aliases.items():
+            if api_version in model_providers:
+                raise RuntimeError(f"Both API module and API alias exist for API version {api_version!r}")
+
+            if (model_provider := model_providers.get(alias)) is None:
+                raise RuntimeError(f"API version {alias!r} (API version {api_version!r} is its alias) does not exist")
+
+            model_providers[api_version] = ProxyModelProvider(model_provider)
+
+        for api_version in sorted(set(api_versions_with_module.keys()) | set(api_versions_aliases.keys())):
+            versions.append(APIVersion(api_version, model_providers[api_version]))
 
         return versions
 
