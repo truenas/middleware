@@ -19,7 +19,6 @@ from assets.websocket.iscsi import (TUR, alua_enabled, initiator, initiator_port
 from assets.websocket.pool import zvol as zvol_dataset
 from assets.websocket.service import ensure_service_enabled, ensure_service_started
 from auto_config import extended_tests, ha, hostname, isns_ip, password, pool_name, user
-from functions import SSH_TEST
 from protocols import ISCSIDiscover, initiator_name_supported, iscsi_scsi_connection, isns_connection
 from pyscsi.pyscsi.scsi_sense import sense_ascq_dict, sense_key_dict
 from pytest_dependency import depends
@@ -30,6 +29,7 @@ from middlewared.test.integration.assets.iscsi import iscsi_auth as iscsi_auth_d
 from middlewared.test.integration.assets.pool import dataset, snapshot
 from middlewared.test.integration.utils import call, settle_ha, ssh
 from middlewared.test.integration.utils.client import truenas_server
+from middlewared.test.integration.utils.legacy_functions import SSH_TEST
 
 # Setup some flags that will enable/disable tests based upon the capabilities of the
 # python-scsi package in use

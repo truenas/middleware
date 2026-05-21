@@ -1,6 +1,6 @@
 import json
 import sys
-from functions import SSH_TEST, SRVTarget, get_host_ip
+from middlewared.test.integration.utils.legacy_functions import SSH_TEST, SRVTarget, get_host_ip
 from platform import system
 
 # sys.real_prefix only found in old virtualenv

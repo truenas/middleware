@@ -7,13 +7,13 @@ from base64 import b64decode, b64encode
 import pytest
 from pytest_dependency import depends
 
-from functions import SSH_TEST
 from auto_config import user, password
 from middlewared.test.integration.assets.account import user as create_user
 from middlewared.test.integration.assets.smb import copy_stream, get_stream, smb_share, smb_mount
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.utils.client import truenas_server
+from middlewared.test.integration.utils.legacy_functions import SSH_TEST
 
 # DO NOT change the order of these imports
 # or the ntstatus import will fail

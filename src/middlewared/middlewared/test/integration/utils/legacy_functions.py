@@ -1,8 +1,3 @@
-#!/usr/bin/env python3
-
-# Author: Eric Turgeon
-# License: BSD
-
 import enum
 import json
 import re
@@ -12,14 +7,9 @@ from urllib.parse import urlparse
 
 import requests
 
-from auto_config import password, user
-from middlewared.test.integration.utils import call, host
+from middlewared.test.integration.utils import call, host, password
 
 
-global header
-header = {'Content-Type': 'application/json', 'Vary': 'accept'}
-global authentication
-authentication = (user, password)
 RE_HTTPS = re.compile(r'^http(:.*)')
 
 
@@ -54,9 +44,12 @@ def POST(testpath, payload=None, controller_a=False, **optional):
     if optional.pop("anonymous", False):
         auth = None
     else:
-        auth = authentication
+        auth = ("root", password())
     files = optional.get("files")
-    headers = dict(({} if optional.get("force_new_headers") else header), **optional.get("headers", {}))
+    headers = dict(
+        ({} if optional.get("force_new_headers") else {'Content-Type': 'application/json', 'Vary': 'accept'}),
+        **optional.get("headers", {}),
+    )
     if payload is None:
         postit = requests.post(
             f'{url}{testpath}', headers=headers, auth=auth, files=files)
@@ -94,7 +87,7 @@ def SSH_TEST(command, username, passwrd, host=None, timeout=120):
             'result': process.returncode == 0}
 
 
-def async_SSH_start(command, username=user, passwrd=password, host=None):
+def async_SSH_start(command, username="root", passwrd=password, host=None):
     target = host or get_host_ip(SRVTarget.DEFAULT)
     cmd = [] if passwrd is None else ["sshpass", "-p", passwrd]
     cmd += [

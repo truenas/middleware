@@ -5,9 +5,9 @@ import tempfile
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import wait_on_job, POST
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call
+from middlewared.test.integration.utils.legacy_functions import wait_on_job, POST
 
 
 def upload_file(file_path, file_path_on_tn):

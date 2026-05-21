@@ -5,12 +5,12 @@ from time import sleep
 import pytest
 from assets.websocket.iscsi import initiator, portal, target, target_extent_associate
 from auto_config import hostname, pool_name
-from functions import SSH_TEST
 
 from middlewared.test.integration.assets.iscsi import iscsi_extent
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.utils.client import truenas_server
+from middlewared.test.integration.utils.legacy_functions import SSH_TEST
 
 try:
     from config import BSD_HOST, BSD_PASSWORD, BSD_USERNAME

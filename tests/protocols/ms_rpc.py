@@ -2,7 +2,7 @@ import re
 import subprocess
 
 from collections import namedtuple
-from functions import SRVTarget, get_host_ip
+from middlewared.test.integration.utils.legacy_functions import SRVTarget, get_host_ip
 
 RE_SAMR_ENUMDOMAINS = re.compile(r"name:\[(?P<name>\w+)\] idx:\[(?P<idx>\w+)\]")
 RE_SAMR_ENUMDOMUSER = re.compile(r"user:\[(?P<user>\w+)\] rid:\[(?P<rid>\w+)\]")

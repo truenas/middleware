@@ -1,7 +1,7 @@
 import sys
 import enum
 import subprocess
-from functions import SRVTarget, get_host_ip
+from middlewared.test.integration.utils.legacy_functions import SRVTarget, get_host_ip
 from platform import system
 from time import sleep
 
