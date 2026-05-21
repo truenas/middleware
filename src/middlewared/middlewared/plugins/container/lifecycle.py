@@ -1,5 +1,7 @@
 import errno
+import os
 
+import truenas_os
 from truenas_pylibvirt import (
     ContainerCapabilitiesPolicy, ContainerDomain, ContainerDomainConfiguration, ContainerIdmapConfiguration,
     ContainerIdmapConfigurationItem, NICDevice, NICDeviceType, Time,
@@ -13,9 +15,65 @@ from middlewared.api.current import (
 )
 from middlewared.plugins.account_.constants import CONTAINER_ROOT_UID, IDMAP_COUNT
 from middlewared.service import CallError, job, private, Service
+from middlewared.utils.filesystem.perms import enforce_dir_perms
 
 from .bridge import container_bridge_name, configure_container_bridge
+from .dataset import CONTAINER_DS_PARENT_DIR
 from .utils import container_instance_dataset_mountpoint, update_etc_hosts, write_etc_hostname
+
+IDMAPPED_ROOT_DIR = '/run/truenas_containers/root'
+
+# The full enumeration of host UIDs any container's container-uid-0 ever
+# maps to: CONTAINER_ROOT_UID + slice*IDMAP_COUNT for slice in range(1000).
+# - slice 0 is the DEFAULT-idmap row (stored internally; not user-settable).
+# - slice [1, 999] is the ISOLATED range per api/v27_0_0/container.py
+#   (PositiveInt with lt=1000).
+# - ContainerXID is `ge=1` in api/base/types/user.py, so no local account
+#   can ever claim container-uid 0; container 0 therefore always maps to
+#   CONTAINER_ROOT_UID + slice*IDMAP_COUNT for some slice in this range.
+# Static set -> no per-container ACL bookkeeping at all.
+_IDMAPPED_ROOT_ALLOWED_UIDS = frozenset(
+    CONTAINER_ROOT_UID + n * IDMAP_COUNT for n in range(1000)
+)
+
+
+def apply_idmapped_root_acl() -> None:
+    """Pin IDMAPPED_ROOT_DIR to root:root with a POSIX1E ACL granting `--x`
+    (search only) to every possible container-uid-0 host UID. Idempotent;
+    called from etc-render at boot and from container.start as drift repair.
+
+    fsetacl writes UGO/MASK through to the legacy mode bits, so a single
+    fsetacl is sole source of truth for both the ACL and the mode (visible
+    as 0o710 because MASK ends up in the group triad).
+    """
+    os.makedirs(IDMAPPED_ROOT_DIR, mode=0o700, exist_ok=True)
+    fd = truenas_os.openat2(
+        IDMAPPED_ROOT_DIR,
+        flags=os.O_DIRECTORY,
+        resolve=truenas_os.RESOLVE_NO_SYMLINKS,
+    )
+    try:
+        st = os.fstat(fd)
+        if st.st_uid != 0 or st.st_gid != 0:
+            os.fchown(fd, 0, 0)
+        truenas_os.fsetacl(fd, _build_idmapped_root_acl())
+    finally:
+        os.close(fd)
+
+
+def _build_idmapped_root_acl() -> 'truenas_os.POSIXACL':
+    P, T = truenas_os.POSIXPerm, truenas_os.POSIXTag
+    rwx = P.READ | P.WRITE | P.EXECUTE
+    nothing = P(0)
+    aces = [
+        truenas_os.POSIXAce(T.USER_OBJ, rwx),
+        truenas_os.POSIXAce(T.GROUP_OBJ, nothing),
+    ]
+    for uid in sorted(_IDMAPPED_ROOT_ALLOWED_UIDS):
+        aces.append(truenas_os.POSIXAce(T.USER, P.EXECUTE, id=uid))
+    aces.append(truenas_os.POSIXAce(T.MASK, P.EXECUTE))
+    aces.append(truenas_os.POSIXAce(T.OTHER, nothing))
+    return truenas_os.POSIXACL.from_aces(aces)
 
 
 class ContainerService(Service):
@@ -38,6 +96,9 @@ class ContainerService(Service):
     @api_method(ContainerStartArgs, ContainerStartResult, roles=["CONTAINER_WRITE"])
     def start(self, id_):
         """Start container."""
+        enforce_dir_perms(CONTAINER_DS_PARENT_DIR)
+        apply_idmapped_root_acl()
+
         container = self.middleware.call_sync("container.get_instance", id_)
         configure_container_bridge(self)
 
