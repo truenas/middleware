@@ -68,7 +68,7 @@ def get_manifest_file() -> UpdateManifest:
 async def fetch(context: ServiceContext, url: str) -> Any:
     await context.middleware.call('network.general.will_perform_activity', 'update')
 
-    async with ClientSession(**_opts) as client:  # type: ignore
+    async with ClientSession(**_opts) as client:  # type: ignore[arg-type]
         try:
             async with client.get(url) as resp:
                 return await resp.json()
@@ -190,7 +190,7 @@ async def release_notes(context: ServiceContext, train: str, filename: str) -> s
     if url in _release_notes_cache:
         return _release_notes_cache[url][0]
 
-    async with ClientSession(**_opts) as client:  # type: ignore
+    async with ClientSession(**_opts) as client:  # type: ignore[arg-type]
         try:
             async with client.get(url) as resp:
                 release_notes_text = await resp.text()

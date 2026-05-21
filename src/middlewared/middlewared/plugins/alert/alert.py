@@ -173,7 +173,7 @@ def get_alert_level(alert: Alert[Any], classes: dict[str, Any]) -> AlertLevel:
 
 
 def get_alert_policy(alert: Alert[Any], classes: dict[str, Any]) -> str:
-    return classes.get(alert.instance.config.name, {}).get("policy", DEFAULT_POLICY)  # type: ignore
+    return classes.get(alert.instance.config.name, {}).get("policy", DEFAULT_POLICY)  # type: ignore[no-any-return]
 
 
 def partition[T](predicate: Callable[[T], Any], iterable: Iterable[T]) -> tuple[list[T], list[T]]:
@@ -242,7 +242,7 @@ class AlertSerializer:
             self.product_type = await self.middleware.call2(self.middleware.services.alert.product_type)
             self.classes = (
                 await self.middleware.call2(self.middleware.services.alertclasses.config)
-            ).classes  # type: ignore
+            ).classes  # type: ignore[assignment]
             self.nodes = await self.middleware.call2(self.middleware.services.alert.node_map)
 
             self.initialized = True
@@ -726,7 +726,7 @@ class AlertService(Service):
 
             run_failover_related = time.monotonic() > self.blocked_failover_alerts_until
             if run_failover_related:
-                args = ([], {"connect_timeout": 2})  # type: ignore
+                args = ([], {"connect_timeout": 2})  # type: ignore[var-annotated]
 
                 # Do not run on backup if there is a software version mismatch
                 try:
@@ -892,7 +892,7 @@ class AlertService(Service):
     def __should_expire_alert(self, alert: Alert[Any]) -> bool:
         if isinstance(alert.instance, OneShotAlertClass):
             if alert.instance.config.expires_after is not None:
-                return alert.last_occurrence < utc_now() - alert.instance.config.expires_after  # type: ignore
+                return alert.last_occurrence < utc_now() - alert.instance.config.expires_after  # type: ignore[operator]
 
         return False
 
@@ -1092,7 +1092,7 @@ class AlertService(Service):
 
     @private
     async def product_type(self) -> str:
-        return await self.middleware.call("system.product_type")  # type: ignore
+        return await self.middleware.call("system.product_type")  # type: ignore[no-any-return]
 
 
 async def _event_system(middleware: Middleware, event_type: str, args: dict[str, Any]) -> None:

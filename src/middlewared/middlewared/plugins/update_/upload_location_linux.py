@@ -22,7 +22,7 @@ def create_upload_location(context: ServiceContext) -> str:
     if not os.path.ismount(UPLOAD_LOCATION):
         subprocess.run(
             ["mount", "-o", "size=2800M", "-t", "tmpfs", "none", UPLOAD_LOCATION], **run_kw,
-        )  # type: ignore
+        )  # type: ignore[call-overload]
 
     for item in os.listdir(UPLOAD_LOCATION):
         item = os.path.join(UPLOAD_LOCATION, item)

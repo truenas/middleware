@@ -536,7 +536,7 @@ class DiskEntry:
         """
         fd, should_close = self._sed_open(dev_fd, writable=False)
         try:
-            return sed.get_device_info(fd)  # type: ignore
+            return sed.get_device_info(fd)  # type: ignore[no-any-return]
         except Exception:
             return None
         finally:
@@ -548,7 +548,7 @@ class DiskEntry:
         info = self.sed_device_info(dev_fd)
         if info is None:
             return False
-        return info["locking"]["supported"]  # type: ignore
+        return info["locking"]["supported"]  # type: ignore[no-any-return]
 
     def sed_status(self, dev_fd: int | None = None) -> str:
         """Return the SED status string for this disk.
@@ -731,7 +731,7 @@ class DiskEntry:
         fd, should_close = self._sed_open(dev_fd, writable=False)
         try:
             info = sed.get_device_info(fd)
-            return sed.get_locking_info(fd, password.encode("utf-8"), device_info=info)  # type: ignore
+            return sed.get_locking_info(fd, password.encode("utf-8"), device_info=info)  # type: ignore[no-any-return]
         except Exception:
             return None
         finally:

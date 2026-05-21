@@ -48,7 +48,7 @@ def is_tally_locked(username: str) -> bool:
     if pam_log is None:
         raise RuntimeError('No keyring access')
 
-    return pam_log.is_tally_locked(username)  # type: ignore
+    return pam_log.is_tally_locked(username)  # type: ignore[no-any-return]
 
 
 def reset_tally(username: str) -> None:
@@ -56,7 +56,7 @@ def reset_tally(username: str) -> None:
     if pam_log is None:
         raise RuntimeError('No keyring access')
 
-    return pam_log.reset_tally(username)  # type: ignore
+    return pam_log.reset_tally(username)  # type: ignore[no-any-return]
 
 
 def tally_locked_users() -> set[str]:
@@ -65,4 +65,4 @@ def tally_locked_users() -> set[str]:
     if pam_log is None:
         raise RuntimeError('No keyring access')
 
-    return pam_log.tally_locked_users()  # type: ignore
+    return pam_log.tally_locked_users()  # type: ignore[no-any-return]

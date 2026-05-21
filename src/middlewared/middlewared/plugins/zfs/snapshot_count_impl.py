@@ -56,7 +56,7 @@ def __get_cached_count(cache_key: str) -> dict[str, Any]:
     """Retrieve cached snapshot count from TDB."""
     try:
         with get_tdb_handle(SNAP_COUNT_TDB_NAME, SNAP_COUNT_TDB_OPTIONS) as hdl:
-            return hdl.get(cache_key)  # type: ignore
+            return hdl.get(cache_key)  # type: ignore[return-value]
     except MatchNotFound:
         return {"changed_ts": None, "cnt": -1}
 
@@ -126,7 +126,7 @@ def __count_dataset_snapshots_cached(ds_hdl: Any, batch_ops: list[TDBBatchOperat
 
     if entry["changed_ts"] == changed_ts and entry["cnt"] >= 0:
         # Cache hit - return cached count
-        return entry["cnt"]  # type: ignore
+        return entry["cnt"]  # type: ignore[no-any-return]
 
     # Cache miss - count and update cache
     count = __count_dataset_snapshots_uncached(ds_hdl)

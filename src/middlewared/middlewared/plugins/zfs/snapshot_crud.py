@@ -647,7 +647,7 @@ class ZFSResourceSnapshotService(Service):
     @pass_thread_local_storage
     def holds_impl(self, tls: Any, path: str) -> tuple[str, ...]:
         rsrc = open_resource(tls, path)
-        return rsrc.get_holds()  # type: ignore
+        return rsrc.get_holds()  # type: ignore[no-any-return]
 
     @api_method(
         ZFSResourceSnapshotHoldsArgs,

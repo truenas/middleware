@@ -28,7 +28,7 @@ def privilege_has_webui_access(privilege: dict[str, Any]) -> bool:
 
 
 def credential_has_full_admin(credential: SessionManagerCredentials) -> bool:
-    if credential.is_user_session and 'FULL_ADMIN' in credential.user['privilege']['roles']:  # type: ignore
+    if credential.is_user_session and 'FULL_ADMIN' in credential.user['privilege']['roles']:  # type: ignore[attr-defined]
         return True
 
     if isinstance(credential, TruenasNodeSessionManagerCredentials):

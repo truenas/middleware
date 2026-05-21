@@ -131,7 +131,7 @@ def __should_exclude_internal_paths(data: dict[str, Any]) -> bool:
             # Someone is explicitly querying an internal path
             return False
     # Exclude internal paths by default
-    return data.get("exclude_internal_paths", True)  # type: ignore
+    return data.get("exclude_internal_paths", True)  # type: ignore[no-any-return]
 
 
 def __query_snapshot_directly(hdl: Any, snap_path: str, state: SnapshotQueryState) -> None:

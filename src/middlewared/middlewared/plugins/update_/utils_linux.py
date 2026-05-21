@@ -19,7 +19,7 @@ run_kw = dict(check=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, enco
 def mount_update(path: str) -> typing.Generator[str]:
     with tempfile.TemporaryDirectory() as mounted:
         try:
-            subprocess.run(["mount", "-t", "squashfs", "-o", "loop", path, mounted], **run_kw)  # type: ignore
+            subprocess.run(["mount", "-t", "squashfs", "-o", "loop", path, mounted], **run_kw)  # type: ignore[call-overload]
         except subprocess.CalledProcessError as e:
             raise CallError(f"Invalid update image file. Please, re-download update. Error: {e.stdout}")
         try:
