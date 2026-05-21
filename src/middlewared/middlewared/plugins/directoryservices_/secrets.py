@@ -67,6 +67,38 @@ def query_secrets_entries(filters: list, options: dict, cluster: bool) -> list:
         return filter_list(hdl.entries(), filters, options)
 
 
+def delete_machine_account_secrets(workgroup: str, realm: str | None, cluster: bool) -> None:
+    """ Surgical delete of the AD/IPA bind keys for ``workgroup`` (and ``realm`` if
+    provided). Mirrors samba's ``secrets_delete_machine_password_ex``: removes the
+    machine-account password / sec channel / domain SID / domain GUID / DES salt
+    entries while leaving local-only keys intact (``SAM/SID``,
+    ``SECRETS/SID/{netbios}``, ``SECRETS/GUID``, ``SECRETS/LOCAL_SCHANNEL_KEY``,
+    ``SECRETS/LDAP_BIND_PW``). Idempotent -- missing keys are ignored. """
+    wg = workgroup.upper()
+    keys = [
+        f'{Secrets.MACHINE_ACCT_PASS.value}/{wg}',
+        f'{Secrets.MACHINE_PASSWORD.value}/{wg}',
+        f'{Secrets.MACHINE_PASSWORD_PREV.value}/{wg}',
+        f'{Secrets.MACHINE_LAST_CHANGE_TIME.value}/{wg}',
+        f'{Secrets.MACHINE_SEC_CHANNEL_TYPE.value}/{wg}',
+        f'{Secrets.MACHINE_TRUST_ACCOUNT_NAME.value}/{wg}',
+        f'{Secrets.MACHINE_DOMAIN_INFO.value}/{wg}',
+        f'{Secrets.DOMTRUST_ACCT_PASS.value}/{wg}',
+        f'{Secrets.DOMAIN_SID.value}/{wg}',
+        f'{Secrets.DOMAIN_GUID.value}/{wg}',
+    ]
+    if realm:
+        keys.append(f'{Secrets.SALTING_PRINCIPAL.value}/DES/{realm.upper()}')
+
+    with get_tdb_handle(*_secrets_config(cluster)) as hdl:
+        for key in keys:
+            try:
+                hdl.delete(key)
+            except (MatchNotFound, RuntimeError):
+                # Idempotent: keys we never set or that samba already cleaned up are fine
+                pass
+
+
 def sync_with_tdb_secrets() -> None:
     with get_tdb_handle(*_secrets_config(True)) as hdl:
         hdl.sync_with_tdb(SECRETS_FILE)
@@ -211,7 +243,12 @@ class DomainSecrets(Service):
     async def backup(self):
         """
         store backup of secrets.tdb contents (keyed on current netbios name) in
-        freenas-v1.db file.
+        freenas-v1.db file. Only the current netbiosname's entry is retained --
+        backups under prior netbiosnames (from hostname changes on this server)
+        are dropped to prevent the DB row from accumulating full secret dumps
+        of historical hostnames indefinitely. In HA the netbiosname is shared
+        (it's the virtual SMB hostname, not per-controller) so pruning never
+        loses the standby's backup.
         """
         failover_status = await self.middleware.call('failover.status')
         if failover_status not in ('SINGLE', 'MASTER'):
@@ -227,11 +264,11 @@ class DomainSecrets(Service):
             self.logger.warning("Unable to parse secrets")
             return
 
-        db_secrets.update({f"{netbios_name.upper()}$": secrets})
+        fresh = {f"{netbios_name.upper()}$": secrets}
         await self.middleware.call(
             'datastore.update',
             'services.cifs', id_,
-            {'secrets': json.dumps(db_secrets)},
+            {'secrets': json.dumps(fresh)},
             {'prefix': 'cifs_srv_'}
         )
 
