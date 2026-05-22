@@ -13,7 +13,8 @@ from auto_config import extended_tests, ha, pool_name
 from protocols import iscsi_scsi_connection
 
 from middlewared.test.integration.assets.hostkvm import get_kvm_domain, poweroff_vm, reset_vm, start_vm
-from middlewared.test.integration.utils import call, settle_ha
+from middlewared.test.integration.assets.pool import dataset
+from middlewared.test.integration.utils import call, settle_ha, ssh
 from middlewared.test.integration.utils.client import truenas_server
 
 pytestmark = pytest.mark.skipif(not ha, reason='Tests applicable to HA only')
@@ -137,8 +138,48 @@ class TestFixtureConfiguredALUA:
                     _debug('Exception while waiting for failover event to complete')
                 sleep(10)
 
+    @pytest.fixture(scope="class")
+    def restore_active_node(self):
+        """Capture the MASTER at class entry; on class teardown reboot the
+        current MASTER if it has changed.
+
+        This is a class-scoped precursor to alua_configured (i.e.
+        alua_configured depends on it), so its setup runs first and its
+        teardown runs last -- after alua_configured has torn down ALUA,
+        the initiator/portal, and the iSCSI service. The reboot therefore
+        happens with the test-file's ALUA setup already gone, leaving the
+        cluster in a clean baseline state with the original active node
+        once again MASTER.
+
+        Tests do not need to take this fixture explicitly; depending on it
+        via alua_configured is sufficient.
+        """
+        initial_node = call("failover.node")
+        try:
+            yield
+        finally:
+            try:
+                current_node = call("failover.node")
+            except Exception:
+                current_node = None
+            if current_node and current_node != initial_node:
+                _debug(
+                    f"restore_active_node: current MASTER is Node "
+                    f"{current_node}; rebooting to restore Node {initial_node}"
+                )
+                try:
+                    call("system.reboot", "iSCSI ALUA test: restoring active node")
+                except Exception:
+                    # system.reboot may not return cleanly as the websocket
+                    # connection is torn down by the reboot itself.
+                    pass
+                self.wait_for_new_master(current_node)
+                self.wait_for_backup()
+                self.wait_for_settle()
+                _debug(f"restore_active_node: Node {initial_node} is MASTER again")
+
     @pytest.fixture(scope='class')
-    def alua_configured(self):
+    def alua_configured(self, restore_active_node):
         assert call('failover.config')['disabled'] is False
         with ensure_service_enabled(SERVICE_NAME):
             call('service.control', 'START', SERVICE_NAME, job=True)
@@ -600,3 +641,211 @@ class TestFixtureConfiguredALUA:
             assert newnode2 == fix_orig_active_node
             self.wait_for_backup()
             self.wait_for_settle()
+
+    # ------------------------------------------------------------------
+    # Regression test for the LUN-replace stall during failover.
+    #
+    # Background. iscsi.alua.become_active swaps each LUN from a dev_disk
+    # to a local zvol via a sysfs `replace` write. The kernel defers the
+    # cleanup of the OLD tgt_devs to a workqueue. That cleanup calls
+    # scst_clear_reservation -> scst_dlm_res_lock, which can stall for
+    # tens of seconds when the dead peer is still a DLM lockspace member.
+    # While stalled the worker holds scst_mutex, so subsequent replaces
+    # queue behind it. With a typical client config (~25 LUNs and active
+    # multipath sessions) the stall blows past the 15s budget enforced by
+    # failover.events.restart_services, leaving iSCSI half-swapped.
+    #
+    # The kernel parks the deferred cleanup on a list while
+    # async_lun_replace=1 and only releases it when the orchestrator
+    # writes 0 to the sysfs knob. Middleware writes 0 from
+    # iscsi.alua.reset_active, after dlm.reset_active has evicted the
+    # peer from the lockspaces.
+    #
+    # This test reproduces the production shape (2 targets with 25 + 10
+    # LUNs, multipath sessions on both controllers), triggers an
+    # ungraceful failover, and asserts that the failover-restart timeout
+    # message is absent from the new master's failover.log.
+    # ------------------------------------------------------------------
+
+    LUN_REPLACE_LAYOUT = (("big", 25), ("small", 10))
+    LUN_REPLACE_LUN_MB = 100
+
+    @contextlib.contextmanager
+    def target_lun_dataset(self, target_id, dataset_name, mb, lun):
+        """Like target_lun, but uses dataset() instead of zvol().
+
+        dataset() avoids the per-zvol SSH probe in zvol(), which matters
+        once we have ~35 LUNs to set up.
+        """
+        zvol_data = {
+            "type": "VOLUME",
+            "volsize": mb * MB,
+            "volblocksize": "16K",
+        }
+        with dataset(dataset_name, zvol_data, pool_name) as ds_path:
+            with zvol_extent(ds_path, dataset_name) as extent_config:
+                with target_extent_associate(
+                    target_id, extent_config["id"], lun
+                ) as associate_config:
+                    yield {
+                        "extent": extent_config,
+                        "associate": associate_config,
+                    }
+
+    @pytest.fixture
+    def fix_lun_replace_config(self, alua_configured):
+        """2 targets with 25 + 10 LUNs each. Function-scoped so it doesn't
+        coexist with fix_complex_alua_config or other class-scoped state."""
+        config = alua_configured
+        portal_id = config["portal"]["id"]
+        digits = "".join(random.choices(string.digits, k=4))
+        targets = {}
+        with contextlib.ExitStack() as es:
+            for suffix, luncount in self.LUN_REPLACE_LAYOUT:
+                namebase = f"{digits}lr{suffix}"
+                if self.VERBOSE:
+                    _debug(
+                        f"lun-replace: creating target {namebase} with {luncount} LUNs"
+                    )
+                tcfg = es.enter_context(
+                    target(f"target{namebase}", [{"portal": portal_id}])
+                )
+                tcfg["luns"] = {}
+                for lun in range(luncount):
+                    ext_name = f"extent{namebase}l{lun}"
+                    tcfg["luns"][lun] = es.enter_context(
+                        self.target_lun_dataset(
+                            tcfg["id"], ext_name, self.LUN_REPLACE_LUN_MB, lun
+                        )
+                    )
+                targets[suffix] = tcfg
+            sleep(2)
+            self.wait_for_settle()
+            yield targets
+            if self.VERBOSE:
+                _debug("lun-replace: tearing down targets")
+
+    @pytest.fixture
+    def fix_lun_replace_recovery(self, fix_get_domain):
+        """Yield the current-master domain info; on test completion, ensure
+        the original master VM is back online and the cluster has settled.
+
+        Runs regardless of whether the test body raised, so an assertion
+        failure in the middle of the failover doesn't leave the cluster in
+        a single-node state for whatever runs next.
+        """
+        yield fix_get_domain
+        domain = fix_get_domain["domain"]
+        _debug(f"lun-replace: (recovery) ensuring VM {domain} is running")
+        try:
+            start_vm(domain)
+        except Exception as e:
+            # Most likely the VM was already running (test body completed
+            # the recovery, or never powered it off). Move on.
+            _debug(f"lun-replace: (recovery) start_vm raised {e!r}; continuing")
+        _debug("lun-replace: (recovery) waiting for backup")
+        self.wait_for_backup()
+        _debug("lun-replace: (recovery) waiting for ALUA to settle")
+        self.wait_for_settle()
+        _debug("lun-replace: (recovery) cluster recovered")
+
+    @skip_extended_tests
+    @pytest.mark.timeout(1200)
+    def test_failover_lun_replace(
+        self, fix_lun_replace_config, fix_lun_replace_recovery
+    ):
+        """become_active LUN-replace loop must not stall on DLM during failover."""
+        targets = fix_lun_replace_config
+        node = fix_lun_replace_recovery["node"]
+        domain = fix_lun_replace_recovery["domain"]
+        iqns = {
+            suffix: f"{basename}:{tcfg['name']}" for suffix, tcfg in targets.items()
+        }
+
+        # The bug requires that the soon-to-be-new-master have at least one
+        # client iSCSI session at the moment of failover, so that
+        # __scst_acg_del_lun has tgt_devs to put on the async-cleanup list.
+        # One session to the BACKUP node on the 25-LUN target gives the
+        # standby's kernel 25 tgt_devs to free during become_active --
+        # plenty to trigger the race against scst_mutex.
+        standby_node = "B" if node == "A" else "A"
+        standby_ip = (
+            truenas_server.nodea_ip if standby_node == "A" else truenas_server.nodeb_ip
+        )
+        big_iqn = iqns["big"]
+
+        _debug(
+            f"lun-replace: master Node {node} ({domain}); opening session to STANDBY Node {standby_node} ({standby_ip}) {big_iqn}"
+        )
+        with iscsi_scsi_connection(standby_ip, big_iqn) as s:
+            s.testunitready()
+            _debug(
+                "lun-replace: session up; waiting for ALUA to settle before failover"
+            )
+            sleep(2)
+            self.wait_for_settle()
+
+            _debug(f"lun-replace: powering off VM {domain} (Node {node})")
+            poweroff_vm(domain)
+            sleep(10)
+
+            _debug("lun-replace: waiting for new master")
+            new_node = self.wait_for_new_master(node)
+            _debug(
+                f"lun-replace: new master is Node {new_node}; waiting for failover_in_progress to clear"
+            )
+            self.wait_for_failover_in_progress()
+            sleep(5)
+
+        # The session was to the standby (which survived the failover), so
+        # the close at this point is clean.
+        new_ip = truenas_server.nodea_ip if new_node == "A" else truenas_server.nodeb_ip
+        # Note: do NOT call wait_for_settle() here -- the original master is
+        # powered off, so iscsi.alua.settled cannot return True (it queries
+        # the peer via failover.call_remote). wait_for_settle() will run
+        # after recovery below, once both nodes are up again.
+        _debug(f"lun-replace: failover complete; new master IP is {new_ip}")
+
+        # Primary regression check: the 15s timeout never fired during the
+        # failover that just completed. The message comes from
+        # failover.events.restart_services -- see middleware/plugins/
+        # failover_/event.py -- and is logged to /var/log/failover.log.
+        _debug(
+            "lun-replace: checking /var/log/failover.log on new master for restart-timeout message"
+        )
+        result = ssh(
+            "grep -c 'Failed to restart service \"iscsitarget\" after' "
+            "/var/log/failover.log || true"
+        ).strip()
+        _debug(f"lun-replace: failover.log restart-timeout match count = {result!r}")
+        assert result == "0", (
+            f"failover.log on new master Node {new_node} reports "
+            f"iscsitarget restart timeout (grep -c returned {result!r}); "
+            f"LUN-replace regression?"
+        )
+
+        # Secondary sanity check: the middleware fix ran. After
+        # iscsi.alua.reset_active, async_lun_replace must read 0. If only
+        # the kernel side were applied without the middleware companion,
+        # become_active would still complete (parking + drain at unload),
+        # but this knob would be stuck at 1.
+        flag = ssh("cat /sys/kernel/scst_tgt/async_lun_replace").strip()
+        _debug(f"lun-replace: async_lun_replace = {flag!r}")
+        assert flag == "0", (
+            f"/sys/kernel/scst_tgt/async_lun_replace is {flag!r} on new "
+            f"master Node {new_node}; iscsi.scst.disable_async_lun_replace "
+            f"did not run from reset_active"
+        )
+
+        # Functional check: every LUN is reachable on the new master.
+        _debug("lun-replace: validating LUN access on new master")
+        for suffix, tcfg in targets.items():
+            iqn = iqns[suffix]
+            for lun in tcfg["luns"]:
+                with iscsi_scsi_connection(new_ip, iqn, lun) as s:
+                    s.testunitready()
+        _debug("lun-replace: all LUNs reachable on new master")
+
+        # Recovery (start_vm + wait_for_backup + wait_for_settle) is handled
+        # by fix_lun_replace_recovery so it runs even if an assertion above
+        # has already failed.
