@@ -306,6 +306,7 @@ def generate_smb_share_conf_dict(
         'smbd max xattr size': 2097152,
         'fruit:metadata': 'stream',
         'fruit:resource': 'stream',
+        'fruit:convert_adouble': False,
         'comment': share_config[share_field.COMMENT],
         'browseable': share_config[share_field.BROWSEABLE],
         'ea support': False,
