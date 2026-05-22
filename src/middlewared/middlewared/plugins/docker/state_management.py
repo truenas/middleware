@@ -3,6 +3,7 @@ import errno
 from middlewared.api.base import Event
 from middlewared.api.current import DockerStateChangedEvent
 from middlewared.service import CallError, periodic, Service
+from middlewared.utils.filesystem.perms import enforce_mountpoint_perms
 
 from .state_utils import APPS_STATUS, IX_APPS_MOUNT_PATH, Status, STATUS_DESCRIPTIONS
 
@@ -69,6 +70,9 @@ class DockerStateService(Service):
             # Make sure correct ix-apps dataset is mounted
             if not await self.middleware.call('docker.fs_manage.ix_apps_is_mounted', config['dataset']):
                 raise CallError(f'{config["dataset"]!r} dataset is not mounted on {IX_APPS_MOUNT_PATH!r}')
+            # Drift repair: re-tighten perms on the apps chokepoint in case an
+            # admin chmod'd it between mounts.
+            await self.middleware.run_in_thread(enforce_mountpoint_perms, IX_APPS_MOUNT_PATH)
             await (
                 await self.middleware.call('service.control', 'START', 'docker', {'timeout': DOCKER_START_TIMEOUT})
             ).wait(raise_error=True)
