@@ -3,6 +3,7 @@ import errno
 from middlewared.api.current import ZFSResourceQuery
 from middlewared.service import CallError, Service, ValidationError
 from middlewared.plugins.pool_.utils import UpdateImplArgs
+from middlewared.utils.filesystem.perms import enforce_mountpoint_perms
 
 from .state_utils import docker_dataset_custom_props, IX_APPS_MOUNT_PATH, Status
 
@@ -25,6 +26,10 @@ class DockerFilesystemManageService(Service):
                         recursive=True,
                         force=True,
                     )
+                    # Restrict the apps chokepoint so non-root host users can't traverse
+                    # into Docker overlay layers or ix_volume datasets (UID-collision
+                    # exposure for apps user etc.).
+                    await self.middleware.run_in_thread(enforce_mountpoint_perms, IX_APPS_MOUNT_PATH)
                 else:
                     try:
                         await self.call2(

@@ -418,3 +418,130 @@ def test_container_device_nic_crud(ubuntu_container):
         assert device["attributes"]["mac"]  # auto-generated
     finally:
         call("container.device.delete", device["id"])
+
+
+# Chokepoint lockdown — non-root host users (e.g. apps UID 568) must not be
+# able to traverse the on-disk container rootfs paths, since UIDs inside the
+# container collide with real host accounts (DEFAULT idmap passthrough).
+
+CONTAINERS_CHOKEPOINT = "/mnt/.truenas_containers"
+
+
+def _chokepoint_perms(path):
+    st = call("filesystem.stat", path)
+    return st["mode"] & 0o7777, st["uid"], st["gid"]
+
+
+def test_truenas_containers_chokepoint_locked(started_ubuntu_container):
+    assert _chokepoint_perms(CONTAINERS_CHOKEPOINT) == (0o700, 0, 0)
+
+
+def test_apps_user_cannot_traverse_containers(started_ubuntu_container):
+    result = ssh(
+        f"runuser -u apps -- ls {CONTAINERS_CHOKEPOINT}/",
+        check=False,
+        complete_response=True,
+    )
+    assert result["returncode"] != 0
+    assert "Permission denied" in result["stderr"]
+
+
+def test_root_retains_access_containers(started_ubuntu_container):
+    listing = ssh(f"ls {CONTAINERS_CHOKEPOINT}/")
+    assert pool in listing.split()
+
+
+def test_drift_repair_containers(started_ubuntu_container):
+    # Simulate an admin loosening perms, then confirm the next container
+    # lifecycle op re-tightens the chokepoint via the drift-repair hook
+    # in lifecycle.py::start().
+    ssh(f"chmod 0755 {CONTAINERS_CHOKEPOINT}")
+
+    call("container.stop", started_ubuntu_container["id"], job=True)
+    call("container.start", started_ubuntu_container["id"])
+
+    assert _chokepoint_perms(CONTAINERS_CHOKEPOINT) == (0o700, 0, 0)
+
+
+# /run/truenas_containers/root/ is the idmapped-bind-mount parent. libvirt_lxc
+# switches to mapped-root (host uid CONTAINER_ROOT_UID + slice * IDMAP_COUNT)
+# *before* the pivot_root setup that creates <UUID>/.oldroot, so it needs
+# search permission on this parent dir while running as the mapped uid -- not
+# host root. We grant exactly that via a POSIX1E ACL with `user:<uid>:--x`
+# entries for every *possible* container-root host uid (the set is static --
+# slice space is [0, 1000) and ContainerXID ge=1 rules out any other value).
+# The legacy mode bits show 0o710: MASK in the group triad gates the named
+# entries to --x.
+
+IDMAPPED_ROOT_CHOKEPOINT = "/run/truenas_containers/root"
+CONTAINER_ROOT_UID = 2147000001
+IDMAP_COUNT = 65536
+EXPECTED_NAMED_UIDS = frozenset(
+    CONTAINER_ROOT_UID + n * IDMAP_COUNT for n in range(1000)
+)
+
+
+def _named_user_uids_in_acl(path):
+    out = ssh(f"getfacl --absolute-names --omit-header {path}")
+    uids = []
+    for line in out.splitlines():
+        line = line.strip()
+        if line.startswith("user:") and line != "user::rwx":
+            # form: "user:<uid>:--x"
+            uids.append(int(line.split(":")[1]))
+    return uids
+
+
+def test_idmapped_root_chokepoint_locked():
+    # Static ACL: 1000 named-USER `--x` entries + MASK=--x; mode shows 0o710
+    # because MASK occupies the legacy group triad.
+    mode, uid, gid = _chokepoint_perms(IDMAPPED_ROOT_CHOKEPOINT)
+    assert (uid, gid) == (0, 0)
+    assert mode == 0o710
+    assert frozenset(_named_user_uids_in_acl(IDMAPPED_ROOT_CHOKEPOINT)) == EXPECTED_NAMED_UIDS
+
+
+def test_apps_user_cannot_traverse_idmapped_root():
+    result = ssh(
+        f"runuser -u apps -- ls {IDMAPPED_ROOT_CHOKEPOINT}/",
+        check=False,
+        complete_response=True,
+    )
+    assert result["returncode"] != 0
+    assert "Permission denied" in result["stderr"]
+
+
+def test_apps_user_cannot_plant_in_running_container_tmp(started_ubuntu_container):
+    # The actual threat model: a non-root host user MUST NOT be able to write
+    # into a running container's /tmp (0o1777, world-writable from the idmap
+    # view). Blocked by ACL on the parent denying traversal.
+    uuid = started_ubuntu_container["uuid"]
+    result = ssh(
+        f"runuser -u apps -- touch {IDMAPPED_ROOT_CHOKEPOINT}/{uuid}/tmp/pwned",
+        check=False,
+        complete_response=True,
+    )
+    assert result["returncode"] != 0
+    assert "Permission denied" in result["stderr"]
+
+
+def test_root_retains_access_idmapped_root(started_ubuntu_container):
+    # Real host root has CAP_DAC_OVERRIDE / CAP_DAC_READ_SEARCH so it can
+    # traverse and list regardless of the ACL.
+    listing = ssh(f"ls {IDMAPPED_ROOT_CHOKEPOINT}/")
+    assert started_ubuntu_container["uuid"] in listing.split()
+
+
+def test_drift_repair_idmapped_root(started_ubuntu_container):
+    # Wipe ACL + open mode bits, then bounce the container -- the start path
+    # re-applies the static ACL.
+    ssh(f"setfacl -b {IDMAPPED_ROOT_CHOKEPOINT}")
+    ssh(f"chmod 0755 {IDMAPPED_ROOT_CHOKEPOINT}")
+
+    call("container.stop", started_ubuntu_container["id"], job=True)
+    call("container.start", started_ubuntu_container["id"])
+
+    mode, uid, gid = _chokepoint_perms(IDMAPPED_ROOT_CHOKEPOINT)
+    assert (uid, gid) == (0, 0)
+    assert mode == 0o710
+    assert frozenset(_named_user_uids_in_acl(IDMAPPED_ROOT_CHOKEPOINT)) == EXPECTED_NAMED_UIDS
