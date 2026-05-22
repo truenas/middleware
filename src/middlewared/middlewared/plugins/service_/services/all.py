@@ -42,6 +42,7 @@ from .pseudo.misc import (
     TimeservicesService,
     UserService,
 )
+from .truenas_zfstierd import TruenasZfstierdService
 
 all_services = [
     CIFSService,
@@ -84,6 +85,7 @@ all_services = [
     TimeservicesService,
     TruecommandService,
     TruesearchService,
+    TruenasZfstierdService,
     UserService,
     WebShareService,
 ]

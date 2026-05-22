@@ -369,7 +369,8 @@ def generate_smb_conf_dict(
     smb_shares: list,
     smb_bind_choices: dict,
     is_enterprise: bool,
-    security_config: dict[str, bool]
+    security_config: dict[str, bool],
+    tiering_enabled: bool = False
 ):
     guest_enabled = any(filter_list(smb_shares, [[f'{share_field.OPTS}.{share_field.GUESTOK}', '=', True]]))
     fsrvp_enabled = any(filter_list(smb_shares, [[f'{share_field.OPTS}.{share_field.FSRVP}', '=', True]]))
@@ -689,6 +690,9 @@ def generate_smb_conf_dict(
             'truenas stateful failover': True,
             'clustering': True,
         })
+
+    if tiering_enabled:
+        smbconf['shadow:no_dataset_traversal'] = True
 
     # The following parameters must come after processing includes in order to
     # prevent auxiliary parameters from overriding them

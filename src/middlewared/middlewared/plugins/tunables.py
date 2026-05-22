@@ -30,11 +30,11 @@ class TunableModel(sa.Model):
 TUNABLE_TYPES = ['SYSCTL', 'UDEV', 'ZFS']
 
 
-def zfs_parameter_path(name):
+def zfs_parameter_path(name: str) -> str:
     return f'/sys/module/zfs/parameters/{name}'
 
 
-def zfs_parameter_value(name):
+def zfs_parameter_value(name: str) -> str:
     with open(zfs_parameter_path(name)) as f:
         return f.read().strip()
 

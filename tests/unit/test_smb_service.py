@@ -1,5 +1,4 @@
 from middlewared.plugins.smb_.util_smbconf import generate_smb_conf_dict
-from middlewared.utils.directoryservices.constants import DSType
 from middlewared.utils.smb import TRUESEARCH_ES_PATH
 
 BASE_SMB_CONFIG = {
@@ -85,7 +84,9 @@ LEGACY_OPTIONS = {
     'auxsmbconf': ''
 }
 
-HOMES_SHARE = BASE_SMB_SHARE | {'purpose': 'LEGACY_SHARE', 'options': LEGACY_OPTIONS | {'path_suffix': '%U', 'home': True}}
+HOMES_SHARE = BASE_SMB_SHARE | {
+    'purpose': 'LEGACY_SHARE', 'options': LEGACY_OPTIONS | {'path_suffix': '%U', 'home': True}
+}
 FSRVP_SHARE = BASE_SMB_SHARE | {'purpose': 'LEGACY_SHARE', 'options': LEGACY_OPTIONS | {'fsrvp': True}}
 GUEST_SHARE = BASE_SMB_SHARE | {'purpose': 'LEGACY_SHARE', 'options': LEGACY_OPTIONS | {'guestok': True}}
 
@@ -472,3 +473,33 @@ def test_search_protocols_spotlight():
     assert conf['spotlight'] is True
     assert 'rpc_daemon:mdssd' not in conf
     assert 'rpc_server:mdssvc' not in conf
+
+
+def test__tiering_disabled():
+    conf = generate_smb_conf_dict(
+        DISABLED_DS_CONFIG, BASE_SMB_CONFIG, [],
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT,
+        tiering_enabled=False
+    )
+    assert 'shadow:no_dataset_traversal' not in conf
+
+
+def test__tiering_enabled():
+    conf = generate_smb_conf_dict(
+        DISABLED_DS_CONFIG, BASE_SMB_CONFIG, [],
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT,
+        tiering_enabled=True
+    )
+    assert conf['shadow:no_dataset_traversal'] is True
+
+
+def test__tiering_not_overridden_by_aux_params():
+    """Ensure tiering parameter cannot be disabled via auxiliary smb_options."""
+    conf = generate_smb_conf_dict(
+        DISABLED_DS_CONFIG,
+        BASE_SMB_CONFIG | {'smb_options': 'shadow:no_dataset_traversal = no'},
+        [],
+        BIND_IP_CHOICES, False, SYSTEM_SECURITY_DEFAULT,
+        tiering_enabled=True
+    )
+    assert conf['shadow:no_dataset_traversal'] is True
