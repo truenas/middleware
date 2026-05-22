@@ -1,7 +1,7 @@
 from time import sleep
 
 from middlewared.test.integration.utils.client import client
-from functions import ping_host
+from middlewared.test.integration.utils.legacy_functions import ping_host
 
 
 def reboot(ip, service_name=None):

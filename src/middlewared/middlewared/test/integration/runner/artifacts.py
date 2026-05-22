@@ -55,12 +55,12 @@ def get_folder(folder: str, destination: str, username: str, passwrd: str | None
 
 def get_cmd_result(cmd: str, target_file: str, target_ip: str) -> None:
     try:
-        results = ssh(cmd, ip=target_ip)  # type: ignore[no-untyped-call]
+        result = ssh(cmd, ip=target_ip)  # type: ignore[no-untyped-call]
     except Exception as exc:
         with open(f"{target_file}.error.txt", "w") as f:
             f.write(f"{target_ip}: command [{cmd}] failed: {exc}\n")
             f.flush()
     else:
         with open(target_file, "w") as f:
-            f.writelines(results["stdout"])
+            f.write(result)
             f.flush()

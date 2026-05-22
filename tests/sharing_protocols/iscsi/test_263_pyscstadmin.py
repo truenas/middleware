@@ -7,10 +7,10 @@ import pytest
 from assets.websocket.pool import zvol
 from assets.websocket.service import ensure_service_started
 from auto_config import password, pool_name, user
-from functions import send_file
 
 from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.utils.client import truenas_server
+from middlewared.test.integration.utils.legacy_functions import send_file
 
 SERVICE_NAME = 'iscsitarget'
 ZVOL1_NAME = 'PYSCSTADMIN_ZVOL1'

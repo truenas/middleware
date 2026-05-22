@@ -7,7 +7,7 @@ from middlewared.test.integration.assets.account import user as create_user
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.smb import smb_share
 from middlewared.test.integration.utils import call, client, ssh
-from functions import SSH_TEST
+from middlewared.test.integration.utils.legacy_functions import SSH_TEST
 from auto_config import user, password
 
 Guests = {

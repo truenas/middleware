@@ -9,7 +9,7 @@ try:
 except ImportError:
     print("iscsi module not available")
 
-from functions import SRVTarget, get_host_ip
+from middlewared.test.integration.utils.legacy_functions import SRVTarget, get_host_ip
 
 
 def initiator_name_supported():

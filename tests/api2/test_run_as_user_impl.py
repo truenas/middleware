@@ -4,8 +4,8 @@ from contextlib import contextmanager
 
 apifolder = os.getcwd()
 sys.path.append(apifolder)
-from functions import wait_on_job
 from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.utils.legacy_functions import wait_on_job
 
 
 @contextmanager

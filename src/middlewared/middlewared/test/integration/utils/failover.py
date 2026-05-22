@@ -7,12 +7,12 @@ try:
     apifolder = os.getcwd()
     sys.path.append(apifolder)
     from auto_config import ha as ha_enabled
-    from functions import async_SSH_done, async_SSH_start
 except ImportError:
     ha_enabled = False
 
 from .call import call
 from .ha import settle_ha
+from .legacy_functions import async_SSH_done, async_SSH_start
 
 __all__ = ["disable_failover", "do_failover"]
 
