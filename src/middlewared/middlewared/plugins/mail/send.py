@@ -76,7 +76,7 @@ def send(
         interval = timedelta(seconds=interval)
 
     if interval > timedelta():
-        channelfile = f"/tmp/.msg.{message.get('channel') or BRAND.lower()}"
+        channelfile = f"/run/middleware/.msg.{message.get('channel') or BRAND.lower()}"
         last_update = datetime.now() - interval
         try:
             last_update = datetime.fromtimestamp(os.stat(channelfile).st_mtime)
