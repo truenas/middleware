@@ -95,7 +95,7 @@ def _apply_metadata_reserve_pct(middleware: Middleware, value: int, ha_propagate
     except FileNotFoundError:
         pass
 
-    middleware.call_sync('tunable.set_zfs_parameter', _ZFS_METADATA_RESERVE_PARAM, str_value, ha_propagate)
+    middleware.call_sync("tunable.set_zfs_parameter", _ZFS_METADATA_RESERVE_PARAM, str_value, ha_propagate)
 
 
 def _raise_client_error(e: RewriteClientException, field: str) -> None:
@@ -256,7 +256,7 @@ class ZfsTierRewriteJobStatusEventSource(EventSource):
         return _map_info_result(info)
 
     def run_sync(self) -> None:
-        dataset_name = self.arg['dataset_name']
+        dataset_name = typing.cast(dict[str, typing.Any], self.arg)["dataset_name"]
         last_info = None
 
         while not self._cancel_sync.is_set():

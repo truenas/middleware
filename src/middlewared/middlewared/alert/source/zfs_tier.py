@@ -142,10 +142,14 @@ class TierJobAlertSource(ThreadedAlertSource):
             else:
                 if tier_job_id in self._fired_terminal_jobs:
                     self.middleware.call_sync(
-                        "alert.oneshot_delete", "TierJobError", tier_job_id,
+                        "alert.oneshot_delete",
+                        "TierJobError",
+                        tier_job_id,
                     )
                     self.middleware.call_sync(
-                        "alert.oneshot_delete", "TierJobComplete", tier_job_id,
+                        "alert.oneshot_delete",
+                        "TierJobComplete",
+                        tier_job_id,
                     )
                     self._fired_terminal_jobs.discard(tier_job_id)
 
@@ -158,7 +162,9 @@ class TierJobAlertSource(ThreadedAlertSource):
                 error = info.error or ""
             except Exception:
                 self.middleware.logger.debug(
-                    "Failed to get info for tier job %s", tier_job_id, exc_info=True,
+                    "Failed to get info for tier job %s",
+                    tier_job_id,
+                    exc_info=True,
                 )
                 error = ""
             self.middleware.call_sync(
@@ -173,12 +179,15 @@ class TierJobAlertSource(ThreadedAlertSource):
             stats = info.stats
         except Exception:
             self.middleware.logger.debug(
-                "Failed to get info for tier job %s", tier_job_id, exc_info=True,
+                "Failed to get info for tier job %s",
+                tier_job_id,
+                exc_info=True,
             )
             stats = None
 
         tier_map = self.middleware.call_sync(
-            "zfs.tier.bulk_get_tier_info", [job.dataset_name],
+            "zfs.tier.bulk_get_tier_info",
+            [job.dataset_name],
         )
         tier_info = tier_map.get(job.dataset_name)
         if not tier_info:
@@ -230,7 +239,9 @@ class TierJobAlertSource(ThreadedAlertSource):
                     {"pool_name": pool_name, "threshold": critical_pct},
                 )
                 self.middleware.call_sync(
-                    "alert.oneshot_delete", "TierSpecialVdevWarning", pool_name,
+                    "alert.oneshot_delete",
+                    "TierSpecialVdevWarning",
+                    pool_name,
                 )
             elif pct > warning_pct:
                 self.middleware.call_sync(
@@ -239,22 +250,32 @@ class TierJobAlertSource(ThreadedAlertSource):
                     {"pool_name": pool_name, "threshold": warning_pct},
                 )
                 self.middleware.call_sync(
-                    "alert.oneshot_delete", "TierSpecialVdevCritical", pool_name,
+                    "alert.oneshot_delete",
+                    "TierSpecialVdevCritical",
+                    pool_name,
                 )
             else:
                 self.middleware.call_sync(
-                    "alert.oneshot_delete", "TierSpecialVdevWarning", pool_name,
+                    "alert.oneshot_delete",
+                    "TierSpecialVdevWarning",
+                    pool_name,
                 )
                 self.middleware.call_sync(
-                    "alert.oneshot_delete", "TierSpecialVdevCritical", pool_name,
+                    "alert.oneshot_delete",
+                    "TierSpecialVdevCritical",
+                    pool_name,
                 )
 
         for stale in self._fired_special_pools - current_pools:
             self.middleware.call_sync(
-                "alert.oneshot_delete", "TierSpecialVdevWarning", stale,
+                "alert.oneshot_delete",
+                "TierSpecialVdevWarning",
+                stale,
             )
             self.middleware.call_sync(
-                "alert.oneshot_delete", "TierSpecialVdevCritical", stale,
+                "alert.oneshot_delete",
+                "TierSpecialVdevCritical",
+                stale,
             )
         self._fired_special_pools = current_pools
 
@@ -262,10 +283,14 @@ class TierJobAlertSource(ThreadedAlertSource):
         for pool_name in self._fired_special_pools:
             try:
                 self.middleware.call_sync(
-                    "alert.oneshot_delete", "TierSpecialVdevWarning", pool_name,
+                    "alert.oneshot_delete",
+                    "TierSpecialVdevWarning",
+                    pool_name,
                 )
                 self.middleware.call_sync(
-                    "alert.oneshot_delete", "TierSpecialVdevCritical", pool_name,
+                    "alert.oneshot_delete",
+                    "TierSpecialVdevCritical",
+                    pool_name,
                 )
             except Exception:
                 pass
@@ -274,10 +299,14 @@ class TierJobAlertSource(ThreadedAlertSource):
         for tier_job_id in self._fired_terminal_jobs:
             try:
                 self.middleware.call_sync(
-                    "alert.oneshot_delete", "TierJobError", tier_job_id,
+                    "alert.oneshot_delete",
+                    "TierJobError",
+                    tier_job_id,
                 )
                 self.middleware.call_sync(
-                    "alert.oneshot_delete", "TierJobComplete", tier_job_id,
+                    "alert.oneshot_delete",
+                    "TierJobComplete",
+                    tier_job_id,
                 )
             except Exception:
                 pass
