@@ -26,7 +26,7 @@ def _convert_vdev_state(vdev: dict) -> None:
 def _format_topology(status_dict: dict) -> dict:
     """Organize vdevs from a pylibzfs status dict into a topology dict.
 
-    Separates storage vdevs into 'data' and places support vdevs (cache,
+    Places storage vdevs into 'data' and support vdevs (cache,
     dedup, log, special) and spares into their respective keys.
 
     Also converts VDevState enums to strings and children tuples to lists

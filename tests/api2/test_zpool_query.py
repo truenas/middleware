@@ -80,7 +80,7 @@ class TestZpoolQueryFull:
             assert isinstance(topology[key], list)
 
     def test_topology_data_vdev(self, zpool_full):
-        """At least one data or stripe vdev should exist."""
+        """At least one data vdev should exist."""
         vdevs = zpool_full["topology"]["data"]
         assert len(vdevs) > 0
         vdev = vdevs[0]
