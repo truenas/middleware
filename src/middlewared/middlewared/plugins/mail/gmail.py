@@ -116,7 +116,6 @@ class GMail:
                     "raw": base64.urlsafe_b64encode(message.as_string().encode("ascii")).decode("ascii"),
                 },
             ).execute()
-            print(gmail_service == self.gmail_service)
             if gmail_service == self.gmail_service:
                 credentials = gmail_service._service._http.credentials  # type: ignore[attr-defined]
                 self._set_gmail_config(
