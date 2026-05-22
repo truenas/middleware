@@ -49,11 +49,25 @@ class ADJoinMixin:
         return cred_info['name_type'] == DSCredType.KERBEROS_PRINCIPAL
 
     def _saf_kdc_name(self) -> str | None:
-        if (kdc_override := kdc_saf_cache_get()) is None:
+        """
+        Return the FQDN of the KDC pinned in the SAF cache, suitable for samba's
+        ``--server`` argument. We prefer the hostname captured at SAF set time so we
+        don't have to depend on reverse DNS — customer domains with broken or
+        partial RDNS would otherwise leave us without a server name.
+        """
+        if (entry := kdc_saf_cache_get()) is None:
             return None
 
-        if ptr := self.middleware.call_sync('dnsclient.reverse_lookup', {'addresses': [kdc_override]}):
-            # strip trailing period because of unexpected interaction with libads
+        # strip trailing period because of unexpected interaction with libads
+        if host := entry.get('host'):
+            return host.removesuffix('.')
+
+        # Legacy entries (or IPA where we never had an address) won't have a hostname.
+        # Fall back to RDNS only when the IP is the only thing we know.
+        if not (ip := entry.get('ip')):
+            return None
+
+        if ptr := self.middleware.call_sync('dnsclient.reverse_lookup', {'addresses': [ip]}):
             return ptr[0]['target'].removesuffix('.')
 
         return None
@@ -107,10 +121,14 @@ class ADJoinMixin:
         """
         After initial AD join we reconfigure kerberos to find KDC via DNS.
         Unfortunately, depending on the AD environment it may take a significant
-        amount of time to replicate the new machine account to other domain
-        controllers. This means we have a retry loop on starting the kerberos
-        service.
+        amount of time for the new machine account to become usable across all
+        domain controllers, or for transient post-join state to settle. This
+        means we have a retry loop on starting the kerberos service. If we
+        exhaust all retries with the same recoverable error, raise it so the
+        caller fails fast with one clear root error rather than letting
+        downstream operations cascade with confusing follow-on failures.
         """
+        last_err: KRB5Error | None = None
         tries = 0
         while tries < MAX_KERBEROS_START_TRIES:
             try:
@@ -129,8 +147,15 @@ class ADJoinMixin:
                 ):
                     raise krberr
 
+                last_err = krberr
+
             sleep(1)
             tries += 1
+
+        # Exhausted retries on a recoverable-class error. Surface it so the
+        # caller knows kerberos.start never succeeded.
+        if last_err is not None:
+            raise last_err
 
     def _ad_domain_info(self, domain: str, retry: bool = True) -> dict:
         """
@@ -263,7 +288,12 @@ class ADJoinMixin:
                 'ads', 'setspn', 'add', spn
             ]
 
-            netads = subprocess.run(cmd, check=False, capture_output=True)
+            # net ads setspn add writes the success narrative ("Registering SPN", "Updated
+            # object") and "Duplicate SPN found" to stdout via d_printf, but routes the actual
+            # LDAP failure through ads_print_error -> DBG_ERR (level 0) which lands on stderr.
+            # Merge stderr into stdout so we capture both with a single read.
+            netads = subprocess.run(cmd, check=False,
+                                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             if netads.returncode != 0:
                 self.logger.error("%s: failed to set spn entry: %s", spn,
                                   netads.stdout.decode().strip())

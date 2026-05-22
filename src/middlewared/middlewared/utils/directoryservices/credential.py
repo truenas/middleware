@@ -1,11 +1,12 @@
 import errno
 import gssapi
+import ipaddress
 import ldap
 import subprocess
 
 from time import sleep
 from middlewared.service_exception import CallError, ValidationErrors
-from .ad import get_domain_info
+from .ad import get_domain_info, lookup_dc
 from .constants import DSCredType, DSType
 from .krb5 import (
     gss_get_current_cred,
@@ -129,6 +130,8 @@ def write_temporary_kerberos_config(schema: str, new: dict, verrors: ValidationE
     kdc = new.get('kdc_override', [])
     realm = new.get('kerberos_realm')
     aux = []
+    saf_host: str | None = None
+    saf_ip: str | None = None
 
     match ds_type:
         case DSType.AD:
@@ -150,6 +153,11 @@ def write_temporary_kerberos_config(schema: str, new: dict, verrors: ValidationE
             if not kdc:
                 kdc.append(domain_info['kdc_server'])
 
+            saf_ip = domain_info['kdc_server']
+            saf_host = lookup_dc(
+                new['configuration']['domain'], server=saf_ip
+            ).get('domain_controller') or None
+
             if not realm:
                 realm = new['configuration']['domain']
 
@@ -157,8 +165,19 @@ def write_temporary_kerberos_config(schema: str, new: dict, verrors: ValidationE
             new['kerberos_realm'] = realm
 
         case DSType.IPA:
+            target = new['configuration']['target_server']
             if not kdc:
-                kdc.append(new['configuration']['target_server'])
+                kdc.append(target)
+
+            # IPA target_server is a free-form NonEmptyString. If admin happened to specify
+            # an IP literal, store it as the address; otherwise treat it as a hostname.
+            # Note: a host-only SAF entry will not produce a krb5.conf kdc= override
+            # (krb5 kdc= must be an address); IPA falls back to DNS lookup in that case.
+            try:
+                ipaddress.ip_address(target)
+                saf_ip = target
+            except ValueError:
+                saf_host = target
 
             if not realm:
                 realm = new['configuration']['domain'].upper()
@@ -183,7 +202,8 @@ def write_temporary_kerberos_config(schema: str, new: dict, verrors: ValidationE
     }
 
     if kdc:
-        kdc_saf_cache_set(kdc[0])
+        if saf_host or saf_ip:
+            kdc_saf_cache_set(host=saf_host, ip=saf_ip)
         libdefaults.update({
             str(KRB_LibDefaults.DNS_LOOKUP_KDC): 'false',
             str(KRB_LibDefaults.DNS_CANONICALIZE_HOSTNAME): 'false',
