@@ -320,11 +320,30 @@ class iSCSITargetService(Service):
             self.logger.warning('Failed to set ALUA active state')
 
     def enable_async_lun_replace(self):
-        """Enable async LUN replace to avoid blocking failover on tgt_dev drain."""
+        """Enable async LUN replace to avoid blocking failover on tgt_dev drain.
+
+        While enabled, the kernel parks the deferred cleanup of old tgt_devs
+        from each LUN replace instead of running it on a workqueue
+        immediately. The orchestrating layer must call
+        disable_async_lun_replace once any cluster coordination the cleanup
+        depends on (e.g. DLM peer eviction) has completed, to release the
+        parked work."""
         try:
             pathlib.Path(SCST_ASYNC_LUN_REPLACE).write_text('1\n')
         except Exception:
             self.logger.warning('Failed to enable async_lun_replace')
+
+    def disable_async_lun_replace(self):
+        """Disable async LUN replace and release any parked LUN-replace cleanup.
+
+        Should be called after the cluster coordination that the parked
+        cleanup depends on (e.g. DLM peer eviction via dlm.reset_active) has
+        completed, so that scst_free_tgt_dev -> scst_clear_reservation ->
+        scst_dlm_res_lock will not stall."""
+        try:
+            pathlib.Path(SCST_ASYNC_LUN_REPLACE).write_text('0\n')
+        except Exception:
+            self.logger.warning('Failed to disable async_lun_replace')
 
     def copy_manager_devices(self):
         result = []
