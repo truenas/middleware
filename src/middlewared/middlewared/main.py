@@ -113,6 +113,7 @@ from middlewared.plugins.cron import CronJobService
 from middlewared.plugins.docker import DockerService
 from middlewared.plugins.init_shutdown_script import InitShutdownScriptService
 from middlewared.plugins.keyvalue import KeyValueService
+from middlewared.plugins.mail import MailService
 from middlewared.plugins.ntp import NTPServerService
 from middlewared.plugins.ports import PortService
 from middlewared.plugins.snapshot import PeriodicSnapshotTaskService
@@ -231,6 +232,7 @@ class ServiceContainer(BaseServiceContainer):
         self.initshutdownscript = InitShutdownScriptService(middleware)
         self.keyvalue = KeyValueService(middleware)
         self.lxc = LXCConfigService(middleware)
+        self.mail = MailService(middleware)
         self.pool = PoolServicesContainer(middleware)
         self.port = PortService(middleware)
         self.sharing = SharingServicesContainer(middleware)

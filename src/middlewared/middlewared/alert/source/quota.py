@@ -8,6 +8,7 @@ from truenas_os_pyutils.mount import iter_mountinfo
 
 from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertClassConfig, AlertLevel, ThreadedAlertSource
 from middlewared.alert.schedule import IntervalSchedule
+from middlewared.api.current import MailSendMessage
 from middlewared.plugins.zfs_.utils import TNUserProp
 from middlewared.utils.size import format_size
 
@@ -157,11 +158,11 @@ class QuotaAlertSource(ThreadedAlertSource):
                             to = None
 
                     if to is not None:
-                        mail = {
-                            "to": [to],
-                            "subject": f"{hostname}: {quota_name} exceeded on dataset {ds}",
-                            "text": instance.format(instance.args())
-                        }
+                        mail = MailSendMessage(
+                            to=[to],
+                            subject=f"{hostname}: {quota_name} exceeded on dataset {ds}",
+                            text=instance.format(instance.args()),
+                        )
 
                 alerts.append(Alert(
                     instance,
