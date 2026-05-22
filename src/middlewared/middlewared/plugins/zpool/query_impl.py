@@ -26,8 +26,7 @@ def _convert_vdev_state(vdev: dict) -> None:
 def _format_topology(status_dict: dict) -> dict:
     """Organize vdevs from a pylibzfs status dict into a topology dict.
 
-    Separates storage vdevs into 'data' (groups with children) and 'stripe'
-    (single-disk vdevs without children), and places support vdevs (cache,
+    Separates storage vdevs into 'data' and places support vdevs (cache,
     dedup, log, special) and spares into their respective keys.
 
     Also converts VDevState enums to strings and children tuples to lists
@@ -38,7 +37,7 @@ def _format_topology(status_dict: dict) -> dict:
             'storage_vdevs', 'support_vdevs', and 'spares' keys.
 
     Returns:
-        dict with keys: cache, data, dedup, log, spares, special, stripe.
+        dict with keys: cache, data, dedup, log, spares, special.
         Each value is a list of vdev dicts.
     """
     top = {
@@ -48,14 +47,10 @@ def _format_topology(status_dict: dict) -> dict:
         "log": [],
         "spares": [],
         "special": [],
-        "stripe": [],
     }
     for vdev in status_dict["storage_vdevs"]:
         _convert_vdev_state(vdev)
-        if vdev["children"]:
-            top["data"].append(vdev)
-        else:
-            top["stripe"].append(vdev)
+        top["data"].append(vdev)
 
     for key in ("cache", "dedup", "log", "special"):
         for vdev in status_dict["support_vdevs"][key]:

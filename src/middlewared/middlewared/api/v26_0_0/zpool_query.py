@@ -110,8 +110,6 @@ class ZPoolTopology(BaseModel):
     """Array of L2ARC cache vdev configurations."""
     spares: list[ZPoolVdev]
     """Array of spare disk configurations."""
-    stripe: list[ZPoolVdev]
-    """Array of stripe (single-disk) vdev configurations."""
     special: list[ZPoolVdev]
     """Array of special vdev configurations for metadata."""
     dedup: list[ZPoolVdev]
