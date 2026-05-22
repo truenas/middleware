@@ -34,6 +34,8 @@ from middlewared.utils.pwenc import PWENC_FILE_SECRET
 from middlewared.plugins.account_.constants import SYNTHETIC_CONTAINER_ROOT
 from middlewared.plugins.docker.state_utils import IX_APPS_DIR_NAME
 from middlewared.service import private, CallError, filterable_api_method, Service, job
+from middlewared.service_exception import ValidationErrors
+from middlewared.plugins.filesystem_.utils import apply_zfs_attrs_recursive
 from middlewared.utils.filter_list import filter_list
 from middlewared.utils.filesystem import attrs, stat_x
 from middlewared.utils.filesystem.acl import acl_is_present, ACL_UNDEFINED_ID
@@ -146,38 +148,79 @@ class FilesystemService(Service):
         audit='Filesystem set ZFS attributes',
         audit_extended=lambda data: data['path']
     )
-    def set_zfs_attributes(self, data):
+    @job(lock=lambda args: f'zfs_attrs_change:{args[0]["path"]}')
+    def set_zfs_attributes(self, job, data):
         """
-        Set special ZFS-related file flags on the specified path
+        Set special ZFS-related file flags on the specified path.
 
-        `readonly` - this maps to READONLY MS-DOS attribute. When set, file may not be
-        written to (toggling does not impact existing file opens).
+        `readonly` - READONLY MS-DOS attribute. When set, file may not be written to
+        (toggling does not impact existing file opens).
 
-        `hidden` - this maps to HIDDEN MS-DOS attribute. When set, the SMB HIDDEN flag
-        is set and file is "hidden" from the perspective of SMB clients.
+        `hidden` - HIDDEN MS-DOS attribute. When set, the SMB HIDDEN flag is set and
+        file is "hidden" from the perspective of SMB clients.
 
-        `system` - this maps to SYSTEM MS-DOS attribute. Is presented to SMB clients, but
-        has no impact on local filesystem.
+        `system` - SYSTEM MS-DOS attribute. Is presented to SMB clients, but has no
+        impact on local filesystem.
 
-        `archive` - this maps to ARCHIVE MS-DOS attribute. Value is reset to True whenever
-        file is modified.
+        `archive` - ARCHIVE MS-DOS attribute. Value is reset to True whenever file is
+        modified.
 
         `immutable` - file may not be altered or deleted. Also appears as IMMUTABLE in
-        attributes in `filesystem.stat` output and as STATX_ATTR_IMMUTABLE in statx() response.
+        attributes in `filesystem.stat` output and as STATX_ATTR_IMMUTABLE in statx().
 
         `nounlink` - file may be altered but not deleted.
 
-        `appendonly` - file may only be opened with O_APPEND flag. Also appears as APPEND in
-        attributes in `filesystem.stat` output and as STATX_ATTR_APPEND in statx() response.
+        `appendonly` - file may only be opened with O_APPEND flag. Also appears as
+        APPEND in attributes in `filesystem.stat` output and as STATX_ATTR_APPEND in
+        statx() response.
 
-        `offline` - this maps to OFFLINE MS-DOS attribute. Is presented to SMB clients, but
-        has no impact on local filesystem.
+        `offline` - OFFLINE MS-DOS attribute. Is presented to SMB clients, but has no
+        impact on local filesystem.
 
-        `sparse` - maps to SPARSE MS-DOS attribute. Is presented to SMB clients, but has
-        no impact on local filesystem.
+        `sparse` - SPARSE MS-DOS attribute. Is presented to SMB clients, but has no
+        impact on local filesystem.
+
+        `options.recursive` - if set to a non-empty list of `FILES`/`DIRECTORIES`,
+        the path is treated as the root of a tree walk and attributes are applied to
+        descendants of the matching type. The root `path` itself is included only if
+        its type matches the filter. `null` (the default) preserves the legacy
+        single-path behavior. Recursion stops at dataset boundaries.
         """
+        recursive = data['options']['recursive']
+        if recursive is not None and len(recursive) == 0:
+            verrors = ValidationErrors()
+            verrors.add(
+                'filesystem.set_zfs_attributes.options.recursive',
+                'Must be null or a non-empty list of FILES/DIRECTORIES.',
+            )
+            verrors.check()
+
+        job.set_progress(0, 'Setting ZFS attributes')
         try:
-            return attrs.set_zfs_file_attributes_dict(data['path'], data['zfs_file_attributes'])
+            if recursive is None:
+                # Legacy single-path semantics — cheap path, no walker.
+                return attrs.set_zfs_file_attributes_dict(
+                    data['path'], data['zfs_file_attributes']
+                )
+
+            try:
+                fd = truenas_os.openat2(
+                    data['path'], os.O_RDWR, resolve=truenas_os.RESOLVE_NO_SYMLINKS
+                )
+                is_dir = False
+            except IsADirectoryError:
+                fd = truenas_os.openat2(
+                    data['path'], os.O_DIRECTORY, resolve=truenas_os.RESOLVE_NO_SYMLINKS
+                )
+                is_dir = True
+
+            try:
+                return apply_zfs_attrs_recursive(
+                    fd, is_dir, data['zfs_file_attributes'], recursive,
+                    job=job,
+                )
+            finally:
+                os.close(fd)
         except OSError as e:
             if e.errno == errno.ELOOP:
                 raise CallError('Symlinks are not permitted.', errno.ELOOP)

@@ -69,7 +69,7 @@ def test_immutable_flag():
             call('filesystem.set_zfs_attributes', {
                 'path': d,
                 'zfs_file_attributes': {'immutable': flag_set}
-            })
+            }, job=True)
             # We test 2 things
             # 1) Writing content to the parent path fails/succeeds based on "set"
             # 2) "is_immutable_set" returns sane response
@@ -188,6 +188,159 @@ def test_fiilesystem_statfs_flags():
             assert p[2] in mount_flags, f"{base}: ({p[2]}) not in {mount_flags}"
 
 
+@pytest.fixture(scope="module")
+def attrs_recursive_tree():
+    """Tree with mixed files, directories, and a symlink for recursive attr tests."""
+    with create_dataset("zfs_attrs_recursive") as ds:
+        base = f"/mnt/{ds}"
+        ssh(
+            f"mkdir -p {base}/sub && "
+            f"touch {base}/a.txt {base}/b.txt {base}/sub/c.txt && "
+            f"ln -s a.txt {base}/lnk"
+        )
+        yield base
+
+
+def _hidden(path):
+    return call("filesystem.get_zfs_attributes", path)["hidden"]
+
+
+def test_recursive_files_only_skips_dirs_and_symlinks(attrs_recursive_tree):
+    base = attrs_recursive_tree
+    try:
+        call(
+            "filesystem.set_zfs_attributes",
+            {
+                "path": base,
+                "zfs_file_attributes": {"hidden": True},
+                "options": {"recursive": ["FILES"]},
+            },
+            job=True,
+        )
+        assert _hidden(f"{base}/a.txt") is True
+        assert _hidden(f"{base}/b.txt") is True
+        assert _hidden(f"{base}/sub/c.txt") is True
+        assert _hidden(base) is False
+        assert _hidden(f"{base}/sub") is False
+    finally:
+        call(
+            "filesystem.set_zfs_attributes",
+            {
+                "path": base,
+                "zfs_file_attributes": {"hidden": False},
+                "options": {"recursive": ["FILES", "DIRECTORIES"]},
+            },
+            job=True,
+        )
+
+
+def test_recursive_directories_only_skips_files(attrs_recursive_tree):
+    base = attrs_recursive_tree
+    try:
+        call(
+            "filesystem.set_zfs_attributes",
+            {
+                "path": base,
+                "zfs_file_attributes": {"hidden": True},
+                "options": {"recursive": ["DIRECTORIES"]},
+            },
+            job=True,
+        )
+        assert _hidden(base) is True
+        assert _hidden(f"{base}/sub") is True
+        assert _hidden(f"{base}/a.txt") is False
+        assert _hidden(f"{base}/sub/c.txt") is False
+    finally:
+        call(
+            "filesystem.set_zfs_attributes",
+            {
+                "path": base,
+                "zfs_file_attributes": {"hidden": False},
+                "options": {"recursive": ["FILES", "DIRECTORIES"]},
+            },
+            job=True,
+        )
+
+
+def test_recursive_both_applies_to_all_non_symlinks(attrs_recursive_tree):
+    base = attrs_recursive_tree
+    try:
+        call(
+            "filesystem.set_zfs_attributes",
+            {
+                "path": base,
+                "zfs_file_attributes": {"hidden": True},
+                "options": {"recursive": ["FILES", "DIRECTORIES"]},
+            },
+            job=True,
+        )
+        for p in (base, f"{base}/sub", f"{base}/a.txt", f"{base}/b.txt", f"{base}/sub/c.txt"):
+            assert _hidden(p) is True, p
+    finally:
+        call(
+            "filesystem.set_zfs_attributes",
+            {
+                "path": base,
+                "zfs_file_attributes": {"hidden": False},
+                "options": {"recursive": ["FILES", "DIRECTORIES"]},
+            },
+            job=True,
+        )
+
+
+def test_recursive_files_only_on_file_path_modifies_root(attrs_recursive_tree):
+    target = f"{attrs_recursive_tree}/a.txt"
+    try:
+        call(
+            "filesystem.set_zfs_attributes",
+            {
+                "path": target,
+                "zfs_file_attributes": {"hidden": True},
+                "options": {"recursive": ["FILES"]},
+            },
+            job=True,
+        )
+        assert _hidden(target) is True
+    finally:
+        call(
+            "filesystem.set_zfs_attributes",
+            {
+                "path": target,
+                "zfs_file_attributes": {"hidden": False},
+            },
+            job=True,
+        )
+
+
+def test_recursive_directories_only_on_file_path_is_noop(attrs_recursive_tree):
+    target = f"{attrs_recursive_tree}/a.txt"
+    before = _hidden(target)
+    res = call(
+        "filesystem.set_zfs_attributes",
+        {
+            "path": target,
+            "zfs_file_attributes": {"hidden": not before},
+            "options": {"recursive": ["DIRECTORIES"]},
+        },
+        job=True,
+    )
+    assert res["hidden"] == before
+    assert _hidden(target) == before
+
+
+def test_recursive_empty_list_is_validation_error(attrs_recursive_tree):
+    with pytest.raises(Exception):
+        call(
+            "filesystem.set_zfs_attributes",
+            {
+                "path": attrs_recursive_tree,
+                "zfs_file_attributes": {"hidden": True},
+                "options": {"recursive": []},
+            },
+            job=True,
+        )
+
+
 def test_dosmodes():
     modes = ("readonly", "hidden", "system", "archive", "offline", "sparse")
     with create_dataset("dosmode_test") as ds:
@@ -201,6 +354,7 @@ def test_dosmodes():
                 res = call(
                     "filesystem.set_zfs_attributes",
                     {"path": p, "zfs_file_attributes": to_set},
+                    job=True,
                 )
                 expected_flags.update(to_set)
                 assert expected_flags == res

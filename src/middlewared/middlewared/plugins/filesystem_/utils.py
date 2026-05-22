@@ -8,7 +8,6 @@ import truenas_os
 
 from middlewared.service_exception import CallError
 from truenas_os_pyutils.mount import statmount as _statmount
-from middlewared.plugins.zfs.object_count_impl import estimate_object_count_impl
 from middlewared.utils.filesystem.acl import (
     ACL_UNDEFINED_ID,
     FS_ACL_Type,
@@ -16,6 +15,12 @@ from middlewared.utils.filesystem.acl import (
     nfs4acl_obj_to_dict,
     posixacl_dict_to_obj,
     posixacl_obj_to_dict,
+)
+from middlewared.utils.filesystem.attrs import (
+    dict_to_zfs_attributes_mask,
+    fget_zfs_file_attributes,
+    fset_zfs_file_attributes,
+    zfs_attributes_to_dict,
 )
 
 
@@ -76,67 +81,59 @@ def _get_mount_info(fd: int):
     return sm.mnt_point, sm.sb_source, (None if rel == '.' else rel), sm.mnt_id
 
 
-class AclTool:
+class _FsRecursionOp:
     """
-    Perform recursive ACL-related operations using fd-based operations via the
-    truenas_os extension.
+    Recursive filesystem operation engine.
+
+    Walks the tree under an open O_RDONLY directory `fd` via
+    truenas_os.iter_filesystem_contents, optionally crossing dataset
+    boundaries (options.traverse), and emits job progress updates throttled
+    to >= 1s. Subclasses implement `_apply_action_fd` to perform the
+    per-entry work and may override `_setup` for one-time precomputation.
 
     `fd` must be an open O_RDONLY descriptor for the root path of the
-    operation.  AclTool reads from it but does NOT close it; the caller owns
-    the descriptor lifetime.
-
-    If `job` is provided, progress updates are emitted no more frequently than
-    every 1 second.
+    operation. The base class reads from it but does NOT close it; the
+    caller owns the descriptor lifetime.
     """
 
+    _label = 'fsrecursion'
+
+    # ZFS datasets have 6 internal objects (master node, SA attrs, unlinked
+    # set, root dir, SA attr registration, SA attr layouts) reported in
+    # f_files; subtract them so progress reflects user-visible objects. For
+    # non-ZFS filesystems the offset is harmless (estimate is approximate).
+    _ZFS_INTERNAL_OBJECTS = 6
+
     __slots__ = (
-        'fd', 'action', 'uid', 'gid', 'options', 'job', 'tls',
-        'nfs4_inh', 'posix_file_acl', '_action_fd_fn',
+        'fd', 'options', 'job',
         'total_objects', 'cumulative_processed', 'last_report_time',
     )
 
-    _OPTIONS_TYPE = types.MappingProxyType({
-        AclToolAction.CHOWN: ATChownOptions,
-        AclToolAction.STRIP: ATPermOptions,
-        AclToolAction.CLONE: ATAclOptions,
-        AclToolAction.INHERIT: ATAclOptions,
-    })
-
-    _ACTION_FN = types.MappingProxyType({
-        AclToolAction.CHOWN: '_do_chown',
-        AclToolAction.STRIP: '_do_strip',
-        AclToolAction.CLONE: '_do_acl',
-        AclToolAction.INHERIT: '_do_acl',
-    })
-
-    def __init__(self, fd, action, uid, gid, options, job=None, tls=None):
-        expected = self._OPTIONS_TYPE[action]
-        if not isinstance(options, expected):
-            raise TypeError(f'{action}: expected {expected.__name__}, got {type(options).__name__}')
+    def __init__(self, fd, options, job=None):
         self.fd = fd
-        self.action = action
-        self.uid = uid
-        self.gid = gid
         self.options = options
         self.job = job
-        self.tls = tls
         self.total_objects = 0
         self.cumulative_processed = 0
         self.last_report_time = time.monotonic()
-        self.nfs4_inh = None
-        self.posix_file_acl = None
-        self._action_fd_fn = getattr(self, self._ACTION_FN[action])
 
     def _estimate_total(self, fs_name, mnt_id):
-        """Populate self.total_objects before iteration begins."""
-        if self.job is None or self.tls is None:
+        """Populate self.total_objects before iteration begins.
+
+        Uses fstatvfs(f_files - f_ffree) on the root fd plus statvfs() on each
+        child mount when traverse is enabled. No libzfs handle required.
+        """
+        if self.job is None:
             return
         # Subdirectory: dataset-wide estimate would dwarf actual work
-        mountpoint, _, rel_path, _ = _get_mount_info(self.fd)
+        _, _, rel_path, _ = _get_mount_info(self.fd)
         if rel_path is not None:
             return
         try:
-            self.total_objects = estimate_object_count_impl(self.tls, fs_name)
+            sv = os.fstatvfs(self.fd)
+            self.total_objects = max(
+                sv.f_files - sv.f_ffree - self._ZFS_INTERNAL_OBJECTS, 0
+            )
             if self.options.traverse:
                 real_path = os.readlink(f'/proc/self/fd/{self.fd}')
                 _sm_flags = (
@@ -149,8 +146,13 @@ class AclTool:
                         continue
                     if entry.fs_type == 'zfs' and entry.sb_source and '@' in entry.sb_source:
                         continue
-                    if entry.fs_type == 'zfs' and entry.sb_source:
-                        self.total_objects += estimate_object_count_impl(self.tls, entry.sb_source)
+                    try:
+                        sv = os.statvfs(entry.mnt_point)
+                    except OSError:
+                        continue
+                    self.total_objects += max(
+                        sv.f_files - sv.f_ffree - self._ZFS_INTERNAL_OBJECTS, 0
+                    )
         except Exception:
             self.total_objects = 0
 
@@ -168,31 +170,15 @@ class AclTool:
             f'Processing {state.current_directory} ({self.cumulative_processed:,} files processed)',
         )
 
-    def _do_chown(self, fd, isdir, depth):
-        os.fchown(fd, self.uid, self.gid)
+    def _setup(self):
+        """Override for one-time setup before walk begins (default: no-op)."""
 
-    def _do_strip(self, fd, isdir, depth):
-        truenas_os.fsetacl(fd, None)
-        if self.uid != ACL_UNDEFINED_ID or self.gid != ACL_UNDEFINED_ID:
-            os.fchown(fd, self.uid, self.gid)
-        if self.options.target_mode is not None:
-            os.fchmod(fd, self.options.target_mode & 0o7777)
-
-    def _do_acl(self, fd, isdir, depth):
-        if self.nfs4_inh is not None:
-            # NFS4: use precomputed depth/type-specific inherited ACL
-            truenas_os.fsetacl(fd, self.nfs4_inh.pick(depth, isdir))
-        elif not isdir:
-            # POSIX1E file: use precomputed file-inherited ACL
-            truenas_os.fsetacl(fd, self.posix_file_acl)
-        else:
-            # POSIX1E dir: apply root ACL directly
-            truenas_os.fsetacl(fd, self.options.target_acl)
-        if self.uid != ACL_UNDEFINED_ID or self.gid != ACL_UNDEFINED_ID:
-            os.fchown(fd, self.uid, self.gid)
+    def _apply_action_fd(self, fd, isdir, depth):
+        """Subclass hook: apply the operation to a single open fd."""
+        raise NotImplementedError
 
     def _apply_action(self, item, it, depth_offset=0):
-        self._action_fd_fn(item.fd, item.isdir, depth_offset + len(it.dir_stack()))
+        self._apply_action_fd(item.fd, item.isdir, depth_offset + len(it.dir_stack()))
 
     def _process_mount(self, mnt_point, fs, rel, depth_offset=0):
         reporting_cb = self._report_progress if self.job is not None else None
@@ -209,18 +195,13 @@ class AclTool:
                 try:
                     self._apply_action(item, it, depth_offset)
                 except OSError as e:
-                    raise CallError(f'acltool [{self.action}] failed on item in {mnt_point}: {e}')
+                    raise CallError(f'{self._label} failed on item in {mnt_point}: {e}')
 
     def run(self):
         mountpoint, fs_name, rel_path, mnt_id = _get_mount_info(self.fd)
 
         self._estimate_total(fs_name, mnt_id)
-
-        if self.action in (AclToolAction.CLONE, AclToolAction.INHERIT):
-            if isinstance(self.options.target_acl, truenas_os.NFS4ACL):
-                self.nfs4_inh = _NFS4InheritedAcls.from_root(self.options.target_acl)
-            elif isinstance(self.options.target_acl, truenas_os.POSIXACL):
-                self.posix_file_acl = self.options.target_acl.generate_inherited_acl(is_dir=False)
+        self._setup()
 
         self._process_mount(mountpoint, fs_name, rel_path)
 
@@ -248,12 +229,152 @@ class AclTool:
                 try:
                     try:
                         self.cumulative_processed += 1
-                        self._action_fd_fn(child_fd, True, child_depth)
+                        self._apply_action_fd(child_fd, True, child_depth)
                     except OSError as e:
-                        raise CallError(f'acltool [{self.action}] failed on {child_mnt}: {e}')
+                        raise CallError(f'{self._label} failed on {child_mnt}: {e}')
                     self._process_mount(child_mnt, entry.sb_source, None, depth_offset=child_depth)
                 finally:
                     os.close(child_fd)
+
+
+class AclTool(_FsRecursionOp):
+    """
+    Perform recursive ACL-related operations using fd-based operations via the
+    truenas_os extension.
+    """
+
+    __slots__ = (
+        'action', 'uid', 'gid', 'nfs4_inh', 'posix_file_acl', '_action_fd_fn',
+    )
+
+    _OPTIONS_TYPE = types.MappingProxyType({
+        AclToolAction.CHOWN: ATChownOptions,
+        AclToolAction.STRIP: ATPermOptions,
+        AclToolAction.CLONE: ATAclOptions,
+        AclToolAction.INHERIT: ATAclOptions,
+    })
+
+    _ACTION_FN = types.MappingProxyType({
+        AclToolAction.CHOWN: '_do_chown',
+        AclToolAction.STRIP: '_do_strip',
+        AclToolAction.CLONE: '_do_acl',
+        AclToolAction.INHERIT: '_do_acl',
+    })
+
+    def __init__(self, fd, action, uid, gid, options, job=None):
+        expected = self._OPTIONS_TYPE[action]
+        if not isinstance(options, expected):
+            raise TypeError(f'{action}: expected {expected.__name__}, got {type(options).__name__}')
+        super().__init__(fd, options, job)
+        self.action = action
+        self.uid = uid
+        self.gid = gid
+        self.nfs4_inh = None
+        self.posix_file_acl = None
+        self._action_fd_fn = getattr(self, self._ACTION_FN[action])
+
+    @property
+    def _label(self):
+        return f'acltool [{self.action}]'
+
+    def _setup(self):
+        if self.action in (AclToolAction.CLONE, AclToolAction.INHERIT):
+            if isinstance(self.options.target_acl, truenas_os.NFS4ACL):
+                self.nfs4_inh = _NFS4InheritedAcls.from_root(self.options.target_acl)
+            elif isinstance(self.options.target_acl, truenas_os.POSIXACL):
+                self.posix_file_acl = self.options.target_acl.generate_inherited_acl(is_dir=False)
+
+    def _apply_action_fd(self, fd, isdir, depth):
+        self._action_fd_fn(fd, isdir, depth)
+
+    def _do_chown(self, fd, isdir, depth):
+        os.fchown(fd, self.uid, self.gid)
+
+    def _do_strip(self, fd, isdir, depth):
+        truenas_os.fsetacl(fd, None)
+        if self.uid != ACL_UNDEFINED_ID or self.gid != ACL_UNDEFINED_ID:
+            os.fchown(fd, self.uid, self.gid)
+        if self.options.target_mode is not None:
+            os.fchmod(fd, self.options.target_mode & 0o7777)
+
+    def _do_acl(self, fd, isdir, depth):
+        if self.nfs4_inh is not None:
+            # NFS4: use precomputed depth/type-specific inherited ACL
+            truenas_os.fsetacl(fd, self.nfs4_inh.pick(depth, isdir))
+        elif not isdir:
+            # POSIX1E file: use precomputed file-inherited ACL
+            truenas_os.fsetacl(fd, self.posix_file_acl)
+        else:
+            # POSIX1E dir: apply root ACL directly
+            truenas_os.fsetacl(fd, self.options.target_acl)
+        if self.uid != ACL_UNDEFINED_ID or self.gid != ACL_UNDEFINED_ID:
+            os.fchown(fd, self.uid, self.gid)
+
+
+class ZfsAttrTool(_FsRecursionOp):
+    """
+    Recursively apply a ZFS attribute change to a tree under an open dir fd.
+
+    `attrs_dict` is keyed by lower-case ZFS attr name (None values stripped).
+    Only entries whose type (file or directory) matches `targets` receive
+    the change. Symlinks are skipped (inherited from base walk).
+
+    `targets` is a sequence containing 'FILES', 'DIRECTORIES', or both.
+    """
+
+    _label = 'set_zfs_attributes'
+
+    __slots__ = ('attrs_dict', '_apply_to_files', '_apply_to_dirs')
+
+    def __init__(self, fd, attrs_dict, targets, job=None):
+        super().__init__(fd, ATBaseOptions(traverse=False), job)
+        self.attrs_dict = {k: v for k, v in attrs_dict.items() if v is not None}
+        self._apply_to_files = 'FILES' in targets
+        self._apply_to_dirs = 'DIRECTORIES' in targets
+
+    def _apply_action_fd(self, fd, isdir, depth):
+        if isdir and not self._apply_to_dirs:
+            return
+        if not isdir and not self._apply_to_files:
+            return
+        current = zfs_attributes_to_dict(fget_zfs_file_attributes(fd))
+        new = current | self.attrs_dict
+        if new == current:
+            return
+        fset_zfs_file_attributes(fd, dict_to_zfs_attributes_mask(new))
+
+
+def apply_zfs_attrs_recursive(fd, is_dir, attrs_in, targets, job=None):
+    """
+    Apply ZFS attribute changes to an open root fd and (if `is_dir`) walk
+    the tree under it applying the same change to descendants whose type is
+    in `targets`. The root fd is touched only if its type appears in
+    `targets`.
+
+    `targets` is a sequence containing 'FILES', 'DIRECTORIES', or both.
+    `attrs_in` is the dict from the API model (lower-case keys, bool|None
+    values; None values are ignored).
+
+    Returns the post-op attrs dict for the root, suitable as the API result.
+    """
+    apply_to_root = (
+        (is_dir and 'DIRECTORIES' in targets) or
+        (not is_dir and 'FILES' in targets)
+    )
+
+    current = zfs_attributes_to_dict(fget_zfs_file_attributes(fd))
+
+    if apply_to_root:
+        attrs_filtered = {k: v for k, v in attrs_in.items() if v is not None}
+        new = current | attrs_filtered
+        if new != current:
+            fset_zfs_file_attributes(fd, dict_to_zfs_attributes_mask(new))
+            current = zfs_attributes_to_dict(fget_zfs_file_attributes(fd))
+
+    if is_dir:
+        ZfsAttrTool(fd, attrs_in, targets, job=job).run()
+
+    return current
 
 
 def calculate_inherited_acl(theacl: dict, isdir: bool = True) -> list:
