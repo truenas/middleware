@@ -289,10 +289,10 @@ class PeriodicSnapshotTaskService(RemovalDateService, TaskRetentionService, CRUD
         """
         task = await self.get_instance(id_)
 
-        if not task["enabled"]:
+        if not task.enabled:
             raise CallError("Task is not enabled")
 
-        await self.middleware.call("zettarepl.run_periodic_snapshot_task", task["id"])
+        await self.middleware.call("zettarepl.run_periodic_snapshot_task", task.id)
 
     async def _validate(self, data: PeriodicSnapshotTaskEntry):
         verrors = ValidationErrors()
