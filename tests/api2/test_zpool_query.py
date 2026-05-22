@@ -75,14 +75,13 @@ class TestZpoolQueryFull:
     def test_topology(self, zpool_full):
         topology = zpool_full["topology"]
         assert isinstance(topology, dict)
-        for key in ("data", "log", "cache", "spares", "stripe", "special", "dedup"):
+        for key in ("data", "log", "cache", "spares", "special", "dedup"):
             assert key in topology
             assert isinstance(topology[key], list)
 
     def test_topology_data_vdev(self, zpool_full):
         """At least one data or stripe vdev should exist."""
-        topology = zpool_full["topology"]
-        vdevs = topology["data"] + topology["stripe"]
+        vdevs = zpool_full["topology"]["data"]
         assert len(vdevs) > 0
         vdev = vdevs[0]
         assert "name" in vdev

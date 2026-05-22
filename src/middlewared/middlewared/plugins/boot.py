@@ -124,12 +124,7 @@ class BootService(Service):
         await self.middleware.call('boot.format', dev, format_opts)
 
         pool = (await self.middleware.call('zpool.query_impl', {'pool_names': [BOOT_POOL_NAME], 'topology': True}))[0]
-
-        # Mirrored boot pools have their vdev in 'data', single-disk boot
-        # pools have it in 'stripe' (no children = no grouping vdev).
-        top = pool['topology']
-        boot_vdev = (top['data'] or top['stripe'])[0]
-
+        boot_vdev = pool['topology']['data'][0]
         zfs_dev_part = await self.middleware.call('disk.get_partition', dev)
         extend_pool_job = await self.middleware.call(
             'zfs.pool.extend', BOOT_POOL_NAME, None, [{
