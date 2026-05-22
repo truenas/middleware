@@ -23,6 +23,7 @@ jobs:
           mypy \
             middlewared/job.py \
             middlewared/alert/ \
+            middlewared/common/ports/ \
             middlewared/plugins/acme_protocol/ \
             middlewared/plugins/acme_dns_authenticator/ \
             middlewared/plugins/acme_registration/ \
@@ -37,7 +38,7 @@ jobs:
             middlewared/plugins/docker/ \
             middlewared/plugins/init_shutdown_script/ \
             middlewared/plugins/keyvalue.py \
-            middlewared/common/ports/ \
+            middlewared/plugins/mail/ \
             middlewared/plugins/ntp/ \
             middlewared/plugins/ports/ \
             middlewared/plugins/snapshot/ \

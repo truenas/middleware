@@ -20,6 +20,7 @@ from middlewared.alert.base import (
     ThreadedAlertSource,
 )
 from middlewared.alert.schedule import IntervalSchedule
+from middlewared.api.current import MailSendMessage
 from middlewared.utils import ProductType
 
 
@@ -179,10 +180,10 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
 
                 alerts.append(Alert(
                     alert_klass(alert_text),
-                    mail={
-                        "cc": ["support-renewal@truenas.com"],
-                        "subject": subject,
-                        "text": textwrap.dedent("""\
+                    mail=MailSendMessage(
+                        cc=["support-renewal@truenas.com"],
+                        subject=subject,
+                        text=textwrap.dedent("""\
                             Hello,
 
                             {opening}
@@ -210,8 +211,8 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
                             "serial_numbers": serial_numbers,
                             "contract_expiration": contract_expiration,
                             "encouraging": encouraging,
-                        })
-                    },
+                        }),
+                    ),
                 ))
                 break
 

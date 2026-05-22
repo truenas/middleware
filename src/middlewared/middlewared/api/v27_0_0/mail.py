@@ -5,7 +5,6 @@ from pydantic import Field, Secret
 from middlewared.api.base import (
     BaseModel,
     EmailString,
-    EmptyDict,
     Excluded,
     ForUpdateMetaclass,
     LongString,
@@ -13,8 +12,8 @@ from middlewared.api.base import (
     excluded_field,
 )
 
-__all__ = ["MailEntry", "MailUpdateArgs", "MailUpdateResult", "MailSendArgs", "MailSendResult",
-           "MailLocalAdministratorEmailArgs", "MailLocalAdministratorEmailResult"]
+__all__ = ["MailEntry", "MailUpdate", "MailUpdateArgs", "MailUpdateResult", "MailSendMessage", "MailSendArgs",
+           "MailSendResult", "MailLocalAdministratorEmailArgs", "MailLocalAdministratorEmailResult"]
 
 
 class MailEntryOAuth(BaseModel):
@@ -45,7 +44,7 @@ class MailEntry(BaseModel):
     """SMTP username."""
     pass_: Secret[str | None] = Field(alias="pass")
     """SMTP password."""
-    oauth: Secret[MailEntryOAuth | EmptyDict | None]
+    oauth: Secret[MailEntryOAuth | None]
     """OAuth configuration for email providers that support it or `null` for basic authentication."""
     id: int
     """Unique identifier for this mail configuration."""

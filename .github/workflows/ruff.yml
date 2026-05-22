@@ -19,7 +19,7 @@ jobs:
       id: new-files
       run: |
         git fetch origin "$GITHUB_BASE_REF" --depth=1
-        mapfile -t NEW_PY_FILES < <(git diff --name-only --diff-filter=A FETCH_HEAD HEAD -- '*.py')
+        mapfile -t NEW_PY_FILES < <(git diff --name-only --diff-filter=A FETCH_HEAD HEAD -- '*.py' ':!src/middlewared/middlewared/alembic/**')
         if [ ${#NEW_PY_FILES[@]} -eq 0 ]; then
           echo "✅ No new Python files to check"
           echo "found=false" >> "$GITHUB_OUTPUT"

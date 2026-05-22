@@ -16,9 +16,7 @@ class ConfigServicePart[E](ServicePart):
     _entry: type[E]
 
     async def config(self) -> E:
-        return await self._get_or_insert(
-            self._datastore, {'prefix': self._datastore_prefix},
-        )
+        return self._entry(**await self._get_or_insert())
 
     def extend(self, data: dict[str, Any]) -> dict[str, Any] | Awaitable[dict[str, Any]]:
         return data
@@ -26,7 +24,9 @@ class ConfigServicePart[E](ServicePart):
     def compress(self, data: dict[str, Any]) -> dict[str, Any] | Awaitable[dict[str, Any]]:
         return data
 
-    async def _get_or_insert(self, datastore: str, options: dict[str, Any]) -> E:
+    async def _get_or_insert(self) -> dict[str, Any]:
+        datastore = self._datastore
+        options = {'prefix': self._datastore_prefix}
         rows = await self.middleware.call('datastore.query', datastore, [], options)
         if not rows:
             async with get_or_insert_lock:
@@ -47,4 +47,13 @@ class ConfigServicePart[E](ServicePart):
             data = await self.extend(rows[0])
         else:
             data = await self.to_thread(self.extend, rows[0])
-        return self._entry.model_construct(**data)
+
+        return data
+
+    async def _update(self, new: E) -> None:
+        db_payload = new.model_dump(context={"expose_secrets": True}, warnings=False, by_alias=True)
+        db_payload.pop("id", None)
+
+        await self.middleware.call(
+            "datastore.update", self._datastore, new.id, db_payload, {"prefix": self._datastore_prefix},
+        )

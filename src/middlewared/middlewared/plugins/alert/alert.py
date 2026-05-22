@@ -639,7 +639,7 @@ class AlertService(Service):
                 for alert in new_alerts:
                     if alert.mail:
                         try:
-                            await self.middleware.call("mail.send", alert.mail)
+                            await self.call2(self.s.mail.send, alert.mail)
                         except NetworkActivityDisabled:
                             pass
 
