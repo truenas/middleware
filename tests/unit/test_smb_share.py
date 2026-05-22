@@ -369,6 +369,56 @@ def test__afp_share(nfsacl_dataset):
     assert conf['streams_xattr:xattr_compat'] is True
 
 
+def test__fruit_convert_adouble_default(nfsacl_dataset):
+    """
+    Stream-mode shares have no ._<base> companions to convert, so eager
+    per-readdir-entry conversion via ad_convert is wasted work. The
+    middleware default flips fruit:convert_adouble to False so vfs_fruit
+    skips the per-entry ENOENT openat. Conversion still happens lazily
+    via fruit_create_file on actual stream access.
+    """
+    conf = generate_smb_share_conf_dict(
+        None, DEFAULT_SHARE | {'path': nfsacl_dataset},
+        BASE_SMB_CONFIG | {'aapl_extensions': True}
+    )
+
+    assert conf['fruit:metadata'] == 'stream'
+    assert conf['fruit:resource'] == 'stream'
+    assert conf['fruit:convert_adouble'] is False
+
+
+def test__fruit_convert_adouble_afp_preserved(nfsacl_dataset):
+    """
+    AFP-compat shares (fruit:resource=file, fruit:metadata=netatalk) hold
+    real Netatalk-written ._<base> files and rely on ad_convert running.
+    The AFP override block must not pick up the stream-mode default.
+    """
+    smb = LEGACY_SHARE | {'path': nfsacl_dataset}
+    smb['options'] = LEGACY_SHARE_OPTS | {'afp': True}
+    conf = generate_smb_share_conf_dict(None, smb, BASE_SMB_CONFIG)
+
+    assert conf['fruit:metadata'] == 'netatalk'
+    assert conf['fruit:resource'] == 'file'
+    assert 'fruit:convert_adouble' not in conf
+
+
+def test__fruit_convert_adouble_aux_override(nfsacl_dataset):
+    """
+    A stream-mode share holding legacy ._<base> artefacts can re-enable
+    eager conversion explicitly via auxsmbconf. Aux params are applied
+    after the defaults, so the override wins.
+    """
+    smb = LEGACY_SHARE | {'path': nfsacl_dataset}
+    smb['options'] = LEGACY_SHARE_OPTS | {
+        'auxsmbconf': 'fruit:convert_adouble = yes'
+    }
+    conf = generate_smb_share_conf_dict(
+        None, smb, BASE_SMB_CONFIG | {'aapl_extensions': True}
+    )
+
+    assert conf['fruit:convert_adouble'] == 'yes'
+
+
 @pytest.mark.parametrize('tmopts', (
     {'auto_snapshot': True},
     {'auto_dataset_creation': True},
