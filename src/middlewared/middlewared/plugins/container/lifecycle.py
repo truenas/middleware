@@ -1,3 +1,4 @@
+import asyncio
 import errno
 import os
 import typing
@@ -96,9 +97,19 @@ def start_on_boot(context: ServiceContext) -> None:
             context.logger.error(f"Failed to start {container.name!r} container: {e}")
 
 
-def handle_shutdown(context: ServiceContext) -> None:
-    for container in context.call_sync2(context.s.container.query, [("status.state", "=", "RUNNING")]):
-        stop(context, container.id, ContainerStopOptions(force_after_timeout=True))
+async def _stop_one_container(context: ServiceContext, container: typing.Any) -> None:
+    try:
+        job = await context.call2(
+            context.s.container.stop, container.id, ContainerStopOptions(force_after_timeout=True),
+        )
+        await job.wait(raise_error=True)
+    except Exception:
+        context.logger.error('Failed to stop %r container', container.name, exc_info=True)
+
+
+async def handle_shutdown(context: ServiceContext) -> None:
+    running = await context.call2(context.s.container.query, [("status.state", "=", "RUNNING")])
+    await asyncio.gather(*(_stop_one_container(context, c) for c in running))
 
 
 def start(context: ServiceContext, id_: int) -> None:
