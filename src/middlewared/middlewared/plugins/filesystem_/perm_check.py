@@ -8,7 +8,6 @@ import truenas_os
 from middlewared.service import CallError, Service, private
 from middlewared.utils.filesystem.access import get_user_details
 
-
 _PERM_TOKEN_TO_BIT = MappingProxyType({
     'READ': os.R_OK,
     'WRITE': os.W_OK,
