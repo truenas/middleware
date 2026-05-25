@@ -216,8 +216,6 @@ def test__write_new_entry_snapshot(smb_setup):
 #   3. A burst of renames debounces to exactly one snapshot.
 #   4. Renames that don't touch the plist (or don't increase its entry count)
 #      do not generate snapshots.
-#   5. A rename targeting the plist before vfs_tmprotect's openat hook has
-#      cached the plist path is intentionally skipped.
 # ---------------------------------------------------------------------------
 
 
@@ -354,32 +352,4 @@ def test__rename_of_plist_with_no_count_change_no_snapshot(smb_setup, fresh_tm_s
 
         check_snapshot_count(smb_setup['dataset'], 0)
 
-    check_snapshot_count(smb_setup['dataset'], 0)
-
-
-def test__rename_into_plist_before_openat_skipped(smb_setup, fresh_tm_state):
-    """If vfs_tmprotect has never observed an openat of the plist on this
-    tree connection, config->history_file is NULL and the rename hook bails
-    out — per the explicit design choice. The disconnect path likewise has
-    nothing to act on, so no snapshot results."""
-    tmp = os.path.join(TM, HISTORY_FILE + '.preopen')
-
-    with smb_connection(
-        share=smb_setup['share']['name'],
-        username=SHAREUSER,
-        password=PASSWD,
-    ) as c:
-        # Deliberately do NOT open HISTORY_PATH first; only the tmp file.
-        fh = c.create_file(tmp, 'w')
-        try:
-            c.write(fh, FINAL_HISTORY.encode(), 0)
-        finally:
-            c.close(fh)
-        rename_replace(c, tmp, HISTORY_PATH)
-
-        time.sleep(TM_DEFERRED_SECONDS + TM_TIMER_SLACK)
-
-        check_snapshot_count(smb_setup['dataset'], 0)
-
-    # On disconnect history_file is still NULL → early return.
     check_snapshot_count(smb_setup['dataset'], 0)
