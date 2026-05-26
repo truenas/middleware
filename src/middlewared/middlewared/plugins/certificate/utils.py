@@ -33,9 +33,11 @@ def get_cert_info_from_data(data: dict[str, Any]) -> dict[str, Any]:
     return {key: data.get(key) for key in cert_info_keys if data.get(key)}
 
 
-def get_private_key(data: dict[str, Any]) -> str | None:
-    private_key: str | None = data.get("private_key")
-    if "passphrase" in data:
-        private_key = export_private_key(data["privatekey"], data["passphrase"])
+def get_private_key(privatekey: str | None = None, passphrase: str | None = None) -> str | None:
+    if passphrase is None:
+        return privatekey
 
-    return private_key
+    if privatekey is None:
+        raise ValueError("Must provide privatekey")
+
+    return export_private_key(privatekey, passphrase)

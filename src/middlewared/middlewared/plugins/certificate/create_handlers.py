@@ -65,13 +65,7 @@ def create_imported_certificate(
     job.set_progress(90, "Finalizing changes")
     return {
         "certificate": payload.certificate,
-        "privatekey": get_private_key(
-            {
-                "private_key": payload.privatekey,
-                "privatekey": payload.privatekey,
-                "passphrase": payload.passphrase,
-            }
-        ),
+        "privatekey": get_private_key(payload.privatekey, payload.passphrase),
         "type": CERT_TYPE_EXISTING,
     }
 
@@ -97,13 +91,7 @@ def create_imported_csr(
     job.set_progress(90, "Finalizing changes")
     return {
         "CSR": payload.CSR,
-        "privatekey": get_private_key(
-            {
-                "private_key": payload.privatekey,
-                "privatekey": payload.privatekey,
-                "passphrase": payload.passphrase,
-            }
-        ),
+        "privatekey": get_private_key(payload.privatekey, payload.passphrase),
         "type": CERT_TYPE_CSR,
     }
 
