@@ -5,6 +5,7 @@ import datetime
 import logging
 from typing import Any
 
+from truenas_connect_utils.finalize import FinalizeResult, classify_finalize_response
 from truenas_connect_utils.status import Status
 from truenas_connect_utils.urls import get_registration_finalization_uri
 
@@ -48,6 +49,7 @@ async def finalize_registration_impl(context: ServiceContext) -> None:
             # _poll_once needs the raw config dict (with jwt_token etc) for URL composition
             tnc_config = await config_internal(context)
             poll_status = await _poll_once(claim_token, system_id, tnc_config)
+            result, description = classify_finalize_response(poll_status)
         except asyncio.CancelledError:
             await status_update(
                 context,
@@ -55,45 +57,44 @@ async def finalize_registration_impl(context: ServiceContext) -> None:
                 'TNC registration finalization polling has been cancelled',
             )
             raise
-        except Exception as e:
-            logger.debug('TNC registration has not been finalized yet: %r', str(e))
-            poll_status = {'error': str(e)}
+        except Exception:
+            logger.error('Unexpected error during TNC finalize poll', exc_info=True)
+            result, description = FinalizeResult.RETRY, 'unexpected exception'
         finally:
             try_num += 1
 
-        if poll_status['error'] is None:
-            # We have got the key now and the registration has been finalized
-            if 'token' not in poll_status['response']:
-                logger.error(
-                    'Registration finalization failed for TNC as token not found in response: %r',
-                    poll_status['response']
-                )
+        if result is FinalizeResult.SUCCESS:
+            token = poll_status['response']['token']
+            try:
+                decoded_token = decode_and_validate_token(token)
+            except ValueError as e:
+                logger.error('Failed to validate received token: %s', e)
                 await status_update(context, Status.REGISTRATION_FINALIZATION_FAILED)
-            else:
-                token = poll_status['response']['token']
-                try:
-                    decoded_token = decode_and_validate_token(token)
-                except ValueError as e:
-                    logger.error('Failed to validate received token: %s', e)
-                    await status_update(context, Status.REGISTRATION_FINALIZATION_FAILED)
-                    return
-
-                await context.middleware.call(
-                    'datastore.update', 'truenas_connect', config.id, {
-                        'jwt_token': token,
-                        'registration_details': decoded_token,
-                    }
-                )
-                await status_update(context, Status.CERT_GENERATION_IN_PROGRESS)
-                logger.debug('TNC registration has been finalized')
-                context.middleware.create_task(
-                    context.call2(context.s.tn_connect.acme.initiate_cert_generation),
-                )
-                # Remove claim token from cache
-                await context.middleware.call('cache.pop', CLAIM_TOKEN_CACHE_KEY)
                 return
+
+            await context.middleware.call(
+                'datastore.update', 'truenas_connect', config.id, {
+                    'jwt_token': token,
+                    'registration_details': decoded_token,
+                }
+            )
+            await status_update(context, Status.CERT_GENERATION_IN_PROGRESS)
+            logger.debug('TNC registration has been finalized')
+            context.middleware.create_task(
+                context.call2(context.s.tn_connect.acme.initiate_cert_generation),
+            )
+            # Remove claim token from cache
+            await context.middleware.call('cache.pop', CLAIM_TOKEN_CACHE_KEY)
+            return
+        elif result is FinalizeResult.TERMINAL:
+            await status_update(
+                context,
+                Status.REGISTRATION_FINALIZATION_FAILED,
+                f'TNC registration terminal failure: {description}',
+            )
+            return
         else:
-            logger.debug('TNC registration has not been finalized yet: %r', poll_status['error'])
+            logger.debug('TNC registration has not been finalized yet: %s', description)
 
         sleep_secs = calculate_sleep(start_time, BACKOFF_BASE_SLEEP)
         logger.debug('Waiting for %r seconds before attempting to finalize registration', sleep_secs)
