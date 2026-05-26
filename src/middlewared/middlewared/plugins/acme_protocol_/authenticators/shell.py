@@ -49,7 +49,7 @@ class ShellAuthenticator(Authenticator):
 
         try:
             can_access = await middleware.call(
-                'filesystem.can_access_as_user', data['user'], data['script'], {'execute': True}
+                'filesystem.can_access_as_user', data['user'], data['script'], ['EXECUTE']
             )
         except CallError as e:
             verrors.add('script', f'Unable to validate script: {e}')
