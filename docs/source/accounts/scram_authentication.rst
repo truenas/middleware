@@ -61,7 +61,7 @@ Creating an API Key (TrueNAS 26+)
 
     # Authenticate with username/password or existing credentials
     with Client() as c:
-        c.call('auth.login', 'root', 'password')
+        c.login_with_password('root', 'password')
 
         # Create new API key
         api_key_data = c.call('api_key.create', {
@@ -752,7 +752,10 @@ Common error responses:
   Server signature verification failed - possible man-in-the-middle attack.
 
 **Method does not exist:**
-  Server doesn't support ``auth.login_ex`` (pre-SCRAM version). Use legacy ``auth.login_with_api_key`` method.
+  Server doesn't support ``auth.login_ex`` (pre-SCRAM version). The legacy ``auth.login_with_api_key``
+  method may still be available on those older servers (it was removed from the v27 API). Custom
+  clients that need to support older servers can use ``auth.login_with_api_key`` as a fallback for
+  pre-25.04 versions while preferring ``auth.login_ex`` for modern servers.
 
 **Invalid nonce:**
   Server nonce doesn't start with client nonce - protocol violation.
