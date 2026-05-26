@@ -113,14 +113,6 @@ def docker_dataset_custom_props(ds: str) -> dict[str, str]:
     return props.get(ds, dict())
 
 
-def docker_dataset_update_props(props: dict[str, str]) -> dict[str, str]:
-    return {
-        attr: value
-        for attr, value in props.items()
-        if attr not in ('casesensitivity', 'mountpoint', 'encryption')
-    }
-
-
 def missing_required_datasets(existing_datasets: set[str], docker_ds: str) -> set[str]:
     diff = existing_datasets ^ set(docker_datasets(docker_ds))
     if fatal_diff := diff.intersection(

@@ -100,11 +100,3 @@ def credential_is_limited_to_own_jobs(credential: SessionManagerCredentials | No
         return False
 
     return not credential_has_full_admin(credential)
-
-
-def credential_is_root_or_equivalent(credential: SessionManagerCredentials | None) -> bool:
-    if credential is None or not credential.is_user_session:
-        return False
-
-    # SYS_ADMIN is set when user UID is 0 (root) or 950 (truenas_admin).
-    return 'SYS_ADMIN' in credential.user['account_attributes']  # type: ignore[attr-defined]
