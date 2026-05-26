@@ -1,16 +1,27 @@
 #!/usr/bin/make -f
 #export DH_VERBOSE = 1
 
+SKIP_DOCS := $(filter 1 yes true,$(SKIP_MIDDLEWARE_DOCS))
+
 %:
 	dh $@
 
 # Override the build step if necessary
 override_dh_auto_build:
+ifeq ($(SKIP_DOCS),)
 	virtualenv --system-site-packages virtualenv
 	virtualenv/bin/pip install -r _requirements.txt
 	virtualenv/bin/python3 generate_docs.py dist
 	dh_auto_build
+else
+	@echo "Skipping middleware docs build"
+endif
 
 override_dh_auto_install:
 	mkdir -p debian/middlewared-docs/usr/share/middlewared
-	mv dist debian/middlewared-docs//usr/share/middlewared/docs
+ifeq ($(SKIP_DOCS),)
+	mv dist debian/middlewared-docs/usr/share/middlewared/docs
+else
+	@echo "Installing empty docs directory"
+	mkdir -p debian/middlewared-docs/usr/share/middlewared/docs
+endif
