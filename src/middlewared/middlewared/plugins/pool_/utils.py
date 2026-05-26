@@ -128,53 +128,6 @@ def dataset_can_be_mounted(ds_name, ds_mountpoint):
     return mount_error_check
 
 
-def get_props_of_interest_mapping():
-    return [
-        (TNUserProp.DESCRIPTION.value, 'comments', None),
-        (TNUserProp.QUOTA_WARN.value, 'quota_warning', None),
-        (TNUserProp.QUOTA_CRIT.value, 'quota_critical', None),
-        (TNUserProp.REFQUOTA_WARN.value, 'refquota_warning', None),
-        (TNUserProp.REFQUOTA_CRIT.value, 'refquota_critical', None),
-        (TNUserProp.MANAGED_BY.value, 'managedby', None),
-        ('dedup', 'deduplication', str.upper),
-        ('mountpoint', None, _null),
-        ('aclmode', None, str.upper),
-        ('acltype', None, str.upper),
-        ('xattr', None, str.upper),
-        ('atime', None, str.upper),
-        ('casesensitivity', None, str.upper),
-        ('checksum', None, str.upper),
-        ('exec', None, str.upper),
-        ('sync', None, str.upper),
-        ('compression', None, str.upper),
-        ('compressratio', None, None),
-        ('origin', None, None),
-        ('quota', None, _null),
-        ('refquota', None, _null),
-        ('reservation', None, _null),
-        ('refreservation', None, _null),
-        ('copies', None, None),
-        ('snapdir', None, str.upper),
-        ('readonly', None, str.upper),
-        ('recordsize', None, None),
-        ('sparse', None, None),
-        ('volsize', None, None),
-        ('volblocksize', None, None),
-        ('keyformat', 'key_format', lambda o: o.upper() if o != 'none' else None),
-        ('encryption', 'encryption_algorithm', lambda o: o.upper() if o != 'off' else None),
-        ('used', None, None),
-        ('usedbychildren', None, None),
-        ('usedbydataset', None, None),
-        ('usedbyrefreservation', None, None),
-        ('usedbysnapshots', None, None),
-        ('available', None, None),
-        ('special_small_blocks', 'special_small_block_size', None),
-        ('pbkdf2iters', None, None),
-        ('creation', None, None),
-        ('snapdev', None, str.upper),
-    ]
-
-
 def retrieve_keys_from_file(job):
     job.check_pipe('input')
     try:
