@@ -130,17 +130,14 @@ def write_plist(plist_path, contents=None):
 
 def delete_aapltm_snapshots(dataset_name):
     """Remove every aapltm-* snapshot on the dataset so subsequent tests start
-    from a clean slate (no rate-limit lingering from prior runs)."""
+    from a clean slate (no rate-limit lingering from prior runs).
+
+    The `aapltm-` prefix is hardcoded in Samba's vfs_tmprotect module when it
+    names the snapshots it takes on behalf of Time Machine clients."""
     snaps = call('pool.snapshot.query', [['dataset', '=', dataset_name]])
     for s in snaps:
         if s['snapshot_name'].startswith('aapltm-'):
             call('pool.snapshot.delete', s['id'])
-
-
-def rename_replace(c, src, dst):
-    """SMB rename that overwrites an existing destination, mirroring the
-    atomic-rename pattern Time Machine uses to commit a new plist."""
-    return c._connection.rename(src, dst, replace=True)
 
 
 @pytest.fixture
@@ -238,7 +235,7 @@ def _smb_atomic_replace(c, contents, tmp_suffix='.new'):
         c.write(fh, contents.encode(), 0)
     finally:
         c.close(fh)
-    rename_replace(c, tmp, HISTORY_PATH)
+    c.rename(tmp, HISTORY_PATH, replace=True)
 
 
 def test__rename_into_plist_disconnect_takes_snapshot_inline(smb_setup, fresh_tm_state):
