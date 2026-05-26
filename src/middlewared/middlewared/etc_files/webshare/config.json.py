@@ -2,11 +2,11 @@ import json
 import os
 
 from middlewared.plugins.etc import FileShouldNotExist
-from middlewared.utils.webshare import WEBSHARE_BULK_DOWNLOAD_PATH
+from middlewared.utils.webshare import WEBSHARE_BULK_DOWNLOAD_PATH, WEBSHARE_PATH
 
 
 def render(service, middleware):
-    if not os.path.exists("/var/db/system/webshare"):
+    if not os.path.exists(WEBSHARE_PATH):
         raise FileShouldNotExist()
 
     shares = middleware.call_sync2(
