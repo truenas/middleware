@@ -601,10 +601,17 @@ class JBOFService(CRUDService):
                 verrors.add(schema, 'Unable to determine this controllers position in chassis')
                 return
 
-            connected_shelf_ips = []
-            results = await asyncio.gather(
-                *[self.hardwire_node(node, shelf_index, shelf_ip_to_mac) for node in ('A', 'B')]
-            )
+            # PLAT-1056: if any node fails to wire up after the first pass,
+            # parallel-reset both IOM fabric cards once and retry. The reset
+            # is hoisted to this level (and run a single time) so both HA
+            # nodes see the same fresh card state when they re-verify.
+            for outer_pass in (1, 2):
+                results = await asyncio.gather(
+                    *[self.hardwire_node(node, shelf_index, shelf_ip_to_mac) for node in ('A', 'B')]
+                )
+                if all(results) or outer_pass == 2:
+                    break
+                await self._reset_both_fabric_cards(mgmt_ip)
             for (node, connected_shelf_ips) in zip(('A', 'B'), results):
                 if not connected_shelf_ips:
                     # Failed to connect any IPs => error
@@ -616,7 +623,12 @@ class JBOFService(CRUDService):
                     return
                 self.logger.debug('Configured node %r: %r', node, connected_shelf_ips)
         else:
-            connected_shelf_ips = await self.hardwire_node('', shelf_index, shelf_ip_to_mac)
+            # PLAT-1056: same retry-with-reset pattern for the single-node case.
+            for outer_pass in (1, 2):
+                connected_shelf_ips = await self.hardwire_node('', shelf_index, shelf_ip_to_mac)
+                if connected_shelf_ips or outer_pass == 2:
+                    break
+                await self._reset_both_fabric_cards(mgmt_ip)
             if not connected_shelf_ips:
                 # Failed to connect any IPs => error
                 verrors.add(schema, 'Unable to communicate with the expansion shelf')
@@ -626,6 +638,49 @@ class JBOFService(CRUDService):
                 verrors.add(schema, 'Too many connections wired to the expansion shelf')
                 return
             self.logger.debug('Configured node: %r', connected_shelf_ips)
+
+    @private
+    def reset_fabric_card(self, mgmt_ip, iom_num):
+        """POST GracefulRestart to the fabric card on the given IOM.
+
+        Blocks until the BMC reports the restart has completed (~28s). Default
+        Redfish client timeout is 10s, so an explicit 90s timeout is used here.
+        Returns True on success, False on failure.
+        """
+        uri = f'/redfish/v1/Chassis/IOM{iom_num}/NetworkAdapters/1/Actions/Oem/VikingEnterpriseSolutions.Reset'
+        try:
+            r = RedfishClient.cache_get(mgmt_ip).post(
+                uri, data={'ResetType': 'GracefulRestart'}, timeout=90,
+            )
+        except Exception:
+            self.logger.warning(
+                'Failed to reset IOM%d fabric card', iom_num, exc_info=True,
+            )
+            return False
+        if not r.ok:
+            self.logger.warning(
+                'Reset IOM%d fabric card returned HTTP %d', iom_num, r.status_code,
+            )
+            return False
+        return True
+
+    @private
+    async def _reset_both_fabric_cards(self, mgmt_ip):
+        """Parallel GracefulRestart of both IOM fabric cards. Used by
+        hardwire_host to recover from PLAT-1056 between retry passes.
+
+        Empirically, BMCs return HTTP 200 from the GracefulRestart action
+        before the fabric data plane is fully ready to answer ARP / NDP.
+        Sleep 30s after the resets complete to let the data plane settle
+        before the caller retries hardwire_node.
+        """
+        self.logger.info('Resetting both IOM fabric cards and retrying')
+        await asyncio.gather(
+            self.middleware.call('jbof.reset_fabric_card', mgmt_ip, 1),
+            self.middleware.call('jbof.reset_fabric_card', mgmt_ip, 2),
+            return_exceptions=True,
+        )
+        await asyncio.sleep(30)
 
     @private
     async def hardwire_node(self, node, shelf_index, shelf_ip_to_mac, skip_ips=[]):
