@@ -31,6 +31,7 @@ class Checkpoint(StrEnum):
     POST_INIT = 'post_init'
     POOL_IMPORT = 'pool_import'
     PRE_INTERFACE_SYNC = 'pre_interface_sync'
+    SYSTEM_DATASET_MOUNTED = 'system_dataset_mounted'
 
 
 class RendererType(StrEnum):
@@ -201,9 +202,24 @@ class EtcService(Service):
             EtcEntry(renderer_type=RendererType.PY, path='truesearch/config.json'),
         )),
         'webshare': EtcGroup(entries=(
-            EtcEntry(renderer_type=RendererType.PY, path='webshare/config.json'),
-            EtcEntry(renderer_type=RendererType.PY, path='webshare-auth/config.json'),
-            EtcEntry(renderer_type=RendererType.PY, path='webshare-link/config.json'),
+            # All webshare-related entries refuse to generate their config files if `WEBSHARE_PATH` does not exist.
+            # `WEBSHARE_PATH` resides on the system dataset, so system dataset must be mounted before we try to generate
+            # a webshare-related entry. That's why we set `checkpoint=Checkpoint.SYSTEM_DATASET_MOUNTED`.
+            EtcEntry(
+                renderer_type=RendererType.PY,
+                path='webshare/config.json',
+                checkpoint=Checkpoint.SYSTEM_DATASET_MOUNTED,
+            ),
+            EtcEntry(
+                renderer_type=RendererType.PY,
+                path='webshare-auth/config.json',
+                checkpoint=Checkpoint.SYSTEM_DATASET_MOUNTED,
+            ),
+            EtcEntry(
+                renderer_type=RendererType.PY,
+                path='webshare-link/config.json',
+                checkpoint=Checkpoint.SYSTEM_DATASET_MOUNTED,
+            ),
         )),
         'truenas_nvdimm': EtcGroup(entries=(
             EtcEntry(renderer_type=RendererType.PY, path='truenas_nvdimm', checkpoint=Checkpoint.POST_INIT),
@@ -716,9 +732,18 @@ async def pool_post_import(middleware, pool):
         await middleware.call('etc.generate_checkpoint', Checkpoint.POOL_IMPORT)
 
 
+async def systemdataset_setup_hook(middleware, data):
+    if not data["in_progress"]:  # System dataset mount complete
+        await middleware.call('etc.generate_checkpoint', Checkpoint.SYSTEM_DATASET_MOUNTED)
+
+
 async def setup(middleware):
     middleware.event_subscribe('system.ready', __event_system_ready)
     # Generate `etc` files before executing other post-boot-time-pool-import actions.
     # There are no explicit requirements for that, we are just preserving execution order
     # when moving checkpoint generation to pool.post_import hook.
     middleware.register_hook('pool.post_import', pool_post_import, order=-1000)
+    # FIXME: Investigate whether we can change the above to generate `etc` files _after_ all other
+    #  post-boot-time-pool-import actions are completed. That will eliminate the need for a separate
+    #  `SYSTEM_DATASET_MOUNTED` checkpoint.
+    middleware.register_hook('sysdataset.setup', systemdataset_setup_hook)
