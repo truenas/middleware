@@ -117,11 +117,11 @@ class iSCSITargetAluaService(Service):
         iqn_basename = config['basename']
         thisnode = await self.middleware.call('failover.node')
 
-        # extents: dict[id] : {id, name, type, serial}
+        # extents: dict[id] : {id, name, path, type, serial}
         extents = {ext['id']: ext for ext in await self.middleware.call(
             'iscsi.extent.query',
             [['enabled', '=', True], ['locked', '=', False]],
-            {'select': ['name', 'id', 'type', 'serial']},
+            {'select': ['name', 'id', 'path', 'type', 'serial']},
         )}
 
         # targets: dict[id]: {'name': name, 'mode': mode}
@@ -161,6 +161,17 @@ class iSCSITargetAluaService(Service):
                     target_name = targets[target_id]['name']
                     target_mode = targets[target_id]['mode']
                     extent_name = extents[extent_id]['name']
+                    extent_type = extents[extent_id]['type']
+                    # If the extent is FILE, then call activate_extent
+                    # (bind_alua_state not set by default)
+                    if extent_type == 'FILE':
+                        if not await self.middleware.call(
+                            'iscsi.scst.activate_extent',
+                            extent_name,
+                            extent_type,
+                            extents[extent_id]['path']
+                        ):
+                            self.logger.warning('become_active: failed to activate FILE extent %r', extent_name)
                     if target_mode in ['ISCSI', 'BOTH']:
                         iqn = f'{iqn_basename}:{target_name}'
                         await self.middleware.call('iscsi.scst.replace_iscsi_lun',
