@@ -1202,7 +1202,7 @@ class InterfaceService(CRUDService):
         await self._common_validation(
             verrors, 'interface_update', new, iface['type'], update=iface
         )
-        if await self.middleware.call('failover.licensed') and (new.get('ipv4_dhcp') or new.get('ipv6_auto')):
+        if await self.middleware.call('failover.licensed') and (data.get('ipv4_dhcp') or data.get('ipv6_auto')):
             verrors.add('interface_update.dhcp', 'Enabling DHCPv4/v6 on HA systems is unsupported.')
 
         verrors.check()
