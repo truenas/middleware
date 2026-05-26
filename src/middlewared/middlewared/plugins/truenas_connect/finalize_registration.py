@@ -2,6 +2,7 @@ import asyncio
 import datetime
 import logging
 
+from truenas_connect_utils.finalize import FinalizeResult, classify_finalize_response
 from truenas_connect_utils.status import Status
 from truenas_connect_utils.urls import get_registration_finalization_uri
 
@@ -47,48 +48,47 @@ class TNCRegistrationFinalizeService(Service, TNCAPIMixin):
             try:
                 logger.debug('Attempt %r: Polling for TNC registration finalization', try_num)
                 status = await self.poll_once(claim_token, system_id, config)
+                result, description = classify_finalize_response(status)
             except asyncio.CancelledError:
                 await self.status_update(
                     Status.REGISTRATION_FINALIZATION_TIMEOUT, 'TNC registration finalization polling has been cancelled'
                 )
                 raise
-            except Exception as e:
-                logger.debug('TNC registration has not been finalized yet: %r', str(e))
-                status = {'error': str(e)}
+            except Exception:
+                logger.error('Unexpected error during TNC finalize poll', exc_info=True)
+                result, description = FinalizeResult.RETRY, 'unexpected exception'
             finally:
                 try_num += 1
 
-            if status['error'] is None:
-                # We have got the key now and the registration has been finalized
-                if 'token' not in status['response']:
-                    logger.error(
-                        'Registration finalization failed for TNC as token not found in response: %r',
-                        status['response']
-                    )
+            if result is FinalizeResult.SUCCESS:
+                token = status['response']['token']
+                try:
+                    decoded_token = decode_and_validate_token(token)
+                except ValueError as e:
+                    logger.error('Failed to validate received token: %s', e)
                     await self.status_update(Status.REGISTRATION_FINALIZATION_FAILED)
-                else:
-                    token = status['response']['token']
-                    try:
-                        decoded_token = decode_and_validate_token(token)
-                    except ValueError as e:
-                        logger.error('Failed to validate received token: %s', e)
-                        await self.status_update(Status.REGISTRATION_FINALIZATION_FAILED)
-                        return
-
-                    await self.middleware.call(
-                        'datastore.update', 'truenas_connect', config['id'], {
-                            'jwt_token': token,
-                            'registration_details': decoded_token,
-                        }
-                    )
-                    await self.status_update(Status.CERT_GENERATION_IN_PROGRESS)
-                    logger.debug('TNC registration has been finalized')
-                    self.middleware.create_task(self.middleware.call('tn_connect.acme.initiate_cert_generation'))
-                    # Remove claim token from cache
-                    await self.middleware.call('cache.pop', CLAIM_TOKEN_CACHE_KEY)
                     return
+
+                await self.middleware.call(
+                    'datastore.update', 'truenas_connect', config['id'], {
+                        'jwt_token': token,
+                        'registration_details': decoded_token,
+                    }
+                )
+                await self.status_update(Status.CERT_GENERATION_IN_PROGRESS)
+                logger.debug('TNC registration has been finalized')
+                self.middleware.create_task(self.middleware.call('tn_connect.acme.initiate_cert_generation'))
+                # Remove claim token from cache
+                await self.middleware.call('cache.pop', CLAIM_TOKEN_CACHE_KEY)
+                return
+            elif result is FinalizeResult.TERMINAL:
+                await self.status_update(
+                    Status.REGISTRATION_FINALIZATION_FAILED,
+                    f'TNC registration terminal failure: {description}',
+                )
+                return
             else:
-                logger.debug('TNC registration has not been finalized yet: %r', status['error'])
+                logger.debug('TNC registration has not been finalized yet: %s', description)
 
             sleep_secs = calculate_sleep(start_time, self.BACKOFF_BASE_SLEEP)
             logger.debug('Waiting for %r seconds before attempting to finalize registration', sleep_secs)
