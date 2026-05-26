@@ -54,7 +54,7 @@ def test_snapshot_task_run_disabled_task_raises():
             "enabled": False,
         }) as t:
             with pytest.raises(CallError, match="Task is not enabled"):
-                call("pool.snapshottask.run", t["id"])
+                call("pool.snapshottask.run", t["id"], job=True)
 
 
 def test_snapshot_task_can_be_deleted_after_dataset_rename():
