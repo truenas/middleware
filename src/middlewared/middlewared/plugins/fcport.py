@@ -367,11 +367,10 @@ class FCPortService(CRUDService):
         else:
             fc_host_alias = data['port']
             chan = None
-        try:
-            fc_host_pair = filter_list(context['fc.fc_host.query'], [('alias', '=', fc_host_alias)], {'get': True})
-        except MatchNotFound:
-            pass
-        else:
+        fc_host_pair = next(
+            (h for h in context['fc.fc_host.query'] if h['alias'] == fc_host_alias), None
+        )
+        if fc_host_pair is not None:
             if chan:
                 # NPIV
                 data['wwpn'] = wwpn_to_vport_naa(fc_host_pair.get('wwpn'), int(chan))

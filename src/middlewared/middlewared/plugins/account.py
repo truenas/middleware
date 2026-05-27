@@ -1614,7 +1614,7 @@ class UserService(CRUDService):
         if 'username' in data:
             pw_checkname(verrors, f'{schema}.username', data['username'])
 
-            if filter_list(users, [('username', '=', data['username'])]):
+            if any(u['username'] == data['username'] for u in users):
                 verrors.add(
                     f'{schema}.username',
                     f'The username "{data["username"]}" already exists.',
@@ -1622,7 +1622,10 @@ class UserService(CRUDService):
                 )
 
             if data.get('smb'):
-                if filter_list(users, [['username', 'C=', data['username']], ['smb', '=', True]]):
+                if any(
+                    u['smb'] and u['username'].casefold() == data['username'].casefold()
+                    for u in users
+                ):
                     verrors.add(
                         f'{schema}.smb',
                         f'Username "{data["username"]}" conflicts with existing SMB user. Note that SMB '
@@ -2575,7 +2578,7 @@ class GroupService(CRUDService):
                                                         [('smb', '=', True)] + exclude_filter,
                                                         {'prefix': 'bsdgrp_'})
 
-                if filter_list(smb_groups, [['group', 'C=', data['name']]]):
+                if any(g['group'].casefold() == data['name'].casefold() for g in smb_groups):
                     verrors.add(
                         f'{schema}.name',
                         f'Group name "{data["name"]}" conflicts with existing groupmap entry. '
