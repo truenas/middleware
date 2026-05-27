@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING
 
 from middlewared.alert.source.web_ui_root_login import WebUiRootLoginAlert
+
 if TYPE_CHECKING:
     from middlewared.main import Middleware
 
