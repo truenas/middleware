@@ -1,5 +1,18 @@
+import asyncio
+
 from middlewared.service import private, Service
 from middlewared.utils.libvirt.utils import ACTIVE_STATES
+
+
+async def _stop_one_vm(middleware, vm):
+    try:
+        if vm['status']['state'] == 'RUNNING':
+            job = await middleware.call('vm.stop', vm['id'], {'force_after_timeout': True})
+            await job.wait(raise_error=True)
+        else:
+            await middleware.call('vm.poweroff', vm['id'])
+    except Exception:
+        middleware.logger.error('Failed to stop %r VM', vm['name'], exc_info=True)
 
 
 class VMService(Service):
@@ -14,14 +27,8 @@ class VMService(Service):
 
     @private
     async def handle_shutdown(self):
-        for vm in await self.middleware.call('vm.query', [('status.state', 'in', ACTIVE_STATES)]):
-            if vm['status']['state'] == 'RUNNING':
-                await self.middleware.call('vm.stop', vm['id'], {'force_after_timeout': True})
-            else:
-                try:
-                    await self.middleware.call('vm.poweroff', vm['id'])
-                except Exception:
-                    self.middleware.logger.error('Powering off %r VM failed', vm['name'], exc_info=True)
+        active = await self.middleware.call('vm.query', [('status.state', 'in', ACTIVE_STATES)])
+        await asyncio.gather(*(_stop_one_vm(self.middleware, vm) for vm in active))
 
 
 async def __event_system_ready(middleware, event_type, args):
