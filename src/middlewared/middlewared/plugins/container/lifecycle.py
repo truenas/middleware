@@ -1,3 +1,4 @@
+import asyncio
 import errno
 import os
 
@@ -76,6 +77,16 @@ def _build_idmapped_root_acl() -> 'truenas_os.POSIXACL':
     return truenas_os.POSIXACL.from_aces(aces)
 
 
+async def _stop_one_container(middleware, container):
+    try:
+        job = await middleware.call(
+            'container.stop', container['id'], {'force_after_timeout': True},
+        )
+        await job.wait(raise_error=True)
+    except Exception:
+        middleware.logger.error('Failed to stop %r container', container['name'], exc_info=True)
+
+
 class ContainerService(Service):
 
     @private
@@ -102,8 +113,8 @@ class ContainerService(Service):
 
     @private
     async def handle_shutdown(self):
-        for container in await self.middleware.call('container.query', [('status.state', '=', 'RUNNING')]):
-            await self.middleware.call('container.stop', container['id'], {'force_after_timeout': True})
+        running = await self.middleware.call('container.query', [('status.state', '=', 'RUNNING')])
+        await asyncio.gather(*(_stop_one_container(self.middleware, c) for c in running))
 
     @api_method(ContainerStartArgs, ContainerStartResult, roles=["CONTAINER_WRITE"])
     def start(self, id_):

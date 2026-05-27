@@ -72,8 +72,14 @@ class VMService(Service):
         libvirt_domain = self.pylibvirt_vm(vm_data)
         if options['force']:
             self.middleware.libvirt_domains_manager.vms.destroy(libvirt_domain)
-        else:
-            self.middleware.libvirt_domains_manager.vms.shutdown(libvirt_domain, vm_data['shutdown_timeout'])
+            return
+
+        self.middleware.libvirt_domains_manager.vms.shutdown(libvirt_domain, vm_data['shutdown_timeout'])
+        if (
+            options['force_after_timeout']
+            and self.middleware.call_sync('vm.get_instance', id_)['status']['state'] == 'RUNNING'
+        ):
+            self.middleware.libvirt_domains_manager.vms.destroy(libvirt_domain)
 
     @api_method(VMPoweroffArgs, VMPoweroffResult, roles=['VM_WRITE'])
     def poweroff(self, id_):
