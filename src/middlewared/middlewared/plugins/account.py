@@ -529,11 +529,11 @@ class UserService(CRUDService):
                     f'{data["home"]}: home directory path is immutable.'
                 )
 
-        in_use = filter_list(users, [('home', '=', data['home'])])
+        in_use = next((u for u in users if u['home'] == data['home']), None)
         if in_use:
             verrors.add(
                 f'{schema}.home',
-                f'{data["home"]}: homedir already used by {in_use[0]["username"]}.',
+                f'{data["home"]}: homedir already used by {in_use["username"]}.',
                 errno.EEXIST
             )
 
@@ -1374,23 +1374,23 @@ class UserService(CRUDService):
             local_users = await self.middleware.call('user.query', [['local', '=', True]])
             local_groups = await self.middleware.call('group.query', [['local', '=', True]])
 
-            if filter_list(local_users, [['uid', '=', ADMIN_UID]]):
+            if any(u['uid'] == ADMIN_UID for u in local_users):
                 raise CallError(
                     f'A user with uid={ADMIN_UID} already exists, setting up local administrator is not possible',
                     errno.EEXIST,
                 )
 
-            if filter_list(local_users, [['username', '=', username]]):
+            if any(u['username'] == username for u in local_users):
                 raise CallError(f'{username!r} user already exists, setting up local administrator is not possible',
                                 errno.EEXIST)
 
-            if filter_list(local_groups, [['gid', '=', ADMIN_GID]]):
+            if any(g['gid'] == ADMIN_GID for g in local_groups):
                 raise CallError(
                     f'A group with gid={ADMIN_GID} already exists, setting up local administrator is not possible',
                     errno.EEXIST,
                 )
 
-            if filter_list(local_groups, [['group', '=', username]]):
+            if any(g['group'] == username for g in local_groups):
                 raise CallError(f'{username!r} group already exists, setting up local administrator is not possible',
                                 errno.EEXIST)
 
