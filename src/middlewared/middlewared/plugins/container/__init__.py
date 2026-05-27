@@ -145,8 +145,8 @@ class ContainerService(GenericCRUDService[ContainerEntry]):
         start_on_boot(self.context)
 
     @private
-    def handle_shutdown(self) -> None:
-        handle_shutdown(self.context)
+    async def handle_shutdown(self) -> None:
+        await handle_shutdown(self.context)
 
     @private
     async def nsenter(self, id_: int) -> list[str]:
