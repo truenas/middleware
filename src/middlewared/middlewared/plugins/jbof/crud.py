@@ -495,6 +495,15 @@ class JBOFService(CRUDService):
         await self.middleware.call('jbof.hardwire_shelf', mgmt_ip, shelf_index)
         await self.middleware.call('jbof.hardwire_host', mgmt_ip, shelf_index, schema, verrors)
         if not verrors:
+            # Some drives may be enumerated by the BMC but absent from the
+            # fabric's NVMe-oF discovery log on shelf attach. A per-slot
+            # Drive.Reset ForceOff -> On gets them re-registered. Detect
+            # (HA-aware: query both controllers' paths) and recover before
+            # attach_drives so the kernel sees the full drive set on each
+            # controller.
+            await self.middleware.call(
+                'jbof.recover_missing_drive_slots', mgmt_ip, shelf_index,
+            )
             await self.middleware.call('jbof.attach_drives', schema, verrors)
 
     @private
@@ -601,10 +610,17 @@ class JBOFService(CRUDService):
                 verrors.add(schema, 'Unable to determine this controllers position in chassis')
                 return
 
-            connected_shelf_ips = []
-            results = await asyncio.gather(
-                *[self.hardwire_node(node, shelf_index, shelf_ip_to_mac) for node in ('A', 'B')]
-            )
+            # PLAT-1056: if any node fails to wire up after the first pass,
+            # parallel-reset both IOM fabric cards once and retry. The reset
+            # is hoisted to this level (and run a single time) so both HA
+            # nodes see the same fresh card state when they re-verify.
+            for outer_pass in (1, 2):
+                results = await asyncio.gather(
+                    *[self.hardwire_node(node, shelf_index, shelf_ip_to_mac) for node in ('A', 'B')]
+                )
+                if all(results) or outer_pass == 2:
+                    break
+                await self._reset_both_fabric_cards(mgmt_ip)
             for (node, connected_shelf_ips) in zip(('A', 'B'), results):
                 if not connected_shelf_ips:
                     # Failed to connect any IPs => error
@@ -616,7 +632,12 @@ class JBOFService(CRUDService):
                     return
                 self.logger.debug('Configured node %r: %r', node, connected_shelf_ips)
         else:
-            connected_shelf_ips = await self.hardwire_node('', shelf_index, shelf_ip_to_mac)
+            # PLAT-1056: same retry-with-reset pattern for the single-node case.
+            for outer_pass in (1, 2):
+                connected_shelf_ips = await self.hardwire_node('', shelf_index, shelf_ip_to_mac)
+                if connected_shelf_ips or outer_pass == 2:
+                    break
+                await self._reset_both_fabric_cards(mgmt_ip)
             if not connected_shelf_ips:
                 # Failed to connect any IPs => error
                 verrors.add(schema, 'Unable to communicate with the expansion shelf')
@@ -626,6 +647,237 @@ class JBOFService(CRUDService):
                 verrors.add(schema, 'Too many connections wired to the expansion shelf')
                 return
             self.logger.debug('Configured node: %r', connected_shelf_ips)
+
+    @private
+    def reset_fabric_card(self, mgmt_ip, iom_num):
+        """POST GracefulRestart to the fabric card on the given IOM.
+
+        Blocks until the BMC reports the restart has completed (~28s). Default
+        Redfish client timeout is 10s, so an explicit 90s timeout is used here.
+        Returns True on success, False on failure.
+        """
+        uri = f'/redfish/v1/Chassis/IOM{iom_num}/NetworkAdapters/1/Actions/Oem/VikingEnterpriseSolutions.Reset'
+        try:
+            r = RedfishClient.cache_get(mgmt_ip).post(
+                uri, data={'ResetType': 'GracefulRestart'}, timeout=90,
+            )
+        except Exception:
+            self.logger.warning(
+                'Failed to reset IOM%d fabric card', iom_num, exc_info=True,
+            )
+            return False
+        if not r.ok:
+            self.logger.warning(
+                'Reset IOM%d fabric card returned HTTP %d', iom_num, r.status_code,
+            )
+            return False
+        return True
+
+    @private
+    async def _reset_both_fabric_cards(self, mgmt_ip):
+        """Parallel GracefulRestart of both IOM fabric cards. Used by
+        hardwire_host to recover from PLAT-1056 between retry passes.
+
+        Empirically, BMCs return HTTP 200 from the GracefulRestart action
+        before the fabric data plane is fully ready to answer ARP / NDP.
+        Sleep 30s after the resets complete to let the data plane settle
+        before the caller retries hardwire_node.
+        """
+        self.logger.info('Resetting both IOM fabric cards and retrying')
+        await asyncio.gather(
+            self.middleware.call('jbof.reset_fabric_card', mgmt_ip, 1),
+            self.middleware.call('jbof.reset_fabric_card', mgmt_ip, 2),
+            return_exceptions=True,
+        )
+        await asyncio.sleep(30)
+
+    @private
+    def list_drive_slots_with_endpoints(self, mgmt_ip):
+        """Return {slot_id: NQN} for every Enabled drive the BMC reports.
+
+        Uses Redfish $expand to fetch the whole collection in a single GET.
+        """
+        try:
+            coll = RedfishClient.cache_get(mgmt_ip).get_uri(
+                '/redfish/v1/Chassis/2U24/Drives?$expand=.'
+            )
+        except Exception:
+            self.logger.warning('Could not list drives from BMC', exc_info=True)
+            return {}
+        result = {}
+        for drive in coll.get('Members', []):
+            if (drive.get('Status') or {}).get('State') != 'Enabled':
+                continue
+            slot_id = drive.get('Id')
+            endpoints = (drive.get('Links') or {}).get('Endpoints') or []
+            if endpoints and slot_id:
+                nqn = endpoints[0].get('@odata.id', '').rsplit('/', 1)[-1]
+                if nqn:
+                    result[slot_id] = nqn
+        return result
+
+    @private
+    def reset_drive_slot(self, mgmt_ip, slot_id, reset_type):
+        """POST Drive.Reset for a specific slot.
+
+        reset_type must be 'ForceOff' or 'On'. The BMC serializes ForceOff
+        requests at ~2.3s/slot regardless of issue order, so an explicit
+        timeout is required.
+        """
+        uri = f'/redfish/v1/Chassis/2U24/Drives/{slot_id}/Actions/Drive.Reset'
+        try:
+            r = RedfishClient.cache_get(mgmt_ip).post(
+                uri, data={'ResetType': reset_type}, timeout=60,
+            )
+        except Exception:
+            self.logger.warning(
+                'Drive.Reset %s on slot %s failed', reset_type, slot_id, exc_info=True,
+            )
+            return False
+        if not r.ok:
+            self.logger.warning(
+                'Drive.Reset %s on slot %s returned HTTP %d',
+                reset_type, slot_id, r.status_code,
+            )
+            return False
+        return True
+
+    @private
+    async def query_missing_drive_slots(self, mgmt_ip, jbof_ips):
+        """Run nvme discover from this host against each of the given fabric
+        IPs and return the sorted list of slot IDs whose NQN is missing from
+        at least one path's discovery log.
+
+        Each controller in an HA pair only has working RDMA routes to its own
+        configured initiator-IP set, so this method must be invoked separately
+        on each controller (locally + via failover.call_remote for the peer).
+        """
+        if isinstance(jbof_ips, str):
+            jbof_ips = [jbof_ips]
+        if not jbof_ips:
+            return []
+        expected = await self.middleware.run_in_thread(
+            self.list_drive_slots_with_endpoints, mgmt_ip,
+        )
+        if not expected:
+            return []
+        missing = set()
+        for ip in jbof_ips:
+            try:
+                proc = await asyncio.create_subprocess_exec(
+                    'nvme', 'discover', '-t', 'rdma', '-a', ip, '-s', '4420',
+                    stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
+                )
+            except Exception:
+                self.logger.warning(
+                    'nvme discover against %s failed to spawn during drive recovery check',
+                    ip, exc_info=True,
+                )
+                continue
+            try:
+                out, _ = await asyncio.wait_for(proc.communicate(), timeout=30)
+            except asyncio.TimeoutError:
+                self.logger.warning(
+                    'nvme discover against %s timed out during drive recovery check', ip,
+                )
+                try:
+                    proc.kill()
+                    await proc.wait()
+                except ProcessLookupError:
+                    pass
+                continue
+            except Exception:
+                self.logger.warning(
+                    'nvme discover against %s failed during drive recovery check',
+                    ip, exc_info=True,
+                )
+                continue
+            advertised = set()
+            for line in out.decode(errors='replace').splitlines():
+                line = line.strip()
+                if line.startswith('subnqn:'):
+                    advertised.add(line.split(':', 1)[1].strip())
+            for slot, nqn in expected.items():
+                if nqn not in advertised:
+                    missing.add(slot)
+        return sorted(missing, key=lambda s: int(s) if s.isdigit() else s)
+
+    @private
+    async def recover_missing_drive_slots(self, mgmt_ip, shelf_index):
+        """If a drive is present in Redfish but its NQN is not advertised in
+        the fabric's NVMe-oF discovery log on ANY controller's path,
+        power-cycle the slot to get the fabric to re-register it.
+
+        HA-aware: queries discover from both controllers' configured RDMA
+        paths, unions the missing-NQN set, then issues Drive.Reset once per
+        slot (the reset is global and helps every path).
+
+        Returns the number of slots recovered.
+        """
+        # Local controller's jbof_ips
+        local_ips = []
+        for iface in await self.middleware.call('rdma.interface.query'):
+            val = decode_static_ip(iface['address'])
+            if val and val[0] == shelf_index:
+                local_ips.append(jbof_static_ip_from_initiator_ip(iface['address']))
+        missing = set(
+            await self.middleware.call('jbof.query_missing_drive_slots', mgmt_ip, local_ips)
+        )
+        # Remote controller's jbof_ips (HA)
+        if await self.middleware.call('failover.licensed'):
+            try:
+                remote_ifaces = await self.middleware.call(
+                    'failover.call_remote', 'rdma.interface.query',
+                )
+                remote_ips = []
+                for iface in remote_ifaces:
+                    val = decode_static_ip(iface['address'])
+                    if val and val[0] == shelf_index:
+                        remote_ips.append(jbof_static_ip_from_initiator_ip(iface['address']))
+                if remote_ips:
+                    remote_missing = await self.middleware.call(
+                        'failover.call_remote', 'jbof.query_missing_drive_slots',
+                        [mgmt_ip, remote_ips],
+                    )
+                    missing.update(remote_missing)
+            except CallError as e:
+                if e.errno != CallError.ENOMETHOD:
+                    self.logger.warning(
+                        'Failed to query missing drive slots on remote node', exc_info=True,
+                    )
+            except Exception:
+                self.logger.warning(
+                    'Failed to query missing drive slots on remote node', exc_info=True,
+                )
+        if not missing:
+            return 0
+        slots = sorted(missing, key=lambda s: int(s) if s.isdigit() else s)
+        self.logger.info(
+            'jbof: %d drive(s) absent from fabric NVMe-oF discovery on at '
+            'least one controller path (slots %s) — power-cycling to recover',
+            len(slots), ','.join(slots),
+        )
+        # BMC serializes ForceOff requests; issue sequentially.
+        forceoff_failed = []
+        on_failed = []
+        for slot in slots:
+            if not await self.middleware.call('jbof.reset_drive_slot', mgmt_ip, slot, 'ForceOff'):
+                forceoff_failed.append(slot)
+        for slot in slots:
+            if not await self.middleware.call('jbof.reset_drive_slot', mgmt_ip, slot, 'On'):
+                on_failed.append(slot)
+        # Let the fabric re-register the slots.
+        await asyncio.sleep(30)
+        failed_slots = sorted(
+            set(forceoff_failed) | set(on_failed),
+            key=lambda s: int(s) if s.isdigit() else s,
+        )
+        if failed_slots:
+            self.logger.warning(
+                'jbof: Drive.Reset failed on %d of %d slot(s): %s',
+                len(failed_slots), len(slots), ','.join(failed_slots),
+            )
+        return len(slots) - len(failed_slots)
 
     @private
     async def hardwire_node(self, node, shelf_index, shelf_ip_to_mac, skip_ips=[]):
