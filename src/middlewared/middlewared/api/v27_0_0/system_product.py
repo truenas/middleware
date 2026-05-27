@@ -19,8 +19,14 @@ __all__ = (
 
 
 class SystemFeatureEnabledArgs(BaseModel):
-    feature: Literal["APPS", "DEDUP", "FIBRECHANNEL", "SED", "SUPPORT", "VM", "ZFSTIER"]
+    feature: Literal["APPS", "DEDUP", "FIBRECHANNEL", "SED", "SUPPORT", "VMS", "ZFSTIER"]
     """Feature to check for availability on this system."""
+
+    @classmethod
+    def from_previous(cls, value):
+        if value.get("feature") == "VM":
+            value["feature"] = "VMS"
+        return value
 
 
 class SystemFeatureEnabledResult(BaseModel):
