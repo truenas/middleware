@@ -214,7 +214,7 @@ class BaseModel(PydanticBaseModel, metaclass=_BaseModelMetaclass):
         }
 
     @classmethod
-    def from_previous(cls, value):
+    def from_previous(cls, value: Any) -> Any:
         """
         Converts model value from a preceding API version to this API version. `value` can be modified in-place.
         :param value: value of the same model in the preceding API version.
@@ -223,7 +223,7 @@ class BaseModel(PydanticBaseModel, metaclass=_BaseModelMetaclass):
         return value
 
     @classmethod
-    def to_previous(cls, value):
+    def to_previous(cls, value: Any) -> Any:
         """
         Converts model value from this API version to a preceding API version. `value` can be modified in-place.
         :param value: value in this API version.

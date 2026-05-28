@@ -1,4 +1,5 @@
 import logging
+import typing
 
 from pydantic import ValidationError
 
@@ -12,7 +13,12 @@ logger = logging.getLogger(__name__)
 __all__ = ["serialize_result"]
 
 
-def serialize_result(model: type[BaseModel], result, expose_secrets: bool, allow_fallback: bool):
+def serialize_result(
+    model: type[BaseModel],
+    result: typing.Any,
+    expose_secrets: bool,
+    allow_fallback: bool,
+) -> typing.Any:
     """
     Serializes a `result` of the method execution using the corresponding `model`.
 

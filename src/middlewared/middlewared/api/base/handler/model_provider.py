@@ -17,14 +17,15 @@ ModelFactory: TypeAlias = Callable[[type[BaseModel]], type[BaseModel]]
 
 class ModelProvider(ABC):
     @abstractmethod
-    def __init__(self):
+    def __init__(self) -> None:
         self.models: dict[str, type[BaseModel]]
 
-    def register_model(self, model_cls: type[BaseModel], *extra: Any) -> None:
+    def register_model(self, model_cls: type[BaseModel], model_factory: ModelFactory, arg_model_name: str) -> None:
         """Register an API model.
 
         :param model_cls: The model class to register.
-        :param *extra: Extra arguments are ignored.
+        :param model_factory: ignored.
+        :param arg_model_name: ignored.
         """
         self.models[model_cls.__name__] = model_cls
 
@@ -156,7 +157,7 @@ def models_from_module(module: ModuleType) -> dict[str, type[BaseModel]]:
 
 
 def _create_model(
-    model_provider: ModelProvider, model_factory: ModelFactory, arg_model_name: str
+    model_provider: ModelProvider, model_factory: ModelFactory, arg_model_name: str,
 ) -> type[BaseModel] | None:
     """Call a model factory.
 
@@ -168,3 +169,5 @@ def _create_model(
     """
     if arg := model_provider.models.get(arg_model_name):
         return model_factory(arg)
+
+    return None

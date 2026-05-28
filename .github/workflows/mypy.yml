@@ -25,6 +25,7 @@ jobs:
             middlewared/service/sharing_task_service_part.py \
             middlewared/service/generic_sharing_service.py \
             middlewared/alert/ \
+            middlewared/api/base/handler/ \
             middlewared/common/ \
             middlewared/plugins/acme_protocol/ \
             middlewared/plugins/acme_dns_authenticator/ \
@@ -58,6 +59,7 @@ jobs:
             middlewared/plugins/pwenc.py \
             middlewared/utils/ \
             middlewared/test/integration/runner/ \
+            middlewared/job.py \
             --exclude middlewared/etc_files \
             --exclude middlewared/utils/directoryservices \
             --exclude middlewared/utils/lio \

@@ -1,3 +1,4 @@
+from collections.abc import Callable, Iterator
 import typing
 
 from pydantic import ValidationError
@@ -6,7 +7,11 @@ from middlewared.api.base import BaseModel
 from middlewared.utils.typing_ import is_union
 
 
-def model_field_is_model(model, value_hint=None, name_hint=None) -> type[BaseModel] | None:
+def model_field_is_model(
+    model: typing.Any,
+    value_hint: dict[str, typing.Any] | None = None,
+    name_hint: str | None = None,
+) -> type[BaseModel] | None:
     """
     Return` model` if it is an API model.
     Returns the first union member that is an API model if `model` is a union.
@@ -36,7 +41,7 @@ def model_field_is_model(model, value_hint=None, name_hint=None) -> type[BaseMod
     return None
 
 
-def model_field_is_list_of_models(model) -> type[BaseModel] | None:
+def model_field_is_list_of_models(model: typing.Any) -> type[BaseModel] | None:
     """
     If` model` represents a list of API models X, then it will return that model X.
     Does the same with the first matching union member if `model` is a union.
@@ -45,12 +50,12 @@ def model_field_is_list_of_models(model) -> type[BaseModel] | None:
     :return: nested API model or `None`
     """
     if typing.get_origin(model) is list and len(args := typing.get_args(model)) == 1:
-        return args[0]
+        return args[0]  # type: ignore[no-any-return]
 
     return first_matching_union_model(model, model_field_is_list_of_models)
 
 
-def model_field_is_dict_of_models(model) -> type[BaseModel] | None:
+def model_field_is_dict_of_models(model: typing.Any) -> type[BaseModel] | None:
     """
     If `model` represents a dict of API models (dict[str, X]), then it will return that model X.
     Does the same with the first matching union member if `model` is a union.
@@ -59,20 +64,23 @@ def model_field_is_dict_of_models(model) -> type[BaseModel] | None:
     :return: nested API model or `None`
     """
     if typing.get_origin(model) is dict and len(args := typing.get_args(model)) == 2:
-        return args[1]  # Return value type, not key type
+        # Return value type, not key type
+        return args[1]  # type: ignore[no-any-return]
 
     return first_matching_union_model(model, model_field_is_dict_of_models)
 
 
-def unpack_union_model_field(model):
+def unpack_union_model_field(model: typing.Any) -> typing.Generator[typing.Any, None, None]:
     # Handle both typing.Union and types.UnionType (|)
     origin = typing.get_origin(model)
     if is_union(origin):
         for member in typing.get_args(model):
             yield member
 
+_UnionMatches = Callable[[typing.Any], type[BaseModel] | None]
 
-def matching_union_models(model, func):
+
+def matching_union_models(model: typing.Any, func: _UnionMatches) -> Iterator[type[BaseModel]]:
     for member in unpack_union_model_field(model):
         if member is type(None):
             continue
@@ -81,7 +89,7 @@ def matching_union_models(model, func):
             yield result
 
 
-def first_matching_union_model(model, func):
+def first_matching_union_model(model: typing.Any, func: _UnionMatches) -> type[BaseModel] | None:
     for result in matching_union_models(model, func):
         return result
 
