@@ -393,7 +393,12 @@ class CachedSystemDBusRouter:
         # the initial Stop call, but once we're inside filter() we're committed
         # to this connection for signal delivery.
         router = await self._ensure_router()
-        with router.filter(_JOB_REMOVED_FILTER_RULE) as job_queue:
+        # bufsize=0 (unbounded): jeepney's _dispatch silently drops via
+        # put_nowait/QueueFull when the queue is full. During failover, systemd
+        # batches many JobRemoved signals into single socket reads, and the
+        # receiver task processes them without yielding — a bounded queue loses
+        # our target signal and the wait then times out spuriously.
+        with router.filter(_JOB_REMOVED_FILTER_RULE, queue=asyncio.Queue()) as job_queue:
             # Issue the stop action
             unit = DBusAddress(
                 unit_path,
@@ -749,7 +754,9 @@ class CachedSystemDBusRouter:
             )
         else:
             # For non-Stop actions, use original flow
-            with router.filter(_JOB_REMOVED_FILTER_RULE) as queue:
+            # See note above _stop_unit_and_wait_for_exit: bounded queue races
+            # with JobRemoved bursts during failover.
+            with router.filter(_JOB_REMOVED_FILTER_RULE, queue=asyncio.Queue()) as queue:
                 # Issue the action
                 unit = DBusAddress(
                     unit_path,
