@@ -37,7 +37,6 @@ jobs:
             middlewared/plugins/cron/ \
             middlewared/plugins/docker/ \
             middlewared/plugins/init_shutdown_script/ \
-            middlewared/plugins/keyvalue.py \
             middlewared/plugins/mail/ \
             middlewared/plugins/ntp/ \
             middlewared/plugins/ports/ \
@@ -51,6 +50,8 @@ jobs:
             middlewared/plugins/ups/ \
             middlewared/plugins/vm/ \
             middlewared/plugins/zfs/ \
+            middlewared/plugins/keyvalue.py \
+            middlewared/plugins/pwenc.py \
             middlewared/utils/ \
             middlewared/test/integration/runner/ \
             --exclude middlewared/etc_files \

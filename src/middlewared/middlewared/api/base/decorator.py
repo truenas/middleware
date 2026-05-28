@@ -9,7 +9,7 @@ import typing
 from ..base.model import BaseModel
 from .handler.accept import accept_params
 
-__all__ = ["api_method"]
+__all__ = ["api_method", "private_method"]
 
 from ...utils.types import AuditCallback
 
@@ -121,7 +121,7 @@ def api_method[**P, T](
     audit: str | None = None,
     audit_callback: bool = False,
     audit_extended: typing.Callable[..., str] | None = None,
-    rate_limit=True,
+    rate_limit: bool = True,
     roles: list[str] | None = None,
     private: bool = False,
     cli_private: bool = False,
@@ -171,11 +171,79 @@ def api_method[**P, T](
 
     `removed_in` specifies major TrueNAS version (in the format vXX) which removes this API method.
     """
-    if list(returns.model_fields.keys()) != ["result"]:
-        raise TypeError("`returns` model must only have one field called `result`")
+    return decorator(
+        accepts,
+        returns,
+        audit,
+        audit_callback,
+        audit_extended,
+        rate_limit,
+        roles,
+        private,
+        cli_private,
+        authentication_required,
+        authorization_required,
+        pass_app,
+        pass_app_require,
+        pass_thread_local_storage,
+        skip_args,
+        removed_in,
+        check_annotations,
+    )
 
-    check_model_module(accepts, private)
-    check_model_module(returns, private)
+
+def private_method[**P, T](
+    pass_app: bool = False,
+    pass_app_require: bool = False,
+    pass_thread_local_storage: bool = False,
+    check_annotations: bool = False,  # FIXME: Eventually must be `True` for all api methods.
+) -> typing.Callable[[typing.Callable[P, T]], typing.Callable[P, T]]:
+    return decorator(
+        accepts=None,
+        returns=None,
+        audit=None,
+        audit_callback=False,
+        audit_extended=None,
+        rate_limit=True,
+        roles=None,
+        private=True,
+        cli_private=True,
+        authentication_required=True,
+        authorization_required=True,
+        pass_app=pass_app,
+        pass_app_require=pass_app_require,
+        pass_thread_local_storage=pass_thread_local_storage,
+        skip_args=None,
+        removed_in=None,
+        check_annotations=check_annotations,
+    )
+
+
+def decorator(
+    accepts: type[BaseModel] | None,
+    returns: type[BaseModel] | None,
+    audit: str | None,
+    audit_callback: bool,
+    audit_extended: typing.Callable[..., str] | None,
+    rate_limit: bool,
+    roles: list[str] | None,
+    private: bool,
+    cli_private: bool,
+    authentication_required: bool,
+    authorization_required: bool,
+    pass_app: bool,
+    pass_app_require: bool,
+    pass_thread_local_storage: bool,
+    skip_args: int | None,
+    removed_in: str | None,
+    check_annotations: bool,
+):
+    if accepts is not None and returns is not None:
+        if list(returns.model_fields.keys()) != ["result"]:
+            raise TypeError("`returns` model must only have one field called `result`")
+
+        check_model_module(accepts, private)
+        check_model_module(returns, private)
 
     def wrapper(func):
         if pass_app:
@@ -192,30 +260,33 @@ def api_method[**P, T](
 
         args_index = calculate_args_index(func, audit_callback, check_annotations)
 
-        dump_models = True
-        if check_annotations:
-            check_method_annotations(func, args_index, accepts, returns)
-            dump_models = False
+        if accepts is not None and returns is not None:
+            dump_models = True
+            if check_annotations:
+                check_method_annotations(func, args_index, accepts, returns)
+                dump_models = False
 
-        if asyncio.iscoroutinefunction(func):
-            if pass_thread_local_storage:
-                raise ValueError('pass_thread_local_storage invalid for coroutines')
+            if asyncio.iscoroutinefunction(func):
+                if pass_thread_local_storage:
+                    raise ValueError('pass_thread_local_storage invalid for coroutines')
 
-            @functools.wraps(func)
-            async def wrapped(*args):
-                args = list(args[:args_index]) + accept_params(accepts, args[args_index:], dump_models=dump_models)
+                @functools.wraps(func)
+                async def wrapped(*args):
+                    args = list(args[:args_index]) + accept_params(accepts, args[args_index:], dump_models=dump_models)
 
-                result = await func(*args)
+                    result = await func(*args)
 
-                return result
+                    return result
+            else:
+                @functools.wraps(func)
+                def wrapped(*args):
+                    args = list(args[:args_index]) + accept_params(accepts, args[args_index:], dump_models=dump_models)
+
+                    result = func(*args)
+
+                    return result
         else:
-            @functools.wraps(func)
-            def wrapped(*args):
-                args = list(args[:args_index]) + accept_params(accepts, args[args_index:], dump_models=dump_models)
-
-                result = func(*args)
-
-                return result
+            wrapped = func
 
         if private:
             if roles or not authentication_required or not authorization_required:
@@ -255,8 +326,9 @@ def api_method[**P, T](
 
             wrapped._removed_in = removed_in
 
-        wrapped.new_style_accepts = accepts
-        wrapped.new_style_returns = returns
+        if accepts is not None and returns is not None:
+            wrapped.new_style_accepts = accepts
+            wrapped.new_style_returns = returns
 
         return wrapped
 

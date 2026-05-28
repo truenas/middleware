@@ -116,6 +116,7 @@ from middlewared.plugins.keyvalue import KeyValueService
 from middlewared.plugins.mail import MailService
 from middlewared.plugins.ntp import NTPServerService
 from middlewared.plugins.ports import PortService
+from middlewared.plugins.pwenc import PWEncService
 from middlewared.plugins.snapshot import PeriodicSnapshotTaskService
 from middlewared.plugins.truenas import TrueNASService
 from middlewared.plugins.truenas_connect import TrueNASConnectService
@@ -235,6 +236,7 @@ class ServiceContainer(BaseServiceContainer):
         self.mail = MailService(middleware)
         self.pool = PoolServicesContainer(middleware)
         self.port = PortService(middleware)
+        self.pwenc = PWEncService(middleware)
         self.sharing = SharingServicesContainer(middleware)
         self.system = SystemServicesContainer(middleware)
         self.tn_connect = TrueNASConnectService(middleware)

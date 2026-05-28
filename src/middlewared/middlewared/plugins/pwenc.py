@@ -1,13 +1,21 @@
+from __future__ import annotations
+
 from base64 import b64decode
 import os
 from tempfile import NamedTemporaryFile
+from typing import TYPE_CHECKING
 
 import truenas_pypwenc
 
+from middlewared.api.base.decorator import private_method
 from middlewared.auth import TruenasNodeSessionManagerCredentials
-from middlewared.service import Service, pass_app
+from middlewared.service import Service
 from middlewared.service_exception import CallError
 from middlewared.utils.pwenc import PWENC_FILE_SECRET, decrypt, encrypt, pwenc_generate_secret, pwenc_rename
+
+if TYPE_CHECKING:
+    from middlewared.api.base.server.app import App
+    from middlewared.main import Middleware
 
 PWENC_CHECK = 'Donuts!'
 
@@ -17,7 +25,7 @@ class PWEncService(Service):
     class Config:
         private = True
 
-    def _reset_passwords(self):
+    def _reset_passwords(self) -> None:
         for table, field, value in (
             ('services_ups', 'ups_monpwd', ''),
             ('system_email', 'em_pass', ''),
@@ -49,13 +57,13 @@ class PWEncService(Service):
         # If config is restored without secret seed then SMB auth won't be possible. Disable SMB for all users.
         self.middleware.call_sync('datastore.sql', 'UPDATE account_bsdusers SET bsdusr_smb=0')
 
-    def _reset_pwenc_check_field(self):
+    def _reset_pwenc_check_field(self) -> None:
         settings = self.middleware.call_sync('datastore.config', 'system.settings')
         self.middleware.call_sync('datastore.update', 'system.settings', settings['id'], {
             'stg_pwenc_check': encrypt(PWENC_CHECK),
         })
 
-    def check(self):
+    def check(self) -> bool:
         try:
             settings = self.middleware.call_sync('datastore.config', 'system.settings')
         except IndexError:
@@ -76,14 +84,14 @@ class PWEncService(Service):
             self.logger.exception('Unexpected error while trying to check pwenc secret')
             return False
 
-    def generate_secret(self):
+    def generate_secret(self) -> None:
         pwenc_generate_secret()
         self._reset_pwenc_check_field()
         self._reset_passwords()
 
-    @pass_app()
-    def replace(self, app, b64secret):
-        """ This method exists purely for use via failover.call_remote from active  controller on HA truenas
+    @private_method(pass_app=True)
+    def replace(self, app: App, b64secret: str) -> None:
+        """ This method exists purely for use via failover.call_remote from active controller on HA truenas
         appliance. """
         if app and not isinstance(app.authenticated_credentials, TruenasNodeSessionManagerCredentials):
             raise CallError(f'{type(app.authenticated_credentials)}: unexpected credential type for endpoint.')
@@ -121,7 +129,7 @@ class PWEncService(Service):
             raise
 
 
-async def setup(middleware):
-    if not await middleware.call('pwenc.check'):
+async def setup(middleware: Middleware) -> None:
+    if not await middleware.call2(middleware.services.pwenc.check):
         middleware.logger.debug('Generating new pwenc secret')
-        await middleware.call('pwenc.generate_secret')
+        await middleware.call2(middleware.services.pwenc.generate_secret)
