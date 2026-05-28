@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import re
 from typing import Annotated
 from uuid import UUID
@@ -21,7 +23,7 @@ NQN_DATE_PATTERN = re.compile(r"^nqn.\d{4}-\d{2}\..*")
 DOMAIN_PATTERN = re.compile(r'^((?!-)[A-Za-z0-9-]{1,63}(?<!-)\.)+[A-Za-z]{2,}$')
 
 
-def _validate_nqn(nqn: str):
+def _validate_nqn(nqn: str) -> str:
     if nqn == NVMET_DISCOVERY_NQN:
         return nqn
     elif nqn.startswith(NVMET_NQN_UUID_PREFIX):

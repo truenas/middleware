@@ -44,6 +44,7 @@ module = [
     "ixhardware.*",
     "josepy.*",
     "lexicon.*",
+    "ldap.*",
     "licenselib.*",
     "mako.*",
     "pam.*",
