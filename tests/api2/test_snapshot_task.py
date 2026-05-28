@@ -1,6 +1,7 @@
 import pytest
+from truenas_api_client import ClientException
 
-from middlewared.service_exception import CallError, InstanceNotFound
+from middlewared.service_exception import InstanceNotFound
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.snapshot_task import snapshot_task
 from middlewared.test.integration.utils import call
@@ -53,7 +54,7 @@ def test_snapshot_task_run_disabled_task_raises():
             "naming_schema": "%Y%m%d%H%M",
             "enabled": False,
         }) as t:
-            with pytest.raises(CallError, match="Task is not enabled"):
+            with pytest.raises(ClientException, match="Task is not enabled"):
                 call("pool.snapshottask.run", t["id"], job=True)
 
 
