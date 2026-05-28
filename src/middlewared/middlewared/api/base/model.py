@@ -6,6 +6,7 @@ from pydantic import BaseModel as PydanticBaseModel
 from pydantic import ConfigDict, Field, Secret, create_model, model_serializer
 from pydantic._internal._decorators import Decorator, PydanticDescriptorProxy
 from pydantic._internal._model_construction import ModelMetaclass
+from pydantic.fields import FieldInfo
 from pydantic.json_schema import SkipJsonSchema
 from pydantic.main import ModelT
 from pydantic.types import SecretType
@@ -206,7 +207,7 @@ class BaseModel(PydanticBaseModel, metaclass=_BaseModelMetaclass):
                 v.description = parent_field.description
 
     @classmethod
-    def schema_model_fields(cls):
+    def schema_model_fields(cls) -> dict[str, FieldInfo]:
         return {
             field.alias or name: field
             for name, field in cls.model_fields.items()

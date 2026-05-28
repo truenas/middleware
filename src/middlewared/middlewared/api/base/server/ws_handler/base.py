@@ -10,11 +10,14 @@ if TYPE_CHECKING:
     from middlewared.main import Middleware
 
 
-def addr_in_allowlist(remote_addr, allowlist: Iterable) -> bool:
+def addr_in_allowlist(remote_addr: str | None, allowlist: Iterable[str]) -> bool:
     """Determine if `remote_addr` is a valid IP address included in `allowlist`."""
+    if remote_addr is None:
+        return False
+
     valid = False
     try:
-        remote_addr = ip_address(remote_addr)
+        addr = ip_address(remote_addr)
     except Exception:
         # invalid/malformed IP so play it safe and
         # return False
@@ -22,13 +25,13 @@ def addr_in_allowlist(remote_addr, allowlist: Iterable) -> bool:
     else:
         for allowed in allowlist:
             try:
-                allowed = ip_network(allowed)
+                allowed_network = ip_network(allowed)
             except Exception:
                 # invalid/malformed network so play it safe
                 valid = False
                 break
             else:
-                if remote_addr == allowed or remote_addr in allowed:
+                if addr == allowed_network or addr in allowed_network:
                     valid = True
                     break
 
@@ -39,7 +42,7 @@ class BaseWebSocketHandler:
     def __init__(self, middleware: "Middleware"):
         self.middleware = middleware
 
-    async def __call__(self, request: Request):
+    async def __call__(self, request: Request) -> WebSocketResponse:
         ws = WebSocketResponse()
         try:
             await ws.prepare(request)
@@ -75,5 +78,5 @@ class BaseWebSocketHandler:
         ui_allowlist = await self.middleware.call("system.general.get_ui_allowlist")
         return not ui_allowlist or addr_in_allowlist(origin.rem_addr, ui_allowlist)
 
-    async def process(self, origin: ConnectionOrigin, ws: WebSocketResponse):
+    async def process(self, origin: ConnectionOrigin, ws: WebSocketResponse) -> None:
         raise NotImplementedError

@@ -774,7 +774,7 @@ class Job[T = typing.Any]:
             'id': self.id,
             'message_ids': self.message_ids,
             'method': self.method_name,
-            'arguments': self.middleware.dump_args(self.args, method=self.method),  # type: ignore[no-untyped-call]
+            'arguments': self.middleware.dump_args(self.args, method=self.method),
             'transient': self.options['transient'],
             'description': self.description,
             'abortable': self.options['abortable'],
@@ -792,7 +792,7 @@ class Job[T = typing.Any]:
             'credentials': (
                 {
                     'type': self.credentials.class_name(),  # type: ignore[no-untyped-call]
-                    'data': self.credentials.dump(),  # type: ignore[no-untyped-call]
+                    'data': self.credentials.dump(),
                 } if self.credentials is not None
                 else None
             )

@@ -1,9 +1,12 @@
+from __future__ import annotations
+
 import types
 from typing import TYPE_CHECKING, Any
 
 from middlewared.job import Job
 
 if TYPE_CHECKING:
+    from middlewared.api.base.model import BaseModel
     from middlewared.api.base.server.ws_handler.rpc import RpcWebSocketApp
     from middlewared.main import Middleware
 
@@ -23,20 +26,20 @@ class Method:
         self.serviceobj, self.methodobj = self.middleware.get_method(self.name)
         self._private: bool | None = None
 
-    async def accepts_model(self):
+    async def accepts_model(self) -> type[BaseModel] | None:
         """
         :return: model that validates method input params.
         """
-        return self.methodobj.new_style_accepts
+        return self.methodobj.new_style_accepts  # type: ignore[attr-defined,no-any-return]
 
-    async def returns_model(self):
+    async def returns_model(self) -> type[BaseModel] | None:
         """
         :return: model that validates method return value.
         """
-        return self.methodobj.new_style_returns
+        return self.methodobj.new_style_returns  # type: ignore[attr-defined,no-any-return]
 
     @property
-    def private(self):
+    def private(self) -> bool:
         if self._private is not None:
             return self._private
 
@@ -51,7 +54,7 @@ class Method:
         """
         self._private = private
 
-    async def call(self, app: "RpcWebSocketApp", id_: Any, params: list):
+    async def call(self, app: "RpcWebSocketApp", id_: Any, params: list[Any]) -> Any:
         """
         Calls the method in the context of a given `app`.
 
@@ -65,7 +68,7 @@ class Method:
         await self.middleware.authorize_method_call(app, self.name, methodobj, params)
 
         if mock := self.middleware._mock_method(self.name, params):
-            methodobj = mock
+            methodobj = mock  # type: ignore[assignment]
 
         result = await self.middleware.call_with_audit(self.name, self.serviceobj, methodobj, params, app,
                                                        message_id=id_)
@@ -81,10 +84,10 @@ class Method:
 
         return await self._dump_result(app, methodobj, result)
 
-    async def _dump_result(self, app: "RpcWebSocketApp", methodobj, result):
+    async def _dump_result(self, app: "RpcWebSocketApp", methodobj: Any, result: Any) -> Any:
         return self.middleware.dump_result(self.serviceobj, methodobj, app, result)
 
-    def dump_args(self, params: list) -> list:
+    def dump_args(self, params: list[Any]) -> list[Any]:
         """
         Dumps the method call params (i.e., removes secrets).
 

@@ -8,6 +8,7 @@ from middlewared.utils.service.call import MethodNotFoundError
 from middlewared.utils.service.crud import real_crud_method
 
 if TYPE_CHECKING:
+    from middlewared.api.base import BaseModel
     from middlewared.api.base.server.ws_handler.rpc import RpcWebSocketApp
     from middlewared.main import Middleware
 
@@ -19,7 +20,7 @@ class LegacyAPIMethod(Method):
     """
 
     def __init__(self, middleware: "Middleware", name: str, api_version: str, adapter: APIVersionsAdapter, *,
-                 passthrough_nonexistent_methods=False):
+                 passthrough_nonexistent_methods: bool = False):
         """
         :param middleware: `Middleware` instance
         :param name: method name
@@ -34,34 +35,34 @@ class LegacyAPIMethod(Method):
 
         methodobj = self.methodobj
         if crud_methodobj := real_crud_method(methodobj):
-            methodobj = crud_methodobj
+            methodobj = crud_methodobj  # type: ignore[assignment]
 
         if hasattr(methodobj, "new_style_accepts"):
             self.current_accepts_model = methodobj.new_style_accepts
-            self.current_returns_model = methodobj.new_style_returns
+            self.current_returns_model = methodobj.new_style_returns  # type: ignore[attr-defined]
         else:
             self.current_accepts_model = None
             self.current_returns_model = None
 
-    async def accepts_model(self):
+    async def accepts_model(self) -> "type[BaseModel] | None":
         try:
             return await self.adapter.versions[self.api_version].get_model(self.current_accepts_model.__name__)
         except APIVersionDoesNotContainModelException:
             return None
 
-    async def returns_model(self):
+    async def returns_model(self) -> "type[BaseModel] | None":
         try:
             return await self.adapter.versions[self.api_version].get_model(self.current_returns_model.__name__)
         except APIVersionDoesNotContainModelException:
             return None
 
-    async def call(self, app: "RpcWebSocketApp", id_: Any, params):
+    async def call(self, app: "RpcWebSocketApp", id_: Any, params: list[Any]) -> Any:
         if self.current_accepts_model:
             params = await self._adapt_params(params)
 
         return await super().call(app, id_, params)
 
-    async def _adapt_params(self, params):
+    async def _adapt_params(self, params: list[Any]) -> list[Any]:
         try:
             legacy_accepts_model = await self.adapter.versions[self.api_version].get_model(
                 self.current_accepts_model.__name__
@@ -85,7 +86,7 @@ class LegacyAPIMethod(Method):
 
         return [adapted_params_dict[field] for field in self.current_accepts_model.model_fields]
 
-    async def _dump_result(self, app: "RpcWebSocketApp", methodobj, result):
+    async def _dump_result(self, app: "RpcWebSocketApp", methodobj: Any, result: Any) -> Any:
         if self.current_accepts_model:  # FIXME: Remove this check when all models become new style
             try:
                 model, result = await self.adapter.adapt_model(
@@ -105,7 +106,7 @@ class LegacyAPIMethod(Method):
 
         return await super()._dump_result(app, methodobj, result)
 
-    def dump_args(self, params):
+    def dump_args(self, params: list[Any]) -> list[Any]:
         if self.current_accepts_model:  # FIXME: Remove this check when all models become new style
             return dump_params(self.current_accepts_model, params, False)
 

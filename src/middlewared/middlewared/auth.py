@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 import re
 from time import monotonic
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from truenas_pypam import PAMCode
 
@@ -57,7 +57,7 @@ class SessionManagerCredentials:
     def logout(self) -> TrueNASAuthenticatorResponse:
         return DEFAULT_LOGOUT_FAIL
 
-    def dump(self):
+    def dump(self) -> dict[str, Any]:
         return {}
 
 

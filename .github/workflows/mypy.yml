@@ -26,6 +26,7 @@ jobs:
             middlewared/service/generic_sharing_service.py \
             middlewared/alert/ \
             middlewared/api/base/handler/ \
+            middlewared/api/base/server/ \
             middlewared/common/ \
             middlewared/plugins/acme_protocol/ \
             middlewared/plugins/acme_dns_authenticator/ \

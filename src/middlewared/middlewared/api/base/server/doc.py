@@ -1,5 +1,6 @@
 import inspect
 import re
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -23,7 +24,7 @@ class APIDumpMethod(BaseModel):
     name: str
     roles: list[str]
     doc: str | None
-    schemas: dict
+    schemas: dict[str, Any]
     removed_in: str | None
     input_pipes: bool = False
     output_pipes: bool = False
@@ -34,7 +35,7 @@ class APIDumpEvent(BaseModel):
     name: str
     roles: list[str]
     doc: str | None
-    schemas: dict
+    schemas: dict[str, Any]
     removed_in: str | None
 
 
@@ -45,7 +46,7 @@ class APIDumper:
         self.api = api
         self.role_manager = role_manager
 
-    async def dump(self):
+    async def dump(self) -> APIDump:
         return APIDump(
             version=self.version,
             version_title=self.version_title,
@@ -53,7 +54,7 @@ class APIDumper:
             events=self._dump_events(),
         )
 
-    async def _dump_methods(self):
+    async def _dump_methods(self) -> list[APIDumpMethod]:
         result = []
         for method in self.api.methods:
             if method.serviceobj._config.private:
@@ -73,7 +74,7 @@ class APIDumper:
 
         return sorted(result, key=lambda method: method.name)
 
-    async def _dump_method(self, method: Method):
+    async def _dump_method(self, method: Method) -> "APIDumpMethod | None":
         schemas = await self._dump_method_schemas(method)
         if schemas is None:
             return None
@@ -114,7 +115,7 @@ class APIDumper:
             check_pipes=check_pipes
         )
 
-    async def _dump_method_schemas(self, method: Method):
+    async def _dump_method_schemas(self, method: Method) -> dict[str, Any] | None:
         accepts_model = await method.accepts_model()
         returns_model = await method.returns_model()
         if accepts_model is None or returns_model is None:
@@ -146,7 +147,7 @@ class APIDumper:
             },
         }
 
-    def _dump_events(self):
+    def _dump_events(self) -> list[APIDumpEvent]:
         result = []
         for event in self.api.events:
             if event.event["private"]:
@@ -159,7 +160,7 @@ class APIDumper:
 
         return sorted(result, key=lambda event: event.name)
 
-    def _dump_event(self, event: Event):
+    def _dump_event(self, event: Event) -> APIDumpEvent:
         return APIDumpEvent(
             name=event.name,
             roles=sorted(self.role_manager.atomic_roles_for_event(event.name)),
@@ -168,7 +169,7 @@ class APIDumper:
             removed_in=None,
         )
 
-    def _dump_event_schemas(self, event: Event):
+    def _dump_event_schemas(self, event: Event) -> dict[str, Any]:
         properties = {}
         for name, model in event.event["models"].items():
             schema = model_json_schema(model)
