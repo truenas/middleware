@@ -274,38 +274,39 @@ def map_vseries_nvme(model, ctx):
         by_switch.items(), key=lambda kv: len(kv[1])
     )
 
-    # Enumerate downstream ports of the switch. V-series multiplexes the
-    # rear-NVMe switch with an on-board SAS HBA (the switch's last
-    # downstream port leads to an LSI SAS controller), so we cannot simply
-    # take the highest- or lowest-numbered N ports.
+    # Enumerate the switch's downstream ports. The rear-NVMe switch
+    # multiplexes an on-board SAS HBA onto one of its downstream ports
+    # (an LSI SAS controller, PCI class 0x0107xx); every other downstream
+    # port is a rear NVMe bay.
     #
-    # Filter: keep a port if it has no PCI children (unpopulated bay) OR
-    # at least one NVMe-class child (PCI class 0x0108xx). Exclude ports
-    # whose only children are non-NVMe (e.g. the SAS HBA). This preserves
-    # slot 1..N numbering across all populations -- fully populated,
-    # partially populated, and empty.
+    # A populated bay shows an NVMe endpoint (class 0x0108xx). An *empty*
+    # bay is not absent from the tree: the Broadcom switch substitutes a
+    # "Virtual PCIe Placeholder Endpoint" (class 0x0880xx) so the
+    # downstream port still has a child. We must therefore keep a port for
+    # every bay -- populated, placeholder, or truly empty -- and exclude
+    # only the SAS HBA. Dropping placeholder/empty bays would renumber the
+    # survivors and shift the empty slot to the end (e.g. pulling bay 2 of
+    # 4 would wrongly report bays 1-3 populated and bay 4 empty).
     nvme_ports = []
     for entry in pathlib.Path(rear_switch_path).iterdir():
         if not pci_bdf_re.match(entry.name):
             continue
 
-        has_pci_child = False
-        has_nvme_child = False
+        has_sas_child = False
         for child in entry.iterdir():
             if not pci_bdf_re.match(child.name):
                 continue
 
-            has_pci_child = True
             try:
                 pci_class = (child / 'class').read_text().strip()
             except (FileNotFoundError, OSError):
                 continue
 
-            if pci_class.startswith('0x0108'):
-                has_nvme_child = True
+            if pci_class.startswith('0x0107'):
+                has_sas_child = True
                 break
 
-        if not has_pci_child or has_nvme_child:
+        if not has_sas_child:
             nvme_ports.append(entry.name)
 
     # Sorted PCI BDF gives stable bay order independent of firmware slot
