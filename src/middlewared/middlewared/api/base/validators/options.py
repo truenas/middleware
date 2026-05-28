@@ -1,4 +1,4 @@
-from typing import Iterable
+from typing import Any, Iterable
 
 import truenas_pyfilter as _tf
 
@@ -6,7 +6,7 @@ MAX_LIMIT = 10000
 _SelectList = Iterable[str | list[str]]
 
 
-def validate_options(options: dict | None) -> tuple[dict, _SelectList, Iterable[str]]:
+def validate_options(options: dict[str, Any] | None) -> tuple[dict[str, Any], _SelectList, Iterable[str]]:
     if options is None:
         return {}, [], []
     select = options.get('select', [])

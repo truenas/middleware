@@ -151,7 +151,7 @@ def filter_list(
             filters = preprocessed
 
     cf = CF_EMPTY if not filters else _tf.compile_filters(list(filters))
-    co = _build_compiled_options(options, select, order_by)  # type: ignore[arg-type]
+    co = _build_compiled_options(options, select, order_by)
     rv: list[_Entry] | int = _tf.tnfilter(_list, filters=cf, options=co)
     if isinstance(rv, int):
         return rv   # count=True: tnfilter returns int directly

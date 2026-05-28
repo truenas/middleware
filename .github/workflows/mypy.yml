@@ -27,7 +27,8 @@ jobs:
             middlewared/alert/ \
             middlewared/api/base/handler/ \
             middlewared/api/base/server/ \
-            middlewared/common/ \
+            middlewared/api/base/types/ \
+            middlewared/api/base/validators/ \
             middlewared/plugins/acme_protocol/ \
             middlewared/plugins/acme_dns_authenticator/ \
             middlewared/plugins/acme_registration/ \
