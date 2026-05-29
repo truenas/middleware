@@ -400,8 +400,15 @@ class RpcWebSocketHandler(BaseWebSocketHandler):
         except CallException as e:
             # CallException and subclasses are the way to gracefully send errors to the client
             if id_ != undefined:
-                app.send_truenas_error(id_, JSONRPCError.TRUENAS_CALL_ERROR.value, "Method call error", e.errno, str(e),
-                                       sys.exc_info(), e.extra)
+                if isinstance(e, CallError):
+                    errno_ = e.errno
+                    extra = e.extra
+                else:
+                    errno_ = errno.EFAULT
+                    extra = None
+
+                app.send_truenas_error(id_, JSONRPCError.TRUENAS_CALL_ERROR.value, "Method call error", errno_, str(e),
+                                       sys.exc_info(), extra)
         except Exception as e:
             adapted = adapt_exception(e)
             if adapted:
