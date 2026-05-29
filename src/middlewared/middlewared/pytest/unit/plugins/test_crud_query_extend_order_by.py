@@ -1,17 +1,10 @@
 from contextlib import asynccontextmanager
-from unittest.mock import patch
 
 import pytest
 import sqlalchemy as sa
-from sqlalchemy.ext.declarative import declarative_base
 
-from middlewared.pytest.unit.helpers import load_compound_service
-from middlewared.pytest.unit.middleware import Middleware
+from middlewared.pytest.unit.plugins.conftest import Model, datastore_test
 from middlewared.service import CRUDService
-
-DatastoreService = load_compound_service("datastore")
-
-Model = declarative_base()
 
 
 class CRUDTestModel(Model):
@@ -45,29 +38,8 @@ ROWS = [
 
 @asynccontextmanager
 async def crud_test():
-    m = Middleware()
-    with (
-        patch("middlewared.plugins.datastore.connection.FREENAS_DATABASE", ":memory:"),
-        patch("middlewared.plugins.datastore.schema.Model", Model),
-        patch("middlewared.plugins.datastore.util.Model", Model),
-    ):
-        ds = DatastoreService(m)
-        ds.setup()
-
-        for part in ds.parts:
-            if hasattr(part, "connection"):
-                Model.metadata.create_all(bind=part.connection)
-                break
-        else:
-            raise RuntimeError("Could not find part that provides connection")
-
-        m["datastore.execute"] = ds.execute
-        m["datastore.execute_write"] = ds.execute_write
-        m["datastore.fetchall"] = ds.fetchall
-        m["datastore.query"] = ds.query
-        m["datastore.insert"] = ds.insert
-        m["datastore.send_insert_events"] = ds.send_insert_events
-
+    async with datastore_test() as ds:
+        m = ds.middleware
         for row in ROWS:
             await ds.insert("test.crud", dict(row))
 
