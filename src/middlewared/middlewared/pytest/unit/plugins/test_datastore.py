@@ -7,7 +7,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import relationship
 
 from middlewared.plugins.datastore.write import NoRowsWereUpdatedException
-from middlewared.pytest.unit.plugins.conftest import Model, datastore_test
+from middlewared.pytest.unit.datastore_harness import Model, datastore_test
 from middlewared.sqlalchemy import JSON, EncryptedText, Time
 
 

@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 import pytest
 import sqlalchemy as sa
 
-from middlewared.pytest.unit.plugins.conftest import Model, datastore_test
+from middlewared.pytest.unit.datastore_harness import Model, datastore_test
 from middlewared.service import CRUDService
 
 

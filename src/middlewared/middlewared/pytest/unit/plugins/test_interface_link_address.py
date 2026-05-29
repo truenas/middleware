@@ -7,7 +7,7 @@ import pytest
 from middlewared.api.current import VMDeviceEntry
 from middlewared.plugins.interface.link_address import InterfaceService
 from middlewared.plugins.interface.link_address import setup as link_address_setup
-from middlewared.pytest.unit.plugins.conftest import Model, datastore_test
+from middlewared.pytest.unit.datastore_harness import Model, datastore_test
 import middlewared.sqlalchemy as sa
 
 logger = logging.getLogger(__name__)
