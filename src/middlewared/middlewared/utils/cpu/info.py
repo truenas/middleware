@@ -111,7 +111,7 @@ def cpu_info_impl() -> CpuInfo:
     #   "0-1"   - HT pair where the kernel enumerates siblings consecutively
     #   "0"     - SMT disabled (only the primary thread is online)
     #   "0-3"   - 4-way SMT (POWER) or wider
-    core_meta: dict[frozenset[int], tuple[int, int, int]] = {}
+    core_meta: dict[tuple[int, ...], tuple[int, int, int]] = {}
     with os.scandir("/sys/devices/system/cpu/") as sdir:
         for entry in filter(lambda x: x.is_dir() and x.name.startswith("cpu"), sdir):
             try:
@@ -129,13 +129,13 @@ def cpu_info_impl() -> CpuInfo:
                 continue
             if not siblings:
                 continue
-            key = frozenset(siblings)
-            if key in core_meta:
+            core_key = tuple(siblings)
+            if core_key in core_meta:
                 continue  # already recorded via another sibling cpuN dir
             pkg = _read_int(os.path.join(topo, "physical_package_id"))
             die = _read_int(os.path.join(topo, "die_id"))
             cid = _read_int(os.path.join(topo, "core_id"))
-            core_meta[key] = (
+            core_meta[core_key] = (
                 pkg if pkg is not None and pkg >= 0 else 0,
                 die if die is not None and die >= 0 else 0,
                 cid if cid is not None and cid >= 0 else 0,
@@ -149,10 +149,10 @@ def cpu_info_impl() -> CpuInfo:
     phys_to_package: dict[int, int] = {}
     phys_to_die: dict[int, int] = {}
     phys_to_core_id: dict[int, int] = {}
-    for phys_idx, key in enumerate(sorted_cores):
-        for cpu_id in sorted(key):
+    for phys_idx, core_key in enumerate(sorted_cores):
+        for cpu_id in sorted(core_key):
             logical_to_phys[cpu_id] = phys_idx
-        pkg, die, cid = core_meta[key]
+        pkg, die, cid = core_meta[core_key]
         phys_to_package[phys_idx] = pkg
         phys_to_die[phys_idx] = die
         phys_to_core_id[phys_idx] = cid

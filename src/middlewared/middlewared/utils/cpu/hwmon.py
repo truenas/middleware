@@ -86,8 +86,6 @@ def _numa_to_pkg() -> dict[int, int]:
     cinfo = cpu_info()
     out: dict[int, int] = {}
     node_root = "/sys/devices/system/node"
-    if not os.path.isdir(node_root):
-        return out
     try:
         with os.scandir(node_root) as entries:
             for entry in entries:
@@ -180,7 +178,7 @@ def _resolve_chip_package(
         # Single-socket boxes commonly report numa_node == -1; fall back to
         # the alphabetical-chip-name index. With one chip this is always 0.
         if nn is None or nn < 0:
-            logger.warning(
+            logger.debug(
                 "%s: numa_node missing/-1; using alphabetical chip-name "
                 "index %d as physical_package_id (hypothesis fallback)",
                 hwmon_path,
@@ -246,13 +244,15 @@ def _discover_cpu_chips() -> tuple[_Chip, ...]:
     all-zero default.
     """
     hwmon_root = "/sys/class/hwmon"
-    if not os.path.isdir(hwmon_root):
-        return ()
     try:
         with os.scandir(hwmon_root) as it:
             entries = sorted(it, key=lambda e: e.name)
     except OSError:
         return ()
+
+    temp_len = len("temp")
+    label_suffix_len = len("_label")
+    input_suffix_len = len("_input")
 
     candidates: list[tuple[str, str, dict[str, str]]] = []
     for entry in entries:
@@ -273,7 +273,7 @@ def _discover_cpu_chips() -> tuple[_Chip, ...]:
                 continue
             if not fname.endswith("_label"):
                 continue
-            n = fname[len("temp") : -len("_label")]
+            n = fname[temp_len:-label_suffix_len]
             if not n.isdigit():
                 continue
             label = _read_str(os.path.join(entry.path, fname))
@@ -288,8 +288,8 @@ def _discover_cpu_chips() -> tuple[_Chip, ...]:
         # Cover the "no tempN_label files at all, but tempN_input exists" case
         # (older k8temp). Walk tempN_input files we haven't picked up.
         for fname in files:
-            if fname.startswith("temp") and fname.endswith("_input") and fname[len("temp") : -len("_input")].isdigit():
-                n = fname[len("temp") : -len("_input")]
+            if fname.startswith("temp") and fname.endswith("_input") and fname[temp_len:-input_suffix_len].isdigit():
+                n = fname[temp_len:-input_suffix_len]
                 fallback_label = f"temp{n}"
                 if fallback_label not in labels and not any(p.endswith(f"/temp{n}_input") for p in labels.values()):
                     labels[fallback_label] = os.path.join(entry.path, fname)
