@@ -102,7 +102,10 @@ async def netdata_get_data(
     query_params = translate_query_params(query)
     graph_plugins: dict[GraphBase, list[str | None]] = collections.defaultdict(list)
     for graph in graphs_arg:
-        graph_plugins[graphs[graph.name]].append(graph.identifier)
+        plugin = graphs.get(graph.name)
+        if plugin is None:
+            raise CallError(f'{graph.name!r} is not a valid graph plugin.', errno.ENOENT)
+        graph_plugins[plugin].append(graph.identifier)
 
     results: list[ReportingGetDataResponse] = []
     async for result in fetch_data_from_graph_plugins(graph_plugins, query_params, query.aggregate):

@@ -59,8 +59,8 @@ class ReportingQuery(BaseModel):
 
 class GraphIdentifier(BaseModel):
     name: typing.Literal[
-        'cpu', 'cputemp', 'disk', 'interface', 'load', 'processes', 'memory', 'uptime', 'arcactualrate', 'arcrate',
-        'arcsize', 'arcresult', 'disktemp', 'upscharge', 'upsruntime', 'upsvoltage', 'upscurrent', 'upsfrequency',
+        'cpu', 'cputemp', 'disk', 'interface', 'load', 'processes', 'memory', 'uptime',
+        'arcsize', 'disktemp', 'upscharge', 'upsruntime', 'upsvoltage', 'upscurrent', 'upsfrequency',
         'upsload', 'upstemperature',
     ] = Field(
         description=(
@@ -74,10 +74,7 @@ class GraphIdentifier(BaseModel):
             "* `processes`: Process count and statistics\n"
             "* `memory`: Memory usage statistics\n"
             "* `uptime`: System uptime\n"
-            "* `arcactualrate`: ZFS ARC actual hit rate\n"
-            "* `arcrate`: ZFS ARC hit rate\n"
             "* `arcsize`: ZFS ARC cache size\n"
-            "* `arcresult`: ZFS ARC operation results\n"
             "* `disktemp`: Disk temperature readings\n"
             "* `upscharge`: UPS battery charge level\n"
             "* `upsruntime`: UPS estimated runtime\n"
@@ -97,6 +94,9 @@ class GraphIdentifier(BaseModel):
     )
 
 
+_REMOVED_GRAPH_NAMES = frozenset({'arcrate', 'arcactualrate', 'arcresult'})
+
+
 class ReportingNetdataGetDataArgs(BaseModel):
     graphs: list[GraphIdentifier] = Field(
         min_length=1,
@@ -106,6 +106,11 @@ class ReportingNetdataGetDataArgs(BaseModel):
         default_factory=lambda: ReportingQuery(),
         description="Query parameters for filtering and formatting the returned data.",
     )
+
+    @classmethod
+    def from_previous(cls, value):
+        value['graphs'] = [g for g in value['graphs'] if g.get('name') not in _REMOVED_GRAPH_NAMES]
+        return value
 
 
 class Aggregations(BaseModel):
