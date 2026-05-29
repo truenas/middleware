@@ -2,8 +2,10 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 import copy
 import hashlib
+import logging
 import os
 import tempfile
+import time
 from typing import Any
 
 from spdk.rpc.client import JSONRPCClient  # type: ignore[import-untyped]
@@ -34,8 +36,37 @@ SPDK_RPC_TIMEOUT = None
 SPDK_RPC_LOG_LEVEL = 'ERROR'
 SPDK_RPC_CONN_RETRIES = 0
 
+# After deleting a bdev, poll bdev_get_bdevs until SPDK no longer reports it.
+# bdev_*_delete's RPC reply fires from spdk_bdev_unregister's cb_fn, which
+# runs *before* spdk_bdev_close(desc) in spdk_bdev_unregister_by_name.
+# That close is what triggers bdev_aio_destruct -> close(fd) on the zvol,
+# so when the RPC returns the kernel may still hold the wkey reference
+# and a subsequent zfs unload-key can fail with EBUSY. Polling
+# bdev_get_bdevs is a valid readiness signal because the bdev is only
+# removed from the global list inside the destruct path.
+BDEV_DRAIN_TIMEOUT = 2.0
+BDEV_DRAIN_POLL_INTERVAL = 0.05
+
+LOGGER = logging.getLogger(__name__)
+
 # Directory into which we will place our keys
 SPDK_KEY_DIR = '/var/run/spdk/keys'
+
+
+def _wait_bdev_gone(client: Any, name: str, timeout: float = BDEV_DRAIN_TIMEOUT) -> None:
+    """Block until SPDK no longer reports a bdev named `name`, or until timeout."""
+    deadline = time.monotonic() + timeout
+    while True:
+        bdevs = client.call('bdev_get_bdevs')
+        if not any(b['name'] == name for b in bdevs):
+            return
+        if time.monotonic() >= deadline:
+            LOGGER.warning(
+                'SPDK bdev %r still present %.1fs after delete; '
+                'proceeding anyway', name, timeout,
+            )
+            return
+        time.sleep(BDEV_DRAIN_POLL_INTERVAL)
 
 
 def host_config_key(config_item: dict[str, Any], key_type: str) -> str | None:
@@ -631,15 +662,18 @@ class NvmetBdevConfig(NvmetConfig):
         pass
 
     def delete(self, client, live_item, render_ctx):
+        name = live_item['name']
         match live_item['product_name']:
             case 'URING bdev':
-                client.call('bdev_uring_delete', {'name': live_item['name']})
+                client.call('bdev_uring_delete', {'name': name})
 
             case 'AIO disk':
-                client.call('bdev_aio_delete', {'name': live_item['name']})
+                client.call('bdev_aio_delete', {'name': name})
 
             case 'Null disk':
-                client.call('bdev_null_delete', {'name': live_item['name']})
+                client.call('bdev_null_delete', {'name': name})
+
+        _wait_bdev_gone(client, name)
 
     def lock(self, client, config_item, render_ctx):
         key = self.config_key(config_item, render_ctx)
