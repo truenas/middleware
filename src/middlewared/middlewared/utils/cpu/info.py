@@ -111,7 +111,7 @@ def cpu_info_impl() -> CpuInfo:
     #   "0-1"   - HT pair where the kernel enumerates siblings consecutively
     #   "0"     - SMT disabled (only the primary thread is online)
     #   "0-3"   - 4-way SMT (POWER) or wider
-    core_meta: dict[tuple[int, ...], tuple[int, int, int]] = {}
+    core_meta: dict[int, tuple[list[int], int, int, int]] = {}
     with os.scandir("/sys/devices/system/cpu/") as sdir:
         for entry in filter(lambda x: x.is_dir() and x.name.startswith("cpu"), sdir):
             try:
@@ -129,30 +129,35 @@ def cpu_info_impl() -> CpuInfo:
                 continue
             if not siblings:
                 continue
-            core_key = tuple(siblings)
+            # The lowest logical CPU id is unique per physical core (sibling
+            # sets are disjoint) and is also the stable ordinal sort key, so
+            # we key core_meta by it directly.
+            core_key = min(siblings)
             if core_key in core_meta:
                 continue  # already recorded via another sibling cpuN dir
             pkg = _read_int(os.path.join(topo, "physical_package_id"))
             die = _read_int(os.path.join(topo, "die_id"))
             cid = _read_int(os.path.join(topo, "core_id"))
             core_meta[core_key] = (
+                siblings,
                 pkg if pkg is not None and pkg >= 0 else 0,
                 die if die is not None and die >= 0 else 0,
                 cid if cid is not None and cid >= 0 else 0,
             )
 
     # Sort physical cores by their lowest logical CPU id for stable ordinals
-    # (filesystem iteration order is not guaranteed sorted).
-    sorted_cores = sorted(core_meta.keys(), key=min)
+    # (filesystem iteration order is not guaranteed sorted). The keys are
+    # already those lowest ids, so a plain sort suffices.
+    sorted_cores = sorted(core_meta.keys())
 
     logical_to_phys: dict[int, int] = {}
     phys_to_package: dict[int, int] = {}
     phys_to_die: dict[int, int] = {}
     phys_to_core_id: dict[int, int] = {}
     for phys_idx, core_key in enumerate(sorted_cores):
-        for cpu_id in sorted(core_key):
+        siblings, pkg, die, cid = core_meta[core_key]
+        for cpu_id in sorted(siblings):
             logical_to_phys[cpu_id] = phys_idx
-        pkg, die, cid = core_meta[core_key]
         phys_to_package[phys_idx] = pkg
         phys_to_die[phys_idx] = die
         phys_to_core_id[phys_idx] = cid
