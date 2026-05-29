@@ -168,7 +168,7 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
             )
             if not verrors:
                 statfs = self.middleware.call_sync("filesystem.statfs", data["cache_path"])
-                if "RO" in statfs["flags"]:
+                if "RO" in statfs.flags:
                     verrors.add(f"{name}.cache_path", "The cache directory must be writeable")
 
         if not verrors:

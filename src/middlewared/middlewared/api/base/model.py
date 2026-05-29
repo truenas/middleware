@@ -15,8 +15,9 @@ from middlewared.api.base.types.string import SECRET_VALUE
 from middlewared.utils.lang import undefined
 from middlewared.utils.typing_ import is_union
 
-__all__ = ["BaseModel", "ForUpdateMetaclass", "query_result", "query_result_item", "added_event_model",
-           "changed_event_model", "removed_event_model", "single_argument_args", "single_argument_result",
+__all__ = ["BaseModel", "ForUpdateMetaclass", "query_result", "query_result_from_item", "query_result_item",
+           "added_event_model", "changed_event_model", "removed_event_model",
+           "single_argument_args", "single_argument_result",
            "NotRequired", "model_subset"]
 
 
@@ -321,12 +322,15 @@ def single_argument_result(klass, klass_name=None):
 
 
 def query_result(item: type[PydanticBaseModel], name: str | None = None) -> type[BaseModel]:
-    item.__query_result_item__ = query_result_item(item)
+    return query_result_from_item(query_result_item(item), name or item.__name__.removesuffix("Entry") + "QueryResult")
+
+
+def query_result_from_item(item: type[PydanticBaseModel], name: str) -> type[BaseModel]:
     return create_model(
-        name or item.__name__.removesuffix("Entry") + "QueryResult",
+        name,
         __base__=(BaseModel,),
         __module__=item.__module__,
-        result=Annotated[list[item.__query_result_item__] | item.__query_result_item__ | int, Field()],
+        result=Annotated[list[item] | item | int, Field()],
     )
 
 
@@ -339,6 +343,7 @@ def query_result_item(item: type[ModelT]) -> type[ModelT]:
         __cls_kwargs__={"metaclass": ForUpdateMetaclass},
     )
     result.__normalize_as__ = item
+    item.__query_result_item__ = result
     return result
 
 

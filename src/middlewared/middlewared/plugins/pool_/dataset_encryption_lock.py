@@ -254,7 +254,7 @@ class PoolDatasetService(Service):
                         # don't worry about errors here, they'll be caught below
                         pass
                     else:
-                        if sfs['source'] == ds['name']:
+                        if sfs.source == ds['name']:
                             self.logger.debug(
                                 '%s: possible race on mounting dataset. Dataset already mounted. This may '
                                 'indicate multiple concurrent API calls impacting dataset locking and mounting',

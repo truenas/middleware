@@ -1223,7 +1223,7 @@ class SharingSMBService(SharingService):
             return 'OFF'
 
         st = self.middleware.call_sync('filesystem.stat', path)
-        if st['type'] == 'SYMLINK':
+        if st.type == 'SYMLINK':
             verrors.add(schema, f'{path}: is symbolic link.')
             return
 
@@ -1316,7 +1316,7 @@ class SharingSMBService(SharingService):
                 )
             else:
                 stat_info = await self.middleware.call('filesystem.stat', data[share_field.PATH])
-                if not data[share_field.OPTS].get(share_field.ACL, True) and stat_info['acl']:
+                if not data[share_field.OPTS].get(share_field.ACL, True) and stat_info.acl:
                     verrors.add(
                         f'{schema_name}.acl',
                         f'ACL detected on {data["path"]}. ACLs must be stripped prior to creation '
@@ -1329,7 +1329,7 @@ class SharingSMBService(SharingService):
                         f'{schema_name}.{share_field.PURPOSE}',
                         'Veeam repository shares require a TrueNAS enterprise license.'
                     )
-                bsize = (await self.middleware.call('filesystem.statfs', data[share_field.PATH]))['blocksize']
+                bsize = (await self.middleware.call('filesystem.statfs', data[share_field.PATH])).blocksize
                 if bsize != VEEAM_REPO_BLOCKSIZE:
                     verrors.add(
                         f'{schema_name}.{share_field.PATH}',

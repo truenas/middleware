@@ -21,6 +21,8 @@ import wbclient
 
 from middlewared.api import api_method
 from middlewared.api.current import (
+    FilesystemMkdirData,
+    FilesystemMkdirOptions,
     GroupCreateArgs,
     GroupCreateResult,
     GroupDeleteArgs,
@@ -468,11 +470,11 @@ class UserService(CRUDService):
     @private
     def validate_homedir_mountinfo(self, verrors, schema, home_path):
         sfs = self.middleware.call_sync('filesystem.statfs', home_path.as_posix())
-        if 'RO' in sfs['flags']:
+        if 'RO' in sfs.flags:
             verrors.add(f'{schema}.home', 'Path has the ZFS readonly property set.')
             return False
 
-        if sfs['fstype'] != 'zfs':
+        if sfs.fstype != 'zfs':
             verrors.add(f'{schema}.home', 'Path is not on a ZFS filesystem')
             return False
 
@@ -522,7 +524,7 @@ class UserService(CRUDService):
                 self.validate_homedir_mountinfo(verrors, schema, p.parent)
 
         elif self.validate_homedir_mountinfo(verrors, schema, p):
-            attrs = self.middleware.call_sync('filesystem.stat', data['home'])['attributes']
+            attrs = self.middleware.call_sync('filesystem.stat', data['home']).attributes
             if 'IMMUTABLE' in attrs:
                 verrors.add(
                     f'{schema}.home',
@@ -586,10 +588,10 @@ class UserService(CRUDService):
                 # target path may have RESTRICTED aclmode. Correct permissions
                 # get set in below `filesystem.setperm` call which strips ACL
                 # if present to strictly enforce `mode`.
-                self.middleware.call_sync('filesystem.mkdir', {
-                    'path': target,
-                    'options': {'mode': mode, 'raise_chmod_error': False}
-                })
+                self.middleware.call_sync('filesystem.mkdir', FilesystemMkdirData(
+                    path=target,
+                    options=FilesystemMkdirOptions(mode=mode, raise_chmod_error=False),
+                ))
             except CallError as e:
                 if e.errno == errno.EEXIST and not os.path.isdir(target):
                     raise CallError(
@@ -1414,7 +1416,7 @@ class UserService(CRUDService):
                 'options': {'stripacl': True},
             })
         else:
-            current_mode = stat.S_IMODE(self.middleware.call_sync('filesystem.stat', home_old)['mode'])
+            current_mode = stat.S_IMODE(self.middleware.call_sync('filesystem.stat', home_old).mode)
             perm_job = self.middleware.call_sync('filesystem.setperm', {
                 'uid': uid,
                 'path': home_new,
@@ -1879,7 +1881,10 @@ class UserService(CRUDService):
         if not os.path.isdir(sshpath):
             # Since this is security sensitive, we allow raising exception here
             # if mode fails to be set to 0o700
-            self.middleware.call_sync('filesystem.mkdir', {'path': sshpath, 'options': {'mode': '700'}})
+            self.middleware.call_sync(
+                'filesystem.mkdir',
+                FilesystemMkdirData(path=sshpath, options=FilesystemMkdirOptions(mode='700')),
+            )
         if not os.path.isdir(sshpath):
             raise CallError(f'{sshpath} is not a directory')
 

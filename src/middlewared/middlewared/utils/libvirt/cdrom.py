@@ -38,12 +38,12 @@ class CDROMDelegate(DeviceDelegate):
             return
 
         st = self.middleware.call_sync('filesystem.statfs', path)
-        if '/' not in st['source']:
+        if '/' not in st.source:
             verrors.add(
                 'attributes.path',
-                f'The specified path is located in the root dataset of pool {st["source"]!r}. '
+                f'The specified path is located in the root dataset of pool {st.source!r}. '
                 'VM resources must be stored within a child dataset of the pool, not the '
-                f'pool root. Create a dataset under {st["source"]!r} (e.g., {st["source"]}/iso) '
+                f'pool root. Create a dataset under {st.source!r} (e.g., {st.source}/iso) '
                 'and move your files there.'
             )
             return

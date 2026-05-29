@@ -18,7 +18,7 @@ class SMBService(Service):
                 continue
 
             try:
-                acl_is_trivial = not (await self.middleware.call("filesystem.stat", share["path"]))["acl"]
+                acl_is_trivial = not (await self.middleware.call("filesystem.stat", share["path"])).acl
             except Exception:
                 self.middleware.logger.warning(
                     "Failed to check for presence of filesystem ACL for share %r",

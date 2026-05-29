@@ -542,10 +542,11 @@ class PoolDatasetService(CRUDService):
 
         parent_mp = parent_ds['mountpoint']
         if parent_ds['locked'] or not parent_mp:
-            parent_st = {'acl': False}
+            parent_st_acltype = None
         else:
-            parent_st = await self.middleware.call('filesystem.stat', parent_mp)
-            parent_st['acltype'] = await self.middleware.call('filesystem.path_get_acltype', parent_mp)
+            parent_st_acltype = await self.middleware.call('filesystem.path_get_acltype', parent_mp)
+            if not (await self.middleware.call('filesystem.stat', parent_mp)).acl:
+                parent_st_acltype = None
 
         mountpoint = os.path.join('/mnt', data['name'])
 
@@ -557,7 +558,7 @@ class PoolDatasetService(CRUDService):
                 raise
 
         if data['share_type'] == 'SMB':
-            if parent_st['acl'] and parent_st['acltype'] == 'NFS4':
+            if parent_st_acltype == 'NFS4':
                 acl_to_set = await self.middleware.call('filesystem.get_inherited_acl', {
                     'path': os.path.join('/mnt', parent_name),
                 })
@@ -568,7 +569,7 @@ class PoolDatasetService(CRUDService):
                 }))[0]['acl']
         elif data['share_type'] == 'APPS':
             must_add_apps = True
-            if parent_st['acl'] and parent_st['acltype'] == 'NFS4':
+            if parent_st_acltype == 'NFS4':
                 acl_to_set = await self.middleware.call('filesystem.get_inherited_acl', {
                     'path': os.path.join('/mnt', parent_name),
                 })
@@ -602,7 +603,7 @@ class PoolDatasetService(CRUDService):
                     'type': 'ALLOW'
                 })
         elif data['share_type'] in ('MULTIPROTOCOL', 'NFS'):
-            if parent_st['acl'] and parent_st['acltype'] == 'NFS4':
+            if parent_st_acltype == 'NFS4':
                 acl_to_set = await self.middleware.call('filesystem.get_inherited_acl', {
                     'path': os.path.join('/mnt', parent_name),
                 })

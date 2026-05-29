@@ -8,7 +8,7 @@ import re
 import subprocess
 from typing import TYPE_CHECKING, Any
 
-from middlewared.api.current import VMDeviceConvert, VMDiskDevice, ZFSResourceQuery
+from middlewared.api.current import FilesystemStatData, VMDeviceConvert, VMDiskDevice, ZFSResourceQuery
 from middlewared.plugins.zfs.utils import has_internal_path
 from middlewared.service import CallError, ServiceContext
 from middlewared.service_exception import InstanceNotFound, ValidationError
@@ -86,7 +86,7 @@ def run_convert_cmd(context: ServiceContext, cmd_args: list[str], job: Job, prog
 
 def validate_convert_disk_image(
     context: ServiceContext, dip: str, schema: str, converting_from_image_to_zvol: bool = False,
-) -> dict[str, Any] | None:
+) -> FilesystemStatData | None:
     if not dip.startswith("/mnt/") or os.path.dirname(dip) == "/mnt":
         raise ValidationError(schema, f'{dip!r} is an invalid location', errno.EINVAL)
 
@@ -94,14 +94,14 @@ def validate_convert_disk_image(
     try:
         st = context.middleware.call_sync('filesystem.stat', dip)
         if converting_from_image_to_zvol:
-            if st['type'] != 'FILE':
+            if st.type != 'FILE':
                 raise ValidationError(schema, f'{dip!r} is not a file', errno.EINVAL)
 
             vfs = context.middleware.call_sync('filesystem.statfs', dip)
-            if has_internal_path(vfs['source']):
+            if has_internal_path(vfs.source):
                 raise ValidationError(
                     schema,
-                    f'{dip!r} is in a protected system path ({vfs["source"]})',
+                    f'{dip!r} is in a protected system path ({vfs.source})',
                     errno.EACCES
                 )
         else:
@@ -124,14 +124,14 @@ def validate_convert_disk_image(
         sp = os.path.dirname(dip)
         try:
             dst = context.middleware.call_sync('filesystem.stat', os.path.dirname(sp))
-            if dst['type'] != 'DIRECTORY':
+            if dst.type != 'DIRECTORY':
                 raise ValidationError(schema, f'{sp!r} is not a directory', errno.EINVAL)
 
-            vfs = context.middleware.call_sync('filesystem.statfs', dst['realpath'])
-            if has_internal_path(vfs['source']):
+            vfs = context.middleware.call_sync('filesystem.statfs', dst.realpath)
+            if has_internal_path(vfs.source):
                 raise ValidationError(
                     schema,
-                    f'{sp!r} is in a protected system path ({vfs["source"]})',
+                    f'{sp!r} is in a protected system path ({vfs.source})',
                     errno.EACCES
                 )
         except CallError as e:
@@ -210,7 +210,7 @@ def convert_disk(context: ServiceContext, job: Job, data: VMDeviceConvert) -> bo
     cmd_args = ['qemu-img', 'convert', '-p']
     if converting_from_image_to_zvol:
         assert st is not None
-        vsize = virtual_size_impl(schema, st['realpath'])
+        vsize = virtual_size_impl(schema, st.realpath)
         if vsize > zv['properties']['volsize']['value']:
             # always convert to next whole GB.
             vshgb = max(1, math.ceil(vsize / (1024 ** 3)))
@@ -239,7 +239,7 @@ def convert_disk(context: ServiceContext, job: Job, data: VMDeviceConvert) -> bo
         # set the user/group owner to the uid/gid of the parent directory
         chown_job = context.middleware.call_sync(
             'filesystem.chown',
-            {'path': data.destination, 'uid': st['uid'], 'gid': st['gid']}
+            {'path': data.destination, 'uid': st.uid, 'gid': st.gid}
         )
         chown_job.wait_sync(raise_error=True)
 
