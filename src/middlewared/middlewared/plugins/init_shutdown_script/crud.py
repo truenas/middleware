@@ -65,7 +65,7 @@ class InitShutdownScriptServicePart(CRUDServicePart[InitShutdownScriptEntry]):
                     verrors.add(f'{schema_name}.script', str(e))
                 else:
                     if obj['type'] != 'FILE':
-                        verrors.add(f'{schema_name}.script', 'Script must be a regular file not {obj["type"]!r}')
+                        verrors.add(f'{schema_name}.script', f'Script must be a regular file not {obj["type"]!r}')
                     elif not bool(obj['mode'] & stat.S_IXUSR):
                         verrors.add(f'{schema_name}.script', 'Script must have execute bit set for the user')
 
