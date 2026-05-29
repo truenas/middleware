@@ -1,6 +1,6 @@
 from collections import defaultdict
 import errno
-from typing import Any, Literal, overload
+from typing import Any, Literal, Sequence, overload
 
 from pydantic_core import ValidationError
 
@@ -10,7 +10,7 @@ from middlewared.service_exception import ValidationErrors
 
 def accept_params(
     model: type[BaseModel],
-    args: list[Any],
+    args: Sequence[Any],
     *,
     dump_models: bool = True,
     exclude_unset: bool = False,
@@ -51,7 +51,7 @@ def accept_params(
         return [getattr(result, field) for field in fields]
 
 
-def model_dict_from_list(model: type[BaseModel], args: list[Any]) -> dict[str, Any]:
+def model_dict_from_list(model: type[BaseModel], args: Sequence[Any]) -> dict[str, Any]:
     """
     Converts a list of `args` for a method call to a dictionary using `model`.
 
