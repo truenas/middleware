@@ -110,8 +110,6 @@ class ZPoolTopology(BaseModel):
     """Array of L2ARC cache vdev configurations."""
     spares: list[ZPoolVdev]
     """Array of spare disk configurations."""
-    stripe: list[ZPoolVdev]
-    """Array of stripe (single-disk) vdev configurations."""
     special: list[ZPoolVdev]
     """Array of special vdev configurations for metadata."""
     dedup: list[ZPoolVdev]
@@ -194,6 +192,9 @@ class ZPoolEntry(BaseModel):
     """Human-readable status description."""
     is_upgraded: bool | None = None
     """Whether every ZFS feature flag on the pool is enabled. `null` for OFFLINE pools."""
+    all_sed: bool | None = None
+    """`true` when every disk backing the pool is a Self-Encrypting Drive, `false` when at least one is not. \
+    `null` when the SED status of the pool has not yet been determined or does not apply."""
     properties: dict[str, ZPoolPropertyValue] | None = None
     """Pool properties, keyed by property name."""
     topology: ZPoolTopology | None = None
