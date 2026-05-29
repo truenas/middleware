@@ -6,10 +6,6 @@ import sqlalchemy as sa
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import relationship
 
-import middlewared.plugins.datastore  # noqa
-import middlewared.plugins.datastore.connection  # noqa
-import middlewared.plugins.datastore.schema  # noqa
-import middlewared.plugins.datastore.util  # noqa
 from middlewared.plugins.datastore.write import NoRowsWereUpdatedException
 from middlewared.pytest.unit.plugins.conftest import Model, datastore_test
 from middlewared.sqlalchemy import JSON, EncryptedText, Time
