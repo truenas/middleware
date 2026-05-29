@@ -172,16 +172,10 @@ class ZPoolService(Service):
 
         results = self.middleware.call_sync("zpool.query_impl", data | {"pool_names": pool_names})
         for entry in results:
-            entry.update({
-                "id": None,
-                "all_sed": None,
-            })
+            entry.update({"id": None, "all_sed": None})
             db_entry = db_pools.get(entry["name"])
             if db_entry is not None:
-                entry.update({
-                    "id": db_entry["id"],
-                    "all_sed": db_entry["all_sed"],
-                })
+                entry.update({"id": db_entry["id"], "all_sed": db_entry["all_sed"]})
 
         imported_names = {p["name"] for p in results}
         offline_names = [name for name in pool_names if name not in imported_names]
