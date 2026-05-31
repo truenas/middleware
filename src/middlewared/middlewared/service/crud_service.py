@@ -74,6 +74,9 @@ class CRUDServiceMetabase(ServiceBase):
                 ('SharingTaskService', ('CRUDService', 'Generic')),
                 ('SharingService', ('SharingTaskService', 'Generic')),
                 ('TaskPathService', ('SharingTaskService', 'Generic')),
+                ('GenericSharingTaskService', ('GenericCRUDService', 'Generic')),
+                ('GenericSharingService', ('GenericSharingTaskService', 'Generic')),
+                ('GenericTaskPathService', ('GenericSharingTaskService', 'Generic')),
             )
         ):
             return klass

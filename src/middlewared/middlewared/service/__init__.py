@@ -15,16 +15,19 @@ from .context import ServiceContext
 from .crud_service import CRUDService, GenericCRUDService
 from .crud_service_part import CRUDServicePart
 from .decorators import filterable_api_method, job, no_auth_required, no_authz_required, pass_app, periodic, private
+from .generic_sharing_service import GenericSharingService, GenericSharingTaskService, GenericTaskPathService
 from .service import Service
 from .service_mixin import ServiceChangeMixin
 from .service_part import ServicePartBase
 from .sharing_service import SharingService, SharingTaskService, TaskPathService
+from .sharing_task_service_part import SharingTaskServicePart
 from .system_service import SystemServiceService
 from .system_service_part import SystemServicePart
 
 ABSTRACT_SERVICES = (
-    CompoundService, ConfigService, CRUDService, GenericConfigService, GenericCRUDService, SharingService,
-    SharingTaskService, SystemServiceService, TaskPathService
+    CompoundService, ConfigService, CRUDService, GenericConfigService, GenericCRUDService, GenericSharingService,
+    GenericSharingTaskService, GenericTaskPathService, SharingService, SharingTaskService, SystemServiceService,
+    TaskPathService
 )
 
 __all__ = [
@@ -46,7 +49,11 @@ __all__ = [
     'CRUDService',
     'GenericConfigService',
     'GenericCRUDService',
+    'GenericSharingService',
+    'GenericSharingTaskService',
+    'GenericTaskPathService',
     'CRUDServicePart',
+    'SharingTaskServicePart',
     'job',
     'no_auth_required',
     'no_authz_required',

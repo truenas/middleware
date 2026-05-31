@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import functools
 from typing import TYPE_CHECKING, Any, Protocol
 
-from middlewared.service import ServiceChangeMixin, SharingTaskService
+from middlewared.service import GenericSharingTaskService, ServiceChangeMixin, SharingTaskService
 
 if TYPE_CHECKING:
     from middlewared.main import Middleware
@@ -98,16 +99,30 @@ class LockableFSAttachmentDelegate[E: Entry](FSAttachmentDelegate[E]):
     """
 
     # service object
-    service_class: type[SharingTaskService[E]]
+    service_class: type[SharingTaskService[E]] | type[GenericSharingTaskService[E]]
 
     def __init__(self, *args: Any, **kwargs: Any):
         super().__init__(*args, **kwargs)
-        self.enabled_field = self.service_class.enabled_field
-        self.locked_field = self.service_class.locked_field
-        self.path_field = self.service_class.path_field
-        self.datastore_model = self.service_class._config.datastore  # type: ignore[attr-defined]
-        self.datastore_prefix = self.service_class._config.datastore_prefix  # type: ignore[attr-defined]
         self.namespace = self.service_class._config.namespace  # type: ignore[attr-defined]
+        if self.service_class._config.datastore:  # type: ignore[attr-defined]
+            # Legacy SharingTaskService: field config + datastore live on the service class.
+            svc = self.service_class
+            self.enabled_field = svc.enabled_field  # type: ignore[union-attr]
+            self.locked_field = svc.locked_field  # type: ignore[union-attr]
+            self.path_field = svc.path_field  # type: ignore[union-attr]
+            self.datastore_model = svc._config.datastore  # type: ignore[attr-defined]
+            self.datastore_prefix = svc._config.datastore_prefix  # type: ignore[attr-defined]
+            self._resource_path = functools.partial(svc.get_path_field, svc)  # type: ignore[union-attr]
+        else:
+            # Typesafe GenericSharingTaskService: field config + datastore live on the service
+            # part; read them off the running instance's part.
+            part = self.middleware.get_service(self.namespace)._svc_part
+            self.enabled_field = part.enabled_field
+            self.locked_field = part.locked_field
+            self.path_field = part.path_field
+            self.datastore_model = part._datastore
+            self.datastore_prefix = part._datastore_prefix
+            self._resource_path = part.get_path_field
         if not self.service:
             self.service = self.service_class._config.service  # type: ignore[attr-defined]
 
@@ -203,8 +218,7 @@ class LockableFSAttachmentDelegate[E: Entry](FSAttachmentDelegate[E]):
         # `check_parent` flag when set can be used to check for the case when share path is the parent
         # of the path to check.
 
-        share_path = await self.service_class.get_path_field(self.service_class, resource)  # type: ignore[arg-type]
-        # FIXME: Fix `type: ignore[arg-type]` above
+        share_path = await self._resource_path(resource)
         if exact_match or share_path == path:
             return share_path == path
 
