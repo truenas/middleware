@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from middlewared.main import Middleware
 
 
-class AppCertificateAttachmentDelegate(CertificateCRUDServiceAttachmentDelegate):
+class AppCertificateAttachmentDelegate(CertificateCRUDServiceAttachmentDelegate[AppEntry]):
 
     HUMAN_NAME = 'Applications'
     NAMESPACE = 'app'

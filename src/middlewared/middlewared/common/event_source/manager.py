@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 from collections import defaultdict
 import functools
-from typing import TYPE_CHECKING, Literal, NamedTuple, TypeAlias
+from typing import TYPE_CHECKING, Any, Literal, NamedTuple, TypeAlias
 from uuid import uuid4
 
 from middlewared.event import EventSource
@@ -21,10 +21,10 @@ class IdentData(NamedTuple):
 
 
 class Subscriber:
-    def send_event(self, event_type: str, **kwargs):
+    def send_event(self, event_type: str, **kwargs: Any) -> None:
         raise NotImplementedError
 
-    def terminate(self, error: Exception | None):
+    def terminate(self, error: Exception | None) -> None:
         raise NotImplementedError
 
 
@@ -33,28 +33,28 @@ class AppSubscriber(Subscriber):
         self.app = app
         self.collection = collection
 
-    def send_event(self, event_type, **kwargs):
+    def send_event(self, event_type: str, **kwargs: Any) -> None:
         self.app.send_event(self.collection, event_type, **kwargs)
 
-    def terminate(self, error):
+    def terminate(self, error: Exception | None) -> None:
         self.app.notify_unsubscribed(self.collection, error)
 
 
 class InternalSubscriber(Subscriber):
-    def __init__(self):
+    def __init__(self) -> None:
         self.iterator = InternalSubscriberIterator()
 
-    def send_event(self, event_type, **kwargs):
+    def send_event(self, event_type: str, **kwargs: Any) -> None:
         self.iterator.queue.put_nowait((False, (event_type, kwargs)))
 
-    def terminate(self, error):
+    def terminate(self, error: Exception | None) -> None:
         if error:
             self.iterator.queue.put_nowait((True, error))
         else:
             self.iterator.queue.put_nowait(None)
 
 
-_IteratorItem: TypeAlias = tuple[str, dict]
+_IteratorItem: TypeAlias = tuple[str, dict[str, Any]]
 """Event type and kwargs"""
 _InternalIteratorItem: TypeAlias = tuple[Literal[True], Exception] | tuple[Literal[False], _IteratorItem] | None
 """Queue item type for InternalSubscriberIterator:
@@ -64,10 +64,10 @@ _InternalIteratorItem: TypeAlias = tuple[Literal[True], Exception] | tuple[Liter
 
 
 class InternalSubscriberIterator:
-    def __init__(self):
+    def __init__(self) -> None:
         self.queue: asyncio.Queue[_InternalIteratorItem] = asyncio.Queue()
 
-    def __aiter__(self):
+    def __aiter__(self) -> InternalSubscriberIterator:
         return self
 
     async def __anext__(self) -> _IteratorItem:
@@ -78,9 +78,9 @@ class InternalSubscriberIterator:
 
         is_error, value = item
         if is_error:
-            raise value
+            raise value  # type: ignore[misc]
         else:
-            return value
+            return value  # type: ignore[return-value]
 
 
 _EventSourceDict: TypeAlias = dict[str | None, EventSource]
@@ -116,7 +116,7 @@ class EventSourceManager:
         else:
             return f'{name}:{arg}'
 
-    def register(self, name: str, event_source: type[EventSource]):
+    def register(self, name: str, event_source: type[EventSource]) -> None:
         if not issubclass(event_source, EventSource):
             raise RuntimeError(f"{event_source} is not EventSource subclass")
 
@@ -124,7 +124,7 @@ class EventSourceManager:
 
         self.middleware.role_manager.register_event(name, event_source.roles)
 
-    async def subscribe(self, subscriber: Subscriber, ident: str, name: str, arg: str | None):
+    async def subscribe(self, subscriber: Subscriber, ident: str, name: str, arg: str | None) -> None:
         if ident in self.idents:
             raise ValueError(f"Ident {ident} is already used")
 
@@ -148,7 +148,7 @@ class EventSourceManager:
         else:
             self.middleware.logger.trace("Re-using existing instance of event source %r:%r", name, arg)
 
-    async def unsubscribe(self, ident: str, error: Exception | None = None):
+    async def unsubscribe(self, ident: str, error: Exception | None = None) -> None:
         ident_data = self.idents.pop(ident, None)
         if ident_data is None:
             return
@@ -162,13 +162,13 @@ class EventSourceManager:
             instance = self.instances[ident_data.name].pop(ident_data.arg)
             await instance.cancel()
 
-    def terminate(self, ident: IdentData, error: Exception | None = None):
+    def terminate(self, ident: IdentData, error: Exception | None = None) -> None:
         ident.subscriber.terminate(error)
 
-    async def subscribe_app(self, app: RpcWebSocketApp, ident: str, name: str, arg: str | None):
+    async def subscribe_app(self, app: RpcWebSocketApp, ident: str, name: str, arg: str | None) -> None:
         await self.subscribe(AppSubscriber(app, self.get_full_name(name, arg)), ident, name, arg)
 
-    async def unsubscribe_app(self, app: RpcWebSocketApp):
+    async def unsubscribe_app(self, app: RpcWebSocketApp) -> None:
         for ident, ident_data in list(self.idents.items()):
             if isinstance(ident_data.subscriber, AppSubscriber) and ident_data.subscriber.app == app:
                 await self.unsubscribe(ident)
@@ -179,7 +179,7 @@ class EventSourceManager:
         await self.subscribe(subscriber, ident, name, arg)
         return subscriber.iterator
 
-    def _send_event(self, name: str, arg: str | None, event_type: str, **kwargs):
+    def _send_event(self, name: str, arg: str | None, event_type: str, **kwargs: Any) -> None:
         for ident in list(self.subscriptions[name][arg]):
             try:
                 ident_data = self.idents[ident]
@@ -189,7 +189,7 @@ class EventSourceManager:
 
             ident_data.subscriber.send_event(event_type, **kwargs)
 
-    async def _unsubscribe_all(self, name: str, arg: str | None, error: Exception | None = None):
+    async def _unsubscribe_all(self, name: str, arg: str | None, error: Exception | None = None) -> None:
         for ident in self.subscriptions[name][arg]:
             self.terminate(self.idents.pop(ident), error)
 

@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from middlewared.main import Middleware
 
 
-class LXCFSAttachmentDelegate(FSAttachmentDelegate):
+class LXCFSAttachmentDelegate(FSAttachmentDelegate[dict[str, str]]):
 
     name = 'lxc'
     title = 'LXC'
@@ -54,7 +54,7 @@ class LXCFSAttachmentDelegate(FSAttachmentDelegate):
         pass
 
 
-class ContainerFSAttachmentDelegate(FSAttachmentDelegate):
+class ContainerFSAttachmentDelegate(FSAttachmentDelegate[dict[str, Any]]):
 
     name = 'container'
     title = 'CONTAINER'

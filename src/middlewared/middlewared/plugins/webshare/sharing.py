@@ -187,5 +187,5 @@ class WebshareFSAttachmentDelegate(LockableFSAttachmentDelegate[SharingWebshareE
 async def setup(middleware: Middleware) -> None:
     await middleware.call(
         'pool.dataset.register_attachment_delegate',
-        WebshareFSAttachmentDelegate(middleware),  # type: ignore[no-untyped-call]
+        WebshareFSAttachmentDelegate(middleware),
     )

@@ -98,7 +98,7 @@ class SharingTaskService[E](CRUDService[E]):
                 )
 
     @private
-    async def get_path_field(self, data):
+    async def get_path_field(self, data) -> str:
         if isinstance(data, dict):
             # FIXME: Remove all the cases where this is dict
             return data[self.path_field]

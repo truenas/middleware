@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from middlewared.main import Middleware
 
 
-class AppFSAttachmentDelegate(FSAttachmentDelegate):
+class AppFSAttachmentDelegate(FSAttachmentDelegate[dict[str, str]]):
     name = 'apps'
     title = 'Apps'
     # Apps depend on Docker, so they start after and stop before Docker
