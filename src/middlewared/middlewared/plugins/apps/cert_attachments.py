@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from middlewared.api.current import AppEntry
 from middlewared.common.attachment.certificate import CertificateCRUDServiceAttachmentDelegate
 from middlewared.service import Service
 
 from .ix_apps.metadata import get_collective_config
 
 if TYPE_CHECKING:
-    from middlewared.api.current import AppEntry
     from middlewared.main import Middleware
 
 
