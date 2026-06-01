@@ -17,6 +17,7 @@ import typing
 
 import html2text
 
+from middlewared.api.base import NotRequired
 from middlewared.api.current import MailEntry, MailSendMessage, MailUpdate
 from middlewared.service import CallError, NetworkActivityDisabled, ServiceContext, ValidationError
 from middlewared.utils import BRAND, ProductName
@@ -41,7 +42,7 @@ def send(
     request: MailSendMessage,
     extra_config: MailUpdate,
 ) -> None:
-    message = request.model_dump()
+    message = {k: v for k, v in request.model_dump().items() if v != NotRequired}
 
     gc = context.middleware.call_sync("datastore.config", "network.globalconfiguration")
     hostname = f"{gc['gc_hostname']}.{gc['gc_domain']}"
