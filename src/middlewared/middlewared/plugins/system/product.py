@@ -100,13 +100,8 @@ class SystemService(Service):
         if parsed_version is None:
             raise CallError(f"Invalid version string specified: {version_str}")
 
-        version_split = parsed_version.split(".")
-        major_version = ".".join(version_split[0:2])
-        base_url = f"https://www.truenas.com/docs/scale/{major_version}/gettingstarted/scalereleasenotes"
-        if len(version_split) == 2:
-            return base_url
-        else:
-            return f"{base_url}/#{''.join(version_split)}"
+        major = parsed_version.split(".")[0]
+        return f"https://www.truenas.com/docs/scale/{major}/gettingstarted/versionnotes"
 
     @api_method(
         SystemVersionArgs,
