@@ -4,8 +4,8 @@ import unittest.mock
 import pytest
 import sqlalchemy as sa
 
+from middlewared.pytest.unit.datastore_harness import Model, datastore_test
 from middlewared.pytest.unit.middleware import Middleware
-from middlewared.pytest.unit.plugins.test_datastore import Model, datastore_test
 from middlewared.service.config_service import ConfigService
 
 
