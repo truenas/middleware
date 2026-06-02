@@ -229,9 +229,13 @@ class ISCSIGlobalService(SystemServiceService):
 
         if licensed and old['alua'] != new['alua']:
             if new['alua']:
-                await self.middleware.call(
-                    'failover.call_remote', 'service.control', ['START', 'iscsitarget'], {'job': True},
-                )
+                if await self.middleware.call('service.started', 'iscsitarget'):
+                    await self.middleware.call(
+                        'failover.call_remote',
+                        'service.control',
+                        ['START', 'iscsitarget'],
+                        {'job': True},
+                    )
 
         # If we have just turned off iSNS then work around a short-coming in scstadmin reload
         if old['isns_servers'] != new['isns_servers'] and not servers:
