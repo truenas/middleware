@@ -123,7 +123,10 @@ class VMService(Service):
     def suspend_vms(self, vm_ids):
         vms = {vm['id']: vm for vm in self.middleware.call_sync('vm.query')}
         for vm_id in filter(
-            lambda vm_id: vms.get(vm_id).get('status', {}).get('state') == 'RUNNING',
+            lambda vm_id: (
+                (vm := vms.get(vm_id, {})).get('status', {}).get('state') == 'RUNNING'
+                and vm.get('suspend_on_snapshot')
+            ),
             map(int, vm_ids)
         ):
             try:
