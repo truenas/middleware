@@ -149,15 +149,15 @@ class ZfsTierRewriteJobQueryEventSourceEvent(BaseModel):
 
 
 class ZfsTierRewriteJobStatusEventSourceArgs(BaseModel):
-    dataset_name: NonEmptyString
-    """ZFS dataset to subscribe to (e.g. `tank/data`). Receives updates whenever the job \
-    status or statistics change."""
+    tier_job_id: NonEmptyString
+    """Rewrite job to subscribe to, in `dataset_name@job_uuid` format. Receives updates \
+    whenever the job status or statistics change."""
 
 
 @single_argument_result
 class ZfsTierRewriteJobStatusEventSourceEvent(BaseModel):
     fields: ZfsTierRewriteJobStatusEntry
-    """Current status and statistics for the dataset's active rewrite job."""
+    """Current status and statistics for the requested rewrite job."""
 
 
 @single_argument_args("zfs_tier_rewrite_job_create")

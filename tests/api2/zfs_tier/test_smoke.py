@@ -321,9 +321,9 @@ def test_rewrite_job_abort_nonexistent_raises(tier_pool):
 
 def test_rewrite_job_status_event_source(tier_ds_with_work):
     """The polling event source emits CHANGED events while a job is active."""
-    call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds_with_work})
+    entry = call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds_with_work})
 
-    arg = json.dumps({"dataset_name": tier_ds_with_work})
+    arg = json.dumps({"tier_job_id": entry["tier_job_id"]})
     with client() as c:
         events = []
         c.subscribe(
@@ -335,5 +335,6 @@ def test_rewrite_job_status_event_source(tier_ds_with_work):
 
     assert events, "No events received from rewrite_job_status event source"
     assert events[0][0] == "CHANGED"
+    assert events[0][1]["fields"]["tier_job_id"] == entry["tier_job_id"]
     assert events[0][1]["fields"]["dataset_name"] == tier_ds_with_work
     assert "status" in events[0][1]["fields"]
