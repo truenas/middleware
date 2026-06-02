@@ -7,11 +7,19 @@ from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, exclud
 from .common import CronModel
 from .keychain import KeychainCredentialEntry
 
-__all__ = ["RsyncTaskEntry",
-           "RsyncTaskCreateArgs", "RsyncTaskCreateResult",
-           "RsyncTaskUpdateArgs", "RsyncTaskUpdateResult",
-           "RsyncTaskDeleteArgs", "RsyncTaskDeleteResult",
-           "RsyncTaskRunArgs", "RsyncTaskRunResult"]
+__all__ = [
+    "RsyncTaskEntry",
+    "RsyncTaskCreate",
+    "RsyncTaskUpdate",
+    "RsyncTaskCreateArgs",
+    "RsyncTaskCreateResult",
+    "RsyncTaskUpdateArgs",
+    "RsyncTaskUpdateResult",
+    "RsyncTaskDeleteArgs",
+    "RsyncTaskDeleteResult",
+    "RsyncTaskRunArgs",
+    "RsyncTaskRunResult",
+]
 
 RSYNC_PATH_LIMIT = 1023
 

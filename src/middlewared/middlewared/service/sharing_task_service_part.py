@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from middlewared.service_exception import ValidationErrors
 
 
-__all__ = ('SharingTaskServicePart',)
+__all__ = ("SharingTaskServicePart",)
 
 
 class SharingTaskServicePart[E, PK = int](CRUDServicePart[E, PK]):
@@ -29,10 +29,10 @@ class SharingTaskServicePart[E, PK = int](CRUDServicePart[E, PK]):
 
     __slots__ = ()
 
-    path_field: str = 'path'
+    path_field: str = "path"
     allowed_path_types: list[FSLocation] = [FSLocation.LOCAL]
-    enabled_field: str = 'enabled'
-    locked_field: str = 'locked'
+    enabled_field: str = "enabled"
+    locked_field: str = "locked"
     include_tier_info: bool = False
 
     async def sharing_task_extend(self, data: dict[str, Any], service_context: Any) -> dict[str, Any]:
@@ -45,8 +45,8 @@ class SharingTaskServicePart[E, PK = int](CRUDServicePart[E, PK]):
         return None
 
     async def extend_context(self, rows: list[dict[str, Any]], extra: dict[str, Any]) -> dict[str, Any]:
-        retrieve_locked_info = extra.get('retrieve_locked_info', True)
-        if select := extra.get('select'):
+        retrieve_locked_info = extra.get("retrieve_locked_info", True)
+        if select := extra.get("select"):
             select_fields = set()
             for entry in select:
                 if isinstance(entry, list) and entry:
@@ -58,26 +58,26 @@ class SharingTaskServicePart[E, PK = int](CRUDServicePart[E, PK]):
 
         tier_map: dict[Any, Any] = {}
         if self.include_tier_info:
-            datasets = [r['dataset'] for r in rows if r.get('dataset')]
+            datasets = [r["dataset"] for r in rows if r.get("dataset")]
             if datasets:
                 tier_map = await self.call2(self.s.zfs.tier.bulk_get_tier_info, datasets)
 
         return {
-            'service_extend': await self.sharing_task_extend_context(rows, extra),
-            'retrieve_locked_info': retrieve_locked_info,
-            'tier_map': tier_map,
+            "service_extend": await self.sharing_task_extend_context(rows, extra),
+            "retrieve_locked_info": retrieve_locked_info,
+            "tier_map": tier_map,
         }
 
     async def extend(self, data: dict[str, Any], context: dict[str, Any]) -> dict[str, Any]:
-        data = await self.sharing_task_extend(data, context['service_extend'])
+        data = await self.sharing_task_extend(data, context["service_extend"])
 
-        if context['retrieve_locked_info']:
+        if context["retrieve_locked_info"]:
             data[self.locked_field] = await self.sharing_task_determine_locked(data)
         else:
             data[self.locked_field] = None
 
-        if self.include_tier_info and 'tier' not in data:
-            data['tier'] = context['tier_map'].get(data.get('dataset'))
+        if self.include_tier_info and "tier" not in data:
+            data["tier"] = context["tier_map"].get(data.get("dataset"))
 
         return data
 
@@ -93,16 +93,14 @@ class SharingTaskServicePart[E, PK = int](CRUDServicePart[E, PK]):
         # relative_path subdirectory components, which are not datasets and always
         # produce spurious EZFS_NOENT lookups. path_in_locked_datasets accepts bare
         # dataset names (e.g. docker and KMIP already call it this way).
-        return bool(await self.middleware.call(
-            'pool.dataset.path_in_locked_datasets', data.get('dataset') or path
-        ))
+        return bool(await self.middleware.call("pool.dataset.path_in_locked_datasets", data.get("dataset") or path))
 
     async def validate_external_path(self, verrors: ValidationErrors, name: str, path: str) -> None:
         raise NotImplementedError
 
     async def validate_zvol_path(self, verrors: ValidationErrors, name: str, path: str) -> None:
         if check_zvol_in_boot_pool_using_path(path):
-            verrors.add(name, 'Disk residing in boot pool cannot be consumed and is not supported')
+            verrors.add(name, "Disk residing in boot pool cannot be consumed and is not supported")
 
     async def validate_local_path(self, verrors: ValidationErrors, name: str, path: str) -> None:
         await check_path_resides_within_volume(verrors, self.middleware, name, path)
@@ -114,13 +112,13 @@ class SharingTaskServicePart[E, PK = int](CRUDServicePart[E, PK]):
 
         Performs path validation based on location type (LOCAL/EXTERNAL/ZVOL) and optionally
         resolves the path to its ZFS dataset components."""
-        name = f'{schema}.{self.path_field}'
+        name = f"{schema}.{self.path_field}"
         path = data[self.path_field]
         await self.validate_zvol_path(verrors, name, path)
         loc = path_location(path)
 
         if loc not in self.allowed_path_types:
-            verrors.add(name, f'{loc.name}: path type is not allowed.')
+            verrors.add(name, f"{loc.name}: path type is not allowed.")
 
         elif loc is FSLocation.EXTERNAL:
             await self.validate_external_path(verrors, name, path)
@@ -134,7 +132,7 @@ class SharingTaskServicePart[E, PK = int](CRUDServicePart[E, PK]):
                 data.update(dataset=ds, relative_path=rel_path)
 
         else:
-            self.logger.error('%s: unknown location type', loc.name)
+            self.logger.error("%s: unknown location type", loc.name)
             raise NotImplementedError
 
         return verrors

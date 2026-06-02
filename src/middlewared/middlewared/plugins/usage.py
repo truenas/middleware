@@ -141,10 +141,14 @@ class UsageService(Service):
         for namespace in ('cloudsync', 'rsynctask'):
             opposite_namespace = 'rsynctask' if namespace == 'cloudsync' else 'cloudsync'
             for task in self.middleware.call_sync(f'{namespace}.query', filters):
+                # FIXME: rsynctask is typesafe and returns Pydantic models while cloudsync still
+                # returns dicts. Once cloudsync is converted, drop this branch and call both via
+                # call_sync2 with attribute access.
+                path = task['path'] if isinstance(task, dict) else task.path
                 try:
-                    task_ds = path_to_dataset_impl(task['path'])
+                    task_ds = path_to_dataset_impl(path)
                 except Exception:
-                    self.logger.error('Failed mapping path %r to dataset', task['path'], exc_info=True)
+                    self.logger.error('Failed mapping path %r to dataset', path, exc_info=True)
                 else:
                     if (task_ds and task_ds in context['datasets']) and (task_ds not in tasks_found[namespace]):
                         # dataset for the task was found, and exists and hasn't already been calculated

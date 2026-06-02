@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from middlewared.utils.types import AuditCallback
 
 
-__all__ = ('GenericSharingTaskService', 'GenericSharingService', 'GenericTaskPathService')
+__all__ = ("GenericSharingTaskService", "GenericSharingService", "GenericTaskPathService")
 
 
 class GenericSharingTaskService[E, PK = int](GenericCRUDService[E, PK]):
@@ -44,8 +44,8 @@ class GenericSharingTaskService[E, PK = int](GenericCRUDService[E, PK]):
     def __init__(self, middleware: Middleware) -> None:
         super().__init__(middleware)
         # Register path resolution hooks for all share/task services
-        middleware.register_hook('dataset.post_unlock', self.resolve_paths, sync=True)
-        middleware.register_hook('pool.post_import', self.resolve_paths, sync=True)
+        middleware.register_hook("dataset.post_unlock", self.resolve_paths, sync=True)
+        middleware.register_hook("pool.post_import", self.resolve_paths, sync=True)
 
     @classmethod
     @private
@@ -59,40 +59,35 @@ class GenericSharingTaskService[E, PK = int](GenericCRUDService[E, PK]):
 
         IMPORTANT: Used by migration/0018_resolve_dataset_paths.py
         """
-        namespace: str = getattr(cls._config, 'namespace')  # cls._config is typed `type` at the metaclass level
+        namespace: str = getattr(cls._config, "namespace")  # cls._config is typed `type` at the metaclass level
         # Datastore now lives on the service part; read it off the running instance (the part
         # is set at runtime in the leaf's __init__, mirroring GenericCRUDService._svc_part).
-        part = getattr(middleware.get_service(namespace), '_svc_part')
+        part = getattr(middleware.get_service(namespace), "_svc_part")
         datastore = part._datastore
         prefix = part._datastore_prefix
         path_field = part.path_field
 
         unresolved = await middleware.call(
-            'datastore.query',
-            datastore,
-            [
-                [prefix + 'dataset', '=', None],
-                *(cls.path_resolution_filters or [])
-            ]
+            "datastore.query", datastore, [[prefix + "dataset", "=", None], *(cls.path_resolution_filters or [])]
         )
         if not unresolved:
             return
 
         for entry in unresolved:
             try:
-                entry_id = entry['id']
+                entry_id = entry["id"]
                 path = entry[prefix + path_field]
 
                 dataset, relative_path = await middleware.run_in_thread(resolve_dataset_path, path, middleware)
                 if dataset:
                     await middleware.call(
-                        'datastore.update',
+                        "datastore.update",
                         datastore,
                         entry_id,
                         {
-                            prefix + 'dataset': dataset,
-                            prefix + 'relative_path': relative_path,
-                        }
+                            prefix + "dataset": dataset,
+                            prefix + "relative_path": relative_path,
+                        },
                     )
                     middleware.logger.info(f"Resolved {namespace} id={entry_id}: {dataset}@'{relative_path}'")
                 else:
@@ -108,11 +103,14 @@ class GenericSharingTaskService[E, PK = int](GenericCRUDService[E, PK]):
     async def generate_locked_alert(self, share_task_id: int) -> None:
         share_task = await self.get_instance(cast(PK, share_task_id))
         await self.call2(
-            self.s.alert.oneshot_create, self.locked_alert_class.from_args({
-                'type': self.share_task_type,
-                'identifier': await self.human_identifier(share_task),
-                'id': getattr(share_task, 'id'),
-            })
+            self.s.alert.oneshot_create,
+            self.locked_alert_class.from_args(
+                {
+                    "type": self.share_task_type,
+                    "identifier": await self.human_identifier(share_task),
+                    "id": getattr(share_task, "id"),
+                }
+            ),
         )
 
     @private
@@ -120,13 +118,11 @@ class GenericSharingTaskService[E, PK = int](GenericCRUDService[E, PK]):
         await self.call2(
             self.s.alert.oneshot_delete,
             self.locked_alert_class.config.name,
-            f'{self.share_task_type}_{share_task_id}',
+            f"{self.share_task_type}_{share_task_id}",
         )
 
     @pass_app(message_id=True)  # type: ignore[misc]  # pass_app is an untyped attribute-tagger decorator
-    async def update(
-        self, app: Any, audit_callback: AuditCallback, message_id: Any, id_: PK, data: Any
-    ) -> E:
+    async def update(self, app: Any, audit_callback: AuditCallback, message_id: Any, id_: PK, data: Any) -> E:
         rv = await super().update(app, audit_callback, message_id, id_, data)
         enabled = getattr(rv, self._svc_part.enabled_field)
         locked = getattr(rv, self._svc_part.locked_field)
@@ -152,7 +148,7 @@ class GenericSharingService[E, PK = int](GenericSharingTaskService[E, PK]):
     async def human_identifier(self, share_task: Any) -> Any:
         if isinstance(share_task, dict):
             # FIXME: Remove all the cases where this is dict
-            return share_task['name']
+            return share_task["name"]
         return share_task.name
 
 

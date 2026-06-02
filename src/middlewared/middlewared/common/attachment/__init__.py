@@ -26,7 +26,7 @@ class FSAttachmentDelegate[E](ServiceChangeMixin):
     # If is not None, corresponding service will be restarted after performing tasks on item
     service: str | None = None
     # attribute which is used to identify human readable description of an attachment
-    resource_name = 'name'
+    resource_name = "name"
     # Priority for ordering delegate operations
     # On start: delegates are processed high-to-low priority (infrastructure starts first)
     # On stop: delegates are processed low-to-high priority (dependent services stop first)
@@ -101,8 +101,8 @@ class LockableFSAttachmentDelegate[E: Entry](FSAttachmentDelegate[E]):
     # service object
     service_class: type[SharingTaskService[E]] | type[GenericSharingTaskService[E]]
 
-    def __init__(self, *args: Any, **kwargs: Any):
-        super().__init__(*args, **kwargs)
+    def __init__(self, middleware: Middleware) -> None:
+        super().__init__(middleware)
         self.namespace = self.service_class._config.namespace  # type: ignore[attr-defined]
         if self.service_class._config.datastore:  # type: ignore[attr-defined]
             # Legacy SharingTaskService: field config + datastore live on the service class.
@@ -112,11 +112,11 @@ class LockableFSAttachmentDelegate[E: Entry](FSAttachmentDelegate[E]):
             self.path_field = svc.path_field  # type: ignore[union-attr]
             self.datastore_model = svc._config.datastore  # type: ignore[attr-defined]
             self.datastore_prefix = svc._config.datastore_prefix  # type: ignore[attr-defined]
-            self._resource_path = functools.partial(svc.get_path_field, svc)  # type: ignore[union-attr]
+            self._resource_path = functools.partial(svc.get_path_field, svc)  # type: ignore[union-attr,arg-type]
         else:
             # Typesafe GenericSharingTaskService: field config + datastore live on the service
             # part; read them off the running instance's part.
-            part = self.middleware.get_service(self.namespace)._svc_part
+            part = self.middleware.get_service(self.namespace)._svc_part  # type: ignore[attr-defined]
             self.enabled_field = part.enabled_field
             self.locked_field = part.locked_field
             self.path_field = part.path_field
@@ -128,26 +128,28 @@ class LockableFSAttachmentDelegate[E: Entry](FSAttachmentDelegate[E]):
 
     async def get_query_filters(self, enabled: bool, options: dict[str, Any] | None = None) -> list[Any]:
         options = options or {}
-        filters = [[self.enabled_field, '=', enabled]]
-        if 'locked' in options:
-            filters += [[self.locked_field, '=', options['locked']]]
+        filters = [[self.enabled_field, "=", enabled]]
+        if "locked" in options:
+            filters += [[self.locked_field, "=", options["locked"]]]
         return filters
 
     async def start_service(self) -> None:
-        if not (
-            service_obj := await self.middleware.call('service.query', [['service', '=', self.service]])
-        ) or not service_obj[0]['enable'] or service_obj[0]['state'] == 'RUNNING':
+        if (
+            not (service_obj := await self.middleware.call("service.query", [["service", "=", self.service]]))
+            or not service_obj[0]["enable"]
+            or service_obj[0]["state"] == "RUNNING"
+        ):
             return
 
-        await (await self.middleware.call('service.control', 'START', self.service)).wait(raise_error=True)
+        await (await self.middleware.call("service.control", "START", self.service)).wait(raise_error=True)
 
     async def query(self, path: str, enabled: bool, options: dict[str, Any] | None = None) -> list[E]:
         results = []
         options = options or {}
-        check_parent = options.get('check_parent', False)
-        exact_match = options.get('exact_match', False)
+        check_parent = options.get("check_parent", False)
+        exact_match = options.get("exact_match", False)
         for resource in await self.middleware.call(
-            f'{self.namespace}.query', await self.get_query_filters(enabled, options)
+            f"{self.namespace}.query", await self.get_query_filters(enabled, options)
         ):
             if await self.is_child_of_path(resource, path, check_parent, exact_match):
                 results.append(resource)
@@ -157,14 +159,15 @@ class LockableFSAttachmentDelegate[E: Entry](FSAttachmentDelegate[E]):
         for attachment in attachments:
             if isinstance(attachment, dict):
                 # FIXME: This must be eventually removed
-                attachment_id = attachment['id']
+                attachment_id = attachment["id"]
             else:
                 attachment_id = attachment.id
 
             await self.middleware.call(
-                'datastore.update', self.datastore_model, attachment_id, {
-                    f'{self.datastore_prefix}{self.enabled_field}': enabled
-                }
+                "datastore.update",
+                self.datastore_model,
+                attachment_id,
+                {f"{self.datastore_prefix}{self.enabled_field}": enabled},
             )
             await self.remove_alert(attachment)
 
@@ -177,11 +180,11 @@ class LockableFSAttachmentDelegate[E: Entry](FSAttachmentDelegate[E]):
         for attachment in attachments:
             if isinstance(attachment, dict):
                 # FIXME: This must be eventually removed
-                attachment_id = attachment['id']
+                attachment_id = attachment["id"]
             else:
                 attachment_id = attachment.id
 
-            await self.middleware.call('datastore.delete', self.datastore_model, attachment_id)
+            await self.middleware.call("datastore.delete", self.datastore_model, attachment_id)
             await self.remove_alert(attachment)
         if attachments:
             await self.restart_reload_services(attachments)
@@ -195,11 +198,11 @@ class LockableFSAttachmentDelegate[E: Entry](FSAttachmentDelegate[E]):
     async def remove_alert(self, attachment: E) -> None:
         if isinstance(attachment, dict):
             # FIXME: This must be eventually removed
-            attachment_id = attachment['id']
+            attachment_id = attachment["id"]
         else:
             attachment_id = attachment.id
 
-        await self.middleware.call(f'{self.namespace}.remove_locked_alert', attachment_id)
+        await self.middleware.call(f"{self.namespace}.remove_locked_alert", attachment_id)
 
     async def is_child_of_path(self, resource: E, path: str, check_parent: bool, exact_match: bool) -> bool:
         # What this is essentially doing is testing if resource in question is a child of queried path
@@ -222,9 +225,9 @@ class LockableFSAttachmentDelegate[E: Entry](FSAttachmentDelegate[E]):
         if exact_match or share_path == path:
             return share_path == path
 
-        is_child = await self.middleware.call('filesystem.is_child', share_path, path)
+        is_child = await self.middleware.call("filesystem.is_child", share_path, path)
         if not is_child and check_parent:
-            return await self.middleware.call('filesystem.is_child', path, share_path)  # type: ignore[no-any-return]
+            return await self.middleware.call("filesystem.is_child", path, share_path)  # type: ignore[no-any-return]
         else:
             return is_child  # type: ignore[no-any-return]
 
