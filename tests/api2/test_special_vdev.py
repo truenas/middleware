@@ -138,5 +138,5 @@ def test_draid_with_dedicated_spares_is_allowed():
         'allow_duplicate_serials': True,
     }) as pool:
         # The combination is accepted and the dedicated spare is present.
-        assert len(pool['topology']['spares']) == 1
+        assert len(pool['topology']['spare']) == 1
         assert pool['topology']['special'][0]['name'].startswith('draid1:')
