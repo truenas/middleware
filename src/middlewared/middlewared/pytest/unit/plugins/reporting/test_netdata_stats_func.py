@@ -7,6 +7,7 @@ from middlewared.plugins.reporting.realtime_reporting import (
     get_interface_stats,
     get_memory_info,
     get_pool_stats,
+    get_gpu_stats,
 )
 from middlewared.plugins.reporting.realtime_reporting.utils import normalize_value, safely_retrieve_dimension
 
@@ -36,6 +37,23 @@ NETDATA_ALL_METRICS = {
             }
         }
     },
+    'gputemp.temperatures': {
+        'name': 'gputemp.temperatures',
+        'family': 'temperature',
+        'context': 'sensors.temperature',
+        'units': 'Celsius',
+        'last_updated': 1737452189,
+        'dimensions': {
+            'Intel A770': {
+                'name': 'Intel A770',
+                'value': 43
+            },
+            'Nvidia RTX A5000': {
+                'name': 'Nvidia RTX A5000',
+                'value': 68
+            }
+        }
+    },
     'truenas_cpu_usage.cpu': {
         'name': 'truenas_cpu_usage.cpu',
         'family': 'cpu.usage',
@@ -58,6 +76,23 @@ NETDATA_ALL_METRICS = {
             'cpu2': {
                 'name': 'cpu2',
                 'value': 4
+            }
+        }
+    },
+    'truenas_gpu_usage.gpu': {
+        'name': 'truenas_gpu_usage.gpu',
+        'family': 'gpu.usage',
+        'context': 'Gpu usage',
+        'units': 'GPU USAGE%',
+        'last_updated': 1737452189,
+        'dimensions': {
+            'Intel A770': {
+                'name': 'Intel A770',
+                'value': 5
+            },
+            'Nvidia RTX A5000': {
+                'name': 'Nvidia RTX A5000',
+                'value': 27
             }
         }
     },
@@ -806,6 +841,20 @@ def test_cpu_stats():
             ),
             'temp': safely_retrieve_dimension(
                 NETDATA_ALL_METRICS, 'cputemp.temperatures', metric,
+            ) or None
+        }
+
+def test_gpu_stats():
+    gpu_stat = get_gpu_stats(NETDATA_ALL_METRICS)
+    for metric, value in gpu_stat.items():
+        assert value == {
+            'usage': safely_retrieve_dimension(
+                NETDATA_ALL_METRICS,
+                'truenas_gpu_usage.gpu',
+                f'{metric}', 0
+            ),
+            'temp': safely_retrieve_dimension(
+                NETDATA_ALL_METRICS, 'gputemp.temperatures', metric,
             ) or None
         }
 

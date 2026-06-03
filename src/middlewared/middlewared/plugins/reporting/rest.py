@@ -12,6 +12,7 @@ from middlewared.utils.zfs import query_imported_fast_impl
 
 from .netdata import ClientConnectError, Netdata
 from .utils import TIER_0_POINT_SIZE, TIER_1_POINT_SIZE, calculate_disk_space_for_netdata, get_metrics_approximation
+from ...utils.metrics.gpu_usage import get_gpu_usage
 
 logger = logging.getLogger('netdata_api')
 
@@ -71,6 +72,7 @@ class NetdataService(Service):
         return get_metrics_approximation(
             len(self.middleware.call_sync('device.get_disks', False, True)),
             cpu_info()['core_count'],
+            len(get_gpu_usage()),
             self.middleware.call_sync('interface.query', [], {'count': True}),
             len(query_imported_fast_impl()),
             self.middleware.call_sync('datastore.query', 'vm.vm', [], {'count': True}),
