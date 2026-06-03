@@ -138,7 +138,7 @@ class VMService(Service):
     def resume_suspended_vms(self, vm_ids):
         vms = {vm['id']: vm for vm in self.middleware.call_sync('vm.query')}
         for vm_id in filter(
-            lambda vm_id: vms.get(vm_id).get('status', {}).get('state') == 'SUSPENDED',
+            lambda vm_id: vms.get(vm_id, {}).get('status', {}).get('state') == 'SUSPENDED',
             map(int, vm_ids)
         ):
             try:
