@@ -111,6 +111,14 @@ def _raise_client_error(e: RewriteClientException, field: str) -> None:
     raise CallError(str(e))
 
 
+def _parse_tier_job_id(tier_job_id: str) -> tuple[str, str]:
+    """Split a ``dataset_name@job_uuid`` tier job id into its two parts."""
+    dataset_name, _, job_uuid = tier_job_id.partition("@")
+    if not dataset_name or not job_uuid:
+        raise CallError(f"Invalid tier_job_id: {tier_job_id!r}")
+    return dataset_name, job_uuid
+
+
 class ZfsTierModel(sa.Model):
     __tablename__ = "zfs_tier"
 
@@ -238,30 +246,31 @@ def get_dataset_tier_info_cached(
 
 class ZfsTierRewriteJobStatusEventSource(TypedEventSource[ZfsTierRewriteJobStatusEventSourceArgs]):
     """
-    Subscribe to real-time status updates for a ZFS rewrite job on the specified dataset.
-    Polls every 2 seconds and emits a CHANGED event when status or statistics change.
+    Subscribe to real-time status updates for a specific ZFS rewrite job, identified by
+    its ``dataset_name@job_uuid`` tier job id. Polls every 2 seconds and emits a CHANGED
+    event when status or statistics change.
     """
 
     args = ZfsTierRewriteJobStatusEventSourceArgs
     event = ZfsTierRewriteJobStatusEventSourceEvent
     roles = ["DATASET_READ"]
 
-    def _poll_job_info(self, dataset_name: str) -> dict[str, typing.Any] | None:
-        """Return a status entry for the given dataset's active job, or None if not found."""
+    def _poll_job_info(self, tier_job_id: str) -> dict[str, typing.Any] | None:
+        """Return a status entry for the given tier job id, or None if it no longer exists."""
+        dataset_name, job_uuid = _parse_tier_job_id(tier_job_id)
         try:
-            last = get_last_job(dataset_name)
-        except KeyError:
+            info = get_info(dataset_name, job_uuid)
+        except ValueError:
             return None
-        info = get_info(last.dataset_name, last.job_uuid)
         return _map_info_result(info)
 
     def run_sync(self) -> None:
-        dataset_name = self.typed_arg.dataset_name
+        tier_job_id = self.typed_arg.tier_job_id
         last_info = None
 
         while not self._cancel_sync.is_set():
             try:
-                current_info = self._poll_job_info(dataset_name)
+                current_info = self._poll_job_info(tier_job_id)
 
                 if current_info != last_info:
                     if current_info is not None:
@@ -269,7 +278,7 @@ class ZfsTierRewriteJobStatusEventSource(TypedEventSource[ZfsTierRewriteJobStatu
 
                     last_info = current_info
             except Exception:
-                self.middleware.logger.debug("Error polling tier job status for %r", dataset_name, exc_info=True)
+                self.middleware.logger.debug("Error polling tier job status for %r", tier_job_id, exc_info=True)
 
             self._cancel_sync.wait(2)
 
@@ -439,7 +448,7 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
     )
     async def rewrite_job_status(self, data: dict[str, typing.Any]) -> dict[str, typing.Any]:
         """Get detailed status and statistics for a specific rewrite job."""
-        dataset_name, job_uuid = self._parse_tier_job_id(data["tier_job_id"])
+        dataset_name, job_uuid = _parse_tier_job_id(data["tier_job_id"])
         try:
             info = get_info(dataset_name, job_uuid)
         except Exception as e:
@@ -453,7 +462,7 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
     )
     async def rewrite_job_failures(self, data: dict[str, typing.Any]) -> typing.Any:
         """List files that failed to be rewritten during a rewrite job."""
-        dataset_name, job_uuid = self._parse_tier_job_id(data["tier_job_id"])
+        dataset_name, job_uuid = _parse_tier_job_id(data["tier_job_id"])
         try:
             resolved = await self.middleware.run_in_thread(get_resolved_failures, dataset_name, job_uuid)
         except Exception as e:
@@ -480,7 +489,7 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
     )
     async def rewrite_job_cancel(self, data: dict[str, typing.Any]) -> None:
         """Cancel a running or queued rewrite job."""
-        dataset_name, job_uuid = self._parse_tier_job_id(data["tier_job_id"])
+        dataset_name, job_uuid = _parse_tier_job_id(data["tier_job_id"])
         async with RewriteClient() as client:
             try:
                 await client.abort_job(dataset_name, job_uuid)
@@ -496,7 +505,7 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
     )
     async def rewrite_job_recover(self, data: dict[str, typing.Any]) -> dict[str, typing.Any]:
         """Recover a rewrite job in ERROR state by reissuing failed rewrites."""
-        dataset_name, job_uuid = self._parse_tier_job_id(data["tier_job_id"])
+        dataset_name, job_uuid = _parse_tier_job_id(data["tier_job_id"])
         await self._validate_dataset_writable(dataset_name, "zfs_tier_rewrite_job_recover.tier_job_id")
         async with RewriteClient() as client:
             try:
@@ -559,13 +568,6 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
                         f"normal class utilization to {projected_pct:.1f}%, exceeding the 80% threshold",
                         errno.ENOSPC,
                     )
-
-    @private
-    def _parse_tier_job_id(self, tier_job_id: str) -> tuple[str, str]:
-        dataset_name, _, job_uuid = tier_job_id.partition("@")
-        if not dataset_name or not job_uuid:
-            raise CallError(f"Invalid tier_job_id: {tier_job_id!r}")
-        return dataset_name, job_uuid
 
     @api_method(
         ZfsTierDatasetSetTierArgs,
