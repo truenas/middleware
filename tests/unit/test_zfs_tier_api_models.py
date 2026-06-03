@@ -17,6 +17,7 @@ from middlewared.api.v26_0_0.zfs_tier import (
     ZfsTierRewriteJobQueryArgs,
     ZfsTierRewriteJobStats,
     ZfsTierRewriteJobStatusEntry,
+    ZfsTierRewriteJobStatusEventSourceArgs,
     ZfsTierUpdateArgs,
 )
 from middlewared.api.v26_0_0.smb import SharingSMBUpdateArgs
@@ -206,6 +207,21 @@ def test_rewrite_job_entry_rejects_empty_dataset_name():
             job_uuid="uuid",
             status="RUNNING",
         )
+
+
+# ----------------------------------------------------------------------------
+# ZfsTierRewriteJobStatusEventSourceArgs: subscribe by tier_job_id
+# ----------------------------------------------------------------------------
+
+
+def test_status_event_source_args_valid_tier_job_id():
+    args = ZfsTierRewriteJobStatusEventSourceArgs(tier_job_id="tank/data@uuid")
+    assert args.tier_job_id == "tank/data@uuid"
+
+
+def test_status_event_source_args_rejects_empty_tier_job_id():
+    with pytest.raises(ValidationError):
+        ZfsTierRewriteJobStatusEventSourceArgs(tier_job_id="")
 
 
 # ----------------------------------------------------------------------------

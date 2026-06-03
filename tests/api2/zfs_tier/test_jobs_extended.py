@@ -203,14 +203,14 @@ def test_rewrite_job_query_pagination_via_query_options(tier_pool, wait_for_job_
 
 
 # ----------------------------------------------------------------------------
-# rewrite_job_status event source (per-dataset, polls every 2s)
+# rewrite_job_status event source (per-job, polls every 2s)
 # ----------------------------------------------------------------------------
 
 
 def test_status_event_source_no_events_for_dataset_without_job(tier_ds):
-    """Subscribing to the per-dataset event source for a dataset with no job
-    should not emit any events within 5s (poll interval is 2s)."""
-    arg = json.dumps({"dataset_name": tier_ds})
+    """Subscribing to the per-job event source with a valid-shape tier_job_id that
+    has no backing job should not emit any events within 5s (poll interval is 2s)."""
+    arg = json.dumps({"tier_job_id": f"{tier_ds}@00000000-0000-0000-0000-000000000000"})
     with client() as c:
         events = []
         c.subscribe(
