@@ -85,7 +85,7 @@ def log_file_download(context: ServiceContext, job: Job, vm_id: int) -> None:
 async def license_active(context: ServiceContext) -> bool:
     can_run_vms = True
     if await context.middleware.call('system.is_ha_capable'):
-        can_run_vms = await context.middleware.call('system.feature_enabled', 'VM')
+        can_run_vms = await context.middleware.call('system.feature_enabled', 'VMS')
 
     return can_run_vms
 

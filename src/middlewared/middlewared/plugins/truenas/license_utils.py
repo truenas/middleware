@@ -12,7 +12,7 @@ import time
 import typing
 
 from truenas_os_pyutils.io import atomic_write
-from truenas_pylicensed import LicenseStatus, LicenseType, get_fingerprint, verify
+from truenas_pylicensed import FEATURE_NAME_MAP, LicenseStatus, LicenseType, get_fingerprint, verify
 
 from middlewared.service import CallError, ValidationError
 
@@ -211,7 +211,7 @@ def get_license_info(lic: LicenseStatus | None = None) -> LicenseInfo | None:
         expires_at=expires_at,
         features=[
             FeatureInfo(
-                name=name,
+                name=FEATURE_NAME_MAP.get(name, name),
                 start_date=date.fromisoformat(f.start_date) if f.start_date else None,
                 expires_at=date.fromisoformat(f.expires_at) if f.expires_at else None,
             )
