@@ -122,13 +122,10 @@ class VMService(Service):
     @private
     def suspend_vms(self, vm_ids):
         vms = {vm['id']: vm for vm in self.middleware.call_sync('vm.query')}
-        for vm_id in filter(
-            lambda vm_id: (
-                (vm := vms.get(vm_id, {})).get('status', {}).get('state') == 'RUNNING'
-                and vm.get('suspend_on_snapshot')
-            ),
-            map(int, vm_ids)
-        ):
+        for vm_id in map(int, vm_ids):
+            vm = vms.get(vm_id)
+            if vm is None or vm['status']['state'] != 'RUNNING' or not vm['suspend_on_snapshot']:
+                continue
             try:
                 self.suspend(vm_id)
             except Exception:
@@ -137,10 +134,10 @@ class VMService(Service):
     @private
     def resume_suspended_vms(self, vm_ids):
         vms = {vm['id']: vm for vm in self.middleware.call_sync('vm.query')}
-        for vm_id in filter(
-            lambda vm_id: vms.get(vm_id, {}).get('status', {}).get('state') == 'SUSPENDED',
-            map(int, vm_ids)
-        ):
+        for vm_id in map(int, vm_ids):
+            vm = vms.get(vm_id)
+            if vm is None or vm['status']['state'] != 'SUSPENDED':
+                continue
             try:
                 self.resume(vm_id)
             except Exception:
