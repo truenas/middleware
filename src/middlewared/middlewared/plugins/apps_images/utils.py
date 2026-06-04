@@ -3,10 +3,10 @@ import re
 from collections import defaultdict
 
 from middlewared.service import CallError
+from middlewared.utils.docker_registry import DEFAULT_DOCKER_REGISTRY, normalize_registry_authority
 
 
 # Default values
-DEFAULT_DOCKER_REGISTRY = 'registry-1.docker.io'
 DEFAULT_DOCKER_REPO = 'library'
 DEFAULT_DOCKER_TAG = 'latest'
 DOCKER_CONTENT_DIGEST_HEADER = 'Docker-Content-Digest'
@@ -158,15 +158,19 @@ def normalize_docker_limits_header(headers: dict) -> dict:
 
 
 def get_normalized_auth_config(registry_info: dict[str, dict], image_tag: str) -> dict:
-    if not registry_info:
-        return {}
+    """Return stored credentials for the registry hosting ``image_tag``, or {}.
 
+    ``registry_info`` is keyed by the raw stored registry URI; we match by
+    normalized authority so a stored 'https://ghcr.io/' still matches a 'ghcr.io'
+    image reference (and any Docker Hub alias matches a docker.io image).
+    """
     user_wants_registry = normalize_reference(image_tag)['registry']
-    if user_wants_registry not in registry_info:
-        return {}
-
-    return {
-        'registry_uri': user_wants_registry,
-        'username': registry_info[user_wants_registry]['username'],
-        'password': registry_info[user_wants_registry]['password'],
-    }
+    target = normalize_registry_authority(user_wants_registry)
+    for uri, entry in registry_info.items():
+        if normalize_registry_authority(uri) == target:
+            return {
+                'registry_uri': user_wants_registry,
+                'username': entry['username'],
+                'password': entry['password'],
+            }
+    return {}

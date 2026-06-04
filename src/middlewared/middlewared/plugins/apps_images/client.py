@@ -4,9 +4,10 @@ import urllib.parse
 import aiohttp
 
 from middlewared.service import CallError
+from middlewared.utils.docker_registry import DEFAULT_DOCKER_REGISTRY
 
 from .utils import (
-    DEFAULT_DOCKER_REGISTRY, DOCKER_AUTH_SERVICE, DOCKER_AUTH_HEADER, DOCKER_AUTH_URL, DOCKER_CONTENT_DIGEST_HEADER,
+    DOCKER_AUTH_SERVICE, DOCKER_AUTH_HEADER, DOCKER_AUTH_URL, DOCKER_CONTENT_DIGEST_HEADER,
     DOCKER_MANIFEST_LIST_SCHEMA_V2, DOCKER_MANIFEST_SCHEMA_V1, DOCKER_MANIFEST_SCHEMA_V2, DOCKER_RATELIMIT_URL,
     DOCKER_MANIFEST_OCI_V1, parse_auth_header, parse_digest_from_schema,
 )
@@ -62,15 +63,17 @@ class ContainerRegistryClientMixin:
 
         return response['response']['token']
 
-    async def _get_manifest_response(self, registry, image, tag, headers, mode, raise_error):
+    async def _get_manifest_response(self, registry, image, tag, headers, mode, raise_error, auth=None):
         manifest_url = f'https://{registry}/v2/{image}/manifests/{tag}'
         # 1) try getting manifest
         response = await self._api_call(manifest_url, headers=headers, mode=mode)
         if (error := response.get('error_obj')) and isinstance(error, aiohttp.ClientResponseError):
             if error.status == 401:
-                # 2) try to get token from manifest api call's response headers
+                # 2) try to get token from manifest api call's response headers; the token
+                # request is sent with Basic auth when registry creds are configured, so
+                # the returned token has read scope on private repos.
                 auth_data = parse_auth_header(error.headers[DOCKER_AUTH_HEADER])
-                headers['Authorization'] = f'Bearer {await self._get_token(**auth_data)}'
+                headers['Authorization'] = f'Bearer {await self._get_token(**auth_data, auth=auth)}'
                 # 3) Redo the manifest call with updated token
                 response = await self._api_call(manifest_url, headers=headers, mode=mode)
 
@@ -82,19 +85,22 @@ class ContainerRegistryClientMixin:
 
         return response
 
-    async def get_manifest_call_headers(self, registry, image, headers):
+    async def get_manifest_call_headers(self, registry, image, headers, auth=None):
         if registry == DEFAULT_DOCKER_REGISTRY:
-            headers['Authorization'] = f'Bearer {await self._get_token(scope=f"repository:{image}:pull")}'
+            headers['Authorization'] = f'Bearer {await self._get_token(scope=f"repository:{image}:pull", auth=auth)}'
         return headers
 
-    async def _get_repo_digest(self, registry, image, tag):
+    async def _get_repo_digest(self, registry, image, tag, auth=None):
+        # `auth` is the aiohttp BasicAuth kwargs dict ({'login', 'password'}) for the
+        # registry hosting this image, or None for anonymous access. It is threaded down
+        # to `_get_token` so the bearer token carries the user's read scope on private repos.
         response = await self._get_manifest_response(
             registry, image, tag, await self.get_manifest_call_headers(registry, image, {
                 'Accept': (f'{DOCKER_MANIFEST_SCHEMA_V2}, '
                            f'{DOCKER_MANIFEST_LIST_SCHEMA_V2}, '
                            f'{DOCKER_MANIFEST_SCHEMA_V1}, '
                            f'{DOCKER_MANIFEST_OCI_V1}')
-            }), 'get', True
+            }, auth=auth), 'get', True, auth=auth
         )
         digests = parse_digest_from_schema(response)
         digests.append(response['response_obj'].headers.get(DOCKER_CONTENT_DIGEST_HEADER))

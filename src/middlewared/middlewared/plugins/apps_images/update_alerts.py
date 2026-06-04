@@ -5,7 +5,7 @@ from collections import defaultdict
 from middlewared.service import CallError, Service
 
 from .client import ContainerRegistryClientMixin
-from .utils import normalize_reference
+from .utils import get_normalized_auth_config, normalize_reference
 
 
 logger = logging.getLogger('docker_image')
@@ -29,10 +29,15 @@ class ContainerImagesService(Service, ContainerRegistryClientMixin):
 
     async def check_update(self):
         images = await self.middleware.call('app.image.query')
+        # Query stored Docker Registries once per cycle and key them by URI so the
+        # per-tag credential lookup can match the registry hosting each image.
+        app_registries = {
+            registry['uri']: registry for registry in await self.middleware.call('app.registry.query')
+        }
         for image in images:
             for tag in image['repo_tags']:
                 try:
-                    await self.check_update_for_image(tag, image)
+                    await self.check_update_for_image(tag, image, app_registries)
                 except CallError as e:
                     logger.error(str(e))
 
@@ -48,24 +53,36 @@ class ContainerImagesService(Service, ContainerRegistryClientMixin):
 
         return repo_digests
 
-    async def check_update_for_image(self, tag, image_details):
+    async def check_update_for_image(self, tag, image_details, app_registries=None):
+        if app_registries is None:
+            app_registries = {
+                registry['uri']: registry for registry in await self.middleware.call('app.registry.query')
+            }
         if not image_details['dangling']:
             parsed_reference = self.normalize_reference(tag)
+            # Without per-registry auth the manifest call hits the public/anonymous code
+            # path; for private repos (e.g. ghcr.io) that yields a token with no read scope,
+            # the retry 401s, and no update is ever detected. When credentials are configured
+            # we forward them as the aiohttp BasicAuth(**auth) kwargs shape the client expects.
+            auth = None
+            if creds := get_normalized_auth_config(app_registries, tag):
+                auth = {'login': creds['username'], 'password': creds['password']}
             self.IMAGE_CACHE[tag] = await self.compare_id_digests(
                 image_details,
                 parsed_reference['registry'],
                 parsed_reference['image'],
-                parsed_reference['tag']
+                parsed_reference['tag'],
+                auth,
             )
 
     async def clear_update_flag_for_tag(self, tag):
         self.IMAGE_CACHE[tag] = False
 
-    async def compare_id_digests(self, image_details, registry, image_str, tag_str):
+    async def compare_id_digests(self, image_details, registry, image_str, tag_str, auth=None):
         """
         Returns whether an update is available for an image.
         """
-        digest = await self._get_repo_digest(registry, image_str, tag_str)
+        digest = await self._get_repo_digest(registry, image_str, tag_str, auth=auth)
         return not any(
             digest.split('@', 1)[-1] == upstream_digest
             for upstream_digest in digest
