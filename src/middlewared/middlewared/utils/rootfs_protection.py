@@ -3,11 +3,11 @@ Cross-process lock serializing operations that flip the read-only state of the
 root filesystem, so they can't clobber one another.
 """
 
+from collections.abc import Iterator
 import contextlib
 import fcntl
 import os
 import threading
-from collections.abc import Iterator
 
 from middlewared.utils import MIDDLEWARE_RUN_DIR
 
