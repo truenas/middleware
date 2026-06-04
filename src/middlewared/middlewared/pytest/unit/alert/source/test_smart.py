@@ -2,7 +2,6 @@ import pytest
 
 from middlewared.alert.source.smart import SMARTAlertSource
 
-
 # The parse_* methods never touch self.middleware, so a bare instance is enough.
 SOURCE = SMARTAlertSource(None)
 
