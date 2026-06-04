@@ -5,9 +5,9 @@ from typing import Any
 
 from middlewared.api.current import AppRegistryEntry
 from middlewared.service import CallError
+from middlewared.utils.docker_registry import DEFAULT_DOCKER_REGISTRY, normalize_registry_authority
 
 # Default values
-DEFAULT_DOCKER_REGISTRY = "registry-1.docker.io"
 DEFAULT_DOCKER_REPO = "library"
 DEFAULT_DOCKER_TAG = "latest"
 DOCKER_CONTENT_DIGEST_HEADER = "Docker-Content-Digest"
@@ -144,19 +144,17 @@ def normalize_docker_limits_header(headers: dict[str, Any]) -> dict[str, Any]:
 
 
 def get_normalized_auth_config(
-    registry_info: dict[str, AppRegistryEntry],
+    registries: list[AppRegistryEntry],
     image_tag: str,
 ) -> dict[str, Any]:
-    if not registry_info:
-        return {}
-
+    """Return stored credentials for the registry hosting ``image_tag``, or {}."""
     user_wants_registry = normalize_reference(image_tag)["registry"]
-    if user_wants_registry not in registry_info:
-        return {}
-
-    entry = registry_info[user_wants_registry]
-    return {
-        "registry_uri": user_wants_registry,
-        "username": entry.username.get_secret_value(),
-        "password": entry.password.get_secret_value(),
-    }
+    target = normalize_registry_authority(user_wants_registry)
+    for entry in registries:
+        if normalize_registry_authority(entry.uri) == target:
+            return {
+                "registry_uri": user_wants_registry,
+                "username": entry.username.get_secret_value(),
+                "password": entry.password.get_secret_value(),
+            }
+    return {}
