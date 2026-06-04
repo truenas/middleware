@@ -25,6 +25,14 @@ def nfs_dataset():
     and races with NFS server-side state release after pynfs sessions
     close."""
     name = f"{pool}/nfs_snapdir"
+    # Delete before create so a dataset left behind by a prior interrupted
+    # run does not fail this run's create with "path already exists".  No
+    # NFS export holds it at module setup, so a single best-effort delete is
+    # enough here.
+    try:
+        call("pool.dataset.delete", name, {"recursive": True})
+    except InstanceNotFound:
+        pass
     call("pool.dataset.create", {"name": name})
     try:
         ssh(f'echo -n Cats > /mnt/{name}/canary')
@@ -130,23 +138,13 @@ def test__snapdir_functional(start_nfs, enterprise, nfs_dataset, nfs_export, ver
     share = call('sharing.nfs.update', nfs_export, {'expose_snapshots': True})
     assert share['expose_snapshots'] is True
     call('service.control', 'STOP', 'nfs', job=True)
+    # Clear the nfsd client-tracking database while the service is down so
+    # the restart skips its grace period.  Otherwise it enters grace for
+    # stale clients earlier tests left behind, and that grace rejects the
+    # OPENs the tests after this one issue (NFS4ERR_GRACE).  The checks
+    # below are READDIRs, which are served regardless.
+    ssh('rm -f /var/db/system/nfs/nfsdcld/main.sqlite*')
     call('service.control', 'START', 'nfs', {'silent': False}, job=True)
-    if int(vers) == 4:
-        # Restarting nfsd puts it into a ~90 s grace period during
-        # which state-changing NFSv4 ops are rejected with
-        # NFS4ERR_GRACE.  Linux nfsd exposes a knob to end grace
-        # immediately, but right after restart the write can return
-        # EBUSY while the kernel's per-net state finishes coming up,
-        # so poll briefly.  NFSv3 readdir doesn't trip grace.
-        for _ in range(40):
-            r = ssh('echo Y > /proc/fs/nfsd/v4_end_grace',
-                    check=False, complete_response=True)
-            if r['result']:
-                break
-            sleep(0.25)
-        else:
-            pytest.fail(f'v4_end_grace still busy after 10s: {r["output"]}')
-
     export = f'/mnt/{nfs_dataset}'
     cls = PynfsClient3 if int(vers) == 3 else PynfsClient
     with cls(truenas_server.ip, export, vers=vers) as n:
