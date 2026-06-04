@@ -43,6 +43,21 @@ class iSCSITargetService(Service):
         else:
             raise ValueError(f'Unexpected path "{realpath}"')
 
+    def path_write_if_needed(self, path, text):
+        """Like path_write, but read first and skip if first line already matches."""
+        p = pathlib.Path(path)
+        realpath = str(p.resolve())
+        if not (realpath.startswith(SCST_BASE) and p.exists()):
+            raise ValueError(f'Unexpected path "{realpath}"')
+        want = text.split('\n', 1)[0]
+        try:
+            have = p.read_text().split('\n', 1)[0]
+        except Exception:
+            have = None
+        if have == want:
+            return
+        p.write_text(text)
+
     async def set_all_cluster_mode(self, value):
         text = f'{int(value)}\n'
         paths = await self.middleware.call('iscsi.scst.cluster_mode_paths')
@@ -50,7 +65,7 @@ class iSCSITargetService(Service):
             for chunk in itertools.batched(paths, 10):
                 await asyncio.gather(
                     *[
-                        self.middleware.call('iscsi.scst.path_write', path, text)
+                        self.middleware.call('iscsi.scst.path_write_if_needed', path, text)
                         for path in chunk
                     ]
                 )
@@ -99,7 +114,7 @@ class iSCSITargetService(Service):
 
     async def set_device_cluster_mode(self, device, value):
         await self.middleware.call(
-            'iscsi.scst.path_write',
+            'iscsi.scst.path_write_if_needed',
             f'{SCST_DEVICES}/{sanitize_extent(device)}/cluster_mode',
             f'{int(value)}\n',
         )
@@ -113,7 +128,7 @@ class iSCSITargetService(Service):
         if paths:
             await asyncio.gather(
                 *[
-                    self.middleware.call('iscsi.scst.path_write', path, text)
+                    self.middleware.call('iscsi.scst.path_write_if_needed', path, text)
                     for path in paths
                 ]
             )
