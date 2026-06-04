@@ -67,7 +67,19 @@ class SMARTAlertSource(ThreadedAlertSource):
             elif attr["id"] == 173:
                 ec = attr["raw"]["value"]
 
-        if ata_tests := data.get("ata_smart_self_test_log", {}).get("table", []):
+        # NAS-141215: smartctl nests the self-test log under "extended" (GP Log 0x07)
+        # or "standard" (legacy SMART log), never as a direct child of
+        # ata_smart_self_test_log. Under `smartctl -x` (what we run) these are mutually
+        # exclusive: "extended" is emitted when the drive supports GP logging, otherwise
+        # smartctl's retry_selftest_log fallback emits "standard" instead. Prefer
+        # "extended" and fall back to "standard" to mirror smartctl itself
+        # (smartmontools 7.4 ataprint.cpp:4280-4332).
+        stl = data.get("ata_smart_self_test_log", {})
+        log = stl.get("extended", {})
+        if not log:
+            log = stl.get("standard", {})
+
+        if ata_tests := log.get("table", []):
             # NAS-140419: smartctl writes table[] newest-first (see ataPrintSmartSelfTestlog
             # in smartmontools/ataprint.cpp), so [0] is the most recent test.
             test_failed = not ata_tests[0]["status"]["passed"]
