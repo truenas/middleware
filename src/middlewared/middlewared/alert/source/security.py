@@ -12,7 +12,6 @@ from middlewared.alert.base import (
 )
 from middlewared.alert.schedule import CrontabSchedule
 from middlewared.utils import ProductType, security
-from middlewared.utils.filter_list import filter_list
 
 
 @dataclass(kw_only=True)
@@ -69,11 +68,11 @@ class SecurityLocalUserAccountExpirationAlertSource(AlertSource):
     products = (ProductType.ENTERPRISE,)
 
     async def check(self) -> list[Alert[Any]]:
-        alerts: list[Alert[Any]] = []
         sec = await self.middleware.call("system.security.config")
-        if not sec["max_password_age"]:
+        max_pw_age = sec["max_password_age"]
+        if not max_pw_age:
             # password aging disabled and so we can skip these checks
-            return alerts
+            return []
 
         unlocked_local_accounts = await self.middleware.call("user.query", [
             ["local", "=", True],
@@ -82,22 +81,11 @@ class SecurityLocalUserAccountExpirationAlertSource(AlertSource):
             ["locked", "=", False]
         ])
 
-        expiring = filter_list(unlocked_local_accounts, [
-            ["password_age", ">=", sec["max_password_age"] - security.PASSWORD_PROMPT_AGE],
-            ["password_age", "<", sec["max_password_age"]],
-        ])
-
-        expired = filter_list(unlocked_local_accounts, [
-            ["password_age", ">=", sec["max_password_age"]]
-        ])
-
-        # Generate this alert an extra day early since we don't want to risk admin lockout
-        active_full_admins = filter_list(unlocked_local_accounts, [
-            ["roles", "rin", "FULL_ADMIN"],
-            ["password_age", "<", sec["max_password_age"] - 1],
-        ])
-
-        if not active_full_admins:
+        if not any(
+            # Generate this alert an extra day early since we don't want to risk admin lockout
+            "FULL_ADMIN" in acct["roles"] and acct["password_age"] < max_pw_age - 1
+            for acct in unlocked_local_accounts
+        ):
             # Once per day we check whether we've potentially locked out all
             # admins from accessing the NAS. If that occurs we forcibly regenerate
             # the shadow file, which will have the effect of disabling password aging
@@ -107,18 +95,24 @@ class SecurityLocalUserAccountExpirationAlertSource(AlertSource):
             # updating password.
             await self.middleware.call('etc.generate', 'shadow')
 
-        if expiring:
-            alerts.append(Alert(
-                LocalAccountExpiringAlert(
-                    accounts=", ".join([u["username"] for u in expiring]),
-                )
-            ))
+        alerts: list[Alert[Any]] = []
 
-        if expired:
-            alerts.append(Alert(
-                LocalAccountExpiredAlert(
-                    accounts=", ".join([u["username"] for u in expired]),
-                )
-            ))
+        # Alert for expiring accounts
+        expiring_accounts = ", ".join(
+            acct["username"]
+            for acct in unlocked_local_accounts
+            if max_pw_age - security.PASSWORD_PROMPT_AGE <= acct["password_age"] < max_pw_age
+        )
+        if expiring_accounts:
+            alerts.append(Alert(LocalAccountExpiringAlert(accounts=expiring_accounts)))
+
+        # Alert for expired accounts
+        expired_accounts = ", ".join(
+            acct["username"]
+            for acct in unlocked_local_accounts
+            if acct["password_age"] >= max_pw_age
+        )
+        if expired_accounts:
+            alerts.append(Alert(LocalAccountExpiredAlert(accounts=expired_accounts)))
 
         return alerts

@@ -1,17 +1,20 @@
 import logging
+from typing import TYPE_CHECKING
 
 from middlewared.plugins.etc import FileShouldNotExist
 from middlewared.utils.directoryservices.constants import DSType
 from middlewared.utils.directoryservices.krb5 import kdc_saf_cache_get
 from middlewared.utils.directoryservices.krb5_conf import KRB5Conf
 from middlewared.utils.directoryservices.krb5_constants import PERSISTENT_KEYRING_PREFIX, KRB_LibDefaults
-from middlewared.utils.filter_list import filter_list
+
+if TYPE_CHECKING:
+    from middlewared.main import Middleware
 
 logger = logging.getLogger(__name__)
 
 
 def generate_krb5_conf(
-    middleware: object,
+    middleware: 'Middleware',
     directory_service: dict,
     krb_config: dict,
     realms: list
@@ -47,16 +50,21 @@ def generate_krb5_conf(
             # AD / IPA domain has been lost. In almost all circumstances this will match the
             # domainname so we can recover from there
             if not default_realm:
+                ds_config_domain = ds_config['configuration']['domain']
                 logger.error(
                     '%s: no realm configuration found for domain. Attempting to recover.',
-                    ds_config['configuration']['domain']
+                    ds_config_domain
                 )
 
                 # Try looking up again by domain
-                default_realm = filter_list(realms, [['realm', '=', ds_config['configuration']['domain']]])
-                if not default_realm:
+                for r in realms:
+                    if r['realm'] == ds_config_domain:
+                        realm_id = r['id']
+                        default_realm = ds_config_domain
+                        break
+                else:
                     # Try to recover by creating a realm stub
-                    if not ds_config['configuration']['domain']:
+                    if not ds_config_domain:
                         # We have an invalid directory services configuration (no domain, no realm)
                         # log an error message and prevent kerberos config generation
 
@@ -67,13 +75,10 @@ def generate_krb5_conf(
 
                     realm_id = middleware.call_sync(
                         'datastore.insert', 'directoryservice.kerberosrealm',
-                        {'krb_realm': ds_config['configuration']['domain']}
+                        {'krb_realm': ds_config_domain}
                     )
 
                     default_realm = middleware.call_sync('kerberos.realm.get_instance', realm_id)['realm']
-                else:
-                    realm_id = default_realm[0]['id']
-                    default_realm = default_realm[0]['realm']
 
                 middleware.call_sync(
                     'datastore.update', 'directoryservices',
@@ -120,7 +125,7 @@ def generate_krb5_conf(
     return krbconf.generate()
 
 
-def render(service, middleware, render_ctx):
+def render(service, middleware: 'Middleware', render_ctx):
 
     return generate_krb5_conf(
         middleware,

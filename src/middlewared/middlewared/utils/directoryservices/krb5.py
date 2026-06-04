@@ -418,15 +418,11 @@ def keytab_services(keytab_file: str) -> list:
 
     `keytab_file` - path to kerberos keytab
     """
-    keytab_data = filter_list(
-        ktutil_list_impl(keytab_file),
-        [['principal', 'rin', '/']]
-    )
-    services = []
-    for entry in keytab_data:
-        services.append(entry['principal'].split('/')[0])
-
-    return services
+    return [
+        entry['principal'].split('/')[0]
+        for entry in ktutil_list_impl(keytab_file)
+        if '/' in entry['principal']
+    ]
 
 
 def extract_from_keytab(

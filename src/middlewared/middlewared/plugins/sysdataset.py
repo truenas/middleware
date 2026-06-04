@@ -27,7 +27,6 @@ from middlewared.plugins.zfs.utils import get_encryption_info
 from middlewared.service import CallError, ConfigService, ValidationError, ValidationErrors, job, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils import BOOT_POOL_NAME_VALID, MIDDLEWARE_RUN_DIR
-from middlewared.utils.filter_list import filter_list
 from middlewared.utils.size import format_size
 from middlewared.utils.tdb import close_sysdataset_tdb_handles
 from middlewared.utils.zfs import query_imported_fast_impl
@@ -310,7 +309,7 @@ class SystemDatasetService(ConfigService):
 
         mntinfo = list(iter_mountinfo())
         if config['pool'] != boot_pool:
-            if not any(filter_list(mntinfo, [['mount_source', '=', config['pool']]])):
+            if not any(mnt['mount_source'] == config['pool'] for mnt in mntinfo):
                 ds = self.call_sync2(
                     self.s.zfs.resource.query_impl,
                     ZFSResourceQuery(paths=[config['basename']], properties=['encryption'])
@@ -340,9 +339,9 @@ class SystemDatasetService(ConfigService):
 
         mounted_pool = mounted = None
 
-        sysds_mntinfo = filter_list(mntinfo, [['mountpoint', '=', '/var/db/system']])
+        sysds_mntinfo = next((mnt for mnt in mntinfo if mnt['mountpoint'] == '/var/db/system'), None)
         if sysds_mntinfo:
-            mounted_pool = sysds_mntinfo[0]['mount_source'].split('/')[0]
+            mounted_pool = sysds_mntinfo['mount_source'].split('/')[0]
 
         if mounted_pool and mounted_pool.split('/')[0] != config['pool']:
             self.logger.debug('Abandoning dataset on %r in favor of %r', mounted_pool, config['pool'])
@@ -364,9 +363,9 @@ class SystemDatasetService(ConfigService):
 
         os.makedirs(SYSDATASET_PATH, mode=0o755, exist_ok=True)
 
-        ds_mntinfo = filter_list(mntinfo, [['mount_source', '=', config['basename']]])
+        ds_mntinfo = next((mnt for mnt in mntinfo if mnt['mount_source'] == config['basename']), None)
         if ds_mntinfo:
-            acl_enabled = 'POSIXACL' in ds_mntinfo[0]['super_opts'] or 'NFSV4ACL' in ds_mntinfo[0]['super_opts']
+            acl_enabled = 'POSIXACL' in ds_mntinfo['super_opts'] or 'NFSV4ACL' in ds_mntinfo['super_opts']
         else:
             ds = self.call_sync2(
                 self.s.zfs.resource.query_impl,

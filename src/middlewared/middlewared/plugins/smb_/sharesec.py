@@ -198,14 +198,15 @@ class ShareSec(Service):
         shares = await self.middleware.call('datastore.query', 'sharing.cifs_share', [], {'prefix': 'cifs_'})
         for s in shares:
             share_name = s['name'] if not s['home'] else 'homes'
-            if not (share_acl := filter_list(entries, [['key', '=', f'SECDESC/{share_name.lower()}']])):
+            share_acl = next((e for e in entries if e['key'] == f'SECDESC/{share_name.lower()}'), None)
+            if not share_acl:
                 continue
 
-            if share_acl[0]['value'] != s['share_acl']:
+            if share_acl['value'] != s['share_acl']:
                 self.logger.debug('Updating stored copy of SMB share ACL on %s', share_name)
                 await self.middleware.call(
                     'datastore.update',
                     'sharing.cifs_share',
                     s['id'],
-                    {'cifs_share_acl': share_acl[0]['value']}
+                    {'cifs_share_acl': share_acl['value']}
                 )
