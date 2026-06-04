@@ -25,8 +25,10 @@ __all__ = [
 
 class VMCDROMDevice(BaseModel):
     dtype: Literal['CDROM']
-    path: NonEmptyString = Field(pattern='^/mnt/[^{}]*$')
-    """Path must not contain "{", "}" characters, and it should start with "/mnt/"."""
+    path: NonEmptyString = Field(
+        pattern='^/mnt/[^{}]*$',
+        description="Path must not contain \"{\", \"}\" characters, and it should start with \"/mnt/\".",
+    )
 
 
 class VMDisplayDevice(BaseModel):
@@ -60,7 +62,7 @@ class VMPCIDevice(BaseModel):
 
 class VMRAWDevice(BaseModel):
     dtype: Literal['RAW']
-    path: NonEmptyString = Field(pattern='^[^{}]*$', description='Path must not contain "{", "}" characters.')
+    path: NonEmptyString = Field(pattern='^[^{}]*$', description="Path must not contain \"{\", \"}\" characters.")
     type_: Literal['AHCI', 'VIRTIO'] = Field(alias='type', default='AHCI')
     exists: bool = False
     boot: bool = False
@@ -96,10 +98,14 @@ class VMDiskDevice(BaseModel):
 
 
 class USBAttributes(BaseModel):
-    vendor_id: NonEmptyString = Field(pattern='^0x.*')
-    """Vendor id must start with "0x" prefix e.g 0x16a8."""
-    product_id: NonEmptyString = Field(pattern='^0x.*')
-    """Product id must start with "0x" prefix e.g 0x16a8."""
+    vendor_id: NonEmptyString = Field(
+        pattern='^0x.*',
+        description="Vendor id must start with \"0x\" prefix e.g 0x16a8.",
+    )
+    product_id: NonEmptyString = Field(
+        pattern='^0x.*',
+        description="Product id must start with \"0x\" prefix e.g 0x16a8.",
+    )
 
 
 class VMUSBDevice(BaseModel):

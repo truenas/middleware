@@ -21,24 +21,23 @@ class GroupEntry(BaseModel):
     builtin: bool
     sudo_commands: list[NonEmptyString] = []
     sudo_commands_nopasswd: list[NonEmptyString] = []
-    smb: bool = True
-    """Specifies whether the group should be mapped into an NT group."""
-    userns_idmap: Literal['DIRECT'] | ContainerXID | None = None
-    """
-    Species the subgid mapping for this group. If DIRECT then the GID will be
-    directly mapped to all containers. Alternatively, the target GID may be
-    explicitly specified. If None, then the GID will not be mapped.
-
-    NOTE: this field will be ignored for groups that have been assigned
-    TrueNAS roles.
-    """
+    smb: bool = Field(default=True, description="Specifies whether the group should be mapped into an NT group.")
+    userns_idmap: Literal['DIRECT'] | ContainerXID | None = Field(
+        default=None,
+        description=(
+            "Species the subgid mapping for this group. If DIRECT then the GID will be directly mapped to all "
+            "containers. Alternatively, the target GID may be explicitly specified. If None, then the GID will not be "
+            "mapped.\n"
+            "\n"
+            "NOTE: this field will be ignored for groups that have been assigned TrueNAS roles."
+        ),
+    )
     group: NonEmptyString
     id_type_both: bool
     local: bool
     sid: str | None
     roles: list[str]
-    users: list[int] = []
-    """A list of user ids (`id` attribute from `user.query`)."""
+    users: list[int] = Field(default=[], description="A list of user ids (`id` attribute from `user.query`).")
 
 
 class GroupCreate(GroupEntry):
@@ -50,8 +49,10 @@ class GroupCreate(GroupEntry):
     sid: Excluded = excluded_field()
     roles: Excluded = excluded_field()
 
-    gid: LocalUID | None = None
-    """If `null`, it is automatically filled with the next one available."""
+    gid: LocalUID | None = Field(
+        default=None,
+        description="If `null`, it is automatically filled with the next one available.",
+    )
 
 
 class GroupCreateArgs(BaseModel):
@@ -76,8 +77,10 @@ class GroupUpdateResult(BaseModel):
 
 
 class GroupDeleteOptions(BaseModel):
-    delete_users: bool = False
-    """Deletes all users that have this group as their primary group."""
+    delete_users: bool = Field(
+        default=False,
+        description="Deletes all users that have this group as their primary group.",
+    )
 
 
 class GroupDeleteArgs(BaseModel):
@@ -106,23 +109,24 @@ class GroupGetGroupObjArgs(BaseModel):
 
 @single_argument_result
 class GroupGetGroupObjResult(BaseModel):
-    gr_name: str
-    """name of the group"""
-    gr_gid: int
-    """group id of the group"""
-    gr_mem: list[str]
-    """list of group names that are members of the group"""
-    sid: str | None = None
-    """optional SID value for the account that is present if `sid_info` is specified in payload."""
-    source: Literal['LOCAL', 'ACTIVEDIRECTORY', 'LDAP']
-    """
-    the name server switch module that provided the user. Options are:
-        FILES - local user in passwd file of server,
-        WINBIND - user provided by winbindd,
-        SSS - user provided by SSSD.
-    """
-    local: bool
-    """boolean indicating whether this group is local to the NAS or provided by a directory service."""
+    gr_name: str = Field(description="name of the group")
+    gr_gid: int = Field(description="group id of the group")
+    gr_mem: list[str] = Field(description="list of group names that are members of the group")
+    sid: str | None = Field(
+        default=None,
+        description="optional SID value for the account that is present if `sid_info` is specified in payload.",
+    )
+    source: Literal['LOCAL', 'ACTIVEDIRECTORY', 'LDAP'] = Field(
+        description=(
+            "the name server switch module that provided the user. Options are:\n"
+            "    FILES - local user in passwd file of server,\n"
+            "    WINBIND - user provided by winbindd,\n"
+            "    SSS - user provided by SSSD."
+        ),
+    )
+    local: bool = Field(
+        description="boolean indicating whether this group is local to the NAS or provided by a directory service.",
+    )
 
 
 class GroupHasPasswordEnabledUserArgs(BaseModel):

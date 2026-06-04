@@ -14,10 +14,11 @@ __all__ = [
 
 
 class ReplicationConfigEntry(BaseModel):
-    id: int
-    """Unique identifier for the replication configuration."""
-    max_parallel_replication_tasks: int | None = Field(ge=1)
-    """A maximum number of parallel replication tasks running."""
+    id: int = Field(description="Unique identifier for the replication configuration.")
+    max_parallel_replication_tasks: int | None = Field(
+        ge=1,
+        description="A maximum number of parallel replication tasks running.",
+    )
 
 
 @single_argument_args("replication_config_update")
@@ -26,5 +27,4 @@ class ReplicationConfigUpdateArgs(ReplicationConfigEntry, metaclass=ForUpdateMet
 
 
 class ReplicationConfigUpdateResult(BaseModel):
-    result: ReplicationConfigEntry
-    """The updated replication configuration."""
+    result: ReplicationConfigEntry = Field(description="The updated replication configuration.")

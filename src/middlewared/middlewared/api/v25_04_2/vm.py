@@ -276,10 +276,8 @@ class VMPortWizardArgs(BaseModel):
 
 @single_argument_result
 class VMPortWizardResult(BaseModel):
-    port: int
-    """Available server port"""
-    web: int
-    """Web port to be used based on available port"""
+    port: int = Field(description="Available server port")
+    web: int = Field(description="Web port to be used based on available port")
 
 
 class VMResolutionChoicesArgs(BaseModel):
@@ -387,12 +385,9 @@ class VMGetVMemoryInUseArgs(BaseModel):
 
 @single_argument_result
 class VMGetVMemoryInUseResult(BaseModel):
-    RNP: int
-    """Running but not provisioned"""
-    PRD: int
-    """Provisioned but not running"""
-    RPRD: int
-    """Running and provisioned"""
+    RNP: int = Field(description="Running but not provisioned")
+    PRD: int = Field(description="Provisioned but not running")
+    RPRD: int = Field(description="Running and provisioned")
 
 
 class VMGetAvailableMemoryArgs(BaseModel):
@@ -409,28 +404,23 @@ class VMGetVMMemoryInfoArgs(BaseModel):
 
 @single_argument_result
 class VMGetVMMemoryInfoResult(BaseModel):
-    minimum_memory_requested: int | None
-    """Minimum memory requested by the VM"""
-    total_memory_requested: int
-    """Maximum / total memory requested by the VM"""
-    overcommit_required: bool
-    """Overcommit of memory is required to start VM"""
-    memory_req_fulfilled_after_overcommit: bool
-    """Memory requirements of VM are fulfilled if over-committing memory is specified"""
-    arc_to_shrink: int | None
-    """Size of ARC to shrink in bytes"""
-    current_arc_max: int
-    """Current size of max ARC in bytes"""
-    arc_min: int
-    """Minimum size of ARC in bytes"""
-    arc_max_after_shrink: int
-    """Size of max ARC in bytes after shrinking"""
-    actual_vm_requested_memory: int
-    """
-    VM memory in bytes to consider when making calculations for available/required memory. If VM ballooning is
-    specified for the VM, the minimum VM memory specified by user will be taken into account otherwise total VM
-    memory requested will be taken into account.
-    """
+    minimum_memory_requested: int | None = Field(description="Minimum memory requested by the VM")
+    total_memory_requested: int = Field(description="Maximum / total memory requested by the VM")
+    overcommit_required: bool = Field(description="Overcommit of memory is required to start VM")
+    memory_req_fulfilled_after_overcommit: bool = Field(
+        description="Memory requirements of VM are fulfilled if over-committing memory is specified",
+    )
+    arc_to_shrink: int | None = Field(description="Size of ARC to shrink in bytes")
+    current_arc_max: int = Field(description="Current size of max ARC in bytes")
+    arc_min: int = Field(description="Minimum size of ARC in bytes")
+    arc_max_after_shrink: int = Field(description="Size of max ARC in bytes after shrinking")
+    actual_vm_requested_memory: int = Field(
+        description=(
+            "VM memory in bytes to consider when making calculations for available/required memory. If VM ballooning is"
+            " specified for the VM, the minimum VM memory specified by user will be taken into account otherwise total "
+            "VM memory requested will be taken into account."
+        ),
+    )
 
 
 class VMRandomMacArgs(BaseModel):

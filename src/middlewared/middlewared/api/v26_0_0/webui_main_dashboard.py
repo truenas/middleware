@@ -13,20 +13,13 @@ class WebUIMainDashboardSysInfoArgs(BaseModel):
 
 
 class RemoteInfo(BaseModel):
-    platform: NonEmptyString
-    """Platform type (e.g., 'FREENAS', 'TRUENAS-SCALE')."""
-    version: NonEmptyString
-    """Software version string."""
-    license: dict | None
-    """License information object. `null` if no license is installed."""
-    system_serial: str
-    """Hardware serial number of the system."""
-    hostname: NonEmptyString
-    """System hostname."""
-    uptime_seconds: float
-    """System uptime in seconds since last boot."""
-    datetime_: datetime = Field(alias="datetime")
-    """Current system date and time."""
+    platform: NonEmptyString = Field(description="Platform type (e.g., 'FREENAS', 'TRUENAS-SCALE').")
+    version: NonEmptyString = Field(description="Software version string.")
+    license: dict | None = Field(description="License information object. `null` if no license is installed.")
+    system_serial: str = Field(description="Hardware serial number of the system.")
+    hostname: NonEmptyString = Field(description="System hostname.")
+    uptime_seconds: float = Field(description="System uptime in seconds since last boot.")
+    datetime_: datetime = Field(alias="datetime", description="Current system date and time.")
 
     @classmethod
     def to_previous(cls, value):
@@ -34,10 +27,10 @@ class RemoteInfo(BaseModel):
 
 
 class SysInfo(RemoteInfo):
-    remote_info: RemoteInfo | None
-    """Information about the remote system in HA configurations. `null` for standalone systems."""
+    remote_info: RemoteInfo | None = Field(
+        description="Information about the remote system in HA configurations. `null` for standalone systems.",
+    )
 
 
 class WebUIMainDashboardSysInfoResult(BaseModel):
-    result: SysInfo
-    """System information for the web UI main dashboard display."""
+    result: SysInfo = Field(description="System information for the web UI main dashboard display.")

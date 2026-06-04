@@ -1,5 +1,7 @@
 from typing import Literal
 
+from pydantic import Field
+
 from middlewared.api.base import BaseModel
 
 
@@ -42,20 +44,22 @@ class GPUInfo(BaseModel):
 
 
 class DeviceGetInfoDisk(BaseModel):
-    type: Literal["DISK"]
-    """Get disk info."""
-    get_partitions: bool = False
-    """
-    If set, query partition information for the disks.
-    NOTE: This can be expensive on systems with a large number of disks present.
-    """
-    serials_only: bool = False
-    """If set, query _ONLY_ serial information for the disks (overrides `get_partitions`)."""
+    type: Literal["DISK"] = Field(description="Get disk info.")
+    get_partitions: bool = Field(
+        default=False,
+        description=(
+            "If set, query partition information for the disks. NOTE: This can be expensive on systems with a large "
+            "number of disks present."
+        ),
+    )
+    serials_only: bool = Field(
+        default=False,
+        description="If set, query _ONLY_ serial information for the disks (overrides `get_partitions`).",
+    )
 
 
 class DeviceGetInfoOther(BaseModel):
-    type: Literal["SERIAL", "GPU"]
-    """Get info for either serial devices or GPUs."""
+    type: Literal["SERIAL", "GPU"] = Field(description="Get info for either serial devices or GPUs.")
 
 
 class DeviceGetInfoArgs(BaseModel):
@@ -63,5 +67,6 @@ class DeviceGetInfoArgs(BaseModel):
 
 
 class DeviceGetInfoResult(BaseModel):
-    result: dict[str, str] | dict[str, dict] | list[SerialInfo] | list[GPUInfo]
-    """Return an object if `type="DISK"` or an array otherwise."""
+    result: dict[str, str] | dict[str, dict] | list[SerialInfo] | list[GPUInfo] = Field(
+        description="Return an object if `type=\"DISK\"` or an array otherwise.",
+    )

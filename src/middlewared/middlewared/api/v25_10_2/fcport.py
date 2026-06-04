@@ -14,16 +14,11 @@ __all__ = [
 
 
 class FCPortEntry(BaseModel):
-    id: int
-    """Unique identifier for the Fibre Channel port configuration."""
-    port: FibreChannelPortAlias
-    """Alias name for the Fibre Channel port."""
-    wwpn: WWPN | None
-    """World Wide Port Name for port A or `null` if not configured."""
-    wwpn_b: WWPN | None
-    """World Wide Port Name for port B or `null` if not configured."""
-    target: dict | None
-    """Target configuration object or `null` if not configured."""
+    id: int = Field(description="Unique identifier for the Fibre Channel port configuration.")
+    port: FibreChannelPortAlias = Field(description="Alias name for the Fibre Channel port.")
+    wwpn: WWPN | None = Field(description="World Wide Port Name for port A or `null` if not configured.")
+    wwpn_b: WWPN | None = Field(description="World Wide Port Name for port B or `null` if not configured.")
+    target: dict | None = Field(description="Target configuration object or `null` if not configured.")
 
 
 class FCPortCreate(FCPortEntry):
@@ -31,18 +26,15 @@ class FCPortCreate(FCPortEntry):
     wwpn: Excluded = excluded_field()
     wwpn_b: Excluded = excluded_field()
     target: Excluded = excluded_field()
-    target_id: int
-    """ID of the target to associate with this FC port."""
+    target_id: int = Field(description="ID of the target to associate with this FC port.")
 
 
 class FCPortCreateArgs(BaseModel):
-    fc_Port_create: FCPortCreate
-    """Fibre Channel port configuration data for the new port."""
+    fc_Port_create: FCPortCreate = Field(description="Fibre Channel port configuration data for the new port.")
 
 
 class FCPortCreateResult(BaseModel):
-    result: FCPortEntry
-    """The created Fibre Channel port configuration."""
+    result: FCPortEntry = Field(description="The created Fibre Channel port configuration.")
 
 
 class FCPortUpdate(FCPortCreate, metaclass=ForUpdateMetaclass):
@@ -50,37 +42,29 @@ class FCPortUpdate(FCPortCreate, metaclass=ForUpdateMetaclass):
 
 
 class FCPortUpdateArgs(BaseModel):
-    id: int
-    """ID of the Fibre Channel port to update."""
-    fc_Port_update: FCPortUpdate
-    """Updated Fibre Channel port configuration data."""
+    id: int = Field(description="ID of the Fibre Channel port to update.")
+    fc_Port_update: FCPortUpdate = Field(description="Updated Fibre Channel port configuration data.")
 
 
 class FCPortUpdateResult(BaseModel):
-    result: FCPortEntry
-    """The updated Fibre Channel port configuration."""
+    result: FCPortEntry = Field(description="The updated Fibre Channel port configuration.")
 
 
 class FCPortDeleteArgs(BaseModel):
-    id: int
-    """ID of the Fibre Channel port to delete."""
+    id: int = Field(description="ID of the Fibre Channel port to delete.")
 
 
 class FCPortDeleteResult(BaseModel):
-    result: Literal[True]
-    """Returns `true` when the Fibre Channel port is successfully deleted."""
+    result: Literal[True] = Field(description="Returns `true` when the Fibre Channel port is successfully deleted.")
 
 
 class FCPortChoiceEntry(BaseModel):
-    wwpn: WWPN | None
-    """World Wide Port Name for port A or `null` if not available."""
-    wwpn_b: WWPN | None
-    """World Wide Port Name for port B or `null` if not available."""
+    wwpn: WWPN | None = Field(description="World Wide Port Name for port A or `null` if not available.")
+    wwpn_b: WWPN | None = Field(description="World Wide Port Name for port B or `null` if not available.")
 
 
 class FCPortPortChoicesArgs(BaseModel):
-    include_used: bool = True
-    """Whether to include FC ports that are already in use."""
+    include_used: bool = Field(default=True, description="Whether to include FC ports that are already in use.")
 
 
 class FCPortPortChoicesResult(BaseModel):
@@ -103,5 +87,4 @@ class FCPortStatusArgs(QueryArgs):
 
 
 class FCPortStatusResult(BaseModel):
-    result: list
-    """Array of Fibre Channel port status information."""
+    result: list = Field(description="Array of Fibre Channel port status information.")

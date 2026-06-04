@@ -2,6 +2,9 @@
 #
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
+
+from pydantic import Field
+
 from middlewared.api.base import BaseModel, NonEmptyString
 from .system_reboot import RebootInfo
 
@@ -11,12 +14,15 @@ __all__ = ["FailoverRebootInfoArgs", "FailoverRebootInfoResult",
 
 
 class FailoverRebootOtherNodeOptions(BaseModel):
-    reason: NonEmptyString = 'System upgrade'
-    """Reason for the system reboot."""
-    graceful: bool = False
-    """If set, call `system.reboot` to gracefully reboot the other node. By default, `failover.become_passive` will be \
-    called on the other node to forcefully reboot and simulate a failover event unless there were changes in the other \
-    node's boot environment."""
+    reason: NonEmptyString = Field(default='System upgrade', description="Reason for the system reboot.")
+    graceful: bool = Field(
+        default=False,
+        description=(
+            "If set, call `system.reboot` to gracefully reboot the other node. By default, `failover.become_passive` "
+            "will be called on the other node to forcefully reboot and simulate a failover event unless there were "
+            "changes in the other node's boot environment."
+        ),
+    )
 
 
 class FailoverRebootInfoArgs(BaseModel):
@@ -24,10 +30,10 @@ class FailoverRebootInfoArgs(BaseModel):
 
 
 class FailoverRebootInfo(BaseModel):
-    this_node: RebootInfo
-    """Reboot information for the current node."""
-    other_node: RebootInfo | None
-    """Reboot information for the other node in the failover pair or `null` if not available."""
+    this_node: RebootInfo = Field(description="Reboot information for the current node.")
+    other_node: RebootInfo | None = Field(
+        description="Reboot information for the other node in the failover pair or `null` if not available.",
+    )
 
 
 class FailoverRebootInfoResult(BaseModel):
@@ -35,17 +41,16 @@ class FailoverRebootInfoResult(BaseModel):
 
 
 class FailoverRebootOtherNodeArgs(BaseModel):
-    options: FailoverRebootOtherNodeOptions = FailoverRebootOtherNodeOptions()
-    """Options for rebooting the other node."""
+    options: FailoverRebootOtherNodeOptions = Field(
+        default=FailoverRebootOtherNodeOptions(),
+        description="Options for rebooting the other node.",
+    )
 
 
 class FailoverRebootOtherNodeResult(BaseModel):
-    result: None
-    """Returns `null` when the other node reboot is successfully initiated."""
+    result: None = Field(description="Returns `null` when the other node reboot is successfully initiated.")
 
 
 class FailoverRebootInfoChangedEvent(BaseModel):
-    id: None
-    """Always null."""
-    fields: FailoverRebootInfo
-    """Event fields."""
+    id: None = Field(description="Always null.")
+    fields: FailoverRebootInfo = Field(description="Event fields.")
