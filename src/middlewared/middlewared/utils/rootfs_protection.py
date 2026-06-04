@@ -2,6 +2,7 @@
 Cross-process lock serializing operations that flip the read-only state of the
 root filesystem, so they can't clobber one another.
 """
+
 import contextlib
 import fcntl
 import os
