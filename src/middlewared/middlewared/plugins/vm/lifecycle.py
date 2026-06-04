@@ -119,10 +119,10 @@ def pylibvirt_vm(
 
 def resume_suspended_vms(context: ServiceContext, vm_ids: list[int]) -> None:
     vms = {vm.id: vm for vm in context.call_sync2(context.s.vm.query)}
-    for vm_id in filter(
-        lambda v_id: v_id in vms and vms[v_id].status.state == 'SUSPENDED',
-        vm_ids
-    ):
+    for vm_id in vm_ids:
+        vm = vms.get(vm_id)
+        if vm is None or vm.status.state != 'SUSPENDED':
+            continue
         try:
             resume_vm(context, vm_id)
         except Exception:
@@ -131,10 +131,10 @@ def resume_suspended_vms(context: ServiceContext, vm_ids: list[int]) -> None:
 
 def suspend_vms(context: ServiceContext, vm_ids: list[int]) -> None:
     vms = {vm.id: vm for vm in context.call_sync2(context.s.vm.query)}
-    for vm_id in filter(
-        lambda v_id: v_id in vms and vms[v_id].status.state == 'RUNNING',
-        vm_ids
-    ):
+    for vm_id in vm_ids:
+        vm = vms.get(vm_id)
+        if vm is None or vm.status.state != 'RUNNING' or not vm.suspend_on_snapshot:
+            continue
         try:
             suspend_vm(context, vm_id)
         except Exception:
