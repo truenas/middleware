@@ -43,11 +43,11 @@ class CronModel(BaseModel):
     Each field can either be a single value or a comma-separated list of values.
     A \"*\" represents the full list of values.
     """
-    minute: str = Field(default="*", description="\"00\" - \"59\"")
-    hour: str = Field(default="*", description="\"00\" - \"23\"")
-    dom: str = Field(default="*", description="\"1\" - \"31\"")
-    month: str = Field(default="*", description="\"1\" (January) - \"12\" (December)")
-    dow: str = Field(default="*", description="\"1\" (Monday) - \"7\" (Sunday)")
+    minute: str = Field(default="*", description="\"00\" - \"59\".")
+    hour: str = Field(default="*", description="\"00\" - \"23\".")
+    dom: str = Field(default="*", description="\"1\" - \"31\".")
+    month: str = Field(default="*", description="\"1\" (January) - \"12\" (December).")
+    dow: str = Field(default="*", description="\"1\" (Monday) - \"7\" (Sunday).")
 
     @model_validator(mode="after")
     def validate_attrs(self):

@@ -44,7 +44,11 @@ def check_docstring(docstr: str | None, must_have: bool = False):
             # Either a docstring or `Field(description=...)` will do
             return "Must have description"
         return
-    if any(c in docstr for c in ["*", "-"]):
+
+    if (
+        any(line.startswith(("* ", "- ", "    {")) for line in docstr.splitlines() if line) or
+        any(c in docstr for c in ["**", "--"])
+    ):
         # Just assume Markdown and skip rules check
         return
 
