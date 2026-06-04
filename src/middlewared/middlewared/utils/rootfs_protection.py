@@ -7,6 +7,7 @@ import contextlib
 import fcntl
 import os
 import threading
+from collections.abc import Iterator
 
 from middlewared.utils import MIDDLEWARE_RUN_DIR
 
@@ -18,7 +19,7 @@ _thread_lock = threading.Lock()
 
 
 @contextlib.contextmanager
-def rootfs_protection_lock():
+def rootfs_protection_lock() -> Iterator[None]:
     os.makedirs(MIDDLEWARE_RUN_DIR, exist_ok=True)
     with (
         _thread_lock,
