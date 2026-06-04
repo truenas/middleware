@@ -1,5 +1,6 @@
 import asyncio
 import os
+import subprocess
 
 from pydantic import Field
 
@@ -13,6 +14,7 @@ from middlewared.api.current import (
 from middlewared.service import CallError, Service, job, private
 from middlewared.utils import run, BOOT_POOL_NAME_VALID
 from middlewared.utils.disks import valid_zfs_partition_uuids
+from middlewared.utils.rootfs_protection import rootfs_protection_lock
 
 
 BOOT_ATTACH_REPLACE_LOCK = 'boot_attach_replace'
@@ -141,7 +143,7 @@ class BootService(Service):
         # If the user is upgrading his disks, let's set expand to True to make sure that we
         # register the new disks capacity which increase the size of the pool
         await self.middleware.call('zfs.pool.online', BOOT_POOL_NAME, zfs_dev_part['name'], True)
-        await self.update_initramfs()
+        await self.middleware.call('boot.update_initramfs')
 
     @api_method(BootDetachArgs, BootDetachResult, roles=['DISK_WRITE'])
     async def detach(self, dev):
@@ -150,7 +152,7 @@ class BootService(Service):
         """
         await self.check_update_ashift_property()
         await self.middleware.call('zfs.pool.detach', BOOT_POOL_NAME, dev, {'clear_label': True})
-        await self.update_initramfs()
+        await self.middleware.call('boot.update_initramfs')
 
     @api_method(BootReplaceArgs, BootReplaceResult, roles=['DISK_WRITE'])
     @job(lock=BOOT_ATTACH_REPLACE_LOCK)
@@ -188,7 +190,7 @@ class BootService(Service):
 
         job.set_progress(100, 'Installing boot loader')
         await self.middleware.call('boot.install_loader', dev)
-        await self.update_initramfs()
+        await self.middleware.call('boot.update_initramfs')
 
     @api_method(BootScrubArgs, BootScrubResult, roles=['BOOT_ENV_WRITE'])
     @job(lock='boot_scrub')
@@ -213,9 +215,12 @@ class BootService(Service):
         return interval
 
     @api_method(BootUpdateInitramfsArgs, BootUpdateInitramfsResult, private=True)
-    async def update_initramfs(self, options):
+    def update_initramfs(self, options):
         """
         Returns true if initramfs was updated and false otherwise.
+
+        Synchronous and blocking (subprocess + lock); callers in async context
+        invoke it via ``middleware.call`` so it runs in the io thread pool.
         """
         args = ['/']
         if options['database']:
@@ -223,11 +228,15 @@ class BootService(Service):
         if options['force']:
             args.extend(['-f'])
 
+        # Hold the rootfs-protection lock across the rebuild so it can't race
+        # disable-rootfs-protection (see middlewared.utils.rootfs_protection):
+        # truenas-initrd.py transiently makes the rootfs writable and restores it.
         # NOTE: truenas-initrd.py is provided by truenas/upgrade_pyutils repository
-        cp = await run(
-            '/usr/local/bin/truenas-initrd.py', *args,
-            encoding='utf8', errors='ignore', check=False
-        )
+        with rootfs_protection_lock():
+            cp = subprocess.run(
+                ['/usr/local/bin/truenas-initrd.py', *args],
+                capture_output=True, encoding='utf8', errors='ignore',
+            )
         if cp.returncode > 1:
             raise CallError(f'Failed to update initramfs: {cp.stdout} {cp.stderr}')
 

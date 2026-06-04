@@ -9,6 +9,7 @@ from middlewared.api.current import (
     SystemAdvancedNvidiaPresentResult,
 )
 from middlewared.service import private, Service
+from middlewared.utils.rootfs_protection import rootfs_protection_lock
 
 
 class SystemAdvancedService(Service):
@@ -57,8 +58,11 @@ class SystemAdvancedService(Service):
             refresh = False
 
         if refresh:
-            subprocess.run(['systemd-sysext', 'refresh'], capture_output=True, check=True, text=True)
-            subprocess.run(['ldconfig'], capture_output=True, check=True, text=True)
+            # systemd-sysext refresh re-overlays /usr; hold the rootfs lock so it
+            # can't race the initramfs rebuild or disable-rootfs-protection.
+            with rootfs_protection_lock():
+                subprocess.run(['systemd-sysext', 'refresh'], capture_output=True, check=True, text=True)
+                subprocess.run(['ldconfig'], capture_output=True, check=True, text=True)
 
         if config['nvidia']:
             cp = subprocess.run(
