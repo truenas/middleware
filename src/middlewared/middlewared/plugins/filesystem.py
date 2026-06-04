@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import binascii
+from collections.abc import Generator
 import errno
 import functools
 from itertools import product
@@ -7,14 +10,14 @@ import pathlib
 import shutil
 import stat as statlib
 import time
-from typing import Literal
+from typing import IO, TYPE_CHECKING, Any, Iterable, Literal, Sequence
 
 import pyinotify
 import truenas_os
 from truenas_os_pyutils.io import safe_open
-from truenas_os_pyutils.mount import iter_mountinfo, statmount
+from truenas_os_pyutils.mount import StatmountResultDict, iter_mountinfo, statmount
 
-from middlewared.api import api_method
+from middlewared.api import api_method, private_method
 from middlewared.api.base import (
     BaseModel,
     LongNonEmptyString,
@@ -23,24 +26,34 @@ from middlewared.api.base import (
 from middlewared.api.current import (
     FileFollowTailEventSourceArgs,
     FileFollowTailEventSourceEvent,
+    FilesystemDirEntry,
     FilesystemGetArgs,
     FilesystemGetResult,
     FilesystemGetZfsAttributesArgs,
     FilesystemGetZfsAttributesResult,
     FilesystemListdirArgs,
     FilesystemListdirResult,
+    FilesystemListdirResultItem,
     FilesystemMkdirArgs,
+    FilesystemMkdirData,
     FilesystemMkdirResult,
     FilesystemPutArgs,
+    FilesystemPutOptions,
     FilesystemPutResult,
     FilesystemSetZfsAttributesArgs,
+    FilesystemSetZfsAttributesData,
     FilesystemSetZfsAttributesResult,
     FilesystemStatArgs,
+    FilesystemStatData,
     FilesystemStatfsArgs,
+    FilesystemStatfsData,
     FilesystemStatfsResult,
     FilesystemStatResult,
+    QueryFilters,
+    QueryOptions,
+    ZFSFileAttrsData,
 )
-from middlewared.event import EventSource
+from middlewared.event import TypedEventSource
 from middlewared.plugins.account_.constants import SYNTHETIC_CONTAINER_ROOT
 from middlewared.plugins.docker.state_utils import IX_APPS_DIR_NAME
 from middlewared.plugins.filesystem_.utils import apply_zfs_attrs_recursive
@@ -49,10 +62,13 @@ from middlewared.utils.filesystem import attrs, stat_x
 from middlewared.utils.filesystem.acl import ACL_UNDEFINED_ID, acl_is_present
 from middlewared.utils.filesystem.constants import FileType
 from middlewared.utils.filesystem.directory import DirectoryRequestMask, iter_listdir
-from middlewared.utils.filter_list import filter_list
+from middlewared.utils.filter_list import filter_list, filter_list_model
 from middlewared.utils.nss import grp, pwd
 from middlewared.utils.path import FSLocation, is_child_realpath, path_location
 from middlewared.utils.pwenc import PWENC_FILE_SECRET
+
+if TYPE_CHECKING:
+    from middlewared.job import Job
 
 
 class FilesystemReceiveFileOptions(BaseModel):
@@ -72,7 +88,7 @@ class FilesystemReceiveFileResult(BaseModel):
     result: Literal[True]
 
 
-class FileFollowTailEventSource(EventSource):
+class FileFollowTailEventSource(TypedEventSource[FileFollowTailEventSourceArgs]):
     """
     Retrieve last ``tail_lines`` lines specified as an integer argument for a specified ``path`` and then
     any new lines as they are added.
@@ -80,8 +96,8 @@ class FileFollowTailEventSource(EventSource):
     args = FileFollowTailEventSourceArgs
     event = FileFollowTailEventSourceEvent
 
-    def run_sync(self):
-        path, lines = self.arg['path'], self.arg['tail_lines']
+    def run_sync(self) -> None:
+        path, lines = self.typed_arg.path, self.typed_arg.tail_lines
 
         if not os.path.exists(path):
             # FIXME: Error?
@@ -106,11 +122,11 @@ class FileFollowTailEventSource(EventSource):
             self.send_event('ADDED', fields={'data': ''.join(data[-lines:])})
             f.seek(fsize)
 
-            for data in self._follow_path(path, f):
-                self.send_event('ADDED', fields={'data': data})
+            for chunk in self._follow_path(path, f):
+                self.send_event('ADDED', fields={'data': chunk})
 
-    def _follow_path(self, path, f):
-        queue = []
+    def _follow_path(self, path: str, f: IO[str]) -> Generator[str, None, None]:
+        queue: list[str] = []
         watch_manager = pyinotify.WatchManager()
         notifier = pyinotify.Notifier(watch_manager)
         watch_manager.add_watch(path, pyinotify.IN_MODIFY, functools.partial(self._follow_callback, queue, f))
@@ -136,7 +152,7 @@ class FileFollowTailEventSource(EventSource):
 
         notifier.stop()
 
-    def _follow_callback(self, queue, f, event):
+    def _follow_callback(self, queue: list[str], f: IO[str], event: Any) -> None:
         data = f.read()
         if data:
             queue.append(data)
@@ -154,10 +170,11 @@ class FilesystemService(Service):
         FilesystemSetZfsAttributesArgs, FilesystemSetZfsAttributesResult,
         roles=['FILESYSTEM_ATTRS_WRITE'],
         audit='Filesystem set ZFS attributes',
-        audit_extended=lambda data: data['path']
+        audit_extended=lambda data: data['path'],
+        check_annotations=True,
     )
     @job(lock=lambda args: f'zfs_attrs_change:{args[0]["path"]}')
-    def set_zfs_attributes(self, job, data):
+    def set_zfs_attributes(self, job: Job, data: FilesystemSetZfsAttributesData) -> ZFSFileAttrsData:
         """
         Set special ZFS-related file flags on the specified path.
 
@@ -194,7 +211,7 @@ class FilesystemService(Service):
         its type matches the filter. `null` (the default) preserves the legacy
         single-path behavior. Recursion stops at dataset boundaries.
         """
-        recursive = data['options']['recursive']
+        recursive = data.options.recursive
         if recursive is not None and len(recursive) == 0:
             verrors = ValidationErrors()
             verrors.add(
@@ -207,26 +224,19 @@ class FilesystemService(Service):
         try:
             if recursive is None:
                 # Legacy single-path semantics — cheap path, no walker.
-                return attrs.set_zfs_file_attributes_dict(
-                    data['path'], data['zfs_file_attributes']
+                return ZFSFileAttrsData(
+                    **attrs.set_zfs_file_attributes_dict(data.path, data.zfs_file_attributes.model_dump()),
                 )
 
             try:
-                fd = truenas_os.openat2(
-                    data['path'], os.O_RDWR, resolve=truenas_os.RESOLVE_NO_SYMLINKS
-                )
+                fd = truenas_os.openat2(data.path, os.O_RDWR, resolve=truenas_os.RESOLVE_NO_SYMLINKS)
                 is_dir = False
             except IsADirectoryError:
-                fd = truenas_os.openat2(
-                    data['path'], os.O_DIRECTORY, resolve=truenas_os.RESOLVE_NO_SYMLINKS
-                )
+                fd = truenas_os.openat2(data.path, os.O_DIRECTORY, resolve=truenas_os.RESOLVE_NO_SYMLINKS)
                 is_dir = True
 
             try:
-                return apply_zfs_attrs_recursive(
-                    fd, is_dir, data['zfs_file_attributes'], recursive,
-                    job=job,
-                )
+                return apply_zfs_attrs_recursive(fd, is_dir, data.zfs_file_attributes, recursive, job=job)
             finally:
                 os.close(fd)
         except OSError as e:
@@ -234,8 +244,13 @@ class FilesystemService(Service):
                 raise CallError('Symlinks are not permitted.', errno.ELOOP)
             raise
 
-    @api_method(FilesystemGetZfsAttributesArgs, FilesystemGetZfsAttributesResult, roles=['FILESYSTEM_ATTRS_READ'])
-    def get_zfs_attributes(self, path):
+    @api_method(
+        FilesystemGetZfsAttributesArgs,
+        FilesystemGetZfsAttributesResult,
+        roles=['FILESYSTEM_ATTRS_READ'],
+        check_annotations=True,
+    )
+    def get_zfs_attributes(self, path: str) -> ZFSFileAttrsData:
         """
         Get the current ZFS attributes for the file at the given path
         """
@@ -250,10 +265,10 @@ class FilesystemService(Service):
         finally:
             os.close(fd)
 
-        return attrs.zfs_attributes_to_dict(attr_mask)
+        return ZFSFileAttrsData(**attrs.zfs_attributes_to_dict(attr_mask))
 
-    @private
-    def is_child(self, child, parent):
+    @private_method()
+    def is_child(self, child: str | list[str], parent: str | list[str]) -> bool:
         for to_check in product(
             child if isinstance(child, list) else [child],
             parent if isinstance(parent, list) else [parent]
@@ -263,16 +278,20 @@ class FilesystemService(Service):
 
         return False
 
-    @private
-    def is_dataset_path(self, path):
+    @private_method()
+    def is_dataset_path(self, path: str) -> bool:
         return path.startswith('/mnt/') and os.stat(path).st_dev != os.stat('/mnt').st_dev
 
     @filterable_api_method(private=True)
-    def mount_info(self, filters, options):
+    def mount_info(
+        self,
+        filters: Iterable[Sequence[Any]],
+        options: dict[str, Any],
+    ) -> list[StatmountResultDict] | StatmountResultDict | int:
         return filter_list(iter_mountinfo(), filters, options)
 
-    @api_method(FilesystemMkdirArgs, FilesystemMkdirResult, roles=['FILESYSTEM_DATA_WRITE'])
-    def mkdir(self, data):
+    @api_method(FilesystemMkdirArgs, FilesystemMkdirResult, roles=['FILESYSTEM_DATA_WRITE'], check_annotations=True)
+    def mkdir(self, data: FilesystemMkdirData) -> FilesystemDirEntry:
         """
         Create a directory at the specified path.
 
@@ -287,21 +306,19 @@ class FilesystemService(Service):
         indicate the current permissions on the directory and not the permissions specified
         in the mkdir payload
         """
-        path = data['path']
-        options = data['options']
-        mode = int(options['mode'], 8)
+        mode = int(data.options.mode, 8)
 
-        p = pathlib.Path(path)
+        p = pathlib.Path(data.path)
         if not p.is_absolute():
-            raise CallError(f'{path}: not an absolute path.', errno.EINVAL)
+            raise CallError(f'{data.path}: not an absolute path.', errno.EINVAL)
 
         if p.exists():
-            raise CallError(f'{path}: path already exists.', errno.EEXIST)
+            raise CallError(f'{data.path}: path already exists.', errno.EEXIST)
 
         # Resolve the parent with no symlink follow and operate via dir_fd, so the
         # prefix check below cannot be raced against the mkdir.
-        parent = os.path.dirname(path) or '/'
-        basename = os.path.basename(path)
+        parent = os.path.dirname(data.path) or '/'
+        basename = os.path.basename(data.path)
         try:
             parent_fd = truenas_os.openat2(
                 parent, os.O_DIRECTORY,
@@ -309,65 +326,68 @@ class FilesystemService(Service):
             )
         except OSError as e:
             if e.errno == errno.ELOOP:
-                raise CallError(f'{path}: symlinks in path are not permitted', errno.EPERM)
+                raise CallError(f'{data.path}: symlinks in path are not permitted', errno.EPERM)
             if e.errno == errno.ENOENT:
-                raise CallError(f'{path}: parent directory does not exist', errno.ENOENT)
+                raise CallError(f'{data.path}: parent directory does not exist', errno.ENOENT)
             raise
 
         try:
             realpath = os.path.join(os.readlink(f'/proc/self/fd/{parent_fd}'), basename)
             if not realpath.startswith(('/mnt/', '/root/.ssh', '/home/admin/.ssh', '/home/truenas_admin/.ssh')):
-                raise CallError(f'{path}: path not permitted', errno.EPERM)
+                raise CallError(f'{data.path}: path not permitted', errno.EPERM)
 
             os.mkdir(basename, mode=mode, dir_fd=parent_fd)
         finally:
             os.close(parent_fd)
 
         st = stat_x.statx_entry_impl(p)
+        if st is None:
+            raise CallError(f'{data.path}: statx entry does not exist', errno.ENOENT)
+
         stat = st['st']
 
         if statlib.S_IMODE(stat.stx_mode) != mode:
             # This may happen if requested mode is greater than umask
             # or if underlying dataset has restricted aclmode and ACL is present
             try:
-                os.chmod(path, mode)
+                os.chmod(data.path, mode)
             except Exception:
-                if options['raise_chmod_error']:
-                    os.rmdir(path)
+                if data.options.raise_chmod_error:
+                    os.rmdir(data.path)
                     raise
 
                 self.logger.debug(
                     '%s: failed to set mode %s on path after mkdir call',
-                    path, options['mode'], exc_info=True
+                    data.path, data.options.mode, exc_info=True
                 )
 
-        return {
-            'name': p.parts[-1],
-            'path': path,
-            'realpath': realpath,
-            'type': 'DIRECTORY',
-            'size': stat.stx_size,
-            'allocation_size': stat.stx_blocks * 512,
-            'mode': stat.stx_mode,
-            'acl': acl_is_present(os.listxattr(path)),
-            'uid': stat.stx_uid,
-            'gid': stat.stx_gid,
-            'is_mountpoint': False,
-            'is_ctldir': False,
-            'mount_id': st['st'].stx_mnt_id,
-            'attributes': st['attributes'],
-            'xattrs': [],
-            'zfs_attrs': ['ARCHIVE']
-        }
+        return FilesystemDirEntry(
+            name=p.parts[-1],
+            path=data.path,
+            realpath=realpath,
+            type='DIRECTORY',
+            size=stat.stx_size,
+            allocation_size=stat.stx_blocks * 512,
+            mode=stat.stx_mode,
+            acl=acl_is_present(os.listxattr(data.path)),
+            uid=stat.stx_uid,
+            gid=stat.stx_gid,
+            is_mountpoint=False,
+            is_ctldir=False,
+            mount_id=st['st'].stx_mnt_id,
+            attributes=st['attributes'],
+            xattrs=[],
+            zfs_attrs=['ARCHIVE'],
+        )
 
     @private
-    def listdir_request_mask(self, select):
+    def listdir_request_mask(self, select: list[str | list[str]] | None) -> DirectoryRequestMask | None:
         """ create request mask for directory listing """
         if not select:
             # request_mask=None means ALL in the directory iterator
             return None
 
-        request_mask = 0
+        request_mask = DirectoryRequestMask(0)
         for i in select:
             # select may be list [key, new_name] to allow
             # equivalent of SELECT AS.
@@ -387,8 +407,13 @@ class FilesystemService(Service):
 
         return request_mask
 
-    @api_method(FilesystemListdirArgs, FilesystemListdirResult, roles=['FILESYSTEM_ATTRS_READ'])
-    def listdir(self, path, filters, options):
+    @api_method(FilesystemListdirArgs, FilesystemListdirResult, roles=['FILESYSTEM_ATTRS_READ'], check_annotations=True)
+    def listdir(
+        self,
+        path: str,
+        filters: QueryFilters,
+        options: QueryOptions,
+    ) -> list[FilesystemListdirResultItem] | FilesystemListdirResultItem | int:
         """
         Get the contents of a directory.
 
@@ -399,24 +424,25 @@ class FilesystemService(Service):
         ZFS attributes for files in a directory.
 
         """
-        path = pathlib.Path(path)
-        if not path.exists():
+        p = pathlib.Path(path)
+        if not p.exists():
             raise CallError(f'Directory {path} does not exist', errno.ENOENT)
 
-        if not path.is_dir():
+        if not p.is_dir():
             raise CallError(f'Path {path} is not a directory', errno.ENOTDIR)
 
-        if options.get('count') is True:
+        request_mask: DirectoryRequestMask | None
+        if options.count:
             # We're just getting count, drop any unnecessary info
-            request_mask = 0
+            request_mask = DirectoryRequestMask(0)
         else:
-            request_mask = self.listdir_request_mask(options.get('select', None))
+            request_mask = self.listdir_request_mask(options.select)
 
         # None request_mask means "everything"
         if request_mask is None or (request_mask & DirectoryRequestMask.ZFS_ATTRS):
             # Make sure this is actually ZFS before issuing FS ioctls
             try:
-                self.get_zfs_attributes(str(path))
+                self.get_zfs_attributes(str(p))
             except CallError:
                 raise
             except Exception:
@@ -437,7 +463,7 @@ class FilesystemService(Service):
             else:
                 continue
 
-        if path.absolute() == pathlib.Path('/mnt'):
+        if p.absolute() == pathlib.Path('/mnt'):
             # sometimes (on failures) the top-level directory
             # where the zpool is mounted does not get removed
             # after the zpool is exported. WebUI calls this
@@ -448,13 +474,14 @@ class FilesystemService(Service):
             # filter these here.
             filters.extend([['is_mountpoint', '=', True], ['name', '!=', IX_APPS_DIR_NAME]])
 
-        return filter_list(
-            iter_listdir(path, file_type=file_type, request_mask=request_mask),
-            filters, options,
-        )
+        return filter_list_model(filter_list(
+            iter_listdir(p, file_type=file_type, request_mask=request_mask),
+            filters,
+            options.model_dump(),
+        ), FilesystemListdirResultItem)
 
-    @api_method(FilesystemStatArgs, FilesystemStatResult, roles=['FILESYSTEM_ATTRS_READ'])
-    def stat(self, _path):
+    @api_method(FilesystemStatArgs, FilesystemStatResult, roles=['FILESYSTEM_ATTRS_READ'], check_annotations=True)
+    def stat(self, _path: str) -> FilesystemStatData:
         """
         Return filesystem information for a given path.
 
@@ -520,48 +547,47 @@ class FilesystemService(Service):
 
         realpath = path.resolve().as_posix() if st['etype'] == 'SYMLINK' else path.absolute().as_posix()
 
-        stat = {
-            'realpath': realpath,
-            'type': st['etype'],
-            'size': st['st'].stx_size,
-            'allocation_size': st['st'].stx_blocks * 512,
-            'mode': st['st'].stx_mode,
-            'uid': st['st'].stx_uid,
-            'gid': st['st'].stx_gid,
-            'atime': st['st'].stx_atime,
-            'mtime': st['st'].stx_mtime,
-            'ctime': st['st'].stx_ctime,
-            'btime': st['st'].stx_btime,
-            'mount_id': st['st'].stx_mnt_id,
-            'dev': st['st'].stx_dev,
-            'inode': st['st'].stx_ino,
-            'nlink': st['st'].stx_nlink,
-            'is_mountpoint': 'MOUNT_ROOT' in st['attributes'],
-            'is_ctldir': st['is_ctldir'],
-            'attributes': st['attributes']
-        }
-
         try:
-            stat['user'] = pwd.getpwuid(stat['uid']).pw_name
+            user: str | None = pwd.getpwuid(st['st'].stx_uid).pw_name
         except KeyError:
-            if stat['uid'] == SYNTHETIC_CONTAINER_ROOT['pw_uid']:
-                stat['user'] = SYNTHETIC_CONTAINER_ROOT['pw_name']
+            if st['st'].stx_uid == SYNTHETIC_CONTAINER_ROOT['pw_uid']:
+                user = SYNTHETIC_CONTAINER_ROOT['pw_name']  # type: ignore[assignment]
             else:
-                stat['user'] = None
+                user = None
 
         try:
-            stat['group'] = grp.getgrgid(stat['gid']).gr_name
+            group = grp.getgrgid(st['st'].stx_gid).gr_name
         except KeyError:
-            stat['group'] = None
+            group = None
 
-        stat['acl'] = acl_is_present(os.listxattr(path))
-
-        return stat
+        return FilesystemStatData(
+            realpath=realpath,
+            type=st['etype'],
+            size=st['st'].stx_size,
+            allocation_size=st['st'].stx_blocks * 512,
+            mode=st['st'].stx_mode,
+            uid=st['st'].stx_uid,
+            gid=st['st'].stx_gid,
+            atime=st['st'].stx_atime,
+            mtime=st['st'].stx_mtime,
+            ctime=st['st'].stx_ctime,
+            btime=st['st'].stx_btime,
+            mount_id=st['st'].stx_mnt_id,
+            dev=st['st'].stx_dev,
+            inode=st['st'].stx_ino,
+            nlink=st['st'].stx_nlink,
+            is_mountpoint='MOUNT_ROOT' in st['attributes'],
+            is_ctldir=st['is_ctldir'],
+            attributes=st['attributes'],
+            user=user,
+            group=group,
+            acl=acl_is_present(os.listxattr(path)),
+        )
 
     # WARNING: following method cannot currently be audited properly due to RFC limitations on
     # syslog message size.
-    @api_method(FilesystemReceiveFileArgs, FilesystemReceiveFileResult, private=True)
-    def file_receive(self, path, content, options):
+    @api_method(FilesystemReceiveFileArgs, FilesystemReceiveFileResult, private=True, check_annotations=True)
+    def file_receive(self, path: str, content: str, options: FilesystemReceiveFileOptions) -> Literal[True]:
         """
         Simplified file receiving method for small files.
 
@@ -575,29 +601,36 @@ class FilesystemService(Service):
 
         dirname = os.path.dirname(path)
         # NOTE: os.makedirs follows symlinks, so an attacker could cause directories
-        # to be created at symlink target locations as a side-effect. The subsequent
+        # to be created at symlink target locations as a side effect. The subsequent
         # safe_open blocks the actual file write via RESOLVE_NO_SYMLINKS, but the
         # created directories are not rolled back. Fully safe directory creation
         # would require an fd-walking mkdirat implementation.
         os.makedirs(dirname, exist_ok=True)
 
-        with safe_open(path, 'ab' if options.get('append') else 'wb+') as f:
+        with safe_open(path, 'ab' if options.append else 'wb+') as f:
             f.write(binascii.a2b_base64(content))
-            if mode := options.get('mode'):
+            if mode := options.mode:
                 os.fchmod(f.fileno(), mode)
             # -1 means don't change uid/gid if the one provided is
             # the same that is on disk already
-            os.fchown(f.fileno(), options.get('uid', -1), options.get('gid', -1))
+            os.fchown(f.fileno(), options.uid, options.gid)
             f.flush()
 
         return True
 
-    @api_method(FilesystemGetArgs, FilesystemGetResult, audit='Filesystem get', roles=['FULL_ADMIN'])
+    @api_method(
+        FilesystemGetArgs,
+        FilesystemGetResult,
+        audit='Filesystem get',
+        roles=['FULL_ADMIN'],
+        check_annotations=True,
+    )
     @job(pipes=["output"])
-    def get(self, job, path):
+    def get(self, job: Job, path: str) -> None:
         """
         Job to get contents of `path`.
         """
+        assert job.pipes.output is not None
 
         if not os.path.isfile(path):
             raise CallError(f'{path} is not a file')
@@ -605,9 +638,15 @@ class FilesystemService(Service):
         with safe_open(path, 'rb') as f:
             shutil.copyfileobj(f, job.pipes.output.w)
 
-    @api_method(FilesystemPutArgs, FilesystemPutResult, audit='Filesystem put', roles=['FULL_ADMIN'])
+    @api_method(
+        FilesystemPutArgs,
+        FilesystemPutResult,
+        audit='Filesystem put',
+        roles=['FULL_ADMIN'],
+        check_annotations=True,
+    )
     @job(pipes=["input"])
-    def put(self, job, path, options):
+    def put(self, job: Job, path: str, options: FilesystemPutOptions) -> Literal[True]:
         """
         Job to put contents to `path`.
         """
@@ -625,17 +664,15 @@ class FilesystemService(Service):
             # created directories are not rolled back. Fully safe directory creation
             # would require an fd-walking mkdirat implementation.
             os.makedirs(dirname)
-        if options.get('append'):
+        if options.append:
             openmode = 'ab'
         else:
             openmode = 'wb+'
 
-        mode = options.get('mode')
-
         try:
             with safe_open(path, openmode) as f:
-                if mode:
-                    os.fchmod(f.fileno(), mode)
+                if options.mode:
+                    os.fchmod(f.fileno(), options.mode)
 
                 shutil.copyfileobj(job.pipes.input.r, f)
         except PermissionError:
@@ -643,8 +680,8 @@ class FilesystemService(Service):
 
         return True
 
-    @api_method(FilesystemStatfsArgs, FilesystemStatfsResult, roles=['FILESYSTEM_ATTRS_READ'])
-    def statfs(self, path):
+    @api_method(FilesystemStatfsArgs, FilesystemStatfsResult, roles=['FILESYSTEM_ATTRS_READ'], check_annotations=True)
+    def statfs(self, path: str) -> FilesystemStatfsData:
         """
         Return stats from the filesystem of a given path.
 
@@ -672,23 +709,26 @@ class FilesystemService(Service):
                 continue
             flags.append(flag)
 
-        result = {
-            'flags': flags,
-            'fstype': mntinfo['fs_type'].lower(),
-            'source': mntinfo['mount_source'],
-            'dest': mntinfo['mountpoint'],
-            'blocksize': st.f_frsize,
-            'total_blocks': st.f_blocks,
-            'free_blocks': st.f_bfree,
-            'avail_blocks': st.f_bavail,
-            'files': st.f_files,
-            'free_files': st.f_ffree,
-            'name_max': st.f_namemax,
-            'fsid': str(st.f_fsid),
-            'total_bytes': st.f_blocks * st.f_frsize,
-            'free_bytes': st.f_bfree * st.f_frsize,
-            'avail_bytes': st.f_bavail * st.f_frsize,
-        }
-        for k in ['total_blocks', 'free_blocks', 'avail_blocks', 'total_bytes', 'free_bytes', 'avail_bytes']:
-            result[f'{k}_str'] = str(result[k])
-        return result
+        return FilesystemStatfsData(
+            flags=flags,
+            fstype=(mntinfo['fs_type'] or '').lower(),
+            source=mntinfo['mount_source'],
+            dest=mntinfo['mountpoint'],
+            blocksize=st.f_frsize,
+            total_blocks=st.f_blocks,
+            total_blocks_str=str(st.f_blocks),
+            free_blocks=st.f_bfree,
+            free_blocks_str=str(st.f_bfree),
+            avail_blocks=st.f_bavail,
+            avail_blocks_str=str(st.f_bavail),
+            files=st.f_files,
+            free_files=st.f_ffree,
+            name_max=st.f_namemax,
+            fsid=str(st.f_fsid),
+            total_bytes=st.f_blocks * st.f_frsize,
+            total_bytes_str=str(st.f_blocks * st.f_frsize),
+            free_bytes=st.f_bfree * st.f_frsize,
+            free_bytes_str=str(st.f_bfree * st.f_frsize),
+            avail_bytes=st.f_bavail * st.f_frsize,
+            avail_bytes_str=str(st.f_bavail * st.f_frsize),
+        )

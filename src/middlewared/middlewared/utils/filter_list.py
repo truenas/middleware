@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Iterable, Literal, Required, Sequence, TypedDict, TypeVar, overload
+from typing import Any, Iterable, Literal, Mapping, Required, Sequence, TypedDict, TypeVar, overload
 
 import truenas_pyfilter as _tf
 from truenas_pyfilter import CompiledFilters, CompiledOptions, match  # noqa: F401 (re-exported)
@@ -13,7 +13,7 @@ from middlewared.service_exception import MatchNotFound
 CF_EMPTY: CompiledFilters = _tf.compile_filters([])
 CO_EMPTY: CompiledOptions = _tf.compile_options()
 
-_Entry = TypeVar('_Entry', bound=dict[str, Any])
+_Entry = TypeVar('_Entry', bound=Mapping[str, Any])
 
 
 def _build_compiled_options(
@@ -161,6 +161,16 @@ def filter_list(
         except IndexError:
             raise MatchNotFound() from None
     return rv
+
+
+def filter_list_model[E](result: dict[str, Any] | list[Any] | int, item: type[E]) -> list[E] | E | int:
+    if isinstance(result, int):
+        return result
+
+    if isinstance(result, dict):
+        return item(**result)
+
+    return [item(**row) for row in result]
 
 
 def compile_filters(filters: list[Sequence[object]]) -> CompiledFilters:

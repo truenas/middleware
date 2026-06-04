@@ -1,4 +1,4 @@
-from typing import Any, Literal, Self
+from typing import Any, Literal, Self, TypeAlias
 
 from pydantic import Field, model_validator
 
@@ -6,7 +6,8 @@ from middlewared.api.base import (
     BaseModel,
     NonEmptyString,
     UnixPerm,
-    query_result,
+    query_result_from_item,
+    query_result_item,
     single_argument_args,
     single_argument_result,
 )
@@ -21,16 +22,18 @@ from .acl import AceWhoId
 from .common import QueryFilters, QueryOptions
 
 __all__ = [
+    'FilesystemDirEntry',
     'FilesystemChownArgs', 'FilesystemChownResult',
     'FilesystemSetpermArgs', 'FilesystemSetpermResult',
-    'FilesystemListdirArgs', 'FilesystemListdirResult',
-    'FilesystemMkdirArgs', 'FilesystemMkdirResult',
-    'FilesystemStatArgs', 'FilesystemStatResult',
-    'FilesystemStatfsArgs', 'FilesystemStatfsResult',
-    'FilesystemSetZfsAttributesArgs', 'FilesystemSetZfsAttributesResult',
+    'FilesystemListdirResultItem', 'FilesystemListdirArgs', 'FilesystemListdirResult',
+    'FilesystemMkdirData', 'FilesystemMkdirOptions', 'FilesystemMkdirArgs', 'FilesystemMkdirResult',
+    'FilesystemStatData', 'FilesystemStatArgs', 'FilesystemStatResult',
+    'FilesystemStatfsData', 'FilesystemStatfsArgs', 'FilesystemStatfsResult',
+    'ZFSFileAttrsData',
+    'FilesystemSetZfsAttributesData', 'FilesystemSetZfsAttributesArgs', 'FilesystemSetZfsAttributesResult',
     'FilesystemGetZfsAttributesArgs', 'FilesystemGetZfsAttributesResult',
     'FilesystemGetArgs', 'FilesystemGetResult',
-    'FilesystemPutArgs', 'FilesystemPutResult',
+    'FilesystemPutOptions', 'FilesystemPutArgs', 'FilesystemPutResult',
     'FileFollowTailEventSourceArgs', 'FileFollowTailEventSourceEvent',
 ]
 
@@ -202,7 +205,8 @@ class FilesystemListdirArgs(BaseModel):
     """Query options for sorting and pagination."""
 
 
-FilesystemListdirResult = query_result(FilesystemDirEntry, "FilesystemListdirResult")
+FilesystemListdirResultItem: TypeAlias = query_result_item(FilesystemDirEntry)
+FilesystemListdirResult = query_result_from_item(FilesystemListdirResultItem, "FilesystemListdirResult")
 
 
 class FilesystemMkdirOptions(BaseModel):
@@ -212,12 +216,16 @@ class FilesystemMkdirOptions(BaseModel):
     """Whether to raise an error if chmod fails."""
 
 
-@single_argument_args('filesystem_mkdir')
-class FilesystemMkdirArgs(BaseModel):
+class FilesystemMkdirData(BaseModel):
     path: NonEmptyString
     """Path where the new directory should be created."""
     options: FilesystemMkdirOptions = Field(default=FilesystemMkdirOptions())
     """Options controlling directory creation behavior."""
+
+
+class FilesystemMkdirArgs(BaseModel):
+    data: FilesystemMkdirData
+    """Directory creation options."""
 
 
 class FilesystemMkdirResult(BaseModel):
@@ -387,14 +395,18 @@ class FilesystemSetZfsAttributesOptions(BaseModel):
     only). An empty list is rejected."""
 
 
-@single_argument_args('set_zfs_file_attributes')
-class FilesystemSetZfsAttributesArgs(BaseModel):
+class FilesystemSetZfsAttributesData(BaseModel):
     path: NonEmptyString
     """Path to the file or directory to set ZFS attributes on."""
     zfs_file_attributes: ZFSFileAttrsData
     """ZFS file attributes to set."""
     options: FilesystemSetZfsAttributesOptions = Field(default=FilesystemSetZfsAttributesOptions())
     """Additional options including recursion behavior."""
+
+
+class FilesystemSetZfsAttributesArgs(BaseModel):
+    data: FilesystemSetZfsAttributesData
+    """ZFS attribute set parameters."""
 
 
 class FilesystemSetZfsAttributesResult(BaseModel):

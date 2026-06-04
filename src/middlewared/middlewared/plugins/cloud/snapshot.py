@@ -68,17 +68,17 @@ def create_snapshot(
     snapshot = middleware.call_sync2(
         middleware.services.zfs.resource.snapshot.create_impl,
         ZFSResourceSnapshotCreateQuery(
-            dataset=st["source"],
+            dataset=st.source,
             name=snapshot_name,
-            recursive=st["dest"] == path,
+            recursive=st.dest == path,
         )
     )
     # Construct the full path to the snapshot, including any subdirectory
     snapshot_path = os.path.join(
-        st["dest"],
+        st.dest,
         ".zfs",
         "snapshot",
         snapshot_name,
-        os.path.relpath(path, st["dest"]) if path != st["dest"] else "",
+        os.path.relpath(path, st.dest) if path != st.dest else "",
     )
     return snapshot["name"], os.path.normpath(snapshot_path)

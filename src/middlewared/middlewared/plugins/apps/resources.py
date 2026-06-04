@@ -96,7 +96,7 @@ async def ip_choices(context: ServiceContext) -> AppIpChoices:
 
 async def available_space(context: ServiceContext) -> int:
     await context.call2(context.s.docker.validate_state)
-    return cast(int, (await context.middleware.call('filesystem.statfs', IX_APPS_MOUNT_PATH))['avail_bytes'])
+    return cast(int, (await context.middleware.call('filesystem.statfs', IX_APPS_MOUNT_PATH)).avail_bytes)
 
 
 async def gpu_choices(context: ServiceContext) -> AppGPUResponse:

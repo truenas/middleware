@@ -49,6 +49,7 @@ module = [
     "pam.*",
     "samba.*",
     "pyctdb.*",
+    "pyinotify.*",
     "pyudev.*",
     "tdb.*",
     "truenas_pam_faillog",

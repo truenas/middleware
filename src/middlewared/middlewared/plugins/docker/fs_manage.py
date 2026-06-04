@@ -49,11 +49,11 @@ async def ix_apps_is_mounted(context: ServiceContext, dataset_to_check: str | No
             return False
         raise
 
-    if fs_details["source"].startswith("boot-pool/"):
+    if fs_details.source.startswith("boot-pool/"):
         return False
 
     if dataset_to_check:
-        return bool(fs_details["source"] == dataset_to_check)
+        return bool(fs_details.source == dataset_to_check)
 
     return True
 
