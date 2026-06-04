@@ -186,7 +186,6 @@ class BaseModel(PydanticBaseModel, metaclass=_BaseModelMetaclass):
         extra="forbid",
         strict=True,
         str_max_length=1024,
-        use_attribute_docstrings=True,
         arbitrary_types_allowed=True,
     )
 

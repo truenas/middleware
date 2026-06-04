@@ -21,71 +21,43 @@ __all__ = [
 
 
 class SupportEntry(BaseModel):
-    id: int
-    """Unique identifier for the support configuration."""
-    enabled: bool | None
-    """Whether support is enabled. `null` if not available."""
-    name: str
-    """Primary contact name for support."""
-    title: str
-    """Primary contact title or role."""
-    email: str
-    """Primary contact email address."""
-    phone: str
-    """Primary contact phone number."""
-    secondary_name: str
-    """Secondary contact name for support."""
-    secondary_title: str
-    """Secondary contact title or role."""
-    secondary_email: str
-    """Secondary contact email address."""
-    secondary_phone: str
-    """Secondary contact phone number."""
+    id: int = Field(description="Unique identifier for the support configuration.")
+    enabled: bool | None = Field(description="Whether support is enabled. `null` if not available.")
+    name: str = Field(description="Primary contact name for support.")
+    title: str = Field(description="Primary contact title or role.")
+    email: str = Field(description="Primary contact email address.")
+    phone: str = Field(description="Primary contact phone number.")
+    secondary_name: str = Field(description="Secondary contact name for support.")
+    secondary_title: str = Field(description="Secondary contact title or role.")
+    secondary_email: str = Field(description="Secondary contact email address.")
+    secondary_phone: str = Field(description="Secondary contact phone number.")
 
 
 class SupportNewTicketCommunity(BaseModel):
-    title: str = Field(max_length=200)
-    """Title of the support ticket."""
-    body: str = Field(max_length=20000)
-    """Detailed description of the issue or request."""
-    attach_debug: bool = False
-    """Whether to attach debug information to the ticket."""
-    token: Secret[str]
-    """Authentication token for creating community tickets."""
-    type: Literal['BUG', 'FEATURE']
-    """Type of ticket being created."""
-    cc: list[EmailString] = []
-    """Array of email addresses to copy on the ticket."""
+    title: str = Field(max_length=200, description="Title of the support ticket.")
+    body: str = Field(max_length=20000, description="Detailed description of the issue or request.")
+    attach_debug: bool = Field(default=False, description="Whether to attach debug information to the ticket.")
+    token: Secret[str] = Field(description="Authentication token for creating community tickets.")
+    type: Literal['BUG', 'FEATURE'] = Field(description="Type of ticket being created.")
+    cc: list[EmailString] = Field(default=[], description="Array of email addresses to copy on the ticket.")
 
 
 class SupportNewTicketEnterprise(BaseModel):
-    title: str = Field(max_length=200)
-    """Title of the support ticket."""
-    body: str = Field(max_length=20000)
-    """Detailed description of the issue or request."""
-    category: str
-    """Category or classification of the support issue."""
-    attach_debug: bool = False
-    """Whether to attach debug information to the ticket."""
-    criticality: str
-    """Priority or criticality level of the issue."""
-    environment: LongString
-    """Description of the environment where the issue occurs."""
-    phone: str
-    """Contact phone number for this ticket."""
-    name: str
-    """Contact name for this ticket."""
-    email: EmailString
-    """Contact email address for this ticket."""
-    cc: list[EmailString] = []
-    """Array of email addresses to copy on the ticket."""
+    title: str = Field(max_length=200, description="Title of the support ticket.")
+    body: str = Field(max_length=20000, description="Detailed description of the issue or request.")
+    category: str = Field(description="Category or classification of the support issue.")
+    attach_debug: bool = Field(default=False, description="Whether to attach debug information to the ticket.")
+    criticality: str = Field(description="Priority or criticality level of the issue.")
+    environment: LongString = Field(description="Description of the environment where the issue occurs.")
+    phone: str = Field(description="Contact phone number for this ticket.")
+    name: str = Field(description="Contact name for this ticket.")
+    email: EmailString = Field(description="Contact email address for this ticket.")
+    cc: list[EmailString] = Field(default=[], description="Array of email addresses to copy on the ticket.")
 
 
 class SupportSimilarIssue(BaseModel):
-    url: str = NotRequired
-    """URL link to the similar issue or knowledge base article."""
-    summary: str = NotRequired
-    """Brief summary of the similar issue."""
+    url: str = Field(default=NotRequired, description="URL link to the similar issue or knowledge base article.")
+    summary: str = Field(default=NotRequired, description="Brief summary of the similar issue.")
 
     class Config:
         extra = 'allow'
@@ -97,17 +69,13 @@ class SupportUpdate(SupportEntry, metaclass=ForUpdateMetaclass):
 
 @single_argument_args('data')
 class SupportAttachTicketArgs(BaseModel):
-    ticket: int
-    """Ticket number to attach the file to."""
-    filename: LongString
-    """Path to the file to attach to the ticket."""
-    token: Secret[str] = NotRequired
-    """Authentication token for attaching files."""
+    ticket: int = Field(description="Ticket number to attach the file to.")
+    filename: LongString = Field(description="Path to the file to attach to the ticket.")
+    token: Secret[str] = Field(default=NotRequired, description="Authentication token for attaching files.")
 
 
 class SupportAttachTicketResult(BaseModel):
-    result: None
-    """Returns `null` on successful file attachment."""
+    result: None = Field(description="Returns `null` on successful file attachment.")
 
 
 class SupportAttachTicketMaxSizeArgs(BaseModel):
@@ -115,8 +83,7 @@ class SupportAttachTicketMaxSizeArgs(BaseModel):
 
 
 class SupportAttachTicketMaxSizeResult(BaseModel):
-    result: int
-    """Maximum file size in bytes allowed for ticket attachments."""
+    result: int = Field(description="Maximum file size in bytes allowed for ticket attachments.")
 
 
 class SupportFieldsArgs(BaseModel):
@@ -124,8 +91,7 @@ class SupportFieldsArgs(BaseModel):
 
 
 class SupportFieldsResult(BaseModel):
-    result: list[list[str]]
-    """Pairs of field names and their titles for Proactive Support."""
+    result: list[list[str]] = Field(description="Pairs of field names and their titles for Proactive Support.")
 
 
 class SupportIsAvailableArgs(BaseModel):
@@ -133,8 +99,7 @@ class SupportIsAvailableArgs(BaseModel):
 
 
 class SupportIsAvailableResult(BaseModel):
-    result: bool
-    """Whether support functionality is available on this system."""
+    result: bool = Field(description="Whether support functionality is available on this system.")
 
 
 class SupportIsAvailableAndEnabledArgs(BaseModel):
@@ -142,46 +107,39 @@ class SupportIsAvailableAndEnabledArgs(BaseModel):
 
 
 class SupportIsAvailableAndEnabledResult(BaseModel):
-    result: bool
-    """Whether support functionality is both available and enabled."""
+    result: bool = Field(description="Whether support functionality is both available and enabled.")
 
 
 class SupportNewTicketArgs(BaseModel):
-    data: SupportNewTicketEnterprise | SupportNewTicketCommunity
-    """Support ticket data for either enterprise or community support."""
+    data: SupportNewTicketEnterprise | SupportNewTicketCommunity = Field(
+        description="Support ticket data for either enterprise or community support.",
+    )
 
 
 class SupportNewTicket(BaseModel):
-    ticket: int | None
-    """Ticket number if successfully created. `null` if creation failed."""
-    url: str | None
-    """URL to view the created ticket. `null` if not available."""
-    has_debug: bool
-    """Whether debug information was attached to the ticket."""
-    debug_attach_error: str | None
-    """If attaching debug information failed, the error message will appear here."""
+    ticket: int | None = Field(description="Ticket number if successfully created. `null` if creation failed.")
+    url: str | None = Field(description="URL to view the created ticket. `null` if not available.")
+    has_debug: bool = Field(description="Whether debug information was attached to the ticket.")
+    debug_attach_error: str | None = Field(
+        description="If attaching debug information failed, the error message will appear here.",
+    )
 
 
 class SupportNewTicketResult(BaseModel):
-    result: SupportNewTicket
-    """Created support ticket details."""
+    result: SupportNewTicket = Field(description="Created support ticket details.")
 
 
 class SupportSimilarIssuesArgs(BaseModel):
-    query: str
-    """Search query to find similar issues or knowledge base articles."""
+    query: str = Field(description="Search query to find similar issues or knowledge base articles.")
 
 
 class SupportSimilarIssuesResult(BaseModel):
-    result: list[SupportSimilarIssue]
-    """Array of similar issues found based on the search query."""
+    result: list[SupportSimilarIssue] = Field(description="Array of similar issues found based on the search query.")
 
 
 class SupportUpdateArgs(BaseModel):
-    data: SupportUpdate
-    """Updated support configuration data."""
+    data: SupportUpdate = Field(description="Updated support configuration data.")
 
 
 class SupportUpdateResult(BaseModel):
-    result: SupportEntry
-    """The updated support configuration."""
+    result: SupportEntry = Field(description="The updated support configuration.")

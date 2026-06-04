@@ -50,44 +50,25 @@ class Maintainer(BaseModel):
 
 
 class CatalogAppInfo(BaseModel):
-    app_readme: LongString | None
-    """HTML content of the app README."""
-    categories: list[str]
-    """List of categories for the app."""
-    description: str
-    """Short description of the app."""
-    healthy: bool
-    """Health status of the app."""
-    healthy_error: str | None = None
-    """Error if app is not healthy."""
-    home: str
-    """Homepage URL of the app."""
-    location: str
-    """Local path to the app's location."""
-    latest_version: str | None
-    """Latest available app version."""
-    latest_app_version: str | None
-    """Latest available app version in repository."""
-    latest_human_version: str | None
-    """Human-readable version of the app."""
-    last_update: datetime | None
-    """Timestamp of the last update in ISO format."""
-    name: str
-    """Name of the app."""
-    recommended: bool
-    """Indicates if the app is recommended."""
-    title: str
-    """Title of the app."""
-    maintainers: list[Maintainer]
-    """List of app maintainers."""
-    tags: list[str]
-    """Tags associated with the app."""
-    screenshots: list[str]
-    """List of screenshot URLs."""
-    sources: list[str]
-    """List of source URLs."""
-    icon_url: str | None = None
-    """URL of the app icon"""
+    app_readme: LongString | None = Field(description="HTML content of the app README.")
+    categories: list[str] = Field(description="List of categories for the app.")
+    description: str = Field(description="Short description of the app.")
+    healthy: bool = Field(description="Health status of the app.")
+    healthy_error: str | None = Field(default=None, description="Error if app is not healthy.")
+    home: str = Field(description="Homepage URL of the app.")
+    location: str = Field(description="Local path to the app's location.")
+    latest_version: str | None = Field(description="Latest available app version.")
+    latest_app_version: str | None = Field(description="Latest available app version in repository.")
+    latest_human_version: str | None = Field(description="Human-readable version of the app.")
+    last_update: datetime | None = Field(description="Timestamp of the last update in ISO format.")
+    name: str = Field(description="Name of the app.")
+    recommended: bool = Field(description="Indicates if the app is recommended.")
+    title: str = Field(description="Title of the app.")
+    maintainers: list[Maintainer] = Field(description="List of app maintainers.")
+    tags: list[str] = Field(description="Tags associated with the app.")
+    screenshots: list[str] = Field(description="List of screenshot URLs.")
+    sources: list[str] = Field(description="List of source URLs.")
+    icon_url: str | None = Field(default=None, description="URL of the app icon")
 
     # We do this because if we change anything in catalog.json, even older releases will
     # get this new field and different roles will start breaking due to this

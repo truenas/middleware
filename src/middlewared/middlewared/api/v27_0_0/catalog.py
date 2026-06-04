@@ -15,29 +15,27 @@ __all__ = [
 
 
 class CatalogEntry(BaseModel):
-    id: NonEmptyString
-    """Unique identifier for the catalog."""
-    label: NonEmptyString = Field(pattern=r'^\w+[\w.-]*$')
-    """Catalog identifier. Must start with alphanumeric, then allow alphanumeric, periods, and hyphens."""
-    preferred_trains: list[NonEmptyString]
-    """Array of preferred train names for this catalog."""
-    location: NonEmptyString
-    """Git repository URL or local path to the catalog."""
+    id: NonEmptyString = Field(description="Unique identifier for the catalog.")
+    label: NonEmptyString = Field(
+        pattern=r'^\w+[\w.-]*$',
+        description="Catalog identifier. Must start with alphanumeric, then allow alphanumeric, periods, and hyphens.",
+    )
+    preferred_trains: list[NonEmptyString] = Field(description="Array of preferred train names for this catalog.")
+    location: NonEmptyString = Field(description="Git repository URL or local path to the catalog.")
 
 
 class CatalogUpdate(BaseModel, metaclass=ForUpdateMetaclass):
-    preferred_trains: list[NonEmptyString]
-    """Updated array of preferred train names for the catalog."""
+    preferred_trains: list[NonEmptyString] = Field(
+        description="Updated array of preferred train names for the catalog.",
+    )
 
 
 class CatalogUpdateArgs(BaseModel):
-    data: CatalogUpdate
-    """Catalog update parameters."""
+    data: CatalogUpdate = Field(description="Catalog update parameters.")
 
 
 class CatalogUpdateResult(BaseModel):
-    result: CatalogEntry
-    """The updated catalog configuration."""
+    result: CatalogEntry = Field(description="The updated catalog configuration.")
 
 
 class CatalogTrainsArgs(BaseModel):
@@ -49,8 +47,7 @@ class CatalogTrainsResponse(RootModel[list[NonEmptyString]]):
 
 
 class CatalogTrainsResult(BaseModel):
-    result: CatalogTrainsResponse
-    """Array of available train names in the catalog."""
+    result: CatalogTrainsResponse = Field(description="Array of available train names in the catalog.")
 
 
 class CatalogSyncArgs(BaseModel):
@@ -58,8 +55,7 @@ class CatalogSyncArgs(BaseModel):
 
 
 class CatalogSyncResult(BaseModel):
-    result: None
-    """Returns `null` when the catalog sync is successfully completed."""
+    result: None = Field(description="Returns `null` when the catalog sync is successfully completed.")
 
 
 class CatalogSyncedArgs(BaseModel):
@@ -67,58 +63,35 @@ class CatalogSyncedArgs(BaseModel):
 
 
 class CatalogSyncedResult(BaseModel):
-    result: bool
-    """Returns `true` if the catalog has been synced at least once, `false` otherwise."""
+    result: bool = Field(description="Returns `true` if the catalog has been synced at least once, `false` otherwise.")
 
 
 class Maintainer(BaseModel):
-    name: str
-    """Name of the app maintainer."""
-    email: str
-    """Email address of the app maintainer."""
-    url: str | None
-    """Website URL of the app maintainer or `null`."""
+    name: str = Field(description="Name of the app maintainer.")
+    email: str = Field(description="Email address of the app maintainer.")
+    url: str | None = Field(description="Website URL of the app maintainer or `null`.")
 
 
 class CatalogAppInfo(BaseModel):
-    app_readme: LongString | None
-    """HTML content of the app README."""
-    categories: list[str]
-    """List of categories for the app."""
-    description: str
-    """Short description of the app."""
-    healthy: bool
-    """Health status of the app."""
-    healthy_error: str | None = None
-    """Error if app is not healthy."""
-    home: str
-    """Homepage URL of the app."""
-    location: str
-    """Local path to the app's location."""
-    latest_version: str | None
-    """Latest available app version."""
-    latest_app_version: str | None
-    """Latest available app version in repository."""
-    latest_human_version: str | None
-    """Human-readable version of the app."""
-    last_update: datetime | None
-    """Timestamp of the last update in ISO format."""
-    name: str
-    """Name of the app."""
-    recommended: bool
-    """Indicates if the app is recommended."""
-    title: str
-    """Title of the app."""
-    maintainers: list[Maintainer]
-    """List of app maintainers."""
-    tags: list[str]
-    """Tags associated with the app."""
-    screenshots: list[str]
-    """List of screenshot URLs."""
-    sources: list[str]
-    """List of source URLs."""
-    icon_url: str | None = None
-    """URL of the app icon."""
+    app_readme: LongString | None = Field(description="HTML content of the app README.")
+    categories: list[str] = Field(description="List of categories for the app.")
+    description: str = Field(description="Short description of the app.")
+    healthy: bool = Field(description="Health status of the app.")
+    healthy_error: str | None = Field(default=None, description="Error if app is not healthy.")
+    home: str = Field(description="Homepage URL of the app.")
+    location: str = Field(description="Local path to the app's location.")
+    latest_version: str | None = Field(description="Latest available app version.")
+    latest_app_version: str | None = Field(description="Latest available app version in repository.")
+    latest_human_version: str | None = Field(description="Human-readable version of the app.")
+    last_update: datetime | None = Field(description="Timestamp of the last update in ISO format.")
+    name: str = Field(description="Name of the app.")
+    recommended: bool = Field(description="Indicates if the app is recommended.")
+    title: str = Field(description="Title of the app.")
+    maintainers: list[Maintainer] = Field(description="List of app maintainers.")
+    tags: list[str] = Field(description="Tags associated with the app.")
+    screenshots: list[str] = Field(description="List of screenshot URLs.")
+    sources: list[str] = Field(description="List of source URLs.")
+    icon_url: str | None = Field(default=None, description="URL of the app icon.")
 
     # We do this because if we change anything in catalog.json, even older releases will
     # get this new field and different roles will start breaking due to this
@@ -126,24 +99,21 @@ class CatalogAppInfo(BaseModel):
 
 
 class CatalogAppDetails(CatalogAppInfo):
-    versions: dict[str, Any]
-    """Mapping of version strings."""
+    versions: dict[str, Any] = Field(description="Mapping of version strings.")
 
 
 class CatalogApps(BaseModel):
-    cache: bool = True
-    """Whether to use cached catalog data if available."""
-    cache_only: bool = False
-    """Whether to only return cached data without fetching updates."""
-    retrieve_all_trains: bool = True
-    """Whether to retrieve apps from all available trains."""
-    trains: list[NonEmptyString] = Field(default_factory=list)
-    """Specific train names to retrieve apps from (empty array means all trains)."""
+    cache: bool = Field(default=True, description="Whether to use cached catalog data if available.")
+    cache_only: bool = Field(default=False, description="Whether to only return cached data without fetching updates.")
+    retrieve_all_trains: bool = Field(default=True, description="Whether to retrieve apps from all available trains.")
+    trains: list[NonEmptyString] = Field(
+        default_factory=list,
+        description="Specific train names to retrieve apps from (empty array means all trains).",
+    )
 
 
 class CatalogAppsArgs(BaseModel):
-    data: CatalogApps
-    """Catalog apps query parameters."""
+    data: CatalogApps = Field(description="Catalog apps query parameters.")
 
 
 class CatalogTrainInfo(RootModel[dict[str, CatalogAppInfo]]):
@@ -155,22 +125,21 @@ class CatalogAppsResponse(RootModel[dict[str, CatalogTrainInfo]]):
 
 
 class CatalogAppsResult(BaseModel):
-    result: CatalogAppsResponse
-    """Object mapping train names to their app information."""
+    result: CatalogAppsResponse = Field(description="Object mapping train names to their app information.")
 
 
 class CatalogAppVersionDetails(BaseModel):
-    train: NonEmptyString
-    """Train name where the app version is located."""
+    train: NonEmptyString = Field(description="Train name where the app version is located.")
 
 
 class CatalogGetAppDetailsArgs(BaseModel):
-    app_name: NonEmptyString
-    """Name of the app to get details for."""
-    app_version_details: CatalogAppVersionDetails
-    """Version and train information for the specific app."""
+    app_name: NonEmptyString = Field(description="Name of the app to get details for.")
+    app_version_details: CatalogAppVersionDetails = Field(
+        description="Version and train information for the specific app.",
+    )
 
 
 class CatalogGetAppDetailsResult(BaseModel):
-    result: CatalogAppDetails
-    """Detailed information about the requested app, including all available versions."""
+    result: CatalogAppDetails = Field(
+        description="Detailed information about the requested app, including all available versions.",
+    )

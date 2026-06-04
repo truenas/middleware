@@ -1,7 +1,7 @@
 import abc
 from typing import Annotated, Literal, Union
 
-from pydantic import Discriminator, Secret
+from pydantic import Discriminator, Field, Secret
 
 from middlewared.api.base import (
     BaseModel,
@@ -29,25 +29,24 @@ __all__ = ["KeychainCredentialEntry", "SSHKeyPairEntry", "SSHCredentialsEntry",
 class SSHKeyPair(BaseModel):
     """At least one of the two keys must be provided on creation."""
     private_key: LongString | None = None
-    public_key: LongString | None = None
-    """Can be omitted and automatically derived from the private key."""
+    public_key: LongString | None = Field(
+        default=None,
+        description="Can be omitted and automatically derived from the private key.",
+    )
 
 
 class SSHCredentials(BaseModel):
     host: str
     port: int = 22
     username: str = "root"
-    private_key: int
-    """Keychain Credential ID."""
-    remote_host_key: str
-    """Can be discovered with keychaincredential.remote_ssh_host_key_scan."""
+    private_key: int = Field(description="Keychain Credential ID.")
+    remote_host_key: str = Field(description="Can be discovered with keychaincredential.remote_ssh_host_key_scan.")
     connect_timeout: int = 10
 
 
 class KeychainCredentialEntry(BaseModel, abc.ABC):
     id: int
-    name: NonEmptyString
-    """Distinguishes this Keychain Credential from others."""
+    name: NonEmptyString = Field(description="Distinguishes this Keychain Credential from others.")
     type: Literal["SSH_KEY_PAIR", "SSH_CREDENTIALS"]
     attributes: Secret[SSHKeyPair | SSHCredentials]
 

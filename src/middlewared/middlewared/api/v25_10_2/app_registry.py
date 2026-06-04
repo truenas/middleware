@@ -1,4 +1,4 @@
-from pydantic import Secret
+from pydantic import Field, Secret
 
 from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, excluded_field
 
@@ -9,34 +9,35 @@ __all__ = [
 
 
 class AppRegistryEntry(BaseModel):
-    id: int
-    """Unique identifier for the container registry configuration."""
-    name: str
-    """Human-readable name for the container registry."""
-    description: str | None = None
-    """Optional description of the container registry or `null`."""
-    username: Secret[str]
-    """Username for registry authentication (masked for security)."""
-    password: Secret[str]
-    """Password or access token for registry authentication (masked for security)."""
-    uri: str
-    """Container registry URI endpoint."""
+    id: int = Field(description="Unique identifier for the container registry configuration.")
+    name: str = Field(description="Human-readable name for the container registry.")
+    description: str | None = Field(
+        default=None,
+        description="Optional description of the container registry or `null`.",
+    )
+    username: Secret[str] = Field(description="Username for registry authentication (masked for security).")
+    password: Secret[str] = Field(
+        description="Password or access token for registry authentication (masked for security).",
+    )
+    uri: str = Field(description="Container registry URI endpoint.")
 
 
 class AppRegistryCreate(AppRegistryEntry):
     id: Excluded = excluded_field()
-    uri: str = 'https://index.docker.io/v1/'
-    """Container registry URI endpoint (defaults to Docker Hub)."""
+    uri: str = Field(
+        default='https://index.docker.io/v1/',
+        description="Container registry URI endpoint (defaults to Docker Hub).",
+    )
 
 
 class AppRegistryCreateArgs(BaseModel):
-    app_registry_create: AppRegistryCreate
-    """Container registry configuration data for the new registry."""
+    app_registry_create: AppRegistryCreate = Field(
+        description="Container registry configuration data for the new registry.",
+    )
 
 
 class AppRegistryCreateResult(BaseModel):
-    result: AppRegistryEntry
-    """The created container registry configuration."""
+    result: AppRegistryEntry = Field(description="The created container registry configuration.")
 
 
 class AppRegistryUpdate(AppRegistryCreate, metaclass=ForUpdateMetaclass):
@@ -44,22 +45,17 @@ class AppRegistryUpdate(AppRegistryCreate, metaclass=ForUpdateMetaclass):
 
 
 class AppRegistryUpdateArgs(BaseModel):
-    id: int
-    """ID of the container registry to update."""
-    data: AppRegistryUpdate
-    """Updated container registry configuration data."""
+    id: int = Field(description="ID of the container registry to update.")
+    data: AppRegistryUpdate = Field(description="Updated container registry configuration data.")
 
 
 class AppRegistryUpdateResult(BaseModel):
-    result: AppRegistryEntry
-    """The updated container registry configuration."""
+    result: AppRegistryEntry = Field(description="The updated container registry configuration.")
 
 
 class AppRegistryDeleteArgs(BaseModel):
-    id: int
-    """ID of the container registry to delete."""
+    id: int = Field(description="ID of the container registry to delete.")
 
 
 class AppRegistryDeleteResult(BaseModel):
-    result: None
-    """Returns `null` when the container registry is successfully deleted."""
+    result: None = Field(description="Returns `null` when the container registry is successfully deleted.")

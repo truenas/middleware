@@ -95,14 +95,18 @@ class AppCreateArgs(BaseModel):
     custom_compose_config: Secret[dict] = Field(default_factory=dict)
     custom_compose_config_string: Secret[LongString] = ''
     catalog_app: str | None = None
-    app_name: str = Field(pattern=r'^[a-z]([-a-z0-9]*[a-z0-9])?$', min_length=1, max_length=40)
-    """
-    Application name must have the following:
-    1) Lowercase alphanumeric characters can be specified
-    2) Name must start with an alphabetic character and can end with alphanumeric character
-    3) Hyphen '-' is allowed but not as the first or last character
-    e.g abc123, abc, abcd-1232
-    """
+    app_name: str = Field(
+        pattern=r'^[a-z]([-a-z0-9]*[a-z0-9])?$',
+        min_length=1,
+        max_length=40,
+        description=(
+            "Application name must have the following:\n"
+            "1) Lowercase alphanumeric characters can be specified\n"
+            "2) Name must start with an alphabetic character and can end with alphanumeric character\n"
+            "3) Hyphen '-' is allowed but not as the first or last character\n"
+            "e.g abc123, abc, abcd-1232"
+        ),
+    )
     train: NonEmptyString = 'stable'
     version: NonEmptyString = 'latest'
 
@@ -348,24 +352,17 @@ class AppUpgradeSummaryArgs(BaseModel):
 
 
 class AppVersionInfo(BaseModel):
-    version: str
-    """Version of the app"""
-    human_version: str
-    """Human readable version of the app"""
+    version: str = Field(description="Version of the app")
+    human_version: str = Field(description="Human readable version of the app")
 
 
 @single_argument_result
 class AppUpgradeSummaryResult(BaseModel):
-    latest_version: str
-    """Latest version available for the app"""
-    latest_human_version: str
-    """Latest human readable version available for the app"""
-    upgrade_version: str
-    """Version user has requested to be upgraded at"""
-    upgrade_human_version: str
-    """Human readable version user has requested to be upgraded at"""
-    available_versions_for_upgrade: list[AppVersionInfo]
-    """List of available versions for upgrade"""
+    latest_version: str = Field(description="Latest version available for the app")
+    latest_human_version: str = Field(description="Latest human readable version available for the app")
+    upgrade_version: str = Field(description="Version user has requested to be upgraded at")
+    upgrade_human_version: str = Field(description="Human readable version user has requested to be upgraded at")
+    available_versions_for_upgrade: list[AppVersionInfo] = Field(description="List of available versions for upgrade")
     changelog: LongString | None
 
 

@@ -1,3 +1,5 @@
+from pydantic import Field
+
 from middlewared.api.base import BaseModel
 
 __all__ = ["SystemGeneralKbdmapChoicesArgs", "SystemGeneralKbdmapChoicesResult",]
@@ -8,5 +10,4 @@ class SystemGeneralKbdmapChoicesArgs(BaseModel):
 
 
 class SystemGeneralKbdmapChoicesResult(BaseModel):
-    result: dict[str, str]
-    """Object of available keyboard layout codes and their descriptive names."""
+    result: dict[str, str] = Field(description="Object of available keyboard layout codes and their descriptive names.")

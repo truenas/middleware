@@ -1,3 +1,5 @@
+from pydantic import Field
+
 from middlewared.api.base import BaseModel
 
 __all__ = [
@@ -15,12 +17,9 @@ class ContainerImageQueryRegistryResult(BaseModel):
 
 
 class ContainerImageQueryRegistryResultImage(BaseModel):
-    name: str
-    """Image name."""
-    versions: list["ContainerImageQueryRegistryResultImageVersion"]
-    """Available image versions."""
+    name: str = Field(description="Image name.")
+    versions: list["ContainerImageQueryRegistryResultImageVersion"] = Field(description="Available image versions.")
 
 
 class ContainerImageQueryRegistryResultImageVersion(BaseModel):
-    version: str
-    """Image version name."""
+    version: str = Field(description="Image version name.")
