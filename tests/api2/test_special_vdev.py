@@ -113,33 +113,30 @@ def test_special_vdev_mixed_types_should_fail():
     assert 'RAIDZ1' in ve.value.errors[0].errmsg and 'MIRROR' in ve.value.errors[0].errmsg
 
 
-def test_draid_special_with_dedicated_spares_should_fail():
+def test_draid_with_dedicated_spares_is_allowed():
     """
-    Test middleware validation: DRAID special vdevs cannot be used with dedicated spares.
-    This validates the fix at pool.py:302-306 (spare → spares).
+    Dedicated spares may coexist with dRAID vdevs.
     """
     unused_disks = call('disk.get_unused')
     if len(unused_disks) < 6:
         pytest.skip('Insufficient number of disks to perform this test')
 
-    with pytest.raises(ValidationErrors) as ve:
-        call('pool.create', {
-            'name': POOL_NAME,
-            'topology': {
-                'data': [{
-                    'type': 'MIRROR',
-                    'disks': [unused_disks[0]['name'], unused_disks[1]['name']]
-                }],
-                'special': [{
-                    'type': 'DRAID1',
-                    'disks': [unused_disks[2]['name'], unused_disks[3]['name'], unused_disks[4]['name']],
-                    'draid_spare_disks': 0,
-                }],
-                'spares': [unused_disks[5]['name']]
-            },
-            'allow_duplicate_serials': True,
-        }, job=True)
-
-    # Verify middleware validation caught it
-    assert ve.value.errors[0].attribute == 'pool_create.topology.spares'
-    assert 'Dedicated spare disks should not be used with dRAID' in ve.value.errors[0].errmsg
+    with another_pool({
+        'name': POOL_NAME,
+        'topology': {
+            'data': [{
+                'type': 'MIRROR',
+                'disks': [unused_disks[0]['name'], unused_disks[1]['name']]
+            }],
+            'special': [{
+                'type': 'DRAID1',
+                'disks': [unused_disks[2]['name'], unused_disks[3]['name'], unused_disks[4]['name']],
+                'draid_spare_disks': 0,
+            }],
+            'spares': [unused_disks[5]['name']]
+        },
+        'allow_duplicate_serials': True,
+    }) as pool:
+        # The combination is accepted and the dedicated spare is present.
+        assert len(pool['topology']['spare']) == 1
+        assert pool['topology']['special'][0]['name'].startswith('draid1:')
