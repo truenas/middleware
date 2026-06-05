@@ -345,7 +345,12 @@ def query_result_from_item(item: type[PydanticBaseModel], name: str) -> type[Bas
         name,
         __base__=(BaseModel,),
         __module__=item.__module__,
-        result=Annotated[list[item] | item | int, Field()],
+        result=Annotated[
+            list[item] |  # type: ignore[valid-type]
+            item |
+            int,
+            Field()
+        ],
     )
 
 
@@ -357,8 +362,8 @@ def query_result_item(item: type[ModelT]) -> type[ModelT]:
         __module__=item.__module__,
         __cls_kwargs__={"metaclass": ForUpdateMetaclass},
     )
-    result.__normalize_as__ = item
-    item.__query_result_item__ = result
+    result.__normalize_as__ = item  # type: ignore[attr-defined]
+    item.__query_result_item__ = result  # type: ignore[attr-defined]
     return result
 
 
