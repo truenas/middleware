@@ -1,6 +1,6 @@
 from typing import Annotated, Any, Literal
 
-from pydantic import Field, Secret, field_validator, model_validator
+from pydantic import Discriminator, Field, Secret, field_validator, model_validator
 
 from middlewared.api.base import (
     LDAP_DN,
@@ -19,6 +19,7 @@ from middlewared.api.base import (
 from middlewared.plugins.idmap_.idmap_constants import TRUENAS_IDMAP_MAX, TRUENAS_IDMAP_MIN
 from middlewared.utils.directoryservices.credential import DSCredType
 from middlewared.utils.lang import undefined
+from annotated_types import Ge, Le
 
 __all__ = [
     'DirectoryServicesCacheRefreshArgs', 'DirectoryServicesCacheRefreshResult',
@@ -28,7 +29,7 @@ __all__ = [
     'DirectoryServicesCertificateChoicesArgs', 'DirectoryServicesCertificateChoicesResult',
 ]
 
-IdmapId = Annotated[int, Field(ge=TRUENAS_IDMAP_MIN, le=TRUENAS_IDMAP_MAX)]
+IdmapId = Annotated[int, Ge(TRUENAS_IDMAP_MIN), Le(TRUENAS_IDMAP_MAX)]
 
 DSStatus = Literal['DISABLED', 'FAULTED', 'LEAVING', 'JOINING', 'HEALTHY']
 DSType = Literal['ACTIVEDIRECTORY', 'IPA', 'LDAP']
@@ -235,7 +236,7 @@ class BuiltinDomainTdb(IdmapDomainBase):
 
 DomainIdmap = Annotated[
     AD_Idmap | LDAP_Idmap | RFC2307_Idmap | RID_Idmap,
-    Field(discriminator='idmap_backend', default=RID_Idmap(idmap_backend='RID'))
+    Discriminator('idmap_backend')
 ]
 
 
@@ -248,6 +249,7 @@ class PrimaryDomainIdmap(BaseModel):
         ),
     )
     idmap_domain: DomainIdmap = Field(
+        default=RID_Idmap(idmap_backend='RID'),
         description=(
             "This configuration defines how domain accounts joined to TrueNAS are mapped to Unix UIDs and GIDs on the "
             "TrueNAS server. Most TrueNAS deployments use the RID backend, which algorithmically assigns UIDs and GIDs "
@@ -309,7 +311,7 @@ class CredLDAPMTLS(BaseModel):
 
 DSCred = Annotated[
     CredKRBUser | CredKRBPrincipal | CredLDAPPlain | CredLDAPAnonymous | CredLDAPMTLS,
-    Field(discriminator='credential_type')
+    Discriminator('credential_type')
 ]
 
 

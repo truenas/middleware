@@ -2,10 +2,12 @@ from abc import ABC
 from datetime import datetime
 from typing import Annotated, Any, Literal
 
-from pydantic import AfterValidator, BeforeValidator, Field
+from pydantic import AfterValidator, BeforeValidator, Field, StringConstraints
 from zettarepl.snapshot.name import validate_snapshot_naming_schema
 
-from middlewared.api.base import BaseModel, Excluded, NonEmptyString, NotRequired, excluded_field, single_argument_args
+from middlewared.api.base import (
+    BaseModel, JsonSchemaExtra, single_argument_args, NonEmptyString, NotRequired, Excluded, excluded_field
+)
 from middlewared.plugins.zfs_.validation_utils import validate_snapshot_name
 
 __all__ = [
@@ -33,8 +35,12 @@ SNAPSHOT_NAME = Annotated[
     NonEmptyString,
     BeforeValidator(_validate_snapshot_name),
 ]
-UserPropertyKey = Annotated[str, Field(description="ZFS user property key in namespace:property format (e.g., "
-                                       "'custom:backup_policy', 'org:created_by').", pattern='.*:.*')]
+UserPropertyKey = Annotated[
+    str,
+    StringConstraints(pattern='.*:.*'),
+    JsonSchemaExtra(description="ZFS user property key in namespace:property format (e.g., "
+                                "'custom:backup_policy', 'org:created_by')."),
+]
 
 
 class PoolSnapshotEntryPropertyFields(BaseModel):

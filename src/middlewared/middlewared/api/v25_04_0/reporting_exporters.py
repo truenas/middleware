@@ -1,4 +1,4 @@
-from typing import Annotated, Literal, TypeAlias
+from typing import Literal, TypeAlias
 
 from pydantic import ConfigDict, Field
 
@@ -32,7 +32,7 @@ class GraphiteExporter(BaseModel):
     matching_charts: NonEmptyString = '*'
 
 
-ExporterType: TypeAlias = Annotated[GraphiteExporter, Field(discriminator='exporter_type')]
+ExporterType: TypeAlias = GraphiteExporter
 
 
 # Reporting Exporter Service
