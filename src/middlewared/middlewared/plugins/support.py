@@ -235,7 +235,7 @@ class SupportService(ConfigService):
 
             with tempfile.NamedTemporaryFile("w+b") as f:
                 def copy1():
-                    nonlocal has_debug
+                    nonlocal has_debug, debug_attach_error
                     try:
                         rbytes = 0
                         while True:
@@ -245,6 +245,14 @@ class SupportService(ConfigService):
 
                             rbytes += len(r)
                             if rbytes > DEBUG_MAX_SIZE * 1048576:
+                                debug_attach_error = (
+                                    f'The debug file exceeds the {DEBUG_MAX_SIZE}MiB size limit. '
+                                    f'Please generate and attach a debug manually.'
+                                )
+                                self.logger.warning(
+                                    'Debug exceeded %dMiB limit for ticket %s; not attaching.',
+                                    DEBUG_MAX_SIZE, ticket,
+                                )
                                 return
 
                             f.write(r)
@@ -256,6 +264,11 @@ class SupportService(ConfigService):
 
                 await self.middleware.run_in_thread(copy1)
                 await debug_job.wait()
+                if debug_job.error:
+                    has_debug = False
+                    if not debug_attach_error:
+                        debug_attach_error = f'Failed to generate debug: {debug_job.error}'
+                    self.logger.warning('Debug generation failed for ticket %s: %s', ticket, debug_job.error)
 
                 if has_debug:
                     job.set_progress(80, 'Attaching debug file')
