@@ -156,6 +156,17 @@ class TNCACMEService(Service):
 
         # acme_config returns a dict from truenas_connect_utils.acme — keep dict access
         acme_cfg = self.call_sync2(self.s.tn_connect.acme.config)
+        # A 401 here means TNC no longer recognises us (the node was deregistered cloud-side), not
+        # that renewal is unneeded. Route it into the same unset path the heartbeat uses instead of
+        # silently swallowing it as "renewal not needed". Must be checked before the generic error
+        # branch below since a 401 also populates 'error'. .get() guards acme_config's early-return
+        # (disabled/no creds) which omits 'status_code'.
+        if acme_cfg.get('status_code') == 401:
+            logger.warning(
+                'TNC ACME config returned 401 during renewal check; node appears deregistered, unsetting TNC'
+            )
+            self.call_sync2(self.s.tn_connect.handle_deregistration)
+            return False, None
         if acme_cfg['error']:
             logger.error(
                 'Failed to fetch TNC ACME configuration when checking renewal: %r', acme_cfg['error']

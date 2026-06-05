@@ -11,6 +11,10 @@ CONFIGURED_TNC_STATES = (
     Status.CONFIGURED.name,
     Status.CERT_RENEWAL_IN_PROGRESS.name,
     Status.CERT_RENEWAL_SUCCESS.name,
+    # A renewal failure still leaves a configured box (enabled, serving its old cert with a live
+    # registration). The heartbeat must keep running in this state so it can receive a 401 and
+    # self-unset if the node was deregistered cloud-side; IP sync should likewise continue.
+    Status.CERT_RENEWAL_FAILURE.name,
 )
 HEARTBEAT_INTERVAL = 120
 TNC_CERT_PREFIX = 'truenas_connect_'

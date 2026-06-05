@@ -8,11 +8,12 @@ from truenas_connect_utils.config import get_account_id_and_system_id
 from truenas_connect_utils.status import Status
 from truenas_connect_utils.urls import get_account_service_url
 
+from middlewared.alert.source.truenas_connect import TNCDisabledAutoUnconfiguredAlert
 from middlewared.api.current import TrueNASConnectEntry
 from middlewared.service import CallError, ServiceContext
 
 from .request import auth_headers, tnc_request
-from .utils import CLAIM_TOKEN_CACHE_KEY, TNC_IPS_CACHE_KEY
+from .utils import CLAIM_TOKEN_CACHE_KEY, TNC_IPS_CACHE_KEY, get_unset_payload
 
 logger = logging.getLogger("truenas_connect")
 
@@ -98,6 +99,34 @@ async def delete_cert(context: ServiceContext, cert_id: int) -> None:
     await delete_job.wait()
     if delete_job.error:
         logger.error("Failed to delete TNC certificate: %s", delete_job.error)
+
+
+async def handle_tnc_deregistration(context: ServiceContext) -> None:
+    # Canonical handler for "TNC told us we are deregistered" (HTTP 401). This is the only path
+    # that auto-unsets TNC and removes its certificate, so both the heartbeat (on a 401 response)
+    # and the renewal check (on a 401 from the ACME config fetch) route through it.
+    # Idempotent: a no-op once TNC is already unset, so concurrent callers are safe.
+    tnc_config = await config_internal(context)
+    if tnc_config["status"] == Status.DISABLED.name and tnc_config["certificate"] is None:
+        logger.debug("TNC already deregistered/unset, nothing to do")
+        return
+
+    logger.debug("Handling TNC deregistration (401), unsetting TNC")
+    with contextlib.suppress(Exception):
+        # Make sure we set up a self-signed certificate and clear any alerts as we are going to
+        # unset TNC. revoke_cert_and_account is False because TNC has already catered to these
+        # cases on its end (the 401 means it no longer knows about us).
+        await unset_registration_details(context, False)
+
+    await context.middleware.call("datastore.update", DATASTORE, tnc_config["id"], {
+        "enabled": False,
+    } | get_unset_payload())
+    new_entry = await context.call2(context.s.tn_connect.config)
+    context.middleware.send_event("tn_connect.config", "CHANGED", fields=new_entry.model_dump())
+    await context.call2(context.s.alert.oneshot_create, TNCDisabledAutoUnconfiguredAlert())
+
+    if tnc_config["certificate"] is not None:
+        await delete_cert(context, tnc_config["certificate"])
 
 
 async def ha_vips(context: ServiceContext) -> list[str]:
