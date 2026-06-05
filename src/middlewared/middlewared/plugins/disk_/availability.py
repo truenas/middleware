@@ -166,8 +166,8 @@ class DiskService(Service):
         """
         verrors = ValidationErrors()
         disks_cache = dict()
-        for i in await self.middleware.call('disk.get_disks'):
-            disks_cache[i.name] = {'serial': i.serial, 'lunid': i.lunid}
+        for name, dev in (await self.middleware.call('device.get_disks')).items():
+            disks_cache[name] = {'serial': dev['serial'], 'lunid': dev['lunid']}
 
         disks_set = set(disks)
         disks_not_in_cache = disks_set - set(disks_cache.keys())

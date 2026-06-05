@@ -1,17 +1,9 @@
-from dataclasses import dataclass
 from unittest.mock import AsyncMock
 
 import pytest
 
 from middlewared.plugins.disk_.availability import DiskService
 from middlewared.pytest.unit.middleware import Middleware
-
-
-@dataclass(kw_only=True)
-class FauxDisk:
-    name: str
-    serial: str
-    lunid: str | None
 
 
 @pytest.mark.parametrize("disks,allow_duplicate_serials,errors", [
@@ -26,15 +18,15 @@ class FauxDisk:
 @pytest.mark.asyncio
 async def test__disk_service__check_disks_availability(disks, allow_duplicate_serials, errors):
     m = Middleware()
-    m["disk.get_disks"] = AsyncMock(return_value=[
-        FauxDisk(**{"name": "sda", "serial": "1", "lunid": None}),
-        FauxDisk(**{"name": "sdb", "serial": "2", "lunid": "0"}),
-        FauxDisk(**{"name": "sdc", "serial": "2", "lunid": "1"}),
-        FauxDisk(**{"name": "sdd", "serial": " BAD USB DRIVE ", "lunid": None}),
-        FauxDisk(**{"name": "sde", "serial": " BAD USB DRIVE ", "lunid": None}),
-        FauxDisk(**{"name": "sdf", "serial": " EVEN WORSE USB DRIVE ", "lunid": None}),
-        FauxDisk(**{"name": "sdg", "serial": " EVEN WORSE USB DRIVE ", "lunid": None}),
-    ])
+    m["device.get_disks"] = AsyncMock(return_value={
+        "sda": {"serial": "1", "lunid": None},
+        "sdb": {"serial": "2", "lunid": "0"},
+        "sdc": {"serial": "2", "lunid": "1"},
+        "sdd": {"serial": " BAD USB DRIVE ", "lunid": None},
+        "sde": {"serial": " BAD USB DRIVE ", "lunid": None},
+        "sdf": {"serial": " EVEN WORSE USB DRIVE ", "lunid": None},
+        "sdg": {"serial": " EVEN WORSE USB DRIVE ", "lunid": None},
+    })
     m["disk.get_reserved"] = AsyncMock(return_value=["sdb", "sde"])
     verrors = await DiskService(m).check_disks_availability(disks, allow_duplicate_serials)
     assert [e.errmsg for e in verrors.errors] == errors
@@ -43,10 +35,10 @@ async def test__disk_service__check_disks_availability(disks, allow_duplicate_se
 @pytest.mark.asyncio
 async def test__disk_service__check_disks_availability__only_requested_disks():
     m = Middleware()
-    m["disk.get_disks"] = AsyncMock(return_value=[
-        FauxDisk(**{"name": "sda", "serial": " BAD USB DRIVE ", "lunid": None}),
-        FauxDisk(**{"name": "sdb", "serial": " BAD USB DRIVE ", "lunid": None}),
-        FauxDisk(**{"name": "sdc", "serial": "1", "lunid": "0"}),
-    ])
+    m["device.get_disks"] = AsyncMock(return_value={
+        "sda": {"serial": " BAD USB DRIVE ", "lunid": None},
+        "sdb": {"serial": " BAD USB DRIVE ", "lunid": None},
+        "sdc": {"serial": "1", "lunid": "0"},
+    })
     m["disk.get_reserved"] = AsyncMock(return_value=["sda", "sdb"])
     assert not await DiskService(m).check_disks_availability(["sdc"], False)
