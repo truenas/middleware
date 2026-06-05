@@ -62,153 +62,213 @@ async def send_alerts(context: ServiceContext, state: AlertState) -> None:
     for policy_name, policy in state.policies.items():
         gone_alerts, new_alerts = policy.receive_alerts(now, state.alerts)
 
-        for alert_service_desc in await context.call2(context.s.alertservice.query, [["enabled", "=", True]]):
-            service_level = AlertLevel[alert_service_desc.level]
-
-            service_alerts = [
-                alert
-                for alert in state.alerts
-                if (
-                    product_type in alert.instance.config.products
-                    and get_alert_level(alert, classes).value >= service_level.value
-                    and get_alert_policy(alert, classes) != "NEVER"
-                )
-            ]
-            service_gone_alerts = [
-                alert
-                for alert in gone_alerts
-                if (
-                    product_type in alert.instance.config.products
-                    and get_alert_level(alert, classes).value >= service_level.value
-                    and get_alert_policy(alert, classes) == policy_name
-                )
-            ]
-            service_new_alerts = [
-                alert
-                for alert in new_alerts
-                if (
-                    product_type in alert.instance.config.products
-                    and get_alert_level(alert, classes).value >= service_level.value
-                    and get_alert_policy(alert, classes) == policy_name
-                )
-            ]
-            for gone_alert in list(service_gone_alerts):
-                for new_alert in service_new_alerts:
-                    if (
-                        gone_alert.instance.config.name == new_alert.instance.config.name
-                        and gone_alert.key == new_alert.key
-                    ):
-                        service_gone_alerts.remove(gone_alert)
-                        service_new_alerts.remove(new_alert)
-                        break
-
-            if not service_gone_alerts and not service_new_alerts:
-                continue
-
-            factory = _AlertService.by_name[alert_service_desc.attributes.type]
-            alert_service = factory(
-                context.middleware,
-                alert_service_desc.attributes.model_dump(context={"expose_secrets": True}),
-            )
-
-            alerts = [alert for alert in service_alerts if not alert.dismissed]
-            service_gone_alerts = [alert for alert in service_gone_alerts if not alert.dismissed]
-            service_new_alerts = [alert for alert in service_new_alerts if not alert.dismissed]
-
-            if alerts or service_gone_alerts or service_new_alerts:
-                try:
-                    await alert_service.send(alerts, service_gone_alerts, service_new_alerts)
-                except Exception:
-                    context.logger.error(
-                        "Error in alert service %r",
-                        alert_service_desc.attributes.type,
-                        exc_info=True,
-                    )
+        await _dispatch_policy_to_services(context, state, policy_name, product_type, classes, gone_alerts, new_alerts)
 
         if policy_name == "IMMEDIATELY":
-            as_ = AlertSerializer(context)
-            for alert in gone_alerts:
-                if await as_.should_show_alert(alert):
-                    send_alert_deleted_event(context, alert)
-            for alert in new_alerts:
-                if await as_.should_show_alert(alert):
-                    context.middleware.send_event(
-                        "alert.list",
-                        "ADDED",
-                        id=alert.uuid,
-                        fields=await as_.serialize(alert),
-                    )
+            await _handle_immediate_policy(context, gone_alerts, new_alerts)
 
-            for alert in new_alerts:
-                if alert.mail:
-                    try:
-                        await context.call2(context.s.mail.send, alert.mail)
-                    except NetworkActivityDisabled:
-                        pass
 
-            if await context.middleware.call("system.is_enterprise"):
-                gone_proactive_support_alerts = [
-                    alert
-                    for alert in gone_alerts
-                    if (
-                        alert.instance.config.proactive_support
-                        and (await as_.get_alert_class(alert)).get("proactive_support", True)
-                        and alert.instance.config.proactive_support_notify_gone
-                    )
-                ]
-                new_proactive_support_alerts = [
-                    alert
-                    for alert in new_alerts
-                    if (
-                        alert.instance.config.proactive_support
-                        and (await as_.get_alert_class(alert)).get("proactive_support", True)
-                    )
-                ]
-                if gone_proactive_support_alerts or new_proactive_support_alerts:
-                    if await context.middleware.call("support.is_available_and_enabled"):
-                        support = await context.middleware.call("support.config")
+def _visible_service_alerts(
+    alerts: list[Alert[Any]], product_type: str, classes: dict[str, Any], service_level: AlertLevel
+) -> list[Alert[Any]]:
+    """Alerts for the running product, at or above `service_level`, whose policy is not ``NEVER``."""
+    result: list[Alert[Any]] = []
+    for alert in alerts:
+        if product_type not in alert.instance.config.products:
+            continue
+        if get_alert_level(alert, classes).value < service_level.value:
+            continue
+        if get_alert_policy(alert, classes) == "NEVER":
+            continue
 
-                        msg: list[str] = []
-                        if gone_proactive_support_alerts:
-                            msg.append("The following alerts were cleared:")
-                            msg += [
-                                f"* {html2text.html2text(alert.formatted)}" for alert in gone_proactive_support_alerts
-                            ]
-                        if new_proactive_support_alerts:
-                            msg.append("The following new alerts appeared:")
-                            msg += [
-                                f"* {html2text.html2text(alert.formatted)}" for alert in new_proactive_support_alerts
-                            ]
+        result.append(alert)
 
-                        serial: str = (await context.middleware.call("system.dmidecode_info"))["system-serial-number"]
+    return result
 
-                        for name, verbose_name in await context.middleware.call("support.fields"):
-                            value = support[name]
-                            if value:
-                                msg += ["", "{}: {}".format(verbose_name, value)]
 
-                        msg_str: str = "\n".join(msg)
+def _policy_alerts(
+    alerts: list[Alert[Any]], product_type: str, classes: dict[str, Any], service_level: AlertLevel, policy_name: str
+) -> list[Alert[Any]]:
+    """Alerts for the running product, at or above `service_level`, whose policy is exactly `policy_name`."""
+    result: list[Alert[Any]] = []
+    for alert in alerts:
+        if product_type not in alert.instance.config.products:
+            continue
+        if get_alert_level(alert, classes).value < service_level.value:
+            continue
+        if get_alert_policy(alert, classes) != policy_name:
+            continue
 
-                        job = await context.middleware.call(
-                            "support.new_ticket",
-                            {
-                                "title": "Automatic alert (%s)" % serial,
-                                "body": msg_str,
-                                "attach_debug": False,
-                                "category": "Hardware",
-                                "criticality": "Loss of Functionality",
-                                "environment": "Production",
-                                "name": "Automatic Alert",
-                                "email": "auto-support@truenas.com",
-                                "phone": "-",
-                            },
-                        )
-                        await job.wait()
-                        if job.error:
-                            await context.call2(
-                                context.s.alert.oneshot_create,
-                                AutomaticAlertFailedAlert(serial=serial, alert=msg_str, error=str(job.error)),
-                            )
+        result.append(alert)
+
+    return result
+
+
+def _remove_matching_pairs(gone: list[Alert[Any]], new: list[Alert[Any]]) -> None:
+    """Drop a gone/new pair in place when both share the same alert class and key (i.e. nothing changed)."""
+    for gone_alert in list(gone):
+        for new_alert in new:
+            if gone_alert.instance.config.name == new_alert.instance.config.name and gone_alert.key == new_alert.key:
+                gone.remove(gone_alert)
+                new.remove(new_alert)
+                break
+
+
+def _undismissed(alerts: list[Alert[Any]]) -> list[Alert[Any]]:
+    result: list[Alert[Any]] = []
+    for alert in alerts:
+        if not alert.dismissed:
+            result.append(alert)
+
+    return result
+
+
+async def _dispatch_policy_to_services(
+    context: ServiceContext,
+    state: AlertState,
+    policy_name: str,
+    product_type: str,
+    classes: dict[str, Any],
+    gone_alerts: list[Alert[Any]],
+    new_alerts: list[Alert[Any]],
+) -> None:
+    for alert_service_desc in await context.call2(context.s.alertservice.query, [["enabled", "=", True]]):
+        service_level = AlertLevel[alert_service_desc.level]
+
+        service_alerts = _visible_service_alerts(state.alerts, product_type, classes, service_level)
+        service_gone_alerts = _policy_alerts(gone_alerts, product_type, classes, service_level, policy_name)
+        service_new_alerts = _policy_alerts(new_alerts, product_type, classes, service_level, policy_name)
+
+        _remove_matching_pairs(service_gone_alerts, service_new_alerts)
+
+        if not service_gone_alerts and not service_new_alerts:
+            continue
+
+        factory = _AlertService.by_name[alert_service_desc.attributes.type]
+        alert_service = factory(
+            context.middleware,
+            alert_service_desc.attributes.model_dump(context={"expose_secrets": True}),
+        )
+
+        alerts = _undismissed(service_alerts)
+        service_gone_alerts = _undismissed(service_gone_alerts)
+        service_new_alerts = _undismissed(service_new_alerts)
+
+        if alerts or service_gone_alerts or service_new_alerts:
+            try:
+                await alert_service.send(alerts, service_gone_alerts, service_new_alerts)
+            except Exception:
+                context.logger.error(
+                    "Error in alert service %r",
+                    alert_service_desc.attributes.type,
+                    exc_info=True,
+                )
+
+
+async def _handle_immediate_policy(
+    context: ServiceContext, gone_alerts: list[Alert[Any]], new_alerts: list[Alert[Any]]
+) -> None:
+    as_ = AlertSerializer(context)
+
+    await _emit_alert_events(context, as_, gone_alerts, new_alerts)
+    await _send_alert_mail(context, new_alerts)
+
+    if await context.middleware.call("system.is_enterprise"):
+        await _maybe_open_proactive_support_ticket(context, as_, gone_alerts, new_alerts)
+
+
+async def _emit_alert_events(
+    context: ServiceContext, as_: AlertSerializer, gone_alerts: list[Alert[Any]], new_alerts: list[Alert[Any]]
+) -> None:
+    for alert in gone_alerts:
+        if await as_.should_show_alert(alert):
+            send_alert_deleted_event(context, alert)
+
+    for alert in new_alerts:
+        if await as_.should_show_alert(alert):
+            context.middleware.send_event(
+                "alert.list",
+                "ADDED",
+                id=alert.uuid,
+                fields=await as_.serialize(alert),
+            )
+
+
+async def _send_alert_mail(context: ServiceContext, new_alerts: list[Alert[Any]]) -> None:
+    for alert in new_alerts:
+        if alert.mail:
+            try:
+                await context.call2(context.s.mail.send, alert.mail)
+            except NetworkActivityDisabled:
+                pass
+
+
+async def _maybe_open_proactive_support_ticket(
+    context: ServiceContext, as_: AlertSerializer, gone_alerts: list[Alert[Any]], new_alerts: list[Alert[Any]]
+) -> None:
+    gone_proactive_support_alerts: list[Alert[Any]] = []
+    for alert in gone_alerts:
+        if (
+            alert.instance.config.proactive_support
+            and (await as_.get_alert_class(alert)).get("proactive_support", True)
+            and alert.instance.config.proactive_support_notify_gone
+        ):
+            gone_proactive_support_alerts.append(alert)
+
+    new_proactive_support_alerts: list[Alert[Any]] = []
+    for alert in new_alerts:
+        if alert.instance.config.proactive_support and (await as_.get_alert_class(alert)).get(
+            "proactive_support", True
+        ):
+            new_proactive_support_alerts.append(alert)
+
+    if not gone_proactive_support_alerts and not new_proactive_support_alerts:
+        return
+
+    if not await context.middleware.call("support.is_available_and_enabled"):
+        return
+
+    support = await context.middleware.call("support.config")
+
+    msg: list[str] = []
+    if gone_proactive_support_alerts:
+        msg.append("The following alerts were cleared:")
+        for alert in gone_proactive_support_alerts:
+            msg.append(f"* {html2text.html2text(alert.formatted)}")
+    if new_proactive_support_alerts:
+        msg.append("The following new alerts appeared:")
+        for alert in new_proactive_support_alerts:
+            msg.append(f"* {html2text.html2text(alert.formatted)}")
+
+    serial: str = (await context.middleware.call("system.dmidecode_info"))["system-serial-number"]
+
+    for name, verbose_name in await context.middleware.call("support.fields"):
+        value = support[name]
+        if value:
+            msg += ["", "{}: {}".format(verbose_name, value)]
+
+    msg_str: str = "\n".join(msg)
+
+    job = await context.middleware.call(
+        "support.new_ticket",
+        {
+            "title": "Automatic alert (%s)" % serial,
+            "body": msg_str,
+            "attach_debug": False,
+            "category": "Hardware",
+            "criticality": "Loss of Functionality",
+            "environment": "Production",
+            "name": "Automatic Alert",
+            "email": "auto-support@truenas.com",
+            "phone": "-",
+        },
+    )
+    await job.wait()
+    if job.error:
+        await context.call2(
+            context.s.alert.oneshot_create,
+            AutomaticAlertFailedAlert(serial=serial, alert=msg_str, error=str(job.error)),
+        )
 
 
 async def should_run_or_send_alerts(context: ServiceContext) -> bool:
@@ -374,15 +434,16 @@ async def run_alerts(context: ServiceContext, state: AlertState) -> None:
 
 
 def handle_alert(state: AlertState, alert: Alert[Any]) -> None:
-    try:
-        existing_alert = [
-            a
-            for a in state.alerts
-            if (a.node, a.source, a.instance.config.name, a.key)
-            == (alert.node, alert.source, alert.instance.config.name, alert.key)
-        ][0]
-    except IndexError:
-        existing_alert = None
+    existing_alert: Alert[Any] | None = None
+    for a in state.alerts:
+        if (a.node, a.source, a.instance.config.name, a.key) == (
+            alert.node,
+            alert.source,
+            alert.instance.config.name,
+            alert.key,
+        ):
+            existing_alert = a
+            break
 
     if existing_alert is None:
         alert.uuid = str(uuid.uuid4())

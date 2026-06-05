@@ -7,14 +7,14 @@ import middlewared.sqlalchemy as sa
 
 
 class AlertClassesModel(sa.Model):
-    __tablename__ = 'system_alertclasses'
+    __tablename__ = "system_alertclasses"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     classes = sa.Column(sa.JSON(dict))
 
 
 class AlertClassesConfigServicePart(ConfigServicePart[AlertClassesEntry]):
-    _datastore = 'system.alertclasses'
+    _datastore = "system.alertclasses"
     _entry = AlertClassesEntry
 
     async def do_update(self, data: AlertClassesUpdate) -> AlertClassesEntry:

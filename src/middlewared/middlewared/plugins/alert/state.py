@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 import typing
 from typing import Any
@@ -56,27 +56,9 @@ class AlertPolicy:
 
 
 def _default_source_run_times() -> dict[str, Any]:
-    return {
-        "last": [],
-        "max": 0,
-        "total_count": 0,
-        "total_time": 0,
-    }
+    return {"last": [], "max": 0, "total_count": 0, "total_time": 0}
 
 
-def _blocked_sources_factory() -> defaultdict[str, set[str]]:
-    return defaultdict(set)
-
-
-def _sources_run_times_factory() -> defaultdict[str, dict[str, Any]]:
-    return defaultdict(_default_source_run_times)
-
-
-def _alert_source_last_run_factory() -> defaultdict[str, datetime]:
-    return defaultdict(lambda: datetime.min)
-
-
-@dataclass(eq=False)
 class AlertState:
     """Mutable in-memory runtime state for the ``alert`` service.
 
@@ -86,14 +68,15 @@ class AlertState:
     analysis.
     """
 
-    alert_sources: dict[str, AlertSource]
-    alerts: list[Alert[Any]] = field(default_factory=list)
-    blocked_sources: defaultdict[str, set[str]] = field(default_factory=_blocked_sources_factory)
-    sources_locks: dict[str, AlertSourceLock] = field(default_factory=dict)
-    blocked_failover_alerts_until: float = 0.0
-    sources_run_times: defaultdict[str, dict[str, Any]] = field(default_factory=_sources_run_times_factory)
-    node: str = "A"
-    alert_source_last_run: defaultdict[str, datetime] = field(default_factory=_alert_source_last_run_factory)
-    policies: dict[str, AlertPolicy] = field(default_factory=dict)
-    alert_sources_errors: set[str] = field(default_factory=set)
-    send_alerts_on_ready: bool = False
+    def __init__(self, alert_sources: dict[str, AlertSource]) -> None:
+        self.alert_sources = alert_sources
+        self.alerts: list[Alert[Any]] = []
+        self.blocked_sources: defaultdict[str, set[str]] = defaultdict(set)
+        self.sources_locks: dict[str, AlertSourceLock] = {}
+        self.blocked_failover_alerts_until: float = 0.0
+        self.sources_run_times: defaultdict[str, dict[str, Any]] = defaultdict(_default_source_run_times)
+        self.node: str = "A"
+        self.alert_source_last_run: defaultdict[str, datetime] = defaultdict(lambda: datetime.min)
+        self.policies: dict[str, AlertPolicy] = {}
+        self.alert_sources_errors: set[str] = set()
+        self.send_alerts_on_ready: bool = False

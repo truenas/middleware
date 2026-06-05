@@ -32,17 +32,16 @@ if typing.TYPE_CHECKING:
     from middlewared.main import Middleware
 
 
-__all__ = ('AlertServiceService',)
+__all__ = ("AlertServiceService",)
 
 
 class AlertServiceService(GenericCRUDService[AlertServiceEntry]):
-
     class Config:
-        datastore = 'system.alertservice'
-        datastore_order_by = ['name']
-        cli_namespace = 'system.alert.service'
+        datastore = "system.alertservice"
+        datastore_order_by = ["name"]
+        cli_namespace = "system.alert.service"
         entry = AlertServiceEntry
-        role_prefix = 'ALERT'
+        role_prefix = "ALERT"
         generic = True
 
     def __init__(self, middleware: Middleware) -> None:
@@ -72,7 +71,7 @@ class AlertServiceService(GenericCRUDService[AlertServiceEntry]):
         """
         return await self._svc_part.do_delete(id_)
 
-    @api_method(AlertServiceTestArgs, AlertServiceTestResult, roles=['ALERT_WRITE'], check_annotations=True)
+    @api_method(AlertServiceTestArgs, AlertServiceTestResult, roles=["ALERT_WRITE"], check_annotations=True)
     async def test(self, data: AlertServiceCreate) -> bool:
         """
         Send a test alert using `type` of Alert Service.
@@ -111,16 +110,14 @@ class AlertServiceService(GenericCRUDService[AlertServiceEntry]):
                 continue
 
             try:
-                AlertServiceEntry.model_validate(
-                    self._svc_part.extend(copy.deepcopy(alertservice), {})
-                )
+                AlertServiceEntry.model_validate(self._svc_part.extend(copy.deepcopy(alertservice), {}))
             except ValidationError as e:
                 attributes = copy.copy(alertservice["attributes"])
                 for error in e.errors():
                     if (
-                        error["type"] == "extra_forbidden" and
-                        len(error["loc"]) == 3 and
-                        error["loc"][0] == "attributes"
+                        error["type"] == "extra_forbidden"
+                        and len(error["loc"]) == 3
+                        and error["loc"][0] == "attributes"
                     ):
                         attribute = error["loc"][2]
                         attributes.pop(attribute, None)
@@ -140,6 +137,11 @@ class AlertServiceService(GenericCRUDService[AlertServiceEntry]):
                         await self.middleware.call("datastore.delete", "system.alertservice", alertservice["id"])
                         break
                 else:
-                    await self.middleware.call("datastore.update", "system.alertservice", alertservice["id"], {
-                        "attributes": attributes,
-                    })
+                    await self.middleware.call(
+                        "datastore.update",
+                        "system.alertservice",
+                        alertservice["id"],
+                        {
+                            "attributes": attributes,
+                        },
+                    )

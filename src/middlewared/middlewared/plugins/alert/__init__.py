@@ -34,10 +34,9 @@ if typing.TYPE_CHECKING:
     from middlewared.main import Middleware
 
 
-__all__ = ('AlertService',)
+__all__ = ("AlertService",)
 
 
-# Models for private `@api_method`s must live in the plugin (not `middlewared.api.*`); see check_model_module.
 class AlertOneshotDeleteArgs(BaseModel):
     klass: str | list[str]
     query: Any = None
@@ -48,7 +47,6 @@ class AlertOneshotDeleteResult(BaseModel):
 
 
 class AlertService(Service):
-
     class Config:
         cli_namespace = "system.alert"
         events = [
@@ -67,40 +65,38 @@ class AlertService(Service):
     def __init__(self, middleware: Middleware) -> None:
         super().__init__(middleware)
 
-        alert_sources: dict[str, AlertSource] = {
-            name: cls(middleware) for name, cls in AlertSource.by_name.items()
-        }
+        alert_sources: dict[str, AlertSource] = {name: cls(middleware) for name, cls in AlertSource.by_name.items()}
         self._state = AlertState(alert_sources=alert_sources)
 
-    @api_method(AlertListPoliciesArgs, AlertListPoliciesResult, roles=['ALERT_LIST_READ'])
+    @api_method(AlertListPoliciesArgs, AlertListPoliciesResult, roles=["ALERT_LIST_READ"])
     async def list_policies(self) -> list[str]:
         """
         List all alert policies which indicate the frequency of the alerts.
         """
         return queries.list_policies()
 
-    @api_method(AlertListCategoriesArgs, AlertListCategoriesResult, roles=['ALERT_LIST_READ'])
+    @api_method(AlertListCategoriesArgs, AlertListCategoriesResult, roles=["ALERT_LIST_READ"])
     async def list_categories(self, options: dict[str, Any]) -> list[dict[str, Any]]:
         """
         List all types of alerts which the system can issue.
         """
         return await queries.list_categories(self.context, options)
 
-    @api_method(AlertListArgs, AlertListResult, roles=['ALERT_LIST_READ'])
+    @api_method(AlertListArgs, AlertListResult, roles=["ALERT_LIST_READ"])
     async def list(self) -> list[dict[str, Any]]:
         """
         List all types of alerts including active/dismissed currently in the system.
         """
         return await queries.list_alerts(self.context, self._state)
 
-    @api_method(AlertDismissArgs, AlertDismissResult, roles=['ALERT_LIST_WRITE'])
+    @api_method(AlertDismissArgs, AlertDismissResult, roles=["ALERT_LIST_WRITE"])
     async def dismiss(self, uuid: str) -> None:
         """
         Dismiss `id` alert.
         """
         await queries.dismiss(self.context, self._state, uuid)
 
-    @api_method(AlertRestoreArgs, AlertRestoreResult, roles=['ALERT_LIST_WRITE'])
+    @api_method(AlertRestoreArgs, AlertRestoreResult, roles=["ALERT_LIST_WRITE"])
     async def restore(self, uuid: str) -> None:
         """
         Restore `id` alert which had been dismissed.

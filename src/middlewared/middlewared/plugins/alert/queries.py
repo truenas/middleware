@@ -46,53 +46,65 @@ async def list_categories(context: ServiceContext, options: dict[str, Any]) -> l
 
         classes.append(alert_class)
 
-    return [
-        {
-            "id": alert_category.name,
-            "title": alert_category_names[alert_category],
-            "classes": sorted(
-                [
-                    {
-                        "id": alert_class.config.name,
-                        "title": alert_class.config.title,
-                        "level": alert_class.config.level.name,
-                        "product_types": list(alert_class.config.products),
-                        "proactive_support": alert_class.config.proactive_support,
-                    }
-                    for alert_class in classes
-                    if alert_class.config.category == alert_category
-                ],
-                key=lambda klass: klass["title"],
-            ),
-        }
-        for alert_category in AlertCategory
-        if any(alert_class.config.category == alert_category for alert_class in classes)
-    ]
+    categories: list[dict[str, Any]] = []
+    for category in AlertCategory:
+        category_classes: list[dict[str, Any]] = []
+        for alert_class in classes:
+            if alert_class.config.category != category:
+                continue
+
+            category_classes.append(
+                {
+                    "id": alert_class.config.name,
+                    "title": alert_class.config.title,
+                    "level": alert_class.config.level.name,
+                    "product_types": list(alert_class.config.products),
+                    "proactive_support": alert_class.config.proactive_support,
+                }
+            )
+
+        if not category_classes:
+            continue
+
+        category_classes.sort(key=lambda klass: klass["title"])
+        categories.append(
+            {
+                "id": category.name,
+                "title": alert_category_names[category],
+                "classes": category_classes,
+            }
+        )
+
+    return categories
 
 
 async def list_alerts(context: ServiceContext, state: AlertState) -> list[dict[str, Any]]:
     as_ = AlertSerializer(context)
     classes = (await context.call2(context.s.alertclasses.config)).classes
 
-    return [
-        await as_.serialize(alert)
-        for alert in sorted(
-            state.alerts,
-            key=lambda alert: (
-                -get_alert_level(alert, classes).value,
-                alert.instance.config.title,
-                alert.datetime,
-            ),
-        )
-        if await as_.should_show_alert(alert)
-    ]
+    sorted_alerts = sorted(
+        state.alerts,
+        key=lambda alert: (
+            -get_alert_level(alert, classes).value,
+            alert.instance.config.title,
+            alert.datetime,
+        ),
+    )
+
+    result: list[dict[str, Any]] = []
+    for alert in sorted_alerts:
+        if await as_.should_show_alert(alert):
+            result.append(await as_.serialize(alert))
+
+    return result
 
 
 def alert_by_uuid(state: AlertState, uuid: str) -> Alert[Any] | None:
-    try:
-        return [a for a in state.alerts if a.uuid == uuid][0]
-    except IndexError:
-        return None
+    for alert in state.alerts:
+        if alert.uuid == uuid:
+            return alert
+
+    return None
 
 
 async def dismiss(context: ServiceContext, state: AlertState, uuid: str) -> None:
@@ -141,24 +153,15 @@ async def restore(context: ServiceContext, state: AlertState, uuid: str) -> None
 
 
 async def node_map(context: ServiceContext) -> dict[str, str]:
-    nodes: dict[str, str] = {
-        "A": "Controller A",
-        "B": "Controller B",
-    }
+    nodes: dict[str, str] = {"A": "Controller A", "B": "Controller B"}
     if await context.middleware.call("failover.licensed"):
         node: str = await context.middleware.call("failover.node")
         status: str = await context.middleware.call("failover.status")
         if status == "MASTER":
             if node == "A":
-                nodes = {
-                    "A": "Active Controller (A)",
-                    "B": "Standby Controller (B)",
-                }
+                nodes = {"A": "Active Controller (A)", "B": "Standby Controller (B)"}
             else:
-                nodes = {
-                    "A": "Standby Controller (A)",
-                    "B": "Active Controller (B)",
-                }
+                nodes = {"A": "Standby Controller (A)", "B": "Active Controller (B)"}
         else:
             nodes[node] = f"{status.title()} Controller ({node})"
 
@@ -166,10 +169,12 @@ async def node_map(context: ServiceContext) -> dict[str, str]:
 
 
 async def sources_stats(state: AlertState) -> dict[str, Any]:
-    return {
-        k: {"avg": v["total_time"] / v["total_count"] if v["total_count"] != 0 else 0, **v}
-        for k, v in sorted(state.sources_run_times.items(), key=lambda t: t[0])
-    }
+    stats: dict[str, Any] = {}
+    for name, runtimes in sorted(state.sources_run_times.items(), key=lambda t: t[0]):
+        avg = runtimes["total_time"] / runtimes["total_count"] if runtimes["total_count"] != 0 else 0
+        stats[name] = {"avg": avg, **runtimes}
+
+    return stats
 
 
 async def run_source(context: ServiceContext, state: AlertState, source_name: str) -> list[dict[str, Any]]:
