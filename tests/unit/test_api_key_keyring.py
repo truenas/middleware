@@ -120,14 +120,14 @@ def test__convert_raw_key_invalid_format():
 
 
 def test__convert_raw_key_wrong_size():
-    """Test that keys with incorrect size are rejected by regex pattern."""
+    """Test that keys with incorrect size are rejected by the length check."""
     with Client() as c:
-        # Key too short (63 chars instead of 64) - caught by regex pattern
-        with pytest.raises(Exception, match='Not a valid raw API key'):
+        # Key too short (63 chars instead of 64) - caught by the size check
+        with pytest.raises(Exception, match='Unexpected key size'):
             c.call('api_key.convert_raw_key', '123-' + 'a' * 63)
 
-        # Key too long (65 chars instead of 64) - caught by regex pattern
-        with pytest.raises(Exception, match='Not a valid raw API key'):
+        # Key too long (65 chars instead of 64) - caught by the size check
+        with pytest.raises(Exception, match='Unexpected key size'):
             c.call('api_key.convert_raw_key', '123-' + 'a' * 65)
 
 
