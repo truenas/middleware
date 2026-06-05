@@ -1,7 +1,7 @@
 from datetime import datetime, time
 from typing import Annotated, Self
 
-from middlewared.api.base import BaseModel, TimeString
+from middlewared.api.base import BaseModel, JsonSchemaExtra, TimeString
 from middlewared.utils import filters
 from middlewared.utils.cron import croniter_for_schedule
 
@@ -18,11 +18,14 @@ def validate_query_filters(qf: list) -> list:
 
 
 QF_DOC = 'List of filters for query results. See API documentation for "Query Methods" for more guidance.'
-QF_FIELD = Field(default=[], description=QF_DOC, examples=[
-    [["name", "=", "bob"]],
-    [["OR", [[["name", "=", "bob"]], [["name", "=", "larry"]]]]],
-])
-QueryFilters = Annotated[list, QF_FIELD, AfterValidator(validate_query_filters)]
+QueryFilters = Annotated[
+    list,
+    JsonSchemaExtra(description=QF_DOC, examples=[
+        [["name", "=", "bob"]],
+        [["OR", [[["name", "=", "bob"]], [["name", "=", "larry"]]]]],
+    ]),
+    AfterValidator(validate_query_filters),
+]
 
 
 class QueryOptions(BaseModel):

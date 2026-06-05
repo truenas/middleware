@@ -1,6 +1,6 @@
 from typing import Annotated, Literal, TypeAlias
 
-from pydantic import AfterValidator, Field, field_validator
+from pydantic import AfterValidator, Discriminator, Field, field_validator
 
 from middlewared.api.base import BaseModel, LocalGID, LocalUID, match_validator, NonEmptyString, single_argument_args
 from middlewared.validators import RE_MAC_ADDRESS
@@ -175,7 +175,7 @@ class CDROM(Device):
 
 DeviceType: TypeAlias = Annotated[
     Disk | GPU | Proxy | TPM | USB | NIC | PCI | CDROM,
-    Field(discriminator='dev_type')
+    Discriminator('dev_type')
 ]
 
 

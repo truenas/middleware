@@ -4,7 +4,8 @@ import re
 from typing import Annotated, Literal
 
 import pydantic
-from pydantic import AfterValidator, Field
+from annotated_types import Ge, Le
+from pydantic import AfterValidator
 
 from ..validators import match_validator
 
@@ -61,7 +62,7 @@ def _validate_nameserver(address: pydantic.IPvAnyAddress) -> str:
     return str_form
 
 
-TcpPort = Annotated[int, Field(ge=1, le=65535)]
+TcpPort = Annotated[int, Ge(1), Le(65535)]
 Hostname = Annotated[str, AfterValidator(match_validator(
     re.compile(r"^[a-z.\-0-9]*[a-z0-9]$", re.IGNORECASE),
     "Hostname can only contain letters, numbers, periods, and dashes and must end with a letter or number"

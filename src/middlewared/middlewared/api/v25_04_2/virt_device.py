@@ -1,6 +1,6 @@
 from typing import Annotated, Literal, TypeAlias
 
-from pydantic import Field, field_validator
+from pydantic import Discriminator, Field, field_validator
 
 from middlewared.api.base import BaseModel, LocalGID, LocalUID, NonEmptyString, single_argument_args
 
@@ -116,7 +116,7 @@ class PCI(Device):
 
 DeviceType: TypeAlias = Annotated[
     Disk | GPU | Proxy | TPM | USB | NIC | PCI,
-    Field(discriminator='dev_type')
+    Discriminator('dev_type')
 ]
 
 

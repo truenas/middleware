@@ -1,6 +1,6 @@
 from typing import Annotated, Literal, TypeAlias
 
-from pydantic import ConfigDict, Field, model_validator, RootModel, Secret
+from pydantic import ConfigDict, Discriminator, Field, model_validator, RootModel, Secret
 
 from middlewared.api.base import (
     BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString, single_argument_args,
@@ -157,7 +157,7 @@ class VMUSBDevice(BaseModel):
 
 VMDeviceType: TypeAlias = Annotated[
     VMCDROMDevice | VMDisplayDevice | VMNICDevice | VMPCIDevice | VMRAWDevice | VMDiskDevice | VMUSBDevice,
-    Field(discriminator='dtype')
+    Discriminator('dtype')
 ]
 
 
