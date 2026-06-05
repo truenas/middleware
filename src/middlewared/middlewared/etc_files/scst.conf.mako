@@ -165,19 +165,12 @@
 
     standby_node_requires_reload = False
     fix_cluster_mode = []
-    cluster_mode_targets = []
     cluster_mode_luns = {}
     clustered_extents = set()
-    active_extents = []
     standby_write_empty_config = False
     skipped_wwpns = set()
     if failover_status == "MASTER":
         local_ip = middleware.call_sync("failover.local_ip")
-        dlm_ready = middleware.call_sync("dlm.node_ready")
-        if alua_enabled:
-            active_extents = middleware.call_sync("iscsi.extent.active_extents")
-            clustered_extents = set(middleware.call_sync("iscsi.target.clustered_extents"))
-            cluster_mode_targets = middleware.call_sync("iscsi.target.cluster_mode_targets")
     elif failover_status == "BACKUP":
         if alua_enabled:
             if standby_write_empty_config := middleware.call_sync("iscsi.alua.standby_write_empty_config"):
@@ -205,7 +198,8 @@
                     standby_node_requires_reload = True
                 else:
                     if _cmt_cml is not None:
-                        cluster_mode_targets, cluster_mode_luns = _cmt_cml
+                        # First tuple element (cluster_mode_targets) is unused here.
+                        _, cluster_mode_luns = _cmt_cml
                 clustered_extents = set(middleware.call_sync("iscsi.target.clustered_extents"))
         else:
             middleware.call_sync("iscsi.target.logout_ha_targets")
@@ -301,12 +295,10 @@
     else:
         cml = calc_copy_manager_luns(all_rw_extent_names)
 
-    def set_active_lun_to_cluster_mode(extentname):
-        if extentname in active_extents and extentname in clustered_extents:
-            return True
-        return False
-
     def set_standby_lun_to_cluster_mode(device, targetname):
+        # Predicate used only to decide whether to queue standby_fix_cluster_mode
+        # for this device. cluster_mode is no longer written via scst.conf; it is
+        # managed by middleware via direct sysfs writes (iscsi.scst.path_write_if_needed).
         if device in clustered_extents:
             if targetname in cluster_mode_luns and int(device.split(':')[-1]) in cluster_mode_luns[targetname]:
                 return True
@@ -343,19 +335,16 @@ HANDLER dev_disk {
 %             if devices:
 %                 for device in devices:
 
-        DEVICE ${device} {
-## We will only enter cluster_mode here if two conditions are satisfied:
-## 1. We are already in cluster_mode, AND
-## 2. The corresponding LUN on the MASTER is in cluster_mode
-## Note we use a similar check to determine whether the target will be enabled.
-%                 if set_standby_lun_to_cluster_mode(device, name):
-            cluster_mode 1
-%                 else:
+## cluster_mode is intentionally omitted from scst.conf and managed via direct
+## sysfs writes (iscsi.scst.path_write_if_needed). The predicate below is used
+## only to decide whether to queue iscsi.alua.standby_fix_cluster_mode for this
+## device (i.e. it is not yet in cluster_mode on both nodes).
+%                 if not set_standby_lun_to_cluster_mode(device, name):
 <%
     fix_cluster_mode.append(device)
 %>\
-            cluster_mode 0
 %                 endif
+        DEVICE ${device} {
         }
 %                 endfor
 %             endif
@@ -405,13 +394,8 @@ HANDLER ${handler} {
 %       endif
         t10_vend_id ${extent['vendor']}
         t10_dev_id ${extent['t10_dev_id']}
-%       if failover_status == "MASTER" and alua_enabled and dlm_ready:
-%       if set_active_lun_to_cluster_mode(extent['name']):
-        cluster_mode 1
-%       else:
-        cluster_mode 0
-%       endif
-%       endif
+##      cluster_mode is intentionally omitted; middleware manages it via direct
+##      sysfs writes (iscsi.scst.path_write_if_needed).
 %       if failover_status == "BACKUP" and alua_enabled:
         active 0
 %       endif

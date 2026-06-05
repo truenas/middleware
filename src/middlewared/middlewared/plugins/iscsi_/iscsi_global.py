@@ -213,6 +213,8 @@ class ISCSIGlobalService(SystemServiceService):
                 if loaded:
                     self.logger.warning('Insufficent unload delay when turning off ALUA')
                 await self.middleware.call('failover.call_remote', 'iscsi.target.logout_ha_targets')
+                # Clear cluster_mode on ACTIVE
+                await self.middleware.call('iscsi.scst.set_all_cluster_mode', 0)
 
         await self._update_service(old, new, options={'ha_propagate': False})
 
