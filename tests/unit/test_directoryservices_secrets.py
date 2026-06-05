@@ -73,7 +73,7 @@ def test__backup_drops_stale_netbiosname_keys(secrets_service):
     asyncio.run(secrets_service.backup())
 
     # The datastore.update call should contain only the current netbiosname's entry.
-    saved = json.loads(captured["args"][3]["secrets"])
+    saved = json.loads(captured["args"][2]["secrets"])
     assert set(saved.keys()) == {"NEWHOST$"}, (
         f"cifs.secrets after backup() should contain only the current NETBIOSNAME$ key; "
         f"got {sorted(saved.keys())}."
