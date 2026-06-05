@@ -306,8 +306,13 @@ class SystemDatasetService(ConfigService):
     @private
     def sysdataset_path(self, expected_datasetname=None):
         """
-        Returns SYSDATASET_PATH if the expected dataset is mounted there,
-        otherwise None. Called frequently -- single statmount probe.
+        This function returns either None or SYSDATASET_PATH,
+        and is called potentially quite frequently (once per ZFS event
+        or pool.dataset.query, etc).
+
+        `None` indicates that there was an issue with filesystem mounted
+        at SYSDATASET_PATH. Typically this could indicate a failed migration
+        of system dataset or problem importing expected pool for system dataset.
         """
         if expected_datasetname is None:
             db_pool = self.middleware.call_sync(
@@ -394,7 +399,9 @@ class SystemDatasetService(ConfigService):
 
     @api_method(SystemDatasetPoolChoicesArgs, SystemDatasetPoolChoicesResult, roles=['POOL_READ'])
     async def pool_choices(self, include_current_pool):
-        """Retrieve pool choices which can be used for configuring system dataset."""
+        """
+        Retrieve pool choices which can be used for configuring system dataset.
+        """
         boot_pool = await self.middleware.call('boot.pool_name')
         current_pool = (await self.config())['pool']
         valid_pools = await self.middleware.call('systemdataset.query_pools_for_system_dataset')
@@ -410,14 +417,8 @@ class SystemDatasetService(ConfigService):
     async def do_update(self, job, data):
         """Update System Dataset Service Configuration.
 
-        Records the user's pool selection in the datastore, then calls
-        reconcile() with `authority=SysdatasetAuthority.LIVE` so the data the user
-        was just working with travels to the new pool. See the module
-        docstring for the state matrix.
-
-        `job` is forwarded into reconcile() so whichever action ends up
-        running (typically MIGRATE_DATA) reports progress as it quiesces
-        services, copies the dataset, and swaps the mount.
+        Set `pool` to choose which pool hosts the system dataset. Changing the
+        pool moves the system dataset and its contents to the new pool.
         """
         job.set_progress(0, 'Validating system dataset configuration')
         data.setdefault('pool_exclude', None)
@@ -575,17 +576,15 @@ class SystemDatasetService(ConfigService):
             config = self.middleware.call_sync('systemdataset.config')
             authority = SysdatasetAuthority.LIVE
 
-        # 2. Make sure SYSDATASET_PATH exists as a real directory before
-        #    any mount work -- the swap opens it and would happily traverse
-        #    a stray symlink target if we let one slip through.
-        if not os.path.isdir(SYSDATASET_PATH) and os.path.exists(SYSDATASET_PATH):
-            os.unlink(SYSDATASET_PATH)
+        # 2. Make sure SYSDATASET_PATH is a real directory before any mount
+        #    work. Remove whatever's there if it isn't one (stale file or
+        #    symlink), then create it.
+        try:
+            if not stat.S_ISDIR(os.lstat(SYSDATASET_PATH).st_mode):
+                os.unlink(SYSDATASET_PATH)
+        except FileNotFoundError:
+            pass
         os.makedirs(SYSDATASET_PATH, mode=0o755, exist_ok=True)
-        os.close(truenas_os.openat2(
-            SYSDATASET_PATH,
-            flags=os.O_DIRECTORY | os.O_CLOEXEC,
-            resolve=truenas_os.RESOLVE_NO_SYMLINKS,
-        ))
 
         # 3. Inspect live state and dispatch via the state machine.
         live_pool = self._live_pool()
@@ -626,12 +625,12 @@ class SystemDatasetService(ConfigService):
 
     @private
     def query_pools_for_system_dataset(self, exclude_pool=None):
-        """Pools eligible to host the system dataset.
-
-        Pools with passphrase-locked roots are eligible because ZFS
-        encryption is per-dataset and the system dataset uses a legacy
-        mount; key format is only exposed via libzfs, so reading mountinfo
-        here is insufficient.
+        """
+        Pools with passphrase-locked root level datasets are permitted as system
+        dataset targets. This is because ZFS encryption is at the dataset level
+        rather than pool level, and we use a legacy mount for the system dataset.
+        Key format is only exposed via libzfs and so reading mountinfo here is
+        insufficient.
         """
         rv = []
         for i in query_imported_fast_impl().values():
@@ -982,10 +981,13 @@ class SystemDatasetService(ConfigService):
     @contextmanager
     @private
     def release_system_dataset(self):
-        """Quiesce daemons that hold sysdataset handles.
+        """
+        This context manager is used to toggle system-dataset dependent services and
+        tasks for cases where the dataset is unmounted / remounted.
 
-        sysdataset.update and sysdataset.setup can both reach this via
-        different code paths -- the lock prevents simultaneous releases.
+        The operations are performed under a lock because systemdataset.update() and
+        systemdataset.setup() both can lead to this being called, and we don't want
+        simultaneous releases of system dataset.
         """
         with self.sysdataset_release_lock:
             # TODO: Review these services because /var/log no longer sits on
@@ -1113,7 +1115,9 @@ async def pool_post_create(middleware, pool):
 
 
 async def pool_post_import(middleware, pool):
-    """On pool import we may need to reconfigure the system dataset."""
+    """
+    On pool import we may need to reconfigure system dataset.
+    """
     await middleware.call('systemdataset.setup')
 
 
