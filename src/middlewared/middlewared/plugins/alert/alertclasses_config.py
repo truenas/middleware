@@ -1,31 +1,20 @@
 from __future__ import annotations
 
-import typing
-
 from middlewared.alert.base import AlertClass
-from middlewared.api import api_method
-from middlewared.api.current import (
-    AlertClassesEntry,
-    AlertClassesUpdate,
-    AlertClassesUpdateArgs,
-    AlertClassesUpdateResult,
-)
-from middlewared.service import ConfigServicePart, GenericConfigService, ValidationErrors
+from middlewared.api.current import AlertClassesEntry, AlertClassesUpdate
+from middlewared.service import ConfigServicePart, ValidationErrors
 import middlewared.sqlalchemy as sa
-
-if typing.TYPE_CHECKING:
-    from middlewared.main import Middleware
 
 
 class AlertClassesModel(sa.Model):
-    __tablename__ = 'system_alertclasses'
+    __tablename__ = "system_alertclasses"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     classes = sa.Column(sa.JSON(dict))
 
 
 class AlertClassesConfigServicePart(ConfigServicePart[AlertClassesEntry]):
-    _datastore = 'system.alertclasses'
+    _datastore = "system.alertclasses"
     _entry = AlertClassesEntry
 
     async def do_update(self, data: AlertClassesUpdate) -> AlertClassesEntry:
@@ -52,27 +41,3 @@ class AlertClassesConfigServicePart(ConfigServicePart[AlertClassesEntry]):
         await self.middleware.call("datastore.update", self._datastore, old.id, new)
 
         return await self.config()
-
-
-__all__ = ('AlertClassesService',)
-
-
-class AlertClassesService(GenericConfigService[AlertClassesEntry]):
-
-    class Config:
-        datastore = 'system.alertclasses'
-        cli_namespace = 'system.alert.class'
-        entry = AlertClassesEntry
-        role_prefix = 'ALERT'
-        generic = True
-
-    def __init__(self, middleware: Middleware) -> None:
-        super().__init__(middleware)
-        self._svc_part = AlertClassesConfigServicePart(self.context)
-
-    @api_method(AlertClassesUpdateArgs, AlertClassesUpdateResult, check_annotations=True)
-    async def do_update(self, data: AlertClassesUpdate) -> AlertClassesEntry:
-        """
-        Update default Alert settings.
-        """
-        return await self._svc_part.do_update(data)

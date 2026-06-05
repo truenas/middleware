@@ -100,9 +100,9 @@ if typing.TYPE_CHECKING:
 from middlewared.plugins.acme_dns_authenticator import DNSAuthenticatorService as ACMEDNSAuthenticatorService
 from middlewared.plugins.acme_protocol import ACMEProtocolService
 from middlewared.plugins.acme_registration import ACMERegistrationService
-from middlewared.plugins.alert.alert import AlertService
-from middlewared.plugins.alert.classes import AlertClassesService
-from middlewared.plugins.alert.service import AlertServiceService
+from middlewared.plugins.alert import AlertService
+from middlewared.plugins.alert.alertclasses import AlertClassesService
+from middlewared.plugins.alert.alertservice import AlertServiceService
 from middlewared.plugins.api_key import ApiKeyService
 from middlewared.plugins.apps import AppService
 from middlewared.plugins.catalog import CatalogService
@@ -577,7 +577,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
                 'mail',
                 # We also need to load alerts first because other plugins can issue one-shot alerts during their
                 # initialization
-                'alert.alert',
+                'alert',
                 # Migrate users and groups ASAP
                 'account',
                 # Replication plugin needs to be initialized before zettarepl in order to register network activity
