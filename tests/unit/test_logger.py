@@ -170,7 +170,11 @@ def test__syslog_handler_recovery(working_syslog, test_message, current_test_nam
         assert f'{test_message}\n{flush_message}' in contents
 
 
-@pytest.mark.parametrize('tnlog', ALL_LOG_FILES)
+# audit_handler is intentionally routed from the system syslog source (s_src) rather
+# than the middleware socket that setup_syslog_handler() injects through -- see the
+# special-case in etc_files/syslog-ng/syslog-ng.conf.mako. A message emitted here can
+# never reach its file, so it can't be validated by this helper and is excluded.
+@pytest.mark.parametrize('tnlog', [t for t in ALL_LOG_FILES if t.name != 'audit_handler'])
 def test__middleware_logger_paths(tnlog, test_message):
     """ Verify that syslog filtering rules work properly for backends """
     logger = setup_syslog_handler(tnlog, None)
