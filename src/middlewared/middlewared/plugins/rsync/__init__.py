@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -58,7 +58,7 @@ class RsyncTaskService(GenericTaskPathService[RsyncTaskEntry], TaskStateMixin):
         return await self._svc_part.do_update(id_, data)
 
     @api_method(RsyncTaskDeleteArgs, RsyncTaskDeleteResult, check_annotations=True)
-    async def do_delete(self, id_: int) -> Literal[True]:
+    async def do_delete(self, id_: int) -> bool:
         """Delete Rsync Task of `id`."""
         await self._svc_part.do_delete(id_)
         return True
