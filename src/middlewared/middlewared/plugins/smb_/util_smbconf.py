@@ -352,6 +352,10 @@ def generate_smb_share_conf_dict(
             'streams_xattr:store_stream_type': False,
             'streams_xattr:xattr_compat': True
         })
+        # AFP-compat shares hold real Netatalk-written ._<base> files and rely on
+        # ad_convert running, so they must not inherit the global
+        # 'fruit:convert_adouble': False default applied to the base config above.
+        config_out.pop('fruit:convert_adouble', None)
 
     if share_config[share_field.AUDIT][share_field.AUDIT_ENABLE]:
         vfs_objects.add(TrueNASVfsObjects.TRUENAS_AUDIT)

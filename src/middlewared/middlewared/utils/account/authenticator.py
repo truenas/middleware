@@ -206,8 +206,12 @@ class UserPamAuthenticator(TrueNASUserPamAuthenticator[UserPamAuthenticatorPassw
 
     def login(self) -> TrueNASAuthenticatorResponse:
         resp = super().login()
-        assert self.ctx is not None
         if resp.code == PAMCode.PAM_SUCCESS:
+            # ctx is only needed for the success path below (session-uuid retrieval). A denied
+            # login -- e.g. PAM_PERM_DENIED when the session limit (maxlogins) is exceeded -- can
+            # return without a PAM context, so assert here rather than unconditionally; otherwise
+            # the denial is masked by an empty AssertionError instead of surfacing to the caller.
+            assert self.ctx is not None
             # On successful session open, pam_truenas will set a pam environmental variable containing the
             # session_uuid it assigned the session in the user keyring.
             #

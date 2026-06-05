@@ -70,8 +70,9 @@ def unix_pam_authenticator(username: str, origin: ConnectionOrigin):
     # Constructor now takes username and origin
     pam_hdl = authenticator.UnixPamAuthenticator(username=username, origin=origin)
 
-    # Authenticate (no origin parameter)
-    pam_resp = pam_hdl.authenticate(username)
+    # Authenticate. The unix-socket authenticator ignores the password but the
+    # method signature requires one, so pass an empty string.
+    pam_resp = pam_hdl.authenticate(username, '')
     assert pam_resp.code == PAMCode.PAM_SUCCESS, pam_resp.reason
 
     # Login (no session parameter)
