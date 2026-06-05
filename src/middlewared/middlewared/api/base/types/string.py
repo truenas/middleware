@@ -1,16 +1,17 @@
 from typing import Annotated, Any
 import uuid
 
+from annotated_types import MinLen
 from pydantic import (
     AfterValidator,
     BeforeValidator,
-    Field,
     GetCoreSchemaHandler,
     HttpUrl as _HttpUrl,
     PlainSerializer,
 )
 from pydantic_core import CoreSchema, core_schema, PydanticKnownError
 
+from middlewared.api.base.types.json_schema import JsonSchemaExtra
 from middlewared.api.base.validators import time_validator, email_validator
 from middlewared.utils.netbios import validate_netbios_name, validate_netbios_domain
 from middlewared.utils.smb import validate_smb_share_name
@@ -81,9 +82,11 @@ LongString = Annotated[
     BeforeValidator(LongStringWrapper),
     PlainSerializer(lambda x: x.value if isinstance(x, LongStringWrapper) else x),
 ]
-NonEmptyString = Annotated[str, Field(min_length=1)]
-LongNonEmptyString = Annotated[LongString, Field(min_length=1)]
-TimeString = Annotated[str, AfterValidator(time_validator), Field(examples=["00:00", "06:30", "18:00", "23:00"])]
+NonEmptyString = Annotated[str, MinLen(1)]
+LongNonEmptyString = Annotated[LongString, MinLen(1)]
+TimeString = Annotated[
+    str, AfterValidator(time_validator), JsonSchemaExtra(examples=["00:00", "06:30", "18:00", "23:00"])
+]
 EmailString = Annotated[str, AfterValidator(email_validator)]
 NetbiosDomain = Annotated[str, AfterValidator(validate_netbios_domain)]
 NetbiosName = Annotated[str, AfterValidator(validate_netbios_name)]

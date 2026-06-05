@@ -1,7 +1,7 @@
 import string
 from typing import Annotated
 
-from pydantic import Field
+from annotated_types import Ge, Le, MinLen
 from pydantic.functional_validators import AfterValidator
 
 from middlewared.utils.sid import sid_is_valid
@@ -61,16 +61,16 @@ def validate_sid(value: str) -> str:
 
 
 LocalUsername = Annotated[str, AfterValidator(validate_local_username)]
-RemoteUsername = Annotated[str, Field(min_length=1)]
+RemoteUsername = Annotated[str, MinLen(1)]
 GroupName = Annotated[
     str,
     AfterValidator(lambda x: validate_name(x, valid_start_chars=GROUP_VALID_START, max_length=None))
 ]
-LocalUID = Annotated[int, Field(ge=0, le=TRUENAS_IDMAP_DEFAULT_LOW - 1)]
+LocalUID = Annotated[int, Ge(0), Le(TRUENAS_IDMAP_DEFAULT_LOW - 1)]
 
-LocalGID = Annotated[int, Field(ge=0, le=TRUENAS_IDMAP_DEFAULT_LOW - 1)]
+LocalGID = Annotated[int, Ge(0), Le(TRUENAS_IDMAP_DEFAULT_LOW - 1)]
 
-ContainerXID = Annotated[int, Field(ge=1, le=XID_MAX)]
+ContainerXID = Annotated[int, Ge(1), Le(XID_MAX)]
 
 SID = Annotated[str, AfterValidator(validate_sid)]
 

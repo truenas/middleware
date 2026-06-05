@@ -3,16 +3,21 @@ from typing import Annotated, Self
 
 from pydantic import AfterValidator, model_validator, Field
 
-from middlewared.api.base import BaseModel, TimeString, croniter_for_schedule, validate_filters, validate_options
+from middlewared.api.base import (
+    BaseModel, JsonSchemaExtra, TimeString, croniter_for_schedule, validate_filters, validate_options
+)
 
 __all__ = ["QueryFilters", "QueryOptions", "QueryArgs", "GenericQueryResult", "CronModel", "TimeCronModel"]
 
 QF_DOC = 'List of filters for query results. See API documentation for "Query Methods" for more guidance.'
-QF_FIELD = Field(default=[], description=QF_DOC, examples=[
-    [["name", "=", "bob"]],
-    [["OR", [[["name", "=", "bob"]], [["name", "=", "larry"]]]]],
-])
-QueryFilters = Annotated[list, QF_FIELD, AfterValidator(validate_filters)]
+QueryFilters = Annotated[
+    list,
+    JsonSchemaExtra(description=QF_DOC, examples=[
+        [["name", "=", "bob"]],
+        [["OR", [[["name", "=", "bob"]], [["name", "=", "larry"]]]]],
+    ]),
+    AfterValidator(validate_filters),
+]
 
 
 class QueryOptions(BaseModel):
