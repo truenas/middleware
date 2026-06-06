@@ -340,12 +340,12 @@ class SystemDatasetService(ConfigService):
 
     @private
     async def config_extend(self, config):
-        # Empty pool is treated as boot pool.
+        # Treat empty system dataset pool as boot pool
         config['pool_set'] = bool(config['pool'])
         config['pool'] = self.force_pool or config['pool'] or await self.middleware.call('boot.pool_name')
         config['basename'] = f'{config["pool"]}/.system'
 
-        # `uuid` always reflects the local node (B uses uuid_b).
+        # Make `uuid` point to the uuid of current node
         uuid_key = 'uuid'
         if await self.middleware.call('failover.node') == 'B':
             uuid_key = 'uuid_b'
@@ -495,8 +495,8 @@ class SystemDatasetService(ConfigService):
 
         used = existing_dataset['properties']['used']['value']
         available = new_dataset['properties']['available']['value']
-        # 1.1x margin: same files don't take exactly the same amount of
-        # space on a different pool.
+        # 1.1 is a safety margin because same files won't
+        # take exactly the same amount of space on a different pool
         used = int(used * 1.1)
         if available < used:
             return (
@@ -734,18 +734,16 @@ class SystemDatasetService(ConfigService):
                 self.s.zfs.resource.query_impl,
                 ZFSResourceQuery(
                     paths=list(datasets),
-                    properties=['encryption', 'quota', 'used', 'overlay'] + list(SystemDatasetZfsProperties)
+                    properties=['encryption', 'quota', 'used'] + list(SystemDatasetZfsProperties)
                 ),
             )
         }
         for dataset, config in datasets.items():
             props = config['props']
-            # Disable encryption on system-managed children of
-            # passphrase-encrypted pools.
+            # Disable encryption for system managed datasets that are
+            # configured on zpools that are passphrase-encrypted.
             if root_dataset_is_passphrase_encrypted:
                 props['encryption'] = 'off'
-            # overlayfs is never used on system dataset paths.
-            props['overlay'] = 'off'
             is_cores_ds = dataset.endswith('/cores')
             if is_cores_ds:
                 # 1G; raw value so the update_props_dict comparison below
@@ -1138,26 +1136,14 @@ async def pool_pre_export(middleware, pool, options, job):
 async def setup(middleware):
     def setup_paths():
         os.makedirs(SYSDATASET_PATH, mode=0o755, exist_ok=True)
-        # /var/cache/nscd should be a symlink to /var/run/nscd/cache.
-        # Probe via lstat on a /var/cache dir_fd so the check doesn't
-        # traverse a hostile symlink at the final component.
-        cache_fd = os.open('/var/cache', os.O_DIRECTORY | os.O_CLOEXEC)
-        try:
-            try:
-                st = os.lstat('nscd', dir_fd=cache_fd)
-                is_symlink = stat.S_ISLNK(st.st_mode)
-                exists = True
-            except FileNotFoundError:
-                is_symlink = False
-                exists = False
+        if not os.path.exists('/var/cache/nscd') or not os.path.islink('/var/cache/nscd'):
+            if os.path.exists('/var/cache/nscd'):
+                shutil.rmtree('/var/cache/nscd')
 
-            if not is_symlink:
-                if exists:
-                    shutil.rmtree('/var/cache/nscd')
-                os.makedirs('/var/run/nscd/cache', exist_ok=True)
-                os.symlink('/var/run/nscd/cache', 'nscd', dir_fd=cache_fd)
-        finally:
-            os.close(cache_fd)
+            os.makedirs('/var/run/nscd/cache', exist_ok=True)
+
+        if not os.path.islink('/var/cache/nscd'):
+            os.symlink('/var/run/nscd/cache', '/var/cache/nscd')
 
     middleware.register_hook('pool.post_create', pool_post_create)
     # Reconfigure the system dataset first thing after a pool import.
