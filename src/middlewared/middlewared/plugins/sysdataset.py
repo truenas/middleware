@@ -301,7 +301,7 @@ class SystemDatasetService(ConfigService):
         entry = SystemDatasetEntry
 
     force_pool = None
-    sysdataset_release_lock = threading.Lock()
+    sysdataset_reconcile_lock = threading.Lock()
 
     @private
     def sysdataset_path(self, expected_datasetname=None):
@@ -528,18 +528,30 @@ class SystemDatasetService(ConfigService):
         Fires the `sysdataset.setup` hook around the work so subscribers
         (e.g. failover state UI) see exactly one in_progress=True / =False
         pair per reconcile.
+
+        Serialized by `sysdataset_reconcile_lock` so concurrent callers
+        (do_update, setup from pool hooks, failover) can never swap the
+        SYSDATASET_PATH mount at the same time.
         """
         try:
             authority = SysdatasetAuthority(authority)
         except ValueError:
             raise CallError(f'invalid authority: {authority!r}')
 
-        self.middleware.call_hook_sync('sysdataset.setup', data={'in_progress': True})
-        try:
-            self._reconcile_impl(exclude_pool, authority, job)
-        finally:
-            self.middleware.call_hook_sync('sysdataset.setup', data={'in_progress': False})
-        return self.middleware.call_sync('systemdataset.config')
+        # Serialize every reconcile regardless of caller -- do_update holds the
+        # sysdataset_update job lock, but setup() (pool.post_create/post_import,
+        # failover) holds nothing. Without this, two reconciles could swap the
+        # /var/db/system mount concurrently. Plain (non-reentrant) Lock is
+        # deliberate: nothing run under it re-enters reconcile/setup/update, so a
+        # future change that does will deadlock loudly in testing instead of
+        # silently allowing a concurrent mount swap. Do NOT switch to RLock.
+        with self.sysdataset_reconcile_lock:
+            self.middleware.call_hook_sync('sysdataset.setup', data={'in_progress': True})
+            try:
+                self._reconcile_impl(exclude_pool, authority, job)
+            finally:
+                self.middleware.call_hook_sync('sysdataset.setup', data={'in_progress': False})
+            return self.middleware.call_sync('systemdataset.config')
 
     def _reconcile_impl(self, exclude_pool, authority, job=None):
         # 1. Pick target_pool and decide whether the DB needs persistence
@@ -983,29 +995,27 @@ class SystemDatasetService(ConfigService):
         This context manager is used to toggle system-dataset dependent services and
         tasks for cases where the dataset is unmounted / remounted.
 
-        The operations are performed under a lock because systemdataset.update() and
-        systemdataset.setup() both can lead to this being called, and we don't want
-        simultaneous releases of system dataset.
+        Callers run inside reconcile(), which holds sysdataset_reconcile_lock, so
+        releases are already serialized -- no separate lock is needed here.
         """
-        with self.sysdataset_release_lock:
-            # TODO: Review these services because /var/log no longer sits on
-            # the system dataset so any service that could potentially open
-            # a file descriptor underneath /var/log will no longer need to be
-            # stopped/restarted to allow the system dataset to migrate
-            restart = ['netdata', 'truenas_zfstierd']
-            if self.middleware.call_sync('service.started', 'nfs'):
-                restart.append('nfs')
-            if self.middleware.call_sync('service.started', 'open-vm-tools'):
-                restart.append('open-vm-tools')
+        # TODO: Review these services because /var/log no longer sits on
+        # the system dataset so any service that could potentially open
+        # a file descriptor underneath /var/log will no longer need to be
+        # stopped/restarted to allow the system dataset to migrate
+        restart = ['netdata', 'truenas_zfstierd']
+        if self.middleware.call_sync('service.started', 'nfs'):
+            restart.append('nfs')
+        if self.middleware.call_sync('service.started', 'open-vm-tools'):
+            restart.append('open-vm-tools')
 
-            try:
-                for svc in restart:
-                    self.middleware.call_sync('service.control', 'STOP', svc).wait_sync(raise_error=True)
-                close_sysdataset_tdb_handles()
-                yield
-            finally:
-                for svc in reversed(restart):
-                    self.middleware.call_sync('service.control', 'START', svc).wait_sync(raise_error=True)
+        try:
+            for svc in restart:
+                self.middleware.call_sync('service.control', 'STOP', svc).wait_sync(raise_error=True)
+            close_sysdataset_tdb_handles()
+            yield
+        finally:
+            for svc in reversed(restart):
+                self.middleware.call_sync('service.control', 'START', svc).wait_sync(raise_error=True)
 
     @private
     def get_system_dataset_spec(self, pool, uid):
