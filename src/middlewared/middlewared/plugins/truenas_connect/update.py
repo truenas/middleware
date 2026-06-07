@@ -263,6 +263,32 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
         if delete_job.error:
             logger.error('Failed to delete TNC certificate: %s', delete_job.error)
 
+    @private
+    async def handle_tnc_deregistration(self):
+        # Canonical handler for "TNC told us we are deregistered" (HTTP 401). This is the only path
+        # that auto-unsets TNC and removes its certificate, so both the heartbeat (on a 401 response)
+        # and the renewal check (on a 401 from the ACME config fetch) route through it.
+        # Idempotent: a no-op once TNC is already unset, so concurrent callers are safe.
+        tnc_config = await self.config_internal()
+        if tnc_config['status'] == Status.DISABLED.name and tnc_config['certificate'] is None:
+            logger.debug('TNC already deregistered/unset, nothing to do')
+            return
+
+        logger.debug('Handling TNC deregistration (401), unsetting TNC')
+        with contextlib.suppress(Exception):
+            # Make sure we set up a self-signed certificate and clear any alerts as we are going to
+            # unset TNC. revoke_cert_and_account is False because TNC has already catered to these
+            # cases on its end (the 401 means it no longer knows about us).
+            await self.unset_registration_details(False)
+
+        await self.middleware.call('datastore.update', 'truenas_connect', tnc_config['id'], {
+            'enabled': False,
+        } | get_unset_payload())
+        self.middleware.send_event('tn_connect.config', 'CHANGED', fields=await self.config())
+        await self.middleware.call('alert.oneshot_create', 'TNCDisabledAutoUnconfigured', None)
+        if tnc_config['certificate'] is not None:
+            await self.delete_cert(tnc_config['certificate'])
+
     @api_method(
         TrueNASConnectIpChoicesArgs, TrueNASConnectIpChoicesResult, roles=['TRUENAS_CONNECT_READ'], removed_in='v26',
     )

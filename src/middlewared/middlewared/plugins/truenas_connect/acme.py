@@ -134,6 +134,17 @@ class TNCACMEService(Service):
             return True, None
 
         acme_config = self.middleware.call_sync('tn_connect.acme.config')
+        # A 401 here means TNC no longer recognises us (the node was deregistered cloud-side), not
+        # that renewal is unneeded. Route it into the same unset path the heartbeat uses instead of
+        # silently swallowing it as "renewal not needed". Must be checked before the generic error
+        # branch below since a 401 also populates 'error'. .get() guards acme_config's early-return
+        # (disabled/no creds) which omits 'status_code'.
+        if acme_config.get('status_code') == 401:
+            logger.warning(
+                'TNC ACME config returned 401 during renewal check; node appears deregistered, unsetting TNC'
+            )
+            self.middleware.call_sync('tn_connect.handle_tnc_deregistration')
+            return False, None
         if acme_config['error']:
             logger.error(
                 'Failed to fetch TNC ACME configuration when checking renewal: %r', acme_config['error']
