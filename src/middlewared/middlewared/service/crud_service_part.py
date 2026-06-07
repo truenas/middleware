@@ -66,6 +66,9 @@ class CRUDServicePart[E, PK = int](ServicePart):
             options = QueryOptions()
         opts = options.model_dump()
         extra = opts.get('extra', {}) or {}
+        # Surface `select` to extend_context so services can skip expensive per-row work
+        # (e.g. lock-state lookups) when the relevant field isn't being selected.
+        extra = {**extra, 'select': opts.get('select')}
 
         if options.force_sql_filters:
             # When force_sql_filters is set, let the datastore handle

@@ -22,6 +22,8 @@ jobs:
           cd src/middlewared
           mypy \
             middlewared/job.py \
+            middlewared/service/sharing_task_service_part.py \
+            middlewared/service/generic_sharing_service.py \
             middlewared/alert/ \
             middlewared/common/ \
             middlewared/plugins/acme_protocol/ \
@@ -40,6 +42,7 @@ jobs:
             middlewared/plugins/mail/ \
             middlewared/plugins/ntp/ \
             middlewared/plugins/ports/ \
+            middlewared/plugins/rsync/ \
             middlewared/plugins/snapshot/ \
             middlewared/plugins/truenas/ \
             middlewared/plugins/truenas_connect/ \
