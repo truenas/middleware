@@ -43,27 +43,33 @@ class UserEntry(BaseModel):
     unixhash: Secret[str | None]
     smbhash: Secret[str | None]
     home: NonEmptyString = DEFAULT_HOME_PATH
-    shell: NonEmptyString = "/usr/bin/zsh"
-    """Available choices can be retrieved with `user.shell_choices`."""
+    shell: NonEmptyString = Field(
+        default="/usr/bin/zsh",
+        description="Available choices can be retrieved with `user.shell_choices`.",
+    )
     full_name: str
     builtin: bool
     smb: bool = True
-    userns_idmap: Literal['DIRECT'] | ContainerXID | None = None
-    """
-    Specifies the subuid mapping for this user. If DIRECT then the UID will be
-    directly mapped to all containers. Alternatively, the target UID may be
-    explicitly specified. If None, then the UID will not be mapped.
-
-    NOTE: this field will be ignored for users that have been assigned
-    TrueNAS roles.
-    """
+    userns_idmap: Literal['DIRECT'] | ContainerXID | None = Field(
+        default=None,
+        description=(
+            "Specifies the subuid mapping for this user. If DIRECT then the UID will be directly mapped to all "
+            "containers. Alternatively, the target UID may be explicitly specified. If None, then the UID will not be "
+            "mapped.\n"
+            "\n"
+            "NOTE: this field will be ignored for users that have been assigned TrueNAS roles."
+        ),
+    )
     group: dict
-    groups: list[int] = Field(default_factory=list)
-    """Specifies whether the user should be allowed access to SMB shares. User will also automatically be added to
-    the `builtin_users` group."""
+    groups: list[int] = Field(
+        default_factory=list,
+        description=(
+            "Specifies whether the user should be allowed access to SMB shares. User will also automatically be added "
+            "to the `builtin_users` group."
+        ),
+    )
     password_disabled: bool = False
-    ssh_password_enabled: bool = False
-    """Required if `password_disabled` is false."""
+    ssh_password_enabled: bool = Field(default=False, description="Required if `password_disabled` is false.")
     sshpubkey: LongString | None = None
     locked: bool = False
     sudo_commands: list[NonEmptyString] = Field(default_factory=list)
@@ -79,9 +85,12 @@ class UserEntry(BaseModel):
 
 
 class UserCreateUpdateResult(UserEntry):
-    password: NonEmptyString | None
-    """Password if it was specified in create or update payload. If random_password
-    was specified then this will be a 20 character random string."""
+    password: NonEmptyString | None = Field(
+        description=(
+            "Password if it was specified in create or update payload. If random_password was specified then this will "
+            "be a 20 character random string."
+        ),
+    )
 
 
 class UserCreate(UserEntry):
@@ -97,25 +106,26 @@ class UserCreate(UserEntry):
     roles: Excluded = excluded_field()
     api_keys: Excluded = excluded_field()
 
-    uid: LocalUID | None = None
-    """UNIX UID. If not provided, it is automatically filled with the next one available."""
-    username: LocalUsername
-    """
-    String used to uniquely identify the user on the server. In order to be portable across
-    systems, local user names must be composed of characters from the POSIX portable filename
-    character set (IEEE Std 1003.1-2024 section 3.265). This means alphanumeric characters,
-    hyphens, underscores, and periods. Usernames also may not begin with a hyphen or a period.
-    """
+    uid: LocalUID | None = Field(
+        default=None,
+        description="UNIX UID. If not provided, it is automatically filled with the next one available.",
+    )
+    username: LocalUsername = Field(
+        description=(
+            "String used to uniquely identify the user on the server. In order to be portable across systems, local "
+            "user names must be composed of characters from the POSIX portable filename character set (IEEE Std "
+            "1003.1-2024 section 3.265). This means alphanumeric characters, hyphens, underscores, and periods. "
+            "Usernames also may not begin with a hyphen or a period."
+        ),
+    )
     full_name: NonEmptyString
 
     group_create: bool = False
-    group: int | None = None
-    """Required if `group_create` is `false`."""
+    group: int | None = Field(default=None, description="Required if `group_create` is `false`.")
     home_create: bool = False
     home_mode: str = "700"
     password: Secret[str | None] = None
-    random_password: bool = False
-    """Generate a random 20 character password for the user"""
+    random_password: bool = Field(default=False, description="Generate a random 20 character password for the user")
 
 
 class UserUpdate(UserCreate, metaclass=ForUpdateMetaclass):
@@ -141,8 +151,10 @@ class UserUpdateResult(BaseModel):
 
 
 class UserDeleteOptions(BaseModel):
-    delete_group: bool = True
-    """Deletes the user primary group if it is not being used by any other user."""
+    delete_group: bool = Field(
+        default=True,
+        description="Deletes the user primary group if it is not being used by any other user.",
+    )
 
 
 class UserDeleteArgs(BaseModel):
@@ -176,37 +188,33 @@ class UserShellChoicesResult(BaseModel):
 class UserGetUserObjArgs(BaseModel):
     username: str | None = None
     uid: int | None = None
-    get_groups: bool = False
-    """retrieve group list for the specified user."""
-    sid_info: bool = False
-    """retrieve SID and domain information for the user."""
+    get_groups: bool = Field(default=False, description="retrieve group list for the specified user.")
+    sid_info: bool = Field(default=False, description="retrieve SID and domain information for the user.")
 
 
 @single_argument_result
 class UserGetUserObjResult(BaseModel):
-    pw_name: str
-    """name of the user"""
-    pw_gecos: str
-    """full username or comment field"""
-    pw_dir: str
-    """user home directory"""
-    pw_shell: str
-    """user command line interpreter"""
-    pw_uid: int
-    """numerical user id of the user"""
-    pw_gid: int
-    """numerical group id for the user's primary group"""
-    grouplist: list[int] | None
-    """
-    optional list of group ids for groups of which this account is a member. If `get_groups` is not specified,
-    this value will be null.
-    """
-    sid: str | None
-    """optional SID value for the account that is present if `sid_info` is specified in payload."""
-    source: Literal['LOCAL', 'ACTIVEDIRECTORY', 'LDAP']
-    """the source for the user account."""
-    local: bool
-    """boolean value indicating whether the account is local to TrueNAS or provided by a directory service."""
+    pw_name: str = Field(description="name of the user")
+    pw_gecos: str = Field(description="full username or comment field")
+    pw_dir: str = Field(description="user home directory")
+    pw_shell: str = Field(description="user command line interpreter")
+    pw_uid: int = Field(description="numerical user id of the user")
+    pw_gid: int = Field(description="numerical group id for the user's primary group")
+    grouplist: list[int] | None = Field(
+        description=(
+            "optional list of group ids for groups of which this account is a member. If `get_groups` is not specified,"
+            " this value will be null."
+        ),
+    )
+    sid: str | None = Field(
+        description="optional SID value for the account that is present if `sid_info` is specified in payload.",
+    )
+    source: Literal['LOCAL', 'ACTIVEDIRECTORY', 'LDAP'] = Field(description="the source for the user account.")
+    local: bool = Field(
+        description=(
+            "boolean value indicating whether the account is local to TrueNAS or provided by a directory service."
+        ),
+    )
 
 
 class UserGetNextUidArgs(BaseModel):
@@ -270,10 +278,10 @@ class UserUnset2faSecretResult(BaseModel):
 
 
 class TwofactorOptions(BaseModel, metaclass=ForUpdateMetaclass):
-    otp_digits: Annotated[int, Ge(6), Le(8)]
-    """Represents number of allowed digits in the OTP"""
-    interval: Annotated[int, Ge(5)]
-    """Time duration in seconds specifying OTP expiration time from its creation time"""
+    otp_digits: Annotated[int, Ge(6), Le(8)] = Field(description="Represents number of allowed digits in the OTP")
+    interval: Annotated[int, Ge(5)] = Field(
+        description="Time duration in seconds specifying OTP expiration time from its creation time",
+    )
 
 
 class UserRenew2faSecretArgs(BaseModel):

@@ -1,3 +1,5 @@
+from pydantic import Field
+
 from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, excluded_field, single_argument_args
 
 __all__ = [
@@ -9,10 +11,10 @@ __all__ = [
 
 class SystemSecurityEntry(BaseModel):
     id: int
-    enable_fips: bool
-    """ When set, enables FIPS mode. """
-    enable_gpos_stig: bool
-    """ When set, enables compatibility with the General Purpose Operating System STIG. """
+    enable_fips: bool = Field(description="When set, enables FIPS mode.")
+    enable_gpos_stig: bool = Field(
+        description="When set, enables compatibility with the General Purpose Operating System STIG.",
+    )
 
 
 @single_argument_args('system_security_update')

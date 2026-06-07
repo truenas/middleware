@@ -1,3 +1,5 @@
+from pydantic import Field
+
 from middlewared.api.base import BaseModel
 
 __all__ = ("SystemGlobalIDIdArgs", "SystemGlobalIDIdResult")
@@ -8,5 +10,4 @@ class SystemGlobalIDIdArgs(BaseModel):
 
 
 class SystemGlobalIDIdResult(BaseModel):
-    result: str
-    """Unique system identifier."""
+    result: str = Field(description="Unique system identifier.")

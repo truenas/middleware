@@ -60,16 +60,17 @@ class SMBShareAclEntryWhoId(BaseModel):
 
 
 class SMBShareAclEntry(BaseModel):
-    ae_perm: Literal['FULL', 'CHANGE', 'READ']
-    """ Permissions granted to the principal. """
-    ae_type: Literal['ALLOWED', 'DENIED']
-    """ The type of SMB share ACL entry. """
-    ae_who_sid: SID | None = None
-    """ SID value of the principal to whom ACL entry applies. """
-    ae_who_id: SMBShareAclEntryWhoId | None = None
-    """ Unix ID of the principal to whom ACL entry applies. """
-    ae_who_str: NonEmptyString | None = None
-    """ User or group name of the principal to whom the ACL entry applies """
+    ae_perm: Literal['FULL', 'CHANGE', 'READ'] = Field(description="Permissions granted to the principal.")
+    ae_type: Literal['ALLOWED', 'DENIED'] = Field(description="The type of SMB share ACL entry.")
+    ae_who_sid: SID | None = Field(default=None, description="SID value of the principal to whom ACL entry applies.")
+    ae_who_id: SMBShareAclEntryWhoId | None = Field(
+        default=None,
+        description="Unix ID of the principal to whom ACL entry applies.",
+    )
+    ae_who_str: NonEmptyString | None = Field(
+        default=None,
+        description="User or group name of the principal to whom the ACL entry applies",
+    )
 
     @model_validator(mode='after')
     def check_ae_who(self) -> Self:
@@ -83,10 +84,11 @@ class SMBShareAclEntry(BaseModel):
 
 
 class SMBShareAcl(BaseModel):
-    share_name: NonEmptyString
-    """ Name of the SMB share. """
-    share_acl: list[SMBShareAclEntry] = [SMBShareAclEntry(ae_who_sid='S-1-1-0', ae_perm='FULL', ae_type='ALLOWED')]
-    """ List of SMB share ACL entries """
+    share_name: NonEmptyString = Field(description="Name of the SMB share.")
+    share_acl: list[SMBShareAclEntry] = Field(
+        default=[SMBShareAclEntry(ae_who_sid='S-1-1-0', ae_perm='FULL', ae_type='ALLOWED')],
+        description="List of SMB share ACL entries",
+    )
 
 
 @single_argument_args('smb_setacl')
@@ -112,52 +114,81 @@ SMBEncryption = Literal['DEFAULT', 'NEGOTIATE', 'DESIRED', 'REQUIRED']
 
 class SMBEntry(BaseModel):
     id: int
-    netbiosname: NetbiosName
-    """ Netbios name of this server """
-    netbiosalias: list[NetbiosName]
-    """ Alternative netbios names of the server that will be announced via
-    netbios nameserver and registered in active directory when joined."""
-    workgroup: NetbiosDomain
-    """ Workgroup. When joined to active directory, this will be automatically
-    reconfigured to match the netbios domain of the AD domain. """
-    description: str
-    """ Description of SMB server. May appear to clients during some operations. """
-    enable_smb1: bool
-    """ Enable SMB1 support for server. WARNING: using SMB1 protocol is not recommended """
-    unixcharset: SMBCharsetType
-    """ Select characterset for file names on local filesystem. This should only be used
-    in cases where system administrator knows that the filenames are not UTF-8."""
+    netbiosname: NetbiosName = Field(description="Netbios name of this server")
+    netbiosalias: list[NetbiosName] = Field(
+        description=(
+            "Alternative netbios names of the server that will be announced via netbios nameserver and registered in "
+            "active directory when joined."
+        ),
+    )
+    workgroup: NetbiosDomain = Field(
+        description=(
+            "Workgroup. When joined to active directory, this will be automatically reconfigured to match the netbios "
+            "domain of the AD domain."
+        ),
+    )
+    description: str = Field(description="Description of SMB server. May appear to clients during some operations.")
+    enable_smb1: bool = Field(
+        description="Enable SMB1 support for server. WARNING: using SMB1 protocol is not recommended",
+    )
+    unixcharset: SMBCharsetType = Field(
+        description=(
+            "Select characterset for file names on local filesystem. This should only be used in cases where system "
+            "administrator knows that the filenames are not UTF-8."
+        ),
+    )
     localmaster: bool
-    syslog: bool
-    """ Send log messages to syslog. This should be enabled if system administrator
-    wishes for SMB server error logs to be included in information sent to remote syslog
-    server if this is globally configured for TrueNAS."""
-    aapl_extensions: bool
-    """ Enable support for SMB2/3 AAPL protocol extensions. This changes the TrueNAS server
-    so that it is advertised as supporting Apple protocol extensions as a MacOS server, and
-    is required for Time Machine support. """
-    admin_group: str | None
-    """ The selected group will have full administrator privileges on TrueNAS over SMB protocol. """
+    syslog: bool = Field(
+        description=(
+            "Send log messages to syslog. This should be enabled if system administrator wishes for SMB server error "
+            "logs to be included in information sent to remote syslog server if this is globally configured for "
+            "TrueNAS."
+        ),
+    )
+    aapl_extensions: bool = Field(
+        description=(
+            "Enable support for SMB2/3 AAPL protocol extensions. This changes the TrueNAS server so that it is "
+            "advertised as supporting Apple protocol extensions as a MacOS server, and is required for Time Machine "
+            "support."
+        ),
+    )
+    admin_group: str | None = Field(
+        description="The selected group will have full administrator privileges on TrueNAS over SMB protocol.",
+    )
     guest: NonEmptyString
-    filemask: UnixPerm | Literal['DEFAULT']
-    """ smb.conf create mask. DEFAULT applies current server default which is 664. """
-    dirmask: UnixPerm | Literal['DEFAULT']
-    """ smb.conf directory mask. DEFAULT applies current server default which is 775. """
-    ntlmv1_auth: bool
-    """ Enable legacy and very insecure NTLMv1 authentication. This should never be done except
-    in extreme edge cases and may be against regulations in non-home environments. """
+    filemask: UnixPerm | Literal['DEFAULT'] = Field(
+        description="smb.conf create mask. DEFAULT applies current server default which is 664.",
+    )
+    dirmask: UnixPerm | Literal['DEFAULT'] = Field(
+        description="smb.conf directory mask. DEFAULT applies current server default which is 775.",
+    )
+    ntlmv1_auth: bool = Field(
+        description=(
+            "Enable legacy and very insecure NTLMv1 authentication. This should never be done except in extreme edge "
+            "cases and may be against regulations in non-home environments."
+        ),
+    )
     multichannel: bool
     encryption: SMBEncryption
     bindip: list[IPvAnyInterface]
-    server_sid: SID | None
-    """ Universally-unique identifier for this particular SMB server that serves as domain SID
-    for all local SMB user and group accounts """
-    smb_options: str
-    """ Additional unvalidated and unsupported configuration options for the SMB server.
-    WARNING: using smb_options may produce unexpected server behavior. """
-    debug: bool
-    """ Set SMB log levels to debug. This should only be used when troubleshooting a specific SMB
-    issue and should not be used in production environments. """
+    server_sid: SID | None = Field(
+        description=(
+            "Universally-unique identifier for this particular SMB server that serves as domain SID for all local SMB "
+            "user and group accounts"
+        ),
+    )
+    smb_options: str = Field(
+        description=(
+            "Additional unvalidated and unsupported configuration options for the SMB server. WARNING: using "
+            "smb_options may produce unexpected server behavior."
+        ),
+    )
+    debug: bool = Field(
+        description=(
+            "Set SMB log levels to debug. This should only be used when troubleshooting a specific SMB issue and should"
+            " not be used in production environments."
+        ),
+    )
 
     @field_validator('bindip')
     @classmethod

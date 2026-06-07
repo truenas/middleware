@@ -1,3 +1,5 @@
+from pydantic import Field
+
 from middlewared.api.base import (
     BaseModel,
     Excluded,
@@ -16,16 +18,14 @@ __all__ = [
 
 
 class LXCConfigEntry(BaseModel):
-    id: int
-    """Configuration ID."""
-    preferred_pool: str | None = None
-    """Default pool used by containers and image datasets."""
-    bridge: str | None = None
-    """Network bridge interface for virtualized instance networking. `null` if not configured."""
-    v4_network: IPv4Network
-    """IPv4 network CIDR for the container bridge network."""
-    v6_network: IPv6Network
-    """IPv6 network CIDR for the container bridge network."""
+    id: int = Field(description="Configuration ID.")
+    preferred_pool: str | None = Field(default=None, description="Default pool used by containers and image datasets.")
+    bridge: str | None = Field(
+        default=None,
+        description="Network bridge interface for virtualized instance networking. `null` if not configured.",
+    )
+    v4_network: IPv4Network = Field(description="IPv4 network CIDR for the container bridge network.")
+    v6_network: IPv6Network = Field(description="IPv6 network CIDR for the container bridge network.")
 
 
 @single_argument_args("lxc_config_update")
@@ -34,8 +34,7 @@ class LXCConfigUpdateArgs(LXCConfigEntry, metaclass=ForUpdateMetaclass):
 
 
 class LXCConfigUpdateResult(BaseModel):
-    result: LXCConfigEntry
-    """Updated LXC configuration."""
+    result: LXCConfigEntry = Field(description="Updated LXC configuration.")
 
 
 class LXCConfigBridgeChoicesArgs(BaseModel):
@@ -43,5 +42,6 @@ class LXCConfigBridgeChoicesArgs(BaseModel):
 
 
 class LXCConfigBridgeChoicesResult(BaseModel):
-    result: dict[str, str]
-    """Object of available network bridge interfaces and their configurations."""
+    result: dict[str, str] = Field(
+        description="Object of available network bridge interfaces and their configurations.",
+    )
