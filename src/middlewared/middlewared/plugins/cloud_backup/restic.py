@@ -95,6 +95,7 @@ def restic_check_progress(job, proc, track_progress=False):
     progress_buffer = JobProgressBuffer(job)
     time_delta = ""
     action = ""
+    logged_unexpected = False
     while True:
         raw = proc.stdout.readline().decode("utf-8", "ignore")
         if raw == "":
@@ -157,7 +158,12 @@ def restic_check_progress(job, proc, track_progress=False):
 
             progress_buffer.set_progress(description=(f"{time_delta} remaining\n" if time_delta else "") + action)
         except Exception:
-            job.middleware.logger.warning("Unexpected error handling restic message %r", raw, exc_info=True)
+            # `status` messages arrive many times per second, so a recurring
+            # failure here could flood the system log. Emit the traceback only
+            # once per run; the raw line still goes to the (bounded) job log.
+            if not logged_unexpected:
+                job.middleware.logger.warning("Unexpected error handling restic message %r", raw, exc_info=True)
+                logged_unexpected = True
             job.internal_data["messages"] = job.internal_data["messages"][-4:] + [raw]
             job.logs_fd.write((raw + "\n").encode("utf-8", "ignore"))
             continue
