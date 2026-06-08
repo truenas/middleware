@@ -46,18 +46,22 @@ def test_error_message_is_decoded_from_nested_object():
     job = make_job()
     restic_check_progress(
         job,
-        make_proc([line({
-            "message_type": "error",
-            "error": {"message": "repository is already locked"},
-            "during": "archival",
-            "item": "/mnt/tank/data",
-        })]),
+        make_proc(
+            [
+                line(
+                    {
+                        "message_type": "error",
+                        "error": {"message": "repository is already locked"},
+                        "during": "archival",
+                        "item": "/mnt/tank/data",
+                    }
+                )
+            ]
+        ),
         track_progress=True,
     )
 
-    assert job.internal_data["messages"] == [
-        "Error in /mnt/tank/data while archival: repository is already locked"
-    ]
+    assert job.internal_data["messages"] == ["Error in /mnt/tank/data while archival: repository is already locked"]
     # The nested access succeeded, so the broad guard must NOT have fired.
     job.middleware.logger.warning.assert_not_called()
 
