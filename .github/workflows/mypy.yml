@@ -21,9 +21,6 @@ jobs:
         run: |
           cd src/middlewared
           mypy \
-            middlewared/job.py \
-            middlewared/service/sharing_task_service_part.py \
-            middlewared/service/generic_sharing_service.py \
             middlewared/alert/ \
             middlewared/api/base/ \
             middlewared/common/ \
@@ -57,6 +54,8 @@ jobs:
             middlewared/plugins/filesystem.py \
             middlewared/plugins/keyvalue.py \
             middlewared/plugins/pwenc.py \
+            middlewared/service/sharing_task_service_part.py \
+            middlewared/service/generic_sharing_service.py \
             middlewared/utils/ \
             middlewared/test/integration/runner/ \
             middlewared/job.py \
