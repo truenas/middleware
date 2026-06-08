@@ -142,11 +142,8 @@ class iSCSITargetService(CRUDService):
         # First process the local (MASTER) config
         await self._service_change('iscsitarget', 'reload', options={'ha_propagate': False})
 
-        # Then process the remote (BACKUP) config if we are HA and ALUA is enabled.
-        if (
-            await self.middleware.call("iscsi.global.alua_enabled")
-            and await self.middleware.call('failover.remote_connected')
-        ):
+        # Then process the remote (BACKUP) config if we are HA and ALUA is operating.
+        if await self.middleware.call('iscsi.alua.should_operate_on_standby'):
             await self.middleware.call(
                 'failover.call_remote', 'service.control', ['RELOAD', 'iscsitarget'], {'job': True},
             )
@@ -359,9 +356,11 @@ class iSCSITargetService(CRUDService):
         # First process the local (MASTER) config
         await self._service_change('iscsitarget', 'reload', options={'ha_propagate': False})
 
-        # Then process the BACKUP config if we are HA and ALUA is enabled.
+        # Then process the BACKUP config if we are HA and ALUA is operating.
+        # Note: alua_enabled is also used below to decide whether to reset params on
+        # the HA: iqn variant, independent of whether the peer is reachable.
         alua_enabled = await self.middleware.call("iscsi.global.alua_enabled")
-        run_on_peer = alua_enabled and await self.middleware.call('failover.remote_connected')
+        run_on_peer = await self.middleware.call('iscsi.alua.should_operate_on_standby')
         if run_on_peer:
             await self.middleware.call(
                 'failover.call_remote', 'service.control', ['RELOAD', 'iscsitarget'], {'job': True},
@@ -427,11 +426,8 @@ class iSCSITargetService(CRUDService):
         )
         rv = await self.middleware.call('datastore.delete', self._config.datastore, id_)
 
-        # If HA and ALUA handle BACKUP first
-        if (
-            await self.middleware.call("iscsi.global.alua_enabled")
-            and await self.middleware.call('failover.remote_connected')
-        ):
+        # If HA and ALUA is operating, handle BACKUP first
+        if await self.middleware.call('iscsi.alua.should_operate_on_standby'):
             await self.middleware.call('failover.call_remote', 'iscsi.target.remove_target', [target["name"]])
             await self.middleware.call(
                 'failover.call_remote', 'service.control', ['RELOAD', 'iscsitarget'], {'job': True},
