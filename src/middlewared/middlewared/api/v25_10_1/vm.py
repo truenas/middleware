@@ -72,7 +72,7 @@ class VMEntry(BaseModel):
     """Whether to expose detailed CPU topology information to the guest OS."""
     pin_vcpus: bool = False
     """Whether to pin virtual CPUs to specific host CPU cores. Improves performance but reduces host flexibility."""
-    suspend_on_snapshot: bool = False
+    suspend_on_snapshot: bool = True
     """Whether to suspend the VM when taking snapshots."""
     trusted_platform_module: bool = False
     """Whether to enable virtual Trusted Platform Module (TPM) for the VM."""
