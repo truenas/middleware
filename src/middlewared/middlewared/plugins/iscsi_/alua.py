@@ -792,6 +792,19 @@ class iSCSITargetAluaService(Service):
             return False
         return True
 
+    async def should_operate_on_standby(self):
+        """Return True iff an ALUA config change made on this (ACTIVE) node also requires
+        coordinating work on the STANDBY.
+
+        Requires that ALUA is enabled, the local iscsitarget service is actually running
+        (otherwise the local-side change was a no-op), and the peer is reachable.
+        """
+        if not await self.middleware.call('iscsi.global.alua_enabled'):
+            return False
+        if not await self.middleware.call('service.started', 'iscsitarget'):
+            return False
+        return await self.middleware.call('failover.remote_connected')
+
     async def wait_for_alua_settled(self, sleep_interval=1, retries=10):
         while retries > 0:
             if await self.middleware.call('iscsi.alua.settled'):

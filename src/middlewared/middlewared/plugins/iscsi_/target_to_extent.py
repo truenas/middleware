@@ -67,8 +67,7 @@ class iSCSITargetToExtentService(CRUDService):
         )
 
         await self._service_change('iscsitarget', 'reload', options={'ha_propagate': False})
-        alua_enabled = await self.middleware.call('iscsi.global.alua_enabled')
-        if alua_enabled and await self.middleware.call('failover.remote_connected'):
+        if await self.middleware.call('iscsi.alua.should_operate_on_standby'):
             target_id = data['target']
             target_name = (await self.middleware.call('iscsi.target.query',
                                                       [['id', '=', target_id]],
@@ -181,11 +180,8 @@ class iSCSITargetToExtentService(CRUDService):
         # on the internal target, if this is an ALUA system.
         await self._service_change('iscsitarget', 'reload', options={'ha_propagate': False})
 
-        # Next, perform any necessary fixup on the STANDBY system if ALUA is enabled.
-        if (
-            await self.middleware.call("iscsi.global.alua_enabled")
-            and await self.middleware.call('failover.remote_connected')
-        ):
+        # Next, perform any necessary fixup on the STANDBY system if ALUA is operating.
+        if await self.middleware.call('iscsi.alua.should_operate_on_standby'):
             target_name = (await self.middleware.call('iscsi.target.query',
                                                       [['id', '=', associated_target['target']]],
                                                       {'select': ['name'], 'get': True}))['name']
