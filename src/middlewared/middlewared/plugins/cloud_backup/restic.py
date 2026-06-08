@@ -142,15 +142,7 @@ def restic_check_progress(job, proc, track_progress=False):
                     continue
 
                 case "error":
-                    # `restic` nests the text as {"error": {"message": "..."}}; the
-                    # scripting docs spell it "error.message" but that is the path to
-                    # the nested field, not a flat key. Tolerate the legacy plain-string
-                    # form and an empty object (restic #4945) as well.
-                    err = read.get("error")
-                    if isinstance(err, dict):
-                        action = err.get("message") or "unknown error"
-                    else:
-                        action = str(err) if err else "unknown error"
+                    action = read["error"]["message"]
                     msg = "".join([
                         "Error",
                         f" in {item}" if (item := read.get("item")) else "",
