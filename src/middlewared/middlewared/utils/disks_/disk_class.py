@@ -732,9 +732,10 @@ class DiskEntry:
         try:
             with self._sed_fd(dev_fd, writable=False) as fd:
                 info = sed.get_device_info(fd)
-                return sed.get_locking_info(
+                locking_info: dict[str, typing.Any] = sed.get_locking_info(
                     fd, password.encode("utf-8"), device_info=info
-                )  # type: ignore[no-any-return]
+                )
+                return locking_info
         except Exception:
             return None
 
