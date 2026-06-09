@@ -379,6 +379,15 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
         else:
             verb = "RELOAD"
         await self.middleware.call("service.control", verb, "truenas_zfstierd")
+
+        if new.enabled != old.enabled:
+            # Tiering state drives the global SMB `shadow:no_dataset_traversal` setting and the set of
+            # directories TrueSearch indexes. Regenerate and apply both so a runtime toggle takes effect.
+            await self.middleware.call("etc.generate", "smb")
+            if await self.middleware.call("service.started", "cifs"):
+                await (await self.middleware.call("service.control", "RELOAD", "cifs")).wait(raise_error=True)
+            await self.call2(self.s.truesearch.configure)
+
         return new
 
     @api_method(

@@ -21,7 +21,7 @@ from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.nfs import nfs_share
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.smb import smb_share
-from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.utils import call, mock, ssh
 
 
 @contextlib.contextmanager
@@ -172,3 +172,39 @@ def test_smb_conf_shadow_no_dataset_traversal_when_tiering_enabled(tier_ds):
         assert value.lower() in ("yes", "true"), (
             f"Expected shadow:no_dataset_traversal=Yes/True when tiering enabled, got: {value!r}"
         )
+
+
+# ----------------------------------------------------------------------------
+# TrueSearch indexing must track the SMB no-traversal behaviour: when tiering
+# is enabled, nested datasets under a share are not reachable over SMB, so they
+# must not be indexed; when disabled, SMB traverses again and they must be.
+# Live counterpart of the unit coverage in
+# src/middlewared/middlewared/pytest/unit/plugins/test_truesearch.py and a
+# tiering-aware analogue of tests/api2/test_truesearch.py::test_index_new_dataset.
+# ----------------------------------------------------------------------------
+
+
+def test_truesearch_directories_track_tiering(tier_ds):
+    nested_ds = f"{tier_ds}/nested"
+    call("pool.dataset.create", {"name": nested_ds})
+    share_dir = f"/mnt/{tier_ds}"
+    nested_mp = f"/mnt/{nested_ds}"
+
+    name = _unique("ts_tier")
+    original_protocols = call("smb.config")["search_protocols"]
+    # SPOTLIGHT requires the indexing service to look available; force it.
+    with mock("truesearch.unavailable_reasons", return_value=[]):
+        call("smb.update", {"search_protocols": ["SPOTLIGHT"]})
+        try:
+            with smb_share(share_dir, name):
+                # tier_pool has tiering enabled -> nested dataset is not indexed.
+                dirs = call("truesearch.directories")
+                assert share_dir in dirs, dirs
+                assert nested_mp not in dirs, dirs
+
+                # Disable tiering -> SMB traverses again -> nested dataset is indexed.
+                with _temporarily_disabled():
+                    dirs = call("truesearch.directories")
+                    assert nested_mp in dirs, dirs
+        finally:
+            call("smb.update", {"search_protocols": original_protocols})

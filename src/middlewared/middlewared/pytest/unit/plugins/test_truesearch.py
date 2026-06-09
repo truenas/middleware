@@ -36,6 +36,33 @@ async def test_process_directories(directories, datasets, result):
 
 
 @pytest.mark.asyncio
+async def test_process_directories_no_traverse():
+    # When traverse=False (ZFS tiering enabled, which stops the SMB server from descending into
+    # nested datasets), only the share directory itself is indexed -- not the nested datasets.
+    datasets = {
+        "tank": False, "tank/users": False, "tank/users/alice": False, "tank/users/bob": False,
+        "tank/users/alice/books": False, "tank/users/alice/documents": True,
+    }
+    middleware = Mock()
+    middleware.call2 = AsyncMock(return_value=[
+        {
+            "type": "FILESYSTEM",
+            "properties": {
+                "mountpoint": {
+                    "value": f"/mnt/{dataset}"
+                },
+                "encryption": {
+                    "value": "on" if encrypted else "off"
+                },
+            }
+        }
+        for dataset, encrypted in datasets.items()
+    ])
+    result = await TrueSearchService(middleware).process_directories({"/mnt/tank/users"}, traverse=False)
+    assert result == ["/mnt/tank/users"]
+
+
+@pytest.mark.asyncio
 async def test_legacy_mountpoint():
     middleware = Mock()
     middleware.call2 = AsyncMock(return_value=[
