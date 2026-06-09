@@ -255,6 +255,14 @@ class DiskService(Service):
             'disk.query', filters, {'extra': {'passwords': True, 'real_names': True}}
         ):
             name = disk['real_name']
+            if name is None:
+                # The disk's identifier doesn't currently resolve to a present
+                # device (e.g. pulled, or not yet enumerated after failover).
+                # We can't unlock a device node we can't locate, so skip it.
+                self.logger.warning(
+                    '%s: SED disk has no resolvable device, skipping unlock', disk['identifier']
+                )
+                continue
             # user can specify a per-disk password and/or a global password
             # we default to using the per-disk password with fallback to global
             passwd = disk['passwd'] if disk['passwd'] else global_passwd
@@ -271,9 +279,10 @@ class DiskService(Service):
         if not disks_to_unlock:
             return
 
-        def _unlock(d):
+        async def _unlock(d):
             entry = DiskEntry(name=d['name'], devpath=f'/dev/{d["name"]}')
-            return d['name'], *entry.sed_unlock(d['passwd'])
+            success, error = await asyncio.to_thread(entry.sed_unlock, d['passwd'])
+            return d['name'], success, error
 
         failed_to_unlock = []
         for name, success, error in await asyncio_map(_unlock, disks_to_unlock, limit=16):
