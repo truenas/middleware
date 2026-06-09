@@ -520,28 +520,42 @@ class DiskEntry:
         finally:
             os.close(dev_fd)
 
-    def _sed_open(self, dev_fd: int | None, writable: bool) -> tuple[int, bool]:
-        """Return (fd, should_close). If dev_fd is provided, use it; otherwise open one."""
+    @contextlib.contextmanager
+    def _sed_fd(self, dev_fd: int | None, writable: bool) -> typing.Iterator[int]:
+        """Yield an fd for SED operations.
+
+        When ``dev_fd`` is provided it is used as-is and left open for the
+        caller to manage. Otherwise ``self.devpath`` is opened and closed on
+        exit.
+
+        ``os.open`` may raise (most notably ``FileNotFoundError`` when the
+        device node has gone away because the disk was physically pulled or the
+        kernel reassigned it a new name). This is intentionally NOT swallowed
+        here so each caller maps it to its own "unqueryable" return value via
+        the ``try``/``except`` it already wraps this in.
+        """
         if dev_fd is not None:
-            return dev_fd, False
+            yield dev_fd
+            return
         flags = os.O_NONBLOCK | (os.O_RDWR if writable else os.O_RDONLY)
-        return os.open(self.devpath, flags), True
+        fd = os.open(self.devpath, flags)
+        try:
+            yield fd
+        finally:
+            os.close(fd)
 
     def sed_device_info(self, dev_fd: int | None = None) -> dict[str, typing.Any] | None:
         """Perform TCG Level 0 Discovery. No authentication required.
 
         Returns:
             dict with device_type, ssc_type, locking, tper, geometry, etc.
-            None if the device does not support TCG or on any error.
+            None if the device does not support TCG, is missing, or on any error.
         """
-        fd, should_close = self._sed_open(dev_fd, writable=False)
         try:
-            return sed.get_device_info(fd)  # type: ignore[no-any-return]
+            with self._sed_fd(dev_fd, writable=False) as fd:
+                return sed.get_device_info(fd)  # type: ignore[no-any-return]
         except Exception:
             return None
-        finally:
-            if should_close:
-                os.close(fd)
 
     def is_sed(self, dev_fd: int | None = None) -> bool:
         """Check if the disk supports SED (TCG Opal/Enterprise)."""
@@ -554,30 +568,29 @@ class DiskEntry:
         """Return the SED status string for this disk.
 
         Returns one of: 'NO_SED', 'FAILED', 'UNINITIALIZED', 'LOCKED', 'UNLOCKED'.
+        A missing device node (e.g. the disk was pulled) reports 'FAILED', i.e.
+        temporarily unqueryable rather than a loss of SED capability.
         """
-        fd, should_close = self._sed_open(dev_fd, writable=False)
         try:
-            info = sed.get_device_info(fd)
+            with self._sed_fd(dev_fd, writable=False) as fd:
+                info = sed.get_device_info(fd)
 
-            locking = info["locking"]
-            if not locking["supported"]:
-                return "NO_SED"
-            if info.get("ssc_type") == "enterprise":
-                # Enterprise SSC drives may or may not report locking.enabled
-                # accurately when factory-fresh — this is manufacturer-dependent.
-                # Use the MSID authentication probe as the source of truth.
-                if sed.is_uninitialized(fd, device_info=info):
+                locking = info["locking"]
+                if not locking["supported"]:
+                    return "NO_SED"
+                if info.get("ssc_type") == "enterprise":
+                    # Enterprise SSC drives may or may not report locking.enabled
+                    # accurately when factory-fresh — this is manufacturer-dependent.
+                    # Use the MSID authentication probe as the source of truth.
+                    if sed.is_uninitialized(fd, device_info=info):
+                        return "UNINITIALIZED"
+                elif not locking["enabled"]:
                     return "UNINITIALIZED"
-            elif not locking["enabled"]:
-                return "UNINITIALIZED"
-            if locking["locked"]:
-                return "LOCKED"
-            return "UNLOCKED"
+                if locking["locked"]:
+                    return "LOCKED"
+                return "UNLOCKED"
         except Exception:
             return "FAILED"
-        finally:
-            if should_close:
-                os.close(fd)
 
     def sed_unlock(self, password: str, dev_fd: int | None = None) -> tuple[bool, str | None]:
         """Unlock a SED disk.
@@ -590,39 +603,36 @@ class DiskEntry:
             (True, None) on success or if already unlocked.
             (False, error_message) on failure.
         """
-        fd, should_close = self._sed_open(dev_fd, writable=True)
         try:
-            info = sed.get_device_info(fd)
-            if not info["locking"]["locked"]:
-                return True, None
+            with self._sed_fd(dev_fd, writable=True) as fd:
+                info = sed.get_device_info(fd)
+                if not info["locking"]["locked"]:
+                    return True, None
 
-            pw_bytes = password.encode("utf-8")
+                pw_bytes = password.encode("utf-8")
 
-            # 1) Try raw password (drives provisioned with truenas_pylibsed)
-            try:
-                sed.unlock(fd, pw_bytes, device_info=info)
-                return True, None
-            except Exception:
-                pass
+                # 1) Try raw password (drives provisioned with truenas_pylibsed)
+                try:
+                    sed.unlock(fd, pw_bytes, device_info=info)
+                    return True, None
+                except Exception:
+                    pass
 
-            # 2) Try PBKDF2 hash with Linux serial (sedutil-cli on Linux)
-            try:
-                sed.unlock(fd, sedutil_hash_password(password, info["lnx_serial"]), device_info=info)
-                return True, None
-            except Exception:
-                pass
+                # 2) Try PBKDF2 hash with Linux serial (sedutil-cli on Linux)
+                try:
+                    sed.unlock(fd, sedutil_hash_password(password, info["lnx_serial"]), device_info=info)
+                    return True, None
+                except Exception:
+                    pass
 
-            # 3) Try PBKDF2 hash with BSD serial (sedutil-cli on FreeBSD)
-            try:
-                sed.unlock(fd, sedutil_hash_password(password, info["bsd_serial"]), device_info=info)
-                return True, None
-            except Exception as e:
-                return False, str(e)
+                # 3) Try PBKDF2 hash with BSD serial (sedutil-cli on FreeBSD)
+                try:
+                    sed.unlock(fd, sedutil_hash_password(password, info["bsd_serial"]), device_info=info)
+                    return True, None
+                except Exception as e:
+                    return False, str(e)
         except Exception as e:
             return False, str(e)
-        finally:
-            if should_close:
-                os.close(fd)
 
     def sed_initial_setup(self, password: str, dev_fd: int | None = None) -> str:
         """Provision a fresh SED disk with the given password.
@@ -634,23 +644,31 @@ class DiskEntry:
             'SUCCESS'          - Setup completed successfully
             'SETUP_FAILED'     - Initial setup call failed
         """
-        fd, should_close = self._sed_open(dev_fd, writable=True)
         try:
-            info = sed.get_device_info(fd)
-            if not info["locking"]["supported"]:
-                return "NO_SED"
+            with self._sed_fd(dev_fd, writable=True) as fd:
+                info = sed.get_device_info(fd)
+                if not info["locking"]["supported"]:
+                    return "NO_SED"
 
-            pw_bytes = password.encode("utf-8")
+                pw_bytes = password.encode("utf-8")
 
-            if info.get("ssc_type") == "enterprise":
-                # Enterprise SSC drives may or may not report locking.enabled
-                # accurately when factory-fresh — this is manufacturer-dependent.
-                # Use the MSID authentication probe as the source of truth.
-                try:
-                    uninitialized = sed.is_uninitialized(fd, device_info=info)
-                except Exception:
-                    return "SETUP_FAILED"
-                if not uninitialized:
+                if info.get("ssc_type") == "enterprise":
+                    # Enterprise SSC drives may or may not report locking.enabled
+                    # accurately when factory-fresh — this is manufacturer-dependent.
+                    # Use the MSID authentication probe as the source of truth.
+                    try:
+                        uninitialized = sed.is_uninitialized(fd, device_info=info)
+                    except Exception:
+                        return "SETUP_FAILED"
+                    if not uninitialized:
+                        try:
+                            locking_info = sed.get_locking_info(fd, pw_bytes, device_info=info)
+                            if locking_info["read_lock_enabled"] and locking_info["write_lock_enabled"]:
+                                return "ACCESS_GRANTED"
+                            return "LOCKING_DISABLED"
+                        except Exception:
+                            return "SETUP_FAILED"
+                elif info["locking"]["enabled"]:
                     try:
                         locking_info = sed.get_locking_info(fd, pw_bytes, device_info=info)
                         if locking_info["read_lock_enabled"] and locking_info["write_lock_enabled"]:
@@ -658,25 +676,14 @@ class DiskEntry:
                         return "LOCKING_DISABLED"
                     except Exception:
                         return "SETUP_FAILED"
-            elif info["locking"]["enabled"]:
+
                 try:
-                    locking_info = sed.get_locking_info(fd, pw_bytes, device_info=info)
-                    if locking_info["read_lock_enabled"] and locking_info["write_lock_enabled"]:
-                        return "ACCESS_GRANTED"
-                    return "LOCKING_DISABLED"
+                    sed.initial_setup(fd, pw_bytes, device_info=info)
+                    return "SUCCESS"
                 except Exception:
                     return "SETUP_FAILED"
-
-            try:
-                sed.initial_setup(fd, pw_bytes, device_info=info)
-                return "SUCCESS"
-            except Exception:
-                return "SETUP_FAILED"
         except Exception:
             return "NO_SED"
-        finally:
-            if should_close:
-                os.close(fd)
 
     def sed_factory_reset(self, psid: str, dev_fd: int | None = None) -> tuple[bool, str]:
         """Factory reset a SED disk using the PSID from the drive label.
@@ -687,16 +694,13 @@ class DiskEntry:
             (True, 'SUCCESS') on success.
             (False, error_message) on failure.
         """
-        fd, should_close = self._sed_open(dev_fd, writable=True)
         try:
-            info = sed.get_device_info(fd)
-            sed.factory_reset(fd, psid.encode("utf-8"), device_info=info)
-            return True, "SUCCESS"
+            with self._sed_fd(dev_fd, writable=True) as fd:
+                info = sed.get_device_info(fd)
+                sed.factory_reset(fd, psid.encode("utf-8"), device_info=info)
+                return True, "SUCCESS"
         except Exception as e:
             return False, str(e)
-        finally:
-            if should_close:
-                os.close(fd)
 
     def sed_change_password(
         self,
@@ -710,16 +714,13 @@ class DiskEntry:
             (True, 'SUCCESS') on success.
             (False, error_message) on failure.
         """
-        fd, should_close = self._sed_open(dev_fd, writable=True)
         try:
-            info = sed.get_device_info(fd)
-            sed.change_password(fd, old_password, new_password, device_info=info)
-            return True, "SUCCESS"
+            with self._sed_fd(dev_fd, writable=True) as fd:
+                info = sed.get_device_info(fd)
+                sed.change_password(fd, old_password, new_password, device_info=info)
+                return True, "SUCCESS"
         except Exception as e:
             return False, str(e)
-        finally:
-            if should_close:
-                os.close(fd)
 
     def sed_locking_info(self, password: str, dev_fd: int | None = None) -> dict[str, typing.Any] | None:
         """Query the global locking range (range 0) properties.
@@ -728,15 +729,14 @@ class DiskEntry:
             dict with range_start, range_length, read_lock_enabled, etc.
             None on authentication failure or error.
         """
-        fd, should_close = self._sed_open(dev_fd, writable=False)
         try:
-            info = sed.get_device_info(fd)
-            return sed.get_locking_info(fd, password.encode("utf-8"), device_info=info)  # type: ignore[no-any-return]
+            with self._sed_fd(dev_fd, writable=False) as fd:
+                info = sed.get_device_info(fd)
+                return sed.get_locking_info(
+                    fd, password.encode("utf-8"), device_info=info
+                )  # type: ignore[no-any-return]
         except Exception:
             return None
-        finally:
-            if should_close:
-                os.close(fd)
 
 
 def iterate_disks() -> collections.abc.Generator[DiskEntry]:
