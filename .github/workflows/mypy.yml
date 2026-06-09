@@ -42,6 +42,7 @@ jobs:
             middlewared/plugins/mail/ \
             middlewared/plugins/ntp/ \
             middlewared/plugins/ports/ \
+            middlewared/plugins/reporting/ \
             middlewared/plugins/rsync/ \
             middlewared/plugins/snapshot/ \
             middlewared/plugins/truenas/ \

@@ -69,12 +69,12 @@ class DiskService(Service):
         for disk in self.middleware.call_sync('reporting.netdata_graph', 'disktemp', opts):
             # identifier looks like "sda | Type: HDD | Model: HUH721212AL4200 | Serial: aaa"
             # so we need to normalize it before checking if caller has specified it
-            name = disk['identifier'].split(' | ')[0].strip()
-            if name in names:
+            name = disk.identifier.split(' | ')[0].strip()
+            if name in names and disk.aggregations is not None:
                 final[name] = {
-                    'min': disk['aggregations']['min'].get('temperature_value', None),
-                    'max': disk['aggregations']['max'].get('temperature_value', None),
-                    'avg': disk['aggregations']['mean'].get('temperature_value', None),
+                    'min': disk.aggregations.min.get('temperature_value', None),
+                    'max': disk.aggregations.max.get('temperature_value', None),
+                    'avg': disk.aggregations.mean.get('temperature_value', None),
                 }
         return final
 

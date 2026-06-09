@@ -1,9 +1,17 @@
+import typing
+
 from .utils import normalize_value, safely_retrieve_dimension
 
 
-def get_disk_stats(netdata_metrics: dict, disks: list[str], disk_mapping: dict[str, str]) -> dict:
+def get_disk_stats(
+    netdata_metrics: dict[str, typing.Any], disks: list[str], disk_mapping: dict[str, str]
+) -> dict[str, int | float]:
     total_disks = len(disks)
-    read_ops = read_bytes = write_ops = write_bytes = busy = 0
+    read_ops: float = 0
+    read_bytes: float = 0
+    write_ops: float = 0
+    write_bytes: float = 0
+    busy: float = 0
     for disk in disks:
         mapped_key = disk_mapping.get(disk)
         read_ops += safely_retrieve_dimension(

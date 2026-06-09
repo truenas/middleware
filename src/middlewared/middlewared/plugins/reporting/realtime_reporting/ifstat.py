@@ -4,8 +4,10 @@ import typing
 from .utils import normalize_value, safely_retrieve_dimension
 
 
-def get_interface_stats(netdata_metrics: dict, interfaces: typing.List[str]) -> dict:
-    data = collections.defaultdict(dict)
+def get_interface_stats(
+    netdata_metrics: dict[str, typing.Any], interfaces: list[str]
+) -> dict[str, dict[str, typing.Any]]:
+    data: dict[str, dict[str, typing.Any]] = collections.defaultdict(dict)
     for interface_name in interfaces:
         link_state = bool(safely_retrieve_dimension(netdata_metrics, f'net_operstate.{interface_name}', 'up', 0))
         data[interface_name]['link_state'] = 'LINK_STATE_UP' if link_state else 'LINK_STATE_DOWN'

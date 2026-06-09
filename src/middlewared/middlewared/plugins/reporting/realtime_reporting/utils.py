@@ -3,7 +3,7 @@ import typing
 
 
 def safely_retrieve_dimension(
-    all_metrics: dict, chart: str, dimension: typing.Optional[str] = None, default: typing.Optional[typing.Any] = None
+    all_metrics: dict[str, typing.Any], chart: str, dimension: str | None = None, default: typing.Any = None
 ) -> typing.Any:
     """
     Safely retrieve a dimension from a chart. If the dimension is not found, return the default value
@@ -23,9 +23,9 @@ def safely_retrieve_dimension(
 
 
 def normalize_value(
-    value: int, multiplier: int = 1, divisor: int = 1, absolute: bool = True, round_value: bool = True,
-) -> typing.Union[int, float]:
-    normalized = (value / divisor) * multiplier
+    value: float, multiplier: int = 1, divisor: int = 1, absolute: bool = True, round_value: bool = True,
+) -> int | float:
+    normalized: float = (value / divisor) * multiplier
     if absolute:
         normalized = abs(normalized)
     if round_value:

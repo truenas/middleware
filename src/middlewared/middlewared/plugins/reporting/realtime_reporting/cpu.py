@@ -1,10 +1,12 @@
+import typing
+
 from middlewared.utils.cpu import cpu_info
 
 from .utils import safely_retrieve_dimension
 
 
-def get_cpu_stats(netdata_metrics: dict) -> dict:
-    data = {
+def get_cpu_stats(netdata_metrics: dict[str, typing.Any]) -> dict[str, dict[str, typing.Any]]:
+    data: dict[str, dict[str, typing.Any]] = {
         'cpu': {
             'usage': safely_retrieve_dimension(
                 netdata_metrics, 'truenas_cpu_usage.cpu', 'cpu', 0
@@ -13,7 +15,7 @@ def get_cpu_stats(netdata_metrics: dict) -> dict:
                 netdata_metrics, 'cputemp.temperatures', 'cpu',
             ) or None
         }}
-    for core_index in range(cpu_info()['core_count']):
+    for core_index in range(cpu_info()['core_count'] or 0):
         data[f'cpu{core_index}'] = {
             'usage': safely_retrieve_dimension(
                 netdata_metrics, 'truenas_cpu_usage.cpu', f'cpu{core_index}', 0
