@@ -109,7 +109,7 @@ def restic_check_progress(job, proc, track_progress=False):
             try:
                 read = json.loads(raw)
             except json.JSONDecodeError:
-                # Can happen with some error messages
+                # Can happen if the command doesn't fully support JSON output (see restic scripting docs).
                 job.internal_data["messages"] = job.internal_data["messages"][-4:] + [raw]
                 job.logs_fd.write((raw + "\n").encode("utf-8", "ignore"))
                 continue
