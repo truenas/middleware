@@ -693,7 +693,14 @@ class SystemDatasetService(ConfigService):
         return (boot_pool, False)
 
     def _pool_is_available(self, pool):
-        """True if `pool`'s root is mounted and the pool is usable for sysdataset."""
+        """True if `pool` is usable as a system dataset target.
+
+        Usable means the pool is importable and its root is either mounted,
+        unencrypted, or passphrase-locked -- a passphrase-locked root is fine
+        because we create `.system` with encryption=off. A key-locked root, or
+        a pool we can't query at all, is not usable. Mirrors the logic in
+        query_pools_for_system_dataset().
+        """
         boot_pool = self.middleware.call_sync('boot.pool_name')
         if pool == boot_pool:
             return True
@@ -702,16 +709,16 @@ class SystemDatasetService(ConfigService):
             if mnt['mount_source'] == pool:
                 return True
 
-        # Not mounted -- check whether the root is locked-with-key.
         ds = self.call_sync2(
             self.s.zfs.resource.query_impl,
             ZFSResourceQuery(paths=[pool], properties=['encryption']),
         )
-        if ds:
-            enc = get_encryption_info(ds[0]['properties'])
-            if enc.encrypted and enc.locked and enc.encryption_type != 'passphrase':
-                return False
-        return False
+        if not ds:
+            return False
+        enc = get_encryption_info(ds[0]['properties'])
+        if enc.encrypted and enc.locked and enc.encryption_type != 'passphrase':
+            return False
+        return True
 
     @private
     async def setup_datasets(self, pool, uuid):
@@ -1024,8 +1031,28 @@ class SystemDatasetService(ConfigService):
     # ---- internals ---------------------------------------------------------
 
     def _finalize_datasets(self, datasets: list[dict]) -> None:
-        """Run create_paths and post_mount_actions for each dataset spec."""
+        """Apply mountpoint ownership/mode, then run create_paths and
+        post_mount_actions for each dataset spec."""
         for ds in datasets:
+            # mount_hierarchy applies chown_config to the cover dir before the
+            # mount lands over it, so the visible mountpoint keeps ZFS's default
+            # 0o755 root:root. Set the real perms on the mounted dataset root
+            # here -- this also covers RECONCILE_ONLY, which never calls
+            # mount_hierarchy.
+            mountpoint = ds.get('mountpoint') or os.path.join(
+                SYSDATASET_PATH, os.path.basename(ds['name']),
+            )
+            cc = ds['chown_config']
+            try:
+                st = os.stat(mountpoint)
+                if st.st_uid != cc['uid'] or st.st_gid != cc['gid']:
+                    os.chown(mountpoint, cc['uid'], cc['gid'])
+                if (st.st_mode & 0o777) != cc['mode']:
+                    os.chmod(mountpoint, cc['mode'])
+            except Exception:
+                self.logger.exception(
+                    'Failed to apply ownership/mode to %r mountpoint', mountpoint,
+                )
             for cp in ds.get('create_paths', []):
                 try:
                     os.makedirs(cp['path'], exist_ok=True)
