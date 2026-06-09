@@ -31,6 +31,7 @@ from middlewared.utils.limits import MsgSizeError, MsgSizeLimit, parse_message
 from middlewared.utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit
 from middlewared.utils.origin import ConnectionOrigin, is_external_call
 from middlewared.utils.threading import run_coro_threadsafe
+from middlewared.utils.types import ExcInfo
 
 from ..app import App
 from ..method import Method
@@ -38,7 +39,6 @@ from .base import BaseWebSocketHandler
 
 if TYPE_CHECKING:
     from middlewared.main import Middleware
-    from middlewared.utils.types import ExcInfo
 
 
 RpcWebSocketAppCallback = Callable[Concatenate["RpcWebSocketApp", ...], None]
