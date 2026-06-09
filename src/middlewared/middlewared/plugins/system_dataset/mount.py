@@ -20,6 +20,8 @@ import uuid
 import truenas_os
 import truenas_pylibzfs
 
+from .utils import SYSDATASET_PATH, dataset_mountpoint
+
 __all__ = ["create_mount_one", "mount_hierarchy", "replicate"]
 
 logger = logging.getLogger("system_dataset")
@@ -70,7 +72,12 @@ def mount_hierarchy(*, target_fd: int, datasets: list[dict]) -> None:
                     os.O_DIRECTORY,
                 )
             else:
-                target_path = os.path.basename(ds["name"])
+                # child_target_fd already points at SYSDATASET_PATH, so the
+                # mount lands at the dataset's absolute mountpoint reduced to a
+                # path relative to that root. Must be a single component: the
+                # os.mkdir below has no makedirs semantics, so a nested
+                # mountpoint override would fail here.
+                target_path = os.path.relpath(dataset_mountpoint(ds), SYSDATASET_PATH)
                 chown = dict(ds["chown_config"])
                 mode = chown.pop("mode")
                 try:

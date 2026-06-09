@@ -251,7 +251,7 @@ from middlewared.plugins.system_dataset.mount import (
     mount_hierarchy,
     replicate,
 )
-from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
+from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH, dataset_mountpoint
 from middlewared.plugins.zfs.exceptions import ZFSPathNotFoundException
 from middlewared.plugins.zfs.utils import get_encryption_info
 from middlewared.service import CallError, ConfigService, ValidationError, ValidationErrors, job, private
@@ -1039,9 +1039,7 @@ class SystemDatasetService(ConfigService):
             # 0o755 root:root. Set the real perms on the mounted dataset root
             # here -- this also covers RECONCILE_ONLY, which never calls
             # mount_hierarchy.
-            mountpoint = ds.get('mountpoint') or os.path.join(
-                SYSDATASET_PATH, os.path.basename(ds['name']),
-            )
+            mountpoint = dataset_mountpoint(ds)
             cc = ds['chown_config']
             try:
                 st = os.stat(mountpoint)
