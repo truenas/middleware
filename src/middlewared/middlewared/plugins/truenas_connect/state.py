@@ -34,8 +34,13 @@ class TrueNASConnectStateService(Service):
         ):
             logger.debug('Middleware started and cert generation is already successful, updating UI')
             self.middleware.create_task(self.middleware.call('tn_connect.acme.update_ui'))
-        elif tnc_config['status'] == Status.CERT_RENEWAL_IN_PROGRESS.name:
-            logger.debug('Middleware started and cert renewal is in progress, initiating process')
+        elif tnc_config['status'] in (
+            Status.CERT_RENEWAL_IN_PROGRESS.name, Status.CERT_RENEWAL_FAILURE.name,
+        ):
+            # CERT_RENEWAL_FAILURE is included so a box that booted after a failed renewal re-attempts
+            # it. renew_cert re-runs check_renewal_needed and no-ops if renewal is not actually due, and
+            # a 401 there now routes into the unset path.
+            logger.debug('Middleware started and cert renewal needs to be (re)attempted, initiating process')
             self.middleware.create_task(self.middleware.call('tn_connect.acme.renew_cert'))
 
         if tnc_config['status'] in CONFIGURED_TNC_STATES:
