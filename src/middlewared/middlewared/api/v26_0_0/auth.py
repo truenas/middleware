@@ -145,7 +145,7 @@ class AuthSCRAM(BaseModel):
             "Channel binding support is also a planned enhancement of the authentication mechanism.\n"
             "\n"
             "C and python libraries to for managing the client-side portion of the authentication exchanges are "
-            "provided at https://github.com/truenas/truenas_scram"
+            "provided at https://github.com/truenas/truenas_scram."
         ),
     )
     scram_type: Literal["CLIENT_FIRST_MESSAGE", "CLIENT_FINAL_MESSAGE"] = Field(

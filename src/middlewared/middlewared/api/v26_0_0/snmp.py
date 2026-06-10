@@ -27,7 +27,7 @@ class SNMPEntry(BaseModel):
         default='public',
         description=(
             "SNMP community string for v1/v2c access. Allows letters and numbers: a-zA-Z0-9 special characters: "
-            "!$%&()+-_={}[]<>,.? and spaces. Notable excluded characters: # / \\ @"
+            "!$%&()+-_={}[]<>,.? and spaces. Notable excluded characters: # / \\ @."
         ),
     )
     v3_username: str = Field(max_length=20, description="Username for SNMP version 3 authentication.")

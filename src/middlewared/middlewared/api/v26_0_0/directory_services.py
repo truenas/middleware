@@ -513,7 +513,7 @@ class LDAPMapGroup(BaseModel):
 
 
 class LDAPMapNetgroup(BaseModel):
-    """ Optional attribute mappings for non-compliant LDAP servers to generate netgroup entries """
+    """Optional attribute mappings for non-compliant LDAP servers to generate netgroup entries."""
     netgroup_object_class: NonEmptyString | None = Field(
         default=None,
         description="The LDAP object class for netgroup entries.",
