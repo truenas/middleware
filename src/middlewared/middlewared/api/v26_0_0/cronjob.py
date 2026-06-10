@@ -14,7 +14,7 @@ __all__ = [
 
 
 class CronJobSchedule(CronModel):
-    minute: str = Field(default="00", description="\"00\" - \"59\"")
+    minute: str = Field(default="00", description="\"00\" - \"59\".")
 
 
 class CronJobCreate(BaseModel):

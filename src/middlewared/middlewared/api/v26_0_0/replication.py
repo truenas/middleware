@@ -34,7 +34,7 @@ __all__ = ["ReplicationEntry",
 
 
 class ReplicationTimeCronModel(TimeCronModel):
-    minute: str = Field(default="00", description="\"00\" - \"59\"")
+    minute: str = Field(default="00", description="\"00\" - \"59\".")
 
 
 class ReplicationLifetimeModel(BaseModel):
