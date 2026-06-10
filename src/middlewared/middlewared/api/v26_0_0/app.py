@@ -102,6 +102,11 @@ class AppEntry(BaseModel):
         description="Information about the running containers, ports, and resources used by this application.",
     )
     notes: LongString | None = Field(description="User-provided notes or comments about this application instance.")
+    action_required: bool = Field(
+        description=(
+            "Whether this application requires user action (e.g., configuration migration or deprecation handling)."
+        ),
+    )
     portals: dict = Field(description="Web portals and access points provided by the application (URLs, ports, etc.).")
     version_details: dict | None = Field(
         default=None,

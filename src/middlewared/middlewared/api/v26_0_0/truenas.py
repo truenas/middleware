@@ -17,6 +17,7 @@ __all__ = [
     'TrueNASManagedByTruecommandArgs', 'TrueNASManagedByTruecommandResult',
     'TrueNASLicenseUploadOptions', 'TrueNASLicenseUploadArgs', 'TrueNASLicenseUploadResult',
     'TrueNASLicenseInfoArgs', 'TrueNASLicenseInfoResult',
+    'TrueNASLicenseFingerprintArgs', 'TrueNASLicenseFingerprintResult',
 ]
 
 
@@ -113,3 +114,11 @@ class TrueNASLicenseInfoResult(BaseModel):
     result: dict[str, Any] | None = Field(
         description="Parsed license JSON object, or `null` if no license file exists.",
     )
+
+
+class TrueNASLicenseFingerprintArgs(BaseModel):
+    pass
+
+
+class TrueNASLicenseFingerprintResult(BaseModel):
+    result: LongString = Field(description="Base64-encoded JSON of the system hardware fingerprint.")
