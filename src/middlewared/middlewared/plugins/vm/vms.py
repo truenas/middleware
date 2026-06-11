@@ -54,7 +54,7 @@ class VMModel(sa.Model):
     nodeset = sa.Column(sa.Text(), default=None, nullable=True)
     pin_vcpus = sa.Column(sa.Boolean(), default=False)
     hide_from_msr = sa.Column(sa.Boolean(), default=False)
-    suspend_on_snapshot = sa.Column(sa.Boolean(), default=False)
+    suspend_on_snapshot = sa.Column(sa.Boolean(), default=True)
     ensure_display_device = sa.Column(sa.Boolean(), default=True)
     arch_type = sa.Column(sa.String(255), default=None, nullable=True)
     machine_type = sa.Column(sa.String(255), default=None, nullable=True)

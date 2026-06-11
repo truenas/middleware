@@ -83,7 +83,7 @@ class VMEntry(BaseModel):
             "Whether to pin virtual CPUs to specific host CPU cores. Improves performance but reduces host flexibility."
         ),
     )
-    suspend_on_snapshot: bool = Field(default=False, description="Whether to suspend the VM when taking snapshots.")
+    suspend_on_snapshot: bool = Field(default=True, description="Whether to suspend the VM when taking snapshots.")
     trusted_platform_module: bool = Field(
         default=False,
         description="Whether to enable virtual Trusted Platform Module (TPM) for the VM.",

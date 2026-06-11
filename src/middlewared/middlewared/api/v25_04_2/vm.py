@@ -51,7 +51,7 @@ class VMEntry(BaseModel):
     nodeset: str | None = None  # TODO: Same as above
     enable_cpu_topology_extension: bool = False
     pin_vcpus: bool = False
-    suspend_on_snapshot: bool = False
+    suspend_on_snapshot: bool = True
     trusted_platform_module: bool = False
     memory: int = Field(ge=20)
     min_memory: int | None = Field(ge=20, default=None)
