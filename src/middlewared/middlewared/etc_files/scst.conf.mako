@@ -128,7 +128,11 @@
             for initiator in group_initiators:
                 if wwn := wwn_as_colon_hex(initiator):
                     initiator_access.add(wwn)
-        return initiator_access
+        # Always emit a security_group ACG: scstadmin's del_group on an
+        # ACG with attached FC sessions fails with -EBUSY, leaving running
+        # config out of sync with /etc/scst.conf. The wildcard keeps the
+        # ACG in place so initiator transitions are in-place ACN updates.
+        return initiator_access or {'*'}
 
     # There are several changes that must occur if ALUA is enabled,
     # and these are different depending on whether this is the
