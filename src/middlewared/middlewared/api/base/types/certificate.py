@@ -1,7 +1,20 @@
 from enum import Enum
 
-from cryptography import x509
+__all__ = ["EKU_OID"]
 
-__all__ = ['EKU_OID']
 
-EKU_OID = Enum('EKU_OID', {i: i for i in dir(x509.oid.ExtendedKeyUsageOID) if not i.startswith('__')})
+# Generated as:
+# from cryptography import x509
+# [i for i in dir(x509.oid.ExtendedKeyUsageOID) if not i.startswith("__")]
+class EKU_OID(Enum):
+    ANY_EXTENDED_KEY_USAGE = "ANY_EXTENDED_KEY_USAGE"
+    CERTIFICATE_TRANSPARENCY = "CERTIFICATE_TRANSPARENCY"
+    CLIENT_AUTH = "CLIENT_AUTH"
+    CODE_SIGNING = "CODE_SIGNING"
+    EMAIL_PROTECTION = "EMAIL_PROTECTION"
+    IPSEC_IKE = "IPSEC_IKE"
+    KERBEROS_PKINIT_KDC = "KERBEROS_PKINIT_KDC"
+    OCSP_SIGNING = "OCSP_SIGNING"
+    SERVER_AUTH = "SERVER_AUTH"
+    SMARTCARD_LOGON = "SMARTCARD_LOGON"
+    TIME_STAMPING = "TIME_STAMPING"

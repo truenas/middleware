@@ -2,6 +2,7 @@ import types
 import typing
 
 from pydantic import Discriminator, Secret
+from pydantic.fields import FieldInfo
 
 from middlewared.api.base import SECRET_VALUE, BaseModel
 from middlewared.utils.typing_ import is_union
@@ -11,7 +12,7 @@ from .inspect import model_field_is_dict_of_models, model_field_is_list_of_model
 __all__ = ["remove_secrets"]
 
 
-def remove_secrets(model: type[BaseModel], value):
+def remove_secrets(model: type[BaseModel], value: typing.Any) -> typing.Any:
     """
     Removes `Secret` values from a model value.
     :param model: `BaseModel` that corresponds to `value`.
@@ -36,7 +37,7 @@ def remove_secrets(model: type[BaseModel], value):
         return value
 
 
-def _remove_secrets_from_field(field, value):
+def _remove_secrets_from_field(field: FieldInfo, value: typing.Any) -> typing.Any:
     """
     Remove secrets from a field value, handling discriminated unions.
     :param field: Pydantic FieldInfo object.
@@ -51,10 +52,10 @@ def _remove_secrets_from_field(field, value):
     if isinstance(value, dict) and (discriminated_model := _get_discriminated_union_model_from_field(field, value)):
         return remove_secrets(discriminated_model, value)
     else:
-        return remove_secrets(field.annotation, value)
+        return remove_secrets(field.annotation, value)  # type: ignore[arg-type]
 
 
-def _get_discriminated_union_model_from_field(field, value: dict) -> type[BaseModel] | None:
+def _get_discriminated_union_model_from_field(field: FieldInfo, value: dict[str, typing.Any]) -> type[BaseModel] | None:
     """
     If `field` is a discriminated union field, returns the appropriate union member
     based on the discriminator field value in `value`.
@@ -128,6 +129,6 @@ def _get_discriminated_union_model_from_field(field, value: dict) -> type[BaseMo
             if field_origin is typing.Literal:
                 literal_values = typing.get_args(member_field.annotation)
                 if discriminator_value in literal_values:
-                    return member
+                    return member  # type: ignore[no-any-return]
 
     return None

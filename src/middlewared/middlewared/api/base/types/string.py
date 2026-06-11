@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Annotated
 import uuid
 
@@ -20,7 +22,7 @@ __all__ = [
 ]
 
 
-def uuidv4_validator(value):
+def uuidv4_validator(value: str) -> str:
     try:
         uuid.UUID(value, version=4)
     except ValueError:

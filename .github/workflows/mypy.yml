@@ -21,10 +21,8 @@ jobs:
         run: |
           cd src/middlewared
           mypy \
-            middlewared/job.py \
-            middlewared/service/sharing_task_service_part.py \
-            middlewared/service/generic_sharing_service.py \
             middlewared/alert/ \
+            middlewared/api/base/ \
             middlewared/common/ \
             middlewared/plugins/acme_protocol/ \
             middlewared/plugins/acme_dns_authenticator/ \
@@ -56,8 +54,11 @@ jobs:
             middlewared/plugins/filesystem.py \
             middlewared/plugins/keyvalue.py \
             middlewared/plugins/pwenc.py \
+            middlewared/service/sharing_task_service_part.py \
+            middlewared/service/generic_sharing_service.py \
             middlewared/utils/ \
             middlewared/test/integration/runner/ \
+            middlewared/job.py \
             --exclude middlewared/etc_files \
             --exclude middlewared/utils/directoryservices \
             --exclude middlewared/utils/lio \

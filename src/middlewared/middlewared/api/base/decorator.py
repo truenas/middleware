@@ -22,11 +22,11 @@ MAJOR_VERSION = re.compile(r"^v([0-9]{2})$")
 ANNOTATION_PREFIX = re.compile(r"middlewared\.api\.[^.]+\.[^.]+\.")
 
 
-def function_arg_names(f):
+def function_arg_names(f: types.FunctionType) -> list[str]:
     return list(f.__code__.co_varnames)[:f.__code__.co_argcount]
 
 
-def process_annotation(annotation):
+def process_annotation(annotation: typing.Any) -> typing.Any:
     from middlewared.api.base.server.app import App
     from middlewared.job import Job
 
@@ -40,7 +40,7 @@ def process_annotation(annotation):
     return annotation
 
 
-def calculate_args_index(f, audit_callback, check_annotations):
+def calculate_args_index(f: typing.Any, audit_callback: bool, check_annotations: bool) -> int:
     """Determine how many leading arguments are framework-injected (before user params).
 
     Decorators must be stacked outermost-to-innermost and the method signature must list the
@@ -67,7 +67,7 @@ def calculate_args_index(f, audit_callback, check_annotations):
 
     signature_args = function_arg_names(f)
     # This must match the order used in `Middleware._call_prepare`
-    expected_args = []
+    expected_args: list[tuple[str, typing.Any]] = []
     if signature_args and signature_args[0] == 'self':
         expected_args.append(('self', None))
     if pass_app := hasattr(f, '_pass_app'):
@@ -219,7 +219,7 @@ def private_method[**P, T](
     )
 
 
-def decorator(
+def decorator[**P, T](
     accepts: type[BaseModel] | None,
     returns: type[BaseModel] | None,
     audit: str | None,
@@ -237,7 +237,7 @@ def decorator(
     skip_args: int | None,
     removed_in: str | None,
     check_annotations: bool,
-):
+) -> typing.Callable[[typing.Callable[P, T]], typing.Callable[P, T]]:
     if accepts is not None and returns is not None:
         if list(returns.model_fields.keys()) != ["result"]:
             raise TypeError("`returns` model must only have one field called `result`")
@@ -245,25 +245,30 @@ def decorator(
         check_model_module(accepts, private)
         check_model_module(returns, private)
 
-    def wrapper(func):
+    def wrapper(func: typing.Callable[P, T]) -> typing.Callable[P, T]:
         if pass_app:
             # Pass the application instance as parameter to the method
-            func._pass_app = {
+            func._pass_app = {  # type: ignore[attr-defined]
                 'message_id': False,
                 'require': pass_app_require,
             }
         if pass_thread_local_storage:
-            func._pass_thread_local_storage = True
+            func._pass_thread_local_storage = True  # type: ignore[attr-defined]
 
         if skip_args is not None:
-            func._skip_arg = skip_args
+            func._skip_arg = skip_args  # type: ignore[attr-defined]
 
         args_index = calculate_args_index(func, audit_callback, check_annotations)
 
         if accepts is not None and returns is not None:
             dump_models = True
             if check_annotations:
-                check_method_annotations(func, args_index, accepts, returns)
+                check_method_annotations(
+                    func,  # type: ignore[arg-type]
+                    args_index,
+                    accepts,
+                    returns,
+                )
                 dump_models = False
 
             if asyncio.iscoroutinefunction(func):
@@ -271,22 +276,22 @@ def decorator(
                     raise ValueError('pass_thread_local_storage invalid for coroutines')
 
                 @functools.wraps(func)
-                async def wrapped(*args):
-                    args = list(args[:args_index]) + accept_params(accepts, args[args_index:], dump_models=dump_models)
+                async def wrapped(*args: typing.Any) -> T:
+                    args2 = list(args[:args_index]) + accept_params(accepts, args[args_index:], dump_models=dump_models)
 
-                    result = await func(*args)
+                    result = await func(*args2)  # type: ignore[call-arg]
 
-                    return result
+                    return result  # type: ignore[no-any-return]
             else:
                 @functools.wraps(func)
-                def wrapped(*args):
-                    args = list(args[:args_index]) + accept_params(accepts, args[args_index:], dump_models=dump_models)
+                def wrapped(*args: typing.Any) -> T:
+                    args2 = list(args[:args_index]) + accept_params(accepts, args[args_index:], dump_models=dump_models)
 
-                    result = func(*args)
+                    result = func(*args2)  # type: ignore[call-arg]
 
                     return result
         else:
-            wrapped = func
+            wrapped = func  # type: ignore[assignment]
 
         if private:
             if roles or not authentication_required or not authorization_required:
@@ -300,10 +305,10 @@ def decorator(
             if not authentication_required:
                 # Although this is technically valid the concern is that dev has fat-fingered something
                 raise ValueError('Either authentication or authorization may be disabled, but not both simultaneously.')
-            wrapped._no_authz_required = True
+            wrapped._no_authz_required = True  # type: ignore[attr-defined]
 
         elif not authentication_required:
-            wrapped._no_auth_required = True
+            wrapped._no_auth_required = True  # type: ignore[attr-defined]
 
         elif func.__name__ not in CONFIG_CRUD_METHODS and not func.__name__.endswith('choices'):
             # All public methods should have a roles definition. This is a rough check to help developers not write
@@ -311,31 +316,31 @@ def decorator(
             # and choices because they may have implicit roles through the role_prefix configuration.
             raise ValueError(f'{func.__name__}: Role definition is required for public API endpoints')
 
-        wrapped.audit = audit
-        wrapped.audit_callback = audit_callback
-        wrapped.audit_extended = audit_extended
-        wrapped.rate_limit = rate_limit
-        wrapped.roles = roles or []
-        wrapped._private = private
-        wrapped._cli_private = cli_private
+        wrapped.audit = audit  # type: ignore[attr-defined]
+        wrapped.audit_callback = audit_callback  # type: ignore[attr-defined]
+        wrapped.audit_extended = audit_extended  # type: ignore[attr-defined]
+        wrapped.rate_limit = rate_limit  # type: ignore[attr-defined]
+        wrapped.roles = roles or []  # type: ignore[attr-defined]
+        wrapped._private = private  # type: ignore[attr-defined]
+        wrapped._cli_private = cli_private  # type: ignore[attr-defined]
         if removed_in is not None:
             if not MAJOR_VERSION.match(removed_in):
                 raise ValueError(
                     f'{func.__name__}: removed_in must be a valid major TrueNAS version number in the format vXX'
                 )
 
-            wrapped._removed_in = removed_in
+            wrapped._removed_in = removed_in  # type: ignore[attr-defined]
 
         if accepts is not None and returns is not None:
-            wrapped.new_style_accepts = accepts
-            wrapped.new_style_returns = returns
+            wrapped.new_style_accepts = accepts  # type: ignore[attr-defined]
+            wrapped.new_style_returns = returns  # type: ignore[attr-defined]
 
-        return wrapped
+        return wrapped  # type: ignore[return-value]
 
     return wrapper
 
 
-def check_model_module(model: type[BaseModel], private: bool):
+def check_model_module(model: type[BaseModel], private: bool) -> None:
     module_name = model.__module__
 
     # CRUDService and ConfigService dynamically generate models.
@@ -362,7 +367,7 @@ def check_model_module(model: type[BaseModel], private: bool):
             )
 
 
-def _resolve_annotation(func: typing.Callable, name: str) -> typing.Any:
+def _resolve_annotation(func: types.FunctionType, name: str) -> typing.Any:
     """Resolve a function's annotation by name into a real type.
 
     With `from __future__ import annotations`, annotations are stored as strings.
@@ -376,7 +381,9 @@ def _resolve_annotation(func: typing.Callable, name: str) -> typing.Any:
     return annotation
 
 
-def check_method_annotations(func, args_index: int, accepts: type[BaseModel], returns: type[BaseModel]):
+def check_method_annotations(
+    func: types.FunctionType, args_index: int, accepts: type[BaseModel], returns: type[BaseModel]
+) -> None:
     expected_args = [(name, field.annotation) for name, field in accepts.model_fields.items()]
     # Resolve string annotations (from `from __future__ import annotations`) into real types
     # so that normalize_annotation can decompose them via union/generic recursion.
@@ -418,7 +425,7 @@ def check_method_annotations(func, args_index: int, accepts: type[BaseModel], re
                          f"Got {return_annotation!r}.")
 
 
-def normalize_annotation(annotation, parent_model=None):
+def normalize_annotation(annotation: typing.Any, parent_model: type[BaseModel] | None = None) -> str | None:
     origin = typing.get_origin(annotation)
 
     # Recurse into union members (handles both `X | Y` and `typing.Union[X, Y]`)
@@ -448,28 +455,28 @@ def normalize_annotation(annotation, parent_model=None):
             origin_name = origin.__name__ if isinstance(origin, type) else repr(origin)
             return f"{origin_name}[{', '.join(str(a) for a in normalized_args)}]"
 
-    result = annotation
+    result_annotation = annotation
     if origin is typing.Annotated:
-        result = typing.get_args(annotation)[0]
+        result_annotation = typing.get_args(annotation)[0]
     elif parent_model is not None and isinstance(annotation, typing.ForwardRef):
-        result = annotation._evaluate(globals(), sys.modules[parent_model.__module__].__dict__,
-                                      recursive_guard=frozenset())
+        result_annotation = annotation._evaluate(globals(), sys.modules[parent_model.__module__].__dict__,
+                                                 recursive_guard=frozenset())
 
     # Allow types to declare their annotation-check equivalent
-    if isinstance(result, type) and hasattr(result, '__normalize_as__'):
-        result = result.__normalize_as__
+    if isinstance(result_annotation, type) and hasattr(result_annotation, '__normalize_as__'):
+        result_annotation = result_annotation.__normalize_as__
 
-    if result is None or result is type(None) or result == "None":
+    if result_annotation is None or result_annotation is type(None) or result_annotation == "None":
         return None
-    elif result is bool:
+    elif result_annotation is bool:
         return "bool"
-    elif isinstance(result, str):
-        return result
+    elif isinstance(result_annotation, str):
+        return result_annotation
     else:
-        if isinstance(result, type):
-            result = result.__name__
+        if isinstance(result_annotation, type):
+            result = result_annotation.__name__
         else:
-            result = repr(result)
+            result = repr(result_annotation)
 
         result = re.sub(ANNOTATION_PREFIX, "", result)
         result = result.replace("typing.", "")

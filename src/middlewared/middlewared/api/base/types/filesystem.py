@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 from typing import Annotated
 
@@ -20,7 +22,7 @@ def validate_unix_perm(value: str) -> str:
     return value
 
 
-def normalize_path(value) -> str:
+def normalize_path(value: str) -> str:
     return os.path.normpath(value)
 
 

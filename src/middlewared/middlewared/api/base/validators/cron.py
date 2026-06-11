@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import re
 
 from croniter import croniter
@@ -5,13 +7,11 @@ from croniter import croniter
 CRON_FIELDS = ('minute', 'hour', 'dom', 'month', 'dow')
 
 
-def croniter_for_schedule(schedule: dict, *args, **kwargs) -> croniter:
+def croniter_for_schedule(schedule: dict[str, str]) -> croniter:
     """
     Create a croniter object from a schedule dictionary.
 
     :param schedule: Dictionary containing cron fields
-    :param args: Additional positional arguments passed to croniter constructor
-    :param kwargs: Additional keyword arguments passed to croniter constructor
     :return: Cron expression for the schedule
     :raises ValueError: If the schedule contains invalid cron expressions
     """
@@ -23,4 +23,4 @@ def croniter_for_schedule(schedule: dict, *args, **kwargs) -> croniter:
 
         cron_expression += f'{value} '
 
-    return croniter(cron_expression, *args, **kwargs)
+    return croniter(cron_expression)

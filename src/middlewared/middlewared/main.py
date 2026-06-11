@@ -1000,7 +1000,12 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
             **prepared_call.kwargs,
         )
 
-    def dump_args(self, args, method=None, method_name=None):
+    def dump_args(
+        self,
+        args: list[typing.Any],
+        method: typing.Any = None,
+        method_name: str | None = None,
+    ) -> list[typing.Any]:
         if method is None:
             if method_name is not None:
                 try:
@@ -1080,7 +1085,13 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         else:
             return result
 
-    async def authorize_method_call(self, app, method_name, methodobj, params):
+    async def authorize_method_call(
+        self,
+        app: RpcWebSocketApp,
+        method_name: str,
+        methodobj: typing.Any,
+        params: list[typing.Any],
+    ) -> None:
         if hasattr(methodobj, '_no_auth_required'):
             if app.authenticated:
                 # Do not rate limit authenticated users
