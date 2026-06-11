@@ -724,6 +724,24 @@ class FailoverEventsService(Service):
         self.run_call('systemdataset.setup')
         logger.info('Done configuring system dataset')
 
+        # Re-apply the configured timezone from the (already replicated) DB row.
+        # If the standby was down or disconnected during the active's last
+        # timezone update, its clock state did not converge -- the new master
+        # would otherwise run with a stale /etc/localtime, TZ env and
+        # systemd-timedated cache until reboot. Done before critical services
+        # restart so they inherit the right TZ. Best-effort: a stale clock is
+        # degraded, not a takeover blocker.
+        logger.info('Synchronizing timezone to current configuration')
+        try:
+            tz = self.run_call('system.general.config')['timezone']
+            self.run_call('system.general.apply_timezone_to_running_system', tz)
+            logger.info('Done synchronizing timezone')
+        except Exception:
+            logger.exception(
+                'Failed to synchronize timezone on become-master; '
+                'new master may run with stale clock state until next reboot'
+            )
+
         # now we restart the services, prioritizing the "critical" services
         logger.info('Restarting critical services.')
         self.run_call('failover.events.restart_services', {'critical': True})

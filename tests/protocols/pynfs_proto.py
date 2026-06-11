@@ -57,6 +57,7 @@ from nfs4commoncode import cb_encode_status_by_name
 import nfs4lib
 import nfs_ops
 import rpc
+import rpc.rpc
 from rpc.rpc_const import AUTH_SYS
 from xdrdef.nfs4_const import (
     FATTR4_CHANGE,
@@ -154,7 +155,9 @@ from xdrdef.nfs4_const import (
     ACL4_DEFAULTED,
     ACL4_PROTECTED,
     CLAIM_NULL,
+    CLAIM_PREVIOUS,
     CREATE_SESSION4_FLAG_CONN_BACK_CHAN,
+    EXCHGID4_FLAG_CONFIRMED_R,
     FATTR4_DACL,
     FATTR4_FILEID,
     FATTR4_MODE,
@@ -169,9 +172,11 @@ from xdrdef.nfs4_const import (
     OP_OFFLOAD_CANCEL,
     OP_OPEN,
     OPEN4_CREATE,
+    OPEN4_NOCREATE,
     OPEN4_SHARE_ACCESS_BOTH,
     OPEN4_SHARE_ACCESS_WANT_NO_DELEG,
     OPEN4_SHARE_DENY_NONE,
+    OPEN_DELEGATE_NONE,
     SETXATTR4_EITHER,
 )
 from xdrdef.nfs4_type import (
@@ -226,6 +231,65 @@ def _op_cb_offload(self, arg, env):
 
 if not hasattr(NFS4Client, "op_cb_offload"):
     NFS4Client.op_cb_offload = _op_cb_offload
+
+
+# Pynfs's RPC reactor (``rpc.rpc.ConnectionHandler.start``) selects on raw
+# integer fds kept in three sets.  When a connection is torn down, a pipe
+# can be closed a hair before its fd is removed from those sets, so its
+# now-``-1`` fileno() lingers for one more loop.  This happens routinely
+# during our teardown: the appliance drops the connection the moment it
+# replies to DESTROY_SESSION, racing the DESTROY_CLIENTID write that
+# follows.  Python 3.13 tolerated a -1 fd in select(); Python 3.14 raises
+# ``ValueError: file descriptor cannot be a negative integer (-1)``, which
+# kills the reactor thread and then hangs the next blocking COMPOUND
+# forever (no reactor is left to deliver its reply).  A closed fd must
+# never be waited on regardless, so drop negatives before selecting.  This
+# is wrapped once, at import, around only ``rpc.rpc``'s ``select`` so the
+# reactor survives the teardown race on every Python.
+if not getattr(rpc.rpc.select, "_truenas_neg_fd_safe", False):
+    _real_select = rpc.rpc.select
+
+    class _NegFdSafeSelect:
+        _truenas_neg_fd_safe = True
+
+        def __getattr__(self, name):
+            return getattr(_real_select, name)
+
+        @staticmethod
+        def select(rlist, wlist, elist, *args, **kwargs):
+            return _real_select.select(
+                [fd for fd in rlist if fd >= 0],
+                [fd for fd in wlist if fd >= 0],
+                [fd for fd in elist if fd >= 0],
+                *args,
+                **kwargs,
+            )
+
+    rpc.rpc.select = _NegFdSafeSelect()
+
+
+# Pynfs waits up to 300 seconds (``DeferredData.wait``/``make_call_function``)
+# for each RPC reply.  That is fine for a live server, but after a failover
+# the ``pre`` client's connection points at the controller that just
+# rebooted, so its teardown COMPOUNDs (DESTROY_SESSION / DESTROY_CLIENTID)
+# get no reply and stall the whole 300 seconds before raising RPCTimeout.
+# A reply that has not arrived in well under a minute is never coming, so
+# cap every reply wait at the chokepoint (``RpcPipe.listen``).  Teardown's
+# ``except Exception`` then catches the prompt RPCTimeout instead of the
+# test appearing to hang.  Single COMPOUNDs against a live server return in
+# milliseconds, so this ceiling never trips in the normal path.
+_RPC_REPLY_TIMEOUT = 20
+
+if not getattr(rpc.rpc.RpcPipe.listen, "_truenas_capped", False):
+    _orig_rpcpipe_listen = rpc.rpc.RpcPipe.listen
+
+    def _capped_listen(self, xid, timeout=None):
+        if timeout is None or timeout > _RPC_REPLY_TIMEOUT:
+            timeout = _RPC_REPLY_TIMEOUT
+        return _orig_rpcpipe_listen(self, xid, timeout)
+
+    _capped_listen._truenas_capped = True
+    rpc.rpc.RpcPipe.listen = _capped_listen
 
 
 class CopyResult(typing.NamedTuple):
@@ -303,6 +367,8 @@ class PynfsClient:
         owner_name=None,
         secure=False,
         on_cb_offload=None,
+        verifier=None,
+        skip_reclaim_complete=False,
         **_ignored,
     ):
         """``vers`` accepts 4, 4.1, 4.2 (or "4.x" string) — gets
@@ -324,6 +390,20 @@ class PynfsClient:
         won't deliver CB_OFFLOAD callbacks (most tests don't need
         them - they poll ``OP_OFFLOAD_STATUS`` instead).
 
+        ``verifier`` and ``skip_reclaim_complete`` support HA failover
+        reclaim tests.  The server keys an NFSv4.1 client on
+        ``(co_verifier, co_ownerid)``, so to have a second instance
+        recognized as the SAME client reclaiming after a server
+        restart, pass the same ``owner_name`` AND the same ``verifier``
+        (the bytes captured from the first instance's ``.verifier``
+        property).  The server then sets ``EXCHGID4_FLAG_CONFIRMED_R``
+        on EXCHANGE_ID (readable via ``.confirmed_r``) and the instance
+        may issue ``CLAIM_PREVIOUS`` reclaims while the server is in its
+        grace period.  Set ``skip_reclaim_complete=True`` so the enter
+        handshake does NOT send RECLAIM_COMPLETE, leaving the
+        reclaiming instance to drive OPEN/LOCK reclaim itself and call
+        ``reclaim_complete()`` when finished.
+
         Other SSH_NFS kwargs (``user``, ``password``, ``ip``,
         ``localpath``, ``kerberos``, ``options``) are accepted-and-
         ignored so callers can swap ``SSH_NFS`` for ``PynfsClient``
@@ -339,11 +419,16 @@ class PynfsClient:
             b"truenas-pynfs-" + secrets.token_hex(4).encode()
         )
         self._on_cb_offload = on_cb_offload
+        self._verifier = verifier
+        self._skip_reclaim_complete = skip_reclaim_complete
         # Set in __enter__
         self._client = None
         self._clt = None
         self._sess = None
         self._chunk = None
+        # eir_flags from the EXCHANGE_ID reply (so a reclaim test can
+        # check EXCHGID4_FLAG_CONFIRMED_R via the ``.confirmed_r`` property).
+        self._eid_flags = None
 
     def __enter__(self):
         c = NFS4Client(
@@ -359,7 +444,14 @@ class PynfsClient:
         clt = None
         sess = None
         try:
-            clt = c.new_client(self._owner_name)
+            clt = c.new_client(self._owner_name, verf=self._verifier)
+            # Capture the verifier that was actually sent.  When the
+            # caller passed verifier=None, new_client used the
+            # NFS4Client's per-instance time-based verifier; recording it
+            # lets a later instance reuse the exact same client identity.
+            if self._verifier is None:
+                self._verifier = c.verifier
+            self._eid_flags = clt.flags
             big_attrs = channel_attrs4(0, _MAX_REQ, _MAX_REQ, _MAX_REQ, 128, 8, [])
             create_flags = (
                 CREATE_SESSION4_FLAG_CONN_BACK_CHAN
@@ -373,7 +465,11 @@ class PynfsClient:
             )
             if self._on_cb_offload is not None:
                 clt.cb_post_hook(OP_CB_OFFLOAD, self._on_cb_offload)
-            sess.compound([op.reclaim_complete(False)])
+            # A reclaiming instance (skip_reclaim_complete=True) sends
+            # RECLAIM_COMPLETE itself after it finishes its CLAIM_PREVIOUS
+            # reclaims; the normal cold-start path sends it here.
+            if not self._skip_reclaim_complete:
+                sess.compound([op.reclaim_complete(False)])
         except Exception:
             self._teardown(c, clt, sess)
             raise
@@ -418,6 +514,20 @@ class PynfsClient:
             c.stop()
         except Exception:
             pass
+
+    def abandon(self):
+        """Drop this client WITHOUT the DESTROY_SESSION / DESTROY_CLIENTID
+        round-trips.  Use after a failover for a client whose connection
+        points at the controller that just rebooted: the polite teardown
+        would only stall on the dead connection (the server has already
+        moved that state on, reclaimed by the post-failover client or
+        lapsing with the lease).  Only stops the local reactor and closes
+        sockets, which never blocks on the server."""
+        c = self._client
+        self._client = self._clt = self._sess = None
+        if c is not None:
+            with contextlib.suppress(Exception):
+                c.stop()
 
     # --- helpers -------------------------------------------------------
 
@@ -1078,6 +1188,204 @@ class PynfsClient:
         if res.status == NFS4_OK:
             return res.status, res.resarray[-1].lock_stateid
         return res.status, None
+
+    # --- HA failover reclaim (NFSv4.1 grace-period state recovery) ----
+
+    @property
+    def owner_name(self):
+        """The client owner name (co_ownerid).  A reclaiming instance
+        must reuse this together with ``verifier`` so the server treats
+        it as the same client across a server restart."""
+        return self._owner_name
+
+    @property
+    def verifier(self):
+        """The client owner verifier (co_verifier) sent on EXCHANGE_ID.
+        Capture it from the pre-failover instance and pass it to the
+        reclaiming instance's constructor."""
+        return self._verifier
+
+    @property
+    def clientid(self):
+        """The clientid from EXCHANGE_ID for the current session."""
+        return self._clt.clientid
+
+    @property
+    def confirmed_r(self):
+        """True when the last EXCHANGE_ID returned
+        EXCHGID4_FLAG_CONFIRMED_R, i.e. the server already had state for
+        this (owner_name, verifier) and recognizes a reclaiming client."""
+        return bool((self._eid_flags or 0) & EXCHGID4_FLAG_CONFIRMED_R)
+
+    def get_filehandle(self, path):
+        """Return the persistent filehandle (opaque bytes) for ``path``.
+
+        ZFS filehandles are persistent, so a handle captured before a
+        failover stays valid afterwards; a reclaim test snapshots it
+        pre-failover and replays it through ``reclaim_open``."""
+        res = self._sess.compound(
+            nfs4lib.use_obj(self._full_components(path)) + [op.getfh()]
+        )
+        self._expect_ok(res, f"get_filehandle({path!r})")
+        return res.resarray[-1].object
+
+    def stat_fh(self, fh):
+        """PUTFH ``fh`` then GETATTR(fileid), returning the COMPOUND
+        status int (no assertion).
+
+        Probes whether a filehandle captured earlier (e.g. before an HA
+        failover) is still valid: NFS4_OK means the handle resolves,
+        NFS4ERR_STALE means the server no longer recognizes it.  PUTFH is
+        the op that fails on a stale handle, so the compound stops there
+        and ``res.status`` carries NFS4ERR_STALE."""
+        bitmap = nfs4lib.list2bitmap([FATTR4_FILEID])
+        res = self._sess.compound([op.putfh(fh), op.getattr(bitmap)])
+        return res.status
+
+    def getattrs_fh(self, fh, attrs):
+        """PUTFH ``fh`` then GETATTR ``attrs`` (a list of FATTR4_* ids),
+        returning the decoded attribute dict keyed by attribute id.
+
+        Unlike ``stat_fh``, which keeps only the COMPOUND status, this
+        returns the attribute VALUES, so a test can prove a filehandle
+        still resolves to the same object across a failover (same fsid and
+        fileid) rather than merely to some valid object.  Asserts NFS4_OK,
+        so probe a possibly-stale handle with ``stat_fh`` first."""
+        bitmap = nfs4lib.list2bitmap(attrs)
+        res = self._sess.compound([op.putfh(fh), op.getattr(bitmap)])
+        self._expect_ok(res, f"getattrs_fh(fh_len={len(fh)}, {attrs!r})")
+        return res.resarray[-1].obj_attributes
+
+    def reclaim_open(
+        self,
+        fh,
+        share_access=OPEN4_SHARE_ACCESS_BOTH,
+        share_deny=OPEN4_SHARE_DENY_NONE,
+        owner_label=b"pynfs-reclaim-owner",
+        expect_status=NFS4_OK,
+    ):
+        """Reclaim a previously-held OPEN via OPEN(CLAIM_PREVIOUS).
+
+        ``fh`` is the filehandle snapshotted before the failover (see
+        ``get_filehandle``); CURRENT_FH is set from it with PUTFH, then
+        OPEN with claim type CLAIM_PREVIOUS asks the server to restore
+        the open during its grace period.  Returns
+        ``(status, open_stateid, fh)``, status first like ``lock_range`` and
+        ``reclaim_lock`` (the stateid and fh are None on failure).
+        ``expect_status=None`` skips the assertion so a negative test
+        (reclaim by an unknown client, or after grace ended) can assert
+        NFS4ERR_NO_GRACE itself."""
+        owner = open_owner4(self._clt.clientid, owner_label)
+        claim = open_claim4(claim=CLAIM_PREVIOUS, delegate_type=OPEN_DELEGATE_NONE)
+        res = self._sess.compound(
+            [
+                op.putfh(fh),
+                op.open(
+                    0,
+                    share_access | OPEN4_SHARE_ACCESS_WANT_NO_DELEG,
+                    share_deny,
+                    owner,
+                    openflag4(OPEN4_NOCREATE, None),
+                    claim,
+                ),
+                op.getfh(),
+            ]
+        )
+        if expect_status is not None:
+            self._expect_status(
+                res,
+                expect_status,
+                f"reclaim_open(fh_len={len(fh)})",
+                expected_op=OP_OPEN,
+            )
+        if res.status == NFS4_OK:
+            return res.status, res.resarray[-2].stateid, res.resarray[-1].object
+        return res.status, None, None
+
+    def reclaim_lock(
+        self,
+        fh,
+        open_stateid,
+        lock_type,
+        offset,
+        length,
+        lock_owner_label=b"pynfs-reclaim-lock-owner",
+        expect_status=NFS4_OK,
+    ):
+        """Reclaim a byte-range lock with LOCK reclaim=True against a
+        reclaimed open (``open_stateid`` from ``reclaim_open``).
+        CURRENT_FH is set from ``fh`` via PUTFH.  Returns
+        ``(status, lock_stateid)``; the lock stateid is None when the
+        LOCK did not succeed.  This mirrors ``lock_range`` but flips the
+        reclaim bit and addresses the file by filehandle."""
+        open_to_lock = open_to_lock_owner4(
+            open_seqid=0,
+            open_stateid=open_stateid,
+            lock_seqid=0,
+            lock_owner=lock_owner4(0, lock_owner_label),
+        )
+        locker = locker4(open_owner=open_to_lock, new_lock_owner=True)
+        res = self._sess.compound(
+            [op.putfh(fh), op.lock(lock_type, True, offset, length, locker)]
+        )
+        if expect_status is not None:
+            self._expect_status(
+                res,
+                expect_status,
+                f"reclaim_lock(off={offset}, len={length}, type={lock_type})",
+                expected_op=OP_LOCK,
+            )
+        if res.status == NFS4_OK:
+            return res.status, res.resarray[-1].lock_stateid
+        return res.status, None
+
+    def reclaim_complete(self, expect_status=NFS4_OK):
+        """Signal end of reclaim for the whole client (RECLAIM_COMPLETE
+        with rca_one_fs=FALSE).  Call once after all CLAIM_PREVIOUS
+        reclaims.  Returns the compound status; ``expect_status=None``
+        skips the assertion so a negative test can assert
+        NFS4ERR_COMPLETE_ALREADY on a second call."""
+        res = self._sess.compound([op.reclaim_complete(False)])
+        if expect_status is not None:
+            # Single-op compound, so no setup op (PUTFH/LOOKUP) could mask the
+            # status; an expected_op disambiguation like the other helpers use
+            # is unnecessary here.
+            self._expect_status(res, expect_status, "reclaim_complete()")
+        return res.status
+
+    def write_stateid(self, fh, stateid, offset, data, stable=2):
+        """WRITE ``data`` at ``offset`` to ``fh`` using an explicit (e.g.
+        reclaimed) open ``stateid``.  ``stable`` is the NFSv4 stability
+        level: 2=FILE_SYNC4 (default, durable on ack), 0=UNSTABLE (fast
+        but must be COMMITted to persist).  Returns the byte count the
+        server acknowledged."""
+        res = self._sess.compound(
+            [op.putfh(fh), op.write(stateid, offset, stable, data)]
+        )
+        self._expect_ok(res, f"write_stateid(off={offset}, len={len(data)})")
+        return res.resarray[-1].count
+
+    def read_stateid(self, fh, stateid, offset, count):
+        """READ up to ``count`` bytes at ``offset`` from ``fh`` using an
+        explicit (e.g. reclaimed) open ``stateid``.  Returns the bytes
+        read."""
+        res = self._sess.compound(
+            [op.putfh(fh), op.read(stateid, offset, count)]
+        )
+        self._expect_ok(res, f"read_stateid(off={offset}, count={count})")
+        return res.resarray[-1].data
+
+    def commit(self, fh, offset=0, count=0):
+        """OP_COMMIT ``[offset, offset+count)`` of ``fh`` (``count=0``
+        commits through EOF).  Returns the server's write verifier
+        (``writeverf``), an opaque token identifying the server instance:
+        it changes when the server restarts, so a client comparing it
+        across a failover learns its UNSTABLE-but-uncommitted writes may
+        be gone and must be re-sent.  This is NFS's guard against silently
+        losing data a client believed it had written."""
+        res = self._sess.compound([op.putfh(fh), op.commit(offset, count)])
+        self._expect_ok(res, f"commit(off={offset}, count={count})")
+        return res.resarray[-1].writeverf
 
     def unlock_range(
         self,

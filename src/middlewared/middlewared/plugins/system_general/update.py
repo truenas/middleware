@@ -12,6 +12,7 @@ from middlewared.async_validators import validate_port
 from middlewared.service import ConfigService, private
 from middlewared.utils import run
 from middlewared.utils.service.settings import SettingsHelper
+from middlewared.utils.timezone_choices import effective_timezone
 
 settings = SettingsHelper()
 
@@ -224,23 +225,19 @@ class SystemGeneralService(ConfigService):
 
         if config['timezone'] != new_config['timezone']:
             await self.middleware.call('zettarepl.update_config', {'timezone': new_config['timezone']})
-            await (await self.middleware.call('service.control', 'RELOAD', 'timeservices')).wait(raise_error=True)
-            await (await self.middleware.call('service.control', 'RESTART', 'cron')).wait(raise_error=True)
-            # Notify systemd-timedated of the zone change. We do not do this in ix-etc because when on boot
-            # ix-etc.service runs Before sysinit.target, while systemd-timedated.service is ordered
-            # After it, so a D-Bus call from there would deadlock. By the time system.general.update
-            # runs interactively those targets have long been reached. Without this call timedatectl
-            # status and any subscriber to timedated's PropertiesChanged signal (journald, chrony,
-            # cron in some configurations) keep reporting the previous zone until the next reboot.
-            cp = await run(
-                ['timedatectl', 'set-timezone', new_config['timezone']],
-                check=False, encoding='utf-8',
-            )
-            if cp.returncode:
-                self.logger.warning(
-                    'timedatectl set-timezone %r failed: %s',
-                    new_config['timezone'], cp.stderr,
-                )
+            await self.apply_timezone_to_running_system(new_config['timezone'])
+            if await self.middleware.call('failover.licensed'):
+                try:
+                    await self.middleware.call(
+                        'failover.call_remote',
+                        'system.general.apply_timezone_to_running_system',
+                        [new_config['timezone']],
+                        {'raise_connect_error': False, 'timeout': 30},
+                    )
+                except Exception:
+                    self.logger.warning(
+                        'Failed to apply timezone on standby controller', exc_info=True
+                    )
 
         if config['ds_auth'] != new_config['ds_auth']:
             await self.middleware.call('etc.generate', 'pam')
@@ -275,6 +272,36 @@ class SystemGeneralService(ConfigService):
                 break
 
         return await self.config()
+
+    @private
+    async def apply_timezone_to_running_system(self, timezone):
+        # Apply the configured timezone to the running system. Reused by the
+        # interactive update path, by failover.call_remote from the active to
+        # propagate to the standby, and by vrrp_master on become-master so a
+        # newly-promoted node converges to the DB's timezone without a reboot.
+        tz = effective_timezone(timezone)
+        ha_options = {'ha_propagate': False}
+        await (await self.middleware.call(
+            'service.control', 'RELOAD', 'timeservices', ha_options,
+        )).wait(raise_error=True)
+        # Restart cron so it inherits the new TZ env from middlewared.
+        await (await self.middleware.call(
+            'service.control', 'RESTART', 'cron', ha_options,
+        )).wait(raise_error=True)
+        # Update systemd-timedated's cache so `timedatectl status` and journald
+        # (which subscribes to timedated's PropertiesChanged signal) reflect the
+        # change without a reboot. We do not do this from ix-etc because at boot
+        # ix-etc.service runs Before sysinit.target while systemd-timedated is
+        # ordered After it, so a D-Bus call from there would deadlock. This
+        # method only runs from contexts that come after sysinit.target.
+        cp = await run(
+            ['timedatectl', 'set-timezone', tz],
+            check=False, encoding='utf-8',
+        )
+        if cp.returncode:
+            self.logger.warning(
+                'timedatectl set-timezone %r failed: %s', tz, cp.stderr,
+            )
 
     @private
     async def set_kbdlayout(self):

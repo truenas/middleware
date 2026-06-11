@@ -1,3 +1,5 @@
+from pydantic import Field
+
 from middlewared.api.base import BaseModel
 
 
@@ -9,5 +11,4 @@ class FailoverDisabledReasonsArgs(BaseModel):
 
 
 class FailoverDisabledReasonsResult(BaseModel):
-    result: list[str]
-    """Array of reasons why failover is currently disabled."""
+    result: list[str] = Field(description="Array of reasons why failover is currently disabled.")

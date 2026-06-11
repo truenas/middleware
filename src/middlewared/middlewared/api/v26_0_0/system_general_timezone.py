@@ -1,3 +1,5 @@
+from pydantic import Field
+
 from middlewared.api.base import BaseModel
 
 
@@ -12,5 +14,6 @@ SystemGeneralTimezoneChoices = dict[str, str]
 
 
 class SystemGeneralTimezoneChoicesResult(BaseModel):
-    result: SystemGeneralTimezoneChoices
-    """Object of available timezone identifiers and their descriptive names."""
+    result: SystemGeneralTimezoneChoices = Field(
+        description="Object of available timezone identifiers and their descriptive names.",
+    )

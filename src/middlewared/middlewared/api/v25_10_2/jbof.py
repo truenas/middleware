@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import Secret
+from pydantic import Field, Secret
 
 from middlewared.api.base import BaseModel, IPvAnyAddress, Excluded, excluded_field, NotRequired, ForUpdateMetaclass
 
@@ -12,22 +12,17 @@ __all__ = [
 
 
 class JBOFEntry(BaseModel):
-    id: int
-    """Unique identifier for the JBOF configuration."""
-    description: str = NotRequired
-    """Optional description of the JBOF."""
-    mgmt_ip1: IPvAnyAddress
-    """IP of first Redfish management interface."""
-    mgmt_ip2: IPvAnyAddress = NotRequired
-    """Optional IP of second Redfish management interface."""
-    mgmt_username: str
-    """Redfish administrative username."""
-    mgmt_password: Secret[str]
-    """Redfish administrative password."""
-    index: int
-    """Index of the JBOF.  Used to determine data plane IP addresses."""
-    uuid: str
-    """UUID of the JBOF as reported by the enclosure firmware."""
+    id: int = Field(description="Unique identifier for the JBOF configuration.")
+    description: str = Field(default=NotRequired, description="Optional description of the JBOF.")
+    mgmt_ip1: IPvAnyAddress = Field(description="IP of first Redfish management interface.")
+    mgmt_ip2: IPvAnyAddress = Field(
+        default=NotRequired,
+        description="Optional IP of second Redfish management interface.",
+    )
+    mgmt_username: str = Field(description="Redfish administrative username.")
+    mgmt_password: Secret[str] = Field(description="Redfish administrative password.")
+    index: int = Field(description="Index of the JBOF.  Used to determine data plane IP addresses.")
+    uuid: str = Field(description="UUID of the JBOF as reported by the enclosure firmware.")
 
 
 class JBOFCreate(JBOFEntry):
@@ -41,25 +36,20 @@ class JBOFUpdate(JBOFCreate, metaclass=ForUpdateMetaclass):
 
 
 class JBOFCreateArgs(BaseModel):
-    data: JBOFCreate
-    """JBOF configuration data for creation."""
+    data: JBOFCreate = Field(description="JBOF configuration data for creation.")
 
 
 class JBOFCreateResult(BaseModel):
-    result: JBOFEntry
-    """The created JBOF configuration."""
+    result: JBOFEntry = Field(description="The created JBOF configuration.")
 
 
 class JBOFDeleteArgs(BaseModel):
-    id: int
-    """ID of the JBOF to delete."""
-    force: bool = False
-    """Whether to force deletion even if the JBOF is in use."""
+    id: int = Field(description="ID of the JBOF to delete.")
+    force: bool = Field(default=False, description="Whether to force deletion even if the JBOF is in use.")
 
 
 class JBOFDeleteResult(BaseModel):
-    result: Literal[True]
-    """Returns `true` when the JBOF is successfully deleted."""
+    result: Literal[True] = Field(description="Returns `true` when the JBOF is successfully deleted.")
 
 
 class JBOFLicensedArgs(BaseModel):
@@ -67,8 +57,7 @@ class JBOFLicensedArgs(BaseModel):
 
 
 class JBOFLicensedResult(BaseModel):
-    result: int
-    """Number of JBOF units licensed."""
+    result: int = Field(description="Number of JBOF units licensed.")
 
 
 class JBOFReapplyConfigArgs(BaseModel):
@@ -76,17 +65,13 @@ class JBOFReapplyConfigArgs(BaseModel):
 
 
 class JBOFReapplyConfigResult(BaseModel):
-    result: None
-    """Returns `null` when the JBOF configuration is successfully reapplied."""
+    result: None = Field(description="Returns `null` when the JBOF configuration is successfully reapplied.")
 
 
 class JBOFUpdateArgs(BaseModel):
-    id: int
-    """ID of the JBOF to update."""
-    data: JBOFUpdate
-    """Updated JBOF configuration data."""
+    id: int = Field(description="ID of the JBOF to update.")
+    data: JBOFUpdate = Field(description="Updated JBOF configuration data.")
 
 
 class JBOFUpdateResult(BaseModel):
-    result: JBOFEntry
-    """The updated JBOF configuration."""
+    result: JBOFEntry = Field(description="The updated JBOF configuration.")

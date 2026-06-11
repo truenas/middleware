@@ -1,3 +1,5 @@
+from pydantic import Field
+
 from middlewared.api.base import BaseModel
 
 
@@ -9,5 +11,4 @@ class IPMIIsLoadedArgs(BaseModel):
 
 
 class IPMIIsLoadedResult(BaseModel):
-    result: bool
-    """Returns `true` if IPMI modules are loaded and available, `false` otherwise."""
+    result: bool = Field(description="Returns `true` if IPMI modules are loaded and available, `false` otherwise.")

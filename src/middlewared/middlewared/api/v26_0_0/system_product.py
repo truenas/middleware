@@ -1,5 +1,7 @@
 from typing import Literal
 
+from pydantic import Field
+
 from middlewared.api.base import BaseModel, NonEmptyString
 
 
@@ -20,8 +22,9 @@ __all__ = (
 
 
 class SystemFeatureEnabledArgs(BaseModel):
-    feature: Literal["APPS", "DEDUP", "FIBRECHANNEL", "SED", "SUPPORT", "VMS", "ZFSTIER"]
-    """Feature to check for availability on this system."""
+    feature: Literal["APPS", "DEDUP", "FIBRECHANNEL", "SED", "SUPPORT", "VMS", "ZFSTIER"] = Field(
+        description="Feature to check for availability on this system.",
+    )
 
     @classmethod
     def from_previous(cls, value):
@@ -31,28 +34,26 @@ class SystemFeatureEnabledArgs(BaseModel):
 
 
 class SystemFeatureEnabledResult(BaseModel):
-    result: bool
-    """Whether the specified feature is enabled on this system."""
+    result: bool = Field(description="Whether the specified feature is enabled on this system.")
 
 
 class SystemLicenseUpdateArgs(BaseModel):
-    license: NonEmptyString
-    """License key to apply to the system."""
+    license: NonEmptyString = Field(description="License key to apply to the system.")
 
 
 class SystemLicenseUpdateResult(BaseModel):
-    result: None
-    """Returns `null` on successful license update."""
+    result: None = Field(description="Returns `null` on successful license update.")
 
 
 class SystemReleaseNotesUrlArgs(BaseModel):
-    version_str: NonEmptyString | None = None
-    """Version string to get release notes for. `null` for current version."""
+    version_str: NonEmptyString | None = Field(
+        default=None,
+        description="Version string to get release notes for. `null` for current version.",
+    )
 
 
 class SystemReleaseNotesUrlResult(BaseModel):
-    result: str
-    """URL to the release notes for the specified version."""
+    result: str = Field(description="URL to the release notes for the specified version.")
 
 
 class SystemProductTypeArgs(BaseModel):
@@ -60,8 +61,7 @@ class SystemProductTypeArgs(BaseModel):
 
 
 class SystemProductTypeResult(BaseModel):
-    result: Literal["COMMUNITY_EDITION", "ENTERPRISE"]
-    """Product type of this TrueNAS system."""
+    result: Literal["COMMUNITY_EDITION", "ENTERPRISE"] = Field(description="Product type of this TrueNAS system.")
 
 
 class SystemVersionArgs(BaseModel):
@@ -69,8 +69,7 @@ class SystemVersionArgs(BaseModel):
 
 
 class SystemVersionResult(BaseModel):
-    result: str
-    """Full version string of the TrueNAS system."""
+    result: str = Field(description="Full version string of the TrueNAS system.")
 
 
 class SystemVersionShortArgs(BaseModel):
@@ -78,5 +77,4 @@ class SystemVersionShortArgs(BaseModel):
 
 
 class SystemVersionShortResult(BaseModel):
-    result: str
-    """Short version string of the TrueNAS system."""
+    result: str = Field(description="Short version string of the TrueNAS system.")

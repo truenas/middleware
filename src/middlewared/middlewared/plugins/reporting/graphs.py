@@ -84,7 +84,10 @@ class ReportingService(Service):
         query_params = await self.middleware.call('reporting.translate_query_params', query)
         graph_plugins = collections.defaultdict(list)
         for graph in graphs:
-            graph_plugins[self.__graphs[graph['name']]].append(graph['identifier'])
+            plugin = self.__graphs.get(graph['name'])
+            if plugin is None:
+                raise CallError(f'{graph["name"]!r} is not a valid graph plugin.', errno.ENOENT)
+            graph_plugins[plugin].append(graph['identifier'])
 
         results = []
         async for result in fetch_data_from_graph_plugins(graph_plugins, query_params, query['aggregate']):

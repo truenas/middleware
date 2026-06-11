@@ -15,8 +15,9 @@ Two helpers here:
   ``sharing.nfs.delete`` removes the export but the kernel takes a
   brief moment to release the underlying ZFS mountpoint; the eager
   ``pool.dataset.delete`` from the standard ``dataset`` asset races
-  that and returns ``EZFS_BUSY``.  Same pattern as
-  ``tests/api2/test_300_nfs.py:nfs_dataset``.
+  that and returns ``EZFS_BUSY``.  It also deletes any same-named dataset a
+  prior interrupted run left behind before creating, so stale state cannot
+  fail the create.  Same pattern as ``tests/api2/test_300_nfs.py:nfs_dataset``.
 """
 
 import contextlib
@@ -52,35 +53,45 @@ def start_nfs():
                 call("nfs.update", {"allow_nonroot": False})
 
 
+def _delete_dataset_tolerant(full):
+    """Delete a dataset, tolerating the EZFS_BUSY race against NFS export
+    teardown: try once, then sleep briefly and poll until it succeeds or the
+    dataset is already gone."""
+    try:
+        call("pool.dataset.delete", full, {"recursive": True})
+        return
+    except InstanceNotFound:
+        return
+    except Exception:
+        pass
+
+    sleep(2)
+    for _ in range(6):
+        try:
+            call("pool.dataset.delete", full, {"recursive": True})
+            return
+        except InstanceNotFound:
+            return
+        except Exception:
+            sleep(10)
+
+
 @contextlib.contextmanager
 def _nfs_dataset_cm(name, data=None):
+    """Create ``pool/<name>``, yield its full name, and delete it on exit,
+    tolerating the EZFS_BUSY delete race.  Mirrored module-scoped as
+    nfs_ha_utils.nfs_ha_dataset for the HA tests, which cannot request this
+    function-scoped fixture."""
     full = f"{pool}/{name}"
+    # Delete before create so a dataset a prior interrupted run left behind
+    # does not fail this run's create with "path already exists"; the create
+    # is then the single source of the dataset for this test.
+    _delete_dataset_tolerant(full)
     call("pool.dataset.create", {"name": full, **(data or {})})
     try:
         yield full
     finally:
-        deleted = False
-        # First attempt - may race with NFS export teardown.
-        try:
-            call("pool.dataset.delete", full, {"recursive": True})
-            deleted = True
-        except InstanceNotFound:
-            deleted = True
-        except Exception:
-            pass
-
-        # Retry: sleep briefly to let the kernel release the export,
-        # then poll until delete succeeds or the dataset is gone.
-        if not deleted:
-            sleep(2)
-            for _ in range(6):
-                try:
-                    call("pool.dataset.delete", full, {"recursive": True})
-                    break
-                except InstanceNotFound:
-                    break
-                except Exception:
-                    sleep(10)
+        _delete_dataset_tolerant(full)
 
 
 @pytest.fixture

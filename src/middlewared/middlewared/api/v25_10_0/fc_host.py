@@ -1,5 +1,7 @@
 from typing import Literal
 
+from pydantic import Field
+
 from middlewared.api.base import WWPN, BaseModel, Excluded, FibreChannelHostAlias, ForUpdateMetaclass, excluded_field
 
 
@@ -10,16 +12,14 @@ __all__ = [
 
 
 class FCHostEntry(BaseModel):
-    id: int
-    """Unique identifier for the Fibre Channel host configuration."""
-    alias: FibreChannelHostAlias
-    """Human-readable alias for the Fibre Channel host."""
-    wwpn: WWPN | None = None
-    """World Wide Port Name for port A or `null` if not configured."""
-    wwpn_b: WWPN | None = None
-    """World Wide Port Name for port B or `null` if not configured."""
-    npiv: int = 0
-    """Number of N_Port ID Virtualization (NPIV) virtual ports to create."""
+    id: int = Field(description="Unique identifier for the Fibre Channel host configuration.")
+    alias: FibreChannelHostAlias = Field(description="Human-readable alias for the Fibre Channel host.")
+    wwpn: WWPN | None = Field(default=None, description="World Wide Port Name for port A or `null` if not configured.")
+    wwpn_b: WWPN | None = Field(
+        default=None,
+        description="World Wide Port Name for port B or `null` if not configured.",
+    )
+    npiv: int = Field(default=0, description="Number of N_Port ID Virtualization (NPIV) virtual ports to create.")
 
 
 class FCHostCreate(FCHostEntry):
@@ -27,13 +27,11 @@ class FCHostCreate(FCHostEntry):
 
 
 class FCHostCreateArgs(BaseModel):
-    fc_host_create: FCHostCreate
-    """Fibre Channel host configuration data for the new host."""
+    fc_host_create: FCHostCreate = Field(description="Fibre Channel host configuration data for the new host.")
 
 
 class FCHostCreateResult(BaseModel):
-    result: FCHostEntry
-    """The created Fibre Channel host configuration."""
+    result: FCHostEntry = Field(description="The created Fibre Channel host configuration.")
 
 
 class FCHostUpdate(FCHostCreate, metaclass=ForUpdateMetaclass):
@@ -41,22 +39,17 @@ class FCHostUpdate(FCHostCreate, metaclass=ForUpdateMetaclass):
 
 
 class FCHostUpdateArgs(BaseModel):
-    id: int
-    """ID of the Fibre Channel host to update."""
-    fc_host_update: FCHostUpdate
-    """Updated Fibre Channel host configuration data."""
+    id: int = Field(description="ID of the Fibre Channel host to update.")
+    fc_host_update: FCHostUpdate = Field(description="Updated Fibre Channel host configuration data.")
 
 
 class FCHostUpdateResult(BaseModel):
-    result: FCHostEntry
-    """The updated Fibre Channel host configuration."""
+    result: FCHostEntry = Field(description="The updated Fibre Channel host configuration.")
 
 
 class FCHostDeleteArgs(BaseModel):
-    id: int
-    """ID of the Fibre Channel host to delete."""
+    id: int = Field(description="ID of the Fibre Channel host to delete.")
 
 
 class FCHostDeleteResult(BaseModel):
-    result: Literal[True]
-    """Returns `true` when the Fibre Channel host is successfully deleted."""
+    result: Literal[True] = Field(description="Returns `true` when the Fibre Channel host is successfully deleted.")

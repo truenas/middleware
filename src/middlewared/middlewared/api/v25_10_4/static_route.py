@@ -1,3 +1,5 @@
+from pydantic import Field
+
 from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString
 
 
@@ -13,14 +15,10 @@ __all__ = [
 
 
 class StaticRouteEntry(BaseModel):
-    destination: NonEmptyString
-    """Destination network or host for this static route."""
-    gateway: NonEmptyString
-    """Gateway IP address for this static route."""
-    description: str = ""
-    """Optional description for this static route."""
-    id: int
-    """Unique identifier for this static route."""
+    destination: NonEmptyString = Field(description="Destination network or host for this static route.")
+    gateway: NonEmptyString = Field(description="Gateway IP address for this static route.")
+    description: str = Field(default="", description="Optional description for this static route.")
+    id: int = Field(description="Unique identifier for this static route.")
 
 
 class StaticRouteCreate(StaticRouteEntry):
@@ -28,13 +26,11 @@ class StaticRouteCreate(StaticRouteEntry):
 
 
 class StaticRouteCreateArgs(BaseModel):
-    data: StaticRouteCreate
-    """Configuration for the new static route."""
+    data: StaticRouteCreate = Field(description="Configuration for the new static route.")
 
 
 class StaticRouteCreateResult(BaseModel):
-    result: StaticRouteEntry
-    """The newly created static route configuration."""
+    result: StaticRouteEntry = Field(description="The newly created static route configuration.")
 
 
 class StaticRouteUpdate(StaticRouteCreate, metaclass=ForUpdateMetaclass):
@@ -42,22 +38,17 @@ class StaticRouteUpdate(StaticRouteCreate, metaclass=ForUpdateMetaclass):
 
 
 class StaticRouteUpdateArgs(BaseModel):
-    id: int
-    """ID of the static route to update."""
-    data: StaticRouteUpdate
-    """Updated configuration for the static route."""
+    id: int = Field(description="ID of the static route to update.")
+    data: StaticRouteUpdate = Field(description="Updated configuration for the static route.")
 
 
 class StaticRouteUpdateResult(BaseModel):
-    result: StaticRouteEntry
-    """The updated static route configuration."""
+    result: StaticRouteEntry = Field(description="The updated static route configuration.")
 
 
 class StaticRouteDeleteArgs(BaseModel):
-    id: int
-    """ID of the static route to delete."""
+    id: int = Field(description="ID of the static route to delete.")
 
 
 class StaticRouteDeleteResult(BaseModel):
-    result: bool
-    """Whether the static route was successfully deleted."""
+    result: bool = Field(description="Whether the static route was successfully deleted.")
