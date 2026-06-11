@@ -12,7 +12,6 @@ def test__normal_alert_class():
             "UPSBatteryLow": {
                 "level": "CRITICAL",
                 "policy": "IMMEDIATELY",
-                "proactive_support": False,
             },
         },
     }
