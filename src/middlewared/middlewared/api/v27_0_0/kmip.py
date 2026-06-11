@@ -8,11 +8,10 @@ from middlewared.api.base import (
     ForUpdateMetaclass,
     NonEmptyString,
     excluded_field,
-    single_argument_args,
 )
 
 __all__ = [
-    'KMIPEntry', 'KMIPKmipSyncPendingArgs', 'KMIPKmipSyncPendingResult',
+    'KMIPEntry', 'KMIPUpdate', 'KMIPKmipSyncPendingArgs', 'KMIPKmipSyncPendingResult',
     'KMIPSyncKeysArgs', 'KMIPSyncKeysResult', 'KMIPClearSyncPendingKeysArgs',
     'KMIPClearSyncPendingKeysResult', 'KMIPUpdateArgs', 'KMIPUpdateResult'
 ]
@@ -36,8 +35,7 @@ class KMIPEntry(BaseModel):
     )
 
 
-@single_argument_args('kmip_update')
-class KMIPUpdateArgs(KMIPEntry, metaclass=ForUpdateMetaclass):
+class KMIPUpdate(KMIPEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
     enabled: bool = Field(description="Whether to enable KMIP functionality.")
     force_clear: bool = Field(description="Whether to force clear existing keys when disabling KMIP.")
@@ -46,6 +44,10 @@ class KMIPUpdateArgs(KMIPEntry, metaclass=ForUpdateMetaclass):
         alias='validate',
         description="Whether to validate the KMIP server connection before saving.",
     )
+
+
+class KMIPUpdateArgs(BaseModel):
+    kmip_update: KMIPUpdate = Field(description="KMIP configuration update arguments.")
 
 
 class KMIPUpdateResult(BaseModel):

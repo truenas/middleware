@@ -1195,8 +1195,8 @@ async def hook_pool_dataset_post_create(middleware, dataset_data):
                 }
             )
         else:
-            kmip = await middleware.call('kmip.config')
-            if kmip['enabled'] and kmip['manage_zfs_keys']:
+            kmip = await middleware.call2(middleware.services.kmip.config)
+            if kmip.enabled and kmip.manage_zfs_keys:
                 await middleware.call('failover.sync_keys_to_remote_node')
 
 
@@ -1215,8 +1215,8 @@ async def hook_pool_dataset_change_key(middleware, dataset_data):
         else:
             await middleware.call('failover.remove_encryption_keys', {'datasets': [dataset_data['name']]})
     else:
-        kmip = await middleware.call('kmip.config')
-        if kmip['enabled'] and kmip['manage_zfs_keys']:
+        kmip = await middleware.call2(middleware.services.kmip.config)
+        if kmip.enabled and kmip.manage_zfs_keys:
             await middleware.call('failover.sync_keys_to_remote_node')
 
 

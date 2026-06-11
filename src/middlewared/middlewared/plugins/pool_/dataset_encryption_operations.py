@@ -54,8 +54,8 @@ class PoolDatasetService(Service):
                 data
             )
 
-        kmip_config = self.middleware.call_sync('kmip.config')
-        if kmip_config['enabled'] and kmip_config['manage_zfs_keys']:
+        kmip_config = self.call_sync2(self.s.kmip.config)
+        if kmip_config.enabled and kmip_config.manage_zfs_keys:
             self.middleware.call_sync('kmip.sync_zfs_keys', [pk])
 
         return pk

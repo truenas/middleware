@@ -114,6 +114,7 @@ from middlewared.plugins.docker import DockerService
 from middlewared.plugins.ftp import FTPService
 from middlewared.plugins.init_shutdown_script import InitShutdownScriptService
 from middlewared.plugins.keyvalue import KeyValueService
+from middlewared.plugins.kmip import KMIPService
 from middlewared.plugins.mail import MailService
 from middlewared.plugins.ntp import NTPServerService
 from middlewared.plugins.ports import PortService
@@ -236,6 +237,7 @@ class ServiceContainer(BaseServiceContainer):
         self.ftp = FTPService(middleware)
         self.initshutdownscript = InitShutdownScriptService(middleware)
         self.keyvalue = KeyValueService(middleware)
+        self.kmip = KMIPService(middleware)
         self.lxc = LXCConfigService(middleware)
         self.mail = MailService(middleware)
         self.pool = PoolServicesContainer(middleware)

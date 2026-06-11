@@ -839,7 +839,7 @@ class FailoverEventsService(Service):
         self.run_call('failover.reboot.discard_unbound_remote_reboot_reasons')
 
         kmip_config = self.run_call('kmip.config')
-        if kmip_config and kmip_config['enabled']:
+        if kmip_config and kmip_config.enabled:
             logger.info('Syncing encryption keys with KMIP server')
 
             # Even though we keep keys in sync, it's best that we do this as well
