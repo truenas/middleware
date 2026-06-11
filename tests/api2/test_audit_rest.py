@@ -71,7 +71,7 @@ def test_authenticated_call():
                         "minor": 1,
                     },
                     "origin": ANY,
-                    "protocol": "REST",
+                    "protocol": "LEGACY_REST",
                     "credentials": {
                         "credentials": "LOGIN_PASSWORD",
                         "credentials_data": {"username": "root", "login_at": ANY, "login_id": ANY},
@@ -94,7 +94,7 @@ def test_authenticated_call():
                         "minor": 1,
                     },
                     "origin": ANY,
-                    "protocol": "REST",
+                    "protocol": "LEGACY_REST",
                     "credentials": {
                         "credentials": "LOGIN_PASSWORD",
                         "credentials_data": {"username": "root", "login_at": ANY, "login_id": ANY},
@@ -149,7 +149,7 @@ def test_unauthorized_call():
                         "minor": 1,
                     },
                     "origin": ANY,
-                    "protocol": "REST",
+                    "protocol": "LEGACY_REST",
                     "credentials": {
                         "credentials": "LOGIN_PASSWORD",
                         "credentials_data": {"username": ANY, "login_at": ANY, "login_id": ANY},
@@ -184,7 +184,7 @@ def test_bogus_call():
                     "minor": 1,
                 },
                 "origin": ANY,
-                "protocol": "REST",
+                "protocol": "LEGACY_REST",
                 "credentials": {
                     "credentials": "LOGIN_PASSWORD",
                     "credentials_data": {"username": "root", "login_at": ANY, "login_id": ANY},
@@ -215,7 +215,7 @@ def test_api_key_auth():
                         "minor": 1,
                     },
                     "origin": ANY,
-                    "protocol": "REST",
+                    "protocol": "LEGACY_REST",
                     "credentials": {
                         "credentials": "API_KEY",
                         "credentials_data": {
