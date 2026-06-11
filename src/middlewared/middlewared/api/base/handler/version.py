@@ -162,10 +162,13 @@ class APIVersionsAdapter:
         new_model: type[BaseModel],
         direction: Direction,
     ):
+        current_model_fields = {field.alias or name: field for name, field in current_model.model_fields.items()}
+        new_model_fields = {field.alias or name: field for name, field in new_model.model_fields.items()}
+
         for k in value:
-            if k in current_model.model_fields and k in new_model.model_fields:
-                current_model_field = current_model.model_fields[k].annotation
-                new_model_field = new_model.model_fields[k].annotation
+            if k in current_model_fields and k in new_model_fields:
+                current_model_field = current_model_fields[k].annotation
+                new_model_field = new_model_fields[k].annotation
                 if (
                     isinstance(value[k], dict) and
                     (current_nested_model := model_field_is_model(current_model_field, value_hint=value[k])) and
@@ -188,7 +191,7 @@ class APIVersionsAdapter:
                     ]
 
         if new_model.__class__ is not ForUpdateMetaclass:
-            for k, field in new_model.model_fields.items():
+            for k, field in new_model_fields.items():
                 if k not in value and not field.is_required():
                     value[k] = field.get_default()
 
@@ -199,7 +202,7 @@ class APIVersionsAdapter:
                 value = new_model.from_previous(value)
 
         for k in list(value):
-            if k in current_model.model_fields and k not in new_model.model_fields:
+            if k in current_model_fields and k not in new_model_fields:
                 value.pop(k)
 
         for k, v in list(value.items()):
