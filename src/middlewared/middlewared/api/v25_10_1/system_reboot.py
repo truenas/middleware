@@ -1,3 +1,5 @@
+from pydantic import Field
+
 from middlewared.api.base import BaseModel
 
 __all__ = ["SystemRebootInfoArgs", "RebootInfo", "SystemRebootInfoResult"]
@@ -8,19 +10,16 @@ class SystemRebootInfoArgs(BaseModel):
 
 
 class RebootRequiredReason(BaseModel):
-    code: str
-    """Code identifying the reason for required reboot."""
-    reason: str
-    """Human-readable description of why a reboot is required."""
+    code: str = Field(description="Code identifying the reason for required reboot.")
+    reason: str = Field(description="Human-readable description of why a reboot is required.")
 
 
 class RebootInfo(BaseModel):
-    boot_id: str
-    """Unique identifier for the current boot session."""
-    reboot_required_reasons: list[RebootRequiredReason]
-    """Array of reasons why a system reboot is required."""
+    boot_id: str = Field(description="Unique identifier for the current boot session.")
+    reboot_required_reasons: list[RebootRequiredReason] = Field(
+        description="Array of reasons why a system reboot is required.",
+    )
 
 
 class SystemRebootInfoResult(BaseModel):
-    result: RebootInfo
-    """Information about the current boot session and reboot requirements."""
+    result: RebootInfo = Field(description="Information about the current boot session and reboot requirements.")

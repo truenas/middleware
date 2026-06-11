@@ -1,3 +1,5 @@
+from pydantic import Field
+
 from middlewared.api.base import BaseModel
 
 
@@ -9,5 +11,4 @@ class FCCapableArgs(BaseModel):
 
 
 class FCCapableResult(BaseModel):
-    result: bool
-    """Returns `true` if the system has Fibre Channel capabilities, `false` otherwise."""
+    result: bool = Field(description="Returns `true` if the system has Fibre Channel capabilities, `false` otherwise.")

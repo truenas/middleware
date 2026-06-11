@@ -43,9 +43,9 @@ class TrueNASConnectSchemaArgs(TrueNASConnectSchema):
 
 class CloudFlareSchema(BaseModel):
     authenticator: Literal['cloudflare']
-    cloudflare_email: NonEmptyString | None = Field(default=None, description='Cloudflare Email')
-    api_key: Secret[NonEmptyString | None] = Field(default=None, description='API Key')
-    api_token: Secret[NonEmptyString | None] = Field(default=None, description='API Token')
+    cloudflare_email: NonEmptyString | None = Field(default=None, description="Cloudflare Email")
+    api_key: Secret[NonEmptyString | None] = Field(default=None, description="API Key")
+    api_token: Secret[NonEmptyString | None] = Field(default=None, description="API Token")
 
 
 @single_argument_args('attributes')
@@ -55,7 +55,7 @@ class CloudFlareSchemaArgs(CloudFlareSchema):
 
 class DigitalOceanSchema(BaseModel):
     authenticator: Literal['digitalocean']
-    digitalocean_token: Secret[NonEmptyString] = Field(description='DigitalOcean Token')
+    digitalocean_token: Secret[NonEmptyString] = Field(description="DigitalOcean Token")
 
 
 @single_argument_args('attributes')
@@ -65,10 +65,10 @@ class DigitalOceanSchemaArgs(DigitalOceanSchema):
 
 class OVHSchema(BaseModel):
     authenticator: Literal['OVH']
-    application_key: NonEmptyString = Field(description='OVH Application Key')
-    application_secret: NonEmptyString = Field(description='OVH Application Secret')
-    consumer_key: NonEmptyString = Field(description='OVH Consumer Key')
-    endpoint: OVHEndpoint = Field(description='OVH Endpoint')
+    application_key: NonEmptyString = Field(description="OVH Application Key")
+    application_secret: NonEmptyString = Field(description="OVH Application Secret")
+    consumer_key: NonEmptyString = Field(description="OVH Consumer Key")
+    endpoint: OVHEndpoint = Field(description="OVH Endpoint")
 
 
 @single_argument_args('attributes')
@@ -78,8 +78,8 @@ class OVHSchemaArgs(OVHSchema):
 
 class Route53Schema(BaseModel):
     authenticator: Literal['route53']
-    access_key_id: NonEmptyString = Field(description='AWS Access Key ID')
-    secret_access_key: NonEmptyString = Field(description='AWS Secret Access Key')
+    access_key_id: NonEmptyString = Field(description="AWS Access Key ID")
+    secret_access_key: NonEmptyString = Field(description="AWS Secret Access Key")
 
 
 @single_argument_args('attributes')
@@ -89,8 +89,8 @@ class Route53SchemaArgs(Route53Schema):
 
 class ShellSchema(BaseModel):
     authenticator: Literal['shell']
-    script: FilePathStr = Field(description='Authentication Script')
-    user: NonEmptyString = Field(description='Running user', default='nobody')
+    script: FilePathStr = Field(description="Authentication Script")
+    user: NonEmptyString = Field(default='nobody', description="Running user")
     timeout: Annotated[int, Field(ge=5, description='Script Timeout', default=60)]
     delay: Annotated[int, Field(ge=10, description='Propagation delay', default=60)]
 
