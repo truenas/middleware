@@ -47,7 +47,7 @@ class MemoryErrorsAlertSource(AlertSource):
 
     async def check(self) -> list[Alert[Any]]:
         alerts: list[Alert[Any]] = []
-        for mem_ctrl, info in (await self.middleware.call('hardware.memory.error_info')).items():
+        for mem_ctrl, info in (await self.call2(self.s.hardware.memory.error_info)).items():
             location = f'memory controller {mem_ctrl}'
             if (val := info['uncorrected_errors_with_no_dimm_info']) is not None and val > 0:
                 # this means that there were uncorrected errors where no additional information
