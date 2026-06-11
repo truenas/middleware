@@ -4,11 +4,11 @@
     ftp = render_ctx['ftp.config']
     cert = None
     tls_options = []
-    if ftp['tls']:
+    if ftp.tls:
         try:
             middleware.call_sync2(
                 middleware.services.certificate.cert_services_validation,
-                ftp['ssltls_certificate'], 'ftp.ftp_ssltls_certificate_id',
+                ftp.ssltls_certificate, 'ftp.ftp_ssltls_certificate_id',
             )
         except Exception:
             # certificate is not valid
@@ -16,7 +16,7 @@
         else:
             cert = middleware.call_sync2(
                 middleware.services.certificate.query,
-                [['id', '=', ftp['ssltls_certificate']]], QueryOptions(get=True),
+                [['id', '=', ftp.ssltls_certificate]], QueryOptions(get=True),
             )
 
             # Generate TLS options
@@ -33,7 +33,7 @@
                 ('dns_name_required', 'dNSNameRequired'),
                 ('ip_address_required', 'iPAddressRequired'),
             ]:
-                if ftp[f'tls_opt_{k}']:
+                if getattr(ftp, f'tls_opt_{k}'):
                     tls_options.append(v)
 %>
 #
@@ -58,6 +58,6 @@ TLSRSACertificateKeyFile "${cert.privatekey_path}"
 TLSCertificateChainFile "${cert.certificate_path}"
 % endif
 TLSVerifyClient off
-TLSRequired ${ftp['tls_policy']}
+TLSRequired ${ftp.tls_policy}
 </IfModule>
 % endif

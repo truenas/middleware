@@ -25,9 +25,11 @@ async def check_path_resides_within_volume(
     )
 
 
-async def resolve_hostname(middleware, verrors, name, hostname):
+async def resolve_hostname(
+    middleware: Middleware, verrors: ValidationErrors, name: str, hostname: str
+) -> None:
 
-    def resolve_host_name_thread(hostname):
+    def resolve_host_name_thread(hostname: str) -> str | bool:
         try:
             try:
                 ipaddress.ip_address(hostname)
@@ -60,5 +62,7 @@ async def validate_country(
         )
 
 
-async def validate_port(middleware, schema, port, whitelist_namespace=None, bind_ip='0.0.0.0'):
+async def validate_port(
+    middleware: Middleware, schema: str, port: int, whitelist_namespace: str | None = None, bind_ip: str = '0.0.0.0'
+) -> ValidationErrors:
     return await middleware.call('port.validate_port', schema, port, bind_ip, whitelist_namespace)

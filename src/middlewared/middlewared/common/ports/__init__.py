@@ -68,7 +68,10 @@ class ServicePortDelegate(PortDelegate):
         return self.bind_address(config), config[port_field]
 
     async def config(self) -> dict[str, Any]:
-        return await self.middleware.call(f'{self.namespace}.config')  # type: ignore[no-any-return]
+        # Config can be a dict (legacy/unconverted services) or a Pydantic model (typesafe
+        # services with `generic = True`); normalize to a dict for field access below.
+        config = await self.middleware.call(f'{self.namespace}.config')
+        return config if isinstance(config, dict) else config.model_dump()
 
     async def get_ports_bound_on_wildcards(self) -> list[int]:
         return []

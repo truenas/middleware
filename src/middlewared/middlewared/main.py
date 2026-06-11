@@ -111,6 +111,7 @@ from middlewared.plugins.container import ContainerService
 from middlewared.plugins.container.lxc import LXCConfigService
 from middlewared.plugins.cron import CronJobService
 from middlewared.plugins.docker import DockerService
+from middlewared.plugins.ftp import FTPService
 from middlewared.plugins.init_shutdown_script import InitShutdownScriptService
 from middlewared.plugins.keyvalue import KeyValueService
 from middlewared.plugins.mail import MailService
@@ -232,6 +233,7 @@ class ServiceContainer(BaseServiceContainer):
         self.container = ContainerService(middleware)
         self.cronjob = CronJobService(middleware)
         self.docker = DockerService(middleware)
+        self.ftp = FTPService(middleware)
         self.initshutdownscript = InitShutdownScriptService(middleware)
         self.keyvalue = KeyValueService(middleware)
         self.lxc = LXCConfigService(middleware)

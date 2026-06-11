@@ -1,6 +1,5 @@
 <%
     # Disallow built-in users
-    ftp = render_ctx['ftp.config']
     disallowed_users = [user["username"] for user in render_ctx['user.query']]
 %>
 #
