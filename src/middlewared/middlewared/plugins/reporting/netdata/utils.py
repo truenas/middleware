@@ -1,3 +1,4 @@
+import typing
 from urllib.parse import urlencode
 
 from middlewared.utils.disks_.disk_class import DiskEntry
@@ -8,7 +9,7 @@ NETDATA_URI = f'http://127.0.0.1:{NETDATA_PORT}/api'
 NETDATA_UPDATE_EVERY = 2  # seconds
 
 
-def get_query_parameters(query_params: dict | None, prefix: str = '&') -> str:
+def get_query_parameters(query_params: dict[str, typing.Any] | None, prefix: str = '&') -> str:
     """
     retrieve complete uri by adding query params to the uri by properly normalizing
     each query param and their special characters

@@ -42,27 +42,28 @@ class DISKPlugin(GraphBase):
     title = 'Disk I/O Bandwidth'
     vertical_label = 'Kibibytes/s'
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         super().__init__(*args, **kwargs)
-        self.disk_mapping = {}
+        self.disk_mapping: dict[str, str] = {}
 
-    def get_title(self):
+    def get_title(self) -> str:
         return 'Disk I/O ({identifier})'
 
-    async def build_context(self):
+    async def build_context(self) -> None:
         all_charts = await self.all_charts()
         self.disk_mapping = await self.middleware.run_in_thread(self.get_mapping, all_charts)
 
-    def get_mapping(self, all_charts):
+    def get_mapping(self, all_charts: dict[str, typing.Any]) -> dict[str, str]:
         return {
             get_human_disk_name(disk): disk.identifier for disk in iterate_disks()
             if f'truenas_disk_stats.io.{disk.identifier}' in all_charts
         }
 
-    async def get_identifiers(self) -> typing.Optional[list]:
+    async def get_identifiers(self) -> list[str] | None:
         return list(self.disk_mapping.keys())
 
     def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
+        assert identifier is not None
         return f'truenas_disk_stats.io.{self.disk_mapping[identifier]}'
 
 
@@ -71,17 +72,17 @@ class InterfacePlugin(GraphBase):
     title = 'Interface Traffic'
     vertical_label = 'Kilobits/s'
 
-    def get_title(self):
+    def get_title(self) -> str:
         return 'Interface Traffic ({identifier})'
 
-    async def get_identifiers(self) -> typing.Optional[list]:
+    async def get_identifiers(self) -> list[str] | None:
         ifaces = {f'net.{i["name"]}' for i in await self.middleware.call('interface.query')}
         return [iface.split('.')[-1] for iface in (ifaces & set(await self.all_charts()))]
 
     def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
         return f'net.{identifier}'
 
-    def normalize_metrics(self, metrics) -> dict:
+    def normalize_metrics(self, metrics: dict[str, typing.Any]) -> dict[str, typing.Any]:
         metrics = super().normalize_metrics(metrics)
         if len(metrics['legend']) < 3:
             for to_add in {'time', 'received', 'sent'} - set(metrics['legend']):
@@ -105,7 +106,7 @@ class LoadPlugin(GraphBase):
     uses_identifiers = False
     vertical_label = 'Load'
 
-    LOAD_MAPPING = {
+    LOAD_MAPPING: dict[str, str] = {
         'load1': 'shortterm',
         'load5': 'midterm',
         'load15': 'longterm',
@@ -114,7 +115,7 @@ class LoadPlugin(GraphBase):
     def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
         return 'system.load'
 
-    def normalize_metrics(self, metrics) -> dict:
+    def normalize_metrics(self, metrics: dict[str, typing.Any]) -> dict[str, typing.Any]:
         metrics = super().normalize_metrics(metrics)
         metrics['legend'] = [self.LOAD_MAPPING.get(legend, legend) for legend in metrics['legend']]
         return metrics
@@ -359,29 +360,30 @@ class DiskTempPlugin(GraphBase):
 
     title = 'Disks Temperature'
     vertical_label = 'Celsius'
-    disk_mapping = {}
+    disk_mapping: dict[str, str] = {}
     skip_zero_values_in_aggregation = True
 
-    def get_title(self):
+    def get_title(self) -> str:
         return 'Disk Temperature {identifier}'
 
-    async def build_context(self):
+    async def build_context(self) -> None:
         all_charts = await self.all_charts()
         self.disk_mapping = await self.middleware.run_in_thread(self.get_mapping, all_charts)
 
-    def get_mapping(self, all_charts):
+    def get_mapping(self, all_charts: dict[str, typing.Any]) -> dict[str, str]:
         return {
             get_human_disk_name(disk): disk.identifier for disk in iterate_disks()
             if f'truenas_disk_temp.{disk.identifier}' in all_charts
         }
 
-    async def get_identifiers(self) -> typing.Optional[list]:
+    async def get_identifiers(self) -> list[str] | None:
         return list(self.disk_mapping.keys())
 
     def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
+        assert identifier is not None
         return f'truenas_disk_temp.{self.disk_mapping[identifier]}'
 
-    def normalize_metrics(self, metrics) -> dict:
+    def normalize_metrics(self, metrics: dict[str, typing.Any]) -> dict[str, typing.Any]:
         metrics = super().normalize_metrics(metrics)
 
         if len(metrics['legend']) < 2:
@@ -395,16 +397,16 @@ class DiskTempPlugin(GraphBase):
 
 class UPSBase(GraphBase):
 
-    UPS_IDENTIFIER = None
+    UPS_IDENTIFIER: str | None = None
     skip_zero_values_in_aggregation = True
 
     async def export_multiple_identifiers(
-        self, query_params: dict, identifiers: list, aggregate: bool = True
-    ) -> typing.List[dict]:
+        self, query_params: dict[str, typing.Any], identifiers: typing.Sequence[str | None], aggregate: bool = True
+    ) -> list[dict[str, typing.Any]]:
         self.UPS_IDENTIFIER = f"local_{(await self.middleware.call('ups.config')).identifier}"
         return await super().export_multiple_identifiers(query_params, identifiers, aggregate)
 
-    def query_parameters(self) -> dict:
+    def query_parameters(self) -> dict[str, typing.Any]:
         return super().query_parameters() | {
             'group': 'median'
         }
@@ -435,16 +437,17 @@ class UPSVoltagePlugin(UPSBase):
     title = 'UPS Voltage'
     vertical_label = 'Volts'
 
-    IDENTIFIER_MAPPING = {
+    IDENTIFIER_MAPPING: dict[str, str] = {
         'battery': 'battery_voltage',
         'input': 'input_voltage',
         'output': 'output_voltage'
     }
 
-    async def get_identifiers(self) -> typing.Optional[list]:
+    async def get_identifiers(self) -> list[str] | None:
         return list(self.IDENTIFIER_MAPPING.keys())
 
     def get_chart_name(self, identifier: typing.Optional[str]) -> str:
+        assert identifier is not None
         return f'upsd_{self.UPS_IDENTIFIER}.{self.IDENTIFIER_MAPPING[identifier]}'
 
 

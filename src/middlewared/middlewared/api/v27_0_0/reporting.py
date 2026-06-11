@@ -8,16 +8,16 @@ from middlewared.api.base import (
     ForUpdateMetaclass,
     NonEmptyString,
     excluded_field,
-    single_argument_args,
     single_argument_result,
 )
 
 __all__ = [
-    'ReportingEntry', 'ReportingUpdateArgs', 'ReportingUpdateResult', 'ReportingGraphsItem',
+    'ReportingEntry', 'ReportingUpdate', 'ReportingUpdateArgs', 'ReportingUpdateResult', 'ReportingGraphsItem',
     'ReportingNetdataGetDataArgs', 'ReportingNetdataGraphResult', 'ReportingNetdataGraphArgs',
     'ReportingGeneratePasswordArgs', 'ReportingGeneratePasswordResult', 'ReportingRealtimeEventSourceArgs',
     'ReportingRealtimeEventSourceEvent', 'ReportingGetDataArgs', 'ReportingGetDataResult', 'ReportingGraphArgs',
     'ReportingGraphResult', 'ReportingNetdataGetDataResult', 'ReportingNetdataGraphsItem',
+    'GraphIdentifier', 'ReportingQuery', 'ReportingGetDataResponse',
 ]
 
 
@@ -28,9 +28,12 @@ class ReportingEntry(BaseModel):
     tier1_update_interval: int = Field(ge=1, description="Interval in seconds for updating aggregated tier1 data.")
 
 
-@single_argument_args('reporting_update')
-class ReportingUpdateArgs(ReportingEntry, metaclass=ForUpdateMetaclass):
+class ReportingUpdate(ReportingEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
+
+
+class ReportingUpdateArgs(BaseModel):
+    reporting_update: ReportingUpdate = Field(description="Updated reporting configuration.")
 
 
 class ReportingUpdateResult(BaseModel):
@@ -109,9 +112,9 @@ class ReportingNetdataGetDataArgs(BaseModel):
 
 
 class Aggregations(BaseModel):
-    min: dict = Field(description="Minimum values for each data series over the time period.")
-    mean: dict = Field(description="Average values for each data series over the time period.")
-    max: dict = Field(description="Maximum values for each data series over the time period.")
+    min: dict[str, float] = Field(description="Minimum value for each data series over the time period.")
+    mean: dict[str, float] = Field(description="Average value for each data series over the time period.")
+    max: dict[str, float] = Field(description="Maximum value for each data series over the time period.")
 
 
 class ReportingGetDataResponse(BaseModel):
@@ -170,18 +173,47 @@ class ReportingRealtimeEventSourceArgs(BaseModel):
     interval: int = Field(default=2, ge=2, description="Interval in seconds between real-time data updates.")
 
 
+class ReportingRealtimeEventSourceEventCPUCore(BaseModel):
+    usage: float = Field(description="CPU usage percentage for this core (or the `cpu` aggregate).")
+    temp: float | None = Field(
+        default=None,
+        description="Temperature of this core in degrees Celsius. `null` when unavailable.",
+    )
+
+
+class ReportingRealtimeEventSourceEventInterface(BaseModel):
+    link_state: typing.Literal["LINK_STATE_UP", "LINK_STATE_DOWN"] = Field(
+        description="Link state of the network interface.",
+    )
+    speed: float = Field(description="Interface speed in megabits per second.")
+    received_bytes_rate: float = Field(default=0, description="Bytes received per second.")
+    sent_bytes_rate: float = Field(default=0, description="Bytes sent per second.")
+    received_bytes: float = Field(
+        default=0, description="Bytes received in the last interval (reported when the link is down).",
+    )
+    sent_bytes: float = Field(
+        default=0, description="Bytes sent in the last interval (reported when the link is down).",
+    )
+
+
 @single_argument_result
 class ReportingRealtimeEventSourceEvent(BaseModel):
-    cpu: dict = Field(description="CPU performance metrics for real-time monitoring.")
+    cpu: dict[str, ReportingRealtimeEventSourceEventCPUCore] = Field(
+        description="Per-core CPU performance metrics keyed by `cpu` (aggregate), `cpu0`, `cpu1`, ...",
+    )
     disks: "ReportingRealtimeEventSourceEventDisks" = Field(
         description="Disk performance metrics for real-time monitoring.",
     )
-    interfaces: dict = Field(description="Network interface statistics for real-time monitoring.")
+    interfaces: dict[str, ReportingRealtimeEventSourceEventInterface] = Field(
+        description="Network interface statistics keyed by interface name.",
+    )
     memory: "ReportingRealtimeEventSourceEventMemory" = Field(
         description="Memory usage metrics for real-time monitoring.",
     )
     zfs: "ReportingRealtimeEventSourceEventZFS" = Field(description="ZFS performance metrics for real-time monitoring.")
-    pools: dict = Field(description="Storage pool statistics for real-time monitoring.")
+    pools: dict[str, dict[str, float]] = Field(
+        description="Storage pool statistics keyed by pool name, each a mapping of stat name to value.",
+    )
 
 
 class ReportingRealtimeEventSourceEventDisks(BaseModel):

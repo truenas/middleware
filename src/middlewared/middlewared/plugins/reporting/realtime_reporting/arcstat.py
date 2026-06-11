@@ -1,7 +1,9 @@
+import typing
+
 from .utils import normalize_value, safely_retrieve_dimension
 
 
-def get_arc_stats(netdata_metrics: dict) -> dict:
+def get_arc_stats(netdata_metrics: dict[str, typing.Any]) -> dict[str, int | float]:
     data = {
         'demand_accesses_per_second': normalize_value(
             safely_retrieve_dimension(netdata_metrics, 'truenas_arcstats.dread', 'dread', 0),

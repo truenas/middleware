@@ -1,28 +1,34 @@
+from __future__ import annotations
+
 import re
 import statistics
 import typing
 
 from .connector import Netdata
 
-GRAPH_PLUGINS = {}
+if typing.TYPE_CHECKING:
+    from middlewared.main import Middleware
+
+GRAPH_PLUGINS: dict[str, type["GraphBase"]] = {}
 RE_GRAPH_PLUGIN = re.compile(r'^(?P<name>.+)Plugin$')
 
 
 class GraphMeta(type):
 
-    def __new__(cls, name, bases, dct):
-        klass = type.__new__(cls, name, bases, dct)
+    def __new__(mcs, name: str, bases: tuple[type, ...], dct: dict[str, typing.Any]) -> "GraphMeta":
+        klass = super().__new__(mcs, name, bases, dct)
+        typed_klass = typing.cast("type[GraphBase]", klass)
         reg = RE_GRAPH_PLUGIN.search(name)
-        if reg and not hasattr(klass, 'plugin'):
-            klass.plugin = reg.group('name').lower()
-        elif not name.endswith('Base') and not hasattr(klass, 'plugin'):
+        if reg and not hasattr(typed_klass, 'plugin'):
+            typed_klass.plugin = reg.group('name').lower()
+        elif not name.endswith('Base') and not hasattr(typed_klass, 'plugin'):
             raise ValueError(f'Could not determine plugin name for {name!r}')
 
-        if reg and not hasattr(klass, 'name'):
-            klass.name = reg.group('name').lower()
-            GRAPH_PLUGINS[klass.name] = klass
-        elif hasattr(klass, 'name'):
-            GRAPH_PLUGINS[klass.name] = klass
+        if reg and not hasattr(typed_klass, 'name'):
+            typed_klass.name = reg.group('name').lower()
+            GRAPH_PLUGINS[typed_klass.name] = typed_klass
+        elif hasattr(typed_klass, 'name'):
+            GRAPH_PLUGINS[typed_klass.name] = typed_klass
         elif not name.endswith('Base'):
             raise ValueError(f'Could not determine class name for {name!r}')
         return klass
@@ -30,41 +36,44 @@ class GraphMeta(type):
 
 class GraphBase(metaclass=GraphMeta):
 
-    aggregations = ('min', 'mean', 'max')
-    title = None
-    uses_identifiers = True
-    vertical_label = None
-    skip_zero_values_in_aggregation = False
+    plugin: typing.ClassVar[str]
+    name: typing.ClassVar[str]
 
-    AGG_MAP = {
+    aggregations: tuple[str, ...] = ('min', 'mean', 'max')
+    title: str | None = None
+    uses_identifiers: bool = True
+    vertical_label: str | None = None
+    skip_zero_values_in_aggregation: bool = False
+
+    AGG_MAP: dict[str, typing.Callable[..., typing.Any]] = {
         'min': min,
         'mean': statistics.mean,
         'max': max,
     }
 
-    def __init__(self, middleware):
+    def __init__(self, middleware: Middleware) -> None:
         self.middleware = middleware
 
     def __repr__(self) -> str:
         return f"<Graph: {self.plugin}>"
 
-    async def all_charts(self) -> typing.Dict[str, dict]:
+    async def all_charts(self) -> dict[str, dict[str, typing.Any]]:
         try:
             return await Netdata.get_charts()
         except Exception as e:
             self.middleware.logger.warning('Failed to connect to netdata: %s', e)
             return {}
 
-    def get_title(self) -> str:
+    def get_title(self) -> str | None:
         return self.title
 
-    def get_vertical_label(self) -> str:
+    def get_vertical_label(self) -> str | None:
         return self.vertical_label
 
-    async def build_context(self):
+    async def build_context(self) -> None:
         pass
 
-    async def as_dict(self) -> dict:
+    async def as_dict(self) -> dict[str, typing.Any]:
         await self.build_context()
         return {
             'name': self.name,
@@ -73,10 +82,10 @@ class GraphBase(metaclass=GraphMeta):
             'identifiers': await self.get_identifiers() if self.uses_identifiers else None,
         }
 
-    async def get_identifiers(self) -> list:
+    async def get_identifiers(self) -> list[str] | None:
         return []
 
-    def normalize_metrics(self, metrics) -> dict:
+    def normalize_metrics(self, metrics: dict[str, typing.Any]) -> dict[str, typing.Any]:
         metrics['legend'] = metrics.pop('labels')
         if metrics['data'] and metrics['data'][-1] and all(m == 0 for m in metrics['data'][-1][1:]):
             # we will now remove last entry of data as when end if sometimes is specified as time which does not
@@ -84,13 +93,13 @@ class GraphBase(metaclass=GraphMeta):
             metrics['data'].pop()
         return metrics
 
-    def get_chart_name(self, identifier: typing.Optional[str]) -> str:
+    def get_chart_name(self, identifier: str | None) -> str:
         raise NotImplementedError()
 
-    def aggregate_metrics(self, data):
+    def aggregate_metrics(self, data: dict[str, typing.Any]) -> dict[str, typing.Any]:
         # Initialize the aggregation dictionary
-        aggregations = {}
-        all_aggregation_values = {
+        aggregations: dict[str, dict[str, float]] = {}
+        all_aggregation_values: dict[str, float] = {
             'min': float('inf'),
             'max': float('-inf'),
             'mean': 0.0,
@@ -99,7 +108,7 @@ class GraphBase(metaclass=GraphMeta):
         default_aggregation_values = {
             key: all_aggregation_values[key] for key in set(self.aggregations) | {'total_points'}
         }
-        final_aggregated_values = {k: {} for k in self.aggregations}
+        final_aggregated_values: dict[str, dict[str, float]] = {k: {} for k in self.aggregations}
         for legend in data['legend'][1:]:
             aggregations[legend] = default_aggregation_values.copy()
 
@@ -144,7 +153,7 @@ class GraphBase(metaclass=GraphMeta):
         data['aggregations'] = final_aggregated_values
         return data
 
-    def query_parameters(self) -> dict:
+    def query_parameters(self) -> dict[str, typing.Any]:
         return {
             'format': 'json',
             'options': 'flip|null2zero|natural-points',
@@ -153,7 +162,10 @@ class GraphBase(metaclass=GraphMeta):
             'gtime': 0,
         }
 
-    def process_chart_metrics(self, responses: list, query_params: dict, aggregate: bool) -> list:
+    def process_chart_metrics(
+        self, responses: list[tuple[str | None, dict[str, typing.Any]]], query_params: dict[str, typing.Any],
+        aggregate: bool,
+    ) -> list[dict[str, typing.Any]]:
         results = []
         for identifier, chart_metrics in responses:
             data = {
@@ -174,8 +186,8 @@ class GraphBase(metaclass=GraphMeta):
         return results
 
     async def export_multiple_identifiers(
-        self, query_params: dict, identifiers: list, aggregate: bool = True
-    ) -> typing.List[dict]:
+        self, query_params: dict[str, typing.Any], identifiers: typing.Sequence[str | None], aggregate: bool = True
+    ) -> list[dict[str, typing.Any]]:
         responses = await Netdata.get_charts_metrics({
             identifier: self.get_chart_name(identifier) for identifier in identifiers
         }, self.query_parameters() | query_params)
