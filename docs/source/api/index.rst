@@ -6,3 +6,4 @@ API
    :caption: Contents:
 
    new_version.rst
+   aliases.rst

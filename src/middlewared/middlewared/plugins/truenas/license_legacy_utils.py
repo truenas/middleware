@@ -5,7 +5,7 @@ from types import MappingProxyType
 
 from licenselib.license import Features, License
 from licenselib.utils import proactive_support_allowed
-from truenas_pylicensed import LicenseType
+from truenas_pylicensed import FEATURE_NAME_MAP, LicenseType
 
 from .license_utils import FeatureInfo, LicenseInfo
 
@@ -57,8 +57,7 @@ def parse_legacy_license(text: str) -> LicenseInfo:
         if Features.dedup in lic.features and Features.jails in lic.features:
             features.append(Features.fibrechannel)
 
-    feature_name_map = {"JAILS": "APPS"}
-    feature_names = [feature_name_map.get(f.name.upper(), f.name.upper()) for f in features]
+    feature_names = [FEATURE_NAME_MAP.get(f.name.upper(), f.name.upper()) for f in features]
     if proactive_support_allowed(lic.contract_type.name):
         feature_names.append("SUPPORT")
 

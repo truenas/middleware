@@ -43,20 +43,20 @@ except Exception:
     pam_log = None
 
 
-def is_tally_locked(username) -> bool:
+def is_tally_locked(username: str) -> bool:
     """ This function checks for whether the pam_truenas user keyring has a tally_lock key set on it. """
     if pam_log is None:
         raise RuntimeError('No keyring access')
 
-    return pam_log.is_tally_locked(username)
+    return pam_log.is_tally_locked(username)  # type: ignore[no-any-return]
 
 
-def reset_tally(username) -> None:
+def reset_tally(username: str) -> None:
     """ Reset FAILLOG for the specified username and remove its tally-lock """
     if pam_log is None:
         raise RuntimeError('No keyring access')
 
-    return pam_log.reset_tally(username)
+    return pam_log.reset_tally(username)  # type: ignore[no-any-return]
 
 
 def tally_locked_users() -> set[str]:
@@ -65,4 +65,4 @@ def tally_locked_users() -> set[str]:
     if pam_log is None:
         raise RuntimeError('No keyring access')
 
-    return pam_log.tally_locked_users()
+    return pam_log.tally_locked_users()  # type: ignore[no-any-return]

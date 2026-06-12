@@ -43,6 +43,21 @@ class iSCSITargetService(Service):
         else:
             raise ValueError(f'Unexpected path "{realpath}"')
 
+    def path_write_if_needed(self, path, text):
+        """Like path_write, but read first and skip if first line already matches."""
+        p = pathlib.Path(path)
+        realpath = str(p.resolve())
+        if not (realpath.startswith(SCST_BASE) and p.exists()):
+            raise ValueError(f'Unexpected path "{realpath}"')
+        want = text.split('\n', 1)[0]
+        try:
+            have = p.read_text().split('\n', 1)[0]
+        except Exception:
+            have = None
+        if have == want:
+            return
+        p.write_text(text)
+
     async def set_all_cluster_mode(self, value):
         text = f'{int(value)}\n'
         paths = await self.middleware.call('iscsi.scst.cluster_mode_paths')
@@ -50,7 +65,7 @@ class iSCSITargetService(Service):
             for chunk in itertools.batched(paths, 10):
                 await asyncio.gather(
                     *[
-                        self.middleware.call('iscsi.scst.path_write', path, text)
+                        self.middleware.call('iscsi.scst.path_write_if_needed', path, text)
                         for path in chunk
                     ]
                 )
@@ -99,7 +114,7 @@ class iSCSITargetService(Service):
 
     async def set_device_cluster_mode(self, device, value):
         await self.middleware.call(
-            'iscsi.scst.path_write',
+            'iscsi.scst.path_write_if_needed',
             f'{SCST_DEVICES}/{sanitize_extent(device)}/cluster_mode',
             f'{int(value)}\n',
         )
@@ -113,7 +128,7 @@ class iSCSITargetService(Service):
         if paths:
             await asyncio.gather(
                 *[
-                    self.middleware.call('iscsi.scst.path_write', path, text)
+                    self.middleware.call('iscsi.scst.path_write_if_needed', path, text)
                     for path in paths
                 ]
             )
@@ -322,11 +337,30 @@ class iSCSITargetService(Service):
             self.logger.warning('Failed to set ALUA active state')
 
     def enable_async_lun_replace(self):
-        """Enable async LUN replace to avoid blocking failover on tgt_dev drain."""
+        """Enable async LUN replace to avoid blocking failover on tgt_dev drain.
+
+        While enabled, the kernel parks the deferred cleanup of old tgt_devs
+        from each LUN replace instead of running it on a workqueue
+        immediately. The orchestrating layer must call
+        disable_async_lun_replace once any cluster coordination the cleanup
+        depends on (e.g. DLM peer eviction) has completed, to release the
+        parked work."""
         try:
             pathlib.Path(SCST_ASYNC_LUN_REPLACE).write_text('1\n')
         except Exception:
             self.logger.warning('Failed to enable async_lun_replace')
+
+    def disable_async_lun_replace(self):
+        """Disable async LUN replace and release any parked LUN-replace cleanup.
+
+        Should be called after the cluster coordination that the parked
+        cleanup depends on (e.g. DLM peer eviction via dlm.reset_active) has
+        completed, so that scst_free_tgt_dev -> scst_clear_reservation ->
+        scst_dlm_res_lock will not stall."""
+        try:
+            pathlib.Path(SCST_ASYNC_LUN_REPLACE).write_text('0\n')
+        except Exception:
+            self.logger.warning('Failed to disable async_lun_replace')
 
     def copy_manager_devices(self):
         result = []

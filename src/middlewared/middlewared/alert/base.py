@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Any, Self, TypeAlias
 import html2text
 
 from middlewared.alert.schedule import BaseSchedule, CrontabSchedule, IntervalSchedule
+from middlewared.api.current import MailSendMessage
 from middlewared.utils import ProductName, ProductType
 from middlewared.utils.service.call_mixin import CallMixin
 
@@ -322,7 +323,7 @@ class Alert[T: AlertClass]:
         last_occurrence: datetime | None = None,
         node: str | None = None,
         dismissed: bool | None = None,
-        mail: Any = None,
+        mail: MailSendMessage | None = None,
         _uuid: str | None = None,
         _source: str | None = None,
         _key: str | None = None,

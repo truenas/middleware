@@ -24,28 +24,30 @@ class UpdateConfigPart(ConfigServicePart[UpdateEntry]):
     _datastore = 'system_update'
     _datastore_prefix = 'upd_'
     _entry = UpdateEntry
-    _default_entry = UpdateConfigSafeEntry
 
     async def config(self) -> UpdateEntry:
-        return await self.config_internal(allow_null_profile=False)  # type: ignore
+        return await self.config_internal(allow_null_profile=False)  # type: ignore[return-value]
 
     async def config_safe(self) -> UpdateConfigSafeEntry:
         return await self.config_internal(allow_null_profile=True)
 
     async def config_internal(self, *, allow_null_profile: bool) -> UpdateConfigSafeEntry:
-        data = await super().config()
+        data = await self._get_or_insert()
 
-        if data.profile is None and not allow_null_profile:
-            await self.middleware.call(
-                'datastore.update',
-                self._datastore,
-                data.id,
-                {'profile': await current_version_profile(self)},
-                {'prefix': self._datastore_prefix},
-            )
-            return await super().config()
+        if data["profile"] is None:
+            if allow_null_profile:
+                return UpdateConfigSafeEntry(**data)
+            else:
+                await self.middleware.call(
+                    'datastore.update',
+                    self._datastore,
+                    data["id"],
+                    {'profile': await current_version_profile(self)},
+                    {'prefix': self._datastore_prefix},
+                )
+                return await super().config()
 
-        return data
+        return UpdateEntry(**data)
 
     async def do_update(self, data: UpdateUpdate) -> UpdateEntry:
         old = await self.config()

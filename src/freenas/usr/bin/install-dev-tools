@@ -45,11 +45,8 @@ PIP_PACKAGES=(
     types-boto3
     types-boto3[s3]
     # linting
-    flake8
-    flake8-builtins
-    flake8-tidy-imports
-    flake8-literal
     import-linter
+    ruff
     # Dependency of pykmip. No-op on python 3.4+. Just to prevent pip from complaining.
     enum-compat
 )

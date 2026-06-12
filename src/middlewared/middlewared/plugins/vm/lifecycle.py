@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import os
 import typing
 
@@ -51,8 +52,14 @@ def stop_vm(context: ServiceContext, id_: int, options: VMStopOptions) -> None:
     libvirt_domain = pylibvirt_vm(context, vm.model_dump(by_alias=True, context={'expose_secrets': True}))
     if options.force:
         context.middleware.libvirt_domains_manager.vms.destroy(libvirt_domain)
-    else:
-        context.middleware.libvirt_domains_manager.vms.shutdown(libvirt_domain, vm.shutdown_timeout)
+        return
+
+    context.middleware.libvirt_domains_manager.vms.shutdown(libvirt_domain, vm.shutdown_timeout)
+    if (
+        options.force_after_timeout
+        and context.call_sync2(context.s.vm.get_instance, id_).status.state == 'RUNNING'
+    ):
+        context.middleware.libvirt_domains_manager.vms.destroy(libvirt_domain)
 
 
 def poweroff_vm(context: ServiceContext, id_: int) -> None:
@@ -112,10 +119,10 @@ def pylibvirt_vm(
 
 def resume_suspended_vms(context: ServiceContext, vm_ids: list[int]) -> None:
     vms = {vm.id: vm for vm in context.call_sync2(context.s.vm.query)}
-    for vm_id in filter(
-        lambda v_id: v_id in vms and vms[v_id].status.state == 'SUSPENDED',
-        vm_ids
-    ):
+    for vm_id in vm_ids:
+        vm = vms.get(vm_id)
+        if vm is None or vm.status.state != 'SUSPENDED':
+            continue
         try:
             resume_vm(context, vm_id)
         except Exception:
@@ -124,10 +131,10 @@ def resume_suspended_vms(context: ServiceContext, vm_ids: list[int]) -> None:
 
 def suspend_vms(context: ServiceContext, vm_ids: list[int]) -> None:
     vms = {vm.id: vm for vm in context.call_sync2(context.s.vm.query)}
-    for vm_id in filter(
-        lambda v_id: v_id in vms and vms[v_id].status.state == 'RUNNING',
-        vm_ids
-    ):
+    for vm_id in vm_ids:
+        vm = vms.get(vm_id)
+        if vm is None or vm.status.state != 'RUNNING' or not vm.suspend_on_snapshot:
+            continue
         try:
             suspend_vm(context, vm_id)
         except Exception:
@@ -142,12 +149,17 @@ async def start_on_boot(context: ServiceContext) -> None:
             context.logger.error(f'Failed to start VM {vm.name}: {e}')
 
 
-async def handle_shutdown(context: ServiceContext) -> None:
-    for vm in await context.call2(context.s.vm.query, [('status.state', 'in', ACTIVE_STATES)]):
+async def _stop_one_vm(context: ServiceContext, vm: typing.Any) -> None:
+    try:
         if vm.status.state == 'RUNNING':
-            await context.call2(context.s.vm.stop, vm.id, VMStopOptions(force_after_timeout=True))
+            job = await context.call2(context.s.vm.stop, vm.id, VMStopOptions(force_after_timeout=True))
+            await job.wait(raise_error=True)
         else:
-            try:
-                await context.to_thread(poweroff_vm, context, vm.id)
-            except Exception:
-                context.logger.error('Powering off %r VM failed', vm.name, exc_info=True)
+            await context.to_thread(poweroff_vm, context, vm.id)
+    except Exception:
+        context.logger.error('Failed to stop %r VM', vm.name, exc_info=True)
+
+
+async def handle_shutdown(context: ServiceContext) -> None:
+    active = await context.call2(context.s.vm.query, [('status.state', 'in', ACTIVE_STATES)])
+    await asyncio.gather(*(_stop_one_vm(context, vm) for vm in active))

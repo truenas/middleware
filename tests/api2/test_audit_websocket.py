@@ -497,7 +497,12 @@ def test_api_key_login():
                     "success": True,
                 }
             ], include_logins=True):
-                assert c.call("auth.login_with_api_key", key)
+                resp = c.call("auth.login_ex", {
+                    "mechanism": "API_KEY_PLAIN",
+                    "username": "root",
+                    "api_key": key,
+                })
+                assert resp["response_type"] == "SUCCESS"
 
 
 def test_api_key_login_failed():
@@ -509,16 +514,21 @@ def test_api_key_login_failed():
                     "credentials": {
                         "credentials": "API_KEY",
                         "credentials_data": {
-                            "api_key": "invalid_api_key",
-                            "username": None
+                            "api_key": "<INVALID>",
+                            "username": "root",
                         },
                     },
-                    "error": "Invalid API key",
+                    "error": "[PAM_AUTH_ERR]: pam_authenticate() failed",
                 },
                 "success": False,
             }
         ], include_logins=True):
-            c.call("auth.login_with_api_key", "invalid_api_key")
+            resp = c.call("auth.login_ex", {
+                "mechanism": "API_KEY_PLAIN",
+                "username": "root",
+                "api_key": "invalid_api_key",
+            })
+            assert resp["response_type"] == "AUTH_ERR"
 
 
 def test_2fa_login(sharing_admin_user):

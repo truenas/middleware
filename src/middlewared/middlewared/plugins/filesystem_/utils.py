@@ -7,6 +7,7 @@ import types
 import truenas_os
 from truenas_os_pyutils.mount import statmount as _statmount
 
+from middlewared.api.current import ZFSFileAttrsData
 from middlewared.service_exception import CallError
 from middlewared.utils.filesystem.acl import (
     ACL_UNDEFINED_ID,
@@ -344,7 +345,7 @@ class ZfsAttrTool(_FsRecursionOp):
         fset_zfs_file_attributes(fd, dict_to_zfs_attributes_mask(new))
 
 
-def apply_zfs_attrs_recursive(fd, is_dir, attrs_in, targets, job=None):
+def apply_zfs_attrs_recursive(fd, is_dir, attrs_in: ZFSFileAttrsData, targets, job=None) -> ZFSFileAttrsData:
     """
     Apply ZFS attribute changes to an open root fd and (if `is_dir`) walk
     the tree under it applying the same change to descendants whose type is
@@ -365,16 +366,16 @@ def apply_zfs_attrs_recursive(fd, is_dir, attrs_in, targets, job=None):
     current = zfs_attributes_to_dict(fget_zfs_file_attributes(fd))
 
     if apply_to_root:
-        attrs_filtered = {k: v for k, v in attrs_in.items() if v is not None}
+        attrs_filtered = {k: v for k, v in attrs_in.model_dump().items() if v is not None}
         new = current | attrs_filtered
         if new != current:
             fset_zfs_file_attributes(fd, dict_to_zfs_attributes_mask(new))
             current = zfs_attributes_to_dict(fget_zfs_file_attributes(fd))
 
     if is_dir:
-        ZfsAttrTool(fd, attrs_in, targets, job=job).run()
+        ZfsAttrTool(fd, attrs_in.model_dump(), targets, job=job).run()
 
-    return current
+    return ZFSFileAttrsData(**current)
 
 
 def calculate_inherited_acl(theacl: dict, isdir: bool = True) -> list:

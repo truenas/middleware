@@ -1,6 +1,7 @@
 <%
     from middlewared.utils.filter_list import filter_list
-    graphite_confs = filter_list(middleware.call_sync('reporting.exporters.query'), [['attributes.exporter_type', '=', 'GRAPHITE']])
+    exporters = [e.model_dump() for e in middleware.call_sync('reporting.exporters.query')]
+    graphite_confs = filter_list(exporters, [['attributes.exporter_type', '=', 'GRAPHITE']])
 %>\
 % for graphite_conf in graphite_confs:
 [${graphite_conf['attributes']['exporter_type'].lower()}:${graphite_conf['name']}]

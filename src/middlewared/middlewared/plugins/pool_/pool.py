@@ -392,12 +392,6 @@ class PoolService(CRUDService):
                         'zfs.pool.validate_draid_configuration', f'{topology_type}.{i}', numdisks, nparity, vdev
                     ))
 
-                    if data['topology'].get('spares'):
-                        verrors.add(
-                            'topology.spares',
-                            'Dedicated spare disks should not be used with dRAID.'
-                        )
-
                 if lastdatatype and lastdatatype != vdev['type']:
                     verrors.add(
                         f'topology.{topology_type}.{i}.type',
@@ -602,6 +596,7 @@ class PoolService(CRUDService):
             'dataset.post_create', {'encrypted': bool(encryption_dict), **encrypted_dataset_data}
         )
         self.middleware.send_event('pool.query', 'ADDED', id=pool_id, fields=pool)
+        await self.middleware.call('zpool.send_change_event', pool['name'], 'ADDED')
         return pool
 
     @private

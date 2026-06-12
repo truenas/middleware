@@ -1,9 +1,9 @@
 import pytest
-from functions import SSH_TEST
 
 from middlewared.test.integration.assets.directory_service import directoryservice
 from middlewared.test.integration.utils import call
 from middlewared.test.integration.utils.audit import expect_audit_method_calls
+from middlewared.test.integration.utils.legacy_functions import SSH_TEST
 from middlewared.service_exception import ValidationErrors
 
 # As declared by plugins/network_/common.py

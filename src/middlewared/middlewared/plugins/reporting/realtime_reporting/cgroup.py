@@ -2,8 +2,8 @@ import collections
 import typing
 
 
-def get_cgroup_stats(netdata_metrics: dict, cgroups: typing.List[str]) -> dict[str, dict]:
-    data = collections.defaultdict(dict)
+def get_cgroup_stats(netdata_metrics: dict[str, typing.Any], cgroups: list[str]) -> dict[str, dict[str, typing.Any]]:
+    data: dict[str, dict[str, typing.Any]] = collections.defaultdict(dict)
     cgroup_keys = list(filter(lambda x: x.startswith('cgroup_'), netdata_metrics.keys()))
 
     for cgroup in cgroups:

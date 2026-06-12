@@ -24,10 +24,8 @@ __all__ = [
 
 
 class AddressPool(BaseModel):
-    base: IPvAnyInterface
-    """Base network address with prefix for the pool."""
-    size: Annotated[int, Field(ge=1)]
-    """Subnet size for networks allocated from this pool."""
+    base: IPvAnyInterface = Field(description="Base network address with prefix for the pool.")
+    size: Annotated[int, Field(ge=1)] = Field(description="Subnet size for networks allocated from this pool.")
 
     @field_validator('base')
     @classmethod
@@ -46,29 +44,19 @@ class AddressPool(BaseModel):
 
 
 class RegistryMirror(BaseModel):
-    url: HttpUrl
-    """URL of the registry mirror."""
-    insecure: bool
-    """Whether the registry mirror uses an insecure (HTTP) connection."""
+    url: HttpUrl = Field(description="URL of the registry mirror.")
+    insecure: bool = Field(description="Whether the registry mirror uses an insecure (HTTP) connection.")
 
 
 class DockerEntry(BaseModel):
-    id: int
-    """Unique identifier for the Docker configuration."""
-    enable_image_updates: bool
-    """Whether automatic Docker image updates are enabled."""
-    dataset: NonEmptyString | None
-    """ZFS dataset used for Docker data storage or `null`."""
-    pool: NonEmptyString | None
-    """Storage pool used for Docker or `null` if not configured."""
-    nvidia: SkipJsonSchema[bool]
-    """Whether NVIDIA GPU support is enabled for containers."""
-    address_pools: list[dict]
-    """Array of network address pools for container networking."""
-    cidr_v6: str
-    """IPv6 CIDR block for Docker container networking."""
-    registry_mirrors: list[RegistryMirror]
-    """Array of registry mirrors."""
+    id: int = Field(description="Unique identifier for the Docker configuration.")
+    enable_image_updates: bool = Field(description="Whether automatic Docker image updates are enabled.")
+    dataset: NonEmptyString | None = Field(description="ZFS dataset used for Docker data storage or `null`.")
+    pool: NonEmptyString | None = Field(description="Storage pool used for Docker or `null` if not configured.")
+    nvidia: SkipJsonSchema[bool] = Field(description="Whether NVIDIA GPU support is enabled for containers.")
+    address_pools: list[dict] = Field(description="Array of network address pools for container networking.")
+    cidr_v6: str = Field(description="IPv6 CIDR block for Docker container networking.")
+    registry_mirrors: list[RegistryMirror] = Field(description="Array of registry mirrors.")
 
     @classmethod
     def from_previous(cls, value):
@@ -91,14 +79,10 @@ class DockerEntry(BaseModel):
 class DockerUpdateArgs(DockerEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
     dataset: Excluded = excluded_field()
-    address_pools: list[AddressPool]
-    """Array of network address pools for container networking."""
-    cidr_v6: IPvAnyInterface
-    """IPv6 CIDR block for Docker container networking."""
-    migrate_applications: bool
-    """Whether to migrate existing applications when changing pools."""
-    registry_mirrors: list[RegistryMirror]
-    """Array of registry mirrors."""
+    address_pools: list[AddressPool] = Field(description="Array of network address pools for container networking.")
+    cidr_v6: IPvAnyInterface = Field(description="IPv6 CIDR block for Docker container networking.")
+    migrate_applications: bool = Field(description="Whether to migrate existing applications when changing pools.")
+    registry_mirrors: list[RegistryMirror] = Field(description="Array of registry mirrors.")
 
     @field_validator('cidr_v6')
     @classmethod
@@ -127,8 +111,7 @@ class DockerUpdateArgs(DockerEntry, metaclass=ForUpdateMetaclass):
 
 
 class DockerUpdateResult(BaseModel):
-    result: DockerEntry
-    """The updated Docker configuration."""
+    result: DockerEntry = Field(description="The updated Docker configuration.")
 
 
 class DockerStatusArgs(BaseModel):
@@ -136,18 +119,15 @@ class DockerStatusArgs(BaseModel):
 
 
 class StatusResult(BaseModel):
-    description: str
-    """Human-readable description of the current Docker service status."""
+    description: str = Field(description="Human-readable description of the current Docker service status.")
     status: Literal[
         'PENDING', 'RUNNING', 'STOPPED', 'INITIALIZING', 'STOPPING', 'UNCONFIGURED',
         'FAILED', 'MIGRATING', 'MIGRATION_FAILED'
-    ]
-    """Current state of the Docker service."""
+    ] = Field(description="Current state of the Docker service.")
 
 
 class DockerStatusResult(BaseModel):
-    result: StatusResult
-    """Current Docker service status information."""
+    result: StatusResult = Field(description="Current Docker service status information.")
 
 
 class DockerNvidiaPresentArgs(BaseModel):
@@ -155,18 +135,20 @@ class DockerNvidiaPresentArgs(BaseModel):
 
 
 class DockerNvidiaPresentResult(BaseModel):
-    result: bool
-    """Returns `true` if NVIDIA GPU hardware is present and supported, `false` otherwise."""
+    result: bool = Field(
+        description="Returns `true` if NVIDIA GPU hardware is present and supported, `false` otherwise.",
+    )
 
 
 class DockerBackupArgs(BaseModel):
-    backup_name: NonEmptyString | None = Field(default=None)
-    """Name for the backup or `null` to generate a timestamp-based name."""
+    backup_name: NonEmptyString | None = Field(
+        default=None,
+        description="Name for the backup or `null` to generate a timestamp-based name.",
+    )
 
 
 class DockerBackupResult(BaseModel):
-    result: NonEmptyString
-    """Name of the created backup."""
+    result: NonEmptyString = Field(description="Name of the created backup.")
 
 
 class DockerListBackupsArgs(BaseModel):
@@ -174,25 +156,17 @@ class DockerListBackupsArgs(BaseModel):
 
 
 class AppInfo(BaseModel):
-    id: NonEmptyString
-    """Unique identifier of the application."""
-    name: NonEmptyString
-    """Human-readable name of the application."""
-    state: NonEmptyString
-    """Current running state of the application."""
+    id: NonEmptyString = Field(description="Unique identifier of the application.")
+    name: NonEmptyString = Field(description="Human-readable name of the application.")
+    state: NonEmptyString = Field(description="Current running state of the application.")
 
 
 class BackupInfo(BaseModel):
-    name: NonEmptyString
-    """Name of the backup."""
-    apps: list[AppInfo]
-    """Array of applications included in this backup."""
-    snapshot_name: NonEmptyString
-    """ZFS snapshot name associated with this backup."""
-    created_on: NonEmptyString
-    """Timestamp when the backup was created."""
-    backup_path: NonEmptyString
-    """Filesystem path where the backup is stored."""
+    name: NonEmptyString = Field(description="Name of the backup.")
+    apps: list[AppInfo] = Field(description="Array of applications included in this backup.")
+    snapshot_name: NonEmptyString = Field(description="ZFS snapshot name associated with this backup.")
+    created_on: NonEmptyString = Field(description="Timestamp when the backup was created.")
+    backup_path: NonEmptyString = Field(description="Filesystem path where the backup is stored.")
 
 
 class DockerBackupInfo(RootModel[dict[str, BackupInfo]]):
@@ -200,47 +174,37 @@ class DockerBackupInfo(RootModel[dict[str, BackupInfo]]):
 
 
 class DockerListBackupsResult(BaseModel):
-    result: DockerBackupInfo
-    """Object mapping backup names to their detailed information."""
+    result: DockerBackupInfo = Field(description="Object mapping backup names to their detailed information.")
 
 
 class DockerRestoreBackupArgs(BaseModel):
-    backup_name: NonEmptyString
-    """Name of the backup to restore."""
+    backup_name: NonEmptyString = Field(description="Name of the backup to restore.")
 
 
 class DockerRestoreBackupResult(BaseModel):
-    result: None
-    """Returns `null` when the backup restore is successfully started."""
+    result: None = Field(description="Returns `null` when the backup restore is successfully started.")
 
 
 class DockerDeleteBackupArgs(BaseModel):
-    backup_name: NonEmptyString
-    """Name of the backup to delete."""
+    backup_name: NonEmptyString = Field(description="Name of the backup to delete.")
 
 
 class DockerDeleteBackupResult(BaseModel):
-    result: None
-    """Returns `null` when the backup is successfully deleted."""
+    result: None = Field(description="Returns `null` when the backup is successfully deleted.")
 
 
 class DockerBackupToPoolArgs(BaseModel):
-    target_pool: NonEmptyString
-    """Name of the storage pool to backup Docker data to."""
+    target_pool: NonEmptyString = Field(description="Name of the storage pool to backup Docker data to.")
 
 
 class DockerBackupToPoolResult(BaseModel):
-    result: None
-    """Returns `null` when the pool backup is successfully started."""
+    result: None = Field(description="Returns `null` when the pool backup is successfully started.")
 
 
 class DockerEventsAddedEvent(BaseModel):
-    id: str
-    """App name."""
-    fields: dict
-    """Event fields."""
+    id: str = Field(description="App name.")
+    fields: dict = Field(description="Event fields.")
 
 
 class DockerStateChangedEvent(BaseModel):
-    fields: StatusResult
-    """Event fields."""
+    fields: StatusResult = Field(description="Event fields.")

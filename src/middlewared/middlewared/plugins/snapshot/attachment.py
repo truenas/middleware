@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from middlewared.main import Middleware
 
 
-class PeriodicSnapshotTaskFSAttachmentDelegate(FSAttachmentDelegate):
+class PeriodicSnapshotTaskFSAttachmentDelegate(FSAttachmentDelegate[PeriodicSnapshotTaskEntry]):
     name = 'snapshottask'
     title = 'Snapshot Task'
     resource_name = 'dataset'

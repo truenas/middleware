@@ -1,4 +1,5 @@
 import pytest
+from truenas_api_client import ClientException
 
 from middlewared.service_exception import InstanceNotFound
 from middlewared.test.integration.assets.pool import dataset
@@ -40,6 +41,21 @@ def test_snapshot_task_is_deleted_when_deleting_a_parent_dataset():
 
                 with pytest.raises(InstanceNotFound):
                     assert call("pool.snapshottask.get_instance", t["id"])
+
+
+def test_snapshot_task_run_disabled_task_raises():
+    """Running a disabled periodic snapshot task should raise a CallError, not crash."""
+    with dataset("snap_disabled") as ds:
+        with snapshot_task({
+            "dataset": ds,
+            "recursive": True,
+            "lifetime_value": 1,
+            "lifetime_unit": "DAY",
+            "naming_schema": "%Y%m%d%H%M",
+            "enabled": False,
+        }) as t:
+            with pytest.raises(ClientException, match="Task is not enabled"):
+                call("pool.snapshottask.run", t["id"], job=True)
 
 
 def test_snapshot_task_can_be_deleted_after_dataset_rename():

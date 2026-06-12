@@ -111,7 +111,7 @@ class FilesystemService(Service):
 
             raise e
 
-        if st['type'] == 'FILE' and data['options']['recursive']:
+        if st.type == 'FILE' and data['options']['recursive']:
             verrors.add(f'{schema}.path', 'Recursive operations on a file are invalid.')
             return loc
 
@@ -121,36 +121,36 @@ class FilesystemService(Service):
                 'Traverse requires recursive to be enabled.'
             )
 
-        if st['is_ctldir']:
+        if st.is_ctldir:
             verrors.add(f'{schema}.path',
                         'Permissions changes in ZFS control directory (.zfs) are not permitted')
             return loc
 
-        if any(st['realpath'].startswith(prefix)
+        if any(st.realpath.startswith(prefix)
                for prefix in ('/home/admin/.ssh', '/home/truenas_admin/.ssh', '/root/.ssh')):
             return loc
 
-        if not st['realpath'].startswith('/mnt/'):
+        if not st.realpath.startswith('/mnt/'):
             verrors.add(
                 f'{schema}.path',
                 "Changes to permissions on paths that are not beneath "
                 f"the directory /mnt are not permitted: {path}"
             )
 
-        elif len(Path(st['realpath']).resolve().parents) == 2:
+        elif len(Path(st.realpath).resolve().parents) == 2:
             if not pool_mp_ok:
                 verrors.add(
                     f'{schema}.path',
                     f'The specified path is a ZFS pool mountpoint "({path})" '
                 )
 
-        elif self.middleware.call_sync('pool.dataset.path_in_locked_datasets', st['realpath']):
+        elif self.middleware.call_sync('pool.dataset.path_in_locked_datasets', st.realpath):
             verrors.add(
                 f'{schema}.path',
                 'Path component is currently encrypted and locked'
             )
         else:
-            statfs_flags = self.middleware.call_sync('filesystem.statfs', path)['flags']
+            statfs_flags = self.middleware.call_sync('filesystem.statfs', path).flags
             if 'RO' in statfs_flags:
                 verrors.add(
                     f'{schema}.path',
@@ -178,7 +178,7 @@ class FilesystemService(Service):
         roles=['FILESYSTEM_ATTRS_WRITE'],
         audit='Filesystem change owner', audit_extended=lambda data: data['path']
     )
-    @job(lock="perm_change")
+    @job(lock=lambda args: f'perm_change:{os.path.normpath(args[0]["path"])}')
     def chown(self, job, data):
         """
         Change owner or group of file at `path`.
@@ -237,7 +237,7 @@ class FilesystemService(Service):
         roles=['FILESYSTEM_ATTRS_WRITE'],
         audit='Filesystem set permission', audit_extended=lambda data: data['path']
     )
-    @job(lock="perm_change")
+    @job(lock=lambda args: f'perm_change:{os.path.normpath(args[0]["path"])}')
     def setperm(self, job, data):
         """
         Set unix permissions on given `path`.
@@ -639,7 +639,7 @@ class FilesystemService(Service):
         audit='Filesystem set ACL',
         audit_extended=lambda data: data['path']
     )
-    @job(lock="perm_change")
+    @job(lock=lambda args: f'perm_change:{os.path.normpath(args[0]["path"])}')
     def setacl(self, job, data):
         """
         Set ACL of a given path. Takes the following parameters:

@@ -49,7 +49,7 @@ def pull_image_action(
     else:
         # If user has not provided any auth creds, try to see if the registry to which the image
         # belongs has saved creds and use those.
-        app_registries = {registry.uri: registry for registry in context.call_sync2(context.s.app.registry.query)}
+        app_registries = context.call_sync2(context.s.app.registry.query)
         fallback = get_normalized_auth_config(app_registries, image_tag)
         username = fallback.get("username")
         password = fallback.get("password")

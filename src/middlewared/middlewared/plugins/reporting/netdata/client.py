@@ -21,7 +21,7 @@ class ClientMixin:
     @contextlib.asynccontextmanager
     async def request(
         cls, resource: str, timeout: int = NETDATA_REQUEST_TIMEOUT, version: str = 'v1',
-    ) -> aiohttp.ClientResponse:
+    ) -> typing.AsyncIterator[aiohttp.ClientResponse]:
         assert version in ('v1', 'v2'), f'Invalid API version {version!r}'
 
         resource = resource.removeprefix('/')
@@ -38,7 +38,9 @@ class ClientMixin:
             raise ClientConnectError(f'Failed to connect to {uri!r}: {e!r}')
 
     @classmethod
-    async def api_call(cls, resource: str, timeout: int = NETDATA_REQUEST_TIMEOUT, version: str = 'v1') -> dict:
+    async def api_call(
+        cls, resource: str, timeout: int = NETDATA_REQUEST_TIMEOUT, version: str = 'v1'
+    ) -> dict[str, typing.Any]:
         try:
             async with cls.request(resource, timeout, version) as resp:
                 output = ''
@@ -51,14 +53,16 @@ class ClientMixin:
                 # So on _LARGE_ strings that need to be decoded, this means
                 # the main event loop "not responding" or "lagging" becomes
                 # measurable.
-                return await ajson.loads(output)
+                return typing.cast(dict[str, typing.Any], await ajson.loads(output))
         except aiohttp.client_exceptions.ContentTypeError as e:
             raise ApiException(f'Malformed response received from {resource!r} endpoint: {e}')
 
     @classmethod
-    async def fetch(cls, uri: str, session: aiohttp.ClientSession, identifier: typing.Optional[str]) -> dict:
+    async def fetch(
+        cls, uri: str, session: aiohttp.ClientSession, identifier: str | None
+    ) -> dict[str, typing.Any]:
         output = ''
-        response = {'error': None, 'data': None, 'uri': uri, 'identifier': identifier}
+        response: dict[str, typing.Any] = {'error': None, 'data': None, 'uri': uri, 'identifier': identifier}
         async with session.get(uri) as call_resp:
             if call_resp.status != 200:
                 response['error'] = f'Received {call_resp.status!r} response code from {uri!r}'
@@ -77,12 +81,12 @@ class ClientMixin:
     @classmethod
     @contextlib.asynccontextmanager
     async def multiple_requests(
-        cls, resources: typing.List[typing.Tuple[str, str]], timeout: int = NETDATA_REQUEST_TIMEOUT, version: str = 'v1'
-    ) -> typing.List[dict]:
+        cls, resources: list[tuple[str | None, str]], timeout: int = NETDATA_REQUEST_TIMEOUT, version: str = 'v1'
+    ) -> typing.AsyncIterator[list[dict[str, typing.Any]]]:
         assert version in ('v1', 'v2'), f'Invalid API version {version!r}'
 
         uri = f'{NETDATA_URI}/{version}'
-        tasks = []
+        tasks: list[typing.Coroutine[typing.Any, typing.Any, dict[str, typing.Any]]] = []
         try:
             async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=timeout)) as session:
                 for identifier, resource in resources:
@@ -98,9 +102,9 @@ class ClientMixin:
 
     @classmethod
     async def api_calls(
-        cls, resources: typing.List[typing.Tuple[str, str]], timeout: int = NETDATA_REQUEST_TIMEOUT, version: str = 'v1'
-    ) -> typing.List[typing.Tuple[typing.Optional[str], dict]]:
-        responses = []
+        cls, resources: list[tuple[str | None, str]], timeout: int = NETDATA_REQUEST_TIMEOUT, version: str = 'v1'
+    ) -> list[tuple[str | None, dict[str, typing.Any]]]:
+        responses: list[tuple[str | None, dict[str, typing.Any]]] = []
         try:
             async with cls.multiple_requests(resources, timeout, version) as tasks:
                 for task in tasks:

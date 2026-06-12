@@ -27,15 +27,15 @@ __all__ = [
 
 
 class DefaultIdmapConfiguration(BaseModel):
-    type: Literal["DEFAULT"]
-    """Configuration type for default ID mapping."""
+    type: Literal["DEFAULT"] = Field(description="Configuration type for default ID mapping.")
 
 
 class IsolatedIdmapConfiguration(BaseModel):
-    type: Literal["ISOLATED"]
-    """Configuration type for isolated ID mapping."""
-    slice: PositiveInt | None = Field(lt=1000)
-    """`null` when creating means we'll look up an unused slice on backend."""
+    type: Literal["ISOLATED"] = Field(description="Configuration type for isolated ID mapping.")
+    slice: PositiveInt | None = Field(
+        lt=1000,
+        description="`null` when creating means we'll look up an unused slice on backend.",
+    )
 
 
 IdmapConfiguration = Annotated[
@@ -48,75 +48,75 @@ IdmapConfiguration = Annotated[
 
 
 class ContainerStatus(BaseModel):
-    state: Literal["RUNNING", "STOPPED"]
-    """Container state."""
-    pid: int | None
-    """Container host PID (if running). Informational only\
-    do not rely on this value to identify the container's init process."""
-    domain_state: NonEmptyString | None
-    """Domain state reported by libvirt."""
+    state: Literal["RUNNING", "STOPPED"] = Field(description="Container state.")
+    pid: int | None = Field(
+        description=(
+            "Container host PID (if running). Informational only do not rely on this value to identify the container's "
+            "init process."
+        ),
+    )
+    domain_state: NonEmptyString | None = Field(description="Domain state reported by libvirt.")
 
 
 class ContainerEntry(BaseModel):
-    id: int
-    """Container ID."""
-    uuid: UUIDv4String
-    """Container UUID (for libvirt)."""
-    name: NonEmptyString
-    """Container name."""
-    description: str = ""
-    """Container description."""
-    devices: list[ContainerDeviceEntry] = []
-    """Container's devices."""
-    cpuset: str | None = None
-    """List of physical CPU numbers that domain process and virtual CPUs can be pinned to by default."""
-    autostart: bool = True
-    """Automatically start the container on boot."""
-    time: Literal["LOCAL", "UTC"] = "LOCAL"
-    """Whether container time should be local time or UTC time."""
-    shutdown_timeout: int = Field(ge=5, le=300, default=90)
-    """How many seconds to wait for container to shut down before killing it."""
-    dataset: str
-    """Which dataset to use as the container root filesystem."""
-    init: str = '/sbin/init'
-    """"init" process commandline."""
-    initdir: str | None = None
-    """"init" process working dir."""
-    initenv: dict[str, str] = {}
-    """"init" process environment variables."""
-    inituser: str | None = None
-    """"init" process username."""
-    initgroup: str | None = None
-    """"init" process group."""
-    idmap: IdmapConfiguration | None = DefaultIdmapConfiguration(type="DEFAULT")
-    """Idmap configuration for the container\
-    \
-    There are three two possible values:\
-    \
-    DEFAULT: This applies the standard TrueNAS idmap namespace configuration.\
-    It changes user ID (UID) 0 (root) in the container to UID 2147000001 (truenas_container_unpriv_root).\
-    It offsets the other container UIDs by the same amount.\
-    For example, UID 1000 in the container becomes UID 2147001001 in the host.\
-    \
-    ISOLATED: Same as `DEFAULT`, but UID will be calculated as `2147000001 + 65536 * slice`.\
-    This will ensure unique ID for each container (provided that the `slice` is also unique).
-    \
-    None: The container does not apply any idmap namespace.\
-    Container UIDs map directly to host UIDs.\
-    For example, UID 0 in the container is UID 0 in the host.\
-    \
-    WARNING: For security, use the DEFAULT value. Security best practice is to run containers with idmap namespaces."""
-    capabilities_policy: Literal["DEFAULT", "ALLOW", "DENY"] = "DEFAULT"
-    """Default rules for capabilities: either keep the default behavior that is dropping the following capabilities:\
-    sys_module, sys_time, mknod, audit_control, mac_admin. Or keep all capabilities, or drop all capabilities."""
-    capabilities_state: dict[str, bool] = {}
-    """Enable or disable specific capabilities."""
-    default_network: str | None = None
-    """The default network bridge this container will use when no NIC devices are explicitly attached. When the\
-    container has explicitly configured NIC devices, this is `null` because the NIC configuration is visible in\
-    the `devices` list."""
-    status: ContainerStatus
-    """Container state."""
+    id: int = Field(description="Container ID.")
+    uuid: UUIDv4String = Field(description="Container UUID (for libvirt).")
+    name: NonEmptyString = Field(description="Container name.")
+    description: str = Field(default="", description="Container description.")
+    devices: list[ContainerDeviceEntry] = Field(default=[], description="Container's devices.")
+    cpuset: str | None = Field(
+        default=None,
+        description="List of physical CPU numbers that domain process and virtual CPUs can be pinned to by default.",
+    )
+    autostart: bool = Field(default=True, description="Automatically start the container on boot.")
+    time: Literal["LOCAL", "UTC"] = Field(
+        default="LOCAL",
+        description="Whether container time should be local time or UTC time.",
+    )
+    shutdown_timeout: int = Field(
+        ge=5,
+        le=300,
+        default=90,
+        description="How many seconds to wait for container to shut down before killing it.",
+    )
+    dataset: str = Field(description="Which dataset to use as the container root filesystem.")
+    init: str = Field(default='/sbin/init', description="\"init\" process commandline.")
+    initdir: str | None = Field(default=None, description="\"init\" process working dir.")
+    initenv: dict[str, str] = Field(default={}, description="\"init\" process environment variables.")
+    inituser: str | None = Field(default=None, description="\"init\" process username.")
+    initgroup: str | None = Field(default=None, description="\"init\" process group.")
+    idmap: IdmapConfiguration | None = Field(
+        default=DefaultIdmapConfiguration(type="DEFAULT"),
+        description=(
+            "Idmap configuration for the container There are three two possible values: DEFAULT: This applies the "
+            "standard TrueNAS idmap namespace configuration. It changes user ID (UID) 0 (root) in the container to UID "
+            "2147000001 (truenas_container_unpriv_root). It offsets the other container UIDs by the same amount. For "
+            "example, UID 1000 in the container becomes UID 2147001001 in the host. ISOLATED: Same as `DEFAULT`, but "
+            "UID will be calculated as `2147000001 + 65536 * slice`. This will ensure unique ID for each container "
+            "(provided that the `slice` is also unique). None: The container does not apply any idmap namespace. "
+            "Container UIDs map directly to host UIDs. For example, UID 0 in the container is UID 0 in the host. "
+            "WARNING: For security, use the DEFAULT value. Security best practice is to run containers with idmap "
+            "namespaces."
+        ),
+    )
+    capabilities_policy: Literal["DEFAULT", "ALLOW", "DENY"] = Field(
+        default="DEFAULT",
+        description=(
+            "Default rules for capabilities: either keep the default behavior that is dropping the following "
+            "capabilities: sys_module, sys_time, mknod, audit_control, mac_admin. Or keep all capabilities, or drop all"
+            " capabilities."
+        ),
+    )
+    capabilities_state: dict[str, bool] = Field(default={}, description="Enable or disable specific capabilities.")
+    default_network: str | None = Field(
+        default=None,
+        description=(
+            "The default network bridge this container will use when no NIC devices are explicitly attached. When the "
+            "container has explicitly configured NIC devices, this is `null` because the NIC configuration is visible "
+            "in the `devices` list."
+        ),
+    )
+    status: ContainerStatus = Field(description="Container state.")
 
 
 class ContainerCreate(ContainerEntry):
@@ -125,29 +125,30 @@ class ContainerCreate(ContainerEntry):
     status: Excluded = excluded_field()
     devices: Excluded = excluded_field()
     default_network: Excluded = excluded_field()
-    uuid: UUIDv4String | None = None
-    """Container UUID (for libvirt). Auto-generated if not provided."""
-    pool: str | None = None
-    """Pool to use for this container. Leave it null to use container preferred pool instead."""
-    image: "ContainerCreateImage"
-    """Image to use for container creation."""
+    uuid: UUIDv4String | None = Field(
+        default=None,
+        description="Container UUID (for libvirt). Auto-generated if not provided.",
+    )
+    pool: str | None = Field(
+        default=None,
+        description="Pool to use for this container. Leave it null to use container preferred pool instead.",
+    )
+    image: "ContainerCreateImage" = Field(description="Image to use for container creation.")
 
 
 class ContainerCreateImage(BaseModel):
-    name: str
-    """Image name. Use `container.image.query_registry` to list all available images."""
-    version: str
-    """Image version. Use `container.image.query_registry` to list all available images."""
+    name: str = Field(description="Image name. Use `container.image.query_registry` to list all available images.")
+    version: str = Field(
+        description="Image version. Use `container.image.query_registry` to list all available images.",
+    )
 
 
 class ContainerCreateArgs(BaseModel):
-    container_create: ContainerCreate
-    """Container creation parameters."""
+    container_create: ContainerCreate = Field(description="Container creation parameters.")
 
 
 class ContainerCreateResult(BaseModel):
-    result: ContainerEntry
-    """Newly created container."""
+    result: ContainerEntry = Field(description="Newly created container.")
 
 
 class ContainerUpdate(ContainerCreate, metaclass=ForUpdateMetaclass):
@@ -157,20 +158,16 @@ class ContainerUpdate(ContainerCreate, metaclass=ForUpdateMetaclass):
 
 
 class ContainerUpdateArgs(BaseModel):
-    id: int
-    """Container ID."""
-    container_update: ContainerUpdate
-    """New container parameters."""
+    id: int = Field(description="Container ID.")
+    container_update: ContainerUpdate = Field(description="New container parameters.")
 
 
 class ContainerUpdateResult(BaseModel):
-    result: ContainerEntry
-    """Updated container."""
+    result: ContainerEntry = Field(description="Updated container.")
 
 
 class ContainerDeleteArgs(BaseModel):
-    id: int
-    """Container ID."""
+    id: int = Field(description="Container ID.")
 
 
 class ContainerDeleteResult(BaseModel):
@@ -182,13 +179,13 @@ class ContainerPoolChoicesArgs(BaseModel):
 
 
 class ContainerPoolChoicesResult(BaseModel):
-    result: dict[str, str]
-    """Object of available ZFS pools that can be used for container root filesystem."""
+    result: dict[str, str] = Field(
+        description="Object of available ZFS pools that can be used for container root filesystem.",
+    )
 
 
 class ContainerStartArgs(BaseModel):
-    id: int
-    """Container ID."""
+    id: int = Field(description="Container ID.")
 
 
 class ContainerStartResult(BaseModel):
@@ -196,17 +193,16 @@ class ContainerStartResult(BaseModel):
 
 
 class ContainerStopOptions(BaseModel):
-    force: bool = False
-    """Kill the container."""
-    force_after_timeout: bool = False
-    """Kill the container if it does not stop within the `shutdown_timeout`."""
+    force: bool = Field(default=False, description="Kill the container.")
+    force_after_timeout: bool = Field(
+        default=False,
+        description="Kill the container if it does not stop within the `shutdown_timeout`.",
+    )
 
 
 class ContainerStopArgs(BaseModel):
-    id: int
-    """Container ID."""
-    options: ContainerStopOptions = ContainerStopOptions()
-    """Container stop options."""
+    id: int = Field(description="Container ID.")
+    options: ContainerStopOptions = Field(default=ContainerStopOptions(), description="Container stop options.")
 
 
 class ContainerStopResult(BaseModel):
@@ -222,8 +218,11 @@ class ContainerMigrateResult(BaseModel):
 
 
 class ContainersMetricsEventSourceArgs(BaseModel):
-    interval: int = Field(default=2, ge=2)
-    """Interval in seconds between metrics updates (minimum 2 seconds)."""
+    interval: int = Field(
+        default=2,
+        ge=2,
+        description="Interval in seconds between metrics updates (minimum 2 seconds).",
+    )
 
 
 class ContainersMetricsEventSourceEvent(BaseModel):
@@ -329,5 +328,5 @@ class ContainersMetricsEventSourceEvent(BaseModel):
                 "cpu_limit_used_percentage": 0.0
             }
         }
-    }])
-    """Real-time metrics data for all virtual instances."""
+    }],
+        description="Real-time metrics data for all virtual instances.")

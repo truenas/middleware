@@ -14,7 +14,13 @@ from middlewared.service_exception import CallError
 def _make_job(**kwargs):
     """Create a minimal Job for testing without a real Middleware instance."""
     mw = MagicMock()
-    mw.loop = asyncio.get_event_loop()
+    try:
+        mw.loop = asyncio.get_event_loop()
+    except RuntimeError:
+        # Python 3.13 no longer auto-creates an event loop for the main thread
+        # when one isn't already running; create and register one for the test.
+        mw.loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(mw.loop)
     mw.create_task = asyncio.ensure_future
     defaults = {
         'lock': None,

@@ -3,7 +3,7 @@ import time
 import urllib.request
 
 
-def environ_update(update):
+def environ_update(update: dict[str, str | None]) -> None:
     for k, v in update.items():
         if v is None:
             os.environ.pop(k, None)
@@ -12,7 +12,7 @@ def environ_update(update):
 
     if 'http_proxy' in update or 'https_proxy' in update:
         # Reset global opener so ProxyHandler can be recalculated
-        urllib.request.install_opener(None)
+        urllib.request.install_opener(None)  # type: ignore[arg-type]
 
     if 'TZ' in update:
         time.tzset()

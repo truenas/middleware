@@ -75,9 +75,12 @@ from middlewared.utils.auth import (
     AA_LEVEL3,
     CURRENT_AAL,
     OTPW_MANAGER,
+    SHELL_APP_REQUIRED_ROLE,
     AuthenticatorAssuranceLevel,
     AuthMech,
     AuthResp,
+    ShellAppType,
+    ShellTokenAuthError,
     aal_auth_mechanism_check,
 )
 from middlewared.utils.crypto import generate_token
@@ -565,7 +568,9 @@ class AuthService(Service):
         return cred
 
     @private
-    def get_token_for_shell_application(self, token_id, origin):
+    def get_token_for_shell_application(self, token_id, origin, shell_type=ShellAppType.HOST):
+        shell_type = ShellAppType(shell_type)
+
         if (token := self.token_manager.get(token_id, origin)) is None:
             return None
 
@@ -577,20 +582,38 @@ class AuthService(Service):
             return None
 
         if not root_credentials.user['privilege']['web_shell']:
-            return None
+            return {
+                'error': ShellTokenAuthError.WEB_SHELL_DENIED,
+                'username': root_credentials.user['username'],
+                'credentials': root_credentials,
+            }
+
+        required_role = SHELL_APP_REQUIRED_ROLE[shell_type]
+        if required_role is not None and required_role not in root_credentials.user['privilege']['roles']:
+            return {
+                'error': ShellTokenAuthError.MISSING_ROLE,
+                'required_role': required_role,
+                'username': root_credentials.user['username'],
+                'credentials': root_credentials,
+            }
 
         if token.single_use:
             self.token_manager.destroy(token)
 
         return {
             'username': root_credentials.user['username'],
+            'credentials': root_credentials,
         }
 
-    @api_method(AuthLoginArgs, AuthLoginResult, cli_private=True, authentication_required=False, pass_app=True)
+    @api_method(AuthLoginArgs, AuthLoginResult, cli_private=True, authentication_required=False, pass_app=True,
+                removed_in='v27')
     async def login(self, app, username, password, otp_token):
         """
         Authenticate session using username and password.
         `otp_token` must be specified if two factor authentication is enabled.
+
+        Deprecated and removed in v27. Use `auth.login_ex` with `mechanism="PASSWORD_PLAIN"`
+        (and `auth.login_ex_continue` with `mechanism="OTP_TOKEN"` for the second factor).
         """
 
         resp = await self.login_ex(app, {
@@ -1041,10 +1064,13 @@ class AuthService(Service):
         return response
 
     @api_method(AuthLoginWithApiKeyArgs, AuthLoginWithApiKeyResult, cli_private=True, authentication_required=False,
-                pass_app=True)
+                pass_app=True, removed_in='v27')
     async def login_with_api_key(self, app, api_key):
         """
         Authenticate session using API Key.
+
+        Deprecated and removed in v27. Use `auth.login_ex` with `mechanism="API_KEY_PLAIN"`
+        (or `mechanism="SCRAM"` for SCRAM-based authentication).
         """
         try:
             key_id = int(api_key.split('-')[0])
@@ -1198,7 +1224,7 @@ async def check_permission(middleware: Middleware, app: RpcWebSocketApp) -> None
         # We can bypass more complex privilege composition for internal root sessions
         authenticator = UnixPamAuthenticator(username='root', origin=origin)
         user = await middleware.call('auth.authenticate_root')
-        resp = await middleware.run_in_thread(authenticator.authenticate, 'root')
+        resp = await middleware.run_in_thread(authenticator.authenticate, 'root', '')
         if resp.code != PAMCode.PAM_SUCCESS:
             middleware.logger.error('root: AF_UNIX authentication for user failed: %s', resp.reason)
     else:
@@ -1211,7 +1237,7 @@ async def check_permission(middleware: Middleware, app: RpcWebSocketApp) -> None
             return
 
         authenticator = UnixPamAuthenticator(username=user_info['pw_name'], origin=origin)
-        resp = await middleware.run_in_thread(authenticator.authenticate, user_info['pw_name'])
+        resp = await middleware.run_in_thread(authenticator.authenticate, user_info['pw_name'], '')
         if resp.code != PAMCode.PAM_SUCCESS:
             middleware.logger.error('%s: AF_UNIX authentication for user failed: %s',
                                     user_info['pw_name'], resp.reason)

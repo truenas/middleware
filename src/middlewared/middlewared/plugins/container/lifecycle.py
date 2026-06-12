@@ -1,6 +1,9 @@
+import asyncio
 import errno
+import os
 import typing
 
+import truenas_os
 from truenas_pylibvirt import (
     ContainerCapabilitiesPolicy,
     ContainerDomain,
@@ -13,31 +16,106 @@ from truenas_pylibvirt import (
 )
 
 from middlewared.api.current import ContainerStopOptions, QueryOptions, ZFSResourceQuery
-from middlewared.plugins.account_.constants import CONTAINER_ROOT_UID
+from middlewared.plugins.account_.constants import CONTAINER_ROOT_UID, IDMAP_COUNT
 from middlewared.service import CallError, ServiceContext
+from middlewared.utils.filesystem.perms import enforce_dir_perms
 
 from .bridge import configure_container_bridge, container_bridge_name
+from .dataset import CONTAINER_DS_PARENT_DIR
 from .utils import container_instance_dataset_mountpoint, update_etc_hosts, write_etc_hostname
 
-IDMAP_COUNT = 65536
+IDMAPPED_ROOT_DIR = "/run/truenas_containers/root"
+
+# The full enumeration of host UIDs any container's container-uid-0 ever
+# maps to: CONTAINER_ROOT_UID + slice*IDMAP_COUNT for slice in range(1000).
+# - slice 0 is the DEFAULT-idmap row (stored internally; not user-settable).
+# - slice [1, 999] is the ISOLATED range per api/v27_0_0/container.py
+#   (PositiveInt with lt=1000).
+# - ContainerXID is `ge=1` in api/base/types/user.py, so no local account
+#   can ever claim container-uid 0; container 0 therefore always maps to
+#   CONTAINER_ROOT_UID + slice*IDMAP_COUNT for some slice in this range.
+# Static set -> no per-container ACL bookkeeping at all.
+_IDMAPPED_ROOT_ALLOWED_UIDS = frozenset(
+    CONTAINER_ROOT_UID + n * IDMAP_COUNT for n in range(1000)
+)
+
+
+def apply_idmapped_root_acl() -> None:
+    """Pin IDMAPPED_ROOT_DIR to root:root with a POSIX1E ACL granting `--x`
+    (search only) to every possible container-uid-0 host UID. Idempotent;
+    called from etc-render at boot and from container.start as drift repair.
+
+    fsetacl writes UGO/MASK through to the legacy mode bits, so a single
+    fsetacl is sole source of truth for both the ACL and the mode (visible
+    as 0o710 because MASK ends up in the group triad).
+    """
+    os.makedirs(IDMAPPED_ROOT_DIR, mode=0o700, exist_ok=True)
+    fd = truenas_os.openat2(
+        IDMAPPED_ROOT_DIR,
+        flags=os.O_DIRECTORY,
+        resolve=truenas_os.RESOLVE_NO_SYMLINKS,
+    )
+    try:
+        st = os.fstat(fd)
+        if st.st_uid != 0 or st.st_gid != 0:
+            os.fchown(fd, 0, 0)
+        truenas_os.fsetacl(fd, _build_idmapped_root_acl())
+    finally:
+        os.close(fd)
+
+
+def _build_idmapped_root_acl() -> "truenas_os.POSIXACL":
+    P, T = truenas_os.POSIXPerm, truenas_os.POSIXTag
+    rwx = P.READ | P.WRITE | P.EXECUTE
+    nothing = P(0)
+    aces = [
+        truenas_os.POSIXAce(T.USER_OBJ, rwx),
+        truenas_os.POSIXAce(T.GROUP_OBJ, nothing),
+    ]
+    for uid in sorted(_IDMAPPED_ROOT_ALLOWED_UIDS):
+        aces.append(truenas_os.POSIXAce(T.USER, P.EXECUTE, id=uid))
+    aces.append(truenas_os.POSIXAce(T.MASK, P.EXECUTE))
+    aces.append(truenas_os.POSIXAce(T.OTHER, nothing))
+    return truenas_os.POSIXACL.from_aces(aces)
 
 
 def start_on_boot(context: ServiceContext) -> None:
+    # Reap orphaned runtime state under /run/truenas_containers/ before any
+    # autostart so a fresh start can't collide with a leaked staged path
+    # from a previous unclean shutdown (libvirtd or middlewared crash).
+    try:
+        context.middleware.libvirt_domains_manager.reconcile_runtime_state()
+    except Exception:
+        context.logger.error('Failed to reconcile container runtime state', exc_info=True)
+
     for container in context.call_sync2(
-        context.s.container.query, [('autostart', '=', True)], QueryOptions(force_sql_filters=True)
+        context.s.container.query, [("autostart", "=", True)], QueryOptions(force_sql_filters=True)
     ):
         try:
             start(context, container.id)
         except Exception as e:
-            context.logger.error(f'Failed to start {container.name!r} container: {e}')
+            context.logger.error(f"Failed to start {container.name!r} container: {e}")
 
 
-def handle_shutdown(context: ServiceContext) -> None:
-    for container in context.call_sync2(context.s.container.query, [('status.state', '=', 'RUNNING')]):
-        stop(context, container.id, ContainerStopOptions(force_after_timeout=True))
+async def _stop_one_container(context: ServiceContext, container: typing.Any) -> None:
+    try:
+        job = await context.call2(
+            context.s.container.stop, container.id, ContainerStopOptions(force_after_timeout=True),
+        )
+        await job.wait(raise_error=True)
+    except Exception:
+        context.logger.error('Failed to stop %r container', container.name, exc_info=True)
+
+
+async def handle_shutdown(context: ServiceContext) -> None:
+    running = await context.call2(context.s.container.query, [("status.state", "=", "RUNNING")])
+    await asyncio.gather(*(_stop_one_container(context, c) for c in running))
 
 
 def start(context: ServiceContext, id_: int) -> None:
+    enforce_dir_perms(CONTAINER_DS_PARENT_DIR)
+    apply_idmapped_root_acl()
+
     container = context.run_coroutine(context.call2(context.s.container.get_instance, id_))
     configure_container_bridge(context)
 
@@ -48,7 +126,7 @@ def start(context: ServiceContext, id_: int) -> None:
         write_etc_hostname(pylibvirt_obj.configuration.root, container.name)
         update_etc_hosts(pylibvirt_obj.configuration.root, container.name)
     except Exception:
-        context.logger.warning('Failed to configure hostname for container %r', container.name, exc_info=True)
+        context.logger.warning("Failed to configure hostname for container %r", container.name, exc_info=True)
 
     context.middleware.libvirt_domains_manager.containers.start(pylibvirt_obj)
 
@@ -61,9 +139,10 @@ def stop(context: ServiceContext, id_: int, options: ContainerStopOptions) -> No
         return
 
     context.middleware.libvirt_domains_manager.containers.shutdown(pylibvirt_container_obj)
-    if options.force_after_timeout and context.run_coroutine(
-        context.call2(context.s.container.get_instance, id_)
-    ).status.state == 'RUNNING':
+    if (
+        options.force_after_timeout
+        and context.run_coroutine(context.call2(context.s.container.get_instance, id_)).status.state == "RUNNING"
+    ):
         context.middleware.libvirt_domains_manager.containers.destroy(pylibvirt_container_obj)
 
 
@@ -71,28 +150,28 @@ def pylibvirt_container(
     context: ServiceContext, container: dict[str, typing.Any], check_ds: bool = False
 ) -> ContainerDomain:
     container = container.copy()
-    container.pop('id', None)
-    container.pop('status', None)
-    container.pop('autostart', None)
-    container.pop('default_network', None)
+    container.pop("id", None)
+    container.pop("status", None)
+    container.pop("autostart", None)
+    container.pop("default_network", None)
 
-    dataset = container.pop('dataset')
-    pool = dataset.split('/')[0]
-    container['root'] = f"/mnt/{container_instance_dataset_mountpoint(pool, container['name'])}"
+    dataset = container.pop("dataset")
+    pool = dataset.split("/")[0]
+    container["root"] = f"/mnt/{container_instance_dataset_mountpoint(pool, container['name'])}"
     if check_ds:
         datasets = context.call_sync2(
             context.s.zfs.resource.query_impl,
             ZFSResourceQuery(paths=[dataset], properties=None),
         )
         if not datasets:
-            raise CallError(f'Dataset {dataset!r} not found', errno.ENOTDIR)
+            raise CallError(f"Dataset {dataset!r} not found", errno.ENOTDIR)
 
-    container['time'] = Time(container['time'])
+    container["time"] = Time(container["time"])
     device_factory = context.middleware.services.container.device.device_factory
     devices = []
     has_nic_device = False
-    for device in container.get('devices', []):
-        if device['attributes']['dtype'] == 'NIC':
+    for device in container.get("devices", []):
+        if device["attributes"]["dtype"] == "NIC":
             has_nic_device = True
 
         devices.append(device_factory.get_device(device))
@@ -110,37 +189,128 @@ def pylibvirt_container(
             )
         )
 
-    container['devices'] = devices
+    container["devices"] = devices
 
     if container['idmap']:
-        item = None
         match container['idmap']['type']:
             case 'DEFAULT':
-                item = ContainerIdmapConfigurationItem(
-                    target=CONTAINER_ROOT_UID,
-                    count=IDMAP_COUNT,
-                )
+                uid_items, gid_items = _build_default_idmap_items(context)
             case 'ISOLATED':
-                item = ContainerIdmapConfigurationItem(
-                    target=CONTAINER_ROOT_UID + container['idmap']['slice'] * IDMAP_COUNT,
-                    count=IDMAP_COUNT,
-                )
+                base_target = CONTAINER_ROOT_UID + container['idmap']['slice'] * IDMAP_COUNT
+                single = ContainerIdmapConfigurationItem(start=0, target=base_target, count=IDMAP_COUNT)
+                uid_items, gid_items = [single], [single]
             case _:
                 raise CallError(f"Unsupported idmap type {container['idmap']['type']!r}")
 
-        container['idmap'] = ContainerIdmapConfiguration(uid=item, gid=item)
+        try:
+            container['idmap'] = ContainerIdmapConfiguration(uid=uid_items, gid=gid_items)
+        except ValueError as e:
+            raise CallError(f'Invalid idmap configuration: {e}')
 
-    if container['capabilities_policy']:
-        container['capabilities_policy'] = ContainerCapabilitiesPolicy[container['capabilities_policy']]
+    if container["capabilities_policy"]:
+        container["capabilities_policy"] = ContainerCapabilitiesPolicy[container["capabilities_policy"]]
 
     # We add this to configuration because for cpu related attrs, we need them if cpuset on
     # container is actually set
     # For memory, lxc does not respect it but libvirt requires it in the xml to be defined
-    container.update({
-        'vcpus': None,
-        'cores': None,
-        'threads': None,
-        'memory': None,
-    })
+    container.update(
+        {
+            "vcpus": None,
+            "cores": None,
+            "threads": None,
+            "memory": None,
+        }
+    )
 
     return ContainerDomain(ContainerDomainConfiguration(**container))
+
+
+def _build_default_idmap_items(
+    context: ServiceContext,
+) -> tuple[list[ContainerIdmapConfigurationItem], list[ContainerIdmapConfigurationItem]]:
+    idmap_filters = [
+        ['local', '=', True],
+        ['userns_idmap', 'nin', [0, None]],
+        ['roles', '=', []],
+    ]
+    users = context.middleware.call_sync('user.query', idmap_filters)
+    groups = context.middleware.call_sync('group.query', idmap_filters)
+
+    uid_passthroughs = [_resolve_target(u['uid'], u['userns_idmap']) for u in users]
+    gid_passthroughs = [_resolve_target(g['gid'], g['userns_idmap']) for g in groups]
+
+    return _build_idmap_items(uid_passthroughs), _build_idmap_items(gid_passthroughs)
+
+
+def _resolve_target(account_id: int, userns_idmap: typing.Any) -> tuple[int, int]:
+    """Resolve an account's userns_idmap setting to a (container_id, host_id) pair.
+
+    'DIRECT' means the host UID/GID is exposed inside the container with the same
+    numeric value (container_id == host_id). Any other value is the explicit
+    container-side ID that should map to the host's UID/GID.
+    """
+    container_id = account_id if userns_idmap == 'DIRECT' else userns_idmap
+    return container_id, account_id
+
+
+def _build_idmap_items(
+    passthroughs: list[tuple[int, int]],
+) -> list[ContainerIdmapConfigurationItem]:
+    """Build a complete idmap table around per-account passthroughs.
+
+    For each passthrough whose container-side ID falls in [0, IDMAP_COUNT), emit
+    a single-ID entry mapping that slot to the account's host ID. Slots not
+    covered by any passthrough are filled with mappings into the shifted
+    CONTAINER_ROOT_UID range so the container has a complete unprivileged
+    UID/GID space. Passthroughs whose container-side ID falls outside
+    [0, IDMAP_COUNT) are appended verbatim as individual one-ID entries.
+
+    Account-level validation rejects duplicate container-side IDs before
+    persistence; the deduplication check here is a safety net for stale or
+    corrupt account state. Host-side overlaps are caught downstream by
+    ContainerIdmapConfiguration validation.
+    """
+    seen: set[int] = set()
+    for container_id, _ in passthroughs:
+        if container_id in seen:
+            raise CallError(
+                f'Duplicate container-side id {container_id} in account idmap configuration'
+            )
+        seen.add(container_id)
+
+    in_range: list[tuple[int, int]] = []
+    out_of_range: list[tuple[int, int]] = []
+    for c, h in passthroughs:
+        if 0 <= c < IDMAP_COUNT:
+            in_range.append((c, h))
+        else:
+            out_of_range.append((c, h))
+    in_range.sort()
+
+    items: list[ContainerIdmapConfigurationItem] = []
+    cursor = 0
+    for container_id, host_id in in_range:
+        if container_id > cursor:
+            items.append(ContainerIdmapConfigurationItem(
+                start=cursor,
+                target=CONTAINER_ROOT_UID + cursor,
+                count=container_id - cursor,
+            ))
+        items.append(ContainerIdmapConfigurationItem(
+            start=container_id, target=host_id, count=1,
+        ))
+        cursor = container_id + 1
+
+    if cursor < IDMAP_COUNT:
+        items.append(ContainerIdmapConfigurationItem(
+            start=cursor,
+            target=CONTAINER_ROOT_UID + cursor,
+            count=IDMAP_COUNT - cursor,
+        ))
+
+    for container_id, host_id in out_of_range:
+        items.append(ContainerIdmapConfigurationItem(
+            start=container_id, target=host_id, count=1,
+        ))
+
+    return items

@@ -1,9 +1,7 @@
-import base64
 import contextlib
 import itertools
 import json
 import re
-import shlex
 import textwrap
 import time
 
@@ -11,12 +9,23 @@ import pytest
 import websocket
 
 from truenas_api_client import ValidationErrors
+from middlewared.test.integration.assets.account import (
+    group as account_group,
+    user as account_user,
+)
+from middlewared.test.integration.assets.container import (
+    ALPINE_IMAGE_NAME,
+    UBUNTU_IMAGE_NAME,
+    configure_bridge,
+    container,
+    filesystem_device,
+    get_mountpoint,
+    nsenter,
+    resolve_image,
+)
 from middlewared.test.integration.assets.pool import another_pool, pool
 from middlewared.test.integration.utils import call, host, ssh, websocket_url
 
-UBUNTU_IMAGE_NAME = "ubuntu:noble:amd64:default"
-ALPINE_IMAGE_NAME = "alpine:edge:amd64:default"
-VIRSH = "virsh -c 'lxc:///system?socket=/run/truenas_libvirt/libvirt-sock'"
 # Capabilities necessary to launch a basic LXC container from linuxcontainers.org
 BASIC_CAPABILITIES = {
     # Capabilities enabled in a default docker container
@@ -39,18 +48,11 @@ BASIC_CAPABILITIES = {
 }
 
 
-def get_mountpoint(dataset):
-    rv = call("zfs.resource.query", {"paths": [dataset], "properties": ["mountpoint"]})
-    return rv[0]["properties"]["mountpoint"]["value"]
-
-
-def nsenter(container, command):
-    return shlex.join(call("container.nsenter", container["id"]) + [command])
-
-
 def script_output(container):
     for i in range(30):
-        result = ssh(nsenter(container, "cat /log"), check=False, complete_response=True)
+        result = ssh(
+            nsenter(container, "cat /log"), check=False, complete_response=True
+        )
         if result["returncode"] == 0:
             return result["stdout"]
 
@@ -65,79 +67,17 @@ def bounding_set(capsh_print):
 
 @pytest.fixture(scope="module", autouse=True)
 def bridge():
-    call("lxc.update", {
-        "v4_network": "10.47.214.0/24",
-        "v6_network": "fd42:3656:7be9:e46c::0/64",
-    })
+    configure_bridge()
 
 
 @pytest.fixture(scope="module")
 def ubuntu_image():
-    images = call("container.image.query_registry")
-    version = [image["versions"][-1]["version"] for image in images if image["name"] == UBUNTU_IMAGE_NAME][0]
-
-    yield {"name": UBUNTU_IMAGE_NAME, "version": version}
+    yield resolve_image(UBUNTU_IMAGE_NAME)
 
 
 @pytest.fixture(scope="module")
 def alpine_image():
-    images = call("container.image.query_registry")
-    version = [image["versions"][-1]["version"] for image in images if image["name"] == ALPINE_IMAGE_NAME][0]
-
-    yield {"name": ALPINE_IMAGE_NAME, "version": version}
-
-
-@contextlib.contextmanager
-def container(image, options=None, start=False, startup_script=None):
-    options = options or {}
-
-    container = call("container.create", {
-        "name": "test",
-        "pool": pool,
-        "image": image,
-        **options,
-    }, job=True)
-    try:
-        mountpoint = get_mountpoint(container["dataset"])
-        if startup_script is not None:
-            ssh(f"mkdir -p {mountpoint}/var/spool/cron/crontabs")
-
-            call(
-                "filesystem.file_receive",
-                f"{mountpoint}/var/spool/cron/crontabs/root",
-                base64.b64encode(b"@reboot /script-wrapper.sh\n").decode("ascii"),
-                {"mode": 0o600},
-            )
-            call(
-                "filesystem.file_receive",
-                f"{mountpoint}/script-wrapper.sh",
-                base64.b64encode(textwrap.dedent("""\
-                    #!/bin/sh
-                    /script.sh > /.log 2>&1
-                    mv /.log /log
-                """).encode("ascii")).decode("ascii"),
-                {"mode": 0o755},
-            )
-            call(
-                "filesystem.file_receive",
-                f"{mountpoint}/script.sh",
-                base64.b64encode(startup_script.encode("ascii")).decode("ascii"),
-                {"mode": 0o755},
-            )
-
-        if start:
-            call("container.start", container["id"])
-
-            container = call("container.get_instance", container["id"])
-            assert container["status"]["state"] == "RUNNING"
-
-        yield container
-    finally:
-        call("container.delete", container["id"])
-
-        #  Id   Name   State
-        # --------------------
-        assert container["uuid"] not in ssh(f"{VIRSH} list --all")
+    yield resolve_image(ALPINE_IMAGE_NAME)
 
 
 @pytest.fixture(scope="function")
@@ -164,13 +104,20 @@ def test_container_stop(started_ubuntu_container):
     assert container["status"]["pid"] is None
     assert (
         ssh(
-            f"ps -p {started_ubuntu_container['status']['pid']}", check=False, complete_response=True,
-        )["returncode"] == 1
+            f"ps -p {started_ubuntu_container['status']['pid']}",
+            check=False,
+            complete_response=True,
+        )["returncode"]
+        == 1
     )
 
 
 def test_container_update(started_ubuntu_container):
-    call("container.update", started_ubuntu_container["id"], {"init": "/bin/sleep infinity"})
+    call(
+        "container.update",
+        started_ubuntu_container["id"],
+        {"init": "/bin/sleep infinity"},
+    )
 
     container = call("container.get_instance", started_ubuntu_container["id"])
     assert "/sbin/init" in ssh(nsenter(container, "ps -p 1 -o args"))
@@ -191,17 +138,24 @@ def test_container_rename(ubuntu_container):
 
     updated = call("container.get_instance", ubuntu_container["id"])
     assert updated["name"] == new_name
-    expected_dataset = old_dataset[:old_dataset.rfind('/') + 1] + new_name
+    expected_dataset = old_dataset[: old_dataset.rfind("/") + 1] + new_name
     assert updated["dataset"] == expected_dataset
     # Verify ZFS dataset actually exists at new path
-    result = call("zfs.resource.query", {"paths": [expected_dataset], "properties": ["mountpoint"]})
+    result = call(
+        "zfs.resource.query",
+        {"paths": [expected_dataset], "properties": ["mountpoint"]},
+    )
     assert result, f"ZFS dataset {expected_dataset!r} does not exist after rename"
 
 
 def test_container_stop_force_after_timeout(ubuntu_container):
     container = ubuntu_container
 
-    call("container.update", container["id"], {"init": "/bin/sleep infinity", "shutdown_timeout": 5})
+    call(
+        "container.update",
+        container["id"],
+        {"init": "/bin/sleep infinity", "shutdown_timeout": 5},
+    )
 
     call("container.start", container["id"])
     container = call("container.get_instance", container["id"])
@@ -209,7 +163,9 @@ def test_container_stop_force_after_timeout(ubuntu_container):
 
     call("container.stop", container["id"], job=True)
     container = call("container.get_instance", container["id"])
-    assert container["status"]["state"] == "RUNNING"  # Process with PID=1 ignores SIGTERM if it is not init
+    assert (
+        container["status"]["state"] == "RUNNING"
+    )  # Process with PID=1 ignores SIGTERM if it is not init
 
     call("container.stop", container["id"], {"force_after_timeout": True}, job=True)
     container = call("container.get_instance", container["id"])
@@ -252,10 +208,17 @@ def test_container_shell(started_ubuntu_container):
     token = call("auth.generate_token", 300, {}, False)
     ws = websocket.create_connection(websocket_url() + "/websocket/shell")
     try:
-        ws.send(json.dumps({
-            "token": token,
-            "options": {"container_id": started_ubuntu_container["id"], "command": "ls /mnt"}
-        }))
+        ws.send(
+            json.dumps(
+                {
+                    "token": token,
+                    "options": {
+                        "container_id": started_ubuntu_container["id"],
+                        "command": "ls /mnt",
+                    },
+                }
+            )
+        )
         _, msg = ws.recv_data()
         assert json.loads(msg.decode())["msg"] == "connected", msg
 
@@ -270,7 +233,7 @@ def test_container_shell(started_ubuntu_container):
 
             data += msg.decode("ascii", "ignore")
 
-        assert data.replace("\x03", "").strip().split()[-1] == f"canary"
+        assert data.replace("\x03", "").strip().split()[-1] == "canary"
     finally:
         ws.close()
 
@@ -278,46 +241,183 @@ def test_container_shell(started_ubuntu_container):
 @pytest.fixture(scope="module")
 def idmap_slice_1_container(ubuntu_image):
     # A container that uses idmap slice 2 to test idmap slice auto-allocation
-    with container(ubuntu_image, {
-        "name": "idmap-slice-1",
-        "idmap": {"type": "ISOLATED", "slice": 1},
-    }, True):
+    with container(
+        ubuntu_image,
+        {
+            "name": "idmap-slice-1",
+            "idmap": {"type": "ISOLATED", "slice": 1},
+        },
+        True,
+    ):
         yield
 
 
-@pytest.mark.parametrize("target,config", [
-    (0, None),
-    (2147000001, {"type": "DEFAULT"}),
-    (2147000001 + 65536, {"type": "ISOLATED", "slice": 1}),
-    (2147000001 + 65536 * 2, {"type": "ISOLATED", "slice": None}),
-])
+@pytest.mark.parametrize(
+    "target,config",
+    [
+        (0, None),
+        (2147000001, {"type": "DEFAULT"}),
+        (2147000001 + 65536, {"type": "ISOLATED", "slice": 1}),
+        (2147000001 + 65536 * 2, {"type": "ISOLATED", "slice": None}),
+    ],
+)
 def test_idmap(ubuntu_image, idmap_slice_1_container, target, config):
-    with container(ubuntu_image, {
-        "idmap": config,
-    }, True) as c:
-        assert ssh(f"ps -p {c['status']['pid']} -o uid,gid --no-headers").strip().split() == [
-            str(target), str(target),
+    with container(
+        ubuntu_image,
+        {
+            "idmap": config,
+        },
+        True,
+    ) as c:
+        assert ssh(
+            f"ps -p {c['status']['pid']} -o uid,gid --no-headers"
+        ).strip().split() == [
+            str(target),
+            str(target),
         ]
 
         mountpoint = get_mountpoint(c["dataset"])
         ssh(f"mkdir {mountpoint}/playground")
         ssh(nsenter(c, "touch /playground/canary"))
-        assert ssh(f"stat -c '%u %g' {mountpoint}/playground/canary").strip().split() == ["0", "0"]
+        assert ssh(
+            f"stat -c '%u %g' {mountpoint}/playground/canary"
+        ).strip().split() == ["0", "0"]
 
 
-@pytest.mark.parametrize("configuration,has", [
-    ({}, True),
-    ({"capabilities_state": {"lease": False}}, False),
-    ({"capabilities_policy": "ALLOW"}, True),
-    ({"capabilities_policy": "ALLOW", "capabilities_state": {"lease": False}}, False),
-    ({"capabilities_policy": "DENY", "capabilities_state": {**BASIC_CAPABILITIES}}, False),
-    ({"capabilities_policy": "DENY", "capabilities_state": {**BASIC_CAPABILITIES, "lease": True}}, True),
-])
+def _stat_inside(container_dict, path):
+    return ssh(nsenter(container_dict, f"stat -c '%u %g' {path}")).strip()
+
+
+@contextlib.contextmanager
+def bind_share_with_file(uid, gid, fname="file"):
+    # idmap passthroughs only take effect for mounts that DON'T have a mount
+    # idmap of their own (FilesystemDevice bind-mounts). The rootfs gets a
+    # matched X-mount.idmap, which forces an identity round-trip and hides
+    # the userns mapping. So tests that verify non-DIRECT / ISOLATED behavior
+    # must use a bind-mount source, not files written into the rootfs dataset.
+    share = f"/mnt/{pool}/idmap_share_{uid}_{gid}"
+    try:
+        ssh(f"rm -rf {share}")
+        ssh(f"mkdir -p {share}")
+        ssh(f": > {share}/{fname} && chown {uid}:{gid} {share}/{fname}")
+        yield share
+    finally:
+        ssh(f"rm -rf {share}")
+
+
+def test_default_idmap_passes_apps_user_through(ubuntu_image):
+    # By default builtin sync sets userns_idmap='DIRECT' on the apps user (568)
+    # and apps group (568). DEFAULT idmap should honor those passthroughs so
+    # host UID/GID 568 is visible as the same 568 inside the container via a
+    # FilesystemDevice bind-mount (where the userns extent actually decides
+    # the visible UID, not the rootfs's identity round-trip).
+    with bind_share_with_file(568, 568, fname="apps_file") as share:
+        with container(ubuntu_image, {"idmap": {"type": "DEFAULT"}}) as c:
+            with filesystem_device(c["id"], share, "/share"):
+                call("container.start", c["id"])
+                c = call("container.get_instance", c["id"])
+                assert c["status"]["state"] == "RUNNING"
+                assert _stat_inside(c, "/share/apps_file") == "568 568"
+
+
+def test_default_idmap_picks_up_custom_user_direct(ubuntu_image):
+    with account_group({"name": "idmap_grp"}) as g:
+        with account_user(
+            {
+                "username": "idmap_user",
+                "full_name": "idmap user",
+                "group": g["id"],
+                "random_password": True,
+            }
+        ) as u:
+            uid, gid = u["uid"], g["gid"]
+            call("user.update", u["id"], {"userns_idmap": "DIRECT"})
+            call("group.update", g["id"], {"userns_idmap": "DIRECT"})
+
+            with bind_share_with_file(uid, gid) as share:
+                with container(ubuntu_image, {"idmap": {"type": "DEFAULT"}}) as c:
+                    with filesystem_device(c["id"], share, "/share"):
+                        call("container.start", c["id"])
+                        c = call("container.get_instance", c["id"])
+                        assert c["status"]["state"] == "RUNNING"
+                        assert _stat_inside(c, "/share/file") == f"{uid} {gid}"
+
+
+def test_default_idmap_picks_up_custom_user_numeric(ubuntu_image):
+    target = 8675309
+    with account_user(
+        {
+            "username": "idmap_numeric",
+            "full_name": "idmap numeric",
+            "group_create": True,
+            "random_password": True,
+        }
+    ) as u:
+        uid = u["uid"]
+        call("user.update", u["id"], {"userns_idmap": target})
+
+        with bind_share_with_file(uid, 0) as share:
+            with container(ubuntu_image, {"idmap": {"type": "DEFAULT"}}) as c:
+                with filesystem_device(c["id"], share, "/share"):
+                    call("container.start", c["id"])
+                    c = call("container.get_instance", c["id"])
+                    assert c["status"]["state"] == "RUNNING"
+                    assert _stat_inside(c, "/share/file").split()[0] == str(target)
+
+
+def test_isolated_idmap_ignores_account_passthrough(ubuntu_image):
+    # ISOLATED's userns has no extent covering host kuid/kgid 568, so a
+    # bind-mounted file at 568:568 must not show as 568:568 inside.
+    with bind_share_with_file(568, 568, fname="apps_file") as share:
+        with container(
+            ubuntu_image, {"idmap": {"type": "ISOLATED", "slice": 1}}
+        ) as c:
+            with filesystem_device(c["id"], share, "/share"):
+                call("container.start", c["id"])
+                c = call("container.get_instance", c["id"])
+                assert c["status"]["state"] == "RUNNING"
+                inside = _stat_inside(c, "/share/apps_file")
+                assert inside != "568 568", (
+                    f"ISOLATED container leaked apps passthrough: {inside}"
+                )
+
+
+@pytest.mark.parametrize(
+    "configuration,has",
+    [
+        ({}, True),
+        ({"capabilities_state": {"lease": False}}, False),
+        ({"capabilities_policy": "ALLOW"}, True),
+        (
+            {"capabilities_policy": "ALLOW", "capabilities_state": {"lease": False}},
+            False,
+        ),
+        (
+            {
+                "capabilities_policy": "DENY",
+                "capabilities_state": {**BASIC_CAPABILITIES},
+            },
+            False,
+        ),
+        (
+            {
+                "capabilities_policy": "DENY",
+                "capabilities_state": {**BASIC_CAPABILITIES, "lease": True},
+            },
+            True,
+        ),
+    ],
+)
 def test_capabilities(ubuntu_image, configuration, has):
-    with container(ubuntu_image, configuration, True, startup_script=textwrap.dedent("""\
+    with container(
+        ubuntu_image,
+        configuration,
+        True,
+        startup_script=textwrap.dedent("""\
         #!/bin/sh
         capsh --print
-    """)) as c:
+    """),
+    ) as c:
         s = script_output(c)
 
         if has:
@@ -345,7 +445,9 @@ def test_network(started_ubuntu_container):
         try:
             assert ssh(nsenter(started_ubuntu_container, f"ping -c 1 {host().ip}"))
             assert ssh(nsenter(started_ubuntu_container, "ping -c 1 8.8.8.8"))
-            assert "inet " in ssh(nsenter(started_ubuntu_container, "ip -4 addr show dev eth0"))
+            assert "inet " in ssh(
+                nsenter(started_ubuntu_container, "ip -4 addr show dev eth0")
+            )
             break
         except AssertionError:
             if i > 30:
@@ -365,7 +467,7 @@ def test_incorrect_image(ubuntu_image):
         with container({**ubuntu_image, "name": ubuntu_image["name"] + "_"}):
             pass
 
-    assert ve.value.errors[0].attribute == 'container_create.image.name'
+    assert ve.value.errors[0].attribute == "container_create.image.name"
 
 
 def test_incorrect_image_version(ubuntu_image):
@@ -373,16 +475,146 @@ def test_incorrect_image_version(ubuntu_image):
         with container({**ubuntu_image, "version": ubuntu_image["version"] + "_"}):
             pass
 
-    assert ve.value.errors[0].attribute == 'container_create.image.version'
+    assert ve.value.errors[0].attribute == "container_create.image.version"
 
 
 def test_container_device_nic_crud(ubuntu_container):
-    device = call("container.device.create", {
-        "container": ubuntu_container["id"],
-        "attributes": {"dtype": "NIC"},
-    })
+    device = call(
+        "container.device.create",
+        {
+            "container": ubuntu_container["id"],
+            "attributes": {"dtype": "NIC"},
+        },
+    )
     try:
         assert device["attributes"]["dtype"] == "NIC"
         assert device["attributes"]["mac"]  # auto-generated
     finally:
         call("container.device.delete", device["id"])
+
+
+# Chokepoint lockdown — non-root host users (e.g. apps UID 568) must not be
+# able to traverse the on-disk container rootfs paths, since UIDs inside the
+# container collide with real host accounts (DEFAULT idmap passthrough).
+
+CONTAINERS_CHOKEPOINT = "/mnt/.truenas_containers"
+
+
+def _chokepoint_perms(path):
+    st = call("filesystem.stat", path)
+    return st["mode"] & 0o7777, st["uid"], st["gid"]
+
+
+def test_truenas_containers_chokepoint_locked(started_ubuntu_container):
+    assert _chokepoint_perms(CONTAINERS_CHOKEPOINT) == (0o700, 0, 0)
+
+
+def test_apps_user_cannot_traverse_containers(started_ubuntu_container):
+    result = ssh(
+        f"runuser -u apps -- ls {CONTAINERS_CHOKEPOINT}/",
+        check=False,
+        complete_response=True,
+    )
+    assert result["returncode"] != 0
+    assert "Permission denied" in result["stderr"]
+
+
+def test_root_retains_access_containers(started_ubuntu_container):
+    listing = ssh(f"ls {CONTAINERS_CHOKEPOINT}/")
+    assert pool in listing.split()
+
+
+def test_drift_repair_containers(started_ubuntu_container):
+    # Simulate an admin loosening perms, then confirm the next container
+    # lifecycle op re-tightens the chokepoint via the drift-repair hook
+    # in lifecycle.py::start().
+    ssh(f"chmod 0755 {CONTAINERS_CHOKEPOINT}")
+
+    call("container.stop", started_ubuntu_container["id"], job=True)
+    call("container.start", started_ubuntu_container["id"])
+
+    assert _chokepoint_perms(CONTAINERS_CHOKEPOINT) == (0o700, 0, 0)
+
+
+# /run/truenas_containers/root/ is the idmapped-bind-mount parent. libvirt_lxc
+# switches to mapped-root (host uid CONTAINER_ROOT_UID + slice * IDMAP_COUNT)
+# *before* the pivot_root setup that creates <UUID>/.oldroot, so it needs
+# search permission on this parent dir while running as the mapped uid -- not
+# host root. We grant exactly that via a POSIX1E ACL with `user:<uid>:--x`
+# entries for every *possible* container-root host uid (the set is static --
+# slice space is [0, 1000) and ContainerXID ge=1 rules out any other value).
+# The legacy mode bits show 0o710: MASK in the group triad gates the named
+# entries to --x.
+
+IDMAPPED_ROOT_CHOKEPOINT = "/run/truenas_containers/root"
+CONTAINER_ROOT_UID = 2147000001
+IDMAP_COUNT = 65536
+EXPECTED_NAMED_UIDS = frozenset(
+    CONTAINER_ROOT_UID + n * IDMAP_COUNT for n in range(1000)
+)
+
+
+def _named_user_uids_in_acl(path):
+    out = ssh(f"getfacl --absolute-names --omit-header {path}")
+    uids = []
+    for line in out.splitlines():
+        line = line.strip()
+        if line.startswith("user:") and line != "user::rwx":
+            # form: "user:<uid>:--x"
+            uids.append(int(line.split(":")[1]))
+    return uids
+
+
+def test_idmapped_root_chokepoint_locked():
+    # Static ACL: 1000 named-USER `--x` entries + MASK=--x; mode shows 0o710
+    # because MASK occupies the legacy group triad.
+    mode, uid, gid = _chokepoint_perms(IDMAPPED_ROOT_CHOKEPOINT)
+    assert (uid, gid) == (0, 0)
+    assert mode == 0o710
+    assert frozenset(_named_user_uids_in_acl(IDMAPPED_ROOT_CHOKEPOINT)) == EXPECTED_NAMED_UIDS
+
+
+def test_apps_user_cannot_traverse_idmapped_root():
+    result = ssh(
+        f"runuser -u apps -- ls {IDMAPPED_ROOT_CHOKEPOINT}/",
+        check=False,
+        complete_response=True,
+    )
+    assert result["returncode"] != 0
+    assert "Permission denied" in result["stderr"]
+
+
+def test_apps_user_cannot_plant_in_running_container_tmp(started_ubuntu_container):
+    # The actual threat model: a non-root host user MUST NOT be able to write
+    # into a running container's /tmp (0o1777, world-writable from the idmap
+    # view). Blocked by ACL on the parent denying traversal.
+    uuid = started_ubuntu_container["uuid"]
+    result = ssh(
+        f"runuser -u apps -- touch {IDMAPPED_ROOT_CHOKEPOINT}/{uuid}/tmp/pwned",
+        check=False,
+        complete_response=True,
+    )
+    assert result["returncode"] != 0
+    assert "Permission denied" in result["stderr"]
+
+
+def test_root_retains_access_idmapped_root(started_ubuntu_container):
+    # Real host root has CAP_DAC_OVERRIDE / CAP_DAC_READ_SEARCH so it can
+    # traverse and list regardless of the ACL.
+    listing = ssh(f"ls {IDMAPPED_ROOT_CHOKEPOINT}/")
+    assert started_ubuntu_container["uuid"] in listing.split()
+
+
+def test_drift_repair_idmapped_root(started_ubuntu_container):
+    # Wipe ACL + open mode bits, then bounce the container -- the start path
+    # re-applies the static ACL.
+    ssh(f"setfacl -b {IDMAPPED_ROOT_CHOKEPOINT}")
+    ssh(f"chmod 0755 {IDMAPPED_ROOT_CHOKEPOINT}")
+
+    call("container.stop", started_ubuntu_container["id"], job=True)
+    call("container.start", started_ubuntu_container["id"])
+
+    mode, uid, gid = _chokepoint_perms(IDMAPPED_ROOT_CHOKEPOINT)
+    assert (uid, gid) == (0, 0)
+    assert mode == 0o710
+    assert frozenset(_named_user_uids_in_acl(IDMAPPED_ROOT_CHOKEPOINT)) == EXPECTED_NAMED_UIDS

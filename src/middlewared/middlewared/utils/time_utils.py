@@ -1,4 +1,4 @@
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 
 UTC_EPOCH = datetime.fromtimestamp(0, UTC)
 
@@ -15,11 +15,3 @@ def datetime_to_epoch_days(value: datetime) -> int:
         raise TypeError(f'{type(value)}: unexpected type')
 
     return (value - UTC_EPOCH).days
-
-
-def epoch_days_to_datetime(value: int) -> datetime:
-    """ Convert days since epoch into a UTC datetime object """
-    if not isinstance(value, int):
-        raise TypeError(f'{type(value)}: unexpected type')
-
-    return UTC_EPOCH + timedelta(days=value)

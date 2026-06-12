@@ -50,6 +50,7 @@ class iSCSITargetAluaService(Service):
         self.standby_starting = False
         self.standby_alua_ready = False
         self.standby_skip_cluster_mode = False
+        self._recheck_ready_done = False
 
         # standby_write_empty_config will be used to control whether the
         # STANDBY node initially writes a minimal scst.conf
@@ -117,11 +118,11 @@ class iSCSITargetAluaService(Service):
         iqn_basename = config['basename']
         thisnode = await self.middleware.call('failover.node')
 
-        # extents: dict[id] : {id, name, type, serial}
+        # extents: dict[id] : {id, name, path, type, serial}
         extents = {ext['id']: ext for ext in await self.middleware.call(
             'iscsi.extent.query',
             [['enabled', '=', True], ['locked', '=', False]],
-            {'select': ['name', 'id', 'type', 'serial']},
+            {'select': ['name', 'id', 'path', 'type', 'serial']},
         )}
 
         # targets: dict[id]: {'name': name, 'mode': mode}
@@ -161,6 +162,17 @@ class iSCSITargetAluaService(Service):
                     target_name = targets[target_id]['name']
                     target_mode = targets[target_id]['mode']
                     extent_name = extents[extent_id]['name']
+                    extent_type = extents[extent_id]['type']
+                    # If the extent is FILE, then call activate_extent
+                    # (bind_alua_state not set by default)
+                    if extent_type == 'FILE':
+                        if not await self.middleware.call(
+                            'iscsi.scst.activate_extent',
+                            extent_name,
+                            extent_type,
+                            extents[extent_id]['path']
+                        ):
+                            self.logger.warning('become_active: failed to activate FILE extent %r', extent_name)
                     if target_mode in ['ISCSI', 'BOTH']:
                         iqn = f'{iqn_basename}:{target_name}'
                         await self.middleware.call('iscsi.scst.replace_iscsi_lun',
@@ -218,6 +230,60 @@ class iSCSITargetAluaService(Service):
             self.logger.warning('Failed to check LUNs', exc_info=True)
             return False
         return True
+
+    async def standby_recheck_ready_once(self):
+        """One-shot wrapper used by setup(): runs standby_recheck_ready only on
+        the first invocation after middlewared startup. The failover on-connect
+        callback fires on every (re)connect of the heartbeat, but we only want
+        to re-derive standby_alua_ready once at startup."""
+        if self._recheck_ready_done:
+            return
+        self._recheck_ready_done = True
+        await self.standby_recheck_ready()
+
+    async def standby_recheck_ready(self):
+        """Called once at middlewared startup (when system.ready is already True,
+        i.e. middlewared was restarted after boot rather than starting at boot).
+
+        If iscsitarget is already running on this STANDBY node with all ALUA state
+        intact, flip standby_alua_ready so the next failover can take the LUN-replace
+        fast path in become_active without restarting iscsitarget. If iscsitarget is
+        running but state is inconsistent (e.g. extents added on ACTIVE while this
+        middlewared was down), kick off standby_after_start to heal it.
+        """
+        if await self.middleware.call('iscsi.global.lio_enabled'):
+            return
+        if not await self.middleware.call('iscsi.global.alua_enabled'):
+            return
+        if await self.middleware.call('failover.status') != 'BACKUP':
+            return
+        if await self.middleware.call('service.get_unit_state', 'iscsitarget') != 'active':
+            return
+        if await self.middleware.call('iscsi.alua.has_active_jobs'):
+            return
+
+        try:
+            logged_in = await self.middleware.call('iscsi.extent.logged_in_extents')
+            standby_clustered = set(await self.middleware.call('iscsi.target.clustered_extents'))
+            active_clustered = set(await self.middleware.call(
+                'failover.call_remote', 'iscsi.target.clustered_extents',
+            ))
+        except Exception:
+            self.logger.warning('standby_recheck_ready: failed to gather ALUA state', exc_info=True)
+            return
+
+        # logged_in_extents on STANDBY is the bridge between the two clustered_extents
+        # views: keys are extent names (matching ACTIVE's view of SCST handlers),
+        # values are STANDBY-side host devs (matching STANDBY's view).
+        if (set(logged_in.values()) == standby_clustered
+                and set(logged_in.keys()) == active_clustered):
+            self.enabled = set(logged_in.keys())
+            self._standby_write_empty_config = False
+            self.standby_alua_ready = True
+            self.logger.debug('ALUA already configured on STANDBY; marked ready')
+        else:
+            self.logger.debug('ALUA state inconsistent on STANDBY restart; running standby_after_start')
+            await self.middleware.call('iscsi.alua.standby_after_start')
 
     @job(lock='standby_after_start', transient=True, lock_queue_size=1)
     async def standby_after_start(self, job):
@@ -783,6 +849,19 @@ class iSCSITargetAluaService(Service):
             return False
         return True
 
+    async def should_operate_on_standby(self):
+        """Return True iff an ALUA config change made on this (ACTIVE) node also requires
+        coordinating work on the STANDBY.
+
+        Requires that ALUA is enabled, the local iscsitarget service is actually running
+        (otherwise the local-side change was a no-op), and the peer is reachable.
+        """
+        if not await self.middleware.call('iscsi.global.alua_enabled'):
+            return False
+        if not await self.middleware.call('service.started', 'iscsitarget'):
+            return False
+        return await self.middleware.call('failover.remote_connected')
+
     async def wait_for_alua_settled(self, sleep_interval=1, retries=10):
         while retries > 0:
             if await self.middleware.call('iscsi.alua.settled'):
@@ -806,5 +885,49 @@ class iSCSITargetAluaService(Service):
     async def reset_active(self, job):
         """Job to be run on the ACTIVE node before the STANDBY node will join."""
         self.standby_starting = False
-        dlm_ra = await self.middleware.call('dlm.reset_active')
-        await job.wrap(dlm_ra)
+        try:
+            dlm_ra = await self.middleware.call('dlm.reset_active')
+            await job.wrap(dlm_ra)
+        finally:
+            # Release any LUN-replace cleanup that was parked by
+            # enable_async_lun_replace. dlm.reset_active does eject_peer
+            # before any of its other steps, so by the time we get here the
+            # peer is already out of the DLM lockspaces -- which is the only
+            # prerequisite the parked work has.
+            await self.middleware.call('iscsi.scst.disable_async_lun_replace')
+
+        # Log out any leftover HA iSCSI sessions to the (former) peer. The
+        # failover event's handle_alua block defers this logout to reset_active
+        # so the ALUA tgt_dev filter stays in place across the LUN replace.
+        # It also keeps dlm.remote_down's logged_in_extents guard from tripping
+        # later: without this, lingering sessions die only when their NOP-out
+        # timer expires, which can keep remote_down skipping reset_active for
+        # minutes. Swallow failures -- the NOP-out timeout is the backstop.
+        try:
+            remote_ip = await self.middleware.call('failover.remote_ip')
+            if remote_ip:
+                await self.middleware.call('iscsi.target.logout_all', remote_ip)
+        except Exception:
+            self.logger.warning('reset_active: logout_all failed', exc_info=True)
+
+
+def _on_remote_connect(middleware, *args, **kwargs):
+    # Fires from the ha_connection thread when the failover heartbeat
+    # (re)connects to the peer. The _once wrapper makes this a no-op on every
+    # connect after the first, so a transient reconnect won't re-trigger work.
+    middleware.call_sync('iscsi.alua.standby_recheck_ready_once')
+
+
+async def setup(middleware):
+    # Only relevant when middlewared was restarted after boot (iscsitarget may
+    # already be running). At boot, system.ready is not yet True and the normal
+    # iscsitarget after_start hook handles ALUA bring-up.
+    if not await middleware.call('system.ready'):
+        return
+    # The recheck makes a failover.call_remote, so we have to wait until the
+    # failover remote client has actually connected to the peer. Register an
+    # on-connect callback to cover the "not yet connected" case, then fire
+    # immediately if the connection is already up.
+    await middleware.call('failover.remote_on_connect', _on_remote_connect)
+    if await middleware.call('failover.remote_connected'):
+        await middleware.call('iscsi.alua.standby_recheck_ready_once')

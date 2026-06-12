@@ -9,7 +9,7 @@ if typing.TYPE_CHECKING:
     from middlewared.main import Middleware
 
 
-class DockerFSAttachmentDelegate(FSAttachmentDelegate):
+class DockerFSAttachmentDelegate(FSAttachmentDelegate[dict[str, str]]):
     name = 'docker'
     title = 'Docker'
     service = 'docker'

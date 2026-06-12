@@ -76,6 +76,7 @@ class iSCSITargetExtentService(SharingService):
 
     share_task_type = 'iSCSI Extent'
     path_resolution_filters = [['iscsi_target_extent_type', '=', 'FILE']]
+    include_tier_info = False
 
     class Config:
         namespace = 'iscsi.extent'
@@ -208,20 +209,19 @@ class iSCSITargetExtentService(SharingService):
         target_name = None
         assoc = []
         if old['enabled'] != new['enabled']:
-            if await self.middleware.call('iscsi.global.alua_enabled'):
-                if await self.middleware.call('failover.remote_connected'):
-                    try:
-                        assoc = await self.middleware.call(
-                            'iscsi.targetextent.query',
-                            [['extent', '=', id_]],
-                            {'get': True}
-                        )
-                        target_name = (await self.middleware.call(
-                            'iscsi.target.query',
-                            [['id', '=', assoc['target']]],
-                            {'select': ['name'], 'get': True}))['name']
-                    except MatchNotFound:
-                        pass
+            if await self.middleware.call('iscsi.alua.should_operate_on_standby'):
+                try:
+                    assoc = await self.middleware.call(
+                        'iscsi.targetextent.query',
+                        [['extent', '=', id_]],
+                        {'get': True}
+                    )
+                    target_name = (await self.middleware.call(
+                        'iscsi.target.query',
+                        [['id', '=', assoc['target']]],
+                        {'select': ['name'], 'get': True}))['name']
+                except MatchNotFound:
+                    pass
 
         if assoc and target_name:
             # ALUA is enabled and we changed the enabled state of a mapped extent
@@ -354,8 +354,7 @@ class iSCSITargetExtentService(SharingService):
             )
         finally:
             await self._service_change('iscsitarget', 'reload')
-            if all([await self.middleware.call("iscsi.global.alua_enabled"),
-                    await self.middleware.call('failover.remote_connected')]):
+            if await self.middleware.call('iscsi.alua.should_operate_on_standby'):
                 await self.middleware.call('iscsi.alua.wait_for_alua_settled')
 
     @private

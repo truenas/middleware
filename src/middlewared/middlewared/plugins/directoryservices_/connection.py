@@ -60,7 +60,11 @@ class DomainConnection(
     @pass_app()
     def activate_standby(self, app, kdc_affinity) -> None:
         """ Activate the standby controller. This should be called through failover.call_remote. This
-        should be used after successfully setting up directory services on the active controller. """
+        should be used after successfully setting up directory services on the active controller.
+
+        ``kdc_affinity`` may be either the new dict form ``{"host": ..., "ip": ...}`` or the
+        legacy single-string IP form (still produced by older active controllers during a mixed
+        upgrade). """
         if app and not isinstance(app.authenticated_credentials, TruenasNodeSessionManagerCredentials):
             raise CallError(f'{type(app.authenticated_credentials)}: unexpected credential type for endpoint.')
 
@@ -69,7 +73,17 @@ class DomainConnection(
             return
 
         if kdc_affinity:
-            kdc_saf_cache_set(kdc_affinity)
+            try:
+                ipaddress.ip_address(kdc_affinity)
+            except (TypeError, ValueError):
+                # New dict form: {"host": ..., "ip": ...}
+                host = kdc_affinity.get('host') or None
+                ip = kdc_affinity.get('ip') or None
+                if host or ip:
+                    kdc_saf_cache_set(host=host, ip=ip)
+            else:
+                # Legacy active controller sent a bare IP string.
+                kdc_saf_cache_set(ip=kdc_affinity)
 
         # This is largely the same as normal `activate()` with addition of clearing local caches
         # and replacing state file (secrets.tdb).

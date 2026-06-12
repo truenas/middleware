@@ -196,6 +196,7 @@ async def zfs_events(middleware, event: ZfsEvent):
                         # endpoints because there are other operations related to create/delete
                         # which when done, we consider the create/delete operation as complete
                         middleware.send_event('pool.query', 'CHANGED', id=pool['id'], fields=pool)
+                        await middleware.call('zpool.send_change_event', pool_name, 'CHANGED')
 
                     await middleware.call2(middleware.services.alert.oneshot_delete, 'PoolUpgraded', pool_name)
                     await create_pool_upgraded_alert(middleware, pool_name)

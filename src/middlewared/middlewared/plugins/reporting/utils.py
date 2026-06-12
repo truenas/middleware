@@ -1,4 +1,3 @@
-import collections
 import contextlib
 import os.path
 import typing
@@ -14,11 +13,11 @@ TIER_1_POINT_SIZE = 4
 
 
 def calculate_disk_space_for_netdata(
-    metric_intervals: dict, days: int, bytes_per_point: int, tier_interval: int
+    metric_intervals: dict[int, int], days: int, bytes_per_point: int, tier_interval: int
 ) -> int:
     # Constants
     sec_per_day = 86400
-    total_metrics = 0
+    total_metrics: float = 0
     for collection_interval_seconds, metrics in metric_intervals.items():
         total_metrics += metrics / collection_interval_seconds
 
@@ -40,8 +39,8 @@ def convert_unit(unit: str, page: int) -> int:
 
 
 async def fetch_data_from_graph_plugins(
-    graph_plugins: typing.Dict[GraphBase, list], query_params: dict, aggregate: bool,
-) -> collections.abc.AsyncIterable:
+    graph_plugins: dict[GraphBase, list[str | None]], query_params: dict[str, typing.Any], aggregate: bool,
+) -> typing.AsyncIterator[list[dict[str, typing.Any]]]:
     for graph_plugin, identifiers in graph_plugins.items():
         await graph_plugin.build_context()
         with contextlib.suppress(Exception):
@@ -54,9 +53,9 @@ def get_netdata_state_path() -> str:
 
 def get_metrics_approximation(
     disk_count: int, core_count: int, interface_count: int, pool_count: int, vms_count: int,
-    systemd_service_count: int, containers_count: typing.Optional[int] = 10,
-) -> dict:
-    data = {
+    systemd_service_count: int, containers_count: int = 10,
+) -> dict[int, int]:
+    data: dict[int, dict[str, int]] = {
         1: {
             'system.clock_sync_state': 1,
             'system.clock_status': 2,

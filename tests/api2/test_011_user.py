@@ -11,8 +11,8 @@ from pytest_dependency import depends
 from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.pool import dataset as dataset_asset
 from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.utils.legacy_functions import SSH_TEST, wait_on_job
 
-from functions import SSH_TEST, wait_on_job
 from auto_config import pool_name, password, user
 SHELL = '/usr/bin/bash'
 VAR_EMPTY = '/var/empty'

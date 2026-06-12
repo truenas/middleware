@@ -2,9 +2,8 @@ import contextlib
 import os
 import sys
 
-from functions import send_file
-
 from middlewared.test.integration.utils import restart_systemd_svc, ssh, truenas_server
+from middlewared.test.integration.utils.legacy_functions import send_file
 
 try:
     apifolder = os.getcwd()

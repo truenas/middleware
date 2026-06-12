@@ -97,7 +97,16 @@ def test_api_key_info(sharing_admin_user):
 @pytest.mark.parametrize('endpoint', ['LEGACY', 'CURRENT'])
 def test_api_key_session(sharing_admin_user, endpoint):
     with api_key(sharing_admin_user.username) as key:
-        with client(auth=None) as c:
+        match endpoint:
+            case 'LEGACY':
+                # auth.login_with_api_key was removed in v27; exercise it via an older API version.
+                client_kwargs = {'auth': None, 'version': 'v26.0.0'}
+            case 'CURRENT':
+                client_kwargs = {'auth': None}
+            case _:
+                raise ValueError(f'{endpoint}: unknown endpoint')
+
+        with client(**client_kwargs) as c:
             match endpoint:
                 case 'LEGACY':
                     assert c.call('auth.login_with_api_key', key)
@@ -108,8 +117,6 @@ def test_api_key_session(sharing_admin_user, endpoint):
                         'api_key': key
                     })
                     assert resp['response_type'] == 'SUCCESS'
-                case _:
-                    raise ValueError(f'{endpoint}: unknown endpoint')
 
             session = c.call('auth.sessions', [['current', '=', True]], {'get': True})
             assert session['credentials'] == 'API_KEY'

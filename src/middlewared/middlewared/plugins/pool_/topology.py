@@ -77,10 +77,6 @@ class PoolService(Service):
             # Remove internal fields
             x.pop('top_guid', None)
 
-            # Merge stripe vdevs into data for legacy format
-            if 'stripe' in x:
-                x['data'].extend(x.pop('stripe'))
-
             # Convert vdev stats to legacy format
             if 'stats' in x and isinstance(x['stats'], dict):
                 x['stats'] = _transform_stats(x['stats'])

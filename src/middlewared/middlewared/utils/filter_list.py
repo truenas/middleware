@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from datetime import datetime
-from typing import Any, Iterable, Literal, Required, Sequence, TypedDict, TypeVar, overload
+from typing import Any, Iterable, Literal, Mapping, Required, Sequence, TypedDict, TypeVar, overload
 
 import truenas_pyfilter as _tf
 from truenas_pyfilter import CompiledFilters, CompiledOptions, match  # noqa: F401 (re-exported)
@@ -11,11 +13,11 @@ from middlewared.service_exception import MatchNotFound
 CF_EMPTY: CompiledFilters = _tf.compile_filters([])
 CO_EMPTY: CompiledOptions = _tf.compile_options()
 
-_Entry = TypeVar('_Entry', bound=dict[str, Any])
+_Entry = TypeVar('_Entry', bound=Mapping[str, Any])
 
 
 def _build_compiled_options(
-    options: dict,
+    options: dict[str, Any],
     select: _SelectList,
     order_by: Iterable[str],
 ) -> CompiledOptions:
@@ -34,7 +36,7 @@ def _build_compiled_options(
 _TIMESTAMP_OPS = frozenset(('=', '!=', '<', '>', '<=', '>='))
 
 
-def _preprocess_date_filters(filters: Iterable[Sequence[Any]], depth: int = 0) -> list | None:
+def _preprocess_date_filters(filters: Iterable[Sequence[Any]], depth: int = 0) -> list[Sequence[object]] | None:
     """
     Walk a filter tree for .$date operands; return a rebuilt tree with suffixes stripped
     and ISO strings replaced with datetime objects, or None if no .$date was found.
@@ -45,7 +47,7 @@ def _preprocess_date_filters(filters: Iterable[Sequence[Any]], depth: int = 0) -
     if depth > 3:
         raise ValueError('query-filters max recursion depth exceeded')
 
-    result = []
+    result: list[Sequence[object]] = []
     changed = False
     for f in filters:
         if len(f) == 2 and isinstance(f[0], str) and f[0] == 'OR':
@@ -149,8 +151,8 @@ def filter_list(
             filters = preprocessed
 
     cf = CF_EMPTY if not filters else _tf.compile_filters(list(filters))
-    co = _build_compiled_options(options, select, order_by)  # type: ignore[arg-type]
-    rv = _tf.tnfilter(_list, filters=cf, options=co)
+    co = _build_compiled_options(options, select, order_by)
+    rv: list[_Entry] | int = _tf.tnfilter(_list, filters=cf, options=co)
     if isinstance(rv, int):
         return rv   # count=True: tnfilter returns int directly
     if options.get('get') is True:
@@ -161,7 +163,17 @@ def filter_list(
     return rv
 
 
-def compile_filters(filters: list) -> CompiledFilters:
+def filter_list_model[E](result: dict[str, Any] | list[Any] | int, item: type[E]) -> list[E] | E | int:
+    if isinstance(result, int):
+        return result
+
+    if isinstance(result, dict):
+        return item(**result)
+
+    return [item(**row) for row in result]
+
+
+def compile_filters(filters: list[Sequence[object]]) -> CompiledFilters:
     """
     Validate and pre-compile a filter list for reuse. Handles .$date preprocessing.
     Store the returned object at module or class level to avoid recompiling on every call.
@@ -171,7 +183,7 @@ def compile_filters(filters: list) -> CompiledFilters:
     return _tf.compile_filters(filters)
 
 
-def compile_options(options: dict | None = None) -> CompiledOptions:
+def compile_options(options: dict[str, Any] | None = None) -> CompiledOptions:
     """
     Pre-compile query options for reuse. Validation is performed by the C layer.
     Store the returned object at module or class level to avoid recompiling on every call.

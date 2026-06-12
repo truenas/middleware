@@ -20,6 +20,7 @@ from middlewared.api.current import (
     ContainerDetails,
     ZFSResourceQuery,
 )
+from middlewared.plugins.truenas_connect.utils import TNC_CERT_PREFIX
 from middlewared.plugins.zfs_.utils import paths_to_datasets_impl
 from middlewared.service import CallError, ServiceContext
 
@@ -58,7 +59,12 @@ async def certificate_choices(context: ServiceContext) -> AppCertificateChoices:
         AppCertificate(id=cert.id, name=cert.name)
         for cert in await context.call2(
             context.s.certificate.query,
-            [['cert_type_CSR', '=', False], ['cert_type_CA', '=', False], ['parsed', '=', True]],
+            [
+                ['cert_type_CSR', '=', False],
+                ['cert_type_CA', '=', False],
+                ['parsed', '=', True],
+                ['name', '!^', TNC_CERT_PREFIX],
+            ],
         )
     ]
 
@@ -90,7 +96,7 @@ async def ip_choices(context: ServiceContext) -> AppIpChoices:
 
 async def available_space(context: ServiceContext) -> int:
     await context.call2(context.s.docker.validate_state)
-    return cast(int, (await context.middleware.call('filesystem.statfs', IX_APPS_MOUNT_PATH))['avail_bytes'])
+    return cast(int, (await context.middleware.call('filesystem.statfs', IX_APPS_MOUNT_PATH)).avail_bytes)
 
 
 async def gpu_choices(context: ServiceContext) -> AppGPUResponse:

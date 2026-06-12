@@ -34,8 +34,9 @@ from truenas_api_client import json
 
 import middlewared.service
 
+from .api.aliases import aliases as api_versions_aliases
 from .api.base.handler.dump_params import dump_params
-from .api.base.handler.model_provider import LazyModuleModelProvider, ModuleModelProvider
+from .api.base.handler.model_provider import LazyModuleModelProvider, ModuleModelProvider, ProxyModelProvider
 from .api.base.handler.result import serialize_result
 from .api.base.handler.version import APIVersion, APIVersionsAdapter
 from .api.base.model import BaseModel
@@ -99,9 +100,9 @@ if typing.TYPE_CHECKING:
 from middlewared.plugins.acme_dns_authenticator import DNSAuthenticatorService as ACMEDNSAuthenticatorService
 from middlewared.plugins.acme_protocol import ACMEProtocolService
 from middlewared.plugins.acme_registration import ACMERegistrationService
-from middlewared.plugins.alert.alert import AlertService
-from middlewared.plugins.alert.classes import AlertClassesService
-from middlewared.plugins.alert.service import AlertServiceService
+from middlewared.plugins.alert import AlertService
+from middlewared.plugins.alert.alertclasses import AlertClassesService
+from middlewared.plugins.alert.alertservice import AlertServiceService
 from middlewared.plugins.api_key import ApiKeyService
 from middlewared.plugins.apps import AppService
 from middlewared.plugins.catalog import CatalogService
@@ -112,8 +113,12 @@ from middlewared.plugins.cron import CronJobService
 from middlewared.plugins.docker import DockerService
 from middlewared.plugins.init_shutdown_script import InitShutdownScriptService
 from middlewared.plugins.keyvalue import KeyValueService
+from middlewared.plugins.mail import MailService
 from middlewared.plugins.ntp import NTPServerService
 from middlewared.plugins.ports import PortService
+from middlewared.plugins.pwenc import PWEncService
+from middlewared.plugins.reporting import ReportingService
+from middlewared.plugins.rsync import RsyncTaskService
 from middlewared.plugins.snapshot import PeriodicSnapshotTaskService
 from middlewared.plugins.truenas import TrueNASService
 from middlewared.plugins.truenas_connect import TrueNASConnectService
@@ -125,6 +130,7 @@ from middlewared.plugins.vm import VMService
 from middlewared.plugins.webshare import WebshareService
 from middlewared.plugins.webshare.sharing import SharingWebshareService
 from middlewared.plugins.zfs.resource_crud import ZFSResourceService
+from middlewared.plugins.zfs.tier import ZfsTierService
 
 _SubHandler = typing.Callable[['Middleware', 'EventType', dict], typing.Awaitable[None]]
 SYSTEMD_EXTEND_USECS = 240000000  # 4mins in microseconds
@@ -208,6 +214,7 @@ class ZfsServicesContainer(BaseServiceContainer):
     def __init__(self, middleware: "Middleware"):
         super().__init__(middleware)
         self.resource = ZFSResourceService(middleware)
+        self.tier = ZfsTierService(middleware)
 
 
 class ServiceContainer(BaseServiceContainer):
@@ -228,8 +235,12 @@ class ServiceContainer(BaseServiceContainer):
         self.initshutdownscript = InitShutdownScriptService(middleware)
         self.keyvalue = KeyValueService(middleware)
         self.lxc = LXCConfigService(middleware)
+        self.mail = MailService(middleware)
         self.pool = PoolServicesContainer(middleware)
         self.port = PortService(middleware)
+        self.pwenc = PWEncService(middleware)
+        self.reporting = ReportingService(middleware)
+        self.rsynctask = RsyncTaskService(middleware)
         self.sharing = SharingServicesContainer(middleware)
         self.system = SystemServicesContainer(middleware)
         self.tn_connect = TrueNASConnectService(middleware)
@@ -245,6 +256,12 @@ class ServiceContainer(BaseServiceContainer):
         self.methods = get_methods(self)
         for method_name, method in self.methods.items():
             method.__func__.__method_name__ = method_name
+
+
+_AuditEvent = typing.Literal[
+    'METHOD_CALL', 'AUTHENTICATION', 'REBOOT', 'SHUTDOWN', 'LOGOUT',
+    'WEBSHELL_AUTHENTICATION', 'WEBSHELL_LOGOUT',
+]
 
 
 class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
@@ -343,19 +360,33 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
 
     def _load_api_versions(self) -> list[APIVersion]:
         versions = []
+
         api_dir = os.path.join(os.path.dirname(__file__), 'api')
-        api_versions = [
-            (version_dir.name.replace('_', '.'), f'middlewared.api.{version_dir.name}')
+        api_versions_with_module = {
+            version_dir.name.replace('_', '.'): f'middlewared.api.{version_dir.name}'
             for version_dir in sorted(pathlib.Path(api_dir).iterdir())
             if version_dir.name.startswith('v') and version_dir.is_dir() and (version_dir / '__init__.py').exists()
-        ]
-        for i, (version, module_name) in enumerate(api_versions):
-            if i == len(api_versions) - 1:
-                module_provider = ModuleModelProvider(module_name)
+        }
+        model_providers = {}
+        for i, (version, module_name) in enumerate(api_versions_with_module.items()):
+            if i == len(api_versions_with_module) - 1:
+                model_provider = ModuleModelProvider(module_name)
             else:
-                module_provider = LazyModuleModelProvider(io_thread_pool_executor, module_name)
+                model_provider = LazyModuleModelProvider(io_thread_pool_executor, module_name)
 
-            versions.append(APIVersion(version, module_provider))
+            model_providers[version] = model_provider
+
+        for api_version, alias in api_versions_aliases.items():
+            if api_version in model_providers:
+                raise RuntimeError(f"Both API module and API alias exist for API version {api_version!r}")
+
+            if (model_provider := model_providers.get(alias)) is None:
+                raise RuntimeError(f"API version {alias!r} (API version {api_version!r} is its alias) does not exist")
+
+            model_providers[api_version] = ProxyModelProvider(model_provider)
+
+        for api_version in sorted(set(api_versions_with_module.keys()) | set(api_versions_aliases.keys())):
+            versions.append(APIVersion(api_version, model_providers[api_version]))
 
         return versions
 
@@ -550,7 +581,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
                 'mail',
                 # We also need to load alerts first because other plugins can issue one-shot alerts during their
                 # initialization
-                'alert.alert',
+                'alert',
                 # Migrate users and groups ASAP
                 'account',
                 # Replication plugin needs to be initialized before zettarepl in order to register network activity
@@ -971,7 +1002,12 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
             **prepared_call.kwargs,
         )
 
-    def dump_args(self, args, method=None, method_name=None):
+    def dump_args(
+        self,
+        args: list[typing.Any],
+        method: typing.Any = None,
+        method_name: str | None = None,
+    ) -> list[typing.Any]:
         if method is None:
             if method_name is not None:
                 try:
@@ -1051,7 +1087,13 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         else:
             return result
 
-    async def authorize_method_call(self, app, method_name, methodobj, params):
+    async def authorize_method_call(
+        self,
+        app: RpcWebSocketApp,
+        method_name: str,
+        methodobj: typing.Any,
+        params: list[typing.Any],
+    ) -> None:
         if hasattr(methodobj, '_no_auth_required'):
             if app.authenticated:
                 # Do not rate limit authenticated users
@@ -1189,7 +1231,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
     def _build_audit_message_sync(
         self,
         app: App,
-        event: typing.Literal['METHOD_CALL', 'AUTHENTICATION', 'REBOOT', 'SHUTDOWN', 'LOGOUT'],
+        event: _AuditEvent,
         event_data: dict,
         success: bool,
     ) -> str:
@@ -1239,7 +1281,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
     def log_audit_message_sync(
         self,
         app: App,
-        event: typing.Literal['METHOD_CALL', 'AUTHENTICATION', 'REBOOT', 'SHUTDOWN', 'LOGOUT'],
+        event: _AuditEvent,
         event_data: dict,
         success: bool,
     ) -> None:
@@ -1255,7 +1297,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
     async def log_audit_message(
         self,
         app: App,
-        event: typing.Literal['METHOD_CALL', 'AUTHENTICATION', 'REBOOT', 'SHUTDOWN', 'LOGOUT'],
+        event: _AuditEvent,
         event_data: dict,
         success: bool,
     ) -> None:

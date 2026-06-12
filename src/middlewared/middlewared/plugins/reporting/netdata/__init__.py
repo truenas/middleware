@@ -1,4 +1,6 @@
-from .connector import Netdata # noqa
-from .exceptions import ApiException, ClientConnectError # noqa
-from .graph_base import GraphBase, GRAPH_PLUGINS # noqa
-from .graphs import * # noqa
+from .connector import Netdata
+from .exceptions import ApiException, ClientConnectError
+from .graph_base import GRAPH_PLUGINS, GraphBase
+from .graphs import *  # noqa  (imported for side-effect: registers graph plugins in GRAPH_PLUGINS)
+
+__all__ = ['Netdata', 'ApiException', 'ClientConnectError', 'GraphBase', 'GRAPH_PLUGINS']

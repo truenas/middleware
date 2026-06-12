@@ -66,6 +66,11 @@ class FailoverEventsService(Service):
     # represents if a failover event was successful or not
     FAILOVER_RESULT = None
 
+    # tracks the type of the last successfully-completed event so the
+    # vrrp event thread can avoid re-firing vrrp_backup when we're
+    # already in BACKUP state. None until the first event completes.
+    LAST_EVENT_TYPE = None
+
     # list of critical services that get restarted first
     # before the other services during a failover event
     CRITICAL_SERVICES = ['iscsitarget', 'nvmet']
@@ -202,6 +207,14 @@ class FailoverEventsService(Service):
                 await self.middleware.call('failover.call_remote', 'failover.status_refresh')
             except Exception:
                 self.logger.warning('Failed to refresh failover status on active node')
+
+    def last_event_type(self):
+        """Return the type ('MASTER' | 'BACKUP') of the last successfully
+        completed failover event on this middlewared process, or None if
+        no event has completed since startup. Used by the vrrp event
+        thread to avoid re-firing a redundant vrrp_backup after a flap.
+        """
+        return self.LAST_EVENT_TYPE
 
     def run_call(self, method, *args, job=False):
         try:
@@ -556,6 +569,7 @@ class FailoverEventsService(Service):
             # there is nothing else to do so just log a warning and return early
             logger.warning('No zpools to import, exiting failover event')
             self.FAILOVER_RESULT = 'INFO'
+            self.LAST_EVENT_TYPE = 'MASTER'
             return self.FAILOVER_RESULT
 
         # unlock SED disks
@@ -717,6 +731,24 @@ class FailoverEventsService(Service):
         self.run_call('systemdataset.setup')
         logger.info('Done configuring system dataset')
 
+        # Re-apply the configured timezone from the (already replicated) DB row.
+        # If the standby was down or disconnected during the active's last
+        # timezone update, its clock state did not converge -- the new master
+        # would otherwise run with a stale /etc/localtime, TZ env and
+        # systemd-timedated cache until reboot. Done before critical services
+        # restart so they inherit the right TZ. Best-effort: a stale clock is
+        # degraded, not a takeover blocker.
+        logger.info('Synchronizing timezone to current configuration')
+        try:
+            tz = self.run_call('system.general.config')['timezone']
+            self.run_call('system.general.apply_timezone_to_running_system', tz)
+            logger.info('Done synchronizing timezone')
+        except Exception:
+            logger.exception(
+                'Failed to synchronize timezone on become-master; '
+                'new master may run with stale clock state until next reboot'
+            )
+
         # now we restart the services, prioritizing the "critical" services
         logger.info('Restarting critical services.')
         self.run_call('failover.events.restart_services', {'critical': True})
@@ -845,6 +877,7 @@ class FailoverEventsService(Service):
         job.set_progress(None, description='SUCCESS')
 
         self.FAILOVER_RESULT = 'SUCCESS'
+        self.LAST_EVENT_TYPE = 'MASTER'
 
         return self.FAILOVER_RESULT
 
@@ -1069,6 +1102,7 @@ class FailoverEventsService(Service):
 
         logger.info('Successfully became the BACKUP node.')
         self.FAILOVER_RESULT = 'SUCCESS'
+        self.LAST_EVENT_TYPE = 'BACKUP'
 
         return self.FAILOVER_RESULT
 

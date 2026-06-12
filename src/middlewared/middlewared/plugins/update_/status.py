@@ -10,7 +10,7 @@ from middlewared.api.current import (
     UpdateStatusStatus,
 )
 from middlewared.service import ServiceContext
-from middlewared.service_exception import CallError, ErrnoMixin, get_errname  # type: ignore
+from middlewared.service_exception import CallError, ErrnoMixin, get_errname  # type: ignore[attr-defined]
 
 from .profile_ import current_version_profile, profile_matches
 from .trains import ReleaseManifest, get_current_train_name, get_next_trains_names, get_train_releases, get_trains

@@ -138,16 +138,19 @@ def _build_entry(
 
     try:
         with _readable_meta_fd(item, item_path) as meta_fd:
+            xattrs = None
+            acl = None
             if mask & (DirectoryRequestMask.XATTRS | DirectoryRequestMask.ACL):
                 try:
                     xattr_list = os.listxattr(meta_fd)
                 except OSError:
                     xattr_list = []
-            else:
-                xattr_list = None
 
-            xattrs = xattr_list if mask & DirectoryRequestMask.XATTRS else None
-            acl = acl_is_present(xattr_list) if mask & DirectoryRequestMask.ACL else None
+                if mask & DirectoryRequestMask.XATTRS:
+                    xattrs = xattr_list
+
+                if mask & DirectoryRequestMask.ACL:
+                    acl = acl_is_present(xattr_list)
 
             zfs_attrs = _zfs_attrs_for(meta_fd) if mask & DirectoryRequestMask.ZFS_ATTRS else None
     except OSError:
@@ -178,7 +181,7 @@ def _build_entry(
 
 
 def iter_listdir(
-    path: str | os.PathLike,
+    path: str | os.PathLike[str],
     file_type: FileType | None = None,
     request_mask: DirectoryRequestMask | None = None,
 ) -> Iterator[dict[str, Any]]:
@@ -221,7 +224,7 @@ def iter_listdir(
             yield entry
 
 
-def directory_is_empty(path: str | os.PathLike) -> bool:
+def directory_is_empty(path: str | os.PathLike[str]) -> bool:
     """
     Memory-efficient test for whether ``path`` is an empty directory.
     """

@@ -234,6 +234,7 @@ class SMBService(ConfigService):
         bind_ip_choices = self.middleware.call_sync('smb.bindip_choices')
         is_enterprise = self.middleware.call_sync('system.is_enterprise')
         security_config = self.middleware.call_sync('system.security.config')
+        tiering_enabled = self.call_sync2(self.s.zfs.tier.config).enabled
         veeam_repo_errors = []
 
         # admins may change ZFS recordsize from shell, UI, or API. Make sure we generate or clear any alerts.
@@ -274,6 +275,7 @@ class SMBService(ConfigService):
             bind_ip_choices,
             is_enterprise,
             security_config,
+            tiering_enabled,
         )
 
     @api_method(SMBBindipChoicesArgs, SMBBindipChoicesResult)
@@ -746,6 +748,7 @@ class SharingSMBModel(sa.Model):
 
 class SharingSMBService(SharingService):
 
+    include_tier_info = True
     share_task_type = 'SMB'
     allowed_path_types = [FSLocation.EXTERNAL, FSLocation.LOCAL]
     path_resolution_filters = [['cifs_purpose', '!=', SMBSharePurpose.EXTERNAL_SHARE]]
@@ -1220,7 +1223,7 @@ class SharingSMBService(SharingService):
             return 'OFF'
 
         st = self.middleware.call_sync('filesystem.stat', path)
-        if st['type'] == 'SYMLINK':
+        if st.type == 'SYMLINK':
             verrors.add(schema, f'{path}: is symbolic link.')
             return
 
@@ -1313,7 +1316,7 @@ class SharingSMBService(SharingService):
                 )
             else:
                 stat_info = await self.middleware.call('filesystem.stat', data[share_field.PATH])
-                if not data[share_field.OPTS].get(share_field.ACL, True) and stat_info['acl']:
+                if not data[share_field.OPTS].get(share_field.ACL, True) and stat_info.acl:
                     verrors.add(
                         f'{schema_name}.acl',
                         f'ACL detected on {data["path"]}. ACLs must be stripped prior to creation '
@@ -1326,7 +1329,7 @@ class SharingSMBService(SharingService):
                         f'{schema_name}.{share_field.PURPOSE}',
                         'Veeam repository shares require a TrueNAS enterprise license.'
                     )
-                bsize = (await self.middleware.call('filesystem.statfs', data[share_field.PATH]))['blocksize']
+                bsize = (await self.middleware.call('filesystem.statfs', data[share_field.PATH])).blocksize
                 if bsize != VEEAM_REPO_BLOCKSIZE:
                     verrors.add(
                         f'{schema_name}.{share_field.PATH}',
@@ -1559,6 +1562,7 @@ class SharingSMBService(SharingService):
                 data[param] = True
 
         data.pop(self.locked_field, None)
+        data.pop('tier', None)
         data.update(opts)
 
         # hosts allow and hosts deny are space-delimited

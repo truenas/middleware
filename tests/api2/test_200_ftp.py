@@ -16,9 +16,9 @@ from middlewared.test.integration.assets.account import user as ftp_user
 from middlewared.test.integration.assets.pool import dataset as dataset_asset
 from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.utils.client import truenas_server, host as init_truenas_server
+from middlewared.test.integration.utils.legacy_functions import SSH_TEST, send_file
 
 from auto_config import password, pool_name, user
-from functions import SSH_TEST, send_file
 from protocols import ftp_connect, ftp_connection, ftps_connection
 
 FTP_DEFAULT = {}

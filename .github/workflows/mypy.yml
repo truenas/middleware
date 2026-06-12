@@ -21,8 +21,9 @@ jobs:
         run: |
           cd src/middlewared
           mypy \
-            middlewared/job.py \
             middlewared/alert/ \
+            middlewared/api/base/ \
+            middlewared/common/ \
             middlewared/plugins/acme_protocol/ \
             middlewared/plugins/acme_dns_authenticator/ \
             middlewared/plugins/acme_registration/ \
@@ -36,10 +37,11 @@ jobs:
             middlewared/plugins/cron/ \
             middlewared/plugins/docker/ \
             middlewared/plugins/init_shutdown_script/ \
-            middlewared/plugins/keyvalue.py \
-            middlewared/common/ports/ \
+            middlewared/plugins/mail/ \
             middlewared/plugins/ntp/ \
             middlewared/plugins/ports/ \
+            middlewared/plugins/reporting/ \
+            middlewared/plugins/rsync/ \
             middlewared/plugins/snapshot/ \
             middlewared/plugins/truenas/ \
             middlewared/plugins/truenas_connect/ \
@@ -50,7 +52,17 @@ jobs:
             middlewared/plugins/ups/ \
             middlewared/plugins/vm/ \
             middlewared/plugins/zfs/ \
+            middlewared/plugins/filesystem.py \
+            middlewared/plugins/keyvalue.py \
+            middlewared/plugins/pwenc.py \
+            middlewared/service/sharing_task_service_part.py \
+            middlewared/service/generic_sharing_service.py \
+            middlewared/utils/ \
             middlewared/test/integration/runner/ \
+            middlewared/job.py \
             --exclude middlewared/etc_files \
+            --exclude middlewared/utils/directoryservices \
+            --exclude middlewared/utils/lio \
+            --exclude middlewared/utils/nvmet \
             --follow-imports silent \
             --strict

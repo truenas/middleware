@@ -2,12 +2,13 @@ from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from truenas_connect_utils.status import Status
 
 from middlewared.api.current import TrueNASConnectEntry
 from middlewared.plugins.truenas_connect.config import TrueNASConnectConfigServicePart
 from middlewared.plugins.truenas_connect.hostname import TNCHostnameService
-from middlewared.plugins.truenas_connect.utils import TNC_IPS_CACHE_KEY
-from middlewared.service import ValidationErrors
+from middlewared.plugins.truenas_connect.utils import CONFIGURED_TNC_STATES, TNC_IPS_CACHE_KEY
+from middlewared.service import CallError, ValidationErrors
 
 
 def make_tnc_entry(**overrides: Any) -> TrueNASConnectEntry:
@@ -459,3 +460,219 @@ class TestTNCHostnameService:
         assert cache_put_args[0] == TNC_IPS_CACHE_KEY
         assert cache_put_args[1] == []
         service.middleware.call_hook.assert_not_called()
+
+
+class _HeartbeatLoopReached(Exception):
+    """Raised by the patched heartbeat request so tests can prove the start guard was passed."""
+
+
+async def _run_heartbeat(status: str, creds: dict | None):
+    """Drive heartbeat_start_impl just past its start guard.
+
+    Everything between the guard and the first request is patched out; the request itself raises
+    _HeartbeatLoopReached. So: guard rejected -> CallError; guard passed -> _HeartbeatLoopReached.
+    """
+    from middlewared.plugins.truenas_connect import heartbeat as hb
+
+    ctx = MagicMock()
+    ctx.middleware = MagicMock()
+    ctx.middleware.call = AsyncMock(return_value='25.10.0')
+
+    with patch.object(hb, 'config_internal', new=AsyncMock(return_value={'status': status, 'id': 1})), \
+            patch.object(hb, 'get_account_id_and_system_id', return_value=creds), \
+            patch.object(hb, 'get_heartbeat_url', return_value='http://hb/{system_id}/{version}'), \
+            patch.object(hb, 'parse_version_string', return_value='25.10'), \
+            patch.object(hb, 'iterate_disks', return_value=[]), \
+            patch.object(hb, '_build_payload', new=AsyncMock(return_value={})), \
+            patch.object(hb, '_heartbeat_request', new=AsyncMock(side_effect=_HeartbeatLoopReached())):
+        await hb.heartbeat_start_impl(ctx)
+
+
+@pytest.mark.parametrize('status', [
+    Status.CONFIGURED.name,
+    Status.CERT_RENEWAL_IN_PROGRESS.name,
+    Status.CERT_RENEWAL_SUCCESS.name,
+    Status.CERT_RENEWAL_FAILURE.name,
+])
+@pytest.mark.asyncio
+async def test_heartbeat_guard_passes_for_configured_states(status):
+    """With valid creds, the heartbeat enters its loop (does not raise the guard CallError)."""
+    creds = {'account_id': 'a', 'system_id': 's'}
+    with pytest.raises(_HeartbeatLoopReached):
+        await _run_heartbeat(status, creds)
+
+
+@pytest.mark.asyncio
+async def test_heartbeat_guard_rejects_unconfigured_state():
+    """A non-configured status is rejected before any request is made."""
+    creds = {'account_id': 'a', 'system_id': 's'}
+    with pytest.raises(CallError):
+        await _run_heartbeat(Status.REGISTRATION_FINALIZATION_FAILED.name, creds)
+
+
+@pytest.mark.asyncio
+async def test_heartbeat_guard_rejects_when_no_creds():
+    """Missing creds is rejected even in a configured state."""
+    with pytest.raises(CallError):
+        await _run_heartbeat(Status.CONFIGURED.name, None)
+
+
+def test_cert_renewal_failure_is_configured_state():
+    assert Status.CERT_RENEWAL_FAILURE.name in CONFIGURED_TNC_STATES
+
+
+@pytest.mark.asyncio
+async def test_sync_ips_proceeds_in_renewal_failure():
+    """sync_ips must not early-return when the box is in CERT_RENEWAL_FAILURE."""
+    service = TNCHostnameService(MagicMock())
+    service.config = AsyncMock(return_value={})
+    service.register_update_ips = AsyncMock(return_value={'error': None})
+    service.middleware.call2 = AsyncMock(
+        return_value=make_tnc_entry(status=Status.CERT_RENEWAL_FAILURE.name),
+    )
+    service.middleware.call_hook = AsyncMock()
+
+    async def mock_middleware_call(method, *args, **kwargs):
+        if method == 'failover.is_single_master_node':
+            return True
+        elif method == 'system.general.config':
+            return {'ui_address': ['0.0.0.0'], 'ui_v6address': ['::']}
+        elif method == 'cache.get':
+            raise KeyError('miss')
+        elif method == 'cache.put':
+            return None
+        raise ValueError(f'Unexpected: {method}')
+
+    service.middleware.call = AsyncMock(side_effect=mock_middleware_call)
+
+    with patch(
+        'middlewared.plugins.truenas_connect.hostname.get_effective_ips',
+        new_callable=AsyncMock, return_value=['192.168.1.10'],
+    ):
+        await service.sync_ips(event_details={'type': 'ipaddress.change', 'iface': 'ens3'})
+
+    service.register_update_ips.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_handle_deregistration_unsets_and_deletes_cert():
+    """A configured box with a cert is unset, an alert raised, and the cert deleted."""
+    from middlewared.plugins.truenas_connect import internal
+
+    ctx = MagicMock()
+    ctx.middleware = MagicMock()
+    ctx.middleware.call = AsyncMock()
+    ctx.middleware.send_event = MagicMock()
+    ctx.call2 = AsyncMock(return_value=MagicMock(model_dump=MagicMock(return_value={})))
+
+    with patch.object(
+        internal, 'config_internal',
+        new=AsyncMock(return_value={'status': Status.CONFIGURED.name, 'certificate': 15, 'id': 1}),
+    ), patch.object(internal, 'unset_registration_details', new=AsyncMock()) as unset, \
+            patch.object(internal, 'delete_cert', new=AsyncMock()) as delete_cert:
+        await internal.handle_tnc_deregistration(ctx)
+
+    unset.assert_awaited_once_with(ctx, False)
+    delete_cert.assert_awaited_once_with(ctx, 15)
+    ctx.middleware.send_event.assert_called_once()
+    # datastore.update flips enabled off and applies the unset payload
+    update_call = next(
+        c for c in ctx.middleware.call.call_args_list if c.args[0] == 'datastore.update'
+    )
+    payload = update_call.args[3]
+    assert payload['enabled'] is False
+    assert payload['certificate'] is None
+    assert payload['status'] == Status.DISABLED.name
+
+
+@pytest.mark.asyncio
+async def test_handle_deregistration_noop_when_already_unset():
+    """Idempotent: already DISABLED with no cert performs no datastore write or cert delete."""
+    from middlewared.plugins.truenas_connect import internal
+
+    ctx = MagicMock()
+    ctx.middleware = MagicMock()
+    ctx.middleware.call = AsyncMock()
+    ctx.call2 = AsyncMock()
+
+    with patch.object(
+        internal, 'config_internal',
+        new=AsyncMock(return_value={'status': Status.DISABLED.name, 'certificate': None, 'id': 1}),
+    ), patch.object(internal, 'unset_registration_details', new=AsyncMock()) as unset, \
+            patch.object(internal, 'delete_cert', new=AsyncMock()) as delete_cert:
+        await internal.handle_tnc_deregistration(ctx)
+
+    unset.assert_not_called()
+    delete_cert.assert_not_called()
+    ctx.middleware.call.assert_not_called()
+
+
+def _make_acme_service(acme_cfg):
+    """Build a TNCACMEService whose call_sync2 dispatches by service-shortcut identity.
+
+    Returns (service, dereg_calls); dereg_calls records when handle_deregistration is invoked.
+    """
+    from middlewared.plugins.truenas_connect.acme import TNCACMEService
+
+    service = TNCACMEService(MagicMock())
+    service.middleware.call_sync2 = MagicMock(return_value=MagicMock(certificate='PEM'))
+    dereg_calls = []
+
+    def dispatch(target, *args, **kwargs):
+        if target is service.s.tn_connect.config:
+            return MagicMock(certificate=15)
+        if target is service.s.tn_connect.acme.config:
+            return acme_cfg
+        if target is service.s.tn_connect.handle_deregistration:
+            dereg_calls.append(True)
+            return None
+        raise AssertionError(f'unexpected call_sync2 target: {target}')
+
+    service.call_sync2 = MagicMock(side_effect=dispatch)
+    return service, dereg_calls
+
+
+def test_check_renewal_401_routes_to_deregistration():
+    service, dereg_calls = _make_acme_service(
+        {'status_code': 401, 'error': "HTTP 401: 'Unauthorized'", 'acme_details': {}},
+    )
+    with patch('middlewared.plugins.truenas_connect.acme.get_cert_id', return_value='cid'):
+        result = service.check_renewal_needed()
+    assert result == (False, None)
+    assert dereg_calls == [True]
+
+
+def test_check_renewal_non_401_error_does_not_deregister():
+    service, dereg_calls = _make_acme_service(
+        {'status_code': 500, 'error': 'HTTP 500: boom', 'acme_details': {}},
+    )
+    with patch('middlewared.plugins.truenas_connect.acme.get_cert_id', return_value='cid'):
+        result = service.check_renewal_needed()
+    assert result == (False, None)
+    assert dereg_calls == []
+
+
+def test_check_renewal_error_without_status_code_does_not_deregister():
+    """acme_config's early-return omits status_code; .get() must not raise or trigger dereg."""
+    service, dereg_calls = _make_acme_service(
+        {'error': 'TrueNAS Connect is not enabled or not configured properly', 'acme_details': {}},
+    )
+    with patch('middlewared.plugins.truenas_connect.acme.get_cert_id', return_value='cid'):
+        result = service.check_renewal_needed()
+    assert result == (False, None)
+    assert dereg_calls == []
+
+
+@pytest.mark.asyncio
+async def test_state_check_failure_triggers_renew_and_heartbeat():
+    from middlewared.plugins.truenas_connect import state as state_mod
+
+    ctx = MagicMock()
+    ctx.middleware = MagicMock()
+    ctx.middleware.create_task = MagicMock()
+    ctx.call2 = AsyncMock(return_value=make_tnc_entry(status=Status.CERT_RENEWAL_FAILURE.name))
+
+    await state_mod.state_check_impl(ctx, restart_ui=False)
+
+    # One task for renew_cert (recovery branch) + one for heartbeat_start (CONFIGURED_TNC_STATES).
+    assert ctx.middleware.create_task.call_count == 2

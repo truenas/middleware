@@ -13,13 +13,21 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Check illegal patterns
+    - name: Check for Literal[None] in API schemas
       run: |
         if grep -r "Literal\[None\]" src/middlewared/middlewared/api/; then
           echo "❌ Literal[None] usage found in middlewared/api/. Use None instead."
           exit 1
         else
           echo "✅ No Literal[None] usage found in middlewared/api/"
+        fi
+    - name: "Check for overly generic generic `type: ignore`"
+      run: |
+        if egrep -R ' type: ignore$' src/middlewared; then
+          echo "Overly generic 'type: ignore' comments found in src/middlewared. Please, use specific error codes instead."
+          exit 1
+        else
+          echo "✅ No overly generic 'type: ignore' comments found in src/middlewared"
         fi
     - name: Set up Python 3.13
       uses: actions/setup-python@v5

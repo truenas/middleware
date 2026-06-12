@@ -21,15 +21,15 @@ PATH=/etc:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 ${' '.join(middleware.call_sync('cronjob.construct_cron_command', job.schedule, "root", f"midclt call cronjob.run {job.id} true"))}
     % endfor
 
-    % for job in middleware.call_sync("rsynctask.query", [["enabled", "=", True]]):
+    % for job in middleware.call_sync2(middleware.services.rsynctask.query, [["enabled", "=", True]]):
 <%
-    if job["locked"]:
-        middleware.call_sync('rsynctask.generate_locked_alert', job['id'])
+    if job.locked:
+        middleware.call_sync2(middleware.services.rsynctask.generate_locked_alert, job.id)
         continue
     else:
-        middleware.call_sync('rsynctask.remove_locked_alert', job['id'])
+        middleware.call_sync2(middleware.services.rsynctask.remove_locked_alert, job.id)
 %>\
-${' '.join(middleware.call_sync('cronjob.construct_cron_command', job["schedule"], "root", f"midclt call rsynctask.run {job['id']}"))}
+${' '.join(middleware.call_sync('cronjob.construct_cron_command', job.schedule.model_dump(), "root", f"midclt call rsynctask.run {job.id}"))}
     % endfor
 
     % for job in middleware.call_sync("cloudsync.query", [["enabled", "=", True]]):

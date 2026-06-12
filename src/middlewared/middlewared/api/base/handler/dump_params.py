@@ -1,4 +1,5 @@
 import itertools
+from typing import Any
 
 from middlewared.api.base import BaseModel
 from middlewared.service_exception import ValidationErrors
@@ -9,7 +10,7 @@ from .remove_secrets import remove_secrets
 __all__ = ["dump_params"]
 
 
-def dump_params(model: type[BaseModel], args: list, expose_secrets: bool) -> list:
+def dump_params(model: type[BaseModel], args: list[Any], expose_secrets: bool) -> list[Any]:
     """
     Dumps a list of `args` for a method call that accepts `model` parameters.
 
@@ -23,6 +24,6 @@ def dump_params(model: type[BaseModel], args: list, expose_secrets: bool) -> lis
     except ValidationErrors:
         # These are invalid params, so we fall back to redacting secrets this way
         return [
-            remove_secrets(field.annotation, arg) if field is not None else arg
+            remove_secrets(field.annotation, arg) if field is not None else arg  # type: ignore[arg-type]
             for field, arg in itertools.zip_longest(model.model_fields.values(), args, fillvalue=None)
         ]

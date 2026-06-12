@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+from collections.abc import Callable
 from datetime import time
 import re
 
@@ -6,15 +9,15 @@ from pydantic import HttpUrl
 __all__ = ["match_validator", "time_validator", "https_only_check", "email_validator"]
 
 
-def match_validator(pattern: re.Pattern, explanation: str | None = None):
-    def validator(value: str):
+def match_validator(pattern: re.Pattern[str], explanation: str | None = None) -> Callable[[str], str]:
+    def validator(value: str) -> str:
         assert (value is None or pattern.match(value)), (explanation or f"Value does not match {pattern!r} pattern")
         return value
 
     return validator
 
 
-def time_validator(value: str):
+def time_validator(value: str) -> str:
     """Always return in the format HH:MM."""
     try:
         hours, minutes = value.split(':')
@@ -37,7 +40,7 @@ def https_only_check(url: HttpUrl) -> str:
     return str(url)
 
 
-def email_validator(value: str):
+def email_validator(value: str) -> str:
     # https://www.rfc-editor.org/rfc/rfc5321#section-4.5.3.1.3
     # (subtract 2 because path portion of email is separated
     # by enclosing "<" which we cannot control)

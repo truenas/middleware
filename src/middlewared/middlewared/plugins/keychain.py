@@ -216,14 +216,16 @@ class RsyncTaskSSHCredentialsUsedByDelegate(KeychainCredentialUsedByDelegate):
     unbind_method = KeychainCredentialUsedByDelegateUnbindMethod.DISABLE
 
     async def query(self, id_):
-        return await self.middleware.call("rsynctask.query", [["ssh_credentials.id", "=", id_]])
+        return await self.middleware.call2(
+            self.middleware.services.rsynctask.query, [["ssh_credentials.id", "=", id_]]
+        )
 
     async def get_title(self, row):
-        return f"Rsync task for {row['path']!r}"
+        return f"Rsync task for {row.path!r}"
 
     async def unbind(self, row):
-        await self.middleware.call("rsynctask.update", row["id"], {"enabled": False})
-        await self.middleware.call("datastore.update", "tasks.rsync", row["id"], {
+        await self.middleware.call2(self.middleware.services.rsynctask.update, row.id, {"enabled": False})
+        await self.middleware.call("datastore.update", "tasks.rsync", row.id, {
             "rsync_ssh_credentials": None,
         })
 

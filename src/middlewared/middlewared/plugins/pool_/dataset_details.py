@@ -179,7 +179,8 @@ class PoolDatasetService(Service):
             results['cloud'].append(task)
 
         # rsync
-        for task in self.middleware.call_sync('rsynctask.query'):
+        for rsync_task in self.call_sync2(self.s.rsynctask.query):
+            task = rsync_task.model_dump()
             task['mount_info'] = self.get_mount_info(task['path'])
             results['rsync'].append(task)
 

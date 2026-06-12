@@ -10,9 +10,9 @@ from protocols import SMB
 from samba import ntstatus
 
 from auto_config import pool_name, user, password
-from functions import SSH_TEST
 from middlewared.test.integration.utils import call
 from middlewared.test.integration.utils.client import truenas_server
+from middlewared.test.integration.utils.legacy_functions import SSH_TEST
 
 
 dataset = f"{pool_name}/smb-vss"

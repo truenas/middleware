@@ -16,10 +16,10 @@ from middlewared.test.integration.assets.pool import another_pool
 from middlewared.test.integration.utils import call, mock, ssh
 from middlewared.test.integration.utils.client import truenas_server
 from middlewared.test.integration.utils.failover import wait_for_standby
+from middlewared.test.integration.utils.legacy_functions import async_SSH_done, async_SSH_start
 from middlewared.test.integration.utils.system import reset_systemd_svcs as reset_svcs
 
 from auto_config import hostname, password, pool_name, user, ha
-from functions import async_SSH_done, async_SSH_start
 from protocols import SSH_NFS, nfs_share
 from protocols.pynfs_proto import PynfsClient, PynfsClient3
 from truenas_api_client import ClientException
@@ -536,7 +536,7 @@ def nfs_share_config(nfsid: int):
         share_config = configs[0]
         yield copy(share_config)
     finally:
-        excl = ['id', 'path', 'locked', 'dataset', 'relative_path']
+        excl = ['id', 'path', 'locked', 'dataset', 'relative_path', 'tier']
         [share_config.pop(key) for key in excl]
         call("sharing.nfs.update", nfsid, share_config)
 

@@ -396,6 +396,14 @@ class ZFSResourceSnapshotService(Service):
     def clone_impl(self, tls: Any, data: ZFSResourceSnapshotCloneQuery) -> None:
         schema = "zfs.resource.snapshot.clone"
 
+        if "special_small_blocks" in data.properties:
+            if self.call_sync2(self.s.zfs.tier.config).enabled:
+                raise ValidationError(
+                    f"{schema}.properties",
+                    "ZFS tiering is enabled; use zfs.tier.dataset_set_tier to manage special_small_blocks.",
+                    errno.EINVAL,
+                )
+
         # Check for internal path protection on BOTH source and destination
         if not data.bypass:
             # For snapshot paths, extract the dataset portion
@@ -639,7 +647,7 @@ class ZFSResourceSnapshotService(Service):
     @pass_thread_local_storage
     def holds_impl(self, tls: Any, path: str) -> tuple[str, ...]:
         rsrc = open_resource(tls, path)
-        return rsrc.get_holds()  # type: ignore
+        return rsrc.get_holds()  # type: ignore[no-any-return]
 
     @api_method(
         ZFSResourceSnapshotHoldsArgs,

@@ -1,5 +1,7 @@
 from typing import Literal
 
+from pydantic import Field
+
 from middlewared.api.base import BaseModel, LongString, NonEmptyString, single_argument_args, single_argument_result
 
 __all__ = [
@@ -36,14 +38,16 @@ class AppImageDockerhubRateLimitArgs(BaseModel):
 
 @single_argument_result
 class AppImageDockerhubRateLimitResult(BaseModel):
-    total_pull_limit: int | None = None
-    """Total pull limit for Docker Hub registry"""
-    total_time_limit_in_secs: int | None = None
-    """Total time limit in seconds for Docker Hub registry before the limit renews"""
-    remaining_pull_limit: int | None = None
-    """Remaining pull limit for Docker Hub registry"""
-    remaining_time_limit_in_secs: int | None = None
-    """Remaining time limit in seconds for Docker Hub registry for the current pull limit to be renewed"""
+    total_pull_limit: int | None = Field(default=None, description="Total pull limit for Docker Hub registry")
+    total_time_limit_in_secs: int | None = Field(
+        default=None,
+        description="Total time limit in seconds for Docker Hub registry before the limit renews",
+    )
+    remaining_pull_limit: int | None = Field(default=None, description="Remaining pull limit for Docker Hub registry")
+    remaining_time_limit_in_secs: int | None = Field(
+        default=None,
+        description="Remaining time limit in seconds for Docker Hub registry for the current pull limit to be renewed",
+    )
     error: str | None = None
 
 

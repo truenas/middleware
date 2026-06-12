@@ -1,7 +1,7 @@
 import sys
 import enum
 import subprocess
-from functions import SRVTarget, get_host_ip
+from middlewared.test.integration.utils.legacy_functions import SRVTarget, get_host_ip
 from platform import system
 from time import sleep
 
@@ -232,9 +232,15 @@ class SMB(object):
             self._open_files[idx]["fh"], data, offset
         )
 
-    def rename(self, src, dst):
+    def rename(self, src, dst, replace=False):
         if libsmb_has_rename:
-            return self._connection.rename(src, dst)
+            return self._connection.rename(src, dst, replace=replace)
+
+        if replace:
+            raise NotImplementedError(
+                "replace=True requires libsmb.Conn.rename; the smbclient CLI "
+                "fallback does not expose an overwrite option."
+            )
 
         cmd = [
             "smbclient", f"//{self._host}/{self._share}",

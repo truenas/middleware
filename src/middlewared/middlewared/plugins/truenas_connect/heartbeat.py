@@ -1,31 +1,25 @@
 from __future__ import annotations
 
 import asyncio
-import contextlib
 import datetime
 import logging
 from typing import Any
 
 from truenas_connect_utils.config import get_account_id_and_system_id
-from truenas_connect_utils.status import Status
 from truenas_connect_utils.urls import get_heartbeat_url
 
-from middlewared.alert.source.truenas_connect import (
-    TNCDisabledAutoUnconfiguredAlert,
-    TNCHeartbeatConnectionFailureAlert,
-)
+from middlewared.alert.source.truenas_connect import TNCHeartbeatConnectionFailureAlert
 from middlewared.service import CallError, ServiceContext
 from middlewared.utils.disks_.disk_class import iterate_disks
 from middlewared.utils.version import parse_version_string
 
-from .internal import config_internal, delete_cert, unset_registration_details
+from .internal import config_internal, handle_tnc_deregistration
 from .request import Mode, auth_headers, tnc_request
 from .utils import (
     CONFIGURED_TNC_STATES,
     HEARTBEAT_INTERVAL,
     calculate_sleep,
     decode_and_validate_token,
-    get_unset_payload,
 )
 
 logger = logging.getLogger('truenas_connect')
@@ -71,7 +65,7 @@ async def heartbeat_start_impl(context: ServiceContext) -> None:
     logger.debug('TNC Heartbeat: Starting heartbeat service')
     tnc_config = await config_internal(context)
     creds = get_account_id_and_system_id(tnc_config)
-    if tnc_config['status'] != Status.CONFIGURED.name or creds is None:
+    if tnc_config['status'] not in CONFIGURED_TNC_STATES or creds is None:
         raise CallError('TrueNAS Connect is not configured properly')
 
     heartbeat_url = get_heartbeat_url(tnc_config).format(
@@ -121,20 +115,7 @@ async def heartbeat_start_impl(context: ServiceContext) -> None:
                     sleep_error = True
                 case 401:
                     logger.debug('TNC Heartbeat: Received 401, unsetting TNC')
-                    with contextlib.suppress(Exception):
-                        # This is called to just make sure that we setup a self-signed certificate and
-                        # remove any alerts which might be there as we are going to unset TNC
-                        await unset_registration_details(context, False)
-
-                    await context.middleware.call('datastore.update', 'truenas_connect', tnc_config['id'], {
-                        'enabled': False,
-                    } | get_unset_payload())
-                    new_entry = await context.call2(context.s.tn_connect.config)
-                    context.middleware.send_event(
-                        'tn_connect.config', 'CHANGED', fields=new_entry.model_dump(),
-                    )
-                    await context.call2(context.s.alert.oneshot_create, TNCDisabledAutoUnconfiguredAlert())
-                    await delete_cert(context, tnc_config['certificate'])
+                    await handle_tnc_deregistration(context)
                     return
                 case 500:
                     logger.debug('TNC Heartbeat: Received 500')

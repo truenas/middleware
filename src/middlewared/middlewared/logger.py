@@ -60,6 +60,7 @@ warnings.filterwarnings("ignore", category=UserWarning, module="middlewared.api.
 
 logging.TRACE = 6
 
+ACME_LOGFILE = '/var/log/acme.log'
 APP_LIFECYCLE_LOGFILE = '/var/log/app_lifecycle.log'
 APP_MIGRATION_LOGFILE = '/var/log/app_migrations.log'
 AUDIT_HANDLER_LOGFILE = '/var/log/audit/audit_handler.log'
@@ -110,6 +111,7 @@ class TNLog:
 # the auto-generated syslog-ng rules place messages in the correct log files.
 ALL_LOG_FILES = (
     TNLog(None, LOGFILE),
+    TNLog('acme', ACME_LOGFILE),
     TNLog('app_lifecycle', APP_LIFECYCLE_LOGFILE),
     TNLog('app_migration', APP_MIGRATION_LOGFILE),
     TNLog('audit_handler', AUDIT_HANDLER_LOGFILE),

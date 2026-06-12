@@ -10,9 +10,9 @@ from middlewared.test.integration.assets.pool import dataset, snapshot
 from middlewared.test.integration.assets.filesystem import directory, mkfile
 from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.utils.client import truenas_server
+from middlewared.test.integration.utils.legacy_functions import async_SSH_done, async_SSH_start
 from middlewared.test.integration.utils.system import reset_systemd_svcs
 from auto_config import ha, hostname, interface, password, user, pool_name
-from functions import async_SSH_done, async_SSH_start
 
 
 # Alias

@@ -1,9 +1,12 @@
 import threading
 
-from middlewared.api import api_method
+from middlewared.api import Event, api_method
 from middlewared.api.current import (
     ZPoolEntry,
+    ZPoolQueryAddedEvent,
     ZPoolQueryArgs,
+    ZPoolQueryChangedEvent,
+    ZPoolQueryRemovedEvent,
     ZPoolQueryResult,
 )
 from middlewared.service import Service, private
@@ -11,18 +14,42 @@ from middlewared.service.decorators import pass_thread_local_storage
 
 from .query_impl import query_impl
 
+# Properties baked into every emitted `zpool.query` event so that subscribers
+# receive a Pool-shaped payload without having to round-trip another call.
+EVENT_PROPERTIES = (
+    "class_normal_used",
+    "class_normal_available",
+    "class_normal_usable",
+    "class_special_used",
+    "class_special_available",
+    "class_special_usable",
+    "autotrim",
+    "dedup_table_size",
+    "dedup_table_quota",
+)
+
 
 class ZPoolService(Service):
     class Config:
         namespace = "zpool"
         cli_private = True
         entry = ZPoolEntry
+        events = [
+            Event(
+                name="zpool.query",
+                description="Sent on zpool changes.",
+                roles=["POOL_READ"],
+                models={
+                    "ADDED": ZPoolQueryAddedEvent,
+                    "CHANGED": ZPoolQueryChangedEvent,
+                    "REMOVED": ZPoolQueryRemovedEvent,
+                },
+            )
+        ]
 
     @private
     @pass_thread_local_storage
-    def query_impl(
-        self, tls: threading.local, data: dict | None = None
-    ) -> list[ZPoolEntry]:
+    def query_impl(self, tls: threading.local, data: dict | None = None) -> list[ZPoolEntry]:
         if data is None:
             data = dict()
         return query_impl(tls.lzh, data)
@@ -70,6 +97,7 @@ class ZPoolService(Service):
 
             entries.append(
                 {
+                    "id": pool_info["id"] if pool_info else None,
                     "name": name,
                     "guid": int(pool_info["guid"]) if pool_info else 0,
                     "status": "OFFLINE",
@@ -77,6 +105,8 @@ class ZPoolService(Service):
                     "warning": False,
                     "status_code": status_code,
                     "status_detail": status_detail,
+                    "is_upgraded": None,
+                    "all_sed": pool_info.get("all_sed"),
                 }
             )
         return entries
@@ -131,9 +161,7 @@ class ZPoolService(Service):
 
         db_pools = {}
         pool_names = []
-        for p in self.middleware.call_sync(
-            "datastore.query", "storage.volume", [], {"prefix": "vol_"}
-        ):
+        for p in self.middleware.call_sync("datastore.query", "storage.volume", [], {"prefix": "vol_"}):
             if requested_names is None or p["name"] in requested_names:
                 db_pools[p["name"]] = p
                 pool_names.append(p["name"])
@@ -142,9 +170,13 @@ class ZPoolService(Service):
         if requested_names is not None and boot_pool_name in requested_names:
             pool_names.append(boot_pool_name)
 
-        results = self.middleware.call_sync(
-            "zpool.query_impl", data | {"pool_names": pool_names}
-        )
+        results = self.middleware.call_sync("zpool.query_impl", data | {"pool_names": pool_names})
+        for entry in results:
+            entry.update({"id": None, "all_sed": None})
+            db_entry = db_pools.get(entry["name"])
+            if db_entry is not None:
+                entry.update({"id": db_entry["id"], "all_sed": db_entry["all_sed"]})
+
         imported_names = {p["name"] for p in results}
         offline_names = [name for name in pool_names if name not in imported_names]
         results.extend(self.offline_entries(db_pools, offline_names))
@@ -153,3 +185,34 @@ class ZPoolService(Service):
         for pool in results:
             rv.append(ZPoolEntry(**pool))
         return rv
+
+    @private
+    def send_change_event(self, pool_name: str, event_type: str = "CHANGED"):
+        """Emit a ``zpool.query`` event with a Pool-shaped payload.
+
+        Re-queries ``zpool.query`` with topology, scan, and the standard
+        property set so subscribers receive the same fields they would
+        from a direct call. No-ops when the pool is not in the database
+        (boot pool, or a pool that has been exported between the trigger
+        and the emit).
+        """
+        pools = self.middleware.call_sync(
+            "zpool.query",
+            {
+                "pool_names": [pool_name],
+                "topology": True,
+                "scan": True,
+                "properties": list(EVENT_PROPERTIES),
+            },
+        )
+        if not pools:
+            return
+        pool = pools[0].model_dump()
+        if pool["id"] is None:
+            return
+        self.middleware.send_event("zpool.query", event_type, id=pool["id"], fields=pool)
+
+    @private
+    def send_removed_event(self, pool_id: int):
+        """Emit a ``zpool.query`` REMOVED event for the given database id."""
+        self.middleware.send_event("zpool.query", "REMOVED", id=pool_id)

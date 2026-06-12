@@ -55,8 +55,8 @@ RE_NAME = re.compile(
 
 
 class ContainerCreateWithDataset(ContainerCreate):
-    pool: Excluded = excluded_field()  # type: ignore[no-untyped-call]
-    image: Excluded = excluded_field()  # type: ignore[no-untyped-call]
+    pool: Excluded = excluded_field()
+    image: Excluded = excluded_field()
     dataset: str  # type: ignore[assignment]
 
 

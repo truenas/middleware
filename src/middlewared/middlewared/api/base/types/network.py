@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import functools
 import ipaddress
 import re
@@ -22,27 +24,27 @@ def _exclude_port_validation(value: int, *, ports: list[int]) -> int:
     return value
 
 
-def exclude_tcp_ports(ports: list[int]):
+def exclude_tcp_ports(ports: list[int]) -> functools.partial[int]:
     return functools.partial(_exclude_port_validation, ports=ports or [])
 
 
-def _validate_ipv4_address(address: str):
+def _validate_ipv4_address(address: str) -> str:
     ipaddress.IPv4Address(address)
     return address
 
 
-def _validate_ipv6_address(address: str):
+def _validate_ipv6_address(address: str) -> str:
     ipaddress.IPv6Address(address)
     return address
 
 
-def _validate_ipaddr(address: str):
+def _validate_ipaddr(address: str) -> str:
     """Return the original string instead of an ipaddress object."""
-    pydantic.IPvAnyAddress(address)
+    pydantic.IPvAnyAddress(address)  # type: ignore[operator]
     return address
 
 
-def _validate_ip_network(network: str):
+def _validate_ip_network(network: str) -> str:
     try:
         ipaddress.IPv6Network(network)
     except Exception:
@@ -51,12 +53,12 @@ def _validate_ip_network(network: str):
     return network
 
 
-def _validate_ipv4_network(network: str):
+def _validate_ipv4_network(network: str) -> str:
     ipaddress.IPv4Network(network)
     return network
 
 
-def _validate_ipv6_network(network: str):
+def _validate_ipv6_network(network: str) -> str:
     ipaddress.IPv6Network(network)
     return network
 

@@ -40,7 +40,8 @@ if TYPE_CHECKING:
         get: Literal[False]
 
 
-PAGINATION_OPTS = ('count', 'get', 'limit', 'offset', 'select')
+# Stripped from the datastore query and re-applied by filter_list on the extended result.
+POST_EXTEND_OPTS = ('count', 'get', 'limit', 'offset', 'select', 'order_by')
 
 
 def get_instance_args(entry: type[BaseModel], primary_key: str = "id") -> type[BaseModel]:
@@ -73,6 +74,9 @@ class CRUDServiceMetabase(ServiceBase):
                 ('SharingTaskService', ('CRUDService', 'Generic')),
                 ('SharingService', ('SharingTaskService', 'Generic')),
                 ('TaskPathService', ('SharingTaskService', 'Generic')),
+                ('GenericSharingTaskService', ('GenericCRUDService', 'Generic')),
+                ('GenericSharingService', ('GenericSharingTaskService', 'Generic')),
+                ('GenericTaskPathService', ('GenericSharingTaskService', 'Generic')),
             )
         ):
             return klass
@@ -194,7 +198,7 @@ class CRUDService[E](ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase)
         # for filters for performance reasons.
         if not options['force_sql_filters'] and options['extend']:
             datastore_options = options.copy()
-            for option in PAGINATION_OPTS:
+            for option in POST_EXTEND_OPTS:
                 datastore_options.pop(option, None)
             result = await self.middleware.call(
                 'datastore.query', self._config.datastore, [], datastore_options

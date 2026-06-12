@@ -90,6 +90,9 @@ def validate_api_method_schema_class_names(klass):
         methods_will_be_wrapped_later["SharingService"] = methods_will_be_wrapped_later["CRUDService"]
         methods_will_be_wrapped_later["SharingTaskService"] = methods_will_be_wrapped_later["CRUDService"]
         methods_will_be_wrapped_later["TaskPathService"] = methods_will_be_wrapped_later["CRUDService"]
+        methods_will_be_wrapped_later["GenericSharingTaskService"] = methods_will_be_wrapped_later["CRUDService"]
+        methods_will_be_wrapped_later["GenericSharingService"] = methods_will_be_wrapped_later["CRUDService"]
+        methods_will_be_wrapped_later["GenericTaskPathService"] = methods_will_be_wrapped_later["CRUDService"]
         will_be_wrapped_later = False
         for base in (klass,) + klass.__bases__:
             if name in methods_will_be_wrapped_later.get(base.__name__, set()):

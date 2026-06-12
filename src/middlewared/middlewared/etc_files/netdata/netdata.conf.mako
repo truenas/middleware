@@ -28,7 +28,7 @@
 	dbengine multihost disk space MB = ${disk_space_for_tier0}
 
 	dbengine tier 1 multihost disk space MB = ${disk_space_for_tier1}
-	dbengine tier 1 update every iterations = ${reporting_config['tier1_update_interval']}
+	dbengine tier 1 update every iterations = ${reporting_config.tier1_update_interval}
 
 [directories]
     cache = ${netdata_cache_dataset}

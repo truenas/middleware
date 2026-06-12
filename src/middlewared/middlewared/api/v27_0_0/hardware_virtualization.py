@@ -1,3 +1,5 @@
+from pydantic import Field
+
 from middlewared.api.base import BaseModel
 
 __all__ = ("HardwareVirtualizationVariantArgs", "HardwareVirtualizationVariantResult")
@@ -8,5 +10,4 @@ class HardwareVirtualizationVariantArgs(BaseModel):
 
 
 class HardwareVirtualizationVariantResult(BaseModel):
-    result: str
-    """The hardware virtualization variant available on this system."""
+    result: str = Field(description="The hardware virtualization variant available on this system.")

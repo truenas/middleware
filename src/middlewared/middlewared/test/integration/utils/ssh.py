@@ -1,21 +1,14 @@
-import os
-import sys
-
-try:
-    apifolder = os.getcwd()
-    sys.path.append(apifolder)
-    from auto_config import password as default_password
-    from auto_config import user as default_user
-    from functions import SSH_TEST
-except ImportError:
-    default_user = None
-    default_password = None
+from .client import password as _password
+from .legacy_functions import SSH_TEST
 
 __all__ = ["ssh"]
 
 
 def ssh(command, check=True, complete_response=False, *,
-        user=default_user, password=default_password, ip=None, timeout=120):
+        user=None, password=None, ip=None, timeout=120):
+    user = user or "root"
+    password = password or _password()
+
     result = SSH_TEST(command, user, password, ip, timeout=timeout)
     if check:
         assert result["result"], result["output"]

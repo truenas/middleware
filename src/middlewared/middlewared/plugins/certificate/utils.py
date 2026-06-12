@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from truenas_crypto_utils.key import export_private_key
-
 # Cert locations
 CERT_ROOT_PATH = "/etc/certificates"
 DEFAULT_CERT_NAME = "truenas_default"
@@ -30,12 +28,4 @@ def get_cert_info_from_data(data: dict[str, Any]) -> dict[str, Any]:
         "digest_algorithm",
         "organizational_unit",
     ]
-    return {key: data.get(key) for key in cert_info_keys if data.get(key)}
-
-
-def get_private_key(data: dict[str, Any]) -> str | None:
-    private_key: str | None = data.get("private_key")
-    if "passphrase" in data:
-        private_key = export_private_key(data["privatekey"], data["passphrase"])
-
-    return private_key
+    return {key: value for key in cert_info_keys if (value := data.get(key))}

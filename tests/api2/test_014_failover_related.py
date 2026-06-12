@@ -3,11 +3,11 @@ import errno
 import pytest
 from pytest_dependency import depends
 
-from functions import SSH_TEST
 from auto_config import ha, user, password
 from middlewared.service_exception import CallError
 from middlewared.test.integration.assets.account import unprivileged_user
 from middlewared.test.integration.utils import call, client
+from middlewared.test.integration.utils.legacy_functions import SSH_TEST
 
 
 @pytest.fixture(scope='module')

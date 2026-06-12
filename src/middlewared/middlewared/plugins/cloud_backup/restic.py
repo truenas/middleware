@@ -95,59 +95,75 @@ def restic_check_progress(job, proc, track_progress=False):
     progress_buffer = JobProgressBuffer(job)
     time_delta = ""
     action = ""
+    logged_unexpected = False
     while True:
-        read = proc.stdout.readline().decode("utf-8", "ignore")
-        if read == "":
+        raw = proc.stdout.readline().decode("utf-8", "ignore")
+        if raw == "":
             break
 
+        # Any failure to parse or handle a single message must not kill this
+        # thread: it is the only consumer of `proc.stdout`, and if it stops
+        # draining the pipe `restic` blocks writing to it and the job hangs
+        # indefinitely. Record the offending line and keep reading instead.
         try:
-            read = json.loads(read)
-        except json.JSONDecodeError:
-            # Can happen with some error messages
-            job.internal_data["messages"] = job.internal_data["messages"][-4:] + [read]
-            job.logs_fd.write((read + "\n").encode("utf-8", "ignore"))
+            try:
+                read = json.loads(raw)
+            except json.JSONDecodeError:
+                # Can happen if the command doesn't fully support JSON output (see restic scripting docs).
+                job.internal_data["messages"] = job.internal_data["messages"][-4:] + [raw]
+                job.logs_fd.write((raw + "\n").encode("utf-8", "ignore"))
+                continue
+
+            msg = None
+            msg_type = read["message_type"]
+            match msg_type:
+                case "status":
+                    if (remaining := read.get("seconds_remaining")) is not None:
+                        try:
+                            time_delta = str(timedelta(seconds=remaining))
+                        except OverflowError:
+                            # Invalid `restic` output yields to
+                            # OverflowError: Python int too large to convert to C int
+                            # OverflowError: days=1785711940; must have magnitude <= 999999999
+                            pass
+
+                    progress_buffer.set_progress(
+                        read["percent_done"] * 100,
+                        (f"{time_delta} remaining\n" if time_delta else "") + action
+                    )
+                    continue
+
+                case "verbose_status":
+                    action = " ".join([read[key] for key in ("item", "action") if key in read])
+                    msg = action
+
+                case "summary":
+                    job.logs_fd.write((json.dumps(read) + "\n").encode("utf-8", "ignore"))
+                    job.logs_excerpt = "\n".join(f"{k}: {v}" for k, v in read.items())
+                    continue
+
+                case "error":
+                    action = read["error"]["message"]
+                    msg = "".join([
+                        "Error",
+                        f" in {item}" if (item := read.get("item")) else "",
+                        f" while {during}" if (during := read.get("during")) else "",
+                        ": ",
+                        action
+                    ])
+                    job.logs_fd.write((json.dumps(read) + "\n").encode("utf-8", "ignore"))
+
+            if msg:
+                job.internal_data["messages"] = job.internal_data["messages"][-4:] + [msg]
+
+            progress_buffer.set_progress(description=(f"{time_delta} remaining\n" if time_delta else "") + action)
+        except Exception:
+            # `status` messages arrive many times per second, so a recurring
+            # failure here could flood the system log. Emit the traceback only
+            # once per run; the raw line still goes to the (bounded) job log.
+            if not logged_unexpected:
+                job.middleware.logger.warning("Unexpected error handling restic message %r", raw, exc_info=True)
+                logged_unexpected = True
+            job.internal_data["messages"] = job.internal_data["messages"][-4:] + [raw]
+            job.logs_fd.write((raw + "\n").encode("utf-8", "ignore"))
             continue
-
-        msg = None
-        msg_type = read["message_type"]
-        match msg_type:
-            case "status":
-                if (remaining := read.get("seconds_remaining")) is not None:
-                    try:
-                        time_delta = str(timedelta(seconds=remaining))
-                    except OverflowError:
-                        # Invalid `restic` output yields to
-                        # OverflowError: Python int too large to convert to C int
-                        # OverflowError: days=1785711940; must have magnitude <= 999999999
-                        pass
-
-                progress_buffer.set_progress(
-                    read["percent_done"] * 100,
-                    (f"{time_delta} remaining\n" if time_delta else "") + action
-                )
-                continue
-
-            case "verbose_status":
-                action = " ".join([read[key] for key in ("item", "action") if key in read])
-                msg = action
-
-            case "summary":
-                job.logs_fd.write((json.dumps(read) + "\n").encode("utf-8", "ignore"))
-                job.logs_excerpt = "\n".join(f"{k}: {v}" for k, v in read.items())
-                continue
-
-            case "error":
-                action = read["error.message"]
-                msg = "".join([
-                    "Error",
-                    f" in {item}" if (item := read.get("item")) else "",
-                    f" while {during}" if (during := read.get("during")) else "",
-                    ": ",
-                    action
-                ])
-                job.logs_fd.write((json.dumps(read) + "\n").encode("utf-8", "ignore"))
-
-        if msg:
-            job.internal_data["messages"] = job.internal_data["messages"][-4:] + [msg]
-
-        progress_buffer.set_progress(description=(f"{time_delta} remaining\n" if time_delta else "") + action)

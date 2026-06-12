@@ -314,6 +314,7 @@ def generate_smb_share_conf_dict(
         'smbd max xattr size': 2097152,
         'fruit:metadata': 'stream',
         'fruit:resource': 'stream',
+        'fruit:convert_adouble': False,
         'comment': share_config[share_field.COMMENT],
         'browseable': share_config[share_field.BROWSEABLE],
         'ea support': False,
@@ -351,6 +352,10 @@ def generate_smb_share_conf_dict(
             'streams_xattr:store_stream_type': False,
             'streams_xattr:xattr_compat': True
         })
+        # AFP-compat shares hold real Netatalk-written ._<base> files and rely on
+        # ad_convert running, so they must not inherit the global
+        # 'fruit:convert_adouble': False default applied to the base config above.
+        config_out.pop('fruit:convert_adouble', None)
 
     if share_config[share_field.AUDIT][share_field.AUDIT_ENABLE]:
         vfs_objects.add(TrueNASVfsObjects.TRUENAS_AUDIT)
@@ -376,7 +381,8 @@ def generate_smb_conf_dict(
     smb_shares: list,
     smb_bind_choices: dict,
     is_enterprise: bool,
-    security_config: dict[str, bool]
+    security_config: dict[str, bool],
+    tiering_enabled: bool = False
 ):
     guest_enabled = bool(_tf.tnfilter(smb_shares, filters=_GUESTOK_FILTER, options=_SHARES_GET_OPTS))
     fsrvp_enabled = bool(_tf.tnfilter(smb_shares, filters=_FSRVP_FILTER, options=_SHARES_GET_OPTS))
@@ -696,6 +702,9 @@ def generate_smb_conf_dict(
             'truenas stateful failover': True,
             'clustering': True,
         })
+
+    if tiering_enabled:
+        smbconf['shadow:no_dataset_traversal'] = True
 
     # The following parameters must come after processing includes in order to
     # prevent auxiliary parameters from overriding them

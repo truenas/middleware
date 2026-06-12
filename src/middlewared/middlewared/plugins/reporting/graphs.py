@@ -1,131 +1,123 @@
+from __future__ import annotations
+
 import collections
 import errno
 import time
 import typing
 
-from middlewared.api import api_method
 from middlewared.api.current import (
-    ReportingNetdataGetDataArgs,
-    ReportingNetdataGetDataResult,
-    ReportingNetdataGraphArgs,
-    ReportingNetdataGraphResult,
-    ReportingNetdataGraphsItem,
+    GraphIdentifier,
+    QueryOptions,
+    ReportingGetDataResponse,
+    ReportingQuery,
 )
-from middlewared.service import CallError, Service, ValidationErrors, filterable_api_method, private
+from middlewared.service import CallError, ServiceContext, ValidationErrors
 from middlewared.utils.filter_list import filter_list
 
 from .netdata import GRAPH_PLUGINS
 from .netdata.graph_base import GraphBase
 from .utils import convert_unit, fetch_data_from_graph_plugins
 
+if typing.TYPE_CHECKING:
+    from middlewared.main import Middleware
 
-class ReportingService(Service):
+T = typing.TypeVar('T')
 
-    class Config:
-        cli_namespace = 'system.reporting'
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.__graphs: typing.Dict[str, GraphBase] = {}
-        for name, klass in GRAPH_PLUGINS.items():
-            self.__graphs[name] = klass(self.middleware)
+def to_entries(
+    result: list[dict[str, typing.Any]] | dict[str, typing.Any] | int, model: type[T],
+) -> list[T] | T | int:
+    # filterable result models expect the `__query_result_item__` variant of the item model,
+    # not the plain item; constructing the plain model fails serialization validation.
+    constructor = typing.cast(type[T], getattr(model, '__query_result_item__', model))
+    if isinstance(result, int):
+        return result
+    if isinstance(result, dict):
+        return constructor(**result)
+    return [constructor(**row) for row in result]
 
-    @private
-    async def graph_names(self):
-        return list(self.__graphs.keys())
 
-    @api_method(ReportingNetdataGraphArgs, ReportingNetdataGraphResult, roles=['REPORTING_READ'], cli_private=True)
-    async def netdata_graph(self, name, query):
-        """
-        Get reporting data for `name` graph.
-        """
-        graph_plugin = self.__graphs.get(name)
-        if graph_plugin is None:
-            raise CallError(f'{name!r} is not a valid graph plugin.', errno.ENOENT)
+def build_graphs(middleware: Middleware) -> dict[str, GraphBase]:
+    return {name: klass(middleware) for name, klass in GRAPH_PLUGINS.items()}
 
-        query_params = await self.middleware.call('reporting.translate_query_params', query)
-        await graph_plugin.build_context()
-        identifiers = await graph_plugin.get_identifiers() if graph_plugin.uses_identifiers else [None]
 
-        return await graph_plugin.export_multiple_identifiers(query_params, identifiers, query['aggregate'])
+def graph_names(graphs: dict[str, GraphBase]) -> list[str]:
+    return list(graphs.keys())
 
-    @filterable_api_method(roles=['REPORTING_READ'], item=ReportingNetdataGraphsItem, cli_private=True)
-    async def netdata_graphs(self, filters, options):
-        """
-        Get reporting netdata graphs.
-        """
-        return filter_list([await i.as_dict() for i in self.__graphs.values()], filters, options)
 
-    @api_method(ReportingNetdataGetDataArgs, ReportingNetdataGetDataResult, roles=['REPORTING_READ'], cli_private=True)
-    async def netdata_get_data(self, graphs, query):
-        """
-        Get reporting data for given graphs.
+def translate_query_params(query: ReportingQuery) -> dict[str, typing.Any]:
+    # TODO: Add unit tests for this please
+    start_time = 0
+    unit = query.unit
+    if unit:
+        verrors = ValidationErrors()
+        for i in ('start', 'end'):
+            if getattr(query, i) is not None:
+                verrors.add(
+                    f'reporting_query.{i}',
+                    f'{i!r} should only be used if "unit" attribute is not provided.',
+                )
+        verrors.check()
+    elif query.start is None:
+        unit = 'HOUR'
+    else:
+        start_time = int(query.start)
 
-        List of possible graphs can be retrieved using `reporting.netdata_graphs` call.
+    end_time = int(query.end or time.time())
+    return {
+        'before': end_time,
+        'after': end_time - convert_unit(unit, query.page) if unit else start_time,
+    }
 
-        For the time period of the graph either `unit` and `page` OR `start` and `end` should be
-        used, not both.
 
-        `aggregate` will return aggregate available data for each graph (e.g. min, max, mean).
+async def _export(
+    context: ServiceContext, graph_plugin: GraphBase, query: ReportingQuery,
+) -> list[dict[str, typing.Any]]:
+    query_params = translate_query_params(query)
+    await graph_plugin.build_context()
+    no_identifiers: list[str | None] = [None]
+    identifiers = await graph_plugin.get_identifiers() if graph_plugin.uses_identifiers else no_identifiers
+    return await graph_plugin.export_multiple_identifiers(query_params, identifiers or [], query.aggregate)
 
-        .. examples(websocket)::
 
-          Get graph data of "nfsstat" from the last hour.
+async def netdata_graph(
+    context: ServiceContext, graphs: dict[str, GraphBase], name: str, query: ReportingQuery,
+) -> list[ReportingGetDataResponse]:
+    graph_plugin = graphs.get(name)
+    if graph_plugin is None:
+        raise CallError(f'{name!r} is not a valid graph plugin.', errno.ENOENT)
 
-            :::javascript
-            {
-                "id": "6841f242-840a-11e6-a437-00e04d680384",
-                "msg": "method",
-                "method": "reporting.netdata_get_data",
-                "params": [
-                    [{"name": "cpu"}],
-                    {"unit": "HOURLY"},
-                ]
-            }
+    return [ReportingGetDataResponse.model_validate(d) for d in await _export(context, graph_plugin, query)]
 
-        """
-        query_params = await self.middleware.call('reporting.translate_query_params', query)
-        graph_plugins = collections.defaultdict(list)
-        for graph in graphs:
-            graph_plugins[self.__graphs[graph['name']]].append(graph['identifier'])
 
-        results = []
-        async for result in fetch_data_from_graph_plugins(graph_plugins, query_params, query['aggregate']):
-            results.extend(result)
+async def netdata_graphs(
+    graphs: dict[str, GraphBase], filters: list[typing.Any], options: QueryOptions,
+) -> list[dict[str, typing.Any]] | dict[str, typing.Any] | int:
+    return filter_list([await i.as_dict() for i in graphs.values()], filters, options.model_dump())
 
-        return results
 
-    @private
-    async def netdata_get_all(self, query):
-        query_params = await self.middleware.call('reporting.translate_query_params', query)
-        rv = []
-        for graph_plugin in self.__graphs.values():
-            await graph_plugin.build_context()
-            identifiers = await graph_plugin.get_identifiers() if graph_plugin.uses_identifiers else [None]
-            rv.extend(await graph_plugin.export_multiple_identifiers(query_params, identifiers, query['aggregate']))
-        return rv
+async def netdata_get_data(
+    context: ServiceContext, graphs: dict[str, GraphBase], graphs_arg: list[GraphIdentifier], query: ReportingQuery,
+) -> list[ReportingGetDataResponse]:
+    query_params = translate_query_params(query)
+    graph_plugins: dict[GraphBase, list[str | None]] = collections.defaultdict(list)
+    for graph in graphs_arg:
+        plugin = graphs.get(graph.name)
+        if plugin is None:
+            raise CallError(f'{graph.name!r} is not a valid graph plugin.', errno.ENOENT)
+        graph_plugins[plugin].append(graph.identifier)
 
-    @private
-    def translate_query_params(self, query):
-        # TODO: Add unit tests for this please
-        unit = query.get('unit')
-        if unit:
-            verrors = ValidationErrors()
-            for i in ('start', 'end'):
-                if query.get(i) is not None:
-                    verrors.add(
-                        f'reporting_query.{i}',
-                        f'{i!r} should only be used if "unit" attribute is not provided.',
-                    )
-            verrors.check()
-        else:
-            if query.get('start') is None:
-                unit = 'HOUR'
-            else:
-                start_time = int(query['start'])
+    results: list[ReportingGetDataResponse] = []
+    async for result in fetch_data_from_graph_plugins(graph_plugins, query_params, query.aggregate):
+        results.extend(ReportingGetDataResponse.model_validate(d) for d in result)
 
-        end_time = int(query.get('end') or time.time())
-        return {
-            'before': end_time,
-            'after': end_time - convert_unit(unit, query['page']) if unit else start_time,
-        }
+    return results
+
+
+async def netdata_get_all(
+    context: ServiceContext, graphs: dict[str, GraphBase], query: ReportingQuery,
+) -> list[dict[str, typing.Any]]:
+    rv: list[dict[str, typing.Any]] = []
+    for graph_plugin in graphs.values():
+        rv.extend(await _export(context, graph_plugin, query))
+    return rv

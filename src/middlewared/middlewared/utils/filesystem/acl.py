@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+from collections.abc import Mapping
 import enum
 import errno
 import os
@@ -262,16 +265,16 @@ _POSIX_PERM_NAMES = tuple(POSIXACE_Mask)
 # Internal helpers (only valid when truenas_os is available)
 # ---------------------------------------------------------------------------
 
-def _perm_obj_to_full_dict(perm: 'truenas_os.NFS4Perm') -> dict:
+def _perm_obj_to_full_dict(perm: truenas_os.NFS4Perm) -> dict[str, bool]:
     return {n: bool(perm & getattr(truenas_os.NFS4Perm, n)) for n in _NFS4_PERM_NAMES}
 
 
-def _flags_obj_to_dict(flags: 'truenas_os.NFS4Flag') -> dict:
+def _flags_obj_to_dict(flags: truenas_os.NFS4Flag) -> dict[str, bool]:
     # SUCCESSFUL_ACCESS and FAILED_ACCESS are intentionally omitted from output
     return {n: bool(flags & getattr(truenas_os.NFS4Flag, n)) for n in _NFS4_OUTPUT_FLAG_NAMES}
 
 
-def _perm_dict_to_obj(perms_dict: dict) -> 'truenas_os.NFS4Perm':
+def _perm_dict_to_obj(perms_dict: dict[str, bool]) -> truenas_os.NFS4Perm:
     perm = truenas_os.NFS4Perm(0)
     for n in _NFS4_PERM_NAMES:
         if perms_dict.get(n):
@@ -279,7 +282,7 @@ def _perm_dict_to_obj(perms_dict: dict) -> 'truenas_os.NFS4Perm':
     return perm
 
 
-def _flags_dict_to_obj(flags_dict: dict) -> 'truenas_os.NFS4Flag':
+def _flags_dict_to_obj(flags_dict: dict[str, bool]) -> truenas_os.NFS4Flag:
     flags = truenas_os.NFS4Flag(0)
     for n in _NFS4_FLAG_NAMES:
         if flags_dict.get(n):
@@ -291,7 +294,7 @@ def _flags_dict_to_obj(flags_dict: dict) -> 'truenas_os.NFS4Flag':
 # Public conversion helpers
 # ---------------------------------------------------------------------------
 
-def nfs4ace_dict_to_obj(ace: dict) -> 'truenas_os.NFS4Ace':
+def nfs4ace_dict_to_obj(ace: dict[str, Any]) -> truenas_os.NFS4Ace:
     """Convert a middleware NFS4 ACE dict to a truenas_os.NFS4Ace object."""
     tag = ace['tag']
     extra_flags = truenas_os.NFS4Flag(0)
@@ -324,7 +327,7 @@ def nfs4ace_dict_to_obj(ace: dict) -> 'truenas_os.NFS4Ace':
     return truenas_os.NFS4Ace(ace_type, ace_flags | extra_flags, access_mask, who_type, who_id)
 
 
-def nfs4acl_dict_to_obj(acl_list: list, aclflags: dict | None) -> 'truenas_os.NFS4ACL':
+def nfs4acl_dict_to_obj(acl_list: list[dict[str, Any]], aclflags: dict[str, Any] | None) -> truenas_os.NFS4ACL:
     """Convert a list of middleware NFS4 ACE dicts to a truenas_os.NFS4ACL."""
     acl_flag_obj = truenas_os.NFS4ACLFlag(0)
     if aclflags:
@@ -334,11 +337,14 @@ def nfs4acl_dict_to_obj(acl_list: list, aclflags: dict | None) -> 'truenas_os.NF
     return truenas_os.NFS4ACL.from_aces([nfs4ace_dict_to_obj(ace) for ace in acl_list], acl_flag_obj)
 
 
-def nfs4acl_obj_to_dict(acl: 'truenas_os.NFS4ACL', uid: int, gid: int, simplified: bool) -> dict:
+def nfs4acl_obj_to_dict(acl: truenas_os.NFS4ACL, uid: int, gid: int, simplified: bool) -> dict[str, Any]:
     """Convert a truenas_os.NFS4ACL to the middleware API dict format."""
     ace_list = []
     for ace in acl.aces:
         ace_flags = ace.ace_flags
+        tag: str | None
+        perms_dict: Mapping[str, bool | NFS4ACE_MaskSimple]
+        flags_dict: Mapping[str, bool | NFS4ACE_FlagSimple]
         if tag := _NFS4_WHO_TO_TAG.get(ace.who_type):
             out_id = -1
         elif ace_flags & truenas_os.NFS4Flag.IDENTIFIER_GROUP:
@@ -372,7 +378,7 @@ def nfs4acl_obj_to_dict(acl: 'truenas_os.NFS4ACL', uid: int, gid: int, simplifie
     }
 
 
-def posixace_dict_to_obj(ace: dict) -> 'truenas_os.POSIXAce':
+def posixace_dict_to_obj(ace: dict[str, Any]) -> truenas_os.POSIXAce:
     """Convert a middleware POSIX ACE dict to a truenas_os.POSIXAce object."""
     perm_obj = truenas_os.POSIXPerm(0)
     for n in _POSIX_PERM_NAMES:
@@ -382,14 +388,14 @@ def posixace_dict_to_obj(ace: dict) -> 'truenas_os.POSIXAce':
     return truenas_os.POSIXAce(truenas_os.POSIXTag[ace['tag']], perm_obj, ace_id, bool(ace.get('default', False)))
 
 
-def posixacl_dict_to_obj(acl_list: list) -> 'truenas_os.POSIXACL':
+def posixacl_dict_to_obj(acl_list: list[dict[str, Any]]) -> truenas_os.POSIXACL:
     """Convert a list of middleware POSIX ACE dicts to a truenas_os.POSIXACL."""
     return truenas_os.POSIXACL.from_aces([posixace_dict_to_obj(ace) for ace in acl_list])
 
 
-def posixacl_obj_to_dict(acl: 'truenas_os.POSIXACL', uid: int, gid: int) -> dict:
+def posixacl_obj_to_dict(acl: truenas_os.POSIXACL, uid: int, gid: int) -> dict[str, Any]:
     """Convert a truenas_os.POSIXACL to the middleware API dict format."""
-    def _ace_to_dict(ace):
+    def _ace_to_dict(ace: truenas_os.POSIXAce) -> dict[str, object]:
         return {
             'default': ace.default, 'tag': ace.tag.name, 'id': ace.id,
             'perms': {n: bool(ace.perms & getattr(truenas_os.POSIXPerm, n)) for n in _POSIX_PERM_NAMES},

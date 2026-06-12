@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from middlewared.main import Middleware
 
 
-class VMFSAttachmentDelegate(FSAttachmentDelegate):
+class VMFSAttachmentDelegate(FSAttachmentDelegate[dict[str, Any]]):
     name = 'vm'
     title = 'VM'
 

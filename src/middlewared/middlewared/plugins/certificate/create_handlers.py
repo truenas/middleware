@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Any
 
 import pydantic
 from truenas_crypto_utils.csr import generate_certificate_signing_request
+from truenas_crypto_utils.key import export_private_key
 
 from middlewared.api.current import CertificateCreate
 from middlewared.service import ServiceContext, ValidationErrors
@@ -14,7 +15,7 @@ from .private_models import (
     CertificateCreateImportedCertificatePayload,
     CertificateCreateImportedCSRPayload,
 )
-from .utils import CERT_TYPE_CSR, CERT_TYPE_EXISTING, get_cert_info_from_data, get_private_key
+from .utils import CERT_TYPE_CSR, CERT_TYPE_EXISTING, get_cert_info_from_data
 
 if TYPE_CHECKING:
     from middlewared.job import Job
@@ -65,13 +66,7 @@ def create_imported_certificate(
     job.set_progress(90, "Finalizing changes")
     return {
         "certificate": payload.certificate,
-        "privatekey": get_private_key(
-            {
-                "private_key": payload.privatekey,
-                "privatekey": payload.privatekey,
-                "passphrase": payload.passphrase,
-            }
-        ),
+        "privatekey": export_private_key(payload.privatekey, payload.passphrase) if payload.privatekey else None,
         "type": CERT_TYPE_EXISTING,
     }
 
@@ -97,13 +92,7 @@ def create_imported_csr(
     job.set_progress(90, "Finalizing changes")
     return {
         "CSR": payload.CSR,
-        "privatekey": get_private_key(
-            {
-                "private_key": payload.privatekey,
-                "privatekey": payload.privatekey,
-                "passphrase": payload.passphrase,
-            }
-        ),
+        "privatekey": export_private_key(payload.privatekey, payload.passphrase),
         "type": CERT_TYPE_CSR,
     }
 

@@ -418,6 +418,7 @@ class NFSShareModel(sa.Model):
 
 class SharingNFSService(SharingService):
 
+    include_tier_info = True
     share_task_type = 'NFS'
 
     @private
@@ -641,7 +642,7 @@ class SharingNFSService(SharingService):
                     # We're using statfs output because in future it should expose
                     # whether snapdir is enabled
                     sfs = await self.middleware.call("filesystem.statfs", data["path"])
-                    if sfs["dest"] != data["path"]:
+                    if sfs.dest != data["path"]:
                         verrors.add(
                             f"{schema_name}.expose_snapshots",
                             f"{data['path']}: export path is not the root directory of a dataset."
@@ -800,13 +801,13 @@ class SharingNFSService(SharingService):
         This module does checks that encompass both hosts and networks.
         """
 
-        tgt_realpath = (await self.middleware.call('filesystem.stat', data['path']))['realpath']
+        tgt_realpath = (await self.middleware.call('filesystem.stat', data['path'])).realpath
 
         used_networks = set()
         used_hosts = set()  # host names without an entry in the cache
         for share in other_shares:
             try:
-                shr_realpath = (await self.middleware.call('filesystem.stat', share['path']))['realpath']
+                shr_realpath = (await self.middleware.call('filesystem.stat', share['path'])).realpath
             except CallError as e:
                 if e.errno != errno.ENOENT:
                     raise
@@ -908,17 +909,17 @@ class SharingNFSService(SharingService):
         tgt_stat = await self.middleware.call('filesystem.stat', data["path"])
 
         # Sanity check: no symlinks
-        if tgt_stat['type'] == "SYMLINK":
+        if tgt_stat.type == "SYMLINK":
             verrors.add(
                 f"{schema_name}.path",
                 f"Symbolic links are not allowed: {data['path']}."
             )
 
-        tgt_realpath = tgt_stat['realpath']
+        tgt_realpath = tgt_stat.realpath
 
         for share in other_shares:
             try:
-                shr_realpath = (await self.middleware.call('filesystem.stat', share['path']))['realpath']
+                shr_realpath = (await self.middleware.call('filesystem.stat', share['path'])).realpath
             except CallError as e:
                 if e.errno != errno.ENOENT:
                     raise
@@ -963,6 +964,7 @@ class SharingNFSService(SharingService):
         data["hosts"] = " ".join(data["hosts"])
         data["security"] = [s.lower() for s in data["security"]]
         data.pop(self.locked_field, None)
+        data.pop('tier', None)
         return data
 
 

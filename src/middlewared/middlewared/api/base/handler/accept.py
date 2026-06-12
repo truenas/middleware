@@ -1,5 +1,6 @@
 from collections import defaultdict
 import errno
+from typing import Any, Literal, Sequence, overload
 
 from pydantic_core import ValidationError
 
@@ -9,12 +10,12 @@ from middlewared.service_exception import ValidationErrors
 
 def accept_params(
     model: type[BaseModel],
-    args: list,
+    args: Sequence[Any],
     *,
-    dump_models=True,
-    exclude_unset=False,
-    expose_secrets=True
-) -> list:
+    dump_models: bool = True,
+    exclude_unset: bool = False,
+    expose_secrets: bool = True
+) -> list[Any]:
     """
     Accepts a list of `args` for a method call and validates it using `model`.
 
@@ -34,20 +35,23 @@ def accept_params(
 
     args_as_dict = model_dict_from_list(model, args)
 
-    result = validate_model(model, args_as_dict, dump_models=dump_models, exclude_unset=exclude_unset,
-                            expose_secrets=expose_secrets)
-
     fields = list(model.model_fields)
     if exclude_unset:
         fields = fields[:len(args)]
 
     if dump_models:
-        return [result[model.model_fields[field].alias or field] for field in fields]
+        result_dict = validate_model(model, args_as_dict, dump_models=True, exclude_unset=exclude_unset,
+                                     expose_secrets=expose_secrets)
+
+        return [result_dict[model.model_fields[field].alias or field] for field in fields]
     else:
+        result = validate_model(model, args_as_dict, dump_models=False, exclude_unset=exclude_unset,
+                                expose_secrets=expose_secrets)
+
         return [getattr(result, field) for field in fields]
 
 
-def model_dict_from_list(model: type[BaseModel], args: list) -> dict:
+def model_dict_from_list(model: type[BaseModel], args: Sequence[Any]) -> dict[str, Any]:
     """
     Converts a list of `args` for a method call to a dictionary using `model`.
 
@@ -71,14 +75,38 @@ def model_dict_from_list(model: type[BaseModel], args: list) -> dict:
     }
 
 
+@overload
 def validate_model(
     model: type[BaseModel],
-    data: dict,
+    data: dict[str, Any],
     *,
-    dump_models=True,
-    exclude_unset=False,
-    expose_secrets=True,
-) -> dict | BaseModel:
+    dump_models: Literal[True] = True,
+    exclude_unset: bool = False,
+    expose_secrets: bool = True,
+) -> dict[str, Any]:
+    ...
+
+
+@overload
+def validate_model(
+    model: type[BaseModel],
+    data: dict[str, Any],
+    *,
+    dump_models: Literal[False],
+    exclude_unset: bool = False,
+    expose_secrets: bool = True,
+) -> BaseModel:
+    ...
+
+
+def validate_model(
+    model: type[BaseModel],
+    data: dict[str, Any],
+    *,
+    dump_models: bool = True,
+    exclude_unset: bool = False,
+    expose_secrets: bool = True,
+) -> dict[str, Any] | BaseModel:
     """
     Validates `data` against the `model`, sanitizes values, sets defaults.
 
@@ -117,8 +145,8 @@ def validate_model(
 
             verrors.add(".".join(loc), msg)
 
-        for field, msg in union_errors.items():
-            verrors.add(field, " or ".join(msg))
+        for field, field_msg in union_errors.items():
+            verrors.add(field, " or ".join(field_msg))
 
         raise verrors from None
 

@@ -1,5 +1,6 @@
 import base64
 import jsonschema
+import logging
 import os
 import pytest
 
@@ -246,6 +247,118 @@ def test__krb5conf_appdefaults_aux_parser(params, expected, success):
                 data,
                 params
             )
+
+
+@pytest.fixture
+def _clear_logged_unsupported_aux():
+    krb5_conf._LOGGED_UNSUPPORTED_AUX.clear()
+    yield
+    krb5_conf._LOGGED_UNSUPPORTED_AUX.clear()
+
+
+def test__krb5conf_libdefaults_aux_parser_strict_default():
+    # Sanity check: the historical strict behavior is still the default.
+    with pytest.raises(ValueError):
+        krb5_conf.parse_krb_aux_params(
+            krb5_conf.KRB5ConfSection.LIBDEFAULTS,
+            {},
+            'allow_weak_crypto = false',
+        )
+
+
+def test__krb5conf_libdefaults_aux_parser_lenient(_clear_logged_unsupported_aux):
+    data = {}
+    krb5_conf.parse_krb_aux_params(
+        krb5_conf.KRB5ConfSection.LIBDEFAULTS,
+        data,
+        'rdns = false\nallow_weak_crypto = false\ncanonicalize = true',
+        strict=False,
+    )
+    assert data == {'rdns': 'false', 'canonicalize': 'true'}
+
+
+def test__krb5conf_libdefaults_aux_lenient_logs_once(
+    _clear_logged_unsupported_aux, caplog
+):
+    bad = 'allow_weak_crypto = false'
+    with caplog.at_level(logging.WARNING, logger=krb5_conf.logger.name):
+        krb5_conf.parse_krb_aux_params(
+            krb5_conf.KRB5ConfSection.LIBDEFAULTS, {}, bad, strict=False,
+        )
+        krb5_conf.parse_krb_aux_params(
+            krb5_conf.KRB5ConfSection.LIBDEFAULTS, {}, bad, strict=False,
+        )
+
+    matching = [r for r in caplog.records if 'allow_weak_crypto' in r.getMessage()]
+    assert len(matching) == 1, [r.getMessage() for r in matching]
+
+
+def test__krb5conf_libdefaults_aux_lenient_preserves_nested(
+    _clear_logged_unsupported_aux,
+):
+    data = {}
+    krb5_conf.parse_krb_aux_params(
+        krb5_conf.KRB5ConfSection.LIBDEFAULTS,
+        data,
+        'MYDOM.TEST = {\n    rdns = false\n    allow_weak_crypto = false\n}',
+        strict=False,
+    )
+    assert data == {'MYDOM.TEST': {'rdns': 'false'}}
+
+
+def test__krb5conf_appdefaults_aux_parser_lenient(_clear_logged_unsupported_aux):
+    data = {}
+    krb5_conf.parse_krb_aux_params(
+        krb5_conf.KRB5ConfSection.APPDEFAULTS,
+        data,
+        'forwardable = true\ncanonicalize = true',
+        strict=False,
+    )
+    assert data == {'forwardable': 'true'}
+
+
+def test__krb5conf_add_libdefaults_lenient_call_path(_clear_logged_unsupported_aux):
+    # Exercise the same path the etc.generate renderer uses: invalid aux
+    # lines are dropped, valid config + aux entries reach the rendered output.
+    kconf = krb5_conf.KRB5Conf()
+    kconf.add_libdefaults(
+        {'default_realm': 'EXAMPLE.COM'},
+        'allow_weak_crypto = false\nrdns = false',
+        strict=False,
+    )
+
+    assert kconf.libdefaults == {'default_realm': 'EXAMPLE.COM', 'rdns': 'false'}
+
+    rendered = kconf.generate()
+    assert 'allow_weak_crypto' not in rendered
+    assert 'default_realm = EXAMPLE.COM' in rendered
+    assert 'rdns = false' in rendered
+
+
+def test__krb5conf_add_appdefaults_lenient_call_path(_clear_logged_unsupported_aux):
+    kconf = krb5_conf.KRB5Conf()
+    kconf.add_appdefaults(
+        {'forwardable': 'true'},
+        'canonicalize = true\nrenew_lifetime = 86400',
+        strict=False,
+    )
+
+    assert kconf.appdefaults == {'forwardable': 'true', 'renew_lifetime': '86400'}
+
+    rendered = kconf.generate()
+    assert 'canonicalize' not in rendered
+    assert 'forwardable = true' in rendered
+    assert 'renew_lifetime = 86400' in rendered
+
+
+def test__krb5conf_add_libdefaults_strict_default_call_path():
+    # Sanity: the wrapper preserves strict-by-default behavior.
+    kconf = krb5_conf.KRB5Conf()
+    with pytest.raises(ValueError):
+        kconf.add_libdefaults(
+            {'default_realm': 'EXAMPLE.COM'},
+            'allow_weak_crypto = false',
+        )
 
 
 def validate_realms_section(data):
@@ -664,3 +777,100 @@ def test__krb5conf_ipv6_already_bracketed():
     # Verify no double-wrapping occurred
     assert '[[2001:db8::1]]' not in realms_section
     assert '[[fe80::1]]' not in realms_section
+
+
+@pytest.fixture
+def saf_cache_file(tmp_path, monkeypatch):
+    """Redirect the SAF cache file to a tmp path for the duration of the test."""
+    path = tmp_path / 'saf_cache'
+    monkeypatch.setattr(krb5, 'SAF_CACHE_FILE', str(path))
+    return path
+
+
+def test__saf_cache_missing_returns_none(saf_cache_file):
+    assert krb5.kdc_saf_cache_get() is None
+
+
+def test__saf_cache_set_and_get_both_fields(saf_cache_file):
+    krb5.kdc_saf_cache_set(host='dc1.ad.example.com', ip='10.0.0.1')
+    entry = krb5.kdc_saf_cache_get()
+    assert entry == {'host': 'dc1.ad.example.com', 'ip': '10.0.0.1'}
+
+
+def test__saf_cache_set_ip_only(saf_cache_file):
+    krb5.kdc_saf_cache_set(ip='10.0.0.1')
+    entry = krb5.kdc_saf_cache_get()
+    assert entry == {'host': None, 'ip': '10.0.0.1'}
+
+
+def test__saf_cache_set_host_only(saf_cache_file):
+    krb5.kdc_saf_cache_set(host='ipa.example.com')
+    entry = krb5.kdc_saf_cache_get()
+    assert entry == {'host': 'ipa.example.com', 'ip': None}
+
+
+def test__saf_cache_set_requires_host_or_ip(saf_cache_file):
+    with pytest.raises(ValueError):
+        krb5.kdc_saf_cache_set()
+
+
+def test__saf_cache_set_rejects_non_string(saf_cache_file):
+    with pytest.raises(TypeError):
+        krb5.kdc_saf_cache_set(ip=12345)
+    with pytest.raises(TypeError):
+        krb5.kdc_saf_cache_set(host=object())
+
+
+def test__saf_cache_expiry(saf_cache_file, monkeypatch):
+    krb5.kdc_saf_cache_set(host='dc1.ad.example.com', ip='10.0.0.1')
+
+    # Fast-forward past SAF_CACHE_TIMEOUT by mocking utc_now to return a far-future time
+    import datetime
+    real_now = datetime.datetime.now(datetime.timezone.utc)
+    far_future = real_now + krb5.SAF_CACHE_TIMEOUT + datetime.timedelta(seconds=1)
+    monkeypatch.setattr(krb5, 'utc_now', lambda naive=False: far_future)
+
+    assert krb5.kdc_saf_cache_get() is None
+
+
+def test__saf_cache_remove(saf_cache_file):
+    krb5.kdc_saf_cache_set(ip='10.0.0.1')
+    assert krb5.kdc_saf_cache_get() is not None
+    krb5.kdc_saf_cache_remove()
+    assert krb5.kdc_saf_cache_get() is None
+
+
+def test__saf_cache_remove_when_missing_is_noop(saf_cache_file):
+    # Should not raise even though file does not exist
+    krb5.kdc_saf_cache_remove()
+
+
+def test__saf_cache_legacy_format_returns_none(saf_cache_file):
+    """
+    The pre-redesign cache file format was ``"<token> <expiration>"`` with a
+    1-hour TTL. Any pre-upgrade entry will be long expired by the time the new
+    code reads the file, so we don't bother parsing the legacy format -- if it
+    isn't valid JSON, return None.
+    """
+    saf_cache_file.write_text('10.0.0.1 9999999999')
+    assert krb5.kdc_saf_cache_get() is None
+
+
+def test__saf_cache_malformed_returns_none(saf_cache_file):
+    saf_cache_file.write_text('this is garbage')
+    assert krb5.kdc_saf_cache_get() is None
+
+
+def test__saf_cache_empty_file_returns_none(saf_cache_file):
+    saf_cache_file.write_text('')
+    assert krb5.kdc_saf_cache_get() is None
+
+
+def test__saf_cache_invalid_json_returns_none(saf_cache_file):
+    saf_cache_file.write_text('{"host": "dc1", "ip": "10.0.0.1"')  # missing closing brace
+    assert krb5.kdc_saf_cache_get() is None
+
+
+def test__saf_cache_json_missing_expires_returns_none(saf_cache_file):
+    saf_cache_file.write_text('{"host": "dc1", "ip": "10.0.0.1"}')
+    assert krb5.kdc_saf_cache_get() is None

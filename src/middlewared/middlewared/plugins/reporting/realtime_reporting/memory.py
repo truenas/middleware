@@ -1,7 +1,9 @@
+import typing
+
 from .utils import normalize_value, safely_retrieve_dimension
 
 
-def get_memory_info(netdata_metrics: dict) -> dict:
+def get_memory_info(netdata_metrics: dict[str, typing.Any]) -> dict[str, int | float]:
 
     return {
         'arc_size': normalize_value(

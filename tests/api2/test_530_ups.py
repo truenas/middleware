@@ -6,10 +6,10 @@ import pytest
 
 from assets.websocket.service import ensure_service_enabled, ensure_service_started
 from auto_config import password, user
-from functions import send_file
 
 from middlewared.test.integration.utils import call, mock, ssh
 from middlewared.test.integration.utils.client import truenas_server
+from middlewared.test.integration.utils.legacy_functions import send_file
 
 DUMMY_FAKEDATA_DEV = '/tmp/fakedata.dev'
 SHUTDOWN_MARKER_FILE = '/tmp/is_shutdown'

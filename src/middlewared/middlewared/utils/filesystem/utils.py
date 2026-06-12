@@ -3,6 +3,7 @@
 #
 # path_in_ctldir() has test coverage via api tests for filesystem.stat
 # and filesystem.listdir methods since it requires access to zpool.
+from __future__ import annotations
 
 import os
 from pathlib import Path
@@ -39,7 +40,7 @@ def path_in_ctldir(path_in: str | Path) -> bool:
     return is_in_ctldir
 
 
-def get_mount_info_for_path(path: str | os.PathLike) -> tuple[str, str, str | None]:
+def get_mount_info_for_path(path: str | os.PathLike[str]) -> tuple[str, str, str | None]:
     """
     Resolve a directory path to the (mountpoint, filesystem_name, relative_path)
     triple required by ``truenas_os.iter_filesystem_contents``.
@@ -50,4 +51,4 @@ def get_mount_info_for_path(path: str | os.PathLike) -> tuple[str, str, str | No
     real = os.path.realpath(os.fspath(path))
     sm = statmount(path=real, as_dict=False)
     rel = os.path.relpath(real, sm.mnt_point)
-    return sm.mnt_point, sm.sb_source, (None if rel == '.' else rel)
+    return sm.mnt_point, sm.sb_source, (None if rel == '.' else rel)  # type: ignore[return-value]

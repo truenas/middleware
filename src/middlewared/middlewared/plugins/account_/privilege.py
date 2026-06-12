@@ -17,7 +17,7 @@ from middlewared.api.current import (
     UserWebUiLoginDisabledAddedEvent,
 )
 from middlewared.plugins.account import unixhash_is_valid
-from middlewared.service import CallError, CRUDService, ValidationErrors, filter_list, private
+from middlewared.service import CallError, CRUDService, ValidationErrors, private
 from middlewared.service_exception import MatchNotFound
 import middlewared.sqlalchemy as sa
 from middlewared.utils.allowlist import Allowlist
@@ -233,9 +233,8 @@ class PrivilegeService(CRUDService):
         by_gid = {group["gid"]: group for group in groups}
         by_sid = {
             group["sid"]: group
-            for group in filter_list(
-                groups, [["sid", "!=", None], ["local", "=", False]],
-            )
+            for group in groups
+            if group["sid"] is not None and not group["local"]
         }
 
         return {'by_gid': by_gid, 'by_sid': by_sid}
@@ -430,11 +429,7 @@ class PrivilegeService(CRUDService):
         if groups is None:
             groups = await self.middleware.call('group.query', [['local', '=', True]])
 
-        root_user = filter_list(
-            users,
-            [['username', '=', 'root']],
-            {'get': True},
-        )
+        root_user = next(u for u in users if u['username'] == 'root')
         users = await self.local_administrators([root_user['id']], users, groups)
         if not users:
             value = True
@@ -471,11 +466,7 @@ class PrivilegeService(CRUDService):
             groups,
         )
         if not local_administrators:
-            root_user = filter_list(
-                users,
-                [['username', '=', 'root']],
-                {'get': True},
-            )
+            root_user = next(u for u in users if u['username'] == 'root')
             if root_user['id'] not in exclude_user_ids:
                 if unixhash_is_valid(root_user['unixhash']):
                     # This can only be if `always_has_root_password_enabled` is `True`

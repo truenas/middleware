@@ -7,6 +7,7 @@ from middlewared.utils import BOOT_POOL_NAME_VALID
 
 from .exceptions import ZpoolNotFoundException
 from .get_zpool_features_impl import get_zpool_features_impl
+from .is_upgraded_impl import is_upgraded_impl
 
 __all__ = ("query_impl",)
 
@@ -25,8 +26,7 @@ def _convert_vdev_state(vdev: dict) -> None:
 def _format_topology(status_dict: dict) -> dict:
     """Organize vdevs from a pylibzfs status dict into a topology dict.
 
-    Separates storage vdevs into 'data' (groups with children) and 'stripe'
-    (single-disk vdevs without children), and places support vdevs (cache,
+    Places storage vdevs into 'data' and support vdevs (cache,
     dedup, log, special) and spares into their respective keys.
 
     Also converts VDevState enums to strings and children tuples to lists
@@ -37,7 +37,7 @@ def _format_topology(status_dict: dict) -> dict:
             'storage_vdevs', 'support_vdevs', and 'spares' keys.
 
     Returns:
-        dict with keys: cache, data, dedup, log, spares, special, stripe.
+        dict with keys: cache, data, dedup, log, spares, special.
         Each value is a list of vdev dicts.
     """
     top = {
@@ -47,14 +47,10 @@ def _format_topology(status_dict: dict) -> dict:
         "log": [],
         "spares": [],
         "special": [],
-        "stripe": [],
     }
     for vdev in status_dict["storage_vdevs"]:
         _convert_vdev_state(vdev)
-        if vdev["children"]:
-            top["data"].append(vdev)
-        else:
-            top["stripe"].append(vdev)
+        top["data"].append(vdev)
 
     for key in ("cache", "dedup", "log", "special"):
         for vdev in status_dict["support_vdevs"][key]:
@@ -243,9 +239,11 @@ def _build_pool_dict(pool: libzfs_types.ZFSPool, lzh: libzfs_types.ZFS, data: di
     if data.get("expand"):
         result["expand"] = _format_expand(pool.expand_info())
 
+    features = get_zpool_features_impl(lzh, pool.name)
+    result["is_upgraded"] = is_upgraded_impl(features)
     result["features"] = None
     if data.get("features"):
-        result["features"] = _format_features(get_zpool_features_impl(lzh, pool.name))
+        result["features"] = _format_features(features)
 
     return result
 

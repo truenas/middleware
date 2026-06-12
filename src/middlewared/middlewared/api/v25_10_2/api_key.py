@@ -21,38 +21,30 @@ __all__ = [
 
 
 class AllowListItem(BaseModel):
-    method: HttpVerb
-    """Method allowed for this API endpoint."""
-    resource: NonEmptyString
-    """API resource path or endpoint this permission applies to."""
+    method: HttpVerb = Field(description="Method allowed for this API endpoint.")
+    resource: NonEmptyString = Field(description="API resource path or endpoint this permission applies to.")
 
 
 class ApiKeyEntry(BaseModel):
-    id: int
-    """Unique identifier for the API key."""
-    name: NonEmptyString = Field(max_length=200)
-    """Human-readable name for the API key."""
-    username: LocalUsername | RemoteUsername | None
-    """Username associated with the API key or `null` for system keys."""
-    user_identifier: int | str
-    """User ID (numeric) or SID (string) that owns this API key."""
-    keyhash: Secret[str]
-    """Hashed representation of the API key (masked for security)."""
-    created_at: datetime
-    """Timestamp when the API key was created."""
-    expires_at: datetime | None = None
-    """Expiration timestamp for the API key or `null` for no expiration."""
-    local: bool
-    """Whether this API key is for local system use only."""
-    revoked: bool
-    """Whether the API key has been revoked and is no longer valid."""
-    revoked_reason: str | None
-    """Reason for API key revocation or `null` if not revoked."""
+    id: int = Field(description="Unique identifier for the API key.")
+    name: NonEmptyString = Field(max_length=200, description="Human-readable name for the API key.")
+    username: LocalUsername | RemoteUsername | None = Field(
+        description="Username associated with the API key or `null` for system keys.",
+    )
+    user_identifier: int | str = Field(description="User ID (numeric) or SID (string) that owns this API key.")
+    keyhash: Secret[str] = Field(description="Hashed representation of the API key (masked for security).")
+    created_at: datetime = Field(description="Timestamp when the API key was created.")
+    expires_at: datetime | None = Field(
+        default=None,
+        description="Expiration timestamp for the API key or `null` for no expiration.",
+    )
+    local: bool = Field(description="Whether this API key is for local system use only.")
+    revoked: bool = Field(description="Whether the API key has been revoked and is no longer valid.")
+    revoked_reason: str | None = Field(description="Reason for API key revocation or `null` if not revoked.")
 
 
 class ApiKeyEntryWithKey(ApiKeyEntry):
-    key: str
-    """The actual API key value (only returned on creation)."""
+    key: str = Field(description="The actual API key value (only returned on creation).")
 
 
 class ApiKeyCreate(ApiKeyEntry):
@@ -67,41 +59,35 @@ class ApiKeyCreate(ApiKeyEntry):
 
 
 class ApiKeyCreateArgs(BaseModel):
-    api_key_create: ApiKeyCreate
-    """API key configuration data for the new key."""
+    api_key_create: ApiKeyCreate = Field(description="API key configuration data for the new key.")
 
 
 class ApiKeyCreateResult(BaseModel):
-    result: ApiKeyEntryWithKey
-    """The created API key with the actual key value."""
+    result: ApiKeyEntryWithKey = Field(description="The created API key with the actual key value.")
 
 
 class ApiKeyUpdate(ApiKeyCreate, metaclass=ForUpdateMetaclass):
     username: Excluded = excluded_field()
-    reset: bool
-    """Whether to regenerate a new API key value for this entry."""
+    reset: bool = Field(description="Whether to regenerate a new API key value for this entry.")
 
 
 class ApiKeyUpdateArgs(BaseModel):
-    id: int
-    """ID of the API key to update."""
-    api_key_update: ApiKeyUpdate
-    """Updated API key configuration data."""
+    id: int = Field(description="ID of the API key to update.")
+    api_key_update: ApiKeyUpdate = Field(description="Updated API key configuration data.")
 
 
 class ApiKeyUpdateResult(BaseModel):
-    result: ApiKeyEntryWithKey | ApiKeyEntry
-    """The updated API key (includes key value if reset was performed)."""
+    result: ApiKeyEntryWithKey | ApiKeyEntry = Field(
+        description="The updated API key (includes key value if reset was performed).",
+    )
 
 
 class ApiKeyDeleteArgs(BaseModel):
-    id: int
-    """ID of the API key to delete."""
+    id: int = Field(description="ID of the API key to delete.")
 
 
 class ApiKeyDeleteResult(BaseModel):
-    result: Literal[True]
-    """Returns `true` when the API key is successfully deleted."""
+    result: Literal[True] = Field(description="Returns `true` when the API key is successfully deleted.")
 
 
 class ApiKeyMyKeysArgs(BaseModel):
@@ -109,5 +95,4 @@ class ApiKeyMyKeysArgs(BaseModel):
 
 
 class ApiKeyMyKeysResult(BaseModel):
-    result: list[ApiKeyEntry]
-    """Array of API keys owned by the current authenticated user."""
+    result: list[ApiKeyEntry] = Field(description="Array of API keys owned by the current authenticated user.")

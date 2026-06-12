@@ -4,8 +4,8 @@ import pytest
 from pytest_dependency import depends
 
 from auto_config import pool_name, user, password
-from functions import SSH_TEST
 from middlewared.test.integration.utils import call
+from middlewared.test.integration.utils.legacy_functions import SSH_TEST
 
 
 G = 1024 * 1024 * 1024

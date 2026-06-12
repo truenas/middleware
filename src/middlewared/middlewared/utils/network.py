@@ -1,7 +1,13 @@
+from __future__ import annotations
+
 import ipaddress
 import socket
+from typing import TYPE_CHECKING
 
 import aiohttp
+
+if TYPE_CHECKING:
+    from middlewared.service_exception import ValidationErrors
 
 INTERNET_TIMEOUT = 15
 
@@ -44,7 +50,7 @@ async def check_internet_connectivity() -> str | None:
         return f'Network connectivity check failed: {e}'
 
 
-def system_ips_to_cidrs(system_ips: list[dict]) -> set:
+def system_ips_to_cidrs(system_ips: list[dict[str, str]]) -> set[ipaddress.IPv4Network | ipaddress.IPv6Network]:
     """Convert list of dicts from interface.ip_in_use to a set of ip_network objects."""
     return {
         ipaddress.ip_network(f'{ip["address"]}/{ip["netmask"]}', strict=False)
@@ -52,7 +58,12 @@ def system_ips_to_cidrs(system_ips: list[dict]) -> set:
     }
 
 
-def validate_network_overlaps(schema: str, network, system_cidrs: set, verrors) -> None:
+def validate_network_overlaps(
+    schema: str,
+    network: ipaddress.IPv4Network | ipaddress.IPv6Network,
+    system_cidrs: set[ipaddress.IPv4Network | ipaddress.IPv6Network],
+    verrors: ValidationErrors,
+) -> None:
     """Add a validation error if `network` overlaps any CIDR in `system_cidrs`.
 
     Only compares networks of the same address family to avoid TypeError.

@@ -38,12 +38,12 @@ class CDROMDelegate(DeviceDelegate):
             return
 
         st = self.middleware.call_sync('filesystem.statfs', path)
-        if '/' not in st['source']:
+        if '/' not in st.source:
             verrors.add(
                 'attributes.path',
-                f'The specified path is located in the root dataset of pool {st["source"]!r}. '
+                f'The specified path is located in the root dataset of pool {st.source!r}. '
                 'VM resources must be stored within a child dataset of the pool, not the '
-                f'pool root. Create a dataset under {st["source"]!r} (e.g., {st["source"]}/iso) '
+                f'pool root. Create a dataset under {st.source!r} (e.g., {st.source}/iso) '
                 'and move your files there.'
             )
             return
@@ -62,7 +62,7 @@ class CDROMDelegate(DeviceDelegate):
         current_owner = os.stat(path)
         is_valid = False
         if current_owner.st_uid != libvirt_user['pw_uid']:
-            if self.middleware.call_sync('filesystem.can_access_as_user', LIBVIRT_USER, path, {'read': True}):
+            if self.middleware.call_sync('filesystem.can_access_as_user', LIBVIRT_USER, path, ['READ']):
                 is_valid = True
             else:
                 os.chown(path, libvirt_user['pw_uid'], libvirt_user['pw_gid'])
@@ -75,7 +75,7 @@ class CDROMDelegate(DeviceDelegate):
                 verrors.add('attributes.path', e.errmsg)
 
             if not self.middleware.call_sync(
-                    'filesystem.can_access_as_user', LIBVIRT_USER, path, {'read': True}
+                    'filesystem.can_access_as_user', LIBVIRT_USER, path, ['READ']
             ):
                 verrors.add(
                     'attributes.path',

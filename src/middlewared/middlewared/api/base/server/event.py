@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from middlewared.main import Middleware
@@ -9,7 +9,7 @@ class Event:
     Represents a middleware API event used in JSON-RPC server.
     """
 
-    def __init__(self, middleware: "Middleware", name: str, event: dict):
+    def __init__(self, middleware: "Middleware", name: str, event: dict[str, Any]):
         """
         :param middleware: `Middleware` instance
         :param name: event name

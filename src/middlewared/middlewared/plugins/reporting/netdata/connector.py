@@ -9,31 +9,33 @@ from .utils import get_query_parameters
 class Netdata(ClientMixin):
 
     @classmethod
-    async def get_info(cls):
+    async def get_info(cls) -> dict[str, typing.Any]:
         """Get information about the running netdata instance"""
         return await cls.api_call('info', version='v1')
 
     @classmethod
-    async def get_all_metrics(cls):
+    async def get_all_metrics(cls) -> dict[str, typing.Any]:
         return await cls.api_call('allmetrics?format=json', version='v1')
 
     @classmethod
-    async def get_charts(cls):
+    async def get_charts(cls) -> dict[str, typing.Any]:
         """
         Get available charts/metrics. Each chart/metric points out information about 1 type of data.
         """
-        return (await cls.api_call('charts', version='v1'))['charts']
+        return typing.cast(dict[str, typing.Any], (await cls.api_call('charts', version='v1'))['charts'])
 
     @classmethod
-    async def get_chart_details(cls, metric):
+    async def get_chart_details(cls, metric: str) -> dict[str, typing.Any]:
         """Get details for `chart`/`metric`"""
         try:
-            return (await cls.get_charts())[metric]
+            return typing.cast(dict[str, typing.Any], (await cls.get_charts())[metric])
         except KeyError:
             raise ApiException(f'Metric {metric!r} does not exist', errno=errno.ENOENT)
 
     @classmethod
-    async def get_chart_metrics(cls, chart, query_params=None):
+    async def get_chart_metrics(
+        cls, chart: str, query_params: dict[str, typing.Any] | None = None
+    ) -> dict[str, typing.Any]:
         """Get metrics for `chart`"""
         return await cls.api_call(
             f'data?chart={chart}&options=null2zero{get_query_parameters(query_params)}',
@@ -42,8 +44,8 @@ class Netdata(ClientMixin):
 
     @classmethod
     async def get_charts_metrics(
-        cls, charts: dict, parameters: dict
-    ) -> typing.List[typing.Tuple[typing.Optional[str], dict]]:
+        cls, charts: dict[str | None, str], parameters: dict[str, typing.Any]
+    ) -> list[tuple[str | None, dict[str, typing.Any]]]:
         """Get metrics for multiple charts"""
         query_params = get_query_parameters(parameters)
         return await cls.api_calls([

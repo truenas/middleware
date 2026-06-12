@@ -4,11 +4,11 @@ from collections import defaultdict
 import logging
 from typing import TYPE_CHECKING
 
-from middlewared.api.current import AppImageEntry
+from middlewared.api.current import AppImageEntry, AppRegistryEntry
 from middlewared.service import CallError
 
 from .client import ContainerRegistryClientMixin
-from .utils import normalize_reference
+from .utils import get_normalized_auth_config, normalize_reference
 
 if TYPE_CHECKING:
     from middlewared.service import ServiceContext
@@ -40,24 +40,40 @@ def remove_from_cache(image: AppImageEntry) -> None:
 
 async def check_update_impl(context: ServiceContext) -> None:
     images = await context.call2(context.s.app.image.query)
+    # Query stored Docker Registries once per cycle; per-tag credentials lookup
+    # happens in `_check_update_for_image` via `get_normalized_auth_config`.
+    registries = await context.call2(context.s.app.registry.query)
     for image in images:
         for tag in image.repo_tags:
             try:
-                await _check_update_for_image(tag, image)
+                await _check_update_for_image(tag, image, registries)
             except CallError as e:
                 logger.error(str(e))
 
 
-async def _check_update_for_image(tag: str, image: AppImageEntry) -> None:
+async def _check_update_for_image(
+    tag: str,
+    image: AppImageEntry,
+    registries: list[AppRegistryEntry],
+) -> None:
     if image.dangling:
         return
 
     parsed_reference = normalize_reference(tag)
+    # Without per-registry auth the manifest call hits the public/anonymous code
+    # path; for private repos (e.g. ghcr.io) that yields a token with no read
+    # scope, the retry 401s, and no update is ever detected. When credentials
+    # are configured we forward them as the aiohttp BasicAuth(**auth) kwargs
+    # shape (`login` / `password`) the underlying client expects.
+    auth: dict[str, str] | None = None
+    if creds := get_normalized_auth_config(registries, tag):
+        auth = {"login": creds["username"], "password": creds["password"]}
     IMAGE_CACHE[tag] = await _compare_id_digests(
         image,
         parsed_reference["registry"],
         parsed_reference["image"],
         parsed_reference["tag"],
+        auth,
     )
 
 
@@ -66,12 +82,15 @@ async def _compare_id_digests(
     registry: str,
     image_str: str,
     tag_str: str,
+    auth: dict[str, str] | None,
 ) -> bool:
     """Return whether an update is available for the image."""
     if not image.repo_digests:
         return False
 
-    upstream_digests = await ContainerRegistryClientMixin()._get_repo_digest(registry, image_str, tag_str)
+    upstream_digests = await ContainerRegistryClientMixin()._get_repo_digest(
+        registry, image_str, tag_str, auth=auth,
+    )
     return not any(
         repo_digest.split("@", 1)[-1] == upstream_digest
         for upstream_digest in upstream_digests

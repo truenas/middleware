@@ -1,6 +1,6 @@
 import enum
 import functools
-from typing import Awaitable, Callable
+from typing import Any, Awaitable, Callable
 
 from middlewared.api.base import BaseModel, ForUpdateMetaclass
 from middlewared.api.base.handler.accept import validate_model
@@ -20,7 +20,7 @@ class APIVersionDoesNotExistException(Exception):
         self.version = version
         super().__init__(version)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"API Version {self.version!r} does not exist"
 
 
@@ -30,7 +30,7 @@ class APIVersionDoesNotContainModelException(Exception):
         self.model_name = model_name
         super().__init__(version, model_name)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"API version {self.version!r} does not contain model {self.model_name!r}"
 
 
@@ -43,7 +43,7 @@ class APIVersion:
         self.version: str = version
         self.model_provider: ModelProvider = model_provider
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<APIVersion {self.version}>"
 
     async def get_model(self, name: str) -> type[BaseModel]:
@@ -81,7 +81,7 @@ class APIVersionsAdapter:
         self.versions_history: list[str] = list(self.versions.keys())
         self.current_version: str = self.versions_history[-1]
 
-    async def adapt(self, value: dict, model_name: str, version1: str, version2: str) -> dict:
+    async def adapt(self, value: dict[str, Any], model_name: str, version1: str, version2: str) -> dict[str, Any]:
         """
         Adapts `value` (that matches a model identified by `model_name`) from API `version1` to API `version2`).
 
@@ -98,11 +98,11 @@ class APIVersionsAdapter:
 
     async def adapt_model(
         self,
-        value: dict,
+        value: dict[str, Any],
         model_name: str,
         version1: str,
         version2: str,
-    ) -> tuple[type[BaseModel] | None, dict]:
+    ) -> tuple[type[BaseModel] | None, dict[str, Any]]:
         """
         Same as `adapt`, but returned value will be a tuple of `version2` model instance and converted value.
 
@@ -123,7 +123,7 @@ class APIVersionsAdapter:
         current_version_model = await current_version.get_model(model_name)
 
         value_factory = functools.partial(async_validate_model, current_version_model, value)
-        model = current_version_model
+        model: type[BaseModel] | None = current_version_model
 
         if version1_index < version2_index:
             step = 1
@@ -149,12 +149,12 @@ class APIVersionsAdapter:
 
     async def _adapt_model(
         self,
-        value_factory: Callable[[], Awaitable[dict]],
+        value_factory: Callable[[], Awaitable[dict[str, Any]]],
         model_name: str,
         current_version: APIVersion,
         new_version: APIVersion,
         direction: Direction,
-    ):
+    ) -> dict[str, Any]:
         """
         :raise APIVersionDoesNotContainModelException:
         """
@@ -164,11 +164,11 @@ class APIVersionsAdapter:
 
     def _adapt_value(
         self,
-        value: dict,
+        value: dict[str, Any],
         current_model: type[BaseModel],
         new_model: type[BaseModel],
         direction: Direction,
-    ):
+    ) -> dict[str, Any]:
         def _build_field_mapping(model: type[BaseModel]) -> tuple[dict[str, str], dict[str, str]]:
             """Build bidirectional mapping between field names and aliases."""
             alias_to_field = {}
@@ -179,7 +179,7 @@ class APIVersionsAdapter:
                 field_to_alias[field_name] = alias
             return alias_to_field, field_to_alias
 
-        def _adapt_nested_value(val, current_field, new_field):
+        def _adapt_nested_value(val: Any, current_field: Any, new_field: Any) -> Any:
             """Adapt nested model values (dict or list of models)."""
             if isinstance(val, dict):
                 if (
@@ -226,7 +226,7 @@ class APIVersionsAdapter:
                     value[new_preferred_key] = value.pop(k)
 
         # Add missing fields with defaults (only for non-ForUpdate models)
-        if new_model.__class__ is not ForUpdateMetaclass:
+        if new_model.__class__ is not ForUpdateMetaclass:  # type: ignore[comparison-overlap]
             for field_name, field_info in new_model.model_fields.items():
                 if field_name not in present_fields and not field_info.is_required():
                     key_to_use = field_info.alias or field_name
@@ -247,5 +247,5 @@ class APIVersionsAdapter:
         return value
 
 
-async def async_validate_model(model: type[BaseModel], data: dict):
+async def async_validate_model(model: type[BaseModel], data: dict[str, Any]) -> dict[str, Any]:
     return validate_model(model, data)

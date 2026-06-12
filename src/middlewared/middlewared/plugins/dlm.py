@@ -325,9 +325,10 @@ class DistributedLockManagerService(Service):
         """
         Handle the HA remote node going down.
 
-        Four guards before calling reset_active:
+        Five guards before calling reset_active:
         - Only act as MASTER (STANDBY and SINGLE are no-ops).
         - Only act if ALUA is being used by iSCSI.  (Otherwise don't care.)
+        - Only act if iSCSI is running.
         - If the peer's DLM port is still reachable, only remote middleware
           restarted; skip to avoid unnecessarily tearing down iSCSI sessions.
         - If we have logged-in extents, we are in standby or mid-transition to
@@ -337,6 +338,9 @@ class DistributedLockManagerService(Service):
             return
 
         if not await self.middleware.call('iscsi.global.using_dlm'):
+            return
+
+        if not await self.middleware.call('service.started', 'iscsitarget'):
             return
 
         peer_ip = self.nodes.get(self.peernodeID, {}).get('ip')
@@ -452,11 +456,6 @@ class DistributedLockManagerService(Service):
                     if await self.middleware.call('dlm.kernel.lockspace_is_stopped', lockspace):
                         self.logger.warning('Starting stopped lockspace %r', lockspace)
                         await self.middleware.call('dlm.kernel.lockspace_start', lockspace)
-
-                self.logger.debug('Logout all HA targets')
-                remote_ip = await self.middleware.call('failover.remote_ip')
-                await self.middleware.call('iscsi.target.logout_all', remote_ip)
-                self.logger.debug('Logged out all HA targets')
             finally:
                 DistributedLockManagerService.resetting = False
         finally:

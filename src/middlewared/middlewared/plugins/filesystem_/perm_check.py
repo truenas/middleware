@@ -1,10 +1,54 @@
 import errno
 import os
 import pathlib
+from types import MappingProxyType
+
+import truenas_os
 
 from middlewared.service import CallError, Service, private
-from middlewared.utils.filesystem.access import check_access, check_acl_execute_impl
-from middlewared.utils.user_context import run_with_user_context
+from middlewared.utils.filesystem.access import get_user_details
+
+_PERM_TOKEN_TO_BIT = MappingProxyType({
+    'READ': os.R_OK,
+    'WRITE': os.W_OK,
+    'EXECUTE': os.X_OK,
+})
+
+
+def _perms_to_mode(perms: list[str]) -> int:
+    """Translate a list of ``"READ"`` / ``"WRITE"`` / ``"EXECUTE"`` tokens into
+    the bitmask that ``truenas_os.check_path_access`` forwards to faccessat2."""
+    mode = 0
+    for token in perms:
+        bit = _PERM_TOKEN_TO_BIT.get(token)
+        if bit is None:
+            raise CallError(
+                f'{token!r}: invalid perm token; must be one of '
+                f'{sorted(_PERM_TOKEN_TO_BIT)}',
+                errno.EINVAL,
+            )
+        mode |= bit
+    return mode
+
+
+def _path_ancestor_components(path: str) -> list[bytes]:
+    """Build the ancestor-component byte list expected by truenas_os.check_path_access.
+
+    For ``/mnt/tank/share/file`` this yields ``[b"/mnt", b"/mnt/tank", b"/mnt/tank/share"]``
+    — every parent directory between the filesystem root and the leaf, exclusive
+    of the leaf itself.
+    """
+    parts = pathlib.Path(path).parts
+    return [('/' + '/'.join(parts[1:i])).encode() for i in range(2, len(parts))]
+
+
+def _cred_from_user_details(user_details: dict) -> truenas_os.CredEntry:
+    return truenas_os.create_cred_entry(
+        user_details['id_name'],
+        user_details['pw_uid'],
+        user_details['pw_gid'],
+        user_details['grouplist'],
+    )
 
 
 class FilesystemService(Service):
@@ -62,21 +106,18 @@ class FilesystemService(Service):
         }
 
     @private
-    def check_as_user_impl(self, user_details, path, perms):
-        return run_with_user_context(check_access, user_details, [path, perms])
+    def can_access_as_user(self, username: str, path: str, perms: list[str]) -> bool:
+        """
+        Check whether `username` is granted every permission in `perms` on `path`.
 
-    @private
-    def can_access_as_user(self, username: str, path: str, perms: dict[str, bool | None] | None = None):
+        `perms` is a list of ``"READ"`` / ``"WRITE"`` / ``"EXECUTE"`` tokens —
+        at least one must be specified.  Returns True iff every requested bit
+        is granted by the filesystem (mode bits + native ACLs).
         """
-        Check if `username` is able to access `path` with specific `permissions`. At least one of `read/write/execute`
-        permission must be specified for checking with each of these defaulting to `null`. `null` for
-        `read/write/execute` represents that the permission should not be checked.
-        """
-        if perms is None:
-            perms = dict()
-        perms.setdefault("read", None)
-        perms.setdefault("write", None)
-        perms.setdefault("execute", None)
+        if not perms:
+            raise CallError('At least one of READ/WRITE/EXECUTE must be set', errno.EINVAL)
+
+        mode = _perms_to_mode(perms)
 
         path_obj = pathlib.Path(path)
         if not path_obj.is_absolute():
@@ -84,15 +125,19 @@ class FilesystemService(Service):
         elif not path_obj.exists():
             raise CallError(f'{path!r} does not exist', errno.EINVAL)
 
-        if all(v is None for v in perms.values()):
-            raise CallError('At least one of read/write/execute flags must be set', errno.EINVAL)
-
         try:
             user_details = self.middleware.call_sync('user.get_user_obj', {'username': username, 'get_groups': True})
         except KeyError:
             raise CallError(f'{username!r} user does not exist', errno=errno.ENOENT)
 
-        return self.check_as_user_impl(user_details, path, perms)
+        user_details['id_name'] = user_details['pw_name']
+        failures = truenas_os.check_path_access(
+            creds=[_cred_from_user_details(user_details)],
+            components=[path.encode()],
+            mode=mode,
+            path_must_exist=True,
+        )
+        return not failures
 
     @private
     def check_path_execute(self, path, id_type, xid, path_must_exist):
@@ -106,29 +151,87 @@ class FilesystemService(Service):
                               id_type.lower(), xid)
             return
 
-        parts = pathlib.Path(path).parts
-        for idx, part in enumerate(parts):
-            if idx < 2:
-                continue
+        components = _path_ancestor_components(path)
+        if not components:
+            return
 
-            path_to_check = f'/{"/".join(parts[1:idx])}'
-            if not os.path.exists(path_to_check):
-                if path_must_exist:
-                    raise CallError(f'{path_to_check}: path component does not exist.', errno.ENOENT)
+        failures = truenas_os.check_path_access(
+            creds=[_cred_from_user_details(user_details)],
+            components=components,
+            path_must_exist=path_must_exist,
+        )
+        if not failures:
+            return
 
-                continue
+        f = failures[0]
+        failing_component = f.failing_component.decode()
+        if f.errnum == errno.ENOENT:
+            raise CallError(f'{failing_component}: path component does not exist.', errno.ENOENT)
 
-            ok = self.check_as_user_impl(user_details, path_to_check, {'read': None, 'write': None, 'execute': True})
-            if not ok:
-                raise CallError(
-                    f'Filesystem permissions on path {path_to_check} prevent access for '
-                    f'{id_type.lower()} "{user_details["id_name"]}" to the path {path}. '
-                    f'This may be fixed by granting the aforementioned {id_type.lower()} '
-                    f'execute permissions on the path: {path_to_check}.', errno.EPERM
-                )
+        raise CallError(
+            f'Filesystem permissions on path {failing_component} prevent access for '
+            f'{id_type.lower()} "{user_details["id_name"]}" to the path {path}. '
+            f'This may be fixed by granting the aforementioned {id_type.lower()} '
+            f'execute permissions on the path: {failing_component}.', errno.EPERM
+        )
 
     @private
     def check_acl_execute(self, path, acl, uid, gid, path_must_exist=False):
-        run_with_user_context(check_acl_execute_impl, {
-            'pw_uid': 0, 'pw_gid': 0, 'pw_dir': '/var/empty', 'pw_name': 'root', 'grouplist': [0, 544]
-        }, [path, acl, uid, gid, path_must_exist])
+        components = _path_ancestor_components(path)
+        if not components:
+            return
+
+        creds: list[truenas_os.CredEntry] = []
+        id_type_by_name: dict[str, str] = {}
+        seen: set[tuple[str, int]] = set()
+
+        for entry in acl:
+            if entry['tag'] in ('everyone@', 'OTHER', 'MASK'):
+                continue
+            if entry.get('type', 'ALLOW') != 'ALLOW':
+                continue
+
+            if entry['tag'] == 'GROUP':
+                id_type, xid = 'GROUP', entry['id']
+            elif entry['tag'] == 'USER':
+                id_type, xid = 'USER', entry['id']
+            elif entry['tag'] in ('owner@', 'USER_OBJ'):
+                id_type, xid = 'USER', uid
+            elif entry['tag'] in ('group@', 'GROUP_OBJ'):
+                id_type, xid = 'GROUP', gid
+            else:
+                continue
+
+            key = (id_type, xid)
+            if key in seen:
+                continue
+            seen.add(key)
+
+            details = get_user_details(id_type, xid)
+            if details is None:
+                continue
+
+            creds.append(_cred_from_user_details(details))
+            id_type_by_name[details['id_name']] = id_type
+
+        if not creds:
+            return
+
+        failures = truenas_os.check_path_access(
+            creds=creds, components=components, path_must_exist=path_must_exist,
+        )
+        if not failures:
+            return
+
+        f = failures[0]
+        failing_component = f.failing_component.decode()
+        if f.errnum == errno.ENOENT:
+            raise CallError(f'{failing_component}: path component does not exist.', errno.ENOENT)
+
+        id_type_lower = id_type_by_name[f.id_name].lower()
+        raise CallError(
+            f'Filesystem permissions on path {failing_component} prevent access for '
+            f'{id_type_lower} "{f.id_name}" to the path {path}. '
+            f'This may be fixed by granting the aforementioned {id_type_lower} '
+            f'execute permissions on the path: {failing_component}.', errno.EPERM
+        )

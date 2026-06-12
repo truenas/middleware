@@ -142,12 +142,15 @@ class PoolDatasetService(CRUDService):
         """
         extra = options.pop('extra', {})
         exclude_internal_datasets = extra.pop('exclude_internal_datasets', True)
+        tier_enabled = self.call_sync2(self.s.zfs.tier.config).enabled
+
         return generic_query(
             tls.lzh.iter_root_filesystems,
             filters,
             options,
             extra,
             exclude_internal_datasets=exclude_internal_datasets,
+            tier_enabled=tier_enabled,
         )
 
     async def __common_validation(self, verrors, schema, data, mode, parent=None, cur_dataset=None):
@@ -321,7 +324,25 @@ class PoolDatasetService(CRUDService):
                         )
 
         if (c_value := data.get('special_small_block_size')) is not None:
-            if c_value != 'INHERIT' and not (0 <= c_value <= 16 * 1048576):
+            tier_config = await self.middleware.call('zfs.tier.config')
+            if tier_config.enabled:
+                if mode == 'UPDATE':
+                    # Allow no-op resubmissions (effective value unchanged)
+                    cur_ssb = cur_dataset['special_small_block_size']
+                    reject = not (
+                        (c_value == 'INHERIT' and cur_ssb['source'] in ('INHERITED', 'DEFAULT', 'NONE'))
+                        or (c_value != 'INHERIT' and c_value == cur_ssb['parsed'])
+                    )
+                else:
+                    # CREATE: INHERIT is allowed (snapped to a canonical tier
+                    # value in do_create); numeric values are rejected.
+                    reject = c_value != 'INHERIT'
+                if reject:
+                    verrors.add(
+                        f'{schema}.special_small_block_size',
+                        'ZFS tiering is enabled; use zfs.tier.dataset_set_tier to manage this property.'
+                    )
+            elif c_value != 'INHERIT' and not (0 <= c_value <= 16 * 1048576):
                 verrors.add(
                     f'{schema}.special_small_block_size',
                     'This field must be from zero to 16M'
@@ -521,10 +542,11 @@ class PoolDatasetService(CRUDService):
 
         parent_mp = parent_ds['mountpoint']
         if parent_ds['locked'] or not parent_mp:
-            parent_st = {'acl': False}
+            parent_st_acltype = None
         else:
-            parent_st = await self.middleware.call('filesystem.stat', parent_mp)
-            parent_st['acltype'] = await self.middleware.call('filesystem.path_get_acltype', parent_mp)
+            parent_st_acltype = await self.middleware.call('filesystem.path_get_acltype', parent_mp)
+            if not (await self.middleware.call('filesystem.stat', parent_mp)).acl:
+                parent_st_acltype = None
 
         mountpoint = os.path.join('/mnt', data['name'])
 
@@ -536,7 +558,7 @@ class PoolDatasetService(CRUDService):
                 raise
 
         if data['share_type'] == 'SMB':
-            if parent_st['acl'] and parent_st['acltype'] == 'NFS4':
+            if parent_st_acltype == 'NFS4':
                 acl_to_set = await self.middleware.call('filesystem.get_inherited_acl', {
                     'path': os.path.join('/mnt', parent_name),
                 })
@@ -547,7 +569,7 @@ class PoolDatasetService(CRUDService):
                 }))[0]['acl']
         elif data['share_type'] == 'APPS':
             must_add_apps = True
-            if parent_st['acl'] and parent_st['acltype'] == 'NFS4':
+            if parent_st_acltype == 'NFS4':
                 acl_to_set = await self.middleware.call('filesystem.get_inherited_acl', {
                     'path': os.path.join('/mnt', parent_name),
                 })
@@ -581,7 +603,7 @@ class PoolDatasetService(CRUDService):
                     'type': 'ALLOW'
                 })
         elif data['share_type'] in ('MULTIPROTOCOL', 'NFS'):
-            if parent_st['acl'] and parent_st['acltype'] == 'NFS4':
+            if parent_st_acltype == 'NFS4':
                 acl_to_set = await self.middleware.call('filesystem.get_inherited_acl', {
                     'path': os.path.join('/mnt', parent_name),
                 })
@@ -666,6 +688,19 @@ class PoolDatasetService(CRUDService):
             'pool_dataset_create.encryption_options',
         ) or encryption_dict
         verrors.check()
+
+        if (
+            data['type'] == 'FILESYSTEM'
+            and data.get('special_small_block_size', 'INHERIT') == 'INHERIT'
+        ):
+            tier_config = await self.middleware.call('zfs.tier.config')
+            if tier_config.enabled:
+                parent_ssb = parent_ds['special_small_block_size']['parsed'] or 0
+                parent_rs = parent_ds['recordsize']['parsed'] or 0
+                if parent_rs > 0 and parent_ssb >= parent_rs:
+                    data['special_small_block_size'] = 16 * 1024 * 1024
+                else:
+                    data['special_small_block_size'] = 0
 
         if data['type'] == 'VOLUME':
             p_special_small_block_size = parent_ds['special_small_block_size']['parsed']

@@ -3,7 +3,7 @@ from __future__ import annotations
 import errno
 from typing import TYPE_CHECKING
 
-from middlewared.api.current import CronJobSchedule
+from middlewared.api.current import CronJobSchedule, MailSendMessage
 from middlewared.service import CallError, ServiceContext
 from middlewared.utils.user_context import run_command_with_user_context
 
@@ -59,12 +59,13 @@ def execute_cron_task(context: ServiceContext, job: Job, task_id: int, skip_disa
                     '"Hide Standard Output" and "Hide Standard Error" checkboxes.'
             )
 
-            mail_job = context.middleware.call_sync(
-                'mail.send', {
-                    'subject': 'Cron Job Run',
-                    'text': text,
-                    'to': [email]
-                }
+            mail_job = context.call_sync2(
+                context.s.mail.send,
+                MailSendMessage(
+                    subject='Cron Job Run',
+                    text=text,
+                    to=[email],
+                ),
             )
 
             job.set_progress(

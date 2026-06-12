@@ -1,3 +1,5 @@
+from pydantic import Field
+
 from middlewared.api.base import BaseModel
 
 __all__ = (
@@ -17,8 +19,9 @@ class CertificateCountryChoicesArgs(BaseModel):
 
 
 class CertificateCountryChoicesResult(BaseModel):
-    result: dict[str, str]
-    """Object mapping country codes to country names for certificate creation."""
+    result: dict[str, str] = Field(
+        description="Object mapping country codes to country names for certificate creation.",
+    )
 
 
 class CertificateAcmeServerChoicesArgs(BaseModel):
@@ -26,8 +29,7 @@ class CertificateAcmeServerChoicesArgs(BaseModel):
 
 
 class CertificateAcmeServerChoicesResult(BaseModel):
-    result: dict[str, str]
-    """Object mapping ACME server identifiers to their directory URLs."""
+    result: dict[str, str] = Field(description="Object mapping ACME server identifiers to their directory URLs.")
 
 
 class CertificateEcCurveChoicesArgs(BaseModel):
@@ -35,8 +37,7 @@ class CertificateEcCurveChoicesArgs(BaseModel):
 
 
 class CertificateEcCurveChoicesResult(BaseModel):
-    result: dict[str, str]
-    """Object mapping elliptic curve identifiers."""
+    result: dict[str, str] = Field(description="Object mapping elliptic curve identifiers.")
 
 
 class CertificateExtendedKeyUsageChoicesArgs(BaseModel):
@@ -44,5 +45,4 @@ class CertificateExtendedKeyUsageChoicesArgs(BaseModel):
 
 
 class CertificateExtendedKeyUsageChoicesResult(BaseModel):
-    result: dict[str, str]
-    """Object mapping extended key usage OIDs."""
+    result: dict[str, str] = Field(description="Object mapping extended key usage OIDs.")
