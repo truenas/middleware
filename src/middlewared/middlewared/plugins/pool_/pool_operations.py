@@ -43,7 +43,7 @@ def calculate_resilver_priority(
         now = datetime.datetime.now()
 
     higher_prio = False
-    weekdays = map(lambda x: int(x), resilver['weekday'].split(','))
+    weekdays = [int(x) for x in resilver['weekday'].split(',')]
     now_t = now.time()
     # end overlaps the day
     if resilver['begin'] > resilver['end']:
