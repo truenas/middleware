@@ -1,32 +1,10 @@
 # -*- coding=utf-8 -*-
 """Cross-version API changelog computation.
 
-Given two :class:`APIDump` objects — any two versions, not necessarily adjacent —
-produce a :class:`Changelog` describing which methods were added, removed, or had
-their schemas changed. Every schema change is reported exactly, at any nesting
-depth, as a human-readable line addressing the changed node by path:
-
-- object fields join with dots (``options.force``), array items append ``[]``
-  (``apps[].options``), map values (an ``additionalProperties``/``patternProperties``
-  schema) append ``[*]``, fixed tuple members append ``[i]``, and titled union
-  branches join like fields (``AppQueryResultItem.action_required``); untitled
-  union branches (e.g. nullable wrappers) are descended in place.
-- union variants are identified by their Pydantic-generated branch title, falling
-  back to a type summary for untitled branches.
-
-The diff is semantic, not cosmetic. It reads only the schema keys ``type``,
-``enum``, ``const``, ``default``, ``required``, ``properties``, ``items``,
-``prefixItems``, ``additionalProperties``, ``patternProperties``, ``propertyNames``,
-``anyOf``, ``oneOf``, and ``title`` (the latter only to identify call parameters
-and union branches). Description/example wording and validation-constraint keys
-(``minLength``, ``pattern``, ...) are never read, so changes to them produce no
-changelog entry. Ignored keys are skipped by never reading them — NOT by stripping
-them from the schemas first: API models contain *fields* named ``description``,
-``type``, or ``default``, and deleting keys by name would corrupt them.
-
-The schemas are trusted to follow SCHEMA_RULES.md (formalized in
-api_dump.schema.json), which is why this module indexes into them without
-defensive checks.
+The diff is semantic, not cosmetic. Description/example wording and
+validation-constraint keys (``minLength``, ``pattern``, ...) are never read, so
+changes to them produce no changelog entry. The schemas are trusted to follow the
+structural rules of the `--dump-api` output.
 """
 from __future__ import annotations
 

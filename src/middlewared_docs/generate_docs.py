@@ -46,9 +46,10 @@ class DocumentationGenerator:
         with open(f"{self.output_dir}/index.rst") as f:
             index = f.read()
 
-        if self.changelog is not None and not self.changelog.is_empty():
+        if self.changelog is not None:
             index = index.replace("$CHANGELOG_ENTRY\n", "   changelog.rst\n")
         else:
+            # The oldest documented version has no predecessor to compare against.
             index = index.replace("$CHANGELOG_ENTRY\n", "")
 
         with open(f"{self.output_dir}/index.rst", "w") as f:
@@ -56,7 +57,7 @@ class DocumentationGenerator:
 
         self._write_api_methods()
         self._write_api_events()
-        if self.changelog is not None and not self.changelog.is_empty():
+        if self.changelog is not None:
             self._write_changelog()
 
     def _write_changelog(self):
@@ -64,26 +65,29 @@ class DocumentationGenerator:
         assert changelog is not None
         title = "Changelog"
         result = f"{title}\n{'=' * len(title)}\n\n"
-        result += (
-            f"Summary of API changes since version {changelog.previous_version}.\n\n"
-        )
+        if changelog.is_empty():
+            result += f"No API schema changes since version {changelog.previous_version}.\n"
+        else:
+            result += (
+                f"Summary of API changes since version {changelog.previous_version}.\n\n"
+            )
 
-        result += self._render_changelog_section(
-            "Methods Added",
-            "api_methods",
-            changelog.methods_added,
-        )
-        result += self._render_changelog_section(
-            "Methods Removed",
-            "api_methods",
-            changelog.methods_removed,
-            removed=True,
-        )
-        result += self._render_schema_changes_section(
-            "Methods with Schema Changes",
-            "api_methods",
-            changelog.methods_changed,
-        )
+            result += self._render_changelog_section(
+                "Methods Added",
+                "api_methods",
+                changelog.methods_added,
+            )
+            result += self._render_changelog_section(
+                "Methods Removed",
+                "api_methods",
+                changelog.methods_removed,
+                removed=True,
+            )
+            result += self._render_schema_changes_section(
+                "Methods with Schema Changes",
+                "api_methods",
+                changelog.methods_changed,
+            )
 
         with open(f"{self.output_dir}/changelog.rst", "w") as f:
             f.write(result)
