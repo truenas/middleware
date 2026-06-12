@@ -157,14 +157,5 @@ def test_overnight_window_into_next_morning_is_high_priority():
     # Tuesday 02:00 with the default every-day 18:00->09:00 window is squarely
     # inside Monday night's resilver window, so resilver should run at HIGH
     # priority.
-    #
-    # This currently FAILS: `calculate_resilver_priority` binds
-    #     weekdays = map(lambda x: int(x), resilver['weekday'].split(','))
-    # The evening check `now.isoweekday() in weekdays` (isoweekday 2) iterates
-    # the map looking for 2, consuming elements 1 and 2. The morning check then
-    # does `lastweekday in weekdays` (lastweekday 1), but 1 has already been
-    # consumed from the one-shot map iterator, so it is never found and the
-    # function wrongly returns LOW_PRIORITY. Replacing the `map(...)` with a
-    # re-readable list/tuple fixes it.
     r = _resilver(EVERY_DAY, (18, 0), (9, 0))
     assert calculate_resilver_priority(r, _at(TUE, 2)) is HIGH_PRIORITY
