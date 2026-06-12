@@ -124,12 +124,20 @@ class DocumentationGenerator:
         for plugin in sorted(by_plugin):
             out += f"**{plugin}**\n\n"
             for change in sorted(by_plugin[plugin], key=lambda c: c.name):
+                # The blank lines around each nested list are required: without them,
+                # docutils parses the construct as a definition list and renders the
+                # would-be parent item as a bold term instead of a list item.
                 out += f"- :doc:`{change.name} <{doc_prefix}_{change.name}>`\n\n"
-                for line in change.call_params_diff:
-                    out += f"  - Call parameters: {line}\n"
-                for line in change.return_value_diff:
-                    out += f"  - Return value: {line}\n"
-                out += "\n"
+                for label, lines in (
+                    ("Call parameters", change.call_params_diff),
+                    ("Return value", change.return_value_diff),
+                ):
+                    if not lines:
+                        continue
+                    out += f"  - {label}:\n\n"
+                    for line in lines:
+                        out += f"    - {line}\n"
+                    out += "\n"
         return out
 
     def _group_by_plugin(self, names: list[str]) -> list[tuple[str, list[str]]]:
