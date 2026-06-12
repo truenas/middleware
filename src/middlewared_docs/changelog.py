@@ -225,12 +225,19 @@ class _SchemaDiffer:
             self.lines.append(f"removed `{_join(path, name)}`")
         for name in sorted(old_props.keys() & new_props.keys()):
             field_path = _join(path, name)
+            old_field = old_props[name]
+            new_field = new_props[name]
             # `required` is compared as a set: real dumps reorder it with identical content.
             if name in new_required and name not in old_required:
                 self.lines.append(f"`{field_path}` became required")
+                if "default" in old_field and "default" not in new_field:
+                    # Losing the default is implied by becoming required.
+                    old_field = {key: value for key, value in old_field.items() if key != "default"}
             elif name in old_required and name not in new_required:
                 self.lines.append(f"`{field_path}` became optional")
-            self.diff(old_props[name], new_props[name], field_path)
+                if "default" in new_field and "default" not in old_field:
+                    new_field = {key: value for key, value in new_field.items() if key != "default"}
+            self.diff(old_field, new_field, field_path)
 
         old_extra = _map_value_schema(old)
         new_extra = _map_value_schema(new)
