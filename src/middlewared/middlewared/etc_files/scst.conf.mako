@@ -123,11 +123,15 @@
 
     def fc_initiator_access_for_target(target):
         initiator_access = set()
-        for group in target['groups']:
-            group_initiators = initiators[group['initiator']]['initiators'] if group['initiator'] else []
-            for initiator in group_initiators:
-                if wwn := wwn_as_colon_hex(initiator):
-                    initiator_access.add(wwn)
+        # Callers may invoke this before checking that the fcport resolved
+        # to a real middleware target; the result is unused in that case
+        # but we still need to not crash.
+        if target is not None:
+            for group in target['groups']:
+                group_initiators = initiators[group['initiator']]['initiators'] if group['initiator'] else []
+                for initiator in group_initiators:
+                    if wwn := wwn_as_colon_hex(initiator):
+                        initiator_access.add(wwn)
         # Always emit a security_group ACG: scstadmin's del_group on an
         # ACG with attached FC sessions fails with -EBUSY, leaving running
         # config out of sync with /etc/scst.conf. The wildcard keeps the
@@ -725,6 +729,7 @@ TARGET_DRIVER qla2x00t {
 <%
     wwpn = wwn_as_colon_hex(fcport['wwpn'])
     target = fcport_to_target(fcport)
+    fc_initiator_access = fc_initiator_access_for_target(target)
     parent_host = fcport_to_parent_host(fcport)
 %>
     % if wwpn and target:
@@ -735,9 +740,15 @@ TARGET_DRIVER qla2x00t {
 % endif  ## parent_host
         rel_tgt_id ${fc_target_rel_tgt_id(target, fcport)}
         enabled 1
+        GROUP security_group {
+%   for initiator_wwpn in fc_initiator_access:
+            INITIATOR ${initiator_wwpn}
+%   endfor
+
         % for associated_target in associated_targets[fcport['target']['id']]:
         LUN ${associated_target['lunid']} ${extents[associated_target['extent']]['name']}
         % endfor
+        }
     }
     % endif  ## wwpn and target
 % endfor
