@@ -22,7 +22,7 @@ class PoolService(Service):
             return
 
         higher_prio = False
-        weekdays = map(lambda x: int(x), resilver['weekday'].split(','))
+        weekdays = [int(x) for x in resilver['weekday'].split(',')]
         now = datetime.now()
         now_t = now.time()
         # end overlaps the day
