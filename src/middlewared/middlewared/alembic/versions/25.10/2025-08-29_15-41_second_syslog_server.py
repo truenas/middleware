@@ -29,10 +29,22 @@ def upgrade():
     else:
         server, transport, cert_id = None, None, None
 
+    has_fk_system_advanced_adv_syslog_tls_certificate_id_system_certificate = False
+    conn = op.get_bind()
+    for sql in map(dict, conn.execute(sa.text(
+        "SELECT sql FROM sqlite_schema WHERE type = 'table' AND tbl_name = 'system_advanced'"
+    )).mappings().all()):
+        if "fk_system_advanced_adv_syslog_tls_certificate_id_system_certificate" in sql["sql"]:
+            has_fk_system_advanced_adv_syslog_tls_certificate_id_system_certificate = True
+
     with op.batch_alter_table('system_advanced', schema=None) as batch_op:
         batch_op.add_column(sa.Column('adv_syslogservers', sa.TEXT(), nullable=False, server_default='[]'))
         batch_op.drop_index('ix_system_advanced_adv_syslog_tls_certificate_id')
-        batch_op.drop_constraint('fk_system_advanced_adv_syslog_tls_certificate_id_system_certificate', type_='foreignkey')
+        if has_fk_system_advanced_adv_syslog_tls_certificate_id_system_certificate:
+            batch_op.drop_constraint(
+                'fk_system_advanced_adv_syslog_tls_certificate_id_system_certificate',
+                type_='foreignkey',
+            )
         batch_op.drop_column('adv_syslog_tls_certificate_id')
         batch_op.drop_column('adv_syslogserver')
         batch_op.drop_column('adv_syslog_transport')
