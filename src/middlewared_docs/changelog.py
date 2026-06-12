@@ -115,7 +115,7 @@ class _SchemaDiffer:
 
     Accumulates change lines in `self.lines`. Lines about the root node itself are
     labeled with `root_label` (empty for the return value, whose label is supplied by
-    the renderer); lines about nested nodes are labeled ``field `<path>```.
+    the renderer); lines about nested nodes are labeled with their `` `<path>` ``.
     """
 
     def __init__(self, root_path: str, root_label: str):
@@ -124,7 +124,7 @@ class _SchemaDiffer:
         self.lines: list[str] = []
 
     def _emit(self, path: str, text: str, sep: str = " "):
-        label = self.root_label if path == self.root_path else f"field `{path}`"
+        label = self.root_label if path == self.root_path else f"`{path}`"
         self.lines.append(f"{label}{sep}{text}" if label else text)
 
     def diff(self, old: dict, new: dict, path: str):
@@ -220,16 +220,16 @@ class _SchemaDiffer:
 
         for name in sorted(new_props.keys() - old_props.keys()):
             suffix = " (required)" if name in new_required else ""
-            self.lines.append(f"added field `{_join(path, name)}`{suffix}")
+            self.lines.append(f"added `{_join(path, name)}`{suffix}")
         for name in sorted(old_props.keys() - new_props.keys()):
-            self.lines.append(f"removed field `{_join(path, name)}`")
+            self.lines.append(f"removed `{_join(path, name)}`")
         for name in sorted(old_props.keys() & new_props.keys()):
             field_path = _join(path, name)
             # `required` is compared as a set: real dumps reorder it with identical content.
             if name in new_required and name not in old_required:
-                self.lines.append(f"field `{field_path}` became required")
+                self.lines.append(f"`{field_path}` became required")
             elif name in old_required and name not in new_required:
-                self.lines.append(f"field `{field_path}` became optional")
+                self.lines.append(f"`{field_path}` became optional")
             self.diff(old_props[name], new_props[name], field_path)
 
         old_extra = _map_value_schema(old)
