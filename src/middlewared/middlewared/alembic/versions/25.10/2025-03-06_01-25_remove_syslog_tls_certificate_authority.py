@@ -17,9 +17,21 @@ depends_on = None
 
 
 def upgrade():
+    has_fk_system_advanced_adv_syslog_tls_certificate_authority_id_system_certificateauthority = False
+    conn = op.get_bind()
+    for sql in map(dict, conn.execute(sa.text(
+        "SELECT sql FROM sqlite_schema WHERE type = 'table' AND tbl_name = 'system_advanced'"
+    )).mappings().all()):
+        if "fk_system_advanced_adv_syslog_tls_certificate_authority_id_system_certificateauthority" in sql["sql"]:
+            has_fk_system_advanced_adv_syslog_tls_certificate_authority_id_system_certificateauthority = True
+
     with op.batch_alter_table('system_advanced', schema=None) as batch_op:
         batch_op.drop_index('ix_system_advanced_adv_syslog_tls_certificate_authority_id')
-        batch_op.drop_constraint('fk_system_advanced_adv_syslog_tls_certificate_authority_id_system_certificateauthority', type_='foreignkey')
+        if has_fk_system_advanced_adv_syslog_tls_certificate_authority_id_system_certificateauthority:
+            batch_op.drop_constraint(
+                'fk_system_advanced_adv_syslog_tls_certificate_authority_id_system_certificateauthority',
+                type_='foreignkey',
+            )
         batch_op.drop_column('adv_syslog_tls_certificate_authority_id')
 
 
