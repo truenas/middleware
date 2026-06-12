@@ -174,7 +174,11 @@ def test_realtime_pool_keys_match_pool_query(realtime_event):
     pool_names = frozenset(pool["name"] for pool in call("pool.query"))
     if not pool_names:
         pytest.skip("no imported pools — cannot validate event pool keys")
-    unexpected = realtime_event["pools"].keys() - pool_names
+    # The realtime event is sourced from query_imported_fast_impl(), which
+    # reports every imported pool including the boot pool; pool.query only
+    # returns data pools. Allow the boot pool so it isn't flagged unexpected.
+    allowed = pool_names | {call("boot.pool_name")}
+    unexpected = realtime_event["pools"].keys() - allowed
     assert not unexpected, f"event reported pools not in pool.query: {unexpected}"
     for pool_name, sub in realtime_event["pools"].items():
         # pool.py:18 filters out falsy values, so any visible stat must be truthy
