@@ -25,7 +25,10 @@ def upgrade():
 
     # Get all container devices and delete those with dtype 'DISK' or 'RAW'
     for device in conn.execute(text("SELECT * FROM container_device")).mappings().all():
-        attributes = json.loads(decrypt(device['attributes']))
+        if not (decrypted := decrypt(device['attributes'])):
+            continue
+
+        attributes = json.loads(decrypted)
 
         if attributes.get('dtype') in ('DISK', 'RAW'):
             conn.execute(

@@ -33,7 +33,10 @@ def upgrade():
     conn = op.get_bind()
 
     for row in conn.execute(text("SELECT * FROM vm_device")).mappings().all():
-        attributes = json.loads(decrypt(row['attributes']))
+        if not (decrypted := decrypt(row['attributes'])):
+            continue
+
+        attributes = json.loads(decrypted)
 
         if attributes.get('dtype') != 'NIC':
             continue
