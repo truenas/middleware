@@ -56,7 +56,7 @@ def POST(testpath, payload=None, controller_a=False, **optional):
     return postit
 
 
-def SSH_TEST(command, username, passwrd, host=None, timeout=120):
+def SSH_TEST(command, username, passwrd, host=None, timeout=120, key_path=None):
     target = host or get_host_ip(SRVTarget.DEFAULT)
 
     cmd = [] if passwrd is None else ["sshpass", "-p", passwrd]
@@ -70,6 +70,10 @@ def SSH_TEST(command, username, passwrd, host=None, timeout=120):
         "VerifyHostKeyDNS=no",
         "-o",
         "LogLevel=error",
+    ]
+    if key_path:
+        cmd += ["-i", key_path]
+    cmd += [
         f"{username}@{target}",
         command,
     ]

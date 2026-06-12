@@ -4,8 +4,7 @@ import os
 
 import pytest
 
-from auto_config import sshKey, user, password
-from middlewared.test.integration.runner.ssh import if_key_listed
+from auto_config import keyPath, sshKey, user, password
 from middlewared.test.integration.utils import fail, ssh
 from middlewared.test.integration.utils.client import client, truenas_server
 from middlewared.test.integration.utils.legacy_functions import SSH_TEST
@@ -89,9 +88,7 @@ def test_005_ssh_using_root_password():
 
 
 def test_006_setup_and_login_using_root_ssh_key():
-    assert os.environ.get('SSH_AUTH_SOCK') is not None
-    assert if_key_listed() is True  # horrible function name
-    results = SSH_TEST('ls -la', user, None)
+    results = SSH_TEST('ls -la', user, None, key_path=keyPath)
     assert results['result'] is True, results['output']
 
 
