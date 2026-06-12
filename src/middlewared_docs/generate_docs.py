@@ -66,10 +66,10 @@ class DocumentationGenerator:
         title = "Changelog"
         result = f"{title}\n{'=' * len(title)}\n\n"
         if changelog.is_empty():
-            result += f"No API schema changes since version {changelog.previous_version}.\n"
+            result += f"No API schema changes since version {changelog.old_version}.\n"
         else:
             result += (
-                f"Summary of API changes since version {changelog.previous_version}.\n\n"
+                f"Summary of API changes since version {changelog.old_version}.\n\n"
             )
 
             result += self._render_changelog_section(
@@ -102,10 +102,11 @@ class DocumentationGenerator:
             for name in plugin_names:
                 if removed:
                     # The method/event no longer exists in this version's build, so link to its
-                    # page in the previous version's sibling Sphinx site via a relative URL.
+                    # page in the sibling Sphinx site of the version this changelog was computed
+                    # against
                     changelog = self.changelog
                     assert changelog is not None
-                    url = f"../{changelog.previous_version}/{doc_prefix}_{name}.html"
+                    url = f"../{changelog.old_version}/{doc_prefix}_{name}.html"
                     out += f"- `{name} <{url}>`__\n"
                 else:
                     out += f"- :doc:`{name} <{doc_prefix}_{name}>`\n"

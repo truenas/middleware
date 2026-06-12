@@ -29,7 +29,7 @@ class SchemaChange:
 
 @dataclasses.dataclass
 class Changelog:
-    previous_version: str
+    old_version: str
     methods_added: list[str] = dataclasses.field(default_factory=list)
     methods_removed: list[str] = dataclasses.field(default_factory=list)
     methods_changed: list[SchemaChange] = dataclasses.field(default_factory=list)
@@ -365,18 +365,18 @@ def compute_schema_diff(old: dict, new: dict) -> tuple[list[str], list[str]]:
 
 
 def _diff_items(
-    previous: typing.Iterable[APIDumpMethod], current: typing.Iterable[APIDumpMethod],
+    old: typing.Iterable[APIDumpMethod], new: typing.Iterable[APIDumpMethod],
 ) -> tuple[list[str], list[str], list[SchemaChange]]:
     """Compute added/removed/changed for a list of APIDumpMethod."""
-    prev_by_name = {item.name: item for item in previous}
-    cur_by_name = {item.name: item for item in current}
+    old_by_name = {item.name: item for item in old}
+    new_by_name = {item.name: item for item in new}
 
-    added = sorted(cur_by_name.keys() - prev_by_name.keys())
-    removed = sorted(prev_by_name.keys() - cur_by_name.keys())
+    added = sorted(new_by_name.keys() - old_by_name.keys())
+    removed = sorted(old_by_name.keys() - new_by_name.keys())
     changed = []
-    for name in sorted(cur_by_name.keys() & prev_by_name.keys()):
-        old_schemas = prev_by_name[name].schemas
-        new_schemas = cur_by_name[name].schemas
+    for name in sorted(new_by_name.keys() & old_by_name.keys()):
+        old_schemas = old_by_name[name].schemas
+        new_schemas = new_by_name[name].schemas
         if old_schemas == new_schemas:
             continue
 
@@ -388,10 +388,10 @@ def _diff_items(
     return added, removed, changed
 
 
-def compute_changelog(previous: APIDump, current: APIDump) -> Changelog:
-    methods_added, methods_removed, methods_changed = _diff_items(previous.methods, current.methods)
+def compute_changelog(old: APIDump, new: APIDump) -> Changelog:
+    methods_added, methods_removed, methods_changed = _diff_items(old.methods, new.methods)
     return Changelog(
-        previous_version=previous.version,
+        old_version=old.version,
         methods_added=methods_added,
         methods_removed=methods_removed,
         methods_changed=methods_changed,
