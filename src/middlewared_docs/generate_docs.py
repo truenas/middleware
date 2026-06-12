@@ -124,12 +124,12 @@ class DocumentationGenerator:
         for plugin in sorted(by_plugin):
             out += f"**{plugin}**\n\n"
             for change in sorted(by_plugin[plugin], key=lambda c: c.name):
-                out += f"- :doc:`{change.name} <{doc_prefix}_{change.name}>`\n"
+                out += f"- :doc:`{change.name} <{doc_prefix}_{change.name}>`\n\n"
                 for line in change.call_params_diff:
-                    out += f"   - Call parameters: {line}\n"
+                    out += f"  - Call parameters: {line}\n"
                 for line in change.return_value_diff:
-                    out += f"   - Return value: {line}\n"
-            out += "\n"
+                    out += f"  - Return value: {line}\n"
+                out += "\n"
         return out
 
     def _group_by_plugin(self, names: list[str]) -> list[tuple[str, list[str]]]:
