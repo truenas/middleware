@@ -29,7 +29,7 @@ def write_config(ctx: Context) -> None:
         artifacts = "{ctx.artifacts}"
         isns_ip = "{ctx.isns_ip}"
         extended_tests = {ctx.extended_tests}
-        sshKey = "{ctx.ssh_key}"
+        sshKey = {ctx.ssh_key!r}
     """)
 
     with open("auto_config.py", "w") as f:

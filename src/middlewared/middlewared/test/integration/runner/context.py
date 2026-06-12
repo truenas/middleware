@@ -11,7 +11,7 @@ import sys
 from middlewared.test.integration.utils.client import client
 
 from .args import RunArgs
-from .ssh import add_ssh_key, create_key, setup_ssh_agent
+from .ssh import create_key
 
 
 @dataclasses.dataclass
@@ -81,13 +81,11 @@ def context_from_args(args: RunArgs, workdir: str) -> Context:
     local_home = os.path.expanduser("~")
     dotssh_path = local_home + "/.ssh"
     ssh_key_path = dotssh_path + "/test_id_rsa"
-    setup_ssh_agent()
     os.makedirs(dotssh_path, exist_ok=True)
     if not os.path.exists(ssh_key_path):
         create_key(ssh_key_path)
-    add_ssh_key(ssh_key_path)
-    with open(ssh_key_path, "r") as f:
-        ssh_key = f.readlines()[0].rstrip()
+    with open(ssh_key_path + ".pub", "r") as f:
+        ssh_key = f.read()
 
     return Context(
         **d,
