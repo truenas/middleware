@@ -379,7 +379,26 @@ def str_to_colon_hex(string):
         return ':'.join(string[i:i + 2] for i in range(2, len(string), 2))
 
 
+def parse_group(lines):
+    """Parse a GROUP block body. The 'GROUP <name> {' line has already been consumed."""
+    group = {'LUN': {}, 'INITIATOR': []}
+    while lines:
+        line = lines.pop(0).strip()
+        if line == '}':
+            return group
+        elif line == '' or line.startswith('#'):
+            continue
+        sline = line.split()
+        if sline[0] == 'LUN':
+            group['LUN'][sline[1]] = sline[2]
+        elif sline[0] == 'INITIATOR':
+            group['INITIATOR'].append(sline[1])
+        elif len(sline) == 2:
+            group[sline[0]] = sline[1]
+
+
 def parse_values(lines):
+    """Parse a TARGET block body. The 'TARGET <id> {' line has already been consumed."""
     values = {'LUN': {}}
     while lines:
         line = lines.pop(0).strip()
@@ -390,6 +409,9 @@ def parse_values(lines):
         sline = line.split()
         if sline[0] == 'LUN':
             values['LUN'][sline[1]] = sline[2]
+        elif sline[0] == 'GROUP' and sline[-1] == '{':
+            group_name = sline[1]
+            values.setdefault('GROUP', {})[group_name] = parse_group(lines)
         elif len(sline) == 2:
             values[sline[0]] = sline[1]
 
@@ -635,9 +657,15 @@ class TestFixtureFibreChannel(AbstractFibreChannel):
                     key1 = str_to_colon_hex(NODE_A_1_WWPN)
                 assert key0 in scst_qla_targets
                 assert scst_qla_targets[key0] == {
-                    'LUN': {'0': 'fcextent0'},
+                    'LUN': {},
                     'enabled': '1',
-                    'rel_tgt_id': str(mapped_rel_tgt_id + rel_tgt_id_node_offset)
+                    'rel_tgt_id': str(mapped_rel_tgt_id + rel_tgt_id_node_offset),
+                    'GROUP': {
+                        'security_group': {
+                            'INITIATOR': ['*'],
+                            'LUN': {'0': 'fcextent0'},
+                        },
+                    },
                 }
                 assert key1 in scst_qla_targets
                 assert scst_qla_targets[key1] == {
@@ -699,26 +727,44 @@ class TestFixtureFibreChannel(AbstractFibreChannel):
                         assert len(scst_qla_targets) == 2
                         assert key0 in scst_qla_targets
                         assert scst_qla_targets[key0] == {
-                            'LUN': {'0': 'fcextent0'},
+                            'LUN': {},
                             'enabled': '1',
-                            'rel_tgt_id': str(mapped_rel_tgt_id + rel_tgt_id_node_offset)
+                            'rel_tgt_id': str(mapped_rel_tgt_id + rel_tgt_id_node_offset),
+                            'GROUP': {
+                                'security_group': {
+                                    'INITIATOR': ['*'],
+                                    'LUN': {'0': 'fcextent0'},
+                                },
+                            },
                         }
                         assert key1 in scst_qla_targets
                         assert scst_qla_targets[key1] == {
-                            'LUN': {'0': 'fcextent2'},
+                            'LUN': {},
                             'enabled': '1',
-                            'rel_tgt_id': str(mapped_rel_tgt_id2 + rel_tgt_id_node_offset)
+                            'rel_tgt_id': str(mapped_rel_tgt_id2 + rel_tgt_id_node_offset),
+                            'GROUP': {
+                                'security_group': {
+                                    'INITIATOR': ['*'],
+                                    'LUN': {'0': 'fcextent2'},
+                                },
+                            },
                         }
                         # Check iSCSI target
                         iqn2 = 'iqn.2005-10.org.freenas.ctl:fctarget2'
                         iscsi_targets = parse_iscsi(lines)
                         assert len(iscsi_targets) == 1
                         assert iqn2 in iscsi_targets
-                        assert iscsi_targets[iqn2] == {
+                        parsed_iscsi = iscsi_targets[iqn2]
+                        assert parsed_iscsi['LUN'] == {}
+                        assert parsed_iscsi['rel_tgt_id'] == str(rel_tgt_id2 + rel_tgt_id_node_offset)
+                        assert parsed_iscsi['enabled'] == '1'
+                        assert parsed_iscsi['per_portal_acl'] == '1'
+                        # The test target was created via target_lun_zero with an empty
+                        # groups list, so no INITIATOR lines render on the iSCSI side
+                        # (the mako loop over target['groups'] yields nothing).
+                        assert parsed_iscsi['GROUP']['security_group'] == {
+                            'INITIATOR': [],
                             'LUN': {'0': 'fcextent2'},
-                            'rel_tgt_id': str(rel_tgt_id2 + rel_tgt_id_node_offset),
-                            'enabled': '1',
-                            'per_portal_acl': '1'
                         }
 
                         # Make sure we can't update the old fcport using the in-use port
@@ -958,11 +1004,17 @@ class TestFixtureFibreChannel(AbstractFibreChannel):
                 }
                 assert key2 in scst_qla_targets
                 assert scst_qla_targets[key2] == {
-                    'LUN': {'0': 'fcextent1'},
+                    'LUN': {},
                     'enabled': '1',
                     'node_name': key0,
                     'parent_host': key0,
-                    'rel_tgt_id': str(5001 + rel_tgt_id_node_offset)
+                    'rel_tgt_id': str(5001 + rel_tgt_id_node_offset),
+                    'GROUP': {
+                        'security_group': {
+                            'INITIATOR': ['*'],
+                            'LUN': {'0': 'fcextent1'},
+                        },
+                    },
                 }
 
             # NPIV target no longer mapped.  Now reduce npiv to zero
