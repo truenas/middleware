@@ -319,6 +319,42 @@ class DocumentationGenerator:
         pass
 
 
+def collapse_changelog_schema_changes(html_path: str):
+    """Collapse each method's diff list in "Methods with Schema Changes" into an accordion.
+
+    Operates on the built HTML: each method list item there holds the method link
+    followed by the nested diff list, which become the `<summary>` and the collapsed
+    body of a native `<details>` element.
+    """
+    with open(html_path) as f:
+        soup = BeautifulSoup(f.read())
+
+    section = soup.find(id="methods-with-schema-changes")
+    if section is None:
+        return
+
+    for li in section.find_all("li"):
+        p = li.find("p", recursive=False)
+        ul = li.find("ul", recursive=False)
+        if p is None or ul is None or p.find("a") is None:
+            # Not a method item: either a diff line, or a "Call parameters:"/
+            # "Return value:" label (which has a nested list but no link).
+            continue
+
+        summary = soup.new_tag("summary")
+        for child in list(p.children):
+            summary.append(child.extract())
+        details = soup.new_tag("details")
+        details.append(summary)
+        details.append(ul.extract())
+        p.replace_with(details)
+        # The <summary> disclosure triangle replaces the bullet.
+        li["style"] = "list-style: none"
+
+    with open(html_path, "w") as f:
+        f.write(str(soup))
+
+
 def docs_filename(version: str):
     return f"truenas-{version}-docs.zip"
 
@@ -348,6 +384,10 @@ def build_api(output_dir: str, api_and_changelog: tuple[APIDump, Changelog | Non
     )
 
     shutil.move(f"{build_dir}/html", f"{output_dir}/{api.version}")
+
+    changelog_path = f"{output_dir}/{api.version}/changelog.html"
+    if os.path.exists(changelog_path):
+        collapse_changelog_schema_changes(changelog_path)
 
 
 def main(output_dir):
