@@ -1,5 +1,6 @@
 import datetime
 import errno
+from dataclasses import dataclass
 
 from middlewared.api import api_method
 from middlewared.api.current import PoolScrubArgs, PoolScrubResult, PoolUpgradeArgs, PoolUpgradeResult
@@ -8,6 +9,58 @@ from middlewared.service_exception import ValidationError
 from middlewared.plugins.zpool import upgrade_zpool_impl
 
 from truenas_pylibzfs import ZFSError, ZFSException
+
+
+@dataclass(frozen=True)
+class ResilverPriority:
+    """ZFS tunables written to sysfs to control resilver/scrub aggressiveness."""
+    resilver_min_time_ms: int
+    nia_credit: int
+    nia_delay: int
+    scrub_max_active: int
+
+
+# Applied while inside the user-configured off-peak window (resilver favored).
+HIGH_PRIORITY = ResilverPriority(resilver_min_time_ms=3000, nia_credit=10, nia_delay=2, scrub_max_active=8)
+# Applied outside the off-peak window (production I/O favored).
+LOW_PRIORITY = ResilverPriority(resilver_min_time_ms=1500, nia_credit=5, nia_delay=5, scrub_max_active=3)
+
+
+def calculate_resilver_priority(
+    resilver: dict, now: datetime.datetime | None = None
+) -> ResilverPriority:
+    """
+    Determine the ZFS resilver tunables for a resilver configuration.
+
+    Returns ``HIGH_PRIORITY`` when ``now`` falls inside the configured off-peak
+    window (`begin`/`end`/`weekday`), otherwise ``LOW_PRIORITY``. ``now`` defaults
+    to the current local time and exists primarily so the decision is testable.
+
+    `weekday` is a comma separated string of isoweekday values (1=Mon .. 7=Sun).
+    If `begin` > `end` the window rolls over midnight into the following morning.
+    """
+    if now is None:
+        now = datetime.datetime.now()
+
+    higher_prio = False
+    weekdays = map(lambda x: int(x), resilver['weekday'].split(','))
+    now_t = now.time()
+    # end overlaps the day
+    if resilver['begin'] > resilver['end']:
+        if now.isoweekday() in weekdays and now_t >= resilver['begin']:
+            higher_prio = True
+        else:
+            lastweekday = now.isoweekday() - 1
+            if lastweekday == 0:
+                lastweekday = 7
+            if lastweekday in weekdays and now_t < resilver['end']:
+                higher_prio = True
+    # end does not overlap the day
+    else:
+        if now.isoweekday() in weekdays and now_t >= resilver['begin'] and now_t < resilver['end']:
+            higher_prio = True
+
+    return HIGH_PRIORITY if higher_prio else LOW_PRIORITY
 
 
 class PoolService(Service):
@@ -26,44 +79,16 @@ class PoolService(Service):
         if not resilver['enabled'] or not resilver['weekday']:
             return
 
-        higher_prio = False
-        weekdays = map(lambda x: int(x), resilver['weekday'].split(','))
-        now = datetime.datetime.now()
-        now_t = now.time()
-        # end overlaps the day
-        if resilver['begin'] > resilver['end']:
-            if now.isoweekday() in weekdays and now_t >= resilver['begin']:
-                higher_prio = True
-            else:
-                lastweekday = now.isoweekday() - 1
-                if lastweekday == 0:
-                    lastweekday = 7
-                if lastweekday in weekdays and now_t < resilver['end']:
-                    higher_prio = True
-        # end does not overlap the day
-        else:
-            if now.isoweekday() in weekdays and now_t >= resilver['begin'] and now_t < resilver['end']:
-                higher_prio = True
-
-        if higher_prio:
-            resilver_min_time_ms = 3000
-            nia_credit = 10
-            nia_delay = 2
-            scrub_max_active = 8
-        else:
-            resilver_min_time_ms = 1500
-            nia_credit = 5
-            nia_delay = 5
-            scrub_max_active = 3
+        priority = calculate_resilver_priority(resilver)
 
         with open('/sys/module/zfs/parameters/zfs_resilver_min_time_ms', 'w') as f:
-            f.write(str(resilver_min_time_ms))
+            f.write(str(priority.resilver_min_time_ms))
         with open('/sys/module/zfs/parameters/zfs_vdev_nia_credit', 'w') as f:
-            f.write(str(nia_credit))
+            f.write(str(priority.nia_credit))
         with open('/sys/module/zfs/parameters/zfs_vdev_nia_delay', 'w') as f:
-            f.write(str(nia_delay))
+            f.write(str(priority.nia_delay))
         with open('/sys/module/zfs/parameters/zfs_vdev_scrub_max_active', 'w') as f:
-            f.write(str(scrub_max_active))
+            f.write(str(priority.scrub_max_active))
 
     @api_method(PoolScrubArgs, PoolScrubResult, roles=['POOL_WRITE'])
     @job(transient=True)
