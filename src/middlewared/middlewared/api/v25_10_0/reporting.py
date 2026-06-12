@@ -1,5 +1,6 @@
 import typing
 
+from annotated_types import Gt
 from pydantic import Field
 
 from middlewared.api.base import (
@@ -38,7 +39,7 @@ class ReportingUpdateResult(BaseModel):
     """The updated reporting configuration."""
 
 
-timestamp: typing.TypeAlias = typing.Annotated[int, Field(gt=0)]
+timestamp: typing.TypeAlias = typing.Annotated[int, Gt(0)]
 
 
 class ReportingQuery(BaseModel):

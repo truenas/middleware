@@ -1,7 +1,7 @@
 import re
 from typing import Annotated, Literal, TypeAlias
 
-from pydantic import AfterValidator, Field, PositiveInt, Secret, StringConstraints
+from pydantic import AfterValidator, Discriminator, Field, PositiveInt, Secret, StringConstraints
 
 from middlewared.api.base import (
     BaseModel, Excluded, excluded_field, match_validator, NonEmptyString, single_argument_args,
@@ -197,7 +197,7 @@ class PoolCreateTopologyDataVdevNonDRAID(BaseModel):
 
 PoolCreateTopologyDataVdev = Annotated[
     PoolCreateTopologyDataVdevDRAID | PoolCreateTopologyDataVdevNonDRAID,
-    Field(discriminator="type")
+    Discriminator("type")
 ]
 
 

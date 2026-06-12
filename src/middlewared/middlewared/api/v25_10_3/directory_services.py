@@ -16,7 +16,8 @@ from middlewared.utils.directoryservices.credential import DSCredType
 from middlewared.utils.lang import undefined
 from middlewared.plugins.idmap_.idmap_constants import TRUENAS_IDMAP_MAX, TRUENAS_IDMAP_MIN
 
-from pydantic import Field, Secret, model_validator, field_validator
+from annotated_types import Ge, Le
+from pydantic import Discriminator, Field, Secret, model_validator, field_validator
 from typing import Annotated, Any, Literal
 
 __all__ = [
@@ -28,7 +29,7 @@ __all__ = [
     'DirectoryServicesSyncKeytabArgs', 'DirectoryServicesSyncKeytabResult',
 ]
 
-IdmapId = Annotated[int, Field(ge=TRUENAS_IDMAP_MIN, le=TRUENAS_IDMAP_MAX)]
+IdmapId = Annotated[int, Ge(TRUENAS_IDMAP_MIN), Le(TRUENAS_IDMAP_MAX)]
 
 DSStatus = Literal['DISABLED', 'FAULTED', 'LEAVING', 'JOINING', 'HEALTHY']
 DSType = Literal['ACTIVEDIRECTORY', 'IPA', 'LDAP']
@@ -182,7 +183,7 @@ class BuiltinDomainTdb(IdmapDomainBase):
 
 DomainIdmap = Annotated[
     AD_Idmap | LDAP_Idmap | RFC2307_Idmap | RID_Idmap,
-    Field(discriminator='idmap_backend', default=RID_Idmap(idmap_backend='RID'))
+    Discriminator('idmap_backend')
 ]
 
 
@@ -190,7 +191,7 @@ class PrimaryDomainIdmap(BaseModel):
     builtin: BuiltinDomainTdb = Field(default=BuiltinDomainTdb())
     """ UID and GID range configuration for automatically generated accounts linked to well-known and BUILTIN accounts \
     on Windows servers. """
-    idmap_domain: DomainIdmap
+    idmap_domain: DomainIdmap = RID_Idmap(idmap_backend='RID')
     """ This configuration defines how domain accounts joined to TrueNAS are mapped to Unix UIDs and GIDs on the \
     TrueNAS server. Most TrueNAS deployments use the RID backend, which algorithmically assigns UIDs and GIDs based on \
     the Active Directory account SID. Another common option is the AD backend, which reads predefined Active Directory \
@@ -238,7 +239,7 @@ class CredLDAPMTLS(BaseModel):
 
 DSCred = Annotated[
     CredKRBUser | CredKRBPrincipal | CredLDAPPlain | CredLDAPAnonymous | CredLDAPMTLS,
-    Field(discriminator='credential_type')
+    Discriminator('credential_type')
 ]
 
 

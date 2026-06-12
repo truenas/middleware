@@ -2,6 +2,7 @@ from .dict import *  # noqa
 from .fc import *  # noqa
 from .filesystem import *  # noqa
 from .iscsi import *  # noqa
+from .json_schema import *  # noqa
 from .ldap import * # noqa
 from .list import *  # noqa
 from .network import *  # noqa

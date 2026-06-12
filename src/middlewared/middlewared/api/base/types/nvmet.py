@@ -2,7 +2,8 @@ import re
 from typing import Annotated
 from uuid import UUID
 
-from pydantic import AfterValidator, Field
+from annotated_types import MaxLen, MinLen
+from pydantic import AfterValidator
 
 __all__ = [
     "NQN"
@@ -46,4 +47,4 @@ def _validate_nqn(nqn: str):
     return nqn
 
 
-NQN = Annotated[str, Field(min_length=MIN_NQN_LEN, max_length=MAX_NQN_LEN), AfterValidator(_validate_nqn)]
+NQN = Annotated[str, MinLen(MIN_NQN_LEN), MaxLen(MAX_NQN_LEN), AfterValidator(_validate_nqn)]
