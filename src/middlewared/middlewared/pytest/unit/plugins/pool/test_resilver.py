@@ -14,17 +14,17 @@ from middlewared.plugins.pool_.pool_operations import (
 #   2024-01-05 Fri(5)  2024-01-06 Sat(6)  2024-01-07 Sun(7)
 MON, TUE, WED, THU, FRI, SAT, SUN = (datetime.date(2024, 1, d) for d in range(1, 8))
 
-BUSINESS_DAYS = '1,2,3,4,5'
-EVERY_DAY = '1,2,3,4,5,6,7'
+BUSINESS_DAYS = "1,2,3,4,5"
+EVERY_DAY = "1,2,3,4,5,6,7"
 
 
 def _resilver(weekday, begin, end, enabled=True):
     """Build a datastore-shaped resilver config row (times are datetime.time)."""
     return {
-        'enabled': enabled,
-        'weekday': weekday,
-        'begin': datetime.time(*begin),
-        'end': datetime.time(*end),
+        "enabled": enabled,
+        "weekday": weekday,
+        "begin": datetime.time(*begin),
+        "end": datetime.time(*end),
     }
 
 
@@ -36,6 +36,7 @@ def _at(day, hour, minute=0):
 # Shape / return-value contract
 # ---------------------------------------------------------------------------
 
+
 def test_returns_resilver_priority_dataclass():
     result = calculate_resilver_priority(_resilver(EVERY_DAY, (9, 0), (17, 0)), _at(MON, 12))
     assert isinstance(result, ResilverPriority)
@@ -43,17 +44,14 @@ def test_returns_resilver_priority_dataclass():
 
 def test_priority_constant_values():
     # Locks in the exact tunables that get written to sysfs.
-    assert HIGH_PRIORITY == ResilverPriority(
-        resilver_min_time_ms=3000, nia_credit=10, nia_delay=2, scrub_max_active=8
-    )
-    assert LOW_PRIORITY == ResilverPriority(
-        resilver_min_time_ms=1500, nia_credit=5, nia_delay=5, scrub_max_active=3
-    )
+    assert HIGH_PRIORITY == ResilverPriority(resilver_min_time_ms=3000, nia_credit=10, nia_delay=2, scrub_max_active=8)
+    assert LOW_PRIORITY == ResilverPriority(resilver_min_time_ms=1500, nia_credit=5, nia_delay=5, scrub_max_active=3)
 
 
 # ---------------------------------------------------------------------------
 # Daytime window (begin < end, no rollover past midnight)
 # ---------------------------------------------------------------------------
+
 
 def test_daytime_window_active():
     r = _resilver(BUSINESS_DAYS, (9, 0), (17, 0))
@@ -86,7 +84,7 @@ def test_daytime_window_wrong_weekday():
     assert calculate_resilver_priority(r, _at(SAT, 12)) is LOW_PRIORITY
 
 
-@pytest.mark.parametrize('day', [MON, TUE, WED, THU, FRI])
+@pytest.mark.parametrize("day", [MON, TUE, WED, THU, FRI])
 def test_daytime_window_every_business_day(day):
     r = _resilver(BUSINESS_DAYS, (9, 0), (17, 0))
     assert calculate_resilver_priority(r, _at(day, 12)) is HIGH_PRIORITY
@@ -97,6 +95,7 @@ def test_daytime_window_every_business_day(day):
 # This half is checked against "today" before the iterator is exhausted, so
 # it behaves correctly.
 # ---------------------------------------------------------------------------
+
 
 def test_overnight_window_evening_active():
     # Default-style window: 18:00 -> 09:00 next day, every weekday enabled.
@@ -127,6 +126,7 @@ def test_overnight_window_evening_wrong_weekday():
 # time after the first `in` check already consumed it.
 # ---------------------------------------------------------------------------
 
+
 def test_overnight_window_morning_after_end_is_low():
     # 10:00 is past the 09:00 end of the rolled-over window.
     r = _resilver(EVERY_DAY, (18, 0), (9, 0))
@@ -141,7 +141,7 @@ def test_overnight_window_morning_at_end_is_exclusive():
 def test_overnight_window_morning_previous_day_not_enabled():
     # Window is Tue-Sat. Tuesday 02:00 belongs to *Monday's* night, and Monday
     # is not enabled, so this is correctly low priority.
-    r = _resilver('2,3,4,5,6', (18, 0), (9, 0))
+    r = _resilver("2,3,4,5,6", (18, 0), (9, 0))
     assert calculate_resilver_priority(r, _at(TUE, 2)) is LOW_PRIORITY
 
 
