@@ -1,11 +1,16 @@
+from dataclasses import dataclass
 import datetime
 import errno
-from dataclasses import dataclass
 
 from truenas_pylibzfs import ZFSError, ZFSException
 
 from middlewared.api import api_method
-from middlewared.api.current import PoolScrubArgs, PoolScrubResult, PoolUpgradeArgs, PoolUpgradeResult
+from middlewared.api.current import (
+    PoolScrubArgs,
+    PoolScrubResult,
+    PoolUpgradeArgs,
+    PoolUpgradeResult,
+)
 from middlewared.plugins.zpool import upgrade_zpool_impl
 from middlewared.service import Service, job, private
 from middlewared.service_exception import ValidationError
