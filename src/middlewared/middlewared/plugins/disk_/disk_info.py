@@ -117,7 +117,7 @@ class DiskService(Service):
         if not bd.children:
             return parts
 
-        req_keys = ('ID_PART_ENTRY_' + i for i in ('TYPE', 'UUID', 'NUMBER', 'SIZE'))
+        req_keys = ['ID_PART_ENTRY_' + i for i in ('TYPE', 'UUID', 'NUMBER', 'SIZE')]
         for p in filter(lambda p: all(p.get(k) for k in req_keys), bd.children):
             part_name = self.get_partition_for_disk(disk, p['ID_PART_ENTRY_NUMBER'])
             pinfo = get_partition_size_info(disk, int(p['ID_PART_ENTRY_OFFSET']), int(p['ID_PART_ENTRY_SIZE']))
