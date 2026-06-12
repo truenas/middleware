@@ -24,7 +24,10 @@ def upgrade():
     conn = op.get_bind()
 
     for device in conn.execute(text("SELECT * FROM container_device")).mappings().all():
-        attributes = json.loads(decrypt(device['attributes']))
+        if not (decrypted := decrypt(device['attributes'])):
+            continue
+
+        attributes = json.loads(decrypted)
 
         if attributes.get('dtype') not in ('DISK', 'RAW', 'USB'):
             continue
