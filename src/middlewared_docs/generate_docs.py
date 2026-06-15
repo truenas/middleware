@@ -12,11 +12,12 @@ import tempfile
 import textwrap
 import typing
 
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 from json_schema_for_humans.generate import generate_from_filename
 from json_schema_for_humans.generation_configuration import GenerationConfiguration
 
 from middlewared.fake_env import setup_fake_middleware_env
+
 setup_fake_middleware_env()
 
 from middlewared.api.base.server.doc import APIDump, APIDumpMethod, APIDumpEvent
@@ -68,9 +69,7 @@ class DocumentationGenerator:
         if changelog.is_empty():
             result += f"No API schema changes since version {changelog.old_version}.\n"
         else:
-            result += (
-                f"Summary of API changes since version {changelog.old_version}.\n\n"
-            )
+            result += f"Summary of API changes since version {changelog.old_version}.\n\n"
 
             result += self._render_changelog_section(
                 "Methods Added",
@@ -92,8 +91,7 @@ class DocumentationGenerator:
         with open(f"{self.output_dir}/changelog.rst", "w") as f:
             f.write(result)
 
-    def _render_changelog_section(self, title: str, doc_prefix: str, names: list[str],
-                                  removed: bool = False) -> str:
+    def _render_changelog_section(self, title: str, doc_prefix: str, names: list[str], removed: bool = False) -> str:
         if not names:
             return ""
         out = f"{title}\n{'-' * len(title)}\n\n"
@@ -113,8 +111,7 @@ class DocumentationGenerator:
             out += "\n"
         return out
 
-    def _render_schema_changes_section(self, title: str, doc_prefix: str,
-                                       changes: list[SchemaChange]) -> str:
+    def _render_schema_changes_section(self, title: str, doc_prefix: str, changes: list[SchemaChange]) -> str:
         if not changes:
             return ""
         out = f"{title}\n{'-' * len(title)}\n\n"
@@ -164,23 +161,24 @@ class DocumentationGenerator:
             self._api_event_html_process,
         )
 
-    def _write_api_index(self, filename: str, title: str, items: list[APIDumpMethod | APIDumpEvent],
-                         html_process: typing.Callable[[BeautifulSoup], None]):
+    def _write_api_index(
+        self,
+        filename: str,
+        title: str,
+        items: list[APIDumpMethod | APIDumpEvent],
+        html_process: typing.Callable[[BeautifulSoup], None],
+    ):
         plugins = sorted({method.name.rsplit(".", 1)[0] for method in items})
 
         index = textwrap.dedent(f"""\
             {title}
-            {'-' * len(title)}
+            {"-" * len(title)}
 
             .. toctree::
 
         """)
         for plugin in plugins:
-            plugin_items = [
-                item
-                for item in items
-                if item.name.rsplit(".", 1)[0] == plugin
-            ]
+            plugin_items = [item for item in items if item.name.rsplit(".", 1)[0] == plugin]
             if not plugin_items:
                 continue
 
@@ -191,11 +189,16 @@ class DocumentationGenerator:
         with open(f"{self.output_dir}/{filename}.rst", "w") as f:
             f.write(index)
 
-    def _write_plugin(self, prefix: str, plugin: str, items: list[APIDumpMethod | APIDumpEvent],
-                      html_process: typing.Callable[[BeautifulSoup], None]):
+    def _write_plugin(
+        self,
+        prefix: str,
+        plugin: str,
+        items: list[APIDumpMethod | APIDumpEvent],
+        html_process: typing.Callable[[BeautifulSoup], None],
+    ):
         index = textwrap.dedent(f"""\
             {plugin}
-            {'-' * len(plugin)}
+            {"-" * len(plugin)}
 
             .. toctree::
 
@@ -210,8 +213,9 @@ class DocumentationGenerator:
         with open(f"{self.output_dir}/{prefix}_{plugin}.rst", "w") as f:
             f.write(index)
 
-    def _generate_item_schemas_html(self, prefix: str, item: APIDumpMethod | APIDumpEvent,
-                                    process: typing.Callable[[BeautifulSoup], None]) -> str:
+    def _generate_item_schemas_html(
+        self, prefix: str, item: APIDumpMethod | APIDumpEvent, process: typing.Callable[[BeautifulSoup], None]
+    ) -> str:
         json_path = f"{self.output_dir}/{prefix}_{item.name}.json"
         try:
             with open(json_path, "w") as f:
@@ -254,14 +258,16 @@ class DocumentationGenerator:
                     except ValueError:
                         continue
 
-                    new_default_value_value = soup.new_tag("div", **{"class": "value"})
+                    new_default_value_value = soup.new_tag("div", attrs={"class": "value"})
                     new_default_value_value.string = json.dumps(value_decoded, indent=2)
-                    new_default_value = soup.new_tag("div", **{"class": "json-default-value"})
+                    new_default_value = soup.new_tag("div", attrs={"class": "json-default-value"})
                     new_default_value.string = "Default:"
                     new_default_value.insert(1, new_default_value_value)
                     default_value.replace_with(new_default_value)
 
-            return soup.find("body").decode_contents()
+            body = soup.find("body")
+            assert isinstance(body, Tag)
+            return body.decode_contents()
         finally:
             os.unlink(json_path)
 
@@ -277,10 +283,7 @@ class DocumentationGenerator:
         if isinstance(item, APIDumpMethod):
             if item.name == "core.download":
                 # Add downloadable jobs list for core.download
-                downloadable_jobs = [
-                    m for m in self.api.methods
-                    if m.output_pipes
-                ]
+                downloadable_jobs = [m for m in self.api.methods if m.output_pipes]
                 if downloadable_jobs:
                     result += "**Jobs that can be downloaded:**\n\n"
                     for job in sorted(downloadable_jobs, key=lambda m: m.name):
@@ -296,25 +299,27 @@ class DocumentationGenerator:
                     result += f"*This job {modal} be used with* :doc:`core.download <api_methods_core.download>`.\n\n"
 
         result += ".. raw:: html\n\n"
-        result += textwrap.indent(
-            "<div id=\"json-schema\">" + schemas_html + "</div><br><br>", " " * 4
-        ) + "\n\n"
+        result += textwrap.indent('<div id="json-schema">' + schemas_html + "</div><br><br>", " " * 4) + "\n\n"
 
         result += "*Required roles:* " + " | ".join(item.roles) + "\n\n"
 
         return result
 
     def _api_method_html_process(self, soup: BeautifulSoup):
-        for h5 in soup.find("div", {"id": "Call_parameters"}).find().find_all("h5", recursive=False):
+        call_parameters = soup.find("div", {"id": "Call_parameters"})
+        assert isinstance(call_parameters, Tag)
+        inner = call_parameters.find()
+        assert isinstance(inner, Tag)
+        for h5 in inner.find_all("h5", recursive=False):
             if m := re.match("Item at ([0-9]+) must be:", h5.text):
                 number = int(m.group(1))
 
-                next_sibling = h5.next_sibling
-                while next_sibling and next_sibling.name is None:
-                    next_sibling = next_sibling.next_sibling
-
-                name = next_sibling.find("h4").text
-                h5.string = f"Parameter {number}: {name}"
+                # The parameter's heading is the next sibling element (skipping text nodes).
+                sibling = h5.find_next_sibling()
+                assert isinstance(sibling, Tag)
+                heading = sibling.find("h4")
+                assert isinstance(heading, Tag)
+                h5.string = f"Parameter {number}: {heading.text}"
 
     def _api_event_html_process(self, soup: BeautifulSoup):
         pass
@@ -377,7 +382,8 @@ def build_api(output_dir: str, api_and_changelog: tuple[APIDump, Changelog | Non
     subprocess.run(
         [
             os.path.join(os.path.dirname(sys.executable), "sphinx-build"),
-            "-M", "html",
+            "-M",
+            "html",
             rst_dir,
             build_dir,
         ],
@@ -423,18 +429,18 @@ def main(output_dir):
         cwd = f"{output_dir}/{version}"
         version_switch = [
             (
-                f'<option value="{api.version}" {"selected" if api.version == version else ""}>' +
-                f'{api.version_title}' +
-                '</option>'
+                f'<option value="{api.version}" {"selected" if api.version == version else ""}>'
+                + f"{api.version_title}"
+                + "</option>"
             )
             for api in apis_sorted
         ]
         version_switch = (
             '<form class="form-inline">'
-            '<select class="form-control" onchange="navigateToVersion(this.value);">' +
-            ''.join(version_switch) +
-            '</select>'
-            '</form>'
+            '<select class="form-control" onchange="navigateToVersion(this.value);">'
+            + "".join(version_switch)
+            + "</select>"
+            "</form>"
         )
 
         for root, dirs, files in os.walk(cwd):

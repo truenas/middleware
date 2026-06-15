@@ -23,4 +23,4 @@ jobs:
           PYTHONPATH=. FAKE_ENV=1 pytest-3 -v --disable-pytest-warnings middlewared/pytest
 
       - name: Docs changelog tests
-        run: pytest-3 -v --disable-pytest-warnings src/middlewared_docs/test_changelog.py
+        run: pytest-3 -v --disable-pytest-warnings src/middlewared_docs/tests/

@@ -1,0 +1,10 @@
+# Inherit the middlewared rule set (line length, target version, select, banned-api).
+extend = "../middlewared/pyproject.toml"
+
+[lint.isort]
+force-sort-within-sections = true
+known-first-party = ["changelog"]
+
+[lint.per-file-ignores]
+# setup_fake_middleware_env() must run before the middlewared imports it enables.
+"generate_docs.py" = ["E402", "I001"]
