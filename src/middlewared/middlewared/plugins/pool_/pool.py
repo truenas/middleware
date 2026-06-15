@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 import errno
 import os
+from types import MappingProxyType
 
 from fenced.fence import ExitCode as FencedExitCodes
 
@@ -23,6 +24,20 @@ from middlewared.utils import BOOT_POOL_NAME_VALID
 from middlewared.utils.size import format_size
 
 from .utils import RE_DRAID_DATA_DISKS, RE_DRAID_SPARE_DISKS, ZPOOL_CACHE_FILE
+
+
+# Redundancy/parity level per vdev type. Used to enforce that a redundant data
+# class is not paired with a non-redundant (parity 0) special vdev.
+VDEV_PARITY = MappingProxyType({
+    'STRIPE': 0,
+    'MIRROR': 1,
+    'RAIDZ1': 1,
+    'RAIDZ2': 2,
+    'RAIDZ3': 3,
+    'DRAID1': 1,
+    'DRAID2': 2,
+    'DRAID3': 3,
+})
 
 
 class PoolPoolNormalizeInfo(PoolEntry):
@@ -362,6 +377,7 @@ class PoolService(CRUDService):
                     rv.append(entry)
             return rv
 
+        data_redundant = False
         for topology_type in ('data', 'special', 'dedup'):
             lastdatatype = None
             topology_data = list(data['topology'].get(topology_type) or [])
@@ -392,7 +408,20 @@ class PoolService(CRUDService):
                         'zfs.pool.validate_draid_configuration', f'{topology_type}.{i}', numdisks, nparity, vdev
                     ))
 
-                if lastdatatype and lastdatatype != vdev['type']:
+                if topology_type == 'data' and VDEV_PARITY[vdev['type']] >= 1:
+                    data_redundant = True
+
+                if topology_type == 'special':
+                    # Special vdevs may mix types (matching truenas_pylibzfs), so no
+                    # same-type check is applied here. A non-redundant special vdev is
+                    # still rejected when the data class is redundant, because losing
+                    # that vdev would otherwise be fatal to an otherwise-redundant pool.
+                    if data_redundant and VDEV_PARITY[vdev['type']] < 1:
+                        verrors.add(
+                            f'topology.{topology_type}.{i}.type',
+                            'A special vdev with no redundancy is not allowed when data vdevs are redundant.',
+                        )
+                elif lastdatatype and lastdatatype != vdev['type']:
                     verrors.add(
                         f'topology.{topology_type}.{i}.type',
                         f'You are not allowed to create a pool with different {topology_type} vdev types '

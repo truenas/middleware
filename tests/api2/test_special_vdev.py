@@ -8,39 +8,6 @@ from middlewared.test.integration.utils import call
 POOL_NAME = 'test_special_vdev_pool'
 
 
-def test_draid_special_vdev_gets_correct_allocation_bias():
-    """
-    CRITICAL: Test that DRAID special vdevs get VDEV_ALLOC_BIAS_SPECIAL.
-    This validates the special_vdev flag flow: middleware → py-libzfs.
-    Without this flag, DRAID special vdevs would be created as data vdevs.
-    """
-    unused_disks = call('disk.get_unused')
-    if len(unused_disks) < 5:
-        pytest.skip('Insufficient number of disks to perform this test')
-
-    with another_pool({
-        'name': POOL_NAME,
-        'topology': {
-            'data': [{
-                'type': 'MIRROR',
-                'disks': [unused_disks[0]['name'], unused_disks[1]['name']]
-            }],
-            'special': [{
-                'type': 'DRAID1',
-                'disks': [disk['name'] for disk in unused_disks[2:5]],
-                'draid_spare_disks': 0,
-            }]
-        },
-        'allow_duplicate_serials': True,
-    }) as pool:
-        # Verify DRAID special vdev exists in topology
-        assert len(pool['topology']['special']) == 1
-        assert pool['topology']['special'][0]['name'].startswith('draid1:')
-
-        # Verify pool is detected as DRAID pool (tests is_draid_pool includes special)
-        assert call('pool.is_draid_pool', pool['name']) is True
-
-
 def test_multiple_special_vdevs_same_type():
     """
     Test that multiple special vdevs of the same type can be created.
@@ -76,13 +43,47 @@ def test_multiple_special_vdevs_same_type():
         assert pool['topology']['special'][1]['type'].upper() == 'RAIDZ1'
 
 
-def test_special_vdev_mixed_types_should_fail():
+def test_special_vdev_mixed_types_is_allowed():
     """
-    Test middleware validation: mixing different vdev types in special topology fails.
-    This is middleware-enforced (pool.py:308-314), not ZFS.
+    Special vdevs may mix types (e.g. MIRROR + RAIDZ1). truenas_pylibzfs applies
+    no same-type rule to the special class, so middleware must not either.
     """
     unused_disks = call('disk.get_unused')
     if len(unused_disks) < 7:
+        pytest.skip('Insufficient number of disks to perform this test')
+
+    with another_pool({
+        'name': POOL_NAME,
+        'topology': {
+            'data': [{
+                'type': 'MIRROR',
+                'disks': [unused_disks[0]['name'], unused_disks[1]['name']]
+            }],
+            'special': [
+                {
+                    'type': 'RAIDZ1',
+                    'disks': [unused_disks[2]['name'], unused_disks[3]['name'], unused_disks[4]['name']]
+                },
+                {
+                    'type': 'MIRROR',
+                    'disks': [unused_disks[5]['name'], unused_disks[6]['name']]
+                }
+            ]
+        },
+        'allow_duplicate_serials': True,
+    }) as pool:
+        assert len(pool['topology']['special']) == 2
+        assert {v['type'].upper() for v in pool['topology']['special']} == {'RAIDZ1', 'MIRROR'}
+
+
+def test_special_vdev_draid_is_rejected():
+    """
+    dRAID is not permitted for special vdevs (matching truenas_pylibzfs). The
+    special class only accepts MIRROR/RAIDZ/STRIPE, so a DRAID type is rejected
+    at input validation.
+    """
+    unused_disks = call('disk.get_unused')
+    if len(unused_disks) < 5:
         pytest.skip('Insufficient number of disks to perform this test')
 
     with pytest.raises(ValidationErrors) as ve:
@@ -93,50 +94,95 @@ def test_special_vdev_mixed_types_should_fail():
                     'type': 'MIRROR',
                     'disks': [unused_disks[0]['name'], unused_disks[1]['name']]
                 }],
-                'special': [
-                    {
-                        'type': 'RAIDZ1',
-                        'disks': [unused_disks[2]['name'], unused_disks[3]['name'], unused_disks[4]['name']]
-                    },
-                    {
-                        'type': 'MIRROR',
-                        'disks': [unused_disks[5]['name'], unused_disks[6]['name']]
-                    }
-                ]
+                'special': [{
+                    'type': 'DRAID1',
+                    'disks': [disk['name'] for disk in unused_disks[2:5]],
+                }]
             },
             'allow_duplicate_serials': True,
         }, job=True)
 
-    # Verify middleware validation caught it
-    assert ve.value.errors[0].attribute == 'pool_create.topology.special.1.type'
-    assert 'You are not allowed to create a pool with different special vdev types' in ve.value.errors[0].errmsg
-    assert 'RAIDZ1' in ve.value.errors[0].errmsg and 'MIRROR' in ve.value.errors[0].errmsg
+    assert ve.value.errors[0].attribute == 'pool_create.topology.special.0.type'
+    assert 'Input should be' in ve.value.errors[0].errmsg
 
 
-def test_draid_with_dedicated_spares_is_allowed():
+def test_non_redundant_special_on_redundant_data_is_rejected():
     """
-    Dedicated spares may coexist with dRAID vdevs.
+    A non-redundant (STRIPE) special vdev is not allowed when the data class is
+    redundant, since losing the special vdev would be fatal to the pool. This
+    matches the redundancy floor enforced by truenas_pylibzfs.
     """
     unused_disks = call('disk.get_unused')
-    if len(unused_disks) < 6:
+    if len(unused_disks) < 3:
+        pytest.skip('Insufficient number of disks to perform this test')
+
+    with pytest.raises(ValidationErrors) as ve:
+        call('pool.create', {
+            'name': POOL_NAME,
+            'topology': {
+                'data': [{
+                    'type': 'MIRROR',
+                    'disks': [unused_disks[0]['name'], unused_disks[1]['name']]
+                }],
+                'special': [{
+                    'type': 'STRIPE',
+                    'disks': [unused_disks[2]['name']]
+                }]
+            },
+            'allow_duplicate_serials': True,
+        }, job=True)
+
+    assert ve.value.errors[0].attribute == 'pool_create.topology.special.0.type'
+    assert 'no redundancy' in ve.value.errors[0].errmsg
+
+
+def test_non_redundant_special_on_striped_data_is_allowed():
+    """
+    When the data class is not redundant (STRIPE), the redundancy floor does not
+    apply, so a non-redundant special vdev is permitted.
+    """
+    unused_disks = call('disk.get_unused')
+    if len(unused_disks) < 2:
         pytest.skip('Insufficient number of disks to perform this test')
 
     with another_pool({
         'name': POOL_NAME,
         'topology': {
             'data': [{
-                'type': 'MIRROR',
-                'disks': [unused_disks[0]['name'], unused_disks[1]['name']]
+                'type': 'STRIPE',
+                'disks': [unused_disks[0]['name']]
             }],
             'special': [{
+                'type': 'STRIPE',
+                'disks': [unused_disks[1]['name']]
+            }]
+        },
+        'allow_duplicate_serials': True,
+    }) as pool:
+        assert len(pool['topology']['special']) == 1
+
+
+def test_dedicated_spares_coexist_with_draid_data():
+    """
+    Dedicated spares may coexist with a dRAID vdev. dRAID is not permitted for
+    special vdevs, so this exercises the data class.
+    """
+    unused_disks = call('disk.get_unused')
+    if len(unused_disks) < 4:
+        pytest.skip('Insufficient number of disks to perform this test')
+
+    with another_pool({
+        'name': POOL_NAME,
+        'topology': {
+            'data': [{
                 'type': 'DRAID1',
-                'disks': [unused_disks[2]['name'], unused_disks[3]['name'], unused_disks[4]['name']],
+                'disks': [unused_disks[0]['name'], unused_disks[1]['name'], unused_disks[2]['name']],
                 'draid_spare_disks': 0,
             }],
-            'spares': [unused_disks[5]['name']]
+            'spares': [unused_disks[3]['name']]
         },
         'allow_duplicate_serials': True,
     }) as pool:
         # The combination is accepted and the dedicated spare is present.
         assert len(pool['topology']['spare']) == 1
-        assert pool['topology']['special'][0]['name'].startswith('draid1:')
+        assert pool['topology']['data'][0]['name'].startswith('draid1:')
