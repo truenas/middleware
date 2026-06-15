@@ -28,6 +28,7 @@ from middlewared.utils.libvirt.utils import ACTIVE_STATES
 from .capabilities import guest_architecture_and_machine_choices
 from .info import (
     MAXIMUM_SUPPORTED_VCPUS,
+    bootloader_aavmf_choices,
     bootloader_ovmf_choices,
     cpu_model_choices,
     license_active,
@@ -107,11 +108,6 @@ class VMServicePart(CRUDServicePart[VMEntry]):
         verrors = ValidationErrors()
         data = await self.validate(verrors, 'vm_create', data)
 
-        if data.bootloader_ovmf is not None and data.bootloader_ovmf not in await self.to_thread(
-            bootloader_ovmf_choices
-        ):
-            verrors.add('vm_create.bootloader_ovmf', 'Invalid bootloader ovmf choice specified')
-
         if data.enable_secure_boot:
             # Only q35 machine type supports secure boot
             # https://docs.openstack.org/nova/latest/admin/secure-boot.html
@@ -147,7 +143,14 @@ class VMServicePart(CRUDServicePart[VMEntry]):
                 )
 
         if data.bootloader_ovmf is None:
-            data = data.model_copy(update={'bootloader_ovmf': 'OVMF_CODE_4M.fd'})
+            if data.arch_type == 'aarch64':
+                data = data.model_copy(update={'bootloader_ovmf': 'AAVMF_CODE.fd'})
+            else:
+                data = data.model_copy(update={'bootloader_ovmf': 'OVMF_CODE_4M.fd'})
+
+        choices_fn = bootloader_aavmf_choices if data.arch_type == 'aarch64' else bootloader_ovmf_choices
+        if data.bootloader_ovmf not in await self.to_thread(choices_fn):
+            verrors.add('vm_create.bootloader_ovmf', 'Invalid bootloader ovmf choice specified')
 
         verrors.check()
 
@@ -322,7 +325,9 @@ class VMServicePart(CRUDServicePart[VMEntry]):
                 f'{schema_name}.cpu_model',
                 'This attribute should not be specified when "cpu_mode" is not "CUSTOM".'
             )
-        elif data.cpu_model and data.cpu_model not in await self.to_thread(cpu_model_choices):
+        elif data.cpu_model and data.cpu_model not in await self.to_thread(
+            cpu_model_choices, data.arch_type or 'x86_64'
+        ):
             verrors.add(f'{schema_name}.cpu_model', 'Please select a valid CPU model.')
 
         if not old or data.name != old.name:

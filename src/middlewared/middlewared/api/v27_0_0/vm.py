@@ -15,7 +15,9 @@ from .vm_device import VMDeviceEntry, VMDisplayDevice
 
 __all__ = [
     'VMEntry', 'VMCreateArgs', 'VMCreateResult', 'VMUpdateArgs', 'VMUpdateResult', 'VMDeleteArgs', 'VMDeleteResult',
-    'VMBootloaderOvmfChoicesArgs', 'VMBootloaderOvmfChoicesResult', 'VMBootloaderOptionsArgs',
+    'VMBootloaderOvmfChoicesArgs', 'VMBootloaderOvmfChoicesResult',
+    'VMBootloaderAavmfChoicesArgs', 'VMBootloaderAavmfChoicesResult',
+    'VMBootloaderOptionsArgs',
     'VMBootloaderOptionsResult', 'VMStatusArgs', 'VMStatusResult', 'VMLogFilePathArgs', 'VMLogFilePathResult',
     'VMLogFileDownloadArgs', 'VMLogFileDownloadResult', 'VMGuestArchitectureAndMachineChoicesArgs',
     'VMGuestArchitectureAndMachineChoicesResult', 'VMCloneArgs', 'VMCloneResult',
@@ -217,6 +219,14 @@ class VMBootloaderOvmfChoicesResult(BaseModel):
     result: dict[str, str] = Field(description="Available OVMF firmware files for UEFI booting.")
 
 
+class VMBootloaderAavmfChoicesArgs(BaseModel):
+    pass
+
+
+class VMBootloaderAavmfChoicesResult(BaseModel):
+    result: dict[str, str] = Field(description="Available AAVMF firmware files for aarch64 UEFI booting.")
+
+
 class VMBootloaderOptionsArgs(BaseModel):
     pass
 
@@ -330,7 +340,10 @@ class VMGetConsoleResult(BaseModel):
 
 
 class VMCpuModelChoicesArgs(BaseModel):
-    pass
+    arch: str = Field(
+        default='x86_64',
+        description="Guest architecture to return CPU model choices for (e.g. 'x86_64', 'aarch64').",
+    )
 
 
 class VMCpuModelChoicesResult(BaseModel):
