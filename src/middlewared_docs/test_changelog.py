@@ -1,5 +1,6 @@
 # -*- coding=utf-8 -*-
 """Unit tests for the cross-version API changelog diff (`changelog.py`)."""
+
 import os
 import sys
 
@@ -10,6 +11,7 @@ import changelog as cl
 
 
 # --- builders for the canonical `--dump-api` schema shape ------------------------------
+
 
 def method_schemas(call_params=None, return_value=None):
     """A method schema as it appears in the dump: object with Call parameters + Return value."""
@@ -36,16 +38,19 @@ def obj(properties, required=()):
 
 
 def call_diff(old_params, new_params):
-    return cl.compute_schema_diff(method_schemas(call_params=old_params),
-                                  method_schemas(call_params=new_params))[0]
+    return cl.compute_schema_diff(
+        method_schemas(call_params=old_params), method_schemas(call_params=new_params)
+    )[0]
 
 
 def return_diff(old_rv, new_rv):
-    return cl.compute_schema_diff(method_schemas(return_value=old_rv),
-                                  method_schemas(return_value=new_rv))[1]
+    return cl.compute_schema_diff(
+        method_schemas(return_value=old_rv), method_schemas(return_value=new_rv)
+    )[1]
 
 
 # --- whole-schema short-circuits -------------------------------------------------------
+
 
 def test_identical_schemas_produce_no_diff():
     schema = method_schemas([param("x")], obj({"a": {"type": "string"}}))
@@ -63,42 +68,53 @@ def test_cosmetic_only_change_is_ignored():
 
 CALL_PARAM_CASES = [
     pytest.param(
-        [param("a")], [param("a"), param("b")],
+        [param("a")],
+        [param("a"), param("b")],
         ["added parameter `b` (required)"],
         id="added-required-param",
     ),
     pytest.param(
-        [param("a")], [param("a"), param("b", default="x")],
+        [param("a")],
+        [param("a"), param("b", default="x")],
         ["added parameter `b` (optional)"],
         id="added-optional-param",
     ),
     pytest.param(
-        [param("a"), param("b")], [param("a")],
+        [param("a"), param("b")],
+        [param("a")],
         ["removed parameter `b`"],
         id="removed-param",
     ),
     pytest.param(
-        [param("old_name")], [param("new_name")],
+        [param("old_name")],
+        [param("new_name")],
         ["parameter `old_name` renamed to `new_name`"],
         id="same-position-rename",
     ),
     pytest.param(
-        [param("a"), param("b")], [param("b"), param("a")],
-        ["parameter `a` moved from position 0 to 1", "parameter `b` moved from position 1 to 0"],
+        [param("a"), param("b")],
+        [param("b"), param("a")],
+        [
+            "parameter `a` moved from position 0 to 1",
+            "parameter `b` moved from position 1 to 0",
+        ],
         id="position-move",
     ),
     pytest.param(
-        [param("a", default="x")], [param("a")],
+        [param("a", default="x")],
+        [param("a")],
         ["parameter `a` became required"],
         id="param-became-required-suppresses-default-removed",
     ),
     pytest.param(
-        [param("a")], [param("a", default="x")],
+        [param("a")],
+        [param("a", default="x")],
         ["parameter `a` became optional"],
         id="param-became-optional-suppresses-default-added",
     ),
     pytest.param(
-        [param("a", type="string")], [param("a", type="integer")],
+        [param("a", type="string")],
+        [param("a", type="integer")],
         ["parameter `a` type changed (string → integer)"],
         id="param-type-change",
     ),
@@ -144,7 +160,8 @@ RETURN_VALUE_CASES = [
         id="required-reordering-is-not-a-change",
     ),
     pytest.param(
-        {"type": "string"}, {"type": "integer"},
+        {"type": "string"},
+        {"type": "integer"},
         ["type changed (string → integer)"],
         id="root-type-change",
     ),
@@ -155,7 +172,8 @@ RETURN_VALUE_CASES = [
         id="became-nullable",
     ),
     pytest.param(
-        {"enum": ["a", "b"]}, {"enum": ["b", "c"]},
+        {"enum": ["a", "b"]},
+        {"enum": ["b", "c"]},
         ['added enum value "c"', 'removed enum value "a"'],
         id="enum-values",
     ),
@@ -185,7 +203,14 @@ RETURN_VALUE_CASES = [
     ),
     pytest.param(
         {"type": "array", "prefixItems": [{"type": "string"}, {"type": "integer"}]},
-        {"type": "array", "prefixItems": [{"type": "string"}, {"type": "integer"}, {"type": "boolean"}]},
+        {
+            "type": "array",
+            "prefixItems": [
+                {"type": "string"},
+                {"type": "integer"},
+                {"type": "boolean"},
+            ],
+        },
         ["tuple length changed (2 → 3)"],
         id="tuple-length-change",
     ),
@@ -211,17 +236,28 @@ def test_return_value_diff(old_rv, new_rv, expected):
 
 # --- unions ----------------------------------------------------------------------------
 
+
 def test_titled_union_added_and_removed_variant():
-    old = {"anyOf": [obj({"a": {"type": "string"}}) | {"title": "A"},
-                     obj({"b": {"type": "string"}}) | {"title": "B"}]}
-    new = {"anyOf": [obj({"a": {"type": "string"}}) | {"title": "A"},
-                     obj({"c": {"type": "string"}}) | {"title": "C"}]}
+    old = {
+        "anyOf": [
+            obj({"a": {"type": "string"}}) | {"title": "A"},
+            obj({"b": {"type": "string"}}) | {"title": "B"},
+        ]
+    }
+    new = {
+        "anyOf": [
+            obj({"a": {"type": "string"}}) | {"title": "A"},
+            obj({"c": {"type": "string"}}) | {"title": "C"},
+        ]
+    }
     assert return_diff(old, new) == ["added variant `C`", "removed variant `B`"]
 
 
 def test_anyof_and_oneof_are_interchangeable():
-    branches = [obj({"a": {"type": "string"}}) | {"title": "A"},
-                obj({"b": {"type": "string"}}) | {"title": "B"}]
+    branches = [
+        obj({"a": {"type": "string"}}) | {"title": "A"},
+        obj({"b": {"type": "string"}}) | {"title": "B"},
+    ]
     assert return_diff({"anyOf": branches}, {"oneOf": list(branches)}) == []
 
 
@@ -233,6 +269,7 @@ def test_union_recurses_into_same_named_branch():
 
 # --- nested dot-notation paths ---------------------------------------------------------
 
+
 def test_nested_field_path_uses_dot_notation():
     old = obj({"outer": obj({"inner": {"type": "string"}})})
     new = obj({"outer": obj({"inner": {"type": "integer"}})})
@@ -240,6 +277,7 @@ def test_nested_field_path_uses_dot_notation():
 
 
 # --- compute_changelog over method lists (stubbed APIDump) -----------------------------
+
 
 class _Method:
     def __init__(self, name, schemas):
@@ -255,16 +293,22 @@ class _Dump:
 
 def test_compute_changelog_partitions_methods():
     unchanged = method_schemas([param("x")])
-    old = _Dump("25.10.0", [
-        _Method("svc.kept", unchanged),
-        _Method("svc.gone", method_schemas([param("x")])),
-        _Method("svc.touched", method_schemas([param("x")])),
-    ])
-    new = _Dump("26.0.0", [
-        _Method("svc.kept", unchanged),
-        _Method("svc.fresh", method_schemas([param("x")])),
-        _Method("svc.touched", method_schemas([param("x"), param("y")])),
-    ])
+    old = _Dump(
+        "25.10.0",
+        [
+            _Method("svc.kept", unchanged),
+            _Method("svc.gone", method_schemas([param("x")])),
+            _Method("svc.touched", method_schemas([param("x")])),
+        ],
+    )
+    new = _Dump(
+        "26.0.0",
+        [
+            _Method("svc.kept", unchanged),
+            _Method("svc.fresh", method_schemas([param("x")])),
+            _Method("svc.touched", method_schemas([param("x"), param("y")])),
+        ],
+    )
 
     log = cl.compute_changelog(old, new)  # type: ignore[arg-type]
 

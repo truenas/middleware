@@ -6,6 +6,7 @@ validation-constraint keys (``minLength``, ``pattern``, ...) are never read, so
 changes to them produce no changelog entry. The schemas are trusted to follow the
 structural rules of the `--dump-api` output.
 """
+
 from __future__ import annotations
 
 import dataclasses
@@ -156,7 +157,14 @@ class _SchemaDiffer:
 
         self._diff_default(old, new, path)
 
-    def _diff_union(self, old: dict, new: dict, old_branches: list[dict], new_branches: list[dict], path: str):
+    def _diff_union(
+        self,
+        old: dict,
+        new: dict,
+        old_branches: list[dict],
+        new_branches: list[dict],
+        path: str,
+    ):
         old_groups = _group_branches(old_branches)
         new_groups = _group_branches(new_branches)
 
@@ -182,7 +190,11 @@ class _SchemaDiffer:
             old_branches = old_groups[name]
             new_branches = new_groups[name]
             for old_branch, new_branch in zip(old_branches, new_branches):
-                branch_path = _join(path, name) if "title" in old_branch or "title" in new_branch else path
+                branch_path = (
+                    _join(path, name)
+                    if "title" in old_branch or "title" in new_branch
+                    else path
+                )
                 self.diff(old_branch, new_branch, branch_path)
             if titled and len(old_branches) != len(new_branches):
                 action = "added" if len(new_branches) > len(old_branches) else "removed"
@@ -206,11 +218,20 @@ class _SchemaDiffer:
         if old_const == new_const:
             return
         if old_const is _MISSING:
-            self._emit(path, f"value restricted to constant {json.dumps(new_const)}", sep=": ")
+            self._emit(
+                path, f"value restricted to constant {json.dumps(new_const)}", sep=": "
+            )
         elif new_const is _MISSING:
-            self._emit(path, f"constant value restriction removed (was {json.dumps(old_const)})", sep=": ")
+            self._emit(
+                path,
+                f"constant value restriction removed (was {json.dumps(old_const)})",
+                sep=": ",
+            )
         else:
-            self._emit(path, f"const value changed ({json.dumps(old_const)} → {json.dumps(new_const)})")
+            self._emit(
+                path,
+                f"const value changed ({json.dumps(old_const)} → {json.dumps(new_const)})",
+            )
 
     def _diff_object(self, old: dict, new: dict, path: str):
         old_required = set(old.get("required", ()))
@@ -232,11 +253,19 @@ class _SchemaDiffer:
                 self.lines.append(f"`{field_path}` became required")
                 if "default" in old_field and "default" not in new_field:
                     # Losing the default is implied by becoming required.
-                    old_field = {key: value for key, value in old_field.items() if key != "default"}
+                    old_field = {
+                        key: value
+                        for key, value in old_field.items()
+                        if key != "default"
+                    }
             elif name in old_required and name not in new_required:
                 self.lines.append(f"`{field_path}` became optional")
                 if "default" in new_field and "default" not in old_field:
-                    new_field = {key: value for key, value in new_field.items() if key != "default"}
+                    new_field = {
+                        key: value
+                        for key, value in new_field.items()
+                        if key != "default"
+                    }
             self.diff(old_field, new_field, field_path)
 
         old_extra = _map_value_schema(old)
@@ -253,11 +282,15 @@ class _SchemaDiffer:
         for pattern in sorted(new_patterns.keys() - old_patterns.keys()):
             self._emit(path, f"added properties matching pattern `{pattern}`", sep=": ")
         for pattern in sorted(old_patterns.keys() - new_patterns.keys()):
-            self._emit(path, f"removed properties matching pattern `{pattern}`", sep=": ")
+            self._emit(
+                path, f"removed properties matching pattern `{pattern}`", sep=": "
+            )
         for pattern in sorted(old_patterns.keys() & new_patterns.keys()):
             self.diff(old_patterns[pattern], new_patterns[pattern], path + "[*]")
 
-        if (old_names := old.get("propertyNames")) != (new_names := new.get("propertyNames")):
+        if (old_names := old.get("propertyNames")) != (
+            new_names := new.get("propertyNames")
+        ):
             self.diff(old_names or {}, new_names or {}, path + "[*:keys]")
 
     def _diff_array(self, old: dict, new: dict, path: str):
@@ -267,7 +300,10 @@ class _SchemaDiffer:
             old_members = old["prefixItems"]
             new_members = new["prefixItems"]
             if len(old_members) != len(new_members):
-                self._emit(path, f"tuple length changed ({len(old_members)} → {len(new_members)})")
+                self._emit(
+                    path,
+                    f"tuple length changed ({len(old_members)} → {len(new_members)})",
+                )
             for i, (old_member, new_member) in enumerate(zip(old_members, new_members)):
                 self.diff(old_member, new_member, f"{path}[{i}]")
         else:
@@ -280,7 +316,10 @@ class _SchemaDiffer:
             return
         if old_default is _MISSING:
             detail = _format_value(new_default)
-            self._emit(path, f"default value added ({detail})" if detail else "default value added")
+            self._emit(
+                path,
+                f"default value added ({detail})" if detail else "default value added",
+            )
         elif new_default is _MISSING:
             self._emit(path, "default value removed")
         else:
@@ -294,8 +333,12 @@ class _SchemaDiffer:
 
 def _diff_call_parameters(old: dict, new: dict) -> list[str]:
     """Diff the `Call parameters` schemas. Parameters are keyed by title; positions matter."""
-    old_params = {param["title"]: (i, param) for i, param in enumerate(old["prefixItems"])}
-    new_params = {param["title"]: (i, param) for i, param in enumerate(new["prefixItems"])}
+    old_params = {
+        param["title"]: (i, param) for i, param in enumerate(old["prefixItems"])
+    }
+    new_params = {
+        param["title"]: (i, param) for i, param in enumerate(new["prefixItems"])
+    }
     added = new_params.keys() - old_params.keys()
     removed = old_params.keys() - new_params.keys()
 
@@ -316,7 +359,9 @@ def _diff_call_parameters(old: dict, new: dict) -> list[str]:
     for title in sorted(removed):
         lines.append(f"removed parameter `{title}`")
 
-    pairs = [(title, title) for title in old_params.keys() & new_params.keys()] + list(renames.items())
+    pairs = [(title, title) for title in old_params.keys() & new_params.keys()] + list(
+        renames.items()
+    )
     for old_title, new_title in sorted(pairs, key=lambda pair: pair[1]):
         old_index, old_param = old_params[old_title]
         new_index, new_param = new_params[new_title]
@@ -324,17 +369,27 @@ def _diff_call_parameters(old: dict, new: dict) -> list[str]:
             lines.append(f"parameter `{old_title}` renamed to `{new_title}`")
         elif old_index != new_index:
             # Positions are 0-based, matching the "Parameter N" headings on method pages.
-            lines.append(f"parameter `{new_title}` moved from position {old_index} to {new_index}")
+            lines.append(
+                f"parameter `{new_title}` moved from position {old_index} to {new_index}"
+            )
 
         had_default = "default" in old_param
         has_default = "default" in new_param
         if had_default != has_default:
-            lines.append(f"parameter `{new_title}` became {'required' if had_default else 'optional'}")
+            lines.append(
+                f"parameter `{new_title}` became {'required' if had_default else 'optional'}"
+            )
             # The presence transition says it all; don't also report it as a default change.
-            old_param = {key: value for key, value in old_param.items() if key != "default"}
-            new_param = {key: value for key, value in new_param.items() if key != "default"}
+            old_param = {
+                key: value for key, value in old_param.items() if key != "default"
+            }
+            new_param = {
+                key: value for key, value in new_param.items() if key != "default"
+            }
 
-        differ = _SchemaDiffer(root_path=new_title, root_label=f"parameter `{new_title}`")
+        differ = _SchemaDiffer(
+            root_path=new_title, root_label=f"parameter `{new_title}`"
+        )
         differ.diff(old_param, new_param, new_title)
         lines.extend(differ.lines)
 
@@ -359,13 +414,16 @@ def compute_schema_diff(old: dict, new: dict) -> tuple[list[str], list[str]]:
     old_props = old["properties"]
     new_props = new["properties"]
     return (
-        _diff_call_parameters(old_props["Call parameters"], new_props["Call parameters"]),
+        _diff_call_parameters(
+            old_props["Call parameters"], new_props["Call parameters"]
+        ),
         _diff_return_value(old_props["Return value"], new_props["Return value"]),
     )
 
 
 def _diff_items(
-    old: typing.Iterable[APIDumpMethod], new: typing.Iterable[APIDumpMethod],
+    old: typing.Iterable[APIDumpMethod],
+    new: typing.Iterable[APIDumpMethod],
 ) -> tuple[list[str], list[str], list[SchemaChange]]:
     """Compute added/removed/changed for a list of APIDumpMethod."""
     old_by_name = {item.name: item for item in old}
@@ -383,13 +441,19 @@ def _diff_items(
         call_diff, return_diff = compute_schema_diff(old_schemas, new_schemas)
         if call_diff or return_diff:
             # No lines means the difference is cosmetic-only; the method is omitted.
-            changed.append(SchemaChange(name=name, call_params_diff=call_diff, return_value_diff=return_diff))
+            changed.append(
+                SchemaChange(
+                    name=name, call_params_diff=call_diff, return_value_diff=return_diff
+                )
+            )
 
     return added, removed, changed
 
 
 def compute_changelog(old: APIDump, new: APIDump) -> Changelog:
-    methods_added, methods_removed, methods_changed = _diff_items(old.methods, new.methods)
+    methods_added, methods_removed, methods_changed = _diff_items(
+        old.methods, new.methods
+    )
     return Changelog(
         old_version=old.version,
         methods_added=methods_added,
