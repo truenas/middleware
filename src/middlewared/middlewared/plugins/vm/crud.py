@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import errno
+import platform
 import re
 import shlex
 from typing import TYPE_CHECKING, Any, TypeVar
@@ -42,6 +43,18 @@ if TYPE_CHECKING:
 
 
 RE_NAME = re.compile(r'^[a-zA-Z_0-9]+$')
+
+
+def _is_secboot_firmware(filename: str) -> bool:
+    # OVMF/AAVMF secboot CODE files use a few conventions: *.secboot.fd is the
+    # canonical name; *.ms.fd is a symlink to it on Debian's AAVMF (and OVMF);
+    # *.snakeoil.fd is a secboot variant signed with self-signed test keys.
+    # Anchored with surrounding dots so AAVMF_CODE.no-secboot.fd doesn't match
+    # via the bare "secboot" substring.
+    name = filename.lower()
+    return any(token in name for token in ('.secboot.', '.ms.fd', '.snakeoil.'))
+
+
 VMDataT = TypeVar('VMDataT', bound=VMEntry)
 
 
@@ -109,24 +122,36 @@ class VMServicePart(CRUDServicePart[VMEntry]):
         data = await self.validate(verrors, 'vm_create', data)
 
         if data.enable_secure_boot:
-            # Only q35 machine type supports secure boot
-            # https://docs.openstack.org/nova/latest/admin/secure-boot.html
+            # Secure-boot defaults are arch-specific:
+            # - x86 secboot: pc-q35 machine + OVMF_CODE_4M.secboot.fd
+            #   (https://docs.openstack.org/nova/latest/admin/secure-boot.html)
+            # - aarch64 secboot: virt machine + AAVMF_CODE.ms.fd
             updates: dict[str, Any] = {}
+            if not data.arch_type and not data.machine_type:
+                # If neither arch nor machine is specified, assume x86_64 to
+                # preserve existing behavior. vm.update fails on null arch_type
+                # so we set it explicitly.
+                updates['arch_type'] = 'x86_64'
+            arch = updates.get('arch_type') or data.arch_type or 'x86_64'
+            is_aarch64 = arch == 'aarch64'
+
             if not data.machine_type:
-                updates['machine_type'] = 'pc-q35-6.2'
-                if not data.arch_type:
-                    # If arch type is not specified, we assume x86_64 architecture
-                    # we set this because otherwise vm.update will fail if this is not set
-                    # explicitly
-                    updates['arch_type'] = 'x86_64'
-            elif 'pc-q35' not in data.machine_type:
-                verrors.add(
-                    'vm_create.machine_type',
-                    'Secure boot is only available in q35 machine type'
-                )
+                updates['machine_type'] = 'virt-9.2' if is_aarch64 else 'pc-q35-6.2'
+            elif is_aarch64:
+                if not data.machine_type.startswith('virt'):
+                    verrors.add(
+                        'vm_create.machine_type',
+                        'aarch64 secure boot requires a virt machine type'
+                    )
+            else:
+                if 'pc-q35' not in data.machine_type:
+                    verrors.add(
+                        'vm_create.machine_type',
+                        'Secure boot is only available in q35 machine type'
+                    )
 
             if data.bootloader_ovmf is None:
-                updates['bootloader_ovmf'] = 'OVMF_CODE_4M.secboot.fd'
+                updates['bootloader_ovmf'] = 'AAVMF_CODE.ms.fd' if is_aarch64 else 'OVMF_CODE_4M.secboot.fd'
 
             if updates:
                 data = data.model_copy(update=updates)
@@ -134,12 +159,13 @@ class VMServicePart(CRUDServicePart[VMEntry]):
             if data.bootloader_ovmf is None:
                 verrors.add(
                     'vm_create.bootloader_ovmf',
-                    'Bootloader OVMF must be specified when secure boot is enabled'
+                    'Bootloader firmware must be specified when secure boot is enabled'
                 )
-            elif 'secboot' not in data.bootloader_ovmf.lower():
+            elif not _is_secboot_firmware(data.bootloader_ovmf):
+                example = 'AAVMF_CODE.ms.fd' if is_aarch64 else 'OVMF_CODE_4M.secboot.fd'
                 verrors.add(
                     'vm_create.bootloader_ovmf',
-                    'Select a bootloader_ovmf that supports secure boot i.e OVMF_CODE_4M.secboot.fd'
+                    f'Select a bootloader_ovmf that supports secure boot i.e {example}'
                 )
 
         if data.bootloader_ovmf is None:
@@ -319,6 +345,41 @@ class VMServicePart(CRUDServicePart[VMEntry]):
                         f'{schema_name}.machine_type',
                         f'Specified machine type is not supported for {choices[data.arch_type]!r} architecture type'
                     )
+
+        # Reject x86-only configuration on aarch64 guests
+        if data.arch_type == 'aarch64':
+            if data.bootloader == 'UEFI_CSM':
+                verrors.add(
+                    f'{schema_name}.bootloader',
+                    'UEFI_CSM (legacy BIOS) is x86-only and not supported for aarch64 guests'
+                )
+            if data.hyperv_enlightenments:
+                verrors.add(
+                    f'{schema_name}.hyperv_enlightenments',
+                    'Hyper-V enlightenments are x86-only and not supported for aarch64 guests'
+                )
+            if data.hide_from_msr:
+                verrors.add(
+                    f'{schema_name}.hide_from_msr',
+                    'hide_from_msr is x86-specific and not supported for aarch64 guests'
+                )
+
+        # KVM accelerates same-ISA guests only; HOST-PASSTHROUGH / HOST-MODEL
+        # don't work cross-arch (TCG can't passthrough a different-ISA CPU).
+        if data.cpu_mode in ('HOST-PASSTHROUGH', 'HOST-MODEL'):
+            host_arch = platform.machine()
+            guest_arch = data.arch_type or host_arch
+            same_family = (
+                guest_arch == host_arch
+                or (host_arch == 'x86_64' and guest_arch in ('i686', 'i386'))
+            )
+            if not same_family:
+                verrors.add(
+                    f'{schema_name}.cpu_mode',
+                    f'{data.cpu_mode} requires the guest architecture ({guest_arch!r}) to match '
+                    f'the host ({host_arch!r}). Use CUSTOM with an explicit cpu_model for '
+                    'cross-architecture emulation.'
+                )
 
         if data.cpu_mode != 'CUSTOM' and data.cpu_model:
             verrors.add(
