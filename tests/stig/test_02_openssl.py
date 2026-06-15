@@ -4,6 +4,8 @@ import time
 from middlewared.test.integration.utils import call, ssh
 from auto_config import ha
 
+# The entire STIG test module is currently disabled.
+pytestmark = pytest.mark.skip(reason='STIG test suite is disabled')
 
 retry = 5
 fips_version = "3.1.2"

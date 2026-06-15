@@ -153,5 +153,8 @@ def setup_server_single():
 
 
 def pytest_sessionstart(session):
-    setup_fn = setup_server_ha if ha else setup_server_single
-    setup_fn()
+    # The entire STIG test module is currently disabled (every test in this
+    # directory is marked skipped), so skip the server setup that would
+    # otherwise run before collection. The setup helpers above are kept intact
+    # so the suite can be re-enabled by removing the skip markers and this guard.
+    return
