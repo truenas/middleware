@@ -33,3 +33,10 @@ jobs:
             --exclude middlewared/etc_files \
             --follow-imports silent \
             --strict
+
+      - name: mypy middlewared_docs
+        run: |
+          mypy \
+            --follow-imports silent \
+            src/middlewared_docs/changelog.py \
+            src/middlewared_docs/generate_docs.py

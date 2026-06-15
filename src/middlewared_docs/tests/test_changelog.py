@@ -1,14 +1,16 @@
 # -*- coding=utf-8 -*-
-"""Unit tests for the cross-version API changelog diff (`changelog.py`)."""
+"""Unit tests for the cross-version API changelog diff (`changelog.py`).
 
-import os
-import sys
+`changelog.py` is made importable by tests/conftest.py, which puts the package dir on
+sys.path. This package is not part of the middlewared unit-test suite and the module
+imports nothing from middlewared at runtime, so the tests run standalone:
+
+    pytest src/middlewared_docs/tests/
+"""
 
 import pytest
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import changelog as cl
-
 
 # --- builders for the canonical `--dump-api` schema shape ------------------------------
 
@@ -38,15 +40,11 @@ def obj(properties, required=()):
 
 
 def call_diff(old_params, new_params):
-    return cl.compute_schema_diff(
-        method_schemas(call_params=old_params), method_schemas(call_params=new_params)
-    )[0]
+    return cl.compute_schema_diff(method_schemas(call_params=old_params), method_schemas(call_params=new_params))[0]
 
 
 def return_diff(old_rv, new_rv):
-    return cl.compute_schema_diff(
-        method_schemas(return_value=old_rv), method_schemas(return_value=new_rv)
-    )[1]
+    return cl.compute_schema_diff(method_schemas(return_value=old_rv), method_schemas(return_value=new_rv))[1]
 
 
 # --- whole-schema short-circuits -------------------------------------------------------
