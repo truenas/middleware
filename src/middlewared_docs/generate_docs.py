@@ -336,13 +336,13 @@ def collapse_changelog_schema_changes(html_path: str):
         soup = BeautifulSoup(f.read())
 
     section = soup.find(id="methods-with-schema-changes")
-    if section is None:
+    if not isinstance(section, Tag):
         return
 
     for li in section.find_all("li"):
         p = li.find("p", recursive=False)
         ul = li.find("ul", recursive=False)
-        if p is None or ul is None or p.find("a") is None:
+        if not isinstance(p, Tag) or not isinstance(ul, Tag) or p.find("a") is None:
             # Not a method item: either a diff line, or a "Call parameters:"/
             # "Return value:" label (which has a nested list but no link).
             continue
