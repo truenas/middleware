@@ -25,7 +25,6 @@ from middlewared.utils.size import format_size
 
 from .utils import RE_DRAID_DATA_DISKS, RE_DRAID_SPARE_DISKS, ZPOOL_CACHE_FILE
 
-
 # Redundancy/parity level per vdev type. Used to enforce that a redundant data
 # class is not paired with a non-redundant (parity 0) special vdev.
 VDEV_PARITY = MappingProxyType({
