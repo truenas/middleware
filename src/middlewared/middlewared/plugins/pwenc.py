@@ -45,6 +45,10 @@ class PWEncService(Service):
         )
         self.middleware.call_sync('datastore.sql', 'DELETE FROM tasks_rsync WHERE rsync_ssh_credentials_id IS NOT NULL')
         self.middleware.call_sync('datastore.sql', 'DELETE FROM system_keychaincredential')
+        # `attributes` is the only payload here and is encrypted; without the key it decrypts to {},
+        # which fails dtype validation and breaks vm/container.query. Parent tables aren't encrypted.
+        self.middleware.call_sync('datastore.sql', 'DELETE FROM vm_device')
+        self.middleware.call_sync('datastore.sql', 'DELETE FROM container_device')
         # If config is restored without secret seed then SMB auth won't be possible. Disable SMB for all users.
         self.middleware.call_sync('datastore.sql', 'UPDATE account_bsdusers SET bsdusr_smb=0')
 
