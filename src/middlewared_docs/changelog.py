@@ -10,6 +10,7 @@ structural rules of the `--dump-api` output.
 from __future__ import annotations
 
 import dataclasses
+import enum
 import json
 import typing
 
@@ -19,6 +20,29 @@ if typing.TYPE_CHECKING:
 _MISSING = object()
 # Defaults longer than this are reported without their values.
 _MAX_RENDERED_VALUE_LENGTH = 50
+
+
+class SchemaKey(enum.StrEnum):
+    """JSON field names read from `--dump-api` method schemas."""
+
+    # Method-schema envelope (the two top-level `properties` of every method schema).
+    CALL_PARAMETERS = "Call parameters"
+    RETURN_VALUE = "Return value"
+    # Structural keywords.
+    TYPE = "type"
+    TITLE = "title"
+    DEFAULT = "default"
+    ENUM = "enum"
+    CONST = "const"
+    PROPERTIES = "properties"
+    REQUIRED = "required"
+    ADDITIONAL_PROPERTIES = "additionalProperties"
+    PATTERN_PROPERTIES = "patternProperties"
+    PROPERTY_NAMES = "propertyNames"
+    ITEMS = "items"
+    PREFIX_ITEMS = "prefixItems"
+    ANY_OF = "anyOf"
+    ONE_OF = "oneOf"
 
 
 @dataclasses.dataclass
@@ -46,7 +70,7 @@ def _union_branches(schema: dict) -> list[dict] | None:
     union) accepts the same payloads as the equivalent anyOf, so flipping between them
     is not a reportable change.
     """
-    for combiner in ("oneOf", "anyOf"):
+    for combiner in (SchemaKey.ONE_OF, SchemaKey.ANY_OF):
         if combiner in schema:
             return schema[combiner]
     return None
@@ -54,7 +78,7 @@ def _union_branches(schema: dict) -> list[dict] | None:
 
 def _branch_name(branch: dict) -> str:
     """Best-effort name for a union branch — prefer Pydantic's `title`, fall back to type."""
-    if title := branch.get("title"):
+    if title := branch.get(SchemaKey.TITLE):
         return title
     return _type_summary(branch)
 
@@ -67,13 +91,13 @@ def _type_summary(schema: dict) -> str:
         # render as e.g. "any | any | any".
         return " | ".join(dict.fromkeys(_branch_name(branch) for branch in branches))
 
-    if t := schema.get("type"):
-        if t == "array" and "prefixItems" in schema:
+    if t := schema.get(SchemaKey.TYPE):
+        if t == "array" and SchemaKey.PREFIX_ITEMS in schema:
             return "tuple"
         return t
-    if "enum" in schema:
+    if SchemaKey.ENUM in schema:
         return "enum"
-    if "const" in schema:
+    if SchemaKey.CONST in schema:
         return "const"
     return "any"
 
@@ -96,7 +120,7 @@ def _map_value_schema(schema: dict) -> dict | None:
     Absent `additionalProperties` and `true` both mean "any value" and normalize to the
     bare-any schema `{}` so that flipping between those representations is no change.
     """
-    extra = schema.get("additionalProperties", True)
+    extra = schema.get(SchemaKey.ADDITIONAL_PROPERTIES, True)
     if extra is False:
         return None
     if extra is True:
@@ -150,7 +174,7 @@ class _SchemaDiffer:
             # Key on `type`, not the summary: a union whose branches summarize alike
             # (e.g. anyOf of two untitled objects) has the same summary as a plain node
             # but must not be recursed into as one.
-            if (node_type := old.get("type")) == new.get("type"):
+            if (node_type := old.get(SchemaKey.TYPE)) == new.get(SchemaKey.TYPE):
                 if node_type == "object":
                     self._diff_object(old, new, path)
                 elif node_type == "array":
@@ -170,7 +194,9 @@ class _SchemaDiffer:
         new_groups = _group_branches(new_branches)
 
         titled = any(
-            "title" in branch for branches in (*old_groups.values(), *new_groups.values()) for branch in branches
+            SchemaKey.TITLE in branch
+            for branches in (*old_groups.values(), *new_groups.values())
+            for branch in branches
         )
         if titled:
             for name in sorted(new_groups.keys() - old_groups.keys()):
@@ -189,7 +215,8 @@ class _SchemaDiffer:
             old_branches = old_groups[name]
             new_branches = new_groups[name]
             for old_branch, new_branch in zip(old_branches, new_branches):
-                branch_path = _join(path, name) if "title" in old_branch or "title" in new_branch else path
+                titled_branch = SchemaKey.TITLE in old_branch or SchemaKey.TITLE in new_branch
+                branch_path = _join(path, name) if titled_branch else path
                 self.diff(old_branch, new_branch, branch_path)
             if titled and len(old_branches) != len(new_branches):
                 action = "added" if len(new_branches) > len(old_branches) else "removed"
@@ -197,19 +224,19 @@ class _SchemaDiffer:
                     self._emit(path, f"{action} variant `{name}`", sep=": ")
 
     def _diff_enum(self, old: dict, new: dict, path: str):
-        if "enum" not in old and "enum" not in new:
+        if SchemaKey.ENUM not in old and SchemaKey.ENUM not in new:
             return
         # Compare values as JSON renderings: hashable, and `0`/`false` stay distinct.
-        old_values = {json.dumps(value) for value in old.get("enum", ())}
-        new_values = {json.dumps(value) for value in new.get("enum", ())}
+        old_values = {json.dumps(value) for value in old.get(SchemaKey.ENUM, ())}
+        new_values = {json.dumps(value) for value in new.get(SchemaKey.ENUM, ())}
         for value in sorted(new_values - old_values):
             self._emit(path, f"added enum value {value}", sep=": ")
         for value in sorted(old_values - new_values):
             self._emit(path, f"removed enum value {value}", sep=": ")
 
     def _diff_const(self, old: dict, new: dict, path: str):
-        old_const = old.get("const", _MISSING)
-        new_const = new.get("const", _MISSING)
+        old_const = old.get(SchemaKey.CONST, _MISSING)
+        new_const = new.get(SchemaKey.CONST, _MISSING)
         if old_const == new_const:
             return
         if old_const is _MISSING:
@@ -227,10 +254,10 @@ class _SchemaDiffer:
             )
 
     def _diff_object(self, old: dict, new: dict, path: str):
-        old_required = set(old.get("required", ()))
-        new_required = set(new.get("required", ()))
-        old_props = old.get("properties", {})
-        new_props = new.get("properties", {})
+        old_required = set(old.get(SchemaKey.REQUIRED, ()))
+        new_required = set(new.get(SchemaKey.REQUIRED, ()))
+        old_props = old.get(SchemaKey.PROPERTIES, {})
+        new_props = new.get(SchemaKey.PROPERTIES, {})
 
         for name in sorted(new_props.keys() - old_props.keys()):
             suffix = " (required)" if name in new_required else ""
@@ -244,13 +271,13 @@ class _SchemaDiffer:
             # `required` is compared as a set: real dumps reorder it with identical content.
             if name in new_required and name not in old_required:
                 self.lines.append(f"`{field_path}` became required")
-                if "default" in old_field and "default" not in new_field:
+                if SchemaKey.DEFAULT in old_field and SchemaKey.DEFAULT not in new_field:
                     # Losing the default is implied by becoming required.
-                    old_field = {key: value for key, value in old_field.items() if key != "default"}
+                    old_field = {key: value for key, value in old_field.items() if key != SchemaKey.DEFAULT}
             elif name in old_required and name not in new_required:
                 self.lines.append(f"`{field_path}` became optional")
-                if "default" in new_field and "default" not in old_field:
-                    new_field = {key: value for key, value in new_field.items() if key != "default"}
+                if SchemaKey.DEFAULT in new_field and SchemaKey.DEFAULT not in old_field:
+                    new_field = {key: value for key, value in new_field.items() if key != SchemaKey.DEFAULT}
             self.diff(old_field, new_field, field_path)
 
         old_extra = _map_value_schema(old)
@@ -262,8 +289,8 @@ class _SchemaDiffer:
         elif old_extra is not None:
             self._emit(path, "additional properties no longer allowed", sep=": ")
 
-        old_patterns = old.get("patternProperties", {})
-        new_patterns = new.get("patternProperties", {})
+        old_patterns = old.get(SchemaKey.PATTERN_PROPERTIES, {})
+        new_patterns = new.get(SchemaKey.PATTERN_PROPERTIES, {})
         for pattern in sorted(new_patterns.keys() - old_patterns.keys()):
             self._emit(path, f"added properties matching pattern `{pattern}`", sep=": ")
         for pattern in sorted(old_patterns.keys() - new_patterns.keys()):
@@ -271,15 +298,15 @@ class _SchemaDiffer:
         for pattern in sorted(old_patterns.keys() & new_patterns.keys()):
             self.diff(old_patterns[pattern], new_patterns[pattern], path + "[*]")
 
-        if (old_names := old.get("propertyNames")) != (new_names := new.get("propertyNames")):
+        if (old_names := old.get(SchemaKey.PROPERTY_NAMES)) != (new_names := new.get(SchemaKey.PROPERTY_NAMES)):
             self.diff(old_names or {}, new_names or {}, path + "[*:keys]")
 
     def _diff_array(self, old: dict, new: dict, path: str):
-        if "prefixItems" in old:
+        if SchemaKey.PREFIX_ITEMS in old:
             # Fixed tuple (only core.download's return in practice). A list ↔ tuple
             # change never reaches here: the type summaries differ ("array" vs "tuple").
-            old_members = old["prefixItems"]
-            new_members = new["prefixItems"]
+            old_members = old[SchemaKey.PREFIX_ITEMS]
+            new_members = new[SchemaKey.PREFIX_ITEMS]
             if len(old_members) != len(new_members):
                 self._emit(
                     path,
@@ -288,11 +315,11 @@ class _SchemaDiffer:
             for i, (old_member, new_member) in enumerate(zip(old_members, new_members)):
                 self.diff(old_member, new_member, f"{path}[{i}]")
         else:
-            self.diff(old["items"], new["items"], path + "[]")
+            self.diff(old[SchemaKey.ITEMS], new[SchemaKey.ITEMS], path + "[]")
 
     def _diff_default(self, old: dict, new: dict, path: str):
-        old_default = old.get("default", _MISSING)
-        new_default = new.get("default", _MISSING)
+        old_default = old.get(SchemaKey.DEFAULT, _MISSING)
+        new_default = new.get(SchemaKey.DEFAULT, _MISSING)
         if old_default == new_default:
             return
         if old_default is _MISSING:
@@ -314,8 +341,8 @@ class _SchemaDiffer:
 
 def _diff_call_parameters(old: dict, new: dict) -> list[str]:
     """Diff the `Call parameters` schemas. Parameters are keyed by title; positions matter."""
-    old_params = {param["title"]: (i, param) for i, param in enumerate(old["prefixItems"])}
-    new_params = {param["title"]: (i, param) for i, param in enumerate(new["prefixItems"])}
+    old_params = {param[SchemaKey.TITLE]: (i, param) for i, param in enumerate(old[SchemaKey.PREFIX_ITEMS])}
+    new_params = {param[SchemaKey.TITLE]: (i, param) for i, param in enumerate(new[SchemaKey.PREFIX_ITEMS])}
     added = new_params.keys() - old_params.keys()
     removed = old_params.keys() - new_params.keys()
 
@@ -331,7 +358,7 @@ def _diff_call_parameters(old: dict, new: dict) -> list[str]:
 
     lines = []
     for title in sorted(added):
-        kind = "optional" if "default" in new_params[title][1] else "required"
+        kind = "optional" if SchemaKey.DEFAULT in new_params[title][1] else "required"
         lines.append(f"added parameter `{title}` ({kind})")
     for title in sorted(removed):
         lines.append(f"removed parameter `{title}`")
@@ -346,13 +373,13 @@ def _diff_call_parameters(old: dict, new: dict) -> list[str]:
             # Positions are 0-based, matching the "Parameter N" headings on method pages.
             lines.append(f"parameter `{new_title}` moved from position {old_index} to {new_index}")
 
-        had_default = "default" in old_param
-        has_default = "default" in new_param
+        had_default = SchemaKey.DEFAULT in old_param
+        has_default = SchemaKey.DEFAULT in new_param
         if had_default != has_default:
             lines.append(f"parameter `{new_title}` became {'required' if had_default else 'optional'}")
             # The presence transition says it all; don't also report it as a default change.
-            old_param = {key: value for key, value in old_param.items() if key != "default"}
-            new_param = {key: value for key, value in new_param.items() if key != "default"}
+            old_param = {key: value for key, value in old_param.items() if key != SchemaKey.DEFAULT}
+            new_param = {key: value for key, value in new_param.items() if key != SchemaKey.DEFAULT}
 
         differ = _SchemaDiffer(root_path=new_title, root_label=f"parameter `{new_title}`")
         differ.diff(old_param, new_param, new_title)
@@ -376,11 +403,11 @@ def compute_schema_diff(old: dict, new: dict) -> tuple[list[str], list[str]]:
     if old == new:
         return [], []
 
-    old_props = old["properties"]
-    new_props = new["properties"]
+    old_props = old[SchemaKey.PROPERTIES]
+    new_props = new[SchemaKey.PROPERTIES]
     return (
-        _diff_call_parameters(old_props["Call parameters"], new_props["Call parameters"]),
-        _diff_return_value(old_props["Return value"], new_props["Return value"]),
+        _diff_call_parameters(old_props[SchemaKey.CALL_PARAMETERS], new_props[SchemaKey.CALL_PARAMETERS]),
+        _diff_return_value(old_props[SchemaKey.RETURN_VALUE], new_props[SchemaKey.RETURN_VALUE]),
     )
 
 
