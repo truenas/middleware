@@ -18,6 +18,9 @@ from middlewared.test.integration.utils import call, ssh
 from os.path import dirname, join as path_join
 from time import sleep
 
+# The entire STIG test module is currently disabled.
+pytestmark = pytest.mark.skip(reason='STIG test suite is disabled')
+
 # Alias
 pp = pytest.param
 

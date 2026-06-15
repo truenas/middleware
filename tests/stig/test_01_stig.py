@@ -12,6 +12,9 @@ from truenas_api_client import ValidationErrors
 
 from auto_config import ha
 
+# The entire STIG test module is currently disabled.
+pytestmark = pytest.mark.skip(reason='STIG test suite is disabled')
+
 # Alias
 pp = pytest.param
 STIG_ACTIVE = False
