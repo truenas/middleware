@@ -5,8 +5,8 @@ import ipaddress
 import re
 from typing import Annotated, Literal
 
-import pydantic
 from annotated_types import Ge, Le
+import pydantic
 from pydantic import AfterValidator
 
 from ..validators import match_validator

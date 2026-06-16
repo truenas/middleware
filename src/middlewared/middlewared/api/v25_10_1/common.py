@@ -4,7 +4,12 @@ from typing import Annotated, Self
 from pydantic import AfterValidator, Field, model_validator
 
 from middlewared.api.base import (
-    BaseModel, JsonSchemaExtra, TimeString, croniter_for_schedule, validate_filters, validate_options
+    BaseModel,
+    JsonSchemaExtra,
+    TimeString,
+    croniter_for_schedule,
+    validate_filters,
+    validate_options,
 )
 
 __all__ = ["QueryFilters", "QueryOptions", "QueryArgs", "GenericQueryResult", "CronModel", "TimeCronModel"]

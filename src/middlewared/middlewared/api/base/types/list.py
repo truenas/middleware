@@ -1,7 +1,7 @@
 from typing import Annotated, TypeVar
 
+from pydantic import AfterValidator
 from pydantic_core import PydanticCustomError
-from pydantic import AfterValidator, Field
 
 from middlewared.api.base.types.json_schema import JsonSchemaExtra
 

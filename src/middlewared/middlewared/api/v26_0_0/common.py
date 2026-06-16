@@ -4,7 +4,12 @@ from typing import Annotated, Literal, Self
 from pydantic import AfterValidator, Field, model_validator
 
 from middlewared.api.base import (
-    BaseModel, JsonSchemaExtra, TimeString, croniter_for_schedule, validate_filters, validate_options
+    BaseModel,
+    JsonSchemaExtra,
+    TimeString,
+    croniter_for_schedule,
+    validate_filters,
+    validate_options,
 )
 
 __all__ = ["QueryFilters", "QueryOptions", "QueryArgs", "GenericQueryResult", "CronModel", "TimeCronModel",
@@ -94,7 +99,10 @@ class QueryOptions(BaseModel):
 
 
 class QueryArgs(BaseModel):
-    filters: QueryFilters = []
+    filters: QueryFilters = Field(
+        default=[],
+        description=QF_DOC,
+    )
     options: QueryOptions = Field(
         default=QueryOptions(),
         description="Query options including pagination, ordering, and additional parameters.",

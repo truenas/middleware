@@ -6,13 +6,10 @@ import uuid
 from annotated_types import MaxLen, MinLen
 from pydantic import (
     AfterValidator,
-    BeforeValidator,
-    Field,
-    GetCoreSchemaHandler,
+)
+from pydantic import (
     HttpUrl as _HttpUrl,
 )
-from pydantic_core import CoreSchema, core_schema, PydanticKnownError
-
 from zettarepl.snapshot.name import validate_snapshot_naming_schema
 
 from middlewared.api.base.types.json_schema import JsonSchemaExtra

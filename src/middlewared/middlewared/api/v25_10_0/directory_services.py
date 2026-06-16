@@ -1,5 +1,6 @@
 from typing import Annotated, Any, Literal
 
+from annotated_types import Ge, Le
 from pydantic import Discriminator, Field, Secret, field_validator, model_validator
 
 from middlewared.api.base import (
@@ -19,7 +20,6 @@ from middlewared.api.base import (
 from middlewared.plugins.idmap_.idmap_constants import TRUENAS_IDMAP_MAX, TRUENAS_IDMAP_MIN
 from middlewared.utils.directoryservices.credential import DSCredType
 from middlewared.utils.lang import undefined
-from annotated_types import Ge, Le
 
 __all__ = [
     'DirectoryServicesCacheRefreshArgs', 'DirectoryServicesCacheRefreshResult',
