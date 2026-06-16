@@ -373,8 +373,9 @@ class ZFSResourceQuery(BaseModel):
 class ZFSResourceDestroyArgsData(BaseModel):
     path: NonEmptyString = Field(
         description=(
-            "Path of the zfs resource (dataset or volume) to be destroyed. Snapshot paths (containing '@') are not "
-            "accepted - use `zfs.resource.snapshot.destroy` instead."
+            "Path of the zfs resource (dataset or volume) to be destroyed. Must be of the form 'pool/name'; it cannot "
+            "be an absolute path or end with '/'. Snapshot paths (containing '@') are not accepted - use "
+            "`zfs.resource.snapshot.destroy` instead."
         ),
     )
     recursive: bool = Field(

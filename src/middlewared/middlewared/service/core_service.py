@@ -452,12 +452,9 @@ class CoreService(Service):
         """
         Respond to WebSocket ping frames with "pong".
 
-        This endpoint can be used to keep connections alive as outlined \
-        in the WebSocket specification. It does not require authentication \
+        This endpoint can be used to keep connections alive as outlined
+        in the WebSocket specification. It does not require authentication
         but is rate limited to prevent abuse.
-
-        Returns:
-            str: Always returns "pong"
         """
         # NOTE: The UI uses this endpoint to maintain the WebSocket
         # connection on the login page.

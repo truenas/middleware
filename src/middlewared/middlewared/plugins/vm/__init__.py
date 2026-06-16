@@ -425,9 +425,6 @@ class VMService(GenericCRUDService[VMEntry]):
     def random_mac(self) -> str:
         """
         Create a random mac address.
-
-        Returns:
-            str: with six groups of two hexadecimal digits
         """
         return random_mac()
 

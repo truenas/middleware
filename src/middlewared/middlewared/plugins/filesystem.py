@@ -685,8 +685,7 @@ class FilesystemService(Service):
         """
         Return stats from the filesystem of a given path.
 
-        Raises:
-            CallError(ENOENT) - Path not found
+        If ``path`` does not exist, the method raises a ``CallError`` (code ``-32001``, *Method call error*).
         """
         try:
             fd = truenas_os.openat2(path, os.O_PATH, resolve=truenas_os.RESOLVE_NO_SYMLINKS)

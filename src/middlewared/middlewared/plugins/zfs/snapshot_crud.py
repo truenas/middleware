@@ -98,38 +98,33 @@ class ZFSResourceSnapshotService(Service):
     )
     def query(self, data: ZFSResourceSnapshotQuery) -> list[ZFSResourceSnapshotEntry]:
         """
-        This method provides an interface for retrieving information about ZFS snapshots,
-        including their properties and user properties.
-
-        Args:
-            data: Query parameters containing:
-                - paths: List of dataset or snapshot paths to query. If empty, queries all.
-                - properties: List of ZFS properties to retrieve. Empty list = defaults, None = none.
-                - get_user_properties: Whether to include user-defined properties.
-                - get_source: Whether to include property source information.
-                - recursive: Include snapshots from child datasets.
-                - min_txg: Minimum transaction group filter (0 = no minimum).
-                - max_txg: Maximum transaction group filter (0 = no maximum).
-
-        Returns:
-            List of snapshot entries with requested properties.
+        Retrieve information about ZFS snapshots, including their properties and user properties.
 
         Examples:
-            # Query all snapshots
-            query({})
 
-            # Query snapshots for a specific dataset
-            query({"paths": ["tank/data"]})
+        Query all snapshots:
 
-            # Query a specific snapshot
-            query({"paths": ["tank/data@backup"]})
+        .. code:: json
 
-            # Query with recursion and specific properties
-            query({
-                "paths": ["tank"],
-                "recursive": True,
-                "properties": ["used", "referenced", "creation"]
-            })
+            {}
+
+        Query snapshots for a specific dataset:
+
+        .. code:: json
+
+            {"paths": ["tank/data"]}
+
+        Query a specific snapshot:
+
+        .. code:: json
+
+            {"paths": ["tank/data@backup"]}
+
+        Query with recursion and specific properties:
+
+        .. code:: json
+
+            {"paths": ["tank"], "recursive": true, "properties": ["used", "referenced", "creation"]}
         """
         self.validate_recursive_paths("zfs.resource.snapshot.query", data)
         try:
@@ -177,30 +172,34 @@ class ZFSResourceSnapshotService(Service):
         """
         Count ZFS snapshots per dataset.
 
-        This method provides a fast way to count snapshots without retrieving
-        full snapshot information. Useful for UI displays and quota checks.
-
-        Args:
-            data: Count parameters containing:
-                - paths: List of dataset paths to count snapshots for. If empty,
-                         counts snapshots for root filesystems only.
-                - recursive: Include snapshots from child datasets in counts.
-
-        Returns:
-            Dict mapping dataset names to their snapshot counts.
+        This method provides a fast way to count snapshots without retrieving full snapshot
+        information. Useful for UI displays and quota checks.
 
         Examples:
-            # Count snapshots for root filesystems only
-            count({})
 
-            # Count all snapshots recursively
-            count({"recursive": True})
+        Count snapshots for root filesystems only:
 
-            # Count snapshots for a specific dataset
-            count({"paths": ["tank/data"]})
+        .. code:: json
 
-            # Count snapshots for a dataset and all children
-            count({"paths": ["tank"], "recursive": True})
+            {}
+
+        Count all snapshots recursively:
+
+        .. code:: json
+
+            {"recursive": true}
+
+        Count snapshots for a specific dataset:
+
+        .. code:: json
+
+            {"paths": ["tank/data"]}
+
+        Count snapshots for a dataset and all of its children:
+
+        .. code:: json
+
+            {"paths": ["tank"], "recursive": true}
         """
         self.validate_recursive_paths("zfs.resource.snapshot.count", data)
         try:
@@ -240,35 +239,46 @@ class ZFSResourceSnapshotService(Service):
         """
         Destroy ZFS snapshots.
 
-        Args:
-            data: Destroy parameters containing:
-                - path: Snapshot path (e.g., 'pool/dataset@snapshot') or dataset path
-                        when all_snapshots=True (e.g., 'pool/dataset').
-                - recursive: Recursively destroy matching snapshots in child datasets.
-                - all_snapshots: If True, path is a dataset and all its snapshots are destroyed.
-                - defer: Defer destruction if snapshot is in use (e.g., has clones).
+        Invalid input is returned to the client as a JSON-RPC ``error`` response (code
+        ``-32602``, *Invalid params*); each failing condition appears in the error's
+        ``data.extra`` array with its own ``errno``. A validation error is raised when:
 
-        Returns:
-            None on success.
-
-        Raises:
-            ValidationError: If snapshot not found, has clones (without defer), or has holds.
+        - the snapshot does not exist (``ENOENT``)
+        - it has dependent clones and ``defer`` is ``false`` (``ENOTEMPTY``)
+        - it has active holds (``ENOTEMPTY``)
+        - a protected path is targeted without ``bypass`` (``EACCES``)
 
         Examples:
-            # Destroy a single snapshot
-            destroy({"path": "tank/data@backup"})
 
-            # Destroy recursively (all matching child snapshots)
-            destroy({"path": "tank@backup", "recursive": True})
+        Destroy a single snapshot:
 
-            # Defer destruction if in use
-            destroy({"path": "tank/data@snap", "defer": True})
+        .. code:: json
 
-            # Destroy all snapshots for a dataset
-            destroy({"path": "tank/data", "all_snapshots": True})
+            {"path": "tank/data@backup"}
 
-            # Destroy all snapshots for a dataset and its children
-            destroy({"path": "tank", "all_snapshots": True, "recursive": True})
+        Destroy matching snapshots in child datasets:
+
+        .. code:: json
+
+            {"path": "tank@backup", "recursive": true}
+
+        Defer destruction if the snapshot is in use:
+
+        .. code:: json
+
+            {"path": "tank/data@snap", "defer": true}
+
+        Destroy all snapshots of a dataset:
+
+        .. code:: json
+
+            {"path": "tank/data", "all_snapshots": true}
+
+        Destroy all snapshots of a dataset and its children:
+
+        .. code:: json
+
+            {"path": "tank", "all_snapshots": true, "recursive": true}
         """
         # Validate path format based on all_snapshots flag
         if data.all_snapshots:
@@ -335,28 +345,27 @@ class ZFSResourceSnapshotService(Service):
         """
         Rename a ZFS snapshot.
 
-        Args:
-            data: Rename parameters containing:
-                - current_name: Current snapshot path (e.g., 'pool/dataset@old_name').
-                - new_name: New snapshot path (e.g., 'pool/dataset@new_name').
-                - recursive: Recursively rename matching snapshots in child datasets.
+        Invalid input is returned to the client as a JSON-RPC ``error`` response (code
+        ``-32602``, *Invalid params*); each failing condition appears in the error's
+        ``data.extra`` array with its own ``errno``. A validation error is raised when:
 
-        Returns:
-            None on success.
-
-        Raises:
-            ValidationError: If snapshot not found, new name already exists, or invalid paths.
+        - the snapshot does not exist
+        - the new name already exists
+        - a supplied path is invalid
 
         Examples:
-            # Rename a single snapshot
-            rename({"current_name": "tank/data@old", "new_name": "tank/data@new"})
 
-            # Rename recursively (all matching child snapshots)
-            rename({
-                "current_name": "tank@old",
-                "new_name": "tank@new",
-                "recursive": True
-            })
+        Rename a single snapshot:
+
+        .. code:: json
+
+            {"current_name": "tank/data@old", "new_name": "tank/data@new"}
+
+        Rename matching snapshots in child datasets:
+
+        .. code:: json
+
+            {"current_name": "tank@old", "new_name": "tank@new", "recursive": true}
         """
         # Validate both paths are snapshot paths
         if "@" not in data.current_name:
@@ -430,28 +439,27 @@ class ZFSResourceSnapshotService(Service):
         """
         Clone a ZFS snapshot to create a new dataset.
 
-        Args:
-            data: Clone parameters containing:
-                - snapshot: Source snapshot path to clone (e.g., 'pool/dataset@snapshot').
-                - dataset: Destination dataset path for the clone (e.g., 'pool/clone').
-                - properties: Optional ZFS properties to set on the cloned dataset.
+        Invalid input is returned to the client as a JSON-RPC ``error`` response (code
+        ``-32602``, *Invalid params*); each failing condition appears in the error's
+        ``data.extra`` array with its own ``errno``. A validation error is raised when:
 
-        Returns:
-            None on success.
-
-        Raises:
-            ValidationError: If snapshot not found, destination already exists, or source is not a snapshot.
+        - the source snapshot does not exist
+        - the destination dataset already exists
+        - the source is not a snapshot
 
         Examples:
-            # Clone a snapshot to a new dataset
-            clone({"snapshot": "tank/data@backup", "dataset": "tank/data_clone"})
 
-            # Clone with properties
-            clone({
-                "snapshot": "tank/data@backup",
-                "dataset": "tank/data_clone",
-                "properties": {"compression": "lz4", "quota": "10G"}
-            })
+        Clone a snapshot to a new dataset:
+
+        .. code:: json
+
+            {"snapshot": "tank/data@backup", "dataset": "tank/data_clone"}
+
+        Clone with properties:
+
+        .. code:: json
+
+            {"snapshot": "tank/data@backup", "dataset": "tank/data_clone", "properties": {"compression": "lz4", "quota": "10G"}}
         """
         # Validate snapshot path contains @
         if "@" not in data.snapshot:
@@ -511,37 +519,32 @@ class ZFSResourceSnapshotService(Service):
         """
         Create a ZFS snapshot.
 
-        Args:
-            data: Create parameters containing:
-                - dataset: Dataset path to snapshot (e.g., 'pool/dataset').
-                - name: Snapshot name (the part after @).
-                - recursive: Create snapshots recursively for child datasets.
-                - exclude: Datasets to exclude when creating recursive snapshots.
-                - user_properties: User properties to set on the snapshot.
+        Invalid input is returned to the client as a JSON-RPC ``error`` response (code
+        ``-32602``, *Invalid params*); each failing condition appears in the error's
+        ``data.extra`` array with its own ``errno``. A validation error is raised when:
 
-        Returns:
-            Snapshot entry for the created snapshot.
-
-        Raises:
-            ValidationError: If dataset not found or snapshot already exists.
+        - the dataset does not exist
+        - the snapshot already exists
 
         Examples:
-            # Create a single snapshot
-            create({"dataset": "tank/data", "name": "backup"})
 
-            # Create recursive snapshots
-            create({
-                "dataset": "tank",
-                "name": "backup",
-                "recursive": True
-            })
+        Create a single snapshot:
 
-            # Create with user properties
-            create({
-                "dataset": "tank/data",
-                "name": "backup",
-                "user_properties": {"com.company:backup_type": "daily"}
-            })
+        .. code:: json
+
+            {"dataset": "tank/data", "name": "backup"}
+
+        Create snapshots recursively:
+
+        .. code:: json
+
+            {"dataset": "tank", "name": "backup", "recursive": true}
+
+        Create with user properties:
+
+        .. code:: json
+
+            {"dataset": "tank/data", "name": "backup", "user_properties": {"com.company:backup_type": "daily"}}
         """
         # Validate dataset path does NOT contain @
         if "@" in data.dataset:
@@ -600,30 +603,35 @@ class ZFSResourceSnapshotService(Service):
         """
         Create a hold on a ZFS snapshot.
 
-        A hold prevents a snapshot from being destroyed. Multiple holds
-        can be placed on a snapshot with different tags.
+        A hold prevents a snapshot from being destroyed. Multiple holds can be placed on a
+        snapshot with different tags.
 
-        Args:
-            data: Hold parameters containing:
-                - path: Snapshot path to hold (e.g., 'pool/dataset@snapshot').
-                - tag: Hold tag name (default: 'truenas').
-                - recursive: Apply hold to matching snapshots in child datasets.
+        Invalid input is returned to the client as a JSON-RPC ``error`` response (code
+        ``-32602``, *Invalid params*); each failing condition appears in the error's
+        ``data.extra`` array with its own ``errno``. A validation error is raised when:
 
-        Returns:
-            None on success.
-
-        Raises:
-            ValidationError: If snapshot not found or hold creation fails.
+        - the snapshot does not exist
+        - the hold cannot be created
 
         Examples:
-            # Hold a single snapshot
-            hold({"path": "tank/data@backup"})
 
-            # Hold with custom tag
-            hold({"path": "tank/data@backup", "tag": "replication"})
+        Hold a snapshot:
 
-            # Hold recursively
-            hold({"path": "tank@backup", "recursive": True})
+        .. code:: json
+
+            {"path": "tank/data@backup"}
+
+        Hold with a custom tag:
+
+        .. code:: json
+
+            {"path": "tank/data@backup", "tag": "replication"}
+
+        Hold matching snapshots in child datasets:
+
+        .. code:: json
+
+            {"path": "tank@backup", "recursive": true}
         """
         # Validate path is a snapshot
         if "@" not in data.path:
@@ -659,16 +667,13 @@ class ZFSResourceSnapshotService(Service):
         """
         Get holds on a ZFS snapshot.
 
-        Args:
-            data: Query parameters containing:
-                - path: Snapshot path to query (e.g., 'pool/dataset@snapshot').
-
-        Returns:
-            List of hold tag names on the snapshot.
-
         Examples:
-            holds({"path": "tank/data@backup"})
-            # Returns: ["truenas", "replication"]
+
+        Get the holds on a snapshot:
+
+        .. code:: json
+
+            {"path": "tank/data@backup"}
         """
         # Validate path is a snapshot
         if "@" not in data.path:
@@ -713,27 +718,32 @@ class ZFSResourceSnapshotService(Service):
         """
         Release hold(s) from a ZFS snapshot.
 
-        Args:
-            data: Release parameters containing:
-                - path: Snapshot path to release holds from (e.g., 'pool/dataset@snapshot').
-                - tag: Specific hold tag to release. If None, releases all holds.
-                - recursive: Release holds from matching snapshots in child datasets.
+        Invalid input is returned to the client as a JSON-RPC ``error`` response (code
+        ``-32602``, *Invalid params*); each failing condition appears in the error's
+        ``data.extra`` array with its own ``errno``. A validation error is raised when:
 
-        Returns:
-            None on success.
-
-        Raises:
-            ValidationError: If snapshot not found or release fails.
+        - the snapshot does not exist
+        - the hold cannot be released
 
         Examples:
-            # Release a specific hold
-            release({"path": "tank/data@backup", "tag": "replication"})
 
-            # Release all holds from a snapshot
-            release({"path": "tank/data@backup"})
+        Release a specific hold:
 
-            # Release holds recursively
-            release({"path": "tank@backup", "tag": "backup", "recursive": True})
+        .. code:: json
+
+            {"path": "tank/data@backup", "tag": "replication"}
+
+        Release all holds from a snapshot:
+
+        .. code:: json
+
+            {"path": "tank/data@backup"}
+
+        Release a hold from matching snapshots in child datasets:
+
+        .. code:: json
+
+            {"path": "tank@backup", "tag": "backup", "recursive": true}
         """
         # Validate path is a snapshot
         if "@" not in data.path:
@@ -779,32 +789,35 @@ class ZFSResourceSnapshotService(Service):
         """
         Rollback a ZFS dataset to a snapshot.
 
-        WARNING: This is a destructive change. All data written since the
-        target snapshot was taken will be discarded.
+        WARNING: This is a destructive change. All data written since the target snapshot was
+        taken will be discarded.
 
-        Args:
-            data: Rollback parameters containing:
-                - path: Snapshot path to rollback to (e.g., 'pool/dataset@snapshot').
-                - recursive: Destroy any snapshots and bookmarks more recent than the one specified.
-                - recursive_clones: Like recursive, but also destroy any clones.
-                - force: Force unmount of any clones.
-                - recursive_rollback: Do a complete recursive rollback of each child snapshot.
+        Invalid input is returned to the client as a JSON-RPC ``error`` response (code
+        ``-32602``, *Invalid params*); each failing condition appears in the error's
+        ``data.extra`` array with its own ``errno``. A validation error is raised when:
 
-        Returns:
-            None on success.
-
-        Raises:
-            ValidationError: If snapshot not found or rollback fails.
+        - the snapshot does not exist
+        - the rollback cannot be completed
 
         Examples:
-            # Basic rollback
-            rollback({"path": "tank/data@backup"})
 
-            # Rollback destroying more recent snapshots
-            rollback({"path": "tank/data@backup", "recursive": True})
+        Roll back to a snapshot:
 
-            # Rollback all child datasets
-            rollback({"path": "tank@backup", "recursive_rollback": True})
+        .. code:: json
+
+            {"path": "tank/data@backup"}
+
+        Roll back, destroying more recent snapshots:
+
+        .. code:: json
+
+            {"path": "tank/data@backup", "recursive": true}
+
+        Roll back all child datasets:
+
+        .. code:: json
+
+            {"path": "tank@backup", "recursive_rollback": true}
         """
         # Validate path is a snapshot
         if "@" not in data.path:
