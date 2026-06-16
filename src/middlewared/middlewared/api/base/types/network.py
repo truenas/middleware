@@ -84,8 +84,8 @@ Domain = Annotated[str, AfterValidator(match_validator(
     "Domain can only contain letters, numbers, periods, and dashes"
 ))]
 MACAddress = Annotated[str, AfterValidator(match_validator(
-    re.compile(r"^([0-9A-Fa-f]{2}[:-]?){5}([0-9A-Fa-f]{2})$"),
-    'MAC address is not valid.'
+    re.compile(r"^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$"),
+    'MAC address must be a colon-separated hexadecimal value (e.g. 00:a0:99:7e:bb:8a).'
 ))]
 IPv4Address = Annotated[str, AfterValidator(_validate_ipv4_address)]
 IPv6Address = Annotated[str, AfterValidator(_validate_ipv6_address)]
