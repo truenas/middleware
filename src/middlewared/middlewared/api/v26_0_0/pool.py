@@ -191,7 +191,7 @@ PoolCreateTopologyDataVdev: TypeAlias = Annotated[
 ]
 
 
-PoolCreateTopologySpecialVdev: TypeAlias = PoolCreateTopologyVdevNonDRAID
+PoolCreateTopologySpecialVdev: TypeAlias = PoolCreateTopologyDataVdev
 
 
 class PoolCreateTopologyDedupVdev(BaseModel):

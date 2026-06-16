@@ -80,7 +80,7 @@ def test_special_vdev_draid_is_rejected():
     """
     dRAID is not permitted for special vdevs (matching truenas_pylibzfs). The
     special class only accepts MIRROR/RAIDZ/STRIPE, so a DRAID type is rejected
-    at input validation.
+    during pool create validation.
     """
     unused_disks = call('disk.get_unused')
     if len(unused_disks) < 5:
@@ -103,7 +103,7 @@ def test_special_vdev_draid_is_rejected():
         }, job=True)
 
     assert ve.value.errors[0].attribute == 'pool_create.topology.special.0.type'
-    assert 'Input should be' in ve.value.errors[0].errmsg
+    assert 'dRAID is not supported for special vdevs' in ve.value.errors[0].errmsg
 
 
 def test_non_redundant_special_on_redundant_data_is_rejected():

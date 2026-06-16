@@ -383,6 +383,14 @@ class PoolService(CRUDService):
             if old and old['topology']:
                 topology_data += disk_to_stripe(topology_type)
             for i, vdev in enumerate(topology_data):
+                if topology_type == 'special' and vdev['type'].startswith('DRAID'):
+                    # dRAID is not supported for special vdevs (matching truenas_pylibzfs).
+                    verrors.add(
+                        f'topology.{topology_type}.{i}.type',
+                        'dRAID is not supported for special vdevs.',
+                    )
+                    continue
+
                 numdisks = len(vdev['disks'])
                 minmap = {
                     'STRIPE': 1,
