@@ -195,6 +195,10 @@ class BaseModel(PydanticBaseModel, metaclass=_BaseModelMetaclass):
         strict=True,
         str_max_length=1024,
         arbitrary_types_allowed=True,
+        # FIXME: for pydantic 2.11 use:
+        # validate_by_name=True,
+        # validate_by_alias=True,
+        populate_by_name=True,
     )
 
     @classmethod

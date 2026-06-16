@@ -61,6 +61,7 @@ jobs:
             middlewared/plugins/ups/ \
             middlewared/plugins/vm/ \
             middlewared/plugins/zfs/ \
+            middlewared/plugins/dns_client.py \
             middlewared/plugins/filesystem.py \
             middlewared/plugins/keyvalue.py \
             middlewared/plugins/pwenc.py \

@@ -3,8 +3,10 @@ import ipaddress
 from os import curdir as dot
 import socket
 
+from middlewared.api.current import QueryOptions
 from middlewared.auth import TruenasNodeSessionManagerCredentials
 from middlewared.job import Job
+from middlewared.plugins.dns_client import DNSClientForwardLookupData, DNSClientOptions
 from middlewared.plugins.network_.common import DEFAULT_NETWORK_DOMAIN
 from middlewared.service import Service, job, pass_app
 from middlewared.service_exception import CallError
@@ -222,12 +224,12 @@ class DomainConnection(
 
         # SRV records get us names. We'll artificially limit ourselves to 20 of them here
         try:
-            results = self.middleware.call_sync('dnsclient.forward_lookup', {
-                'names': [query_name],
-                'record_types': ['SRV'],
-                'query-options': {'order_by': ['priority', 'weight'], 'limit': 20},
-                'dns_client_options': {'timeout': config['timeout']}
-            })
+            srv_results = self.call_sync2(self.s.dnsclient.forward_lookup, DNSClientForwardLookupData(
+                names=[query_name],
+                record_types=['SRV'],
+                query_options=QueryOptions(order_by=['priority', 'weight'], limit=20),
+                dns_client_options=DNSClientOptions(timeout=config['timeout']),
+            ))
         except Exception:
             self.logger.error('%s: failed to look up KDCs for realm [%s]',
                               query_name, realm, exc_info=True)
@@ -235,11 +237,11 @@ class DomainConnection(
 
         # now resolve the names to addresses
         try:
-            results = self.middleware.call_sync('dnsclient.forward_lookup', {
-                'names': [entry['target'] for entry in results],
-                'record_types': ['A', 'AAAA'],
-                'dns_client_options': {'timeout': config['timeout'], 'raise_error': 'NEVER'}
-            })
+            results = self.call_sync2(self.s.dnsclient.forward_lookup, DNSClientForwardLookupData(
+                names=[entry.target for entry in srv_results],
+                record_types=['A', 'AAAA'],
+                dns_client_options=DNSClientOptions(timeout=config['timeout'], raise_error='NEVER'),
+            ))
         except Exception:
             self.logger.error('%s: failed to look up KDCs for realm [%s]',
                               query_name, realm, exc_info=True)
@@ -250,18 +252,18 @@ class DomainConnection(
         # are actually connectable.
         for entry in results:
             with socket.socket(
-                family=socket.AF_INET if entry['type'] == 'A' else socket.AF_INET6,
+                family=socket.AF_INET if entry.type == 'A' else socket.AF_INET6,
                 type=socket.SOCK_STREAM
             ) as s:
                 s.settimeout(1)
                 try:
-                    s.connect((entry['address'], 88))
+                    s.connect((entry.address, 88))
                 except Exception:
                     self.logger.debug('%s: connection to kdc failed. Omitting from list',
-                                      entry['address'], exc_info=True)
+                                      entry.address, exc_info=True)
                     continue
 
-                kdcs_out.append(entry['address'])
+                kdcs_out.append(entry.address)
                 if len(kdcs_out) == 3:
                     break
 
