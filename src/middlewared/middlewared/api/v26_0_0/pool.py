@@ -1,6 +1,6 @@
 from typing import Annotated, Literal, TypeAlias
 
-from pydantic import Field, PositiveInt, Secret
+from pydantic import Discriminator, Field, PositiveInt, Secret
 
 from middlewared.api.base import (
     BaseModel,
@@ -187,7 +187,7 @@ class PoolCreateTopologyVdevNonDRAID(BaseModel):
 
 PoolCreateTopologyDataVdev: TypeAlias = Annotated[
     PoolCreateTopologyVdevDRAID | PoolCreateTopologyVdevNonDRAID,
-    Field(discriminator="type")
+    Discriminator("type")
 ]
 
 

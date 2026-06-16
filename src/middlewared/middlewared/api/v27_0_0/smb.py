@@ -1,6 +1,6 @@
 from typing import Annotated, Any, Literal, Self, Union
 
-from pydantic import AfterValidator, Field, IPvAnyInterface, field_validator, model_validator
+from pydantic import AfterValidator, Discriminator, Field, IPvAnyInterface, field_validator, model_validator
 
 from middlewared.api.base import (
     SID,
@@ -896,7 +896,7 @@ SmbShareOptions = Annotated[
         LegacyOpt, DefaultOpt, TimeMachineOpt, MultiprotocolOpt, TimeLockedOpt, PrivateDatasetOpt, ExternalOpt,
         VeeamRepositoryOpt, FCPStorageOpt,
     ],
-    Field(discriminator='purpose')
+    Discriminator('purpose')
 ]
 
 
