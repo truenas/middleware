@@ -8,7 +8,7 @@ import struct
 
 from middlewared.plugins.service_.services.dbus_router import system_dbus
 
-__all__ = ("DHCPLease", "DHCPStatus", "dhcp_leases", "dhcp_start", "dhcp_status", "dhcp_stop")
+__all__ = ("DHCPLease", "DHCPStatus", "dhcp_leases", "dhcp_reload", "dhcp_start", "dhcp_status", "dhcp_stop")
 
 
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
@@ -132,6 +132,26 @@ async def dhcp_stop(interface: str) -> None:
     """
     unit_name = f"ix-dhcpcd@{interface}.service"
     await system_dbus.call_unit_action_and_wait(unit_name, "Stop")
+
+
+async def dhcp_reload(interface: str) -> None:
+    """Reload dhcpcd's configuration for an interface via systemd (D-Bus).
+
+    Triggers the ix-dhcpcd@{interface}.service ExecReload, which runs
+    `dhcpcd -n` (SIGHUP). dhcpcd re-reads dhcpcd.conf and re-applies it,
+    picking up per-interface changes such as the noipv6rs ("Autoconfigure
+    IPv6") option and dropping a SLAAC address that is no longer permitted,
+    without releasing the existing DHCPv4 lease.
+
+    NOTE: a reload (SIGHUP) is required for config changes to take effect. The
+    dhcpcd control-socket "--rebind" command performs only a DHCP-level rebind
+    and does NOT reload the configuration (verified against dhcpcd 10.x).
+
+    Raises if the unit is not active, so callers should only reload interfaces
+    that are running (or handle the error).
+    """
+    unit_name = f"ix-dhcpcd@{interface}.service"
+    await system_dbus.call_unit_action_and_wait(unit_name, "Reload")
 
 
 def dhcp_leases(interface: str) -> DHCPLease | None:

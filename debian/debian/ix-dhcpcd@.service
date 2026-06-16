@@ -11,6 +11,7 @@ Documentation=man:dhcpcd(8)
 Type=forking
 PIDFile=/run/dhcpcd/%I.pid
 ExecStart=/usr/sbin/dhcpcd -q -w %I
+ExecReload=/usr/sbin/dhcpcd -n %I
 ExecStop=/usr/sbin/dhcpcd -x %I
 Restart=always
 
