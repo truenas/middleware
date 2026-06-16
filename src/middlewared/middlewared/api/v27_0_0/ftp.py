@@ -2,10 +2,9 @@ from typing import Annotated, Literal
 
 from pydantic import Field, ValidationInfo, field_validator
 
-from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, UnixPerm, excluded_field, single_argument_args
+from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, UnixPerm, excluded_field
 
-__all__ = ["FTPEntry",
-           "FTPUpdateArgs", "FTPUpdateResult"]
+__all__ = ["FTPEntry", "FTPUpdate", "FTPUpdateArgs", "FTPUpdateResult"]
 
 TLS_PolicyOptions = Literal[
     "", "on", "off", "data", "!data", "auth", "ctrl", "ctrl+data", "ctrl+!data", "auth+data", "auth+!data"
@@ -139,10 +138,13 @@ class FTPEntry(BaseModel):
         return field_value
 
 
-@single_argument_args('ftp_update')
-class FTPUpdateArgs(FTPEntry, metaclass=ForUpdateMetaclass):
+class FTPUpdate(FTPEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
 
 
+class FTPUpdateArgs(BaseModel):
+    data: FTPUpdate = Field(description="FTP service configuration changes to apply.")
+
+
 class FTPUpdateResult(BaseModel):
-    result: FTPEntry
+    result: FTPEntry = Field(description="The updated FTP service configuration.")

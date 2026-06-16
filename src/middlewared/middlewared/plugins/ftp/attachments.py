@@ -1,4 +1,11 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from middlewared.common.ports import ServicePortDelegate
+
+if TYPE_CHECKING:
+    from middlewared.main import Middleware
 
 
 class FTPServicePortDelegate(ServicePortDelegate):
@@ -9,5 +16,5 @@ class FTPServicePortDelegate(ServicePortDelegate):
     title = 'FTP Service'
 
 
-async def setup(middleware):
+async def setup(middleware: Middleware) -> None:
     await middleware.call('port.register_attachment_delegate', FTPServicePortDelegate(middleware))

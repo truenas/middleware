@@ -342,12 +342,12 @@ class UsageService(Service):
 
     async def gather_ftp(self, context_unused):
         """ Gather number of FTP connection info """
-        ftp_config = await self.middleware.call('ftp.config')
-        num_conn = await self.middleware.call('ftp.connection_count')
+        ftp_config = await self.call2(self.s.ftp.config)
+        num_conn = await self.call2(self.s.ftp.connection_count)
 
         return {
             'FTP': {
-                'connections_allowed': ftp_config['clients'] * ftp_config['ipconnections'],
+                'connections_allowed': ftp_config.clients * ftp_config.ipconnections,
                 'num_connections': num_conn
             }
         }
