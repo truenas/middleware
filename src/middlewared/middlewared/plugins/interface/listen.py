@@ -31,12 +31,13 @@ class InterfaceService(Service):
         """
         Returns which services will be set to listen on 0.0.0.0 (and, thus, restarted) on sync.
 
-        Example result:
-        [
-            // Samba service will be set ot listen on 0.0.0.0 and restarted because it was set up to listen on
-            // 192.168.0.1 which is being removed.
-            {"type": "SYSTEM_SERVICE", "service": "cifs", "ips": ["192.168.0.1"]},
-        ]
+        Example result::
+
+            [
+                // Samba service will be set ot listen on 0.0.0.0 and restarted because it was set up to listen on
+                // 192.168.0.1 which is being removed.
+                {"type": "SYSTEM_SERVICE", "service": "cifs", "ips": ["192.168.0.1"]},
+            ]
         """
         return [dict(await pd.delegate.repr(pd.state), ips=pd.addresses)
                 for pd in await self.listen_delegates_prepare()]

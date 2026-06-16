@@ -122,72 +122,76 @@ class NFSService(Service):
     )
     def get_nfs4_clients(self, filters, options):
         """
-        Read information about NFSv4 clients from /proc/fs/nfsd/clients
-        Sample output:
-        [{
-            "id": "4",
-            "info": {
-                "clientid": 6273260596088110000,
-                "address": "192.168.40.247:790",
-                "status": "confirmed",
-                "seconds from last renew": 45,
-                "name": "Linux NFSv4.2 debian12-hv",
-                "minor version": 2,
-                "Implementation domain": "kernel.org",
-                "Implementation name": "Linux 6.1.0-12-amd64 #1 SMP PREEMPT_DYNAMIC"
-                                      " Debian 6.1.52-1 (2023-09-07) x86_64",
-                "Implementation time": [0, 0],
-                "callback state": "UP",
-                "callback address": "192.168.40.247:0"
-            },
-            "states": [
-                {
-                    "94850248556250062041657638912": {
-                        "type": "deleg",
-                        "access": "r",
-                        "superblock": "00:39:5",
-                        "filename": "/debian12-hv"
-                    }
+        Read information about NFSv4 clients from /proc/fs/nfsd/clients.
+
+        Sample output::
+
+            [{
+                "id": "4",
+                "info": {
+                    "clientid": 6273260596088110000,
+                    "address": "192.168.40.247:790",
+                    "status": "confirmed",
+                    "seconds from last renew": 45,
+                    "name": "Linux NFSv4.2 debian12-hv",
+                    "minor version": 2,
+                    "Implementation domain": "kernel.org",
+                    "Implementation name": "Linux 6.1.0-12-amd64 #1 SMP PREEMPT_DYNAMIC"
+                                          " Debian 6.1.52-1 (2023-09-07) x86_64",
+                    "Implementation time": [0, 0],
+                    "callback state": "UP",
+                    "callback address": "192.168.40.247:0"
                 },
-                {
-                    "94850248556250062041741524992": {
-                        "type": "open",
-                        "access": "rw",
-                        "deny": "--",
-                        "superblock": "00:39:137",
-                        "filename": "/.debian12-hv.swp",
-                        "owner": "open id:\u0000\u0000\u00008\u0000\u0000\u0000\u0000\u0000\u0000\u0014þÀ²3"
+                "states": [
+                    {
+                        "94850248556250062041657638912": {
+                            "type": "deleg",
+                            "access": "r",
+                            "superblock": "00:39:5",
+                            "filename": "/debian12-hv"
+                        }
+                    },
+                    {
+                        "94850248556250062041741524992": {
+                            "type": "open",
+                            "access": "rw",
+                            "deny": "--",
+                            "superblock": "00:39:137",
+                            "filename": "/.debian12-hv.swp",
+                            "owner": "open id:\u0000\u0000\u00008\u0000\u0000\u0000\u0000\u0000\u0000\u0014þÀ²3"
+                        }
                     }
-                }
-            ]
-        }]
-        ---- Description of the fields (all per NFS client) ----
-        'clientid': Hash generated for this client connection
-        'address':  The client IP and port. e.g. 10.20.30.40:768
+                ]
+            }]
 
-        'status':   The current client status:
-            'confirmed' An active connection.
-                        The status will convert to 'courtesy' in 90 seconds if not 'confirmed' by the client.
-            'courtesy'  A stalled connection from an inactive client.
-                        The status will convert to 'expirable' in 24hr.
-            'expirable' Waiting to be cleaned up.
+        Description of the fields (all per NFS client)::
 
-        'seconds from last renew':  The session timeout counter.  See 'status' field.
-                                    Gets reset by confirmation update from the client
+            'clientid': Hash generated for this client connection
+            'address':  The client IP and port. e.g. 10.20.30.40:768
 
-        'name': Supplied by the client.
-                Linux clients might offer something like 'Linux NFS4.2 clnt_name'.
-                FreeBSD clients might supply a UUID like name
+            'status':   The current client status:
+                'confirmed' An active connection.
+                            The status will convert to 'courtesy' in 90 seconds if not 'confirmed' by the client.
+                'courtesy'  A stalled connection from an inactive client.
+                            The status will convert to 'expirable' in 24hr.
+                'expirable' Waiting to be cleaned up.
 
-        'minor version':    The NFS4.x minor version.  E.G. '2' for NFSv4.2
+            'seconds from last renew':  The session timeout counter.  See 'status' field.
+                                        Gets reset by confirmation update from the client
 
-        'Implementation domain': NFSv4.1 info - e.g. 'kernel.org' or 'freebsd.org'.
-        'Implementation name':   NFSv4.1 info - e.g. equivalent to 'uname -a' on the client
-        'Implementation time':   NFSv4.1 info - Timestamp (time nfstime4) of client version (maybe unused?)
+            'name': Supplied by the client.
+                    Linux clients might offer something like 'Linux NFS4.2 clnt_name'.
+                    FreeBSD clients might supply a UUID like name
 
-        'callback state':   Current callback 'service' status for this client: 'UP', 'DOWN', 'FAULT' or 'UNKNOWN'
-                            Linux clients usually indicate 'UP'
-                            FreeBSD clients may indicate 'DOWN' but are still functional
+            'minor version':    The NFS4.x minor version.  E.G. '2' for NFSv4.2
+
+            'Implementation domain': NFSv4.1 info - e.g. 'kernel.org' or 'freebsd.org'.
+            'Implementation name':   NFSv4.1 info - e.g. equivalent to 'uname -a' on the client
+            'Implementation time':   NFSv4.1 info - Timestamp (time nfstime4) of client version (maybe unused?)
+
+            'callback state':   Current callback 'service' status for this client: 'UP', 'DOWN', 'FAULT' or 'UNKNOWN'
+                                Linux clients usually indicate 'UP'
+                                FreeBSD clients may indicate 'DOWN' but are still functional
         """
         clients = []
         with suppress(FileNotFoundError):

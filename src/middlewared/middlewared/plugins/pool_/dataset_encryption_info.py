@@ -42,45 +42,46 @@ class PoolDatasetService(Service):
 
         Keys/passphrase can be supplied to check if the keys are valid.
 
-        Example output:
-        [
-            {
-                "name": "vol",
-                "key_format": "PASSPHRASE",
-                "key_present_in_database": false,
-                "valid_key": true,
-                "locked": true,
-                "unlock_error": null,
-                "unlock_successful": true
-            },
-            {
-                "name": "vol/c1/d1",
-                "key_format": "PASSPHRASE",
-                "key_present_in_database": false,
-                "valid_key": false,
-                "locked": true,
-                "unlock_error": "Provided key is invalid",
-                "unlock_successful": false
-            },
-            {
-                "name": "vol/c",
-                "key_format": "PASSPHRASE",
-                "key_present_in_database": false,
-                "valid_key": false,
-                "locked": true,
-                "unlock_error": "Key not provided",
-                "unlock_successful": false
-            },
-            {
-                "name": "vol/c/d2",
-                "key_format": "PASSPHRASE",
-                "key_present_in_database": false,
-                "valid_key": false,
-                "locked": true,
-                "unlock_error": "Child cannot be unlocked when parent \"vol/c\" is locked and provided key is invalid",
-                "unlock_successful": false
-            }
-        ]
+        Example output::
+
+            [
+                {
+                    "name": "vol",
+                    "key_format": "PASSPHRASE",
+                    "key_present_in_database": false,
+                    "valid_key": true,
+                    "locked": true,
+                    "unlock_error": null,
+                    "unlock_successful": true
+                },
+                {
+                    "name": "vol/c1/d1",
+                    "key_format": "PASSPHRASE",
+                    "key_present_in_database": false,
+                    "valid_key": false,
+                    "locked": true,
+                    "unlock_error": "Provided key is invalid",
+                    "unlock_successful": false
+                },
+                {
+                    "name": "vol/c",
+                    "key_format": "PASSPHRASE",
+                    "key_present_in_database": false,
+                    "valid_key": false,
+                    "locked": true,
+                    "unlock_error": "Key not provided",
+                    "unlock_successful": false
+                },
+                {
+                    "name": "vol/c/d2",
+                    "key_format": "PASSPHRASE",
+                    "key_present_in_database": false,
+                    "valid_key": false,
+                    "locked": true,
+                    "unlock_error": "Child cannot be unlocked when parent \"vol/c\" is locked and provided key is invalid",
+                    "unlock_successful": false
+                }
+            ]
         """
         keys_supplied = {}
         verrors = ValidationErrors()

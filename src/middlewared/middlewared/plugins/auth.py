@@ -322,19 +322,19 @@ class AuthService(Service):
         """
         Returns list of active auth sessions.
 
-        Example of return value:
+        Example of return value::
 
-        [
-            {
-                "id": "NyhB1J5vjPjIV82yZ6caU12HLA1boDJcZNWuVQM4hQWuiyUWMGZTz2ElDp7Yk87d",
-                "origin": "192.168.0.3:40392",
-                "credentials": "LOGIN_PASSWORD",
-                "credentials_data": {"username": "root"},
-                "current": True,
-                "internal": False,
-                "created_at": {"$date": 1545842426070}
-            }
-        ]
+            [
+                {
+                    "id": "NyhB1J5vjPjIV82yZ6caU12HLA1boDJcZNWuVQM4hQWuiyUWMGZTz2ElDp7Yk87d",
+                    "origin": "192.168.0.3:40392",
+                    "credentials": "LOGIN_PASSWORD",
+                    "credentials_data": {"username": "root"},
+                    "current": True,
+                    "internal": False,
+                    "created_at": {"$date": 1545842426070}
+                }
+            ]
 
         `credentials` can be `UNIX_SOCKET`, `ROOT_TCP_SOCKET`, `LOGIN_PASSWORD`, `API_KEY` or `TOKEN`,
         depending on what authentication method was used.
@@ -342,13 +342,13 @@ class AuthService(Service):
         For `API_KEY` corresponding `api_key` will be provided in `credentials_data`.
         For `TOKEN` its `parent` credential will be provided in `credentials_data`.
 
-        If you want to exclude all internal connections from the list, call this method with following arguments:
+        If you want to exclude all internal connections from the list, call this method with following arguments::
 
-        [
             [
-                ["internal", "=", True]
+                [
+                    ["internal", "=", True]
+                ]
             ]
-        ]
         """
         return filter_list(
             [
@@ -851,6 +851,7 @@ class AuthService(Service):
         Notes about response types:
 
         SUCCESS:
+
         additional keys:
             user_info: includes auth.me output for the resulting authenticated
             credentials.
@@ -859,6 +860,7 @@ class AuthService(Service):
             supported by the credential type.
 
         OTP_REQUIRED
+
         additional key:
             username: normalized username of user who must provide an OTP token.
 

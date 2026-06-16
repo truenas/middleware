@@ -638,7 +638,7 @@ class CoreService(Service):
     @job(lock=lambda args: f"bulk:{args[0]}")
     async def bulk(self, app, job, method, params, description):
         """
-        Will sequentially call `method` with arguments from the `params` list. For example, running
+        Will sequentially call `method` with arguments from the `params` list. For example, running::
 
             call(
                 "core.bulk",
@@ -649,12 +649,12 @@ class CoreService(Service):
                 ]
             )
 
-        will call
+        will call::
 
             call("zfs.resource.destroy", {"path": tank@snap-1", recursive=True})
             call("zfs.resource.destroy", {"path": "tank@snap-2", recursive=False)
 
-        If the first call fails and the seconds succeeds (returning `true`), the result of the overall call will be:
+        If the first call fails and the seconds succeeds (returning `true`), the result of the overall call will be::
 
             [
                 {"result": null, "error": "Error deleting snapshot"},

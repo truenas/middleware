@@ -456,11 +456,13 @@ class InterfaceService(CRUDService):
         that will be validated and applied to the global network configuration.
 
         This makes 2 assumptions:
+
         1. `interface.create`/`update`/`delete` must have been called before
             calling this method.
         2. This method must be called before `interface.commit` is called.
 
         This method exists for the predominant scenario for new users:
+
         1. Fresh install SCALE.
         2. All interfaces start DHCPv4 (v6 is ignored for now).
         3. One of the interfaces receives an IP address.
@@ -478,6 +480,7 @@ class InterfaceService(CRUDService):
 
         In the above scenario, we're going to try and prevent this by doing
         the following:
+
         1. Fresh install SCALE.
         2. All interfaces start DHCPv4.
         3. Default route is received.

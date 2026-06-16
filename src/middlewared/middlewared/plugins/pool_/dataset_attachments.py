@@ -23,14 +23,15 @@ class PoolDatasetService(Service):
         Responsible for telling the user whether there is a related
         share, asking for confirmation.
 
-        Example return value:
-        [
-          {
-            "type": "NFS Share",
-            "service": "nfs",
-            "attachments": ["/mnt/tank/work"]
-          }
-        ]
+        Example return value::
+
+            [
+              {
+                "type": "NFS Share",
+                "service": "nfs",
+                "attachments": ["/mnt/tank/work"]
+              }
+            ]
         """
         dataset = await self.middleware.call('pool.dataset.get_instance_quick', oid)
         if mountpoint := dataset_mountpoint(dataset):

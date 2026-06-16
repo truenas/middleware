@@ -21,6 +21,7 @@ class PoolService(Service):
         to complete if the target is a RAIDZ vdev undergoing expansion.
 
         Locking behavior:
+
         - If another attach operation is already using the same disk, this call will fail immediately
           with EBUSY rather than queueing.
         - If another attach operation is running on the same pool (but with a different disk), this

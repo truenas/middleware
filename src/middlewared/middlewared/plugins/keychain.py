@@ -299,7 +299,7 @@ class KeychainCredentialService(CRUDService):
         """
         Create a Keychain Credential.
 
-        The following `type`s are supported:
+        The following `type` values are supported:
          * `SSH_KEY_PAIR`
          * `SSH_CREDENTIALS`
 
