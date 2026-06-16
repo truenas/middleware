@@ -12,22 +12,26 @@ import tempfile
 import textwrap
 import typing
 
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 from json_schema_for_humans.generate import generate_from_filename
 from json_schema_for_humans.generation_configuration import GenerationConfiguration
 
 from middlewared.fake_env import setup_fake_middleware_env
+
 setup_fake_middleware_env()
 
 from middlewared.api.base.server.doc import APIDump, APIDumpMethod, APIDumpEvent
+
+from changelog import Changelog, SchemaChange, compute_changelog
 
 logger = logging.getLogger(__name__)
 
 
 class DocumentationGenerator:
-    def __init__(self, api: APIDump, output_dir: str):
+    def __init__(self, api: APIDump, output_dir: str, changelog: Changelog | None = None):
         self.api = api
         self.output_dir = output_dir
+        self.changelog = changelog
 
     def generate(self):
         shutil.copytree("docs", self.output_dir, dirs_exist_ok=True)
@@ -40,8 +44,106 @@ class DocumentationGenerator:
         with open(f"{self.output_dir}/conf.py", "w") as f:
             f.write(conf)
 
+        with open(f"{self.output_dir}/index.rst") as f:
+            index = f.read()
+
+        if self.changelog is not None:
+            index = index.replace("$CHANGELOG_ENTRY\n", "   changelog.rst\n")
+        else:
+            # The oldest documented version has no predecessor to compare against.
+            index = index.replace("$CHANGELOG_ENTRY\n", "")
+
+        with open(f"{self.output_dir}/index.rst", "w") as f:
+            f.write(index)
+
         self._write_api_methods()
         self._write_api_events()
+        if self.changelog is not None:
+            self._write_changelog()
+
+    def _write_changelog(self):
+        changelog = self.changelog
+        assert changelog is not None
+        title = "Changelog"
+        result = f"{title}\n{'=' * len(title)}\n\n"
+        if changelog.is_empty():
+            result += f"No API schema changes since version {changelog.old_version}.\n"
+        else:
+            result += f"Summary of API changes since version {changelog.old_version}.\n\n"
+
+            result += self._render_changelog_section(
+                "Methods Added",
+                "api_methods",
+                changelog.methods_added,
+            )
+            result += self._render_changelog_section(
+                "Methods Removed",
+                "api_methods",
+                changelog.methods_removed,
+                removed=True,
+            )
+            result += self._render_schema_changes_section(
+                "Methods with Schema Changes",
+                "api_methods",
+                changelog.methods_changed,
+            )
+
+        with open(f"{self.output_dir}/changelog.rst", "w") as f:
+            f.write(result)
+
+    def _render_changelog_section(self, title: str, doc_prefix: str, names: list[str], removed: bool = False) -> str:
+        if not names:
+            return ""
+        out = f"{title}\n{'-' * len(title)}\n\n"
+        for plugin, plugin_names in self._group_by_plugin(names):
+            out += f"**{plugin}**\n\n"
+            for name in plugin_names:
+                if removed:
+                    # The method/event no longer exists in this version's build, so link to its
+                    # page in the sibling Sphinx site of the version this changelog was computed
+                    # against
+                    changelog = self.changelog
+                    assert changelog is not None
+                    url = f"../{changelog.old_version}/{doc_prefix}_{name}.html"
+                    out += f"- `{name} <{url}>`__\n"
+                else:
+                    out += f"- :doc:`{name} <{doc_prefix}_{name}>`\n"
+            out += "\n"
+        return out
+
+    def _render_schema_changes_section(self, title: str, doc_prefix: str, changes: list[SchemaChange]) -> str:
+        if not changes:
+            return ""
+        out = f"{title}\n{'-' * len(title)}\n\n"
+        by_plugin: dict[str, list[SchemaChange]] = {}
+        for change in changes:
+            plugin = change.name.rsplit(".", 1)[0]
+            by_plugin.setdefault(plugin, []).append(change)
+        for plugin in sorted(by_plugin):
+            out += f"**{plugin}**\n\n"
+            for change in sorted(by_plugin[plugin], key=lambda c: c.name):
+                # The blank lines around each nested list are required: without them,
+                # docutils parses the construct as a definition list and renders the
+                # would-be parent item as a bold term instead of a list item.
+                out += f"- :doc:`{change.name} <{doc_prefix}_{change.name}>`\n\n"
+                for label, lines in (
+                    ("Call parameters", change.call_params_diff),
+                    ("Return value", change.return_value_diff),
+                ):
+                    if not lines:
+                        continue
+                    out += f"  - {label}:\n\n"
+                    for line in lines:
+                        out += f"    - {line}\n"
+                    out += "\n"
+        return out
+
+    def _group_by_plugin(self, names: list[str]) -> list[tuple[str, list[str]]]:
+        groups: dict[str, list[str]] = {}
+        for name in names:
+            plugin = name.rsplit(".", 1)[0]
+            groups.setdefault(plugin, []).append(name)
+        return [(plugin, sorted(groups[plugin])) for plugin in sorted(groups)]
 
     def _write_api_methods(self):
         return self._write_api_index(
@@ -59,23 +161,24 @@ class DocumentationGenerator:
             self._api_event_html_process,
         )
 
-    def _write_api_index(self, filename: str, title: str, items: list[APIDumpMethod | APIDumpEvent],
-                         html_process: typing.Callable[[BeautifulSoup], None]):
+    def _write_api_index(
+        self,
+        filename: str,
+        title: str,
+        items: list[APIDumpMethod | APIDumpEvent],
+        html_process: typing.Callable[[BeautifulSoup], None],
+    ):
         plugins = sorted({method.name.rsplit(".", 1)[0] for method in items})
 
         index = textwrap.dedent(f"""\
             {title}
-            {'-' * len(title)}
+            {"-" * len(title)}
 
             .. toctree::
 
         """)
         for plugin in plugins:
-            plugin_items = [
-                item
-                for item in items
-                if item.name.rsplit(".", 1)[0] == plugin
-            ]
+            plugin_items = [item for item in items if item.name.rsplit(".", 1)[0] == plugin]
             if not plugin_items:
                 continue
 
@@ -86,11 +189,16 @@ class DocumentationGenerator:
         with open(f"{self.output_dir}/{filename}.rst", "w") as f:
             f.write(index)
 
-    def _write_plugin(self, prefix: str, plugin: str, items: list[APIDumpMethod | APIDumpEvent],
-                      html_process: typing.Callable[[BeautifulSoup], None]):
+    def _write_plugin(
+        self,
+        prefix: str,
+        plugin: str,
+        items: list[APIDumpMethod | APIDumpEvent],
+        html_process: typing.Callable[[BeautifulSoup], None],
+    ):
         index = textwrap.dedent(f"""\
             {plugin}
-            {'-' * len(plugin)}
+            {"-" * len(plugin)}
 
             .. toctree::
 
@@ -105,8 +213,9 @@ class DocumentationGenerator:
         with open(f"{self.output_dir}/{prefix}_{plugin}.rst", "w") as f:
             f.write(index)
 
-    def _generate_item_schemas_html(self, prefix: str, item: APIDumpMethod | APIDumpEvent,
-                                    process: typing.Callable[[BeautifulSoup], None]) -> str:
+    def _generate_item_schemas_html(
+        self, prefix: str, item: APIDumpMethod | APIDumpEvent, process: typing.Callable[[BeautifulSoup], None]
+    ) -> str:
         json_path = f"{self.output_dir}/{prefix}_{item.name}.json"
         try:
             with open(json_path, "w") as f:
@@ -149,14 +258,16 @@ class DocumentationGenerator:
                     except ValueError:
                         continue
 
-                    new_default_value_value = soup.new_tag("div", **{"class": "value"})
+                    new_default_value_value = soup.new_tag("div", attrs={"class": "value"})
                     new_default_value_value.string = json.dumps(value_decoded, indent=2)
-                    new_default_value = soup.new_tag("div", **{"class": "json-default-value"})
+                    new_default_value = soup.new_tag("div", attrs={"class": "json-default-value"})
                     new_default_value.string = "Default:"
                     new_default_value.insert(1, new_default_value_value)
                     default_value.replace_with(new_default_value)
 
-            return soup.find("body").decode_contents()
+            body = soup.find("body")
+            assert isinstance(body, Tag)
+            return body.decode_contents()
         finally:
             os.unlink(json_path)
 
@@ -172,10 +283,7 @@ class DocumentationGenerator:
         if isinstance(item, APIDumpMethod):
             if item.name == "core.download":
                 # Add downloadable jobs list for core.download
-                downloadable_jobs = [
-                    m for m in self.api.methods
-                    if m.output_pipes
-                ]
+                downloadable_jobs = [m for m in self.api.methods if m.output_pipes]
                 if downloadable_jobs:
                     result += "**Jobs that can be downloaded:**\n\n"
                     for job in sorted(downloadable_jobs, key=lambda m: m.name):
@@ -191,37 +299,76 @@ class DocumentationGenerator:
                     result += f"*This job {modal} be used with* :doc:`core.download <api_methods_core.download>`.\n\n"
 
         result += ".. raw:: html\n\n"
-        result += textwrap.indent(
-            "<div id=\"json-schema\">" + schemas_html + "</div><br><br>", " " * 4
-        ) + "\n\n"
+        result += textwrap.indent('<div id="json-schema">' + schemas_html + "</div><br><br>", " " * 4) + "\n\n"
 
         result += "*Required roles:* " + " | ".join(item.roles) + "\n\n"
 
         return result
 
     def _api_method_html_process(self, soup: BeautifulSoup):
-        for h5 in soup.find("div", {"id": "Call_parameters"}).find().find_all("h5", recursive=False):
+        call_parameters = soup.find("div", {"id": "Call_parameters"})
+        assert isinstance(call_parameters, Tag)
+        inner = call_parameters.find()
+        assert isinstance(inner, Tag)
+        for h5 in inner.find_all("h5", recursive=False):
             if m := re.match("Item at ([0-9]+) must be:", h5.text):
                 number = int(m.group(1))
 
-                next_sibling = h5.next_sibling
-                while next_sibling and next_sibling.name is None:
-                    next_sibling = next_sibling.next_sibling
-
-                name = next_sibling.find("h4").text
-                h5.string = f"Parameter {number}: {name}"
+                # The parameter's heading is the next sibling element (skipping text nodes).
+                sibling = h5.find_next_sibling()
+                assert isinstance(sibling, Tag)
+                heading = sibling.find("h4")
+                assert isinstance(heading, Tag)
+                h5.string = f"Parameter {number}: {heading.text}"
 
     def _api_event_html_process(self, soup: BeautifulSoup):
         pass
+
+
+def collapse_changelog_schema_changes(html_path: str):
+    """Collapse each method's diff list in "Methods with Schema Changes" into an accordion.
+
+    Operates on the built HTML: each method list item there holds the method link
+    followed by the nested diff list, which become the `<summary>` and the collapsed
+    body of a native `<details>` element.
+    """
+    with open(html_path) as f:
+        soup = BeautifulSoup(f.read())
+
+    section = soup.find(id="methods-with-schema-changes")
+    if not isinstance(section, Tag):
+        return
+
+    for li in section.find_all("li"):
+        p = li.find("p", recursive=False)
+        ul = li.find("ul", recursive=False)
+        if not isinstance(p, Tag) or not isinstance(ul, Tag) or p.find("a") is None:
+            # Not a method item: either a diff line, or a "Call parameters:"/
+            # "Return value:" label (which has a nested list but no link).
+            continue
+
+        summary = soup.new_tag("summary")
+        for child in list(p.children):
+            summary.append(child.extract())
+        details = soup.new_tag("details")
+        details.append(summary)
+        details.append(ul.extract())
+        p.replace_with(details)
+        # The <summary> disclosure triangle replaces the bullet.
+        li["style"] = "list-style: none"
+
+    with open(html_path, "w") as f:
+        f.write(str(soup))
 
 
 def docs_filename(version: str):
     return f"truenas-{version}-docs.zip"
 
 
-def build_api(output_dir: str, api: APIDump):
+def build_api(output_dir: str, api_and_changelog: tuple[APIDump, Changelog | None]):
+    api, changelog = api_and_changelog
     rst_dir = f"{output_dir}/rst/{api.version}"
-    DocumentationGenerator(api, rst_dir).generate()
+    DocumentationGenerator(api, rst_dir, changelog).generate()
 
     with open(f"{rst_dir}/index.rst") as f:
         index = f.read()
@@ -235,7 +382,8 @@ def build_api(output_dir: str, api: APIDump):
     subprocess.run(
         [
             os.path.join(os.path.dirname(sys.executable), "sphinx-build"),
-            "-M", "html",
+            "-M",
+            "html",
             rst_dir,
             build_dir,
         ],
@@ -244,8 +392,13 @@ def build_api(output_dir: str, api: APIDump):
 
     shutil.move(f"{build_dir}/html", f"{output_dir}/{api.version}")
 
+    changelog_path = f"{output_dir}/{api.version}/changelog.html"
+    if os.path.exists(changelog_path):
+        collapse_changelog_schema_changes(changelog_path)
+
 
 def main(output_dir):
+    # Load API models
     data = json.loads(
         subprocess.run(
             ["middlewared", "--dump-api"],
@@ -256,45 +409,54 @@ def main(output_dir):
         ).stdout
     )
     apis = [APIDump.model_validate(api_dump) for api_dump in data["versions"]]
+    apis_sorted = sorted(apis, key=lambda api: api.version)
+
+    # Compute changelogs between versions
+    changelogs: dict[str, Changelog | None] = {apis_sorted[0].version: None}
+    for previous, current in zip(apis_sorted, apis_sorted[1:]):
+        changelogs[current.version] = compute_changelog(previous, current)
+
+    # Generate docs pages
+    work_items = [(api, changelogs[api.version]) for api in apis]
     with multiprocessing.Pool() as p:
-        p.map(functools.partial(build_api, output_dir), apis)
+        p.map(functools.partial(build_api, output_dir), work_items)
 
     shutil.rmtree(f"{output_dir}/rst")
     shutil.rmtree(f"{output_dir}/html")
 
+    apis_sorted.reverse()
     for version in os.listdir(output_dir):
         cwd = f"{output_dir}/{version}"
+        version_switch = [
+            (
+                f'<option value="{api.version}" {"selected" if api.version == version else ""}>'
+                + f"{api.version_title}"
+                + "</option>"
+            )
+            for api in apis_sorted
+        ]
+        version_switch = (
+            '<form class="form-inline">'
+            '<select class="form-control" onchange="navigateToVersion(this.value);">'
+            + "".join(version_switch)
+            + "</select>"
+            "</form>"
+        )
 
         for root, dirs, files in os.walk(cwd):
-            for filename in files:
-                if filename.endswith(".html"):
-                    with open(f"{root}/{filename}") as f:
-                        contents = f.read()
+            for filename in filter(lambda fname: fname.endswith(".html"), files):
+                with open(f"{root}/{filename}") as f:
+                    contents = f.read()
 
-                    # Version switch
-                    version_switch = [
-                        (
-                            f'<option value="{api.version}" {"selected" if api.version == version else ""}>' +
-                            f'{api.version_title}' +
-                            '</option>'
-                        )
-                        for api in sorted(apis, key=lambda api: api.version, reverse=True)
-                    ]
-                    version_switch = (
-                        '<form class="form-inline">'
-                        '<select class="form-control" onchange="navigateToVersion(this.value);">' +
-                        ''.join(version_switch) +
-                        '</select>'
-                        '</form>'
-                    )
-                    navbar = '<ul class="navbar-nav mr-auto">'
-                    contents = contents.replace(navbar, version_switch + navbar)
+                # Version switch
+                navbar = '<ul class="navbar-nav mr-auto">'
+                contents = contents.replace(navbar, version_switch + navbar)
 
-                    # Make sphinx show a summary of the search result (sphinxbootstrap4theme breaks this)
-                    contents = contents.replace('<div class="bodywrapper">', '<div class="bodywrapper" role="main">')
+                # Make sphinx show a summary of the search result (sphinxbootstrap4theme breaks this)
+                contents = contents.replace('<div class="bodywrapper">', '<div class="bodywrapper" role="main">')
 
-                    with open(f"{root}/{filename}", "w") as f:
-                        f.write(contents)
+                with open(f"{root}/{filename}", "w") as f:
+                    f.write(contents)
 
         with tempfile.NamedTemporaryFile() as tf:
             shutil.make_archive(tf.name, "zip", cwd)
