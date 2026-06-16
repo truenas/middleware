@@ -65,4 +65,7 @@ async def validate_country(
 async def validate_port(
     middleware: Middleware, schema: str, port: int, whitelist_namespace: str | None = None, bind_ip: str = '0.0.0.0'
 ) -> ValidationErrors:
-    return await middleware.call('port.validate_port', schema, port, bind_ip, whitelist_namespace)
+    verrors: ValidationErrors = await middleware.call(
+        'port.validate_port', schema, port, bind_ip, whitelist_namespace,
+    )
+    return verrors

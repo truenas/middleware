@@ -33,7 +33,7 @@ class KmipService(PseudoServiceBase):
 
     async def get_state(self):
         return ServiceState(
-            (await self.middleware.call('kmip.config'))['enabled'],
+            (await self.middleware.call2(self.middleware.services.kmip.config)).enabled,
             [],
         )
 

@@ -1,17 +1,17 @@
 <%
-	kmip_config = middleware.call_sync('kmip.config')
+	kmip_config = middleware.call_sync2(middleware.services.kmip.config)
 	cert = middleware.call_sync2(
 		middleware.services.certificate.query,
-		[['id', '=', kmip_config['certificate']]],
+		[['id', '=', kmip_config.certificate]],
 	)
 	ca = middleware.call_sync2(
 		middleware.services.certificate.query,
-		[['id', '=', kmip_config['certificate_authority']]],
+		[['id', '=', kmip_config.certificate_authority]],
 	)
 %>\
 [client]
-host=${kmip_config['server']}
-port=${kmip_config['port']}
+host=${kmip_config.server}
+port=${kmip_config.port}
 % if cert and ca:
 certfile=${cert[0].certificate_path}
 keyfile=${cert[0].privatekey_path}

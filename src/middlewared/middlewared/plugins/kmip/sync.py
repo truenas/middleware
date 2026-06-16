@@ -2,127 +2,74 @@
 #
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
-from middlewared.alert.source.kmip import KMIPConnectionFailedAlert
-from middlewared.api import api_method
-from middlewared.api.current import (
-    KMIPClearSyncPendingKeysArgs,
-    KMIPClearSyncPendingKeysResult,
-    KMIPKmipSyncPendingArgs,
-    KMIPKmipSyncPendingResult,
-    KMIPSyncKeysArgs,
-    KMIPSyncKeysResult,
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
+
+from .connection import test_connection
+from .keystore import KMIPKeyStore
+from .sed_keys import (
+    clear_sync_pending_sed_keys,
+    initialize_sed_keys,
+    sed_keys,
+    sed_keys_pending_sync,
+    update_sed_keys,
 )
-from middlewared.service import CallError, Service, job, periodic, private
+from .zfs_keys import (
+    clear_sync_pending_zfs_keys,
+    initialize_zfs_keys,
+    update_zfs_keys,
+    zfs_keys_pending_sync,
+)
 
-from .connection import KMIPServerMixin
+if TYPE_CHECKING:
+    from middlewared.job import Job
+    from middlewared.service import ServiceContext
 
 
-class KMIPService(Service, KMIPServerMixin):
+def kmip_sync_pending(context: ServiceContext, store: KMIPKeyStore) -> bool:
+    return zfs_keys_pending_sync(context, store) or sed_keys_pending_sync(context, store)
 
-    @private
-    def connection_config(self, data=None):
-        config = self.middleware.call_sync('kmip.config')
-        config.update(data or {})
-        cert = self.middleware.call_sync2(
-            self.s.certificate.query, [['id', '=', config['certificate']]],
+
+async def sync_keys(context: ServiceContext, store: KMIPKeyStore) -> None:
+    if not await context.to_thread(kmip_sync_pending, context, store) or \
+            not await context.middleware.call('failover.is_single_master_node'):
+        return
+    await context.call2(context.s.kmip.sync_zfs_keys)
+    await context.call2(context.s.kmip.sync_sed_keys)
+
+
+async def clear_sync_pending_keys(context: ServiceContext, store: KMIPKeyStore) -> None:
+    config = await context.call2(context.s.kmip.config)
+    clear = not config.enabled
+    if clear or not config.manage_zfs_keys:
+        await clear_sync_pending_zfs_keys(context, store)
+    if clear or not config.manage_sed_disks:
+        await clear_sync_pending_sed_keys(context, store)
+
+
+async def initialize_keys(context: ServiceContext, store: KMIPKeyStore, job: Job) -> None:
+    kmip_config = await context.call2(context.s.kmip.config)
+    if kmip_config.enabled and await context.middleware.call('failover.is_single_master_node'):
+        connection_success = await context.to_thread(
+            test_connection, context, None, kmip_config.manage_zfs_keys or kmip_config.manage_sed_disks
         )
-        ca = self.middleware.call_sync2(
-            self.s.certificate.query, [['id', '=', config['certificate_authority']]],
-        )
-        if not cert or not ca:
-            raise CallError('Certificate/CA not setup correctly')
-        return {
-            **config,
-            'cert': cert[0].certificate_path,
-            'cert_key': cert[0].privatekey_path,
-            'ca': ca[0].certificate_path,
-        }
+        if kmip_config.manage_zfs_keys:
+            await context.to_thread(initialize_zfs_keys, context, store, connection_success)
+        if kmip_config.manage_sed_disks:
+            await context.to_thread(initialize_sed_keys, context, store, connection_success)
 
-    @private
-    def test_connection(self, data=None, raise_alert=False):
-        try:
-            result = self._test_connection(self.connection_config(data))
-        except CallError as e:
-            result = {'error': True, 'exception': str(e)}
-        if result['error']:
-            if raise_alert:
-                config = self.middleware.call_sync('kmip.config')
-                self.call_sync2(
-                    self.s.alert.oneshot_create,
-                    KMIPConnectionFailedAlert(server=config['server'], error=result['exception'])
-                )
-            return False
-        else:
-            return True
 
-    @api_method(KMIPKmipSyncPendingArgs, KMIPKmipSyncPendingResult, roles=['KMIP_READ'])
-    async def kmip_sync_pending(self):
-        """
-        Returns true or false based on if there are keys which are to be synced from local database to remote KMIP
-        server or vice versa.
-        """
-        return await self.middleware.call('kmip.zfs_keys_pending_sync') or await self.middleware.call(
-            'kmip.sed_keys_pending_sync'
-        )
+def kmip_memory_keys(store: KMIPKeyStore) -> dict[str, Any]:
+    return {
+        'zfs': store.zfs_keys,
+        'sed': sed_keys(store),
+    }
 
-    @periodic(interval=86400)
-    @api_method(KMIPSyncKeysArgs, KMIPSyncKeysResult, roles=['KMIP_WRITE'])
-    async def sync_keys(self):
-        """
-        Sync ZFS/SED keys between KMIP Server and TN database.
-        """
-        if not await self.middleware.call('kmip.kmip_sync_pending') or \
-                not await self.middleware.call('failover.is_single_master_node'):
-            return
-        await self.middleware.call('kmip.sync_zfs_keys')
-        await self.middleware.call('kmip.sync_sed_keys')
 
-    @api_method(KMIPClearSyncPendingKeysArgs, KMIPClearSyncPendingKeysResult, roles=['KMIP_WRITE'])
-    async def clear_sync_pending_keys(self):
-        """
-        Clear all keys which are pending to be synced between KMIP server and TN database.
-
-        For ZFS/SED keys, we remove the UID from local database with which we are able to retrieve ZFS/SED keys.
-        It should be used with caution.
-        """
-        config = await self.middleware.call('kmip.config')
-        clear = not config['enabled']
-        if clear or not config['manage_zfs_keys']:
-            await self.middleware.call('kmip.clear_sync_pending_zfs_keys')
-        if clear or not config['manage_sed_disks']:
-            await self.middleware.call('kmip.clear_sync_pending_sed_keys')
-
-    @private
-    def delete_kmip_secret_data(self, uid):
-        with self._connection(self.connection_config()) as conn:
-            return self._revoke_and_destroy_key(uid, conn, self.middleware.logger)
-
-    @private
-    @job(lock='initialize_kmip_keys')
-    async def initialize_keys(self, job):
-        kmip_config = await self.middleware.call('kmip.config')
-        if kmip_config['enabled'] and await self.middleware.call('failover.is_single_master_node'):
-            connection_success = await self.middleware.call(
-                'kmip.test_connection', None, kmip_config['manage_zfs_keys'] or kmip_config['manage_sed_disks']
-            )
-            if kmip_config['manage_zfs_keys']:
-                await self.middleware.call('kmip.initialize_zfs_keys', connection_success)
-            if kmip_config['manage_sed_disks']:
-                await self.middleware.call('kmip.initialize_sed_keys', connection_success)
-
-    @private
-    async def kmip_memory_keys(self):
-        return {
-            'zfs': await self.middleware.call('kmip.retrieve_zfs_keys'),
-            'sed': await self.middleware.call('kmip.sed_keys'),
-        }
-
-    @private
-    async def update_memory_keys(self, data):
-        for key, method in filter(
-            lambda k: k[0] in data, (
-                ('zfs', 'update_zfs_keys'),
-                ('sed', 'update_sed_keys'),
-            )
-        ):
-            await self.middleware.call(f'kmip.{method}', data[key])
+def update_memory_keys(store: KMIPKeyStore, data: dict[str, Any]) -> None:
+    if 'zfs' in data:
+        update_zfs_keys(store, data['zfs'])
+    if 'sed' in data:
+        update_sed_keys(store, data['sed'])

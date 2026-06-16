@@ -43,6 +43,7 @@ module = [
     "influxdb.*",
     "ixhardware.*",
     "josepy.*",
+    "kmip.*",
     "lexicon.*",
     "ldap.*",
     "licenselib.*",
