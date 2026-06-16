@@ -6,6 +6,8 @@ from middlewared.utils.jsonpath import (
 )
 from truenas_verify import mtree_verify
 
+from middlewared.utils.rootfs_protection import rootfs_protection_lock
+
 AUDIT_DATASET_PATH = '/audit'
 AUDIT_LIFETIME = 7
 AUDIT_DEFAULT_RESERVATION = 0
@@ -124,6 +126,13 @@ def setup_truenas_verify(sysver: str) -> int:
         # Takes too much time on developer middleware restart
         return 0
 
-    verify_rc = mtree_verify.do_verify(['init', sysver])
+    # do_verify reads the whole rootfs to build the as-installed baseline. It
+    # runs as a first-boot system.ready handler alongside boot.update_initramfs,
+    # which overlays a read-only functioning-dpkg sysext on /usr for the duration
+    # of its rebuild. Reading /usr while that overlay is mounted captures the
+    # overlay's dpkg files instead of the installed ones (spurious discrepancies),
+    # so take the same lock boot.update_initramfs holds across the rebuild.
+    with rootfs_protection_lock():
+        verify_rc = mtree_verify.do_verify(['init', sysver])
 
     return verify_rc
