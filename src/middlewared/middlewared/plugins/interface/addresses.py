@@ -167,14 +167,22 @@ def configure_addresses_impl(
                 broadcast=addr.broadcast,
             )
 
-    # Configure IPv6 autoconf
+    # Configure IPv6 autoconf / Router Advertisement handling.
+    #
+    # autoconf alone only controls SLAAC *address* creation; accept_ra must be
+    # cleared too, otherwise the kernel keeps processing RAs and installs
+    # routes on interfaces with "Autoconfigure IPv6" disabled (NAS-141208).
+    # Use accept_ra=2 (not 1) so RAs are still honoured when IPv6 forwarding is
+    # enabled (e.g. by Docker / VMs).
     has_ipv6 = (
         data["int_version"] == 6
         or data["int_ipv6auto"]
         or any(alias["alias_version"] == 6 for alias in aliases)
     )
     autoconf = "1" if has_ipv6 else "0"
+    accept_ra = "2" if has_ipv6 else "0"
     ctx.call_sync2(ctx.s.tunable.set_sysctl, f"net.ipv6.conf.{name}.autoconf", autoconf)
+    ctx.call_sync2(ctx.s.tunable.set_sysctl, f"net.ipv6.conf.{name}.accept_ra", accept_ra)
 
     # Add addresses in database but not configured. Iterate the dict in
     # insertion order so int_address is added first and becomes the kernel
