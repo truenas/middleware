@@ -513,7 +513,11 @@ def test_api_key_login_failed():
                             "username": None
                         },
                     },
-                    "error": "Invalid API key",
+                    # A malformed/nonexistent API key has no keyring entry, so
+                    # pam_truenas reports PAM_AUTHINFO_UNAVAIL and the api-key PAM
+                    # stack (default=die) propagates it. The response_type still
+                    # maps to AUTH_ERR.
+                    "error": "[PAM_AUTHINFO_UNAVAIL]: pam_authenticate() failed",
                 },
                 "success": False,
             }
