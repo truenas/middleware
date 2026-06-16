@@ -56,29 +56,8 @@ class KMIPService(GenericConfigService[KMIPEntry]):
         """
         Update KMIP Server Configuration.
 
-        System currently authenticates connection with remote KMIP Server with a TLS handshake. `certificate` and
-        `certificate_authority` determine the certs which will be used to initiate the TLS handshake with `server`.
-
-        `validate` is enabled by default. When enabled, system will test connection to `server` making sure
-        it's reachable.
-
-        `manage_zfs_keys`/`manage_sed_disks` when enabled will sync keys from local database to remote KMIP server.
-        When disabled, if there are any keys left to be retrieved from the KMIP server,
-        it will sync them back to local database.
-
-        `enabled` if true, cannot be set to disabled if there are existing keys pending to be synced. However users
-        can still perform this action by enabling `force_clear`.
-
-        `ssl_version` can be specified to match the ssl configuration being used by KMIP server.
-
-        `change_server` is a boolean field which allows users to migrate data between two KMIP servers. System
-        will first migrate keys from old KMIP server to local database and then migrate the keys from local database
-        to new KMIP server. If it is unable to retrieve all the keys from old server, this will fail. Users can bypass
-        this by enabling `force_clear`.
-
-        `force_clear` is a boolean option which when enabled will in this case remove all
-        pending keys to be synced from database. It should be used with extreme caution as users may end up with
-        not having ZFS dataset or SED disks keys leaving them locked forever. It is disabled by default.
+        The system authenticates to the remote KMIP server with a TLS handshake and synchronizes ZFS/SED keys
+        between the local database and the server according to the configuration.
         """
         return await self._svc_part.do_update(job, data)
 
