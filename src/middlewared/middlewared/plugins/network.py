@@ -5,7 +5,7 @@ from itertools import zip_longest
 from ipaddress import ip_address, ip_interface
 
 from middlewared.api import api_method
-from middlewared.plugins.interface.dhcp import dhcp_start
+from middlewared.plugins.interface.dhcp import dhcp_reload, dhcp_start
 from middlewared.api.current import (
     InterfaceEntry, InterfaceAvailableFecModesArgs, InterfaceAvailableFecModesResult,
     InterfaceBridgeMembersChoicesArgs, InterfaceBridgeMembersChoicesResult,
@@ -1674,13 +1674,32 @@ class InterfaceService(CRUDService):
 
         interfaces = list(iface_configs.keys())
 
-        if run_dhcp:
-            # update dhcpcd.conf before we run dhcpcd to ensure the hostname/fqdn
-            # and/or the static routers config options are set properly
+        # DHCP-enabled interfaces that are already running (not freshly started
+        # below) need their dhcpcd.conf reloaded so config changes -- e.g.
+        # toggling "Autoconfigure IPv6" (the per-interface noipv6rs option) --
+        # take effect without releasing the lease.
+        run_dhcp_set = set(run_dhcp)
+        reload_dhcp = [
+            name for name, cfg in iface_configs.items()
+            if cfg['interface']['int_dhcp'] and name not in run_dhcp_set
+        ]
+
+        if run_dhcp or reload_dhcp:
+            # update dhcpcd.conf before we (re)start/reload dhcpcd to ensure the
+            # hostname/fqdn, static routers, and per-interface IPv6 autoconf
+            # options are set properly
             await self.middleware.call('etc.generate', 'dhcpcd')
+
+        if run_dhcp:
             await asyncio.wait([
                 self.middleware.create_task(self.run_dhcp(interface, wait_dhcp)) for interface in run_dhcp
             ])
+
+        for name in reload_dhcp:
+            try:
+                await dhcp_reload(name)
+            except Exception:
+                self.logger.error('Failed to reload dhcpcd for %s', name, exc_info=True)
 
         self.logger.info('Interfaces in database: {}'.format(', '.join(interfaces) or 'NONE'))
 
