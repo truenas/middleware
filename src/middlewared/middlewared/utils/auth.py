@@ -117,10 +117,14 @@ AA_LEVEL1 = AuthenticatorAssuranceLevel(
 # Per these guidelines, our TOKEN_PLAIN and API_KEY_PLAIN provide insufficient replay resistance,
 # which is in addition to the replay-resistant nature of encrypted transport, and are therefore
 # unsuitable for this authentication level.
+#
+# SCRAM is likewise unsuitable here: although it is replay resistant, it authenticates through the
+# API key PAM stack which has no OATH plumbing, so a SCRAM exchange cannot prompt for the second
+# factor that this level mandates (otp_mandatory) and would otherwise grant single-factor access.
 AA_LEVEL2 = AuthenticatorAssuranceLevel(
     max_session_age=12 * 60 * 60,
     max_inactivity=30 * 60,
-    mechanisms=(AuthMech.PASSWORD_PLAIN, AuthMech.SCRAM),
+    mechanisms=(AuthMech.PASSWORD_PLAIN,),
     otp_mandatory=True,
     min_fail_delay=4
 )
