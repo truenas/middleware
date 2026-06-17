@@ -457,9 +457,11 @@ class InterfaceService(CRUDService):
 
         This makes 2 assumptions:
 
-        1. `interface.create`/`update`/`delete` must have been called before
-            calling this method.
-        2. This method must be called before `interface.commit` is called.
+        1. :doc:`interface.create <api_methods_interface.create>`,
+            :doc:`update <api_methods_interface.update>`, or
+            :doc:`delete <api_methods_interface.delete>` must have been called
+            before calling this method.
+        2. This method must be called before :doc:`interface.commit <api_methods_interface.commit>` is called.
 
         This method exists for the predominant scenario for new users:
 
@@ -485,9 +487,11 @@ class InterfaceService(CRUDService):
         2. All interfaces start DHCPv4.
         3. Default route is received.
         4. User configures an interface.
-        5. When user pushes "Test Changes" (`interface.commit`), webUI will call
-            `interface.network_config_to_be_removed` BEFORE `interface.commit`.
-        6. If `interface.network_config_to_be_removed` returns any fields,
+        5. When user pushes "Test Changes" (:doc:`interface.commit <api_methods_interface.commit>`), WebUI will call
+            :doc:`interface.network_config_to_be_removed <api_methods_interface.network_config_to_be_removed>`
+            BEFORE :doc:`interface.commit <api_methods_interface.commit>`.
+        6. If :doc:`interface.network_config_to_be_removed <api_methods_interface.network_config_to_be_removed>`
+            returns any fields,
             then webUI will open a new modal dialog that gives the end-user
             ample warning describing the situation. Furthermore, the
             modal will allow the user to input a default gateway and nameservers.

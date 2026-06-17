@@ -454,13 +454,15 @@ class ZFSResourceService(Service):
         """
         Destroy a ZFS resource (filesystem or volume), optionally recursing into its descendants.
 
-        To destroy snapshots, use ``zfs.resource.snapshot.destroy`` instead.
+        To destroy snapshots, use
+        :doc:`zfs.resource.snapshot.destroy <api_methods_zfs.resource.snapshot.destroy>` instead.
 
         Invalid input is returned to the client as a JSON-RPC ``error`` response (code
         ``-32602``, *Invalid params*); each failing condition appears in the error's
         ``data.extra`` array with its own ``errno``. A validation error is raised when:
 
-        - a snapshot path (containing ``@``) is supplied (use ``zfs.resource.snapshot.destroy``)
+        - a snapshot path (containing ``@``) is supplied
+          (use :doc:`zfs.resource.snapshot.destroy <api_methods_zfs.resource.snapshot.destroy>`)
         - the resource does not exist (``ENOENT``)
         - the resource has children and ``recursive`` is ``false`` (``EBUSY``)
         - the resource has snapshots and ``recursive`` is ``false``
@@ -487,7 +489,6 @@ class ZFSResourceService(Service):
         - Root filesystem destruction is not allowed for safety
         - Protected system paths cannot be destroyed via API
         - Datasets with snapshots require ``recursive=True``
-        - To destroy snapshots, use ``zfs.resource.snapshot.destroy``
         """
         schema = "zfs.resource.destroy"
         path = data.path
@@ -529,13 +530,13 @@ class ZFSResourceService(Service):
         resources, including their properties, hierarchical relationships, and metadata. The query
         can be customized to retrieve specific resources, properties, and control the output format.
 
-        To query snapshots, use ``zfs.resource.snapshot.query`` instead.
+        To query snapshots, use :doc:`zfs.resource.snapshot.query <api_methods_zfs.resource.snapshot.query>` instead.
 
         Invalid input is returned to the client as a JSON-RPC ``error`` response (code
         ``-32602``, *Invalid params*); each failing condition appears in the error's
         ``data.extra`` array with its own ``errno``. A validation error is raised when:
 
-        - a snapshot path is supplied (use ``zfs.resource.snapshot.query``)
+        - a snapshot path is supplied (use :doc:`zfs.resource.snapshot.query <api_methods_zfs.resource.snapshot.query>`)
         - overlapping paths are supplied with ``get_children`` enabled
         - a requested path does not exist (``ENOENT``)
 
