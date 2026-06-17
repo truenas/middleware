@@ -1,3 +1,4 @@
+import dataclasses
 import logging
 import typing
 
@@ -10,7 +11,25 @@ from .remove_secrets import remove_secrets
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["serialize_result"]
+__all__ = ["serialize_result", "serialize_dataclasses"]
+
+
+def serialize_dataclasses(result: typing.Any) -> typing.Any:
+    """Recursively convert dataclass instances within a method result into plain dicts.
+
+    This is the dataclass analogue of `serialize_result`: it is used for methods that return
+    dataclasses without a `BaseModel` return type (e.g. private methods consumed in-process but
+    still reachable over the wire), so the result can be JSON-serialized for transport.
+    """
+    if dataclasses.is_dataclass(result) and not isinstance(result, type):
+        return dataclasses.asdict(result)
+    if isinstance(result, list):
+        return [serialize_dataclasses(item) for item in result]
+    if isinstance(result, tuple):
+        return tuple(serialize_dataclasses(item) for item in result)
+    if isinstance(result, dict):
+        return {key: serialize_dataclasses(value) for key, value in result.items()}
+    return result
 
 
 def serialize_result(
