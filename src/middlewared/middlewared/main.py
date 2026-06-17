@@ -128,6 +128,7 @@ from middlewared.plugins.pwenc import PWEncService
 from middlewared.plugins.reporting import ReportingService
 from middlewared.plugins.rsync import RsyncTaskService
 from middlewared.plugins.snapshot import PeriodicSnapshotTaskService
+from middlewared.plugins.ssh import SSHService
 from middlewared.plugins.support import SupportService
 from middlewared.plugins.system_vendor import VendorService
 from middlewared.plugins.truecommand import TruecommandService
@@ -272,6 +273,7 @@ class ServiceContainer(BaseServiceContainer):
         self.reporting = ReportingService(middleware)
         self.rsynctask = RsyncTaskService(middleware)
         self.sharing = SharingServicesContainer(middleware)
+        self.ssh = SSHService(middleware)
         self.support = SupportService(middleware)
         self.system = SystemServicesContainer(middleware)
         self.tn_connect = TrueNASConnectService(middleware)

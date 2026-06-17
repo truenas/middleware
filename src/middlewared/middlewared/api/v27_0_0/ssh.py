@@ -4,7 +4,10 @@ from pydantic import Field
 
 from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, LongString, TcpPort, excluded_field
 
-__all__ = ['SSHEntry', 'SSHBindifaceChoicesArgs', 'SSHBindifaceChoicesResult', 'SSHUpdateArgs', 'SSHUpdateResult',]
+__all__ = [
+    'SSHEntry', 'SSHUpdate', 'SSHBindifaceChoicesArgs', 'SSHBindifaceChoicesResult', 'SSHUpdateArgs',
+    'SSHUpdateResult',
+]
 
 
 class SSHEntry(BaseModel):
