@@ -461,7 +461,7 @@ class InterfaceService(CRUDService):
            :doc:`update <api_methods_interface.update>`, or
            :doc:`delete <api_methods_interface.delete>` must have been called
            before calling this method.
-        2. This method must be called before :doc:`interface.commit <api_methods_interface.commit>` is called.
+        2. This method must be called before :method:`interface.commit` is called.
 
         This method exists for the predominant scenario for new users:
 
@@ -487,10 +487,10 @@ class InterfaceService(CRUDService):
         2. All interfaces start DHCPv4.
         3. Default route is received.
         4. User configures an interface.
-        5. When user pushes "Test Changes" (:doc:`interface.commit <api_methods_interface.commit>`), WebUI will
-           call :doc:`interface.network_config_to_be_removed <api_methods_interface.network_config_to_be_removed>`
-           BEFORE :doc:`interface.commit <api_methods_interface.commit>`.
-        6. If :doc:`interface.network_config_to_be_removed <api_methods_interface.network_config_to_be_removed>`
+        5. When user pushes "Test Changes" (:method:`interface.commit`), WebUI will
+           call :method:`interface.network_config_to_be_removed`
+           BEFORE :method:`interface.commit`.
+        6. If :method:`interface.network_config_to_be_removed`
            returns any fields,
            then webUI will open a new modal dialog that gives the end-user
            ample warning describing the situation. Furthermore, the

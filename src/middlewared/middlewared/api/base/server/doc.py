@@ -13,6 +13,12 @@ from .event import Event
 from .method import Method
 
 _LIST_MARKER_RE = re.compile(r"([-*+]|[0-9]+\.|#\.) ")
+_METHOD_REF_RE = re.compile(r":method:`([\w.]+)`")
+
+
+def expand_method_refs(doc: str) -> str:
+    """Expand ``:method:`x``` shorthand into a full ``:doc:`` cross-reference."""
+    return _METHOD_REF_RE.sub(r":doc:`\1 <api_methods_\1>`", doc)
 
 
 def _is_unindented_prose(block: list[str]) -> bool:
@@ -37,7 +43,10 @@ def reflow_docstring(doc: str) -> str:
     literal block, block quote, table, or a list/definition item with continuation
     lines) or that opens with a directive or list marker is left exactly as written,
     so its structure is preserved rather than mangled.
+
+    ``:method:`x``` shorthand references are expanded into full ``:doc:`` cross-references.
     """
+    doc = expand_method_refs(doc)
     out: list[str] = []
     block: list[str] = []
 

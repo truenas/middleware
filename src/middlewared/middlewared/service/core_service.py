@@ -636,7 +636,7 @@ class CoreService(Service):
     async def bulk(self, app, job, method, params, description):
         """
         Will sequentially call `method` with the arguments from each entry of the `params` list. For
-        example, calling :doc:`core.bulk <api_methods_core.bulk>` with these parameters::
+        example, calling :method:`core.bulk` with these parameters::
 
             [
                 "zfs.resource.destroy",
@@ -646,9 +646,8 @@ class CoreService(Service):
                 ]
             ]
 
-        calls :doc:`zfs.resource.destroy <api_methods_zfs.resource.destroy>` twice: first with
-        ``{"path": "tank@snap-1", "recursive": true}``, then with
-        ``{"path": "tank@snap-2", "recursive": false}``.
+        calls :method:`zfs.resource.destroy` twice: first with ``{"path": "tank@snap-1", "recursive": true}``,
+        then with ``{"path": "tank@snap-2", "recursive": false}``.
 
         If the first call fails and the second succeeds (returning ``true``), the result of the overall
         call will be::
@@ -660,9 +659,9 @@ class CoreService(Service):
 
         .. important::
 
-            The execution status of :doc:`core.bulk <api_methods_core.bulk>` will always be a
-            ``SUCCESS`` (unless an unlikely internal error occurs). Caller must check for individual call
-            results to ensure the absence of any call errors.
+            The execution status of :method:`core.bulk` will always be a ``SUCCESS`` (unless
+            an unlikely internal error occurs). Caller must check for individual call results
+            to ensure the absence of any call errors.
         """
         serviceobj, methodobj = self.middleware.get_method(method)
 

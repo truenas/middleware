@@ -114,7 +114,7 @@ async def do_create(self, app, data):
 - The docstring is a description of the method, formatted with reStructuredText (RST).
 - Do **not** use Google- or NumPy-style docstrings (no `Args:`/`Returns:`/`Parameters` sections).
 - Do **not** document parameters or return values in the method docstring; those descriptions belong only in the API models (see **API Model Field Descriptions** above).
-- Every mention of another API method (or the method itself) **must** be a doc reference, e.g. ``:doc:`core.bulk <api_methods_core.bulk>` ``.
+- Every mention of another API method (or the method itself) **must** be a method reference, e.g. ``:method:`core.bulk` ``. The docs preprocessor expands this to the full ``:doc:`core.bulk <api_methods_core.bulk>` `` cross-reference at build time.
 - If the description includes example code, it **must** be JSON-RPC (as passed by the API client), not Python.
 
 **API Versioning**:

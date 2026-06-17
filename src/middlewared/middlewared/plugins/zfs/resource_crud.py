@@ -455,14 +455,14 @@ class ZFSResourceService(Service):
         Destroy a ZFS resource (filesystem or volume), optionally recursing into its descendants.
 
         To destroy snapshots, use
-        :doc:`zfs.resource.snapshot.destroy <api_methods_zfs.resource.snapshot.destroy>` instead.
+        :method:`zfs.resource.snapshot.destroy` instead.
 
         Invalid input is returned to the client as a JSON-RPC ``error`` response (code
         ``-32602``, *Invalid params*); each failing condition appears in the error's
         ``data.extra`` array with its own ``errno``. A validation error is raised when:
 
         - a snapshot path (containing ``@``) is supplied
-          (use :doc:`zfs.resource.snapshot.destroy <api_methods_zfs.resource.snapshot.destroy>`)
+          (use :method:`zfs.resource.snapshot.destroy`)
         - the resource does not exist (``ENOENT``)
         - the resource has children and ``recursive`` is ``false`` (``EBUSY``)
         - the resource has snapshots and ``recursive`` is ``false``
@@ -530,13 +530,13 @@ class ZFSResourceService(Service):
         resources, including their properties, hierarchical relationships, and metadata. The query
         can be customized to retrieve specific resources, properties, and control the output format.
 
-        To query snapshots, use :doc:`zfs.resource.snapshot.query <api_methods_zfs.resource.snapshot.query>` instead.
+        To query snapshots, use :method:`zfs.resource.snapshot.query` instead.
 
         Invalid input is returned to the client as a JSON-RPC ``error`` response (code
         ``-32602``, *Invalid params*); each failing condition appears in the error's
         ``data.extra`` array with its own ``errno``. A validation error is raised when:
 
-        - a snapshot path is supplied (use :doc:`zfs.resource.snapshot.query <api_methods_zfs.resource.snapshot.query>`)
+        - a snapshot path is supplied (use :method:`zfs.resource.snapshot.query`)
         - overlapping paths are supplied with ``get_children`` enabled
         - a requested path does not exist (``ENOENT``)
 
