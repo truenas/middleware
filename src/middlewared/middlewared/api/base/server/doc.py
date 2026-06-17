@@ -41,7 +41,7 @@ def reflow_docstring(doc: str) -> str:
     out: list[str] = []
     block: list[str] = []
 
-    def flush():
+    def flush() -> None:
         if not block:
             return
         if _is_unindented_prose(block):
