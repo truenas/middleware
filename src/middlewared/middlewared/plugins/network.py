@@ -458,9 +458,9 @@ class InterfaceService(CRUDService):
         This makes 2 assumptions:
 
         1. :doc:`interface.create <api_methods_interface.create>`,
-            :doc:`update <api_methods_interface.update>`, or
-            :doc:`delete <api_methods_interface.delete>` must have been called
-            before calling this method.
+           :doc:`update <api_methods_interface.update>`, or
+           :doc:`delete <api_methods_interface.delete>` must have been called
+           before calling this method.
         2. This method must be called before :doc:`interface.commit <api_methods_interface.commit>` is called.
 
         This method exists for the predominant scenario for new users:
@@ -469,16 +469,16 @@ class InterfaceService(CRUDService):
         2. All interfaces start DHCPv4 (v6 is ignored for now).
         3. One of the interfaces receives an IP address.
         4. Along with the IP, the kernel receives a default route
-            (by design, of course).
+           (by design, of course).
         5. User goes to configure this interface as having a static
-            IP address.
+           IP address.
         6. As we go through and "commit" the changes, we remove the default
-            route because it exists in the kernel FIB but doesn't exist
-            in the database.
+           route because it exists in the kernel FIB but doesn't exist
+           in the database.
         7. IF the user is connecting via layer3, then they will lose all
-            access to the TrueNAS and never be able to finalize the changes
-            to the network because we ripped out the default route which
-            is how they were communicating to begin with.
+           access to the TrueNAS and never be able to finalize the changes
+           to the network because we ripped out the default route which
+           is how they were communicating to begin with.
 
         In the above scenario, we're going to try and prevent this by doing
         the following:
@@ -488,20 +488,20 @@ class InterfaceService(CRUDService):
         3. Default route is received.
         4. User configures an interface.
         5. When user pushes "Test Changes" (:doc:`interface.commit <api_methods_interface.commit>`), WebUI will call
-            :doc:`interface.network_config_to_be_removed <api_methods_interface.network_config_to_be_removed>`
-            BEFORE :doc:`interface.commit <api_methods_interface.commit>`.
+           :doc:`interface.network_config_to_be_removed <api_methods_interface.network_config_to_be_removed>`
+           BEFORE :doc:`interface.commit <api_methods_interface.commit>`.
         6. If :doc:`interface.network_config_to_be_removed <api_methods_interface.network_config_to_be_removed>`
-            returns any fields,
-            then webUI will open a new modal dialog that gives the end-user
-            ample warning describing the situation. Furthermore, the
-            modal will allow the user to input a default gateway and nameservers.
+           returns any fields,
+           then webUI will open a new modal dialog that gives the end-user
+           ample warning describing the situation. Furthermore, the
+           modal will allow the user to input a default gateway and nameservers.
         7. If user gives gateway, webUI will call this method providing the info
-            and we'll validate accordingly.
+           and we'll validate accordingly.
         8. OR if user doesn't give gateway, they will need to "confirm" this is
-            desired.
+           desired.
         9. The network configuration provided (gateway and nameservers) will be stored
-            in the same in-memory cache that we use for storing the interface changes
-            and will be rolled back accordingly in this plugin just like everything else.
+           in the same in-memory cache that we use for storing the interface changes
+           and will be rolled back accordingly in this plugin just like everything else.
 
         There are a few other scenarios where this is beneficial, but the one listed above
         is seen most often by end-users/support team.
