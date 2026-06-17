@@ -784,96 +784,38 @@ class AuthService(Service):
     @api_method(AuthLoginExArgs, AuthLoginExResult, cli_private=True, authentication_required=False, pass_app=True)
     async def login_ex(self, app, data):
         """
-        Authenticate using one of a variety of mechanisms
+        Authenticate using one of a variety of mechanisms.
 
-        NOTE: mechanisms with a _PLAIN suffix indicate that they involve
-        passing plain-text passwords or password-equivalent strings and
-        should not be used on untrusted / insecure transport. Available
-        mechanisms will be expanded in future releases.
+        The mechanism is selected by the ``mechanism`` field of the request, and the set of
+        supported mechanisms will be expanded in future releases.
 
-        params:
-            This takes a single argument consistning of a JSON object with the
-            following keys:
+        .. warning::
 
-            mechanism: the mechanism by which to authenticate to the backend
-            the exact parameters to use vary by mechanism and are described
-            below
+            Mechanisms with a ``_PLAIN`` suffix involve passing plain-text passwords or
+            password-equivalent strings and should not be used over untrusted or insecure
+            transport.
 
-            PASSWORD_PLAIN
-            username: username with which to authenticate
-            password: password with which to authenticate
-            login_options: dictionary with additional authentication options
+        The ``response_type`` of the result indicates the outcome of the current authentication
+        step and whether further action is required to complete authentication:
 
-            API_KEY_PLAIN
-            username: username with which to authenticate
-            api_key: API key string
-            login_options: dictionary with additional authentication options
+        - ``SUCCESS`` -- authentication completed and a session was established.
+        - ``OTP_REQUIRED`` -- the account requires a one-time password; the client must continue
+          authentication by submitting the token via the ``OTP_TOKEN`` mechanism.
+        - ``AUTH_ERR`` -- generic authentication failure corresponding to ``PAM_AUTH_ERR`` and
+          ``PAM_USER_UNKNOWN`` from libpam. Returned when the account does not exist or the
+          credential is incorrect.
+        - ``EXPIRED`` -- the supplied credential is expired and not suitable for authentication.
+        - ``REDIRECT`` -- authentication must be performed on a different server.
 
-            AUTH_TOKEN_PLAIN
-            token: authentication token string
-            login_options: dictionary with additional authentication options
+        A JSON-RPC ``error`` response (code ``-32001``, *Method call error*) is returned instead
+        of a result in the following cases:
 
-            OTP_TOKEN
-            otp_token: one-time password token. This is only permitted if
-            a previous auth.login_ex call responded with "OTP_REQUIRED".
-
-            login_options
-            user_info: boolean - include auth.me output in successful responses.
-            reconnect_token: boolean - include a reconnect token in successful responses.
-
-        raises:
-            CallError: a middleware CallError may be raised in the following
-                circumstances.
-
-            * An multistep challenge-response authentication mechanism is being
-              used and the specified `mechanism` does not match the expected
-              next step for authentication. In this case the errno will be set
-              to EBUSY.
-
-            * OTP_TOKEN mechanism was passed without an explicit request from
-              a previous authentication step. In this case the errno will be set
-              to EINVAL.
-
-            * Current authenticator assurance level prohibits the use of the
-              specified authentication mechanism. In this case the errno will be
-              set to EOPNOTSUPP.
-
-        returns:
-            JSON object containing the following keys:
-
-            response_type: string indicating the results of the current authentication
-                mechanism. This is used to inform client of nature of authentication
-                error or whether further action will be required in order to complete
-                authentication.
-
-            <additional keys per response_type>
-
-        Notes about response types:
-
-        SUCCESS:
-
-        additional keys:
-            user_info: includes auth.me output for the resulting authenticated
-            credentials.
-            reconnect_token: token that can be used to reauthenticate if the
-            websocket session is interrupted, or null if not requested or not
-            supported by the credential type.
-
-        OTP_REQUIRED
-
-        additional key:
-            username: normalized username of user who must provide an OTP token.
-
-        AUTH_ERR
-        Generic authentication error corresponds to PAM_AUTH_ERR and PAM_USER_UNKOWN
-        from libpam. This may be returned if the account does not exist or if the
-        credential is incorrect.
-
-        EXPIRED
-        The specified credential is expired and not suitable for authentication.
-
-        REDIRECT
-        Authentication must be performed on different server.
+        - a multistep challenge-response mechanism is in progress and the supplied ``mechanism``
+          does not match the expected next step (errno ``EBUSY``)
+        - the ``OTP_TOKEN`` mechanism is used without a preceding step having requested it
+          (errno ``EINVAL``)
+        - the current authenticator assurance level prohibits the supplied mechanism
+          (errno ``EOPNOTSUPP``)
         """
         if await self.middleware.call('failover.licensed'):
             if await self.middleware.call('failover.status') == 'BACKUP':

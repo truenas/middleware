@@ -487,8 +487,8 @@ class InterfaceService(CRUDService):
         2. All interfaces start DHCPv4.
         3. Default route is received.
         4. User configures an interface.
-        5. When user pushes "Test Changes" (:doc:`interface.commit <api_methods_interface.commit>`), WebUI will call
-           :doc:`interface.network_config_to_be_removed <api_methods_interface.network_config_to_be_removed>`
+        5. When user pushes "Test Changes" (:doc:`interface.commit <api_methods_interface.commit>`), WebUI will
+           call :doc:`interface.network_config_to_be_removed <api_methods_interface.network_config_to_be_removed>`
            BEFORE :doc:`interface.commit <api_methods_interface.commit>`.
         6. If :doc:`interface.network_config_to_be_removed <api_methods_interface.network_config_to_be_removed>`
            returns any fields,
