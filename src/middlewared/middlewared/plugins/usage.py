@@ -274,8 +274,8 @@ class UsageService(Service):
             'version': await self.middleware.call('system.version'),
             'is_vendored': await self.middleware.call('system.vendor.is_vendored'),
             'vendor_name': await self.middleware.call('system.vendor.name'),
-            'is_virtualized': await self.middleware.call('hardware.virtualization.is_virtualized'),
-            'hypervisor': await self.middleware.call('hardware.virtualization.variant'),
+            'is_virtualized': await self.call2(self.s.hardware.virtualization.is_virtualized),
+            'hypervisor': await self.call2(self.s.hardware.virtualization.variant),
         }
 
     async def gather_system(self, context):

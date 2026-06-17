@@ -37,7 +37,7 @@ import middlewared.service
 from .api.aliases import aliases as api_versions_aliases
 from .api.base.handler.dump_params import dump_params
 from .api.base.handler.model_provider import LazyModuleModelProvider, ModuleModelProvider, ProxyModelProvider
-from .api.base.handler.result import serialize_result
+from .api.base.handler.result import serialize_nonmodel_result, serialize_result
 from .api.base.handler.version import APIVersion, APIVersionsAdapter
 from .api.base.model import BaseModel
 from .api.base.server.api import API
@@ -112,6 +112,12 @@ from middlewared.plugins.container.lxc import LXCConfigService
 from middlewared.plugins.cron import CronJobService
 from middlewared.plugins.docker import DockerService
 from middlewared.plugins.ftp import FTPService
+from middlewared.plugins.hardware import (
+    HardwareMemoryService,
+    HardwareVirtualization,
+    MseriesBiosService,
+    MseriesNvdimmService,
+)
 from middlewared.plugins.init_shutdown_script import InitShutdownScriptService
 from middlewared.plugins.keyvalue import KeyValueService
 from middlewared.plugins.kmip import KMIPService
@@ -194,6 +200,20 @@ class AcmeServicesContainer(BaseServiceContainer):
         self.dns = AcmeDnsServicesContainer(middleware)
 
 
+class HardwareServicesContainer(BaseServiceContainer):
+    def __init__(self, middleware: "Middleware"):
+        super().__init__(middleware)
+        self.memory = HardwareMemoryService(middleware)
+        self.virtualization = HardwareVirtualization(middleware)
+
+
+class MseriesServicesContainer(BaseServiceContainer):
+    def __init__(self, middleware: "Middleware"):
+        super().__init__(middleware)
+        self.bios = MseriesBiosService(middleware)
+        self.nvdimm = MseriesNvdimmService(middleware)
+
+
 class PoolServicesContainer(BaseServiceContainer):
     def __init__(self, middleware: "Middleware"):
         super().__init__(middleware)
@@ -235,11 +255,13 @@ class ServiceContainer(BaseServiceContainer):
         self.cronjob = CronJobService(middleware)
         self.docker = DockerService(middleware)
         self.ftp = FTPService(middleware)
+        self.hardware = HardwareServicesContainer(middleware)
         self.initshutdownscript = InitShutdownScriptService(middleware)
         self.keyvalue = KeyValueService(middleware)
         self.kmip = KMIPService(middleware)
         self.lxc = LXCConfigService(middleware)
         self.mail = MailService(middleware)
+        self.mseries = MseriesServicesContainer(middleware)
         self.pool = PoolServicesContainer(middleware)
         self.port = PortService(middleware)
         self.pwenc = PWEncService(middleware)
@@ -1089,7 +1111,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         if new_style_returns_model:
             return serialize_result(new_style_returns_model, result, expose_secrets, self.dump_result_allow_fallback)
         else:
-            return result
+            return serialize_nonmodel_result(result)
 
     async def authorize_method_call(
         self,
