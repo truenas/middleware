@@ -129,6 +129,7 @@ from middlewared.plugins.reporting import ReportingService
 from middlewared.plugins.rsync import RsyncTaskService
 from middlewared.plugins.snapshot import PeriodicSnapshotTaskService
 from middlewared.plugins.system_vendor import VendorService
+from middlewared.plugins.truecommand import TruecommandService
 from middlewared.plugins.truenas import TrueNASService
 from middlewared.plugins.truenas_connect import TrueNASConnectService
 from middlewared.plugins.truesearch import TrueSearchService
@@ -272,6 +273,7 @@ class ServiceContainer(BaseServiceContainer):
         self.sharing = SharingServicesContainer(middleware)
         self.system = SystemServicesContainer(middleware)
         self.tn_connect = TrueNASConnectService(middleware)
+        self.truecommand = TruecommandService(middleware)
         self.truenas = TrueNASService(middleware)
         self.truesearch = TrueSearchService(middleware)
         self.tunable = TunableService(middleware)
