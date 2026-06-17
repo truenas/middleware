@@ -488,7 +488,7 @@ class ZFSResourceService(Service):
 
         - Root filesystem destruction is not allowed for safety
         - Protected system paths cannot be destroyed via API
-        - Datasets with snapshots require ``recursive=True``
+        - Datasets with snapshots require ``recursive`` to be ``true``
         """
         schema = "zfs.resource.destroy"
         path = data.path

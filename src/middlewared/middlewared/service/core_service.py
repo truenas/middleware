@@ -635,31 +635,32 @@ class CoreService(Service):
     @job(lock=lambda args: f"bulk:{args[0]}")
     async def bulk(self, app, job, method, params, description):
         """
-        Will sequentially call `method` with arguments from the `params` list. For example, running::
+        Will sequentially call `method` with the arguments from each entry of the `params` list. For
+        example, calling :doc:`core.bulk <api_methods_core.bulk>` with these parameters::
 
-            call(
-                "core.bulk",
+            [
                 "zfs.resource.destroy",
                 [
-                    {"path": "tank@snap-1", "recursive": True},
-                    {"path": "tank@snap-2", "recursive": False}
+                    [{"path": "tank@snap-1", "recursive": true}],
+                    [{"path": "tank@snap-2", "recursive": false}]
                 ]
-            )
+            ]
 
-        will call::
+        calls :doc:`zfs.resource.destroy <api_methods_zfs.resource.destroy>` twice: first with
+        ``{"path": "tank@snap-1", "recursive": true}``, then with
+        ``{"path": "tank@snap-2", "recursive": false}``.
 
-            call("zfs.resource.destroy", {"path": tank@snap-1", recursive=True})
-            call("zfs.resource.destroy", {"path": "tank@snap-2", recursive=False)
-
-        If the first call fails and the seconds succeeds (returning `true`), the result of the overall call will be::
+        If the first call fails and the second succeeds (returning ``true``), the result of the overall
+        call will be::
 
             [
                 {"result": null, "error": "Error deleting snapshot"},
                 {"result": true, "error": null}
             ]
 
-        Important note: the execution status of `core.bulk` will always be a `SUCCESS` (unless an unlikely internal
-        error occurs). Caller must check for individual call results to ensure the absence of any call errors.
+        Important note: the execution status of :doc:`core.bulk <api_methods_core.bulk>` will always be a
+        `SUCCESS` (unless an unlikely internal error occurs). Caller must check for individual call results
+        to ensure the absence of any call errors.
         """
         serviceobj, methodobj = self.middleware.get_method(method)
 

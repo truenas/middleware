@@ -330,8 +330,8 @@ class AuthService(Service):
                     "origin": "192.168.0.3:40392",
                     "credentials": "LOGIN_PASSWORD",
                     "credentials_data": {"username": "root"},
-                    "current": True,
-                    "internal": False,
+                    "current": true,
+                    "internal": false,
                     "created_at": {"$date": 1545842426070}
                 }
             ]
@@ -346,7 +346,7 @@ class AuthService(Service):
 
             [
                 [
-                    ["internal", "=", True]
+                    ["internal", "=", true]
                 ]
             ]
         """
