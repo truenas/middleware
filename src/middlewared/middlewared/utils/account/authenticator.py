@@ -50,7 +50,7 @@ class AccountFlag(enum.StrEnum):
     LDAP = 'LDAP'  # account is provided by ordinary LDAP server
 
     # Flags about how authenticated
-    TWOFACTOR = '2FA'  # Account requires 2FA (NOTE: PAM currently isn't evaluating second factor)
+    TWOFACTOR = '2FA'  # Session authenticated with a second factor (OATH token)
     API_KEY = 'API_KEY'  # Account authenticated by API key
     SCRAM = 'SCRAM'
     OTPW = 'OTPW'  # Account authenticated by a single-use password
@@ -167,10 +167,6 @@ class UserPamAuthenticator(TrueNASUserPamAuthenticator[UserPamAuthenticatorPassw
 
         if self.state.service == TruenasPamFile.API_KEY.service:
             self.passwd['account_attributes'].append(AccountFlag.API_KEY)
-
-        # Compare normalized username from NSS with usernames in the /etc/users.oath file
-        if self.twofactor_user:
-            self.passwd['account_attributes'].append(AccountFlag.TWOFACTOR)
 
         if passwd['pw_uid'] in (0, ADMIN_UID):
             self.passwd['account_attributes'].append(AccountFlag.SYS_ADMIN)
@@ -344,6 +340,10 @@ class UserPamAuthenticator(TrueNASUserPamAuthenticator[UserPamAuthenticatorPassw
         resp = self.auth_continue([twofactor_token])
         if resp.code == PAMCode.PAM_SUCCESS:
             assert resp.user_info is not None
+            # The second factor has now been verified for this session. Record it in the account
+            # flags here (rather than in _get_user_obj) because whether a second factor applies is
+            # only known after the PAM conversation has prompted for and accepted the OATH token.
+            self.passwd['account_attributes'].append(AccountFlag.TWOFACTOR)
             # Grab fresh copy since account flags may have changed due to OTPW login
             pw = self.truenas_user_obj
             assert pw['pw_name'] == resp.user_info['pw_name']

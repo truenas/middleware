@@ -33,7 +33,7 @@ def sharing_admin_user(unprivileged_user_fixture):
 
 @pytest.mark.parametrize('level,expected', [
     ('LEVEL_1', ['API_KEY_PLAIN', 'TOKEN_PLAIN', 'PASSWORD_PLAIN', 'SCRAM']),
-    ('LEVEL_2', ['PASSWORD_PLAIN', 'SCRAM']),
+    ('LEVEL_2', ['PASSWORD_PLAIN']),
 ])
 def test_mechanism_choices(level, expected):
     with authenticator_assurance_level(level):
@@ -55,6 +55,23 @@ def test_level2_api_key_plain():
                     })
 
                 assert ce.value.errno == errno.EOPNOTSUPP
+
+
+def test_level2_scram():
+    """ SCRAM authenticates through the OATH-less API key PAM stack and so cannot
+    satisfy the mandatory second factor required at this level. It must therefore be
+    rejected with EOPNOTSUPP before any SCRAM exchange takes place.
+    """
+    with authenticator_assurance_level('LEVEL_2'):
+        with client(auth=None) as c:
+            with pytest.raises(CallError) as ce:
+                c.call('auth.login_ex', {
+                    'mechanism': 'SCRAM',
+                    'scram_type': 'CLIENT_FIRST_MESSAGE',
+                    'rfc_str': 'n,,n=root,r=fyko+d2lbbFgONRv9qkxdawL',
+                })
+
+            assert ce.value.errno == errno.EOPNOTSUPP
 
 
 def test_level2_password_plain_no_twofactor():
