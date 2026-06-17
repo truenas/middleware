@@ -789,8 +789,10 @@ class ZFSResourceSnapshotService(Service):
         """
         Rollback a ZFS dataset to a snapshot.
 
-        WARNING: This is a destructive change. All data written since the target snapshot was
-        taken will be discarded.
+        .. warning::
+
+            This is a destructive change. All data written since the target snapshot was
+            taken will be discarded.
 
         Invalid input is returned to the client as a JSON-RPC ``error`` response (code
         ``-32602``, *Invalid params*); each failing condition appears in the error's

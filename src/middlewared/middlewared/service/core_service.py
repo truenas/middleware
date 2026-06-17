@@ -658,9 +658,11 @@ class CoreService(Service):
                 {"result": true, "error": null}
             ]
 
-        Important note: the execution status of :doc:`core.bulk <api_methods_core.bulk>` will always be a
-        `SUCCESS` (unless an unlikely internal error occurs). Caller must check for individual call results
-        to ensure the absence of any call errors.
+        .. important::
+
+            The execution status of :doc:`core.bulk <api_methods_core.bulk>` will always be a
+            ``SUCCESS`` (unless an unlikely internal error occurs). Caller must check for individual call
+            results to ensure the absence of any call errors.
         """
         serviceobj, methodobj = self.middleware.get_method(method)
 
