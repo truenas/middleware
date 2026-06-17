@@ -18,8 +18,14 @@ from middlewared.test.integration.utils import call, ssh
 from os.path import dirname, join as path_join
 from time import sleep
 
-# The entire STIG test module is currently disabled.
-pytestmark = pytest.mark.skip(reason='STIG test suite is disabled')
+# These end-to-end tests require the auditd daemon to be running and writing
+# /var/log/audit/audit.log (ausearch reads it). That daemon's lifecycle is managed
+# outside middleware (Debian auditd.service + tnaudit.service from the
+# truenas/audit_rules repo), so they are deferred until that dependency is confirmed
+# in the STIG CI environment rather than re-enabled with the rest of the suite.
+pytestmark = pytest.mark.skip(
+    reason='Requires a running auditd daemon (managed outside middleware); deferred'
+)
 
 # Alias
 pp = pytest.param

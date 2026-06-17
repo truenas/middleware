@@ -71,5 +71,6 @@ def module_stig_enabled():
 
 @pytest.fixture(autouse=True)
 def init_test_environment():
-    truenas_server.client.call("test.init")
+    if not STIG_ENABLED:
+        truenas_server.client.call("test.init")
     yield
