@@ -1,6 +1,6 @@
 from typing import Annotated, Literal, TypeAlias
 
-from pydantic import ConfigDict, Field
+from pydantic import ConfigDict, Discriminator, Field
 
 from middlewared.api.base import (
     BaseModel,
@@ -85,7 +85,7 @@ class ContainerUSBDevice(BaseModel):
 
 ContainerDeviceType: TypeAlias = Annotated[
     ContainerFilesystemDevice | ContainerGPUDevice | ContainerNICDevice | ContainerUSBDevice,
-    Field(discriminator='dtype')
+    Discriminator('dtype')
 ]
 
 

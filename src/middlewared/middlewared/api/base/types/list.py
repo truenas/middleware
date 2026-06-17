@@ -1,7 +1,9 @@
 from typing import Annotated, TypeVar
 
-from pydantic import AfterValidator, Field
+from pydantic import AfterValidator
 from pydantic_core import PydanticCustomError
+
+from middlewared.api.base.types.json_schema import JsonSchemaExtra
 
 __all__ = ['UniqueList']
 
@@ -19,4 +21,4 @@ def _validate_unique_list(v: list[T]) -> list[T]:
     return v
 
 
-UniqueList = Annotated[list[T], AfterValidator(_validate_unique_list), Field(json_schema_extra={'uniqueItems': True})]
+UniqueList = Annotated[list[T], AfterValidator(_validate_unique_list), JsonSchemaExtra(uniqueItems=True)]

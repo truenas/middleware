@@ -1,6 +1,6 @@
 from typing import Annotated, Any, Literal, Union
 
-from pydantic import BeforeValidator, ConfigDict, Field, Secret, model_validator
+from pydantic import BeforeValidator, ConfigDict, Discriminator, Field, Secret, model_validator
 
 from middlewared.api.base import (
     BaseModel,
@@ -518,7 +518,7 @@ class PoolDatasetProjectQuota(_PoolDatasetQuota):
 
 PoolDatasetQuota = Annotated[
     PoolDatasetUserGroupQuota | PoolDatasetDatasetQuota | PoolDatasetProjectQuota,
-    Field(discriminator='quota_type')
+    Discriminator('quota_type')
 ]
 
 

@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Annotated, Literal, TypeAlias
 
-from pydantic import BeforeValidator, ConfigDict, Field, FilePath, PlainSerializer, Secret
+from pydantic import BeforeValidator, ConfigDict, Discriminator, Field, FilePath, PlainSerializer, Secret
 
 from middlewared.api.base import (
     BaseModel,
@@ -104,7 +104,7 @@ class ShellSchemaArgs(ShellSchema):
 
 AuthType: TypeAlias = Annotated[
     CloudFlareSchema | DigitalOceanSchema | OVHSchema | Route53Schema | ShellSchema,
-    Field(discriminator='authenticator')
+    Discriminator('authenticator')
 ]
 
 
