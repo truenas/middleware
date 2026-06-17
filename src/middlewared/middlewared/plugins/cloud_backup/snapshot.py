@@ -1,110 +1,92 @@
+from __future__ import annotations
+
 from datetime import datetime
 import json
 import subprocess
+from typing import TYPE_CHECKING
 
-from middlewared.api import api_method
-from middlewared.api.current import (
-    CloudBackupDeleteSnapshotArgs,
-    CloudBackupDeleteSnapshotResult,
-    CloudBackupListSnapshotDirectoryArgs,
-    CloudBackupListSnapshotDirectoryResult,
-    CloudBackupListSnapshotsArgs,
-    CloudBackupListSnapshotsResult,
-)
+from middlewared.api.current import CloudBackupSnapshot, CloudBackupSnapshotItem
 from middlewared.plugins.cloud_backup.restic import get_restic_config
-from middlewared.service import CallError, Service, job
+from middlewared.plugins.cloud_backup.utils import revealed_dict
+from middlewared.service import CallError, ServiceContext
+
+if TYPE_CHECKING:
+    from middlewared.job import Job
 
 
-class CloudBackupService(Service):
+def list_snapshots(context: ServiceContext, id_: int) -> list[CloudBackupSnapshot]:
+    context.middleware.call_sync("network.general.will_perform_activity", "cloud_backup")
 
-    class Config:
-        cli_namespace = "task.cloud_backup"
-        namespace = "cloud_backup"
+    cloud_backup = revealed_dict(context, context.call_sync2(context.s.cloud_backup.get_instance, id_))
 
-    @api_method(CloudBackupListSnapshotsArgs, CloudBackupListSnapshotsResult, roles=['CLOUD_BACKUP_READ'])
-    def list_snapshots(self, id_):
-        """
-        List existing snapshots for the cloud backup job `id`.
-        """
-        self.middleware.call_sync("network.general.will_perform_activity", "cloud_backup")
+    restic_config = get_restic_config(cloud_backup)
 
-        cloud_backup = self.middleware.call_sync("cloud_backup.get_instance", id_)
+    try:
+        snapshots = json.loads(subprocess.run(
+            restic_config.cmd + ["--json", "snapshots"],
+            env=restic_config.env,
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout)
+    except subprocess.CalledProcessError as e:
+        raise CallError(e.stderr)
 
-        restic_config = get_restic_config(cloud_backup)
+    for snapshot in snapshots:
+        snapshot["time"] = datetime.fromisoformat(snapshot["time"])
 
-        try:
-            snapshots = json.loads(subprocess.run(
-                restic_config.cmd + ["--json", "snapshots"],
-                env=restic_config.env,
-                capture_output=True,
-                text=True,
-                check=True,
-            ).stdout)
-        except subprocess.CalledProcessError as e:
-            raise CallError(e.stderr)
+    return [CloudBackupSnapshot(**snapshot) for snapshot in snapshots]
 
-        for snapshot in snapshots:
-            snapshot["time"] = datetime.fromisoformat(snapshot["time"])
 
-        return snapshots
+def list_snapshot_directory(
+    context: ServiceContext, id_: int, snapshot_id: str, path: str,
+) -> list[CloudBackupSnapshotItem]:
+    context.middleware.call_sync("network.general.will_perform_activity", "cloud_backup")
 
-    @api_method(CloudBackupListSnapshotDirectoryArgs, CloudBackupListSnapshotDirectoryResult,
-                roles=['CLOUD_BACKUP_READ'])
-    def list_snapshot_directory(self, id_, snapshot_id, path):
-        """
-        List files in the directory `path` of the `snapshot_id` created by the cloud backup job `id`.
-        """
-        self.middleware.call_sync("network.general.will_perform_activity", "cloud_backup")
+    cloud_backup = revealed_dict(context, context.call_sync2(context.s.cloud_backup.get_instance, id_))
 
-        cloud_backup = self.middleware.call_sync("cloud_backup.get_instance", id_)
+    restic_config = get_restic_config(cloud_backup)
 
-        restic_config = get_restic_config(cloud_backup)
+    try:
+        items = list(map(json.loads, subprocess.run(
+            restic_config.cmd + ["--json", "ls", snapshot_id, path],
+            env=restic_config.env,
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.splitlines()))
+    except subprocess.CalledProcessError as e:
+        raise CallError(e.stderr)
 
-        try:
-            items = list(map(json.loads, subprocess.run(
-                restic_config.cmd + ["--json", "ls", snapshot_id, path],
-                env=restic_config.env,
-                capture_output=True,
-                text=True,
-                check=True,
-            ).stdout.splitlines()))
-        except subprocess.CalledProcessError as e:
-            raise CallError(e.stderr)
+    contents = []
+    for item in items[1:]:
+        if item["struct_type"] != "node":
+            continue
 
-        contents = []
-        for item in items[1:]:
-            if item["struct_type"] != "node":
-                continue
+        item.setdefault("size", None)
 
-            item.setdefault("size", None)
+        for k in ["atime", "ctime", "mtime"]:
+            item[k] = datetime.fromisoformat(item[k])
 
-            for k in ["atime", "ctime", "mtime"]:
-                item[k] = datetime.fromisoformat(item[k])
+        contents.append(item)
 
-            contents.append(item)
+    return [CloudBackupSnapshotItem(**item) for item in contents]
 
-        return contents
 
-    @api_method(CloudBackupDeleteSnapshotArgs, CloudBackupDeleteSnapshotResult,
-                roles=['CLOUD_BACKUP_WRITE'])
-    @job(lock=lambda args: "cloud_backup:{}".format(args[-1]), lock_queue_size=1)
-    def delete_snapshot(self, job, id_, snapshot_id):
-        """
-        Delete snapshot `snapshot_id` created by the cloud backup job `id`.
-        """
-        self.middleware.call_sync("network.general.will_perform_activity", "cloud_backup")
+def delete_snapshot(context: ServiceContext, job: Job, id_: int, snapshot_id: str) -> None:
+    context.middleware.call_sync("network.general.will_perform_activity", "cloud_backup")
 
-        cloud_backup = self.middleware.call_sync("cloud_backup.get_instance", id_)
+    cloud_backup = revealed_dict(context, context.call_sync2(context.s.cloud_backup.get_instance, id_))
 
-        restic_config = get_restic_config(cloud_backup)
+    restic_config = get_restic_config(cloud_backup)
 
-        try:
-            subprocess.run(
-                restic_config.cmd + ["forget", snapshot_id, "--prune"],
-                env=restic_config.env,
-                capture_output=True,
-                text=True,
-                check=True,
-            )
-        except subprocess.CalledProcessError as e:
-            raise CallError(e.stderr)
+    try:
+        subprocess.run(
+            restic_config.cmd + ["forget", snapshot_id, "--prune"],
+            env=restic_config.env,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except subprocess.CalledProcessError as e:
+        raise CallError(e.stderr)

@@ -1,29 +1,23 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any
 
 from middlewared.alert.base import AlertCategory, AlertClassConfig, AlertLevel, OneShotAlertClass
-from middlewared.api import api_method
-from middlewared.api.current import (
-    CloudBackupCreateArgs,
-    CloudBackupCreateResult,
-    CloudBackupDeleteArgs,
-    CloudBackupDeleteResult,
-    CloudBackupEntry,
-    CloudBackupTransferSettingChoicesArgs,
-    CloudBackupTransferSettingChoicesResult,
-    CloudBackupUpdateArgs,
-    CloudBackupUpdateResult,
-)
+from middlewared.api.current import CloudBackupCreate, CloudBackupEntry, CloudBackupUpdate
 from middlewared.async_validators import check_path_resides_within_volume
-from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.plugins.cloud.crud import CloudTaskServiceMixin
 from middlewared.plugins.cloud.model import CloudTaskModelMixin
-from middlewared.service import TaskPathService, ValidationErrors, private
+from middlewared.plugins.zfs.zvol_utils import zvol_path_to_name
+from middlewared.service import CallError, SharingTaskServicePart, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.cron import convert_db_format_to_schedule, convert_schedule_to_db_format
 from middlewared.utils.path import FSLocation
-from middlewared.utils.service.task_state import TaskStateMixin
 
 from .init import IncorrectPassword
+
+if TYPE_CHECKING:
+    from middlewared.api.base.server.app import App
 
 
 class CloudBackupModel(CloudTaskModelMixin, sa.Model):
@@ -37,125 +31,103 @@ class CloudBackupModel(CloudTaskModelMixin, sa.Model):
     rate_limit = sa.Column(sa.Integer(), nullable=True)
 
 
-class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
+@dataclass(kw_only=True)
+class CloudBackupTaskFailedAlert(OneShotAlertClass):
+    config = AlertClassConfig(
+        category=AlertCategory.TASKS,
+        level=AlertLevel.ERROR,
+        title="Cloud Backup Task Failed",
+        text="Cloud backup task \"%(name)s\" failed.",
+    )
+
+    id: int
+    name: str
+
+    @classmethod
+    def key_from_args(cls, args: Any) -> Any:
+        return args["id"]
+
+
+class CloudBackupServicePart(SharingTaskServicePart[CloudBackupEntry], CloudTaskServiceMixin):
+    _datastore = "tasks.cloud_backup"
+    _entry = CloudBackupEntry
+
     allow_zvol = True
-
-    share_task_type = "CloudBackup"
     allowed_path_types = [FSLocation.LOCAL]
-    task_state_methods = ["cloud_backup.sync", "cloud_backup.restore"]
+    path_field = "path"
 
-    class Config:
-        datastore = "tasks.cloud_backup"
-        datastore_extend = "cloud_backup.extend"
-        datastore_extend_context = "cloud_backup.extend_context"
-        cli_namespace = "task.cloud_backup"
-        namespace = "cloud_backup"
-        role_prefix = "CLOUD_BACKUP"
-        entry = CloudBackupEntry
-
-    @private
-    def transfer_setting_args(self):
+    async def sharing_task_extend_context(self, rows: list[dict[str, Any]], extra: dict[str, Any]) -> Any:
         return {
-            "DEFAULT": [],
-            "PERFORMANCE": ["--pack-size", "29"],
-            "FAST_STORAGE": ["--pack-size", "58", "--read-concurrency", "100"]
+            "task_state": await self.call2(self.s.cloud_backup.get_task_state_context),
         }
 
-    @private
-    def extend_context(self, rows, extra):
-        return {
-            "task_state": self.middleware.run_coroutine(self.get_task_state_context()),
-        }
+    async def sharing_task_extend(self, data: dict[str, Any], service_context: Any) -> dict[str, Any]:
+        data["credentials"] = await self.middleware.call("cloudsync.credentials.extend", data.pop("credential"))
 
-    @private
-    def extend(self, cloud_backup, context):
-        cloud_backup["credentials"] = self.middleware.call_sync(
-            "cloudsync.credentials.extend", cloud_backup.pop("credential"),
-        )
+        if job := await self.call2(self.s.cloud_backup.get_task_state_job, service_context["task_state"], data["id"]):
+            data["job"] = job
 
-        if job := self.middleware.run_coroutine(self.get_task_state_job(context["task_state"], cloud_backup["id"])):
-            cloud_backup["job"] = job
+        convert_db_format_to_schedule(data)
+        return data
 
-        convert_db_format_to_schedule(cloud_backup)
+    async def compress(self, data: dict[str, Any]) -> dict[str, Any]:
+        data["credential"] = data.pop("credentials")
+        convert_schedule_to_db_format(data)
+        # tasks_cloud_backup.job is NOT NULL; the runtime job state lives in task_state, so persist null here.
+        data["job"] = None
+        data.pop(self.locked_field, None)
+        return data
 
-        return cloud_backup
+    async def do_create(self, app: App | None, data: CloudBackupCreate) -> CloudBackupEntry:
+        cloud_backup = data.model_dump(context={"expose_secrets": True})
+        await self.to_thread(self._run_validation, app, "cloud_backup_create", cloud_backup)
 
-    @private
-    def _compress(self, cloud_backup):
-        cloud_backup["credential"] = cloud_backup.pop("credentials")
+        entry = await self._create(cloud_backup)
+        await (await self.middleware.call("service.control", "RESTART", "cron")).wait(raise_error=True)
+        return entry
 
-        convert_schedule_to_db_format(cloud_backup)
+    async def do_update(self, app: App | None, id_: int, data: CloudBackupUpdate) -> CloudBackupEntry:
+        old = (await self.get_instance(id_)).model_dump(context={"expose_secrets": True})
+        old.pop(self.locked_field, None)
+        old.pop("job", None)
+        # credentials is a foreign key, collapse the extended entry back to its id before merging.
+        if old["credentials"]:
+            old["credentials"] = old["credentials"]["id"]
 
-        cloud_backup.pop("job", None)
-        cloud_backup.pop(self.locked_field, None)
+        new = {**old, **data.model_dump(context={"expose_secrets": True})}
+        await self.to_thread(self._run_validation, app, "cloud_backup_update", new)
 
-        return cloud_backup
+        entry = await self._update(id_, new)
+        await (await self.middleware.call("service.control", "RESTART", "cron")).wait(raise_error=True)
+        return entry
 
-    @api_method(CloudBackupTransferSettingChoicesArgs, CloudBackupTransferSettingChoicesResult)
-    def transfer_setting_choices(self):
-        """
-        Return all possible choices for `cloud_backup.create.transfer_setting`.
-        """
-        args = self.transfer_setting_args()
-        return list(args.keys())
+    async def do_delete(self, id_: int) -> None:
+        await self.call2(self.s.cloud_backup.abort, id_)
+        await self.call2(self.s.alert.oneshot_delete, "CloudBackupTaskFailed", id_)
+        await self._delete(id_)
+        await (await self.middleware.call("service.control", "RESTART", "cron")).wait(raise_error=True)
 
-    @api_method(CloudBackupCreateArgs, CloudBackupCreateResult, pass_app=True)
-    def do_create(self, app, cloud_backup):
-        """
-        Create a new cloud backup task
-        """
+    async def get_path_field(self, data: Any) -> Any:
+        if isinstance(data, dict):
+            return data[self.path_field]
+        return getattr(data, self.path_field)
+
+    def validate_zvol(self, path: str) -> None:
+        dataset = zvol_path_to_name(path)
+        if not (
+            self.call_sync2(self.s.vm.query_snapshot_begin, dataset, False) or
+            self.middleware.call_sync("vmware.dataset_has_vms", dataset, False)
+        ):
+            raise CallError("Backed up zvol must be used by a local or VMware VM")
+
+    def _run_validation(self, app: App | None, schema: str, data: dict[str, Any]) -> None:
         verrors = ValidationErrors()
-        self._validate(app, verrors, "cloud_backup_create", cloud_backup)
+        self._validate(app, verrors, schema, data)
         verrors.check()
 
-        cloud_backup = self._compress(cloud_backup)
-        cloud_backup["id"] = self.middleware.call_sync(
-            "datastore.insert", "tasks.cloud_backup", {**cloud_backup, "job": None},
-        )
-        self.middleware.call_sync("service.control", "RESTART", "cron").wait_sync(raise_error=True)
-
-        return self.get_instance__sync(cloud_backup["id"])
-
-    @api_method(CloudBackupUpdateArgs, CloudBackupUpdateResult, pass_app=True)
-    def do_update(self, app, id_, data):
-        """
-        Update the cloud backup entry `id` with `data`.
-        """
-        cloud_backup = self.get_instance__sync(id_)
-
-        # credentials is a foreign key for now
-        if cloud_backup["credentials"]:
-            cloud_backup["credentials"] = cloud_backup["credentials"]["id"]
-
-        cloud_backup.update(data)
-
-        verrors = ValidationErrors()
-
-        self._validate(app, verrors, "cloud_backup_update", cloud_backup)
-
-        verrors.check()
-
-        cloud_backup = self._compress(cloud_backup)
-
-        self.middleware.call_sync("datastore.update", "tasks.cloud_backup", id_, cloud_backup)
-        self.middleware.call_sync("service.control", "RESTART", "cron").wait_sync(raise_error=True)
-
-        return self.get_instance__sync(id_)
-
-    @api_method(CloudBackupDeleteArgs, CloudBackupDeleteResult)
-    def do_delete(self, id_):
-        """
-        Delete cloud backup entry `id`.
-        """
-        self.middleware.call_sync("cloud_backup.abort", id_)
-        self.call_sync2(self.s.alert.oneshot_delete, "CloudBackupTaskFailed", id_)
-        rv = self.middleware.call_sync("datastore.delete", "tasks.cloud_backup", id_)
-        self.middleware.call_sync("service.control", "RESTART", "cron").wait_sync(raise_error=True)
-        return rv
-
-    @private
-    def _validate(self, app, verrors, name, data):
-        super()._validate(app, verrors, name, data)
+    def _validate(self, app: App | None, verrors: ValidationErrors, name: str, data: dict[str, Any]) -> None:
+        # CloudTaskServiceMixin is shared with the unconverted cloud_sync and is left untyped.
+        super()._validate(app, verrors, name, data)  # type: ignore[no-untyped-call]
 
         if data["snapshot"] and data["absolute_paths"]:
             verrors.add(f"{name}.snapshot", "This option can't be used when absolute paths are enabled")
@@ -173,39 +145,7 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
 
         if not verrors:
             try:
-                self.middleware.call_sync("cloud_backup.ensure_initialized", data)
+                # Route through the registry method so the suite can mock cloud_backup.ensure_initialized.
+                self.call_sync2(self.s.cloud_backup.ensure_initialized, data)
             except IncorrectPassword as e:
                 verrors.add(f"{name}.password", e.errmsg)
-
-
-@dataclass(kw_only=True)
-class CloudBackupTaskFailedAlert(OneShotAlertClass):
-    config = AlertClassConfig(
-        category=AlertCategory.TASKS,
-        level=AlertLevel.ERROR,
-        title="Cloud Backup Task Failed",
-        text="Cloud backup task \"%(name)s\" failed.",
-    )
-
-    id: int
-    name: str
-
-    @classmethod
-    def key_from_args(cls, args):
-        return args["id"]
-
-
-class CloudBackupFSAttachmentDelegate(LockableFSAttachmentDelegate):
-    name = "cloud_backup"
-    title = "Cloud Backup Task"
-    service_class = CloudBackupService
-    resource_name = "path"
-
-    async def restart_reload_services(self, attachments):
-        await (await self.middleware.call("service.control", "RESTART", "cron")).wait(raise_error=True)
-
-
-async def setup(middleware):
-    await middleware.call("pool.dataset.register_attachment_delegate", CloudBackupFSAttachmentDelegate(middleware))
-    await middleware.call("network.general.register_activity", "cloud_backup", "Cloud backup")
-    await middleware.call("cloud_backup.persist_task_state_on_job_complete")

@@ -1,46 +1,47 @@
-from middlewared.api import api_method
-from middlewared.api.current import CloudBackupRestoreArgs, CloudBackupRestoreResult
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from middlewared.api.current import CloudBackupRestoreOptions
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.cloud_backup.restic import get_restic_config, run_restic
-from middlewared.service import Service, ValidationErrors, job
+from middlewared.plugins.cloud_backup.utils import revealed_dict
+from middlewared.service import ServiceContext, ValidationErrors
+
+if TYPE_CHECKING:
+    from middlewared.job import Job
 
 
-class CloudBackupService(Service):
+def do_restore(
+    context: ServiceContext,
+    job: Job,
+    id_: int,
+    snapshot_id: str,
+    subfolder: str,
+    destination_path: str,
+    options: CloudBackupRestoreOptions,
+) -> None:
+    context.middleware.call_sync("network.general.will_perform_activity", "cloud_backup")
 
-    class Config:
-        cli_namespace = "task.cloud_backup"
-        namespace = "cloud_backup"
+    verrors = ValidationErrors()
+    context.middleware.run_coroutine(
+        check_path_resides_within_volume(verrors, context.middleware, "destination_path", destination_path)
+    )
+    verrors.check()
 
-    @api_method(CloudBackupRestoreArgs, CloudBackupRestoreResult, roles=["FILESYSTEM_DATA_WRITE"])
-    @job(logs=True)
-    def restore(self, job, id_, snapshot_id, subfolder, destination_path, options):
-        """
-        Restore files to the directory `destination_path` from the `snapshot_id` subfolder `subfolder`
-        created by the cloud backup job `id`.
-        """
-        self.middleware.call_sync("network.general.will_perform_activity", "cloud_backup")
+    cloud_backup = revealed_dict(context, context.call_sync2(context.s.cloud_backup.get_instance, id_))
 
-        verrors = ValidationErrors()
+    restic_config = get_restic_config(cloud_backup)
 
-        self.middleware.run_coroutine(
-            check_path_resides_within_volume(verrors, self.middleware, "destination_path", destination_path)
-        )
+    cmd = ["restore", f"{snapshot_id}:{subfolder}", "--target", destination_path]
+    cmd += sum([["--exclude", exclude] for exclude in options.exclude], [])
+    cmd += sum([["--include", include] for include in options.include], [])
+    if limit := (options.rate_limit or cloud_backup["rate_limit"]):
+        cmd.append(f"--limit-download={limit}")
 
-        verrors.check()
-
-        cloud_backup = self.middleware.call_sync("cloud_backup.get_instance", id_)
-
-        restic_config = get_restic_config(cloud_backup)
-
-        cmd = ["restore", f"{snapshot_id}:{subfolder}", "--target", destination_path]
-        cmd += sum([["--exclude", exclude] for exclude in options["exclude"]], [])
-        cmd += sum([["--include", include] for include in options["include"]], [])
-        if limit := (options["rate_limit"] or cloud_backup["rate_limit"]):
-            cmd.append(f"--limit-download={limit}")
-
-        run_restic(
-            job,
-            restic_config.cmd + cmd,
-            restic_config.env,
-            track_progress=True,
-        )
+    run_restic(
+        job,
+        restic_config.cmd + cmd,
+        restic_config.env,
+        track_progress=True,
+    )

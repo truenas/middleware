@@ -10,7 +10,7 @@ run before mount). Paths that cannot be resolved (encrypted datasets, hardware
 issues) are left as NULL and will be resolved via hook subscriptions when the
 datasets become available.
 """
-from middlewared.plugins.cloud_backup.crud import CloudBackupService
+from middlewared.plugins.cloud_backup import CloudBackupService
 from middlewared.plugins.cloud_sync import CloudSyncService
 from middlewared.plugins.iscsi_.extents import iSCSITargetExtentService
 from middlewared.plugins.nfs import SharingNFSService
