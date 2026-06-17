@@ -17,6 +17,7 @@ from .utils import PROJECT_PREFIX, AppState, ContainerState, get_app_name_from_p
 COMPOSE_SERVICE_KEY: str = 'com.docker.compose.service'
 KNOWN_EXIT_CODES: tuple[int, ...] = (
     0,    # Normal exit
+    129,  # SIGHUP
     130,  # SIGINT
     137,  # SIGKILL
     143,  # SIGTERM
