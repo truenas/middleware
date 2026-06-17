@@ -50,7 +50,7 @@ def ftp_init_db_dflt(confirm_test_config):
     # Get the 'default' settings from FTPModel
     ftpconf_script = '#!/usr/bin/python3\n'
     ftpconf_script += 'import json\n'
-    ftpconf_script += 'from middlewared.plugins.ftp import FTPModel\n'
+    ftpconf_script += 'from middlewared.plugins.ftp.config import FTPModel\n'
     ftpconf_script += 'FTPModel_defaults = {}\n'
     ftpconf_script += 'for attrib in FTPModel.__dict__.keys():\n'
     ftpconf_script += '    if attrib[:4] == "ftp_":\n'

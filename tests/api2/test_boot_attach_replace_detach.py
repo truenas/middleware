@@ -10,6 +10,7 @@ if not ha:
     # we have to skip this test since it will fail
     # 100% of the time on HA VMs.
 
+    @pytest.mark.skip(reason="Skip until IT can provide larger disks (current disks lack space for boot partitions)")
     @pytest.mark.timeout(600)
     def test_boot_attach_replace_detach():
         existing_disks = call("boot.get_disks")
