@@ -15,6 +15,12 @@ from .path import get_app_parent_config_path
 from .utils import PROJECT_PREFIX, AppState, ContainerState, get_app_name_from_project_name
 
 COMPOSE_SERVICE_KEY: str = 'com.docker.compose.service'
+KNOWN_EXIT_CODES: tuple[int, ...] = (
+    0,    # Normal exit
+    130,  # SIGINT
+    137,  # SIGKILL
+    143,  # SIGTERM
+)
 
 
 @dataclass(frozen=True, eq=True)
@@ -272,10 +278,10 @@ def translate_resources_to_desired_workflow(app_resources: dict[str, Any]) -> di
                 state = ContainerState.RUNNING.value
         elif container['State']['Status'].lower() == 'created':
             state = ContainerState.CREATED.value
-        elif container['State']['Status'] == 'exited' and container['State']['ExitCode'] != 0:
+        elif container['State']['Status'] == 'exited' and container['State']['ExitCode'] not in KNOWN_EXIT_CODES:
             state = ContainerState.CRASHED.value
         else:
-            state = 'exited'
+            state = ContainerState.EXITED.value
 
         workloads['container_details'].append({
             'service_name': service_name,
