@@ -269,7 +269,8 @@ def translate_resources_to_desired_workflow(app_resources: dict[str, Any]) -> di
                 type='bind' if volume_mount['Type'] == 'bind' else 'volume',
             ))
 
-        if container['State']['Status'].lower() == 'running':
+        container_status = container['State']['Status'].lower()
+        if container_status == 'running':
             if health_config := container['State'].get('Health'):
                 if health_config['Status'] == 'healthy':
                     state = ContainerState.RUNNING.value
@@ -277,9 +278,9 @@ def translate_resources_to_desired_workflow(app_resources: dict[str, Any]) -> di
                     state = ContainerState.STARTING.value
             else:
                 state = ContainerState.RUNNING.value
-        elif container['State']['Status'].lower() == 'created':
+        elif container_status == 'created':
             state = ContainerState.CREATED.value
-        elif container['State']['Status'] == 'exited' and container['State']['ExitCode'] not in KNOWN_NORMAL_EXIT_CODES:
+        elif container_status == 'exited' and container['State']['ExitCode'] not in KNOWN_NORMAL_EXIT_CODES:
             state = ContainerState.CRASHED.value
         else:
             state = ContainerState.EXITED.value
