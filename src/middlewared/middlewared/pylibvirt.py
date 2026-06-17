@@ -1,7 +1,14 @@
 import time
 from typing import Callable
 
-from truenas_pylibvirt import BaseDomain, Connection, ConnectionManager, DomainManagers, ServiceDelegate
+from truenas_pylibvirt import (
+    BaseDomain,
+    Connection,
+    ConnectionManager,
+    DomainManagers,
+    ServiceDelegate,
+    is_no_domain_error,
+)
 
 __all__ = ["create_pylibvirt_domains_manager", "gather_pylibvirt_domains_states", "get_pylibvirt_domain_state"]
 
@@ -32,21 +39,43 @@ def gather_pylibvirt_domains_states(
     container_factory: Callable[[dict], BaseDomain],
 ):
     state = {}
-    if rows:
-        shutting_down = middleware.call_sync('system.state') == 'SHUTTING_DOWN'
-        if not shutting_down:
-            uuid_to_container = {row['uuid']: row for row in rows}
-            try:
-                for domain in connection.list_domains():
-                    uuid = domain.name()
-                    if container := uuid_to_container.get(uuid):
-                        state[uuid] = pylibvirt_domain_state(
-                            connection,
-                            domain,
-                            container_factory(container.copy()),
-                        )
-            except Exception:
-                middleware.logger.warning("Unhandled exception in gather_pylibvirt_domains_state", exc_info=True)
+    if not rows:
+        return state
+
+    if middleware.call_sync('system.state') == 'SHUTTING_DOWN':
+        return state
+
+    uuid_to_container = {row['uuid']: row for row in rows}
+
+    try:
+        domains = connection.list_domains()
+    except Exception:
+        # libvirt being unreachable (connection dead, libvirtd restarting, ...) must never break
+        # container.query / vm.query. Every domain falls back to STOPPED via get_pylibvirt_domain_state().
+        middleware.logger.warning('Failed to list libvirt domains while gathering state', exc_info=True)
+        return state
+
+    for domain in domains:
+        uuid = None
+        try:
+            uuid = domain.name()
+            container = uuid_to_container.get(uuid)
+            if container is None:
+                continue
+
+            state[uuid] = pylibvirt_domain_state(
+                connection,
+                domain,
+                container_factory(container.copy()),
+            )
+        except Exception as e:
+            if is_no_domain_error(e):
+                # The domain was stopped/undefined between list_domains() and reading its state.
+                # It is correctly reported as STOPPED by get_pylibvirt_domain_state() once it is
+                # absent from the returned dict, so skip just this one and keep the rest of the batch.
+                middleware.logger.debug('Domain %s vanished while gathering its state', uuid)
+            else:
+                middleware.logger.error('Failed to gather libvirt state for domain %s', uuid, exc_info=True)
 
     return state
 
