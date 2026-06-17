@@ -459,7 +459,11 @@ class ZFSResourceSnapshotService(Service):
 
         .. code:: json
 
-            {"snapshot": "tank/data@backup", "dataset": "tank/data_clone", "properties": {"compression": "lz4", "quota": "10G"}}
+            {
+                "snapshot": "tank/data@backup",
+                "dataset": "tank/data_clone",
+                "properties": {"compression": "lz4", "quota": "10G"}
+            }
         """
         # Validate snapshot path contains @
         if "@" not in data.snapshot:

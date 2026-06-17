@@ -78,7 +78,7 @@ class PoolDatasetService(Service):
                     "key_present_in_database": false,
                     "valid_key": false,
                     "locked": true,
-                    "unlock_error": "Child cannot be unlocked when parent \"vol/c\" is locked and provided key is invalid",
+                    "unlock_error": "Child cannot be unlocked when parent \"vol/c\" is locked and key is invalid",
                     "unlock_successful": false
                 }
             ]

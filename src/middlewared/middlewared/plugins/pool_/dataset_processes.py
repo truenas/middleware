@@ -34,7 +34,7 @@ class PoolDatasetService(Service):
               {
                 "pid": 97778,
                 "name": "minio",
-                "cmdline": "/usr/local/bin/minio -C /usr/local/etc/minio server --address=0.0.0.0:9000 --quiet /mnt/tank/wk"
+                "cmdline": "/usr/local/bin/minio -C /usr/local/etc/minio server --address=0.0.0.0:9000 /mnt/tank/wk"
               }
             ]
         """

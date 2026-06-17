@@ -12,7 +12,6 @@ from .api import API
 from .event import Event
 from .method import Method
 
-
 _LIST_MARKER_RE = re.compile(r"([-*+]|[0-9]+\.|#\.) ")
 
 
