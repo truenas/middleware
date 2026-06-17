@@ -11,24 +11,26 @@ from .remove_secrets import remove_secrets
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["serialize_result", "serialize_dataclasses"]
+__all__ = ["serialize_result", "serialize_nonmodel_result"]
 
 
-def serialize_dataclasses(result: typing.Any) -> typing.Any:
-    """Recursively convert dataclass instances within a method result into plain dicts.
+def serialize_nonmodel_result(result: typing.Any) -> typing.Any:
+    """Serialize a method result that has no `BaseModel` return type into JSON-friendly data.
 
-    This is the dataclass analogue of `serialize_result`: it is used for methods that return
-    dataclasses without a `BaseModel` return type (e.g. private methods consumed in-process but
-    still reachable over the wire), so the result can be JSON-serialized for transport.
+    Used for methods that return objects without a pydantic return model (e.g. private methods
+    consumed in-process but still reachable over the wire). Currently this recursively converts
+    dataclass instances into plain dicts; other object types may be handled here in the future.
     """
+    # `is_dataclass()` is also true for the dataclass *type* itself; restrict to instances since
+    # `asdict()` requires an instance and would raise on a bare class.
     if dataclasses.is_dataclass(result) and not isinstance(result, type):
         return dataclasses.asdict(result)
     if isinstance(result, list):
-        return [serialize_dataclasses(item) for item in result]
+        return [serialize_nonmodel_result(item) for item in result]
     if isinstance(result, tuple):
-        return tuple(serialize_dataclasses(item) for item in result)
+        return tuple(serialize_nonmodel_result(item) for item in result)
     if isinstance(result, dict):
-        return {key: serialize_dataclasses(value) for key, value in result.items()}
+        return {key: serialize_nonmodel_result(value) for key, value in result.items()}
     return result
 
 

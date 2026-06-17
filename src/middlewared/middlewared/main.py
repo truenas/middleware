@@ -37,7 +37,7 @@ import middlewared.service
 from .api.aliases import aliases as api_versions_aliases
 from .api.base.handler.dump_params import dump_params
 from .api.base.handler.model_provider import LazyModuleModelProvider, ModuleModelProvider, ProxyModelProvider
-from .api.base.handler.result import serialize_dataclasses, serialize_result
+from .api.base.handler.result import serialize_nonmodel_result, serialize_result
 from .api.base.handler.version import APIVersion, APIVersionsAdapter
 from .api.base.model import BaseModel
 from .api.base.server.api import API
@@ -1111,7 +1111,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         if new_style_returns_model:
             return serialize_result(new_style_returns_model, result, expose_secrets, self.dump_result_allow_fallback)
         else:
-            return serialize_dataclasses(result)
+            return serialize_nonmodel_result(result)
 
     async def authorize_method_call(
         self,
