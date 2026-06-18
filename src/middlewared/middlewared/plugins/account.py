@@ -1931,14 +1931,10 @@ class UserService(CRUDService):
 
         .. note::
 
-            When the authenticated session has less than the ``FULL_ADMIN`` role,
-            password changes will be rejected if the payload does not match the
-            currently-authenticated user.
-
-        .. note::
-
-            Users authenticated with a one-time password will be able to change the
-            password without submitting it a second time.
+            When the authenticated session has less than the ``FULL_ADMIN`` role, password changes
+            will be rejected if the payload does not match the currently-authenticated user. Users
+            authenticated with a one-time password are exempt and may change the password without
+            submitting it a second time.
         """
 
         verrors = ValidationErrors()

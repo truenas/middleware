@@ -116,6 +116,12 @@ async def do_create(self, app, data):
 - Do **not** document parameters or return values in the method docstring; those descriptions belong only in the API models (see **API Model Field Descriptions** above).
 - Every mention of another API method (or the method itself) **must** be a method reference, e.g. ``:method:`core.bulk` ``. The docs preprocessor expands this to the full ``:doc:`core.bulk <api_methods_core.bulk>` `` cross-reference at build time.
 - If the description includes example code, it **must** be JSON-RPC (as passed by the API client), not Python.
+- Admonitions, when used, **must** be one of these four RST directives, chosen by severity:
+  - `.. warning::` — risk of fatal errors, data loss, hardware damage, service disruption, or liability if the caller is not careful (e.g. a destructive rollback).
+  - `.. important::` — information that does not quite merit a warning but deserves more attention than a note.
+  - `.. note::` — generic contextual or additional information, requirements, or technical limitations (including soft consequences of not following a recommendation).
+  - `.. tip::` — a recommendation or best practice that improves the result or experience.
+  - Do **not** overuse admonitions — most docstrings need none. Reserve them for information that genuinely stands apart from the surrounding prose.
 
 **API Versioning**:
 - Multiple API versions maintained in parallel (`src/middlewared/middlewared/api/v*/`)

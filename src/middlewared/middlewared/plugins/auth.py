@@ -1088,7 +1088,7 @@ class AuthService(Service):
 
         Attributes set here will appear in the :method:`auth.me` response under the ``attributes`` field.
 
-        .. warning::
+        .. important::
 
             This endpoint exists solely for the use of the TrueNAS UX team. The data stored in these
             attributes *must* be considered opaque from the perspective of the middleware backend,
@@ -1098,8 +1098,8 @@ class AuthService(Service):
         .. warning::
 
             This endpoint is not intended for storing security-sensitive information. The backend
-            storage for this data is not encrypted and it is indexed by unix user id rather than
-            database ID, which exposes a risk of stale settings being reused if a new user gets
+            storage for this data is not encrypted, and it is indexed by unix user id rather than
+            database ID which exposes a risk of stale settings being reused if a new user gets
             assigned the same unix user id as a previously-existing one. This is of particular
             concern when users are provided by directory services.
         """

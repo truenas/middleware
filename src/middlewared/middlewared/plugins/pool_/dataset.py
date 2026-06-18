@@ -972,18 +972,16 @@ class PoolDatasetService(CRUDService):
         """
         Rename a ZFS resource (filesystem, snapshot, or zvolume) identified by ``id``.
 
-        No safety checks are performed when renaming ZFS resources. If the dataset is in use by services such
-        as SMB, iSCSI, snapshot tasks, replication, or cloud sync, renaming may cause disruptions or service failures.
+        .. warning::
 
-        Proceed only if you are certain the ZFS resource is not in use and fully understand the risks.
-        Set ``force`` to continue.
+            No safety checks are performed when renaming ZFS resources. If the resource is in use by services
+            such as SMB, iSCSI, snapshot tasks, replication, or cloud sync, renaming may cause disruptions or
+            service failures. Proceed only if you are certain the resource is not in use and fully understand
+            the risks; set ``force`` to continue.
 
-        .. note::
-
-            The ``recursive`` option is only valid for renaming snapshots. If ``true``, and a snapshot is given, the
-            snapshot will be renamed recursively for all children. For example, ``dozer/a@now`` and ``dozer/a/b@now``
-            will be renamed to ``dozer/a@new`` and ``dozer/a/b@new``. Renaming snapshots is not recommended and can
-            cause disruptions or service failures all the same.
+        The ``recursive`` option is only valid for renaming snapshots. If ``true``, and a snapshot is given, the
+        snapshot is renamed recursively for all children -- for example, ``dozer/a@now`` and ``dozer/a/b@now``
+        are renamed to ``dozer/a@new`` and ``dozer/a/b@new``. Renaming snapshots is likewise not recommended.
         """
         if not options['force']:
             raise ValidationError(

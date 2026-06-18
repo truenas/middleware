@@ -317,13 +317,12 @@ class FailoverService(ConfigService):
         but it will not import the zpool and it will not start ``fenced``. Only way out of that
         situation is to manually fix things (import zpool, migrate VIPs, start ``fenced``, etc).
 
-        .. note::
+        .. warning::
 
             The only "safe" way to "become passive" is to use the **STCNITH** method, or "Shoot The
-            Current Node In The Head" (similar to **STONITH**).
-
-        This ensures that the current node gets out of the way *completely* so there is no chance
-        of the zpool being imported at the same time on both nodes (which can ultimately end in data corruption).
+            Current Node In The Head" (similar to **STONITH**). This ensures the current node gets out
+            of the way *completely* so there is no chance of the zpool being imported on both nodes at
+            the same time which can ultimately end in data corruption.
         """
         if self.middleware.call_sync('failover.config')['disabled'] is True:
             raise ValidationError('failover.become_passive', 'Failover must be enabled.')

@@ -526,7 +526,7 @@ class SMBService(ConfigService):
 
             ``workgroup`` and ``netbiosname`` must have different values.
 
-        .. warning::
+        .. important::
 
             ``smb_options`` are raw ``smb.conf`` parameters that are not covered by the supported configuration
             options. Not all options are tested or supported, and their behavior may change between releases.

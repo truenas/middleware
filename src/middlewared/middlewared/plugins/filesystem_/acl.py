@@ -250,7 +250,7 @@ class FilesystemService(Service):
         trivial ACLs. An ACL is trivial if it can be expressed as a file mode without losing any
         access rules.
 
-        .. warning::
+        .. important::
 
             ``uid``, ``gid``, ``user``, and ``group`` *should* remain unset *unless* the
             administrator wishes to change the owner or group of files.

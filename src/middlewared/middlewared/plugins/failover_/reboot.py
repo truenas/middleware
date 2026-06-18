@@ -187,7 +187,7 @@ class FailoverRebootService(Service):
         """
         Reboot the other node and wait for it to come back online.
 
-        .. note::
+        .. important::
 
             This makes very few checks on HA systems. You need to know what you're doing before
             calling this.
