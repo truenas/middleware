@@ -275,3 +275,15 @@ def test__login_with_api_key_invalid_credentials(api_key_data):
     with pytest.raises(ValueError, match='Invalid API key|Failed to authenticate'):
         with Client('ws://127.0.0.1/api/current') as c:
             c.login_with_api_key('root', '999-invalidkeydata12345')
+
+
+def test__login_with_api_key_over_tls_channel_binding(api_key_data):
+    """Over a TLS (wss) connection the client auto-engages SCRAM-PLUS channel binding. The
+    bound exchange must succeed end to end, which only happens when the server's published
+    tls-server-end-point binding matches the certificate it serves."""
+    with Client('wss://127.0.0.1/api/current', verify_ssl=False) as c:
+        c.login_with_api_key('root', api_key_data['key'])
+        me = c.call('auth.me')
+        assert me['pw_name'] == 'root'
+        assert 'API_KEY' in me['account_attributes']
+        assert 'SCRAM' in me['account_attributes']

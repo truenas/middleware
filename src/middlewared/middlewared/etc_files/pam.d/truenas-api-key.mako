@@ -11,7 +11,7 @@
 %>\
 # Pam configuration for API key authentication
 
-auth		[success=1 default=die]		pam_truenas.so	allow_password_auth
+auth		[success=1 default=die]		pam_truenas.so	allow_password_auth channel_binding=negotiate
 @include common-auth-unix
 %if ds_auth:
 @include common-account
