@@ -12,6 +12,12 @@ TrueNAS middleware supports two authentication methods for API keys:
 SCRAM authentication provides mutual authentication between client and server without transmitting
 the raw key material during authentication. It is the recommended method for all implementations.
 
+SCRAM also supports an optional, negotiated **channel binding** mode (SCRAM-PLUS, using the
+RFC 5929 ``tls-server-end-point`` binding) that cryptographically ties an authentication exchange
+to the server's TLS certificate, defeating a TLS-terminating man-in-the-middle. See
+`Channel Binding (SCRAM-PLUS)`_ below for the protocol details and for examples of computing the
+binding.
+
 API Key Format
 --------------
 
@@ -152,6 +158,29 @@ Specifying Authentication Mechanism
 
         # Auto-detect (default - recommended)
         c.login_with_api_key('root', api_key, APIKeyAuthMech.AUTO)
+
+Channel Binding with the API Client
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When the connection is made over TLS (``wss://``), the client automatically engages SCRAM-PLUS
+channel binding (RFC 5929 ``tls-server-end-point``): it reads the server certificate from the live
+TLS socket, computes the binding, and folds it into the SCRAM proof. No extra configuration is
+required, and it works even with ``verify_ssl=False`` (the certificate is still read from the
+handshake):
+
+.. code-block:: python
+
+    from truenas_api_client import Client
+
+    # Over wss:// the SCRAM exchange is automatically channel-bound to the server certificate.
+    with Client('wss://truenas.local/api/current') as c:
+        c.login_with_api_key('root', '1-uz8DhKHFhRIUQIvjzabPYtpy...')
+        pools = c.call('pool.query')
+
+Over a non-TLS transport (a plain ``ws://`` connection or the local AF_UNIX socket) the client
+skips channel binding and the server accepts the unbound exchange. See
+`Channel Binding (SCRAM-PLUS)`_ below for the protocol details and for adding channel binding to a
+custom client.
 
 Using Key Files
 ~~~~~~~~~~~~~~~
@@ -295,7 +324,9 @@ Example for user ``root`` with API key ID ``1``:
 
 Where:
 
-- ``n,,`` indicates no channel binding (GS2 header per RFC 5802 Section 7)
+- ``n,,`` is the GS2 header (RFC 5802 Section 7). ``n,,`` requests no channel binding; a
+  channel-binding client sends ``p=tls-server-end-point,,`` instead (see
+  `Channel Binding (SCRAM-PLUS)`_)
 - ``n={username}:{api_key_id}`` specifies the username and API key ID concatenated with ``:``
 - ``r={client-nonce}`` is a client-generated random nonce (base64-encoded, 32 bytes recommended)
 
@@ -319,7 +350,9 @@ Where:
 
 Where:
 
-- ``c={channel-binding}`` is base64-encoded GS2 header (``biws`` which is base64 for ``n,,``)
+- ``c={channel-binding}`` is the base64-encoded GS2 header (``biws`` — base64 of ``n,,`` — when no
+  channel binding is used; with channel binding it also carries the binding data, see
+  `Channel Binding (SCRAM-PLUS)`_)
 - ``r={server-nonce}`` matches server's nonce from first response
 - ``p={client-proof}`` is base64-encoded client proof (see computation below)
 
@@ -354,7 +387,9 @@ Where:
 
 - ``client-first-bare`` is the client first message without the GS2 header (e.g., ``n=root:1,r=...``)
 - ``server-first`` is the complete server first response (e.g., ``r=...,s=...,i=...``)
-- ``client-final-without-proof`` is the client final message without the proof (e.g., ``c=biws,r=...``)
+- ``client-final-without-proof`` is the client final message without the proof (e.g., ``c=biws,r=...``).
+  When channel binding is used, the binding is carried inside ``c=`` and is therefore covered by the
+  proof automatically (see `Channel Binding (SCRAM-PLUS)`_)
 
 **Using Precomputed Keys:** If you have precomputed SCRAM data from TrueNAS 26+ or from
 ``api_key.convert_raw_key``, you can skip the expensive PBKDF2 computation and use the
@@ -711,6 +746,231 @@ Usage example:
         return sc.VerifyServerSignature(resp2["rfc_str"].(string))
     }
 
+Channel Binding (SCRAM-PLUS)
+----------------------------
+
+How channel binding works
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+SCRAM-PLUS (the ``-PLUS`` mechanism variants in RFC 5802 / RFC 7677) cryptographically binds a
+SCRAM exchange to the TLS channel it runs over, using *channel binding* as defined in RFC 5929.
+TrueNAS implements the ``tls-server-end-point`` binding: a value derived from the server's leaf
+TLS certificate. Folding this value into the SCRAM proof lets the server detect a TLS-terminating
+man-in-the-middle — an attacker who proxies the TLS connection presents a different certificate, so
+the binding the client computes will not match the one the server expects and authentication fails.
+
+Channel binding is **optional and negotiated per exchange** (the API-key PAM stack runs in
+``channel_binding=negotiate`` mode):
+
+- A client that does not request binding (GS2 ``n,,`` header) authenticates normally, even when the
+  server has a binding available. This preserves backward compatibility with older clients.
+- A client that requires binding (GS2 ``p=tls-server-end-point`` header) is verified against the
+  server's certificate, and a mismatch is rejected.
+
+**TrueNAS-specific behavior:**
+
+- TLS is terminated at the nginx reverse proxy in front of middleware, so the binding is a hash of
+  the **public** UI certificate that nginx serves. middlewared publishes the active UI certificate's
+  ``tls-server-end-point`` value where ``pam_truenas`` can read and verify against it, and refreshes
+  it automatically when the UI certificate is changed or redeployed.
+- Because the binding is only a hash of a public certificate, a cleartext client could replay it.
+  middleware therefore **rejects a channel-binding request (GS2 ``p=``) that does not arrive over
+  TLS**, returning ``AUTH_ERR`` for the CLIENT_FIRST_MESSAGE before any challenge is issued. Request
+  channel binding over ``wss://`` only.
+- The recommended binding for TLS 1.3 is ``tls-exporter`` (RFC 9266). TrueNAS currently implements
+  ``tls-server-end-point`` (RFC 5929), which works across TLS versions and does not require the TLS
+  library to expose a keying-material exporter.
+
+Computing the tls-server-end-point value
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``tls-server-end-point`` value is the server's DER-encoded leaf certificate hashed with the
+digest from the certificate's own signature algorithm, with one substitution from RFC 5929
+Section 4.1: if that algorithm uses MD5 or SHA-1, SHA-256 is used instead. For example, a
+certificate signed with ``sha256WithRSAEncryption`` yields ``SHA-256(DER)``, and one signed with
+``ecdsa-with-SHA384`` yields ``SHA-384(DER)``. Signature algorithms with no single well-defined hash
+(EdDSA, RSASSA-PSS) have no defined binding and must be rejected.
+
+The DER-encoded leaf certificate is read from the live TLS connection — for example
+``ssl_socket.getpeercert(binary_form=True)`` in Python or ``conn.ConnectionState().PeerCertificates[0].Raw``
+in Go. This is the certificate as actually presented in the handshake, which is the whole point of
+the binding: it reflects whatever endpoint the client is really talking to.
+
+**Python (recommended) — using** ``truenas_pyscram``:
+
+.. code-block:: python
+
+    import truenas_pyscram
+
+    # cert_der: the DER-encoded leaf certificate from the live TLS connection,
+    # e.g. ssl_socket.getpeercert(binary_form=True).
+    binding = truenas_pyscram.compute_tls_server_end_point(cert_der)
+    # `binding` is a CryptoDatum wrapping the raw binding bytes; bytes(binding) for the raw value.
+
+**Python (from scratch) — for clients that cannot use** ``truenas_pyscram``:
+
+.. code-block:: python
+
+    import hashlib
+    from cryptography import x509
+
+    def compute_tls_server_end_point(cert_der: bytes) -> bytes:
+        cert = x509.load_der_x509_certificate(cert_der)
+        # `signature_hash_algorithm` is None for algorithms (e.g. Ed25519) that have no
+        # separate hash; those have no defined tls-server-end-point binding.
+        sig_hash = cert.signature_hash_algorithm
+        if sig_hash is None:
+            raise ValueError('tls-server-end-point is undefined for this signature algorithm')
+
+        # RFC 5929 4.1: MD5 and SHA-1 are promoted to SHA-256.
+        hash_name = 'sha256' if sig_hash.name in ('md5', 'sha1') else sig_hash.name
+        return hashlib.new(hash_name, cert_der).digest()
+
+(TrueNAS UI certificates are RSA or ECDSA in practice. The authoritative implementation also rejects
+RSASSA-PSS, which the simplified example above does not special-case.)
+
+**Go — computing the binding from the TLS connection:**
+
+.. code-block:: go
+
+    import (
+        "crypto/sha256"
+        "crypto/sha512"
+        "crypto/x509"
+        "fmt"
+        "hash"
+    )
+
+    // computeTLSServerEndPoint returns the RFC 5929 tls-server-end-point channel
+    // binding for a server leaf certificate: the DER certificate hashed with the
+    // digest from its own signature algorithm, with MD5/SHA-1 promoted to SHA-256.
+    func computeTLSServerEndPoint(cert *x509.Certificate) ([]byte, error) {
+        var h hash.Hash
+        switch cert.SignatureAlgorithm {
+        case x509.MD5WithRSA, x509.SHA1WithRSA, x509.ECDSAWithSHA1: // RFC 5929 4.1: promoted
+            h = sha256.New()
+        case x509.SHA256WithRSA, x509.ECDSAWithSHA256:
+            h = sha256.New()
+        case x509.SHA384WithRSA, x509.ECDSAWithSHA384:
+            h = sha512.New384()
+        case x509.SHA512WithRSA, x509.ECDSAWithSHA512:
+            h = sha512.New()
+        default:
+            // RSASSA-PSS, Ed25519, etc. have no defined tls-server-end-point binding.
+            return nil, fmt.Errorf("tls-server-end-point undefined for %s", cert.SignatureAlgorithm)
+        }
+        h.Write(cert.Raw)
+        return h.Sum(nil), nil
+    }
+
+    // The leaf certificate comes from the established TLS connection:
+    //     state := tlsConn.ConnectionState()
+    //     binding, err := computeTLSServerEndPoint(state.PeerCertificates[0])
+
+Channel binding on the wire
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Channel binding changes only two fields of the SCRAM exchange; everything else (the
+``ClientKey``/``StoredKey``/``ServerKey``/``ServerSignature`` computations, the nonces, the proof
+formula) is identical to the unbound flow.
+
+1. The **GS2 header** in the client-first-message changes from the no-binding flag ``n`` to
+   ``p=tls-server-end-point``:
+
+   Unbound::
+
+       n,,n=root:1,r=fyko+d2lbbFgONRv9qkxdawL
+
+   Bound::
+
+       p=tls-server-end-point,,n=root:1,r=fyko+d2lbbFgONRv9qkxdawL
+
+2. The **c= attribute** in the client-final-message carries the GS2 header followed by the raw
+   binding bytes, base64-encoded as a whole. The GS2 header here is the cbind flag plus its
+   ``,,`` separator exactly as it appeared in client-first:
+
+   Unbound — ``c=biws`` (``biws`` is base64 of ``n,,``)::
+
+       c=biws,r=...,p=...
+
+   Bound — ``c=`` is ``base64("p=tls-server-end-point,," + binding_bytes)``::
+
+       c=<base64 of "p=tls-server-end-point,," followed by the raw binding bytes>,r=...,p=...
+
+Because ``c=`` is part of ``client-final-without-proof``, which is part of the ``AuthMessage`` covered
+by the client proof, the binding is authenticated by the same proof — there is no separate field for
+it on the wire.
+
+Adding channel binding to a custom client
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Python** — ``truenas_pyscram`` builds both messages for you. Pass ``channel_binding_type`` to the
+client-first (which sets the ``p=tls-server-end-point`` GS2 header) and the binding bytes to the
+client-final (which folds them into ``c=``):
+
+.. code-block:: python
+
+    import truenas_pyscram
+
+    cert_der = ssl_socket.getpeercert(binary_form=True)
+    binding = truenas_pyscram.compute_tls_server_end_point(cert_der)
+
+    client_first = truenas_pyscram.ClientFirstMessage(
+        username='root', api_key_id=1,
+        channel_binding_type=truenas_pyscram.CB_TLS_SERVER_END_POINT,
+    )
+    # ... send str(client_first) as the CLIENT_FIRST_MESSAGE rfc_str, receive the server-first ...
+    server_first = truenas_pyscram.ServerFirstMessage(rfc_string=server_first_rfc_str)
+
+    client_final = truenas_pyscram.ClientFinalMessage(
+        client_first=client_first, server_first=server_first,
+        client_key=client_key, stored_key=stored_key,
+        channel_binding=binding,
+    )
+    # ... send str(client_final) as the CLIENT_FINAL_MESSAGE rfc_str ...
+
+**Go** — extend the ``ScramClient`` from `Example: Go Implementation`_ with a ``channelBinding``
+field, then make these two changes. In ``GetClientFirstMessage`` choose the GS2 header from whether a
+binding is present:
+
+.. code-block:: go
+
+    gs2Header := "n,,"
+    if sc.channelBinding != nil {
+        gs2Header = "p=tls-server-end-point,,"
+    }
+    sc.clientFirstBare = fmt.Sprintf("n=%s,r=%s", scramUsername, sc.clientNonce)
+    rfcStr := gs2Header + sc.clientFirstBare
+
+In ``GetClientFinalMessage`` (and the matching reconstruction in ``VerifyServerSignature``) build the
+``c=`` value from the same GS2 header plus the raw binding bytes:
+
+.. code-block:: go
+
+    // cbind-input = gs2-header + cbind-data (RFC 5802 Section 6)
+    cbindInput := []byte("n,,")
+    if sc.channelBinding != nil {
+        cbindInput = append([]byte("p=tls-server-end-point,,"), sc.channelBinding...)
+    }
+    channelBinding := base64.StdEncoding.EncodeToString(cbindInput)
+    clientFinalWithoutProof := fmt.Sprintf("c=%s,r=%s", channelBinding, sc.serverNonce)
+
+Set ``sc.channelBinding`` from ``computeTLSServerEndPoint()`` (above) once the TLS connection is
+established and before sending the client-first-message.
+
+Verifying behavior
+~~~~~~~~~~~~~~~~~~~
+
+The negotiated, TLS-only semantics produce three observable outcomes:
+
+- An **unbound** login (GS2 ``n,,``) succeeds even when the server has a binding published — binding
+  is negotiated, not required.
+- A **bound** login (GS2 ``p=tls-server-end-point``) over ``wss://`` succeeds only when the client's
+  computed binding matches the certificate nginx serves; a mismatch fails.
+- A **bound request over plain** ``ws://`` is rejected at the CLIENT_FIRST_MESSAGE with ``AUTH_ERR``,
+  because the binding cannot be honored on a non-TLS transport.
+
+
 Security Considerations
 -----------------------
 
@@ -852,9 +1112,21 @@ References
 
   https://datatracker.ietf.org/doc/html/rfc7677
 
+- RFC 5929: Channel Bindings for TLS (defines ``tls-server-end-point``, used for SCRAM-PLUS)
+
+  https://datatracker.ietf.org/doc/html/rfc5929
+
+- RFC 9266: Channel Bindings for TLS 1.3 (defines ``tls-exporter``)
+
+  https://datatracker.ietf.org/doc/html/rfc9266
+
 - RFC 5234: Augmented BNF for Syntax Specifications: ABNF
 
   https://datatracker.ietf.org/doc/html/rfc5234
+
+- TrueNAS SCRAM Library (C and Python client-side primitives, incl. channel binding)
+
+  https://github.com/truenas/truenas_scram
 
 - TrueNAS API Client Library
 
