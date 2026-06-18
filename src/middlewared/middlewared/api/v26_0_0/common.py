@@ -94,7 +94,10 @@ class QueryOptions(BaseModel):
 
 
 class QueryArgs(BaseModel):
-    filters: QueryFilters = []
+    filters: QueryFilters = Field(
+        default=[],
+        description=QF_DOC,
+    )
     options: QueryOptions = Field(
         default=QueryOptions(),
         description="Query options including pagination, ordering, and additional parameters.",
