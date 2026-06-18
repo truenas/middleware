@@ -1,3 +1,4 @@
+import ast
 import importlib
 import inspect
 import os
@@ -6,8 +7,12 @@ import pkgutil
 
 import pytest
 
+import middlewared
 import middlewared.api
 from middlewared.api.base import BaseModel
+
+PUBLIC_API_DECORATORS = frozenset({"api_method", "filterable_api_method"})
+PRIVATE_DECORATORS = frozenset({"private", "private_method"})
 
 
 @pytest.fixture(scope="module")
@@ -58,7 +63,7 @@ def check_docstring(docstr: str | None, must_have: bool = False):
     if not docstr.endswith("."):
         return "Docstring must end with a period"
     if any(line[-1] not in (".", ":") for line in docstr.splitlines() if line):
-        return r"Use '\' at ends of lines to wrap text"  # noqa: LIT013
+        return "Lines must end with a colon or a period"
 
 
 def test_api_current_module_exports(current_api_package):
@@ -89,3 +94,81 @@ def test_api_docstrings(current_api_package):
 
     if errors:
         raise ExceptionGroup(f"Improper docstring(s) detected in {current_api_package.__name__}", errors)
+
+
+def _decorator_name(node):
+    """Return the bare name of a decorator node."""
+    target = node.func if isinstance(node, ast.Call) else node
+    return getattr(target, "id", None) or getattr(target, "attr", None)
+
+
+def _is_true(node):
+    return isinstance(node, ast.Constant) and node.value is True
+
+
+def _service_is_private(class_node):
+    """Return whether a service class declares ``private = True`` in its ``Config``."""
+    for member in class_node.body:
+        if isinstance(member, ast.ClassDef) and member.name == "Config":
+            for stmt in member.body:
+                if (
+                    isinstance(stmt, ast.Assign)
+                    and any(isinstance(t, ast.Name) and t.id == "private" for t in stmt.targets)
+                    and _is_true(stmt.value)
+                ):
+                    return True
+    return False
+
+
+def _iter_public_api_methods(tree):
+    """Yield each method node in `tree` that is exposed in the public API.
+
+    A method is public when it is decorated with one of `PUBLIC_API_DECORATORS` and is not made
+    private by its enclosing service's ``Config``, a private decorator, or a ``private=True`` keyword
+    argument to the API decorator.
+    """
+    for class_node in ast.walk(tree):
+        if not isinstance(class_node, ast.ClassDef):
+            continue
+
+        service_private = _service_is_private(class_node)
+        for node in class_node.body:
+            if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                continue
+
+            decorator_names = [_decorator_name(d) for d in node.decorator_list]
+            if not any(name in PUBLIC_API_DECORATORS for name in decorator_names):
+                continue
+
+            if service_private or any(name in PRIVATE_DECORATORS for name in decorator_names):
+                continue
+
+            if any(
+                isinstance(d, ast.Call)
+                and _decorator_name(d) in PUBLIC_API_DECORATORS
+                and any(kw.arg == "private" and _is_true(kw.value) for kw in d.keywords)
+                for d in node.decorator_list
+            ):
+                continue
+
+            yield node
+
+
+def test_api_method_docstrings():
+    """Every public API method must have a non-empty docstring (see CLAUDE.md)."""
+    package_root = pathlib.Path(middlewared.__file__).parent
+    errors = []
+    for path in sorted(package_root.rglob("*.py")):
+        # Skip the test suite itself.
+        if "pytest" in path.relative_to(package_root).parts:
+            continue
+
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        for node in _iter_public_api_methods(tree):
+            docstring = ast.get_docstring(node)
+            if not docstring or not docstring.strip():
+                rel_path = path.relative_to(package_root)
+                errors.append(SyntaxWarning(f"{rel_path}:{node.lineno}: {node.name} is missing a docstring"))
+
+    if errors:
+        raise ExceptionGroup("Public API method(s) without a docstring", errors)

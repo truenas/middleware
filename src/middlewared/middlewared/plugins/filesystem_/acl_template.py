@@ -112,6 +112,11 @@ class ACLTemplateService(CRUDService):
 
     @filterable_api_method(item=ACLTemplateEntry, roles=['FILESYSTEM_ATTRS_READ'])
     async def query(self, filters, options):
+        """
+        Retrieve the available filesystem ACL templates.
+
+        Built-in templates are returned with their access control list fully populated.
+        """
         templates = await super().query(filters or [], {})
         for t in templates:
             if t['builtin']:

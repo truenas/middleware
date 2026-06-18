@@ -96,6 +96,12 @@ class BootEnvironmentService(Service):
 
     @filterable_api_method(item=BootEnvironmentEntry, roles=['BOOT_ENV_READ'])
     def query(self, filters, options):
+        """
+        Retrieve the boot environments present in the system's boot pool.
+
+        The ``active`` field identifies the boot environment that is currently running, while the
+        ``activated`` field identifies the one that will be used on the next boot.
+        """
         results = list()
         try:
             info, bp_name = self.zfs_get_props()
