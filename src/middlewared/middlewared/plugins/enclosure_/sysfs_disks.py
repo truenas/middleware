@@ -3,11 +3,15 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
+import re
 from dataclasses import dataclass
 from os import scandir
 from pathlib import Path
 
 from .enums import ControllerModels
+
+
+_NVME_NAMESPACE_RE = re.compile(r'nvme\d+n\d+')
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
@@ -58,8 +62,26 @@ def map_disks_to_enclosure_slots(enc) -> dict[int, BaseDev]:
                 try:
                     name = next((path / "device/block").iterdir(), None).name
                 except (AttributeError, FileNotFoundError):
-                    # no disk in this slot
-                    name = None
+                    # No SCSI/SATA block device under this slot. Try the
+                    # NVMe layout: V-series PEX89088-fronted bays expose
+                    # the NVMe controller as the slot's `device/` and the
+                    # namespace as a sibling directory (e.g.
+                    # `device/nvme7n1`). Pick the first namespace dir.
+                    # Note: this only picks one namespace per drive — it
+                    # doesn't account for NVMe devices with multiple
+                    # namespaces, but neither do many other places in
+                    # this codebase.
+                    try:
+                        name = next(
+                            (
+                                d.name for d in (path / "device").iterdir()
+                                if d.is_dir() and _NVME_NAMESPACE_RE.fullmatch(d.name)
+                            ),
+                            None,
+                        )
+                    except (AttributeError, FileNotFoundError):
+                        # no disk in this slot
+                        name = None
                 try:
                     locate = (
                         "ON" if (path / "locate").read_text().strip() == "1" else "OFF"

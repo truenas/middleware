@@ -724,15 +724,89 @@ def get_slot_info(enc):
             }
         }
     elif enc.is_vseries:
-        # V-series has 2 VirtualSES enclosures (one per 9600-12i4e HBA)
-        # Front 24 slots are split between two HBAs with interleaved mapping
-        # Use slot designation to distinguish between enclosures
+        # V-series has 2 VirtualSES enclosures.
+        # V1xx (V100/V140/V160): one VirtualSES per 9600-12i4e SAS HBA. Each
+        # HBA's SES exposes its own 12 slots at libsg3 element indices 1-12
+        # with sysfs slot files starting at 0.
+        # V2xx (V260/V280): a single PEX89088 PCIe switch chip is partitioned
+        # into two VirtualSES enclosures. Each partition exposes ALL 24 chip
+        # elements through every sg device; the slots it actually owns are
+        # at libsg3 indices 1-12 (NVME0 partition) or 13-24 (NVME8 partition)
+        # with sysfs slot files matching the index 1:1 (not offset). Some
+        # physical chassis positions are also wired differently from V1xx —
+        # at minimum display slots 4 and 8 swap.
+        # Front 24 slots are split between the two SES enclosures with
+        # interleaved mapping; slot_designation (NVME0/NVME8) distinguishes
+        # them. We branch by enc.product so the right table is picked.
+        if enc.product in ('4IXGA-SWp', '4IXGA-SWs'):
+            return {
+                'any_version': True,
+                'versions': {
+                    'DEFAULT': {
+                        'id': {
+                            # V2xx NVME0 — first PEX89088 partition.
+                            # Handles TrueNAS slots 1-10, 13-14.
+                            # libsg3 element key 1-12 → kernel sysfs slot
+                            # file 1-12 (same value, no offset). Display
+                            # slots 4/8 use SES keys 8/7 (swapped from V160).
+                            'NVME0': {
+                                key: {
+                                    SYSFS_SLOT_KEY: sysfs_key,
+                                    MAPPED_SLOT_KEY: mapped_key,
+                                    SUPPORTS_IDENTIFY_KEY: True,
+                                }
+                                for key, sysfs_key, mapped_key in (
+                                    (1, 1, 1),
+                                    (4, 4, 2),
+                                    (5, 5, 3),
+                                    (8, 8, 4),   # V2xx: SES key 8 → display 4 (V1xx had key 7)
+                                    (2, 2, 5),
+                                    (3, 3, 6),
+                                    (6, 6, 7),
+                                    (7, 7, 8),   # V2xx: SES key 7 → display 8 (V1xx had key 8)
+                                    (9, 9, 9),
+                                    (12, 12, 10),
+                                    (10, 10, 13),
+                                    (11, 11, 14),
+                                )
+                            },
+                            # V2xx NVME8 — second PEX89088 partition.
+                            # Handles TrueNAS slots 11-12, 15-24.
+                            # On V2xx the partition exposes its 12 slots at
+                            # libsg3 element indices 13-24 (offset +12 from
+                            # V1xx convention). Sysfs slot files match the
+                            # index 13-24 1:1.
+                            'NVME8': {
+                                key: {
+                                    SYSFS_SLOT_KEY: sysfs_key,
+                                    MAPPED_SLOT_KEY: mapped_key,
+                                    SUPPORTS_IDENTIFY_KEY: True,
+                                }
+                                for key, sysfs_key, mapped_key in (
+                                    (13, 13, 11),
+                                    (16, 16, 12),
+                                    (14, 14, 15),
+                                    (15, 15, 16),
+                                    (17, 17, 17),
+                                    (20, 20, 18),
+                                    (21, 21, 19),
+                                    (24, 24, 20),
+                                    (18, 18, 21),
+                                    (19, 19, 22),
+                                    (22, 22, 23),
+                                    (23, 23, 24),
+                                )
+                            },
+                        }
+                    }
+                }
+            }
         return {
             'any_version': True,
             'versions': {
                 'DEFAULT': {
                     'id': {
-                        # First VirtualSES enclosure
+                        # V1xx NVME0 — first 9600-12i4e SAS HBA VirtualSES.
                         # Handles TrueNAS slots 1-10, 13-14
                         'NVME0': {
                             key: {SYSFS_SLOT_KEY: sysfs_key, MAPPED_SLOT_KEY: mapped_key, SUPPORTS_IDENTIFY_KEY: True}
@@ -751,7 +825,7 @@ def get_slot_info(enc):
                                 (11, 10, 14),
                             )
                         },
-                        # Second VirtualSES enclosure
+                        # V1xx NVME8 — second 9600-12i4e SAS HBA VirtualSES.
                         # Handles TrueNAS slots 11-12, 15-24
                         'NVME8': {
                             key: {SYSFS_SLOT_KEY: sysfs_key, MAPPED_SLOT_KEY: mapped_key, SUPPORTS_IDENTIFY_KEY: True}
