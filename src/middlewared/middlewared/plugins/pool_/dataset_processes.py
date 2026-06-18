@@ -23,20 +23,20 @@ class PoolDatasetService(Service):
         """
         Return a list of processes using this dataset.
 
-        Example return value:
+        Example return value::
 
-        [
-          {
-            "pid": 2520,
-            "name": "smbd",
-            "service": "cifs"
-          },
-          {
-            "pid": 97778,
-            "name": "minio",
-            "cmdline": "/usr/local/bin/minio -C /usr/local/etc/minio server --address=0.0.0.0:9000 --quiet /mnt/tank/wk"
-          }
-        ]
+            [
+              {
+                "pid": 2520,
+                "name": "smbd",
+                "service": "cifs"
+              },
+              {
+                "pid": 97778,
+                "name": "minio",
+                "cmdline": "/usr/local/bin/minio -C /usr/local/etc/minio server --address=0.0.0.0:9000 /mnt/tank/wk"
+              }
+            ]
         """
         dataset = await self.middleware.call('pool.dataset.get_instance_quick', oid, {'encryption': True})
         if dataset['locked']:

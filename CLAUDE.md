@@ -105,8 +105,17 @@ async def do_create(self, app, data):
 ```
 
 **API Model Field Descriptions**:
-- Every field in API models (`Args`, `Result`, `Entry` classes) **must** have a description, either as a docstring or via `Field(description=...)`.
+- Every field in API models (`Args`, `Result`, `Entry` classes) **must** have a description via `Field(description=...)`.
 - This is enforced by `test_api_docstrings` in the unit test suite.
+- Description can be formatted with Markdown.
+
+**Method Docstrings**:
+- Every public API method (decorated with `@api_method`) **must** have a docstring.
+- The docstring is a description of the method, formatted with reStructuredText (RST).
+- Do **not** use Google- or NumPy-style docstrings (no `Args:`/`Returns:`/`Parameters` sections).
+- Do **not** document parameters or return values in the method docstring; those descriptions belong only in the API models (see **API Model Field Descriptions** above).
+- Every mention of another API method (or the method itself) **must** be a method reference, e.g. ``:method:`core.bulk` ``. The docs preprocessor expands this to the full ``:doc:`core.bulk <api_methods_core.bulk>` `` cross-reference at build time.
+- If the description includes example code, it **must** be JSON-RPC (as passed by the API client), not Python.
 
 **API Versioning**:
 - Multiple API versions maintained in parallel (`src/middlewared/middlewared/api/v*/`)
@@ -227,92 +236,26 @@ Common test patterns:
 
 ## Logging Guidelines
 
-The middleware follows a philosophy of **logging problems and state changes, not routine success**. The absence of error messages indicates successful operation.
+Log **problems and state changes, not routine success** — absence of error messages means things worked. Use `self.logger`.
 
-### When TO Log
+**Levels:**
+- **ERROR** — operation failures, unexpected exceptions (always `exc_info=True`), service state problems, data inconsistencies.
+- **WARNING** — recoverable/degraded conditions, non-critical config issues, failed non-critical cleanup, unexpected-but-handled data.
+- **INFO** — significant state changes and milestones (pool imports, service starts, setup completion).
+- **DEBUG** — flow through complex multi-step operations, significant code-path entry/exit, race-condition workarounds.
 
-**ERROR level** (`self.logger.error`):
-- Operation failures that prevent functionality
-- Unexpected exceptions (always use `exc_info=True`)
-- Service state problems
-- Critical configuration errors
-- Data inconsistencies
+**Do NOT log:** routine reads/queries/`get_instance`, datastore lookups and config retrieval, successful routine CRUD, internal helper calls, data transforms, cache hits, or anything sensitive (credentials, keys, passwords). For input validation raise `ValidationError`; for permission/operational failures raise `CallError` — don't log instead of raising.
+
+**Conventions:**
+- Include a resource identifier in every message; use the `'resource: description'` format.
+- Pass `exc_info=True` on all exception logs to capture the stack trace.
+- Log an error once — don't re-log the same failure at multiple levels as it propagates.
 
 ```python
-try:
-    # operation
 except Exception:
     self.logger.error('%s: failed to perform operation', resource_name, exc_info=True)
     raise
 ```
-
-**WARNING level** (`self.logger.warning`):
-- Recoverable errors or degraded functionality
-- Configuration issues that don't prevent operation
-- Missing or unexpected data that can be handled
-- Failed cleanup operations that aren't critical
-- Unexpected conditions that succeeded but shouldn't have occurred
-
-**INFO level** (`self.logger.info`):
-- Significant system state changes (pool imports, service starts)
-- Major configuration changes
-- Initialization/setup completion messages
-- Important milestones in long-running operations
-
-**DEBUG level** (`self.logger.debug`):
-- Progress tracking through complex multi-step operations
-- Entry/exit of significant code paths
-- State transitions that help trace execution flow
-- Race condition detection or workarounds applied
-
-### When NOT to Log
-
-**Do NOT log:**
-- ❌ Standard read operations (`.query()`, `.get_instance()`)
-- ❌ Database lookups and configuration retrieval
-- ❌ Input validation (raise `ValidationError` instead)
-- ❌ Permission checks (raise `CallError` instead)
-- ❌ Successful routine CRUD operations
-- ❌ Internal helper method calls
-- ❌ Data transformation/formatting operations
-- ❌ Cache lookups or simple getters/setters
-- ❌ Sensitive data (credentials, keys, passwords)
-
-### Logging Patterns
-
-```python
-# Pattern 1: Exception with context and stack trace
-try:
-    result = perform_operation()
-except Exception:
-    self.logger.error('Failed to perform operation on %r', resource_id, exc_info=True)
-    raise CallError(f'Operation failed: {error}')
-
-# Pattern 2: Warning for non-critical failures
-if not expected_condition:
-    self.logger.warning('%s: unexpected condition detected', resource_name)
-
-# Pattern 3: Debug for complex operation flow
-self.logger.debug('Starting multi-step operation on %r', resource_name)
-# ... step 1 ...
-self.logger.debug('Completed step 1, beginning step 2')
-# ... step 2 ...
-self.logger.debug('Operation completed successfully')
-
-# Pattern 4: Info for significant state changes
-self.logger.info('Pool %r imported successfully', pool_name)
-
-# Pattern 5: Structured message format
-self.logger.error('%s: %s', resource_identifier, description)
-```
-
-### Key Principles
-
-1. **Context is critical**: Always include resource identifiers (pool name, share ID, etc.)
-2. **Use `exc_info=True`**: For all exceptions to capture stack traces
-3. **Structured format**: Use `'resource: description'` pattern consistently
-4. **No success logging**: Don't log when things work as expected
-5. **Log once**: Don't log the same error at multiple levels
 
 ## Important Notes
 

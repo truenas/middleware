@@ -82,7 +82,9 @@ class AuthSessionsEntry(BaseModel):
 class AuthCommonOptions(BaseModel):
     user_info: bool = Field(
         default=True,
-        description="Whether to include detailed user information in the authentication response.",
+        description=(
+            "Whether to include detailed user information (the output of `auth.me`) in the authentication response."
+        ),
     )  # include auth.me in successful result
     reconnect_token: bool = Field(
         default=False,
@@ -214,7 +216,9 @@ class AuthUserInfo(UserGetUserObj):
 
 class AuthRespSuccess(BaseModel):
     response_type: Literal["SUCCESS"] = Field(description="Authentication response type indicating successful login.")
-    user_info: AuthUserInfo | None = Field(description="Authenticated user information or `null` if not available.")
+    user_info: AuthUserInfo | None = Field(
+        description="Authenticated user information (the output of `auth.me`), or `null` if not requested.",
+    )
     authenticator: Literal['LEVEL_1', 'LEVEL_2'] = Field(
         description="Authentication level achieved (LEVEL_1 for password, LEVEL_2 for two-factor).",
     )

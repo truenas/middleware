@@ -152,6 +152,7 @@ class SNMPService(SystemServiceService):
         Update SNMP Service Configuration.
 
         --- Rules ---
+
         Enabling v3:
             requires v3_username, v3_authtype and v3_password
         Disabling v3:

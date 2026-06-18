@@ -291,11 +291,13 @@ class VMService(GenericCRUDService[VMEntry]):
         Get the current maximum amount of available memory to be allocated for VMs.
 
         In case of `overcommit` being `true`, calculations are done in the following manner:
+
         1. If a VM has requested 10G but is only consuming 5G, only 5G will be counted
         2. System will consider shrinkable ZFS ARC as free memory ( shrinkable ZFS ARC is current ZFS ARC
            minus ZFS ARC minimum )
 
         In case of `overcommit` being `false`, calculations are done in the following manner:
+
         1. Complete VM requested memory will be taken into account regardless of how much actual physical
            memory the VM is consuming
         2. System will not consider shrinkable ZFS ARC as free memory
@@ -423,9 +425,6 @@ class VMService(GenericCRUDService[VMEntry]):
     def random_mac(self) -> str:
         """
         Create a random mac address.
-
-        Returns:
-            str: with six groups of two hexadecimal digits
         """
         return random_mac()
 

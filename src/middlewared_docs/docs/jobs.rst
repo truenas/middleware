@@ -121,6 +121,8 @@ Uploading / Downloading Files
 There are some jobs which require input or output as files which can
 be uploaded or downloaded.
 
+.. _downloading-files:
+
 Downloading a File
 ^^^^^^^^^^^^^^^^^^
 

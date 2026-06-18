@@ -295,8 +295,8 @@ class DocumentationGenerator:
                     # Add note about file upload for jobs with input pipes
                     result += f"*This job {modal} be used with file upload.* See :ref:`uploading-files`.\n\n"
                 if item.output_pipes:
-                    # Add note about core.download for jobs with output pipes
-                    result += f"*This job {modal} be used with* :doc:`core.download <api_methods_core.download>`.\n\n"
+                    # Add note about file download for jobs with output pipes
+                    result += f"*This job {modal} produce a file for download.* See :ref:`downloading-files`.\n\n"
 
         result += ".. raw:: html\n\n"
         result += textwrap.indent('<div id="json-schema">' + schemas_html + "</div><br><br>", " " * 4) + "\n\n"

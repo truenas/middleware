@@ -12,6 +12,64 @@ from .api import API
 from .event import Event
 from .method import Method
 
+_LIST_MARKER_RE = re.compile(r"([-*+]|[0-9]+\.|#\.) ")
+_METHOD_REF_RE = re.compile(r":method:`([\w.]+)`")
+
+
+def expand_method_refs(doc: str) -> str:
+    """Expand ``:method:`x``` shorthand into a full ``:doc:`` cross-reference."""
+    return _METHOD_REF_RE.sub(r":doc:`\1 <api_methods_\1>`", doc)
+
+
+def _is_unindented_prose(block: list[str]) -> bool:
+    """Whether a blank-line-delimited block is a plain prose paragraph to unwrap."""
+    # Any indentation means the block is a literal block, block quote, table, or a
+    # list/definition item with continuation lines: its line structure matters.
+    if any(line[:1].isspace() for line in block):
+        return False
+    # Directives and list items rely on their line structure too.
+    first = block[0]
+    if first.startswith(".. ") or _LIST_MARKER_RE.match(first):
+        return False
+    return True
+
+
+def reflow_docstring(doc: str) -> str:
+    """Unwrap hard-wrapped prose paragraphs while leaving RST structure intact.
+
+    Method docstrings are hard-wrapped for readability in source. A
+    blank-line-delimited block of entirely unindented prose is joined into a single
+    line so it reflows when rendered as HTML. Any block that carries indentation (a
+    literal block, block quote, table, or a list/definition item with continuation
+    lines) or that opens with a directive or list marker is left exactly as written,
+    so its structure is preserved rather than mangled.
+
+    ``:method:`x``` shorthand references are expanded into full ``:doc:`` cross-references.
+    """
+    doc = expand_method_refs(doc)
+    out: list[str] = []
+    block: list[str] = []
+
+    def flush() -> None:
+        if not block:
+            return
+        if _is_unindented_prose(block):
+            out.append(" ".join(line.strip() for line in block))
+        else:
+            out.extend(block)
+        block.clear()
+
+    for line in doc.split("\n"):
+        if line.strip():
+            block.append(line)
+        else:
+            flush()
+            out.append("")
+
+    flush()
+
+    return "\n".join(out).strip()
+
 
 class APIDump(BaseModel):
     version: str
@@ -87,7 +145,7 @@ class APIDumper:
 
         methodobj_ = method.methodobj
         if doc := inspect.getdoc(methodobj_):
-            doc = re.sub(r"(\S)\n[ ]*(\S)", r"\1 \2", doc).strip()
+            doc = reflow_docstring(doc)
 
         input_pipes, output_pipes, check_pipes = False, False, True
         if job := getattr(methodobj_, "_job", None):

@@ -452,48 +452,43 @@ class ZFSResourceService(Service):
     )
     def destroy(self, data: ZFSResourceDestroyArgsData) -> None:
         """
-        Destroy a ZFS resource (filesystem or volume).
+        Destroy a ZFS resource (filesystem or volume), optionally recursing into its descendants.
 
-        This method provides an interface for destroying ZFS datasets and volumes \
-        with support for recursive deletion.
+        To destroy snapshots, use
+        :method:`zfs.resource.snapshot.destroy` instead.
 
-        NOTE: To destroy snapshots, use `zfs.resource.snapshot.destroy`.
+        Invalid input is returned to the client as a JSON-RPC ``error`` response (code
+        ``-32602``, *Invalid params*); each failing condition appears in the error's
+        ``data.extra`` array with its own ``errno``. A validation error is raised when:
 
-        Args:
-            data (dict): Dictionary containing destruction parameters:
-                - path (str): Path of the ZFS resource to destroy. Must be in the form \
-                    'pool/name' or 'pool/zvol'. Snapshot paths (containing '@') are \
-                    not accepted - use `zfs.resource.snapshot.destroy` instead.
-                    Cannot be an absolute path or end with a forward slash.
-                - recursive (bool, optional): If True, recursively destroy all descendants \
-                    including their snapshots, clones, and holds. Default: False.
-
-        Returns:
-            None: On successful destruction.
-
-        Raises:
-            ValidationError: Raised in the following cases:
-                - Snapshot path provided (use zfs.resource.snapshot.destroy)
-                - Resource does not exist (ENOENT)
-                - Resource has children and recursive=False (EBUSY)
-                - Resource has snapshots and recursive=False
-                - Attempting to destroy root filesystem
-                - Path is absolute (starts with /)
-                - Path ends with forward slash
-                - Path references protected internal resources
+        - a snapshot path (containing ``@``) is supplied
+          (use :method:`zfs.resource.snapshot.destroy`)
+        - the resource does not exist (``ENOENT``)
+        - the resource has children and ``recursive`` is ``false`` (``EBUSY``)
+        - the resource has snapshots and ``recursive`` is ``false``
+        - the target is the pool's root filesystem
+        - the path is absolute or ends with ``/``
+        - the path references a protected internal resource
 
         Examples:
-            # Destroy a simple filesystem
-            destroy({"path": "tank/temp"})
 
-            # Recursively destroy filesystem and all descendants
-            destroy({"path": "tank/parent", "recursive": True})
+        Destroy a single filesystem:
 
-        Notes:
+        .. code:: json
+
+            {"path": "tank/temp"}
+
+        Recursively destroy a filesystem and all of its descendants:
+
+        .. code:: json
+
+            {"path": "tank/parent", "recursive": true}
+
+        .. note::
+
             - Root filesystem destruction is not allowed for safety
             - Protected system paths cannot be destroyed via API
-            - Datasets with snapshots require recursive=True
-            - To destroy snapshots, use `zfs.resource.snapshot.destroy`
+            - Datasets with snapshots require ``recursive`` to be ``true``
         """
         schema = "zfs.resource.destroy"
         path = data.path
@@ -531,34 +526,45 @@ class ZFSResourceService(Service):
         """
         Query ZFS resources (datasets and volumes) with flexible filtering options.
 
-        This method provides a high-performance interface for retrieving information \
-        about ZFS resources, including their properties, hierarchical relationships, \
-        and metadata. The query can be customized to retrieve specific resources, \
-        properties, and control the output format.
+        This method provides a high-performance interface for retrieving information about ZFS
+        resources, including their properties, hierarchical relationships, and metadata. The query
+        can be customized to retrieve specific resources, properties, and control the output format.
 
-        NOTE: To query snapshots, use `zfs.resource.snapshot.query`.
+        To query snapshots, use :method:`zfs.resource.snapshot.query` instead.
 
-        Raises:
-            ValidationError: If:
-                - Snapshot paths are provided (use zfs.resource.snapshot.query)
-                - Overlapping paths are provided with get_children=True
+        Invalid input is returned to the client as a JSON-RPC ``error`` response (code
+        ``-32602``, *Invalid params*); each failing condition appears in the error's
+        ``data.extra`` array with its own ``errno``. A validation error is raised when:
+
+        - a snapshot path is supplied (use :method:`zfs.resource.snapshot.query`)
+        - overlapping paths are supplied with ``get_children`` enabled
+        - a requested path does not exist (``ENOENT``)
 
         Examples:
-            # Query all resources with default properties
-            query()
 
-            # Query specific resources with all properties
-            query({"paths": ["tank/documents", "tank/media"]})
+        Query all resources with default properties:
 
-            # Query with specific properties and children
-            query({
-                "paths": ["tank"],
-                "properties": ["mounted", "compression", "used"],
-                "get_children": True
-            })
+        .. code:: json
 
-            # Get hierarchical view of resources
-            query({"paths": ["tank"], "nest_results": True, "get_children": True})
+            {}
+
+        Query specific resources:
+
+        .. code:: json
+
+            {"paths": ["tank/documents", "tank/media"]}
+
+        Query specific properties with children:
+
+        .. code:: json
+
+            {"paths": ["tank"], "properties": ["mounted", "compression", "used"], "get_children": true}
+
+        Get a hierarchical view of resources:
+
+        .. code:: json
+
+            {"paths": ["tank"], "nest_results": true, "get_children": true}
         """
         try:
             return [
