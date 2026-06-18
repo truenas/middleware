@@ -346,7 +346,7 @@ class FilesystemSetAclOptions(BaseModel):
     )
     traverse: bool = Field(
         default=False,
-        description="Whether to traverse filesystem boundaries during recursive operations.",
+        description="Whether to traverse filesystem boundaries (ZFS datasets) during recursive operations.",
     )
     validate_effective_acl: bool = Field(
         default=True,
@@ -361,7 +361,10 @@ class FilesystemSetAclOptions(BaseModel):
 class FilesystemSetaclArgs(BaseModel):
     path: NonEmptyString = Field(description="Absolute filesystem path to set ACL on.")
     dacl: list[NFS4ACE] | list[POSIXACE] = Field(
-        description="Array of Access Control Entries to apply to the filesystem object.",
+        description=(
+            "Array of Access Control Entries to apply to the filesystem object. Formatting depends on the underlying "
+            "`acltype`: an NFS4 ACL requires NFSv4 entries, while a POSIX1e ACL requires POSIX1e entries."
+        ),
     )
     options: FilesystemSetAclOptions = Field(
         default=FilesystemSetAclOptions(),
@@ -373,14 +376,30 @@ class FilesystemSetaclArgs(BaseModel):
     )
     uid: AceWhoId | None = Field(
         default=ACL_UNDEFINED_ID,
-        description="Numeric user ID to set as owner or `null` to preserve existing.",
+        description=(
+            "Numeric user ID to set as owner or `null` to preserve existing. Set one and only one of `uid`/`user`, and "
+            "only to change the owning user."
+        ),
     )
-    user: str | None = Field(default=None, description="Username to set as owner or `null` to preserve existing.")
+    user: str | None = Field(
+        default=None,
+        description=(
+            "Username to set as owner or `null` to preserve existing. Set one and only one of `uid`/`user`."
+        ),
+    )
     gid: AceWhoId | None = Field(
         default=ACL_UNDEFINED_ID,
-        description="Numeric group ID to set as group or `null` to preserve existing.",
+        description=(
+            "Numeric group ID to set as group or `null` to preserve existing. Set one and only one of `gid`/`group`, "
+            "and only to change the owning group."
+        ),
     )
-    group: str | None = Field(default=None, description="Group name to set as group or `null` to preserve existing.")
+    group: str | None = Field(
+        default=None,
+        description=(
+            "Group name to set as group or `null` to preserve existing. Set one and only one of `gid`/`group`."
+        ),
+    )
 
     # acltype is explicitly added to preserve compatibility with older setacl API
     acltype: Literal[FS_ACL_Type.NFS4, FS_ACL_Type.POSIX1E] | None = Field(

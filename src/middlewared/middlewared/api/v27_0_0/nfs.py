@@ -56,15 +56,32 @@ class NFSGetNfs4ClientsEntry(BaseModel):
 class NFSEntry(BaseModel):
     id: int = Field(description="Placeholder identifier.  Not used as there is only one.")
     servers: Annotated[int | None, Field(ge=1, le=256)] = Field(
-        description="Specify the number of nfsd. Default: Number of nfsd is equal number of CPU.",
+        description=(
+            "Specify the number of nfsd. Set `1..256`, or `null`/unset to have the server determine the count "
+            "automatically. When automatic, the count equals the number of CPU cores, clamped to no less than 1 and "
+            "no more than 32. The number of mountd processes is always one quarter of the number of nfsd."
+        ),
     )
     allow_nonroot: bool = Field(description="Allow non-root mount requests.  This equates to 'insecure' share option.")
     protocols: list[NFS_protocols] = Field(
-        description="Specify supported NFS protocols:  NFSv3, NFSv4 or both can be listed.",
+        description=(
+            "Specify supported NFS protocols:  NFSv3, NFSv4 or both can be listed. At least one must be enabled. The "
+            "`showmount` command is available only while NFSv3 is enabled."
+        ),
     )
     v4_krb: bool = Field(description="Force Kerberos authentication on NFS shares.")
-    v4_domain: str = Field(description="Specify a DNS domain (NFSv4 only).")
-    bindip: list[NonEmptyString] = Field(default=[], description="Limit the server IP addresses available for NFS.")
+    v4_domain: str = Field(
+        description=(
+            "Specify a DNS domain (NFSv4 only). Overrides the DNS domain for NFSv4 (sets the `Domain` setting in "
+            "idmapd.conf)."
+        ),
+    )
+    bindip: list[NonEmptyString] = Field(
+        default=[],
+        description=(
+            "Limit the server IP addresses available for NFS. When empty, NFS listens on all active server addresses."
+        ),
+    )
     mountd_port: NfsTcpPort = Field(description="Specify the mountd port binding.")
     rpcstatd_port: NfsTcpPort = Field(description="Specify the rpc.statd port binding.")
     rpclockd_port: NfsTcpPort = Field(description="Specify the rpc.lockd port binding.")
@@ -78,7 +95,12 @@ class NFSEntry(BaseModel):
             "Report status of 'servers' field. If true, the number of nfsd is managed by the server (status only)."
         ),
     )
-    rdma: bool = Field(description="Enable or disable NFS over RDMA.  Requires RDMA capable NIC.")
+    rdma: bool = Field(
+        description=(
+            "Enable or disable NFS over RDMA.  Available on supported platforms with an installed RDMA-capable NIC. "
+            "NFS over RDMA uses port 20049."
+        ),
+    )
 
 
 @single_argument_args("nfs_update")
