@@ -1,8 +1,8 @@
-from typing import Annotated, Self
+from typing import Annotated
 
 from pydantic import AfterValidator, Field, model_validator
 
-from middlewared.api.base import BaseModel, croniter_for_schedule, validate_filters, validate_options
+from middlewared.api.base import BaseModel, croniter_for_schedule, validate_filters
 
 __all__ = ["QueryFilters", "QueryOptions", "QueryArgs", "GenericQueryResult"]
 
@@ -19,14 +19,9 @@ class QueryOptions(BaseModel):
     select: list[str | list] = []
     count: bool = False
     get: bool = False
-    offset: int = 0
-    limit: int = 0
+    offset: int = Field(default=0, ge=0)
+    limit: int = Field(default=0, ge=0, le=10000)
     force_sql_filters: bool = False
-
-    @model_validator(mode='after')
-    def validate_query_options(self) -> Self:
-        validate_options(self.model_dump())
-        return self
 
 
 class QueryArgs(BaseModel):

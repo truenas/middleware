@@ -1,42 +1,30 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Iterable, Literal, Mapping, Required, Sequence, TypedDict, TypeVar, overload
+from typing import TYPE_CHECKING, Any, Iterable, Literal, Mapping, Required, Sequence, TypedDict, TypeVar, overload
 
 import truenas_pyfilter as _tf
 from truenas_pyfilter import CompiledFilters, CompiledOptions, match  # noqa: F401 (re-exported)
 
 from middlewared.api.base.validators.filters import TIMESTAMP_DESIGNATOR
-from middlewared.api.base.validators.options import _SelectList, validate_options
 from middlewared.service_exception import MatchNotFound
+
+if TYPE_CHECKING:
+    from middlewared.api.base import BaseModel
+    from middlewared.api.current import QueryOptions
+
+    _Entry = TypeVar('_Entry', bound=Mapping[str, Any] | type[BaseModel])
+else:
+    _Entry = TypeVar('_Entry')
 
 CF_EMPTY: CompiledFilters = _tf.compile_filters([])
 CO_EMPTY: CompiledOptions = _tf.compile_options()
-
-_Entry = TypeVar('_Entry', bound=Mapping[str, Any])
-
-
-def _build_compiled_options(
-    options: dict[str, Any],
-    select: _SelectList,
-    order_by: Iterable[str],
-) -> CompiledOptions:
-    sel = list(select)
-    ord_ = list(order_by)
-    return _tf.compile_options(
-        get=options.get('get', False),
-        count=options.get('count', False),
-        select=sel if sel else None,
-        order_by=ord_ if ord_ else None,
-        offset=options.get('offset', 0),
-        limit=options.get('limit', 0),
-    )
 
 
 _TIMESTAMP_OPS = frozenset(('=', '!=', '<', '>', '<=', '>='))
 
 
-def _preprocess_date_filters(filters: Iterable[Sequence[Any]], depth: int = 0) -> list[Sequence[object]] | None:
+def _preprocess_date_filters(filters: Sequence[Any], depth: int = 0) -> list[Sequence[Any]] | None:
     """
     Walk a filter tree for .$date operands; return a rebuilt tree with suffixes stripped
     and ISO strings replaced with datetime objects, or None if no .$date was found.
@@ -109,7 +97,7 @@ class _FilterListCountOptions(_FilterListBaseOptions, total=False):
 @overload
 def filter_list(
     _list: Iterable[_Entry],
-    filters: Iterable[Sequence[Any]] | None,
+    filters: Sequence[Sequence[Any]] | None,
     options: _FilterListCountOptions,
 ) -> int: ...
 
@@ -117,7 +105,7 @@ def filter_list(
 @overload
 def filter_list(
     _list: Iterable[_Entry],
-    filters: Iterable[Sequence[Any]] | None,
+    filters: Sequence[Sequence[Any]] | None,
     options: _FilterListGetOptions,
 ) -> _Entry: ...
 
@@ -125,7 +113,7 @@ def filter_list(
 @overload
 def filter_list(
     _list: Iterable[_Entry],
-    filters: Iterable[Sequence[Any]] | None = None,
+    filters: Sequence[Sequence[Any]] | None = None,
     options: None = None,
 ) -> list[_Entry]: ...
 
@@ -133,29 +121,33 @@ def filter_list(
 @overload
 def filter_list(
     _list: Iterable[_Entry],
-    filters: Iterable[Sequence[Any]] | None = None,
+    filters: Sequence[Sequence[Any]] | None = None,
     options: dict[str, Any] | None = None,
 ) -> list[_Entry] | _Entry | int: ...
 
 
+@overload
+def filter_list[E: BaseModel](
+    _list: Iterable[E],
+    filters: Sequence[Sequence[Any]],
+    options: QueryOptions,
+    model: type[BaseModel],
+) -> list[E] | E | int: ...
+
+
 def filter_list(
-    _list: Iterable[_Entry],
-    filters: Iterable[Sequence[Any]] | None = None,
-    options: dict[str, Any] | _FilterListGetOptions | _FilterListCountOptions | None = None
-) -> list[_Entry] | _Entry | int:
+    _list: Iterable[Any],
+    filters: Sequence[Sequence[Any]] | None = None,
+    options: dict[str, Any] | _FilterListGetOptions | _FilterListCountOptions | QueryOptions | None = None,
+    model: type[BaseModel] | None = None,
+) -> Any:
     """Main entry point for filtering, selecting, ordering and paginating data collections."""
-    options, select, order_by = validate_options(options)  # type: ignore[arg-type]
-
-    if filters:
-        if (preprocessed := _preprocess_date_filters(filters)) is not None:
-            filters = preprocessed
-
-    cf = CF_EMPTY if not filters else _tf.compile_filters(list(filters))
-    co = _build_compiled_options(options, select, order_by)
-    rv: list[_Entry] | int = _tf.tnfilter(_list, filters=cf, options=co)
+    cf = compile_filters(list(filters or []), model=model)
+    co = compile_options(options or {}, model=model)
+    rv = _tf.tnfilter(_list, filters=cf, options=co)
     if isinstance(rv, int):
         return rv   # count=True: tnfilter returns int directly
-    if options.get('get') is True:
+    if co.get:
         try:
             return rv[0]
         except IndexError:
@@ -163,39 +155,49 @@ def filter_list(
     return rv
 
 
-def filter_list_model[E](result: dict[str, Any] | list[Any] | int, item: type[E]) -> list[E] | E | int:
-    if isinstance(result, int):
-        return result
-
-    if isinstance(result, dict):
-        return item(**result)
-
-    return [item(**row) for row in result]
-
-
-def compile_filters(filters: list[Sequence[object]]) -> CompiledFilters:
+def compile_filters(filters: list[Sequence[Any]], model: type[BaseModel] | None = None) -> CompiledFilters:
     """
     Validate and pre-compile a filter list for reuse. Handles .$date preprocessing.
     Store the returned object at module or class level to avoid recompiling on every call.
     """
+    if not filters:
+        return CF_EMPTY
+
     if (preprocessed := _preprocess_date_filters(filters)) is not None:
         filters = preprocessed
-    return _tf.compile_filters(filters)
+
+    return _tf.compile_filters(filters, model=model)
 
 
-def compile_options(options: dict[str, Any] | None = None) -> CompiledOptions:
+def compile_options(
+    options: dict[str, Any] | _FilterListGetOptions | _FilterListCountOptions | QueryOptions | None = None,
+    model: type[BaseModel] | None = None,
+) -> _tf.CompiledOptions:
     """
     Pre-compile query options for reuse. Validation is performed by the C layer.
     Store the returned object at module or class level to avoid recompiling on every call.
     """
-    options = options or {}
+    from middlewared.api.current import QueryOptions
+
+    if options is None:
+        return CO_EMPTY
+
+    if isinstance(options, dict):
+        # Eventually, get rid of this branch
+        options_inst = QueryOptions(**{
+            k: v for k, v in options.items() if k not in {"extend", "extend_context", "extend_fk", "prefix"}
+        })
+    else:
+        options_inst = options
+
     return _tf.compile_options(
-        get=options.get('get', False),
-        count=options.get('count', False),
-        select=options.get('select') or None,
-        order_by=options.get('order_by') or None,
-        offset=options.get('offset', 0),
-        limit=options.get('limit', 0),
+        get=options_inst.get,
+        count=options_inst.count,
+        select=options_inst.select,
+        order_by=options_inst.order_by,
+        offset=options_inst.offset,
+        limit=options_inst.limit,
+        model=model,
     )
 
 

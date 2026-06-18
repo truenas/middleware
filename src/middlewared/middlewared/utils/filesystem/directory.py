@@ -11,9 +11,10 @@ import contextlib
 import enum
 import errno
 import os
-from typing import Any
 
 import truenas_os
+
+from middlewared.api.current import FilesystemDirEntry
 
 from .acl import acl_is_present
 from .attrs import fget_zfs_file_attributes, zfs_attributes_dump
@@ -108,7 +109,7 @@ def _build_entry(
     item: truenas_os.IterInstance,
     etype: str,
     mask: DirectoryRequestMask,
-) -> dict[str, Any] | None:
+) -> FilesystemDirEntry | None:
     """
     Render a single iter_filesystem_contents item as a listdir-shaped dict.
 
@@ -160,31 +161,31 @@ def _build_entry(
 
     is_ctldir = path_in_ctldir(item_path) if mask & DirectoryRequestMask.CTLDIR else None
 
-    return {
-        'name': item.name,
-        'path': item_path,
-        'realpath': realpath,
-        'type': etype,
-        'size': st.stx_size,
-        'allocation_size': st.stx_blocks * 512,
-        'mode': st.stx_mode,
-        'acl': acl,
-        'uid': st.stx_uid,
-        'gid': st.stx_gid,
-        'mount_id': st.stx_mnt_id,
-        'is_mountpoint': StatxAttr.MOUNT_ROOT.name in attributes,
-        'is_ctldir': is_ctldir,
-        'attributes': attributes,
-        'xattrs': xattrs,
-        'zfs_attrs': zfs_attrs,
-    }
+    return FilesystemDirEntry(
+        name=item.name,
+        path=item_path,
+        realpath=realpath,
+        type=etype,
+        size=st.stx_size,
+        allocation_size=st.stx_blocks * 512,
+        mode=st.stx_mode,
+        acl=acl,
+        uid=st.stx_uid,
+        gid=st.stx_gid,
+        mount_id=st.stx_mnt_id,
+        is_mountpoint=StatxAttr.MOUNT_ROOT.name in attributes,
+        is_ctldir=is_ctldir,
+        attributes=attributes,
+        xattrs=xattrs,
+        zfs_attrs=zfs_attrs,
+    )
 
 
 def iter_listdir(
     path: str | os.PathLike[str],
     file_type: FileType | None = None,
     request_mask: DirectoryRequestMask | None = None,
-) -> Iterator[dict[str, Any]]:
+) -> Iterator[FilesystemDirEntry]:
     """
     Yield single-level directory entries for ``path`` as listdir-shaped dicts.
 

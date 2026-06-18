@@ -10,7 +10,7 @@ from middlewared.plugins.zfs.tier import get_dataset_tier_info_cached
 from middlewared.plugins.zfs_.utils import TNUserProp
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils import BOOT_POOL_NAME_VALID
-from middlewared.utils.filter_list import CF_EMPTY, compile_filters, validate_options
+from middlewared.utils.filter_list import compile_filters, compile_options
 from middlewared.utils.size import format_size
 
 __all__ = ("generic_query",)
@@ -1061,24 +1061,14 @@ def generic_query(
     Raises:
         MatchNotFound: When get=True but no results found
     """
-    # parse query-options
-    options, select, order_by = validate_options(options_in)
-
-    cf = CF_EMPTY if not filters_in else compile_filters(filters_in)
-    co = _tf.compile_options(
-        get=options.get('get', False),
-        count=options.get('count', False),
-        select=list(select) if select else None,
-        order_by=list(order_by) if order_by else None,
-        offset=options.get('offset', 0),
-        limit=options.get('limit', 0),
-    )
+    cf = compile_filters(filters_in)
+    co = compile_options(options_in)
 
     # set up callback state
     state = QueryFiltersCallbackState(
         filters_compiled=cf if filters_in else None,
         options_compiled=co if filters_in else None,
-        count_only=options["count"],
+        count_only=co.count,
         extra=ExtraArgs(
             flat=extra.get("flat", True),
             zfs_properties=extra.pop("properties", None),
@@ -1099,7 +1089,7 @@ def generic_query(
     # do iteration
     rsrc_iterator(callback=generic_query_callback, state=state)
 
-    if options["count"]:
+    if co.count:
         return state.count
 
     # Always flatten before filtering; hierarchy is not supported with filters applied
@@ -1108,7 +1098,7 @@ def generic_query(
     rv = _tf.tnfilter(flat, filters=cf, options=co)
     if isinstance(rv, int):
         return rv
-    if options.get('get'):
+    if co.get:
         if not rv:
             raise MatchNotFound()
         return rv[0]

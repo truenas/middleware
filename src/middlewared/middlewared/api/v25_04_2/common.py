@@ -1,8 +1,8 @@
-from typing import Annotated, Self
+from typing import Annotated
 
 from pydantic import AfterValidator, Field, model_validator
 
-from middlewared.api.base import BaseModel, croniter_for_schedule, validate_filters, validate_options
+from middlewared.api.base import BaseModel, croniter_for_schedule, validate_filters
 
 __all__ = ["QueryFilters", "QueryOptions", "QueryArgs", "GenericQueryResult"]
 
@@ -52,6 +52,7 @@ class QueryOptions(BaseModel):
     )
     offset: int = Field(
         default=0,
+        ge=0,
         description=(
             "This specifies the beginning offset of the results array. When combined with the `limit` query-option it "
             "may be used to implement pagination of large results arrays. WARNING: some query methods provide volatile "
@@ -61,6 +62,8 @@ class QueryOptions(BaseModel):
     )
     limit: int = Field(
         default=0,
+        ge=0,
+        le=10000,
         description=(
             "This specifies the maximum number of results matching the specified `query-filters` to return. When "
             "combined wtih the `offset` query-option it may be used to implement pagination of large results arrays. "
@@ -69,11 +72,6 @@ class QueryOptions(BaseModel):
         ),
     )
     force_sql_filters: bool = False
-
-    @model_validator(mode='after')
-    def validate_query_options(self) -> Self:
-        validate_options(self.model_dump())
-        return self
 
 
 class QueryArgs(BaseModel):
