@@ -184,7 +184,7 @@ def compile_options(
 
     if isinstance(options, dict):
         # Eventually, get rid of this branch
-        options_inst = QueryOptions(**{
+        options_inst = QueryOptions.model_validate({
             k: v for k, v in options.items() if k not in {"extend", "extend_context", "extend_fk", "prefix"}
         })
     else:

@@ -15,7 +15,7 @@ from middlewared.api.base import (
 __all__ = [
     "UpdateConfigSafeEntry", "UpdateEntry",
     "UpdateUpdate", "UpdateUpdateArgs", "UpdateUpdateResult",
-    "UpdateProfileChoice", "UpdateProfileChoicesArgs", "UpdateProfileChoicesResult",
+    "UpdateProfileChoice", "UpdateProfileChoicesArgs", "UpdateProfileChoicesResult", "UpdateStatusCode",
     "UpdateStatus", "UpdateStatusCurrentVersion", "UpdateStatusError", "UpdateStatusNewVersion", "UpdateStatusStatus",
     "UpdateDownloadProgress", "UpdateStatusArgs", "UpdateStatusResult", "UpdateStatusChangedEvent",
     "UpdateAvailableVersion", "UpdateAvailableVersionsArgs", "UpdateAvailableVersionsResult",
@@ -101,9 +101,11 @@ class UpdateDownloadProgress(BaseModel):
     description: LongString = Field(description="Human-readable description of the current download activity.")
     version: str = Field(description="Version number being downloaded.")
 
+UpdateStatusCode = Literal['NORMAL', 'ERROR']
+
 
 class UpdateStatus(BaseModel):
-    code: Literal['NORMAL', 'ERROR'] = Field(
+    code: UpdateStatusCode = Field(
         description=(
             "Status code:\n"
             "* NORMAL - normal status, see `status` dictionary for details.\n"

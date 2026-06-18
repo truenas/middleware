@@ -126,6 +126,7 @@ FILESYSTEM_STATX_ATTRS = Literal[
     'COMPRESSED',
     'APPEND',
     'NODUMP',
+    'ENCRYPTED',
     'IMMUTABLE',
     'AUTOMOUNT',
     'MOUNT_ROOT',
