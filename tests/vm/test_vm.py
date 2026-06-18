@@ -2,6 +2,7 @@ import contextlib
 import json
 import re
 import secrets
+import time
 
 import pytest
 import websocket
@@ -70,7 +71,7 @@ def ubuntu_image_snapshot(request, vm_test_pool):
         try:
             with dataset(
                 f"ubuntu-{arch}",
-                {"type": "VOLUME", "volsize": 4 * 1024 ** 3},
+                {"type": "VOLUME", "volsize": 4 * 1024**3},
                 pool=vm_test_pool,
                 delete=DELETE_IMAGE_SNAPSHOTS,
             ) as volume_name:
@@ -85,21 +86,44 @@ def ubuntu_image_snapshot(request, vm_test_pool):
                     try:
                         ssh(f"mount {loop_device}p1 rootfs")
                         try:
-                            ssh(r'sed -i "s/^#\?PermitRootLogin.*/PermitRootLogin yes/" rootfs/etc/ssh/sshd_config')
-                            ssh(r'sed -i "s/^#\?PasswordAuthentication.*/PasswordAuthentication yes/" '
-                                'rootfs/etc/ssh/sshd_config')
-                            ssh(r'rm rootfs/etc/ssh/sshd_config.d/60-cloudimg-settings.conf')
-                            ssh('ssh-keygen -A -f rootfs')
-                            ssh(rf'PASS=$(openssl passwd -6 "{_vm_password}") && sed -i "s|^root:[^:]*:|root:$PASS:|" rootfs/etc/shadow')
-                            ssh("echo '[Match]' > rootfs/etc/systemd/network/99-wildcard.network")
-                            ssh("echo 'Name=en*' >> rootfs/etc/systemd/network/99-wildcard.network")
-                            ssh("echo '[Network]' >> rootfs/etc/systemd/network/99-wildcard.network")
-                            ssh("echo 'DHCP=yes' >> rootfs/etc/systemd/network/99-wildcard.network")
+                            ssh(
+                                r'sed -i "s/^#\?PermitRootLogin.*/PermitRootLogin yes/" rootfs/etc/ssh/sshd_config'
+                            )
+                            ssh(
+                                r'sed -i "s/^#\?PasswordAuthentication.*/PasswordAuthentication yes/" '
+                                "rootfs/etc/ssh/sshd_config"
+                            )
+                            ssh(
+                                r"rm rootfs/etc/ssh/sshd_config.d/60-cloudimg-settings.conf"
+                            )
+                            ssh("ssh-keygen -A -f rootfs")
+                            ssh(
+                                rf'PASS=$(openssl passwd -6 "{_vm_password}") && sed -i "s|^root:[^:]*:|root:$PASS:|" rootfs/etc/shadow'
+                            )
+                            ssh(
+                                "echo '[Match]' > rootfs/etc/systemd/network/99-wildcard.network"
+                            )
+                            ssh(
+                                "echo 'Name=en*' >> rootfs/etc/systemd/network/99-wildcard.network"
+                            )
+                            ssh(
+                                "echo '[Network]' >> rootfs/etc/systemd/network/99-wildcard.network"
+                            )
+                            ssh(
+                                "echo 'DHCP=yes' >> rootfs/etc/systemd/network/99-wildcard.network"
+                            )
                         finally:
                             ssh("umount rootfs")
 
-                        call("pool.snapshot.create", {"dataset": volume_name, "name": "pristine"})
-                        yield {"snapshot": f"{volume_name}@pristine", "arch": arch, "pool": vm_test_pool}
+                        call(
+                            "pool.snapshot.create",
+                            {"dataset": volume_name, "name": "pristine"},
+                        )
+                        yield {
+                            "snapshot": f"{volume_name}@pristine",
+                            "arch": arch,
+                            "pool": vm_test_pool,
+                        }
                     finally:
                         ssh("rm -rf rootfs")
                 finally:
@@ -116,28 +140,37 @@ def ubuntu_vm(image_info, options=None):
     vm_dataset = f"{test_pool}/vm-{arch}"
     call("pool.snapshot.clone", {"snapshot": snapshot, "dataset_dst": vm_dataset})
     try:
-        vm = call("vm.create", {
-            "name": f"Test_{arch}",
-            "memory": 2048,
-            **VM_ARCH_OPTIONS[arch],
-            **(options or {}),
-        })
+        vm = call(
+            "vm.create",
+            {
+                "name": f"Test_{arch}",
+                "memory": 2048,
+                **VM_ARCH_OPTIONS[arch],
+                **(options or {}),
+            },
+        )
         try:
-            call("vm.device.create", {
-                "vm": vm["id"],
-                "attributes": {
-                    "dtype": "NIC",
-                    "nic_attach": interface,
+            call(
+                "vm.device.create",
+                {
+                    "vm": vm["id"],
+                    "attributes": {
+                        "dtype": "NIC",
+                        "nic_attach": interface,
+                    },
                 },
-            })
-            call("vm.device.create", {
-                "vm": vm["id"],
-                "attributes": {
-                    "dtype": "DISK",
-                    "type": VM_DISK_TYPE[arch],
-                    "path": f"/dev/zvol/{vm_dataset}",
+            )
+            call(
+                "vm.device.create",
+                {
+                    "vm": vm["id"],
+                    "attributes": {
+                        "dtype": "DISK",
+                        "type": VM_DISK_TYPE[arch],
+                        "path": f"/dev/zvol/{vm_dataset}",
+                    },
                 },
-            })
+            )
 
             call("vm.start", vm["id"])
 
@@ -145,10 +178,7 @@ def ubuntu_vm(image_info, options=None):
             ws = websocket.create_connection(websocket_url() + "/websocket/shell")
             ip_address = None
             try:
-                ws.send(json.dumps({
-                    "token": token,
-                    "options": {"vm_id": vm["id"]}
-                }))
+                ws.send(json.dumps({"token": token, "options": {"vm_id": vm["id"]}}))
                 resp_opcode, msg = ws.recv_data()
                 assert json.loads(msg.decode())["msg"] == "connected", msg
 
@@ -173,16 +203,34 @@ def ubuntu_vm(image_info, options=None):
                         ws.send_binary(_vm_password.encode("ascii") + b"\r\n")
                         password_sent = True
                     if not ip_sent and data.endswith(b"root@ubuntu:~# "):
-                        ws.send_binary(b"NO_COLOR=1 ip -4 -o addr show scope global\r\n")
+                        ws.send_binary(
+                            b"NO_COLOR=1 ip -4 -o addr show scope global\r\n"
+                        )
                         ip_sent = True
-                    if m := re.search(r"inet ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)", data.decode("ascii", "ignore")):
+                    if m := re.search(
+                        r"inet ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)",
+                        data.decode("ascii", "ignore"),
+                    ):
                         ip_address = m.group(1)
                         break
             finally:
                 ws.close()
 
             if ip_address is None:
-                raise RuntimeError("Unable to find IP address: " + data.decode("ascii", "ignore")[-1000:])
+                raise RuntimeError(
+                    "Unable to find IP address: "
+                    + data.decode("ascii", "ignore")[-1000:]
+                )
+
+            deadline = time.monotonic() + 60
+            while True:
+                try:
+                    ssh("true", user="root", ip=ip_address, password=_vm_password)
+                    break
+                except Exception:
+                    if time.monotonic() > deadline:
+                        raise RuntimeError(f"SSH on {ip_address} not ready after 60s")
+                    time.sleep(5)
 
             yield {**vm, "ip": ip_address, "password": _vm_password}
         finally:
