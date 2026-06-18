@@ -172,54 +172,6 @@ def get_nvme_slot_info(model):
                                 DISK_INTERNAL_KEY: False
                             } for i, j in zip(range(1, 5), range(25, 29))
                         },
-                        'v140_nvme_enclosure': {
-                            i: {
-                                SYSFS_SLOT_KEY: i,
-                                MAPPED_SLOT_KEY: j,
-                                SUPPORTS_IDENTIFY_KEY: False,
-                                DISK_FRONT_KEY: False,
-                                DISK_TOP_KEY: False,
-                                DISK_REAR_KEY: True,
-                                DISK_INTERNAL_KEY: False
-                            }
-                            for i, j in zip(range(1, 5), range(25, 29))
-                        },
-                        'v160_nvme_enclosure': {
-                            i: {
-                                SYSFS_SLOT_KEY: i,
-                                MAPPED_SLOT_KEY: j,
-                                SUPPORTS_IDENTIFY_KEY: False,
-                                DISK_FRONT_KEY: False,
-                                DISK_TOP_KEY: False,
-                                DISK_REAR_KEY: True,
-                                DISK_INTERNAL_KEY: False
-                            }
-                            for i, j in zip(range(1, 5), range(25, 29))
-                        },
-                        'v260_nvme_enclosure': {
-                            i: {
-                                SYSFS_SLOT_KEY: i,
-                                MAPPED_SLOT_KEY: j,
-                                SUPPORTS_IDENTIFY_KEY: False,
-                                DISK_FRONT_KEY: False,
-                                DISK_TOP_KEY: False,
-                                DISK_REAR_KEY: True,
-                                DISK_INTERNAL_KEY: False
-                            }
-                            for i, j in zip(range(1, 5), range(25, 29))
-                        },
-                        'v280_nvme_enclosure': {
-                            i: {
-                                SYSFS_SLOT_KEY: i,
-                                MAPPED_SLOT_KEY: j,
-                                SUPPORTS_IDENTIFY_KEY: False,
-                                DISK_FRONT_KEY: False,
-                                DISK_TOP_KEY: False,
-                                DISK_REAR_KEY: True,
-                                DISK_INTERNAL_KEY: False
-                            }
-                            for i, j in zip(range(1, 5), range(25, 29))
-                        },
                         'r30_nvme_enclosure': {
                             i: {
                                 SYSFS_SLOT_KEY: i,
@@ -738,6 +690,33 @@ def get_slot_info(enc):
         # Front 24 slots are split between the two SES enclosures with
         # interleaved mapping; slot_designation (NVME0/NVME8) distinguishes
         # them. We branch by enc.product so the right table is picked.
+        if enc.product in ('4IXGA-NTBp', '4IXGA-NTBs', '4IXGA-NTGp', '4IXGA-NTGs'):
+            # V-series rear-bay PEX89032 NTG chip. Bifurcated into 2 SES
+            # partitions per controller; ses_enclosures2 picks the
+            # bay-serving partition and tags it 'REAR'. Slots are libsg3
+            # keys 1-4 with sysfs slot files matching the key 1:1
+            # (slot01..slot04).
+            return {
+                'any_version': True,
+                'versions': {
+                    'DEFAULT': {
+                        'id': {
+                            'REAR': {
+                                key: {
+                                    SYSFS_SLOT_KEY: key,
+                                    MAPPED_SLOT_KEY: 24 + key,
+                                    SUPPORTS_IDENTIFY_KEY: True,
+                                    DISK_FRONT_KEY: False,
+                                    DISK_TOP_KEY: False,
+                                    DISK_REAR_KEY: True,
+                                    DISK_INTERNAL_KEY: False,
+                                }
+                                for key in range(1, 5)
+                            },
+                        }
+                    }
+                }
+            }
         if enc.product in ('4IXGA-SWp', '4IXGA-SWs'):
             return {
                 'any_version': True,

@@ -117,15 +117,6 @@ class Enclosure:
             # the one whose enclosure id is "3000000000000001"). So we ignore the
             # other enclosure device otherwise.
             self.should_ignore = True
-        elif (
-            self.is_vseries
-            and self.vendor == 'ECStream'
-            and not (self.product or '').startswith('4IXGA-SW')
-        ):
-            # Preserve the existing V-series ECStream filter, but exempt
-            # 4IXGA-SW (V2xx front-bay PEX89088 partition) so those slots
-            # surface in enclosure2.query via the V-series SES path.
-            self.should_ignore = True
         else:
             self.should_ignore = False
 
@@ -185,8 +176,8 @@ class Enclosure:
                 | 'ECStream_4IXGA-NTGp'
                 | 'ECStream_4IXGA-NTGs'
             ):
-                # V series — NTB on the original board, NTG on the new
-                # 4IXGA_PEX89032 (X710) board. Same -p/-s convention.
+                # V-series rear-bay NTG chip (bifurcated PEX89032).
+                # Same -p/-s convention as the front-bay enclosures.
                 self.model = dmi_model.value
                 self.controller = True
             case (
@@ -195,9 +186,9 @@ class Enclosure:
             ):
                 # V2xx (V260/V280) — front-bay PEX89088 PCIe switch enclosure
                 # (replaces V1xx's dual 9600w-12i4e SAS HBAs). Same -p/-s
-                # convention as the NTB/NTG rear-bay enclosures: each
-                # controller sees one suffix (p or s) determined by its
-                # chassis slot position.
+                # convention as the NTG rear-bay enclosures: each controller
+                # sees one suffix (p or s) determined by its chassis slot
+                # position.
                 self.model = dmi_model.value
                 self.controller = True
             case 'CELESTIC_P3215-O' | 'CELESTIC_P3217-B':
