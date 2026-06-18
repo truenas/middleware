@@ -191,6 +191,12 @@ class ACLTemplateService(CRUDService):
         roles=['FILESYSTEM_ATTRS_WRITE']
     )
     async def do_delete(self, id_):
+        """
+        Delete the ACL template identified by ``id``.
+
+        Built-in ACL templates may not be deleted; attempting to delete one returns a JSON-RPC
+        ``error`` response (code ``-32001``, *Method call error*).
+        """
         entry = await self.get_instance(id_)
         if entry['builtin']:
             raise CallError("Deletion of builtin templates is not permitted",

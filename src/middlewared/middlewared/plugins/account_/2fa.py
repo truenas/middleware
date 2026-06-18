@@ -147,10 +147,12 @@ class UserService(Service):
     )
     async def renew_2fa_secret(self, app, username, twofactor_options):
         """
-        Renew `username` user's two-factor authentication secret.
+        Renew ``username`` user's two-factor authentication secret.
 
-        NOTE: This username must match the authenticated username unless authenticated
-        credentials have FULL_ADMIN role.
+        .. note::
+
+            This username must match the authenticated username unless authenticated
+            credentials have the ``FULL_ADMIN`` role.
         """
         if not app_credential_full_admin_or_user(app, username):
             raise CallError(

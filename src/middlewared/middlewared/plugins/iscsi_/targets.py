@@ -303,12 +303,8 @@ class iSCSITargetService(CRUDService):
     )
     async def validate_name(self, name, existing_id):
         """
-        Returns validation error for iSCSI target name
-
-        :param name: name to be validated
-        :param existing_id: id of an existing iSCSI target that will receive this name (or `None` if a new target
-                            is being created)
-        :return: error message (or `None` if there is no error)
+        Return a validation error message for the given iSCSI target name or ``null`` if the name
+        is valid.
         """
         if not RE_TARGET_NAME.search(name):
             return 'Only lowercase alphanumeric characters plus dot (.), dash (-), and colon (:) are allowed.'

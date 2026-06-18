@@ -60,6 +60,16 @@ class PoolSnapshotService(CRUDService):
         roles=['SNAPSHOT_WRITE', 'POOL_WRITE']
     )
     def rollback(self, id_, options):
+        """
+        Roll the dataset of snapshot ``id`` back to the state captured by that snapshot.
+
+        .. warning::
+
+            This operation is destructive. Any data written to the dataset after the snapshot was taken is
+            permanently lost. Snapshots and bookmarks more recent than ``id`` must also be destroyed for the
+            rollback to proceed; use the ``recursive``, ``recursive_clones``, or ``recursive_rollback`` options to
+            control how newer snapshots and their clones are handled.
+        """
         self.call_sync2(self.s.zfs.resource.snapshot.rollback_impl, ZFSResourceSnapshotRollbackQuery(
             path=id_,
             **options,
@@ -365,12 +375,19 @@ class PoolSnapshotService(CRUDService):
 
     @api_method(PoolSnapshotUpdateArgs, PoolSnapshotUpdateResult)
     def do_update(self, snap_id, data):
+        """Update the user properties of the snapshot identified by ``snap_id``."""
         # TODO: add zfs.resource.snapshot.update (what is this even used for???)
         data['user_properties_update'].extend({'key': k, 'remove': True} for k in data.pop('user_properties_remove'))
         # return self.middleware.call_sync('zfs.snapshot.update', snap_id, data)
 
     @api_method(PoolSnapshotDeleteArgs, PoolSnapshotDeleteResult)
     def do_delete(self, id_, options):
+        """
+        Delete the snapshot identified by ``id``.
+
+        Set ``recursive`` to also delete identically named snapshots of child datasets. Set ``defer`` to request a
+        deferred (asynchronous) destroy, which lets the snapshot be removed even while it still has holds or clones.
+        """
         if '@' not in id_:
             raise ValidationError('pool.snapshot.delete', f'Invalid snapshot name: {id_!r}')
 

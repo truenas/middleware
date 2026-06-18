@@ -970,18 +970,20 @@ class PoolDatasetService(CRUDService):
     )
     async def rename(self, id_, options):
         """
-        Rename a zfs resource (filesystem, snapshot, or zvolume) of `id`.
+        Rename a ZFS resource (filesystem, snapshot, or zvolume) identified by ``id``.
 
         No safety checks are performed when renaming ZFS resources. If the dataset is in use by services such
         as SMB, iSCSI, snapshot tasks, replication, or cloud sync, renaming may cause disruptions or service failures.
 
         Proceed only if you are certain the ZFS resource is not in use and fully understand the risks.
-        Set Force to continue.
+        Set ``force`` to continue.
 
-        NOTE: The "recursive" option is only valid for renaming snapshots. If True, and a snapshot is given, the \
-        snapshot will be renamed recursively for all children. For example: dozer/a@now, dozer/a/b@now will be \
-        renamed to dozer/a@new dozer/a/b@new. Renaming snapshots IS NOT recommended and can cause disruptions or \
-        service failures all the same.
+        .. note::
+
+            The ``recursive`` option is only valid for renaming snapshots. If ``true``, and a snapshot is given, the
+            snapshot will be renamed recursively for all children. For example, ``dozer/a@now`` and ``dozer/a/b@now``
+            will be renamed to ``dozer/a@new`` and ``dozer/a/b@new``. Renaming snapshots is not recommended and can
+            cause disruptions or service failures all the same.
         """
         if not options['force']:
             raise ValidationError(

@@ -455,15 +455,17 @@ class AuthService(Service):
         """
         Generate a token to be used for authentication.
 
-        `ttl` stands for Time To Live, in seconds. The token will be invalidated if the connection
+        ``ttl`` stands for Time To Live, in seconds. The token will be invalidated if the connection
         has been inactive for a time greater than this.
 
-        `attrs` is a general purpose object/dictionary to hold information about the token.
+        ``attrs`` is a general purpose object/dictionary to hold information about the token.
 
-        `match_origin` will only allow using this token from the same IP address or with the same user UID.
+        ``match_origin`` will only allow using this token from the same IP address or with the same user UID.
 
-        NOTE: this endpoint is not supported when server security requires replay-resistant
-        authentication as part of GPOS STIG requirements.
+        .. note::
+
+            This method is not supported when server security requires replay-resistant
+            authentication as part of GPOS STIG requirements.
         """
         if not single_use and CURRENT_AAL.level != AA_LEVEL1:
             raise CallError(
@@ -755,29 +757,18 @@ class AuthService(Service):
                 pass_app=True)
     async def login_ex_continue(self, app, data):
         """
-        Continue in-progress authentication attempt. This endpoint should be
-        called to continue an auth.login_ex attempt that returned OTP_REQUIRED.
+        Continue an in-progress authentication attempt. This endpoint should be called to continue
+        an :method:`auth.login_ex` attempt that returned a ``response_type`` of ``OTP_REQUIRED``,
+        submitting the one-time password via the ``OTP_TOKEN`` mechanism.
 
-        This is a convenience wrapper around auth.login_ex for API consumers.
+        This is a convenience wrapper around :method:`auth.login_ex` for API consumers.
 
-        params:
-            mechanism: the mechanism by which to continue authentication.
-            Currently the only supported mechanism here is OTP_TOKEN.
+        The ``response_type`` of the result indicates the outcome of this authentication step:
 
-            OTP_TOKEN
-            otp_token: one-time password token. This is only permitted if
-            a previous auth.login_ex call responded with "OTP_REQUIRED".
-
-        returns:
-            JSON object containing the following keys:
-
-            `response_type` - will be one of the following:
-            SUCCESS - continued auth was required
-
-            OTP_REQUIRED - otp token was rejected. API consumer may call this
-            endpoint again with correct OTP token.
-
-            AUTH_ERR - invalid OTP token submitted too many times.
+        - ``SUCCESS`` -- authentication completed and a session was established.
+        - ``OTP_REQUIRED`` -- the one-time password token was rejected; the client may call this
+          endpoint again with a correct token.
+        - ``AUTH_ERR`` -- an invalid one-time password token was submitted too many times.
         """
         return await self.login_ex(app, data)
 
@@ -1091,22 +1082,26 @@ class AuthService(Service):
     @api_method(AuthSetAttributeArgs, AuthSetAttributeResult, authorization_required=False, pass_app=True)
     async def set_attribute(self, app, key, value):
         """
-        Set current user's `attributes` dictionary `key` to `value`.
+        Set current user's ``attributes`` dictionary ``key`` to ``value``.
 
-        e.g. Setting key="foo" value="var" will result in {"attributes": {"foo": "bar"}}
+        e.g. Setting ``key="foo"`` ``value="var"`` will result in ``{"attributes": {"foo": "bar"}}``
 
-        Attributes set here will appear in the `auth.me` API response under the `attributes` field.
+        Attributes set here will appear in the :method:`auth.me` response under the ``attributes`` field.
 
-        WARNING: this API endpoint exists solely for the use of the TrueNAS UX team. The data stored in
-        these attributes *must* be considered opaque from the perspective of the middleware backend,
-        with specific documented exceptions. This endpoint should not be used or relied on by any
-        third-party scripts or workflows.
+        .. warning::
 
-        WARNING: this API endpoint is not intended for storing security-sensitive information. The
-        backend storage for this data is not encrypted and it is indexed by unix user id rather than
-        database ID, which exposes a risk of stale settings being reused if a new user gets assigned
-        the same unix user id as an previously-existing one. This is of particular concern when users
-        are provided by directory services.
+            This endpoint exists solely for the use of the TrueNAS UX team. The data stored in these
+            attributes *must* be considered opaque from the perspective of the middleware backend,
+            with specific documented exceptions. This endpoint should not be used or relied on by any
+            third-party scripts or workflows.
+
+        .. warning::
+
+            This endpoint is not intended for storing security-sensitive information. The backend
+            storage for this data is not encrypted and it is indexed by unix user id rather than
+            database ID, which exposes a risk of stale settings being reused if a new user gets
+            assigned the same unix user id as a previously-existing one. This is of particular
+            concern when users are provided by directory services.
         """
         user = await self._me(app)
 

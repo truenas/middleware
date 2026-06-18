@@ -22,6 +22,7 @@ class ReplicationConfigService(ConfigService):
 
     @api_method(ReplicationConfigUpdateArgs, ReplicationConfigUpdateResult)
     async def do_update(self, data):
+        """Update the global replication configuration shared by all replication tasks."""
         old_config = await self.config()
         config = old_config.copy()
 

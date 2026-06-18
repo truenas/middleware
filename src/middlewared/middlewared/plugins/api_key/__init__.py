@@ -138,11 +138,13 @@ class ApiKeyService(GenericCRUDService[ApiKeyEntry]):
         Convert a raw API key into its SCRAM authentication components.
 
         This allows API key consumers to transform a raw API key
-        (format: `id-key`) into the precomputed SCRAM authentication
+        (format: ``id-key``) into the precomputed SCRAM authentication
         material for improved performance.
 
-        NOTE: this is a convenience function for API consumers. It does
-        not impact the API key stored server-side.
+        .. note::
+
+            This is a convenience method for API consumers. It does not impact the API key stored
+            server-side.
         """
         return await self._svc_part.convert_raw_key(raw_key.get_secret_value())
 

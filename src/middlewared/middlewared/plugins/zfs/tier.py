@@ -364,6 +364,17 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
         audit="ZFS tier config update",
     )
     async def do_update(self, data: dict[str, typing.Any]) -> ZfsTierEntry:
+        """
+        Update the global ZFS tiering configuration.
+
+        Controls whether tiering is enabled, how many rewrite jobs may run concurrently, the filesystem usage
+        threshold at which rewrites are aborted, and the percentage of PERFORMANCE tier space reserved for
+        metadata. Applying the new configuration regenerates the ``truenas_zfstierd`` daemon configuration and
+        reloads (or restarts, if ``max_concurrent_jobs`` changed) the daemon.
+
+        ZFS tiering requires a license. A JSON-RPC ``error`` response (code ``-32001``, *Method call error*) is
+        returned when the system is not licensed for this feature.
+        """
         if not feature_is_licensed():
             raise CallError("ZFS tiering requires a license.")
 

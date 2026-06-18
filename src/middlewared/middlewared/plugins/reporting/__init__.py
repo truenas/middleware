@@ -76,6 +76,11 @@ class ReportingService(GenericConfigService[ReportingEntry]):
     async def graphs(
         self, filters: list[typing.Any], options: QueryOptions,
     ) -> list[ReportingGraphsItem] | ReportingGraphsItem | int:
+        """
+        List the reporting graphs available to be queried, each describing a metric type along with the
+        instance identifiers (if any) that can be reported on. Pass the resulting graph names to
+        :method:`reporting.get_data` to retrieve the corresponding data points.
+        """
         return to_entries(await _netdata_graphs(self._graphs, filters, options), ReportingGraphsItem)
 
     @api_method(

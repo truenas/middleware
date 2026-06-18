@@ -24,11 +24,12 @@ class DiskService(Service):
         roles=['REPORTING_READ']
     )
     def temperatures(self, names, include_thresholds):
-        """Returns disk temperatures for disks in degrees celsius.
+        """
+        Returns disk temperatures for disks in degrees celsius.
 
-        NOTE:
-            Disk temperatures are not retrieved more than
-            once every 5 minutes.
+        .. note::
+
+            Disk temperatures are not retrieved more than once every 5 minutes.
         """
         now = time()
         rv = {i: None for i in names}

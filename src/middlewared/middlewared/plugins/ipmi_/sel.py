@@ -90,6 +90,9 @@ class IpmiSelService(Service):
     )
     @job(lock=SEL_LOCK, lock_queue_size=1)
     def clear(self, job):
+        """
+        Clear all entries from the IPMI System Event Log (SEL).
+        """
         if self.middleware.call_sync('ipmi.is_loaded'):
             cp = run(['ipmi-sel', '--clear'], capture_output=True)
             if cp.returncode:

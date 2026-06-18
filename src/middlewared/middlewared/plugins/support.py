@@ -146,6 +146,14 @@ class SupportService(ConfigService):
 
     @api_method(SupportSimilarIssuesArgs, SupportSimilarIssuesResult, roles=['SUPPORT_READ'])
     async def similar_issues(self, query):
+        """
+        Query the iXsystems support system for existing issues that resemble the supplied ``query`` (typically
+        a proposed ticket title). Use this while filing a support ticket to surface related, already-known
+        issues before submitting a new one with :method:`support.new_ticket`.
+
+        This requires outbound network access to the support service; a JSON-RPC ``error`` response (code
+        ``-32001``, *Method call error*) is returned if the support system reports an error.
+        """
         await self.middleware.call('network.general.will_perform_activity', 'support')
 
         data = await post(

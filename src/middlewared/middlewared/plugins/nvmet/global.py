@@ -140,6 +140,11 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
 
     @filterable_api_method(item=NVMetGlobalSessionsItem, roles=['SHARING_NVME_TARGET_READ'])
     async def sessions(self, filters, options):
+        """
+        Return the NVMe-oF host sessions currently connected to this TrueNAS.
+
+        On an HA system with ANA enabled, sessions from both controllers are included.
+        """
         sessions = []
         subsys_id = None
         for _filter in filters:

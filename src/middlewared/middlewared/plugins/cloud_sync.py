@@ -933,6 +933,16 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
 
     @api_method(CloudSyncListBucketsArgs, CloudSyncListBucketsResult, roles=["CLOUD_SYNC_WRITE"])
     def list_buckets(self, credentials_id):
+        """
+        List the buckets available to the cloud sync credential identified by ``credentials_id``.
+
+        Use this when configuring a cloud sync task to discover which buckets a set of credentials
+        can access. Each returned entry describes a bucket as a directory-like listing.
+
+        Only providers that organize storage into buckets (such as Amazon S3 or Storj) are
+        supported. A JSON-RPC ``error`` response (code ``-32001``, *Method call error*) is returned
+        when the credential does not exist or its provider does not use buckets.
+        """
         credentials = self._get_credentials(credentials_id)
         if not credentials:
             raise CallError("Invalid credentials")

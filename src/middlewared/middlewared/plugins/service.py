@@ -161,6 +161,15 @@ class ServiceService(CRUDService):
     )
     @job(lock=lambda args: f'service_{args[1]}')
     async def control(self, app, job, verb, service, options):
+        """
+        Perform the control operation given by ``verb`` (``START``, ``STOP``, ``RESTART``, or ``RELOAD``) on the
+        system service named ``service``. This is the general entry point for managing the running state of a
+        service; the configured enable-on-boot setting is changed separately via :method:`service.update`.
+
+        The result reflects whether the service is running after a ``START``, ``RESTART``, or ``RELOAD``, or
+        whether it was successfully stopped for a ``STOP``. By default failures are reported by returning
+        ``false`` rather than raising; set ``options.silent`` to ``false`` to receive an error instead.
+        """
         # Check permissions before calling the private method
         if not app_has_write_privilege_for_service(app, service):
             raise CallError(f'{service}: authenticated session lacks privilege to {verb.lower()} service', errno.EPERM)

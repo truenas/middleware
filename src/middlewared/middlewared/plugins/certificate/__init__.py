@@ -101,12 +101,12 @@ class CertificateService(GenericCRUDService[CertificateEntry]):
     @job(lock="cert_delete")
     def do_delete(self, job: Job, id_: int, force: bool) -> bool:
         """
-        Delete certificate of `id`.
+        Delete certificate of ``id``.
 
-        If the certificate is an ACME based certificate, certificate service will try to
-        revoke the certificate by updating it's status with the ACME server, if it fails an exception is raised
-        and the certificate is not deleted from the system. However, if `force` is set to True, certificate is deleted
-        from the system even if some error occurred while revoking the certificate with the ACME Server.
+        If the certificate is an ACME based certificate, the certificate service will try to revoke the
+        certificate by updating its status with the ACME server. If that fails, an exception is raised and the
+        certificate is not deleted from the system. However, if ``force`` is set to ``true``, the certificate is
+        deleted from the system even if some error occurred while revoking the certificate with the ACME server.
         """
         return self._svc_part.do_delete(job, id_, force)
 

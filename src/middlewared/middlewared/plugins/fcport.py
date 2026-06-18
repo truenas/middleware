@@ -123,6 +123,12 @@ class FCPortService(CRUDService):
 
     @api_method(FCPortPortChoicesArgs, FCPortPortChoicesResult)
     async def port_choices(self, include_used):
+        """
+        Return the available Fibre Channel ports that can be assigned to a target.
+
+        By default this includes ports that are already mapped to a target. Set ``include_used``
+        to ``false`` to exclude ports that are already in use.
+        """
         result = {}
         if include_used:
             # We don't need to check, so don't populate this
@@ -222,6 +228,12 @@ class FCPortService(CRUDService):
 
     @api_method(FCPortStatusArgs, FCPortStatusResult, roles=['SHARING_ISCSI_TARGET_READ'])
     async def status(self, filters, options):
+        """
+        Return the runtime status of Fibre Channel ports, including port state, type, speed, and
+        connected sessions.
+
+        On an HA system, status is gathered from both controllers and reported per node.
+        """
         with_lun_access = options['extra']['with_lun_access']
         # If a filter has been supplied, and if it *only* selects a single fc_port
         # then we can optimize what data we collect.

@@ -80,6 +80,14 @@ class MailService(GenericConfigService[MailEntry]):
         check_annotations=True,
     )
     async def local_administrator_email(self) -> str | None:
+        """
+        Return the email address of the local administrator.
+
+        The local administrator is a local user account holding the ``FULL_ADMIN`` role that has an
+        email address configured. When more than one such account exists, the address that sorts
+        first alphabetically is returned. ``null`` is returned when no local administrator has an
+        email address set.
+        """
         emails = await self.local_administrators_emails()
         if emails:
             return sorted(emails)[0]

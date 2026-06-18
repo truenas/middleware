@@ -133,8 +133,9 @@ class DiskService(Service):
         Return disks that are in use by any zpool that is currently imported. It will
         also return disks that are in use by any zpool that is exported.
 
-        `join_partitions`: Bool, when True will return all partitions currently written to disk
-            NOTE: this is an expensive operation
+        .. note::
+
+            Enabling ``join_partitions`` is an expensive operation.
         """
         return (await self.details_impl({'join_partitions': join_partitions}))['used']
 
