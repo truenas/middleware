@@ -1,0 +1,606 @@
+[
+  {
+    "bsg": "/dev/bsg/0:0:0:0",
+    "controller": true,
+    "dmi": "TRUENAS-V260-HA",
+    "elements": {
+      "Array Device Slot": {
+        "1": {
+          "descriptor": "slot01",
+          "dev": "nvme7n1",
+          "drive_bay_light_status": "OFF",
+          "is_front": true,
+          "is_internal": false,
+          "is_rear": false,
+          "is_top": false,
+          "original": {
+            "descriptor": "slot1",
+            "enclosure_bsg": "/dev/bsg/0:0:0:0",
+            "enclosure_id": "5b0bd6d600000070",
+            "enclosure_sg": "/dev/sg0",
+            "slot": 1
+          },
+          "status": "OK, Swapped",
+          "supports_identify_light": true,
+          "value": null,
+          "value_raw": 285212672
+        },
+        "2": {
+          "descriptor": "slot04",
+          "dev": "nvme4n1",
+          "drive_bay_light_status": "OFF",
+          "is_front": true,
+          "is_internal": false,
+          "is_rear": false,
+          "is_top": false,
+          "original": {
+            "descriptor": "slot4",
+            "enclosure_bsg": "/dev/bsg/0:0:0:0",
+            "enclosure_id": "5b0bd6d600000070",
+            "enclosure_sg": "/dev/sg0",
+            "slot": 4
+          },
+          "status": "OK, Swapped",
+          "supports_identify_light": true,
+          "value": null,
+          "value_raw": 285212672
+        },
+        "3": {
+          "descriptor": "slot05",
+          "dev": "nvme3n1",
+          "drive_bay_light_status": "OFF",
+          "is_front": true,
+          "is_internal": false,
+          "is_rear": false,
+          "is_top": false,
+          "original": {
+            "descriptor": "slot5",
+            "enclosure_bsg": "/dev/bsg/0:0:0:0",
+            "enclosure_id": "5b0bd6d600000070",
+            "enclosure_sg": "/dev/sg0",
+            "slot": 5
+          },
+          "status": "OK, Swapped",
+          "supports_identify_light": true,
+          "value": null,
+          "value_raw": 285212672
+        },
+        "4": {
+          "descriptor": "slot08",
+          "dev": "nvme0n1",
+          "drive_bay_light_status": "OFF",
+          "is_front": true,
+          "is_internal": false,
+          "is_rear": false,
+          "is_top": false,
+          "original": {
+            "descriptor": "slot8",
+            "enclosure_bsg": "/dev/bsg/0:0:0:0",
+            "enclosure_id": "5b0bd6d600000070",
+            "enclosure_sg": "/dev/sg0",
+            "slot": 8
+          },
+          "status": "OK, Swapped",
+          "supports_identify_light": true,
+          "value": null,
+          "value_raw": 285212672
+        },
+        "5": {
+          "descriptor": "slot02",
+          "dev": "nvme6n1",
+          "drive_bay_light_status": "OFF",
+          "is_front": true,
+          "is_internal": false,
+          "is_rear": false,
+          "is_top": false,
+          "original": {
+            "descriptor": "slot2",
+            "enclosure_bsg": "/dev/bsg/0:0:0:0",
+            "enclosure_id": "5b0bd6d600000070",
+            "enclosure_sg": "/dev/sg0",
+            "slot": 2
+          },
+          "status": "OK, Swapped",
+          "supports_identify_light": true,
+          "value": null,
+          "value_raw": 285212672
+        },
+        "6": {
+          "descriptor": "slot03",
+          "dev": "nvme5n1",
+          "drive_bay_light_status": "OFF",
+          "is_front": true,
+          "is_internal": false,
+          "is_rear": false,
+          "is_top": false,
+          "original": {
+            "descriptor": "slot3",
+            "enclosure_bsg": "/dev/bsg/0:0:0:0",
+            "enclosure_id": "5b0bd6d600000070",
+            "enclosure_sg": "/dev/sg0",
+            "slot": 3
+          },
+          "status": "OK, Swapped",
+          "supports_identify_light": true,
+          "value": null,
+          "value_raw": 285212672
+        },
+        "7": {
+          "descriptor": "slot06",
+          "dev": "nvme2n1",
+          "drive_bay_light_status": "OFF",
+          "is_front": true,
+          "is_internal": false,
+          "is_rear": false,
+          "is_top": false,
+          "original": {
+            "descriptor": "slot6",
+            "enclosure_bsg": "/dev/bsg/0:0:0:0",
+            "enclosure_id": "5b0bd6d600000070",
+            "enclosure_sg": "/dev/sg0",
+            "slot": 6
+          },
+          "status": "OK, Swapped",
+          "supports_identify_light": true,
+          "value": null,
+          "value_raw": 285212672
+        },
+        "8": {
+          "descriptor": "slot07",
+          "dev": "nvme1n1",
+          "drive_bay_light_status": "OFF",
+          "is_front": true,
+          "is_internal": false,
+          "is_rear": false,
+          "is_top": false,
+          "original": {
+            "descriptor": "slot7",
+            "enclosure_bsg": "/dev/bsg/0:0:0:0",
+            "enclosure_id": "5b0bd6d600000070",
+            "enclosure_sg": "/dev/sg0",
+            "slot": 7
+          },
+          "status": "OK, Swapped",
+          "supports_identify_light": true,
+          "value": null,
+          "value_raw": 285212672
+        },
+        "9": {
+          "descriptor": "slot09",
+          "dev": null,
+          "drive_bay_light_status": "OFF",
+          "is_front": true,
+          "is_internal": false,
+          "is_rear": false,
+          "is_top": false,
+          "original": {
+            "descriptor": "slot9",
+            "enclosure_bsg": "/dev/bsg/0:0:0:0",
+            "enclosure_id": "5b0bd6d600000070",
+            "enclosure_sg": "/dev/sg0",
+            "slot": 9
+          },
+          "status": "Not installed",
+          "supports_identify_light": true,
+          "value": null,
+          "value_raw": 83886080
+        },
+        "10": {
+          "descriptor": "slot12",
+          "dev": null,
+          "drive_bay_light_status": "OFF",
+          "is_front": true,
+          "is_internal": false,
+          "is_rear": false,
+          "is_top": false,
+          "original": {
+            "descriptor": "slot12",
+            "enclosure_bsg": "/dev/bsg/0:0:0:0",
+            "enclosure_id": "5b0bd6d600000070",
+            "enclosure_sg": "/dev/sg0",
+            "slot": 12
+          },
+          "status": "Not installed",
+          "supports_identify_light": true,
+          "value": null,
+          "value_raw": 83886080
+        },
+        "11": {
+          "descriptor": "slot13",
+          "dev": null,
+          "drive_bay_light_status": "OFF",
+          "is_front": true,
+          "is_internal": false,
+          "is_rear": false,
+          "is_top": false,
+          "original": {
+            "descriptor": "slot13",
+            "enclosure_bsg": "/dev/bsg/3:0:0:0",
+            "enclosure_id": "5b0bd6d600000070",
+            "enclosure_sg": "/dev/sg3",
+            "slot": 13
+          },
+          "status": "Not installed",
+          "supports_identify_light": true,
+          "value": null,
+          "value_raw": 83886080
+        },
+        "12": {
+          "descriptor": "slot16",
+          "dev": null,
+          "drive_bay_light_status": "OFF",
+          "is_front": true,
+          "is_internal": false,
+          "is_rear": false,
+          "is_top": false,
+          "original": {
+            "descriptor": "slot16",
+            "enclosure_bsg": "/dev/bsg/3:0:0:0",
+            "enclosure_id": "5b0bd6d600000070",
+            "enclosure_sg": "/dev/sg3",
+            "slot": 16
+          },
+          "status": "Not installed",
+          "supports_identify_light": true,
+          "value": null,
+          "value_raw": 83886080
+        },
+        "13": {
+          "descriptor": "slot10",
+          "dev": null,
+          "drive_bay_light_status": "OFF",
+          "is_front": true,
+          "is_internal": false,
+          "is_rear": false,
+          "is_top": false,
+          "original": {
+            "descriptor": "slot10",
+            "enclosure_bsg": "/dev/bsg/0:0:0:0",
+            "enclosure_id": "5b0bd6d600000070",
+            "enclosure_sg": "/dev/sg0",
+            "slot": 10
+          },
+          "status": "Not installed",
+          "supports_identify_light": true,
+          "value": null,
+          "value_raw": 83886080
+        },
+        "14": {
+          "descriptor": "slot11",
+          "dev": null,
+          "drive_bay_light_status": "OFF",
+          "is_front": true,
+          "is_internal": false,
+          "is_rear": false,
+          "is_top": false,
+          "original": {
+            "descriptor": "slot11",
+            "enclosure_bsg": "/dev/bsg/0:0:0:0",
+            "enclosure_id": "5b0bd6d600000070",
+            "enclosure_sg": "/dev/sg0",
+            "slot": 11
+          },
+          "status": "Not installed",
+          "supports_identify_light": true,
+          "value": null,
+          "value_raw": 83886080
+        },
+        "15": {
+          "descriptor": "slot14",
+          "dev": null,
+          "drive_bay_light_status": "OFF",
+          "is_front": true,
+          "is_internal": false,
+          "is_rear": false,
+          "is_top": false,
+          "original": {
+            "descriptor": "slot14",
+            "enclosure_bsg": "/dev/bsg/3:0:0:0",
+            "enclosure_id": "5b0bd6d600000070",
+            "enclosure_sg": "/dev/sg3",
+            "slot": 14
+          },
+          "status": "Not installed",
+          "supports_identify_light": true,
+          "value": null,
+          "value_raw": 83886080
+        },
+        "16": {
+          "descriptor": "slot15",
+          "dev": null,
+          "drive_bay_light_status": "OFF",
+          "is_front": true,
+          "is_internal": false,
+          "is_rear": false,
+          "is_top": false,
+          "original": {
+            "descriptor": "slot15",
+            "enclosure_bsg": "/dev/bsg/3:0:0:0",
+            "enclosure_id": "5b0bd6d600000070",
+            "enclosure_sg": "/dev/sg3",
+            "slot": 15
+          },
+          "status": "Not installed",
+          "supports_identify_light": true,
+          "value": null,
+          "value_raw": 83886080
+        },
+        "17": {
+          "descriptor": "slot17",
+          "dev": null,
+          "drive_bay_light_status": "OFF",
+          "is_front": true,
+          "is_internal": false,
+          "is_rear": false,
+          "is_top": false,
+          "original": {
+            "descriptor": "slot17",
+            "enclosure_bsg": "/dev/bsg/3:0:0:0",
+            "enclosure_id": "5b0bd6d600000070",
+            "enclosure_sg": "/dev/sg3",
+            "slot": 17
+          },
+          "status": "Not installed",
+          "supports_identify_light": true,
+          "value": null,
+          "value_raw": 83886080
+        },
+        "18": {
+          "descriptor": "slot20",
+          "dev": null,
+          "drive_bay_light_status": "OFF",
+          "is_front": true,
+          "is_internal": false,
+          "is_rear": false,
+          "is_top": false,
+          "original": {
+            "descriptor": "slot20",
+            "enclosure_bsg": "/dev/bsg/3:0:0:0",
+            "enclosure_id": "5b0bd6d600000070",
+            "enclosure_sg": "/dev/sg3",
+            "slot": 20
+          },
+          "status": "Not installed",
+          "supports_identify_light": true,
+          "value": null,
+          "value_raw": 83886080
+        },
+        "19": {
+          "descriptor": "slot21",
+          "dev": null,
+          "drive_bay_light_status": "OFF",
+          "is_front": true,
+          "is_internal": false,
+          "is_rear": false,
+          "is_top": false,
+          "original": {
+            "descriptor": "slot21",
+            "enclosure_bsg": "/dev/bsg/3:0:0:0",
+            "enclosure_id": "5b0bd6d600000070",
+            "enclosure_sg": "/dev/sg3",
+            "slot": 21
+          },
+          "status": "Not installed",
+          "supports_identify_light": true,
+          "value": null,
+          "value_raw": 83886080
+        },
+        "20": {
+          "descriptor": "slot24",
+          "dev": null,
+          "drive_bay_light_status": "OFF",
+          "is_front": true,
+          "is_internal": false,
+          "is_rear": false,
+          "is_top": false,
+          "original": {
+            "descriptor": "slot24",
+            "enclosure_bsg": "/dev/bsg/3:0:0:0",
+            "enclosure_id": "5b0bd6d600000070",
+            "enclosure_sg": "/dev/sg3",
+            "slot": 24
+          },
+          "status": "Not installed",
+          "supports_identify_light": true,
+          "value": null,
+          "value_raw": 83886080
+        },
+        "21": {
+          "descriptor": "slot18",
+          "dev": null,
+          "drive_bay_light_status": "OFF",
+          "is_front": true,
+          "is_internal": false,
+          "is_rear": false,
+          "is_top": false,
+          "original": {
+            "descriptor": "slot18",
+            "enclosure_bsg": "/dev/bsg/3:0:0:0",
+            "enclosure_id": "5b0bd6d600000070",
+            "enclosure_sg": "/dev/sg3",
+            "slot": 18
+          },
+          "status": "Not installed",
+          "supports_identify_light": true,
+          "value": null,
+          "value_raw": 83886080
+        },
+        "22": {
+          "descriptor": "slot19",
+          "dev": null,
+          "drive_bay_light_status": "OFF",
+          "is_front": true,
+          "is_internal": false,
+          "is_rear": false,
+          "is_top": false,
+          "original": {
+            "descriptor": "slot19",
+            "enclosure_bsg": "/dev/bsg/3:0:0:0",
+            "enclosure_id": "5b0bd6d600000070",
+            "enclosure_sg": "/dev/sg3",
+            "slot": 19
+          },
+          "status": "Not installed",
+          "supports_identify_light": true,
+          "value": null,
+          "value_raw": 83886080
+        },
+        "23": {
+          "descriptor": "slot22",
+          "dev": null,
+          "drive_bay_light_status": "OFF",
+          "is_front": true,
+          "is_internal": false,
+          "is_rear": false,
+          "is_top": false,
+          "original": {
+            "descriptor": "slot22",
+            "enclosure_bsg": "/dev/bsg/3:0:0:0",
+            "enclosure_id": "5b0bd6d600000070",
+            "enclosure_sg": "/dev/sg3",
+            "slot": 22
+          },
+          "status": "Not installed",
+          "supports_identify_light": true,
+          "value": null,
+          "value_raw": 83886080
+        },
+        "24": {
+          "descriptor": "slot23",
+          "dev": null,
+          "drive_bay_light_status": "OFF",
+          "is_front": true,
+          "is_internal": false,
+          "is_rear": false,
+          "is_top": false,
+          "original": {
+            "descriptor": "slot23",
+            "enclosure_bsg": "/dev/bsg/3:0:0:0",
+            "enclosure_id": "5b0bd6d600000070",
+            "enclosure_sg": "/dev/sg3",
+            "slot": 23
+          },
+          "status": "Not installed",
+          "supports_identify_light": true,
+          "value": null,
+          "value_raw": 83886080
+        },
+        "25": {
+          "descriptor": "slot01",
+          "dev": "nvme9n1",
+          "drive_bay_light_status": "OFF",
+          "is_front": false,
+          "is_internal": false,
+          "is_rear": true,
+          "is_top": false,
+          "original": {
+            "descriptor": "slot1",
+            "enclosure_bsg": "/dev/bsg/1:0:0:0",
+            "enclosure_id": "5b0bd6d6000000c0",
+            "enclosure_sg": "/dev/sg1",
+            "slot": 1
+          },
+          "status": "OK, Swapped",
+          "supports_identify_light": true,
+          "value": null,
+          "value_raw": 285212672
+        },
+        "26": {
+          "descriptor": "slot02",
+          "dev": "nvme10n1",
+          "drive_bay_light_status": "OFF",
+          "is_front": false,
+          "is_internal": false,
+          "is_rear": true,
+          "is_top": false,
+          "original": {
+            "descriptor": "slot2",
+            "enclosure_bsg": "/dev/bsg/1:0:0:0",
+            "enclosure_id": "5b0bd6d6000000c0",
+            "enclosure_sg": "/dev/sg1",
+            "slot": 2
+          },
+          "status": "OK, Swapped",
+          "supports_identify_light": true,
+          "value": null,
+          "value_raw": 285212672
+        },
+        "27": {
+          "descriptor": "slot03",
+          "dev": "nvme11n1",
+          "drive_bay_light_status": "OFF",
+          "is_front": false,
+          "is_internal": false,
+          "is_rear": true,
+          "is_top": false,
+          "original": {
+            "descriptor": "slot3",
+            "enclosure_bsg": "/dev/bsg/1:0:0:0",
+            "enclosure_id": "5b0bd6d6000000c0",
+            "enclosure_sg": "/dev/sg1",
+            "slot": 3
+          },
+          "status": "OK, Swapped",
+          "supports_identify_light": true,
+          "value": null,
+          "value_raw": 285212672
+        },
+        "28": {
+          "descriptor": "slot04",
+          "dev": null,
+          "drive_bay_light_status": "OFF",
+          "is_front": false,
+          "is_internal": false,
+          "is_rear": true,
+          "is_top": false,
+          "original": {
+            "descriptor": "slot4",
+            "enclosure_bsg": "/dev/bsg/1:0:0:0",
+            "enclosure_id": "5b0bd6d6000000c0",
+            "enclosure_sg": "/dev/sg1",
+            "slot": 4
+          },
+          "status": "Not installed",
+          "supports_identify_light": true,
+          "value": null,
+          "value_raw": 83886080
+        }
+      },
+      "Enclosure": {
+        "28": {
+          "descriptor": "EnclosureElement01",
+          "status": "OK",
+          "value": null,
+          "value_raw": 16777216
+        }
+      },
+      "Temperature Sensors": {
+        "26": {
+          "descriptor": "Pcie Die",
+          "status": "OK",
+          "value": "47C",
+          "value_raw": 16794368
+        }
+      }
+    },
+    "front_loaded": true,
+    "front_slots": 24,
+    "id": "5b0bd6d600000070",
+    "internal_slots": 0,
+    "label": "ECStream 4IXGA-SWp 04f0",
+    "model": "V260",
+    "name": "ECStream 4IXGA-SWp 04f0",
+    "pci": "0:0:0:0",
+    "product": "4IXGA-SWp",
+    "rackmount": true,
+    "rear_slots": 4,
+    "revision": "04f0",
+    "sg": "/dev/sg0",
+    "status": [
+      "INFO"
+    ],
+    "top_loaded": false,
+    "top_slots": 0,
+    "vendor": "ECStream"
+  }
+]

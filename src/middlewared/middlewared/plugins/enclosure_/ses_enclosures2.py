@@ -32,6 +32,9 @@ def _extend_rv(rv: list, iterable: Iterable[Enclosure], asdict: bool = True) -> 
         rv.extend(iterable)
 
 
+_VSERIES_REAR_PRODUCTS = ('4IXGA-NTBp', '4IXGA-NTBs', '4IXGA-NTGp', '4IXGA-NTGs')
+
+
 def _vseries_slot_designation_from_descriptors(elements: ElementsDict) -> str | None:
     """Derive a V-series slot_designation by inspecting Array Device Slot
     element descriptors. V-series VirtualSES enclosures label the slots each
@@ -106,9 +109,59 @@ def _initialize_v_series_front_enclosures(
     _extend_rv(rv, (enc1, enc2), asdict)
 
 
+def _vseries_rear_partition_owns_bays(elements: ElementsDict) -> bool:
+    """True if this NTG partition serves the 4 rear bays (descriptors
+    'slot01'..'slot04'); the no-drives partition reports all slots '<empty>'.
+    """
+    for element in elements.values():
+        if element.get('type') != _ARRAY_DEVICE_SLOT_TYPE:
+            continue
+        match = _VSERIES_SLOT_LABEL_RE.match(element.get('descriptor', '').strip())
+        if match and 1 <= int(match.group(1)) <= 4:
+            return True
+    return False
+
+
+def _initialize_v_series_rear_enclosures(
+    rv: list, deferred: list[tuple[Enclosure, ElementsDict]], asdict: bool = True
+) -> None:
+    """Keep the bay-serving half of the bifurcated NTG chip as 'REAR';
+    drop the no-drives half so it doesn't surface in enclosure2.query.
+    """
+    if len(deferred) != 2:
+        logger.error('Unable to map elements: Expected 2 V-series rear-bay enclosures, found %r', len(deferred))
+        return _extend_rv(rv, (enc.initialize(status) for enc, status in deferred), asdict)
+
+    bay_partitions = [(enc, els) for enc, els in deferred if _vseries_rear_partition_owns_bays(els)]
+    if len(bay_partitions) != 1:
+        logger.error(
+            'Unable to map elements: expected exactly 1 rear-bay-serving partition among %r, found %r',
+            [enc.product for enc, _ in deferred], len(bay_partitions),
+        )
+        return _extend_rv(rv, (enc.initialize(status) for enc, status in deferred), asdict)
+
+    enc, elements = bay_partitions[0]
+    enc.initialize(elements, slot_designation='REAR')
+    _extend_rv(rv, (enc,), asdict)
+
+
+def _initialize_v_series_enclosures(
+    rv: list,
+    deferred_front: list[tuple[Enclosure, ElementsDict]],
+    deferred_rear: list[tuple[Enclosure, ElementsDict]],
+    asdict: bool = True,
+) -> None:
+    """Dispatch deferred V-series enclosures to the per-kind initializer."""
+    if deferred_front:
+        _initialize_v_series_front_enclosures(rv, deferred_front, asdict)
+    if deferred_rear:
+        _initialize_v_series_rear_enclosures(rv, deferred_rear, asdict)
+
+
 def get_ses_enclosures(asdict=True):
     rv = list()
     deferred_front = list()
+    deferred_rear = list()
 
     with suppress(FileNotFoundError):
         for i in Path('/sys/class/enclosure').iterdir():
@@ -121,20 +174,15 @@ def get_ses_enclosures(asdict=True):
                     status['name'] == 'BROADCOMVirtualSES0001'
                     or enc.product in ('4IXGA-SWp', '4IXGA-SWs')
                 ):
-                    # Front-bay carve-out. V1xx advertises the SES enclosure
-                    # name 'BROADCOMVirtualSES0001' (one per 9600-12i4e SAS
-                    # HBA); V2xx (V260/V280) front-bay PEX89088 chip
-                    # advertises ECStream 4IXGA-SWp/4IXGA-SWs (one of the
-                    # two suffixes per controller, determined by chassis
-                    # slot position). Both forms need the NVME0/NVME8
-                    # split applied across the two partitions.
+                    # V-series front-bay: defer for NVME0/NVME8 disambiguation.
                     deferred_front.append((enc, status['elements']))
+                elif enc.is_vseries and enc.product in _VSERIES_REAR_PRODUCTS:
+                    # V-series rear-bay: defer to pick bay-serving partition.
+                    deferred_rear.append((enc, status['elements']))
                 else:
-                    # Every other system can initialize their enclosures independently
                     enc.initialize(status['elements'])
                     rv.append(enc.asdict() if asdict else enc)
 
-    if deferred_front:
-        _initialize_v_series_front_enclosures(rv, deferred_front, asdict)
+    _initialize_v_series_enclosures(rv, deferred_front, deferred_rear, asdict)
 
     return rv
