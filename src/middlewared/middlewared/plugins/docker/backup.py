@@ -37,7 +37,7 @@ logger = logging.getLogger('app_lifecycle')
 
 def list_backups(context: ServiceContext) -> DockerBackupMap:
     docker_config = context.call_sync2(context.s.docker.config)
-    if not docker_config.pool:
+    if not docker_config.pool or not docker_config.dataset:
         return DockerBackupMap(root={})
 
     backups_base_dir = backup_ds_path()

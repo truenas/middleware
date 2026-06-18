@@ -8,7 +8,7 @@
 from enum import IntFlag, StrEnum
 from pathlib import Path
 import stat as statlib
-from typing import TypedDict
+from typing import Literal, TypedDict
 
 import truenas_os
 
@@ -35,14 +35,16 @@ class StatxAttr(IntFlag):
     DAX = 0x00200000
 
 
+STATX_ATTRIBUTE = Literal['COMPRESSED', 'IMMUTABLE', 'APPEND', 'NODUMP', 'ENCRYPTED', 'AUTOMOUNT', 'MOUNT_ROOT',
+                          'VERIFY', 'DAX']
 STATX_DEFAULT_MASK = truenas_os.STATX_BASIC_STATS | truenas_os.STATX_BTIME | truenas_os.STATX_MNT_ID_UNIQUE
 
 
 class StatxEntryResult(TypedDict, total=False):
     """Return type for statx_entry_impl"""
     st: truenas_os.StatxResult
-    etype: str | None
-    attributes: list[str]
+    etype: str
+    attributes: list[STATX_ATTRIBUTE]
     is_ctldir: bool  # Optional: only present if entry is absolute
 
 
@@ -78,28 +80,31 @@ def statx_entry_impl(entry: Path, dir_fd: int = truenas_os.AT_FDCWD) -> StatxEnt
     except FileNotFoundError:
         return None
 
-    out = StatxEntryResult(st=st, etype=None, attributes=[])
+    out_st = st
+    attributes: list[STATX_ATTRIBUTE] = []
 
     for attr in StatxAttr:
-        if out['st'].stx_attributes & attr.value:
+        if out_st.stx_attributes & attr.value:
             if attr.name is not None:
-                out['attributes'].append(attr.name)
+                attributes.append(attr.name)  # type: ignore[arg-type]
 
-    if statlib.S_ISDIR(out['st'].stx_mode):
-        out['etype'] = StatxEtype.DIRECTORY.name
+    if statlib.S_ISDIR(out_st.stx_mode):
+        etype = StatxEtype.DIRECTORY.name
 
-    elif statlib.S_ISLNK(out['st'].stx_mode):
-        out['etype'] = StatxEtype.SYMLINK.name
+    elif statlib.S_ISLNK(out_st.stx_mode):
+        etype = StatxEtype.SYMLINK.name
         try:
-            out['st'] = truenas_os.statx(path, dir_fd=dir_fd, mask=STATX_DEFAULT_MASK)
+            out_st = truenas_os.statx(path, dir_fd=dir_fd, mask=STATX_DEFAULT_MASK)
         except FileNotFoundError:
             return None
 
-    elif statlib.S_ISREG(out['st'].stx_mode):
-        out['etype'] = StatxEtype.FILE.name
+    elif statlib.S_ISREG(out_st.stx_mode):
+        etype = StatxEtype.FILE.name
 
     else:
-        out['etype'] = StatxEtype.OTHER.name
+        etype = StatxEtype.OTHER.name
+
+    out = StatxEntryResult(st=out_st, etype=etype, attributes=attributes)
 
     if entry.is_absolute():
         out['is_ctldir'] = path_in_ctldir(entry)

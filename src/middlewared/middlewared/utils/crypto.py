@@ -3,6 +3,7 @@ from hashlib import pbkdf2_hmac
 from hmac import compare_digest
 from ssl import RAND_bytes
 from string import ascii_letters, digits, punctuation
+from typing import TypedDict
 from uuid import UUID
 
 from cryptit import cryptit
@@ -86,11 +87,19 @@ def generate_nt_hash(passwd: str) -> str:
     return md4_hash_bytes.hex().upper()
 
 
+class ApiKeyAuthData(TypedDict):
+    iterations: int
+    salt: str
+    client_key: str
+    stored_key: str
+    server_key: str
+
+
 def generate_api_key_auth_data(
     passwd: str,
     salt_in: bytes | None = None,
     rounds: int = 500000
-) -> dict[str, str | int]:
+) -> ApiKeyAuthData:
     """
     Generate SCRAM authentication data for API key using PBKDF2-SHA512.
 

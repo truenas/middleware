@@ -14,9 +14,6 @@ from middlewared.api.base import (
 from middlewared.utils.filesystem.acl import (
     ACL_UNDEFINED_ID,
 )
-from middlewared.utils.filesystem.stat_x import (
-    StatxEtype,
-)
 
 from .acl import AceWhoId
 from .common import QueryFilters, QueryOptions
@@ -129,6 +126,7 @@ FILESYSTEM_STATX_ATTRS = Literal[
     'COMPRESSED',
     'APPEND',
     'NODUMP',
+    'ENCRYPTED',
     'IMMUTABLE',
     'AUTOMOUNT',
     'MOUNT_ROOT',
@@ -156,10 +154,10 @@ FILESYSTEM_ZFS_ATTRS = Literal[
 
 
 FileType = Literal[
-    StatxEtype.DIRECTORY,
-    StatxEtype.FILE,
-    StatxEtype.SYMLINK,
-    StatxEtype.OTHER,
+    'DIRECTORY',
+    'FILE',
+    'SYMLINK',
+    'OTHER',
 ]
 
 

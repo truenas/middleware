@@ -11,6 +11,7 @@ import contextlib
 import enum
 import errno
 import os
+import typing
 
 import truenas_os
 
@@ -53,7 +54,7 @@ ALL_ATTRS = (
 )
 
 
-def _etype(item: truenas_os.IterInstance) -> str:
+def _etype(item: truenas_os.IterInstance) -> typing.Literal['DIRECTORY', 'FILE', 'SYMLINK', 'OTHER']:
     if item.isdir:
         return StatxEtype.DIRECTORY.name
     if item.islnk:
@@ -63,13 +64,23 @@ def _etype(item: truenas_os.IterInstance) -> str:
     return StatxEtype.OTHER.name
 
 
-def _statx_attr_names(stx_attributes: int) -> list[str]:
-    return [a.name for a in StatxAttr if stx_attributes & a.value and a.name is not None]
+def _statx_attr_names(stx_attributes: int) -> list[
+    typing.Literal['COMPRESSED', 'APPEND', 'NODUMP', 'ENCRYPTED', 'IMMUTABLE', 'AUTOMOUNT', 'MOUNT_ROOT', 'VERIFY',
+    'DAX'
+]]:
+    return [
+        a.name  # type: ignore[misc]
+        for a in StatxAttr
+        if stx_attributes & a.value and a.name is not None
+    ]
 
 
-def _zfs_attrs_for(fd: int) -> list[str] | None:
+def _zfs_attrs_for(fd: int) -> list[
+    typing.Literal['READONLY', 'HIDDEN', 'SYSTEM', 'ARCHIVE', 'IMMUTABLE', 'NOUNLINK', 'APPENDONLY', 'NODUMP', 'OPAQUE',
+                   'AV_QUARANTINED', 'AV_MODIFIED', 'REPARSE', 'OFFLINE', 'SPARSE'
+]] | None:
     try:
-        return zfs_attributes_dump(fget_zfs_file_attributes(fd))
+        return zfs_attributes_dump(fget_zfs_file_attributes(fd))  # type: ignore[return-value]
     except OSError as e:
         # ENOTTY/EINVAL: not a ZFS filesystem.  Match historical None sentinel.
         if e.errno in (errno.ENOTTY, errno.EINVAL):
@@ -107,7 +118,7 @@ def _readable_meta_fd(item: truenas_os.IterInstance, item_path: str) -> Iterator
 def _build_entry(
     parent_path: str,
     item: truenas_os.IterInstance,
-    etype: str,
+    etype: typing.Literal['DIRECTORY', 'FILE', 'SYMLINK', 'OTHER'],
     mask: DirectoryRequestMask,
 ) -> FilesystemDirEntry | None:
     """
