@@ -15,6 +15,13 @@ from .path import get_app_parent_config_path
 from .utils import PROJECT_PREFIX, AppState, ContainerState, get_app_name_from_project_name
 
 COMPOSE_SERVICE_KEY: str = 'com.docker.compose.service'
+KNOWN_NORMAL_EXIT_CODES: tuple[int, ...] = (
+    0,    # Normal exit
+    129,  # SIGHUP
+    130,  # SIGINT
+    137,  # SIGKILL
+    143,  # SIGTERM
+)
 
 
 @dataclass(frozen=True, eq=True)
@@ -262,7 +269,8 @@ def translate_resources_to_desired_workflow(app_resources: dict[str, Any]) -> di
                 type='bind' if volume_mount['Type'] == 'bind' else 'volume',
             ))
 
-        if container['State']['Status'].lower() == 'running':
+        container_status = container['State']['Status'].lower()
+        if container_status == 'running':
             if health_config := container['State'].get('Health'):
                 if health_config['Status'] == 'healthy':
                     state = ContainerState.RUNNING.value
@@ -270,12 +278,12 @@ def translate_resources_to_desired_workflow(app_resources: dict[str, Any]) -> di
                     state = ContainerState.STARTING.value
             else:
                 state = ContainerState.RUNNING.value
-        elif container['State']['Status'].lower() == 'created':
+        elif container_status == 'created':
             state = ContainerState.CREATED.value
-        elif container['State']['Status'] == 'exited' and container['State']['ExitCode'] != 0:
+        elif container_status == 'exited' and container['State']['ExitCode'] not in KNOWN_NORMAL_EXIT_CODES:
             state = ContainerState.CRASHED.value
         else:
-            state = 'exited'
+            state = ContainerState.EXITED.value
 
         workloads['container_details'].append({
             'service_name': service_name,
