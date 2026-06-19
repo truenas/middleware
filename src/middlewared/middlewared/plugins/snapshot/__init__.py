@@ -68,20 +68,11 @@ class PeriodicSnapshotTaskService(GenericCRUDService[PeriodicSnapshotTaskEntry])
     )
     async def do_create(self, data: PoolSnapshotTaskCreate) -> PeriodicSnapshotTaskEntry:
         """
-        Create a Periodic Snapshot Task
+        Create a periodic snapshot task.
 
-        Create a Periodic Snapshot Task that will take snapshots of specified `dataset` at specified `schedule`.
-        Recursive snapshots can be created if `recursive` flag is enabled. You can `exclude` specific child datasets
-        or zvols from the snapshot.
-
-        Snapshots will be automatically destroyed after a certain amount of time, specified by
-        `lifetime_value` and `lifetime_unit`.
-
-        If multiple periodic tasks create snapshots at the same time (for example hourly and daily at 00:00)
-        the snapshot will be kept until the last of these tasks reaches its expiry time.
-
-        Snapshots will be named according to `naming_schema` which is a `strftime`-like template for snapshot name
-        and must contain `%Y`, `%m`, `%d`, `%H` and `%M`.
+        Snapshots are automatically destroyed after their configured lifetime. If multiple periodic tasks create a
+        snapshot at the same time (for example, an hourly and a daily task at 00:00), the snapshot is kept until the
+        last of those tasks reaches its expiry time.
         """
         return await self._svc_part.do_create(data)
 

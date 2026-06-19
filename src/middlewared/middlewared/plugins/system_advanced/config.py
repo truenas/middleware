@@ -281,7 +281,7 @@ class SystemAdvancedService(ConfigService):
     )
     async def sed_global_password_is_set(self):
         """Returns a boolean identifying whether or not a global
-        SED password has been set"""
+        SED password has been set."""
         return bool(await self.sed_global_password())
 
     @api_method(
@@ -291,7 +291,7 @@ class SystemAdvancedService(ConfigService):
     )
     async def sed_global_password(self):
         """Returns configured global SED password in clear-text if one
-        is configured, otherwise an empty string"""
+        is configured, otherwise an empty string."""
         passwd = (await self.middleware.call(
             'datastore.config', 'system.advanced', {'prefix': self._config.datastore_prefix}
         ))['sed_passwd']
@@ -299,7 +299,7 @@ class SystemAdvancedService(ConfigService):
 
     @api_method(SystemAdvancedLoginBannerArgs, SystemAdvancedLoginBannerResult, authentication_required=False)
     def login_banner(self):
-        """Returns user set login banner"""
+        """Returns user set login banner."""
         # NOTE: This endpoint doesn't require authentication because
         # it is used by UI on the login page
         return self.middleware.call_sync('datastore.config', 'system.advanced')['adv_login_banner']

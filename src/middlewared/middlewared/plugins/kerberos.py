@@ -352,11 +352,8 @@ class KerberosKeytabService(CRUDService):
     )
     async def do_create(self, data):
         """
-        Create a kerberos keytab. Uploaded keytab files will be merged with the system
-        keytab under /etc/krb5.keytab.
-
-        `file` b64encoded kerberos keytab
-        `name` name for kerberos keytab
+        Create a Kerberos keytab. Uploaded keytab files are merged with the system keytab under
+        ``/etc/krb5.keytab``.
         """
         verrors = ValidationErrors()
 

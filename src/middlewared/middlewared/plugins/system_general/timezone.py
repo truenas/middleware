@@ -18,5 +18,5 @@ class SystemGeneralService(Service):
         SystemGeneralTimezoneChoicesResult
     )
     def timezone_choices(self):
-        """Returns available timezones"""
+        """Returns available timezones."""
         return dict(tz_choices())

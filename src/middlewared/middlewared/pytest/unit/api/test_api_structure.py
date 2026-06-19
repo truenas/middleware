@@ -4,15 +4,19 @@ import inspect
 import os
 import pathlib
 import pkgutil
+import re
 
 import pytest
 
 import middlewared
 import middlewared.api
 from middlewared.api.base import BaseModel
+from middlewared.api.base.server.doc import reflow_docstring
 
 PUBLIC_API_DECORATORS = frozenset({"api_method", "filterable_api_method"})
 PRIVATE_DECORATORS = frozenset({"private", "private_method"})
+# RST list markers, mirroring `reflow_docstring`'s definition of a structural (non-prose) block.
+RST_LIST_MARKER = re.compile(r"([-*+]|[0-9]+\.|#\.) ")
 
 
 @pytest.fixture(scope="module")
@@ -43,6 +47,11 @@ def check_docstring(docstr: str | None, must_have: bool = False):
     2. Last character must be a period
     3. Last character of each line must be a period or colon
 
+    Rules 2 and 3 are applied to prose only. RST literal blocks (indented), directives (lines
+    starting with ``.. ``), and list items are structural -- ``reflow_docstring`` preserves them
+    verbatim -- so they are exempt (e.g. a docstring may legitimately end in a code example or a
+    ``.. versionadded::`` directive).
+
     """
     if not docstr:
         if must_have:
@@ -60,9 +69,15 @@ def check_docstring(docstr: str | None, must_have: bool = False):
     docstr = docstr.strip()
     if docstr[0].islower() and docstr.partition(" ")[0] not in {"pCloud", "iSCSI"}:
         return "Docstring cannot start with lowercase letter"
-    if not docstr.endswith("."):
+
+    lines = [line for line in docstr.splitlines() if line]
+
+    def is_structural(line):
+        return bool(line[:1].isspace() or line.startswith(".. ") or RST_LIST_MARKER.match(line))
+
+    if not docstr.endswith(".") and not is_structural(lines[-1]):
         return "Docstring must end with a period"
-    if any(line[-1] not in (".", ":") for line in docstr.splitlines() if line):
+    if any(line[-1] not in (".", ":") for line in lines if not is_structural(line)):
         return "Lines must end with a colon or a period"
 
 
@@ -155,7 +170,11 @@ def _iter_public_api_methods(tree):
 
 
 def test_api_method_docstrings():
-    """Every public API method must have a non-empty docstring (see CLAUDE.md)."""
+    """Every public API method must have a docstring that satisfies the API docstring rules.
+
+    Each docstring is reflowed exactly as it is for the generated API documentation before the
+    rules are applied, so hard-wrapped prose is validated as the single paragraph it renders to.
+    """
     package_root = pathlib.Path(middlewared.__file__).parent
     errors = []
     for path in sorted(package_root.rglob("*.py")):
@@ -166,9 +185,10 @@ def test_api_method_docstrings():
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
         for node in _iter_public_api_methods(tree):
             docstring = ast.get_docstring(node)
-            if not docstring or not docstring.strip():
+            reflowed = reflow_docstring(docstring) if docstring else None
+            if err := check_docstring(reflowed, must_have=True):
                 rel_path = path.relative_to(package_root)
-                errors.append(SyntaxWarning(f"{rel_path}:{node.lineno}: {node.name} is missing a docstring"))
+                errors.append(SyntaxWarning(f"{rel_path}:{node.lineno}: {node.name}: {err}"))
 
     if errors:
-        raise ExceptionGroup("Public API method(s) without a docstring", errors)
+        raise ExceptionGroup("Improper public API method docstring(s)", errors)

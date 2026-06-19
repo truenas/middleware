@@ -974,19 +974,9 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
         """
         List contents of a remote bucket / directory.
 
-        If remote supports buckets, path is constructed by two keys "bucket"/"folder" in `attributes`.
-        If remote does not support buckets, path is constructed using "folder" key only in `attributes`.
-        "folder" is directory name and "bucket" is bucket name for remote.
-
-        Path examples:
-
-        S3 Service
-        `bucketname/directory/name`
-
-        Dropbox Service
-        `directory/name`
-
-        `credentials` is a valid id of a Cloud Sync Credential which will be used to connect to the provider.
+        If the remote supports buckets, the path is constructed from the ``bucket`` and ``folder`` keys in
+        ``attributes``; otherwise it is constructed from the ``folder`` key alone. For example, an S3 path is
+        ``bucketname/directory/name`` and a Dropbox path is ``directory/name``.
         """
         verrors = ValidationErrors()
 

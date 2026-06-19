@@ -87,9 +87,10 @@ class SMBShareAclEntry(BaseModel):
     You can identify the principal by a SID (`ae_who_sid`), or Unix ID (`ae_who_id`). """
     ae_perm: Literal['FULL', 'CHANGE', 'READ', 'CUSTOM'] = Field(
         description=(
-            "Permissions granted or denied to the principal. NOTE: this may appear as CUSTOM on read if user has "
-            "manually edited the share ACL through unsupported means. In this case users will be required to set it to "
-            "a supported value on update."
+            "Permissions granted or denied to the principal: `FULL` grants read, write, execute, delete, write ACL, "
+            "and change owner; `CHANGE` grants read, write, execute, and delete; `READ` grants read and execute. "
+            "NOTE: this may appear as CUSTOM on read if user has manually edited the share ACL through unsupported "
+            "means. In this case users will be required to set it to a supported value on update."
         ),
     )
     ae_type: Literal['ALLOWED', 'DENIED'] = Field(

@@ -30,7 +30,7 @@ class PrivilegeEntry(BaseModel):
     builtin_name: str | None = Field(
         description="Name of the built-in privilege if this is a system privilege. `null` for custom privileges.",
     )
-    name: NonEmptyString = Field(description="Display name of the privilege.")
+    name: NonEmptyString = Field(description="Display name of the privilege. Must be unique.")
     local_groups: list[GroupEntry | UnmappedGroupEntry] = Field(
         description="Array of local groups assigned to this privilege.",
     )
@@ -83,7 +83,12 @@ class PrivilegeDeleteResult(BaseModel):
 class PrivilegeRolesEntry(BaseModel):
     name: NonEmptyString = Field(description="Internal name of the role.")
     title: NonEmptyString = Field(description="Human-readable title of the role.")
-    includes: list[NonEmptyString] = Field(description="Array of other role names that this role includes.")
+    includes: list[NonEmptyString] = Field(
+        description=(
+            "Array of other role names that this role includes. Granting this role also grants the permissions of all "
+            "included roles."
+        ),
+    )
     builtin: bool = Field(description="Whether this is a built-in system role.")
     stig: STIGType | None = Field(description="STIG compliance type for this role. `null` if not STIG-related.")
 

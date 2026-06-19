@@ -219,15 +219,15 @@ class VMService(GenericCRUDService[VMEntry]):
         """
         Update all information of a specific VM.
 
-        `devices` is a list of virtualized hardware to attach to the virtual machine. If `devices` is not present,
-        no change is made to devices. If either the device list order or data stored by the device changes when the
-        attribute is passed, these actions are taken:
+        ``devices`` is a list of virtualized hardware to attach to the virtual machine. If ``devices`` is not
+        present, no change is made to devices. If either the device list order or the data stored by a device
+        changes when the attribute is passed, these actions are taken:
 
-        1) If there is no device in the `devices` list which was previously attached to the VM, that device is
-           removed from the virtual machine.
-        2) Devices are updated in the `devices` list when they contain a valid `id` attribute that corresponds to
-           an existing device.
-        3) Devices that do not have an `id` attribute are created and attached to `id` VM.
+        1. If a device previously attached to the VM is no longer in the ``devices`` list, it is removed from the
+           virtual machine.
+        2. Devices in the ``devices`` list that contain a valid ``id`` attribute corresponding to an existing
+           device are updated.
+        3. Devices that do not have an ``id`` attribute are created and attached to the VM.
         """
         return await self._svc_part.do_update(id_, data, audit_callback=audit_callback)
 
@@ -267,7 +267,7 @@ class VMService(GenericCRUDService[VMEntry]):
     @api_method(VMBootloaderOvmfChoicesArgs, VMBootloaderOvmfChoicesResult, roles=['VM_READ'], check_annotations=True)
     def bootloader_ovmf_choices(self) -> dict[str, str]:
         """
-        Retrieve bootloader ovmf choices
+        Retrieve bootloader ovmf choices.
         """
         return bootloader_ovmf_choices()
 
@@ -355,12 +355,7 @@ class VMService(GenericCRUDService[VMEntry]):
     @api_method(VMGetVmemoryInUseArgs, VMGetVmemoryInUseResult, roles=['VM_READ'], check_annotations=True)
     async def get_vmemory_in_use(self) -> VMGetVmemoryInUse:
         """
-        The total amount of virtual memory in bytes used by guests
-
-            Returns a dict with the following information:
-                RNP - Running but not provisioned
-                PRD - Provisioned but not running
-                RPRD - Running and provisioned
+        Return the total amount of virtual memory, in bytes, used by guests.
         """
         return await get_vmemory_in_use(self.context)
 
@@ -401,7 +396,7 @@ class VMService(GenericCRUDService[VMEntry]):
     @api_method(VMMaximumSupportedVcpusArgs, VMMaximumSupportedVcpusResult, roles=['VM_READ'], check_annotations=True)
     async def maximum_supported_vcpus(self) -> int:
         """
-        Returns maximum supported VCPU's
+        Returns maximum supported VCPU's.
         """
         return MAXIMUM_SUPPORTED_VCPUS
 
@@ -499,7 +494,7 @@ class VMService(GenericCRUDService[VMEntry]):
     )
     def supports_virtualization(self) -> bool:
         """
-        Returns "true" if system supports virtualization, "false" otherwise
+        Returns "true" if system supports virtualization, "false" otherwise.
         """
         return kvm_supported()
 

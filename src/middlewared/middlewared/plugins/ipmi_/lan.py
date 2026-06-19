@@ -176,7 +176,7 @@ class IPMILanService(Service):
         audit='Update IPMI configuration'
     )
     def update(self, id_, data):
-        """Update IPMI channel configuration"""
+        """Update IPMI channel configuration."""
         verrors = ValidationErrors()
         schema = 'ipmi.lan.update'
         if not self.middleware.call_sync('ipmi.is_loaded'):

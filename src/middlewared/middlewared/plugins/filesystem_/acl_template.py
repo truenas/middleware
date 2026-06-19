@@ -157,7 +157,7 @@ class ACLTemplateService(CRUDService):
     )
     async def do_update(self, id_, data):
         """
-        update filesystem ACL template with `id`.
+        Update filesystem ACL template with ``id``.
         """
         old = await self.get_instance(id_)
         new = old.copy()

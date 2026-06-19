@@ -185,7 +185,7 @@ class VMDeviceService(GenericCRUDService[VMDeviceEntry]):
         roles=['VM_DEVICE_READ'], check_annotations=True,
     )
     def iommu_enabled(self) -> bool:
-        """Returns "true" if iommu is enabled, "false" otherwise"""
+        """Returns "true" if iommu is enabled, "false" otherwise."""
         return _iommu_enabled()
 
     @api_method(
@@ -212,7 +212,7 @@ class VMDeviceService(GenericCRUDService[VMDeviceEntry]):
         roles=['VM_DEVICE_READ'], check_annotations=True,
     )
     def passthrough_device(self, device: str) -> VMDevicePassthroughDevice:
-        """Retrieve details about `device` PCI device"""
+        """Retrieve details about ``device`` PCI device."""
         return _passthrough_device(device)
 
     @api_method(
@@ -220,7 +220,7 @@ class VMDeviceService(GenericCRUDService[VMDeviceEntry]):
         roles=['VM_DEVICE_READ'], check_annotations=True,
     )
     def passthrough_device_choices(self) -> VMDevicePassthroughInfo:
-        """Available choices for PCI passthru devices"""
+        """Available choices for PCI passthru devices."""
         return _passthrough_device_choices()
 
     @api_method(
@@ -228,7 +228,7 @@ class VMDeviceService(GenericCRUDService[VMDeviceEntry]):
         roles=['VM_DEVICE_READ'], check_annotations=True,
     )
     def usb_controller_choices(self) -> dict[str, str]:
-        """Retrieve USB controller type choices"""
+        """Retrieve USB controller type choices."""
         return _usb_controller_choices()
 
     @api_method(

@@ -189,9 +189,9 @@ class InterfaceService(CRUDService):
     @filterable_api_method(item=InterfaceEntry)
     def query(self, filters, options):
         """
-        Query Interfaces with `query-filters` and `query-options`
+        Query network interfaces with the standard ``query-filters`` and ``query-options``.
 
-        `options.extra.retrieve_names_only` (bool): Only return interface names.
+        Set the ``options.extra.retrieve_names_only`` boolean to return only interface names.
 
         """
         retrieve_names_only = options['extra'].get('retrieve_names_only')
@@ -732,24 +732,24 @@ class InterfaceService(CRUDService):
     )
     async def do_create(self, data):
         """
-        Create virtual interfaces (Link Aggregation, VLAN)
+        Create virtual interfaces (Link Aggregation, VLAN).
 
         .. examples(cli)::
 
-        Create a bridge interface:
+            Create a bridge interface:
 
-        > network interface create name=br0 type=BRIDGE bridge_members=enp0s3,enp0s4
-            aliases="192.168.0.10"
+            > network interface create name=br0 type=BRIDGE bridge_members=enp0s3,enp0s4
+                aliases="192.168.0.10"
 
-        Create a link aggregation interface that has multiple IP addresses in multiple subnets:
+            Create a link aggregation interface that has multiple IP addresses in multiple subnets:
 
-        > network interface create name=bond0 type=LINK_AGGREGATION lag_protocol=LACP
-            lag_ports=enp0s8,enp0s9 aliases="192.168.0.20/30","192.168.1.20/30"
+            > network interface create name=bond0 type=LINK_AGGREGATION lag_protocol=LACP
+                lag_ports=enp0s8,enp0s9 aliases="192.168.0.20/30","192.168.1.20/30"
 
-        Create a DHCP-enabled VLAN interface
+            Create a DHCP-enabled VLAN interface:
 
-        > network interface create name=vlan0 type=VLAN vlan_parent_interface=enp0s10
-            vlan_tag=10 vlan_pcp=4 ipv4_dhcp=true ipv6_auto=true
+            > network interface create name=vlan0 type=VLAN vlan_parent_interface=enp0s10
+                vlan_tag=10 vlan_pcp=4 ipv4_dhcp=true ipv6_auto=true
 
         """
         verrors = ValidationErrors()
@@ -1241,9 +1241,9 @@ class InterfaceService(CRUDService):
 
         .. examples(cli)::
 
-        Update network interface static IP:
+            Update network interface static IP:
 
-        > network interface update enp0s3 aliases="192.168.0.10"
+            > network interface update enp0s3 aliases="192.168.0.10"
         """
         verrors = ValidationErrors()
         await self.middleware.call('network.common.check_failover_disabled', 'interface.update', verrors)
@@ -1781,7 +1781,7 @@ class InterfaceService(CRUDService):
 
     @api_method(InterfaceIpInUseArgs, InterfaceIpInUseResult, roles=['NETWORK_INTERFACE_READ'])
     def ip_in_use(self, choices):
-        """Get all IPv4 / IPv6 from all valid interfaces"""
+        """Get all IPv4 / IPv6 from all valid interfaces."""
         list_of_ip = []
         static_ips = {}
         # Filter by specified interfaces if provided

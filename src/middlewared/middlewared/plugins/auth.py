@@ -734,7 +734,7 @@ class AuthService(Service):
 
     @api_method(AuthMechanismChoicesArgs, AuthMechanismChoicesResult, authentication_required=False, pass_app=True)
     async def mechanism_choices(self, app) -> list:
-        """ Get list of available authentication mechanisms available for auth.login_ex """
+        """Get the list of authentication mechanisms available for :method:`auth.login_ex`."""
         aal = CURRENT_AAL.level
         cred_allows_token = True
 
@@ -1084,7 +1084,7 @@ class AuthService(Service):
         """
         Set current user's ``attributes`` dictionary ``key`` to ``value``.
 
-        e.g. Setting ``key="foo"`` ``value="var"`` will result in ``{"attributes": {"foo": "bar"}}``
+        e.g. Setting ``key="foo"`` ``value="var"`` will result in ``{"attributes": {"foo": "bar"}}``.
 
         Attributes set here will appear in the :method:`auth.me` response under the ``attributes`` field.
 

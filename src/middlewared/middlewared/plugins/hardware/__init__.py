@@ -64,7 +64,7 @@ class HardwareVirtualization(Service):
         check_annotations=True,
     )
     def variant(self) -> str:
-        """Report the virtualization variation of TrueNAS system"""
+        """Report the virtualization variation of TrueNAS system."""
         return _virt.detect_variant()
 
     @private

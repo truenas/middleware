@@ -102,19 +102,19 @@ class PoolDatasetService(Service):
     @job(lock=lambda args: f'dataset_unlock_{args[0]}', pipes=['input'], check_pipes=False)
     def unlock(self, job, tls, id_, options):
         """
-        Unlock dataset `id` (and its children if `unlock_options.recursive` is `true`).
+        Unlock dataset ``id`` (and its children if ``unlock_options.recursive`` is ``true``).
 
-        If `id` dataset is not encrypted an exception will be raised. There is one exception:
-        when `id` is a root dataset and `unlock_options.recursive` is specified, encryption
-        validation will not be performed for `id`. This allow unlocking encrypted children for the entire pool `id`.
+        If ``id`` is not encrypted, an exception is raised with one exception: when ``id`` is a root dataset and
+        ``unlock_options.recursive`` is specified, encryption validation is not performed for ``id``. This allows
+        unlocking encrypted children for the entire pool ``id``.
 
         There are two ways to supply the key(s)/passphrase(s) for unlocking a dataset:
 
-        1. Upload a json file which contains encrypted dataset keys (it will be read from the input pipe if
-        `unlock_options.key_file` is `true`). The format is the one that is used for exporting encrypted dataset keys
-        (`pool.export_keys`).
+        1. Upload a JSON file which contains encrypted dataset keys (it is read from the input pipe if
+           ``unlock_options.key_file`` is ``true``). The format is the one used for exporting encrypted dataset
+           keys (:method:`pool.export_keys`).
 
-        2. Specify a key or a passphrase for each unlocked dataset using `unlock_options.datasets`.
+        2. Specify a key or a passphrase for each unlocked dataset using ``unlock_options.datasets``.
         """
         verrors = ValidationErrors()
         dataset = self.middleware.call_sync('pool.dataset.get_instance', id_)

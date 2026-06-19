@@ -110,9 +110,6 @@ class BootService(Service):
     async def attach(self, job, dev, options):
         """
         Attach a disk to the boot pool, turning a stripe into a mirror.
-
-        `expand` option will determine whether the new disk partition will be
-                 the maximum available or the same size as the current disk.
         """
         await self.check_update_ashift_property()
         disks = list(await self.get_disks())

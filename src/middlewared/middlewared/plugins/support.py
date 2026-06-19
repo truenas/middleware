@@ -353,7 +353,7 @@ class SupportService(ConfigService):
     @api_method(SupportAttachTicketMaxSizeArgs, SupportAttachTicketMaxSizeResult, roles=['SUPPORT_READ'])
     async def attach_ticket_max_size(self):
         """
-        Returns maximum uploaded file size for `support.attach_ticket`
+        Returns the maximum uploaded file size for :method:`support.attach_ticket`.
         """
         return DEBUG_MAX_SIZE
 

@@ -102,7 +102,7 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
     @api_method(CloudBackupCreateArgs, CloudBackupCreateResult, pass_app=True)
     def do_create(self, app, cloud_backup):
         """
-        Create a new cloud backup task
+        Create a new cloud backup task.
         """
         verrors = ValidationErrors()
         self._validate(app, verrors, "cloud_backup_create", cloud_backup)

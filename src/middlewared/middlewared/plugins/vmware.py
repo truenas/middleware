@@ -320,7 +320,7 @@ class VMWareService(CRUDService):
     @api_method(VMWareDatasetHasVmsArgs, VMWareDatasetHasVmsResult, roles=['READONLY_ADMIN'])
     def dataset_has_vms(self, dataset, recursive):
         """
-        Returns "true" if `dataset` is configured with a VMWare snapshot
+        Returns "true" if ``dataset`` is configured with a VMWare snapshot.
         """
         return len(self._dataset_get_vms(dataset, recursive)) > 0
 

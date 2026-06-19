@@ -289,7 +289,7 @@ class ReplicationService(CRUDService):
     )
     async def do_delete(self, audit_callback, id_):
         """
-        Delete a Replication Task with specific `id`
+        Delete a replication task with the given ``id``.
         """
         task_name = (await self.get_instance(id_))["name"]
         audit_callback(task_name)
@@ -713,7 +713,7 @@ class ReplicationService(CRUDService):
     @api_method(ReplicationListDatasetsArgs, ReplicationListDatasetsResult, roles=["REPLICATION_TASK_WRITE"])
     async def list_datasets(self, transport, ssh_credentials):
         """
-        List datasets on remote side
+        List datasets on remote side.
         """
 
         return await self.middleware.call("zettarepl.list_datasets", transport, ssh_credentials)
@@ -721,7 +721,7 @@ class ReplicationService(CRUDService):
     @api_method(ReplicationCreateDatasetArgs, ReplicationCreateDatasetResult, roles=["REPLICATION_TASK_WRITE"])
     async def create_dataset(self, dataset, transport, ssh_credentials):
         """
-        Creates dataset on remote side
+        Creates dataset on remote side.
         """
         return await self.middleware.call("zettarepl.create_dataset", dataset, transport, ssh_credentials)
 

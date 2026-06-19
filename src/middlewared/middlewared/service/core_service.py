@@ -91,7 +91,7 @@ class CoreService(Service):
     @api_method(CoreResizeShellArgs, CoreResizeShellResult, authorization_required=False)
     async def resize_shell(self, id_, cols, rows):
         """
-        Resize terminal session (/websocket/shell) to cols x rows
+        Resize terminal session (/websocket/shell) to cols x rows.
         """
         shell = middlewared.main.ShellApplication.shells.get(id_)
         if shell is None:

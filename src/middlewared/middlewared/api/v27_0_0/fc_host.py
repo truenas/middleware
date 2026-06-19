@@ -13,10 +13,16 @@ __all__ = [
 class FCHostEntry(BaseModel):
     id: int = Field(description="Unique identifier for the Fibre Channel host configuration.")
     alias: FibreChannelHostAlias = Field(description="Human-readable alias for the Fibre Channel host.")
-    wwpn: WWPN | None = Field(default=None, description="World Wide Port Name for port A or `null` if not configured.")
+    wwpn: WWPN | None = Field(
+        default=None,
+        description="World Wide Port Name (NAA format) for Controller A, or `null` if not configured.",
+    )
     wwpn_b: WWPN | None = Field(
         default=None,
-        description="World Wide Port Name for port B or `null` if not configured.",
+        description=(
+            "World Wide Port Name (NAA format) for Controller B, or `null` if not configured. Only applicable to HA "
+            "systems."
+        ),
     )
     npiv: int = Field(default=0, description="Number of N_Port ID Virtualization (NPIV) virtual ports to create.")
 

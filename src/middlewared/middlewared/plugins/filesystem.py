@@ -228,7 +228,7 @@ class FilesystemService(Service):
     )
     def get_zfs_attributes(self, path: str) -> ZFSFileAttrsData:
         """
-        Get the current ZFS attributes for the file at the given path
+        Get the current ZFS attributes for the file at the given path.
         """
         try:
             fd = truenas_os.openat2(path, os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS)

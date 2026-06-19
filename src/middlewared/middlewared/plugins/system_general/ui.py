@@ -117,7 +117,7 @@ class SystemGeneralService(Service):
     )
     async def local_url(self):
         """
-        Returns configured local url in the format of protocol://host:port
+        Returns configured local url in the format of protocol://host:port.
         """
         config = await self.middleware.call("system.general.config")
         if config["ui_certificate"]:

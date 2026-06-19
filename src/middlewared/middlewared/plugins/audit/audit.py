@@ -427,12 +427,10 @@ class AuditService(ConfigService):
         """
         Update default audit settings.
 
-        The following fields contain read-only data and are returned in calls
-        to `audit.config` and `audit.update`:
-        - `space`
-        - `remote_logging_enabled`
-        - `enabled_services`
+        .. note::
 
+            ``space``, ``remote_logging_enabled``, and ``enabled_services`` are read-only and are returned only by
+            :method:`audit.config` and :method:`audit.update`.
         """
         old = await self.config()
         new = old.copy()

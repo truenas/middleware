@@ -49,18 +49,10 @@ class FCHostService(CRUDService):
     @api_method(FCHostCreateArgs, FCHostCreateResult, audit='Create FC host', audit_extended=lambda data: data['alias'])
     async def do_create(self, data: dict) -> dict:
         """
-        Creates FC host (pairing).
+        Create an FC host (pairing).
 
-        This will associate an `alias` with a corresponding Fibre Channel WWPN.  For
-        HA sytems the alias will be associated with a pair of WWPNs, one per node.
-
-        `alias` is a user-readable name for FC host (pairing).
-
-        `wwpn` is the WWPN in naa format (Controller A if HA)
-
-        `wwpn_b` is the WWPN in naa format (Controller B, only applicable for HA)
-
-        `npiv` is the number of NPIV hosts to create for this FC host.
+        This associates an ``alias`` with a corresponding Fibre Channel WWPN. For HA systems, the alias is
+        associated with a pair of WWPNs, one per node.
         """
         await self._validate("fc_host_create", data)
 
@@ -73,15 +65,7 @@ class FCHostService(CRUDService):
     @api_method(FCHostUpdateArgs, FCHostUpdateResult, audit='Update FC host', audit_callback=True)
     async def do_update(self, audit_callback, id_: int, data: dict) -> dict:
         """
-        Update FC host `id`.
-
-        `alias` is a user-readable name for FC host port.
-
-        `wwpn` is the WWPN in naa format (Controller A if HA)
-
-        `wwpn_b` is the WWPN in naa format (Controller B, only applicable for HA)
-
-        `npiv` is the number of NPIV hosts to allow for this FC host.
+        Update FC host ``id``.
         """
         old = await self.get_instance(id_)
         audit_callback(old['alias'])

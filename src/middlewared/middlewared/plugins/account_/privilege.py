@@ -83,17 +83,7 @@ class PrivilegeService(CRUDService):
                 audit="Create privilege", audit_extended=lambda data: data["name"])
     async def do_create(self, data):
         """
-        Creates a privilege.
-
-        `name` is a name for privilege (must be unique).
-
-        `local_groups` is a list of local user account group GIDs that gain this privilege.
-
-        `ds_groups` is list of Directory Service group GIDs that will gain this privilege.
-
-        `roles` is a list of roles to be assigned to the privilege
-
-        `web_shell` controls whether users with this privilege are allowed to log in to the Web UI.
+        Create a privilege.
         """
         await self._validate("privilege_create", data)
 

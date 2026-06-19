@@ -123,12 +123,12 @@ class PoolDatasetService(Service):
     @job(lock=lambda args: f'dataset_change_key_{args[0]}', pipes=['input'], check_pipes=False)
     def change_key(self, job, tls, id_, options):
         """
-        Change encryption properties for `id` encrypted dataset.
+        Change encryption properties for the ``id`` encrypted dataset.
 
-        Changing dataset encryption to use passphrase instead of a key is not allowed if:
+        Changing dataset encryption to use a passphrase instead of a key is not allowed if:
 
-        1) It has encrypted roots as children which are encrypted with a key
-        2) If it is a root dataset where the system dataset is located
+        1. It has encrypted roots as children that are encrypted with a key.
+        2. It is a root dataset where the system dataset is located.
         """
         ds = self.middleware.call_sync('pool.dataset.get_instance_quick', id_, {
             'encryption': True,

@@ -43,7 +43,7 @@ class DirectoryServices(Service):
     )
     def status(self):
         """
-        Provide the type and status of the currently-enabled directory service
+        Provide the type and status of the currently-enabled directory service.
         """
         if not DSHealthObj.initialized:
             try:

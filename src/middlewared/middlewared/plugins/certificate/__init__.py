@@ -69,25 +69,16 @@ class CertificateService(GenericCRUDService[CertificateEntry]):
     @job(lock="cert_create")
     async def do_create(self, job: Job, data: CertificateCreate) -> CertificateEntry:
         """
-        Create a new Certificate
+        Create a new certificate.
 
-        Certificates are classified under following types and the necessary keywords to be passed
-        for `create_type` attribute to create the respective type of certificate
+        The ``create_type`` attribute selects which kind of certificate is created:
 
-        1) Imported Certificate                 -  CERTIFICATE_CREATE_IMPORTED
+        1. ``CERTIFICATE_CREATE_IMPORTED`` - imported certificate.
+        2. ``CERTIFICATE_CREATE_CSR`` - certificate signing request.
+        3. ``CERTIFICATE_CREATE_IMPORTED_CSR`` - imported certificate signing request.
+        4. ``CERTIFICATE_CREATE_ACME`` - ACME certificate.
 
-        2) Certificate Signing Request          -  CERTIFICATE_CREATE_CSR
-
-        3) Imported Certificate Signing Request -  CERTIFICATE_CREATE_IMPORTED_CSR
-
-        4) ACME Certificate                     -  CERTIFICATE_CREATE_ACME
-
-        By default, created CSRs use RSA keys. If an Elliptic Curve Key is desired, it can be specified with the
-        `key_type` attribute. If the `ec_curve` attribute is not specified for the Elliptic Curve Key, then default to
-        using "SECP384R1" curve.
-
-        A type is selected by the Certificate Service based on `create_type`. The rest of the values in `data` are
-        validated accordingly and finally a certificate is made based on the selected type.
+        The remaining values in ``data`` are validated according to the selected type.
         """
         return await self._svc_part.do_create(job, data)
 

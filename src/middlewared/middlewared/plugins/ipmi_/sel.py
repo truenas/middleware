@@ -41,7 +41,7 @@ class IpmiSelService(Service):
     @filterable_api_method(item=IpmiSelElistEntry, roles=['IPMI_READ'])
     @job(lock=SEL_LOCK, lock_queue_size=1, transient=True)
     def elist(self, job, filters, options):
-        """Query IPMI System Event Log (SEL) extended list"""
+        """Query IPMI System Event Log (SEL) extended list."""
         rv = []
         if not self.middleware.call_sync('ipmi.is_loaded'):
             return rv
@@ -69,7 +69,7 @@ class IpmiSelService(Service):
     )
     @job(lock=SEL_LOCK, lock_queue_size=1, transient=True)
     def info(self, job):
-        """Query General information about the IPMI System Event Log"""
+        """Query General information about the IPMI System Event Log."""
         rv = {}
         if not self.middleware.call_sync('ipmi.is_loaded'):
             return rv

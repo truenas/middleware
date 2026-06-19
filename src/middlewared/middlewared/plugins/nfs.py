@@ -208,7 +208,7 @@ class NFSService(SystemServiceService):
     @api_method(NFSBindipChoicesArgs, NFSBindipChoicesResult)
     async def bindip_choices(self):
         """
-        Returns ip choices for NFS service to use
+        Returns ip choices for NFS service to use.
         """
         return {
             d['address']: d['address'] for d in await self.middleware.call(

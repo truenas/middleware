@@ -59,7 +59,7 @@ class DiskService(Service):
         roles=['REPORTING_READ']
     )
     def temperature_agg(self, names, days):
-        """Returns min/max/avg temperature for `names` disks for the last `days` days"""
+        """Returns min/max/avg temperature for ``names`` disks over the last ``days`` days."""
         # we only keep 7 days of historical data because we keep per second information
         # which adds up to lots of used disk space quickly depending on the size of the
         # system

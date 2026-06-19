@@ -46,7 +46,7 @@ class DNSAuthenticatorService(GenericCRUDService[DNSAuthenticatorEntry]):
     @api_method(DNSAuthenticatorCreateArgs, DNSAuthenticatorCreateResult, check_annotations=True)
     async def do_create(self, dns_authenticator_create: ACMEDNSAuthenticatorCreate) -> DNSAuthenticatorEntry:
         """
-        Create a DNS Authenticator
+        Create a DNS Authenticator.
 
         Create a specific DNS Authenticator containing required authentication details for the said
         provider to successfully connect with it.
