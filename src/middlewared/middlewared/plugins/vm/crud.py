@@ -27,6 +27,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils.libvirt.utils import ACTIVE_STATES
 
 from .capabilities import guest_architecture_and_machine_choices
+from .constants import VMGuestArch
 from .info import (
     MAXIMUM_SUPPORTED_VCPUS,
     bootloader_aavmf_choices,
@@ -131,9 +132,9 @@ class VMServicePart(CRUDServicePart[VMEntry]):
                 # If neither arch nor machine is specified, assume x86_64 to
                 # preserve existing behavior. vm.update fails on null arch_type
                 # so we set it explicitly.
-                updates['arch_type'] = 'x86_64'
-            arch = updates.get('arch_type') or data.arch_type or 'x86_64'
-            is_aarch64 = arch == 'aarch64'
+                updates['arch_type'] = VMGuestArch.X86_64
+            arch = updates.get('arch_type') or data.arch_type or VMGuestArch.X86_64
+            is_aarch64 = arch == VMGuestArch.AARCH64
 
             if not data.machine_type:
                 updates['machine_type'] = 'virt-9.2' if is_aarch64 else 'pc-q35-6.2'
@@ -169,12 +170,12 @@ class VMServicePart(CRUDServicePart[VMEntry]):
                 )
 
         if data.bootloader_ovmf is None:
-            if data.arch_type == 'aarch64':
+            if data.arch_type == VMGuestArch.AARCH64:
                 data = data.model_copy(update={'bootloader_ovmf': 'AAVMF_CODE.fd'})
             else:
                 data = data.model_copy(update={'bootloader_ovmf': 'OVMF_CODE_4M.fd'})
 
-        choices_fn = bootloader_aavmf_choices if data.arch_type == 'aarch64' else bootloader_ovmf_choices
+        choices_fn = bootloader_aavmf_choices if data.arch_type == VMGuestArch.AARCH64 else bootloader_ovmf_choices
         if data.bootloader_ovmf not in await self.to_thread(choices_fn):
             verrors.add('vm_create.bootloader_ovmf', 'Invalid bootloader ovmf choice specified')
 
@@ -347,7 +348,7 @@ class VMServicePart(CRUDServicePart[VMEntry]):
                     )
 
         # Reject x86-only configuration on aarch64 guests
-        if data.arch_type == 'aarch64':
+        if data.arch_type == VMGuestArch.AARCH64:
             if data.bootloader == 'UEFI_CSM':
                 verrors.add(
                     f'{schema_name}.bootloader',
@@ -371,7 +372,7 @@ class VMServicePart(CRUDServicePart[VMEntry]):
             guest_arch = data.arch_type or host_arch
             same_family = (
                 guest_arch == host_arch
-                or (host_arch == 'x86_64' and guest_arch in ('i686', 'i386'))
+                or (host_arch == VMGuestArch.X86_64 and guest_arch in (VMGuestArch.I686, 'i386'))
             )
             if not same_family:
                 verrors.add(
@@ -387,7 +388,7 @@ class VMServicePart(CRUDServicePart[VMEntry]):
                 'This attribute should not be specified when "cpu_mode" is not "CUSTOM".'
             )
         elif data.cpu_model and data.cpu_model not in await self.to_thread(
-            cpu_model_choices, data.arch_type or 'x86_64'
+            cpu_model_choices, data.arch_type or VMGuestArch.X86_64
         ):
             verrors.add(f'{schema_name}.cpu_model', 'Please select a valid CPU model.')
 

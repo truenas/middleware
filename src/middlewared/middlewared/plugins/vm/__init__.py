@@ -93,6 +93,7 @@ from middlewared.utils.libvirt.utils import NGINX_PREFIX
 
 from .capabilities import guest_architecture_and_machine_choices
 from .clone import clone_vm
+from .constants import VMGuestArch
 from .crud import VMServicePart
 from .event import vm_domain_event_callback
 from .info import (
@@ -282,7 +283,7 @@ class VMService(GenericCRUDService[VMEntry]):
         return bootloader_aavmf_choices()
 
     @api_method(VMCpuModelChoicesArgs, VMCpuModelChoicesResult, roles=['VM_READ'], check_annotations=True)
-    def cpu_model_choices(self, arch: str = 'x86_64') -> dict[str, str]:
+    def cpu_model_choices(self, arch: str = VMGuestArch.X86_64) -> dict[str, str]:
         """
         Retrieve CPU Model choices which can be used with a VM guest to emulate the CPU in the guest.
         """

@@ -24,6 +24,8 @@ from middlewared.utils.cpu import cpu_info
 from middlewared.utils.libvirt.display import DisplayDelegate
 from middlewared.utils.libvirt.nic import NICDelegate
 
+from .constants import VMGuestArch
+
 if typing.TYPE_CHECKING:
     from middlewared.api.base.server.app import App
     from middlewared.job import Job
@@ -134,7 +136,7 @@ async def get_console(context: ServiceContext, id_: int) -> str:
     return f'{vm["id"]}_{vm["name"]}'
 
 
-def cpu_model_choices(arch: str = 'x86_64') -> dict[str, str]:
+def cpu_model_choices(arch: str = VMGuestArch.X86_64) -> dict[str, str]:
     return get_cpu_model_choices().get(arch, {})
 
 
