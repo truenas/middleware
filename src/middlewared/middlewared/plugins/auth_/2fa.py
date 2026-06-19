@@ -149,17 +149,13 @@ class TwoFactorAuthService(ConfigService):
                 ad_user = True
 
             if username:
-                # The OATH users file only supports 30- or 60-second TOTP steps. Coerce any
-                # other interval to 30 so a misconfigured value can't render the entry
-                # unparseable and silently drop the second factor (fail closed, not open).
-                interval = config['interval'] if config['interval'] in (30, 60) else 30
                 users.append({
                     'username': username,
                     'secret_hex': base64.b16encode(base64.b32decode(config['secret'])).decode(),
                     'row_id': config['id'],
                     'ad_user': ad_user,
                     'otp_digits': config['otp_digits'],
-                    'interval': interval
+                    'interval': config['interval']
                 })
 
         return users
