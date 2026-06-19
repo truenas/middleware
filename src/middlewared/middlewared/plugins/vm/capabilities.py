@@ -10,7 +10,7 @@ RE_MACHINE_TYPE_CHOICES = re.compile(r'^\s*(?!none\s)(\S+)(?=\s{2,})', flags=re.
 
 
 def get_capabilities(context: ServiceContext) -> dict[str, list[str]]:
-    supported_archs = {}
+    supported_archs: dict[str, list[str]] = {}
 
     cp = subprocess.run(['/usr/bin/qemu-system-x86_64', '-machine', 'help'], capture_output=True, text=True)
     if cp.returncode:
