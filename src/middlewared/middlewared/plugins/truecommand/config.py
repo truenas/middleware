@@ -48,13 +48,17 @@ class TruecommandConfigServicePart(ConfigServicePart[TruecommandEntry]):
         for key in ('wg_public_key', 'wg_private_key', 'tc_public_key', 'endpoint', 'wg_address'):
             data.pop(key)
 
+        # Pop unconditionally so the standby controller path below also strips it - api_key_state
+        # is not a field on the entry and would otherwise fail validation on the standby node.
+        api_key_state = data.pop('api_key_state')
+
         # In database we will have CONNECTED when the portal has approved the key
         # Connecting basically represents 2 phases - where we wait for TC to connect to
         # NAS and where we are waiting to hear back from the portal after registration
         status_reason = None
         if await self.middleware.call('failover.is_single_master_node'):
             if TruecommandStatus(
-                data.pop('api_key_state')
+                api_key_state
             ) == TruecommandStatus.CONNECTED and get_status() == TruecommandStatus.CONNECTING:
                 if await wireguard_connection_health(self):
                     await set_status(self, TruecommandStatus.CONNECTED.value)

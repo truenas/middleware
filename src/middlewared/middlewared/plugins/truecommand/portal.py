@@ -51,7 +51,7 @@ async def post_call(
     except asyncio.TimeoutError:
         response['error'] = f'Unable to connect with TrueNAS portal in {timeout} seconds.'
     except aiohttp.ClientResponseError as e:
-        response['error'] = f'Error Code ({req.status}): {e}'
+        response['error'] = f'Error Code ({e.status}): {e}'
     else:
         response['response'] = await req.json()
     return response
