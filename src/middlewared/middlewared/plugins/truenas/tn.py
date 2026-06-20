@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, cast
 
 from truenas_pydmi.models import TRUENAS_UNKNOWN
 
-from middlewared.api.current import SupportNewTicket, TruecommandStatus
+from middlewared.api.current import SupportNewTicket, SupportNewTicketEnterprise, TruecommandStatus
 from middlewared.service import ServiceContext
 from middlewared.utils.dmi import cached_dmi
 
@@ -66,16 +66,19 @@ async def set_production(
 
     if not was_production and production:
         serial = (await context.middleware.call('system.dmidecode_info'))['system-serial-number']
-        result: SupportNewTicket = await job.wrap(await context.middleware.call('support.new_ticket', {
-            'title': f'System has been just put into production ({serial})',
-            'body': 'This system has been just put into production',
-            'attach_debug': attach_debug,
-            'category': 'Installation/Setup',
-            'criticality': 'Inquiry',
-            'environment': 'Production',
-            'name': 'Automatic Alert',
-            'email': 'auto-support@truenas.com',
-            'phone': '-',
-        }))
+        result: SupportNewTicket = await job.wrap(await context.call2(
+            context.s.support.new_ticket,
+            SupportNewTicketEnterprise(
+                title=f'System has been just put into production ({serial})',
+                body='This system has been just put into production',
+                attach_debug=attach_debug,
+                category='Installation/Setup',
+                criticality='Inquiry',
+                environment='Production',
+                name='Automatic Alert',
+                email='auto-support@truenas.com',
+                phone='-',
+            ),
+        ))
         return result
     return None

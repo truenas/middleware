@@ -128,6 +128,7 @@ from middlewared.plugins.pwenc import PWEncService
 from middlewared.plugins.reporting import ReportingService
 from middlewared.plugins.rsync import RsyncTaskService
 from middlewared.plugins.snapshot import PeriodicSnapshotTaskService
+from middlewared.plugins.support import SupportService
 from middlewared.plugins.system_vendor import VendorService
 from middlewared.plugins.truenas import TrueNASService
 from middlewared.plugins.truenas_connect import TrueNASConnectService
@@ -270,6 +271,7 @@ class ServiceContainer(BaseServiceContainer):
         self.reporting = ReportingService(middleware)
         self.rsynctask = RsyncTaskService(middleware)
         self.sharing = SharingServicesContainer(middleware)
+        self.support = SupportService(middleware)
         self.system = SystemServicesContainer(middleware)
         self.tn_connect = TrueNASConnectService(middleware)
         self.truenas = TrueNASService(middleware)
@@ -905,7 +907,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
     async def run_in_thread[**P, T](self, method: typing.Callable[P, T], *args: P.args, **kwargs: P.kwargs) -> T:
         return await self.run_in_executor(io_thread_pool_executor, method, *args, **kwargs)
 
-    def pipe(self, buffered=False):
+    def pipe(self, buffered: bool = False) -> Pipe:
         """
         :param buffered: Please see :class:`middlewared.pipe.Pipe` documentation for information on unbuffered and
             buffered pipes.
