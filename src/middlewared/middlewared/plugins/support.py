@@ -112,7 +112,7 @@ class SupportService(ConfigService):
         Returns whether Proactive Support is available for this product type and current license.
         """
 
-        if await self.middleware.call('system.vendor.name'):
+        if await self.call2(self.s.system.vendor.name):
             return False
 
         if not await self.middleware.call('system.is_enterprise'):
@@ -171,7 +171,7 @@ class SupportService(ConfigService):
         For Community Edition, `criticality`, `environment`, `phone`, `name`, and `email` attributes are not required.
         For Enterprise, `token` and `type` attributes are not required.
         """
-        vendor = await self.middleware.call('system.vendor.name')
+        vendor = await self.call2(self.s.system.vendor.name)
         if vendor:
             raise CallError(f'Support is not available for this product ({vendor})', errno.EINVAL)
 

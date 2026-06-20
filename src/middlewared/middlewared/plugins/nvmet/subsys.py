@@ -227,7 +227,7 @@ class NVMetSubsysService(CRUDService, NVMetStandbyMixin):
     @private
     @cache
     def model(self):
-        vendor = self.middleware.call_sync('system.vendor.name')
+        vendor = self.call_sync2(self.s.system.vendor.name)
         dmiinfo = self.middleware.call_sync('system.dmidecode_info')
         if dmiinfo.get('system-manufacturer') == 'QEMU':
             system_product = 'KVM VM'

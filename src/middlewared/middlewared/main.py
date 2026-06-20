@@ -128,6 +128,7 @@ from middlewared.plugins.pwenc import PWEncService
 from middlewared.plugins.reporting import ReportingService
 from middlewared.plugins.rsync import RsyncTaskService
 from middlewared.plugins.snapshot import PeriodicSnapshotTaskService
+from middlewared.plugins.system_vendor import VendorService
 from middlewared.plugins.truenas import TrueNASService
 from middlewared.plugins.truenas_connect import TrueNASConnectService
 from middlewared.plugins.truesearch import TrueSearchService
@@ -230,6 +231,7 @@ class SystemServicesContainer(BaseServiceContainer):
     def __init__(self, middleware: "Middleware"):
         super().__init__(middleware)
         self.ntpserver = NTPServerService(middleware)
+        self.vendor = VendorService(middleware)
 
 
 class ZfsServicesContainer(BaseServiceContainer):
