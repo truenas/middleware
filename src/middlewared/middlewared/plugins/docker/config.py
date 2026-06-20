@@ -9,12 +9,14 @@ from middlewared.api.current import (
     DockerRegistryMirror,
     DockerUpdate,
     ZFSResourceQuery,
+    ZFSResourceSnapshotQuery,
 )
 from middlewared.plugins.zfs.utils import get_encryption_info
 from middlewared.service import CallError, ConfigServicePart, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.zfs import query_imported_fast_impl
 
+from .backup_to_pool import backup_to_pool_snapshot_prefix
 from .fs_manage import ix_apps_is_mounted, mount_docker_ds, umount_docker_ds
 from .migrate import migrate_ix_apps_dataset
 from .service_utils import license_active
@@ -40,6 +42,11 @@ class DockerModel(sa.Model):
         {'base': 'fdd0::/48', 'size': 64},
     ])
     registry_mirrors = sa.Column(sa.JSON(list), default=[])
+    backup_to_pool_enabled = sa.Column(sa.Boolean(), default=False, nullable=False)
+    backup_to_pool_target = sa.Column(sa.String(255), default=None, nullable=True)
+    backup_to_pool_schedule = sa.Column(sa.JSON(dict), default={
+        'minute': '0', 'hour': '0', 'dom': '*', 'month': '*', 'dow': '7',
+    })
 
 
 class DockerConfigServicePart(ConfigServicePart[DockerEntry]):
@@ -79,9 +86,15 @@ class DockerConfigServicePart(ConfigServicePart[DockerEntry]):
             or str(new_config.cidr_v6) != str(old_config.cidr_v6)
         )
         registry_mirrors_changed = new_config.registry_mirrors != old_config.registry_mirrors
+        backup_to_pool_changed = (
+            new_config.backup_to_pool_enabled != old_config.backup_to_pool_enabled
+            or new_config.backup_to_pool_target != old_config.backup_to_pool_target
+            or new_config.backup_to_pool_schedule != old_config.backup_to_pool_schedule
+        )
         db_changed = (
             pool_changed or address_pools_changed or registry_mirrors_changed
             or new_config.enable_image_updates != old_config.enable_image_updates
+            or backup_to_pool_changed
         )
 
         if db_changed:
@@ -152,12 +165,64 @@ class DockerConfigServicePart(ConfigServicePart[DockerEntry]):
                     ]
                 )
 
+        if backup_to_pool_changed or pool_changed:
+            # Re-render the crontab so the scheduled backup line reflects the new configuration
+            await (await self.middleware.call('service.control', 'RESTART', 'cron')).wait(raise_error=True)
+
         if nvidia_changed:
             job.set_progress(97, 'Applying requested nvidia configuration changes')
             await self.middleware.call('system.advanced.update', {'nvidia': new_nvidia})
 
         job.set_progress(100, 'Requested configuration applied')
         return await self.config()
+
+    async def validate_backup_to_pool(self, verrors: ValidationErrors, config: DockerEntry, schema: str) -> None:
+        prefix = f'{schema}.backup_to_pool'
+        if not config.pool:
+            verrors.add(f'{prefix}_enabled', 'A Docker pool must be configured before enabling automated backups.')
+            return
+
+        target = config.backup_to_pool_target
+        if not target:
+            verrors.add(f'{prefix}_target', 'A target pool is required when automated backups are enabled.')
+            return
+
+        if target == config.pool:
+            verrors.add(f'{prefix}_target', 'Target pool cannot be the same as the Docker pool.')
+            return
+
+        if target == await self.middleware.call('boot.pool_name'):
+            verrors.add(f'{prefix}_target', 'The boot pool cannot be used as a backup target.')
+            return
+
+        target_root = await self.call2(
+            self.s.zfs.resource.query_impl,
+            ZFSResourceQuery(paths=[target], properties=['encryption'])
+        )
+        if not target_root:
+            verrors.add(f'{prefix}_target', f'Target pool {target!r} not found.')
+            return
+
+        if get_encryption_info(target_root[0]['properties']).encrypted:
+            verrors.add(f'{prefix}_target', f'Backup to an encrypted pool {target!r} is not allowed.')
+            return
+
+        # If the target already has an ix-apps dataset that wasn't produced by our backups, refuse to
+        # silently replicate over it (the actual replication would safe-fail, but a clean error is friendlier).
+        target_ix_apps = applications_ds_name(target)
+        if await self.call2(
+            self.s.zfs.resource.query_impl, ZFSResourceQuery(paths=[target_ix_apps], properties=None)
+        ):
+            snap_prefix = backup_to_pool_snapshot_prefix(config.pool, target)
+            snapshots = await self.call2(
+                self.s.zfs.resource.snapshot.query, ZFSResourceSnapshotQuery(paths=[target_ix_apps], properties=None)
+            )
+            if not any(snap.name.split('@', 1)[-1].startswith(snap_prefix) for snap in (snapshots or [])):
+                verrors.add(
+                    f'{prefix}_target',
+                    f'Target pool {target!r} already contains an {target_ix_apps!r} dataset that was not created '
+                    'by automated backups.'
+                )
 
     async def validate(
         self, old_config: DockerEntry, new_config: DockerEntry, migrate_apps: bool, schema: str = 'docker_update',
@@ -189,6 +254,9 @@ class DockerConfigServicePart(ConfigServicePart[DockerEntry]):
                         f'Duplicate registry mirror: {url}'
                     )
                 seen_registries.add(url)
+
+        if new_config.backup_to_pool_enabled:
+            await self.validate_backup_to_pool(verrors, new_config, schema)
 
         if migrate_apps:
             if new_config.pool == old_config.pool:

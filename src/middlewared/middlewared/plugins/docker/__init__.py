@@ -31,7 +31,7 @@ from middlewared.api.current import (
 from middlewared.service import GenericConfigService, job, periodic, private
 
 from .backup import backup, delete_backup, list_backups, post_system_update_hook
-from .backup_to_pool import backup_to_pool
+from .backup_to_pool import backup_to_pool, scheduled_backup_to_pool
 from .config import DockerConfigServicePart
 from .docker_network import DockerNetworkService
 from .events import setup_docker_events
@@ -124,6 +124,11 @@ class DockerService(GenericConfigService[DockerEntry]):
         then start it again after snapshot has been taken of the current apps dataset.
         """
         return await backup_to_pool(self.context, job, target_pool)
+
+    @private
+    @job(lock='docker_backup_to_pool')
+    async def cron_backup_to_pool(self, job: Job) -> None:
+        await scheduled_backup_to_pool(self.context, job)
 
     @api_method(
         DockerDeleteBackupArgs, DockerDeleteBackupResult,

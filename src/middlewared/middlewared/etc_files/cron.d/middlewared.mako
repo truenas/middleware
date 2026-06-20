@@ -73,4 +73,9 @@ ${random.randint(1, 4)} \
 * * * root midclt call update.download > /dev/null 2>&1
     % endif
 
+<% docker_config = middleware.call_sync2(middleware.services.docker.config) %>\
+    % if docker_config.backup_to_pool_enabled and docker_config.pool and docker_config.backup_to_pool_target:
+${' '.join(middleware.call_sync('cronjob.construct_cron_command', docker_config.backup_to_pool_schedule.model_dump(), "root", "midclt call docker.cron_backup_to_pool"))}
+    % endif
+
 % endif

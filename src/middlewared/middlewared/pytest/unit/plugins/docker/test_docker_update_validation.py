@@ -60,7 +60,10 @@ def mock_zfs_resource_query_impl(system_state):
     return _query_impl
 
 
-DEFAULTS = dict(id=1, enable_image_updates=True, nvidia=False, cidr_v6='fdd0::/64', registry_mirrors=[])
+DEFAULTS = dict(
+    id=1, enable_image_updates=True, nvidia=False, cidr_v6='fdd0::/64', registry_mirrors=[],
+    backup_to_pool_enabled=False, backup_to_pool_target=None,
+)
 
 SYSTEM_STATE = {
     'available_pool': ['test', 'tank'],

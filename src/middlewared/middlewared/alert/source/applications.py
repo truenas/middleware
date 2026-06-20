@@ -32,6 +32,21 @@ class ApplicationsStartFailedAlert(OneShotAlertClass):
 
 
 @dataclass(kw_only=True)
+class DockerBackupToPoolFailedAlert(OneShotAlertClass):
+    config = AlertClassConfig(
+        category=AlertCategory.APPLICATIONS,
+        level=AlertLevel.WARNING,
+        title='Automated Apps Backup Failed',
+        text='Scheduled backup of the apps dataset to pool %(target)s could not complete: %(error)s',
+        deleted_automatically=False,
+        keys=[],
+    )
+
+    target: str
+    error: str
+
+
+@dataclass(kw_only=True)
 class AppUpdateAlert(OneShotAlertClass):
     config = AlertClassConfig(
         category=AlertCategory.APPLICATIONS,

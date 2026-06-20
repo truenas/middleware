@@ -13,8 +13,11 @@ from middlewared.api.base import (
     excluded_field,
 )
 
+from .common import CronModel
+
 __all__ = [
     'DockerAddressPool', 'DockerBackupAppInfo', 'DockerBackupEntry', 'DockerBackupMap',
+    'DockerBackupToPoolSchedule',
     'DockerEntry', 'DockerRegistryMirror', 'DockerUpdateArgs', 'DockerUpdateResult',
     'DockerStatusArgs', 'DockerStatusResult',
     'DockerNvidiaPresentArgs', 'DockerNvidiaPresentResult', 'DockerBackupArgs', 'DockerBackupResult',
@@ -22,6 +25,12 @@ __all__ = [
     'DockerDeleteBackupArgs', 'DockerDeleteBackupResult', 'DockerBackupToPoolArgs', 'DockerBackupToPoolResult',
     'DockerEventsAddedEvent', 'DockerStateChangedEvent', 'DockerUpdate', 'DockerStatusInfo',
 ]
+
+
+class DockerBackupToPoolSchedule(CronModel):
+    minute: str = Field(default="0", description="\"00\" - \"59\".")
+    hour: str = Field(default="0", description="\"00\" - \"23\".")
+    dow: str = Field(default="7", description="\"1\" (Monday) - \"7\" (Sunday). Defaults to Sunday (weekly).")
 
 
 class DockerAddressPool(BaseModel):
@@ -64,6 +73,15 @@ class DockerEntry(BaseModel):
     )
     cidr_v6: str = Field(description="IPv6 CIDR block for Docker container networking.")
     registry_mirrors: list[DockerRegistryMirror] = Field(description="Array of registry mirrors.")
+    backup_to_pool_enabled: bool = Field(
+        description="Whether middleware automatically replicates the apps dataset to another pool on a schedule.",
+    )
+    backup_to_pool_target: NonEmptyString | None = Field(
+        description="Storage pool that scheduled apps-dataset backups replicate to, or `null` if not configured.",
+    )
+    backup_to_pool_schedule: DockerBackupToPoolSchedule = Field(
+        description="Cron schedule controlling how often the apps dataset is backed up to `backup_to_pool_target`.",
+    )
 
 
 class DockerUpdate(DockerEntry, metaclass=ForUpdateMetaclass):

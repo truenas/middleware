@@ -16,7 +16,10 @@ def make_svc_part(m):
     return DockerConfigServicePart(context)
 
 
-DEFAULTS = dict(id=1, enable_image_updates=True, nvidia=False, cidr_v6='fdd0::/64', address_pools=[])
+DEFAULTS = dict(
+    id=1, enable_image_updates=True, nvidia=False, cidr_v6='fdd0::/64', address_pools=[],
+    backup_to_pool_enabled=False, backup_to_pool_target=None,
+)
 
 
 @pytest.mark.parametrize('new_mirrors,old_mirrors,error_msgs', [
