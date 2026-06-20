@@ -1,8 +1,10 @@
 import contextlib
 from dataclasses import asdict
+from datetime import date
 import os
 from typing import Any
 
+from truenas_pydmi.models import TRUENAS_UNKNOWN
 from truenas_pylicensed import LicenseError, LicenseType, verify
 
 from middlewared.api import api_method
@@ -21,6 +23,7 @@ from middlewared.service import Service, ValidationError, private
 
 from .license_legacy_utils import LEGACY_LICENSE_FILE, get_legacy_license_info
 from .license_utils import (
+    FeaturePolicy,
     LicenseInfo,
     configure_ha_license,
     get_fingerprint_b64,
@@ -117,3 +120,46 @@ class TrueNASLicenseService(Service):
             return get_legacy_license_info()
 
         return get_license_info(license_status)
+
+    @private
+    async def feature_available(self, name: str, policy: FeaturePolicy = FeaturePolicy.ANY) -> bool:
+        """Single source of truth for "is this system licensed to use ``name``".
+
+        The license is consulted only when the policy's gate is active; on hardware
+        where the feature is unrestricted the license is not consulted at all.
+        """
+        match policy:
+            case FeaturePolicy.ANY:
+                return await self.feature_licensed(name)
+            case FeaturePolicy.ENTERPRISE:
+                # enterprise add-on: not consulted on community systems
+                if not await self.middleware.call("system.is_enterprise"):
+                    return False
+                return await self.feature_licensed(name)
+            case FeaturePolicy.HA_APPLIANCE:
+                # enforced only on HA-capable appliances; everywhere else the feature
+                # runs unrestricted and the license is not consulted
+                if not await self.middleware.call("system.is_ha_capable"):
+                    return True
+                return await self.feature_licensed(name)
+            case FeaturePolicy.IX_HARDWARE:
+                # enforced only on iX-branded non-MINI hardware
+                chassis = await self.middleware.call("truenas.get_chassis_hardware")
+                if chassis == TRUENAS_UNKNOWN or "MINI" in chassis:
+                    return True
+                return await self.feature_licensed(name)
+            case _:
+                raise ValueError(f"Unknown feature policy: {policy!r}")
+
+    @private
+    async def feature_licensed(self, name: str) -> bool:
+        """Whether ``name`` is present in the (legacy-aware) license and not expired."""
+        info = await self.middleware.call("truenas.license.info_private")
+        if info is None:
+            return False
+
+        today = date.today()
+        return any(
+            f.name == name and (f.expires_at is None or today <= f.expires_at)
+            for f in info.features
+        )

@@ -67,7 +67,14 @@ def parse_legacy_license(text: str) -> LicenseInfo:
         model=lic.model or None,
         expires_at=lic.contract_end,
         features=[
-            FeatureInfo(name=name, start_date=lic.contract_start, expires_at=lic.contract_end)
+            # Legacy licenses grant their feature bits perpetually; contract_end is only the
+            # support-contract end (the system stays fully functional after it lapses). So bought
+            # features never expire, and only SUPPORT (proactive support) is tied to contract_end.
+            FeatureInfo(
+                name=name,
+                start_date=lic.contract_start,
+                expires_at=lic.contract_end if name == "SUPPORT" else None,
+            )
             for name in feature_names
         ],
         serials=serials,

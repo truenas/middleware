@@ -6,6 +6,7 @@ import subprocess
 
 from middlewared.api import api_method
 from middlewared.api.current import FCCapableArgs, FCCapableResult
+from middlewared.plugins.truenas.license_utils import FeaturePolicy
 from middlewared.service import Service, filterable_api_method, private
 from middlewared.service_exception import CallError
 from middlewared.utils.filter_list import filter_list
@@ -34,10 +35,11 @@ class FCService(Service):
         Returns ``true`` if the system is licensed for FIBRECHANNEL and contains
         one or more Fibre Channel cards. ``false`` otherwise.
         """
-        if await self.middleware.call('system.is_enterprise'):
-            if await self.middleware.call('system.feature_enabled', 'FIBRECHANNEL'):
-                if await self.middleware.call('fc.hba_present'):
-                    return True
+        if await self.middleware.call(
+            'truenas.license.feature_available', 'FIBRECHANNEL', FeaturePolicy.ENTERPRISE
+        ):
+            if await self.middleware.call('fc.hba_present'):
+                return True
         return False
 
     @private

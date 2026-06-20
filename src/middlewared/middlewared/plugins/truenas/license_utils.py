@@ -4,6 +4,7 @@ import base64
 import contextlib
 from dataclasses import dataclass
 from datetime import date
+import enum
 import json
 import logging
 import os
@@ -23,6 +24,7 @@ logger = logging.getLogger(__name__)
 
 __all__ = (
     "LICENSE_FILE",
+    "FeaturePolicy",
     "FeatureInfo",
     "LicenseInfo",
     "upload_license",
@@ -30,6 +32,23 @@ __all__ = (
     "get_fingerprint_b64",
     "configure_ha_license",
 )
+
+
+class FeaturePolicy(enum.StrEnum):
+    """How a license feature's availability is gated.
+
+    The license is consulted only when the policy's gate is active; on hardware
+    where the feature is unrestricted the license is not consulted at all.
+    """
+
+    ANY = "any"
+    """Feature must be licensed."""
+    ENTERPRISE = "enterprise"
+    """System must be enterprise AND the feature licensed."""
+    HA_APPLIANCE = "ha_appliance"
+    """License enforced only on HA-capable appliances; freely available otherwise."""
+    IX_HARDWARE = "ix_hardware"
+    """License enforced only on iX-branded (non-MINI) hardware; freely available otherwise."""
 
 
 def get_fingerprint_b64() -> str:

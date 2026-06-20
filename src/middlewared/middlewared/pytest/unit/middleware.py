@@ -10,6 +10,7 @@ class Middleware(dict):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self['failover.licensed'] = AsyncMock(return_value=False)
+        self['truenas.license.feature_available'] = AsyncMock(return_value=True)
 
         self.call_hook = AsyncMock()
         self.call_hook_inline = Mock()

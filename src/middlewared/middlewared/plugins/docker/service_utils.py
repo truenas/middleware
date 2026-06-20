@@ -1,12 +1,12 @@
+from middlewared.plugins.truenas.license_utils import FeaturePolicy
 from middlewared.service import ServiceContext
 
 
 async def license_active(context: ServiceContext) -> bool:
-    can_run_apps = True
-    if await context.middleware.call('system.is_ha_capable'):
-        can_run_apps = await context.middleware.call('system.feature_enabled', 'APPS')
-
-    return can_run_apps
+    available: bool = await context.middleware.call(
+        'truenas.license.feature_available', 'APPS', FeaturePolicy.HA_APPLIANCE
+    )
+    return available
 
 
 async def restart_docker_service(context: ServiceContext) -> None:

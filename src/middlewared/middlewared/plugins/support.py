@@ -30,6 +30,7 @@ from middlewared.api.current import (
 )
 from middlewared.pipe import InputPipes, Pipes
 from middlewared.plugins.system.utils import DEBUG_MAX_SIZE
+from middlewared.plugins.truenas.license_utils import FeaturePolicy
 from middlewared.service import CallError, ConfigService, ValidationErrors, job
 import middlewared.sqlalchemy as sa
 from middlewared.utils import sw_version
@@ -115,10 +116,9 @@ class SupportService(ConfigService):
         if await self.middleware.call('system.vendor.name'):
             return False
 
-        if not await self.middleware.call('system.is_enterprise'):
-            return False
-
-        return await self.middleware.call('system.feature_enabled', 'SUPPORT')
+        return await self.middleware.call(
+            'truenas.license.feature_available', 'SUPPORT', FeaturePolicy.ENTERPRISE
+        )
 
     @api_method(SupportIsAvailableAndEnabledArgs, SupportIsAvailableAndEnabledResult, roles=['SUPPORT_READ'])
     async def is_available_and_enabled(self):

@@ -17,8 +17,8 @@ from middlewared.plugins.truenas.license_utils import FeatureInfo, LicenseInfo
             model="H10",
             expires_at=date(2026, 4, 30),
             features=[
-                FeatureInfo(name="FIBRECHANNEL", start_date=date(2026, 4, 8), expires_at=date(2026, 4, 30)),
-                FeatureInfo(name="VMS", start_date=date(2026, 4, 8), expires_at=date(2026, 4, 30)),
+                FeatureInfo(name="FIBRECHANNEL", start_date=date(2026, 4, 8), expires_at=None),
+                FeatureInfo(name="VMS", start_date=date(2026, 4, 8), expires_at=None),
                 FeatureInfo(name="SUPPORT", start_date=date(2026, 4, 8), expires_at=date(2026, 4, 30))],
             serials=["TEST-000001", "TEST-000002"],
             enclosures={"E24": 3, "E16": 2},
@@ -34,7 +34,7 @@ from middlewared.plugins.truenas.license_utils import FeatureInfo, LicenseInfo
             model="X10",
             expires_at=date(2026, 4, 30),
             features=[
-                FeatureInfo(name="APPS", start_date=date(2026, 4, 8), expires_at=date(2026, 4, 30)),
+                FeatureInfo(name="APPS", start_date=date(2026, 4, 8), expires_at=None),
             ],
             serials=["TEST-000001"],
             enclosures={},
