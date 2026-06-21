@@ -46,6 +46,7 @@ jobs:
             middlewared/plugins/reporting/ \
             middlewared/plugins/rsync/ \
             middlewared/plugins/snapshot/ \
+            middlewared/plugins/system_vendor/ \
             middlewared/plugins/truenas/ \
             middlewared/plugins/truenas_connect/ \
             middlewared/plugins/truesearch.py \
