@@ -297,7 +297,10 @@ class VMCloneArgs(BaseModel):
     id: int = Field(description="ID of the virtual machine to clone.")
     name: NonEmptyString | None = Field(
         default=None,
-        description="Name for the cloned virtual machine. `null` to append the next available number to the original VM name.",
+        description=(
+            "Name for the cloned virtual machine. "
+            "`null` to append the next available number to the original VM name."
+        ),
     )
 
 
