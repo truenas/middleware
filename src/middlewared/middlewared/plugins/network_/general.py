@@ -16,11 +16,8 @@ class NetworkGeneralService(Service):
         """
         Retrieve general information for current Network.
 
-        Returns a dictionary. For example:
+        Returns a dictionary. For example::
 
-        .. examples(websocket)::
-
-            :::javascript
             {
                 "ips": {
                     "vtnet0": {

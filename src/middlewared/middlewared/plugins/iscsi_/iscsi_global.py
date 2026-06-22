@@ -147,7 +147,7 @@ class ISCSIGlobalService(SystemServiceService):
     )
     async def do_update(self, data):
         """
-        `alua` is a no-op for FreeNAS.
+        Update the iSCSI global configuration.
         """
         old = await self.config()
 

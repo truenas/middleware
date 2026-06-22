@@ -100,7 +100,7 @@ class SystemGeneralService(Service):
         """
         Restart HTTP server to use latest UI settings.
 
-        HTTP server will be restarted after `delay` seconds.
+        HTTP server will be restarted after ``delay`` seconds.
         """
         event_loop = asyncio.get_event_loop()
         event_loop.call_later(

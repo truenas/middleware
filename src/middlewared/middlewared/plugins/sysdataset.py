@@ -417,7 +417,7 @@ class SystemDatasetService(ConfigService):
     async def do_update(self, job, data):
         """Update System Dataset Service Configuration.
 
-        Set `pool` to choose which pool hosts the system dataset. Changing the
+        Set ``pool`` to choose which pool hosts the system dataset. Changing the
         pool moves the system dataset and its contents to the new pool.
         """
         job.set_progress(0, 'Validating system dataset configuration')

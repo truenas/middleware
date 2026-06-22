@@ -150,7 +150,7 @@ class IPMILanService(Service):
         roles=['IPMI_READ'],
     )
     def query(self, data):
-        """Query available IPMI Channels with `query-filters` and `query-options`."""
+        """Query available IPMI Channels with ``query-filters`` and ``query-options``."""
         result = []
         if not data['ipmi-options']['query-remote']:
             result = self.query_impl()

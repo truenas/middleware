@@ -98,7 +98,7 @@ class PrivilegeService(CRUDService):
     @api_method(PrivilegeUpdateArgs, PrivilegeUpdateResult, audit="Update privilege", audit_callback=True)
     async def do_update(self, audit_callback, id_, data):
         """
-        Update the privilege `id`.
+        Update the privilege ``id``.
         """
         old = await self.get_instance(id_)
         audit_callback(old["name"])
@@ -162,7 +162,7 @@ class PrivilegeService(CRUDService):
     @api_method(PrivilegeDeleteArgs, PrivilegeDeleteResult, audit="Delete privilege", audit_callback=True)
     async def do_delete(self, audit_callback, id_):
         """
-        Delete the privilege `id`.
+        Delete the privilege ``id``.
         """
         privilege = await self.get_instance(id_)
         audit_callback(privilege["name"])
@@ -472,7 +472,7 @@ class PrivilegeService(CRUDService):
         pass_app_require=True
     )
     async def become_readonly(self, app):
-        """ Reduce the privileges of the current user credentials to `READONLY_ADMINS`.
+        """ Reduce the privileges of the current user credentials to ``READONLY_ADMINS``.
         This action prevents the session from making configuration changes. It also redacts
         sensitive data in API output. """
         if not app.authenticated_credentials.is_user_session:

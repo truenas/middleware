@@ -59,7 +59,7 @@ class ContainerDeviceService(GenericCRUDService[ContainerDeviceEntry]):
         check_annotations=True,
     )
     async def do_create(self, data: ContainerDeviceCreate) -> ContainerDeviceEntry:
-        """Create a new device for the container of id `container`."""
+        """Create a new device for the container of id ``container``."""
         return await self._svc_part.do_create(data)
 
     @api_method(
@@ -70,7 +70,7 @@ class ContainerDeviceService(GenericCRUDService[ContainerDeviceEntry]):
     async def do_update(
         self, audit_callback: AuditCallback, id_: int, data: ContainerDeviceUpdate,
     ) -> ContainerDeviceEntry:
-        """Update a container device of `id`."""
+        """Update a container device of ``id``."""
         return await self._svc_part.do_update(id_, data, audit_callback=audit_callback)
 
     @api_method(
@@ -81,7 +81,7 @@ class ContainerDeviceService(GenericCRUDService[ContainerDeviceEntry]):
     async def do_delete(
         self, audit_callback: AuditCallback, id_: int, options: ContainerDeviceDeleteOptions,
     ) -> bool:
-        """Delete a container device of `id`."""
+        """Delete a container device of ``id``."""
         return await self._svc_part.do_delete(id_, options, audit_callback=audit_callback)
 
     @api_method(

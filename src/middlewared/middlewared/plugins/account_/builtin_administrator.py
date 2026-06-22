@@ -9,7 +9,7 @@ class GroupService(Service):
     @api_method(GroupHasPasswordEnabledUserArgs, GroupHasPasswordEnabledUserResult, roles=['ACCOUNT_READ'])
     async def has_password_enabled_user(self, gids, exclude_user_ids):
         """
-        Checks whether at least one local user with a password is a member of any of the `group_ids`.
+        Checks whether at least one local user with a password is a member of any of the ``group_ids``.
         """
         return len(await self.get_password_enabled_users(gids, exclude_user_ids)) > 0
 

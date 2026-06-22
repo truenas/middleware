@@ -63,16 +63,13 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
 
         `[ ['username', '=', 'root' ] ]`
 
-        .. examples(websocket)::
+        Querying for username "root" and returning a single item::
 
-          Querying for username "root" and returning a single item:
-
-            :::javascript
             {
-              "id": "d51da71b-bb48-4b8b-a8f7-6046fcc892b4",
-              "msg": "method",
-              "method": "datastore.query",
-              "params": ["account.bsdusers", [ ["username", "=", "root" ] ], {"get": true}]
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "datastore.query",
+                "params": ["account.bsdusers", [["username", "=", "root"]], {"get": true}]
             }
         """
         table = self._get_table(name)

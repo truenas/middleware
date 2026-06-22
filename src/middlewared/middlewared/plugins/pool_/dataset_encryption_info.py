@@ -38,7 +38,7 @@ class PoolDatasetService(Service):
     @job(lock=lambda args: f'encryption_summary_options_{args[0]}', pipes=['input'], check_pipes=False)
     def encryption_summary(self, job, tls, id_, options):
         """
-        Retrieve summary of all encrypted roots under `id`.
+        Retrieve summary of all encrypted roots under ``id``.
 
         Keys/passphrase can be supplied to check if the keys are valid.
 
@@ -339,7 +339,7 @@ class PoolDatasetService(Service):
     @job(lock='dataset_export_keys', pipes=['output'])
     def export_keys(self, job, id_):
         """
-        Export keys for `id` and its children which are stored in the system. The exported file is a JSON file
+        Export keys for ``id`` and its children which are stored in the system. The exported file is a JSON file
         which has a dictionary containing dataset names as keys and their keys as the value.
 
         Please refer to websocket documentation for downloading the file.
@@ -360,7 +360,7 @@ class PoolDatasetService(Service):
     @job(pipes=['output'])
     def export_keys_for_replication(self, job, task_id):
         """
-        Export keys for replication task `id` for source dataset(s) which are stored in the system. The exported file
+        Export keys for replication task ``id`` for source dataset(s) which are stored in the system. The exported file
         is a JSON file which has a dictionary containing dataset names as keys and their keys as the value.
 
         Please refer to websocket documentation for downloading the file.
@@ -446,7 +446,7 @@ class PoolDatasetService(Service):
     @job(lock='dataset_export_keys', pipes=['output'], check_pipes=False)
     def export_key(self, job, id_, download):
         """
-        Export own encryption key for dataset `id`. If `download` is `true`, key will be downloaded in a json file
+        Export own encryption key for dataset ``id``. If ``download`` is ``true``, key will be downloaded in a json file
         where the same file can be used to unlock the dataset, otherwise it will be returned as string.
 
         Please refer to websocket documentation for downloading the file.

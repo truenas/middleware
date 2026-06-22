@@ -15,8 +15,8 @@ class CloudBackupService(Service):
     @job(logs=True)
     def restore(self, job, id_, snapshot_id, subfolder, destination_path, options):
         """
-        Restore files to the directory `destination_path` from the `snapshot_id` subfolder `subfolder`
-        created by the cloud backup job `id`.
+        Restore files to the directory ``destination_path`` from the ``snapshot_id`` subfolder ``subfolder``
+        created by the cloud backup job ``id``.
         """
         self.middleware.call_sync("network.general.will_perform_activity", "cloud_backup")
 

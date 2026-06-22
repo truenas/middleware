@@ -115,13 +115,15 @@ class DockerService(GenericConfigService[DockerEntry]):
     @job(lock='docker_backup_to_pool')
     async def backup_to_pool(self, job: Job, target_pool: str) -> None:
         """
-        Create a backup of existing apps on `target_pool`.
+        Create a backup of existing apps on ``target_pool``.
 
-        This creates a backup of existing apps on the `target_pool` specified. If this is executed multiple times,
-        in the next iteration it will incrementally backup the apps that have changed since the last backup.
+        If this is executed multiple times, in the next iteration it will incrementally backup the apps that have
+        changed since the last backup.
 
-        Note: This will stop the docker service (which means current active apps will be stopped) and
-        then start it again after snapshot has been taken of the current apps dataset.
+        .. note::
+
+            This will stop the docker service (which means current active apps will be stopped) and then start it
+            again after snapshot has been taken of the current apps dataset.
         """
         return await backup_to_pool(self.context, job, target_pool)
 
@@ -134,7 +136,7 @@ class DockerService(GenericConfigService[DockerEntry]):
     )
     def delete_backup(self, backup_name: str) -> None:
         """
-        Delete `backup_name` app backup.
+        Delete ``backup_name`` app backup.
         """
         delete_backup(self.context, backup_name)
 

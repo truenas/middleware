@@ -1050,10 +1050,7 @@ class UserService(CRUDService):
     @api_method(UserDeleteArgs, UserDeleteResult, audit='Delete user', audit_callback=True, pass_app=True)
     def do_delete(self, app, audit_callback, pk, options):
         """
-        Delete user `id`.
-
-        The `delete_group` option deletes the user primary group if it is not being used by
-        any other user.
+        Delete user ``id``.
         """
         if pk > BASE_SYNTHETIC_DATASTORE_ID:
             # datastore ids for directory services are created by adding the
@@ -2305,9 +2302,7 @@ class GroupService(CRUDService):
     @api_method(GroupDeleteArgs, GroupDeleteResult, audit='Delete group', audit_callback=True)
     async def do_delete(self, audit_callback, pk, options):
         """
-        Delete group `id`.
-
-        The `delete_users` option deletes all users that have this group as their primary group.
+        Delete group ``id``.
         """
 
         if pk > BASE_SYNTHETIC_DATASTORE_ID:
@@ -2394,10 +2389,9 @@ class GroupService(CRUDService):
     def get_group_obj(self, data):
         """
         Returns dictionary containing information from struct grp for the group specified by either
-        the `groupname` or `gid`.
+        the ``groupname`` or ``gid``.
 
-        If `sid_info` is specified then addition SMB / domain information is returned for the
-        group.
+        If ``sid_info`` is specified, additional SMB / domain information is returned for the group.
         """
         verrors = ValidationErrors()
         if not data['groupname'] and data['gid'] is None:

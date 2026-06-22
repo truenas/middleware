@@ -46,9 +46,7 @@ class StaticRouteService(CRUDService):
         """
         Create a Static Route.
 
-        Address families of `gateway` and `destination` should match when creating a static route.
-
-        `description` is an optional attribute for any notes regarding the static route.
+        Address families of ``gateway`` and ``destination`` should match when creating a static route.
         """
         self._validate("staticroute_create", data)
         id_ = self.middleware.call_sync(
@@ -67,7 +65,7 @@ class StaticRouteService(CRUDService):
     )
     def do_update(self, id_, data):
         """
-        Update Static Route of `id`.
+        Update Static Route of ``id``.
         """
         old = self.get_instance__sync(id_)
         new = old.copy()
@@ -93,7 +91,7 @@ class StaticRouteService(CRUDService):
     )
     def do_delete(self, id_):
         """
-        Delete Static Route of `id`.
+        Delete Static Route of ``id``.
         """
         st = self.get_instance__sync(id_)
         rv = self.middleware.call_sync("datastore.delete", self._config.datastore, id_)

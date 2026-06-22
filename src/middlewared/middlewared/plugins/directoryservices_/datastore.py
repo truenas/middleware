@@ -915,7 +915,7 @@ class DirectoryServices(ConfigService):
     @job(lock='directoryservices_change')
     def leave(self, job, cred):
         """ Leave an Active Directory or IPA domain. Calling this endpoint when the directory services status is
-        `HEALTHY` will cause TrueNAS to remove its account from the domain and then reset the local directory
+        ``HEALTHY`` will cause TrueNAS to remove its account from the domain and then reset the local directory
         services configuration on TrueNAS. """
         revert = []
         verrors = ValidationErrors()
@@ -989,7 +989,7 @@ class DirectoryServices(ConfigService):
         roles=['DIRECTORY_SERVICE_READ']
     )
     async def certificate_choices(self):
-        """ Available certificate choices for use with the `LDAP_MTLS` `credential_type`.
+        """ Available certificate choices for use with the ``LDAP_MTLS`` ``credential_type``.
         Note that prior configuration of LDAP server is required and uploading a custom
         certificate to TrueNAS may also be required. """
         return {

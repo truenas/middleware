@@ -56,10 +56,6 @@ class FCPortService(CRUDService):
     async def do_create(self, data: dict) -> dict:
         """
         Creates mapping between a FC port and a target.
-
-        `port` is a FC host port `alias`, or `alias/number` for a NPIV port.
-
-        `target_id` is the `id` of the target to be associated with the FC port.
         """
         await self._validate("fcport_create", data)
 
@@ -78,7 +74,7 @@ class FCPortService(CRUDService):
     @api_method(FCPortUpdateArgs, FCPortUpdateResult, audit='Update FC port mapping', audit_callback=True)
     async def do_update(self, audit_callback: callable, id_: int, data: dict) -> dict:
         """
-        Update FC port mapping `id`.
+        Update FC port mapping ``id``.
         """
         old = await self.get_instance(id_)
         audit_callback(old['port'])
@@ -106,7 +102,7 @@ class FCPortService(CRUDService):
     @api_method(FCPortDeleteArgs, FCPortDeleteResult, audit='Delete FC port mapping', audit_callback=True)
     async def do_delete(self, audit_callback: callable, id_: int) -> Literal[True]:
         """
-        Delete FC port mapping `id`.
+        Delete FC port mapping ``id``.
         """
         alias = (await self.get_instance(id_))['port']
         audit_callback(alias)

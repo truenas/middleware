@@ -78,6 +78,6 @@ class AppsIxVolumeService(GenericCRUDService[AppsIxVolumeEntry, str]):
     )
     def exists(self, name: str) -> bool:
         """
-        Check if ix-volumes exist for `name` application.
+        Check if ix-volumes exist for ``name`` application.
         """
         return bool(self.query([['app_name', '=', name]]))

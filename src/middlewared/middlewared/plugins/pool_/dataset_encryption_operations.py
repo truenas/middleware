@@ -221,7 +221,7 @@ class PoolDatasetService(Service):
     def inherit_parent_encryption_properties(self, tls, id_):
         """
         Allows inheriting parent's encryption root discarding its current encryption settings. This
-        can only be done where `id` has an encrypted parent and `id` itself is an encryption root.
+        can only be done where ``id`` has an encrypted parent and ``id`` itself is an encryption root.
         """
         ds = self.middleware.call_sync('pool.dataset.get_instance_quick', id_, {
             'encryption': True,

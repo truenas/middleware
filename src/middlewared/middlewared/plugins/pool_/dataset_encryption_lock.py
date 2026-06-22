@@ -39,7 +39,7 @@ class PoolDatasetService(Service):
     @job(lock=lambda args: 'dataset_lock')
     async def lock(self, job, id_, options):
         """
-        Locks `id` dataset. It will unmount the dataset and its children before locking.
+        Locks ``id`` dataset. It will unmount the dataset and its children before locking.
 
         After the dataset has been unmounted, system will set immutable flag on the dataset's mountpoint where
         the dataset was mounted before it was locked making sure that the path cannot be modified. Once the dataset

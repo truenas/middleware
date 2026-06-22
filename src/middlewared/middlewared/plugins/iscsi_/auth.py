@@ -57,13 +57,6 @@ class iSCSITargetAuthCredentialService(CRUDService):
     async def do_create(self, data):
         """
         Create an iSCSI Authorized Access.
-
-        `tag` should be unique among all configured iSCSI Authorized Accesses.
-
-        `secret` and `peersecret` should have length between 12-16 letters inclusive.
-
-        `peeruser` and `peersecret` are provided only when configuring mutual CHAP. `peersecret` should not be
-        similar to `secret`.
         """
         orig_peerusers = await self.middleware.call('iscsi.auth.da_mutual_chap_peerusers')
 
@@ -86,7 +79,7 @@ class iSCSITargetAuthCredentialService(CRUDService):
                 audit='Update iSCSI Authorized Access', audit_callback=True)
     async def do_update(self, audit_callback, id_, data):
         """
-        Update iSCSI Authorized Access of `id`.
+        Update iSCSI Authorized Access of ``id``.
         """
         old = await self.get_instance(id_)
         audit_callback(_auth_summary(old))
@@ -128,7 +121,7 @@ class iSCSITargetAuthCredentialService(CRUDService):
                 audit='Delete iSCSI Authorized Access', audit_callback=True)
     async def do_delete(self, audit_callback, id_):
         """
-        Delete iSCSI Authorized Access of `id`.
+        Delete iSCSI Authorized Access of ``id``.
         """
         config = await self.get_instance(id_)
         audit_callback(_auth_summary(config))

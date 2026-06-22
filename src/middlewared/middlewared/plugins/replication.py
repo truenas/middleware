@@ -243,7 +243,7 @@ class ReplicationService(CRUDService):
     )
     async def do_update(self, app, audit_callback, id_, data):
         """
-        Update a Replication Task with specific `id`.
+        Update a Replication Task with specific ``id``.
         """
 
         old = await self.get_instance(id_)
@@ -315,7 +315,7 @@ class ReplicationService(CRUDService):
     @job(logs=True, read_roles=["REPLICATION_TASK_READ"])
     async def run(self, job, id_, really_run):
         """
-        Run Replication Task of `id`.
+        Run Replication Task of ``id``.
         """
         if really_run:
             task = await self.get_instance(id_)
@@ -745,7 +745,7 @@ class ReplicationService(CRUDService):
     )
     async def count_eligible_manual_snapshots(self, data):
         """
-        Count how many existing snapshots of `dataset` match `naming_schema`.
+        Count how many existing snapshots of ``dataset`` match ``naming_schema``.
         """
         return await self.middleware.call("zettarepl.count_eligible_manual_snapshots", data)
 

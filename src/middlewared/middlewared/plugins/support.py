@@ -176,8 +176,9 @@ class SupportService(ConfigService):
         This is done using the support proxy API.
         For TrueNAS Community Edition it will be created on JIRA and for TrueNAS Enterprise on Salesforce.
 
-        For Community Edition, `criticality`, `environment`, `phone`, `name`, and `email` attributes are not required.
-        For Enterprise, `token` and `type` attributes are not required.
+        For Community Edition, ``criticality``, ``environment``, ``phone``, ``name``, and ``email`` attributes are
+        not required.
+        For Enterprise, ``token`` and ``type`` attributes are not required.
         """
         vendor = await self.middleware.call('system.vendor.name')
         if vendor:

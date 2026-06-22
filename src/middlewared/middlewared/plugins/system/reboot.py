@@ -42,7 +42,7 @@ class SystemRebootService(Service):
         configuration change or a pending system upgrade). An empty list of reasons indicates no reboot is
         currently required.
 
-        The ``system.reboot.info`` event is emitted whenever this information changes.
+        The :method:`system.reboot.info` event is emitted whenever this information changes.
         """
         return {
             'boot_id': await self.middleware.call('system.boot_id'),

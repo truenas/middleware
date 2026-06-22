@@ -85,7 +85,7 @@ class CertificateService(GenericCRUDService[CertificateEntry]):
     @api_method(CertificateUpdateArgs, CertificateUpdateResult, check_annotations=True)
     @job(lock="cert_update")
     async def do_update(self, job: Job, id_: int, data: CertificateUpdate) -> CertificateEntry:
-        """Update certificate of `id`."""
+        """Update certificate of ``id``."""
         return await self._svc_part.do_update(job, id_, data)
 
     @api_method(CertificateDeleteArgs, CertificateDeleteResult, check_annotations=True)

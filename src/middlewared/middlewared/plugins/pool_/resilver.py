@@ -53,20 +53,17 @@ class PoolResilverService(ConfigService):
         """
         Configure Pool Resilver Priority.
 
-        If `begin` time is greater than `end` time it means it will rollover the day, e.g.
+        If ``begin`` time is greater than ``end`` time it means it will rollover the day, e.g.
         begin = "19:00", end = "05:00" will increase pool resilver priority from 19:00 of one day
         until 05:00 of the next day.
 
-        `weekday` follows crontab(5) values 0-7 (0 or 7 is Sun).
+        ``weekday`` follows crontab(5) values 0-7 (0 or 7 is Sun).
 
-        .. examples(websocket)::
+        Enable pool resilver priority all business days from 7PM to 5AM::
 
-          Enable pool resilver priority all business days from 7PM to 5AM.
-
-            :::javascript
             {
-                "id": "6841f242-840a-11e6-a437-00e04d680384",
-                "msg": "method",
+                "jsonrpc": "2.0",
+                "id": 1,
                 "method": "pool.resilver.update",
                 "params": [{
                     "enabled": true,

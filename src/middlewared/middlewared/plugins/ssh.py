@@ -70,16 +70,13 @@ class SSHService(SystemServiceService):
         """
         Update settings of SSH daemon service.
 
-        If `bindiface` is empty it will listen for all available addresses.
+        If ``bindiface`` is empty, it will listen for all available addresses.
 
-        .. examples(websocket)::
+        Make sshd listen only to igb0 interface::
 
-          Make sshd listen only to igb0 interface.
-
-            :::javascript
             {
-                "id": "6841f242-840a-11e6-a437-00e04d680384",
-                "msg": "method",
+                "jsonrpc": "2.0",
+                "id": 1,
                 "method": "ssh.update",
                 "params": [{
                     "bindiface": ["igb0"]

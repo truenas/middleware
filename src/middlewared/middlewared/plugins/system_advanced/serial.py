@@ -13,7 +13,7 @@ class SystemAdvancedService(Service):
     @api_method(SystemAdvancedSerialPortChoicesArgs, SystemAdvancedSerialPortChoicesResult, roles=['READONLY_ADMIN'])
     async def serial_port_choices(self):
         """
-        Get available choices for `serialport`.
+        Get available choices for ``serialport``.
         """
         ports = {e['name']: e['name'] for e in await self.middleware.call('device.get_info', {'type': 'SERIAL'})}
         if not ports or (await self.middleware.call('system.advanced.config'))['serialport'] == 'ttyS0':

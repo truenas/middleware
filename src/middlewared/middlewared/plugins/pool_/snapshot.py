@@ -77,9 +77,9 @@ class PoolSnapshotService(CRUDService):
 
     @api_method(PoolSnapshotHoldArgs, PoolSnapshotHoldResult, roles=['SNAPSHOT_WRITE'])
     def hold(self, id_, options):
-        """Hold snapshot `id`.
+        """Hold snapshot ``id``.
 
-        Add `truenas` tag to the snapshot's tag namespace.
+        Add ``truenas`` tag to the snapshot's tag namespace.
 
         """
         self.call_sync2(self.s.zfs.resource.snapshot.hold_impl, ZFSResourceSnapshotHoldQuery(
@@ -90,7 +90,7 @@ class PoolSnapshotService(CRUDService):
 
     @api_method(PoolSnapshotReleaseArgs, PoolSnapshotReleaseResult, roles=['SNAPSHOT_WRITE'])
     def release(self, id_, options):
-        """Release hold on snapshot `id`.
+        """Release hold on snapshot ``id``.
 
         Remove all hold tags from the specified snapshot.
 
@@ -419,7 +419,7 @@ class PoolSnapshotService(CRUDService):
     )
     async def rename(self, id_, options):
         """
-        Rename a snapshot `id` to `new_name`.
+        Rename a snapshot ``id`` to ``new_name``.
 
         No safety checks are performed when renaming ZFS resources. If the dataset is in use by services such
         as SMB, iSCSI, snapshot tasks, replication, or cloud sync, renaming may cause disruptions or service failures.

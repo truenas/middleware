@@ -53,14 +53,11 @@ class PoolDatasetService(Service):
         """
         Helper method to get recommended size for a new zvol (dataset of type VOLUME).
 
-        .. examples(websocket)::
+        Get blocksize for pool "tank"::
 
-          Get blocksize for pool "tank".
-
-            :::javascript
             {
-                "id": "6841f242-840a-11e6-a437-00e04d680384",
-                "msg": "method",
+                "jsonrpc": "2.0",
+                "id": 1,
                 "method": "pool.dataset.recommended_zvol_blocksize",
                 "params": ["tank"]
             }

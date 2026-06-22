@@ -155,7 +155,7 @@ class BootService(Service):
     @api_method(BootDetachArgs, BootDetachResult, roles=['DISK_WRITE'])
     async def detach(self, dev):
         """
-        Detach given `dev` from boot pool.
+        Detach given ``dev`` from boot pool.
         """
         await self.check_update_ashift_property()
         await self.middleware.call('zfs.pool.detach', BOOT_POOL_NAME, dev, {'clear_label': True})
@@ -165,7 +165,7 @@ class BootService(Service):
     @job(lock=BOOT_ATTACH_REPLACE_LOCK)
     async def replace(self, job, label, dev):
         """
-        Replace device `label` on boot pool with `dev`.
+        Replace device ``label`` on boot pool with ``dev``.
         """
         format_opts = {}
         await self.check_update_ashift_property()

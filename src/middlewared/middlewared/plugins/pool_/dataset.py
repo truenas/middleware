@@ -110,35 +110,29 @@ class PoolDatasetService(CRUDService):
     )
     def query(self, tls, filters, options):
         """
-        Query Pool Datasets with `query-filters` and `query-options`.
+        Query pool datasets with ``query-filters`` and ``query-options``.
 
-        We provide two ways to retrieve datasets. The first is a flat structure (default), where
-        all datasets in the system are returned as separate objects which contain all data
-        there is for their children. This retrieval type is slightly slower because of duplicates in each object.
-        The second type is hierarchical, where only top level datasets are returned in the list. They contain all the
-        children in the `children` key. This retrieval type is slightly faster.
-        These options are controlled by the `query-options.extra.flat` attribute (default true).
+        Results can be returned as a flat structure or as a hierarchy of top-level datasets with their children
+        nested, controlled by the ``query-options.extra.flat`` option.
 
-        In some cases it might be desirable to only retrieve details of a dataset itself and not it's children, in this
-        case `query-options.extra.retrieve_children` should be explicitly specified and set to `false` which will
-        result in children not being retrieved.
+        The following ``query-options.extra`` options are supported:
 
-        In case only some properties are desired to be retrieved for datasets, consumer should specify
-        `query-options.extra.properties` which when `null` ( which is the default ) will retrieve all properties
-        and otherwise a list can be specified like `["type", "used", "available"]` to retrieve selective properties.
-        If no properties are desired, in that case an empty list should be sent. It should be noted that specifying
-        empty list will still retrieve user properties. If user properties are not desired, in that case
-        `query-options.extra.retrieve_user_props` should be set to `false`.
-
-        `query-options.extra.snapshots` can be set to retrieve snapshot(s) of dataset in question.
-
-        `query-options.extra.snapshots_recursive` can be set to retrieve snapshot(s) recursively of dataset in question.
-        If `query-options.extra.snapshots_recursive` and `query-options.extra.snapshots` are set, snapshot(s) will be
-        retrieved recursively.
-
-        `query-options.extra.snapshots_properties` can be specified to list out properties which should be retrieved
-        for snapshot(s) related to each dataset. By default only name of the snapshot would be retrieved, however
-        if `null` is specified all properties of the snapshot would be retrieved in this case.
+        ``flat`` *(bool)*:
+            Return all datasets as a flat list (``true``, the default) or only top-level datasets with their
+            children nested under a ``children`` key (``false``).
+        ``retrieve_children`` *(bool)*:
+            Set to ``false`` to exclude child datasets from the results.
+        ``properties`` *(list)*:
+            List of ZFS properties to retrieve. ``null`` (the default) retrieves all properties; an empty list
+            retrieves none, though user properties are still returned unless disabled.
+        ``retrieve_user_props`` *(bool)*:
+            Set to ``false`` to exclude ZFS user properties.
+        ``snapshots`` *(bool)*:
+            Include each dataset's snapshots in the results.
+        ``snapshots_recursive`` *(bool)*:
+            Include each dataset's snapshots recursively.
+        ``snapshots_properties`` *(list)*:
+            List of snapshot properties to retrieve.
         """
         extra = options.pop('extra', {})
         exclude_internal_datasets = extra.pop('exclude_internal_datasets', True)
@@ -470,15 +464,12 @@ class PoolDatasetService(CRUDService):
         """
         Creates a dataset/zvol.
 
-        .. examples(websocket)::
+        Create a dataset within tank pool::
 
-          Create a dataset within tank pool.
-
-            :::javascript
             {
-                "id": "6841f242-840a-11e6-a437-00e04d680384",
-                "msg": "method",
-                "method": "pool.dataset.create,
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "pool.dataset.create",
                 "params": [{
                     "name": "tank/myuser",
                     "comments": "Dataset for myuser"
@@ -784,17 +775,14 @@ class PoolDatasetService(CRUDService):
     @api_method(PoolDatasetUpdateArgs, PoolDatasetUpdateResult, audit='Pool dataset update', audit_callback=True)
     async def do_update(self, audit_callback, id_, data):
         """
-        Updates a dataset/zvol `id`.
+        Updates a dataset/zvol ``id``.
 
-        .. examples(websocket)::
+        Update the ``comments`` for "tank/myuser"::
 
-          Update the `comments` for "tank/myuser".
-
-            :::javascript
             {
-                "id": "6841f242-840a-11e6-a437-00e04d680384",
-                "msg": "method",
-                "method": "pool.dataset.update,
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "pool.dataset.update",
                 "params": ["tank/myuser", {
                     "comments": "Dataset for myuser, UPDATE #1"
                 }]
@@ -904,16 +892,13 @@ class PoolDatasetService(CRUDService):
     @api_method(PoolDatasetDeleteArgs, PoolDatasetDeleteResult, audit='Pool dataset delete', audit_callback=True)
     async def do_delete(self, audit_callback, id_, options):
         """
-        Delete dataset/zvol `id`.
+        Delete dataset/zvol ``id``.
 
-        .. examples(websocket)::
+        Delete "tank/myuser" dataset::
 
-          Delete "tank/myuser" dataset.
-
-            :::javascript
             {
-                "id": "6841f242-840a-11e6-a437-00e04d680384",
-                "msg": "method",
+                "jsonrpc": "2.0",
+                "id": 1,
                 "method": "pool.dataset.delete",
                 "params": ["tank/myuser"]
             }

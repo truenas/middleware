@@ -2,3 +2,5 @@ pyfakefs
 pytest-asyncio
 jsonschema
 PyYAML
+sphinx
+sphinx-lint

@@ -120,13 +120,6 @@ class iSCSITargetService(CRUDService):
     async def do_create(self, data):
         """
         Create an iSCSI Target.
-
-        `groups` is a list of group dictionaries which provide information related to using a `portal`, `initiator`,
-        `authmethod` and `auth` with this target. `auth` represents a valid iSCSI Authorized Access and defaults to
-        null.
-
-        `auth_networks` is a list of IP/CIDR addresses which are allowed to use this initiator. If all networks are
-        to be allowed, this field should be left empty.
         """
         verrors = ValidationErrors()
         await self.__validate(verrors, data, 'iscsi_target_create')
@@ -324,7 +317,7 @@ class iSCSITargetService(CRUDService):
     )
     async def do_update(self, audit_callback, id_, data):
         """
-        Update iSCSI Target of `id`.
+        Update iSCSI Target of ``id``.
         """
         old = await self.get_instance(id_)
         audit_callback(old['name'])
@@ -404,9 +397,9 @@ class iSCSITargetService(CRUDService):
     )
     async def do_delete(self, audit_callback, id_, force, delete_extents):
         """
-        Delete iSCSI Target of `id`.
+        Delete iSCSI Target of ``id``.
 
-        Deleting an iSCSI Target makes sure we delete all Associated Targets which use `id` iSCSI Target.
+        Deleting an iSCSI Target makes sure we delete all Associated Targets which use ``id`` iSCSI Target.
         """
         target = await self.get_instance(id_)
         audit_callback(target['name'])

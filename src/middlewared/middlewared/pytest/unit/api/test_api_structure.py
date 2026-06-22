@@ -5,6 +5,8 @@ import os
 import pathlib
 import pkgutil
 import re
+import subprocess
+import sys
 
 import pytest
 
@@ -192,3 +194,96 @@ def test_api_method_docstrings():
 
     if errors:
         raise ExceptionGroup("Improper public API method docstring(s)", errors)
+
+
+@pytest.fixture(scope="module")
+def reflowed_docstring_pages(tmp_path_factory):
+    """Write each public API method's reflowed docstring as an isolated RST page.
+
+    Returns ``(srcdir, pages)``, where ``pages`` maps each ``<name>.rst`` file to the
+    ``path:line method`` it came from, so tool output can be translated back to the source.
+    """
+    srcdir = tmp_path_factory.mktemp("api_method_docstrings")
+    (srcdir / "conf.py").write_text("project = 'API'\nextensions = []\nexclude_patterns = []\n")
+
+    pages = {}
+    names = []
+    package_root = pathlib.Path(middlewared.__file__).parent
+    for path in sorted(package_root.rglob("*.py")):
+        if "pytest" in path.relative_to(package_root).parts:
+            continue
+
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        for node in _iter_public_api_methods(tree):
+            docstring = ast.get_docstring(node)
+            if not docstring:
+                continue
+
+            name = f"m{len(names):04d}"
+            # A neutral title avoids RST parsing a source path (e.g. ``account_``) as a reference.
+            title = f"Method {len(names)}"
+            page = f"{title}\n{'=' * len(title)}\n\n{reflow_docstring(docstring)}\n"
+            (srcdir / f"{name}.rst").write_text(page)
+            pages[f"{name}.rst"] = f"{path.relative_to(package_root)}:{node.lineno} {node.name}"
+            names.append(name)
+
+    toctree = "".join(f"   {name}\n" for name in names)
+    (srcdir / "index.rst").write_text(f"API\n===\n\n.. toctree::\n   :maxdepth: 1\n\n{toctree}")
+    return srcdir, pages
+
+
+def _locate(line, pages):
+    """Rewrite a ``<tmp>/mNNNN.rst:LINE: message`` tool finding to ``source location: message``."""
+    if m := re.search(r"(m\d{4}\.rst):\d+: (.*)", line):
+        if m.group(1) in pages:
+            return f"{pages[m.group(1)]}: {m.group(2)}"
+    return line
+
+
+def test_api_method_docstrings_render(reflowed_docstring_pages, tmp_path):
+    """Reflowed public API method docstrings must be structurally valid RST.
+
+    They are parsed with the same Sphinx machinery used to build the API documentation. Cross-
+    reference resolution warnings (``ref.doc``) are ignored because each method page is built in
+    isolation, so the ``:doc:`` targets expanded from ``:method:`` do not resolve here.
+    """
+    pytest.importorskip("sphinx")
+    srcdir, pages = reflowed_docstring_pages
+    result = subprocess.run(
+        [sys.executable, "-m", "sphinx", "-b", "dummy", "-q", str(srcdir), str(tmp_path / "out")],
+        capture_output=True,
+        text=True,
+    )
+
+    errors = [
+        SyntaxWarning(_locate(line, pages))
+        for line in (result.stdout + result.stderr).splitlines()
+        if ("WARNING" in line or "ERROR" in line) and "[ref.doc]" not in line
+    ]
+    if errors:
+        raise ExceptionGroup("Public API method docstring(s) with invalid RST", errors)
+
+
+def test_api_method_docstrings_sphinx_lint(reflowed_docstring_pages):
+    """Reflowed public API method docstrings must pass sphinx-lint.
+
+    ``default-role`` is enabled on top of the default checks so that single-backtick literals (which
+    should be double backticks) are rejected, alongside role and inline-markup mistakes -- e.g. a
+    ``:method:`` reference missing its closing backtick, or unbalanced inline literals -- that render
+    incorrectly without raising a parse error.
+    """
+    pytest.importorskip("sphinxlint")
+    srcdir, pages = reflowed_docstring_pages
+    result = subprocess.run(
+        [sys.executable, "-m", "sphinxlint", "--enable", "default-role", str(srcdir)],
+        capture_output=True,
+        text=True,
+    )
+
+    errors = [
+        SyntaxWarning(_locate(line, pages))
+        for line in (result.stdout + result.stderr).splitlines()
+        if re.search(r"m\d{4}\.rst:\d+:", line)
+    ]
+    if errors:
+        raise ExceptionGroup("Public API method docstring(s) flagged by sphinx-lint", errors)

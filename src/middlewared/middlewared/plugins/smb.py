@@ -1043,7 +1043,7 @@ class SharingSMBService(SharingService):
     )
     async def do_delete(self, audit_callback, id_):
         """
-        Delete SMB Share of `id`. This will forcibly disconnect SMB clients
+        Delete SMB Share of ``id``. This will forcibly disconnect SMB clients
         that are accessing the share.
         """
         share = await self.get_instance(id_)

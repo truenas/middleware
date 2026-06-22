@@ -13,7 +13,7 @@ class ReplicationService(Service):
     )
     async def restore(self, app, id_, data):
         """
-        Create the opposite of replication task `id` (PULL if it was PUSH and vice versa).
+        Create the opposite of replication task ``id`` (PULL if it was PUSH and vice versa).
         """
         replication_task = await self.middleware.call("replication.query", [["id", "=", id_]], {"get": True})
 

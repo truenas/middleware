@@ -114,7 +114,7 @@ class UserService(Service):
                 roles=['ACCOUNT_WRITE'])
     async def unset_2fa_secret(self, username):
         """
-        Unset two-factor authentication secret for `username`.
+        Unset two-factor authentication secret for ``username``.
         """
         user = await self.translate_username(username)
         twofactor_auth = await self.middleware.call(

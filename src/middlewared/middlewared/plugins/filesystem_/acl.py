@@ -181,19 +181,19 @@ class FilesystemService(Service):
     @job(lock=lambda args: f'perm_change:{os.path.normpath(args[0]["path"])}')
     def chown(self, job, data):
         """
-        Change owner or group of file at `path`.
+        Change owner or group of file at ``path``.
 
-        `uid` and `gid` specify new owner of the file. If either
+        ``uid`` and ``gid`` specify new owner of the file. If either
         key is absent or None, then existing value on the file is not
         changed.
 
-        `user` and `group` alternatively allow specifying a uid gid by
+        ``user`` and ``group`` alternatively allow specifying a uid gid by
         user name or group name.
 
-        `recursive` performs action recursively, but does
+        ``recursive`` performs action recursively, but does
         not traverse filesystem mount points.
 
-        If `traverse` and `recursive` are specified, then the chown
+        If ``traverse`` and ``recursive`` are specified, then the chown
         operation will traverse filesystem mount points.
         """
         job.set_progress(0, 'Preparing to change owner.')
@@ -387,36 +387,8 @@ class FilesystemService(Service):
     )
     def getacl(self, path, simplified, resolve_ids):
         """
-        Return ACL of a given path. This may return a POSIX1e ACL or a NFSv4 ACL. The acl type is indicated
-        by the `acltype` key.
-
-        `simplified` - effect of this depends on ACL type on underlying filesystem. In the case of
-        NFSv4 ACLs simplified permissions and flags are returned for ACL entries where applicable.
-        NFSv4 errata below. In the case of POSIX1E ACls, this setting has no impact on returned ACL.
-
-        `resolve_ids` - adds additional `who` key to each ACL entry, that converts the numeric id to
-        a user name or group name. In the case of owner@ and group@ (NFSv4) or USER_OBJ and GROUP_OBJ
-        (POSIX1E), st_uid or st_gid will be converted from stat() return for file. In the case of
-        MASK (POSIX1E), OTHER (POSIX1E), everyone@ (NFSv4), key `who` will be included, but set to null.
-        In case of failure to resolve the id to a name, `who` will be set to null. This option should
-        only be used if resolving ids to names is required.
-
-        Errata about ACLType NFSv4:
-
-        `simplified` returns a shortened form of the ACL permset and flags where applicable. If permissions
-        have been simplified, then the `perms` object will contain only a single `BASIC` key with a string
-        describing the underlying permissions set.
-
-        `TRAVERSE` sufficient rights to traverse a directory, but not read contents.
-
-        `READ` sufficient rights to traverse a directory, and read file contents.
-
-        `MODIFIY` sufficient rights to traverse, read, write, and modify a file.
-
-        `FULL_CONTROL` all permissions.
-
-        If the permisssions do not fit within one of the pre-defined simplified permissions types, then
-        the full ACL entry will be returned.
+        Return ACL of a given path. This may return a POSIX1e ACL or a NFSv4 ACL. The ACL type is indicated
+        by the ``acltype`` key.
         """
         if path_location(path) is FSLocation.EXTERNAL:
             raise CallError(f'{path} is external to TrueNAS', errno.EXDEV)
@@ -634,9 +606,6 @@ class FilesystemService(Service):
         NFSv4 entries, while a ``POSIX1E`` ACL requires POSIX1e entries. When ``stripacl`` is set the
         ACL is converted to a trivial ACL; an ACL is trivial if it can be expressed as a file mode
         without losing any access rules.
-
-        The ``canonicalize`` option is deprecated and has no effect; ACL entries are always written in
-        canonical order.
 
         .. note::
 

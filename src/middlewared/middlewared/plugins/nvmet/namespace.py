@@ -94,7 +94,7 @@ class NVMetNamespaceService(SharingService):
     )
     async def do_create(self, data):
         """
-        Create a NVMe target namespace in a subsystem (`subsys`).
+        Create a NVMe target namespace in a subsystem (``subsys``).
 
         This will expose the namespace to any hosts permitted to access the subsystem.
         """
@@ -125,7 +125,7 @@ class NVMetNamespaceService(SharingService):
     )
     async def do_update(self, audit_callback, id_, data):
         """
-        Update NVMe target namespace of `id`.
+        Update NVMe target namespace of ``id``.
         """
         old = await self.get_instance(id_)
         audit_callback(self.__audit_summary(old))
@@ -156,7 +156,7 @@ class NVMetNamespaceService(SharingService):
     )
     async def do_delete(self, audit_callback, id_, options):
         """
-        Delete NVMe target namespace of `id`.
+        Delete NVMe target namespace of ``id``.
         """
         remove = options.get('remove', False)
         data = await self.get_instance(id_)

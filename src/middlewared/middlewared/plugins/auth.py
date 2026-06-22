@@ -320,35 +320,7 @@ class AuthService(Service):
     @filterable_api_method(item=AuthSessionsEntry, roles=['AUTH_SESSIONS_READ'], pass_app=True, pass_app_require=True)
     def sessions(self, app, filters, options):
         """
-        Returns list of active auth sessions.
-
-        Example of return value::
-
-            [
-                {
-                    "id": "NyhB1J5vjPjIV82yZ6caU12HLA1boDJcZNWuVQM4hQWuiyUWMGZTz2ElDp7Yk87d",
-                    "origin": "192.168.0.3:40392",
-                    "credentials": "LOGIN_PASSWORD",
-                    "credentials_data": {"username": "root"},
-                    "current": true,
-                    "internal": false,
-                    "created_at": {"$date": 1545842426070}
-                }
-            ]
-
-        `credentials` can be `UNIX_SOCKET`, `ROOT_TCP_SOCKET`, `LOGIN_PASSWORD`, `API_KEY` or `TOKEN`,
-        depending on what authentication method was used.
-        For `UNIX_SOCKET` and `LOGIN_PASSWORD` logged-in `username` field will be provided in `credentials_data`.
-        For `API_KEY` corresponding `api_key` will be provided in `credentials_data`.
-        For `TOKEN` its `parent` credential will be provided in `credentials_data`.
-
-        If you want to exclude all internal connections from the list, call this method with following arguments::
-
-            [
-                [
-                    ["internal", "=", true]
-                ]
-            ]
+        Returns a list of active auth sessions.
         """
         return filter_list(
             [
@@ -368,7 +340,7 @@ class AuthService(Service):
     @api_method(AuthTerminateSessionArgs, AuthTerminateSessionResult, roles=['AUTH_SESSIONS_WRITE'])
     async def terminate_session(self, id_):
         """
-        Terminates session `id`.
+        Terminates session ``id``.
         """
         session = self.session_manager.sessions.get(id_)
         if session is None:
@@ -454,13 +426,6 @@ class AuthService(Service):
     def generate_token(self, app, ttl, attrs, match_origin, single_use):
         """
         Generate a token to be used for authentication.
-
-        ``ttl`` stands for Time To Live, in seconds. The token will be invalidated if the connection
-        has been inactive for a time greater than this.
-
-        ``attrs`` is a general purpose object/dictionary to hold information about the token.
-
-        ``match_origin`` will only allow using this token from the same IP address or with the same user UID.
 
         .. note::
 
@@ -612,10 +577,9 @@ class AuthService(Service):
     async def login(self, app, username, password, otp_token):
         """
         Authenticate session using username and password.
-        `otp_token` must be specified if two factor authentication is enabled.
 
-        Deprecated and removed in v27. Use `auth.login_ex` with `mechanism="PASSWORD_PLAIN"`
-        (and `auth.login_ex_continue` with `mechanism="OTP_TOKEN"` for the second factor).
+        Deprecated and removed in v27. Use :method:`auth.login_ex` with ``mechanism="PASSWORD_PLAIN"``
+        (and :method:`auth.login_ex_continue` with ``mechanism="OTP_TOKEN"`` for the second factor).
         """
 
         resp = await self.login_ex(app, {
@@ -1004,8 +968,8 @@ class AuthService(Service):
         """
         Authenticate session using API Key.
 
-        Deprecated and removed in v27. Use `auth.login_ex` with `mechanism="API_KEY_PLAIN"`
-        (or `mechanism="SCRAM"` for SCRAM-based authentication).
+        Deprecated and removed in v27. Use :method:`auth.login_ex` with ``mechanism="API_KEY_PLAIN"``
+        (or ``mechanism="SCRAM"`` for SCRAM-based authentication).
         """
         try:
             key_id = int(api_key.split('-')[0])
@@ -1040,7 +1004,7 @@ class AuthService(Service):
                 pass_app=True)
     async def login_with_token(self, app, token_str):
         """
-        Authenticate session using token generated with `auth.generate_token`.
+        Authenticate session using token generated with :method:`auth.generate_token`.
         """
         resp = await self.login_ex(app, {
             'mechanism': AuthMech.TOKEN_PLAIN,

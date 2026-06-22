@@ -40,10 +40,10 @@ class NVMetHostSubsysService(CRUDService):
     )
     async def do_create(self, data):
         """
-        Create an association between a `host` and a subsystem (`subsys`).
+        Create an association between a ``host`` and a subsystem (``subsys``).
 
-        This will enable the `host` to access the subsystem, even if the
-        subsystem does not have the `allow_any_host` attribute set.
+        This will enable the ``host`` to access the subsystem, even if the
+        subsystem does not have the ``allow_any_host`` attribute set.
         """
         verrors = ValidationErrors()
         await self.__validate(verrors, data, 'nvmet_host_subsys_create')
@@ -74,7 +74,7 @@ class NVMetHostSubsysService(CRUDService):
     )
     async def do_update(self, audit_callback, id_, data):
         """
-        Update `host`/`subsys` association of `id`.
+        Update ``host``/``subsys`` association of ``id``.
         """
         old = await self.get_instance(id_)
         audit_callback(self.__audit_summary(old))
@@ -102,9 +102,9 @@ class NVMetHostSubsysService(CRUDService):
     )
     async def do_delete(self, audit_callback, id_):
         """
-        Delete `host`/`subsys` association of `id`.
+        Delete ``host``/``subsys`` association of ``id``.
 
-        If the subsystem does not have the `allow_any_host` attribute set,
+        If the subsystem does not have the ``allow_any_host`` attribute set,
         then this will remove access of the host to the subsystem.
         """
         data = await self.get_instance(id_)

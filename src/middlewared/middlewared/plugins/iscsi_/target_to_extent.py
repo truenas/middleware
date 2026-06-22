@@ -47,8 +47,6 @@ class iSCSITargetToExtentService(CRUDService):
     async def do_create(self, audit_callback, data):
         """
         Create an Associated Target.
-
-        `lunid` will be automatically assigned if it is not provided based on the `target`.
         """
         # It is unusual to do a audit_callback on a do_create, but we want to perform
         # more extensive operations than is usual for a create ... because the parameters
@@ -130,7 +128,7 @@ class iSCSITargetToExtentService(CRUDService):
     )
     async def do_update(self, audit_callback, id_, data):
         """
-        Update Associated Target of `id`.
+        Update Associated Target of ``id``.
         """
         verrors = ValidationErrors()
         old = await self.get_instance(id_)
@@ -159,7 +157,7 @@ class iSCSITargetToExtentService(CRUDService):
     )
     async def do_delete(self, audit_callback, id_, force):
         """
-        Delete Associated Target of `id`.
+        Delete Associated Target of ``id``.
         """
         associated_target = await self.get_instance(id_)
         active_sessions = await self.middleware.call(

@@ -143,7 +143,7 @@ class CloudBackupService(Service):
     @job(lock=lambda args: "cloud_backup:{}".format(args[-1]), lock_queue_size=1, logs=True, abortable=True)
     def sync(self, job, id_, options):
         """
-        Run the cloud backup job `id`.
+        Run the cloud backup job ``id``.
         """
         cloud_backup = self.middleware.call_sync("cloud_backup.get_instance", id_)
         if cloud_backup["locked"]:

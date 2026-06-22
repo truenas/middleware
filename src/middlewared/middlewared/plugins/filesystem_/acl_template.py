@@ -340,16 +340,10 @@ class ACLTemplateService(CRUDService):
     )
     async def by_path(self, data):
         """
-        Retrieve list of available ACL templates for a given `path`.
+        Retrieve list of available ACL templates for a given ``path``. Supports ``query-filters`` and
+        ``query-options``.
 
-        Supports `query-filters` and `query-options`.
-        `format-options` gives additional options to alter the results of
-        the template query:
-
-        `canonicalize` - deprecated, has no effect. ACL entries are always stored in canonical order.
-        `ensure_builtins` - ensure all results contain entries for `builtin_users` and `builtin_administrators`
-        groups.
-        `resolve_names` - convert ids in ACL entries into names.
+        ACL entries in the returned templates are always in canonical order.
         """
         verrors = ValidationErrors()
         filters = data.get('query-filters')

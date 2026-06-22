@@ -734,23 +734,51 @@ class InterfaceService(CRUDService):
         """
         Create virtual interfaces (Link Aggregation, VLAN).
 
-        .. examples(cli)::
+        Create a bridge interface::
 
-            Create a bridge interface:
+            {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "interface.create",
+                "params": [{
+                    "name": "br0",
+                    "type": "BRIDGE",
+                    "bridge_members": ["enp0s3", "enp0s4"],
+                    "aliases": ["192.168.0.10"]
+                }]
+            }
 
-            > network interface create name=br0 type=BRIDGE bridge_members=enp0s3,enp0s4
-                aliases="192.168.0.10"
+        Create a link aggregation interface that has multiple IP addresses in multiple subnets::
 
-            Create a link aggregation interface that has multiple IP addresses in multiple subnets:
+            {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "interface.create",
+                "params": [{
+                    "name": "bond0",
+                    "type": "LINK_AGGREGATION",
+                    "lag_protocol": "LACP",
+                    "lag_ports": ["enp0s8", "enp0s9"],
+                    "aliases": ["192.168.0.20/30", "192.168.1.20/30"]
+                }]
+            }
 
-            > network interface create name=bond0 type=LINK_AGGREGATION lag_protocol=LACP
-                lag_ports=enp0s8,enp0s9 aliases="192.168.0.20/30","192.168.1.20/30"
+        Create a DHCP-enabled VLAN interface::
 
-            Create a DHCP-enabled VLAN interface:
-
-            > network interface create name=vlan0 type=VLAN vlan_parent_interface=enp0s10
-                vlan_tag=10 vlan_pcp=4 ipv4_dhcp=true ipv6_auto=true
-
+            {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "interface.create",
+                "params": [{
+                    "name": "vlan0",
+                    "type": "VLAN",
+                    "vlan_parent_interface": "enp0s10",
+                    "vlan_tag": 10,
+                    "vlan_pcp": 4,
+                    "ipv4_dhcp": true,
+                    "ipv6_auto": true
+                }]
+            }
         """
         verrors = ValidationErrors()
         await self.middleware.call('network.common.check_failover_disabled', 'interface.create', verrors)
@@ -1237,13 +1265,16 @@ class InterfaceService(CRUDService):
     )
     async def do_update(self, audit_callback, oid, data):
         """
-        Update Interface of `id`.
+        Update Interface of ``id``.
 
-        .. examples(cli)::
+        Update network interface static IP::
 
-            Update network interface static IP:
-
-            > network interface update enp0s3 aliases="192.168.0.10"
+            {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "interface.update",
+                "params": ["enp0s3", {"aliases": ["192.168.0.10"]}]
+            }
         """
         verrors = ValidationErrors()
         await self.middleware.call('network.common.check_failover_disabled', 'interface.update', verrors)
@@ -1434,7 +1465,7 @@ class InterfaceService(CRUDService):
     )
     async def do_delete(self, audit_callback, oid):
         """
-        Delete Interface of `id`.
+        Delete Interface of ``id``.
         """
         verrors = ValidationErrors()
         schema = 'interface.delete'
@@ -1525,7 +1556,7 @@ class InterfaceService(CRUDService):
     @api_method(InterfaceAvailableFecModesArgs, InterfaceAvailableFecModesResult, roles=['NETWORK_INTERFACE_READ'])
     def available_fec_modes(self, id_):
         """
-        Returns FEC modes supported by interface `id`.
+        Returns FEC modes supported by interface ``id``.
 
         Returns an empty list if the interface does not exist or does not support FEC.
         """
@@ -1571,7 +1602,7 @@ class InterfaceService(CRUDService):
         roles=['NETWORK_INTERFACE_READ']
     )
     async def bridge_members_choices(self, id_):
-        """Return available interface choices that can be added to a `br` (bridge) interface."""
+        """Return available interface choices that can be added to a ``br`` (bridge) interface."""
         exclude = {}
         include = {}
         for interface in await self.middleware.call('interface.query'):
@@ -1599,7 +1630,7 @@ class InterfaceService(CRUDService):
     @api_method(InterfaceLagPortsChoicesArgs, InterfaceLagPortsChoicesResult, roles=['NETWORK_INTERFACE_READ'])
     async def lag_ports_choices(self, id_):
         """
-        Return available interface choices that can be added to a `bond` (lag) interface.
+        Return available interface choices that can be added to a ``bond`` (lag) interface.
         """
         exclude = {}
         include = {}
@@ -1645,7 +1676,7 @@ class InterfaceService(CRUDService):
     )
     async def vlan_parent_interface_choices(self):
         """
-        Return available interface choices for `vlan_parent_interface` attribute.
+        Return available interface choices for ``vlan_parent_interface`` attribute.
         """
         return await self.middleware.call('interface.choices', {
             'bridge_members': True,

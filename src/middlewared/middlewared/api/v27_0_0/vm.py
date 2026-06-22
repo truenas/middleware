@@ -65,7 +65,14 @@ class VMEntry(BaseModel):
     )
     name: NonEmptyString = Field(description="Display name of the virtual machine.")
     description: str = Field(default='', description="Optional description or notes about the virtual machine.")
-    vcpus: int = Field(ge=1, default=1, description="Number of virtual CPUs allocated to the VM.")
+    vcpus: int = Field(
+        ge=1,
+        default=1,
+        description=(
+            "Number of virtual CPU sockets. The total number of guest vCPUs is `vcpus` * `cores` * `threads` "
+            "(maximum 16)."
+        ),
+    )
     cores: int = Field(ge=1, default=1, description="Number of CPU cores per socket.")
     threads: int = Field(ge=1, default=1, description="Number of threads per CPU core.")
     cpuset: str | None = Field(

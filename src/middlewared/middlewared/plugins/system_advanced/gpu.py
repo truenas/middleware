@@ -58,7 +58,7 @@ class SystemAdvancedService(Service):
     )
     async def update_gpu_pci_ids(self, isolated_gpu_pci_ids):
         """
-        `isolated_gpu_pci_ids` is a list of PCI ids which are isolated from host system.
+        Update the list of GPU PCI IDs isolated from the host system.
         """
         verrors = ValidationErrors()
         if isolated_gpu_pci_ids:

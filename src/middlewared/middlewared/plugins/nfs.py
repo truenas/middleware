@@ -377,20 +377,6 @@ class SharingNFSService(SharingService):
     async def do_create(self, data):
         """
         Create a NFS Share.
-
-        `path` local path to be exported.
-
-        `aliases` IGNORED, for now.
-
-        `networks` is a list of authorized networks that are allowed to access the share having format
-        "network/mask" CIDR notation. If empty, all networks are allowed.
-
-        `hosts` is a list of IP's/hostnames which are allowed to access the share. If empty, all IP's/hostnames are
-        allowed.
-
-        `expose_snapshots` enable TrueNAS Enterprise feature to allow access
-        to the ZFS snapshot directory over NFS. This feature requires a valid
-        enterprise license.
         """
         verrors = ValidationErrors()
 
@@ -417,7 +403,7 @@ class SharingNFSService(SharingService):
     )
     async def do_update(self, audit_callback, id_, data):
         """
-        Update NFS Share of `id`.
+        Update NFS Share of ``id``.
         """
         verrors = ValidationErrors()
         old = await self.get_instance(id_)
@@ -448,7 +434,7 @@ class SharingNFSService(SharingService):
     )
     async def do_delete(self, audit_callback, id_):
         """
-        Delete NFS Share of `id`.
+        Delete NFS Share of ``id``.
         """
         nfs_share = await self.get_instance(id_)
         audit_callback(nfs_share['path'])

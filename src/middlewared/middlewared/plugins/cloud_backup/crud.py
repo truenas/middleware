@@ -94,7 +94,7 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
     @api_method(CloudBackupTransferSettingChoicesArgs, CloudBackupTransferSettingChoicesResult)
     def transfer_setting_choices(self):
         """
-        Return all possible choices for `cloud_backup.create.transfer_setting`.
+        Return all possible choices for ``cloud_backup.create.transfer_setting``.
         """
         args = self.transfer_setting_args()
         return list(args.keys())
@@ -119,7 +119,7 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
     @api_method(CloudBackupUpdateArgs, CloudBackupUpdateResult, pass_app=True)
     def do_update(self, app, id_, data):
         """
-        Update the cloud backup entry `id` with `data`.
+        Update the cloud backup entry ``id`` with ``data``.
         """
         cloud_backup = self.get_instance__sync(id_)
 
@@ -145,7 +145,7 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
     @api_method(CloudBackupDeleteArgs, CloudBackupDeleteResult)
     def do_delete(self, id_):
         """
-        Delete cloud backup entry `id`.
+        Delete cloud backup entry ``id``.
         """
         self.middleware.call_sync("cloud_backup.abort", id_)
         self.call_sync2(self.s.alert.oneshot_delete, "CloudBackupTaskFailed", id_)

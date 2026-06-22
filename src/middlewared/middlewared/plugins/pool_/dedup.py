@@ -19,11 +19,7 @@ class PoolService(Service):
     @job(lock=lambda args: f'ddt_prune_{args[0].get("pool_name")}')
     async def ddt_prune(self, job, options):
         """
-        Prune DDT entries in pool `pool_name` based on the specified options.
-
-        `percentage` is the percentage of DDT entries to prune.
-
-        `days` is the number of days to prune DDT entries.
+        Prune DDT entries in pool ``pool_name`` based on the specified options.
         """
         return await self.middleware.call('zfs.pool.ddt_prune', options)
 
@@ -34,7 +30,7 @@ class PoolService(Service):
         Prefetch DDT entries in pool ``pool_name``.
 
         .. versionremoved:: 26
-            Use ``pool.prefetch`` instead, which prefetches both DDT and BRT metadata.
+            Use :method:`pool.prefetch` instead, which prefetches both DDT and BRT metadata.
         """
         return await self.middleware.call('zfs.resource.pool.prefetch', pool_name)
 

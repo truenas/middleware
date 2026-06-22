@@ -17,6 +17,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install unit test requirements
+        run: pip install --break-system-packages -r src/middlewared/middlewared/pytest/unit/requirements.txt
+
       - name: Test
         run: |
           cd src/middlewared

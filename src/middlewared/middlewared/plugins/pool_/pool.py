@@ -416,15 +416,11 @@ class PoolService(CRUDService):
         """
         Create a new ZFS Pool.
 
-        .. examples(websocket)::
+        Create a pool named "tank", raidz1 with 3 disks, 1 cache disk, 1 ZIL/log disk and 1 hot spare disk::
 
-          Create a pool named "tank", raidz1 with 3 disks, 1 cache disk, 1 ZIL/log disk
-          and 1 hot spare disk.
-
-            :::javascript
             {
-                "id": "6841f242-840a-11e6-a437-00e04d680384",
-                "msg": "method",
+                "jsonrpc": "2.0",
+                "id": 1,
                 "method": "pool.create",
                 "params": [{
                     "name": "tank",
@@ -628,16 +624,13 @@ class PoolService(CRUDService):
     @job(lock='pool_createupdate')
     async def do_update(self, job, audit_callback, id_, data):
         """
-        Update pool of `id`, adding the new topology.
+        Update pool of ``id``, adding the new topology.
 
-        .. examples(websocket)::
+        Add a new set of raidz1 to pool of id 1::
 
-          Add a new set of raidz1 to pool of id 1.
-
-            :::javascript
             {
-                "id": "6841f242-840a-11e6-a437-00e04d680384",
-                "msg": "method",
+                "jsonrpc": "2.0",
+                "id": 1,
                 "method": "pool.update",
                 "params": [1, {
                     "topology": {
@@ -693,7 +686,7 @@ class PoolService(CRUDService):
     @api_method(PoolValidateNameArgs, PoolValidateNameResult, roles=['POOL_READ'])
     def validate_name(self, pool_name):
         """
-        Validates `pool_name` is a valid name for a pool.
+        Validates ``pool_name`` is a valid name for a pool.
         """
         verrors = ValidationErrors()
         if not validate_pool_name(pool_name):

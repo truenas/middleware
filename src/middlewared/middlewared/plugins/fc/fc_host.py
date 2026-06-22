@@ -88,7 +88,7 @@ class FCHostService(CRUDService):
     @api_method(FCHostDeleteArgs, FCHostDeleteResult, audit='Delete FC host', audit_callback=True)
     async def do_delete(self, audit_callback, id_: int) -> Literal[True]:
         """
-        Delete FC host `id`.
+        Delete FC host ``id``.
         """
         alias = (await self.get_instance(id_))['alias']
         audit_callback(alias)

@@ -146,11 +146,11 @@ class CoreService(Service):
         If authenticated session does not have the FULL_ADMIN role, only
         jobs owned by the current authenticated session will be returned.
 
-        `result` key will have sensitive values redacted by default for external
+        ``result`` key will have sensitive values redacted by default for external
         clients.
 
-        Redaction behavior may be explicitly specfied via the `extra`
-        query-option `raw_result`. If `raw_result` is True then unredacted result
+        Redaction behavior may be explicitly specfied via the ``extra``
+        query option ``raw_result``. If ``raw_result`` is ``true`` then an unredacted result
         is returned.
         """
 
@@ -173,10 +173,10 @@ class CoreService(Service):
     @api_method(CoreJobDownloadLogsArgs, CoreJobDownloadLogsResult, authorization_required=False, pass_app=True)
     async def job_download_logs(self, app, id_, filename, buffered):
         """
-        Download logs of the job `id`.
+        Download logs of the job ``id``.
 
-        Please see `core.download` method documentation for explanation on `filename` and `buffered` arguments,
-        and return value.
+        Please see :method:`core.download` method documentation for explanation on ``filename`` and ``buffered``
+        arguments and return value.
         """
         job = self._job_by_app_and_id(app, id_, JobAccess.READ)
 
@@ -564,7 +564,7 @@ class CoreService(Service):
         This method executes jobs that generate files or streaming data for download. The job writes its output
         to a pipe, and this method returns a time-limited, single-use download URL.
 
-        1. Call ``core.download`` with the target job method, arguments, and desired filename
+        1. Call :method:`core.download` with the target job method, arguments, and desired filename
 
         2. Receive an array containing the job ID and download URL
 
@@ -652,7 +652,7 @@ class CoreService(Service):
     @job(lock=lambda args: f"bulk:{args[0]}")
     async def bulk(self, app, job, method, params, description):
         """
-        Will sequentially call `method` with the arguments from each entry of the `params` list. For
+        Will sequentially call ``method`` with the arguments from each entry of the ``params`` list. For
         example, calling :method:`core.bulk` with these parameters::
 
             [

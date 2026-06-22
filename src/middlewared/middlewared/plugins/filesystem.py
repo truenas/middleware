@@ -567,7 +567,7 @@ class FilesystemService(Service):
     @job(pipes=["output"])
     def get(self, job: Job, path: str) -> None:
         """
-        Job to get contents of `path`.
+        Job to get contents of ``path``.
         """
         assert job.pipes.output is not None
 
@@ -587,7 +587,7 @@ class FilesystemService(Service):
     @job(pipes=["input"])
     def put(self, job: Job, path: str, options: FilesystemPutOptions) -> Literal[True]:
         """
-        Job to put contents to `path`.
+        Job to put contents to ``path``.
         """
         if path == PWENC_FILE_SECRET:
             raise CallError(

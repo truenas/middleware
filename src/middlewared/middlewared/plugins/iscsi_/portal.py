@@ -80,7 +80,7 @@ class ISCSIPortalService(CRUDService):
     @api_method(ISCSIPortalListenIpChoicesArgs, ISCSIPortalListenIpChoicesResult)
     async def listen_ip_choices(self):
         """
-        Returns possible choices for `listen.ip` attribute of portal create and update.
+        Returns possible choices for ``listen.ip`` attribute of portal create and update.
         """
         choices = {'0.0.0.0': '0.0.0.0', '::': '::'}
         if (await self.middleware.call('iscsi.global.config'))['alua']:
@@ -201,7 +201,7 @@ class ISCSIPortalService(CRUDService):
     )
     async def do_update(self, audit_callback, pk, data):
         """
-        Update iSCSI Portal `id`.
+        Update iSCSI Portal ``id``.
         """
 
         old = await self.get_instance(pk)
@@ -235,7 +235,7 @@ class ISCSIPortalService(CRUDService):
     )
     async def do_delete(self, audit_callback, id_):
         """
-        Delete iSCSI Portal `id`.
+        Delete iSCSI Portal ``id``.
         """
         old = await self.get_instance(id_)
         audit_callback(portal_summary(old))

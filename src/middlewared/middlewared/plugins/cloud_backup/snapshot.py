@@ -24,7 +24,7 @@ class CloudBackupService(Service):
     @api_method(CloudBackupListSnapshotsArgs, CloudBackupListSnapshotsResult, roles=['CLOUD_BACKUP_READ'])
     def list_snapshots(self, id_):
         """
-        List existing snapshots for the cloud backup job `id`.
+        List existing snapshots for the cloud backup job ``id``.
         """
         self.middleware.call_sync("network.general.will_perform_activity", "cloud_backup")
 
@@ -52,7 +52,7 @@ class CloudBackupService(Service):
                 roles=['CLOUD_BACKUP_READ'])
     def list_snapshot_directory(self, id_, snapshot_id, path):
         """
-        List files in the directory `path` of the `snapshot_id` created by the cloud backup job `id`.
+        List files in the directory ``path`` of the ``snapshot_id`` created by the cloud backup job ``id``.
         """
         self.middleware.call_sync("network.general.will_perform_activity", "cloud_backup")
 
@@ -90,7 +90,7 @@ class CloudBackupService(Service):
     @job(lock=lambda args: "cloud_backup:{}".format(args[-1]), lock_queue_size=1)
     def delete_snapshot(self, job, id_, snapshot_id):
         """
-        Delete snapshot `snapshot_id` created by the cloud backup job `id`.
+        Delete snapshot ``snapshot_id`` created by the cloud backup job ``id``.
         """
         self.middleware.call_sync("network.general.will_perform_activity", "cloud_backup")
 

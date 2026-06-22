@@ -467,7 +467,10 @@ class ACLTemplateDeleteResult(BaseModel):
 class AclTemplateFormatOptions(BaseModel):
     ensure_builtins: bool = Field(
         default=False,
-        description="Whether to ensure built-in templates are included in the response.",
+        description=(
+            "Whether to ensure every result contains ACL entries for the `builtin_users` and "
+            "`builtin_administrators` groups."
+        ),
     )
     resolve_names: bool = Field(
         default=False,

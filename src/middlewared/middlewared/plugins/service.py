@@ -99,11 +99,13 @@ class ServiceService(CRUDService):
     @filterable_api_method(item=ServiceEntry)
     async def query(self, filters, options):
         """
-        Query all system services with `query-filters` and `query-options`.
+        Query all system services with ``query-filters`` and ``query-options``.
 
-        Supports the following extra options:
-        `include_state` - performance optimization to avoid getting service state.
-        defaults to True.
+        The following ``query-options.extra`` options are supported:
+
+        ``include_state`` *(bool)*:
+            Include the running state of each service (``true`` by default). Set to ``false`` as a performance
+            optimization when service state is not needed.
         """
         default_options = {
             'prefix': self._config.datastore_prefix,
@@ -128,7 +130,7 @@ class ServiceService(CRUDService):
     )
     async def do_update(self, app, audit_callback, id_or_name, data):
         """
-        Update service entry of `id_or_name`.
+        Update service entry of ``id_or_name``.
         """
         if isinstance(id_or_name, int) or id_or_name.isdigit():
             filters = [['id', '=', int(id_or_name)]]
@@ -233,7 +235,7 @@ class ServiceService(CRUDService):
     @api_method(ServiceStartedArgs, ServiceStartedResult, roles=['SERVICE_READ'])
     async def started(self, service):
         """
-        Test if service specified by `service` has been started.
+        Test if service specified by ``service`` has been started.
         """
         service_object: 'ServiceInterface' = await self.middleware.call('service.object', service)
 
@@ -250,7 +252,7 @@ class ServiceService(CRUDService):
     @api_method(ServiceStartedOrEnabledArgs, ServiceStartedOrEnabledResult, roles=['SERVICE_READ'])
     async def started_or_enabled(self, service):
         """
-        Test if service specified by `service` is started or enabled to start automatically.
+        Test if service specified by ``service`` is started or enabled to start automatically.
         """
         svc = await self.middleware.call('service.query', [['service', '=', service]], {'get': True})
         return svc['state'] == 'RUNNING' or svc['enable']

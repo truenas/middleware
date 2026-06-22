@@ -15,7 +15,7 @@ class CloudSyncService(Service):
     )
     def restore(self, id_, data):
         """
-        Create the opposite of cloud sync task `id` (PULL if it was PUSH and vice versa).
+        Create the opposite of cloud sync task ``id`` (PULL if it was PUSH and vice versa).
         """
         cloud_sync = self.middleware.call_sync(
             "cloudsync.query", [["id", "=", id_]], {"get": True, "extra": {"retrieve_locked_info": False}}

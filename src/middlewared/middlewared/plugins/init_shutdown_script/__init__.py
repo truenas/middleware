@@ -53,12 +53,12 @@ class InitShutdownScriptService(GenericCRUDService[InitShutdownScriptEntry]):
 
     @api_method(InitShutdownScriptUpdateArgs, InitShutdownScriptUpdateResult, check_annotations=True)
     async def do_update(self, id_: int, data: InitShutdownScriptUpdate) -> InitShutdownScriptEntry:
-        """Update initshutdown script task of `id`."""
+        """Update initshutdown script task of ``id``."""
         return await self._svc_part.do_update(id_, data)
 
     @api_method(InitShutdownScriptDeleteArgs, InitShutdownScriptDeleteResult, check_annotations=True)
     async def do_delete(self, id_: int) -> Literal[True]:
-        """Delete init/shutdown task of `id`."""
+        """Delete init/shutdown task of ``id``."""
         await self._svc_part.do_delete(id_)
         return True
 

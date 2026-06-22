@@ -20,19 +20,11 @@ class PoolService(Service):
         """
         Replace a disk on a pool.
 
-        `label` is the ZFS guid or a device name
-        `disk` is the identifier of a disk
-        If `preserve_settings` is true, then settings (power management, S.M.A.R.T., etc.) of a disk being replaced
-        will be applied to a new disk.
+        Replace missing ZFS device with disk {serial}FOO::
 
-        .. examples(websocket)::
-
-          Replace missing ZFS device with disk {serial}FOO.
-
-            :::javascript
             {
-                "id": "6841f242-840a-11e6-a437-00e04d680384",
-                "msg": "method",
+                "jsonrpc": "2.0",
+                "id": 1,
                 "method": "pool.replace",
                 "params": [1, {
                     "label": "80802394992848654",

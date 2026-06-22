@@ -90,7 +90,7 @@ class PeriodicSnapshotTaskService(GenericCRUDService[PeriodicSnapshotTaskEntry])
         data: PoolSnapshotTaskUpdate,
     ) -> PeriodicSnapshotTaskEntry:
         """
-        Update a Periodic Snapshot Task with specific `id`.
+        Update a Periodic Snapshot Task with specific ``id``.
         """
         return await self._svc_part.do_update(audit_callback, id_, data)
 
@@ -108,7 +108,7 @@ class PeriodicSnapshotTaskService(GenericCRUDService[PeriodicSnapshotTaskEntry])
         options: PoolSnapshotTaskDeleteOptions,
     ) -> typing.Literal[True]:
         """
-        Delete a Periodic Snapshot Task with specific `id`.
+        Delete a Periodic Snapshot Task with specific ``id``.
         """
         await self._svc_part.do_delete(audit_callback, id_, options)
         return True
@@ -146,7 +146,7 @@ class PeriodicSnapshotTaskService(GenericCRUDService[PeriodicSnapshotTaskEntry])
     @job()
     async def run(self, job: Job, id_: int) -> None:
         """
-        Execute a Periodic Snapshot Task of `id`.
+        Execute a Periodic Snapshot Task of ``id``.
         """
         await _run(self.context, id_)
 
@@ -175,8 +175,8 @@ class PeriodicSnapshotTaskService(GenericCRUDService[PeriodicSnapshotTaskEntry])
         data: PoolSnapshotTaskUpdateWillChangeRetentionFor,
     ) -> dict[str, list[str]]:
         """
-        Returns a list of snapshots which will change the retention if periodic snapshot task `id` is updated
-        with `data`.
+        Returns a list of snapshots which will change the retention if periodic snapshot task ``id`` is updated
+        with ``data``.
         """
         return await update_will_change_retention_for(self.context, id_, data)
 
@@ -188,7 +188,7 @@ class PeriodicSnapshotTaskService(GenericCRUDService[PeriodicSnapshotTaskEntry])
     )
     async def delete_will_change_retention_for(self, id_: int) -> dict[str, list[str]]:
         """
-        Returns a list of snapshots which will change the retention if periodic snapshot task `id` is deleted.
+        Returns a list of snapshots which will change the retention if periodic snapshot task ``id`` is deleted.
         """
         return await delete_will_change_retention_for(self.context, id_)
 
