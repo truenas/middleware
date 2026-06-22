@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Literal
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -149,7 +149,7 @@ class CloudBackupService(GenericTaskPathService[CloudBackupEntry], TaskStateMixi
         return delete_snapshot_impl(self.context, job, id_, snapshot_id)
 
     @private
-    def ensure_initialized(self, cloud_backup: dict[str, Any]) -> None:
+    def ensure_initialized(self, cloud_backup: CloudBackupEntry | CloudBackupCreate) -> None:
         ensure_initialized_impl(self.context, cloud_backup)
 
     @private

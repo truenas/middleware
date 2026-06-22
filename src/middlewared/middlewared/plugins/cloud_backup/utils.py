@@ -2,20 +2,18 @@ from __future__ import annotations
 
 from typing import Any
 
-from middlewared.api.current import CloudBackupEntry
+from middlewared.api.current import CredentialsEntry
 from middlewared.service import ServiceContext
 
 
-def revealed_dict(context: ServiceContext, entry: CloudBackupEntry) -> dict[str, Any]:
-    """Return a cloud backup entry as a plain dict with the secrets restic needs revealed.
+def resolve_credentials(context: ServiceContext, credentials: int | CredentialsEntry) -> dict[str, Any]:
+    """Return the cloud credential record (with the flat, revealed provider dict restic needs).
 
-    ``model_dump`` redacts the ``Secret`` password, and the credential's provider secrets are
-    only available as a plain dict from the (unconverted) ``cloudsync`` service. The restic
-    helpers consume this dict shape directly.
+    The credential id may come straight from a create/update payload (``int``) or from a persisted
+    entry (``CredentialsEntry``). Either way the provider secrets are owned by the unconverted
+    ``cloudsync.credentials`` service, which is the only source of the flat ``provider`` dict shape
+    the restic helpers consume.
     """
-    data = entry.model_dump(context={"expose_secrets": True})
-    data["credentials"] = context.middleware.call_sync(
-        "cloudsync.credentials.get_instance",
-        entry.credentials.id,
-    )
-    return data
+    cred_id = credentials if isinstance(credentials, int) else credentials.id
+    record: dict[str, Any] = context.middleware.call_sync("cloudsync.credentials.get_instance", cred_id)
+    return record

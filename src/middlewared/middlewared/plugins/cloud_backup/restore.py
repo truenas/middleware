@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING
 from middlewared.api.current import CloudBackupRestoreOptions
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.cloud_backup.restic import get_restic_config, run_restic
-from middlewared.plugins.cloud_backup.utils import revealed_dict
 from middlewared.service import ServiceContext, ValidationErrors
 
 if TYPE_CHECKING:
@@ -29,14 +28,14 @@ def do_restore(
     )
     verrors.check()
 
-    cloud_backup = revealed_dict(context, context.call_sync2(context.s.cloud_backup.get_instance, id_))
+    entry = context.call_sync2(context.s.cloud_backup.get_instance, id_)
 
-    restic_config = get_restic_config(cloud_backup)
+    restic_config = get_restic_config(context, entry)
 
     cmd = ["restore", f"{snapshot_id}:{subfolder}", "--target", destination_path]
     cmd += sum([["--exclude", exclude] for exclude in options.exclude], [])
     cmd += sum([["--include", include] for include in options.include], [])
-    if limit := (options.rate_limit or cloud_backup["rate_limit"]):
+    if limit := (options.rate_limit or entry.rate_limit):
         cmd.append(f"--limit-download={limit}")
 
     run_restic(

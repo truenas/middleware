@@ -80,24 +80,27 @@ class CloudBackupServicePart(SharingTaskServicePart[CloudBackupEntry], CloudTask
 
     async def do_create(self, app: App | None, data: CloudBackupCreate) -> CloudBackupEntry:
         cloud_backup = data.model_dump(context={"expose_secrets": True})
-        await self.to_thread(self._run_validation, app, "cloud_backup_create", cloud_backup)
+        await self.to_thread(self._run_validation, app, "cloud_backup_create", cloud_backup, data)
 
         entry = await self._create(cloud_backup)
         await (await self.middleware.call("service.control", "RESTART", "cron")).wait(raise_error=True)
         return entry
 
     async def do_update(self, app: App | None, id_: int, data: CloudBackupUpdate) -> CloudBackupEntry:
-        old = (await self.get_instance(id_)).model_dump(context={"expose_secrets": True})
-        old.pop(self.locked_field, None)
-        old.pop("job", None)
-        # credentials is a foreign key, collapse the extended entry back to its id before merging.
-        if old["credentials"]:
-            old["credentials"] = old["credentials"]["id"]
+        old = await self.get_instance(id_)
+        new = old.updated(data)
 
-        new = {**old, **data.model_dump(context={"expose_secrets": True})}
-        await self.to_thread(self._run_validation, app, "cloud_backup_update", new)
+        cloud_backup = new.model_dump(context={"expose_secrets": True})
+        cloud_backup.pop(self.locked_field, None)
+        cloud_backup.pop("job", None)
+        # credentials is a foreign key; collapse the extended entry back to its id for the
+        # datastore and the shared validation mixin (a changed credential is already an int).
+        if isinstance(cloud_backup["credentials"], dict):
+            cloud_backup["credentials"] = cloud_backup["credentials"]["id"]
 
-        entry = await self._update(id_, new)
+        await self.to_thread(self._run_validation, app, "cloud_backup_update", cloud_backup, new)
+
+        entry = await self._update(id_, cloud_backup)
         await (await self.middleware.call("service.control", "RESTART", "cron")).wait(raise_error=True)
         return entry
 
@@ -120,13 +123,22 @@ class CloudBackupServicePart(SharingTaskServicePart[CloudBackupEntry], CloudTask
         ):
             raise CallError("Backed up zvol must be used by a local or VMware VM")
 
-    def _run_validation(self, app: App | None, schema: str, data: dict[str, Any]) -> None:
+    def _run_validation(
+        self, app: App | None, schema: str, data: dict[str, Any], entry: CloudBackupEntry | CloudBackupCreate,
+    ) -> None:
         verrors = ValidationErrors()
         self._validate(app, verrors, schema, data)
+        if not verrors:
+            try:
+                # Route through the registry method so the suite can mock cloud_backup.ensure_initialized.
+                self.call_sync2(self.s.cloud_backup.ensure_initialized, entry)
+            except IncorrectPassword as e:
+                verrors.add(f"{schema}.password", e.errmsg)
         verrors.check()
 
     def _validate(self, app: App | None, verrors: ValidationErrors, name: str, data: dict[str, Any]) -> None:
-        # CloudTaskServiceMixin is shared with the unconverted cloud_sync and is left untyped.
+        # CloudTaskServiceMixin is shared with the unconverted cloud_sync and operates on the dict
+        # (it normalizes data["attributes"] in place, which must reach the datastore).
         super()._validate(app, verrors, name, data)  # type: ignore[no-untyped-call]
 
         if data["snapshot"] and data["absolute_paths"]:
@@ -142,10 +154,3 @@ class CloudBackupServicePart(SharingTaskServicePart[CloudBackupEntry], CloudTask
                 statfs = self.middleware.call_sync("filesystem.statfs", data["cache_path"])
                 if "RO" in statfs.flags:
                     verrors.add(f"{name}.cache_path", "The cache directory must be writeable")
-
-        if not verrors:
-            try:
-                # Route through the registry method so the suite can mock cloud_backup.ensure_initialized.
-                self.call_sync2(self.s.cloud_backup.ensure_initialized, data)
-            except IncorrectPassword as e:
-                verrors.add(f"{name}.password", e.errmsg)

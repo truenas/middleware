@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING
 
 from middlewared.api.current import CloudBackupSnapshot, CloudBackupSnapshotItem
 from middlewared.plugins.cloud_backup.restic import get_restic_config
-from middlewared.plugins.cloud_backup.utils import revealed_dict
 from middlewared.service import CallError, ServiceContext
 
 if TYPE_CHECKING:
@@ -17,9 +16,9 @@ if TYPE_CHECKING:
 def list_snapshots(context: ServiceContext, id_: int) -> list[CloudBackupSnapshot]:
     context.middleware.call_sync("network.general.will_perform_activity", "cloud_backup")
 
-    cloud_backup = revealed_dict(context, context.call_sync2(context.s.cloud_backup.get_instance, id_))
+    entry = context.call_sync2(context.s.cloud_backup.get_instance, id_)
 
-    restic_config = get_restic_config(cloud_backup)
+    restic_config = get_restic_config(context, entry)
 
     try:
         snapshots = json.loads(subprocess.run(
@@ -43,9 +42,9 @@ def list_snapshot_directory(
 ) -> list[CloudBackupSnapshotItem]:
     context.middleware.call_sync("network.general.will_perform_activity", "cloud_backup")
 
-    cloud_backup = revealed_dict(context, context.call_sync2(context.s.cloud_backup.get_instance, id_))
+    entry = context.call_sync2(context.s.cloud_backup.get_instance, id_)
 
-    restic_config = get_restic_config(cloud_backup)
+    restic_config = get_restic_config(context, entry)
 
     try:
         items = list(map(json.loads, subprocess.run(
@@ -76,9 +75,9 @@ def list_snapshot_directory(
 def delete_snapshot(context: ServiceContext, job: Job, id_: int, snapshot_id: str) -> None:
     context.middleware.call_sync("network.general.will_perform_activity", "cloud_backup")
 
-    cloud_backup = revealed_dict(context, context.call_sync2(context.s.cloud_backup.get_instance, id_))
+    entry = context.call_sync2(context.s.cloud_backup.get_instance, id_)
 
-    restic_config = get_restic_config(cloud_backup)
+    restic_config = get_restic_config(context, entry)
 
     try:
         subprocess.run(

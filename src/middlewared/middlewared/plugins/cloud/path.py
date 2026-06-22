@@ -8,9 +8,10 @@ from middlewared.service import CallError
 
 if TYPE_CHECKING:
     from middlewared.main import Middleware
+    from middlewared.rclone.base import BaseRcloneRemote
 
 
-def get_remote_path(provider: Any, attributes: dict[str, Any]) -> str:
+def get_remote_path(provider: BaseRcloneRemote, attributes: dict[str, Any]) -> str:
     remote_path = attributes["folder"].rstrip("/")
     if not remote_path:
         remote_path = "/"

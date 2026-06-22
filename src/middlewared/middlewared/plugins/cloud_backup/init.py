@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import subprocess
-from typing import Any
 
+from middlewared.api.current import CloudBackupCreate, CloudBackupEntry
 from middlewared.plugins.cloud_backup.restic import ResticConfig, get_restic_config
+from middlewared.plugins.cloud_backup.utils import resolve_credentials
 from middlewared.service import CallError, ServiceContext
 
 
@@ -11,25 +12,19 @@ class IncorrectPassword(CallError):
     pass
 
 
-def ensure_initialized(context: ServiceContext, cloud_backup: dict[str, Any]) -> None:
+def ensure_initialized(context: ServiceContext, entry: CloudBackupEntry | CloudBackupCreate) -> None:
     context.middleware.call_sync("network.general.will_perform_activity", "cloud_backup")
 
-    if isinstance(cloud_backup["credentials"], int):
-        cloud_backup = {
-            **cloud_backup,
-            "credentials": context.middleware.call_sync(
-                "cloudsync.credentials.get_instance", cloud_backup["credentials"],
-            ),
-        }
+    credentials = resolve_credentials(context, entry.credentials)
 
-    attrs = cloud_backup["attributes"]
-    cred = cloud_backup["credentials"]["id"]
+    attrs = entry.attributes.model_dump()
+    cred = credentials["id"]
     if "bucket" in attrs:
         existing_buckets = [b["Name"] for b in context.middleware.call_sync("cloudsync.list_buckets", cred)]
         if attrs["bucket"] not in existing_buckets:
             context.middleware.call_sync("cloudsync.create_bucket", cred, attrs["bucket"])
 
-    restic_config = get_restic_config(cloud_backup)
+    restic_config = get_restic_config(context, entry)
 
     subprocess.run(
         restic_config.cmd + ["unlock"],
@@ -41,7 +36,7 @@ def ensure_initialized(context: ServiceContext, cloud_backup: dict[str, Any]) ->
     if is_initialized(context, restic_config):
         return
 
-    init(context, cloud_backup)
+    init(context, entry)
 
 
 def is_initialized(context: ServiceContext, restic_config: ResticConfig) -> bool:
@@ -68,10 +63,10 @@ def is_initialized(context: ServiceContext, restic_config: ResticConfig) -> bool
         raise CallError(text)
 
 
-def init(context: ServiceContext, cloud_backup: dict[str, Any]) -> None:
+def init(context: ServiceContext, entry: CloudBackupEntry | CloudBackupCreate) -> None:
     context.middleware.call_sync("network.general.will_perform_activity", "cloud_backup")
 
-    restic_config = get_restic_config(cloud_backup)
+    restic_config = get_restic_config(context, entry)
 
     try:
         subprocess.run(
