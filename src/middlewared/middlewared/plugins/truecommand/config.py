@@ -1,17 +1,26 @@
-import asyncio
+from __future__ import annotations
 
-from middlewared.api import Event, api_method
+import asyncio
+from typing import Any
+
 from middlewared.api.current import (
     TRUECOMMAND_CONNECTING_STATUS_REASON,
-    TruecommandConfigChangedEvent,
     TruecommandEntry,
     TruecommandStatus,
     TruecommandStatusReason,
-    TruecommandUpdateArgs,
-    TruecommandUpdateResult,
+    TruecommandUpdate,
 )
-from middlewared.service import ConfigService, ValidationErrors, private
+from middlewared.service import ConfigServicePart, ValidationErrors
 import middlewared.sqlalchemy as sa
+
+from .portal import register_with_portal
+from .state import dismiss_alerts, event_config, get_status, set_status
+from .wireguard import (
+    generate_wg_keys,
+    start_truecommand_service,
+    stop_truecommand_service,
+    wireguard_connection_health,
+)
 
 TRUECOMMAND_UPDATE_LOCK = asyncio.Lock()
 
@@ -31,31 +40,17 @@ class TrueCommandModel(sa.Model):
     enabled = sa.Column(sa.Boolean(), default=False)
 
 
-class TruecommandService(ConfigService):
+class TruecommandConfigServicePart(ConfigServicePart[TruecommandEntry]):
+    _datastore = 'system.truecommand'
+    _entry = TruecommandEntry
 
-    STATUS = TruecommandStatus.DISABLED
-
-    class Config:
-        datastore = 'system.truecommand'
-        datastore_extend = 'truecommand.tc_extend'
-        cli_namespace = 'system.truecommand'
-        role_prefix = 'TRUECOMMAND'
-        entry = TruecommandEntry
-        events = [
-            Event(
-                name='truecommand.config',
-                description='Sent on TrueCommand configuration changes.',
-                roles=['READONLY_ADMIN'],
-                models={
-                    'CHANGED': TruecommandConfigChangedEvent,
-                },
-            )
-        ]
-
-    @private
-    async def tc_extend(self, config):
+    async def extend(self, data: dict[str, Any]) -> dict[str, Any]:
         for key in ('wg_public_key', 'wg_private_key', 'tc_public_key', 'endpoint', 'wg_address'):
-            config.pop(key)
+            data.pop(key)
+
+        # Pop unconditionally so the standby controller path below also strips it - api_key_state
+        # is not a field on the entry and would otherwise fail validation on the standby node.
+        api_key_state = data.pop('api_key_state')
 
         # In database we will have CONNECTED when the portal has approved the key
         # Connecting basically represents 2 phases - where we wait for TC to connect to
@@ -63,33 +58,30 @@ class TruecommandService(ConfigService):
         status_reason = None
         if await self.middleware.call('failover.is_single_master_node'):
             if TruecommandStatus(
-                config.pop('api_key_state')
-            ) == self.STATUS.CONNECTED and self.STATUS == TruecommandStatus.CONNECTING:
-                if await self.middleware.call('truecommand.wireguard_connection_health'):
-                    await self.set_status(TruecommandStatus.CONNECTED.value)
+                api_key_state
+            ) == TruecommandStatus.CONNECTED and get_status() == TruecommandStatus.CONNECTING:
+                if await wireguard_connection_health(self):
+                    await set_status(self, TruecommandStatus.CONNECTED.value)
                 else:
                     status_reason = TRUECOMMAND_CONNECTING_STATUS_REASON
         else:
-            if self.STATUS != TruecommandStatus.DISABLED:
-                await self.set_status(TruecommandStatus.DISABLED.value)
+            if get_status() != TruecommandStatus.DISABLED:
+                await set_status(self, TruecommandStatus.DISABLED.value)
             status_reason = 'Truecommand service is disabled on standby controller'
 
-        config['remote_ip_address'] = config['remote_url'] = config.pop('remote_address')
-        if config['remote_ip_address']:
-            config['remote_ip_address'] = config.pop('remote_ip_address').split('/', 1)[0]
-            config['remote_url'] = f'http://{config["remote_ip_address"]}/'
+        data['remote_ip_address'] = data['remote_url'] = data.pop('remote_address')
+        if data['remote_ip_address']:
+            data['remote_ip_address'] = data.pop('remote_ip_address').split('/', 1)[0]
+            data['remote_url'] = f'http://{data["remote_ip_address"]}/'
 
-        config.update({
-            'status': self.STATUS.value,
-            'status_reason': status_reason or TruecommandStatusReason.__members__[self.STATUS.value].value
+        status = get_status()
+        data.update({
+            'status': status.value,
+            'status_reason': status_reason or TruecommandStatusReason.__members__[status.value].value
         })
-        return config
+        return data
 
-    @api_method(TruecommandUpdateArgs, TruecommandUpdateResult)
-    async def do_update(self, data):
-        """
-        Update Truecommand service settings.
-        """
+    async def do_update(self, data: TruecommandUpdate) -> TruecommandEntry:
         # We have following cases worth mentioning wrt updating TC credentials
         # 1) User enters API Key and enables the service
         # 2) User disables the service
@@ -114,9 +106,9 @@ class TruecommandService(ConfigService):
         # For case (3), everything is similar to how we handle case (1), however we are going to stop wireguard
         # if it was running with previous api key credentials.
         async with TRUECOMMAND_UPDATE_LOCK:
-            old = await self.middleware.call('datastore.config', self._config.datastore)
+            old = await self.middleware.call('datastore.config', self._datastore)
             new = old.copy()
-            new.update(data)
+            new.update(data.model_dump(exclude_unset=True, context={'expose_secrets': True}))
 
             verrors = ValidationErrors()
             if new['enabled'] and not new['api_key']:
@@ -139,7 +131,7 @@ class TruecommandService(ConfigService):
             for polling_job in polling_jobs:
                 await self.middleware.call('core.job_abort', polling_job['id'])
 
-            await self.set_status(TruecommandStatus.DISABLED.value)
+            await set_status(self, TruecommandStatus.DISABLED.value)
             new['api_key_state'] = TruecommandStatus.DISABLED.value
 
             if old['api_key'] != new['api_key']:
@@ -155,73 +147,42 @@ class TruecommandService(ConfigService):
 
             if new['enabled']:
                 if not new['wg_public_key'] or not new['wg_private_key']:
-                    new.update(**(await self.middleware.call('truecommand.generate_wg_keys')))
+                    new.update(**(await generate_wg_keys()))
 
                 if old['api_key'] != new['api_key']:
-                    await self.middleware.call('truecommand.register_with_portal', new)
+                    await register_with_portal(self, new)
                     # Registration succeeded, we are good to poll now
                 elif all(
                     new[k] for k in ('wg_address', 'wg_private_key', 'remote_address', 'endpoint', 'tc_public_key')
                 ):
                     # Api key hasn't changed and we have wireguard details, let's please start wireguard in this case
-                    await self.set_status(TruecommandStatus.CONNECTING.value)
+                    await set_status(self, TruecommandStatus.CONNECTING.value)
                     new['api_key_state'] = TruecommandStatus.CONNECTED.value
 
-            await self.dismiss_alerts(True)
+            await dismiss_alerts(self, True)
 
-            await self.middleware.call(
-                'datastore.update',
-                self._config.datastore,
-                old['id'],
-                new
-            )
+            await self.middleware.call('datastore.update', self._datastore, old['id'], new)
 
-            self.middleware.send_event('truecommand.config', 'CHANGED', fields=(await self.event_config()))
+            self.middleware.send_event('truecommand.config', 'CHANGED', fields=await event_config(self))
 
             # We are going to stop truecommand service with this update anyways as only 2 possible actions
             # can happen on update
             # 1) Service enabled/disabled
             # 2) Api Key changed
-            await self.middleware.call('truecommand.stop_truecommand_service')
+            await stop_truecommand_service(self)
 
             if new['enabled']:
                 if new['api_key'] != old['api_key'] or any(
                     not new[k] for k in ('wg_address', 'wg_private_key', 'remote_address', 'endpoint', 'tc_public_key')
                 ):
                     # We are going to start polling here
-                    await self.middleware.call('truecommand.poll_api_for_status')
+                    await self.call2(self.s.truecommand.poll_api_for_status)
                 else:
                     # User just enabled the service after disabling it - we have wireguard details and
                     # we can initiate the connection. If it is not good, health check will fail and we will
                     # poll iX Portal to see what's up. Let's just start wireguard now
-                    await self.middleware.call('truecommand.start_truecommand_service')
+                    await start_truecommand_service(self)
 
                 await self.call2(self.s.truesearch.configure)
 
             return await self.config()
-
-    @private
-    async def set_status(self, new_status):
-        assert new_status in TruecommandStatus.__members__
-        self.STATUS = TruecommandStatus(new_status)
-        self.middleware.send_event('truecommand.config', 'CHANGED', fields=(await self.event_config()))
-
-    @private
-    async def dismiss_alerts(self, dismiss_health=False, dismiss_health_only=False):
-        # We do not dismiss health by default because it's possible that the key has not been revoked
-        # and it's just that TC has not connected to TN in 30 minutes, so we only should dismiss it when
-        # we update TC service or the health is okay now with the service running or when service is not running
-        health_alerts = {'TruecommandConnectionHealth', 'TruecommandContainerHealth'}
-        non_health_alerts = {'TruecommandConnectionDisabled', 'TruecommandConnectionPending'}
-        if dismiss_health_only:
-            to_dismiss_alerts = health_alerts
-        else:
-            to_dismiss_alerts = health_alerts | non_health_alerts if dismiss_health else non_health_alerts
-        for klass in to_dismiss_alerts:
-            await self.call2(self.s.alert.oneshot_delete, klass, None)
-
-    @private
-    async def event_config(self):
-        config = await self.config()
-        config.pop('api_key', None)
-        return config

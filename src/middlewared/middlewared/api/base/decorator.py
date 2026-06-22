@@ -436,7 +436,7 @@ def normalize_annotation(annotation: typing.Any, parent_model: type[BaseModel] |
         has_none = None in normalized
         if not non_none:
             return None
-        result = " | ".join(non_none)
+        result = " | ".join(sorted(set(non_none)))
         if has_none:
             result += " | None"
         return result

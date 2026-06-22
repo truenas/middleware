@@ -170,7 +170,7 @@ FileType = Literal[
 class FilesystemDirEntry(BaseModel):
     name: NonEmptyString = Field(description="Entry's base name.")
     path: NonEmptyString = Field(description="Entry's full path.")
-    realpath: NonEmptyString = Field(description="Canonical path of the entry, eliminating any symbolic links.")
+    realpath: NonEmptyString | None = Field(description="Canonical path of the entry, eliminating any symbolic links.")
     type: FileType = Field(
         description=(
             "Type of filesystem entry.\n"
@@ -199,7 +199,7 @@ class FilesystemDirEntry(BaseModel):
             "/proc/self/mountinfo and stx_mnt_id."
         ),
     )
-    acl: bool = Field(
+    acl: bool | None = Field(
         description=(
             "Specifies whether ACL is present on the entry. If this is the case then file permission bits as reported "
             "in `mode` may not be representative of the actual permissions."
@@ -208,13 +208,13 @@ class FilesystemDirEntry(BaseModel):
     uid: int = Field(description="User ID of the entry's owner. This corresponds with stx_uid.")
     gid: int = Field(description="Group ID of the entry's owner. This corresponds with stx_gid.")
     is_mountpoint: bool = Field(description="Specifies whether the entry is also the mountpoint of a filesystem.")
-    is_ctldir: bool = Field(
+    is_ctldir: bool | None = Field(
         description="Specifies whether the entry is located within the ZFS ctldir (for example a snapshot).",
     )
     attributes: list[FILESYSTEM_STATX_ATTRS] = Field(
         description="Extra file attribute indicators for entry as returned by statx. Expanded from stx_attributes.",
     )
-    xattrs: list[NonEmptyString] = Field(description="List of xattr names of extended attributes on file.")
+    xattrs: list[NonEmptyString] | None = Field(description="List of xattr names of extended attributes on file.")
     zfs_attrs: list[FILESYSTEM_ZFS_ATTRS] | None = Field(
         description=(
             "List of extra ZFS-related file attribute indicators on file. Will be None type if filesystem is not ZFS."

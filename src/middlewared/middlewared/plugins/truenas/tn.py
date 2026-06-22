@@ -20,7 +20,7 @@ EULA_PENDING_PATH = '/data/truenas-eula-pending'
 
 async def managed_by_truecommand(context: ServiceContext) -> bool:
     return TruecommandStatus(
-        (await context.middleware.call('truecommand.config'))['status']
+        (await context.call2(context.s.truecommand.config)).status
     ) == TruecommandStatus.CONNECTED
 
 

@@ -24,6 +24,8 @@ from middlewared.utils.cpu import cpu_info
 from middlewared.utils.libvirt.display import DisplayDelegate
 from middlewared.utils.libvirt.nic import NICDelegate
 
+from .constants import VMGuestArch
+
 if typing.TYPE_CHECKING:
     from middlewared.api.base.server.app import App
     from middlewared.job import Job
@@ -63,6 +65,11 @@ async def all_used_display_device_ports(
 @functools.cache
 def bootloader_ovmf_choices() -> dict[str, str]:
     return {path: path for path in os.listdir('/usr/share/OVMF') if re.findall(r'^OVMF_CODE.*.fd', path)}
+
+
+@functools.cache
+def bootloader_aavmf_choices() -> dict[str, str]:
+    return {path: path for path in os.listdir('/usr/share/AAVMF') if re.findall(r'^AAVMF_CODE.*.fd', path)}
 
 
 def random_mac() -> str:
@@ -129,8 +136,8 @@ async def get_console(context: ServiceContext, id_: int) -> str:
     return f'{vm["id"]}_{vm["name"]}'
 
 
-def cpu_model_choices() -> dict[str, str]:
-    return get_cpu_model_choices()
+def cpu_model_choices(arch: str = VMGuestArch.X86_64) -> dict[str, str]:
+    return get_cpu_model_choices().get(arch, {})
 
 
 async def get_display_devices(context: ServiceContext, id_: int) -> list[VMDisplayDeviceInfo]:

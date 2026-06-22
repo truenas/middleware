@@ -1,101 +1,176 @@
 import contextlib
 import json
 import re
+import secrets
+import time
 
 import pytest
 import websocket
 
-from middlewared.test.integration.assets.pool import dataset
-from middlewared.test.integration.utils import call, pool, ssh, websocket_url
-from middlewared.test.integration.utils.ssh import default_password
+from middlewared.test.integration.assets.pool import another_pool, dataset
+from middlewared.test.integration.utils import call, ssh, websocket_url
 from auto_config import interface
 
-IMAGE_URL = "https://cloud-images.ubuntu.com/plucky/current/plucky-server-cloudimg-amd64.img"
-# Set this to false when debugging to prevent from test image snapshots from being destroyed when the test ends, and
-# then re-downloaded on the next test launch.
+_vm_password = secrets.token_urlsafe(16)
+
+IMAGES = {
+    "amd64": "https://cloud-images.ubuntu.com/questing/current/questing-server-cloudimg-amd64.img",
+    "arm64": "https://cloud-images.ubuntu.com/questing/current/questing-server-cloudimg-arm64.img",
+}
+
+# Extra vm.create kwargs for non-default-arch guests.
+VM_ARCH_OPTIONS = {
+    "amd64": {},
+    "arm64": {
+        "arch_type": "aarch64",
+        "machine_type": "virt-9.2",
+        "cpu_mode": "CUSTOM",
+        "cpu_model": "cortex-a53",
+    },
+}
+
+# AAVMF has no AHCI driver; arm64 guests must boot from a VirtIO disk.
+VM_DISK_TYPE = {
+    "amd64": "AHCI",
+    "arm64": "VIRTIO",
+}
+
+# Set this to false when debugging to prevent test image snapshots from being destroyed when the
+# test ends, and then re-downloaded on the next test launch.
 DELETE_IMAGE_SNAPSHOTS = True
+
+# arm64 runs under TCG (software emulation) on x86 hosts — boot takes several minutes.
+pytestmark = pytest.mark.timeout(1200)
 
 
 def ssh_vm(vm, *args, **kwargs):
-    return ssh(*args, **kwargs, user="root", ip=vm["ip"])
+    return ssh(*args, **kwargs, user="root", ip=vm["ip"], password=vm["password"])
 
 
 @pytest.fixture(scope="module")
-def ubuntu_image_snapshot():
-    snapshot_name = f"{pool}/ubuntu@pristine"
-    if call("pool.snapshot.query", [["name", "=", snapshot_name]]):
-        yield snapshot_name
-    else:
-        ssh(f"wget {IMAGE_URL}")
+def vm_test_pool():
+    with another_pool() as pool:
+        yield pool["name"]
 
-        qcow2_image_name = IMAGE_URL.split("/")[-1]
+
+@pytest.fixture(scope="module", params=["amd64", "arm64"])
+def ubuntu_image_snapshot(request, vm_test_pool):
+    arch = request.param
+    image_url = IMAGES[arch]
+    snapshot_name = f"{vm_test_pool}/ubuntu-{arch}@pristine"
+    if call("pool.snapshot.query", [["name", "=", snapshot_name]]):
+        yield {"snapshot": snapshot_name, "arch": arch, "pool": vm_test_pool}
+    else:
+        ssh(f"wget {image_url}")
+
+        qcow2_image_name = image_url.split("/")[-1]
         image_name = qcow2_image_name.rsplit(".", 1)[0] + ".raw"
         ssh(f"qemu-img convert -f qcow2 -O raw {qcow2_image_name} {image_name}")
         ssh(f"rm {qcow2_image_name}")
 
-        with dataset(
-            "ubuntu",
-            {"type": "VOLUME", "volsize": 4 * 1024 ** 3},
-            delete=DELETE_IMAGE_SNAPSHOTS,
-        ) as volume_name:
-            volume_path = f"/dev/zvol/{volume_name}"
-            ssh(f"dd if={image_name} of={volume_path} bs=16M")
-            ssh(f"rm {image_name}")
+        try:
+            with dataset(
+                f"ubuntu-{arch}",
+                {"type": "VOLUME", "volsize": 4 * 1024**3},
+                pool=vm_test_pool,
+                delete=DELETE_IMAGE_SNAPSHOTS,
+            ) as volume_name:
+                volume_path = f"/dev/zvol/{volume_name}"
+                ssh(f"dd if={image_name} of={volume_path} bs=16M")
+                ssh(f"rm {image_name}")
 
-            loop_device = ssh("losetup -f").strip()
-            ssh(f"losetup -P {loop_device} {volume_path}")
-            try:
-                ssh("mkdir rootfs")
+                loop_device = ssh("losetup -f").strip()
+                ssh(f"losetup -P {loop_device} {volume_path}")
                 try:
-                    ssh(f"mount {loop_device}p1 rootfs")
+                    ssh("mkdir -p rootfs")
                     try:
-                        ssh(r'sed -i "s/^#\?PermitRootLogin.*/PermitRootLogin yes/" rootfs/etc/ssh/sshd_config')
-                        ssh(r'sed -i "s/^#\?PasswordAuthentication.*/PasswordAuthentication yes/" '
-                            'rootfs/etc/ssh/sshd_config')
-                        ssh(r'rm rootfs/etc/ssh/sshd_config.d/60-cloudimg-settings.conf')
-                        ssh(r'chroot rootfs ssh-keygen -A')
-                        ssh(rf'echo root:{default_password} | chroot rootfs chpasswd')
-                        ssh("echo '[Match]' > rootfs/etc/systemd/network/99-wildcard.network")
-                        ssh("echo 'Name=en*' >> rootfs/etc/systemd/network/99-wildcard.network")
-                        ssh("echo '[Network]' >> rootfs/etc/systemd/network/99-wildcard.network")
-                        ssh("echo 'DHCP=yes' >> rootfs/etc/systemd/network/99-wildcard.network")
-                    finally:
-                        ssh("umount rootfs")
+                        ssh(f"mount {loop_device}p1 rootfs")
+                        try:
+                            ssh(
+                                r'sed -i "s/^#\?PermitRootLogin.*/PermitRootLogin yes/" rootfs/etc/ssh/sshd_config'
+                            )
+                            ssh(
+                                r'sed -i "s/^#\?PasswordAuthentication.*/PasswordAuthentication yes/" '
+                                "rootfs/etc/ssh/sshd_config"
+                            )
+                            ssh(
+                                r"rm rootfs/etc/ssh/sshd_config.d/60-cloudimg-settings.conf"
+                            )
+                            ssh("ssh-keygen -A -f rootfs")
+                            ssh(
+                                rf'PASS=$(openssl passwd -6 "{_vm_password}") && sed -i "s|^root:[^:]*:|root:$PASS:|" rootfs/etc/shadow'
+                            )
+                            ssh(
+                                "echo '[Match]' > rootfs/etc/systemd/network/99-wildcard.network"
+                            )
+                            ssh(
+                                "echo 'Name=en*' >> rootfs/etc/systemd/network/99-wildcard.network"
+                            )
+                            ssh(
+                                "echo '[Network]' >> rootfs/etc/systemd/network/99-wildcard.network"
+                            )
+                            ssh(
+                                "echo 'DHCP=yes' >> rootfs/etc/systemd/network/99-wildcard.network"
+                            )
+                        finally:
+                            ssh("umount rootfs")
 
-                    snapshot_name = "pristine"
-                    call("pool.snapshot.create", {"dataset": volume_name, "name": snapshot_name})
-                    yield f"{volume_name}@{snapshot_name}"
+                        call(
+                            "pool.snapshot.create",
+                            {"dataset": volume_name, "name": "pristine"},
+                        )
+                        yield {
+                            "snapshot": f"{volume_name}@pristine",
+                            "arch": arch,
+                            "pool": vm_test_pool,
+                        }
+                    finally:
+                        ssh("rm -rf rootfs")
                 finally:
-                    ssh("rm -rf rootfs")
-            finally:
-                ssh(f"losetup -d {loop_device}")
+                    ssh(f"losetup -d {loop_device}")
+        finally:
+            ssh(f"rm -f {image_name}")
 
 
 @contextlib.contextmanager
-def ubuntu_vm(ubuntu_image_snapshot, options=None):
-    dataset = f"{pool}/vm"
-    call("pool.snapshot.clone", {"snapshot": ubuntu_image_snapshot, "dataset_dst": dataset})
+def ubuntu_vm(image_info, options=None):
+    arch = image_info["arch"]
+    snapshot = image_info["snapshot"]
+    test_pool = image_info["pool"]
+    vm_dataset = f"{test_pool}/vm-{arch}"
+    call("pool.snapshot.clone", {"snapshot": snapshot, "dataset_dst": vm_dataset})
     try:
-        vm = call("vm.create", {
-            "name": "Test",
-            "memory": 2048,
-            **(options or {}),
-        })
+        vm = call(
+            "vm.create",
+            {
+                "name": f"Test_{arch}",
+                "memory": 2048,
+                **VM_ARCH_OPTIONS[arch],
+                **(options or {}),
+            },
+        )
         try:
-            call("vm.device.create", {
-                "vm": vm["id"],
-                "attributes": {
-                    "dtype": "NIC",
-                    "nic_attach": interface,
+            call(
+                "vm.device.create",
+                {
+                    "vm": vm["id"],
+                    "attributes": {
+                        "dtype": "NIC",
+                        "nic_attach": interface,
+                    },
                 },
-            })
-            call("vm.device.create", {
-                "vm": vm["id"],
-                "attributes": {
-                    "dtype": "DISK",
-                    "path": f"/dev/zvol/{dataset}",
+            )
+            call(
+                "vm.device.create",
+                {
+                    "vm": vm["id"],
+                    "attributes": {
+                        "dtype": "DISK",
+                        "type": VM_DISK_TYPE[arch],
+                        "path": f"/dev/zvol/{vm_dataset}",
+                    },
                 },
-            })
+            )
 
             call("vm.start", vm["id"])
 
@@ -103,10 +178,7 @@ def ubuntu_vm(ubuntu_image_snapshot, options=None):
             ws = websocket.create_connection(websocket_url() + "/websocket/shell")
             ip_address = None
             try:
-                ws.send(json.dumps({
-                    "token": token,
-                    "options": {"vm_id": vm["id"]}
-                }))
+                ws.send(json.dumps({"token": token, "options": {"vm_id": vm["id"]}}))
                 resp_opcode, msg = ws.recv_data()
                 assert json.loads(msg.decode())["msg"] == "connected", msg
 
@@ -114,7 +186,7 @@ def ubuntu_vm(ubuntu_image_snapshot, options=None):
                 login_sent = False
                 password_sent = False
                 ip_sent = False
-                ws.settimeout(30)
+                ws.settimeout(600 if arch == "arm64" else 30)
                 while True:
                     try:
                         resp_opcode, msg = ws.recv_data()
@@ -128,25 +200,43 @@ def ubuntu_vm(ubuntu_image_snapshot, options=None):
                         ws.send_binary(b"root\r\n")
                         login_sent = True
                     if not password_sent and data.endswith(b"Password: "):
-                        ws.send_binary(default_password.encode("ascii") + b"\r\n")
+                        ws.send_binary(_vm_password.encode("ascii") + b"\r\n")
                         password_sent = True
                     if not ip_sent and data.endswith(b"root@ubuntu:~# "):
-                        ws.send_binary(b"NO_COLOR=1 ip address list ens3\r\n")
+                        ws.send_binary(
+                            b"NO_COLOR=1 ip -4 -o addr show scope global\r\n"
+                        )
                         ip_sent = True
-                    if m := re.search("inet ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)", data.decode("ascii", "ignore")):
+                    if m := re.search(
+                        r"inet ([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)",
+                        data.decode("ascii", "ignore"),
+                    ):
                         ip_address = m.group(1)
                         break
             finally:
                 ws.close()
 
             if ip_address is None:
-                raise RuntimeError("Unable to find IP address: " + data.decode("ascii", "ignore")[-1000:])
+                raise RuntimeError(
+                    "Unable to find IP address: "
+                    + data.decode("ascii", "ignore")[-1000:]
+                )
 
-            yield {**vm, "ip": ip_address}
+            deadline = time.monotonic() + 60
+            while True:
+                try:
+                    ssh("true", user="root", ip=ip_address, password=_vm_password)
+                    break
+                except Exception:
+                    if time.monotonic() > deadline:
+                        raise RuntimeError(f"SSH on {ip_address} not ready after 60s")
+                    time.sleep(5)
+
+            yield {**vm, "ip": ip_address, "password": _vm_password}
         finally:
             call("vm.delete", vm["id"])
     finally:
-        call("pool.dataset.delete", dataset)
+        call("pool.dataset.delete", vm_dataset)
 
 
 def test_vm(ubuntu_image_snapshot):

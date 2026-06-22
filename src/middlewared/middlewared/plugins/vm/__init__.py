@@ -7,6 +7,8 @@ from truenas_pylibvirt.utils import kvm_supported
 
 from middlewared.api import api_method
 from middlewared.api.current import (
+    VMBootloaderAavmfChoicesArgs,
+    VMBootloaderAavmfChoicesResult,
     VMBootloaderOptions,
     VMBootloaderOptionsArgs,
     VMBootloaderOptionsResult,
@@ -91,12 +93,14 @@ from middlewared.utils.libvirt.utils import NGINX_PREFIX
 
 from .capabilities import guest_architecture_and_machine_choices
 from .clone import clone_vm
+from .constants import VMGuestArch
 from .crud import VMServicePart
 from .event import vm_domain_event_callback
 from .info import (
     BOOT_LOADER_OPTIONS,
     MAXIMUM_SUPPORTED_VCPUS,
     all_used_display_device_ports,
+    bootloader_aavmf_choices,
     bootloader_ovmf_choices,
     cpu_model_choices,
     get_console,
@@ -240,12 +244,19 @@ class VMService(GenericCRUDService[VMEntry]):
         """
         return bootloader_ovmf_choices()
 
+    @api_method(VMBootloaderAavmfChoicesArgs, VMBootloaderAavmfChoicesResult, roles=['VM_READ'], check_annotations=True)
+    def bootloader_aavmf_choices(self) -> dict[str, str]:
+        """
+        Retrieve bootloader AAVMF (aarch64) firmware choices.
+        """
+        return bootloader_aavmf_choices()
+
     @api_method(VMCpuModelChoicesArgs, VMCpuModelChoicesResult, roles=['VM_READ'], check_annotations=True)
-    def cpu_model_choices(self) -> dict[str, str]:
+    def cpu_model_choices(self, arch: str = VMGuestArch.X86_64) -> dict[str, str]:
         """
         Retrieve CPU Model choices which can be used with a VM guest to emulate the CPU in the guest.
         """
-        return cpu_model_choices()
+        return cpu_model_choices(arch)
 
     @api_method(VMFlagsArgs, VMFlagsResult, roles=['VM_READ'], check_annotations=True)
     def flags(self) -> VMFlags:
