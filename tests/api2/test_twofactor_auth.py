@@ -4,7 +4,7 @@ import errno
 
 import pytest
 
-from middlewared.service_exception import CallError
+from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.test.integration.assets.account import user as user_create
 from middlewared.test.integration.assets.directory_service import directoryservice
 from middlewared.test.integration.assets.two_factor_auth import (
@@ -23,7 +23,7 @@ TEST_GID = 544
 TEST_TWOFACTOR_INTERVAL = {'interval': 60}
 USERS_2FA_CONF = {
     TEST_USERNAME: {'interval': 30, 'otp_digits': 6},
-    TEST_USERNAME_2: {'interval': 40, 'otp_digits': 7}
+    TEST_USERNAME_2: {'interval': 60, 'otp_digits': 7}
 }
 
 
@@ -97,7 +97,7 @@ def test_login_without_2fa(clear_ratelimit):
 @pytest.mark.parametrize("user_name,password,renew_options", [
     ('test_user1', 'test_password1', {'interval': 30, 'otp_digits': 6}),
     ('test_user2', 'test_password2', {'interval': 60, 'otp_digits': 7}),
-    ('test_user3', 'test_password3', {'interval': 50, 'otp_digits': 8}),
+    ('test_user3', 'test_password3', {'interval': 30, 'otp_digits': 8}),
 ])
 def test_secret_generation_for_user(user_name, password, renew_options, clear_ratelimit):
     with user({
@@ -114,6 +114,19 @@ def test_secret_generation_for_user(user_name, password, renew_options, clear_ra
         assert user_secret_obj['secret'] is not None
         for k in ('interval', 'otp_digits'):
             assert user_secret_obj[k] == renew_options[k]
+
+
+@pytest.mark.parametrize("bad_interval", [5, 15, 40, 45, 50, 90, 120])
+def test_renew_2fa_secret_rejects_unsupported_interval(bad_interval, clear_ratelimit):
+    with user({
+        'username': TEST_USERNAME,
+        'password': TEST_PASSWORD,
+        'full_name': TEST_USERNAME,
+    }) as user_obj:
+        with pytest.raises(ValidationErrors):
+            call('user.renew_2fa_secret', user_obj['username'], {'interval': bad_interval, 'otp_digits': 6})
+
+        assert get_user_secret(user_obj['id'])['secret'] is None
 
 
 def test_secret_generation_for_multiple_users(clear_ratelimit):

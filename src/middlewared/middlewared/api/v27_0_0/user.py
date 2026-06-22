@@ -473,9 +473,11 @@ class UserUnset2faSecretResult(BaseModel):
 
 class TwofactorOptions(BaseModel, metaclass=ForUpdateMetaclass):
     otp_digits: int = Field(ge=6, le=8, description="Represents number of allowed digits in the OTP.")
-    interval: int = Field(
-        ge=5,
-        description="Time duration in seconds specifying OTP expiration time from its creation time.",
+    interval: Literal[30, 60] = Field(
+        description=(
+            "Time duration in seconds specifying OTP expiration time from its creation time. "
+            "Only 30 or 60 are supported."
+        ),
     )
 
 
