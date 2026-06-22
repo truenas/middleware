@@ -1,5 +1,4 @@
 import contextlib
-from datetime import datetime
 import time
 import typing
 
@@ -24,15 +23,29 @@ def get_user_secret_sid(user_sid: str, get: typing.Optional[bool] = True) -> typ
     return call('datastore.query', 'account.twofactor_user_auth', [['user_sid', '=', user_sid]], {'get': get})
 
 
-def get_2fa_totp_token(users_config: dict) -> str:
-    second = datetime.now().second
-    if second >= 55 or second < 5:
-        # We allow 5 seconds time difference between NAS and test client, and OTP expiry interval is 60 seconds.
-        # So tokens generated within 5 seconds of :00 are not safe to use
-        time.sleep(10)
+# Tracks the last TOTP token handed out per secret so the same one is never returned
+# twice: pam_oath enforces RFC 6238 one-time use and rejects a replayed token.
+_last_totp_token: dict[str, str] = {}
 
-    return pyotp.TOTP(
-        users_config['secret'],
-        interval=users_config['interval'],
-        digits=users_config['otp_digits'],
-    ).now()
+
+def get_2fa_totp_token(users_config: dict) -> str:
+    """ Return a fresh, single-use TOTP token for the given 2FA config.
+
+    pam_oath rejects a token that has already authenticated within its time step
+    (RFC 6238 one-time use), so callers that authenticate repeatedly with the same
+    secret (e.g. STIG setup/teardown) must not be handed the same token twice. Wait
+    for the next time step when the current token was already used, or is within a few
+    seconds of rolling over before the server can validate it.
+    """
+    secret = users_config['secret']
+    interval = users_config['interval']
+    totp = pyotp.TOTP(secret, interval=interval, digits=users_config['otp_digits'])
+
+    token = totp.now()
+    seconds_left = interval - (time.time() % interval)
+    if _last_totp_token.get(secret) == token or seconds_left < 5:
+        time.sleep(seconds_left + 1)
+        token = totp.now()
+
+    _last_totp_token[secret] = token
+    return token

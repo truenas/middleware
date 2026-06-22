@@ -8,12 +8,9 @@ from middlewared.test.integration.assets.two_factor_auth import (
     enabled_twofactor_auth, get_user_secret, get_2fa_totp_token
 )
 from middlewared.test.integration.utils import busy_wait_on_job, call, client, mock, password
-from truenas_api_client import ValidationErrors
+from truenas_api_client import ClientException, ValidationErrors
 
 from auto_config import ha
-
-# The entire STIG test module is currently disabled.
-pytestmark = pytest.mark.skip(reason='STIG test suite is disabled')
 
 # Alias
 pp = pytest.param
@@ -70,7 +67,14 @@ def root_non_stig_client():
 def clear_ratelimit(root_non_stig_client):
     # We need to use non stig client here because we cannot make private endpoint
     # calls when STIG is active.
-    root_non_stig_client.call('rate.limit.cache_clear')
+    try:
+        root_non_stig_client.call('rate.limit.cache_clear')
+    except ClientException:
+        # On HA the FIPS/STIG reboot in setup_stig severs this pre-STIG root session, and it
+        # can't be re-established under STIG (root can't satisfy AAL2, and rate.limit is a
+        # private namespace). Clearing is best-effort: the 2FA logins are spaced far enough
+        # apart (a step per login) to stay under the 20-calls/60s limit without it.
+        pass
 
 
 @pytest.fixture(scope='function')
@@ -106,7 +110,7 @@ def non_admin_w_2fa(two_factor_enabled, unprivileged_user_fixture):
     call('privilege.update', privilege[0]['id'], {'roles': ['SHARING_ADMIN']})
 
     try:
-        call('user.renew_2fa_secret', unprivileged_user_fixture.username, {'interval': 60})
+        call('user.renew_2fa_secret', unprivileged_user_fixture.username, {'interval': 30})
         user_obj_id = call('user.query', [['username', '=', unprivileged_user_fixture.username]], {'get': True})['id']
         secret = get_user_secret(user_obj_id)
         yield (unprivileged_user_fixture, secret)
@@ -121,7 +125,7 @@ def full_admin_w_2fa(two_factor_enabled, unprivileged_user_fixture):
     call('privilege.update', privilege[0]['id'], {'roles': ['FULL_ADMIN']})
 
     try:
-        call('user.renew_2fa_secret', unprivileged_user_fixture.username, {'interval': 60})
+        call('user.renew_2fa_secret', unprivileged_user_fixture.username, {'interval': 30})
         user_obj_id = call('user.query', [['username', '=', unprivileged_user_fixture.username]], {'get': True})['id']
         secret = get_user_secret(user_obj_id)
         yield (unprivileged_user_fixture, secret)
@@ -138,7 +142,7 @@ def full_admin_w_2fa_builtin_admin(two_factor_enabled, unprivileged_user_fixture
     call('group.update', builtin_admin['id'], {'users': builtin_admin['users'] + [user_obj_id]})
 
     try:
-        call('user.renew_2fa_secret', unprivileged_user_fixture.username, {'interval': 60})
+        call('user.renew_2fa_secret', unprivileged_user_fixture.username, {'interval': 30})
         secret = get_user_secret(user_obj_id)
         yield (unprivileged_user_fixture, secret)
     finally:
@@ -185,77 +189,93 @@ def setup_stig(full_admin_w_2fa_builtin_admin, module_stig_enabled, root_non_sti
     user_obj, secret = full_admin_w_2fa_builtin_admin
     global STIG_ACTIVE
 
+    # Immutable admin accounts whose password auth gets disabled below. Captured in the
+    # outer scope so teardown_stig() can re-enable them even when setup fails before the
+    # yield. Otherwise a partial setup strands the system with no password-enabled admin
+    # and every subsequent test (and module) fails to authenticate.
+    admin_id = []
+
+    def teardown_stig():
+        # Restore default security, user and network settings (FIPS is mocked). Runs from
+        # the finally below on success and on a failed/partial setup alike, so it opens its
+        # own 2FA-authenticated sessions and tolerates STIG never having been enabled. It
+        # must finish before the product_type / set_fips_available mocks unwind, because
+        # their teardown logs in with a plain password.
+        global STIG_ACTIVE
+        with client(auth=None) as c:
+            do_stig_auth(c, user_obj, secret)
+            wait_for_failover_disabled_reasons([], call_fn=c.call)
+            unconfig_jobid = c.call('system.security.update', {
+                'enable_gpos_stig': False,
+                'min_password_age': None, 'max_password_age': None,
+                'password_complexity_ruleset': None, 'min_password_length': None,
+                'password_history_length': None
+            })
+            busy_wait_on_job(unconfig_jobid, call_fn=c.call)
+            if ha:
+                wait_for_failover_disabled_reasons(["LOC_FIPS_REBOOT_REQ"], call_fn=c.call)
+                c.call('system.reboot', 'teardown_stig: unconfigure')
+                time.sleep(10)
+
+        with client(auth=None) as c2:
+            do_stig_auth(c2, user_obj, secret)
+            if ha:
+                wait_for_failover_disabled_reasons([], call_fn=c2.call)
+            STIG_ACTIVE = False
+            # Need to turn off two-factor auth before can reenable admin password
+            c2.call('auth.twofactor.update', {'enabled': False, 'window': 0, 'services': {'ssh': False}})
+            for id in admin_id:
+                c2.call('user.update', id, {"password_disabled": False})
+            c2.call('network.configuration.update', {"activity": {"type": "DENY", "activities": []}})
+
     with product_type('ENTERPRISE'):
         with set_fips_available(True):
-            with client(auth=None) as c:
-                # Do two-factor authentication before enabling STIG support
-                do_stig_auth(c, user_obj, secret)
+            try:
+                with client(auth=None) as c:
+                    # Do two-factor authentication before enabling STIG support
+                    do_stig_auth(c, user_obj, secret)
 
-                # Disable password authentication for immutable admin accounts
-                admin_id = get_excluded_admins()
-                for id in admin_id:
-                    c.call('user.update', id, {"password_disabled": True})
+                    # Disable password authentication for immutable admin accounts
+                    admin_id = get_excluded_admins()
+                    for id in admin_id:
+                        c.call('user.update', id, {"password_disabled": True})
 
-                config_jobid = c.call('system.security.update', {'enable_fips': True, 'enable_gpos_stig': True})
-                busy_wait_on_job(config_jobid, call_fn=c.call)
-                STIG_ACTIVE = True
-                if ha:
-                    wait_for_failover_disabled_reasons(["LOC_FIPS_REBOOT_REQ"], call_fn=c.call)
-                    c.call('system.reboot', 'setup_stig: configure')
-                    time.sleep(10)
+                    config_jobid = c.call('system.security.update', {'enable_fips': True, 'enable_gpos_stig': True})
+                    busy_wait_on_job(config_jobid, call_fn=c.call)
+                    STIG_ACTIVE = True
+                    if ha:
+                        wait_for_failover_disabled_reasons(["LOC_FIPS_REBOOT_REQ"], call_fn=c.call)
+                        c.call('system.reboot', 'setup_stig: configure')
+                        time.sleep(10)
 
-            # We may have rebooted both controllers at this point.
-            # Need to create a new client, so we can see the nodes
-            # stabilize.
-            with client(auth=None) as c:
-                do_stig_auth(c, user_obj, secret)
-                # We can no longer call private APIs
-                if ha:
-                    wait_for_failover_disabled_reasons([], call_fn=c.call)
+                # We may have rebooted both controllers at this point.
+                # Need to create a new client, so we can see the nodes
+                # stabilize.
+                with client(auth=None) as c:
+                    do_stig_auth(c, user_obj, secret)
+                    # We can no longer call private APIs
+                    if ha:
+                        wait_for_failover_disabled_reasons([], call_fn=c.call)
 
-                # Since auth.get_authenticator_assurance_level is private,
-                # we cannot call it now.
-                #   aal = c.call('auth.get_authenticator_assurance_level')
-                #   assert aal == 'LEVEL_2'
-                # Instead, we can call auth.mechanism_choices and check that only
-                # "PASSWORD_PLAIN" is there
-                choices = c.call('auth.mechanism_choices')
-                assert len(choices) == 1, choices
-                assert choices[0] == "PASSWORD_PLAIN", choices
-                aal = 'LEVEL_2'
+                    # Since auth.get_authenticator_assurance_level is private,
+                    # we cannot call it now.
+                    #   aal = c.call('auth.get_authenticator_assurance_level')
+                    #   assert aal == 'LEVEL_2'
+                    # Instead, we can call auth.mechanism_choices and check that only
+                    # "PASSWORD_PLAIN" is there
+                    choices = c.call('auth.mechanism_choices')
+                    assert len(choices) == 1, choices
+                    assert choices[0] == "PASSWORD_PLAIN", choices
+                    aal = 'LEVEL_2'
 
-                try:
                     yield {
                         'connection': c,
                         'user_obj': user_obj,
                         'secret': secret,
                         'aal': aal
                     }
-                finally:
-                    # Restore default security, user and network settings
-                    # FIPS is mocked
-                    wait_for_failover_disabled_reasons([], call_fn=c.call)
-                    unconfig_jobid = c.call('system.security.update', {
-                        'enable_gpos_stig': False,
-                        'min_password_age': None, 'max_password_age': None,
-                        'password_complexity_ruleset': None, 'min_password_length': None,
-                        'password_history_length': None
-                    })
-                    busy_wait_on_job(unconfig_jobid, call_fn=c.call)
-                    if ha:
-                        wait_for_failover_disabled_reasons(["LOC_FIPS_REBOOT_REQ"], call_fn=c.call)
-                        c.call('system.reboot', 'teardown_stig: unconfigure')
-                        time.sleep(10)
-                    with client(auth=None) as c2:
-                        do_stig_auth(c2, user_obj, secret)
-                        if ha:
-                            wait_for_failover_disabled_reasons([], call_fn=c2.call)
-                        STIG_ACTIVE = False
-                        # Need to turn off two-factor auth before can reenable admin password
-                        c2.call('auth.twofactor.update', {'enabled': False, 'window': 0, 'services': {'ssh': False}})
-                        for id in admin_id:
-                            c2.call('user.update', id, {"password_disabled": False})
-                        c2.call('network.configuration.update', {"activity": {"type": "DENY", "activities": []}})
+            finally:
+                teardown_stig()
 
 
 # The order of the following tests is significant. We gradually add fixtures that have module scope
