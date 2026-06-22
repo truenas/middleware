@@ -95,7 +95,7 @@ class ISCSITargetService(SwitchableSimpleService):
             return await self.middleware.call("iscsi.scst.apply_config_file")
         else:
             return (await run(
-                ["scstadmin", "-noprompt", "-force", "-config", "/etc/scst.conf"], check=False
+                ["scstadmin", "-noprompt", "-preserve_cluster_mode", "-force", "-config", "/etc/scst.conf"], check=False
             )).returncode == 0
 
     async def become_active(self):
