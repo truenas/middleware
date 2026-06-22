@@ -120,17 +120,23 @@ class PoolDatasetService(CRUDService):
         ``flat`` *(bool)*:
             Return all datasets as a flat list (``true``, the default) or only top-level datasets with their
             children nested under a ``children`` key (``false``).
+
         ``retrieve_children`` *(bool)*:
             Set to ``false`` to exclude child datasets from the results.
+
         ``properties`` *(list)*:
             List of ZFS properties to retrieve. ``null`` (the default) retrieves all properties; an empty list
             retrieves none, though user properties are still returned unless disabled.
+
         ``retrieve_user_props`` *(bool)*:
             Set to ``false`` to exclude ZFS user properties.
+
         ``snapshots`` *(bool)*:
             Include each dataset's snapshots in the results.
+
         ``snapshots_recursive`` *(bool)*:
             Include each dataset's snapshots recursively.
+
         ``snapshots_properties`` *(list)*:
             List of snapshot properties to retrieve.
         """

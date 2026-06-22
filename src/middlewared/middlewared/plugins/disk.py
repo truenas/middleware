@@ -77,8 +77,10 @@ class DiskService(CRUDService):
 
         ``include_expired`` *(bool)*:
             Also include expired disks (``false`` by default).
+
         ``passwords`` *(bool)*:
             Don't hide the KMIP password for the disks (``false`` by default).
+
         ``pools`` *(bool)*:
             Join the pool name for each disk (``false`` by default).
         """

@@ -206,12 +206,16 @@ class PoolSnapshotService(CRUDService):
 
         ``holds`` *(bool)*:
             Include hold tags for snapshots in the query result (``false`` by default).
+
         ``min_txg`` *(int)*:
             Limit snapshot retrieval based on minimum transaction group.
+
         ``max_txg`` *(int)*:
             Limit snapshot retrieval based on maximum transaction group.
+
         ``retention`` *(bool)*:
             Include retention information in the query result (``false`` by default).
+
         ``properties`` *(list)*:
             List of ZFS property names to retrieve.
         """

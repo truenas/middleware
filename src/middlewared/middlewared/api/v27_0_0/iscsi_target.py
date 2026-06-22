@@ -87,7 +87,10 @@ class iSCSITargetEntry(BaseModel):
     )
     auth_networks: list[str] = Field(
         default=[],
-        description="Array of network addresses allowed to access this target.",
+        description=(
+            "Array of network addresses (CIDR notation) allowed to access this target. An empty list allows access "
+            "from all networks."
+        ),
     )  # IPvAnyNetwork: "Object of type IPv4Network is not JSON serializable", etc
     rel_tgt_id: int = Field(description="Relative target ID number assigned by the system.")
     iscsi_parameters: IscsiTargetParameters | None = Field(

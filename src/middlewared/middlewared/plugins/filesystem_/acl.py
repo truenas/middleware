@@ -603,40 +603,40 @@ class FilesystemService(Service):
         Set the ACL of a given path.
 
         The ``dacl`` entry formatting depends on the underlying ``acltype``: an ``NFS4`` ACL requires
-        NFSv4 entries, while a ``POSIX1E`` ACL requires POSIX1e entries. When ``stripacl`` is set the
+        NFSv4 entries, while a ``POSIX1E`` ACL requires POSIX1e entries. When ``stripacl`` is set, the
         ACL is converted to a trivial ACL; an ACL is trivial if it can be expressed as a file mode
         without losing any access rules.
 
         .. note::
 
-            For each owner change, set one and only one of ``uid``/``user`` (and likewise one of
-            ``gid``/``group``), and only if the caller wishes to change the owning user or group of
+            For each owner change, set one and only one of ``uid`` or ``user`` (and likewise one of
+            ``gid`` or ``group``), and only if the caller wishes to change the owning user or group of
             the file or directory.
 
         .. warning::
 
-            If ``user``, ``uid``, ``group``, or ``gid`` is specified in a recursive operation then the
+            If ``user``, ``uid``, ``group``, or ``gid`` is specified in a recursive operation, then the
             owning user, group, or both for *all* files will be changed.
 
-        The following notes about ACL entries are necessarily terse. If more detail is required please
+        The following notes about ACL entries are necessarily terse. If more detail is required, please
         consult relevant TrueNAS documentation.
 
         .. rubric:: NFSv4 ACL entry semantics
 
         The ``tag`` identifies the principal to whom the entry applies. ``USER`` and ``GROUP`` have
-        conventional meanings; ``owner@`` refers to the owning user of the file, ``group@`` to the
+        conventional meanings: ``owner@`` refers to the owning user of the file, ``group@`` to the
         owning group, and ``everyone@`` to all users (including the owning user and group). The
         ``type`` may be ``ALLOW`` or ``DENY``, and ``DENY`` entries take precedence over ``ALLOW``
         when the ACL is evaluated. The ``flags`` inheritance flags determine how an entry is presented
-        (if at all) on newly-created files or directories within the specified path, and are only
+        (if at all) on newly-created files or directories within the specified path and are only
         valid for directories.
 
         .. rubric:: POSIX1e ACL entry semantics
 
-        When ``default`` is ``true`` the entry belongs to the POSIX default ACL and is copied to new
+        When ``default`` is ``true``, the entry belongs to the POSIX default ACL and is copied to new
         files and directories created within the directory where it is set; default entries are *not*
         evaluated when determining access to the file on which they are set. When ``default`` is
-        ``false`` the entry applies to the POSIX access ACL, which is used to determine access to the
+        ``false``, the entry applies to the POSIX access ACL which is used to determine access to the
         directory but is not inherited.
 
         For the ``tag``, ``USER_OBJ`` refers to the owning user (denoted "user" in conventional POSIX

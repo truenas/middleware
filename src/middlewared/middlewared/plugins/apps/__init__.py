@@ -185,15 +185,18 @@ class AppService(GenericCRUDService[AppEntry, str]):
         self, app: App, filters: list[typing.Any] | None = None, options: QueryOptions | None = None,
     ) -> list[AppEntry] | AppEntry | int:
         """
-        Query all apps with `query-filters` and `query-options`.
+        Query all apps with ``query-filters`` and ``query-options``.
 
-        `query-options.extra.host_ip` is a string which can be provided to override portal IP address
-        if it is a wildcard.
+        The following ``query-options.extra`` options are supported:
 
-        `query-options.extra.include_app_schema` is a boolean which can be set to include app schema in the response.
+        ``host_ip`` *(str)*:
+            Override the portal IP address when it is a wildcard.
 
-        `query-options.extra.retrieve_config` is a boolean which can be set to retrieve app configuration
-        used to install/manage app.
+        ``include_app_schema`` *(bool)*:
+            Include the app schema in the response.
+
+        ``retrieve_config`` *(bool)*:
+            Include the app configuration used to install or manage the app.
         """
         return query_apps(self.context, filters or [], options or QueryOptions(), app)
 

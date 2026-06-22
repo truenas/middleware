@@ -416,7 +416,7 @@ class PoolService(CRUDService):
         """
         Create a new ZFS Pool.
 
-        Create a pool named "tank", raidz1 with 3 disks, 1 cache disk, 1 ZIL/log disk and 1 hot spare disk::
+        Create a pool named "tank": RAIDZ1 with three disks, one cache disk, one ZIL/log disk, and one hot spare disk::
 
             {
                 "jsonrpc": "2.0",

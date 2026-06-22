@@ -81,9 +81,12 @@ class AppImageService(GenericCRUDService[AppImageEntry, str]):
         options: QueryOptions | None = None,
     ) -> list[AppImageEntry] | AppImageEntry | int:
         """
-        Query all docker images with `query-filters` and `query-options`.
+        Query all docker images with ``query-filters`` and ``query-options``.
 
-        `query-options.extra.parse_tags` when set will have normalized tags returned on each entry.
+        The following ``query-options.extra`` options are supported:
+
+        ``parse_tags`` *(bool)*:
+            Include normalized tags on each entry.
         """
         return query_images(self.context, filters or [], options or QueryOptions())
 

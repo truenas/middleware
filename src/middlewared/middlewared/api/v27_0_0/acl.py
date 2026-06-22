@@ -303,7 +303,11 @@ class FilesystemGetaclArgs(BaseModel):
     path: NonEmptyString = Field(description="Absolute filesystem path to get ACL information for.")
     simplified: bool = Field(
         default=True,
-        description="Whether to return simplified/basic permission sets instead of advanced permissions.",
+        description=(
+            "Whether to return simplified permission sets. For NFSv4 ACLs, simplified mode returns only basic "
+            "ALLOW entries, stripping DENY entries and inheritance flags. For POSIX ACLs, returns only the "
+            "access ACL without default entries."
+        ),
     )
     resolve_ids: bool = Field(
         default=False,

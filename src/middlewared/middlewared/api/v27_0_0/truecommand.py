@@ -61,7 +61,10 @@ class TruecommandEntry(BaseModel):
 class TruecommandUpdate(BaseModel, metaclass=ForUpdateMetaclass):
     enabled: bool = Field(description="Whether to enable TrueCommand integration.")
     api_key: Secret[Annotated[str, Field(min_length=16, max_length=16)] | None] = Field(
-        description="16-character API key for TrueCommand authentication. `null` to disable integration.",
+        description=(
+            "16-character API key for TrueCommand authentication, obtained from iX Portal. "
+            "`null` to disable integration."
+        ),
     )
 
 

@@ -69,7 +69,12 @@ class NFSEntry(BaseModel):
             "`showmount` command is available only while NFSv3 is enabled."
         ),
     )
-    v4_krb: bool = Field(description="Force Kerberos authentication on NFS shares.")
+    v4_krb: bool = Field(
+        description=(
+            "Force Kerberos authentication on NFS shares. When enabled, NFS shares will be inaccessible if a "
+            "valid Kerberos ticket is not available."
+        ),
+    )
     v4_domain: str = Field(
         description=(
             "Specify a DNS domain (NFSv4 only). Overrides the DNS domain for NFSv4 (sets the `Domain` setting in "

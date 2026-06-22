@@ -321,6 +321,19 @@ class AuthService(Service):
     def sessions(self, app, filters, options):
         """
         Returns a list of active auth sessions.
+
+        The ``credentials_data`` object varies by ``credentials`` type: password and socket sessions include
+        ``username``; API key sessions additionally include ``api_key`` (id and name); token sessions include
+        ``parent`` (the originating credential) and optionally ``username``.
+
+        Example::
+
+            {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "auth.sessions",
+                "params": []
+            }
         """
         return filter_list(
             [
