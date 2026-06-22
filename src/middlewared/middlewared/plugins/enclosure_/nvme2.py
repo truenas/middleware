@@ -232,45 +232,95 @@ def map_plx_r50bm(model, ctx):
 
 
 def map_vseries_nvme(model, ctx):
-    """Map NVMe devices for V-series systems using PCIe slot addresses."""
-    num_of_nvme_slots = 4
+    """Map NVMe devices for V-series using PCIe switch downstream port topology.
 
-    # Build a mapping of PCIe addresses to NVMe block device names
-    nvmes = {}
-    for i in ctx.list_devices(subsystem='nvme'):
-        for namespace_dev in i.children:
-            if namespace_dev.device_type != 'disk':
+    Unlike /sys/bus/pci/slots/ names -- which the kernel disambiguates with
+    "-N" suffixes when another PCI device shares the same firmware slot
+    number (e.g. an add-in NIC assigned the same firmware slot as a rear
+    NVMe bay) -- the PCIe switch downstream port addresses are a fixed
+    property of the topology and provide stable slot identity regardless
+    of system configuration.
+    """
+    num_of_nvme_slots = 4
+    mapped = {}
+    pci_bdf_re = re.compile(r'^[0-9a-f]{4}:[0-9a-f]{2}:[0-9a-f]{2}\.[0-9]$')
+
+    # Walk from each NVMe controller up the PCIe tree:
+    # nvme ctrl -> nvme PCI dev -> downstream port -> switch upstream port.
+    # Group block devices by their switch; the rear-NVMe switch is the one
+    # with the most NVMes attached.
+    by_switch = {}
+    for ctrl in ctx.list_devices(subsystem='nvme'):
+        for child in ctrl.children:
+            if child.device_type != 'disk':
                 continue
 
             try:
-                # i.parent.sys_name looks like 0000:44:00.0
-                # namespace_dev.sys_name looks like nvme1n1
-                # Strip the last 2 chars (.0) to get the base address
-                nvmes[i.parent.sys_name[:-2]] = namespace_dev.sys_name
-            except (IndexError, AttributeError):
+                downstream_port = ctrl.parent.parent
+                switch = downstream_port.parent
+            except AttributeError:
                 continue
 
-    # Map PCIe slots 1-4 to rear NVMe bays
-    mapped = {}
-    for slot_path in pathlib.Path('/sys/bus/pci/slots').iterdir():
-        try:
-            slot_name = slot_path.name
-            # Only process slots 1-4 (rear NVMe bays)
-            if not slot_name.isdigit():
+            if switch is None or switch.subsystem != 'pci':
                 continue
 
-            slot_num = int(slot_name)
-            if slot_num < 1 or slot_num > num_of_nvme_slots:
-                continue
+            by_switch.setdefault(switch.sys_path, []).append(
+                (downstream_port.sys_name, child.sys_name)
+            )
 
-            # Read the PCIe address for this slot
-            addr = (slot_path / 'address').read_text().strip()
+    if not by_switch:
+        return fake_nvme_enclosure(model, num_of_nvme_slots, mapped)
 
-            # Check if we have an NVMe device at this address
-            if nvme_device := nvmes.get(addr):
-                mapped[slot_num] = nvme_device
-        except (ValueError, FileNotFoundError, OSError):
+    rear_switch_path, nvme_info = max(
+        by_switch.items(), key=lambda kv: len(kv[1])
+    )
+
+    # Enumerate the switch's downstream ports. The rear-NVMe switch
+    # multiplexes an on-board SAS HBA onto one of its downstream ports
+    # (an LSI SAS controller, PCI class 0x0107xx); every other downstream
+    # port is a rear NVMe bay.
+    #
+    # A populated bay shows an NVMe endpoint (class 0x0108xx). An *empty*
+    # bay is not absent from the tree: the Broadcom switch substitutes a
+    # "Virtual PCIe Placeholder Endpoint" (class 0x0880xx) so the
+    # downstream port still has a child. We must therefore keep a port for
+    # every bay -- populated, placeholder, or truly empty -- and exclude
+    # only the SAS HBA. Dropping placeholder/empty bays would renumber the
+    # survivors and shift the empty slot to the end (e.g. pulling bay 2 of
+    # 4 would wrongly report bays 1-3 populated and bay 4 empty).
+    nvme_ports = []
+    for entry in pathlib.Path(rear_switch_path).iterdir():
+        if not pci_bdf_re.match(entry.name):
             continue
+
+        has_sas_child = False
+        for child in entry.iterdir():
+            if not pci_bdf_re.match(child.name):
+                continue
+
+            try:
+                pci_class = (child / 'class').read_text().strip()
+            except (FileNotFoundError, OSError):
+                continue
+
+            if pci_class.startswith('0x0107'):
+                has_sas_child = True
+                break
+
+        if not has_sas_child:
+            nvme_ports.append(entry.name)
+
+    # Sorted PCI BDF gives stable bay order independent of firmware slot
+    # naming. Truncate to num_of_nvme_slots as a final safety bound.
+    nvme_ports.sort()
+    nvme_ports = nvme_ports[:num_of_nvme_slots]
+    port_to_slot = {port: idx for idx, port in enumerate(nvme_ports, start=1)}
+    for port_name, dev_name in nvme_info:
+        slot = port_to_slot.get(port_name)
+        if slot is None:
+            continue
+
+        mapped[slot] = dev_name
 
     return fake_nvme_enclosure(model, num_of_nvme_slots, mapped)
 
