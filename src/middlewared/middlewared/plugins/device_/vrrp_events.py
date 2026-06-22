@@ -163,10 +163,40 @@ class VrrpEventThread(Thread):
                     last_event = this_event
                     sleep(self.rapid_event_settle_time)
                 else:
+                    # Settle period already paid. Fire the hook for BACKUP
+                    # (safer state to converge on, idempotent on a fresh
+                    # boot); log+drop MASTER, since acting on an unsettled
+                    # MASTER would kick off fenced + zpool import. If we've
+                    # already successfully run vrrp_backup since this
+                    # process started, the BACKUP event is redundant -
+                    # drop it too.
                     last_event = None
                     backoff = False
                     self.event_queue.pop()
-                    LOGGER.warning('Detected rapid succession of failover events: (%r)', this_event)
+                    if this_event['event'] == 'BACKUP':
+                        last_type = self.middleware.call_sync(
+                            'failover.events.last_event_type'
+                        )
+                        if last_type == 'BACKUP':
+                            LOGGER.warning(
+                                'Rapid succession of failover events; '
+                                'skipping redundant BACKUP after settle '
+                                '(vrrp_backup already ran): (%r)',
+                                this_event,
+                            )
+                        else:
+                            LOGGER.warning(
+                                'Rapid succession of failover events; '
+                                'processing latest BACKUP after settle: (%r)',
+                                this_event,
+                            )
+                            self.middleware.call_hook_sync('vrrp.fifo', data=this_event)
+                    else:
+                        LOGGER.warning(
+                            'Rapid succession of failover events; '
+                            'dropping non-BACKUP latest after settle: (%r)',
+                            this_event,
+                        )
             else:
                 LOGGER.warning('Unhandled failover event. last_event: %r, this_event: %r', last_event, this_event)
                 last_event = None
