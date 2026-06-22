@@ -1,5 +1,5 @@
 from collections import defaultdict
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from functools import cache
 import re
 
@@ -11,7 +11,7 @@ import truenas_pyfilter as _tf
 from middlewared.api.base.validators.filters import validate_filters
 from middlewared.service import Service
 from middlewared.service_exception import MatchNotFound
-from middlewared.utils.filter_list import CF_EMPTY, CO_EMPTY, match, validate_options
+from middlewared.utils.filter_list import CF_EMPTY, CO_EMPTY, match
 
 from .filter import FilterMixin
 from .schema import SchemaMixin
@@ -37,6 +37,16 @@ class DatastoreQueryOptions:
     offset: int = 0
     limit: int = 0
     force_sql_filters: bool = False
+
+    def __post_init__(self):
+        if self.offset < 0:
+            raise ValueError("offset must be positive")
+
+        if self.limit < 0:
+            raise ValueError("limit must be positive")
+
+        if self.limit > 10_000:
+            raise ValueError("limit must be less or equal to 10000")
 
 
 class DatastoreService(Service, FilterMixin, SchemaMixin):
@@ -78,21 +88,20 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
         table = self._get_table(name)
 
         filters = filters or []
-        options = asdict(DatastoreQueryOptions(**(options or {})))
+        options = DatastoreQueryOptions(**(options or {}))
 
         validate_filters(filters)
-        validate_options(options)
 
-        prefix = options['prefix']
-        extend_fk = options.get('extend_fk')
+        prefix = options.prefix
+        extend_fk = options.extend_fk
         fk_attrs = {}
         aliases = {}
-        if options['count'] and not self._filters_contains_foreign_key(filters):
+        if options.count and not self._filters_contains_foreign_key(filters):
             qs = select(func.count(self._get_pk(table)))
         else:
             columns = list(table.c)
             from_ = table
-            if options['relationships']:
+            if options.relationships:
                 aliases = self._get_queryset_joins(table)
                 for foreign_key, alias in aliases.items():
                     if extend_fk and foreign_key.parent.name.endswith('_id'):
@@ -104,7 +113,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
                     columns.extend(list(alias.c))
                     from_ = from_.outerjoin(alias, alias.c[foreign_key.column.name] == foreign_key.parent)
 
-            if options['count']:
+            if options.count:
                 qs = select(func.count(self._get_pk(table))).select_from(from_)
             else:
                 qs = select(*columns).select_from(from_)
@@ -112,7 +121,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
         if filters:
             qs = qs.where(and_(*self._filters_to_queryset(filters, table, prefix, aliases)))
 
-        if options['count']:
+        if options.count:
             result = await self.middleware.call("datastore.fetchall", qs)
             # The count result will be a dict with a generated key for the count column
             # We need to get the first value from the first row
@@ -121,7 +130,7 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
                 return list(result[0].values())[0]
             return 0
 
-        order_by = options['order_by']
+        order_by = options.order_by
         if order_by:
             # Do not change original order_by
             order_by = order_by[:]
@@ -144,26 +153,26 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
 
             qs = qs.order_by(*order_by)
 
-        if options['offset']:
-            qs = qs.offset(options['offset'])
+        if options.offset:
+            qs = qs.offset(options.offset)
 
-        if options['limit']:
-            qs = qs.limit(options['limit'])
+        if options.limit:
+            qs = qs.limit(options.limit)
 
         result = await self.middleware.call("datastore.fetchall", qs)
 
         relationships = [{} for row in result]
-        if options['relationships']:
+        if options.relationships:
             # This will only fetch many-to-many relationships for primary table, not for joins, but that's enough
             relationships = await self._fetch_many_to_many(table, result)
 
         result = await self._queryset_serialize(
             result,
-            table, aliases, relationships, options['extend'], options['extend_context'], options['prefix'],
-            options['select'], options['extra'], fk_attrs,
+            table, aliases, relationships, options.extend, options.extend_context, options.prefix,
+            options.select, options.extra, fk_attrs,
         )
 
-        if options['get']:
+        if options.get:
             try:
                 return result[0]
             except IndexError:
@@ -181,7 +190,6 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
             options = dict()
 
         options.setdefault('get', True)
-        validate_options(options)
 
         return await self.query(name, [], options)
 

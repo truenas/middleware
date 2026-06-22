@@ -1,5 +1,5 @@
 from datetime import datetime, time
-from typing import Annotated, Literal, Self
+from typing import Annotated, Literal
 
 from pydantic import AfterValidator, Field, model_validator
 
@@ -9,7 +9,6 @@ from middlewared.api.base import (
     TimeString,
     croniter_for_schedule,
     validate_filters,
-    validate_options,
 )
 
 __all__ = ["QueryFilters", "QueryOptions", "QueryArgs", "GenericQueryResult", "CronModel", "TimeCronModel",
@@ -70,6 +69,7 @@ class QueryOptions(BaseModel):
     )
     offset: int = Field(
         default=0,
+        ge=0,
         description=(
             "This specifies the beginning offset of the results array. When combined with the `limit` query-option it "
             "may be used to implement pagination of large results arrays. WARNING: some query methods provide volatile "
@@ -79,6 +79,8 @@ class QueryOptions(BaseModel):
     )
     limit: int = Field(
         default=0,
+        ge=0,
+        le=10000,
         description=(
             "This specifies the maximum number of results matching the specified `query-filters` to return. When "
             "combined wtih the `offset` query-option it may be used to implement pagination of large results arrays.\n"
@@ -91,11 +93,6 @@ class QueryOptions(BaseModel):
         default=False,
         description="Force use of SQL for result filtering to reduce response time. May not work for all methods.",
     )
-
-    @model_validator(mode='after')
-    def validate_query_options(self) -> Self:
-        validate_options(self.model_dump())
-        return self
 
 
 class QueryArgs(BaseModel):

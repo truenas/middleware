@@ -10,7 +10,7 @@ import pathlib
 import shutil
 import stat as statlib
 import time
-from typing import IO, TYPE_CHECKING, Any, Iterable, Literal, Sequence
+from typing import IO, TYPE_CHECKING, Any, Literal, Sequence
 
 import pyinotify
 import truenas_os
@@ -62,7 +62,7 @@ from middlewared.utils.filesystem import attrs, stat_x
 from middlewared.utils.filesystem.acl import ACL_UNDEFINED_ID, acl_is_present
 from middlewared.utils.filesystem.constants import FileType
 from middlewared.utils.filesystem.directory import DirectoryRequestMask, iter_listdir
-from middlewared.utils.filter_list import filter_list, filter_list_model
+from middlewared.utils.filter_list import filter_list
 from middlewared.utils.nss import grp, pwd
 from middlewared.utils.path import FSLocation, is_child_realpath, path_location
 from middlewared.utils.pwenc import PWENC_FILE_SECRET
@@ -285,7 +285,7 @@ class FilesystemService(Service):
     @filterable_api_method(private=True)
     def mount_info(
         self,
-        filters: Iterable[Sequence[Any]],
+        filters: Sequence[Sequence[Any]],
         options: dict[str, Any],
     ) -> list[StatmountResultDict] | StatmountResultDict | int:
         return filter_list(iter_mountinfo(), filters, options)
@@ -474,11 +474,12 @@ class FilesystemService(Service):
             # filter these here.
             filters.extend([['is_mountpoint', '=', True], ['name', '!=', IX_APPS_DIR_NAME]])
 
-        return filter_list_model(filter_list(
+        return filter_list(
             iter_listdir(p, file_type=file_type, request_mask=request_mask),
             filters,
-            options.model_dump(),
-        ), FilesystemListdirResultItem)
+            options,
+            FilesystemListdirResultItem,
+        )
 
     @api_method(FilesystemStatArgs, FilesystemStatResult, roles=['FILESYSTEM_ATTRS_READ'], check_annotations=True)
     def stat(self, _path: str) -> FilesystemStatData:

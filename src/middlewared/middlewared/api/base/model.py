@@ -341,16 +341,29 @@ def query_result(item: type[PydanticBaseModel], name: str | None = None) -> type
 
 
 def query_result_from_item(item: type[PydanticBaseModel], name: str) -> type[BaseModel]:
-    return create_model(
-        name,
-        __base__=(BaseModel,),
-        __module__=item.__module__,
-        result=Annotated[
+    if item.__normalize_as__ != item:  # type: ignore[attr-defined]
+        result = Annotated[
+            list[item.__normalize_as__] |  # type: ignore[name-defined]
+            item.__normalize_as__ |  # type: ignore[name-defined]
+            list[item] |  # type: ignore[valid-type]
+            item |  # type: ignore[valid-type]
+            int,
+            Field()
+        ]
+    else:
+        result = Annotated[  # type: ignore[assignment,misc]
             list[item] |  # type: ignore[valid-type]
             item |
             int,
             Field()
-        ],
+        ]
+
+
+    return create_model(
+        name,
+        __base__=(BaseModel,),
+        __module__=item.__module__,
+        result=result,
     )
 
 
