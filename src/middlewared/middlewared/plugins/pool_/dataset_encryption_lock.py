@@ -112,7 +112,7 @@ class PoolDatasetService(Service):
 
         1. Upload a JSON file which contains encrypted dataset keys (it is read from the input pipe if
            ``unlock_options.key_file`` is ``true``). The format is the one used for exporting encrypted dataset
-           keys (:method:`pool.export_keys`).
+           keys (:method:`pool.dataset.export_keys`).
 
         2. Specify a key or a passphrase for each unlocked dataset using ``unlock_options.datasets``.
         """
