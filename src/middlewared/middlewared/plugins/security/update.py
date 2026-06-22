@@ -118,8 +118,8 @@ class SystemSecurityService(ConfigService):
                 'enabling General Purpose OS STIG compatibility mode.'
             )
 
-        tc_config = await self.middleware.call('truecommand.config')
-        if tc_config['enabled']:
+        tc_config = await self.call2(self.s.truecommand.config)
+        if tc_config.enabled:
             raise ValidationError(
                 'system_security_update.enable_gpos_stig',
                 'TrueCommand is not supported under General Purpose OS STIG compatibility mode.'
