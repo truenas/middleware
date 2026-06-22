@@ -621,7 +621,7 @@ class FilesystemService(Service):
         The following notes about ACL entries are necessarily terse. If more detail is required please
         consult relevant TrueNAS documentation.
 
-        **NFSv4 ACL entry semantics**
+        .. rubric:: NFSv4 ACL entry semantics
 
         The ``tag`` identifies the principal to whom the entry applies. ``USER`` and ``GROUP`` have
         conventional meanings; ``owner@`` refers to the owning user of the file, ``group@`` to the
@@ -631,7 +631,7 @@ class FilesystemService(Service):
         (if at all) on newly-created files or directories within the specified path, and are only
         valid for directories.
 
-        **POSIX1e ACL entry semantics**
+        .. rubric:: POSIX1e ACL entry semantics
 
         When ``default`` is ``true`` the entry belongs to the POSIX default ACL and is copied to new
         files and directories created within the directory where it is set; default entries are *not*

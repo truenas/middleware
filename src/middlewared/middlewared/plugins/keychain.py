@@ -473,7 +473,7 @@ class KeychainCredentialService(CRUDService):
     )
     def generate_ssh_key_pair(self):
         """
-        Generate a public/private key pair (useful for ``SSH_KEY_PAIR`` type)
+        Generate a public/private key pair (useful for ``SSH_KEY_PAIR`` type).
 
         Example::
 
@@ -505,7 +505,7 @@ class KeychainCredentialService(CRUDService):
     )
     async def remote_ssh_host_key_scan(self, data):
         """
-        Discover a remote host key (useful for ``SSH_CREDENTIALS``)
+        Discover a remote host key (useful for ``SSH_CREDENTIALS``).
 
         Example::
 

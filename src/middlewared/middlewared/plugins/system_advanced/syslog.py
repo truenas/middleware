@@ -44,7 +44,9 @@ class SystemAdvancedService(Service):
     async def syslog_certificate_authority_choices(self):
         """
         Return choices of certificate authorities which can be used for ``syslog_tls_certificate_authority``.
-        ---- NO LONGER USED: TO BE REMOVED AFTER UI UPDATE ----
+
+        .. deprecated:: 25.10
+            This method is no longer used and will be removed after the UI is updated.
         """
         # return {
         #     i['id']: i['name']
