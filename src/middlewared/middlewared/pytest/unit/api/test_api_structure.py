@@ -43,10 +43,9 @@ def current_api_package():
     return importlib.import_module(module_name)
 
 
-def check_docstring(docstr: str | None, must_have: bool = False):
+def check_docstring(docstr: str | None, must_have: bool = False, allow_markdown: bool = True):
     """Enforce API docstring rules.
 
-    Rules are skipped if the docstring contains any asterisks (*) or hyphens (-).
     1. First character cannot be a lowercase letter
     2. Last character must be a period
     3. Last character of each line must be a period or colon
@@ -56,6 +55,9 @@ def check_docstring(docstr: str | None, must_have: bool = False):
     verbatim -- so they are exempt (e.g. a docstring may legitimately end in a code example or a
     ``.. versionadded::`` directive).
 
+    When ``allow_markdown`` is ``True`` (the default, used for model field descriptions), rules are
+    skipped if the docstring appears to use Markdown conventions (bullet lists, bold, or em-dashes).
+
     """
     if not docstr:
         if must_have:
@@ -63,7 +65,7 @@ def check_docstring(docstr: str | None, must_have: bool = False):
             return "Must have description"
         return
 
-    if (
+    if allow_markdown and (
         any(line.startswith(("* ", "- ", "    {")) for line in docstr.splitlines() if line) or
         any(c in docstr for c in ["**", "--"])
     ):
@@ -230,7 +232,7 @@ def test_api_method_docstrings(public_api):
     errors = [
         SyntaxWarning(f"{location}: {err}")
         for location, _name, reflowed in methods
-        if (err := check_docstring(reflowed, must_have=True))
+        if (err := check_docstring(reflowed, must_have=True, allow_markdown=False))
     ]
     if errors:
         raise ExceptionGroup("Improper public API method docstring(s)", errors)
@@ -280,7 +282,6 @@ def test_api_method_docstrings_render(api_doc_pages, tmp_path):
     method name has a page, a ``ref.doc`` warning means a ``:method:`` reference points at a method
     that does not exist.
     """
-    pytest.importorskip("sphinx")
     srcdir, page_locations = api_doc_pages
     result = subprocess.run(
         [sys.executable, "-m", "sphinx", "-b", "dummy", "-q", str(srcdir), str(tmp_path / "out")],
