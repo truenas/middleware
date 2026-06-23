@@ -8,14 +8,14 @@ import threading
 import time
 
 from pydantic import Field
-from sqlalchemy import and_, create_engine, func, inspect, select, text
+from sqlalchemy import and_, case, create_engine, func, inspect, select, text
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.expression import nullsfirst, nullslast
 from truenas_api_client import ejson
 import yaml
 
-from middlewared.alert.source.audit import AuditBackendSetupAlert
+from middlewared.alert.source.audit import AuditBackendSetupAlert, AuditDatabaseCorruptedAlert
 from middlewared.api import api_method
 from middlewared.api.base import BaseModel
 from middlewared.api.base.types import NonEmptyString
@@ -24,7 +24,7 @@ from middlewared.plugins.audit.table import AUDIT_TABLES
 from middlewared.plugins.audit.utils import AUDIT_CHUNK_SZ, AUDITED_SERVICES, audit_file_path
 from middlewared.plugins.datastore.filter import FilterMixin
 from middlewared.plugins.datastore.schema import SchemaMixin
-from middlewared.service import Service, job, periodic
+from middlewared.service import Service, job, periodic, private
 from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.utils.jsonpath import JSON_PATH_PREFIX, json_path_parse
 
@@ -37,6 +37,20 @@ class AuditBackendQueryArgs(BaseModel):
 
 class AuditBackendQueryResult(GenericQueryResult):
     pass
+
+
+def decode_audit_json(data):
+    """
+    Decode a JSON string read from an audit database. A row can hold non-JSON or
+    otherwise undecodable text (e.g. on-disk corruption, or a syntactically valid
+    document carrying a malformed ``$date``/``$time``/``$type`` payload that ``ejson``
+    cannot reconstruct). In those cases fall back to the raw string rather than
+    propagating the decode error and failing the whole query.
+    """
+    try:
+        return ejson.loads(data)
+    except (json.decoder.JSONDecodeError, ejson.EJSONDecodeError):
+        return data
 
 
 class SQLConn:
@@ -103,10 +117,7 @@ class SQLConn:
                             elif isinstance(data, str):
                                 # Majority of time these will probably be JSON objects extracted
                                 # via json_extract()
-                                try:
-                                    entry[column_name] = ejson.loads(data)
-                                except json.decoder.JSONDecodeError:
-                                    entry[column_name] = data
+                                entry[column_name] = decode_audit_json(data)
                             else:
                                 entry[column_name] = data
                         else:
@@ -169,6 +180,23 @@ class SQLConn:
                 s.commit()
 
             self.connection.connection.execute('VACUUM')
+
+    def count_malformed(self):
+        """
+        Count rows whose JSON columns hold data that cannot be parsed by SQLite's
+        json1 extension. json_valid() never raises, so this is safe to run over a
+        table that contains corrupted entries.
+        """
+        with self.lock:
+            if not self.audit_table_exists():
+                return 0
+
+            cursor = self.connection.execute(text(
+                f'SELECT count(*) AS cnt FROM "{self.table_name}" '
+                f'WHERE (event_data IS NOT NULL AND NOT json_valid(event_data)) '
+                f'OR (service_data IS NOT NULL AND NOT json_valid(service_data))'
+            ), {})
+            return list(cursor.mappings())[0]['cnt']
 
 
 class AuditBackendService(Service, FilterMixin, SchemaMixin):
@@ -236,10 +264,14 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
         if name.startswith(JSON_PATH_PREFIX):
             name, path = json_path_parse(name)
             raw_column = self._get_col(table, name)
+            # Guard against rows whose JSON column holds non-JSON text: json_extract() in the
+            # SELECT list would otherwise abort the whole statement with "malformed JSON". CASE
+            # ensures json_valid() is checked first, projecting NULL for an unparseable row.
+            extracted = case((func.json_valid(raw_column), func.json_extract(raw_column, path)), else_=None)
             if label:
-                column = func.json_extract(raw_column, path).label(label)
+                column = extracted.label(label)
             else:
-                column = func.json_extract(raw_column, path)
+                column = extracted
         else:
             if label:
                 column = self._get_col(table, name).label(label)
@@ -285,7 +317,9 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
             qs = select(*columns).select_from(from_)
 
         if filters:
-            qs = qs.where(and_(*self._filters_to_queryset(filters, conn.table, None, {})))
+            qs = qs.where(and_(*self._filters_to_queryset(
+                filters, conn.table, None, {}, guard_malformed_json=True
+            )))
 
         if order_by:
             for i, order in enumerate(order_by):
@@ -429,3 +463,37 @@ class AuditBackendService(Service, FilterMixin, SchemaMixin):
                 'Cleanup of auditing report directory failed',
                 exc_info=True
             )
+
+        self.scan_corruption()
+
+    @private
+    def scan_corruption(self):
+        """
+        Scan each audit database for records whose JSON columns cannot be parsed and
+        raise (or clear) a per-service alert accordingly. Audit queries skip these
+        records, so the data they hold is effectively lost; the alert exists so the
+        condition is surfaced rather than silently ignored.
+        """
+        for svc, conn in self.connections.items():
+            try:
+                count = conn.count_malformed()
+            except Exception:
+                self.logger.error(
+                    "%s: failed to scan audit DB for corrupted records.",
+                    svc, exc_info=True
+                )
+                continue
+
+            if count:
+                self.logger.warning(
+                    "%s: audit DB contains %d record(s) with unreadable data.",
+                    svc, count
+                )
+                self.call_sync2(
+                    self.s.alert.oneshot_create,
+                    AuditDatabaseCorruptedAlert(service=svc, count=count)
+                )
+            else:
+                # key_from_args for this alert returns the scalar service name, so the
+                # delete query must be that scalar (not a dict) to match and clear it.
+                self.call_sync2(self.s.alert.oneshot_delete, 'AuditDatabaseCorrupted', svc)
