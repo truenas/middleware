@@ -144,20 +144,21 @@ where ``/secure/path/my_api_key.json`` contains:
 Specifying Authentication Mechanism
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+SCRAM is the default mechanism. Pass ``auth_mechanism`` only to override it — most commonly to
+force legacy PLAIN authentication for a server that predates SCRAM (before TrueNAS 26):
+
 .. code-block:: python
 
     from truenas_api_client import Client
     from truenas_api_client.auth_api_key import APIKeyAuthMech
 
-    with Client('ws://truenas.local/api/current') as c:
-        # Force SCRAM authentication
+    with Client('wss://truenas.local/api/current') as c:
+        # SCRAM is the default; this is equivalent to omitting auth_mechanism.
         c.login_with_api_key('root', api_key, APIKeyAuthMech.SCRAM)
 
-        # Force legacy PLAIN authentication
+        # Force legacy PLAIN authentication. PLAIN sends the raw key (only TLS protects
+        # it) and must be selected explicitly -- the client never falls back to it.
         c.login_with_api_key('root', api_key, APIKeyAuthMech.PLAIN)
-
-        # Auto-detect (default - recommended)
-        c.login_with_api_key('root', api_key, APIKeyAuthMech.AUTO)
 
 Channel Binding with the API Client
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
