@@ -243,7 +243,13 @@ class SystemGeneralService(ConfigService):
                         'Failed to apply timezone on standby controller', exc_info=True
                     )
 
-        if config['ds_auth'] != new_config['ds_auth']:
+        # Regenerate pam when ds_auth changes, or when the UI certificate is switched so the
+        # SCRAM-PLUS server channel binding (published by pam_keyring) tracks the served cert.
+        # The switch path does not hit the certificate attachment-delegate redeploy.
+        if (
+            config['ds_auth'] != new_config['ds_auth'] or
+            config['ui_certificate'] != new_config['ui_certificate']
+        ):
             await self.middleware.call('etc.generate', 'pam')
             try:
                 await self.middleware.call('failover.call_remote', 'etc.generate', ['pam'])
