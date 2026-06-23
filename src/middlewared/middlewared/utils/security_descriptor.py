@@ -26,6 +26,13 @@ class SDDLAccessMaskStandard(enum.IntEnum):
     READ = security.SEC_RIGHTS_DIR_READ | security.SEC_RIGHTS_DIR_EXECUTE
 
 
+# Some Windows versions / older Samba builds persist the CHANGE preset without the
+# SEC_DIR_DELETE_CHILD right (0x40), yielding 0x1301BF instead of 0x1301FF. Treat it
+# as CHANGE so reading such a share ACL returns a supported value rather than raising.
+# See NAS-139535.
+CHANGE_NO_DELETE_CHILD = SDDLAccessMaskStandard.CHANGE.value & ~security.SEC_DIR_DELETE_CHILD
+
+
 def security_descriptor_from_bytes(sd_buf: bytes) -> security.descriptor:
     """
     method to convert bytes to security descriptor. This is particularly
@@ -67,7 +74,12 @@ def sd_bytes_to_share_acl(sd_bytes: bytes) -> list[dict]:
 
     for ace in sd.dacl.aces:
         dom_sid = str(ace.trustee)
-        perm = SDDLAccessMaskStandard(ace.access_mask).name
+
+        if ace.access_mask == CHANGE_NO_DELETE_CHILD:
+            perm = SDDLAccessMaskStandard.CHANGE.name
+        else:
+            perm = SDDLAccessMaskStandard(ace.access_mask).name
+
         match ace.type:
             case security.SEC_ACE_TYPE_ACCESS_ALLOWED:
                 ace_type = 'ALLOWED'
