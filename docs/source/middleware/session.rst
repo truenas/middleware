@@ -258,3 +258,18 @@ The SCRAM authentication involves three messages between client and server::
 The `rfc_str` fields follow the format specified in RFC5802. The username in the CLIENT_FIRST_MESSAGE includes
 the API key ID (e.g., "user:10" where 10 is the API key database ID). Client libraries for handling these
 exchanges are available at https://github.com/truenas/truenas_scram.
+
+
+SCRAM channel binding (SCRAM-PLUS)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Channel binding (SCRAM-PLUS, RFC 5929 `tls-server-end-point`) is supported as an optional, negotiated
+enhancement. The API-key PAM stack runs in `channel_binding=negotiate` mode: a client may bind the
+exchange to the served TLS certificate by sending a `p=tls-server-end-point` GS2 header (instead of
+`n,,`) in the CLIENT_FIRST_MESSAGE, and pam_truenas verifies it against the active UI certificate's published binding;
+clients that do not request binding still authenticate. middlewared publishes the active UI
+certificate's `tls-server-end-point` value to the uid=0 persistent keyring (see
+`etc_files/pam_keyring.py`) for `pam_truenas` to verify against, refreshing it when the UI certificate
+changes. Because TLS is terminated at nginx, `ScramPamAuthenticator` rejects a binding request that
+does not arrive over TLS. See `docs/source/accounts/scram_authentication.rst` for the protocol details
+and examples of computing the binding.

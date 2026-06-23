@@ -191,3 +191,82 @@ def test__convert_raw_key_whitespace_handling(root_api_key):
         # Test with both
         result = c.call('api_key.convert_raw_key', '  ' + root_api_key['key'] + '  ')
         assert result['api_key_id'] == root_api_key['id']
+
+
+def test__scram_unbound_login_allowed_with_server_binding(root_api_key):
+    # Backward compatibility: a client that does NOT request channel binding (gs2 'n,,')
+    # must still authenticate even though the server publishes a binding -- channel binding
+    # is negotiated (channel_binding=negotiate), not required.
+    with Client('ws://127.0.0.1/api/current') as c:
+        client_first = truenas_pyscram.ClientFirstMessage(
+            username=root_api_key['username'],
+            api_key_id=root_api_key['id'],
+        )
+        assert str(client_first).startswith('n,,'), str(client_first)
+        resp = c.call('auth.login_ex', {
+            'mechanism': 'SCRAM',
+            'scram_type': 'CLIENT_FIRST_MESSAGE',
+            'rfc_str': str(client_first),
+        })
+        assert resp['response_type'] == 'SCRAM_RESPONSE', str(resp)
+
+        server_first = truenas_pyscram.ServerFirstMessage(rfc_string=resp['rfc_str'])
+        client_final = truenas_pyscram.ClientFinalMessage(
+            client_first=client_first,
+            server_first=server_first,
+            client_key=truenas_pyscram.CryptoDatum(b64decode(root_api_key['client_key'])),
+            stored_key=truenas_pyscram.CryptoDatum(b64decode(root_api_key['stored_key'])),
+        )
+        resp = c.call('auth.login_ex', {
+            'mechanism': 'SCRAM',
+            'scram_type': 'CLIENT_FINAL_MESSAGE',
+            'rfc_str': str(client_final),
+        })
+        assert resp['response_type'] == 'SCRAM_RESPONSE', str(resp)
+        assert resp['scram_type'] == 'SERVER_FINAL_RESPONSE', str(resp)
+
+
+def test__scram_channel_binding_rejected_over_non_tls(root_api_key):
+    # A client demanding channel binding (gs2 'p=') over a non-TLS transport must be rejected
+    # before the PAM exchange: TLS terminates at nginx, so middleware cannot honor the binding
+    # and tls-server-end-point is only a hash of the public certificate.
+    with Client('ws://127.0.0.1/api/current') as c:
+        client_first = truenas_pyscram.ClientFirstMessage(
+            username=root_api_key['username'],
+            api_key_id=root_api_key['id'],
+            channel_binding_type=truenas_pyscram.CB_TLS_SERVER_END_POINT,
+        )
+        assert str(client_first).startswith('p=tls-server-end-point,,'), str(client_first)
+        resp = c.call('auth.login_ex', {
+            'mechanism': 'SCRAM',
+            'scram_type': 'CLIENT_FIRST_MESSAGE',
+            'rfc_str': str(client_first),
+        })
+        assert resp['response_type'] == 'AUTH_ERR', str(resp)
+
+
+def test__scram_plus_server_binding_published():
+    # middlewared publishes the active UI certificate's RFC 5929 tls-server-end-point as a
+    # 'user' key in the uid=0 persistent keyring so pam_truenas can verify channel binding.
+    truenas_keyring = pytest.importorskip('truenas_keyring')
+    from cryptography import x509
+    from cryptography.hazmat.primitives import serialization
+
+    with Client() as c:
+        cert_id = c.call('system.general.config')['ui_certificate']
+        assert cert_id, 'no active UI certificate configured'
+        pem = c.call('certificate.get_instance', cert_id)['certificate']
+
+    der = x509.load_pem_x509_certificate(pem.encode()).public_bytes(serialization.Encoding.DER)
+    expected = bytes(truenas_pyscram.compute_tls_server_end_point(der))
+
+    persistent = truenas_keyring.get_persistent_keyring()
+    try:
+        key = persistent.search(
+            key_type=truenas_keyring.KeyType.USER,
+            description='TRUENAS_SCRAM_PLUS_SERVER_BINDING',
+        )
+    except FileNotFoundError:
+        pytest.fail('SCRAM-PLUS server channel binding was not published to the keyring')
+
+    assert key.read_data() == expected

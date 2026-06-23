@@ -8,6 +8,13 @@ class SystemGeneralCertificateAttachmentDelegate(CertificateServiceAttachmentDel
     NAMESPACE = 'system.general'
     SERVICE = 'http'
 
+    async def redeploy(self, cert_id):
+        await super().redeploy(cert_id)
+        # The served UI cert just changed (e.g. ACME renewal), so refresh the SCRAM-PLUS
+        # server channel binding that pam_truenas reads. etc.generate('pam') re-runs
+        # pam_keyring, which republishes the tls-server-end-point value.
+        await self.middleware.call('etc.generate', 'pam')
+
 
 class SystemAdvancedCertificateAttachmentDelegate(CertificateServiceAttachmentDelegate):
 

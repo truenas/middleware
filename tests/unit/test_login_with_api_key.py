@@ -30,10 +30,13 @@ def api_key_data():
             c.call('api_key.delete', api_key['id'])
 
 
+# These tests authenticate over a plain ws:// loopback connection, which cannot carry
+# SCRAM-PLUS channel binding, so they pass channel_binding=False to use unbound SCRAM.
+# The bound (default) path is covered by test__login_with_api_key_over_tls_channel_binding.
 def test__login_with_raw_api_key_string(api_key_data):
     """Test login_with_api_key using raw API key string (format: id-key)."""
     with Client('ws://127.0.0.1/api/current') as c:
-        c.login_with_api_key('root', api_key_data['key'])
+        c.login_with_api_key('root', api_key_data['key'], channel_binding=False)
         me = c.call('auth.me')
         assert me['pw_name'] == 'root'
         assert 'API_KEY' in me['account_attributes']
@@ -49,7 +52,7 @@ def test__login_with_raw_api_key_json_file(api_key_data):
 
     try:
         with Client('ws://127.0.0.1/api/current') as c:
-            c.login_with_api_key('root', json_file)
+            c.login_with_api_key('root', json_file, channel_binding=False)
             me = c.call('auth.me')
             assert me['pw_name'] == 'root'
             assert 'API_KEY' in me['account_attributes']
@@ -71,7 +74,7 @@ def test__login_with_raw_api_key_ini_file(api_key_data):
 
     try:
         with Client('ws://127.0.0.1/api/current') as c:
-            c.login_with_api_key('root', ini_file)
+            c.login_with_api_key('root', ini_file, channel_binding=False)
             me = c.call('auth.me')
             assert me['pw_name'] == 'root'
             assert 'API_KEY' in me['account_attributes']
@@ -94,7 +97,7 @@ def test__login_with_raw_api_key_ini_file_single_section(api_key_data):
 
     try:
         with Client('ws://127.0.0.1/api/current') as c:
-            c.login_with_api_key('root', ini_file)
+            c.login_with_api_key('root', ini_file, channel_binding=False)
             me = c.call('auth.me')
             assert me['pw_name'] == 'root'
             assert 'API_KEY' in me['account_attributes']
@@ -117,7 +120,7 @@ def test__login_with_precomputed_keys_json_file(api_key_data):
 
     try:
         with Client('ws://127.0.0.1/api/current') as c:
-            c.login_with_api_key('root', json_file)
+            c.login_with_api_key('root', json_file, channel_binding=False)
             me = c.call('auth.me')
             assert me['pw_name'] == 'root'
             assert 'API_KEY' in me['account_attributes']
@@ -142,7 +145,7 @@ def test__login_with_precomputed_keys_ini_file(api_key_data):
 
     try:
         with Client('ws://127.0.0.1/api/current') as c:
-            c.login_with_api_key('root', ini_file)
+            c.login_with_api_key('root', ini_file, channel_binding=False)
             me = c.call('auth.me')
             assert me['pw_name'] == 'root'
             assert 'API_KEY' in me['account_attributes']
@@ -161,7 +164,7 @@ def test__login_with_precomputed_keys_json_string(api_key_data):
     })
 
     with Client('ws://127.0.0.1/api/current') as c:
-        c.login_with_api_key('root', json_string)
+        c.login_with_api_key('root', json_string, channel_binding=False)
         me = c.call('auth.me')
         assert me['pw_name'] == 'root'
         assert 'API_KEY' in me['account_attributes']
@@ -173,19 +176,7 @@ def test__login_with_raw_api_key_json_string(api_key_data):
     json_string = json.dumps({'raw_key': api_key_data['key']})
 
     with Client('ws://127.0.0.1/api/current') as c:
-        c.login_with_api_key('root', json_string)
-        me = c.call('auth.me')
-        assert me['pw_name'] == 'root'
-        assert 'API_KEY' in me['account_attributes']
-        assert 'SCRAM' in me['account_attributes']
-
-
-def test__login_with_api_key_auto_mechanism(api_key_data):
-    """Test login_with_api_key with AUTO mechanism (should use SCRAM if available)."""
-    from truenas_api_client.auth_api_key import APIKeyAuthMech
-
-    with Client('ws://127.0.0.1/api/current') as c:
-        c.login_with_api_key('root', api_key_data['key'], APIKeyAuthMech.AUTO)
+        c.login_with_api_key('root', json_string, channel_binding=False)
         me = c.call('auth.me')
         assert me['pw_name'] == 'root'
         assert 'API_KEY' in me['account_attributes']
@@ -197,7 +188,7 @@ def test__login_with_api_key_scram_mechanism(api_key_data):
     from truenas_api_client.auth_api_key import APIKeyAuthMech
 
     with Client('ws://127.0.0.1/api/current') as c:
-        c.login_with_api_key('root', api_key_data['key'], APIKeyAuthMech.SCRAM)
+        c.login_with_api_key('root', api_key_data['key'], APIKeyAuthMech.SCRAM, channel_binding=False)
         me = c.call('auth.me')
         assert me['pw_name'] == 'root'
         assert 'API_KEY' in me['account_attributes']
@@ -221,7 +212,7 @@ def test__login_with_api_key_context_manager(api_key_data):
     # This tests the pattern: with Client("ws://127.0.0.1/api/current") as c:
     #                             c.login_with_api_key(username, key)
     with Client("ws://127.0.0.1/api/current") as c:
-        c.login_with_api_key('root', api_key_data['key'])
+        c.login_with_api_key('root', api_key_data['key'], channel_binding=False)
         me = c.call('auth.me')
         assert me['pw_name'] == 'root'
         assert 'API_KEY' in me['account_attributes']
@@ -274,4 +265,16 @@ def test__login_with_api_key_invalid_credentials(api_key_data):
     """Test that proper error is raised with invalid API key."""
     with pytest.raises(ValueError, match='Invalid API key|Failed to authenticate'):
         with Client('ws://127.0.0.1/api/current') as c:
-            c.login_with_api_key('root', '999-invalidkeydata12345')
+            c.login_with_api_key('root', '999-invalidkeydata12345', channel_binding=False)
+
+
+def test__login_with_api_key_over_tls_channel_binding(api_key_data):
+    """Over a TLS (wss) connection the client auto-engages SCRAM-PLUS channel binding. The
+    bound exchange must succeed end to end, which only happens when the server's published
+    tls-server-end-point binding matches the certificate it serves."""
+    with Client('wss://127.0.0.1/api/current', verify_ssl=False) as c:
+        c.login_with_api_key('root', api_key_data['key'])
+        me = c.call('auth.me')
+        assert me['pw_name'] == 'root'
+        assert 'API_KEY' in me['account_attributes']
+        assert 'SCRAM' in me['account_attributes']
