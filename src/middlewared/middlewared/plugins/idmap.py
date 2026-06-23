@@ -17,7 +17,8 @@ from middlewared.plugins.idmap_.idmap_winbind import WBCErr, WBClient
 from middlewared.plugins.smb_.constants import SMBBuiltin
 from middlewared.service import CallError, Service, ValidationError, filterable_api_method, job, private
 from middlewared.service_exception import MatchNotFound
-from middlewared.utils.directoryservices.constants import DSType as DirectoryServiceType, DSStatus
+from middlewared.utils.directoryservices.constants import DSStatus
+from middlewared.utils.directoryservices.constants import DSType as DirectoryServiceType
 from middlewared.utils.directoryservices.health import DSHealthObj
 from middlewared.utils.filter_list import filter_list
 from middlewared.utils.sid import (
