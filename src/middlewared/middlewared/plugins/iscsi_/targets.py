@@ -22,6 +22,7 @@ from middlewared.api.current import (
     iSCSITargetValidateNameArgs,
     iSCSITargetValidateNameResult,
 )
+from middlewared.plugins.truenas.license_utils import FeaturePolicy
 from middlewared.service import CallError, CRUDService, ValidationErrors, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils import UnexpectedFailure, run
@@ -220,7 +221,7 @@ class iSCSITargetService(CRUDService):
 
         if (
             data['mode'] != 'ISCSI' and
-            not await self.middleware.call('system.feature_enabled', 'FIBRECHANNEL')
+            not await self.middleware.call('truenas.license.feature_available', 'FIBRECHANNEL', FeaturePolicy.ANY)
         ):
             verrors.add(f'{schema_name}.mode', 'Fibre Channel not enabled')
 

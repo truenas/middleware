@@ -6,8 +6,6 @@
 from datetime import date
 from types import MappingProxyType
 
-import truenas_pylicensed
-
 from middlewared.api import api_method
 from middlewared.api.current import (
     SystemFeatureEnabledArgs,
@@ -71,8 +69,8 @@ class SystemService(Service):
         )
 
     @private
-    def sed_enabled(self):
-        return truenas_pylicensed.is_feature_licensed("SED")
+    async def sed_enabled(self):
+        return await self.call2(self.s.truenas.license.feature_available, "SED")
 
     @api_method(
         SystemVersionShortArgs,
@@ -176,11 +174,7 @@ class SystemService(Service):
         """
         Returns whether the `feature` is enabled or not
         """
-        info = await self.call2(self.s.truenas.license.info_private)
-        if info is not None:
-            return any(f.name == name for f in info.features)
-
-        return False
+        return await self.call2(self.s.truenas.license.feature_available, name)
 
 
 async def hook_license_update(middleware, had_license, *args, **kwargs):

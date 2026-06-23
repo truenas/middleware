@@ -19,6 +19,7 @@ from middlewared.api.current import (
     VMPortWizard,
     VMVirtualizationDetails,
 )
+from middlewared.plugins.truenas.license_utils import FeaturePolicy
 from middlewared.service import ServiceContext
 from middlewared.utils.cpu import cpu_info
 from middlewared.utils.libvirt.display import DisplayDelegate
@@ -90,11 +91,10 @@ def log_file_download(context: ServiceContext, job: Job, vm_id: int) -> None:
 
 
 async def license_active(context: ServiceContext) -> bool:
-    can_run_vms = True
-    if await context.middleware.call('system.is_ha_capable'):
-        can_run_vms = await context.middleware.call('system.feature_enabled', 'VMS')
-
-    return can_run_vms
+    available: bool = await context.middleware.call(
+        'truenas.license.feature_available', 'VMS', FeaturePolicy.HA_APPLIANCE
+    )
+    return available
 
 
 def virtualization_details() -> VMVirtualizationDetails:
