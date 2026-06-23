@@ -642,7 +642,7 @@ class KeychainCredentialService(CRUDService):
         pertinent SSH data of this machine.
         """
         service = self.middleware.call_sync("service.query", [("service", "=", "ssh")], {"get": True})
-        ssh = self.middleware.call_sync("ssh.config")
+        ssh = self.middleware.call_sync2(self.middleware.services.ssh.config)
         try:
             user = self.middleware.call_sync(
                 "user.query",
@@ -664,7 +664,7 @@ class KeychainCredentialService(CRUDService):
 
             # This might be the first time of the service being enabled
             # which will then result in new host keys we need to grab
-            ssh = self.middleware.call_sync("ssh.config")
+            ssh = self.middleware.call_sync2(self.middleware.services.ssh.config)
 
         # Write public key in user authorized_keys for SSH
         pubkey = (user["sshpubkey"] or "").strip()
@@ -674,13 +674,13 @@ class KeychainCredentialService(CRUDService):
 
         ssh_hostkey = "{0} {1}\n{0} {2}\n{0} {3}\n".format(
             data["remote_hostname"],
-            base64.b64decode(ssh["host_rsa_key_pub"].encode()).decode(),
-            base64.b64decode(ssh["host_ecdsa_key_pub"].encode()).decode(),
-            base64.b64decode(ssh["host_ed25519_key_pub"].encode()).decode(),
+            base64.b64decode(ssh.host_rsa_key_pub.encode()).decode(),
+            base64.b64decode(ssh.host_ecdsa_key_pub.encode()).decode(),
+            base64.b64decode(ssh.host_ed25519_key_pub.encode()).decode(),
         )
 
         return {
-            "port": ssh["tcpport"],
+            "port": ssh.tcpport,
             "host_key": ssh_hostkey,
         }
 
