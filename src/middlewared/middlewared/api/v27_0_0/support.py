@@ -8,15 +8,15 @@ from middlewared.api.base import (
     ForUpdateMetaclass,
     LongString,
     NotRequired,
-    single_argument_args,
 )
 
 __all__ = [
-    "SupportEntry", "SupportAttachTicketArgs", "SupportAttachTicketResult", "SupportAttachTicketMaxSizeArgs",
-    "SupportAttachTicketMaxSizeResult", "SupportFieldsArgs", "SupportFieldsResult", "SupportIsAvailableArgs",
-    "SupportIsAvailableResult", "SupportIsAvailableAndEnabledArgs", "SupportIsAvailableAndEnabledResult",
-    "SupportNewTicketArgs", "SupportNewTicketResult", "SupportSimilarIssuesArgs", "SupportSimilarIssuesResult",
-    "SupportUpdateArgs", "SupportUpdateResult", "SupportNewTicket"
+    "SupportEntry", "SupportUpdate", "SupportAttachTicket", "SupportAttachTicketArgs", "SupportAttachTicketResult",
+    "SupportAttachTicketMaxSizeArgs", "SupportAttachTicketMaxSizeResult", "SupportFieldsArgs", "SupportFieldsResult",
+    "SupportIsAvailableArgs", "SupportIsAvailableResult", "SupportIsAvailableAndEnabledArgs",
+    "SupportIsAvailableAndEnabledResult", "SupportNewTicketArgs", "SupportNewTicketResult", "SupportNewTicket",
+    "SupportNewTicketCommunity", "SupportNewTicketEnterprise", "SupportSimilarIssuesArgs", "SupportSimilarIssuesResult",
+    "SupportSimilarIssue", "SupportUpdateArgs", "SupportUpdateResult",
 ]
 
 
@@ -67,11 +67,14 @@ class SupportUpdate(SupportEntry, metaclass=ForUpdateMetaclass):
     pass
 
 
-@single_argument_args('data')
-class SupportAttachTicketArgs(BaseModel):
+class SupportAttachTicket(BaseModel):
     ticket: int = Field(description="Ticket number to attach the file to.")
     filename: LongString = Field(description="Path to the file to attach to the ticket.")
     token: Secret[str] = Field(default=NotRequired, description="Authentication token for attaching files.")
+
+
+class SupportAttachTicketArgs(BaseModel):
+    data: SupportAttachTicket = Field(description="File attachment details for an existing ticket.")
 
 
 class SupportAttachTicketResult(BaseModel):
