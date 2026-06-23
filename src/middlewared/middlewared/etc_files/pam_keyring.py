@@ -1,11 +1,10 @@
-import truenas_keyring
-import truenas_pyscram
 from cryptography import x509
 from cryptography.hazmat.primitives import serialization
+import truenas_keyring
+import truenas_pyscram
 
 from middlewared.api.current import ApiKeyEntry
 from middlewared.utils.user_api_key import UserApiKey, UserKeyringEntry, flush_user_api_keys
-
 
 # Must match pam_truenas's PAM_SCRAM_BINDING_NAME. pam_truenas reads this as a
 # `user`-type key directly from the uid=0 persistent keyring (a sibling of the
