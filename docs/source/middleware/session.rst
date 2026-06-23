@@ -266,7 +266,7 @@ SCRAM channel binding (SCRAM-PLUS)
 Channel binding (SCRAM-PLUS, RFC 5929 `tls-server-end-point`) is supported as an optional, negotiated
 enhancement. The API-key PAM stack runs in `channel_binding=negotiate` mode: a client may bind the
 exchange to the served TLS certificate by sending a `p=tls-server-end-point` GS2 header (instead of
-`n,,`) in the CLIENT_FIRST_MESSAGE, and middlewared verifies it against the active UI certificate;
+`n,,`) in the CLIENT_FIRST_MESSAGE, and pam_truenas verifies it against the active UI certificate's published binding;
 clients that do not request binding still authenticate. middlewared publishes the active UI
 certificate's `tls-server-end-point` value to the uid=0 persistent keyring (see
 `etc_files/pam_keyring.py`) for `pam_truenas` to verify against, refreshing it when the UI certificate

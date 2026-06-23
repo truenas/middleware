@@ -7,7 +7,7 @@ Overview
 TrueNAS middleware supports two authentication methods for API keys:
 
 1. **Legacy PLAIN authentication** (``API_KEY_PLAIN``): Sends the raw API key directly to the server
-2. **SCRAM-SHA-512 authentication** (``SCRAM``): Uses challenge-response authentication per RFC 5802 and RFC 7677
+2. **SCRAM-SHA-512 authentication** (``SCRAM``): Uses the SCRAM challenge-response mechanism (RFC 5802; RFC 7677 defines the SHA-256 family that SCRAM-SHA-512 follows)
 
 SCRAM authentication provides mutual authentication between client and server without transmitting
 the raw key material during authentication. It is the recommended method for all implementations.
@@ -177,8 +177,10 @@ handshake):
         c.login_with_api_key('root', '1-uz8DhKHFhRIUQIvjzabPYtpy...')
         pools = c.call('pool.query')
 
-Over a non-TLS transport (a plain ``ws://`` connection or the local AF_UNIX socket) the client
-skips channel binding and the server accepts the unbound exchange. See
+The local AF_UNIX socket is exempt: it is not a TLS transport, so the client skips channel binding
+and the server accepts the unbound exchange. Over a plain ``ws://`` network connection channel
+binding cannot be honored, so the default (``channel_binding=True``) raises; pass
+``channel_binding=False`` to authenticate with an unbound exchange there. See
 `Channel Binding (SCRAM-PLUS)`_ below for the protocol details and for adding channel binding to a
 custom client.
 
@@ -295,7 +297,7 @@ SCRAM authentication consists of three message exchanges:
 The protocol is defined in:
 
 - RFC 5802: Salted Challenge Response Authentication Mechanism (SCRAM)
-- RFC 7677: SCRAM-SHA-256 and SCRAM-SHA-512 (TrueNAS uses SHA-512)
+- RFC 7677: SCRAM-SHA-256 and SCRAM-SHA-256-PLUS (TrueNAS uses SHA-512)
 - RFC 5234: Augmented BNF for Syntax Specifications (for message format)
 
 **Important for API Key Authentication:** When constructing SCRAM RFC messages manually (for custom clients),
@@ -788,8 +790,11 @@ The ``tls-server-end-point`` value is the server's DER-encoded leaf certificate 
 digest from the certificate's own signature algorithm, with one substitution from RFC 5929
 Section 4.1: if that algorithm uses MD5 or SHA-1, SHA-256 is used instead. For example, a
 certificate signed with ``sha256WithRSAEncryption`` yields ``SHA-256(DER)``, and one signed with
-``ecdsa-with-SHA384`` yields ``SHA-384(DER)``. Signature algorithms with no single well-defined hash
-(EdDSA, RSASSA-PSS) have no defined binding and must be rejected.
+``ecdsa-with-SHA384`` yields ``SHA-384(DER)``. RSASSA-PSS is also supported: its hash is carried in
+the signature parameters rather than the algorithm OID, so a PSS-SHA-256 certificate yields
+``SHA-256(DER)``. RFC 5929 Section 4.1 leaves the binding undefined only for algorithms that use no
+single signature hash — notably EdDSA (Ed25519/Ed448), whose hash is internal to the signature
+scheme — and those are rejected.
 
 The DER-encoded leaf certificate is read from the live TLS connection — for example
 ``ssl_socket.getpeercert(binary_form=True)`` in Python or ``conn.ConnectionState().PeerCertificates[0].Raw``
@@ -826,8 +831,10 @@ the binding: it reflects whatever endpoint the client is really talking to.
         hash_name = 'sha256' if sig_hash.name in ('md5', 'sha1') else sig_hash.name
         return hashlib.new(hash_name, cert_der).digest()
 
-(TrueNAS UI certificates are RSA or ECDSA in practice. The authoritative implementation also rejects
-RSASSA-PSS, which the simplified example above does not special-case.)
+(This example also handles RSASSA-PSS correctly: ``cryptography`` reads the hash from the PSS
+signature parameters, so ``signature_hash_algorithm`` returns that hash rather than ``None`` — it is
+``None`` only for EdDSA, the genuinely undefined case. TrueNAS UI certificates are RSA or ECDSA in
+practice.)
 
 **Go — computing the binding from the TLS connection:**
 
@@ -849,14 +856,15 @@ RSASSA-PSS, which the simplified example above does not special-case.)
         switch cert.SignatureAlgorithm {
         case x509.MD5WithRSA, x509.SHA1WithRSA, x509.ECDSAWithSHA1: // RFC 5929 4.1: promoted
             h = sha256.New()
-        case x509.SHA256WithRSA, x509.ECDSAWithSHA256:
+        case x509.SHA256WithRSA, x509.ECDSAWithSHA256, x509.SHA256WithRSAPSS:
             h = sha256.New()
-        case x509.SHA384WithRSA, x509.ECDSAWithSHA384:
+        case x509.SHA384WithRSA, x509.ECDSAWithSHA384, x509.SHA384WithRSAPSS:
             h = sha512.New384()
-        case x509.SHA512WithRSA, x509.ECDSAWithSHA512:
+        case x509.SHA512WithRSA, x509.ECDSAWithSHA512, x509.SHA512WithRSAPSS:
             h = sha512.New()
         default:
-            // RSASSA-PSS, Ed25519, etc. have no defined tls-server-end-point binding.
+            // EdDSA (Ed25519/Ed448) has no separate signature hash, so its
+            // tls-server-end-point binding is undefined (RFC 5929 4.1).
             return nil, fmt.Errorf("tls-server-end-point undefined for %s", cert.SignatureAlgorithm)
         }
         h.Write(cert.Raw)
@@ -1000,6 +1008,13 @@ Security Considerations
 7. **Constant-time comparison**: When comparing signatures or proofs, use constant-time comparison
    functions (e.g., ``hmac.Equal()`` in Go, ``hmac.compare_digest()`` in Python) to prevent timing attacks.
 
+8. **Channel binding is negotiated, not downgrade-proof**: Per RFC 5802 Section 7, SCRAM does not
+   protect against downgrade of channel binding types, and the API-key stack runs in ``negotiate``
+   mode with a single ``SCRAM`` mechanism (no ``-PLUS`` name to advertise), so the server cannot
+   detect a channel-binding-capable client that is steered to an unbound ``n,,`` exchange. Enforcing
+   channel binding is therefore the **client's** responsibility: the TrueNAS API client binds by
+   default over TLS and refuses to silently fall back to an unbound or plaintext exchange.
+
 Error Handling
 --------------
 
@@ -1108,7 +1123,7 @@ References
 
   https://datatracker.ietf.org/doc/html/rfc5802
 
-- RFC 7677: SCRAM-SHA-256 and SCRAM-SHA-512 Simple Authentication and Security Layer (SASL) Mechanisms
+- RFC 7677: SCRAM-SHA-256 and SCRAM-SHA-256-PLUS Simple Authentication and Security Layer (SASL) Mechanisms
 
   https://datatracker.ietf.org/doc/html/rfc7677
 
