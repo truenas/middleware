@@ -7,11 +7,14 @@ from middlewared.api.base import BaseModel, Excluded, excluded_field, ForUpdateM
 
 
 __all__ = [
-    'TRUECOMMAND_CONNECTING_STATUS_REASON', 'TruecommandStatus', 'TruecommandStatusReason',
+    'TRUECOMMAND_CONNECTING_STATUS_REASON',
+    'TRUECOMMAND_DISABLED_ON_STANDBY_STATUS_REASON',
+    'TruecommandStatus', 'TruecommandStatusReason',
     'TruecommandEntry', 'TruecommandUpdateArgs', 'TruecommandUpdateResult', 'TruecommandConfigChangedEvent',
 ]
 
 TRUECOMMAND_CONNECTING_STATUS_REASON = 'Waiting for connection from Truecommand.'
+TRUECOMMAND_DISABLED_ON_STANDBY_STATUS_REASON = 'Truecommand service is disabled on standby controller'
 
 
 class TruecommandStatus(enum.Enum):
@@ -49,7 +52,8 @@ class TruecommandEntry(BaseModel):
         description="Current connection status with TrueCommand service.",
     )
     status_reason: Literal[
-        tuple(s.value for s in TruecommandStatusReason) + tuple([TRUECOMMAND_CONNECTING_STATUS_REASON])
+        tuple(s.value for s in TruecommandStatusReason)
+        + tuple([TRUECOMMAND_CONNECTING_STATUS_REASON, TRUECOMMAND_DISABLED_ON_STANDBY_STATUS_REASON])
     ] = Field(description="Explanation of the current TrueCommand connection status.")
     remote_url: str | None = Field(description="URL of the connected TrueCommand instance. `null` if not connected.")
     remote_ip_address: str | None = Field(
