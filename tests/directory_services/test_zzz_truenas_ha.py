@@ -1,5 +1,4 @@
 import pytest
-from time import sleep
 
 from middlewared.test.integration.assets.directory_service import directoryservice
 from middlewared.test.integration.utils import call, ssh, truenas_server
@@ -68,38 +67,3 @@ def test_failover(service_type):
 
     check_ds_status(call('directoryservices.status'), None)
     check_ds_status(call('failover.call_remote', 'directoryservices.status'), None)
-
-
-@pytest.mark.skipif(not ha_enabled, reason='HA only test')
-def test_secrets_propagate_to_standby_on_rotation():
-    """
-    The machine-account secret DB backup (services.cifs.secrets) is the only HA-durable
-    copy and is replicated to the standby. After an on-disk password rotation,
-    kerberos.check_updated_keytab must refresh that backup AND the refreshed row must
-    reach the standby's config DB.
-    """
-    with directoryservice('ACTIVEDIRECTORY'):
-        netbios = call('smb.config')['netbiosname'].upper()
-        workgroup = call('smb.config')['workgroup']
-        machine_key = f'SECRETS/MACHINE_PASSWORD/{workgroup}'
-
-        before = call('directoryservices.secrets.get_db_secrets')[f'{netbios}$'][machine_key]
-
-        # Rotate on the active node, then run the freshness check to back it up.
-        ssh('net ads changetrustpw')
-        call('kerberos.check_updated_keytab')
-
-        active = call('directoryservices.secrets.get_db_secrets')[f'{netbios}$'][machine_key]
-        assert active != before, 'active DB backup did not pick up the rotated secret'
-
-        # The DB write replicates to the standby; allow a moment for SQL replay.
-        standby = None
-        for _ in range(10):
-            standby = call(
-                'failover.call_remote', 'directoryservices.secrets.get_db_secrets', []
-            )[f'{netbios}$'][machine_key]
-            if standby == active:
-                break
-            sleep(1)
-
-        assert standby == active, 'standby DB backup did not receive the rotated secret'

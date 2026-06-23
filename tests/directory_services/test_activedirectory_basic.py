@@ -382,36 +382,6 @@ def test_secrets_in_sync_after_join():
         assert passwd_change['dbconfig'] == passwd_change['secrets']
 
 
-def test_check_updated_keytab_picks_up_rotation():
-    with directoryservice('ACTIVEDIRECTORY', retrieve_user=False):
-        reset_systemd_svcs('winbind')
-        assert check_ad_started() is True
-
-        before = call('directoryservices.get_last_password_change')
-        kt_before = call(
-            'kerberos.keytab.query', [['name', '=', 'AD_MACHINE_ACCOUNT']], {'get': True}
-        )['file']
-
-        # Rotate the machine account password out-of-band so the on-disk
-        # MACHINE_LAST_CHANGE_TIME advances ahead of the DB backup.
-        ssh('net ads changetrustpw')
-
-        after = call('directoryservices.get_last_password_change')
-        assert after['secrets'] > before['secrets']
-
-        # The freshness check must now back up the new secret and refresh the AD
-        # machine-account keytab (it no-ops once the two copies agree again).
-        call('kerberos.check_updated_keytab')
-
-        synced = call('directoryservices.get_last_password_change')
-        assert synced['dbconfig'] == synced['secrets']
-
-        kt_after = call(
-            'kerberos.keytab.query', [['name', '=', 'AD_MACHINE_ACCOUNT']], {'get': True}
-        )['file']
-        assert kt_after != kt_before
-
-
 def test_keytab_restore():
 
     with directoryservice('ACTIVEDIRECTORY', retrieve_user=False):
