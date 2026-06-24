@@ -14,6 +14,26 @@ class AuditBackendSetupAlertClass(AlertClass, SimpleOneShotAlertClass):
     text = "Audit service failed backend setup: %(service)s. See /var/log/middlewared.log"
 
 
+class AuditDatabaseCorruptedAlertClass(AlertClass, SimpleOneShotAlertClass):
+    category = AlertCategory.AUDIT
+    level = AlertLevel.ERROR
+    title = "Audit Database Contains Corrupted Records"
+    text = (
+        "The %(service)s audit database contains %(count)s record(s) with unreadable data "
+        "that are skipped by audit queries. See /var/log/middlewared.log for details."
+    )
+
+    async def create(self, args):
+        # Key on the service alone so a changing count updates the alert instead of duplicating it.
+        return Alert(AuditDatabaseCorruptedAlertClass, args, key=args['service'])
+
+    async def delete(self, alerts, query):
+        return list(filter(
+            lambda alert: alert.args['service'] != query,
+            alerts
+        ))
+
+
 # --------------- Monitored Alerts ----------------
 class AuditServiceHealthAlertClass(AlertClass):
     category = AlertCategory.AUDIT
