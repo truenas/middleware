@@ -28,6 +28,9 @@ ProductType = ProductTypes()
 ProductName = ProductNames()
 
 MIDDLEWARE_RUN_DIR = '/run/middleware'
+# Private unix socket that nginx reverse-proxies all external API/UI traffic over.
+# Locked down to the nginx worker uid so this traffic is not exposed on loopback TCP.
+MIDDLEWARE_NGINX_SOCK = f'{MIDDLEWARE_RUN_DIR}/middlewared-nginx.sock'
 MIDDLEWARE_BOOT_ENV_STATE_DIR = '/var/lib/truenas-middleware'
 MIDDLEWARE_STARTED_SENTINEL_PATH = f'{MIDDLEWARE_RUN_DIR}/middlewared-started'
 BOOTREADY = f'{MIDDLEWARE_RUN_DIR}/.bootready'
