@@ -6,6 +6,7 @@ from middlewared.api.base import (
     BaseModel,
     Excluded,
     ForUpdateMetaclass,
+    IPvAnyAddress,
     NonEmptyString,
     UUIDv4String,
     excluded_field,
@@ -34,6 +35,8 @@ __all__ = [
     'VMRandomMacResult', 'VMCreate', 'VMUpdate', 'VMDeleteOptions', 'VMVirtualizationDetails', 'VMFlags',
     'VMGetVmemoryInUse', 'VMStatus', 'VMGetVmMemoryInfo', 'VMStartOptions', 'VMStopOptions', 'VMPortWizard',
     'VMBootloaderOptions',
+    'VMGuestNetworkInterfaceIPAddress', 'VMGuestNetworkInterface',
+    'VMGetGuestNetworkInterfacesArgs', 'VMGetGuestNetworkInterfacesResult',
 ]
 
 
@@ -572,3 +575,27 @@ class VMRandomMacArgs(BaseModel):
 
 class VMRandomMacResult(BaseModel):
     result: str = Field(description="Randomly generated MAC address suitable for virtual machine network interfaces.")
+
+
+class VMGuestNetworkInterfaceIPAddress(BaseModel):
+    ip_address: IPvAnyAddress = Field(description="IP address assigned to the interface.")
+    prefix: int = Field(description="Prefix length (subnet mask bits).")
+    ip_address_type: Literal["ipv4", "ipv6"] = Field(description="Address family: 'ipv4' or 'ipv6'.")
+
+
+class VMGuestNetworkInterface(BaseModel):
+    name: str = Field(description="Interface name as seen in the guest OS (e.g. 'eth0', 'ens3').")
+    hardware_address: str = Field(description="MAC address of the interface.")
+    ip_addresses: list[VMGuestNetworkInterfaceIPAddress] = Field(
+        description="IP addresses currently assigned to this interface."
+    )
+
+
+class VMGetGuestNetworkInterfacesArgs(BaseModel):
+    id: int = Field(description="ID of the virtual machine.")
+
+
+class VMGetGuestNetworkInterfacesResult(BaseModel):
+    result: list[VMGuestNetworkInterface] = Field(
+        description="Network interfaces reported by the QEMU guest agent."
+    )

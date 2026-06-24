@@ -39,6 +39,8 @@ from middlewared.api.current import (
     VMGetDisplayWebUri,
     VMGetDisplayWebUriArgs,
     VMGetDisplayWebUriResult,
+    VMGetGuestNetworkInterfacesArgs,
+    VMGetGuestNetworkInterfacesResult,
     VMGetMemoryUsageArgs,
     VMGetMemoryUsageResult,
     VMGetVmemoryInUse,
@@ -49,6 +51,7 @@ from middlewared.api.current import (
     VMGetVmMemoryInfoResult,
     VMGuestArchitectureAndMachineChoicesArgs,
     VMGuestArchitectureAndMachineChoicesResult,
+    VMGuestNetworkInterface,
     VMLogFileDownloadArgs,
     VMLogFileDownloadResult,
     VMLogFilePathArgs,
@@ -104,6 +107,7 @@ from .info import (
     bootloader_ovmf_choices,
     cpu_model_choices,
     get_console,
+    get_guest_network_interfaces,
     log_file_download,
     log_file_path,
     port_wizard,
@@ -296,6 +300,20 @@ class VMService(GenericCRUDService[VMEntry]):
         Get the console device from a given guest.
         """
         return await get_console(self.context, id_)
+
+    @api_method(VMGetGuestNetworkInterfacesArgs, VMGetGuestNetworkInterfacesResult, roles=['VM_READ'],
+                check_annotations=True)
+    def get_guest_network_interfaces(self, id_: int) -> list[VMGuestNetworkInterface]:
+        """
+        Return the network interfaces visible inside a running VM as reported by the QEMU guest agent.
+
+        Requires the guest to have ``qemu-guest-agent`` installed and running.
+
+        .. note::
+            This method polls the guest agent with a 30-second timeout. If the agent is not yet ready
+            (e.g. the guest just booted), a :exc:`CallError` is raised and the caller should retry.
+        """
+        return get_guest_network_interfaces(self.context, id_)
 
     @api_method(VMGetDisplayDevicesArgs, VMGetDisplayDevicesResult, roles=['VM_READ'], check_annotations=True)
     async def get_display_devices(self, id_: int) -> list[VMDisplayDeviceInfo]:
