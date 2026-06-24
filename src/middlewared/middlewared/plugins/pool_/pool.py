@@ -416,6 +416,9 @@ class PoolService(CRUDService):
         """
         Create a new ZFS Pool.
 
+        .. deprecated:: 27.0.0
+            Use :method:`zpool.create` instead.
+
         .. examples(websocket)::
 
           Create a pool named "tank", raidz1 with 3 disks, 1 cache disk, 1 ZIL/log disk

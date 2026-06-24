@@ -1,7 +1,14 @@
+import errno
+import os
 import threading
+
+from fenced.fence import ExitCode as FencedExitCodes
+from truenas_pylibzfs import ZFSException
 
 from middlewared.api import Event, api_method
 from middlewared.api.current import (
+    ZPoolCreateArgs,
+    ZPoolCreateResult,
     ZPoolEntry,
     ZPoolQueryAddedEvent,
     ZPoolQueryArgs,
@@ -9,9 +16,20 @@ from middlewared.api.current import (
     ZPoolQueryRemovedEvent,
     ZPoolQueryResult,
 )
-from middlewared.service import Service, private
+from middlewared.plugins.pool_.utils import UpdateImplArgs, ZPOOL_CACHE_FILE
+from middlewared.plugins.zfs_.validation_utils import validate_pool_name
+from middlewared.service import CallError, Service, ValidationErrors, job, private
 from middlewared.service.decorators import pass_thread_local_storage
+from middlewared.utils.size import format_size
 
+from .create_impl import (
+    assemble_create_pool_vdev_kwargs,
+    build_fs_properties,
+    build_pool_properties,
+    convert_topology_to_vdevs,
+    validate_vdev_layout,
+)
+from .exceptions import ZpoolCreateException, ZpoolException
 from .query_impl import query_impl
 
 # Properties baked into every emitted `zpool.query` event so that subscribers
@@ -216,3 +234,188 @@ class ZPoolService(Service):
     def send_removed_event(self, pool_id: int):
         """Emit a ``zpool.query`` REMOVED event for the given database id."""
         self.middleware.send_event("zpool.query", "REMOVED", id=pool_id)
+
+    @api_method(
+        ZPoolCreateArgs,
+        ZPoolCreateResult,
+        roles=["POOL_WRITE"],
+        audit="Pool create",
+        audit_extended=lambda data: data["name"],
+    )
+    @job(lock="pool_createupdate")
+    async def create(self, job, data):
+        """
+        Create a new ZFS pool.
+
+        The pool is built from the supplied ``topology`` using the
+        ``truenas_pylibzfs`` bindings. All disks referenced by the topology are
+        formatted before the pool is created, so any disk currently in use will
+        cause the call to fail. On an HA system this must run on the active
+        controller.
+
+        .. versionadded:: 27.0.0
+
+        Example::
+
+            {
+                "name": "tank",
+                "topology": {
+                    "data": [{"type": "RAIDZ1", "disks": ["sda", "sdb", "sdc"]}],
+                    "cache": [{"type": "STRIPE", "disks": ["sdd"]}],
+                    "log": [{"type": "STRIPE", "disks": ["sde"]}],
+                    "spares": ["sdf"]
+                }
+            }
+        """
+        verrors = ValidationErrors()
+        name = data["name"]
+
+        if await self.middleware.call("pool.query", [("name", "=", name)]):
+            verrors.add("zpool_create.name", "A pool with this name already exists.", errno.EEXIST)
+        elif not validate_pool_name(name):
+            verrors.add("zpool_create.name", "Invalid pool name", errno.EINVAL)
+
+        dedup_table_quota_value = None
+        if data["deduplication"] == "ON":
+            dedup_table_quota_value = await self.middleware.call(
+                "pool.validate_dedup_table_quota", data, verrors, "zpool_create"
+            )
+
+        verrors.check()
+
+        is_ha = await self.middleware.call("failover.licensed")
+        if is_ha and (rc := await self.middleware.call("failover.fenced.start")):
+            if rc == FencedExitCodes.ALREADY_RUNNING.value[0]:
+                try:
+                    await self.middleware.call("failover.fenced.signal", {"reload": True})
+                except Exception:
+                    self.logger.error("Unhandled exception reloading fenced", exc_info=True)
+            else:
+                err = "Unexpected error starting fenced"
+                for i in filter(lambda x: x.value[0] == rc, FencedExitCodes):
+                    err = i.value[1]
+                raise CallError(err)
+
+        for field, message in validate_vdev_layout(data["topology"]):
+            verrors.add(f"zpool_create.{field}", message)
+        verrors.check()
+
+        disks, vdevs = convert_topology_to_vdevs(data["topology"])
+        verrors.add_child(
+            "zpool_create",
+            await self.middleware.call("disk.check_disks_availability", list(disks), data["allow_duplicate_serials"]),
+        )
+        verrors.check()
+
+        disks_cache = {i.name: {"size": i.size_bytes} for i in await self.middleware.call("disk.get_disks")}
+        min_data_size = min(
+            disks_cache[disk]["size"]
+            for disk in sum([vdev["disks"] for vdev in data["topology"].get("data", [])], [])
+            if disk in disks_cache
+        )
+        for spare_disk in data["topology"].get("spares") or []:
+            spare_size = disks_cache[spare_disk]["size"]
+            if spare_size < min_data_size:
+                verrors.add(
+                    "zpool_create.topology",
+                    f"Spare {spare_disk} ({format_size(spare_size)}) is smaller than the smallest data disk "
+                    f"({format_size(min_data_size)})",
+                )
+        verrors.check()
+
+        if data["all_sed"]:
+            await self.middleware.call(
+                "disk.setup_sed_disks_for_pool", list(disks), "zpool_create.topology", data["all_sed"]
+            )
+
+        if osize := (await self.middleware.call("system.advanced.config"))["overprovision"]:
+            if log_disks := {disk: osize
+                             for disk in sum([vdev["disks"] for vdev in data["topology"].get("log", [])], [])}:
+                # will log errors if there are any so it won't crash here (this matches CORE behavior)
+                await (await self.middleware.call("disk.resize", log_disks, True)).wait()
+
+        await self.middleware.call("pool.format_disks", job, disks, 0, 30)
+
+        has_draid = any(
+            vdev["type"].startswith("DRAID")
+            for vdev in data["topology"]["data"] + data["topology"].get("special", [])
+        )
+        properties = build_pool_properties(dedup_table_quota_value)
+        filesystem_properties = build_fs_properties(name, data["deduplication"], data["checksum"], has_draid)
+
+        await self.middleware.run_in_thread(os.makedirs, os.path.dirname(ZPOOL_CACHE_FILE), exist_ok=True)
+
+        pool_id = z_pool_guid = None
+        try:
+            job.set_progress(90, "Creating ZFS Pool")
+            z_pool_guid = await self.middleware.call("zpool.create_pool_impl", {
+                "name": name,
+                "vdevs": vdevs,
+                "properties": properties,
+                "filesystem_properties": filesystem_properties,
+            })
+
+            job.set_progress(95, "Setting pool options")
+
+            # Inherit mountpoint after create because we set mountpoint on creation
+            # making it a "local" source.
+            await self.middleware.call(
+                "pool.dataset.update_impl", UpdateImplArgs(name=name, iprops={"mountpoint"})
+            )
+            await self.middleware.call("zfs.resource.mount", name)
+
+            pool_id = await self.middleware.call(
+                "datastore.insert",
+                "storage.volume",
+                {"name": name, "guid": str(z_pool_guid), "all_sed": data["all_sed"]},
+                {"prefix": "vol_"},
+            )
+            await self.middleware.call("datastore.insert", "storage.scrub", {"volume": pool_id}, {"prefix": "scrub_"})
+        except Exception as e:
+            # Something went wrong, roll back and destroy the pool.
+            self.logger.debug("Pool %r failed to create with topology %r", name, data["topology"])
+            if z_pool_guid:
+                try:
+                    await self.middleware.call("zfs.pool.delete", name)
+                except Exception:
+                    self.logger.warning("Failed to delete pool on zpool.create rollback", exc_info=True)
+            if pool_id:
+                await self.middleware.call("datastore.delete", "storage.volume", pool_id)
+            if isinstance(e, ZpoolException):
+                raise CallError(str(e), e.errno) from e
+            raise
+
+        # There is really no point in waiting for all these services to reload so do
+        # them in the background.
+        self.middleware.create_task(self.middleware.call("pool.restart_services"))
+
+        pool = await self.middleware.call("pool.get_instance", pool_id)
+        await self.middleware.call_hook("pool.post_create", pool=pool)
+        await self.middleware.call_hook("pool.post_create_or_update", pool=pool)
+        self.middleware.send_event("pool.query", "ADDED", id=pool_id, fields=pool)
+        await self.middleware.call("zpool.send_change_event", name, "ADDED")
+        return (await self.middleware.call(
+            "zpool.query", {"pool_names": [name], "topology": True, "scan": True}
+        ))[0]
+
+    @private
+    @pass_thread_local_storage
+    def create_pool_impl(self, tls, data):
+        """Create the ZFS pool via ``truenas_pylibzfs`` and return its GUID.
+
+        This is the only step that touches the libzfs handle directly. ``data`` is
+        a dict with keys: ``name``, ``vdevs`` (converted topology with populated
+        ``/dev/<gptid>`` device lists), ``properties``, and ``filesystem_properties``.
+        """
+        kwargs = {
+            "name": data["name"],
+            **assemble_create_pool_vdev_kwargs(data["vdevs"]),
+            "properties": data["properties"],
+            "filesystem_properties": data["filesystem_properties"],
+        }
+        try:
+            tls.lzh.create_pool(**kwargs)
+        except ZFSException as e:
+            raise ZpoolCreateException(data["name"], str(e)) from e
+
+        return query_impl(tls.lzh, {"pool_names": [data["name"]]})[0]["guid"]
