@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 from aiohttp.web import Request
 from truenas_pynetif.diag import get_inet_diag, netlink_diag
 
+from . import MIDDLEWARE_NGINX_SOCK
 from .auth import AUID_UNSET, get_login_uid
 
 if TYPE_CHECKING:
@@ -64,6 +65,16 @@ class ConnectionOrigin:
 
             sock = transport.get_extra_info("socket")
             if sock.family == AF_UNIX:
+                if sock.getsockname() == MIDDLEWARE_NGINX_SOCK:
+                    # nginx reverse-proxies external API/UI traffic over a
+                    # private unix socket, but these connections represent
+                    # remote TCP/IP clients. Classify them as TCP/IP origins
+                    # from the reverse-proxy X-Real-Remote-* headers so that
+                    # all downstream access control treats them exactly like
+                    # direct nginx TCP connections (UI allowlist enforced, no
+                    # local/root auto-authentication, secure-transport, etc.).
+                    return get_tcp_ip_info(sock, request)
+
                 pid, uid, gid = unpack("3i", sock.getsockopt(SOL_SOCKET, SO_PEERCRED, calcsize("3i")))
                 login_uid = get_login_uid(pid)
                 return cls(
@@ -211,6 +222,12 @@ def get_tcp_ip_info(
         ssl = request.headers.get("X-Https", "") == "on"
         check_uids = True
     except (KeyError, ValueError):
+        if sock.family not in (AF_INET, AF_INET6):
+            # No reverse-proxy headers on a non-TCP/IP socket (e.g. the nginx
+            # unix socket reached without the expected headers). We cannot
+            # determine a meaningful origin, so reject the connection rather
+            # than attempt to unpack a unix peer name.
+            return None
         ra, rp = sock.getpeername()
         family = sock.family
         ssl = False

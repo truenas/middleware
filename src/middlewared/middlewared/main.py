@@ -57,11 +57,12 @@ from .pylibvirt import create_pylibvirt_domains_manager
 from .role import ROLES, RoleManager
 from .service_container import BaseServiceContainer
 from .service_exception import CallError, ErrnoMixin
-from .utils import MIDDLEWARE_RUN_DIR, MIDDLEWARE_STARTED_SENTINEL_PATH, sw_version
+from .utils import MIDDLEWARE_NGINX_SOCK, MIDDLEWARE_RUN_DIR, MIDDLEWARE_STARTED_SENTINEL_PATH, sw_version
 from .utils.audit import audit_username_from_session
 from .utils.debug import get_threads_stacks
 from .utils.limits import MsgSizeError, MsgSizeLimit, parse_message
 from .utils.mock import coerce_mock_result, get_mock_return_model
+from .utils.nss.pwd import getpwnam
 from .utils.plugins import LoadPluginsMixin
 from .utils.prctl import set_cmdline, set_name
 from .utils.privilege import credential_has_full_admin
@@ -132,6 +133,7 @@ from middlewared.plugins.snapshot import PeriodicSnapshotTaskService
 from middlewared.plugins.ssh import SSHService
 from middlewared.plugins.support import SupportService
 from middlewared.plugins.system_vendor import VendorService
+from middlewared.plugins.system_vendor.vendor import is_vendored
 from middlewared.plugins.truecommand import TruecommandService
 from middlewared.plugins.truenas import TrueNASService
 from middlewared.plugins.truenas_connect import TrueNASConnectService
@@ -2040,11 +2042,33 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         if await self.call('system.state') == 'READY':
             self._setup_periodic_tasks()
 
-        await self.add_tcp_site('127.0.0.1')
+        # Private socket that nginx reverse-proxies all external API/UI traffic
+        # over. It is owned by the nginx worker uid (www-data) with 0o600 perms.
+        # Connections arriving here are classified as TCP/IP origins from the X-Real-Remote-*
+        # headers (see middlewared.utils.origin.ConnectionOrigin.create).
+        await self.site_manager.add_site(web.UnixSite, MIDDLEWARE_NGINX_SOCK)
+
+        # Public local socket used by midclt and other local clients.
         unix_socket_path = os.path.join(MIDDLEWARE_RUN_DIR, 'middlewared.sock')
         await self.site_manager.add_site(web.UnixSite, unix_socket_path)
+
+        # The loopback TCP listener is only consumed by the vendor (HexOS)
+        # websocat tunnel (scripts/vendor_service.py). On non-vendored systems
+        # nothing connects to it (HA binds its own :6000 site on the heartbeat
+        # IP), so we avoid exposing loopback TCP at all.
+        if is_vendored():
+            await self.add_tcp_site('127.0.0.1')
+
         await self.site_manager.start_sites(self.runner)
+
         os.chmod(unix_socket_path, 0o666)
+
+        # Restrict the nginx socket to the nginx worker uid now that the site
+        # has been started and the socket file exists. root (middleware) can
+        # still connect regardless of these perms.
+        www_data = getpwnam('www-data')
+        os.chown(MIDDLEWARE_NGINX_SOCK, www_data.pw_uid, www_data.pw_gid)
+        os.chmod(MIDDLEWARE_NGINX_SOCK, 0o600)
 
         self.logger.debug('Accepting connections')
         self._console_write('loading completed\n')

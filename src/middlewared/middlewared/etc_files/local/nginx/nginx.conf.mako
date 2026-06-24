@@ -174,6 +174,11 @@ http {
     access_log /var/log/nginx/access.log combined buffer=32k flush=5s;
     error_log /var/log/nginx/error.log;
 
+    # All middleware API/UI traffic is proxied over a private unix socket
+    upstream middlewared {
+        server unix:/run/middleware/middlewared-nginx.sock;
+    }
+
     map $http_upgrade $connection_upgrade {
         default upgrade;
         '' close;
@@ -286,7 +291,7 @@ ${spaces}gzip off;
         location /api {
             allow all;  # This is handled by `Middleware.ws_can_access` because if we return HTTP 403, browser security
                         # won't allow us to understand that connection error was due to client IP not being allowlisted.
-            proxy_pass http://127.0.0.1:6000/api;
+            proxy_pass http://middlewared/api;
             proxy_http_version 1.1;
             proxy_set_header X-Real-Remote-Addr $remote_addr;
             proxy_set_header X-Real-Remote-Port $remote_port;
@@ -324,7 +329,7 @@ ${spaces}gzip off;
             add_header Access-Control-Allow-Origin $allow_origin always;
             add_header Access-Control-Allow-Headers "*" always;
 % endif
-            proxy_pass http://127.0.0.1:6000/api/versions;
+            proxy_pass http://middlewared/api/versions;
             proxy_http_version 1.1;
             proxy_set_header X-Real-Remote-Addr $remote_addr;
             proxy_set_header X-Real-Remote-Port $remote_port;
@@ -405,7 +410,7 @@ ${spaces}gzip off;
         location /websocket {
             allow all;  # This is handled by `Middleware.ws_can_access` because if we return HTTP 403, browser security
                         # won't allow us to understand that connection error was due to client IP not being allowlisted.
-            proxy_pass http://127.0.0.1:6000/websocket;
+            proxy_pass http://middlewared/websocket;
             proxy_http_version 1.1;
             proxy_set_header X-Real-Remote-Addr $remote_addr;
             proxy_set_header X-Real-Remote-Port $remote_port;
@@ -422,7 +427,7 @@ ${spaces}gzip off;
         location /websocket/shell {
             allow all;  # This is handled by `Middleware.ws_can_access` because if we return HTTP 403, browser security
                         # won't allow us to understand that connection error was due to client IP not being allowlisted.
-            proxy_pass http://127.0.0.1:6000/_shell;
+            proxy_pass http://middlewared/_shell;
             proxy_http_version 1.1;
             proxy_set_header X-Real-Remote-Addr $remote_addr;
             proxy_set_header X-Real-Remote-Port $remote_port;
@@ -440,7 +445,7 @@ ${spaces}gzip off;
 	    # do not add the path to proxy_pass because of automatic url decoding
 	    # e.g. /api/v2.0/pool/dataset/id/tank%2Ffoo/ would become
 	    #      /api/v2.0/pool/dataset/id/tank/foo/
-            proxy_pass http://127.0.0.1:6000;
+            proxy_pass http://middlewared;
             proxy_http_version 1.1;
             proxy_set_header X-Real-Remote-Addr $remote_addr;
             proxy_set_header X-Real-Remote-Port $remote_port;
@@ -460,7 +465,7 @@ ${spaces}gzip off;
             add_header Access-Control-Allow-Origin $allow_origin always;
             add_header Access-Control-Allow-Headers "*" always;
 % endif
-            proxy_pass http://127.0.0.1:6000;
+            proxy_pass http://middlewared;
             proxy_http_version 1.1;
             proxy_set_header X-Real-Remote-Addr $remote_addr;
             proxy_set_header X-Real-Remote-Port $remote_port;
@@ -474,7 +479,7 @@ ${spaces}gzip off;
         location /_upload {
             # Allow uploads of any size. Its middlewared job to handle size.
             client_max_body_size 0;
-            proxy_pass http://127.0.0.1:6000;
+            proxy_pass http://middlewared;
             # make sure nginx does not buffer the upload and pass directly to middlewared
             proxy_request_buffering off;
             proxy_http_version 1.1;
@@ -487,7 +492,7 @@ ${spaces}gzip off;
         }
 
         location /_plugins {
-            proxy_pass http://127.0.0.1:6000/_plugins;
+            proxy_pass http://middlewared/_plugins;
             proxy_http_version 1.1;
             proxy_set_header X-Real-Remote-Addr $remote_addr;
             proxy_set_header X-Real-Remote-Port $remote_port;
