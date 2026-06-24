@@ -227,3 +227,16 @@ def test_api_key_revoke_insecure_transport(sharing_admin_user):
             'Test API Key: API key has been revoked and must either be renewed or deleted. '
             'Revoke reason: Attempt to use over an insecure transport.'
         )
+
+
+def test_api_key_scram_channel_binding(sharing_admin_user):
+    # Over the production TLS (wss) transport the API client auto-engages SCRAM-PLUS channel
+    # binding (RFC 5929 tls-server-end-point). The bound exchange succeeds only when the
+    # server's published binding matches the certificate nginx serves.
+    with api_key(sharing_admin_user.username) as key:
+        with client(auth=None) as c:
+            c.login_with_api_key(sharing_admin_user.username, key)
+            me = c.call('auth.me')
+            assert me['pw_name'] == sharing_admin_user.username
+            assert 'API_KEY' in me['account_attributes']
+            assert 'SCRAM' in me['account_attributes']
