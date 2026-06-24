@@ -3,7 +3,6 @@ from cryptography.hazmat.primitives import serialization
 import truenas_keyring
 import truenas_pyscram
 
-from middlewared.api.current import ApiKeyEntry
 from middlewared.utils.user_api_key import UserApiKey, UserKeyringEntry, flush_user_api_keys
 
 # Must match pam_truenas's PAM_SCRAM_BINDING_NAME. pam_truenas reads this as a
@@ -125,7 +124,6 @@ def _flush_server_channel_binding(middleware) -> None:
 def render(service, middleware, render_ctx):
     api_keys = render_ctx['api_key.query']
     entries = {}
-    keyring_entries = []
     for key in api_keys:
         if key['username'] not in entries:
             entries[key['username']] = [key]
