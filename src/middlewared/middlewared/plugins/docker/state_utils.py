@@ -25,6 +25,7 @@ class DatasetDefaults:
     casesensitivity: DatasetProp = DatasetProp('sensitive', True)
     canmount: DatasetProp = DatasetProp('noauto', False)
     dedup: DatasetProp = DatasetProp('off', False)
+    devices: DatasetProp = DatasetProp('on', False, DOCKER_DATASET_NAME)
     encryption: DatasetProp = DatasetProp('off', True, DOCKER_DATASET_NAME)
     exec: DatasetProp = DatasetProp('on', False)
     mountpoint: DatasetProp = DatasetProp(f'/{IX_APPS_DIR_NAME}', True, DOCKER_DATASET_NAME)

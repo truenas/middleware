@@ -332,3 +332,32 @@ def test_drift_repair_ix_apps(docker_pool):
     # runs the drift-repair enforce_mountpoint_perms call.
     call("docker.start_service")
     assert _chokepoint_perms(IX_APPS_CHOKEPOINT) == (0o700, 0, 0)
+
+
+def test_ix_apps_tree_keeps_exec_devices_setuid_on(docker_pool):
+    # The pool-root defaults of exec/devices/setuid=off would otherwise be
+    # inherited by ix-apps and break apps that need to execute binaries,
+    # honor setuid bits, or open device nodes. The ix-apps root pins all
+    # three LOCAL; every child inherits.
+    ix_apps_root = f"{docker_pool['pool']}/ix-apps"
+    children = {
+        f"{ix_apps_root}/{child}"
+        for child in ("truenas_catalog", "app_configs", "app_mounts", "docker")
+    }
+    results = {
+        r["name"]: r["properties"]
+        for r in call(
+            "zfs.resource.query",
+            {"paths": sorted({ix_apps_root} | children), "properties": ["exec", "devices", "setuid"]},
+        )
+    }
+    assert set(results) == {ix_apps_root} | children
+
+    for p in ("exec", "devices", "setuid"):
+        root_prop = results[ix_apps_root][p]
+        assert root_prop["value"] == "on", (p, root_prop)
+        assert root_prop["source"]["type"] == "LOCAL", (p, root_prop)
+
+    for child in children:
+        for p in ("exec", "devices", "setuid"):
+            assert results[child][p]["value"] == "on", (child, p, results[child][p])

@@ -5,7 +5,7 @@ from middlewared.plugins.pool_.utils import CreateImplArgs
 from middlewared.service import CallError, ServiceContext
 from middlewared.utils.filesystem.perms import enforce_dir_perms
 
-from .utils import CONTAINER_DS_NAME, container_dataset, container_dataset_mountpoint
+from .utils import CONTAINER_DS_MOUNT_PROPS, CONTAINER_DS_NAME, container_dataset, container_dataset_mountpoint
 
 CONTAINER_DS_PARENT_DIR = f"/mnt/{CONTAINER_DS_NAME}"
 
@@ -44,6 +44,7 @@ async def ensure_datasets(context: ServiceContext, pool: str) -> None:
                     "acltype": "posix",
                     "aclmode": "discard",
                     "snapdir": "hidden",
+                    **CONTAINER_DS_MOUNT_PROPS,
                 },
             ),
         )
