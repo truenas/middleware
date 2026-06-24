@@ -33,6 +33,7 @@ jobs:
             middlewared/plugins/apps/ \
             middlewared/plugins/apps_images/ \
             middlewared/plugins/catalog/ \
+            middlewared/plugins/cloud_backup/ \
             middlewared/plugins/container/ \
             middlewared/plugins/cron/ \
             middlewared/plugins/docker/ \
@@ -46,6 +47,8 @@ jobs:
             middlewared/plugins/reporting/ \
             middlewared/plugins/rsync/ \
             middlewared/plugins/snapshot/ \
+            middlewared/plugins/ssh/ \
+            middlewared/plugins/support/ \
             middlewared/plugins/system_vendor/ \
             middlewared/plugins/truecommand/ \
             middlewared/plugins/truenas/ \

@@ -10,7 +10,7 @@ class SSHService(SimpleService):
     systemd_unit = "ssh"
 
     async def after_start(self):
-        await self.middleware.call("ssh.save_keys")
+        await self.middleware.call2(self.middleware.services.ssh.save_keys)
 
     async def after_reload(self):
-        await self.middleware.call("ssh.save_keys")
+        await self.middleware.call2(self.middleware.services.ssh.save_keys)

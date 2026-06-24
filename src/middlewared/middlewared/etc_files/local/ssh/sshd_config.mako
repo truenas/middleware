@@ -16,13 +16,10 @@
 			middleware.logger.debug("%s: changing owner to root:root", p)
 			os.chown(p, 0, 0)
 
-	if not ssh_config['sftp_log_level']:
-		ssh_config['sftp_log_level'] = 'ERROR'
+	sftp_log_level = ssh_config.sftp_log_level or 'ERROR'
+	sftp_log_facility = ssh_config.sftp_log_facility or 'AUTH'
 
-	if not ssh_config['sftp_log_facility']:
-		ssh_config['sftp_log_facility'] = 'AUTH'
-
-	ifaces = filter_list(render_ctx['interface.query'], [['name', 'in', ssh_config['bindiface']]])
+	ifaces = filter_list(render_ctx['interface.query'], [['name', 'in', ssh_config.bindiface]])
 	bind_ifaces = []
 	for iface in ifaces:
 		for alias in iface.get('state', {}).get('aliases', []):
@@ -42,32 +39,32 @@
 	root_user = filter_list(users, [['username', '=', 'root']], {'get': True})
 	login_banner = render_ctx['system.advanced.login_banner']
 %>\
-Subsystem	sftp	internal-sftp -l ${ssh_config['sftp_log_level']} -f ${ssh_config['sftp_log_facility']}
-% if 'Protocol' not in ssh_config['options']:
+Subsystem	sftp	internal-sftp -l ${sftp_log_level} -f ${sftp_log_facility}
+% if 'Protocol' not in ssh_config.options:
 Protocol 2
 % endif
-% if 'UseDNS' not in ssh_config['options']:
+% if 'UseDNS' not in ssh_config.options:
 UseDNS no
 % endif
-% if 'ChallengeResponseAuthentication' not in ssh_config['options'] and not twofactor_enabled:
+% if 'ChallengeResponseAuthentication' not in ssh_config.options and not twofactor_enabled:
 ChallengeResponseAuthentication no
 % endif
-% if 'ClientAliveCountMax' not in ssh_config['options']:
+% if 'ClientAliveCountMax' not in ssh_config.options:
 ClientAliveCountMax 3
 % endif
-% if 'ClientAliveInterval' not in ssh_config['options']:
+% if 'ClientAliveInterval' not in ssh_config.options:
 ClientAliveInterval 15
 % endif
 ## Scale doesnt have HPN patches yet
-% if 'VersionAddendum' not in ssh_config['options']:
+% if 'VersionAddendum' not in ssh_config.options:
 VersionAddendum none
 % endif
 ## Add aes128-cbc by default. See #20044
-% if 'Ciphers' not in ssh_config['options'] and 'AES128-CBC' in ssh_config['weak_ciphers']:
+% if 'Ciphers' not in ssh_config.options and 'AES128-CBC' in ssh_config.weak_ciphers:
 Ciphers +aes128-cbc
 % endif
-% if ssh_config['tcpport'] > 0:
-Port ${ssh_config['tcpport']}
+% if ssh_config.tcpport > 0:
+Port ${ssh_config.tcpport}
 % endif
 % for ip in bind_ifaces:
 ListenAddress ${ip}
@@ -77,18 +74,18 @@ PermitRootLogin yes
 % else:
 PermitRootLogin without-password
 % endif
-% if ssh_config['tcpfwd']:
+% if ssh_config.tcpfwd:
 AllowTcpForwarding yes
 % else:
 AllowTcpForwarding no
 % endif
-% if ssh_config['compression']:
+% if ssh_config.compression:
 Compression delayed
 % else:
 Compression no
 % endif
 PasswordAuthentication no
-% if ssh_config['kerberosauth']:
+% if ssh_config.kerberosauth:
 GSSAPIAuthentication yes
 % endif
 PubkeyAuthentication yes
@@ -99,13 +96,13 @@ UsePAM yes
 PrintMotd no
 SetEnv LC_ALL=C.UTF-8
 
-% if ssh_config['passwordauth']:
+% if ssh_config.passwordauth:
 % for user in filter_list(users, [['ssh_password_enabled', '=', True]]):
 Match User "${user['username']}"
 	PasswordAuthentication yes
 	ChallengeResponseAuthentication yes
 % endfor
-% for group in ssh_config['password_login_groups']:
+% for group in ssh_config.password_login_groups:
 Match Group "${group}"
 	PasswordAuthentication yes
 	ChallengeResponseAuthentication yes
@@ -118,4 +115,4 @@ Banner /etc/login_banner
 # in the config. User provided "Match" blocks,
 # for example, need to come AFTER the UsePam
 # line. Otherwise ssh service WILL NOT START.
-${ssh_config['options']}
+${ssh_config.options}

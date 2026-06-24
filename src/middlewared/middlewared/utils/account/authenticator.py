@@ -449,6 +449,8 @@ class ScramPamAuthenticator(UserPamAuthenticator):
         if not origin.is_tcp_ip_family:
             raise TypeError(f'{origin}: unexpected origin for ScramPamAuthenticator')
 
+        self.origin = origin
+
         try:
             self.client_first = truenas_pyscram.ClientFirstMessage(rfc_string=client_first_message)
         except Exception as exc:
@@ -483,6 +485,17 @@ class ScramPamAuthenticator(UserPamAuthenticator):
             # We had some sort of parsing error on the client-provided RFC string. We'll convert it
             # to a PAM response here
             return TrueNASAuthenticatorResponse(stage, PAMCode.PAM_AUTH_ERR, str(self.scram_error))
+
+        # Channel binding proves a live TLS channel to THIS server. TLS is terminated at
+        # nginx, so pam_truenas cannot observe the transport and the tls-server-end-point
+        # value is a hash of the *public* certificate. Enforce here that a client demanding
+        # channel binding (gs2 'p=' flag) actually arrived over TLS -- otherwise a non-TLS
+        # client could replay the public hash and pam_truenas would accept it.
+        if (self.client_first.gs2_header or '').startswith('p=') and not self.origin.ssl:
+            return TrueNASAuthenticatorResponse(
+                stage, PAMCode.PAM_AUTH_ERR,
+                'channel binding is not permitted over a non-TLS transport'
+            )
 
         if self.sent_server_first:
             raise RuntimeError('Already sent server first response')

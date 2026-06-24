@@ -5,6 +5,7 @@ from typing import Any
 
 from middlewared.api.current import (
     TRUECOMMAND_CONNECTING_STATUS_REASON,
+    TRUECOMMAND_DISABLED_ON_STANDBY_STATUS_REASON,
     TruecommandEntry,
     TruecommandStatus,
     TruecommandStatusReason,
@@ -67,7 +68,7 @@ class TruecommandConfigServicePart(ConfigServicePart[TruecommandEntry]):
         else:
             if get_status() != TruecommandStatus.DISABLED:
                 await set_status(self, TruecommandStatus.DISABLED.value)
-            status_reason = 'Truecommand service is disabled on standby controller'
+            status_reason = TRUECOMMAND_DISABLED_ON_STANDBY_STATUS_REASON
 
         data['remote_ip_address'] = data['remote_url'] = data.pop('remote_address')
         if data['remote_ip_address']:

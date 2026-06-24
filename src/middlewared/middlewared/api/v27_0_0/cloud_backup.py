@@ -9,7 +9,9 @@ from .cloud import BaseCloudEntry
 from .common import CronModel
 
 __all__ = [
-    "CloudBackupEntry", "CloudBackupTransferSettingChoicesArgs", "CloudBackupTransferSettingChoicesResult",
+    "CloudBackupEntry", "CloudBackupCreate", "CloudBackupUpdate", "CloudBackupRestoreOptions",
+    "CloudBackupSnapshot", "CloudBackupSnapshotItem", "CloudBackupSyncOptions",
+    "CloudBackupTransferSettingChoicesArgs", "CloudBackupTransferSettingChoicesResult",
     "CloudBackupCreateArgs", "CloudBackupCreateResult", "CloudBackupUpdateArgs", "CloudBackupUpdateResult",
     "CloudBackupDeleteArgs", "CloudBackupDeleteResult", "CloudBackupRestoreArgs", "CloudBackupRestoreResult",
     "CloudBackupListSnapshotsArgs", "CloudBackupListSnapshotsResult", "CloudBackupListSnapshotDirectoryArgs",

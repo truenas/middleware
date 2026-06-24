@@ -20,6 +20,7 @@ from middlewared.alert.base import (
 from middlewared.alert.base import (
     AlertService as _AlertService,
 )
+from middlewared.api.current import SupportNewTicketEnterprise
 from middlewared.plugins.failover_.remote import NETWORK_ERRORS
 from middlewared.service import ServiceContext
 from middlewared.service_exception import CallError, NetworkActivityDisabled
@@ -225,10 +226,10 @@ async def _maybe_open_proactive_support_ticket(
     if not gone_proactive_support_alerts and not new_proactive_support_alerts:
         return
 
-    if not await context.middleware.call("support.is_available_and_enabled"):
+    if not await context.call2(context.s.support.is_available_and_enabled):
         return
 
-    support = await context.middleware.call("support.config")
+    support = await context.call2(context.s.support.config)
 
     msg: list[str] = []
     if gone_proactive_support_alerts:
@@ -242,26 +243,26 @@ async def _maybe_open_proactive_support_ticket(
 
     serial: str = (await context.middleware.call("system.dmidecode_info"))["system-serial-number"]
 
-    for name, verbose_name in await context.middleware.call("support.fields"):
-        value = support[name]
+    for name, verbose_name in await context.call2(context.s.support.fields):
+        value = getattr(support, name)
         if value:
             msg += ["", "{}: {}".format(verbose_name, value)]
 
     msg_str: str = "\n".join(msg)
 
-    job = await context.middleware.call(
-        "support.new_ticket",
-        {
-            "title": "Automatic alert (%s)" % serial,
-            "body": msg_str,
-            "attach_debug": False,
-            "category": "Hardware",
-            "criticality": "Loss of Functionality",
-            "environment": "Production",
-            "name": "Automatic Alert",
-            "email": "auto-support@truenas.com",
-            "phone": "-",
-        },
+    job = await context.call2(
+        context.s.support.new_ticket,
+        SupportNewTicketEnterprise(
+            title="Automatic alert (%s)" % serial,
+            body=msg_str,
+            attach_debug=False,
+            category="Hardware",
+            criticality="Loss of Functionality",
+            environment="Production",
+            name="Automatic Alert",
+            email="auto-support@truenas.com",
+            phone="-",
+        ),
     )
     await job.wait()
     if job.error:

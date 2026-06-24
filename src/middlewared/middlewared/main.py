@@ -107,6 +107,7 @@ from middlewared.plugins.api_key import ApiKeyService
 from middlewared.plugins.apps import AppService
 from middlewared.plugins.catalog import CatalogService
 from middlewared.plugins.certificate import CertificateService
+from middlewared.plugins.cloud_backup import CloudBackupService
 from middlewared.plugins.container import ContainerService
 from middlewared.plugins.container.lxc import LXCConfigService
 from middlewared.plugins.cron import CronJobService
@@ -128,6 +129,8 @@ from middlewared.plugins.pwenc import PWEncService
 from middlewared.plugins.reporting import ReportingService
 from middlewared.plugins.rsync import RsyncTaskService
 from middlewared.plugins.snapshot import PeriodicSnapshotTaskService
+from middlewared.plugins.ssh import SSHService
+from middlewared.plugins.support import SupportService
 from middlewared.plugins.system_vendor import VendorService
 from middlewared.plugins.truecommand import TruecommandService
 from middlewared.plugins.truenas import TrueNASService
@@ -254,6 +257,7 @@ class ServiceContainer(BaseServiceContainer):
         self.app = AppService(middleware)
         self.catalog = CatalogService(middleware)
         self.certificate = CertificateService(middleware)
+        self.cloud_backup = CloudBackupService(middleware)
         self.container = ContainerService(middleware)
         self.cronjob = CronJobService(middleware)
         self.docker = DockerService(middleware)
@@ -271,6 +275,8 @@ class ServiceContainer(BaseServiceContainer):
         self.reporting = ReportingService(middleware)
         self.rsynctask = RsyncTaskService(middleware)
         self.sharing = SharingServicesContainer(middleware)
+        self.ssh = SSHService(middleware)
+        self.support = SupportService(middleware)
         self.system = SystemServicesContainer(middleware)
         self.tn_connect = TrueNASConnectService(middleware)
         self.truecommand = TruecommandService(middleware)
@@ -907,7 +913,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
     async def run_in_thread[**P, T](self, method: typing.Callable[P, T], *args: P.args, **kwargs: P.kwargs) -> T:
         return await self.run_in_executor(io_thread_pool_executor, method, *args, **kwargs)
 
-    def pipe(self, buffered=False):
+    def pipe(self, buffered: bool = False) -> Pipe:
         """
         :param buffered: Please see :class:`middlewared.pipe.Pipe` documentation for information on unbuffered and
             buffered pipes.

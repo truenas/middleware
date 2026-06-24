@@ -1,10 +1,17 @@
+from __future__ import annotations
+
 import os
 import stat
+from typing import TYPE_CHECKING, Any
 
 from middlewared.service import CallError
 
+if TYPE_CHECKING:
+    from middlewared.main import Middleware
+    from middlewared.rclone.base import BaseRcloneRemote
 
-def get_remote_path(provider, attributes):
+
+def get_remote_path(provider: BaseRcloneRemote, attributes: dict[str, Any]) -> str:
     remote_path = attributes["folder"].rstrip("/")
     if not remote_path:
         remote_path = "/"
@@ -13,7 +20,13 @@ def get_remote_path(provider, attributes):
     return remote_path
 
 
-def check_local_path(middleware, path, *, check_mountpoint=True, error_text_path=None):
+def check_local_path(
+    middleware: Middleware,
+    path: str,
+    *,
+    check_mountpoint: bool = True,
+    error_text_path: str | None = None,
+) -> None:
     error_text_path = error_text_path or path
 
     try:
