@@ -154,7 +154,8 @@ class SMBService(ConfigService):
             # Do not include SMB shares in configuration on standby controller
             smb_shares = []
 
-        # Skip locked shares and generate alerts for them
+        # Skip locked shares (alerting on each). For unlocked shares, clear any
+        # stale locked-dataset alert (e.g. generated at boot before pools unlocked).
         active_shares = []
         for share in smb_shares:
             if share[share_field.LOCKED]:
@@ -164,6 +165,7 @@ class SMBService(ConfigService):
                 )
                 self.middleware.call_sync('sharing.smb.generate_locked_alert', share['id'])
                 continue
+            self.middleware.call_sync('sharing.smb.remove_locked_alert', share['id'])
             active_shares.append(share)
         smb_shares = active_shares
 
