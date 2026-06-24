@@ -306,7 +306,6 @@ def test_api_method_docstrings_sphinx_lint(api_doc_pages):
     ``:method:`` reference missing its closing backtick, or unbalanced inline literals -- that render
     incorrectly without raising a parse error.
     """
-    pytest.importorskip("sphinxlint")
     srcdir, page_locations = api_doc_pages
     result = subprocess.run(
         [sys.executable, "-m", "sphinxlint", "--enable", "default-role", str(srcdir)],
