@@ -56,6 +56,7 @@ from middlewared.api.current import (
     CredentialsUpdateResult,
     CredentialsVerifyArgs,
     CredentialsVerifyResult,
+    QueryOptions,
     ZFSResourceSnapshotDestroyQuery,
 )
 from middlewared.common.attachment import LockableFSAttachmentDelegate
@@ -703,11 +704,12 @@ class CredentialsService(CRUDService):
         if tasks:
             raise CallError(f"This credential is used by cloud sync task {tasks[0]['description'] or tasks[0]['id']}")
 
-        tasks = self.middleware.call_sync(
-            "cloud_backup.query", [["credentials.id", "=", id_]], {"select": ["id", "credentials", "description"]}
+        tasks = self.middleware.call_sync2(
+            self.middleware.services.cloud_backup.query,
+            [["credentials.id", "=", id_]], QueryOptions(select=["id", "credentials", "description"]),
         )
         if tasks:
-            raise CallError(f"This credential is used by cloud backup task {tasks[0]['description'] or tasks[0]['id']}")
+            raise CallError(f"This credential is used by cloud backup task {tasks[0].description or tasks[0].id}")
 
         return self.middleware.call_sync(
             "datastore.delete",

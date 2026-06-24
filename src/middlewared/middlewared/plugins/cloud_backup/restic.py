@@ -1,13 +1,20 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 from datetime import timedelta
 import json
 import subprocess
 import threading
+from typing import IO, TYPE_CHECKING, Any
 
+from middlewared.api.current import CloudBackupEntry
 from middlewared.job import JobCancelledException, JobProgressBuffer
 from middlewared.plugins.cloud.path import get_remote_path
 from middlewared.plugins.cloud.remotes import REMOTES
 from middlewared.service import CallError
+
+if TYPE_CHECKING:
+    from middlewared.job import Job
 
 
 @dataclass
@@ -16,26 +23,37 @@ class ResticConfig:
     env: dict[str, str]
 
 
-def get_restic_config(cloud_backup):
-    remote = REMOTES[cloud_backup["credentials"]["provider"]["type"]]
+def get_restic_config(entry: CloudBackupEntry, credentials: dict[str, Any]) -> ResticConfig:
+    attributes = entry.attributes.model_dump()
 
-    remote_path = get_remote_path(remote, cloud_backup["attributes"])
+    remote = REMOTES[credentials["provider"]["type"]]
 
-    url, env = remote.get_restic_config(cloud_backup)
+    remote_path = get_remote_path(remote, attributes)
 
-    if cloud_backup["cache_path"]:
-        cache = ["--cache-dir", cloud_backup["cache_path"]]
+    url, env = remote.get_restic_config({"credentials": credentials, "attributes": attributes})
+
+    if entry.cache_path:
+        cache = ["--cache-dir", entry.cache_path]
     else:
         cache = ["--no-cache"]
 
     cmd = ["restic"] + cache + ["--json", "-r", f"{remote.rclone_type}:{url}/{remote_path}"]
 
-    env["RESTIC_PASSWORD"] = cloud_backup["password"]
+    env["RESTIC_PASSWORD"] = entry.password.get_secret_value()
 
     return ResticConfig(cmd, env)
 
 
-def run_restic(job, cmd, env, *, cwd=None, stdin=None, track_progress=False):
+def run_restic(
+    job: Job,
+    cmd: list[str],
+    env: dict[str, str],
+    *,
+    cwd: str | None = None,
+    stdin: IO[bytes] | None = None,
+    track_progress: bool = False,
+) -> None:
+    assert job.logs_fd is not None
     job.logs_fd.write((json.dumps(cmd) + "\n").encode("utf-8", "ignore"))
     proc = subprocess.Popen(
         cmd,
@@ -77,7 +95,7 @@ def run_restic(job, cmd, env, *, cwd=None, stdin=None, track_progress=False):
         raise CallError(message)
 
 
-def restic_check_progress(job, proc, track_progress=False):
+def restic_check_progress(job: Job, proc: subprocess.Popen[bytes], track_progress: bool = False) -> None:
     """Record progress of restic backup, restore, and forget commands.
 
     `track_progress` cannot be set when running "restic forget".
@@ -85,9 +103,11 @@ def restic_check_progress(job, proc, track_progress=False):
     Relevant documentation: https://restic.readthedocs.io/en/stable/075_scripting.html#json-output
 
     """
+    assert proc.stdout is not None
+    assert job.logs_fd is not None
+
     if not track_progress:
-        read = proc.stdout.read()
-        job.logs_fd.write(read)
+        job.logs_fd.write(proc.stdout.read())
         return
 
     # backup or restore

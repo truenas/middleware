@@ -33,6 +33,7 @@ jobs:
             middlewared/plugins/apps/ \
             middlewared/plugins/apps_images/ \
             middlewared/plugins/catalog/ \
+            middlewared/plugins/cloud_backup/ \
             middlewared/plugins/container/ \
             middlewared/plugins/cron/ \
             middlewared/plugins/docker/ \
