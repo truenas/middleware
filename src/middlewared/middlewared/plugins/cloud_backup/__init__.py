@@ -77,12 +77,12 @@ class CloudBackupService(GenericTaskPathService[CloudBackupEntry], TaskStateMixi
 
     @api_method(CloudBackupUpdateArgs, CloudBackupUpdateResult, pass_app=True, check_annotations=True)
     async def do_update(self, app: App, id_: int, data: CloudBackupUpdate) -> CloudBackupEntry:
-        """Update the cloud backup entry `id` with `data`."""
+        """Update the cloud backup entry ``id`` with ``data``."""
         return await self._svc_part.do_update(app, id_, data)
 
     @api_method(CloudBackupDeleteArgs, CloudBackupDeleteResult, check_annotations=True)
     async def do_delete(self, id_: int) -> Literal[True]:
-        """Delete cloud backup entry `id`."""
+        """Delete cloud backup entry ``id``."""
         await self._svc_part.do_delete(id_)
         return True
 
@@ -90,13 +90,13 @@ class CloudBackupService(GenericTaskPathService[CloudBackupEntry], TaskStateMixi
         CloudBackupTransferSettingChoicesArgs, CloudBackupTransferSettingChoicesResult, check_annotations=True,
     )
     async def transfer_setting_choices(self) -> list[Literal["DEFAULT", "PERFORMANCE", "FAST_STORAGE"]]:
-        """Return all possible choices for `cloud_backup.create.transfer_setting`."""
+        """Return all possible choices for ``cloud_backup.create.transfer_setting``."""
         return list(TRANSFER_SETTING_ARGS)
 
     @api_method(CloudBackupSyncArgs, CloudBackupSyncResult, roles=["CLOUD_BACKUP_WRITE"], check_annotations=True)
     @job(lock=lambda args: "cloud_backup:{}".format(args[-1]), lock_queue_size=1, logs=True, abortable=True)
     def sync(self, job: Job, id_: int, options: CloudBackupSyncOptions) -> None:
-        """Run the cloud backup job `id`."""
+        """Run the cloud backup job ``id``."""
         return do_sync(self.context, job, id_, options)
 
     @api_method(CloudBackupAbortArgs, CloudBackupAbortResult, roles=["CLOUD_BACKUP_WRITE"], check_annotations=True)
@@ -118,8 +118,8 @@ class CloudBackupService(GenericTaskPathService[CloudBackupEntry], TaskStateMixi
         options: CloudBackupRestoreOptions,
     ) -> None:
         """
-        Restore files to the directory `destination_path` from the `snapshot_id` subfolder `subfolder`
-        created by the cloud backup job `id`.
+        Restore files to the directory ``destination_path`` from the ``snapshot_id`` subfolder ``subfolder``
+        created by the cloud backup job ``id``.
         """
         return do_restore(self.context, job, id_, snapshot_id, subfolder, destination_path, options)
 
@@ -128,7 +128,7 @@ class CloudBackupService(GenericTaskPathService[CloudBackupEntry], TaskStateMixi
         check_annotations=True,
     )
     def list_snapshots(self, id_: int) -> list[CloudBackupSnapshot]:
-        """List existing snapshots for the cloud backup job `id`."""
+        """List existing snapshots for the cloud backup job ``id``."""
         return list_snapshots_impl(self.context, id_)
 
     @api_method(
@@ -136,7 +136,7 @@ class CloudBackupService(GenericTaskPathService[CloudBackupEntry], TaskStateMixi
         check_annotations=True,
     )
     def list_snapshot_directory(self, id_: int, snapshot_id: str, path: str) -> list[CloudBackupSnapshotItem]:
-        """List files in the directory `path` of the `snapshot_id` created by the cloud backup job `id`."""
+        """List files in the directory ``path`` of the ``snapshot_id`` created by the cloud backup job ``id``."""
         return list_snapshot_directory_impl(self.context, id_, snapshot_id, path)
 
     @api_method(
@@ -145,7 +145,7 @@ class CloudBackupService(GenericTaskPathService[CloudBackupEntry], TaskStateMixi
     )
     @job(lock=lambda args: "cloud_backup:{}".format(args[-1]), lock_queue_size=1)
     def delete_snapshot(self, job: Job, id_: int, snapshot_id: str) -> None:
-        """Delete snapshot `snapshot_id` created by the cloud backup job `id`."""
+        """Delete snapshot ``snapshot_id`` created by the cloud backup job ``id``."""
         return delete_snapshot_impl(self.context, job, id_, snapshot_id)
 
     @private

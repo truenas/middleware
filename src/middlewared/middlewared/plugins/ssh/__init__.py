@@ -52,7 +52,7 @@ class SSHService(SystemServiceService[SSHEntry]):
         """
         Update settings of SSH daemon service.
 
-        If `bindiface` is empty it will listen for all available addresses.
+        If ``bindiface`` is empty it will listen for all available addresses.
         """
         return await self._service_part.do_update(data)
 

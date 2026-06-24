@@ -103,7 +103,7 @@ class SupportService(GenericConfigService[SupportEntry]):
     @api_method(SupportSimilarIssuesArgs, SupportSimilarIssuesResult, roles=["SUPPORT_READ"], check_annotations=True)
     async def similar_issues(self, query: str) -> list[SupportSimilarIssue]:
         """
-        Returns a list of similar issues for the given `query` from the support knowledge base.
+        Returns a list of similar issues for the given ``query`` from the support knowledge base.
         """
         return await similar_issues(self.context, query)
 
@@ -123,9 +123,6 @@ class SupportService(GenericConfigService[SupportEntry]):
         Creates a new ticket for support.
         This is done using the support proxy API.
         For TrueNAS Community Edition it will be created on JIRA and for TrueNAS Enterprise on Salesforce.
-
-        For Community Edition, `criticality`, `environment`, `phone`, `name`, and `email` attributes are not required.
-        For Enterprise, `token` and `type` attributes are not required.
         """
         return await new_ticket(self.context, job, data)
 
