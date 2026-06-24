@@ -214,6 +214,7 @@ class iSCSITargetService(Service):
             [
                 'scstadmin',
                 '-noprompt',
+                '-preserve_cluster_mode',
                 '-rem_lun',
                 str(lun_id),
                 '-driver',
@@ -385,6 +386,7 @@ class iSCSITargetService(Service):
                     'scstadmin',
                     '-force',
                     '-noprompt',
+                    '-preserve_cluster_mode',
                     '-rem_target',
                     iqn,
                     '-driver',

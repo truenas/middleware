@@ -264,7 +264,7 @@ class ISCSIGlobalService(SystemServiceService):
         need to be able to perform an explicit action.
         """
         cp = await run([
-            'scstadmin', '-force', '-noprompt', '-set_drv_attr', 'iscsi',
+            'scstadmin', '-force', '-noprompt', '-preserve_cluster_mode', '-set_drv_attr', 'iscsi',
             '-attributes', 'iSNSServer=""'
         ], check=False)
         if cp.returncode:
