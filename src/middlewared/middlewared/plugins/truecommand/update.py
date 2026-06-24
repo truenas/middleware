@@ -4,7 +4,9 @@ import middlewared.sqlalchemy as sa
 
 from middlewared.api import api_method, Event
 from middlewared.api.current import (
-    TRUECOMMAND_CONNECTING_STATUS_REASON, TruecommandStatus, TruecommandStatusReason, TruecommandEntry,
+    TRUECOMMAND_CONNECTING_STATUS_REASON,
+    TRUECOMMAND_DISABLED_ON_STANDBY_STATUS_REASON,
+    TruecommandStatus, TruecommandStatusReason, TruecommandEntry,
     TruecommandUpdateArgs, TruecommandUpdateResult, TruecommandConfigChangedEvent,
 )
 from middlewared.service import ConfigService, private, ValidationErrors
@@ -69,7 +71,7 @@ class TruecommandService(ConfigService):
         else:
             if self.STATUS != TruecommandStatus.DISABLED:
                 await self.set_status(TruecommandStatus.DISABLED.value)
-            status_reason = 'Truecommand service is disabled on standby controller'
+            status_reason = TRUECOMMAND_DISABLED_ON_STANDBY_STATUS_REASON
 
         config['remote_ip_address'] = config['remote_url'] = config.pop('remote_address')
         if config['remote_ip_address']:
