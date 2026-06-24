@@ -67,7 +67,14 @@ class VMEntry(BaseModel):
     )
     name: NonEmptyString = Field(description="Display name of the virtual machine.")
     description: str = Field(default='', description="Optional description or notes about the virtual machine.")
-    vcpus: int = Field(ge=1, default=1, description="Number of virtual CPUs allocated to the VM.")
+    vcpus: int = Field(
+        ge=1,
+        default=1,
+        description=(
+            "Number of virtual CPU sockets. The total number of guest vCPUs is `vcpus` * `cores` * `threads` "
+            "(maximum 16)."
+        ),
+    )
     cores: int = Field(ge=1, default=1, description="Number of CPU cores per socket.")
     threads: int = Field(ge=1, default=1, description="Number of threads per CPU core.")
     cpuset: str | None = Field(
@@ -88,7 +95,13 @@ class VMEntry(BaseModel):
             "Whether to pin virtual CPUs to specific host CPU cores. Improves performance but reduces host flexibility."
         ),
     )
-    suspend_on_snapshot: bool = Field(default=True, description="Whether to suspend the VM when taking snapshots.")
+    suspend_on_snapshot: bool = Field(
+        default=True,
+        description=(
+            "Whether to automatically suspend the VM when a periodic snapshot task runs. For manual snapshots, "
+            "the VM is suspended only if explicitly included in the snapshot's VM pause list."
+        ),
+    )
     trusted_platform_module: bool = Field(
         default=False,
         description="Whether to enable virtual Trusted Platform Module (TPM) for the VM.",
@@ -121,11 +134,16 @@ class VMEntry(BaseModel):
     )
     hide_from_msr: bool = Field(
         default=False,
-        description="Whether to hide hypervisor signatures from guest OS MSR access.",
+        description=(
+            "Whether to hide the KVM hypervisor from standard MSR-based discovery. Useful when doing GPU passthrough."
+        ),
     )
     ensure_display_device: bool = Field(
         default=True,
-        description="Whether to ensure at least one display device is configured for the VM.",
+        description=(
+            "Whether to ensure the guest always has access to a video device. Required for headless OS installations "
+            "(e.g. Ubuntu Server). Set to `false` when using GPU passthrough without a separate display device."
+        ),
     )
     time: Literal['LOCAL', 'UTC'] = Field(
         default='LOCAL',
@@ -279,7 +297,10 @@ class VMCloneArgs(BaseModel):
     id: int = Field(description="ID of the virtual machine to clone.")
     name: NonEmptyString | None = Field(
         default=None,
-        description="Name for the cloned virtual machine. `null` to auto-generate.",
+        description=(
+            "Name for the cloned virtual machine. "
+            "`null` to append the next available number to the original VM name."
+        ),
     )
 
 

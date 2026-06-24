@@ -92,14 +92,14 @@ class AlertService(Service):
     @api_method(AlertDismissArgs, AlertDismissResult, roles=["ALERT_LIST_WRITE"])
     async def dismiss(self, uuid: str) -> None:
         """
-        Dismiss `id` alert.
+        Dismiss ``id`` alert.
         """
         await queries.dismiss(self.context, self._state, uuid)
 
     @api_method(AlertRestoreArgs, AlertRestoreResult, roles=["ALERT_LIST_WRITE"])
     async def restore(self, uuid: str) -> None:
         """
-        Restore `id` alert which had been dismissed.
+        Restore ``id`` alert which had been dismissed.
         """
         await queries.restore(self.context, self._state, uuid)
 

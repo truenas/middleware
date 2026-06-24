@@ -635,7 +635,7 @@ class CredentialsService(CRUDService):
     @api_method(CredentialsVerifyArgs, CredentialsVerifyResult, roles=["CLOUD_SYNC_WRITE"])
     def verify(self, data):
         """
-        Verify if `attributes` provided for `provider` are authorized by the `provider`.
+        Verify if ``attributes`` provided for ``provider`` are authorized by the ``provider``.
         """
         self.middleware.call_sync("network.general.will_perform_activity", "cloud_sync")
 
@@ -656,8 +656,6 @@ class CredentialsService(CRUDService):
     def do_create(self, data):
         """
         Create Cloud Sync Credentials.
-
-        `attributes` is a dictionary of valid values which will be used to authorize with the `provider`.
         """
         self._validate("cloud_sync_credentials_create", data)
 
@@ -673,7 +671,7 @@ class CredentialsService(CRUDService):
     @api_method(CredentialsUpdateArgs, CredentialsUpdateResult)
     def do_update(self, id_, data):
         """
-        Update Cloud Sync Credentials of `id`.
+        Update Cloud Sync Credentials of ``id``.
         """
         old = self.middleware.call_sync("cloudsync.credentials.get_instance", id_)
 
@@ -696,7 +694,7 @@ class CredentialsService(CRUDService):
     @api_method(CredentialsDeleteArgs, CredentialsDeleteResult)
     def do_delete(self, id_):
         """
-        Delete Cloud Sync Credentials of `id`.
+        Delete Cloud Sync Credentials of ``id``.
         """
         tasks = self.middleware.call_sync(
             "cloudsync.query", [["credentials.id", "=", id_]], {"select": ["id", "credentials", "description"]}
@@ -727,7 +725,7 @@ class CredentialsService(CRUDService):
     @api_method(CredentialsS3ProviderChoicesArgs, CredentialsS3ProviderChoicesResult)
     def s3_provider_choices(self):
         """
-        Provide choices for S3 provider `provider` field.
+        Provide choices for S3 provider ``provider`` field.
         """
         return S3_PROVIDERS
 
@@ -876,7 +874,7 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
     @api_method(CloudSyncUpdateArgs, CloudSyncUpdateResult, pass_app=True)
     def do_update(self, app, id_, data):
         """
-        Updates the cloud_sync entry `id` with `data`.
+        Updates the cloud_sync entry ``id`` with ``data``.
         """
         cloud_sync = self.middleware.call_sync("cloudsync.get_instance", id_)
 
@@ -906,7 +904,7 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
     @api_method(CloudSyncDeleteArgs, CloudSyncDeleteResult)
     def do_delete(self, id_):
         """
-        Deletes cloud_sync entry `id`.
+        Deletes cloud_sync entry ``id``.
         """
         self.middleware.call_sync("cloudsync.abort", id_)
         self.call_sync2(self.s.alert.oneshot_delete, "CloudSyncTaskFailed", id_)
@@ -917,7 +915,7 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
     @api_method(CloudSyncCreateBucketArgs, CloudSyncCreateBucketResult, roles=["CLOUD_SYNC_WRITE"])
     def create_bucket(self, credentials_id, name):
         """
-        Creates a new bucket `name` using ` credentials_id`.
+        Creates a new bucket ``name`` using ``credentials_id``.
         """
         credentials = self._get_credentials(credentials_id)
         if not credentials:
@@ -935,6 +933,16 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
 
     @api_method(CloudSyncListBucketsArgs, CloudSyncListBucketsResult, roles=["CLOUD_SYNC_WRITE"])
     def list_buckets(self, credentials_id):
+        """
+        List the buckets available to the cloud sync credential identified by ``credentials_id``.
+
+        Use this when configuring a cloud sync task to discover which buckets a set of credentials
+        can access. Each returned entry describes a bucket as a directory-like listing.
+
+        Only providers that organize storage into buckets (such as Amazon S3 or Storj) are
+        supported. A JSON-RPC ``error`` response (code ``-32001``, *Method call error*) is returned
+        when the credential does not exist or its provider does not use buckets.
+        """
         credentials = self._get_credentials(credentials_id)
         if not credentials:
             raise CallError("Invalid credentials")
@@ -966,19 +974,9 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
         """
         List contents of a remote bucket / directory.
 
-        If remote supports buckets, path is constructed by two keys "bucket"/"folder" in `attributes`.
-        If remote does not support buckets, path is constructed using "folder" key only in `attributes`.
-        "folder" is directory name and "bucket" is bucket name for remote.
-
-        Path examples:
-
-        S3 Service
-        `bucketname/directory/name`
-
-        Dropbox Service
-        `directory/name`
-
-        `credentials` is a valid id of a Cloud Sync Credential which will be used to connect to the provider.
+        If the remote supports buckets, the path is constructed from the ``bucket`` and ``folder`` keys in
+        ``attributes``; otherwise it is constructed from the ``folder`` key alone. For example, an S3 path is
+        ``bucketname/directory/name`` and a Dropbox path is ``directory/name``.
         """
         verrors = ValidationErrors()
 
@@ -1049,7 +1047,7 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
          read_roles=["CLOUD_SYNC_READ"])
     def sync(self, job, id_, options):
         """
-        Run the cloud_sync job `id`, syncing the local data to remote.
+        Run the cloud_sync job ``id``, syncing the local data to remote.
         """
 
         cloud_sync = self.middleware.call_sync("cloudsync.get_instance", id_)

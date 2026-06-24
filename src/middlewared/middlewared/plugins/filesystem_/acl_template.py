@@ -112,6 +112,11 @@ class ACLTemplateService(CRUDService):
 
     @filterable_api_method(item=ACLTemplateEntry, roles=['FILESYSTEM_ATTRS_READ'])
     async def query(self, filters, options):
+        """
+        Retrieve the available filesystem ACL templates.
+
+        Built-in templates are returned with their access control list fully populated.
+        """
         templates = await super().query(filters or [], {})
         for t in templates:
             if t['builtin']:
@@ -152,7 +157,7 @@ class ACLTemplateService(CRUDService):
     )
     async def do_update(self, id_, data):
         """
-        update filesystem ACL template with `id`.
+        Update filesystem ACL template with ``id``.
         """
         old = await self.get_instance(id_)
         new = old.copy()
@@ -191,6 +196,12 @@ class ACLTemplateService(CRUDService):
         roles=['FILESYSTEM_ATTRS_WRITE']
     )
     async def do_delete(self, id_):
+        """
+        Delete the ACL template identified by ``id``.
+
+        Built-in ACL templates may not be deleted; attempting to delete one returns a JSON-RPC
+        ``error`` response (code ``-32001``, *Method call error*).
+        """
         entry = await self.get_instance(id_)
         if entry['builtin']:
             raise CallError("Deletion of builtin templates is not permitted",
@@ -329,16 +340,10 @@ class ACLTemplateService(CRUDService):
     )
     async def by_path(self, data):
         """
-        Retrieve list of available ACL templates for a given `path`.
+        Retrieve list of available ACL templates for a given ``path``. Supports ``query-filters`` and
+        ``query-options``.
 
-        Supports `query-filters` and `query-options`.
-        `format-options` gives additional options to alter the results of
-        the template query:
-
-        `canonicalize` - deprecated, has no effect. ACL entries are always stored in canonical order.
-        `ensure_builtins` - ensure all results contain entries for `builtin_users` and `builtin_administrators`
-        groups.
-        `resolve_names` - convert ids in ACL entries into names.
+        ACL entries in the returned templates are always in canonical order.
         """
         verrors = ValidationErrors()
         filters = data.get('query-filters')

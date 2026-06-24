@@ -54,9 +54,6 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
     async def do_create(self, data):
         """
         Create an iSCSI Initiator.
-
-        `initiators` is a list of initiator hostnames which are authorized to access an iSCSI Target. To allow all
-        possible initiators, `initiators` can be left empty.
         """
         await self.compress(data)
 
@@ -76,7 +73,7 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
     )
     async def do_update(self, audit_callback, id_, data):
         """
-        Update iSCSI initiator of `id`.
+        Update iSCSI initiator of ``id``.
         """
         old = await self.get_instance(id_)
         audit_callback(initiator_summary(old))
@@ -101,7 +98,7 @@ class iSCSITargetAuthorizedInitiator(CRUDService):
     )
     async def do_delete(self, audit_callback, id_):
         """
-        Delete iSCSI initiator of `id`.
+        Delete iSCSI initiator of ``id``.
         """
         old = await self.get_instance(id_)
         audit_callback(initiator_summary(old))

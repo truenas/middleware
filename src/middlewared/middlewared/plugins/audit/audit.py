@@ -142,7 +142,7 @@ class AuditService(ConfigService):
     @api_method(AuditQueryArgs, AuditQueryResult)
     async def query(self, data):
         """
-        Query contents of audit databases specified by `services`.
+        Query contents of audit databases specified by ``services``.
         """
         verrors = ValidationErrors()
 
@@ -211,8 +211,8 @@ class AuditService(ConfigService):
     @job()
     def export(self, job, data):
         """
-        Generate an audit report based on the specified `query-filters` and
-        `query-options` for the specified `services` in the specified `export_format`.
+        Generate an audit report based on the specified ``query-filters`` and
+        ``query-options`` for the specified ``services`` in the specified ``export_format``.
 
         Supported export_formats are CSV, JSON, and YAML. The endpoint returns a
         local filesystem path where the resulting audit report is located.
@@ -427,12 +427,10 @@ class AuditService(ConfigService):
         """
         Update default audit settings.
 
-        The following fields contain read-only data and are returned in calls
-        to `audit.config` and `audit.update`:
-        - `space`
-        - `remote_logging_enabled`
-        - `enabled_services`
+        .. note::
 
+            ``space``, ``remote_logging_enabled``, and ``enabled_services`` are read-only and are returned only by
+            :method:`audit.config` and :method:`audit.update`.
         """
         old = await self.config()
         new = old.copy()

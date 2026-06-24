@@ -176,40 +176,16 @@ class FilesystemService(Service):
     @job(lock=lambda args: f'zfs_attrs_change:{args[0]["path"]}')
     def set_zfs_attributes(self, job: Job, data: FilesystemSetZfsAttributesData) -> ZFSFileAttrsData:
         """
-        Set special ZFS-related file flags on the specified path.
+        Set special ZFS-related file flags (MS-DOS attributes and the BSD-style
+        ``immutable``/``nounlink``/``appendonly`` flags) on the specified path.
 
-        `readonly` - READONLY MS-DOS attribute. When set, file may not be written to
-        (toggling does not impact existing file opens).
+        Several of these flags are also surfaced elsewhere. The ``immutable`` flag appears as
+        ``IMMUTABLE`` in the ``attributes`` of :method:`filesystem.stat` output and as
+        ``STATX_ATTR_IMMUTABLE`` in the ``statx()`` response; ``appendonly`` appears as ``APPEND`` in
+        :method:`filesystem.stat` output and as ``STATX_ATTR_APPEND`` in ``statx()``.
 
-        `hidden` - HIDDEN MS-DOS attribute. When set, the SMB HIDDEN flag is set and
-        file is "hidden" from the perspective of SMB clients.
-
-        `system` - SYSTEM MS-DOS attribute. Is presented to SMB clients, but has no
-        impact on local filesystem.
-
-        `archive` - ARCHIVE MS-DOS attribute. Value is reset to True whenever file is
-        modified.
-
-        `immutable` - file may not be altered or deleted. Also appears as IMMUTABLE in
-        attributes in `filesystem.stat` output and as STATX_ATTR_IMMUTABLE in statx().
-
-        `nounlink` - file may be altered but not deleted.
-
-        `appendonly` - file may only be opened with O_APPEND flag. Also appears as
-        APPEND in attributes in `filesystem.stat` output and as STATX_ATTR_APPEND in
-        statx() response.
-
-        `offline` - OFFLINE MS-DOS attribute. Is presented to SMB clients, but has no
-        impact on local filesystem.
-
-        `sparse` - SPARSE MS-DOS attribute. Is presented to SMB clients, but has no
-        impact on local filesystem.
-
-        `options.recursive` - if set to a non-empty list of `FILES`/`DIRECTORIES`,
-        the path is treated as the root of a tree walk and attributes are applied to
-        descendants of the matching type. The root `path` itself is included only if
-        its type matches the filter. `null` (the default) preserves the legacy
-        single-path behavior. Recursion stops at dataset boundaries.
+        When recursion is requested, the path is treated as the root of a tree walk, and attributes are
+        applied to descendants of the matching type. Recursion stops at dataset boundaries.
         """
         recursive = data.options.recursive
         if recursive is not None and len(recursive) == 0:
@@ -252,7 +228,7 @@ class FilesystemService(Service):
     )
     def get_zfs_attributes(self, path: str) -> ZFSFileAttrsData:
         """
-        Get the current ZFS attributes for the file at the given path
+        Get the current ZFS attributes for the file at the given path.
         """
         try:
             fd = truenas_os.openat2(path, os.O_RDONLY, resolve=truenas_os.RESOLVE_NO_SYMLINKS)
@@ -295,16 +271,13 @@ class FilesystemService(Service):
         """
         Create a directory at the specified path.
 
-        The following options are supported:
+        If the requested ``mode`` cannot be applied and ``raise_chmod_error`` is set, the newly
+        created directory is removed to prevent its use with unintended permissions.
 
-        `mode` - specify the permissions to set on the new directory (0o755 is default).
-        `raise_chmod_error` - choose whether to raise an exception if the attempt to set
-        mode fails. In this case, the newly created directory will be removed to prevent
-        use with unintended permissions.
+        .. note::
 
-        NOTE: if chmod error is skipped, the resulting `mode` key in mkdir response will
-        indicate the current permissions on the directory and not the permissions specified
-        in the mkdir payload
+            If the chmod error is skipped, the ``mode`` key in the response will indicate the current
+            permissions on the directory and not the permissions specified in the request payload.
         """
         mode = int(data.options.mode, 8)
 
@@ -486,54 +459,20 @@ class FilesystemService(Service):
         """
         Return filesystem information for a given path.
 
-        `realpath(str)`: absolute real path of the entry (if SYMLINK)
+        The reported timestamps reflect ``statx()`` values. The ``atime`` and ``mtime`` timestamps
+        are mutable from userspace, and ``btime`` may also be mutable from userspace depending on the
+        platform.
 
-        `type(str)`: DIRECTORY | FILE | SYMLINK | OTHER
+        The returned ``attributes`` list contains the ``statx()`` file attributes that apply to the
+        file (see the ``statx(2)`` manpage for details). ZFS flags set via
+        :method:`filesystem.set_zfs_attributes` are surfaced here: an immutable file reports
+        ``IMMUTABLE`` and an append-only file reports ``APPEND``.
 
-        `size(int)`: size of the entry
+        .. note::
 
-        `allocation_size(int)`: on-disk size of entry
-
-        `mode(int)`: file mode/permission
-
-        `uid(int)`: user id of file owner
-
-        `gid(int)`: group id of file owner
-
-        `atime(float)`: timestamp for when file was last accessed.
-        NOTE: this timestamp may be changed from userspace.
-
-        `mtime(float)`: timestamp for when file data was last modified
-        NOTE: this timestamp may be changed from userspace.
-
-        `ctime(float)`: timestamp for when file was last changed.
-
-        `btime(float)`: timestamp for when file was initially created.
-        NOTE: depending on platform this may be changed from userspace.
-
-        `dev(int)`: device id of the device containing the file. In the
-        context of the TrueNAS API, this is sufficient to uniquely identify
-        a given dataset.
-
-        `mount_id(int)`: the mount id for the filesystem underlying the given path.
-        Bind mounts will have same device id, but different mount IDs. This value
-        is sufficient to uniquely identify the particular mount which can be used
-        to identify children of the given mountpoint.
-
-        `inode(int)`: inode number of the file. This number uniquely identifies
-        the file on the given device, but once a file is deleted its inode number
-        may be reused.
-
-        `nlink(int)`: number of hard lnks to the file.
-
-        `acl(bool)`: extended ACL is present on file
-
-        `is_mountpoint(bool)`: path is a mountpoint
-
-        `is_ctldir(bool)`: path is within special .zfs directory
-
-        `attributes(list)`: list of statx file attributes that apply to the
-        file. See statx(2) manpage for more details.
+            ``mount_id`` uniquely identifies the particular mount underlying the path. Bind mounts
+            share the same ``dev`` (device id) but have distinct ``mount_id`` values, so ``mount_id``
+            (not ``dev``) must be used to identify children of a given mountpoint.
         """
         if path_location(_path) is FSLocation.EXTERNAL:
             raise CallError(f'{_path} is external to TrueNAS', errno.EXDEV)
@@ -629,7 +568,7 @@ class FilesystemService(Service):
     @job(pipes=["output"])
     def get(self, job: Job, path: str) -> None:
         """
-        Job to get contents of `path`.
+        Job to get contents of ``path``.
         """
         assert job.pipes.output is not None
 
@@ -649,7 +588,7 @@ class FilesystemService(Service):
     @job(pipes=["input"])
     def put(self, job: Job, path: str, options: FilesystemPutOptions) -> Literal[True]:
         """
-        Job to put contents to `path`.
+        Job to put contents to ``path``.
         """
         if path == PWENC_FILE_SECRET:
             raise CallError(

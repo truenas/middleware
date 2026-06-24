@@ -44,34 +44,17 @@ class NTPServerService(GenericCRUDService[NTPServerEntry]):
     async def do_create(self, data: NTPServerCreate) -> NTPServerEntry:
         """
         Add an NTP Server.
-
-        `address` specifies the hostname/IP address of the NTP server.
-
-        `burst` when enabled makes sure that if server is reachable, sends a burst of eight packets instead of one.
-        This is designed to improve timekeeping quality with the server command.
-
-        `iburst` when enabled speeds up the initial synchronization, taking seconds rather than minutes.
-
-        `prefer` marks the specified server as preferred. When all other things are equal, this host is chosen
-        for synchronization acquisition with the server command. It is recommended that they be used for servers with
-        time monitoring hardware.
-
-        `minpoll` is minimum polling time in seconds. It must be a power of 2 and less than `maxpoll`.
-
-        `maxpoll` is maximum polling time in seconds. It must be a power of 2 and greater than `minpoll`.
-
-        `force` when enabled forces the addition of NTP server even if it is currently unreachable.
         """
         return await self._svc_part.do_create(data)
 
     @api_method(NTPServerUpdateArgs, NTPServerUpdateResult, check_annotations=True)
     async def do_update(self, id_: int, data: NTPServerUpdate) -> NTPServerEntry:
-        """Update NTP server of `id`."""
+        """Update NTP server of ``id``."""
         return await self._svc_part.do_update(id_, data)
 
     @api_method(NTPServerDeleteArgs, NTPServerDeleteResult, check_annotations=True)
     async def do_delete(self, id_: int) -> Literal[True]:
-        """Delete NTP server of `id`."""
+        """Delete NTP server of ``id``."""
         await self._svc_part.do_delete(id_)
         return True
 

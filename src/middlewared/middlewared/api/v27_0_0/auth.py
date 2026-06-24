@@ -47,7 +47,12 @@ class TokenCredentialData(BaseCredentialData):
 class AuthSessionsEntry(BaseModel):
     id: str = Field(description="Unique identifier for the authentication session.")
     current: bool = Field(description="Whether this is the current active session.")
-    internal: bool = Field(description="Whether this is an internal system session.")
+    internal: bool = Field(
+        description=(
+            "Whether this is an internal system session. Pass `[[\"internal\", \"=\", false]]` as "
+            "`query-filters` to exclude internal sessions from the list."
+        ),
+    )
     origin: str = Field(description="Origin information for the session (IP address, hostname, etc.).")
     credentials: Literal[
         'UNIX_SOCKET',

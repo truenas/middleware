@@ -41,7 +41,7 @@ class FailoverDisabledService(Service):
     )
     def reasons(self, app):
         """Returns a list of reasons why failover is not enabled/functional.
-        See `DisabledReasonsEnum` for the reasons and their explanation.
+        See ``DisabledReasonsEnum`` for the reasons and their explanation.
         """
         reasons = self.middleware.call_sync("failover.disabled.get_reasons", app)
         if reasons != FailoverDisabledService.LAST_DISABLED_REASONS:

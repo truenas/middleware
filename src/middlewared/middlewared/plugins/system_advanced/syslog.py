@@ -22,7 +22,7 @@ class SystemAdvancedService(Service):
     )
     async def syslog_certificate_choices(self):
         """
-        Return choices of certificates which can be used for `syslogservers.N.tls_certificate`.
+        Return choices of certificates which can be used for ``syslogservers.N.tls_certificate``.
         """
         return {
             i.id: i.name
@@ -43,8 +43,10 @@ class SystemAdvancedService(Service):
     )
     async def syslog_certificate_authority_choices(self):
         """
-        Return choices of certificate authorities which can be used for `syslog_tls_certificate_authority`.
-        ---- NO LONGER USED: TO BE REMOVED AFTER UI UPDATE ----
+        Return choices of certificate authorities which can be used for ``syslog_tls_certificate_authority``.
+
+        .. deprecated:: 25.10
+            This method is no longer used and will be removed after the UI is updated.
         """
         # return {
         #     i['id']: i['name']

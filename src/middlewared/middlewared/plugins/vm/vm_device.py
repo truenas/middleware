@@ -114,14 +114,14 @@ class VMDeviceService(GenericCRUDService[VMDeviceEntry]):
     )
     async def do_create(self, data: VMDeviceCreate) -> VMDeviceEntry:
         """
-        Create a new device for the VM of id `vm`.
+        Create a new device for the VM of id ``vm``.
 
-        If `attributes.dtype` is the `RAW` type and a new raw file is to be created, `attributes.exists` will be
+        If ``attributes.dtype`` is the ``RAW`` type and a new raw file is to be created, ``attributes.exists`` will be
         passed as false. This means the API handles creating the raw file and raises the appropriate exception if
         file creation fails.
 
-        If `attributes.dtype` is of `DISK` type and a new Zvol is to be created, `attributes.create_zvol` will be
-        passed as true with valid `attributes.zvol_name` and `attributes.zvol_volsize` values.
+        If ``attributes.dtype`` is of ``DISK`` type and a new Zvol is to be created, ``attributes.create_zvol`` will be
+        passed as true with valid ``attributes.zvol_name`` and ``attributes.zvol_volsize`` values.
         """
         return await self._svc_part.do_create(data)
 
@@ -133,9 +133,9 @@ class VMDeviceService(GenericCRUDService[VMDeviceEntry]):
     )
     async def do_update(self, audit_callback: AuditCallback, id_: int, data: VMDeviceUpdate) -> VMDeviceEntry:
         """
-        Update a VM device of `id`.
+        Update a VM device of ``id``.
 
-        Pass `attributes.size` to resize a `dtype` `RAW` device. The raw file will be resized.
+        Pass ``attributes.size`` to resize a ``dtype`` ``RAW`` device. The raw file will be resized.
         """
         return await self._svc_part.do_update(id_, data, audit_callback=audit_callback)
 
@@ -147,7 +147,7 @@ class VMDeviceService(GenericCRUDService[VMDeviceEntry]):
     )
     async def do_delete(self, audit_callback: AuditCallback, id_: int, options: VMDeviceDeleteOptions) -> bool:
         """
-        Delete a VM device of `id`.
+        Delete a VM device of ``id``.
         """
         return await self._svc_part.do_delete(id_, options, audit_callback=audit_callback)
 
@@ -185,7 +185,7 @@ class VMDeviceService(GenericCRUDService[VMDeviceEntry]):
         roles=['VM_DEVICE_READ'], check_annotations=True,
     )
     def iommu_enabled(self) -> bool:
-        """Returns "true" if iommu is enabled, "false" otherwise"""
+        """Returns "true" if iommu is enabled, "false" otherwise."""
         return _iommu_enabled()
 
     @api_method(
@@ -212,7 +212,7 @@ class VMDeviceService(GenericCRUDService[VMDeviceEntry]):
         roles=['VM_DEVICE_READ'], check_annotations=True,
     )
     def passthrough_device(self, device: str) -> VMDevicePassthroughDevice:
-        """Retrieve details about `device` PCI device"""
+        """Retrieve details about ``device`` PCI device."""
         return _passthrough_device(device)
 
     @api_method(
@@ -220,7 +220,7 @@ class VMDeviceService(GenericCRUDService[VMDeviceEntry]):
         roles=['VM_DEVICE_READ'], check_annotations=True,
     )
     def passthrough_device_choices(self) -> VMDevicePassthroughInfo:
-        """Available choices for PCI passthru devices"""
+        """Available choices for PCI passthru devices."""
         return _passthrough_device_choices()
 
     @api_method(
@@ -228,7 +228,7 @@ class VMDeviceService(GenericCRUDService[VMDeviceEntry]):
         roles=['VM_DEVICE_READ'], check_annotations=True,
     )
     def usb_controller_choices(self) -> dict[str, str]:
-        """Retrieve USB controller type choices"""
+        """Retrieve USB controller type choices."""
         return _usb_controller_choices()
 
     @api_method(
@@ -236,7 +236,7 @@ class VMDeviceService(GenericCRUDService[VMDeviceEntry]):
         roles=['VM_DEVICE_READ'], check_annotations=True,
     )
     def usb_passthrough_device(self, device: str) -> USBPassthroughDevice:
-        """Retrieve details about `device` USB device."""
+        """Retrieve details about ``device`` USB device."""
         return _usb_passthrough_device(device)
 
     @api_method(

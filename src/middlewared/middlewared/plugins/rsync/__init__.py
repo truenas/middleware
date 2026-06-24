@@ -54,19 +54,19 @@ class RsyncTaskService(GenericTaskPathService[RsyncTaskEntry], TaskStateMixin):
 
     @api_method(RsyncTaskUpdateArgs, RsyncTaskUpdateResult, check_annotations=True)
     async def do_update(self, id_: int, data: RsyncTaskUpdate) -> RsyncTaskEntry:
-        """Update Rsync Task of `id`."""
+        """Update Rsync Task of ``id``."""
         return await self._svc_part.do_update(id_, data)
 
     @api_method(RsyncTaskDeleteArgs, RsyncTaskDeleteResult, check_annotations=True)
     async def do_delete(self, id_: int) -> bool:
-        """Delete Rsync Task of `id`."""
+        """Delete Rsync Task of ``id``."""
         await self._svc_part.do_delete(id_)
         return True
 
     @api_method(RsyncTaskRunArgs, RsyncTaskRunResult, roles=["SNAPSHOT_TASK_WRITE"], check_annotations=True)
     @job(lock=lambda args: args[-1], lock_queue_size=1, logs=True)
     def run(self, job: Job, id_: int) -> None:
-        """Job to run rsync task of `id`. Output is saved to the job log excerpt (not syslog)."""
+        """Job to run rsync task of ``id``. Output is saved to the job log excerpt (not syslog)."""
         return execute_rsync_task(self.context, job, id_)
 
     def _task_state_datastore(self) -> str:

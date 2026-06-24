@@ -39,7 +39,8 @@ class IpmiChassisService(Service):
         """
         Return IPMI chassis info.
 
-        `query-remote`: [optional] if True on HA system, then return info from remote controller.
+        On an HA system, set ``query-remote`` to ``true`` to return the chassis info from the
+        remote controller instead of the local one.
         """
         query_remote = data.get('query-remote', False)
         result = {}
@@ -71,10 +72,10 @@ class IpmiChassisService(Service):
     )
     def identify(self, data):
         """
-        Toggle the chassis identify light.
+        Toggle the chassis identify light on or off.
 
-        `verb`: str if 'ON' turn identify light on. if 'OFF' turn identify light off.
-        `apply_remote`: bool if True on HA systems, apply to remote controller.
+        On an HA system, set ``apply_remote`` to ``true`` to apply the change to the remote
+        controller instead of the local one.
         """
         verb = data.get('verb', 'ON')
         apply_remote = data.get('apply_remote', False)

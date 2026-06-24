@@ -115,7 +115,11 @@ class SupportIsAvailableAndEnabledResult(BaseModel):
 
 class SupportNewTicketArgs(BaseModel):
     data: SupportNewTicketEnterprise | SupportNewTicketCommunity = Field(
-        description="Support ticket data for either enterprise or community support.",
+        description=(
+            "Support ticket data for either Enterprise or Community Edition. Community Edition tickets do "
+            "not require `criticality`, `environment`, `phone`, `name`, or `email`; Enterprise tickets do "
+            "not require `token` or `type`."
+        ),
     )
 
 

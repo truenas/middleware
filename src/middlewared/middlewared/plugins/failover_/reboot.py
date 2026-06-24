@@ -90,6 +90,12 @@ class FailoverRebootService(Service):
 
     @api_method(FailoverRebootInfoArgs, FailoverRebootInfoResult, roles=['FAILOVER_READ'])
     async def info(self):
+        """
+        Return reboot information for both nodes of the failover pair.
+
+        The response reports, for the local node and for the other node, whether a reboot is required and the
+        reasons for it. The ``other_node`` field is ``null`` when the remote node cannot be reached.
+        """
         changed = False
 
         try:
@@ -181,8 +187,10 @@ class FailoverRebootService(Service):
         """
         Reboot the other node and wait for it to come back online.
 
-        NOTE: This makes very few checks on HA systems. You need to
-            know what you're doing before calling this.
+        .. warning::
+
+            This makes very few checks on HA systems. You need to know what you're doing before
+            calling this.
         """
         if not await self.middleware.call('failover.licensed'):
             return

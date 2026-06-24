@@ -150,7 +150,7 @@ class IPMILanService(Service):
         roles=['IPMI_READ'],
     )
     def query(self, data):
-        """Query available IPMI Channels with `query-filters` and `query-options`."""
+        """Query available IPMI Channels with ``query-filters`` and ``query-options``."""
         result = []
         if not data['ipmi-options']['query-remote']:
             result = self.query_impl()
@@ -176,7 +176,7 @@ class IPMILanService(Service):
         audit='Update IPMI configuration'
     )
     def update(self, id_, data):
-        """Update IPMI channel configuration"""
+        """Update IPMI channel configuration."""
         verrors = ValidationErrors()
         schema = 'ipmi.lan.update'
         if not self.middleware.call_sync('ipmi.is_loaded'):

@@ -73,12 +73,16 @@ class DiskService(CRUDService):
         """
         Query disks.
 
-        The following extra options are supported:
+        The following ``query-options.extra`` options are supported:
 
-        `include_expired` (bool): Also include expired disks (default: false).
-        `passwords` (bool): Don't hide KMIP password for the disks (default: false).
-        `pools` (bool): Join pool name for each disk (default: false).
+        ``include_expired`` *(bool)*:
+            Also include expired disks (``false`` by default).
 
+        ``passwords`` *(bool)*:
+            Don't hide the KMIP password for the disks (``false`` by default).
+
+        ``pools`` *(bool)*:
+            Join the pool name for each disk (``false`` by default).
         """
         filters = filters or []
         options = options or {}
@@ -179,7 +183,7 @@ class DiskService(CRUDService):
     @api_method(DiskUpdateArgs, DiskUpdateResult)
     async def do_update(self, id_, data):
         """
-        Update disk of `id`.
+        Update disk of ``id``.
         """
 
         old = await self.middleware.call(

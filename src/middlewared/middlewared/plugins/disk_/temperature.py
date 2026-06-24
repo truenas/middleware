@@ -24,11 +24,12 @@ class DiskService(Service):
         roles=['REPORTING_READ']
     )
     def temperatures(self, names, include_thresholds):
-        """Returns disk temperatures for disks in degrees celsius.
+        """
+        Returns disk temperatures for disks in degrees celsius.
 
-        NOTE:
-            Disk temperatures are not retrieved more than
-            once every 5 minutes.
+        .. note::
+
+            Disk temperatures are not retrieved more than once every 5 minutes.
         """
         now = time()
         rv = {i: None for i in names}
@@ -58,7 +59,7 @@ class DiskService(Service):
         roles=['REPORTING_READ']
     )
     def temperature_agg(self, names, days):
-        """Returns min/max/avg temperature for `names` disks for the last `days` days"""
+        """Returns min/max/avg temperature for ``names`` disks over the last ``days`` days."""
         # we only keep 7 days of historical data because we keep per second information
         # which adds up to lots of used disk space quickly depending on the size of the
         # system

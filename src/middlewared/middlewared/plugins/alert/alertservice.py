@@ -51,30 +51,30 @@ class AlertServiceService(GenericCRUDService[AlertServiceEntry]):
     @api_method(AlertServiceCreateArgs, AlertServiceCreateResult, check_annotations=True)
     async def do_create(self, data: AlertServiceCreate) -> AlertServiceEntry:
         """
-        Create an Alert Service of specified `type`.
+        Create an Alert Service of specified ``type``.
 
-        If `enabled`, it sends alerts to the configured `type` of Alert Service.
+        If ``enabled``, it sends alerts to the configured ``type`` of Alert Service.
         """
         return await self._svc_part.do_create(data)
 
     @api_method(AlertServiceUpdateArgs, AlertServiceUpdateResult, check_annotations=True)
     async def do_update(self, id_: int, data: AlertServiceCreate) -> AlertServiceEntry:
         """
-        Update Alert Service of `id`.
+        Update Alert Service of ``id``.
         """
         return await self._svc_part.do_update(id_, data)
 
     @api_method(AlertServiceDeleteArgs, AlertServiceDeleteResult, check_annotations=True)
     async def do_delete(self, id_: int) -> bool:
         """
-        Delete Alert Service of `id`.
+        Delete Alert Service of ``id``.
         """
         return await self._svc_part.do_delete(id_)
 
     @api_method(AlertServiceTestArgs, AlertServiceTestResult, roles=["ALERT_WRITE"], check_annotations=True)
     async def test(self, data: AlertServiceCreate) -> bool:
         """
-        Send a test alert using `type` of Alert Service.
+        Send a test alert using ``type`` of Alert Service.
         """
         self._svc_part._validate(data, "alert_service_test")
 

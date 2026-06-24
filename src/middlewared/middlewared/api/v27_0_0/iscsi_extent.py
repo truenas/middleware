@@ -47,7 +47,10 @@ class iSCSITargetExtentEntry(BaseModel):
             "be resolved yet. This is a read-only field automatically populated from \"path\"."
         ),
     )
-    filesize: str | int = Field(default='0', description="Size of the file-based extent in bytes.")
+    filesize: str | int = Field(
+        default='0',
+        description="Size of the file-based extent in bytes. If non-zero, must be a multiple of `blocksize`.",
+    )
     blocksize: IscsiExtentBlockSize = Field(default=512, description="Block size for the extent in bytes.")
     pblocksize: bool = Field(default=False, description="Whether to use physical block size reporting.")
     avail_threshold: Annotated[int, Field(ge=1, le=99)] | None = Field(
@@ -58,9 +61,15 @@ class iSCSITargetExtentEntry(BaseModel):
     naa: str = Field(max_length=34, description="Network Address Authority (NAA) identifier for the extent.")
     insecure_tpc: bool = Field(
         default=True,
-        description="Whether to enable insecure Third Party Copy (TPC) operations.",
+        description=(
+            "Whether to allow initiators to bypass normal access control for XCOPY (Third Party Copy) operations. "
+            "Disable if XCOPY cross-target access is not required."
+        ),
     )
-    xen: bool = Field(default=False, description="Whether to enable Xen compatibility mode.")
+    xen: bool = Field(
+        default=False,
+        description="Whether to enable Xen compatibility mode. Set to `true` when Xen is the iSCSI initiator.",
+    )
     rpm: IscsiExtentRPM = Field(default='SSD', description="Reported RPM type for the extent.")
     ro: bool = Field(default=False, description="Whether the extent is read-only.")
     enabled: bool = Field(default=True, description="Whether the extent is enabled and available for use.")

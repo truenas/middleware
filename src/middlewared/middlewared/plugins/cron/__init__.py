@@ -48,7 +48,7 @@ class CronJobService(GenericCRUDService[CronJobEntry]):
         """
         Create a new cron job.
 
-        `stderr` and `stdout` are boolean values which if `true`, represent that we would like to suppress
+        ``stderr`` and ``stdout`` are boolean values which, if ``true``, represent that we would like to suppress
         standard error / standard output respectively.
         """
         return await self._svc_part.do_create(data)
@@ -56,14 +56,14 @@ class CronJobService(GenericCRUDService[CronJobEntry]):
     @api_method(CronJobUpdateArgs, CronJobUpdateResult, check_annotations=True)
     async def do_update(self, id_: int, data: CronJobUpdate) -> CronJobEntry:
         """
-        Update cronjob of `id`.
+        Update cronjob of ``id``.
         """
         return await self._svc_part.do_update(id_, data)
 
     @api_method(CronJobDeleteArgs, CronJobDeleteResult, check_annotations=True)
     async def do_delete(self, id_: int) -> Literal[True]:
         """
-        Delete cronjob of `id`.
+        Delete cronjob of ``id``.
         """
         await self._svc_part.do_delete(id_)
         return True
@@ -72,7 +72,7 @@ class CronJobService(GenericCRUDService[CronJobEntry]):
     @job(lock=lambda args: f'cron_job_run_{args[0]}', logs=True, lock_queue_size=1)
     def run(self, job: Job, id_: int, skip_disabled: bool) -> None:
         """
-        Job to run cronjob task of `id`.
+        Job to run cronjob task of ``id``.
         """
         return execute_cron_task(self.context, job, id_, skip_disabled)
 

@@ -40,13 +40,12 @@ class KeychainCredentialService(Service):
     )
     async def setup_ssh_connection(self, options):
         """
-        Creates an SSH Connection performing the following steps:
+        Create an SSH connection by performing the following steps:
 
-        1) Generate SSH Key Pair if required
-        2) Set up SSH Credentials based on `setup_type`
+        1. Generate an SSH key pair if required.
+        2. Set up SSH credentials based on ``setup_type``.
 
-        In case (2) fails, it will be ensured that SSH Key Pair generated (if applicable) in the process is
-        removed.
+        If step 2 fails, any SSH key pair generated in the process is removed.
         """
         await self._validate_options(options)
 

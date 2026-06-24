@@ -100,7 +100,7 @@ class SystemGeneralService(Service):
         """
         Restart HTTP server to use latest UI settings.
 
-        HTTP server will be restarted after `delay` seconds.
+        HTTP server will be restarted after ``delay`` seconds.
         """
         event_loop = asyncio.get_event_loop()
         event_loop.call_later(
@@ -117,7 +117,7 @@ class SystemGeneralService(Service):
     )
     async def local_url(self):
         """
-        Returns configured local url in the format of protocol://host:port
+        Returns configured local url in the format of protocol://host:port.
         """
         config = await self.middleware.call("system.general.config")
         if config["ui_certificate"]:

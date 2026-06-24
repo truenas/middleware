@@ -299,16 +299,15 @@ class KeychainCredentialService(CRUDService):
         """
         Create a Keychain Credential.
 
-        The following `type` values are supported:
-         * `SSH_KEY_PAIR`
-         * `SSH_CREDENTIALS`
+        The following ``type`` values are supported:
+         * ``SSH_KEY_PAIR``
+         * ``SSH_CREDENTIALS``
 
-        .. examples(websocket)::
+        Example::
 
-            :::javascript
             {
-                "id": "6841f242-840a-11e6-a437-00e04d680384",
-                "msg": "method",
+                "jsonrpc": "2.0",
+                "id": 1,
                 "method": "keychaincredential.create",
                 "params": [{
                     "name": "Work SSH connection",
@@ -320,6 +319,7 @@ class KeychainCredentialService(CRUDService):
                     }
                 }]
             }
+
         """
         await self._validate("keychain_credential_create", data)
 
@@ -338,16 +338,15 @@ class KeychainCredentialService(CRUDService):
     )
     async def do_update(self, audit_callback, id_, data):
         """
-        Update a Keychain Credential with specific `id`.
+        Update a Keychain Credential with specific ``id``.
 
-        Please note that you can't change `type`. You must specify full `attributes` value.
+        Please note that you can't change ``type``. You must specify full ``attributes`` value.
 
-        .. examples(websocket)::
+        Example::
 
-            :::javascript
             {
-                "id": "6841f242-840a-11e6-a437-00e04d680384",
-                "msg": "method",
+                "jsonrpc": "2.0",
+                "id": 1,
                 "method": "keychaincredential.update",
                 "params": [
                     13,
@@ -361,6 +360,7 @@ class KeychainCredentialService(CRUDService):
                     }
                 ]
             }
+
         """
         old = await self.get_instance(id_)
         audit_callback(old["name"])
@@ -389,19 +389,19 @@ class KeychainCredentialService(CRUDService):
     )
     async def do_delete(self, audit_callback, id_, options):
         """
-        Delete Keychain Credential with specific `id`.
+        Delete Keychain Credential with specific ``id``.
 
-        .. examples(websocket)::
+        Example::
 
-            :::javascript
             {
-                "id": "6841f242-840a-11e6-a437-00e04d680384",
-                "msg": "method",
+                "jsonrpc": "2.0",
+                "id": 1,
                 "method": "keychaincredential.delete",
                 "params": [
                     13
                 ]
             }
+
         """
         instance = await self.get_instance(id_)
         audit_callback(instance["name"])
@@ -473,17 +473,17 @@ class KeychainCredentialService(CRUDService):
     )
     def generate_ssh_key_pair(self):
         """
-        Generate a public/private key pair (useful for `SSH_KEY_PAIR` type)
+        Generate a public/private key pair (useful for ``SSH_KEY_PAIR`` type).
 
-        .. examples(websocket)::
+        Example::
 
-            :::javascript
             {
-                "id": "6841f242-840a-11e6-a437-00e04d680384",
-                "msg": "method",
+                "jsonrpc": "2.0",
+                "id": 1,
                 "method": "keychaincredential.generate_ssh_key_pair",
                 "params": []
             }
+
         """
         with tempfile.TemporaryDirectory() as tmpdirname:
             key = os.path.join(tmpdirname, "key")
@@ -505,19 +505,19 @@ class KeychainCredentialService(CRUDService):
     )
     async def remote_ssh_host_key_scan(self, data):
         """
-        Discover a remote host key (useful for `SSH_CREDENTIALS`)
+        Discover a remote host key (useful for ``SSH_CREDENTIALS``).
 
-        .. examples(websocket)::
+        Example::
 
-            :::javascript
             {
-                "id": "6841f242-840a-11e6-a437-00e04d680384",
-                "msg": "method",
-                "method": "keychaincredential.delete",
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "keychaincredential.remote_ssh_host_key_scan",
                 "params": [{
                     "host": "work.freenas.org"
                 }]
             }
+
         """
 
         proc = await run(["ssh-keyscan", "-p", str(data["port"]), "-T", str(data["connect_timeout"]), data["host"]],
@@ -546,17 +546,16 @@ class KeychainCredentialService(CRUDService):
         """
         Perform semi-automatic SSH connection setup with other TrueNAS machine.
 
-        It creates an `SSH_CREDENTIALS` credential with specified `name` that can be used to connect to TrueNAS machine
-        with specified `url` and temporary auth `token`. Other TrueNAS machine adds `private_key` to allowed
-        `username`'s private keys. Other `SSH_CREDENTIALS` attributes such as `connect_timeout` can be specified as
-        well.
+        It creates an ``SSH_CREDENTIALS`` credential with specified ``name`` that can be used to connect to TrueNAS
+        machine with specified ``url`` and temporary auth ``token``. Other TrueNAS machine adds ``private_key`` to
+        allowed ``username``'s private keys. Other ``SSH_CREDENTIALS`` attributes such as ``connect_timeout`` can be
+        specified as well.
 
-        .. examples(websocket)::
+        Example::
 
-            :::javascript
             {
-                "id": "6841f242-840a-11e6-a437-00e04d680384",
-                "msg": "method",
+                "jsonrpc": "2.0",
+                "id": 1,
                 "method": "keychaincredential.remote_ssh_semiautomatic_setup",
                 "params": [{
                     "name": "Work SSH connection",
@@ -565,6 +564,7 @@ class KeychainCredentialService(CRUDService):
                     "private_key": 12
                 }]
             }
+
         """
         replication_key = self.middleware.call_sync("keychaincredential.get_ssh_key_pair_with_private_key",
                                                     data["private_key"])

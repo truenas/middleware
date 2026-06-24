@@ -129,7 +129,7 @@ class VMWareService(CRUDService):
     @api_method(VMWareUpdateArgs, VMWareUpdateResult)
     async def do_update(self, id_, data):
         """
-        Update VMWare snapshot of `id`.
+        Update VMWare snapshot of ``id``.
         """
         old = await self.get_instance(id_)
         old.pop('state')
@@ -153,7 +153,7 @@ class VMWareService(CRUDService):
     @api_method(VMWareDeleteArgs, VMWareDeleteResult)
     async def do_delete(self, id_):
         """
-        Delete VMWare snapshot of `id`.
+        Delete VMWare snapshot of ``id``.
         """
 
         vmsnapobj = await self.get_instance(id_)
@@ -320,7 +320,7 @@ class VMWareService(CRUDService):
     @api_method(VMWareDatasetHasVmsArgs, VMWareDatasetHasVmsResult, roles=['READONLY_ADMIN'])
     def dataset_has_vms(self, dataset, recursive):
         """
-        Returns "true" if `dataset` is configured with a VMWare snapshot
+        Returns "true" if ``dataset`` is configured with a VMWare snapshot.
         """
         return len(self._dataset_get_vms(dataset, recursive)) > 0
 

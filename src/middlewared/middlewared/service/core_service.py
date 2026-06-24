@@ -91,7 +91,7 @@ class CoreService(Service):
     @api_method(CoreResizeShellArgs, CoreResizeShellResult, authorization_required=False)
     async def resize_shell(self, id_, cols, rows):
         """
-        Resize terminal session (/websocket/shell) to cols x rows
+        Resize terminal session (/websocket/shell) to cols x rows.
         """
         shell = middlewared.main.ShellApplication.shells.get(id_)
         if shell is None:
@@ -146,11 +146,11 @@ class CoreService(Service):
         If authenticated session does not have the FULL_ADMIN role, only
         jobs owned by the current authenticated session will be returned.
 
-        `result` key will have sensitive values redacted by default for external
+        ``result`` key will have sensitive values redacted by default for external
         clients.
 
-        Redaction behavior may be explicitly specfied via the `extra`
-        query-option `raw_result`. If `raw_result` is True then unredacted result
+        Redaction behavior may be explicitly specfied via the ``extra``
+        query option ``raw_result``. If ``raw_result`` is ``true`` then an unredacted result
         is returned.
         """
 
@@ -173,10 +173,10 @@ class CoreService(Service):
     @api_method(CoreJobDownloadLogsArgs, CoreJobDownloadLogsResult, authorization_required=False, pass_app=True)
     async def job_download_logs(self, app, id_, filename, buffered):
         """
-        Download logs of the job `id`.
+        Download logs of the job ``id``.
 
-        Please see `core.download` method documentation for explanation on `filename` and `buffered` arguments,
-        and return value.
+        Please see :method:`core.download` method documentation for explanation on ``filename`` and ``buffered``
+        arguments and return value.
         """
         job = self._job_by_app_and_id(app, id_, JobAccess.READ)
 
@@ -188,6 +188,12 @@ class CoreService(Service):
     @api_method(CoreJobWaitArgs, CoreJobWaitResult, authorization_required=False)
     @job()
     async def job_wait(self, job, id_):
+        """
+        Wait for the job identified by ``id`` to finish and return its result.
+
+        This method is itself a job that wraps the target job, so it mirrors the target's progress and
+        final state (success, failure, or abort).
+        """
         target_job = self.__job_by_credential_and_id(job.credentials, id_, JobAccess.READ)
 
         return await job.wrap(target_job)
@@ -224,6 +230,11 @@ class CoreService(Service):
 
     @api_method(CoreJobAbortArgs, CoreJobAbortResult, authorization_required=False, pass_app=True)
     def job_abort(self, app, id_):
+        """
+        Abort the running job identified by ``id``.
+
+        Only jobs the caller is authorized to abort may be aborted.
+        """
         job = self._job_by_app_and_id(app, id_, JobAccess.ABORT)
         job.abort()
 
@@ -518,6 +529,12 @@ class CoreService(Service):
 
     @api_method(CoreArpArgs, CoreArpResult, roles=['FULL_ADMIN'])
     def arp(self, options):
+        """
+        Return the system ARP table as a mapping of IP address to MAC address.
+
+        Use the ``interface`` and ``ip`` options to restrict the results to a particular interface or a
+        single IP address.
+        """
         arp_command = ['arp', '-n']
         if interface := options.get('interface'):
             arp_command.extend(['-i', interface])
@@ -547,7 +564,7 @@ class CoreService(Service):
         This method executes jobs that generate files or streaming data for download. The job writes its output
         to a pipe, and this method returns a time-limited, single-use download URL.
 
-        1. Call ``core.download`` with the target job method, arguments, and desired filename
+        1. Call :method:`core.download` with the target job method, arguments, and desired filename
 
         2. Receive an array containing the job ID and download URL
 
@@ -635,7 +652,7 @@ class CoreService(Service):
     @job(lock=lambda args: f"bulk:{args[0]}")
     async def bulk(self, app, job, method, params, description):
         """
-        Will sequentially call `method` with the arguments from each entry of the `params` list. For
+        Will sequentially call ``method`` with the arguments from each entry of the ``params`` list. For
         example, calling :method:`core.bulk` with these parameters::
 
             [
@@ -734,6 +751,13 @@ class CoreService(Service):
     @api_method(CoreSetOptionsArgs, CoreSetOptionsResult, authentication_required=False, rate_limit=False,
                 pass_app=True)
     async def set_options(self, app, options):
+        """
+        Set per-connection options for the current API session and return the resulting option values.
+
+        Options such as ``legacy_jobs``, ``private_methods``, and ``py_exceptions`` change how the
+        middleware formats responses and errors for this connection only; they are not persisted beyond
+        the session.
+        """
         if "legacy_jobs" in options:
             app.legacy_jobs = options["legacy_jobs"]
         if "private_methods" in options:
@@ -749,6 +773,13 @@ class CoreService(Service):
 
     @api_method(CoreSubscribeArgs, CoreSubscribeResult, authorization_required=False, pass_app=True)
     async def subscribe(self, app, event):
+        """
+        Subscribe the current connection to the named ``event`` and return a subscription identifier.
+
+        Matching event notifications are pushed to this connection until the subscription is removed with
+        :method:`core.unsubscribe`. A JSON-RPC ``error`` response (code ``-32001``, *Method call error*)
+        is returned if the caller is not authorized to subscribe to the event.
+        """
         if not self.middleware.can_subscribe(app, event):
             raise CallError('Not authorized', errno.EACCES)
 
@@ -758,4 +789,8 @@ class CoreService(Service):
 
     @api_method(CoreUnsubscribeArgs, CoreUnsubscribeResult, authorization_required=False, pass_app=True)
     async def unsubscribe(self, app, ident):
+        """
+        Remove the event subscription identified by ``ident`` (as returned by :method:`core.subscribe`)
+        so the current connection no longer receives notifications for it.
+        """
         await app.unsubscribe(ident)

@@ -164,7 +164,7 @@ class DiskService(Service):
     @api_method(DiskSetupSedArgs, DiskSetupSedResult, roles=['DISK_WRITE'])
     async def setup_sed(self, options):
         """
-        Setup specified `options.name` SED disk.
+        Setup specified ``options.name`` SED disk.
         """
         disk, verrors = await self.common_sed_validation('disk_sed_setup', options, 'UNINITIALIZED')
         password = options.get('password') or disk['passwd'] or await self.middleware.call(
@@ -192,7 +192,7 @@ class DiskService(Service):
     @api_method(DiskUnlockSedArgs, DiskUnlockSedResult, roles=['DISK_WRITE'])
     async def unlock_sed(self, options):
         """
-        Unlock specified `options.name` SED disk.
+        Unlock specified ``options.name`` SED disk.
         """
         disk, verrors = await self.common_sed_validation('disk_sed_unlock', options, 'LOCKED')
         global_sed_password = await self.middleware.call('system.advanced.sed_global_password')

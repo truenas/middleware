@@ -44,30 +44,21 @@ class InitShutdownScriptService(GenericCRUDService[InitShutdownScriptEntry]):
         """
         Create an initshutdown script task.
 
-        `type` indicates if a command or script should be executed at `when`.
+        .. note::
 
-        There are three choices for `when`:
-
-        1) PREINIT - This is early in the boot process before all the services have started
-        2) POSTINIT - This is late in the boot process when most of the services have started
-        3) SHUTDOWN - This is on shutdown
-
-        `timeout` is an integer value which indicates time in seconds which the system should wait for the execution
-        of script/command. It should be noted that a hard limit for a timeout is configured by the base OS, so when
-        a script/command is set to execute on SHUTDOWN, the hard limit configured by the base OS is changed adding
-        the timeout specified by script/command so it can be ensured that it executes as desired and is not interrupted
-        by the base OS's limit.
+            When a script or command is scheduled to run on ``SHUTDOWN``, its ``timeout`` is added to the hard
+            shutdown limit imposed by the base OS so that it can run to completion without being interrupted.
         """
         return await self._svc_part.do_create(data)
 
     @api_method(InitShutdownScriptUpdateArgs, InitShutdownScriptUpdateResult, check_annotations=True)
     async def do_update(self, id_: int, data: InitShutdownScriptUpdate) -> InitShutdownScriptEntry:
-        """Update initshutdown script task of `id`."""
+        """Update initshutdown script task of ``id``."""
         return await self._svc_part.do_update(id_, data)
 
     @api_method(InitShutdownScriptDeleteArgs, InitShutdownScriptDeleteResult, check_annotations=True)
     async def do_delete(self, id_: int) -> Literal[True]:
-        """Delete init/shutdown task of `id`."""
+        """Delete init/shutdown task of ``id``."""
         await self._svc_part.do_delete(id_)
         return True
 

@@ -517,6 +517,17 @@ class DirectoryServices(ConfigService):
     )
     @job(lock='directoryservices_change')
     def update(self, job, data):
+        """
+        Update the directory services configuration that binds TrueNAS to an Active Directory, IPA, or
+        OpenLDAP domain.
+
+        When IPA or Active Directory is enabled for the first time, TrueNAS joins the domain which creates a
+        computer account and DNS records on the domain controller. Setting ``enable`` to ``false`` while keeping
+        the rest of the configuration temporarily disables directory services without discarding the settings.
+        Setting both ``enable`` to ``false`` and ``service_type`` to ``null`` clears the configuration but does
+        not remove the TrueNAS computer account from the domain; use :method:`directoryservices.leave` to leave a
+        domain cleanly.
+        """
         old = self.middleware.call_sync('directoryservices.config')
         new = old | data
         revert = []  # list of methods and arguments required to revert back to clean state
@@ -904,7 +915,7 @@ class DirectoryServices(ConfigService):
     @job(lock='directoryservices_change')
     def leave(self, job, cred):
         """ Leave an Active Directory or IPA domain. Calling this endpoint when the directory services status is
-        `HEALTHY` will cause TrueNAS to remove its account from the domain and then reset the local directory
+        ``HEALTHY`` will cause TrueNAS to remove its account from the domain and then reset the local directory
         services configuration on TrueNAS. """
         revert = []
         verrors = ValidationErrors()
@@ -978,7 +989,7 @@ class DirectoryServices(ConfigService):
         roles=['DIRECTORY_SERVICE_READ']
     )
     async def certificate_choices(self):
-        """ Available certificate choices for use with the `LDAP_MTLS` `credential_type`.
+        """ Available certificate choices for use with the ``LDAP_MTLS`` ``credential_type``.
         Note that prior configuration of LDAP server is required and uploading a custom
         certificate to TrueNAS may also be required. """
         return {

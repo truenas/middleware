@@ -88,7 +88,7 @@ class SystemService(Service):
     )
     async def ready(self):
         """
-        Returns whether the system completed boot and is ready to use
+        Returns whether the system completed boot and is ready to use.
         """
         return await self.middleware.call("system.state") != "BOOTING"
 
@@ -99,10 +99,7 @@ class SystemService(Service):
     )
     async def state(self):
         """
-        Returns system state:
-        "BOOTING" - System is booting
-        "READY" - System completed boot and is ready to use
-        "SHUTTING_DOWN" - System is shutting down
+        Returns the current system state.
         """
         if lifecycle_conf.SYSTEM_SHUTTING_DOWN:
             return "SHUTTING_DOWN"

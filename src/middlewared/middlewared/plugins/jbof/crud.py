@@ -244,7 +244,7 @@ class JBOFService(CRUDService):
     @api_method(JBOFUpdateArgs, JBOFUpdateResult)
     async def do_update(self, id_, data):
         """
-        Update JBOF of `id`
+        Update JBOF of ``id``.
         """
         old = await self.get_instance(id_)
         new = old.copy()

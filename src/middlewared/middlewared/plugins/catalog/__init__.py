@@ -79,7 +79,7 @@ class CatalogService(GenericConfigService[CatalogEntry]):
     )
     def get_app_details(self, app_name: str, options: CatalogAppVersionDetails) -> CatalogAppDetails:
         """
-        Retrieve information of `app_name` `app_version_details.catalog` catalog app.
+        Retrieve information of ``app_name`` ``app_version_details.catalog`` catalog app.
         """
         return get_app_details(self.context, app_name, options)
 
@@ -101,20 +101,7 @@ class CatalogService(GenericConfigService[CatalogEntry]):
     @api_method(CatalogAppsArgs, CatalogAppsResult, check_annotations=True, roles=['CATALOG_READ'])
     def apps(self, options: CatalogApps) -> CatalogAppsResponse:
         """
-        Retrieve apps details for `label` catalog.
-
-        `options.cache` is a boolean which when set will try to get apps details for `label` catalog from cache
-        if available.
-
-        `options.cache_only` is a boolean which when set will force usage of cache only for retrieving catalog
-        information. If the content for the catalog in question is not cached, no content would be returned. If
-        `options.cache` is unset, this attribute has no effect.
-
-        `options.retrieve_all_trains` is a boolean value which when set will retrieve information for all the trains
-        present in the catalog ( it is set by default ).
-
-        `options.trains` is a list of train name(s) which will allow selective filtering to retrieve only information
-        of desired trains in a catalog. If `options.retrieve_all_trains` is set, it has precedence over `options.train`.
+        Retrieve apps details for ``label`` catalog.
         """
         return apps_impl(self.context, options)
 

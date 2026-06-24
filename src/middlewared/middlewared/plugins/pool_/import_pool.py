@@ -134,20 +134,17 @@ class PoolService(Service):
     @job(lock='import_pool')
     async def import_pool(self, job, data):
         """
-        Import a pool found with `pool.import_find`.
+        Import a pool found with :method:`pool.import_find`.
 
         Errors:
             ENOENT - Pool not found
 
-        .. examples(websocket)::
+        Import pool of guid 5571830764813710860::
 
-          Import pool of guid 5571830764813710860.
-
-            :::javascript
             {
-                "id": "6841f242-840a-11e6-a437-00e04d680384",
-                "msg": "method",
-                "method": "pool.import_pool,
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "pool.import_pool",
                 "params": [{
                     "guid": "5571830764813710860"
                 }]

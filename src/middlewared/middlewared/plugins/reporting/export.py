@@ -51,12 +51,12 @@ class ReportingExportsService(GenericCRUDService[ReportingExportsEntry]):
 
     @api_method(ReportingExportsUpdateArgs, ReportingExportsUpdateResult, check_annotations=True)
     async def do_update(self, id_: int, data: ReportingExporterUpdate) -> ReportingExportsEntry:
-        """Update Reporting Exporter of `id`."""
+        """Update Reporting Exporter of ``id``."""
         return await self._svc_part.do_update(id_, data)
 
     @api_method(ReportingExportsDeleteArgs, ReportingExportsDeleteResult, check_annotations=True)
     async def do_delete(self, id_: int) -> bool:
-        """Delete Reporting Exporter of `id`."""
+        """Delete Reporting Exporter of ``id``."""
         await self._svc_part.do_delete(id_)
         return True
 

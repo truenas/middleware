@@ -91,13 +91,13 @@ class PoolService(Service):
         """
         Return the device names of all disks belonging to a pool.
 
-        Queries the database for the pool matching the given `id` and
+        Queries the database for the pool matching the given ``id`` and
         resolves each vdev, cache, log, special, dedup, and spare device
-        to its whole-disk device name (e.g. sda, nvme0n1). If `id` is
+        to its whole-disk device name (e.g. sda, nvme0n1). If ``id`` is
         not provided, disks for all imported pools in the database are
         returned. Pools that are not currently imported are skipped.
 
-        Raises a `ValidationError` if `id` is provided but does not
+        Raises a ``ValidationError`` if ``id`` is provided but does not
         match any pool in the database.
         """
         filters = list() if not oid else [['id', '=', oid]]
@@ -123,7 +123,7 @@ class PoolService(Service):
 
     @api_method(PoolFilesystemChoicesArgs, PoolFilesystemChoicesResult, roles=['DATASET_READ'])
     async def filesystem_choices(self, types):
-        """Returns all available zfs resources based on `types`."""
+        """Returns all available zfs resources based on ``types``."""
         info = []
         for i in await self.call2(
             self.s.zfs.resource.query_impl,
@@ -142,14 +142,14 @@ class PoolService(Service):
     )
     def is_upgraded(self, tls, oid):
         """
-        Returns whether the pool of `id` is on the latest version
+        Returns whether the pool of ``id`` is on the latest version
         and with all feature flags enabled.
 
-        Queries the database for the pool matching the given `id`, then
-        checks each ZFS feature flag on the pool. Returns `true` only
+        Queries the database for the pool matching the given ``id``, then
+        checks each ZFS feature flag on the pool. Returns ``true`` only
         when every feature flag is in the ENABLED or ACTIVE state.
 
-        Raises a `ValidationError` if `id` does not match any pool in
+        Raises a ``ValidationError`` if ``id`` does not match any pool in
         the database.
         """
         pool = self.middleware.call_sync(

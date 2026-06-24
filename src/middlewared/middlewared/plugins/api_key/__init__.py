@@ -62,8 +62,6 @@ class ApiKeyService(GenericCRUDService[ApiKeyEntry]):
     async def do_create(self, app: App, data: ApiKeyCreate) -> ApiKeyEntryWithKey:
         """
         Create an API key.
-
-        `name` is a user-readable name for the key.
         """
         return await self._svc_part.do_create(app, data)
 
@@ -84,9 +82,9 @@ class ApiKeyService(GenericCRUDService[ApiKeyEntry]):
         data: ApiKeyUpdate,
     ) -> ApiKeyEntryWithKey | ApiKeyEntry:
         """
-        Update API Key `id`.
+        Update API Key ``id``.
 
-        Specify `reset: true` to reset this API Key.
+        Specify ``reset: true`` to reset this API Key.
         """
         return await self._svc_part.do_update(app, audit_callback, id_, data)
 
@@ -106,7 +104,7 @@ class ApiKeyService(GenericCRUDService[ApiKeyEntry]):
         id_: int,
     ) -> Literal[True]:
         """
-        Delete API Key `id`.
+        Delete API Key ``id``.
         """
         await self._svc_part.do_delete(app, audit_callback, id_)
         return True
@@ -138,11 +136,13 @@ class ApiKeyService(GenericCRUDService[ApiKeyEntry]):
         Convert a raw API key into its SCRAM authentication components.
 
         This allows API key consumers to transform a raw API key
-        (format: `id-key`) into the precomputed SCRAM authentication
+        (format: ``id-key``) into the precomputed SCRAM authentication
         material for improved performance.
 
-        NOTE: this is a convenience function for API consumers. It does
-        not impact the API key stored server-side.
+        .. note::
+
+            This is a convenience method for API consumers. It does not impact the API key stored
+            server-side.
         """
         return await self._svc_part.convert_raw_key(raw_key.get_secret_value())
 

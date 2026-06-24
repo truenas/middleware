@@ -1050,10 +1050,7 @@ class UserService(CRUDService):
     @api_method(UserDeleteArgs, UserDeleteResult, audit='Delete user', audit_callback=True, pass_app=True)
     def do_delete(self, app, audit_callback, pk, options):
         """
-        Delete user `id`.
-
-        The `delete_group` option deletes the user primary group if it is not being used by
-        any other user.
+        Delete user ``id``.
         """
         if pk > BASE_SYNTHETIC_DATASTORE_ID:
             # datastore ids for directory services are created by adding the
@@ -1144,9 +1141,8 @@ class UserService(CRUDService):
     @api_method(UserShellChoicesArgs, UserShellChoicesResult)
     def shell_choices(self, group_ids):
         """
-        Return the available shell choices to be used in `user.create` and `user.update`.
-
-        :param group_ids: List of local group IDs for the user.
+        Return the available shell choices to be used in :method:`user.create` and
+        :method:`user.update`.
         """
         group_ids = {
             g["gid"] for g in self.middleware.call_sync(
@@ -1179,9 +1175,11 @@ class UserService(CRUDService):
     def get_user_obj(self, data):
         """
         Returns dictionary containing information from struct passwd for the user specified by either
-        the username or uid. Bypasses user cache.
+        the ``username`` or ``uid``. Bypasses user cache.
 
-        NOTE: results will not include nested groups for Active Directory users.
+        .. note::
+
+            Results will not include nested groups for Active Directory users.
         """
         verrors = ValidationErrors()
         if not data['username'] and data['uid'] is None:
@@ -1917,21 +1915,23 @@ class UserService(CRUDService):
                 pass_app=True, pass_app_require=True)
     async def set_password(self, app, data):
         """
-        Set the password of the specified `username` to the `new_password`
+        Set the password of the specified ``username`` to the ``new_password``
         specified in payload.
 
-        ValidationErrors will be raised in the following situations:
-        * username does not exist
-        * account is not local to the NAS (Active Directory, LDAP, etc)
-        * account has password authentication disabled
-        * account is locked
+        A JSON-RPC ``error`` response (code ``-32602``, *Invalid params*) is returned in the
+        following situations:
 
-        NOTE: when authenticated session has less than FULL_ADMIN role,
-        password changes will be rejected if the payload does not match the
-        currently-authenticated user.
+        - the user does not exist
+        - the account is not local to the NAS (Active Directory, LDAP, etc.)
+        - the account has password authentication disabled
+        - the account is locked
 
-        NOTE: users authenticated with a one-time password will be able
-        to change the password without submitting a second time.
+        .. note::
+
+            When the authenticated session has less than the ``FULL_ADMIN`` role, password changes
+            will be rejected if the payload does not match the currently-authenticated user. Users
+            authenticated with a one-time password are exempt and may change the password without
+            submitting it a second time.
         """
 
         verrors = ValidationErrors()
@@ -2302,9 +2302,7 @@ class GroupService(CRUDService):
     @api_method(GroupDeleteArgs, GroupDeleteResult, audit='Delete group', audit_callback=True)
     async def do_delete(self, audit_callback, pk, options):
         """
-        Delete group `id`.
-
-        The `delete_users` option deletes all users that have this group as their primary group.
+        Delete group ``id``.
         """
 
         if pk > BASE_SYNTHETIC_DATASTORE_ID:
@@ -2391,10 +2389,9 @@ class GroupService(CRUDService):
     def get_group_obj(self, data):
         """
         Returns dictionary containing information from struct grp for the group specified by either
-        the `groupname` or `gid`.
+        the ``groupname`` or ``gid``.
 
-        If `sid_info` is specified then addition SMB / domain information is returned for the
-        group.
+        If ``sid_info`` is specified, additional SMB / domain information is returned for the group.
         """
         verrors = ValidationErrors()
         if not data['groupname'] and data['gid'] is None:

@@ -114,7 +114,7 @@ class UserService(Service):
                 roles=['ACCOUNT_WRITE'])
     async def unset_2fa_secret(self, username):
         """
-        Unset two-factor authentication secret for `username`.
+        Unset two-factor authentication secret for ``username``.
         """
         user = await self.translate_username(username)
         twofactor_auth = await self.middleware.call(
@@ -147,10 +147,12 @@ class UserService(Service):
     )
     async def renew_2fa_secret(self, app, username, twofactor_options):
         """
-        Renew `username` user's two-factor authentication secret.
+        Renew ``username`` user's two-factor authentication secret.
 
-        NOTE: This username must match the authenticated username unless authenticated
-        credentials have FULL_ADMIN role.
+        .. note::
+
+            This username must match the authenticated username unless authenticated
+            credentials have the ``FULL_ADMIN`` role.
         """
         if not app_credential_full_admin_or_user(app, username):
             raise CallError(

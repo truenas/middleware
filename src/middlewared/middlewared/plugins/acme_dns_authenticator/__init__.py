@@ -46,7 +46,7 @@ class DNSAuthenticatorService(GenericCRUDService[DNSAuthenticatorEntry]):
     @api_method(DNSAuthenticatorCreateArgs, DNSAuthenticatorCreateResult, check_annotations=True)
     async def do_create(self, dns_authenticator_create: ACMEDNSAuthenticatorCreate) -> DNSAuthenticatorEntry:
         """
-        Create a DNS Authenticator
+        Create a DNS Authenticator.
 
         Create a specific DNS Authenticator containing required authentication details for the said
         provider to successfully connect with it.
@@ -55,12 +55,12 @@ class DNSAuthenticatorService(GenericCRUDService[DNSAuthenticatorEntry]):
 
     @api_method(DNSAuthenticatorUpdateArgs, DNSAuthenticatorUpdateResult, check_annotations=True)
     async def do_update(self, id_: int, dns_authenticator_update: ACMEDNSAuthenticatorUpdate) -> DNSAuthenticatorEntry:
-        """Update DNS Authenticator of `id`."""
+        """Update DNS Authenticator of ``id``."""
         return await self._svc_part.do_update(id_, dns_authenticator_update)
 
     @api_method(DNSAuthenticatorDeleteArgs, DNSAuthenticatorDeleteResult, check_annotations=True)
     async def do_delete(self, id_: int) -> bool:
-        """Delete DNS Authenticator of `id`."""
+        """Delete DNS Authenticator of ``id``."""
         return await self._svc_part.do_delete(id_)
 
     @api_method(

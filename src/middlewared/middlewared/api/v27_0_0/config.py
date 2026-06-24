@@ -15,7 +15,8 @@ class ConfigSave(BaseModel):
     )
     pool_keys: bool = Field(
         default=False,
-        description="Whether to include encryption keys for storage pools in the backup.",
+        description="Whether to include encryption keys for storage pools in the backup. IGNORED and deprecated; "
+                    "it does not apply on SCALE systems.",
     )
     root_authorized_keys: bool = Field(
         default=False,

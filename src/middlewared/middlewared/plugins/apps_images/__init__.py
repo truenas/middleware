@@ -81,9 +81,12 @@ class AppImageService(GenericCRUDService[AppImageEntry, str]):
         options: QueryOptions | None = None,
     ) -> list[AppImageEntry] | AppImageEntry | int:
         """
-        Query all docker images with `query-filters` and `query-options`.
+        Query all docker images with ``query-filters`` and ``query-options``.
 
-        `query-options.extra.parse_tags` when set will have normalized tags returned on each entry.
+        The following ``query-options.extra`` options are supported:
+
+        ``parse_tags`` *(bool)*:
+            Include normalized tags on each entry.
         """
         return query_images(self.context, filters or [], options or QueryOptions())
 
@@ -109,22 +112,14 @@ class AppImageService(GenericCRUDService[AppImageEntry, str]):
     @job()
     def pull(self, job: Job, image_pull: AppImagePull) -> None:
         """
-        `image` is the name of the image to pull. Format for the name is `registry/repo/image:v1.2.3`
-        where registry may be omitted and it will default to docker registry in this case. It can or
-        cannot contain the tag - this will be passed as is to docker so this should be analogous to
-        what `docker pull` expects.
-
-        `auth_config` should be specified if the image to be retrieved is under a private repository.
+        Pull a docker image.
         """
         return pull_image_action(self.context, job, image_pull)
 
     @api_method(AppImageDeleteArgs, AppImageDeleteResult, check_annotations=True)
     def do_delete(self, image_id: str, options: AppImageDeleteOptions) -> typing.Literal[True]:
         """
-        Delete docker image `image_id`.
-
-        `options.force` when set will force delete the image regardless of the state of containers
-        and should be used cautiously.
+        Delete docker image ``image_id``.
         """
         return delete_image_action(self.context, image_id, options)
 

@@ -320,35 +320,20 @@ class AuthService(Service):
     @filterable_api_method(item=AuthSessionsEntry, roles=['AUTH_SESSIONS_READ'], pass_app=True, pass_app_require=True)
     def sessions(self, app, filters, options):
         """
-        Returns list of active auth sessions.
+        Returns a list of active auth sessions.
 
-        Example of return value::
+        The ``credentials_data`` object varies by ``credentials`` type: password and socket sessions include
+        ``username``; API key sessions additionally include ``api_key`` (id and name); token sessions include
+        ``parent`` (the originating credential) and optionally ``username``.
 
-            [
-                {
-                    "id": "NyhB1J5vjPjIV82yZ6caU12HLA1boDJcZNWuVQM4hQWuiyUWMGZTz2ElDp7Yk87d",
-                    "origin": "192.168.0.3:40392",
-                    "credentials": "LOGIN_PASSWORD",
-                    "credentials_data": {"username": "root"},
-                    "current": true,
-                    "internal": false,
-                    "created_at": {"$date": 1545842426070}
-                }
-            ]
+        Example::
 
-        `credentials` can be `UNIX_SOCKET`, `ROOT_TCP_SOCKET`, `LOGIN_PASSWORD`, `API_KEY` or `TOKEN`,
-        depending on what authentication method was used.
-        For `UNIX_SOCKET` and `LOGIN_PASSWORD` logged-in `username` field will be provided in `credentials_data`.
-        For `API_KEY` corresponding `api_key` will be provided in `credentials_data`.
-        For `TOKEN` its `parent` credential will be provided in `credentials_data`.
-
-        If you want to exclude all internal connections from the list, call this method with following arguments::
-
-            [
-                [
-                    ["internal", "=", true]
-                ]
-            ]
+            {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "auth.sessions",
+                "params": []
+            }
         """
         return filter_list(
             [
@@ -368,7 +353,7 @@ class AuthService(Service):
     @api_method(AuthTerminateSessionArgs, AuthTerminateSessionResult, roles=['AUTH_SESSIONS_WRITE'])
     async def terminate_session(self, id_):
         """
-        Terminates session `id`.
+        Terminates session ``id``.
         """
         session = self.session_manager.sessions.get(id_)
         if session is None:
@@ -455,15 +440,10 @@ class AuthService(Service):
         """
         Generate a token to be used for authentication.
 
-        `ttl` stands for Time To Live, in seconds. The token will be invalidated if the connection
-        has been inactive for a time greater than this.
+        .. note::
 
-        `attrs` is a general purpose object/dictionary to hold information about the token.
-
-        `match_origin` will only allow using this token from the same IP address or with the same user UID.
-
-        NOTE: this endpoint is not supported when server security requires replay-resistant
-        authentication as part of GPOS STIG requirements.
+            This method is not supported when server security requires replay-resistant
+            authentication as part of GPOS STIG requirements.
         """
         if not single_use and CURRENT_AAL.level != AA_LEVEL1:
             raise CallError(
@@ -610,10 +590,9 @@ class AuthService(Service):
     async def login(self, app, username, password, otp_token):
         """
         Authenticate session using username and password.
-        `otp_token` must be specified if two factor authentication is enabled.
 
-        Deprecated and removed in v27. Use `auth.login_ex` with `mechanism="PASSWORD_PLAIN"`
-        (and `auth.login_ex_continue` with `mechanism="OTP_TOKEN"` for the second factor).
+        Deprecated and removed in v27. Use :method:`auth.login_ex` with ``mechanism="PASSWORD_PLAIN"``
+        (and :method:`auth.login_ex_continue` with ``mechanism="OTP_TOKEN"`` for the second factor).
         """
 
         resp = await self.login_ex(app, {
@@ -732,7 +711,7 @@ class AuthService(Service):
 
     @api_method(AuthMechanismChoicesArgs, AuthMechanismChoicesResult, authentication_required=False, pass_app=True)
     async def mechanism_choices(self, app) -> list:
-        """ Get list of available authentication mechanisms available for auth.login_ex """
+        """Get the list of authentication mechanisms available for :method:`auth.login_ex`."""
         aal = CURRENT_AAL.level
         cred_allows_token = True
 
@@ -755,29 +734,18 @@ class AuthService(Service):
                 pass_app=True)
     async def login_ex_continue(self, app, data):
         """
-        Continue in-progress authentication attempt. This endpoint should be
-        called to continue an auth.login_ex attempt that returned OTP_REQUIRED.
+        Continue an in-progress authentication attempt. This endpoint should be called to continue
+        an :method:`auth.login_ex` attempt that returned a ``response_type`` of ``OTP_REQUIRED``,
+        submitting the one-time password via the ``OTP_TOKEN`` mechanism.
 
-        This is a convenience wrapper around auth.login_ex for API consumers.
+        This is a convenience wrapper around :method:`auth.login_ex` for API consumers.
 
-        params:
-            mechanism: the mechanism by which to continue authentication.
-            Currently the only supported mechanism here is OTP_TOKEN.
+        The ``response_type`` of the result indicates the outcome of this authentication step:
 
-            OTP_TOKEN
-            otp_token: one-time password token. This is only permitted if
-            a previous auth.login_ex call responded with "OTP_REQUIRED".
-
-        returns:
-            JSON object containing the following keys:
-
-            `response_type` - will be one of the following:
-            SUCCESS - continued auth was required
-
-            OTP_REQUIRED - otp token was rejected. API consumer may call this
-            endpoint again with correct OTP token.
-
-            AUTH_ERR - invalid OTP token submitted too many times.
+        - ``SUCCESS`` -- authentication completed and a session was established.
+        - ``OTP_REQUIRED`` -- the one-time password token was rejected; the client may call this
+          endpoint again with a correct token.
+        - ``AUTH_ERR`` -- an invalid one-time password token was submitted too many times.
         """
         return await self.login_ex(app, data)
 
@@ -1013,8 +981,8 @@ class AuthService(Service):
         """
         Authenticate session using API Key.
 
-        Deprecated and removed in v27. Use `auth.login_ex` with `mechanism="API_KEY_PLAIN"`
-        (or `mechanism="SCRAM"` for SCRAM-based authentication).
+        Deprecated and removed in v27. Use :method:`auth.login_ex` with ``mechanism="API_KEY_PLAIN"``
+        (or ``mechanism="SCRAM"`` for SCRAM-based authentication).
         """
         try:
             key_id = int(api_key.split('-')[0])
@@ -1049,7 +1017,7 @@ class AuthService(Service):
                 pass_app=True)
     async def login_with_token(self, app, token_str):
         """
-        Authenticate session using token generated with `auth.generate_token`.
+        Authenticate session using token generated with :method:`auth.generate_token`.
         """
         resp = await self.login_ex(app, {
             'mechanism': AuthMech.TOKEN_PLAIN,
@@ -1091,22 +1059,26 @@ class AuthService(Service):
     @api_method(AuthSetAttributeArgs, AuthSetAttributeResult, authorization_required=False, pass_app=True)
     async def set_attribute(self, app, key, value):
         """
-        Set current user's `attributes` dictionary `key` to `value`.
+        Set current user's ``attributes`` dictionary ``key`` to ``value``.
 
-        e.g. Setting key="foo" value="var" will result in {"attributes": {"foo": "bar"}}
+        e.g. Setting ``key="foo"`` ``value="var"`` will result in ``{"attributes": {"foo": "bar"}}``.
 
-        Attributes set here will appear in the `auth.me` API response under the `attributes` field.
+        Attributes set here will appear in the :method:`auth.me` response under the ``attributes`` field.
 
-        WARNING: this API endpoint exists solely for the use of the TrueNAS UX team. The data stored in
-        these attributes *must* be considered opaque from the perspective of the middleware backend,
-        with specific documented exceptions. This endpoint should not be used or relied on by any
-        third-party scripts or workflows.
+        .. important::
 
-        WARNING: this API endpoint is not intended for storing security-sensitive information. The
-        backend storage for this data is not encrypted and it is indexed by unix user id rather than
-        database ID, which exposes a risk of stale settings being reused if a new user gets assigned
-        the same unix user id as an previously-existing one. This is of particular concern when users
-        are provided by directory services.
+            This endpoint exists solely for the use of the TrueNAS UX team. The data stored in these
+            attributes *must* be considered opaque from the perspective of the middleware backend,
+            with specific documented exceptions. This endpoint should not be used or relied on by any
+            third-party scripts or workflows.
+
+        .. warning::
+
+            This endpoint is not intended for storing security-sensitive information. The backend
+            storage for this data is not encrypted, and it is indexed by unix user id rather than
+            database ID which exposes a risk of stale settings being reused if a new user gets
+            assigned the same unix user id as a previously-existing one. This is of particular
+            concern when users are provided by directory services.
         """
         user = await self._me(app)
 

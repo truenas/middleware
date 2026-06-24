@@ -55,7 +55,7 @@ class TwoFactorAuthService(ConfigService):
     )
     async def do_update(self, data):
         """
-        `window` extends the validity to `window` many counter ticks before and after the current one.
+        ``window`` extends the validity to ``window`` many counter ticks before and after the current one.
 
         Update Two-Factor Authentication Service Configuration.
         """

@@ -58,6 +58,12 @@ class SharingWebshareService(SharingService[SharingWebshareEntry]):
         check_annotations=True,
     )
     async def do_create(self, data: SharingWebshareCreate) -> SharingWebshareEntry:
+        """
+        Create a Webshare share that exposes a local ZFS path over the Webshare protocol.
+
+        The shared ``path`` must reside under ``/mnt/`` within a ZFS pool. At most one share may set
+        ``is_home_base`` to ``true`` to serve as the base path for user home directories.
+        """
         verrors = ValidationErrors()
 
         await self.validate(data, 'sharing_webshare_create', verrors)
@@ -84,6 +90,11 @@ class SharingWebshareService(SharingService[SharingWebshareEntry]):
         id_: int,
         data: SharingWebshareUpdate,
     ) -> SharingWebshareEntry:
+        """
+        Update the Webshare share identified by ``id``.
+
+        Only one share may set ``is_home_base`` to ``true`` to serve as the base path for user home directories.
+        """
         old = await self.get_instance(id_)
         audit_callback(old.name)
 
@@ -111,7 +122,7 @@ class SharingWebshareService(SharingService[SharingWebshareEntry]):
     )
     async def do_delete(self, audit_callback: AuditCallback, id_: int) -> None:
         """
-        Delete SMB Share of `id`. This will forcibly disconnect SMB clients
+        Delete SMB Share of ``id``. This will forcibly disconnect SMB clients
         that are accessing the share.
         """
         share = await self.get_instance(id_)

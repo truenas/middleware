@@ -61,13 +61,13 @@ class TunableService(GenericCRUDService[TunableEntry]):
     @api_method(TunableUpdateArgs, TunableUpdateResult, audit='Tunable update', check_annotations=True)
     @job(lock='tunable_crud')
     async def do_update(self, job: Job, id_: int, data: TunableUpdate) -> TunableEntry:
-        """Update Tunable of `id`."""
+        """Update Tunable of ``id``."""
         return await self._svc_part.do_update(id_, data)
 
     @api_method(TunableDeleteArgs, TunableDeleteResult, audit='Tunable delete', check_annotations=True)
     @job(lock='tunable_crud')
     async def do_delete(self, job: Job, id_: int) -> None:
-        """Delete Tunable of `id`."""
+        """Delete Tunable of ``id``."""
         await self._svc_part.do_delete(id_)
 
     @private

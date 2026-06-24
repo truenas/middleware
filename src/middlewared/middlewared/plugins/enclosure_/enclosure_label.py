@@ -27,6 +27,12 @@ class EnclosureLabelService(Service):
 
     @api_method(EnclosureLabelSetArgs, EnclosureLabelSetResult, roles=["ENCLOSURE_WRITE"])
     async def set(self, id_, label):
+        """
+        Set a user-defined label for the enclosure identified by ``id``.
+
+        A JSON-RPC ``error`` response (code ``-32602``, *Invalid params*) is returned when no
+        enclosure with the given ``id`` exists.
+        """
         try:
             await self.middleware.call("enclosure2.query", [["id", "=", id_]], {"get": True})
         except MatchNotFound:

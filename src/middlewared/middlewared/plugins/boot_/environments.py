@@ -96,6 +96,12 @@ class BootEnvironmentService(Service):
 
     @filterable_api_method(item=BootEnvironmentEntry, roles=['BOOT_ENV_READ'])
     def query(self, filters, options):
+        """
+        Retrieve the boot environments present in the system's boot pool.
+
+        The ``active`` field identifies the boot environment that is currently running, while the
+        ``activated`` field identifies the one that will be used on the next boot.
+        """
         results = list()
         try:
             info, bp_name = self.zfs_get_props()
@@ -127,6 +133,13 @@ class BootEnvironmentService(Service):
 
     @api_method(BootEnvironmentActivateArgs, BootEnvironmentActivateResult, roles=["BOOT_ENV_WRITE"])
     def activate(self, data):
+        """
+        Activate the boot environment identified by ``id`` so that it becomes the default selection on the
+        next boot. The currently running boot environment is unaffected until the system is rebooted.
+
+        A JSON-RPC ``error`` response (code ``-32602``, *Invalid params*) is returned when the boot environment
+        is already activated or cannot be activated (for example, when it has no associated kernel).
+        """
         info = self.validate_be("boot.environment.activate", data["id"])
         if info["activated"]:
             raise ValidationError(
@@ -142,6 +155,13 @@ class BootEnvironmentService(Service):
 
     @api_method(BootEnvironmentCloneArgs, BootEnvironmentCloneResult, roles=['BOOT_ENV_WRITE'])
     def clone(self, data):
+        """
+        Create a new boot environment named ``target`` as a clone of the existing boot environment identified
+        by ``id``. The clone is not activated; use :method:`boot.environment.activate` to boot into it.
+
+        A JSON-RPC ``error`` response (code ``-32602``, *Invalid params*) is returned when ``id`` does not
+        exist or a boot environment named ``target`` already exists.
+        """
         be = self.validate_be("boot.environment.clone", data["id"])
         self.validate_be("boot.environment.clone", data["target"], should_exist=False)
         run_zectl_cmd(["create", "-r", "-e", be["dataset"], data["target"]])
@@ -149,6 +169,12 @@ class BootEnvironmentService(Service):
 
     @api_method(BootEnvironmentDestroyArgs, BootEnvironmentDestroyResult, roles=['BOOT_ENV_WRITE'])
     def destroy(self, data):
+        """
+        Permanently destroy the boot environment identified by ``id``, freeing the space it consumes.
+
+        The active (currently running) boot environment cannot be destroyed; attempting to do so returns a
+        JSON-RPC ``error`` response (code ``-32602``, *Invalid params*).
+        """
         if self.validate_be("boot.environment.destroy", data["id"])["active"]:
             raise ValidationError(
                 "boot.environment.destroy",
@@ -158,6 +184,11 @@ class BootEnvironmentService(Service):
 
     @api_method(BootEnvironmentKeepArgs, BootEnvironmentKeepResult, roles=['BOOT_ENV_WRITE'])
     def keep(self, data):
+        """
+        Set or clear the "keep" flag on the boot environment identified by ``id``. When ``value`` is ``true``,
+        the boot environment is protected from automatic deletion by the updater when it needs space for an
+        update; when ``false``, the boot environment becomes eligible for such automatic pruning.
+        """
         self.middleware.call_sync(
             "pool.dataset.update_impl",
             UpdateImplArgs(

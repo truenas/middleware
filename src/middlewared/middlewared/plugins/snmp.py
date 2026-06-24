@@ -151,18 +151,12 @@ class SNMPService(SystemServiceService):
         """
         Update SNMP Service Configuration.
 
-        --- Rules ---
+        The ``v3_*`` settings are valid and enforced only when ``v3`` is enabled.
 
-        Enabling v3:
-            requires v3_username, v3_authtype and v3_password
-        Disabling v3:
-            By itself will retain the v3 user settings and config in the 'private' config,
-            but remove the entry in the public config to block v3 access by that user.
-        Disabling v3 and clearing the v3_username:
-            This will do the actions described in 'Disabling v3' and take the extra step to
-            remove the user from the 'private' config.
-
-        The 'v3_*' settings are valid and enforced only when 'v3' is enabled
+        Enabling ``v3`` requires ``v3_username``, ``v3_authtype``, and ``v3_password``. Disabling
+        ``v3`` alone retains the v3 user settings in the private config but removes the public config
+        entry, blocking v3 access. Disabling ``v3`` and clearing ``v3_username`` additionally removes
+        the user from the private config.
         """
         # Make sure we have the SNMP system user
         if not SNMPSystem.SYSTEM_USER['key']:

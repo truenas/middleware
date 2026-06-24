@@ -243,7 +243,7 @@ class ReplicationService(CRUDService):
     )
     async def do_update(self, app, audit_callback, id_, data):
         """
-        Update a Replication Task with specific `id`.
+        Update a Replication Task with specific ``id``.
         """
 
         old = await self.get_instance(id_)
@@ -289,7 +289,7 @@ class ReplicationService(CRUDService):
     )
     async def do_delete(self, audit_callback, id_):
         """
-        Delete a Replication Task with specific `id`
+        Delete a replication task with the given ``id``.
         """
         task_name = (await self.get_instance(id_))["name"]
         audit_callback(task_name)
@@ -315,7 +315,7 @@ class ReplicationService(CRUDService):
     @job(logs=True, read_roles=["REPLICATION_TASK_READ"])
     async def run(self, job, id_, really_run):
         """
-        Run Replication Task of `id`.
+        Run Replication Task of ``id``.
         """
         if really_run:
             task = await self.get_instance(id_)
@@ -713,7 +713,7 @@ class ReplicationService(CRUDService):
     @api_method(ReplicationListDatasetsArgs, ReplicationListDatasetsResult, roles=["REPLICATION_TASK_WRITE"])
     async def list_datasets(self, transport, ssh_credentials):
         """
-        List datasets on remote side
+        List datasets on remote side.
         """
 
         return await self.middleware.call("zettarepl.list_datasets", transport, ssh_credentials)
@@ -721,7 +721,7 @@ class ReplicationService(CRUDService):
     @api_method(ReplicationCreateDatasetArgs, ReplicationCreateDatasetResult, roles=["REPLICATION_TASK_WRITE"])
     async def create_dataset(self, dataset, transport, ssh_credentials):
         """
-        Creates dataset on remote side
+        Creates dataset on remote side.
         """
         return await self.middleware.call("zettarepl.create_dataset", dataset, transport, ssh_credentials)
 
@@ -745,7 +745,7 @@ class ReplicationService(CRUDService):
     )
     async def count_eligible_manual_snapshots(self, data):
         """
-        Count how many existing snapshots of `dataset` match `naming_schema`.
+        Count how many existing snapshots of ``dataset`` match ``naming_schema``.
         """
         return await self.middleware.call("zettarepl.count_eligible_manual_snapshots", data)
 

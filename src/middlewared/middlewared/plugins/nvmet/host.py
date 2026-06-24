@@ -55,9 +55,9 @@ class NVMetHostService(CRUDService):
     )
     async def do_create(self, data):
         """
-        Create an NVMe target `host`.
+        Create an NVMe target ``host``.
 
-        This may be then be associated with one or more `subsystems` to control access.
+        This may be then be associated with one or more ``subsystems`` to control access.
         """
         verrors = ValidationErrors()
         await self.__validate(verrors, data, 'nvmet_host_create')
@@ -79,7 +79,7 @@ class NVMetHostService(CRUDService):
     )
     async def do_update(self, audit_callback, id_, data):
         """
-        Update NVMe target `host` of `id`.
+        Update NVMe target ``host`` of ``id``.
         """
         old = await self.get_instance(id_)
         audit_callback(old['hostnqn'])
@@ -107,7 +107,7 @@ class NVMetHostService(CRUDService):
     )
     async def do_delete(self, audit_callback, id_, options):
         """
-        Delete NVMe target `host` of `id`.
+        Delete NVMe target ``host`` of ``id``.
         """
         force = options.get('force', False)
         verrors = ValidationErrors()
@@ -179,7 +179,7 @@ class NVMetHostService(CRUDService):
     @api_method(NVMetHostGenerateKeyArgs, NVMetHostGenerateKeyResult, roles=['SHARING_NVME_TARGET_WRITE'])
     async def generate_key(self, dhchap_hash, nqn):
         """
-        Generate a secret key that may be used when configuring `host` authentication.
+        Generate a secret key that may be used when configuring ``host`` authentication.
         """
         # We happen to use the same DB mapping as nvme uses for its parameter
         hash_value = DHCHAP_HASH.by_api(dhchap_hash).db
@@ -197,7 +197,7 @@ class NVMetHostService(CRUDService):
     @api_method(NVMetHostDhchapDhgroupChoicesArgs, NVMetHostDhchapDhgroupChoicesResult)
     async def dhchap_dhgroup_choices(self):
         """
-        Returns possible choices for `dhchap_dhgroup` attribute of `host` create and update.
+        Returns possible choices for ``dhchap_dhgroup`` attribute of ``host`` create and update.
         None is an additional choice.
         """
         return ['2048-BIT', '3072-BIT', '4096-BIT', '6144-BIT', '8192-BIT']
@@ -205,6 +205,6 @@ class NVMetHostService(CRUDService):
     @api_method(NVMetHostDhchapHashChoicesArgs, NVMetHostDhchapHashChoicesResult)
     async def dhchap_hash_choices(self):
         """
-        Returns possible choices for `dhchap_hash` attribute of `host` create and update.
+        Returns possible choices for ``dhchap_hash`` attribute of ``host`` create and update.
         """
         return ['SHA-256', 'SHA-384', 'SHA-512']

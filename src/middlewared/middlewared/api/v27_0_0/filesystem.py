@@ -53,7 +53,11 @@ class FilesystemChownOptions(FilesystemRecursionOptions):
 class FilesystemSetpermOptions(FilesystemRecursionOptions):
     stripacl: bool = Field(
         default=False,
-        description="Whether to remove existing Access Control Lists when setting permissions.",
+        description=(
+            "Whether to remove existing Access Control Lists when setting permissions. `filesystem.setperm` fails if "
+            "an extended ACL is present on the path unless this is set. When no `mode` is set and this is `true`, "
+            "non-trivial ACLs are converted to trivial ACLs."
+        ),
     )
 
 
@@ -230,7 +234,13 @@ FilesystemListdirResult = query_result_from_item(FilesystemListdirResultItem, "F
 
 class FilesystemMkdirOptions(BaseModel):
     mode: UnixPerm = Field(default='755', description="Unix permissions for the new directory.")
-    raise_chmod_error: bool = Field(default=True, description="Whether to raise an error if chmod fails.")
+    raise_chmod_error: bool = Field(
+        default=True,
+        description=(
+            "Whether to raise an error if chmod fails. When it does, the newly created directory is removed to "
+            "prevent its use with unintended permissions."
+        ),
+    )
 
 
 class FilesystemMkdirData(BaseModel):
@@ -262,7 +272,9 @@ class FilesystemStatData(BaseModel):
     mount_id: int = Field(
         description=(
             "The mount ID of the mount containing the entry. This corresponds to the number in first field of "
-            "/proc/self/mountinfo and stx_mnt_id."
+            "/proc/self/mountinfo and stx_mnt_id. Bind mounts share the same device ID but have different mount IDs, "
+            "so this value uniquely identifies the particular mount and can be used to identify children of a given "
+            "mountpoint."
         ),
     )
     uid: int = Field(description="User ID of the entry's owner. This corresponds with stx_uid.")
@@ -272,15 +284,26 @@ class FilesystemStatData(BaseModel):
         description="Time of last modification. Corresponds with stx_mtime. This is mutable from userspace.",
     )
     ctime: float = Field(description="Time of last status change. Corresponds with stx_ctime.")
-    btime: float = Field(description="Time of creation. Corresponds with stx_btime.")
-    dev: int = Field(
+    btime: float = Field(
         description=(
-            "The ID of the device containing the filesystem where the file resides. This is not sufficient to uniquely "
-            "identify a particular filesystem mount. mount_id must be used for that purpose. This corresponds with "
-            "st_dev."
+            "Time of creation. Corresponds with stx_btime. Depending on the platform, this may be mutable from "
+            "userspace."
         ),
     )
-    inode: int = Field(description="The inode number of the file. This corresponds with stx_ino.")
+    dev: int = Field(
+        description=(
+            "The ID of the device containing the filesystem where the file resides. Within the TrueNAS API this is "
+            "sufficient to uniquely identify a given dataset, but it is not sufficient to uniquely identify a "
+            "particular filesystem mount (bind mounts of the same dataset share a dev). mount_id must be used for "
+            "that purpose. This corresponds with st_dev."
+        ),
+    )
+    inode: int = Field(
+        description=(
+            "The inode number of the file. This corresponds with stx_ino. It uniquely identifies the file on the "
+            "given device, but once a file is deleted its inode number may be reused."
+        ),
+    )
     nlink: int = Field(description="Number of hard links. Corresponds with stx_nlinks.")
     acl: bool = Field(
         description=(
@@ -421,7 +444,8 @@ class FilesystemSetZfsAttributesOptions(BaseModel):
         description=(
             "If set, walk the tree under `path` and apply attributes to entries whose type appears in the list "
             "(`FILES`, `DIRECTORIES`, or both). The root `path` is included only if its type matches the filter. `null`"
-            " means no recursion (operate on `path` only). An empty list is rejected."
+            " means no recursion (operate on `path` only). An empty list is rejected. Recursion stops at dataset "
+            "boundaries."
         ),
     )
 

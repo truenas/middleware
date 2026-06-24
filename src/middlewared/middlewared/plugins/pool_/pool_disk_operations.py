@@ -33,17 +33,14 @@ class PoolService(Service):
     )
     async def detach(self, audit_callback, oid, options):
         """
-        Detach a disk from pool of id `id`.
+        Detach a disk from pool of id ``id``.
 
-        .. examples(websocket)::
+        Example::
 
-          Detach ZFS device.
-
-            :::javascript
             {
-                "id": "6841f242-840a-11e6-a437-00e04d680384",
-                "msg": "method",
-                "method": "pool.detach,
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "pool.detach",
                 "params": [1, {
                     "label": "80802394992848654"
                 }]
@@ -86,17 +83,14 @@ class PoolService(Service):
     )
     async def offline(self, audit_callback, oid, options):
         """
-        Offline a disk from pool of id `id`.
+        Offline a disk from pool of id ``id``.
 
-        .. examples(websocket)::
+        Example::
 
-          Offline ZFS device.
-
-            :::javascript
             {
-                "id": "6841f242-840a-11e6-a437-00e04d680384",
-                "msg": "method",
-                "method": "pool.offline,
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "pool.offline",
                 "params": [1, {
                     "label": "80802394992848654"
                 }]
@@ -129,17 +123,14 @@ class PoolService(Service):
     )
     async def online(self, audit_callback, oid, options):
         """
-        Online a disk from pool of id `id`.
+        Online a disk from pool of id ``id``.
 
-        .. examples(websocket)::
+        Example::
 
-          Online ZFS device.
-
-            :::javascript
             {
-                "id": "6841f242-840a-11e6-a437-00e04d680384",
-                "msg": "method",
-                "method": "pool.online,
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "pool.online",
                 "params": [1, {
                     "label": "80802394992848654"
                 }]
@@ -174,25 +165,14 @@ class PoolService(Service):
     @job(lock=lambda args: f'{args[0]}_remove')
     async def remove(self, job, audit_callback, oid, options):
         """
-        Remove a disk from pool of id `id`.
+        Remove a disk from pool of id ``id``.
 
-        `label` is the vdev guid or device name.
+        Example::
 
-        Error codes:
-
-            EZFS_NOSPC(2032): out of space to remove a device
-            EZFS_NODEVICE(2017): no such device in pool
-            EZFS_NOREPLICAS(2019): no valid replicas
-
-        .. examples(websocket)::
-
-          Remove ZFS device.
-
-            :::javascript
             {
-                "id": "6841f242-840a-11e6-a437-00e04d680384",
-                "msg": "method",
-                "method": "pool.remove,
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "pool.remove",
                 "params": [1, {
                     "label": "80802394992848654"
                 }]

@@ -137,6 +137,10 @@ class SMBService(ConfigService):
 
     @api_method(SMBUnixcharsetChoicesArgs, SMBUnixcharsetChoicesResult)
     async def unixcharset_choices(self):
+        """
+        Return the available UNIX character set choices for the ``unixcharset`` field in the SMB service
+        configuration.
+        """
         return {str(charset): charset for charset in SMBUnixCharset}
 
     @private
@@ -508,43 +512,25 @@ class SMBService(ConfigService):
 
     @api_method(SMBUpdateArgs, SMBUpdateResult, audit='Update SMB configuration', pass_app=True)
     async def do_update(self, app, data):
-        r"""
-        Update SMB Service Configuration.
+        """
+        Update the SMB service configuration.
 
-        `netbiosname` defaults to the original hostname of the system.
+        The group specified as the SMB ``admin_group`` is automatically added as a foreign group member of
+        ``S-1-5-32-544`` (the builtin administrators group), affording the group all privileges granted to a
+        local administrator. Any SMB group may be selected, including Active Directory groups.
 
-        `netbiosalias` a list of netbios aliases. If Server is joined to an AD domain, additional Kerberos
-        Service Principal Names will be generated for these aliases.
+        Mandatory SMB encryption (``encryption`` set to ``REQUIRED``) is not compatible with ``SMB1`` server
+        support.
 
-        `workgroup` specifies the NetBIOS workgroup to which the TrueNAS server belongs. This will be
-        automatically set to the correct value during the process of joining an AD domain.
-        NOTE: `workgroup` and `netbiosname` should have different values.
+        .. note::
 
-        `minimum_protocol` sets the minimum SMB protocol version permitted for client connections.
+            ``workgroup`` and ``netbiosname`` must have different values.
 
-        `aapl_extensions` enables support for SMB2 protocol extensions for MacOS clients. This is not a
-        requirement for MacOS support, but is currently a requirement for time machine support.
+        .. important::
 
-        `localmaster` when set, determines if the system participates in a browser election.
-
-        `guest` attribute is specified to select the account to be used for guest access. It defaults to "nobody".
-
-        The group specified as the SMB `admin_group` will be automatically added as a foreign group member
-        of S-1-5-32-544 (builtin\\admins). This will afford the group all privileges granted to a local admin.
-        Any SMB group may be selected (including AD groups).
-
-        `ntlmv1_auth` enables a legacy and insecure authentication method, which may be required for legacy or
-        poorly-implemented SMB clients.
-
-        `encryption` set global server behavior with regard to SMB encrpytion. Options are DEFAULT (which
-        follows the upstream defaults -- currently identical to NEGOTIATE), NEGOTIATE encrypts SMB transport
-        only if requested by the SMB client, DESIRED encrypts SMB transport if supported by the SMB client,
-        REQUIRED only allows encrypted transport to the SMB server. Mandatory SMB encryption is not
-        compatible with SMB1 server support in TrueNAS.
-
-        `smb_options` smb.conf parameters that are not covered by the above supported configuration options may be
-        added as an smb_option. Not all options are tested or supported, and behavior of smb_options may change
-        between releases. Stability of smb.conf options is not guaranteed.
+            ``smb_options`` are raw ``smb.conf`` parameters that are not covered by the supported configuration
+            options. Not all options are tested or supported, and their behavior may change between releases.
+            Stability of ``smb.conf`` options is not guaranteed.
         """
         old = await self.config()
 
@@ -773,6 +759,20 @@ class SharingSMBService(SharingService):
         pass_app=True,
     )
     async def do_create(self, app, data):
+        """
+        Create an SMB share.
+
+        The behavior and available options of the share are determined by its ``purpose``; most deployments
+        should use ``DEFAULT_SHARE``. Before creating a share, the server should be joined to a directory
+        service or have at least one local SMB user; :method:`sharing.smb.share_precheck` can be used to
+        validate this and the share name in advance.
+
+        .. note::
+
+            Setting raw ``smb.conf`` auxiliary parameters (``options.auxsmbconf``) is restricted to callers
+            with full administrative privileges. Auxiliary parameters that would break the SMB server are
+            rejected, returning a JSON-RPC ``error`` response (code ``-32602``, *Invalid params*).
+        """
         audit_info = deepcopy(SMB_AUDIT_DEFAULTS) | data.get(share_field.AUDIT)
         data[share_field.AUDIT] = audit_info
 
@@ -881,6 +881,18 @@ class SharingSMBService(SharingService):
         pass_app=True,
     )
     async def do_update(self, app, audit_callback, id_, data):
+        """
+        Update the SMB share identified by ``id``.
+
+        Renaming a share or changing its ``path`` is disruptive: existing SMB sessions on the affected share
+        are forcibly closed so that the change can take effect.
+
+        .. note::
+
+            Setting raw ``smb.conf`` auxiliary parameters (``options.auxsmbconf``) is restricted to callers
+            with full administrative privileges. Auxiliary parameters that would break the SMB server are
+            rejected and the original configuration is restored.
+        """
         old = await self.get_instance(id_)
         audit_callback(old[share_field.NAME])
 
@@ -1031,7 +1043,7 @@ class SharingSMBService(SharingService):
     )
     async def do_delete(self, audit_callback, id_):
         """
-        Delete SMB Share of `id`. This will forcibly disconnect SMB clients
+        Delete SMB Share of ``id``. This will forcibly disconnect SMB clients
         that are accessing the share.
         """
         share = await self.get_instance(id_)
@@ -1410,8 +1422,16 @@ class SharingSMBService(SharingService):
 
     @api_method(SharingSMBSharePrecheckArgs, SharingSMBSharePrecheckResult, roles=['READONLY_ADMIN'])
     async def share_precheck(self, data):
-        # This endpoint provides the UI a mechanism to determine whether popup prompting to create
-        # SMB users should occur when auto-creating an SMB share in the datasets form.
+        """
+        Validate prerequisites for creating an SMB share before calling :method:`sharing.smb.create`.
+
+        This is used by the UI to determine whether it should prompt to create SMB users when auto-creating
+        a share. It verifies that the server is joined to a directory service or has at least one local SMB
+        user, and, when ``name`` is supplied, that the share name is valid and not already in use.
+
+        Returns ``null`` on success. If any check fails, a JSON-RPC ``error`` response (code ``-32602``,
+        *Invalid params*) is returned describing the problem.
+        """
         verrors = ValidationErrors()
         ds_enabled = (await self.middleware.call('directoryservices.config'))['enable']
         if not ds_enabled:
@@ -1601,22 +1621,7 @@ class SharingSMBService(SharingService):
     )
     async def setacl(self, data):
         """
-        Set an ACL on `share_name`. This only impacts access through the SMB protocol.
-
-        `share_name` the name of the share
-
-        `share_acl` a list of ACL entries (dictionaries) with the following keys:
-
-        `ae_who_sid` who the ACL entry applies to expressed as a Windows SID
-
-        `ae_who_id` Unix ID information for user or group to which the ACL entry applies.
-
-        `ae_perm` string representation of the permissions granted to the user or group.
-        FULL - grants read, write, execute, delete, write acl, and change owner.
-        CHANGE - grants read, write, execute, and delete.
-        READ - grants read and execute.
-
-        `ae_type` can be ALLOWED or DENIED.
+        Set an ACL on ``share_name``. This only impacts access through the SMB protocol.
         """
         verrors = ValidationErrors()
 
@@ -1723,6 +1728,17 @@ class SharingSMBService(SharingService):
         audit_extended=lambda data: data['share_name']
     )
     async def getacl(self, data):
+        """
+        Retrieve the share-level ACL for the SMB share named ``share_name``.
+
+        This is the access control list enforced by the SMB protocol on connections to the share; it is
+        distinct from the filesystem ACL on the share ``path``. Each entry's SID is resolved to a Unix ID and
+        name where possible. The special share name ``HOMES`` refers to the auto-generated home-directory
+        share.
+
+        A JSON-RPC ``error`` response (code ``-32602``, *Invalid params*) is returned when the named share
+        does not exist.
+        """
         verrors = ValidationErrors()
 
         if data['share_name'].upper() == 'HOMES':

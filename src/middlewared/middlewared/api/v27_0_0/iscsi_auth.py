@@ -17,16 +17,26 @@ __all__ = [
 
 class iSCSITargetAuthCredentialEntry(BaseModel):
     id: int = Field(description="Unique identifier for the iSCSI authentication credential.")
-    tag: int = Field(description="Numeric tag used to associate this credential with iSCSI targets.")
+    tag: int = Field(
+        description=(
+            "Numeric tag used to associate this credential with iSCSI targets. Must be unique among "
+            "iSCSI Authorized Accesses."
+        ),
+    )
     user: str = Field(description="Username for iSCSI CHAP authentication.")
-    secret: Secret[str] = Field(description="Password/secret for iSCSI CHAP authentication.")
+    secret: Secret[str] = Field(
+        description="Password/secret for iSCSI CHAP authentication. Must be 12-16 characters.",
+    )
     peeruser: str = Field(
         default='',
         description="Username for mutual CHAP authentication or empty string if not configured.",
     )
     peersecret: Secret[str] = Field(
         default='',
-        description="Password/secret for mutual CHAP authentication or empty string if not configured.",
+        description=(
+            "Password/secret for mutual CHAP authentication, or empty string if not configured. Must be 12-16 "
+            "characters when set and must differ from `secret`."
+        ),
     )
     discovery_auth: IscsiAuthType = Field(
         default='NONE',

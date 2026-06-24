@@ -56,10 +56,6 @@ class FCPortService(CRUDService):
     async def do_create(self, data: dict) -> dict:
         """
         Creates mapping between a FC port and a target.
-
-        `port` is a FC host port `alias`, or `alias/number` for a NPIV port.
-
-        `target_id` is the `id` of the target to be associated with the FC port.
         """
         await self._validate("fcport_create", data)
 
@@ -78,7 +74,7 @@ class FCPortService(CRUDService):
     @api_method(FCPortUpdateArgs, FCPortUpdateResult, audit='Update FC port mapping', audit_callback=True)
     async def do_update(self, audit_callback: callable, id_: int, data: dict) -> dict:
         """
-        Update FC port mapping `id`.
+        Update FC port mapping ``id``.
         """
         old = await self.get_instance(id_)
         audit_callback(old['port'])
@@ -106,7 +102,7 @@ class FCPortService(CRUDService):
     @api_method(FCPortDeleteArgs, FCPortDeleteResult, audit='Delete FC port mapping', audit_callback=True)
     async def do_delete(self, audit_callback: callable, id_: int) -> Literal[True]:
         """
-        Delete FC port mapping `id`.
+        Delete FC port mapping ``id``.
         """
         alias = (await self.get_instance(id_))['port']
         audit_callback(alias)
@@ -123,6 +119,12 @@ class FCPortService(CRUDService):
 
     @api_method(FCPortPortChoicesArgs, FCPortPortChoicesResult)
     async def port_choices(self, include_used):
+        """
+        Return the available Fibre Channel ports that can be assigned to a target.
+
+        By default this includes ports that are already mapped to a target. Set ``include_used``
+        to ``false`` to exclude ports that are already in use.
+        """
         result = {}
         if include_used:
             # We don't need to check, so don't populate this
@@ -222,6 +224,12 @@ class FCPortService(CRUDService):
 
     @api_method(FCPortStatusArgs, FCPortStatusResult, roles=['SHARING_ISCSI_TARGET_READ'])
     async def status(self, filters, options):
+        """
+        Return the runtime status of Fibre Channel ports, including port state, type, speed, and
+        connected sessions.
+
+        On an HA system, status is gathered from both controllers and reported per node.
+        """
         with_lun_access = options['extra']['with_lun_access']
         # If a filter has been supplied, and if it *only* selects a single fc_port
         # then we can optimize what data we collect.

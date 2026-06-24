@@ -99,11 +99,13 @@ class ServiceService(CRUDService):
     @filterable_api_method(item=ServiceEntry)
     async def query(self, filters, options):
         """
-        Query all system services with `query-filters` and `query-options`.
+        Query all system services with ``query-filters`` and ``query-options``.
 
-        Supports the following extra options:
-        `include_state` - performance optimization to avoid getting service state.
-        defaults to True.
+        The following ``query-options.extra`` options are supported:
+
+        ``include_state`` *(bool)*:
+            Include the running state of each service (``true`` by default). Set to ``false`` as a performance
+            optimization when service state is not needed.
         """
         default_options = {
             'prefix': self._config.datastore_prefix,
@@ -128,7 +130,7 @@ class ServiceService(CRUDService):
     )
     async def do_update(self, app, audit_callback, id_or_name, data):
         """
-        Update service entry of `id_or_name`.
+        Update service entry of ``id_or_name``.
         """
         if isinstance(id_or_name, int) or id_or_name.isdigit():
             filters = [['id', '=', int(id_or_name)]]
@@ -161,6 +163,15 @@ class ServiceService(CRUDService):
     )
     @job(lock=lambda args: f'service_{args[1]}')
     async def control(self, app, job, verb, service, options):
+        """
+        Perform the control operation given by ``verb`` (``START``, ``STOP``, ``RESTART``, or ``RELOAD``) on the
+        system service named ``service``. This is the general entry point for managing the running state of a
+        service; the configured enable-on-boot setting is changed separately via :method:`service.update`.
+
+        The result reflects whether the service is running after a ``START``, ``RESTART``, or ``RELOAD``, or
+        whether it was successfully stopped for a ``STOP``. By default failures are reported by returning
+        ``false`` rather than raising; set ``options.silent`` to ``false`` to receive an error instead.
+        """
         # Check permissions before calling the private method
         if not app_has_write_privilege_for_service(app, service):
             raise CallError(f'{service}: authenticated session lacks privilege to {verb.lower()} service', errno.EPERM)
@@ -224,7 +235,7 @@ class ServiceService(CRUDService):
     @api_method(ServiceStartedArgs, ServiceStartedResult, roles=['SERVICE_READ'])
     async def started(self, service):
         """
-        Test if service specified by `service` has been started.
+        Test if service specified by ``service`` has been started.
         """
         service_object: 'ServiceInterface' = await self.middleware.call('service.object', service)
 
@@ -241,7 +252,7 @@ class ServiceService(CRUDService):
     @api_method(ServiceStartedOrEnabledArgs, ServiceStartedOrEnabledResult, roles=['SERVICE_READ'])
     async def started_or_enabled(self, service):
         """
-        Test if service specified by `service` is started or enabled to start automatically.
+        Test if service specified by ``service`` is started or enabled to start automatically.
         """
         svc = await self.middleware.call('service.query', [['service', '=', service]], {'get': True})
         return svc['state'] == 'RUNNING' or svc['enable']

@@ -83,17 +83,7 @@ class PrivilegeService(CRUDService):
                 audit="Create privilege", audit_extended=lambda data: data["name"])
     async def do_create(self, data):
         """
-        Creates a privilege.
-
-        `name` is a name for privilege (must be unique).
-
-        `local_groups` is a list of local user account group GIDs that gain this privilege.
-
-        `ds_groups` is list of Directory Service group GIDs that will gain this privilege.
-
-        `roles` is a list of roles to be assigned to the privilege
-
-        `web_shell` controls whether users with this privilege are allowed to log in to the Web UI.
+        Create a privilege.
         """
         await self._validate("privilege_create", data)
 
@@ -108,7 +98,7 @@ class PrivilegeService(CRUDService):
     @api_method(PrivilegeUpdateArgs, PrivilegeUpdateResult, audit="Update privilege", audit_callback=True)
     async def do_update(self, audit_callback, id_, data):
         """
-        Update the privilege `id`.
+        Update the privilege ``id``.
         """
         old = await self.get_instance(id_)
         audit_callback(old["name"])
@@ -172,7 +162,7 @@ class PrivilegeService(CRUDService):
     @api_method(PrivilegeDeleteArgs, PrivilegeDeleteResult, audit="Delete privilege", audit_callback=True)
     async def do_delete(self, audit_callback, id_):
         """
-        Delete the privilege `id`.
+        Delete the privilege ``id``.
         """
         privilege = await self.get_instance(id_)
         audit_callback(privilege["name"])
@@ -482,7 +472,7 @@ class PrivilegeService(CRUDService):
         pass_app_require=True
     )
     async def become_readonly(self, app):
-        """ Reduce the privileges of the current user credentials to `READONLY_ADMINS`.
+        """ Reduce the privileges of the current user credentials to ``READONLY_ADMINS``.
         This action prevents the session from making configuration changes. It also redacts
         sensitive data in API output. """
         if not app.authenticated_credentials.is_user_session:

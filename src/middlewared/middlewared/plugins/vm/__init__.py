@@ -179,36 +179,8 @@ class VMService(GenericCRUDService[VMEntry]):
         """
         Create a Virtual Machine (VM).
 
-        Maximum of 16 guest virtual CPUs are allowed. By default, every virtual CPU is configured as a
-        separate package. Multiple cores can be configured per CPU by specifying `cores` attributes.
-        `vcpus` specifies total number of CPU sockets. `cores` specifies number of cores per socket. `threads`
-        specifies number of threads per core.
-
-        `ensure_display_device` when set ( the default ) will ensure that the guest always has access to a video device.
-        For headless installations like ubuntu server this is required for the guest to operate properly. However
-        for cases where consumer would like to use GPU passthrough and does not want a display device added should set
-        this to `false`.
-
-        `arch_type` refers to architecture type and can be specified for the guest. By default the value is `null` and
-        system in this case will choose a reasonable default based on host.
-
-        `machine_type` refers to machine type of the guest based on the architecture type selected with `arch_type`.
-        By default the value is `null` and system in this case will choose a reasonable default based on `arch_type`
-        configuration.
-
-        `shutdown_timeout` indicates the time in seconds the system waits for the VM to cleanly shutdown. During system
-        shutdown, if the VM hasn't exited after a hardware shutdown signal has been sent by the system within
-        `shutdown_timeout` seconds, system initiates poweroff for the VM to stop it.
-
-        `hide_from_msr` is a boolean which when set will hide the KVM hypervisor from standard MSR based discovery and
-        is useful to enable when doing GPU passthrough.
-
-        `hyperv_enlightenments` can be used to enable subset of predefined Hyper-V enlightenments for Windows guests.
-        These enlightenments improve performance and enable otherwise missing features.
-
-        `suspend_on_snapshot` is a boolean attribute which when enabled will automatically pause/suspend VMs when
-        a snapshot is being taken for periodic snapshot tasks. For manual snapshots, if user has specified vms to
-        be paused, they will be in that case.
+        A maximum of 16 guest virtual CPUs are allowed. The CPU topology is configured through the
+        ``vcpus``, ``cores``, and ``threads`` attributes.
         """
         return await self._svc_part.do_create(data)
 
@@ -223,15 +195,15 @@ class VMService(GenericCRUDService[VMEntry]):
         """
         Update all information of a specific VM.
 
-        `devices` is a list of virtualized hardware to attach to the virtual machine. If `devices` is not present,
-        no change is made to devices. If either the device list order or data stored by the device changes when the
-        attribute is passed, these actions are taken:
+        ``devices`` is a list of virtualized hardware to attach to the virtual machine. If ``devices`` is not
+        present, no change is made to devices. If either the device list order or the data stored by a device
+        changes when the attribute is passed, these actions are taken:
 
-        1) If there is no device in the `devices` list which was previously attached to the VM, that device is
-           removed from the virtual machine.
-        2) Devices are updated in the `devices` list when they contain a valid `id` attribute that corresponds to
-           an existing device.
-        3) Devices that do not have an `id` attribute are created and attached to `id` VM.
+        1. If a device previously attached to the VM is no longer in the ``devices`` list, it is removed from the
+           virtual machine.
+        2. Devices in the ``devices`` list that contain a valid ``id`` attribute corresponding to an existing
+           device are updated.
+        3. Devices that do not have an ``id`` attribute are created and attached to the VM.
         """
         return await self._svc_part.do_update(id_, data, audit_callback=audit_callback)
 
@@ -254,10 +226,7 @@ class VMService(GenericCRUDService[VMEntry]):
     )
     async def clone(self, audit_callback: AuditCallback, id_: int, name: str | None) -> bool:
         """
-        Clone the VM `id`.
-
-        `name` is an optional parameter for the cloned VM.
-        If not provided it will append the next number available to the VM name.
+        Clone the VM ``id``.
         """
         return await clone_vm(self.context, id_, name, audit_callback=audit_callback)
 
@@ -271,7 +240,7 @@ class VMService(GenericCRUDService[VMEntry]):
     @api_method(VMBootloaderOvmfChoicesArgs, VMBootloaderOvmfChoicesResult, roles=['VM_READ'], check_annotations=True)
     def bootloader_ovmf_choices(self) -> dict[str, str]:
         """
-        Retrieve bootloader ovmf choices
+        Retrieve bootloader ovmf choices.
         """
         return bootloader_ovmf_choices()
 
@@ -301,16 +270,18 @@ class VMService(GenericCRUDService[VMEntry]):
         """
         Get the current maximum amount of available memory to be allocated for VMs.
 
-        In case of `overcommit` being `true`, calculations are done in the following manner:
+        In case of ``overcommit`` being ``true``, calculations are done in the following manner:
 
         1. If a VM has requested 10G but is only consuming 5G, only 5G will be counted
+
         2. System will consider shrinkable ZFS ARC as free memory ( shrinkable ZFS ARC is current ZFS ARC
            minus ZFS ARC minimum )
 
-        In case of `overcommit` being `false`, calculations are done in the following manner:
+        In case of ``overcommit`` being ``false``, calculations are done in the following manner:
 
         1. Complete VM requested memory will be taken into account regardless of how much actual physical
            memory the VM is consuming
+
         2. System will not consider shrinkable ZFS ARC as free memory
 
         Memory is of course a very "volatile" resource, values may change abruptly between a
@@ -329,8 +300,7 @@ class VMService(GenericCRUDService[VMEntry]):
     @api_method(VMGetDisplayDevicesArgs, VMGetDisplayDevicesResult, roles=['VM_READ'], check_annotations=True)
     async def get_display_devices(self, id_: int) -> list[VMDisplayDeviceInfo]:
         """
-        Get the display devices from a given guest. If a display device has password configured,
-        `attributes.password_configured` will be set to `true`.
+        Get the display devices from a given guest.
         """
         return await _get_display_devices(self.context, id_)
 
@@ -357,7 +327,7 @@ class VMService(GenericCRUDService[VMEntry]):
     @api_method(VMGetVmMemoryInfoArgs, VMGetVmMemoryInfoResult, roles=['VM_READ'], check_annotations=True)
     async def get_vm_memory_info(self, vm_id: int) -> VMGetVmMemoryInfo:
         """
-        Returns memory information for `vm_id` VM if it is going to be started.
+        Returns memory information for ``vm_id`` VM if it is going to be started.
 
         All memory attributes are expressed in bytes.
         """
@@ -366,12 +336,7 @@ class VMService(GenericCRUDService[VMEntry]):
     @api_method(VMGetVmemoryInUseArgs, VMGetVmemoryInUseResult, roles=['VM_READ'], check_annotations=True)
     async def get_vmemory_in_use(self) -> VMGetVmemoryInUse:
         """
-        The total amount of virtual memory in bytes used by guests
-
-            Returns a dict with the following information:
-                RNP - Running but not provisioned
-                PRD - Provisioned but not running
-                RPRD - Running and provisioned
+        Return the total amount of virtual memory, in bytes, used by guests.
         """
         return await get_vmemory_in_use(self.context)
 
@@ -394,7 +359,7 @@ class VMService(GenericCRUDService[VMEntry]):
     @job(pipes=['output'])
     def log_file_download(self, job: Job, vm_id: int) -> None:
         """
-        Retrieve log file contents of `id` VM.
+        Retrieve log file contents of ``id`` VM.
 
         It will download empty file if log file does not exist.
         """
@@ -403,16 +368,16 @@ class VMService(GenericCRUDService[VMEntry]):
     @api_method(VMLogFilePathArgs, VMLogFilePathResult, roles=['VM_READ'], check_annotations=True)
     def log_file_path(self, vm_id: int) -> str | None:
         """
-        Retrieve log file path of `id` VM.
+        Retrieve log file path of ``id`` VM.
 
-        It will return path of the log file if it exists and `null` otherwise.
+        It will return path of the log file if it exists and ``null`` otherwise.
         """
         return log_file_path(self.context, vm_id)
 
     @api_method(VMMaximumSupportedVcpusArgs, VMMaximumSupportedVcpusResult, roles=['VM_READ'], check_annotations=True)
     async def maximum_supported_vcpus(self) -> int:
         """
-        Returns maximum supported VCPU's
+        Returns maximum supported VCPU's.
         """
         return MAXIMUM_SUPPORTED_VCPUS
 
@@ -421,7 +386,7 @@ class VMService(GenericCRUDService[VMEntry]):
         """
         It returns the next available Display Server Port and Web Port.
 
-        Returns a dict with two keys `port` and `web`.
+        Returns a dict with two keys ``port`` and ``web``.
         """
         return await port_wizard(self.context)
 
@@ -457,7 +422,7 @@ class VMService(GenericCRUDService[VMEntry]):
     @api_method(VMResumeArgs, VMResumeResult, roles=['VM_WRITE'], check_annotations=True)
     def resume(self, id_: int) -> None:
         """
-        Resume suspended `id` VM.
+        Resume suspended ``id`` VM.
         """
         resume_vm(self.context, id_)
 
@@ -479,7 +444,7 @@ class VMService(GenericCRUDService[VMEntry]):
     @api_method(VMStatusArgs, VMStatusResult, roles=['VM_READ'], check_annotations=True)
     async def status(self, id_: int) -> VMStatus:
         """
-        Get the status of `id` VM.
+        Get the status of ``id`` VM.
 
         Returns a dict:
             - state, RUNNING / STOPPED / SUSPENDED
@@ -493,12 +458,10 @@ class VMService(GenericCRUDService[VMEntry]):
         """
         Stops a VM.
 
-        For unresponsive guests who have exceeded the `shutdown_timeout` defined by the user and have become
-        unresponsive, they required to be powered down using `vm.poweroff`. `vm.stop` is only going to send a
-        shutdown signal to the guest and wait the desired `shutdown_timeout` value before tearing down guest vmemory.
-
-        `force_after_timeout` when supplied, it will initiate poweroff for the VM forcing it to exit if it has
-        not already stopped within the specified `shutdown_timeout`.
+        For unresponsive guests who have exceeded the ``shutdown_timeout`` defined by the user and have become
+        unresponsive, they required to be powered down using :method:`vm.poweroff`. :method:`vm.stop` is only going to
+        send a shutdown signal to the guest and wait the desired ``shutdown_timeout`` value before tearing down guest
+        vmemory.
         """
         stop_vm(self.context, id_, options)
 
@@ -510,14 +473,14 @@ class VMService(GenericCRUDService[VMEntry]):
     )
     def supports_virtualization(self) -> bool:
         """
-        Returns "true" if system supports virtualization, "false" otherwise
+        Returns "true" if system supports virtualization, "false" otherwise.
         """
         return kvm_supported()
 
     @api_method(VMSuspendArgs, VMSuspendResult, roles=['VM_WRITE'], check_annotations=True)
     def suspend(self, id_: int) -> None:
         """
-        Suspend `id` VM.
+        Suspend ``id`` VM.
         """
         suspend_vm(self.context, id_)
 

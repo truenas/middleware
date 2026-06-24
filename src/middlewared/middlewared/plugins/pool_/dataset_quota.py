@@ -152,11 +152,12 @@ class PoolDatasetService(Service):
     )
     async def get_quota(self, ds, quota_type, filters, options):
         """
-        Return a list of the specified `quota_type` of quotas on the ZFS dataset `ds`.
-        Support `query-filters` and `query-options`.
+        Return a list of the specified ``quota_type`` of quotas on the ZFS dataset ``ds``.
+        Supports ``query-filters`` and ``query-options``.
 
-        Note: SMB client requests to set a quota granting no space will result
-        in an on-disk quota of 1 KiB.
+        .. note::
+
+            SMB client requests to set a quota granting no space will result in an on-disk quota of 1 KiB.
         """
         quota_list = await self.middleware.call(
             'pool.dataset.get_quota_impl', ds, quota_type

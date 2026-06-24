@@ -53,7 +53,7 @@ class DNSService(Service):
     @filterable_api_method(item=DNSQueryItem, roles=['NETWORK_INTERFACE_READ'])
     def query(self, filters, options):
         """
-        Query Name Servers with `query-filters` and `query-options`.
+        Query Name Servers with ``query-filters`` and ``query-options``.
         """
         ips = []
         with contextlib.suppress(Exception):

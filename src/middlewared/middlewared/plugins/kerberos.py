@@ -69,9 +69,9 @@ class KerberosService(ConfigService):
     @api_method(KerberosUpdateArgs, KerberosUpdateResult, audit='Kerberos configuration update')
     async def do_update(self, data):
         """
-        `appdefaults_aux` add parameters to "appdefaults" section of the krb5.conf file.
+        ``appdefaults_aux`` add parameters to "appdefaults" section of the krb5.conf file.
 
-        `libdefaults_aux` add parameters to "libdefaults" section of the krb5.conf file.
+        ``libdefaults_aux`` add parameters to "libdefaults" section of the krb5.conf file.
         """
         old = await self.config()
         new = old.copy()
@@ -352,11 +352,8 @@ class KerberosKeytabService(CRUDService):
     )
     async def do_create(self, data):
         """
-        Create a kerberos keytab. Uploaded keytab files will be merged with the system
-        keytab under /etc/krb5.keytab.
-
-        `file` b64encoded kerberos keytab
-        `name` name for kerberos keytab
+        Create a Kerberos keytab. Uploaded keytab files are merged with the system keytab under
+        ``/etc/krb5.keytab``.
         """
         verrors = ValidationErrors()
 

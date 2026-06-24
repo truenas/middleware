@@ -183,14 +183,15 @@ class SystemGeneralService(ConfigService):
         """
         Update System General Service Configuration.
 
-        UI configuration is not applied automatically. Call `system.general.ui_restart` to apply new UI settings (all
-        HTTP connections will be aborted) or specify `ui_restart_delay` (in seconds) to automatically apply them after
-        some small amount of time necessary you might need to receive the response for your settings update request.
+        UI configuration is not applied automatically. Call :method:`system.general.ui_restart` to apply new UI
+        settings (all HTTP connections will be aborted) or specify ``ui_restart_delay`` (in seconds) to automatically
+        apply them after some small amount of time necessary you might need to receive the response for your settings
+        update request.
 
         If incorrect UI configuration is applied, you might loss API connectivity and won't be able to fix the settings.
-        To avoid that, specify `rollback_timeout` (in seconds). It will automatically roll back UI configuration to the
-        previously working settings after `rollback_timeout` passes unless you call `system.general.checkin` in case
-        the new settings were correct and no rollback is necessary.
+        To avoid that, specify ``rollback_timeout`` (in seconds). It will automatically roll back UI configuration
+        to the previously working settings after ``rollback_timeout`` passes unless you call
+        :method:`system.general.checkin` in case the new settings were correct and no rollback is necessary.
         """
         rollback_timeout = data.pop('rollback_timeout', None)
         ui_restart_delay = data.pop('ui_restart_delay', None)
@@ -333,7 +334,7 @@ class SystemGeneralService(ConfigService):
     @api_method(SystemGeneralCheckinArgs, SystemGeneralCheckinResult, roles=['SYSTEM_GENERAL_WRITE'])
     async def checkin(self):
         """
-        After UI settings are saved with `rollback_timeout` this method needs to be called within that timeout limit
+        After UI settings are saved with ``rollback_timeout`` this method needs to be called within that timeout limit
         to prevent reverting the changes.
 
         This is to ensure user verifies the changes went as planned and its working.

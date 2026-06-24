@@ -29,7 +29,12 @@ class UPSEntry(BaseModel):
         le=65535,
         description="Network port for communicating with remote UPS monitoring systems.",
     )
-    shutdowntimer: int = Field(description="Seconds to wait after initiating shutdown before forcing power off.")
+    shutdowntimer: int = Field(
+        description=(
+            "Seconds to wait after initiating shutdown before forcing power off. "
+            "Only applies when `shutdown` is `BATT`."
+        ),
+    )
     hostsync: int = Field(ge=0, description="Maximum seconds to wait for other systems to shutdown before continuing.")
     description: str = Field(description="Human-readable description of this UPS configuration.")
     driver: str = Field(description="UPS driver name that handles communication with the specific UPS hardware model.")
@@ -54,7 +59,7 @@ class UPSEntry(BaseModel):
         description="Shutdown trigger condition: LOWBATT on low battery, BATT when on battery power.",
     )
     shutdowncmd: str | None = Field(
-        description="Custom command to execute during UPS shutdown sequence. `null` for default.",
+        description="Custom command to execute during UPS shutdown sequence. `null` to use the default (`poweroff`).",
     )
     complete_identifier: str = Field(description="Complete UPS identifier including hostname for network monitoring.")
 

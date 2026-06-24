@@ -18,7 +18,7 @@ class PoolDatasetService(Service):
         check_annotations=True,
     )
     def snapshot_count(self, dataset: str) -> int:
-        """Returns snapshot count for specified `dataset`."""
+        """Returns snapshot count for specified ``dataset``."""
         return self.call_sync2(
             self.s.zfs.resource.snapshot.count_impl,
             ZFSResourceSnapshotCountQuery(paths=[dataset])

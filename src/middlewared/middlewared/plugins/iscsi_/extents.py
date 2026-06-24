@@ -122,18 +122,6 @@ class iSCSITargetExtentService(SharingService):
     async def do_create(self, data):
         """
         Create an iSCSI Extent.
-
-        When `type` is set to FILE, attribute `filesize` is used and it represents number of bytes. `filesize` if
-        not zero should be a multiple of `blocksize`. `path` is a required attribute with `type` set as FILE.
-
-        With `type` being set to DISK, a valid ZFS volume is required.
-
-        `insecure_tpc` when enabled allows an initiator to bypass normal access control and access any scannable
-        target. This allows xcopy operations otherwise blocked by access control.
-
-        `xen` is a boolean value which is set to true if Xen is being used as the iSCSI initiator.
-
-        `ro` when set to true prevents the initiator from writing to this LUN.
         """
         await self.validate(data)
         verrors = ValidationErrors()
@@ -169,7 +157,7 @@ class iSCSITargetExtentService(SharingService):
     )
     async def do_update(self, audit_callback, id_, data):
         """
-        Update iSCSI Extent of `id`.
+        Update iSCSI Extent of ``id``.
         """
         verrors = ValidationErrors()
         old = await self.get_instance(id_)
@@ -296,9 +284,9 @@ class iSCSITargetExtentService(SharingService):
     )
     async def do_delete(self, audit_callback, id_, remove, force):
         """
-        Delete iSCSI Extent of `id`.
+        Delete iSCSI Extent of ``id``.
 
-        If `id` iSCSI Extent's `type` was configured to FILE, `remove` can be set to remove the configured file.
+        If ``id`` iSCSI Extent's ``type`` was configured to FILE, ``remove`` can be set to remove the configured file.
         """
         data = await self.get_instance(id_)
         audit_callback(data['name'])

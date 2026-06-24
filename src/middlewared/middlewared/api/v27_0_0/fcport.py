@@ -15,7 +15,9 @@ __all__ = [
 
 class FCPortEntry(BaseModel):
     id: int = Field(description="Unique identifier for the Fibre Channel port configuration.")
-    port: FibreChannelPortAlias = Field(description="Alias name for the Fibre Channel port.")
+    port: FibreChannelPortAlias = Field(
+        description="Alias name for the Fibre Channel port, or `alias/number` for an NPIV port.",
+    )
     wwpn: WWPN | None = Field(description="World Wide Port Name for port A or `null` if not configured.")
     wwpn_b: WWPN | None = Field(description="World Wide Port Name for port B or `null` if not configured.")
     target: dict | None = Field(description="Target configuration object or `null` if not configured.")

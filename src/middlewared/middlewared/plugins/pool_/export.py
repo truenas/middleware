@@ -45,21 +45,14 @@ class PoolService(Service):
     @job(lock='pool_export')
     async def export(self, job, audit_callback, oid, options):
         """
-        Export pool of `id`.
+        Export pool of ``id``.
 
-        `cascade` will delete all attachments of the given pool (`pool.attachments`).
-        `restart_services` will restart services that have open files on given pool.
-        `destroy` will also PERMANENTLY destroy the pool/data.
+        Export pool of id 1::
 
-        .. examples(websocket)::
-
-          Export pool of id 1.
-
-            :::javascript
             {
-                "id": "6841f242-840a-11e6-a437-00e04d680384",
-                "msg": "method",
-                "method": "pool.export,
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "pool.export",
                 "params": [1, {
                     "cascade": true,
                     "destroy": false

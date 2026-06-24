@@ -40,7 +40,7 @@ class SystemService(Service):
         SystemProductTypeArgs, SystemProductTypeResult, roles=["SYSTEM_PRODUCT_READ"]
     )
     async def product_type(self):
-        """Returns the type of the product"""
+        """Returns the type of the product."""
         if SystemService.PRODUCT_TYPE is None:
             if await self.is_ha_capable():
                 # HA capable hardware
@@ -91,10 +91,7 @@ class SystemService(Service):
     def release_notes_url(self, version_str):
         """Returns the release notes URL for a version of SCALE.
 
-        `version_str` str: represents a version to check against
-
-        If `version` is not provided, then the release notes URL will return
-            a link for the currently installed version of SCALE.
+        If a version is not provided, the URL for the currently installed version is returned.
         """
         parsed_version = parse_version_string(version_str or self.version_short())
         if parsed_version is None:
@@ -161,7 +158,7 @@ class SystemService(Service):
         roles=["SYSTEM_PRODUCT_WRITE"],
     )
     def license_update(self, license_):
-        """Update license file"""
+        """Update license file."""
         raise ValidationError(
             "system.license_update",
             "Legacy license upload is no longer supported. Use truenas.license.upload instead.",
@@ -174,7 +171,7 @@ class SystemService(Service):
     )
     async def feature_enabled(self, name):
         """
-        Returns whether the `feature` is enabled or not
+        Returns whether the ``feature`` is enabled.
         """
         info = await self.call2(self.s.truenas.license.info_private)
         if info is not None:

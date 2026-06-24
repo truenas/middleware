@@ -64,11 +64,8 @@ class SystemService(Service):
     @api_method(SystemHostIdArgs, SystemHostIdResult, roles=['READONLY_ADMIN'])
     def host_id(self):
         """
-        Retrieve a hex string that is generated based
-        on the contents of the `/etc/hostid` file. This
-        is a permanent value that persists across
-        reboots/upgrades and can be used as a unique
-        identifier for the machine.
+        Retrieve a hex string that is generated based on the contents of the ``/etc/hostid`` file. This is a permanent
+        value that persists across reboots/upgrades and can be used as a unique identifier for the machine.
         """
         if self.HOST_ID is None:
             with open('/etc/hostid', 'rb') as f:

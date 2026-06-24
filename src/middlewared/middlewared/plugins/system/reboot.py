@@ -36,6 +36,14 @@ class SystemRebootService(Service):
 
     @api_method(SystemRebootInfoArgs, SystemRebootInfoResult, roles=['SYSTEM_GENERAL_READ'])
     async def info(self):
+        """
+        Return information about whether the system requires a reboot, including the current boot session
+        identifier and the list of pending reasons a reboot is required (for example, a FIPS or STIG
+        configuration change or a pending system upgrade). An empty list of reasons indicates no reboot is
+        currently required.
+
+        The :method:`system.reboot.info` event is emitted whenever this information changes.
+        """
         return {
             'boot_id': await self.middleware.call('system.boot_id'),
             'reboot_required_reasons': [

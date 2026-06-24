@@ -131,7 +131,7 @@ class DiskService(Service):
         abortable=True,
     )
     async def wipe(self, job, dev, mode, sync):
-        """Performs a wipe of a disk `dev`."""
+        """Performs a wipe of a disk ``dev``."""
         event = threading.Event()
         try:
             await self.middleware.run_in_thread(self._wipe_impl, job, dev, mode, event)

@@ -111,20 +111,12 @@ class PoolScrubService(CRUDService):
         """
         Create a scrub task for a pool.
 
-        `threshold` refers to the minimum amount of time in days has to be passed before
-        a scrub can run again.
+        Create a scrub task for pool of id 1, to run every Sunday at 3AM with a threshold of 35 days::
 
-        .. examples(websocket)::
-
-          Create a scrub task for pool of id 1, to run every sunday but with a threshold of
-          35 days.
-          The check will run at 3AM every sunday.
-
-            :::javascript
             {
-                "id": "6841f242-840a-11e6-a437-00e04d680384",
-                "msg": "method",
-                "method": "pool.scrub.create"
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "pool.scrub.create",
                 "params": [{
                     "pool": 1,
                     "threshold": 35,
@@ -154,7 +146,7 @@ class PoolScrubService(CRUDService):
     @api_method(PoolScrubUpdateArgs, PoolScrubUpdateResult)
     async def do_update(self, id_, data):
         """
-        Update scrub task of `id`.
+        Update scrub task of ``id``.
         """
         task_data = await self.get_instance(id_)
         original_data = task_data.copy()
@@ -187,7 +179,7 @@ class PoolScrubService(CRUDService):
     @api_method(PoolScrubDeleteArgs, PoolScrubDeleteResult)
     async def do_delete(self, id_):
         """
-        Delete scrub task of `id`.
+        Delete scrub task of ``id``.
         """
         response = await self.middleware.call(
             'datastore.delete',

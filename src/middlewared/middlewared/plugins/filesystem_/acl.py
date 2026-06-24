@@ -181,19 +181,19 @@ class FilesystemService(Service):
     @job(lock=lambda args: f'perm_change:{os.path.normpath(args[0]["path"])}')
     def chown(self, job, data):
         """
-        Change owner or group of file at `path`.
+        Change owner or group of file at ``path``.
 
-        `uid` and `gid` specify new owner of the file. If either
+        ``uid`` and ``gid`` specify new owner of the file. If either
         key is absent or None, then existing value on the file is not
         changed.
 
-        `user` and `group` alternatively allow specifying a uid gid by
+        ``user`` and ``group`` alternatively allow specifying a uid gid by
         user name or group name.
 
-        `recursive` performs action recursively, but does
+        ``recursive`` performs action recursively, but does
         not traverse filesystem mount points.
 
-        If `traverse` and `recursive` are specified, then the chown
+        If ``traverse`` and ``recursive`` are specified, then the chown
         operation will traverse filesystem mount points.
         """
         job.set_progress(0, 'Preparing to change owner.')
@@ -240,34 +240,20 @@ class FilesystemService(Service):
     @job(lock=lambda args: f'perm_change:{os.path.normpath(args[0]["path"])}')
     def setperm(self, job, data):
         """
-        Set unix permissions on given `path`.
+        Set Unix permissions on the given ``path``.
 
-        If `mode` is specified then the mode will be applied to the
-        path and files and subdirectories depending on which `options` are
-        selected. Mode should be formatted as string representation of octal
-        permissions bits.
+        If ``mode`` is specified then the mode is applied to the path, and to files and
+        subdirectories depending on which ``options`` are selected.
 
-        `uid` the desired UID of the file user. If set to None (the default), then user is not changed.
+        This method will fail if an extended ACL is present on ``path`` unless ``stripacl`` is set.
+        If no ``mode`` is set and ``stripacl`` is ``true``, then non-trivial ACLs are converted to
+        trivial ACLs. An ACL is trivial if it can be expressed as a file mode without losing any
+        access rules.
 
-        `gid` the desired GID of the file group. If set to None (the default), then group is not changed.
+        .. important::
 
-        `user` and `group` alternatively allow specifying the owner by name.
-
-        WARNING: `uid`, `gid, `user`, and `group` _should_ remain unset _unless_
-        the administrator wishes to change the owner or group of files.
-
-        `stripacl` setperm will fail if an extended ACL is present on `path`,
-        unless `stripacl` is set to True.
-
-        `recursive` remove ACLs recursively, but do not traverse dataset
-        boundaries.
-
-        `traverse` remove ACLs from child datasets.
-
-        If no `mode` is set, and `stripacl` is True, then non-trivial ACLs
-        will be converted to trivial ACLs. An ACL is trivial if it can be
-        expressed as a file mode without losing any access rules.
-
+            ``uid``, ``gid``, ``user``, and ``group`` *should* remain unset *unless* the
+            administrator wishes to change the owner or group of files.
         """
         job.set_progress(0, 'Preparing to set permissions.')
         options = data['options']
@@ -401,36 +387,8 @@ class FilesystemService(Service):
     )
     def getacl(self, path, simplified, resolve_ids):
         """
-        Return ACL of a given path. This may return a POSIX1e ACL or a NFSv4 ACL. The acl type is indicated
-        by the `acltype` key.
-
-        `simplified` - effect of this depends on ACL type on underlying filesystem. In the case of
-        NFSv4 ACLs simplified permissions and flags are returned for ACL entries where applicable.
-        NFSv4 errata below. In the case of POSIX1E ACls, this setting has no impact on returned ACL.
-
-        `resolve_ids` - adds additional `who` key to each ACL entry, that converts the numeric id to
-        a user name or group name. In the case of owner@ and group@ (NFSv4) or USER_OBJ and GROUP_OBJ
-        (POSIX1E), st_uid or st_gid will be converted from stat() return for file. In the case of
-        MASK (POSIX1E), OTHER (POSIX1E), everyone@ (NFSv4), key `who` will be included, but set to null.
-        In case of failure to resolve the id to a name, `who` will be set to null. This option should
-        only be used if resolving ids to names is required.
-
-        Errata about ACLType NFSv4:
-
-        `simplified` returns a shortened form of the ACL permset and flags where applicable. If permissions
-        have been simplified, then the `perms` object will contain only a single `BASIC` key with a string
-        describing the underlying permissions set.
-
-        `TRAVERSE` sufficient rights to traverse a directory, but not read contents.
-
-        `READ` sufficient rights to traverse a directory, and read file contents.
-
-        `MODIFIY` sufficient rights to traverse, read, write, and modify a file.
-
-        `FULL_CONTROL` all permissions.
-
-        If the permisssions do not fit within one of the pre-defined simplified permissions types, then
-        the full ACL entry will be returned.
+        Return ACL of a given path. This may return a POSIX1e ACL or a NFSv4 ACL. The ACL type is indicated
+        by the ``acltype`` key.
         """
         if path_location(path) is FSLocation.EXTERNAL:
             raise CallError(f'{path} is external to TrueNAS', errno.EXDEV)
@@ -642,82 +600,51 @@ class FilesystemService(Service):
     @job(lock=lambda args: f'perm_change:{os.path.normpath(args[0]["path"])}')
     def setacl(self, job, data):
         """
-        Set ACL of a given path. Takes the following parameters:
-        `path` full path to directory or file.
+        Set the ACL of a given path.
 
-        `dacl` ACL entries. Formatting depends on the underlying `acltype`. NFS4ACL requires
-        NFSv4 entries. POSIX1e requires POSIX1e entries.
+        The ``dacl`` entry formatting depends on the underlying ``acltype``: an ``NFS4`` ACL requires
+        NFSv4 entries, while a ``POSIX1E`` ACL requires POSIX1e entries. When ``stripacl`` is set, the
+        ACL is converted to a trivial ACL; an ACL is trivial if it can be expressed as a file mode
+        without losing any access rules.
 
-        `uid` the desired UID of the file user. If set to None (the default), then user is not changed.
+        .. note::
 
-        `user` the desired username for the file user. If set to None, then user is not changed.
+            For each owner change, set one and only one of ``uid`` or ``user`` (and likewise one of
+            ``gid`` or ``group``), and only if the caller wishes to change the owning user or group of
+            the file or directory.
 
-        Note about interaction between `uid` and `user`:
-        One and only one of these parameters should be set, and _only_ if the API consumer wishes to
-        change the owner on the file / directory.
+        .. warning::
 
-        `gid` the desired GID of the file group. If set to None (the default), then group is not changed.
+            If ``user``, ``uid``, ``group``, or ``gid`` is specified in a recursive operation, then the
+            owning user, group, or both for *all* files will be changed.
 
-        `group` the desired groupname for the file group. If set to None (the default), then group is not
-        changed.
+        The following notes about ACL entries are necessarily terse. If more detail is required, please
+        consult relevant TrueNAS documentation.
 
-        Note about interaction between `gid` and `group`:
-        One and only one of these parameters should be set, and _only_ if the API consumer wishes to
-        change the owner on the file / directory.
+        .. rubric:: NFSv4 ACL entry semantics
 
-        WARNING: if user, uid, group, or gid is specified in a recursive operation then the owning
-        user, group, or both for _all_ files will be changed.
+        The ``tag`` identifies the principal to whom the entry applies. ``USER`` and ``GROUP`` have
+        conventional meanings: ``owner@`` refers to the owning user of the file, ``group@`` to the
+        owning group, and ``everyone@`` to all users (including the owning user and group). The
+        ``type`` may be ``ALLOW`` or ``DENY``, and ``DENY`` entries take precedence over ``ALLOW``
+        when the ACL is evaluated. The ``flags`` inheritance flags determine how an entry is presented
+        (if at all) on newly-created files or directories within the specified path and are only
+        valid for directories.
 
-        `recursive` apply the ACL recursively
+        .. rubric:: POSIX1e ACL entry semantics
 
-        `traverse` traverse filestem boundaries (ZFS datasets)
+        When ``default`` is ``true``, the entry belongs to the POSIX default ACL and is copied to new
+        files and directories created within the directory where it is set; default entries are *not*
+        evaluated when determining access to the file on which they are set. When ``default`` is
+        ``false``, the entry applies to the POSIX access ACL which is used to determine access to the
+        directory but is not inherited.
 
-        `strip` convert ACL to trivial. ACL is trivial if it can be expressed as a file mode without
-        losing any access rules.
-
-        `canonicalize` deprecated, has no effect. ACL entries are always written in canonical order.
-
-        The following notes about ACL entries are necessarily terse. If more detail is requried
-        please consult relevant TrueNAS documentation.
-
-        Notes about NFSv4 ACL entry fields:
-
-        `tag` refers to the type of principal to whom the ACL entries applies. USER and GROUP have
-        conventional meanings. `owner@` refers to the owning user of the file, `group@` refers to the owning
-        group of the file, and `everyone@` refers to ALL users (including the owning user and group)..
-
-        `id` refers to the numeric user id or group id associatiated with USER or GROUP entries.
-
-        `who` a user or group name may be specified in lieu of numeric ID for USER or GROUP entries
-
-        `type` may be ALLOW or DENY. Deny entries take precedence over allow when the ACL is evaluated.
-
-        `perms` permissions allowed or denied by the entry. May be set as a simlified BASIC type or
-        more complex type detailing specific permissions.
-
-        `flags` inheritance flags determine how this entry will be presented (if at all) on newly-created
-        files or directories within the specified path. Only valid for directories.
-
-        Notes about posix1e ACL entry fields:
-
-        `default` the ACL entry is in the posix default ACL (will be copied to new files and directories)
-        created within the directory where it is set. These are _NOT_ evaluated when determining access for
-        the file on which they're set. If default is false then the entry applies to the posix access ACL,
-        which is used to determine access to the directory, but is not inherited on new files / directories.
-
-        `tag` the type of principal to whom the ACL entry apples. USER and GROUP have conventional meanings
-        USER_OBJ refers to the owning user of the file and is also denoted by "user" in conventional POSIX
-        UGO permissions. GROUP_OBJ refers to the owning group of the file and is denoted by "group" in the
-        same. OTHER refers to POSIX other, which applies to all users and groups who are not USER_OBJ or
-        GROUP_OBJ. MASK sets maximum permissions granted to all USER and GROUP entries. A valid POSIX1 ACL
-        entry contains precisely one USER_OBJ, GROUP_OBJ, OTHER, and MASK entry for the default and access
-        list.
-
-        `id` refers to the numeric user id or group id associatiated with USER or GROUP entries.
-
-        `who` a user or group name may be specified in lieu of numeric ID for USER or GROUP entries
-
-        `perms` - object containing posix permissions.
+        For the ``tag``, ``USER_OBJ`` refers to the owning user (denoted "user" in conventional POSIX
+        UGO permissions), ``GROUP_OBJ`` refers to the owning group (denoted "group"), and ``OTHER``
+        applies to all users and groups who are not ``USER_OBJ`` or ``GROUP_OBJ``. ``MASK`` sets the
+        maximum permissions granted to all ``USER`` and ``GROUP`` entries. A valid POSIX1e ACL
+        contains precisely one ``USER_OBJ``, ``GROUP_OBJ``, ``OTHER``, and ``MASK`` entry for each of
+        the default and access lists.
         """
         verrors = ValidationErrors()
         data['loc'] = self._common_perm_path_validate("filesystem.setacl", data, verrors)

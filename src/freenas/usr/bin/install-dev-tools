@@ -47,6 +47,9 @@ PIP_PACKAGES=(
     # linting
     import-linter
     ruff
+    # Render and lint API method docstrings in the unit test suite
+    sphinx
+    sphinx-lint
     # Dependency of pykmip. No-op on python 3.4+. Just to prevent pip from complaining.
     enum-compat
 )

@@ -60,6 +60,16 @@ class PoolSnapshotService(CRUDService):
         roles=['SNAPSHOT_WRITE', 'POOL_WRITE']
     )
     def rollback(self, id_, options):
+        """
+        Roll the dataset of snapshot ``id`` back to the state captured by that snapshot.
+
+        .. warning::
+
+            This operation is destructive. Any data written to the dataset after the snapshot was taken is
+            permanently lost. Snapshots and bookmarks more recent than ``id`` must also be destroyed for the
+            rollback to proceed; use the ``recursive``, ``recursive_clones``, or ``recursive_rollback`` options to
+            control how newer snapshots and their clones are handled.
+        """
         self.call_sync2(self.s.zfs.resource.snapshot.rollback_impl, ZFSResourceSnapshotRollbackQuery(
             path=id_,
             **options,
@@ -67,9 +77,9 @@ class PoolSnapshotService(CRUDService):
 
     @api_method(PoolSnapshotHoldArgs, PoolSnapshotHoldResult, roles=['SNAPSHOT_WRITE'])
     def hold(self, id_, options):
-        """Hold snapshot `id`.
+        """Hold snapshot ``id``.
 
-        Add `truenas` tag to the snapshot's tag namespace.
+        Add ``truenas`` tag to the snapshot's tag namespace.
 
         """
         self.call_sync2(self.s.zfs.resource.snapshot.hold_impl, ZFSResourceSnapshotHoldQuery(
@@ -80,7 +90,7 @@ class PoolSnapshotService(CRUDService):
 
     @api_method(PoolSnapshotReleaseArgs, PoolSnapshotReleaseResult, roles=['SNAPSHOT_WRITE'])
     def release(self, id_, options):
-        """Release hold on snapshot `id`.
+        """Release hold on snapshot ``id``.
 
         Remove all hold tags from the specified snapshot.
 
@@ -190,17 +200,23 @@ class PoolSnapshotService(CRUDService):
 
     @filterable_api_method(item=PoolSnapshotEntry)
     def query(self, filters, options):
-        """Query all ZFS Snapshots with `query-filters` and `query-options`.
+        """Query all ZFS snapshots with the standard ``query-filters`` and ``query-options``.
 
-        `query-options.extra.holds` *(bool)*
-            Include hold tags for snapshots in the query result (false by default).
-        `query-options.extra.min_txg` *(int)*
+        The following ``query-options.extra`` options are supported:
+
+        ``holds`` *(bool)*:
+            Include hold tags for snapshots in the query result (``false`` by default).
+
+        ``min_txg`` *(int)*:
             Limit snapshot retrieval based on minimum transaction group.
-        `query-options.extra.max_txg` *(int)*
+
+        ``max_txg`` *(int)*:
             Limit snapshot retrieval based on maximum transaction group.
-        `query-options.extra.retention` *(bool)*
-            Include retention information in the query result (false by default).
-        `query-options.extra.properties` *(list)*
+
+        ``retention`` *(bool)*:
+            Include retention information in the query result (``false`` by default).
+
+        ``properties`` *(list)*:
             List of ZFS property names to retrieve.
         """
         filters = filters or []
@@ -365,12 +381,19 @@ class PoolSnapshotService(CRUDService):
 
     @api_method(PoolSnapshotUpdateArgs, PoolSnapshotUpdateResult)
     def do_update(self, snap_id, data):
+        """Update the user properties of the snapshot identified by ``snap_id``."""
         # TODO: add zfs.resource.snapshot.update (what is this even used for???)
         data['user_properties_update'].extend({'key': k, 'remove': True} for k in data.pop('user_properties_remove'))
         # return self.middleware.call_sync('zfs.snapshot.update', snap_id, data)
 
     @api_method(PoolSnapshotDeleteArgs, PoolSnapshotDeleteResult)
     def do_delete(self, id_, options):
+        """
+        Delete the snapshot identified by ``id``.
+
+        Set ``recursive`` to also delete identically named snapshots of child datasets. Set ``defer`` to request a
+        deferred (asynchronous) destroy, which lets the snapshot be removed even while it still has holds or clones.
+        """
         if '@' not in id_:
             raise ValidationError('pool.snapshot.delete', f'Invalid snapshot name: {id_!r}')
 
@@ -400,7 +423,7 @@ class PoolSnapshotService(CRUDService):
     )
     async def rename(self, id_, options):
         """
-        Rename a snapshot `id` to `new_name`.
+        Rename a snapshot ``id`` to ``new_name``.
 
         No safety checks are performed when renaming ZFS resources. If the dataset is in use by services such
         as SMB, iSCSI, snapshot tasks, replication, or cloud sync, renaming may cause disruptions or service failures.

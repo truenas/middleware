@@ -68,20 +68,11 @@ class PeriodicSnapshotTaskService(GenericCRUDService[PeriodicSnapshotTaskEntry])
     )
     async def do_create(self, data: PoolSnapshotTaskCreate) -> PeriodicSnapshotTaskEntry:
         """
-        Create a Periodic Snapshot Task
+        Create a periodic snapshot task.
 
-        Create a Periodic Snapshot Task that will take snapshots of specified `dataset` at specified `schedule`.
-        Recursive snapshots can be created if `recursive` flag is enabled. You can `exclude` specific child datasets
-        or zvols from the snapshot.
-
-        Snapshots will be automatically destroyed after a certain amount of time, specified by
-        `lifetime_value` and `lifetime_unit`.
-
-        If multiple periodic tasks create snapshots at the same time (for example hourly and daily at 00:00)
-        the snapshot will be kept until the last of these tasks reaches its expiry time.
-
-        Snapshots will be named according to `naming_schema` which is a `strftime`-like template for snapshot name
-        and must contain `%Y`, `%m`, `%d`, `%H` and `%M`.
+        Snapshots are automatically destroyed after their configured lifetime. If multiple periodic tasks create a
+        snapshot at the same time (for example, an hourly and a daily task at 00:00), the snapshot is kept until the
+        last of those tasks reaches its expiry time.
         """
         return await self._svc_part.do_create(data)
 
@@ -99,7 +90,7 @@ class PeriodicSnapshotTaskService(GenericCRUDService[PeriodicSnapshotTaskEntry])
         data: PoolSnapshotTaskUpdate,
     ) -> PeriodicSnapshotTaskEntry:
         """
-        Update a Periodic Snapshot Task with specific `id`.
+        Update a Periodic Snapshot Task with specific ``id``.
         """
         return await self._svc_part.do_update(audit_callback, id_, data)
 
@@ -117,7 +108,7 @@ class PeriodicSnapshotTaskService(GenericCRUDService[PeriodicSnapshotTaskEntry])
         options: PoolSnapshotTaskDeleteOptions,
     ) -> typing.Literal[True]:
         """
-        Delete a Periodic Snapshot Task with specific `id`.
+        Delete a Periodic Snapshot Task with specific ``id``.
         """
         await self._svc_part.do_delete(audit_callback, id_, options)
         return True
@@ -155,7 +146,7 @@ class PeriodicSnapshotTaskService(GenericCRUDService[PeriodicSnapshotTaskEntry])
     @job()
     async def run(self, job: Job, id_: int) -> None:
         """
-        Execute a Periodic Snapshot Task of `id`.
+        Execute a Periodic Snapshot Task of ``id``.
         """
         await _run(self.context, id_)
 
@@ -184,8 +175,8 @@ class PeriodicSnapshotTaskService(GenericCRUDService[PeriodicSnapshotTaskEntry])
         data: PoolSnapshotTaskUpdateWillChangeRetentionFor,
     ) -> dict[str, list[str]]:
         """
-        Returns a list of snapshots which will change the retention if periodic snapshot task `id` is updated
-        with `data`.
+        Returns a list of snapshots which will change the retention if periodic snapshot task ``id`` is updated
+        with ``data``.
         """
         return await update_will_change_retention_for(self.context, id_, data)
 
@@ -197,7 +188,7 @@ class PeriodicSnapshotTaskService(GenericCRUDService[PeriodicSnapshotTaskEntry])
     )
     async def delete_will_change_retention_for(self, id_: int) -> dict[str, list[str]]:
         """
-        Returns a list of snapshots which will change the retention if periodic snapshot task `id` is deleted.
+        Returns a list of snapshots which will change the retention if periodic snapshot task ``id`` is deleted.
         """
         return await delete_will_change_retention_for(self.context, id_)
 

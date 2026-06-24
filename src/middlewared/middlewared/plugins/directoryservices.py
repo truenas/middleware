@@ -43,7 +43,7 @@ class DirectoryServices(Service):
     )
     def status(self):
         """
-        Provide the type and status of the currently-enabled directory service
+        Provide the type and status of the currently-enabled directory service.
         """
         if not DSHealthObj.initialized:
             try:
@@ -76,7 +76,7 @@ class DirectoryServices(Service):
     async def cache_refresh(self, job):
         """
         This method refreshes the directory services cache for users and groups that is
-        used as a backing for `user.query` and `group.query` methods. The first cache fill in
+        used as a backing for :method:`user.query` and :method:`group.query` methods. The first cache fill in
         an Active Directory domain may take a significant amount of time to complete and
         so it is performed as within a job. The most likely situation in which a user may
         desire to refresh the directory services cache is after new users or groups  to a remote

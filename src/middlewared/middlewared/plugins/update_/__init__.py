@@ -105,7 +105,7 @@ class UpdateService(ConfigService[UpdateEntry]):
     )
     async def profile_choices(self) -> dict[str, UpdateProfileChoice]:
         """
-        `profile` choices for configuration update.
+        ``profile`` choices for configuration update.
         """
         return await profile_choices(self.context)
 

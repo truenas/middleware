@@ -67,8 +67,7 @@ class ReportingService(GenericConfigService[ReportingEntry]):
     @api_method(ReportingUpdateArgs, ReportingUpdateResult, check_annotations=True)
     async def do_update(self, data: ReportingUpdate) -> ReportingEntry:
         """
-        `tier1_days` can be set to specify for how many days we want to store reporting history which in netdata
-        terms specifies the number of days netdata should be storing data in tier1 storage.
+        Update reporting configuration settings.
         """
         return await self._svc_part.do_update(data)
 
@@ -76,6 +75,11 @@ class ReportingService(GenericConfigService[ReportingEntry]):
     async def graphs(
         self, filters: list[typing.Any], options: QueryOptions,
     ) -> list[ReportingGraphsItem] | ReportingGraphsItem | int:
+        """
+        List the reporting graphs available to be queried, each describing a metric type along with the
+        instance identifiers (if any) that can be reported on. Pass the resulting graph names to
+        :method:`reporting.get_data` to retrieve the corresponding data points.
+        """
         return to_entries(await _netdata_graphs(self._graphs, filters, options), ReportingGraphsItem)
 
     @api_method(
@@ -86,12 +90,10 @@ class ReportingService(GenericConfigService[ReportingEntry]):
         """
         Get reporting data for given graphs.
 
-        List of possible graphs can be retrieved using `reporting.graphs` call.
+        List of possible graphs can be retrieved using :method:`reporting.graphs` call.
 
-        For the time period of the graph either `unit` and `page` OR `start` and `end` should be
+        For the time period of the graph either ``unit`` and ``page`` OR ``start`` and ``end`` should be
         used, not both.
-
-        `aggregate` will return aggregate available data for each graph (e.g. min, max, mean).
         """
         return await _netdata_get_data(self.context, self._graphs, graphs, query)
 
@@ -100,7 +102,7 @@ class ReportingService(GenericConfigService[ReportingEntry]):
     )
     async def graph(self, name: str, query: ReportingQuery) -> list[ReportingGetDataResponse]:
         """
-        Get reporting data for `name` graph.
+        Get reporting data for ``name`` graph.
         """
         return await _netdata_graph(self.context, self._graphs, name, query)
 
@@ -110,7 +112,7 @@ class ReportingService(GenericConfigService[ReportingEntry]):
     )
     async def netdata_graph(self, name: str, query: ReportingQuery) -> list[ReportingGetDataResponse]:
         """
-        Get reporting data for `name` graph.
+        Get reporting data for ``name`` graph.
         """
         return await _netdata_graph(self.context, self._graphs, name, query)
 
@@ -135,7 +137,7 @@ class ReportingService(GenericConfigService[ReportingEntry]):
         """
         Get reporting data for given graphs.
 
-        List of possible graphs can be retrieved using `reporting.netdata_graphs` call.
+        List of possible graphs can be retrieved using :method:`reporting.netdata_graphs` call.
         """
         return await _netdata_get_data(self.context, self._graphs, graphs, query)
 
