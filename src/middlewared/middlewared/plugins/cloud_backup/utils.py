@@ -6,13 +6,16 @@ from middlewared.api.current import CredentialsEntry
 from middlewared.service import ServiceContext
 
 
+# FIXME: Remove once the cloud_sync plugin is converted; its dict-based rclone layer is why we marshal here.
 def resolve_credentials(context: ServiceContext, credentials: int | CredentialsEntry) -> dict[str, Any]:
-    """Return the cloud credential record (with the flat, revealed provider dict restic needs).
+    """Return the cloud credential as the flat, plaintext provider dict the restic/rclone helpers consume.
 
-    The credential id may come straight from a create/update payload (``int``) or from a persisted
-    entry (``CredentialsEntry``). Either way the provider secrets are owned by the unconverted
-    ``cloudsync.credentials`` service, which is the only source of the flat ``provider`` dict shape
-    the restic helpers consume.
+    This is the single place that turns a credential reference into that dict, and each operation calls
+    it once and threads the result down. The reference is an ``int`` id on a create/update payload or a
+    ``CredentialsEntry`` on a persisted task; either way it points at an existing ``system.cloudcredentials``
+    row, so we fetch it from the unconverted ``cloudsync.credentials`` service. We deliberately do not dump
+    the entry's ``CredentialsEntry`` instead: its secrets are masked, and ``model_dump`` drifts from the
+    stored shape (URL normalization, default-filled keys) that flows into the ``CLOUD_BACKUP_*`` script env.
     """
     cred_id = credentials if isinstance(credentials, int) else credentials.id
     record: dict[str, Any] = context.middleware.call_sync("cloudsync.credentials.get_instance", cred_id)

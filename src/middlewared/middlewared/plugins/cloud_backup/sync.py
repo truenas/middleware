@@ -3,7 +3,7 @@ from __future__ import annotations
 import itertools
 import subprocess
 import time
-from typing import IO, TYPE_CHECKING, Literal
+from typing import IO, TYPE_CHECKING, Any, Literal
 
 from middlewared.api.current import (
     CloudBackupEntry,
@@ -37,6 +37,7 @@ def restic_backup(
     context: ServiceContext,
     job: Job,
     entry: CloudBackupEntry,
+    credentials: dict[str, Any],
     dry_run: bool = False,
     rate_limit: int | None = None,
 ) -> None:
@@ -105,10 +106,9 @@ def restic_backup(
 
         cmd.extend(["--exclude=" + excl for excl in entry.exclude])
 
-        restic_config = get_restic_config(context, entry)
+        restic_config = get_restic_config(entry, credentials)
         cmd = restic_config.cmd + ["--verbose", "backup"] + cmd
 
-        credentials = resolve_credentials(context, entry.credentials)
         env = env_mapping("CLOUD_BACKUP_", {
             "id": entry.id,
             "description": entry.description,
@@ -164,12 +164,13 @@ def do_sync(context: ServiceContext, job: Job, id_: int, options: CloudBackupSyn
 def _sync(context: ServiceContext, entry: CloudBackupEntry, options: CloudBackupSyncOptions, job: Job) -> None:
     job.set_progress(0, "Starting")
     try:
-        ensure_initialized(context, entry)
+        credentials = resolve_credentials(context, entry.credentials)
+        ensure_initialized(context, entry, credentials)
 
-        restic_backup(context, job, entry, dry_run=options.dry_run, rate_limit=options.rate_limit)
+        restic_backup(context, job, entry, credentials, dry_run=options.dry_run, rate_limit=options.rate_limit)
 
         job.set_progress(100, "Cleaning up")
-        restic_config = get_restic_config(context, entry)
+        restic_config = get_restic_config(entry, credentials)
         run_restic(
             job,
             restic_config.cmd + ["forget", "--keep-last", str(entry.keep_last), "--group-by", "", "--prune"],

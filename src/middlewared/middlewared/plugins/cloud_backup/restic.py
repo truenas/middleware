@@ -5,14 +5,13 @@ from datetime import timedelta
 import json
 import subprocess
 import threading
-from typing import IO, TYPE_CHECKING
+from typing import IO, TYPE_CHECKING, Any
 
-from middlewared.api.current import CloudBackupCreate, CloudBackupEntry
+from middlewared.api.current import CloudBackupEntry
 from middlewared.job import JobCancelledException, JobProgressBuffer
 from middlewared.plugins.cloud.path import get_remote_path
 from middlewared.plugins.cloud.remotes import REMOTES
-from middlewared.plugins.cloud_backup.utils import resolve_credentials
-from middlewared.service import CallError, ServiceContext
+from middlewared.service import CallError
 
 if TYPE_CHECKING:
     from middlewared.job import Job
@@ -24,8 +23,7 @@ class ResticConfig:
     env: dict[str, str]
 
 
-def get_restic_config(context: ServiceContext, entry: CloudBackupEntry | CloudBackupCreate) -> ResticConfig:
-    credentials = resolve_credentials(context, entry.credentials)
+def get_restic_config(entry: CloudBackupEntry, credentials: dict[str, Any]) -> ResticConfig:
     attributes = entry.attributes.model_dump()
 
     remote = REMOTES[credentials["provider"]["type"]]

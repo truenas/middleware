@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 from middlewared.api.current import CloudBackupRestoreOptions
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.cloud_backup.restic import get_restic_config, run_restic
+from middlewared.plugins.cloud_backup.utils import resolve_credentials
 from middlewared.service import ServiceContext, ValidationErrors
 
 if TYPE_CHECKING:
@@ -30,7 +31,8 @@ def do_restore(
 
     entry = context.call_sync2(context.s.cloud_backup.get_instance, id_)
 
-    restic_config = get_restic_config(context, entry)
+    credentials = resolve_credentials(context, entry.credentials)
+    restic_config = get_restic_config(entry, credentials)
 
     cmd = ["restore", f"{snapshot_id}:{subfolder}", "--target", destination_path]
     cmd += sum([["--exclude", exclude] for exclude in options.exclude], [])

@@ -15,6 +15,7 @@ from middlewared.utils.cron import convert_db_format_to_schedule, convert_schedu
 from middlewared.utils.path import FSLocation
 
 from .init import IncorrectPassword
+from .utils import resolve_credentials
 
 if TYPE_CHECKING:
     from middlewared.api.base.server.app import App
@@ -79,9 +80,7 @@ class CloudBackupServicePart(SharingTaskServicePart[CloudBackupEntry], CloudTask
         return data
 
     async def do_create(self, app: App | None, data: CloudBackupCreate) -> CloudBackupEntry:
-        cloud_backup = data.model_dump(context={"expose_secrets": True})
-        await self.to_thread(self._run_validation, app, "cloud_backup_create", cloud_backup, data)
-
+        cloud_backup = await self.to_thread(self._run_validation, app, "cloud_backup_create", data)
         entry = await self._create(cloud_backup)
         await (await self.middleware.call("service.control", "RESTART", "cron")).wait(raise_error=True)
         return entry
@@ -89,17 +88,7 @@ class CloudBackupServicePart(SharingTaskServicePart[CloudBackupEntry], CloudTask
     async def do_update(self, app: App | None, id_: int, data: CloudBackupUpdate) -> CloudBackupEntry:
         old = await self.get_instance(id_)
         new = old.updated(data)
-
-        cloud_backup = new.model_dump(context={"expose_secrets": True})
-        cloud_backup.pop(self.locked_field, None)
-        cloud_backup.pop("job", None)
-        # credentials is a foreign key; collapse the extended entry back to its id for the
-        # datastore and the shared validation mixin (a changed credential is already an int).
-        if isinstance(cloud_backup["credentials"], dict):
-            cloud_backup["credentials"] = cloud_backup["credentials"]["id"]
-
-        await self.to_thread(self._run_validation, app, "cloud_backup_update", cloud_backup, new)
-
+        cloud_backup = await self.to_thread(self._run_validation, app, "cloud_backup_update", new)
         entry = await self._update(id_, cloud_backup)
         await (await self.middleware.call("service.control", "RESTART", "cron")).wait(raise_error=True)
         return entry
@@ -123,18 +112,28 @@ class CloudBackupServicePart(SharingTaskServicePart[CloudBackupEntry], CloudTask
         ):
             raise CallError("Backed up zvol must be used by a local or VMware VM")
 
-    def _run_validation(
-        self, app: App | None, schema: str, data: dict[str, Any], entry: CloudBackupEntry | CloudBackupCreate,
-    ) -> None:
+    def _run_validation(self, app: App | None, schema: str, entry: CloudBackupEntry) -> dict[str, Any]:
+        # FIXME: Drop this model->dict marshalling and validate the entry directly once CloudTaskServiceMixin
+        # is converted; it is shared with the unconverted cloud_sync and only operates on dicts for now.
+        data = entry.model_dump(context={"expose_secrets": True})
+        data.pop(self.locked_field, None)
+        data.pop("job", None)
+        # credentials is a foreign key; collapse the extended entry back to its id for the
+        # datastore and the shared validation mixin (a changed credential is already an int).
+        if isinstance(data["credentials"], dict):
+            data["credentials"] = data["credentials"]["id"]
+
         verrors = ValidationErrors()
         self._validate(app, verrors, schema, data)
         if not verrors:
+            credentials = resolve_credentials(self, entry.credentials)
             try:
                 # Route through the registry method so the suite can mock cloud_backup.ensure_initialized.
-                self.call_sync2(self.s.cloud_backup.ensure_initialized, entry)
+                self.call_sync2(self.s.cloud_backup.ensure_initialized, entry, credentials)
             except IncorrectPassword as e:
                 verrors.add(f"{schema}.password", e.errmsg)
         verrors.check()
+        return data
 
     def _validate(self, app: App | None, verrors: ValidationErrors, name: str, data: dict[str, Any]) -> None:
         # CloudTaskServiceMixin is shared with the unconverted cloud_sync and operates on the dict
