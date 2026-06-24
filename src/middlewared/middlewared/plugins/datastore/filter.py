@@ -1,7 +1,7 @@
 import operator
 from typing import Any, Iterable, Literal
 
-from sqlalchemy import Column, ForeignKey, Table, func
+from sqlalchemy import Column, ForeignKey, Table, case, func
 
 from truenas_api_client import ejson as json
 from middlewared.utils.jsonpath import JSON_PATH_PREFIX, json_path_parse
@@ -45,7 +45,8 @@ class FilterMixin(SchemaMixin):
         filters: FiltersList,
         table: Table,
         prefix: str | None,
-        aliases: dict[ForeignKey, Table]
+        aliases: dict[ForeignKey, Table],
+        guard_malformed_json: bool = False
     ) -> list:
         opmap = {
             '=': operator.eq,
@@ -76,9 +77,9 @@ class FilterMixin(SchemaMixin):
                 # WARNING: this capability doesn't exist for encrypted JSON fields.
                 if name.startswith(JSON_PATH_PREFIX):
                     name, json_target = json_path_parse(name)
-                    col = self._get_col(table, name, prefix)
+                    raw_col = self._get_col(table, name, prefix)
                     # Set up JSON1 operation to extract JSON data for filtering
-                    col = func.json_extract(col, json_target)
+                    col = func.json_extract(raw_col, json_target)
                     is_json_extract = True
                 elif matched := next((x for x in ['__', '.'] if x in name), False):
                     fk, name = name.split(matched, 1)
@@ -96,12 +97,17 @@ class FilterMixin(SchemaMixin):
                     value = json.dumps(value, separators=(',', ':'), sort_keys=True)
 
                 q = opmap[op](col, value)
+                if is_json_extract and guard_malformed_json:
+                    # json_extract() raises "malformed JSON" if the column holds non-JSON text,
+                    # which aborts the entire statement. CASE guarantees json_valid() is evaluated
+                    # before json_extract(), so a row with non-JSON data is skipped instead.
+                    q = case((func.json_valid(raw_col), q), else_=False)
                 rv.append(q)
             elif len(f) == 2:
                 op, value = f
                 if op == 'OR':
                     or_value = None
-                    for value in self._filters_to_queryset(value, table, prefix, aliases):
+                    for value in self._filters_to_queryset(value, table, prefix, aliases, guard_malformed_json):
                         if or_value is None:
                             or_value = value
                         else:
