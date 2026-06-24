@@ -1,8 +1,10 @@
-import time
-
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.smb import smb_share
 from middlewared.test.integration.utils import call
+from middlewared.test.integration.utils.alert import (
+    wait_for_share_locked_alert,
+    wait_for_share_locked_alert_cleared,
+)
 
 
 PASSPHRASE = '12345678'
@@ -14,29 +16,6 @@ def encryption_props():
         'encryption': True,
         'inherit_encryption': False,
     }
-
-
-def find_share_locked_alert(share_id):
-    for alert in call('alert.list'):
-        if alert['klass'] == 'ShareLocked' and f'SMB_{share_id}' in alert['key']:
-            return alert
-    return None
-
-
-def wait_for_alert(share_id, timeout=30):
-    for _ in range(timeout):
-        if alert := find_share_locked_alert(share_id):
-            return alert
-        time.sleep(1)
-    return None
-
-
-def wait_for_alert_cleared(share_id, timeout=30):
-    for _ in range(timeout):
-        if find_share_locked_alert(share_id) is None:
-            return True
-        time.sleep(1)
-    return False
 
 
 def test_share_locked_alert_on_dataset_lock_unlock():
@@ -58,7 +37,7 @@ def test_share_locked_alert_on_dataset_lock_unlock():
             assert share['locked'] is True
 
             # Locking the dataset should generate a ShareLocked alert
-            alert = wait_for_alert(share_id)
+            alert = wait_for_share_locked_alert('SMB', share_id)
             assert alert is not None, 'ShareLocked alert was not created after locking dataset'
             assert alert['level'] == 'WARNING'
 
@@ -72,5 +51,5 @@ def test_share_locked_alert_on_dataset_lock_unlock():
             share = call('sharing.smb.get_instance', share_id)
             assert share['locked'] is False
 
-            assert wait_for_alert_cleared(share_id), \
+            assert wait_for_share_locked_alert_cleared('SMB', share_id), \
                 'ShareLocked alert was not cleared after unlocking dataset'
