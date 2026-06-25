@@ -11,9 +11,13 @@ def process_alerts():
 def find_share_locked_alert(share_type, share_id):
     """Return the ShareLocked alert for the given share, or None.
 
-    `share_type` is the share task type used in the alert key (e.g. 'SMB', 'NFS')."""
+    `share_type` is the share task type (e.g. 'SMB', 'NFS')."""
     for alert in call('alert.list'):
-        if alert['klass'] == 'ShareLocked' and f'{share_type}_{share_id}' in alert['key']:
+        if (
+            alert['klass'] == 'ShareLocked'
+            and alert['args'].get('type') == share_type
+            and alert['args'].get('id') == share_id
+        ):
             return alert
     return None
 

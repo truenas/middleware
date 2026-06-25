@@ -155,7 +155,12 @@ class SMBService(ConfigService):
             smb_shares = []
 
         # Skip locked shares (alerting on each). For unlocked shares, clear any
-        # stale locked-dataset alert (e.g. generated at boot before pools unlocked).
+        # stale locked-dataset alert left from when the dataset was still locked.
+        locked_alert_share_ids = {
+            alert['args'].get('id')
+            for alert in self.middleware.call_sync('alert.list')
+            if alert['klass'] == 'ShareLocked' and alert['args'].get('type') == 'SMB'
+        }
         active_shares = []
         for share in smb_shares:
             if share[share_field.LOCKED]:
@@ -165,7 +170,8 @@ class SMBService(ConfigService):
                 )
                 self.middleware.call_sync('sharing.smb.generate_locked_alert', share['id'])
                 continue
-            self.middleware.call_sync('sharing.smb.remove_locked_alert', share['id'])
+            if share['id'] in locked_alert_share_ids:
+                self.middleware.call_sync('sharing.smb.remove_locked_alert', share['id'])
             active_shares.append(share)
         smb_shares = active_shares
 
