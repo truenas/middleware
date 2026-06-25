@@ -132,10 +132,40 @@ def rollback_impl(
             _rollback_single(ds, snap_name)
         except FileNotFoundError:
             raise ZFSPathNotFoundException(snap_path)
-        except FileExistsError as e:
-            raise ValueError(f"Cannot rollback: more recent snapshots exist. Use recursive=True to destroy them. {e}")
+        except FileExistsError:
+            conflicts = _collect_newer_snapshots(tls, ds, snap_name)
+            raise ValueError(
+                "Cannot rollback: more recent snapshots or bookmarks exist. Please pass `recursive: true` to "
+                "delete the following snapshots and bookmarks recursively:\n" +
+                "\n".join([f"  {snapshot}" for snapshot in conflicts])
+            )
         except (ValueError, OSError, PermissionError, RuntimeError) as e:
             raise ValueError(f"Failed to rollback snapshot: {e}")
+
+
+def _collect_newer_snapshots(tls: Any, dataset: str, target_snap: str) -> list[str]:
+    """Return the snapshots of ``dataset`` that are newer than ``target_snap``.
+
+    The names are ordered by ascending creation transaction group, matching the
+    order ``zfs rollback -r`` reports the snapshots it would force-delete.
+    Returns an empty list if the target or dataset can no longer be opened.
+    """
+    target_path = f"{dataset}@{target_snap}"
+    try:
+        target_rsrc = tls.lzh.open_resource(name=target_path)
+        target_txg = int(target_rsrc.createtxg)
+        ds_hdl = tls.lzh.open_resource(name=dataset)
+    except truenas_pylibzfs.ZFSException:
+        return []
+
+    state = CollectNewerSnapshotsState(target_txg=target_txg, snaps=[])
+    ds_hdl.iter_snapshots(
+        callback=__collect_newer_snapshots_callback,
+        state=state,
+        min_transaction_group=target_txg,
+        order_by_transaction_group=True,
+    )
+    return state.snaps
 
 
 def _destroy_newer_snapshots(tls: Any, dataset: str, target_snap: str, destroy_clones: bool, force: bool) -> None:
@@ -148,25 +178,8 @@ def _destroy_newer_snapshots(tls: Any, dataset: str, target_snap: str, destroy_c
         destroy_clones: Also destroy clones of newer snapshots
         force: Force unmount
     """
-    # Get the target snapshot's createtxg
-    target_path = f"{dataset}@{target_snap}"
-    try:
-        target_rsrc = tls.lzh.open_resource(name=target_path)
-        target_props = target_rsrc.get_properties(properties={truenas_pylibzfs.ZFSProperty.CREATETXG})
-        target_txg = int(target_props.createtxg.value)
-    except truenas_pylibzfs.ZFSException:
-        return  # Target doesn't exist, let rollback handle the error
-
-    # Get all snapshots for this dataset
-    try:
-        ds_hdl = tls.lzh.open_resource(name=dataset)
-    except truenas_pylibzfs.ZFSException:
-        return
-
-    # Collect snapshots newer than target
-    state = CollectNewerSnapshotsState(target_txg=target_txg, snaps=[])
-    ds_hdl.iter_snapshots(callback=__collect_newer_snapshots_callback, state=state)
-    newer_snaps = state.snaps
+    # Collect snapshots newer than target (ordered oldest-first)
+    newer_snaps = _collect_newer_snapshots(tls, dataset, target_snap)
 
     # Destroy newer snapshots (in reverse order - newest first)
     for snap_path in reversed(newer_snaps):
