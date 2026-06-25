@@ -156,6 +156,11 @@ class SMBService(ConfigService):
 
         # Skip locked shares (alerting on each). For unlocked shares, clear any
         # stale locked-dataset alert left from when the dataset was still locked.
+        # Gate the removal on an alert actually existing so the common all-unlocked
+        # case does not spawn a process_alerts job per share on every regeneration.
+        # alert.list hides alerts whose ShareLocked class policy is NEVER, so such an
+        # alert is not auto-cleared here; acceptable because it is hidden from the
+        # user and self-heals on a later regeneration if the policy becomes visible.
         locked_alert_share_ids = {
             alert['args'].get('id')
             for alert in self.middleware.call_sync('alert.list')
