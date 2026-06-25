@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import functools
+import json
 import os
 import re
 import shutil
 from socket import AF_INET6
 import typing
 
+from truenas_pylibvirt import GuestAgentError
 from truenas_pylibvirt.utils import kvm_supported
 from truenas_pylibvirt.utils.cpu import get_cpu_model_choices
 
@@ -16,10 +18,11 @@ from middlewared.api.current import (
     VMDisplayWebURIOptions,
     VMFlags,
     VMGetDisplayWebUri,
+    VMGuestNetworkInterface,
     VMPortWizard,
     VMVirtualizationDetails,
 )
-from middlewared.service import ServiceContext
+from middlewared.service import CallError, ServiceContext
 from middlewared.utils.cpu import cpu_info
 from middlewared.utils.libvirt.display import DisplayDelegate
 from middlewared.utils.libvirt.nic import NICDelegate
@@ -149,6 +152,42 @@ async def get_display_devices(context: ServiceContext, id_: int) -> list[VMDispl
         device_dict['attributes']['password_configured'] = bool(device_dict['attributes'].get('password'))
         devices.append(VMDisplayDeviceInfo.model_validate(device_dict))
     return devices
+
+
+def get_guest_network_interfaces(context: ServiceContext, id_: int) -> list[VMGuestNetworkInterface]:
+    """Return network interfaces reported by the QEMU guest agent.
+
+    Raises CallError if the VM is not running or the guest agent is unavailable.
+    """
+    uuid = context.middleware.call_sync(
+        'datastore.query', 'vm.vm', [['id', '=', id_]], {'get': True}
+    )['uuid']
+    domain = context.middleware.libvirt_domains_manager.vms_connection.get_domain(uuid)
+    if domain is None:
+        raise CallError(f'VM {id_} is not running')
+    try:
+        raw = context.middleware.libvirt_domains_manager.vms_connection.guest_agent_command(
+            domain, '{"execute":"guest-network-get-interfaces"}'
+        )
+    except GuestAgentError as e:
+        raise CallError(f'VM {id_}: {e}')
+    data = json.loads(raw)
+    return [
+        VMGuestNetworkInterface.model_validate({
+            'name': iface.get('name', ''),
+            'hardware_address': iface.get('hardware-address', ''),
+            'ip_addresses': [
+                {
+                    'ip_address': addr['ip-address'],
+                    'prefix': addr.get('prefix', 0),
+                    'ip_address_type': addr.get('ip-address-type', 'ipv4').upper(),
+                }
+                for addr in iface.get('ip-addresses', [])
+                if addr.get('ip-address')
+            ],
+        })
+        for iface in data.get('return', [])
+    ]
 
 
 async def get_display_web_uri(
