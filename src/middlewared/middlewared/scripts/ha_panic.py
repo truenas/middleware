@@ -8,6 +8,7 @@ import sys
 
 from middlewared.plugins.failover_.detect_utils import detect_platform
 from middlewared.plugins.failover_.ha_hardware import is_licensed_for_ha
+from middlewared.plugins.failover_.stcnith import stcnith_reboot
 from middlewared.utils.db import query_config_table
 
 
@@ -26,22 +27,12 @@ def is_failover_enabled() -> bool:
         return False
 
 
-def trigger_panic() -> None:
-    """Trigger immediate reboot via sysrq (same as failover.become_passive)."""
-    # Enable sysrq triggers
-    with open('/proc/sys/kernel/sysrq', 'w') as f:
-        f.write('1')
-    # Immediate reboot - no sync, no umount
-    with open('/proc/sysrq-trigger', 'w') as f:
-        f.write('b')
-
-
 def main() -> int:
     if is_ha_capable() is False or is_failover_enabled() is False or is_licensed_for_ha() is False:
         # If system is not HA or if failover is explicitly disabled or if system is not licensed for HA, let's not panic
         return 0
 
-    trigger_panic()
+    stcnith_reboot()
     return 0
 
 

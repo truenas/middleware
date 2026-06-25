@@ -41,6 +41,7 @@ from middlewared.plugins.failover_.enums import DisabledReasonsEnum
 from middlewared.plugins.failover_.event import BACKUP_STOP_SERVICES
 from middlewared.plugins.failover_.ha_hardware import is_licensed_for_ha
 from middlewared.plugins.failover_.remote import NETWORK_ERRORS
+from middlewared.plugins.failover_.stcnith import stcnith_reboot
 from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE, ZPOOL_CACHE_FILE_OVERWRITE
 from middlewared.plugins.system.reboot import RebootReason
 from middlewared.plugins.truenas.license_legacy_utils import LEGACY_LICENSE_FILE
@@ -327,20 +328,7 @@ class FailoverService(ConfigService):
         if self.middleware.call_sync('failover.config')['disabled'] is True:
             raise ValidationError('failover.become_passive', 'Failover must be enabled.')
         else:
-            try:
-                # have to enable the "magic" sysrq triggers
-                with open('/proc/sys/kernel/sysrq', 'w') as f:
-                    f.write('1')
-
-                # now violently reboot
-                with open('/proc/sysrq-trigger', 'w') as f:
-                    f.write('b')
-            except Exception:
-                # yeah...this isn't good
-                self.logger.error('Unexpected failure in failover.become_passive', exc_info=True)
-            finally:
-                # this shouldn't be reached but better safe than sorry
-                os.system('shutdown -r now')
+            stcnith_reboot()
 
     @private
     async def force_master(self):
