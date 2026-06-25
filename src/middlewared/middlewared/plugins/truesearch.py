@@ -51,11 +51,17 @@ class TrueSearchService(Service):
         """
         What directories will it index.
         """
-        return await self.process_directories(await self.raw_directories())
+        # When ZFS tiering is enabled the SMB server no longer traverses into nested dataset
+        # mountpoints under a share, so don't index datasets that aren't reachable through the share.
+        traverse = not (await self.call2(self.s.zfs.tier.config)).enabled
+        return await self.process_directories(await self.raw_directories(), traverse=traverse)
 
-    async def process_directories(self, directories: set[str]) -> list[str]:
+    async def process_directories(self, directories: set[str], traverse: bool = True) -> list[str]:
         """
         :param directories: a list of share directories
+        :param traverse: whether the share protocol descends into nested dataset mountpoints. When
+            False (ZFS tiering is enabled, which stops the SMB server from traversing nested
+            datasets) only the share directories themselves are indexed.
         :return: a list of directories that TrueSearch will index
 
         The reason these do not match is that TrueSearch does not traverse filesystem boundaries.
@@ -80,11 +86,13 @@ class TrueSearchService(Service):
 
         result = set()
         for directory in directories:
-            result |= self._processed_directories_for_directory(mountpoints, directory)
+            result |= self._processed_directories_for_directory(mountpoints, directory, traverse)
 
         return list(sorted(result))
 
-    def _processed_directories_for_directory(self, mountpoints: dict[str, bool], directory: str) -> set[str]:
+    def _processed_directories_for_directory(
+        self, mountpoints: dict[str, bool], directory: str, traverse: bool = True
+    ) -> set[str]:
         result = set()
         match mountpoints.get(directory):
             case True:
@@ -93,10 +101,11 @@ class TrueSearchService(Service):
             case False:
                 # The dataset is not encrypted. Add the directory
                 result.add(directory)
-                # And all the nested non-encrypted datasets
-                for mountpoint, encrypted in mountpoints.items():
-                    if os.path.commonpath([mountpoint, directory]) == directory and not encrypted:
-                        result.add(mountpoint)
+                if traverse:
+                    # And all the nested non-encrypted datasets
+                    for mountpoint, encrypted in mountpoints.items():
+                        if os.path.commonpath([mountpoint, directory]) == directory and not encrypted:
+                            result.add(mountpoint)
 
                 return result
             case _:
