@@ -11,7 +11,9 @@ from .constants import (
     SYSFS_SLOT_KEY,
     MAPPED_SLOT_KEY,
     SUPPORTS_IDENTIFY_KEY,
-    SUPPORTS_IDENTIFY_STATUS_KEY
+    SUPPORTS_IDENTIFY_STATUS_KEY,
+    VSERIES_FRONT_PRODUCTS,
+    VSERIES_REAR_PRODUCTS,
 )
 from .enums import ControllerModels, JbodModels, JbofModels
 
@@ -690,7 +692,7 @@ def get_slot_info(enc):
         # Front 24 slots are split between the two SES enclosures with
         # interleaved mapping; slot_designation (NVME0/NVME8) distinguishes
         # them. We branch by enc.product so the right table is picked.
-        if enc.product in ('4IXGA-NTBp', '4IXGA-NTBs', '4IXGA-NTGp', '4IXGA-NTGs'):
+        if enc.product in VSERIES_REAR_PRODUCTS:
             # V-series rear-bay PEX89032 NTG chip. Bifurcated into 2 SES
             # partitions per controller; ses_enclosures2 picks the
             # bay-serving partition and tags it 'REAR'. Slots are libsg3
@@ -717,7 +719,7 @@ def get_slot_info(enc):
                     }
                 }
             }
-        if enc.product in ('4IXGA-SWp', '4IXGA-SWs'):
+        if enc.product in VSERIES_FRONT_PRODUCTS:
             return {
                 'any_version': True,
                 'versions': {
