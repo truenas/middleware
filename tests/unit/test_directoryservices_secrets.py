@@ -8,12 +8,18 @@ dump of the prior bind's secrets. The fix makes backup() retain only the current
 import asyncio
 import json
 import logging
+import os
+import struct
+from base64 import b64encode
 
 import pytest
+import tdb
 
 from unittest.mock import AsyncMock, MagicMock
 
+from middlewared.plugins.directoryservices_ import secrets as secrets_mod
 from middlewared.plugins.directoryservices_.secrets import DomainSecrets
+from middlewared.utils.tdb import get_tdb_handle
 
 
 @pytest.fixture
@@ -100,3 +106,60 @@ def test__backup_skips_when_failover_status_is_backup(secrets_service):
 
     # Should return without raising and without making any non-failover.status calls.
     asyncio.run(secrets_service.backup())
+
+
+def test__last_password_change_real_tdb_roundtrip(secrets_service, tmp_path, monkeypatch):
+    """
+    Regression for the stray ']' in the secrets.tdb key, exercised end-to-end against a real
+    secrets.tdb instead of a stubbed fetch. last_password_change must read
+    SECRETS/MACHINE_LAST_CHANGE_TIME/<DOMAIN> -- the exact key the writer and the DB-side
+    reader (directoryservices.get_last_password_change) use. With the ']' the lookup misses,
+    the disk read raises MatchNotFound, last_password_change returns None, and
+    kerberos.check_updated_keytab churns a backup + keytab rewrite every hour.
+
+    Writing a real entry and reading it back through samba's tdb library covers the full
+    key + struct + base64 path that the stray bracket broke -- a wrong key surfaces here as a
+    failure rather than passing because the fetch itself was mocked away.
+    """
+    tdb_path = str(tmp_path / 'secrets.tdb')
+    # The secrets.tdb path opens O_RDWR without O_CREAT, so the db must already exist.
+    tdb.Tdb(tdb_path, 0, tdb.DEFAULT, os.O_CREAT | os.O_RDWR, 0o600).close()
+    monkeypatch.setattr(
+        secrets_mod, 'SECRETS_TDB_CONFIG', (tdb_path, secrets_mod.SECRETS_TDB_OPTIONS)
+    )
+
+    key = f'{secrets_mod.Secrets.MACHINE_LAST_CHANGE_TIME.value}/MSC'
+    with get_tdb_handle(tdb_path, secrets_mod.SECRETS_TDB_OPTIONS) as hdl:
+        hdl.store(key, b64encode(struct.pack('<L', 1718800000)).decode())
+
+    secrets_service.middleware.call_sync = MagicMock(return_value={'stateful_failover': False})
+
+    assert secrets_service.last_password_change('msc') == 1718800000
+
+
+def test__get_db_secrets_invalid_json_returns_id_only(secrets_service):
+    """
+    Corrupt JSON in cifs.secrets must degrade to "no backup" ({'id': ...}) instead of
+    raising UnboundLocalError -- previously the except branch fell through to
+    `return {'id': ...} | secrets` with `secrets` never bound.
+    """
+    async def fake_call(method, *args, **kwargs):
+        assert method == "datastore.config"
+        return {"id": 5, "secrets": "{not valid json"}
+
+    secrets_service.middleware.call.side_effect = fake_call
+
+    assert asyncio.run(secrets_service.get_db_secrets()) == {"id": 5}
+
+
+def test__get_db_secrets_valid_json_merges_id(secrets_service):
+    """A well-formed backup blob is returned merged with the row id."""
+    blob = {"NEWHOST$": {"SECRETS/MACHINE_PASSWORD/NEWDOMAIN": "ZnJlc2g="}}
+
+    async def fake_call(method, *args, **kwargs):
+        assert method == "datastore.config"
+        return {"id": 7, "secrets": json.dumps(blob)}
+
+    secrets_service.middleware.call.side_effect = fake_call
+
+    assert asyncio.run(secrets_service.get_db_secrets()) == {"id": 7} | blob
