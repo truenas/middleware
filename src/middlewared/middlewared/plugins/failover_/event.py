@@ -226,6 +226,14 @@ class FailoverEventsService(Service):
             if refresh and job is not None:
                 self.middleware.create_task(self.refresh_failover_status(job.id, event))
 
+    def _violently_reboot(self):
+        # enable the "magic" sysrq triggers and immediately reboot the node
+        # https://www.kernel.org/doc/html/latest/admin-guide/sysrq.html
+        with open('/proc/sys/kernel/sysrq', 'w') as f:
+            f.write('1')
+        with open('/proc/sysrq-trigger', 'w') as f:
+            f.write('b')
+
     def _export_zpools(self, volumes):
 
         # export the zpool(s)
@@ -235,6 +243,14 @@ class FailoverEventsService(Service):
                     self.middleware.call_sync('zfs.pool.export', vol['name'], {'force': True})
                     logger.info('Exported "%s"', vol['name'])
         except Exception as e:
+            if isinstance(e, CallError) and e.errno == errno.EBUSY:
+                # a pool import is in flight on this node (it holds the import/export
+                # lock), so we cannot safely become passive. STONITH (Shoot The Current
+                # Node In The Head) so there is no chance the zpool ends up imported on
+                # both controllers.
+                logger.error('Cannot become passive while a pool import is in progress: %s. Rebooting.', e)
+                self._violently_reboot()
+
             # catch any exception that could be raised
             # We sleep for 5 seconds here because this is
             # in its own thread. The calling thread waits
@@ -924,13 +940,8 @@ class FailoverEventsService(Service):
         export_thread.start()
         export_thread.join(timeout=self.ZPOOL_EXPORT_TIMEOUT)
         if export_thread.is_alive():
-            # have to enable the "magic" sysrq triggers
-            with open('/proc/sys/kernel/sysrq', 'w') as f:
-                f.write('1')
-
-            # now violently reboot
-            with open('/proc/sysrq-trigger', 'w') as f:
-                f.write('b')
+            # the export(s) did not finish within the timeout -> violently reboot
+            self._violently_reboot()
 
         # Pools are now exported and so we can make disks available to other controller
         logger.warning('Stopping fenced')

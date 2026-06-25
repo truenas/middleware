@@ -6,6 +6,7 @@ import functools
 from middlewared.service import CallError, Service
 from middlewared.service_exception import ValidationError
 from middlewared.utils import BOOT_POOL_NAME_VALID
+from middlewared.utils.pool_lock import pool_import_export_lock
 from .pool_utils import find_vdev, SEARCH_PATHS
 
 
@@ -47,7 +48,7 @@ class ZFSPoolService(Service):
 
     def export(self, name: str, options: dict | None = None):
         try:
-            with libzfs.ZFS() as zfs:
+            with pool_import_export_lock(), libzfs.ZFS() as zfs:
                 # FIXME: force not yet implemented
                 pool = zfs.get(name)
                 zfs.export_pool(pool)
@@ -197,7 +198,7 @@ class ZFSPoolService(Service):
             import_options = dict()
         import_options.setdefault('missing_log', False)
 
-        with libzfs.ZFS() as zfs:
+        with pool_import_export_lock(), libzfs.ZFS() as zfs:
             found = None
             sp = self.get_search_paths()
             try:

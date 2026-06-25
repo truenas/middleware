@@ -7,6 +7,7 @@ from middlewared.api import api_method
 from middlewared.api.current import PoolImportFindArgs, PoolImportFindResult, PoolImportPoolArgs, PoolImportPoolResult
 from middlewared.plugins.docker.state_utils import IX_APPS_DIR_NAME
 from middlewared.service import CallError, InstanceNotFound, job, private, Service
+from middlewared.utils.pool_lock import pool_import_export_lock
 
 from .utils import ZPOOL_CACHE_FILE
 
@@ -289,7 +290,8 @@ class PoolService(Service):
         ]
         try:
             self.logger.debug('Importing %r with guid: %r', vol_name, vol_guid)
-            cp = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            with pool_import_export_lock():
+                cp = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             if cp.returncode != 0:
                 self.logger.error(
                     'Failed to import %r with guid: %r with error: %r',
