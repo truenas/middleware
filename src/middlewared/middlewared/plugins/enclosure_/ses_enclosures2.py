@@ -145,19 +145,6 @@ def _initialize_v_series_rear_enclosures(
     _extend_rv(rv, (enc,), asdict)
 
 
-def _initialize_v_series_enclosures(
-    rv: list,
-    deferred_front: list[tuple[Enclosure, ElementsDict]],
-    deferred_rear: list[tuple[Enclosure, ElementsDict]],
-    asdict: bool = True,
-) -> None:
-    """Dispatch deferred V-series enclosures to the per-kind initializer."""
-    if deferred_front:
-        _initialize_v_series_front_enclosures(rv, deferred_front, asdict)
-    if deferred_rear:
-        _initialize_v_series_rear_enclosures(rv, deferred_rear, asdict)
-
-
 def get_ses_enclosures(asdict=True):
     rv = list()
     deferred_front = list()
@@ -183,6 +170,9 @@ def get_ses_enclosures(asdict=True):
                     enc.initialize(status['elements'])
                     rv.append(enc.asdict() if asdict else enc)
 
-    _initialize_v_series_enclosures(rv, deferred_front, deferred_rear, asdict)
+    if deferred_front:
+        _initialize_v_series_front_enclosures(rv, deferred_front, asdict)
+    if deferred_rear:
+        _initialize_v_series_rear_enclosures(rv, deferred_rear, asdict)
 
     return rv
