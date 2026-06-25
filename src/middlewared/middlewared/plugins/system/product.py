@@ -7,6 +7,7 @@ from datetime import date
 from types import MappingProxyType
 
 import truenas_pylicensed
+from truenas_pylicensed import LicenseType
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -47,18 +48,27 @@ class SystemService(Service):
                 SystemService.PRODUCT_TYPE = ProductType.ENTERPRISE
             else:
                 if license_ := await self.call2(self.s.truenas.license.info_private):
-                    if license_.model.lower().startswith("freenas"):
-                        # legacy freenas certified
-                        SystemService.PRODUCT_TYPE = ProductType.COMMUNITY_EDITION
+                    if license_.type in (LicenseType.ENTERPRISE_SINGLE, LicenseType.ENTERPRISE_HA):
+                        if (license_.model or "").lower().startswith("freenas"):
+                            # legacy freenas certified
+                            SystemService.PRODUCT_TYPE = ProductType.COMMUNITY_EDITION
+                        else:
+                            # the license has been issued for a "certified" line
+                            # of hardware which is considered enterprise
+                            SystemService.PRODUCT_TYPE = ProductType.ENTERPRISE
                     else:
-                        # the license has been issued for a "certified" line
-                        # of hardware which is considered enterprise
-                        SystemService.PRODUCT_TYPE = ProductType.ENTERPRISE
+                        # commercial/community licenses are fingerprint-bound software
+                        # licenses, not enterprise appliance hardware
+                        SystemService.PRODUCT_TYPE = ProductType.COMMUNITY_EDITION
                 else:
                     # no license
                     SystemService.PRODUCT_TYPE = ProductType.COMMUNITY_EDITION
 
         return SystemService.PRODUCT_TYPE
+
+    @private
+    def reset_product_type_cache(self):
+        SystemService.PRODUCT_TYPE = None
 
     @private
     async def is_ha_capable(self):
@@ -72,6 +82,8 @@ class SystemService(Service):
 
     @private
     def sed_enabled(self):
+        if not self.middleware.call_sync('system.is_enterprise'):
+            return False
         return truenas_pylicensed.is_feature_licensed("SED")
 
     @api_method(

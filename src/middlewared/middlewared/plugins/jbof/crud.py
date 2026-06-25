@@ -347,6 +347,11 @@ class JBOFService(CRUDService):
     async def licensed(self):
         """Return a count of the number of JBOF units licensed."""
         result = 0
+        # JBOF licensing is an enterprise appliance entitlement; commercial/community
+        # licensed systems are community-equivalent and never license a JBOF
+        if not await self.middleware.call('system.is_enterprise'):
+            return result
+
         # Do we have a license at all?
         license_ = await self.call2(self.s.truenas.license.info_private)
         if not license_:

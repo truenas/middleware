@@ -204,19 +204,27 @@ def get_license_info(lic: LicenseStatus | None = None) -> LicenseInfo | None:
     else:
         expires_at = None
 
-    return LicenseInfo(
-        id=lic.id,  # type: ignore[arg-type]
-        type=lic.type,  # type: ignore[arg-type]
-        model=lic.model,
-        expires_at=expires_at,
-        features=[
+    # Commercial/community licenses are fingerprint-bound software licenses that are not
+    # honored as enterprise feature entitlements yet; report no features so feature_enabled
+    # consumers treat these systems like a community edition install.
+    if lic.type in (LicenseType.COMMERCIAL, LicenseType.COMMUNITY):
+        features: list[FeatureInfo] = []
+    else:
+        features = [
             FeatureInfo(
                 name=FEATURE_NAME_MAP.get(name, name),
                 start_date=date.fromisoformat(f.start_date) if f.start_date else None,
                 expires_at=date.fromisoformat(f.expires_at) if f.expires_at else None,
             )
             for name, f in (lic.features or {}).items()
-        ],
+        ]
+
+    return LicenseInfo(
+        id=lic.id,  # type: ignore[arg-type]
+        type=lic.type,  # type: ignore[arg-type]
+        model=lic.model,
+        expires_at=expires_at,
+        features=features,
         serials=lic.system_id["serials"] if lic.system_id else [],
         enclosures={model: entry["count"] for model, entry in (lic.enclosures or {}).items()},
         contract_type=contract_type,

@@ -75,3 +75,40 @@ def test__get_license_info__passes_through_unrelated_feature_names():
 )
 def test__get_license_info__returns_none_for_invalid_license(status):
     assert get_license_info(status) is None
+
+
+def _fingerprint_status(license_type: LicenseType) -> LicenseStatus:
+    return LicenseStatus(
+        valid=True,
+        code=LicenseError.OK,
+        id="test-id",
+        version=1,
+        type=license_type,
+        model=None,
+        expires_at=None,
+        features={
+            "SUPPORT": FeatureEntry(
+                name="SUPPORT",
+                source="enterprise",
+                start_date="2026-06-23",
+                expires_at="2027-06-24",
+                type="SILVER",
+            ),
+            "APPS": FeatureEntry(name="APPS", source="enterprise"),
+            "FIBRECHANNEL": FeatureEntry(name="FIBRECHANNEL", source="enterprise"),
+        },
+        system_id={"serials": []},
+        enclosures={},
+    )
+
+
+@pytest.mark.parametrize("license_type", [LicenseType.COMMERCIAL, LicenseType.COMMUNITY])
+def test__get_license_info__fingerprint_licenses_report_no_features(license_type):
+    info = get_license_info(_fingerprint_status(license_type))
+
+    assert info is not None
+    # commercial/community licenses are not honored as feature entitlements yet
+    assert info.features == []
+    # but the support contract metadata derived from the raw license survives
+    assert info.contract_type == "SILVER"
+    assert info.expires_at == date(2027, 6, 24)
