@@ -359,6 +359,28 @@ def test_secrets_restore():
 
         assert check_ad_started() is True
 
+        # After restore the on-disk secret must be readable again (regression: the
+        # last_password_change key typo made the on-disk timestamp unreadable) and agree
+        # with the DB backup, so check_updated_keytab does not churn.
+        passwd_change = call('directoryservices.get_last_password_change')
+        assert passwd_change['secrets'] is not None
+        assert passwd_change['dbconfig'] == passwd_change['secrets']
+
+
+def test_secrets_in_sync_after_join():
+    with directoryservice('ACTIVEDIRECTORY', retrieve_user=False):
+        reset_systemd_svcs('winbind')
+        assert check_ad_started() is True
+
+        # Regression: the stray ']' in the secrets.tdb key made last_password_change
+        # always return None, so kerberos.check_updated_keytab saw a permanent
+        # dbconfig/secrets mismatch and rewrote the backup + keytab every hour. A clean
+        # join must leave the on-disk and DB timestamps equal.
+        passwd_change = call('directoryservices.get_last_password_change')
+        assert passwd_change['dbconfig'] is not None
+        assert passwd_change['secrets'] is not None
+        assert passwd_change['dbconfig'] == passwd_change['secrets']
+
 
 def test_keytab_restore():
 

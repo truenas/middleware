@@ -515,7 +515,7 @@ class DirectoryServices(ConfigService):
         roles=['DIRECTORY_SERVICE_WRITE'],
         audit='Directory Services Update'
     )
-    @job(lock='directoryservices_change')
+    @job(lock='directoryservices_change', lock_queue_size=1)
     def update(self, job, data):
         """
         Update the directory services configuration that binds TrueNAS to an Active Directory, IPA, or
@@ -912,7 +912,7 @@ class DirectoryServices(ConfigService):
         roles=['DIRECTORY_SERVICE_WRITE'],
         audit='Leaving directory services domain'
     )
-    @job(lock='directoryservices_change')
+    @job(lock='directoryservices_change', lock_queue_size=1)
     def leave(self, job, cred):
         """ Leave an Active Directory or IPA domain. Calling this endpoint when the directory services status is
         ``HEALTHY`` will cause TrueNAS to remove its account from the domain and then reset the local directory
@@ -1009,7 +1009,7 @@ class DirectoryServices(ConfigService):
         DirectoryServicesSyncKeytabArgs, DirectoryServicesSyncKeytabResult,
         roles=['DIRECTORY_SERVICE_WRITE']
     )
-    @job(lock='directoryservices_change')
+    @job(lock='directoryservices_change', lock_queue_size=1)
     async def sync_keytab(self, job):
         """ Sync local keytab with remote domain controller. This is required if additional
         kerberos SPNs were added to the truenas account in the remote domain controller after
