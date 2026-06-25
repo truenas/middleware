@@ -60,14 +60,14 @@ class TwoFactorAuthService(ConfigService):
         Update Two-Factor Authentication Service Configuration.
         """
         verrors = ValidationErrors()
-        security = await self.middleware.call('system.security.config')
+        security = await self.call2(self.s.system.security.config)
 
         old_config = await self.config()
         config = old_config.copy()
 
         config.update(data)
 
-        if security['enable_gpos_stig']:
+        if security.enable_gpos_stig:
             if not config['enabled']:
                 verrors.add(
                     'auth_twofactor_update.enable',

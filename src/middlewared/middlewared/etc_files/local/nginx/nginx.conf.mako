@@ -71,7 +71,7 @@
     system_version = middleware.call_sync('system.version')
 
     # Check if FIPS mode is enabled
-    fips_enabled = middleware.call_sync('system.security.info.fips_enabled')
+    fips_enabled = middleware.call_sync2(middleware.services.system.security.info.fips_enabled)
 
     # HSTS max-age calculation (730 days = 63072000 seconds)
     max_age = 63072000 if general_settings['ui_httpsredirect'] else 0

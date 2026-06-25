@@ -5,6 +5,7 @@ import string
 import subprocess
 
 from dataclasses import asdict
+from middlewared.api.current import SystemSecurityEntry
 from middlewared.plugins.smb_ import util_passdb
 from middlewared.plugins.smb_.util_account_policy import (
     SMBAccountPolicy, sync_account_policy, get_account_policy
@@ -32,15 +33,6 @@ PDB_DICT_DEFAULTS = {
     'logon_count': 0,
     'bad_pw_count': 0,
     'times': None
-}
-
-DEFAULT_ACCOUNT_POLICY = {
-    "min_password_age": None,
-    "max_password_age": None,
-    "password_warn_period": None,
-    "password_inactivity_period": None,
-    "min_password_length": None,
-    "password_history_length": None
 }
 
 SAMPLE_USER = {
@@ -255,7 +247,9 @@ def test__validate_pass_last_set():
 
 @pytest.mark.parametrize('policy_item', SMBAccountPolicy)
 def test__validate_account_policy(policy_item):
-    full_policy = DEFAULT_ACCOUNT_POLICY.copy() | {policy_item.name.lower(): 10}
+    full_policy = SystemSecurityEntry(
+        id=1, enable_fips=False, enable_gpos_stig=False, **{policy_item.name.lower(): 10}
+    )
     sync_account_policy(full_policy)
 
     for to_check in SMBAccountPolicy:

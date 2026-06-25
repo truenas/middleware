@@ -129,6 +129,7 @@ from middlewared.plugins.ports import PortService
 from middlewared.plugins.pwenc import PWEncService
 from middlewared.plugins.reporting import ReportingService
 from middlewared.plugins.rsync import RsyncTaskService
+from middlewared.plugins.security import SystemSecurityService
 from middlewared.plugins.snapshot import PeriodicSnapshotTaskService
 from middlewared.plugins.ssh import SSHService
 from middlewared.plugins.support import SupportService
@@ -237,6 +238,7 @@ class SystemServicesContainer(BaseServiceContainer):
     def __init__(self, middleware: "Middleware"):
         super().__init__(middleware)
         self.ntpserver = NTPServerService(middleware)
+        self.security = SystemSecurityService(middleware)
         self.vendor = VendorService(middleware)
 
 

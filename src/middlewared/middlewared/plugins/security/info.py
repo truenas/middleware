@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from subprocess import run
 
 from middlewared.api import api_method
@@ -18,18 +20,18 @@ class SystemSecurityInfoService(Service):
 
     @api_method(
         SystemSecurityInfoFipsAvailableArgs, SystemSecurityInfoFipsAvailableResult,
-        roles=['SYSTEM_SECURITY_READ']
+        roles=['SYSTEM_SECURITY_READ'], check_annotations=True,
     )
-    def fips_available(self):
+    def fips_available(self) -> bool:
         """Returns a boolean identifying whether FIPS mode may be toggled on this system."""
         # being able to toggle fips mode is hinged on whether this is an iX licensed piece of hardware
         return bool(self.call_sync2(self.s.truenas.license.info))
 
     @api_method(
         SystemSecurityInfoFipsEnabledArgs, SystemSecurityInfoFipsEnabledResult,
-        roles=['SYSTEM_SECURITY_READ']
+        roles=['SYSTEM_SECURITY_READ'], check_annotations=True,
     )
-    def fips_enabled(self):
+    def fips_enabled(self) -> bool:
         """Returns a boolean identifying whether FIPS mode has been enabled on this system."""
         cp = run(['openssl', 'list', '-providers'], capture_output=True)
         if cp.returncode:

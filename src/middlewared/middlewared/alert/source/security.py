@@ -68,8 +68,8 @@ class SecurityLocalUserAccountExpirationAlertSource(AlertSource):
     products = (ProductType.ENTERPRISE,)
 
     async def check(self) -> list[Alert[Any]]:
-        sec = await self.middleware.call("system.security.config")
-        max_pw_age = sec["max_password_age"]
+        sec = await self.middleware.call2(self.middleware.services.system.security.config)
+        max_pw_age = sec.max_password_age
         if not max_pw_age:
             # password aging disabled and so we can skip these checks
             return []

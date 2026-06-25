@@ -21,9 +21,9 @@
         # account so its password has password_disabled = true.
         root_always_enabled = middleware.call_sync('privilege.always_has_root_password_enabled')
 
-    if sec['max_password_age'] and password_full_admin_users:
+    if sec.max_password_age and password_full_admin_users:
         unexpired = filter_list(password_full_admin_users, [
-           ['password_age', '<', sec['max_password_age'] - 1]
+           ['password_age', '<', sec.max_password_age - 1]
         ])
         if unexpired:
             middleware.call_sync2(middleware.services.alert.oneshot_delete, 'AllAdminAccountsExpired', None)

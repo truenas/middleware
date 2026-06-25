@@ -237,7 +237,7 @@ class SMBService(ConfigService):
 
         bind_ip_choices = self.middleware.call_sync('smb.bindip_choices')
         is_enterprise = self.middleware.call_sync('system.is_enterprise')
-        security_config = self.middleware.call_sync('system.security.config')
+        security_config = self.call_sync2(self.s.system.security.config)
         tiering_enabled = self.call_sync2(self.s.zfs.tier.config).enabled
         veeam_repo_errors = []
 

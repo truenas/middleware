@@ -1,3 +1,4 @@
+from middlewared.api.current import SystemSecurityEntry
 from middlewared.plugins.smb_.util_smbconf import generate_smb_conf_dict
 from middlewared.utils.smb import TRUESEARCH_ES_PATH
 
@@ -41,8 +42,8 @@ SMB_OPTIONS = BASE_SMB_CONFIG | {'smb_options': 'canary = bob\n canary2 = bob2 \
 SMB_ENCRYPTION_NEGOTIATE = BASE_SMB_CONFIG | {'encryption': 'NEGOTIATE'}
 SMB_ENCRYPTION_DESIRED = BASE_SMB_CONFIG | {'encryption': 'DESIRED'}
 SMB_ENCRYPTION_REQUIRED = BASE_SMB_CONFIG | {'encryption': 'REQUIRED'}
-SYSTEM_SECURITY_DEFAULT = {'id': 1, 'enable_fips': False, 'enable_gpos_stig': False}
-SYSTEM_SECURITY_GPOS_STIG = {'id': 1, 'enable_fips': True, 'enable_gpos_stig': True}
+SYSTEM_SECURITY_DEFAULT = SystemSecurityEntry(id=1, enable_fips=False, enable_gpos_stig=False)
+SYSTEM_SECURITY_GPOS_STIG = SystemSecurityEntry(id=1, enable_fips=True, enable_gpos_stig=True)
 DEFAULT_SHARE_OPTIONS = {'aapl_name_mangling': False}
 
 BASE_SMB_SHARE = {

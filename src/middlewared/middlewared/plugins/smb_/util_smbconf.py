@@ -6,6 +6,7 @@ import os
 
 import truenas_pyfilter as _tf
 
+from middlewared.api.current import SystemSecurityEntry
 from middlewared.plugins.account import DEFAULT_HOME_PATH
 from middlewared.plugins.smb_.constants import VEEAM_REPO_BLOCKSIZE, SMBEncryption, SMBPath
 from middlewared.plugins.smb_.constants import SMBShareField as share_field
@@ -381,7 +382,7 @@ def generate_smb_conf_dict(
     smb_shares: list,
     smb_bind_choices: dict,
     is_enterprise: bool,
-    security_config: dict[str, bool],
+    security_config: SystemSecurityEntry,
     tiering_enabled: bool = False
 ):
     guest_enabled = bool(_tf.tnfilter(smb_shares, filters=_GUESTOK_FILTER, options=_SHARES_GET_OPTS))
@@ -687,7 +688,7 @@ def generate_smb_conf_dict(
 
     # Ordering here is relevant. Do not permit smb_options to override required
     # settings for the STIG.
-    if security_config['enable_gpos_stig']:
+    if security_config.enable_gpos_stig:
         smbconf.update({
             'client use kerberos': 'required',
             'ntlm auth': 'disabled'

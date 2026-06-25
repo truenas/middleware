@@ -378,7 +378,7 @@ class PrivilegeService(CRUDService):
 
     @private
     async def compose_privilege(self, privileges):
-        security_config = await self.middleware.call('system.security.config')
+        security_config = await self.call2(self.s.system.security.config)
         enabled_stig = system_security_config_to_stig_type(security_config)
 
         compose = {

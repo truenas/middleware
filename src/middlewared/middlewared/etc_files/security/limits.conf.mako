@@ -54,7 +54,7 @@
 #<domain>      <type>  <item>         <value>
 #
 
-% if render_ctx['system.security.config']['enable_gpos_stig']:
+% if render_ctx['system.security.config'].enable_gpos_stig:
 *	hard	maxlogins	10
 % endif
 

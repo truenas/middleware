@@ -48,6 +48,6 @@ class TrueNASVerifyServiceChangeDetectionAlertSource(ThreadedAlertSource):
         return None
 
     def stig_enabled(self) -> Any:
-        security_config = self.middleware.call_sync('system.security.config')
+        security_config = self.middleware.call_sync2(self.middleware.services.system.security.config)
         enabled_stig = system_security_config_to_stig_type(security_config)
         return enabled_stig

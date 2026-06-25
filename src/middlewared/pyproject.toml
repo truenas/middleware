@@ -55,6 +55,7 @@ module = [
     "pyudev.*",
     "tdb.*",
     "truenas_pam_faillog",
+    "truenas_pam_session",
     "truenas_pylibsed.*",
     "truenas_pysnmp.*",
     "truenas_zfstierd_client.*",

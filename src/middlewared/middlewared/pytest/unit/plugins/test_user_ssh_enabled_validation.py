@@ -2,7 +2,7 @@ from typing import Literal
 
 import pytest
 
-from middlewared.api.current import UserCreateArgs, UserEntry
+from middlewared.api.current import SystemSecurityEntry, UserCreateArgs, UserEntry
 from middlewared.plugins.account import UserService
 from middlewared.pytest.unit.middleware import Middleware
 from middlewared.service import ValidationErrors
@@ -76,7 +76,9 @@ async def test_use_ssh_enabled_validation(
     m['auth.twofactor.config'] = lambda *args: twofactor_config
     m['user.shell_choices'] = lambda *args: {'/usr/bin/zsh': 'zsh'}
     m['user.translate_username'] = lambda *args: {'twofactor_auth_configured': twofactor_enabled}
-    m['system.security.config'] = lambda *args: {'enable_fips': False, 'enable_gpos_stig': False}
+    m.services.system.security.config = lambda *args: SystemSecurityEntry(
+        id=1, enable_fips=False, enable_gpos_stig=False
+    )
     user_service = UserService(m)
     user_service.validate_homedir_path = lambda *args: True
 
