@@ -6,7 +6,7 @@
 import logging
 import os
 
-logger = logging.getLogger('failover')
+logger = logging.getLogger("failover")
 
 
 def stcnith_reboot(reason=None):
@@ -26,18 +26,18 @@ def stcnith_reboot(reason=None):
     check *before* calling.
     """
     if reason:
-        logger.error('Force-rebooting this controller: %s', reason)
+        logger.error("Force-rebooting this controller: %s", reason)
     try:
         # have to enable the "magic" sysrq triggers
-        with open('/proc/sys/kernel/sysrq', 'w') as f:
-            f.write('1')
+        with open("/proc/sys/kernel/sysrq", "w") as f:
+            f.write("1")
 
         # now violently reboot
-        with open('/proc/sysrq-trigger', 'w') as f:
-            f.write('b')
+        with open("/proc/sysrq-trigger", "w") as f:
+            f.write("b")
     except Exception:
         # yeah...this isn't good
-        logger.error('Unexpected failure triggering immediate reboot via sysrq', exc_info=True)
+        logger.error("Unexpected failure triggering immediate reboot via sysrq", exc_info=True)
     finally:
         # this shouldn't be reached but better safe than sorry
-        os.system('shutdown -r now')
+        os.system("shutdown -r now")
