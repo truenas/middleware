@@ -8,7 +8,7 @@ import shutil
 from socket import AF_INET6
 import typing
 
-import libvirt  # type: ignore[import-untyped]
+from truenas_pylibvirt import GuestAgentError
 from truenas_pylibvirt.utils import kvm_supported
 from truenas_pylibvirt.utils.cpu import get_cpu_model_choices
 
@@ -169,8 +169,8 @@ def get_guest_network_interfaces(context: ServiceContext, id_: int) -> list[VMGu
         raw = context.middleware.libvirt_domains_manager.vms_connection.guest_agent_command(
             domain, '{"execute":"guest-network-get-interfaces"}'
         )
-    except libvirt.libvirtError as e:
-        raise CallError(f'Guest agent not available for VM {id_}: {e}')
+    except GuestAgentError as e:
+        raise CallError(f'VM {id_}: {e}')
     data = json.loads(raw)
     return [
         VMGuestNetworkInterface.model_validate({
