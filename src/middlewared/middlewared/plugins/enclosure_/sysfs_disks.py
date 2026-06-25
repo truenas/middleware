@@ -67,10 +67,6 @@ def map_disks_to_enclosure_slots(enc) -> dict[int, BaseDev]:
                     # the NVMe controller as the slot's `device/` and the
                     # namespace as a sibling directory (e.g.
                     # `device/nvme7n1`). Pick the first namespace dir.
-                    # Note: this only picks one namespace per drive — it
-                    # doesn't account for NVMe devices with multiple
-                    # namespaces, but neither do many other places in
-                    # this codebase.
                     try:
                         name = next(
                             (
