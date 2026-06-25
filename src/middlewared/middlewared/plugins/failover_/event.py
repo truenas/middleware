@@ -240,25 +240,6 @@ class FailoverEventsService(Service):
             if refresh and job is not None:
                 self.middleware.create_task(self.refresh_failover_status(job.id, event))
 
-    def force_reboot(self, reason):
-        """
-        Fail-closed guard reboot. Used when we cannot safely continue a failover
-        transition -- e.g. a pool is still imported and we must not release SCSI
-        fencing, or the pool import state is indeterminate.
-
-        We write the watchdog sentinel first so the post-reboot alert is correct
-        (ticket 39114), then hand off to the shared STCNITH reboot. Unlike
-        `failover.become_passive` this performs no failover-enabled check: a
-        still-attached pool must reboot us regardless.
-        """
-        with contextlib.suppress(Exception):
-            with open(WATCHDOG_ALERT_FILE, 'w') as f:
-                f.write(f'{time.time()}')
-                f.flush()  # be sure it goes straight to disk
-                os.fsync(f.fileno())  # be EXTRA sure it goes straight to disk
-
-        stcnith_reboot(reason)
-
     def fence_if_pools_still_imported(self, volumes):
         """
         Fail-closed demotion guard. Before releasing SCSI fencing on a demoting
@@ -282,7 +263,7 @@ class FailoverEventsService(Service):
 
         The boot pool is excluded: each controller has its own boot pool that is
         always imported, so it must never count as still-attached shared storage
-        (otherwise we would self-fence on every demotion).
+        (otherwise we would reboot ourselves on every demotion).
         """
         try:
             imported_names = {
@@ -290,12 +271,12 @@ class FailoverEventsService(Service):
                 if p['name'] not in BOOT_POOL_NAME_VALID
             }
         except Exception as e:
-            self.force_reboot(f'could not determine pool import state before releasing fencing: {e}')
+            stcnith_reboot(f'could not determine pool import state before releasing fencing: {e}')
             return
 
         still_imported = [v['name'] for v in volumes if v['name'] in imported_names]
         if still_imported:
-            self.force_reboot(
+            stcnith_reboot(
                 f'pool(s) {still_imported} still imported after export; refusing to release fencing'
             )
 
@@ -1029,7 +1010,7 @@ class FailoverEventsService(Service):
         if export_thread.is_alive():
             # export is wedged (e.g. a suspended pool whose I/O never completes);
             # force-reboot rather than risk releasing the disks while still attached
-            self.force_reboot(f'zpool export did not complete within {self.ZPOOL_EXPORT_TIMEOUT}s')
+            stcnith_reboot(f'zpool export did not complete within {self.ZPOOL_EXPORT_TIMEOUT}s')
 
         # A skipped/failed export leaves the pool imported. Confirm every pool is
         # actually gone before releasing fencing, else force-reboot.

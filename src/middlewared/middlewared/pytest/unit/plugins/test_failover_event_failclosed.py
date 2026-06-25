@@ -1,4 +1,4 @@
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 from middlewared.plugins.failover_.event import FailoverEventsService
 from middlewared.pytest.unit.middleware import Middleware
@@ -17,26 +17,24 @@ IMPORTED_WITH_TANK = {
 }
 ONLY_BOOT_POOL = {"999": {"name": "boot-pool", "state": "ONLINE"}}
 
-# query_imported_fast_impl is imported into the event module's namespace, so that
-# is where we patch it.
+# Both are imported into the event module's namespace, so that is where we patch
+# them. Patching stcnith_reboot also keeps the test runner from actually rebooting.
 QIF = "middlewared.plugins.failover_.event.query_imported_fast_impl"
+SR = "middlewared.plugins.failover_.event.stcnith_reboot"
 
 
 def make_service():
-    svc = FailoverEventsService(Middleware())
-    # never actually sysrq-reboot the test runner
-    svc.force_reboot = Mock()
-    return svc
+    return FailoverEventsService(Middleware())
 
 
 def test_demotion_reboots_when_pool_still_imported():
     # pool.query said OFFLINE (see volumes), but the authoritative kstat shows tank
     # is STILL imported -> must force-reboot instead of releasing fencing.
     svc = make_service()
-    with patch(QIF, return_value=IMPORTED_WITH_TANK):
+    with patch(QIF, return_value=IMPORTED_WITH_TANK), patch(SR) as reboot:
         svc.fence_if_pools_still_imported(TANK_VOLUMES)
 
-    svc.force_reboot.assert_called_once()
+    reboot.assert_called_once()
 
 
 def test_demotion_reboots_when_present_but_state_offline():
@@ -46,28 +44,28 @@ def test_demotion_reboots_when_present_but_state_offline():
     # spurious-OFFLINE failure mode that fooled the old status-gated export).
     imported = {"123": {"name": "tank", "state": "OFFLINE"}}
     svc = make_service()
-    with patch(QIF, return_value=imported):
+    with patch(QIF, return_value=imported), patch(SR) as reboot:
         svc.fence_if_pools_still_imported(TANK_VOLUMES)
 
-    svc.force_reboot.assert_called_once()
+    reboot.assert_called_once()
 
 
 def test_demotion_releases_when_pool_exported():
     # kstat shows only the boot pool -> tank really is exported -> safe, no reboot
     svc = make_service()
-    with patch(QIF, return_value=ONLY_BOOT_POOL):
+    with patch(QIF, return_value=ONLY_BOOT_POOL), patch(SR) as reboot:
         svc.fence_if_pools_still_imported(TANK_VOLUMES)
 
-    svc.force_reboot.assert_not_called()
+    reboot.assert_not_called()
 
 
 def test_demotion_reboots_when_state_indeterminate():
     # cannot determine import state -> fail closed (force-reboot), never release
     svc = make_service()
-    with patch(QIF, side_effect=RuntimeError("boom")):
+    with patch(QIF, side_effect=RuntimeError("boom")), patch(SR) as reboot:
         svc.fence_if_pools_still_imported(TANK_VOLUMES)
 
-    svc.force_reboot.assert_called_once()
+    reboot.assert_called_once()
 
 
 def test_demotion_ignores_boot_pools():
@@ -79,7 +77,7 @@ def test_demotion_ignores_boot_pools():
         "222": {"name": "freenas-boot", "state": "ONLINE"},
     }
     svc = make_service()
-    with patch(QIF, return_value=imported):
+    with patch(QIF, return_value=imported), patch(SR) as reboot:
         svc.fence_if_pools_still_imported(TANK_VOLUMES)
 
-    svc.force_reboot.assert_not_called()
+    reboot.assert_not_called()
