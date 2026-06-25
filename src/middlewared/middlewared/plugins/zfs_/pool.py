@@ -27,7 +27,16 @@ class ZFSPoolService(CRUDService):
             if filters and len(filters) == 1 and list(filters[0][:2]) in (['id', '='], ['name', '=']):
                 try:
                     pools = [zfs.get(filters[0][2]).asdict(**state_kwargs)]
-                except libzfs.ZFSException:
+                except libzfs.ZFSException as e:
+                    # NOTE: historically *any* libzfs error here was silently swallowed to
+                    # an empty result, which (depending on the caller) can have painful
+                    # side-effects -- e.g. a transient/live zpool error gets interpreted as
+                    # "no such pool". A genuinely missing pool (NOENT) is expected and
+                    # benign (the pool is simply exported/not imported), so we ignore that
+                    # one, but we log every other error so we retain breadcrumbs for the
+                    # rare edge-cases. See NAS-141530.
+                    if e.code != libzfs.Error.NOENT.value:
+                        self.logger.error('Failed to query zpool %r', filters[0][2], exc_info=True)
                     pools = []
             else:
                 pools = [i.asdict(**state_kwargs) for i in zfs.pools]
