@@ -1,5 +1,7 @@
 from subprocess import run
 
+from truenas_pylicensed import LicenseType
+
 from middlewared.api import api_method
 from middlewared.api.current import (
     SystemSecurityInfoFipsAvailableArgs,
@@ -22,9 +24,11 @@ class SystemSecurityInfoService(Service):
     )
     def fips_available(self):
         """Returns a boolean identifying whether FIPS mode may be toggled on this system."""
-        # toggling fips mode is an enterprise capability; commercial/community licenses are
-        # community-equivalent and must not unlock it
-        return self.middleware.call_sync('system.is_enterprise')
+        # FIPS/STIG is an iX-licensed-hardware capability: enterprise and legacy (freenas-certified)
+        # licenses are ENTERPRISE_* typed; commercial/community software licenses are not and must
+        # not unlock it
+        info = self.call_sync2(self.s.truenas.license.info_private)
+        return info is not None and info.type in (LicenseType.ENTERPRISE_SINGLE, LicenseType.ENTERPRISE_HA)
 
     @api_method(
         SystemSecurityInfoFipsEnabledArgs, SystemSecurityInfoFipsEnabledResult,

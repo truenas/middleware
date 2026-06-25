@@ -206,7 +206,9 @@ def get_license_info(lic: LicenseStatus | None = None) -> LicenseInfo | None:
 
     # Commercial/community licenses are fingerprint-bound software licenses that are not
     # honored as enterprise feature entitlements yet; report no features so feature_enabled
-    # consumers treat these systems like a community edition install.
+    # consumers treat these systems like a community edition install. contract_type/expires_at
+    # computed above are deliberately kept — support-contract detection
+    # (system.has_support_contract) relies on contract_type surviving this emptied feature list.
     if lic.type in (LicenseType.COMMERCIAL, LicenseType.COMMUNITY):
         features: list[FeatureInfo] = []
     else:

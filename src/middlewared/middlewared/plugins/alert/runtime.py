@@ -174,8 +174,9 @@ async def _handle_immediate_policy(
     await _emit_alert_events(context, as_, gone_alerts, new_alerts)
     await _send_alert_mail(context, new_alerts)
 
-    if await context.middleware.call("system.is_enterprise"):
-        await _maybe_open_proactive_support_ticket(context, as_, gone_alerts, new_alerts)
+    # _maybe_open_proactive_support_ticket is the single gate: it returns early when there are no
+    # proactive-support alerts and otherwise checks support.is_available_and_enabled itself
+    await _maybe_open_proactive_support_ticket(context, as_, gone_alerts, new_alerts)
 
 
 async def _emit_alert_events(

@@ -77,7 +77,11 @@ async def new_ticket(
 
     job.set_progress(1, "Gathering data")
 
-    sw_name = "freenas" if not await context.middleware.call("system.is_enterprise") else "truenas"
+    paid = (
+        await context.middleware.call("system.is_enterprise")
+        or await context.middleware.call("system.has_support_contract")
+    )
+    sw_name = "truenas" if paid else "freenas"
 
     payload = data.model_dump(context={"expose_secrets": True})
 
@@ -208,7 +212,11 @@ async def new_ticket(
 def attach_ticket(context: ServiceContext, job: Job, data: SupportAttachTicket) -> None:
     context.middleware.call_sync("network.general.will_perform_activity", "support")
 
-    sw_name = "freenas" if not context.middleware.call_sync("system.is_enterprise") else "truenas"
+    paid = (
+        context.middleware.call_sync("system.is_enterprise")
+        or context.middleware.call_sync("system.has_support_contract")
+    )
+    sw_name = "truenas" if paid else "freenas"
 
     payload = data.model_dump(context={"expose_secrets": True})
     payload["ticketnum"] = payload.pop("ticket")

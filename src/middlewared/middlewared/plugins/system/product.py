@@ -81,6 +81,19 @@ class SystemService(Service):
         )
 
     @private
+    async def has_support_contract(self):
+        info = await self.call2(self.s.truenas.license.info_private)
+        if info is None:
+            return False
+
+        if info.type in (LicenseType.COMMERCIAL, LicenseType.COMMUNITY):
+            # the feature list is not honored for these types, but contract_type is preserved
+            # from the raw SUPPORT feature
+            return info.contract_type is not None
+
+        return await self.middleware.call("system.feature_enabled", "SUPPORT")
+
+    @private
     def sed_enabled(self):
         if not self.middleware.call_sync('system.is_enterprise'):
             return False

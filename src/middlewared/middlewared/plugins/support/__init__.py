@@ -67,10 +67,7 @@ class SupportService(GenericConfigService[SupportEntry]):
         if await self.call2(self.s.system.vendor.name):
             return False
 
-        if not await self.middleware.call("system.is_enterprise"):
-            return False
-
-        return bool(await self.middleware.call("system.feature_enabled", "SUPPORT"))
+        return bool(await self.middleware.call("system.has_support_contract"))
 
     @api_method(
         SupportIsAvailableAndEnabledArgs,
