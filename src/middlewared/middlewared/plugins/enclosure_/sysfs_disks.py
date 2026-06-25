@@ -3,15 +3,12 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
-import re
 from dataclasses import dataclass
 from os import scandir
 from pathlib import Path
 
+from .constants import NVME_NAMESPACE_RE
 from .enums import ControllerModels
-
-
-_NVME_NAMESPACE_RE = re.compile(r'nvme\d+n\d+')
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
@@ -71,7 +68,7 @@ def map_disks_to_enclosure_slots(enc) -> dict[int, BaseDev]:
                         name = next(
                             (
                                 d.name for d in (path / "device").iterdir()
-                                if d.is_dir() and _NVME_NAMESPACE_RE.fullmatch(d.name)
+                                if d.is_dir() and NVME_NAMESPACE_RE.fullmatch(d.name)
                             ),
                             None,
                         )

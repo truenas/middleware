@@ -10,6 +10,7 @@ from middlewared.utils.scsi_generic import inquiry
 
 from ixhardware import parse_dmi
 from .constants import (
+    ARRAY_DEVICE_SLOT_ELEMENT_TYPE,
     MINI_MODEL_BASE,
     MINIR_MODEL_BASE,
     SYSFS_SLOT_KEY,
@@ -265,7 +266,7 @@ class Enclosure:
             (
                 not self.is_hseries
                 # Array Device Slot elements' descriptors on V-series are "<empty>"
-                and not (self.is_vseries and element['type'] == 23)
+                and not (self.is_vseries and element['type'] == ARRAY_DEVICE_SLOT_ELEMENT_TYPE)
                 and desc in (
                     ElementDescriptorsToIgnore.EMPTY.value,
                     ElementDescriptorsToIgnore.AD.value,

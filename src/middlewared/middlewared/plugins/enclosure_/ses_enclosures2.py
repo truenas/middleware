@@ -1,20 +1,18 @@
-import re
 from contextlib import suppress
 from logging import getLogger
 from pathlib import Path
 from typing import Iterable
 
 from libsg3.ses import EnclosureDevice
+from .constants import (
+    ARRAY_DEVICE_SLOT_ELEMENT_TYPE,
+    SLOT_DESCRIPTOR_RE,
+    VSERIES_FRONT_PRODUCTS,
+    VSERIES_REAR_PRODUCTS,
+)
 from .enclosure_class import ElementsDict, Enclosure, EnclosureStatusDict
 
 logger = getLogger(__name__)
-
-# V-series Array Device Slot element type, per SES standard.
-_ARRAY_DEVICE_SLOT_TYPE = 23
-# Matches element descriptors like 'slot01'..'slot24' that V-series VirtualSES
-# enclosures use to label the slots each partition owns. Slots that a partition
-# does NOT own are reported with descriptor '<empty>'.
-_VSERIES_SLOT_LABEL_RE = re.compile(r'^slot(\d+)$')
 
 
 def get_ses_enclosure_status(bsg_path: str) -> EnclosureStatusDict | None:
@@ -32,9 +30,6 @@ def _extend_rv(rv: list, iterable: Iterable[Enclosure], asdict: bool = True) -> 
         rv.extend(iterable)
 
 
-_VSERIES_REAR_PRODUCTS = ('4IXGA-NTBp', '4IXGA-NTBs', '4IXGA-NTGp', '4IXGA-NTGs')
-
-
 def _vseries_slot_designation_from_descriptors(elements: ElementsDict) -> str | None:
     """Derive a V-series slot_designation by inspecting Array Device Slot
     element descriptors. V-series VirtualSES enclosures label the slots each
@@ -48,9 +43,9 @@ def _vseries_slot_designation_from_descriptors(elements: ElementsDict) -> str | 
     has_low = False
     has_high = False
     for element in elements.values():
-        if element.get('type') != _ARRAY_DEVICE_SLOT_TYPE:
+        if element.get('type') != ARRAY_DEVICE_SLOT_ELEMENT_TYPE:
             continue
-        match = _VSERIES_SLOT_LABEL_RE.match(element.get('descriptor', '').strip())
+        match = SLOT_DESCRIPTOR_RE.match(element.get('descriptor', '').strip())
         if not match:
             continue
         slot_num = int(match.group(1))
@@ -114,9 +109,9 @@ def _vseries_rear_partition_owns_bays(elements: ElementsDict) -> bool:
     'slot01'..'slot04'); the no-drives partition reports all slots '<empty>'.
     """
     for element in elements.values():
-        if element.get('type') != _ARRAY_DEVICE_SLOT_TYPE:
+        if element.get('type') != ARRAY_DEVICE_SLOT_ELEMENT_TYPE:
             continue
-        match = _VSERIES_SLOT_LABEL_RE.match(element.get('descriptor', '').strip())
+        match = SLOT_DESCRIPTOR_RE.match(element.get('descriptor', '').strip())
         if match and 1 <= int(match.group(1)) <= 4:
             return True
     return False
@@ -159,11 +154,11 @@ def get_ses_enclosures(asdict=True):
 
                 if enc.is_vseries and (
                     status['name'] == 'BROADCOMVirtualSES0001'
-                    or enc.product in ('4IXGA-SWp', '4IXGA-SWs')
+                    or enc.product in VSERIES_FRONT_PRODUCTS
                 ):
                     # V-series front-bay: defer for NVME0/NVME8 disambiguation.
                     deferred_front.append((enc, status['elements']))
-                elif enc.is_vseries and enc.product in _VSERIES_REAR_PRODUCTS:
+                elif enc.is_vseries and enc.product in VSERIES_REAR_PRODUCTS:
                     # V-series rear-bay: defer to pick bay-serving partition.
                     deferred_rear.append((enc, status['elements']))
                 else:
