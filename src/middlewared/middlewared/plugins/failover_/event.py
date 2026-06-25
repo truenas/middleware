@@ -12,13 +12,14 @@ import logging
 import errno
 from collections import defaultdict
 
-from middlewared.utils import filter_list
+from middlewared.utils import BOOT_POOL_NAME_VALID, filter_list
 from middlewared.service import Service, job
 from middlewared.service_exception import CallError
 from middlewared.plugins.docker.state_utils import Status as DockerStatus
 # from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE
 from middlewared.plugins.failover_.event_exceptions import AllZpoolsFailedToImport, IgnoreFailoverEvent, FencedError
 from middlewared.plugins.failover_.scheduled_reboot_alert import WATCHDOG_ALERT_FILE
+from middlewared.plugins.failover_.stcnith import stcnith_reboot
 from middlewared.plugins.service_.services.all import all_services
 from middlewared.plugins.virt.utils import VirtGlobalStatus as VirtStatus
 from middlewared.plugins.pwenc import PWENC_FILE_SECRET
@@ -226,23 +227,81 @@ class FailoverEventsService(Service):
             if refresh and job is not None:
                 self.middleware.create_task(self.refresh_failover_status(job.id, event))
 
-    def _export_zpools(self, volumes):
+    def force_reboot(self, reason):
+        """
+        Fail-closed guard reboot. Used when we cannot safely continue a failover
+        transition -- e.g. a pool is still imported and we must not release SCSI
+        fencing, or the pool import state is indeterminate.
 
-        # export the zpool(s)
+        We write the watchdog sentinel first so the post-reboot alert is correct
+        (ticket 39114), then hand off to the shared STCNITH reboot. Unlike
+        `failover.become_passive` this performs no failover-enabled check: a
+        still-attached pool must reboot us regardless.
+        """
+        with contextlib.suppress(Exception):
+            with open(WATCHDOG_ALERT_FILE, 'w') as f:
+                f.write(f'{time.time()}')
+                f.flush()  # be sure it goes straight to disk
+                os.fsync(f.fileno())  # be EXTRA sure it goes straight to disk
+
+        stcnith_reboot(reason)
+
+    def fence_if_pools_still_imported(self, volumes):
+        """
+        Fail-closed demotion guard. Before releasing SCSI fencing on a demoting
+        controller, authoritatively confirm every data pool has actually been
+        exported.
+
+        "Imported" is keyed on the pool's *presence* in the kstat namespace:
+        zfs.pool.query_imported_fast enumerates /proc/spl/kstat/zfs, whose per-pool
+        directory OpenZFS creates in spa_add() and removes in spa_remove() -- so it
+        exists for exactly as long as the pool is in the SPA namespace (import until
+        export, and spa_remove runs after the vdevs/disks are closed). The reads are
+        lockless (per OpenZFS spa_stats.c: "a lock-less read ... unlike 'zpool',
+        which can potentially block for seconds"), so this cannot hang on a wedged
+        or suspended pool.
+
+        We deliberately ignore the reported pool *state* -- spa_state_to_name() can
+        return OFFLINE or SUSPENDED while the pool is still imported, which is the
+        spurious-OFFLINE that made the old status-gated export skip a still-attached
+        pool. Any pool still present, or an indeterminate read, means we force-reboot
+        rather than release the disks.
+
+        The boot pool is excluded: each controller has its own boot pool that is
+        always imported, so it must never count as still-attached shared storage
+        (otherwise we would self-fence on every demotion).
+        """
         try:
-            for vol in volumes:
-                if vol['status'] != 'OFFLINE':
-                    self.middleware.call_sync('zfs.pool.export', vol['name'], {'force': True})
-                    logger.info('Exported "%s"', vol['name'])
+            imported_names = {
+                p['name'] for p in self.run_call('zfs.pool.query_imported_fast').values()
+                if p['name'] not in BOOT_POOL_NAME_VALID
+            }
         except Exception as e:
-            # catch any exception that could be raised
-            # We sleep for 5 seconds here because this is
-            # in its own thread. The calling thread waits
-            # for self.ZPOOL_EXPORT_TIMEOUT and if this
-            # thread is_alive(), then we violently reboot
-            # the node
-            logger.error('Error exporting "%s" with error %s', vol['name'], e)
-            time.sleep(self.ZPOOL_EXPORT_TIMEOUT + 1)
+            self.force_reboot(f'could not determine pool import state before releasing fencing: {e}')
+            return
+
+        still_imported = [v['name'] for v in volumes if v['name'] in imported_names]
+        if still_imported:
+            self.force_reboot(
+                f'pool(s) {still_imported} still imported after export; refusing to release fencing'
+            )
+
+    def _export_zpools(self, volumes):
+        # Best-effort export of each pool. NOTE: "finished" is not "succeeded" --
+        # a failed export leaves the pool imported. The caller (vrrp_backup)
+        # authoritatively re-checks every pool with zfs.pool.query_imported_fast
+        # before releasing fencing and force-reboots if any pool is still attached.
+        # A hung export keeps this thread alive past the join() timeout, which the
+        # caller also turns into a force-reboot. So to stay fail-closed and as safe
+        # as possible, we simply attempt every export here and let that caller's
+        # re-check be the single authoritative gate -- no need to gate on pool
+        # status or to sleep-to-force-reboot from in here.
+        for vol in volumes:
+            try:
+                self.middleware.call_sync('zfs.pool.export', vol['name'], {'force': True})
+                logger.info('Exported %r', vol['name'])
+            except Exception:
+                logger.error('Error exporting %r', vol['name'], exc_info=True)
 
     def generate_failover_data(self):
 
@@ -910,12 +969,9 @@ class FailoverEventsService(Service):
         # setup the zpool cachefile
         # self.run_call('failover.zpool.cachefile.setup', 'BACKUP')
 
-        # export zpools in a thread and set a timeout to
-        # to `self.ZPOOL_EXPORT_TIMEOUT`.
-        # if we can't export the zpool(s) in this timeframe,
-        # we send the 'b' character to the /proc/sysrq-trigger
-        # to trigger an immediate reboot of the system
-        # https://www.kernel.org/doc/html/latest/admin-guide/sysrq.html
+        # export zpools in a thread with a timeout of `self.ZPOOL_EXPORT_TIMEOUT`.
+        # if the export can't finish in that timeframe (or leaves a pool still
+        # imported), we force-reboot this controller rather than release the disks.
         export_thread = threading.Thread(
             target=self._export_zpools,
             name='failover_export_zpools',
@@ -924,15 +980,15 @@ class FailoverEventsService(Service):
         export_thread.start()
         export_thread.join(timeout=self.ZPOOL_EXPORT_TIMEOUT)
         if export_thread.is_alive():
-            # have to enable the "magic" sysrq triggers
-            with open('/proc/sys/kernel/sysrq', 'w') as f:
-                f.write('1')
+            # export is wedged (e.g. a suspended pool whose I/O never completes);
+            # force-reboot rather than risk releasing the disks while still attached
+            self.force_reboot(f'zpool export did not complete within {self.ZPOOL_EXPORT_TIMEOUT}s')
 
-            # now violently reboot
-            with open('/proc/sysrq-trigger', 'w') as f:
-                f.write('b')
+        # A skipped/failed export leaves the pool imported. Confirm every pool is
+        # actually gone before releasing fencing, else force-reboot.
+        self.fence_if_pools_still_imported(fobj['volumes'])
 
-        # Pools are now exported and so we can make disks available to other controller
+        # Every pool is confirmed exported; safe to make disks available to peer.
         logger.warning('Stopping fenced')
         self.run_call('failover.fenced.stop')
 
