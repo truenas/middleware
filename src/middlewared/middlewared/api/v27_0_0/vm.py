@@ -580,7 +580,7 @@ class VMRandomMacResult(BaseModel):
 class VMGuestNetworkInterfaceIPAddress(BaseModel):
     ip_address: IPvAnyAddress = Field(description="IP address assigned to the interface.")
     prefix: int = Field(description="Prefix length (subnet mask bits).")
-    ip_address_type: Literal["ipv4", "ipv6"] = Field(description="Address family: 'ipv4' or 'ipv6'.")
+    ip_address_type: Literal["IPV4", "IPV6"] = Field(description="Address family: 'IPV4' or 'IPV6'.")
 
 
 class VMGuestNetworkInterface(BaseModel):

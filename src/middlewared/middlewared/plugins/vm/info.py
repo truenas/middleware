@@ -178,11 +178,12 @@ def get_guest_network_interfaces(context: ServiceContext, id_: int) -> list[VMGu
             'hardware_address': iface.get('hardware-address', ''),
             'ip_addresses': [
                 {
-                    'ip_address': addr.get('ip-address', ''),
+                    'ip_address': addr['ip-address'],
                     'prefix': addr.get('prefix', 0),
-                    'ip_address_type': addr.get('ip-address-type', 'ipv4'),
+                    'ip_address_type': addr.get('ip-address-type', 'ipv4').upper(),
                 }
                 for addr in iface.get('ip-addresses', [])
+                if addr.get('ip-address')
             ],
         })
         for iface in data.get('return', [])
