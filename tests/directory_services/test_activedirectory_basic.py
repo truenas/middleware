@@ -15,7 +15,6 @@ from middlewared.test.integration.utils.system import reset_systemd_svcs, get_gs
 
 from auto_config import ha
 from protocols import smb_connection, smb_share
-from truenas_api_client import ClientException
 
 SMB_NAME = "TestADShare"
 
@@ -352,7 +351,7 @@ def test_secrets_restore():
 
         ssh('rm /var/lib/truenas-samba/private/secrets.tdb')
 
-        with pytest.raises(ClientException):
+        with pytest.raises(Exception, match="Active Directory secrets file lacks an entry"):
             call('directoryservices.health.check')
 
         call('directoryservices.health.recover')
