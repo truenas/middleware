@@ -1,6 +1,7 @@
 from logging import getLogger
 import os
 import subprocess
+from typing import Any
 
 from cryptography.fernet import Fernet
 
@@ -23,7 +24,7 @@ class SNMPSystem():
     }
 
 
-def _get_authuser_secret():
+def _get_authuser_secret() -> str:
     """
     Get the auth user saved secret.
     Internal helper function for use by this module.
@@ -41,7 +42,7 @@ def _get_authuser_secret():
     return secret
 
 
-def _set_authuser_secret(secret):
+def _set_authuser_secret(secret: str) -> None:
     """
     Save the auth user secret.
     Internal helper function for use by this module.
@@ -52,7 +53,7 @@ def _set_authuser_secret(secret):
     return
 
 
-def _add_system_user():
+def _add_system_user() -> None:
     """
     Add the v3 system user.
     For internal use by this module.
@@ -73,7 +74,7 @@ def _add_system_user():
     _set_authuser_secret(auth_pwd)
 
 
-def add_snmp_user(snmp):
+def add_snmp_user(snmp: dict[str, Any]) -> None:
     """
     Build the createUser message and add it to the private config file.
     NOTE: The SNMP daemon should be stopped before calling this routine and
@@ -100,7 +101,7 @@ def add_snmp_user(snmp):
         f.write(create_v3_user)
 
 
-def delete_snmp_user(user):
+def delete_snmp_user(user: str) -> None:
     """
     Delete the SNMPv3 user
     RETURN: stdout message
@@ -119,8 +120,8 @@ def delete_snmp_user(user):
         raise CallError
 
 
-def get_users_cmd():
-    cmd = []
+def get_users_cmd() -> list[str]:
+    cmd: list[str] = []
     if pwd := _get_authuser_secret():
         # snmpwalk -v3 -u ixAuthUser -l authNoPriv -a MD5 -A "abcd1234" localhost iso.3.6.1.6.3.15.1.2.2.1.3
         cmd = ['snmpwalk', '-v3', '-u', f'{SNMPSystem.SYSTEM_USER["name"]}',

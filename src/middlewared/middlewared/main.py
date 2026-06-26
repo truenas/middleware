@@ -132,6 +132,7 @@ from middlewared.plugins.reporting import ReportingService
 from middlewared.plugins.rsync import RsyncTaskService
 from middlewared.plugins.security import SystemSecurityService
 from middlewared.plugins.snapshot import PeriodicSnapshotTaskService
+from middlewared.plugins.snmp import SNMPService
 from middlewared.plugins.ssh import SSHService
 from middlewared.plugins.support import SupportService
 from middlewared.plugins.system_vendor import VendorService
@@ -281,6 +282,7 @@ class ServiceContainer(BaseServiceContainer):
         self.route = RouteService(middleware)
         self.rsynctask = RsyncTaskService(middleware)
         self.sharing = SharingServicesContainer(middleware)
+        self.snmp = SNMPService(middleware)
         self.ssh = SSHService(middleware)
         self.staticroute = StaticRouteService(middleware)
         self.support = SupportService(middleware)
