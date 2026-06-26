@@ -5,9 +5,9 @@
 # the session is inserted into the keyring, when pam_close_session()
 # is called by the application, the information is removed.
 
-from collections.abc import Iterator
+from collections.abc import Generator
 from datetime import datetime
-from typing import Any, TypeVar, cast
+from typing import Any
 
 from truenas_pam_session import iterate_sessions
 
@@ -18,8 +18,6 @@ from middlewared.utils.filter_list import filter_list
 
 # Currently session info is private and consumed for STIG purposes but we can
 # expose in future by moving APIs here to formal external definitions
-
-T = TypeVar('T', bound=BaseModel)
 
 
 class SecuritySessionEntry(BaseModel):
@@ -47,32 +45,21 @@ class SecuritySessionEntry(BaseModel):
     """ Session open timestamp """
 
 
-def truenas_session_iterator() -> Iterator[dict[str, Any]]:
+def truenas_session_iterator() -> Generator[SecuritySessionEntry]:
     for session in iterate_sessions():
-        yield {
-            'session_uuid': str(session.session_id),
-            'creation': session.creation,
-            'pid': session.pid,
-            'sid': session.sid,
-            'username': session.username,
-            'uid': session.uid,
-            'gid': session.gid,
-            'service': session.service,
-            'ruser': session.ruser,
-            'rhost': session.rhost,
-            'tty': session.tty,
-        }
-
-
-def to_entries(result: list[dict[str, Any]] | dict[str, Any] | int, model: type[T]) -> list[T] | T | int:
-    # filterable result models expect the `__query_result_item__` variant of the item model,
-    # not the plain item; constructing the plain model fails serialization validation.
-    constructor = cast(type[T], getattr(model, '__query_result_item__', model))
-    if isinstance(result, int):
-        return result
-    if isinstance(result, dict):
-        return constructor(**result)
-    return [constructor(**row) for row in result]
+        yield SecuritySessionEntry(
+            session_uuid=str(session.session_id),
+            creation=session.creation,
+            pid=session.pid,
+            sid=session.sid,
+            username=session.username,
+            uid=session.uid,
+            gid=session.gid,
+            service=session.service,
+            ruser=session.ruser,
+            rhost=session.rhost,
+            tty=session.tty,
+        )
 
 
 class SystemSecuritySessionsService(Service):
@@ -88,4 +75,4 @@ class SystemSecuritySessionsService(Service):
         """ Query current open PAM sessions. This includes all services
         that use the PAM stack, so you'll see webshare sessions, FTP
         sessions, openssh sessions, etc. """
-        return to_entries(filter_list(truenas_session_iterator(), filters, options.model_dump()), SecuritySessionEntry)
+        return filter_list(truenas_session_iterator(), filters, options, SecuritySessionEntry)

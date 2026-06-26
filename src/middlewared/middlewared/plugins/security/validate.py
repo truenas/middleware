@@ -25,8 +25,8 @@ async def validate_security(
 
             raise ValidationError(
                 f"system_security_update.{key}",
-                "This feature can only be enabled on licensed iX enterprise systems. "
-                "Please contact iX sales for more information.",
+                "This feature can only be enabled on licensed TrueNAS Enterprise systems. "
+                "Please contact TrueNAS sales for more information.",
             )
 
     if is_ha and ha_disabled_reasons:
