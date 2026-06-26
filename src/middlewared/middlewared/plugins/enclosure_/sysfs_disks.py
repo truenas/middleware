@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from os import scandir
 from pathlib import Path
 
+from .constants import NVME_NAMESPACE_RE
 from .enums import ControllerModels
 
 
@@ -58,8 +59,22 @@ def map_disks_to_enclosure_slots(enc) -> dict[int, BaseDev]:
                 try:
                     name = next((path / "device/block").iterdir(), None).name
                 except (AttributeError, FileNotFoundError):
-                    # no disk in this slot
-                    name = None
+                    # No SCSI/SATA block device under this slot. Try the
+                    # NVMe layout: V-series PEX89088-fronted bays expose
+                    # the NVMe controller as the slot's `device/` and the
+                    # namespace as a sibling directory (e.g.
+                    # `device/nvme7n1`). Pick the first namespace dir.
+                    try:
+                        name = next(
+                            (
+                                d.name for d in (path / "device").iterdir()
+                                if d.is_dir() and NVME_NAMESPACE_RE.fullmatch(d.name)
+                            ),
+                            None,
+                        )
+                    except (AttributeError, FileNotFoundError):
+                        # no disk in this slot
+                        name = None
                 try:
                     locate = (
                         "ON" if (path / "locate").read_text().strip() == "1" else "OFF"
