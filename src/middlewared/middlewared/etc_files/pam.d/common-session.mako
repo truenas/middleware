@@ -26,7 +26,7 @@
         case _:
             raise TypeError(f'{dstype}: unknown DSType')
 
-    if render_ctx['system.security.config']['enable_gpos_stig']:
+    if render_ctx['system.security.config'].enable_gpos_stig:
         tty_audit_line = TTY_AUDIT_LINE
         truenas_session_line = TRUENAS_SESSION_LIMIT
     else:

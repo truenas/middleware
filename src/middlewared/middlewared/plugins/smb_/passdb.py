@@ -55,7 +55,7 @@ class SMBService(Service):
 
     @private
     def apply_account_policy(self):
-        security = self.middleware.call_sync('system.security.config')
+        security = self.call_sync2(self.s.system.security.config)
         sync_account_policy(security)
 
     @private

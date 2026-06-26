@@ -5,11 +5,14 @@
 # the session is inserted into the keyring, when pam_close_session()
 # is called by the application, the information is removed.
 
+from collections.abc import Generator
 from datetime import datetime
+from typing import Any
 
 from truenas_pam_session import iterate_sessions
 
 from middlewared.api.base import BaseModel, NonEmptyString
+from middlewared.api.current import QueryOptions
 from middlewared.service import Service, filterable_api_method
 from middlewared.utils.filter_list import filter_list
 
@@ -42,32 +45,34 @@ class SecuritySessionEntry(BaseModel):
     """ Session open timestamp """
 
 
-def truenas_session_iterator():
+def truenas_session_iterator() -> Generator[SecuritySessionEntry]:
     for session in iterate_sessions():
-        yield {
-            'session_uuid': str(session.session_id),
-            'creation': session.creation,
-            'pid': session.pid,
-            'sid': session.sid,
-            'username': session.username,
-            'uid': session.uid,
-            'gid': session.gid,
-            'service': session.service,
-            'ruser': session.ruser,
-            'rhost': session.rhost,
-            'tty': session.tty,
-        }
+        yield SecuritySessionEntry(
+            session_uuid=str(session.session_id),
+            creation=session.creation,
+            pid=session.pid,
+            sid=session.sid,
+            username=session.username,
+            uid=session.uid,
+            gid=session.gid,
+            service=session.service,
+            ruser=session.ruser,
+            rhost=session.rhost,
+            tty=session.tty,
+        )
 
 
-class SystemSecurityInfoService(Service):
+class SystemSecuritySessionsService(Service):
 
     class Config:
         namespace = 'system.security.sessions'
-        cli_namespace = 'system.security.sessions'
+        private = True
 
-    @filterable_api_method(item=SecuritySessionEntry, private=True)
-    def query(self, filters, options):
+    @filterable_api_method(item=SecuritySessionEntry, private=True, check_annotations=True)
+    def query(
+        self, filters: list[Any], options: QueryOptions
+    ) -> list[SecuritySessionEntry] | SecuritySessionEntry | int:
         """ Query current open PAM sessions. This includes all services
         that use the PAM stack, so you'll see webshare sessions, FTP
         sessions, openssh sessions, etc. """
-        return filter_list(truenas_session_iterator(), filters, options)
+        return filter_list(truenas_session_iterator(), filters, options, SecuritySessionEntry)

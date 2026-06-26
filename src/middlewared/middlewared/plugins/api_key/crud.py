@@ -171,7 +171,7 @@ class ApiKeyServicePart(CRUDServicePart[ApiKeyEntry]):
         return out
 
     async def do_create(self, app: App | None, data: ApiKeyCreate) -> ApiKeyEntryWithKey:
-        if (await self.middleware.call("system.security.config"))["enable_gpos_stig"]:
+        if (await self.call2(self.s.system.security.config)).enable_gpos_stig:
             raise CallError(
                 "Changes to API keys are not permitted in GPOS STIG mode",
                 errno.EACCES,
@@ -235,7 +235,7 @@ class ApiKeyServicePart(CRUDServicePart[ApiKeyEntry]):
         id_: int,
         data: ApiKeyUpdate,
     ) -> ApiKeyEntryWithKey | ApiKeyEntry:
-        if (await self.middleware.call("system.security.config"))["enable_gpos_stig"]:
+        if (await self.call2(self.s.system.security.config)).enable_gpos_stig:
             raise CallError(
                 "Changes to API keys are not permitted in GPOS STIG mode",
                 errno.EACCES,

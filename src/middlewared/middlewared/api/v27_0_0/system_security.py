@@ -2,11 +2,11 @@ from typing import Annotated, Literal
 
 from pydantic import Field, PositiveInt
 
-from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, excluded_field, single_argument_args
+from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, excluded_field
 from middlewared.utils.security import MAX_PASSWORD_HISTORY, PasswordComplexity
 
 __all__ = [
-    'SystemSecurityEntry', 'SystemSecurityUpdateArgs', 'SystemSecurityUpdateResult',
+    'SystemSecurityEntry', 'SystemSecurityUpdate', 'SystemSecurityUpdateArgs', 'SystemSecurityUpdateResult',
     'SystemSecurityInfoFipsAvailableArgs', 'SystemSecurityInfoFipsAvailableResult',
     'SystemSecurityInfoFipsEnabledArgs', 'SystemSecurityInfoFipsEnabledResult',
 ]
@@ -68,9 +68,12 @@ class SystemSecurityEntry(BaseModel):
     )
 
 
-@single_argument_args('system_security_update')
-class SystemSecurityUpdateArgs(SystemSecurityEntry, metaclass=ForUpdateMetaclass):
+class SystemSecurityUpdate(SystemSecurityEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
+
+
+class SystemSecurityUpdateArgs(BaseModel):
+    data: SystemSecurityUpdate = Field(description="Data to update the system security configuration.")
 
 
 class SystemSecurityUpdateResult(BaseModel):

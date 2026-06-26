@@ -5,7 +5,7 @@
 
     ds_auth = render_ctx['datastore.config']['stg_ds_auth']
 
-    if render_ctx['system.security.config']['enable_gpos_stig']:
+    if render_ctx['system.security.config'].enable_gpos_stig:
         truenas_session_line = TRUENAS_SESSION_LIMIT
     else:
         truenas_session_line = TRUENAS_SESSION_NO_LIMIT

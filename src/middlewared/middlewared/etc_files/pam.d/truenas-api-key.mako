@@ -18,7 +18,7 @@ auth		[success=1 default=die]		pam_truenas.so	allow_password_auth channel_bindin
 %else:
 ${'\n'.join(line.as_conf() for line in STANDALONE_ACCOUNT.primary)}
 @include common-account-unix
-%if render_ctx['system.security.config']['enable_gpos_stig']:
+%if render_ctx['system.security.config'].enable_gpos_stig:
 ${FAILLOCK_AUTH_SUCC.as_conf()}
 %endif
 %endif

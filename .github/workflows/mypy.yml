@@ -46,6 +46,7 @@ jobs:
             middlewared/plugins/ports/ \
             middlewared/plugins/reporting/ \
             middlewared/plugins/rsync/ \
+            middlewared/plugins/security/ \
             middlewared/plugins/snapshot/ \
             middlewared/plugins/ssh/ \
             middlewared/plugins/support/ \

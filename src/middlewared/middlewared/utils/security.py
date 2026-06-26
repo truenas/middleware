@@ -1,8 +1,13 @@
+from __future__ import annotations
+
 import enum
 from string import punctuation
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from .time_utils import datetime_to_epoch_days
+
+if TYPE_CHECKING:
+    from middlewared.api.current import SystemSecurityEntry
 
 # WARNING: Changes to MAX_PASSWORD_HISTORY may impact API schemas
 # This value was chosen to be 2x beyond what is technically required
@@ -74,13 +79,13 @@ class STIGType(enum.IntFlag):
     GPOS = enum.auto()  # General Purpose Operating System
 
 
-def system_security_config_to_stig_type(config: dict[str, bool]) -> STIGType:
-    return STIGType.GPOS if config['enable_gpos_stig'] else STIGType.NONE
+def system_security_config_to_stig_type(config: SystemSecurityEntry) -> STIGType:
+    return STIGType.GPOS if config.enable_gpos_stig else STIGType.NONE
 
 
 def shadow_parse_aging(
     user: dict[str, Any],
-    security: dict[str, Any],
+    security: SystemSecurityEntry,
     max_age_overrides: set[str] | None = None
 ) -> str:
     """
@@ -95,7 +100,7 @@ def shadow_parse_aging(
     user: dict, required
         user.query entry for shadow entry
 
-    security: dict, required
+    security: SystemSecurityEntry, required
         system.security.config results
 
     max_age_overrides: set, optional
@@ -138,13 +143,13 @@ def shadow_parse_aging(
 
     outstr += SHADOW_SEPARATOR
 
-    if security['min_password_age']:
-        outstr += str(security['min_password_age'])
+    if security.min_password_age:
+        outstr += str(security.min_password_age)
 
     outstr += SHADOW_SEPARATOR
 
-    if security['max_password_age'] and user['username'] not in max_age_skip_users:
-        outstr += str(security['max_password_age'])
+    if security.max_password_age and user['username'] not in max_age_skip_users:
+        outstr += str(security.max_password_age)
 
     outstr += SHADOW_SEPARATOR
 

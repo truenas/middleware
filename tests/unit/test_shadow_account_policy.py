@@ -2,6 +2,8 @@ import pytest
 
 from contextlib import contextmanager
 from datetime import datetime, timedelta, UTC
+from middlewared.api.current import SystemSecurityEntry
+from middlewared.plugins.security.validate import validate_password_security
 from middlewared.utils.security import (
     check_password_complexity,
     PasswordComplexity,
@@ -533,7 +535,7 @@ STIG_ENABLE = {'enable_fips': True, 'enable_gpos_stig': True}
     (DEFAULT_SEC | STIG_ENABLE | {'min_password_age': 1, 'max_password_age': 50}, True, None),
     (DEFAULT_SEC | {'min_password_length': 15}, False, None),
     (
-        DEFAULT_SEC | STIG_ENABLE | {'min_password_length': 5},
+        DEFAULT_SEC | STIG_ENABLE | {'min_password_length': 10},
         False,
         'requires password length'
     ),
@@ -543,20 +545,19 @@ STIG_ENABLE = {'enable_fips': True, 'enable_gpos_stig': True}
         'Maximum password age must be less than or equal'
     ),
     (
-        DEFAULT_SEC | STIG_ENABLE | {'password_complexity_ruleset': set(['UPPER'])},
+        DEFAULT_SEC | STIG_ENABLE | {'password_complexity_ruleset': {PasswordComplexity.UPPER}},
         False,
         'requires the following password complexity rules'
     ),
 ))
 def test__stig_password_policy(config, update_account_policy, error):
-    with Client() as c:
-        if error:
-            with pytest.raises(Exception, match=error):
-                c.call('system.security.validate_password_security', DEFAULT_SEC, config)
-
-        else:
-            result = c.call('system.security.validate_password_security', DEFAULT_SEC, config)
-            assert result == update_account_policy
+    old = SystemSecurityEntry(id=1, **DEFAULT_SEC)
+    new = SystemSecurityEntry(id=1, **config)
+    if error:
+        with pytest.raises(Exception, match=error):
+            validate_password_security(old, new)
+    else:
+        assert validate_password_security(old, new) == update_account_policy
 
 
 def test_stig_min_password_age(readonly_admin):

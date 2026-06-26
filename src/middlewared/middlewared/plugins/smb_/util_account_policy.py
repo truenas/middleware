@@ -1,6 +1,8 @@
 import enum
 from subprocess import run
 
+from middlewared.api.current import SystemSecurityEntry
+
 from .constants import SMBCmd
 
 
@@ -38,17 +40,18 @@ def set_account_policy(policy: SMBAccountPolicy, value: int) -> None:
         raise RuntimeError(f'Failed to set {policy} to {value}: {rv.stderr.decode()}')
 
 
-def sync_account_policy(security: dict) -> None:
+def sync_account_policy(security: SystemSecurityEntry) -> None:
     for account_policy in SMBAccountPolicy:
         sec_key = account_policy.name.lower()
+        sec_value = getattr(security, sec_key)
 
         match sec_key:
             case 'min_password_age' | 'max_password_age':
-                if security[sec_key] is None:
+                if sec_value is None:
                     value = account_policy.default
                 else:
-                    value = security[sec_key] * 86400  # passdb expects in seconds rather than days
+                    value = sec_value * 86400  # passdb expects in seconds rather than days
             case _:
-                value = security[sec_key] or account_policy.default
+                value = sec_value or account_policy.default
 
         set_account_policy(account_policy, value)

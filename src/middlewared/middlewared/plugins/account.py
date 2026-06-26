@@ -266,8 +266,8 @@ class UserService(CRUDService):
 
             user_api_keys[key.username].append(key.id)
 
-        sec = await self.middleware.call('system.security.config')
-        if sec['enable_gpos_stig']:
+        sec = await self.call2(self.s.system.security.config)
+        if sec.enable_gpos_stig:
             # When GPOS stig is enabled it's possible that users are locked due to pam_faillock(8)
             pam_locked_users = await self.middleware.run_in_thread(tally_locked_users)
         else:
@@ -338,8 +338,8 @@ class UserService(CRUDService):
         # Set bool indicating user needs to change password
         # Depending on security configuration this can be a soft limit
         # that still allows login or a hard limit that blocks auth
-        if user['password_age'] and ctx['security']['max_password_age']:
-            max_age = ctx['security']['max_password_age']
+        if user['password_age'] and ctx['security'].max_password_age:
+            max_age = ctx['security'].max_password_age
             user['password_change_required'] = user['password_age'] >= (max_age - PASSWORD_PROMPT_AGE)
         else:
             user['password_change_required'] = False
@@ -362,7 +362,7 @@ class UserService(CRUDService):
             'roles': list(user_roles),
             'api_keys': ctx['user_api_keys'][user['username']]
         })
-        if ctx['security']['enable_gpos_stig']:
+        if ctx['security'].enable_gpos_stig:
             # NTLM authentication relies on non-FIPS crypto
             user.update({
                 'smb': False,
@@ -1442,10 +1442,10 @@ class UserService(CRUDService):
     async def password_security_validate(self, schema, verrors, password, password_history, password_field='password'):
         # NOTE: min_password_age is *not* validated here because the system administator needs
         # to be able to reset passwords in case the user forgets theirs
-        sec = await self.middleware.call('system.security.config')
+        sec = await self.call2(self.s.system.security.config)
         field = f'{schema}.{password_field}'
-        if sec['password_complexity_ruleset']:
-            unmet_rules = check_password_complexity(sec['password_complexity_ruleset'], password)
+        if sec.password_complexity_ruleset:
+            unmet_rules = check_password_complexity(sec.password_complexity_ruleset, password)
             if unmet_rules:
                 verrors.add(
                     field,
@@ -1453,18 +1453,18 @@ class UserService(CRUDService):
                     f'The following character types are absent: {", ".join(unmet_rules)}'
                 )
 
-        if sec['min_password_length'] and len(password) < sec['min_password_length']:
+        if sec.min_password_length and len(password) < sec.min_password_length:
             verrors.add(
                 field,
                 'The specified password is too short. The minimum password length '
-                f'is {sec["min_password_length"]} characters.'
+                f'is {sec.min_password_length} characters.'
             )
 
-        if password_history and sec['password_history_length']:
+        if password_history and sec.password_history_length:
             # the most recent hashes are at end of list and so we reverse order when evaluating whether there
             # is a repeat in the password history
             for idx, unix_hash in enumerate(reversed(password_history)):
-                if idx >= sec['password_history_length']:
+                if idx >= sec.password_history_length:
                     # History may be longer than currently configured history length
                     break
 
@@ -1472,7 +1472,7 @@ class UserService(CRUDService):
                     verrors.add(
                         field,
                         'The security configuration of the TrueNAS server requires a password '
-                        f'that does not match any of the last {sec["password_history_length"]} '
+                        f'that does not match any of the last {sec.password_history_length} '
                         'passwords for this account.'
                     )
 
@@ -1633,7 +1633,7 @@ class UserService(CRUDService):
                         errno.EEXIST,
                     )
 
-        stig_enabled = (await self.middleware.call('system.security.config'))['enable_gpos_stig']
+        stig_enabled = (await self.call2(self.s.system.security.config)).enable_gpos_stig
 
         if combined['smb']:
             if not await self.middleware.call('smb.is_configured'):
@@ -2004,7 +2004,7 @@ class UserService(CRUDService):
 
         history = entry['password_history'] + [entry['unixhash']]
         await self.password_security_validate('user.set_password', verrors, password, history, 'new_password')
-        min_password_age = (await self.middleware.call('system.security.config'))['min_password_age']
+        min_password_age = (await self.call2(self.s.system.security.config)).min_password_age
 
         verrors.check()
 

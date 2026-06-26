@@ -955,7 +955,7 @@ class ZettareplService(Service):
             "connect-timeout": credentials["attributes"]["connect_timeout"],
         }
 
-        if (await self.middleware.call("system.security.config"))["enable_fips"]:
+        if (await self.call2(self.s.system.security.config)).enable_fips:
             transport["cipher"] = "fips"
 
         return transport
