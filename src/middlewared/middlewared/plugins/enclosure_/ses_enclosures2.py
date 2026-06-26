@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Iterable
 
 from libsg3.ses import EnclosureDevice
+
 from .constants import (
     ARRAY_DEVICE_SLOT_ELEMENT_TYPE,
     SLOT_DESCRIPTOR_RE,

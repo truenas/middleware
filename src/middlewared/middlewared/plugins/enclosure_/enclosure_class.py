@@ -11,12 +11,6 @@ from middlewared.utils.scsi_generic import inquiry
 
 from .constants import (
     ARRAY_DEVICE_SLOT_ELEMENT_TYPE,
-    MINI_MODEL_BASE,
-    MINIR_MODEL_BASE,
-    SYSFS_SLOT_KEY,
-    MAPPED_SLOT_KEY,
-    SUPPORTS_IDENTIFY_KEY,
-    SUPPORTS_IDENTIFY_STATUS_KEY,
     DISK_FRONT_KEY,
     DISK_INTERNAL_KEY,
     DISK_REAR_KEY,
