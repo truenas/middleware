@@ -3,7 +3,7 @@ import os.path
 
 from middlewared.common.attachment import FSAttachmentDelegate
 from middlewared.common.ports import PortDelegate
-from middlewared.plugins.zfs_.utils import zvol_path_to_name
+from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
 from middlewared.service import private, Service
 from middlewared.utils.libvirt.utils import ACTIVE_STATES
 
@@ -125,9 +125,46 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate):
         await self.toggle(attachments, True)
 
     async def start_on_unlock(self, dataset, mountpoint):
-        # VM disks may be zvols (no mountpoint), so we cannot rely on the generic query/start path;
-        # restart_vms_after_unlock matches autostart VMs against the unlocked dataset directly.
-        await self.middleware.call('pool.dataset.restart_vms_after_unlock', dataset)
+        # The generic start path cannot help here: query(enabled=True) only reports already-active
+        # VMs, so an autostart VM that is stopped because its disk's dataset was locked would never
+        # be restarted. Match autostart VMs to the unlocked dataset ourselves and (re)start them.
+        for vm in await self.autostart_vms_on_dataset(dataset, mountpoint):
+            if (await self.middleware.call('vm.status', vm['id']))['state'] == 'RUNNING':
+                stop_job = await self.middleware.call('vm.stop', vm['id'])
+                await stop_job.wait()
+                if stop_job.error:
+                    self.middleware.logger.error('Failed to stop %r VM: %s', vm['name'], stop_job.error)
+            try:
+                await self.middleware.call('vm.start', vm['id'])
+            except Exception:
+                self.middleware.logger.error(
+                    'Failed to start %r VM after %r unlock', vm['name'], dataset['name'], exc_info=True
+                )
+
+    async def autostart_vms_on_dataset(self, dataset, mountpoint):
+        result = []
+        for vm in await self.middleware.call('vm.query', [('autostart', '=', True)]):
+            for device in vm['devices']:
+                if device['attributes']['dtype'] not in ('DISK', 'RAW'):
+                    continue
+
+                path = device['attributes'].get('path')
+                if not path:
+                    continue
+
+                on_dataset = False
+                if dataset['type'] == 'FILESYSTEM' and mountpoint:
+                    on_dataset = path.startswith(mountpoint + '/') or path.startswith(
+                        zvol_name_to_path(dataset['name']) + '/'
+                    )
+                elif dataset['type'] == 'VOLUME' and zvol_name_to_path(dataset['name']) == path:
+                    on_dataset = True
+
+                if on_dataset:
+                    result.append(vm)
+                    break
+
+        return result
 
 
 class VMPortDelegate(PortDelegate):
