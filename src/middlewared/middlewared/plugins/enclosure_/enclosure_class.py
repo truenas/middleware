@@ -10,6 +10,7 @@ from middlewared.utils.scsi_generic import inquiry
 
 from ixhardware import parse_dmi
 from .constants import (
+    ARRAY_DEVICE_SLOT_ELEMENT_TYPE,
     MINI_MODEL_BASE,
     MINIR_MODEL_BASE,
     SYSFS_SLOT_KEY,
@@ -117,8 +118,6 @@ class Enclosure:
             # the one whose enclosure id is "3000000000000001"). So we ignore the
             # other enclosure device otherwise.
             self.should_ignore = True
-        elif self.is_vseries and self.vendor == 'ECStream':
-            self.should_ignore = True
         else:
             self.should_ignore = False
 
@@ -178,8 +177,19 @@ class Enclosure:
                 | 'ECStream_4IXGA-NTGp'
                 | 'ECStream_4IXGA-NTGs'
             ):
-                # V series — NTB on the original board, NTG on the new
-                # 4IXGA_PEX89032 (X710) board. Same -p/-s convention.
+                # V-series rear-bay NTG chip (bifurcated PEX89032).
+                # Same -p/-s convention as the front-bay enclosures.
+                self.model = dmi_model.value
+                self.controller = True
+            case (
+                'ECStream_4IXGA-SWp'
+                | 'ECStream_4IXGA-SWs'
+            ):
+                # V2xx (V260/V280) — front-bay PEX89088 PCIe switch enclosure
+                # (replaces V1xx's dual 9600w-12i4e SAS HBAs). Same -p/-s
+                # convention as the NTG rear-bay enclosures: each controller
+                # sees one suffix (p or s) determined by its chassis slot
+                # position.
                 self.model = dmi_model.value
                 self.controller = True
             case 'CELESTIC_P3215-O' | 'CELESTIC_P3217-B':
@@ -256,7 +266,7 @@ class Enclosure:
             (
                 not self.is_hseries
                 # Array Device Slot elements' descriptors on V-series are "<empty>"
-                and not (self.is_vseries and element['type'] == 23)
+                and not (self.is_vseries and element['type'] == ARRAY_DEVICE_SLOT_ELEMENT_TYPE)
                 and desc in (
                     ElementDescriptorsToIgnore.EMPTY.value,
                     ElementDescriptorsToIgnore.AD.value,

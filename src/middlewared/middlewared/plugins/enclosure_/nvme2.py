@@ -230,100 +230,6 @@ def map_plx_r50bm(model, ctx):
     return fake_nvme_enclosure(model, num_of_nvme_slots, mapped)
 
 
-def map_vseries_nvme(model, ctx):
-    """Map NVMe devices for V-series using PCIe switch downstream port topology.
-
-    Unlike /sys/bus/pci/slots/ names -- which the kernel disambiguates with
-    "-N" suffixes when another PCI device shares the same firmware slot
-    number (e.g. an add-in NIC assigned the same firmware slot as a rear
-    NVMe bay) -- the PCIe switch downstream port addresses are a fixed
-    property of the topology and provide stable slot identity regardless
-    of system configuration.
-    """
-    num_of_nvme_slots = 4
-    mapped = {}
-    pci_bdf_re = re.compile(r'^[0-9a-f]{4}:[0-9a-f]{2}:[0-9a-f]{2}\.[0-9]$')
-
-    # Walk from each NVMe controller up the PCIe tree:
-    # nvme ctrl -> nvme PCI dev -> downstream port -> switch upstream port.
-    # Group block devices by their switch; the rear-NVMe switch is the one
-    # with the most NVMes attached.
-    by_switch = {}
-    for ctrl in ctx.list_devices(subsystem='nvme'):
-        for child in ctrl.children:
-            if child.device_type != 'disk':
-                continue
-
-            try:
-                downstream_port = ctrl.parent.parent
-                switch = downstream_port.parent
-            except AttributeError:
-                continue
-
-            if switch is None or switch.subsystem != 'pci':
-                continue
-
-            by_switch.setdefault(switch.sys_path, []).append(
-                (downstream_port.sys_name, child.sys_name)
-            )
-
-    if not by_switch:
-        return fake_nvme_enclosure(model, num_of_nvme_slots, mapped)
-
-    rear_switch_path, nvme_info = max(
-        by_switch.items(), key=lambda kv: len(kv[1])
-    )
-
-    # Enumerate the switch's downstream ports. The rear-NVMe switch
-    # multiplexes an on-board SAS HBA onto one of its downstream ports
-    # (an LSI SAS controller, PCI class 0x0107xx); every other downstream
-    # port is a rear NVMe bay.
-    #
-    # A populated bay shows an NVMe endpoint (class 0x0108xx). An *empty*
-    # bay is not absent from the tree: the Broadcom switch substitutes a
-    # "Virtual PCIe Placeholder Endpoint" (class 0x0880xx) so the
-    # downstream port still has a child. We must therefore keep a port for
-    # every bay -- populated, placeholder, or truly empty -- and exclude
-    # only the SAS HBA. Dropping placeholder/empty bays would renumber the
-    # survivors and shift the empty slot to the end (e.g. pulling bay 2 of
-    # 4 would wrongly report bays 1-3 populated and bay 4 empty).
-    nvme_ports = []
-    for entry in pathlib.Path(rear_switch_path).iterdir():
-        if not pci_bdf_re.match(entry.name):
-            continue
-
-        has_sas_child = False
-        for child in entry.iterdir():
-            if not pci_bdf_re.match(child.name):
-                continue
-
-            try:
-                pci_class = (child / 'class').read_text().strip()
-            except (FileNotFoundError, OSError):
-                continue
-
-            if pci_class.startswith('0x0107'):
-                has_sas_child = True
-                break
-
-        if not has_sas_child:
-            nvme_ports.append(entry.name)
-
-    # Sorted PCI BDF gives stable bay order independent of firmware slot
-    # naming. Truncate to num_of_nvme_slots as a final safety bound.
-    nvme_ports.sort()
-    nvme_ports = nvme_ports[:num_of_nvme_slots]
-    port_to_slot = {port: idx for idx, port in enumerate(nvme_ports, start=1)}
-    for port_name, dev_name in nvme_info:
-        slot = port_to_slot.get(port_name)
-        if slot is None:
-            continue
-
-        mapped[slot] = dev_name
-
-    return fake_nvme_enclosure(model, num_of_nvme_slots, mapped)
-
-
 def map_r50_or_r50b(model, ctx):
     num_of_nvme_slots = 3 if model == 'R50' else 2  # r50 has 3 rear nvme slots, r50b has 2
     if model == 'R50':
@@ -436,13 +342,6 @@ def map_nvme():
     ):
         # all nvme systems which we need to handle separately
         return map_r30_r60_or_fseries(model, ctx)
-    elif model in (
-        ControllerModels.V140.value,
-        ControllerModels.V160.value,
-        ControllerModels.V260.value,
-        ControllerModels.V280.value,
-    ):
-        return map_vseries_nvme(model, ctx)
     elif model == ControllerModels.R50BM.value:
         return map_plx_r50bm(model, ctx)
     elif model in (
