@@ -4,7 +4,6 @@ from middlewared.test.integration.assets.directory_service import directoryservi
 from middlewared.test.integration.assets.product import product_type
 from middlewared.test.integration.utils import call, client, ssh
 from middlewared.test.integration.utils.client import truenas_server
-from truenas_api_client import ClientException
 
 
 @pytest.fixture(scope="module")
@@ -119,7 +118,7 @@ def test_dns_resolution(do_freeipa_connection):
 def test_ipa_config_recover(do_freeipa_connection):
     """ Remove the default config and verify our health check restores it """
     ssh('rm /etc/ipa/default.conf')
-    with pytest.raises(ClientException, match="IPA default.conf file is missing"):
+    with pytest.raises(Exception, match="IPA default.conf file is missing"):
         call('directoryservices.health.check')
 
     call('directoryservices.health.recover')
