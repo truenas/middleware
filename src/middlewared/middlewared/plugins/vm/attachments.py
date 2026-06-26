@@ -124,6 +124,11 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate):
     async def start(self, attachments):
         await self.toggle(attachments, True)
 
+    async def start_on_unlock(self, dataset, mountpoint):
+        # VM disks may be zvols (no mountpoint), so we cannot rely on the generic query/start path;
+        # restart_vms_after_unlock matches autostart VMs against the unlocked dataset directly.
+        await self.middleware.call('pool.dataset.restart_vms_after_unlock', dataset)
+
 
 class VMPortDelegate(PortDelegate):
 

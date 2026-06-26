@@ -71,6 +71,21 @@ class FSAttachmentDelegate(ServiceChangeMixin):
     async def stop(self, attachments):
         pass
 
+    async def start_on_unlock(self, dataset, mountpoint):
+        """
+        Bring this delegate's attachments back up after `dataset` is unlocked.
+
+        :param dataset: the dataset dict that was unlocked
+        :param mountpoint: its mountpoint, or `None` for a zvol
+
+        The default implementation starts the share/service style attachments that the generic
+        `query`/`start` contract describes. Stateful workloads (VMs, containers) whose `query`
+        only reports already-running items override this to honor their autostart configuration.
+        """
+        if mountpoint:
+            if attachments := await self.query(mountpoint, True, {'locked': False}):
+                await self.start(attachments)
+
     async def disable(self, attachments):
         """
         Disable said items, this is used when we export pool but do not want to delete

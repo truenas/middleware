@@ -116,6 +116,52 @@ class ContainerFSAttachmentDelegate(FSAttachmentDelegate):
             except Exception:
                 self.middleware.logger.warning('Unable to start %r container', attachment['id'])
 
+    async def start_on_unlock(self, dataset, mountpoint):
+        # The generic start path cannot help here: it would call query(enabled=True), which only
+        # reports already-active containers, so an autostart container that is stopped because its
+        # pool was locked would never be restarted. Match autostart containers to the unlocked
+        # dataset ourselves and (re)start them.
+        if dataset['type'] != 'FILESYSTEM' or not mountpoint:
+            return
+
+        for container in await self.autostart_containers_on_path(mountpoint):
+            if container['status']['state'] in ACTIVE_STATES:
+                try:
+                    await (
+                        await self.middleware.call('container.stop', container['id'], {'force': True})
+                    ).wait(raise_error=True)
+                except Exception:
+                    self.middleware.logger.warning('Unable to stop %r container', container['id'])
+            try:
+                await self.middleware.call('container.start', container['id'])
+            except Exception:
+                self.middleware.logger.warning('Unable to start %r container after unlock', container['id'])
+
+    async def autostart_containers_on_path(self, path):
+        autostart_containers = {
+            container['id']: container
+            for container in await self.middleware.call('container.query', [('autostart', '=', True)])
+        }
+        if not autostart_containers:
+            return []
+
+        matched = {}
+        for container_id, container in autostart_containers.items():
+            if await self.middleware.call('filesystem.is_child', os.path.join('/mnt', container['dataset']), path):
+                matched[container_id] = container
+
+        for device in await self.middleware.call('datastore.query', 'container.device'):
+            container_id = device['container']['id']
+            if container_id in matched or container_id not in autostart_containers:
+                continue
+            if device['attributes']['dtype'] != 'FILESYSTEM':
+                continue
+            source = device['attributes'].get('source')
+            if source and await self.middleware.call('filesystem.is_child', source, path):
+                matched[container_id] = autostart_containers[container_id]
+
+        return list(matched.values())
+
 
 async def setup(middleware):
     await middleware.call('pool.dataset.register_attachment_delegate', LXCFSAttachmentDelegate(middleware))
