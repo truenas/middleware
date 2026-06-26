@@ -62,6 +62,7 @@ from middlewared.utils.filesystem import attrs, stat_x
 from middlewared.utils.filesystem.acl import ACL_UNDEFINED_ID, acl_is_present
 from middlewared.utils.filesystem.constants import FileType
 from middlewared.utils.filesystem.directory import DirectoryRequestMask, iter_listdir
+from middlewared.utils.filesystem.stat_x import StatxEtype
 from middlewared.utils.filter_list import filter_list
 from middlewared.utils.nss import grp, pwd
 from middlewared.utils.path import FSLocation, is_child_realpath, path_location
@@ -338,7 +339,7 @@ class FilesystemService(Service):
             name=p.parts[-1],
             path=data.path,
             realpath=realpath,
-            type='DIRECTORY',
+            type=StatxEtype.DIRECTORY.value,
             size=stat.stx_size,
             allocation_size=stat.stx_blocks * 512,
             mode=stat.stx_mode,
@@ -502,7 +503,7 @@ class FilesystemService(Service):
 
         return FilesystemStatData(
             realpath=realpath,
-            type=st['etype'],
+            type=StatxEtype[st['etype']].value,
             size=st['st'].stx_size,
             allocation_size=st['st'].stx_blocks * 512,
             mode=st['st'].stx_mode,
@@ -651,8 +652,8 @@ class FilesystemService(Service):
         return FilesystemStatfsData(
             flags=flags,
             fstype=(mntinfo['fs_type'] or '').lower(),
-            source=mntinfo['mount_source'],
-            dest=mntinfo['mountpoint'],
+            source=mntinfo['mount_source'] or '',
+            dest=mntinfo['mountpoint'] or '',
             blocksize=st.f_frsize,
             total_blocks=st.f_blocks,
             total_blocks_str=str(st.f_blocks),

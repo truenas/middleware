@@ -24,7 +24,7 @@ wait_on_disks = "middlewared.scripts.wait_on_disks:main"
 start_vendor_service = "middlewared.scripts.vendor_service:main"
 
 [tool.mypy]
-plugins = ["sqlalchemy.ext.mypy.plugin"]
+plugins = ["pydantic.mypy", "sqlalchemy.ext.mypy.plugin"]
 
 [[tool.mypy.overrides]]
 module = [

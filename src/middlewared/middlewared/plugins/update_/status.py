@@ -5,6 +5,7 @@ import errno
 from middlewared.api.current import (
     UpdateDownloadProgress,
     UpdateStatus,
+    UpdateStatusCode,
     UpdateStatusCurrentVersion,
     UpdateStatusError,
     UpdateStatusStatus,
@@ -104,7 +105,7 @@ async def status_internal(context: ServiceContext, propagate_exception: bool = F
 
 def _result(
     context: ServiceContext,
-    code: str,
+    code: UpdateStatusCode,
     status: UpdateStatusStatus | None = None,
     error: UpdateStatusError | None = None,
 ) -> UpdateStatus:

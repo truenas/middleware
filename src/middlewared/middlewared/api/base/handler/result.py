@@ -50,7 +50,7 @@ def serialize_result(
     :return: serialized method execution result.
     """
     try:
-        return model(result=result).model_dump(
+        return model(result=result).model_dump(  # type: ignore[call-arg]
             context={"expose_secrets": expose_secrets},
             warnings=False,
             by_alias=True,
