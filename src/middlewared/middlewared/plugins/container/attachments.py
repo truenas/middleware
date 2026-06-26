@@ -51,41 +51,39 @@ class ContainerFSAttachmentDelegate(FSAttachmentDelegate):
     title = 'CONTAINER'
 
     async def query(self, path, enabled, options=None):
-        containers_attached = []
-        # Track containers to skip during attachment queries:
+        # Select the candidate containers by state:
         # - enabled=True: looking for active attachments, skip inactive containers
         # - enabled=False: looking for inactive attachments, skip active containers
-        # Also tracks containers already found via root dataset check to avoid duplicates when checking devices
-        ignored_or_seen_containers = set()
+        candidates = {}
         for container in await self.middleware.call('container.query'):
             state = container['status']['state']
             if (enabled and state not in ACTIVE_STATES) or (enabled is False and state in ACTIVE_STATES):
-                ignored_or_seen_containers.add(container['id'])
                 continue
+            candidates[container['id']] = container
 
+        matched = await self.containers_on_path(candidates, path)
+        return [{'id': container['id'], 'name': container['name']} for container in matched.values()]
+
+    async def containers_on_path(self, containers, path):
+        # `containers` maps container id -> container dict (as returned by `container.query`). Returns the
+        # ordered id -> container subset whose root dataset, or any FILESYSTEM device source, lives on or
+        # under `path` (root-dataset matches first, then device-source matches).
+        matched = {}
+        for container_id, container in containers.items():
             if await self.middleware.call('filesystem.is_child', os.path.join('/mnt', container['dataset']), path):
-                containers_attached.append({'id': container['id'], 'name': container['name']})
-                ignored_or_seen_containers.add(container['id'])
+                matched[container_id] = container
 
         for device in await self.middleware.call('datastore.query', 'container.device'):
-            if (
-                device['attributes']['dtype'] != 'FILESYSTEM'
-                or device['container']['id'] in ignored_or_seen_containers
-            ):
+            container_id = device['container']['id']
+            if container_id in matched or container_id not in containers:
                 continue
-
+            if device['attributes']['dtype'] != 'FILESYSTEM':
+                continue
             source = device['attributes'].get('source')
-            if not source:
-                continue
+            if source and await self.middleware.call('filesystem.is_child', source, path):
+                matched[container_id] = containers[container_id]
 
-            if await self.middleware.call('filesystem.is_child', source, path):
-                containers_attached.append({
-                    'id': device['container']['id'],
-                    'name': device['container']['name'],
-                })
-                ignored_or_seen_containers.add(device['container']['id'])
-
-        return containers_attached
+        return matched
 
     async def delete(self, attachments):
         for attachment in attachments:
@@ -124,18 +122,9 @@ class ContainerFSAttachmentDelegate(FSAttachmentDelegate):
         if dataset['type'] != 'FILESYSTEM' or not mountpoint:
             return
 
-        for container in await self.autostart_containers_on_path(mountpoint):
-            if container['status']['state'] in ACTIVE_STATES:
-                try:
-                    await (
-                        await self.middleware.call('container.stop', container['id'], {'force': True})
-                    ).wait(raise_error=True)
-                except Exception:
-                    self.middleware.logger.warning('Unable to stop %r container', container['id'])
-            try:
-                await self.middleware.call('container.start', container['id'])
-            except Exception:
-                self.middleware.logger.warning('Unable to start %r container after unlock', container['id'])
+        containers = await self.autostart_containers_on_path(mountpoint)
+        await self.stop([c for c in containers if c['status']['state'] in ACTIVE_STATES])
+        await self.start(containers)
 
     async def autostart_containers_on_path(self, path):
         autostart_containers = {
@@ -145,22 +134,7 @@ class ContainerFSAttachmentDelegate(FSAttachmentDelegate):
         if not autostart_containers:
             return []
 
-        matched = {}
-        for container_id, container in autostart_containers.items():
-            if await self.middleware.call('filesystem.is_child', os.path.join('/mnt', container['dataset']), path):
-                matched[container_id] = container
-
-        for device in await self.middleware.call('datastore.query', 'container.device'):
-            container_id = device['container']['id']
-            if container_id in matched or container_id not in autostart_containers:
-                continue
-            if device['attributes']['dtype'] != 'FILESYSTEM':
-                continue
-            source = device['attributes'].get('source')
-            if source and await self.middleware.call('filesystem.is_child', source, path):
-                matched[container_id] = autostart_containers[container_id]
-
-        return list(matched.values())
+        return list((await self.containers_on_path(autostart_containers, path)).values())
 
 
 async def setup(middleware):
