@@ -284,7 +284,7 @@ def setup_stig(full_admin_w_2fa_builtin_admin, module_stig_enabled, root_non_sti
 def test_nonenterprise_fail(community_product):
     # Clean up from prior runs of this module.
     user_and_config_cleanup()
-    with pytest.raises(ValidationErrors, match='Please contact iX sales for more information.'):
+    with pytest.raises(ValidationErrors, match='Please contact TrueNAS sales for more information.'):
         call('system.security.update', {'enable_gpos_stig': True}, job=True)
 
 
