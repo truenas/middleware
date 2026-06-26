@@ -103,7 +103,7 @@ class NetworkService(PseudoServiceBase):
 
     async def start(self):
         await self.middleware.call("interface.sync")
-        await self.middleware.call("route.sync")
+        await self.call2(self.s.route.sync)
 
 
 class NetworkGeneralService(PseudoServiceBase):
@@ -179,7 +179,7 @@ class RoutingService(SimpleService):
         return ServiceState(True, [])
 
     async def restart(self):
-        await self.middleware.call("staticroute.sync")
+        await self.call2(self.s.staticroute.sync)
 
 
 class SslService(PseudoServiceBase):

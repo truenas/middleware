@@ -46,11 +46,11 @@ class NetworkGeneralService(Service):
                 ips[iface['name']][key].append(f'{alias["address"]}/{alias["netmask"]}')
 
         default_routes = dict()
-        for route in await self.middleware.call('route.system_routes', [('netmask', 'in', ['0.0.0.0', '::'])]):
+        for route in await self.call2(self.s.route.system_routes, [('netmask', 'in', ['0.0.0.0', '::'])]):
             # IPv6 have local addresses that don't have gateways. Make sure we only return a gateway
             # if there is one.
-            if route['gateway']:
-                default_routes[route['gateway']] = None
+            if route.gateway:
+                default_routes[str(route.gateway)] = None
 
         nameservers = dict()
         for ns in await self.middleware.call('dns.query'):
