@@ -2,10 +2,10 @@ import asyncio
 
 from truenas_connect_utils.status import Status
 
-from middlewared.plugins.service_.services.base import SimpleService
-from middlewared.plugins.service_.services.base_interface import ServiceInterface
-from middlewared.plugins.service_.services.base_state import ServiceState
-from middlewared.plugins.service_.services.dbus_router import system_dbus
+from middlewared.plugins.service.services.base import SimpleService
+from middlewared.plugins.service.services.base_interface import ServiceInterface
+from middlewared.plugins.service.services.base_state import ServiceState
+from middlewared.plugins.service.services.dbus_router import system_dbus
 from middlewared.utils.timezone_choices import effective_timezone
 
 
@@ -258,9 +258,9 @@ class NVMETargetService(PseudoServiceBase):
             [],
         )
 
-    async def failure_logs(self) -> str | None:
+    async def failure_logs(self, failed_units: dict[str, tuple[str, int]] | None = None) -> str:
         if (await self.middleware.call('nvmet.global.config'))['kernel']:
-            return None
+            return ""
         else:
             service_object = await self.middleware.call('service.object', "nvmf")
             return await service_object.failure_logs()  # type: ignore[no-any-return]

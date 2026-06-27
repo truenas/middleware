@@ -4,7 +4,7 @@ import types
 import pytest
 
 from middlewared.auth import UserSessionManagerCredentials
-from middlewared.plugins.service_.utils import app_has_write_privilege_for_service
+from middlewared.plugins.service.utils import app_has_write_privilege_for_service
 from middlewared.utils.account.authenticator import UserPamAuthenticator
 from middlewared.utils.auth import AA_LEVEL1
 from middlewared.utils.origin import ConnectionOrigin

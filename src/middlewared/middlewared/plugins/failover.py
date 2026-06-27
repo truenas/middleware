@@ -1224,7 +1224,7 @@ async def service_remote(middleware, service, verb, options):
 
     This is the middleware side of what legacy UI did on service changes.
     """
-    if not options['ha_propagate']:
+    if not options.ha_propagate:
         # the service action was explicitly requested
         # to not replicate to the remote controller
         return

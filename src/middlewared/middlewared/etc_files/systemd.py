@@ -2,7 +2,7 @@ import json
 
 from truenas_os_pyutils.io import atomic_write
 
-from middlewared.plugins.service_.services.dbus_router import system_dbus
+from middlewared.plugins.service.services.dbus_router import system_dbus
 
 
 async def render(service, middleware):

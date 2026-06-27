@@ -5,7 +5,7 @@ import socket
 import struct
 import time
 
-from middlewared.plugins.service_.services.dbus_router import system_dbus
+from middlewared.plugins.service.services.dbus_router import system_dbus
 from middlewared.utils.threading import start_daemon_thread
 
 IX_VEND_LOCK = asyncio.Lock()
