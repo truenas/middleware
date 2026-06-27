@@ -29,7 +29,7 @@ class ISCSIPortalIPAlertSource(AlertSource):
 
     async def check(self) -> Alert[ISCSIPortalIPAlert] | None:
         try:
-            started = await self.middleware.call('service.started', 'iscsitarget')
+            started = await self.call2(self.s.service.started, 'iscsitarget')
         except Exception:
             # during upgrade this crashed with a timeout error
             # so don't pollute the webUI with tracebacks

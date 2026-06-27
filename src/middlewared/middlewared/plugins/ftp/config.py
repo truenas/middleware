@@ -76,7 +76,7 @@ class FTPServicePart(SystemServicePart[FTPEntry]):
         await self._update_service(old.id, update)
 
         if not old.tls and new.tls:
-            await (await self.middleware.call("service.control", "START", "ssl")).wait(raise_error=True)
+            await (await self.call2(self.s.service.control, "START", "ssl")).wait(raise_error=True)
 
         return await self.config()
 

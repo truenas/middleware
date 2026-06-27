@@ -72,7 +72,7 @@ class UpdateConfigPart(ConfigServicePart[UpdateEntry]):
         )
 
         if new.autocheck != old.autocheck:
-            await (await self.middleware.call('service.control', 'RESTART', 'cron')).wait(raise_error=True)
+            await (await self.call2(self.s.service.control, 'RESTART', 'cron')).wait(raise_error=True)
 
         if new.profile != old.profile:
             self.middleware.send_event(

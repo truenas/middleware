@@ -1,5 +1,6 @@
 import asyncio
 
+from middlewared.api.current import ServiceOptions
 from middlewared.utils import run
 from middlewared.utils.lio.config import ISCSI_DIR, teardown_lio_config
 
@@ -35,7 +36,7 @@ class ISCSITargetService(SwitchableSimpleService):
     async def _wait_to_avoid_states(self, states: list[str], retries: int = 10) -> None:
         initial_retries = retries
         while retries > 0:
-            curstate = await self.middleware.call("service.get_unit_state", self.name)
+            curstate = await self.call2(self.s.service.get_unit_state, self.name)
             if curstate not in states:
                 break
             retries -= 1
@@ -111,10 +112,10 @@ class ISCSITargetService(SwitchableSimpleService):
                         self.middleware.logger.warning('Failover exception', exc_info=True)
                         # Fall through
         # Fallback to doing a regular restart
-        rjob = await self.middleware.call(
-            'service.control',
+        rjob = await self.call2(
+            self.s.service.control,
             'RESTART',
             self.name,
-            {'ha_propagate': False}
+            ServiceOptions(ha_propagate=False)
         )
         await rjob.wait(raise_error=True)

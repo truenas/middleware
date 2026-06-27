@@ -98,7 +98,7 @@ class DockerConfigServicePart(ConfigServicePart[DockerEntry]):
             if pool_changed or address_pools_changed or registry_mirrors_changed:
                 job.set_progress(20, 'Stopping Docker service')
                 try:
-                    await (await self.middleware.call('service.control', 'STOP', 'docker')).wait(raise_error=True)
+                    await (await self.call2(self.s.service.control, 'STOP', 'docker')).wait(raise_error=True)
                 except Exception as e:
                     raise CallError(f'Failed to stop docker service: {e}')
 
@@ -142,7 +142,7 @@ class DockerConfigServicePart(ConfigServicePart[DockerEntry]):
                 if catalog_sync_job:
                     await catalog_sync_job.wait()
 
-                await (await self.middleware.call('service.control', 'START', 'docker')).wait(raise_error=True)
+                await (await self.call2(self.s.service.control, 'START', 'docker')).wait(raise_error=True)
 
             if new_config.pool and address_pools_changed:
                 job.set_progress(95, 'Initiating redeployment of applications to apply new address pools changes')

@@ -36,7 +36,7 @@ async def setup_self_signed_cert_for_ui(context: ServiceContext, cert_name: str 
         {"stg_guicertificate": cert_id},
     )
 
-    await (await context.middleware.call("service.control", "START", "ssl")).wait(raise_error=True)
+    await (await context.call2(context.s.service.control, "START", "ssl")).wait(raise_error=True)
 
 
 async def setup_self_signed_cert_for_ui_impl(context: ServiceContext, cert_name: str) -> int:

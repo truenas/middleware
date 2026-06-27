@@ -1,5 +1,6 @@
 from typing import Literal
 
+from middlewared.api.current import QueryOptions, ServiceOptions
 from middlewared.service_exception import CallError
 from middlewared.utils.service.call_mixin import CallMixin
 
@@ -12,11 +13,11 @@ class ServiceChangeMixin(CallMixin):
         options: dict | None = None,
     ) -> None:
 
-        svc_state = (await self.middleware.call(
-            'service.query',
+        svc_state = (await self.call2(
+            self.s.service.query,
             [('service', '=', service)],
-            {'get': True}
-        ))['state'].lower()
+            QueryOptions(get=True)
+        )).state.lower()
 
         # For now its hard to keep track of which services change rc.conf.
         # To be safe run this every time any service is updated.
@@ -25,7 +26,7 @@ class ServiceChangeMixin(CallMixin):
 
         if svc_state == 'running':
             started = await (
-                await self.middleware.call('service.control', verb.upper(), service, options or {})
+                await self.call2(self.s.service.control, verb.upper(), service, ServiceOptions(**(options or {})))
             ).wait(raise_error=True)
 
             if not started:

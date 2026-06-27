@@ -77,7 +77,7 @@ def run_restic(
             if job.aborted_event.wait(timeout=0.2):
                 aborted = True
                 try:
-                    job.middleware.call_sync("service.terminate_process", proc.pid)
+                    job.middleware.call_sync2(job.middleware.services.service.terminate_process, proc.pid)
                 except CallError as e:
                     job.middleware.logger.warning(f"Error terminating restic on cloud backup abort: {e!r}")
                     break

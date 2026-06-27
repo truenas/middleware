@@ -250,7 +250,7 @@ async def _event_system_ready(middleware: Middleware, event_type: str, args: typ
 async def handle_license_update(middleware: Middleware, *args: typing.Any, **kwargs: typing.Any) -> None:
     if not await middleware.call('docker.license_active'):
         # We would like to stop docker in this case
-        await middleware.call('service.control', 'STOP', 'docker')
+        await middleware.call2(middleware.services.service.control, 'STOP', 'docker')
 
 
 async def setup(middleware: Middleware) -> None:

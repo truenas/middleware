@@ -2,6 +2,7 @@ import asyncio
 
 from middlewared.api import api_method
 from middlewared.api.current import (
+    ServiceOptions,
     SystemGeneralCheckinArgs,
     SystemGeneralCheckinResult,
     SystemGeneralCheckinWaitingArgs,
@@ -265,7 +266,7 @@ class SystemGeneralService(ConfigService):
             new_config['ui_httpsport']
         )
 
-        await (await self.middleware.call('service.control', 'START', 'ssl')).wait(raise_error=True)
+        await (await self.call2(self.s.service.control, 'START', 'ssl')).wait(raise_error=True)
 
         if rollback_timeout is not None:
             self._original_datastore = original_datastore
@@ -292,12 +293,12 @@ class SystemGeneralService(ConfigService):
         # newly-promoted node converges to the DB's timezone without a reboot.
         tz = effective_timezone(timezone)
         ha_options = {'ha_propagate': False}
-        await (await self.middleware.call(
-            'service.control', 'RELOAD', 'timeservices', ha_options,
+        await (await self.call2(
+            self.s.service.control, 'RELOAD', 'timeservices', ServiceOptions(**ha_options),
         )).wait(raise_error=True)
         # Restart cron so it inherits the new TZ env from middlewared.
-        await (await self.middleware.call(
-            'service.control', 'RESTART', 'cron', ha_options,
+        await (await self.call2(
+            self.s.service.control, 'RESTART', 'cron', ServiceOptions(**ha_options),
         )).wait(raise_error=True)
         # Update systemd-timedated's cache so `timedatectl status` and journald
         # (which subscribes to timedated's PropertiesChanged signal) reflect the

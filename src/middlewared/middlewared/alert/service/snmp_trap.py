@@ -12,7 +12,7 @@ class SNMPTrapAlertService(ThreadedAlertService):
 
     def send_sync(self, alerts: list[Alert[Any]], gone_alerts: list[Alert[Any]], new_alerts: list[Alert[Any]]) -> None:
         if self.attributes["host"] in ("localhost", "127.0.0.1", "::1"):
-            if not self.middleware.call_sync("service.started", "snmp"):
+            if not self.call_sync2(self.s.service.started, "snmp"):
                 self.logger.trace("Local SNMP service not started, not sending traps")  # type: ignore[attr-defined]
                 return
 

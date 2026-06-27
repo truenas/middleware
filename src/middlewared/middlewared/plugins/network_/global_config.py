@@ -170,7 +170,7 @@ class NetworkConfigurationService(ConfigService):
 
     @private
     async def toggle_announcement(self, data, prev=None):
-        await (await self.middleware.call('service.control', 'RESTART', 'discovery')).wait(raise_error=True)
+        await (await self.call2(self.s.service.control, 'RESTART', 'discovery')).wait(raise_error=True)
 
     @api_method(
         NetworkConfigurationUpdateArgs,
@@ -342,7 +342,7 @@ class NetworkConfigurationService(ConfigService):
             await self.middleware.call('zettarepl.update_tasks')
 
         for service, verb in service_actions:
-            await (await self.middleware.call('service.control', verb, service)).wait(raise_error=True)
+            await (await self.call2(self.s.service.control, verb, service)).wait(raise_error=True)
 
         # The unified truenas-discoveryd daemon advertises mDNS, NetBIOS NS
         # and WSD from a single config file; toggle_announcement regenerates

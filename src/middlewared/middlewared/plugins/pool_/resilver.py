@@ -93,7 +93,7 @@ class PoolResilverService(ConfigService):
                 new_config
             )
 
-            await (await self.middleware.call('service.control', 'RESTART', 'cron')).wait(raise_error=True)
+            await (await self.call2(self.s.service.control, 'RESTART', 'cron')).wait(raise_error=True)
             await self.middleware.call('pool.configure_resilver_priority')
 
         return await self.config()

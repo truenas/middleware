@@ -38,7 +38,7 @@ async def migrate_ix_apps_dataset(
         raise CallError(f'Failed to backup docker apps: {backup_job.error}')
 
     job.set_progress(35, 'Stopping docker service')
-    await (await context.middleware.call('service.control', 'STOP', 'docker')).wait(raise_error=True)
+    await (await context.call2(context.s.service.control, 'STOP', 'docker')).wait(raise_error=True)
 
     try:
         job.set_progress(40, f'Replicating datasets from {old_config.pool!r} to {new_pool!r} pool')

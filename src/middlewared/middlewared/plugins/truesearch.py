@@ -125,7 +125,7 @@ class TrueSearchService(Service):
         """
         What Samba shares directories should it index.
         """
-        if not await self.middleware.call('service.started_or_enabled', 'cifs'):
+        if not await self.call2(self.s.service.started_or_enabled, 'cifs'):
             return set()
 
         smb_config = await self.middleware.call('smb.config')
@@ -144,7 +144,7 @@ class TrueSearchService(Service):
         """
         What WebShare shares directories should it index.
         """
-        if not await self.middleware.call('service.started_or_enabled', 'webshare'):
+        if not await self.call2(self.s.service.started_or_enabled, 'webshare'):
             return set()
 
         webshare_config = await self.call2(self.s.webshare.config)
@@ -169,14 +169,14 @@ class TrueSearchService(Service):
             self.RECONFIGURE_TIMER.cancel()
 
         enabled = await self.enabled()
-        running = await self.middleware.call('service.started', 'truesearch')
+        running = await self.call2(self.s.service.started, 'truesearch')
 
         if enabled and running:
-            await (await self.middleware.call('service.control', 'RELOAD', 'truesearch')).wait(raise_error=True)
+            await (await self.call2(self.s.service.control, 'RELOAD', 'truesearch')).wait(raise_error=True)
         elif enabled and not running:
-            await (await self.middleware.call('service.control', 'START', 'truesearch')).wait(raise_error=True)
+            await (await self.call2(self.s.service.control, 'START', 'truesearch')).wait(raise_error=True)
         elif not enabled and running:
-            await (await self.middleware.call('service.control', 'STOP', 'truesearch')).wait(raise_error=True)
+            await (await self.call2(self.s.service.control, 'STOP', 'truesearch')).wait(raise_error=True)
 
     async def schedule_reconfigure(self) -> None:
         """
@@ -199,7 +199,7 @@ class TrueSearchService(Service):
         resume = False
         try:
             if mountpoint is not None:
-                running = await self.middleware.call('service.started', 'truesearch')
+                running = await self.call2(self.s.service.started, 'truesearch')
                 if running:
                     stop = False
                     for directory in await self.raw_directories():
@@ -213,7 +213,7 @@ class TrueSearchService(Service):
 
                     if stop:
                         await (
-                            await self.middleware.call('service.control', 'STOP', 'truesearch')
+                            await self.call2(self.s.service.control, 'STOP', 'truesearch')
                         ).wait(raise_error=True)
                         resume = True
 
@@ -221,7 +221,7 @@ class TrueSearchService(Service):
         finally:
             if resume:
                 self.logger.info("Resuming TrueSearch service.")
-                await (await self.middleware.call('service.control', 'START', 'truesearch')).wait(raise_error=True)
+                await (await self.call2(self.s.service.control, 'START', 'truesearch')).wait(raise_error=True)
 
 
 async def post_license_update(middleware: Middleware, *args: tuple[Any], **kwargs: dict[str, Any]) -> None:

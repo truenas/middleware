@@ -72,7 +72,7 @@ class SharingWebshareService(SharingService[SharingWebshareEntry]):
 
         id_ = await self.middleware.call('datastore.insert', self._config.datastore, self.compress(data))
 
-        await (await self.middleware.call('service.control', 'RELOAD', 'webshare')).wait(raise_error=True)
+        await (await self.call2(self.s.service.control, 'RELOAD', 'webshare')).wait(raise_error=True)
 
         await self.call2(self.s.truesearch.configure)
 
@@ -108,7 +108,7 @@ class SharingWebshareService(SharingService[SharingWebshareEntry]):
 
         await self.middleware.call('datastore.update', self._config.datastore, id_, self.compress(new))
 
-        await (await self.middleware.call('service.control', 'RELOAD', 'webshare')).wait(raise_error=True)
+        await (await self.call2(self.s.service.control, 'RELOAD', 'webshare')).wait(raise_error=True)
 
         await self.call2(self.s.truesearch.configure)
 
@@ -130,7 +130,7 @@ class SharingWebshareService(SharingService[SharingWebshareEntry]):
 
         await self.middleware.call('datastore.delete', self._config.datastore, id_)
 
-        await (await self.middleware.call('service.control', 'RELOAD', 'webshare')).wait(raise_error=True)
+        await (await self.call2(self.s.service.control, 'RELOAD', 'webshare')).wait(raise_error=True)
 
         await self.call2(self.s.truesearch.configure)
 
@@ -190,7 +190,7 @@ class WebshareFSAttachmentDelegate(LockableFSAttachmentDelegate[SharingWebshareE
     service_class = SharingWebshareService
 
     async def restart_reload_services(self, attachments: list[SharingWebshareEntry]) -> None:
-        await (await self.middleware.call('service.control', 'RELOAD', 'webshare')).wait(raise_error=True)
+        await (await self.call2(self.s.service.control, 'RELOAD', 'webshare')).wait(raise_error=True)
 
         await self.call2(self.s.truesearch.configure)
 

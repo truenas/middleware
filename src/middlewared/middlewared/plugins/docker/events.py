@@ -35,7 +35,7 @@ def setup_docker_events(context: ServiceContext) -> None:
     try:
         process(context)
     except Exception:
-        if not context.middleware.call_sync('service.started', 'docker'):
+        if not context.call_sync2(context.s.service.started, 'docker'):
             # This is okay and can happen when docker is stopped
             return
         raise

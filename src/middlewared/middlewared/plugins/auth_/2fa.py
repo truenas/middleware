@@ -100,7 +100,7 @@ class TwoFactorAuthService(ConfigService):
 
         for svc in ('ssh', 'user'):
             # Going through service.control ensures HA is handled.
-            await (await self.middleware.call('service.control', 'RELOAD', svc)).wait(raise_error=True)
+            await (await self.call2(self.s.service.control, 'RELOAD', svc)).wait(raise_error=True)
 
         await self.middleware.call('etc.generate', 'pam')
 

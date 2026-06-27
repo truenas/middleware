@@ -83,7 +83,7 @@ class RsyncFSAttachmentDelegate(LockableFSAttachmentDelegate[RsyncTaskEntry]):
     resource_name = "path"
 
     async def restart_reload_services(self, attachments: list[RsyncTaskEntry]) -> None:
-        await (await self.middleware.call("service.control", "RESTART", "cron")).wait(raise_error=True)
+        await (await self.call2(self.s.service.control, "RESTART", "cron")).wait(raise_error=True)
 
 
 async def setup(middleware: Middleware) -> None:

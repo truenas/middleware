@@ -10,5 +10,5 @@ async def license_active(context: ServiceContext) -> bool:
 
 
 async def restart_docker_service(context: ServiceContext) -> None:
-    await (await context.middleware.call('service.control', 'STOP', 'docker')).wait(raise_error=True)
-    await (await context.middleware.call('service.control', 'START', 'docker')).wait(raise_error=True)
+    await (await context.call2(context.s.service.control, 'STOP', 'docker')).wait(raise_error=True)
+    await (await context.call2(context.s.service.control, 'START', 'docker')).wait(raise_error=True)

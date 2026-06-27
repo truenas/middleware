@@ -54,7 +54,7 @@ async def pool_post_import(middleware: Middleware, pool: dict[str, Any] | None) 
         finally:
             return
 
-    await (await middleware.call("service.control", "RELOAD", "ftp")).wait(raise_error=True)
+    await (await middleware.call2(middleware.services.service.control, "RELOAD", "ftp")).wait(raise_error=True)
 
 
 async def setup(middleware: Middleware) -> None:
