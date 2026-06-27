@@ -22,28 +22,16 @@ class DNSClientOptions(BaseModel):
     raise_error: Literal['NEVER', 'ANY_FAILURE', 'HOST_FAILURE', 'ALL_FAILURE'] = 'HOST_FAILURE'
 
 
-class BaseDNSClientLookupItem(BaseModel):
+class DNSClientLookupItem(BaseModel):
     name: str
     class_: str = Field(alias='class')
     type: str
     ttl: int
-
-
-class DNSClientALookupItem(BaseDNSClientLookupItem):
-    address: IPvAnyAddress
-
-
-class DNSClientCnameLookupItem(BaseDNSClientLookupItem):
-    target: str
-
-
-class DNSClientSrvLookupItem(BaseDNSClientLookupItem):
-    target: str
-    priority: int
-    weight: int
-    port: int
-
-DNSClientLookupItem = DNSClientALookupItem | DNSClientCnameLookupItem | DNSClientSrvLookupItem
+    address: IPvAnyAddress | None = None
+    target: str | None = None
+    priority: int | None = None
+    weight: int | None = None
+    port: int | None = None
 
 
 class DNSClientForwardLookupData(BaseModel):
@@ -74,7 +62,7 @@ class DNSClientReverseLookupArgs(BaseModel):
 
 
 class DNSClientReverseLookupResult(BaseModel):
-    result: list[DNSClientCnameLookupItem] | DNSClientCnameLookupItem | int
+    result: list[DNSClientLookupItem] | DNSClientLookupItem | int
 
 
 class DNSClientService(Service):
@@ -155,7 +143,7 @@ class DNSClientService(Service):
                 # 'SRV' and 'CNAME' are special
                 if rtype == 'SRV':
                     entries: list[DNSClientLookupItem] = [
-                        DNSClientSrvLookupItem(
+                        DNSClientLookupItem(
                             name=name,
                             priority=i.priority,
                             weight=i.weight,
@@ -170,7 +158,7 @@ class DNSClientService(Service):
                     ]
                 elif rtype == 'CNAME':
                     entries = [
-                        DNSClientCnameLookupItem(
+                        DNSClientLookupItem(
                             name=name,
                             class_=i.rdclass.name,
                             type=i.rdtype.name,
@@ -182,7 +170,7 @@ class DNSClientService(Service):
                     ]
                 else:  # The remaining options are 'A' and/or 'AAAA'
                     entries = [
-                        DNSClientALookupItem(
+                        DNSClientLookupItem(
                             name=name,
                             class_=i.rdclass.name,
                             type=i.rdtype.name,
@@ -211,11 +199,11 @@ class DNSClientService(Service):
                 if len(data.names) * len(data.record_types) == len(failures):
                     raise failures[0]
 
-        return filter_list(output, data.query_filters, data.query_options, BaseDNSClientLookupItem)
+        return filter_list(output, data.query_filters, data.query_options, DNSClientLookupItem)
 
     @api_method(DNSClientReverseLookupArgs, DNSClientReverseLookupResult, private=True, check_annotations=True)
     async def reverse_lookup(self, data: DNSClientReverseLookupData) -> (
-        list[DNSClientCnameLookupItem] | DNSClientCnameLookupItem | int
+        list[DNSClientLookupItem] | DNSClientLookupItem | int
     ):
         output = []
         options = data.dns_client_options
@@ -229,7 +217,7 @@ class DNSClientService(Service):
             name = ans.response.answer[0].name.to_text()
 
             entries = [
-                DNSClientCnameLookupItem(
+                DNSClientLookupItem(
                     name=name,
                     class_=i.rdclass.name,
                     type=i.rdtype.name,
@@ -241,4 +229,4 @@ class DNSClientService(Service):
 
             output.extend(entries)
 
-        return filter_list(output, data.query_filters, data.query_options, DNSClientCnameLookupItem)
+        return filter_list(output, data.query_filters, data.query_options, DNSClientLookupItem)
