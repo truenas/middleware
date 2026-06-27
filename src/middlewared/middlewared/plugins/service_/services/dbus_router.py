@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 import logging
 import time
 import types
+from typing import Any
 
 # NOTE: We prefer to minimize third-party dependencies in critical service management code.
 # However, jeepney was chosen for D-Bus communication because:
@@ -20,13 +21,13 @@ __all__ = ("ServiceActionError", "system_dbus")
 class ServiceActionError(Exception):
     """Service not in expected state after a systemd action."""
 
-    def __init__(self, unit, action, detail):
+    def __init__(self, unit: str, action: str, detail: str) -> None:
         self.unit = unit
         self.action = action
         self.detail = detail
         super().__init__(unit, action, detail)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.unit} {self.action}: {self.detail}"
 
 
@@ -165,7 +166,7 @@ class CachedSystemDBusRouter:
         async with self._lock:
             await self._teardown()
 
-    async def _send(self, msg):
+    async def _send(self, msg: Any) -> Any:
         """Send a message and return the reply, reconnecting on failure.
 
         Any error except DBusErrorResponse is treated as a potential
@@ -197,9 +198,9 @@ class CachedSystemDBusRouter:
         """Load a systemd unit and return its D-Bus object path."""
         msg = new_method_call(_SYSTEMD_MANAGER, "LoadUnit", "s", (service_name,))
         reply = await self._send(msg)
-        return unwrap_msg(reply)[0]
+        return unwrap_msg(reply)[0]  # type: ignore[no-any-return]
 
-    async def _get_unit_property(self, unit_path: str, interface: str, prop: str):
+    async def _get_unit_property(self, unit_path: str, interface: str, prop: str) -> Any:
         """Get a property from a systemd unit via D-Bus."""
         props = DBusAddress(
             unit_path,
@@ -346,12 +347,12 @@ class CachedSystemDBusRouter:
         )
 
     @staticmethod
-    async def _phase1_wait_for_job_removed(job_queue, job_path: str) -> str | None:
+    async def _phase1_wait_for_job_removed(job_queue: asyncio.Queue[Any], job_path: str) -> str | None:
         """Return the Stop job result string once the matching JobRemoved signal arrives."""
         while True:
             msg = await job_queue.get()
             if msg.body[1] == job_path:
-                return msg.body[3]
+                return msg.body[3]  # type: ignore[no-any-return]
 
     async def _phase1_wait_for_inactive(self, unit_path: str) -> None:
         """Return when the unit reaches inactive or failed state."""
@@ -611,7 +612,7 @@ class CachedSystemDBusRouter:
         """
         service_name = self._normalize_unit_name(service_name)
         unit_path = await self._load_unit_path(service_name)
-        return await self._get_unit_property(
+        return await self._get_unit_property(  # type: ignore[no-any-return]
             unit_path, "org.freedesktop.systemd1.Unit", "InactiveExitTimestampMonotonic"
         )
 
@@ -641,7 +642,7 @@ class CachedSystemDBusRouter:
         """
         service_name = self._normalize_unit_name(service_name)
         unit_path = await self._load_unit_path(service_name)
-        return await self._get_unit_property(
+        return await self._get_unit_property(  # type: ignore[no-any-return]
             unit_path, "org.freedesktop.systemd1.Unit", "ActiveState"
         )
 
@@ -662,7 +663,7 @@ class CachedSystemDBusRouter:
                 _SYSTEMD_MANAGER, "GetUnitFileState", "s", (service_name,)
             )
             reply = await self._send(msg)
-            return unwrap_msg(reply)[0]
+            return unwrap_msg(reply)[0]  # type: ignore[no-any-return]
         except DBusErrorResponse as e:
             if e.name == "org.freedesktop.DBus.Error.FileNotFound":
                 return "not-found"
@@ -714,7 +715,7 @@ class CachedSystemDBusRouter:
 
         msg = new_method_call(unit, action, "s", ("replace",))
         reply = await self._send(msg)
-        return unwrap_msg(reply)[0]
+        return unwrap_msg(reply)[0]  # type: ignore[no-any-return]
 
     async def call_unit_action_and_wait(
         self, service_name: str | bytes, action: str, timeout: float | None = None
@@ -731,7 +732,6 @@ class CachedSystemDBusRouter:
         for processes to actually exit by polling the service state.
         """
         service_name = self._normalize_unit_name(service_name)
-        timeout_is_explicit = timeout is not None
 
         start_time = time.monotonic()
 
@@ -739,8 +739,12 @@ class CachedSystemDBusRouter:
 
         unit_path = await self._load_unit_path(service_name)
 
-        if not timeout_is_explicit:
-            timeout = await self._get_unit_timeout(unit_path, service_name, action)
+        if timeout is not None:
+            effective_timeout = timeout
+            timeout_is_explicit = True
+        else:
+            effective_timeout = await self._get_unit_timeout(unit_path, service_name, action)
+            timeout_is_explicit = False
 
         if action == "Stop":
             active_state = await self._get_unit_property(
@@ -751,7 +755,7 @@ class CachedSystemDBusRouter:
             await self._stop_unit_and_wait_for_exit(
                 unit_path,
                 service_name,
-                timeout,
+                effective_timeout,
                 start_time,
                 timeout_is_explicit,
             )

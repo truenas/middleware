@@ -1,78 +1,82 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from middlewared.utils.service.call_mixin import CallMixin
 
 if TYPE_CHECKING:
+    from middlewared.main import Middleware
+
     from .base_state import ServiceState
 
 
 class ServiceInterface(CallMixin):
     name: str
 
-    etc = []
+    etc: list[str] = []
     restartable = False  # Implements `restart` method instead of `stop` + `start`
     reloadable = False  # Implements `reload` method
     deprecated = False  # Alert if service is running
     may_run_on_standby = True  # should be allowed to run on HA standby
 
-    def __init__(self, middleware):
+    def __init__(self, middleware: Middleware) -> None:
         self.middleware = middleware
 
-    async def get_state(self) -> 'ServiceState':
+    async def get_state(self) -> ServiceState:
         raise NotImplementedError
 
-    async def get_unit_state(self):
+    async def get_unit_state(self) -> str | None:
         raise NotImplementedError
 
-    async def become_active(self):
+    async def become_active(self) -> None:
         raise NotImplementedError
 
-    async def become_standby(self):
+    async def become_standby(self) -> None:
         raise NotImplementedError
 
-    async def check_configuration(self):
+    async def check_configuration(self) -> None:
         pass
 
-    async def start(self):
+    async def start(self) -> None:
         raise NotImplementedError
 
-    async def before_start(self):
+    async def before_start(self) -> None:
         pass
 
-    async def after_start(self):
+    async def after_start(self) -> None:
         pass
 
-    async def stop(self):
+    async def stop(self) -> None:
         raise NotImplementedError
 
-    async def before_stop(self):
+    async def before_stop(self) -> None:
         pass
 
-    async def after_stop(self):
+    async def after_stop(self) -> None:
         pass
 
-    async def restart(self):
+    async def restart(self) -> None:
         raise NotImplementedError
 
-    async def before_restart(self):
+    async def before_restart(self) -> None:
         pass
 
-    async def after_restart(self):
+    async def after_restart(self) -> None:
         pass
 
-    async def reload(self):
+    async def reload(self) -> None:
         raise NotImplementedError
 
-    async def before_reload(self):
+    async def before_reload(self) -> None:
         pass
 
-    async def after_reload(self):
+    async def after_reload(self) -> None:
         pass
 
-    async def select_etc(self) -> list:
+    async def select_etc(self) -> list[str]:
         return self.etc
 
-    async def get_failed_sub_units(self):
+    async def get_failed_sub_units(self) -> dict[str, tuple[str, int]]:
         """Return dict of failed/crash-looping units in the dependency tree.
 
         Returns:
@@ -84,5 +88,5 @@ class ServiceInterface(CallMixin):
 
 
 class IdentifiableServiceInterface:
-    async def identify(self, procname):
+    async def identify(self, procname: str) -> str | None:
         raise NotImplementedError

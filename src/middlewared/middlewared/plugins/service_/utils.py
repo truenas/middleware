@@ -1,6 +1,12 @@
+from __future__ import annotations
+
 import enum
+import typing
 
 from middlewared.utils.privilege import credential_has_full_admin
+
+if typing.TYPE_CHECKING:
+    from middlewared.api.base.server.app import App
 
 
 class ServiceWriteRole(enum.Enum):
@@ -11,10 +17,7 @@ class ServiceWriteRole(enum.Enum):
     NVMET = 'SHARING_NVME_TARGET_WRITE'
 
 
-def app_has_write_privilege_for_service(
-    app: object | None,
-    service: str
-) -> bool:
+def app_has_write_privilege_for_service(app: App | None, service: str) -> bool:
     if app is None:
         # Internal middleware call
         return True
