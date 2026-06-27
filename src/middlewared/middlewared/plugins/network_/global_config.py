@@ -148,8 +148,8 @@ class NetworkConfigurationService(ConfigService):
         for field in ('ipv4gateway', 'ipv6gateway'):
             if (
                 (gateway_value := data.get(field))
-                and not await self.middleware.call(
-                    'route.gateway_is_reachable',
+                and not await self.call2(
+                    self.s.route.gateway_is_reachable,
                     ipaddress.ip_address(gateway_value).exploded,
                     int(field[3])
                 )
@@ -313,7 +313,7 @@ class NetworkConfigurationService(ConfigService):
         ipv4gw_changed = new_config['ipv4gateway'] != config['ipv4gateway']
         ipv6gw_changed = new_config['ipv6gateway'] != config['ipv6gateway']
         if ipv4gw_changed or ipv6gw_changed:
-            await self.middleware.call('route.sync')
+            await self.call2(self.s.route.sync)
             if licensed:
                 try:
                     await self.middleware.call('failover.call_remote', 'route.sync')

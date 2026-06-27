@@ -9,22 +9,23 @@ from truenas_pynetif.address.netlink import (
     netlink_route,
 )
 
+from middlewared.api.current import StaticRouteEntry
 from middlewared.service import ServiceContext
 
 __all__ = ("sync_impl",)
 
 
-def _parse_static_route(staticroute: dict) -> tuple[str, int, str]:
+def _parse_static_route(staticroute: StaticRouteEntry) -> tuple[str, int, str]:
     """Parse a static route DB record into (dst, dst_len, gateway)."""
-    network = ip_network(staticroute["destination"], strict=False)
-    return network.network_address.exploded, network.prefixlen, staticroute["gateway"]
+    network = ip_network(staticroute.destination, strict=False)
+    return network.network_address.exploded, network.prefixlen, staticroute.gateway
 
 
-def sync_impl(ctx: ServiceContext):
+def sync_impl(ctx: ServiceContext) -> None:
     """Synchronize kernel static routes with the database configuration."""
-    desired = {}
-    for route in ctx.middleware.call_sync("staticroute.query"):
-        key = _parse_static_route(route)
+    desired: dict[tuple[str | None, int, str | None], bool] = {}
+    for static_route in ctx.call_sync2(ctx.s.staticroute.query):
+        key = _parse_static_route(static_route)
         desired[key] = True
 
     with netlink_route() as sock:
@@ -42,12 +43,12 @@ def sync_impl(ctx: ServiceContext):
             )
 
         for route in get_routes(sock):
-            key = (route.dst, route.dst_len, route.gateway)
-            if key in desired:
-                del desired[key]
+            route_key = (route.dst, route.dst_len, route.gateway)
+            if route_key in desired:
+                del desired[route_key]
                 continue
 
-            if key in default_keys:
+            if route_key in default_keys:
                 continue
 
             if route.gateway is not None:

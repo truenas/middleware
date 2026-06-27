@@ -42,6 +42,7 @@ jobs:
             middlewared/plugins/init_shutdown_script/ \
             middlewared/plugins/kmip/ \
             middlewared/plugins/mail/ \
+            middlewared/plugins/network_routes/ \
             middlewared/plugins/ntp/ \
             middlewared/plugins/ports/ \
             middlewared/plugins/reporting/ \
