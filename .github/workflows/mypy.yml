@@ -48,7 +48,7 @@ jobs:
             middlewared/plugins/reporting/ \
             middlewared/plugins/rsync/ \
             middlewared/plugins/security/ \
-            middlewared/plugins/service_/ \
+            middlewared/plugins/service/ \
             middlewared/plugins/snapshot/ \
             middlewared/plugins/snmp/ \
             middlewared/plugins/ssh/ \

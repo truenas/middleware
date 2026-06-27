@@ -22,7 +22,7 @@ from middlewared.plugins.docker.state_utils import Status as DockerStatus
 from middlewared.plugins.failover_.event_exceptions import AllZpoolsFailedToImport, FencedError, IgnoreFailoverEvent
 from middlewared.plugins.failover_.scheduled_reboot_alert import WATCHDOG_ALERT_FILE
 from middlewared.plugins.failover_.stcnith import stcnith_reboot
-from middlewared.plugins.service_.services.all import all_services
+from middlewared.plugins.service.services.all import all_services
 from middlewared.service import Service, job
 from middlewared.service_exception import CallError
 from middlewared.utils import BOOT_POOL_NAME_VALID

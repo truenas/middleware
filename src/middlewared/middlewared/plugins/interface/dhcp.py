@@ -6,7 +6,7 @@ import os
 import socket
 import struct
 
-from middlewared.plugins.service_.services.dbus_router import system_dbus
+from middlewared.plugins.service.services.dbus_router import system_dbus
 
 __all__ = ("DHCPLease", "DHCPStatus", "dhcp_leases", "dhcp_reload", "dhcp_start", "dhcp_status", "dhcp_stop")
 

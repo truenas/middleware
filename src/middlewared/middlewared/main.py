@@ -132,6 +132,7 @@ from middlewared.plugins.pwenc import PWEncService
 from middlewared.plugins.reporting import ReportingService
 from middlewared.plugins.rsync import RsyncTaskService
 from middlewared.plugins.security import SystemSecurityService
+from middlewared.plugins.service import ServiceService
 from middlewared.plugins.snapshot import PeriodicSnapshotTaskService
 from middlewared.plugins.snmp import SNMPService
 from middlewared.plugins.ssh import SSHService
@@ -284,6 +285,7 @@ class ServiceContainer(BaseServiceContainer):
         self.reporting = ReportingService(middleware)
         self.route = RouteService(middleware)
         self.rsynctask = RsyncTaskService(middleware)
+        self.service = ServiceService(middleware)
         self.sharing = SharingServicesContainer(middleware)
         self.snmp = SNMPService(middleware)
         self.ssh = SSHService(middleware)

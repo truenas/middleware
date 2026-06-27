@@ -212,13 +212,18 @@ class CRUDService[E](ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase)
             )
 
         if self._config.generic:
-            if not options['count']:
-                if options['get']:
-                    return self._config.entry.__query_result_item__(**result)
-                else:
-                    return [self._config.entry.__query_result_item__(**item) for item in result]
+            return self._handle_generic_query_result(result, options['count'], options['get'])
 
         return result
+
+    def _handle_generic_query_result[E](self, result: Any, count: bool, get: bool) -> list[E] | E | int:
+        if count:
+            return result
+
+        if get:
+            return self._config.entry.__query_result_item__(**result)
+
+        return [self._config.entry.__query_result_item__(**item) for item in result]
 
     @pass_app(message_id=True)
     async def create(self, app, audit_callback, message_id, data):

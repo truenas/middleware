@@ -48,8 +48,8 @@ class SimpleService(ServiceInterface, IdentifiableServiceInterface):
     async def reload(self) -> None:
         await self._unit_action("Reload")
 
-    async def identify(self, procname: str) -> str | None:
-        return None
+    async def identify(self, procname: str) -> bool:
+        return False
 
     async def get_failed_sub_units(self) -> dict[str, tuple[str, int]]:
         unit_name = self._get_systemd_unit_name()
