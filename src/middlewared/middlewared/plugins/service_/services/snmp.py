@@ -8,13 +8,13 @@ class SNMPService(SimpleService):
 
     systemd_unit = "snmpd"
 
-    async def systemd_extra_units(self):
+    async def systemd_extra_units(self) -> list[str]:
         return ["snmp-agent"]
 
-    async def start(self):
+    async def start(self) -> None:
         await super().start()
         await self._systemd_unit("snmp-agent", "start")
 
-    async def stop(self):
+    async def stop(self) -> None:
         await self._systemd_unit("snmp-agent", "stop")
         await super().stop()

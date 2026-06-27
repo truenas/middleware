@@ -10,7 +10,7 @@ from middlewared.utils.timezone_choices import effective_timezone
 
 
 class PseudoServiceBase(ServiceInterface):
-    async def get_state(self):
+    async def get_state(self) -> ServiceState:
         return ServiceState(True, [])
 
 
@@ -20,18 +20,18 @@ class CronService(PseudoServiceBase):
     etc = ["cron"]
     restartable = True
 
-    async def restart(self):
+    async def restart(self) -> None:
         pass
 
 
 class KmipService(PseudoServiceBase):
     name = "kmip"
 
-    async def start(self):
+    async def start(self) -> None:
         await (await self.middleware.call("service.control", "START", "ssl")).wait(raise_error=True)
         await self.middleware.call("etc.generate", "kmip")
 
-    async def get_state(self):
+    async def get_state(self) -> ServiceState:
         return ServiceState(
             (await self.middleware.call2(self.middleware.services.kmip.config)).enabled,
             [],
@@ -44,7 +44,7 @@ class LoaderService(PseudoServiceBase):
     etc = ["loader"]
     reloadable = True
 
-    async def reload(self):
+    async def reload(self) -> None:
         pass
 
 
@@ -53,7 +53,7 @@ class HostnameService(PseudoServiceBase):
 
     reloadable = True
 
-    async def reload(self):
+    async def reload(self) -> None:
         await self.middleware.call("etc.generate", "hostname")
         await (await self.middleware.call("service.control", "RESTART", "discovery")).wait(raise_error=True)
 
@@ -65,13 +65,13 @@ class HttpService(PseudoServiceBase):
     restartable = True
     reloadable = True
 
-    async def _register_new_port(self):
+    async def _register_new_port(self) -> None:
         """Create a task that sends the new HTTPS port to TNC if configured."""
         port_changed, new_port = await self.middleware.call("system.general.https_port_changed")
         if port_changed and (await self.call2(self.s.tn_connect.config)).status == Status.CONFIGURED.name:
             self.middleware.create_task(self._register_port_with_retry(new_port))
 
-    async def _register_port_with_retry(self, new_port: int):
+    async def _register_port_with_retry(self, new_port: int) -> None:
         """Register port with TNC with retry logic."""
         for attempt in range(3):
             try:
@@ -83,25 +83,25 @@ class HttpService(PseudoServiceBase):
                 else:
                     await asyncio.sleep(5)
 
-    async def restart(self):
+    async def restart(self) -> None:
         await self.middleware.call("system.general.update_ui_allowlist")
         await system_dbus.systemd_unit("nginx", "restart")
 
-    async def after_restart(self):
+    async def after_restart(self) -> None:
         await self._register_new_port()
 
-    async def reload(self):
+    async def reload(self) -> None:
         await self.middleware.call("system.general.update_ui_allowlist")
         await system_dbus.systemd_unit("nginx", "reload")
 
-    async def after_reload(self):
+    async def after_reload(self) -> None:
         await self._register_new_port()
 
 
 class NetworkService(PseudoServiceBase):
     name = "network"
 
-    async def start(self):
+    async def start(self) -> None:
         await self.middleware.call("interface.sync")
         await self.middleware.call("route.sync")
 
@@ -111,7 +111,7 @@ class NetworkGeneralService(PseudoServiceBase):
 
     reloadable = True
 
-    async def reload(self):
+    async def reload(self) -> None:
         await (await self.middleware.call("service.control", "RELOAD", "resolvconf")).wait(raise_error=True)
         await (await self.middleware.call("service.control", "RESTART", "routing")).wait(raise_error=True)
 
@@ -154,7 +154,7 @@ class RcService(PseudoServiceBase):
     etc = ["rc"]
     reloadable = True
 
-    async def reload(self):
+    async def reload(self) -> None:
         pass
 
 
@@ -163,7 +163,7 @@ class ResolvConfService(PseudoServiceBase):
 
     reloadable = True
 
-    async def reload(self):
+    async def reload(self) -> None:
         await (await self.middleware.call("service.control", "RELOAD", "hostname")).wait(raise_error=True)
         await self.middleware.call("dns.sync")
 
@@ -175,10 +175,10 @@ class RoutingService(SimpleService):
 
     restartable = True
 
-    async def get_state(self):
+    async def get_state(self) -> ServiceState:
         return ServiceState(True, [])
 
-    async def restart(self):
+    async def restart(self) -> None:
         await self.middleware.call("staticroute.sync")
 
 
@@ -187,7 +187,7 @@ class SslService(PseudoServiceBase):
 
     etc = ["ssl"]
 
-    async def start(self):
+    async def start(self) -> None:
         pass
 
 
@@ -207,7 +207,7 @@ class TimeservicesService(PseudoServiceBase):
     etc = ["localtime"]
     reloadable = True
 
-    async def reload(self):
+    async def reload(self) -> None:
         await (await self.middleware.call("service.control", "RESTART", "ntpd")).wait(raise_error=True)
 
         settings = await self.middleware.call("datastore.config", "system.settings")
@@ -222,7 +222,7 @@ class UserService(PseudoServiceBase):
     etc = ["user"]
     reloadable = True
 
-    async def reload(self):
+    async def reload(self) -> None:
         pass
 
 
@@ -233,17 +233,17 @@ class NVMETargetService(PseudoServiceBase):
 
     systemd_unit: str
 
-    async def start(self):
+    async def start(self) -> None:
         await self.middleware.call('nvmet.global.start')
 
-    async def stop(self):
+    async def stop(self) -> None:
         await self.middleware.call('nvmet.global.stop')
 
-    async def reload(self):
+    async def reload(self) -> None:
         # etc.generate is called before we get here
         pass
 
-    async def become_active(self):
+    async def become_active(self) -> None:
         if await self.middleware.call('nvmet.global.running'):
             # If necessary we can optimize to *just* poke the
             # 1. port ANA group state
@@ -252,18 +252,18 @@ class NVMETargetService(PseudoServiceBase):
         else:
             await self.start()
 
-    async def get_state(self):
+    async def get_state(self) -> ServiceState:
         return ServiceState(
             (await self.middleware.call('nvmet.global.running')),
             [],
         )
 
-    async def failure_logs(self):
+    async def failure_logs(self) -> str | None:
         if (await self.middleware.call('nvmet.global.config'))['kernel']:
             return None
         else:
             service_object = await self.middleware.call('service.object', "nvmf")
-            return await service_object.failure_logs()
+            return await service_object.failure_logs()  # type: ignore[no-any-return]
 
 
 class NVMfService(SimpleService):

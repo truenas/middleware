@@ -7,17 +7,17 @@ class LibvirtdService(SimpleService):
     etc = ["libvirt"]
     may_run_on_standby = False
 
-    async def after_start(self):
+    async def after_start(self) -> None:
         job = await self.middleware.call(
             "service.control", "START", "libvirt-guests", {"ha_propagate": False}
         )
         await job.wait(raise_error=True)
 
-    async def before_stop(self):
+    async def before_stop(self) -> None:
         job = await self.middleware.call("service.control", "STOP", "libvirt-guests")
         await job.wait(raise_error=True)
 
-    async def after_stop(self):
+    async def after_stop(self) -> None:
         for service in ('virtlogd.service', 'virtlogd.socket'):
             await self._systemd_unit(service, 'stop')
 

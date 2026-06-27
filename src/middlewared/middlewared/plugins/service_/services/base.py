@@ -17,10 +17,10 @@ class SimpleService(ServiceInterface, IdentifiableServiceInterface):
     systemd_unit: str
     systemd_async_start = False
 
-    async def systemd_extra_units(self):
+    async def systemd_extra_units(self) -> list[str]:
         return []
 
-    async def get_state(self):
+    async def get_state(self) -> ServiceState:
         unit_name = self._get_systemd_unit_name()
         state, main_pid = await system_dbus.get_service_state(unit_name)
         if (
@@ -32,26 +32,26 @@ class SimpleService(ServiceInterface, IdentifiableServiceInterface):
         else:
             return ServiceState(False, [])
 
-    async def get_unit_state(self):
+    async def get_unit_state(self) -> str | None:
         unit_name = self._get_systemd_unit_name()
         return await system_dbus.get_unit_active_state(unit_name)
 
-    async def start(self):
+    async def start(self) -> None:
         await self._unit_action("Start")
 
-    async def stop(self):
+    async def stop(self) -> None:
         await self._unit_action("Stop")
 
-    async def restart(self):
+    async def restart(self) -> None:
         await self._unit_action("Restart")
 
-    async def reload(self):
+    async def reload(self) -> None:
         await self._unit_action("Reload")
 
-    async def identify(self, procname):
-        pass
+    async def identify(self, procname: str) -> str | None:
+        return None
 
-    async def get_failed_sub_units(self):
+    async def get_failed_sub_units(self) -> dict[str, tuple[str, int]]:
         unit_name = self._get_systemd_unit_name()
         try:
             wants_tree = await system_dbus.get_wants_tree(unit_name)
@@ -60,7 +60,7 @@ class SimpleService(ServiceInterface, IdentifiableServiceInterface):
             logger.debug("Failed to walk Wants tree for %s", unit_name, exc_info=True)
             return {}
 
-    async def failure_logs(self, failed_units=None):
+    async def failure_logs(self, failed_units:  dict[str, tuple[str, int]] | None = None) -> str:
         # Walk the Wants dependency tree and find failed/crash-looping units.
         # This catches sub-unit failures (e.g. nut-driver@ups crash-looping
         # under nut-monitor) that the main unit's logs wouldn't show.
@@ -79,24 +79,24 @@ class SimpleService(ServiceInterface, IdentifiableServiceInterface):
             self._collect_failure_logs, units_info
         )
 
-    def _get_systemd_unit_name(self):
+    def _get_systemd_unit_name(self) -> str:
         return f"{self.systemd_unit}.service"
 
-    async def _unit_action(self, action, wait=True):
+    async def _unit_action(self, action: str, wait: bool = True) -> None:
         unit_name = self._get_systemd_unit_name()
         if wait:
             await self._call_unit_action_and_wait(unit_name, action)
         else:
             await system_dbus.call_unit_action(unit_name, action)
 
-    async def _call_unit_action_and_wait(self, service_name, action, timeout=None):
+    async def _call_unit_action_and_wait(self, service_name: str, action: str, timeout: float | None = None) -> None:
         await system_dbus.call_unit_action_and_wait(service_name, action, timeout)
 
-    async def _systemd_unit(self, unit, verb):
+    async def _systemd_unit(self, unit: str, verb: str) -> None:
         await system_dbus.systemd_unit(unit, verb)
 
     @staticmethod
-    def _collect_failure_logs(units_info):
+    def _collect_failure_logs(units_info: list[tuple[str, tuple[str, int]]]) -> str:
         """Collect journalctl logs for one or more failed units.
 
         Args:
@@ -150,7 +150,7 @@ class SwitchableSimpleService(SimpleService):
     async def get_state_no_unit(self) -> "ServiceState":
         return ServiceState(False, [])
 
-    async def get_state(self):
+    async def get_state(self) -> ServiceState:
         unit = await self.select_systemd_unit_name()
         if unit is None:
             return await self.get_state_no_unit()
@@ -164,13 +164,13 @@ class SwitchableSimpleService(SimpleService):
             return ServiceState(True, list(filter(None, [main_pid])))
         return ServiceState(False, [])
 
-    async def get_unit_state(self):
+    async def get_unit_state(self) -> str | None:
         unit = await self.select_systemd_unit_name()
         if unit is None:
             return None
         return await system_dbus.get_unit_active_state(f"{unit}.service")
 
-    async def _unit_action(self, action, wait=True):
+    async def _unit_action(self, action: str, wait: bool = True) -> None:
         unit = await self.select_systemd_unit_name()
         if unit is None:
             return
@@ -180,7 +180,7 @@ class SwitchableSimpleService(SimpleService):
         else:
             await system_dbus.call_unit_action(unit_name, action)
 
-    async def get_failed_sub_units(self):
+    async def get_failed_sub_units(self) -> dict[str, tuple[str, int]]:
         unit = await self.select_systemd_unit_name()
         if unit is None:
             return {}
@@ -192,7 +192,7 @@ class SwitchableSimpleService(SimpleService):
             logger.debug("Failed to walk Wants tree for %s", unit_name, exc_info=True)
             return {}
 
-    async def failure_logs(self, failed_units=None):
+    async def failure_logs(self, failed_units: dict[str, tuple[str, int]] | None = None) -> str:
         unit = await self.select_systemd_unit_name()
         if failed_units is None:
             failed_units = await self.get_failed_sub_units()

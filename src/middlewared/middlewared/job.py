@@ -409,7 +409,7 @@ class Job[T = typing.Any]:
 
         if access == JobAccess.READ:
             if credential.is_user_session and any(
-                credential.has_role(role) for role in self.options['read_roles']  # type: ignore[no-untyped-call]
+                credential.has_role(role) for role in self.options['read_roles']
             ):
                 return None
 
@@ -791,7 +791,7 @@ class Job[T = typing.Any]:
             'time_finished': self.time_finished,
             'credentials': (
                 {
-                    'type': self.credentials.class_name(),  # type: ignore[no-untyped-call]
+                    'type': self.credentials.class_name(),
                     'data': self.credentials.dump(),
                 } if self.credentials is not None
                 else None
