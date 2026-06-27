@@ -5,6 +5,7 @@ from time import sleep, time
 import wbclient
 
 from middlewared.job import Job
+from middlewared.plugins.dns_client import DNSClientReverseLookupData
 from middlewared.plugins.smb_.constants import SMBCmd, SMBPath
 from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.utils.directoryservices.ad import get_domain_info, lookup_dc
@@ -63,8 +64,10 @@ class ADJoinMixin:
         if not (ip := entry.get('ip')):
             return None
 
-        if ptr := self.middleware.call_sync('dnsclient.reverse_lookup', {'addresses': [ip]}):
-            return ptr[0]['target'].removesuffix('.')
+        if ptr := self.middleware.call_sync2(
+            self.middleware.services.dnsclient.reverse_lookup, DNSClientReverseLookupData(addresses=[ip]),
+        ):
+            return ptr[0].target.removesuffix('.')
 
         return None
 

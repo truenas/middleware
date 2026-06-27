@@ -112,6 +112,7 @@ from middlewared.plugins.cloud_backup import CloudBackupService
 from middlewared.plugins.container import ContainerService
 from middlewared.plugins.container.lxc import LXCConfigService
 from middlewared.plugins.cron import CronJobService
+from middlewared.plugins.dns_client import DNSClientService
 from middlewared.plugins.docker import DockerService
 from middlewared.plugins.ftp import FTPService
 from middlewared.plugins.hardware import (
@@ -264,6 +265,7 @@ class ServiceContainer(BaseServiceContainer):
         self.cloud_backup = CloudBackupService(middleware)
         self.container = ContainerService(middleware)
         self.cronjob = CronJobService(middleware)
+        self.dnsclient = DNSClientService(middleware)
         self.docker = DockerService(middleware)
         self.ftp = FTPService(middleware)
         self.hardware = HardwareServicesContainer(middleware)

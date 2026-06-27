@@ -24,6 +24,7 @@ from middlewared.api.current import (
 )
 from middlewared.async_validators import check_path_resides_within_volume, validate_port
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
+from middlewared.plugins.dns_client import DNSClientForwardLookupData
 from middlewared.plugins.nfs_.utils import get_domain, get_wildcard_domain, leftmost_has_wildcards
 from middlewared.plugins.nfs_.validators import confirm_unique, sanitize_hosts, sanitize_networks, validate_bind_ip
 from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
@@ -697,8 +698,8 @@ class SharingNFSService(SharingService):
                     else:
                         try:
                             dns_addresses = [
-                                x['address'] for x in await self.middleware.call(
-                                    'dnsclient.forward_lookup', {'names': [hostname]},
+                                x.address for x in await self.call2(
+                                    self.s.dnsclient.forward_lookup, DNSClientForwardLookupData(names=[hostname]),
                                 )
                             ]
                             # We might get both IPv4 and IPv6 addresses, the caller expects a single response
