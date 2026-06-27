@@ -118,7 +118,9 @@ class UserSessionManagerCredentials(SessionManagerCredentials):
                 self.last_used_at = now
 
     def is_valid(self):
-        if self.assurance and (now := monotonic()) > self.expiry:
+        now = monotonic()
+
+        if self.assurance and now > self.expiry:
             return False
 
         if self.inactivity_timeout:
