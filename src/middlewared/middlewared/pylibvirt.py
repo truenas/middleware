@@ -18,12 +18,16 @@ class MiddlewareServiceDelegate(ServiceDelegate):
         self.middleware = middleware
 
     def ensure_started(self):
-        self.middleware.call_sync("service.control", "START", "libvirtd").wait_sync(raise_error=True)
-        while not self.middleware.call_sync("service.started", "libvirtd"):
+        self.middleware.call_sync2(
+            self.middleware.services.service.control, "START", "libvirtd"
+        ).wait_sync(raise_error=True)
+        while not self.middleware.call_sync2(self.middleware.services.service.started, "libvirtd"):
             time.sleep(2)
 
     def stop(self):
-        self.middleware.call_sync("service.control", "STOP", "libvirtd").wait_sync(raise_error=True)
+        self.middleware.call_sync2(
+            self.middleware.services.service.control, "STOP", "libvirtd"
+        ).wait_sync(raise_error=True)
 
 
 def create_pylibvirt_domains_manager(middleware):

@@ -28,7 +28,7 @@ class KmipService(PseudoServiceBase):
     name = "kmip"
 
     async def start(self) -> None:
-        await (await self.middleware.call("service.control", "START", "ssl")).wait(raise_error=True)
+        await (await self.call2(self.s.service.control, "START", "ssl")).wait(raise_error=True)
         await self.middleware.call("etc.generate", "kmip")
 
     async def get_state(self) -> ServiceState:
@@ -55,7 +55,7 @@ class HostnameService(PseudoServiceBase):
 
     async def reload(self) -> None:
         await self.middleware.call("etc.generate", "hostname")
-        await (await self.middleware.call("service.control", "RESTART", "discovery")).wait(raise_error=True)
+        await (await self.call2(self.s.service.control, "RESTART", "discovery")).wait(raise_error=True)
 
 
 class HttpService(PseudoServiceBase):
@@ -112,8 +112,8 @@ class NetworkGeneralService(PseudoServiceBase):
     reloadable = True
 
     async def reload(self) -> None:
-        await (await self.middleware.call("service.control", "RELOAD", "resolvconf")).wait(raise_error=True)
-        await (await self.middleware.call("service.control", "RESTART", "routing")).wait(raise_error=True)
+        await (await self.call2(self.s.service.control, "RELOAD", "resolvconf")).wait(raise_error=True)
+        await (await self.call2(self.s.service.control, "RESTART", "routing")).wait(raise_error=True)
 
 
 class NfsMountdService(SimpleService):
@@ -164,7 +164,7 @@ class ResolvConfService(PseudoServiceBase):
     reloadable = True
 
     async def reload(self) -> None:
-        await (await self.middleware.call("service.control", "RELOAD", "hostname")).wait(raise_error=True)
+        await (await self.call2(self.s.service.control, "RELOAD", "hostname")).wait(raise_error=True)
         await self.middleware.call("dns.sync")
 
 
@@ -208,7 +208,7 @@ class TimeservicesService(PseudoServiceBase):
     reloadable = True
 
     async def reload(self) -> None:
-        await (await self.middleware.call("service.control", "RESTART", "ntpd")).wait(raise_error=True)
+        await (await self.call2(self.s.service.control, "RESTART", "ntpd")).wait(raise_error=True)
 
         settings = await self.middleware.call("datastore.config", "system.settings")
         await self.middleware.call(
@@ -262,8 +262,8 @@ class NVMETargetService(PseudoServiceBase):
         if (await self.middleware.call('nvmet.global.config'))['kernel']:
             return ""
         else:
-            service_object = await self.middleware.call('service.object', "nvmf")
-            return await service_object.failure_logs()  # type: ignore[no-any-return]
+            service_object = await self.call2(self.s.service.object, "nvmf")
+            return await service_object.failure_logs()
 
 
 class NVMfService(SimpleService):

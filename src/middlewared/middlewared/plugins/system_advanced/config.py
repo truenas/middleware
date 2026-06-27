@@ -231,20 +231,20 @@ class SystemAdvancedService(ConfigService):
             )
 
             if original_data['boot_scrub'] != config_data['boot_scrub']:
-                await (await self.middleware.call('service.control', 'RESTART', 'cron')).wait(raise_error=True)
+                await (await self.call2(self.s.service.control, 'RESTART', 'cron')).wait(raise_error=True)
 
             generate_grub = original_data['kernel_extra_options'] != config_data['kernel_extra_options']
             if original_data['motd'] != config_data['motd']:
                 await self.middleware.call('etc.generate', 'motd')
 
             if original_data['login_banner'] != config_data['login_banner']:
-                await (await self.middleware.call('service.control', 'RELOAD', 'ssh')).wait(raise_error=True)
+                await (await self.call2(self.s.service.control, 'RELOAD', 'ssh')).wait(raise_error=True)
 
             if original_data['powerdaemon'] != config_data['powerdaemon']:
-                await (await self.middleware.call('service.control', 'RESTART', 'powerd')).wait(raise_error=True)
+                await (await self.call2(self.s.service.control, 'RESTART', 'powerd')).wait(raise_error=True)
 
             if self._syslogd_changes(original_data, config_data):
-                await (await self.middleware.call('service.control', 'RESTART', 'syslogd')).wait(raise_error=True)
+                await (await self.call2(self.s.service.control, 'RESTART', 'syslogd')).wait(raise_error=True)
 
             if config_data['sed_passwd'] and original_data['sed_passwd'] != config_data['sed_passwd']:
                 await self.middleware.call('kmip.sync_sed_keys')

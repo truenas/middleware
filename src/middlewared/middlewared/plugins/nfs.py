@@ -325,7 +325,7 @@ class NFSService(SystemServiceService):
         await self._update_service(old, new, "restart")
 
         if old['mountd_log'] != new['mountd_log']:
-            await (await self.middleware.call('service.control', 'RELOAD', 'syslogd')).wait(raise_error=True)
+            await (await self.call2(self.s.service.control, 'RELOAD', 'syslogd')).wait(raise_error=True)
 
         return await self.config()
 
@@ -900,7 +900,8 @@ async def pool_post_import(middleware, pool):
     path = f'/mnt/{pool["name"]}'
     for share in await middleware.call('sharing.nfs.query', [], {'select': ['path']}):
         if share['path'].startswith(path):
-            await middleware.call('service.control', 'RELOAD', 'nfs')  # No need to wait for this to complete
+            # No need to wait for this to complete
+            await middleware.call2(middleware.services.service.control, 'RELOAD', 'nfs')
             break
 
 

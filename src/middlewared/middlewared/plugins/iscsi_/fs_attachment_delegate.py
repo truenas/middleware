@@ -94,7 +94,7 @@ class ISCSIFSAttachmentDelegate(LockableFSAttachmentDelegate):
         if attachments:
             alua_enabled = await self.middleware.call('iscsi.global.alua_enabled')
             remote_connected = await self.middleware.call('failover.remote_connected')
-            service_started = await self.middleware.call('service.started', self.service)
+            service_started = await self.call2(self.s.service.started, self.service)
             if alua_enabled and remote_connected and service_started:
                 await self._service_change(
                     'iscsitarget',

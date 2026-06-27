@@ -4,6 +4,7 @@ import subprocess
 
 import wbclient
 
+from middlewared.api.current import ServiceOptions
 from middlewared.plugins.idmap_.idmap_winbind import WBClient
 from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.utils.directoryservices.ad import get_domain_info
@@ -213,7 +214,9 @@ class ADHealthMixin:
                 # not recoverable
                 raise error from None
 
-        self.middleware.call_sync('service.control', 'RESTART', 'idmap', DEF_SVC_OPTS).wait_sync(raise_error=True)
+        self.call_sync2(
+            self.s.service.control, 'RESTART', 'idmap', ServiceOptions(**DEF_SVC_OPTS)
+        ).wait_sync(raise_error=True)
 
     def _health_check_ad(self):
         """
@@ -280,9 +283,11 @@ class ADHealthMixin:
 
         # Now check that winbindd is started
 
-        if not self.middleware.call_sync('service.started', 'idmap'):
+        if not self.call_sync2(self.s.service.started, 'idmap'):
             try:
-                self.middleware.call_sync('service.control', 'START', 'idmap', DEF_SVC_OPTS).wait_sync(raise_error=True)
+                self.call_sync2(
+                    self.s.service.control, 'START', 'idmap', ServiceOptions(**DEF_SVC_OPTS)
+                ).wait_sync(raise_error=True)
             except CallError as e:
                 faulted_reason = str(e.errmsg)
                 raise ADHealthError(

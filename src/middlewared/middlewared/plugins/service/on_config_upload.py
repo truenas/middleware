@@ -18,7 +18,7 @@ def on_config_upload(middleware: Middleware, path: str) -> None:
         cursor = conn.cursor()
         for service, enabled in cursor.execute('SELECT srv_service, srv_enable FROM services_services').fetchall():
             try:
-                units = middleware.call_sync('service.systemd_units', service)
+                units = middleware.call_sync2(middleware.services.service.systemd_units, service)
             except MatchNotFound:
                 # An old service which we don't have currently
                 continue

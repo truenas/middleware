@@ -22,5 +22,5 @@ class ReportingConfigServicePart(ConfigServicePart[ReportingEntry]):
         old = await self.config()
         new = old.updated(data)
         await self._update(new)
-        await (await self.middleware.call("service.control", "RESTART", "netdata")).wait(raise_error=True)
+        await (await self.call2(self.s.service.control, "RESTART", "netdata")).wait(raise_error=True)
         return await self.config()

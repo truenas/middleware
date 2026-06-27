@@ -17,7 +17,7 @@ class CIFSService(SimpleService):
 
     async def after_start(self) -> None:
         # We reconfigure discovery (add SMB service, possibly also ADISK)
-        await (await self.middleware.call('service.control', 'RELOAD', 'discovery')).wait(raise_error=True)
+        await (await self.call2(self.s.service.control, 'RELOAD', 'discovery')).wait(raise_error=True)
         await self.call2(self.s.truesearch.configure)
 
     async def stop(self) -> None:
@@ -25,7 +25,7 @@ class CIFSService(SimpleService):
 
     async def after_stop(self) -> None:
         # reconfigure discovery (remove SMB service, possibly also ADISK)
-        await (await self.middleware.call('service.control', 'RELOAD', 'discovery')).wait(raise_error=True)
+        await (await self.call2(self.s.service.control, 'RELOAD', 'discovery')).wait(raise_error=True)
         await self.call2(self.s.truesearch.configure)
 
     async def reload(self) -> None:

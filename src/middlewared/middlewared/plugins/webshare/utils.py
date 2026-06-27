@@ -40,7 +40,7 @@ def hostnames_from_config(tn_connect_hostname_config: dict[str, Any]) -> list[st
 async def tn_connect_hostname_updated(middleware: Middleware, tn_connect_hostname_config: dict[str, Any]) -> None:
     hostnames = hostnames_from_config(tn_connect_hostname_config)
     await middleware.call2(middleware.services.keyvalue.set, HOSTNAMES_KEY, hostnames)
-    if not await middleware.call("service.started", "webshare"):
+    if not await middleware.call2(middleware.services.service.started, "webshare"):
         return
 
-    await middleware.call("service.control", "RELOAD", "webshare")
+    await middleware.call2(middleware.services.service.control, "RELOAD", "webshare")

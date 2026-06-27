@@ -88,4 +88,4 @@ class ReportingExportsServicePart(CRUDServicePart[ReportingExportsEntry]):
         verrors.check()
 
     async def _restart_netdata(self) -> None:
-        await (await self.middleware.call("service.control", "RESTART", "netdata")).wait(raise_error=True)
+        await (await self.call2(self.s.service.control, "RESTART", "netdata")).wait(raise_error=True)

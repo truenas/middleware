@@ -42,7 +42,7 @@ class ISCSIGlobalService(Service):
 
     @private
     def resync_lun_size_for_zvol(self, id_):
-        if not self.middleware.call_sync('service.started', 'iscsitarget'):
+        if not self.call_sync2(self.s.service.started, 'iscsitarget'):
             return
 
         extent = self.middleware.call_sync(
@@ -74,7 +74,7 @@ class ISCSIGlobalService(Service):
 
     @private
     def resync_lun_size_for_file(self, path):
-        if not self.middleware.call_sync('service.started', 'iscsitarget'):
+        if not self.call_sync2(self.s.service.started, 'iscsitarget'):
             return
 
         extent = self.middleware.call_sync(
@@ -106,7 +106,7 @@ class ISCSIGlobalService(Service):
 
     @private
     async def terminate_luns_for_pool(self, pool_name):
-        if not await self.middleware.call('service.started', 'iscsitarget'):
+        if not await self.call2(self.s.service.started, 'iscsitarget'):
             return
 
         g_config = await self.middleware.call('iscsi.global.config')

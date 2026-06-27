@@ -82,7 +82,7 @@ class CloudBackupServicePart(SharingTaskServicePart[CloudBackupEntry], CloudTask
     async def do_create(self, app: App | None, data: CloudBackupCreate) -> CloudBackupEntry:
         cloud_backup = await self.to_thread(self._run_validation, app, "cloud_backup_create", data)
         entry = await self._create(cloud_backup)
-        await (await self.middleware.call("service.control", "RESTART", "cron")).wait(raise_error=True)
+        await (await self.call2(self.s.service.control, "RESTART", "cron")).wait(raise_error=True)
         return entry
 
     async def do_update(self, app: App | None, id_: int, data: CloudBackupUpdate) -> CloudBackupEntry:
@@ -90,14 +90,14 @@ class CloudBackupServicePart(SharingTaskServicePart[CloudBackupEntry], CloudTask
         new = old.updated(data)
         cloud_backup = await self.to_thread(self._run_validation, app, "cloud_backup_update", new)
         entry = await self._update(id_, cloud_backup)
-        await (await self.middleware.call("service.control", "RESTART", "cron")).wait(raise_error=True)
+        await (await self.call2(self.s.service.control, "RESTART", "cron")).wait(raise_error=True)
         return entry
 
     async def do_delete(self, id_: int) -> None:
         await self.call2(self.s.cloud_backup.abort, id_)
         await self.call2(self.s.alert.oneshot_delete, "CloudBackupTaskFailed", id_)
         await self._delete(id_)
-        await (await self.middleware.call("service.control", "RESTART", "cron")).wait(raise_error=True)
+        await (await self.call2(self.s.service.control, "RESTART", "cron")).wait(raise_error=True)
 
     async def get_path_field(self, data: Any) -> Any:
         if isinstance(data, dict):

@@ -91,15 +91,15 @@ class PoolDatasetService(Service):
                         for attachment_delegate in await self.middleware.call('pool.dataset.get_attachment_delegates')
                     ):
                         self.logger.info('Restarting service %r that holds dataset %r', service, oid)
-                        await (await self.middleware.call('service.control', 'RESTART', service)).wait(raise_error=True)
+                        await (await self.call2(self.s.service.control, 'RESTART', service)).wait(raise_error=True)
                     else:
                         self.logger.info('Stopping service %r that holds dataset %r', service, oid)
-                        await (await self.middleware.call('service.control', 'STOP', service)).wait(raise_error=True)
+                        await (await self.call2(self.s.service.control, 'STOP', service)).wait(raise_error=True)
                 else:
                     self.logger.info('Killing process %r (%r) that holds dataset %r', process['pid'],
                                      process['cmdline'], oid)
                     try:
-                        await self.middleware.call('service.terminate_process', process['pid'])
+                        await self.call2(self.s.service.terminate_process, process['pid'])
                     except CallError as e:
                         self.logger.warning('Error killing process: %r', e)
 
@@ -195,7 +195,7 @@ class PoolDatasetService(Service):
 
                         proc = {'pid': int(pid), 'name': name, 'service': None, 'cmdline': None}
 
-                        if svc := self.middleware.call_sync('service.identify_process', name):
+                        if svc := self.call_sync2(self.s.service.identify_process, name):
                             proc['service'] = svc
                         else:
                             with open(f'/proc/{pid}/cmdline') as cmd:

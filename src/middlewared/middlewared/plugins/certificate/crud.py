@@ -99,7 +99,7 @@ class CertificateServicePart(CRUDServicePart[CertificateEntry]):
             "add_to_trusted_store": data.add_to_trusted_store,
         }
         cert_entry = await self._create(db_payload)
-        await (await self.middleware.call("service.control", "START", "ssl")).wait(raise_error=True)
+        await (await self.call2(self.s.service.control, "START", "ssl")).wait(raise_error=True)
         job.set_progress(100, "Certificate created successfully")
         return cert_entry
 
@@ -141,7 +141,7 @@ class CertificateServicePart(CRUDServicePart[CertificateEntry]):
                 update_fields["renew_days"] = new.renew_days
 
             await self._update(id_, update_fields)
-            await (await self.middleware.call("service.control", "START", "ssl")).wait(raise_error=True)
+            await (await self.call2(self.s.service.control, "START", "ssl")).wait(raise_error=True)
 
         job.set_progress(90, "Finalizing changes")
         return await self.get_instance(id_)
@@ -167,7 +167,7 @@ class CertificateServicePart(CRUDServicePart[CertificateEntry]):
                     raise
 
         response: bool = self.middleware.call_sync("datastore.delete", self._datastore, id_)
-        self.middleware.call_sync("service.control", "START", "ssl").wait_sync(raise_error=True)
+        self.call_sync2(self.s.service.control, "START", "ssl").wait_sync(raise_error=True)
         self.call_sync2(self.s.alert.alert_source_clear_run, "CertificateChecks")
         job.set_progress(100)
         return response

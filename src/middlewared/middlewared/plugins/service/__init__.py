@@ -3,17 +3,17 @@ from __future__ import annotations
 import asyncio
 import errno
 import os
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any, Literal, overload
 
 from middlewared.alert.source.deprecated_service import DeprecatedServiceAlert
 from middlewared.api import api_method
 from middlewared.api.current import (
     QueryFilters,
     QueryOptions,
-    ServiceOptions,
     ServiceControlArgs,
     ServiceControlResult,
     ServiceEntry,
+    ServiceOptions,
     ServiceStartedArgs,
     ServiceStartedOrEnabledArgs,
     ServiceStartedOrEnabledResult,
@@ -37,6 +37,7 @@ if TYPE_CHECKING:
     from middlewared.api.base.server.app import App
     from middlewared.job import Job
     from middlewared.main import Middleware
+    from middlewared.service.crud_service import _QueryGetOptions, _QueryCountOptions
     from middlewared.utils.types import AuditCallback
 
     from .services.base_interface import ServiceInterface
@@ -111,8 +112,23 @@ class ServiceService(CRUDService[ServiceEntry]):
     async def service_extend(self, svc: dict[str, Any], ctx: dict[str, Any]) -> dict[str, Any]:
         return svc | ctx.get(svc['service'], {'state': 'UNKNOWN', 'pids': []})  # type: ignore[no-any-return]
 
+    @overload  # type: ignore[override]
+    async def query(  # type: ignore[overload-overlap]
+        self, filters: QueryFilters, options: _QueryCountOptions,
+    ) -> int: ...
+
+    @overload
+    async def query(  # type: ignore[overload-overlap]
+        self, filters: QueryFilters, options: _QueryGetOptions,
+    ) -> ServiceEntry: ...
+
+    @overload
+    async def query(
+        self, filters: QueryFilters, options: QueryOptions = QueryOptions(),
+    ) -> list[ServiceEntry]: ...
+
     @filterable_api_method(item=ServiceEntry, check_annotations=True)
-    async def query(self, filters: QueryFilters, options: QueryOptions) -> (  # type: ignore[override]
+    async def query(self, filters: QueryFilters, options: QueryOptions = QueryOptions()) -> (
         list[ServiceEntry] | ServiceEntry | int
     ):
         """
@@ -182,7 +198,7 @@ class ServiceService(CRUDService[ServiceEntry]):
             'datastore.update', 'services.services', svc['id'], {'srv_enable': data.enable}
         )
         await self.middleware.call('etc.generate', 'rc')
-        await self.middleware.call('service.notify_running', svc['service'])
+        await self.call2(self.s.service.notify_running, svc['service'])
         return rv  # type: ignore[no-any-return]
 
     @api_method(
@@ -196,7 +212,7 @@ class ServiceService(CRUDService[ServiceEntry]):
         check_annotations=True,
     )
     @job(lock=lambda args: f'service_{args[1]}')
-    async def control(self, app: App, job: Job, verb: Literal['START', 'STOP', 'RESTART', 'RELOAD'], service: str, options: ServiceOptions) -> bool:
+    async def control(self, app: App, job: Job, verb: Literal['START', 'STOP', 'RESTART', 'RELOAD'], service: str, options: ServiceOptions = ServiceOptions()) -> bool:
         """
         Perform the control operation given by ``verb`` (``START``, ``STOP``, ``RESTART``, or ``RELOAD``) on the
         system service named ``service``. This is the general entry point for managing the running state of a
@@ -222,7 +238,7 @@ class ServiceService(CRUDService[ServiceEntry]):
             async with asyncio.timeout(options.timeout):
                 await self.middleware.call_hook('service.pre_action', service, 'start', options)
 
-                await self.middleware.call('service.generate_etc', service_object)
+                await self.call2(self.s.service.generate_etc, service_object)
 
                 try:
                     await service_object.check_configuration()
@@ -244,7 +260,7 @@ class ServiceService(CRUDService[ServiceEntry]):
                 )
                 if ok:
                     await service_object.after_start()
-                    await self.middleware.call('service.notify_running', service)
+                    await self.call2(self.s.service.notify_running, service)
                     if service_object.deprecated:
                         await self.call2(
                             self.s.alert.oneshot_create,
@@ -252,7 +268,7 @@ class ServiceService(CRUDService[ServiceEntry]):
                         )
                     return True
 
-                await self.middleware.call('service.notify_running', service)
+                await self.call2(self.s.service.notify_running, service)
                 if options.silent:
                     return False
 
@@ -313,14 +329,14 @@ class ServiceService(CRUDService[ServiceEntry]):
                 state = await service_object.get_state()
                 if not state.running:
                     await service_object.after_stop()
-                    await self.middleware.call('service.notify_running', service)
+                    await self.call2(self.s.service.notify_running, service)
                     if service_object.deprecated:
                         await self.call2(self.s.alert.oneshot_delete, 'DeprecatedService', service_object.name)
 
                     return True
 
                 self.logger.error("Service %r running after stop", service)
-                await self.middleware.call('service.notify_running', service)
+                await self.call2(self.s.service.notify_running, service)
                 if options.silent:
                     return False
                 raise CallError(await service_object.failure_logs() or 'Service still running after stop')
@@ -341,7 +357,7 @@ class ServiceService(CRUDService[ServiceEntry]):
             async with asyncio.timeout(options.timeout):
                 await self.middleware.call_hook('service.pre_action', service, 'restart', options)
 
-                await self.middleware.call('service.generate_etc', service_object)
+                await self.call2(self.s.service.generate_etc, service_object)
 
                 return await self._restart(service, service_object)
         except asyncio.TimeoutError:
@@ -387,7 +403,7 @@ class ServiceService(CRUDService[ServiceEntry]):
                 service, service_object, "restart",
             )
             if not ok:
-                await self.middleware.call('service.notify_running', service)
+                await self.call2(self.s.service.notify_running, service)
                 return False
 
         else:
@@ -411,12 +427,12 @@ class ServiceService(CRUDService[ServiceEntry]):
                 service, service_object, "restart",
             )
             if not ok:
-                await self.middleware.call('service.notify_running', service)
+                await self.call2(self.s.service.notify_running, service)
                 return False
 
             await service_object.after_start()
 
-        await self.middleware.call('service.notify_running', service)
+        await self.call2(self.s.service.notify_running, service)
         if service_object.deprecated:
             await self.call2(self.s.alert.oneshot_create, DeprecatedServiceAlert(service=service_object.name))
 
@@ -433,7 +449,7 @@ class ServiceService(CRUDService[ServiceEntry]):
             async with asyncio.timeout(options.timeout):
                 await self.middleware.call_hook('service.pre_action', service, 'reload', options)
 
-                await self.middleware.call('service.generate_etc', service_object)
+                await self.call2(self.s.service.generate_etc, service_object)
 
                 # Check if service is running before attempting reload
                 state = await service_object.get_state()
@@ -490,7 +506,7 @@ class ServiceService(CRUDService[ServiceEntry]):
     @private
     async def notify_running(self, service: str) -> None:
         try:
-            svc = await self.middleware.call('service.query', [('service', '=', service)], {'get': True})
+            svc = await self.call2(self.s.service.query, [('service', '=', service)], QueryOptions(get=True))
         except MatchNotFound:
             return
 
@@ -567,11 +583,11 @@ class ServiceService(CRUDService[ServiceEntry]):
 
 
 async def __event_service_ready(middleware: Middleware, event_type: Any, args: Any) -> None:
-    middleware.create_task(middleware.call('service.check_deprecated_services'))
+    middleware.create_task(middleware.call2(middleware.services.service.check_deprecated_services))
 
 
 async def setup(middleware: Middleware) -> None:
     for klass in all_services:
-        await middleware.call('service.register_object', klass(middleware))
+        await middleware.call2(middleware.services.service.register_object, klass(middleware))
 
     middleware.event_subscribe('system.ready', __event_service_ready)

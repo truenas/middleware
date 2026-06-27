@@ -30,6 +30,8 @@ from middlewared.api.current import (
     KeychainCredentialUpdateResult,
     KeychainCredentialUsedByArgs,
     KeychainCredentialUsedByResult,
+    QueryOptions,
+    ServiceUpdate,
     SSHCredentialsEntry,
     SSHKeyPairEntry,
 )
@@ -641,7 +643,7 @@ class KeychainCredentialService(CRUDService):
         Receives public key, storing it to accept SSH connection and return
         pertinent SSH data of this machine.
         """
-        service = self.middleware.call_sync("service.query", [("service", "=", "ssh")], {"get": True})
+        service = self.call_sync2(self.s.service.query, [("service", "=", "ssh")], QueryOptions(get=True))
         ssh = self.middleware.call_sync2(self.middleware.services.ssh.config)
         try:
             user = self.middleware.call_sync(
@@ -656,11 +658,11 @@ class KeychainCredentialService(CRUDService):
             raise CallError(f"Home directory {user['home']} does not exist", errno.ENOENT)
 
         # Make sure SSH is enabled
-        if not service["enable"]:
-            self.middleware.call_sync("service.update", "ssh", {"enable": True})
+        if not service.enable:
+            self.call_sync2(self.s.service.update, "ssh", ServiceUpdate(enable=True))
 
-        if service["state"] != "RUNNING":
-            self.middleware.call_sync("service.control", "START", "ssh").wait_sync(raise_error=True)
+        if service.state != "RUNNING":
+            self.call_sync2(self.s.service.control, "START", "ssh").wait_sync(raise_error=True)
 
             # This might be the first time of the service being enabled
             # which will then result in new host keys we need to grab

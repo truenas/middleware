@@ -139,7 +139,7 @@ class PoolScrubService(CRUDService):
             {'prefix': self._config.datastore_prefix}
         )
 
-        await (await self.middleware.call('service.control', 'RESTART', 'cron')).wait(raise_error=True)
+        await (await self.call2(self.s.service.control, 'RESTART', 'cron')).wait(raise_error=True)
 
         return await self.get_instance(data['id'])
 
@@ -172,7 +172,7 @@ class PoolScrubService(CRUDService):
                 {'prefix': self._config.datastore_prefix}
             )
 
-            await (await self.middleware.call('service.control', 'RESTART', 'cron')).wait(raise_error=True)
+            await (await self.call2(self.s.service.control, 'RESTART', 'cron')).wait(raise_error=True)
 
         return await self.get_instance(id_)
 
@@ -187,7 +187,7 @@ class PoolScrubService(CRUDService):
             id_
         )
 
-        await (await self.middleware.call('service.control', 'RESTART', 'cron')).wait(raise_error=True)
+        await (await self.call2(self.s.service.control, 'RESTART', 'cron')).wait(raise_error=True)
         return response
 
     @api_method(PoolScrubScrubArgs, PoolScrubScrubResult, roles=['POOL_WRITE'])

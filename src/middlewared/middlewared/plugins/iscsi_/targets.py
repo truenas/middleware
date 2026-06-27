@@ -450,7 +450,7 @@ class iSCSITargetService(CRUDService):
     async def remove_target(self, name):
         # We explicitly need to do this unfortunately as scst does not accept these changes with a reload
         # So this is the best way to do this without going through a restart of the service
-        if await self.middleware.call('service.started', 'iscsitarget'):
+        if await self.call2(self.s.service.started, 'iscsitarget'):
             if await self.middleware.call('iscsi.global.lio_enabled'):
                 # LIO: the reload (etc.generate 'lio') reconciler removes the target; nothing to do here.
                 return

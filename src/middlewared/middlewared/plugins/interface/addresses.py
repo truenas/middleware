@@ -212,13 +212,13 @@ def configure_addresses_impl(
     # it here would deadlock for 95s.  The sentinel is written by ix-netif.service
     # on successful completion, so its presence means the network is up.
     if vip or alias_vips:
-        if ctx.middleware.call_sync("service.started", "keepalived"):
-            ctx.middleware.call_sync(
-                "service.control", "RELOAD", "keepalived"
+        if ctx.call_sync2(ctx.s.service.started, "keepalived"):
+            ctx.call_sync2(
+                ctx.s.service.control, "RELOAD", "keepalived"
             ).wait_sync(raise_error=True)
         elif os.path.exists(NETIF_COMPLETE_SENTINEL):
-            ctx.middleware.call_sync(
-                "service.control", "START", "keepalived"
+            ctx.call_sync2(
+                ctx.s.service.control, "START", "keepalived"
             ).wait_sync(raise_error=True)
         # else: early boot call from ix-netif.service; keepalived will be
         # started later once network-online.target is satisfied.

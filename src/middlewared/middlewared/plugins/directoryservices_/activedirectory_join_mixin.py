@@ -4,6 +4,7 @@ from time import sleep, time
 
 import wbclient
 
+from middlewared.api.current import ServiceOptions
 from middlewared.job import Job
 from middlewared.plugins.smb_.constants import SMBCmd, SMBPath
 from middlewared.service_exception import CallError, MatchNotFound
@@ -72,8 +73,10 @@ class ADJoinMixin:
         for etc_file in DSType.AD.etc_files:
             self.middleware.call_sync('etc.generate', etc_file)
 
-        self.middleware.call_sync('service.control', 'STOP', 'idmap', DEF_SVC_OPTS).wait_sync()
-        self.middleware.call_sync('service.control', 'START', 'idmap', DEF_SVC_OPTS).wait_sync(raise_error=True)
+        self.call_sync2(self.s.service.control, 'STOP', 'idmap', ServiceOptions(**DEF_SVC_OPTS)).wait_sync()
+        self.call_sync2(
+            self.s.service.control, 'START', 'idmap', ServiceOptions(**DEF_SVC_OPTS)
+        ).wait_sync(raise_error=True)
 
         # Wait for winbind to come online to provide some time for sysvol replication
         self._ad_wait_wbclient()

@@ -44,7 +44,7 @@ class CronJobServicePart(CRUDServicePart[CronJobEntry]):
     async def do_create(self, data: CronJobCreate) -> CronJobEntry:
         data = await self.validate(data, 'cron_job_create')
         cronjob_entry = await self._create(data.model_dump())
-        await (await self.middleware.call('service.control', 'RESTART', 'cron')).wait(raise_error=True)
+        await (await self.call2(self.s.service.control, 'RESTART', 'cron')).wait(raise_error=True)
         return cronjob_entry
 
     async def do_update(self, id_: int, data: CronJobUpdate) -> CronJobEntry:
@@ -52,13 +52,13 @@ class CronJobServicePart(CRUDServicePart[CronJobEntry]):
         new = old.updated(data)
         new = await self.validate(new, 'cron_job_update')
         cronjob_entry = await self._update(id_, new.model_dump())
-        await (await self.middleware.call('service.control', 'RESTART', 'cron')).wait(raise_error=True)
+        await (await self.call2(self.s.service.control, 'RESTART', 'cron')).wait(raise_error=True)
         return cronjob_entry
 
     async def do_delete(self, id_: int) -> None:
         await self.get_instance(id_)
         await self._delete(id_)
-        await (await self.middleware.call('service.control', 'RESTART', 'cron')).wait(raise_error=True)
+        await (await self.call2(self.s.service.control, 'RESTART', 'cron')).wait(raise_error=True)
 
     async def validate(self, data: CronJobCreateT, schema: str) -> CronJobCreateT:
         verrors = ValidationErrors()

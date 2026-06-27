@@ -5,7 +5,7 @@ import re
 import time
 
 from middlewared.alert.source.truecommand import TruecommandConnectionHealthAlert
-from middlewared.api.current import TruecommandStatus
+from middlewared.api.current import ServiceOptions, TruecommandStatus
 from middlewared.service import CallError, ServiceContext
 from middlewared.utils import run
 
@@ -63,7 +63,7 @@ async def wireguard_connection_health(context: ServiceContext) -> bool:
     Returns true if we are connected and wireguard connection has have had a handshake within last
     HEALTH_CHECK_SECONDS
     """
-    health_error = not (await context.middleware.call('service.started', 'truecommand'))
+    health_error = not (await context.call2(context.s.service.started, 'truecommand'))
     if not health_error:
         cp = await run(['wg', 'show', WIREGUARD_INTERFACE_NAME, 'latest-handshakes'], encoding='utf8', check=False)
         if cp.returncode:
@@ -97,11 +97,11 @@ async def start_truecommand_service(context: ServiceContext) -> None:
         if TruecommandStatus(config['api_key_state']) == TruecommandStatus.CONNECTED and all(
             config[k] for k in ('wg_private_key', 'remote_address', 'endpoint', 'tc_public_key', 'wg_address')
         ):
-            await (await context.middleware.call(
-                'service.control', 'START', 'truecommand', {'ha_propagate': False},
+            await (await context.call2(
+                context.s.service.control, 'START', 'truecommand', ServiceOptions(ha_propagate=False),
             )).wait(raise_error=True)
-            await (await context.middleware.call(
-                'service.control', 'RELOAD', 'http', {'ha_propagate': False},
+            await (await context.call2(
+                context.s.service.control, 'RELOAD', 'http', ServiceOptions(ha_propagate=False),
             )).wait(raise_error=True)
             asyncio.get_event_loop().call_later(
                 30,  # 30 seconds is enough time to initiate a health check to see if the connection is alive
@@ -115,6 +115,6 @@ async def start_truecommand_service(context: ServiceContext) -> None:
 
 
 async def stop_truecommand_service(context: ServiceContext) -> None:
-    await (await context.middleware.call('service.control', 'RELOAD', 'http')).wait(raise_error=True)
-    if await context.middleware.call('service.started', 'truecommand'):
-        await (await context.middleware.call('service.control', 'STOP', 'truecommand')).wait(raise_error=True)
+    await (await context.call2(context.s.service.control, 'RELOAD', 'http')).wait(raise_error=True)
+    if await context.call2(context.s.service.started, 'truecommand'):
+        await (await context.call2(context.s.service.control, 'STOP', 'truecommand')).wait(raise_error=True)

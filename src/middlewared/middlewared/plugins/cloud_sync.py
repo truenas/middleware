@@ -268,7 +268,7 @@ def rclone(middleware, job, cloud_sync, dry_run):
                 if job.aborted_event.wait(timeout=0.2):
                     aborted = True
                     try:
-                        middleware.call_sync("service.terminate_process", proc.pid)
+                        middleware.call_sync2(middleware.services.service.terminate_process, proc.pid)
                     except CallError as e:
                         job.middleware.logger.warning(f"Error terminating rclone on cloud sync abort: {e!r}")
                         break
@@ -867,7 +867,7 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
         cloud_sync = self._compress(cloud_sync)
 
         cloud_sync["id"] = self.middleware.call_sync("datastore.insert", "tasks.cloudsync", cloud_sync)
-        self.middleware.call_sync("service.control", "RESTART", "cron").wait_sync(raise_error=True)
+        self.call_sync2(self.s.service.control, "RESTART", "cron").wait_sync(raise_error=True)
 
         return self.middleware.call_sync("cloudsync.get_instance", cloud_sync["id"])
 
@@ -897,7 +897,7 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
         cloud_sync = self._compress(cloud_sync)
 
         self.middleware.call_sync("datastore.update", "tasks.cloudsync", id_, cloud_sync)
-        self.middleware.call_sync("service.control", "RESTART", "cron").wait_sync(raise_error=True)
+        self.call_sync2(self.s.service.control, "RESTART", "cron").wait_sync(raise_error=True)
 
         return self.middleware.call_sync("cloudsync.get_instance", id_)
 
@@ -909,7 +909,7 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
         self.middleware.call_sync("cloudsync.abort", id_)
         self.call_sync2(self.s.alert.oneshot_delete, "CloudSyncTaskFailed", id_)
         rv = self.middleware.call_sync("datastore.delete", "tasks.cloudsync", id_)
-        self.middleware.call_sync("service.control", "RESTART", "cron").wait_sync(raise_error=True)
+        self.call_sync2(self.s.service.control, "RESTART", "cron").wait_sync(raise_error=True)
         return rv
 
     @api_method(CloudSyncCreateBucketArgs, CloudSyncCreateBucketResult, roles=["CLOUD_SYNC_WRITE"])
@@ -1174,7 +1174,7 @@ class CloudSyncFSAttachmentDelegate(LockableFSAttachmentDelegate):
     resource_name = 'path'
 
     async def restart_reload_services(self, attachments):
-        await (await self.middleware.call("service.control", "RESTART", "cron")).wait(raise_error=True)
+        await (await self.call2(self.s.service.control, "RESTART", "cron")).wait(raise_error=True)
 
 
 async def setup(middleware):

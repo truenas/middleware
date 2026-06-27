@@ -39,7 +39,7 @@ async def backup_to_pool(context: ServiceContext, job: Job, target_pool: str) ->
 
     assert docker_config.pool is not None
     job.set_progress(10, 'Initial validation has been completed, stopping docker service')
-    await (await context.middleware.call('service.control', 'STOP', 'docker')).wait(raise_error=True)
+    await (await context.call2(context.s.service.control, 'STOP', 'docker')).wait(raise_error=True)
     job.set_progress(30, 'Snapshotting apps dataset')
     schema = f'ix-apps-{docker_config.pool}-to-{target_pool}-backup-%Y-%m-%d_%H-%M-%S'
     try:
@@ -55,7 +55,7 @@ async def backup_to_pool(context: ServiceContext, job: Job, target_pool: str) ->
         ))
     finally:
         # We do this in try/finally block to ensure that docker service is started back
-        await (await context.middleware.call('service.control', 'START', 'docker')).wait(raise_error=True)
+        await (await context.call2(context.s.service.control, 'START', 'docker')).wait(raise_error=True)
 
     job.set_progress(45, 'Incrementally replicating apps dataset')
 

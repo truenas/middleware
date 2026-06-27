@@ -442,7 +442,7 @@ class NVMetNamespaceService(SharingService):
 
     @private
     async def resync_lun_size_for_zvol(self, zvol_id):
-        if not await self.middleware.call('service.started', 'nvmet'):
+        if not await self.call2(self.s.service.started, 'nvmet'):
             return
 
         namespaces = await self.middleware.call(

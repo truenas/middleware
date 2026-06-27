@@ -11,6 +11,7 @@ from middlewared.alert.source.smb_audit import SMBAuditShareDisabledAlert
 from middlewared.alert.source.smb_recordsize import SMBVeeamFastCloneAlert
 from middlewared.api import api_method
 from middlewared.api.current import (
+    ServiceOptions,
     SharingSMBCreateArgs,
     SharingSMBCreateResult,
     SharingSMBDeleteArgs,
@@ -644,8 +645,8 @@ class SMBService(ConfigService):
 
         # These smb.config fields feed truenas-discoveryd.conf.
         if any(old[f] != new_config[f] for f in ('netbiosname', 'netbiosalias', 'workgroup')):
-            await (await self.middleware.call(
-                'service.control', 'RELOAD', 'discovery'
+            await (await self.call2(
+                self.s.service.control, 'RELOAD', 'discovery'
             )).wait(raise_error=True)
 
         if new['admin_group'] and new['admin_group'] != old['admin_group']:
@@ -681,7 +682,7 @@ class SMBService(ConfigService):
                     self.logger.exception('Failed to restore local directory services secrets')
 
             # We need winbindd to reopen its tdb files as ctdb or vice-versa
-            wb_restart = await self.middleware.call('service.control', 'RESTART', 'idmap')
+            wb_restart = await self.call2(self.s.service.control, 'RESTART', 'idmap')
             await wb_restart.wait()
 
             config_job = await self.middleware.call('smb.configure')
@@ -850,7 +851,9 @@ class SharingSMBService(SharingService):
             await self._service_change('cifs', 'reload')
 
         if is_time_machine_share(data):
-            disc_reload = await self.middleware.call('service.control', 'RELOAD', 'discovery', {'ha_propagate': False})
+            disc_reload = await self.call2(
+                self.s.service.control, 'RELOAD', 'discovery', ServiceOptions(ha_propagate=False)
+            )
             # Failure to reload discovery shouldn't be passed to API consumer
             await disc_reload.wait()
 
@@ -1043,7 +1046,7 @@ class SharingSMBService(SharingService):
             await self._service_change('cifs', 'reload')
 
         if check_mdns:
-            await (await self.middleware.call('service.control', 'RELOAD', 'discovery')).wait(raise_error=True)
+            await (await self.call2(self.s.service.control, 'RELOAD', 'discovery')).wait(raise_error=True)
 
         await self.call2(self.s.truesearch.configure)
 
@@ -1082,8 +1085,8 @@ class SharingSMBService(SharingService):
             self.logger.debug('Failed to delete share ACL for [%s].', share_name, exc_info=True)
 
         if is_time_machine_share(share):
-            await (await self.middleware.call(
-                'service.control', 'RELOAD', 'discovery', {'ha_propagate': False}
+            await (await self.call2(
+                self.s.service.control, 'RELOAD', 'discovery', ServiceOptions(ha_propagate=False)
             )).wait(raise_error=True)
 
         await self.middleware.call('etc.generate', 'smb')
@@ -1876,7 +1879,7 @@ class SMBFSAttachmentDelegate(LockableFSAttachmentDelegate):
             return
 
         await self.middleware.call('etc.generate', 'smb')
-        await (await self.middleware.call('service.control', 'RELOAD', 'discovery')).wait(raise_error=True)
+        await (await self.call2(self.s.service.control, 'RELOAD', 'discovery')).wait(raise_error=True)
 
     async def is_child_of_path(self, resource, path, check_parent, exact_match):
         return await super().is_child_of_path(resource, path, check_parent, exact_match) if resource.get(
@@ -1910,7 +1913,7 @@ def create_samba_directories(middleware):
 
 
 async def hook_post_generic(middleware, datasets):
-    await (await middleware.call('service.control', 'RELOAD', 'cifs')).wait()
+    await (await middleware.call2(middleware.services.service.control, 'RELOAD', 'cifs')).wait()
 
 
 async def setup(middleware):

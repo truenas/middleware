@@ -98,7 +98,7 @@ class LockableFSAttachmentDelegate[E: Entry](FSAttachmentDelegate[E]):
     Represents a share/task/resource which is affected if the dataset underlying is locked
     """
 
-    # service object
+    service: str
     service_class: type[SharingTaskService[E]] | type[GenericSharingTaskService[E]]
 
     def __init__(self, middleware: Middleware) -> None:
@@ -135,13 +135,13 @@ class LockableFSAttachmentDelegate[E: Entry](FSAttachmentDelegate[E]):
 
     async def start_service(self) -> None:
         if (
-            not (service_obj := await self.middleware.call("service.query", [["service", "=", self.service]]))
-            or not service_obj[0]["enable"]
-            or service_obj[0]["state"] == "RUNNING"
+            not (service_obj := await self.call2(self.s.service.query, [["service", "=", self.service]]))
+            or not service_obj[0].enable
+            or service_obj[0].state == "RUNNING"
         ):
             return
 
-        await (await self.middleware.call("service.control", "START", self.service)).wait(raise_error=True)
+        await (await self.call2(self.s.service.control, "START", self.service)).wait(raise_error=True)
 
     async def query(self, path: str, enabled: bool, options: dict[str, Any] | None = None) -> list[E]:
         results = []

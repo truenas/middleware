@@ -4,7 +4,7 @@ import errno
 import wbclient
 
 from middlewared.api import api_method
-from middlewared.api.current import IdmapDomainClearIdmapCacheArgs, IdmapDomainClearIdmapCacheResult
+from middlewared.api.current import IdmapDomainClearIdmapCacheArgs, IdmapDomainClearIdmapCacheResult, ServiceOptions
 from middlewared.plugins.account_.constants import CONTAINER_ROOT_UID
 from middlewared.plugins.idmap_.idmap_constants import (
     BASE_SYNTHETIC_DATASTORE_ID,
@@ -82,7 +82,9 @@ class IdmapDomainService(Service):
                 'dataset configuration.', errno.EAGAIN
             )
 
-        self.middleware.call_sync('service.control', 'START', 'idmap', {'silent': False}).wait_sync(raise_error=True)
+        self.call_sync2(
+            self.s.service.control, 'START', 'idmap', ServiceOptions(silent=False)
+        ).wait_sync(raise_error=True)
         return self.__wbclient_ctx(False)
 
     @filterable_api_method(private=True)
@@ -152,8 +154,8 @@ class IdmapDomainService(Service):
         Stop samba, remove the winbindd_cache.tdb file, start samba, flush samba's cache.
         This should be performed after finalizing idmap changes.
         """
-        smb_started = await self.middleware.call('service.started', 'cifs')
-        await (await self.middleware.call('service.control', 'STOP', 'idmap')).wait(raise_error=True)
+        smb_started = await self.call2(self.s.service.started, 'cifs')
+        await (await self.call2(self.s.service.control, 'STOP', 'idmap')).wait(raise_error=True)
 
         try:
             await self.middleware.run_in_thread(clear_winbind_cache)
@@ -166,9 +168,9 @@ class IdmapDomainService(Service):
 
         await self.middleware.call('idmap.gencache.flush')
 
-        await (await self.middleware.call('service.control', 'START', 'idmap')).wait(raise_error=True)
+        await (await self.call2(self.s.service.control, 'START', 'idmap')).wait(raise_error=True)
         if smb_started:
-            await (await self.middleware.call('service.control', 'RESTART', 'cifs')).wait(raise_error=True)
+            await (await self.call2(self.s.service.control, 'RESTART', 'cifs')).wait(raise_error=True)
 
     @private
     async def backend_options(self):

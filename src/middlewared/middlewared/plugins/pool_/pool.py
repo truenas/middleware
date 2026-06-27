@@ -277,7 +277,7 @@ class PoolService(CRUDService):
     @private
     async def restart_services(self):
         # regenerate crontab because of scrub
-        await (await self.middleware.call('service.control', 'RESTART', 'cron')).wait(raise_error=True)
+        await (await self.call2(self.s.service.control, 'RESTART', 'cron')).wait(raise_error=True)
 
     async def _process_topology(
         self, schema_name: str, data: dict, old: dict | None = None, validate_all_sed: bool = False
