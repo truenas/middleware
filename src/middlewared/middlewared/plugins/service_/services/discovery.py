@@ -10,11 +10,11 @@ class DiscoveryService(SimpleService):
 
     systemd_unit = "truenas-discoveryd"
 
-    async def reload(self):
+    async def reload(self) -> None:
         announce = (await self.middleware.call("network.configuration.config"))["service_announcement"]
         if not any(announce.get(k) for k in ("mdns", "netbios", "wsd")):
             return
 
         state = await self.get_state()
         cmd = "reload" if state.running else "start"
-        return await self._systemd_unit("truenas-discoveryd", cmd)
+        await self._systemd_unit("truenas-discoveryd", cmd)

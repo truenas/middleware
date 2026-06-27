@@ -42,6 +42,7 @@ module = [
     "googleapiclient.*",
     "influxdb.*",
     "ixhardware.*",
+    "jeepney.*",
     "josepy.*",
     "kmip.*",
     "lexicon.*",

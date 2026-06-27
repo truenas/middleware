@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any
 
 from truenas_pypam import PAMCode
 
+from middlewared.api.base.types import HttpVerb
 from middlewared.utils.account.authenticator import (
     DEFAULT_LOGIN_FAIL,
     DEFAULT_LOGIN_SUCCESS,
@@ -27,11 +28,11 @@ if TYPE_CHECKING:
 class SessionManagerCredentials:
     is_user_session = False
     may_create_auth_token = True
-    allowlist = None
-    login_id = None
+    allowlist: Allowlist = Allowlist([])
+    login_id: str
 
     @classmethod
-    def class_name(cls):
+    def class_name(cls) -> str:
         return re.sub(
             r"([A-Z])",
             r"_\1",
@@ -42,16 +43,16 @@ class SessionManagerCredentials:
         # Default to failure. This method should not be hit
         return DEFAULT_LOGIN_FAIL
 
-    def is_valid(self):
+    def is_valid(self) -> bool:
         return True
 
-    def authorize(self, method, resource):
+    def authorize(self, method: HttpVerb, resource: str) -> bool:
         return False
 
-    def has_role(self, role):
+    def has_role(self, role: str) -> bool:
         return False
 
-    def notify_used(self):
+    def notify_used(self) -> None:
         pass
 
     def logout(self) -> TrueNASAuthenticatorResponse:
@@ -66,7 +67,7 @@ class UserSessionManagerCredentials(SessionManagerCredentials):
 
     def __init__(
         self,
-        user: dict,
+        user: dict[str, Any],
         assurance: AuthenticatorAssuranceLevel | None,
         authenticator: UserPamAuthenticator,
     ):
@@ -92,15 +93,15 @@ class UserSessionManagerCredentials(SessionManagerCredentials):
         self.expiry = None
         self.inactivity_timeout = None
         self.last_used_at = now
-        self.authenticator = authenticator
+        self.authenticator: UserPamAuthenticator = authenticator
 
-        if assurance:
+        if self.assurance:
             self.expiry = now + self.assurance.max_session_age
             self.inactivity_timeout = self.assurance.max_inactivity
 
     def login(self) -> TrueNASAuthenticatorResponse:
         resp = self.authenticator.login()
-        self.login_at = self.authenticator.login_at
+        self.login_at = self.authenticator.login_at  # type: ignore[assignment]
         if self.authenticator.session_uuid:
             self.login_id = str(self.authenticator.session_uuid)
         else:
@@ -114,18 +115,21 @@ class UserSessionManagerCredentials(SessionManagerCredentials):
 
     def logout(self) -> TrueNASAuthenticatorResponse:
         resp = self.authenticator.logout()
-        self.authenticator = None
+        self.authenticator = None  # type: ignore[assignment]
         return resp
 
-    def notify_used(self):
+    def notify_used(self) -> None:
         if self.inactivity_timeout:
             now = monotonic()
             if now < self.last_used_at + self.inactivity_timeout:
                 self.last_used_at = now
 
-    def is_valid(self):
-        if self.assurance and (now := monotonic()) > self.expiry:
-            return False
+    def is_valid(self) -> bool:
+        now = monotonic()
+        if self.assurance:
+            assert self.expiry
+            if now > self.expiry:
+                return False
 
         if self.inactivity_timeout:
             if now > self.last_used_at + self.inactivity_timeout:
@@ -133,16 +137,16 @@ class UserSessionManagerCredentials(SessionManagerCredentials):
 
         return True
 
-    def authorize(self, method, resource):
+    def authorize(self, method: HttpVerb, resource: str) -> bool:
         if not self.is_valid():
             return False
 
         return self.allowlist.authorize(method, resource)
 
-    def has_role(self, role):
+    def has_role(self, role: str) -> bool:
         return role in self.user["privilege"]["roles"]
 
-    def dump(self):
+    def dump(self) -> dict[str, Any]:
         return {
             "username": self.user["username"],
             "login_id": self.login_id,
@@ -157,15 +161,15 @@ class ApiKeySessionManagerCredentials(UserSessionManagerCredentials):
 
     def __init__(
         self,
-        user: dict,
-        api_key: dict,
+        user: dict[str, Any],
+        api_key: dict[str, Any],
         assurance: AuthenticatorAssuranceLevel,
         authenticator: ApiKeyPamAuthenticator
     ):
         super().__init__(user, assurance, authenticator)
         self.api_key = api_key
 
-    def dump(self):
+    def dump(self) -> dict[str, Any]:
         out = super().dump()
         return out | {
             "api_key": {
@@ -179,7 +183,7 @@ class UnixSocketSessionManagerCredentials(UserSessionManagerCredentials):
     """ Credentials for a specific user account on TrueNAS
     Authenticated by unix domain socket connection
     """
-    def __init__(self, user: dict, authenticator: UnixPamAuthenticator):
+    def __init__(self, user: dict[str, Any], authenticator: UnixPamAuthenticator):
         super().__init__(user, None, authenticator)
 
 
@@ -189,7 +193,7 @@ class LoginPasswordSessionManagerCredentials(UserSessionManagerCredentials):
     """
     def __init__(
         self,
-        user: dict,
+        user: dict[str, Any],
         assurance: AuthenticatorAssuranceLevel,
         authenticator: UserPamAuthenticator
     ):
@@ -205,10 +209,10 @@ class LoginTwofactorSessionManagerCredentials(LoginPasswordSessionManagerCredent
 
 
 class LoginOnetimePasswordSessionManagerCredentials(UserSessionManagerCredentials):
-    """ Credentials for a specific user account  on TrueNAS
-    Authenticated by username + onetime password ccombination
+    """ Credentials for a specific user account on TrueNAS
+    Authenticated by username + onetime password combination
     """
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.may_create_auth_token = False
 
@@ -224,7 +228,9 @@ class TokenSessionManagerCredentials(SessionManagerCredentials):
         token: 'Token',
         authenticator: TokenPamAuthenticator,
     ):
-        self.root_credentials = token.root_credentials()
+        root_credentials = token.root_credentials()
+        assert root_credentials
+        self.root_credentials = root_credentials
         """ Root credentials for the token are the credentials used for originally
         generating it. These are used for method authorization. """
         self.authenticator = authenticator
@@ -240,11 +246,11 @@ class TokenSessionManagerCredentials(SessionManagerCredentials):
         # Middleware has already determined that the token string matches, but
         # we still need to generate the utmp entry
         if self.is_user_session:
-            self.user = self.root_credentials.user
+            self.user = self.root_credentials.user  # type: ignore[attr-defined]
 
         self.allowlist = self.root_credentials.allowlist
 
-    def pam_authenticate(self):
+    def pam_authenticate(self) -> TrueNASAuthenticatorResponse:
         """ Perform PAM authentication for the account. This may fail if the underlying
         account is locked or if it account session limits have been reached c.f. pam_limits.
         This also generates utmp entry for the token-based session. """
@@ -255,7 +261,7 @@ class TokenSessionManagerCredentials(SessionManagerCredentials):
         self.pam_authenticated = pam_resp.code == PAMCode.PAM_SUCCESS
         return pam_resp
 
-    def is_valid(self):
+    def is_valid(self) -> bool:
         if not self.root_credentials.is_valid():
             return False
 
@@ -266,19 +272,19 @@ class TokenSessionManagerCredentials(SessionManagerCredentials):
 
         return self.token.is_valid()
 
-    def authorize(self, method, resource):
+    def authorize(self, method: HttpVerb, resource: str) -> bool:
         return self.token.parent_credentials.authorize(method, resource)
 
-    def has_role(self, role):
+    def has_role(self, role: str) -> bool:
         return self.token.parent_credentials.has_role(role)
 
-    def notify_used(self):
+    def notify_used(self) -> None:
         self.root_credentials.notify_used()
         self.token.notify_used()
 
     def login(self) -> TrueNASAuthenticatorResponse:
         resp = self.authenticator.login()
-        self.login_at = self.authenticator.login_at
+        self.login_at = self.authenticator.login_at  # type: ignore[assignment]
         if self.authenticator.session_uuid:
             self.login_id = str(self.authenticator.session_uuid)
         else:
@@ -296,7 +302,7 @@ class TokenSessionManagerCredentials(SessionManagerCredentials):
         # Explicit logout of this session
         return self.authenticator.logout()
 
-    def dump(self):
+    def dump(self) -> dict[str, Any]:
         data = {
             "parent": dump_credentials(self.token.parent_credentials),
             "login_id": self.login_id,
@@ -316,7 +322,7 @@ class TruenasNodeSessionManagerCredentials(SessionManagerCredentials):
     def logout(self) -> TrueNASAuthenticatorResponse:
         return DEFAULT_LOGOUT_SUCCESS
 
-    def authorize(self, method, resource):
+    def authorize(self, method: HttpVerb, resource: str) -> bool:
         return True
 
 
@@ -329,18 +335,18 @@ class AuthenticationContext:
     """
     pam_hdl: UserPamAuthenticator | ApiKeyPamAuthenticator | UnixPamAuthenticator | None = None
     next_mech: AuthMech | None = None
-    auth_data: dict | None = None
+    auth_data: dict[str, Any] | None = None
 
 
 class FakeApplication:
     authenticated_credentials = SessionManagerCredentials()
 
 
-def fake_app():
+def fake_app() -> FakeApplication:
     return FakeApplication()
 
 
-def dump_credentials(credentials):
+def dump_credentials(credentials: SessionManagerCredentials) -> dict[str, Any]:
     return {
         "credentials": credentials.class_name(),
         "credentials_data": credentials.dump(),

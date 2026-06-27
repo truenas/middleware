@@ -47,6 +47,7 @@ jobs:
             middlewared/plugins/reporting/ \
             middlewared/plugins/rsync/ \
             middlewared/plugins/security/ \
+            middlewared/plugins/service_/ \
             middlewared/plugins/snapshot/ \
             middlewared/plugins/ssh/ \
             middlewared/plugins/support/ \
@@ -68,6 +69,7 @@ jobs:
             middlewared/service/generic_sharing_service.py \
             middlewared/utils/ \
             middlewared/test/integration/runner/ \
+            middlewared/auth.py \
             middlewared/job.py \
             --exclude middlewared/etc_files \
             --exclude middlewared/utils/directoryservices \
