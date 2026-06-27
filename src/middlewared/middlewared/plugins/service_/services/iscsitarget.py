@@ -108,7 +108,7 @@ class ISCSITargetService(SwitchableSimpleService):
                     try:
                         return await self.middleware.call("iscsi.alua.become_active")
                     except Exception:
-                        self.logger.warning('Failover exception', exc_info=True)
+                        self.middleware.logger.warning('Failover exception', exc_info=True)
                         # Fall through
         # Fallback to doing a regular restart
         rjob = await self.middleware.call(
