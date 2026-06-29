@@ -369,6 +369,12 @@ def test__afp_share(nfsacl_dataset):
     assert conf['streams_xattr:xattr_compat'] is True
 
 
+def test__streams_xattr_module_name():
+    # Samba 4.24 renamed the module; middleware must emit the TrueNAS fork,
+    # otherwise shares silently fall back to upstream's streams_xattr.
+    assert TrueNASVfsObjects.STREAMS_XATTR == 'truenas_streams_xattr'
+
+
 def test__fruit_convert_adouble_default(nfsacl_dataset):
     """
     Stream-mode shares have no ._<base> companions to convert, so eager
