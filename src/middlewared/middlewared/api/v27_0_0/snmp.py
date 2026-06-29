@@ -3,10 +3,9 @@ from typing import Annotated, Literal
 from pydantic import EmailStr, Field, Secret
 from pydantic.types import StringConstraints
 
-from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, excluded_field, single_argument_args
+from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, excluded_field
 
-__all__ = ["SNMPEntry",
-           "SNMPUpdateArgs", "SNMPUpdateResult"]
+__all__ = ["SNMPEntry", "SNMPUpdate", "SNMPUpdateArgs", "SNMPUpdateResult"]
 
 
 class SNMPEntry(BaseModel):
@@ -54,9 +53,12 @@ class SNMPEntry(BaseModel):
     id: int = Field(description="Placeholder identifier.  Not used as there is only one.")
 
 
-@single_argument_args('snmp_update')
-class SNMPUpdateArgs(SNMPEntry, metaclass=ForUpdateMetaclass):
+class SNMPUpdate(SNMPEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
+
+
+class SNMPUpdateArgs(BaseModel):
+    snmp_update: SNMPUpdate = Field(description="Data to update the SNMP service configuration.")
 
 
 class SNMPUpdateResult(BaseModel):
