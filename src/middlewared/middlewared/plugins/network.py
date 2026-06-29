@@ -1790,13 +1790,13 @@ class InterfaceService(CRUDService):
 
         try:
             # static routes explicitly defined by the user need to be setup
-            await self.middleware.call('staticroute.sync')
+            await self.call2(self.s.staticroute.sync)
         except Exception:
             self.logger.info('Failed to sync static routes', exc_info=True)
 
         try:
             # We may need to set up routes again as they may have been removed while changing IPs
-            await self.middleware.call('route.sync')
+            await self.call2(self.s.route.sync)
         except Exception:
             self.logger.info('Failed to sync routes', exc_info=True)
 

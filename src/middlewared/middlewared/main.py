@@ -124,6 +124,7 @@ from middlewared.plugins.init_shutdown_script import InitShutdownScriptService
 from middlewared.plugins.keyvalue import KeyValueService
 from middlewared.plugins.kmip import KMIPService
 from middlewared.plugins.mail import MailService
+from middlewared.plugins.network_routes import RouteService, StaticRouteService
 from middlewared.plugins.ntp import NTPServerService
 from middlewared.plugins.ports import PortService
 from middlewared.plugins.pwenc import PWEncService
@@ -277,9 +278,11 @@ class ServiceContainer(BaseServiceContainer):
         self.port = PortService(middleware)
         self.pwenc = PWEncService(middleware)
         self.reporting = ReportingService(middleware)
+        self.route = RouteService(middleware)
         self.rsynctask = RsyncTaskService(middleware)
         self.sharing = SharingServicesContainer(middleware)
         self.ssh = SSHService(middleware)
+        self.staticroute = StaticRouteService(middleware)
         self.support = SupportService(middleware)
         self.system = SystemServicesContainer(middleware)
         self.tn_connect = TrueNASConnectService(middleware)

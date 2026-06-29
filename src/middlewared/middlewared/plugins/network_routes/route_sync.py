@@ -39,7 +39,7 @@ def _get_default_ip4_route_from_dhcpcd(
     return None
 
 
-def _sync_ip4_impl(ctx: ServiceContext, sock: socket.socket, dbgw: str | None):
+def _sync_ip4_impl(ctx: ServiceContext, sock: socket.socket, dbgw: str | None) -> None:
     """Synchronize the kernel's IPv4 default route with the database configuration."""
     cur_gw = get_default_route(sock, family=AddressFamily.INET)
     if not dbgw:
@@ -91,7 +91,7 @@ def _sync_ip4_impl(ctx: ServiceContext, sock: socket.socket, dbgw: str | None):
         delete_route(sock, gateway=cur_gw.gateway)
 
 
-def _sync_ip6_impl(ctx: ServiceContext, sock: socket.socket, dbgw: str | None):
+def _sync_ip6_impl(ctx: ServiceContext, sock: socket.socket, dbgw: str | None) -> None:
     """Synchronize the kernel's IPv6 default route with the database configuration."""
     cur_gw = get_default_route(sock, family=AddressFamily.INET6)
     dbgw_iface = None
@@ -132,7 +132,7 @@ def _sync_ip6_impl(ctx: ServiceContext, sock: socket.socket, dbgw: str | None):
             delete_route(sock, gateway=cur_gw.gateway, index=cur_gw.oif)
 
 
-def sync_impl(ctx: ServiceContext):
+def sync_impl(ctx: ServiceContext) -> None:
     """Synchronize the kernel's default routes with the database configuration."""
     # Generate dhcpcd.conf so we can ignore routes (def gw) option
     # in case there is one explicitly set in network config
