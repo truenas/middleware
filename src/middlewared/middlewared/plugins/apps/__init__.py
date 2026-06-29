@@ -127,16 +127,9 @@ from .upgrade import (
 
 if typing.TYPE_CHECKING:
     from middlewared.api.base.server.app import App
+    from middlewared.api.current import QueryOptionsCount, QueryOptionsGet
     from middlewared.job import Job
     from middlewared.main import Middleware
-
-    class _QueryGetOptions(QueryOptions):
-        get: typing.Literal[True]
-        count: typing.Literal[False]
-
-    class _QueryCountOptions(QueryOptions):
-        count: typing.Literal[True]
-        get: typing.Literal[False]
 
 
 __all__ = ('AppService',)
@@ -168,12 +161,12 @@ class AppService(GenericCRUDService[AppEntry, str]):
 
     @typing.overload  # type: ignore[override]
     def query(  # type: ignore[overload-overlap]
-        self, app: App, filters: list[typing.Any], options: _QueryCountOptions,
+        self, app: App, filters: list[typing.Any], options: QueryOptionsCount,
     ) -> int: ...
 
     @typing.overload
     def query(  # type: ignore[overload-overlap]
-        self, app: App, filters: list[typing.Any], options: _QueryGetOptions,
+        self, app: App, filters: list[typing.Any], options: QueryOptionsGet,
     ) -> AppEntry: ...
 
     @typing.overload

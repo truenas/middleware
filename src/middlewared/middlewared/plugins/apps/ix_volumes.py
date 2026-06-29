@@ -14,15 +14,8 @@ from middlewared.service import CallError, GenericCRUDService
 from .ix_volumes_crud import query_ix_volumes
 
 if typing.TYPE_CHECKING:
+    from middlewared.api.current import QueryOptionsCount, QueryOptionsGet
     from middlewared.main import Middleware
-
-    class _QueryGetOptions(QueryOptions):
-        get: typing.Literal[True]
-        count: typing.Literal[False]
-
-    class _QueryCountOptions(QueryOptions):
-        count: typing.Literal[True]
-        get: typing.Literal[False]
 
 
 __all__ = ('AppsIxVolumeService',)
@@ -45,12 +38,12 @@ class AppsIxVolumeService(GenericCRUDService[AppsIxVolumeEntry, str]):
 
     @typing.overload  # type: ignore[override]
     def query(  # type: ignore[overload-overlap]
-        self, filters: list[typing.Any], options: _QueryCountOptions,
+        self, filters: list[typing.Any], options: QueryOptionsCount,
     ) -> int: ...
 
     @typing.overload
     def query(  # type: ignore[overload-overlap]
-        self, filters: list[typing.Any], options: _QueryGetOptions,
+        self, filters: list[typing.Any], options: QueryOptionsGet,
     ) -> AppsIxVolumeEntry: ...
 
     @typing.overload

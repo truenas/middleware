@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from datetime import datetime, time
-from typing import Annotated, Any, Literal
+from typing import TYPE_CHECKING, Annotated, Any, Literal, overload
 
 from pydantic import AfterValidator, Field, model_validator
 
@@ -11,8 +13,8 @@ from middlewared.api.base import (
     validate_filters,
 )
 
-__all__ = ["QueryFilters", "QueryOptions", "QueryArgs", "GenericQueryResult", "CronModel", "TimeCronModel",
-           "StorageTier"]
+__all__ = ["QueryFilters", "QueryOptions", "QueryOptionsGet", "QueryOptionsCount", "QueryArgs", "GenericQueryResult",
+           "CronModel", "TimeCronModel", "StorageTier"]
 
 StorageTier = Literal['REGULAR', 'PERFORMANCE']
 """Storage performance tier. `REGULAR` uses standard-capacity drives; `PERFORMANCE` uses fast media (e.g. NVMe)."""
@@ -93,6 +95,32 @@ class QueryOptions(BaseModel):
         default=False,
         description="Force use of SQL for result filtering to reduce response time. May not work for all methods.",
     )
+
+    if TYPE_CHECKING:
+        @overload
+        def __new__(  # type: ignore[overload-overlap]
+            cls, *, get: Literal[True], **kwargs: Any,
+        ) -> QueryOptionsGet: ...
+
+        @overload
+        def __new__(  # type: ignore[overload-overlap]
+            cls, *, count: Literal[True], **kwargs: Any,
+        ) -> QueryOptionsCount: ...
+
+        @overload
+        def __new__(cls, **kwargs: Any) -> QueryOptions: ...
+
+        def __new__(cls, **kwargs: Any) -> QueryOptions: ...
+
+
+class QueryOptionsGet(QueryOptions):
+    get: Literal[True]
+    count: Literal[False]
+
+
+class QueryOptionsCount(QueryOptions):
+    count: Literal[True]
+    get: Literal[False]
 
 
 class QueryArgs(BaseModel):

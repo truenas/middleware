@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Awaitable
-from typing import TYPE_CHECKING, Any, Literal, cast, overload
+from typing import TYPE_CHECKING, Any, cast, overload
 
 from middlewared.api import API_LOADING_FORBIDDEN
 from middlewared.service_exception import InstanceNotFound
@@ -13,14 +13,7 @@ if not API_LOADING_FORBIDDEN:
     from middlewared.api.current import QueryOptions
 
 if TYPE_CHECKING:
-
-    class _QueryGetOptions(QueryOptions):
-        get: Literal[True]
-        count: Literal[False]
-
-    class _QueryCountOptions(QueryOptions):
-        count: Literal[True]
-        get: Literal[False]
+    from middlewared.api.current import QueryOptionsCount, QueryOptionsGet
 
 
 __all__ = ('CRUDServicePart',)
@@ -47,10 +40,10 @@ class CRUDServicePart[E, PK = int](ServicePart):
         return data
 
     @overload
-    async def query(self, filters: list[Any], options: _QueryCountOptions) -> int: ...  # type: ignore[overload-overlap]
+    async def query(self, filters: list[Any], options: QueryOptionsCount) -> int: ...  # type: ignore[overload-overlap]
 
     @overload
-    async def query(self, filters: list[Any], options: _QueryGetOptions) -> E: ...  # type: ignore[overload-overlap]
+    async def query(self, filters: list[Any], options: QueryOptionsGet) -> E: ...  # type: ignore[overload-overlap]
 
     @overload
     async def query(

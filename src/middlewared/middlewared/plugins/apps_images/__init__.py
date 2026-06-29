@@ -29,15 +29,8 @@ from .update_alerts import (
 )
 
 if typing.TYPE_CHECKING:
+    from middlewared.api.current import QueryOptionsCount, QueryOptionsGet
     from middlewared.job import Job
-
-    class _QueryGetOptions(QueryOptions):
-        get: typing.Literal[True]
-        count: typing.Literal[False]
-
-    class _QueryCountOptions(QueryOptions):
-        count: typing.Literal[True]
-        get: typing.Literal[False]
 
 
 __all__ = ("AppImageService",)
@@ -58,14 +51,14 @@ class AppImageService(GenericCRUDService[AppImageEntry, str]):
     def query(  # type: ignore[overload-overlap]
         self,
         filters: list[typing.Any],
-        options: _QueryCountOptions,
+        options: QueryOptionsCount,
     ) -> int: ...
 
     @typing.overload
     def query(  # type: ignore[overload-overlap]
         self,
         filters: list[typing.Any],
-        options: _QueryGetOptions,
+        options: QueryOptionsGet,
     ) -> AppImageEntry: ...
 
     @typing.overload

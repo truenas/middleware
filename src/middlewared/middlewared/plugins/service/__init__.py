@@ -35,9 +35,9 @@ from .utils import app_has_write_privilege_for_service
 
 if TYPE_CHECKING:
     from middlewared.api.base.server.app import App
+    from middlewared.api.current import QueryOptionsCount, QueryOptionsGet
     from middlewared.job import Job
     from middlewared.main import Middleware
-    from middlewared.service.crud_service import _QueryCountOptions, _QueryGetOptions
     from middlewared.utils.types import AuditCallback
 
     from .services.base_interface import ServiceInterface
@@ -118,12 +118,12 @@ class ServiceService(CRUDService[ServiceEntry]):
 
     @overload  # type: ignore[override]
     async def query(  # type: ignore[overload-overlap]
-        self, filters: QueryFilters, options: _QueryCountOptions,
+        self, filters: QueryFilters, options: QueryOptionsCount,
     ) -> int: ...
 
     @overload
     async def query(  # type: ignore[overload-overlap]
-        self, filters: QueryFilters, options: _QueryGetOptions,
+        self, filters: QueryFilters, options: QueryOptionsGet,
     ) -> ServiceEntry: ...
 
     @overload
@@ -316,9 +316,7 @@ class ServiceService(CRUDService[ServiceEntry]):
         """
         Test if service specified by ``service`` is started or enabled to start automatically.
         """
-        svc: ServiceEntry = await self.query(  # type: ignore[assignment]
-            [['service', '=', service]], QueryOptions(get=True),
-        )
+        svc = await self.query([['service', '=', service]], QueryOptions(get=True))
         return svc.state == 'RUNNING' or svc.enable
 
     @private

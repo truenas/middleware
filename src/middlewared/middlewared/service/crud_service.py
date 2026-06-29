@@ -29,15 +29,7 @@ if not API_LOADING_FORBIDDEN:
     from middlewared.api.current import QueryArgs, QueryOptions
 
 if TYPE_CHECKING:
-    from typing import Literal
-
-    class _QueryGetOptions(QueryOptions):
-        get: Literal[True]
-        count: Literal[False]
-
-    class _QueryCountOptions(QueryOptions):
-        count: Literal[True]
-        get: Literal[False]
+    from middlewared.api.current import QueryOptionsCount, QueryOptionsGet
 
 
 # Stripped from the datastore query and re-applied by filter_list on the extended result.
@@ -412,10 +404,10 @@ class GenericCRUDService[E, PK = int](CRUDService[E]):
     """
 
     @overload
-    async def query(self, filters: list[Any], options: _QueryCountOptions) -> int: ...  # type: ignore[overload-overlap]
+    async def query(self, filters: list[Any], options: QueryOptionsCount) -> int: ...  # type: ignore[overload-overlap]
 
     @overload
-    async def query(self, filters: list[Any], options: _QueryGetOptions) -> E: ...  # type: ignore[overload-overlap]
+    async def query(self, filters: list[Any], options: QueryOptionsGet) -> E: ...  # type: ignore[overload-overlap]
 
     @overload
     async def query(
