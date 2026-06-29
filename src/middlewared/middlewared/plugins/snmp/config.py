@@ -110,7 +110,7 @@ class SNMPServicePart(SystemServicePart[SNMPEntry]):
 
         await (await self.call2(self.s.service.control, "START", "snmp")).wait(raise_error=True)
 
-        if snmp_service["state"] == "STOPPED":
+        if snmp_service.state == "STOPPED":
             await (await self.call2(self.s.service.control, "STOP", "snmp")).wait(raise_error=True)
 
     async def do_update(self, data: SNMPUpdate) -> SNMPEntry:
@@ -171,7 +171,7 @@ class SNMPServicePart(SystemServicePart[SNMPEntry]):
                 new_payload.update(default_v3_config)
 
             # Restore original SNMP state
-            if "STOPPED" in snmp_service["state"]:
+            if snmp_service.state == "STOPPED":
                 await (await self.call2(self.s.service.control, "STOP", "snmp")).wait(raise_error=True)
 
         update = {k: v for k, v in new_payload.items() if k != "id"}

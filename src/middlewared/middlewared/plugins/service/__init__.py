@@ -37,7 +37,7 @@ if TYPE_CHECKING:
     from middlewared.api.base.server.app import App
     from middlewared.job import Job
     from middlewared.main import Middleware
-    from middlewared.service.crud_service import _QueryGetOptions, _QueryCountOptions
+    from middlewared.service.crud_service import _QueryCountOptions, _QueryGetOptions
     from middlewared.utils.types import AuditCallback
 
     from .services.base_interface import ServiceInterface
@@ -64,7 +64,11 @@ class ServiceService(CRUDService[ServiceEntry]):
         generic = True
 
     @private
-    async def service_extend_context(self, services_or_service: dict[str, Any], extra: dict[str, Any]) -> dict[str, Any]:
+    async def service_extend_context(
+        self,
+        services_or_service: dict[str, Any],
+        extra: dict[str, Any],
+    ) -> dict[str, Any]:
         if not extra.get('include_state', True):
             return {}
 
@@ -212,7 +216,14 @@ class ServiceService(CRUDService[ServiceEntry]):
         check_annotations=True,
     )
     @job(lock=lambda args: f'service_{args[1]}')
-    async def control(self, app: App, job: Job, verb: Literal['START', 'STOP', 'RESTART', 'RELOAD'], service: str, options: ServiceOptions = ServiceOptions()) -> bool:
+    async def control(
+        self,
+        app: App,
+        job: Job,
+        verb: Literal['START', 'STOP', 'RESTART', 'RELOAD'],
+        service: str,
+        options: ServiceOptions = ServiceOptions(),
+    ) -> bool:
         """
         Perform the control operation given by ``verb`` (``START``, ``STOP``, ``RESTART``, or ``RELOAD``) on the
         system service named ``service``. This is the general entry point for managing the running state of a
