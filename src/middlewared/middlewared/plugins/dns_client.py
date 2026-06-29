@@ -11,7 +11,7 @@ from pydantic import Field
 from middlewared.api import api_method
 from middlewared.api.base import BaseModel, IPvAnyAddress
 from middlewared.api.current import QueryFilters, QueryOptions
-from middlewared.service import Service, ValidationError, private
+from middlewared.service import Service, ValidationError
 from middlewared.utils.filter_list import filter_list
 
 
@@ -69,7 +69,6 @@ class DNSClientService(Service):
     class Config:
         private = True
 
-    @private
     async def get_resolver(self, options: DNSClientOptions) -> Resolver:
         if options.nameservers:
             mem_resolvconf = StringIO()
@@ -85,7 +84,6 @@ class DNSClientService(Service):
 
         return r
 
-    @private
     async def resolve_name(self, name: str, rdtype: str, options: DNSClientOptions) -> Answer:
         r = await self.get_resolver(options)
 
