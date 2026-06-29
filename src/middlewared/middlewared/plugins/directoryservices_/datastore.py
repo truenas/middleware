@@ -19,6 +19,7 @@ from middlewared.api.current import (
 )
 from middlewared.plugins.directoryservices_.secrets import delete_machine_account_secrets
 from middlewared.plugins.directoryservices_.util_cache import expire_cache
+from middlewared.plugins.dns_client import DNSClientForwardLookupData, DNSClientOptions
 from middlewared.plugins.truenas_connect.utils import TNC_CERT_PREFIX
 from middlewared.service import ConfigService, job, private
 from middlewared.service_exception import CallError, MatchNotFound, ValidationErrors
@@ -423,14 +424,14 @@ class DirectoryServices(ConfigService):
         for entry in self.middleware.call_sync('dns.query'):
             record = f'{KRB_SRV}{domain}.'
             try:
-                self.middleware.call_sync('dnsclient.forward_lookup', {
-                    'names': [f'{KRB_SRV}{domain}.'],
-                    'record_types': ['SRV'],
-                    'dns_client_options': {
-                        'nameservers': [entry['nameserver']],
-                        'lifetime': lifetime,
-                    }
-                })
+                self.call_sync2(self.s.dnsclient.forward_lookup, DNSClientForwardLookupData(
+                    names=[f'{KRB_SRV}{domain}.'],
+                    record_types=['SRV'],
+                    dns_client_options=DNSClientOptions(
+                        nameservers=[entry['nameserver']],
+                        lifetime=lifetime,
+                    ),
+                ))
             except Exception:
                 self.logger.debug(
                     "%s: DNS forward lookup on %s failed with error",
@@ -456,10 +457,13 @@ class DirectoryServices(ConfigService):
         # Check whether forward lookup of our name works
         dns_name = f'{new["configuration"]["hostname"]}.{new["configuration"]["domain"]}'
         try:
-            dns_addresses = set(x['address'] for x in self.middleware.call_sync('dnsclient.forward_lookup', {
-                'names': [dns_name],
-                'dns_client_options': {'lifetime': new['timeout']}
-            }))
+            dns_addresses = {
+                x.address
+                for x in self.call_sync2(self.s.dnsclient.forward_lookup, DNSClientForwardLookupData(
+                    names=[dns_name],
+                    dns_client_options=DNSClientOptions(lifetime=new['timeout']),
+                ))
+            }
         except (dns.resolver.NXDOMAIN, dns.resolver.NoNameservers):
             # No entries for this DNS name. This probably just means we've
             # never joined the domain before
