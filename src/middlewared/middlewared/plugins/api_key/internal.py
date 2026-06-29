@@ -38,8 +38,7 @@ def api_key_privilege_check(
     if credential_has_full_admin(creds):
         return
 
-    # `has_role` is declared on the untyped base `SessionManagerCredentials`.
-    if creds.has_role("API_KEY_WRITE"):  # type: ignore[no-untyped-call]
+    if creds.has_role("API_KEY_WRITE"):
         return
 
     # `.user` only exists on the `UserSessionManagerCredentials` subclass

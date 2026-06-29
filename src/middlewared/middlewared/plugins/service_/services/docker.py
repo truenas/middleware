@@ -15,7 +15,7 @@ class DockerService(SimpleService):
     may_run_on_standby = False
     systemd_unit = 'docker'
 
-    async def before_start(self):
+    async def before_start(self) -> None:
         await self.middleware.call2(self.s.docker.set_status, Status.INITIALIZING.value)
         await self.middleware.call2(self.s.docker.before_start_check)
         for key, value in (
@@ -24,7 +24,7 @@ class DockerService(SimpleService):
         ):
             await self.middleware.call('sysctl.set_value', key, value)
 
-    async def start(self):
+    async def start(self) -> None:
         try:
             await super().start()
             # We have a timeout for docker to start within 16 minutes of the above call, if that doesn't happen
@@ -43,19 +43,19 @@ class DockerService(SimpleService):
                 lambda: self.middleware.create_task(self.middleware.call2(self.s.docker.after_start_check)),
             )
 
-    async def stop(self):
+    async def stop(self) -> None:
         await super().stop()
         await self._systemd_unit('docker.socket', 'stop')
         await self._systemd_unit('containerd.service', 'stop')
 
-    async def after_start(self):
+    async def after_start(self) -> None:
         await self.middleware.call2(self.s.docker.set_status, Status.RUNNING.value)
         self.middleware.create_task(self.middleware.call2(self.s.docker.setup_docker_events))
         if (await self.middleware.call2(self.s.docker.config)).enable_image_updates:
             self.middleware.create_task(self.middleware.call2(self.s.app.image.check_update))
 
-    async def before_stop(self):
+    async def before_stop(self) -> None:
         await self.middleware.call2(self.s.docker.set_status, Status.STOPPING.value)
 
-    async def after_stop(self):
+    async def after_stop(self) -> None:
         await self.middleware.call2(self.s.docker.set_status, Status.STOPPED.value)

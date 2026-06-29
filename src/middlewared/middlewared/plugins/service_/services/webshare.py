@@ -11,8 +11,8 @@ class WebShareService(SimpleService):
     systemd_unit = "truenas-webshare-auth"
     systemd_async_start = True
 
-    async def after_start(self):
+    async def after_start(self) -> None:
         await self.call2(self.s.truesearch.configure)
 
-    async def after_stop(self):
+    async def after_stop(self) -> None:
         await self.call2(self.s.truesearch.configure)

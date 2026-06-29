@@ -168,10 +168,10 @@ class Token:
 
         self.last_used_at = time.monotonic()
 
-    def is_valid(self):
+    def is_valid(self) -> bool:
         return time.monotonic() < self.last_used_at + self.ttl
 
-    def notify_used(self):
+    def notify_used(self) -> None:
         self.last_used_at = time.monotonic()
 
     def root_credentials(self) -> SessionManagerCredentials | None:

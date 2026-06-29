@@ -16,23 +16,23 @@ class ISCSITargetService(SwitchableSimpleService):
 
     systemd_unit = "scst"
 
-    async def _lio_mode(self):
-        return await self.middleware.call('iscsi.global.lio_enabled')
+    async def _lio_mode(self) -> bool:
+        return await self.middleware.call('iscsi.global.lio_enabled')  # type: ignore[no-any-return]
 
-    async def select_systemd_unit_name(self):
+    async def select_systemd_unit_name(self) -> str | None:
         if await self._lio_mode():
             return None
         return self.systemd_unit
 
-    async def get_state_no_unit(self):
+    async def get_state_no_unit(self) -> ServiceState:
         return ServiceState(ISCSI_DIR.exists(), [])
 
-    async def select_etc(self):
+    async def select_etc(self) -> list[str]:
         if await self._lio_mode():
             return ['lio']
         return self.etc
 
-    async def _wait_to_avoid_states(self, states, retries=10):
+    async def _wait_to_avoid_states(self, states: list[str], retries: int = 10) -> None:
         initial_retries = retries
         while retries > 0:
             curstate = await self.middleware.call("service.get_unit_state", self.name)
@@ -46,7 +46,7 @@ class ISCSITargetService(SwitchableSimpleService):
             else:
                 self.middleware.logger.debug(f'Waited sucessfully for {self.name} to enter {curstate} state')
 
-    async def before_start(self):
+    async def before_start(self) -> None:
         await self.middleware.call("iscsi.alua.before_start")
         if not await self._lio_mode():
             # Because we are a systemd_async_start service, it is possible that
@@ -57,7 +57,7 @@ class ISCSITargetService(SwitchableSimpleService):
                 await self._wait_to_avoid_states(['deactivating'])
         await self.middleware.call("iscsi.iser.before_start")
 
-    async def start(self):
+    async def start(self) -> None:
         if await self._lio_mode():
             # In LIO mode there is no systemd unit to start (select_systemd_unit_name
             # returns None) and config is written by etc.generate('lio') before this
@@ -69,7 +69,7 @@ class ISCSITargetService(SwitchableSimpleService):
                 return
         await super().start()
 
-    async def stop(self):
+    async def stop(self) -> None:
         if await self._lio_mode():
             # In LIO mode there is no systemd unit; tear down the configfs tree
             # directly and return without invoking the SCST stop path.
@@ -77,28 +77,28 @@ class ISCSITargetService(SwitchableSimpleService):
             return
         await super().stop()
 
-    async def after_start(self):
+    async def after_start(self) -> None:
         await self.middleware.call("iscsi.alua.after_start")
 
-    async def before_stop(self):
+    async def before_stop(self) -> None:
         await self.middleware.call("iscsi.alua.before_stop")
 
-    async def after_stop(self):
+    async def after_stop(self) -> None:
         await self.middleware.call("iscsi.alua.after_stop")
 
-    async def reload(self):
+    async def reload(self) -> None:
         if await self._lio_mode():
             # In LIO mode reloads are handled by etc.generate('lio') which rewrites
             # the configfs tree directly.  No scstadmin reload is needed.
-            return True
+            return
         if await self.middleware.call("iscsi.global.direct_config_enabled"):
-            return await self.middleware.call("iscsi.scst.apply_config_file")
+            return await self.middleware.call("iscsi.scst.apply_config_file")  # type: ignore[no-any-return]
         else:
-            return (await run(
+            await run(
                 ["scstadmin", "-noprompt", "-preserve_cluster_mode", "-force", "-config", "/etc/scst.conf"], check=False
-            )).returncode == 0
+            )
 
-    async def become_active(self):
+    async def become_active(self) -> None:
         """If we are becoming the ACTIVE node on a HA system, and if SCST was already loaded
         then we can perform a shortcut operation to switch from being the STANDBY node to the
         ACTIVE one, *without* restarting SCST, but just by reconfiguring it."""
@@ -106,9 +106,9 @@ class ISCSITargetService(SwitchableSimpleService):
             if await self.middleware.call('iscsi.global.alua_enabled'):
                 if await self.middleware.call('iscsi.scst.is_kernel_module_loaded'):
                     try:
-                        return await self.middleware.call("iscsi.alua.become_active")
+                        await self.middleware.call("iscsi.alua.become_active")
                     except Exception:
-                        self.logger.warning('Failover exception', exc_info=True)
+                        self.middleware.logger.warning('Failover exception', exc_info=True)
                         # Fall through
         # Fallback to doing a regular restart
         rjob = await self.middleware.call(
