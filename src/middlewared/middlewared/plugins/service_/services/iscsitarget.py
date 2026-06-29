@@ -68,7 +68,7 @@ class ISCSITargetService(SimpleService):
                 try:
                     return await self.middleware.call("iscsi.alua.become_active")
                 except Exception:
-                    self.logger.warning('Failover exception', exc_info=True)
+                    self.middleware.logger.warning('Failover exception', exc_info=True)
                     # Fall through
         # Fallback to doing a regular restart
         return await (await self.middleware.call('service.control', 'RESTART', self.name, {'ha_propagate': False})).wait(raise_error=True)
