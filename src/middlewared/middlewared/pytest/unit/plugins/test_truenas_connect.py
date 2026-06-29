@@ -582,3 +582,214 @@ async def test_heartbeat_guard_rejects_when_no_creds():
     """Missing creds is rejected even in a configured state."""
     with pytest.raises(CallError):
         await _run_heartbeat_start(Status.CONFIGURED.name, None)
+
+
+# --- Heartbeat request payload --------------------------------------------------------------------
+
+def _payload_service(license_info, fingerprint='FP', fingerprint_raises=False):
+    """A TNCHeartbeatService whose middleware.call serves what payload() needs."""
+    service = TNCHeartbeatService(MagicMock())
+
+    async def mock_call(method, *args, **kwargs):
+        if method == 'reporting.realtime.stats':
+            return {}
+        if method in ('app.query', 'vm.query', 'alert.list'):
+            return []
+        if method == 'truenas.license.fingerprint':
+            if fingerprint_raises:
+                raise CallError('daemon down')
+            return fingerprint
+        if method == 'truenas.license.info':
+            return license_info
+        raise ValueError(f'Unexpected: {method}')
+
+    service.middleware.call = AsyncMock(side_effect=mock_call)
+    return service
+
+
+@pytest.mark.asyncio
+async def test_payload_reports_fingerprint_and_license_id():
+    service = _payload_service(license_info={'id': 'LIC-1'}, fingerprint='FP-XYZ')
+    payload = await service.payload({})
+    assert payload['fingerprint'] == 'FP-XYZ'
+    assert payload['license_id'] == 'LIC-1'
+
+
+@pytest.mark.asyncio
+async def test_payload_license_id_null_when_unlicensed():
+    service = _payload_service(license_info=None)
+    payload = await service.payload({})
+    assert payload['license_id'] is None
+
+
+@pytest.mark.asyncio
+async def test_payload_fingerprint_failure_degrades_to_null():
+    service = _payload_service(license_info={'id': 'LIC-1'}, fingerprint_raises=True)
+    payload = await service.payload({})
+    assert payload['fingerprint'] is None
+    assert payload['license_id'] == 'LIC-1'  # other fields still populated
+
+
+# --- License install (dedup + always-install + never crash) ---------------------------------------
+
+def _install_service(installed_raw, upload_raises=False):
+    service = TNCHeartbeatService(MagicMock())
+
+    async def mock_call(method, *args, **kwargs):
+        if method == 'system.license':
+            return {'raw_license': installed_raw} if installed_raw is not None else None
+        if method == 'truenas.license.upload':
+            if upload_raises:
+                raise CallError('bad license')
+            return None
+        raise ValueError(f'Unexpected: {method}')
+
+    service.middleware.call = AsyncMock(side_effect=mock_call)
+    return service
+
+
+def _upload_calls(service):
+    return [c for c in service.middleware.call.call_args_list if c.args[0] == 'truenas.license.upload']
+
+
+@pytest.mark.asyncio
+async def test_maybe_install_license_installs_when_different():
+    service = _install_service(installed_raw='OLD-PEM')
+    await service.maybe_install_license('NEW-PEM')
+    calls = _upload_calls(service)
+    assert len(calls) == 1
+    assert calls[0].args[1] == 'NEW-PEM'
+
+
+@pytest.mark.asyncio
+async def test_maybe_install_license_installs_when_no_current():
+    service = _install_service(installed_raw=None)
+    await service.maybe_install_license('NEW-PEM')
+    assert len(_upload_calls(service)) == 1
+
+
+@pytest.mark.asyncio
+async def test_maybe_install_license_skips_when_identical():
+    # Trailing whitespace differs but content matches -> dedup must skip.
+    service = _install_service(installed_raw='SAME-PEM')
+    await service.maybe_install_license('  SAME-PEM\n')
+    assert _upload_calls(service) == []
+
+
+@pytest.mark.asyncio
+async def test_maybe_install_license_swallows_upload_error():
+    service = _install_service(installed_raw='OLD-PEM', upload_raises=True)
+    # Must not raise -- a failed install cannot kill the heartbeat loop.
+    await service.maybe_install_license('NEW-PEM')
+    assert len(_upload_calls(service)) == 1
+
+
+# --- Token rotation persistence -------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_persist_new_token_writes_and_updates_in_memory():
+    from middlewared.plugins.truenas_connect import heartbeat as hb
+
+    service = TNCHeartbeatService(MagicMock())
+    service.middleware.call = AsyncMock()
+    tnc_config = {'id': 1, 'jwt_token': 'OLD'}
+    decoded = {'account_id': 'a', 'system_id': 's'}
+
+    with patch.object(hb, 'decode_and_validate_token', return_value=decoded):
+        await service.persist_new_token(tnc_config, 'NEW-TOKEN')
+
+    update_call = next(
+        c for c in service.middleware.call.call_args_list if c.args[0] == 'datastore.update'
+    )
+    assert update_call.args[1] == 'truenas_connect'
+    assert update_call.args[3] == {'jwt_token': 'NEW-TOKEN', 'registration_details': decoded}
+    # In-memory config updated so the next request authenticates with the new token.
+    assert tnc_config['jwt_token'] == 'NEW-TOKEN'
+    assert tnc_config['registration_details'] == decoded
+
+
+@pytest.mark.asyncio
+async def test_persist_new_token_skips_invalid_token():
+    from middlewared.plugins.truenas_connect import heartbeat as hb
+
+    service = TNCHeartbeatService(MagicMock())
+    service.middleware.call = AsyncMock()
+    tnc_config = {'id': 1, 'jwt_token': 'OLD'}
+
+    with patch.object(hb, 'decode_and_validate_token', side_effect=ValueError('bad')):
+        await service.persist_new_token(tnc_config, 'BROKEN')
+
+    service.middleware.call.assert_not_called()
+    assert tnc_config['jwt_token'] == 'OLD'  # unchanged
+
+
+# --- 2xx response dispatch ------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('body, expect_token, expect_license', [
+    # A token is persisted whenever new_token is present -- even with token_status='active', which is
+    # the decoupling the reviewer asked for (rotation can be issued while the old token is active).
+    ({'token_status': 'active', 'new_token': 'T'}, 'T', None),
+    # A token under 'rotating' is likewise persisted.
+    ({'token_status': 'rotating', 'new_token': 'T'}, 'T', None),
+    # A PEM is installed whenever present, regardless of license_status.
+    ({'license_status': 'pending', 'license': 'PEM'}, None, 'PEM'),
+    ({'license_status': 'accepted', 'license': 'PEM'}, None, 'PEM'),
+    # Both artifacts present -> both handled.
+    ({'new_token': 'T', 'license': 'PEM'}, 'T', 'PEM'),
+    # Empty fields / empty body -> nothing.
+    ({'token_status': 'active', 'new_token': '', 'license_status': 'pending', 'license': ''}, None, None),
+    ({}, None, None),
+])
+async def test_handle_response_dispatch(body, expect_token, expect_license):
+    service = TNCHeartbeatService(MagicMock())
+    tnc_config = {'id': 1}
+
+    with patch.object(service, 'persist_new_token', new=AsyncMock()) as persist, \
+            patch.object(service, 'maybe_install_license', new=AsyncMock()) as install:
+        # 202 keeps the focus on field-driven routing without tripping the 205 fault check.
+        await service.handle_response(tnc_config, 202, body)
+
+    if expect_token is None:
+        persist.assert_not_called()
+    else:
+        persist.assert_awaited_once_with(tnc_config, expect_token)
+
+    if expect_license is None:
+        install.assert_not_called()
+    else:
+        install.assert_awaited_once_with(expect_license)
+
+
+@pytest.mark.asyncio
+async def test_handle_response_205_without_artifact_warns():
+    """A 205 promising an artifact but carrying none is a TNC fault we must surface, not skip."""
+    from middlewared.plugins.truenas_connect import heartbeat as hb
+
+    service = TNCHeartbeatService(MagicMock())
+    body = {'token_status': 'active', 'license_status': 'pending', 'license': '', 'new_token': ''}
+
+    with patch.object(service, 'persist_new_token', new=AsyncMock()) as persist, \
+            patch.object(service, 'maybe_install_license', new=AsyncMock()) as install, \
+            patch.object(hb.logger, 'warning') as warn:
+        await service.handle_response({'id': 1}, 205, body)
+
+    persist.assert_not_called()
+    install.assert_not_called()
+    assert any('no license or token' in str(c.args[0]) for c in warn.call_args_list)
+
+
+@pytest.mark.asyncio
+async def test_handle_response_202_pending_without_pem_is_quiet():
+    """A 202 with pending-but-no-PEM is normal (signing in progress) and must not warn."""
+    from middlewared.plugins.truenas_connect import heartbeat as hb
+
+    service = TNCHeartbeatService(MagicMock())
+    body = {'token_status': 'active', 'license_status': 'pending', 'license': '', 'new_token': ''}
+
+    with patch.object(service, 'maybe_install_license', new=AsyncMock()) as install, \
+            patch.object(hb.logger, 'warning') as warn:
+        await service.handle_response({'id': 1}, 202, body)
+
+    install.assert_not_called()
+    warn.assert_not_called()
