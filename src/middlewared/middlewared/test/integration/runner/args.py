@@ -4,9 +4,9 @@ from dataclasses import dataclass
 
 @dataclass
 class RunArgs:
-    ip: str
+    ip: str | None
     password: str
-    interface: str
+    interface: str | None
     ip2: str
     vip: str
     ha: bool
@@ -35,34 +35,29 @@ def parse(args: list[str] | None = None) -> RunArgs:
     parser = argparse.ArgumentParser(description="Run TrueNAS integration tests")
 
     conn = parser.add_argument_group("connection")
-    # required=True + nargs='?' means the flag must be present but its value is
-    # optional: bare -i/-p/-I (without a value) set the field to '' via const.
     conn.add_argument(
         "-i",
         "--ip",
-        nargs="?",
-        const="",
-        required=True,
+        default=None,
         metavar="ADDR",
-        help="IP address of the TrueNAS system under test",
+        help=(
+            "IP address of the TrueNAS system under test; defaults to the IP of the "
+            "local primary network interface (the one with the default gateway)"
+        ),
     )
     conn.add_argument(
         "-p",
         "--password",
-        nargs="?",
-        const="",
-        required=True,
+        default="password",
         metavar="SECRET",
-        help="password for the TrueNAS root user",
+        help="password for the TrueNAS root user (default: %(default)s)",
     )
     conn.add_argument(
         "-I",
         "--interface",
-        nargs="?",
-        const="",
-        required=True,
+        default=None,
         metavar="IFACE",
-        help="network interface TrueNAS is bound to",
+        help="network interface TrueNAS is bound to (auto-detected from the IP under test)",
     )
 
     ha = parser.add_argument_group("HA")
