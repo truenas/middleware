@@ -61,7 +61,7 @@ class TrueNASVfsObjects(enum.StrEnum):
     TRUENAS_AUDIT = 'truenas_audit'
     CATIA = 'catia'
     FRUIT = 'fruit'
-    STREAMS_XATTR = 'streams_xattr'
+    STREAMS_XATTR = 'truenas_streams_xattr'
     SHADOW_COPY_ZFS = 'shadow_copy_zfs'
     IXNAS = 'ixnas'
     WINMSA = 'winmsa'
@@ -349,6 +349,8 @@ def generate_smb_share_conf_dict(
             'fruit:encoding': 'native',
             'fruit:metadata': 'netatalk',
             'fruit:resource': 'file',
+            # The Samba module is named truenas_streams_xattr (renamed in 4.24), but its
+            # parametric options are still read under the streams_xattr: prefix. Do not rename.
             'streams_xattr:prefix': 'user.',
             'streams_xattr:store_stream_type': False,
             'streams_xattr:xattr_compat': True
