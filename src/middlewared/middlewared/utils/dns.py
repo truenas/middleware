@@ -4,6 +4,14 @@ import ipaddress
 from subprocess import CompletedProcess
 from typing import Any
 
+# nsupdate prints this to stderr when the server cannot verify our TSIG
+# signature. It is common and non-fatal: the reverse zone may be misconfigured,
+# or -- during an AD leave -- ``net ads leave`` has already removed the machine
+# credentials we sign DNS updates with. A forward update that fails only this
+# way is tolerated so the rest of the operation (e.g. resetting the network
+# domain after leaving) still proceeds.
+TSIG_VERIFY_FAILURE = "tsig verify failure"
+
 
 @dataclass(frozen=True)
 class NSUpdatePlan:
@@ -88,3 +96,10 @@ def run_nsupdate_plan(plan: NSUpdatePlan, send: Callable[[list[str]], CompletedP
             ptr_failures.append((reverse_pointer, proc.stderr.decode().strip()))
 
     return NSUpdateResult(forward_error=None, ptr_failures=ptr_failures)
+
+
+def forward_error_is_fatal(error: str | None) -> bool:
+    """Whether a forward-transaction error from :func:`run_nsupdate_plan` should
+    abort the caller's operation. Success (``None``) and TSIG verify failures are
+    tolerated; any other error is fatal."""
+    return error is not None and TSIG_VERIFY_FAILURE not in error

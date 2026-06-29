@@ -15,7 +15,7 @@ from middlewared.plugins.interface.dhcp import dhcp_leases
 from middlewared.service import Service, filterable_api_method, private
 from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.utils import MIDDLEWARE_RUN_DIR
-from middlewared.utils.dns import build_nsupdate_plan, run_nsupdate_plan
+from middlewared.utils.dns import build_nsupdate_plan, forward_error_is_fatal, run_nsupdate_plan
 from middlewared.utils.filter_list import filter_list
 
 
@@ -150,12 +150,15 @@ class DNSService(Service):
         )
 
         # Forward (A / AAAA) registration is critical: without it the host is not
-        # resolvable in the domain, so we raise -- the GSSAPI retry in the AD
-        # join path also depends on this raising to retry through slow sysvol
-        # replication. Reverse (PTR) registration is best-effort: reverse DNS is
-        # frequently absent or misconfigured and must not block the join, so PTR
-        # failures are only logged.
-        if result.forward_error is not None:
+        # resolvable in the domain, so a fatal error is raised -- the GSSAPI retry
+        # in the AD join path also depends on this raising to retry through slow
+        # sysvol replication. A TSIG verify failure is the exception and is
+        # tolerated: it is expected, e.g. during a leave once `net ads leave` has
+        # already removed the credentials we sign updates with, and must not block
+        # the rest of unregistration. Reverse (PTR) registration is best-effort:
+        # reverse DNS is frequently absent or misconfigured and must not block the
+        # join, so PTR failures are only logged.
+        if forward_error_is_fatal(result.forward_error):
             raise CallError(f'nsupdate failed to register forward records: {result.forward_error}')
 
         for reverse_pointer, error in result.ptr_failures:

@@ -5,6 +5,7 @@ import pytest
 from middlewared.utils.dns import (
     NSUpdateResult,
     build_nsupdate_plan,
+    forward_error_is_fatal,
     nsupdate_directive,
     run_nsupdate_plan,
 )
@@ -189,3 +190,26 @@ def test_run_collects_every_ptr_failure():
     result = run_nsupdate_plan(plan, send)
     assert result.forward_error is None
     assert len(result.ptr_failures) == len(plan.reverse) == 2
+
+
+# ---- forward_error_is_fatal: TSIG tolerance ----------------------------------
+
+
+@pytest.mark.parametrize(
+    "error,fatal",
+    [
+        (None, False),  # success
+        # A TSIG verify failure is tolerated -- it is expected once `net ads leave`
+        # has removed our credentials, and must not abort the rest of the leave.
+        ("; TSIG error with server: tsig verify failure", False),
+        ("update failed: tsig verify failure\n", False),
+        # any other forward failure stays fatal
+        ("update failed: NOTZONE", True),
+        (
+            "tkey query failed: GSSAPI error ... Server not found in Kerberos database",
+            True,
+        ),
+    ],
+)
+def test_forward_error_is_fatal(error, fatal):
+    assert forward_error_is_fatal(error) is fatal
