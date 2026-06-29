@@ -1,14 +1,6 @@
-from types import SimpleNamespace
-
 import pytest
 
-from middlewared.utils.dns import (
-    NSUpdateResult,
-    build_nsupdate_plan,
-    forward_error_is_fatal,
-    nsupdate_directive,
-    run_nsupdate_plan,
-)
+from middlewared.utils.dns import build_nsupdate_payload, nsupdate_directive
 
 
 FQDN = "truenas.ad.example.com."
@@ -49,14 +41,6 @@ def _op(address, rtype, command="ADD", ttl=3600, do_ptr=True, name=FQDN):
             "2001:db8::5",
             "update delete truenas.ad.example.com. 60 AAAA 2001:db8::5 \n",
         ),
-        (
-            "ADD",
-            "5.1.168.192.in-addr.arpa",
-            3600,
-            "PTR",
-            FQDN,
-            "update add 5.1.168.192.in-addr.arpa 3600 PTR truenas.ad.example.com. \n",
-        ),
     ],
 )
 def test_nsupdate_directive(command, name, ttl, rtype, rdata, expected):
@@ -64,152 +48,75 @@ def test_nsupdate_directive(command, name, ttl, rtype, rdata, expected):
     assert nsupdate_directive(command, name, ttl, rtype, rdata) == expected
 
 
-# ---- build_nsupdate_plan: forward --------------------------------------------
+# ---- build_nsupdate_payload ---------------------------------------------------
 
 
-def test_forward_records_share_one_transaction():
-    # A and AAAA for the same host go into the single forward transaction.
-    plan = build_nsupdate_plan([_op("192.168.1.5", "A"), _op("2001:db8::5", "AAAA")])
-    assert plan.forward == [
-        "update add truenas.ad.example.com. 3600 A 192.168.1.5 \n",
-        "update add truenas.ad.example.com. 3600 AAAA 2001:db8::5 \n",
-    ]
+def test_full_payload_forward_grouped_each_ptr_own_send():
+    # The reported bug: IPv4 (in-addr.arpa) and IPv6 (ip6.arpa) PTRs must not
+    # share a transaction. Forward A/AAAA go together; each PTR gets its own send.
+    payload = build_nsupdate_payload(
+        [_op("192.168.1.5", "A"), _op("2001:db8::5", "AAAA")]
+    )
+    assert payload == (
+        "update add truenas.ad.example.com. 3600 A 192.168.1.5 \n"
+        "update add truenas.ad.example.com. 3600 AAAA 2001:db8::5 \n"
+        "send\n"
+        "update add 5.1.168.192.in-addr.arpa 3600 PTR truenas.ad.example.com. \n"
+        "send\n"
+        f"update add {IPV6_PTR} 3600 PTR truenas.ad.example.com. \n"
+        "send\n"
+    )
 
 
-def test_forward_emitted_even_when_no_ptr():
-    plan = build_nsupdate_plan([_op("192.168.1.5", "A", do_ptr=False)])
-    assert len(plan.forward) == 1
-    assert plan.reverse == []
+def test_no_ptr_single_send():
+    payload = build_nsupdate_payload([_op("192.168.1.5", "A", do_ptr=False)])
+    assert payload == "update add truenas.ad.example.com. 3600 A 192.168.1.5 \nsend\n"
+    assert payload.count("send\n") == 1
 
 
-# ---- build_nsupdate_plan: per-PTR isolation ----------------------------------
+def test_send_count_is_one_forward_plus_one_per_ptr():
+    payload = build_nsupdate_payload(
+        [_op("192.168.1.5", "A"), _op("2001:db8::5", "AAAA")]
+    )
+    assert payload.count("send\n") == 3  # forward + 2 PTRs
 
 
-def test_ipv4_and_ipv6_ptrs_are_separate_entries():
-    # The core fix: the IPv4 (in-addr.arpa) and IPv6 (ip6.arpa) PTRs are distinct
-    # reverse entries -> separate transactions -> never share a DNS UPDATE.
-    plan = build_nsupdate_plan([_op("192.168.1.5", "A"), _op("2001:db8::5", "AAAA")])
-    assert [rp for rp, _ in plan.reverse] == ["5.1.168.192.in-addr.arpa", IPV6_PTR]
-    # no single directive ever mixes the two reverse families
-    for _, directive in plan.reverse:
-        assert not ("in-addr.arpa" in directive and "ip6.arpa" in directive)
-
-
-def test_multiple_same_family_addresses_each_isolated():
-    # Even two IPv4 addresses are isolated -- their reverse zones may be
-    # delegated separately, and that is not knowable from the address.
-    plan = build_nsupdate_plan([_op("192.168.1.5", "A"), _op("192.168.50.6", "A")])
-    assert [rp for rp, _ in plan.reverse] == [
-        "5.1.168.192.in-addr.arpa",
-        "6.50.168.192.in-addr.arpa",
-    ]
+def test_ipv4_and_ipv6_ptrs_never_share_a_transaction():
+    payload = build_nsupdate_payload(
+        [_op("192.168.1.5", "A"), _op("2001:db8::5", "AAAA")]
+    )
+    # Split into transactions by "send"; no single transaction holds both families.
+    transactions = payload.split("send\n")
+    for txn in transactions:
+        assert not ("in-addr.arpa" in txn and "ip6.arpa" in txn)
 
 
 def test_do_ptr_false_excludes_reverse():
-    plan = build_nsupdate_plan(
+    payload = build_nsupdate_payload(
         [
             _op("192.168.1.5", "A", do_ptr=True),
             _op("2001:db8::5", "AAAA", do_ptr=False),
         ]
     )
-    assert len(plan.forward) == 2
-    assert [rp for rp, _ in plan.reverse] == ["5.1.168.192.in-addr.arpa"]
+    assert "5.1.168.192.in-addr.arpa" in payload
+    assert "ip6.arpa" not in payload
+    assert payload.count("send\n") == 2  # forward + the single IPv4 PTR
 
 
-def test_ptr_directive_uses_its_own_op_command_and_ttl():
-    # Regression: each PTR directive must use the command/ttl of the op that
-    # produced it, not a value carried over from another op in the list.
-    plan = build_nsupdate_plan(
+def test_ptr_uses_its_own_op_command_and_ttl():
+    # Regression: each PTR must use the command/ttl of the op that produced it,
+    # not a value carried over from another op in the list.
+    payload = build_nsupdate_payload(
         [
             _op("192.168.1.5", "A", command="ADD", ttl=3600),
             _op("192.168.1.6", "A", command="DELETE", ttl=60),
         ]
     )
-    assert [d for _, d in plan.reverse] == [
-        "update add 5.1.168.192.in-addr.arpa 3600 PTR truenas.ad.example.com. \n",
-        "update delete 6.1.168.192.in-addr.arpa 60 PTR truenas.ad.example.com. \n",
-    ]
-
-
-# ---- run_nsupdate_plan: failure accounting -----------------------------------
-
-
-def _sender(fail_on=None):
-    """Fake ``send`` recording its calls. ``fail_on(directives) -> bool`` selects
-    which transactions return a non-zero exit code."""
-    fail_on = fail_on or (lambda directives: False)
-    calls = []
-
-    def send(directives):
-        calls.append(list(directives))
-        if fail_on(directives):
-            return SimpleNamespace(returncode=2, stderr=b"update failed: NOTZONE\n")
-        return SimpleNamespace(returncode=0, stderr=b"")
-
-    send.calls = calls
-    return send
-
-
-def _plan():
-    return build_nsupdate_plan([_op("192.168.1.5", "A"), _op("2001:db8::5", "AAAA")])
-
-
-def test_run_all_success():
-    plan = _plan()
-    send = _sender()
-    result = run_nsupdate_plan(plan, send)
-    assert result == NSUpdateResult(forward_error=None, ptr_failures=[])
-    assert len(send.calls) == 1 + len(plan.reverse)  # forward + one per PTR
-
-
-def test_run_forward_failure_short_circuits():
-    # Forward failure is fatal: its error is captured and the PTRs are NOT
-    # attempted, so the AD join's GSSAPI retry sees the forward error promptly.
-    plan = _plan()
-    send = _sender(fail_on=lambda d: "PTR" not in d[0])
-    result = run_nsupdate_plan(plan, send)
-    assert result.forward_error == "update failed: NOTZONE\n"
-    assert result.ptr_failures == []
-    assert len(send.calls) == 1
-
-
-def test_run_ptr_failure_is_collected_not_fatal():
-    # A missing IPv6 reverse zone (NOTZONE) must not fail the operation: forward
-    # and the IPv4 PTR still succeed, and only the failing PTR is reported.
-    plan = _plan()
-    send = _sender(fail_on=lambda d: "ip6.arpa" in d[0])
-    result = run_nsupdate_plan(plan, send)
-    assert result.forward_error is None
-    assert result.ptr_failures == [(IPV6_PTR, "update failed: NOTZONE")]
-    assert len(send.calls) == 3  # all transactions attempted
-
-
-def test_run_collects_every_ptr_failure():
-    plan = _plan()
-    send = _sender(fail_on=lambda d: "PTR" in d[0])
-    result = run_nsupdate_plan(plan, send)
-    assert result.forward_error is None
-    assert len(result.ptr_failures) == len(plan.reverse) == 2
-
-
-# ---- forward_error_is_fatal: TSIG tolerance ----------------------------------
-
-
-@pytest.mark.parametrize(
-    "error,fatal",
-    [
-        (None, False),  # success
-        # A TSIG verify failure is tolerated -- it is expected once `net ads leave`
-        # has removed our credentials, and must not abort the rest of the leave.
-        ("; TSIG error with server: tsig verify failure", False),
-        ("update failed: tsig verify failure\n", False),
-        # any other forward failure stays fatal
-        ("update failed: NOTZONE", True),
-        (
-            "tkey query failed: GSSAPI error ... Server not found in Kerberos database",
-            True,
-        ),
-    ],
-)
-def test_forward_error_is_fatal(error, fatal):
-    assert forward_error_is_fatal(error) is fatal
+    assert (
+        "update add 5.1.168.192.in-addr.arpa 3600 PTR truenas.ad.example.com. \n"
+        in payload
+    )
+    assert (
+        "update delete 6.1.168.192.in-addr.arpa 60 PTR truenas.ad.example.com. \n"
+        in payload
+    )

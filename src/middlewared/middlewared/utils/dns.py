@@ -1,51 +1,5 @@
-from collections.abc import Callable
-from dataclasses import dataclass
 import ipaddress
-from subprocess import CompletedProcess
 from typing import Any
-
-# nsupdate prints this to stderr when the server cannot verify our TSIG
-# signature. It is common and non-fatal: the reverse zone may be misconfigured,
-# or -- during an AD leave -- ``net ads leave`` has already removed the machine
-# credentials we sign DNS updates with. A forward update that fails only this
-# way is tolerated so the rest of the operation (e.g. resetting the network
-# domain after leaving) still proceeds.
-TSIG_VERIFY_FAILURE = "tsig verify failure"
-
-
-@dataclass(frozen=True)
-class NSUpdatePlan:
-    """The set of nsupdate transactions derived from a list of record ops.
-
-    A DNS UPDATE message targets exactly one zone, and a reverse name's zone is
-    a server-side delegation that cannot be derived from the address. Rather than
-    try to determine it, the records are split into independent transactions and
-    nsupdate resolves each transaction's zone itself (via an SOA lookup):
-
-    * ``forward`` -- the A / AAAA directives. They share the host's forward zone
-      and are submitted together as a single transaction.
-    * ``reverse`` -- ``(reverse_pointer, directive)`` pairs, one per PTR record,
-      each submitted as its own transaction. Isolating every PTR guarantees two
-      records from different reverse zones can never share a transaction (which
-      the server would reject with NOTZONE), without us having to know where any
-      zone is cut.
-    """
-
-    forward: list[str]
-    reverse: list[tuple[str, str]]
-
-
-@dataclass(frozen=True)
-class NSUpdateResult:
-    """Outcome of running an :class:`NSUpdatePlan`.
-
-    ``forward_error`` holds the nsupdate error output when the (critical) forward
-    transaction failed, otherwise ``None``. ``ptr_failures`` pairs each failed
-    reverse pointer with its error output; PTR failures are non-fatal.
-    """
-
-    forward_error: str | None
-    ptr_failures: list[tuple[str, str]]
 
 
 def nsupdate_directive(command: str, name: str, ttl: int, rtype: str, rdata: str) -> str:
@@ -53,10 +7,20 @@ def nsupdate_directive(command: str, name: str, ttl: int, rtype: str, rdata: str
     return " ".join(["update", command.lower(), name, str(ttl), rtype, rdata, "\n"])
 
 
-def build_nsupdate_plan(ops: list[dict[str, Any]]) -> NSUpdatePlan:
-    """Split record ops into a single forward transaction and one transaction
-    per PTR record. Each op carries its own ``command`` and ``ttl``, so a reverse
-    directive is always built from the op that produced it."""
+def build_nsupdate_payload(ops: list[dict[str, Any]]) -> str:
+    """Build the command input for a single nsupdate invocation from record ops.
+
+    The forward (A / AAAA) records share the host's forward zone and are sent as
+    one transaction. Each PTR record gets its own transaction (its own ``send``):
+    a DNS UPDATE message targets exactly one zone, so batching PTRs from
+    different reverse zones -- e.g. IPv4 ``in-addr.arpa`` and IPv6 ``ip6.arpa`` --
+    makes the server reject the out-of-zone records with NOTZONE and fail the
+    whole update. Splitting the ``send`` blocks (rather than splitting into
+    separate nsupdate invocations) keeps every record under one GSS-TSIG
+    negotiation, and one exit code, so the caller's existing failure handling and
+    retries are unchanged. Each PTR is built from the op that produced it, so its
+    command and ttl are its own.
+    """
     forward = []
     reverse = []
     for entry in ops:
@@ -66,40 +30,11 @@ def build_nsupdate_plan(ops: list[dict[str, Any]]) -> NSUpdatePlan:
         )
         if entry["do_ptr"]:
             reverse.append(
-                (
-                    addr.reverse_pointer,
-                    nsupdate_directive(entry["command"], addr.reverse_pointer, entry["ttl"], "PTR", entry["name"]),
-                )
+                nsupdate_directive(entry["command"], addr.reverse_pointer, entry["ttl"], "PTR", entry["name"])
             )
 
-    return NSUpdatePlan(forward=forward, reverse=reverse)
+    lines = forward + ["send\n"]
+    for directive in reverse:
+        lines += [directive, "send\n"]
 
-
-def run_nsupdate_plan(plan: NSUpdatePlan, send: Callable[[list[str]], CompletedProcess[bytes]]) -> NSUpdateResult:
-    """Execute ``plan`` one transaction at a time using ``send``.
-
-    ``send`` takes the directive lines for a single transaction and returns a
-    completed process exposing ``returncode`` (int) and ``stderr`` (bytes).
-
-    The forward transaction is critical: if it fails the reverse records are not
-    attempted and its error is returned in :attr:`NSUpdateResult.forward_error`.
-    Each PTR is attempted independently so one failing reverse zone cannot abort
-    the rest; any PTR failures are collected for the caller to surface."""
-    proc = send(plan.forward)
-    if proc.returncode:
-        return NSUpdateResult(forward_error=proc.stderr.decode(), ptr_failures=[])
-
-    ptr_failures = []
-    for reverse_pointer, directive in plan.reverse:
-        proc = send([directive])
-        if proc.returncode:
-            ptr_failures.append((reverse_pointer, proc.stderr.decode().strip()))
-
-    return NSUpdateResult(forward_error=None, ptr_failures=ptr_failures)
-
-
-def forward_error_is_fatal(error: str | None) -> bool:
-    """Whether a forward-transaction error from :func:`run_nsupdate_plan` should
-    abort the caller's operation. Success (``None``) and TSIG verify failures are
-    tolerated; any other error is fatal."""
-    return error is not None and TSIG_VERIFY_FAILURE not in error
+    return "".join(lines)

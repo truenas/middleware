@@ -15,7 +15,7 @@ from middlewared.plugins.interface.dhcp import dhcp_leases
 from middlewared.service import Service, filterable_api_method, private
 from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.utils import MIDDLEWARE_RUN_DIR
-from middlewared.utils.dns import build_nsupdate_plan, forward_error_is_fatal, run_nsupdate_plan
+from middlewared.utils.dns import build_nsupdate_payload
 from middlewared.utils.filter_list import filter_list
 
 
@@ -143,40 +143,25 @@ class DNSService(Service):
         if data['use_kerberos']:
             self.middleware.call_sync('kerberos.check_ticket')
 
-        plan = build_nsupdate_plan(data['ops'])
-        result = run_nsupdate_plan(
-            plan,
-            lambda directives: self._nsupdate_send(directives, data['timeout'], data['use_kerberos']),
-        )
-
-        # Forward (A / AAAA) registration is critical: without it the host is not
-        # resolvable in the domain, so a fatal error is raised -- the GSSAPI retry
-        # in the AD join path also depends on this raising to retry through slow
-        # sysvol replication. A TSIG verify failure is the exception and is
-        # tolerated: it is expected, e.g. during a leave once `net ads leave` has
-        # already removed the credentials we sign updates with, and must not block
-        # the rest of unregistration. Reverse (PTR) registration is best-effort:
-        # reverse DNS is frequently absent or misconfigured and must not block the
-        # join, so PTR failures are only logged.
-        if forward_error_is_fatal(result.forward_error):
-            raise CallError(f'nsupdate failed to register forward records: {result.forward_error}')
-
-        for reverse_pointer, error in result.ptr_failures:
-            self.logger.warning('%s: failed to register reverse (PTR) record: %s', reverse_pointer, error)
-
-    def _nsupdate_send(self, directives, timeout, use_kerberos):
-        """ Run a single nsupdate transaction made up of ``directives`` (one
-        "send" block) and return the completed process for inspection. """
         with tempfile.NamedTemporaryFile(dir=MIDDLEWARE_RUN_DIR) as tmpfile:
-            for directive in directives:
-                tmpfile.write(directive.encode())
-
-            tmpfile.write(b'send\n')
+            # A / AAAA records go out as one transaction; each PTR gets its own
+            # "send" so records from different reverse zones never share an UPDATE
+            # (which the server rejects with NOTZONE). This is a single nsupdate
+            # invocation -- one GSS-TSIG negotiation, one exit code.
+            tmpfile.write(build_nsupdate_payload(data['ops']).encode())
             tmpfile.file.flush()
 
-            cmd = ['nsupdate', '-t', str(timeout)]
-            if use_kerberos:
+            cmd = ['nsupdate', '-t', str(data['timeout'])]
+            if data['use_kerberos']:
                 cmd.append('-g')
 
             cmd.append(tmpfile.name)
-            return subprocess.run(cmd, capture_output=True)
+            nsupdate_proc = subprocess.run(cmd, capture_output=True)
+
+            # tsig verify failure is possible if a reverse zone is misconfigured.
+            # Unfortunately, this is quite common and so we have to skip it. Every
+            # other failure is raised so callers can react -- in particular the AD
+            # join retries on the transient "Server not found in Kerberos database"
+            # GSSAPI error seen during slow sysvol replication.
+            if nsupdate_proc.returncode and 'tsig verify failure' not in nsupdate_proc.stderr.decode():
+                raise CallError(f'nsupdate failed: {nsupdate_proc.stderr.decode()}')
