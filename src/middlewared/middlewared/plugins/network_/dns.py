@@ -15,6 +15,7 @@ from middlewared.plugins.interface.dhcp import dhcp_leases
 from middlewared.service import Service, filterable_api_method, private
 from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.utils import MIDDLEWARE_RUN_DIR
+from middlewared.utils.dns import build_nsupdate_plan, run_nsupdate_plan
 from middlewared.utils.filter_list import filter_list
 
 
@@ -142,58 +143,37 @@ class DNSService(Service):
         if data['use_kerberos']:
             self.middleware.call_sync('kerberos.check_ticket')
 
+        plan = build_nsupdate_plan(data['ops'])
+        result = run_nsupdate_plan(
+            plan,
+            lambda directives: self._nsupdate_send(directives, data['timeout'], data['use_kerberos']),
+        )
+
+        # Forward (A / AAAA) registration is critical: without it the host is not
+        # resolvable in the domain, so we raise -- the GSSAPI retry in the AD
+        # join path also depends on this raising to retry through slow sysvol
+        # replication. Reverse (PTR) registration is best-effort: reverse DNS is
+        # frequently absent or misconfigured and must not block the join, so PTR
+        # failures are only logged.
+        if result.forward_error is not None:
+            raise CallError(f'nsupdate failed to register forward records: {result.forward_error}')
+
+        for reverse_pointer, error in result.ptr_failures:
+            self.logger.warning('%s: failed to register reverse (PTR) record: %s', reverse_pointer, error)
+
+    def _nsupdate_send(self, directives, timeout, use_kerberos):
+        """ Run a single nsupdate transaction made up of ``directives`` (one
+        "send" block) and return the completed process for inspection. """
         with tempfile.NamedTemporaryFile(dir=MIDDLEWARE_RUN_DIR) as tmpfile:
-            ptrs = []
-            for entry in data['ops']:
-                addr = ipaddress.ip_address(entry['address'])
-
-                directive = ' '.join([
-                    'update',
-                    entry['command'].lower(),
-                    entry['name'],
-                    str(entry['ttl']),
-                    entry['type'],
-                    addr.compressed,
-                    '\n'
-                ])
-
+            for directive in directives:
                 tmpfile.write(directive.encode())
-                if entry['do_ptr']:
-                    ptrs.append((addr.reverse_pointer, entry['name']))
-
-            if ptrs:
-                # additional newline means "send"
-                # in this case we send our A and AAAA changes
-                # prior to sending our PTR changes
-                tmpfile.write(b'\n')
-
-                for ptr in ptrs:
-                    reverse_pointer, name = ptr
-                    directive = ' '.join([
-                        'update',
-                        entry['command'].lower(),
-                        reverse_pointer,
-                        str(entry['ttl']),
-                        'PTR',
-                        name,
-                        '\n'
-                    ])
-                    tmpfile.write(directive.encode())
 
             tmpfile.write(b'send\n')
             tmpfile.file.flush()
 
-            cmd = ['nsupdate', '-t', str(data['timeout'])]
-            if data['use_kerberos']:
+            cmd = ['nsupdate', '-t', str(timeout)]
+            if use_kerberos:
                 cmd.append('-g')
 
             cmd.append(tmpfile.name)
-            nsupdate_proc = subprocess.run(cmd, capture_output=True)
-
-            # tsig verify failure is possible if reverse zone is misconfigured
-            # Unfortunately, this is quite common and so we have to skip it.
-            #
-            # Future enhancement can be to perform forward-lookups to validate
-            # changes were applied properly
-            if nsupdate_proc.returncode and 'tsig verify failure' not in nsupdate_proc.stderr.decode():
-                raise CallError(f'nsupdate failed: {nsupdate_proc.stderr.decode()}')
+            return subprocess.run(cmd, capture_output=True)
