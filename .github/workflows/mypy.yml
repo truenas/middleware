@@ -71,12 +71,54 @@ jobs:
             middlewared/service/generic_sharing_service.py \
             middlewared/utils/ \
             middlewared/test/integration/runner/ \
+            middlewared/test/linter/ \
             middlewared/auth.py \
             middlewared/job.py \
             --exclude middlewared/etc_files \
             --exclude middlewared/utils/directoryservices \
             --exclude middlewared/utils/lio \
             --exclude middlewared/utils/nvmet \
+            --follow-imports silent \
+            --strict
+
+      - name: mypy mako templates
+        run: |
+          cd src/middlewared
+          python3 -m middlewared.test.linter.mypy_mako \
+            middlewared/etc_files/chrony \
+            middlewared/etc_files/cron.d \
+            middlewared/etc_files/ctdb \
+            middlewared/etc_files/default \
+            middlewared/etc_files/dhcpcd.conf.mako \
+            middlewared/etc_files/fstab.mako \
+            middlewared/etc_files/ftpusers.mako \
+            middlewared/etc_files/hosts.mako \
+            middlewared/etc_files/idmapd.conf.mako \
+            middlewared/etc_files/initiators.deny.mako \
+            middlewared/etc_files/local/nut \
+            middlewared/etc_files/local/openldap \
+            middlewared/etc_files/local/smb4.conf.mako \
+            middlewared/etc_files/local/snmpd.conf.mako \
+            middlewared/etc_files/local/ssh \
+            middlewared/etc_files/local/users.oath.mako \
+            middlewared/etc_files/login_banner.mako \
+            middlewared/etc_files/mail \
+            middlewared/etc_files/motd.mako \
+            middlewared/etc_files/netdata \
+            middlewared/etc_files/nfs.conf.mako \
+            middlewared/etc_files/nscd.conf.mako \
+            middlewared/etc_files/nsswitch.conf.mako \
+            middlewared/etc_files/pam.d \
+            middlewared/etc_files/proftpd \
+            middlewared/etc_files/pykmip \
+            middlewared/etc_files/scst.direct.mako \
+            middlewared/etc_files/scst.env.mako \
+            middlewared/etc_files/security \
+            middlewared/etc_files/subgid.mako \
+            middlewared/etc_files/subuid.mako \
+            middlewared/etc_files/sysctl.d \
+            middlewared/etc_files/syslog-ng/conf.d/tndestinations.conf.mako \
+            middlewared/etc_files/wireguard \
             --follow-imports silent \
             --strict
 
