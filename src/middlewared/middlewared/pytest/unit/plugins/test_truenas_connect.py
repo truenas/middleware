@@ -676,3 +676,241 @@ async def test_state_check_failure_triggers_renew_and_heartbeat():
 
     # One task for renew_cert (recovery branch) + one for heartbeat_start (CONFIGURED_TNC_STATES).
     assert ctx.middleware.create_task.call_count == 2
+
+
+# --- Heartbeat request payload --------------------------------------------------------------------
+
+def _payload_ctx(license_info, fingerprint='FP', fingerprint_raises=False):
+    """ctx whose middleware.call serves the methods _build_payload needs."""
+    ctx = MagicMock()
+    ctx.middleware = MagicMock()
+    ctx.call2 = AsyncMock(return_value=[])  # app.query / vm.query / alert.list all return lists
+
+    async def mock_call(method, *args, **kwargs):
+        if method == 'reporting.realtime.stats':
+            return {}
+        if method == 'truenas.license.fingerprint':
+            if fingerprint_raises:
+                raise CallError('daemon down')
+            return fingerprint
+        if method == 'truenas.license.info':
+            return license_info
+        raise ValueError(f'Unexpected: {method}')
+
+    ctx.middleware.call = AsyncMock(side_effect=mock_call)
+    return ctx
+
+
+@pytest.mark.asyncio
+async def test_build_payload_reports_fingerprint_and_license_id():
+    from middlewared.plugins.truenas_connect import heartbeat as hb
+    ctx = _payload_ctx(license_info={'id': 'LIC-1'}, fingerprint='FP-XYZ')
+    payload = await hb._build_payload(ctx, {})
+    assert payload['fingerprint'] == 'FP-XYZ'
+    assert payload['license_id'] == 'LIC-1'
+
+
+@pytest.mark.asyncio
+async def test_build_payload_license_id_null_when_unlicensed():
+    from middlewared.plugins.truenas_connect import heartbeat as hb
+    ctx = _payload_ctx(license_info=None)
+    payload = await hb._build_payload(ctx, {})
+    assert payload['license_id'] is None
+
+
+@pytest.mark.asyncio
+async def test_build_payload_fingerprint_failure_degrades_to_null():
+    from middlewared.plugins.truenas_connect import heartbeat as hb
+    ctx = _payload_ctx(license_info={'id': 'LIC-1'}, fingerprint_raises=True)
+    payload = await hb._build_payload(ctx, {})
+    assert payload['fingerprint'] is None
+    assert payload['license_id'] == 'LIC-1'  # other fields still populated
+
+
+# --- License install (dedup + always-install + never crash) ---------------------------------------
+
+def _install_ctx(installed_raw, upload_raises=False):
+    ctx = MagicMock()
+    ctx.middleware = MagicMock()
+
+    async def mock_call(method, *args, **kwargs):
+        if method == 'system.license':
+            return {'raw_license': installed_raw} if installed_raw is not None else None
+        if method == 'truenas.license.upload':
+            if upload_raises:
+                raise CallError('bad license')
+            return None
+        raise ValueError(f'Unexpected: {method}')
+
+    ctx.middleware.call = AsyncMock(side_effect=mock_call)
+    return ctx
+
+
+def _upload_calls(ctx):
+    return [c for c in ctx.middleware.call.call_args_list if c.args[0] == 'truenas.license.upload']
+
+
+@pytest.mark.asyncio
+async def test_maybe_install_license_installs_when_different():
+    from middlewared.plugins.truenas_connect import heartbeat as hb
+    ctx = _install_ctx(installed_raw='OLD-PEM')
+    await hb._maybe_install_license(ctx, 'NEW-PEM')
+    calls = _upload_calls(ctx)
+    assert len(calls) == 1
+    assert calls[0].args[1] == 'NEW-PEM'
+
+
+@pytest.mark.asyncio
+async def test_maybe_install_license_installs_when_no_current():
+    from middlewared.plugins.truenas_connect import heartbeat as hb
+    ctx = _install_ctx(installed_raw=None)
+    await hb._maybe_install_license(ctx, 'NEW-PEM')
+    assert len(_upload_calls(ctx)) == 1
+
+
+@pytest.mark.asyncio
+async def test_maybe_install_license_skips_when_identical():
+    from middlewared.plugins.truenas_connect import heartbeat as hb
+    # Trailing whitespace differs but content matches -> dedup must skip.
+    ctx = _install_ctx(installed_raw='SAME-PEM')
+    await hb._maybe_install_license(ctx, '  SAME-PEM\n')
+    assert _upload_calls(ctx) == []
+
+
+@pytest.mark.asyncio
+async def test_maybe_install_license_swallows_upload_error():
+    from middlewared.plugins.truenas_connect import heartbeat as hb
+    ctx = _install_ctx(installed_raw='OLD-PEM', upload_raises=True)
+    # Must not raise -- a failed install cannot kill the heartbeat loop.
+    await hb._maybe_install_license(ctx, 'NEW-PEM')
+    assert len(_upload_calls(ctx)) == 1
+
+
+# --- Token rotation persistence -------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_persist_new_token_writes_and_updates_in_memory():
+    from middlewared.plugins.truenas_connect import heartbeat as hb
+
+    ctx = MagicMock()
+    ctx.middleware = MagicMock()
+    ctx.middleware.call = AsyncMock()
+    tnc_config = {'id': 1, 'jwt_token': 'OLD'}
+    decoded = {'account_id': 'a', 'system_id': 's'}
+
+    with patch.object(hb, 'decode_and_validate_token', return_value=decoded):
+        await hb._persist_new_token(ctx, tnc_config, 'NEW-TOKEN')
+
+    update_call = next(c for c in ctx.middleware.call.call_args_list if c.args[0] == 'datastore.update')
+    assert update_call.args[1] == 'truenas_connect'
+    assert update_call.args[3] == {'jwt_token': 'NEW-TOKEN', 'registration_details': decoded}
+    # In-memory config updated so the next request authenticates with the new token.
+    assert tnc_config['jwt_token'] == 'NEW-TOKEN'
+    assert tnc_config['registration_details'] == decoded
+
+
+@pytest.mark.asyncio
+async def test_persist_new_token_skips_invalid_token():
+    from middlewared.plugins.truenas_connect import heartbeat as hb
+
+    ctx = MagicMock()
+    ctx.middleware = MagicMock()
+    ctx.middleware.call = AsyncMock()
+    tnc_config = {'id': 1, 'jwt_token': 'OLD'}
+
+    with patch.object(hb, 'decode_and_validate_token', side_effect=ValueError('bad')):
+        await hb._persist_new_token(ctx, tnc_config, 'BROKEN')
+
+    ctx.middleware.call.assert_not_called()
+    assert tnc_config['jwt_token'] == 'OLD'  # unchanged
+
+
+# --- 2xx response dispatch ------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('body, expect_token, expect_license', [
+    # A token is persisted whenever new_token is present -- even with token_status='active', which is
+    # the decoupling the reviewer asked for (rotation can be issued while the old token is active).
+    ({'token_status': 'active', 'new_token': 'T'}, 'T', None),
+    # A token under 'rotating' is likewise persisted.
+    ({'token_status': 'rotating', 'new_token': 'T'}, 'T', None),
+    # A PEM is installed whenever present, regardless of license_status.
+    ({'license_status': 'pending', 'license': 'PEM'}, None, 'PEM'),
+    ({'license_status': 'accepted', 'license': 'PEM'}, None, 'PEM'),
+    # Both artifacts present -> both handled.
+    ({'new_token': 'T', 'license': 'PEM'}, 'T', 'PEM'),
+    # Empty fields / empty body -> nothing.
+    ({'token_status': 'active', 'new_token': '', 'license_status': 'pending', 'license': ''}, None, None),
+    ({}, None, None),
+])
+async def test_handle_heartbeat_response_dispatch(body, expect_token, expect_license):
+    from middlewared.plugins.truenas_connect import heartbeat as hb
+
+    ctx = MagicMock()
+    tnc_config = {'id': 1}
+
+    with patch.object(hb, '_persist_new_token', new=AsyncMock()) as persist, \
+            patch.object(hb, '_maybe_install_license', new=AsyncMock()) as install:
+        # 202 keeps the focus on field-driven routing without tripping the 205 fault check.
+        await hb._handle_heartbeat_response(ctx, tnc_config, 202, body)
+
+    if expect_token is None:
+        persist.assert_not_called()
+    else:
+        persist.assert_awaited_once_with(ctx, tnc_config, expect_token)
+
+    if expect_license is None:
+        install.assert_not_called()
+    else:
+        install.assert_awaited_once_with(ctx, expect_license)
+
+
+@pytest.mark.asyncio
+async def test_handle_heartbeat_response_handles_token_and_license_together():
+    """A single 205 may carry both a rotated token and a delivered license."""
+    from middlewared.plugins.truenas_connect import heartbeat as hb
+
+    ctx = MagicMock()
+    tnc_config = {'id': 1}
+    body = {'token_status': 'rotating', 'new_token': 'T', 'license_status': 'pending', 'license': 'PEM'}
+
+    with patch.object(hb, '_persist_new_token', new=AsyncMock()) as persist, \
+            patch.object(hb, '_maybe_install_license', new=AsyncMock()) as install:
+        await hb._handle_heartbeat_response(ctx, tnc_config, 205, body)
+
+    persist.assert_awaited_once_with(ctx, tnc_config, 'T')
+    install.assert_awaited_once_with(ctx, 'PEM')
+
+
+@pytest.mark.asyncio
+async def test_handle_heartbeat_response_205_without_artifact_warns():
+    """A 205 promising an artifact but carrying none is a TNC fault we must surface, not skip."""
+    from middlewared.plugins.truenas_connect import heartbeat as hb
+
+    ctx = MagicMock()
+    body = {'token_status': 'active', 'license_status': 'pending', 'license': '', 'new_token': ''}
+
+    with patch.object(hb, '_persist_new_token', new=AsyncMock()) as persist, \
+            patch.object(hb, '_maybe_install_license', new=AsyncMock()) as install, \
+            patch.object(hb.logger, 'warning') as warn:
+        await hb._handle_heartbeat_response(ctx, {'id': 1}, 205, body)
+
+    persist.assert_not_called()
+    install.assert_not_called()
+    assert any('no license or token' in str(c.args[0]) for c in warn.call_args_list)
+
+
+@pytest.mark.asyncio
+async def test_handle_heartbeat_response_202_pending_without_pem_is_quiet():
+    """A 202 with pending-but-no-PEM is normal (signing in progress) and must not warn."""
+    from middlewared.plugins.truenas_connect import heartbeat as hb
+
+    ctx = MagicMock()
+    body = {'token_status': 'active', 'license_status': 'pending', 'license': '', 'new_token': ''}
+
+    with patch.object(hb, '_maybe_install_license', new=AsyncMock()) as install, \
+            patch.object(hb.logger, 'warning') as warn:
+        await hb._handle_heartbeat_response(ctx, {'id': 1}, 202, body)
+
+    install.assert_not_called()
+    warn.assert_not_called()
