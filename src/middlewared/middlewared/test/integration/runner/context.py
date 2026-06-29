@@ -1,5 +1,6 @@
 import dataclasses
 from ipaddress import ip_interface
+import json
 import os
 import random
 import secrets
@@ -16,6 +17,8 @@ from .ssh import create_key
 
 @dataclasses.dataclass
 class Context(RunArgs):
+    ip: str
+    interface: str
     workdir: str
     artifacts: str
     domain: str
@@ -30,11 +33,20 @@ class Context(RunArgs):
 
 
 def context_from_args(args: RunArgs, workdir: str) -> Context:
-    os.environ["MIDDLEWARE_TEST_IP"] = args.ip
+    ip_to_use = args.ip or get_primary_ip()
+    if not ip_to_use:
+        print(
+            "Unable to determine the IP of the primary network interface (the one with the "
+            "default gateway). Please specify --ip explicitly."
+        )
+        sys.exit(1)
+
+    os.environ["MIDDLEWARE_TEST_IP"] = ip_to_use
     os.environ["MIDDLEWARE_TEST_PASSWORD"] = args.password
     os.environ["SERVER_TYPE"] = "ENTERPRISE_HA" if args.ha else "STANDARD"
 
     d = dataclasses.asdict(args)
+    d["ip"] = ip_to_use
 
     artifacts = f"{workdir}/artifacts/"
     if not os.path.exists(artifacts):
@@ -53,7 +65,6 @@ def context_from_args(args: RunArgs, workdir: str) -> Context:
     else:
         domain = f"{d['hostname']}.nb.ixsystems.net"
 
-    ip_to_use = args.ip
     interface, netmask, gateway, ns1, ns2 = get_ipinfo(ip_to_use)
 
     if interface is None or netmask is None or gateway is None:
@@ -100,6 +111,30 @@ def context_from_args(args: RunArgs, workdir: str) -> Context:
         ssh_key_path=ssh_key_path,
         ssh_key=ssh_key,
     )
+
+
+def get_primary_ip() -> str | None:
+    """Return the IPv4 address of the local interface that owns the default route, or None."""
+    try:
+        routes = json.loads(subprocess.check_output(["ip", "-j", "route", "show", "default"], text=True))
+    except (subprocess.CalledProcessError, FileNotFoundError, json.JSONDecodeError):
+        return None
+
+    dev = next((r["dev"] for r in routes if r.get("dev")), None)
+    if not dev:
+        return None
+
+    try:
+        addrs = json.loads(subprocess.check_output(["ip", "-j", "-4", "addr", "show", "dev", dev], text=True))
+    except (subprocess.CalledProcessError, FileNotFoundError, json.JSONDecodeError):
+        return None
+
+    for entry in addrs:
+        for info in entry.get("addr_info", []):
+            if info.get("family") == "inet" and info.get("local"):
+                return str(info["local"])
+
+    return None
 
 
 def get_ipinfo(
