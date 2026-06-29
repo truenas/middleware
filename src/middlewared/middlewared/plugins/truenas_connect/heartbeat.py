@@ -28,6 +28,63 @@ class TNCHeartbeatService(Service, TNCAPIMixin):
         config = await self.middleware.call('tn_connect.config_internal')
         return await self._call(url, mode, payload=payload, headers=await self.auth_headers(config), **(kwargs or {}))
 
+    async def persist_new_token(self, tnc_config, new_token):
+        try:
+            decoded_token = decode_and_validate_token(new_token)
+        except ValueError as e:
+            logger.error('TNC Heartbeat: failed to validate rotated token: %s', e)
+            return
+
+        await self.middleware.call(
+            'datastore.update',
+            'truenas_connect',
+            tnc_config['id'],
+            {
+                'jwt_token': new_token,
+                'registration_details': decoded_token,
+            },
+        )
+        # Keep the in-memory config in sync so the very next request authenticates with the new token.
+        tnc_config.update({
+            'jwt_token': new_token,
+            'registration_details': decoded_token,
+        })
+        logger.info('TNC Heartbeat: rotated to new token')
+
+    async def maybe_install_license(self, pem):
+        # TNC re-sends the same PEM until our heartbeat reports its id, so skip when it is already
+        # installed; reinstalling would needlessly re-run etc.generate / license hooks / ctdb restart.
+        current = await self.middleware.call('system.license', True)
+        if current and (current.get('raw_license') or '').strip() == pem.strip():
+            logger.debug('TNC Heartbeat: delivered license already installed, skipping')
+            return
+
+        try:
+            await self.middleware.call('truenas.license.upload', pem)
+        except Exception:
+            logger.error('TNC Heartbeat: failed to install delivered license', exc_info=True)
+        else:
+            logger.info('TNC Heartbeat: installed license delivered by TNC')
+
+    async def handle_response(self, tnc_config, status_code, body):
+        # Act on what the body carries, not on the token_status/license_status strings: a new token
+        # can be issued while the presented one is still active, and an error response would not carry
+        # the heartbeat body at all. Field presence is the safer, decoupled trigger.
+        new_token = body.get('new_token')
+        pem = body.get('license')
+
+        if new_token:
+            await self.persist_new_token(tnc_config, new_token)
+        if pem:
+            await self.maybe_install_license(pem)
+
+        # A 205 means the body carries an artifact the NAS must install before its next heartbeat. If
+        # it carries neither a license nor a new token, TNC violated its own contract; surface it
+        # rather than silently skipping. A 202 with a pending license but no PEM is normal (signing in
+        # progress), so it is intentionally not flagged here.
+        if status_code == 205 and not new_token and not pem:
+            logger.warning('TNC Heartbeat: received 205 but the response carried no license or token to install')
+
     async def start(self):
         logger.debug('TNC Heartbeat: Starting heartbeat service')
         tnc_config = await self.middleware.call('tn_connect.config_internal')
@@ -42,48 +99,26 @@ class TNCHeartbeatService(Service, TNCAPIMixin):
         disk_mapping = {i.name: i.identifier for i in iterate_disks()}
         while tnc_config['status'] in CONFIGURED_TNC_STATES:
             sleep_error = False
-            resp = await self.call(heartbeat_url, 'post', await self.payload(disk_mapping), get_response=False)
+            resp = await self.call(heartbeat_url, 'post', await self.payload(disk_mapping))
             if resp['error'] is not None and resp['status_code'] is None:
                 logger.debug('TNC Heartbeat: Failed to connect to heart beat service (%s)', resp['error'])
                 sleep_error = True
             else:
                 match resp['status_code']:
-                    case 200 | 202:
-                        # Just keeping this here for valid codes, we don't need to do anything
-                        pass
-                    case 205:
-                        if (new_token := resp['headers'].get('X-New-Token')) is not None:
-                            logger.debug('TNC Heartbeat: Received new token')
-
-                            try:
-                                decoded_token = decode_and_validate_token(new_token)
-                            except ValueError as e:
-                                logger.error('TNC Heartbeat: Failed to validate received token: %s', e)
-                            else:
-                                await self.middleware.call(
-                                    'datastore.update',
-                                    'truenas_connect',
-                                    tnc_config['id'],
-                                    {
-                                        'jwt_token': new_token,
-                                        'registration_details': decoded_token,
-                                    },
-                                )
-                                tnc_config.update({
-                                    'jwt_token': new_token,
-                                    'registration_details': decoded_token,
-                                })
-                        else:
-                            logger.warning('TNC Heartbeat: Received 205 status but no X-New-Token header')
-                    case 400:
-                        logger.debug('TNC Heartbeat: Received 400')
-                        sleep_error = True
+                    case 202 | 205:
+                        await self.handle_response(tnc_config, resp['status_code'], resp['response'] or {})
                     case 401:
-                        logger.debug('TNC Heartbeat: Received 401, unsetting TNC')
+                        # An error response is an ErrorResponse ({"error": ..., "data": {...}}), not the
+                        # heartbeat body, so the token_status reason lives under "data" when present.
+                        reason = (resp['response'] or {}).get('data') or {}
+                        logger.info(
+                            'TNC Heartbeat: Received 401 (token_status=%s), unsetting TNC',
+                            reason.get('token_status'),
+                        )
                         await self.middleware.call('tn_connect.handle_tnc_deregistration')
                         return
-                    case 500:
-                        logger.debug('TNC Heartbeat: Received 500')
+                    case 400 | 500:
+                        logger.debug('TNC Heartbeat: Received %r', resp['status_code'])
                         sleep_error = True
                     case _:
                         logger.debug('TNC Heartbeat: Received unknown status code %r', resp['status_code'])
@@ -140,7 +175,21 @@ class TNCHeartbeatService(Service, TNCAPIMixin):
                 'running': len([vm for vm in vms if vm['status']['state'] == 'RUNNING']),
             },
         })
+
+        # A fingerprint hiccup must not take down the heartbeat, so degrade to null on failure.
+        try:
+            fingerprint = await self.middleware.call('truenas.license.fingerprint')
+        except Exception:
+            logger.error('TNC Heartbeat: failed to compute system fingerprint', exc_info=True)
+            fingerprint = None
+
+        # license_id is the delivery acknowledgement: once we report the id of an installed license,
+        # TNC marks it accepted and stops resending the PEM. Null when we hold no valid license.
+        license_info = await self.middleware.call('truenas.license.info')
+
         return {
             'alerts': await self.middleware.call('alert.list'),
             'stats': stats,
+            'fingerprint': fingerprint,
+            'license_id': license_info['id'] if license_info else None,
         }
