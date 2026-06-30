@@ -69,15 +69,20 @@ class ContainerRegistryClientMixin:
         response = await self._api_call(manifest_url, headers=headers, mode=mode)
         if (error := response.get('error_obj')) and isinstance(error, aiohttp.ClientResponseError):
             if error.status == 401:
-                # 2) Authenticate according to the scheme advertised in the challenge.
-                auth_data = parse_auth_header(error.headers[DOCKER_AUTH_HEADER])
-                if auth_data.pop('scheme', 'bearer') == 'basic':
+                # 2) Authenticate according to the scheme advertised in the challenge. An
+                # empty/unrecognized challenge - or a Bearer challenge that omits the scope
+                # needed to request a token - is left to surface as a CallError below rather
+                # than crashing.
+                auth_data = parse_auth_header((error.headers or {}).get(DOCKER_AUTH_HEADER) or '')
+                scheme = auth_data.pop('scheme', None)
+                if scheme == 'basic' and auth is not None:
                     # Private registries using htpasswd/HTTP Basic auth answer with a
                     # `Basic` challenge that has no token endpoint or scope - there is no
-                    # token to fetch. Replay the manifest request directly with the stored
-                    # registry credentials instead of attempting a token exchange.
+                    # token to fetch. Replay the manifest request with the stored
+                    # credentials. With no credentials the replay would just repeat the
+                    # anonymous request that already 401'd, so it is skipped.
                     response = await self._api_call(manifest_url, headers=headers, mode=mode, auth=auth)
-                else:
+                elif scheme == 'bearer' and 'scope' in auth_data:
                     # Bearer/token auth: fetch a scoped token from the registry's auth
                     # endpoint and retry with it. The token request is sent with Basic auth
                     # when registry creds are configured so the returned token has read

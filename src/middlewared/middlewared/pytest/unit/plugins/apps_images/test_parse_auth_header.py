@@ -23,10 +23,25 @@ from middlewared.plugins.apps_images.utils import parse_auth_header
         ('Basic realm="example.com"', {"scheme": "basic", "auth_url": "example.com"}),
         # The auth scheme is case-insensitive per RFC 7235.
         ('BASIC realm="example.com"', {"scheme": "basic", "auth_url": "example.com"}),
+        # Optional whitespace after the parameter commas (RFC 7235) must not drop
+        # service/scope - otherwise a well-formed Bearer challenge would lose its scope
+        # and crash the caller with the same `missing scope` TypeError NAS-141553 targets.
+        (
+            'Bearer realm="https://ghcr.io/token", service="ghcr.io", scope="redis:pull"',
+            {
+                "scheme": "bearer",
+                "auth_url": "https://ghcr.io/token",
+                "service": "ghcr.io",
+                "scope": "redis:pull",
+            },
+        ),
+        # A realm value containing whitespace is preserved intact.
+        ('Basic realm="Registry Realm"', {"scheme": "basic", "auth_url": "Registry Realm"}),
         # A bare scheme with no parameters still reports the scheme.
         ("Basic", {"scheme": "basic"}),
-        # An empty header degrades gracefully.
+        # Empty / whitespace-only headers degrade gracefully.
         ("", {}),
+        ("   ", {}),
     ],
 )
 def test__parse_auth_header(header, expected):
