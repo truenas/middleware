@@ -42,15 +42,31 @@ def parse_digest_from_schema(response: dict) -> list[str]:
 
 def parse_auth_header(header: str) -> dict[str, str]:
     """
-    Parses header in format below:
+    Parses a ``WWW-Authenticate`` challenge header.
+
+    A Bearer/token-auth challenge, e.g.:
     'Bearer realm="https://ghcr.io/token",service="ghcr.io",scope="redis:pull"'
 
-    Returns:
+    returns:
         {
+            'scheme': 'bearer',
             'auth_url': 'https://ghcr.io/token',
             'service': 'ghcr.io',
             'scope': 'redis:pull'
         }
+
+    An HTTP Basic challenge (e.g. a private registry using htpasswd auth):
+    'Basic realm="example.com"'
+
+    returns:
+        {
+            'scheme': 'basic',
+            'auth_url': 'example.com'
+        }
+
+    Basic challenges carry no token endpoint or ``scope`` (the parsed ``realm`` is
+    unused), so callers must branch on ``scheme`` rather than assuming a
+    token-exchange flow.
     """
     adapter = {
         'realm': 'auth_url',
@@ -59,6 +75,9 @@ def parse_auth_header(header: str) -> dict[str, str]:
     }
     results = {}
     parts = header.split()
+    if not parts:
+        return results
+    results['scheme'] = parts[0].lower()
     if len(parts) > 1:
         for part in parts[1].split(','):
             key_value = part.split('=')
