@@ -53,6 +53,7 @@ jobs:
             middlewared/plugins/snmp/ \
             middlewared/plugins/ssh/ \
             middlewared/plugins/support/ \
+            middlewared/plugins/sysctl/ \
             middlewared/plugins/system_vendor/ \
             middlewared/plugins/truecommand/ \
             middlewared/plugins/truenas/ \

@@ -22,7 +22,7 @@ class DockerService(SimpleService):
             ('vm.panic_on_oom', 0),
             ('vm.overcommit_memory', 1),
         ):
-            await self.middleware.call('sysctl.set_value', key, value)
+            await self.middleware.call2(self.s.sysctl.set_value, key, value)
 
     async def start(self) -> None:
         try:

@@ -49,4 +49,4 @@ async def setup(middleware):
     tz = effective_timezone(settings['timezone'])
     middleware.logger.debug('Setting timezone to %r', tz)
     await middleware.call('core.environ_update', {'TZ': tz})
-    await middleware.call('sysctl.set_zvol_volmode', 2)
+    await middleware.call2(middleware.services.sysctl.set_zvol_volmode, 2)

@@ -136,6 +136,7 @@ from middlewared.plugins.snapshot import PeriodicSnapshotTaskService
 from middlewared.plugins.snmp import SNMPService
 from middlewared.plugins.ssh import SSHService
 from middlewared.plugins.support import SupportService
+from middlewared.plugins.sysctl import SysctlService
 from middlewared.plugins.system_vendor import VendorService
 from middlewared.plugins.system_vendor.vendor import is_vendored
 from middlewared.plugins.truecommand import TruecommandService
@@ -288,6 +289,7 @@ class ServiceContainer(BaseServiceContainer):
         self.ssh = SSHService(middleware)
         self.staticroute = StaticRouteService(middleware)
         self.support = SupportService(middleware)
+        self.sysctl = SysctlService(middleware)
         self.system = SystemServicesContainer(middleware)
         self.tn_connect = TrueNASConnectService(middleware)
         self.truecommand = TruecommandService(middleware)
