@@ -49,6 +49,10 @@ async def check_update_impl(context: ServiceContext) -> None:
                 await _check_update_for_image(tag, image, registries)
             except CallError as e:
                 logger.error(str(e))
+            except Exception:
+                # A single misbehaving image/registry must not abort the whole sweep
+                # (and surface as an unretrieved task exception); log and move on.
+                logger.error('Failed to check for image update for %r', tag, exc_info=True)
 
 
 async def _check_update_for_image(
