@@ -49,13 +49,13 @@ def _resolve_ui_cert_pem(middleware) -> str | None:
 
     # Use query instead of get_instance so a missing/odd cert can't raise and break
     # pam rendering (mirrors the nginx template).
-    cert_list = middleware.call_sync2(
-        middleware.services.certificate.query, [['id', '=', general['ui_certificate']]]
+    cert_list = middleware.call_sync(
+        'certificate.query', [['id', '=', general['ui_certificate']]]
     )
     if not cert_list:
         return None
 
-    return cert_list[0].model_dump(context={'expose_secrets': True})['certificate']
+    return cert_list[0]['certificate']
 
 
 def _compute_server_binding(pem: str) -> bytes:
