@@ -643,9 +643,10 @@ def test_151_set_xattr_via_ssh(request, xat):
     depends(request, ["AFP_ENABLED"], scope="session")
     smb_path = TEST_DATA['share']['path']
     afptestfile = f'{smb_path}/afp_xattr_testfile'
+    b64data = b64encode(AFPXattr[xat]['bytes']).decode()
     cmd = f'touch {afptestfile} && chown {SMB_USER} {afptestfile} && '
-    cmd += f'echo -n \"{AFPXattr[xat]["text"]}\" | base64 -d | '
-    cmd += f'attr -q -s {xat} {afptestfile}'
+    cmd += 'python3 -c "import os, base64;'
+    cmd += f'os.setxattr(\\"{afptestfile}\\", \\"user.{xat}\\", base64.b64decode(\\"{b64data}\\"))"'
 
     results = SSH_TEST(cmd, user, password)
     assert results['result'] is True, {"cmd": cmd, "res": results['output']}
@@ -732,7 +733,8 @@ def test_155_ssh_read_afp_xattr(request, xat):
 
     smb_path = TEST_DATA['share']['path']
     afptestfile = f'{smb_path}/afp_xattr_testfile'
-    cmd = f'attr -q -g {xat} {afptestfile} | base64'
+    cmd = 'python3 -c "import os, base64;'
+    cmd += f'print(base64.b64encode(os.getxattr(\\"{afptestfile}\\", \\"user.{xat}\\")).decode())"'
     results = SSH_TEST(cmd, user, password)
     assert results['result'] is True, results['output']
     xat_data = b64decode(results['stdout'])
