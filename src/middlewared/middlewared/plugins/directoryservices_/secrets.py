@@ -141,7 +141,7 @@ class DomainSecrets(Service):
         """
         cluster = self.middleware.call_sync("smb.config")["stateful_failover"]
         encoded_change_ts = fetch_secrets_entry(
-            f"{Secrets.MACHINE_LAST_CHANGE_TIME.value}/{domain.upper()}]", cluster
+            f"{Secrets.MACHINE_LAST_CHANGE_TIME.value}/{domain.upper()}", cluster
         )
         try:
             bytes_passwd_chng = b64decode(encoded_change_ts)
@@ -238,6 +238,7 @@ class DomainSecrets(Service):
         except json.decoder.JSONDecodeError:
             self.logger.warning("Stored secrets are not valid JSON "
                                 "a new backup of secrets should be generated.")
+            return {'id': db['id']}
         return {'id': db['id']} | secrets
 
     async def backup(self):

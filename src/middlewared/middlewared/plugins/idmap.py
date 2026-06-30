@@ -6,6 +6,7 @@ from middlewared.api import api_method
 from middlewared.api.current import IdmapDomainClearIdmapCacheArgs, IdmapDomainClearIdmapCacheResult
 from middlewared.service import CallError, Service, job, private, ValidationError, filterable_api_method
 from middlewared.service_exception import MatchNotFound
+from middlewared.utils.directoryservices.constants import DSStatus
 from middlewared.utils.directoryservices.constants import DSType as DirectoryServiceType
 from middlewared.plugins.account_.constants import CONTAINER_ROOT_UID
 from middlewared.plugins.idmap_.idmap_constants import (
@@ -14,6 +15,7 @@ from middlewared.plugins.idmap_.idmap_constants import (
 from middlewared.plugins.idmap_.idmap_winbind import (WBClient, WBCErr)
 from middlewared.plugins.idmap_.idmap_sss import SSSClient
 from middlewared.plugins.smb_.constants import SMBBuiltin
+from middlewared.utils.directoryservices.health import DSHealthObj
 from middlewared.utils.filter_list import filter_list
 from middlewared.utils.sid import (
     get_domain_rid,
@@ -58,6 +60,13 @@ class IdmapDomainService(Service):
             return WBClient()
         except wbclient.WBCError as e:
             if not retry or e.error_code != wbclient.WBC_ERR_WINBIND_NOT_AVAILABLE:
+                raise e
+
+            # Directory services are FAULTED: do not (re)start winbind here. This is a
+            # hot path (idmap.convert_sids resolves SIDs per request), so attempting a
+            # start on every call during an outage produces a winbind restart storm.
+            # Surface the original error and let the health check own recovery.
+            if DSHealthObj.status is DSStatus.FAULTED:
                 raise e
 
         if not self.middleware.call_sync('systemdataset.sysdataset_path'):
