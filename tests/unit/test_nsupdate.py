@@ -1,6 +1,6 @@
 import pytest
 
-from middlewared.utils.dns import build_nsupdate_payload, nsupdate_directive
+from middlewared.utils.nsupdate import build_nsupdate_payload, nsupdate_directive
 
 
 FQDN = "truenas.ad.example.com."

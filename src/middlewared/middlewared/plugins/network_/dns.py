@@ -15,8 +15,8 @@ from middlewared.plugins.interface.dhcp import dhcp_leases
 from middlewared.service import Service, filterable_api_method, private
 from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.utils import MIDDLEWARE_RUN_DIR
-from middlewared.utils.dns import build_nsupdate_payload
 from middlewared.utils.filter_list import filter_list
+from middlewared.utils.nsupdate import build_nsupdate_payload
 
 
 class DNSNsUpdateOpA(BaseModel):
