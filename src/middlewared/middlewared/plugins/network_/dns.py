@@ -16,6 +16,7 @@ from middlewared.utils.filter_list import filter_list
 from truenas_os_pyutils.io import atomic_write
 from middlewared.service_exception import CallError, ValidationErrors
 from truenas_pynetif.address.netlink import get_links, netlink_route
+from middlewared.utils.nsupdate import build_nsupdate_payload
 
 
 class DNSNsUpdateOpA(BaseModel):
@@ -143,44 +144,11 @@ class DNSService(Service):
             self.middleware.call_sync('kerberos.check_ticket')
 
         with tempfile.NamedTemporaryFile(dir=MIDDLEWARE_RUN_DIR) as tmpfile:
-            ptrs = []
-            for entry in data['ops']:
-                addr = ipaddress.ip_address(entry['address'])
-
-                directive = ' '.join([
-                    'update',
-                    entry['command'].lower(),
-                    entry['name'],
-                    str(entry['ttl']),
-                    entry['type'],
-                    addr.compressed,
-                    '\n'
-                ])
-
-                tmpfile.write(directive.encode())
-                if entry['do_ptr']:
-                    ptrs.append((addr.reverse_pointer, entry['name']))
-
-            if ptrs:
-                # additional newline means "send"
-                # in this case we send our A and AAAA changes
-                # prior to sending our PTR changes
-                tmpfile.write(b'\n')
-
-                for ptr in ptrs:
-                    reverse_pointer, name = ptr
-                    directive = ' '.join([
-                        'update',
-                        entry['command'].lower(),
-                        reverse_pointer,
-                        str(entry['ttl']),
-                        'PTR',
-                        name,
-                        '\n'
-                    ])
-                    tmpfile.write(directive.encode())
-
-            tmpfile.write(b'send\n')
+            # A / AAAA records go out as one transaction; each PTR gets its own
+            # "send" so records from different reverse zones never share an UPDATE
+            # (which the server rejects with NOTZONE). This is a single nsupdate
+            # invocation -- one GSS-TSIG negotiation, one exit code.
+            tmpfile.write(build_nsupdate_payload(data['ops']).encode())
             tmpfile.file.flush()
 
             cmd = ['nsupdate', '-t', str(data['timeout'])]
@@ -190,10 +158,10 @@ class DNSService(Service):
             cmd.append(tmpfile.name)
             nsupdate_proc = subprocess.run(cmd, capture_output=True)
 
-            # tsig verify failure is possible if reverse zone is misconfigured
-            # Unfortunately, this is quite common and so we have to skip it.
-            #
-            # Future enhancement can be to perform forward-lookups to validate
-            # changes were applied properly
+            # tsig verify failure is possible if a reverse zone is misconfigured.
+            # Unfortunately, this is quite common and so we have to skip it. Every
+            # other failure is raised so callers can react -- in particular the AD
+            # join retries on the transient "Server not found in Kerberos database"
+            # GSSAPI error seen during slow sysvol replication.
             if nsupdate_proc.returncode and 'tsig verify failure' not in nsupdate_proc.stderr.decode():
                 raise CallError(f'nsupdate failed: {nsupdate_proc.stderr.decode()}')
