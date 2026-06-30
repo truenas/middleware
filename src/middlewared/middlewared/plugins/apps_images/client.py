@@ -65,14 +65,11 @@ class ContainerRegistryClientMixin:
 
     async def _get_manifest_response(self, registry, image, tag, headers, mode, raise_error, auth=None):
         manifest_url = f'https://{registry}/v2/{image}/manifests/{tag}'
-        # 1) try getting manifest
+        # 1) Try getting manifest.
         response = await self._api_call(manifest_url, headers=headers, mode=mode)
         if (error := response.get('error_obj')) and isinstance(error, aiohttp.ClientResponseError):
             if error.status == 401:
-                # 2) Authenticate according to the scheme advertised in the challenge. An
-                # empty/unrecognized challenge - or a Bearer challenge that omits the scope
-                # needed to request a token - is left to surface as a CallError below rather
-                # than crashing.
+                # 2) Authenticate according to the scheme advertised in the challenge.
                 auth_data = parse_auth_header((error.headers or {}).get(DOCKER_AUTH_HEADER) or '')
                 scheme = auth_data.pop('scheme', None)
                 if scheme == 'basic' and auth is not None:
@@ -88,7 +85,7 @@ class ContainerRegistryClientMixin:
                     # when registry creds are configured so the returned token has read
                     # scope on private repos.
                     headers['Authorization'] = f'Bearer {await self._get_token(**auth_data, auth=auth)}'
-                    # 3) Redo the manifest call with updated token
+                    # 3) Redo the manifest call with updated token.
                     response = await self._api_call(manifest_url, headers=headers, mode=mode)
 
         if raise_error and response['error']:
