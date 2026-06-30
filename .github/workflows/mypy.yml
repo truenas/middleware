@@ -63,6 +63,7 @@ jobs:
             middlewared/plugins/webshare/ \
             middlewared/plugins/update_/ \
             middlewared/plugins/ups/ \
+            middlewared/plugins/usage/ \
             middlewared/plugins/vm/ \
             middlewared/plugins/zfs/ \
             middlewared/plugins/dns_client.py \

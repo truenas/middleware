@@ -174,7 +174,7 @@ async def _event_system_ready(middleware, event_type, args):
         await middleware.call2(middleware.services.alert.oneshot_delete, "KdumpNotReady", None)
 
     if await middleware.call("system.first_boot"):
-        middleware.create_task(middleware.call("usage.firstboot"))
+        middleware.create_task(middleware.call2(middleware.services.usage.firstboot))
 
 
 async def _event_system_shutdown(middleware, event_type, args):
