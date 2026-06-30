@@ -40,6 +40,10 @@ class ContainerImagesService(Service, ContainerRegistryClientMixin):
                     await self.check_update_for_image(tag, image, app_registries)
                 except CallError as e:
                     logger.error(str(e))
+                except Exception:
+                    # A single misbehaving image/registry must not abort the whole sweep
+                    # (and surface as an unretrieved task exception); log and move on.
+                    logger.error('Failed to check for image update for %r', tag, exc_info=True)
 
     async def retrieve_digest(self, reference: str):
         repo_digests = []

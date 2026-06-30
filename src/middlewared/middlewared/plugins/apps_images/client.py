@@ -69,13 +69,27 @@ class ContainerRegistryClientMixin:
         response = await self._api_call(manifest_url, headers=headers, mode=mode)
         if (error := response.get('error_obj')) and isinstance(error, aiohttp.ClientResponseError):
             if error.status == 401:
-                # 2) try to get token from manifest api call's response headers; the token
-                # request is sent with Basic auth when registry creds are configured, so
-                # the returned token has read scope on private repos.
-                auth_data = parse_auth_header(error.headers[DOCKER_AUTH_HEADER])
-                headers['Authorization'] = f'Bearer {await self._get_token(**auth_data, auth=auth)}'
-                # 3) Redo the manifest call with updated token
-                response = await self._api_call(manifest_url, headers=headers, mode=mode)
+                # 2) Authenticate according to the scheme advertised in the challenge. An
+                # empty/unrecognized challenge - or a Bearer challenge that omits the scope
+                # needed to request a token - is left to surface as a CallError below rather
+                # than crashing.
+                auth_data = parse_auth_header((error.headers or {}).get(DOCKER_AUTH_HEADER) or '')
+                scheme = auth_data.pop('scheme', None)
+                if scheme == 'basic' and auth is not None:
+                    # Private registries using htpasswd/HTTP Basic auth answer with a
+                    # `Basic` challenge that has no token endpoint or scope - there is no
+                    # token to fetch. Replay the manifest request with the stored
+                    # credentials. With no credentials the replay would just repeat the
+                    # anonymous request that already 401'd, so it is skipped.
+                    response = await self._api_call(manifest_url, headers=headers, mode=mode, auth=auth)
+                elif scheme == 'bearer' and 'scope' in auth_data:
+                    # Bearer/token auth: fetch a scoped token from the registry's auth
+                    # endpoint and retry with it. The token request is sent with Basic auth
+                    # when registry creds are configured so the returned token has read
+                    # scope on private repos.
+                    headers['Authorization'] = f'Bearer {await self._get_token(**auth_data, auth=auth)}'
+                    # 3) Redo the manifest call with updated token
+                    response = await self._api_call(manifest_url, headers=headers, mode=mode)
 
         if raise_error and response['error']:
             raise CallError(

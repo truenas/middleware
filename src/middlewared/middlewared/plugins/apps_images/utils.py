@@ -42,15 +42,32 @@ def parse_digest_from_schema(response: dict) -> list[str]:
 
 def parse_auth_header(header: str) -> dict[str, str]:
     """
-    Parses header in format below:
+    Parses a ``WWW-Authenticate`` challenge header.
+
+    A Bearer/token-auth challenge, e.g.:
     'Bearer realm="https://ghcr.io/token",service="ghcr.io",scope="redis:pull"'
 
-    Returns:
+    returns:
         {
+            'scheme': 'bearer',
             'auth_url': 'https://ghcr.io/token',
             'service': 'ghcr.io',
             'scope': 'redis:pull'
         }
+
+    An HTTP Basic challenge (e.g. a private registry using htpasswd auth):
+    'Basic realm="example.com"'
+
+    returns:
+        {
+            'scheme': 'basic',
+            'auth_url': 'example.com'
+        }
+
+    Basic challenges carry no token endpoint or ``scope`` (the parsed ``realm`` is
+    unused), so callers must branch on ``scheme`` rather than assuming a
+    token-exchange flow. Optional whitespace around the comma-separated parameters
+    is tolerated (RFC 7235).
     """
     adapter = {
         'realm': 'auth_url',
@@ -58,12 +75,15 @@ def parse_auth_header(header: str) -> dict[str, str]:
         'scope': 'scope',
     }
     results = {}
-    parts = header.split()
-    if len(parts) > 1:
-        for part in parts[1].split(','):
-            key_value = part.split('=')
-            if len(key_value) == 2 and key_value[0] in adapter:
-                results[adapter[key_value[0]]] = key_value[1].strip('"')
+    scheme, _, params = header.strip().partition(' ')
+    if not scheme:
+        return results
+    results['scheme'] = scheme.lower()
+    for part in params.split(','):
+        # partition on the first '=' so values that themselves contain '=' survive.
+        key, sep, value = part.strip().partition('=')
+        if sep and key in adapter:
+            results[adapter[key]] = value.strip().strip('"')
     return results
 
 
