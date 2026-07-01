@@ -146,6 +146,7 @@ from middlewared.plugins.truesearch import TrueSearchService
 from middlewared.plugins.tunable import TunableService
 from middlewared.plugins.update_ import UpdateService
 from middlewared.plugins.ups import UPSService
+from middlewared.plugins.usage import UsageService
 from middlewared.plugins.vm import VMService
 from middlewared.plugins.webshare import WebshareService
 from middlewared.plugins.webshare.sharing import SharingWebshareService
@@ -298,6 +299,7 @@ class ServiceContainer(BaseServiceContainer):
         self.tunable = TunableService(middleware)
         self.update = UpdateService(middleware)
         self.ups = UPSService(middleware)
+        self.usage = UsageService(middleware)
         self.vm = VMService(middleware)
         self.webshare = WebshareService(middleware)
         self.zfs = ZfsServicesContainer(middleware)
