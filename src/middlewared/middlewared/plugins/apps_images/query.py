@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Literal, overload
+from typing import TYPE_CHECKING, Any, overload
 
 from middlewared.api.current import AppImageEntry, QueryOptions
 from middlewared.plugins.apps.ix_apps.docker.images import list_images
@@ -13,21 +13,14 @@ from .update_alerts import IMAGE_CACHE
 from .utils import parse_tags
 
 if TYPE_CHECKING:
-
-    class _QueryGetOptions(QueryOptions):
-        get: Literal[True]
-        count: Literal[False]
-
-    class _QueryCountOptions(QueryOptions):
-        count: Literal[True]
-        get: Literal[False]
+    from middlewared.api.current import QueryOptionsCount, QueryOptionsGet
 
 
 @overload
 def query_images(  # type: ignore[overload-overlap]
     context: ServiceContext,
     filters: list[Any],
-    options: _QueryCountOptions,
+    options: QueryOptionsCount,
 ) -> int: ...
 
 
@@ -35,7 +28,7 @@ def query_images(  # type: ignore[overload-overlap]
 def query_images(  # type: ignore[overload-overlap]
     context: ServiceContext,
     filters: list[Any],
-    options: _QueryGetOptions,
+    options: QueryOptionsGet,
 ) -> AppImageEntry: ...
 
 

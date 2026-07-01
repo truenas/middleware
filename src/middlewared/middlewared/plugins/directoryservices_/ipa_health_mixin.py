@@ -2,6 +2,7 @@ import os
 
 import ldap
 
+from middlewared.api.current import ServiceOptions
 from middlewared.service_exception import CallError
 from middlewared.utils.directoryservices import ipa_constants
 from middlewared.utils.directoryservices.constants import DEF_SVC_OPTS
@@ -41,7 +42,9 @@ class IPAHealthMixin:
                 raise error from None
 
         # The recovery steps here are node-local
-        self.middleware.call_sync('service.control', 'RESTART', 'sssd', DEF_SVC_OPTS).wait_sync(raise_error=True)
+        self.call_sync2(
+            self.s.service.control, 'RESTART', 'sssd', ServiceOptions(**DEF_SVC_OPTS)
+        ).wait_sync(raise_error=True)
 
     def _health_check_ipa(self) -> None:
         """
@@ -126,9 +129,11 @@ class IPAHealthMixin:
         # We don't want to move the sssd restart into the alert itself because
         # we need to populate the error reason into `_faulted_reason` so that
         # it appears in our directory services summary
-        if not self.middleware.call_sync('service.started', 'sssd'):
+        if not self.call_sync2(self.s.service.started, 'sssd'):
             try:
-                self.middleware.call_sync('service.control', 'START', 'sssd', DEF_SVC_OPTS).wait_sync(raise_error=True)
+                self.call_sync2(
+                    self.s.service.control, 'START', 'sssd', ServiceOptions(**DEF_SVC_OPTS)
+                ).wait_sync(raise_error=True)
             except CallError as e:
                 self._faulted_reason = str(e)
                 raise IPAHealthError(

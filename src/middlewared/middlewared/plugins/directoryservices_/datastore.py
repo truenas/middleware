@@ -16,6 +16,7 @@ from middlewared.api.current import (
     DirectoryServicesUpdateArgs,
     DirectoryServicesUpdateResult,
     QueryOptions,
+    ServiceOptions,
 )
 from middlewared.plugins.directoryservices_.secrets import delete_machine_account_secrets
 from middlewared.plugins.directoryservices_.util_cache import expire_cache
@@ -566,7 +567,9 @@ class DirectoryServices(ConfigService):
                     self.middleware.call_sync('etc.generate', etc)
 
                 svc = 'idmap' if ds_type == DSType.AD else 'sssd'
-                self.middleware.call_sync('service.control', 'RESTART', svc, DEF_SVC_OPTS).wait_sync(raise_error=True)
+                self.call_sync2(
+                    self.s.service.control, 'RESTART', svc, ServiceOptions(**DEF_SVC_OPTS)
+                ).wait_sync(raise_error=True)
 
                 # Now restart any dependent services
                 job.set_progress(description='Restarting dependent services')
@@ -653,7 +656,9 @@ class DirectoryServices(ConfigService):
                 self.middleware.call_sync('etc.generate', etc)
 
             svc = 'idmap' if ds_type == DSType.AD else 'sssd'
-            self.middleware.call_sync('service.control', 'RESTART', svc, DEF_SVC_OPTS).wait_sync(raise_error=True)
+            self.call_sync2(
+                self.s.service.control, 'RESTART', svc, ServiceOptions(**DEF_SVC_OPTS)
+            ).wait_sync(raise_error=True)
             self.middleware.call_sync('directoryservices.restart_dependent_services')
             try:
                 # Perform a sanity check that these changes didn't totally break us.
@@ -665,7 +670,9 @@ class DirectoryServices(ConfigService):
                 for etc in ds_type.etc_files:
                     self.middleware.call_sync('etc.generate', etc)
 
-                self.middleware.call_sync('service.control', 'RESTART', svc, DEF_SVC_OPTS).wait_sync(raise_error=True)
+                self.call_sync2(
+                    self.s.service.control, 'RESTART', svc, ServiceOptions(**DEF_SVC_OPTS)
+                ).wait_sync(raise_error=True)
                 raise
 
             return self.middleware.call_sync('directoryservices.config')
@@ -980,7 +987,7 @@ class DirectoryServices(ConfigService):
                 self.logger.warning('Failed to deactivate directory services on standby controller', exc_info=True)
 
         if ds_type is DSType.IPA:
-            self.middleware.call_sync('service.control', 'STOP', 'sssd').wait_sync(raise_error=True)
+            self.call_sync2(self.s.service.control, 'STOP', 'sssd').wait_sync(raise_error=True)
         else:
             # Clearing the idmap cache also restarts winbindd
             self.middleware.call_sync('idmap.clear_idmap_cache').wait(raise_error=True)

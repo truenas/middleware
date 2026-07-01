@@ -2,13 +2,13 @@ import json
 
 from truenas_os_pyutils.io import atomic_write
 
-from middlewared.plugins.service_.services.dbus_router import system_dbus
+from middlewared.plugins.service.services.dbus_router import system_dbus
 
 
 async def render(service, middleware):
     services_enabled = {}
     for service in await middleware.call("datastore.query", "services.services", [], {"prefix": "srv_"}):
-        for unit in await middleware.call("service.systemd_units", service["service"]):
+        for unit in await middleware.call2(middleware.services.service.systemd_units, service["service"]):
             services_enabled[unit] = service["enable"]
 
     licensed = await middleware.call('failover.licensed')

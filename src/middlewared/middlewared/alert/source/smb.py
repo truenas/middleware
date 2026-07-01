@@ -90,7 +90,7 @@ class SMBLegacyProtocolAlertSource(AlertSource):
     run_on_backup_node = False
 
     async def check(self) -> Alert[Any] | None:
-        if not await self.middleware.call('service.started', 'cifs'):
+        if not await self.call2(self.s.service.started, 'cifs'):
             return None
 
         now = time.time()
@@ -127,7 +127,7 @@ class NTLMv1AuthenticationAlertSource(AlertSource):
     run_on_backup_node = False
 
     async def check(self) -> Alert[Any] | None:
-        if not await self.middleware.call('service.started', 'cifs'):
+        if not await self.call2(self.s.service.started, 'cifs'):
             return None
 
         smb_conf = await self.middleware.call('smb.config')

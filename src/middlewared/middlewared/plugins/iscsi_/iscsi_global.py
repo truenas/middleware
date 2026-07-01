@@ -12,6 +12,7 @@ from middlewared.api.current import (
     ISCSIGlobalIserEnabledResult,
     ISCSIGlobalUpdateArgs,
     ISCSIGlobalUpdateResult,
+    ServiceOptions,
 )
 from middlewared.async_validators import validate_port
 from middlewared.plugins.rdma.constants import RDMAprotocols
@@ -137,7 +138,7 @@ class ISCSIGlobalService(SystemServiceService):
 
         # Mode switches require the service to be stopped so the old stack can
         # be torn down cleanly before the new one is brought up.
-        if await self.middleware.call('service.started', 'iscsitarget'):
+        if await self.call2(self.s.service.started, 'iscsitarget'):
             verrors.add(schema_name, 'Cannot switch iSCSI mode while the service is running.')
 
     @api_method(
@@ -231,7 +232,7 @@ class ISCSIGlobalService(SystemServiceService):
 
         if licensed and old['alua'] != new['alua']:
             if new['alua']:
-                if await self.middleware.call('service.started', 'iscsitarget'):
+                if await self.call2(self.s.service.started, 'iscsitarget'):
                     await self.middleware.call(
                         'failover.call_remote',
                         'service.control',
@@ -250,9 +251,11 @@ class ISCSIGlobalService(SystemServiceService):
 
         # If we have changed the iSER setting and the service is running then restart it
         if old['iser'] != new['iser']:
-            if await self.middleware.call('service.started', 'iscsitarget'):
+            if await self.call2(self.s.service.started, 'iscsitarget'):
                 await (
-                    await self.middleware.call('service.control', 'RESTART', 'iscsitarget', {'ha_propagate': False})
+                    await self.call2(
+                        self.s.service.control, 'RESTART', 'iscsitarget', ServiceOptions(ha_propagate=False)
+                    )
                 ).wait(raise_error=True)
                 if licensed and new['alua'] and old['alua']:
                     # Only need to restart the remote service if it was already running

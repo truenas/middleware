@@ -76,6 +76,9 @@ class ServiceInterface(CallMixin):
     async def select_etc(self) -> list[str]:
         return self.etc
 
+    async def systemd_extra_units(self) -> list[str]:
+        return []
+
     async def get_failed_sub_units(self) -> dict[str, tuple[str, int]]:
         """Return dict of failed/crash-looping units in the dependency tree.
 
@@ -86,7 +89,10 @@ class ServiceInterface(CallMixin):
         """
         return {}
 
+    async def failure_logs(self, failed_units:  dict[str, tuple[str, int]] | None = None) -> str:
+        raise NotImplementedError
+
 
 class IdentifiableServiceInterface:
-    async def identify(self, procname: str) -> str | None:
+    async def identify(self, procname: str) -> bool:
         raise NotImplementedError

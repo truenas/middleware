@@ -20,7 +20,7 @@ jobs:
       - name: Test
         run: |
           cd src/middlewared
-          mypy \
+          PYTHONPATH=. mypy \
             middlewared/alert/ \
             middlewared/api/base/ \
             middlewared/common/ \
@@ -48,7 +48,7 @@ jobs:
             middlewared/plugins/reporting/ \
             middlewared/plugins/rsync/ \
             middlewared/plugins/security/ \
-            middlewared/plugins/service_/ \
+            middlewared/plugins/service/ \
             middlewared/plugins/snapshot/ \
             middlewared/plugins/snmp/ \
             middlewared/plugins/ssh/ \

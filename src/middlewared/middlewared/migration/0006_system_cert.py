@@ -8,4 +8,4 @@ async def migrate(middleware):
         middleware.services.certificate.cert_services_validation, system_cert_id, 'certificate', False
     ):
         await middleware.call2(middleware.services.certificate.setup_self_signed_cert_for_ui)
-        await (await middleware.call('service.control', 'RESTART', 'http')).wait(raise_error=True)
+        await (await middleware.call2(middleware.services.service.control, 'RESTART', 'http')).wait(raise_error=True)

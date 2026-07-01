@@ -44,4 +44,4 @@ async def start_service(context: ServiceContext) -> None:
     if await context.middleware.call("failover.licensed"):
         return
 
-    await (await context.middleware.call("service.control", "START", "netdata")).wait(raise_error=True)
+    await (await context.call2(context.s.service.control, "START", "netdata")).wait(raise_error=True)

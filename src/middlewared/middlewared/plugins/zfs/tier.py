@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import errno
 import typing
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 if TYPE_CHECKING:
     from middlewared.main import Middleware
@@ -386,10 +386,10 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
                 _apply_metadata_reserve_pct, self.middleware, new.special_class_metadata_reserve_pct, True
             )
         if new.max_concurrent_jobs != old.max_concurrent_jobs:
-            verb = "RESTART"
+            verb: Literal["RESTART", "RELOAD"] = "RESTART"
         else:
             verb = "RELOAD"
-        await self.middleware.call("service.control", verb, "truenas_zfstierd")
+        await self.call2(self.s.service.control, verb, "truenas_zfstierd")
         return new
 
     @api_method(

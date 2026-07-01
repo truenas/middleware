@@ -1,4 +1,5 @@
-from middlewared.plugins.service_.services.base import SimpleService
+from middlewared.api.current import ServiceOptions
+from middlewared.plugins.service.services.base import SimpleService
 
 
 class LibvirtdService(SimpleService):
@@ -8,13 +9,13 @@ class LibvirtdService(SimpleService):
     may_run_on_standby = False
 
     async def after_start(self) -> None:
-        job = await self.middleware.call(
-            "service.control", "START", "libvirt-guests", {"ha_propagate": False}
+        job = await self.call2(
+            self.s.service.control, "START", "libvirt-guests", ServiceOptions(ha_propagate=False)
         )
         await job.wait(raise_error=True)
 
     async def before_stop(self) -> None:
-        job = await self.middleware.call("service.control", "STOP", "libvirt-guests")
+        job = await self.call2(self.s.service.control, "STOP", "libvirt-guests")
         await job.wait(raise_error=True)
 
     async def after_stop(self) -> None:

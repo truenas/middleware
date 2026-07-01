@@ -1010,19 +1010,19 @@ class SystemDatasetService(ConfigService):
         # a file descriptor underneath /var/log will no longer need to be
         # stopped/restarted to allow the system dataset to migrate
         restart = ['netdata', 'truenas_zfstierd']
-        if self.middleware.call_sync('service.started', 'nfs'):
+        if self.call_sync2(self.s.service.started, 'nfs'):
             restart.append('nfs')
-        if self.middleware.call_sync('service.started', 'open-vm-tools'):
+        if self.call_sync2(self.s.service.started, 'open-vm-tools'):
             restart.append('open-vm-tools')
 
         try:
             for svc in restart:
-                self.middleware.call_sync('service.control', 'STOP', svc).wait_sync(raise_error=True)
+                self.call_sync2(self.s.service.control, 'STOP', svc).wait_sync(raise_error=True)
             close_sysdataset_tdb_handles()
             yield
         finally:
             for svc in reversed(restart):
-                self.middleware.call_sync('service.control', 'START', svc).wait_sync(raise_error=True)
+                self.call_sync2(self.s.service.control, 'START', svc).wait_sync(raise_error=True)
 
     @private
     def get_system_dataset_spec(self, pool, uid):

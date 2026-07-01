@@ -1,3 +1,4 @@
+from middlewared.api.current import ServiceOptions
 from middlewared.service_exception import CallError
 
 from .base import SimpleService
@@ -37,10 +38,10 @@ class UPSService(SimpleService):
 
     async def after_start(self) -> None:
         # Restart netdata to pick up UPS config changes
-        await (await self.middleware.call('service.control', 'RESTART', 'netdata')).wait(raise_error=True)
+        await (await self.call2(self.s.service.control, 'RESTART', 'netdata')).wait(raise_error=True)
         # Reconfigure discovery (add nut service)
         await (
-            await self.middleware.call('service.control', 'RELOAD', 'discovery', {'ha_propagate': False})
+            await self.call2(self.s.service.control, 'RELOAD', 'discovery', ServiceOptions(ha_propagate=False))
         ).wait(raise_error=True)
 
     async def before_stop(self) -> None:
@@ -55,5 +56,5 @@ class UPSService(SimpleService):
     async def after_stop(self) -> None:
         # Reconfigure discovery (remove nut service)
         await (
-            await self.middleware.call('service.control', 'RELOAD', 'discovery', {'ha_propagate': False})
+            await self.call2(self.s.service.control, 'RELOAD', 'discovery', ServiceOptions(ha_propagate=False))
         ).wait(raise_error=True)

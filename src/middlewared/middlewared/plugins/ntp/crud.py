@@ -27,7 +27,7 @@ class NTPServerServicePart(CRUDServicePart[NTPServerEntry]):
     async def do_create(self, data: NTPServerCreate) -> NTPServerEntry:
         await self.validate(data, 'ntpserver_create', force=data.force)
         entry = await self._create(data.model_dump(exclude={'force'}))
-        await (await self.middleware.call('service.control', 'RESTART', 'ntpd')).wait(raise_error=True)
+        await (await self.call2(self.s.service.control, 'RESTART', 'ntpd')).wait(raise_error=True)
         return entry
 
     async def do_update(self, id_: int, data: NTPServerUpdate) -> NTPServerEntry:
@@ -36,12 +36,12 @@ class NTPServerServicePart(CRUDServicePart[NTPServerEntry]):
         new = old.updated(data)
         await self.validate(new, 'ntpserver_update', force=force)
         entry = await self._update(id_, new.model_dump())
-        await (await self.middleware.call('service.control', 'RESTART', 'ntpd')).wait(raise_error=True)
+        await (await self.call2(self.s.service.control, 'RESTART', 'ntpd')).wait(raise_error=True)
         return entry
 
     async def do_delete(self, id_: int) -> None:
         await self._delete(id_)
-        await (await self.middleware.call('service.control', 'RESTART', 'ntpd')).wait(raise_error=True)
+        await (await self.call2(self.s.service.control, 'RESTART', 'ntpd')).wait(raise_error=True)
 
     async def validate(self, data: NTPServerEntry, schema_name: str, *, force: bool = False) -> None:
         verrors = ValidationErrors()

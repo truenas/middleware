@@ -15,6 +15,7 @@ import time
 from truenas_os_pyutils.io import atomic_write
 import truenas_pyfilter as _tf
 
+from middlewared.api.current import ServiceOptions
 from middlewared.plugins.directoryservices import DEPENDENT_SERVICES
 from middlewared.plugins.docker.state_utils import Status as DockerStatus
 
@@ -22,7 +23,7 @@ from middlewared.plugins.docker.state_utils import Status as DockerStatus
 from middlewared.plugins.failover_.event_exceptions import AllZpoolsFailedToImport, FencedError, IgnoreFailoverEvent
 from middlewared.plugins.failover_.scheduled_reboot_alert import WATCHDOG_ALERT_FILE
 from middlewared.plugins.failover_.stcnith import stcnith_reboot
-from middlewared.plugins.service_.services.all import all_services
+from middlewared.plugins.service.services.all import all_services
 from middlewared.service import Service, job
 from middlewared.service_exception import CallError
 from middlewared.utils import BOOT_POOL_NAME_VALID
@@ -95,13 +96,13 @@ class FailoverEventsService(Service):
     async def service_action(self, service, timeout, verb):
         logger.info('%s %s', verb, service)
         return await (
-            await self.middleware.call('service.control', verb, service, self.HA_PROPAGATE)
+            await self.call2(self.s.service.control, verb, service, ServiceOptions(**self.HA_PROPAGATE))
         ).wait(timeout=timeout)
 
     async def become_active_service(self, service, timeout):
         logger.info('Become active %s', service)
         return await asyncio.wait_for(
-            self.middleware.create_task(self.middleware.call('service.become_active', service)),
+            self.middleware.create_task(self.call2(self.s.service.become_active, service)),
             timeout=timeout,
         )
 

@@ -106,7 +106,7 @@ class SystemGeneralService(Service):
         event_loop.call_later(
             delay,
             lambda: self.middleware.create_task(
-                self.middleware.call("service.control", "RESTART", "http")
+                self.call2(self.s.service.control, "RESTART", "http")
             ),
         )
 

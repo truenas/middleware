@@ -3,7 +3,7 @@ import os
 import subprocess
 from typing import Any
 
-from middlewared.api.current import SNMPEntry, SNMPUpdate
+from middlewared.api.current import QueryOptions, SNMPEntry, SNMPUpdate
 from middlewared.plugins.snmp_.utils_snmp_user import (
     SNMPSystem,
     _add_system_user,
@@ -94,24 +94,24 @@ class SNMPServicePart(SystemServicePart[SNMPEntry]):
         """
         config = await self.config()
 
-        snmp_service = await self.middleware.call("service.query", [("service", "=", "snmp")], {"get": True})
+        snmp_service = await self.call2(self.s.service.query, [("service", "=", "snmp")], QueryOptions(get=True))
 
-        await (await self.middleware.call("service.control", "STOP", "snmp")).wait(raise_error=True)
+        await (await self.call2(self.s.service.control, "STOP", "snmp")).wait(raise_error=True)
         with suppress(FileNotFoundError):
             await self.to_thread(os.remove, SNMPSystem.PRIV_CONF)
 
-        await (await self.middleware.call("service.control", "START", "snmp")).wait(raise_error=True)
+        await (await self.call2(self.s.service.control, "START", "snmp")).wait(raise_error=True)
 
-        await (await self.middleware.call("service.control", "STOP", "snmp")).wait(raise_error=True)
+        await (await self.call2(self.s.service.control, "STOP", "snmp")).wait(raise_error=True)
         await self.to_thread(_add_system_user)
 
         if config.v3_username:
             await self.to_thread(add_snmp_user, config.model_dump(context={"expose_secrets": True}))
 
-        await (await self.middleware.call("service.control", "START", "snmp")).wait(raise_error=True)
+        await (await self.call2(self.s.service.control, "START", "snmp")).wait(raise_error=True)
 
-        if snmp_service["state"] == "STOPPED":
-            await (await self.middleware.call("service.control", "STOP", "snmp")).wait(raise_error=True)
+        if snmp_service.state == "STOPPED":
+            await (await self.call2(self.s.service.control, "STOP", "snmp")).wait(raise_error=True)
 
     async def do_update(self, data: SNMPUpdate) -> SNMPEntry:
         # Make sure we have the SNMP system user
@@ -158,8 +158,8 @@ class SNMPServicePart(SystemServicePart[SNMPEntry]):
         if not any([new.v3, new.v3_username]) and old.v3_username:
             # v3 is disabled and we're asked to delete the v3 user. SNMP must be running to delete the
             # user with snmpusm; we then clear the v3 settings and restore the original SNMP run state.
-            snmp_service = await self.middleware.call("service.query", [("service", "=", "snmp")], {"get": True})
-            await (await self.middleware.call("service.control", "START", "snmp")).wait(raise_error=True)
+            snmp_service = await self.call2(self.s.service.query, [("service", "=", "snmp")], QueryOptions(get=True))
+            await (await self.call2(self.s.service.control, "START", "snmp")).wait(raise_error=True)
             try:
                 await self.to_thread(delete_snmp_user, old.v3_username)
             except Exception:
@@ -171,8 +171,8 @@ class SNMPServicePart(SystemServicePart[SNMPEntry]):
                 new_payload.update(default_v3_config)
 
             # Restore original SNMP state
-            if "STOPPED" in snmp_service["state"]:
-                await (await self.middleware.call("service.control", "STOP", "snmp")).wait(raise_error=True)
+            if snmp_service.state == "STOPPED":
+                await (await self.call2(self.s.service.control, "STOP", "snmp")).wait(raise_error=True)
 
         update = {k: v for k, v in new_payload.items() if k != "id"}
         await self._update_service(old.id, update)

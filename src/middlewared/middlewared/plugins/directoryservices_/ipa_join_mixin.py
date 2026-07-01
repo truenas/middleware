@@ -6,6 +6,7 @@ import os
 import subprocess
 from tempfile import NamedTemporaryFile
 
+from middlewared.api.current import ServiceOptions
 from middlewared.job import Job
 from middlewared.service_exception import CallError
 from middlewared.utils.directoryservices import ipa, ipa_constants
@@ -112,7 +113,9 @@ class IPAJoinMixin:
         for etc_file in DSType.IPA.etc_files:
             self.middleware.call_sync('etc.generate', etc_file)
 
-        self.middleware.call_sync('service.control', 'RESTART', 'sssd', DEF_SVC_OPTS).wait_sync(raise_error=True)
+        self.call_sync2(
+            self.s.service.control, 'RESTART', 'sssd', ServiceOptions(**DEF_SVC_OPTS)
+        ).wait_sync(raise_error=True)
         self.middleware.call_sync('kerberos.start')
 
     def _ipa_insert_keytab(self, service: ipa_constants.IpaConfigName, keytab_data: str) -> None:

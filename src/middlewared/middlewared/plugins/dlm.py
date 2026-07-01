@@ -340,7 +340,7 @@ class DistributedLockManagerService(Service):
         if not await self.middleware.call('iscsi.global.using_dlm'):
             return
 
-        if not await self.middleware.call('service.started', 'iscsitarget'):
+        if not await self.call2(self.s.service.started, 'iscsitarget'):
             return
 
         peer_ip = self.nodes.get(self.peernodeID, {}).get('ip')

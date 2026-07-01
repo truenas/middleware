@@ -44,7 +44,7 @@ def start_vm(context: ServiceContext, id_: int, options: VMStartOptions) -> None
     )
 
     # Reload HTTP service for display device changes
-    context.middleware.call_sync('service.control', 'RELOAD', 'http').wait_sync(raise_error=True)
+    context.call_sync2(context.s.service.control, 'RELOAD', 'http').wait_sync(raise_error=True)
 
 
 def stop_vm(context: ServiceContext, id_: int, options: VMStopOptions) -> None:

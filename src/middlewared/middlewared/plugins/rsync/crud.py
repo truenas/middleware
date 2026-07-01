@@ -79,7 +79,7 @@ class RsyncTaskServicePart(SharingTaskServicePart[RsyncTaskEntry]):
         verrors.check()
 
         entry = await self._create(d)
-        await (await self.middleware.call("service.control", "RESTART", "cron")).wait(raise_error=True)
+        await (await self.call2(self.s.service.control, "RESTART", "cron")).wait(raise_error=True)
         return entry
 
     async def do_update(self, id_: int, data: RsyncTaskUpdate) -> RsyncTaskEntry:
@@ -97,11 +97,11 @@ class RsyncTaskServicePart(SharingTaskServicePart[RsyncTaskEntry]):
         verrors.check()
 
         entry = await self._update(id_, new)
-        await (await self.middleware.call("service.control", "RESTART", "cron")).wait(raise_error=True)
+        await (await self.call2(self.s.service.control, "RESTART", "cron")).wait(raise_error=True)
         return entry
 
     async def do_delete(self, id_: int) -> None:
         await self._delete(id_)
         for klass in ("RsyncSuccess", "RsyncFailed"):
             await self.call2(self.s.alert.oneshot_delete, klass, id_)
-        await (await self.middleware.call("service.control", "RESTART", "cron")).wait(raise_error=True)
+        await (await self.call2(self.s.service.control, "RESTART", "cron")).wait(raise_error=True)

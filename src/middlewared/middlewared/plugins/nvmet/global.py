@@ -6,6 +6,7 @@ from middlewared.api.current import (
     NVMetGlobalSessionsItem,
     NVMetGlobalUpdateArgs,
     NVMetGlobalUpdateResult,
+    QueryOptions,
 )
 from middlewared.plugins.rdma.constants import RDMAprotocols
 from middlewared.service import SystemServiceService, ValidationErrors, filterable_api_method, private
@@ -296,7 +297,7 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
         if (await self.config())['kernel']:
             return await self.middleware.run_in_thread(nvmet_kernel_module_loaded)
         else:
-            return await self.middleware.call('service.started', NVMF_SERVICE)
+            return await self.call2(self.s.service.started, NVMF_SERVICE)
 
     @private
     async def reload(self):
@@ -309,7 +310,7 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
             await self.middleware.call('nvmet.global.load_kernel_modules')
         else:
             await self.middleware.call('nvmet.spdk.slots')
-            if await (await self.middleware.call('service.control', 'START', NVMF_SERVICE)).wait(raise_error=True):
+            if await (await self.call2(self.s.service.control, 'START', NVMF_SERVICE)).wait(raise_error=True):
                 await self.middleware.call('nvmet.spdk.wait_nvmf_ready')
         await self.middleware.call('etc.generate', 'nvmet')
 
@@ -320,17 +321,15 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
                 await self.middleware.run_in_thread(clear_config)
                 await self.middleware.call('nvmet.global.unload_kernel_modules')
             else:
-                job = await self.middleware.call('service.control', 'STOP', NVMF_SERVICE)
+                job = await self.call2(self.s.service.control, 'STOP', NVMF_SERVICE)
                 return await job.wait(raise_error=True)
 
     @private
     async def system_ready(self):
         # Because the kernel nvmet service does not have a systemd unit
         # we need to ensure it gets started (if necessary).
-        service = await self.middleware.call('service.query',
-                                             [['service', '=', NVMET_SERVICE_NAME]],
-                                             {'get': True})
-        if not service['enable'] or service['state'] == 'RUNNING':
+        service = await self.call2(self.s.service.query, [['service', '=', NVMET_SERVICE_NAME]], QueryOptions(get=True))
+        if not service.enable or service.state == 'RUNNING':
             return
 
         if await self.middleware.call('failover.licensed'):
@@ -354,7 +353,9 @@ async def pool_post_import(middleware, pool):
             ('OR', [
                 ('device_path', '^', f'zvol/{name}/'),
                 ('device_path', '^', f'{path}/'),])]):
-            await (await middleware.call('service.control', 'RELOAD', NVMET_SERVICE_NAME)).wait(raise_error=True)
+            await (await middleware.call2(
+                middleware.services.service.control, 'RELOAD', NVMET_SERVICE_NAME
+            )).wait(raise_error=True)
 
 
 async def setup(middleware):

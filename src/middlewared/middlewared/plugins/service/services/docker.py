@@ -32,7 +32,7 @@ class DockerService(SimpleService):
             # HDDs have been notorious and can take quite some time for docker to start on boot.
             timeout = DOCKER_START_TIMEOUT
             while timeout > 0:
-                if not await self.middleware.call('service.started', 'docker'):
+                if not await self.call2(self.s.service.started, 'docker'):
                     await asyncio.sleep(DOCKER_STATUS_CHECK_INTERVAL)
                     timeout -= DOCKER_STATUS_CHECK_INTERVAL
                 else:

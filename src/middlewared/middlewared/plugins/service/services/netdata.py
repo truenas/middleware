@@ -1,4 +1,4 @@
-from middlewared.plugins.service_.services.base import SimpleService
+from middlewared.plugins.service.services.base import SimpleService
 
 
 class NetdataService(SimpleService):

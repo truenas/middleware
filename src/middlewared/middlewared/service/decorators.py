@@ -12,6 +12,7 @@ if not API_LOADING_FORBIDDEN:
     from middlewared.api.current import GenericQueryResult, QueryArgs
 
 if TYPE_CHECKING:
+    from middlewared.api.base.server.app import App
     from middlewared.job import Job
 
 
@@ -94,23 +95,61 @@ class _JobDecorator:
             'read_roles': read_roles or [],
         }
 
+    # Accepts (self, app: App, job: Job, ...)
+
+    # async
     @overload
-    def __call__[**P, R](
+    def __call__[**P, R, S](
         self,
         fn: Callable[
-            Concatenate[Any, Any, P],
+            Concatenate[S, App, Job, P],
             Coroutine[Any, Any, R],
         ],
     ) -> Callable[
-        Concatenate[Any, P],
+        Concatenate[S, P],
         Coroutine[Any, Any, Job[R]],
     ]: ...
 
+    # sync
     @overload
-    def __call__[**P, R](
+    def __call__[**P, R, S](
         self,
-        fn: Callable[Concatenate[Any, Any, P], R],
-    ) -> Callable[Concatenate[Any, P], Job[R]]: ...
+        fn: Callable[
+            Concatenate[S, App, Job, P],
+            R,
+        ],
+    ) -> Callable[
+        Concatenate[S, P],
+        Job[R],
+    ]: ...
+
+    # Accepts (self, job: Job, ...)
+
+    # async
+    @overload
+    def __call__[**P, R, S](
+        self,
+        fn: Callable[
+            Concatenate[S, Job, P],
+            Coroutine[Any, Any, R],
+        ],
+    ) -> Callable[
+        Concatenate[S, P],
+        Coroutine[Any, Any, Job[R]],
+    ]: ...
+
+    # sync
+    @overload
+    def __call__[**P, R, S](
+        self,
+        fn: Callable[
+            Concatenate[S, Job, P],
+            R,
+        ],
+    ) -> Callable[
+        Concatenate[S, P],
+        Job[R],
+    ]: ...
 
     def __call__(self, fn: Any) -> Any:
         fn._job = self._options

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import collections
-from typing import TYPE_CHECKING, Any, Literal, overload
+from typing import TYPE_CHECKING, Any, overload
 
 from middlewared.api.current import AppsIxVolumeEntry, QueryOptions, ZFSResourceQuery
 from middlewared.service import ServiceContext
@@ -11,24 +11,18 @@ from .ix_apps.path import get_app_mounts_ds
 from .utils import to_entries
 
 if TYPE_CHECKING:
-    class _QueryGetOptions(QueryOptions):
-        get: Literal[True]
-        count: Literal[False]
-
-    class _QueryCountOptions(QueryOptions):
-        count: Literal[True]
-        get: Literal[False]
+    from middlewared.api.current import QueryOptionsCount, QueryOptionsGet
 
 
 @overload
 def query_ix_volumes(  # type: ignore[overload-overlap]
-    context: ServiceContext, filters: list[Any], options: _QueryCountOptions,
+    context: ServiceContext, filters: list[Any], options: QueryOptionsCount,
 ) -> int: ...
 
 
 @overload
 def query_ix_volumes(  # type: ignore[overload-overlap]
-    context: ServiceContext, filters: list[Any], options: _QueryGetOptions,
+    context: ServiceContext, filters: list[Any], options: QueryOptionsGet,
 ) -> AppsIxVolumeEntry: ...
 
 

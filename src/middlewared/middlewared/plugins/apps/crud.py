@@ -31,26 +31,19 @@ from .version_utils import get_latest_version_from_app_versions
 
 if TYPE_CHECKING:
     from middlewared.api.base.server.app import App
+    from middlewared.api.current import QueryOptionsCount, QueryOptionsGet
     from middlewared.job import Job
-
-    class _QueryGetOptions(QueryOptions):
-        get: Literal[True]
-        count: Literal[False]
-
-    class _QueryCountOptions(QueryOptions):
-        count: Literal[True]
-        get: Literal[False]
 
 
 @overload
 def query_apps(  # type: ignore[overload-overlap]
-    context: ServiceContext, filters: list[Any], options: _QueryCountOptions, app: App | None = None,
+    context: ServiceContext, filters: list[Any], options: QueryOptionsCount, app: App | None = None,
 ) -> int: ...
 
 
 @overload
 def query_apps(  # type: ignore[overload-overlap]
-    context: ServiceContext, filters: list[Any], options: _QueryGetOptions, app: App | None = None,
+    context: ServiceContext, filters: list[Any], options: QueryOptionsGet, app: App | None = None,
 ) -> AppEntry: ...
 
 

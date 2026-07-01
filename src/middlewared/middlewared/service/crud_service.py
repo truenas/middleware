@@ -29,15 +29,7 @@ if not API_LOADING_FORBIDDEN:
     from middlewared.api.current import QueryArgs, QueryOptions
 
 if TYPE_CHECKING:
-    from typing import Literal
-
-    class _QueryGetOptions(QueryOptions):
-        get: Literal[True]
-        count: Literal[False]
-
-    class _QueryCountOptions(QueryOptions):
-        count: Literal[True]
-        get: Literal[False]
+    from middlewared.api.current import QueryOptionsCount, QueryOptionsGet
 
 
 # Stripped from the datastore query and re-applied by filter_list on the extended result.
@@ -212,13 +204,18 @@ class CRUDService[E](ServiceChangeMixin, Service, metaclass=CRUDServiceMetabase)
             )
 
         if self._config.generic:
-            if not options['count']:
-                if options['get']:
-                    return self._config.entry.__query_result_item__(**result)
-                else:
-                    return [self._config.entry.__query_result_item__(**item) for item in result]
+            return self._handle_generic_query_result(result, options['count'], options['get'])
 
         return result
+
+    def _handle_generic_query_result[E](self, result: Any, count: bool, get: bool) -> list[E] | E | int:
+        if count:
+            return result
+
+        if get:
+            return self._config.entry.__query_result_item__(**result)
+
+        return [self._config.entry.__query_result_item__(**item) for item in result]
 
     @pass_app(message_id=True)
     async def create(self, app, audit_callback, message_id, data):
@@ -407,10 +404,10 @@ class GenericCRUDService[E, PK = int](CRUDService[E]):
     """
 
     @overload
-    async def query(self, filters: list[Any], options: _QueryCountOptions) -> int: ...  # type: ignore[overload-overlap]
+    async def query(self, filters: list[Any], options: QueryOptionsCount) -> int: ...  # type: ignore[overload-overlap]
 
     @overload
-    async def query(self, filters: list[Any], options: _QueryGetOptions) -> E: ...  # type: ignore[overload-overlap]
+    async def query(self, filters: list[Any], options: QueryOptionsGet) -> E: ...  # type: ignore[overload-overlap]
 
     @overload
     async def query(

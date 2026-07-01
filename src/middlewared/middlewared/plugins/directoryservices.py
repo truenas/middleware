@@ -8,6 +8,7 @@ from middlewared.api.current import (
     DirectoryServicesStatusArgs,
     DirectoryServicesStatusChangedEvent,
     DirectoryServicesStatusResult,
+    ServiceOptions,
 )
 from middlewared.plugins.directoryservices_.util_cache import check_cache_version
 from middlewared.service import Service, job, private
@@ -125,23 +126,23 @@ class DirectoryServices(Service):
     def restart_dependent_services(self, reload_services=None):
         # System services that should be started
         for svc in PREREQUISITE_SERVICES:
-            self.middleware.call_sync('service.control', 'START', svc).wait_sync(raise_error=True)
+            self.call_sync2(self.s.service.control, 'START', svc).wait_sync(raise_error=True)
 
         to_reload = reload_services or []
 
         # Dependent protocols
-        for svc in self.middleware.call_sync('service.query', [['OR', [
+        for svc in self.call_sync2(self.s.service.query, [['OR', [
             ['enable', '=', True],
             ['state', '=', 'RUNNING']
         ]], ['service', 'in', DEPENDENT_SERVICES]]):
 
-            if svc['state'] == 'RUNNING' and svc['service'] in to_reload:
+            if svc.state == 'RUNNING' and svc.service in to_reload:
                 verb = 'RELOAD'
             else:
                 verb = 'RESTART'
 
-            self.middleware.call_sync(
-                'service.control', verb, svc['service'], DEF_SVC_OPTS
+            self.call_sync2(
+                self.s.service.control, verb, svc.service, ServiceOptions(**DEF_SVC_OPTS)
             ).wait_sync(raise_error=True)
 
     @private

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 from middlewared.service import ServiceChangeMixin
 
@@ -30,7 +30,7 @@ class CertificateServiceAttachmentDelegate(CertificateAttachmentDelegate, Servic
 
     CERT_FIELD = 'certificate'
     SERVICE: str
-    SERVICE_VERB = 'RELOAD'
+    SERVICE_VERB: Literal['START', 'RESTART', 'RELOAD'] = 'RELOAD'
 
     async def get_namespace(self) -> str:
         return getattr(self, 'NAMESPACE', self.SERVICE)
@@ -46,9 +46,9 @@ class CertificateServiceAttachmentDelegate(CertificateAttachmentDelegate, Servic
         return cert_value == cert_id  # type: ignore[no-any-return]
 
     async def redeploy(self, cert_id: int) -> None:
-        if await self.middleware.call('service.started', self.SERVICE):
+        if await self.call2(self.s.service.started, self.SERVICE):
             await (
-                await self.middleware.call('service.control', self.SERVICE_VERB, self.SERVICE)
+                await self.call2(self.s.service.control, self.SERVICE_VERB, self.SERVICE)
             ).wait(raise_error=True)
 
 

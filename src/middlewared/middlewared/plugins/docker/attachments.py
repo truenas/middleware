@@ -45,7 +45,7 @@ class DockerFSAttachmentDelegate(FSAttachmentDelegate[dict[str, str]]):
         if not attachments:
             return
         try:
-            await (await self.middleware.call('service.control', 'STOP', self.service)).wait(raise_error=True)
+            await (await self.call2(self.s.service.control, 'STOP', self.service)).wait(raise_error=True)
             umount_job = await self.call2(self.s.docker.umount_docker_ds)
             if umount_job:
                 await umount_job.wait(raise_error=True)

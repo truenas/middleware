@@ -31,7 +31,7 @@ def restore_backup(context: ServiceContext, job: Job, backup_name: str) -> None:
     job.set_progress(10, 'Basic validation complete')
 
     logger.debug('Restoring backup %r', backup_name)
-    context.middleware.call_sync('service.control', 'STOP', 'docker').wait_sync(raise_error=True)
+    context.call_sync2(context.s.service.control, 'STOP', 'docker').wait_sync(raise_error=True)
     job.set_progress(20, 'Stopped Docker service')
 
     docker_config = context.call_sync2(context.s.docker.config)
