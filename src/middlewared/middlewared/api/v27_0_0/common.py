@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, time
-from typing import TYPE_CHECKING, Annotated, Any, Literal, overload
+from typing import Annotated, Any, Literal
 
 from pydantic import AfterValidator, Field, model_validator
 
@@ -95,22 +95,6 @@ class QueryOptions(BaseModel):
         default=False,
         description="Force use of SQL for result filtering to reduce response time. May not work for all methods.",
     )
-
-    if TYPE_CHECKING:
-        @overload
-        def __new__(  # type: ignore[overload-overlap]
-            cls, *, get: Literal[True], **kwargs: Any,
-        ) -> QueryOptionsGet: ...
-
-        @overload
-        def __new__(  # type: ignore[overload-overlap]
-            cls, *, count: Literal[True], **kwargs: Any,
-        ) -> QueryOptionsCount: ...
-
-        @overload
-        def __new__(cls, **kwargs: Any) -> QueryOptions: ...
-
-        def __new__(cls, **kwargs: Any) -> QueryOptions: ...
 
 
 class QueryOptionsGet(QueryOptions):

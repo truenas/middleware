@@ -20,7 +20,7 @@ jobs:
       - name: Test
         run: |
           cd src/middlewared
-          mypy \
+          PYTHONPATH=. mypy \
             middlewared/alert/ \
             middlewared/api/base/ \
             middlewared/common/ \
