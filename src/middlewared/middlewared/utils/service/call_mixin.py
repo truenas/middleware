@@ -18,186 +18,45 @@ class CallMixin:
     def s(self) -> middlewared.main.ServiceContainer:
         return self.middleware.services
 
-    # Overloads for pass_app methods: strip the leading App parameter via Concatenate
-    @typing.overload
-    async def call2[**P, T](
-        self,
-        f: typing.Callable[typing.Concatenate[App, P], typing.Coroutine[typing.Any, typing.Any, Job[T]]],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> Job[T]:
-        ...
-
-    @typing.overload
-    async def call2[**P, T](
-        self,
-        f: typing.Callable[typing.Concatenate[App, P], Job[T]],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> Job[T]:
-        ...
-
-    @typing.overload
-    async def call2[**P, T](
-        self,
-        f: typing.Callable[typing.Concatenate[App, P], typing.Coroutine[typing.Any, typing.Any, T]],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> T:
-        ...
-
-    @typing.overload
-    async def call2[**P, T](
-        self,
-        f: typing.Callable[typing.Concatenate[App, P], T],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> T:
-        ...
-
-    # Overloads for normal methods (no pass_app)
-    @typing.overload
-    async def call2[**P, T](
-        self,
-        f: typing.Callable[P, typing.Coroutine[typing.Any, typing.Any, Job[T]]],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> Job[T]:
-        ...
-
-    @typing.overload
-    async def call2[**P, T](
-        self,
-        f: typing.Callable[P, Job[T]],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> Job[T]:
-        ...
-
-    @typing.overload
-    async def call2[**P, T](
-        self,
-        f: typing.Callable[P, typing.Coroutine[typing.Any, typing.Any, T]],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> T:
-        ...
-
-    @typing.overload
-    async def call2[**P, T](
-        self,
-        f: typing.Callable[P, T],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> T:
-        ...
-
+    # The callee's parameters are grafted onto this signature per call site by the `mypy_call2`
+    # plugin; the keyword-only options below are the typed options it appends to every call.
     async def call2(
         self,
         f: typing.Callable[..., typing.Any],
         *args: typing.Any,
+        app: App | None = None,
+        audit_callback: AuditCallback | None = None,
+        job_on_progress_cb: JobProgressCallback = None,
+        job_silent: bool = False,
+        pipes: Pipes | None = None,
+        profile: bool = False,
         **kwargs: typing.Any,
     ) -> typing.Any:
-        app: App | None = kwargs.pop("app", None)
-        audit_callback: AuditCallback | None = kwargs.pop("audit_callback", None)
-        job_on_progress_cb: JobProgressCallback = kwargs.pop("job_on_progress_cb", None)
-        pipes: Pipes | None = kwargs.pop("pipes", None)
-        profile: bool = kwargs.pop("profile", False)
         return await self.middleware.call2(
             f,
             *args,
             app=app,
             audit_callback=audit_callback,
             job_on_progress_cb=job_on_progress_cb,
+            job_silent=job_silent,
             pipes=pipes,
             profile=profile,
             **kwargs,
         )
 
-    # Overloads for pass_app methods: strip the leading App parameter via Concatenate
-    @typing.overload
-    def call_sync2[**P, T](
-        self,
-        f: typing.Callable[typing.Concatenate[App, P], typing.Coroutine[typing.Any, typing.Any, Job[T]]],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> Job[T]:
-        ...
-
-    @typing.overload
-    def call_sync2[**P, T](
-        self,
-        f: typing.Callable[typing.Concatenate[App, P], Job[T]],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> Job[T]:
-        ...
-
-    @typing.overload
-    def call_sync2[**P, T](
-        self,
-        f: typing.Callable[typing.Concatenate[App, P], typing.Coroutine[typing.Any, typing.Any, T]],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> T:
-        ...
-
-    @typing.overload
-    def call_sync2[**P, T](
-        self,
-        f: typing.Callable[typing.Concatenate[App, P], T],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> T:
-        ...
-
-    # Overloads for normal methods (no pass_app)
-    @typing.overload
-    def call_sync2[**P, T](
-        self,
-        f: typing.Callable[P, typing.Coroutine[typing.Any, typing.Any, Job[T]]],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> Job[T]:
-        ...
-
-    @typing.overload
-    def call_sync2[**P, T](
-        self,
-        f: typing.Callable[P, Job[T]],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> Job[T]:
-        ...
-
-    @typing.overload
-    def call_sync2[**P, T](
-        self,
-        f: typing.Callable[P, typing.Coroutine[typing.Any, typing.Any, T]],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> T:
-        ...
-
-    @typing.overload
-    def call_sync2[**P, T](
-        self,
-        f: typing.Callable[P, T],
-        *args: P.args,
-        **kwargs: P.kwargs,
-    ) -> T:
-        ...
-
+    # The callee's parameters are grafted onto this signature per call site by the `mypy_call2`
+    # plugin; the keyword-only options below are the typed options it appends to every call.
     def call_sync2(
         self,
         f: typing.Callable[..., typing.Any],
         *args: typing.Any,
+        app: App | None = None,
+        audit_callback: AuditCallback | None = None,
+        background: bool = False,
+        job_on_progress_cb: JobProgressCallback = None,
+        job_silent: bool = False,
         **kwargs: typing.Any,
     ) -> typing.Any:
-        app: App | None = kwargs.pop("app", None)
-        audit_callback: AuditCallback | None = kwargs.pop("audit_callback", None)
-        background: bool = kwargs.pop("background", False)
-        job_on_progress_cb: JobProgressCallback = kwargs.pop("job_on_progress_cb", None)
         return self.middleware.call_sync2(
             f,
             *args,
@@ -205,5 +64,6 @@ class CallMixin:
             audit_callback=audit_callback,
             background=background,
             job_on_progress_cb=job_on_progress_cb,
+            job_silent=job_silent,
             **kwargs,
         )

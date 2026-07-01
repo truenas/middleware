@@ -122,6 +122,7 @@ from middlewared.plugins.hardware import (
     MseriesNvdimmService,
 )
 from middlewared.plugins.init_shutdown_script import InitShutdownScriptService
+from middlewared.plugins.keychain import KeychainCredentialService
 from middlewared.plugins.keyvalue import KeyValueService
 from middlewared.plugins.kmip import KMIPService
 from middlewared.plugins.mail import MailService
@@ -276,6 +277,7 @@ class ServiceContainer(BaseServiceContainer):
         self.hardware = HardwareServicesContainer(middleware)
         self.initshutdownscript = InitShutdownScriptService(middleware)
         self.keyvalue = KeyValueService(middleware)
+        self.keychaincredential = KeychainCredentialService(middleware)
         self.kmip = KMIPService(middleware)
         self.lxc = LXCConfigService(middleware)
         self.mail = MailService(middleware)
@@ -1420,120 +1422,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         self.logger.trace('Calling %r in current thread', name)
         return methodobj(*prepared_call.args)
 
-    # Overloads for pass_app methods: strip the leading App parameter via Concatenate
-    @typing.overload
-    async def call2[**P, T](
-        self,
-        f: typing.Callable[typing.Concatenate[App, P], typing.Coroutine[typing.Any, typing.Any, Job[T]]],
-        *args: P.args,
-        app: App | None = None,
-        audit_callback: AuditCallback | None = None,
-        job_on_progress_cb: JobProgressCallback = None,
-        job_silent: bool = False,
-        pipes: Pipes | None = None,
-        profile: bool = False,
-        **kwargs: P.kwargs,
-    ) -> Job[T]: ...
-
-    @typing.overload
-    async def call2[**P, T](
-        self,
-        f: typing.Callable[typing.Concatenate[App, P], Job[T]],
-        *args: P.args,
-        app: App | None = None,
-        audit_callback: AuditCallback | None = None,
-        job_on_progress_cb: JobProgressCallback = None,
-        job_silent: bool = False,
-        pipes: Pipes | None = None,
-        profile: bool = False,
-        **kwargs: P.kwargs,
-    ) -> Job[T]: ...
-
-    @typing.overload
-    async def call2[**P, T](
-        self,
-        f: typing.Callable[typing.Concatenate[App, P], typing.Coroutine[typing.Any, typing.Any, T]],
-        *args: P.args,
-        app: App | None = None,
-        audit_callback: AuditCallback | None = None,
-        job_on_progress_cb: JobProgressCallback = None,
-        job_silent: bool = False,
-        pipes: Pipes | None = None,
-        profile: bool = False,
-        **kwargs: P.kwargs,
-    ) -> T: ...
-
-    @typing.overload
-    async def call2[**P, T](
-        self,
-        f: typing.Callable[typing.Concatenate[App, P], T],
-        *args: P.args,
-        app: App | None = None,
-        audit_callback: AuditCallback | None = None,
-        job_on_progress_cb: JobProgressCallback = None,
-        job_silent: bool = False,
-        pipes: Pipes | None = None,
-        profile: bool = False,
-        **kwargs: P.kwargs,
-    ) -> T: ...
-
-    # Overloads for normal methods (no pass_app)
-    @typing.overload
-    async def call2[**P, T](
-        self,
-        f: typing.Callable[P, typing.Coroutine[typing.Any, typing.Any, Job[T]]],
-        *args: P.args,
-        app: App | None = None,
-        audit_callback: AuditCallback | None = None,
-        job_on_progress_cb: JobProgressCallback = None,
-        job_silent: bool = False,
-        pipes: Pipes | None = None,
-        profile: bool = False,
-        **kwargs: P.kwargs,
-    ) -> Job[T]: ...
-
-    @typing.overload
-    async def call2[**P, T](
-        self,
-        f: typing.Callable[P, Job[T]],
-        *args: P.args,
-        app: App | None = None,
-        audit_callback: AuditCallback | None = None,
-        job_on_progress_cb: JobProgressCallback = None,
-        job_silent: bool = False,
-        pipes: Pipes | None = None,
-        profile: bool = False,
-        **kwargs: P.kwargs,
-    ) -> Job[T]: ...
-
-    @typing.overload
-    async def call2[**P, T](
-        self,
-        f: typing.Callable[P, typing.Coroutine[typing.Any, typing.Any, T]],
-        *args: P.args,
-        app: App | None = None,
-        audit_callback: AuditCallback | None = None,
-        job_on_progress_cb: JobProgressCallback = None,
-        job_silent: bool = False,
-        pipes: Pipes | None = None,
-        profile: bool = False,
-        **kwargs: P.kwargs,
-    ) -> T: ...
-
-    @typing.overload
-    async def call2[**P, T](
-        self,
-        f: typing.Callable[P, T],
-        *args: P.args,
-        app: App | None = None,
-        audit_callback: AuditCallback | None = None,
-        job_on_progress_cb: JobProgressCallback = None,
-        job_silent: bool = False,
-        pipes: Pipes | None = None,
-        profile: bool = False,
-        **kwargs: P.kwargs,
-    ) -> T: ...
-
+    # Signature is provided per call site by the `mypy_call2` plugin.
     async def call2(
         self,
         f: typing.Callable[..., typing.Any],

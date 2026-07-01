@@ -20,7 +20,8 @@ from middlewared.utils.typing_ import is_union
 __all__ = ["BaseModel", "ForUpdateMetaclass", "query_result", "query_result_from_item", "query_result_item",
            "added_event_model", "changed_event_model", "removed_event_model",
            "single_argument_args", "single_argument_result",
-           "NotRequired", "model_subset"]
+           "NotRequired", "model_subset",
+           "convert_model"]
 
 
 class _NotRequired:
@@ -442,3 +443,7 @@ def model_subset(base: type[BaseModel], fields: list[str]) -> type[BaseModel]:
         model.model_rebuild(force=True)
 
     return model  # type: ignore[no-any-return]
+
+
+def convert_model[E: BaseModel](src: BaseModel, type_: type[E]) -> E:
+    return type_.model_validate({name: getattr(src, name) for name in type_.model_fields})

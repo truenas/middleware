@@ -23,8 +23,8 @@ async def get_ssh_credentials_connect_kwargs(
 ) -> dict[str, Any] | None:
     """Return None if the keychain credential with id `cred_id` cannot be retrieved."""
     try:
-        ssh_credentials = await part.middleware.call(
-            "keychaincredential.get_of_type",
+        ssh_credentials = await part.call2(
+            part.s.keychaincredential.get_of_type,
             cred_id,
             "SSH_CREDENTIALS",
         )
@@ -32,17 +32,22 @@ async def get_ssh_credentials_connect_kwargs(
         verrors.add(f"{schema}.ssh_credentials", e.errmsg)
         return None
 
-    cred_attrs = ssh_credentials["attributes"]
-    ssh_keypair = await part.middleware.call(
-        "keychaincredential.get_of_type",
-        cred_attrs["private_key"],
+    cred_attrs = ssh_credentials.attributes.get_secret_value()
+    ssh_keypair = await part.call2(
+        part.s.keychaincredential.get_of_type,
+        cred_attrs.private_key,
         "SSH_KEY_PAIR",
     )
+    private_key = ssh_keypair.attributes.get_secret_value().private_key
+    if private_key is None:
+        verrors.add(f"{schema}.ssh_credentials", "SSH key pair has no private key")
+        return None
+
     return {
-        "host": cred_attrs["host"],
-        "port": cred_attrs["port"],
-        "username": cred_attrs["username"],
-        "client_keys": [asyncssh.import_private_key(ssh_keypair["attributes"]["private_key"])],
+        "host": cred_attrs.host,
+        "port": cred_attrs.port,
+        "username": cred_attrs.username,
+        "client_keys": [asyncssh.import_private_key(private_key)],
         "known_hosts": asyncssh.SSHKnownHosts(get_host_key_file_contents_from_ssh_credentials(cred_attrs)),
     }
 

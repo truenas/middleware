@@ -16,11 +16,11 @@ class SFTPRcloneRemote(BaseRcloneRemote):
         if credentials["provider"].get("private_key") is not None:
             with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp_file:
                 tmp_file.write(
-                    self.middleware.call_sync(
-                        "keychaincredential.get_of_type",
+                    self.middleware.call_sync2(
+                        self.middleware.services.keychaincredential.get_of_type,
                         credentials["provider"]["private_key"],
                         "SSH_KEY_PAIR"
-                    )["attributes"]["private_key"]
+                    ).attributes.get_secret_value().private_key
                 )
 
                 result["key_file"] = tmp_file.name

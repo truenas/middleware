@@ -918,8 +918,8 @@ class ZettareplService(Service):
             if ssh_credentials is None:
                 raise CallError(f"You should pass SSH credentials for {transport} transport")
 
-            ssh_credentials = await self.middleware.call("keychaincredential.get_of_type", ssh_credentials,
-                                                         "SSH_CREDENTIALS")
+            ssh_credentials = await self.call2(self.s.keychaincredential.get_of_type, ssh_credentials,
+                                               "SSH_CREDENTIALS")
 
             transport_definition = dict(type="ssh", **await self._define_ssh_transport(ssh_credentials), sudo=sudo)
 
@@ -940,19 +940,20 @@ class ZettareplService(Service):
         return transport_definition
 
     async def _define_ssh_transport(self, credentials):
+        attributes = credentials.attributes.get_secret_value()
         try:
-            key_pair = await self.middleware.call("keychaincredential.get_of_type",
-                                                  credentials["attributes"]["private_key"], "SSH_KEY_PAIR")
+            key_pair = await self.call2(self.s.keychaincredential.get_of_type,
+                                        attributes.private_key, "SSH_KEY_PAIR")
         except CallError as e:
-            raise CallError(f"Error while querying SSH key pair for credentials {credentials['id']}: {e!s}")
+            raise CallError(f"Error while querying SSH key pair for credentials {credentials.id}: {e!s}")
 
         transport = {
-            "hostname": credentials["attributes"]["host"],
-            "port": credentials["attributes"]["port"],
-            "username": credentials["attributes"]["username"],
-            "private-key": key_pair["attributes"]["private_key"],
-            "host-key": credentials["attributes"]["remote_host_key"],
-            "connect-timeout": credentials["attributes"]["connect_timeout"],
+            "hostname": attributes.host,
+            "port": attributes.port,
+            "username": attributes.username,
+            "private-key": key_pair.attributes.get_secret_value().private_key,
+            "host-key": attributes.remote_host_key,
+            "connect-timeout": attributes.connect_timeout,
         }
 
         if (await self.call2(self.s.system.security.config)).enable_fips:

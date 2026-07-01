@@ -116,7 +116,7 @@ def get_zvol_attachments_impl(middleware: Middleware) -> dict[str, dict[str, Any
         att_data["iscsi.extent.query"][ip] = i
 
     for v in middleware.call_sync2(middleware.services.vm.device.query, [["attributes.dtype", "=", "DISK"]]):
-        vp = zvol_path_to_name(v.attributes.path)
+        vp = zvol_path_to_name(v.attributes.path)  # type: ignore[arg-type,union-attr]
         att_data["vm.devices.query"][vp] = v
 
     for n in middleware.call_sync(
