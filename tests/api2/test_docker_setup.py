@@ -101,8 +101,10 @@ def test_apps_dataset_after_address_pool_update(docker_pool):
     docker_config = call('docker.update', {'address_pools': [
         {'base': '172.17.0.0/12', 'size': 27}, {"base": '2024:db8::/48', 'size': 64}]
     }, job=True)
+    # The base is normalized to its canonical network address (172.17.0.0/12 -> 172.16.0.0/12),
+    # which is the range Docker actually allocates from.
     assert docker_config['address_pools'] == [
-        {'base': '172.17.0.0/12', 'size': 27}, {"base": '2024:db8::/48', 'size': 64}
+        {'base': '172.16.0.0/12', 'size': 27}, {"base": '2024:db8::/48', 'size': 64}
     ]
     assert call('filesystem.statfs', IX_APPS_MOUNT_PATH)['source'] == docker_config['dataset']
     assert call('docker.status')['status'] == 'RUNNING'
