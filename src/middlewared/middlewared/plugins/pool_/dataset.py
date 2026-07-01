@@ -210,6 +210,13 @@ class PoolDatasetService(CRUDService):
         # We raise validation errors here as parent could be used down to validate other aspects of the dataset
         verrors.check()
 
+        if data.get('deduplication') in ('ON', 'VERIFY'):
+            if not await self.middleware.call('system.feature_enabled', 'DEDUP'):
+                verrors.add(
+                    f'{schema}.deduplication',
+                    'This system is not licensed to use ZFS deduplication.'
+                )
+
         dataset_pool_is_draid = await self.middleware.call('pool.is_draid_pool', parent['pool'])
         if data['type'] == 'FILESYSTEM':
             to_check = {'acltype': None, 'aclmode': None}
