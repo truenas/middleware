@@ -103,7 +103,7 @@ class ContainerRegistryClientMixin:
                 # needed to request a token - is left to surface as a CallError below rather
                 # than crashing.
                 auth_data = parse_auth_header((error.headers or {}).get(DOCKER_AUTH_HEADER) or '')
-                scheme = auth_data.pop('scheme', None)
+                scheme = auth_data.get('scheme')
                 if scheme == 'basic' and auth is not None:
                     # Private registries using htpasswd/HTTP Basic auth answer with a
                     # `Basic` challenge that has no token endpoint or scope - there is no

@@ -76,10 +76,13 @@ def parse_auth_header(header: str) -> dict[str, str]:
         "scope": "scope",
     }
     results: dict[str, str] = {}
-    scheme, _, params = header.strip().partition(' ')
-    if not scheme:
+    # Split the scheme from its parameters on the first run of whitespace so a tab or
+    # multiple spaces between them is tolerated (RFC 7235 uses SP, but be lenient).
+    tokens = header.strip().split(maxsplit=1)
+    if not tokens:
         return results
-    results['scheme'] = scheme.lower()
+    results['scheme'] = tokens[0].lower()
+    params = tokens[1] if len(tokens) > 1 else ''
     for part in params.split(','):
         # partition on the first '=' so values that themselves contain '=' survive.
         key, sep, value = part.strip().partition('=')
