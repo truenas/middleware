@@ -51,7 +51,7 @@ class NFSServicePathInfo(enum.Enum):
     SMBAKDIR = (os.path.join(SYSDATASET_PATH, 'nfs', 'sm.bak'), 0o755, True, {'uid': 'statd', 'gid': 'nogroup'})
     V4RECOVERYDIR = (os.path.join(SYSDATASET_PATH, 'nfs', 'v4recovery'), 0o755, True, {'uid': 0, 'gid': 0})
 
-    def path(self):
+    def path(self) -> str:
         return self.value[0]
 
     def mode(self):

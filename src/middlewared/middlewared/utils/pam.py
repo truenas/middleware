@@ -103,6 +103,11 @@ class PAMConfLines:
     secondary: tuple[PAMLine, ...] | None = None
 
 
+@dataclass(slots=True, frozen=True)
+class PAMConfLinesWithSecondary(PAMConfLines):
+    secondary: tuple[PAMLine, ...]
+
+
 # Below this point are intialized PAM configuration objects for use in mako files
 
 STANDALONE_ACCOUNT = PAMConfLines(
@@ -145,7 +150,7 @@ AD_ACCOUNT = PAMConfLines(
     )
 )
 
-SSS_ACCOUNT = PAMConfLines(
+SSS_ACCOUNT = PAMConfLinesWithSecondary(
     service=PAMService.ACCOUNT,
     primary=(
         PAMLine(
@@ -232,7 +237,7 @@ SSS_AUTH = PAMConfLines(
     )
 )
 
-STANDALONE_SESSION = PAMConfLines(
+STANDALONE_SESSION = PAMConfLinesWithSecondary(
     service=PAMService.SESSION,
     primary=(),
     secondary=(
@@ -249,7 +254,7 @@ STANDALONE_SESSION = PAMConfLines(
     )
 )
 
-AD_SESSION = PAMConfLines(
+AD_SESSION = PAMConfLinesWithSecondary(
     service=PAMService.SESSION,
     primary=(),
     secondary=(
@@ -275,7 +280,7 @@ AD_SESSION = PAMConfLines(
     )
 )
 
-SSS_SESSION = PAMConfLines(
+SSS_SESSION = PAMConfLinesWithSecondary(
     service=PAMService.SESSION,
     primary=(),
     secondary=(

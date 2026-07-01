@@ -1,17 +1,15 @@
 <%
-    import contextlib
     import glob
-    import os
 
     enabled = middleware.call_sync('system.advanced.config')['kdump_enabled']
 
     if enabled:
-        initrd_boot_path = glob.glob('/boot/initrd.img*')
-        if not initrd_boot_path:
+        initrd_list = glob.glob('/boot/initrd.img*')
+        if not initrd_list:
             middleware.logger.error('Initrd image not found under /boot.')
             enabled = False
         else:
-            initrd_boot_path = initrd_boot_path[0]
+            initrd_boot_path = initrd_list[0]
 %>\
 % if enabled:
 USE_KDUMP=1
