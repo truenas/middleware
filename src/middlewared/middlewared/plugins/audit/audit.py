@@ -100,7 +100,7 @@ class AuditService(ConfigService):
             )
         )[0]
 
-        for k, default in TNUserProp.quotas():
+        for k, default in TNUserProp.audit_quotas():
             no_prefix = k.removeprefix(f'{LEGACY_USERPROP_PREFIX}:')
             try:
                 ds[k] = int(ds['user_properties'][no_prefix])
