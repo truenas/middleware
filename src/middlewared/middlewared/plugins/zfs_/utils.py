@@ -3,6 +3,7 @@ import os
 
 from truenas_os_pyutils.mount import statmount
 
+from middlewared.plugins.audit.utils import AUDIT_DEFAULT_FILL_CRITICAL, AUDIT_DEFAULT_FILL_WARNING
 from middlewared.service_exception import CallError
 from middlewared.utils import BOOT_POOL_NAME_VALID
 from middlewared.utils.path import is_child
@@ -50,6 +51,18 @@ class TNUserProp(enum.Enum):
             TNUserProp.REFQUOTA_WARN,
             TNUserProp.REFQUOTA_CRIT
         ]]
+
+    def audit_quotas():
+        # Same shape as quotas(), but the audit dataset defaults to its own
+        # warning/critical thresholds rather than the general-purpose values
+        # from default(). Only a default: the on-disk user properties (which
+        # can be changed by the user) take precedence when present.
+        return [
+            (TNUserProp.QUOTA_WARN.value, AUDIT_DEFAULT_FILL_WARNING),
+            (TNUserProp.QUOTA_CRIT.value, AUDIT_DEFAULT_FILL_CRITICAL),
+            (TNUserProp.REFQUOTA_WARN.value, AUDIT_DEFAULT_FILL_WARNING),
+            (TNUserProp.REFQUOTA_CRIT.value, AUDIT_DEFAULT_FILL_CRITICAL),
+        ]
 
     def values():
         return [a.value for a in TNUserProp]

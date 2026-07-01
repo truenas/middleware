@@ -23,7 +23,6 @@ class QuotaWarningAlert(AlertClass):
         title="Quota Exceeded on Dataset",
         text="%(name)s exceeded on dataset %(dataset)s. Used %(used_fraction).2f%% (%(used)s of %(quota_value)s).",
     )
-
     name: str
     dataset: str
     used_fraction: float
@@ -44,7 +43,6 @@ class QuotaCriticalAlert(AlertClass):
         title="Critical Quota Exceeded on Dataset",
         text="%(name)s exceeded on dataset %(dataset)s. Used %(used_fraction).2f%% (%(used)s of %(quota_value)s).",
     )
-
     name: str
     dataset: str
     used_fraction: float
