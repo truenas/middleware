@@ -7,7 +7,6 @@ from middlewared.plugins.apps_images.client import ContainerRegistryClientMixin
 from middlewared.plugins.apps_images.utils import DOCKER_AUTH_HEADER
 from middlewared.service import CallError
 
-
 CREDS = {"login": "user", "password": "pass"}
 BASIC = 'Basic realm="Registry Realm"'
 BEARER = 'Bearer realm="https://auth.docker.io/token",service="registry.docker.io",scope="repository:foo/bar:pull"'
