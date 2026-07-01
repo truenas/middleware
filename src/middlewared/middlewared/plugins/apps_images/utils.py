@@ -43,15 +43,32 @@ def parse_digest_from_schema(response: dict[str, Any]) -> list[str]:
 
 def parse_auth_header(header: str) -> dict[str, str]:
     """
-    Parses header in format below:
+    Parses a ``WWW-Authenticate`` challenge header.
+
+    A Bearer/token-auth challenge, e.g.:
     'Bearer realm="https://ghcr.io/token",service="ghcr.io",scope="redis:pull"'
 
-    Returns:
+    returns:
         {
+            'scheme': 'bearer',
             'auth_url': 'https://ghcr.io/token',
             'service': 'ghcr.io',
             'scope': 'redis:pull'
         }
+
+    An HTTP Basic challenge (e.g. a private registry using htpasswd auth):
+    'Basic realm="example.com"'
+
+    returns:
+        {
+            'scheme': 'basic',
+            'auth_url': 'example.com'
+        }
+
+    Basic challenges carry no token endpoint or ``scope`` (the parsed ``realm`` is
+    unused), so callers must branch on ``scheme`` rather than assuming a
+    token-exchange flow. Optional whitespace around the comma-separated parameters
+    is tolerated (RFC 7235).
     """
     adapter = {
         "realm": "auth_url",
@@ -59,12 +76,18 @@ def parse_auth_header(header: str) -> dict[str, str]:
         "scope": "scope",
     }
     results: dict[str, str] = {}
-    parts = header.split()
-    if len(parts) > 1:
-        for part in parts[1].split(","):
-            key_value = part.split("=")
-            if len(key_value) == 2 and key_value[0] in adapter:
-                results[adapter[key_value[0]]] = key_value[1].strip('"')
+    # Split the scheme from its parameters on the first run of whitespace so a tab or
+    # multiple spaces between them is tolerated (RFC 7235 uses SP, but be lenient).
+    tokens = header.strip().split(maxsplit=1)
+    if not tokens:
+        return results
+    results['scheme'] = tokens[0].lower()
+    params = tokens[1] if len(tokens) > 1 else ''
+    for part in params.split(','):
+        # partition on the first '=' so values that themselves contain '=' survive.
+        key, sep, value = part.strip().partition('=')
+        if sep and key in adapter:
+            results[adapter[key]] = value.strip().strip('"')
     return results
 
 
