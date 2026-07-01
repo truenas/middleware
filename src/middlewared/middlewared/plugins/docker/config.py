@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ipaddress
 import typing
 from typing import Any
 
@@ -36,7 +37,7 @@ class DockerModel(sa.Model):
     enable_image_updates = sa.Column(sa.Boolean(), default=True)
     cidr_v6 = sa.Column(sa.String(), default='fdd0::/64', nullable=False)
     address_pools = sa.Column(sa.JSON(list), default=[
-        {'base': '172.17.0.0/12', 'size': 24},
+        {'base': '172.16.0.0/12', 'size': 24},
         {'base': 'fdd0::/48', 'size': 64},
     ])
     registry_mirrors = sa.Column(sa.JSON(list), default=[])
@@ -123,7 +124,11 @@ class DockerConfigServicePart(ConfigServicePart[DockerEntry]):
             # are not directly storable in SQLite. Convert them to plain strings for DB storage.
             if 'address_pools' in db_update:
                 for pool in db_update['address_pools']:
-                    pool['base'] = str(pool['base'])
+                    # Store the canonical network address (host bits masked off) so the stored/displayed
+                    # value matches the network Docker actually allocates from. Docker ignores host bits
+                    # in a pool base, e.g. 172.17.0.0/12 is treated as 172.16.0.0/12 and networks are
+                    # handed out from 172.16.0.0 upwards.
+                    pool['base'] = str(ipaddress.ip_network(str(pool['base']), strict=False))
             if 'cidr_v6' in db_update:
                 db_update['cidr_v6'] = str(db_update['cidr_v6'])
             if 'registry_mirrors' in db_update:
