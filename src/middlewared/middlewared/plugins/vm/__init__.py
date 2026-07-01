@@ -239,7 +239,7 @@ class VMService(GenericCRUDService[VMEntry]):
         """
         Supported motherboard firmware options.
         """
-        return VMBootloaderOptions(**BOOT_LOADER_OPTIONS)
+        return VMBootloaderOptions(**BOOT_LOADER_OPTIONS)  # type: ignore[arg-type]
 
     @api_method(VMBootloaderOvmfChoicesArgs, VMBootloaderOvmfChoicesResult, roles=['VM_READ'], check_annotations=True)
     def bootloader_ovmf_choices(self) -> dict[str, str]:

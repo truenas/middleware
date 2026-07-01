@@ -55,7 +55,7 @@ class MailService(GenericConfigService[MailEntry]):
     @job(pipes=["input"], check_pipes=False)
     def send(self, job: Job, message: MailSendMessage, config: MailUpdate | None = None) -> None:
         """Sends mail using configured mail settings."""
-        return send(self.context, self._mail_queue, job, message, config or MailUpdate())
+        return send(self.context, self._mail_queue, job, message, config or MailUpdate())  # type: ignore[call-arg]
 
     @periodic(600, run_on_start=False)
     @private
