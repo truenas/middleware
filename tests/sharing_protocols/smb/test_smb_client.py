@@ -71,11 +71,27 @@ def mount_share(setup_smb_tests):
         yield setup_smb_tests | {'mountpoint': mp}
 
 
+SPECIAL_TAGS = ('owner@', 'group@', 'everyone@')
+
+
+def present_special_as_smb(acl):
+    # ixnas (ixnas:zfs_acl_advertise_enforced, default on) does not advertise
+    # WRITE_ACL / WRITE_OWNER on the special identities owner@ / group@ / everyone@
+    # over SMB, since ZFS will not honor those bits there. Reading the ACL locally
+    # still reports them, so an ALLOW ace that is FULL_CONTROL locally is presented
+    # as MODIFY over SMB. Normalize the local copy to match before comparing.
+    for ace in acl:
+        if ace['tag'] in SPECIAL_TAGS and ace['type'] == 'ALLOW':
+            if ace['perms'].get('BASIC') == 'FULL_CONTROL':
+                ace['perms'] = {'BASIC': 'MODIFY'}
+
+
 def compare_acls(local_path, share_path):
     local_acl = call('filesystem.getacl', local_path)
     local_acl.pop('path')
     smb_acl = call('filesystem.getacl', share_path)
     smb_acl.pop('path')
+    present_special_as_smb(local_acl['acl'])
     assert local_acl == smb_acl
 
 

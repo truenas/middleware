@@ -176,9 +176,10 @@ def test_004_test_flags(request):
 def test_005_test_map_modify(request):
     """
     This test validates that we are generating an appropriate SD when user has
-    'stripped' an ACL from an SMB share. Appropriate in this case means one that
-    grants an access mask equaivalent to MODIFY or FULL depending on whether it's
-    the file owner or group / other.
+    'stripped' an ACL from an SMB share. The special identities (owner@ / group@
+    / everyone@) are presented with an access mask equivalent to MODIFY: ixnas
+    does not advertise WRITE_ACL / WRITE_OWNER on them because ZFS will not honor
+    those bits for the special identities.
     """
     depends(request, ["SMB_SERVICE_STARTED"], scope="session")
 
@@ -189,7 +190,7 @@ def test_005_test_map_modify(request):
             sleep(5)
             sd = get_windows_sd("MAP_MODIFY", "SMB")
             dacl = sd['dacl']
-            assert dacl[0]['access_mask']['standard'] == 'FULL', str(dacl[0])
+            assert dacl[0]['access_mask']['standard'] == 'CHANGE', str(dacl[0])
             assert dacl[1]['access_mask']['special']['WRITE_ATTRIBUTES'], str(dacl[1])
             assert dacl[1]['access_mask']['special']['WRITE_EA'], str(dacl[1])
             assert dacl[2]['access_mask']['special']['WRITE_ATTRIBUTES'], str(dacl[2])

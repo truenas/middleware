@@ -197,10 +197,15 @@ class SMB(object):
                 FileAttributes=dosmode,
             )
         elif mode == "w":
+            # A write open only needs the rights to create and write the file, not
+            # WRITE_OWNER. Request MAXIMUM_ALLOWED so the server grants whatever the
+            # caller is entitled to: the special identities (owner@/group@/everyone@)
+            # do not advertise WRITE_OWNER and the file owner is not implicitly
+            # granted it, so an explicit SEC_GENERIC_ALL open by the owner is denied.
             f = self._connection.create(
                 file,
                 CreateDisposition=3,
-                DesiredAccess=security.SEC_GENERIC_ALL,
+                DesiredAccess=security.SEC_FLAG_MAXIMUM_ALLOWED,
                 FileAttributes=dosmode,
             )
 
