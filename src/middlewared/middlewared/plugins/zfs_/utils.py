@@ -3,7 +3,6 @@ import os
 
 from truenas_os_pyutils.mount import statmount
 
-from middlewared.plugins.audit.utils import AUDIT_DEFAULT_FILL_CRITICAL, AUDIT_DEFAULT_FILL_WARNING
 from middlewared.service_exception import CallError
 from middlewared.utils import BOOT_POOL_NAME_VALID
 from middlewared.utils.path import is_child
@@ -28,15 +27,19 @@ class TNUserProp(enum.Enum):
     MANAGED_BY = f'{USERPROP_PREFIX}:managedby'
 
     def default(self):
+        # NOTE: DONT CHANGE THESE VALUES WITHOUT CHANGING
+        # THE UX! The UX has hard-coded these values on
+        # a form and so changing them here will cause
+        # confusion for end-user.
         match self:
             case TNUserProp.QUOTA_WARN:
-                return AUDIT_DEFAULT_FILL_WARNING
+                return 80
             case TNUserProp.QUOTA_CRIT:
-                return AUDIT_DEFAULT_FILL_CRITICAL
+                return 95
             case TNUserProp.REFQUOTA_WARN:
-                return AUDIT_DEFAULT_FILL_WARNING
+                return 80
             case TNUserProp.REFQUOTA_CRIT:
-                return AUDIT_DEFAULT_FILL_CRITICAL
+                return 95
             case _:
                 raise ValueError(f'{self.value}: no default value is set')
 
