@@ -37,6 +37,17 @@ from middlewared.plugins.apps_images.utils import parse_auth_header
         ),
         # A realm value containing whitespace is preserved intact.
         ('Basic realm="Registry Realm"', {"scheme": "basic", "auth_url": "Registry Realm"}),
+        # The scheme/parameter separator may be a tab or multiple spaces, not just a
+        # single space - the parser splits on the first run of whitespace.
+        (
+            'Bearer\trealm="https://ghcr.io/token",service="ghcr.io",scope="redis:pull"',
+            {
+                "scheme": "bearer",
+                "auth_url": "https://ghcr.io/token",
+                "service": "ghcr.io",
+                "scope": "redis:pull",
+            },
+        ),
         # A bare scheme with no parameters still reports the scheme.
         ("Basic", {"scheme": "basic"}),
         # Empty / whitespace-only headers degrade gracefully.
