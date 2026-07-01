@@ -575,7 +575,7 @@ async def setup(middleware: Middleware) -> None:
     # any type of VM initialization. We have to capture the
     # zfs c_max value before we start manipulating these
     # sysctls during vm start/stop
-    await middleware.call('sysctl.store_default_arc_max')
+    await middleware.call2(middleware.services.sysctl.store_default_arc_max)
 
     middleware.event_subscribe('system.ready', __event_system_ready)
     middleware.event_subscribe('system.shutdown', __event_system_shutdown)

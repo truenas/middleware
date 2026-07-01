@@ -39,8 +39,8 @@ async def get_available_memory(context: ServiceContext, overcommit: bool) -> int
     free = int((await context.to_thread(get_memory_info))['available'] * 0.9)
 
     # Difference between current ARC total size and the minimum allowed
-    arc_total = await context.middleware.call('sysctl.get_arcstats_size')
-    arc_min = await context.middleware.call('sysctl.get_arc_min')
+    arc_total = await context.call2(context.s.sysctl.get_arcstats_size)
+    arc_min = await context.call2(context.s.sysctl.get_arc_min)
     arc_shrink = max(0, arc_total - arc_min)
     total_free = free + arc_shrink
 
@@ -76,8 +76,8 @@ async def get_vm_memory_info(context: ServiceContext, vm_id: int) -> VMGetVmMemo
         #  show separate info of each VM in the UI moving on
         raise CallError(f'Unable to retrieve {vm.name!r} VM information as it is already running.')
 
-    arc_max = await context.middleware.call('sysctl.get_arc_max')
-    arc_min = await context.middleware.call('sysctl.get_arc_min')
+    arc_max = await context.call2(context.s.sysctl.get_arc_max)
+    arc_min = await context.call2(context.s.sysctl.get_arc_min)
     shrinkable_arc_max = max(0, arc_max - arc_min)
 
     available_memory = await get_available_memory(context, False)
@@ -118,7 +118,7 @@ async def _set_guest_vmemory(context: ServiceContext, vm_id: int, overcommit: bo
         context.logger.debug(
             'Setting ARC from %s to %s', memory_details.current_arc_max, memory_details.arc_max_after_shrink
         )
-        await context.middleware.call('sysctl.set_arc_max', memory_details.arc_max_after_shrink)
+        await context.call2(context.s.sysctl.set_arc_max, memory_details.arc_max_after_shrink)
 
 
 async def init_guest_vmemory(context: ServiceContext, vm_id: int, overcommit: bool) -> None:
@@ -135,16 +135,16 @@ async def teardown_guest_vmemory(context: ServiceContext, vm_id: int) -> None:
         return
 
     guest_memory = vm.memory * 1024 * 1024
-    arc_max = await context.middleware.call('sysctl.get_arc_max')
-    arc_min = await context.middleware.call('sysctl.get_arc_min')
+    arc_max = await context.call2(context.s.sysctl.get_arc_max)
+    arc_min = await context.call2(context.s.sysctl.get_arc_min)
     new_arc_max = min(
-        await context.middleware.call('sysctl.get_default_arc_max'),
+        await context.call2(context.s.sysctl.get_default_arc_max),
         arc_max + guest_memory
     )
     if arc_max != new_arc_max:
         if new_arc_max > arc_min:
             context.logger.debug(f'Giving back guest memory to ARC: {new_arc_max}')
-            await context.middleware.call('sysctl.set_arc_max', new_arc_max)
+            await context.call2(context.s.sysctl.set_arc_max, new_arc_max)
         else:
             context.logger.warn(
                 f'Not giving back memory to ARC because new arc_max ({new_arc_max}) <= arc_min ({arc_min})'
