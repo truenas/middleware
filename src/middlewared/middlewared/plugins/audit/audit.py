@@ -79,7 +79,7 @@ class AuditService(ConfigService):
             {'extra': {'retrieve_children': False}, 'get': True}
         )
 
-        for k, default in TNUserProp.quotas():
+        for k, default in TNUserProp.audit_quotas():
             try:
                 ds[k] = int(ds['properties'][k]["rawvalue"])
             except (KeyError, ValueError):
