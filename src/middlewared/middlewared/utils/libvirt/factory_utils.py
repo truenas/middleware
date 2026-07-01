@@ -12,6 +12,7 @@ from truenas_pylibvirt.device import (
     NICDevice,
     NICDeviceModel,
     NICDeviceType,
+    PciAddress,
     PCIDevice,
     RawStorageDevice,
     StorageDeviceIoType,
@@ -62,12 +63,21 @@ def get_device(device: dict[str, Any], delegate: DeviceDelegate) -> Device:
             else:
                 type_ = NICDeviceType.DIRECT
 
+            pci_addr_data = device['attributes'].get('pci_address')
+            pci_address = PciAddress(
+                bus=pci_addr_data['bus'],
+                slot=pci_addr_data.get('slot', 0),
+                function=pci_addr_data.get('function', 0),
+                domain=pci_addr_data.get('domain', 0),
+            ) if pci_addr_data else None
+
             return NICDevice(
                 type_=type_,
                 source=device['attributes']['nic_attach'],
                 model=NICDeviceModel(device['attributes']['type']),
                 mac=device['attributes']['mac'],
                 trust_guest_rx_filters=device['attributes']['trust_guest_rx_filters'],
+                pci_address=pci_address,
                 device_delegate=delegate,
             )
         case 'PCI':

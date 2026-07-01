@@ -12,20 +12,56 @@ from middlewared.api.base import (
 )
 
 __all__ = [
-    'VMCDROMDevice', 'VMDisplayDevice', 'VMNICDevice', 'VMPCIDevice', 'VMRAWDevice', 'VMDiskDevice', 'VMUSBDevice',
-    'VMDeviceType', 'VMDeviceEntry', 'VMDeviceCreateArgs', 'VMDeviceCreateResult', 'VMDeviceUpdateArgs',
-    'VMDeviceUpdateResult', 'VMDeviceDeleteArgs', 'VMDeviceDeleteResult', 'VMDeviceDiskChoicesArgs',
-    'VMDeviceDiskChoicesResult', 'VMDeviceIotypeChoicesArgs', 'VMDeviceIotypeChoicesResult',
-    'VMDeviceNicAttachChoicesArgs', 'VMDevicePassthroughDevice', 'VMDevicePassthroughInfo',
-    'VMDeviceNicAttachChoicesResult', 'VMDeviceBindChoicesArgs', 'VMDeviceBindChoicesResult',
-    'VMDevicePassthroughDeviceArgs', 'VMDevicePassthroughDeviceResult', 'VMDeviceIommuEnabledArgs',
-    'VMDeviceIommuEnabledResult', 'VMDevicePassthroughDeviceChoicesArgs', 'VMDevicePassthroughDeviceChoicesResult',
-    'VMDeviceUsbPassthroughDeviceArgs', 'VMDeviceUsbPassthroughDeviceResult',
-    'VMDeviceUsbPassthroughChoicesArgs', 'VMDeviceUsbPassthroughChoicesResult',
-    'VMDeviceUsbControllerChoicesArgs', 'VMDeviceUsbControllerChoicesResult',
-    'VMDeviceConvertArgs', 'VMDeviceConvertResult', 'USBPassthroughInfo', 'VMDeviceCreate',
-    'VMDeviceVirtualSize', 'VMDeviceVirtualSizeArgs', 'VMDeviceVirtualSizeResult', 'VMDeviceDeleteOptions',
-    'VMDeviceUpdate', 'VMDeviceNicAttachChoices', 'VMDeviceIotypeChoices', 'VMDeviceConvert',
+    "VMCDROMDevice",
+    "VMDisplayDevice",
+    "VMNICDevice",
+    "VMNICPciAddress",
+    "VMPCIDevice",
+    "VMRAWDevice",
+    "VMDiskDevice",
+    "VMUSBDevice",
+    "VMDeviceType",
+    "VMDeviceEntry",
+    "VMDeviceCreateArgs",
+    "VMDeviceCreateResult",
+    "VMDeviceUpdateArgs",
+    "VMDeviceUpdateResult",
+    "VMDeviceDeleteArgs",
+    "VMDeviceDeleteResult",
+    "VMDeviceDiskChoicesArgs",
+    "VMDeviceDiskChoicesResult",
+    "VMDeviceIotypeChoicesArgs",
+    "VMDeviceIotypeChoicesResult",
+    "VMDeviceNicAttachChoicesArgs",
+    "VMDevicePassthroughDevice",
+    "VMDevicePassthroughInfo",
+    "VMDeviceNicAttachChoicesResult",
+    "VMDeviceBindChoicesArgs",
+    "VMDeviceBindChoicesResult",
+    "VMDevicePassthroughDeviceArgs",
+    "VMDevicePassthroughDeviceResult",
+    "VMDeviceIommuEnabledArgs",
+    "VMDeviceIommuEnabledResult",
+    "VMDevicePassthroughDeviceChoicesArgs",
+    "VMDevicePassthroughDeviceChoicesResult",
+    "VMDeviceUsbPassthroughDeviceArgs",
+    "VMDeviceUsbPassthroughDeviceResult",
+    "VMDeviceUsbPassthroughChoicesArgs",
+    "VMDeviceUsbPassthroughChoicesResult",
+    "VMDeviceUsbControllerChoicesArgs",
+    "VMDeviceUsbControllerChoicesResult",
+    "VMDeviceConvertArgs",
+    "VMDeviceConvertResult",
+    "USBPassthroughInfo",
+    "VMDeviceCreate",
+    "VMDeviceVirtualSize",
+    "VMDeviceVirtualSizeArgs",
+    "VMDeviceVirtualSizeResult",
+    "VMDeviceDeleteOptions",
+    "VMDeviceUpdate",
+    "VMDeviceNicAttachChoices",
+    "VMDeviceIotypeChoices",
+    "VMDeviceConvert",
 ]
 
 
@@ -61,6 +97,13 @@ class VMDisplayDevice(BaseModel):
     type_: Literal['SPICE', 'VNC'] = Field(alias='type', default='SPICE', description="Display protocol type.")
 
 
+class VMNICPciAddress(BaseModel):
+    bus: int = Field(ge=1, description="PCI bus number. Must be >= 1; bus 0 is the root complex.")
+    slot: int = Field(default=0, ge=0, le=31, description="PCI slot number (0–31).")
+    function: int = Field(default=0, ge=0, le=7, description="PCI function number (0–7).")
+    domain: int = Field(default=0, ge=0, description="PCI domain number.")
+
+
 class VMNICDevice(BaseModel):
     dtype: Literal['NIC'] = Field(description="Device type identifier for network interface cards.")
     trust_guest_rx_filters: bool = Field(
@@ -79,6 +122,14 @@ class VMNICDevice(BaseModel):
     mac: MACAddress | None = Field(
         default=None,
         description="MAC address for the virtual network interface. `null` for auto-generation.",
+    )
+    pci_address: VMNICPciAddress | None = Field(
+        default=None,
+        description=(
+            "Pin this NIC to a specific PCI address in the guest. "
+            "For example, `bus=1, slot=0` causes the interface to appear as `enp1s0`. "
+            "`null` for automatic assignment."
+        ),
     )
 
 
