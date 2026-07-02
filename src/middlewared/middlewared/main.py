@@ -372,7 +372,6 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         self.dump_result_allow_fallback = True
         self.services = ServiceContainer(self)
         self._systemd_notifier: SystemdNotifier | None = None
-        self._coverage: typing.Any = None
 
     @typing.overload
     def get_method(
@@ -1842,9 +1841,9 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
 
     def _save_coverage(self) -> None:
         # os._exit() skips coverage.py's atexit save, so flush explicitly.
-        if self._coverage is not None:
-            self._coverage.stop()
-            self._coverage.save()
+        if middlewared._coverage is not None:
+            middlewared._coverage.stop()
+            middlewared._coverage.save()
 
     def run(
         self,
@@ -2101,16 +2100,6 @@ def main():
     # 'spawn' starts a fresh Python interpreter via fork+exec, avoiding all inherited state issues.
     multiprocessing.set_start_method('spawn')
 
-    cov = None
-    if args.coverage:
-        try:
-            import coverage
-        except ImportError:
-            parser.error("--coverage requires the 'coverage' package to be installed")
-        source = [pkg.strip() for pkg in args.coverage.split(',') if pkg.strip()]
-        cov = coverage.Coverage(branch=True, source=source)
-        cov.start()
-
     middleware = Middleware(
         loop_debug=args.loop_debug,
         loop_monitor=not args.disable_loop_monitor,
@@ -2119,7 +2108,6 @@ def main():
         # Otherwise will crash since `/data/manifest.json` does not exist at that build stage
         print_version=not (args.dump_api or args.dump_methods),
     )
-    middleware._coverage = cov
 
     if args.dump_api:
         asyncio.get_event_loop().run_until_complete(middleware.dump_api(sys.stdout))
