@@ -95,9 +95,10 @@ class SFTPCloudSyncCredentialsSSHKeyPairUsedByDelegate(KeychainCredentialUsedByD
         return f"Cloud credentials {row['name']}"
 
     async def unbind(self, row: dict[str, Any]) -> None:
-        row["attributes"].pop("private_key")
+        attributes = {k: v for k, v in row["provider"].items() if k != "type"}
+        attributes.pop("private_key", None)
         await self.middleware.call("datastore.update", "system.cloudcredentials", row["id"], {
-            "attributes": row["attributes"]
+            "attributes": attributes,
         })
 
 
