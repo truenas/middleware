@@ -81,7 +81,7 @@ class SSHKeyPair(SyncKeychainCredentialType[SSHKeyPairAttributes]):
                 if proc.returncode == 0:
                     public_key = proc.stdout
                 else:
-                    if proc.stderr.startswith("Enter passphrase:"):
+                    if proc.stderr.startswith("Enter passphrase"):
                         error = "Encrypted private keys are not allowed"
                     else:
                         error = proc.stderr

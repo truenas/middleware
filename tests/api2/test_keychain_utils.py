@@ -63,6 +63,21 @@ def test_ssh_key_pair_used_by_sftp_cloud_credentials():
             } in used_by
 
 
+def test_used_by_ignores_ssh_credentials_for_unrelated_key_pair():
+    # `c` provides an SSH credential referencing its own key pair; querying a different, unrelated key pair must
+    # exercise the delegate's `_is_related` check and return nothing.
+    with localhost_ssh_credentials(username="root"):
+        with ssh_keypair() as unrelated:
+            assert call("keychaincredential.used_by", unrelated["id"]) == []
+
+
+def test_used_by_ignores_sftp_cloud_credentials_for_unrelated_key_pair():
+    with ssh_keypair() as used_key:
+        with sftp_cloud_credential(used_key["id"]):
+            with ssh_keypair() as unrelated:
+                assert call("keychaincredential.used_by", unrelated["id"]) == []
+
+
 def test_ssh_credentials_used_by_replication_task():
     with localhost_ssh_credentials(username="root") as c:
         with replication_task(_replication_data(c["credentials"]["id"])) as task:
@@ -167,6 +182,11 @@ def test_remote_ssh_host_key_scan():
 def test_remote_ssh_host_key_scan_failure():
     with pytest.raises(CallError):
         call("keychaincredential.remote_ssh_host_key_scan", {"host": "localhost", "port": 1, "connect_timeout": 3})
+
+
+def test_remote_ssh_host_key_scan_invalid_host():
+    with pytest.raises(CallError):
+        call("keychaincredential.remote_ssh_host_key_scan", {"host": "invalid.invalid.invalid", "connect_timeout": 3})
 
 
 @pytest.fixture(scope="module")

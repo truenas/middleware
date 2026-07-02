@@ -192,12 +192,18 @@ class KeychainCredentialRemoteSSHSemiautomaticSetup(BaseModel):
     )
     token: Secret[str | None] = Field(
         default=None,
+        validate_default=True,
         description="API token for authentication with the remote system or `null`.",
     )
     admin_username: str = Field(default="root", description="Administrative username for the remote system.")
-    password: Secret[str | None] = Field(default=None, description="Password for the administrative user or `null`.")
+    password: Secret[str | None] = Field(
+        default=None,
+        validate_default=True,
+        description="Password for the administrative user or `null`.",
+    )
     otp_token: Secret[str | None] = Field(
         default=None,
+        validate_default=True,
         description="One-time password token for 2FA authentication or `null`.",
     )
     username: str = Field(default="root", description="Username for the SSH connection.")
