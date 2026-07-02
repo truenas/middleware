@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import ipaddress
 import typing
 from typing import Any
 
@@ -124,11 +123,7 @@ class DockerConfigServicePart(ConfigServicePart[DockerEntry]):
             # are not directly storable in SQLite. Convert them to plain strings for DB storage.
             if 'address_pools' in db_update:
                 for pool in db_update['address_pools']:
-                    # Store the canonical network address (host bits masked off) so the stored/displayed
-                    # value matches the network Docker actually allocates from. Docker ignores host bits
-                    # in a pool base, e.g. 172.17.0.0/12 is treated as 172.16.0.0/12 and networks are
-                    # handed out from 172.16.0.0 upwards.
-                    pool['base'] = str(ipaddress.ip_network(str(pool['base']), strict=False))
+                    pool['base'] = str(pool['base'])
             if 'cidr_v6' in db_update:
                 db_update['cidr_v6'] = str(db_update['cidr_v6'])
             if 'registry_mirrors' in db_update:

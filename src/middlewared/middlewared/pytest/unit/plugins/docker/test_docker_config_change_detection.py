@@ -85,6 +85,47 @@ async def test_address_pools_not_equal_after_updated_with_different_values():
 
 
 @pytest.mark.asyncio
+async def test_address_pool_base_normalized_to_canonical():
+    """A base with host bits set is stored/returned in canonical network form (172.17.0.0/12 -> 172.16.0.0/12)."""
+    m = Middleware()
+    m['system.advanced.config'] = lambda *a: {'nvidia': False}
+    svc = make_svc_part(m)
+
+    # read path (extend / model_validate of stored value)
+    extended = await svc.extend(dict(DB_DEFAULTS))
+    assert [str(p.base) for p in extended['address_pools']] == ['172.16.0.0/12', 'fdd0::/48']
+
+    # input path (DockerUpdate)
+    update = DockerUpdate(address_pools=[{'base': '172.17.0.0/12', 'size': 24}])
+    assert str(update.address_pools[0].base) == '172.16.0.0/12'
+
+
+@pytest.mark.asyncio
+async def test_no_spurious_address_pools_change_on_noncanonical_resubmit():
+    """Re-submitting the configured pool in non-canonical form must not be seen as a change.
+
+    Regression for the unnecessary docker restart: a stored canonical 172.16.0.0/12 pool
+    re-submitted as its non-canonical equivalent 172.17.0.0/12 must compare equal.
+    """
+    m = Middleware()
+    m['system.advanced.config'] = lambda *a: {'nvidia': False}
+    svc = make_svc_part(m)
+
+    stored = dict(DB_DEFAULTS, address_pools=[
+        {'base': '172.16.0.0/12', 'size': 24},
+        {'base': 'fdd0::/48', 'size': 64},
+    ])
+    old_config = DockerEntry.model_construct(**await svc.extend(stored))
+
+    update = DockerUpdate(address_pools=[
+        {'base': '172.17.0.0/12', 'size': 24},
+        {'base': 'fdd0::/48', 'size': 64},
+    ])
+    new_config = old_config.updated(update)
+    assert new_config.address_pools == old_config.address_pools
+
+
+@pytest.mark.asyncio
 async def test_registry_mirrors_equal_after_updated_with_same_values():
     m = Middleware()
     m['system.advanced.config'] = lambda *a: {'nvidia': False}
