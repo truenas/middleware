@@ -5,11 +5,10 @@ import errno
 import os
 import re
 import ssl
-import urllib.parse
 from typing import cast
+import urllib.parse
 
 from pydantic import Secret
-
 from truenas_api_client import Client
 from truenas_api_client.exc import ClientException
 
@@ -127,7 +126,7 @@ def remote_ssh_semiautomatic_setup(
 ) -> SSHCredentialsEntry:
     replication_key = get_ssh_key_pair_with_private_key(context, data.private_key.get_secret_value())
     if replication_key is None:
-        raise CallError(f"Specified key pair not found")
+        raise CallError("Specified key pair not found")
 
     try:
         client = Client(os.path.join(re.sub("^http", "ws", data.url), "websocket"),

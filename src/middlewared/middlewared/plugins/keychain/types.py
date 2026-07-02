@@ -6,7 +6,8 @@ import subprocess
 import tempfile
 import typing
 
-from middlewared.api.current import SSHKeyPair as SSHKeyPairAttributes, SSHCredentials as SSHCredentialsAttributes
+from middlewared.api.current import SSHCredentials as SSHCredentialsAttributes
+from middlewared.api.current import SSHKeyPair as SSHKeyPairAttributes
 from middlewared.service import ValidationErrors
 
 from .used_by import (

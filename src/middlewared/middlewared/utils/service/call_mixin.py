@@ -6,7 +6,6 @@ from middlewared.utils.types import AuditCallback, JobProgressCallback
 
 if typing.TYPE_CHECKING:
     from middlewared.api.base.server.app import App
-    from middlewared.job import Job
     import middlewared.main
     from middlewared.pipe import Pipes
 

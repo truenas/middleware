@@ -8,8 +8,8 @@ from middlewared.api.current import (
 )
 from middlewared.service import CRUDServicePart, ValidationErrors
 from middlewared.service_exception import ValidationError
-from middlewared.utils.types import AuditCallback
 import middlewared.sqlalchemy as sa
+from middlewared.utils.types import AuditCallback
 
 from .types import TYPES
 

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import enum
-from typing import TYPE_CHECKING, Any, reveal_type
+from typing import TYPE_CHECKING, Any
 
 from middlewared.api.current import (
     KeychainCredentialDeleteOptions,
