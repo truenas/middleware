@@ -28,7 +28,6 @@ from middlewared.api.current import (
 from middlewared.plugins.account_.constants import NO_LOGIN_SHELL
 from middlewared.service import ServiceContext, ValidationErrors
 from middlewared.service_exception import CallError, MatchNotFound
-from middlewared.utils.types import NO_AUDIT_CALLBACK
 
 from .ssh_key import process_ssh_keyscan_output
 
@@ -278,7 +277,7 @@ async def setup_ssh_connection(
             )
     except Exception:
         if pkey_config_.generate_key:
-            await context.call2(context.s.keychaincredential.do_delete, NO_AUDIT_CALLBACK, ssh_key_pair.id)
+            await context.call2(context.s.keychaincredential.delete, ssh_key_pair.id)
         raise
     else:
         return convert_model(resp, SSHCredentialsEntry)
