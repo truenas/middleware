@@ -26,7 +26,11 @@ __all__ = [
 
 
 class DockerAddressPool(BaseModel):
-    base: IPvAnyInterface = Field(description="Base network address with prefix for the pool.")
+    base: IPvAnyInterface = Field(
+        description="Base network for the pool. Host bits are ignored, and the value is stored as its "
+        "canonical network address (e.g. `172.17.0.0/12` is stored as `172.16.0.0/12`) which is the "
+        "range subnets are actually allocated from."
+    )
     size: Annotated[int, Field(ge=1)] = Field(description="Subnet size for networks allocated from this pool.")
 
     @field_serializer('base')
