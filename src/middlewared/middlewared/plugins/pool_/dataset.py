@@ -2,6 +2,7 @@ import errno
 import os
 import pathlib
 
+from ixhardware import TRUENAS_UNKNOWN
 from truenas_pylibzfs import ZFSError, ZFSException, ZFSType
 
 from middlewared.api import api_method
@@ -196,6 +197,23 @@ class PoolDatasetService(CRUDService):
 
         # We raise validation errors here as parent could be used down to validate other aspects of the dataset
         verrors.check()
+
+        if data.get('deduplication') in ('ON', 'VERIFY'):
+            if await self.middleware.call('system.license') is not None:
+                # Any licensed system must carry the explicit DEDUP feature flag.
+                if not await self.middleware.call('system.feature_enabled', 'DEDUP'):
+                    verrors.add(
+                        f'{schema}.deduplication',
+                        "This system's license does not include the ZFS deduplication feature."
+                    )
+            else:
+                # Unlicensed: Community Edition (incl. minis) may use dedup; TrueNAS hardware may not.
+                chassis = await self.middleware.call('truenas.get_chassis_hardware')
+                if chassis != TRUENAS_UNKNOWN and 'MINI' not in chassis:
+                    verrors.add(
+                        f'{schema}.deduplication',
+                        'This system is not licensed to use ZFS deduplication.'
+                    )
 
         dataset_pool_is_draid = await self.middleware.call('pool.is_draid_pool', parent['pool'])
         if data['type'] == 'FILESYSTEM':
