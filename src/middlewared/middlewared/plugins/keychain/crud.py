@@ -15,7 +15,7 @@ from .types import TYPES
 
 
 class KeychainCredentialModel(sa.Model):
-    __tablename__ = 'system_keychaincredential'
+    __tablename__ = "system_keychaincredential"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     name = sa.Column(sa.String(255))
@@ -29,14 +29,19 @@ class KeychainCredentialServicePart(CRUDServicePart[KeychainCredentialEntry]):
 
     async def do_create(self, data: KeychainCredentialCreate) -> KeychainCredentialEntry:
         await self.validate("keychain_credential_create", data)
-        return await self._create({
-            "name": data.name,
-            "type": data.type,
-            "attributes": data.attributes.get_secret_value().model_dump(),
-        })
+        return await self._create(
+            {
+                "name": data.name,
+                "type": data.type,
+                "attributes": data.attributes.get_secret_value().model_dump(),
+            }
+        )
 
     async def do_update(
-        self, audit_callback: AuditCallback, id_: int, data: KeychainCredentialUpdate,
+        self,
+        audit_callback: AuditCallback,
+        id_: int,
+        data: KeychainCredentialUpdate,
     ) -> KeychainCredentialEntry:
         old = await self.get_instance(id_)
         audit_callback(old.name)
@@ -45,18 +50,24 @@ class KeychainCredentialServicePart(CRUDServicePart[KeychainCredentialEntry]):
 
         await self.validate("keychain_credentials_update", new, id_)
 
-        entry = await self._update(id_, {
-            "name": new.name,
-            "type": new.type,
-            "attributes": new.attributes.get_secret_value().model_dump(),
-        })
+        entry = await self._update(
+            id_,
+            {
+                "name": new.name,
+                "type": new.type,
+                "attributes": new.attributes.get_secret_value().model_dump(),
+            },
+        )
 
         await self.middleware.call("zettarepl.update_tasks")
 
         return entry
 
     async def do_delete(
-        self, audit_callback: AuditCallback, id_: int, options: KeychainCredentialDeleteOptions,
+        self,
+        audit_callback: AuditCallback,
+        id_: int,
+        options: KeychainCredentialDeleteOptions,
     ) -> None:
         instance = await self.get_instance(id_)
         audit_callback(instance.name)
@@ -66,15 +77,17 @@ class KeychainCredentialServicePart(CRUDServicePart[KeychainCredentialEntry]):
             for row in await delegate.query(instance.id):
                 if not options.cascade:
                     raise ValidationError(
-                        "options.cascade",
-                        "This credential is used and no cascade option is specified"
+                        "options.cascade", "This credential is used and no cascade option is specified"
                     )
                 await delegate.unbind(row)
 
         await self._delete(id_)
 
     async def validate(
-        self, schema_name: str, credential: KeychainCredentialEntry, id_: int | None = None,
+        self,
+        schema_name: str,
+        credential: KeychainCredentialEntry,
+        id_: int | None = None,
     ) -> None:
         verrors = ValidationErrors()
 

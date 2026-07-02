@@ -44,9 +44,7 @@ _AWAITABLE_FULLNAMES = ("typing.Coroutine", "typing.Awaitable", "typing.AsyncGen
 
 
 class _Call2Plugin(Plugin):
-    def get_method_signature_hook(
-        self, fullname: str
-    ) -> Callable[[MethodSigContext], FunctionLike] | None:
+    def get_method_signature_hook(self, fullname: str) -> Callable[[MethodSigContext], FunctionLike] | None:
         name = fullname.rsplit(".", 1)[-1]
         if name not in _METHODS:
             return None
@@ -78,9 +76,7 @@ def _from_callee(
     return None
 
 
-def _graft(
-    callee: CallableType, default: CallableType, ctx: MethodSigContext, is_async: bool
-) -> CallableType | None:
+def _graft(callee: CallableType, default: CallableType, ctx: MethodSigContext, is_async: bool) -> CallableType | None:
     # Strip a leading ``App`` parameter -- ``pass_app`` methods receive it via injection,
     # not from the caller (mirrors the ``Concatenate[App, P]`` handling in the overloads).
     start = 1 if callee.arg_types and _is_app(callee.arg_types[0]) else 0
@@ -106,8 +102,9 @@ def _graft(
     result = _awaited(callee.ret_type)
     # ``call2`` is itself ``async``, so its *signature* return must be the awaitable that the
     # caller ``await``s; ``call_sync2`` returns the value directly.
-    ret_type: Type = ctx.api.named_generic_type("typing.Coroutine", [any_type, any_type, result]) \
-        if is_async else result
+    ret_type: Type = (
+        ctx.api.named_generic_type("typing.Coroutine", [any_type, any_type, result]) if is_async else result
+    )
 
     return default.copy_modified(
         # ``f`` itself is untyped here (``Any``) -- it is only a placeholder; the callee's

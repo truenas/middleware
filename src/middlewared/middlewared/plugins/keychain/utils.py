@@ -12,14 +12,20 @@ if TYPE_CHECKING:
 
 @overload
 async def get_of_type(
-    context: ServiceContext, id_: int, type_: Literal["SSH_KEY_PAIR"],
+    context: ServiceContext,
+    id_: int,
+    type_: Literal["SSH_KEY_PAIR"],
 ) -> SSHKeyPairEntry: ...
 @overload
 async def get_of_type(
-    context: ServiceContext, id_: int, type_: Literal["SSH_CREDENTIALS"],
+    context: ServiceContext,
+    id_: int,
+    type_: Literal["SSH_CREDENTIALS"],
 ) -> SSHCredentialsEntry: ...
 async def get_of_type(
-    context: ServiceContext, id_: int, type_: Literal["SSH_KEY_PAIR", "SSH_CREDENTIALS"],
+    context: ServiceContext,
+    id_: int,
+    type_: Literal["SSH_KEY_PAIR", "SSH_CREDENTIALS"],
 ) -> SSHKeyPairEntry | SSHCredentialsEntry:
     try:
         credential = await context.middleware.call(

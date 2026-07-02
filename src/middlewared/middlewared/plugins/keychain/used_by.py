@@ -49,7 +49,8 @@ class OtherKeychainCredentialKeychainCredentialUsedByDelegate[E: KeychainCredent
     async def query(self, id_: int) -> list[E]:
         result: list[E] = []
         for row in await self.middleware.call2(
-            self.middleware.services.keychaincredential.query, [["type", "=", self.type]],
+            self.middleware.services.keychaincredential.query,
+            [["type", "=", self.type]],
         ):
             if await self._is_related(row, id_):  # type: ignore[arg-type]
                 result.append(row)  # type: ignore[arg-type]
@@ -58,11 +59,14 @@ class OtherKeychainCredentialKeychainCredentialUsedByDelegate[E: KeychainCredent
 
     async def get_title(self, row: E) -> str:
         from .types import TYPES
+
         return f"{TYPES[self.type].title} {row.name}"
 
     async def unbind(self, row: E) -> None:
         await self.middleware.call2(
-            self.middleware.services.keychaincredential.delete, row.id, KeychainCredentialDeleteOptions(cascade=True),
+            self.middleware.services.keychaincredential.delete,
+            row.id,
+            KeychainCredentialDeleteOptions(cascade=True),
         )
 
     async def _is_related(self, row: E, id_: int) -> bool:
@@ -97,9 +101,14 @@ class SFTPCloudSyncCredentialsSSHKeyPairUsedByDelegate(KeychainCredentialUsedByD
     async def unbind(self, row: dict[str, Any]) -> None:
         attributes = {k: v for k, v in row["provider"].items() if k != "type"}
         attributes.pop("private_key", None)
-        await self.middleware.call("datastore.update", "system.cloudcredentials", row["id"], {
-            "attributes": attributes,
-        })
+        await self.middleware.call(
+            "datastore.update",
+            "system.cloudcredentials",
+            row["id"],
+            {
+                "attributes": attributes,
+            },
+        )
 
 
 class ReplicationTaskSSHCredentialsUsedByDelegate(KeychainCredentialUsedByDelegate[dict[str, Any]]):
@@ -107,17 +116,23 @@ class ReplicationTaskSSHCredentialsUsedByDelegate(KeychainCredentialUsedByDelega
 
     async def query(self, id_: int) -> list[dict[str, Any]]:
         return await self.middleware.call(  # type: ignore[no-any-return]
-            "replication.query", [["ssh_credentials.id", "=", id_]],
+            "replication.query",
+            [["ssh_credentials.id", "=", id_]],
         )
 
     async def get_title(self, row: dict[str, Any]) -> str:
         return f"Replication task {row['name']}"
 
     async def unbind(self, row: dict[str, Any]) -> None:
-        await self.middleware.call("datastore.update", "storage.replication", row["id"], {
-            "repl_enabled": False,
-            "repl_ssh_credentials": None,
-        })
+        await self.middleware.call(
+            "datastore.update",
+            "storage.replication",
+            row["id"],
+            {
+                "repl_enabled": False,
+                "repl_ssh_credentials": None,
+            },
+        )
         await self.middleware.call("zettarepl.update_tasks")
 
 
@@ -125,18 +140,21 @@ class RsyncTaskSSHCredentialsUsedByDelegate(KeychainCredentialUsedByDelegate[Rsy
     unbind_method = KeychainCredentialUsedByDelegateUnbindMethod.DISABLE
 
     async def query(self, id_: int) -> list[RsyncTaskEntry]:
-        return await self.middleware.call2(
-            self.middleware.services.rsynctask.query, [["ssh_credentials.id", "=", id_]]
-        )
+        return await self.middleware.call2(self.middleware.services.rsynctask.query, [["ssh_credentials.id", "=", id_]])
 
     async def get_title(self, row: RsyncTaskEntry) -> str:
         return f"Rsync task for {row.path!r}"
 
     async def unbind(self, row: RsyncTaskEntry) -> None:
         await self.middleware.call2(self.middleware.services.rsynctask.update, row.id, {"enabled": False})
-        await self.middleware.call("datastore.update", "tasks.rsync", row.id, {
-            "rsync_ssh_credentials": None,
-        })
+        await self.middleware.call(
+            "datastore.update",
+            "tasks.rsync",
+            row.id,
+            {
+                "rsync_ssh_credentials": None,
+            },
+        )
 
 
 async def get_used_by(service: KeychainCredentialService, id_: int) -> list[UsedKeychainCredential]:
@@ -149,10 +167,12 @@ async def get_used_by(service: KeychainCredentialService, id_: int) -> list[Used
     for delegate_cls in TYPES[instance.type].used_by_delegates:
         delegate = delegate_cls(service.middleware)
         for row in await delegate.query(instance.id):
-            result.append(UsedKeychainCredential(
-                title=await delegate.get_title(row),
-                unbind_method=delegate.unbind_method.value,
-            ))
+            result.append(
+                UsedKeychainCredential(
+                    title=await delegate.get_title(row),
+                    unbind_method=delegate.unbind_method.value,
+                )
+            )
             if isinstance(delegate, OtherKeychainCredentialKeychainCredentialUsedByDelegate):
                 result.extend(await get_used_by(service, row.id))
     return result

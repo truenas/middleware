@@ -29,24 +29,33 @@ class KeychainCredentialType[E]:
     used_by_delegates: list[type[KeychainCredentialUsedByDelegate[typing.Any]]] = []
 
     async def validate_and_pre_save(
-        self, middleware: Middleware, verrors: ValidationErrors, schema_name: str, attributes: E,
+        self,
+        middleware: Middleware,
+        verrors: ValidationErrors,
+        schema_name: str,
+        attributes: E,
     ) -> None:
         pass
 
 
 class SyncKeychainCredentialType[E](KeychainCredentialType[E]):
     async def validate_and_pre_save(
-        self, middleware: Middleware, verrors: ValidationErrors, schema_name: str, attributes: E,
+        self,
+        middleware: Middleware,
+        verrors: ValidationErrors,
+        schema_name: str,
+        attributes: E,
     ) -> None:
-        return await asyncio.to_thread(
-            self.validate_and_pre_save_impl, middleware, verrors, schema_name, attributes
-        )
+        return await asyncio.to_thread(self.validate_and_pre_save_impl, middleware, verrors, schema_name, attributes)
 
     def validate_and_pre_save_impl(
-        self, middleware: Middleware, verrors: ValidationErrors, schema_name: str, attributes: E,
+        self,
+        middleware: Middleware,
+        verrors: ValidationErrors,
+        schema_name: str,
+        attributes: E,
     ) -> None:
         pass
-
 
 
 class SSHKeyPair(SyncKeychainCredentialType[SSHKeyPairAttributes]):
@@ -59,7 +68,11 @@ class SSHKeyPair(SyncKeychainCredentialType[SSHKeyPairAttributes]):
     ]
 
     def validate_and_pre_save_impl(
-        self, middleware: Middleware, verrors: ValidationErrors, schema_name: str, attributes: SSHKeyPairAttributes,
+        self,
+        middleware: Middleware,
+        verrors: ValidationErrors,
+        schema_name: str,
+        attributes: SSHKeyPairAttributes,
     ) -> None:
         if attributes.private_key:
             # TODO: It would be best if we use crypto plugin for this but as of right now we don't have support
@@ -77,7 +90,10 @@ class SSHKeyPair(SyncKeychainCredentialType[SSHKeyPairAttributes]):
 
                 proc = subprocess.run(
                     ["ssh-keygen", "-y", "-f", f.name],
-                    capture_output=True, check=False, encoding="utf-8", errors="ignore",
+                    capture_output=True,
+                    check=False,
+                    encoding="utf-8",
+                    errors="ignore",
                 )
                 if proc.returncode == 0:
                     public_key = proc.stdout
@@ -108,7 +124,10 @@ class SSHKeyPair(SyncKeychainCredentialType[SSHKeyPairAttributes]):
 
             proc = subprocess.run(
                 ["ssh-keygen", "-l", "-f", f.name],
-                capture_output=True, check=False, encoding="utf-8", errors="ignore",
+                capture_output=True,
+                check=False,
+                encoding="utf-8",
+                errors="ignore",
             )
             if proc.returncode != 0:
                 verrors.add(f"{schema_name}.public_key", "Invalid public key")

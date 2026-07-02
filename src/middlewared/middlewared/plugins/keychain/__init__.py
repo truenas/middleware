@@ -66,7 +66,6 @@ class KeychainCredentialGetOfTypeResult(BaseModel):
 
 
 class KeychainCredentialService(GenericCRUDService[KeychainCredentialEntry]):
-
     _svc_part: KeychainCredentialServicePart
 
     class Config:
@@ -100,7 +99,10 @@ class KeychainCredentialService(GenericCRUDService[KeychainCredentialEntry]):
         check_annotations=True,
     )
     async def do_update(
-        self, audit_callback: AuditCallback, id_: int, data: KeychainCredentialUpdate,
+        self,
+        audit_callback: AuditCallback,
+        id_: int,
+        data: KeychainCredentialUpdate,
     ) -> KeychainCredentialEntry:
         """
         Update a Keychain Credential with specific ``id``.
@@ -150,7 +152,9 @@ class KeychainCredentialService(GenericCRUDService[KeychainCredentialEntry]):
         check_annotations=True,
     )
     async def get_of_type(
-        self, id_: int, type_: Literal["SSH_KEY_PAIR", "SSH_CREDENTIALS"],
+        self,
+        id_: int,
+        type_: Literal["SSH_KEY_PAIR", "SSH_CREDENTIALS"],
     ) -> SSHKeyPairEntry | SSHCredentialsEntry:
         return await get_of_type(self.context, id_, type_)
 
@@ -210,7 +214,7 @@ class KeychainCredentialService(GenericCRUDService[KeychainCredentialEntry]):
     @api_method(
         KeychainCredentialSetupSshConnectionArgs,
         KeychainCredentialSetupSshConnectionResult,
-        roles=['KEYCHAIN_CREDENTIAL_WRITE'],
+        roles=["KEYCHAIN_CREDENTIAL_WRITE"],
         audit="Setup SSH Connection:",
         audit_extended=lambda options: options["connection_name"],
         check_annotations=True,
