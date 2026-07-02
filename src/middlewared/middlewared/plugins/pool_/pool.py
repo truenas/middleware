@@ -23,7 +23,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils import BOOT_POOL_NAME_VALID
 from middlewared.utils.size import format_size
 
-from .utils import RE_DRAID_DATA_DISKS, RE_DRAID_SPARE_DISKS, ZPOOL_CACHE_FILE
+from .utils import RE_DRAID_DATA_DISKS, RE_DRAID_SPARE_DISKS, ZPOOL_CACHE_FILE, validate_dedup_license
 
 # Redundancy/parity level per vdev type. Used to enforce that a redundant data
 # class is not paired with a non-redundant (parity 0) special vdev.
@@ -492,6 +492,8 @@ class PoolService(CRUDService):
         dedup_table_quota_value = None
         if data['deduplication'] == 'ON':
             dedup_table_quota_value = await self.validate_dedup_table_quota(data, verrors)
+
+        await validate_dedup_license(self.middleware, verrors, 'pool_create', data['deduplication'])
 
         verrors.check()
 
