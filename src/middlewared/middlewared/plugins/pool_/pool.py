@@ -16,7 +16,7 @@ from middlewared.service import CallError, CRUDService, job, private, Validation
 from middlewared.utils import BOOT_POOL_NAME_VALID
 from middlewared.utils.size import format_size
 
-from .utils import ZPOOL_CACHE_FILE, RE_DRAID_DATA_DISKS, RE_DRAID_SPARE_DISKS
+from .utils import ZPOOL_CACHE_FILE, RE_DRAID_DATA_DISKS, RE_DRAID_SPARE_DISKS, validate_dedup_license
 
 
 class PoolPoolNormalizeInfo(PoolEntry):
@@ -371,6 +371,8 @@ class PoolService(CRUDService):
         dedup_table_quota_value = None
         if data['deduplication'] == 'ON':
             dedup_table_quota_value = await self.validate_dedup_table_quota(data, verrors)
+
+        await validate_dedup_license(self.middleware, verrors, 'pool_create', data['deduplication'])
 
         verrors.check()
 
