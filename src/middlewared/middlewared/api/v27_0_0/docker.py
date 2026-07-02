@@ -1,3 +1,4 @@
+import ipaddress
 from typing import Annotated, Literal
 from urllib.parse import urlparse
 
@@ -25,7 +26,11 @@ __all__ = [
 
 
 class DockerAddressPool(BaseModel):
-    base: IPvAnyInterface = Field(description="Base network address with prefix for the pool.")
+    base: IPvAnyInterface = Field(
+        description="Base network for the pool. Host bits are ignored, and the value is stored as its "
+        "canonical network address (e.g. `172.17.0.0/12` is stored as `172.16.0.0/12`) which is the "
+        "range subnets are actually allocated from."
+    )
     size: Annotated[int, Field(ge=1)] = Field(description="Subnet size for networks allocated from this pool.")
 
     @field_serializer('base')
@@ -34,10 +39,15 @@ class DockerAddressPool(BaseModel):
 
     @field_validator('base')
     @classmethod
-    def check_prefixlen(cls, v):
+    def normalize_base(cls, v):
         if v.network.prefixlen in (32, 128):
             raise ValueError('Prefix length of base network cannot be 32 or 128.')
-        return v
+        # Normalize to the canonical network address (host bits masked off) so the value we store,
+        # display and hand to Docker matches the network Docker actually allocates from. Docker ignores
+        # host bits in a pool base, e.g. 172.17.0.0/12 is treated as 172.16.0.0/12. Normalizing at the
+        # model boundary (before docker.update validation and change detection) also prevents a spurious
+        # address_pools change when the same pool is re-submitted in a non-canonical form.
+        return ipaddress.ip_interface(v.network)
 
     @model_validator(mode='after')
     def validate_attrs(self):

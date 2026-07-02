@@ -36,7 +36,7 @@ class DockerModel(sa.Model):
     enable_image_updates = sa.Column(sa.Boolean(), default=True)
     cidr_v6 = sa.Column(sa.String(), default='fdd0::/64', nullable=False)
     address_pools = sa.Column(sa.JSON(list), default=[
-        {'base': '172.17.0.0/12', 'size': 24},
+        {'base': '172.16.0.0/12', 'size': 24},
         {'base': 'fdd0::/48', 'size': 64},
     ])
     registry_mirrors = sa.Column(sa.JSON(list), default=[])
