@@ -9,6 +9,8 @@ import typing
 from pathlib import Path
 from typing import TypedDict
 
+from ixhardware import TRUENAS_UNKNOWN
+
 from middlewared.plugins.zfs_.utils import TNUserProp
 from middlewared.service_exception import CallError
 from middlewared.utils.size import MB
@@ -96,6 +98,33 @@ class UpdateImplArgsDataclass:
     """ZFS user properties to be applied during creation."""
     iprops: set = dataclasses.field(default_factory=set)
     """ZFS properties to be inherited from parent."""
+
+
+async def validate_dedup_license(middleware, verrors, schema, deduplication):
+    """Reject enabling ZFS deduplication on systems that are not entitled to it.
+
+    Licensed systems must carry the DEDUP feature flag; unlicensed TrueNAS hardware
+    (iX-branded, excluding minis) is blocked; Community Edition and minis may use
+    dedup freely. Only ON/VERIFY are gated.
+    """
+    if deduplication not in ('ON', 'VERIFY'):
+        return
+
+    if await middleware.call('system.license') is not None:
+        # Any licensed system must carry the explicit DEDUP feature flag.
+        if not await middleware.call('system.feature_enabled', 'DEDUP'):
+            verrors.add(
+                f'{schema}.deduplication',
+                "This system's license does not include the ZFS deduplication feature."
+            )
+    else:
+        # Unlicensed: Community Edition (incl. minis) may use dedup; TrueNAS hardware may not.
+        chassis = await middleware.call('truenas.get_chassis_hardware')
+        if chassis != TRUENAS_UNKNOWN and 'MINI' not in chassis:
+            verrors.add(
+                f'{schema}.deduplication',
+                'This system is not licensed to use ZFS deduplication.'
+            )
 
 
 def none_normalize(x):
