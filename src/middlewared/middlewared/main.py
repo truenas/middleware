@@ -372,6 +372,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         self.dump_result_allow_fallback = True
         self.services = ServiceContainer(self)
         self._systemd_notifier: SystemdNotifier | None = None
+        self._coverage: typing.Any = None
 
     @typing.overload
     def get_method(
@@ -1839,6 +1840,12 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
 
         json.dump(methods, stream)
 
+    def _save_coverage(self) -> None:
+        # os._exit() skips coverage.py's atexit save, so flush explicitly.
+        if self._coverage is not None:
+            self._coverage.stop()
+            self._coverage.save()
+
     def run(
         self,
         single_task: typing.Callable[[], typing.Coroutine[typing.Any, typing.Any, int]] | None = None,
@@ -1881,6 +1888,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
                         except Exception:
                             pass
 
+            self._save_coverage()
             os._exit(exit_code)
 
         try:
@@ -1888,6 +1896,8 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         except RuntimeError as e:
             if e.args[0] != "Event loop is closed":
                 raise
+
+        self._save_coverage()
 
         # Use os._exit rather than sys.exit to avoid Python-level cleanup (atexit handlers, thread joins, etc.)
         # that could block in this abnormal shutdown path.
@@ -2051,6 +2061,10 @@ def main():
     # is needed - the LLM can make code changes, then immediately test them by running
     # pytest or other validation tools in the context of a fully initialized middleware.
     parser.add_argument('--test', action='store_true', help=argparse.SUPPRESS)
+    parser.add_argument('--coverage', nargs='?', const='middlewared', default=None,
+                        metavar='PACKAGES',
+                        help='Collect coverage.py data for a comma-separated list of packages, '
+                             'written to .coverage in the working directory on exit')
     args, test_command = parser.parse_known_args()
 
     # If --test was specified, everything after it is the test command
@@ -2087,6 +2101,16 @@ def main():
     # 'spawn' starts a fresh Python interpreter via fork+exec, avoiding all inherited state issues.
     multiprocessing.set_start_method('spawn')
 
+    cov = None
+    if args.coverage:
+        try:
+            import coverage
+        except ImportError:
+            parser.error("--coverage requires the 'coverage' package to be installed")
+        source = [pkg.strip() for pkg in args.coverage.split(',') if pkg.strip()]
+        cov = coverage.Coverage(branch=True, source=source)
+        cov.start()
+
     middleware = Middleware(
         loop_debug=args.loop_debug,
         loop_monitor=not args.disable_loop_monitor,
@@ -2095,6 +2119,7 @@ def main():
         # Otherwise will crash since `/data/manifest.json` does not exist at that build stage
         print_version=not (args.dump_api or args.dump_methods),
     )
+    middleware._coverage = cov
 
     if args.dump_api:
         asyncio.get_event_loop().run_until_complete(middleware.dump_api(sys.stdout))
