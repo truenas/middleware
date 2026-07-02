@@ -84,7 +84,7 @@ class CloudTaskServiceMixin:
                 verrors.add(f'{name}.{self.path_field}', f'{zvol!r} is an invalid location')
             else:
                 try:
-                    self.validate_zvol(path)
+                    self.call_sync2(self.s.cloud_backup.validate_zvol, path)
                 except CallError as e:
                     verrors.add(f'{name}.{self.path_field}', e.errmsg)
         else:
