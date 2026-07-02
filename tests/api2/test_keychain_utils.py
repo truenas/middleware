@@ -156,12 +156,7 @@ def test_get_of_type_wrong_type():
 
 
 def test_get_of_type_decrypt_failure():
-    keypair = call("keychaincredential.create", {
-        "name": "keychain-broken-attributes",
-        "type": "SSH_KEY_PAIR",
-        "attributes": call("keychaincredential.generate_ssh_key_pair"),
-    })
-    try:
+    with ssh_keypair() as keypair:
         # Blanking the stored attributes simulates a credential whose secret could not be decrypted.
         call("datastore.update", "system.keychaincredential", keypair["id"], {"attributes": {}})
 
@@ -169,8 +164,6 @@ def test_get_of_type_decrypt_failure():
             call("keychaincredential.get_of_type", keypair["id"], "SSH_KEY_PAIR")
 
         assert ve.value.errno == errno.EFAULT
-    finally:
-        call("datastore.delete", "system.keychaincredential", keypair["id"])
 
 
 def test_remote_ssh_host_key_scan():
