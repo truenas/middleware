@@ -29,3 +29,16 @@ def localhost_ssh_connection():
 @pytest.mark.parametrize("transport", ["SSH", "SSH+NETCAT"])
 def test_list_datasets_ssh(localhost_ssh_connection, transport):
     assert pool in call("replication.list_datasets", transport, localhost_ssh_connection)
+
+
+def test_replication_pair():
+    public_key = call("keychaincredential.generate_ssh_key_pair")["public_key"]
+
+    result = call("replication.pair", {
+        "hostname": "127.0.0.1",
+        "public-key": public_key,
+        "user": "root",
+    })
+
+    assert result["ssh_port"] == call("ssh.config")["tcpport"]
+    assert "127.0.0.1 ssh-" in result["ssh_hostkey"]
