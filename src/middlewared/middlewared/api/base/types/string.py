@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated
 import uuid
 
 from annotated_types import MaxLen, MinLen
@@ -32,7 +32,11 @@ def uuidv4_validator(value: str) -> str:
     return value
 
 
-HttpUrl = Annotated[_HttpUrl, AfterValidator(str)]
+if TYPE_CHECKING:
+    HttpUrl = str
+else:
+    HttpUrl = Annotated[_HttpUrl, AfterValidator(str)]
+
 # By default, our strings are no more than 1024 characters long. This string is 2**31-1 characters long (SQLite limit).
 LongString = Annotated[str, MaxLen(2 ** 31 - 1)]
 NonEmptyString = Annotated[str, MinLen(1)]

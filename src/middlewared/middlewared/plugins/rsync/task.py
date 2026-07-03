@@ -87,28 +87,30 @@ def build_commandline(context: ServiceContext, id_: int) -> Iterator[str]:
             line += module_args
         else:
             if rsync.ssh_credentials:
-                # Refetch the credential as a plain dict so we get the revealed secret values
-                # (the model exposes them as Secret[...] which we must not unwrap directly).
-                credentials = context.middleware.call_sync(
-                    "keychaincredential.get_of_type",
+                credentials = context.call_sync2(
+                    context.s.keychaincredential.get_of_type,
                     rsync.ssh_credentials.id,
                     "SSH_CREDENTIALS",
-                )["attributes"]
-                key_pair = context.middleware.call_sync(
-                    "keychaincredential.get_of_type",
-                    credentials["private_key"],
+                ).attributes.get_secret_value()
+                key_pair = context.call_sync2(
+                    context.s.keychaincredential.get_of_type,
+                    credentials.private_key,
                     "SSH_KEY_PAIR",
                 )
 
-                remote = f'"{credentials["username"]}"@{credentials["host"]}'
-                port = credentials["port"]
+                remote = f'"{credentials.username}"@{credentials.host}'
+                port: int | None = credentials.port
+
+                private_key = key_pair.attributes.get_secret_value().private_key
+                if private_key is None:
+                    raise CallError(f"SSH key pair {credentials.private_key} has no private key")
 
                 user = context.middleware.call_sync("user.get_user_obj", {"username": rsync.user})
 
                 private_key_file = exit_stack.enter_context(tempfile.NamedTemporaryFile("w"))
                 os.fchmod(private_key_file.fileno(), 0o600)
                 os.fchown(private_key_file.fileno(), user["pw_uid"], user["pw_gid"])
-                private_key_file.write(key_pair["attributes"]["private_key"])
+                private_key_file.write(private_key)
                 private_key_file.flush()
 
                 host_key_file = exit_stack.enter_context(tempfile.NamedTemporaryFile("w"))

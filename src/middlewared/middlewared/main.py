@@ -122,6 +122,7 @@ from middlewared.plugins.hardware import (
     MseriesNvdimmService,
 )
 from middlewared.plugins.init_shutdown_script import InitShutdownScriptService
+from middlewared.plugins.keychain import KeychainCredentialService
 from middlewared.plugins.keyvalue import KeyValueService
 from middlewared.plugins.kmip import KMIPService
 from middlewared.plugins.mail import MailService
@@ -276,6 +277,7 @@ class ServiceContainer(BaseServiceContainer):
         self.hardware = HardwareServicesContainer(middleware)
         self.initshutdownscript = InitShutdownScriptService(middleware)
         self.keyvalue = KeyValueService(middleware)
+        self.keychaincredential = KeychainCredentialService(middleware)
         self.kmip = KMIPService(middleware)
         self.lxc = LXCConfigService(middleware)
         self.mail = MailService(middleware)
@@ -1420,120 +1422,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         self.logger.trace('Calling %r in current thread', name)
         return methodobj(*prepared_call.args)
 
-    # Overloads for pass_app methods: strip the leading App parameter via Concatenate
-    @typing.overload
-    async def call2[**P, T](
-        self,
-        f: typing.Callable[typing.Concatenate[App, P], typing.Coroutine[typing.Any, typing.Any, Job[T]]],
-        *args: P.args,
-        app: App | None = None,
-        audit_callback: AuditCallback | None = None,
-        job_on_progress_cb: JobProgressCallback = None,
-        job_silent: bool = False,
-        pipes: Pipes | None = None,
-        profile: bool = False,
-        **kwargs: P.kwargs,
-    ) -> Job[T]: ...
-
-    @typing.overload
-    async def call2[**P, T](
-        self,
-        f: typing.Callable[typing.Concatenate[App, P], Job[T]],
-        *args: P.args,
-        app: App | None = None,
-        audit_callback: AuditCallback | None = None,
-        job_on_progress_cb: JobProgressCallback = None,
-        job_silent: bool = False,
-        pipes: Pipes | None = None,
-        profile: bool = False,
-        **kwargs: P.kwargs,
-    ) -> Job[T]: ...
-
-    @typing.overload
-    async def call2[**P, T](
-        self,
-        f: typing.Callable[typing.Concatenate[App, P], typing.Coroutine[typing.Any, typing.Any, T]],
-        *args: P.args,
-        app: App | None = None,
-        audit_callback: AuditCallback | None = None,
-        job_on_progress_cb: JobProgressCallback = None,
-        job_silent: bool = False,
-        pipes: Pipes | None = None,
-        profile: bool = False,
-        **kwargs: P.kwargs,
-    ) -> T: ...
-
-    @typing.overload
-    async def call2[**P, T](
-        self,
-        f: typing.Callable[typing.Concatenate[App, P], T],
-        *args: P.args,
-        app: App | None = None,
-        audit_callback: AuditCallback | None = None,
-        job_on_progress_cb: JobProgressCallback = None,
-        job_silent: bool = False,
-        pipes: Pipes | None = None,
-        profile: bool = False,
-        **kwargs: P.kwargs,
-    ) -> T: ...
-
-    # Overloads for normal methods (no pass_app)
-    @typing.overload
-    async def call2[**P, T](
-        self,
-        f: typing.Callable[P, typing.Coroutine[typing.Any, typing.Any, Job[T]]],
-        *args: P.args,
-        app: App | None = None,
-        audit_callback: AuditCallback | None = None,
-        job_on_progress_cb: JobProgressCallback = None,
-        job_silent: bool = False,
-        pipes: Pipes | None = None,
-        profile: bool = False,
-        **kwargs: P.kwargs,
-    ) -> Job[T]: ...
-
-    @typing.overload
-    async def call2[**P, T](
-        self,
-        f: typing.Callable[P, Job[T]],
-        *args: P.args,
-        app: App | None = None,
-        audit_callback: AuditCallback | None = None,
-        job_on_progress_cb: JobProgressCallback = None,
-        job_silent: bool = False,
-        pipes: Pipes | None = None,
-        profile: bool = False,
-        **kwargs: P.kwargs,
-    ) -> Job[T]: ...
-
-    @typing.overload
-    async def call2[**P, T](
-        self,
-        f: typing.Callable[P, typing.Coroutine[typing.Any, typing.Any, T]],
-        *args: P.args,
-        app: App | None = None,
-        audit_callback: AuditCallback | None = None,
-        job_on_progress_cb: JobProgressCallback = None,
-        job_silent: bool = False,
-        pipes: Pipes | None = None,
-        profile: bool = False,
-        **kwargs: P.kwargs,
-    ) -> T: ...
-
-    @typing.overload
-    async def call2[**P, T](
-        self,
-        f: typing.Callable[P, T],
-        *args: P.args,
-        app: App | None = None,
-        audit_callback: AuditCallback | None = None,
-        job_on_progress_cb: JobProgressCallback = None,
-        job_silent: bool = False,
-        pipes: Pipes | None = None,
-        profile: bool = False,
-        **kwargs: P.kwargs,
-    ) -> T: ...
-
+    # Signature is provided per call site by the `mypy_call2` plugin.
     async def call2(
         self,
         f: typing.Callable[..., typing.Any],
@@ -1950,6 +1839,12 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
 
         json.dump(methods, stream)
 
+    def _save_coverage(self) -> None:
+        # os._exit() skips coverage.py's atexit save, so flush explicitly.
+        if middlewared._coverage is not None:
+            middlewared._coverage.stop()
+            middlewared._coverage.save()
+
     def run(
         self,
         single_task: typing.Callable[[], typing.Coroutine[typing.Any, typing.Any, int]] | None = None,
@@ -1992,6 +1887,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
                         except Exception:
                             pass
 
+            self._save_coverage()
             os._exit(exit_code)
 
         try:
@@ -1999,6 +1895,8 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         except RuntimeError as e:
             if e.args[0] != "Event loop is closed":
                 raise
+
+        self._save_coverage()
 
         # Use os._exit rather than sys.exit to avoid Python-level cleanup (atexit handlers, thread joins, etc.)
         # that could block in this abnormal shutdown path.
@@ -2162,6 +2060,10 @@ def main():
     # is needed - the LLM can make code changes, then immediately test them by running
     # pytest or other validation tools in the context of a fully initialized middleware.
     parser.add_argument('--test', action='store_true', help=argparse.SUPPRESS)
+    parser.add_argument('--coverage', nargs='?', const='middlewared', default=None,
+                        metavar='PACKAGES',
+                        help='Collect coverage.py data for a comma-separated list of packages, '
+                             'written to .coverage in the working directory on exit')
     args, test_command = parser.parse_known_args()
 
     # If --test was specified, everything after it is the test command

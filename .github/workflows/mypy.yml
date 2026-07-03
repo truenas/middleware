@@ -41,6 +41,7 @@ jobs:
             middlewared/plugins/hardware/ \
             middlewared/plugins/init_shutdown_script/ \
             middlewared/plugins/kmip/ \
+            middlewared/plugins/keychain/ \
             middlewared/plugins/mail/ \
             middlewared/plugins/network_routes/ \
             middlewared/plugins/ntp/ \

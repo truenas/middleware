@@ -2,7 +2,7 @@
 from types import TracebackType
 from typing import Any, Callable, Literal, TypeAlias
 
-__all__ = ["AuditCallback", "JobProgressCallback", "EventType", "ExcInfo", "OptExcInfo"]
+__all__ = ["AuditCallback", "JobProgressCallback", "EventType", "ExcInfo", "OptExcInfo", "NO_AUDIT_CALLBACK"]
 
 AuditCallback = Callable[[str], None]
 JobProgressCallback = Callable[[dict[str, Any]], None] | None
@@ -12,3 +12,7 @@ EventType: TypeAlias = Literal['ADDED', 'CHANGED', 'REMOVED']
 ExcInfo: TypeAlias = tuple[type[BaseException], BaseException, TracebackType]
 OptExcInfo: TypeAlias = ExcInfo | tuple[None, None, None]
 """The return type of `sys.exc_info()`"""
+
+
+def NO_AUDIT_CALLBACK(s: str) -> None:
+    return None

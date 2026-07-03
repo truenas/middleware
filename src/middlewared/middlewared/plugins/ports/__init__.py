@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import Any
+from typing import Any, Literal, overload
 
 from middlewared.common.ports import PortDelegate, PortEntry
 from middlewared.service import Service, ValidationErrors
@@ -27,6 +27,26 @@ class PortService(Service):
 
     async def get_unused_ports(self, lower_port_limit: int = 1025) -> list[int]:
         return await _ports.get_unused_ports(lower_port_limit)
+
+    @overload
+    async def validate_port(
+        self,
+        schema: str,
+        port: int,
+        bindip: str = ...,
+        whitelist_namespace: str | None = ...,
+        raise_error: Literal[False] = False,
+    ) -> ValidationErrors: ...
+    @overload
+    async def validate_port(
+        self,
+        schema: str,
+        port: int,
+        bindip: str = ...,
+        whitelist_namespace: str | None = ...,
+        *,
+        raise_error: Literal[True],
+    ) -> None: ...
 
     async def validate_port(
         self,

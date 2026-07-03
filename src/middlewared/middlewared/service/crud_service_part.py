@@ -4,7 +4,7 @@ from collections.abc import Awaitable
 from typing import TYPE_CHECKING, Any, cast, overload
 
 from middlewared.api import API_LOADING_FORBIDDEN
-from middlewared.service_exception import InstanceNotFound
+from middlewared.service_exception import InstanceNotFound, ValidationErrors
 from middlewared.utils.filter_list import filter_list
 
 from .part import ServicePart
@@ -127,6 +127,24 @@ class CRUDServicePart[E, PK = int](ServicePart):
 
     async def _delete(self, id_: PK) -> None:
         await self.middleware.call('datastore.delete', self._datastore, id_)
+
+    async def _ensure_unique(
+        self,
+        verrors: ValidationErrors,
+        schema_name: str,
+        field_name: str,
+        value: Any,
+        id_: PK | None = None,
+        query_field_name: str | None = None,
+    ) -> None:
+        filters = [[query_field_name or field_name, '=', value]]
+        if id_ is not None:
+            filters.append(['id', '!=', id_])
+        if await self.query(filters):
+            verrors.add(
+                '.'.join(filter(None, [schema_name, field_name])),
+                f'Object with this {field_name} already exists',
+            )
 
     def _to_entry(self, data: dict[str, Any]) -> E:
         constructor = cast(type[E], getattr(self._entry, '__query_result_item__', self._entry))

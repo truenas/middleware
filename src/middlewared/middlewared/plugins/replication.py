@@ -32,6 +32,7 @@ from middlewared.api.current import (
 )
 from middlewared.auth import fake_app
 from middlewared.common.attachment import FSAttachmentDelegate
+from middlewared.plugins.keychain import KeychainCredentialSSHPairArg
 from middlewared.service import CallError, CRUDService, ValidationErrors, job, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils.cron import convert_db_format_to_schedule, convert_schedule_to_db_format
@@ -112,10 +113,14 @@ class ReplicationPeriodicSnapshotTaskModel(sa.Model):
     task_id = sa.Column(sa.ForeignKey("storage_task.id", ondelete="CASCADE"), index=True)
 
 
-class ReplicationPairArgs(BaseModel):
+class ReplicationPairData(BaseModel):
     hostname: str
     public_key: str = Field(alias="public-key")
-    user: str | None
+    user: str | None = None
+
+
+class ReplicationPairArgs(BaseModel):
+    data: ReplicationPairData
 
 
 class ReplicationPairResult(BaseModel):
@@ -349,9 +354,10 @@ class ReplicationService(CRUDService):
         verrors.check()
 
         if data.get("ssh_credentials") is not None:
-            data["ssh_credentials"] = await self.middleware.call(
-                "keychaincredential.get_of_type", data["ssh_credentials"], "SSH_CREDENTIALS",
+            ssh_credentials = await self.call2(
+                self.s.keychaincredential.get_of_type, data["ssh_credentials"], "SSH_CREDENTIALS",
             )
+            data["ssh_credentials"] = ssh_credentials.model_dump(context={"expose_secrets": True})
 
         await self.middleware.call("zettarepl.run_onetime_replication_task", job, data)
 
@@ -496,8 +502,8 @@ class ReplicationService(CRUDService):
         else:
             # Verify the SSH credentials exist and are valid
             try:
-                await self.middleware.call(
-                    "keychaincredential.get_of_type",
+                await self.call2(
+                    self.s.keychaincredential.get_of_type,
                     ssh_credentials,
                     "SSH_CREDENTIALS"
                 )
@@ -768,14 +774,14 @@ class ReplicationService(CRUDService):
     # Legacy pair support
     @api_method(ReplicationPairArgs, ReplicationPairResult, private=True)
     async def pair(self, data):
-        result = await self.middleware.call("keychaincredential.ssh_pair", {
-            "remote_hostname": data["hostname"],
-            "username": data["user"] or "root",
-            "public_key": data["public-key"],
-        })
+        result = await self.call2(self.s.keychaincredential.ssh_pair, KeychainCredentialSSHPairArg(
+            remote_hostname=data["hostname"],
+            username=data["user"] or "root",
+            public_key=data["public-key"],
+        ))
         return {
-            "ssh_port": result["port"],
-            "ssh_hostkey": result["host_key"],
+            "ssh_port": result.port,
+            "ssh_hostkey": result.host_key,
         }
 
 

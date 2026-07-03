@@ -17,7 +17,7 @@ class PeriodicSnapshotTaskFSAttachmentDelegate(FSAttachmentDelegate[PeriodicSnap
 
     async def query(self, path: str, enabled: bool, options: dict[str, Any] | None = None) -> list[Any]:
         results: list[PeriodicSnapshotTaskEntry] = []
-        for task in await self.middleware.call2(  # type: ignore[attr-defined]
+        for task in await self.middleware.call2(
             self.middleware.services.pool.snapshottask.query,
             [['enabled', '=', enabled]],
         ):
