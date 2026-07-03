@@ -3,7 +3,7 @@ import pytest
 from middlewared.service_exception import CallError
 from middlewared.test.integration.assets.account import user
 from middlewared.test.integration.assets.pool import dataset
-from middlewared.test.integration.utils import call
+from middlewared.test.integration.utils import call, password
 
 
 @pytest.fixture(scope="module")
@@ -89,3 +89,59 @@ def test_ignore_ssl_certificate_error(credential):
         "private_key": credential["id"],
     })
     call("keychaincredential.delete", connection["id"])
+
+
+def test_remote_ssh_semiautomatic_setup_invalid_ip(credential):
+    with pytest.raises(CallError) as ve:
+        call("keychaincredential.remote_ssh_semiautomatic_setup", {
+            "name": "localhost",
+            # Nothing listens on port 1, so the connection is refused
+            "url": "http://localhost:1",
+            "token": call("auth.generate_token", 600, {}, False),
+            "private_key": credential["id"],
+        })
+
+    assert "Unable to connect to remote system" in ve.value.errmsg
+
+
+def test_remote_ssh_semiautomatic_setup_invalid_keypair():
+    with pytest.raises(CallError) as ve:
+        call("keychaincredential.remote_ssh_semiautomatic_setup", {
+            "name": "localhost",
+            "url": "http://localhost",
+            "token": call("auth.generate_token", 600, {}, False),
+            "private_key": 99999999,
+        })
+
+    assert "key pair not found" in ve.value.errmsg.lower()
+
+
+def test_remote_ssh_semiautomatic_setup_with_password(credential):
+    connection = call("keychaincredential.remote_ssh_semiautomatic_setup", {
+        "name": "localhost",
+        "url": "http://localhost",
+        "password": password(),
+        "private_key": credential["id"],
+    })
+    call("keychaincredential.delete", connection["id"])
+
+
+def test_remote_ssh_semiautomatic_setup_with_invalid_password(credential):
+    with pytest.raises(CallError):
+        call("keychaincredential.remote_ssh_semiautomatic_setup", {
+            "name": "localhost",
+            "url": "http://localhost",
+            "password": "invalid-password",
+            "private_key": credential["id"],
+        })
+
+
+def test_remote_ssh_semiautomatic_setup_without_password_or_token(credential):
+    with pytest.raises(CallError) as ve:
+        call("keychaincredential.remote_ssh_semiautomatic_setup", {
+            "name": "localhost",
+            "url": "http://localhost",
+            "private_key": credential["id"],
+        })
+
+    assert "specify either remote system password or temporary authentication token" in ve.value.errmsg
