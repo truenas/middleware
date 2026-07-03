@@ -115,10 +115,16 @@ class SFTPCloudSyncCredentialsSSHKeyPairUsedByDelegate(KeychainCredentialUsedByD
         return f"Cloud credentials {row['name']}"
 
     async def unbind(self, row):
-        row["attributes"].pop("private_key")
-        await self.middleware.call("datastore.update", "system.cloudcredentials", row["id"], {
-            "attributes": row["attributes"]
-        })
+        attributes = {k: v for k, v in row["provider"].items() if k != "type"}
+        attributes.pop("private_key", None)
+        await self.middleware.call(
+            "datastore.update",
+            "system.cloudcredentials",
+            row["id"],
+            {
+                "attributes": attributes,
+            },
+        )
 
 
 class SSHKeyPair(KeychainCredentialType):
@@ -149,7 +155,7 @@ class SSHKeyPair(KeychainCredentialType):
                 if proc.returncode == 0:
                     public_key = proc.stdout
                 else:
-                    if proc.stderr.startswith("Enter passphrase:"):
+                    if proc.stderr.startswith("Enter passphrase"):
                         error = "Encrypted private keys are not allowed"
                     else:
                         error = proc.stderr
@@ -558,6 +564,8 @@ class KeychainCredentialService(CRUDService):
         """
         replication_key = self.middleware.call_sync("keychaincredential.get_ssh_key_pair_with_private_key",
                                                     data["private_key"])
+        if replication_key is None:
+            raise CallError("Specified key pair not found")
 
         try:
             client = Client(os.path.join(re.sub("^http", "ws", data["url"]), "websocket"),
