@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from middlewared.api.current import TrueNASConnectEntry
-from middlewared.plugins.service_.services.pseudo.misc import HttpService
+from middlewared.plugins.service.services.pseudo.misc import HttpService
 from truenas_connect_utils.status import Status
 
 
