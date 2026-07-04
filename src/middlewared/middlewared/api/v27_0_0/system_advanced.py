@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import Field, NonNegativeInt, PositiveInt, Secret
 
@@ -19,8 +19,8 @@ __all__ = [
     "SystemAdvancedSedGlobalPasswordIsSetResult", "SystemAdvancedSerialPortChoicesArgs",
     "SystemAdvancedSerialPortChoicesResult", "SystemAdvancedSyslogCertificateAuthorityChoicesArgs",
     "SystemAdvancedSyslogCertificateAuthorityChoicesResult", "SystemAdvancedSyslogCertificateChoicesArgs",
-    "SystemAdvancedSyslogCertificateChoicesResult", "SystemAdvancedUpdateArgs", "SystemAdvancedUpdateResult",
-    "SystemAdvancedUpdateGpuPciIdsArgs", "SystemAdvancedUpdateGpuPciIdsResult",
+    "SystemAdvancedSyslogCertificateChoicesResult", "SystemAdvancedUpdate", "SystemAdvancedUpdateArgs",
+    "SystemAdvancedUpdateResult", "SystemAdvancedUpdateGpuPciIdsArgs", "SystemAdvancedUpdateGpuPciIdsResult",
     "SystemAdvancedNvidiaPresentArgs", "SystemAdvancedNvidiaPresentResult",
 ]
 
@@ -126,7 +126,7 @@ class SystemAdvancedGetGpuPciChoicesArgs(BaseModel):
 
 
 class SystemAdvancedGetGpuPciChoicesResult(BaseModel):
-    result: dict = Field(description="Available GPU PCI devices that can be isolated for VM passthrough.")
+    result: dict[str, Any] = Field(description="Available GPU PCI devices that can be isolated for VM passthrough.")
 
 
 class SystemAdvancedLoginBannerArgs(BaseModel):

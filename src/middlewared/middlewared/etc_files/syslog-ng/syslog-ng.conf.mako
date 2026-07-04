@@ -9,8 +9,8 @@ syslog_template = 'template("${MESSAGE}\\n")'
 
 
 def generate_syslog_remote_destination(server, d_name):
-    address = server["host"]
-    transport = server["transport"].lower()
+    address = server.host
+    transport = server.transport.lower()
 
     if "]:" in address or (":" in address and not "]" in address): 
         host, port = address.rsplit(":", 1)
@@ -20,7 +20,7 @@ def generate_syslog_remote_destination(server, d_name):
         host, port = address, "514"
 
     host = host.replace("[", "").replace("]", "")
-    cert_id = server["tls_certificate"]
+    cert_id = server.tls_certificate
 
     remotelog_stanza = (
      f'destination {d_name} {{\n'
@@ -69,7 +69,7 @@ options {
   chain_hostnames(off);
   flush_lines(0);
   use_dns(no);
-  use_fqdn(${'yes' if render_ctx['system.advanced.config']['fqdn_syslog'] else 'no'});
+  use_fqdn(${'yes' if render_ctx['system.advanced.config'].fqdn_syslog else 'no'});
   dns_cache(no);
   owner("root");
   group("adm");
@@ -102,7 +102,7 @@ source s_tn_auditd {
 @include "/etc/syslog-ng/conf.d/tndestinations.conf"
 
 ## Remote syslog stanza needs to be here _before_ the audit-related configuration
-% if render_ctx['system.advanced.config']['syslogservers']:
+% if render_ctx['system.advanced.config'].syslogservers:
 ##################
 # remote logging
 ##################
@@ -117,7 +117,7 @@ source s_nginx_logs {
   );
 };
 
-% for i, server in enumerate(render_ctx['system.advanced.config']['syslogservers']):
+% for i, server in enumerate(render_ctx['system.advanced.config'].syslogservers):
 ${generate_syslog_remote_destination(server, 'loghost' + str(i))}
 % endfor
 % endif

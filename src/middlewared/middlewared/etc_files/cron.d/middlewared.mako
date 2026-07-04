@@ -2,7 +2,7 @@
     import random
     import shlex
 
-    system_advanced = middleware.call_sync("system.advanced.config")
+    system_advanced = middleware.call_sync2(middleware.services.system.advanced.config)
     resilver = middleware.call_sync("pool.resilver.config")
     boot_pool = middleware.call_sync("boot.pool_name")
 %>\
@@ -12,7 +12,7 @@ PATH=/etc:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 30 3 * * * root midclt call directoryservices.cache_refresh > /dev/null 2>&1
 45 3 * * * root midclt call config.backup >/dev/null 2>&1
 
-45 3 * * * root midclt call pool.scrub.run ${boot_pool} ${system_advanced['boot_scrub']} > /dev/null 2>&1
+45 3 * * * root midclt call pool.scrub.run ${boot_pool} ${system_advanced.boot_scrub} > /dev/null 2>&1
 
 ## Don't run these on TrueNAS HA standby controllers
 ## Redmine 55908

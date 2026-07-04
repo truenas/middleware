@@ -1,7 +1,7 @@
 <%
     import glob
 
-    enabled = middleware.call_sync('system.advanced.config')['kdump_enabled']
+    enabled = middleware.call_sync2(middleware.services.system.advanced.config).kdump_enabled
 
     if enabled:
         initrd_list = glob.glob('/boot/initrd.img*')

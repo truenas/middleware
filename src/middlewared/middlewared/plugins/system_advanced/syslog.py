@@ -1,55 +1,27 @@
-from middlewared.api import api_method
-from middlewared.api.current import (
-    SystemAdvancedSyslogCertificateAuthorityChoicesArgs,
-    SystemAdvancedSyslogCertificateAuthorityChoicesResult,
-    SystemAdvancedSyslogCertificateChoicesArgs,
-    SystemAdvancedSyslogCertificateChoicesResult,
-)
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from middlewared.api.base import EmptyDict
 from middlewared.plugins.truenas_connect.utils import TNC_CERT_PREFIX
-from middlewared.service import Service
+
+if TYPE_CHECKING:
+    from middlewared.service import ServiceContext
 
 
-class SystemAdvancedService(Service):
+async def syslog_certificate_choices(context: ServiceContext) -> dict[int, str]:
+    return {
+        i.id: i.name
+        for i in await context.call2(
+            context.s.certificate.query,
+            [
+                ['cert_type_CSR', '=', False],
+                ['cert_type_CA', '=', False],
+                ['name', '!^', TNC_CERT_PREFIX],
+            ],
+        )
+    }
 
-    class Config:
-        namespace = 'system.advanced'
-        cli_namespace = 'system.advanced'
 
-    @api_method(
-        SystemAdvancedSyslogCertificateChoicesArgs,
-        SystemAdvancedSyslogCertificateChoicesResult,
-        roles=['READONLY_ADMIN']
-    )
-    async def syslog_certificate_choices(self):
-        """
-        Return choices of certificates which can be used for ``syslogservers.N.tls_certificate``.
-        """
-        return {
-            i.id: i.name
-            for i in await self.middleware.call2(
-                self.s.certificate.query,
-                [
-                    ['cert_type_CSR', '=', False],
-                    ['cert_type_CA', '=', False],
-                    ['name', '!^', TNC_CERT_PREFIX],
-                ],
-            )
-        }
-
-    @api_method(
-        SystemAdvancedSyslogCertificateAuthorityChoicesArgs,
-        SystemAdvancedSyslogCertificateAuthorityChoicesResult,
-        authorization_required=False
-    )
-    async def syslog_certificate_authority_choices(self):
-        """
-        Return choices of certificate authorities which can be used for ``syslog_tls_certificate_authority``.
-
-        .. deprecated:: 25.10
-            This method is no longer used and will be removed after the UI is updated.
-        """
-        # return {
-        #     i['id']: i['name']
-        #     for i in await self.middleware.call('certificateauthority.query', [['revoked', '=', False]])
-        # }
-        return {}
+def syslog_certificate_authority_choices() -> EmptyDict:
+    return EmptyDict()

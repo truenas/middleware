@@ -72,9 +72,9 @@ class UPSServicePart(SystemServicePart[UPSEntry]):
                 )
 
         if data.port:
-            adv_config = await self.middleware.call('system.advanced.config')
-            serial_port = os.path.join('/dev', adv_config['serialport'])
-            if adv_config['serialconsole'] and serial_port == data.port:
+            adv_config = await self.call2(self.s.system.advanced.config)
+            serial_port = os.path.join('/dev', adv_config.serialport)
+            if adv_config.serialconsole and serial_port == data.port:
                 verrors.add(
                     'ups_update.port',
                     'UPS port must be different then the port specified for '

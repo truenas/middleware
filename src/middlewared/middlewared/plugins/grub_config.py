@@ -126,9 +126,9 @@ def _read_vendor() -> str:
 def render_grub_config(middleware: Middleware) -> str:
     """Compute the `truenas.cfg` content. Pure function of DB + hardware +
     memory; no side effects."""
-    advanced = middleware.call_sync("system.advanced.config")
+    advanced = middleware.call_sync2(middleware.services.system.advanced.config)
     vendor = _read_vendor()
-    kernel_extra_options = advanced.get("kernel_extra_options") or ""
+    kernel_extra_options = advanced.kernel_extra_options or ""
 
     cmdline_default = KERNEL_CMDLINE_DEFAULT
     if kernel_extra_options:
@@ -143,21 +143,21 @@ def render_grub_config(middleware: Middleware) -> str:
     terminal_output = ["console"]
     terminal_input = ["console"]
     cmdline: list[str] = []
-    if advanced["serialconsole"]:
+    if advanced.serialconsole:
         ports = {e["start"]: e["name"].replace("uart", "ttyS") for e in serial_port_choices()}
-        port = ports.get(advanced["serialport"], advanced["serialport"])
+        port = ports.get(advanced.serialport, advanced.serialport)
         port_nr = port.replace("ttyS", "")
         config.append(
             f'GRUB_SERIAL_COMMAND="serial --unit={port_nr}'
-            f' --speed={advanced["serialspeed"]} --word=8 --parity=no --stop=1"'
+            f' --speed={advanced.serialspeed} --word=8 --parity=no --stop=1"'
         )
         if os.path.exists("/sys/firmware/efi"):
             terminal_output = ["gfxterm"]
         terminal_output.append("serial")
         terminal_input.append("serial")
-        cmdline.append(f"console=tty1 console={port},{advanced['serialspeed']}")
+        cmdline.append(f"console=tty1 console={port},{advanced.serialspeed}")
 
-    if advanced.get("kdump_enabled"):
+    if advanced.kdump_enabled:
         # For every 4KB of physical memory allocate 2 bits to the crash
         # kernel (1 byte per 16KB). 400MB base was needed in testing for our
         # custom kernel; see RHEL kdump memory requirements and the

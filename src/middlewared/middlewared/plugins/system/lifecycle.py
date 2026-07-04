@@ -159,7 +159,7 @@ class SystemService(Service):
 async def _event_system_ready(middleware, event_type, args):
     lifecycle_conf.SYSTEM_READY = True
 
-    if (await middleware.call("system.advanced.config"))["kdump_enabled"]:
+    if (await middleware.call2(middleware.services.system.advanced.config)).kdump_enabled:
         cp = await run(["kdump-config", "status"], check=False)
         if cp.returncode:
             middleware.logger.error(

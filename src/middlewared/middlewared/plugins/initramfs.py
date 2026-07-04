@@ -91,10 +91,10 @@ def _read_from_sqlite(db_path: str) -> InitramfsConfig:
 
 
 def _read_from_middleware(middleware: Middleware) -> InitramfsConfig:
-    cfg = middleware.call_sync("system.advanced.config")
+    cfg = middleware.call_sync2(middleware.services.system.advanced.config)
     return InitramfsConfig(
-        debugkernel=cfg["debugkernel"],
-        isolated_gpu_pci_ids=cfg.get("isolated_gpu_pci_ids") or [],
+        debugkernel=cfg.debugkernel,
+        isolated_gpu_pci_ids=cfg.isolated_gpu_pci_ids or [],
         zfs_tunables=[
             (t.var, t.value)
             for t in middleware.call_sync2(
@@ -179,7 +179,7 @@ async def _reconcile(middleware):
         # GPU validation may mutate the DB (removes invalid PCI IDs and emits
         # alerts), so run it before materializing flags so the writes pick up
         # the cleaned state.
-        await middleware.call("system.advanced.validate_isolated_gpus_on_boot")
+        await middleware.call2(middleware.services.system.advanced.validate_isolated_gpus_on_boot)
         changed = await asyncio.to_thread(write_initramfs_flags, middleware)
         if changed:
             await middleware.call("boot.update_initramfs", {"force": True})

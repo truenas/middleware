@@ -1,6 +1,6 @@
 <%
 	buildtime = middleware.call_sync('system.build_time')
-	motd = middleware.call_sync('system.advanced.config')['motd']
+	motd = middleware.call_sync2(middleware.services.system.advanced.config).motd
 %>\
 
 	TrueNAS (c) 2009-${buildtime.year}, iXsystems, Inc. dba TrueNAS

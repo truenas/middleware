@@ -60,8 +60,8 @@ class UPSService(SystemServiceService[UPSEntry]):
         """
         Returns available UPS device ports for the system (serial ports, USB HID devices, and "auto").
         """
-        adv_config = self.middleware.call_sync('system.advanced.config')
-        return port_choices(adv_config['serialconsole'], adv_config['serialport'])
+        adv_config = self.call_sync2(self.s.system.advanced.config)
+        return port_choices(adv_config.serialconsole, adv_config.serialport)
 
     @private
     async def dismiss_alerts(self) -> None:

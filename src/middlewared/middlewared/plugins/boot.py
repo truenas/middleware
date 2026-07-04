@@ -216,7 +216,7 @@ class BootService(Service):
         await self.middleware.call(
             'datastore.update',
             'system.advanced',
-            (await self.middleware.call('system.advanced.config'))['id'],
+            (await self.call2(self.s.system.advanced.config)).id,
             {'adv_boot_scrub': interval},
         )
         return interval

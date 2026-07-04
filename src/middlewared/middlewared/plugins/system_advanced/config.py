@@ -1,27 +1,21 @@
+from __future__ import annotations
+
 import asyncio
-from copy import deepcopy
 import re
 import tempfile
 import textwrap
+from typing import Any
 import warnings
 
-from middlewared.api import api_method
-from middlewared.api.current import (
-    SystemAdvancedEntry,
-    SystemAdvancedLoginBannerArgs,
-    SystemAdvancedLoginBannerResult,
-    SystemAdvancedSedGlobalPasswordArgs,
-    SystemAdvancedSedGlobalPasswordIsSetArgs,
-    SystemAdvancedSedGlobalPasswordIsSetResult,
-    SystemAdvancedSedGlobalPasswordResult,
-    SystemAdvancedUpdateArgs,
-    SystemAdvancedUpdateResult,
-)
+from middlewared.api.current import SystemAdvancedEntry, SystemAdvancedUpdate
 from middlewared.plugins.initramfs import write_initramfs_flags
-from middlewared.service import ConfigService, private
+from middlewared.service import ConfigServicePart, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
 from middlewared.utils.service.settings import SettingsHelper
+
+from .nvidia import handle_nvidia_toggle
+from .serial import configure_tty, serial_port_choices
 
 settings = SettingsHelper()
 
@@ -59,38 +53,57 @@ class SystemAdvancedModel(sa.Model):
     adv_nvidia = sa.Column(sa.Boolean(), default=False)
 
 
-class SystemAdvancedService(ConfigService):
+def syslogd_changes(orig_config: dict[str, Any], new_config: dict[str, Any]) -> bool:
+    """Return `True` if syslogd should be restarted to apply the new configuration."""
+    if (
+        orig_config['fqdn_syslog'] != new_config['fqdn_syslog']
+        or orig_config['sysloglevel'].lower() != new_config['sysloglevel'].lower()
+        or orig_config['syslog_audit'] != new_config['syslog_audit']
+    ):
+        return True
+    # Convert syslogservers to sets to disregard ordering for the comparison
+    orig_items_set = {frozenset(d.items()) for d in orig_config['syslogservers']}
+    new_items_set = {frozenset(d.items()) for d in new_config['syslogservers']}
+    return orig_items_set != new_items_set
 
-    class Config:
-        datastore = 'system.advanced'
-        datastore_prefix = 'adv_'
-        datastore_extend = 'system.advanced.system_advanced_extend'
-        namespace = 'system.advanced'
-        cli_namespace = 'system.advanced'
-        role_prefix = 'SYSTEM_ADVANCED'
-        entry = SystemAdvancedEntry
 
-    @private
-    async def system_advanced_extend(self, data):
+class SystemAdvancedConfigServicePart(ConfigServicePart[SystemAdvancedEntry]):
+    _datastore = 'system.advanced'
+    _datastore_prefix = 'adv_'
+    _entry = SystemAdvancedEntry
+
+    async def extend(self, data: dict[str, Any]) -> dict[str, Any]:
         data['consolemsg'] = (await self.middleware.call('system.general.config'))['ui_consolemsg']
 
         if data.get('sed_user'):
-            data['sed_user'] = data.get('sed_user').upper()
+            data['sed_user'] = data['sed_user'].upper()
 
         data.pop('sed_passwd')
         data.pop('kmip_uid')
 
         return data
 
+    async def sed_global_password(self) -> str:
+        """Returns the configured global SED password in clear-text if one is set, otherwise an empty string."""
+        passwd = (await self.middleware.call(
+            'datastore.config', self._datastore, {'prefix': self._datastore_prefix}
+        ))['sed_passwd']
+        if passwd:
+            return str(passwd)
+        return str(await self.middleware.call('kmip.sed_global_password'))
+
+    def login_banner(self) -> str:
+        return str(self.middleware.call_sync('datastore.config', self._datastore)['adv_login_banner'])
+
     @settings.fields_validator('serialport', 'serialconsole')
-    async def _validate_serial(self, verrors, serialport, serialconsole):
+    async def _validate_serial(self, verrors: ValidationErrors, serialport: str, serialconsole: bool) -> None:
         if serialconsole:
             if not serialport:
                 verrors.add(
                     'serialport',
                     'Please specify a serial port when serial console option is checked'
                 )
-            elif serialport not in await self.middleware.call('system.advanced.serial_port_choices'):
+            elif serialport not in await serial_port_choices(self):
                 verrors.add(
                     'serialport',
                     'Serial port specified has not been identified by the system'
@@ -104,7 +117,7 @@ class SystemAdvancedService(ConfigService):
                 )
 
     @settings.fields_validator('syslogservers')
-    async def _validate_syslogserver(self, verrors, syslogservers):
+    async def _validate_syslogserver(self, verrors: ValidationErrors, syslogservers: list[dict[str, Any]]) -> None:
         seen_hosts = set()
         for i, server in enumerate(syslogservers):
             host = server['host']
@@ -121,17 +134,17 @@ class SystemAdvancedService(ConfigService):
 
             seen_hosts.add(host)
 
-            cert_id = server['tls_certificate']
+            cert_id: int = server['tls_certificate']
             if server['transport'] == 'TLS' and cert_id:
-                verrors.extend(
-                    await self.middleware.call2(
-                        self.s.certificate.cert_services_validation,
-                        cert_id, f'syslogservers.{i}.tls_certificate', False,
-                    )
+                cert_verrors = await self.call2(
+                    self.s.certificate.cert_services_validation,
+                    cert_id, f'syslogservers.{i}.tls_certificate', False,
                 )
+                if cert_verrors:
+                    verrors.extend(cert_verrors)
 
     @settings.fields_validator('kernel_extra_options')
-    async def _validate_kernel_extra_options(self, verrors, kernel_extra_options):
+    async def _validate_kernel_extra_options(self, verrors: ValidationErrors, kernel_extra_options: str) -> None:
         for invalid_char in ('\n', '"'):
             if invalid_char in kernel_extra_options:
                 verrors.add('kernel_extra_options', f'{invalid_char!r} is an invalid character and not allowed')
@@ -155,18 +168,19 @@ class SystemAdvancedService(ConfigService):
             verrors.add('kernel_extra_options', f'Modifying {invalid_param!r} is not allowed')
 
     @settings.fields_validator('nvidia')
-    async def _validate_nvidia(self, verrors, nvidia):
+    async def _validate_nvidia(self, verrors: ValidationErrors, nvidia: bool) -> None:
         # Only validate when nvidia is being disabled
         if nvidia is True:
             return
 
         container_ids = {
-            device.container for device in await self.middleware.call(
-                'container.device.query', [['attributes.dtype', '=', 'GPU'], ['attributes.gpu_type', '=', 'NVIDIA']]
+            device.container for device in await self.call2(
+                self.s.container.device.query,
+                [['attributes.dtype', '=', 'GPU'], ['attributes.gpu_type', '=', 'NVIDIA']],
             )
         }
-        if containers := await self.middleware.call(
-            'container.query', [['id', 'in', container_ids], ['status.state', '=', 'RUNNING']]
+        if containers := await self.call2(
+            self.s.container.query, [['id', 'in', container_ids], ['status.state', '=', 'RUNNING']]
         ):
             verrors.add(
                 'nvidia',
@@ -174,132 +188,87 @@ class SystemAdvancedService(ConfigService):
                 f'NVIDIA GPUs: {", ".join(c.name for c in containers)}. Please stop these containers first.'
             )
 
-    def _syslogd_changes(self, orig_config: dict, new_config: dict) -> bool:
-        """Return `True` if syslogd should be restarted to apply the new configuration."""
-        if (
-            orig_config['fqdn_syslog'] != new_config['fqdn_syslog']
-            or orig_config['sysloglevel'].lower() != new_config['sysloglevel'].lower()
-            or orig_config['syslog_audit'] != new_config['syslog_audit']
-        ):
-            return True
-        # Convert syslogservers to sets to disregard ordering for the comparison
-        orig_items_set = {frozenset(d.items()) for d in orig_config['syslogservers']}
-        new_items_set = {frozenset(d.items()) for d in new_config['syslogservers']}
-        return orig_items_set != new_items_set
+    async def do_update(self, data: SystemAdvancedUpdate) -> SystemAdvancedEntry:
+        old_config = await self.config()
+        old_sed = await self.sed_global_password()
 
-    @api_method(SystemAdvancedUpdateArgs, SystemAdvancedUpdateResult, audit='System advanced update')
-    async def do_update(self, data):
-        """
-        Update System Advanced Service Configuration.
-        """
+        update = data.model_dump(context={"expose_secrets": True})
+        new_sed = update.pop('sed_passwd', old_sed)
+
         consolemsg = None
-        if 'consolemsg' in data:
-            consolemsg = data.pop('consolemsg')
+        if 'consolemsg' in update:
+            consolemsg = update.pop('consolemsg')
             warnings.warn("`consolemsg` has been deprecated and moved to `system.general`", DeprecationWarning)
 
-        for server in data.get('syslogservers', []):
+        for server in update.get('syslogservers', []):
             if server['transport'] != 'TLS':
                 server['tls_certificate'] = None
 
-        config_data = await self.config()
-        config_data['sed_passwd'] = await self.sed_global_password()
-        config_data.pop('consolemsg')
-        original_data = deepcopy(config_data)
-        config_data.update(data)
+        merged = old_config.model_dump()
+        merged.update(update)
+        new_config = SystemAdvancedEntry(**merged)
 
-        await settings.validate(self, 'system_advanced_update', original_data, config_data)
+        await settings.validate(self, 'system_advanced_update', old_config.model_dump(), new_config.model_dump())
 
-        if config_data != original_data:
-            if original_data.get('sed_user'):
-                original_data['sed_user'] = original_data['sed_user'].lower()
-            if config_data.get('sed_user'):
-                config_data['sed_user'] = config_data['sed_user'].lower()
-            if not config_data['sed_passwd'] and config_data['sed_passwd'] != original_data['sed_passwd']:
+        if new_config != old_config or new_sed != old_sed:
+            write = new_config.model_dump()
+            write.pop('id', None)
+            write.pop('consolemsg', None)
+            write['sed_user'] = write['sed_user'].lower()
+            write['sed_passwd'] = new_sed
+
+            if not new_sed and new_sed != old_sed:
                 # We want to make sure kmip uid is None in this case
-                adv_config = await self.middleware.call('datastore.config', self._config.datastore)
-                self.middleware.create_task(
-                    self.middleware.call('kmip.reset_sed_global_password', adv_config['adv_kmip_uid'])
-                )
-                config_data['kmip_uid'] = None
+                adv_kmip_uid = (await self.middleware.call(
+                    'datastore.config', self._datastore, {'prefix': self._datastore_prefix}
+                ))['kmip_uid']
+                self.create_task(self.middleware.call('kmip.reset_sed_global_password', adv_kmip_uid))
+                write['kmip_uid'] = None
 
             await self.middleware.call(
-                'datastore.update',
-                self._config.datastore,
-                config_data['id'],
-                config_data,
-                {'prefix': self._config.datastore_prefix}
+                'datastore.update', self._datastore, old_config.id, write, {'prefix': self._datastore_prefix}
             )
 
-            if original_data['boot_scrub'] != config_data['boot_scrub']:
+            if old_config.boot_scrub != new_config.boot_scrub:
                 await (await self.call2(self.s.service.control, 'RESTART', 'cron')).wait(raise_error=True)
 
-            generate_grub = original_data['kernel_extra_options'] != config_data['kernel_extra_options']
-            if original_data['motd'] != config_data['motd']:
+            generate_grub = old_config.kernel_extra_options != new_config.kernel_extra_options
+            if old_config.motd != new_config.motd:
                 await self.middleware.call('etc.generate', 'motd')
 
-            if original_data['login_banner'] != config_data['login_banner']:
+            if old_config.login_banner != new_config.login_banner:
                 await (await self.call2(self.s.service.control, 'RELOAD', 'ssh')).wait(raise_error=True)
 
-            if original_data['powerdaemon'] != config_data['powerdaemon']:
+            if old_config.powerdaemon != new_config.powerdaemon:
                 await (await self.call2(self.s.service.control, 'RESTART', 'powerd')).wait(raise_error=True)
 
-            if self._syslogd_changes(original_data, config_data):
+            if syslogd_changes(old_config.model_dump(), new_config.model_dump()):
                 await (await self.call2(self.s.service.control, 'RESTART', 'syslogd')).wait(raise_error=True)
 
-            if config_data['sed_passwd'] and original_data['sed_passwd'] != config_data['sed_passwd']:
+            if new_sed and old_sed != new_sed:
                 await self.middleware.call('kmip.sync_sed_keys')
 
-            if config_data['kdump_enabled'] != original_data['kdump_enabled']:
+            if new_config.kdump_enabled != old_config.kdump_enabled:
                 # kdump changes require a reboot to take effect. So just generating the kdump config
                 # should be enough
                 await self.middleware.call('etc.generate', 'kdump')
                 generate_grub = True
 
-            if original_data['debugkernel'] != config_data['debugkernel']:
+            if old_config.debugkernel != new_config.debugkernel:
                 generate_grub = True
                 # Keep the on-disk flag in sync on every transition so
                 # truenas-initrd.py reads the right value on the next regen.
                 await asyncio.to_thread(write_initramfs_flags, self.middleware)
 
-            if original_data['nvidia'] != config_data['nvidia']:
-                await self.middleware.call('system.advanced.handle_nvidia_toggle')
+            if old_config.nvidia != new_config.nvidia:
+                await handle_nvidia_toggle(self)
 
-            await self.middleware.call('system.advanced.configure_tty', original_data, config_data, generate_grub)
+            await configure_tty(self, old_config.model_dump(), new_config.model_dump(), generate_grub)
 
-            if config_data['debugkernel'] and not original_data['debugkernel']:
+            if new_config.debugkernel and not old_config.debugkernel:
                 await self.middleware.call('boot.update_initramfs')
 
         if consolemsg is not None:
             await self.middleware.call('system.general.update', {'ui_consolemsg': consolemsg})
 
         return await self.config()
-
-    @api_method(
-        SystemAdvancedSedGlobalPasswordIsSetArgs,
-        SystemAdvancedSedGlobalPasswordIsSetResult,
-        roles=['SYSTEM_ADVANCED_READ']
-    )
-    async def sed_global_password_is_set(self):
-        """Returns a boolean identifying whether or not a global
-        SED password has been set."""
-        return bool(await self.sed_global_password())
-
-    @api_method(
-        SystemAdvancedSedGlobalPasswordArgs,
-        SystemAdvancedSedGlobalPasswordResult,
-        roles=['SYSTEM_ADVANCED_READ']
-    )
-    async def sed_global_password(self):
-        """Returns configured global SED password in clear-text if one
-        is configured, otherwise an empty string."""
-        passwd = (await self.middleware.call(
-            'datastore.config', 'system.advanced', {'prefix': self._config.datastore_prefix}
-        ))['sed_passwd']
-        return passwd if passwd else await self.middleware.call('kmip.sed_global_password')
-
-    @api_method(SystemAdvancedLoginBannerArgs, SystemAdvancedLoginBannerResult, authentication_required=False)
-    def login_banner(self):
-        """Returns user set login banner."""
-        # NOTE: This endpoint doesn't require authentication because
-        # it is used by UI on the login page
-        return self.middleware.call_sync('datastore.config', 'system.advanced')['adv_login_banner']
