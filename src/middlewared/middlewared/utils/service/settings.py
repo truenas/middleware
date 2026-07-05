@@ -1,10 +1,8 @@
-from typing import Any, Awaitable, Callable
+from typing import Any, Awaitable, Callable, Concatenate
 
 from middlewared.service import ValidationErrors
 
-# Validators are registered with the field values appended positionally, so the concrete
-# per-validator signature varies; keep the callable type permissive on its arguments.
-FieldsValidator = Callable[..., Awaitable[None]]
+FieldsValidator = Callable[Concatenate[Any, ValidationErrors, ...], Awaitable[None]]
 
 
 class SettingsHelper:

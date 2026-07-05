@@ -96,7 +96,7 @@ class SystemAdvancedConfigServicePart(ConfigServicePart[SystemAdvancedEntry]):
         return str(self.middleware.call_sync('datastore.config', self._datastore)['adv_login_banner'])
 
     @settings.fields_validator('serialport', 'serialconsole')
-    async def _validate_serial(self, verrors: ValidationErrors, serialport: str, serialconsole: bool) -> None:
+    async def _validate_serial(self, verrors: ValidationErrors, /, serialport: str, serialconsole: bool) -> None:
         if serialconsole:
             if not serialport:
                 verrors.add(
@@ -117,7 +117,7 @@ class SystemAdvancedConfigServicePart(ConfigServicePart[SystemAdvancedEntry]):
                 )
 
     @settings.fields_validator('syslogservers')
-    async def _validate_syslogserver(self, verrors: ValidationErrors, syslogservers: list[dict[str, Any]]) -> None:
+    async def _validate_syslogserver(self, verrors: ValidationErrors, /, syslogservers: list[dict[str, Any]]) -> None:
         seen_hosts = set()
         for i, server in enumerate(syslogservers):
             host = server['host']
@@ -144,7 +144,7 @@ class SystemAdvancedConfigServicePart(ConfigServicePart[SystemAdvancedEntry]):
                     verrors.extend(cert_verrors)
 
     @settings.fields_validator('kernel_extra_options')
-    async def _validate_kernel_extra_options(self, verrors: ValidationErrors, kernel_extra_options: str) -> None:
+    async def _validate_kernel_extra_options(self, verrors: ValidationErrors, /, kernel_extra_options: str) -> None:
         for invalid_char in ('\n', '"'):
             if invalid_char in kernel_extra_options:
                 verrors.add('kernel_extra_options', f'{invalid_char!r} is an invalid character and not allowed')
@@ -168,7 +168,7 @@ class SystemAdvancedConfigServicePart(ConfigServicePart[SystemAdvancedEntry]):
             verrors.add('kernel_extra_options', f'Modifying {invalid_param!r} is not allowed')
 
     @settings.fields_validator('nvidia')
-    async def _validate_nvidia(self, verrors: ValidationErrors, nvidia: bool) -> None:
+    async def _validate_nvidia(self, verrors: ValidationErrors, /, nvidia: bool) -> None:
         # Only validate when nvidia is being disabled
         if nvidia is True:
             return
@@ -192,21 +192,26 @@ class SystemAdvancedConfigServicePart(ConfigServicePart[SystemAdvancedEntry]):
         old_config = await self.config()
         old_sed = await self.sed_global_password()
 
+        # `sed_passwd` is not a field on the entry and `consolemsg` lives in `system.general`; read both
+        # side-channel values here since they are handled separately from the entry merge below.
         update = data.model_dump(context={"expose_secrets": True})
-        new_sed = update.pop('sed_passwd', old_sed)
+        new_sed = update.get('sed_passwd', old_sed)
 
         consolemsg = None
         if 'consolemsg' in update:
-            consolemsg = update.pop('consolemsg')
+            consolemsg = update['consolemsg']
             warnings.warn("`consolemsg` has been deprecated and moved to `system.general`", DeprecationWarning)
 
-        for server in update.get('syslogservers', []):
-            if server['transport'] != 'TLS':
-                server['tls_certificate'] = None
-
-        merged = old_config.model_dump()
-        merged.update(update)
-        new_config = SystemAdvancedEntry(**merged)
+        new_config = old_config.updated(data)
+        new_config = new_config.model_copy(update={
+            # consolemsg lives in system.general, so it must not count as an advanced change
+            'consolemsg': old_config.consolemsg,
+            # a non-TLS server can't carry a client certificate
+            'syslogservers': [
+                server if server.transport == 'TLS' else server.model_copy(update={'tls_certificate': None})
+                for server in new_config.syslogservers
+            ],
+        })
 
         await settings.validate(self, 'system_advanced_update', old_config.model_dump(), new_config.model_dump())
 

@@ -130,13 +130,11 @@ class SystemAdvancedService(GenericConfigService[SystemAdvancedEntry]):
         SystemAdvancedSyslogCertificateAuthorityChoicesResult,
         authorization_required=False,
         check_annotations=True,
+        removed_in='v27',
     )
     async def syslog_certificate_authority_choices(self) -> EmptyDict:
         """
         Return choices of certificate authorities which can be used for ``syslog_tls_certificate_authority``.
-
-        .. deprecated:: 25.10
-            This method is no longer used and will be removed after the UI is updated.
         """
         return _syslog.syslog_certificate_authority_choices()
 
