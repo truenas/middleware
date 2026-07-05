@@ -1,5 +1,6 @@
 import errno
 import io
+from typing import Any
 from urllib.parse import urlparse
 import xml.etree.ElementTree as ET
 
@@ -10,6 +11,7 @@ from botocore.awsrequest import AWSRequest
 from botocore.credentials import Credentials
 import requests
 
+from middlewared.api.current import CloudTaskAttributes, CredentialsEntry
 from middlewared.rclone.base import BaseRcloneRemote
 from middlewared.service_exception import CallError
 from middlewared.utils.network import INTERNET_TIMEOUT
@@ -31,8 +33,8 @@ class StorjIxRcloneRemote(BaseRcloneRemote):
 
     rclone_type = "s3"
 
-    def create_bucket(self, credentials, name):
-        provider = credentials["provider"]
+    def create_bucket(self, credentials: CredentialsEntry, name: str) -> None:
+        provider = self._provider_config(credentials)
         s3_client = boto3.client(
             "s3",
             config=botocore.config.Config(user_agent="ix-storj-1"),
@@ -58,8 +60,8 @@ class StorjIxRcloneRemote(BaseRcloneRemote):
                 )
             raise
 
-    def list_buckets(self, credentials):
-        provider = credentials["provider"]
+    def list_buckets(self, credentials: CredentialsEntry) -> list[dict[str, Any]]:
+        provider = self._provider_config(credentials)
         endpoint = provider["endpoint"]
         url = f"{endpoint}?attribution"
 
@@ -80,10 +82,11 @@ class StorjIxRcloneRemote(BaseRcloneRemote):
             for bucket in ET.parse(io.StringIO(r.text)).iter(f"{ns}Bucket")
         ]
 
-    def get_credentials_extra(self, credentials):
-        return {"endpoint": credentials["provider"]["endpoint"], "provider": "Other"}
+    def get_credentials_extra(self, credentials: CredentialsEntry) -> dict[str, Any]:
+        provider = self._provider_config(credentials)
+        return {"endpoint": provider["endpoint"], "provider": "Other"}
 
-    def get_task_extra(self, task):
+    def get_task_extra(self, attributes: CloudTaskAttributes, credentials: CredentialsEntry) -> dict[str, Any]:
         # Storj recommended these settings
         return {
             "chunk_size": "64M",
@@ -91,10 +94,14 @@ class StorjIxRcloneRemote(BaseRcloneRemote):
             "upload_cutoff": "64M",
         }
 
-    def get_restic_config(self, task):
-        provider = task["credentials"]["provider"]
+    def get_restic_config(
+        self, credentials: CredentialsEntry, attributes: CloudTaskAttributes,
+    ) -> tuple[str, dict[str, str]]:
+        provider = self._provider_config(credentials)
         env = {
             "AWS_ACCESS_KEY_ID": provider["access_key_id"],
             "AWS_SECRET_ACCESS_KEY": provider["secret_access_key"],
         }
-        return urlparse(provider["endpoint"]).hostname, env
+        hostname = urlparse(provider["endpoint"]).hostname
+        assert hostname is not None
+        return hostname, env

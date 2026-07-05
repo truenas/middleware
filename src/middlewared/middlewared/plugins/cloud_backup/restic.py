@@ -5,9 +5,9 @@ from datetime import timedelta
 import json
 import subprocess
 import threading
-from typing import IO, TYPE_CHECKING, Any
+from typing import IO, TYPE_CHECKING
 
-from middlewared.api.current import CloudBackupEntry
+from middlewared.api.current import CloudBackupEntry, CredentialsEntry
 from middlewared.job import JobCancelledException, JobProgressBuffer
 from middlewared.plugins.cloud.path import get_remote_path
 from middlewared.plugins.cloud.remotes import REMOTES
@@ -23,14 +23,12 @@ class ResticConfig:
     env: dict[str, str]
 
 
-def get_restic_config(entry: CloudBackupEntry, credentials: dict[str, Any]) -> ResticConfig:
-    attributes = entry.attributes.model_dump()
+def get_restic_config(entry: CloudBackupEntry, credentials: CredentialsEntry) -> ResticConfig:
+    remote = REMOTES[credentials.provider.type]
 
-    remote = REMOTES[credentials["provider"]["type"]]
+    remote_path = get_remote_path(remote, entry.attributes)
 
-    remote_path = get_remote_path(remote, attributes)
-
-    url, env = remote.get_restic_config({"credentials": credentials, "attributes": attributes})
+    url, env = remote.get_restic_config(credentials, entry.attributes)
 
     if entry.cache_path:
         cache = ["--cache-dir", entry.cache_path]

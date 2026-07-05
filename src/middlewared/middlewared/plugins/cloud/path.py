@@ -2,21 +2,23 @@ from __future__ import annotations
 
 import os
 import stat
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from middlewared.service import CallError
 
 if TYPE_CHECKING:
+    from middlewared.api.current import CloudTaskAttributes
     from middlewared.main import Middleware
     from middlewared.rclone.base import BaseRcloneRemote
 
 
-def get_remote_path(provider: BaseRcloneRemote, attributes: dict[str, Any]) -> str:
-    remote_path = attributes["folder"].rstrip("/")
+def get_remote_path(provider: BaseRcloneRemote, attributes: CloudTaskAttributes) -> str:
+    attrs = attributes.model_dump(by_alias=True)
+    remote_path = attrs["folder"].rstrip("/")
     if not remote_path:
         remote_path = "/"
     if provider.buckets:
-        remote_path = f"{attributes['bucket']}/{remote_path.lstrip('/')}"
+        remote_path = f"{attrs['bucket']}/{remote_path.lstrip('/')}"
     return remote_path
 
 

@@ -4,7 +4,7 @@ import textwrap
 
 import pytest
 
-from middlewared.plugins.cloud_sync import lsjson_error_excerpt, RcloneVerboseLogCutter
+from middlewared.plugins.cloud_sync.rclone import lsjson_error_excerpt, RcloneVerboseLogCutter
 
 
 @pytest.mark.parametrize("error,excerpt", [

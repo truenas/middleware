@@ -1,3 +1,6 @@
+from typing import Any
+
+from middlewared.api.current import CloudTaskAttributes, CredentialsEntry
 from middlewared.rclone.base import BaseRcloneRemote
 
 
@@ -12,5 +15,5 @@ class AzureBlobRcloneRemote(BaseRcloneRemote):
 
     rclone_type = "azureblob"
 
-    def get_task_extra(self, task):
+    def get_task_extra(self, attributes: CloudTaskAttributes, credentials: CredentialsEntry) -> dict[str, Any]:
         return {"chunk_size": "100Mi"}

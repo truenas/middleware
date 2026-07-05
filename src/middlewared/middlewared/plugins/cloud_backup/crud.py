@@ -8,6 +8,7 @@ from middlewared.api.current import CloudBackupCreate, CloudBackupEntry, CloudBa
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.cloud.crud import CloudTaskServiceMixin
 from middlewared.plugins.cloud.model import CloudTaskModelMixin
+from middlewared.plugins.cloud_sync.credentials import extend_credential
 from middlewared.plugins.zfs.zvol_utils import zvol_path_to_name
 from middlewared.service import CallError, SharingTaskServicePart, ValidationErrors
 import middlewared.sqlalchemy as sa
@@ -15,7 +16,6 @@ from middlewared.utils.cron import convert_db_format_to_schedule, convert_schedu
 from middlewared.utils.path import FSLocation
 
 from .init import IncorrectPassword
-from .utils import resolve_credentials
 
 if TYPE_CHECKING:
     from middlewared.api.base.server.app import App
@@ -63,7 +63,7 @@ class CloudBackupServicePart(SharingTaskServicePart[CloudBackupEntry], CloudTask
         }
 
     async def sharing_task_extend(self, data: dict[str, Any], service_context: Any) -> dict[str, Any]:
-        data["credentials"] = await self.middleware.call("cloudsync.credentials.extend", data.pop("credential"))
+        data["credentials"] = extend_credential(data.pop("credential"))
 
         if job := await self.call2(self.s.cloud_backup.get_task_state_job, service_context["task_state"], data["id"]):
             data["job"] = job
@@ -113,9 +113,9 @@ class CloudBackupServicePart(SharingTaskServicePart[CloudBackupEntry], CloudTask
             raise CallError("Backed up zvol must be used by a local or VMware VM")
 
     def _run_validation(self, app: App | None, schema: str, entry: CloudBackupEntry) -> dict[str, Any]:
-        # FIXME: Drop this model->dict marshalling and validate the entry directly once CloudTaskServiceMixin
-        # is converted; it is shared with the unconverted cloud_sync and only operates on dicts for now.
-        data = entry.model_dump(context={"expose_secrets": True})
+        # The shared validation mixin normalizes attributes and resolves the path into
+        # dataset/relative_path in place on the datastore-bound payload dict, so build that dict here.
+        data = entry.model_dump(by_alias=True, context={"expose_secrets": True})
         data.pop(self.locked_field, None)
         data.pop("job", None)
         # credentials is a foreign key; collapse the extended entry back to its id for the
@@ -126,7 +126,8 @@ class CloudBackupServicePart(SharingTaskServicePart[CloudBackupEntry], CloudTask
         verrors = ValidationErrors()
         self._validate(app, verrors, schema, data)
         if not verrors:
-            credentials = resolve_credentials(self, entry.credentials)
+            credentials = self._get_credentials(data["credentials"])
+            assert credentials is not None
             try:
                 # Route through the registry method so the suite can mock cloud_backup.ensure_initialized.
                 self.call_sync2(self.s.cloud_backup.ensure_initialized, entry, credentials)
@@ -136,9 +137,7 @@ class CloudBackupServicePart(SharingTaskServicePart[CloudBackupEntry], CloudTask
         return data
 
     def _validate(self, app: App | None, verrors: ValidationErrors, name: str, data: dict[str, Any]) -> None:
-        # CloudTaskServiceMixin is shared with the unconverted cloud_sync and operates on the dict
-        # (it normalizes data["attributes"] in place, which must reach the datastore).
-        super()._validate(app, verrors, name, data)  # type: ignore[no-untyped-call]
+        super()._validate(app, verrors, name, data)
 
         if data["snapshot"] and data["absolute_paths"]:
             verrors.add(f"{name}.snapshot", "This option can't be used when absolute paths are enabled")

@@ -117,11 +117,8 @@ def gather_backup_data(service: Service, context: GatherContext) -> dict[str, An
     tasks_found: dict[str, set[str]] = {"cloudsync": set(), "rsynctask": set()}
     for namespace in ("cloudsync", "rsynctask"):
         opposite_namespace = "rsynctask" if namespace == "cloudsync" else "cloudsync"
-        for task in service.middleware.call_sync(f"{namespace}.query", filters):
-            # FIXME: rsynctask is typesafe and returns Pydantic models while cloudsync still
-            # returns dicts. Once cloudsync is converted, drop this branch and call both via
-            # call_sync2 with attribute access.
-            path = task["path"] if isinstance(task, dict) else task.path
+        for task in service.middleware.call_sync2(getattr(service.middleware.services, namespace).query, filters):
+            path = task.path
             try:
                 task_ds = path_to_dataset_impl(path)
             except Exception:
@@ -210,9 +207,9 @@ async def gather_cloud_services(service: Service, context: GatherContext) -> dic
     return {
         "cloud_services": list(
             {
-                t["credentials"]["provider"]["type"]
-                for t in await service.middleware.call(
-                    "cloudsync.query", [["enabled", "=", True]], {"select": ["enabled", "credentials"]}
+                t.credentials.provider.type
+                for t in await service.middleware.call2(
+                    service.middleware.services.cloudsync.query, [["enabled", "=", True]]
                 )
             }
         )

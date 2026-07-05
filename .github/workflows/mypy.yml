@@ -34,6 +34,7 @@ jobs:
             middlewared/plugins/apps_images/ \
             middlewared/plugins/catalog/ \
             middlewared/plugins/cloud_backup/ \
+            middlewared/plugins/cloud_sync/ \
             middlewared/plugins/container/ \
             middlewared/plugins/cron/ \
             middlewared/plugins/docker/ \

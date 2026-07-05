@@ -1,27 +1,52 @@
+from __future__ import annotations
+
 import shlex
+from typing import TYPE_CHECKING, Any
 
 from middlewared.api.base.handler.accept import validate_model
 from middlewared.api.base.model import model_subset
-from middlewared.api.current import CloudTaskAttributes, ZFSResourceQuery
+from middlewared.api.current import CloudTaskAttributes, CredentialsEntry, ZFSResourceQuery
 from middlewared.plugins.cloud.remotes import REMOTES
 from middlewared.plugins.zfs.utils import has_internal_path
 from middlewared.plugins.zfs_.utils import zvol_path_to_name
-from middlewared.service import CallError, private
+from middlewared.rclone.base import BaseRcloneRemote
+from middlewared.service import CallError, ServiceContext, private
 from middlewared.service_exception import InstanceNotFound, ValidationErrors
 from middlewared.utils.privilege import credential_has_full_admin
 
+if TYPE_CHECKING:
+    from middlewared.api.base.server.app import App
 
-class CloudTaskServiceMixin:
+
+class CloudTaskServiceMixin(ServiceContext):
+    """Shared create/update validation for the cloud_sync and cloud_backup task services.
+
+    ``data`` is the datastore-bound payload dict (the create/update model dumped by the leaf part); path
+    validation writes the resolved ``dataset``/``relative_path`` back into it. Credentials resolve to a typed
+    :class:`CredentialsEntry` and the rclone provider is called with typed models.
+    """
+
     allow_zvol = False
 
-    def _get_credentials(self, credentials_id):
+    if TYPE_CHECKING:
+        # Provided by the ``SharingTaskServicePart`` this mixin is combined with.
+        path_field: str
+
+        async def get_path_field(self, data: Any) -> Any: ...
+
+        async def validate_path_field(
+            self, data: dict[str, Any], schema: str, verrors: ValidationErrors, *, split_path: bool = ...,
+        ) -> ValidationErrors: ...
+
+    def _get_credentials(self, credentials: int | CredentialsEntry) -> CredentialsEntry | None:
+        cred_id = credentials if isinstance(credentials, int) else credentials.id
         try:
-            return self.middleware.call_sync("cloudsync.credentials.get_instance", credentials_id)
+            return self.call_sync2(self.s.cloudsync.credentials.get_instance, cred_id)
         except InstanceNotFound:
             return None
 
     @private
-    def task_attributes(self, provider):
+    def task_attributes(self, provider: BaseRcloneRemote) -> list[str]:
         attributes = []
 
         if provider.buckets:
@@ -36,7 +61,7 @@ class CloudTaskServiceMixin:
 
         return attributes
 
-    def _basic_validate(self, verrors, name, data):
+    def _basic_validate(self, verrors: ValidationErrors, name: str, data: dict[str, Any]) -> None:
         try:
             shlex.split(data["args"])
         except ValueError as e:
@@ -49,7 +74,7 @@ class CloudTaskServiceMixin:
         if verrors:
             return
 
-        provider = REMOTES[credentials["provider"]["type"]]
+        provider = REMOTES[credentials.provider.type]
 
         try:
             data["attributes"] = validate_model(
@@ -59,17 +84,21 @@ class CloudTaskServiceMixin:
         except ValidationErrors as e:
             verrors.add_child(f"{name}.attributes", e)
         else:
-            provider.validate_task_basic(data, credentials, verrors)
+            attributes = CloudTaskAttributes(**data["attributes"])
+            provider.validate_task_basic(attributes, credentials, verrors)
+            # `validate_task_basic` may normalize the attributes (e.g. S3 fills in the bucket region).
+            data["attributes"] = attributes.model_dump(by_alias=True, exclude_unset=True)
 
-    def _validate(self, app, verrors, name, data):
+    def _validate(self, app: App | None, verrors: ValidationErrors, name: str, data: dict[str, Any]) -> None:
         self._basic_validate(verrors, name, data)
 
         if not verrors:
             credentials = self._get_credentials(data["credentials"])
+            assert credentials is not None
 
-            provider = REMOTES[credentials["provider"]["type"]]
+            provider = REMOTES[credentials.provider.type]
 
-            provider.validate_task_full(data, credentials, verrors)
+            provider.validate_task_full(CloudTaskAttributes(**data["attributes"]), credentials, verrors)
 
         if self.allow_zvol and (
             path := self.middleware.run_coroutine(self.get_path_field(data))

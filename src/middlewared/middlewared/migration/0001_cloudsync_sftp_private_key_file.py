@@ -3,12 +3,14 @@ import os
 
 
 def migrate(middleware):
-    for credential in middleware.call_sync("cloudsync.credentials.query", [["provider.type", "=", "SFTP"]]):
-        if "key_file" in credential["provider"] and os.path.exists(credential["provider"]["key_file"]):
+    # Read raw rows: `key_file` is a legacy attribute that the typed credential models no longer describe.
+    for credential in middleware.call_sync("datastore.query", "system.cloudcredentials", [["provider", "=", "SFTP"]]):
+        attributes = credential["attributes"]
+        if "key_file" in attributes and os.path.exists(attributes["key_file"]):
             middleware.logger.info("Migrating SFTP cloud credential %d to keychain", credential["id"])
 
             try:
-                with open(credential["provider"]["key_file"]) as f:
+                with open(attributes["key_file"]) as f:
                     private_key = f.read()
 
                 for keypair in middleware.call_sync2(
@@ -26,11 +28,11 @@ def migrate(middleware):
                         }
                     }).id
 
-                del credential["provider"]["key_file"]
-                credential["provider"]["private_key"] = keypair_id
+                del attributes["key_file"]
+                attributes["private_key"] = keypair_id
 
                 middleware.call_sync("datastore.update", "system.cloudcredentials", credential["id"], {
-                    "provider": credential["provider"],
+                    "attributes": attributes,
                 })
             except Exception as e:
                 middleware.logger.warning("Error migrating SFTP cloud credential %d to keychain: %r",

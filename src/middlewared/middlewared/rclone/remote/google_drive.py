@@ -1,3 +1,6 @@
+from typing import Any
+
+from middlewared.api.current import CredentialsEntry
 from middlewared.rclone.base import BaseRcloneRemote
 
 
@@ -14,8 +17,9 @@ class GoogleDriveRcloneRemote(BaseRcloneRemote):
 
     task_attributes = ["acknowledge_abuse"]
 
-    def get_credentials_extra(self, credentials):
-        if credentials["provider"].get("team_drive"):
+    def get_credentials_extra(self, credentials: CredentialsEntry) -> dict[str, Any]:
+        provider = self._provider_config(credentials)
+        if provider.get("team_drive"):
             return dict()
 
         return dict(root_folder_id="root")

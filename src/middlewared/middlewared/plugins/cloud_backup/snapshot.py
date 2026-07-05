@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING
 
 from middlewared.api.current import CloudBackupSnapshot, CloudBackupSnapshotItem
 from middlewared.plugins.cloud_backup.restic import get_restic_config
-from middlewared.plugins.cloud_backup.utils import resolve_credentials
 from middlewared.service import CallError, ServiceContext
 
 if TYPE_CHECKING:
@@ -19,8 +18,7 @@ def list_snapshots(context: ServiceContext, id_: int) -> list[CloudBackupSnapsho
 
     entry = context.call_sync2(context.s.cloud_backup.get_instance, id_)
 
-    credentials = resolve_credentials(context, entry.credentials)
-    restic_config = get_restic_config(entry, credentials)
+    restic_config = get_restic_config(entry, entry.credentials)
 
     try:
         snapshots = json.loads(subprocess.run(
@@ -46,8 +44,7 @@ def list_snapshot_directory(
 
     entry = context.call_sync2(context.s.cloud_backup.get_instance, id_)
 
-    credentials = resolve_credentials(context, entry.credentials)
-    restic_config = get_restic_config(entry, credentials)
+    restic_config = get_restic_config(entry, entry.credentials)
 
     try:
         items = list(map(json.loads, subprocess.run(
@@ -80,8 +77,7 @@ def delete_snapshot(context: ServiceContext, job: Job, id_: int, snapshot_id: st
 
     entry = context.call_sync2(context.s.cloud_backup.get_instance, id_)
 
-    credentials = resolve_credentials(context, entry.credentials)
-    restic_config = get_restic_config(entry, credentials)
+    restic_config = get_restic_config(entry, entry.credentials)
 
     try:
         subprocess.run(

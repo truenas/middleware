@@ -1,5 +1,7 @@
 import json
+from typing import Any
 
+from middlewared.api.current import CredentialsEntry
 from middlewared.rclone.base import BaseRcloneRemote
 
 
@@ -15,10 +17,11 @@ class GoogleCloudStorageRcloneRemote(BaseRcloneRemote):
 
     task_attributes = ["bucket_policy_only"]
 
-    def get_credentials_extra(self, credentials):
+    def get_credentials_extra(self, credentials: CredentialsEntry) -> dict[str, Any]:
+        provider = self._provider_config(credentials)
         return dict(
-            service_account_credentials=(credentials["provider"]["service_account_credentials"].
+            service_account_credentials=(provider["service_account_credentials"].
                                          replace("\r", "").
                                          replace("\n", "")),
-            project_number=json.loads(credentials["provider"]["service_account_credentials"])["project_id"],
+            project_number=json.loads(provider["service_account_credentials"])["project_id"],
         )

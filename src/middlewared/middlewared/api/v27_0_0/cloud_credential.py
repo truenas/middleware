@@ -13,6 +13,7 @@ from middlewared.api.base import (
 from .cloud_sync_providers import CloudCredentialProvider
 
 __all__ = ["CredentialsEntry",
+           "CloudCredentialCreate", "CloudCredentialUpdate",
            "CredentialsCreateArgs", "CredentialsCreateResult",
            "CredentialsUpdateArgs", "CredentialsUpdateResult",
            "CredentialsDeleteArgs", "CredentialsDeleteResult",

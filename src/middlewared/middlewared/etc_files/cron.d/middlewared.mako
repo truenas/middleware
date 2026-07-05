@@ -32,15 +32,15 @@ ${' '.join(middleware.call_sync('cronjob.construct_cron_command', job.schedule, 
 ${' '.join(middleware.call_sync('cronjob.construct_cron_command', job.schedule.model_dump(), "root", f"midclt call rsynctask.run {job.id}"))}
     % endfor
 
-    % for job in middleware.call_sync("cloudsync.query", [["enabled", "=", True]]):
+    % for job in middleware.call_sync2(middleware.services.cloudsync.query, [["enabled", "=", True]]):
 <%
-    if job["locked"]:
-        middleware.call_sync('cloudsync.generate_locked_alert', job['id'])
+    if job.locked:
+        middleware.call_sync2(middleware.services.cloudsync.generate_locked_alert, job.id)
         continue
     else:
-        middleware.call_sync('cloudsync.remove_locked_alert', job['id'])
+        middleware.call_sync2(middleware.services.cloudsync.remove_locked_alert, job.id)
 %>\
-${' '.join(middleware.call_sync('cronjob.construct_cron_command', job["schedule"], "root", f"midclt call cloudsync.sync {job['id']}"))}
+${' '.join(middleware.call_sync('cronjob.construct_cron_command', job.schedule.model_dump(), "root", f"midclt call cloudsync.sync {job.id}"))}
     % endfor
 
     % for job in middleware.call_sync2(middleware.services.cloud_backup.query, [["enabled", "=", True]]):

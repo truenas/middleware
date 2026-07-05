@@ -1,3 +1,6 @@
+from typing import Any
+
+from middlewared.api.current import CloudTaskAttributes, CredentialsEntry
 from middlewared.rclone.base import BaseRcloneRemote
 
 
@@ -7,5 +10,6 @@ class WebDavRcloneRemote(BaseRcloneRemote):
 
     rclone_type = "webdav"
 
-    def get_task_extra(self, task):
-        return dict(vendor=task["credentials"]["provider"]["vendor"].lower())
+    def get_task_extra(self, attributes: CloudTaskAttributes, credentials: CredentialsEntry) -> dict[str, Any]:
+        provider = self._provider_config(credentials)
+        return dict(vendor=provider["vendor"].lower())

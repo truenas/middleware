@@ -1,9 +1,15 @@
 import json
+from typing import Any
 
 import requests
 
 from middlewared.api import api_method
-from middlewared.api.current import CloudSyncOneDriveListDrivesArgs, CloudSyncOneDriveListDrivesResult
+from middlewared.api.current import (
+    CloudSyncOneDriveListDrivesArgs,
+    CloudSyncOneDriveListDrivesResult,
+    CloudTaskAttributes,
+    CredentialsEntry,
+)
 from middlewared.rclone.base import BaseRcloneRemote
 from middlewared.utils.microsoft import get_microsoft_access_token
 
@@ -26,25 +32,24 @@ class OneDriveRcloneRemote(BaseRcloneRemote):
 
     extra_methods = ["list_drives"]
 
-    def get_task_extra(self, task):
+    def get_task_extra(self, attributes: CloudTaskAttributes, credentials: CredentialsEntry) -> dict[str, Any]:
+        provider = self._provider_config(credentials)
         return {
-            "drive_type": DRIVES_TYPES.get(task["credentials"]["provider"]["drive_type"], ""),
+            "drive_type": DRIVES_TYPES.get(provider["drive_type"], ""),
             # Subject to change as Microsoft changes rate limits; please watch `forum.rclone.org`
             "checkers": "1",
             "tpslimit": "10",
         }
 
     @api_method(CloudSyncOneDriveListDrivesArgs, CloudSyncOneDriveListDrivesResult, roles=["CLOUD_SYNC_WRITE"])
-    def list_drives(self, credentials):
+    def list_drives(self, credentials: dict[str, Any]) -> list[dict[str, Any]]:
         """
         Lists all available drives and their types for given Microsoft OneDrive credentials.
         """
         self.middleware.call_sync("network.general.will_perform_activity", "cloud_sync")
 
-        if not credentials["client_id"]:
-            credentials["client_id"] = "b15665d9-eda6-4092-8539-0eec376afd59"
-        if not credentials["client_secret"]:
-            credentials["client_secret"] = "qtyfaBBYA403=unZUP40~_#"
+        client_id = credentials["client_id"] or "b15665d9-eda6-4092-8539-0eec376afd59"
+        client_secret = credentials["client_secret"] or "qtyfaBBYA403=unZUP40~_#"
 
         token = json.loads(credentials["token"])
 
@@ -55,8 +60,8 @@ class OneDriveRcloneRemote(BaseRcloneRemote):
         )
         if r.status_code == 401:
             token = get_microsoft_access_token(
-                credentials["client_id"],
-                credentials["client_secret"],
+                client_id,
+                client_secret,
                 token["refresh_token"],
                 "Files.Read Files.ReadWrite Files.Read.All Files.ReadWrite.All Sites.Read.All offline_access",
             )
@@ -67,7 +72,7 @@ class OneDriveRcloneRemote(BaseRcloneRemote):
             )
         r.raise_for_status()
 
-        def process_drive(drive):
+        def process_drive(drive: dict[str, Any]) -> dict[str, Any]:
             return {
                 "drive_type": DRIVES_TYPES_INV.get(drive["driveType"], ""),
                 "drive_id": drive["id"],
