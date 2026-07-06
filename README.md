@@ -8,3 +8,8 @@ TrueNAS Middleware Source Repo
 =============
 
 Please submit Pull Requests here for consideration to be included in the next major release of TrueNAS. To build this source repository, please refer to the instructions provided at: https://github.com/truenas/truenas-build.
+
+Reporting Security Vulnerabilities
+-------------
+
+Please do not report security vulnerabilities through public pull requests or issues. If you believe you have found a previously unknown vulnerability, please follow our responsible disclosure process described at [security.truenas.com](https://security.truenas.com/) under **"Reporting Previously Unknown Vulnerabilities (Click to expand)"**. See [SECURITY.md](SECURITY.md) for details.
