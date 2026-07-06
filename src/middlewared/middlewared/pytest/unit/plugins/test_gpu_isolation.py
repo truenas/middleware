@@ -1,7 +1,10 @@
+import logging
+
 import pytest
 
-from middlewared.pytest.unit.helpers import load_compound_service
+from middlewared.plugins.system_advanced.gpu import validate_gpu_pci_ids
 from middlewared.pytest.unit.middleware import Middleware
+from middlewared.service.context import ServiceContext
 from middlewared.service_exception import ValidationErrors
 
 AVAILABLE_GPUS = [
@@ -44,7 +47,6 @@ AVAILABLE_GPUS = [
         'available_to_host': True
     }
 ]
-ADVANCED_SVC = load_compound_service('system.advanced')
 
 
 @pytest.mark.parametrize('gpu_pci_ids,errors', [
@@ -57,7 +59,7 @@ async def test_valid_isolated_gpu(gpu_pci_ids, errors):
     m = Middleware()
     m['device.get_gpus'] = lambda *args: AVAILABLE_GPUS
 
-    system_advance_svc = ADVANCED_SVC(m)
+    context = ServiceContext(m, logging.getLogger('test'))
     verrors = ValidationErrors()
-    verrors = await system_advance_svc.validate_gpu_pci_ids(gpu_pci_ids, verrors, 'test')
+    verrors = await validate_gpu_pci_ids(context, gpu_pci_ids, verrors, 'test')
     assert [e.errmsg for e in verrors.errors] == errors

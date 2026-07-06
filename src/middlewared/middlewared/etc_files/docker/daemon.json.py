@@ -43,7 +43,7 @@ def render(service, middleware):
         )
     }
 
-    isolated = middleware.call_sync('system.advanced.config')['isolated_gpu_pci_ids']
+    isolated = middleware.call_sync2(middleware.services.system.advanced.config).isolated_gpu_pci_ids
     for gpu in filter(lambda x: x not in isolated, get_nvidia_gpus()):
         base.update({
             'runtimes': {

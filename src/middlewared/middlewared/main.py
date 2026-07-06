@@ -139,6 +139,7 @@ from middlewared.plugins.snmp import SNMPService
 from middlewared.plugins.ssh import SSHService
 from middlewared.plugins.support import SupportService
 from middlewared.plugins.sysctl import SysctlService
+from middlewared.plugins.system_advanced import SystemAdvancedService
 from middlewared.plugins.system_vendor import VendorService
 from middlewared.plugins.system_vendor.vendor import is_vendored
 from middlewared.plugins.truecommand import TruecommandService
@@ -244,6 +245,7 @@ class SharingServicesContainer(BaseServiceContainer):
 class SystemServicesContainer(BaseServiceContainer):
     def __init__(self, middleware: "Middleware"):
         super().__init__(middleware)
+        self.advanced = SystemAdvancedService(middleware)
         self.ntpserver = NTPServerService(middleware)
         self.security = SystemSecurityService(middleware)
         self.vendor = VendorService(middleware)

@@ -32,9 +32,9 @@ filter f_tnremote_f_is_info { level(info); };
 filter f_tnremote_f_debug { level(debug..emerg); };
 
 filter f_tnremote {
-    filter(f_tnremote_${adv_conf["sysloglevel"].lower()})
+    filter(f_tnremote_${adv_conf.sysloglevel.lower()})
 ## syslog_audit is associated with remote logging only
-% if not adv_conf['syslog_audit']:
+% if not adv_conf.syslog_audit:
     and not filter(f_tnaudit_all)
 % endif
 };

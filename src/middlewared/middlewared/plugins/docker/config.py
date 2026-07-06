@@ -48,7 +48,7 @@ class DockerConfigServicePart(ConfigServicePart[DockerEntry]):
 
     async def extend(self, data: dict[str, Any]) -> dict[str, Any]:
         data['dataset'] = applications_ds_name(data['pool']) if data.get('pool') else None
-        data['nvidia'] = (await self.middleware.call('system.advanced.config'))['nvidia']
+        data['nvidia'] = (await self.call2(self.s.system.advanced.config)).nvidia
         data['address_pools'] = [DockerAddressPool.model_validate(p) for p in data.get('address_pools', [])]
         data['registry_mirrors'] = [DockerRegistryMirror.model_validate(m) for m in data.get('registry_mirrors', [])]
         return data
@@ -154,7 +154,7 @@ class DockerConfigServicePart(ConfigServicePart[DockerEntry]):
 
         if nvidia_changed:
             job.set_progress(97, 'Applying requested nvidia configuration changes')
-            await self.middleware.call('system.advanced.update', {'nvidia': new_nvidia})
+            await self.call2(self.s.system.advanced.update, {'nvidia': new_nvidia})
 
         job.set_progress(100, 'Requested configuration applied')
         return await self.config()

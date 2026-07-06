@@ -225,7 +225,7 @@ class DeviceService(Service):
     @private
     def get_gpus(self):
         gpus = get_gpus()
-        to_isolate_gpus = self.middleware.call_sync('system.advanced.config')['isolated_gpu_pci_ids']
+        to_isolate_gpus = self.call_sync2(self.s.system.advanced.config).isolated_gpu_pci_ids
         for gpu in gpus:
             gpu['available_to_host'] = gpu['addr']['pci_slot'] not in to_isolate_gpus
         return gpus

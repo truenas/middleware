@@ -512,7 +512,7 @@ class PoolService(CRUDService):
 
         disks, vdevs = await self._process_topology('pool_create', data, None, data['all_sed'])
 
-        if osize := (await self.middleware.call('system.advanced.config'))['overprovision']:
+        if osize := (await self.call2(self.s.system.advanced.config)).overprovision:
             if log_disks := {disk: osize
                              for disk in sum([vdev['disks'] for vdev in data['topology'].get('log', [])], [])}:
                 # will log errors if there are any so it won't crash here (this matches CORE behavior)

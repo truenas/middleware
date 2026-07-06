@@ -10,6 +10,7 @@ import truenas_pylicensed
 
 from middlewared.api import api_method
 from middlewared.api.current import (
+    SystemAdvancedUpdate,
     SystemFeatureEnabledArgs,
     SystemFeatureEnabledResult,
     SystemLicenseUpdateArgs,
@@ -182,7 +183,7 @@ class SystemService(Service):
 
 async def hook_license_update(middleware, had_license, *args, **kwargs):
     if not had_license and await middleware.call("system.product_type") == "ENTERPRISE":
-        await middleware.call("system.advanced.update", {"autotune": True})
+        await middleware.call2(middleware.services.system.advanced.update, SystemAdvancedUpdate(autotune=True))
 
 
 async def setup(middleware):

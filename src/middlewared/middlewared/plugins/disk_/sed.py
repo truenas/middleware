@@ -88,7 +88,7 @@ class DiskService(Service):
         verrors.check()
 
         if to_setup_sed_disks:
-            global_sed_password = await self.middleware.call('system.advanced.sed_global_password')
+            global_sed_password = (await self.call2(self.s.system.advanced.sed_global_password)).get_secret_value()
             if not global_sed_password:
                 verrors.add(
                     schema_name,
@@ -167,9 +167,9 @@ class DiskService(Service):
         Setup specified ``options.name`` SED disk.
         """
         disk, verrors = await self.common_sed_validation('disk_sed_setup', options, 'UNINITIALIZED')
-        password = options.get('password') or disk['passwd'] or await self.middleware.call(
-            'system.advanced.sed_global_password'
-        )
+        password = options.get('password') or disk['passwd'] or (
+            await self.call2(self.s.system.advanced.sed_global_password)
+        ).get_secret_value()
         if not password:
             verrors.add('disk_sed_setup.password', 'Please specify a password to be used for setting up SED disk')
 
@@ -195,7 +195,7 @@ class DiskService(Service):
         Unlock specified ``options.name`` SED disk.
         """
         disk, verrors = await self.common_sed_validation('disk_sed_unlock', options, 'LOCKED')
-        global_sed_password = await self.middleware.call('system.advanced.sed_global_password')
+        global_sed_password = (await self.call2(self.s.system.advanced.sed_global_password)).get_secret_value()
         password = options.get('password') or disk['passwd'] or global_sed_password
         if not password:
             verrors.add(
@@ -248,7 +248,7 @@ class DiskService(Service):
 
     @private
     async def map_disks_to_passwd(self, disk_name=None):
-        global_passwd = await self.middleware.call('system.advanced.sed_global_password')
+        global_passwd = (await self.call2(self.s.system.advanced.sed_global_password)).get_secret_value()
         disks = []
         filters = [] if disk_name is None else [('real_name', '=', disk_name)]
         for disk in await self.middleware.call(

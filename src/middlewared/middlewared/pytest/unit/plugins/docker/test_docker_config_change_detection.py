@@ -2,7 +2,13 @@ import logging
 
 import pytest
 
-from middlewared.api.current import DockerAddressPool, DockerEntry, DockerRegistryMirror, DockerUpdate
+from middlewared.api.current import (
+    DockerAddressPool,
+    DockerEntry,
+    DockerRegistryMirror,
+    DockerUpdate,
+    SystemAdvancedEntry,
+)
 from middlewared.plugins.docker.config import DockerConfigServicePart
 from middlewared.pytest.unit.middleware import Middleware
 from middlewared.service.context import ServiceContext
@@ -26,7 +32,7 @@ DB_DEFAULTS = dict(
 @pytest.mark.asyncio
 async def test_extend_constructs_typed_address_pools():
     m = Middleware()
-    m['system.advanced.config'] = lambda *a: {'nvidia': False}
+    m.services.system.advanced.config = lambda *a: SystemAdvancedEntry.model_construct(nvidia=False)
     svc = make_svc_part(m)
 
     data = dict(DB_DEFAULTS)
@@ -37,7 +43,7 @@ async def test_extend_constructs_typed_address_pools():
 @pytest.mark.asyncio
 async def test_extend_constructs_typed_registry_mirrors():
     m = Middleware()
-    m['system.advanced.config'] = lambda *a: {'nvidia': False}
+    m.services.system.advanced.config = lambda *a: SystemAdvancedEntry.model_construct(nvidia=False)
     svc = make_svc_part(m)
 
     data = dict(DB_DEFAULTS, registry_mirrors=[
@@ -51,7 +57,7 @@ async def test_extend_constructs_typed_registry_mirrors():
 async def test_address_pools_equal_after_updated_with_same_values():
     """old_config (from extend+model_construct) and new_config (from updated with DockerUpdate) compare equal."""
     m = Middleware()
-    m['system.advanced.config'] = lambda *a: {'nvidia': False}
+    m.services.system.advanced.config = lambda *a: SystemAdvancedEntry.model_construct(nvidia=False)
     svc = make_svc_part(m)
 
     data = dict(DB_DEFAULTS)
@@ -70,7 +76,7 @@ async def test_address_pools_equal_after_updated_with_same_values():
 @pytest.mark.asyncio
 async def test_address_pools_not_equal_after_updated_with_different_values():
     m = Middleware()
-    m['system.advanced.config'] = lambda *a: {'nvidia': False}
+    m.services.system.advanced.config = lambda *a: SystemAdvancedEntry.model_construct(nvidia=False)
     svc = make_svc_part(m)
 
     data = dict(DB_DEFAULTS)
@@ -88,7 +94,7 @@ async def test_address_pools_not_equal_after_updated_with_different_values():
 async def test_address_pool_base_normalized_to_canonical():
     """A base with host bits set is stored/returned in canonical network form (172.17.0.0/12 -> 172.16.0.0/12)."""
     m = Middleware()
-    m['system.advanced.config'] = lambda *a: {'nvidia': False}
+    m.services.system.advanced.config = lambda *a: SystemAdvancedEntry.model_construct(nvidia=False)
     svc = make_svc_part(m)
 
     # read path (extend / model_validate of stored value)
@@ -108,7 +114,7 @@ async def test_no_spurious_address_pools_change_on_noncanonical_resubmit():
     re-submitted as its non-canonical equivalent 172.17.0.0/12 must compare equal.
     """
     m = Middleware()
-    m['system.advanced.config'] = lambda *a: {'nvidia': False}
+    m.services.system.advanced.config = lambda *a: SystemAdvancedEntry.model_construct(nvidia=False)
     svc = make_svc_part(m)
 
     stored = dict(DB_DEFAULTS, address_pools=[
@@ -128,7 +134,7 @@ async def test_no_spurious_address_pools_change_on_noncanonical_resubmit():
 @pytest.mark.asyncio
 async def test_registry_mirrors_equal_after_updated_with_same_values():
     m = Middleware()
-    m['system.advanced.config'] = lambda *a: {'nvidia': False}
+    m.services.system.advanced.config = lambda *a: SystemAdvancedEntry.model_construct(nvidia=False)
     svc = make_svc_part(m)
 
     mirrors = [{'url': 'https://mirror.example.com', 'insecure': False}]
@@ -144,7 +150,7 @@ async def test_registry_mirrors_equal_after_updated_with_same_values():
 @pytest.mark.asyncio
 async def test_registry_mirrors_not_equal_after_updated_with_different_values():
     m = Middleware()
-    m['system.advanced.config'] = lambda *a: {'nvidia': False}
+    m.services.system.advanced.config = lambda *a: SystemAdvancedEntry.model_construct(nvidia=False)
     svc = make_svc_part(m)
 
     data = dict(DB_DEFAULTS, registry_mirrors=[

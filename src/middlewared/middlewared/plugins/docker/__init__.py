@@ -150,7 +150,7 @@ class DockerService(GenericConfigService[DockerEntry]):
     @api_method(DockerNvidiaPresentArgs, DockerNvidiaPresentResult, roles=['DOCKER_READ'], check_annotations=True)
     async def nvidia_present(self) -> bool:
         """Returns whether a non-isolated NVIDIA GPU is present in the system."""
-        return await self.middleware.call('system.advanced.nvidia_present')  # type: ignore[no-any-return]
+        return await self.call2(self.s.system.advanced.nvidia_present)
 
     @api_method(
         DockerRestoreBackupArgs, DockerRestoreBackupResult,
