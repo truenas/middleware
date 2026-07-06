@@ -76,7 +76,7 @@ def _add_system_user() -> None:
 
 def add_snmp_user(snmp: dict[str, Any]) -> None:
     """
-    Build the createUser message and add it to the private config file.
+    Create the SNMPv3 user using net-snmp tooling.
     NOTE: The SNMP daemon should be stopped before calling this routine and
             the new user will be available after starting SNMP.
     """
@@ -84,21 +84,26 @@ def add_snmp_user(snmp: dict[str, Any]) -> None:
     if not os.path.exists(SNMPSystem.PRIV_CONF):
         return
 
-    # BuilSNMPSystem. 'createUser' message
-    create_v3_user = f"createUser {snmp['v3_username']} "
-
-    user_pwd = snmp['v3_password']
-    create_v3_user += f'{snmp["v3_authtype"]} "{user_pwd}" '
+    cmd = [
+        'net-snmp-create-v3-user',
+        '-ro',
+        '-a', snmp['v3_authtype'],
+        '-A', snmp['v3_password'],
+    ]
 
     if snmp.get('v3_privproto'):
-        user_phrase = snmp['v3_privpassphrase']
-        create_v3_user += f'{snmp["v3_privproto"]} "{user_phrase}" '
+        cmd.extend([
+            '-x', snmp['v3_privproto'],
+            '-X', snmp['v3_privpassphrase'],
+        ])
 
-    create_v3_user += '\n'
+    cmd.append(snmp['v3_username'])
 
-    # Example: createUser newPrivUser MD5 "abcd1234" DES "abcd1234"
-    with open(SNMPSystem.PRIV_CONF, 'a') as f:
-        f.write(create_v3_user)
+    result = subprocess.run(cmd, capture_output=True, text=True, check=False)
+    if result.returncode != 0:
+        raise CallError(
+            f'Failed to create SNMPv3 user {snmp["v3_username"]}: {result.stderr.strip()}'
+        )
 
 
 def delete_snmp_user(user: str) -> None:
