@@ -101,10 +101,14 @@ class ReplicationPeriodicSnapshotTaskModel(sa.Model):
     task_id = sa.Column(sa.ForeignKey('storage_task.id', ondelete='CASCADE'), index=True)
 
 
-class ReplicationPairArgs(BaseModel):
+class ReplicationPairData(BaseModel):
     hostname: str
     public_key: str = Field(alias="public-key")
-    user: str | None
+    user: str | None = None
+
+
+class ReplicationPairArgs(BaseModel):
+    data: ReplicationPairData
 
 
 class ReplicationPairResult(BaseModel):
