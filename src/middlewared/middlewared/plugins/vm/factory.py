@@ -6,6 +6,7 @@ from truenas_pylibvirt.device import (
     CDROMDevice,
     DiskStorageDevice,
     DisplayDevice,
+    ISCSIDiskDevice,
     NICDevice,
     PCIDevice,
     RawStorageDevice,
@@ -16,6 +17,7 @@ from middlewared.api.current import (
     VMCDROMDevice,
     VMDiskDevice,
     VMDisplayDevice,
+    VMISCSIDiskDevice,
     VMNICDevice,
     VMPCIDevice,
     VMRAWDevice,
@@ -24,6 +26,7 @@ from middlewared.api.current import (
 from middlewared.service_exception import ValidationErrors
 from middlewared.utils.crypto import generate_string
 from middlewared.utils.libvirt.cdrom import CDROMDelegate
+from middlewared.utils.libvirt.delegate import DeviceDelegate
 from middlewared.utils.libvirt.display import DisplayDelegate
 from middlewared.utils.libvirt.nic import NICDelegate
 from middlewared.utils.libvirt.pci import PCIDelegate
@@ -148,6 +151,13 @@ class VMUSBDelegate(USBDelegate):
         return VMUSBDevice
 
 
+class VMISCSIDiskDelegate(DeviceDelegate):
+
+    @property
+    def schema_model(self) -> type[VMISCSIDiskDevice]:
+        return VMISCSIDiskDevice
+
+
 async def setup(middleware: Middleware) -> None:
     device_factory = middleware.services.vm.device.device_factory
     for device_key, device_klass, delegate_klass in (
@@ -158,5 +168,6 @@ async def setup(middleware: Middleware) -> None:
         ('USB', USBDevice, VMUSBDelegate),
         ('PCI', PCIDevice, VMPCIDelegate),
         ('DISPLAY', DisplayDevice, VMDisplayDelegate),
+        ('ISCSI_DISK', ISCSIDiskDevice, VMISCSIDiskDelegate),
     ):
         device_factory.register(device_key, device_klass, delegate_klass)
