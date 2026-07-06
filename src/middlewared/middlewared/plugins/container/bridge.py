@@ -132,9 +132,35 @@ def _start_dnsmasq(ctx: ServiceContext, dnsmasq_args: list[str]) -> None:
         )
 
 
-def _configure_nft(ipv4_masquerade: str, ipv6_masquerade: str) -> None:
-    with open("/proc/sys/net/ipv4/ip_forward", "w") as f:
+def _enable_ipv6_forwarding() -> None:
+    # Enabling forwarding makes the kernel ignore router advertisements on any
+    # interface still at accept_ra=1, which can strip a SLAAC-derived address
+    # from the host's own uplink. Bump those interfaces to accept_ra=2 first so
+    # the host keeps honouring RAs while forwarding is on. Leave 0 (RA disabled
+    # on purpose) and 2 (already safe) untouched.
+    conf_dir = "/proc/sys/net/ipv6/conf"
+    with os.scandir(conf_dir) as it:
+        for entry in it:
+            accept_ra_path = os.path.join(entry.path, "accept_ra")
+            try:
+                with open(accept_ra_path) as f:
+                    current = f.read().strip()
+                if current == "1":
+                    with open(accept_ra_path, "w") as f:
+                        f.write("2\n")
+            except (FileNotFoundError, PermissionError):
+                continue
+
+    with open(f"{conf_dir}/all/forwarding", "w") as f:
         f.write("1\n")
+
+
+def _configure_nft(ipv4_masquerade: str, ipv6_masquerade: str) -> None:
+    if ipv4_masquerade:
+        with open("/proc/sys/net/ipv4/ip_forward", "w") as f:
+            f.write("1\n")
+    if ipv6_masquerade:
+        _enable_ipv6_forwarding()
 
     icmp_type = "destination-unreachable, time-exceeded, parameter-problem"
     icmpv6_type = (
