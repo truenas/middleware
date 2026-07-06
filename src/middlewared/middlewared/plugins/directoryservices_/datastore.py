@@ -477,6 +477,15 @@ class DirectoryServices(ConfigService):
 
     @private
     def validate_ipa(self, old, new, verrors, revert):
+        if not new['enable_dns_updates']:
+            verrors.add(
+                f'{SCHEMA}.enable_dns_updates',
+                'DNS updates are currently required for the IPA directory service in order to properly support '
+                'Kerberized services. TrueNAS must be able to register its host record in the IPA-managed DNS so '
+                'that the SMB and NFS service principals can be created.'
+            )
+            return
+
         validate_ldap_credential(SCHEMA, new, verrors, revert)
         self.validate_dns(old, new, verrors, revert)
 
