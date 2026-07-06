@@ -81,6 +81,23 @@ class IPAJoinMixin:
         self.middleware.call_sync('directoryservices.reset')
         self._ipa_remove_kerberos_cert_config(job, ds_config)
 
+    def _ipa_rollback_join(self, job: Job | None, ds_config: dict) -> None:
+        """ Undo the local configuration written during a partial IPA join (host keytab,
+        kerberos realm, CA certificate, and the on-disk IPA config files). Without this a
+        failed join leaves behind the host keytab and realm, which would cause the next
+        attempt to short-circuit as already-joined and never retry registration. The
+        remote IPA host account, if it was created, is reused via ipa-join re-enrollment
+        on the next attempt. """
+        self._ipa_remove_kerberos_cert_config(job, ds_config)
+        for p in (
+            ipa_constants.IPAPath.DEFAULTCONF.path,
+            ipa_constants.IPAPath.CACERT.path
+        ):
+            try:
+                os.remove(p)
+            except FileNotFoundError:
+                pass
+
     def _ipa_leave(self, job: Job, ds_config: dict):
         """
         Leave the IPA domain
@@ -467,6 +484,21 @@ class IPAJoinMixin:
         # resp includes `cacert` for domain and `keytab` for our host principal to use
         # in future.
 
+        # The host account now exists in the IPA domain. Everything below writes local
+        # configuration and registers the host and its services with the domain; if any
+        # of it fails, roll the local state back so that a later attempt starts clean
+        # instead of short-circuiting as already-joined.
+        try:
+            self._ipa_configure_and_register(job, ds_config, resp)
+        except Exception:
+            self._ipa_rollback_join(job, ds_config)
+            raise
+
+    def _ipa_configure_and_register(self, job: Job, ds_config: dict, resp: dict):
+        """ Store the joined IPA domain's details on TrueNAS (host keytab, realm, CA
+        cert), obtain our host kerberos credential, then register DNS and the SMB / NFS
+        service principals and activate the service. On failure the caller rolls back the
+        partial configuration via _ipa_rollback_join. """
         # insert the IPA host principal keytab into our database
         job.set_progress(description='Updating TrueNAS configuration with IPA domain details.')
         self._ipa_insert_keytab(ipa_constants.IpaConfigName.IPA_HOST_KEYTAB, resp['keytab'])
@@ -539,25 +571,12 @@ class IPAJoinMixin:
         except KRB5Error as err:
             match err.krb5_code:
                 case KRB5ErrCode.KRB5_REALM_UNKNOWN:
-                    # DNS is broken in the IPA domain and so we need to roll back our config
-                    # changes.
-
+                    # DNS is likely broken in the IPA domain. The partial join is rolled
+                    # back by the caller; log a hint about the probable cause here.
                     self.logger.warning(
                         'Unable to resolve kerberos realm via DNS. This may indicate misconfigured '
                         'nameservers on the TrueNAS server or a misconfigured IPA domain.', exc_info=True
                     )
-
-                    self._ipa_remove_kerberos_cert_config(None, ds_config)
-
-                    # remove any configuration files we have written
-                    for p in (
-                        ipa_constants.IPAPath.DEFAULTCONF.path,
-                        ipa_constants.IPAPath.CACERT.path
-                    ):
-                        try:
-                            os.remove(p)
-                        except FileNotFoundError:
-                            pass
                 case _:
                     # Log the complete error message so that we have opportunity to improve error
                     # handling for weird kerberos errors.
