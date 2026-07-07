@@ -269,6 +269,13 @@ def test__with_recyclebin_ad(nfsacl_dataset, enabled):
         assert not any([k.startswith('recycle') for k in conf.keys()])
 
 
+def test__recycle_module_name():
+    # Middleware must emit the TrueNAS fork, otherwise shares silently fall
+    # back to upstream's recycle without the per-user ACL'd bins. The
+    # parametric options are still read under the recycle: prefix, though.
+    assert TrueNASVfsObjects.RECYCLE == 'truenas_recycle'
+
+
 @pytest.mark.parametrize('enabled', [True, False])
 def test__durablehandle(nfsacl_dataset, enabled):
     conf = generate_smb_share_conf_dict(DSType.AD, DEFAULT_SHARE | {

@@ -65,7 +65,7 @@ class TrueNASVfsObjects(enum.StrEnum):
     SHADOW_COPY_ZFS = 'shadow_copy_zfs'
     IXNAS = 'ixnas'
     WINMSA = 'winmsa'
-    RECYCLE = 'recycle'
+    RECYCLE = 'truenas_recycle'
     ZFS_CORE = 'zfs_core'
     IO_URING = 'io_uring'
     WORM = 'worm'
@@ -230,6 +230,8 @@ def __apply_purpose_and_options(
 
             if opts[share_field.RECYCLE]:
                 vfs_objects.add(TrueNASVfsObjects.RECYCLE)
+                # The Samba module is forked as truenas_recycle, but its parametric
+                # options are still read under the recycle: prefix. Do not rename.
                 out.update({
                     'recycle:repository': '.recycle/%D/%U' if ds_type is DSType.AD else '.recycle/%U',
                     'recycle:keeptree': True,
