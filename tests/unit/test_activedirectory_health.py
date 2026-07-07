@@ -3,7 +3,7 @@ import logging
 import pytest
 import wbclient
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 from middlewared.plugins.directoryservices_ import (
     activedirectory_health_mixin as ad_health,
@@ -53,6 +53,7 @@ class _ADHealthHarness(ADHealthMixin):
 
     def __init__(self):
         self.middleware = MagicMock()
+        self.s = MagicMock()
         self.logger = logging.getLogger("test_activedirectory_health")
 
 
@@ -84,7 +85,15 @@ def harness(saf_cache_file):
             case _:
                 raise AssertionError(f"unexpected middleware call: {name}")
 
+    def call_sync2(method, *args, **kwargs):
+        match method:
+            case h.s.service.started:
+                return True
+            case _:
+                raise AssertionError(f"unexpected middleware call: {method}")
+
     h.middleware.call_sync.side_effect = call_sync
+    h.call_sync2 = Mock(side_effect=call_sync2)
     return h
 
 
