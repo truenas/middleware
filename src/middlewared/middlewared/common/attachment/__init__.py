@@ -71,20 +71,33 @@ class FSAttachmentDelegate(ServiceChangeMixin):
     async def stop(self, attachments):
         pass
 
-    async def start_on_unlock(self, dataset, mountpoint):
+    async def start_on_unlock(self, datasets):
         """
-        Bring this delegate's attachments back up after `dataset` is unlocked.
+        Bring this delegate's attachments back up after datasets are unlocked.
 
-        :param dataset: the dataset dict that was unlocked
-        :param mountpoint: its mountpoint, or `None` for a zvol
+        :param datasets: list of `(dataset, mountpoint)` tuples, one per encryption root that was
+            actually unlocked. `dataset` is the dataset dict; `mountpoint` is where its filesystem
+            lives (for a zvol this is the fabricated `/mnt/<name>` path, and it is `None` when the
+            dataset has a `legacy` mountpoint).
 
         The default implementation starts the share/service style attachments that the generic
         `query`/`start` contract describes. Stateful workloads (VMs, containers) whose `query`
         only reports already-running items override this to honor their autostart configuration.
+        (Apps are a deliberate exception: they have no autostart flag and are never started
+        automatically when a path becomes available.)
         """
-        if mountpoint:
-            if attachments := await self.query(mountpoint, True, {'locked': False}):
-                await self.start(attachments)
+        attachments = []
+        for dataset, mountpoint in datasets:
+            if not mountpoint:
+                continue
+            # A nested encryption root can be unlocked along with its parent, so the same
+            # attachment may be reported for more than one mountpoint
+            for attachment in await self.query(mountpoint, True, {'locked': False}):
+                if attachment not in attachments:
+                    attachments.append(attachment)
+
+        if attachments:
+            await self.start(attachments)
 
     async def disable(self, attachments):
         """

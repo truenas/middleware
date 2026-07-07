@@ -44,6 +44,11 @@ class LXCFSAttachmentDelegate(FSAttachmentDelegate):
     async def toggle(self, attachments, enabled):
         pass
 
+    async def start_on_unlock(self, datasets):
+        # `start` is a no-op for this delegate, so don't waste the base implementation's
+        # `container.query` on it
+        pass
+
 
 class ContainerFSAttachmentDelegate(FSAttachmentDelegate):
 
@@ -51,41 +56,45 @@ class ContainerFSAttachmentDelegate(FSAttachmentDelegate):
     title = 'CONTAINER'
 
     async def query(self, path, enabled, options=None):
-        containers_attached = []
-        # Track containers to skip during attachment queries:
+        # Select the candidate containers by state:
         # - enabled=True: looking for active attachments, skip inactive containers
         # - enabled=False: looking for inactive attachments, skip active containers
-        # Also tracks containers already found via root dataset check to avoid duplicates when checking devices
-        ignored_or_seen_containers = set()
+        candidates = []
         for container in await self.middleware.call('container.query'):
             state = container['status']['state']
             if (enabled and state not in ACTIVE_STATES) or (enabled is False and state in ACTIVE_STATES):
-                ignored_or_seen_containers.add(container['id'])
                 continue
+            candidates.append(container)
 
-            if await self.middleware.call('filesystem.is_child', os.path.join('/mnt', container['dataset']), path):
-                containers_attached.append({'id': container['id'], 'name': container['name']})
-                ignored_or_seen_containers.add(container['id'])
+        return [
+            {'id': container['id'], 'name': container['name']}
+            async for container in self.containers_on_paths(candidates, [path])
+        ]
 
-        for device in await self.middleware.call('datastore.query', 'container.device'):
-            if (
-                device['attributes']['dtype'] != 'FILESYSTEM'
-                or device['container']['id'] in ignored_or_seen_containers
-            ):
+    async def containers_on_paths(self, containers, paths):
+        # Returns the subset of `containers` (as returned by `container.query`) whose root dataset,
+        # or any FILESYSTEM device source, lives on or under any of `paths`.
+        for container in containers:
+            if await self.container_on_paths(container, paths):
+                yield container
+
+    async def container_on_paths(self, container, paths):
+        root = os.path.join('/mnt', container['dataset'])
+        for path in paths:
+            if await self.middleware.call('filesystem.is_child', root, path):
+                return True
+
+        for device in container['devices']:
+            if device['attributes']['dtype'] != 'FILESYSTEM':
                 continue
-
             source = device['attributes'].get('source')
             if not source:
                 continue
+            for path in paths:
+                if await self.middleware.call('filesystem.is_child', source, path):
+                    return True
 
-            if await self.middleware.call('filesystem.is_child', source, path):
-                containers_attached.append({
-                    'id': device['container']['id'],
-                    'name': device['container']['name'],
-                })
-                ignored_or_seen_containers.add(device['container']['id'])
-
-        return containers_attached
+        return False
 
     async def delete(self, attachments):
         for attachment in attachments:
@@ -116,51 +125,45 @@ class ContainerFSAttachmentDelegate(FSAttachmentDelegate):
             except Exception:
                 self.middleware.logger.warning('Unable to start %r container', attachment['id'])
 
-    async def start_on_unlock(self, dataset, mountpoint):
+    async def start_on_unlock(self, datasets):
         # The generic start path cannot help here: it would call query(enabled=True), which only
         # reports already-active containers, so an autostart container that is stopped because its
         # pool was locked would never be restarted. Match autostart containers to the unlocked
-        # dataset ourselves and (re)start them.
-        if dataset['type'] != 'FILESYSTEM' or not mountpoint:
+        # datasets ourselves and (re)start them.
+        paths = [
+            mountpoint for dataset, mountpoint in datasets
+            if dataset['type'] == 'FILESYSTEM' and mountpoint
+        ]
+        if not paths:
             return
 
-        for container in await self.autostart_containers_on_path(mountpoint):
-            if container['status']['state'] in ACTIVE_STATES:
+        containers = await self.middleware.call(
+            'container.query', [('autostart', '=', True)], {'force_sql_filters': True}
+        )
+        to_start = []
+        async for container in self.containers_on_paths(containers, paths):
+            try:
+                # Use a fresh state for the restart decision: the query snapshot may have gone stale
+                # while earlier containers in this loop were being restarted (or a container may have
+                # been deleted since)
+                state = (await self.middleware.call('container.get_instance', container['id']))['status']['state']
+            except Exception:
+                self.middleware.logger.warning('Unable to query %r container after unlock', container['id'])
+                continue
+
+            if state == 'RUNNING':
                 try:
                     await (
-                        await self.middleware.call('container.stop', container['id'], {'force': True})
+                        await self.middleware.call('container.stop', container['id'], {'force_after_timeout': True})
                     ).wait(raise_error=True)
                 except Exception:
                     self.middleware.logger.warning('Unable to stop %r container', container['id'])
-            try:
-                await self.middleware.call('container.start', container['id'])
-            except Exception:
-                self.middleware.logger.warning('Unable to start %r container after unlock', container['id'])
-
-    async def autostart_containers_on_path(self, path):
-        autostart_containers = {
-            container['id']: container
-            for container in await self.middleware.call('container.query', [('autostart', '=', True)])
-        }
-        if not autostart_containers:
-            return []
-
-        matched = {}
-        for container_id, container in autostart_containers.items():
-            if await self.middleware.call('filesystem.is_child', os.path.join('/mnt', container['dataset']), path):
-                matched[container_id] = container
-
-        for device in await self.middleware.call('datastore.query', 'container.device'):
-            container_id = device['container']['id']
-            if container_id in matched or container_id not in autostart_containers:
+            elif state in ACTIVE_STATES:
+                # SUSPENDED: don't discard the paused state just to restart the container
                 continue
-            if device['attributes']['dtype'] != 'FILESYSTEM':
-                continue
-            source = device['attributes'].get('source')
-            if source and await self.middleware.call('filesystem.is_child', source, path):
-                matched[container_id] = autostart_containers[container_id]
+            to_start.append(container)
 
-        return list(matched.values())
+        await self.start(to_start)
 
 
 async def setup(middleware):
