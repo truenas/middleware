@@ -48,6 +48,7 @@ class KernelDistributedLockManagerService(Service):
     SPACES_DIR = CLUSTER_DIR + '/spaces'
     COMMS_DIR = CLUSTER_DIR + '/comms'
     CLUSTER_NAME = "HA"
+    SCAN_SECS = "30"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -68,6 +69,8 @@ class KernelDistributedLockManagerService(Service):
                 if d == KernelDistributedLockManagerService.CLUSTER_DIR:
                     with open(f'{d}/cluster_name', 'w') as f:
                         f.write(name)
+                    with open(f'{d}/scan_secs', 'w') as f:
+                        f.write(KernelDistributedLockManagerService.SCAN_SECS)
 
     def comms_add_node(self, nodeid, addr, local, port=0, mark=None):
         # Create comms directory for this node if necessary
