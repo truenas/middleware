@@ -42,6 +42,7 @@ PACKAGES=(
     libiscsi-dev
 )
 PIP_PACKAGES=(
+    coverage
     types-boto3
     types-boto3[s3]
     # linting
