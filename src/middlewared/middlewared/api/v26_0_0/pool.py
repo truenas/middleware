@@ -277,6 +277,16 @@ class PoolCreate(BaseModel):
         description="Whether to allow disks with duplicate serial numbers in the pool.",
     )
     all_sed: bool = Field(default=False, description="When set, all disks in the pool must be SED based.")
+    force_topology: bool = Field(
+        default=False,
+        description=(
+            "Bypass topology policy validation. Allows data vdevs that differ in type or width from "
+            "the rest of the pool, RAIDZ/mirror vdevs wider than the recommended maximum, and special "
+            "or dedup vdevs whose redundancy does not match the data vdevs. Structural requirements "
+            "(minimum disks per vdev type, dRAID configuration) still apply. This option is not "
+            "permitted on Enterprise-licensed systems."
+        ),
+    )
 
 
 class PoolDetachOptions(BaseModel):
