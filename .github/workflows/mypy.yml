@@ -32,6 +32,7 @@ jobs:
             middlewared/plugins/app_registry/ \
             middlewared/plugins/apps/ \
             middlewared/plugins/apps_images/ \
+            middlewared/plugins/boot_environment/ \
             middlewared/plugins/catalog/ \
             middlewared/plugins/cloud_backup/ \
             middlewared/plugins/container/ \

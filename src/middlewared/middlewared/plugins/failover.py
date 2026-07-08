@@ -734,8 +734,8 @@ class FailoverService(ConfigService):
                 bootenv_name = manifest['version'].replace('+', '-')
 
             existing_bes = set()
-            for i in self.middleware.call_sync('boot.environment.query'):
-                existing_bes.add(i['id'])
+            for i in self.call_sync2(self.s.boot.environment.query):
+                existing_bes.add(i.id)
 
             try:
                 for i in self.middleware.call_sync(

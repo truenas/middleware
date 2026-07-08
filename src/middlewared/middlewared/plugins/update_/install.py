@@ -9,7 +9,7 @@ import subprocess
 import time
 from typing import Any, Callable
 
-from middlewared.api.current import ZFSResourceQuery
+from middlewared.api.current import BootEnvironmentDestroy, QueryOptions, ZFSResourceQuery
 from middlewared.service import CallError, ServiceContext
 from middlewared.utils.size import format_size
 
@@ -124,15 +124,13 @@ def ensure_free_space(context: ServiceContext, pool_name: str, size: int) -> Non
         ["activated", "=", False],
     ]
     # ascending order (i.e. oldest comes first)
-    opts = {"order_by": ["created"]}
-    for be in context.middleware.call_sync(
-        "boot.environment.query", filters, opts
-    ):
+    opts = QueryOptions(order_by=["created"])
+    for be in context.call_sync2(context.s.boot.environment.query, filters, opts):
         space_left_before_prune = space_left
-        logger.info("Pruning %r", be["id"])
-        context.middleware.call_sync("boot.environment.destroy", {"id": be["id"]})
+        logger.info("Pruning %r", be.id)
+        context.call_sync2(context.s.boot.environment.destroy, BootEnvironmentDestroy(id=be.id))
 
-        be_size = be["used_bytes"]
+        be_size = be.used_bytes
         for i in range(10):
             space_left = _space_left(context, pool_name)
             if space_left > size:
