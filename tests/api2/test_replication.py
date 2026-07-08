@@ -6,10 +6,12 @@ import pytest
 
 from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.keychain import localhost_ssh_credentials
-from middlewared.test.integration.assets.pool import dataset
+from middlewared.test.integration.assets.pool import another_pool, dataset
 from middlewared.test.integration.assets.replication import replication_task
 from middlewared.test.integration.assets.snapshot_task import snapshot_task
 from middlewared.test.integration.utils import call, pool, ssh
+
+from truenas_api_client import ClientException
 
 
 BASE_REPLICATION = {
@@ -155,6 +157,73 @@ def periodic_snapshot_tasks():
     (dict(source_datasets=["tank/data"], periodic_snapshot_tasks=["data-recursive", "data-work-nonrecursive"],
           replicate=True, recursive=True, properties=True),
      "periodic_snapshot_tasks.1"),
+
+    # Transport/netcat validation for non-netcat (LOCAL) transport
+    # netcat_active_side has no sense for non-netcat transport
+    (dict(also_include_naming_schema=["snap-%Y%m%d-%H%M-1w"], netcat_active_side="LOCAL"), "netcat_active_side"),
+    # netcat port fields have no sense for non-netcat transport
+    (dict(also_include_naming_schema=["snap-%Y%m%d-%H%M-1w"], netcat_active_side_port_min=1024),
+     "netcat_active_side_port_min"),
+    # Remote credentials have no sense for local replication
+    (dict(also_include_naming_schema=["snap-%Y%m%d-%H%M-1w"], ssh_credentials=True), "ssh_credentials"),
+    # Compression has no sense for local replication
+    (dict(also_include_naming_schema=["snap-%Y%m%d-%H%M-1w"], compression="LZ4"), "compression"),
+    # Speed limit has no sense for local replication
+    (dict(also_include_naming_schema=["snap-%Y%m%d-%H%M-1w"], speed_limit=1024), "speed_limit"),
+
+    # Automatic pull replication must have a schedule
+    (dict(direction="PULL", naming_schema=["snap-%Y%m%d-%H%M-1w"], auto=True), "auto"),
+
+    # Full filesystem replication (replicate) requirements
+    # replicate requires recursive
+    (dict(source_datasets=["tank/data"], periodic_snapshot_tasks=["data-recursive"], replicate=True, recursive=False,
+          properties=True, retention_policy="SOURCE"),
+     "recursive"),
+    # replicate does not support exclude
+    (dict(source_datasets=["tank/data"], periodic_snapshot_tasks=["data-recursive"], replicate=True, recursive=True,
+          properties=True, retention_policy="SOURCE", exclude=["tank/data/work"]),
+     "exclude"),
+    # replicate requires properties
+    (dict(source_datasets=["tank/data"], periodic_snapshot_tasks=["data-recursive"], replicate=True, recursive=True,
+          properties=False, retention_policy="SOURCE"),
+     "properties"),
+
+    # Encryption enabled (not inherited) requires key details
+    (dict(also_include_naming_schema=["snap-%Y%m%d-%H%M-1w"], encryption=True, encryption_inherit=False),
+     "encryption_key"),
+    # Encryption enabled with some (but not all) key details provided
+    (dict(also_include_naming_schema=["snap-%Y%m%d-%H%M-1w"], encryption=True, encryption_inherit=False,
+          encryption_key="0" * 64, encryption_key_format="HEX"),
+     "encryption_key_location"),
+
+    # Schedule requires auto
+    (dict(also_include_naming_schema=["snap-%Y%m%d-%H%M-1w"], schedule={"minute": "*/2"}), "schedule"),
+    # only_matching_schedule requires a schedule
+    (dict(also_include_naming_schema=["snap-%Y%m%d-%H%M-1w"], only_matching_schedule=True), "only_matching_schedule"),
+
+    # name_regex validation
+    # Invalid regex
+    (dict(name_regex="("), "name_regex"),
+    # name_regex can't be used with periodic snapshot tasks
+    (dict(name_regex="manual-.+", periodic_snapshot_tasks=["data-recursive"]), "name_regex"),
+    # name_regex can't be used with naming schema
+    (dict(name_regex="manual-.+", also_include_naming_schema=["snap-%Y%m%d-%H%M-1w"]), "name_regex"),
+
+    # Retention lifetime validation
+    # CUSTOM retention requires lifetime_value
+    (dict(also_include_naming_schema=["snap-%Y%m%d-%H%M-1w"], retention_policy="CUSTOM", lifetime_unit="WEEK"),
+     "lifetime_value"),
+    # CUSTOM retention requires lifetime_unit
+    (dict(also_include_naming_schema=["snap-%Y%m%d-%H%M-1w"], retention_policy="CUSTOM", lifetime_value=2),
+     "lifetime_unit"),
+    # Non-custom retention forbids lifetime_value
+    (dict(also_include_naming_schema=["snap-%Y%m%d-%H%M-1w"], lifetime_value=2), "lifetime_value"),
+    # Non-custom retention forbids lifetime_unit
+    (dict(also_include_naming_schema=["snap-%Y%m%d-%H%M-1w"], lifetime_unit="WEEK"), "lifetime_unit"),
+    # Non-custom retention forbids lifetimes
+    (dict(also_include_naming_schema=["snap-%Y%m%d-%H%M-1w"],
+          lifetimes=[dict(schedule={"hour": "0"}, lifetime_value=30, lifetime_unit="DAY")]),
+     "lifetimes"),
 ])
 def test_create_replication(ssh_credentials, periodic_snapshot_tasks, req, error):
     if "ssh_credentials" in req:
@@ -360,3 +429,185 @@ def test_disable_task_preserves_state():
                 assert "last_snapshot" in state_after_disable, \
                     f"State 'last_snapshot' field should be preserved after disabling. " \
                     f"Before: {state_before_disable}, After: {state_after_disable}"
+
+
+def test_create_invalid_ssh_credentials():
+    """Creating a task referencing nonexistent SSH credentials is a validation error."""
+    with pytest.raises(ValidationErrors) as ve:
+        call("replication.create", {
+            "name": "test_invalid_ssh_credentials",
+            "direction": "PUSH",
+            "transport": "SSH",
+            "ssh_credentials": 999999,
+            "source_datasets": ["data"],
+            "target_dataset": "data",
+            "recursive": False,
+            "name_regex": ".+",
+            "auto": False,
+            "retention_policy": "NONE",
+        })
+
+    assert any(e.attribute == "replication_create.ssh_credentials" for e in ve.value.errors)
+
+
+def test_create_nonexistent_periodic_snapshot_task():
+    """Binding a nonexistent periodic snapshot task is a validation error."""
+    with pytest.raises(ValidationErrors) as ve:
+        call("replication.create", {
+            "name": "test_nonexistent_snapshot_task",
+            "direction": "PUSH",
+            "transport": "LOCAL",
+            "periodic_snapshot_tasks": [999999],
+            "source_datasets": ["data"],
+            "target_dataset": "data",
+            "recursive": False,
+            "auto": False,
+            "retention_policy": "NONE",
+        })
+
+    assert any(e.attribute == "replication_create.periodic_snapshot_tasks.0" for e in ve.value.errors)
+
+
+def test_create_disabled_periodic_snapshot_task_binding():
+    """An enabled replication task can't be bound to a disabled periodic snapshot task."""
+    with dataset("src") as src:
+        with snapshot_task({
+            "dataset": src,
+            "recursive": False,
+            "lifetime_value": 1,
+            "lifetime_unit": "WEEK",
+            "naming_schema": "auto-%Y%m%d.%H%M%S-1w",
+            "schedule": {},
+            "enabled": False,
+        }) as st:
+            with pytest.raises(ValidationErrors) as ve:
+                call("replication.create", {
+                    "name": "test_disabled_snapshot_task",
+                    "direction": "PUSH",
+                    "transport": "LOCAL",
+                    "periodic_snapshot_tasks": [st["id"]],
+                    "source_datasets": [src],
+                    "target_dataset": "data",
+                    "recursive": False,
+                    "auto": False,
+                    "retention_policy": "NONE",
+                    "enabled": True,
+                })
+
+            assert any(e.attribute == "replication_create.periodic_snapshot_tasks.0" for e in ve.value.errors)
+
+
+def test_run_disabled_task():
+    """Running a disabled replication task raises an error."""
+    with dataset("src") as src:
+        with dataset("dst") as dst:
+            with replication_task({
+                "name": "test_run_disabled",
+                "direction": "PUSH",
+                "transport": "LOCAL",
+                "source_datasets": [src],
+                "target_dataset": dst,
+                "recursive": False,
+                "also_include_naming_schema": ["%Y-%m-%d-%H-%M-%S"],
+                "auto": False,
+                "retention_policy": "NONE",
+                "enabled": False,
+            }) as task:
+                with pytest.raises(ClientException, match="Task is not enabled"):
+                    call("replication.run", task["id"], job=True)
+
+
+def test_update_ssh_credentials_task(ssh_credentials):
+    """Updating a task bound to SSH credentials normalizes the credentials back to their id."""
+    with replication_task({
+        "name": "test_update_ssh_credentials",
+        "direction": "PUSH",
+        "transport": "SSH",
+        "ssh_credentials": ssh_credentials["credentials"]["id"],
+        "source_datasets": ["data"],
+        "target_dataset": "data",
+        "recursive": False,
+        "name_regex": ".+",
+        "auto": False,
+        "retention_policy": "NONE",
+    }) as task:
+        updated = call("replication.update", task["id"], {"retries": 3})
+
+        assert updated["retries"] == 3
+        assert updated["ssh_credentials"]["id"] == ssh_credentials["credentials"]["id"]
+
+
+def test_attachment_delegate_delete():
+    """Deleting a source dataset removes the replication task via the attachment delegate."""
+    with dataset("src") as src:
+        task = call("replication.create", {
+            "name": "test_attachment_delete",
+            "direction": "PUSH",
+            "transport": "LOCAL",
+            "source_datasets": [src],
+            "target_dataset": "data",
+            "recursive": False,
+            "name_regex": ".+",
+            "auto": False,
+            "retention_policy": "NONE",
+        })
+
+    # Exiting the `dataset` context deletes the source dataset, which drives the attachment
+    # delegate to delete the associated replication task.
+    assert call("replication.query", [["id", "=", task["id"]]]) == []
+
+
+def test_attachment_delegate_toggle():
+    """Exporting/importing a pool disables/re-enables its replication tasks via the delegate."""
+    pool_name = "test_replication_toggle"
+    with another_pool({"name": pool_name}) as new_pool:
+        src = f"{pool_name}/src"
+        call("pool.dataset.create", {"name": src})
+
+        task = call("replication.create", {
+            "name": "test_attachment_toggle",
+            "direction": "PUSH",
+            "transport": "LOCAL",
+            "source_datasets": [src],
+            "target_dataset": "data",
+            "recursive": False,
+            "name_regex": ".+",
+            "auto": False,
+            "retention_policy": "NONE",
+        })
+        try:
+            # Export without cascade disables the attachment via `toggle(attachments, False)`.
+            call("pool.export", new_pool["id"], job=True)
+            assert call("replication.get_instance", task["id"])["enabled"] is False
+
+            # Re-import re-enables the attachment via `toggle(attachments, True)`.
+            call("pool.import_pool", {"guid": new_pool["guid"], "name": pool_name}, job=True)
+            assert call("replication.get_instance", task["id"])["enabled"] is True
+        finally:
+            call("replication.delete", task["id"])
+
+
+def test_query_check_dataset_encryption_keys():
+    """Querying with `check_dataset_encryption_keys` exercises the encryption-key extend path."""
+    with dataset("src_enc", {
+        "encryption": True,
+        "inherit_encryption": False,
+        "encryption_options": {"generate_key": True},
+    }) as src:
+        with replication_task({
+            "name": "test_encryption_keys_query",
+            "direction": "PUSH",
+            "transport": "LOCAL",
+            "source_datasets": [src],
+            "target_dataset": "data",
+            "recursive": True,
+            "name_regex": ".+",
+            "auto": False,
+            "retention_policy": "NONE",
+        }) as task:
+            result = call("replication.query", [["id", "=", task["id"]]], {
+                "get": True,
+                "extra": {"check_dataset_encryption_keys": True},
+            })
+
+            assert "has_encrypted_dataset_keys" in result
