@@ -3,6 +3,8 @@ from __future__ import annotations
 import os
 from typing import TYPE_CHECKING, Any
 
+from truenas_pylibvirt.domain.start_validator import check_pci_slot_conflicts
+
 from middlewared.api.base.handler.accept import validate_model
 from middlewared.api.current import (
     QueryOptions,
@@ -138,6 +140,32 @@ class VMDeviceServicePart(CRUDServicePart[VMDeviceEntry]):
         verrors.check()
         device_adapter = self.device_factory.get_device_adapter(device)
         await self.middleware.run_in_thread(device_adapter.validate, old, svc_instance, update)
+        await self.middleware.run_in_thread(self._check_pci_slot_conflicts, device, svc_instance)
+
+    def _check_pci_slot_conflicts(
+        self, device: dict[str, Any], vm_instance: dict[str, Any],
+    ) -> None:
+        # Build pylibvirt Device objects for all devices on this VM, replacing
+        # the device being updated (matched by id) with the new version.
+        device_id = device.get('id')
+        pylibvirt_devices = []
+        for existing in vm_instance.get('devices', []):
+            if existing.get('id') == device_id:
+                continue
+            try:
+                pylibvirt_devices.append(self.device_factory.get_device(existing))
+            except Exception:
+                continue
+        try:
+            pylibvirt_devices.append(self.device_factory.get_device(device))
+        except Exception:
+            return
+        errors = check_pci_slot_conflicts(pylibvirt_devices)
+        if errors:
+            verrors = ValidationErrors()
+            for field, msg in errors:
+                verrors.add(field, msg)
+            verrors.check()
 
     async def _update_device(
         self, data: dict[str, Any], old: dict[str, Any] | None = None,

@@ -6,6 +6,7 @@ from middlewared.api.base import (
     BaseModel,
     Excluded,
     ForUpdateMetaclass,
+    IPvAnyAddress,
     MACAddress,
     NonEmptyString,
     excluded_field,
@@ -14,6 +15,8 @@ from middlewared.api.base import (
 __all__ = [
     "VMCDROMDevice",
     "VMDisplayDevice",
+    "VMISCSIDiskDevice",
+    "VMISCSIDiskTarget",
     "VMNICDevice",
     "VMNICPciAddress",
     "VMPCIDevice",
@@ -98,10 +101,16 @@ class VMDisplayDevice(BaseModel):
 
 
 class VMNICPciAddress(BaseModel):
-    bus: int = Field(ge=1, description="PCI bus number. Must be >= 1; bus 0 is the root complex.")
-    slot: int = Field(default=0, ge=0, le=31, description="PCI slot number (0–31).")
-    function: int = Field(default=0, ge=0, le=7, description="PCI function number (0–7).")
-    domain: int = Field(default=0, ge=0, description="PCI domain number.")
+    bus: int = Field(ge=1, le=255, description="PCI bus number. Must be >= 1; bus 0 is the root complex.")
+    slot: int = Field(
+        ge=0, le=31,
+        description="PCI slot number (0-31). No default: correct value depends on machine type.",
+    )
+    function: int = Field(default=0, ge=0, le=7, description="PCI function number (0-7).")
+    domain: int = Field(
+        default=0, ge=0, le=0,
+        description="PCI domain number. Must be 0; multi-segment topologies are not supported.",
+    )
 
 
 class VMNICDevice(BaseModel):
@@ -126,8 +135,7 @@ class VMNICDevice(BaseModel):
     pci_address: VMNICPciAddress | None = Field(
         default=None,
         description=(
-            "Pin this NIC to a specific PCI address in the guest. "
-            "For example, `bus=1, slot=0` causes the interface to appear as `enp1s0`. "
+            "Pin this NIC to a specific PCI controller bus rather than letting libvirt auto-assign an address. "
             "`null` for automatic assignment."
         ),
     )
@@ -249,8 +257,42 @@ class VMUSBDevice(BaseModel):
     )
 
 
+class VMISCSIDiskTarget(BaseModel):
+    iqn: NonEmptyString = Field(description="iSCSI Qualified Name of the target.")
+    luns: list[int] = Field(
+        default=[0],
+        min_length=1,
+        description="LUN numbers to access on this target.",
+    )
+
+
+class VMISCSIDiskDevice(BaseModel):
+    dtype: Literal['ISCSI_DISK'] = Field(description="Device type identifier for iSCSI disk devices.")
+    portal_address: IPvAnyAddress = Field(
+        description="IP address of the iSCSI target portal.",
+    )
+    targets: list[VMISCSIDiskTarget] = Field(
+        min_length=1,
+        description="iSCSI targets to attach, one entry per target IQN.",
+    )
+    initiator_iqn: NonEmptyString = Field(
+        description="IQN identifying this VM as an iSCSI initiator.",
+    )
+    controller_slot: int = Field(
+        default=0x15,
+        ge=1,
+        le=30,
+        description=(
+            "PCI slot for the virtio-scsi-pci controller on the root bus (pcie.0 on q35/aarch64, "
+            "pci.0 on i440fx). Conflicts with other explicitly-placed devices are detected at "
+            "device creation time."
+        ),
+    )
+
+
 VMDeviceType: TypeAlias = Annotated[
-    VMCDROMDevice | VMDisplayDevice | VMNICDevice | VMPCIDevice | VMRAWDevice | VMDiskDevice | VMUSBDevice,
+    VMCDROMDevice | VMDisplayDevice | VMISCSIDiskDevice | VMNICDevice
+    | VMPCIDevice | VMRAWDevice | VMDiskDevice | VMUSBDevice,
     Discriminator('dtype')
 ]
 

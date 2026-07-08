@@ -9,6 +9,8 @@ from truenas_pylibvirt.device import (
     DisplayDeviceType,
     FilesystemDevice,
     GPUDevice,
+    ISCSIDiskDevice,
+    ISCSIDiskTarget,
     NICDevice,
     NICDeviceModel,
     NICDeviceType,
@@ -125,6 +127,20 @@ def get_device(device: dict[str, Any], delegate: DeviceDelegate) -> Device:
             return GPUDevice(
                 gpu_type=device['attributes']['gpu_type'],
                 pci_address=device['attributes']['pci_address'],
+                device_delegate=delegate,
+            )
+        case 'ISCSI_DISK':
+            return ISCSIDiskDevice(
+                portal_address=str(device['attributes']['portal_address']),
+                targets=[
+                    ISCSIDiskTarget(
+                        iqn=t['iqn'],
+                        luns=t.get('luns', [0]),
+                    )
+                    for t in device['attributes']['targets']
+                ],
+                initiator_iqn=device['attributes']['initiator_iqn'],
+                controller_slot=device['attributes'].get('controller_slot', 0x15),
                 device_delegate=delegate,
             )
         case _:

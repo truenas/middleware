@@ -6,16 +6,19 @@ from truenas_pylibvirt.device import (
     CDROMDevice,
     DiskStorageDevice,
     DisplayDevice,
+    ISCSIDiskDevice,
     NICDevice,
     PCIDevice,
     RawStorageDevice,
     USBDevice,
 )
+from truenas_pylibvirt.domain.start_validator import pci_slot_error_for_machine
 
 from middlewared.api.current import (
     VMCDROMDevice,
     VMDiskDevice,
     VMDisplayDevice,
+    VMISCSIDiskDevice,
     VMNICDevice,
     VMPCIDevice,
     VMRAWDevice,
@@ -24,6 +27,7 @@ from middlewared.api.current import (
 from middlewared.service_exception import ValidationErrors
 from middlewared.utils.crypto import generate_string
 from middlewared.utils.libvirt.cdrom import CDROMDelegate
+from middlewared.utils.libvirt.delegate import DeviceDelegate
 from middlewared.utils.libvirt.display import DisplayDelegate
 from middlewared.utils.libvirt.nic import NICDelegate
 from middlewared.utils.libvirt.pci import PCIDelegate
@@ -85,6 +89,24 @@ class VMNICDelegate(NICDelegate):
     @property
     def schema_model(self) -> type[VMNICDevice]:
         return VMNICDevice
+
+    def validate_middleware(
+        self,
+        device: dict[str, Any],
+        verrors: ValidationErrors,
+        old: dict[str, Any] | None = None,
+        instance: dict[str, Any] | None = None,
+        update: bool = True,
+    ) -> None:
+        super().validate_middleware(device, verrors, old, instance, update)
+        # Validate pci_address slot against the VM's machine topology.
+        # PCIe (q35/virt): point-to-point ports require slot == 0.
+        # i440fx: slot 0 is SHPC-reserved, usable slots start at 1.
+        pci = device['attributes'].get('pci_address')
+        if pci and instance:
+            machine_type = instance.get('machine_type')
+            if msg := pci_slot_error_for_machine(pci['slot'], machine_type):
+                verrors.add('attributes.pci_address.slot', msg)
 
 
 class VMPCIDelegate(PCIDelegate):
@@ -148,6 +170,13 @@ class VMUSBDelegate(USBDelegate):
         return VMUSBDevice
 
 
+class VMISCSIDiskDelegate(DeviceDelegate):
+
+    @property
+    def schema_model(self) -> type[VMISCSIDiskDevice]:
+        return VMISCSIDiskDevice
+
+
 async def setup(middleware: Middleware) -> None:
     device_factory = middleware.services.vm.device.device_factory
     for device_key, device_klass, delegate_klass in (
@@ -158,5 +187,6 @@ async def setup(middleware: Middleware) -> None:
         ('USB', USBDevice, VMUSBDelegate),
         ('PCI', PCIDevice, VMPCIDelegate),
         ('DISPLAY', DisplayDevice, VMDisplayDelegate),
+        ('ISCSI_DISK', ISCSIDiskDevice, VMISCSIDiskDelegate),
     ):
         device_factory.register(device_key, device_klass, delegate_klass)
