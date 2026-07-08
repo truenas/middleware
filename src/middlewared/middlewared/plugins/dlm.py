@@ -1,4 +1,5 @@
 import asyncio
+import time
 
 from middlewared.service import Service, job, private
 
@@ -369,10 +370,27 @@ class DistributedLockManagerService(Service):
             )
             return
 
+        # Poll for up to 60 seconds before declaring node dead
         self.logger.info(
-            'remote_down: DLM port unreachable on %s; calling reset_active',
+            'remote_down: DLM port unreachable on %s; checking whether transient',
             peer_ip,
         )
+        deadline = time.monotonic() + 60
+        while time.monotonic() < deadline:
+            await asyncio.sleep(5)
+            try:
+                _, writer = await asyncio.wait_for(
+                    asyncio.open_connection(peer_ip, DLM_PORT), timeout=3
+                )
+                writer.close()
+                await writer.wait_closed()
+                # Port is back — peer recovered, skip reset_active
+                self.logger.info('remote_down: DLM port recovered, skipping reset_active')
+                return
+            except Exception:
+                pass  # still unreachable, keep waiting
+
+        self.logger.info('remote_down: DLM port unreachable for 60s; calling reset_active')
         await self.middleware.call('dlm.reset_active')
 
     @private
