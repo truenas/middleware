@@ -223,7 +223,10 @@ class PoolService(Service):
                 for delegate in await self.middleware.call('pool.dataset.get_attachment_delegates_for_start'):
                     if delegate.name == name:
                         attachments = await delegate.query(pool['path'], False)
-                        attachments = [attachment for attachment in attachments if attachment['id'] in ids]
+                        attachments = [
+                            attachment for attachment in attachments
+                            if (attachment['id'] if isinstance(attachment, dict) else attachment.id) in ids
+                        ]
                         if attachments:
                             await delegate.toggle(attachments, True)
             await self.call2(self.s.keyvalue.delete, key)

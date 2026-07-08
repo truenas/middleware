@@ -100,13 +100,13 @@ class PeriodicSnapshotTaskServicePart(CRUDServicePart[PeriodicSnapshotTaskEntry]
         verrors.add_child('periodic_snapshot_update', await self._validate(new))
 
         if not new.enabled:
-            for replication_task in await self.middleware.call('replication.query', [['enabled', '=', True]]):
-                if any(periodic_snapshot_task['id'] == id_
-                       for periodic_snapshot_task in replication_task['periodic_snapshot_tasks']):
+            for replication_task in await self.call2(self.s.replication.query, [['enabled', '=', True]]):
+                if any(periodic_snapshot_task.id == id_
+                       for periodic_snapshot_task in replication_task.periodic_snapshot_tasks):
                     verrors.add(
                         'periodic_snapshot_update.enabled',
                         (f"You can't disable this periodic snapshot task because it is bound to enabled replication "
-                         f"task {replication_task['id']!r}")
+                         f"task {replication_task.id!r}")
                     )
                     break
 
@@ -138,16 +138,16 @@ class PeriodicSnapshotTaskServicePart(CRUDServicePart[PeriodicSnapshotTaskEntry]
         task = await self.get_instance(id_)
         audit_callback(task.dataset)
 
-        for replication_task in await self.middleware.call('replication.query', [
+        for replication_task in await self.call2(self.s.replication.query, [
             ['direction', '=', 'PUSH'],
             ['also_include_naming_schema', '=', []],
             ['enabled', '=', True],
         ]):
-            if len(replication_task['periodic_snapshot_tasks']) == 1:
-                if replication_task['periodic_snapshot_tasks'][0]['id'] == id_:
+            if len(replication_task.periodic_snapshot_tasks) == 1:
+                if replication_task.periodic_snapshot_tasks[0].id == id_:
                     raise CallError(
                         f'You are deleting the last periodic snapshot task bound to enabled replication task '
-                        f'{replication_task["name"]!r} which will break it. Please, disable that replication task '
+                        f'{replication_task.name!r} which will break it. Please, disable that replication task '
                         f'first.',
                     )
 

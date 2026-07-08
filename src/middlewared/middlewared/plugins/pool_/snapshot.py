@@ -320,7 +320,7 @@ class PoolSnapshotService(CRUDService):
         if not name:
             naming_schema = data.get('naming_schema')
             if naming_schema:
-                name = self.middleware.call_sync('replication.new_snapshot_name', naming_schema)
+                name = self.call_sync2(self.s.replication.new_snapshot_name, naming_schema)
 
         if exclude:
             for k in ('vmware_sync', 'properties'):
