@@ -12,6 +12,7 @@ from truenas_pylibvirt.device import (
     RawStorageDevice,
     USBDevice,
 )
+from truenas_pylibvirt.domain.start_validator import pci_slot_error_for_machine
 
 from middlewared.api.current import (
     VMCDROMDevice,
@@ -88,6 +89,24 @@ class VMNICDelegate(NICDelegate):
     @property
     def schema_model(self) -> type[VMNICDevice]:
         return VMNICDevice
+
+    def validate_middleware(
+        self,
+        device: dict[str, Any],
+        verrors: ValidationErrors,
+        old: dict[str, Any] | None = None,
+        instance: dict[str, Any] | None = None,
+        update: bool = True,
+    ) -> None:
+        super().validate_middleware(device, verrors, old, instance, update)
+        # Validate pci_address slot against the VM's machine topology.
+        # PCIe (q35/virt): point-to-point ports require slot == 0.
+        # i440fx: slot 0 is SHPC-reserved, usable slots start at 1.
+        pci = device['attributes'].get('pci_address')
+        if pci and instance:
+            machine_type = instance.get('machine_type')
+            if msg := pci_slot_error_for_machine(pci['slot'], machine_type):
+                verrors.add('attributes.pci_address.slot', msg)
 
 
 class VMPCIDelegate(PCIDelegate):
