@@ -2,12 +2,22 @@ from datetime import datetime
 
 from pydantic import Field
 
-from middlewared.api.base import BaseModel, NonEmptyString, single_argument_args
+from middlewared.api.base import BaseModel, NonEmptyString
 
 __all__ = [
-    "BootEnvironmentEntry", "BootEnvironmentActivateArgs", "BootEnvironmentActivateResult", "BootEnvironmentCloneArgs",
-    "BootEnvironmentCloneResult", "BootEnvironmentDestroyArgs", "BootEnvironmentDestroyResult",
-    "BootEnvironmentKeepArgs", "BootEnvironmentKeepResult",
+    "BootEnvironmentEntry",
+    "BootEnvironmentActivate",
+    "BootEnvironmentActivateArgs",
+    "BootEnvironmentActivateResult",
+    "BootEnvironmentClone",
+    "BootEnvironmentCloneArgs",
+    "BootEnvironmentCloneResult",
+    "BootEnvironmentDestroy",
+    "BootEnvironmentDestroyArgs",
+    "BootEnvironmentDestroyResult",
+    "BootEnvironmentKeep",
+    "BootEnvironmentKeepArgs",
+    "BootEnvironmentKeepResult",
 ]
 
 
@@ -29,38 +39,50 @@ class BootEnvironmentEntry(BaseModel):
     can_activate: bool = Field(description="The given boot environment may be activated.")
 
 
-@single_argument_args("boot_environment_activate")
-class BootEnvironmentActivateArgs(BaseModel):
+class BootEnvironmentActivate(BaseModel):
     id: NonEmptyString = Field(description="Name of the boot environment to activate for next boot.")
+
+
+class BootEnvironmentActivateArgs(BaseModel):
+    boot_environment_activate: BootEnvironmentActivate = Field(description="Boot environment activate parameters.")
 
 
 class BootEnvironmentActivateResult(BaseModel):
     result: BootEnvironmentEntry = Field(description="The activated boot environment configuration.")
 
 
-@single_argument_args("boot_environment_clone")
-class BootEnvironmentCloneArgs(BaseModel):
+class BootEnvironmentClone(BaseModel):
     id: NonEmptyString = Field(description="Name of the existing boot environment to clone from.")
     target: NonEmptyString = Field(description="Name for the new cloned boot environment.")
+
+
+class BootEnvironmentCloneArgs(BaseModel):
+    boot_environment_clone: BootEnvironmentClone = Field(description="Boot environment clone parameters.")
 
 
 class BootEnvironmentCloneResult(BaseModel):
     result: BootEnvironmentEntry = Field(description="The newly created cloned boot environment.")
 
 
-@single_argument_args("boot_environment_destroy")
-class BootEnvironmentDestroyArgs(BaseModel):
+class BootEnvironmentDestroy(BaseModel):
     id: NonEmptyString = Field(description="Name of the boot environment to destroy.")
+
+
+class BootEnvironmentDestroyArgs(BaseModel):
+    boot_environment_destroy: BootEnvironmentDestroy = Field(description="Boot environment destroy parameters.")
 
 
 class BootEnvironmentDestroyResult(BaseModel):
     result: None = Field(description="Returns `null` when the boot environment is successfully destroyed.")
 
 
-@single_argument_args("boot_environment_destroy")
-class BootEnvironmentKeepArgs(BaseModel):
+class BootEnvironmentKeep(BaseModel):
     id: NonEmptyString = Field(description="Name of the boot environment to modify.")
     value: bool = Field(description="Whether to protect this boot environment from automatic deletion.")
+
+
+class BootEnvironmentKeepArgs(BaseModel):
+    boot_environment_destroy: BootEnvironmentKeep = Field(description="Boot environment keep parameters.")
 
 
 class BootEnvironmentKeepResult(BaseModel):

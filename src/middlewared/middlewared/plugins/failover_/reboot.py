@@ -196,11 +196,11 @@ class FailoverRebootService(Service):
             return
 
         job.set_progress(0, 'Checking other controller boot environment')
-        current_be_id = (await self.middleware.call(
-            'boot.environment.query',
+        current_be_id = (await self.call2(
+            self.s.boot.environment.query,
             [['active', '=', True]],
             {'get': True},
-        ))['id']
+        )).id
         remote_be_changed = await self._ensure_remote_be(current_be_id)
 
         remote_boot_id = await self.middleware.call('failover.call_remote', 'system.boot_id')
