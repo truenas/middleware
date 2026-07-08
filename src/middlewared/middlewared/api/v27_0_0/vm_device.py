@@ -101,10 +101,16 @@ class VMDisplayDevice(BaseModel):
 
 
 class VMNICPciAddress(BaseModel):
-    bus: int = Field(ge=1, description="PCI bus number. Must be >= 1; bus 0 is the root complex.")
-    slot: int = Field(default=0, ge=0, le=31, description="PCI slot number (0–31).")
-    function: int = Field(default=0, ge=0, le=7, description="PCI function number (0–7).")
-    domain: int = Field(default=0, ge=0, description="PCI domain number.")
+    bus: int = Field(ge=1, le=255, description="PCI bus number. Must be >= 1; bus 0 is the root complex.")
+    slot: int = Field(
+        ge=0, le=31,
+        description="PCI slot number (0-31). No default: correct value depends on machine type.",
+    )
+    function: int = Field(default=0, ge=0, le=7, description="PCI function number (0-7).")
+    domain: int = Field(
+        default=0, ge=0, le=0,
+        description="PCI domain number. Must be 0; multi-segment topologies are not supported.",
+    )
 
 
 class VMNICDevice(BaseModel):
@@ -129,8 +135,7 @@ class VMNICDevice(BaseModel):
     pci_address: VMNICPciAddress | None = Field(
         default=None,
         description=(
-            "Pin this NIC to a specific PCI address in the guest. "
-            "For example, `bus=1, slot=0` causes the interface to appear as `enp1s0`. "
+            "Pin this NIC to a specific PCI controller bus rather than letting libvirt auto-assign an address. "
             "`null` for automatic assignment."
         ),
     )
