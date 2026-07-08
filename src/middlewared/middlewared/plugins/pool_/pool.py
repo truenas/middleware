@@ -340,6 +340,21 @@ class PoolService(CRUDService):
     async def _validate_topology(self, data, old=None):
         verrors = ValidationErrors()
 
+        # When force_topology is set, TrueNAS topology policy checks are skipped:
+        # data vdev type/width matching, the RAIDZ/mirror width caps, and the
+        # special/dedup redundancy floor (mirroring truenas_pylibzfs's force flag).
+        # Structural checks (minimum disks, dRAID configuration) always apply.
+        force_topology = data.get('force_topology', False)
+
+        # force_topology is a footgun; it is not permitted on Enterprise-licensed
+        # systems, which are expected to use supported topologies.
+        if force_topology and await self.middleware.call('system.is_enterprise'):
+            verrors.add(
+                'force_topology',
+                'Bypassing pool topology validation is not supported on '
+                'Enterprise-licensed systems.',
+            )
+
         def disk_to_stripe(topology_type):
             """
             We need to convert the original topology to use STRIPE
@@ -375,7 +390,9 @@ class PoolService(CRUDService):
         data_redundant = False
         for topology_type in ('data', 'special', 'dedup'):
             lastdatatype = None
+            lastnumdisks = None
             topology_data = list(data['topology'].get(topology_type) or [])
+            num_new_vdevs = len(topology_data)
             if old and old['topology']:
                 topology_data += disk_to_stripe(topology_type)
             for i, vdev in enumerate(topology_data):
@@ -405,6 +422,26 @@ class PoolService(CRUDService):
                         f'You need at least {mindisks} disk(s) for this vdev type.',
                     )
 
+                # Maximum width, mirroring truenas_pylibzfs's PYLIBZFS_MAX_MIRROR_WIDTH (4)
+                # and PYLIBZFS_MAX_RAIDZ_WIDTH (15); keep in sync with that binding. Only
+                # newly supplied data vdevs are capped (i < num_new_vdevs), matching
+                # truenas_pylibzfs which caps the vdevs being added, not existing geometry.
+                # STRIPE is uncapped; dRAID is bounded by validate_draid_configuration.
+                maxmap = {
+                    'MIRROR': 4,
+                    'RAIDZ1': 15,
+                    'RAIDZ2': 15,
+                    'RAIDZ3': 15,
+                }
+                if (
+                    not force_topology and topology_type == 'data' and i < num_new_vdevs
+                    and vdev['type'] in maxmap and numdisks > maxmap[vdev['type']]
+                ):
+                    verrors.add(
+                        f'topology.{topology_type}.{i}.disks',
+                        f'You can have at most {maxmap[vdev["type"]]} disk(s) for this vdev type.',
+                    )
+
                 if vdev['type'].startswith('DRAID'):
                     nparity = int(vdev['type'][-1:])
                     verrors.extend(await self.middleware.call(
@@ -414,7 +451,12 @@ class PoolService(CRUDService):
                 if topology_type == 'data' and VDEV_PARITY[vdev['type']] >= 1:
                     data_redundant = True
 
-                if topology_type == 'special':
+                if force_topology:
+                    # force_topology bypasses the topology policy checks below (special/data
+                    # redundancy match and data vdev type/width matching). Structural checks
+                    # (min disks, dRAID config) above always run.
+                    pass
+                elif topology_type == 'special':
                     # Special vdevs may mix types (matching truenas_pylibzfs), so no
                     # same-type check is applied here. A non-redundant special vdev is
                     # still rejected when the data class is redundant, because losing
@@ -430,7 +472,22 @@ class PoolService(CRUDService):
                         f'You are not allowed to create a pool with different {topology_type} vdev types '
                         f'({lastdatatype} and {vdev["type"]}).',
                     )
+                elif (
+                    topology_type == 'data' and lastdatatype
+                    and vdev['type'] != 'STRIPE' and numdisks != lastnumdisks
+                ):
+                    # All redundant data vdevs must be the same width. Mixing widths (for
+                    # example a 7-wide and a 30-wide RAIDZ2) leaves capacity and fault
+                    # tolerance uneven across the pool and cannot be corrected without
+                    # recreating it. STRIPE is exempt as it has no geometry to match.
+                    # This mirrors the child-count match enforced by truenas_pylibzfs.
+                    verrors.add(
+                        f'topology.{topology_type}.{i}.disks',
+                        f'You are not allowed to create a pool with {topology_type} vdevs of '
+                        f'different widths ({lastnumdisks} and {numdisks} disks).',
+                    )
                 lastdatatype = vdev['type']
+                lastnumdisks = numdisks
 
         for i in ('cache', 'log'):
             value = data['topology'].get(i)
