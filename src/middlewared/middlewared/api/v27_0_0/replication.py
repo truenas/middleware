@@ -407,7 +407,7 @@ class ReplicationTargetUnmatchedSnapshotsArgs(BaseModel):
 
 
 class ReplicationTargetUnmatchedSnapshotsResult(BaseModel):
-    result: dict[str, str] = Field(examples=[
+    result: dict[str, list[str]] = Field(examples=[
         {
             "backup/work": ["auto-2019-10-15_13-00", "auto-2019-10-15_09-00"],
             "backup/games": ["auto-2019-10-15_13-00"],
