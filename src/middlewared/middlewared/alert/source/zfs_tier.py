@@ -145,7 +145,12 @@ class TierJobAlertSource(ThreadedAlertSource):
     def _check_jobs(self) -> None:
         current_terminal: set[str] = set()
 
-        for job in enum_jobs():
+        # Materialize first: enum_jobs() holds an LMDB read transaction open for
+        # the life of the iterator, and _fire_job_alert() -> get_info() below opens
+        # another read transaction on the same thread. LMDB permits one read
+        # transaction per thread, so reading inside the live iterator raises
+        # MDB_BAD_RSLOT.
+        for job in list(enum_jobs()):
             tier_job_id = f"{job.dataset_name}@{job.job_uuid}"
 
             if job.status in _TERMINAL_STATUSES:

@@ -849,6 +849,15 @@ class FailoverEventsService(Service):
         self.run_call('service.control', 'RESTART', 'netdata', job=True)
         logger.info('Done restarting reporting metrics')
 
+        # Regenerate /etc/truenas_zfstierd.conf and restart the tier daemon. The
+        # standby never runs zfs.tier.do_update, so its on-disk config is stale or
+        # absent (leaving the daemon disabled) until it is regenerated on service
+        # start. Restart rather than reload so the daemon also reopens its LMDB job
+        # store against the just-remounted system dataset.
+        logger.info('Restarting ZFS tier daemon')
+        self.run_call('service.control', 'RESTART', 'truenas_zfstierd', job=True)
+        logger.info('Done restarting ZFS tier daemon')
+
         logger.info('Updating replication tasks')
         self.run_call('zettarepl.update_tasks')
         logger.info('Done updating replication tasks')
