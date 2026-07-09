@@ -17,8 +17,9 @@ def send_mail_queue(context: ServiceContext, queue: MailQueue) -> None:
 
                 # Update `From` address from currently used config because if the SMTP user changes,
                 # already queued messages might not be sent due to (553, b"Relaying disallowed as xxx")
-                # error
-                item.message["From"] = from_addr(config)
+                # error. `replace_header` because `__setitem__` appends a second `From` header instead
+                # of replacing the existing one.
+                item.message.replace_header("From", from_addr(config))
 
                 sendmail(context, item.message, config)
             except NetworkActivityDisabled:
