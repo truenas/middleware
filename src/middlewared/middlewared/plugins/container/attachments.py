@@ -96,6 +96,20 @@ class ContainerFSAttachmentDelegate(FSAttachmentDelegate):
 
         return False
 
+    async def storage_locked(self, container):
+        # True if any dataset the container needs to run -- its root dataset or a FILESYSTEM device
+        # source -- is still locked (or has a locked parent).
+        paths = [os.path.join('/mnt', container['dataset'])]
+        for device in container['devices']:
+            if device['attributes']['dtype'] == 'FILESYSTEM' and (source := device['attributes'].get('source')):
+                paths.append(source)
+
+        for path in paths:
+            if await self.middleware.call('pool.dataset.path_in_locked_datasets', path):
+                return True
+
+        return False
+
     async def delete(self, attachments):
         for attachment in attachments:
             try:
@@ -142,6 +156,12 @@ class ContainerFSAttachmentDelegate(FSAttachmentDelegate):
         )
         to_start = []
         async for container in self.containers_on_paths(containers, paths):
+            if await self.storage_locked(container):
+                # Don't start a container while any dataset it needs (its root or a FILESYSTEM
+                # bind-mount source) is still locked -- it would come up with missing/empty
+                # filesystems. It gets started when the unlock of its last remaining dependency
+                # triggers this delegate again.
+                continue
             try:
                 # Use a fresh state for the restart decision: the query snapshot may have gone stale
                 # while earlier containers in this loop were being restarted (or a container may have

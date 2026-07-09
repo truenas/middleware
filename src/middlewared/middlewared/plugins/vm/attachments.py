@@ -126,6 +126,18 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate):
 
         return False
 
+    async def storage_locked(self, vm):
+        # True if any DISK/RAW disk the VM needs is on a dataset that is still locked (or has a
+        # locked parent).
+        for device in vm['devices']:
+            if device['attributes']['dtype'] not in ('DISK', 'RAW'):
+                continue
+            disk = self.device_disk_path(device)
+            if disk and await self.middleware.call('pool.dataset.path_in_locked_datasets', disk):
+                return True
+
+        return False
+
     async def delete(self, attachments):
         for attachment in attachments:
             try:
@@ -162,6 +174,11 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate):
         vms = await self.middleware.call('vm.query', [('autostart', '=', True)], {'force_sql_filters': True})
         for vm in vms:
             if not await self.vm_on_paths(vm, paths):
+                continue
+            if await self.storage_locked(vm):
+                # Don't start a VM while any dataset a DISK/RAW disk lives on is still locked -- it
+                # would boot with missing storage. It gets started when the unlock of its last
+                # remaining dependency triggers this delegate again.
                 continue
 
             try:
