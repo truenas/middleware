@@ -24,7 +24,7 @@ def be_query(be_name, get=True):
 @contextlib.contextmanager
 def simulate_can_activate_is_false(be_ds):
     prop = "truenas:kernel_version"
-    orig_value = ssh(f"zfs get {prop} {be_ds}").strip()
+    orig_value = ssh(f"zfs get -H -o value {prop} {be_ds}").strip()
     assert orig_value
     try:
         temp = f"{prop}=-"
@@ -55,7 +55,8 @@ def get_zfs_property(ds_name, property):
 def test_failure_conditions_for_activate(orig_be):
     """
     1. test activating a non-existent BE fails
-    2. test activating an already activated BE fails
+    2. test re-activating the activated BE succeeds (it is the retry
+       path after a failed boot menu regeneration)
     3. test destroying the active BE fails
     """
     with pytest.raises(ValidationError) as ve:
@@ -63,10 +64,8 @@ def test_failure_conditions_for_activate(orig_be):
     assert ve.value.attribute == "boot.environment.activate"
     assert ve.value.errmsg == "'CANARY' not found"
 
-    with pytest.raises(ValidationError) as ve:
-        call("boot.environment.activate", {"id": orig_be["id"]})
-    assert ve.value.attribute == "boot.environment.activate"
-    assert ve.value.errmsg == f"{orig_be['id']!r} is already activated"
+    reactivated = call("boot.environment.activate", {"id": orig_be["id"]})
+    assert reactivated["activated"] is True
 
     with pytest.raises(ValidationError) as ve:
         call("boot.environment.destroy", {"id": orig_be["id"]})
@@ -84,17 +83,36 @@ def test_clone_activate_keep_and_destroy(orig_be):
     rv = ssh("zectl list -H").strip()
     assert TEMP_BE_NAME in rv, rv
 
+    # cloning onto an existing target is refused
+    with pytest.raises(ValidationError) as ve:
+        call("boot.environment.clone", {"id": orig_be["id"], "target": TEMP_BE_NAME})
+    assert ve.value.attribute == "boot.environment.clone"
+    assert "already exists" in ve.value.errmsg
+
     with simulate_can_activate_is_false(tmp["dataset"]):
         with pytest.raises(ValidationError) as ve:
             call("boot.environment.activate", {"id": tmp["id"]})
-    assert ve.value.attribute == "boot.environment.activate"
-    assert ve.value.errmsg == f"{tmp['id']!r} can not be activated"
+        assert ve.value.attribute == "boot.environment.activate"
+        assert ve.value.errmsg == f"{tmp['id']!r} can not be activated"
+
+        # a kernel-less source cannot be cloned either
+        with pytest.raises(ValidationError) as ve:
+            call("boot.environment.clone", {"id": tmp["id"], "target": "no_kernel_clone"})
+        assert ve.value.attribute == "boot.environment.clone"
+        assert "has no kernel version" in ve.value.errmsg
 
     rv = call("boot.environment.activate", {"id": TEMP_BE_NAME})
     assert rv["id"] == TEMP_BE_NAME
     assert rv["activated"] is True
 
     validate_activated_be(TEMP_BE_NAME)
+
+    # while the clone is activated (but not running), destroying it
+    # must be refused by the middleware guard
+    with pytest.raises(ValidationError) as ve:
+        call("boot.environment.destroy", {"id": TEMP_BE_NAME})
+    assert ve.value.attribute == "boot.environment.destroy"
+    assert ve.value.errmsg == "Deleting the activated boot environment is not allowed"
 
     rv = call("boot.environment.activate", {"id": orig_be["id"]})
     assert rv["activated"] is True

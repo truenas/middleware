@@ -54,7 +54,7 @@ def be_query(be_name, get=True):
 @contextlib.contextmanager
 def simulate_can_activate_is_false(be_ds):
     prop = "truenas:kernel_version"
-    orig_value = ssh(f"zfs get {prop} {be_ds}").strip()
+    orig_value = ssh(f"zfs get -H -o value {prop} {be_ds}").strip()
     assert orig_value
     try:
         temp = f"{prop}=-"
@@ -83,7 +83,8 @@ def get_zfs_property(ds_name, property):
 def test_failure_conditions_for_activate(orig_be):
     """
     1. test activating a non-existent BE fails
-    2. test activating an already activated BE fails
+    2. test re-activating the activated BE succeeds (it is the retry
+       path after a failed boot menu regeneration)
     3. test destroying the active BE fails
     """
     with pytest.raises(ValidationError) as ve:
@@ -91,10 +92,8 @@ def test_failure_conditions_for_activate(orig_be):
     assert ve.value.attribute == "boot.environment.activate"
     assert ve.value.errmsg == "'CANARY' not found"
 
-    with pytest.raises(ValidationError) as ve:
-        call("boot.environment.activate", {"id": orig_be["id"]})
-    assert ve.value.attribute == "boot.environment.activate"
-    assert ve.value.errmsg == f"{orig_be['id']!r} is already activated"
+    reactivated = call("boot.environment.activate", {"id": orig_be["id"]})
+    assert reactivated["activated"] is True
 
     with pytest.raises(ValidationError) as ve:
         call("boot.environment.destroy", {"id": orig_be["id"]})
