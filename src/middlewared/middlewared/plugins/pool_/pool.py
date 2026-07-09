@@ -39,6 +39,31 @@ VDEV_PARITY = MappingProxyType({
 })
 
 
+# Minimum number of disks per vdev type.
+VDEV_MIN_DISKS = MappingProxyType({
+    'STRIPE': 1,
+    'MIRROR': 2,
+    'DRAID1': 2,
+    'DRAID2': 3,
+    'DRAID3': 4,
+    'RAIDZ1': 3,
+    'RAIDZ2': 4,
+    'RAIDZ3': 5,
+})
+
+
+# Maximum vdev width for the redundant types we cap, mirroring truenas_pylibzfs's
+# PYLIBZFS_MAX_MIRROR_WIDTH (4) and PYLIBZFS_MAX_RAIDZ_WIDTH (15); keep in sync
+# with that binding. STRIPE is uncapped; dRAID is bounded by
+# validate_draid_configuration.
+VDEV_MAX_DISKS = MappingProxyType({
+    'MIRROR': 4,
+    'RAIDZ1': 15,
+    'RAIDZ2': 15,
+    'RAIDZ3': 15,
+})
+
+
 class PoolPoolNormalizeInfo(PoolEntry):
     id: Excluded = excluded_field()
     guid: Excluded = excluded_field()
@@ -409,41 +434,23 @@ class PoolService(CRUDService):
                     continue
 
                 numdisks = len(vdev['disks'])
-                minmap = {
-                    'STRIPE': 1,
-                    'MIRROR': 2,
-                    'DRAID1': 2,
-                    'DRAID2': 3,
-                    'DRAID3': 4,
-                    'RAIDZ1': 3,
-                    'RAIDZ2': 4,
-                    'RAIDZ3': 5,
-                }
-                mindisks = minmap[vdev['type']]
+                mindisks = VDEV_MIN_DISKS[vdev['type']]
                 if numdisks < mindisks:
                     verrors.add(
                         f'topology.{topology_type}.{i}.disks',
                         f'You need at least {mindisks} disk(s) for this vdev type.',
                     )
 
-                # Maximum width, mirroring truenas_pylibzfs's PYLIBZFS_MAX_MIRROR_WIDTH (4)
-                # and PYLIBZFS_MAX_RAIDZ_WIDTH (15); keep in sync with that binding. Only
-                # newly supplied data vdevs are capped (i < num_new_vdevs), matching
-                # truenas_pylibzfs which caps the vdevs being added, not existing geometry.
-                # STRIPE is uncapped; dRAID is bounded by validate_draid_configuration.
-                maxmap = {
-                    'MIRROR': 4,
-                    'RAIDZ1': 15,
-                    'RAIDZ2': 15,
-                    'RAIDZ3': 15,
-                }
+                # Cap the width of newly supplied data vdevs only (i < num_new_vdevs),
+                # matching truenas_pylibzfs, which caps the vdevs being added and not the
+                # pool's existing geometry.
                 if (
                     not force_topology and topology_type == 'data' and i < num_new_vdevs
-                    and vdev['type'] in maxmap and numdisks > maxmap[vdev['type']]
+                    and vdev['type'] in VDEV_MAX_DISKS and numdisks > VDEV_MAX_DISKS[vdev['type']]
                 ):
                     verrors.add(
                         f'topology.{topology_type}.{i}.disks',
-                        f'You can have at most {maxmap[vdev["type"]]} disk(s) for this vdev type.',
+                        f'You can have at most {VDEV_MAX_DISKS[vdev["type"]]} disk(s) for this vdev type.',
                     )
 
                 if vdev['type'].startswith('DRAID'):
