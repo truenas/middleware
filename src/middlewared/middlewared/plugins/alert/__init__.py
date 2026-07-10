@@ -198,7 +198,7 @@ class AlertService(Service):
 
     @private
     async def product_type(self) -> str:
-        return await queries.product_type(self.context)
+        return await queries.get_product_type(self.context)
 
 
 async def _event_system(middleware: Middleware, event_type: str, args: dict[str, Any]) -> None:
