@@ -33,12 +33,23 @@ def list_policies() -> list[str]:
     return POLICIES
 
 
+def should_list_alert_class(alert_class: type[AlertClass], product_type: str, failover_licensed: bool) -> bool:
+    if alert_class.config.category == AlertCategory.HA and not failover_licensed:
+        return False
+
+    return product_type in alert_class.config.products
+
+
 async def list_categories(context: ServiceContext, options: dict[str, Any]) -> list[dict[str, Any]]:
-    product_type: str = await context.call2(context.s.alert.product_type)
+    product_type = await context.call2(context.s.alert.product_type)
+    failover_licensed: bool = await context.middleware.call("failover.licensed")
 
     classes: list[type[AlertClass]] = []
     for alert_class in AlertClass.classes:
-        if not (options["include_all_products"] or product_type in alert_class.config.products):
+        if not (
+            options["include_all_products"] or
+            should_list_alert_class(alert_class, product_type, failover_licensed)
+        ):
             continue
 
         if not (options["include_hidden_classes"] or not alert_class.config.exclude_from_list):
@@ -215,5 +226,5 @@ def alert_source_clear_run(state: AlertState, name: str) -> None:
     state.alert_source_last_run[alert_source.name] = datetime.min
 
 
-async def product_type(context: ServiceContext) -> str:
+async def get_product_type(context: ServiceContext) -> str:
     return await context.middleware.call("system.product_type")  # type: ignore[no-any-return]
