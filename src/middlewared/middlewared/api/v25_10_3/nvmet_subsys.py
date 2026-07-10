@@ -2,7 +2,15 @@ from typing import Literal, Optional
 
 from pydantic import Field
 
-from middlewared.api.base import NQN, BaseModel, Excluded, ForUpdateMetaclass, NonEmptyString, excluded_field
+from middlewared.api.base import (
+    NQN,
+    BaseModel,
+    Excluded,
+    ForUpdateMetaclass,
+    NonEmptyString,
+    NotRequired,
+    excluded_field,
+)
 
 __all__ = [
     "NVMetSubsysEntry",
@@ -55,7 +63,7 @@ class NVMetSubsysEntry(BaseModel):
         ),
     )
     hosts: Optional[list[int]] = Field(
-        default=[],
+        default=NotRequired,
         description=(
             "List of host ids which have access to this subsystem.\n"
             "\n"
@@ -63,7 +71,7 @@ class NVMetSubsysEntry(BaseModel):
         ),
     )
     namespaces: Optional[list[int]] = Field(
-        default=[],
+        default=NotRequired,
         description=(
             "List of namespaces ids in this subsystem.\n"
             "\n"
@@ -71,7 +79,7 @@ class NVMetSubsysEntry(BaseModel):
         ),
     )
     ports: Optional[list[int]] = Field(
-        default=[],
+        default=NotRequired,
         description=(
             "List of ports ids on which this subsystem is available.\n"
             "\n"
