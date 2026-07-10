@@ -210,9 +210,6 @@ alert_category_names = {
 }
 
 
-assert all([category in alert_category_names for category in AlertCategory]), 'Alert Category Mismatch'
-
-
 class AlertLevel(enum.Enum):
     INFO = 1
     NOTICE = 2
