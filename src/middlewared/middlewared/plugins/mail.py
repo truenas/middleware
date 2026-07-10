@@ -278,17 +278,7 @@ class MailService(ConfigService):
                     # This is because FreeNAS doesn't run a full MTA.
                     # else:
                     #    server.connect()
-                    server.sendmail(
-                        # `from_addr` is a `Header` instance, not `str`, so `encode` is not `str.encode`, it's a
-                        # different method.
-                        # Then we do `decode` because `sendmail` crashes on certain invalid byte sequences
-                        # (like b'"TrueNAS SCALE<user@domaincom>" <user@domain.com>')
-                        # Same byte sequences passed as strings work fine and result in invalid from address being
-                        # sanitized properly.
-                        from_addr if isinstance(from_addr, str) else from_addr.encode().decode(),
-                        to,
-                        msg.as_string(),
-                    )
+                    server.sendmail(from_addr, to, msg.as_string())
         except NetworkActivityDisabled:
             self.logger.warning('Sending email denied')
             return False
@@ -361,8 +351,9 @@ class MailService(ConfigService):
                             # Update `From` address from currently used config because if the SMTP user changes,
                             # already queued messages might not be sent due to (553, b'Relaying disallowed as xxx')
                             # error
-                            queue.message['From'] = self._from_addr(config)
-                            server.sendmail(queue.message['From'].encode(),
+                            from_addr = self._from_addr(config)
+                            queue.message.replace_header('From', from_addr)
+                            server.sendmail(from_addr,
                                             queue.message['To'].split(', '),
                                             queue.message.as_string())
                 except NetworkActivityDisabled:
@@ -392,7 +383,7 @@ class MailService(ConfigService):
             else:
                 from_addr = Header(config['fromemail'], 'ascii')
 
-            return from_addr
+            return from_addr.encode()
 
     @private
     async def local_administrators_emails(self):
