@@ -2,7 +2,7 @@ from middlewared.alert.base import Alert, AlertCategory, AlertClass, SimpleOneSh
 
 
 class FailoverRebootAlertClass(AlertClass, SimpleOneShotAlertClass):
-    category = AlertCategory.SYSTEM
+    category = AlertCategory.HA
     level = AlertLevel.WARNING
     title = "Failover Event Caused System Reboot"
     text = (
@@ -19,7 +19,7 @@ class FailoverRebootAlertClass(AlertClass, SimpleOneShotAlertClass):
 
 
 class FencedRebootAlertClass(AlertClass, SimpleOneShotAlertClass):
-    category = AlertCategory.SYSTEM
+    category = AlertCategory.HA
     level = AlertLevel.WARNING
     title = "Fenced Caused System Reboot"
     text = (
