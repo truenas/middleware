@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import Mock
+
+import pytest
 
 from middlewared.plugins.pool_.pool import PoolService
 from middlewared.pytest.unit.middleware import Middleware
