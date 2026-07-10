@@ -15,6 +15,16 @@ from middlewared.alert.base import (
     UnavailableException,
     alert_category_names,
 )
+from middlewared.api.current import (
+    Alert as AlertListItem,
+)
+from middlewared.api.current import (
+    AlertCategory as AlertCategoryListItem,
+)
+from middlewared.api.current import (
+    AlertCategoryClass,
+    AlertListCategoriesOptions,
+)
 from middlewared.service import ServiceContext
 from middlewared.service_exception import CallError
 
@@ -40,56 +50,56 @@ def should_list_alert_class(alert_class: type[AlertClass], product_type: str, fa
     return product_type in alert_class.config.products
 
 
-async def list_categories(context: ServiceContext, options: dict[str, Any]) -> list[dict[str, Any]]:
+async def list_categories(context: ServiceContext, options: AlertListCategoriesOptions) -> list[AlertCategoryListItem]:
     product_type = await context.call2(context.s.alert.product_type)
     failover_licensed: bool = await context.middleware.call("failover.licensed")
 
     classes: list[type[AlertClass]] = []
     for alert_class in AlertClass.classes:
         if not (
-            options["include_all_products"] or
+            options.include_all_products or
             should_list_alert_class(alert_class, product_type, failover_licensed)
         ):
             continue
 
-        if not (options["include_hidden_classes"] or not alert_class.config.exclude_from_list):
+        if not (options.include_hidden_classes or not alert_class.config.exclude_from_list):
             continue
 
         classes.append(alert_class)
 
-    categories: list[dict[str, Any]] = []
+    categories: list[AlertCategoryListItem] = []
     for category in AlertCategory:
-        category_classes: list[dict[str, Any]] = []
+        category_classes: list[AlertCategoryClass] = []
         for alert_class in classes:
             if alert_class.config.category != category:
                 continue
 
             category_classes.append(
-                {
-                    "id": alert_class.config.name,
-                    "title": alert_class.config.title,
-                    "level": alert_class.config.level.name,
-                    "product_types": list(alert_class.config.products),
-                    "proactive_support": alert_class.config.proactive_support,
-                }
+                AlertCategoryClass(
+                    id=alert_class.config.name,
+                    title=alert_class.config.title,
+                    level=alert_class.config.level.name,
+                    product_types=list(alert_class.config.products),  # type: ignore[arg-type]
+                    proactive_support=alert_class.config.proactive_support,
+                )
             )
 
         if not category_classes:
             continue
 
-        category_classes.sort(key=lambda klass: klass["title"])
+        category_classes.sort(key=lambda klass: klass.title)
         categories.append(
-            {
-                "id": category.name,
-                "title": alert_category_names[category],
-                "classes": category_classes,
-            }
+            AlertCategoryListItem(
+                id=category.name,
+                title=alert_category_names[category],
+                classes=category_classes,
+            )
         )
 
     return categories
 
 
-async def list_alerts(context: ServiceContext, state: AlertState) -> list[dict[str, Any]]:
+async def list_alerts(context: ServiceContext, state: AlertState) -> list[AlertListItem]:
     as_ = AlertSerializer(context)
     classes = (await context.call2(context.s.alertclasses.config)).classes
 
@@ -102,7 +112,7 @@ async def list_alerts(context: ServiceContext, state: AlertState) -> list[dict[s
         ),
     )
 
-    result: list[dict[str, Any]] = []
+    result: list[AlertListItem] = []
     for alert in sorted_alerts:
         if await as_.should_show_alert(alert):
             result.append(await as_.serialize(alert))

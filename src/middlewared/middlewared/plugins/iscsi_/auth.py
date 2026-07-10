@@ -275,10 +275,10 @@ class iSCSITargetAuthCredentialService(CRUDService):
     async def clear_alerts(self):
         alerts = [
             alert for alert in await self.call2(self.s.alert.list)
-            if alert['klass'].startswith('ISCSIDiscoveryAuth')
+            if alert.klass.startswith('ISCSIDiscoveryAuth')
         ]
         for alert in alerts:
-            await self.call2(self.s.alert.oneshot_delete, alert['klass'], alert['args'])
+            await self.call2(self.s.alert.oneshot_delete, alert.klass, alert.args)
 
 
 async def __event_system_ready(middleware, event_type, args):

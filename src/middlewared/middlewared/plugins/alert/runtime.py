@@ -470,7 +470,7 @@ def expire_alerts(state: AlertState) -> None:
 def should_expire_alert(alert: Alert[Any]) -> bool:
     if isinstance(alert.instance, OneShotAlertClass):
         if alert.instance.config.expires_after is not None:
-            return alert.last_occurrence < utc_now() - alert.instance.config.expires_after  # type: ignore[operator]
+            return alert.last_occurrence < utc_now() - alert.instance.config.expires_after
 
     return False
 

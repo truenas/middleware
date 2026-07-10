@@ -11,11 +11,14 @@ import middlewared.alert.source  # noqa: F401
 from middlewared.api import Event, api_method
 from middlewared.api.base import BaseModel
 from middlewared.api.current import (
+    Alert,
+    AlertCategory,
     AlertDismissArgs,
     AlertDismissResult,
     AlertListAddedEvent,
     AlertListArgs,
     AlertListCategoriesArgs,
+    AlertListCategoriesOptions,
     AlertListCategoriesResult,
     AlertListChangedEvent,
     AlertListPoliciesArgs,
@@ -31,6 +34,7 @@ from . import lifecycle, oneshot, queries, runtime
 from .state import AlertState
 
 if typing.TYPE_CHECKING:
+    from middlewared.job import Job
     from middlewared.main import Middleware
 
 
@@ -68,35 +72,35 @@ class AlertService(Service):
         alert_sources: dict[str, AlertSource] = {name: cls(middleware) for name, cls in AlertSource.by_name.items()}
         self._state = AlertState(alert_sources=alert_sources)
 
-    @api_method(AlertListPoliciesArgs, AlertListPoliciesResult, roles=["ALERT_LIST_READ"])
+    @api_method(AlertListPoliciesArgs, AlertListPoliciesResult, roles=["ALERT_LIST_READ"], check_annotations=True)
     async def list_policies(self) -> list[str]:
         """
         List all alert policies which indicate the frequency of the alerts.
         """
         return queries.list_policies()
 
-    @api_method(AlertListCategoriesArgs, AlertListCategoriesResult, roles=["ALERT_LIST_READ"])
-    async def list_categories(self, options: dict[str, Any]) -> list[dict[str, Any]]:
+    @api_method(AlertListCategoriesArgs, AlertListCategoriesResult, roles=["ALERT_LIST_READ"], check_annotations=True)
+    async def list_categories(self, options: AlertListCategoriesOptions) -> list[AlertCategory]:
         """
         List all types of alerts which the system can issue.
         """
         return await queries.list_categories(self.context, options)
 
-    @api_method(AlertListArgs, AlertListResult, roles=["ALERT_LIST_READ"])
-    async def list(self) -> list[dict[str, Any]]:
+    @api_method(AlertListArgs, AlertListResult, roles=["ALERT_LIST_READ"], check_annotations=True)
+    async def list(self) -> list[Alert]:
         """
         List all types of alerts including active/dismissed currently in the system.
         """
         return await queries.list_alerts(self.context, self._state)
 
-    @api_method(AlertDismissArgs, AlertDismissResult, roles=["ALERT_LIST_WRITE"])
+    @api_method(AlertDismissArgs, AlertDismissResult, roles=["ALERT_LIST_WRITE"], check_annotations=True)
     async def dismiss(self, uuid: str) -> None:
         """
         Dismiss ``id`` alert.
         """
         await queries.dismiss(self.context, self._state, uuid)
 
-    @api_method(AlertRestoreArgs, AlertRestoreResult, roles=["ALERT_LIST_WRITE"])
+    @api_method(AlertRestoreArgs, AlertRestoreResult, roles=["ALERT_LIST_WRITE"], check_annotations=True)
     async def restore(self, uuid: str) -> None:
         """
         Restore ``id`` alert which had been dismissed.
@@ -114,12 +118,12 @@ class AlertService(Service):
     @periodic(60)
     @private
     @job(lock="process_alerts", transient=True, lock_queue_size=1)
-    async def process_alerts(self, job: Any) -> None:
+    async def process_alerts(self, job: Job) -> None:
         await runtime.process_alerts(self.context, self._state)
 
     @private
     @job(lock="process_alerts", transient=True)
-    async def send_alerts(self, job: Any) -> None:
+    async def send_alerts(self, job: Job) -> None:
         await runtime.send_alerts(self.context, self._state)
 
     @periodic(3600, run_on_start=False)
@@ -133,7 +137,7 @@ class AlertService(Service):
         lock_queue_size=None,  # Must be `None` so that alert operations are not discarded
         transient=True,
     )
-    async def oneshot_create(self, job: Any, instance: OneShotAlertClass) -> None:
+    async def oneshot_create(self, job: Job, instance: OneShotAlertClass) -> None:
         """
         Creates a one-shot alert from the given alert class `instance`.
 
@@ -144,13 +148,13 @@ class AlertService(Service):
         """
         await oneshot.oneshot_create(self.context, self._state, instance)
 
-    @api_method(AlertOneshotDeleteArgs, AlertOneshotDeleteResult, private=True)
+    @api_method(AlertOneshotDeleteArgs, AlertOneshotDeleteResult, private=True, check_annotations=True)
     @job(
         lock="process_alerts",
         lock_queue_size=None,  # Must be `None` so that alert operations are not discarded
         transient=True,
     )
-    async def oneshot_delete(self, job: Any, klass: str | builtins.list[str], query: Any = None) -> None:
+    async def oneshot_delete(self, job: Job, klass: str | builtins.list[str], query: Any = None) -> None:
         """
         Deletes one-shot alerts of specified `klass` or klasses, passing `query`
         to `klass.delete` method.

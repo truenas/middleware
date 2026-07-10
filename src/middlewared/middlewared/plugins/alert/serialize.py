@@ -4,6 +4,7 @@ import typing
 from typing import Any
 
 from middlewared.alert.base import Alert, AlertLevel, OneShotAlertClass
+from middlewared.api.current import Alert as AlertListItem
 from middlewared.service import ServiceContext
 
 from .state import DEFAULT_POLICY
@@ -45,10 +46,10 @@ class AlertSerializer:
         self.classes: dict[str, dict[str, Any]] = {}
         self.nodes: dict[str, str] = {}
 
-    async def serialize(self, alert: Alert[Any]) -> dict[str, Any]:
+    async def serialize(self, alert: Alert[Any]) -> AlertListItem:
         await self._ensure_initialized()
 
-        return dict(
+        return AlertListItem(
             id=alert.uuid,
             uuid=alert.uuid,
             source=alert.source,
@@ -56,7 +57,7 @@ class AlertSerializer:
             args=alert.instance.args(),
             node=self.nodes[alert.node],
             key=alert.key,
-            datetime=alert.datetime,
+            datetime_=alert.datetime,
             last_occurrence=alert.last_occurrence,
             dismissed=alert.dismissed,
             mail=alert.mail,

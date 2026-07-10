@@ -163,9 +163,9 @@ class SMBService(ConfigService):
         # alert is not auto-cleared here; acceptable because it is hidden from the
         # user and self-heals on a later regeneration if the policy becomes visible.
         locked_alert_share_ids = {
-            alert['args'].get('id')
-            for alert in self.middleware.call_sync('alert.list')
-            if alert['klass'] == 'ShareLocked' and alert['args'].get('type') == 'SMB'
+            alert.args.get('id')
+            for alert in self.call_sync2(self.s.alert.list)
+            if alert.klass == 'ShareLocked' and alert.args.get('type') == 'SMB'
         }
         active_shares = []
         for share in smb_shares:

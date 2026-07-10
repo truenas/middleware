@@ -68,7 +68,7 @@ async def _build_payload(
     license_info = await context.middleware.call('truenas.license.info')
 
     return {
-        'alerts': await context.call2(context.s.alert.list),
+        'alerts': [alert.model_dump(by_alias=True) for alert in await context.call2(context.s.alert.list)],
         'stats': stats,
         'fingerprint': fingerprint,
         'license_id': license_info['id'] if license_info else None,
