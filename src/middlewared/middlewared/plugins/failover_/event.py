@@ -26,7 +26,7 @@ from middlewared.plugins.failover_.stcnith import stcnith_reboot
 from middlewared.plugins.service.services.all import all_services
 from middlewared.service import Service, job
 from middlewared.service_exception import CallError
-from middlewared.utils import BOOT_POOL_NAME_VALID
+from middlewared.utils.boot.pool import BOOT_POOL_NAME_VALID
 from middlewared.utils.filter_list import compile_filters, compile_options
 from middlewared.utils.zfs import query_imported_fast_impl
 

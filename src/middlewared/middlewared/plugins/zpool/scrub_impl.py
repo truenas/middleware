@@ -175,7 +175,7 @@ def validate_pool(
         ZpoolScrubNotDueException: A recent scrub or pool event is within
             the threshold window.
     """
-    if pool_name != middleware.call_sync('boot.pool_name'):
+    if pool_name != middleware.call_sync2(middleware.services.boot.pool_name):
         if not middleware.call_sync('failover.is_single_master_node'):
             raise ZpoolNotMasterNodeException(pool_name)
 

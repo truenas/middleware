@@ -1,8 +1,8 @@
 import os
 from typing import Any
 
-from middlewared.plugins.boot import BOOT_POOL_NAME
 from middlewared.service import CallError, ValidationErrors
+from middlewared.utils.boot.pool import get_boot_pool_name
 from middlewared.utils.path import check_path_resides_within_volume_sync
 from middlewared.utils.zfs import query_imported_fast_impl
 
@@ -23,7 +23,7 @@ class CDROMDelegate(DeviceDelegate):
         path = device['attributes']['path']
         check_path_resides_within_volume_sync(
             verrors, 'attributes.path', path, [
-                i['name'] for i in query_imported_fast_impl().values() if i['name'] != BOOT_POOL_NAME
+                i['name'] for i in query_imported_fast_impl().values() if i['name'] != get_boot_pool_name()
             ]
         )
         if instance and not device_uniqueness_check(

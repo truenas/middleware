@@ -20,7 +20,7 @@ from middlewared.api.current import (
 )
 from middlewared.plugins.pool_.utils import UpdateImplArgs
 from middlewared.service import CRUDServicePart
-from middlewared.service_exception import ValidationError
+from middlewared.service_exception import CallError, ValidationError
 from middlewared.utils.filter_list import filter_list
 from middlewared.utils.size import format_size
 
@@ -32,7 +32,9 @@ class BootEnvironmentServicePart(CRUDServicePart[BootEnvironmentEntry, str]):
 
     async def _zfs_get_props(self) -> tuple[list[dict[str, Any]], str]:
         rv = []
-        bp_name = await self.middleware.call("boot.pool_name")
+        bp_name = await self.call2(self.s.boot.pool_name)
+        if bp_name is None:
+            raise CallError("Boot pool not detected")
         for i in await self.call2(
             self.s.zfs.resource.query_impl,
             ZFSResourceQuery(

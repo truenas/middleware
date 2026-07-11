@@ -12,6 +12,7 @@ from middlewared.plugins.initramfs import write_initramfs_flags
 from middlewared.service import ConfigServicePart, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
+from middlewared.utils.boot.models import BootUpdateInitramfsOptions
 from middlewared.utils.service.settings import SettingsHelper
 
 from .nvidia import handle_nvidia_toggle
@@ -271,7 +272,7 @@ class SystemAdvancedConfigServicePart(ConfigServicePart[SystemAdvancedEntry]):
             await configure_tty(self, old_config.model_dump(), new_config.model_dump(), generate_grub)
 
             if new_config.debugkernel and not old_config.debugkernel:
-                await self.middleware.call('boot.update_initramfs')
+                await self.call2(self.s.boot.update_initramfs, BootUpdateInitramfsOptions())
 
         if consolemsg is not None:
             await self.middleware.call('system.general.update', {'ui_consolemsg': consolemsg})

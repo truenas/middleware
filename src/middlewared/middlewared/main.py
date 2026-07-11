@@ -106,7 +106,7 @@ from middlewared.plugins.alert.alertclasses import AlertClassesService
 from middlewared.plugins.alert.alertservice import AlertServiceService
 from middlewared.plugins.api_key import ApiKeyService
 from middlewared.plugins.apps import AppService
-from middlewared.plugins.boot_environment import BootEnvironmentService
+from middlewared.plugins.boot import BootService
 from middlewared.plugins.catalog import CatalogService
 from middlewared.plugins.certificate import CertificateService
 from middlewared.plugins.cloud_backup import CloudBackupService
@@ -218,12 +218,6 @@ class AcmeServicesContainer(BaseServiceContainer):
         self.dns = AcmeDnsServicesContainer(middleware)
 
 
-class BootServicesContainer(BaseServiceContainer):
-    def __init__(self, middleware: "Middleware"):
-        super().__init__(middleware)
-        self.environment = BootEnvironmentService(middleware)
-
-
 class HardwareServicesContainer(BaseServiceContainer):
     def __init__(self, middleware: "Middleware"):
         super().__init__(middleware)
@@ -276,7 +270,7 @@ class ServiceContainer(BaseServiceContainer):
         self.alertservice = AlertServiceService(middleware)
         self.api_key = ApiKeyService(middleware)
         self.app = AppService(middleware)
-        self.boot = BootServicesContainer(middleware)
+        self.boot = BootService(middleware)
         self.catalog = CatalogService(middleware)
         self.certificate = CertificateService(middleware)
         self.cloud_backup = CloudBackupService(middleware)
