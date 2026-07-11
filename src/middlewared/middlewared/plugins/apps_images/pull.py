@@ -43,8 +43,8 @@ def pull_image_action(
     context.call_sync2(context.s.docker.validate_state)
     image_tag = data.image
     if data.auth_config is not None:
-        username: str | None = data.auth_config.username
-        password: str | None = data.auth_config.password
+        username: str | None = data.auth_config.username.get_secret_value()
+        password: str | None = data.auth_config.password.get_secret_value()
         registry_uri: str | None = data.auth_config.registry_uri
     else:
         # If user has not provided any auth creds, try to see if the registry to which the image
