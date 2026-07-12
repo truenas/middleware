@@ -475,7 +475,7 @@ class UPSLoadPlugin(UPSBase):
     uses_identifiers = False
 
     def get_chart_name(self, identifier: typing.Optional[str]) -> str:
-        return f'upsd_{self.UPS_IDENTIFIER}.load_usage'
+        return f'upsd_{self.UPS_IDENTIFIER}.load_percentage'
 
 
 class UPSTemperaturePlugin(UPSBase):
