@@ -4,5 +4,10 @@ Driver=ntb_netdev
 
 [Link]
 Name=ntb0
-# NAS-140093: Drop ntb MTU to 4000 to fix memory allocation issues
-MTUBytes=4000
+# fight the temptation of bumping this
+# to anything higher than 64000. ntb
+# driver code can easily inflate memory
+# to 2x what it should be (i.e. 128k+).
+# cf. truenas/linux repo and look at
+# rx_copybreak in the ntb_netdev driver
+MTUBytes=64000
