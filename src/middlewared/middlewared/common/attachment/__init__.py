@@ -1,4 +1,17 @@
+from typing import Generator, Iterable
+
 from middlewared.service import ServiceChangeMixin, SharingTaskService
+
+
+def uncovered_mountpoints(mountpoints: Iterable[str]) -> Generator[str]:
+    # Keep only the top-most mountpoints: a mountpoint nested under another in the set is already
+    # covered because attachment `query` matches child paths recursively.
+    kept = []
+    for mountpoint in sorted(set(mountpoints), key=len):
+        if any(mountpoint == top or mountpoint.startswith(top + '/') for top in kept):
+            continue
+        yield mountpoint
+        kept.append(mountpoint)
 
 
 class FSAttachmentDelegate(ServiceChangeMixin):
@@ -87,11 +100,11 @@ class FSAttachmentDelegate(ServiceChangeMixin):
         automatically when a path becomes available.)
         """
         attachments = []
-        for dataset, mountpoint in datasets:
-            if not mountpoint:
-                continue
-            # A nested encryption root can be unlocked along with its parent, so the same
-            # attachment may be reported for more than one mountpoint
+        # `query` matches recursively, so querying only the top-most mountpoints avoids re-running
+        # `{namespace}.query` (and an is_child per share) for every child dataset of a recursively
+        # unlocked pool, while still covering a legacy-mountpoint parent or a child mounted outside
+        # its parent's subtree.
+        for mountpoint in uncovered_mountpoints(mountpoint for _, mountpoint in datasets if mountpoint):
             for attachment in await self.query(mountpoint, True, {'locked': False}):
                 if attachment not in attachments:
                     attachments.append(attachment)

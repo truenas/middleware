@@ -78,33 +78,25 @@ class ContainerFSAttachmentDelegate(FSAttachmentDelegate):
             if await self.container_on_paths(container, paths):
                 yield container
 
-    async def container_on_paths(self, container, paths):
-        root = os.path.join('/mnt', container['dataset'])
-        for path in paths:
-            if await self.middleware.call('filesystem.is_child', root, path):
-                return True
-
-        for device in container['devices']:
-            if device['attributes']['dtype'] != 'FILESYSTEM':
-                continue
-            source = device['attributes'].get('source')
-            if not source:
-                continue
-            for path in paths:
-                if await self.middleware.call('filesystem.is_child', source, path):
-                    return True
-
-        return False
-
-    async def storage_locked(self, container):
-        # True if any dataset the container needs to run -- its root dataset or a FILESYSTEM device
-        # source -- is still locked (or has a locked parent).
+    def storage_paths(self, container):
+        # The paths whose datasets the container needs to run: its root dataset and every FILESYSTEM
+        # device source.
         paths = [os.path.join('/mnt', container['dataset'])]
         for device in container['devices']:
             if device['attributes']['dtype'] == 'FILESYSTEM' and (source := device['attributes'].get('source')):
                 paths.append(source)
 
-        for path in paths:
+        return paths
+
+    async def container_on_paths(self, container, paths):
+        # `filesystem.is_child` accepts lists on both sides and matches the cartesian product, so
+        # this is a single call rather than one per (storage path, unlocked path) pair.
+        return await self.middleware.call('filesystem.is_child', self.storage_paths(container), list(paths))
+
+    async def storage_locked(self, container):
+        # True if any dataset the container needs to run -- its root dataset or a FILESYSTEM device
+        # source -- is still locked (or has a locked parent).
+        for path in self.storage_paths(container):
             if await self.middleware.call('pool.dataset.path_in_locked_datasets', path):
                 return True
 
@@ -137,7 +129,7 @@ class ContainerFSAttachmentDelegate(FSAttachmentDelegate):
             try:
                 await self.middleware.call('container.start', attachment['id'])
             except Exception:
-                self.middleware.logger.warning('Unable to start %r container', attachment['id'])
+                self.middleware.logger.error('Failed to start %r container', attachment['id'], exc_info=True)
 
     async def start_on_unlock(self, datasets):
         # The generic start path cannot help here: it would call query(enabled=True), which only
@@ -168,7 +160,9 @@ class ContainerFSAttachmentDelegate(FSAttachmentDelegate):
                 # been deleted since)
                 state = (await self.middleware.call('container.get_instance', container['id']))['status']['state']
             except Exception:
-                self.middleware.logger.warning('Unable to query %r container after unlock', container['id'])
+                self.middleware.logger.warning(
+                    'Unable to query %r container after unlock', container['id'], exc_info=True
+                )
                 continue
 
             if state == 'RUNNING':
@@ -177,7 +171,7 @@ class ContainerFSAttachmentDelegate(FSAttachmentDelegate):
                         await self.middleware.call('container.stop', container['id'], {'force_after_timeout': True})
                     ).wait(raise_error=True)
                 except Exception:
-                    self.middleware.logger.warning('Unable to stop %r container', container['id'])
+                    self.middleware.logger.warning('Unable to stop %r container', container['id'], exc_info=True)
             elif state in ACTIVE_STATES:
                 # SUSPENDED: don't discard the paused state just to restart the container
                 continue

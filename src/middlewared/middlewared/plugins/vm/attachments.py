@@ -115,25 +115,23 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate):
 
         return disk
 
+    def disk_paths(self, vm):
+        # Normalized paths of the VM's DISK/RAW devices -- the storage it can't run without.
+        return [
+            disk for device in vm['devices']
+            if device['attributes']['dtype'] in ('DISK', 'RAW')
+            if (disk := self.device_disk_path(device))
+        ]
+
     async def device_on_paths(self, device, paths):
         disk = self.device_disk_path(device)
-        if disk is None:
-            return False
-
-        for path in paths:
-            if await self.middleware.call('filesystem.is_child', disk, path):
-                return True
-
-        return False
+        return disk is not None and await self.middleware.call('filesystem.is_child', disk, list(paths))
 
     async def storage_locked(self, vm):
         # True if any DISK/RAW disk the VM needs is on a dataset that is still locked (or has a
         # locked parent).
-        for device in vm['devices']:
-            if device['attributes']['dtype'] not in ('DISK', 'RAW'):
-                continue
-            disk = self.device_disk_path(device)
-            if disk and await self.middleware.call('pool.dataset.path_in_locked_datasets', disk):
+        for disk in self.disk_paths(vm):
+            if await self.middleware.call('pool.dataset.path_in_locked_datasets', disk):
                 return True
 
         return False
@@ -186,7 +184,7 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate):
                 # while earlier VMs in this loop were being restarted (or a VM may have been deleted since)
                 state = (await self.middleware.call('vm.status', vm['id']))['state']
             except Exception:
-                self.middleware.logger.warning('Unable to query %r VM after unlock', vm['name'])
+                self.middleware.logger.warning('Unable to query %r VM after unlock', vm['name'], exc_info=True)
                 continue
 
             if state == 'RUNNING':
@@ -196,7 +194,7 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate):
                     if stop_job.error:
                         self.middleware.logger.warning('Unable to stop %r VM: %s', vm['name'], stop_job.error)
                 except Exception:
-                    self.middleware.logger.warning('Unable to stop %r VM', vm['name'])
+                    self.middleware.logger.warning('Unable to stop %r VM', vm['name'], exc_info=True)
             elif state in ACTIVE_STATES:
                 # SUSPENDED: don't discard the paused state just to restart the VM
                 continue
@@ -204,17 +202,15 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate):
             try:
                 await self.middleware.call('vm.start', vm['id'])
             except Exception:
-                self.middleware.logger.warning('Unable to start %r VM after unlock', vm['name'])
+                self.middleware.logger.error('Failed to start %r VM after unlock', vm['name'], exc_info=True)
 
     async def vm_on_paths(self, vm, paths):
-        # A VM is tied to the unlocked datasets if a DISK/RAW device lives there: it cannot run
-        # without it, so a VM stopped when its dataset was locked is restarted on unlock. CDROMs are
-        # removable media and don't trigger a restart.
-        for device in vm['devices']:
-            if device['attributes']['dtype'] in ('DISK', 'RAW') and await self.device_on_paths(device, paths):
-                return True
-
-        return False
+        # A VM is tied to the unlocked datasets if a DISK/RAW disk lives there: it cannot run without
+        # it, so a VM stopped when its dataset was locked is restarted on unlock. CDROMs are removable
+        # media and don't trigger a restart. `filesystem.is_child` matches the cartesian product of
+        # both lists, so this is a single call.
+        disks = self.disk_paths(vm)
+        return bool(disks) and await self.middleware.call('filesystem.is_child', disks, list(paths))
 
 
 class VMPortDelegate(PortDelegate):

@@ -15,8 +15,8 @@ def encryption_props():
     }
 
 
-@pytest.mark.parametrize("running", [True, False])
-def test_restart_container_on_dataset_unlock(running):
+@pytest.mark.parametrize("state", ["RUNNING", "STOPPED", "SUSPENDED"])
+def test_restart_container_on_dataset_unlock(state):
     with dataset("test", encryption_props()) as ds:
         call("pool.dataset.lock", ds, job=True)
 
@@ -26,7 +26,7 @@ def test_restart_container_on_dataset_unlock(running):
             "autostart": True,
             "dataset": ds,
             "devices": [],
-            "status": {"state": "RUNNING" if running else "STOPPED"},
+            "status": {"state": state},
         }
         with (
             mock("container.query", return_value=[container]),
@@ -35,14 +35,14 @@ def test_restart_container_on_dataset_unlock(running):
             ssh("rm -f /tmp/test-container-stop")
             with mock(
                 "container.stop",
-                """
+                declaration="""
                 from middlewared.service import job
 
                 @job()
                 def mock(self, job, *args):
                     with open("/tmp/test-container-stop", "w") as f:
                         pass
-            """,
+                """,
             ):
                 ssh("rm -f /tmp/test-container-start")
                 with mock(
@@ -51,7 +51,7 @@ def test_restart_container_on_dataset_unlock(running):
                     def mock(self, *args):
                         with open("/tmp/test-container-start", "w") as f:
                             pass
-                """,
+                    """,
                 ):
                     call(
                         "pool.dataset.unlock",
@@ -60,17 +60,24 @@ def test_restart_container_on_dataset_unlock(running):
                         job=True,
                     )
 
-                    if running:
+                    # A RUNNING container is bounced (stopped then started) so it picks up the
+                    # freshly-mounted storage; a STOPPED one is just started; a SUSPENDED one is
+                    # left paused -- neither stopped nor started.
+                    if state == "RUNNING":
                         call("filesystem.stat", "/tmp/test-container-stop")
                     else:
                         ssh("test ! -f /tmp/test-container-stop")
-                    call("filesystem.stat", "/tmp/test-container-start")
+
+                    if state == "SUSPENDED":
+                        ssh("test ! -f /tmp/test-container-start")
+                    else:
+                        call("filesystem.stat", "/tmp/test-container-start")
 
 
 def test_container_not_started_until_all_encrypted_storage_unlocked():
-    # A container rooted on one encrypted pool that also bind-mounts storage from a second encrypted
-    # pool must not be started until BOTH are unlocked -- starting it with a still-locked bind-mount
-    # source would bring it up with a missing/empty filesystem.
+    # A container rooted on one encrypted dataset that also bind-mounts a second, independently
+    # encrypted dataset must not be started until BOTH are unlocked -- starting it with the
+    # still-locked bind-mount source would bring it up with a missing/empty filesystem.
     with (
         dataset("croot", encryption_props()) as root_ds,
         dataset("cdata", encryption_props()) as data_ds,
@@ -102,7 +109,7 @@ def test_container_not_started_until_all_encrypted_storage_unlocked():
         ):
             ssh("rm -f /tmp/split-container-start")
 
-            # Unlock only the root pool: the bind-mount source is still locked, so the
+            # Unlock only the root dataset: the bind-mount source is still locked, so the
             # container must NOT be started yet.
             call(
                 "pool.dataset.unlock",
