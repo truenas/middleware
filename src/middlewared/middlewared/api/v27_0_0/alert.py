@@ -6,11 +6,28 @@ from pydantic import Field
 from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, LongString, NotRequired, excluded_field
 
 __all__ = [
-    'AlertDismissArgs', 'AlertListArgs', 'AlertDismissResult', 'AlertListResult', 'AlertListCategoriesArgs',
-    'AlertListCategoriesResult', 'AlertListPoliciesArgs', 'AlertListPoliciesResult', 'AlertRestoreArgs',
-    'AlertRestoreResult', 'AlertClassesEntry', 'AlertClassesUpdate', 'AlertClassesUpdateArgs',
-    'AlertClassesUpdateResult', 'Alert', 'AlertListAddedEvent', 'AlertListChangedEvent', 'AlertListRemovedEvent',
-    'AlertLevel',
+    "AlertDismissArgs",
+    "AlertListArgs",
+    "AlertDismissResult",
+    "AlertListResult",
+    "AlertListCategoriesArgs",
+    "AlertListCategoriesOptions",
+    "AlertCategory",
+    "AlertCategoryClass",
+    "AlertListCategoriesResult",
+    "AlertListPoliciesArgs",
+    "AlertListPoliciesResult",
+    "AlertRestoreArgs",
+    "AlertRestoreResult",
+    "AlertClassesEntry",
+    "AlertClassesUpdate",
+    "AlertClassesUpdateArgs",
+    "AlertClassesUpdateResult",
+    "Alert",
+    "AlertListAddedEvent",
+    "AlertListChangedEvent",
+    "AlertListRemovedEvent",
+    "AlertLevel",
 ]
 
 AlertLevel: TypeAlias = Literal['INFO', 'NOTICE', 'WARNING', 'ERROR', 'CRITICAL', 'ALERT', 'EMERGENCY']

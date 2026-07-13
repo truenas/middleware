@@ -230,9 +230,9 @@ async def remove_outdated_alerts_on_boot(middleware, data):
         pools = {pool['name'] for pool in (await middleware.run_in_thread(query_imported_fast_impl)).values()}
 
         for alert in await middleware.call2(middleware.services.alert.list):
-            if alert['klass'] == 'PoolUpgraded':
-                if alert['args'] not in pools:
-                    await middleware.call2(middleware.services.alert.oneshot_delete, 'PoolUpgraded', alert['args'])
+            if alert.klass == 'PoolUpgraded':
+                if alert.args not in pools:
+                    await middleware.call2(middleware.services.alert.oneshot_delete, 'PoolUpgraded', alert.args)
 
 
 async def setup(middleware):

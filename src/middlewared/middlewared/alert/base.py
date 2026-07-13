@@ -328,9 +328,9 @@ class Alert[T: AlertClass]:
     ):
         self.instance = instance
         self.datetime: DateTimeType = datetime  # type: ignore[assignment]
-        self.last_occurrence = last_occurrence or datetime
+        self.last_occurrence: DateTimeType = last_occurrence or datetime  # type: ignore[assignment]
         self.node: str = node  # type: ignore[assignment]
-        self.dismissed = dismissed
+        self.dismissed: bool = dismissed  # type: ignore[assignment]
         self.mail = mail
 
         self.uuid: str = _uuid  # type: ignore[assignment]

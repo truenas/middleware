@@ -89,6 +89,6 @@ class DiskService(Service):
         alerts = list()
         names = {f'/dev/{i}' for i in names}
         for i in await self.call2(self.s.alert.list):
-            if i["klass"] == "DiskTemperatureTooHot" and i["args"]["device"] in names:
+            if i.klass == "DiskTemperatureTooHot" and i.args["device"] in names:
                 alerts.append(i)
         return alerts
