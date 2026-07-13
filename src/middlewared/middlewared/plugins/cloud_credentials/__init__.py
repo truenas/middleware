@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any
 from middlewared.api import api_method
 from middlewared.api.current import (
     CloudCredentialCreate,
+    CloudCredentialProvider,
     CloudCredentialUpdate,
     CredentialsCreateArgs,
     CredentialsCreateResult,
@@ -23,7 +24,6 @@ from middlewared.service import GenericCRUDService, private
 
 from . import verify as verify_
 from .crud import CloudCredentialModel, CredentialsServicePart  # noqa: F401 (CloudCredentialModel registers the model)
-from .verify import PROVIDER_UNION
 
 if TYPE_CHECKING:
     from middlewared.main import Middleware
@@ -55,7 +55,7 @@ class CredentialsService(GenericCRUDService[CredentialsEntry]):
         return self._svc_part.extend(data, {})
 
     @api_method(CredentialsVerifyArgs, CredentialsVerifyResult, roles=["CLOUD_SYNC_WRITE"], check_annotations=True)
-    def verify(self, data: PROVIDER_UNION) -> CredentialsVerifyData:
+    def verify(self, data: CloudCredentialProvider) -> CredentialsVerifyData:
         """
         Verify if ``attributes`` provided for ``provider`` are authorized by the ``provider``.
         """

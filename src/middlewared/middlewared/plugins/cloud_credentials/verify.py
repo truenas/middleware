@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 import subprocess
-import typing
 from typing import TYPE_CHECKING
 
-from middlewared.api.current import CloudCredentialProvider, CredentialsVerifyData
+from middlewared.api.current import CredentialsVerifyData
 from middlewared.plugins.cloud_sync import RcloneConfig, lsjson_error_excerpt
 from middlewared.rclone.remote.s3_providers import S3_PROVIDERS
 
@@ -12,10 +11,6 @@ if TYPE_CHECKING:
     from middlewared.api.base import BaseModel
 
     from . import CredentialsService
-
-# The API model stores the provider as ``Annotated[Union[...], Discriminator]``. ``check_annotations``
-# compares the bare union members, so unwrap the ``Annotated`` here to use as the method's parameter type.
-PROVIDER_UNION = typing.get_args(CloudCredentialProvider)[0]
 
 
 def verify(service: CredentialsService, provider: BaseModel) -> CredentialsVerifyData:
