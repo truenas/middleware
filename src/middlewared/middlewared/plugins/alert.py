@@ -244,6 +244,13 @@ class AlertOneshotDeleteResult(BaseModel):
     result: None
 
 
+def should_list_alert_class(alert_class: type[AlertClass], product_type: str, failover_licensed: bool) -> bool:
+    if alert_class.category == AlertCategory.HA and not failover_licensed:
+        return False
+
+    return product_type in alert_class.products
+
+
 class AlertService(Service):
     alert_sources_errors = set()
 
@@ -360,10 +367,14 @@ class AlertService(Service):
         """
 
         product_type = await self.middleware.call("alert.product_type")
+        failover_licensed = await self.middleware.call("failover.licensed")
 
         classes: list[type[AlertClass]] = []
         for alert_class in AlertClass.classes:
-            if not (options["include_all_products"] or product_type in alert_class.products):
+            if not (
+                options["include_all_products"] or
+                should_list_alert_class(alert_class, product_type, failover_licensed)
+            ):
                 continue
 
             if not (options["include_hidden_classes"] or not alert_class.exclude_from_list):
