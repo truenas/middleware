@@ -110,6 +110,7 @@ from middlewared.plugins.boot_environment import BootEnvironmentService
 from middlewared.plugins.catalog import CatalogService
 from middlewared.plugins.certificate import CertificateService
 from middlewared.plugins.cloud_backup import CloudBackupService
+from middlewared.plugins.cloud_credentials import CredentialsService
 from middlewared.plugins.container import ContainerService
 from middlewared.plugins.container.lxc import LXCConfigService
 from middlewared.plugins.cron import CronJobService
@@ -223,6 +224,12 @@ class BootServicesContainer(BaseServiceContainer):
         self.environment = BootEnvironmentService(middleware)
 
 
+class CloudsyncServicesContainer(BaseServiceContainer):
+    def __init__(self, middleware: "Middleware"):
+        super().__init__(middleware)
+        self.credentials = CredentialsService(middleware)
+
+
 class HardwareServicesContainer(BaseServiceContainer):
     def __init__(self, middleware: "Middleware"):
         super().__init__(middleware)
@@ -279,6 +286,7 @@ class ServiceContainer(BaseServiceContainer):
         self.catalog = CatalogService(middleware)
         self.certificate = CertificateService(middleware)
         self.cloud_backup = CloudBackupService(middleware)
+        self.cloudsync = CloudsyncServicesContainer(middleware)
         self.container = ContainerService(middleware)
         self.cronjob = CronJobService(middleware)
         self.dnsclient = DNSClientService(middleware)

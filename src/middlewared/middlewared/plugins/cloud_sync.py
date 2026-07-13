@@ -45,18 +45,6 @@ from middlewared.api.current import (
     CloudSyncSyncResult,
     CloudSyncUpdateArgs,
     CloudSyncUpdateResult,
-    CredentialsCreateArgs,
-    CredentialsCreateResult,
-    CredentialsDeleteArgs,
-    CredentialsDeleteResult,
-    CredentialsEntry,
-    CredentialsS3ProviderChoicesArgs,
-    CredentialsS3ProviderChoicesResult,
-    CredentialsUpdateArgs,
-    CredentialsUpdateResult,
-    CredentialsVerifyArgs,
-    CredentialsVerifyResult,
-    QueryOptions,
     ZFSResourceSnapshotDestroyQuery,
 )
 from middlewared.common.attachment import LockableFSAttachmentDelegate
@@ -67,11 +55,9 @@ from middlewared.plugins.cloud.path import check_local_path, get_remote_path
 from middlewared.plugins.cloud.remotes import REMOTES, remote_classes
 from middlewared.plugins.cloud.script import env_mapping, run_script
 from middlewared.plugins.cloud.snapshot import create_snapshot
-from middlewared.rclone.remote.s3_providers import S3_PROVIDERS
 from middlewared.rclone.remote.storjix import StorjIxError
 from middlewared.service import (
     CallError,
-    CRUDService,
     TaskPathService,
     ValidationError,
     ValidationErrors,
@@ -300,9 +286,11 @@ def rclone(middleware, job, cloud_sync, dry_run):
                     credentials_attributes[key] = value
                     updated = True
             if updated:
-                middleware.call_sync("cloudsync.credentials.update", cloud_sync["credentials"]["id"], {
-                    "provider": credentials_attributes
-                })
+                middleware.call_sync2(
+                    middleware.services.cloudsync.credentials.update,
+                    cloud_sync["credentials"]["id"],
+                    {"provider": credentials_attributes},
+                )
 
         if aborted:
             raise JobCancelledException()
@@ -595,141 +583,6 @@ def lsjson_error_excerpt(error):
     return excerpt
 
 
-class CloudCredentialModel(sa.Model):
-    __tablename__ = 'system_cloudcredentials'
-
-    id = sa.Column(sa.Integer(), primary_key=True)
-    name = sa.Column(sa.String(100))
-    provider = sa.Column(sa.String(50))
-    attributes = sa.Column(sa.JSON(dict, encrypted=True))
-
-
-class CredentialsService(CRUDService):
-
-    class Config:
-        namespace = "cloudsync.credentials"
-
-        datastore = "system.cloudcredentials"
-        datastore_extend = 'cloudsync.credentials.extend'
-
-        cli_namespace = "task.cloud_sync.credential"
-
-        role_prefix = "CLOUD_SYNC"
-
-        entry = CredentialsEntry
-
-    @private
-    def extend(self, data):
-        data["provider"] = {
-            "type": data["provider"],
-            **data.pop("attributes"),
-        }
-        return data
-
-    @private
-    def compress(self, data):
-        data["attributes"] = data["provider"]
-        data["provider"] = data["attributes"].pop("type")
-        return data
-
-    @api_method(CredentialsVerifyArgs, CredentialsVerifyResult, roles=["CLOUD_SYNC_WRITE"])
-    def verify(self, data):
-        """
-        Verify if ``attributes`` provided for ``provider`` are authorized by the ``provider``.
-        """
-        self.middleware.call_sync("network.general.will_perform_activity", "cloud_sync")
-
-        with RcloneConfig({"credentials": {"provider": data}}) as config:
-            proc = subprocess.run(
-                ["rclone", "--config", config.config_path, "--contimeout", "15s", "--timeout", "30s", "lsjson",
-                 "remote:"],
-                check=False,
-                encoding="utf8",
-                capture_output=True,
-            )
-            if proc.returncode == 0:
-                return {"valid": True}
-            else:
-                return {"valid": False, "error": proc.stderr, "excerpt": lsjson_error_excerpt(proc.stderr)}
-
-    @api_method(CredentialsCreateArgs, CredentialsCreateResult)
-    def do_create(self, data):
-        """
-        Create Cloud Sync Credentials.
-        """
-        self._validate("cloud_sync_credentials_create", data)
-
-        self.compress(data)
-        data["id"] = self.middleware.call_sync(
-            "datastore.insert",
-            "system.cloudcredentials",
-            data,
-        )
-        self.extend(data)
-        return data
-
-    @api_method(CredentialsUpdateArgs, CredentialsUpdateResult)
-    def do_update(self, id_, data):
-        """
-        Update Cloud Sync Credentials of ``id``.
-        """
-        old = self.middleware.call_sync("cloudsync.credentials.get_instance", id_)
-
-        new = old.copy()
-        new.update(data)
-
-        self._validate("cloud_sync_credentials_update", new, id_)
-
-        self.compress(new)
-        self.middleware.call_sync(
-            "datastore.update",
-            "system.cloudcredentials",
-            id_,
-            new,
-        )
-        self.extend(new)
-
-        return new
-
-    @api_method(CredentialsDeleteArgs, CredentialsDeleteResult)
-    def do_delete(self, id_):
-        """
-        Delete Cloud Sync Credentials of ``id``.
-        """
-        tasks = self.middleware.call_sync(
-            "cloudsync.query", [["credentials.id", "=", id_]], {"select": ["id", "credentials", "description"]}
-        )
-        if tasks:
-            raise CallError(f"This credential is used by cloud sync task {tasks[0]['description'] or tasks[0]['id']}")
-
-        tasks = self.middleware.call_sync2(
-            self.middleware.services.cloud_backup.query,
-            [["credentials.id", "=", id_]], QueryOptions(select=["id", "credentials", "description"]),
-        )
-        if tasks:
-            raise CallError(f"This credential is used by cloud backup task {tasks[0].description or tasks[0].id}")
-
-        return self.middleware.call_sync(
-            "datastore.delete",
-            "system.cloudcredentials",
-            id_,
-        )
-
-    def _validate(self, schema_name, data, id_=None):
-        verrors = ValidationErrors()
-
-        self.middleware.run_coroutine(self._ensure_unique(verrors, schema_name, "name", data["name"], id_))
-
-        verrors.check()
-
-    @api_method(CredentialsS3ProviderChoicesArgs, CredentialsS3ProviderChoicesResult)
-    def s3_provider_choices(self):
-        """
-        Provide choices for S3 provider ``provider`` field.
-        """
-        return S3_PROVIDERS
-
-
 class CloudSyncModel(CloudTaskModelMixin, sa.Model):
     __tablename__ = 'tasks_cloudsync'
 
@@ -771,8 +624,8 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
 
     @private
     def extend(self, cloud_sync, context):
-        cloud_sync["credentials"] = self.middleware.call_sync(
-            "cloudsync.credentials.extend", cloud_sync.pop("credential"),
+        cloud_sync["credentials"] = self.middleware.call_sync2(
+            self.middleware.services.cloudsync.credentials.extend, cloud_sync.pop("credential"),
         )
 
         if job := self.middleware.run_coroutine(self.get_task_state_job(context["task_state"], cloud_sync["id"])):

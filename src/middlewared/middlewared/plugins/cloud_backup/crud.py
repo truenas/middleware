@@ -63,7 +63,7 @@ class CloudBackupServicePart(SharingTaskServicePart[CloudBackupEntry], CloudTask
         }
 
     async def sharing_task_extend(self, data: dict[str, Any], service_context: Any) -> dict[str, Any]:
-        data["credentials"] = await self.middleware.call("cloudsync.credentials.extend", data.pop("credential"))
+        data["credentials"] = await self.call2(self.s.cloudsync.credentials.extend, data.pop("credential"))
 
         if job := await self.call2(self.s.cloud_backup.get_task_state_job, service_context["task_state"], data["id"]):
             data["job"] = job

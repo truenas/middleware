@@ -7,16 +7,17 @@ from middlewared.api.base import (
     LongString,
     NonEmptyString,
     excluded_field,
-    single_argument_result,
 )
 
 from .cloud_sync_providers import CloudCredentialProvider
 
-__all__ = ["CredentialsEntry",
+__all__ = ["CloudCredentialProvider",
+           "CloudCredentialCreate", "CloudCredentialUpdate",
+           "CredentialsEntry",
            "CredentialsCreateArgs", "CredentialsCreateResult",
            "CredentialsUpdateArgs", "CredentialsUpdateResult",
            "CredentialsDeleteArgs", "CredentialsDeleteResult",
-           "CredentialsVerifyArgs", "CredentialsVerifyResult",
+           "CredentialsVerifyArgs", "CredentialsVerifyData", "CredentialsVerifyResult",
            "CredentialsS3ProviderChoicesArgs", "CredentialsS3ProviderChoicesResult"]
 
 
@@ -71,14 +72,17 @@ class CredentialsVerifyArgs(BaseModel):
     )
 
 
-@single_argument_result
-class CredentialsVerifyResult(BaseModel):
+class CredentialsVerifyData(BaseModel):
     valid: bool = Field(description="Whether the cloud credentials are valid and functional.")
     error: LongString | None = Field(
         default=None,
         description="Error message if credential verification failed or `null` on success.",
     )
     excerpt: LongString | None = Field(default=None, description="Logs excerpt (or `null` if no error occurred).")
+
+
+class CredentialsVerifyResult(BaseModel):
+    result: CredentialsVerifyData = Field(description="Outcome of the cloud credential verification.")
 
 
 class CredentialsS3ProviderChoicesArgs(BaseModel):

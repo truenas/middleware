@@ -4,6 +4,7 @@ import enum
 from typing import TYPE_CHECKING, Any
 
 from middlewared.api.current import (
+    CredentialsEntry,
     KeychainCredentialDeleteOptions,
     KeychainCredentialEntry,
     RsyncTaskEntry,
@@ -82,29 +83,30 @@ class SSHCredentialsSSHKeyPairUsedByDelegate(
         return row.attributes.get_secret_value().private_key == id_
 
 
-class SFTPCloudSyncCredentialsSSHKeyPairUsedByDelegate(KeychainCredentialUsedByDelegate[dict[str, Any]]):
+class SFTPCloudSyncCredentialsSSHKeyPairUsedByDelegate(KeychainCredentialUsedByDelegate[CredentialsEntry]):
     unbind_method = KeychainCredentialUsedByDelegateUnbindMethod.DISABLE
 
-    async def query(self, id_: int) -> list[dict[str, Any]]:
+    async def query(self, id_: int) -> list[CredentialsEntry]:
         result = []
-        for cloud_credentials in await self.middleware.call(
-            "cloudsync.credentials.query", [["provider.type", "=", "SFTP"]]
+        for cloud_credentials in await self.middleware.call2(
+            self.middleware.services.cloudsync.credentials.query, [["provider.type", "=", "SFTP"]]
         ):
-            if cloud_credentials["provider"].get("private_key") == id_:
+            if cloud_credentials.provider.private_key.get_secret_value() == id_:
                 result.append(cloud_credentials)
 
         return result
 
-    async def get_title(self, row: dict[str, Any]) -> str:
-        return f"Cloud credentials {row['name']}"
+    async def get_title(self, row: CredentialsEntry) -> str:
+        return f"Cloud credentials {row.name}"
 
-    async def unbind(self, row: dict[str, Any]) -> None:
-        attributes = {k: v for k, v in row["provider"].items() if k != "type"}
+    async def unbind(self, row: CredentialsEntry) -> None:
+        attributes = row.provider.model_dump(by_alias=True, context={"expose_secrets": True})
+        attributes.pop("type", None)
         attributes.pop("private_key", None)
         await self.middleware.call(
             "datastore.update",
             "system.cloudcredentials",
-            row["id"],
+            row.id,
             {
                 "attributes": attributes,
             },
