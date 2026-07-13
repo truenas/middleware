@@ -141,7 +141,7 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate):
             try:
                 await self.middleware.call('vm.stop', attachment['id'])
             except Exception:
-                self.middleware.logger.warning('Unable to vm.stop %r', attachment['id'])
+                self.logger.warning('Unable to vm.stop %r', attachment['id'])
 
     async def toggle(self, attachments, enabled):
         for attachment in attachments:
@@ -149,7 +149,7 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate):
             try:
                 await self.middleware.call(action, attachment['id'])
             except Exception:
-                self.middleware.logger.warning('Unable to %s %r', action, attachment['id'])
+                self.logger.warning('Unable to %s %r', action, attachment['id'])
 
     async def stop(self, attachments):
         await self.toggle(attachments, False)
@@ -184,7 +184,7 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate):
                 # while earlier VMs in this loop were being restarted (or a VM may have been deleted since)
                 state = (await self.middleware.call('vm.status', vm['id']))['state']
             except Exception:
-                self.middleware.logger.warning('Unable to query %r VM after unlock', vm['name'], exc_info=True)
+                self.logger.warning('Unable to query %r VM after unlock', vm['name'], exc_info=True)
                 continue
 
             if state == 'RUNNING':
@@ -192,9 +192,9 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate):
                     stop_job = await self.middleware.call('vm.stop', vm['id'], {'force_after_timeout': True})
                     await stop_job.wait()
                     if stop_job.error:
-                        self.middleware.logger.warning('Unable to stop %r VM: %s', vm['name'], stop_job.error)
+                        self.logger.warning('Unable to stop %r VM: %s', vm['name'], stop_job.error)
                 except Exception:
-                    self.middleware.logger.warning('Unable to stop %r VM', vm['name'], exc_info=True)
+                    self.logger.warning('Unable to stop %r VM', vm['name'], exc_info=True)
             elif state in ACTIVE_STATES:
                 # SUSPENDED: don't discard the paused state just to restart the VM
                 continue
@@ -202,7 +202,7 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate):
             try:
                 await self.middleware.call('vm.start', vm['id'])
             except Exception:
-                self.middleware.logger.error('Failed to start %r VM after unlock', vm['name'], exc_info=True)
+                self.logger.error('Failed to start %r VM after unlock', vm['name'], exc_info=True)
 
     async def vm_on_paths(self, vm, paths):
         # A VM is tied to the unlocked datasets if a DISK/RAW disk lives there: it cannot run without

@@ -108,7 +108,7 @@ class ContainerFSAttachmentDelegate(FSAttachmentDelegate):
                 container = await self.middleware.call('container.get_instance', attachment['id'])
                 await self.middleware.call('container.delete_container_from_db_and_libvirt', container)
             except Exception:
-                self.middleware.logger.warning('Unable to delete %r container', attachment['id'])
+                self.logger.warning('Unable to delete %r container', attachment['id'])
         else:
             await self.middleware.call('etc.generate', 'libvirt_guests')
 
@@ -122,14 +122,14 @@ class ContainerFSAttachmentDelegate(FSAttachmentDelegate):
                     await self.middleware.call('container.stop', attachment['id'], {'force': True})
                 ).wait(raise_error=True)
             except Exception:
-                self.middleware.logger.warning('Unable to stop %r container', attachment['id'])
+                self.logger.warning('Unable to stop %r container', attachment['id'])
 
     async def start(self, attachments):
         for attachment in attachments:
             try:
                 await self.middleware.call('container.start', attachment['id'])
             except Exception:
-                self.middleware.logger.error('Failed to start %r container', attachment['id'], exc_info=True)
+                self.logger.error('Failed to start %r container', attachment['id'], exc_info=True)
 
     async def start_on_unlock(self, datasets):
         # The generic start path cannot help here: it would call query(enabled=True), which only
@@ -160,7 +160,7 @@ class ContainerFSAttachmentDelegate(FSAttachmentDelegate):
                 # been deleted since)
                 state = (await self.middleware.call('container.get_instance', container['id']))['status']['state']
             except Exception:
-                self.middleware.logger.warning(
+                self.logger.warning(
                     'Unable to query %r container after unlock', container['id'], exc_info=True
                 )
                 continue
@@ -171,7 +171,7 @@ class ContainerFSAttachmentDelegate(FSAttachmentDelegate):
                         await self.middleware.call('container.stop', container['id'], {'force_after_timeout': True})
                     ).wait(raise_error=True)
                 except Exception:
-                    self.middleware.logger.warning('Unable to stop %r container', container['id'], exc_info=True)
+                    self.logger.warning('Unable to stop %r container', container['id'], exc_info=True)
             elif state in ACTIVE_STATES:
                 # SUSPENDED: don't discard the paused state just to restart the container
                 continue
