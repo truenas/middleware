@@ -18,7 +18,7 @@ def verify(service: CredentialsService, provider: BaseModel) -> CredentialsVerif
 
     service.middleware.call_sync("network.general.will_perform_activity", "cloud_sync")
 
-    with RcloneConfig({"credentials": {"provider": attributes}}) as config:
+    with RcloneConfig({"credentials": {"provider": attributes}}) as config:  # type: ignore[no-untyped-call]
         proc = subprocess.run(
             ["rclone", "--config", config.config_path, "--contimeout", "15s", "--timeout", "30s", "lsjson",
              "remote:"],

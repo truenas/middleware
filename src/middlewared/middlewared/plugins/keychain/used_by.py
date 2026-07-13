@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import enum
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from middlewared.api.current import (
     CredentialsEntry,
     KeychainCredentialDeleteOptions,
     KeychainCredentialEntry,
     RsyncTaskEntry,
+    SFTPCredentialsModel,
     SSHCredentialsEntry,
     UsedKeychainCredential,
 )
@@ -91,7 +92,8 @@ class SFTPCloudSyncCredentialsSSHKeyPairUsedByDelegate(KeychainCredentialUsedByD
         for cloud_credentials in await self.middleware.call2(
             self.middleware.services.cloudsync.credentials.query, [["provider.type", "=", "SFTP"]]
         ):
-            if cloud_credentials.provider.private_key.get_secret_value() == id_:
+            provider = cast(SFTPCredentialsModel, cloud_credentials.provider)
+            if provider.private_key.get_secret_value() == id_:
                 result.append(cloud_credentials)
 
         return result

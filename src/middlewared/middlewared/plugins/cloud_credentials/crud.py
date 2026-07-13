@@ -54,7 +54,11 @@ class CredentialsServicePart(CRUDServicePart[CredentialsEntry]):
         if tasks:
             raise CallError(f"This credential is used by cloud backup task {tasks[0].description or tasks[0].id}")
 
-        return await self.middleware.call("datastore.delete", "system.cloudcredentials", id_)
+        return await self.middleware.call(  # type: ignore[no-any-return]
+            "datastore.delete",
+            "system.cloudcredentials",
+            id_,
+        )
 
     async def validate(self, schema_name: str, credential: CredentialsEntry, id_: int | None = None) -> None:
         verrors = ValidationErrors()

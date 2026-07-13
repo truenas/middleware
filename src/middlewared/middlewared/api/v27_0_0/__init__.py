@@ -16,6 +16,7 @@ from .catalog import *
 from .certificate import *
 from .cloud_backup import *
 from .cloud_credential import *
+from .cloud_sync_providers import *
 from .cloud_sync import *
 from .common import *
 from .config import *

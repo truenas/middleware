@@ -35,6 +35,7 @@ jobs:
             middlewared/plugins/boot_environment/ \
             middlewared/plugins/catalog/ \
             middlewared/plugins/cloud_backup/ \
+            middlewared/plugins/cloud_credentials/ \
             middlewared/plugins/container/ \
             middlewared/plugins/cron/ \
             middlewared/plugins/docker/ \

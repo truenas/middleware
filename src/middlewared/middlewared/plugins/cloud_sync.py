@@ -575,7 +575,7 @@ class CloudProviderRemovedAlert(OneShotAlertClass):
     )
 
 
-def lsjson_error_excerpt(error):
+def lsjson_error_excerpt(error: str) -> str:
     excerpt = error.split("\n")[0]
     excerpt = re.sub(r"^[0-9]{4}/[0-9]{2}/[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} ", "", excerpt)
     excerpt = excerpt.replace("Failed to create file system for \"remote:\": ", "")
