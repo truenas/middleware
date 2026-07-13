@@ -1,18 +1,13 @@
 import pytest
 
+from assets.unlock_restart import (
+    assert_started_only_after_all_deps_unlocked,
+    encryption_props,
+    marker_mock,
+    unlock,
+)
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call, mock, ssh
-
-
-PASSPHRASE = "12345678"
-
-
-def encryption_props():
-    return {
-        "encryption_options": {"generate_key": False, "passphrase": PASSPHRASE},
-        "encryption": True,
-        "inherit_encryption": False,
-    }
 
 
 @pytest.mark.parametrize("state", ["RUNNING", "STOPPED", "SUSPENDED"])
@@ -31,47 +26,25 @@ def test_restart_container_on_dataset_unlock(state):
         with (
             mock("container.query", return_value=[container]),
             mock("container.get_instance", return_value=container),
+            mock("container.stop", declaration=marker_mock("/tmp/test-container-stop")),
+            mock(
+                "container.start", declaration=marker_mock("/tmp/test-container-start")
+            ),
         ):
-            ssh("rm -f /tmp/test-container-stop")
-            with mock(
-                "container.stop",
-                declaration="""
-                from middlewared.service import job
+            ssh("rm -f /tmp/test-container-stop /tmp/test-container-start")
+            unlock(ds)
 
-                @job()
-                def mock(self, job, *args):
-                    with open("/tmp/test-container-stop", "w") as f:
-                        pass
-                """,
-            ):
-                ssh("rm -f /tmp/test-container-start")
-                with mock(
-                    "container.start",
-                    declaration="""
-                    def mock(self, *args):
-                        with open("/tmp/test-container-start", "w") as f:
-                            pass
-                    """,
-                ):
-                    call(
-                        "pool.dataset.unlock",
-                        ds,
-                        {"datasets": [{"name": ds, "passphrase": PASSPHRASE}]},
-                        job=True,
-                    )
+            # A RUNNING container is bounced (stopped then started) so it picks up the freshly
+            # mounted storage; a STOPPED one is just started; a SUSPENDED one is left paused.
+            if state == "RUNNING":
+                call("filesystem.stat", "/tmp/test-container-stop")
+            else:
+                ssh("test ! -f /tmp/test-container-stop")
 
-                    # A RUNNING container is bounced (stopped then started) so it picks up the
-                    # freshly-mounted storage; a STOPPED one is just started; a SUSPENDED one is
-                    # left paused -- neither stopped nor started.
-                    if state == "RUNNING":
-                        call("filesystem.stat", "/tmp/test-container-stop")
-                    else:
-                        ssh("test ! -f /tmp/test-container-stop")
-
-                    if state == "SUSPENDED":
-                        ssh("test ! -f /tmp/test-container-start")
-                    else:
-                        call("filesystem.stat", "/tmp/test-container-start")
+            if state == "SUSPENDED":
+                ssh("test ! -f /tmp/test-container-start")
+            else:
+                call("filesystem.stat", "/tmp/test-container-start")
 
 
 def test_container_not_started_until_all_encrypted_storage_unlocked():
@@ -99,32 +72,9 @@ def test_container_not_started_until_all_encrypted_storage_unlocked():
             mock("container.query", return_value=[container]),
             mock("container.get_instance", return_value=container),
             mock(
-                "container.start",
-                declaration="""
-                def mock(self, *args):
-                    with open("/tmp/split-container-start", "w") as f:
-                        pass
-                """,
+                "container.start", declaration=marker_mock("/tmp/split-container-start")
             ),
         ):
-            ssh("rm -f /tmp/split-container-start")
-
-            # Unlock only the root dataset: the bind-mount source is still locked, so the
-            # container must NOT be started yet.
-            call(
-                "pool.dataset.unlock",
-                root_ds,
-                {"datasets": [{"name": root_ds, "passphrase": PASSPHRASE}]},
-                job=True,
+            assert_started_only_after_all_deps_unlocked(
+                "/tmp/split-container-start", root_ds, data_ds
             )
-            ssh("test ! -f /tmp/split-container-start")
-
-            # Unlock the bind-mount source: now all of the container's storage is
-            # available, so it is started.
-            call(
-                "pool.dataset.unlock",
-                data_ds,
-                {"datasets": [{"name": data_ds, "passphrase": PASSPHRASE}]},
-                job=True,
-            )
-            call("filesystem.stat", "/tmp/split-container-start")
