@@ -6,10 +6,9 @@ from typing import TYPE_CHECKING
 from middlewared.service import CallError
 from middlewared.utils import run
 from middlewared.utils.boot.models import BootFormatOptions, BootUpdateInitramfsOptions
-from middlewared.utils.boot.pool import get_boot_pool_name
+from middlewared.utils.boot.pool import boot_pool
 from middlewared.utils.disks import valid_zfs_partition_uuids
 
-from .disks import get_disks_cache, get_state_dict
 from .format import format_disk, install_loader, legacy_schema
 
 if TYPE_CHECKING:
@@ -19,16 +18,18 @@ if TYPE_CHECKING:
 
 
 async def check_update_ashift_property(context: ServiceContext) -> None:
-    boot_pool = get_boot_pool_name()
-    zfs_pool = await context.middleware.call("zpool.query_impl", {"pool_names": [boot_pool], "properties": ["ashift"]})
+    boot_pool_name = boot_pool.get_name()
+    zfs_pool = await context.middleware.call(
+        "zpool.query_impl", {"pool_names": [boot_pool_name], "properties": ["ashift"]}
+    )
     if zfs_pool and zfs_pool[0]["properties"]["ashift"]["source"] == "DEFAULT":
-        await context.middleware.call("zfs.pool.update", boot_pool, {"properties": {"ashift": {"value": "12"}}})
+        await context.middleware.call("zfs.pool.update", boot_pool_name, {"properties": {"ashift": {"value": "12"}}})
 
 
 async def attach(context: ServiceContext, job: Job, dev: str, options: BootAttachOptions) -> None:
-    boot_pool = get_boot_pool_name()
+    boot_pool_name = boot_pool.get_name()
     await check_update_ashift_property(context)
-    disks = list(await get_disks_cache(context))
+    disks = list(await boot_pool.get_disks(context.middleware))
     if len(disks) > 1:
         raise CallError("3-way mirror not supported")
 
@@ -47,12 +48,12 @@ async def attach(context: ServiceContext, job: Job, dev: str, options: BootAttac
     schema = await legacy_schema(context, disks[0])
     await format_disk(context, dev, BootFormatOptions(size=size, legacy_schema=schema))
 
-    pool = (await context.middleware.call("zpool.query_impl", {"pool_names": [boot_pool], "topology": True}))[0]
+    pool = (await context.middleware.call("zpool.query_impl", {"pool_names": [boot_pool_name], "topology": True}))[0]
     boot_vdev = pool["topology"]["data"][0]
     zfs_dev_part = await context.middleware.call("disk.get_partition", dev)
     extend_pool_job = await context.middleware.call(
         "zfs.pool.extend",
-        boot_pool,
+        boot_pool_name,
         None,
         [{"target": boot_vdev["guid"], "type": "DISK", "path": f"/dev/{zfs_dev_part['name']}"}],
     )
@@ -63,20 +64,20 @@ async def attach(context: ServiceContext, job: Job, dev: str, options: BootAttac
 
     # If the user is upgrading his disks, let's set expand to True to make sure that we
     # register the new disks capacity which increase the size of the pool
-    await context.middleware.call("zfs.pool.online", boot_pool, zfs_dev_part["name"], True)
+    await context.middleware.call("zfs.pool.online", boot_pool_name, zfs_dev_part["name"], True)
     await context.call2(context.s.boot.update_initramfs, BootUpdateInitramfsOptions())
 
 
 async def detach(context: ServiceContext, dev: str) -> None:
     await check_update_ashift_property(context)
-    await context.middleware.call("zfs.pool.detach", get_boot_pool_name(), dev, {"clear_label": True})
+    await context.middleware.call("zfs.pool.detach", boot_pool.get_name(), dev, {"clear_label": True})
     await context.call2(context.s.boot.update_initramfs, BootUpdateInitramfsOptions())
 
 
 async def replace(context: ServiceContext, job: Job, label: str, dev: str) -> None:
-    boot_pool = get_boot_pool_name()
+    boot_pool_name = boot_pool.get_name()
     await check_update_ashift_property(context)
-    disks = list(await get_disks_cache(context))
+    disks = list(await boot_pool.get_disks(context.middleware))
 
     schema = await legacy_schema(context, disks[0])
 
@@ -85,15 +86,15 @@ async def replace(context: ServiceContext, job: Job, label: str, dev: str) -> No
 
     job.set_progress(0, f"Replacing {label} with {dev}")
     zfs_dev_part = await context.middleware.call("disk.get_partition", dev)
-    await context.middleware.call("zfs.pool.replace", boot_pool, label, zfs_dev_part["name"])
+    await context.middleware.call("zfs.pool.replace", boot_pool_name, label, zfs_dev_part["name"])
 
     # We need to wait for pool resilver after replacing a device, otherwise grub might
     # fail with `unknown filesystem` error
     while True:
-        state = await get_state_dict(context)
-        if state["scan"] and state["scan"]["function"] == "RESILVER" and state["scan"]["state"] == "SCANNING":
-            left = int(state["scan"]["total_secs_left"]) if state["scan"]["total_secs_left"] else "unknown"
-            job.set_progress(int(state["scan"]["percentage"]), f"Resilvering boot pool, {left} seconds left")
+        state = await context.call2(context.s.boot.get_state)
+        if state.scan is not None and state.scan.function == "RESILVER" and state.scan.state == "SCANNING":
+            left = state.scan.total_secs_left if state.scan.total_secs_left is not None else "unknown"
+            job.set_progress(int(state.scan.percentage), f"Resilvering boot pool, {left} seconds left")
             await asyncio.sleep(5)
         else:
             break
@@ -104,7 +105,7 @@ async def replace(context: ServiceContext, job: Job, label: str, dev: str) -> No
 
 
 async def scrub(context: ServiceContext, job: Job) -> None:
-    subjob = await context.middleware.call("pool.scrub.scrub", get_boot_pool_name())
+    subjob = await context.middleware.call("pool.scrub.scrub", boot_pool.get_name())
     await job.wrap(subjob)
 
 
@@ -120,8 +121,8 @@ async def set_scrub_interval(context: ServiceContext, interval: int) -> int:
 
 async def expand(context: ServiceContext) -> None:
     await check_update_ashift_property(context)
-    boot_pool = get_boot_pool_name()
-    for device in await context.middleware.call("zfs.pool.get_devices", boot_pool):
+    boot_pool_name = boot_pool.get_name()
+    for device in await context.middleware.call("zfs.pool.get_devices", boot_pool_name):
         try:
             await expand_device(context, device)
         except CallError as e:

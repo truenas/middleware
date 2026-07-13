@@ -34,7 +34,7 @@ from middlewared.utils.boot.models import (
     BootUpdateInitramfsOptions,
     BootUpdateInitramfsResult,
 )
-from middlewared.utils.boot.pool import get_boot_pool_name
+from middlewared.utils.boot.pool import boot_pool
 
 from . import disks as _disks
 from . import format as _format
@@ -64,7 +64,7 @@ class BootService(Service):
         Returns the current state of the boot pool, including all vdevs, properties and datasets.
         """
         # WebUI expects same data as `pool.pool_extend`
-        info = await _disks.get_state_dict(self.context)
+        info = await self.middleware.call("pool.pool_normalize_info", boot_pool.get_name())
         return BootGetState.model_validate(info)
 
     @api_method(BootGetDisksArgs, BootGetDisksResult, roles=["DISK_READ"], check_annotations=True)
@@ -72,7 +72,7 @@ class BootService(Service):
         """
         Returns disks of the boot pool.
         """
-        return await _disks.get_disks_cache(self.context)
+        return await boot_pool.get_disks(self.middleware)
 
     @api_method(BootAttachArgs, BootAttachResult, roles=["DISK_WRITE"], check_annotations=True)
     @job(lock=BOOT_ATTACH_REPLACE_LOCK)
@@ -130,16 +130,16 @@ class BootService(Service):
         return _initramfs.rebuild_initramfs(options.force)
 
     @private
-    async def pool_name(self) -> str | None:
-        return get_boot_pool_name()
+    async def pool_name(self) -> str:
+        return boot_pool.get_name()
 
     @private
     async def get_disks_cache(self) -> list[str]:
-        return await _disks.get_disks_cache(self.context)
+        return await boot_pool.get_disks(self.middleware)
 
     @private
     async def clear_disks_cache(self) -> None:
-        _disks.clear_disks_cache()
+        boot_pool.clear_disks_cache()
 
     @private
     def get_boot_type(self) -> str:
@@ -176,5 +176,5 @@ class BootService(Service):
 
 
 async def setup(middleware: Middleware) -> None:
-    await _disks.detect_boot_pool(middleware.services.boot.context)
+    await boot_pool.initialize(middleware)
     middleware.register_hook("config.on_upload", _initramfs.on_config_upload, sync=True)

@@ -1,6 +1,6 @@
 import truenas_pylibzfs
 
-from middlewared.utils.boot.pool import get_boot_pool_name
+from middlewared.utils.boot.pool import boot_pool
 
 
 def check_zvol_in_boot_pool_using_name(zvol_name: str) -> bool:
@@ -9,7 +9,7 @@ def check_zvol_in_boot_pool_using_name(zvol_name: str) -> bool:
 
 
 def check_zvol_in_boot_pool_using_path(zvol_path: str) -> bool:
-    return zvol_path.startswith(f'/dev/zvol/{get_boot_pool_name()}/')
+    return zvol_path.startswith(f'/dev/zvol/{boot_pool.get_name()}/')
 
 
 def validate_pool_name(name: str) -> bool:

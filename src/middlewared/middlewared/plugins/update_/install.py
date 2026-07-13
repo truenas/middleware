@@ -36,8 +36,6 @@ def install_scale(
         manifest = json.load(f)
 
     boot_pool_name = context.call_sync2(context.s.boot.pool_name)
-    if boot_pool_name is None:
-        raise CallError("Boot pool not detected")
     ensure_free_space(context, boot_pool_name, manifest["size"])
 
     for file, checksum in manifest["checksums"].items():
