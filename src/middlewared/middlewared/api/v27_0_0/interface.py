@@ -219,10 +219,38 @@ class InterfaceEntry(BaseModel):
     bridge_members: list[str] = Field(
         default=[],
         description="List of interface names that are members of this bridge.",
-    )  # FIXME: Please document fields for HA Hardware
+    )
     enable_learning: bool = Field(
         default=NotRequired,
         description="Whether MAC address learning is enabled for bridge interfaces.",
+    )
+    failover_critical: bool = Field(
+        default=NotRequired,
+        description="Whether this interface is critical for failover. Only present on HA-capable systems.",
+    )
+    failover_group: int | None = Field(
+        default=NotRequired,
+        description="Failover group identifier for clustering. Only present on HA-capable systems.",
+    )
+    failover_vhid: int | None = Field(
+        default=NotRequired,
+        description="VRRP Virtual Host ID for failover. Only present on HA-capable systems.",
+    )
+    failover_aliases: list[InterfaceEntryAlias] = Field(
+        default=NotRequired,
+        description=(
+            "Standby node IP aliases for failover. Only present on HA-capable systems. Unlike the "
+            "`failover_aliases` accepted by `interface.create` and `interface.update`, each entry here also "
+            "includes a `netmask`."
+        ),
+    )
+    failover_virtual_aliases: list[InterfaceEntryAlias] = Field(
+        default=NotRequired,
+        description=(
+            "Virtual (floating) IP aliases shared between nodes during failover. Only present on HA-capable "
+            "systems. Unlike the `failover_virtual_aliases` accepted by `interface.create` and "
+            "`interface.update`, each entry here also includes a `netmask`."
+        ),
     )
 
     class Config:
