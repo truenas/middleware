@@ -47,6 +47,7 @@ jobs:
             middlewared/plugins/network_routes/ \
             middlewared/plugins/ntp/ \
             middlewared/plugins/ports/ \
+            middlewared/plugins/replication/ \
             middlewared/plugins/reporting/ \
             middlewared/plugins/rsync/ \
             middlewared/plugins/security/ \

@@ -7,6 +7,7 @@ from middlewared.api.base import (
 from .replication import ReplicationEntry
 
 __all__ = [
+    "ReplicationRestoreOptions",
     "ReplicationRestoreArgs", "ReplicationRestoreResult",
 ]
 

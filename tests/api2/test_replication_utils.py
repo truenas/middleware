@@ -111,3 +111,13 @@ def test_create_dataset():
         assert name in ssh("zfs list -H -o name").splitlines()
     finally:
         ssh(f"zfs destroy -r {name}", check=False)
+
+
+def test_replication_config_update():
+    original = call("replication.config.config")["max_parallel_replication_tasks"]
+    try:
+        updated = call("replication.config.update", {"max_parallel_replication_tasks": 3})
+        assert updated["max_parallel_replication_tasks"] == 3
+        assert call("replication.config.config")["max_parallel_replication_tasks"] == 3
+    finally:
+        call("replication.config.update", {"max_parallel_replication_tasks": original})

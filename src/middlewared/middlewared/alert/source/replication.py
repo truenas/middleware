@@ -81,28 +81,28 @@ class ReplicationAlertSource(AlertSource):
                     )
                 )
 
-        for replication in await self.middleware.call("replication.query", [["enabled", "=", True]]):
-            if replication["state"]["state"] == "FINISHED":
+        for replication in await self.call2(self.s.replication.query, [["enabled", "=", True]]):
+            if replication.state["state"] == "FINISHED":
                 alerts.append(
                     Alert(
                         ReplicationSuccessAlert(
-                            name=replication["name"],
-                            id=replication["id"],
-                            datetime_iso=replication["state"]["datetime"].isoformat(),
+                            name=replication.name,
+                            id=replication.id,
+                            datetime_iso=replication.state["datetime"].isoformat(),
                         ),
-                        datetime=replication["state"]["datetime"],
+                        datetime=replication.state["datetime"],
                     )
                 )
-            if replication["state"]["state"] == "ERROR":
+            if replication.state["state"] == "ERROR":
                 alerts.append(
                     Alert(
                         ReplicationFailedAlert(
-                            name=replication["name"],
-                            message=replication["state"]["error"],
-                            id=replication["id"],
-                            datetime_iso=replication["state"]["datetime"].isoformat(),
+                            name=replication.name,
+                            message=replication.state["error"],
+                            id=replication.id,
+                            datetime_iso=replication.state["datetime"].isoformat(),
                         ),
-                        datetime=replication["state"]["datetime"],
+                        datetime=replication.state["datetime"],
                     )
                 )
 

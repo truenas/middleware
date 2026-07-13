@@ -131,6 +131,7 @@ from middlewared.plugins.network_routes import RouteService, StaticRouteService
 from middlewared.plugins.ntp import NTPServerService
 from middlewared.plugins.ports import PortService
 from middlewared.plugins.pwenc import PWEncService
+from middlewared.plugins.replication import ReplicationService
 from middlewared.plugins.reporting import ReportingService
 from middlewared.plugins.rsync import RsyncTaskService
 from middlewared.plugins.security import SystemSecurityService
@@ -295,6 +296,7 @@ class ServiceContainer(BaseServiceContainer):
         self.pool = PoolServicesContainer(middleware)
         self.port = PortService(middleware)
         self.pwenc = PWEncService(middleware)
+        self.replication = ReplicationService(middleware)
         self.reporting = ReportingService(middleware)
         self.route = RouteService(middleware)
         self.rsynctask = RsyncTaskService(middleware)
