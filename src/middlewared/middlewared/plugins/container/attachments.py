@@ -146,7 +146,6 @@ class ContainerFSAttachmentDelegate(FSAttachmentDelegate):
         containers = await self.middleware.call(
             'container.query', [('autostart', '=', True)], {'force_sql_filters': True}
         )
-        to_start = []
         async for container in self.containers_on_paths(containers, paths):
             if await self.storage_locked(container):
                 # Don't start a container while any dataset it needs (its root or a FILESYSTEM
@@ -171,13 +170,18 @@ class ContainerFSAttachmentDelegate(FSAttachmentDelegate):
                         await self.middleware.call('container.stop', container['id'], {'force_after_timeout': True})
                     ).wait(raise_error=True)
                 except Exception:
+                    # It is still running with its stale mount; the start below can't help, so skip
+                    # it rather than logging a misleading start failure.
                     self.logger.warning('Unable to stop %r container', container['id'], exc_info=True)
+                    continue
             elif state in ACTIVE_STATES:
                 # SUSPENDED: don't discard the paused state just to restart the container
                 continue
-            to_start.append(container)
 
-        await self.start(to_start)
+            try:
+                await self.middleware.call('container.start', container['id'])
+            except Exception:
+                self.logger.error('Failed to start %r container after unlock', container['id'], exc_info=True)
 
 
 async def setup(middleware):

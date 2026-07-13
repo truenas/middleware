@@ -188,13 +188,17 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate):
                 continue
 
             if state == 'RUNNING':
+                # If the bounce-stop fails, the VM is still running with its stale mount; the start
+                # below can't help, so skip it rather than logging a misleading start failure.
                 try:
                     stop_job = await self.middleware.call('vm.stop', vm['id'], {'force_after_timeout': True})
                     await stop_job.wait()
                     if stop_job.error:
                         self.logger.warning('Unable to stop %r VM: %s', vm['name'], stop_job.error)
+                        continue
                 except Exception:
                     self.logger.warning('Unable to stop %r VM', vm['name'], exc_info=True)
+                    continue
             elif state in ACTIVE_STATES:
                 # SUSPENDED: don't discard the paused state just to restart the VM
                 continue
@@ -207,8 +211,10 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate):
     async def vm_on_paths(self, vm, paths):
         # A VM is tied to the unlocked datasets if a DISK/RAW disk lives there: it cannot run without
         # it, so a VM stopped when its dataset was locked is restarted on unlock. CDROMs are removable
-        # media and don't trigger a restart. `filesystem.is_child` matches the cartesian product of
-        # both lists, so this is a single call.
+        # media and deliberately don't trigger a restart -- note this is asymmetric with the lock side
+        # (`query` treats CDROMs as disk-like), so a VM whose only tie to a locked dataset is a CDROM
+        # is stopped when it locks but not auto-restarted on unlock; it must be started manually.
+        # `filesystem.is_child` matches the cartesian product of both lists, so this is a single call.
         disks = self.disk_paths(vm)
         return bool(disks) and await self.middleware.call('filesystem.is_child', disks, list(paths))
 
