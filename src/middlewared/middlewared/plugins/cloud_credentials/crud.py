@@ -13,7 +13,7 @@ import middlewared.sqlalchemy as sa
 
 
 class CloudCredentialModel(sa.Model):
-    __tablename__ = 'system_cloudcredentials'
+    __tablename__ = "system_cloudcredentials"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     name = sa.Column(sa.String(100))
@@ -49,7 +49,8 @@ class CredentialsServicePart(CRUDServicePart[CredentialsEntry]):
 
         tasks = await self.call2(
             self.s.cloud_backup.query,
-            [["credentials.id", "=", id_]], QueryOptions(select=["id", "credentials", "description"]),
+            [["credentials.id", "=", id_]],
+            QueryOptions(select=["id", "credentials", "description"]),
         )
         if tasks:
             raise CallError(f"This credential is used by cloud backup task {tasks[0].description or tasks[0].id}")

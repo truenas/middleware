@@ -20,8 +20,7 @@ def verify(service: CredentialsService, provider: BaseModel) -> CredentialsVerif
 
     with RcloneConfig({"credentials": {"provider": attributes}}) as config:  # type: ignore[no-untyped-call]
         proc = subprocess.run(
-            ["rclone", "--config", config.config_path, "--contimeout", "15s", "--timeout", "30s", "lsjson",
-             "remote:"],
+            ["rclone", "--config", config.config_path, "--contimeout", "15s", "--timeout", "30s", "lsjson", "remote:"],
             check=False,
             encoding="utf8",
             capture_output=True,
