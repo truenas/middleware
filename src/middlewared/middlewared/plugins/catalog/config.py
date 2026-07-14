@@ -39,15 +39,18 @@ class CatalogConfigPart(ConfigServicePart[CatalogEntry]):
         return data
 
     async def do_update(self, data: CatalogUpdate) -> CatalogEntry:
+        old = await self.config()
+        new = old.updated(data)
+
         verrors = ValidationErrors()
-        if not data.preferred_trains:
+        if not new.preferred_trains:
             verrors.add(
                 'catalog_update.preferred_trains',
                 'At least 1 preferred train must be specified.'
             )
         if (
             await self.middleware.call('system.product_type') == ProductType.ENTERPRISE and
-            OFFICIAL_ENTERPRISE_TRAIN not in data.preferred_trains
+            OFFICIAL_ENTERPRISE_TRAIN not in new.preferred_trains
         ):
             verrors.add(
                 'catalog_update.preferred_trains',
@@ -60,7 +63,7 @@ class CatalogConfigPart(ConfigServicePart[CatalogEntry]):
             'datastore.update',
             self._datastore,
             OFFICIAL_LABEL,
-            data.model_dump(),
+            {'preferred_trains': new.preferred_trains},
         )
 
         return await self.config()
