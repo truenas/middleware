@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import functools
-from typing import TYPE_CHECKING, Any, Protocol
+from typing import TYPE_CHECKING, Any, Generator, Iterable, Protocol, TypeAlias
 
 from middlewared.service import GenericSharingTaskService, ServiceChangeMixin, SharingTaskService
 
@@ -9,8 +9,25 @@ if TYPE_CHECKING:
     from middlewared.main import Middleware
 
 
+# A dataset that was unlocked, paired with the mountpoint its filesystem lives at. `dataset` is in
+# `pool.dataset.query` form; `mountpoint` is the fabricated `/mnt/<name>` path for a zvol and `None`
+# when the dataset has a `legacy` mountpoint.
+UnlockedDataset: TypeAlias = tuple[dict[str, Any], str | None]
+
+
 class Entry(Protocol):
     id: int
+
+
+def uncovered_mountpoints(mountpoints: Iterable[str]) -> Generator[str]:
+    # Keep only the top-most mountpoints: a mountpoint nested under another in the set is already
+    # covered because attachment `query` matches child paths recursively.
+    kept: list[str] = []
+    for mountpoint in sorted(set(mountpoints), key=len):
+        if any(mountpoint == top or mountpoint.startswith(top + '/') for top in kept):
+            continue
+        yield mountpoint
+        kept.append(mountpoint)
 
 
 class FSAttachmentDelegate[E](ServiceChangeMixin):
@@ -82,6 +99,34 @@ class FSAttachmentDelegate[E](ServiceChangeMixin):
 
     async def stop(self, attachments: list[E]) -> None:
         pass
+
+    async def start_on_unlock(self, datasets: list[UnlockedDataset]) -> None:
+        """
+        Bring this delegate's attachments back up after datasets are unlocked.
+
+        :param datasets: list of `(dataset, mountpoint)` tuples, one per encryption root that was
+            actually unlocked. `dataset` is the dataset dict; `mountpoint` is where its filesystem
+            lives (for a zvol this is the fabricated `/mnt/<name>` path, and it is `None` when the
+            dataset has a `legacy` mountpoint).
+
+        The default implementation starts the share/service style attachments that the generic
+        `query`/`start` contract describes. Stateful workloads (VMs, containers) whose `query`
+        only reports already-running items override this to honor their autostart configuration.
+        (Apps are a deliberate exception: they have no autostart flag and are never started
+        automatically when a path becomes available.)
+        """
+        attachments: list[E] = []
+        # `query` matches recursively, so querying only the top-most mountpoints avoids re-running
+        # `{namespace}.query` (and an is_child per share) for every child dataset of a recursively
+        # unlocked pool, while still covering a legacy-mountpoint parent or a child mounted outside
+        # its parent's subtree.
+        for mountpoint in uncovered_mountpoints(mountpoint for _, mountpoint in datasets if mountpoint):
+            for attachment in await self.query(mountpoint, True, {'locked': False}):
+                if attachment not in attachments:
+                    attachments.append(attachment)
+
+        if attachments:
+            await self.start(attachments)
 
     async def disable(self, attachments: list[E]) -> None:
         """

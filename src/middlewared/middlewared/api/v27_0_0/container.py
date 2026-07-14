@@ -14,7 +14,7 @@ from middlewared.api.base import (
 from .container_device import ContainerDeviceEntry
 
 __all__ = [
-    "ContainerEntry",
+    "ContainerEntry", "ContainerStatus",
     "ContainerCreateArgs", "ContainerCreateResult", "ContainerCreate",
     "ContainerUpdateArgs", "ContainerUpdateResult", "ContainerUpdate",
     "ContainerDeleteArgs", "ContainerDeleteResult",
