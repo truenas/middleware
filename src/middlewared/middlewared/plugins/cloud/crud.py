@@ -1,20 +1,31 @@
+from __future__ import annotations
+
 import shlex
+from typing import TYPE_CHECKING, Any, Callable, Coroutine
 
 from middlewared.api.base.handler.accept import validate_model
 from middlewared.api.base.model import model_subset
 from middlewared.api.current import CloudTaskAttributes, ZFSResourceQuery
 from middlewared.plugins.cloud.remotes import REMOTES
 from middlewared.plugins.zfs.utils import has_internal_path
-from middlewared.plugins.zfs_.utils import zvol_path_to_name
+from middlewared.plugins.zfs.zvol_utils import zvol_path_to_name
+from middlewared.rclone.base import BaseRcloneRemote
 from middlewared.service import CallError, private
 from middlewared.service_exception import InstanceNotFound, ValidationErrors
+from middlewared.utils.service.call_mixin import CallMixin
 from middlewared.utils.privilege import credential_has_full_admin
 
+if TYPE_CHECKING:
+    from middlewared.api.base.server.app import App
 
-class CloudTaskServiceMixin:
+
+class CloudTaskServiceMixin(CallMixin):
+    get_path_field: Callable[[dict[str, Any]], Coroutine[Any, Any, str]]
+    path_field: str
+
     allow_zvol = False
 
-    def _get_credentials(self, credentials_id):
+    def _get_credentials(self, credentials_id: int) -> dict[str, Any] | None:
         try:
             credentials = self.call_sync2(self.s.cloudsync.credentials.get_instance, credentials_id)
         except InstanceNotFound:
@@ -24,7 +35,7 @@ class CloudTaskServiceMixin:
         return credentials.model_dump(by_alias=True, context={"expose_secrets": True})
 
     @private
-    def task_attributes(self, provider):
+    def task_attributes(self, provider: BaseRcloneRemote) -> list[str]:
         attributes = []
 
         if provider.buckets:
@@ -39,17 +50,16 @@ class CloudTaskServiceMixin:
 
         return attributes
 
-    def _basic_validate(self, verrors, name, data):
+    def _basic_validate(self, verrors: ValidationErrors, name: str, data: dict[str, Any]) -> None:
         try:
             shlex.split(data["args"])
         except ValueError as e:
             verrors.add(f"{name}.args", f"Parse error: {e.args[0]}")
+            return
 
         credentials = self._get_credentials(data["credentials"])
         if not credentials:
             verrors.add(f"{name}.credentials", "Invalid credentials")
-
-        if verrors:
             return
 
         provider = REMOTES[credentials["provider"]["type"]]
@@ -64,11 +74,12 @@ class CloudTaskServiceMixin:
         else:
             provider.validate_task_basic(data, credentials, verrors)
 
-    def _validate(self, app, verrors, name, data):
+    def _validate(self, app: App | None, verrors: ValidationErrors, name: str, data: dict[str, Any]) -> None:
         self._basic_validate(verrors, name, data)
 
         if not verrors:
             credentials = self._get_credentials(data["credentials"])
+            assert credentials is not None
 
             provider = REMOTES[credentials["provider"]["type"]]
 
@@ -91,7 +102,9 @@ class CloudTaskServiceMixin:
                 except CallError as e:
                     verrors.add(f'{name}.{self.path_field}', e.errmsg)
         else:
-            self.middleware.run_coroutine(self.validate_path_field(data, name, verrors, split_path=True))
+            self.middleware.run_coroutine(
+                self.validate_path_field(data, name, verrors, split_path=True)  # type: ignore[attr-defined]
+            )
 
         if data["snapshot"]:
             dataset_name = data["path"].removeprefix("/mnt/")
@@ -113,7 +126,7 @@ class CloudTaskServiceMixin:
                     )
                     break
 
-        if app and not credential_has_full_admin(app.authenticated_credentials):
+        if app and not (app.authenticated_credentials and credential_has_full_admin(app.authenticated_credentials)):
             for k in ["pre_script", "post_script"]:
                 if data[k]:
                     verrors.add(f"{name}.{k}", "The ability to edit pre-scripts and post-scripts is limited to "

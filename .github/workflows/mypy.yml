@@ -35,6 +35,7 @@ jobs:
             middlewared/plugins/boot/ \
             middlewared/plugins/boot_environment/ \
             middlewared/plugins/catalog/ \
+            middlewared/plugins/cloud/ \
             middlewared/plugins/cloud_backup/ \
             middlewared/plugins/cloud_credentials/ \
             middlewared/plugins/container/ \

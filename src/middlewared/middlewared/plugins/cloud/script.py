@@ -1,11 +1,16 @@
+from __future__ import annotations
+
 import os
 import shlex
 import subprocess
 import tempfile
 import threading
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from middlewared.service import CallError
+
+if TYPE_CHECKING:
+    from middlewared.job import Job
 
 
 def env_mapping(prefix: str, mapping: dict[str, Any]) -> dict[str, str]:
@@ -24,7 +29,7 @@ def env_mapping(prefix: str, mapping: dict[str, Any]) -> dict[str, str]:
     return env
 
 
-def run_script(job, script_name, hook: str = "", env: dict | None = None):
+def run_script(job: Job, script_name: str, hook: str = "", env: dict[str, str] | None = None) -> None:
     env = env or {}
 
     hook = hook.strip()
@@ -56,7 +61,10 @@ def run_script(job, script_name, hook: str = "", env: dict | None = None):
             raise CallError(f"{script_name} failed with exit code {proc.returncode}")
 
 
-def _run_script_check(job, proc, name):
+def _run_script_check(job: Job, proc: subprocess.Popen[bytes], name: str) -> None:
+    assert proc.stdout is not None
+    assert job.logs_fd is not None
+
     while True:
         read = proc.stdout.readline()
         if read == b"":

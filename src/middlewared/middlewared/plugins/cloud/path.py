@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 
 def get_remote_path(provider: BaseRcloneRemote, attributes: dict[str, Any]) -> str:
-    remote_path = attributes["folder"].rstrip("/")
+    remote_path: str = attributes["folder"].rstrip("/")
     if not remote_path:
         remote_path = "/"
     if provider.buckets:

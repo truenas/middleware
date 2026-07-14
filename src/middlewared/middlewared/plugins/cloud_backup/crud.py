@@ -138,7 +138,7 @@ class CloudBackupServicePart(SharingTaskServicePart[CloudBackupEntry], CloudTask
     def _validate(self, app: App | None, verrors: ValidationErrors, name: str, data: dict[str, Any]) -> None:
         # CloudTaskServiceMixin is shared with the unconverted cloud_sync and operates on the dict
         # (it normalizes data["attributes"] in place, which must reach the datastore).
-        super()._validate(app, verrors, name, data)  # type: ignore[no-untyped-call]
+        super()._validate(app, verrors, name, data)
 
         if data["snapshot"] and data["absolute_paths"]:
             verrors.add(f"{name}.snapshot", "This option can't be used when absolute paths are enabled")
