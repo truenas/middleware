@@ -77,19 +77,19 @@ CHARTS = {
         ]
     },
     'dmhit': {
-        'options': [None, 'dmhit', 'dmhit', 'dmhit', ArcStatDescriptions['dmhit'], 'line'],
+        'options': [None, 'dmhit', 'dmhit/s', 'dmhit', ArcStatDescriptions['dmhit'], 'line'],
         'lines': [
             ['dmhit', 'dmhit', 'incremental'],
         ]
     },
     'dmioh': {
-        'options': [None, 'dmioh', 'dmioh', 'dmioh', ArcStatDescriptions['dmioh'], 'line'],
+        'options': [None, 'dmioh', 'dmioh/s', 'dmioh', ArcStatDescriptions['dmioh'], 'line'],
         'lines': [
             ['dmioh', 'dmioh', 'incremental'],
         ]
     },
     'dmmis': {
-        'options': [None, 'dmmis', 'dmmis', 'dmmis', ArcStatDescriptions['dmmis'], 'line'],
+        'options': [None, 'dmmis', 'dmmis/s', 'dmmis', ArcStatDescriptions['dmmis'], 'line'],
         'lines': [
             ['dmmis', 'dmmis', 'incremental'],
         ]
@@ -113,19 +113,19 @@ CHARTS = {
         ]
     },
     'l2hits': {
-        'options': [None, 'l2hits', 'l2hits', 'l2hits', ArcStatDescriptions['l2hits'], 'line'],
+        'options': [None, 'l2hits', 'l2hits/s', 'l2hits', ArcStatDescriptions['l2hits'], 'line'],
         'lines': [
             ['l2hits', 'l2hits', 'incremental'],
         ]
     },
     'l2miss': {
-        'options': [None, 'l2miss', 'l2miss', 'l2miss', ArcStatDescriptions['l2miss'], 'line'],
+        'options': [None, 'l2miss', 'l2miss/s', 'l2miss', ArcStatDescriptions['l2miss'], 'line'],
         'lines': [
             ['l2miss', 'l2miss', 'incremental'],
         ]
     },
     'l2read': {
-        'options': [None, 'l2read', 'l2read', 'l2read', ArcStatDescriptions['l2read'], 'line'],
+        'options': [None, 'l2read', 'l2read/s', 'l2read', ArcStatDescriptions['l2read'], 'line'],
         'lines': [
             ['l2read', 'l2read', 'incremental'],
         ]
@@ -143,13 +143,13 @@ CHARTS = {
         ]
     },
     'l2bytes': {
-        'options': [None, 'l2bytes', 'l2bytes', 'l2bytes', ArcStatDescriptions['l2bytes'], 'line'],
+        'options': [None, 'l2bytes', 'l2bytes/s', 'l2bytes', ArcStatDescriptions['l2bytes'], 'line'],
         'lines': [
             ['l2bytes', 'l2bytes', 'incremental'],
         ]
     },
     'l2wbytes': {
-        'options': [None, 'l2wbytes', 'l2wbytes', 'l2wbytes', ArcStatDescriptions['l2wbytes'], 'line'],
+        'options': [None, 'l2wbytes', 'l2wbytes/s', 'l2wbytes', ArcStatDescriptions['l2wbytes'], 'line'],
         'lines': [
             ['l2wbytes', 'l2wbytes', 'incremental'],
         ]
