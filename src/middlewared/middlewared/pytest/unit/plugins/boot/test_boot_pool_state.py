@@ -18,7 +18,7 @@ def test_get_name_returns_after_set():
 
 
 @pytest.mark.asyncio
-async def test_get_disks_caches_and_clears():
+async def test_get_disks_uses_cache():
     state = BootPoolState()
     state.set_name("boot-pool")
     middleware = MagicMock()
@@ -28,21 +28,21 @@ async def test_get_disks_caches_and_clears():
     assert await state.get_disks(middleware) == ["sda", "sdb"]
     middleware.call.assert_called_once()  # second read is served from cache
 
-    state.clear_disks_cache()
-    await state.get_disks(middleware)
-    assert middleware.call.call_count == 2  # cleared cache forces a refetch
-
 
 @pytest.mark.asyncio
-async def test_warm_disks_swallows_and_logs(caplog):
+async def test_get_disks_use_cache_false_refetches_and_refills():
     state = BootPoolState()
     state.set_name("boot-pool")
     middleware = MagicMock()
-    middleware.call = AsyncMock(side_effect=RuntimeError("boom"))
+    middleware.call = AsyncMock(return_value={"disks": ["sda", "sdb"]})
+    await state.get_disks(middleware)  # fill cache
 
-    await state._warm_disks(middleware)  # must not raise
+    middleware.call = AsyncMock(return_value={"disks": ["sda", "sdb", "sdc"]})
+    result = await state.get_disks(middleware, use_cache=False)
 
-    assert "failed to warm boot-pool disk cache" in caplog.text
+    assert result == ["sda", "sdb", "sdc"]  # live value returned
+    middleware.call.assert_called_once()  # bypassed the cache and refetched
+    assert await state.get_disks(middleware) == ["sda", "sdb", "sdc"]  # cache refilled with the new value
 
 
 @pytest.mark.asyncio
@@ -57,17 +57,17 @@ async def test_initialize_raises_when_no_known_pool(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_initialize_detects_and_schedules_warm(monkeypatch):
+async def test_initialize_detects_and_fills_cache(monkeypatch):
     async def fake_run(*args, **kwargs):
         return MagicMock(stdout="boot-pool\tgrub2\n")
 
     monkeypatch.setattr(pool_mod, "run", fake_run)
     state = BootPoolState()
     middleware = MagicMock()
+    middleware.call = AsyncMock(return_value={"disks": ["sda", "sdv"]})
 
     await state.initialize(middleware)
 
     assert state.get_name() == "boot-pool"
-    middleware.create_task.assert_called_once()
-    # The scheduled coroutine is never awaited in this test; close it to avoid a warning.
-    middleware.create_task.call_args.args[0].close()
+    assert await state.get_disks(middleware) == ["sda", "sdv"]  # cache was filled during initialize
+    middleware.call.assert_called_once()  # get_disks hit zpool.status exactly once (via initialize)

@@ -175,9 +175,9 @@ async def zfs_events(middleware, event: ZfsEvent):
             await middleware.call('cache.pop', VOLUME_STATUS_ALERTS)
 
             if pool_name == await middleware.call2(middleware.services.boot.pool_name):
-                # a change was made to the boot drive, so let's clear
+                # a change was made to the boot drive, so let's re-derive
                 # the disk mapping for this pool
-                await middleware.call2(middleware.services.boot.clear_disks_cache)
+                await middleware.call2(middleware.services.boot.refresh_disks)
 
             async with POOL_ALERTS_LOCKS[pool_name]:
                 # The hook is registered with `sync=False` so this code might get executed concurrently for the same

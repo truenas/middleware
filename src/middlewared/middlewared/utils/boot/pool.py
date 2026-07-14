@@ -45,23 +45,21 @@ class BootPoolState:
     def set_name(self, name: str) -> None:
         self._name = name
 
-    def clear_disks_cache(self) -> None:
-        """Clear the boot pool disk cache so the next read re-derives it."""
-        self._disks = None
-
-    async def get_disks(self, middleware: Middleware) -> list[str]:
+    async def get_disks(self, middleware: Middleware, use_cache: bool = True) -> list[str]:
         """Return the boot pool disks, populating the cache on first use.
 
         Cached because it changes rarely and has many callers (especially on HA); an immutable
-        tuple is stored because the value is globally cached.
+        tuple is stored because the value is globally cached. Pass ``use_cache=False`` to
+        re-derive the membership live from ``zpool.status`` and refill the cache (used to
+        invalidate after the boot pool changes).
         """
-        if self._disks is None:
+        if not use_cache or self._disks is None:
             status = await middleware.call("zpool.status", {"name": self.get_name(), "real_paths": True})
             self._disks = tuple(status["disks"])
         return list(self._disks)
 
     async def initialize(self, middleware: Middleware) -> None:
-        """Detect the boot pool, warm the disk cache, and ensure grub2 compatibility.
+        """Detect the boot pool, fill the disk cache, and ensure grub2 compatibility.
 
         Run once from the plugin's ``setup()``. Raises :class:`BootPoolNotDetected` (aborting
         middleware startup) if no known boot pool is imported — every downstream subsystem
@@ -85,7 +83,7 @@ class BootPoolState:
         for name in BOOT_POOL_NAME_VALID:
             if name in pools:
                 self.set_name(name)
-                await self._warm_disks(middleware)
+                await self.get_disks(middleware)
                 compatibility = pools[name]
                 if compatibility != "grub2":
                     logger.info("Boot pool %r has compatibility=%r, setting it to grub2", name, compatibility)
@@ -96,12 +94,6 @@ class BootPoolState:
                 break
         else:
             raise BootPoolNotDetected("Failed to detect boot pool; no known boot pool is imported")
-
-    async def _warm_disks(self, middleware: Middleware) -> None:
-        try:
-            await self.get_disks(middleware)
-        except Exception:
-            logger.error("boot: failed to warm boot-pool disk cache", exc_info=True)
 
 
 boot_pool = BootPoolState()

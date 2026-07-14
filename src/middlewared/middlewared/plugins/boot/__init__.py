@@ -134,12 +134,14 @@ class BootService(Service):
         return boot_pool.get_name()
 
     @private
-    async def get_disks_cache(self) -> list[str]:
-        return await boot_pool.get_disks(self.middleware)
-
-    @private
-    async def clear_disks_cache(self) -> None:
-        boot_pool.clear_disks_cache()
+    async def refresh_disks(self) -> None:
+        # Re-derive the boot pool disk membership live and refill the cache. Called from the ZFS
+        # event handler (fire-and-forget), so swallow+log rather than let a transient
+        # `zpool.status` failure surface as an unretrieved-task traceback.
+        try:
+            await boot_pool.get_disks(self.middleware, use_cache=False)
+        except Exception:
+            self.logger.error("boot: failed to refresh boot-pool disk cache", exc_info=True)
 
     @private
     def get_boot_type(self) -> str:
