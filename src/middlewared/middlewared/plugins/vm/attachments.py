@@ -8,6 +8,10 @@ from middlewared.service import private, Service
 from middlewared.utils.libvirt.utils import ACTIVE_STATES
 
 
+# Device types that are backed by a storage path (as opposed to e.g. NIC/DISPLAY/PCI)
+DISKLIKE_DTYPES = ('DISK', 'RAW', 'CDROM')
+
+
 async def determine_recursive_search(recursive, device, child_datasets):
     # TODO: Add unit tests for this please
     if recursive:
@@ -46,7 +50,7 @@ class VMService(Service):
         )
         for device in await self.middleware.call(
             'vm.device.query', [
-                ['attributes.dtype', 'in', ('DISK', 'RAW', 'CDROM')],
+                ['attributes.dtype', 'in', DISKLIKE_DTYPES],
                 ['vm', 'nin', to_ignore_vms],
             ]
         ):
@@ -83,17 +87,10 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate):
         vms_attached = []
         ignored_vms = await self.middleware.call('vm.get_vms_to_ignore_for_querying_attachments', enabled)
         for device in await self.middleware.call('datastore.query', 'vm.device'):
-            if (device['attributes']['dtype'] not in ('DISK', 'RAW', 'CDROM')) or device['vm']['id'] in ignored_vms:
+            if device['vm']['id'] in ignored_vms:
                 continue
 
-            disk = device['attributes'].get('path')
-            if not disk:
-                continue
-
-            if disk.startswith('/dev/zvol'):
-                disk = os.path.join('/mnt', zvol_path_to_name(disk))
-
-            if await self.middleware.call('filesystem.is_child', disk, path):
+            if await self.device_on_paths(device, [path]):
                 vm = {
                     'id': device['vm'].get('id'),
                     'name': device['vm'].get('name'),
@@ -103,12 +100,48 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate):
 
         return vms_attached
 
+    def device_disk_path(self, device):
+        # Normalized `/mnt`-relative path a disk-like device is backed by, or `None` if the device
+        # is not disk-backed or has no path.
+        if device['attributes']['dtype'] not in DISKLIKE_DTYPES:
+            return None
+
+        disk = device['attributes'].get('path')
+        if not disk:
+            return None
+
+        if disk.startswith('/dev/zvol/'):
+            disk = os.path.join('/mnt', zvol_path_to_name(disk))
+
+        return disk
+
+    def disk_paths(self, vm):
+        # Normalized paths of the VM's DISK/RAW devices -- the storage it can't run without.
+        return [
+            disk for device in vm['devices']
+            if device['attributes']['dtype'] in ('DISK', 'RAW')
+            if (disk := self.device_disk_path(device))
+        ]
+
+    async def device_on_paths(self, device, paths):
+        disk = self.device_disk_path(device)
+        return disk is not None and await self.middleware.call('filesystem.is_child', disk, list(paths))
+
+    async def storage_locked(self, vm):
+        # True if any DISK/RAW disk the VM needs is on a dataset that is still locked (or has a
+        # locked parent).
+        for disk in self.disk_paths(vm):
+            if await self.middleware.call('pool.dataset.path_in_locked_datasets', disk):
+                return True
+
+        return False
+
     async def delete(self, attachments):
         for attachment in attachments:
             try:
                 await self.middleware.call('vm.stop', attachment['id'])
             except Exception:
-                self.middleware.logger.warning('Unable to vm.stop %r', attachment['id'])
+                self.logger.warning('Unable to vm.stop %r', attachment['id'])
 
     async def toggle(self, attachments, enabled):
         for attachment in attachments:
@@ -116,13 +149,74 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate):
             try:
                 await self.middleware.call(action, attachment['id'])
             except Exception:
-                self.middleware.logger.warning('Unable to %s %r', action, attachment['id'])
+                self.logger.warning('Unable to %s %r', action, attachment['id'])
 
     async def stop(self, attachments):
         await self.toggle(attachments, False)
 
     async def start(self, attachments):
         await self.toggle(attachments, True)
+
+    async def start_on_unlock(self, datasets):
+        # The generic start path cannot help here: query(enabled=True) only reports already-active
+        # VMs, so an autostart VM that is stopped because its disk's dataset was locked would never
+        # be restarted. Match autostart VMs to the unlocked datasets ourselves and (re)start them.
+        paths = set()
+        for dataset, mountpoint in datasets:
+            if mountpoint:
+                paths.add(mountpoint)
+            # Child zvols live under the dataset's name-based path no matter where (or whether)
+            # the dataset's filesystem is mounted
+            paths.add(os.path.join('/mnt', dataset['name']))
+
+        vms = await self.middleware.call('vm.query', [('autostart', '=', True)], {'force_sql_filters': True})
+        for vm in vms:
+            if not await self.vm_on_paths(vm, paths):
+                continue
+            if await self.storage_locked(vm):
+                # Don't start a VM while any dataset a DISK/RAW disk lives on is still locked -- it
+                # would boot with missing storage. It gets started when the unlock of its last
+                # remaining dependency triggers this delegate again.
+                continue
+
+            try:
+                # Use a fresh state for the restart decision: the query snapshot may have gone stale
+                # while earlier VMs in this loop were being restarted (or a VM may have been deleted since)
+                state = (await self.middleware.call('vm.status', vm['id']))['state']
+            except Exception:
+                self.logger.warning('Unable to query %r VM after unlock', vm['name'], exc_info=True)
+                continue
+
+            if state == 'RUNNING':
+                # If the bounce-stop fails, the VM is still running with its stale mount; the start
+                # below can't help, so skip it rather than logging a misleading start failure.
+                try:
+                    stop_job = await self.middleware.call('vm.stop', vm['id'], {'force_after_timeout': True})
+                    await stop_job.wait()
+                    if stop_job.error:
+                        self.logger.warning('Unable to stop %r VM: %s', vm['name'], stop_job.error)
+                        continue
+                except Exception:
+                    self.logger.warning('Unable to stop %r VM', vm['name'], exc_info=True)
+                    continue
+            elif state in ACTIVE_STATES:
+                # SUSPENDED: don't discard the paused state just to restart the VM
+                continue
+
+            try:
+                await self.middleware.call('vm.start', vm['id'])
+            except Exception:
+                self.logger.error('Failed to start %r VM after unlock', vm['name'], exc_info=True)
+
+    async def vm_on_paths(self, vm, paths):
+        # A VM is tied to the unlocked datasets if a DISK/RAW disk lives there: it cannot run without
+        # it, so a VM stopped when its dataset was locked is restarted on unlock. CDROMs are removable
+        # media and deliberately don't trigger a restart -- note this is asymmetric with the lock side
+        # (`query` treats CDROMs as disk-like), so a VM whose only tie to a locked dataset is a CDROM
+        # is stopped when it locks but not auto-restarted on unlock; it must be started manually.
+        # `filesystem.is_child` matches the cartesian product of both lists, so this is a single call.
+        disks = self.disk_paths(vm)
+        return bool(disks) and await self.middleware.call('filesystem.is_child', disks, list(paths))
 
 
 class VMPortDelegate(PortDelegate):

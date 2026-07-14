@@ -1,18 +1,13 @@
 import pytest
 
+from assets.unlock_restart import (
+    assert_started_only_after_all_deps_unlocked,
+    encryption_props,
+    marker_mock,
+    unlock,
+)
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call, mock, ssh
-
-
-PASSPHRASE = "12345678"
-
-
-def encryption_props():
-    return {
-        "encryption_options": {"generate_key": False, "passphrase": PASSPHRASE},
-        "encryption": True,
-        "inherit_encryption": False
-    }
 
 
 @pytest.mark.parametrize("zvol", [True, False])
@@ -30,29 +25,39 @@ def test_restart_vm_on_dataset_unlock(zvol):
         else:
             device = {"attributes": {"path": f"/mnt/{ds}/child", "dtype": "RAW"}}
 
-        with mock("vm.query", return_value=[{"id": 1, "devices": [device]}]):
-            with mock("vm.status", return_value={"state": "RUNNING"}):
-                ssh("rm -f /tmp/test-vm-stop")
-                with mock("vm.stop", """
-                    from middlewared.service import job
+        with (
+            mock("vm.query", return_value=[{"id": 1, "devices": [device]}]),
+            mock("vm.status", return_value={"state": "RUNNING"}),
+            mock("vm.stop", declaration=marker_mock("/tmp/test-vm-stop")),
+            mock("vm.start", declaration=marker_mock("/tmp/test-vm-start")),
+        ):
+            ssh("rm -f /tmp/test-vm-stop /tmp/test-vm-start")
+            unlock(ds)
+            call("filesystem.stat", "/tmp/test-vm-stop")
+            call("filesystem.stat", "/tmp/test-vm-start")
 
-                    @job()
-                    def mock(self, job, *args):
-                        with open("/tmp/test-vm-stop", "w") as f:
-                            pass
-                """):
-                    ssh("rm -f /tmp/test-vm-start")
-                    with mock("vm.start", declaration="""
-                        def mock(self, job, *args):
-                            with open("/tmp/test-vm-start", "w") as f:
-                                pass
-                    """):
-                        call(
-                            "pool.dataset.unlock",
-                            ds,
-                            {"datasets": [{"name": ds, "passphrase": PASSPHRASE}]},
-                            job=True,
-                        )
 
-                        call("filesystem.stat", "/tmp/test-vm-stop")
-                        call("filesystem.stat", "/tmp/test-vm-start")
+def test_vm_not_started_until_all_encrypted_storage_unlocked():
+    # A VM with disks on two independently-encrypted datasets must not be started until BOTH are
+    # unlocked -- booting with a still-locked disk would present missing storage to the guest.
+    with (
+        dataset("vroot", encryption_props()) as ds1,
+        dataset("vdata", encryption_props()) as ds2,
+    ):
+        call("pool.dataset.lock", ds1, job=True)
+        call("pool.dataset.lock", ds2, job=True)
+
+        vm = {
+            "id": 1,
+            "name": "split-vm",
+            "devices": [
+                {"attributes": {"dtype": "RAW", "path": f"/mnt/{ds1}/disk.raw"}},
+                {"attributes": {"dtype": "RAW", "path": f"/mnt/{ds2}/disk.raw"}},
+            ],
+        }
+        with (
+            mock("vm.query", return_value=[vm]),
+            mock("vm.status", return_value={"state": "STOPPED"}),
+            mock("vm.start", declaration=marker_mock("/tmp/split-vm-start")),
+        ):
+            assert_started_only_after_all_deps_unlocked("/tmp/split-vm-start", ds1, ds2)
