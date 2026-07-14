@@ -2,7 +2,9 @@ import re
 import time
 
 import pytest
+from truenas_api_client import ClientException
 
+from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.test.integration.assets.cloud_sync import (
     credential, task, local_ftp_credential, local_ftp_task, run_task,
 )
@@ -128,6 +130,173 @@ def test_snapshot(has_zvol_sibling):
         finally:
             if has_zvol_sibling:
                 ssh(f"zfs destroy -r {pool}/zvol")
+
+
+def test_dry_run():
+    with local_ftp_task() as task:
+        ssh(f'touch {task["path"]}/file')
+
+        call("cloudsync.sync", task["id"], {"dry_run": True}, job=True)
+
+        # A dry run must not transfer anything to the remote
+        assert ssh(f'ls /mnt/{pool}/cloudsync_remote') == ''
+
+
+def test_follow_symlinks():
+    with local_ftp_task({"follow_symlinks": True}) as task:
+        ssh(f'mkdir {task["path"]}/target')
+        ssh(f'touch {task["path"]}/target/file')
+        ssh(f'ln -s target {task["path"]}/link')
+
+        run_task(task)
+
+        # With -L, the symlink is followed and copied as the directory it points to
+        assert ssh(f'ls /mnt/{pool}/cloudsync_remote/link') == 'file\n'
+
+
+def test_transfers():
+    with local_ftp_task({"transfers": 5}) as task:
+        ssh(f'touch {task["path"]}/file')
+
+        run_task(task)
+
+        assert ssh(f'ls /mnt/{pool}/cloudsync_remote') == 'file\n'
+
+
+def test_abort_method():
+    with dataset("test_cloudsync_abort_method") as ds:
+        ssh(f"dd if=/dev/urandom of=/mnt/{ds}/blob bs=1M count=1")
+
+        with local_ftp_task({
+            "path": f"/mnt/{ds}",
+            "bwlimit": [{"time": "00:00", "bandwidth": 1024 * 100}],  # So it'll take 10 seconds
+        }) as task:
+            call("cloudsync.sync", task["id"])
+
+            time.sleep(2.5)
+
+            assert call("cloudsync.abort", task["id"]) is True
+
+            for i in range(10):
+                time.sleep(1)
+                state = call("cloudsync.query", [["id", "=", task["id"]]], {"get": True})["job"]["state"]
+                if state == "RUNNING":
+                    continue
+                elif state == "ABORTED":
+                    break
+                else:
+                    assert False, f"Cloud sync task is {state}"
+            else:
+                assert False, "Cloud sync task was not aborted"
+
+            assert "rclone" not in ssh("ps ax")
+
+
+def test_pull_folder_is_a_file():
+    with dataset("cloudsync_local") as local_dataset:
+        with local_ftp_credential() as c:
+            ssh(f'touch /mnt/{pool}/cloudsync_remote/afile')
+
+            with pytest.raises(ValidationErrors) as ve:
+                with task({
+                    "direction": "PULL",
+                    "transfer_mode": "COPY",
+                    "path": f"/mnt/{local_dataset}",
+                    "credentials": c["id"],
+                    "attributes": {"folder": "afile"},
+                }):
+                    pass
+
+            assert "cloud_sync_create.attributes.folder" in ve.value
+
+
+def test_pull_folder_does_not_exist():
+    with dataset("cloudsync_local") as local_dataset:
+        with local_ftp_credential() as c:
+            with pytest.raises(ValidationErrors) as ve:
+                with task({
+                    "direction": "PULL",
+                    "transfer_mode": "COPY",
+                    "path": f"/mnt/{local_dataset}",
+                    "credentials": c["id"],
+                    "attributes": {"folder": "missing-dir"},
+                }):
+                    pass
+
+            assert "cloud_sync_create.attributes.folder" in ve.value
+
+
+def test_list_directory_error():
+    with local_ftp_credential() as c:
+        with pytest.raises(CallError):
+            call("cloudsync.list_directory", {
+                "credentials": c["id"],
+                "attributes": {"folder": "nonexistent-folder"},
+            })
+
+
+def test_encrypted_push_and_list():
+    with local_ftp_task({
+        "encryption": True,
+        "filename_encryption": True,
+        "encryption_password": "password",
+        "encryption_salt": "salt",
+    }) as task:
+        ssh(f'touch {task["path"]}/testfile.txt')
+
+        run_task(task)
+
+        # Filenames are stored encrypted on the remote
+        assert ssh(f'ls /mnt/{pool}/cloudsync_remote') != 'testfile.txt\n'
+
+        listing = call("cloudsync.list_directory", {
+            "credentials": task["credentials"]["id"],
+            "encryption": True,
+            "filename_encryption": True,
+            "encryption_password": "password",
+            "encryption_salt": "salt",
+            "attributes": {"folder": ""},
+        })
+
+        decrypted_names = {item.get("Decrypted", item["Name"]) for item in listing}
+        assert "testfile.txt" in decrypted_names
+
+
+def test_sync_locked_dataset():
+    with dataset("cloudsync_locked", {
+        "encryption": True,
+        "encryption_options": {"generate_key": False, "passphrase": "12345678"},
+        "inherit_encryption": False,
+    }) as ds:
+        with local_ftp_credential() as c:
+            with task({
+                "direction": "PUSH",
+                "transfer_mode": "COPY",
+                "path": f"/mnt/{ds}",
+                "credentials": c["id"],
+                "attributes": {"folder": ""},
+            }) as t:
+                call("pool.dataset.lock", ds, job=True)
+
+                # A failing job re-raises the client-side ClientException, not the middleware CallError
+                with pytest.raises(ClientException) as ve:
+                    call("cloudsync.sync", t["id"], job=True)
+
+                assert "Dataset is locked" in str(ve.value)
+
+
+def test_pool_root_path_filter():
+    # A task whose path is a pool mountpoint (parent directory is exactly "/mnt") adds the
+    # ix-applications / ix-apps rclone filters. A dry run exercises that branch without transferring.
+    with local_ftp_credential() as c:
+        with task({
+            "direction": "PUSH",
+            "transfer_mode": "COPY",
+            "path": f"/mnt/{pool}",
+            "credentials": c["id"],
+            "attributes": {"folder": ""},
+        }) as t:
+            call("cloudsync.sync", t["id"], {"dry_run": True}, job=True)
 
 
 def test_sync_onetime():

@@ -92,3 +92,22 @@ def test_delete_cloud_credentials_error(credentials, task):
         call("cloudsync.credentials.delete", credentials["id"])
 
     assert "This credential is used by cloud sync task" in ve.value.errmsg
+
+
+def test_fast_list(credentials):
+    # `fast_list` is only accepted for providers that support it (S3 here); running the task
+    # exercises the `--fast-list` argument branch in `rclone()`.
+    with dataset("cloudsync_fast_list_local") as local_dataset:
+        ssh(f"touch /mnt/{local_dataset}/file")
+        with _task({
+            "direction": "PUSH",
+            "transfer_mode": "COPY",
+            "path": f"/mnt/{local_dataset}",
+            "credentials": credentials["id"],
+            "attributes": {
+                "bucket": AWS_BUCKET,
+                "folder": "",
+                "fast_list": True,
+            },
+        }) as t:
+            call("cloudsync.sync", t["id"], job=True)
