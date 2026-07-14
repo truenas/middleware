@@ -85,7 +85,6 @@ systemctl enable syslog-ng
 systemctl mask libvirtd.socket libvirtd-ro.socket libvirtd-admin.socket libvirtd-tls.socket libvirtd-tcp.socket
 systemctl mask exim4-base.service exim4.service exim4-base.timer
 systemctl mask uuidd.service uuidd.socket
-systemctl mask ndctl-monitor.service
 # Prevent `apt.systemd.daily[3756924]: /usr/lib/apt/apt.systemd.daily: 325: apt-config: Permission denied`
 systemctl mask apt-daily.timer apt-daily-upgrade.timer
 
