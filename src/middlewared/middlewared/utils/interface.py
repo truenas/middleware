@@ -36,8 +36,26 @@ def wait_on_interface_link_state_up(interface: str) -> bool:
 
 
 def wait_for_default_interface_link_state_up() -> tuple[str | None, bool]:
-    default_interface = get_default_interface()
-    if default_interface is None:
-        return default_interface, False
+    """
+    Wait for the default interface to appear and come up.
 
-    return default_interface, wait_on_interface_link_state_up(default_interface)
+    Polls get_default_interface() for up to IFACE_LINK_STATE_MAX_WAIT seconds so we tolerate the
+    boot-time window where the default route is not installed yet -- e.g. DHCP is still acquiring
+    a lease, or a bridge is still converging through STP forward-delay. A single read here would
+    otherwise abort docker/apps startup with "Unable to determine default interface" whenever
+    system.ready beats the route.
+
+    Returns (interface_name, success): interface_name is None if no default interface appears
+    within the window; success is whether that interface reached link-state up.
+    """
+    sleep_interval = 1
+    time_waited = 0
+    while time_waited < IFACE_LINK_STATE_MAX_WAIT:
+        default_interface = get_default_interface()
+        if default_interface is not None:
+            return default_interface, wait_on_interface_link_state_up(default_interface)
+
+        time.sleep(sleep_interval)
+        time_waited += sleep_interval
+
+    return None, False
