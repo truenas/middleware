@@ -185,19 +185,17 @@ def _destroy_newer_snapshots(tls: Any, dataset: str, target_snap: str, destroy_c
     for snap_path in reversed(newer_snaps):
         try:
             if destroy_clones:
-                # Check for clones and destroy them first
+                # Destroy any clones of this snapshot first. get_clones()
+                # returns an empty tuple when there are none.
                 snap_rsrc = tls.lzh.open_resource(name=snap_path)
-                props = snap_rsrc.get_properties(properties={truenas_pylibzfs.ZFSProperty.CLONES})
-                if props.clones.value:
-                    for clone in props.clones.value.split(","):
-                        if clone:
-                            try:
-                                clone_rsrc = tls.lzh.open_resource(name=clone)
-                                if force:
-                                    clone_rsrc.unmount(force=True)
-                                clone_rsrc.destroy()
-                            except truenas_pylibzfs.ZFSException:
-                                pass
+                for clone in snap_rsrc.get_clones():
+                    try:
+                        clone_rsrc = tls.lzh.open_resource(name=clone)
+                        if force:
+                            clone_rsrc.unmount(force=True)
+                        clone_rsrc.destroy()
+                    except truenas_pylibzfs.ZFSException:
+                        pass
 
             truenas_pylibzfs.lzc.destroy_snapshots(
                 snapshot_names=(snap_path,),
