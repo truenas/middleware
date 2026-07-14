@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, Secret
 
 from middlewared.api.base import BaseModel, LongString, NonEmptyString, single_argument_args, single_argument_result
 
@@ -64,8 +64,8 @@ class ContainerImagesDockerhubRateLimitResult(BaseModel):
 
 
 class AppImageAuthConfig(BaseModel):
-    username: str = Field(description="Username for container registry authentication.")
-    password: str = Field(description="Password or access token for container registry authentication.")
+    username: Secret[str] = Field(description="Username for container registry authentication.")
+    password: Secret[str] = Field(description="Password or access token for container registry authentication.")
     registry_uri: str | None = Field(
         default=None,
         description="Container registry URI or `null` to use default registry.",
