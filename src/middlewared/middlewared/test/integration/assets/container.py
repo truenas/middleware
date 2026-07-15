@@ -89,7 +89,7 @@ def container(image, options=None, start=False, startup_script=None, name="test"
     finally:
         if call("container.get_instance", container["id"])["status"]["state"] == "RUNNING":
             call("container.stop", container["id"], {"force": True}, job=True)
-        call("container.delete", container["id"])
+        call("container.delete", container["id"], job=True)
 
         #  Id   Name   State
         # --------------------
