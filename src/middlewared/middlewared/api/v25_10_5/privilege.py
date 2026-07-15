@@ -1,0 +1,86 @@
+from pydantic import Field
+
+from middlewared.api.base import SID, BaseModel, Excluded, ForUpdateMetaclass, NonEmptyString, excluded_field
+from middlewared.utils.security import STIGType
+
+from .group import GroupEntry
+
+__all__ = ["PrivilegeEntry", "PrivilegeRolesEntry",
+           "PrivilegeCreateArgs", "PrivilegeCreateResult",
+           "PrivilegeUpdateArgs", "PrivilegeUpdateResult",
+           "PrivilegeDeleteArgs", "PrivilegeDeleteResult"]
+
+
+class UnmappedGroupEntry(BaseModel):
+    gid: int | None = Field(
+        description="Group ID if this is a local group that couldn't be mapped. `null` for directory service groups.",
+    )
+    sid: str | None = Field(
+        description=(
+            "Security identifier if this is a directory service group that couldn't be mapped. `null` for local groups."
+        ),
+    )
+    group: None = Field(description="Always `null` for unmapped groups.")
+
+
+class PrivilegeEntry(BaseModel):
+    id: int = Field(description="Unique identifier for the privilege.")
+    builtin_name: str | None = Field(
+        description="Name of the built-in privilege if this is a system privilege. `null` for custom privileges.",
+    )
+    name: NonEmptyString = Field(description="Display name of the privilege.")
+    local_groups: list[GroupEntry | UnmappedGroupEntry] = Field(
+        description="Array of local groups assigned to this privilege.",
+    )
+    ds_groups: list[GroupEntry | UnmappedGroupEntry] = Field(
+        description="Array of directory service groups assigned to this privilege.",
+    )
+    roles: list[str] = Field(default=[], description="Array of role names included in this privilege.")
+    web_shell: bool = Field(description="Whether this privilege grants access to the web shell.")
+
+
+class PrivilegeCreate(PrivilegeEntry):
+    id: Excluded = excluded_field()
+    builtin_name: Excluded = excluded_field()
+    local_groups: list[int] = Field(default=[], description="Array of local group IDs to assign to this privilege.")
+    ds_groups: list[int | SID] = Field(
+        default=[],
+        description="Array of directory service group IDs or SIDs to assign to this privilege.",
+    )
+
+
+class PrivilegeCreateArgs(BaseModel):
+    privilege_create: PrivilegeCreate = Field(description="Configuration for creating a new privilege.")
+
+
+class PrivilegeCreateResult(BaseModel):
+    result: PrivilegeEntry = Field(description="The newly created privilege configuration.")
+
+
+class PrivilegeUpdate(PrivilegeCreate, metaclass=ForUpdateMetaclass):
+    pass
+
+
+class PrivilegeUpdateArgs(BaseModel):
+    id: int = Field(description="ID of the privilege to update.")
+    privilege_update: PrivilegeUpdate = Field(description="Updated configuration for the privilege.")
+
+
+class PrivilegeUpdateResult(BaseModel):
+    result: PrivilegeEntry = Field(description="The updated privilege configuration.")
+
+
+class PrivilegeDeleteArgs(BaseModel):
+    id: int = Field(description="ID of the privilege to delete.")
+
+
+class PrivilegeDeleteResult(BaseModel):
+    result: bool = Field(description="Whether the privilege was successfully deleted.")
+
+
+class PrivilegeRolesEntry(BaseModel):
+    name: NonEmptyString = Field(description="Internal name of the role.")
+    title: NonEmptyString = Field(description="Human-readable title of the role.")
+    includes: list[NonEmptyString] = Field(description="Array of other role names that this role includes.")
+    builtin: bool = Field(description="Whether this is a built-in system role.")
+    stig: STIGType | None = Field(description="STIG compliance type for this role. `null` if not STIG-related.")
