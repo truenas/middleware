@@ -1,4 +1,4 @@
-name: flake8
+name: lint
 
 on:
   pull_request:
