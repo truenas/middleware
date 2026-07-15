@@ -5,14 +5,9 @@ from typing import TYPE_CHECKING
 
 from middlewared.api.current import CredentialsVerifyData
 from middlewared.plugins.cloud.rclone.remote.s3_providers import S3_PROVIDERS
-
-# Import from the defining submodule rather than the `cloud_sync` package: the package `__init__`
-# imports this plugin's `CredentialsService`, so pulling these names off the package would form an
-# import cycle (cloud_sync -> cloud_credentials -> verify -> cloud_sync).
 from middlewared.plugins.cloud_sync.rclone import RcloneConfig, lsjson_error_excerpt
 
 if TYPE_CHECKING:
-    from middlewared.api.base import BaseModel
     from middlewared.api.current import (
         CloudCredentialProvider,
     )

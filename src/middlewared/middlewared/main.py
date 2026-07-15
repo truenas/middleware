@@ -219,12 +219,6 @@ class AcmeServicesContainer(BaseServiceContainer):
         self.dns = AcmeDnsServicesContainer(middleware)
 
 
-class CloudsyncServicesContainer(BaseServiceContainer):
-    def __init__(self, middleware: "Middleware"):
-        super().__init__(middleware)
-        self.credentials = CredentialsService(middleware)
-
-
 class HardwareServicesContainer(BaseServiceContainer):
     def __init__(self, middleware: "Middleware"):
         super().__init__(middleware)
