@@ -137,7 +137,7 @@ POOL_ALERTS_LOCKS = defaultdict(asyncio.Lock)
 
 async def create_pool_upgraded_alert(middleware, pool_name):
     """Create a PoolUpgraded alert if the pool exists and has available feature flag upgrades."""
-    if pool_name == await middleware.call('boot.pool_name'):
+    if pool_name == await middleware.call2(middleware.services.boot.pool_name):
         # We don't want this alert for the boot pool as it has certain features disabled by design
         return
 
@@ -174,10 +174,10 @@ async def zfs_events(middleware, event: ZfsEvent):
         if pool_name:
             await middleware.call('cache.pop', VOLUME_STATUS_ALERTS)
 
-            if pool_name == await middleware.call('boot.pool_name'):
-                # a change was made to the boot drive, so let's clear
+            if pool_name == await middleware.call2(middleware.services.boot.pool_name):
+                # a change was made to the boot drive, so let's re-derive
                 # the disk mapping for this pool
-                await middleware.call('boot.clear_disks_cache')
+                await middleware.call2(middleware.services.boot.refresh_disks)
 
             async with POOL_ALERTS_LOCKS[pool_name]:
                 # The hook is registered with `sync=False` so this code might get executed concurrently for the same
@@ -240,7 +240,7 @@ async def setup(middleware):
 
     # middleware does not receive `sysevent.fs.zfs.pool_import` or `sysevent.fs.zfs.config_sync` events on the boot pool
     # import because it happens before middleware is started. We have to manually process these alerts for the boot pool
-    pool_name = await middleware.call('boot.pool_name')
+    pool_name = await middleware.call2(middleware.services.boot.pool_name)
     await middleware.call2(middleware.services.alert.oneshot_delete, 'PoolUpgraded', pool_name)
     await create_pool_upgraded_alert(middleware, pool_name)
 

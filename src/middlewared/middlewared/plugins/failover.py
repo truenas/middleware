@@ -468,7 +468,7 @@ class FailoverService(ConfigService):
     @private
     async def get_disks_local(self):
         try:
-            lbd = await self.middleware.call('boot.get_disks')
+            lbd = await self.call2(self.s.boot.get_disks)
             return [
                 serial for disk, serial in (await self.middleware.call('device.get_disks', False, True)).items()
                 if disk not in lbd
@@ -756,7 +756,7 @@ class FailoverService(ConfigService):
                         bootenv_name = probe_bootenv_name
                         break
 
-            dataset_name = f'{self.middleware.call_sync("boot.pool_name")}/ROOT/{bootenv_name}'
+            dataset_name = f'{self.call_sync2(self.s.boot.pool_name)}/ROOT/{bootenv_name}'
 
             remote_path = self.middleware.call_sync('failover.call_remote', 'update.get_update_location')
 

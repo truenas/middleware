@@ -7,6 +7,7 @@ from middlewared.api.current import (
     CredentialsEntry,
     KeychainCredentialDeleteOptions,
     KeychainCredentialEntry,
+    ReplicationEntry,
     RsyncTaskEntry,
     SFTPCredentialsModel,
     SSHCredentialsEntry,
@@ -115,23 +116,23 @@ class SFTPCloudSyncCredentialsSSHKeyPairUsedByDelegate(KeychainCredentialUsedByD
         )
 
 
-class ReplicationTaskSSHCredentialsUsedByDelegate(KeychainCredentialUsedByDelegate[dict[str, Any]]):
+class ReplicationTaskSSHCredentialsUsedByDelegate(KeychainCredentialUsedByDelegate[ReplicationEntry]):
     unbind_method = KeychainCredentialUsedByDelegateUnbindMethod.DISABLE
 
-    async def query(self, id_: int) -> list[dict[str, Any]]:
-        return await self.middleware.call(  # type: ignore[no-any-return]
-            "replication.query",
+    async def query(self, id_: int) -> list[ReplicationEntry]:
+        return await self.middleware.call2(
+            self.middleware.services.replication.query,
             [["ssh_credentials.id", "=", id_]],
         )
 
-    async def get_title(self, row: dict[str, Any]) -> str:
-        return f"Replication task {row['name']}"
+    async def get_title(self, row: ReplicationEntry) -> str:
+        return f"Replication task {row.name}"
 
-    async def unbind(self, row: dict[str, Any]) -> None:
+    async def unbind(self, row: ReplicationEntry) -> None:
         await self.middleware.call(
             "datastore.update",
             "storage.replication",
-            row["id"],
+            row.id,
             {
                 "repl_enabled": False,
                 "repl_ssh_credentials": None,

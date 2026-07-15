@@ -34,7 +34,6 @@ MIDDLEWARE_NGINX_SOCK = f'{MIDDLEWARE_RUN_DIR}/middlewared-nginx.sock'
 MIDDLEWARE_BOOT_ENV_STATE_DIR = '/var/lib/truenas-middleware'
 MIDDLEWARE_STARTED_SENTINEL_PATH = f'{MIDDLEWARE_RUN_DIR}/middlewared-started'
 BOOTREADY = f'{MIDDLEWARE_RUN_DIR}/.bootready'
-BOOT_POOL_NAME_VALID = ['freenas-boot', 'boot-pool']
 MANIFEST_FILE = '/data/manifest.json'
 UPDATE_TRAINS_FILE_NAME = 'trains_v2.json'
 BRAND = ProductName.PRODUCT_NAME

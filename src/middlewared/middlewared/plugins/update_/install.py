@@ -35,7 +35,7 @@ def install_scale(
     with open(os.path.join(mounted, "manifest.json")) as f:
         manifest = json.load(f)
 
-    boot_pool_name = context.middleware.call_sync("boot.pool_name")
+    boot_pool_name = context.call_sync2(context.s.boot.pool_name)
     ensure_free_space(context, boot_pool_name, manifest["size"])
 
     for file, checksum in manifest["checksums"].items():
@@ -59,7 +59,7 @@ def install_scale(
 
     progress_callback(0, STARTING_INSTALLER)
     command = {
-        "disks": context.middleware.call_sync("boot.get_disks"),
+        "disks": context.call_sync2(context.s.boot.get_disks),
         "json": True,
         "old_root": "/",
         "pool_name": boot_pool_name,

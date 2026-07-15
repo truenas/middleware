@@ -42,7 +42,7 @@ class DiskService(Service):
 
     @private
     async def sync_all_zfs_guid(self):
-        boot_pool = await self.middleware.call("boot.pool_name")
+        boot_pool = await self.call2(self.s.boot.pool_name)
         for pool in await self.middleware.call("zpool.query_impl", {"topology": True}):
             if pool["name"] == boot_pool:
                 continue

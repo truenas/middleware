@@ -365,7 +365,7 @@ class PoolDatasetService(Service):
 
         Please refer to websocket documentation for downloading the file.
         """
-        task = self.middleware.call_sync('replication.get_instance', task_id)
+        task = self.call_sync2(self.s.replication.get_instance, task_id)
         datasets = self.middleware.call_sync('pool.dataset.export_keys_for_replication_internal', task)
         job.pipes.output.w.write(json.dumps(datasets).encode())
 
@@ -374,19 +374,19 @@ class PoolDatasetService(Service):
         self, replication_task_or_id, dataset_encryption_root_mapping=None, skip_syncing_db_keys=False,
     ):
         if isinstance(replication_task_or_id, int):
-            task = await self.middleware.call('replication.get_instance', replication_task_or_id)
+            task = await self.call2(self.s.replication.get_instance, replication_task_or_id)
         else:
             task = replication_task_or_id
-        if task['direction'] != 'PUSH':
+        if task.direction != 'PUSH':
             raise CallError('Only push replication tasks are supported.', errno.EINVAL)
 
         if not skip_syncing_db_keys:
             await (await self.middleware.call(
-                'core.bulk', 'pool.dataset.sync_db_keys', [[source] for source in task['source_datasets']]
+                'core.bulk', 'pool.dataset.sync_db_keys', [[source] for source in task.source_datasets]
             )).wait()
 
         mapping = {}
-        for source_ds in task['source_datasets']:
+        for source_ds in task.source_datasets:
             source_ds_details = await self.middleware.call('pool.dataset.query', [['id', '=', source_ds]], {'extra': {
                 'properties': ['encryptionroot'],
                 'retrieve_children': False,
@@ -394,7 +394,7 @@ class PoolDatasetService(Service):
             if source_ds_details and source_ds_details[0]['encryption_root'] != source_ds:
                 filters = ['name', '=', source_ds_details[0]['encryption_root']]
             else:
-                if task['recursive']:
+                if task.recursive:
                     filters = ['OR', [['name', '=', source_ds], ['name', '^', f'{source_ds}/']]]
                 else:
                     filters = ['name', '=', source_ds]
@@ -411,18 +411,18 @@ class PoolDatasetService(Service):
             return {}
 
         result = {}
-        include_encryption_root_children = not task['replicate'] and task['recursive']
-        target_ds = task['target_dataset']
+        include_encryption_root_children = not task.replicate and task.recursive
+        target_ds = task.target_dataset
 
         source_mapping = await self.middleware.call(
-            'zettarepl.get_source_target_datasets_mapping', task['source_datasets'], target_ds
+            'zettarepl.get_source_target_datasets_mapping', task.source_datasets, target_ds
         )
         if include_encryption_root_children:
             dataset_mapping = dataset_encryption_root_mapping or await self.dataset_encryption_root_mapping()
         else:
             dataset_mapping = {}
 
-        for source_ds in task['source_datasets']:
+        for source_ds in task.source_datasets:
             for ds_name, key in mapping[source_ds].items():
                 for dataset in (dataset_mapping[ds_name] if include_encryption_root_children else [{'id': ds_name}]):
                     result[dataset['id'].replace(

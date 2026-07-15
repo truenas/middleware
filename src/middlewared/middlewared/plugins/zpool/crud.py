@@ -156,7 +156,7 @@ class ZPoolService(Service):
                 "properties": ["size", "capacity", "health"]
             }
         """
-        boot_pool_name = self.middleware.call_sync("boot.pool_name")
+        boot_pool_name = self.call_sync2(self.s.boot.pool_name)
         requested_names = data.get("pool_names")
 
         db_pools = {}

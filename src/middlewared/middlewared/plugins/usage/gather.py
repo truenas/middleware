@@ -142,8 +142,8 @@ def gather_backup_data(service: Service, context: GatherContext) -> dict[str, An
 
     repls_found: set[str] = set()
     filters = [["enabled", "=", True], ["transport", "!=", "LOCAL"], ["direction", "=", "PUSH"]]
-    for task in service.middleware.call_sync("replication.query", filters):
-        for source in filter(lambda s: s in context["datasets"] and s not in repls_found, task["source_datasets"]):
+    for task in service.call_sync2(service.s.replication.query, filters):
+        for source in filter(lambda s: s in context["datasets"] and s not in repls_found, task.source_datasets):
             size = context["datasets"][source]["properties"]["used"]["value"]
             backed["zfs_replication"] += size
             repls_found.add(source)

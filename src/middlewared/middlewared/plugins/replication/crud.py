@@ -1,42 +1,27 @@
-from datetime import datetime, time
-import os
+from __future__ import annotations
+
+from datetime import time
 import re
+from typing import TYPE_CHECKING, Any
 
-from pydantic import Field
-
-from middlewared.api import api_method
-from middlewared.api.base import BaseModel
 from middlewared.api.current import (
     PeriodicSnapshotTaskEntry,
-    ReplicationCountEligibleManualSnapshotsArgs,
-    ReplicationCountEligibleManualSnapshotsResult,
-    ReplicationCreateArgs,
-    ReplicationCreateDatasetArgs,
-    ReplicationCreateDatasetResult,
-    ReplicationCreateResult,
-    ReplicationDeleteArgs,
-    ReplicationDeleteResult,
+    ReplicationCreate,
     ReplicationEntry,
-    ReplicationListDatasetsArgs,
-    ReplicationListDatasetsResult,
-    ReplicationListNamingSchemasArgs,
-    ReplicationListNamingSchemasResult,
-    ReplicationRunArgs,
     ReplicationRunOnetimeArgs,
-    ReplicationRunOnetimeResult,
-    ReplicationRunResult,
-    ReplicationTargetUnmatchedSnapshotsArgs,
-    ReplicationTargetUnmatchedSnapshotsResult,
-    ReplicationUpdateArgs,
-    ReplicationUpdateResult,
+    ReplicationUpdate,
 )
 from middlewared.auth import fake_app
-from middlewared.common.attachment import FSAttachmentDelegate
-from middlewared.plugins.keychain import KeychainCredentialSSHPairArg
-from middlewared.service import CallError, CRUDService, ValidationErrors, job, private
+from middlewared.service import CallError, CRUDServicePart, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.cron import convert_db_format_to_schedule, convert_schedule_to_db_format
 from middlewared.utils.path import is_child
+
+if TYPE_CHECKING:
+    from middlewared.api.base.server.app import App
+    from middlewared.auth import FakeApplication
+    from middlewared.job import Job
+    from middlewared.utils.types import AuditCallback
 
 
 class ReplicationModel(sa.Model):
@@ -101,8 +86,9 @@ class ReplicationModel(sa.Model):
     repl_encryption_key_format = sa.Column(sa.String(120), nullable=True)
     repl_encryption_key_location = sa.Column(sa.Text(), nullable=True)
 
-    repl_periodic_snapshot_tasks = sa.relationship("PeriodicSnapshotTaskModel",
-                                                   secondary=lambda: ReplicationPeriodicSnapshotTaskModel.__table__)
+    repl_periodic_snapshot_tasks = sa.relationship(
+        "PeriodicSnapshotTaskModel", secondary=lambda: ReplicationPeriodicSnapshotTaskModel.__table__
+    )
 
 
 class ReplicationPeriodicSnapshotTaskModel(sa.Model):
@@ -113,33 +99,12 @@ class ReplicationPeriodicSnapshotTaskModel(sa.Model):
     task_id = sa.Column(sa.ForeignKey("storage_task.id", ondelete="CASCADE"), index=True)
 
 
-class ReplicationPairData(BaseModel):
-    hostname: str
-    public_key: str = Field(alias="public-key")
-    user: str | None = None
+class ReplicationServicePart(CRUDServicePart[ReplicationEntry]):
+    _datastore = "storage.replication"
+    _datastore_prefix = "repl_"
+    _entry = ReplicationEntry
 
-
-class ReplicationPairArgs(BaseModel):
-    data: ReplicationPairData
-
-
-class ReplicationPairResult(BaseModel):
-    result: dict
-
-
-class ReplicationService(CRUDService):
-
-    class Config:
-        datastore = "storage.replication"
-        datastore_prefix = "repl_"
-        datastore_extend = "replication.extend"
-        datastore_extend_context = "replication.extend_context"
-        cli_namespace = "task.replication"
-        entry = ReplicationEntry
-        role_prefix = "REPLICATION_TASK"
-
-    @private
-    async def extend_context(self, rows, extra):
+    async def extend_context(self, rows: list[dict[str, Any]], extra: dict[str, Any]) -> dict[str, Any]:
         if extra.get("check_dataset_encryption_keys", False) and any(row["direction"] == "PUSH" for row in rows):
             dataset_mapping = await self.middleware.call("pool.dataset.dataset_encryption_root_mapping")
         else:
@@ -151,11 +116,9 @@ class ReplicationService(CRUDService):
             "check_dataset_encryption_keys": extra.get("check_dataset_encryption_keys", False),
         }
 
-    @private
-    async def extend(self, data, context):
+    async def extend(self, data: dict[str, Any], context: dict[str, Any]) -> dict[str, Any]:
         data["periodic_snapshot_tasks"] = [
-            {k.replace("task_", ""): v for k, v in task.items()}
-            for task in data["periodic_snapshot_tasks"]
+            {k.replace("task_", ""): v for k, v in task.items()} for task in data["periodic_snapshot_tasks"]
         ]
 
         for task in data["periodic_snapshot_tasks"]:
@@ -173,9 +136,12 @@ class ReplicationService(CRUDService):
         if "error" in context["state"]:
             data["state"] = context["state"]["error"]
         else:
-            data["state"] = context["state"]["tasks"].get(f"replication_task_{data['id']}", {
-                "state": "PENDING",
-            })
+            data["state"] = context["state"]["tasks"].get(
+                f"replication_task_{data['id']}",
+                {
+                    "state": "PENDING",
+                },
+            )
 
         data["job"] = data["state"].pop("job", None)
 
@@ -184,15 +150,16 @@ class ReplicationService(CRUDService):
             if context["dataset_encryption_root_mapping"] and data["direction"] == "PUSH":
                 data["has_encrypted_dataset_keys"] = bool(
                     await self.middleware.call(
-                        "pool.dataset.export_keys_for_replication_internal", data,
-                        context["dataset_encryption_root_mapping"], True,
+                        "pool.dataset.export_keys_for_replication_internal",
+                        self._to_entry(data),
+                        context["dataset_encryption_root_mapping"],
+                        True,
                     )
                 )
 
         return data
 
-    @private
-    async def compress(self, data):
+    def compress(self, data: dict[str, Any]) -> dict[str, Any]:
         if data["direction"] == "PUSH":
             data["naming_schema"] = data["also_include_naming_schema"]
         del data["also_include_naming_schema"]
@@ -204,32 +171,20 @@ class ReplicationService(CRUDService):
 
         return data
 
-    @api_method(
-        ReplicationCreateArgs,
-        ReplicationCreateResult,
-        audit="Replication task create:",
-        audit_extended=lambda data: data["name"],
-        pass_app=True,
-        pass_app_require=True,
-    )
-    async def do_create(self, app, data):
-        """
-        Create a Replication Task that will push or pull ZFS snapshots to or from remote host.
-        """
-
+    async def do_create(self, app: App, data: ReplicationCreate) -> ReplicationEntry:
         verrors = ValidationErrors()
-        verrors.add_child("replication_create", await self._validate(app, data))
-
+        verrors.add_child("replication_create", await self.validate(app, data))
         verrors.check()
 
-        periodic_snapshot_tasks = data["periodic_snapshot_tasks"]
-        await self.compress(data)
+        ds = data.model_dump()
+        periodic_snapshot_tasks = ds["periodic_snapshot_tasks"]
+        self.compress(ds)
 
         id_ = await self.middleware.call(
             "datastore.insert",
-            self._config.datastore,
-            data,
-            {"prefix": self._config.datastore_prefix}
+            self._datastore,
+            ds,
+            {"prefix": self._datastore_prefix},
         )
 
         await self._set_periodic_snapshot_tasks(id_, periodic_snapshot_tasks)
@@ -238,46 +193,48 @@ class ReplicationService(CRUDService):
 
         return await self.get_instance(id_)
 
-    @api_method(
-        ReplicationUpdateArgs,
-        ReplicationUpdateResult,
-        audit="Replication task update:",
-        audit_callback=True,
-        pass_app=True,
-        pass_app_require=True,
-    )
-    async def do_update(self, app, audit_callback, id_, data):
-        """
-        Update a Replication Task with specific ``id``.
-        """
-
+    async def do_update(
+        self,
+        app: App,
+        audit_callback: AuditCallback,
+        id_: int,
+        data: ReplicationUpdate,
+    ) -> ReplicationEntry:
         old = await self.get_instance(id_)
-        audit_callback(old["name"])
+        audit_callback(old.name)
 
-        new = old.copy()
-        if new["ssh_credentials"]:
-            new["ssh_credentials"] = new["ssh_credentials"]["id"]
-        new["periodic_snapshot_tasks"] = [task["id"] for task in new["periodic_snapshot_tasks"]]
-        new.update(data)
+        # Reduce the current entry to a `ReplicationCreate` shape (`ssh_credentials` and
+        # `periodic_snapshot_tasks` as ids), then apply the requested changes on top of it.
+        current = ReplicationCreate(
+            **old.model_dump(
+                exclude={
+                    "id",
+                    "state",
+                    "job",
+                    "has_encrypted_dataset_keys",
+                    "ssh_credentials",
+                    "periodic_snapshot_tasks",
+                },
+            ),
+            ssh_credentials=old.ssh_credentials.id if old.ssh_credentials else None,
+            periodic_snapshot_tasks=[task.id for task in old.periodic_snapshot_tasks],
+        )
+        new = current.updated(data)
 
         verrors = ValidationErrors()
-        verrors.add_child("replication_update", await self._validate(app, new, id_))
-
+        verrors.add_child("replication_update", await self.validate(app, new, id_))
         verrors.check()
 
-        periodic_snapshot_tasks = new["periodic_snapshot_tasks"]
-        await self.compress(new)
-
-        new.pop("state", None)
-        new.pop("job", None)
-        new.pop("has_encrypted_dataset_keys", None)
+        ds = new.model_dump()
+        periodic_snapshot_tasks = ds["periodic_snapshot_tasks"]
+        self.compress(ds)
 
         await self.middleware.call(
             "datastore.update",
-            self._config.datastore,
+            self._datastore,
             id_,
-            new,
-            {"prefix": self._config.datastore_prefix}
+            ds,
+            {"prefix": self._datastore_prefix},
         )
 
         await self._set_periodic_snapshot_tasks(id_, periodic_snapshot_tasks)
@@ -286,24 +243,11 @@ class ReplicationService(CRUDService):
 
         return await self.get_instance(id_)
 
-    @api_method(
-        ReplicationDeleteArgs,
-        ReplicationDeleteResult,
-        audit="Replication task delete:",
-        audit_callback=True,
-    )
-    async def do_delete(self, audit_callback, id_):
-        """
-        Delete a replication task with the given ``id``.
-        """
-        task_name = (await self.get_instance(id_))["name"]
+    async def do_delete(self, audit_callback: AuditCallback, id_: int) -> bool:
+        task_name = (await self.get_instance(id_)).name
         audit_callback(task_name)
 
-        response = await self.middleware.call(
-            "datastore.delete",
-            self._config.datastore,
-            id_
-        )
+        response: bool = await self.middleware.call("datastore.delete", self._datastore, id_)
 
         # Remove task state from zettarepl before updating tasks
         await self.middleware.call("zettarepl.remove_task", f"replication_task_{id_}")
@@ -312,74 +256,94 @@ class ReplicationService(CRUDService):
 
         return response
 
-    @api_method(
-        ReplicationRunArgs,
-        ReplicationRunResult,
-        roles=["REPLICATION_TASK_WRITE"],
-    )
-    @job(logs=True, read_roles=["REPLICATION_TASK_READ"])
-    async def run(self, job, id_, really_run):
-        """
-        Run Replication Task of ``id``.
-        """
-        if really_run:
-            task = await self.get_instance(id_)
+    async def _set_periodic_snapshot_tasks(
+        self,
+        replication_task_id: int,
+        periodic_snapshot_tasks_ids: list[int],
+    ) -> None:
+        await self.middleware.call(
+            "datastore.delete",
+            "storage.replication_repl_periodic_snapshot_tasks",
+            [["replication_id", "=", replication_task_id]],
+        )
+        for periodic_snapshot_task_id in periodic_snapshot_tasks_ids:
+            await self.middleware.call(
+                "datastore.insert",
+                "storage.replication_repl_periodic_snapshot_tasks",
+                {
+                    "replication_id": replication_task_id,
+                    "task_id": periodic_snapshot_task_id,
+                },
+            )
 
-            if not task["enabled"]:
-                raise CallError("Task is not enabled")
+    async def run_onetime(self, job: Job, data: ReplicationRunOnetimeArgs) -> None:
+        payload = data.model_dump()
+        payload["name"] = f"Temporary replication task for job {job.id}"
+        payload["schedule"] = None
+        payload["only_matching_schedule"] = False
+        payload["auto"] = False
+        payload["enabled"] = True
 
-            if task["state"]["state"] == "RUNNING":
-                raise CallError("Task is already running")
-
-            if task["state"]["state"] == "HOLD":
-                raise CallError("Task is on hold")
-
-        await self.middleware.call("zettarepl.run_replication_task", id_, really_run, job)
-
-    @api_method(ReplicationRunOnetimeArgs, ReplicationRunOnetimeResult, roles=["REPLICATION_TASK_WRITE"])
-    @job(logs=True)
-    async def run_onetime(self, job, data):
-        """
-        Run replication task without creating it.
-        """
-        data["name"] = f"Temporary replication task for job {job.id}"
-        data["schedule"] = None
-        data["only_matching_schedule"] = False
-        data["auto"] = False
-        data["enabled"] = True
-
+        # `payload` carries every `ReplicationCreate` field (plus one-time-only extras like `mount`); pick out
+        # exactly the `ReplicationCreate` fields so it can be validated as a model.
+        replication_create = ReplicationCreate(
+            **{k: payload[k] for k in ReplicationCreate.model_fields if k in payload}
+        )
         verrors = ValidationErrors()
-        verrors.add_child("replication_run_onetime", await self._validate(fake_app(), data))
-
+        verrors.add_child("replication_run_onetime", await self.validate(fake_app(), replication_create))
         verrors.check()
 
-        if data.get("ssh_credentials") is not None:
+        if payload.get("ssh_credentials") is not None:
             ssh_credentials = await self.call2(
-                self.s.keychaincredential.get_of_type, data["ssh_credentials"], "SSH_CREDENTIALS",
+                self.s.keychaincredential.get_of_type,
+                payload["ssh_credentials"],
+                "SSH_CREDENTIALS",
             )
-            data["ssh_credentials"] = ssh_credentials.model_dump(context={"expose_secrets": True})
+            payload["ssh_credentials"] = ssh_credentials.model_dump(context={"expose_secrets": True})
 
-        await self.middleware.call("zettarepl.run_onetime_replication_task", job, data)
+        await self.middleware.call("zettarepl.run_onetime_replication_task", job, payload)
+
+    async def validate(
+        self,
+        app: App | FakeApplication,
+        data: ReplicationCreate,
+        id_: int | None = None,
+    ) -> ValidationErrors:
+        verrors = ValidationErrors()
+
+        await self._ensure_unique(verrors, "", "name", data.name, id_)
+
+        # Direction
+        snapshot_tasks = await self._validate_direction(app.authenticated_credentials, data, verrors)
+
+        # Transport
+        await self._validate_transport(data, verrors)
+
+        # Common for all directions and transports
+        self._validate_source_datasets(data, snapshot_tasks, verrors)
+        self._validate_common(data, snapshot_tasks, verrors)
+
+        return verrors
 
     async def _validate_direction(
         self,
-        app_creds,
-        data: dict,
+        app_creds: Any,
+        data: ReplicationCreate,
         verrors: ValidationErrors,
     ) -> list[PeriodicSnapshotTaskEntry]:
         """
         Validate direction-specific settings (PUSH vs PULL).
         Returns list of periodic snapshot tasks (empty for PULL).
         """
-        periodic_snapshot_tasks = data["periodic_snapshot_tasks"]
-        naming_schema = data["naming_schema"]
-        also_include_naming_schema = data["also_include_naming_schema"]
-        name_regex = data["name_regex"]
-        schedule = data["schedule"]
-        auto = data["auto"]
-        snapshot_tasks = []
+        periodic_snapshot_tasks = data.periodic_snapshot_tasks
+        naming_schema = data.naming_schema
+        also_include_naming_schema = data.also_include_naming_schema
+        name_regex = data.name_regex
+        schedule = data.schedule
+        auto = data.auto
+        snapshot_tasks: list[PeriodicSnapshotTaskEntry] = []
 
-        match data["direction"]:
+        match data.direction:
             case "PUSH":
                 # Query and validate periodic snapshot tasks
                 e, snapshot_tasks = await self._query_periodic_snapshot_tasks(periodic_snapshot_tasks)
@@ -393,8 +357,8 @@ class ReplicationService(CRUDService):
                 if not snapshot_tasks and not also_include_naming_schema and not name_regex:
                     verrors.add(
                         "periodic_snapshot_tasks",
-                        "You must at least either bind a periodic snapshot task or provide \"Also Include Naming "
-                        "Schema\" or \"Name Regex\" for push replication task"
+                        'You must at least either bind a periodic snapshot task or provide "Also Include Naming '
+                        'Schema" or "Name Regex" for push replication task',
                     )
 
                 # Automatic PUSH needs a trigger (schedule or periodic snapshot task)
@@ -402,7 +366,7 @@ class ReplicationService(CRUDService):
                     verrors.add(
                         "auto",
                         "Push replication that runs automatically must be either bound to a periodic snapshot task or "
-                        "have a schedule"
+                        "have a schedule",
                     )
 
             case "PULL":
@@ -413,8 +377,7 @@ class ReplicationService(CRUDService):
                 # PULL can't use periodic snapshot tasks (they're for local snapshots only)
                 if periodic_snapshot_tasks:
                     verrors.add(
-                        "periodic_snapshot_tasks",
-                        "Pull replication can't be bound to a periodic snapshot task"
+                        "periodic_snapshot_tasks", "Pull replication can't be bound to a periodic snapshot task"
                     )
 
                 # PULL needs naming_schema or name_regex to identify remote snapshots
@@ -426,27 +389,26 @@ class ReplicationService(CRUDService):
                     verrors.add("also_include_naming_schema", "This field has no sense for pull replication")
 
                 # PULL can't hold snapshots on source (we don't have access to do retention there)
-                if data["hold_pending_snapshots"]:
+                if data.hold_pending_snapshots:
                     verrors.add(
                         "hold_pending_snapshots",
-                        "Pull replication tasks can't hold pending snapshots because they don't do source retention"
+                        "Pull replication tasks can't hold pending snapshots because they don't do source retention",
                     )
 
                 # PULL replication requires explicit permission (security: pulling data from remote)
-                if (
-                    app_creds.has_role("REPLICATION_TASK_WRITE")
-                    and not app_creds.has_role("REPLICATION_TASK_WRITE_PULL")
+                if app_creds.has_role("REPLICATION_TASK_WRITE") and not app_creds.has_role(
+                    "REPLICATION_TASK_WRITE_PULL"
                 ):
                     verrors.add("direction", "You don't have permissions to use PULL replication")
 
         return snapshot_tasks
 
-    async def _validate_transport(self, data: dict, verrors: ValidationErrors):
+    async def _validate_transport(self, data: ReplicationCreate, verrors: ValidationErrors) -> None:
         """Validate transport settings (SSH+NETCAT, LOCAL, or SSH)."""
-        transport = data["transport"]
-        netcat_active_side = data["netcat_active_side"]
-        compression = data["compression"]
-        speed_limit = data["speed_limit"]
+        transport = data.transport
+        netcat_active_side = data.netcat_active_side
+        compression = data.compression
+        speed_limit = data.speed_limit
 
         # SSH+NETCAT: Uses SSH for control, netcat for data transfer
         if transport == "SSH+NETCAT":
@@ -455,12 +417,12 @@ class ReplicationService(CRUDService):
                 verrors.add("netcat_active_side", "You must choose active side for SSH+netcat replication")
 
             # Validate port range for netcat listener
-            port_min = data["netcat_active_side_port_min"]
-            port_max = data["netcat_active_side_port_max"]
+            port_min = data.netcat_active_side_port_min
+            port_max = data.netcat_active_side_port_max
             if port_min is not None and port_max is not None and port_min > port_max:
                 verrors.add(
                     "netcat_active_side_port_max",
-                    "Please specify value greater than or equal to netcat_active_side_port_min"
+                    "Please specify value greater than or equal to netcat_active_side_port_min",
                 )
 
             # Netcat handles raw data transfer, so compression/speed limit not applicable
@@ -481,11 +443,11 @@ class ReplicationService(CRUDService):
                 "netcat_active_side_port_max",
                 "netcat_passive_side_connect_address",
             ):
-                if data[k] is not None:
+                if getattr(data, k) is not None:
                     verrors.add(k, "This field only has sense for SSH+netcat replication")
 
         # Validate credentials based on transport type
-        ssh_credentials = data["ssh_credentials"]
+        ssh_credentials = data.ssh_credentials
         if transport == "LOCAL":
             # LOCAL replication is same-system, so no remote credentials or network features
             if ssh_credentials is not None:
@@ -502,24 +464,20 @@ class ReplicationService(CRUDService):
         else:
             # Verify the SSH credentials exist and are valid
             try:
-                await self.call2(
-                    self.s.keychaincredential.get_of_type,
-                    ssh_credentials,
-                    "SSH_CREDENTIALS"
-                )
+                await self.call2(self.s.keychaincredential.get_of_type, ssh_credentials, "SSH_CREDENTIALS")
             except CallError as e:
                 verrors.add("ssh_credentials", str(e))
 
     def _validate_source_datasets(
         self,
-        data: dict,
+        data: ReplicationCreate,
         snapshot_tasks: list[PeriodicSnapshotTaskEntry],
         verrors: ValidationErrors,
-    ):
+    ) -> None:
         """Validate source datasets, exclusions, and full filesystem replication settings."""
-        source_datasets = data["source_datasets"]
-        recursive = data["recursive"]
-        exclude = data["exclude"]
+        source_datasets = data.source_datasets
+        recursive = data.recursive
+        exclude = data.exclude
 
         # Validate that exclusions are consistent between replication task and snapshot tasks
         for i, src_ds in enumerate(source_datasets):
@@ -534,14 +492,13 @@ class ReplicationService(CRUDService):
                                 verrors.add(
                                     "exclude",
                                     f"You should exclude {task_exclude_item!r} as bound periodic snapshot task dataset "
-                                    f"{task_ds!r} does"
+                                    f"{task_ds!r} does",
                                 )
                     elif src_ds in task_exclude:
                         # For non-recursive, can't replicate a dataset that's excluded from snapshots
                         verrors.add(
                             f"source_datasets.{i}",
-                            f"Dataset {src_ds!r} is excluded by bound periodic snapshot task for dataset "
-                            f"{task_ds!r}"
+                            f"Dataset {src_ds!r} is excluded by bound periodic snapshot task for dataset {task_ds!r}",
                         )
 
         # Exclude lists only work with recursive replication
@@ -554,7 +511,7 @@ class ReplicationService(CRUDService):
                 verrors.add(f"exclude.{i}", "This dataset is not a child of any of source datasets")
 
         # Full filesystem replication (replicate=True) has additional requirements
-        if not data["replicate"]:
+        if not data.replicate:
             return
 
         # Full filesystem replication must include all children and properties
@@ -565,11 +522,11 @@ class ReplicationService(CRUDService):
         if exclude:
             verrors.add("exclude", "This option is not supported for full filesystem replication")
 
-        if not data["properties"]:
+        if not data.properties:
             verrors.add("properties", required_msg)
 
         # Full filesystem replication must use SOURCE retention to match source exactly
-        if data["retention_policy"] != "SOURCE":
+        if data.retention_policy != "SOURCE":
             verrors.add(
                 "retention_policy",
                 "Only `Same as Source` retention policy can be used for full filesystem replication",
@@ -582,42 +539,44 @@ class ReplicationService(CRUDService):
                     verrors.add(
                         f"source_datasets.{i}",
                         "Replication task that replicates the entire filesystem can't replicate both "
-                        f"{another_src_ds!r} and its child {src_ds!r}"
+                        f"{another_src_ds!r} and its child {src_ds!r}",
                     )
 
         # Snapshot tasks must be recursive and cover the source datasets
         for i, periodic_snapshot_task in enumerate(snapshot_tasks):
             if (
-                not any(
-                    is_child(src_ds, periodic_snapshot_task.dataset)
-                    for src_ds in source_datasets
-                )
+                not any(is_child(src_ds, periodic_snapshot_task.dataset) for src_ds in source_datasets)
                 or not periodic_snapshot_task.recursive
             ):
                 verrors.add(
                     f"periodic_snapshot_tasks.{i}",
                     "Replication tasks that replicate the entire filesystem can only use periodic snapshot tasks "
-                    "that take recursive snapshots of the dataset being replicated (or its ancestor)"
+                    "that take recursive snapshots of the dataset being replicated (or its ancestor)",
                 )
 
-    def _validate_common(self, data: dict, snapshot_tasks: list[PeriodicSnapshotTaskEntry], verrors: ValidationErrors):
+    def _validate_common(
+        self,
+        data: ReplicationCreate,
+        snapshot_tasks: list[PeriodicSnapshotTaskEntry],
+        verrors: ValidationErrors,
+    ) -> None:
         """Validate common settings (encryption, schedules, retention, naming)."""
         # When encryption is enabled but not inherited, must specify key details
-        if data["encryption"] and not data["encryption_inherit"]:
+        if data.encryption and not data.encryption_inherit:
             for k in ("encryption_key", "encryption_key_format", "encryption_key_location"):
-                if data[k] is None:
+                if getattr(data, k) is None:
                     verrors.add(k, "This property is required when remote dataset encryption is enabled")
 
         # Schedule validation: schedule requires auto, only_matching_schedule requires schedule
-        if data["schedule"]:
-            if not data["auto"]:
+        if data.schedule:
+            if not data.auto:
                 verrors.add("schedule", "You can't have schedule for replication that does not run automatically")
-        elif data["only_matching_schedule"]:
+        elif data.only_matching_schedule:
             verrors.add("only_matching_schedule", "You can't have only-matching-schedule without schedule")
 
         # Name regex validation and compatibility checks
-        name_regex = data["name_regex"]
-        retention_policy = data["retention_policy"]
+        name_regex = data.name_regex
+        retention_policy = data.retention_policy
         if name_regex:
             # Verify regex syntax is valid
             try:
@@ -630,7 +589,7 @@ class ReplicationService(CRUDService):
                 verrors.add("name_regex", "Naming regex can't be used with periodic snapshot tasks")
 
             # Name regex is mutually exclusive with naming schema
-            if data["naming_schema"] or data["also_include_naming_schema"]:
+            if data.naming_schema or data.also_include_naming_schema:
                 verrors.add("name_regex", "Naming regex can't be used with Naming schema")
 
             # Name regex has limited retention policy options (can't calculate lifetimes from arbitrary names)
@@ -641,8 +600,8 @@ class ReplicationService(CRUDService):
                 )
 
         # Retention policy validation: CUSTOM requires lifetime settings, others forbid them
-        lifetime_value = data["lifetime_value"]
-        lifetime_unit = data["lifetime_unit"]
+        lifetime_value = data.lifetime_value
+        lifetime_unit = data.lifetime_unit
         if retention_policy == "CUSTOM":
             # CUSTOM retention needs both value and unit to calculate snapshot lifetime
             errmsg = "This field is required for custom retention policy"
@@ -657,50 +616,24 @@ class ReplicationService(CRUDService):
                 verrors.add("lifetime_value", errmsg)
             if lifetime_unit is not None:
                 verrors.add("lifetime_unit", errmsg)
-            if data["lifetimes"]:
+            if data.lifetimes:
                 verrors.add("lifetimes", errmsg)
 
         # Can't bind disabled snapshot tasks to enabled replication tasks
-        if not data["enabled"]:
+        if not data.enabled:
             return
 
         for i, snapshot_task in enumerate(snapshot_tasks):
             if not snapshot_task.enabled:
                 verrors.add(
                     f"periodic_snapshot_tasks.{i}",
-                    "You can't bind disabled periodic snapshot task to enabled replication task"
+                    "You can't bind disabled periodic snapshot task to enabled replication task",
                 )
 
-    async def _validate(self, app, data, id_=None):
-        verrors = ValidationErrors()
-
-        await self._ensure_unique(verrors, "", "name", data["name"], id_)
-
-        # Direction
-        snapshot_tasks = await self._validate_direction(app.authenticated_credentials, data, verrors)
-
-        # Transport
-        await self._validate_transport(data, verrors)
-
-        # Common for all directions and transports
-        self._validate_source_datasets(data, snapshot_tasks, verrors)
-        self._validate_common(data, snapshot_tasks, verrors)
-
-        return verrors
-
-    async def _set_periodic_snapshot_tasks(self, replication_task_id, periodic_snapshot_tasks_ids):
-        await self.middleware.call("datastore.delete", "storage.replication_repl_periodic_snapshot_tasks",
-                                   [["replication_id", "=", replication_task_id]])
-        for periodic_snapshot_task_id in periodic_snapshot_tasks_ids:
-            await self.middleware.call(
-                "datastore.insert", "storage.replication_repl_periodic_snapshot_tasks",
-                {
-                    "replication_id": replication_task_id,
-                    "task_id": periodic_snapshot_task_id,
-                },
-            )
-
-    async def _query_periodic_snapshot_tasks(self, ids):
+    async def _query_periodic_snapshot_tasks(
+        self,
+        ids: list[int],
+    ) -> tuple[ValidationErrors, list[PeriodicSnapshotTaskEntry]]:
         verrors = ValidationErrors()
 
         query_result = await self.call2(self.s.pool.snapshottask.query, [["id", "in", ids]])
@@ -715,121 +648,3 @@ class ReplicationService(CRUDService):
                 verrors.add(str(i), "This snapshot task does not exist")
 
         return verrors, snapshot_tasks
-
-    @api_method(ReplicationListDatasetsArgs, ReplicationListDatasetsResult, roles=["REPLICATION_TASK_WRITE"])
-    async def list_datasets(self, transport, ssh_credentials):
-        """
-        List datasets on remote side.
-        """
-
-        return await self.middleware.call("zettarepl.list_datasets", transport, ssh_credentials)
-
-    @api_method(ReplicationCreateDatasetArgs, ReplicationCreateDatasetResult, roles=["REPLICATION_TASK_WRITE"])
-    async def create_dataset(self, dataset, transport, ssh_credentials):
-        """
-        Creates dataset on remote side.
-        """
-        return await self.middleware.call("zettarepl.create_dataset", dataset, transport, ssh_credentials)
-
-    @api_method(ReplicationListNamingSchemasArgs, ReplicationListNamingSchemasResult, roles=["REPLICATION_TASK_WRITE"])
-    async def list_naming_schemas(self):
-        """
-        List all naming schemas used in periodic snapshot and replication tasks.
-        """
-        naming_schemas = []
-        for snapshottask in await self.call2(self.s.pool.snapshottask.query):
-            naming_schemas.append(snapshottask.naming_schema)
-        for replication in await self.middleware.call("replication.query"):
-            naming_schemas.extend(replication["naming_schema"])
-            naming_schemas.extend(replication["also_include_naming_schema"])
-        return sorted(set(naming_schemas))
-
-    @api_method(
-        ReplicationCountEligibleManualSnapshotsArgs,
-        ReplicationCountEligibleManualSnapshotsResult,
-        roles=["REPLICATION_TASK_WRITE"],
-    )
-    async def count_eligible_manual_snapshots(self, data):
-        """
-        Count how many existing snapshots of ``dataset`` match ``naming_schema``.
-        """
-        return await self.middleware.call("zettarepl.count_eligible_manual_snapshots", data)
-
-    @api_method(
-        ReplicationTargetUnmatchedSnapshotsArgs,
-        ReplicationTargetUnmatchedSnapshotsResult,
-        roles=["REPLICATION_TASK_WRITE"],
-    )
-    async def target_unmatched_snapshots(self, direction, source_datasets, target_dataset, transport, ssh_credentials):
-        """
-        Check if target has any snapshots that do not exist on source. Returns these snapshots grouped by dataset.
-        """
-        return await self.middleware.call("zettarepl.target_unmatched_snapshots", direction, source_datasets,
-                                          target_dataset, transport, ssh_credentials)
-
-    @private
-    def new_snapshot_name(self, naming_schema):
-        return datetime.now().strftime(naming_schema)
-
-    # Legacy pair support
-    @api_method(ReplicationPairArgs, ReplicationPairResult, private=True)
-    async def pair(self, data):
-        result = await self.call2(self.s.keychaincredential.ssh_pair, KeychainCredentialSSHPairArg(
-            remote_hostname=data["hostname"],
-            username=data["user"] or "root",
-            public_key=data["public-key"],
-        ))
-        return {
-            "ssh_port": result.port,
-            "ssh_hostkey": result.host_key,
-        }
-
-
-class ReplicationFSAttachmentDelegate(FSAttachmentDelegate):
-    name = "replication"
-    title = "Replication"
-
-    async def query(self, path, enabled, options=None):
-        results = []
-        for replication in await self.middleware.call("replication.query", [["enabled", "=", enabled]]):
-            if replication["transport"] == "LOCAL" or replication["direction"] == "PUSH":
-                if await self.middleware.call("filesystem.is_child", [
-                    os.path.join("/mnt", source_dataset) for source_dataset in replication["source_datasets"]
-                ], path):
-                    results.append(replication)
-
-            if replication["transport"] == "LOCAL" or replication["direction"] == "PULL":
-                if await self.middleware.call(
-                    "filesystem.is_child",
-                    os.path.join("/mnt", replication["target_dataset"]),
-                    path
-                ):
-                    results.append(replication)
-
-        return results
-
-    async def delete(self, attachments):
-        for attachment in attachments:
-            await self.middleware.call("datastore.delete", "storage.replication", attachment["id"])
-
-        await self.middleware.call("zettarepl.update_tasks")
-
-    async def toggle(self, attachments, enabled):
-        for attachment in attachments:
-            await self.middleware.call("datastore.update", "storage.replication", attachment["id"],
-                                       {"repl_enabled": enabled})
-
-        await self.middleware.call("zettarepl.update_tasks")
-
-
-async def on_zettarepl_state_changed(middleware, id_, fields):
-    if id_.startswith("replication_task_"):
-        task_id = int(id_.split("_")[-1])
-        middleware.send_event("replication.query", "CHANGED", id=task_id, fields={"state": fields})
-
-
-async def setup(middleware):
-    await middleware.call("pool.dataset.register_attachment_delegate", ReplicationFSAttachmentDelegate(middleware))
-    await middleware.call("network.general.register_activity", "replication", "Replication")
-
-    middleware.register_hook("zettarepl.state_change", on_zettarepl_state_changed)

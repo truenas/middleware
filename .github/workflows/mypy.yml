@@ -32,6 +32,7 @@ jobs:
             middlewared/plugins/app_registry/ \
             middlewared/plugins/apps/ \
             middlewared/plugins/apps_images/ \
+            middlewared/plugins/boot/ \
             middlewared/plugins/boot_environment/ \
             middlewared/plugins/catalog/ \
             middlewared/plugins/cloud_backup/ \
@@ -48,6 +49,7 @@ jobs:
             middlewared/plugins/network_routes/ \
             middlewared/plugins/ntp/ \
             middlewared/plugins/ports/ \
+            middlewared/plugins/replication/ \
             middlewared/plugins/reporting/ \
             middlewared/plugins/rsync/ \
             middlewared/plugins/security/ \

@@ -154,7 +154,7 @@ class DiskService(Service):
 
     @private
     async def get_reserved(self):
-        return await self.middleware.call('boot.get_disks') + await self.middleware.call('pool.get_disks')
+        return await self.call2(self.s.boot.get_disks) + await self.middleware.call('pool.get_disks')
 
     @private
     async def check_disks_availability(self, disks, allow_duplicate_serials):

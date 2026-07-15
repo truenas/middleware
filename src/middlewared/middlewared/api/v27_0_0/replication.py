@@ -21,6 +21,7 @@ from .keychain import KeychainCredentialEntry
 from .pool_snapshottask import PoolSnapshotTaskDBEntry
 
 __all__ = ["ReplicationEntry",
+           "ReplicationCreate", "ReplicationUpdate",
            "ReplicationCreateArgs", "ReplicationCreateResult",
            "ReplicationUpdateArgs", "ReplicationUpdateResult",
            "ReplicationDeleteArgs", "ReplicationDeleteResult",

@@ -20,7 +20,7 @@ from middlewared.plugins.pool_.utils import UpdateImplArgs
 from middlewared.plugins.zfs_.validation_utils import validate_pool_name
 from middlewared.service import CallError, CRUDService, ValidationErrors, job, private
 import middlewared.sqlalchemy as sa
-from middlewared.utils import BOOT_POOL_NAME_VALID
+from middlewared.utils.boot.pool import BOOT_POOL_NAME_VALID
 from middlewared.utils.size import format_size
 
 from .utils import RE_DRAID_DATA_DISKS, RE_DRAID_SPARE_DISKS, ZPOOL_CACHE_FILE, validate_dedup_license
@@ -36,6 +36,31 @@ VDEV_PARITY = MappingProxyType({
     'DRAID1': 1,
     'DRAID2': 2,
     'DRAID3': 3,
+})
+
+
+# Minimum number of disks per vdev type.
+VDEV_MIN_DISKS = MappingProxyType({
+    'STRIPE': 1,
+    'MIRROR': 2,
+    'DRAID1': 2,
+    'DRAID2': 3,
+    'DRAID3': 4,
+    'RAIDZ1': 3,
+    'RAIDZ2': 4,
+    'RAIDZ3': 5,
+})
+
+
+# Maximum vdev width for the redundant types we cap, mirroring truenas_pylibzfs's
+# PYLIBZFS_MAX_MIRROR_WIDTH (4) and PYLIBZFS_MAX_RAIDZ_WIDTH (15); keep in sync
+# with that binding. STRIPE is uncapped; dRAID is bounded by
+# validate_draid_configuration.
+VDEV_MAX_DISKS = MappingProxyType({
+    'MIRROR': 4,
+    'RAIDZ1': 15,
+    'RAIDZ2': 15,
+    'RAIDZ3': 15,
 })
 
 
@@ -344,6 +369,21 @@ class PoolService(CRUDService):
     async def _validate_topology(self, data, old=None):
         verrors = ValidationErrors()
 
+        # When force_topology is set, TrueNAS topology policy checks are skipped:
+        # data vdev type/width matching, the RAIDZ/mirror width caps, and the
+        # special/dedup redundancy floor (mirroring truenas_pylibzfs's force flag).
+        # Structural checks (minimum disks, dRAID configuration) always apply.
+        force_topology = data.get('force_topology', False)
+
+        # force_topology is a footgun; it is not permitted on Enterprise-licensed
+        # systems, which are expected to use supported topologies.
+        if force_topology and await self.middleware.call('system.is_enterprise'):
+            verrors.add(
+                'force_topology',
+                'Bypassing pool topology validation is not supported on '
+                'Enterprise-licensed systems.',
+            )
+
         def disk_to_stripe(topology_type):
             """
             We need to convert the original topology to use STRIPE
@@ -379,7 +419,9 @@ class PoolService(CRUDService):
         data_redundant = False
         for topology_type in ('data', 'special', 'dedup'):
             lastdatatype = None
+            lastnumdisks = None
             topology_data = list(data['topology'].get(topology_type) or [])
+            num_new_vdevs = len(topology_data)
             if old and old['topology']:
                 topology_data += disk_to_stripe(topology_type)
             for i, vdev in enumerate(topology_data):
@@ -392,21 +434,23 @@ class PoolService(CRUDService):
                     continue
 
                 numdisks = len(vdev['disks'])
-                minmap = {
-                    'STRIPE': 1,
-                    'MIRROR': 2,
-                    'DRAID1': 2,
-                    'DRAID2': 3,
-                    'DRAID3': 4,
-                    'RAIDZ1': 3,
-                    'RAIDZ2': 4,
-                    'RAIDZ3': 5,
-                }
-                mindisks = minmap[vdev['type']]
+                mindisks = VDEV_MIN_DISKS[vdev['type']]
                 if numdisks < mindisks:
                     verrors.add(
                         f'topology.{topology_type}.{i}.disks',
                         f'You need at least {mindisks} disk(s) for this vdev type.',
+                    )
+
+                # Cap the width of newly supplied data vdevs only (i < num_new_vdevs),
+                # matching truenas_pylibzfs, which caps the vdevs being added and not the
+                # pool's existing geometry.
+                if (
+                    not force_topology and topology_type == 'data' and i < num_new_vdevs
+                    and vdev['type'] in VDEV_MAX_DISKS and numdisks > VDEV_MAX_DISKS[vdev['type']]
+                ):
+                    verrors.add(
+                        f'topology.{topology_type}.{i}.disks',
+                        f'You can have at most {VDEV_MAX_DISKS[vdev["type"]]} disk(s) for this vdev type.',
                     )
 
                 if vdev['type'].startswith('DRAID'):
@@ -418,7 +462,12 @@ class PoolService(CRUDService):
                 if topology_type == 'data' and VDEV_PARITY[vdev['type']] >= 1:
                     data_redundant = True
 
-                if topology_type == 'special':
+                if force_topology:
+                    # force_topology bypasses the topology policy checks below (special/data
+                    # redundancy match and data vdev type/width matching). Structural checks
+                    # (min disks, dRAID config) above always run.
+                    pass
+                elif topology_type == 'special':
                     # Special vdevs may mix types (matching truenas_pylibzfs), so no
                     # same-type check is applied here. A non-redundant special vdev is
                     # still rejected when the data class is redundant, because losing
@@ -434,7 +483,22 @@ class PoolService(CRUDService):
                         f'You are not allowed to create a pool with different {topology_type} vdev types '
                         f'({lastdatatype} and {vdev["type"]}).',
                     )
+                elif (
+                    topology_type == 'data' and lastdatatype
+                    and vdev['type'] != 'STRIPE' and numdisks != lastnumdisks
+                ):
+                    # All redundant data vdevs must be the same width. Mixing widths (for
+                    # example a 7-wide and a 30-wide RAIDZ2) leaves capacity and fault
+                    # tolerance uneven across the pool and cannot be corrected without
+                    # recreating it. STRIPE is exempt as it has no geometry to match.
+                    # This mirrors the child-count match enforced by truenas_pylibzfs.
+                    verrors.add(
+                        f'topology.{topology_type}.{i}.disks',
+                        f'You are not allowed to create a pool with {topology_type} vdevs of '
+                        f'different widths ({lastnumdisks} and {numdisks} disks).',
+                    )
                 lastdatatype = vdev['type']
+                lastnumdisks = numdisks
 
         for i in ('cache', 'log'):
             value = data['topology'].get(i)

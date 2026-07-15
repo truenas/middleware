@@ -106,7 +106,7 @@ from middlewared.plugins.alert.alertclasses import AlertClassesService
 from middlewared.plugins.alert.alertservice import AlertServiceService
 from middlewared.plugins.api_key import ApiKeyService
 from middlewared.plugins.apps import AppService
-from middlewared.plugins.boot_environment import BootEnvironmentService
+from middlewared.plugins.boot import BootService
 from middlewared.plugins.catalog import CatalogService
 from middlewared.plugins.certificate import CertificateService
 from middlewared.plugins.cloud_backup import CloudBackupService
@@ -132,6 +132,7 @@ from middlewared.plugins.network_routes import RouteService, StaticRouteService
 from middlewared.plugins.ntp import NTPServerService
 from middlewared.plugins.ports import PortService
 from middlewared.plugins.pwenc import PWEncService
+from middlewared.plugins.replication import ReplicationService
 from middlewared.plugins.reporting import ReportingService
 from middlewared.plugins.rsync import RsyncTaskService
 from middlewared.plugins.security import SystemSecurityService
@@ -218,12 +219,6 @@ class AcmeServicesContainer(BaseServiceContainer):
         self.dns = AcmeDnsServicesContainer(middleware)
 
 
-class BootServicesContainer(BaseServiceContainer):
-    def __init__(self, middleware: "Middleware"):
-        super().__init__(middleware)
-        self.environment = BootEnvironmentService(middleware)
-
-
 class CloudsyncServicesContainer(BaseServiceContainer):
     def __init__(self, middleware: "Middleware"):
         super().__init__(middleware)
@@ -282,7 +277,7 @@ class ServiceContainer(BaseServiceContainer):
         self.alertservice = AlertServiceService(middleware)
         self.api_key = ApiKeyService(middleware)
         self.app = AppService(middleware)
-        self.boot = BootServicesContainer(middleware)
+        self.boot = BootService(middleware)
         self.catalog = CatalogService(middleware)
         self.certificate = CertificateService(middleware)
         self.cloud_backup = CloudBackupService(middleware)
@@ -303,6 +298,7 @@ class ServiceContainer(BaseServiceContainer):
         self.pool = PoolServicesContainer(middleware)
         self.port = PortService(middleware)
         self.pwenc = PWEncService(middleware)
+        self.replication = ReplicationService(middleware)
         self.reporting = ReportingService(middleware)
         self.route = RouteService(middleware)
         self.rsynctask = RsyncTaskService(middleware)

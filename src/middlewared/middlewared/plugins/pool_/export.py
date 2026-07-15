@@ -101,7 +101,10 @@ class PoolService(Service):
                     await delegate.disable(attachments)
                     enable_on_import[delegate.name] = list(
                         set(enable_on_import.get(delegate.name, [])) |
-                        {attachment['id'] for attachment in attachments}
+                        {
+                            attachment['id'] if isinstance(attachment, dict) else attachment.id
+                            for attachment in attachments
+                        }
                     )
 
         if enable_on_import:

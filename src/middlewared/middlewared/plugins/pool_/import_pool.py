@@ -223,7 +223,10 @@ class PoolService(Service):
                 for delegate in await self.middleware.call('pool.dataset.get_attachment_delegates_for_start'):
                     if delegate.name == name:
                         attachments = await delegate.query(pool['path'], False)
-                        attachments = [attachment for attachment in attachments if attachment['id'] in ids]
+                        attachments = [
+                            attachment for attachment in attachments
+                            if (attachment['id'] if isinstance(attachment, dict) else attachment.id) in ids
+                        ]
                         if attachments:
                             await delegate.toggle(attachments, True)
             await self.call2(self.s.keyvalue.delete, key)
@@ -331,7 +334,7 @@ class PoolService(Service):
         # ZFS import events fire before the DB entry exists so the
         # PoolUpgraded alert cannot be created at that time. Check
         # here where the pool is guaranteed to be in the database.
-        if pool['name'] != await self.middleware.call('boot.pool_name'):
+        if pool['name'] != await self.call2(self.s.boot.pool_name):
             try:
                 if not await self.middleware.call('pool.is_upgraded', pool['id']):
                     await self.middleware.call2(

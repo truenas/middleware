@@ -705,7 +705,11 @@ class ZettareplService(Service):
             )
 
         replication_tasks = {}
-        for replication_task in await self.middleware.call("replication.query", [["enabled", "=", True]]):
+        for replication_task in await self.call2(self.s.replication.query, [["enabled", "=", True]]):
+            # `_replication_task_definition` builds a zettarepl-library task definition and is shared with one-time
+            # tasks (`self.onetime_replication_tasks`), which are plain dicts of a different shape. Dump the model to
+            # a dict here so both paths feed it the same representation.
+            replication_task = replication_task.model_dump(context={"expose_secrets": True})
             try:
                 replication_tasks[f"task_{replication_task['id']}"] = await self._replication_task_definition(
                     pools, replication_task
@@ -720,7 +724,7 @@ class ZettareplService(Service):
                 hold_tasks[f"job_{job_id}"] = e.reason
 
         definition = {
-            "max-parallel-replication-tasks": config["max_parallel_replication_tasks"],
+            "max-parallel-replication-tasks": config.max_parallel_replication_tasks,
             "timezone": timezone,
             "use-removal-dates": True,
             "periodic-snapshot-tasks": periodic_snapshot_tasks,
@@ -1043,7 +1047,7 @@ class ZettareplService(Service):
 
                     # Start fake job if none are already running
                     if not self.replication_jobs_channels[message.task_id]:
-                        self.middleware.call_sync("replication.run", int(message.task_id[5:]), False)
+                        self.call_sync2(self.s.replication.run, int(message.task_id[5:]), False)
 
                 if isinstance(message, ReplicationTaskLog):
                     for channel in self.replication_jobs_channels[message.task_id]:

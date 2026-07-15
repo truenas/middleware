@@ -4,7 +4,7 @@
 
     system_advanced = middleware.call_sync2(middleware.services.system.advanced.config)
     resilver = middleware.call_sync("pool.resilver.config")
-    boot_pool = middleware.call_sync("boot.pool_name")
+    boot_pool = middleware.call_sync2(middleware.services.boot.pool_name)
 %>\
 SHELL=/bin/sh
 PATH=/etc:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
