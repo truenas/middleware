@@ -428,6 +428,14 @@ def check_method_annotations(
 def normalize_annotation(annotation: typing.Any, parent_model: type[BaseModel] | None = None) -> str | None:
     origin = typing.get_origin(annotation)
 
+    # `Annotated[X, ...]` only carries metadata (e.g. a pydantic `Discriminator` on a discriminated union).
+    # pydantic strips that metadata when exposing a model field's `.annotation`, so a method may annotate its
+    # parameter with the bare `X` or the `Annotated[X, ...]` alias and both must normalize identically.
+    # Recurse into the wrapped type so, for example, `Annotated[A | B, Discriminator(...)]` decomposes to
+    # `A | B` just like the bare union does.
+    if origin is typing.Annotated:
+        return normalize_annotation(typing.get_args(annotation)[0], parent_model)
+
     # Recurse into union members (handles both `X | Y` and `typing.Union[X, Y]`)
     if origin is types.UnionType or origin is typing.Union:
         args = typing.get_args(annotation)
@@ -446,7 +454,6 @@ def normalize_annotation(annotation: typing.Any, parent_model: type[BaseModel] |
         origin is not None
         and origin is not types.UnionType
         and origin is not typing.Union
-        and origin is not typing.Annotated
         and origin is not typing.Literal
     ):
         args = typing.get_args(annotation)
@@ -456,9 +463,7 @@ def normalize_annotation(annotation: typing.Any, parent_model: type[BaseModel] |
             return f"{origin_name}[{', '.join(str(a) for a in normalized_args)}]"
 
     result_annotation = annotation
-    if origin is typing.Annotated:
-        result_annotation = typing.get_args(annotation)[0]
-    elif parent_model is not None and isinstance(annotation, typing.ForwardRef):
+    if parent_model is not None and isinstance(annotation, typing.ForwardRef):
         result_annotation = annotation._evaluate(globals(), sys.modules[parent_model.__module__].__dict__,
                                                  recursive_guard=frozenset())
 
