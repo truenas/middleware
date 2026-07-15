@@ -297,6 +297,80 @@ def test_zvol_cloud_backup(s3_credential, zvol):
             run_task(t)
 
 
+def test_zvol_cloud_backup_nonexistent_volume(s3_credential):
+    clean()
+
+    with pytest.raises(ValidationErrors) as ve:
+        with task({
+            "path": f"/dev/zvol/{pool}/cloud_backup_nonexistent_zvol",
+            "credentials": s3_credential["id"],
+            "attributes": {
+                "bucket": AWS_BUCKET,
+                "folder": "cloud_backup",
+            },
+            "password": "test",
+            "keep_last": 100,
+        }):
+            pass
+
+    assert any(
+        error.attribute == "cloud_backup_create.path" and "Volume does not exist" in error.errmsg
+        for error in ve.value.errors
+    ), ve.value
+
+
+def test_zvol_cloud_backup_path_is_filesystem(s3_credential):
+    clean()
+
+    with dataset("cloud_backup_not_a_zvol") as ds:
+        with pytest.raises(ValidationErrors) as ve:
+            with task({
+                "path": f"/dev/zvol/{ds}",
+                "credentials": s3_credential["id"],
+                "attributes": {
+                    "bucket": AWS_BUCKET,
+                    "folder": "cloud_backup",
+                },
+                "password": "test",
+                "keep_last": 100,
+            }):
+                pass
+
+    assert any(
+        error.attribute == "cloud_backup_create.path" and "is not a volume" in error.errmsg
+        for error in ve.value.errors
+    ), ve.value
+
+
+def test_zvol_cloud_backup_internal_location(s3_credential):
+    clean()
+
+    zvol_name = f"{pool}/ix-apps/cloud_backup_internal_vol"
+    # `ix-apps` is a reserved internal path, so the zvol must be created out-of-band with `zfs create`
+    # (`pool.dataset.create` rejects reserved names). `-p` also creates the `ix-apps` parent.
+    ssh(f"zfs create -p -s -V 1M {zvol_name}")
+    try:
+        with pytest.raises(ValidationErrors) as ve:
+            with task({
+                "path": f"/dev/zvol/{zvol_name}",
+                "credentials": s3_credential["id"],
+                "attributes": {
+                    "bucket": AWS_BUCKET,
+                    "folder": "cloud_backup",
+                },
+                "password": "test",
+                "keep_last": 100,
+            }):
+                pass
+
+        assert any(
+            error.attribute == "cloud_backup_create.path" and "is an invalid location" in error.errmsg
+            for error in ve.value.errors
+        ), ve.value
+    finally:
+        ssh(f"zfs destroy -r {pool}/ix-apps")
+
+
 def test_zvol_cloud_backup_create_time_validation(s3_credential, zvol):
     clean()
 
@@ -519,3 +593,84 @@ def test_cloud_sync_credential_deletion(s3_credential, cloud_backup_task):
         call("cloudsync.credentials.delete", s3_credential["id"])
 
     assert "This credential is used by cloud backup task" in ve.value.errmsg
+
+
+def test_cloud_backup_dry_run(cloud_backup_task):
+    ssh(f"touch /mnt/{cloud_backup_task.local_dataset}/blob")
+
+    call("cloud_backup.sync", cloud_backup_task.task["id"], {"dry_run": True}, job=True)
+
+    cmd = validate_log(cloud_backup_task.task["id"])
+    assert "-n" in cmd
+    # A dry run does not actually create a snapshot in the repository.
+    assert call("cloud_backup.list_snapshots", cloud_backup_task.task["id"]) == []
+
+
+def test_cloud_backup_snapshot_with_absolute_paths(s3_credential):
+    clean()
+
+    with dataset("cloud_backup_snapshot_absolute") as ds:
+        with pytest.raises(ValidationErrors) as ve:
+            with task({
+                "path": f"/mnt/{ds}",
+                "credentials": s3_credential["id"],
+                "attributes": {
+                    "bucket": AWS_BUCKET,
+                    "folder": "cloud_backup",
+                },
+                "password": "test",
+                "keep_last": 100,
+                "snapshot": True,
+                "absolute_paths": True,
+            }):
+                pass
+
+        assert "cloud_backup_create.snapshot" in ve.value
+
+
+def test_cloud_backup_readonly_cache_path(s3_credential):
+    clean()
+
+    with dataset("cloud_backup_cache_ro_data") as ds:
+        with dataset("cloud_backup_cache_ro", {"readonly": "ON"}) as cache_ds:
+            with pytest.raises(ValidationErrors) as ve:
+                with task({
+                    "path": f"/mnt/{ds}",
+                    "credentials": s3_credential["id"],
+                    "attributes": {
+                        "bucket": AWS_BUCKET,
+                        "folder": "cloud_backup",
+                    },
+                    "password": "test",
+                    "keep_last": 100,
+                    "cache_path": f"/mnt/{cache_ds}",
+                }):
+                    pass
+
+            assert "cloud_backup_create.cache_path" in ve.value
+
+
+def test_cloud_backup_locked_dataset(s3_credential):
+    clean()
+
+    with dataset("cloud_backup_locked", {
+        "encryption": True,
+        "inherit_encryption": False,
+        "encryption_options": {"generate_key": False, "passphrase": "12345678"},
+    }) as ds:
+        with task({
+            "path": f"/mnt/{ds}",
+            "credentials": s3_credential["id"],
+            "attributes": {
+                "bucket": AWS_BUCKET,
+                "folder": "cloud_backup",
+            },
+            "password": "test",
+            "keep_last": 100,
+        }) as t:
+            call("pool.dataset.lock", ds, job=True)
+
+            with pytest.raises(ClientException) as ve:
+                run_task(t)
+
+            assert "Dataset is locked" in str(ve.value)
