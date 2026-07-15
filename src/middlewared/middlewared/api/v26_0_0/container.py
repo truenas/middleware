@@ -44,7 +44,7 @@ IdmapConfiguration = Annotated[
 
 
 class ContainerStatus(BaseModel):
-    state: Literal["RUNNING", "STOPPED"] = Field(description="Container state.")
+    state: Literal["RUNNING", "STOPPED", "SUSPENDED"] = Field(description="Container state.")
     pid: int | None = Field(
         description=(
             "Container host PID (if running). Informational only do not rely on this value to identify the container's "
@@ -163,8 +163,18 @@ class ContainerUpdateResult(BaseModel):
     result: ContainerEntry = Field(description="Updated container.")
 
 
+class ContainerDeleteOptions(BaseModel):
+    force: bool = Field(
+        default=False,
+        description="Force deletion even if the container is currently running by stopping it first.",
+    )
+
+
 class ContainerDeleteArgs(BaseModel):
     id: int = Field(description="Container ID.")
+    options: ContainerDeleteOptions = Field(
+        default=ContainerDeleteOptions(), description="Container deletion options."
+    )
 
 
 class ContainerDeleteResult(BaseModel):

@@ -69,7 +69,7 @@ class ContainerImageService(Service):
                 # Orphan dataset without a snapshot. Probably leftover from a
                 # previous `pull` attempt that failed and did not clean up
                 # properly. Delete it.
-                self.call_sync2(self.s.zfs.resource.destroy_impl, dataset_name)
+                self.call_sync2(self.s.zfs.resource.destroy_impl, dataset_name, bypass=True)
             else:
                 # Image dataset already exists, no action needed.
                 return snapshot_name
@@ -142,7 +142,8 @@ class ContainerImageService(Service):
                 job.set_progress(98, 'Creating ZFS snapshot...')
                 self.call_sync2(self.s.zfs.resource.snapshot.create_impl, ZFSResourceSnapshotCreateQuery(
                     dataset=dataset_name,
-                    name='image'
+                    name='image',
+                    bypass=True,
                 ))
 
                 job.set_progress(100, 'Image pull completed successfully')
@@ -152,7 +153,7 @@ class ContainerImageService(Service):
             except (tarfile.TarError, OSError) as e:
                 raise CallError(f'Failed to extract image tarball: {str(e)}')
         except Exception:
-            self.call_sync2(self.s.zfs.resource.destroy_impl, dataset_name)
+            self.call_sync2(self.s.zfs.resource.destroy_impl, dataset_name, bypass=True)
             raise
 
 
