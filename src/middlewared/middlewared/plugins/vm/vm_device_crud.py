@@ -69,7 +69,7 @@ class VMDeviceServicePart(CRUDServicePart[VMDeviceEntry]):
     ) -> VMDeviceEntry:
         device = await self.get_instance(id_)
         device_dict = device.model_dump(expose_secrets=True)
-        data_dict = data.model_dump(exclude_unset=True, by_alias=True)
+        data_dict = data.model_dump(exclude_unset=True)
         new_attrs = data_dict.pop('attributes', {})
         device_dict.update(data_dict)
         device_dict['attributes'].update(new_attrs)

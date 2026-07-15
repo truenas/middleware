@@ -109,7 +109,7 @@ class TruecommandConfigServicePart(ConfigServicePart[TruecommandEntry]):
         async with TRUECOMMAND_UPDATE_LOCK:
             old = await self.middleware.call('datastore.config', self._datastore)
             new = old.copy()
-            new.update(data.model_dump(exclude_unset=True, context={'expose_secrets': True}))
+            new.update(data.model_dump(exclude_unset=True, expose_secrets=True))
 
             verrors = ValidationErrors()
             if new['enabled'] and not new['api_key']:
