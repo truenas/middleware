@@ -29,7 +29,7 @@ from collections import defaultdict
 import logging
 from typing import TYPE_CHECKING, Any, Callable, Coroutine
 
-from middlewared.api.current import VMDisplayDevice, ZFSResourceQuery
+from middlewared.api.current import QueryOptions, VMDisplayDevice, ZFSResourceQuery
 from middlewared.plugins.zfs_.utils import path_to_dataset_impl
 
 if TYPE_CHECKING:
@@ -210,9 +210,11 @@ async def gather_cloud_services(service: Service, context: GatherContext) -> dic
     return {
         "cloud_services": list(
             {
-                t["credentials"]["provider"]["type"]
-                for t in await service.middleware.call(
-                    "cloudsync.query", [["enabled", "=", True]], {"select": ["enabled", "credentials"]}
+                t.credentials.provider.type
+                for t in await service.call2(
+                    service.s.cloudsync.query,
+                    [["enabled", "=", True]],
+                    QueryOptions(select=["enabled", "credentials"]),
                 )
             }
         )

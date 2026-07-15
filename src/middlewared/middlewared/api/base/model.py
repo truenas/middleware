@@ -479,34 +479,34 @@ def removed_event_model(item: type[BaseModel]) -> type[BaseModel]:
 
 
 def model_subset(base: type[BaseModel], fields: list[str]) -> type[BaseModel]:
-    """Create a model that is a copy of `base` but only has `fields` fields."""
-    model = create_model(  # type: ignore[call-overload]
+    """Create a model that is a subclass of `base` but only has `fields` fields."""
+    keep = set(fields)
+    model = create_model(
         base.__name__ + "Subset",
-        __base__=(BaseModel,),
+        __base__=(base,),
         __module__=base.__module__,
-        **{
-            field.alias or field_name: Annotated[field.annotation, field]
-            for field_name, field in [
-                (field, base.model_fields[field])
-                for field in fields
-            ]
-        }
     )
 
-    rebuild = False
-    for field in model.model_fields.values():
-        # Restore values backed up by `ForUpdateMetaclass` (if it was present)
+    # We inherit *all* of `base`'s fields; drop the ones not requested.
+    for field_name in list(model.model_fields):
+        if field_name not in keep:
+            del model.model_fields[field_name]
+
+    for field_name, field in model.model_fields.items():
+        # Restore the original default/default_factory backed up by `ForUpdateMetaclass` (if it was present). We read
+        # the single-layer backup off `base`'s field: subclassing re-runs `ForUpdateMetaclass`, which would otherwise
+        # double-wrap the value on `field` itself.
+        src = base.model_fields[field_name]
+        default, default_factory = src.default, src.default_factory
         try:
-            field.default, field.default_factory = field.default_factory({}, True)
+            default, default_factory = src.default_factory({}, True)  # type: ignore[call-arg,misc]
         except TypeError:
             pass
-        else:
-            rebuild = True
+        field.default, field.default_factory = default, default_factory
 
-    if rebuild:
-        model.model_rebuild(force=True)
+    model.model_rebuild(force=True)
 
-    return model  # type: ignore[no-any-return]
+    return model
 
 
 def convert_model[E: BaseModel](src: BaseModel, type_: type[E]) -> E:

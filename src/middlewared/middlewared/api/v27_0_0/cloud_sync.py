@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import Field, PositiveInt, Secret
 
@@ -18,6 +18,12 @@ from .cloud import BaseCloudEntry, CloudTaskAttributes
 __all__ = [
     "CloudTaskAttributes",
     "CloudSyncEntry",
+    "CloudSyncCreate",
+    "CloudSyncUpdate",
+    "CloudSyncSyncOptions",
+    "CloudSyncProvider",
+    "CloudSyncProviderTaskSchemaItem",
+    "RestoreOpts",
     "CloudSyncCreateArgs",
     "CloudSyncCreateResult",
     "CloudSyncRestoreArgs",
@@ -30,6 +36,7 @@ __all__ = [
     "CloudSyncCreateBucketResult",
     "CloudSyncListBucketsArgs",
     "CloudSyncListBucketsResult",
+    "CloudSyncListDirectory",
     "CloudSyncListDirectoryArgs",
     "CloudSyncListDirectoryResult",
     "CloudSyncSyncArgs",
@@ -42,6 +49,7 @@ __all__ = [
     "CloudSyncProvidersResult",
     "CloudSyncOneDriveListDrivesArgs",
     "CloudSyncOneDriveListDrivesResult",
+    "CloudSyncOneDriveListDrivesDrive",
 ]
 
 
@@ -166,11 +174,10 @@ class CloudSyncListBucketsArgs(BaseModel):
 
 
 class CloudSyncListBucketsResult(BaseModel):
-    result: list[dict] = Field(description="Array of bucket information objects.")
+    result: list[dict[str, Any]] = Field(description="Array of bucket information objects.")
 
 
-@single_argument_args("cloud_sync_ls")
-class CloudSyncListDirectoryArgs(BaseModel):
+class CloudSyncListDirectory(BaseModel):
     credentials: int = Field(description="ID of the cloud credential to use for directory listing.")
     encryption: bool = Field(default=False, description="Whether files are encrypted in cloud storage.")
     filename_encryption: bool = Field(default=False, description="Whether filenames are encrypted in cloud storage.")
@@ -180,8 +187,12 @@ class CloudSyncListDirectoryArgs(BaseModel):
     args: str = Field(default="", description="Additional arguments for the directory listing command.")
 
 
+class CloudSyncListDirectoryArgs(BaseModel):
+    cloud_sync_ls: CloudSyncListDirectory = Field(description="Parameters describing the remote directory to list.")
+
+
 class CloudSyncListDirectoryResult(BaseModel):
-    result: list[dict] = Field(description="Array of file and directory information objects.")
+    result: list[dict[str, Any]] = Field(description="Array of file and directory information objects.")
 
 
 class CloudSyncSyncOptions(BaseModel):

@@ -38,6 +38,7 @@ jobs:
             middlewared/plugins/cloud/ \
             middlewared/plugins/cloud_backup/ \
             middlewared/plugins/cloud_credentials/ \
+            middlewared/plugins/cloud_sync/ \
             middlewared/plugins/container/ \
             middlewared/plugins/cron/ \
             middlewared/plugins/docker/ \

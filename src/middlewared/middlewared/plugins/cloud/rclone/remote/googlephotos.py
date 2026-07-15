@@ -1,9 +1,19 @@
+from __future__ import annotations
+
 import os
+from typing import TYPE_CHECKING
 
-from middlewared.rclone.base import BaseRcloneRemote
+from middlewared.api.current import GooglePhotosCredentialsModel
+from middlewared.plugins.cloud.rclone.base import BaseRcloneRemote
+
+if TYPE_CHECKING:
+    from middlewared.api.current import CloudTaskAttributes
+    from middlewared.service_exception import ValidationErrors
 
 
-class GooglePhotosRcloneRemote(BaseRcloneRemote):
+class GooglePhotosRcloneRemote(BaseRcloneRemote[GooglePhotosCredentialsModel]):
+    credentials_schema = GooglePhotosCredentialsModel
+
     name = "GOOGLE_PHOTOS"
     title = "Google Photos"
 
@@ -11,11 +21,13 @@ class GooglePhotosRcloneRemote(BaseRcloneRemote):
 
     refresh_credentials = ["token"]
 
-    def validate_task_full(self, task, credentials, verrors):
+    def validate_task_full(
+        self, attributes: CloudTaskAttributes, credentials: GooglePhotosCredentialsModel, verrors: ValidationErrors,
+    ) -> None:
         # `/media/by-day` contains a huge tree of empty directories for all days starting from 2000-01-01. Listing
         # them all will never complete due to the API rate limits.
 
-        folder = task["attributes"]["folder"].strip("/")
+        folder = attributes.folder.strip("/")
         if not folder:
             verrors.add(
                 "attributes.folder",

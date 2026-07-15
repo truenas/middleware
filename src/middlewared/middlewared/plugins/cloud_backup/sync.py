@@ -3,11 +3,12 @@ from __future__ import annotations
 import itertools
 import subprocess
 import time
-from typing import IO, TYPE_CHECKING, Any, Literal
+from typing import IO, TYPE_CHECKING, Literal
 
 from middlewared.api.current import (
     CloudBackupEntry,
     CloudBackupSyncOptions,
+    CredentialsEntry,
     ZFSResourceSnapshotCloneQuery,
     ZFSResourceSnapshotDestroyQuery,
 )
@@ -37,7 +38,7 @@ def restic_backup(
     context: ServiceContext,
     job: Job,
     entry: CloudBackupEntry,
-    credentials: dict[str, Any],
+    credentials: CredentialsEntry,
     dry_run: bool = False,
     rate_limit: int | None = None,
 ) -> None:
@@ -116,7 +117,7 @@ def restic_backup(
             "password": entry.password.get_secret_value(),
             "keep_last": entry.keep_last,
             "transfer_setting": entry.transfer_setting,
-            **credentials["provider"],
+            **credentials.provider.model_dump(expose_secrets=True),
             **entry.attributes.model_dump(),
             "path": local_path
         })

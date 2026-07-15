@@ -103,7 +103,7 @@ class SFTPCloudSyncCredentialsSSHKeyPairUsedByDelegate(KeychainCredentialUsedByD
         return f"Cloud credentials {row.name}"
 
     async def unbind(self, row: CredentialsEntry) -> None:
-        attributes = row.provider.model_dump(by_alias=True, context={"expose_secrets": True})
+        attributes = row.provider.model_dump(expose_secrets=True)
         attributes.pop("type", None)
         attributes.pop("private_key", None)
         await self.middleware.call(

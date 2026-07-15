@@ -110,7 +110,7 @@ from middlewared.plugins.boot import BootService
 from middlewared.plugins.catalog import CatalogService
 from middlewared.plugins.certificate import CertificateService
 from middlewared.plugins.cloud_backup import CloudBackupService
-from middlewared.plugins.cloud_credentials import CredentialsService
+from middlewared.plugins.cloud_sync import CloudSyncService
 from middlewared.plugins.container import ContainerService
 from middlewared.plugins.container.lxc import LXCConfigService
 from middlewared.plugins.cron import CronJobService
@@ -281,7 +281,7 @@ class ServiceContainer(BaseServiceContainer):
         self.catalog = CatalogService(middleware)
         self.certificate = CertificateService(middleware)
         self.cloud_backup = CloudBackupService(middleware)
-        self.cloudsync = CloudsyncServicesContainer(middleware)
+        self.cloudsync = CloudSyncService(middleware)
         self.container = ContainerService(middleware)
         self.cronjob = CronJobService(middleware)
         self.dnsclient = DNSClientService(middleware)
