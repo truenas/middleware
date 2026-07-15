@@ -95,7 +95,7 @@ def issue_certificate_impl(
             dns_auth.get_authenticator_internal, attrs.authenticator,
         )
         dns_mapping_copy[domain] = authenticator_cls(
-            context.middleware, attrs.model_dump(context={'expose_secrets': True}),
+            context.middleware, attrs.model_dump(expose_secrets=True),
         )
 
     def progress_callback(progress_int: int, description: str) -> None:

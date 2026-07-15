@@ -57,7 +57,7 @@ class VMDeviceServicePart(CRUDServicePart[VMDeviceEntry]):
         return data
 
     async def do_create(self, data: VMDeviceCreate) -> VMDeviceEntry:
-        data_dict = data.model_dump(by_alias=True, context={'expose_secrets': True})
+        data_dict = data.model_dump(expose_secrets=True)
         await self._validate_device(data_dict, update=False)
         data_dict = await self._update_device(data_dict)
         id_ = await self.middleware.call('datastore.insert', self._datastore, data_dict)
@@ -68,7 +68,7 @@ class VMDeviceServicePart(CRUDServicePart[VMDeviceEntry]):
         self, id_: int, data: VMDeviceUpdate, *, audit_callback: AuditCallback,
     ) -> VMDeviceEntry:
         device = await self.get_instance(id_)
-        device_dict = device.model_dump(by_alias=True, context={'expose_secrets': True})
+        device_dict = device.model_dump(expose_secrets=True)
         data_dict = data.model_dump(exclude_unset=True, by_alias=True)
         new_attrs = data_dict.pop('attributes', {})
         device_dict.update(data_dict)
@@ -82,7 +82,7 @@ class VMDeviceServicePart(CRUDServicePart[VMDeviceEntry]):
         # to make libvirt device out of it, it will error out before we actually validate
         # device itself
         validate_model(self._entry, device_dict)
-        old_dict = device.model_dump(by_alias=True, context={'expose_secrets': True})
+        old_dict = device.model_dump(expose_secrets=True)
         await self._validate_device(device_dict, old_dict)
         device_dict = await self._update_device(device_dict, old_dict)
         await self.middleware.call('datastore.update', self._datastore, id_, device_dict)
@@ -133,7 +133,7 @@ class VMDeviceServicePart(CRUDServicePart[VMDeviceEntry]):
     async def _validate_device(
         self, device: dict[str, Any], old: dict[str, Any] | None = None, update: bool = True,
     ) -> None:
-        svc_instance = (await self.call2(self.s.vm.get_instance, device['vm'])).model_dump(by_alias=True)
+        svc_instance = (await self.call2(self.s.vm.get_instance, device['vm'])).model_dump()
         verrors = ValidationErrors()
         if old and old['attributes']['dtype'] != device['attributes']['dtype']:
             verrors.add('attributes.dtype', 'Device type cannot be changed')

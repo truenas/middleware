@@ -24,4 +24,4 @@ def vm_domain_event_callback(middleware: Middleware, event: DomainEvent) -> None
         return
 
     vm = vms[0]
-    middleware.send_event('vm.query', 'CHANGED', id=vm.id, fields=vm.model_dump(by_alias=True))
+    middleware.send_event('vm.query', 'CHANGED', id=vm.id, fields=vm.model_dump())

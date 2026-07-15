@@ -50,11 +50,7 @@ def serialize_result(
     :return: serialized method execution result.
     """
     try:
-        return model(result=result).model_dump(  # type: ignore[call-arg]
-            context={"expose_secrets": expose_secrets},
-            warnings=False,
-            by_alias=True,
-        )["result"]
+        return model(result=result).model_dump(expose_secrets=expose_secrets)["result"]  # type: ignore[call-arg]
     except (ValidationError, ValidationErrors) as e:
         if not allow_fallback:
             raise

@@ -1,7 +1,7 @@
 from collections.abc import Callable
 import inspect
 from types import NoneType
-from typing import Annotated, Any, Self, get_args, get_origin
+from typing import Annotated, Any, Literal, Self, get_args, get_origin
 
 from pydantic import BaseModel as PydanticBaseModel
 from pydantic import ConfigDict, Field, Secret, create_model, model_serializer
@@ -9,7 +9,7 @@ from pydantic._internal._decorators import Decorator, PydanticDescriptorProxy
 from pydantic._internal._model_construction import ModelMetaclass
 from pydantic.fields import FieldInfo
 from pydantic.json_schema import SkipJsonSchema
-from pydantic.main import ModelT
+from pydantic.main import IncEx, ModelT
 from pydantic.types import SecretType
 from pydantic_core import SchemaSerializer, core_schema
 
@@ -243,6 +243,43 @@ class BaseModel(PydanticBaseModel, metaclass=_BaseModelMetaclass):
         :return: value of the same model in the preceding API version.
         """
         return value
+
+    def model_dump(  # type: ignore[override]
+        self,
+        *,
+        mode: Literal["json", "python"] = "python",
+        include: IncEx | None = None,
+        exclude: IncEx | None = None,
+        context: dict[str, Any] | None = None,
+        by_alias: bool = True,  # pydantic default is `False`
+        exclude_unset: bool = False,
+        exclude_defaults: bool = False,
+        exclude_none: bool = False,
+        round_trip: bool = False,
+        warnings: bool | Literal["none", "warn", "error"] = False,  # pydantic default is `True`
+        serialize_as_any: bool = False,
+        expose_secrets: bool = False,
+    ) -> dict[str, Any]:
+        """
+        Usage docs: https://docs.pydantic.dev/2.10/concepts/serialization/#modelmodel_dump
+
+        Re-implementation of the original `model_dump` function to change some default values.
+
+        `expose_secrets`: new parameter. If `False`, will replace `Secret` fields with a placeholder.
+        """
+        return super().model_dump(
+            mode=mode,
+            include=include,
+            exclude=exclude,
+            context={**(context or {}), "expose_secrets": expose_secrets},
+            by_alias=by_alias,
+            exclude_unset=exclude_unset,
+            exclude_defaults=exclude_defaults,
+            exclude_none=exclude_none,
+            round_trip=round_trip,
+            warnings=warnings,
+            serialize_as_any=serialize_as_any,
+        )
 
     def updated(self, value: "BaseModel") -> Self:
         """

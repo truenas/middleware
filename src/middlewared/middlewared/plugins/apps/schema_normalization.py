@@ -119,7 +119,7 @@ async def normalize_certificate(
         return value
 
     cert = await context.call2(context.s.certificate.get_instance, value)
-    complete_config['ix_certificates'][value] = cert.model_dump(context={'expose_secrets': True})
+    complete_config['ix_certificates'][value] = cert.model_dump(expose_secrets=True)
 
     return value
 

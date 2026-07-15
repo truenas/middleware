@@ -126,7 +126,7 @@ async def clone_vm(context: ServiceContext, id_: int, name: str | None, *, audit
     clone_name = name if name is not None else await _next_clone_name(context, vm.name)
 
     # Build VMCreate from the existing VM entry, overriding name and uuid
-    vm_dict = vm.model_dump(by_alias=True)
+    vm_dict = vm.model_dump()
     for key in ('id', 'status', 'display_available', 'devices'):
         vm_dict.pop(key, None)
     vm_dict['name'] = clone_name
@@ -168,7 +168,7 @@ async def clone_vm(context: ServiceContext, id_: int, name: str | None, *, audit
             )
 
         for device in vm.devices:
-            device_dict = device.model_dump(by_alias=True, context={'expose_secrets': True})
+            device_dict = device.model_dump(expose_secrets=True)
             device_dict.pop('id', None)
             device_dict['vm'] = new_vm.id
             dtype = device.attributes.dtype

@@ -271,7 +271,7 @@ class VMServicePart(CRUDServicePart[VMEntry]):
                         'Failed to delete %r volume when removing %r VM', disk_name, vm.name, exc_info=True
                     )
 
-        pylibvirt_vm_obj = pylibvirt_vm(self, vm.model_dump(by_alias=True, context={'expose_secrets': True}))
+        pylibvirt_vm_obj = pylibvirt_vm(self, vm.model_dump(expose_secrets=True))
         try:
             self.middleware.libvirt_domains_manager.vms.delete(pylibvirt_vm_obj)
         except DomainDoesNotExistError:

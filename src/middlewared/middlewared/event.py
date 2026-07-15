@@ -163,4 +163,4 @@ class TypedEventSource[A: 'BaseModel'](EventSource):
 
         result = validate_model(self.args, data, dump_models=False)
         self.typed_arg = result  # type: ignore[assignment]
-        self.arg = result.model_dump(warnings=False, by_alias=True)
+        self.arg = result.model_dump()

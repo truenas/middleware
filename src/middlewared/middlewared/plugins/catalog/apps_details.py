@@ -205,4 +205,4 @@ def app_version_details(
     if questions_context is None:
         questions_context = context.run_coroutine(get_normalized_questions_context(context))
 
-    return get_app_version_details(version_path, questions_context.model_dump(by_alias=True))
+    return get_app_version_details(version_path, questions_context.model_dump())

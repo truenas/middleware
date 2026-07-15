@@ -52,12 +52,12 @@ def _make_index_validator(item_models: list[type[BaseModel]], model_name: str) -
                 # Check if item is already a model instance (from re-validation)
                 if isinstance(item, BaseModel):
                     # Convert model instance to dict for re-validation
-                    item = item.model_dump(warnings=False, by_alias=True)
+                    item = item.model_dump()
 
                 # Use Model() to create an instance instead of validate_model which returns dict
                 validated = Model(**item)
                 # Convert validated model back to dict to match expected output format
-                out.append(validated.model_dump(warnings=False, by_alias=True))
+                out.append(validated.model_dump())
             except ValidationError as e:
                 # Re-raise Pydantic ValidationError with adjusted locations
                 # Pydantic will handle adding the parent field name

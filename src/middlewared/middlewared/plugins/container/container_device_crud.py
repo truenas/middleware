@@ -40,7 +40,7 @@ class ContainerDeviceServicePart(CRUDServicePart[ContainerDeviceEntry]):
         return data
 
     async def do_create(self, data: ContainerDeviceCreate) -> ContainerDeviceEntry:
-        data_dict = data.model_dump(by_alias=True)
+        data_dict = data.model_dump()
         await self._validate_device(data_dict)
         id_ = await self.middleware.call('datastore.insert', self._datastore, data_dict)
         return await self.get_instance(id_)
@@ -49,7 +49,7 @@ class ContainerDeviceServicePart(CRUDServicePart[ContainerDeviceEntry]):
         self, id_: int, data: ContainerDeviceUpdate, *, audit_callback: AuditCallback,
     ) -> ContainerDeviceEntry:
         device = await self.get_instance(id_)
-        device_dict = device.model_dump(by_alias=True)
+        device_dict = device.model_dump()
         data_dict = data.model_dump(exclude_unset=True, by_alias=True)
         new_attrs = data_dict.pop('attributes', {})
         device_dict.update(data_dict)
@@ -57,7 +57,7 @@ class ContainerDeviceServicePart(CRUDServicePart[ContainerDeviceEntry]):
         audit_callback(device_dict['attributes']['dtype'])
 
         validate_model(self._entry, device_dict)
-        await self._validate_device(device_dict, device.model_dump(by_alias=True))
+        await self._validate_device(device_dict, device.model_dump())
         await self.middleware.call('datastore.update', self._datastore, id_, device_dict)
         return await self.get_instance(id_)
 
@@ -82,7 +82,7 @@ class ContainerDeviceServicePart(CRUDServicePart[ContainerDeviceEntry]):
     ) -> None:
         svc_instance = (await self.call2(
             self.s.container.get_instance, device['container']
-        )).model_dump(by_alias=True)
+        )).model_dump()
         verrors = ValidationErrors()
         if old and old['attributes']['dtype'] != device['attributes']['dtype']:
             verrors.add('attributes.dtype', 'Device type cannot be changed')

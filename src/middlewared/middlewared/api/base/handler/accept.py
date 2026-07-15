@@ -153,9 +153,4 @@ def validate_model(
     if not dump_models:
         return instance
 
-    return instance.model_dump(
-        context={"expose_secrets": expose_secrets},
-        exclude_unset=exclude_unset,
-        warnings=False,
-        by_alias=True,
-    )
+    return instance.model_dump(expose_secrets=expose_secrets, exclude_unset=exclude_unset)

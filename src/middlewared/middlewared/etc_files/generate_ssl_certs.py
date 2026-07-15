@@ -48,7 +48,7 @@ def render(service: Service, middleware: Middleware) -> None:
 
     expected_files = set()
     certs = [
-        c.model_dump(context={'expose_secrets': True})
+        c.model_dump(expose_secrets=True)
         for c in middleware.call_sync2(middleware.services.certificate.query)
     ]
 

@@ -51,7 +51,7 @@ class ConfigServicePart[E](ServicePart):
         return data
 
     async def _update(self, new: E) -> None:
-        db_payload = new.model_dump(context={"expose_secrets": True}, warnings=False, by_alias=True)
+        db_payload = new.model_dump(expose_secrets=True)
         db_payload.pop("id", None)
 
         await self.middleware.call(

@@ -31,7 +31,7 @@ def get_app_details(context: ServiceContext, app_name: str, options: CatalogAppV
     elif app_name not in train_data.root[options.train].root:
         raise CallError(f'Unable to locate {app_name!r} app in {options.train!r} train')
 
-    questions_context = context.run_coroutine(get_normalized_questions_context(context)).model_dump(by_alias=True)
+    questions_context = context.run_coroutine(get_normalized_questions_context(context)).model_dump()
     app_details = retrieve_app_details(
         app_location, train_data.root[options.train].root[app_name].model_dump(), questions_context
     )

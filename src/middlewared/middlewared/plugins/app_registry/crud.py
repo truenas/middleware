@@ -27,7 +27,7 @@ class AppRegistryServicePart(CRUDServicePart[AppRegistryEntry]):
     async def do_create(self, data: AppRegistryCreate) -> AppRegistryEntry:
         await self.middleware.call('docker.validate_state')
         data = await self.validate(data, 'app_registry_create')
-        entry = await self._create(data.model_dump(context={'expose_secrets': True}))
+        entry = await self._create(data.model_dump(expose_secrets=True))
         await self.middleware.call('etc.generate', 'app_registry')
         return entry
 
@@ -36,7 +36,7 @@ class AppRegistryServicePart(CRUDServicePart[AppRegistryEntry]):
         old = await self.get_instance(id_)
         new = old.updated(data)
         new = await self.validate(new, 'app_registry_update', old=old)
-        entry = await self._update(id_, new.model_dump(context={'expose_secrets': True}))
+        entry = await self._update(id_, new.model_dump(expose_secrets=True))
         await self.middleware.call('etc.generate', 'app_registry')
         return entry
 

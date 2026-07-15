@@ -195,7 +195,7 @@ class SystemAdvancedConfigServicePart(ConfigServicePart[SystemAdvancedEntry]):
 
         # `sed_passwd` is not a field on the entry and `consolemsg` lives in `system.general`; read both
         # side-channel values here since they are handled separately from the entry merge below.
-        update = data.model_dump(context={"expose_secrets": True})
+        update = data.model_dump(expose_secrets=True)
         new_sed = update.get('sed_passwd', old_sed)
 
         consolemsg = None

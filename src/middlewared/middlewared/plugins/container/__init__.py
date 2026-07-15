@@ -182,7 +182,7 @@ def domain_event_callback(middleware: Middleware, event: DomainEvent) -> None:
     )
     if containers:
         container = containers[0]
-        middleware.send_event('container.query', 'CHANGED', id=container.id, fields=container.model_dump(by_alias=True))
+        middleware.send_event('container.query', 'CHANGED', id=container.id, fields=container.model_dump())
 
 
 async def setup(middleware: Middleware) -> None:

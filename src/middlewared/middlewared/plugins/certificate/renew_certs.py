@@ -83,7 +83,7 @@ def renew_certs(context: ServiceContext, job: Job) -> None:
                     "acme_directory_uri": cert.acme["directory"],
                     "dns_mapping": cert.domains_authenticators,
                 },
-                cert.model_dump(context={"expose_secrets": True}),
+                cert.model_dump(expose_secrets=True),
             )
             cert_payload = {
                 "certificate": final_order.fullchain_pem,

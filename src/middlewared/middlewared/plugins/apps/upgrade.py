@@ -137,7 +137,7 @@ def upgrade_impl(context: ServiceContext, job: Job, app_name: str, options: AppU
             if app.upgrade_available is False or app.custom_app:
                 # Pull may have succeeded but redeploy failed - we early-return here
                 # so that the caller can update alerts based on the refreshed app state
-                context.middleware.send_event('app.query', 'CHANGED', id=app_name, fields=app.model_dump(by_alias=True))
+                context.middleware.send_event('app.query', 'CHANGED', id=app_name, fields=app.model_dump())
                 job.set_progress(100, 'App successfully upgraded and redeployed')
                 return app
 
@@ -208,7 +208,7 @@ def upgrade_impl(context: ServiceContext, job: Job, app_name: str, options: AppU
         context.call_sync2(context.s.app.metadata_generate).wait_sync(raise_error=True)
         new_app_instance = context.call_sync2(context.s.app.get_instance, app_name)
         context.middleware.send_event(
-            'app.query', 'CHANGED', id=app_name, fields=new_app_instance.model_dump(by_alias=True),
+            'app.query', 'CHANGED', id=app_name, fields=new_app_instance.model_dump(),
         )
 
     job.set_progress(100, 'Upgraded app successfully')

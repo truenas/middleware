@@ -42,7 +42,7 @@
             [["id", "=", general_settings['ui_certificate']]],
         )
         if cert_list:
-            cert = cert_list[0].model_dump(context={'expose_secrets': True})
+            cert = cert_list[0].model_dump(expose_secrets=True)
 
     x_frame_options = '' if general_settings['ui_x_frame_options'] == 'ALLOW_ALL' else general_settings['ui_x_frame_options']
 
@@ -89,7 +89,7 @@
         tnc_basename = middleware.call_sync2(middleware.services.tn_connect.hostname.basename_from_cert)
         tnc_cert = middleware.call_sync2(
             middleware.services.certificate.get_instance, tn_connect_config.certificate,
-        ).model_dump(context={'expose_secrets': True}) if tn_connect_config.certificate else None
+        ).model_dump(expose_secrets=True) if tn_connect_config.certificate else None
     except Exception:
         # This should not happen but better safe then sorry as we don't want to disrupt nginx configuration
         tnc_basename = tnc_cert = None

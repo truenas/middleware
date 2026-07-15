@@ -220,7 +220,7 @@ class InterfaceRenamer:
                 self.middleware.logger.info("Changing VM NIC device %r from %r to %r", vm_device.id,
                                             vm_device.attributes.nic_attach, new_name)
                 await self.middleware.call("datastore.update", "vm.device", vm_device.id, {
-                    "attributes": {**vm_device.attributes.model_dump(by_alias=True), "nic_attach": new_name},
+                    "attributes": {**vm_device.attributes.model_dump(), "nic_attach": new_name},
                 }, {"ha_sync": False})
 
     async def _commit_laggs(self):

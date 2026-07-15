@@ -73,9 +73,9 @@ async def query_snapshot_begin(
         dataset_path = os.path.join('/mnt', dataset)
         if await determine_recursive_search(recursive, device, datasets):
             if await context.middleware.call('filesystem.is_child', path, dataset_path):
-                vms[device.vm].append(device.model_dump(by_alias=True))
+                vms[device.vm].append(device.model_dump())
         elif dataset_path == path:
-            vms[device.vm].append(device.model_dump(by_alias=True))
+            vms[device.vm].append(device.model_dump())
 
     return vms
 

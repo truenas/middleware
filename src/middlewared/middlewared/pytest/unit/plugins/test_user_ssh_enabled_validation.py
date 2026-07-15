@@ -92,7 +92,7 @@ async def test_use_ssh_enabled_validation(
             'smb': False,
             'password_disabled': True,
             'ssh_password_enabled': True,
-        }).model_dump(by_alias=True, context={'expose_secrets': True})['user_create']
+        }).model_dump(expose_secrets=True)['user_create']
         old_data = None
     else:
         data = {'ssh_password_enabled': True}
@@ -118,7 +118,7 @@ async def test_use_ssh_enabled_validation(
             password_change_required=False,
             roles=[],
             api_keys=[],
-        ).model_dump(by_alias=True, context={'expose_secrets': True})
+        ).model_dump(expose_secrets=True)
 
     verrors = ValidationErrors()
     if expected_error:
