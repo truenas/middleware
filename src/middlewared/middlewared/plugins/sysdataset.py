@@ -256,7 +256,7 @@ from middlewared.plugins.zfs.exceptions import ZFSPathNotFoundException
 from middlewared.plugins.zfs.utils import get_encryption_info
 from middlewared.service import CallError, ConfigService, ValidationError, ValidationErrors, job, private
 import middlewared.sqlalchemy as sa
-from middlewared.utils import BOOT_POOL_NAME_VALID
+from middlewared.utils.boot.pool import BOOT_POOL_NAME_VALID
 from middlewared.utils.size import format_size
 from middlewared.utils.tdb import close_sysdataset_tdb_handles
 from middlewared.utils.zfs import query_imported_fast_impl
@@ -318,7 +318,7 @@ class SystemDatasetService(ConfigService):
             db_pool = self.middleware.call_sync(
                 'datastore.config', 'system.systemdataset',
             )['sys_pool']
-            pool = self.force_pool or db_pool or self.middleware.call_sync('boot.pool_name')
+            pool = self.force_pool or db_pool or self.call_sync2(self.s.boot.pool_name)
             ds_name = f'{pool}/.system'
         else:
             ds_name = expected_datasetname
@@ -342,7 +342,7 @@ class SystemDatasetService(ConfigService):
     async def config_extend(self, config):
         # Treat empty system dataset pool as boot pool
         config['pool_set'] = bool(config['pool'])
-        config['pool'] = self.force_pool or config['pool'] or await self.middleware.call('boot.pool_name')
+        config['pool'] = self.force_pool or config['pool'] or await self.call2(self.s.boot.pool_name)
         config['basename'] = f'{config["pool"]}/.system'
 
         # Make `uuid` point to the uuid of current node
@@ -402,7 +402,7 @@ class SystemDatasetService(ConfigService):
         """
         Retrieve pool choices which can be used for configuring system dataset.
         """
-        boot_pool = await self.middleware.call('boot.pool_name')
+        boot_pool = await self.call2(self.s.boot.pool_name)
         current_pool = (await self.config())['pool']
         valid_pools = await self.middleware.call('systemdataset.query_pools_for_system_dataset')
 
@@ -676,7 +676,7 @@ class SystemDatasetService(ConfigService):
         but currently inaccessible (unimported or root-locked-with-key);
         the caller uses force_pool rather than persisting the fallback.
         """
-        boot_pool = self.middleware.call_sync('boot.pool_name')
+        boot_pool = self.call_sync2(self.s.boot.pool_name)
 
         if preferred_pool and preferred_pool != exclude_pool:
             if self._pool_is_available(preferred_pool):
@@ -701,7 +701,7 @@ class SystemDatasetService(ConfigService):
         a pool we can't query at all, is not usable. Mirrors the logic in
         query_pools_for_system_dataset().
         """
-        boot_pool = self.middleware.call_sync('boot.pool_name')
+        boot_pool = self.call_sync2(self.s.boot.pool_name)
         if pool == boot_pool:
             return True
 
@@ -727,7 +727,7 @@ class SystemDatasetService(ConfigService):
         Returns the spec list (suitable for passing to mount_hierarchy /
         finalize_datasets).
         """
-        boot_pool = await self.middleware.call('boot.pool_name')
+        boot_pool = await self.call2(self.s.boot.pool_name)
         # Empty string falls back to boot pool (handles cases where no
         # data pool is selectable).
         pool = pool or boot_pool
@@ -1143,7 +1143,8 @@ class SystemDatasetService(ConfigService):
 
 
 async def pool_post_create(middleware, pool):
-    if (await middleware.call('systemdataset.config'))['pool'] == await middleware.call('boot.pool_name'):
+    boot_pool = await middleware.call2(middleware.services.boot.pool_name)
+    if (await middleware.call('systemdataset.config'))['pool'] == boot_pool:
         await middleware.call('systemdataset.setup')
 
 

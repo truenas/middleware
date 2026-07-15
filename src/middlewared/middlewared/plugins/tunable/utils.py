@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any
 from middlewared.plugins.initramfs import write_initramfs_flags
 from middlewared.service_exception import CallError
 from middlewared.utils import run
+from middlewared.utils.boot.models import BootUpdateInitramfsOptions
 
 if TYPE_CHECKING:
     from middlewared.api.current import TunableEntry
@@ -90,7 +91,7 @@ async def generate_sysctl(middleware: Middleware, ha_propagate: bool = False) ->
 async def update_initramfs(middleware: Middleware, ha_propagate: bool = False) -> None:
     if not ha_propagate:
         changed = await asyncio.to_thread(write_initramfs_flags, middleware)
-        await middleware.call('boot.update_initramfs', {'force': changed})
+        await middleware.call2(middleware.services.boot.update_initramfs, BootUpdateInitramfsOptions(force=changed))
         return
 
     # Phase 1: materialize flag files on both nodes. Must finish on both
@@ -103,7 +104,7 @@ async def update_initramfs(middleware: Middleware, ha_propagate: bool = False) -
 
     # Phase 2: rebuild the initramfs on both nodes concurrently.
     results = await asyncio.gather(
-        middleware.call('boot.update_initramfs', {'force': local_changed}),
+        middleware.call2(middleware.services.boot.update_initramfs, BootUpdateInitramfsOptions(force=local_changed)),
         middleware.call(
             'failover.call_remote', 'boot.update_initramfs',
             [{'force': remote_changed}], {'timeout': 300},

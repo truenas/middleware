@@ -3,7 +3,7 @@ import typing
 
 from truenas_pylibzfs import ZFSError, ZFSException, ZPOOLProperty, libzfs_types, property_sets
 
-from middlewared.utils import BOOT_POOL_NAME_VALID
+from middlewared.utils.boot.pool import BOOT_POOL_NAME_VALID
 
 from .exceptions import ZpoolNotFoundException
 from .get_zpool_features_impl import get_zpool_features_impl

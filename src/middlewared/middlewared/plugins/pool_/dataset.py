@@ -33,7 +33,7 @@ from middlewared.service import (
 )
 from middlewared.service.decorators import pass_thread_local_storage
 import middlewared.sqlalchemy as sa
-from middlewared.utils import BOOT_POOL_NAME_VALID
+from middlewared.utils.boot.pool import BOOT_POOL_NAME_VALID
 from middlewared.utils.filesystem import attrs as fs_attrs
 from middlewared.utils.filter_list import filter_list
 

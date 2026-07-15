@@ -58,7 +58,7 @@ class VolumeStatusAlertSource(AlertSource):
 
         if alerts is None:
             alerts = []
-            boot_pool = await self.middleware.call("boot.pool_name")
+            boot_pool = await self.middleware.call2(self.middleware.services.boot.pool_name)
             for pool in await self.middleware.call("zpool.query_impl", {"pool_names": [boot_pool]}):
                 if not pool["healthy"]:
                     alerts.append([

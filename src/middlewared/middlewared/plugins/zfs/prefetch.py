@@ -4,7 +4,7 @@ import truenas_pylibzfs
 
 from middlewared.service import CallError, Service
 from middlewared.service.decorators import pass_thread_local_storage
-from middlewared.utils import BOOT_POOL_NAME_VALID
+from middlewared.utils.boot.pool import BOOT_POOL_NAME_VALID
 from middlewared.utils.zfs import query_imported_fast_impl
 
 

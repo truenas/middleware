@@ -334,7 +334,7 @@ class PoolService(Service):
         # ZFS import events fire before the DB entry exists so the
         # PoolUpgraded alert cannot be created at that time. Check
         # here where the pool is guaranteed to be in the database.
-        if pool['name'] != await self.middleware.call('boot.pool_name'):
+        if pool['name'] != await self.call2(self.s.boot.pool_name):
             try:
                 if not await self.middleware.call('pool.is_upgraded', pool['id']):
                     await self.middleware.call2(

@@ -31,11 +31,11 @@ def install(
             "before running upgrade."
         )
 
-    state = context.middleware.call_sync("boot.get_state")
+    state = context.middleware.call_sync2(context.middleware.services.boot.get_state)
     if (
-        state["scan"] and
-        state["scan"]["function"] == "RESILVER" and
-        state["scan"]["state"] == "SCANNING"
+        state.scan and
+        state.scan.function == "RESILVER" and
+        state.scan.state == "SCANNING"
     ):
         raise CallError(
             "One or more boot pool devices are currently being resilvered. The upgrade cannot continue "

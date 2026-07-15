@@ -9,7 +9,7 @@ import select
 import signal
 import sys
 
-from middlewared.utils import BOOT_POOL_NAME_VALID
+from middlewared.utils.boot.pool import BOOT_POOL_NAME_VALID
 from middlewared.utils.ctdb import CTDB_DATA_DIR
 from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
 from truenas_os_pyutils.mount import statmount

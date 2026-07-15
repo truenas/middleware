@@ -152,8 +152,8 @@ class DiskService(CRUDService):
             }
 
         if context['pools']:
-            context['boot_pool_disks'] = await self.middleware.call('boot.get_disks')
-            context['boot_pool_name'] = await self.middleware.call('boot.pool_name')
+            context['boot_pool_disks'] = await self.call2(self.s.boot.get_disks)
+            context['boot_pool_name'] = await self.call2(self.s.boot.pool_name)
 
             for pool in await self.middleware.call('zpool.query_impl', {'topology': True}):
                 topology = await self.middleware.call('pool.transform_topology_lightweight', pool['topology'])
