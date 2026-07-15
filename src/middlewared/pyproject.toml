@@ -24,7 +24,12 @@ wait_on_disks = "middlewared.scripts.wait_on_disks:main"
 start_vendor_service = "middlewared.scripts.vendor_service:main"
 
 [tool.mypy]
-plugins = ["middlewared.test.linter.mypy_query_options", "middlewared.test.linter.mypy_call2", "pydantic.mypy", "sqlalchemy.ext.mypy.plugin"]
+plugins = [
+    "middlewared.test.linter.mypy_query_options",
+    "middlewared.test.linter.mypy_call2",
+    "pydantic.mypy",
+    "sqlalchemy.ext.mypy.plugin",
+]
 
 [[tool.mypy.overrides]]
 module = [
