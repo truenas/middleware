@@ -36,7 +36,6 @@ from middlewared.api.current import (
 )
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.plugins.cloud.remotes import remote_classes
-from middlewared.plugins.cloud_credentials import CredentialsService
 from middlewared.service import GenericTaskPathService, job
 from middlewared.utils.service.task_state import TaskStateMixin
 
@@ -87,6 +86,7 @@ class CloudSyncService(GenericTaskPathService[CloudSyncEntry], TaskStateMixin):
         role_prefix = "CLOUD_SYNC"
 
     def __init__(self, middleware: Middleware) -> None:
+        from middlewared.plugins.cloud_credentials import CredentialsService
         super().__init__(middleware)
         self.credentials = CredentialsService(middleware)
         self._svc_part = CloudSyncServicePart(self.context)
