@@ -312,6 +312,11 @@ class BaseModel(DumpableModel, metaclass=_BaseModelMetaclass):
 
         `expose_secrets`: new parameter. If `False`, will replace `Secret` fields with a placeholder.
         """
+        if isinstance(context, dict) and "expose_secrets" in context:
+            raise ValueError(
+                "Do not specify `expose_secrets` via `context`; use explicit `expose_secrets` parameter instead."
+            )
+
         return super().model_dump(
             mode=mode,
             include=include,
