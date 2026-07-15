@@ -23,7 +23,10 @@ class DropboxRcloneRemote(BaseRcloneRemote[DropboxCredentialsModel]):
     task_attributes = ["dropbox_chunk_size"]
 
     def validate_task_basic(
-        self, attributes: CloudTaskAttributes, credentials: DropboxCredentialsModel, verrors: ValidationErrors,
+        self,
+        attributes: CloudTaskAttributes,
+        credentials: DropboxCredentialsModel,
+        verrors: ValidationErrors,
     ) -> None:
         if not (attributes.dropbox_chunk_size >= 5):
             verrors.add("chunk_size", "Must be greater than or equal to 5")

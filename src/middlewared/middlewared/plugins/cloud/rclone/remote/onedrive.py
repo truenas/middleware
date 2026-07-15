@@ -38,7 +38,9 @@ class OneDriveRcloneRemote(BaseRcloneRemote[OneDriveCredentialsModel]):
     extra_methods = ["list_drives"]
 
     def get_task_extra(
-        self, attributes: "CloudTaskAttributes", credentials: OneDriveCredentialsModel,
+        self,
+        attributes: "CloudTaskAttributes",
+        credentials: OneDriveCredentialsModel,
     ) -> dict[str, Any]:
         return {
             "drive_type": DRIVES_TYPES.get(credentials.drive_type.get_secret_value(), ""),
@@ -47,8 +49,12 @@ class OneDriveRcloneRemote(BaseRcloneRemote[OneDriveCredentialsModel]):
             "tpslimit": "10",
         }
 
-    @api_method(CloudSyncOneDriveListDrivesArgs, CloudSyncOneDriveListDrivesResult, roles=["CLOUD_SYNC_WRITE"],
-                check_annotations=True)
+    @api_method(
+        CloudSyncOneDriveListDrivesArgs,
+        CloudSyncOneDriveListDrivesResult,
+        roles=["CLOUD_SYNC_WRITE"],
+        check_annotations=True,
+    )
     def list_drives(self, credentials: CloudSyncOneDriveListDrivesArgs) -> list[CloudSyncOneDriveListDrivesDrive]:
         """
         Lists all available drives and their types for given Microsoft OneDrive credentials.

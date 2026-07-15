@@ -45,7 +45,10 @@ class S3RcloneRemote(BaseRcloneRemote[S3CredentialsModel]):
         return client
 
     def validate_task_basic(
-        self, attributes: CloudTaskAttributes, credentials: S3CredentialsModel, verrors: ValidationErrors,
+        self,
+        attributes: CloudTaskAttributes,
+        credentials: S3CredentialsModel,
+        verrors: ValidationErrors,
     ) -> None:
         if attributes.encryption not in (None, "", "AES256"):
             verrors.add("encryption", 'Encryption should be null or "AES256"')
@@ -88,7 +91,9 @@ class S3RcloneRemote(BaseRcloneRemote[S3CredentialsModel]):
         return result
 
     def get_restic_config(
-        self, attributes: CloudTaskAttributes, credentials: S3CredentialsModel,
+        self,
+        attributes: CloudTaskAttributes,
+        credentials: S3CredentialsModel,
     ) -> tuple[str, dict[str, str]]:
         url = credentials.endpoint.rstrip("/")
         if not url:

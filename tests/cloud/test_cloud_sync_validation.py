@@ -13,15 +13,17 @@ from middlewared.test.integration.utils import call
 def offline_ftp_credential():
     # Credential creation does not verify connectivity, so this is enough to exercise
     # the validation code paths that run before any network access.
-    with credential({
-        "provider": {
-            "type": "FTP",
-            "host": "localhost",
-            "port": 21,
-            "user": "anonymous",
-            "pass": "",
-        },
-    }) as c:
+    with credential(
+        {
+            "provider": {
+                "type": "FTP",
+                "host": "localhost",
+                "port": 21,
+                "user": "anonymous",
+                "pass": "",
+            },
+        }
+    ) as c:
         yield c
 
 
@@ -58,10 +60,16 @@ def test_bwlimit_time_order():
     with dataset("cloudsync_local") as local_dataset:
         with offline_ftp_credential() as c:
             with pytest.raises(ValidationErrors) as ve:
-                with task(push_task(c, f"/mnt/{local_dataset}", bwlimit=[
-                    {"time": "10:00", "bandwidth": 1024},
-                    {"time": "01:00", "bandwidth": 1024},
-                ])):
+                with task(
+                    push_task(
+                        c,
+                        f"/mnt/{local_dataset}",
+                        bwlimit=[
+                            {"time": "10:00", "bandwidth": 1024},
+                            {"time": "01:00", "bandwidth": 1024},
+                        ],
+                    )
+                ):
                     pass
 
             assert "cloud_sync_create.bwlimit.1.time" in ve.value

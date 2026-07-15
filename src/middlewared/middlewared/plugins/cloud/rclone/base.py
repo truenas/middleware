@@ -45,12 +45,18 @@ class BaseRcloneRemote[CredentialsT: BaseModel]:
         raise NotImplementedError
 
     def validate_task_basic(
-        self, attributes: CloudTaskAttributes, credentials: CredentialsT, verrors: ValidationErrors,
+        self,
+        attributes: CloudTaskAttributes,
+        credentials: CredentialsT,
+        verrors: ValidationErrors,
     ) -> None:
         pass
 
     def validate_task_full(
-        self, attributes: CloudTaskAttributes, credentials: CredentialsT, verrors: ValidationErrors,
+        self,
+        attributes: CloudTaskAttributes,
+        credentials: CredentialsT,
+        verrors: ValidationErrors,
     ) -> None:
         pass
 
@@ -67,6 +73,8 @@ class BaseRcloneRemote[CredentialsT: BaseModel]:
         pass
 
     def get_restic_config(
-        self, attributes: CloudTaskAttributes, credentials: CredentialsT,
+        self,
+        attributes: CloudTaskAttributes,
+        credentials: CredentialsT,
     ) -> tuple[str, dict[str, str]]:
         raise NotImplementedError

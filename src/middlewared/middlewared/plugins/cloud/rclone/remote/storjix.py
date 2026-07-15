@@ -71,7 +71,8 @@ class StorjIxRcloneRemote(BaseRcloneRemote[StorjIxCredentialsModel]):
         url = f"{endpoint}?attribution"
 
         creds = Credentials(
-            credentials.access_key_id.get_secret_value(), credentials.secret_access_key.get_secret_value(),
+            credentials.access_key_id.get_secret_value(),
+            credentials.secret_access_key.get_secret_value(),
         )
         request = AWSRequest(method="GET", url=url)
         SigV4Auth(creds, "s3", "").add_auth(request)
@@ -107,7 +108,9 @@ class StorjIxRcloneRemote(BaseRcloneRemote[StorjIxCredentialsModel]):
         }
 
     def get_restic_config(
-        self, attributes: CloudTaskAttributes, credentials: StorjIxCredentialsModel,
+        self,
+        attributes: CloudTaskAttributes,
+        credentials: StorjIxCredentialsModel,
     ) -> tuple[str, dict[str, str]]:
         env = {
             "AWS_ACCESS_KEY_ID": credentials.access_key_id.get_secret_value(),

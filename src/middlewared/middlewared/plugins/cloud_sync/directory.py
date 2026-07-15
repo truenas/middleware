@@ -90,16 +90,16 @@ def providers(part: CloudSyncServicePart) -> list[CloudSyncProvider]:
                 title=provider.title,
                 credentials_oauth=(
                     f"{OAUTH_URL}/{(provider.credentials_oauth_name or provider.name.lower())}"
-                    if provider.credentials_oauth else None
+                    if provider.credentials_oauth
+                    else None
                 ),
                 buckets=provider.buckets,
                 bucket_title=provider.bucket_title,
                 task_schema=[
-                    CloudSyncProviderTaskSchemaItem(property=attribute)
-                    for attribute in task_attributes(provider)
+                    CloudSyncProviderTaskSchemaItem(property=attribute) for attribute in task_attributes(provider)
                 ],
             )
             for provider in REMOTES.values()
         ],
-        key=lambda provider: provider.title.lower()
+        key=lambda provider: provider.title.lower(),
     )

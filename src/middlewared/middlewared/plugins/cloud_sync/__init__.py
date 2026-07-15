@@ -87,6 +87,7 @@ class CloudSyncService(GenericTaskPathService[CloudSyncEntry], TaskStateMixin):
 
     def __init__(self, middleware: Middleware) -> None:
         from middlewared.plugins.cloud_credentials import CredentialsService
+
         super().__init__(middleware)
         self.credentials = CredentialsService(middleware)
         self._svc_part = CloudSyncServicePart(self.context)
@@ -113,16 +114,18 @@ class CloudSyncService(GenericTaskPathService[CloudSyncEntry], TaskStateMixin):
         await self._svc_part.do_delete(id_)
         return True
 
-    @api_method(CloudSyncCreateBucketArgs, CloudSyncCreateBucketResult, roles=["CLOUD_SYNC_WRITE"],
-                check_annotations=True)
+    @api_method(
+        CloudSyncCreateBucketArgs, CloudSyncCreateBucketResult, roles=["CLOUD_SYNC_WRITE"], check_annotations=True
+    )
     def create_bucket(self, credentials_id: int, name: str) -> None:
         """
         Creates a new bucket ``name`` using ``credentials_id``.
         """
         create_bucket_impl(self._svc_part, credentials_id, name)
 
-    @api_method(CloudSyncListBucketsArgs, CloudSyncListBucketsResult, roles=["CLOUD_SYNC_WRITE"],
-                check_annotations=True)
+    @api_method(
+        CloudSyncListBucketsArgs, CloudSyncListBucketsResult, roles=["CLOUD_SYNC_WRITE"], check_annotations=True
+    )
     def list_buckets(self, credentials_id: int) -> list[dict[str, Any]]:
         """
         List the buckets available to the cloud sync credential identified by ``credentials_id``.
@@ -136,8 +139,9 @@ class CloudSyncService(GenericTaskPathService[CloudSyncEntry], TaskStateMixin):
         """
         return list_buckets_impl(self._svc_part, credentials_id)
 
-    @api_method(CloudSyncListDirectoryArgs, CloudSyncListDirectoryResult, roles=["CLOUD_SYNC_WRITE"],
-                check_annotations=True)
+    @api_method(
+        CloudSyncListDirectoryArgs, CloudSyncListDirectoryResult, roles=["CLOUD_SYNC_WRITE"], check_annotations=True
+    )
     def list_directory(self, cloud_sync_ls: CloudSyncListDirectory) -> list[dict[str, Any]]:
         """
         List contents of a remote bucket / directory.
@@ -149,16 +153,22 @@ class CloudSyncService(GenericTaskPathService[CloudSyncEntry], TaskStateMixin):
         return list_directory_impl(self._svc_part, cloud_sync_ls)
 
     @api_method(CloudSyncSyncArgs, CloudSyncSyncResult, roles=["CLOUD_SYNC_WRITE"], check_annotations=True)
-    @job(lock=lambda args: "cloud_sync:{}".format(args[-1]), lock_queue_size=1, logs=True, abortable=True,
-         read_roles=["CLOUD_SYNC_READ"])
+    @job(
+        lock=lambda args: "cloud_sync:{}".format(args[-1]),
+        lock_queue_size=1,
+        logs=True,
+        abortable=True,
+        read_roles=["CLOUD_SYNC_READ"],
+    )
     def sync(self, job: Job, id_: int, options: CloudSyncSyncOptions) -> None:
         """
         Run the cloud_sync job ``id``, syncing the local data to remote.
         """
         do_sync(self.context, job, id_, options)
 
-    @api_method(CloudSyncSyncOnetimeArgs, CloudSyncSyncOnetimeResult, roles=["CLOUD_SYNC_WRITE"],
-                check_annotations=True)
+    @api_method(
+        CloudSyncSyncOnetimeArgs, CloudSyncSyncOnetimeResult, roles=["CLOUD_SYNC_WRITE"], check_annotations=True
+    )
     @job(logs=True, abortable=True)
     def sync_onetime(self, job: Job, cloud_sync: CloudSyncCreate, options: CloudSyncSyncOptions) -> None:
         """

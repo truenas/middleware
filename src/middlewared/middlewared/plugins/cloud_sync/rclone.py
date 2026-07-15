@@ -94,13 +94,12 @@ class RcloneConfig:
                 self.tmp_file.write("[encrypted]\n")
                 self.tmp_file.write("type = crypt\n")
                 self.tmp_file.write(f"remote = {remote_path}\n")
-                self.tmp_file.write("filename_encryption = {}\n".format(
-                    "standard" if self.task.filename_encryption else "off"))
-                self.tmp_file.write("password = {}\n".format(
-                    rclone_encrypt_password(encryption_password)))
+                self.tmp_file.write(
+                    "filename_encryption = {}\n".format("standard" if self.task.filename_encryption else "off")
+                )
+                self.tmp_file.write("password = {}\n".format(rclone_encrypt_password(encryption_password)))
                 if encryption_salt:
-                    self.tmp_file.write("password2 = {}\n".format(
-                        rclone_encrypt_password(encryption_salt)))
+                    self.tmp_file.write("password2 = {}\n".format(rclone_encrypt_password(encryption_salt)))
 
                 remote_path = "encrypted:/"
 
@@ -111,12 +110,14 @@ class RcloneConfig:
 
             if isinstance(self.task, CloudSyncEntry):
                 if os.path.dirname(self.task.path.rstrip("/")) == "/mnt":
-                    rclone_filter.extend([
-                        "- /ix-applications",
-                        "- /ix-apps",
-                        "- /ix-applications/**",
-                        "- /ix-apps/**",
-                    ])
+                    rclone_filter.extend(
+                        [
+                            "- /ix-applications",
+                            "- /ix-apps",
+                            "- /ix-applications/**",
+                            "- /ix-apps/**",
+                        ]
+                    )
 
                 for item in self.task.exclude:
                     rclone_filter.append(f"- {item}")
@@ -153,7 +154,11 @@ class RcloneConfig:
 
 
 def rclone(
-    middleware: Middleware, job: Job, cloud_sync: CloudSyncEntry, credentials: CredentialsEntry, dry_run: bool,
+    middleware: Middleware,
+    job: Job,
+    cloud_sync: CloudSyncEntry,
+    credentials: CredentialsEntry,
+    dry_run: bool,
 ) -> None:
     middleware.call_sync("network.general.will_perform_activity", "cloud_sync")
 
@@ -168,9 +173,11 @@ def rclone(
     with RcloneConfig(credentials.provider, cloud_sync) as config:
         args = [
             "rclone",
-            "--config", config.config_path,
+            "--config",
+            config.config_path,
             "-v",
-            "--stats", "1s",
+            "--stats",
+            "1s",
         ]
 
         if task["attributes"].get("fast_list"):
@@ -183,10 +190,17 @@ def rclone(
             args.extend(["--transfers", str(task["transfers"])])
 
         if task["bwlimit"]:
-            args.extend(["--bwlimit", " ".join([
-                f"{limit['time']},{str(limit['bandwidth']) + 'b' if limit['bandwidth'] else 'off'}"
-                for limit in task["bwlimit"]
-            ])])
+            args.extend(
+                [
+                    "--bwlimit",
+                    " ".join(
+                        [
+                            f"{limit['time']},{str(limit['bandwidth']) + 'b' if limit['bandwidth'] else 'off'}"
+                            for limit in task["bwlimit"]
+                        ]
+                    ),
+                ]
+            )
 
         if dry_run:
             args.append("--dry-run")
@@ -210,15 +224,30 @@ def rclone(
         else:
             args.extend([config.remote_path, path])
 
-        env = env_mapping("CLOUD_SYNC_", {
-            **{k: v for k, v in task.items() if k in [
-                "id", "description", "direction", "transfer_mode", "encryption", "filename_encryption",
-                "encryption_password", "encryption_salt", "snapshot"
-            ]},
-            **provider,
-            **task["attributes"],
-            "path": path
-        })
+        env = env_mapping(
+            "CLOUD_SYNC_",
+            {
+                **{
+                    k: v
+                    for k, v in task.items()
+                    if k
+                    in [
+                        "id",
+                        "description",
+                        "direction",
+                        "transfer_mode",
+                        "encryption",
+                        "filename_encryption",
+                        "encryption_password",
+                        "encryption_salt",
+                        "snapshot",
+                    ]
+                },
+                **provider,
+                **task["attributes"],
+                "path": path,
+            },
+        )
         run_script(job, "Pre-script", task["pre_script"], env)
 
         job.middleware.logger.trace("Running %r", args)
@@ -261,9 +290,9 @@ def rclone(
             ini.read(config.config_path)
             for key, value in ini["remote"].items():
                 if (
-                        key in refresh_credentials and
-                        key in credentials_attributes and
-                        credentials_attributes[key] != value
+                    key in refresh_credentials
+                    and key in credentials_attributes
+                    and credentials_attributes[key] != value
                 ):
                     logger.debug("Updating credentials attributes key %r", key)
                     credentials_attributes[key] = value
@@ -401,11 +430,11 @@ def rclone_check_progress(job: Job, proc: subprocess.Popen[bytes]) -> None:
                 transferred2 = reg.group("progress_1") + reg.group("progress_2")
             if reg := RE_CHECKS.search(read):
                 progress3 = int(reg.group("progress"))
-                checks = f'checks: {reg.group("checks")}'
+                checks = f"checks: {reg.group('checks')}"
 
             progresses = [p for p in (progress1, progress2, progress3) if p is not None]
             if progresses:
-                job.set_progress(min(progresses), ', '.join(filter(None, [transferred1, transferred2, checks])))
+                job.set_progress(min(progresses), ", ".join(filter(None, [transferred1, transferred2, checks])))
     finally:
         result = cutter.flush()
         if result:
@@ -429,10 +458,42 @@ def rclone_encrypt_password(password: str) -> str:
     Note: rclone uses aes-256-ctr with a hard-coded key to slightly obfuscate passwords in the configuration file. The
     following is required by the application itself.
     """
-    key = bytes([0x9c, 0x93, 0x5b, 0x48, 0x73, 0x0a, 0x55, 0x4d,
-                 0x6b, 0xfd, 0x7c, 0x63, 0xc8, 0x86, 0xa9, 0x2b,
-                 0xd3, 0x90, 0x19, 0x8e, 0xb8, 0x12, 0x8a, 0xfb,
-                 0xf4, 0xde, 0x16, 0x2b, 0x8b, 0x95, 0xf6, 0x38])
+    key = bytes(
+        [
+            0x9C,
+            0x93,
+            0x5B,
+            0x48,
+            0x73,
+            0x0A,
+            0x55,
+            0x4D,
+            0x6B,
+            0xFD,
+            0x7C,
+            0x63,
+            0xC8,
+            0x86,
+            0xA9,
+            0x2B,
+            0xD3,
+            0x90,
+            0x19,
+            0x8E,
+            0xB8,
+            0x12,
+            0x8A,
+            0xFB,
+            0xF4,
+            0xDE,
+            0x16,
+            0x2B,
+            0x8B,
+            0x95,
+            0xF6,
+            0x38,
+        ]
+    )
 
     aes = algorithms.AES256
     iv = ssl_random(aes.block_size // 8)
@@ -446,22 +507,28 @@ def rclone_encrypt_password(password: str) -> str:
 def lsjson_error_excerpt(error: str) -> str:
     excerpt = error.split("\n")[0]
     excerpt = re.sub(r"^[0-9]{4}/[0-9]{2}/[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} ", "", excerpt)
-    excerpt = excerpt.replace("Failed to create file system for \"remote:\": ", "")
+    excerpt = excerpt.replace('Failed to create file system for "remote:": ', "")
     excerpt = excerpt.replace("ERROR : : error listing: ", "")
     return excerpt
 
 
 def ls(
-    middleware: Middleware, credentials: CloudCredentialProvider, cloud_sync: CloudSyncListDirectory | None, path: str,
+    middleware: Middleware,
+    credentials: CloudCredentialProvider,
+    cloud_sync: CloudSyncListDirectory | None,
+    path: str,
 ) -> list[dict[str, Any]]:
     middleware.call_sync("network.general.will_perform_activity", "cloud_sync")
 
-    decrypt_filenames = (
-        cloud_sync is not None and cloud_sync.encryption and cloud_sync.filename_encryption
-    )
+    decrypt_filenames = cloud_sync is not None and cloud_sync.encryption and cloud_sync.filename_encryption
     with RcloneConfig(credentials, cloud_sync) as rclone_config:
-        proc = subprocess.run(["rclone", "--config", rclone_config.config_path, "lsjson", "remote:" + path],
-                              check=False, encoding="utf8", errors="ignore", capture_output=True)
+        proc = subprocess.run(
+            ["rclone", "--config", rclone_config.config_path, "lsjson", "remote:" + path],
+            check=False,
+            encoding="utf8",
+            errors="ignore",
+            capture_output=True,
+        )
         if proc.returncode == 0:
             result = json.loads(proc.stdout)
 
@@ -476,14 +543,7 @@ def ls(
                     # names. List limit is 10 items
                     for batch in itertools.batched([item["Name"] for item in result], 10):
                         proc = subprocess.run(
-                            [
-                                "rclone",
-                                "--config",
-                                rclone_config.config_path,
-                                "cryptdecode",
-                                "encrypted:",
-                                *batch
-                            ],
+                            ["rclone", "--config", rclone_config.config_path, "cryptdecode", "encrypted:", *batch],
                             check=False,
                             encoding="utf8",
                             errors="ignore",

@@ -184,21 +184,19 @@ class CloudTaskServiceMixin[
             zvol = zvol_path_to_name(path)
             zz = self.call_sync2(self.s.zfs.resource.query_impl, ZFSResourceQuery(paths=[zvol], properties=None))
             if not zz:
-                verrors.add(f'{name}.{self.path_field}', 'Volume does not exist')
-            elif not zz[0]['type'] == 'VOLUME':
-                verrors.add(f'{name}.{self.path_field}', f'{zvol!r} is not a volume')
-            elif has_internal_path(zz[0]['name']):
-                verrors.add(f'{name}.{self.path_field}', f'{zvol!r} is an invalid location')
+                verrors.add(f"{name}.{self.path_field}", "Volume does not exist")
+            elif not zz[0]["type"] == "VOLUME":
+                verrors.add(f"{name}.{self.path_field}", f"{zvol!r} is not a volume")
+            elif has_internal_path(zz[0]["name"]):
+                verrors.add(f"{name}.{self.path_field}", f"{zvol!r} is an invalid location")
             else:
                 try:
                     self.call_sync2(self.s.cloud_backup.validate_zvol, path)
                 except CallError as e:
-                    verrors.add(f'{name}.{self.path_field}', e.errmsg)
+                    verrors.add(f"{name}.{self.path_field}", e.errmsg)
         else:
             path_data: dict[str, Any] = {self.path_field: entry.path}
-            self.middleware.run_coroutine(
-                self.validate_path_field(path_data, name, verrors, split_path=True)
-            )
+            self.middleware.run_coroutine(self.validate_path_field(path_data, name, verrors, split_path=True))
             entry.dataset = path_data.get("dataset")
             entry.relative_path = path_data.get("relative_path")
 
@@ -206,24 +204,22 @@ class CloudTaskServiceMixin[
             dataset_name = entry.path.removeprefix("/mnt/")
             for i in self.call_sync2(
                 self.s.zfs.resource.query_impl,
-                ZFSResourceQuery(
-                    paths=[dataset_name],
-                    properties=None,
-                    get_children=True
-                ),
+                ZFSResourceQuery(paths=[dataset_name], properties=None, get_children=True),
             ):
                 if i["name"] == dataset_name:
                     continue
 
                 if i["type"] == "FILESYSTEM":
                     verrors.add(
-                        f"{name}.snapshot",
-                        "This option is only available for datasets that have no further nesting"
+                        f"{name}.snapshot", "This option is only available for datasets that have no further nesting"
                     )
                     break
 
         if app and not (app.authenticated_credentials and credential_has_full_admin(app.authenticated_credentials)):
             for k in ["pre_script", "post_script"]:
                 if getattr(entry, k):
-                    verrors.add(f"{name}.{k}", "The ability to edit pre-scripts and post-scripts is limited to "
-                                               "users who have full administrative credentials")
+                    verrors.add(
+                        f"{name}.{k}",
+                        "The ability to edit pre-scripts and post-scripts is limited to "
+                        "users who have full administrative credentials",
+                    )

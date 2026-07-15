@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 
 
 class CloudSyncModel(CloudTaskModelMixin, sa.Model):
-    __tablename__ = 'tasks_cloudsync'
+    __tablename__ = "tasks_cloudsync"
 
     direction = sa.Column(sa.String(10))
     transfer_mode = sa.Column(sa.String(20))
@@ -49,7 +49,7 @@ class CloudSyncTaskFailedAlert(OneShotAlertClass):
         category=AlertCategory.TASKS,
         level=AlertLevel.ERROR,
         title="Cloud Sync Task Failed",
-        text="Cloud sync task \"%(name)s\" failed.",
+        text='Cloud sync task "%(name)s" failed.',
     )
 
     id: int
@@ -122,7 +122,11 @@ class CloudSyncServicePart(CloudTaskServiceMixin[CloudSyncEntry, CloudSyncCreate
         super()._basic_validate(verrors, name, entry)
 
     def _validate(
-        self, app: App | None, verrors: ValidationErrors, name: str, entry: CloudSyncCreate | CloudSyncEntry,
+        self,
+        app: App | None,
+        verrors: ValidationErrors,
+        name: str,
+        entry: CloudSyncCreate | CloudSyncEntry,
     ) -> None:
         super()._validate(app, verrors, name, entry)
 
@@ -141,7 +145,10 @@ class CloudSyncServicePart(CloudTaskServiceMixin[CloudSyncEntry, CloudSyncCreate
             self._validate_folder(verrors, name, entry)
 
     def _validate_folder(
-        self, verrors: ValidationErrors, name: str, entry: CloudSyncCreate | CloudSyncEntry,
+        self,
+        verrors: ValidationErrors,
+        name: str,
+        entry: CloudSyncCreate | CloudSyncEntry,
     ) -> None:
         if entry.direction == "PULL":
             folder = entry.attributes.folder.rstrip("/")
@@ -150,15 +157,18 @@ class CloudSyncServicePart(CloudTaskServiceMixin[CloudSyncEntry, CloudSyncCreate
                 if folder_parent == ".":
                     folder_parent = ""
                 folder_basename = os.path.basename(folder)
-                ls = list_directory(self, CloudSyncListDirectory(
-                    credentials=self._credential_id(entry),
-                    encryption=entry.encryption,
-                    filename_encryption=entry.filename_encryption,
-                    encryption_password=entry.encryption_password,
-                    encryption_salt=entry.encryption_salt,
-                    attributes=entry.attributes.model_copy(update={"folder": folder_parent}),
-                    args=entry.args,
-                ))
+                ls = list_directory(
+                    self,
+                    CloudSyncListDirectory(
+                        credentials=self._credential_id(entry),
+                        encryption=entry.encryption,
+                        filename_encryption=entry.filename_encryption,
+                        encryption_password=entry.encryption_password,
+                        encryption_salt=entry.encryption_salt,
+                        attributes=entry.attributes.model_copy(update={"folder": folder_parent}),
+                        args=entry.args,
+                    ),
+                )
                 for item in ls:
                     if item["Name"] == folder_basename:
                         if not item["IsDir"]:

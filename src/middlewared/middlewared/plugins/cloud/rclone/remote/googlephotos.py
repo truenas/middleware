@@ -22,7 +22,10 @@ class GooglePhotosRcloneRemote(BaseRcloneRemote[GooglePhotosCredentialsModel]):
     refresh_credentials = ["token"]
 
     def validate_task_full(
-        self, attributes: CloudTaskAttributes, credentials: GooglePhotosCredentialsModel, verrors: ValidationErrors,
+        self,
+        attributes: CloudTaskAttributes,
+        credentials: GooglePhotosCredentialsModel,
+        verrors: ValidationErrors,
     ) -> None:
         # `/media/by-day` contains a huge tree of empty directories for all days starting from 2000-01-01. Listing
         # them all will never complete due to the API rate limits.
@@ -31,7 +34,7 @@ class GooglePhotosRcloneRemote(BaseRcloneRemote[GooglePhotosCredentialsModel]):
         if not folder:
             verrors.add(
                 "attributes.folder",
-                "Pulling from the root directory is not allowed. Please, select a specific directory."
+                "Pulling from the root directory is not allowed. Please, select a specific directory.",
             )
             return
 
@@ -40,6 +43,6 @@ class GooglePhotosRcloneRemote(BaseRcloneRemote[GooglePhotosCredentialsModel]):
             if folder == prohibited:
                 verrors.add(
                     "attributes.folder",
-                    f"Pulling from the {prohibited} directory is not allowed. Please, select a specific directory."
+                    f"Pulling from the {prohibited} directory is not allowed. Please, select a specific directory.",
                 )
                 return

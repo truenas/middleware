@@ -12,15 +12,17 @@ from middlewared.test.integration.utils import call, ssh
 def offline_ftp_credential():
     # `check_local_path` runs before rclone contacts the remote, so the FTP server does not need to
     # be reachable for these tests.
-    with credential({
-        "provider": {
-            "type": "FTP",
-            "host": "localhost",
-            "port": 21,
-            "user": "anonymous",
-            "pass": "",
-        },
-    }) as c:
+    with credential(
+        {
+            "provider": {
+                "type": "FTP",
+                "host": "localhost",
+                "port": 21,
+                "user": "anonymous",
+                "pass": "",
+            },
+        }
+    ) as c:
         yield c
 
 
@@ -32,13 +34,15 @@ def task_with_forged_path(local_dataset, path):
     runtime ``check_local_path`` checks in :mod:`middlewared.plugins.cloud.path`.
     """
     with offline_ftp_credential() as c:
-        with task({
-            "direction": "PUSH",
-            "transfer_mode": "COPY",
-            "path": f"/mnt/{local_dataset}",
-            "credentials": c["id"],
-            "attributes": {"folder": ""},
-        }) as t:
+        with task(
+            {
+                "direction": "PUSH",
+                "transfer_mode": "COPY",
+                "path": f"/mnt/{local_dataset}",
+                "credentials": c["id"],
+                "attributes": {"folder": ""},
+            }
+        ) as t:
             call("datastore.update", "tasks.cloudsync", t["id"], {"path": path})
             yield t
 

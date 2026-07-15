@@ -25,7 +25,10 @@ class B2RcloneRemote(BaseRcloneRemote[B2CredentialsModel]):
     task_attributes = ["b2_chunk_size"]
 
     def validate_task_basic(
-        self, attributes: CloudTaskAttributes, credentials: B2CredentialsModel, verrors: ValidationErrors,
+        self,
+        attributes: CloudTaskAttributes,
+        credentials: B2CredentialsModel,
+        verrors: ValidationErrors,
     ) -> None:
         if not (attributes.b2_chunk_size >= 5):
             verrors.add("chunk_size", "Must be greater than or equal to 5")

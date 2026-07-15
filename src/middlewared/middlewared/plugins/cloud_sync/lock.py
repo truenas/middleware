@@ -14,6 +14,7 @@ class FsLockDirection(enum.Enum):
 
 class SyncRWLock:
     """Synchronous read-write lock implementation."""
+
     def __init__(self) -> None:
         self._lock = threading.Lock()
         self._read_ready = threading.Condition(self._lock)

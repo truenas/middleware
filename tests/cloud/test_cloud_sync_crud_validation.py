@@ -10,15 +10,17 @@ from middlewared.test.integration.assets.pool import dataset
 
 @contextlib.contextmanager
 def offline_ftp_credential():
-    with credential({
-        "provider": {
-            "type": "FTP",
-            "host": "localhost",
-            "port": 21,
-            "user": "anonymous",
-            "pass": "",
-        },
-    }) as c:
+    with credential(
+        {
+            "provider": {
+                "type": "FTP",
+                "host": "localhost",
+                "port": 21,
+                "user": "anonymous",
+                "pass": "",
+            },
+        }
+    ) as c:
         yield c
 
 
@@ -69,10 +71,13 @@ def test_scripts_require_full_admin():
         with offline_ftp_credential() as c:
             with unprivileged_user_client(roles=["CLOUD_SYNC_WRITE"]) as client:
                 with pytest.raises(ValidationErrors) as ve:
-                    client.call("cloudsync.create", {
-                        "description": "Test",
-                        "schedule": {"minute": "00", "hour": "00", "dom": "1", "month": "1", "dow": "1"},
-                        **push_task(c["id"], f"/mnt/{local_dataset}", pre_script="echo hi"),
-                    })
+                    client.call(
+                        "cloudsync.create",
+                        {
+                            "description": "Test",
+                            "schedule": {"minute": "00", "hour": "00", "dom": "1", "month": "1", "dow": "1"},
+                            **push_task(c["id"], f"/mnt/{local_dataset}", pre_script="echo hi"),
+                        },
+                    )
 
                 assert "cloud_sync_create.pre_script" in ve.value

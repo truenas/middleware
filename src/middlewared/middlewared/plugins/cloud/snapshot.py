@@ -11,7 +11,9 @@ if typing.TYPE_CHECKING:
 
 
 def create_snapshot(
-    middleware: Middleware, path: str, name: str = "cloud_task-onetime",
+    middleware: Middleware,
+    path: str,
+    name: str = "cloud_task-onetime",
 ) -> tuple[str, str]:
     """Create a ZFS snapshot for the dataset containing the specified path.
 
@@ -77,7 +79,7 @@ def create_snapshot(
             dataset=st.source,
             name=snapshot_name,
             recursive=st.dest == path,
-        )
+        ),
     )
     # Construct the full path to the snapshot, including any subdirectory
     snapshot_path = os.path.join(

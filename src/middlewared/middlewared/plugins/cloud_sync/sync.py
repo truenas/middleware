@@ -55,7 +55,8 @@ def do_sync_onetime(
     verrors.check()
 
     credentials = context.call_sync2(
-        context.s.cloudsync.credentials.get_instance, part._credential_id(cloud_sync),
+        context.s.cloudsync.credentials.get_instance,
+        part._credential_id(cloud_sync),
     )
 
     _sync(context, cloud_sync, credentials, options, job)
@@ -94,10 +95,13 @@ def _sync(
                     context.call_sync2(context.s.alert.oneshot_delete, "CloudSyncTaskFailed", task_id)
             except Exception:
                 if task_id is not None:
-                    context.call_sync2(context.s.alert.oneshot_create, CloudSyncTaskFailedAlert(
-                        id=task_id,
-                        name=cloud_sync.description,
-                    ))
+                    context.call_sync2(
+                        context.s.alert.oneshot_create,
+                        CloudSyncTaskFailedAlert(
+                            id=task_id,
+                            name=cloud_sync.description,
+                        ),
+                    )
                 raise
 
 
