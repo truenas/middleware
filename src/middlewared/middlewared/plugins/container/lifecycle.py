@@ -216,6 +216,21 @@ class ContainerService(Service):
         if container["capabilities_policy"]:
             container["capabilities_policy"] = ContainerCapabilitiesPolicy[container["capabilities_policy"]]
 
+        # For a privileged (no user namespace) container, "allow all" keeps every
+        # capability in the bounding set but libvirt only widens the cgroup device
+        # ACL — which permits creating device nodes such as the overlayfs whiteouts
+        # produced during container-image extraction — when an explicit
+        # <mknod state='on'/> is emitted. Inject it so "allow all" also allows
+        # device-node creation, unless the user set mknod explicitly. This is
+        # skipped for user-namespaced containers, where the device ACL is not the
+        # operative gate (the user namespace is) and the element would be a no-op.
+        if (
+            container["capabilities_policy"] == ContainerCapabilitiesPolicy.ALLOW
+            and container["idmap"] is None
+            and "mknod" not in container["capabilities_state"]
+        ):
+            container["capabilities_state"] = {**container["capabilities_state"], "mknod": True}
+
         # We add this to configuration because for cpu related attrs, we need them if cpuset on
         # container is actually set
         # For memory, lxc does not respect it but libvirt requires it in the xml to be defined
