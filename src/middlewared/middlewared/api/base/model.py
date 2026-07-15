@@ -289,48 +289,6 @@ class BaseModel(DumpableModel, metaclass=_BaseModelMetaclass):
         """
         return value
 
-    def model_dump(  # type: ignore[override]
-        self,
-        *,
-        mode: Literal["json", "python"] = "python",
-        include: IncEx | None = None,
-        exclude: IncEx | None = None,
-        context: dict[str, Any] | None = None,
-        by_alias: bool = True,  # pydantic default is `False`
-        exclude_unset: bool = False,
-        exclude_defaults: bool = False,
-        exclude_none: bool = False,
-        round_trip: bool = False,
-        warnings: bool | Literal["none", "warn", "error"] = False,  # pydantic default is `True`
-        serialize_as_any: bool = False,
-        expose_secrets: bool = False,
-    ) -> dict[str, Any]:
-        """
-        Usage docs: https://docs.pydantic.dev/2.10/concepts/serialization/#modelmodel_dump
-
-        Re-implementation of the original `model_dump` function to change some default values.
-
-        `expose_secrets`: new parameter. If `False`, will replace `Secret` fields with a placeholder.
-        """
-        if isinstance(context, dict) and "expose_secrets" in context:
-            raise ValueError(
-                "Do not specify `expose_secrets` via `context`; use explicit `expose_secrets` parameter instead."
-            )
-
-        return super().model_dump(
-            mode=mode,
-            include=include,
-            exclude=exclude,
-            context={**(context or {}), "expose_secrets": expose_secrets},
-            by_alias=by_alias,
-            exclude_unset=exclude_unset,
-            exclude_defaults=exclude_defaults,
-            exclude_none=exclude_none,
-            round_trip=round_trip,
-            warnings=warnings,
-            serialize_as_any=serialize_as_any,
-        )
-
     def updated(self, value: "BaseModel") -> Self:
         """
         Returns an updated version of this model using All the fields that are present in the `value` model and are not
