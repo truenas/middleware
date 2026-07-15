@@ -1,6 +1,6 @@
 from collections.abc import Callable
 import inspect
-from types import NoneType
+from types import NoneType, new_class
 from typing import Annotated, Any, Literal, Self, get_args, get_origin
 
 from pydantic import BaseModel as PydanticBaseModel
@@ -11,7 +11,7 @@ from pydantic.fields import FieldInfo
 from pydantic.json_schema import SkipJsonSchema
 from pydantic.main import IncEx, ModelT
 from pydantic.types import SecretType
-from pydantic_core import SchemaSerializer, core_schema
+from pydantic_core import PydanticUndefined, SchemaSerializer, core_schema
 
 from middlewared.api.base.types.string import SECRET_VALUE
 from middlewared.utils.lang import Undefined, undefined
@@ -135,6 +135,7 @@ class _BaseModelMetaclass(ModelMetaclass):
         cls = super().__new__(mcls, name, bases, namespace, **kwargs)
 
         has_not_required = False
+        wrapped_secret_default = False
         for field in cls.model_fields.values():  # type: ignore[attr-defined]
             if field.default is NotRequired:
                 # Update annotation of any field with a default of `NotRequired` since fields
@@ -146,10 +147,28 @@ class _BaseModelMetaclass(ModelMetaclass):
                 field.annotation = _annotate_not_required(field.annotation, field.metadata)
                 field.metadata = []
                 has_not_required = True
+            elif (
+                get_origin(field.annotation) is Secret
+                and field.default is not PydanticUndefined
+                and field.default is not undefined
+                and not isinstance(field.default, Secret)
+            ):
+                # Pydantic does not validate defaults, so a bare default on a `Secret` field (e.g.
+                # `Secret[str] = Field(default="")`) stays an unwrapped value, which is inconsistent with explicitly
+                # specified values. Wrap it so model instances are consistent.
+                field.default = new_class(
+                    "Secret",
+                    (Secret[get_args(field.annotation)[0]],),  # type: ignore[misc]
+                )(field.default)
+                wrapped_secret_default = True
 
         if has_not_required:
             # If any field has a default of `NotRequired`, apply the serializer to the model.
+            # This rebuilds the model, which is also required for the wrapped `Secret` defaults above.
             _apply_model_serializer(cls, _not_required_serializer)  # type: ignore[arg-type]
+        elif wrapped_secret_default:
+            # A mutated `field.default` only takes effect on instantiation after the model is rebuilt.
+            cls.model_rebuild(force=True)  # type: ignore[attr-defined]
 
         return cls
 
