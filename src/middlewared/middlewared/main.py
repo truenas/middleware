@@ -674,10 +674,10 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
             name, f = setup_func
             self._console_write(f'setting up plugins ({name}) [{i + 1}/{setup_total}]')
             self.__notify_startup_progress()
-            call = f(self)
+            result = f(self)
             # Allow setup to be a coroutine
-            if asyncio.iscoroutinefunction(f):
-                await call
+            if inspect.isawaitable(result):
+                await result
 
         self.logger.debug('All plugins loaded')
 
