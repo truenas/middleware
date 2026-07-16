@@ -764,7 +764,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
                     raise
 
                 self.logger.error(
-                    'Failed to run hook {}:{}(*{}, **{})'.format(name, hook['method'], args, kwargs), exc_info=True
+                    'Failed to run hook %s:%s(*%s, **%s)', name, hook['method'], args, kwargs, exc_info=True
                 )
 
     async def call_hook(self, name: str, *args, **kwargs) -> None:
@@ -786,7 +786,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
                     raise
 
                 self.logger.error(
-                    'Failed to run hook {}:{}(*{}, **{})'.format(name, hook['method'], args, kwargs), exc_info=True
+                    'Failed to run hook %s:%s(*%s, **%s)', name, hook['method'], args, kwargs, exc_info=True
                 )
 
     def call_hook_sync(self, name: str, *args, **kwargs) -> None:
@@ -1471,18 +1471,18 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         if name not in self.events:
             # We should eventually deny events that are not registered to ensure every event is
             # documented but for backward-compatibility and safety just log it for now.
-            self.logger.warning(f'Event {name!r} not registered.')
+            self.logger.warning('Event %r not registered.', name)
 
         assert event_type in ('ADDED', 'CHANGED', 'REMOVED')
 
-        self.logger.trace(f'Sending event {name!r}:{event_type!r}:{kwargs!r}')
+        self.logger.trace('Sending event %r:%r:%r', name, event_type, kwargs)
 
         for session_id, wsclient in list(self.__wsclients.items()):
             try:
                 if should_send_event is None or should_send_event(wsclient):
                     wsclient.send_event(name, event_type, **kwargs)
             except Exception:
-                self.logger.warning('Failed to send event {} to {}'.format(name, session_id), exc_info=True)
+                self.logger.warning('Failed to send event %s to %s', name, session_id, exc_info=True)
 
         async def wrap(handler: _SubHandler):
             try:
