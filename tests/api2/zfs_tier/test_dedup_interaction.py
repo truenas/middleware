@@ -34,7 +34,9 @@ INCOMPATIBLE_MSG = "incompatible with tiering"
 def _require_dedup_feature(tier_pool):
     """validate_dedup_license would reject dedup before the tiering check runs
     on licensed systems without the DEDUP feature flag."""
-    if call("system.license") is not None and not call("system.feature_enabled", "DEDUP"):
+    if call("system.license") is not None and not call(
+        "system.feature_enabled", "DEDUP"
+    ):
         pytest.skip("System license does not include the ZFS deduplication feature")
 
 
