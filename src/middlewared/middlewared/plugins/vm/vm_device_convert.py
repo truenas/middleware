@@ -12,6 +12,7 @@ from middlewared.api.current import FilesystemStatData, VMDeviceConvert, VMDiskD
 from middlewared.plugins.zfs.utils import has_internal_path
 from middlewared.service import CallError, ServiceContext
 from middlewared.service_exception import InstanceNotFound, ValidationError
+from middlewared.utils.libvirt.utils import ACTIVE_STATES
 
 if TYPE_CHECKING:
     from middlewared.job import Job
@@ -123,7 +124,7 @@ def validate_convert_disk_image(
     if not converting_from_image_to_zvol:
         sp = os.path.dirname(dip)
         try:
-            dst = context.middleware.call_sync('filesystem.stat', os.path.dirname(sp))
+            dst = context.middleware.call_sync('filesystem.stat', sp)
             if dst.type != 'DIRECTORY':
                 raise ValidationError(schema, f'{sp!r} is not a directory', errno.EINVAL)
 
@@ -167,10 +168,11 @@ def validate_convert_zvol(
         if vmzv and vmzv == ntp:
             try:
                 vm = context.call_sync2(context.s.vm.get_instance, device.vm)
-                if vm.status.state == 'RUNNING':
+                if vm.status.state in ACTIVE_STATES:
                     raise ValidationError(
                         schema,
-                        f'{vmzv!r} is part of running VM. {vm.name!r} must be stopped first',
+                        f'{vmzv!r} is attached to {vm.status.state.lower()} VM {vm.name!r}; '
+                        'it must be stopped first',
                         errno.EBUSY
                     )
             except InstanceNotFound:

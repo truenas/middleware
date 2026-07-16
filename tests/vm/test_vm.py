@@ -234,7 +234,7 @@ def ubuntu_vm(image_info, options=None):
 
             yield {**vm, "ip": ip_address, "password": _vm_password}
         finally:
-            call("vm.delete", vm["id"])
+            call("vm.delete", vm["id"], {"force": True})
     finally:
         call("pool.dataset.delete", vm_dataset)
 
