@@ -29,7 +29,9 @@ class PoolService(Service):
             root, children = check.pop()
             for c in children:
                 if c['type'] == 'DISK':
-                    if label in (c['path'].replace('/dev/', ''), c['guid']):
+                    # `path` is None when the disk was missing at pool import time
+                    # and libzfs only reports the vdev guid as its name.
+                    if label == c['guid'] or (c['path'] and label == c['path'].replace('/dev/', '')):
                         found = (root, c)
                         break
                 elif include_top_level_vdev and c['guid'] == label:
