@@ -9,6 +9,7 @@ __all__ = ["SNMPEntry", "SNMPUpdate", "SNMPUpdateArgs", "SNMPUpdateResult"]
 
 
 class SNMPEntry(BaseModel):
+    id: int = Field(description="Placeholder identifier.  Not used as there is only one.")
     location: str = Field(description="A comment describing the physical location of the server.")
     contact: EmailStr | Annotated[str, StringConstraints(pattern=r'^[-_a-zA-Z0-9\s]*$')] = Field(
         description="Contact information for the system administrator (email or name).",
@@ -42,7 +43,6 @@ class SNMPEntry(BaseModel):
         default=None,
         description="Privacy passphrase for SNMP version 3 encryption. This field is required when `privproto` is set.",
     )
-    loglevel: int = Field(ge=0, le=7, description="Logging level for SNMP daemon (0=emergency to 7=debug).")
     options: str = Field(
         description=(
             "Additional SNMP daemon configuration options. Manual settings should be used with caution as they may "
@@ -50,7 +50,11 @@ class SNMPEntry(BaseModel):
         ),
     )
     zilstat: bool = Field(description="Whether to enable ZFS dataset statistics collection for SNMP.")
-    id: int = Field(description="Placeholder identifier.  Not used as there is only one.")
+
+    @classmethod
+    def to_previous(cls, value):
+        value["loglevel"] = 4  # -LOw
+        return value
 
 
 class SNMPUpdate(SNMPEntry, metaclass=ForUpdateMetaclass):
