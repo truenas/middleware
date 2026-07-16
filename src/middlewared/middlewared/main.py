@@ -741,11 +741,12 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
             for name in names:
                 self.__blocked_hooks[name] += 1
 
-        yield
-
-        with self.__blocked_hooks_lock:
-            for name in names:
-                self.__blocked_hooks[name] -= 1
+        try:
+            yield
+        finally:
+            with self.__blocked_hooks_lock:
+                for name in names:
+                    self.__blocked_hooks[name] -= 1
 
     def _call_hook_base(self, name, *args, **kwargs):
         if self.__blocked_hooks[name] > 0:
