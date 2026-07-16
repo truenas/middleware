@@ -226,7 +226,7 @@ def get_pool_status(unused_disks, real_paths=False, replaced=False):
 def test_pool():
     unused_disks = call('disk.get_unused')
     if len(unused_disks) < 7:
-        pytest.skip('Insufficient number of disks to perform these tests')
+        pytest.fail('Insufficient number of disks to perform these tests')
 
     with another_pool({
         'name': POOL_NAME,
