@@ -67,6 +67,15 @@ class ZPoolVdev(BaseModel):
     stats: ZPoolVdevStats = Field(description="Vdev I/O statistics.")
     children: list["ZPoolVdev"] = Field(description="Child vdevs.")
     top_guid: int | None = Field(default=None, description="GUID of the top-level vdev this belongs to.")
+    path: str | None = Field(
+        default=None,
+        description=(
+            "Device path stored in the vdev config (e.g. '/dev/disk/by-partuuid/<uuid>'). Unlike `name`, this is "
+            "preserved for devices that were missing at pool import time. dRAID distributed spares store their "
+            "synthetic spare name as the config path. `null` for interior vdevs (mirror, raidz, draid) that have "
+            "no config path."
+        ),
+    )
 
 
 class ZPoolTopology(BaseModel):
