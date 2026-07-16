@@ -14,11 +14,10 @@ from middlewared.test.integration.utils.legacy_functions import SSH_TEST
 
 try:
     from config import BSD_HOST, BSD_PASSWORD, BSD_USERNAME
-    have_bsd_host_cfg = True
-except ImportError:
-    have_bsd_host_cfg = False
-
-pytestmark = pytest.mark.skipif(not have_bsd_host_cfg, reason='BSD host configuration is missing in ixautomation.conf')
+except ImportError as e:
+    @pytest.fixture(autouse=True)
+    def fail_all_tests():
+        pytest.fail(str(e))
 
 digit = ''.join(random.choices(string.digits, k=2))
 
