@@ -5,8 +5,8 @@
 *.iso
 __pycache__
 *.xml
-*.pyc
 .cache
+.coverage
 .pytest_cache
 /tests/auto_config.py
 /tests/config.py
@@ -18,7 +18,4 @@ __pycache__
 /src/middlewared/dist/
 /src/middlewared/middlewared.egg-info/
 /tests/artifacts/
-/tests/test-report.txt
-/tests/test-report.xml
-/tests/testfile.txt
 /tests/config.cfg
