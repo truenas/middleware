@@ -21,8 +21,10 @@ try:
         AWS_SECRET_ACCESS_KEY,
         AWS_BUCKET,
     )
-except ImportError:
-    pytestmark = pytest.mark.skip(reason="AWS credential are missing in config.py")
+except ImportError as e:
+    @pytest.fixture(autouse=True)
+    def fail_all_tests():
+        pytest.fail(str(e))
 
 
 def clean():

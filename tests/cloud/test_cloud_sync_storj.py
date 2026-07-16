@@ -1,13 +1,19 @@
 import pytest
 
-from config import (
-    STORJ_IX_AWS_ACCESS_KEY_ID,
-    STORJ_IX_AWS_SECRET_ACCESS_KEY,
-    STORJ_IX_BUCKET,
-)
 from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.assets.cloud_sync import credential, task, run_task
 from middlewared.test.integration.assets.pool import dataset
+
+try:
+    from config import (
+        STORJ_IX_AWS_ACCESS_KEY_ID,
+        STORJ_IX_AWS_SECRET_ACCESS_KEY,
+        STORJ_IX_BUCKET,
+    )
+except ImportError as e:
+    @pytest.fixture(autouse=True)
+    def fail_all_tests():
+        pytest.fail(str(e))
 
 
 CREDENTIAL = {
