@@ -15,6 +15,9 @@ from middlewared.service_exception import CallError
 from middlewared.utils.filesystem.directory import directory_is_empty
 from middlewared.utils.size import MB
 
+if typing.TYPE_CHECKING:
+    from middlewared.main import Middleware
+
 DATASET_DATABASE_MODEL_NAME = 'storage.encrypteddataset'
 RE_DRAID_DATA_DISKS = re.compile(r':\d*d')
 RE_DRAID_SPARE_DISKS = re.compile(r':\d*s')
@@ -125,7 +128,7 @@ async def validate_dedup_license(middleware, verrors, schema, deduplication):
             )
 
 
-async def pool_has_special_vdev(middleware, pool_name):
+async def pool_has_special_vdev(middleware: 'Middleware', pool_name: str) -> bool:
     """Whether the pool has a SPECIAL allocation class vdev. Returns False when the
     pool cannot be inspected."""
     try:
