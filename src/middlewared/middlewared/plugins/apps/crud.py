@@ -116,7 +116,7 @@ def create_app(context: ServiceContext, job: Job, data: AppCreate) -> AppEntry:
         raise CallError(f'Application with name {data.app_name} already exists', errno=errno.EEXIST)
 
     if data.custom_app:
-        return create_custom_app(context, job, data.model_dump(context={'expose_secrets': True}))
+        return create_custom_app(context, job, data.model_dump(expose_secrets=True))
 
     verrors = ValidationErrors()
     if not data.catalog_app:
@@ -207,7 +207,7 @@ def create_internal(
         update_app_metadata(app_name, app_version_details, migrated_app)
         context.call_sync2(context.s.app.metadata_generate).wait_sync(raise_error=True)
         entry = get_instance(context, app_name)
-        context.middleware.send_event('app.query', 'ADDED', id=app_name, fields=entry.model_dump(by_alias=True))
+        context.middleware.send_event('app.query', 'ADDED', id=app_name, fields=entry.model_dump())
 
         job.set_progress(60, 'App installation in progress, pulling images')
         if dry_run is False:
@@ -242,7 +242,7 @@ def update_internal(
     app_name = app.id
     if app.custom_app:
         if progress_keyword == 'Update':
-            new_values = validate_payload(data.model_dump(context={'expose_secrets': True}), 'app_update')
+            new_values = validate_payload(data.model_dump(expose_secrets=True), 'app_update')
         else:
             new_values = get_current_app_config(app_name, app.version)
     else:
@@ -265,7 +265,7 @@ def update_internal(
         update_app_metadata_for_portals(app_name, app.version)
     job.set_progress(60, 'Configuration updated')
     context.middleware.send_event(
-        'app.query', 'CHANGED', id=app_name, fields=get_instance(context, app_name).model_dump(by_alias=True)
+        'app.query', 'CHANGED', id=app_name, fields=get_instance(context, app_name).model_dump()
     )
     if trigger_compose:
         job.set_progress(70, 'Updating docker resources')

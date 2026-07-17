@@ -14,9 +14,10 @@ from catalog_reader.recommended_apps import retrieve_recommended_apps as retriev
 from catalog_reader.train_utils import get_train_path
 from jsonschema import ValidationError as JsonValidationError
 from jsonschema import validate as json_schema_validate
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import ConfigDict, Field
 
 from middlewared.alert.source.catalogs import CatalogNotHealthyAlert
+from middlewared.api.base import DumpableModel
 from middlewared.api.current import (
     AppCertificateChoices,
     AppIpChoices,
@@ -34,7 +35,7 @@ from .utils import OFFICIAL_LABEL, get_cache_key
 CATEGORIES_SET: set[str] = set()
 
 
-class NormalizedQuestions(BaseModel):
+class NormalizedQuestions(DumpableModel):
     model_config = ConfigDict(populate_by_name=True)
 
     timezones: SystemGeneralTimezoneChoices
@@ -205,4 +206,4 @@ def app_version_details(
     if questions_context is None:
         questions_context = context.run_coroutine(get_normalized_questions_context(context))
 
-    return get_app_version_details(version_path, questions_context.model_dump(by_alias=True))
+    return get_app_version_details(version_path, questions_context.model_dump())

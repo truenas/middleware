@@ -299,7 +299,7 @@ class ReplicationServicePart(CRUDServicePart[ReplicationEntry]):
                 payload["ssh_credentials"],
                 "SSH_CREDENTIALS",
             )
-            payload["ssh_credentials"] = ssh_credentials.model_dump(context={"expose_secrets": True})
+            payload["ssh_credentials"] = ssh_credentials.model_dump(expose_secrets=True)
 
         await self.middleware.call("zettarepl.run_onetime_replication_task", job, payload)
 

@@ -148,7 +148,7 @@ async def get_display_devices(context: ServiceContext, id_: int) -> list[VMDispl
     for device in await context.call2(
         context.s.vm.device.query, [['vm', '=', id_], ['attributes.dtype', '=', 'DISPLAY']]
     ):
-        device_dict = device.model_dump(by_alias=True)
+        device_dict = device.model_dump()
         device_dict['attributes']['password_configured'] = bool(device_dict['attributes'].get('password'))
         devices.append(VMDisplayDeviceInfo.model_validate(device_dict))
     return devices
@@ -208,7 +208,7 @@ async def get_display_web_uri(
         for device_data in display_devices:
             if device_data.attributes.web:
                 uri_data.uri = DisplayDelegate.web_uri(
-                    device_data.model_dump(by_alias=True), host, protocol=protocol,
+                    device_data.model_dump(), host, protocol=protocol,
                 )
                 uri_data.error = None
                 break

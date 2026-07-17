@@ -48,7 +48,7 @@ class AppCertificateService(Service):
         apps_having_outdated_certs = []
         filters = filters or []
         certs = {
-            c.id: c.model_dump(context={'expose_secrets': True})
+            c.id: c.model_dump(expose_secrets=True)
             for c in await self.call2(self.s.certificate.query)
         }
         config = await self.middleware.run_in_thread(get_collective_config)

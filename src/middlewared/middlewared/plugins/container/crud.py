@@ -257,7 +257,7 @@ class ContainerServicePart(CRUDServicePart[ContainerEntry]):
         self.middleware.call_sync('etc.generate', 'libvirt_guests')
 
     def delete_container_from_db_and_libvirt(self, container: ContainerEntry) -> None:
-        pylibvirt_container_obj = pylibvirt_container(self, container.model_dump(by_alias=True))
+        pylibvirt_container_obj = pylibvirt_container(self, container.model_dump())
         try:
             self.middleware.libvirt_domains_manager.containers.delete(pylibvirt_container_obj)
         except DomainDoesNotExistError:

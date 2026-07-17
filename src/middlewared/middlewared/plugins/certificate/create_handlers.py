@@ -43,7 +43,7 @@ def _raise_validation_errors(
 def _flatten(data: CertificateCreate) -> dict[str, Any]:
     """Unwrap Secret-wrapped fields and nested Pydantic models into a plain dict
     so the per-type private payload models can re-validate the same input."""
-    return data.model_dump(context={"expose_secrets": True})
+    return data.model_dump(expose_secrets=True)
 
 
 def create_imported_certificate(
@@ -170,7 +170,7 @@ def create_acme_certificate(
             "acme_directory_uri": directory_uri,
             "dns_mapping": payload.dns_mapping,
         },
-        csr_data.model_dump(context={"expose_secrets": True}),
+        csr_data.model_dump(expose_secrets=True),
     )
     job.set_progress(95, "Final order received from ACME server")
 

@@ -40,7 +40,7 @@ def start_vm(context: ServiceContext, id_: int, options: VMStartOptions) -> None
 
     # Start the VM using pylibvirt
     context.middleware.libvirt_domains_manager.vms.start(
-        pylibvirt_vm(context, vm.model_dump(by_alias=True, context={'expose_secrets': True}), options.model_dump())
+        pylibvirt_vm(context, vm.model_dump(expose_secrets=True), options.model_dump())
     )
 
     # Reload HTTP service for display device changes
@@ -49,7 +49,7 @@ def start_vm(context: ServiceContext, id_: int, options: VMStartOptions) -> None
 
 def stop_vm(context: ServiceContext, id_: int, options: VMStopOptions) -> None:
     vm = context.call_sync2(context.s.vm.get_instance, id_)
-    libvirt_domain = pylibvirt_vm(context, vm.model_dump(by_alias=True, context={'expose_secrets': True}))
+    libvirt_domain = pylibvirt_vm(context, vm.model_dump(expose_secrets=True))
     if options.force:
         context.middleware.libvirt_domains_manager.vms.destroy(libvirt_domain)
         return
@@ -65,21 +65,21 @@ def stop_vm(context: ServiceContext, id_: int, options: VMStopOptions) -> None:
 def poweroff_vm(context: ServiceContext, id_: int) -> None:
     vm = context.call_sync2(context.s.vm.get_instance, id_)
     context.middleware.libvirt_domains_manager.vms.destroy(
-        pylibvirt_vm(context, vm.model_dump(by_alias=True, context={'expose_secrets': True}))
+        pylibvirt_vm(context, vm.model_dump(expose_secrets=True))
     )
 
 
 def suspend_vm(context: ServiceContext, id_: int) -> None:
     vm = context.call_sync2(context.s.vm.get_instance, id_)
     context.middleware.libvirt_domains_manager.vms.suspend(
-        pylibvirt_vm(context, vm.model_dump(by_alias=True, context={'expose_secrets': True}))
+        pylibvirt_vm(context, vm.model_dump(expose_secrets=True))
     )
 
 
 def resume_vm(context: ServiceContext, id_: int) -> None:
     vm = context.call_sync2(context.s.vm.get_instance, id_)
     context.middleware.libvirt_domains_manager.vms.resume(
-        pylibvirt_vm(context, vm.model_dump(by_alias=True, context={'expose_secrets': True}))
+        pylibvirt_vm(context, vm.model_dump(expose_secrets=True))
     )
 
 

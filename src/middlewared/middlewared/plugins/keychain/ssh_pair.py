@@ -265,7 +265,7 @@ async def setup_ssh_connection(
             resp = await context.call2(
                 context.s.keychaincredential.remote_ssh_semiautomatic_setup,
                 KeychainCredentialRemoteSSHSemiautomaticSetup(
-                    **options.semi_automatic_setup.model_dump(context={"expose_secrets": True}),
+                    **options.semi_automatic_setup.model_dump(expose_secrets=True),
                     private_key=Secret(ssh_key_pair.id),
                     name=options.connection_name,
                 ),

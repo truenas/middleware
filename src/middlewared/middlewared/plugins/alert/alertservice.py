@@ -79,7 +79,7 @@ class AlertServiceService(GenericCRUDService[AlertServiceEntry]):
         self._svc_part._validate(data, "alert_service_test")
 
         factory = _AlertService.by_name[data.attributes.type]
-        alert_service = factory(self.middleware, data.attributes.model_dump(context={"expose_secrets": True}))
+        alert_service = factory(self.middleware, data.attributes.model_dump(expose_secrets=True))
 
         master_node = "A"
         if await self.middleware.call("failover.licensed"):

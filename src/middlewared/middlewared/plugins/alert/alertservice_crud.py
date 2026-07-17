@@ -61,12 +61,12 @@ class AlertServiceServicePart(CRUDServicePart[AlertServiceEntry]):
 
     async def do_create(self, data: AlertServiceCreate) -> AlertServiceEntry:
         self._validate(data, "alert_service_create")
-        return await self._create(data.model_dump(context={"expose_secrets": True}))
+        return await self._create(data.model_dump(expose_secrets=True))
 
     async def do_update(self, id_: int, data: AlertServiceCreate) -> AlertServiceEntry:
         old = await self.get_instance(id_)
-        new_data = old.model_dump(context={"expose_secrets": True})
-        new_data.update(data.model_dump(context={"expose_secrets": True}))
+        new_data = old.model_dump(expose_secrets=True)
+        new_data.update(data.model_dump(expose_secrets=True))
         self._validate_dict(new_data, "alert_service_update")
         return await self._update(id_, new_data)
 

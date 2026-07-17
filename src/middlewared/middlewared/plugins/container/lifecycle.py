@@ -119,7 +119,7 @@ def start(context: ServiceContext, id_: int) -> None:
     container = context.run_coroutine(context.call2(context.s.container.get_instance, id_))
     configure_container_bridge(context)
 
-    pylibvirt_obj = pylibvirt_container(context, container.model_dump(by_alias=True), True)
+    pylibvirt_obj = pylibvirt_container(context, container.model_dump(), True)
 
     # Configure hostname files before start so init reads correct values
     try:
@@ -133,7 +133,7 @@ def start(context: ServiceContext, id_: int) -> None:
 
 def stop(context: ServiceContext, id_: int, options: ContainerStopOptions) -> None:
     container = context.run_coroutine(context.call2(context.s.container.get_instance, id_))
-    pylibvirt_container_obj = pylibvirt_container(context, container.model_dump(by_alias=True))
+    pylibvirt_container_obj = pylibvirt_container(context, container.model_dump())
     if options.force:
         context.middleware.libvirt_domains_manager.containers.destroy(pylibvirt_container_obj)
         return

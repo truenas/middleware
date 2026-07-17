@@ -56,7 +56,7 @@ def _resolve_ui_cert_pem(middleware) -> str | None:
     if not cert_list:
         return None
 
-    return cert_list[0].model_dump(context={'expose_secrets': True})['certificate']
+    return cert_list[0].model_dump(expose_secrets=True)['certificate']
 
 
 def _compute_server_binding(pem: str) -> bytes:

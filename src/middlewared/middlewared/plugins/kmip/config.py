@@ -54,7 +54,7 @@ class KMIPConfigServicePart(ConfigServicePart[KMIPEntry]):
         update_dict = data.model_dump(exclude_unset=True)
         force_clear = update_dict.pop('force_clear', False)
         change_server = update_dict.pop('change_server', False)
-        do_validate = update_dict.pop('validate_', True)
+        do_validate = update_dict.pop('validate', True)
         new = {**old.model_dump(), **update_dict}
         verrors = ValidationErrors()
 

@@ -105,7 +105,7 @@ class SNMPServicePart(SystemServicePart[SNMPEntry]):
         await self.to_thread(_add_system_user)
 
         if config.v3_username:
-            await self.to_thread(add_snmp_user, config.model_dump(context={"expose_secrets": True}))
+            await self.to_thread(add_snmp_user, config.model_dump(expose_secrets=True))
 
         await (await self.call2(self.s.service.control, "START", "snmp")).wait(raise_error=True)
 
@@ -149,7 +149,7 @@ class SNMPServicePart(SystemServicePart[SNMPEntry]):
 
         verrors.check()
 
-        new_payload = new.model_dump(context={"expose_secrets": True})
+        new_payload = new.model_dump(expose_secrets=True)
 
         # To delete the v3 user:
         #   From the UI: In the following order, clear the username field, then uncheck the v3 checkbox
@@ -179,7 +179,7 @@ class SNMPServicePart(SystemServicePart[SNMPEntry]):
         # Manage update to SNMP v3 user
         if new_payload["v3"]:
             # v3 is enabled: re-init the user if any of the v3_* settings changed
-            old_payload = old.model_dump(context={"expose_secrets": True})
+            old_payload = old.model_dump(expose_secrets=True)
             new_v3 = {k: v for k, v in new_payload.items() if k.startswith("v3_")}
             old_v3 = {k: v for k, v in old_payload.items() if k.startswith("v3_")}
             if set(new_v3.items()) ^ set(old_v3.items()):

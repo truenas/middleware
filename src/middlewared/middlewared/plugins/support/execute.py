@@ -79,7 +79,7 @@ async def new_ticket(
 
     sw_name = "freenas" if not await context.middleware.call("system.is_enterprise") else "truenas"
 
-    payload = data.model_dump(context={"expose_secrets": True})
+    payload = data.model_dump(expose_secrets=True)
 
     required_attrs: tuple[str, ...]
     if sw_name == "freenas":
@@ -210,7 +210,7 @@ def attach_ticket(context: ServiceContext, job: Job, data: SupportAttachTicket) 
 
     sw_name = "freenas" if not context.middleware.call_sync("system.is_enterprise") else "truenas"
 
-    payload = data.model_dump(context={"expose_secrets": True})
+    payload = data.model_dump(expose_secrets=True)
     payload["ticketnum"] = payload.pop("ticket")
     filename = payload.pop("filename")
 

@@ -33,17 +33,17 @@ class DNSAuthenticatorServicePart(CRUDServicePart[DNSAuthenticatorEntry]):
     _schemas: dict[str, type[BaseModel]] | None = None
 
     async def do_create(self, data: ACMEDNSAuthenticatorCreate) -> DNSAuthenticatorEntry:
-        data_dict = data.model_dump(context={'expose_secrets': True})
+        data_dict = data.model_dump(expose_secrets=True)
         await self._validate(data_dict, 'dns_authenticator_create')
         return await self._create(data_dict)
 
     async def do_update(self, id_: int, data: ACMEDNSAuthenticatorUpdate) -> DNSAuthenticatorEntry:
         old = await self.get_instance(id_)
-        old_dict = old.model_dump(context={'expose_secrets': True})
+        old_dict = old.model_dump(expose_secrets=True)
         original_name = old_dict['name']
         original_authenticator = old_dict['attributes']['authenticator']
 
-        update_dict = data.model_dump(context={'expose_secrets': True}, exclude_unset=True)
+        update_dict = data.model_dump(expose_secrets=True, exclude_unset=True)
         old_dict.update(update_dict)
 
         await self._validate(

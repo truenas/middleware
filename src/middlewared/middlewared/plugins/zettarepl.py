@@ -709,7 +709,7 @@ class ZettareplService(Service):
             # `_replication_task_definition` builds a zettarepl-library task definition and is shared with one-time
             # tasks (`self.onetime_replication_tasks`), which are plain dicts of a different shape. Dump the model to
             # a dict here so both paths feed it the same representation.
-            replication_task = replication_task.model_dump(context={"expose_secrets": True})
+            replication_task = replication_task.model_dump(expose_secrets=True)
             try:
                 replication_tasks[f"task_{replication_task['id']}"] = await self._replication_task_definition(
                     pools, replication_task

@@ -42,4 +42,4 @@ class WebUICryptoService(Service):
         curve, lifetime, digest algorithm, and X.509 extensions (basic constraints,
         key usage, extended key usage).
         """
-        return CSRProfilesModel().model_dump(by_alias=True)
+        return CSRProfilesModel().model_dump()

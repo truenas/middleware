@@ -222,7 +222,7 @@ class ApiKeyServicePart(CRUDServicePart[ApiKeyEntry]):
         await self.middleware.call("etc.generate", "pam")
 
         with_key = ApiKeyEntryWithKey(
-            **entry.model_dump(context={"expose_secrets": True}),
+            **entry.model_dump(expose_secrets=True),
             key=f"{entry.id}-{raw_key}",
             client_key=auth_data["client_key"],
         )
@@ -249,7 +249,7 @@ class ApiKeyServicePart(CRUDServicePart[ApiKeyEntry]):
         update_dict = data.model_dump(exclude_unset=True)
         reset = update_dict.pop("reset", False)
 
-        merged = old.model_dump(context={"expose_secrets": True})
+        merged = old.model_dump(expose_secrets=True)
         merged.update(update_dict)
 
         verrors = ValidationErrors()
@@ -277,7 +277,7 @@ class ApiKeyServicePart(CRUDServicePart[ApiKeyEntry]):
         await self.middleware.call("etc.generate", "pam")
         await check_status(self)
         return ApiKeyEntryWithKey(
-            **entry.model_dump(context={"expose_secrets": True}),
+            **entry.model_dump(expose_secrets=True),
             key=f"{entry.id}-{raw_key}",
             client_key=auth_data["client_key"],
         )

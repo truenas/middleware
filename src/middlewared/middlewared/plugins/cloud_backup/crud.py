@@ -115,7 +115,7 @@ class CloudBackupServicePart(SharingTaskServicePart[CloudBackupEntry], CloudTask
     def _run_validation(self, app: App | None, schema: str, entry: CloudBackupEntry) -> dict[str, Any]:
         # FIXME: Drop this model->dict marshalling and validate the entry directly once CloudTaskServiceMixin
         # is converted; it is shared with the unconverted cloud_sync and only operates on dicts for now.
-        data = entry.model_dump(context={"expose_secrets": True})
+        data = entry.model_dump(expose_secrets=True)
         data.pop(self.locked_field, None)
         data.pop("job", None)
         # credentials is a foreign key; collapse the extended entry back to its id for the
