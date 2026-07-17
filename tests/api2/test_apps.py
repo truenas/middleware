@@ -155,6 +155,43 @@ def test_create_custom_app(docker_pool):
         assert app_info["state"] == "DEPLOYING"
 
 
+def test_create_custom_app_compose_progress(docker_pool):
+    """
+    App installation streams fine-grained progress parsed from `docker compose
+    --progress=json` events (image pulls, container creation) instead of jumping
+    between fixed milestones. If a docker compose upgrade ever changes the JSON
+    event format, the progress tracker goes silent and this test fails loudly
+    instead of app job progress silently freezing mid-operation.
+    """
+    progress = []
+
+    def callback(job):
+        item = (job["progress"]["percent"], job["progress"]["description"])
+        if not progress or progress[-1] != item:
+            progress.append(item)
+
+    with client(py_exceptions=False) as c:
+        c.call(
+            "app.create",
+            {
+                "app_name": "progress-probe",
+                "custom_app": True,
+                "custom_compose_config": {"services": {"nginx": {"image": "nginx:1.27-alpine"}}},
+            },
+            job=True,
+            callback=callback,
+        )
+    try:
+        percents = [percent for percent, _ in progress if percent is not None]
+        assert percents == sorted(percents), progress
+        # Compose resource events are emitted whether or not images needed pulling
+        assert any(
+            "Container" in description for _, description in progress if description
+        ), progress
+    finally:
+        call("app.delete", "progress-probe", {"remove_images": True}, job=True)
+
+
 def test_create_custom_app_validation_error(docker_pool):
     with pytest.raises(ValidationErrors):
         with app(

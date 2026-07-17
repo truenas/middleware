@@ -8,6 +8,7 @@ from middlewared.service import ServiceContext
 
 from .compose_utils import compose_action
 from .crud import get_instance
+from .utils import band_progress, child_job_progress
 
 if TYPE_CHECKING:
     from middlewared.job import Job
@@ -32,10 +33,12 @@ def pull_images_for_app(context: ServiceContext, job: Job, app_name: str, option
 def pull_images_internal(
     context: ServiceContext, app_name: str, app: AppEntry, options: AppPullImages, job: Job | None = None,
 ) -> None:
+    progress_callback = None
     if job is not None:
         job.set_progress(20, 'Pulling app images')
+        progress_callback = band_progress(job, 20, 75 if options.redeploy else 99)
 
-    compose_action(app_name, app.version, action='pull')
+    compose_action(app_name, app.version, action='pull', progress_callback=progress_callback)
     if job is not None:
         job.set_progress(80 if options.redeploy else 100, 'Images pulled successfully')
 
@@ -47,6 +50,9 @@ def pull_images_internal(
         context.call_sync2(context.s.app.image.clear_update_flag_for_tag, image_tag)
 
     if options.redeploy:
-        context.call_sync2(context.s.app.redeploy, app_name).wait_sync(raise_error=True)
+        context.call_sync2(
+            context.s.app.redeploy, app_name,
+            job_on_progress_cb=child_job_progress(job, 80, 100) if job is not None else None,
+        ).wait_sync(raise_error=True)
         if job is not None:
             job.set_progress(100, 'App redeployed successfully')
