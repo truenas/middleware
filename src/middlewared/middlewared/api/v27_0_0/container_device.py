@@ -26,10 +26,14 @@ __all__ = [
 
 class ContainerFilesystemDevice(BaseModel):
     dtype: Literal['FILESYSTEM'] = Field(description="Device type identifier for FILESYSTEM devices.")
-    target: NonEmptyString = Field(pattern=r'^[^{}]*$', description="Target must not contain braces.")
+    target: NonEmptyString = Field(
+        pattern=r'^[^{}]*$',
+        description="Path inside the container to mount the source at. Must not contain braces.",
+    )
     source: NonEmptyString = Field(
         pattern=r'^[^{}]*$',
-        description="Source must not contain braces, and not start with /mnt/.",
+        description="Host path to bind-mount into the container. Must reside within a pool (under "
+        "`/mnt`) and must not contain braces.",
     )
 
 

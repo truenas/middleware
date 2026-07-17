@@ -346,9 +346,17 @@ class PoolDatasetService(Service):
         if unlocked:
             if options['toggle_attachments']:
                 job.set_progress(91, 'Handling attachments')
-                # FIXME: this is incorrect design. We should be passing array of dataset names and
-                # mountpoints that were *actually* unlocked rather than what was *requested* to be unlocked
-                self.middleware.call_sync('pool.dataset.unlock_handle_attachments', dataset)
+                # Resolve the names that actually mounted to their dataset dicts (each encryption
+                # root and any of its mounted children) so delegates match attachments against the
+                # real per-dataset mountpoints rather than the requested root's subtree.
+                unlocked_datasets = {
+                    ds['name']: ds
+                    for root in datasets.values()
+                    for ds in (root, *root['children'])
+                }
+                self.middleware.call_sync('pool.dataset.unlock_handle_attachments', [
+                    unlocked_datasets[name] for name in unlocked if name in unlocked_datasets
+                ])
 
             job.set_progress(92, 'Updating database')
 
@@ -388,14 +396,21 @@ class PoolDatasetService(Service):
                             break
 
     @private
-    async def unlock_handle_attachments(self, dataset):
-        mountpoint = dataset_mountpoint(dataset)
-        for attachment_delegate in await self.middleware.call('pool.dataset.get_attachment_delegates_for_start'):
-            # FIXME: put this into `VMFSAttachmentDelegate`
-            if attachment_delegate.name == 'vm':
-                await self.middleware.call('pool.dataset.restart_vms_after_unlock', dataset)
-                continue
+    async def unlock_handle_attachments(self, datasets):
+        """
+        Bring attachments back up for `datasets`, the dataset dicts (in `pool.dataset.query` form,
+        encryption roots and their mounted children) that were actually unlocked.
+        """
+        if not datasets:
+            return
 
-            if mountpoint:
-                if attachments := await attachment_delegate.query(mountpoint, True, {'locked': False}):
-                    await attachment_delegate.start(attachments)
+        datasets = [(dataset, dataset_mountpoint(dataset)) for dataset in datasets]
+        for delegate in await self.middleware.call('pool.dataset.get_attachment_delegates_for_start'):
+            # The datasets are already unlocked and mounted, so a delegate failure here must not abort
+            # the unlock job before its encryption records are persisted
+            try:
+                await delegate.start_on_unlock(datasets)
+            except Exception:
+                self.logger.error(
+                    '%s: failed to start attachments after unlock', delegate.name, exc_info=True
+                )
