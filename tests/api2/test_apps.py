@@ -1,3 +1,5 @@
+import threading
+
 import pytest
 
 from middlewared.test.integration.utils import call, client, ssh
@@ -165,11 +167,17 @@ def test_create_custom_app_compose_progress(docker_pool):
     """
     def install_capturing_progress(c):
         progress = []
+        progress_lock = threading.Lock()
 
         def callback(job):
-            item = (job["progress"]["percent"], job["progress"]["description"])
-            if not progress or progress[-1] != item:
-                progress.append(item)
+            # api_client dispatches each job event to this callback in its own daemon thread,
+            # all sharing one mutable job dict. Serialize read+append so concurrent threads
+            # cannot interleave into an out-of-order capture; since progress only advances, the
+            # captured percents stay sorted under the lock.
+            with progress_lock:
+                item = (job["progress"]["percent"], job["progress"]["description"])
+                if not progress or progress[-1] != item:
+                    progress.append(item)
 
         c.call(
             "app.create",

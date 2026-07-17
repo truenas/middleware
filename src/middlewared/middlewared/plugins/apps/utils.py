@@ -114,14 +114,19 @@ def run_streaming(
         for line in proc.stdout:
             stdout_lines.append(line)
 
+    def kill_process_group() -> None:
+        try:
+            os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+
     def on_timeout() -> None:
         nonlocal timed_out
         if proc.poll() is None:
+            # Written here before the kill and read in the finally block below. The kill is what
+            # ends the readline loop (EOF), which happens-before that read, so no lock is needed.
             timed_out = True
-            try:
-                os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
-            except ProcessLookupError:
-                pass
+            kill_process_group()
 
     drain_thread = threading.Thread(target=drain_stdout, daemon=True)
     drain_thread.start()
@@ -140,10 +145,13 @@ def run_streaming(
                 except Exception:
                     logger.warning('%r: line callback failed, output streaming disabled', args[0], exc_info=True)
                     callback_usable = False
-
-        proc.wait()
     finally:
         timer.cancel()
+        # Reap in finally so an unexpected error in the read loop cannot leave the child (and its
+        # process group) running; kill first if it somehow outlived the loop without timing out.
+        if proc.poll() is None:
+            kill_process_group()
+        proc.wait()
         drain_thread.join(timeout=10)
 
     if timed_out:
