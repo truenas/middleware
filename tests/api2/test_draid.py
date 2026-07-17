@@ -21,7 +21,7 @@ POOL_NAME = 'test_draid_pool'
 def test_valid_draid_pool_creation(n_data, n_spare, n_parity):
     unused_disks = call('disk.get_unused')
     if len(unused_disks) < 5:
-        pytest.skip('Insufficient number of disk to perform these test')
+        pytest.fail('Insufficient number of disk to perform these test')
 
     children = n_data + n_parity + n_spare
     with another_pool({
@@ -69,7 +69,7 @@ def test_valid_draid_pool_creation(n_data, n_spare, n_parity):
 def test_invalid_draid_pool_creation(n_data, n_spare, n_parity, minimum_disk):
     unused_disks = call('disk.get_unused')
     if len(unused_disks) < 3:
-        pytest.skip('Insufficient number of disk to perform these test')
+        pytest.fail('Insufficient number of disk to perform these test')
 
     children = n_data + n_parity + n_spare
 

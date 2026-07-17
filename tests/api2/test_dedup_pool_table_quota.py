@@ -9,7 +9,7 @@ from middlewared.test.integration.utils import call
 def dedup_pool_payload(dedup_table_quota: str | None, dedup_table_quota_value: int | None) -> dict:
     unused_disks = call('disk.get_unused')
     if len(unused_disks) < 2:
-        pytest.skip('Insufficient number of disks to perform this test')
+        pytest.fail('Insufficient number of disks to perform this test')
 
     return {
         'deduplication': 'ON',

@@ -51,7 +51,6 @@ EXPECTED_DEFAULT_CONFIG = {
     "v3_privproto": None,
     "v3_privpassphrase": None,
     "options": "",
-    "loglevel": 3,
     "zilstat": False
 }
 

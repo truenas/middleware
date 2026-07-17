@@ -5,7 +5,7 @@ from typing import Any, Literal
 
 import truenas_pylibzfs
 
-from middlewared.utils import BOOT_POOL_NAME_VALID
+from middlewared.utils.boot.pool import BOOT_POOL_NAME_VALID
 
 from .exceptions import ZFSPathNotFoundException, ZFSPathNotProvidedException
 

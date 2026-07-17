@@ -18,6 +18,15 @@ from middlewared.api.current import (
 from middlewared.service import CallError, Service, ValidationErrors, job
 
 
+def get_disk_paths(vdev):
+    """Return the disk paths of `vdev` (its own, or its children's if it is
+    not a leaf), falling back to the zfs guid for disks that were missing at
+    pool import time and have no path."""
+    if vdev['type'] != 'DISK':
+        return [d['path'] or d['guid'] for d in vdev['children']]
+    return [vdev['path'] or vdev['guid']]
+
+
 class PoolService(Service):
 
     class Config:
@@ -54,15 +63,13 @@ class PoolService(Service):
             verrors.add('options.label', f'Label {options["label"]} not found on this pool.')
         verrors.check()
 
-        disk = await self.middleware.call(
-            'disk.label_to_disk', found[1]['path'].replace('/dev/', '')
-        )
+        disk = None
+        if found[1]['path']:
+            disk = await self.middleware.call(
+                'disk.label_to_disk', found[1]['path'].replace('/dev/', '')
+            )
 
-        if found[1]['type'] != 'DISK':
-            disk_paths = [d['path'] for d in found[1]['children']]
-        else:
-            disk_paths = [found[1]['path']]
-        audit_callback(f'{", ".join(disk_paths)} from {pool["name"]!r} pool')
+        audit_callback(f'{", ".join(get_disk_paths(found[1]))} from {pool["name"]!r} pool')
 
         await self.middleware.call('zfs.pool.detach', pool['name'], found[1]['guid'])
 
@@ -104,11 +111,7 @@ class PoolService(Service):
             verrors.add('options.label', f'Label {options["label"]} not found on this pool.')
         verrors.check()
 
-        if found[1]['type'] != 'DISK':
-            disk_paths = [d['path'] for d in found[1]['children']]
-        else:
-            disk_paths = [found[1]['path']]
-        audit_callback(f'{", ".join(disk_paths)} in {pool["name"]!r} pool')
+        audit_callback(f'{", ".join(get_disk_paths(found[1]))} in {pool["name"]!r} pool')
 
         await self.middleware.call('zfs.pool.offline', pool['name'], found[1]['guid'])
 
@@ -145,11 +148,7 @@ class PoolService(Service):
             verrors.add('options.label', f'Label {options["label"]} not found on this pool.')
         verrors.check()
 
-        if found[1]['type'] != 'DISK':
-            disk_paths = [d['path'] for d in found[1]['children']]
-        else:
-            disk_paths = [found[1]['path']]
-        audit_callback(f'{", ".join(disk_paths)} in {pool["name"]!r} pool')
+        audit_callback(f'{", ".join(get_disk_paths(found[1]))} in {pool["name"]!r} pool')
 
         await self.middleware.call('zfs.pool.online', pool['name'], found[1]['guid'])
 
@@ -200,10 +199,7 @@ class PoolService(Service):
         )
         job.set_progress(60, 'Removal of ZFS device complete')
 
-        if found[1]['type'] != 'DISK':
-            disk_paths = [d['path'] for d in found[1]['children']]
-        else:
-            disk_paths = [found[1]['path']]
+        disk_paths = get_disk_paths(found[1])
         audit_callback(f'{", ".join(disk_paths)} from {pool["name"]!r} pool')
 
         job.set_progress(70, 'Wiping disks')

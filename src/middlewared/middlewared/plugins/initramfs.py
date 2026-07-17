@@ -26,6 +26,8 @@ import typing
 from truenas_os_pyutils.io import atomic_write
 from truenas_pylibvirt.utils.gpu import get_gpus
 
+from middlewared.utils.boot.models import BootUpdateInitramfsOptions
+
 if typing.TYPE_CHECKING:
     from middlewared.main import Middleware
 
@@ -182,7 +184,7 @@ async def _reconcile(middleware):
         await middleware.call2(middleware.services.system.advanced.validate_isolated_gpus_on_boot)
         changed = await asyncio.to_thread(write_initramfs_flags, middleware)
         if changed:
-            await middleware.call("boot.update_initramfs", {"force": True})
+            await middleware.call2(middleware.services.boot.update_initramfs, BootUpdateInitramfsOptions(force=True))
     except Exception:
         middleware.logger.error("Failed to reconcile initramfs flags", exc_info=True)
 

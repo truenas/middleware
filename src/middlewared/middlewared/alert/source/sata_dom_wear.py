@@ -57,7 +57,7 @@ class SATADOMWearAlertSource(AlertSource):
             return []
 
         alerts: list[Alert[Any]] = []
-        for disk in await self.middleware.call("boot.get_disks"):
+        for disk in await self.middleware.call2(self.middleware.services.boot.get_disks):
             if not disk.startswith("sda"):
                 continue
 

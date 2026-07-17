@@ -32,7 +32,7 @@ class BootEnvironmentServicePart(CRUDServicePart[BootEnvironmentEntry, str]):
 
     async def _zfs_get_props(self) -> tuple[list[dict[str, Any]], str]:
         rv = []
-        bp_name = await self.middleware.call("boot.pool_name")
+        bp_name = await self.call2(self.s.boot.pool_name)
         for i in await self.call2(
             self.s.zfs.resource.query_impl,
             ZFSResourceQuery(

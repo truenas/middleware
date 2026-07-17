@@ -15,6 +15,7 @@ from middlewared.async_validators import validate_port
 from middlewared.service import ConfigService, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
+from middlewared.utils.boot.models import BootUpdateInitramfsOptions
 from middlewared.utils.service.settings import SettingsHelper
 from middlewared.utils.timezone_choices import effective_timezone
 
@@ -319,7 +320,7 @@ class SystemGeneralService(ConfigService):
     async def set_kbdlayout(self):
         await self.middleware.call('etc.generate', 'keyboard')
         await run(['setupcon'], check=False)
-        await self.middleware.call('boot.update_initramfs', {'force': True})
+        await self.call2(self.s.boot.update_initramfs, BootUpdateInitramfsOptions(force=True))
 
     @api_method(SystemGeneralCheckinWaitingArgs, SystemGeneralCheckinWaitingResult, roles=['SYSTEM_GENERAL_WRITE'])
     async def checkin_waiting(self):

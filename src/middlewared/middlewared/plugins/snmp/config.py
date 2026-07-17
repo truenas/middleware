@@ -30,7 +30,6 @@ class SNMPModel(sa.Model):
     snmp_v3_privproto = sa.Column(sa.String(3), nullable=True)
     snmp_v3_privpassphrase = sa.Column(sa.EncryptedText(), nullable=True)
     snmp_options = sa.Column(sa.Text())
-    snmp_loglevel = sa.Column(sa.Integer(), default=3)
     snmp_zilstat = sa.Column(sa.Boolean(), default=False)
 
 

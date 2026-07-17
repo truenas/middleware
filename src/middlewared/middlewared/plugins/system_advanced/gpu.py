@@ -8,6 +8,7 @@ from middlewared.alert.source.gpu_isolation import InvalidGpuPciIdsAlert
 from middlewared.plugins.initramfs import write_initramfs_flags
 from middlewared.plugins.system.reboot import RebootReason
 from middlewared.service import ValidationErrors
+from middlewared.utils.boot.models import BootUpdateInitramfsOptions
 
 if TYPE_CHECKING:
     from middlewared.service import ServiceContext
@@ -57,7 +58,7 @@ async def update_gpu_pci_ids(context: ServiceContext, isolated_gpu_pci_ids: list
         {'prefix': 'adv_'}
     )
     changed = await context.to_thread(write_initramfs_flags, context.middleware)
-    await context.middleware.call('boot.update_initramfs', {'force': changed})
+    await context.call2(context.s.boot.update_initramfs, BootUpdateInitramfsOptions(force=changed))
 
 
 async def validate_gpu_pci_ids(

@@ -30,7 +30,7 @@ class FencedService(Service):
         # get the boot disks so fenced doesn't try to
         # place reservations on the boot drives
         try:
-            boot_disks = ','.join(self.middleware.call_sync('boot.get_disks'))
+            boot_disks = ','.join(self.call_sync2(self.s.boot.get_disks))
         except Exception:
             self.logger.warning('Failed to get boot disks', exc_info=True)
             # just because we can't grab the boot disks from middleware

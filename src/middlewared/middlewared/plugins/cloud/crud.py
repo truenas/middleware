@@ -16,9 +16,12 @@ class CloudTaskServiceMixin:
 
     def _get_credentials(self, credentials_id):
         try:
-            return self.middleware.call_sync("cloudsync.credentials.get_instance", credentials_id)
+            credentials = self.call_sync2(self.s.cloudsync.credentials.get_instance, credentials_id)
         except InstanceNotFound:
             return None
+
+        # The rclone layer consumes the flat, plaintext provider dict; reproduce the stored shape.
+        return credentials.model_dump(by_alias=True, context={"expose_secrets": True})
 
     @private
     def task_attributes(self, provider):

@@ -5,7 +5,7 @@ from pydantic import AfterValidator, Discriminator, Field, Secret
 
 from middlewared.api.base import BaseModel, HttpsOnlyURL, HttpUrl, LongNonEmptyString, NonEmptyString, match_validator
 
-__all__ = ["CloudCredentialProvider"]
+__all__ = ["CloudCredentialProvider", "SFTPCredentialsModel"]
 
 
 class AzureBlobCredentialsModel(BaseModel):

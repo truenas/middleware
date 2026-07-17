@@ -146,6 +146,41 @@ class TestCheckMethodAnnotations:
         # Should not raise
         check_method_annotations(method, 1, AnnotatedArgs, SimpleResult)
 
+    def test_discriminated_union_annotated_alias(self):
+        """A discriminated-union parameter may be annotated with its ``Annotated[..., Discriminator]`` alias.
+
+        pydantic strips the ``Discriminator`` metadata when exposing the model field's annotation, so the
+        alias must normalize to the same bare union and be accepted (as must the bare union itself).
+        """
+        from typing import Literal
+
+        from pydantic import Discriminator
+
+        class Cat(BaseModel):
+            type: Literal["cat"]
+            meow: str
+
+        class Dog(BaseModel):
+            type: Literal["dog"]
+            bark: str
+
+        Animal = Annotated[Cat | Dog, Discriminator("type")]
+
+        class AnimalArgs(BaseModel):
+            animal: Animal
+
+        # Annotating the parameter with the Annotated alias must pass.
+        def method_alias(self, animal: Animal) -> str:
+            pass
+
+        check_method_annotations(method_alias, 1, AnimalArgs, SimpleResult)
+
+        # Annotating with the bare union the alias wraps must pass too.
+        def method_union(self, animal: Cat | Dog) -> str:
+            pass
+
+        check_method_annotations(method_union, 1, AnimalArgs, SimpleResult)
+
     def test_optional_type(self):
         """Test that Optional/None types are validated."""
         class OptionalArgs(BaseModel):

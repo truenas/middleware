@@ -89,7 +89,7 @@ def test__format_disk():
     with Client() as c:
         unused_disks = c.call("disk.get_unused")
         if not unused_disks:
-            pytest.skip("No unused disks available for testing")
+            pytest.fail("No unused disks available for testing")
 
         for disk_class in DiskService(None).get_disks(
             name_filters=[unused_disks[0]["name"]]

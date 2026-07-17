@@ -463,7 +463,7 @@ class AuditService(ConfigService):
         # Explicitly look up pool name. If somehow audit dataset ends up being
         # on a pool that isn't the boot-pool, we don't want to recursively
         # remove refreservations on it.
-        boot_pool = await self.middleware.call('boot.pool_name')
+        boot_pool = await self.call2(self.s.boot.pool_name)
 
         # Get dataset names of any dataset on boot pool that isn't on the current
         # activated boot environment.

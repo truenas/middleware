@@ -577,7 +577,7 @@ class TestNutService:
             "service.query", [["service", "=", "ups"]], {"get": True},
         )
         if svc.get("state") == "RUNNING" or svc.get("enable"):
-            pytest.skip("ups service is active; negative gating N/A")
+            pytest.fail("ups service is active; negative gating N/A")
         status = get_discovery_status()
         assert status is not None
         nut = [

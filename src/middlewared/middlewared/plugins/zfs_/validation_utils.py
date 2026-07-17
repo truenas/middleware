@@ -1,5 +1,7 @@
 import truenas_pylibzfs
 
+from middlewared.utils.boot.pool import boot_pool
+
 
 def check_zvol_in_boot_pool_using_name(zvol_name: str) -> bool:
     from .utils import zvol_name_to_path  # lazy import to avoid circular import when running `alembic merge heads`
@@ -7,8 +9,7 @@ def check_zvol_in_boot_pool_using_name(zvol_name: str) -> bool:
 
 
 def check_zvol_in_boot_pool_using_path(zvol_path: str) -> bool:
-    from middlewared.plugins.boot import BOOT_POOL_NAME
-    return zvol_path.startswith(f'/dev/zvol/{BOOT_POOL_NAME}/')
+    return zvol_path.startswith(f'/dev/zvol/{boot_pool.get_name()}/')
 
 
 def validate_pool_name(name: str) -> bool:

@@ -1,6 +1,8 @@
 import os
 import pytest
 
+pytest.register_assert_rewrite("middlewared.test")
+
 from middlewared.test.integration.assets.roles import unprivileged_user_fixture  # noqa
 from middlewared.test.integration.utils.client import truenas_server
 from middlewared.test.integration.utils.pytest import failed
@@ -12,8 +14,6 @@ from middlewared.test.integration.utils.pytest import failed
 # See: https://stackoverflow.com/questions/75647682/how-can-i-resolve-flake8-unused-import-error-for-pytest-fixture-imported-from
 from middlewared.test.integration.assets.roles import unprivileged_user_fixture  # noqa
 from middlewared.test.integration.assets.account import test_user  # noqa
-
-pytest.register_assert_rewrite("middlewared.test")
 
 # When STIG is active we are not able to call test.notify_test_start
 # or test.notify_test_end
