@@ -8,6 +8,7 @@ import subprocess
 from middlewared.plugins.smb_.constants import SMBPath
 from middlewared.service import Service
 from middlewared.service_exception import CallError, MatchNotFound
+from middlewared.utils.directoryservices.ipa_constants import IPA_SMB_CRED_VERSION
 from middlewared.utils.filter_list import filter_list
 from middlewared.utils.sid import raw_sid_to_str
 from middlewared.utils.tdb import (
@@ -22,6 +23,10 @@ SECRETS_TDB_OPTIONS = TDBOptions(TDBPathType.CUSTOM, TDBDataType.BYTES)
 SECRETS_CTDB_OPTIONS = TDBOptions(TDBPathType.PERSISTENT, TDBDataType.BYTES, True)
 SECRETS_TDB_CONFIG = (SECRETS_FILE, SECRETS_TDB_OPTIONS)
 SECRETS_CTDB_CONFIG = ('secrets.tdb', SECRETS_CTDB_OPTIONS)
+
+# TrueNAS-private secrets.tdb key (namespaced away from samba's SECRETS/* keys) recording
+# the version of the IPA SMB machine-account credential last written for a domain.
+IPA_SMB_CRED_VERSION_KEY = 'TRUENAS/IPA_SMB_CRED_VERSION'
 
 
 # c.f. source3/include/secrets.h
@@ -153,8 +158,11 @@ class DomainSecrets(Service):
 
         return struct.unpack("<L", bytes_passwd_chng)[0]
 
-    def set_ipa_secret(self, domain, secret):
-        # The stored secret in secrets.tdb and our kerberos keytab for SMB must be kept in-sync
+    def set_ipa_secret(self, domain: str, secret: bytes):
+        # The stored secret in secrets.tdb and our kerberos keytab for SMB must be kept
+        # in-sync. `secret` is the raw machine-account password bytes (the same value used
+        # to derive the SMB keytab); it is piped verbatim to `net changesecretpw` and must
+        # not be base64- or otherwise encoded, or SMB machine authentication will fail.
         cluster = self.middleware.call_sync("smb.config")["stateful_failover"]
         store_secrets_entry(
             f'{Secrets.MACHINE_PASSWORD.value}/{domain.upper()}', b64encode(b"2\x00").decode(), cluster
@@ -170,10 +178,32 @@ class DomainSecrets(Service):
             capture_output=True, check=False, input=secret
         )
         if setsecret.returncode != 0:
-            raise CallError(f'Failed to set machine account secret: {setsecret.stdout.decode()}')
+            raise CallError(f'Failed to set machine account secret: {setsecret.stderr.decode()}')
 
-        # Ensure we back this info up into our sqlite database as well
-        self.backup()
+        # Record the credential-format version so that systems joined by a build that wrote
+        # this secret incorrectly can be detected and healed after an upgrade.
+        store_secrets_entry(
+            f'{IPA_SMB_CRED_VERSION_KEY}/{domain.upper()}',
+            b64encode(str(IPA_SMB_CRED_VERSION).encode()).decode(), cluster
+        )
+
+    def ipa_cred_version(self, domain):
+        """
+        Return the IPA SMB machine-account credential-format version recorded in
+        secrets.tdb for `domain`, or 0 when no marker is present (which indicates the
+        credential was written by a build predating version tracking and should be
+        regenerated).
+        """
+        cluster = self.middleware.call_sync("smb.config")["stateful_failover"]
+        try:
+            encoded = fetch_secrets_entry(f'{IPA_SMB_CRED_VERSION_KEY}/{domain.upper()}', cluster)
+        except MatchNotFound:
+            return 0
+
+        try:
+            return int(b64decode(encoded).decode())
+        except (ValueError, TypeError):
+            return 0
 
     def set_ldap_idmap_secret(self, domain, user_dn, secret):
         """

@@ -10,6 +10,7 @@ import json
 import logging
 import os
 import struct
+import subprocess
 from base64 import b64encode
 
 import pytest
@@ -19,7 +20,23 @@ from unittest.mock import AsyncMock, MagicMock
 
 from middlewared.plugins.directoryservices_ import secrets as secrets_mod
 from middlewared.plugins.directoryservices_.secrets import DomainSecrets
+from middlewared.service_exception import CallError
 from middlewared.utils.tdb import get_tdb_handle
+
+
+@pytest.fixture
+def secrets_tdb(secrets_service, tmp_path, monkeypatch):
+    """
+    Point the secrets service at a real, empty secrets.tdb in a temp dir and run in
+    non-clustered mode. The tdb is opened O_RDWR without O_CREAT, so it must exist first.
+    """
+    tdb_path = str(tmp_path / 'secrets.tdb')
+    tdb.Tdb(tdb_path, 0, tdb.DEFAULT, os.O_CREAT | os.O_RDWR, 0o600).close()
+    monkeypatch.setattr(
+        secrets_mod, 'SECRETS_TDB_CONFIG', (tdb_path, secrets_mod.SECRETS_TDB_OPTIONS)
+    )
+    secrets_service.middleware.call_sync = MagicMock(return_value={'stateful_failover': False})
+    return secrets_service
 
 
 @pytest.fixture
@@ -163,3 +180,55 @@ def test__get_db_secrets_valid_json_merges_id(secrets_service):
     secrets_service.middleware.call.side_effect = fake_call
 
     assert asyncio.run(secrets_service.get_db_secrets()) == {"id": 7} | blob
+
+
+def test__set_ipa_secret_pipes_raw_password_and_stamps_version(secrets_tdb, monkeypatch):
+    """
+    The IPA <> SMB auth bug: the machine-account password handed to `net changesecretpw`
+    must be the raw bytes that the SMB keytab was derived from -- base64/otherwise encoding
+    it desynchronises secrets.tdb from the keytab and breaks SMB machine authentication.
+    set_ipa_secret must also stamp the credential-format version so systems joined by the
+    broken build can be detected and healed after an upgrade.
+    """
+    captured = {}
+
+    def fake_run(cmd, *args, **kwargs):
+        captured['cmd'] = cmd
+        captured['input'] = kwargs.get('input')
+        return subprocess.CompletedProcess(cmd, 0, stdout=b'', stderr=b'')
+
+    monkeypatch.setattr(secrets_mod.subprocess, 'run', fake_run)
+
+    # Deliberately include characters outside the base64 alphabet to catch any re-encoding.
+    raw_password = b'S0me-R@w_Machine!:;<=>()[]~Pass'
+    secrets_tdb.set_ipa_secret('MYDOMAIN', raw_password)
+
+    assert captured['cmd'][:2] == ['net', 'changesecretpw']
+    assert captured['input'] == raw_password, 'password must be piped to net changesecretpw verbatim'
+
+    # A successful write records the current credential-format version for the domain.
+    assert secrets_tdb.ipa_cred_version('MYDOMAIN') == secrets_mod.IPA_SMB_CRED_VERSION
+
+
+def test__set_ipa_secret_error_reports_stderr(secrets_tdb, monkeypatch):
+    """
+    On failure the raised error must surface `net changesecretpw`'s diagnostics, which it
+    writes to stderr -- reporting stdout (empty on the failure path) left the error blank.
+    """
+    def fake_run(cmd, *args, **kwargs):
+        return subprocess.CompletedProcess(
+            cmd, 1, stdout=b'', stderr=b'net: unable to write machine account password'
+        )
+
+    monkeypatch.setattr(secrets_mod.subprocess, 'run', fake_run)
+
+    with pytest.raises(CallError, match='unable to write machine account password'):
+        secrets_tdb.set_ipa_secret('MYDOMAIN', b'whatever')
+
+
+def test__ipa_cred_version_absent_reads_as_zero(secrets_tdb):
+    """
+    A domain with no recorded credential version -- i.e. one joined before version tracking
+    existed -- must read as 0 so the health check knows to regenerate its SMB credential.
+    """
+    assert secrets_tdb.ipa_cred_version('OLDDOMAIN') == 0
