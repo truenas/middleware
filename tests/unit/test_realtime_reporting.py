@@ -75,7 +75,7 @@ def netdata_metrics():
     with Client(private_methods=True) as c:
         data = c.call("netdata.get_all_metrics")
     if not data:
-        pytest.skip("netdata returned no metrics — service may be down or warming up")
+        pytest.fail("netdata returned no metrics — service may be down or warming up")
     return data
 
 
@@ -187,7 +187,7 @@ def test_interface_empty_inputs_safe():
 
 def test_interface_live_shape(netdata_metrics, interface_names):
     if not interface_names:
-        pytest.skip("no network interfaces reported by interface.query")
+        pytest.fail("no network interfaces reported by interface.query")
     result = get_interface_stats(netdata_metrics, interface_names)
     assert result.keys() == frozenset(interface_names)
     for name, sub in result.items():

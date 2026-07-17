@@ -10,7 +10,7 @@ from auto_config import ha
 @pytest.fixture(scope='module')
 def check_unused_disks():
     if len(call('disk.get_unused')) < 4:
-        pytest.skip('Insufficient number of disks to perform these tests')
+        pytest.fail('Insufficient number of disks to perform these tests')
 
 
 @pytest.fixture(scope='module')

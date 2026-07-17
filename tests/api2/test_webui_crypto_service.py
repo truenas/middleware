@@ -29,7 +29,7 @@ def test_ui_crypto_profiles_readonly_role(role, endpoint, valid_role):
 def test_ui_crypto_domain_names_readonly_role(role, valid_role):
     default_certificate = call('certificate.query', [('name', '=', 'truenas_default')])
     if not default_certificate:
-        pytest.skip('Default certificate does not exist which is required for this test')
+        pytest.fail('Default certificate does not exist which is required for this test')
     else:
         default_certificate = default_certificate[0]
 

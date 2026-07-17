@@ -12,7 +12,7 @@ def rename_test_pool():
     """Create a dedicated pool for rename tests."""
     unused_disks = call("disk.get_unused")
     if len(unused_disks) < 1:
-        pytest.skip("Insufficient number of disks to perform this test")
+        pytest.fail("Insufficient number of disks to perform this test")
 
     with another_pool({"name": POOL_NAME}) as pool:
         yield pool

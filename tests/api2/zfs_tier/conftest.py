@@ -21,11 +21,12 @@ from middlewared.test.integration.utils.system import reset_systemd_svcs
 @pytest.fixture(scope="module")
 def tier_pool():
     """A pool with a SPECIAL vdev, with tiering globally enabled."""
-    unused = call("disk.get_unused")
-    if len(unused) < 6:
-        pytest.skip("Need at least 6 unused disks for a 3+3 RAIDZ1 tier pool")
     if not call("system.is_enterprise"):
         pytest.skip("ZFS tiering requires an Enterprise license")
+
+    unused = call("disk.get_unused")
+    if len(unused) < 6:
+        pytest.fail("Need at least 6 unused disks for a 3+3 RAIDZ1 tier pool")
 
     data_disks = [d["name"] for d in unused[:3]]
     special_disks = [d["name"] for d in unused[3:6]]

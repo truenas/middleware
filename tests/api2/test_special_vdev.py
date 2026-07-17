@@ -15,7 +15,7 @@ def test_multiple_special_vdevs_same_type():
     """
     unused_disks = call('disk.get_unused')
     if len(unused_disks) < 8:
-        pytest.skip('Insufficient number of disks to perform this test')
+        pytest.fail('Insufficient number of disks to perform this test')
 
     with another_pool({
         'name': POOL_NAME,
@@ -50,7 +50,7 @@ def test_special_vdev_mixed_types_is_allowed():
     """
     unused_disks = call('disk.get_unused')
     if len(unused_disks) < 7:
-        pytest.skip('Insufficient number of disks to perform this test')
+        pytest.fail('Insufficient number of disks to perform this test')
 
     with another_pool({
         'name': POOL_NAME,
@@ -84,7 +84,7 @@ def test_special_vdev_draid_is_rejected():
     """
     unused_disks = call('disk.get_unused')
     if len(unused_disks) < 5:
-        pytest.skip('Insufficient number of disks to perform this test')
+        pytest.fail('Insufficient number of disks to perform this test')
 
     with pytest.raises(ValidationErrors) as ve:
         call('pool.create', {
@@ -114,7 +114,7 @@ def test_non_redundant_special_on_redundant_data_is_rejected():
     """
     unused_disks = call('disk.get_unused')
     if len(unused_disks) < 3:
-        pytest.skip('Insufficient number of disks to perform this test')
+        pytest.fail('Insufficient number of disks to perform this test')
 
     with pytest.raises(ValidationErrors) as ve:
         call('pool.create', {
@@ -143,7 +143,7 @@ def test_non_redundant_special_on_striped_data_is_allowed():
     """
     unused_disks = call('disk.get_unused')
     if len(unused_disks) < 2:
-        pytest.skip('Insufficient number of disks to perform this test')
+        pytest.fail('Insufficient number of disks to perform this test')
 
     with another_pool({
         'name': POOL_NAME,
@@ -169,7 +169,7 @@ def test_dedicated_spares_coexist_with_draid_data():
     """
     unused_disks = call('disk.get_unused')
     if len(unused_disks) < 4:
-        pytest.skip('Insufficient number of disks to perform this test')
+        pytest.fail('Insufficient number of disks to perform this test')
 
     with another_pool({
         'name': POOL_NAME,
