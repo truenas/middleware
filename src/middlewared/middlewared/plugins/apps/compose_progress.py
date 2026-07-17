@@ -93,8 +93,9 @@ class ComposeProgressTracker:
     def flush(self) -> None:
         """Emit the current state, bypassing throttling. Call after the event stream ends so the
         final events, which usually land within the throttle interval of the previous emission,
-        are not lost."""
-        self._emit(force=True)
+        are not lost. Marks the resource set complete so the last resources are no longer held
+        back for undiscovered ones."""
+        self._emit(force=True, final=True)
 
     def _feed_layer(self, image_id: str, layer_id: str, event: dict[str, typing.Any]) -> None:
         image = self.images.setdefault(image_id, _ImageState())
@@ -155,10 +156,20 @@ class ComposeProgressTracker:
             return 0.0
         return sum(map(self._image_fraction, self.images.values())) / len(self.images)
 
-    def _compute(self) -> tuple[float, str]:
+    def _resources_fraction(self, final: bool) -> float:
+        if not self.resources:
+            return 0.0
+        # Resource ids are discovered as their events arrive, and compose creates the network
+        # before any container - so the network completing alone would read as 1/1 and peg the
+        # fraction at 100% while the slow container recreate is still running. Until the event
+        # stream ends (final), reserve room for at least one resource still to be discovered.
+        denominator = len(self.resources) if final else len(self.resources) + 1
+        return sum(self.resources.values()) / denominator
+
+    def _compute(self, final: bool = False) -> tuple[float, str]:
         pull_fraction = self._pull_fraction()
         if self.resources_expected:
-            resources_fraction = sum(self.resources.values()) / len(self.resources) if self.resources else 0.0
+            resources_fraction = self._resources_fraction(final)
             if self.images:
                 fraction = (
                     PULL_PORTION_WITH_RESOURCES * pull_fraction + (1 - PULL_PORTION_WITH_RESOURCES) * resources_fraction
@@ -183,8 +194,8 @@ class ComposeProgressTracker:
 
         return fraction, description
 
-    def _emit(self, force: bool = False) -> None:
-        fraction, description = self._compute()
+    def _emit(self, force: bool = False, final: bool = False) -> None:
+        fraction, description = self._compute(final)
         fraction = self._max_fraction = max(fraction, self._max_fraction)
         now = time.monotonic()
         if self._last_emitted == (fraction, description) or (

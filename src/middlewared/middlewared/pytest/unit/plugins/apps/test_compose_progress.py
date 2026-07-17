@@ -87,18 +87,47 @@ def test_up_reserves_progress_for_resources():
 
     fractions = [fraction for fraction, _ in emitted]
     assert fractions == sorted(fractions), fractions
-    assert fractions[-1] == 1.0
+    # The reserved band climbs but does not collapse to 100% while containers are still deploying
+    assert 0.9 < emitted[-1][0] < 1.0
     assert emitted[-1][1] == "Started Container myapp-web-1"
 
+    tracker.flush()
+    assert emitted[-1][0] == 1.0
 
-def test_up_without_pull_tracks_resources_at_full_weight():
+
+def test_up_without_pull_does_not_peg_at_network_creation():
+    # Real compose ordering for a config-only update: no image events (image already present),
+    # the network is created before the container, then the container is recreated and started.
     tracker, emitted = make_tracker(resources_expected=True)
-    # All images already present: compose emits no image events at all
-    feed(tracker, {"id": "Container myapp-web-1", "status": "Working", "text": "Creating"})
-    feed(tracker, {"id": "Container myapp-db-1", "status": "Working", "text": "Creating"})
+    feed(tracker, {"id": "Network myapp_default", "status": "Working", "text": "Creating"})
+    feed(tracker, {"id": "Network myapp_default", "status": "Done", "text": "Created"})
+    # The network finishing must not read as 100% - the slow container recreate is still to come
+    assert emitted[-1][0] < 1.0
+    feed(tracker, {"id": "Container myapp-web-1", "status": "Working", "text": "Recreate"})
     feed(tracker, {"id": "Container myapp-web-1", "status": "Done", "text": "Created"})
-    assert emitted[-1][0] == pytest.approx(0.5)
+    feed(tracker, {"id": "Container myapp-web-1", "status": "Working", "text": "Starting"})
+    feed(tracker, {"id": "Container myapp-web-1", "status": "Done", "text": "Started"})
+
+    fractions = [fraction for fraction, _ in emitted]
+    assert fractions == sorted(fractions), fractions
+    assert emitted[-1][0] < 1.0
+    tracker.flush()
+    assert emitted[-1][0] == 1.0
+
+
+def test_up_multi_container_progresses_incrementally():
+    # The first container to finish must not read as 100% while another is still pending
+    tracker, emitted = make_tracker(resources_expected=True)
+    feed(tracker, {"id": "Network myapp_default", "status": "Done", "text": "Created"})
+    feed(tracker, {"id": "Container myapp-web-1", "status": "Done", "text": "Created"})
+    after_first = emitted[-1][0]
+    assert after_first < 1.0
     feed(tracker, {"id": "Container myapp-db-1", "status": "Done", "text": "Created"})
+    fractions = [fraction for fraction, _ in emitted]
+    assert fractions == sorted(fractions), fractions
+    assert emitted[-1][0] > after_first
+    assert emitted[-1][0] < 1.0
+    tracker.flush()
     assert emitted[-1][0] == 1.0
 
 
