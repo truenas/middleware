@@ -95,46 +95,41 @@ def test_up_reserves_progress_for_resources():
     assert emitted[-1][0] == 1.0
 
 
-def test_up_without_pull_does_not_peg_at_network_creation():
+def test_up_without_pull_progresses_incrementally():
     # Real compose ordering for a config-only update: no image events (image already present),
-    # the network is created before the container, then the container is recreated and started.
+    # the network is created before the containers, which are then recreated and started.
     tracker, emitted = make_tracker(resources_expected=True)
     feed(tracker, {"id": "Network myapp_default", "status": "Working", "text": "Creating"})
     feed(tracker, {"id": "Network myapp_default", "status": "Done", "text": "Created"})
-    # The network finishing must not read as 100% - the slow container recreate is still to come
-    assert emitted[-1][0] < 1.0
+    # The network finishing must not read as 100% - the slow container recreates are still to come
+    after_network = emitted[-1][0]
+    assert after_network < 1.0
     feed(tracker, {"id": "Container myapp-web-1", "status": "Working", "text": "Recreate"})
     feed(tracker, {"id": "Container myapp-web-1", "status": "Done", "text": "Created"})
     feed(tracker, {"id": "Container myapp-web-1", "status": "Working", "text": "Starting"})
     feed(tracker, {"id": "Container myapp-web-1", "status": "Done", "text": "Started"})
-
-    fractions = [fraction for fraction, _ in emitted]
-    assert fractions == sorted(fractions), fractions
-    assert emitted[-1][0] < 1.0
-    tracker.flush()
-    assert emitted[-1][0] == 1.0
-
-
-def test_up_multi_container_progresses_incrementally():
-    # The first container to finish must not read as 100% while another is still pending
-    tracker, emitted = make_tracker(resources_expected=True)
-    feed(tracker, {"id": "Network myapp_default", "status": "Done", "text": "Created"})
-    feed(tracker, {"id": "Container myapp-web-1", "status": "Done", "text": "Created"})
+    # The first container finishing advances progress but must not read as 100%
+    # while another is still pending
     after_first = emitted[-1][0]
-    assert after_first < 1.0
+    assert after_network < after_first < 1.0
     feed(tracker, {"id": "Container myapp-db-1", "status": "Done", "text": "Created"})
+
     fractions = [fraction for fraction, _ in emitted]
     assert fractions == sorted(fractions), fractions
-    assert emitted[-1][0] > after_first
-    assert emitted[-1][0] < 1.0
+    assert after_first < emitted[-1][0] < 1.0
     tracker.flush()
     assert emitted[-1][0] == 1.0
 
 
-def test_cached_layers_pull_completes():
+def test_cached_layers_count_as_complete():
+    # Mixed pull: one layer already present locally, one still downloading. The cached layer
+    # must count as complete (weighted as average-sized, its size is never announced), not as
+    # not-started.
     tracker, emitted = make_tracker(resources_expected=False)
-    feed(tracker, {"id": IMAGE, "status": "Working", "text": "Pulling"})
     feed(tracker, layer_event("aaa", "Already exists", status="Done"))
+    feed(tracker, layer_event("bbb", "Downloading", 0, 1000))
+    assert emitted[-1][0] == pytest.approx(0.5)
+    feed(tracker, layer_event("bbb", "Pull complete", status="Done"))
     feed(tracker, {"id": IMAGE, "status": "Done", "text": "Pulled"})
     assert emitted[-1][0] == 1.0
 
