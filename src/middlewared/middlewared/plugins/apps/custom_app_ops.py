@@ -72,6 +72,7 @@ def create_custom_app(
         compose_action(
             app_name, version, 'up', force_recreate=True, remove_orphans=True,
             progress_callback=lambda fraction, description: update_progress(60 + int(35 * fraction), description),
+            job=job,
         )
     except Exception as e:
         assert job.logs_fd is not None

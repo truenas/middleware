@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import contextlib
 import logging
 import os
@@ -114,7 +115,14 @@ async def upgrade_bulk(
 
 
 async def upgrade_app(context: ServiceContext, job: Job, app_name: str, options: AppUpgradeOptions) -> AppEntry:
-    app_instance = await job.wrap(await context.call2(context.s.app.upgrade_impl, app_name, options))
+    upgrade_job = await context.call2(context.s.app.upgrade_impl, app_name, options)
+    try:
+        app_instance = await job.wrap(upgrade_job)
+    except asyncio.CancelledError:
+        # Aborting this job only cancels the wrapping coroutine; forward the abort to the child
+        # job actually performing the upgrade instead of letting it run to completion unobserved
+        upgrade_job.abort()
+        raise
     if app_instance.upgrade_available is False or app_instance.custom_app:
         # Refresh alerts when app reached latest version (remove from upgrade list) or
         # for custom apps where upgrade_available may not reflect image update status.
@@ -213,7 +221,7 @@ def upgrade_impl(context: ServiceContext, job: Job, app_name: str, options: AppU
     try:
         compose_action(
             app_name, upgrade_version['version'], 'up', force_recreate=True, remove_orphans=True, pull_images=True,
-            progress_callback=band_progress(job, 50, 99),
+            progress_callback=band_progress(job, 50, 99), job=job,
         )
     finally:
         context.call_sync2(context.s.app.metadata_generate).wait_sync(raise_error=True)

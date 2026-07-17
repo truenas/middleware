@@ -200,7 +200,7 @@ class AppService(GenericCRUDService[AppEntry, str]):
         roles=['APPS_WRITE'],
         check_annotations=True,
     )
-    @job(lock=lambda args: f'app_create_{args[0].get("app_name")}', logs=True)
+    @job(lock=lambda args: f'app_create_{args[0].get("app_name")}', logs=True, abortable=True)
     def do_create(self, job: Job, data: AppCreate) -> AppEntry:
         """Create an app with ``app_name`` using ``catalog_app`` with ``train`` and ``version``."""
         return create_app(self.context, job, data)
@@ -212,7 +212,7 @@ class AppService(GenericCRUDService[AppEntry, str]):
         roles=['APPS_WRITE'],
         check_annotations=True,
     )
-    @job(lock=lambda args: f'app_update_{args[0]}')
+    @job(lock=lambda args: f'app_update_{args[0]}', abortable=True)
     def do_update(self, job: Job, app_name: str, data: AppUpdate) -> AppEntry:
         """Update ``app_name`` app with new configuration."""
         return update_app(self.context, job, app_name, data)
@@ -376,7 +376,7 @@ class AppService(GenericCRUDService[AppEntry, str]):
         roles=['APPS_WRITE'],
         check_annotations=True,
     )
-    @job(lock=lambda args: f'pull_images_{args[0]}')
+    @job(lock=lambda args: f'pull_images_{args[0]}', abortable=True)
     def pull_images(self, job: Job, app_name: str, options: AppPullImages) -> None:
         """Pulls docker images for the specified app ``name``."""
         return pull_images_for_app(self.context, job, app_name, options)
@@ -388,7 +388,7 @@ class AppService(GenericCRUDService[AppEntry, str]):
         roles=['APPS_WRITE'],
         check_annotations=True,
     )
-    @job(lock=lambda args: f'app_redeploy_{args[0]}')
+    @job(lock=lambda args: f'app_redeploy_{args[0]}', abortable=True)
     def redeploy(self, job: Job, app_name: str) -> AppEntry:
         """Redeploy ``app_name`` app."""
         return redeploy_app(self.context, job, app_name)
@@ -445,7 +445,7 @@ class AppService(GenericCRUDService[AppEntry, str]):
         roles=['APPS_WRITE'],
         check_annotations=True,
     )
-    @job(lock=lambda args: f'app_upgrade_{args[0]}')
+    @job(lock=lambda args: f'app_upgrade_{args[0]}', abortable=True)
     async def upgrade(self, job: Job, app_name: str, options: AppUpgradeOptions) -> AppEntry:
         """
         Upgrade ``app_name`` app to ``app_version``.

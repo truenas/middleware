@@ -5,10 +5,12 @@ import os
 import signal
 import subprocess
 import threading
+import time
 from typing import IO, TYPE_CHECKING, Any, Callable, TypeVar, cast
 
 from middlewared.api.base import BaseModel
 from middlewared.api.current import AppEntry, AppUpgradeSummary
+from middlewared.job import JobCancelledException
 from middlewared.plugins.docker.state_utils import (
     IX_APPS_MOUNT_PATH as IX_APPS_MOUNT_PATH,
 )
@@ -93,48 +95,31 @@ def run_streaming(
     line_callback: Callable[[str], None],
     timeout: int = 60,
     env: dict[str, str] | None = None,
+    job: Job | None = None,
 ) -> subprocess.CompletedProcess[str]:
     """
     Like `run`, but invokes `line_callback` with each line of stderr as it is produced
-    instead of buffering output until the process exits.
+    instead of buffering output until the process exits. If `job` is given, aborting it
+    kills the process and raises `JobCancelledException`.
     """
-    # Run in its own session so the timeout can signal the whole process group. `docker compose`
+    # Run in its own session so timeout/abort can signal the whole process group. `docker compose`
     # spawns the compose plugin as a child, and killing only the direct process would orphan it,
-    # leaving it holding the stderr pipe open and blocking the readline loop below past the timeout.
+    # leaving it running and holding the output pipes open past the timeout.
     proc = subprocess.Popen(
         args, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
         encoding='utf8', errors='ignore', env=env or dict(os.environ), start_new_session=True,
     )
     stdout_lines: list[str] = []
     stderr_lines: list[str] = []
-    timed_out = False
 
-    def drain_stdout() -> None:
+    def read_stdout() -> None:
         assert proc.stdout is not None
         for line in proc.stdout:
             stdout_lines.append(line)
 
-    def kill_process_group() -> None:
-        try:
-            os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
-        except ProcessLookupError:
-            pass
-
-    def on_timeout() -> None:
-        nonlocal timed_out
-        if proc.poll() is None:
-            # Written here before the kill and read in the finally block below. The kill is what
-            # ends the readline loop (EOF), which happens-before that read, so no lock is needed.
-            timed_out = True
-            kill_process_group()
-
-    drain_thread = threading.Thread(target=drain_stdout, daemon=True)
-    drain_thread.start()
-    timer = threading.Timer(timeout, on_timeout)
-    timer.start()
-    callback_usable = True
-    try:
+    def read_stderr() -> None:
         assert proc.stderr is not None
+        callback_usable = True
         # iter(readline) instead of direct file iteration: the latter's read-ahead buffering
         # would deliver lines in large batches, defeating real-time streaming
         for line in iter(proc.stderr.readline, ''):
@@ -145,15 +130,36 @@ def run_streaming(
                 except Exception:
                     logger.warning('%r: line callback failed, output streaming disabled', args[0], exc_info=True)
                     callback_usable = False
-    finally:
-        timer.cancel()
-        # Reap in finally so an unexpected error in the read loop cannot leave the child (and its
-        # process group) running; kill first if it somehow outlived the loop without timing out.
-        if proc.poll() is None:
-            kill_process_group()
-        proc.wait()
-        drain_thread.join(timeout=10)
 
+    def kill_process_group() -> None:
+        try:
+            os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+
+    readers = [threading.Thread(target=read_stdout, daemon=True), threading.Thread(target=read_stderr, daemon=True)]
+    for reader in readers:
+        reader.start()
+
+    abort_event = job.aborted_event if job is not None else threading.Event()
+    deadline = time.monotonic() + timeout
+    aborted = timed_out = False
+    while proc.poll() is None:
+        if abort_event.wait(timeout=0.2):
+            aborted = True
+            kill_process_group()
+            break
+        if time.monotonic() > deadline:
+            timed_out = True
+            kill_process_group()
+            break
+
+    proc.wait()
+    for reader in readers:
+        reader.join(timeout=10)
+
+    if aborted:
+        raise JobCancelledException()
     if timed_out:
         return subprocess.CompletedProcess(args, -1, stdout='', stderr='Timed out waiting for response')
 

@@ -213,7 +213,7 @@ def create_internal(
         if dry_run is False:
             compose_action(
                 app_name, version, 'up', force_recreate=True, remove_orphans=True,
-                progress_callback=band_progress(job, 60, 95),
+                progress_callback=band_progress(job, 60, 95), job=job,
             )
     except Exception as e:
         job.set_progress(80, f'Failure occurred while installing {app_name!r}, cleaning up')
@@ -274,7 +274,7 @@ def update_internal(
         job.set_progress(70, 'Updating docker resources')
         compose_action(
             app_name, app.version, 'up', force_recreate=True, remove_orphans=True,
-            progress_callback=band_progress(job, 70, 99),
+            progress_callback=band_progress(job, 70, 99), job=job,
         )
 
     job.set_progress(100, f'{progress_keyword} completed for {app_name!r}')

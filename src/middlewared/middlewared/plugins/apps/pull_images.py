@@ -38,7 +38,7 @@ def pull_images_internal(
         job.set_progress(20, 'Pulling app images')
         progress_callback = band_progress(job, 20, 75 if options.redeploy else 99)
 
-    compose_action(app_name, app.version, action='pull', progress_callback=progress_callback)
+    compose_action(app_name, app.version, action='pull', progress_callback=progress_callback, job=job)
     if job is not None:
         job.set_progress(80 if options.redeploy else 100, 'Images pulled successfully')
 
