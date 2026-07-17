@@ -124,3 +124,50 @@ def test_ipa_config_recover(do_freeipa_connection):
     call('directoryservices.health.recover')
     st = call('directoryservices.status')
     assert st['status'] == 'HEALTHY'
+
+
+def test_smb_machine_cred_version_stamped(do_freeipa_connection):
+    """ A completed IPA join must stamp the SMB machine-account credential with a non-zero
+    format version. A missing marker (version 0) is exactly what flags a credential written
+    by an affected build for regeneration, so a fresh, correct join must never look
+    un-stamped. """
+    smb_domain = do_freeipa_connection['config']['configuration']['smb_domain']
+    assert smb_domain, 'IPA domain with SMB support should expose smb_domain config'
+
+    version = call('directoryservices.secrets.ipa_cred_version', smb_domain['name'])
+    assert version > 0, f'SMB machine-account credential was not version-stamped (got {version})'
+
+
+def test_smb_machine_cred_health_check_is_clean(do_freeipa_connection):
+    """ The IPA health check now regenerates the SMB machine-account credential in place
+    when it predates the current format. On an already-current system it must be a no-op:
+    the check passes, the domain stays healthy and the credential stays stamped. """
+    call('directoryservices.health.check')
+
+    st = call('directoryservices.status')
+    assert st['status'] == 'HEALTHY'
+
+    smb_domain = do_freeipa_connection['config']['configuration']['smb_domain']
+    assert call('directoryservices.secrets.ipa_cred_version', smb_domain['name']) > 0
+
+
+def test_ipa_smb_spn_recovery(do_freeipa_connection):
+    """ Explicitly regenerate the IPA SMB machine account -- the recovery action that heals
+    systems joined by an affected build -- and confirm the result is functional. It runs on
+    the host credential alone (no administrator credential); afterwards the SMB keytab is
+    present, the credential is re-stamped, the domain is healthy, and the regenerated
+    machine account authenticates a secure channel to the IPA domain. """
+    smb_domain = do_freeipa_connection['config']['configuration']['smb_domain']
+    assert smb_domain, 'IPA domain with SMB support should expose smb_domain config'
+
+    call('directoryservices.connection.ipa_smb_recover_machine_account')
+
+    call('kerberos.keytab.query', [['name', '=', 'IPA_SMB_KEYTAB']], {'get': True})
+    assert call('directoryservices.secrets.ipa_cred_version', smb_domain['name']) > 0
+
+    call('directoryservices.health.check')
+    assert call('directoryservices.status')['status'] == 'HEALTHY'
+
+    # Secure channel using the regenerated machine-account secret in secrets.tdb.
+    # ssh(check=True) fails the test if wbinfo returns non-zero.
+    ssh('wbinfo -t')
