@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import os
+import signal
 import subprocess
 import threading
 from typing import IO, TYPE_CHECKING, Any, Callable, TypeVar, cast
@@ -97,9 +98,12 @@ def run_streaming(
     Like `run`, but invokes `line_callback` with each line of stderr as it is produced
     instead of buffering output until the process exits.
     """
+    # Run in its own session so the timeout can signal the whole process group. `docker compose`
+    # spawns the compose plugin as a child, and killing only the direct process would orphan it,
+    # leaving it holding the stderr pipe open and blocking the readline loop below past the timeout.
     proc = subprocess.Popen(
         args, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-        encoding='utf8', errors='ignore', env=env or dict(os.environ),
+        encoding='utf8', errors='ignore', env=env or dict(os.environ), start_new_session=True,
     )
     stdout_lines: list[str] = []
     stderr_lines: list[str] = []
@@ -114,7 +118,10 @@ def run_streaming(
         nonlocal timed_out
         if proc.poll() is None:
             timed_out = True
-            proc.kill()
+            try:
+                os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+            except ProcessLookupError:
+                pass
 
     drain_thread = threading.Thread(target=drain_stdout, daemon=True)
     drain_thread.start()
