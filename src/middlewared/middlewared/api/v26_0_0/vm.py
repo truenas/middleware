@@ -193,7 +193,12 @@ class VMUpdateResult(BaseModel):
 
 class VMDeleteOptions(BaseModel):
     zvols: bool = Field(default=False, description="Delete associated ZFS volumes when deleting the VM.")
-    force: bool = Field(default=False, description="Force deletion even if the VM is currently running.")
+    force: bool = Field(
+        default=False,
+        description="Delete a running or suspended VM by stopping it first. Without this, deleting an active VM is "
+                    "rejected. Also causes failures to destroy associated ZFS volumes to be logged and ignored rather "
+                    "than aborting the deletion."
+    )
 
 
 class VMDeleteArgs(BaseModel):

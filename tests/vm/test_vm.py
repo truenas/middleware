@@ -144,7 +144,7 @@ def ubuntu_vm(ubuntu_image_snapshot, options=None):
 
             yield {**vm, "ip": ip_address}
         finally:
-            call("vm.delete", vm["id"])
+            call("vm.delete", vm["id"], {"force": True})
     finally:
         call("pool.dataset.delete", dataset)
 
