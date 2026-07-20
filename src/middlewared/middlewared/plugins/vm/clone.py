@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import errno
-import itertools
 import re
 import typing
 import uuid
 
 from middlewared.api.current import (
     VMCreate,
+    VMDeleteOptions,
     VMDeviceCreate,
     VMDeviceEntry,
     ZFSResourceQuery,
@@ -21,7 +21,7 @@ from middlewared.service import CallError, ServiceContext
 from middlewared.service_exception import ValidationErrors
 from middlewared.utils.libvirt.nic import NICDelegate
 
-from .utils import copy_vm_state, delete_vm_state, vm_state_missing_sources
+from .utils import copy_vm_state, vm_state_missing_sources
 
 if typing.TYPE_CHECKING:
     from middlewared.utils.types import AuditCallback
@@ -135,7 +135,6 @@ async def clone_vm(context: ServiceContext, id_: int, name: str | None, *, audit
 
     created_snaps: list[str] = []
     created_clones: list[str] = []
-    state_copied = False
     new_vm = None
     try:
         new_vm = await context.call2(context.s.vm.create, create_data)
@@ -154,7 +153,6 @@ async def clone_vm(context: ServiceContext, id_: int, name: str | None, *, audit
                 f'Failed to copy VM state for {vm.name!r} -> {new_vm.name!r}: '
                 f'{oe.strerror or oe} (errno={oe.errno}).'
             ) from oe
-        state_copied = True
 
         missing = await context.to_thread(
             vm_state_missing_sources, vm.id, vm.name,
@@ -190,32 +188,38 @@ async def clone_vm(context: ServiceContext, id_: int, name: str | None, *, audit
                 continue
 
             await context.call2(context.s.vm.device.create, VMDeviceCreate.model_validate(device_dict))
-    except Exception as e:
-        for clone, snap in itertools.zip_longest(reversed(created_clones), reversed(created_snaps)):
-            if clone is not None:
-                try:
-                    context.call_sync2(context.s.zfs.resource.destroy_impl, clone)
-                except Exception:
-                    context.logger.exception('Failed to destroy cloned zvol %r', clone)
-                    continue
-                else:
-                    if snap is not None:
-                        try:
-                            await context.call2(
-                                context.s.zfs.resource.snapshot.destroy_impl,
-                                ZFSResourceSnapshotDestroyQuery(path=snap),
-                            )
-                        except Exception:
-                            context.logger.exception('Failed to destroy snapshot %r for zvol %r', snap, clone)
-        if state_copied and new_vm is not None:
+    except Exception:
+        # Destroy clones before their origin snapshots: a clone pins the snapshot it
+        # was created from, so the snapshot can only be removed once every clone is gone.
+        # The two lists can differ in length if _clone_zvol failed between creating the
+        # snapshot and the clone, so unwinding them separately.
+        for clone in reversed(created_clones):
             try:
-                await context.to_thread(delete_vm_state, new_vm.id, new_vm.name)
+                await context.call2(context.s.zfs.resource.destroy_impl, clone)
+            except Exception:
+                context.logger.exception('clone rollback: failed to destroy cloned zvol %r', clone)
+        for snap in reversed(created_snaps):
+            try:
+                await context.call2(
+                    context.s.zfs.resource.snapshot.destroy_impl,
+                    ZFSResourceSnapshotDestroyQuery(path=snap),
+                )
+            except Exception:
+                context.logger.exception('clone rollback: failed to destroy snapshot %r', snap)
+        if new_vm is not None:
+            # Remove the partially-created VM: its datastore row, any device rows already
+            # created, and copied NVRAM/TPM state. zvols=False since the clone datasets are
+            # handled above; force=True skips the running-VM guard (it was never started).
+            try:
+                await context.call2(
+                    context.s.vm.delete, new_vm.id, VMDeleteOptions(zvols=False, force=True),
+                )
             except Exception:
                 context.logger.error(
-                    '%s: failed to clean up cloned NVRAM/TPM state after clone failure',
+                    '%s: clone rollback failed to remove partially-created VM record',
                     new_vm.name, exc_info=True,
                 )
-        raise e
+        raise
 
     context.logger.info('VM cloned from %r to %r', origin_name, clone_name)
     return True

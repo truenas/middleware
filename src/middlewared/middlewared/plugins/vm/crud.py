@@ -249,6 +249,21 @@ class VMServicePart(CRUDServicePart[VMEntry]):
         vm = self.get_instance__sync(id_)
         audit_callback(vm.name)
 
+        if vm.status.state in ACTIVE_STATES and not data.force:
+            raise CallError(
+                f'{vm.name!r} is {vm.status.state.lower()}; stop the VM first or pass force to delete it.',
+                errno.EBUSY,
+            )
+
+        # Stop and undefine the domain before destroying any backing zvols so qemu
+        # releases the block devices first; destroying a zvol under a live domain
+        # risks guest corruption and fails with EBUSY.
+        pylibvirt_vm_obj = pylibvirt_vm(self, vm.model_dump(expose_secrets=True))
+        try:
+            self.middleware.libvirt_domains_manager.vms.delete(pylibvirt_vm_obj)
+        except DomainDoesNotExistError:
+            pass
+
         if data.zvols:
             disk_devices = self.call_sync2(
                 self.s.vm.device.query,
@@ -270,12 +285,6 @@ class VMServicePart(CRUDServicePart[VMEntry]):
                     self.logger.error(
                         'Failed to delete %r volume when removing %r VM', disk_name, vm.name, exc_info=True
                     )
-
-        pylibvirt_vm_obj = pylibvirt_vm(self, vm.model_dump(expose_secrets=True))
-        try:
-            self.middleware.libvirt_domains_manager.vms.delete(pylibvirt_vm_obj)
-        except DomainDoesNotExistError:
-            pass
 
         for device in vm.devices:
             self.call_sync2(self.s.vm.device.delete, device.id, VMDeviceDeleteOptions(force=False))
