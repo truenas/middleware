@@ -6,7 +6,7 @@ import typing
 
 from truenas_pylibvirt import VmBootloader, VmCpuMode
 
-from middlewared.api.current import QueryOptions, VMStartOptions, VMStopOptions
+from middlewared.api.current import QueryOptions, VMEntry, VMStartOptions, VMStopOptions
 from middlewared.service import CallError, ServiceContext
 from middlewared.utils.libvirt.utils import ACTIVE_STATES
 
@@ -40,7 +40,7 @@ def start_vm(context: ServiceContext, id_: int, options: VMStartOptions) -> None
 
     # Start the VM using pylibvirt
     context.middleware.libvirt_domains_manager.vms.start(
-        pylibvirt_vm(context, vm.model_dump(expose_secrets=True), options.model_dump())
+        pylibvirt_vm(context, vm, options)
     )
 
     # Reload HTTP service for display device changes
@@ -49,7 +49,7 @@ def start_vm(context: ServiceContext, id_: int, options: VMStartOptions) -> None
 
 def stop_vm(context: ServiceContext, id_: int, options: VMStopOptions) -> None:
     vm = context.call_sync2(context.s.vm.get_instance, id_)
-    libvirt_domain = pylibvirt_vm(context, vm.model_dump(expose_secrets=True))
+    libvirt_domain = pylibvirt_vm(context, vm)
     if options.force:
         context.middleware.libvirt_domains_manager.vms.destroy(libvirt_domain)
         return
@@ -65,21 +65,21 @@ def stop_vm(context: ServiceContext, id_: int, options: VMStopOptions) -> None:
 def poweroff_vm(context: ServiceContext, id_: int) -> None:
     vm = context.call_sync2(context.s.vm.get_instance, id_)
     context.middleware.libvirt_domains_manager.vms.destroy(
-        pylibvirt_vm(context, vm.model_dump(expose_secrets=True))
+        pylibvirt_vm(context, vm)
     )
 
 
 def suspend_vm(context: ServiceContext, id_: int) -> None:
     vm = context.call_sync2(context.s.vm.get_instance, id_)
     context.middleware.libvirt_domains_manager.vms.suspend(
-        pylibvirt_vm(context, vm.model_dump(expose_secrets=True))
+        pylibvirt_vm(context, vm)
     )
 
 
 def resume_vm(context: ServiceContext, id_: int) -> None:
     vm = context.call_sync2(context.s.vm.get_instance, id_)
     context.middleware.libvirt_domains_manager.vms.resume(
-        pylibvirt_vm(context, vm.model_dump(expose_secrets=True))
+        pylibvirt_vm(context, vm)
     )
 
 
@@ -94,27 +94,31 @@ def restart_vm(context: ServiceContext, id_: int) -> None:
 
 
 def pylibvirt_vm(
-    context: ServiceContext, vm: dict[str, typing.Any], start_config: dict[str, typing.Any] | None = None,
+    context: ServiceContext, vm: VMEntry, start_config: VMStartOptions | None = None,
 ) -> VmDomain:
-    vm = vm.copy()
-    vm.pop('display_available', None)
-    vm.pop('status', None)
-    vm.pop('autostart', None)
+    data = vm.model_dump(expose_secrets=True)
+    data.pop('display_available', None)
+    data.pop('status', None)
+    data.pop('autostart', None)
 
     device_factory = context.s.vm.device.device_factory
     devices = []
-    for device in sorted(vm.get('devices', []), key=lambda x: (x['order'], x['id'])):
+    for device in sorted(data.get('devices', []), key=lambda x: (x['order'], x['id'])):
         devices.append(device_factory.get_device(device))
 
-    vm.update({
-        'bootloader': VmBootloader(vm['bootloader']),
-        'cpu_mode': VmCpuMode(vm['cpu_mode']),
-        'nvram_path': os.path.join(SYSTEM_NVRAM_FOLDER_PATH, get_vm_nvram_file_name(vm['id'], vm['name'])),
-        'tpm_path': os.path.join(SYSTEM_TPM_FOLDER_PATH, get_vm_tpm_state_dir_name(vm['id'], vm['name'])),
+    data.update({
+        'bootloader': VmBootloader(data['bootloader']),
+        'cpu_mode': VmCpuMode(data['cpu_mode']),
+        'nvram_path': os.path.join(SYSTEM_NVRAM_FOLDER_PATH, get_vm_nvram_file_name(data['id'], data['name'])),
+        'tpm_path': os.path.join(SYSTEM_TPM_FOLDER_PATH, get_vm_tpm_state_dir_name(data['id'], data['name'])),
         'devices': devices,
     })
 
-    return VmDomain(VmDomainConfiguration(**vm), context.middleware, start_config)
+    return VmDomain(
+        VmDomainConfiguration(**data),
+        context.middleware,
+        start_config.model_dump() if start_config is not None else None,
+    )
 
 
 def resume_suspended_vms(context: ServiceContext, vm_ids: list[int]) -> None:

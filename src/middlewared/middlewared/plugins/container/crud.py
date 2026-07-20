@@ -97,21 +97,41 @@ class ContainerServicePart(CRUDServicePart[ContainerEntry]):
 
     def extend_context_sync(self, rows: list[dict[str, Any]], extra: dict[str, Any]) -> dict[str, Any]:
         return {
+            'devices': self.devices_by_container(rows),
             'states': gather_pylibvirt_domains_states(
                 self.middleware,
                 rows,
                 self.middleware.libvirt_domains_manager.containers_connection,
-                lambda container: pylibvirt_container(self, self.extend_container(container)),
+                lambda container: pylibvirt_container(self, self.state_entry(container)),
             ),
             'bridge_name': container_bridge_name(self),
         }
 
-    async def extend(self, data: dict[str, Any], context: dict[str, Any]) -> dict[str, Any]:
-        devices = await self.call2(
+    def devices_by_container(self, rows: list[dict[str, Any]]) -> dict[int, list[Any]]:
+        devices_by_container: dict[int, list[Any]] = {}
+        if not rows:
+            return devices_by_container
+
+        for device in self.call_sync2(
             self.s.container.device.query,
-            [('container', '=', data['id'])],
+            [['container', 'in', [row['id'] for row in rows]]],
             QueryOptions(force_sql_filters=True),
-        )
+        ):
+            devices_by_container.setdefault(device.container, []).append(device)
+
+        return devices_by_container
+
+    def state_entry(self, row: dict[str, Any]) -> ContainerEntry:
+        # State gathering only reads the container's identity to find its libvirt domain, so
+        # the runtime-only fields are filled with placeholders just to satisfy the model.
+        return ContainerEntry(**{
+            **self.extend_container(dict(row)),
+            'devices': [],
+            'status': {'state': 'STOPPED', 'pid': None, 'domain_state': None},
+        })
+
+    async def extend(self, data: dict[str, Any], context: dict[str, Any]) -> dict[str, Any]:
+        devices = context['devices'].get(data['id'], [])
         has_nic = any(d.attributes.dtype == 'NIC' for d in devices)
 
         data.update({
@@ -257,7 +277,7 @@ class ContainerServicePart(CRUDServicePart[ContainerEntry]):
         self.middleware.call_sync('etc.generate', 'libvirt_guests')
 
     def delete_container_from_db_and_libvirt(self, container: ContainerEntry) -> None:
-        pylibvirt_container_obj = pylibvirt_container(self, container.model_dump())
+        pylibvirt_container_obj = pylibvirt_container(self, container)
         try:
             self.middleware.libvirt_domains_manager.containers.delete(pylibvirt_container_obj)
         except DomainDoesNotExistError:

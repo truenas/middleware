@@ -15,7 +15,7 @@ from truenas_pylibvirt import (
     Time,
 )
 
-from middlewared.api.current import ContainerStopOptions, QueryOptions, ZFSResourceQuery
+from middlewared.api.current import ContainerEntry, ContainerStopOptions, QueryOptions, ZFSResourceQuery
 from middlewared.plugins.account_.constants import CONTAINER_ROOT_UID, IDMAP_COUNT
 from middlewared.service import CallError, ServiceContext
 from middlewared.utils.filesystem.perms import enforce_dir_perms
@@ -119,7 +119,7 @@ def start(context: ServiceContext, id_: int) -> None:
     container = context.run_coroutine(context.call2(context.s.container.get_instance, id_))
     configure_container_bridge(context)
 
-    pylibvirt_obj = pylibvirt_container(context, container.model_dump(), True)
+    pylibvirt_obj = pylibvirt_container(context, container, True)
 
     # Configure hostname files before start so init reads correct values
     try:
@@ -133,7 +133,7 @@ def start(context: ServiceContext, id_: int) -> None:
 
 def stop(context: ServiceContext, id_: int, options: ContainerStopOptions) -> None:
     container = context.run_coroutine(context.call2(context.s.container.get_instance, id_))
-    pylibvirt_container_obj = pylibvirt_container(context, container.model_dump())
+    pylibvirt_container_obj = pylibvirt_container(context, container)
     if options.force:
         context.middleware.libvirt_domains_manager.containers.destroy(pylibvirt_container_obj)
         return
@@ -147,17 +147,18 @@ def stop(context: ServiceContext, id_: int, options: ContainerStopOptions) -> No
 
 
 def pylibvirt_container(
-    context: ServiceContext, container: dict[str, typing.Any], check_ds: bool = False
+    context: ServiceContext, container: ContainerEntry, check_ds: bool = False
 ) -> ContainerDomain:
-    container = container.copy()
-    container.pop("id", None)
-    container.pop("status", None)
-    container.pop("autostart", None)
-    container.pop("default_network", None)
+    data = container.model_dump()
 
-    dataset = container.pop("dataset")
+    data.pop("id", None)
+    data.pop("status", None)
+    data.pop("autostart", None)
+    data.pop("default_network", None)
+
+    dataset = data.pop("dataset")
     pool = dataset.split("/")[0]
-    container["root"] = f"/mnt/{container_instance_dataset_mountpoint(pool, container['name'])}"
+    data["root"] = f"/mnt/{container_instance_dataset_mountpoint(pool, data['name'])}"
     if check_ds:
         datasets = context.call_sync2(
             context.s.zfs.resource.query_impl,
@@ -166,11 +167,11 @@ def pylibvirt_container(
         if not datasets:
             raise CallError(f"Dataset {dataset!r} not found", errno.ENOTDIR)
 
-    container["time"] = Time(container["time"])
+    data["time"] = Time(data["time"])
     device_factory = context.middleware.services.container.device.device_factory
     devices = []
     has_nic_device = False
-    for device in container.get("devices", []):
+    for device in data.get("devices", []):
         if device["attributes"]["dtype"] == "NIC":
             has_nic_device = True
 
@@ -189,26 +190,26 @@ def pylibvirt_container(
             )
         )
 
-    container["devices"] = devices
+    data["devices"] = devices
 
-    if container['idmap']:
-        match container['idmap']['type']:
+    if data['idmap']:
+        match data['idmap']['type']:
             case 'DEFAULT':
                 uid_items, gid_items = _build_default_idmap_items(context)
             case 'ISOLATED':
-                base_target = CONTAINER_ROOT_UID + container['idmap']['slice'] * IDMAP_COUNT
+                base_target = CONTAINER_ROOT_UID + data['idmap']['slice'] * IDMAP_COUNT
                 single = ContainerIdmapConfigurationItem(start=0, target=base_target, count=IDMAP_COUNT)
                 uid_items, gid_items = [single], [single]
             case _:
-                raise CallError(f"Unsupported idmap type {container['idmap']['type']!r}")
+                raise CallError(f"Unsupported idmap type {data['idmap']['type']!r}")
 
         try:
-            container['idmap'] = ContainerIdmapConfiguration(uid=uid_items, gid=gid_items)
+            data['idmap'] = ContainerIdmapConfiguration(uid=uid_items, gid=gid_items)
         except ValueError as e:
             raise CallError(f'Invalid idmap configuration: {e}')
 
-    if container["capabilities_policy"]:
-        container["capabilities_policy"] = ContainerCapabilitiesPolicy[container["capabilities_policy"]]
+    if data["capabilities_policy"]:
+        data["capabilities_policy"] = ContainerCapabilitiesPolicy[data["capabilities_policy"]]
 
     # For a privileged (no user namespace) container, "allow all" keeps every
     # capability in the bounding set but libvirt only widens the cgroup device
@@ -219,16 +220,16 @@ def pylibvirt_container(
     # skipped for user-namespaced containers, where the device ACL is not the
     # operative gate (the user namespace is) and the element would be a no-op.
     if (
-        container["capabilities_policy"] == ContainerCapabilitiesPolicy.ALLOW
-        and container["idmap"] is None
-        and "mknod" not in container["capabilities_state"]
+        data["capabilities_policy"] == ContainerCapabilitiesPolicy.ALLOW
+        and data["idmap"] is None
+        and "mknod" not in data["capabilities_state"]
     ):
-        container["capabilities_state"] = {**container["capabilities_state"], "mknod": True}
+        data["capabilities_state"] = {**data["capabilities_state"], "mknod": True}
 
     # We add this to configuration because for cpu related attrs, we need them if cpuset on
     # container is actually set
     # For memory, lxc does not respect it but libvirt requires it in the xml to be defined
-    container.update(
+    data.update(
         {
             "vcpus": None,
             "cores": None,
@@ -237,7 +238,7 @@ def pylibvirt_container(
         }
     )
 
-    return ContainerDomain(ContainerDomainConfiguration(**container))
+    return ContainerDomain(ContainerDomainConfiguration(**data))
 
 
 def _build_default_idmap_items(
