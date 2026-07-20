@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import contextlib
 import logging
 import os
@@ -39,7 +40,7 @@ from .migration_utils import get_migration_scripts
 from .pull_images import pull_images_internal
 from .resources import get_app_volume_ds, get_hostpaths_datasets
 from .schema_normalization import normalize_and_validate_values
-from .utils import get_upgrade_snap_name, upgrade_summary_info
+from .utils import band_progress, child_job_progress, get_upgrade_snap_name, upgrade_summary_info
 from .version_utils import get_latest_version_from_app_versions
 
 if TYPE_CHECKING:
@@ -95,7 +96,12 @@ async def upgrade_bulk(
     for i, entry in enumerate(apps):
         app_name = entry.app_name
         job.set_progress(int(100 * i / total) if total else 0, f'Upgrading {app_name} [{i + 1} / {total}]')
-        upgrade_job = await context.call2(context.s.app.upgrade_impl, app_name, entry.options)
+        upgrade_job = await context.call2(
+            context.s.app.upgrade_impl, app_name, entry.options,
+            job_on_progress_cb=child_job_progress(
+                job, 100 * i / total, 100 * (i + 1) / total, f'Upgrading {app_name} [{i + 1} / {total}]: ',
+            ),
+        )
         result = await upgrade_job.wait(raise_error=False)
         results.append(AppBulkUpgradeJobResult(
             app_name=app_name,
@@ -109,7 +115,14 @@ async def upgrade_bulk(
 
 
 async def upgrade_app(context: ServiceContext, job: Job, app_name: str, options: AppUpgradeOptions) -> AppEntry:
-    app_instance = await job.wrap(await context.call2(context.s.app.upgrade_impl, app_name, options))
+    upgrade_job = await context.call2(context.s.app.upgrade_impl, app_name, options)
+    try:
+        app_instance = await job.wrap(upgrade_job)
+    except asyncio.CancelledError:
+        # Aborting this job only cancels the wrapping coroutine; forward the abort to the child
+        # job actually performing the upgrade instead of letting it run to completion unobserved
+        upgrade_job.abort()
+        raise
     if app_instance.upgrade_available is False or app_instance.custom_app:
         # Refresh alerts when app reached latest version (remove from upgrade list) or
         # for custom apps where upgrade_available may not reflect image update status.
@@ -131,7 +144,12 @@ def upgrade_impl(context: ServiceContext, job: Job, app_name: str, options: AppU
     if app.custom_app or app.metadata['name'] == IX_APP_NAME:
         job.set_progress(10, 'Pulling app images')
         try:
-            pull_images_internal(context, app_name, app, AppPullImages(redeploy=True))
+            # Custom apps always complete their upgrade here, so the job can be handed over for
+            # precise progress reporting. ix-apps may only have image updates and can still fall
+            # through to a version upgrade below, which would rewind an already-completed progress.
+            pull_images_internal(
+                context, app_name, app, AppPullImages(redeploy=True), job=job if app.custom_app else None,
+            )
         finally:
             app = context.call_sync2(context.s.app.get_instance, app_name)
             if app.upgrade_available is False or app.custom_app:
@@ -203,6 +221,7 @@ def upgrade_impl(context: ServiceContext, job: Job, app_name: str, options: AppU
     try:
         compose_action(
             app_name, upgrade_version['version'], 'up', force_recreate=True, remove_orphans=True, pull_images=True,
+            progress_callback=band_progress(job, 50, 99), job=job,
         )
     finally:
         context.call_sync2(context.s.app.metadata_generate).wait_sync(raise_error=True)

@@ -1,3 +1,5 @@
+import threading
+
 import pytest
 
 from middlewared.test.integration.utils import call, client, ssh
@@ -153,6 +155,60 @@ def test_create_custom_app(docker_pool):
     ) as app_info:
         assert app_info["name"] == "custom-budget"
         assert app_info["state"] == "DEPLOYING"
+
+
+def test_create_custom_app_compose_progress(docker_pool):
+    """
+    App installation streams fine-grained progress parsed from `docker compose
+    --progress=json` events (image pulls, container creation) instead of jumping
+    between fixed milestones. If a docker compose upgrade ever changes the JSON
+    event format, the progress tracker goes silent and this test fails loudly
+    instead of app job progress silently freezing mid-operation.
+    """
+    def install_capturing_progress(c):
+        progress = []
+        progress_lock = threading.Lock()
+
+        def callback(job):
+            # api_client dispatches each job event to this callback in its own daemon thread,
+            # all sharing one mutable job dict. Serialize read+append so concurrent threads
+            # cannot interleave into an out-of-order capture; since progress only advances, the
+            # captured percents stay sorted under the lock.
+            with progress_lock:
+                item = (job["progress"]["percent"], job["progress"]["description"])
+                if not progress or progress[-1] != item:
+                    progress.append(item)
+
+        c.call(
+            "app.create",
+            {
+                "app_name": "progress-probe",
+                "custom_app": True,
+                "custom_compose_config": {"services": {"nginx": {"image": "nginx:1.27-alpine"}}},
+            },
+            job=True,
+            callback=callback,
+        )
+        percents = [percent for percent, _ in progress if percent is not None]
+        assert percents == sorted(percents), progress
+        # Compose resource events are emitted whether or not images needed pulling
+        assert any(
+            "Container" in description for _, description in progress if description
+        ), progress
+        return progress
+
+    with client(py_exceptions=False) as c:
+        try:
+            install_capturing_progress(c)
+            # Reinstalling with the image kept must reuse it: byte-level pull progress
+            # (only reported while layers actually download) must not appear
+            call("app.delete", "progress-probe", {"remove_images": False}, job=True)
+            progress = install_capturing_progress(c)
+            assert not any(
+                description.startswith("Pulling app images (") for _, description in progress if description
+            ), progress
+        finally:
+            call("app.delete", "progress-probe", {"remove_images": True}, job=True)
 
 
 def test_create_custom_app_validation_error(docker_pool):

@@ -26,7 +26,7 @@ from .ix_apps.query import list_apps
 from .ix_apps.setup import setup_install_app_dir
 from .resources import delete_internal_resources, get_app_volume_ds, remove_failed_resources
 from .schema_normalization import normalize_and_validate_values
-from .utils import to_entries
+from .utils import band_progress, to_entries
 from .version_utils import get_latest_version_from_app_versions
 
 if TYPE_CHECKING:
@@ -211,7 +211,10 @@ def create_internal(
 
         job.set_progress(60, 'App installation in progress, pulling images')
         if dry_run is False:
-            compose_action(app_name, version, 'up', force_recreate=True, remove_orphans=True)
+            compose_action(
+                app_name, version, 'up', force_recreate=True, remove_orphans=True,
+                progress_callback=band_progress(job, 60, 95), job=job,
+            )
     except Exception as e:
         job.set_progress(80, f'Failure occurred while installing {app_name!r}, cleaning up')
         if logs := collect_logs(app_name, version):
@@ -269,7 +272,10 @@ def update_internal(
     )
     if trigger_compose:
         job.set_progress(70, 'Updating docker resources')
-        compose_action(app_name, app.version, 'up', force_recreate=True, remove_orphans=True)
+        compose_action(
+            app_name, app.version, 'up', force_recreate=True, remove_orphans=True,
+            progress_callback=band_progress(job, 70, 99), job=job,
+        )
 
     job.set_progress(100, f'{progress_keyword} completed for {app_name!r}')
     return get_instance(context, app_name)
