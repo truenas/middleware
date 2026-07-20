@@ -1,5 +1,4 @@
 import errno
-import itertools
 import re
 import uuid
 
@@ -12,7 +11,7 @@ from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
 from middlewared.service import CallError, Service, private
 from middlewared.service_exception import ValidationErrors
 
-from .utils import copy_vm_state, delete_vm_state, vm_state_missing_sources
+from .utils import copy_vm_state, vm_state_missing_sources
 
 
 ZVOL_CLONE_SUFFIX = '_clone'
@@ -124,7 +123,6 @@ class VMService(Service):
         # In case we need to rollback
         created_snaps = []
         created_clones = []
-        state_copied = False
         new_vm = None
         try:
             new_vm = await self.middleware.call('vm.do_create', vm)
@@ -145,7 +143,6 @@ class VMService(Service):
                     f'Failed to copy VM state for {origin_name!r} -> {new_vm["name"]!r}: '
                     f'{oe.strerror or oe} (errno={oe.errno}).'
                 ) from oe
-            state_copied = True
 
             missing = await self.middleware.run_in_thread(
                 vm_state_missing_sources, origin_id, origin_name,
@@ -180,38 +177,38 @@ class VMService(Service):
                     continue
 
                 await self.middleware.call('vm.device.create', item)
-        except Exception as e:
-            for clone, snap in itertools.zip_longest(reversed(created_clones), reversed(created_snaps)):
-                # order is important here. the clone is dependent on snap so destroy
-                # the clone first before destroying the snap
-                if clone is not None:
-                    try:
-                        self.call_sync2(self.s.zfs.resource.destroy_impl, clone)
-                    except Exception:
-                        self.logger.exception('Failed to destroy cloned zvol %r', clone)
-                        # failing to destroy the clone means destroying the snap will
-                        # also fail since we're not recursively destroying anything
-                        continue
-                    else:
-                        if snap is not None:
-                            try:
-                                await self.call2(
-                                    self.s.zfs.resource.snapshot.destroy_impl,
-                                    ZFSResourceSnapshotDestroyQuery(path=snap),
-                                )
-                            except Exception:
-                                self.logger.exception('Failed to destroy snapshot %r for zvol %r', snap, clone)
-            if state_copied and new_vm is not None:
+        except Exception:
+            # Destroy clones before their origin snapshots: a clone pins the snapshot it
+            # was created from, so the snapshot can only be removed once every clone is gone.
+            # The two lists can differ in length if __clone_zvol failed between creating the
+            # snapshot and the clone, so unwinding them separately.
+            for clone in reversed(created_clones):
                 try:
-                    await self.middleware.run_in_thread(
-                        delete_vm_state, new_vm['id'], new_vm['name'],
+                    await self.call2(self.s.zfs.resource.destroy_impl, clone)
+                except Exception:
+                    self.logger.exception('clone rollback: failed to destroy cloned zvol %r', clone)
+            for snap in reversed(created_snaps):
+                try:
+                    await self.call2(
+                        self.s.zfs.resource.snapshot.destroy_impl,
+                        ZFSResourceSnapshotDestroyQuery(path=snap),
+                    )
+                except Exception:
+                    self.logger.exception('clone rollback: failed to destroy snapshot %r', snap)
+            if new_vm is not None:
+                # Remove the partially-created VM: its datastore row, any device rows already
+                # created, and copied NVRAM/TPM state. zvols=False since the clone datasets are
+                # handled above; force=True skips the running-VM guard (it was never started).
+                try:
+                    await self.middleware.call(
+                        'vm.delete', new_vm['id'], {'zvols': False, 'force': True},
                     )
                 except Exception:
                     self.logger.error(
-                        '%s: failed to clean up cloned NVRAM/TPM state after clone failure',
+                        '%s: clone rollback failed to remove partially-created VM record',
                         new_vm['name'], exc_info=True,
                     )
-            raise e
+            raise
 
         self.logger.info('VM cloned from %r to %r', origin_name, vm['name'])
         return True

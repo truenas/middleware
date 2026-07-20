@@ -34,6 +34,7 @@ from middlewared.service import CallError, CRUDService, job, private
 from middlewared.service_exception import InstanceNotFound, ValidationError
 from middlewared.utils.libvirt.device_factory import DeviceFactory
 from middlewared.utils.libvirt.mixin import DeviceMixin
+from middlewared.utils.libvirt.utils import ACTIVE_STATES
 
 
 VALID_DISK_FORMATS = ('qcow2', 'qed', 'raw', 'vdi', 'vhdx', 'vmdk')
@@ -165,7 +166,7 @@ class VMDeviceService(CRUDService, DeviceMixin):
         if not converting_from_image_to_zvol:
             sp = os.path.dirname(dip)
             try:
-                dst = self.middleware.call_sync('filesystem.stat', os.path.dirname(sp))
+                dst = self.middleware.call_sync('filesystem.stat', sp)
                 if dst['type'] != 'DIRECTORY':
                     raise ValidationError(schema, f'{sp!r} is not a directory', errno.EINVAL)
 
@@ -205,10 +206,11 @@ class VMDeviceService(CRUDService, DeviceMixin):
             if vmzv and vmzv == ntp:
                 try:
                     vm = self.middleware.call_sync('vm.get_instance', i['vm'])
-                    if vm['status']['state'] == 'RUNNING':
+                    if vm['status']['state'] in ACTIVE_STATES:
                         raise ValidationError(
                             schema,
-                            f'{vmzv!r} is part of running VM. {vm["name"]!r} must be stopped first',
+                            f'{vmzv!r} is attached to {vm["status"]["state"].lower()} VM {vm["name"]!r}; '
+                            'it must be stopped first',
                             errno.EBUSY
                         )
                 except InstanceNotFound:
