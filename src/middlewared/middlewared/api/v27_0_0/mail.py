@@ -56,8 +56,6 @@ class MailSendMessage(BaseModel):
     )
     to: list[str] = Field(default=NotRequired, description="Email recipients. Defaults to all local administrators.")
     cc: list[str] = Field(default=NotRequired, description="Email CC recipients, if any.")
-    interval: int | None = Field(default=NotRequired, description="In seconds.")
-    channel: str | None = Field(default=NotRequired, description="Defaults to \"truenas\".")
     timeout: int = Field(default=300, description="Time limit for connecting to the SMTP server in seconds.")
     attachments: bool = Field(
         default=False,

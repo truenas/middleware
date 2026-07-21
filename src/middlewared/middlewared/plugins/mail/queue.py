@@ -18,7 +18,10 @@ class MailQueue:
 
     def __init__(self) -> None:
         self.queue: deque[QueueItem] = deque(maxlen=self.MAX_QUEUE_LIMIT)
+        # Guards `queue` itself. Only ever held for the duration of a deque operation.
         self.lock = Lock()
+        # Held for an entire queue flush, so that two of them cannot deliver the same message.
+        self.send_lock = Lock()
 
     def append(self, message: MIMEBase) -> None:
         self.queue.append(QueueItem(message))

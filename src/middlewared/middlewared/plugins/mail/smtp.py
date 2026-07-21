@@ -42,7 +42,7 @@ def get_smtp_server(
             outlook.xoauth2(server, config)
         elif config.smtp:
             username: str = config.user  # type: ignore[assignment]
-            password: str = config.pass_.get_secret_value()  # type: ignore[assignment]
+            password: str = config.pass_.get_secret_value() or ""
             server.login(username, password)
 
         yield server

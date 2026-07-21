@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 import base64
-from datetime import datetime, timedelta
 from email.message import Message
 from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from email.utils import formatdate, make_msgid
+from email.utils import formatdate, getaddresses, make_msgid
 import errno
 import html
 import json
@@ -20,7 +19,7 @@ import html2text
 from middlewared.api.base.model import _NotRequired
 from middlewared.api.current import MailEntry, MailSendMessage, MailUpdate
 from middlewared.service import CallError, NetworkActivityDisabled, ServiceContext, ValidationError
-from middlewared.utils import BRAND, ProductName
+from middlewared.utils import ProductName
 from middlewared.utils.mako import get_template
 
 from .config import validate_config
@@ -70,28 +69,6 @@ def send(
 
     from_addr_ = from_addr(config)
 
-    interval = message.get("interval")
-    if interval is None:
-        interval = timedelta()
-    else:
-        interval = timedelta(seconds=interval)
-
-    if interval > timedelta():
-        channelfile = f"/run/middleware/.msg.{message.get('channel') or BRAND.lower()}"
-        last_update = datetime.now() - interval
-        try:
-            last_update = datetime.fromtimestamp(os.stat(channelfile).st_mtime)
-        except OSError:
-            pass
-        timediff = datetime.now() - last_update
-        if (timediff >= interval) or (timediff < timedelta()):
-            # Make sure mtime is modified
-            # We could use os.utime but this is simpler!
-            with open(channelfile, "w") as f:
-                f.write("!")
-        else:
-            raise CallError("This message was already sent in the given interval")
-
     validate_config(config)
 
     to = message.get("to")
@@ -114,14 +91,19 @@ def send(
                 data += read
                 i += 1
                 if i > 50:
-                    raise ValueError("Attachments bigger than 50MB not allowed yet")
+                    raise ValidationError("attachments", "Attachments bigger than 50MB not allowed yet")
 
             if data == b"":
                 return None
 
-            return json.loads(data)
+            try:
+                return json.loads(data)
+            except ValueError as e:
+                raise ValidationError("attachments", f"Attachments are not valid JSON: {e}")
 
         attachments = read_json()
+        if attachments is not None and not isinstance(attachments, list):
+            raise ValidationError("attachments", "Attachments must be an array")
     else:
         attachments = None
 
@@ -134,12 +116,8 @@ def send(
             msg2.attach(MIMEText(message["html"], "html", _charset="utf-8"))
             msg.attach(msg2)
         if attachments:
-            for attachment in attachments:
-                m = Message()
-                m.set_payload(attachment["content"])
-                for header in attachment.get("headers"):
-                    m.add_header(header["name"], header["value"], **(header.get("params") or {}))
-                msg.attach(m)
+            for index, attachment in enumerate(attachments):
+                msg.attach(build_attachment(index, attachment))
     else:
         msg = MIMEText(message["text"], _charset="utf-8")
 
@@ -196,6 +174,41 @@ def send(
         raise CallError(f"Failed to send email: {e}")
 
 
+def build_attachment(index: int, attachment: typing.Any) -> Message:
+    """Build a MIME part from one caller-supplied attachment.
+
+    Attachments are uploaded as JSON rather than passed through the API model, so nothing has
+    validated their shape yet.
+    """
+    m = Message()
+    try:
+        content = attachment["content"]
+        if not isinstance(content, str):
+            raise ValidationError("attachments", f"Invalid attachment at index {index}: content must be a string")
+
+        m.set_payload(content)
+        for header in attachment.get("headers") or []:
+            m.add_header(header["name"], header["value"], **(header.get("params") or {}))
+    except (AttributeError, KeyError, TypeError) as e:
+        raise ValidationError("attachments", f"Invalid attachment at index {index}: {e!r}")
+
+    return m
+
+
+def envelope_recipients(msg: MIMEBase) -> list[str]:
+    """Return every address `msg` should be delivered to, in order and without duplicates.
+
+    SMTP delivers to the envelope recipients, not to the message headers, so `Cc` has to be
+    included here or those recipients would never receive the message.
+    """
+    recipients = []
+    for _, address in getaddresses(msg.get_all("To", []) + msg.get_all("Cc", [])):
+        if address and address not in recipients:
+            recipients.append(address)
+
+    return recipients
+
+
 def sendmail(
     context: ServiceContext,
     msg: MIMEBase,
@@ -216,8 +229,10 @@ def sendmail(
             # This is because we don't run a full MTA.
             # else:
             #    server.connect()
+            # The envelope sender is an address, not the `From` header, which may carry a display
+            # name and be RFC 2047 encoded.
             server.sendmail(
-                msg["From"],
-                msg["To"].split(", "),
+                config.fromemail,
+                envelope_recipients(msg),
                 msg.as_string(),
             )
