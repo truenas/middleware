@@ -182,7 +182,11 @@ def build_attachment(index: int, attachment: typing.Any) -> Message:
     """
     m = Message()
     try:
-        m.set_payload(attachment["content"])
+        content = attachment["content"]
+        if not isinstance(content, str):
+            raise ValidationError("attachments", f"Invalid attachment at index {index}: content must be a string")
+
+        m.set_payload(content)
         for header in attachment.get("headers") or []:
             m.add_header(header["name"], header["value"], **(header.get("params") or {}))
     except (AttributeError, KeyError, TypeError) as e:

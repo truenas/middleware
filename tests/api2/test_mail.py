@@ -385,6 +385,18 @@ def test_mail_send_attachment_without_content(server):
         send_with_attachments(message(attachments=True), json.dumps([{"headers": []}]).encode())
 
 
+@pytest.mark.parametrize("content", [1, None, ["dGVzdAo="], {"data": "dGVzdAo="}])
+def test_mail_send_attachment_content_not_a_string(server, content):
+    """A non-string payload would otherwise only fail when the message is flattened for sending."""
+    with pytest.raises(ClientException, match="Invalid attachment at index 0: content must be a string"):
+        send_with_attachments(message(attachments=True), json.dumps([{"content": content}]).encode())
+
+
+def test_mail_send_attachment_not_an_object(server):
+    with pytest.raises(ClientException, match="Invalid attachment at index 0"):
+        send_with_attachments(message(attachments=True), json.dumps(["dGVzdAo="]).encode())
+
+
 def test_mail_send_attachments_not_an_array(server):
     with pytest.raises(ClientException, match="Attachments must be an array"):
         send_with_attachments(message(attachments=True), json.dumps({"content": "dGVzdAo="}).encode())
@@ -455,7 +467,7 @@ def test_mail_send_starttls(server):
 
 
 def test_mail_send_sender_refused_redacts_sender(server):
-    """NAS-137666: email addresses are PII and must not appear in the error."""
+    """Email addresses are PII and must not appear in the error."""
     with pytest.raises(ClientException) as ve:
         call("mail.send", message(), {"fromemail": f"{REFUSE_SENDER}@localhost"}, job=True)
 
@@ -464,7 +476,7 @@ def test_mail_send_sender_refused_redacts_sender(server):
 
 
 def test_mail_send_recipients_refused_redacts_recipients(server):
-    """NAS-137666: email addresses are PII and must not appear in the error."""
+    """Email addresses are PII and must not appear in the error."""
     with pytest.raises(ClientException) as ve:
         call("mail.send", message(to=[f"{REFUSE_RECIPIENT}@example.com"]), job=True)
 
