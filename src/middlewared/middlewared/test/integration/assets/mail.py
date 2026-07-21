@@ -32,6 +32,11 @@ class FakeSMTPServer:
     host: str
     port: int
 
+    def clear(self) -> None:
+        """Discard every message recorded so far."""
+        # `find` rather than a glob, which the remote shell fails on when the directory is empty.
+        ssh(f"find {_OUTDIR} -type f -delete")
+
     def get_messages(self) -> list[ReceivedMail]:
         result = []
         for name in sorted(ssh(f"ls {_OUTDIR}").split()):

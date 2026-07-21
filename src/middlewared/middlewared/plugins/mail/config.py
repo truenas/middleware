@@ -25,7 +25,7 @@ class MailModel(sa.Model):
 
 
 def validate_config(data: MailEntry) -> None:
-    if data.smtp and data.user == "":
+    if data.smtp and not data.user:
         raise ValidationError("user", "This field is required when SMTP authentication is enabled")
 
     oauth = data.oauth.get_secret_value()
