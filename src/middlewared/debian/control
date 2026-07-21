@@ -186,7 +186,6 @@ Depends: alembic,
          tcpdump,
          truenas-files,
          wireguard-tools,
-         zectl,
          ${misc:Depends},
          ${python3:Depends}
 Description: Middleware daemon for TrueNAS
