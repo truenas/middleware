@@ -62,10 +62,7 @@ def _call2_calls(middleware):
         be_service.regenerate_grub: "regenerate_grub",
         be_service.promote_current_datasets: "promote_current_datasets",
     }
-    return [
-        (names.get(c.args[0], c.args[0]), c.args[1:])
-        for c in middleware.call2.call_args_list
-    ]
+    return [(names.get(c.args[0], c.args[0]), c.args[1:]) for c in middleware.call2.call_args_list]
 
 
 def _call2_methods(middleware):
