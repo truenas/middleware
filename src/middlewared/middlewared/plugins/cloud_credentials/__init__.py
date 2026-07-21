@@ -19,6 +19,7 @@ from middlewared.api.current import (
     CredentialsVerifyArgs,
     CredentialsVerifyData,
     CredentialsVerifyResult,
+    QueryOptions,
 )
 from middlewared.service import GenericCRUDService, private
 
@@ -92,3 +93,7 @@ class CredentialsService(GenericCRUDService[CredentialsEntry]):
         Provide choices for S3 provider ``provider`` field.
         """
         return verify_.s3_provider_choices()
+
+
+async def setup(middleware: Middleware) -> None:
+    await middleware.call2(middleware.services.cloudsync.credentials.query, [], QueryOptions(delete_invalid_rows=True))

@@ -1,11 +1,19 @@
+from __future__ import annotations
+
 import os
+import typing
 
 from middlewared.api.current import ZFSResourceSnapshotCreateQuery
 from middlewared.utils.time_utils import utc_now
 
+if typing.TYPE_CHECKING:
+    from middlewared.main import Middleware
+
 
 def create_snapshot(
-    middleware, path, name="cloud_task-onetime"
+    middleware: Middleware,
+    path: str,
+    name: str = "cloud_task-onetime",
 ) -> tuple[str, str]:
     """Create a ZFS snapshot for the dataset containing the specified path.
 
@@ -71,7 +79,7 @@ def create_snapshot(
             dataset=st.source,
             name=snapshot_name,
             recursive=st.dest == path,
-        )
+        ),
     )
     # Construct the full path to the snapshot, including any subdirectory
     snapshot_path = os.path.join(

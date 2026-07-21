@@ -137,3 +137,9 @@ class ModelSubsetTest(BaseModel, metaclass=ForUpdateMetaclass):
 ])
 def test_model_subset(fields, data, result):
     assert validate_model(model_subset(ModelSubsetTest, fields), data) == result
+
+
+def test_model_subset_is_subclass():
+    subset = model_subset(ModelSubsetTest, ["fast_list"])
+    assert issubclass(subset, ModelSubsetTest)
+    assert isinstance(subset(), ModelSubsetTest)

@@ -11,7 +11,7 @@ class CloudTaskModelMixin:
     relative_path = sa.Column(sa.String(255), nullable=True)
 
     @declared_attr
-    def credential_id(cls):
+    def credential_id(cls):  # type: ignore[no-untyped-def]
         return sa.Column(sa.ForeignKey("system_cloudcredentials.id"), index=True)
 
     attributes = sa.Column(sa.JSON(dict))

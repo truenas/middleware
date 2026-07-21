@@ -7,12 +7,13 @@ from typing import TYPE_CHECKING, Any
 from middlewared.service import CallError
 
 if TYPE_CHECKING:
+    from middlewared.api.base import BaseModel
     from middlewared.main import Middleware
-    from middlewared.rclone.base import BaseRcloneRemote
+    from middlewared.plugins.cloud.rclone.base import BaseRcloneRemote
 
 
-def get_remote_path(provider: BaseRcloneRemote, attributes: dict[str, Any]) -> str:
-    remote_path = attributes["folder"].rstrip("/")
+def get_remote_path[T: BaseModel](provider: BaseRcloneRemote[T], attributes: dict[str, Any]) -> str:
+    remote_path: str = attributes["folder"].rstrip("/")
     if not remote_path:
         remote_path = "/"
     if provider.buckets:

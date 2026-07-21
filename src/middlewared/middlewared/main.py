@@ -110,7 +110,7 @@ from middlewared.plugins.boot import BootService
 from middlewared.plugins.catalog import CatalogService
 from middlewared.plugins.certificate import CertificateService
 from middlewared.plugins.cloud_backup import CloudBackupService
-from middlewared.plugins.cloud_credentials import CredentialsService
+from middlewared.plugins.cloud_sync import CloudSyncService
 from middlewared.plugins.container import ContainerService
 from middlewared.plugins.container.lxc import LXCConfigService
 from middlewared.plugins.cron import CronJobService
@@ -219,12 +219,6 @@ class AcmeServicesContainer(BaseServiceContainer):
         self.dns = AcmeDnsServicesContainer(middleware)
 
 
-class CloudsyncServicesContainer(BaseServiceContainer):
-    def __init__(self, middleware: "Middleware"):
-        super().__init__(middleware)
-        self.credentials = CredentialsService(middleware)
-
-
 class HardwareServicesContainer(BaseServiceContainer):
     def __init__(self, middleware: "Middleware"):
         super().__init__(middleware)
@@ -281,7 +275,7 @@ class ServiceContainer(BaseServiceContainer):
         self.catalog = CatalogService(middleware)
         self.certificate = CertificateService(middleware)
         self.cloud_backup = CloudBackupService(middleware)
-        self.cloudsync = CloudsyncServicesContainer(middleware)
+        self.cloudsync = CloudSyncService(middleware)
         self.container = ContainerService(middleware)
         self.cronjob = CronJobService(middleware)
         self.dnsclient = DNSClientService(middleware)
@@ -653,6 +647,10 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
                 'alert',
                 # Migrate users and groups ASAP
                 'account',
+                # Invalid cloud credentials need to be deleted before invalid cloud tasks
+                'cloud_credentials',
+                'cloud_backup',
+                'cloud_sync',
                 # Replication plugin needs to be initialized before zettarepl in order to register network activity
                 'replication',
                 # Migrate network interfaces ASAP

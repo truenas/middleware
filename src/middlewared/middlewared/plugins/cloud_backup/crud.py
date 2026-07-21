@@ -9,7 +9,7 @@ from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.cloud.crud import CloudTaskServiceMixin
 from middlewared.plugins.cloud.model import CloudTaskModelMixin
 from middlewared.plugins.zfs.zvol_utils import zvol_path_to_name
-from middlewared.service import CallError, SharingTaskServicePart, ValidationErrors
+from middlewared.service import CallError, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.cron import convert_db_format_to_schedule, convert_schedule_to_db_format
 from middlewared.utils.path import FSLocation
@@ -49,9 +49,10 @@ class CloudBackupTaskFailedAlert(OneShotAlertClass):
         return args["id"]
 
 
-class CloudBackupServicePart(SharingTaskServicePart[CloudBackupEntry], CloudTaskServiceMixin):
+class CloudBackupServicePart(CloudTaskServiceMixin[CloudBackupEntry, CloudBackupCreate, CloudBackupUpdate]):
     _datastore = "tasks.cloud_backup"
     _entry = CloudBackupEntry
+    schema_prefix = "cloud_backup"
 
     allow_zvol = True
     allowed_path_types = [FSLocation.LOCAL]
@@ -79,30 +80,9 @@ class CloudBackupServicePart(SharingTaskServicePart[CloudBackupEntry], CloudTask
         data.pop(self.locked_field, None)
         return data
 
-    async def do_create(self, app: App | None, data: CloudBackupCreate) -> CloudBackupEntry:
-        cloud_backup = await self.to_thread(self._run_validation, app, "cloud_backup_create", data)
-        entry = await self._create(cloud_backup)
-        await (await self.call2(self.s.service.control, "RESTART", "cron")).wait(raise_error=True)
-        return entry
-
-    async def do_update(self, app: App | None, id_: int, data: CloudBackupUpdate) -> CloudBackupEntry:
-        old = await self.get_instance(id_)
-        new = old.updated(data)
-        cloud_backup = await self.to_thread(self._run_validation, app, "cloud_backup_update", new)
-        entry = await self._update(id_, cloud_backup)
-        await (await self.call2(self.s.service.control, "RESTART", "cron")).wait(raise_error=True)
-        return entry
-
-    async def do_delete(self, id_: int) -> None:
+    async def _pre_delete(self, id_: int) -> None:
         await self.call2(self.s.cloud_backup.abort, id_)
         await self.call2(self.s.alert.oneshot_delete, "CloudBackupTaskFailed", id_)
-        await self._delete(id_)
-        await (await self.call2(self.s.service.control, "RESTART", "cron")).wait(raise_error=True)
-
-    async def get_path_field(self, data: Any) -> Any:
-        if isinstance(data, dict):
-            return data[self.path_field]
-        return getattr(data, self.path_field)
 
     def validate_zvol(self, path: str) -> None:
         dataset = zvol_path_to_name(path)
@@ -112,44 +92,28 @@ class CloudBackupServicePart(SharingTaskServicePart[CloudBackupEntry], CloudTask
         ):
             raise CallError("Backed up zvol must be used by a local or VMware VM")
 
-    def _run_validation(self, app: App | None, schema: str, entry: CloudBackupEntry) -> dict[str, Any]:
-        # FIXME: Drop this model->dict marshalling and validate the entry directly once CloudTaskServiceMixin
-        # is converted; it is shared with the unconverted cloud_sync and only operates on dicts for now.
-        data = entry.model_dump(expose_secrets=True)
-        data.pop(self.locked_field, None)
-        data.pop("job", None)
-        # credentials is a foreign key; collapse the extended entry back to its id for the
-        # datastore and the shared validation mixin (a changed credential is already an int).
-        if isinstance(data["credentials"], dict):
-            data["credentials"] = data["credentials"]["id"]
+    def _validate(
+        self, app: App | None, verrors: ValidationErrors, name: str, entry: CloudBackupCreate | CloudBackupEntry,
+    ) -> None:
+        super()._validate(app, verrors, name, entry)
 
-        verrors = ValidationErrors()
-        self._validate(app, verrors, schema, data)
-        if not verrors:
-            credentials = resolve_credentials(self, entry.credentials)
-            try:
-                # Route through the registry method so the suite can mock cloud_backup.ensure_initialized.
-                self.call_sync2(self.s.cloud_backup.ensure_initialized, entry, credentials)
-            except IncorrectPassword as e:
-                verrors.add(f"{schema}.password", e.errmsg)
-        verrors.check()
-        return data
-
-    def _validate(self, app: App | None, verrors: ValidationErrors, name: str, data: dict[str, Any]) -> None:
-        # CloudTaskServiceMixin is shared with the unconverted cloud_sync and operates on the dict
-        # (it normalizes data["attributes"] in place, which must reach the datastore).
-        super()._validate(app, verrors, name, data)  # type: ignore[no-untyped-call]
-
-        if data["snapshot"] and data["absolute_paths"]:
+        if entry.snapshot and entry.absolute_paths:
             verrors.add(f"{name}.snapshot", "This option can't be used when absolute paths are enabled")
 
-        if data["cache_path"]:
+        if entry.cache_path:
             self.middleware.run_coroutine(
                 check_path_resides_within_volume(
-                    verrors, self.middleware, f"{name}.cache_path", data["cache_path"], True,
+                    verrors, self.middleware, f"{name}.cache_path", entry.cache_path, True,
                 )
             )
             if not verrors:
-                statfs = self.middleware.call_sync("filesystem.statfs", data["cache_path"])
+                statfs = self.middleware.call_sync("filesystem.statfs", entry.cache_path)
                 if "RO" in statfs.flags:
                     verrors.add(f"{name}.cache_path", "The cache directory must be writeable")
+
+        if not verrors:
+            credentials = resolve_credentials(self, entry.credentials)
+            try:
+                self.call_sync2(self.s.cloud_backup.ensure_initialized, entry, credentials)
+            except IncorrectPassword as e:
+                verrors.add(f"{name}.password", e.errmsg)

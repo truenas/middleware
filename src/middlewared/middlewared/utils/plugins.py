@@ -37,12 +37,12 @@ def load_modules(
             base = '.'.join(os.path.relpath(directory, new_module_path).split('/'))
 
     _, dirs, files = next(os.walk(directory))
-    for f in filter(lambda x: x[-3:] == '.py', files):
+    for f in sorted(filter(lambda x: x[-3:] == '.py', files)):
         module_name = base if f == '__init__.py' else f'{base}.{f[:-3]}'
         if whitelist is None or any(module_name.startswith(w) for w in whitelist):
             yield importlib.import_module(module_name)
 
-    for f in dirs:
+    for f in sorted(dirs):
         if depth > 0:
             path = os.path.join(directory, f)
             yield from load_modules(path, f'{base}.{f}', depth - 1, whitelist)

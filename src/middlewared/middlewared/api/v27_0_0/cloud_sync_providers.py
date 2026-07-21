@@ -5,7 +5,28 @@ from pydantic import AfterValidator, Discriminator, Field, Secret
 
 from middlewared.api.base import BaseModel, HttpsOnlyURL, HttpUrl, LongNonEmptyString, NonEmptyString, match_validator
 
-__all__ = ["CloudCredentialProvider", "SFTPCredentialsModel"]
+__all__ = [
+    "CloudCredentialProvider",
+    "AzureBlobCredentialsModel",
+    "B2CredentialsModel",
+    "BoxCredentialsModel",
+    "DropboxCredentialsModel",
+    "FTPCredentialsModel",
+    "GoogleCloudStorageCredentialsModel",
+    "GoogleDriveCredentialsModel",
+    "GooglePhotosCredentialsModel",
+    "HTTPCredentialsModel",
+    "HubicCredentialsModel",
+    "MegaCredentialsModel",
+    "OneDriveCredentialsModel",
+    "PCloudCredentialsModel",
+    "S3CredentialsModel",
+    "SFTPCredentialsModel",
+    "StorjIxCredentialsModel",
+    "SwiftCredentialsModel",
+    "WebDavCredentialsModel",
+    "YandexCredentialsModel",
+]
 
 
 class AzureBlobCredentialsModel(BaseModel):
