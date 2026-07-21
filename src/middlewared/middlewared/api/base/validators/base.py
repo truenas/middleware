@@ -34,10 +34,10 @@ def time_validator(value: str) -> str:
     return ':'.join(digits.rjust(2, '0') for digits in (hours, minutes))
 
 
-def https_only_check(url: HttpUrl) -> str:
+def https_only_check(url: HttpUrl) -> HttpUrl:
     if url.scheme != 'https':
         raise ValueError('URL scheme must be https')
-    return str(url)
+    return url
 
 
 def email_validator(value: str) -> str:
