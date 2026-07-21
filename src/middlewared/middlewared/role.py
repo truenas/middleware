@@ -61,7 +61,7 @@ ROLES = {
 
     # Interact with privilege framework
     'PRIVILEGE_READ': Role(),
-    'PRIVILEGE_WRITE': Role(includes=['PRIVILEGE_WRITE']),
+    'PRIVILEGE_WRITE': Role(includes=['PRIVILEGE_READ']),
 
     'REPORTING_READ': Role(),
     'REPORTING_WRITE': Role(includes=['REPORTING_READ']),
