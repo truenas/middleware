@@ -37,6 +37,7 @@ class DatastoreQueryOptions:
     offset: int = 0
     limit: int = 0
     force_sql_filters: bool = False
+    delete_invalid_rows: bool = False
 
     def __post_init__(self):
         if self.offset < 0:

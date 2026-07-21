@@ -5,6 +5,7 @@ from sqlalchemy import and_, types
 from sqlalchemy.sql import sqltypes
 
 from middlewared.service import Service
+from middlewared.sqlalchemy import Model
 
 from .filter import FilterMixin
 from .schema import SchemaMixin
@@ -31,6 +32,7 @@ after all the db operations are complete.
 
 @dataclass(slots=True, kw_only=True)
 class DatastoreOptions:
+    cascade: bool = False
     ha_sync: bool = True
     prefix: str = ""
     send_events: bool = True
@@ -194,6 +196,13 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
         """
         table = self._get_table(name)
         options = self._handle_datastore_opts(options)
+
+        if options['cascade']:
+            if not isinstance(id_or_filters, int):
+                raise ValueError('Cascade delete is only supported when deleting a single row by its id')
+
+            await self._cascade_delete(table, id_or_filters, options)
+
         await self.middleware.call(
             'datastore.execute_write',
             table.delete().where(self._where_clause(table, id_or_filters, {'prefix': options['prefix']})),
@@ -206,3 +215,33 @@ class DatastoreService(Service, FilterMixin, SchemaMixin):
             await self.middleware.call('datastore.send_delete_events', name, id_or_filters)
 
         return True
+
+    async def _cascade_delete(self, table, id_: int, options: dict):
+        """
+        Delete the rows that reference (via a foreign key) the row `id_` of `table` that is about to be deleted.
+        """
+        pk = self._get_pk(table)
+        child_options = {
+            'cascade': True,
+            'ha_sync': options['ha_sync'],
+            'send_events': options['send_events'],
+        }
+        for referencing_table in Model.metadata.tables.values():
+            for column in referencing_table.c:
+                if not any(foreign_key.column is pk for foreign_key in column.foreign_keys):
+                    continue
+
+                referencing_name = referencing_table.name.replace('_', '.', 1)
+                referencing_pk_name = self._get_pk(referencing_table).name
+                for row in await self.middleware.call(
+                    'datastore.query',
+                    referencing_name,
+                    [[column.name, '=', id_]],
+                    {'relationships': False},
+                ):
+                    referencing_id = row[referencing_pk_name]
+                    self.middleware.logger.warning(
+                        '%s: cascade deleting row %r referencing %s row %r',
+                        referencing_table.name, referencing_id, table.name, id_,
+                    )
+                    await self.delete(referencing_name, referencing_id, child_options)

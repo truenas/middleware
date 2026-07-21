@@ -647,6 +647,10 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
                 'alert',
                 # Migrate users and groups ASAP
                 'account',
+                # Invalid cloud credentials need to be deleted before invalid cloud tasks
+                'cloud_credentials',
+                'cloud_backup',
+                'cloud_sync',
                 # Replication plugin needs to be initialized before zettarepl in order to register network activity
                 'replication',
                 # Migrate network interfaces ASAP

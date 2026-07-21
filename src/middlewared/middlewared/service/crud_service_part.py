@@ -88,10 +88,28 @@ class CRUDServicePart[E, PK = int](ServicePart):
 
         if isinstance(result, int):
             return result
+
         if isinstance(result, dict):
             return self._to_entry(result)
+
         if isinstance(result, list):
-            return [self._to_entry(row) for row in result]
+            result_list: list[E] = []
+            for row in result:
+                try:
+                    result_list.append(self._to_entry(row))
+                except Exception as e:
+                    if options.delete_invalid_rows:
+                        self.middleware.logger.error(
+                            "Validation error while parsing table %r row %r: %r. "
+                            "The row will be deleted from the database.",
+                            self._datastore,
+                            row["id"],
+                            repr(e),
+                        )
+                        await self.middleware.call("datastore.delete", self._datastore, row["id"], {"cascade": True})
+
+            return result_list
+
         return result
 
     async def get_instance(self, id_: PK, extra: dict[str, Any] | None = None) -> E:

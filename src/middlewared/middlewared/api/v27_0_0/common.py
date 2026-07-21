@@ -4,6 +4,7 @@ from datetime import datetime, time
 from typing import Annotated, Any, Literal
 
 from pydantic import AfterValidator, Field, model_validator
+from pydantic.json_schema import SkipJsonSchema
 
 from middlewared.api.base import (
     BaseModel,
@@ -94,6 +95,10 @@ class QueryOptions(BaseModel):
     force_sql_filters: bool = Field(
         default=False,
         description="Force use of SQL for result filtering to reduce response time. May not work for all methods.",
+    )
+    delete_invalid_rows: SkipJsonSchema[bool] = Field(
+        default=False,
+        description="If any row fails validation during loading, delete it from the database and log a message.",
     )
 
 
