@@ -66,7 +66,7 @@ def simulate_can_activate_is_false(be_ds):
 
 
 def validate_activated_be(be_name, activate_string="R"):
-    for line in ssh("zectl list -H").splitlines():
+    for line in ssh("truenas-bootenv list -H").splitlines():
         values = line.split()
         be, activated = values[0], values[1]
         if be.strip() == be_name and activated.strip() == activate_string:

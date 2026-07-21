@@ -38,7 +38,7 @@ def simulate_can_activate_is_false(be_ds):
 def validate_activated_be(be_name, activate_string="R"):
     """Validate the boot environment shows that it is activated
     according to OS perspective."""
-    for line in ssh("zectl list -H").splitlines():
+    for line in ssh("truenas-bootenv list -H").splitlines():
         values = line.split()
         be, activated = values[0], values[1]
         if be.strip() == be_name and activated.strip() == activate_string:
@@ -80,7 +80,7 @@ def test_clone_activate_keep_and_destroy(orig_be):
     tmp = call("boot.environment.clone", {"id": orig_be["id"], "target": TEMP_BE_NAME})
     assert tmp["id"] == TEMP_BE_NAME
 
-    rv = ssh("zectl list -H").strip()
+    rv = ssh("truenas-bootenv list -H").strip()
     assert TEMP_BE_NAME in rv, rv
 
     # cloning onto an existing target is refused
@@ -137,7 +137,7 @@ def test_clone_activate_keep_and_destroy(orig_be):
     rv = call("boot.environment.query", [["id", "=", TEMP_BE_NAME]])
     assert rv == [], rv
 
-    rv = ssh("zectl list -H").strip()
+    rv = ssh("truenas-bootenv list -H").strip()
     assert TEMP_BE_NAME not in rv, rv
 
 
