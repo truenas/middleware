@@ -6,7 +6,7 @@ from email.header import Header
 from email.message import Message
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from email.utils import formataddr, formatdate, make_msgid
+from email.utils import formataddr, formatdate, getaddresses, make_msgid
 import errno
 import html
 import json
@@ -25,6 +25,20 @@ from middlewared.service import (
 import middlewared.sqlalchemy as sa
 from middlewared.utils import ProductName, BRAND
 from middlewared.utils.mako import get_template
+
+
+def envelope_recipients(msg):
+    """Return every address `msg` should be delivered to, in order and without duplicates.
+
+    SMTP delivers to the envelope recipients, not to the message headers, so `Cc` has to be
+    included here or those recipients would never receive the message.
+    """
+    recipients = []
+    for _, address in getaddresses(msg.get_all('To', []) + msg.get_all('Cc', [])):
+        if address and address not in recipients:
+            recipients.append(address)
+
+    return recipients
 
 
 class QueueItem:
@@ -282,7 +296,7 @@ class MailService(ConfigService):
                     # This is because FreeNAS doesn't run a full MTA.
                     # else:
                     #    server.connect()
-                    server.sendmail(from_addr, to, msg.as_string())
+                    server.sendmail(from_addr, envelope_recipients(msg), msg.as_string())
         except NetworkActivityDisabled:
             self.logger.warning('Sending email denied')
             raise
@@ -357,7 +371,7 @@ class MailService(ConfigService):
                             from_addr = self._from_addr(config)
                             queue.message.replace_header('From', from_addr)
                             server.sendmail(from_addr,
-                                            queue.message['To'].split(', '),
+                                            envelope_recipients(queue.message),
                                             queue.message.as_string())
                 except NetworkActivityDisabled:
                     # no reason to queue up email since network activity was
