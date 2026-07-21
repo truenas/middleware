@@ -99,18 +99,41 @@ class VMServicePart(CRUDServicePart[VMEntry]):
 
     def extend_context_sync(self, rows: list[dict[str, Any]], extra: dict[str, Any]) -> dict[str, Any]:
         return {
+            'devices': self.devices_by_vm(rows),
             'states': gather_pylibvirt_domains_states(
                 self.middleware,
                 rows,
                 self.middleware.libvirt_domains_manager.vms_connection,
-                lambda vm: pylibvirt_vm(self, vm),
+                lambda vm: pylibvirt_vm(self, self.state_entry(vm)),
             ),
         }
 
+    def devices_by_vm(self, rows: list[dict[str, Any]]) -> dict[int, list[Any]]:
+        devices_by_vm: dict[int, list[Any]] = {}
+        if not rows:
+            return devices_by_vm
+
+        for device in self.call_sync2(
+            self.s.vm.device.query,
+            [['vm', 'in', [row['id'] for row in rows]]],
+            QueryOptions(force_sql_filters=True),
+        ):
+            devices_by_vm.setdefault(device.vm, []).append(device)
+
+        return devices_by_vm
+
+    def state_entry(self, row: dict[str, Any]) -> VMEntry:
+        # State gathering only reads the VM's identity to find its libvirt domain, so the
+        # runtime-only fields are filled with placeholders just to satisfy the model.
+        return VMEntry(**{
+            **row,
+            'devices': [],
+            'display_available': False,
+            'status': {'state': 'STOPPED', 'pid': None, 'domain_state': None},
+        })
+
     async def extend(self, data: dict[str, Any], context: dict[str, Any]) -> dict[str, Any]:
-        vm_devices = await self.call2(
-            self.s.vm.device.query, [['vm', '=', data['id']]], QueryOptions(force_sql_filters=True)
-        )
+        vm_devices = context['devices'].get(data['id'], [])
         data.update({
             'devices': vm_devices,
             'display_available': any(device.attributes.dtype == 'DISPLAY' for device in vm_devices),
@@ -258,7 +281,7 @@ class VMServicePart(CRUDServicePart[VMEntry]):
         # Stop and undefine the domain before destroying any backing zvols so qemu
         # releases the block devices first; destroying a zvol under a live domain
         # risks guest corruption and fails with EBUSY.
-        pylibvirt_vm_obj = pylibvirt_vm(self, vm.model_dump(expose_secrets=True))
+        pylibvirt_vm_obj = pylibvirt_vm(self, vm)
         try:
             self.middleware.libvirt_domains_manager.vms.delete(pylibvirt_vm_obj)
         except DomainDoesNotExistError:
