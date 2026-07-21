@@ -46,7 +46,7 @@ class MailService(Service):
 
     def _get_outlook_token(self, email: str, refresh_token: str) -> str | None:
         for key, token in list(self.outlook_tokens.items()):
-            if token.expires_at < time.monotonic() - 5:
+            if token.expires_at < time.monotonic() + 5:
                 self.outlook_tokens.pop(key)
 
         if token := self.outlook_tokens.get(email + refresh_token):
