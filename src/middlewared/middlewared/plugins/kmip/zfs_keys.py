@@ -91,7 +91,8 @@ class KMIPService(Service, KMIPServerMixin):
                     update_data = {'encryption_key': None, 'kmip_uid': uid}
                 if update_data:
                     self.middleware.call_sync('datastore.update', 'storage.encrypteddataset', ds['id'], update_data)
-        self.zfs_keys = {k: v for k, v in self.zfs_keys.items() if k in existing_datasets}
+        existing_dataset_names = {ds['name'] for ds in existing_datasets}
+        self.zfs_keys = {k: v for k, v in self.zfs_keys.items() if k in existing_dataset_names}
         return failed
 
     @private
@@ -122,7 +123,8 @@ class KMIPService(Service, KMIPServerMixin):
                 self.zfs_keys.pop(ds['name'], None)
                 if connection_successful:
                     self.middleware.call_sync('kmip.delete_kmip_secret_data', ds['kmip_uid'])
-        self.zfs_keys = {k: v for k, v in self.zfs_keys.items() if k in existing_datasets}
+        existing_dataset_names = {ds['name'] for ds in existing_datasets}
+        self.zfs_keys = {k: v for k, v in self.zfs_keys.items() if k in existing_dataset_names}
         return failed
 
     @private
