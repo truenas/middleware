@@ -1836,10 +1836,9 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
             if api.version == current_api.version:
                 version_title += " (current)"
 
-            result["versions"].append(
-                (await APIDumper(version, version_title, api, self.role_manager,
-                                 keep_refs=keep_refs).dump()).model_dump()
-            )
+            dumper = APIDumper(version, version_title, api, self.role_manager, keep_refs=keep_refs)
+            dumped_api = await dumper.dump()
+            result["versions"].append(dumped_api.model_dump())
 
         # Use async-safe json.dump to prevent blocking on file I/O
         await asyncio.to_thread(json.dump, result, stream)
