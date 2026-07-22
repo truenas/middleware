@@ -59,9 +59,7 @@ from middlewared.plugins.account_.constants import (
     ADMIN_GID,
     ADMIN_UID,
     ALLOWED_BUILTIN_GIDS,
-    CONTAINER_ROOT_UID,
     DEFAULT_HOME_PATH,
-    IDMAP_COUNT,
     MIN_AUTO_XID,
     NO_LOGIN_SHELL,
     SKEL_PATH,
@@ -99,36 +97,6 @@ from middlewared.utils.time_utils import UTC, utc_now
 
 SYNC_NEXT_UID_LOCK = Lock()
 ASYNC_NEXT_GID_LOCK = AsyncioLock()
-
-
-def pw_checkname(verrors, attribute, name):
-    """
-    Makes sure the provided `name` is a valid unix name.
-    """
-    if name.startswith('-'):
-        verrors.add(
-            attribute,
-            'Name must begin with an alphanumeric character and not a '
-            '"-".'
-        )
-    if name.find('$') not in (-1, len(name) - 1):
-        verrors.add(
-            attribute,
-            'The character $ is only allowed as the final character.'
-        )
-    invalid_chars = ' ,\t:+&#%^()!@~*?<>=|\\/"'
-    invalids = []
-    for char in name:
-        # invalid_chars nor 8-bit characters are allowed
-        if (
-            char in invalid_chars and char not in invalids
-        ) or ord(char) & 0x80:
-            invalids.append(char)
-    if invalids:
-        verrors.add(
-            attribute,
-            f'name contains invalid characters: {", ".join(invalids)}'
-        )
 
 
 def crypted_password(cleartext):
@@ -516,9 +484,6 @@ class UserService(CRUDService):
                     f'{schema}.home',
                     f'{p.parent}: parent path of specified home directory does not exist.'
                 )
-
-            if not verrors:
-                self.validate_homedir_mountinfo(verrors, schema, p.parent)
 
         elif self.validate_homedir_mountinfo(verrors, schema, p):
             attrs = self.middleware.call_sync('filesystem.stat', data['home']).attributes
@@ -1550,14 +1515,6 @@ class UserService(CRUDService):
                 )
 
             combined_uid = combined.get('uid')
-            if combined_uid is not None and CONTAINER_ROOT_UID <= combined_uid < CONTAINER_ROOT_UID + IDMAP_COUNT:
-                verrors.add(
-                    f'{schema}.userns_idmap',
-                    f'User UID {combined_uid} falls within the host-side range reserved for '
-                    f'container userns mappings [{CONTAINER_ROOT_UID}, {CONTAINER_ROOT_UID + IDMAP_COUNT}); '
-                    'a user namespace idmap cannot be configured for it.'
-                )
-
             await self.validate_userns_idmap_conflict(
                 verrors, schema, data['userns_idmap'], combined_uid,
                 exclude_id=old['id'] if old else None,
@@ -1609,8 +1566,6 @@ class UserService(CRUDService):
                 )
 
         if 'username' in data:
-            pw_checkname(verrors, f'{schema}.username', data['username'])
-
             if any(u['username'] == data['username'] for u in users):
                 verrors.add(
                     f'{schema}.username',
@@ -1962,21 +1917,22 @@ class UserService(CRUDService):
             {'extra': {'additional_information': ['DS']}}
         )
         if not entry:
-            # This only happens if authenticated user has FULL_ADMIN privileges
+            # This only happens if authenticated user has FULL_ADMIN privileges,
             # and so we're not concerned about letting admin know that username is
             # bad.
             verrors.add(
                 'user.set_password.username',
                 f'{username}: user does not exist.'
             )
-        else:
-            entry = entry[0]
-            if not entry['local']:
-                # We don't allow resetting passwords on remote directory service.
-                verrors.add(
-                    'user.set_password.username',
-                    f'{username}: user is not local to the TrueNAS server.'
-                )
+            verrors.check()
+
+        entry = entry[0]
+        if not entry['local']:
+            # We don't allow resetting passwords on remote directory service.
+            verrors.add(
+                'user.set_password.username',
+                f'{username}: user is not local to the TrueNAS server.'
+            )
 
         # Require submitting password twice if this is not a full admin session
         # and does not have a one-time password.
@@ -2242,9 +2198,6 @@ class GroupService(CRUDService):
 
         group = await self.get_instance(pk)
         audit_callback(group['name'])
-
-        if data.get('gid') == group['gid']:
-            data.pop('gid')  # Only check for duplicate GID if we are updating it
 
         verrors = ValidationErrors()
         await self.__common_validation(verrors, data, 'group_update', pk=pk)
@@ -2546,18 +2499,6 @@ class GroupService(CRUDService):
                 )
 
         effective_gid = entry['gid'] if entry else data.get('gid')
-        if (
-            data.get('userns_idmap')
-            and effective_gid is not None
-            and CONTAINER_ROOT_UID <= effective_gid < CONTAINER_ROOT_UID + IDMAP_COUNT
-        ):
-            verrors.add(
-                f'{schema}.userns_idmap',
-                f'Group GID {effective_gid} falls within the host-side range reserved for '
-                f'container userns mappings [{CONTAINER_ROOT_UID}, {CONTAINER_ROOT_UID + IDMAP_COUNT}); '
-                'a user namespace idmap cannot be configured for it.'
-            )
-
         await self.validate_userns_idmap_conflict(
             verrors, schema, data.get('userns_idmap'), effective_gid, exclude_id=pk,
         )
@@ -2596,8 +2537,6 @@ class GroupService(CRUDService):
                     f'A Group with the name "{data["name"]}" already exists.',
                     errno.EEXIST,
                 )
-
-            pw_checkname(verrors, f'{schema}.name', data['name'])
 
         if data.get('gid') is not None:
             try:

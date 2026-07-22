@@ -185,8 +185,8 @@ Depends: alembic,
          syslog-ng-mod-sql,
          tcpdump,
          truenas-files,
+         websockify,
          wireguard-tools,
-         zectl,
          ${misc:Depends},
          ${python3:Depends}
 Description: Middleware daemon for TrueNAS
