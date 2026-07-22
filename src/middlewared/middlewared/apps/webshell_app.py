@@ -186,7 +186,7 @@ class ShellWorkerThread(threading.Thread):
                     eio_deadline = None
                     fut = asyncio.run_coroutine_threadsafe(self.ws.send_bytes(read), loop=self.loop)
                     try:
-                        fut.result(timeout=30)
+                        fut.result(timeout=60)
                     except TimeoutError:
                         # A stalled client that stops draining but keeps acking zero-window probes
                         # never fails at the TCP level, so the send must be bounded here.
