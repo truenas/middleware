@@ -154,7 +154,7 @@ class KMIPService(Service, KMIPServerMixin):
             'datastore.query', 'storage.encrypteddataset', [['kmip_uid', '!=', None]]
         ):
             if ds['encryption_key']:
-                await self.middleware.call('datastore.update', 'storage.encrypteddataset', {'kmip_uid': None})
+                await self.middleware.call('datastore.update', 'storage.encrypteddataset', ds['id'], {'kmip_uid': None})
             else:
                 to_remove.append(ds['id'])
         await self.middleware.call('datastore.delete', 'storage.encrypteddataset', [['id', 'in', to_remove]])
