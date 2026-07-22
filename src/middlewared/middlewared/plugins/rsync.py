@@ -186,6 +186,9 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
             )
             return
 
+        if verrors:
+            return
+
         for file in set(key_files):
             # file holds a private key and it's permissions should be 600
             if os.stat(file).st_mode & 0o077 != 0:
@@ -195,9 +198,6 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
                     f'Please correct them by running chmod 600 {file}'
                 )
                 key_files.discard(file)
-
-        if not key_files:
-            return
 
         if '@' in remote_host:
             remote_username, remote_host = remote_host.rsplit('@', 1)
