@@ -140,3 +140,21 @@ class IPAHealthMixin:
                     IPAHealthCheckFailReason.SSSD_STOPPED,
                     self._faulted_reason
                 )
+
+        # Systems joined by a build that wrote the SMB machine-account credential
+        # incorrectly are left with secrets.tdb, the SMB keytab and the KDC out of sync.
+        # The connection service regenerates the credential in place using the host
+        # credential (no administrator credential is required); only fault -- raising an
+        # alert -- if that regeneration fails.
+        try:
+            self.middleware.call_sync('directoryservices.connection.ipa_smb_heal_machine_account')
+        except Exception as e:
+            self._faulted_reason = (
+                'Failed to regenerate the IPA SMB machine account credentials. SMB '
+                'authentication against the IPA domain may not work until this is '
+                f'resolved: {e}'
+            )
+            raise IPAHealthError(
+                IPAHealthCheckFailReason.IPA_SMB_CREDS,
+                self._faulted_reason
+            )

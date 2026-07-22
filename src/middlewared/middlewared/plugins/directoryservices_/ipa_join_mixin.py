@@ -231,25 +231,34 @@ class IPAJoinMixin:
         return True
 
     @kerberos_ticket
-    def _ipa_set_spn(self):
-        """ internal method to create service entries on remote IPA server """
+    def _ipa_set_spn(self, principals=None):
+        """ internal method to create service entries on remote IPA server
+
+        `principals` optionally restricts the operation to a subset of service principals
+        (it defaults to both SMB and NFS). A failure to create a principal is fatal so that
+        a partially-configured join is rolled back by the caller rather than silently
+        reported as success; the sole tolerated case is an IPA domain that does not support
+        SMB, which is skipped.
+        """
+        if principals is None:
+            principals = (
+                (IpaOperation.SET_SMB_PRINCIPAL, ipa_constants.IpaConfigName.IPA_SMB_KEYTAB),
+                (IpaOperation.SET_NFS_PRINCIPAL, ipa_constants.IpaConfigName.IPA_NFS_KEYTAB)
+            )
+
         output = []
-        for op, spn_type in (
-            (IpaOperation.SET_SMB_PRINCIPAL, ipa_constants.IpaConfigName.IPA_SMB_KEYTAB),
-            (IpaOperation.SET_NFS_PRINCIPAL, ipa_constants.IpaConfigName.IPA_NFS_KEYTAB)
-        ):
+        for op, spn_type in principals:
             setspn = subprocess.run(
                 [IPACTL, '-a', op.name], check=False, capture_output=True, timeout=IPACTL_OP_TIMEOUT
             )
 
             try:
                 resp = _parse_ipa_response(setspn)
-                output.append(resp | {'keytab_type': spn_type})
             except FileNotFoundError:
                 self.logger.debug('IPA domain does not provide support for SMB protocol')
                 continue
-            except Exception:
-                self.logger.error('%s: failed to create keytab', op.name, exc_info=True)
+
+            output.append(resp | {'keytab_type': spn_type})
 
         return output
 
@@ -277,10 +286,18 @@ class IPAJoinMixin:
                 self.middleware.call_sync('kerberos.keytab.delete', kt[0]['id'])
 
     @kerberos_ticket
-    def _ipa_setup_services(self, job: Job):
-        job.set_progress(description='Configuring kerberos principals')
+    def _ipa_setup_services(self, job: Job | None = None):
+        if job:
+            job.set_progress(description='Configuring kerberos principals')
+
+        # ipactl's SET_SMB_PRINCIPAL registers the machine account under the NetBIOS name
+        # it reads back from the on-disk smb.conf. Regenerate smb.conf first so that name
+        # reflects the current (possibly renamed) datastore value instead of a stale one.
+        self.middleware.call_sync('etc.generate', 'smb')
+
         resp = self._ipa_set_spn()
         domain_info = None
+        password = None
 
         for entry in resp:
             self._ipa_insert_keytab(entry['keytab_type'], entry['keytab'])
@@ -289,44 +306,95 @@ class IPAJoinMixin:
                 password = entry['password']
 
         if domain_info:
+            self._ipa_configure_smb(job, domain_info, password)
+
+    def _ipa_configure_smb(self, job: Job | None, domain_info: dict, password: str) -> None:
+        if job:
             job.set_progress(description='Configuring SMB server for IPA')
-            self.middleware.call_sync('datastore.update', 'services.cifs', 1, {
-                'cifs_srv_workgroup': domain_info['netbios_name']
-            })
 
-            # insert the domain info into our datastore config so that it's
-            # available for smb.conf generation
-            self.middleware.call_sync('datastore.update', 'directoryservices', 1, {
-                'ipa_smb_domain': {
-                    'name': domain_info['netbios_name'],
-                    'idmap_backend': 'SSS',
-                    'range_low': domain_info['range_id_min'],
-                    'range_high': domain_info['range_id_max'],
-                    'domain_sid': domain_info['domain_sid'],
-                    'domain_name': domain_info['domain_name']
-                }
-            })
+        self.middleware.call_sync('datastore.update', 'services.cifs', 1, {
+            'cifs_srv_workgroup': domain_info['netbios_name']
+        })
 
-            # regenerate our SMB config to apply our new domain
-            self.middleware.call_sync('etc.generate', 'smb')
+        # insert the domain info into our datastore config so that it's
+        # available for smb.conf generation
+        self.middleware.call_sync('datastore.update', 'directoryservices', 1, {
+            'ipa_smb_domain': {
+                'name': domain_info['netbios_name'],
+                'idmap_backend': 'SSS',
+                'range_low': domain_info['range_id_min'],
+                'range_high': domain_info['range_id_max'],
+                'domain_sid': domain_info['domain_sid'],
+                'domain_name': domain_info['domain_name']
+            }
+        })
 
-            # write our domain sid to the secrets.tdb
-            setsid = subprocess.run([
-                'net', 'setdomainsid', domain_info['domain_sid']
-            ], capture_output=True, check=False)
+        # regenerate our SMB config to apply our new domain
+        self.middleware.call_sync('etc.generate', 'smb')
 
-            if setsid.returncode:
-                raise CallError(f'Failed to set domain SID: {setsid.stderr.decode()}')
+        # write our domain sid to the secrets.tdb
+        setsid = subprocess.run([
+            'net', 'setdomainsid', domain_info['domain_sid']
+        ], capture_output=True, check=False)
 
-            # We must write the password encoded in the SMB keytab
-            # to secrets.tdb at this point.
-            self.middleware.call_sync(
-                'directoryservices.secrets.set_ipa_secret',
-                domain_info['netbios_name'],
-                base64.b64encode(password.encode())
-            )
+        if setsid.returncode:
+            raise CallError(f'Failed to set domain SID: {setsid.stderr.decode()}')
 
-            self.middleware.call_sync('directoryservices.secrets.backup')
+        # Write the raw machine-account password (the value the SMB keytab was derived
+        # from) to secrets.tdb so that the keytab and secrets.tdb stay in sync.
+        self.middleware.call_sync(
+            'directoryservices.secrets.set_ipa_secret',
+            domain_info['netbios_name'],
+            password.encode()
+        )
+
+        self.middleware.call_sync('directoryservices.secrets.backup')
+
+    def ipa_smb_heal_machine_account(self) -> None:
+        """ Regenerate the IPA SMB machine-account credential in place if it predates the
+        current credential format (for example a system joined by a build that wrote it
+        incorrectly). A no-op when the credential is already current or the IPA domain has
+        no SMB support. This uses the host credential only -- no administrator credential
+        is required. Invoked from the IPA health check, which raises an alert if it fails.
+        """
+        if self._ipa_smb_creds_need_resync():
+            self.ipa_smb_recover_machine_account()
+
+    def _ipa_smb_creds_need_resync(self) -> bool:
+        """ Whether the IPA SMB machine-account credential predates the current credential
+        format and should be regenerated (for example a system joined by a build that wrote
+        it incorrectly). Returns False for IPA domains without SMB support. """
+        config = self.middleware.call_sync('directoryservices.config')
+        smb_domain = (config.get('configuration') or {}).get('smb_domain')
+        if not smb_domain:
+            return False
+
+        version = self.middleware.call_sync(
+            'directoryservices.secrets.ipa_cred_version', smb_domain['name']
+        )
+        return version < ipa_constants.IPA_SMB_CRED_VERSION
+
+    def ipa_smb_recover_machine_account(self) -> None:
+        """ Regenerate the SMB machine-account credential (KDC password, SMB keytab and
+        secrets.tdb) for an already-joined IPA domain, unconditionally. This is the explicit
+        recovery action: it uses the host credential only, so it needs no administrator
+        credential, and it heals a machine account left inconsistent by a build that wrote
+        the credential incorrectly. NFS is left untouched so its keytab is not needlessly
+        rotated. """
+        self.logger.info('IPA domain: regenerating SMB machine account credentials')
+
+        # smb.conf must reflect the current NetBIOS name before the SMB principal is
+        # recreated against it (see _ipa_setup_services).
+        self.middleware.call_sync('etc.generate', 'smb')
+
+        resp = self._ipa_set_spn(principals=(
+            (IpaOperation.SET_SMB_PRINCIPAL, ipa_constants.IpaConfigName.IPA_SMB_KEYTAB),
+        ))
+
+        for entry in resp:
+            self._ipa_insert_keytab(entry['keytab_type'], entry['keytab'])
+            if entry['keytab_type'] is ipa_constants.IpaConfigName.IPA_SMB_KEYTAB:
+                self._ipa_configure_smb(None, entry['domain_info'][0], entry['password'])
 
     @kerberos_ticket
     def ipa_get_smb_domain_info(self) -> dict | None:
