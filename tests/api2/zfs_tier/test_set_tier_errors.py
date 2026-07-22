@@ -66,13 +66,19 @@ def test_dataset_set_tier_readonly_rejected_with_erofs(tier_ds):
         call("pool.dataset.update", tier_ds, {"readonly": "OFF"})
 
 
-def test_dataset_set_tier_with_active_job_returns_ebusy(tier_ds_with_work):
+def test_dataset_set_tier_with_active_job_returns_ebusy(
+    tier_ds_with_work, wait_for_job_status
+):
     """If a tier job is already RUNNING or QUEUED for the dataset, set_tier
-    refuses with EBUSY (tier.py:576-584). tier_ds_with_work guarantees the
-    rewrite has real cross-class block movement to perform."""
+    refuses with EBUSY. tier_ds_with_work guarantees the rewrite has real
+    cross-class block movement to perform and stays active long enough."""
     entry = call("zfs.tier.rewrite_job_create", {"dataset_name": tier_ds_with_work})
 
     try:
+        # The EBUSY guard reads job state from LMDB, which the daemon only
+        # writes shortly after rewrite_job_create returns; wait until the
+        # job is visibly active before asserting the guard trips.
+        wait_for_job_status(entry["tier_job_id"], {"QUEUED", "RUNNING"}, timeout=30)
         with pytest.raises(ValidationError) as ve:
             call(
                 "zfs.tier.dataset_set_tier",

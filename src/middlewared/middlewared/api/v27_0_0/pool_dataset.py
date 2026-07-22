@@ -302,6 +302,8 @@ class PoolDatasetCreate(BaseModel):
         default="INHERIT",
         description=(
             "Deduplication setting. 'ON' enables dedup, 'VERIFY' enables with checksum verification, 'OFF' disables."
+            " While ZFS tiering is enabled, cannot be enabled on a dataset in the PERFORMANCE tier (data on the"
+            " SPECIAL vdev) or on one with a PERFORMANCE-tier descendant that would inherit the setting."
         ),
     )
     checksum: Literal[

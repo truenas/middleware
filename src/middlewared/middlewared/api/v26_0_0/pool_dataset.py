@@ -92,7 +92,10 @@ class PoolDatasetEntry(BaseModel, metaclass=ForUpdateMetaclass):
     )
     locked: bool = Field(description="Whether an encrypted dataset is currently locked (key not loaded).")
     tier: TierInfo | None = Field(
-        description="Performance tier. `null` if tiering disabled or if underlying pool does not support tiering.",
+        description=(
+            "Performance tier. `null` if tiering disabled, if underlying pool does not support tiering, or if "
+            "deduplication is enabled on the dataset."
+        ),
     )
     comments: PoolDatasetEntryProperty = Field(
         description="ZFS comments property for storing descriptive text about the dataset.",
@@ -311,6 +314,8 @@ class PoolDatasetCreate(BaseModel):
         default="INHERIT",
         description=(
             "Deduplication setting. 'ON' enables dedup, 'VERIFY' enables with checksum verification, 'OFF' disables."
+            " While ZFS tiering is enabled, cannot be enabled on a dataset in the PERFORMANCE tier (data on the"
+            " SPECIAL vdev) or on one with a PERFORMANCE-tier descendant that would inherit the setting."
         ),
     )
     checksum: Literal[

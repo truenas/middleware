@@ -15,6 +15,9 @@ from middlewared.service_exception import CallError
 from middlewared.utils.filesystem.directory import directory_is_empty
 from middlewared.utils.size import MB
 
+if typing.TYPE_CHECKING:
+    from middlewared.main import Middleware
+
 DATASET_DATABASE_MODEL_NAME = 'storage.encrypteddataset'
 RE_DRAID_DATA_DISKS = re.compile(r':\d*d')
 RE_DRAID_SPARE_DISKS = re.compile(r':\d*s')
@@ -123,6 +126,122 @@ async def validate_dedup_license(middleware, verrors, schema, deduplication):
                 f'{schema}.deduplication',
                 'This system is not licensed to use ZFS deduplication.'
             )
+
+
+async def pool_has_special_vdev(middleware: 'Middleware', pool_name: str) -> bool:
+    """Whether the pool has a SPECIAL allocation class vdev. Returns False when the
+    pool cannot be inspected."""
+    try:
+        pools = await middleware.call(
+            'zpool.query_impl',
+            {'pool_names': [pool_name], 'properties': ['class_special_size']},
+        )
+        if not pools:
+            return False
+        special_size = ((pools[0].get('properties') or {}).get('class_special_size') or {}).get('value')
+    except Exception:
+        middleware.logger.debug('%s: failed to query pool SPECIAL vdev size', pool_name, exc_info=True)
+        return False
+    return isinstance(special_size, int) and special_size > 0
+
+
+async def _dedup_inheriting_performance_descendants(middleware, dataset_name):
+    """Names of FILESYSTEM descendants of ``dataset_name`` whose data placement is on
+    the SPECIAL vdev (effective ``special_small_blocks`` > 0) and whose effective
+    deduplication value would change with a deduplication value set on ``dataset_name``.
+    Returns an empty list when the descendants cannot be inspected."""
+    try:
+        results = await middleware.call(
+            'pool.dataset.query',
+            [('id', '=', dataset_name)],
+            {'extra': {'properties': ['dedup', 'special_small_blocks'], 'retrieve_user_props': False}},
+        )
+    except Exception:
+        middleware.logger.debug('%s: failed to query descendant datasets', dataset_name, exc_info=True)
+        return []
+    if not results:
+        return []
+
+    affected = []
+    stack = list(results[0].get('children') or [])
+    while stack:
+        ds = stack.pop()
+        stack.extend(ds.get('children') or [])
+        if ds.get('type') != 'FILESYSTEM':
+            continue
+        if not ((ds.get('special_small_block_size') or {}).get('parsed') or 0):
+            continue
+        dedup = ds.get('deduplication') or {}
+        source = dedup.get('source')
+        if source in ('DEFAULT', 'NONE'):
+            affected.append(ds['name'])
+        elif source == 'INHERITED':
+            # Only a value inherited from the dataset being changed or one of its
+            # ancestors is masked by the new local value; a value inherited from a
+            # dataset in between keeps masking it.
+            src = dedup.get('source_info')
+            if src is not None and (src == dataset_name or dataset_name.startswith(f'{src}/')):
+                affected.append(ds['name'])
+    return sorted(affected)
+
+
+async def validate_dedup_tiering(
+    middleware, verrors, schema, deduplication, pool_name, dataset_type,
+    special_small_blocks, cur_deduplication=None, dataset_name=None,
+):
+    """Reject enabling ZFS deduplication where data sits (or would sit) on the SPECIAL vdev.
+
+    Only PERFORMANCE placement (``special_small_blocks`` > 0, so the dataset's data lives
+    on the SPECIAL vdev) conflicts with deduplication. REGULAR datasets keep their data on
+    the normal vdev and may be deduplicated freely; only FILESYSTEM datasets can be tiered,
+    so volumes are never restricted. Datasets that already have deduplication in effect are
+    left alone so no-op resubmissions and ON<->VERIFY changes keep working.
+
+    ``dataset_name`` names an existing dataset being updated (None on creation). Because
+    deduplication is inherited, enabling it also enables it on every descendant without
+    its own deduplication setting, so a PERFORMANCE-placed descendant that would inherit
+    the new value blocks the change as well.
+    """
+    if dataset_type != 'FILESYSTEM':
+        return
+
+    if deduplication not in ('ON', 'VERIFY'):
+        return
+
+    if cur_deduplication is not None and cur_deduplication.get('value') not in (None, 'OFF'):
+        # Deduplication is already in effect on this dataset.
+        return
+
+    if not special_small_blocks and dataset_name is None:
+        # Creating a dataset with REGULAR placement: its data goes to the normal vdev
+        # and it has no descendants yet, safe to deduplicate.
+        return
+
+    if not (await middleware.call('zfs.tier.config')).enabled:
+        return
+
+    if not await pool_has_special_vdev(middleware, pool_name):
+        # Data cannot land on a SPECIAL vdev regardless of placement.
+        return
+
+    if special_small_blocks:
+        verrors.add(
+            f'{schema}.deduplication',
+            'ZFS deduplication is incompatible with tiering and cannot be enabled on a dataset '
+            'assigned to the PERFORMANCE tier (its data is placed on the SPECIAL vdev); switch it '
+            'to the REGULAR tier first.'
+        )
+        return
+
+    affected = await _dedup_inheriting_performance_descendants(middleware, dataset_name)
+    if affected:
+        others = f' (and {len(affected) - 1} more)' if len(affected) > 1 else ''
+        verrors.add(
+            f'{schema}.deduplication',
+            'ZFS deduplication is incompatible with tiering and cannot be enabled here: descendant '
+            f'dataset {affected[0]!r}{others} is assigned to the PERFORMANCE tier (its data is placed '
+            'on the SPECIAL vdev) and would inherit deduplication; switch it to the REGULAR tier first.'
+        )
 
 
 def none_normalize(x):

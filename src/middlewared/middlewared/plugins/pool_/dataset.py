@@ -50,6 +50,7 @@ from .utils import (
     dataset_mountpoint,
     get_dataset_parents,
     validate_dedup_license,
+    validate_dedup_tiering,
 )
 
 
@@ -212,6 +213,13 @@ class PoolDatasetService(CRUDService):
         verrors.check()
 
         await validate_dedup_license(self.middleware, verrors, schema, data.get('deduplication'))
+        ssb_ref = cur_dataset or parent
+        special_small_blocks = (ssb_ref.get('special_small_block_size') or {}).get('parsed') or 0
+        await validate_dedup_tiering(
+            self.middleware, verrors, schema, data.get('deduplication'), parent['pool'],
+            data['type'], special_small_blocks, cur_dataset.get('deduplication') if cur_dataset else None,
+            cur_dataset['name'] if cur_dataset else None,
+        )
 
         dataset_pool_is_draid = await self.middleware.call('pool.is_draid_pool', parent['pool'])
         if data['type'] == 'FILESYSTEM':
