@@ -534,6 +534,37 @@ def test_kmip_clear_sync_pending_removes_sed_uids():
             call("datastore.update", "system.advanced", adv["id"], {"adv_kmip_uid": None})
 
 
+def test_kmip_clear_sync_pending_removes_zfs_uids(encrypted_dataset):
+    key = encrypted_dataset_row(encrypted_dataset)["encryption_key"]
+    assert key
+
+    # A dataset that still holds its key locally must keep the key and only lose its
+    # (orphaned) KMIP UID.
+    set_encrypted_dataset(encrypted_dataset, {"encryption_key": key, "kmip_uid": "orphan-uid"})
+
+    # A row whose key only lived on the KMIP server (no local key) has nothing left to
+    # recover once KMIP is gone, so clearing must delete the row outright.
+    orphan_name = "tank/kmip-clear-orphan"
+    call(
+        "datastore.insert",
+        "storage.encrypteddataset",
+        {"name": orphan_name, "encryption_key": None, "kmip_uid": "gone-uid"},
+    )
+    try:
+        # KMIP is disabled, so this clears every pending ZFS UID.
+        call("kmip.clear_sync_pending_keys")
+
+        row = encrypted_dataset_row(encrypted_dataset)
+        assert row["encryption_key"] == key
+        assert row["kmip_uid"] is None
+
+        # The keyless orphan row was deleted rather than left behind.
+        assert call("datastore.query", "storage.encrypteddataset", [["name", "=", orphan_name]]) == []
+    finally:
+        for orphan in call("datastore.query", "storage.encrypteddataset", [["name", "=", orphan_name]]):
+            call("datastore.delete", "storage.encrypteddataset", orphan["id"])
+
+
 def test_kmip_reset_keys_with_unreachable_server():
     # Removing a key from a KMIP server that is not configured fails internally, but the
     # in-memory entry is dropped regardless so the caller never sees an error.
