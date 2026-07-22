@@ -49,17 +49,8 @@ def message(**overrides):
     return {"subject": "test subject", "text": "test body", "to": [TO], "queue": False, **overrides}
 
 
-@pytest.fixture(scope="module", autouse=True)
-def restore_mail_config():
-    original = call("mail.config")
-    try:
-        yield
-    finally:
-        call("mail.update", {k: v for k, v in original.items() if k != "id"})
-
-
 @pytest.fixture(scope="module")
-def smtp_server(restore_mail_config):
+def smtp_server():
     with fake_smtp_server() as server:
         yield server
 
