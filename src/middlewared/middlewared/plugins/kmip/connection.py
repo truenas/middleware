@@ -4,7 +4,6 @@
 # See the file LICENSE.IX for complete terms and conditions
 
 import contextlib
-import socket
 
 from kmip.core import enums
 from kmip.pie.client import ProxyKmipClient
@@ -33,7 +32,7 @@ class KMIPServerMixin:
         try:
             with ProxyKmipClient(**{k: data[v] for k, v in mapping.items() if data.get(v)}) as conn:
                 yield conn
-        except (ClientConnectionFailure, ClientConnectionNotOpen, socket.timeout) as e:
+        except (ClientConnectionFailure, ClientConnectionNotOpen, OSError) as e:
             raise CallError(f'Failed to connect to KMIP Server: {e}')
 
     def _test_connection(self, data=None):
