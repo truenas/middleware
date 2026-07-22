@@ -101,36 +101,6 @@ SYNC_NEXT_UID_LOCK = Lock()
 ASYNC_NEXT_GID_LOCK = AsyncioLock()
 
 
-def pw_checkname(verrors, attribute, name):
-    """
-    Makes sure the provided `name` is a valid unix name.
-    """
-    if name.startswith('-'):
-        verrors.add(
-            attribute,
-            'Name must begin with an alphanumeric character and not a '
-            '"-".'
-        )
-    if name.find('$') not in (-1, len(name) - 1):
-        verrors.add(
-            attribute,
-            'The character $ is only allowed as the final character.'
-        )
-    invalid_chars = ' ,\t:+&#%^()!@~*?<>=|\\/"'
-    invalids = []
-    for char in name:
-        # invalid_chars nor 8-bit characters are allowed
-        if (
-            char in invalid_chars and char not in invalids
-        ) or ord(char) & 0x80:
-            invalids.append(char)
-    if invalids:
-        verrors.add(
-            attribute,
-            f'name contains invalid characters: {", ".join(invalids)}'
-        )
-
-
 def crypted_password(cleartext, algo='SHA512'):
     if algo == 'SHA512':
         return sha512_crypt(cleartext)
@@ -1612,8 +1582,6 @@ class UserService(CRUDService):
                 )
 
         if 'username' in data:
-            pw_checkname(verrors, f'{schema}.username', data['username'])
-
             if any(u['username'] == data['username'] for u in users):
                 verrors.add(
                     f'{schema}.username',
@@ -2599,8 +2567,6 @@ class GroupService(CRUDService):
                     f'A Group with the name "{data["name"]}" already exists.',
                     errno.EEXIST,
                 )
-
-            pw_checkname(verrors, f'{schema}.name', data['name'])
 
         if data.get('gid') is not None:
             try:
