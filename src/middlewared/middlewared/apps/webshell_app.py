@@ -137,6 +137,11 @@ class ShellWorkerThread(threading.Thread):
             os.write(2, error_msg)
             os._exit(1)
 
+        # Terminal baudrate affects input queue size
+        attr = termios.tcgetattr(self.master_fd)
+        attr[4] = attr[5] = termios.B921600
+        termios.tcsetattr(self.master_fd, termios.TCSANOW, attr)
+
         def reader():
             """
             Reader thread for reading from pty file descriptor
@@ -242,11 +247,6 @@ class ShellWorkerThread(threading.Thread):
                 # The reap below collects the zombie immediately.
                 with contextlib.suppress(ProcessLookupError):
                     os.kill(self.shell_pid, signal.SIGKILL)
-
-            # Terminal baudrate affects input queue size
-            attr = termios.tcgetattr(self.master_fd)
-            attr[4] = attr[5] = termios.B921600
-            termios.tcsetattr(self.master_fd, termios.TCSANOW, attr)
 
             t_reader = threading.Thread(target=reader, daemon=True)
             t_reader.start()
