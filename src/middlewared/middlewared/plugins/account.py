@@ -2215,9 +2215,6 @@ class GroupService(CRUDService):
         group = await self.get_instance(pk)
         audit_callback(group['name'])
 
-        if data.get('gid') == group['gid']:
-            data.pop('gid')  # Only check for duplicate GID if we are updating it
-
         verrors = ValidationErrors()
         await self.__common_validation(verrors, data, 'group_update', pk=pk)
         if group['immutable']:
