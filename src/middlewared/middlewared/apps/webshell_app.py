@@ -126,6 +126,13 @@ class ShellWorkerThread(threading.Thread):
             os.write(2, error_msg)
             os._exit(1)
 
+        if self._die:
+            # abort() ran before the fork completed and had no pid to
+            # signal; terminate the child so the reap below doesn't wait
+            # forever.
+            with contextlib.suppress(ProcessLookupError):
+                terminate_pid(self.shell_pid, timeout=2, use_pgid=True)
+
         # Terminal baudrate affects input queue size
         attr = termios.tcgetattr(self.master_fd)
         attr[4] = attr[5] = termios.B921600
@@ -136,12 +143,14 @@ class ShellWorkerThread(threading.Thread):
             Reader thread for reading from pty file descriptor
             and forwarding it to the websocket.
             """
-            # Use a local copy of master_fd to avoid race condition with abort()
+            # run() closes master_fd only after this thread exits, so the fd
+            # number cannot be closed and recycled by an unrelated open()
+            # while we poll/read it.
             master_fd = self.master_fd
             poller = select.poll()
             poller.register(master_fd, select.POLLIN)
             try:
-                while True:
+                while not self._die:
                     # Use poll to wait for data (1 second timeout)
                     try:
                         events = poller.poll(1000)  # timeout in milliseconds
@@ -153,20 +162,38 @@ class ShellWorkerThread(threading.Thread):
                             except ProcessLookupError:
                                 break
                     except OSError:
-                        # Expected when master_fd is closed by abort()
                         break
 
                     try:
                         read = os.read(master_fd, 1024)
                     except OSError:
-                        # Expected when PTY closes or abort() closes master_fd
-                        break
+                        read = b""
                     if read == b"":
-                        break
-                    asyncio.run_coroutine_threadsafe(
-                        self.ws.send_bytes(read), loop=self.loop
-                    ).result()
-            except Exception:
+                        # The master gives EIO/EOF whenever no process has
+                        # the slave open. login(1) causes this transiently
+                        # at session start: its vhangup() revokes the slave
+                        # before login reopens it. Fatal only if the child
+                        # is gone.
+                        try:
+                            os.kill(self.shell_pid, 0)
+                        except ProcessLookupError:
+                            break
+                        time.sleep(0.05)
+                        continue
+                    try:
+                        asyncio.run_coroutine_threadsafe(
+                            self.ws.send_bytes(read), loop=self.loop
+                        ).result()
+                    except BaseException:
+                        if self._die:
+                            # The session is being torn down and the
+                            # websocket may already be closed; drop the
+                            # output.
+                            break
+                        raise
+            except BaseException:
+                # BaseException so that asyncio.CancelledError raised by the
+                # websocket send cannot kill this thread without a trace.
                 self.middleware.logger.error(
                     "Error in ShellWorkerThread.reader", exc_info=True
                 )
@@ -179,12 +206,17 @@ class ShellWorkerThread(threading.Thread):
             Writer thread for reading from input_queue and write to
             the shell pty file descriptor.
             """
-            # Use a local copy of master_fd to avoid race condition with abort()
+            # run() closes master_fd only after this thread exits, so the fd
+            # number cannot be closed and recycled by an unrelated open()
+            # while we write to it.
             master_fd = self.master_fd
             try:
-                while True:
+                while not self._die:
                     try:
                         get = self.input_queue.get(timeout=1)
+                        if get is None:
+                            # Sentinel pushed by abort()/run() to unblock us
+                            break
                         if isinstance(get, ShellResize):
                             fcntl.ioctl(
                                 master_fd,
@@ -201,9 +233,16 @@ class ShellWorkerThread(threading.Thread):
                         except ProcessLookupError:
                             break
                     except OSError:
-                        # Expected when master_fd is closed by abort()
-                        break
-            except Exception:
+                        # The master gives EIO whenever no process has the
+                        # slave open (transient while login(1) does vhangup()
+                        # then reopens the tty). Fatal only if the child is
+                        # gone; the input that failed is dropped either way.
+                        try:
+                            os.kill(self.shell_pid, 0)
+                        except ProcessLookupError:
+                            break
+                        time.sleep(0.05)
+            except BaseException:
                 self.middleware.logger.error(
                     "Error in ShellWorkerThread.writer", exc_info=True
                 )
@@ -215,17 +254,20 @@ class ShellWorkerThread(threading.Thread):
         t_writer = threading.Thread(target=writer, daemon=True)
         t_writer.start()
 
-        # Wait for shell to exit
-        while True:
-            try:
-                pid, rv = os.waitpid(self.shell_pid, os.WNOHANG)
-            except ChildProcessError:
-                break
-            if self._die:
-                return
-            if pid <= 0:
-                time.sleep(1)
+        # Wait for the shell to exit, reaping it so that abort()'s
+        # terminate_pid() and the threads' liveness checks see it disappear.
+        # abort() unblocks this wait by terminating the child.
+        try:
+            os.waitpid(self.shell_pid, 0)
+        except ChildProcessError:
+            pass
 
+        # Unblock the writer, then close master_fd only once both threads
+        # have exited: they use the raw fd number, and closing it while
+        # either is still running would let an unrelated open() (e.g. the
+        # next shell session's forkpty) reuse the number and have this
+        # session's I/O misdirected to it.
+        self.input_queue.put(None)
         t_reader.join()
         t_writer.join()
         self.close_master_fd()
@@ -235,23 +277,25 @@ class ShellWorkerThread(threading.Thread):
         self._die = True
 
     def abort(self):
+        # Signal the reader and writer threads to exit. run() joins them
+        # and closes master_fd only after both have finished, so neither
+        # can use the fd number after it has been closed.
+        self.die()
+        self.input_queue.put(None)
+
         # Close websocket
         run_coro_threadsafe(self.ws.close(), self.loop)
 
-        # Close the master FD
-        self.close_master_fd()
-
-        # Terminate the child process
+        # Terminate the child process; its death also delivers EOF/HUP on
+        # the pty master, waking the reader out of poll(), and unblocks the
+        # waitpid() in run().
         if self.shell_pid:
             with contextlib.suppress(ProcessLookupError):
                 terminate_pid(self.shell_pid, timeout=2, use_pgid=True)
 
-        # Set die flag
-        self.die()
-
     def close_master_fd(self):
-        # Atomic swap so that concurrent calls from run() and abort()
-        # don't race to close the same fd (GIL makes the swap atomic).
+        # Atomic swap so that concurrent calls don't race to close the
+        # same fd (GIL makes the swap atomic).
         fd, self.master_fd = self.master_fd, None
         if fd is not None:
             with contextlib.suppress(OSError):
