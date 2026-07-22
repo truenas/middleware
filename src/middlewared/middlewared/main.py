@@ -1824,7 +1824,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
 
             last = current
 
-    async def dump_api(self, stream: typing.TextIO):
+    async def dump_api(self, stream: typing.TextIO, keep_refs: bool = False):
         self.__plugins_load()
 
         apis = self._load_apis()
@@ -1837,7 +1837,8 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
                 version_title += " (current)"
 
             result["versions"].append(
-                (await APIDumper(version, version_title, api, self.role_manager).dump()).model_dump()
+                (await APIDumper(version, version_title, api, self.role_manager,
+                                 keep_refs=keep_refs).dump()).model_dump()
             )
 
         # Use async-safe json.dump to prevent blocking on file I/O
@@ -2061,6 +2062,11 @@ def main():
     # This generates a complete JSON representation of all API versions, methods, and models
     # that is consumed by the middlewared_docs package builder to generate API documentation.
     parser.add_argument('--dump-api', action='store_true', help=argparse.SUPPRESS)
+    # Hidden modifier for --dump-api: emit each method/event schema as pydantic's native output,
+    # retaining the `$defs` table with named model definitions and resolvable discriminator mappings
+    # instead of inlining every definition at its use site. Consumed by client code generators that
+    # need model identities; the documentation builder uses the default (inlined) output.
+    parser.add_argument('--keep-refs', action='store_true', help=argparse.SUPPRESS)
     # Hidden argument for dumping all methods metadata to JSON
     # This generates the complete output of CoreService.get_methods() without any filtering.
     parser.add_argument('--dump-methods', action='store_true', help=argparse.SUPPRESS)
@@ -2090,6 +2096,9 @@ def main():
         # If --test wasn't specified but there are unknown args, it's an error
         if test_command:
             parser.error(f"unrecognized arguments: {' '.join(test_command)}")
+
+    if args.keep_refs and not args.dump_api:
+        parser.error('--keep-refs requires --dump-api')
 
     os.makedirs(MIDDLEWARE_RUN_DIR, exist_ok=True)
     pidpath = os.path.join(MIDDLEWARE_RUN_DIR, 'middlewared.pid')
@@ -2123,7 +2132,7 @@ def main():
     )
 
     if args.dump_api:
-        asyncio.get_event_loop().run_until_complete(middleware.dump_api(sys.stdout))
+        asyncio.get_event_loop().run_until_complete(middleware.dump_api(sys.stdout, keep_refs=args.keep_refs))
         return
 
     if args.dump_methods:
