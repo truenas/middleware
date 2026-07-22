@@ -84,6 +84,7 @@ class APIDumpMethod(BaseModel):
     doc: str | None
     schemas: dict[str, Any]
     removed_in: str | None
+    job: bool = False
     input_pipes: bool = False
     output_pipes: bool = False
     check_pipes: bool = True
@@ -180,6 +181,7 @@ class APIDumper:
             doc=doc,
             schemas=schemas,
             removed_in=getattr(method.methodobj, "_removed_in", None),
+            job=bool(job),
             input_pipes=input_pipes,
             output_pipes=output_pipes,
             check_pipes=check_pipes
