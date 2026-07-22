@@ -73,6 +73,8 @@ def get_connect_kwargs(
             f"{schema}.user",
             "In order to use rsync over SSH you need a user with a private key (DSA/ECDSA/RSA) set up in home dir.",
         )
+
+    if verrors:
         return None
 
     for file in set(key_files):
@@ -84,9 +86,6 @@ def get_connect_kwargs(
                 f"Please correct them by running chmod 600 {file}",
             )
             key_files.discard(file)
-
-    if not key_files:
-        return None
 
     if "@" in remote_host:
         remote_username, remote_host = remote_host.rsplit("@", 1)
