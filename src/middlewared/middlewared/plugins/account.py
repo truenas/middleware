@@ -1965,21 +1965,22 @@ class UserService(CRUDService):
             {'extra': {'additional_information': ['DS']}}
         )
         if not entry:
-            # This only happens if authenticated user has FULL_ADMIN privileges
+            # This only happens if authenticated user has FULL_ADMIN privileges,
             # and so we're not concerned about letting admin know that username is
             # bad.
             verrors.add(
                 'user.set_password.username',
                 f'{username}: user does not exist.'
             )
-        else:
-            entry = entry[0]
-            if not entry['local']:
-                # We don't allow resetting passwords on remote directory service.
-                verrors.add(
-                    'user.set_password.username',
-                    f'{username}: user is not local to the TrueNAS server.'
-                )
+            verrors.check()
+
+        entry = entry[0]
+        if not entry['local']:
+            # We don't allow resetting passwords on remote directory service.
+            verrors.add(
+                'user.set_password.username',
+                f'{username}: user is not local to the TrueNAS server.'
+            )
 
         # Require submitting password twice if this is not a full admin session
         # and does not have a one-time password.
