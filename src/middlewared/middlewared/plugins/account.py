@@ -488,9 +488,6 @@ class UserService(CRUDService):
                     f'{p.parent}: parent path of specified home directory does not exist.'
                 )
 
-            if not verrors:
-                self.validate_homedir_mountinfo(verrors, schema, p.parent)
-
         elif self.validate_homedir_mountinfo(verrors, schema, p):
             attrs = self.middleware.call_sync('filesystem.stat', data['home']).attributes
             if 'IMMUTABLE' in attrs:
