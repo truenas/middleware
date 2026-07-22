@@ -35,6 +35,8 @@ ShellResize = collections.namedtuple("ShellResize", ["cols", "rows"])
 # argument to `sh -c` by both the app and container shell paths.
 BASH_FALLBACK_SCRIPT = "if command -v bash >/dev/null 2>&1; then exec bash -l; else exec sh; fi"
 
+WS_SEND_TIMEOUT = 600  # backstop only -- the UI abandons the session at its own lifetime + 30s
+
 
 def _audit_target(shell_type, options):
     if shell_type is ShellAppType.VM:
@@ -186,10 +188,12 @@ class ShellWorkerThread(threading.Thread):
                     eio_deadline = None
                     fut = asyncio.run_coroutine_threadsafe(self.ws.send_bytes(read), loop=self.loop)
                     try:
-                        fut.result(timeout=600)
+                        fut.result(timeout=WS_SEND_TIMEOUT)
                     except TimeoutError:
                         # A stalled client that stops draining but keeps acking zero-window probes
                         # never fails at the TCP level, so the send must be bounded here.
+                        # This can in principle happen if browser freezes tab with webshell while it's
+                        # doing work.
                         fut.cancel()
                         raise
             except BaseException:
