@@ -99,11 +99,8 @@ SYNC_NEXT_UID_LOCK = Lock()
 ASYNC_NEXT_GID_LOCK = AsyncioLock()
 
 
-def crypted_password(cleartext, algo='SHA512'):
-    if algo == 'SHA512':
-        return sha512_crypt(cleartext)
-    else:
-        raise ValueError(f'{algo} is unsupported')
+def crypted_password(cleartext):
+    return sha512_crypt(cleartext)
 
 
 def unixhash_is_valid(unixhash):
