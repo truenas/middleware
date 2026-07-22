@@ -236,7 +236,9 @@ class ShellWorkerThread(threading.Thread):
                             break
                         time.sleep(0.05)
             except BaseException:
-                self.middleware.logger.error("Error in ShellWorkerThread.writer", exc_info=True)
+                self.middleware.logger.error(
+                    "Error in ShellWorkerThread.writer", exc_info=True
+                )
                 self.abort()
 
         t_reader = t_writer = None
@@ -308,8 +310,7 @@ class ShellWorkerThread(threading.Thread):
                 terminate_pid(self.shell_pid, timeout=2, use_pgid=True)
 
     def close_master_fd(self):
-        # Atomic swap so that concurrent calls don't race to close the
-        # same fd (GIL makes the swap atomic).
+        # Atomic swap so that concurrent calls don't race to close the same fd (GIL makes the swap atomic).
         fd, self.master_fd = self.master_fd, None
         if fd is not None:
             with contextlib.suppress(OSError):
