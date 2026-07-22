@@ -99,6 +99,24 @@ def kmip_server(port=KMIP_PORT, certificate=None):
         ssh(f"rm -rf {remote_dir}", check=False)
 
 
+def _wait_for_sync_settled(timeout=60):
+    """Best-effort wait until no KMIP keys are pending sync.
+
+    ``kmip.update`` starts the per-key-type sync jobs without waiting for them, so a key
+    can still be pending for a short while after an update returns. ``kmip.update`` also
+    refuses to flip ``enabled`` while any key is pending sync, so the teardown below has
+    to let those background jobs drain first. This never raises: leftover pending state is
+    a caller problem the test's own assertions should have caught, and the teardown clears
+    whatever remains with ``force_clear`` regardless.
+    """
+    deadline = time.monotonic() + timeout
+    while call("kmip.kmip_sync_pending"):
+        if time.monotonic() >= deadline:
+            return False
+        time.sleep(1)
+    return True
+
+
 @contextlib.contextmanager
 def kmip_enabled(cert_id, *, server=KMIP_HOST, port=KMIP_PORT, **overrides):
     """Enable the KMIP service pointed at ``server``:``port`` and disable it on exit.
@@ -119,6 +137,10 @@ def kmip_enabled(cert_id, *, server=KMIP_HOST, port=KMIP_PORT, **overrides):
     try:
         yield call("kmip.update", payload, job=True)
     finally:
+        # Let any in-flight sync jobs started inside the block settle before flipping
+        # `enabled`, which is otherwise rejected while keys are pending sync. `force_clear`
+        # is a safety net for the small window between this drain and the update.
+        _wait_for_sync_settled()
         call(
             "kmip.update",
             {
@@ -128,7 +150,11 @@ def kmip_enabled(cert_id, *, server=KMIP_HOST, port=KMIP_PORT, **overrides):
                 "certificate_authority": None,
                 "manage_zfs_keys": False,
                 "manage_sed_disks": False,
+                "force_clear": True,
                 "validate": False,
             },
             job=True,
         )
+        # Disabling triggers a final pull back into the database; drain it too so the next
+        # test starts from a clean, fully-synced slate.
+        _wait_for_sync_settled()

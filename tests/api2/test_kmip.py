@@ -355,6 +355,8 @@ def test_kmip_zfs_keys_migrated_to_new_server(kmip_certificate, kmip_server_pem,
             call("kmip.update", {"manage_zfs_keys": False}, job=True)
             wait_for(lambda: encrypted_dataset_row(encrypted_dataset)["encryption_key"] == key)
 
+    wait_for(lambda: call("kmip.kmip_sync_pending") is False)
+
 
 def test_kmip_zfs_key_resynced_from_server(kmip_certificate, encrypted_dataset):
     key = encrypted_dataset_row(encrypted_dataset)["encryption_key"]
