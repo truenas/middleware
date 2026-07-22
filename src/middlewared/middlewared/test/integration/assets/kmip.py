@@ -12,7 +12,9 @@ __all__ = ["KMIP_HOST", "KMIP_PORT", "kmip_server", "kmip_enabled"]
 # 127.0.0.1. PyKMIP ships with the middleware, so no extra packages are needed.
 KMIP_HOST = "127.0.0.1"
 KMIP_PORT = 5696
-_REMOTE_DIR = "/tmp/pykmip-test"
+# Each server instance gets its own directory (keyed by port) so that several can
+# run side by side, e.g. when testing a migration from one server to another.
+_REMOTE_DIR = "/tmp/pykmip-test-{port}"
 
 # PyKMIP's TLS handshake requires a client certificate (the server always sets
 # ``ssl.CERT_REQUIRED``). A single self-signed certificate is used for every
@@ -53,29 +55,32 @@ def _write_remote_file(path, contents):
 
 
 @contextlib.contextmanager
-def kmip_server(port=KMIP_PORT):
+def kmip_server(port=KMIP_PORT, certificate=None):
     """Launch PyKMIP's built-in KMIP server on the TrueNAS host.
 
     Yields a dict with the ``cert`` and ``key`` PEMs the server uses. The same
     certificate can be imported into the middleware (e.g. via
     ``middlewared.test.integration.assets.crypto.imported_certificate``) and used as
-    both the KMIP client certificate and certificate authority.
+    both the KMIP client certificate and certificate authority. Pass ``certificate``
+    as a ``(cert_pem, key_pem)`` tuple to reuse existing material, which is what lets
+    two servers share the certificate authority the middleware is configured with.
     """
     # The pykmip client does not verify the server hostname, so a plain self-signed
     # certificate works for every role here.
-    cert_pem, key_pem = generate_self_signed_pem(common_name=KMIP_HOST)
+    cert_pem, key_pem = certificate or generate_self_signed_pem(common_name=KMIP_HOST)
     launcher = _SERVER_LAUNCHER.format(host=KMIP_HOST, port=port)
+    remote_dir = _REMOTE_DIR.format(port=port)
 
-    ssh(f"rm -rf {_REMOTE_DIR}")
-    _write_remote_file(f"{_REMOTE_DIR}/ca.pem", cert_pem)
-    _write_remote_file(f"{_REMOTE_DIR}/server.pem", cert_pem)
-    _write_remote_file(f"{_REMOTE_DIR}/server.key", key_pem)
-    _write_remote_file(f"{_REMOTE_DIR}/launch.py", launcher)
+    ssh(f"rm -rf {remote_dir}")
+    _write_remote_file(f"{remote_dir}/ca.pem", cert_pem)
+    _write_remote_file(f"{remote_dir}/server.pem", cert_pem)
+    _write_remote_file(f"{remote_dir}/server.key", key_pem)
+    _write_remote_file(f"{remote_dir}/launch.py", launcher)
 
     # nohup exec's into python, so ``$!`` is the server's PID. Detach stdin so the
     # ssh channel closes immediately instead of waiting on the backgrounded process.
     pid = ssh(
-        f"nohup python3 {_REMOTE_DIR}/launch.py {_REMOTE_DIR} < /dev/null > {_REMOTE_DIR}/nohup.out 2>&1 & echo $!"
+        f"nohup python3 {remote_dir}/launch.py {remote_dir} < /dev/null > {remote_dir}/nohup.out 2>&1 & echo $!"
     ).strip()
     try:
         # Wait for the server to start listening on the KMIP port.
@@ -85,13 +90,13 @@ def kmip_server(port=KMIP_PORT):
                 break
             time.sleep(1)
         else:
-            log = ssh(f"cat {_REMOTE_DIR}/server.log {_REMOTE_DIR}/nohup.out || true", check=False)
+            log = ssh(f"cat {remote_dir}/server.log {remote_dir}/nohup.out || true", check=False)
             raise AssertionError(f"PyKMIP server did not start listening on port {port}:\n{log}")
 
-        yield {"cert": cert_pem, "key": key_pem}
+        yield {"cert": cert_pem, "key": key_pem, "port": port}
     finally:
         ssh(f"kill {pid} 2>/dev/null || true", check=False)
-        ssh(f"rm -rf {_REMOTE_DIR}", check=False)
+        ssh(f"rm -rf {remote_dir}", check=False)
 
 
 @contextlib.contextmanager
