@@ -6,6 +6,7 @@ import fcntl
 import os
 import queue
 import select
+import signal
 import struct
 import termios
 import threading
@@ -98,6 +99,16 @@ class ShellWorkerThread(threading.Thread):
     def resize(self, cols, rows):
         self.input_queue.put(ShellResize(cols, rows))
 
+    def _shell_alive(self):
+        pid = self.shell_pid
+        if pid is None:
+            return False
+        try:
+            os.kill(pid, 0)
+        except ProcessLookupError:
+            return False
+        return True
+
     def run(self):
         self.shell_pid, self.master_fd = os.forkpty()
         if self.shell_pid == 0:
@@ -126,51 +137,62 @@ class ShellWorkerThread(threading.Thread):
             os.write(2, error_msg)
             os._exit(1)
 
-        # Terminal baudrate affects input queue size
-        attr = termios.tcgetattr(self.master_fd)
-        attr[4] = attr[5] = termios.B921600
-        termios.tcsetattr(self.master_fd, termios.TCSANOW, attr)
-
         def reader():
             """
             Reader thread for reading from pty file descriptor
             and forwarding it to the websocket.
             """
-            # Use a local copy of master_fd to avoid race condition with abort()
+            # run() closes master_fd only after this thread exits
             master_fd = self.master_fd
+            shell_pid = self.shell_pid
             poller = select.poll()
             poller.register(master_fd, select.POLLIN)
+            eio_deadline = None
             try:
-                while True:
+                while not self._die:
                     # Use poll to wait for data (1 second timeout)
-                    try:
-                        events = poller.poll(1000)  # timeout in milliseconds
-                        if not events:
-                            # Timeout, check if child is still alive
-                            try:
-                                os.kill(self.shell_pid, 0)
-                                continue
-                            except ProcessLookupError:
-                                break
-                    except OSError:
-                        # Expected when master_fd is closed by abort()
+                    events = poller.poll(1000)  # timeout in milliseconds
+                    if not events:
+                        # Timeout, check if child is still alive
+                        if self._shell_alive():
+                            continue
                         break
 
                     try:
                         read = os.read(master_fd, 1024)
                     except OSError:
-                        # Expected when PTY closes or abort() closes master_fd
-                        break
+                        read = b""
                     if read == b"":
-                        break
-                    asyncio.run_coroutine_threadsafe(
-                        self.ws.send_bytes(read), loop=self.loop
-                    ).result()
-            except Exception:
-                self.middleware.logger.error(
-                    "Error in ShellWorkerThread.reader", exc_info=True
-                )
-                self.abort()
+                        # EIO/EOF means no process has the slave open -- transient during login(1)
+                        # vhangup+reopen. Fatal if the child is gone or the slave stays abandoned.
+                        if not self._shell_alive():
+                            break
+                        if eio_deadline is None:
+                            eio_deadline = time.monotonic() + 5
+                        elif time.monotonic() >= eio_deadline:
+                            self.middleware.logger.warning(
+                                "%d: pty slave abandoned; terminating shell session", shell_pid
+                            )
+                            self.abort()
+                            break
+                        time.sleep(0.05)
+                        continue
+
+                    eio_deadline = None
+                    fut = asyncio.run_coroutine_threadsafe(self.ws.send_bytes(read), loop=self.loop)
+                    try:
+                        fut.result(timeout=30)
+                    except TimeoutError:
+                        # A stalled client that stops draining but keeps acking zero-window probes
+                        # never fails at the TCP level, so the send must be bounded here.
+                        fut.cancel()
+                        raise
+            except BaseException:
+                # BaseException: CancelledError from the ws send must not kill this thread
+                # silently; during teardown the ws may already be closed, which is not an error.
+                if not self._die:
+                    self.middleware.logger.error("Error in ShellWorkerThread.reader", exc_info=True)
+                    self.abort()
             finally:
                 poller.unregister(master_fd)
 
@@ -179,12 +201,16 @@ class ShellWorkerThread(threading.Thread):
             Writer thread for reading from input_queue and write to
             the shell pty file descriptor.
             """
-            # Use a local copy of master_fd to avoid race condition with abort()
+            # run() closes master_fd only after this thread exits
             master_fd = self.master_fd
             try:
-                while True:
+                while not self._die:
                     try:
                         get = self.input_queue.get(timeout=1)
+                        if get is None:
+                            # shutdown sentinel from abort()/run()
+                            break
+
                         if isinstance(get, ShellResize):
                             fcntl.ioctl(
                                 master_fd,
@@ -196,62 +222,94 @@ class ShellWorkerThread(threading.Thread):
                     except queue.Empty:
                         # If we timeout waiting in input query lets make sure
                         # the shell process is still alive
-                        try:
-                            os.kill(self.shell_pid, 0)
-                        except ProcessLookupError:
+                        if not self._shell_alive():
                             break
                     except OSError:
-                        # Expected when master_fd is closed by abort()
-                        break
-            except Exception:
-                self.middleware.logger.error(
-                    "Error in ShellWorkerThread.writer", exc_info=True
-                )
+                        # EIO means no process has the slave open -- transient during login(1)
+                        # vhangup+reopen. Fatal only if the child is gone.
+                        if not self._shell_alive():
+                            break
+                        time.sleep(0.05)
+            except BaseException:
+                self.middleware.logger.error("Error in ShellWorkerThread.writer", exc_info=True)
                 self.abort()
 
-        t_reader = threading.Thread(target=reader, daemon=True)
-        t_reader.start()
-
-        t_writer = threading.Thread(target=writer, daemon=True)
-        t_writer.start()
-
-        # Wait for shell to exit
-        while True:
-            try:
-                pid, rv = os.waitpid(self.shell_pid, os.WNOHANG)
-            except ChildProcessError:
-                break
+        t_reader = t_writer = None
+        try:
             if self._die:
-                return
-            if pid <= 0:
-                time.sleep(1)
+                # abort() ran before the fork and had no pid to kill. Kill the pid directly: the
+                # child may not have called setsid() yet, so its process group may still be ours.
+                # The reap below collects the zombie immediately.
+                with contextlib.suppress(ProcessLookupError):
+                    os.kill(self.shell_pid, signal.SIGKILL)
 
-        t_reader.join()
-        t_writer.join()
-        self.close_master_fd()
-        run_coro_threadsafe(self.ws.close(), self.loop)
+            # Terminal baudrate affects input queue size
+            attr = termios.tcgetattr(self.master_fd)
+            attr[4] = attr[5] = termios.B921600
+            termios.tcsetattr(self.master_fd, termios.TCSANOW, attr)
+
+            t_reader = threading.Thread(target=reader, daemon=True)
+            t_reader.start()
+
+            t_writer = threading.Thread(target=writer, daemon=True)
+            t_writer.start()
+
+            # Reap the child so terminate_pid() and the threads' liveness checks see it exit;
+            # abort() unblocks this by killing the child. WNOHANG polling so an unkillable
+            # (D-state) child cannot strand this thread and the fds it owns forever.
+            give_up_at = None
+            while True:
+                try:
+                    if os.waitpid(self.shell_pid, os.WNOHANG)[0]:
+                        self.shell_pid = None
+                        break
+                except ChildProcessError:
+                    self.shell_pid = None
+                    break
+
+                if self._die:
+                    if give_up_at is None:
+                        give_up_at = time.monotonic() + 5
+                    elif time.monotonic() >= give_up_at:
+                        self.middleware.logger.error(
+                            "%d: shell child did not exit after kill; abandoning reap", self.shell_pid
+                        )
+                        break
+
+                time.sleep(0.2 if self._die else 1)
+        except BaseException:
+            self.middleware.logger.error("Error in ShellWorkerThread.run", exc_info=True)
+            self.abort()
+        finally:
+            # Close master_fd only after both threads have exited; closing
+            # earlier lets the fd number be recycled under them.
+            self.input_queue.put(None)
+            if t_reader is not None:
+                t_reader.join()
+            if t_writer is not None:
+                t_writer.join()
+            self.close_master_fd()
+            run_coro_threadsafe(self.ws.close(), self.loop)
 
     def die(self):
         self._die = True
 
     def abort(self):
+        # Signal the threads; run() joins them and closes master_fd
+        self.die()
+        self.input_queue.put(None)
+
         # Close websocket
         run_coro_threadsafe(self.ws.close(), self.loop)
 
-        # Close the master FD
-        self.close_master_fd()
-
-        # Terminate the child process
+        # Child death wakes the reader (EOF/HUP) and the waitpid() in run()
         if self.shell_pid:
             with contextlib.suppress(ProcessLookupError):
                 terminate_pid(self.shell_pid, timeout=2, use_pgid=True)
 
-        # Set die flag
-        self.die()
-
     def close_master_fd(self):
-        # Atomic swap so that concurrent calls from run() and abort()
-        # don't race to close the same fd (GIL makes the swap atomic).
+        # Atomic swap so that concurrent calls don't race to close the
+        # same fd (GIL makes the swap atomic).
         fd, self.master_fd = self.master_fd, None
         if fd is not None:
             with contextlib.suppress(OSError):
