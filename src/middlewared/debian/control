@@ -185,6 +185,7 @@ Depends: alembic,
          syslog-ng-mod-sql,
          tcpdump,
          truenas-files,
+         websockify,
          wireguard-tools,
          ${misc:Depends},
          ${python3:Depends}
