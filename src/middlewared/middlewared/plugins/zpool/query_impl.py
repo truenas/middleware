@@ -3,6 +3,7 @@ import typing
 
 from truenas_pylibzfs import ZFSError, ZFSException, ZPOOLProperty, libzfs_types, property_sets
 
+from middlewared.service import ServiceContext
 from middlewared.utils import BOOT_POOL_NAME_VALID
 
 from .exceptions import ZpoolNotFoundException
@@ -292,3 +293,60 @@ def query_impl(lzh: libzfs_types.ZFS, data: dict) -> list[dict]:
                     continue
             raise
     return results
+
+
+def offline_entries(ctx: ServiceContext, db_pools: dict[str, dict], offline_names: typing.Iterable[str]) -> list[dict]:
+    """Build OFFLINE ZPoolEntry dicts for pools not currently imported.
+
+    For pools flagged as all-SED in the database, checks whether locked
+    SED disks may explain the import failure and sets status_code and
+    status_detail accordingly. The SED check is performed at most once
+    per call and reused across all offline all-SED pools.
+    """
+    entries = []
+    sed_cache = {}
+    for name in offline_names:
+        pool_info = db_pools.get(name, {})
+        status_code = None
+        status_detail = None
+
+        if pool_info.get("all_sed"):
+            if not sed_cache:
+                sed_enabled = ctx.middleware.call_sync("system.sed_enabled")
+                locked_sed_disks = set()
+                if sed_enabled:
+                    for disk in ctx.middleware.call_sync(
+                        "disk.query",
+                        [["sed_status", "=", "LOCKED"]],
+                        {"extra": {"sed_status": True}},
+                    ):
+                        locked_sed_disks.add(disk["name"])
+                sed_cache.update(
+                    {
+                        "sed_enabled": sed_enabled,
+                        "locked_sed_disks": locked_sed_disks,
+                    }
+                )
+
+            if sed_cache["sed_enabled"] and sed_cache["locked_sed_disks"]:
+                status_code = "LOCKED_SED_DISKS"
+                status_detail = (
+                    "Pool might have failed to import because of "
+                    f"{', '.join(sed_cache['locked_sed_disks'])!r} SED disk(s) being locked"
+                )
+
+        entries.append(
+            {
+                "id": pool_info["id"] if pool_info else None,
+                "name": name,
+                "guid": int(pool_info["guid"]) if pool_info else 0,
+                "status": "OFFLINE",
+                "healthy": False,
+                "warning": False,
+                "status_code": status_code,
+                "status_detail": status_detail,
+                "is_upgraded": None,
+                "all_sed": pool_info.get("all_sed"),
+            }
+        )
+    return entries

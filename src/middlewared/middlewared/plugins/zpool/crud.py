@@ -21,6 +21,7 @@ from middlewared.plugins.zfs_.validation_utils import validate_pool_name
 from middlewared.service import CallError, Service, ValidationErrors, job, private
 from middlewared.service.decorators import pass_thread_local_storage
 from middlewared.utils.size import format_size
+from middlewared.utils.types import EventType
 
 from .create_impl import (
     assemble_create_pool_vdev_kwargs,
@@ -30,7 +31,7 @@ from .create_impl import (
     validate_vdev_layout,
 )
 from .exceptions import ZpoolCreateException, ZpoolException
-from .query_impl import query_impl
+from .query_impl import offline_entries, query_impl
 
 # Properties baked into every emitted `zpool.query` event so that subscribers
 # receive a Pool-shaped payload without having to round-trip another call.
@@ -71,63 +72,6 @@ class ZPoolService(Service):
         if data is None:
             data = dict()
         return query_impl(tls.lzh, data)
-
-    @private
-    def offline_entries(self, db_pools, offline_names):
-        """Build OFFLINE ZPoolEntry dicts for pools not currently imported.
-
-        For pools flagged as all-SED in the database, checks whether locked
-        SED disks may explain the import failure and sets status_code and
-        status_detail accordingly. The SED check is performed at most once
-        per call and reused across all offline all-SED pools.
-        """
-        entries = []
-        sed_cache = {}
-        for name in offline_names:
-            pool_info = db_pools.get(name, {})
-            status_code = None
-            status_detail = None
-
-            if pool_info.get("all_sed"):
-                if not sed_cache:
-                    sed_enabled = self.middleware.call_sync("system.sed_enabled")
-                    locked_sed_disks = set()
-                    if sed_enabled:
-                        for disk in self.middleware.call_sync(
-                            "disk.query",
-                            [["sed_status", "=", "LOCKED"]],
-                            {"extra": {"sed_status": True}},
-                        ):
-                            locked_sed_disks.add(disk["name"])
-                    sed_cache.update(
-                        {
-                            "sed_enabled": sed_enabled,
-                            "locked_sed_disks": locked_sed_disks,
-                        }
-                    )
-
-                if sed_cache["sed_enabled"] and sed_cache["locked_sed_disks"]:
-                    status_code = "LOCKED_SED_DISKS"
-                    status_detail = (
-                        "Pool might have failed to import because of "
-                        f"{', '.join(sed_cache['locked_sed_disks'])!r} SED disk(s) being locked"
-                    )
-
-            entries.append(
-                {
-                    "id": pool_info["id"] if pool_info else None,
-                    "name": name,
-                    "guid": int(pool_info["guid"]) if pool_info else 0,
-                    "status": "OFFLINE",
-                    "healthy": False,
-                    "warning": False,
-                    "status_code": status_code,
-                    "status_detail": status_detail,
-                    "is_upgraded": None,
-                    "all_sed": pool_info.get("all_sed"),
-                }
-            )
-        return entries
 
     @api_method(
         ZPoolQueryArgs,
@@ -197,7 +141,7 @@ class ZPoolService(Service):
 
         imported_names = {p["name"] for p in results}
         offline_names = [name for name in pool_names if name not in imported_names]
-        results.extend(self.offline_entries(db_pools, offline_names))
+        results.extend(offline_entries(self.context, db_pools, offline_names))
 
         rv = []
         for pool in results:
@@ -205,7 +149,7 @@ class ZPoolService(Service):
         return rv
 
     @private
-    def send_change_event(self, pool_name: str, event_type: str = "CHANGED"):
+    def send_change_event(self, pool_name: str, event_type: EventType = "CHANGED"):
         """Emit a ``zpool.query`` event with a Pool-shaped payload.
 
         Re-queries ``zpool.query`` with topology, scan, and the standard
@@ -214,15 +158,12 @@ class ZPoolService(Service):
         (boot pool, or a pool that has been exported between the trigger
         and the emit).
         """
-        pools = self.middleware.call_sync(
-            "zpool.query",
-            {
-                "pool_names": [pool_name],
-                "topology": True,
-                "scan": True,
-                "properties": list(EVENT_PROPERTIES),
-            },
-        )
+        pools = self.query({
+            "pool_names": [pool_name],
+            "topology": True,
+            "scan": True,
+            "properties": list(EVENT_PROPERTIES),
+        })
         if not pools:
             return
         pool = pools[0].model_dump()
@@ -243,14 +184,14 @@ class ZPoolService(Service):
         audit_extended=lambda data: data["name"],
     )
     @job(lock="pool_createupdate")
-    async def create(self, job, data):
+    async def create(self, job, data) -> ZPoolEntry:
         """
         Create a new ZFS pool.
 
         The pool is built from the supplied ``topology`` using the
         ``truenas_pylibzfs`` bindings. All disks referenced by the topology are
         formatted before the pool is created, so any disk currently in use will
-        cause the call to fail. On an HA system this must run on the active
+        cause the call to fail. On an HA system, this must run on the active
         controller.
 
         .. versionadded:: 27.0.0
@@ -270,7 +211,7 @@ class ZPoolService(Service):
         verrors = ValidationErrors()
         name = data["name"]
 
-        if await self.middleware.call("pool.query", [("name", "=", name)]):
+        if await self.middleware.call("zpool.query", {"pool_names": [name]}):
             verrors.add("zpool_create.name", "A pool with this name already exists.", errno.EEXIST)
         elif not validate_pool_name(name):
             verrors.add("zpool_create.name", "Invalid pool name", errno.EINVAL)
@@ -348,7 +289,7 @@ class ZPoolService(Service):
         pool_id = z_pool_guid = None
         try:
             job.set_progress(90, "Creating ZFS Pool")
-            z_pool_guid = await self.middleware.call("zpool.create_pool_impl", {
+            z_pool_guid = await self.middleware.call("zpool.create_impl", {
                 "name": name,
                 "vdevs": vdevs,
                 "properties": properties,
@@ -400,7 +341,7 @@ class ZPoolService(Service):
 
     @private
     @pass_thread_local_storage
-    def create_pool_impl(self, tls, data):
+    def create_impl(self, tls, data):
         """Create the ZFS pool via ``truenas_pylibzfs`` and return its GUID.
 
         This is the only step that touches the libzfs handle directly. ``data`` is
@@ -419,3 +360,78 @@ class ZPoolService(Service):
             raise ZpoolCreateException(data["name"], str(e)) from e
 
         return query_impl(tls.lzh, {"pool_names": [data["name"]]})[0]["guid"]
+
+    @private
+    def status(self, data: dict | None = None):
+        """The equivalent of running 'zpool status' from the cli.
+
+        Args:
+            data: dictionary with the following top-level keys.
+                `name`: str the name of the zpool for which to return the status info
+                `real_paths`: bool if True, resolve the underlying devices to their
+                    real device (i.e. /dev/disk/by-id/blah -> /dev/sda1)
+
+        An example of what this returns looks like the following:
+            {
+              "disks": {
+                "/dev/disk/by-partuuid/d9cfa346-8623-402f-9bfe-a8256de902ec": {
+                  "pool_name": "evo",
+                  "disk_status": "ONLINE",
+                  "disk_read_errors": 0,
+                  "disk_write_errors": 0,
+                  "disk_checksum_errors": 0,
+                  "vdev_name": "stripe",
+                  "vdev_type": "data",
+                  "vdev_disks": [
+                    "/dev/disk/by-partuuid/d9cfa346-8623-402f-9bfe-a8256de902ec"
+                  ]
+                }
+              },
+              "pools": {
+                "evo": {
+                    "spares": {},
+                    "logs": {},
+                    "dedup": {},
+                    "special": {},
+                    "l2cache": {},
+                    "data": {
+                        "/dev/disk/by-partuuid/d9cfa346-8623-402f-9bfe-a8256de902ec": {
+                            "pool_name": "evo",
+                            "disk_status": "ONLINE",
+                            "disk_read_errors": 0,
+                            "disk_write_errors": 0,
+                            "disk_checksum_errors": 0,
+                            "vdev_name": "stripe",
+                            "vdev_type": "data",
+                            "vdev_disks": [
+                            "/dev/disk/by-partuuid/d9cfa346-8623-402f-9bfe-a8256de902ec"
+                            ]
+                        }
+                    }
+                }
+            }
+        """
+        if data is None:
+            data = dict()
+        data.setdefault('name', None)
+        data.setdefault('real_paths', False)
+
+        final = {'disks': dict(), 'pools': dict()}
+        for pool_name, pool_info in get_zpool_status(data.get('name')).items():
+            final['pools'][pool_name] = dict()
+            # We need some normalization for data vdev here
+            pool_info['data'] = pool_info.get('vdevs', {}).get(pool_name, {}).get('vdevs', {})
+            for vdev_type in ('spares', 'logs', 'dedup', 'special', 'l2cache', 'data'):
+                vdev_members = pool_info.get(vdev_type, {})
+                if not vdev_members:
+                    final['pools'][pool_name][vdev_type] = dict()
+                    continue
+
+                info = self.status_impl(pool_name, vdev_type, vdev_members, **data)
+                # we key on pool name and disk id because
+                # this was designed, primarily, for the
+                # `webui.enclosure.dashboard` endpoint
+                final['pools'][pool_name][vdev_type] = info
+                final['disks'].update(info)
+
+        return final
