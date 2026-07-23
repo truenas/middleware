@@ -29,8 +29,8 @@ __all__ = [
     'VMGetMemoryUsageResult', 'VMPortWizardArgs', 'VMPortWizardResult', 'VMResolutionChoicesArgs',
     'VMResolutionChoicesResult', 'VMGetDisplayDevicesArgs', 'VMGetDisplayDevicesResult', 'VMGetDisplayWebUriArgs',
     'VMGetDisplayWebUriResult', 'VMStartArgs', 'VMStartResult', 'VMStopArgs', 'VMStopResult', 'VMRestartArgs',
-    'VMRestartResult', 'VMResumeArgs', 'VMResumeResult', 'VMPoweroffArgs', 'VMPoweroffResult', 'VMSuspendArgs',
-    'VMSuspendResult', 'VMGetVmemoryInUseArgs', 'VMGetVmemoryInUseResult', 'VMGetAvailableMemoryArgs',
+    'VMRestartResult', 'VMResumeArgs', 'VMResumeResult', 'VMPoweroffArgs', 'VMPoweroffResult', 'VMResetArgs',
+    'VMResetResult', 'VMSuspendArgs', 'VMSuspendResult', 'VMGetVmemoryInUseArgs', 'VMGetVmemoryInUseResult', 'VMGetAvailableMemoryArgs',
     'VMGetAvailableMemoryResult', 'VMGetVmMemoryInfoArgs', 'VMGetVmMemoryInfoResult', 'VMRandomMacArgs',
     'VMRandomMacResult', 'VMCreate', 'VMUpdate', 'VMDeleteOptions', 'VMVirtualizationDetails', 'VMFlags',
     'VMGetVmemoryInUse', 'VMStatus', 'VMGetVmMemoryInfo', 'VMStartOptions', 'VMStopOptions', 'VMPortWizard',
@@ -503,6 +503,14 @@ class VMRestartArgs(BaseModel):
 
 class VMRestartResult(BaseModel):
     result: None = Field(description="Returns `null` on successful VM restart initiation.")
+
+
+class VMResetArgs(BaseModel):
+    id: int = Field(description="ID of the virtual machine to reset.")
+
+
+class VMResetResult(BaseModel):
+    result: None = Field(description="Returns `null` on successful VM reset.")
 
 
 class VMSuspendArgs(BaseModel):

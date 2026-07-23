@@ -65,6 +65,8 @@ from middlewared.api.current import (
     VMPoweroffResult,
     VMRandomMacArgs,
     VMRandomMacResult,
+    VMResetArgs,
+    VMResetResult,
     VMResolutionChoicesArgs,
     VMResolutionChoicesResult,
     VMRestartArgs,
@@ -125,6 +127,7 @@ from .info import (
 from .lifecycle import (
     handle_shutdown,
     poweroff_vm,
+    reset_vm,
     restart_vm,
     resume_suspended_vms,
     resume_vm,
@@ -421,6 +424,22 @@ class VMService(GenericCRUDService[VMEntry]):
         Create a random mac address.
         """
         return random_mac()
+
+    @api_method(VMResetArgs, VMResetResult, roles=['VM_WRITE'], check_annotations=True)
+    def reset(self, id_: int) -> None:
+        """
+        Reset ``id`` VM.
+
+        Performs an immediate hardware-level reset of the virtual machine, equivalent to
+        pressing the reset button. The guest OS receives no warning and the VM restarts
+        instantly without going through a clean shutdown cycle.
+
+        .. warning::
+            Data loss or filesystem corruption may occur if the guest has unflushed writes
+            at the time of the reset. Prefer :method:`vm.restart` for a clean restart
+            when the guest is responsive.
+        """
+        reset_vm(self.context, id_)
 
     @api_method(VMResolutionChoicesArgs, VMResolutionChoicesResult, roles=['VM_READ'], check_annotations=True)
     async def resolution_choices(self) -> dict[str, str]:
