@@ -592,7 +592,31 @@ class KerberosKeytabService(CRUDService):
         if not ds_config['enable'] or ds_config['service_type'] != 'ACTIVEDIRECTORY':
             return
 
+        workgroup = (await self.middleware.call('smb.config'))['workgroup']
+        if not await self.middleware.call('directoryservices.secrets.has_domain', workgroup):
+            # The live secrets.tdb has no machine account password entry yet. This is not a
+            # password rotation -- it happens transiently during startup when smb.set_system_sid
+            # has created secrets.tdb (writing only the local server SID) but the machine account
+            # secret has not yet been restored from the database backup. Backing up now would dump
+            # a machine-secret-less secrets.tdb over the good backup and destroy it. Skip until the
+            # secret is present. Keyed on the machine account password rather than its last-change
+            # timestamp: a corrupt timestamp with the password intact must not be mistaken for this
+            # startup state (which would otherwise skip keytab refreshes forever).
+            return
+
         ts = await self.middleware.call('directoryservices.get_last_password_change')
+        if ts['secrets'] is None:
+            # The machine account password is present but its last-change timestamp is unreadable
+            # (a corrupt secrets.tdb entry). We can't compare timestamps to decide whether the
+            # keytab needs refreshing, and backing up now could propagate the corruption over a
+            # good backup, so log and skip this cycle. A genuine password change rewrites the
+            # timestamp to a valid value, healing this on a later run.
+            self.logger.warning(
+                'Machine account password last-change timestamp is unreadable although the machine '
+                'account password is present; skipping keytab and secrets update this cycle.'
+            )
+            return
+
         if ts['dbconfig'] == ts['secrets']:
             return
 

@@ -263,9 +263,11 @@ class ADJoinMixin:
                 'by an Active Directory administrator: %s', netads.stderr.decode()
             )
 
-        # Above step nukes our secrets file so we can forcibly overwrite our secrets backup
+        # Above step nukes our secrets file so we can forcibly overwrite our secrets backup.
+        # allow_missing_machine_secret is required because the machine account password is
+        # intentionally gone at this point -- we want to clear the stored backup, not keep it.
         try:
-            self.middleware.call_sync('directoryservices.secrets.backup')
+            self.middleware.call_sync('directoryservices.secrets.backup', True)
         except Exception:
             self.logger.debug('Failed to remove stale secrets', exc_info=True)
 
