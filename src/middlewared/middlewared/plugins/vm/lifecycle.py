@@ -69,6 +69,13 @@ def poweroff_vm(context: ServiceContext, id_: int) -> None:
     )
 
 
+def reset_vm(context: ServiceContext, id_: int) -> None:
+    vm = context.call_sync2(context.s.vm.get_instance, id_)
+    context.middleware.libvirt_domains_manager.vms.reset(
+        pylibvirt_vm(context, vm)
+    )
+
+
 def suspend_vm(context: ServiceContext, id_: int) -> None:
     vm = context.call_sync2(context.s.vm.get_instance, id_)
     context.middleware.libvirt_domains_manager.vms.suspend(
