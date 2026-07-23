@@ -640,6 +640,39 @@ def test_kmip_sync_keys_noop_when_disabled():
     call("kmip.clear_sync_pending_keys")
 
 
+def test_kmip_change_server_fails_when_old_server_unreachable(kmip_certificate, encrypted_dataset):
+    # This needs a healthy server (it pushes a key below and pulls it back at the end), so it
+    # must run before the pull-failure tests, which probe UIDs the server does not know and
+    # thereby degrade it for the rest of the module (see the `kmip_certificate` docstring).
+    key = encrypted_dataset_row(encrypted_dataset)["encryption_key"]
+
+    with kmip_enabled(kmip_certificate["id"], manage_zfs_keys=True):
+        uid = wait_for(lambda: encrypted_dataset_row(encrypted_dataset)["kmip_uid"])
+
+        # Point the configuration at a dead port without touching the stored UIDs, so the
+        # migration cannot retrieve the keys from the "old" server. The in-memory cache is
+        # dropped as well, as it would be after a reboot against an unreachable server, so
+        # the key genuinely cannot be recovered from any source.
+        call("kmip.update", {"port": DEAD_PORT, "validate": False}, job=True)
+        call("kmip.update_memory_keys", {"zfs": {}})
+
+        with pytest.raises(ClientException) as ce:
+            call("kmip.update", {"change_server": True, "server": "localhost", "port": KMIP_PORT}, job=True)
+
+        assert "Failed to sync keys" in str(ce.value), ce.value
+
+        # The previous configuration was restored, so the key is still on the old server.
+        config = call("kmip.config")
+        assert config["server"] == KMIP_HOST
+        assert config["manage_zfs_keys"] is True
+        assert encrypted_dataset_row(encrypted_dataset)["kmip_uid"] == uid
+
+        # Restore a working configuration so the key can be pulled back.
+        call("kmip.update", {"port": KMIP_PORT}, job=True)
+        call("kmip.update", {"manage_zfs_keys": False}, job=True)
+        wait_for(lambda: encrypted_dataset_row(encrypted_dataset)["encryption_key"] == key)
+
+
 def test_kmip_zfs_key_pull_failures(kmip_certificate, encrypted_dataset):
     key = encrypted_dataset_row(encrypted_dataset)["encryption_key"]
 
@@ -698,35 +731,5 @@ def test_kmip_sed_keys_pull_failures(kmip_certificate):
                 call("alert.oneshot_delete", klass)
 
     assert call("kmip.kmip_sync_pending") is False
-
-
-def test_kmip_change_server_fails_when_old_server_unreachable(kmip_certificate, encrypted_dataset):
-    key = encrypted_dataset_row(encrypted_dataset)["encryption_key"]
-
-    with kmip_enabled(kmip_certificate["id"], manage_zfs_keys=True):
-        uid = wait_for(lambda: encrypted_dataset_row(encrypted_dataset)["kmip_uid"])
-
-        # Point the configuration at a dead port without touching the stored UIDs, so the
-        # migration cannot retrieve the keys from the "old" server. The in-memory cache is
-        # dropped as well, as it would be after a reboot against an unreachable server, so
-        # the key genuinely cannot be recovered from any source.
-        call("kmip.update", {"port": DEAD_PORT, "validate": False}, job=True)
-        call("kmip.update_memory_keys", {"zfs": {}})
-
-        with pytest.raises(ClientException) as ce:
-            call("kmip.update", {"change_server": True, "server": "localhost", "port": KMIP_PORT}, job=True)
-
-        assert "Failed to sync keys" in str(ce.value), ce.value
-
-        # The previous configuration was restored, so the key is still on the old server.
-        config = call("kmip.config")
-        assert config["server"] == KMIP_HOST
-        assert config["manage_zfs_keys"] is True
-        assert encrypted_dataset_row(encrypted_dataset)["kmip_uid"] == uid
-
-        # Restore a working configuration so the key can be pulled back.
-        call("kmip.update", {"port": KMIP_PORT}, job=True)
-        call("kmip.update", {"manage_zfs_keys": False}, job=True)
-        wait_for(lambda: encrypted_dataset_row(encrypted_dataset)["encryption_key"] == key)
 
     wait_for(lambda: call("kmip.kmip_sync_pending") is False)
