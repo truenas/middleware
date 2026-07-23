@@ -561,6 +561,15 @@ class PoolService(CRUDService):
 
         verrors.check()
 
+        disks, vdevs = await self._process_topology('pool_create', data, None, data['all_sed'])
+
+        # WARNING: Fenced MUST NOT start (or reload) until SED provisioning inside
+        # self._process_topology() has completed. Its persistent reservation
+        # register/acquire burst racing the TCG Security Send/Receive session
+        # corrupts controller state on some SED drive firmware (observed on
+        # TCG Ruby 1.0 NVMe). SED setup writes no user data, so fencing is
+        # only required before disks are written to (resize, format, zpool
+        # create), all of which happen below.
         is_ha = await self.middleware.call('failover.licensed')
         if is_ha and (rc := await self.middleware.call('failover.fenced.start')):
             if rc == FencedExitCodes.ALREADY_RUNNING.value[0]:
@@ -573,8 +582,6 @@ class PoolService(CRUDService):
                 for i in filter(lambda x: x.value[0] == rc, FencedExitCodes):
                     err = i.value[1]
                 raise CallError(err)
-
-        disks, vdevs = await self._process_topology('pool_create', data, None, data['all_sed'])
 
         if osize := (await self.middleware.call('system.advanced.config'))['overprovision']:
             if log_disks := {disk: osize
