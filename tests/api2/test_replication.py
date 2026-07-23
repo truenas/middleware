@@ -557,34 +557,52 @@ def test_attachment_delegate_delete():
     assert call("replication.query", [["id", "=", task["id"]]]) == []
 
 
-def test_attachment_delegate_toggle():
-    """Exporting/importing a pool disables/re-enables its replication tasks via the delegate."""
-    pool_name = "test_replication_toggle"
-    with another_pool({"name": pool_name}) as new_pool:
-        src = f"{pool_name}/src"
-        call("pool.dataset.create", {"name": src})
+ATTACHMENT_TOGGLE_POOL = "test_attachment_toggle"
+ATTACHMENT_TOGGLE_SRC = f"{ATTACHMENT_TOGGLE_POOL}/src"
 
-        task = call("replication.create", {
-            "name": "test_attachment_toggle",
-            "direction": "PUSH",
-            "transport": "LOCAL",
-            "source_datasets": [src],
-            "target_dataset": "data",
-            "recursive": False,
-            "name_regex": ".+",
-            "auto": False,
-            "retention_policy": "NONE",
-        })
+
+@pytest.mark.parametrize("namespace,data", (
+    pytest.param("replication", {
+        "name": "test_attachment_toggle",
+        "direction": "PUSH",
+        "transport": "LOCAL",
+        "source_datasets": [ATTACHMENT_TOGGLE_SRC],
+        "target_dataset": "data",
+        "recursive": False,
+        "name_regex": ".+",
+        "auto": False,
+        "retention_policy": "NONE",
+    }, id="replication"),
+    pytest.param("pool.snapshottask", {
+        "dataset": ATTACHMENT_TOGGLE_SRC,
+        "recursive": False,
+        "lifetime_value": 1,
+        "lifetime_unit": "WEEK",
+        "naming_schema": "auto-%Y%m%d.%H%M%S-1w",
+        "schedule": {},
+        "enabled": True,
+    }, id="snapshot_task"),
+))
+def test_attachment_delegate_toggle(namespace, data):
+    """Non-cascade export then re-import disables and re-enables a pool's attachments via the delegate.
+
+    The `snapshot_task` case guards the type-safe `pool.snapshottask` conversion: that delegate returns
+    model objects, so the export `enable_on_import` bookkeeping and the re-import re-enable step must not
+    subscript attachments like dicts.
+    """
+    with another_pool({"name": ATTACHMENT_TOGGLE_POOL}) as new_pool:
+        call("pool.dataset.create", {"name": ATTACHMENT_TOGGLE_SRC})
+        task = call(f"{namespace}.create", data)
         try:
             # Export without cascade disables the attachment via `toggle(attachments, False)`.
             call("pool.export", new_pool["id"], job=True)
-            assert call("replication.get_instance", task["id"])["enabled"] is False
+            assert call(f"{namespace}.get_instance", task["id"])["enabled"] is False
 
             # Re-import re-enables the attachment via `toggle(attachments, True)`.
-            call("pool.import_pool", {"guid": new_pool["guid"], "name": pool_name}, job=True)
-            assert call("replication.get_instance", task["id"])["enabled"] is True
+            call("pool.import_pool", {"guid": new_pool["guid"], "name": ATTACHMENT_TOGGLE_POOL}, job=True)
+            assert call(f"{namespace}.get_instance", task["id"])["enabled"] is True
         finally:
-            call("replication.delete", task["id"])
+            call(f"{namespace}.delete", task["id"])
 
 
 def test_query_check_dataset_encryption_keys():
