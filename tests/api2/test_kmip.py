@@ -374,20 +374,17 @@ def test_kmip_zfs_key_resynced_from_server(kmip_certificate, encrypted_dataset):
         call("kmip.initialize_keys", job=True)
         assert call("kmip.retrieve_zfs_keys")[encrypted_dataset] == key
 
-        # A dataset that carries both a database key and a (stale) KMIP UID has the old
-        # object revoked and destroyed before the key is registered again.
-        set_encrypted_dataset(encrypted_dataset, {"encryption_key": key, "kmip_uid": "stale-uid"})
+        # A dataset that carries both a database key and an existing KMIP UID has the old
+        # object revoked and destroyed before the key is registered again. The UID must be
+        # one the server actually knows (here the object registered by the initial push):
+        # asking PyKMIP about an unknown object degrades it for the rest of the module. The
+        # unresolvable-UID paths are covered by `test_kmip_zfs_key_pull_failures`, which runs
+        # against the deliberately-degraded server at the end of the module.
+        set_encrypted_dataset(encrypted_dataset, {"encryption_key": key, "kmip_uid": uid})
         call("kmip.sync_zfs_keys", job=True)
         row = encrypted_dataset_row(encrypted_dataset)
         assert row["encryption_key"] is None
-        assert row["kmip_uid"] not in (None, "stale-uid", uid)
-
-        # A UID the KMIP server does not know about cannot be resolved, so the key stays
-        # unavailable instead of the sync blowing up.
-        set_encrypted_dataset(encrypted_dataset, {"encryption_key": None, "kmip_uid": "unknown-uid"})
-        call("kmip.update_memory_keys", {"zfs": {}})
-        call("kmip.sync_zfs_keys", job=True)
-        assert call("kmip.retrieve_zfs_keys") == {}
+        assert row["kmip_uid"] not in (None, uid)
 
         set_encrypted_dataset(encrypted_dataset, {"encryption_key": key, "kmip_uid": None})
         call("kmip.update", {"manage_zfs_keys": False}, job=True)
