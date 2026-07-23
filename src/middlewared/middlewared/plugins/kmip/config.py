@@ -156,7 +156,11 @@ class KMIPConfigServicePart(ConfigServicePart[KMIPEntry]):
             'datastore.update', self._datastore, old.id, new,
         )
 
-        await (await self.call2(self.s.service.control, 'START', 'kmip')).wait(raise_error=True)
+        if new['enabled']:
+            await (await self.call2(self.s.service.control, 'START', 'kmip')).wait(raise_error=True)
+        else:
+            await self.middleware.call('etc.generate', 'kmip')
+
         if new['enabled'] and old.enabled != new['enabled']:
             await self.call2(self.s.kmip.initialize_keys)
         if any(getattr(old, k) != new[k] for k in ('enabled', 'manage_zfs_keys', 'manage_sed_disks')) or change_server:
