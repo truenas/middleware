@@ -91,10 +91,12 @@ class DomainConnection(
             case DSType.IPA:
                 if not clustered:
                     self.middleware.call_sync('directoryservices.secrets.restore')
+                    self._reconcile_standby_local_sid()
                 activate_fn = self._ipa_activate
             case DSType.AD:
                 if not clustered:
                     self.middleware.call_sync('directoryservices.secrets.restore')
+                    self._reconcile_standby_local_sid()
                 activate_fn = self._ad_activate
             case DSType.LDAP:
                 activate_fn = self._ldap_activate
@@ -112,6 +114,40 @@ class DomainConnection(
             self.middleware.call_sync('directoryservices.health.recover')
         except Exception:
             self.logger.warning('Failed to become healthy on standby controller', exc_info=True)
+
+    def _reconcile_standby_local_sid(self) -> None:
+        """
+        Ensure the standby's restored secrets.tdb carries the authoritative local server
+        SID before winbindd starts.
+
+        ``directoryservices.secrets.restore`` replays the ``SECRETS/SID/{netbios}`` value
+        that was current when the backup was taken, which can lag the database value. If
+        left unreconciled, winbindd starts with a stale local SAM domain SID. That state
+        cannot self-heal via a winbindd restart on the standby (the wrong SID is persisted
+        in secrets.tdb, so a restart just re-reads it), so it is rewritten here, before
+        winbindd starts, to keep the standby correct ahead of any failover.
+
+        This is best effort: a failure to reconcile is logged and swallowed rather than
+        aborting standby activation. The activation and health-recovery steps that follow
+        this call are wrapped for the same reason, and the periodic health check provides a
+        further backstop once this controller is promoted.
+        """
+        try:
+            if not self.middleware.call_sync('datastore.config', 'services.cifs')['cifs_SID']:
+                # Without a stored SID, smb.local_server_sid() would synthesize a fresh random
+                # SID on every call on the standby (it only persists on the active controller),
+                # so reconciling here would stamp a bogus SID. A directory-services-enabled
+                # server always has this set, so treat its absence as a skip, not an error.
+                self.logger.warning(
+                    'Local server SID is not set in configuration; skipping standby SID reconciliation.'
+                )
+                return
+
+            self.middleware.call_sync('smb.set_system_sid')
+        except Exception:
+            self.logger.warning(
+                'Failed to reconcile local server SID on standby controller', exc_info=True
+            )
 
     def activate(self) -> int:
         """ Generate etc files and start services, then start cache fill job and return job id """
