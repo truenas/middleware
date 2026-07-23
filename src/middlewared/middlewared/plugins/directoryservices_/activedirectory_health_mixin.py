@@ -209,6 +209,14 @@ class ADHealthMixin:
             case ADHealthCheckFailReason.WINBIND_STOPPED:
                 # pick up winbind restart below
                 pass
+            case ADHealthCheckFailReason.WINBIND_STALE_LOCAL_SID:
+                # Reconcile the on-disk SID before the restart below. A bare restart only
+                # heals the case where secrets.tdb already holds the configured SID and only
+                # winbindd's in-memory copy is stale; if secrets.tdb itself is stale, winbindd
+                # would re-read the stale value and the check would fault again every cycle.
+                # smb.set_system_sid rewrites secrets.tdb from the configured SID (a no-op
+                # when it already matches), so the restart below always converges.
+                self.middleware.call_sync('smb.set_system_sid')
             case _:
                 # not recoverable
                 raise error from None
@@ -231,7 +239,8 @@ class ADHealthMixin:
         except Exception:
             domain_info = None
 
-        workgroup = self.middleware.call_sync('smb.config')['workgroup']
+        smb_config = self.middleware.call_sync('smb.config')
+        workgroup = smb_config['workgroup']
 
         if domain_info:
             if domain_info['server_time_offset'] > MAX_SERVER_TIME_OFFSET:
@@ -300,6 +309,41 @@ class ADHealthMixin:
                 ADHealthCheckFailReason.AD_WBCLIENT_FAILURE,
                 faulted_reason
             )
+
+        # winbindd captures the local SAM domain SID from secrets.tdb when it starts.
+        # If the SID changes under a running winbindd (for example via `net setlocalsid`
+        # during an HA failover), its domain list no longer matches what the SAMR/passdb
+        # layer accepts and group token expansion fails with NT_STATUS_NO_SUCH_DOMAIN.
+        # Restarting winbindd rebuilds the domain list.
+        db_sid = self.middleware.call_sync('datastore.config', 'services.cifs')['cifs_SID']
+        if not db_sid:
+            # No configured server SID to compare against. Deliberately avoid
+            # smb.local_server_sid() here: with no stored SID it synthesizes (and on the
+            # active controller persists) a random SID, which would both corrupt the stored
+            # value from a health check and guarantee a spurious mismatch against winbindd.
+            # A directory-services-enabled server always has this set, so treat its absence
+            # as a skip, not a fault.
+            self.logger.warning(
+                'Local server SID is not set in configuration; skipping stale local SID check.'
+            )
+        else:
+            try:
+                wb_local_sid = ctx.domain_info(smb_config['netbiosname'])['sid']
+            except Exception:
+                # Unable to determine winbindd's view of the local SAM domain. This is
+                # ambiguous (for example a transient winbind hiccup) so we don't force a
+                # restart on it -- log and let the remaining checks proceed.
+                self.logger.warning(
+                    'Failed to retrieve local SAM domain information from winbindd', exc_info=True
+                )
+            else:
+                if wb_local_sid != db_sid:
+                    raise ADHealthError(
+                        ADHealthCheckFailReason.WINBIND_STALE_LOCAL_SID,
+                        f'winbindd reports local SAM domain SID [{wb_local_sid}] but the configured '
+                        f'server SID is [{db_sid}]. This indicates the local server SID was changed '
+                        'while winbindd was running.'
+                    )
 
         # If needed we can replace `ping_dc()` with `check_trust()`
         # for now we're defaulting to lower-cost test unless it gives

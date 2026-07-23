@@ -36,6 +36,10 @@ SAF_PINNED_IP = "10.0.0.42"
 SAF_PINNED_HOST = "dc-joined.ad.example.com"
 
 SMB_CONFIG = {"workgroup": "AD", "netbiosname": "TRUENAS"}
+
+# winbindd's view of the local SAM domain SID and the configured server SID. These
+# agree on a healthy system; the stale-SID health check fires when they diverge.
+LOCAL_SAM_SID = "S-1-5-21-1111111111-2222222222-3333333333"
 DS_CONFIG = {
     "kerberos_realm": "AD.EXAMPLE.COM",
     "configuration": {"domain": "AD.EXAMPLE.COM"},
@@ -81,6 +85,11 @@ def harness(saf_cache_file):
                 return {"name": "AD_MACHINE_ACCOUNT"}
             case "service.started":
                 return True
+            case "datastore.config":
+                # services.cifs row -- the configured local server SID. Read directly
+                # (rather than via smb.local_server_sid) so the health check never
+                # synthesizes/persists a random SID as a side effect.
+                return {"cifs_SID": LOCAL_SAM_SID}
             case _:
                 raise AssertionError(f"unexpected middleware call: {name}")
 
@@ -124,14 +133,16 @@ def _wbclient_with_failing_ping(
     """
     instance = MagicMock()
     instance.ping_dc.side_effect = _make_wbc_error(wbc_error_code, ntstatus, message)
+    instance.domain_info.return_value = {"sid": LOCAL_SAM_SID}
     cls = MagicMock(return_value=instance)
     return cls
 
 
-def _wbclient_healthy():
-    """WBClient mock whose ping_dc() succeeds."""
+def _wbclient_healthy(local_sam_sid=LOCAL_SAM_SID):
+    """WBClient mock whose ping_dc() succeeds and whose local SAM SID matches the db by default."""
     instance = MagicMock()
     instance.ping_dc.return_value = None
+    instance.domain_info.return_value = {"sid": local_sam_sid}
     cls = MagicMock(return_value=instance)
     return cls
 
@@ -166,6 +177,149 @@ def test__health_check_ad_does_not_run_password_test_when_ping_dc_succeeds(harne
         "on every periodic check writes a temporary krb5.conf and regenerates the "
         "system one, which is unnecessary churn."
     )
+
+
+# ---- Stale local SAM SID detection --------------------------------------------------------
+
+
+def test__health_check_ad_detects_stale_local_sid(harness):
+    """
+    If winbindd's view of the local SAM domain SID diverges from the configured server SID
+    (as when `net setlocalsid` runs under a live winbindd), the health check must fault with
+    WINBIND_STALE_LOCAL_SID so recovery routes to a winbindd restart.
+    """
+    with (
+        patch.object(_ADHealthHarness, "_test_machine_account_password") as test_pw,
+        patch(
+            "middlewared.plugins.directoryservices_.activedirectory_health_mixin.get_domain_info",
+            return_value=LIBADS_DOMAIN_INFO,
+        ),
+        patch(
+            "middlewared.plugins.directoryservices_.activedirectory_health_mixin.WBClient",
+            new=_wbclient_healthy(local_sam_sid="S-1-5-21-9999999999-8888888888-7777777777"),
+        ),
+    ):
+        with pytest.raises(ADHealthError) as excinfo:
+            harness._health_check_ad()
+
+    assert excinfo.value.reason is ADHealthCheckFailReason.WINBIND_STALE_LOCAL_SID
+    assert LOCAL_SAM_SID in excinfo.value.errmsg
+    # The mismatch is detected before ping_dc, so no password refinement should run.
+    assert not test_pw.called
+
+
+def test__health_check_ad_domain_info_failure_does_not_fault(harness):
+    """
+    A failure to read winbindd's local SAM domain info is ambiguous (possibly a transient
+    winbind hiccup) and must NOT by itself fault the health check into a winbindd restart
+    -- otherwise a benign query blip becomes a 10-minute restart loop. The remaining
+    checks (here, a healthy ping_dc) should still run and pass.
+    """
+    instance = MagicMock()
+    instance.ping_dc.return_value = None
+    instance.domain_info.side_effect = wbclient.WBCError(
+        wbclient.WBC_ERR_DOMAIN_NOT_FOUND, "domain not found", "tests/synthetic"
+    )
+    wbclient_mock = MagicMock(return_value=instance)
+
+    with (
+        patch.object(_ADHealthHarness, "_test_machine_account_password"),
+        patch(
+            "middlewared.plugins.directoryservices_.activedirectory_health_mixin.get_domain_info",
+            return_value=LIBADS_DOMAIN_INFO,
+        ),
+        patch(
+            "middlewared.plugins.directoryservices_.activedirectory_health_mixin.WBClient",
+            new=wbclient_mock,
+        ),
+    ):
+        # No raise: ambiguous domain_info failure is logged, not faulted.
+        harness._health_check_ad()
+
+    # And the check must have continued past the swallowed domain_info failure rather than
+    # returning early -- otherwise "does not fault" could pass for the wrong reason. ping_dc
+    # is the next step, so its having run proves the flow proceeded.
+    assert instance.ping_dc.called, (
+        "health check should continue to ping_dc after a logged domain_info failure"
+    )
+
+
+def test__health_check_ad_missing_server_sid_skips_stale_check(harness):
+    """
+    When no server SID is stored in configuration, the stale-SID check must be skipped
+    rather than calling smb.local_server_sid() -- which would synthesize (and, on the active
+    controller, persist) a random SID, corrupting the stored value from a read-only health
+    check and guaranteeing a spurious WINBIND_STALE_LOCAL_SID fault. winbindd's domain_info
+    must not even be consulted, and the remaining checks (here, a healthy ping_dc) still run.
+    """
+    orig = harness.middleware.call_sync.side_effect
+
+    def call_sync(name, *args, **kwargs):
+        if name == "datastore.config":
+            return {"cifs_SID": ""}
+        return orig(name, *args, **kwargs)
+
+    harness.middleware.call_sync.side_effect = call_sync
+
+    instance = MagicMock()
+    instance.ping_dc.return_value = None
+    # A SID that WOULD mismatch if it were ever consulted -- proving the check is skipped.
+    instance.domain_info.return_value = {"sid": "S-1-5-21-9999999999-8888888888-7777777777"}
+    wbclient_mock = MagicMock(return_value=instance)
+
+    with (
+        patch.object(_ADHealthHarness, "_test_machine_account_password"),
+        patch(
+            "middlewared.plugins.directoryservices_.activedirectory_health_mixin.get_domain_info",
+            return_value=LIBADS_DOMAIN_INFO,
+        ),
+        patch(
+            "middlewared.plugins.directoryservices_.activedirectory_health_mixin.WBClient",
+            new=wbclient_mock,
+        ),
+    ):
+        # No raise: an absent server SID is a skip, not a fault.
+        harness._health_check_ad()
+
+    assert not instance.domain_info.called, (
+        "with no configured server SID the stale-SID check must be skipped without "
+        "consulting winbindd's domain_info"
+    )
+    assert instance.ping_dc.called, "health check should proceed to ping_dc"
+
+
+def test__recover_ad_stale_local_sid_reconciles_and_restarts_winbind(harness):
+    """
+    Recovery for WINBIND_STALE_LOCAL_SID must reconcile the on-disk SID (smb.set_system_sid)
+    AND restart winbindd. A bare restart cannot fix a SID that is stale in secrets.tdb itself
+    -- winbindd would just re-read it and the check would fault again every cycle -- so the
+    reconcile is required for the fault to converge.
+    """
+    restart_job = MagicMock()
+    harness.call_sync2 = Mock(return_value=restart_job)
+
+    calls = []
+
+    def call_sync(name, *args, **kwargs):
+        calls.append(name)
+        if name == "smb.set_system_sid":
+            return None
+        raise AssertionError(f"unexpected middleware call: {name}")
+
+    harness.middleware.call_sync.side_effect = call_sync
+
+    harness._recover_ad(
+        ADHealthError(ADHealthCheckFailReason.WINBIND_STALE_LOCAL_SID, "stale local sid")
+    )
+
+    assert "smb.set_system_sid" in calls, (
+        "recovery must reconcile the on-disk SID via smb.set_system_sid so the restart converges"
+    )
+    control_call = harness.call_sync2.call_args
+    assert control_call.args[0] is harness.s.service.control
+    assert control_call.args[1] == "RESTART"
+    assert control_call.args[2] == "idmap"
+    restart_job.wait_sync.assert_called_once_with(raise_error=True)
 
 
 # ---- Refinement path: password test runs after ping_dc fails ------------------------------
@@ -491,6 +645,7 @@ def test__health_check_ad_unexpected_non_wbcerror_does_not_crash(harness):
     """
     instance = MagicMock()
     instance.ping_dc.side_effect = RuntimeError("libwbclient.so broken")
+    instance.domain_info.return_value = {"sid": LOCAL_SAM_SID}
     wbclient_mock = MagicMock(return_value=instance)
 
     with (
