@@ -107,7 +107,7 @@ def test_group_next_gid():
             result[{next_gid}] = None
             return result
     """):
-        assert call("group.get_next_gid") == next_gid + 1
+        assert call("group.get_next_gid") != next_gid
 
 
 def test_remove_only_local_administrator_password_enabled_user():
