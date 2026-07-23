@@ -53,12 +53,17 @@ def terminate_pid(pid: int, timeout: int = 10, use_pgid: bool = False) -> bool:
         before sending SIGKILL to `pid` if the process doesn't honor
         SIGTERM or takes longer than `timeout` seconds to terminate.
     `use_pgid`: boolean, if true will lookup the process group id of
-        `pid` and apply the same logic.
+        `pid` and apply the same logic. If `pid` still shares the
+        caller's process group, `pid` is signalled directly instead.
     """
     pid_or_pgid, method = pid, kill
     if use_pgid:
-        method = killpg
-        pid_or_pgid = getpgid(pid)
+        # A freshly forked child that has not called setsid() yet still shares the caller's process
+        # group; killpg on that group would signal the caller itself, so signal the pid directly instead.
+        pgid = getpgid(pid)
+        if pgid != getpgid(0):
+            method = killpg
+            pid_or_pgid = pgid
 
     # Send SIGTERM to request the process (group) to terminate
     method(pid_or_pgid, SIGTERM)
