@@ -25,6 +25,7 @@ class IPAHealthCheckFailReason(enum.IntEnum):
     NTP_EXCESSIVE_SLEW = enum.auto()
     LDAP_BIND_FAILED = enum.auto()
     SSSD_STOPPED = enum.auto()
+    IPA_SMB_CREDS = enum.auto()
 
 
 class ADHealthCheckFailReason(enum.IntEnum):
