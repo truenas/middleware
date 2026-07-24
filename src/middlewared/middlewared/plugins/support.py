@@ -21,6 +21,7 @@ from middlewared.plugins.system.utils import DEBUG_MAX_SIZE
 from middlewared.service import CallError, ConfigService, job, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import sw_version
+from middlewared.utils.entitlements import DerivedEntitlement
 from middlewared.utils.network import INTERNET_TIMEOUT
 
 ADDRESS = 'support-proxy.truenas.com'
@@ -103,10 +104,7 @@ class SupportService(ConfigService):
         if await self.middleware.call('system.vendor.name'):
             return False
 
-        if not await self.middleware.call('system.is_enterprise'):
-            return False
-
-        return await self.middleware.call('system.feature_enabled', 'SUPPORT')
+        return (await self.call2(self.s.truenas.entitlements.check, DerivedEntitlement.PROACTIVE_SUPPORT)).entitled
 
     @api_method(SupportIsAvailableAndEnabledArgs, SupportIsAvailableAndEnabledResult, roles=['SUPPORT_READ'])
     async def is_available_and_enabled(self):
