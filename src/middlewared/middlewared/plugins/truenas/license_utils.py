@@ -69,6 +69,10 @@ class FeatureInfo:
     """Feature start date or None."""
     expires_at: date | None
     """Feature expiration date or None for perpetual."""
+    source: str
+    """How the feature was granted (e.g. "enterprise")."""
+    type: str | None = None
+    """Per-feature tier qualifier (e.g. SUPPORT type=GOLD), enabler for future tier gates."""
 
 
 @dataclass(frozen=True, kw_only=True, slots=True)
@@ -215,9 +219,11 @@ def get_license_info(lic: LicenseStatus | None = None) -> LicenseInfo | None:
         expires_at=expires_at,
         features=[
             FeatureInfo(
-                name=FEATURE_NAME_MAP.get(name, name),
+                name=str(FEATURE_NAME_MAP.get(name, name)),
                 start_date=date.fromisoformat(f.start_date) if f.start_date else None,
                 expires_at=date.fromisoformat(f.expires_at) if f.expires_at else None,
+                source=f.source,
+                type=f.type,
             )
             for name, f in (lic.features or {}).items()
         ],
