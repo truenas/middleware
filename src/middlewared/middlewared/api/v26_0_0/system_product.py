@@ -22,7 +22,12 @@ __all__ = (
 
 
 class SystemFeatureEnabledArgs(BaseModel):
-    feature: Literal["APPS", "DEDUP", "FIBRECHANNEL", "SED", "SUPPORT", "VMS", "ZFSTIER"] = Field(
+    feature: Literal[
+        "APPS", "AUTOTUNE", "CATALOG_ENTERPRISE_TRAIN", "CONTAINERS", "DEDUP", "DIRECTORY_SERVICES",
+        "FIBRECHANNEL", "JBOF", "KMIP", "LTS", "MISSION_CRITICAL", "NETWORK_FEC", "NFS_SNAPSHOT",
+        "NVMEOF_SPDK", "RDMA", "SED", "SMB_FASTPATH", "SMB_VEEAM", "STIG", "SUPPORT", "TRUESEARCH",
+        "VMS", "WEBSHARE", "ZFSTIER",
+    ] = Field(
         description="Feature to check for availability on this system.",
     )
 
