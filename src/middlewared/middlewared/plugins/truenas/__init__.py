@@ -17,6 +17,7 @@ from middlewared.api.current import (
 from middlewared.job import Job
 from middlewared.service import job, private, Service
 
+from .entitlements import TrueNASEntitlementsService
 from .license import TrueNASLicenseService
 from .tn import (
     managed_by_truecommand as tn_managed_by_truecommand,
@@ -45,6 +46,7 @@ class TrueNASService(Service):
     def __init__(self, middleware: Middleware):
         super().__init__(middleware)
         self.license = TrueNASLicenseService(middleware)
+        self.entitlements = TrueNASEntitlementsService(middleware)
 
     @api_method(
         TrueNASManagedByTruecommandArgs, TrueNASManagedByTruecommandResult,
