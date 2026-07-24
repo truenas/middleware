@@ -42,8 +42,11 @@ def test__get_license_info__renames_vm_to_vms():
         model="H10",
         expires_at=date(2026, 4, 30),
         features=[
-            FeatureInfo(name="VMS", start_date=date(2026, 4, 8), expires_at=date(2026, 4, 30)),
-            FeatureInfo(name="SUPPORT", start_date=date(2026, 4, 8), expires_at=date(2026, 4, 30)),
+            FeatureInfo(name="VMS", start_date=date(2026, 4, 8), expires_at=date(2026, 4, 30), source="enterprise"),
+            FeatureInfo(
+                name="SUPPORT", start_date=date(2026, 4, 8), expires_at=date(2026, 4, 30),
+                source="enterprise", type="GOLD",
+            ),
         ],
         serials=["TEST-000001", "TEST-000002"],
         enclosures={"E24": 3},
