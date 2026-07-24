@@ -158,8 +158,6 @@ class KMIPConfigServicePart(ConfigServicePart[KMIPEntry]):
 
         if new['enabled']:
             await (await self.call2(self.s.service.control, 'START', 'kmip')).wait(raise_error=True)
-        else:
-            await self.middleware.call('etc.generate', 'kmip')
 
         if new['enabled'] and old.enabled != new['enabled']:
             await self.call2(self.s.kmip.initialize_keys)

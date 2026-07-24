@@ -121,7 +121,6 @@ jobs:
             middlewared/etc_files/nsswitch.conf.mako \
             middlewared/etc_files/pam.d \
             middlewared/etc_files/proftpd \
-            middlewared/etc_files/pykmip \
             middlewared/etc_files/scst.direct.mako \
             middlewared/etc_files/scst.env.mako \
             middlewared/etc_files/security \

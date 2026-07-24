@@ -592,9 +592,6 @@ class EtcService(Service):
         'localtime': EtcGroup(entries=(
             EtcEntry(renderer_type=RendererType.PY, path='localtime_config'),
         )),
-        'kmip': EtcGroup(entries=(
-            EtcEntry(renderer_type=RendererType.MAKO, path='pykmip/pykmip.conf'),
-        )),
         'truecommand': EtcGroup(entries=(
             EtcEntry(renderer_type=RendererType.MAKO, path='wireguard/ix-truecommand.conf'),
         )),

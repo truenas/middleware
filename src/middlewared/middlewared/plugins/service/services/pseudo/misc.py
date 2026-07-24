@@ -29,7 +29,6 @@ class KmipService(PseudoServiceBase):
 
     async def start(self) -> None:
         await (await self.call2(self.s.service.control, "START", "ssl")).wait(raise_error=True)
-        await self.middleware.call("etc.generate", "kmip")
 
     async def get_state(self) -> ServiceState:
         return ServiceState(
