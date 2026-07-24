@@ -6,7 +6,7 @@
 from datetime import date
 from types import MappingProxyType
 
-import truenas_pylicensed
+from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -48,8 +48,9 @@ class SystemService(Service):
                 SystemService.PRODUCT_TYPE = ProductType.ENTERPRISE
             else:
                 if license_ := await self.call2(self.s.truenas.license.info_private):
-                    if license_.model.lower().startswith("freenas"):
-                        # legacy freenas certified
+                    if license_.model is None or license_.model.lower().startswith("freenas"):
+                        # legacy freenas certified, or a model-less daemon license
+                        # (COMMERCIAL/COMMUNITY) which is not a certified hardware line
                         SystemService.PRODUCT_TYPE = ProductType.COMMUNITY_EDITION
                     else:
                         # the license has been issued for a "certified" line
@@ -73,7 +74,7 @@ class SystemService(Service):
 
     @private
     def sed_enabled(self):
-        return truenas_pylicensed.is_feature_licensed("SED")
+        return self.call_sync2(self.s.truenas.entitlements.check, LicenseFeature.SED).entitled
 
     @api_method(
         SystemVersionShortArgs,

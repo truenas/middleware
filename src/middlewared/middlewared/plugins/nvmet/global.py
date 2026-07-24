@@ -1,5 +1,7 @@
 import pathlib
 
+from truenas_pylicensed.features import LicenseFeature
+
 import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
 from middlewared.api.current import (NVMetGlobalEntry,
@@ -84,11 +86,9 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
                 )
         if old['kernel'] != data['kernel']:
             if not data['kernel']:
-                if not await self.middleware.call('system.is_enterprise'):
-                    verrors.add(
-                        f'{schema_name}.kernel',
-                        'SPDK is limited to enterprise licensed systems only.'
-                    )
+                spdk = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.NVMEOF_SPDK)
+                if not spdk.entitled:
+                    verrors.add(f'{schema_name}.kernel', spdk.message)
                 elif AVX2_FLAG not in (await self.middleware.call('system.cpu_flags')):
                     verrors.add(
                         f'{schema_name}.kernel',

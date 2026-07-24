@@ -8,11 +8,11 @@ if TYPE_CHECKING:
     from middlewared.main import Middleware
 
 import truenas_pylibzfs
+from truenas_pylicensed.features import LicenseFeature
 from truenas_zfstierd_client import (
     RewriteClient,
     RewriteClientException,
     enum_jobs,
-    feature_is_licensed,
     get_info,
     get_last_job,
     get_resolved_failures,
@@ -367,8 +367,9 @@ class ZfsTierService(ConfigService[ZfsTierEntry]):
         audit="ZFS tier config update",
     )
     async def do_update(self, data: dict[str, typing.Any]) -> ZfsTierEntry:
-        if not feature_is_licensed():
-            raise CallError("ZFS tiering requires a license.")
+        ent = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.ZFSTIER)
+        if not ent.entitled:
+            raise CallError(ent.message)
 
         old = await self.config()
         new = await self._svc_part.do_update(data)
