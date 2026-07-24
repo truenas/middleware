@@ -272,7 +272,7 @@ def get_keytab(
             cmd.append('-P')
             res = subprocess.run(
                 cmd, check=False,
-                input=b'{password}\n{password}',
+                input=f'{password}\n{password}'.encode(),
                 capture_output=True
             )
         else:

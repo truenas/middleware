@@ -323,7 +323,7 @@ class IPAJoinMixin:
             self.middleware.call_sync(
                 'directoryservices.secrets.set_ipa_secret',
                 domain_info['netbios_name'],
-                base64.b64encode(password.encode())
+                password.encode()
             )
 
             self.middleware.call_sync('directoryservices.secrets.backup')
