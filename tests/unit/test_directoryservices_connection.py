@@ -41,9 +41,9 @@ def test__reconcile_standby_local_sid_rewrites_when_sid_configured():
 
     svc._reconcile_standby_local_sid()
 
-    assert any(
-        c.args[0] == "smb.set_system_sid" for c in svc.middleware.call_sync.call_args_list
-    ), "reconcile must invoke smb.set_system_sid when a server SID is configured"
+    assert any(c.args[0] == "smb.set_system_sid" for c in svc.middleware.call_sync.call_args_list), (
+        "reconcile must invoke smb.set_system_sid when a server SID is configured"
+    )
 
 
 def test__reconcile_standby_local_sid_skips_when_sid_absent():
@@ -90,6 +90,6 @@ def test__reconcile_standby_local_sid_swallows_failures():
     # Must not raise: the failure is logged and swallowed.
     svc._reconcile_standby_local_sid()
 
-    assert any(
-        c.args[0] == "smb.set_system_sid" for c in svc.middleware.call_sync.call_args_list
-    ), "reconcile should have attempted smb.set_system_sid before swallowing the failure"
+    assert any(c.args[0] == "smb.set_system_sid" for c in svc.middleware.call_sync.call_args_list), (
+        "reconcile should have attempted smb.set_system_sid before swallowing the failure"
+    )
