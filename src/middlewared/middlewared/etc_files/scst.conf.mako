@@ -15,8 +15,8 @@
 
     global_config = render_ctx['iscsi.global.config']
 
-    def existing_copy_manager_luns():
-        luns = {}
+    def existing_copy_manager_luns() -> dict[int, str]:
+        luns: dict[int, str] = {}
         p = Path('/sys/kernel/scst_tgt/targets/copy_manager/copy_manager_tgt/luns')
         if p.is_dir():
             for lun in p.iterdir():
@@ -27,7 +27,7 @@
                         luns[int(lun.name)] = target.name
         return luns
 
-    def calc_copy_manager_luns(devices, force_insert=False):
+    def calc_copy_manager_luns(devices: list[str], force_insert: bool = False) -> dict[int, str]:
         cml = existing_copy_manager_luns()
         # Remove any devices not present
         for key in list(cml):
@@ -74,11 +74,12 @@
     # Populate this below
     fc_host_by_port_name = {}
 
-    def ha_node_wwpn_for_fcport_or_fchost(fcport):
+    def ha_node_wwpn_for_fcport_or_fchost(fcport: dict[str, str]) -> str | None:
         if not is_ha or render_ctx['failover.node'] == 'A':
             return wwn_as_colon_hex(fcport['wwpn'])
         elif render_ctx['failover.node'] == 'B':
             return wwn_as_colon_hex(fcport['wwpn_b'])
+        return None
 
     def ha_node_wwpn_for_target(target, node):
         """Iterator that yields wwpn, fcport pairs"""
@@ -89,7 +90,7 @@
                 if wwpn:
                     yield wwpn, fcport
 
-    def fc_target_rel_tgt_id(target, fcport):
+    def fc_target_rel_tgt_id(target: dict[str, int], fcport: dict[str, str]) -> int:
         """
         Return a rel_tgt_id for a target attached to a particular fcport.
 
@@ -101,10 +102,10 @@
             per_hba = 0
         return target['rel_tgt_id'] + REL_TGT_ID_FC_OFFSET + per_hba
 
-    def is_iscsi_target(target):
+    def is_iscsi_target(target: dict[str, str]) -> bool:
         return target['mode'] in ['ISCSI', 'BOTH']
 
-    def is_fc_target(target):
+    def is_fc_target(target: dict[str, str]) -> bool:
         return target['mode'] in ['FC', 'BOTH']
 
     def fcport_to_target(fcport):
@@ -113,7 +114,7 @@
         except KeyError:
             return None
 
-    def fcport_to_parent_host(fcport):
+    def fcport_to_parent_host(fcport: dict[str, str]) -> str | None:
         if '/' in fcport['port']:
             parent_port_name = fcport['port'].split('/')[0]
             if parent_fcport := fcports_by_port_name.get(parent_port_name):
@@ -240,7 +241,11 @@
                     for key in ['wwpn', 'wwpn_b']:
                         if naa := entry.get(key):
                             used_physical_naa.add(naa)
-            unused_physical = sorted([wwn_as_colon_hex(naa) for naa in (physical_naa - used_physical_naa)])
+            unused_physical = sorted(
+                hexwwpn
+                for naa in (physical_naa - used_physical_naa)
+                if (hexwwpn := wwn_as_colon_hex(naa)) is not None
+            )
 
     # Let's map extents to respective ios
     all_rw_extent_names = []
@@ -303,7 +308,7 @@
     else:
         cml = calc_copy_manager_luns(all_rw_extent_names)
 
-    def set_standby_lun_to_cluster_mode(device, targetname):
+    def set_standby_lun_to_cluster_mode(device: str, targetname: str) -> bool:
         # Predicate used only to decide whether to queue standby_fix_cluster_mode
         # for this device. cluster_mode is no longer written via scst.conf; it is
         # managed by middleware via direct sysfs writes (iscsi.scst.path_write_if_needed).
@@ -312,14 +317,14 @@
                 return True
         return False
 
-    def set_standy_target_to_enabled(targetname):
+    def set_standy_target_to_enabled(targetname: str) -> bool:
         devices = logged_in_targets.get(targetname, [])
         if devices:
             if set(devices).issubset(clustered_extents):
                 return True
         return False
 
-    def option_value(v):
+    def option_value(v: str | int) -> str | int:
         if isinstance(v, bool):
             return "Yes" if v else "No"
         return v
@@ -369,8 +374,8 @@ HANDLER dev_disk {
 % if len(cml):
 TARGET_DRIVER copy_manager {
         TARGET copy_manager_tgt {
-%       for key in sorted(cml):
-                LUN ${key} ${cml[key]}
+%       for cml_key in sorted(cml):
+                LUN ${cml_key} ${cml[cml_key]}
 %       endfor
         }
 }
@@ -458,8 +463,8 @@ TARGET_DRIVER iscsi {
     # desires mutual chap, we take the first one and use it's peer credentials
     alias = target.get('alias')
     mutual_chap = None
-    chap_users = set()
-    iscsi_initiator_portal_access = set()
+    chap_users: set[str] = set()
+    iscsi_initiator_portal_access: set[str] = set()
     for group in target['groups']:
         if group['authmethod'] != 'NONE' and authenticators[group['auth']]:
             auth_list = authenticators[group['auth']]
@@ -629,19 +634,19 @@ TARGET_DRIVER qla2x00t {
 % if alua_enabled:
 ##    ALUA enabled - write out the target for this node
 <%
-    wwpn = ha_node_wwpn_for_fcport_or_fchost(fcport)
+    fc_wwpn = ha_node_wwpn_for_fcport_or_fchost(fcport)
     target = fcport_to_target(fcport)
     fc_initiator_access = fc_initiator_access_for_target(target)
     parent_host = fcport_to_parent_host(fcport)
     skip_wwpn = standby_write_empty_config and "/" in fcport['port']
     if skip_wwpn:
-        skipped_wwpns.add(wwpn)
+        skipped_wwpns.add(fc_wwpn)
 %>\
 % if skip_wwpn:
 <% continue %>
 % endif
-% if wwpn and target:
-    TARGET ${wwpn} {
+% if fc_wwpn and target:
+    TARGET ${fc_wwpn} {
 % if parent_host:
         node_name ${parent_host}
         parent_host ${parent_host}
@@ -689,13 +694,13 @@ TARGET_DRIVER qla2x00t {
 ##    ALUA not enabled - only write out the target for this node if MASTER
 % if failover_status == "MASTER":
 <%
-    wwpn = ha_node_wwpn_for_fcport_or_fchost(fcport)
+    fc_wwpn = ha_node_wwpn_for_fcport_or_fchost(fcport)
     target = fcport_to_target(fcport)
     fc_initiator_access = fc_initiator_access_for_target(target)
     parent_host = fcport_to_parent_host(fcport)
 %>
-    % if wwpn and target:
-    TARGET ${wwpn} {
+    % if fc_wwpn and target:
+    TARGET ${fc_wwpn} {
 % if parent_host:
         node_name ${parent_host}
         parent_host ${parent_host}
@@ -727,13 +732,13 @@ TARGET_DRIVER qla2x00t {
 ##
 % for fcport in render_ctx['fcport.query']:
 <%
-    wwpn = wwn_as_colon_hex(fcport['wwpn'])
+    fc_wwpn = wwn_as_colon_hex(fcport['wwpn'])
     target = fcport_to_target(fcport)
     fc_initiator_access = fc_initiator_access_for_target(target)
     parent_host = fcport_to_parent_host(fcport)
 %>
-    % if wwpn and target:
-    TARGET ${wwpn} {
+    % if fc_wwpn and target:
+    TARGET ${fc_wwpn} {
 % if parent_host:
         node_name ${parent_host}
         parent_host ${parent_host}

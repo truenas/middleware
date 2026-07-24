@@ -101,16 +101,19 @@ jobs:
             middlewared/etc_files/ctdb \
             middlewared/etc_files/default \
             middlewared/etc_files/dhcpcd.conf.mako \
+            middlewared/etc_files/exports.mako \
             middlewared/etc_files/fstab.mako \
             middlewared/etc_files/ftpusers.mako \
             middlewared/etc_files/hosts.mako \
             middlewared/etc_files/idmapd.conf.mako \
+            middlewared/etc_files/initiators.allow.mako \
             middlewared/etc_files/initiators.deny.mako \
             middlewared/etc_files/local/nut \
             middlewared/etc_files/local/openldap \
             middlewared/etc_files/local/smb4.conf.mako \
             middlewared/etc_files/local/snmpd.conf.mako \
             middlewared/etc_files/local/ssh \
+            middlewared/etc_files/local/sudoers.mako \
             middlewared/etc_files/local/users.oath.mako \
             middlewared/etc_files/login_banner.mako \
             middlewared/etc_files/mail \
@@ -128,6 +131,7 @@ jobs:
             middlewared/etc_files/subgid.mako \
             middlewared/etc_files/subuid.mako \
             middlewared/etc_files/sysctl.d \
+            middlewared/etc_files/syslog-ng/conf.d/tnaudit.conf.mako \
             middlewared/etc_files/syslog-ng/conf.d/tndestinations.conf.mako \
             middlewared/etc_files/wireguard \
             --follow-imports silent \

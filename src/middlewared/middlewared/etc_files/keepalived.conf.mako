@@ -7,9 +7,9 @@
             'Chassis position could not be determined.'
             ' Keepalived config not generated.'
         )
-	raise FileShouldNotExist()
+        raise FileShouldNotExist()
     elif not licensed:
-	return
+        return
 
     prio = middleware.call_sync('failover.vrrp.get_priority')
     config = middleware.call_sync('failover.config')

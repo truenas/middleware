@@ -2,11 +2,12 @@
     import ipaddress
     import socket
     from pathlib import Path
+    from typing import Any
     from middlewared.alert.source.nfs_host import NFSHostnameLookupFailAlert
     from middlewared.alert.source.nfs_exportsd import NFSexportMappingInvalidNamesAlert
     from middlewared.plugins.nfs_.utils import leftmost_has_wildcards
 
-    def do_map(share, map_type, map_ids, alert_shares):
+    def do_map(share: dict[str, str], map_type: str, map_ids: dict[str, int | str], alert_shares: dict[str, list[str]]) -> list[str]:
         output = []
         invalid_name = []
 
@@ -41,11 +42,11 @@
         return output
 
 
-    def generate_options(share, global_sec, config, alert_shares):
+    def generate_options(share: dict[str, str], global_sec: list[str], config: dict[str, Any], alert_shares: dict[str, list[str]]) -> str:
         params = []
         mapall = []
         maproot = []
-        map_ids = {
+        map_ids: dict[str, int | str] = {
             'maproot_user': -1,
             'maproot_group': -1,
             'mapall_user': -1,
@@ -82,7 +83,7 @@
 
         return ','.join(params)
 
-    def parse_host(hostname, gaierrors):
+    def parse_host(hostname: str, gaierrors: list[str]) -> str | None:
         if hostname.startswith('@'):
             # This is a netgroup, skip validation
             return hostname
@@ -107,8 +108,8 @@
         return hostname
 
     entries = []
-    gaierrors = []
-    alert_shares = {}
+    gaierrors: list[str] = []
+    alert_shares: dict[str, list[str]] = {}
 
     config = render_ctx["nfs.config"]
     shares = render_ctx["sharing.nfs.query"]

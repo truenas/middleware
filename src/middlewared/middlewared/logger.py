@@ -97,7 +97,7 @@ class TNLog:
     logformat: str = DEFAULT_LOGFORMAT
     pending_maxlen: int | None = DEFAULT_PENDING_QUEUE_LEN
 
-    def get_ident(self):
+    def get_ident(self) -> str:
         if self.name is None:
             return DEFAULT_IDENT
 
