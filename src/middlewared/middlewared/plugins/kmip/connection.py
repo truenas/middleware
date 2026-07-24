@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import contextlib
 from logging import Logger
-import socket
 from typing import TYPE_CHECKING, Any, Iterator
 
 from kmip.core import enums
@@ -39,7 +38,7 @@ def kmip_connection(context: ServiceContext, data: dict[str, Any] | None = None)
     try:
         with ProxyKmipClient(**{k: data[v] for k, v in mapping.items() if data.get(v)}) as conn:
             yield conn
-    except (ClientConnectionFailure, ClientConnectionNotOpen, socket.timeout) as e:
+    except (ClientConnectionFailure, ClientConnectionNotOpen, OSError) as e:
         raise CallError(f'Failed to connect to KMIP Server: {e}')
 
 

@@ -99,7 +99,8 @@ def push_zfs_keys(context: ServiceContext, store: KMIPKeyStore, tls: Any, ids: l
                 update_data = {'encryption_key': None, 'kmip_uid': uid}
             if update_data:
                 context.middleware.call_sync('datastore.update', 'storage.encrypteddataset', ds['id'], update_data)
-    store.zfs_keys = {k: v for k, v in store.zfs_keys.items() if k in existing_datasets}  # type: ignore[comparison-overlap]
+    existing_dataset_names = {ds['name'] for ds in existing_datasets}
+    store.zfs_keys = {k: v for k, v in store.zfs_keys.items() if k in existing_dataset_names}
     return failed
 
 
@@ -129,7 +130,8 @@ def pull_zfs_keys(context: ServiceContext, store: KMIPKeyStore, tls: Any) -> lis
             store.zfs_keys.pop(ds['name'], None)
             if connection_successful:
                 delete_kmip_secret_data(context, ds['kmip_uid'])
-    store.zfs_keys = {k: v for k, v in store.zfs_keys.items() if k in existing_datasets}  # type: ignore[comparison-overlap]
+    existing_dataset_names = {ds['name'] for ds in existing_datasets}
+    store.zfs_keys = {k: v for k, v in store.zfs_keys.items() if k in existing_dataset_names}
     return failed
 
 
@@ -161,7 +163,7 @@ async def clear_sync_pending_zfs_keys(context: ServiceContext, store: KMIPKeySto
         'datastore.query', 'storage.encrypteddataset', [['kmip_uid', '!=', None]]
     ):
         if ds['encryption_key']:
-            await context.middleware.call('datastore.update', 'storage.encrypteddataset', {'kmip_uid': None})
+            await context.middleware.call('datastore.update', 'storage.encrypteddataset', ds['id'], {'kmip_uid': None})
         else:
             to_remove.append(ds['id'])
     await context.middleware.call('datastore.delete', 'storage.encrypteddataset', [['id', 'in', to_remove]])
