@@ -243,6 +243,18 @@ class ContainerService(Service):
                         )
                     processed_parents_mountpoints = True
 
+                # Relocate this container's origin image out of .ix-virt BEFORE
+                # renaming the container into .truenas_containers, so a later
+                # deletion of .ix-virt cannot cascade into the migrated container.
+                # On failure, skip the container so it stays wholly in .ix-virt.
+                relocate_status = self.relocate_container_origin(dataset["name"])
+                if relocate_status in ("FAILED", "ABSENT"):
+                    job.logs_fd.write((
+                        f"Skipping container {name!r}: could not relocate its base image out of "
+                        f".ix-virt.\n"
+                    ).encode())
+                    continue
+
                 self.middleware.call_sync(
                     "pool.dataset.update_impl",
                     UpdateImplArgs(
@@ -296,3 +308,96 @@ class ContainerService(Service):
                 job.logs_fd.write(f"Unable to migrate container {name!r}: {e!r}.\n".encode())
             else:
                 job.logs_fd.write(f"Successfully migrated container {name!r}.\n".encode())
+
+    @private
+    def relocate_container_origin(self, container_ds):
+        """Relocate a migrated container's origin image out of legacy ``.ix-virt``.
+
+        A migrated container is a ZFS clone whose ``origin`` snapshot may still
+        live inside ``<pool>/.ix-virt``. A recursive destroy of ``.ix-virt``
+        cascades into dependent clones regardless of where they live, so such a
+        container is destroyed if the user later deletes ``.ix-virt``. This moves
+        the origin image dataset into the native ``<pool>/.truenas_containers/images``
+        tree so the container no longer depends on anything under ``.ix-virt``.
+
+        Best-effort. Returns one of:
+          - ``RELOCATED``: the origin image was moved.
+          - ``ALREADY_SATISFIED``: not a clone, or the origin already lives
+            outside ``.ix-virt`` (a fan-out sibling or earlier run moved it);
+            the caller may proceed.
+          - ``FAILED``: could not relocate; the caller should skip the container
+            so it stays wholly inside ``.ix-virt``.
+          - ``ABSENT``: the container dataset (or its pool) is not present.
+        """
+        try:
+            resources = self.call_sync2(
+                self.s.zfs.resource.query_impl,
+                ZFSResourceQuery(paths=[container_ds], properties=["origin"]),
+            )
+        except Exception:
+            self.logger.error("%s: failed to read origin", container_ds, exc_info=True)
+            return "FAILED"
+
+        if not resources:
+            return "ABSENT"
+
+        origin = resources[0]["properties"]["origin"]["value"]
+        if origin in (None, "", "none"):
+            return "ALREADY_SATISFIED"
+
+        origin_dataset = origin.split("@")[0]
+        pool = origin_dataset.split("/")[0]
+        ix_virt = f"{pool}/.ix-virt/"
+        if not origin_dataset.startswith(ix_virt):
+            # Already relocated (fan-out sibling / prior run) or never in .ix-virt.
+            return "ALREADY_SATISFIED"
+
+        if not (
+            origin_dataset.startswith(f"{ix_virt}images/")
+            or origin_dataset.startswith(f"{ix_virt}deleted/images/")
+        ):
+            # Via the supported API a container origin is always an image
+            # snapshot. Anything else under .ix-virt is only reachable through
+            # the raw incus CLI, which we make no promises about.
+            self.logger.warning(
+                "%s: origin %r is under .ix-virt but is not an image dataset; skipping relocation",
+                container_ds, origin_dataset,
+            )
+            return "FAILED"
+
+        self.middleware.call_sync("container.ensure_datasets", pool)
+
+        fingerprint = origin_dataset.rsplit("/", 1)[1]
+        target = os.path.join(container_dataset(pool), f"images/{fingerprint}")
+
+        # EEXIST-tolerance: the same fingerprint can, in crash/manual states,
+        # exist under both images/ and deleted/images/. Same fingerprint means
+        # identical content, so an extra copy is only redundant disk - pick a
+        # free name rather than failing.
+        final_target = target
+        attempt = 0
+        while self.call_sync2(
+            self.s.zfs.resource.query_impl,
+            ZFSResourceQuery(paths=[final_target], properties=None),
+        ):
+            attempt += 1
+            final_target = f"{target}-migrated-{attempt}"
+
+        try:
+            self.call_sync2(self.s.zfs.resource.rename, origin_dataset, final_target)
+            self.middleware.call_sync(
+                "pool.dataset.update_impl",
+                UpdateImplArgs(
+                    name=final_target,
+                    zprops={"canmount": "noauto"},
+                    uprops={"truenas:origin": "incus-migration"},
+                ),
+            )
+        except Exception:
+            self.logger.error(
+                "%s: failed to relocate origin image %r out of .ix-virt",
+                container_ds, origin_dataset, exc_info=True,
+            )
+            return "FAILED"
+
+        return "RELOCATED"

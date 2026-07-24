@@ -17,8 +17,10 @@ from middlewared.api.current import (
     ContainerDeleteArgs, ContainerDeleteResult,
     ContainerPoolChoicesArgs, ContainerPoolChoicesResult,
     ZFSResourceQuery,
+    ZFSResourceSnapshotCloneQuery,
     ZFSResourceSnapshotDestroyQuery,
 )
+from middlewared.plugins.zfs.exceptions import ZFSPathHasClonesException, ZFSPathNotFoundException
 from middlewared.plugins.zfs.utils import get_encryption_info
 from middlewared.pylibvirt import gather_pylibvirt_domains_states, get_pylibvirt_domain_state
 from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
@@ -259,10 +261,18 @@ class ContainerService(CRUDService):
         # Populate dataset
         if pool == image_snapshot.split('@')[0].split('/')[0]:  # noqa
             # The container is in the same pool as images. We can just clone the image.
-            await self.middleware.call("pool.snapshot.clone", {
-                "snapshot": image_snapshot,  # noqa
-                "dataset_dst": data['dataset']
-            })
+            # Both the image snapshot and the destination live under
+            # .truenas_containers, which is an internal (delete-guarded) path, and
+            # pool.snapshot.clone has no bypass passthrough - so clone directly.
+            await self.call2(
+                self.s.zfs.resource.snapshot.clone_impl,
+                ZFSResourceSnapshotCloneQuery(
+                    snapshot=image_snapshot,  # noqa
+                    dataset=data['dataset'],
+                    bypass=True,
+                ),
+            )
+            await self.call2(self.s.zfs.resource.mount, data['dataset'])
         else:
             # The container is on the different pool. Let's replicate the image.
             source_dataset, source_snapshot = image_snapshot.split('@', 1)  # noqa
@@ -281,7 +291,7 @@ class ContainerService(CRUDService):
             ))
             await self.call2(
                 self.s.zfs.resource.snapshot.destroy_impl,
-                ZFSResourceSnapshotDestroyQuery(path=f'{data["dataset"]}@{source_snapshot}'),
+                ZFSResourceSnapshotDestroyQuery(path=f'{data["dataset"]}@{source_snapshot}', bypass=True),
             )
 
         return await self.create_with_dataset(data)
@@ -320,7 +330,7 @@ class ContainerService(CRUDService):
 
         name_changed = old['name'] != new['name']
         if name_changed:
-            if old['status']['state'] == 'RUNNING':
+            if old['status']['state'] != 'STOPPED':
                 raise CallError('Container must be stopped before renaming.')
 
             old_dataset = old['dataset']
@@ -345,15 +355,121 @@ class ContainerService(CRUDService):
         audit='Container delete',
         audit_callback=True,
     )
-    def do_delete(self, audit_callback, id_):
+    @job(lock='container_delete')
+    def do_delete(self, job, audit_callback, id_, options):
         """
         Delete a Container.
         """
+        # A single global lock serializes deletes so that fan-out siblings cloned
+        # from one migrated image don't race each other's last-clone image GC.
         container = self.middleware.call_sync("container.get_instance", id_)
         audit_callback(container['name'])
+
+        if container['status']['state'] != 'STOPPED':
+            if not options['force']:
+                raise CallError(
+                    f'Container {container["name"]!r} is {container["status"]["state"].lower()}. Stop it first, '
+                    f'or pass force=True to stop and delete it.'
+                )
+            self.middleware.call_sync('container.stop', id_, {'force': True}).wait_sync(raise_error=True)
+
+        # Read the origin image (if this container clones a migrated Incus image)
+        # before destroying the clone - the origin is unreadable afterwards.
+        migrated_origin = self.migrated_container_origin(container['dataset'])
+
+        # Destroy the dataset first and only remove the DB/libvirt records once it is
+        # actually gone, so a failed destroy never orphans the dataset with no
+        # container row pointing at it. recursive=True mirrors the apps stack so a
+        # container that has snapshots can still be removed; bypass=True because the
+        # dataset lives under the now delete-guarded .truenas_containers.
+        try:
+            failed = self.call_sync2(
+                self.s.zfs.resource.destroy_impl, container['dataset'], recursive=True, bypass=True,
+            )[0]
+        except ZFSPathNotFoundException:
+            # Dataset already gone (e.g. a victim of a legacy .ix-virt deletion);
+            # fall through to clean up the now-dangling records.
+            failed = None
+        if failed is not None:
+            raise CallError(f'Failed to delete container {container["name"]!r} dataset: {failed}')
+
         self.delete_container_from_db_and_libvirt(container)
-        self.call_sync2(self.s.zfs.resource.destroy_impl, container['dataset'])
         self.middleware.call_sync('etc.generate', 'libvirt_guests')
+
+        if migrated_origin is not None:
+            self.gc_migrated_origin_image(migrated_origin)
+
+    @private
+    def migrated_container_origin(self, container_ds):
+        """Return the origin snapshot of `container_ds` iff it clones a migrated
+        Incus image (tagged ``truenas:origin=incus-migration``), else ``None``.
+
+        Only tagged images are eligible for last-clone garbage collection, so a
+        native image-cache dataset is never reaped.
+        """
+        try:
+            resources = self.call_sync2(
+                self.s.zfs.resource.query_impl,
+                ZFSResourceQuery(paths=[container_ds], properties=['origin']),
+            )
+            if not resources:
+                return None
+
+            origin = resources[0]['properties']['origin']['value']
+            if origin in (None, '', 'none'):
+                return None
+
+            image = self.call_sync2(
+                self.s.zfs.resource.query_impl,
+                ZFSResourceQuery(paths=[origin.split('@')[0]], get_user_properties=True),
+            )
+            if not image:
+                return None
+
+            user_properties = image[0].get('user_properties') or {}
+            if user_properties.get('truenas:origin') != 'incus-migration':
+                return None
+
+            return origin
+        except Exception:
+            self.logger.warning(
+                '%s: failed to read origin for image garbage collection', container_ds, exc_info=True,
+            )
+            return None
+
+    @private
+    def gc_migrated_origin_image(self, origin_snapshot):
+        """Garbage-collect a migrated origin image once its last clone is gone.
+
+        Attempts to destroy the origin ``@readonly`` snapshot; if other container
+        clones still depend on it, ZFS raises ``ZFSPathHasClonesException`` and it
+        is left in place. Otherwise the image dataset is destroyed recursively so
+        any snapshots it accumulated (e.g. from a periodic snapshot task over
+        ``.truenas_containers``) do not block reclaim - this is safe because we
+        only get here once the origin snapshot is confirmed clone-free, so no live
+        container clones the image. Best-effort: a GC failure never fails the delete.
+        """
+        try:
+            self.call_sync2(
+                self.s.zfs.resource.snapshot.destroy_impl,
+                ZFSResourceSnapshotDestroyQuery(path=origin_snapshot, bypass=True),
+            )
+        except ZFSPathHasClonesException:
+            # Other containers still clone this image; keep it.
+            return
+        except Exception:
+            self.logger.warning(
+                '%s: failed to garbage-collect migrated image snapshot', origin_snapshot, exc_info=True,
+            )
+            return
+
+        origin_dataset = origin_snapshot.split('@')[0]
+        try:
+            self.call_sync2(self.s.zfs.resource.destroy_impl, origin_dataset, recursive=True, bypass=True)
+        except Exception:
+            self.logger.warning(
+                '%s: failed to destroy garbage-collected migrated image', origin_dataset, exc_info=True,
+            )
 
     @private
     def delete_container_from_db_and_libvirt(self, container):
