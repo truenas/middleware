@@ -103,9 +103,7 @@ def test_skips_but_warns_when_timestamp_corrupt_with_password_present():
 
 def test_skips_when_timestamps_match():
     """Password present, timestamps equal -> nothing changed, no backup/keytab work."""
-    svc = _kerberos_service(
-        has_domain=True, last_change={"dbconfig": 1718800000, "secrets": 1718800000}
-    )
+    svc = _kerberos_service(has_domain=True, last_change={"dbconfig": 1718800000, "secrets": 1718800000})
 
     asyncio.run(svc.check_updated_keytab())
 
@@ -117,9 +115,7 @@ def test_backs_up_and_stores_keytab_on_password_change():
     Password present and the secrets timestamp differs from the stored one -> a real rotation
     -> back up secrets and refresh the keytab.
     """
-    svc = _kerberos_service(
-        has_domain=True, last_change={"dbconfig": 1718800000, "secrets": 1718900000}
-    )
+    svc = _kerberos_service(has_domain=True, last_change={"dbconfig": 1718800000, "secrets": 1718900000})
 
     asyncio.run(svc.check_updated_keytab())
 
