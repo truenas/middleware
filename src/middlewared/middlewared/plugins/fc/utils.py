@@ -7,7 +7,7 @@ HEX_COLON = re.compile(r'^([0-9a-fA-F][0-9a-fA-F]:){7}[0-9a-fA-F][0-9a-fA-F]$')
 NAA_PATTERN = re.compile(r"^naa.[0-9a-fA-F]{16}$")
 
 
-def wwn_as_colon_hex(hexstr):
+def wwn_as_colon_hex(hexstr: str | None) -> str | None:
     """
     Given a hex string '0xaabbccdd11223344' (or 'naa.aabbccdd11223344')
     return 'aa:bb:cc:dd:11:22:33:44'.
@@ -31,7 +31,7 @@ def colon_hex_as_naa(hexstr):
         return 'naa.' + ''.join(hexstr.split(':'))
 
 
-def str_to_naa(string):
+def str_to_naa(string: str | None) -> str | None:
     if isinstance(string, str):
         if string.startswith('0x'):
             return 'naa.' + string[2:]
@@ -97,7 +97,7 @@ def filter_by_wwpns_hex_string(wwpn_naa, wwpn_b_naa):
         return []
 
 
-def is_fc_addr(addr):
+def is_fc_addr(addr: str | None) -> bool:
     if isinstance(addr, str):
         return bool(HEX_COLON.match(addr) or NAA_PATTERN.match(addr))
     return False

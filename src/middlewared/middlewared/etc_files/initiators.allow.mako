@@ -3,7 +3,7 @@
     base_name = render_ctx['iscsi.global.config']['basename']
     targets = render_ctx['iscsi.target.query']
 
-    def parse_auths(auths):
+    def parse_auths(auths: list[str]) -> str:
         result = []
         for auth in auths:
             try:

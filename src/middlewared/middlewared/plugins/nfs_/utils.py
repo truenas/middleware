@@ -15,7 +15,7 @@ def get_domain(hostname):
     return None
 
 
-def leftmost_has_wildcards(hostname):
+def leftmost_has_wildcards(hostname: str) -> bool:
     """
     A bool that returns True if the left most level contains wildcards
     """

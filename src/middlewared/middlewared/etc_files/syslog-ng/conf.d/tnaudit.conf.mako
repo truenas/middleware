@@ -31,15 +31,15 @@
         "${TNAUDIT.success}"
     ''')
 
-    def to_text(tp, x):
+    def to_text(tp: str, x: str) -> str:
         return ''.join((f'{tp}(', textwrap.indent(x, '  '), ')'))
 
-    def get_filter(svc):
+    def get_filter(svc: str) -> str:
         txt = f'filter f_tnaudit_{svc.lower()} ' + '{ '
         txt += f'program("TNAUDIT_{svc}");' + ' };'
         return txt
 
-    def get_db(svc):
+    def get_db(svc: str) -> str:
         sql = 'sql(type(sqlite3)'
         db = f'database("{audit_file_path(svc)}")'
         table = 'table("audit_${TNAUDIT.svc}_${TNAUDIT.vers.major}_${TNAUDIT.vers.minor}")'

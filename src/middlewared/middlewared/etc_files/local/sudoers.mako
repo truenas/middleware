@@ -2,7 +2,7 @@
     users = render_ctx['user.query']
     groups = render_ctx['group.query']
 
-    def sudo_entry(commands, commands_nopasswd):
+    def sudo_entry(commands: list[str], commands_nopasswd: list[str]) -> str:
         entry = []
         if commands:
             entry.append(sudo_commands(commands))
@@ -10,11 +10,11 @@
             entry.append("NOPASSWD: " + sudo_commands(commands_nopasswd))
         return ", ".join(entry)
 
-    def sudo_commands(commands):
+    def sudo_commands(commands: list[str]) -> str:
         commands = list(filter(None, [command.strip() for command in commands]))
         return ", ".join(map(sudo_command, commands))
 
-    def sudo_command(command):
+    def sudo_command(command: str) -> str:
         for c in ["\\", ",", ":", "="]:
             command = command.replace(c, "\\" + c)
         return command

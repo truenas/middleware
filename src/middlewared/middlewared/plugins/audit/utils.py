@@ -30,14 +30,14 @@ AUDIT_LOG_PATH_NAME = mtree_verify.LOG_PATH_NAME
 AUDIT_CHUNK_SZ = 10000  # number of audit entries yielded by iterator
 
 
-def audit_program(svc):
+def audit_program(svc: str) -> str:
     if svc == 'SUDO':
         return 'sudo'
     else:
         return f'TNAUDIT_{svc}'
 
 
-def audit_custom_section(svc, section):
+def audit_custom_section(svc: str, section: str) -> bool:
     """
     Can be used to control whether generic SVC mako rendering applies for this section/service.
     """
@@ -46,7 +46,7 @@ def audit_custom_section(svc, section):
     return False
 
 
-def audit_file_path(svc):
+def audit_file_path(svc: str) -> str:
     return f'{AUDIT_DATASET_PATH}/{svc}.db'
 
 
