@@ -48,6 +48,7 @@ FEATURE_DISPLAY_NAMES: Mapping[str, str] = {
     LicenseFeature.APPS: "applications",
     LicenseFeature.CONTAINERS: "containers",
     LicenseFeature.DEDUP: "ZFS deduplication",
+    LicenseFeature.FIBRECHANNEL: "Fibre Channel",
     LicenseFeature.NVMEOF_SPDK: "NVMe-oF SPDK backend",
     LicenseFeature.SED: "SED",
     LicenseFeature.VMS: "virtual machines",

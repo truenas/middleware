@@ -8,6 +8,7 @@ from asyncio import Lock
 from collections import defaultdict
 
 from pydantic import IPvAnyNetwork
+from truenas_pylicensed.features import LicenseFeature
 
 import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
@@ -210,9 +211,11 @@ class iSCSITargetService(CRUDService):
                 if aliases:
                     verrors.add(f'{schema_name}.alias', 'Alias already exists')
 
+        # Deliberately the entitlement alone: a target may be defined before the hardware it will be
+        # mapped to exists, so unlike fc.capable this does not require an HBA to be present.
         if (
             data['mode'] != 'ISCSI' and
-            not await self.middleware.call('system.feature_enabled', 'FIBRECHANNEL')
+            not (await self.call2(self.s.truenas.entitlements.check, LicenseFeature.FIBRECHANNEL)).entitled
         ):
             verrors.add(f'{schema_name}.mode', 'Fibre Channel not enabled')
 
