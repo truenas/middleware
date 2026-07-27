@@ -9,12 +9,13 @@ Revises: b3f0a9c41d7e
 Create Date: 2026-07-27 19:21:01.865610+00:00
 
 """
+
 from alembic import op
 
 
 # revision identifiers, used by Alembic.
-revision = '1dc145b1f6fa'
-down_revision = 'b3f0a9c41d7e'
+revision = "1dc145b1f6fa"
+down_revision = "b3f0a9c41d7e"
 branch_labels = None
 depends_on = None
 
