@@ -797,8 +797,12 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
 
         if self._systemd_notifier:
             self._systemd_notifier.notify('READY=1')
-            self._systemd_notifier.close()
-            self._systemd_notifier = None
+            self.loop.create_task(self.__watchdog(), name="watchdog")
+
+    async def __watchdog(self):
+        while True:
+            self._systemd_notifier.notify("WATCHDOG=1")
+            await asyncio.sleep(60)
 
     def plugin_route_add(self, plugin_name, route, method):
         self.app.router.add_route('*', f'/_plugins/{plugin_name}/{route}', method)
