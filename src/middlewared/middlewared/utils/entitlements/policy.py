@@ -45,7 +45,7 @@ POLICY: Mapping[str, Rule] = MappingProxyType(
 )
 
 
-def check(
+def check_entitlement(
     feature: str,
     facts: EntitlementFacts,
     *,
