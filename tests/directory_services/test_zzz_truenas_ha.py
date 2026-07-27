@@ -13,6 +13,22 @@ from middlewared.test.integration.utils.failover import do_failover, ha_enabled
 SAF_PATH = '/root/.KDC_SERVER_AFFINITY'
 
 
+@pytest.fixture(scope='function')
+def enable_ds_auth():
+    """ Directory services users may only authenticate to the API when the ds_auth
+    system.general setting is on (with it off, the generated PAM stacks for API login
+    exclude the directory services modules entirely). Every test in this file is
+    HA-only and HA systems are always enterprise-licensed, so the setting can be
+    toggled directly. Changing it regenerates PAM on both controllers, which also
+    covers logins performed after a failover. """
+    call('system.general.update', {'ds_auth': True})
+
+    try:
+        yield
+    finally:
+        call('system.general.update', {'ds_auth': False})
+
+
 def check_ds_status(status_dict, expected):
     msg = status_dict['status_msg']
     status = status_dict['status']
@@ -75,7 +91,7 @@ def test_failover(service_type):
 
 
 @pytest.mark.skipif(not ha_enabled, reason='HA only test')
-def test_ad_user_privilege_auth_survives_failover():
+def test_ad_user_privilege_auth_survives_failover(enable_ds_auth):
     """
     An AD user granted API access through a group privilege must still authenticate to the
     API after a failover.
