@@ -45,9 +45,12 @@ _MESSAGES: Mapping[Reason, str] = {
 # Human-facing names substituted into the generic message templates; the raw
 # feature key is used when a name is not listed here.
 FEATURE_DISPLAY_NAMES: Mapping[str, str] = {
+    LicenseFeature.APPS: "applications",
+    LicenseFeature.CONTAINERS: "containers",
     LicenseFeature.DEDUP: "ZFS deduplication",
     LicenseFeature.NVMEOF_SPDK: "NVMe-oF SPDK backend",
     LicenseFeature.SED: "SED",
+    LicenseFeature.VMS: "virtual machines",
     LicenseFeature.ZFSTIER: "ZFS tiering",
     DerivedEntitlement.HA: "high availability",
     DerivedEntitlement.PROACTIVE_SUPPORT: "proactive support",

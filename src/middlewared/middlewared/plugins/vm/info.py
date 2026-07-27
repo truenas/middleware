@@ -3,6 +3,7 @@ import re
 
 from truenas_pylibvirt.utils import kvm_supported
 from truenas_pylibvirt.utils.cpu import get_cpu_model_choices
+from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -31,14 +32,9 @@ class VMService(Service):
     @private
     async def license_active(self):
         """
-        If this is HA capable hardware and has NOT been licensed to run VMs
-        then this will return False. Otherwise this will return true.
+        Returns whether this system is entitled to run VMs.
         """
-        can_run_vms = True
-        if await self.middleware.call('system.is_ha_capable'):
-            can_run_vms = await self.middleware.call('system.feature_enabled', 'VMS')
-
-        return can_run_vms
+        return (await self.call2(self.s.truenas.entitlements.check, LicenseFeature.VMS)).entitled
 
     @api_method(VMVirtualizationDetailsArgs, VMVirtualizationDetailsResult, roles=['VM_READ'])
     def virtualization_details(self):

@@ -19,15 +19,10 @@ def _features(names, *, support_type=None, start=date(2026, 4, 8), end=date(2026
     ]
 
 
-# Mirrors the production injection buckets in license_legacy_utils. Both lists
-# are in LicenseFeature declaration order; the enterprise-only flags all sort
-# before the all-legacy flags, so an enterprise model's injected tail is
-# _ENT_ONLY_INJECT followed by _ALL_LEGACY_INJECT.
-_ALL_LEGACY_INJECT = ["STIG", "TRUESEARCH"]
-_ENT_ONLY_INJECT = [
-    "AUTOTUNE", "CATALOG_ENTERPRISE_TRAIN", "DIRECTORY_SERVICES", "MISSION_CRITICAL", "NETWORK_FEC",
-    "NFS_SNAPSHOT", "NVMEOF_SPDK", "RDMA", "SMB_FASTPATH", "SMB_VEEAM",
-]
+# Mirrors the production injection bucket that fires for every parseable legacy
+# blob, in LicenseFeature declaration order. Injected flags are appended after
+# the license's own bits, also in declaration order.
+_ALL_LEGACY_INJECT = ["APPS", "CONTAINERS", "STIG", "TRUESEARCH", "VMS"]
 
 
 @pytest.mark.parametrize("text,result", [
@@ -42,7 +37,11 @@ _ENT_ONLY_INJECT = [
             model="H10",
             expires_at=date(2026, 4, 30),
             features=_features(
-                ["FIBRECHANNEL", "VMS", "SUPPORT"] + _ENT_ONLY_INJECT + _ALL_LEGACY_INJECT,
+                [
+                    "FIBRECHANNEL", "VMS", "SUPPORT", "APPS", "AUTOTUNE", "CATALOG_ENTERPRISE_TRAIN", "CONTAINERS",
+                    "DIRECTORY_SERVICES", "MISSION_CRITICAL", "NETWORK_FEC", "NFS_SNAPSHOT", "NVMEOF_SPDK", "RDMA",
+                    "SMB_FASTPATH", "SMB_VEEAM", "STIG", "TRUESEARCH",
+                ],
                 support_type="GOLD",
             ),
             serials=["TEST-000001", "TEST-000002"],
@@ -51,7 +50,7 @@ _ENT_ONLY_INJECT = [
         )
     ),
     # Enterprise single license (X10, STANDARD contract): jails->APPS bit (no
-    # proactive SUPPORT), co-injected CONTAINERS, plus injected flags.
+    # proactive SUPPORT), plus the all-legacy and enterprise-only injected flags.
     (
         "AVgxMAAAAAAAAAAAAAAAAABURVNULTAwMDAwMQAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAADIwMjYwNDA4AAAAABYAAAAAAAAAaVhzeXN0ZW1zIE"
         "luYy4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAA==",
@@ -63,7 +62,7 @@ _ENT_ONLY_INJECT = [
             features=_features([
                 "APPS", "AUTOTUNE", "CATALOG_ENTERPRISE_TRAIN", "CONTAINERS", "DIRECTORY_SERVICES",
                 "MISSION_CRITICAL", "NETWORK_FEC", "NFS_SNAPSHOT", "NVMEOF_SPDK", "RDMA", "SMB_FASTPATH",
-                "SMB_VEEAM", "STIG", "TRUESEARCH",
+                "SMB_VEEAM", "STIG", "TRUESEARCH", "VMS",
             ]),
             serials=["TEST-000001"],
             enclosures={},

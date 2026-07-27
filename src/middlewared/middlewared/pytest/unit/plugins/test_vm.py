@@ -1,27 +1,34 @@
 import pytest
+from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.service_exception import ValidationErrors
 from middlewared.pytest.unit.helpers import load_compound_service
 from middlewared.pytest.unit.middleware import Middleware
+from middlewared.utils.entitlements import Entitlement, Reason
 
 
 VMService = load_compound_service('vm')
 
 
-@pytest.mark.parametrize('ha_capable,feature_enabled,should_work', [
-    (True, False, False),
-    (True, True, True),
-    (False, False, True),
+@pytest.mark.parametrize('entitled,reason', [
+    (True, Reason.ENTITLED),
+    (False, Reason.KEY_MISSING),
 ])
 @pytest.mark.asyncio
-async def test_vm_license_active_response(ha_capable, feature_enabled, should_work):
+async def test_vm_license_active_response(entitled, reason):
     m = Middleware()
     vm_svc = VMService(m)
 
-    m['system.is_ha_capable'] = lambda *args: ha_capable
-    m['system.feature_enabled'] = lambda *args: feature_enabled
+    checked = []
 
-    assert await vm_svc.license_active() is should_work
+    def check(feature):
+        checked.append(feature)
+        return Entitlement(entitled=entitled, reason=reason, column='HW+K', message='')
+
+    m.services.truenas.entitlements.check = check
+
+    assert await vm_svc.license_active() is entitled
+    assert checked == [LicenseFeature.VMS]
 
 
 @pytest.mark.parametrize('license_active', [
