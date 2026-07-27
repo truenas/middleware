@@ -12,12 +12,11 @@ class FsLockDirection(enum.Enum):
     WRITE = 1
 
 
-class SyncRWLock:
-    """Synchronous read-write lock implementation."""
+class RWLock:
+    """Read-write lock implementation."""
 
     def __init__(self) -> None:
-        self._lock = threading.Lock()
-        self._read_ready = threading.Condition(self._lock)
+        self._read_ready = threading.Condition()
         self._readers = 0
         self._writers = 0
         self._fs_manager: FsLockManager | None = None
@@ -26,14 +25,14 @@ class SyncRWLock:
     @contextmanager
     def reader_lock(self) -> Iterator[None]:
         """Context manager for acquiring read lock."""
-        with self._lock:
+        with self._read_ready:
             while self._writers > 0:
                 self._read_ready.wait()
             self._readers += 1
         try:
             yield
         finally:
-            with self._lock:
+            with self._read_ready:
                 self._readers -= 1
                 if self._readers == 0:
                     self._read_ready.notify_all()
@@ -43,14 +42,14 @@ class SyncRWLock:
     @contextmanager
     def writer_lock(self) -> Iterator[None]:
         """Context manager for acquiring write lock."""
-        with self._lock:
+        with self._read_ready:
             while self._writers > 0 or self._readers > 0:
                 self._read_ready.wait()
             self._writers += 1
         try:
             yield
         finally:
-            with self._lock:
+            with self._read_ready:
                 self._writers -= 1
                 self._read_ready.notify_all()
                 if self._fs_manager and self._readers == 0:
@@ -59,28 +58,21 @@ class SyncRWLock:
 
 class FsLockManager:
     def __init__(self) -> None:
-        self.sync_locks: dict[str, SyncRWLock] = {}
+        self.locks: dict[str, RWLock] = {}
 
     def lock(self, path: str, direction: FsLockDirection) -> Any:
-        """Return a synchronous lock context manager."""
+        """Return a lock context manager."""
         path = os.path.normpath(path)
-        for k in self.sync_locks:
+        for k in self.locks:
             if os.path.commonpath([k, path]) in [k, path]:
-                return self._choose_sync_lock(self.sync_locks[k], direction)
+                return self._choose_lock(self.locks[k], direction)
 
-        self.sync_locks[path] = SyncRWLock()
-        self.sync_locks[path]._fs_manager = self
-        self.sync_locks[path]._fs_path = path
-        return self._choose_sync_lock(self.sync_locks[path], direction)
+        self.locks[path] = RWLock()
+        self.locks[path]._fs_manager = self
+        self.locks[path]._fs_path = path
+        return self._choose_lock(self.locks[path], direction)
 
-    def _choose_lock(self, lock: SyncRWLock, direction: FsLockDirection) -> Any:
-        if direction == FsLockDirection.READ:
-            return lock.reader_lock
-        if direction == FsLockDirection.WRITE:
-            return lock.writer_lock
-        raise ValueError(direction)
-
-    def _choose_sync_lock(self, lock: SyncRWLock, direction: FsLockDirection) -> Any:
+    def _choose_lock(self, lock: RWLock, direction: FsLockDirection) -> Any:
         if direction == FsLockDirection.READ:
             return lock.reader_lock()
         if direction == FsLockDirection.WRITE:
@@ -89,7 +81,7 @@ class FsLockManager:
 
     def _remove_lock(self, path: str | None) -> None:
         if path is not None:
-            self.sync_locks.pop(path, None)
+            self.locks.pop(path, None)
 
 
 # Process-wide singletons shared by every cloud sync job (mirrors the class attributes the
