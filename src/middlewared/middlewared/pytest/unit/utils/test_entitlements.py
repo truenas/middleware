@@ -21,7 +21,7 @@ from middlewared.utils.entitlements import (
     Reason,
     TierRule,
     Vector,
-    check,
+    check_entitlement,
 )
 
 
@@ -83,7 +83,7 @@ def facts_for_column(feature: str, column: str, *, is_ha_capable: bool = False) 
 @pytest.mark.parametrize("feature,column", [(f, c) for f in TARGET_VECTORS for c in COLUMNS])
 def test_matrix_fixture(feature, column):
     cell = TARGET_VECTORS[feature][COLUMNS.index(column)]
-    entitlement = check(feature, facts_for_column(feature, column), policy=TARGET_VECTORS)
+    entitlement = check_entitlement(feature, facts_for_column(feature, column), policy=TARGET_VECTORS)
     assert entitlement.entitled == bool(cell)
     assert entitlement.column == column
 
@@ -160,20 +160,20 @@ DEDUP_TABLE = [
 @pytest.mark.parametrize("hardware_class,state,entitled,reason,column", DEDUP_TABLE)
 def test_dedup_vector_behavior(hardware_class, state, entitled, reason, column):
     facts = make_facts(hardware_class=hardware_class, license=_license_for(LicenseFeature.DEDUP, state))
-    entitlement = check(LicenseFeature.DEDUP, facts)
+    entitlement = check_entitlement(LicenseFeature.DEDUP, facts)
     assert entitlement.entitled is entitled
     assert entitlement.reason == reason
     assert entitlement.column == column
 
 
 def test_dedup_no_license_message_uses_display_name():
-    entitlement = check(LicenseFeature.DEDUP, make_facts(hardware_class=HardwareClass.TRUENAS_HW))
+    entitlement = check_entitlement(LicenseFeature.DEDUP, make_facts(hardware_class=HardwareClass.TRUENAS_HW))
     assert entitlement.message == "This system is not licensed to use the ZFS deduplication feature."
 
 
 def test_dedup_key_missing_message_uses_display_name():
     facts = make_facts(hardware_class=HardwareClass.TRUENAS_HW, license=make_license())
-    entitlement = check(LicenseFeature.DEDUP, facts)
+    entitlement = check_entitlement(LicenseFeature.DEDUP, facts)
     assert entitlement.message == "This system's license does not include the ZFS deduplication feature."
 
 
@@ -194,7 +194,7 @@ ZFSTIER_TABLE = [
 @pytest.mark.parametrize("hardware_class,state,entitled,reason,column", ZFSTIER_TABLE)
 def test_zfstier_vector_behavior(hardware_class, state, entitled, reason, column):
     facts = make_facts(hardware_class=hardware_class, license=_license_for(LicenseFeature.ZFSTIER, state))
-    entitlement = check(LicenseFeature.ZFSTIER, facts)
+    entitlement = check_entitlement(LicenseFeature.ZFSTIER, facts)
     assert entitlement.entitled is entitled
     assert entitlement.reason == reason
     assert entitlement.column == column
@@ -202,27 +202,27 @@ def test_zfstier_vector_behavior(hardware_class, state, entitled, reason, column
 
 def test_legacy_nvmet_spdk_ha_capable_entitled_even_unlicensed():
     facts = make_facts(hardware_class=HardwareClass.GENERIC, is_ha_capable=True)
-    assert check(LicenseFeature.NVMEOF_SPDK, facts).entitled is True
+    assert check_entitlement(LicenseFeature.NVMEOF_SPDK, facts).entitled is True
 
 
 def test_legacy_nvmet_spdk_certified_model_entitled():
     facts = make_facts(hardware_class=HardwareClass.TRUENAS_HW, license=make_license(model="H10"))
-    assert check(LicenseFeature.NVMEOF_SPDK, facts).entitled is True
+    assert check_entitlement(LicenseFeature.NVMEOF_SPDK, facts).entitled is True
 
 
 def test_legacy_nvmet_spdk_freenas_model_blocked():
     facts = make_facts(hardware_class=HardwareClass.TRUENAS_HW, license=make_license(model="FREENAS-XYZ"))
-    assert check(LicenseFeature.NVMEOF_SPDK, facts).entitled is False
+    assert check_entitlement(LicenseFeature.NVMEOF_SPDK, facts).entitled is False
 
 
 def test_legacy_nvmet_spdk_model_none_blocked():
     facts = make_facts(hardware_class=HardwareClass.GENERIC, license=make_license(model=None))
-    assert check(LicenseFeature.NVMEOF_SPDK, facts).entitled is False
+    assert check_entitlement(LicenseFeature.NVMEOF_SPDK, facts).entitled is False
 
 
 def test_legacy_nvmet_spdk_unlicensed_no_license():
     facts = make_facts(hardware_class=HardwareClass.GENERIC)
-    entitlement = check(LicenseFeature.NVMEOF_SPDK, facts)
+    entitlement = check_entitlement(LicenseFeature.NVMEOF_SPDK, facts)
     assert entitlement.entitled is False
     assert entitlement.reason == "NO_LICENSE"
     assert entitlement.message == "SPDK is limited to enterprise licensed systems only."
@@ -239,14 +239,14 @@ def test_nvmeof_spdk_bespoke_message_registered():
 def test_nvmeof_spdk_bespoke_message_survives_vector_flip():
     policy = {LicenseFeature.NVMEOF_SPDK: TARGET_VECTORS[LicenseFeature.NVMEOF_SPDK]}
     facts = make_facts(hardware_class=HardwareClass.TRUENAS_HW, license=make_license(feature_names=()))
-    entitlement = check(LicenseFeature.NVMEOF_SPDK, facts, policy=policy)
+    entitlement = check_entitlement(LicenseFeature.NVMEOF_SPDK, facts, policy=policy)
     assert entitlement.reason == "KEY_MISSING"
     assert entitlement.message == "SPDK is limited to enterprise licensed systems only."
 
 
 def test_legacy_sed_key_present_entitled():
     facts = make_facts(hardware_class=HardwareClass.TRUENAS_HW, license=make_license(feature_names=("SED",)))
-    assert check(LicenseFeature.SED, facts).entitled is True
+    assert check_entitlement(LicenseFeature.SED, facts).entitled is True
 
 
 def test_legacy_sed_expired_key_still_entitled():
@@ -255,25 +255,25 @@ def test_legacy_sed_expired_key_still_entitled():
         hardware_class=HardwareClass.TRUENAS_HW,
         license=make_license(feature_names=("SED",), expires_at=date.today() - timedelta(days=1)),
     )
-    assert check(LicenseFeature.SED, facts).entitled is True
+    assert check_entitlement(LicenseFeature.SED, facts).entitled is True
 
 
 def test_legacy_sed_no_key_key_missing():
     facts = make_facts(hardware_class=HardwareClass.TRUENAS_HW, license=make_license())
-    entitlement = check(LicenseFeature.SED, facts)
+    entitlement = check_entitlement(LicenseFeature.SED, facts)
     assert entitlement.entitled is False
     assert entitlement.reason == "KEY_MISSING"
 
 
 def test_legacy_sed_no_license():
-    entitlement = check(LicenseFeature.SED, make_facts(hardware_class=HardwareClass.TRUENAS_HW))
+    entitlement = check_entitlement(LicenseFeature.SED, make_facts(hardware_class=HardwareClass.TRUENAS_HW))
     assert entitlement.entitled is False
     assert entitlement.reason == "NO_LICENSE"
 
 
 # (d) Reason derivation from vectors.
 def test_reason_fibrechannel_generic_no_license_is_no_license():
-    entitlement = check(
+    entitlement = check_entitlement(
         LicenseFeature.FIBRECHANNEL, facts_for_column(LicenseFeature.FIBRECHANNEL, "CE"), policy=TARGET_VECTORS
     )
     assert entitlement.entitled is False
@@ -281,7 +281,7 @@ def test_reason_fibrechannel_generic_no_license_is_no_license():
 
 
 def test_reason_fibrechannel_generic_keyless_license_is_key_missing():
-    entitlement = check(
+    entitlement = check_entitlement(
         LicenseFeature.FIBRECHANNEL, facts_for_column(LicenseFeature.FIBRECHANNEL, "CE+L"), policy=TARGET_VECTORS
     )
     assert entitlement.entitled is False
@@ -291,20 +291,20 @@ def test_reason_fibrechannel_generic_keyless_license_is_key_missing():
 def test_reason_wrong_hardware():
     # Synthetic feature entitled only on HW+K -- a key on the CE side never grants it.
     policy = {"JBOF": Vector(0, 0, 0, 1, 0, 0)}
-    entitlement = check("JBOF", facts_for_column("JBOF", "CE+K"), policy=policy)
+    entitlement = check_entitlement("JBOF", facts_for_column("JBOF", "CE+K"), policy=policy)
     assert entitlement.entitled is False
     assert entitlement.reason == "WRONG_HARDWARE"
 
 
 # (e) Revocation rule: a license lacking the key revokes a bare no-license grant.
 def test_revocation_apps_generic_no_license_entitled():
-    entitlement = check(LicenseFeature.APPS, facts_for_column(LicenseFeature.APPS, "CE"), policy=TARGET_VECTORS)
+    entitlement = check_entitlement(LicenseFeature.APPS, facts_for_column(LicenseFeature.APPS, "CE"), policy=TARGET_VECTORS)
     assert entitlement.entitled is True
     assert entitlement.column == "CE"
 
 
 def test_revocation_apps_generic_keyless_license_revoked():
-    entitlement = check(LicenseFeature.APPS, facts_for_column(LicenseFeature.APPS, "CE+L"), policy=TARGET_VECTORS)
+    entitlement = check_entitlement(LicenseFeature.APPS, facts_for_column(LicenseFeature.APPS, "CE+L"), policy=TARGET_VECTORS)
     assert entitlement.entitled is False
     assert entitlement.reason == "KEY_MISSING"
     assert entitlement.column == "CE+L"
@@ -339,7 +339,7 @@ def test_hardware_class_from_chassis(chassis, expected):
 # (h) Unknown feature.
 def test_unknown_feature_raises():
     with pytest.raises(ValueError):
-        check("NOPE", make_facts(hardware_class=HardwareClass.GENERIC))
+        check_entitlement("NOPE", make_facts(hardware_class=HardwareClass.GENERIC))
 
 
 # (i) PROACTIVE_SUPPORT: live TierRule over the SUPPORT tier qualifier.
@@ -359,21 +359,21 @@ def test_proactive_support_tiers(support_type, entitled, reason):
         hardware_class=HardwareClass.TRUENAS_HW,
         license=make_license(feature_names=("SUPPORT",), support_type=support_type),
     )
-    entitlement = check(DerivedEntitlement.PROACTIVE_SUPPORT, facts)
+    entitlement = check_entitlement(DerivedEntitlement.PROACTIVE_SUPPORT, facts)
     assert entitlement.entitled is entitled
     assert entitlement.reason == reason
 
 
 def test_proactive_support_key_absent_is_key_missing():
     facts = make_facts(hardware_class=HardwareClass.TRUENAS_HW, license=make_license(feature_names=()))
-    entitlement = check(DerivedEntitlement.PROACTIVE_SUPPORT, facts)
+    entitlement = check_entitlement(DerivedEntitlement.PROACTIVE_SUPPORT, facts)
     assert entitlement.entitled is False
     assert entitlement.reason == "KEY_MISSING"
 
 
 def test_proactive_support_unlicensed_is_no_license():
     facts = make_facts(hardware_class=HardwareClass.TRUENAS_HW)
-    entitlement = check(DerivedEntitlement.PROACTIVE_SUPPORT, facts)
+    entitlement = check_entitlement(DerivedEntitlement.PROACTIVE_SUPPORT, facts)
     assert entitlement.entitled is False
     assert entitlement.reason == "NO_LICENSE"
 
@@ -381,7 +381,7 @@ def test_proactive_support_unlicensed_is_no_license():
 # (j) HA: live LicenseTypeRule over the license type.
 def test_ha_entitled_for_enterprise_ha():
     facts = make_facts(hardware_class=HardwareClass.TRUENAS_HW, license=make_license(type_=LicenseType.ENTERPRISE_HA))
-    assert check(DerivedEntitlement.HA, facts).entitled is True
+    assert check_entitlement(DerivedEntitlement.HA, facts).entitled is True
 
 
 def test_ha_wrong_type_for_enterprise_single():
@@ -389,12 +389,12 @@ def test_ha_wrong_type_for_enterprise_single():
         hardware_class=HardwareClass.TRUENAS_HW,
         license=make_license(type_=LicenseType.ENTERPRISE_SINGLE),
     )
-    entitlement = check(DerivedEntitlement.HA, facts)
+    entitlement = check_entitlement(DerivedEntitlement.HA, facts)
     assert entitlement.entitled is False
     assert entitlement.reason == "WRONG_LICENSE_TYPE"
 
 
 def test_ha_unlicensed_is_no_license():
-    entitlement = check(DerivedEntitlement.HA, make_facts(hardware_class=HardwareClass.TRUENAS_HW))
+    entitlement = check_entitlement(DerivedEntitlement.HA, make_facts(hardware_class=HardwareClass.TRUENAS_HW))
     assert entitlement.entitled is False
     assert entitlement.reason == "NO_LICENSE"

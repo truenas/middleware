@@ -34,7 +34,7 @@ from .engine import (
 )
 from .facts import EntitlementFacts, HardwareClass
 from .matrix import TARGET_VECTORS
-from .policy import POLICY, check
+from .policy import POLICY, check_entitlement
 
 __all__ = [
     "COLUMNS",
@@ -52,5 +52,5 @@ __all__ = [
     "Rule",
     "TierRule",
     "Vector",
-    "check",
+    "check_entitlement",
 ]
