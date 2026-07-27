@@ -142,6 +142,16 @@ class ContainerService(Service):
             return
 
         legacy_config = legacy_config[0]
+        if not await self.middleware.call("container.license_active"):
+            # Returning before virt_global.pool is cleared leaves the legacy
+            # configuration intact, so the migration runs on a later boot once
+            # the license is in place. Nothing on disk is touched meanwhile.
+            self.logger.warning(
+                "Legacy incus containers found but this system is not licensed to use containers; "
+                "migration deferred."
+            )
+            return
+
         self.logger.info("Legacy incus container configuration found, starting migration")
         try:
             migration_job = await self.middleware.call("container.migrate")
@@ -187,6 +197,13 @@ class ContainerService(Service):
         legacy_configuration = await self.middleware.call("datastore.query", "virt.global")
         if not legacy_configuration or legacy_configuration[0]["pool"] is None:
             raise CallError("Legacy containers configuration pool is not set.")
+
+        # Every migrated container has to pass container.validate, which fails
+        # without a license. Bailing out here leaves the legacy datasets untouched
+        # instead of moving them somewhere no container row can point at.
+        if not await self.middleware.call("container.license_active"):
+            raise CallError("System is not licensed to use containers.")
+
         pool = legacy_configuration[0]["pool"]
 
         storage_pools = {pool} | set(filter(bool, (legacy_configuration[0]["storage_pools"] or "").split()))
