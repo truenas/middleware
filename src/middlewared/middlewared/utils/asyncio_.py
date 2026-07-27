@@ -29,6 +29,8 @@ async def asyncio_map[T, R](
 
 
 class ThreadsafeTimer[*Ts]:
+    __slots__ = ("_loop", "_delay", "_callback", "_args", "_cancelled", "_handle")
+
     def __init__(
         self,
         loop: asyncio.AbstractEventLoop,
@@ -37,18 +39,21 @@ class ThreadsafeTimer[*Ts]:
         *args: *Ts,
     ) -> None:
         self._loop = loop
+        self._delay = delay
+        self._callback = callback
+        self._args = args
         self._cancelled = False
         self._handle: asyncio.Handle | None = None
 
-        def schedule() -> None:
-            if not self._cancelled:
-                self._handle = loop.call_later(
-                    delay,
-                    callback,
-                    *args,
-                )
+        loop.call_soon_threadsafe(self._schedule)
 
-        loop.call_soon_threadsafe(schedule)
+    def _schedule(self) -> None:
+        if not self._cancelled:
+            self._handle = self._loop.call_later(
+                self._delay,
+                self._callback,
+                *self._args,
+            )
 
     def cancel(self) -> None:
         self._cancelled = True
