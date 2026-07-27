@@ -571,7 +571,12 @@ class AbstractFibreChannel:
         # Make sure iSCSI service is not running.  Would go boom
         assert call('service.query', [['service', '=', 'iscsitarget']], {'get': True})['state'] == 'STOPPED'
         with mock('fc.capable', return_value=True):
-            with mock('system.feature_enabled', args=['FIBRECHANNEL',], return_value=True):
+            with mock('truenas.entitlements.check', args=['FIBRECHANNEL',], declaration="""
+                def mock(self, feature):
+                    from middlewared.utils.entitlements import Entitlement, Reason
+
+                    return Entitlement(entitled=True, reason=Reason.ENTITLED, column='HW+K', message='')
+            """):
                 call('fc.fc_host.reset_wired', True)
                 with mock_ports(self.NODE_A_PORTS, self.NODE_B_PORTS):
                     yield

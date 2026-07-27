@@ -35,6 +35,7 @@ POLICY: Mapping[str, Rule] = MappingProxyType(
         LicenseFeature.APPS: TARGET_VECTORS[LicenseFeature.APPS],
         LicenseFeature.CONTAINERS: TARGET_VECTORS[LicenseFeature.CONTAINERS],
         LicenseFeature.DEDUP: TARGET_VECTORS[LicenseFeature.DEDUP],  # TODO: Validate logic with old impl
+        LicenseFeature.FIBRECHANNEL: TARGET_VECTORS[LicenseFeature.FIBRECHANNEL],
         LicenseFeature.NVMEOF_SPDK: LegacyRule(func=legacy.nvmet_spdk),  # TODO: Validate logic with old impl
         LicenseFeature.SED: LegacyRule(func=legacy.sed),  # TODO: Validate logic with old impl
         LicenseFeature.VMS: TARGET_VECTORS[LicenseFeature.VMS],

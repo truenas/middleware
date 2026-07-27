@@ -4,6 +4,8 @@ import subprocess
 from functools import cache
 from pathlib import Path
 
+from truenas_pylicensed.features import LicenseFeature
+
 from middlewared.api import api_method
 from middlewared.api.current import FCCapableArgs, FCCapableResult
 from middlewared.service import Service, filterable_api_method, private
@@ -33,10 +35,11 @@ class FCService(Service):
         Returns ``true`` if the system is licensed for FIBRECHANNEL and contains
         one or more Fibre Channel cards. ``false`` otherwise.
         """
-        if await self.middleware.call('system.is_enterprise'):
-            if await self.middleware.call('system.feature_enabled', 'FIBRECHANNEL'):
-                if await self.middleware.call('fc.hba_present'):
-                    return True
+        # Presence of an HBA is a physical fact the entitlement does not model, so it stays here. It is
+        # checked last because it shells out to lspci.
+        if (await self.call2(self.s.truenas.entitlements.check, LicenseFeature.FIBRECHANNEL)).entitled:
+            if await self.middleware.call('fc.hba_present'):
+                return True
         return False
 
     @private
