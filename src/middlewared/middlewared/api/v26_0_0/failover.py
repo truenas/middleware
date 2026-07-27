@@ -45,6 +45,20 @@ class FailoverSyncToPeer(BaseModel):
 
 class FailoverUpdate(FailoverEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
+    timeout: int = Field(
+        ge=0,
+        le=120,
+        description=(
+            "The time to WAIT (in seconds) until a failover occurs when a network event occurs on an interface that is "
+            "marked critical for failover AND HA is enabled and working appropriately. The default time to wait is 2 "
+            "seconds.\n"
+            "\n"
+            "Maximum is 120 seconds. This value is used to derive the VRRPv3 advertisement interval, which cannot "
+            "exceed 40.95 seconds (RFC 5798 section 5.2.7).\n"
+            "\n"
+            "**NOTE: This setting does NOT effect the `disabled` or `master` parameters.**"
+        ),
+    )
 
 
 class FailoverUpgrade(BaseModel):
