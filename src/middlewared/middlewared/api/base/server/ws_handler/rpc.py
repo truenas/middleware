@@ -19,7 +19,6 @@ from middlewared.service_exception import (
     CallException, CallError, MatchNotFound, ValidationError, ValidationErrors, adapt_exception, get_errname
 )
 from middlewared.utils.auth import AUID_UNSET, AUID_FAULTED
-from middlewared.utils.debug import get_frame_details
 from middlewared.utils.lang import undefined
 from middlewared.utils.limits import MsgSizeError, MsgSizeLimit, parse_message
 from middlewared.utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit
@@ -114,21 +113,10 @@ class RpcWebSocketApp(App):
         return result
 
     def truenas_error_traceback(self, exc_info: ExcInfo) -> dict:
-        etype, value, tb = exc_info
-
-        frames = []
-        cur_tb = tb
-        while cur_tb:
-            tb_frame = cur_tb.tb_frame
-            cur_tb = cur_tb.tb_next
-
-            cur_frame = get_frame_details(tb_frame, self.middleware.logger)
-            if cur_frame:
-                frames.append(cur_frame)
+        etype, value = exc_info[0], exc_info[1]
 
         return {
             "class": etype.__name__,
-            "frames": frames,
             "formatted": "".join(traceback.format_exception(*exc_info)),
             "repr": repr(value),
         }
