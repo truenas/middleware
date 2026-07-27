@@ -230,6 +230,7 @@ class ContainerService(Service):
                 continue
 
             dst_dataset = os.path.join(container_dataset(pool), f"containers/{name}")
+            needs_mount_revert = False
             try:
                 if not processed_parents_mountpoints:
                     for ds in (f"{pool}/.ix-virt", f"{pool}/.ix-virt/containers"):
@@ -243,18 +244,6 @@ class ContainerService(Service):
                         )
                     processed_parents_mountpoints = True
 
-                # Relocate this container's origin image out of .ix-virt BEFORE
-                # renaming the container into .truenas_containers, so a later
-                # deletion of .ix-virt cannot cascade into the migrated container.
-                # On failure, skip the container so it stays wholly in .ix-virt.
-                relocate_status = self.relocate_container_origin(dataset["name"])
-                if relocate_status in ("FAILED", "ABSENT"):
-                    job.logs_fd.write((
-                        f"Skipping container {name!r}: could not relocate its base image out of "
-                        f".ix-virt.\n"
-                    ).encode())
-                    continue
-
                 self.middleware.call_sync(
                     "pool.dataset.update_impl",
                     UpdateImplArgs(
@@ -264,6 +253,7 @@ class ContainerService(Service):
                     )
                 )
                 self.call_sync2(self.s.zfs.resource.mount, dataset["name"])
+                needs_mount_revert = True
 
                 try:
                     with open(f"/mnt/{dataset['name']}/backup.yaml") as f:
@@ -272,6 +262,20 @@ class ContainerService(Service):
                     job.logs_fd.write(
                         f"Failed to read backup.yaml for container {name!r}, skipping.\n".encode()
                     )
+                    continue
+
+                # Relocate the origin image out of .ix-virt before renaming the container
+                # into .truenas_containers, so a later deletion of .ix-virt cannot cascade
+                # into the migrated container. This runs only once the dataset is known to
+                # be a real container: an image kept alive solely by a leftover clone that
+                # is not one stays inside .ix-virt and is reclaimed along with it.
+                if self.relocate_container_origin(dataset["name"]) in ("FAILED", "ABSENT"):
+                    # Skip it. Migrating a container whose origin is still inside .ix-virt
+                    # would produce something that looks healthy right up until .ix-virt is
+                    # deleted and takes it with it; leaving it untouched keeps it whole.
+                    job.logs_fd.write((
+                        f"Skipping container {name!r}: could not relocate its base image out of .ix-virt.\n"
+                    ).encode())
                     continue
 
                 config = manifest["container"]["config"]
@@ -289,6 +293,9 @@ class ContainerService(Service):
                 os.rmdir(rootfs_path)
 
                 self.call_sync2(self.s.zfs.resource.rename, dataset["name"], dst_dataset)
+                # From here on the dataset lives in its native location, where the mount
+                # properties set above are the correct ones to keep.
+                needs_mount_revert = False
 
                 container_instance = self.middleware.call_sync(
                     "container.create_with_dataset",
@@ -308,6 +315,40 @@ class ContainerService(Service):
                 job.logs_fd.write(f"Unable to migrate container {name!r}: {e!r}.\n".encode())
             else:
                 job.logs_fd.write(f"Successfully migrated container {name!r}.\n".encode())
+            finally:
+                if needs_mount_revert:
+                    self.revert_incus_mount_properties(dataset["name"])
+
+    @private
+    def revert_incus_mount_properties(self, container_ds):
+        """Restore the mount properties incus set on a container dataset that stays put.
+
+        Inspecting a legacy container means mounting it, which means replacing the
+        ``canmount=noauto``/``mountpoint=legacy`` pair incus relies on with a real
+        mountpoint. A container that is not migrated must not keep that: it would be
+        left mounted under ``/mnt/<pool>/.ix-virt`` and remounted on every boot, with
+        nothing left on the system that manages it.
+        """
+        try:
+            self.call_sync2(self.s.zfs.resource.unmount, container_ds)
+        except Exception:
+            self.logger.warning(
+                "%s: failed to unmount after skipping migration", container_ds, exc_info=True,
+            )
+
+        try:
+            self.middleware.call_sync(
+                "pool.dataset.update_impl",
+                UpdateImplArgs(
+                    name=container_ds,
+                    zprops={"canmount": "noauto", "mountpoint": "legacy"},
+                ),
+            )
+        except Exception:
+            self.logger.warning(
+                "%s: failed to restore mount properties after skipping migration",
+                container_ds, exc_info=True,
+            )
 
     @private
     def relocate_container_origin(self, container_ds):
@@ -325,8 +366,8 @@ class ContainerService(Service):
           - ``ALREADY_SATISFIED``: not a clone, or the origin already lives
             outside ``.ix-virt`` (a fan-out sibling or earlier run moved it);
             the caller may proceed.
-          - ``FAILED``: could not relocate; the caller should skip the container
-            so it stays wholly inside ``.ix-virt``.
+          - ``FAILED``: could not relocate; the container still depends on
+            something inside ``.ix-virt``.
           - ``ABSENT``: the container dataset (or its pool) is not present.
         """
         try:
