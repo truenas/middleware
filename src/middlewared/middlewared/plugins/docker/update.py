@@ -1,5 +1,7 @@
 from urllib.parse import urlparse
 
+from truenas_pylicensed.features import LicenseFeature
+
 import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -52,11 +54,7 @@ class DockerService(ConfigService):
 
     @private
     async def license_active(self):
-        can_run_apps = True
-        if await self.middleware.call('system.is_ha_capable'):
-            can_run_apps = await self.middleware.call('system.feature_enabled', 'APPS')
-
-        return can_run_apps
+        return (await self.call2(self.s.truenas.entitlements.check, LicenseFeature.APPS)).entitled
 
     @private
     async def validate_data(self, old_config, config, schema='docker_update'):
