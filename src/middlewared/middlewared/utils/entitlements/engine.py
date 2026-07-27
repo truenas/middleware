@@ -51,6 +51,7 @@ FEATURE_DISPLAY_NAMES: Mapping[str, str] = {
     LicenseFeature.FIBRECHANNEL: "Fibre Channel",
     LicenseFeature.NVMEOF_SPDK: "NVMe-oF SPDK backend",
     LicenseFeature.SED: "SED",
+    LicenseFeature.STIG: "STIG and FIPS",
     LicenseFeature.VMS: "virtual machines",
     LicenseFeature.ZFSTIER: "ZFS tiering",
     DerivedEntitlement.HA: "high availability",
