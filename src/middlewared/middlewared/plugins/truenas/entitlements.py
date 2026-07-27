@@ -5,7 +5,7 @@ from middlewared.utils.entitlements import (
     Entitlement,
     EntitlementFacts,
     HardwareClass,
-    check as check_entitlement,
+    check_entitlement,
 )
 
 from .tn import get_chassis_hardware
