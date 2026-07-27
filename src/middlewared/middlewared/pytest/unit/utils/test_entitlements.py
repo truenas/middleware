@@ -93,6 +93,9 @@ def test_live_policy_shape():
     assert set(POLICY) == {
         LicenseFeature.DEDUP,
         LicenseFeature.ZFSTIER,
+        LicenseFeature.APPS,
+        LicenseFeature.CONTAINERS,
+        LicenseFeature.VMS,
         LicenseFeature.SED,
         LicenseFeature.NVMEOF_SPDK,
         DerivedEntitlement.HA,
@@ -100,6 +103,9 @@ def test_live_policy_shape():
     }
     assert isinstance(POLICY[LicenseFeature.DEDUP], Vector)
     assert isinstance(POLICY[LicenseFeature.ZFSTIER], Vector)
+    assert isinstance(POLICY[LicenseFeature.APPS], Vector)
+    assert isinstance(POLICY[LicenseFeature.CONTAINERS], Vector)
+    assert isinstance(POLICY[LicenseFeature.VMS], Vector)
     assert isinstance(POLICY[LicenseFeature.SED], LegacyRule)
     assert isinstance(POLICY[LicenseFeature.NVMEOF_SPDK], LegacyRule)
     assert isinstance(POLICY[DerivedEntitlement.HA], LicenseTypeRule)
@@ -198,6 +204,42 @@ def test_zfstier_vector_behavior(hardware_class, state, entitled, reason, column
     assert entitlement.entitled is entitled
     assert entitlement.reason == reason
     assert entitlement.column == column
+
+
+# APPS, CONTAINERS and VMS are live matrix Vectors (1,1,0,1,0,1): granted with no
+# license at all on either hardware side, but a license without the key revokes it.
+WORKLOAD_TABLE = [
+    (HardwareClass.TRUENAS_HW, "none", True, "ENTITLED", "HW"),
+    (HardwareClass.TRUENAS_HW, "nokey", False, "KEY_MISSING", "HW+L"),
+    (HardwareClass.TRUENAS_HW, "key", True, "ENTITLED", "HW+K"),
+    (HardwareClass.MINI, "none", True, "ENTITLED", "CE"),
+    (HardwareClass.MINI, "nokey", False, "KEY_MISSING", "CE+L"),
+    (HardwareClass.MINI, "key", True, "ENTITLED", "CE+K"),
+    (HardwareClass.GENERIC, "none", True, "ENTITLED", "CE"),
+    (HardwareClass.GENERIC, "nokey", False, "KEY_MISSING", "CE+L"),
+    (HardwareClass.GENERIC, "key", True, "ENTITLED", "CE+K"),
+]
+
+
+@pytest.mark.parametrize("feature", [LicenseFeature.APPS, LicenseFeature.CONTAINERS, LicenseFeature.VMS])
+@pytest.mark.parametrize("hardware_class,state,entitled,reason,column", WORKLOAD_TABLE)
+def test_workload_vector_behavior(feature, hardware_class, state, entitled, reason, column):
+    facts = make_facts(hardware_class=hardware_class, license=_license_for(feature, state))
+    entitlement = check_entitlement(feature, facts)
+    assert entitlement.entitled is entitled
+    assert entitlement.reason == reason
+    assert entitlement.column == column
+
+
+@pytest.mark.parametrize("feature,display", [
+    (LicenseFeature.APPS, "applications"),
+    (LicenseFeature.CONTAINERS, "containers"),
+    (LicenseFeature.VMS, "virtual machines"),
+])
+def test_workload_key_missing_message_uses_display_name(feature, display):
+    facts = make_facts(hardware_class=HardwareClass.TRUENAS_HW, license=make_license())
+    entitlement = check_entitlement(feature, facts)
+    assert entitlement.message == f"This system's license does not include the {display} feature."
 
 
 def test_legacy_nvmet_spdk_ha_capable_entitled_even_unlicensed():
