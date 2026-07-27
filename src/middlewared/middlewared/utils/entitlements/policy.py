@@ -32,10 +32,13 @@ if typing.TYPE_CHECKING:
 # ``LicenseTypeRule`` for HA, and a ``TierRule`` for proactive support.
 POLICY: Mapping[str, Rule] = MappingProxyType(
     {
+        LicenseFeature.APPS: TARGET_VECTORS[LicenseFeature.APPS],
+        LicenseFeature.CONTAINERS: TARGET_VECTORS[LicenseFeature.CONTAINERS],
         LicenseFeature.DEDUP: TARGET_VECTORS[LicenseFeature.DEDUP],  # TODO: Validate logic with old impl
-        LicenseFeature.ZFSTIER: TARGET_VECTORS[LicenseFeature.ZFSTIER],  # TODO: Validate logic with old impl
-        LicenseFeature.SED: LegacyRule(func=legacy.sed),  # TODO: Validate logic with old impl
         LicenseFeature.NVMEOF_SPDK: LegacyRule(func=legacy.nvmet_spdk),  # TODO: Validate logic with old impl
+        LicenseFeature.SED: LegacyRule(func=legacy.sed),  # TODO: Validate logic with old impl
+        LicenseFeature.VMS: TARGET_VECTORS[LicenseFeature.VMS],
+        LicenseFeature.ZFSTIER: TARGET_VECTORS[LicenseFeature.ZFSTIER],  # TODO: Validate logic with old impl / Remember that zfstier client has license logic as well which should be reviewed too
         DerivedEntitlement.HA: LicenseTypeRule(allowed_types=frozenset({LicenseType.ENTERPRISE_HA})),  # TODO: Validate logic with old impl
         DerivedEntitlement.PROACTIVE_SUPPORT: TierRule(  # TODO: Validate logic with old impl
             feature=LicenseFeature.SUPPORT,
