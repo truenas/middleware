@@ -367,7 +367,8 @@ class ContainerService(Service):
             outside ``.ix-virt`` (a fan-out sibling or earlier run moved it);
             the caller may proceed.
           - ``FAILED``: could not relocate; the container still depends on
-            something inside ``.ix-virt``.
+            something inside ``.ix-virt``, or it is a clone of another
+            container rather than of an image.
           - ``ABSENT``: the container dataset (or its pool) is not present.
         """
         try:
@@ -389,6 +390,20 @@ class ContainerService(Service):
         origin_dataset = origin.split("@")[0]
         pool = origin_dataset.split("/")[0]
         ix_virt = f"{pool}/.ix-virt/"
+        if any(
+            origin_dataset.startswith(f"{prefix}containers/")
+            for prefix in (ix_virt, f"{container_dataset(pool)}/")
+        ):
+            # A container cloned from another container would arrive in the native
+            # tree still linked to that sibling, where deleting either one destroys
+            # the other: container deletion destroys dependent clones along with the
+            # dataset. The sibling may already have migrated, hence the native path.
+            self.logger.warning(
+                "%s: origin %r is another container; skipping relocation",
+                container_ds, origin_dataset,
+            )
+            return "FAILED"
+
         if not origin_dataset.startswith(ix_virt):
             # Already relocated (fan-out sibling / prior run) or never in .ix-virt.
             return "ALREADY_SATISFIED"
