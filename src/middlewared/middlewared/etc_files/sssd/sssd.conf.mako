@@ -34,7 +34,7 @@
                 aux.append(param)
             else:
                 try:
-                    min_uid = param.split()[1]
+                    min_uid = int(param.split()[1])
                 except Exception:
                     pass
 
