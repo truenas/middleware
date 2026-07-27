@@ -21,6 +21,16 @@
         # I round to the 100th decimal place since VRRP version 3
         # uses centisecond intervals by default
         advert_int = round(((128 * config['timeout']) / 385), 2)
+        if advert_int > 40.95:
+            # VRRPv3 carries the advertisement interval in a 12-bit
+            # centisecond field, so keepalived rejects anything above
+            # 40.95 seconds and fails to apply the config entirely
+            middleware.logger.warning(
+                'failover.timeout: %r produces a VRRP advertisement interval of %.2f seconds'
+                ' which exceeds the VRRPv3 maximum, clamping to 40.95 seconds',
+                config['timeout'], advert_int,
+            )
+            advert_int = 40.95
 
     info = middleware.call_sync('interface.query')
     info = [i for i in info if len(i['failover_virtual_aliases'])]
