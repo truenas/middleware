@@ -98,6 +98,7 @@ def test_live_policy_shape():
         LicenseFeature.CONTAINERS,
         LicenseFeature.VMS,
         LicenseFeature.SED,
+        LicenseFeature.STIG,
         LicenseFeature.NVMEOF_SPDK,
         DerivedEntitlement.HA,
         DerivedEntitlement.PROACTIVE_SUPPORT,
@@ -108,6 +109,7 @@ def test_live_policy_shape():
     assert isinstance(POLICY[LicenseFeature.APPS], Vector)
     assert isinstance(POLICY[LicenseFeature.CONTAINERS], Vector)
     assert isinstance(POLICY[LicenseFeature.VMS], Vector)
+    assert isinstance(POLICY[LicenseFeature.STIG], Vector)
     assert isinstance(POLICY[LicenseFeature.SED], LegacyRule)
     assert isinstance(POLICY[LicenseFeature.NVMEOF_SPDK], LegacyRule)
     assert isinstance(POLICY[DerivedEntitlement.HA], LicenseTypeRule)
@@ -185,8 +187,8 @@ def test_dedup_key_missing_message_uses_display_name():
     assert entitlement.message == "This system's license does not include the ZFS deduplication feature."
 
 
-# ZFSTIER is a live matrix Vector (0,0,0,1,0,1): key-only on either hardware side.
-ZFSTIER_TABLE = [
+# ZFSTIER and STIG are live matrix Vectors (0,0,0,1,0,1): key-only on either hardware side.
+KEY_ONLY_TABLE = [
     (HardwareClass.TRUENAS_HW, "none", False, "NO_LICENSE", "HW"),
     (HardwareClass.TRUENAS_HW, "nokey", False, "KEY_MISSING", "HW+L"),
     (HardwareClass.TRUENAS_HW, "key", True, "ENTITLED", "HW+K"),
@@ -199,13 +201,24 @@ ZFSTIER_TABLE = [
 ]
 
 
-@pytest.mark.parametrize("hardware_class,state,entitled,reason,column", ZFSTIER_TABLE)
-def test_zfstier_vector_behavior(hardware_class, state, entitled, reason, column):
-    facts = make_facts(hardware_class=hardware_class, license=_license_for(LicenseFeature.ZFSTIER, state))
-    entitlement = check_entitlement(LicenseFeature.ZFSTIER, facts)
+@pytest.mark.parametrize("feature", [LicenseFeature.ZFSTIER, LicenseFeature.STIG])
+@pytest.mark.parametrize("hardware_class,state,entitled,reason,column", KEY_ONLY_TABLE)
+def test_key_only_vector_behavior(feature, hardware_class, state, entitled, reason, column):
+    facts = make_facts(hardware_class=hardware_class, license=_license_for(feature, state))
+    entitlement = check_entitlement(feature, facts)
     assert entitlement.entitled is entitled
     assert entitlement.reason == reason
     assert entitlement.column == column
+
+
+@pytest.mark.parametrize("feature,display", [
+    (LicenseFeature.ZFSTIER, "ZFS tiering"),
+    (LicenseFeature.STIG, "STIG and FIPS"),
+])
+def test_key_only_key_missing_message_uses_display_name(feature, display):
+    facts = make_facts(hardware_class=HardwareClass.TRUENAS_HW, license=make_license())
+    entitlement = check_entitlement(feature, facts)
+    assert entitlement.message == f"This system's license does not include the {display} feature."
 
 
 # FIBRECHANNEL is a live matrix Vector (0,0,1,1,0,1): any license grants it on iX
