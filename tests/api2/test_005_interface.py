@@ -168,3 +168,16 @@ def test_004_remove_critical_failover_group(request):
             errno.EINVAL,
         )
     ]
+
+
+@pytest.mark.skipif(not ha, reason="Test valid on HA systems only")
+def test_005_failover_timeout_out_of_range(request):
+    # timeout values above 120 seconds produce a VRRP advertisement interval
+    # beyond the VRRPv3 maximum of 40.95 seconds, which keepalived rejects,
+    # breaking failover entirely (SEE-577)
+    before = call("failover.config")["timeout"]
+    with pytest.raises(ValidationErrors, match="Input should be less than or equal to 120"):
+        call("failover.update", {"timeout": 3600})
+    with pytest.raises(ValidationErrors, match="Input should be greater than or equal to 0"):
+        call("failover.update", {"timeout": -1})
+    assert call("failover.config")["timeout"] == before
