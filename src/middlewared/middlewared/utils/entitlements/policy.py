@@ -32,12 +32,12 @@ if typing.TYPE_CHECKING:
 # ``LicenseTypeRule`` for HA, and a ``TierRule`` for proactive support.
 POLICY: Mapping[str, Rule] = MappingProxyType(
     {
-        LicenseFeature.DEDUP: TARGET_VECTORS[LicenseFeature.DEDUP],
-        LicenseFeature.ZFSTIER: TARGET_VECTORS[LicenseFeature.ZFSTIER],
-        LicenseFeature.SED: LegacyRule(func=legacy.sed),
-        LicenseFeature.NVMEOF_SPDK: LegacyRule(func=legacy.nvmet_spdk),
-        DerivedEntitlement.HA: LicenseTypeRule(allowed_types=frozenset({LicenseType.ENTERPRISE_HA})),
-        DerivedEntitlement.PROACTIVE_SUPPORT: TierRule(
+        LicenseFeature.DEDUP: TARGET_VECTORS[LicenseFeature.DEDUP],  # TODO: Validate logic with old impl
+        LicenseFeature.ZFSTIER: TARGET_VECTORS[LicenseFeature.ZFSTIER],  # TODO: Validate logic with old impl
+        LicenseFeature.SED: LegacyRule(func=legacy.sed),  # TODO: Validate logic with old impl
+        LicenseFeature.NVMEOF_SPDK: LegacyRule(func=legacy.nvmet_spdk),  # TODO: Validate logic with old impl
+        DerivedEntitlement.HA: LicenseTypeRule(allowed_types=frozenset({LicenseType.ENTERPRISE_HA})),  # TODO: Validate logic with old impl
+        DerivedEntitlement.PROACTIVE_SUPPORT: TierRule(  # TODO: Validate logic with old impl
             feature=LicenseFeature.SUPPORT,
             allowed_tiers=frozenset({SupportTier.GOLD, SupportTier.SILVER, SupportTier.SILVERINTERNATIONAL}),
         ),
