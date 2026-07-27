@@ -39,12 +39,3 @@ class SystemdNotifier:
             self._socket.send(msg.encode("latin-1"))
         except Exception:
             logger.exception("Failed to send message %r", msg)
-
-    def close(self) -> None:
-        if self._socket is not None:
-            try:
-                self._socket.close()
-            except Exception:
-                logger.exception("Error closing systemd socket")
-            finally:
-                self._socket = None
