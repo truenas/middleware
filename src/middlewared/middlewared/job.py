@@ -18,12 +18,13 @@ import typing
 
 from middlewared.pipe import Pipes
 from middlewared.service_exception import CallError, ValidationError, ValidationErrors, adapt_exception
+from middlewared.utils.asyncio_ import ThreadsafeTimer
 from middlewared.utils.privilege import credential_has_full_admin, credential_is_limited_to_own_jobs
 from middlewared.utils.threading import thread_local_storage
 from middlewared.utils.time_utils import utc_now
 
 if typing.TYPE_CHECKING:
-    from asyncio import Task, TimerHandle
+    from asyncio import Task
     from datetime import datetime
 
     from middlewared.api.base.server.app import App
@@ -918,7 +919,7 @@ class JobProgressBuffer:
         self.last_update_at: float = 0
 
         self.pending_update_body: tuple[int | float | None, str | None, typing.Any] | None = None
-        self.pending_update: TimerHandle | None = None
+        self.pending_update: ThreadsafeTimer[()] | None = None
 
     def set_progress(
         self,
@@ -941,7 +942,7 @@ class JobProgressBuffer:
             self.pending_update_body = percent, description, extra
 
             if self.pending_update is None:
-                self.pending_update = self.job.loop.call_later(self.interval, self._do_pending_update)
+                self.pending_update = ThreadsafeTimer(self.job.loop, self.interval, self._do_pending_update)
 
     def cancel(self) -> None:
         if self.pending_update is not None:
