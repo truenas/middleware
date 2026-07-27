@@ -92,6 +92,7 @@ def test_matrix_fixture(feature, column):
 def test_live_policy_shape():
     assert set(POLICY) == {
         LicenseFeature.DEDUP,
+        LicenseFeature.FIBRECHANNEL,
         LicenseFeature.ZFSTIER,
         LicenseFeature.APPS,
         LicenseFeature.CONTAINERS,
@@ -102,6 +103,7 @@ def test_live_policy_shape():
         DerivedEntitlement.PROACTIVE_SUPPORT,
     }
     assert isinstance(POLICY[LicenseFeature.DEDUP], Vector)
+    assert isinstance(POLICY[LicenseFeature.FIBRECHANNEL], Vector)
     assert isinstance(POLICY[LicenseFeature.ZFSTIER], Vector)
     assert isinstance(POLICY[LicenseFeature.APPS], Vector)
     assert isinstance(POLICY[LicenseFeature.CONTAINERS], Vector)
@@ -204,6 +206,36 @@ def test_zfstier_vector_behavior(hardware_class, state, entitled, reason, column
     assert entitlement.entitled is entitled
     assert entitlement.reason == reason
     assert entitlement.column == column
+
+
+# FIBRECHANNEL is a live matrix Vector (0,0,1,1,0,1): any license grants it on iX
+# hardware, while the CE side needs the key.
+FIBRECHANNEL_TABLE = [
+    (HardwareClass.TRUENAS_HW, "none", False, "NO_LICENSE", "HW",
+     "This system is not licensed to use the Fibre Channel feature."),
+    (HardwareClass.TRUENAS_HW, "nokey", True, "ENTITLED", "HW+L", ""),
+    (HardwareClass.TRUENAS_HW, "key", True, "ENTITLED", "HW+K", ""),
+    (HardwareClass.MINI, "none", False, "NO_LICENSE", "CE",
+     "This system is not licensed to use the Fibre Channel feature."),
+    (HardwareClass.MINI, "nokey", False, "KEY_MISSING", "CE+L",
+     "This system's license does not include the Fibre Channel feature."),
+    (HardwareClass.MINI, "key", True, "ENTITLED", "CE+K", ""),
+    (HardwareClass.GENERIC, "none", False, "NO_LICENSE", "CE",
+     "This system is not licensed to use the Fibre Channel feature."),
+    (HardwareClass.GENERIC, "nokey", False, "KEY_MISSING", "CE+L",
+     "This system's license does not include the Fibre Channel feature."),
+    (HardwareClass.GENERIC, "key", True, "ENTITLED", "CE+K", ""),
+]
+
+
+@pytest.mark.parametrize("hardware_class,state,entitled,reason,column,message", FIBRECHANNEL_TABLE)
+def test_fibrechannel_vector_behavior(hardware_class, state, entitled, reason, column, message):
+    facts = make_facts(hardware_class=hardware_class, license=_license_for(LicenseFeature.FIBRECHANNEL, state))
+    entitlement = check_entitlement(LicenseFeature.FIBRECHANNEL, facts)
+    assert entitlement.entitled is entitled
+    assert entitlement.reason == reason
+    assert entitlement.column == column
+    assert entitlement.message == message
 
 
 # APPS, CONTAINERS and VMS are live matrix Vectors (1,1,0,1,0,1): granted with no
