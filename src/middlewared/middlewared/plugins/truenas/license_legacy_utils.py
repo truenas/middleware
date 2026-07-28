@@ -19,6 +19,12 @@ injection buckets mirror how today's gates read a legacy license:
 - every legacy license: NETWORK_FEC. Its matrix vector is key-only on both
   hardware sides, so any legacy holder configuring FEC mode would lose it on
   upgrade unless the flag is injected regardless of model.
+- every legacy license: RDMA. Its matrix vector is key-only on both hardware
+  sides, while the gate it replaced required an enterprise system that was not
+  a MINI and had an RDMA capable NIC fitted. The NIC remains a hardware check
+  outside the license, but the model half of that gate is dropped, so the flag
+  is injected regardless of model to keep every legacy holder with the hardware
+  able to use RDMA.
 - enterprise models only (model present and not freenas-prefixed, the same
   demotion rule product_type applies): the flags historically gated behind an
   is_enterprise check.
@@ -43,10 +49,10 @@ logger = logging.getLogger(__name__)
 _ALL_LEGACY_INJECT: frozenset[LicenseFeature] = frozenset({
     LicenseFeature.STIG, LicenseFeature.TRUESEARCH, LicenseFeature.APPS, LicenseFeature.VMS,
     LicenseFeature.CONTAINERS, LicenseFeature.NFS_SNAPSHOT, LicenseFeature.NVMEOF_SPDK,
-    LicenseFeature.NETWORK_FEC,
+    LicenseFeature.NETWORK_FEC, LicenseFeature.RDMA,
 })
 _ENT_ONLY_INJECT: frozenset[LicenseFeature] = frozenset({
-    LicenseFeature.RDMA, LicenseFeature.SMB_VEEAM, LicenseFeature.SMB_FASTPATH,
+    LicenseFeature.SMB_VEEAM, LicenseFeature.SMB_FASTPATH,
     LicenseFeature.DIRECTORY_SERVICES, LicenseFeature.MISSION_CRITICAL,
     LicenseFeature.AUTOTUNE, LicenseFeature.CATALOG_ENTERPRISE_TRAIN,
 })

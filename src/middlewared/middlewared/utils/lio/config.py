@@ -433,7 +433,7 @@ def _build_iscsi_desired(render_ctx: dict) -> dict:
         }}
     """
     global_cfg = render_ctx["iscsi.global.config"]
-    iser_enabled = global_cfg.get("iser", False)
+    iser_enabled = render_ctx.get("iscsi.global.iser_enabled", False)
 
     extents = {e["id"]: e for e in render_ctx["iscsi.extent.query"]}
     portals = {p["id"]: p for p in render_ctx["iscsi.portal.query"]}
@@ -1135,7 +1135,7 @@ def _load_modules(render_ctx: dict):
     if render_ctx.get("fc.capable") and not MOD_TCM_QLA2XXX.exists():
         needed.append("tcm_qla2xxx")
 
-    if render_ctx.get("iscsi.global.config", {}).get("iser"):
+    if render_ctx.get("iscsi.global.iser_enabled"):
         if not MOD_IB_ISERT.exists():
             needed.append("ib_isert")
 
