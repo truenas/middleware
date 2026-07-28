@@ -4,8 +4,7 @@ import pytest
 
 from middlewared.service_exception import InstanceNotFound, ValidationErrors
 from middlewared.test.integration.assets.filesystem import directory
-from middlewared.test.integration.assets.product import product_type
-from middlewared.test.integration.utils import call, pool, ssh
+from middlewared.test.integration.utils import call, mock, pool, ssh
 from middlewared.test.integration.utils.client import truenas_server
 from protocols.pynfs_proto import PynfsClient, PynfsClient3
 
@@ -14,7 +13,12 @@ SNAPDIR_EXPORTS_ENTRY = 'zfs_snapdir'
 
 @pytest.fixture(scope='function')
 def enterprise():
-    with product_type():
+    with mock('truenas.entitlements.check', args=['NFS_SNAPSHOT', ], declaration="""
+        def mock(self, feature):
+            from middlewared.utils.entitlements import Entitlement, Reason
+
+            return Entitlement(entitled=True, reason=Reason.ENTITLED, column='HW+K', message='')
+    """):
         yield
 
 
@@ -61,7 +65,17 @@ def nfs_dataset():
 
 @pytest.fixture(scope='function')
 def community():
-    with product_type('COMMUNITY_EDITION'):
+    with mock('truenas.entitlements.check', args=['NFS_SNAPSHOT', ], declaration="""
+        def mock(self, feature):
+            from middlewared.utils.entitlements import Entitlement, Reason
+
+            return Entitlement(
+                entitled=False,
+                reason=Reason.NO_LICENSE,
+                column='CE',
+                message='This is an enterprise feature and may not be enabled without a valid license.',
+            )
+    """):
         yield
 
 
