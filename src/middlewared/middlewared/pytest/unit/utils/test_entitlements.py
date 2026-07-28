@@ -191,7 +191,8 @@ def test_dedup_key_missing_message_uses_display_name():
     assert entitlement.message == "This system's license does not include the ZFS deduplication feature."
 
 
-# ZFSTIER, STIG and TRUESEARCH are live matrix Vectors (0,0,0,1,0,1): key-only on either hardware side.
+# ZFSTIER, STIG, TRUESEARCH and NFS_SNAPSHOT are live matrix Vectors (0,0,0,1,0,1):
+# key-only on either hardware side.
 KEY_ONLY_TABLE = [
     (HardwareClass.TRUENAS_HW, "none", False, "NO_LICENSE", "HW"),
     (HardwareClass.TRUENAS_HW, "nokey", False, "KEY_MISSING", "HW+L"),
@@ -205,7 +206,15 @@ KEY_ONLY_TABLE = [
 ]
 
 
-@pytest.mark.parametrize("feature", [LicenseFeature.ZFSTIER, LicenseFeature.STIG, LicenseFeature.TRUESEARCH])
+@pytest.mark.parametrize(
+    "feature",
+    [
+        LicenseFeature.ZFSTIER,
+        LicenseFeature.STIG,
+        LicenseFeature.TRUESEARCH,
+        LicenseFeature.NFS_SNAPSHOT,
+    ],
+)
 @pytest.mark.parametrize("hardware_class,state,entitled,reason,column", KEY_ONLY_TABLE)
 def test_key_only_vector_behavior(feature, hardware_class, state, entitled, reason, column):
     facts = make_facts(hardware_class=hardware_class, license=_license_for(feature, state))
@@ -227,6 +236,37 @@ def test_key_only_key_missing_message_uses_display_name(feature, display):
     facts = make_facts(hardware_class=HardwareClass.TRUENAS_HW, license=make_license())
     entitlement = check_entitlement(feature, facts)
     assert entitlement.message == f"This system's license does not include the {display} feature."
+
+
+# NFS_SNAPSHOT is a key-only vector too, but it keeps its pre-engine validation
+# wording through FEATURE_MESSAGES instead of the generic display-name template.
+NFS_SNAPSHOT_MESSAGE = "This is an enterprise feature and may not be enabled without a valid license."
+
+
+def test_nfs_snapshot_bespoke_message_registered():
+    overrides = FEATURE_MESSAGES[LicenseFeature.NFS_SNAPSHOT]
+    for reason in (Reason.NO_LICENSE, Reason.KEY_MISSING, Reason.WRONG_HARDWARE):
+        assert overrides[reason] == NFS_SNAPSHOT_MESSAGE
+
+
+@pytest.mark.parametrize("hardware_class", [HardwareClass.TRUENAS_HW, HardwareClass.MINI, HardwareClass.GENERIC])
+@pytest.mark.parametrize("state", ["none", "nokey"])
+def test_nfs_snapshot_bespoke_message_from_live_policy(hardware_class, state):
+    facts = make_facts(hardware_class=hardware_class, license=_license_for(LicenseFeature.NFS_SNAPSHOT, state))
+    entitlement = check_entitlement(LicenseFeature.NFS_SNAPSHOT, facts)
+    assert entitlement.entitled is False
+    assert entitlement.message == NFS_SNAPSHOT_MESSAGE
+
+
+def test_nfs_snapshot_bespoke_message_survives_vector_flip():
+    # Dropping the CE key cell makes WRONG_HARDWARE reachable for this feature;
+    # the wording must hold there too rather than falling back to the template.
+    policy = {LicenseFeature.NFS_SNAPSHOT: Vector(0, 0, 0, 1, 0, 0)}
+    facts = facts_for_column(LicenseFeature.NFS_SNAPSHOT, "CE+K")
+    entitlement = check_entitlement(LicenseFeature.NFS_SNAPSHOT, facts, policy=policy)
+    assert entitlement.entitled is False
+    assert entitlement.reason == "WRONG_HARDWARE"
+    assert entitlement.message == NFS_SNAPSHOT_MESSAGE
 
 
 # FIBRECHANNEL is a live matrix Vector (0,0,1,1,0,1): any license grants it on iX
