@@ -82,7 +82,12 @@ class SMARTAlertSource(ThreadedAlertSource):
         if ata_tests := log.get("table", []):
             # NAS-140419: smartctl writes table[] newest-first (see ataPrintSmartSelfTestlog
             # in smartmontools/ataprint.cpp), so [0] is the most recent test.
-            test_failed = not ata_tests[0]["status"]["passed"]
+            # NAS-141951: smartctl omits "passed" entirely when the test result is
+            # unknown -- status nibble 0x1 (aborted by host), 0x2 (interrupted by
+            # host reset) or 0x3 (fatal/unknown error); see "aborted -> unknown" in
+            # ataPrintSmartSelfTestEntry (smartmontools 7.4 ataprint.cpp:2654-2657).
+            # Only an explicit false means the drive recorded a failed self-test.
+            test_failed = ata_tests[0]["status"].get("passed") is False
 
         return SmartInfo(
             uncorrected_errors=ue,
