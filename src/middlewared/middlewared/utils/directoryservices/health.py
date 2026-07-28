@@ -37,6 +37,7 @@ class ADHealthCheckFailReason(enum.IntEnum):
     AD_WBCLIENT_FAILURE = enum.auto()
     NTP_EXCESSIVE_SLEW = enum.auto()
     WINBIND_STOPPED = enum.auto()
+    WINBIND_STALE_LOCAL_SID = enum.auto()
 
 
 class LDAPHealthCheckFailReason(enum.IntEnum):
