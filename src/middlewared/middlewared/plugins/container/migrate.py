@@ -338,6 +338,7 @@ class ContainerService(Service):
                         'cpuset': config.get('limits.cpu', None),
                     },
                 )
+                existing_containers[name] = container_instance
                 self.middleware.call_sync(
                     "container.migrate_devices", job, manifest["container"], container_instance
                 )
