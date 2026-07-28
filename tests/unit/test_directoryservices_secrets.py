@@ -21,7 +21,7 @@ from unittest.mock import AsyncMock, MagicMock
 from middlewared.plugins.directoryservices_ import secrets as secrets_mod
 from middlewared.plugins.directoryservices_.secrets import DomainSecrets
 from middlewared.service_exception import CallError
-from middlewared.utils.tdb import get_tdb_handle
+from middlewared.utils.tdb import TDBDataType, get_tdb_handle, keys_are_null_terminated
 
 
 @pytest.fixture
@@ -305,3 +305,44 @@ def test__ipa_cred_version_absent_reads_as_zero(secrets_tdb):
     existed -- must read as 0 so the health check knows to regenerate its SMB credential.
     """
     assert secrets_tdb.ipa_cred_version('OLDDOMAIN') == 0
+
+
+@pytest.mark.parametrize('name,data_type,expected', [
+    ('secrets.tdb', TDBDataType.BYTES, False),
+    ('/var/lib/truenas-samba/private/secrets.tdb', TDBDataType.BYTES, False),
+    # Most samba databases key via string_term_tdb_data() (strlen + 1).
+    ('gencache.tdb', TDBDataType.BYTES, True),
+    ('group_mapping.tdb', TDBDataType.BYTES, True),
+    ('group_mapping_rejects.tdb', TDBDataType.BYTES, True),
+    ('passdb.tdb', TDBDataType.BYTES, True),
+    ('share_info.tdb', TDBDataType.BYTES, True),       # default: BYTES -> terminated
+    ('winbindd_cache.tdb', TDBDataType.BYTES, True),   # default: BYTES -> terminated
+    ('middleware_cache', TDBDataType.JSON, False),     # middleware-owned JSON -> not
+])
+def test__keys_are_null_terminated_conventions(name, data_type, expected):
+    """
+    Lock the per-database key convention that both TDB access paths share. A regression
+    that flips secrets.tdb back to null-terminated re-breaks winbindd on stateful failover.
+    """
+    assert keys_are_null_terminated(name, data_type) is expected
+
+
+def test__secrets_tdb_keys_are_not_null_terminated_on_disk(tmp_path):
+    """
+    End-to-end proof that a key written through the secrets.tdb handle lands on disk
+    without a trailing NUL -- the exact byte layout samba's secrets_fetch() expects. If
+    the handle null-terminates the key, secrets_fetch_domain_sid() misses and winbindd
+    aborts. Inspecting the raw underlying tdb keys (bypassing the wrapper, which would
+    hide the terminator) surfaces a regression as a failure here.
+    """
+    tdb_path = str(tmp_path / 'secrets.tdb')
+    # secrets.tdb opens O_RDWR without O_CREAT, so the db must already exist.
+    tdb.Tdb(tdb_path, 0, tdb.DEFAULT, os.O_CREAT | os.O_RDWR, 0o600).close()
+
+    key = 'SECRETS/SID/ACME'
+    with get_tdb_handle(tdb_path, secrets_mod.SECRETS_TDB_OPTIONS) as hdl:
+        hdl.store(key, b64encode(b'\x01\x04rawsidbytes').decode())
+        raw_keys = list(hdl.hdl.keys())  # underlying tdb.Tdb -> raw key bytes
+
+    assert key.encode() in raw_keys, f'expected un-terminated key on disk; got {raw_keys}'
+    assert key.encode() + b'\x00' not in raw_keys, 'secrets key must not be NUL-terminated'
