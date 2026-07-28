@@ -61,15 +61,29 @@ __all__ = (
 
 # TODO: injecting APPS overrides the legacy jails bit, granting apps to HA capable systems that never purchased it
 # TODO: injecting VMS overrides the legacy vm bit, granting VMs to HA capable systems that never purchased it
-_ALL_LEGACY_INJECT: frozenset[LicenseFeature] = frozenset({
-    LicenseFeature.STIG, LicenseFeature.TRUESEARCH, LicenseFeature.APPS, LicenseFeature.VMS,
-    LicenseFeature.CONTAINERS, LicenseFeature.NFS_SNAPSHOT, LicenseFeature.NVMEOF_SPDK,
-    LicenseFeature.NETWORK_FEC, LicenseFeature.RDMA, LicenseFeature.DIRECTORY_SERVICES,
-})
-_ENT_ONLY_INJECT: frozenset[LicenseFeature] = frozenset({
-    LicenseFeature.SMB_VEEAM, LicenseFeature.SMB_FASTPATH, LicenseFeature.MISSION_CRITICAL,
-    LicenseFeature.AUTOTUNE, LicenseFeature.CATALOG_ENTERPRISE_TRAIN,
-})
+_ALL_LEGACY_INJECT: frozenset[LicenseFeature] = frozenset(
+    {
+        LicenseFeature.STIG,
+        LicenseFeature.TRUESEARCH,
+        LicenseFeature.APPS,
+        LicenseFeature.VMS,
+        LicenseFeature.CONTAINERS,
+        LicenseFeature.NFS_SNAPSHOT,
+        LicenseFeature.NVMEOF_SPDK,
+        LicenseFeature.NETWORK_FEC,
+        LicenseFeature.RDMA,
+        LicenseFeature.DIRECTORY_SERVICES,
+    }
+)
+_ENT_ONLY_INJECT: frozenset[LicenseFeature] = frozenset(
+    {
+        LicenseFeature.SMB_VEEAM,
+        LicenseFeature.SMB_FASTPATH,
+        LicenseFeature.MISSION_CRITICAL,
+        LicenseFeature.AUTOTUNE,
+        LicenseFeature.CATALOG_ENTERPRISE_TRAIN,
+    }
+)
 
 
 @lru_cache()
@@ -117,21 +131,21 @@ def parse_legacy_license(text: str) -> LicenseInfo:
         model=model,
         support_expires_at=lic.contract_end,
         license_expires_at=None,
-        features=MappingProxyType({
-            name: FeatureInfo(
-                name=name,
-                start_date=lic.contract_start,
-                expires_at=lic.contract_end,
-                source="enterprise",
-                type=lic.contract_type.name.upper() if name == "SUPPORT" else None,
-            )
-            for name in feature_names
-        }),
+        features=MappingProxyType(
+            {
+                name: FeatureInfo(
+                    name=name,
+                    start_date=lic.contract_start,
+                    expires_at=lic.contract_end,
+                    source="enterprise",
+                    type=lic.contract_type.name.upper() if name == "SUPPORT" else None,
+                )
+                for name in feature_names
+            }
+        ),
         serials=tuple(serials),
-        enclosures=MappingProxyType({
-            LICENSE_ADDHW_MAPPING[code]: quantity
-            for quantity, code in lic.addhw
-            if code in LICENSE_ADDHW_MAPPING
-        }),
+        enclosures=MappingProxyType(
+            {LICENSE_ADDHW_MAPPING[code]: quantity for quantity, code in lic.addhw if code in LICENSE_ADDHW_MAPPING}
+        ),
         contract_type=lic.contract_type.name.upper(),
     )

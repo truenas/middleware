@@ -42,12 +42,14 @@ __all__ = [
 
 # Codes that mean the daemon had nothing to say about a v2 license, so the
 # legacy blob underneath is still the best answer available.
-_FALLBACK_CODES = frozenset({
-    LicenseError.NO_LICENSE,
-    LicenseError.DAEMON_UNAVAILABLE,
-    LicenseError.DAEMON_ERROR,
-    LicenseError.INTERNAL_ERROR,
-})
+_FALLBACK_CODES = frozenset(
+    {
+        LicenseError.NO_LICENSE,
+        LicenseError.DAEMON_UNAVAILABLE,
+        LicenseError.DAEMON_ERROR,
+        LicenseError.INTERNAL_ERROR,
+    }
+)
 
 
 def get_license(status: LicenseStatus | None = None) -> LicenseInfo | None:
