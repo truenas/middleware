@@ -36,13 +36,17 @@ POLICY: Mapping[str, Rule] = MappingProxyType(
         LicenseFeature.CONTAINERS: TARGET_VECTORS[LicenseFeature.CONTAINERS],
         LicenseFeature.DEDUP: TARGET_VECTORS[LicenseFeature.DEDUP],  # TODO: Validate logic with old impl
         LicenseFeature.FIBRECHANNEL: TARGET_VECTORS[LicenseFeature.FIBRECHANNEL],
+        LicenseFeature.NFS_SNAPSHOT: TARGET_VECTORS[LicenseFeature.NFS_SNAPSHOT],
         LicenseFeature.NVMEOF_SPDK: LegacyRule(func=legacy.nvmet_spdk),  # TODO: Validate logic with old impl
         LicenseFeature.SED: LegacyRule(func=legacy.sed),  # TODO: Validate logic with old impl
         LicenseFeature.STIG: TARGET_VECTORS[LicenseFeature.STIG],
         LicenseFeature.TRUESEARCH: TARGET_VECTORS[LicenseFeature.TRUESEARCH],
         LicenseFeature.VMS: TARGET_VECTORS[LicenseFeature.VMS],
-        LicenseFeature.ZFSTIER: TARGET_VECTORS[LicenseFeature.ZFSTIER],  # TODO: Validate logic with old impl / Remember that zfstier client has license logic as well which should be reviewed too
-        DerivedEntitlement.HA: LicenseTypeRule(allowed_types=frozenset({LicenseType.ENTERPRISE_HA})),  # TODO: Validate logic with old impl
+        # TODO: Validate logic with old impl / Remember that zfstier client has license
+        # logic as well which should be reviewed too
+        LicenseFeature.ZFSTIER: TARGET_VECTORS[LicenseFeature.ZFSTIER],
+        # TODO: Validate logic with old impl
+        DerivedEntitlement.HA: LicenseTypeRule(allowed_types=frozenset({LicenseType.ENTERPRISE_HA})),
         DerivedEntitlement.PROACTIVE_SUPPORT: TierRule(  # TODO: Validate logic with old impl
             feature=LicenseFeature.SUPPORT,
             allowed_tiers=frozenset({SupportTier.GOLD, SupportTier.SILVER, SupportTier.SILVERINTERNATIONAL}),
