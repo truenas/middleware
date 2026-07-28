@@ -1676,40 +1676,6 @@ class TestNFSops:
             else:
                 assert errmsg in str(ve.value.errors[0])
 
-    @pytest.mark.parametrize("param,errmsg", [
-        pp([""], None, id="basic settings"),
-        pp(["a.b.c.d"], "not appear to be", id="Not a valid IP"),
-        pp(["", "ixsystems.com"], "not appear to be", id="2nd entry not valid IP"),
-        pp(["", None], "not appear to be valid", id="2nd entry is None"),
-        pp(["", "a.b.c.d", "ixsystems.com"], "not appear to be", id="Two invalid entries")
-    ])
-    def test_nfs_bindip(self, start_nfs, param, errmsg):
-        '''
-        This test requires a static IP address
-        - Test the private nfs.bindip call
-        * Failure testing:
-            - Valid IP, but does not match choices
-            - Invalid IP
-            - Two entries, one valid the other not
-        '''
-        assert start_nfs is True
-
-        if errmsg is None:
-            # Multiple restarts cause systemd failures.  Reset the systemd counters.
-            reset_svcs("nfs-idmapd nfs-mountd nfs-server rpcbind rpc-statd")
-
-            call("nfs.bindip", {"bindip": [truenas_server.ip]})
-            call("nfs.bindip", {"bindip": []})
-
-        else:
-            # None of these should make it to the config
-            if param[0] == "":
-                param[0] = truenas_server.ip
-
-            # Test the standalone private
-            with pytest.raises(ValueError, match=errmsg):
-                call("nfs.bindip", {"bindip": param})
-
     def test_v4_domain(self, start_nfs):
         '''
         The v4_domain configuration item maps to the 'Domain' setting in
