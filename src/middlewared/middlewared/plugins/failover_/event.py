@@ -620,26 +620,13 @@ class FailoverEventsService(Service):
         maybe_unlocked = False
         try:
             maybe_unlocked = self.run_call('disk.sed_unlock_all', True)
+            if maybe_unlocked:
+                logger.info('Done unlocking all SED disks (if any)')
         except Exception as e:
             # failing here doesn't mean the zpool won't import
             # we could have failed on only 1 disk so log an
             # error and move on
             logger.error('Failed to unlock SED disk(s) with error: %r', e)
-
-        if maybe_unlocked:
-            logger.info('Done unlocking all SED disks (if any)')
-            try:
-                if self.run_call("failover.remote_connected"):
-                    logger.info("Retasting disks on standby node")
-                    self.run_call(
-                        "failover.call_remote",
-                        "disk.retaste",
-                        [],
-                        {"raise_connect_error": False, "timeout": 5},
-                    )
-                    logger.info("Done scheduling retasting disks on standby node")
-            except Exception:
-                logger.exception('Unexpected failure scheduling retasting disks on standby node')
 
         # setup the zpool cachefile  TODO: see comment below about cachefile usage
         # self.run_call('failover.zpool.cachefile.setup', 'MASTER')
@@ -814,6 +801,24 @@ class FailoverEventsService(Service):
             logger.info('Done allowing network traffic.')
 
         logger.info('Critical portion of failover is now complete')
+
+        if maybe_unlocked:
+            try:
+                if self.run_call("failover.remote_connected"):
+                    logger.info("Scheudling disks retaste on standby node")
+                    self.run_call(
+                        "failover.call_remote",
+                        "disk.retaste",
+                        [],
+                        {
+                            "raise_connect_error": False,
+                            "timeout": 2,
+                            "job": "RETURN"  # return immediately, no need to wait
+                        },
+                    )
+                    logger.info("Done scheduling disks retaste on standby node")
+            except Exception:
+                logger.exception('Unexpected failure scheduling disks retaste on standby node')
 
         # regenerate cron
         logger.info('Regenerating cron')
