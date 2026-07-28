@@ -805,16 +805,20 @@ class FailoverEventsService(Service):
         if maybe_unlocked:
             try:
                 if self.run_call("failover.remote_connected"):
-                    logger.info("Retasting disks on standby node")
+                    logger.info("Scheudling disks retaste on standby node")
                     self.run_call(
                         "failover.call_remote",
                         "disk.retaste",
                         [],
-                        {"raise_connect_error": False, "timeout": 5},
+                        {
+                            "raise_connect_error": False,
+                            "timeout": 2,
+                            "job": "RETURN"  # return immediately, no need to wate
+                        },
                     )
-                    logger.info("Done scheduling retasting disks on standby node")
+                    logger.info("Done scheduling disks retaste on standby node")
             except Exception:
-                logger.exception('Unexpected failure scheduling retasting disks on standby node')
+                logger.exception('Unexpected failure scheduling disks retaste on standby node')
 
         # regenerate cron
         logger.info('Regenerating cron')
