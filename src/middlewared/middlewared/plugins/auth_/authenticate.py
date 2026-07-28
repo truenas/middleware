@@ -60,13 +60,8 @@ class AuthService(Service):
         privileges = await self.middleware.call('privilege.privileges_for_groups', groups_key, groups)
         if not privileges:
             if not user['local']:
-                # A directory services user can authenticate (valid credentials) yet match no
-                # privilege for two reasons: the normal case where the account simply has no
-                # TrueNAS role, and the failure case where its NSS group list was truncated by
-                # a degraded provider (e.g. winbindd returning a partial getgrouplist). We
-                # can't tell them apart here, so log the evaluated group list as a factual
-                # breadcrumb -- an operator correlates it with directory services health status
-                # rather than this line asserting degradation on every routine no-role login.
+                # Directory services issues can be particularly difficult to pin down and
+                # so catching additional logging here is useful.
                 self.logger.info(
                     '%s: authenticated directory services user matched no privilege granting API '
                     'access; evaluated group list: %s.',
