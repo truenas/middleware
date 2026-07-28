@@ -270,6 +270,9 @@ class ContainerService(Service):
                         )
                     processed_parents_mountpoints = True
 
+                # Armed before the properties are touched: a partial apply has to be
+                # reverted too, and update_impl can fail between the two of them.
+                needs_mount_revert = True
                 self.middleware.call_sync(
                     "pool.dataset.update_impl",
                     UpdateImplArgs(
@@ -279,7 +282,6 @@ class ContainerService(Service):
                     )
                 )
                 self.call_sync2(self.s.zfs.resource.mount, dataset["name"])
-                needs_mount_revert = True
 
                 try:
                     with open(f"/mnt/{dataset['name']}/backup.yaml") as f:
