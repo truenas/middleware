@@ -1,4 +1,5 @@
 from contextlib import suppress
+import errno
 import os
 import typing
 
@@ -21,7 +22,7 @@ from middlewared.utils.yaml import safe_yaml_load
 class NFSService(Service):
 
     @private
-    def get_rmtab(self):
+    def get_rmtab(self) -> list[dict[str, str]]:
         """
         In future we can apply enhance based on socket status
         e.g ss -H -o state established '( sport = :nfs )'
@@ -41,7 +42,7 @@ class NFSService(Service):
         return entries
 
     @private
-    def clear_nfs3_rmtab(self, ip_to_clear=["all"]):
+    def clear_nfs3_rmtab(self, ip_to_clear: list[str] | None = None) -> None:
         """
         Clear some or all NFSv3 client entries in rmtab.
         rmtab can become clogged with stale entries, this provides a
@@ -49,6 +50,9 @@ class NFSService(Service):
         Optional input: list of ip to remove, e.g. ip_to_clear=["a.b.c.d"]
         DEFAULT: Clear all entries
         """
+        if ip_to_clear is None:
+            ip_to_clear = ["all"]
+
         rmtab = os.path.join(NFSServicePathInfo.STATEDIR.path(), "rmtab")
         with suppress(FileNotFoundError):
             # Handle default:  clear all
@@ -72,7 +76,11 @@ class NFSService(Service):
         # READONLY is considered administrative-level permission
         roles=['READONLY_ADMIN', 'SHARING_NFS_WRITE']
     )
-    def get_nfs3_clients(self, filters, options):
+    def get_nfs3_clients(
+        self,
+        filters: list[list[typing.Any]],
+        options: dict[str, typing.Any],
+    ) -> list[dict[str, str]] | dict[str, str] | int:
         """
         Read contents of rmtab. This information may not
         be accurate due to stale entries. This is ultimately
@@ -82,7 +90,7 @@ class NFSService(Service):
         return filter_list(rmtab, filters, options)
 
     @private
-    def get_nfs4_client_info(self, id_):
+    def get_nfs4_client_info(self, id_: str) -> dict[str, str]:
         """
         See the following link:
             NFS 4.1 spec: https://www.rfc-editor.org/rfc/rfc8881.html
@@ -100,7 +108,7 @@ class NFSService(Service):
         return info
 
     @private
-    def get_nfs4_client_states(self, id_):
+    def get_nfs4_client_states(self, id_: str) -> list[typing.Any]:
         """
         Detailed information regarding current open files per NFS client
         TODO: review formatting of this field
@@ -120,7 +128,11 @@ class NFSService(Service):
         # READONLY is considered administrative-level permission
         roles=['READONLY_ADMIN', 'SHARING_NFS_WRITE']
     )
-    def get_nfs4_clients(self, filters, options):
+    def get_nfs4_clients(
+        self,
+        filters: list[list[typing.Any]],
+        options: dict[str, typing.Any],
+    ) -> list[dict[str, typing.Any]] | dict[str, typing.Any] | int:
         """
         Read information about NFSv4 clients from /proc/fs/nfsd/clients.
 
@@ -205,7 +217,7 @@ class NFSService(Service):
         return filter_list(clients, filters, options)
 
     @api_method(NFSClientCountArgs, NFSClientCountResult, roles=['SHARING_NFS_READ'])
-    def client_count(self):
+    def client_count(self) -> int:
         """
         Return currently connected clients count.
         Count may not be accurate if NFSv3 protocol is in use
@@ -214,12 +226,12 @@ class NFSService(Service):
 
         cnt = 0
         for op in (self.get_nfs3_clients, self.get_nfs4_clients):
-            cnt += op([], {"count": True})
+            cnt += op([], {"count": True})  # type: ignore[operator]
 
         return cnt
 
     @private
-    def close_client_state(self, client_id):
+    def close_client_state(self, client_id: str) -> None:
         """
         force the server to immediately revoke all state held by:
         `client_id`. This only applies to NFSv4. `client_id` is `id`
@@ -230,7 +242,7 @@ class NFSService(Service):
                 f.write("expire\n")
 
     @private
-    def get_threadpool_mode(self):
+    def get_threadpool_mode(self) -> str:
         with open("/sys/module/sunrpc/parameters/pool_mode", "r") as f:
             pool_mode = f.readline().strip()
 
@@ -240,7 +252,7 @@ class NFSService(Service):
     def set_threadpool_mode(
         self,
         pool_mode: typing.Literal["AUTO", "GLOBAL", "PERCPU", "PERNODE"]
-    ):
+    ) -> None:
         """
         Control how the NFS server code allocates CPUs to
         service thread pools.  Depending on how many NICs
@@ -262,5 +274,5 @@ class NFSService(Service):
         except OSError as e:
             raise CallError(
                 "NFS service must be stopped before threadpool mode changes",
-                errno=e.errno
+                errno=e.errno or errno.EFAULT
             )

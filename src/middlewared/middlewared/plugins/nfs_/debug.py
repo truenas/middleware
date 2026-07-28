@@ -30,7 +30,7 @@ class NFS_DBGFLAGS(enum.Enum):
     ALL = 0xFFFF
 
 
-class NFSD_DBGFLAGS(enum. Enum):
+class NFSD_DBGFLAGS(enum.Enum):
     # include/uapi/linux/nfsd/debug.h
     NONE = 0x0000
     SOCK = 0x0001
@@ -82,10 +82,10 @@ class RPC_DBGFLAGS(enum.Enum):
 
 
 class NfsDebug(BaseModel):
-    NFS: UniqueList[Literal[*NFS_DBGFLAGS.__members__]] | None = None
-    NFSD: UniqueList[Literal[*NFSD_DBGFLAGS.__members__]] | None = None
-    NLM: UniqueList[Literal[*NLM_DBGFLAGS.__members__]] | None = None
-    RPC: UniqueList[Literal[*RPC_DBGFLAGS.__members__]] | None = None
+    NFS: UniqueList[Literal[*NFS_DBGFLAGS.__members__]] | None = None  # type: ignore[valid-type]
+    NFSD: UniqueList[Literal[*NFSD_DBGFLAGS.__members__]] | None = None  # type: ignore[valid-type]
+    NLM: UniqueList[Literal[*NLM_DBGFLAGS.__members__]] | None = None  # type: ignore[valid-type]
+    RPC: UniqueList[Literal[*RPC_DBGFLAGS.__members__]] | None = None  # type: ignore[valid-type]
 
 
 class NfsDebugGetArgs(BaseModel):
@@ -93,7 +93,7 @@ class NfsDebugGetArgs(BaseModel):
 
 
 class NfsDebugGetResult(BaseModel):
-    result: dict
+    result: dict[str, list[str]]
 
 
 class NfsDebugSetArgs(BaseModel):
@@ -111,19 +111,24 @@ class NFSService(Service):
     are files in /proc/sys/sunrpc.
     """
 
-    dbgcls = {'NFS': NFS_DBGFLAGS, 'NFSD': NFSD_DBGFLAGS, 'NLM': NLM_DBGFLAGS, 'RPC': RPC_DBGFLAGS}
+    dbgcls: dict[str, type[NFS_DBGFLAGS] | type[NFSD_DBGFLAGS] | type[NLM_DBGFLAGS] | type[RPC_DBGFLAGS]] = {
+        'NFS': NFS_DBGFLAGS,
+        'NFSD': NFSD_DBGFLAGS,
+        'NLM': NLM_DBGFLAGS,
+        'RPC': RPC_DBGFLAGS,
+    }
 
     @api_method(NfsDebugGetArgs, NfsDebugGetResult, private=True)
-    def get_debug(self):
+    def get_debug(self) -> dict[str, list[str]]:
         """
         Display current debug settings for NFS, NFSD, NLM and RPC
         All settings are reported as uppercase.
         See man (8) rpcdebug for more information.
         """
-        output = {}
+        output: dict[str, list[str]] = {}
         with suppress(FileNotFoundError):
             for svc in os.listdir("/proc/sys/sunrpc"):
-                flags = []
+                flags: list[str] = []
                 if not svc.endswith("debug"):
                     continue
 
@@ -131,7 +136,8 @@ class NFSService(Service):
                 with open(f"/proc/sys/sunrpc/{svc}", "r") as f:
                     val = int(f.readline().strip(), 16)
 
-                for dbgflg in self.dbgcls[svc_name]:
+                dbgcls = self.dbgcls[svc_name]
+                for dbgflg in dbgcls:
                     if dbgflg.name == 'NONE':
                         continue
 
@@ -144,23 +150,23 @@ class NFSService(Service):
                     flags.append(dbgflg.name)
 
                 if not flags:
-                    flags = [dbgflg.NONE.name]
+                    flags = [dbgcls.NONE.name]
 
-                if dbgflg.ALL.name in flags:
-                    flags = [dbgflg.ALL.name]
+                if dbgcls.ALL.name in flags:
+                    flags = [dbgcls.ALL.name]
 
                 output[svc_name] = flags
 
         return output
 
     @api_method(NfsDebugSetArgs, NfsDebugSetResult, private=True)
-    def set_debug(self, services):
+    def set_debug(self, services: dict[str, list[str] | None]) -> bool:
         """
         Set debug flags for NFS, NFSD, NLM and RPC.
         All flag names are uppercase.
         See man (8) rpcdebug for more information.
         """
-        def debug_level_to_int(svc, opts):
+        def debug_level_to_int(svc: str, opts: list[str]) -> int:
             rv = 0
 
             if "NONE" in opts:
@@ -171,7 +177,7 @@ class NFSService(Service):
 
             return rv
 
-        changes = dict(filter(lambda item: item[1] is not None, services.items()))
+        changes = {svc: opts for svc, opts in services.items() if opts is not None}
         for svc, opts in changes.items():
             if opts == []:
                 continue
