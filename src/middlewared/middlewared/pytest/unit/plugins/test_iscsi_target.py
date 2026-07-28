@@ -10,8 +10,8 @@ from middlewared.utils.entitlements import Entitlement, Reason
 
 def target_middleware(entitlement):
     m = Middleware()
-    m['iscsi.target.query'] = lambda *args: []
-    m['datastore.query'] = lambda *args: []
+    m["iscsi.target.query"] = lambda *args: []
+    m["datastore.query"] = lambda *args: []
 
     checked = []
 
@@ -28,37 +28,37 @@ async def validate(m, mode):
     svc = create_service(m, iSCSITargetService)
     await svc._iSCSITargetService__validate(
         verrors,
-        {'name': 'target1', 'alias': None, 'mode': mode, 'groups': [], 'auth_networks': []},
-        'iscsi_target_create',
+        {"name": "target1", "alias": None, "mode": mode, "groups": [], "auth_networks": []},
+        "iscsi_target_create",
     )
     return verrors
 
 
-@pytest.mark.parametrize('mode', ['FC', 'BOTH'])
+@pytest.mark.parametrize("mode", ["FC", "BOTH"])
 @pytest.mark.asyncio
 async def test_target_mode_rejected_when_not_entitled(mode):
-    m, checked = target_middleware(Entitlement(
-        entitled=False,
-        reason=Reason.KEY_MISSING,
-        column='CE+L',
-        message='',
-    ))
+    m, checked = target_middleware(
+        Entitlement(
+            entitled=False,
+            reason=Reason.KEY_MISSING,
+            column="CE+L",
+            message="",
+        )
+    )
 
     verrors = await validate(m, mode)
 
     assert checked == [LicenseFeature.FIBRECHANNEL]
     assert [(e.attribute, e.errmsg) for e in verrors.errors] == [
-        ('iscsi_target_create.mode', 'Fibre Channel not enabled'),
+        ("iscsi_target_create.mode", "Fibre Channel not enabled"),
     ]
 
 
 @pytest.mark.asyncio
 async def test_target_mode_allowed_when_entitled():
-    m, checked = target_middleware(
-        Entitlement(entitled=True, reason=Reason.ENTITLED, column='HW+L', message='')
-    )
+    m, checked = target_middleware(Entitlement(entitled=True, reason=Reason.ENTITLED, column="HW+L", message=""))
 
-    verrors = await validate(m, 'FC')
+    verrors = await validate(m, "FC")
 
     assert checked == [LicenseFeature.FIBRECHANNEL]
     assert verrors.errors == []
@@ -66,11 +66,9 @@ async def test_target_mode_allowed_when_entitled():
 
 @pytest.mark.asyncio
 async def test_iscsi_only_target_skips_entitlement_check():
-    m, checked = target_middleware(
-        Entitlement(entitled=False, reason=Reason.NO_LICENSE, column='CE', message='')
-    )
+    m, checked = target_middleware(Entitlement(entitled=False, reason=Reason.NO_LICENSE, column="CE", message=""))
 
-    verrors = await validate(m, 'ISCSI')
+    verrors = await validate(m, "ISCSI")
 
     assert checked == []
     assert verrors.errors == []
