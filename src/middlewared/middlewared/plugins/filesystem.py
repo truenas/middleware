@@ -7,7 +7,6 @@ import functools
 from itertools import product
 import os
 import pathlib
-import shutil
 import stat as statlib
 import time
 from typing import IO, TYPE_CHECKING, Any, Literal, Sequence
@@ -16,6 +15,7 @@ import pyinotify
 import truenas_os
 from truenas_os_pyutils.io import safe_open
 from truenas_os_pyutils.mount import StatmountResultDict, iter_mountinfo, statmount
+from truenas_os_pyutils.truenas_shutil import copysendfile, copysplice
 
 from middlewared.api import api_method, private_method
 from middlewared.api.base import (
@@ -577,7 +577,11 @@ class FilesystemService(Service):
             raise CallError(f'{path} is not a file')
 
         with safe_open(path, 'rb') as f:
-            shutil.copyfileobj(f, job.pipes.output.w)
+            # Stream the file to the download pipe with a zero-copy sendfile.
+            # Skip empty files: there is nothing to send, and copysendfile's
+            # userspace fallback would lseek() the pipe and raise ESPIPE.
+            if os.fstat(f.fileno()).st_size > 0:
+                copysendfile(f.fileno(), job.pipes.output.w.fileno())
 
     @api_method(
         FilesystemPutArgs,
@@ -613,9 +617,18 @@ class FilesystemService(Service):
         try:
             with safe_open(path, openmode) as f:
                 if options.mode:
+                    # Strip any ACL the file inherited from its parent
+                    # directory before applying the requested mode. Otherwise
+                    # fchmod fails with EPERM on aclmode=restricted datasets,
+                    # and where it succeeds the inherited ACL (not the mode
+                    # bits) would still govern access, so the requested
+                    # permission would not actually take effect. fsetacl(fd,
+                    # None) resets the file to a trivial ACL derived from the
+                    # mode, and is a no-op when no ACL is present.
+                    truenas_os.fsetacl(f.fileno(), None)
                     os.fchmod(f.fileno(), options.mode)
 
-                shutil.copyfileobj(job.pipes.input.r, f)
+                copysplice(job.pipes.input.r.fileno(), f.fileno())
         except PermissionError:
             raise CallError(f'Unable to put contents at {path!r} as the path exists on a locked dataset', errno.EINVAL)
 
