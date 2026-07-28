@@ -211,7 +211,16 @@ class ContainerService(Service):
             container["name"]: container for container in await self.middleware.call("container.query")
         }
         for storage_pool in storage_pools:
-            await self.middleware.call("container.migrate_specific_pool", job, storage_pool, existing_containers)
+            # One unusable pool must not stop the pools that come after it.
+            try:
+                await self.middleware.call(
+                    "container.migrate_specific_pool", job, storage_pool, existing_containers
+                )
+            except Exception as e:
+                self.logger.error("Unable to migrate containers on pool %r", storage_pool, exc_info=True)
+                await job.logs_fd_write(
+                    f"Unable to migrate containers on pool {storage_pool!r}: {e!r}.\n".encode()
+                )
 
     @private
     def migrate_specific_pool(self, job, pool, existing_containers):
