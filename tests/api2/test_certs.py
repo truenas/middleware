@@ -1,9 +1,15 @@
 import textwrap
 
 import pytest
+from cryptography.hazmat.primitives.asymmetric import dsa, ed448, ed25519
 
-from middlewared.test.integration.assets.crypto import certificate_signing_request
-from middlewared.test.integration.utils import call
+from middlewared.test.integration.assets.crypto import (
+    CERT_TYPE_CSR,
+    certificate_signing_request,
+    datastore_certificate,
+    generate_self_signed_pem,
+)
+from middlewared.test.integration.utils import call, ssh
 from truenas_api_client import ValidationErrors
 
 
@@ -221,3 +227,125 @@ def test_importing_certificate_validation(certificate, private_key, should_work)
     else:
         with pytest.raises(ValidationErrors):
             call("certificate.create", payload, job=True)
+
+
+# Material that satisfies the PEM regex but cannot be parsed. It can only be put
+# in front of the query code by writing it straight to the datastore.
+MALFORMED_CERT = "-----BEGIN CERTIFICATE-----\nZ2FyYmFnZQ==\n-----END CERTIFICATE-----\n"
+MALFORMED_KEY = "-----BEGIN PRIVATE KEY-----\nZ2FyYmFnZQ==\n-----END PRIVATE KEY-----\n"
+MALFORMED_CSR = "-----BEGIN CERTIFICATE REQUEST-----\nZ2FyYmFnZQ==\n-----END CERTIFICATE REQUEST-----\n"
+
+
+def test_query_unparseable_certificate():
+    with datastore_certificate(
+        "unparseable_cert", certificate=MALFORMED_CERT, privatekey=MALFORMED_KEY
+    ) as cert:
+        assert cert["parsed"] is False, cert
+        assert cert["chain_list"] == [], cert
+        # Everything derived from the certificate is normalized away.
+        assert cert["fingerprint"] is None, cert
+        assert cert["until"] is None, cert
+        assert cert["extensions"] == {}, cert
+        # ... and so is everything derived from the unreadable private key.
+        assert cert["key_length"] is None, cert
+        assert cert["key_type"] is None, cert
+
+
+def test_query_unparseable_csr():
+    with datastore_certificate(
+        "unparseable_csr", cert_type=CERT_TYPE_CSR, CSR=MALFORMED_CSR
+    ) as csr:
+        assert csr["cert_type_CSR"] is True, csr
+        assert csr["parsed"] is False, csr
+        assert csr["common"] is None, csr
+
+
+@pytest.mark.parametrize(
+    "key_factory,expected_key_type,expected_key_length",
+    [
+        (lambda: dsa.generate_private_key(key_size=2048), "DSA", 2048),
+        (ed448.Ed448PrivateKey.generate, "OTHER", None),
+        (ed25519.Ed25519PrivateKey.generate, "EC", 32),
+    ],
+    ids=["dsa", "ed448", "ed25519"],
+)
+def test_query_reports_key_type(key_factory, expected_key_type, expected_key_length):
+    # certificate.create only ever produces RSA/EC keys, so the remaining
+    # branches of the key introspection are reachable only via the datastore.
+    cert_pem, key_pem = generate_self_signed_pem(common_name="keytype.test.local", key=key_factory())
+    with datastore_certificate("key_type_cert", certificate=cert_pem, privatekey=key_pem) as cert:
+        assert cert["parsed"] is True, cert
+        assert cert["key_type"] == expected_key_type, cert
+        assert cert["key_length"] == expected_key_length, cert
+
+
+def test_redeploy_cert_attachments():
+    # The UI certificate always has at least the UI service attached to it.
+    ui_cert_id = call("system.general.config")["ui_certificate"]
+    assert call("certificate.get_attachments", ui_cert_id)
+    call("certificate.redeploy_cert_attachments", ui_cert_id)
+
+
+def test_dhparam_setup():
+    ssh("cp -a /data/dhparam.pem /data/dhparam.pem.bak")
+    try:
+        ssh("truncate -s 0 /data/dhparam.pem")
+        call("certificate.dhparam_setup", job=True)
+        size, mode = ssh("stat -c '%s %a' /data/dhparam.pem").split()
+        assert int(size) > 0
+        assert mode == "600"
+
+        # An existing non-empty file is left alone.
+        before = ssh("sha256sum /data/dhparam.pem")
+        call("certificate.dhparam_setup", job=True)
+        assert ssh("sha256sum /data/dhparam.pem") == before
+    finally:
+        ssh("mv /data/dhparam.pem.bak /data/dhparam.pem")
+
+
+def test_setup_self_signed_cert_for_ui():
+    original_ui_cert_id = call("system.general.config")["ui_certificate"]
+    created = []
+    try:
+        # No certificate by that name yet: a self-signed one is generated and
+        # installed as the UI certificate.
+        call("certificate.setup_self_signed_cert_for_ui", "self_signed_ui")
+        cert = call("certificate.query", [["name", "=", "self_signed_ui"]], {"get": True})
+        created.append(cert["id"])
+        assert call("system.general.config")["ui_certificate"] == cert["id"]
+
+        # Called again with the same name the existing certificate is reused.
+        call("certificate.setup_self_signed_cert_for_ui", "self_signed_ui")
+        assert call("system.general.config")["ui_certificate"] == cert["id"]
+    finally:
+        call(
+            "datastore.update",
+            "system.settings",
+            call("system.general.config")["id"],
+            {"stg_guicertificate": original_ui_cert_id},
+        )
+        call("service.control", "START", "ssl", job=True)
+        for cert_id in created:
+            call("certificate.delete", cert_id, job=True)
+
+
+def test_setup_self_signed_cert_for_ui_name_taken_by_unusable_certificate():
+    # A CSR cannot be used by the UI, so the name gets a numeric suffix and a
+    # brand new self-signed certificate is generated under it.
+    original_ui_cert_id = call("system.general.config")["ui_certificate"]
+    with certificate_signing_request("self_signed_taken") as csr:
+        try:
+            call("certificate.setup_self_signed_cert_for_ui", csr["name"])
+            cert = call("certificate.query", [["name", "=", f"{csr['name']}_1"]], {"get": True})
+            assert cert["cert_type_existing"] is True, cert
+            assert call("system.general.config")["ui_certificate"] == cert["id"]
+        finally:
+            call(
+                "datastore.update",
+                "system.settings",
+                call("system.general.config")["id"],
+                {"stg_guicertificate": original_ui_cert_id},
+            )
+            call("service.control", "START", "ssl", job=True)
+            for leftover in call("certificate.query", [["name", "=", f"{csr['name']}_1"]]):
+                call("certificate.delete", leftover["id"], job=True)
