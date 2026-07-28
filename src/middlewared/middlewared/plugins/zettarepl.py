@@ -705,7 +705,7 @@ class ZettareplService(Service):
             )
 
         replication_tasks = {}
-        for replication_task in await self.call2(self.s.replication.query, [["enabled", "=", True]]):
+        for replication_task in await self.call2(self.s.replication.query):
             # `_replication_task_definition` builds a zettarepl-library task definition and is shared with one-time
             # tasks (`self.onetime_replication_tasks`), which are plain dicts of a different shape. Dump the model to
             # a dict here so both paths feed it the same representation.
@@ -817,8 +817,8 @@ class ZettareplService(Service):
                 f"task_{periodic_snapshot_task['id']}"
                 for periodic_snapshot_task in replication_task["periodic_snapshot_tasks"]
             ],
-            "auto": replication_task["auto"],
-            "only-matching-schedule": replication_task["only_matching_schedule"],
+            "auto": replication_task["auto"] and replication_task["enabled"],
+            "only-matching-schedule": replication_task["only_matching_schedule"] and replication_task["enabled"],
             "allow-from-scratch": replication_task["allow_from_scratch"],
             "only-from-scratch": replication_task.get("only_from_scratch", False),
             "readonly": replication_task["readonly"].lower(),
@@ -847,7 +847,7 @@ class ZettareplService(Service):
             definition["also-include-naming-schema"] = replication_task["also_include_naming_schema"]
         if replication_task["name_regex"]:
             definition["name-regex"] = replication_task["name_regex"]
-        if replication_task["schedule"] is not None:
+        if replication_task["schedule"] is not None and replication_task["enabled"]:
             definition["schedule"] = zettarepl_schedule(replication_task["schedule"])
         if replication_task["restrict_schedule"] is not None:
             definition["restrict-schedule"] = zettarepl_schedule(replication_task["restrict_schedule"])
