@@ -29,6 +29,9 @@ dataset = f"{pool_name}/nfs"
 dataset_url = dataset.replace('/', '%2F')
 NFS_PATH = "/mnt/" + dataset
 
+# Entries that must always be present in the NFS state directory
+NFS_STATE_DIR_ENTRIES = {"nfsdcld", "nfsdcltrack", "sm", "sm.bak", "state", "v4recovery"}
+
 # Alias
 pp = pytest.param
 
@@ -700,9 +703,8 @@ class TestNFSops:
         assert bootds_nfs['name'] == sysds['pool'] + "/.system/nfs"
 
         # Confirm the required entries are present
-        required_nfs_entries = {"nfsdcld", "nfsdcltrack", "sm", "sm.bak", "state", "v4recovery"}
         current_nfs_entries = set(list(ssh(f'ls {nfs_state_dir}').splitlines()))
-        assert required_nfs_entries.issubset(current_nfs_entries)
+        assert NFS_STATE_DIR_ENTRIES.issubset(current_nfs_entries)
 
         # ----------------------------------------------------------------------
         # NOTE: Test fresh-install and upgrade.
@@ -1382,6 +1384,15 @@ class TestNFSops:
         pp('InvalidAssignment', [
             {'mapall_group': 'badgroup'}, 'mapall_user', 'This field is required when map group is specified'
         ], id="invalid mapall group"),
+        pp('InvalidAssignment', [
+            {'maproot_user': 'root', 'maproot_group': 'badgroup'}, 'maproot_group', 'Group not found: badgroup'
+        ], id="invalid maproot group with valid map user"),
+        pp('InvalidAssignment', [
+            {'mapall_user': 'root', 'mapall_group': 'badgroup'}, 'mapall_group', 'Group not found: badgroup'
+        ], id="invalid mapall group with valid map user"),
+        pp('InvalidAssignment', [
+            {'maproot_user': 'root', 'mapall_user': 'nobody'}, 'mapall_user', 'maproot_user disqualifies mapall_user'
+        ], id="maproot and mapall are mutually exclusive"),
         pp('MissingUser', ['maproot_user', 'missinguser'], id="missing maproot user"),
         pp('MissingUser', ['mapall_user', 'missinguser'], id="missing mapall user"),
         pp('MissingGroup', ['maproot_group', 'missingroup'], id="missing maproot group"),
@@ -1722,6 +1733,69 @@ class TestNFSops:
             s = parse_server_config("idmapd")
             assert s['General'].get('Domain') == 'ixsystems.com', f"'Domain' failed to be updated in idmapd.conf: {s}"
 
+            # v4_domain is an NFSv4-only setting
+            with pytest.raises(ValidationErrors, match="does not apply to NFSv3"):
+                call('nfs.update', {"protocols": ["NFSV3"]})
+
+    def test_v4_domain_from_kerberos_realm(self, start_nfs):
+        '''
+        If NFSv4 is running with kerberos and no v4_domain has been configured,
+        then the domain is taken from the kerberos realm of the directory service.
+        '''
+        assert start_nfs is True
+
+        # Multiple restarts cause systemd failures.  Reset the systemd counters.
+        reset_svcs("nfs-idmapd nfs-mountd nfs-server rpcbind rpc-statd")
+
+        ds_config = call('directoryservices.config') | {
+            'enable': True, 'kerberos_realm': 'MOCK.REALM.INTERNAL'
+        }
+
+        with nfs_config() as nfs_db:
+            assert nfs_db['v4_domain'] == "", f"Expected zero-len string, but found {nfs_db['v4_domain']}"
+
+            # A keytab with an NFS principal is enough to enable kerberos
+            with mock("kerberos.keytab.has_nfs_principal", return_value=True):
+                with mock("directoryservices.config", return_value=ds_config):
+                    db = call('nfs.update', {})
+
+            assert db['v4_domain'] == 'MOCK.REALM.INTERNAL', f"v4_domain was not taken from the realm: {db}"
+            s = parse_server_config("idmapd")
+            assert s['General'].get('Domain') == 'MOCK.REALM.INTERNAL', \
+                f"'Domain' failed to be updated in idmapd.conf: {s}"
+
+    HA_KRB_ERROR = ValidationError(
+        'nfs_update.v4',
+        'Enabling kerberos authentication on TrueNAS HA requires setting the virtual hostname and domain',
+        22
+    )
+    BAD_BINDIP_ERROR = ValidationError(
+        'nfs_update.bindip.0', 'Cannot use 240.0.0.1. Please provide a valid ip address.', 22
+    )
+
+    @pytest.mark.parametrize('gc_update,payload,expected_errors', [
+        pp({'gc_hostname_virtual': None}, {}, [HA_KRB_ERROR], id="no virtual hostname"),
+        pp({'gc_domain': ''}, {}, [HA_KRB_ERROR], id="no domain"),
+        # Nothing to complain about, so provoke an unrelated error to keep the config unchanged
+        pp({'gc_hostname_virtual': 'virtnas', 'gc_domain': 'ixsystems.com'},
+           {'bindip': ['240.0.0.1']}, [BAD_BINDIP_ERROR], id="virtual hostname and domain are set"),
+    ])
+    def test_v4_krb_on_ha_requires_virtual_hostname(self, start_nfs, gc_update, payload, expected_errors):
+        '''
+        Kerberos with NFSv4 on an HA system requires a virtual hostname and a domain.
+        '''
+        assert start_nfs is True
+
+        gc = call('datastore.config', 'network.globalconfiguration') | gc_update
+
+        with mock("failover.licensed", return_value=True):
+            with mock("kerberos.keytab.has_nfs_principal", return_value=True):
+                with mock("datastore.config", args=['network.globalconfiguration'], return_value=gc):
+                    with pytest.raises(ValidationErrors) as ve:
+                        call('nfs.update', payload)
+
+        assert ve.value.errors == expected_errors
+
     class TestSubtreeShares:
         """
         Wrap a class around test_37 to allow calling the fixture only once
@@ -1978,6 +2052,278 @@ class TestNFSops:
                 call('service.control', 'RESTART', 'nfs', job=True)
                 confirm_clean()
 
+    @pytest.mark.parametrize('name,name_type', [
+        pp(0, 'user', id="an int is returned unchanged"),
+        pp(None, 'user', id="a NoneType is returned unchanged"),
+        pp('statd', 'bogus', id="an unknown name_type returns the name"),
+        pp('nosuchuser', 'user', id="an unresolvable built-in user returns the name"),
+        pp('nosuchgroup', 'group', id="an unresolvable built-in group returns the name"),
+    ])
+    def test_name_to_id_conversion_passthrough(self, start_nfs, name, name_type):
+        '''
+        The NFS state directories are owned by built-in users and groups.
+        Input that cannot be converted to a uid or gid is passed through
+        unchanged rather than raising.
+        '''
+        assert start_nfs is True
+        assert call('nfs.name_to_id_conversion', name, name_type) == name
+
+    def test_name_to_id_conversion_unexpected_error(self, start_nfs):
+        ''' An unexpected lookup failure is also trapped and the name is passed through '''
+        assert start_nfs is True
+
+        with mock("user.get_builtin_user_id", exception='mock lookup failure'):
+            assert call('nfs.name_to_id_conversion', 'statd', 'user') == 'statd'
+
+    def test_setup_directories_clears_rmtab(self, start_nfs):
+        '''
+        rmtab can collect stale NFSv3 client entries across a reboot.
+        setup_directories is run as part of the system dataset setup and
+        clears rmtab, but only when the system has not yet completed boot.
+        '''
+        assert start_nfs is True
+
+        nfs_state_dir = os.path.join(call('systemdataset.sysdataset_path'), 'nfs')
+        rmtab = os.path.join(nfs_state_dir, 'rmtab')
+        stale_entry = "192.168.111.222:/mnt/nowhere:0x00000001"
+
+        # The system is 'ready', so rmtab is left alone
+        ssh(f"echo '{stale_entry}' > {rmtab}")
+        call('nfs.setup_directories')
+        assert ssh(f"cat {rmtab}").strip() == stale_entry
+
+        # During boot the stale entries are cleared
+        with mock("system.ready", return_value=False):
+            call('nfs.setup_directories')
+        assert ssh(f"cat {rmtab}").strip() == ""
+
+        # The expected state directories survived
+        assert NFS_STATE_DIR_ENTRIES.issubset(set(ssh(f'ls {nfs_state_dir}').splitlines()))
+
+    def test_setup_directories_traps_permission_errors(self, start_nfs):
+        '''
+        setup_directories repairs the mode and ownership of the state directories.
+        A directory that cannot be repaired is reported, but does not abort the setup.
+        '''
+        assert start_nfs is True
+
+        nfs_state_dir = os.path.join(call('systemdataset.sysdataset_path'), 'nfs')
+        # v4recovery is unused while nfsdcld tracks the client state
+        immutable_dir = os.path.join(nfs_state_dir, 'v4recovery')
+
+        def set_immutable(want_immutable):
+            call('filesystem.set_zfs_attributes', {
+                'path': immutable_dir,
+                'zfs_file_attributes': {'immutable': want_immutable}
+            }, job=True)
+            attributes = call('filesystem.stat', immutable_dir)['attributes']
+            assert ('IMMUTABLE' in attributes) is want_immutable, str(attributes)
+
+        try:
+            set_immutable(True)
+            # chmod and chown of the immutable directory fail, but setup continues
+            call('nfs.setup_directories')
+        finally:
+            set_immutable(False)
+
+        assert NFS_STATE_DIR_ENTRIES.issubset(set(ssh(f'ls {nfs_state_dir}').splitlines()))
+
+    def test_config_bindip_not_in_choices(self, start_nfs):
+        '''
+        nfs.update only accepts addresses reported by nfs.bindip_choices.
+        Unlike test_config_bindip, this does not require a static IP.
+        '''
+        assert start_nfs is True
+
+        assert '240.0.0.1' not in call('nfs.bindip_choices')
+        with pytest.raises(ValidationErrors) as ve:
+            call('nfs.update', {'bindip': ['240.0.0.1']})
+        assert ve.value.errors == [
+            ValidationError('nfs_update.bindip.0', 'Cannot use 240.0.0.1. Please provide a valid ip address.', 22)
+        ]
+
+    def test_share_human_identifier(self, start_nfs, nfs_dataset_and_share):
+        ''' NFS shares are identified by their path in alerts and attachments '''
+        assert start_nfs is True
+
+        share = call('sharing.nfs.get_instance', nfs_dataset_and_share['nfsid'])
+        assert call('sharing.nfs.human_identifier', share) == share['path']
+
+    def test_share_aliases_are_ignored(self, start_nfs, nfs_dataset_and_share):
+        '''
+        'aliases' was intended to be provided by nfs-ganesha.  We no longer have
+        ganesha, so the field is accepted but silently discarded.
+        '''
+        assert start_nfs is True
+
+        with directory(f'{NFS_PATH}/aliased') as tmp_path:
+            with nfs_share(tmp_path, {'aliases': ['/aliased'], 'hosts': ['127.0.0.1']}) as nfsid:
+                assert call('sharing.nfs.get_instance', nfsid)['aliases'] == []
+
+    def test_share_security_requires_nfsv4(self, start_nfs, nfs_dataset_and_share):
+        ''' The kerberos security flavors are NFSv4 only '''
+        assert start_nfs is True
+        nfsid = nfs_dataset_and_share['nfsid']
+
+        # Multiple restarts cause systemd failures.  Reset the systemd counters.
+        reset_svcs("nfs-idmapd nfs-mountd nfs-server rpcbind rpc-statd")
+
+        with nfs_config(), nfs_share_config(nfsid):
+            # NFSv4 is enabled by default, so the kerberos flavors are accepted
+            assert call('sharing.nfs.update', nfsid, {'security': ['KRB5', 'KRB5P']})['security'] == \
+                ['KRB5', 'KRB5P']
+
+            call('nfs.update', {'protocols': ['NFSV3']})
+            with pytest.raises(ValidationErrors) as ve:
+                call('sharing.nfs.update', nfsid, {'security': ['KRB5', 'KRB5P']})
+            assert ve.value.errors == [
+                ValidationError(
+                    'sharingnfs_update.security',
+                    'The following security flavor(s) require NFSv4 to be enabled: KRB5,KRB5P.',
+                    22
+                )
+            ]
+
+    def test_share_expose_snapshots(self, start_nfs, nfs_dataset_and_share):
+        '''
+        expose_snapshots is a licensed feature and the export path must be the
+        root directory of a dataset.
+        '''
+        assert start_nfs is True
+        nfsid = nfs_dataset_and_share['nfsid']
+
+        # Not licensed
+        with mock("system.is_enterprise", return_value=False):
+            with pytest.raises(ValidationErrors) as ve:
+                call('sharing.nfs.update', nfsid, {'expose_snapshots': True})
+            assert ve.value.errors == [
+                ValidationError(
+                    'sharingnfs_update.expose_snapshots',
+                    'This is an enterprise feature and may not be enabled without a valid license.',
+                    22
+                )
+            ]
+
+        with mock("system.is_enterprise", return_value=True):
+            # The share path is the root of a dataset
+            with nfs_share_config(nfsid):
+                assert call('sharing.nfs.update', nfsid, {'expose_snapshots': True})['expose_snapshots'] is True
+
+                parsed = [entry for entry in parse_exports() if entry['path'] == NFS_PATH]
+                assert len(parsed) == 1, str(parsed)
+                assert 'zfs_snapdir' in parsed[0]['opts'][0]['parameters'], str(parsed)
+
+            with directory(f'{NFS_PATH}/snapdir') as tmp_path:
+                # A directory within a dataset is not the root of a dataset
+                with pytest.raises(ValidationErrors) as ve:
+                    call('sharing.nfs.create', {
+                        'path': tmp_path, 'expose_snapshots': True, 'hosts': ['127.0.0.1']
+                    })
+                assert ve.value.errors == [
+                    ValidationError(
+                        'sharingnfs_create.expose_snapshots',
+                        f'{tmp_path}: export path is not the root directory of a dataset.',
+                        22
+                    )
+                ]
+
+                # We cannot collect statfs data for unmounted or locked datasets.
+                # This does not have to be perfect, so the check is skipped.
+                with mock("filesystem.statfs", args=[tmp_path], exception='mock statfs failure'):
+                    with nfs_share(tmp_path, {'expose_snapshots': True, 'hosts': ['127.0.0.1']}) as sub_id:
+                        assert call('sharing.nfs.get_instance', sub_id)['expose_snapshots'] is True
+
+    def test_share_network_collides_with_resolved_host(self, start_nfs, nfs_dataset_and_share):
+        ''' A network entry may not name an address that is already covered by a host entry '''
+        assert start_nfs is True
+        nfsid = nfs_dataset_and_share['nfsid']
+
+        with nfs_share_config(nfsid):
+            with pytest.raises(ValidationErrors) as ve:
+                call('sharing.nfs.update', nfsid, {
+                    'hosts': ['192.168.77.5'], 'networks': ['192.168.77.5/32']
+                })
+            assert ve.value.errors == [
+                ValidationError(
+                    'sharingnfs_update.networks',
+                    "ERROR - Resolved hostname to duplicate address: "
+                    "host '192.168.77.5' resolves to '192.168.77.5/32'",
+                    22
+                )
+            ]
+
+    def test_share_with_missing_path_does_not_block_validation(self, start_nfs, nfs_dataset_and_share):
+        '''
+        A share whose path has gone away (e.g. a locked dataset) must not prevent
+        other shares from being created or updated.
+        '''
+        assert start_nfs is True
+        missing_path = f'{NFS_PATH}/removed_after_share_create'
+
+        call('filesystem.mkdir', {'path': missing_path})
+        with nfs_share(missing_path, {'hosts': ['127.0.0.1']}):
+            assert missing_path in [entry['path'] for entry in parse_exports()]
+            ssh(f'rmdir {missing_path}')
+
+            with directory(f'{NFS_PATH}/still_here') as tmp_path:
+                with nfs_share(tmp_path, {'hosts': ['127.0.0.2']}) as nfsid:
+                    assert call('sharing.nfs.get_instance', nfsid)['path'] == tmp_path
+
+                    # The share with the missing path is omitted from the exports
+                    exported = [entry['path'] for entry in parse_exports()]
+                    assert tmp_path in exported, str(exported)
+                    assert missing_path not in exported, str(exported)
+
+    def test_share_conflicts_with_everybody_on_same_path(self, start_nfs):
+        '''
+        A share with neither hosts nor networks is exported to everybody.
+        A second share of the same path cannot restrict access to a subset.
+        '''
+        assert start_nfs is True
+
+        with nfs_dataset('nfs_everybody') as ds:
+            path = f'/mnt/{ds}'
+            with nfs_share(path):
+                with pytest.raises(ValidationErrors) as ve:
+                    call('sharing.nfs.create', {'path': path, 'networks': ['192.168.77.0/24']})
+                assert ve.value.errors == [
+                    ValidationError(
+                        'sharingnfs_create.networks',
+                        f"ERROR - This or another NFS share exports {path} to 0.0.0.0/0 "
+                        f"and overlaps network 192.168.77.0/24",
+                        22
+                    )
+                ]
+
+    def test_share_with_invalid_network_does_not_block_validation(self, start_nfs):
+        '''
+        The networks of the existing shares are re-parsed whenever another share
+        of the same path is validated.  An entry that cannot be parsed can only
+        get into the database by bypassing the API (e.g. left behind by an older
+        release).  It is reported and skipped rather than aborting the validation.
+        '''
+        assert start_nfs is True
+
+        with nfs_dataset('nfs_badnet') as ds:
+            path = f'/mnt/{ds}'
+            with nfs_share(path, {'networks': ['192.168.78.0/24']}) as nfsid:
+                # Bypass the share validation to store a network entry that ip_network
+                # cannot parse.  A wildcard name is a valid host in exports, so the
+                # share remains exportable.
+                call('datastore.update', 'sharing.nfs_share', nfsid, {'nfs_network': '*.example.com'})
+                assert call('sharing.nfs.get_instance', nfsid)['networks'] == ['*.example.com']
+
+                # The unparsable entry is skipped, so it neither blocks nor matches this share
+                with nfs_share(path, {'networks': ['192.168.79.0/24']}) as second_id:
+                    assert call('sharing.nfs.get_instance', second_id)['networks'] == ['192.168.79.0/24']
+
+                    # Both shares are still exported, the unparsable entry verbatim
+                    parsed = parse_exports()
+                    exported = sorted(
+                        opt['host'] for entry in parsed if entry['path'] == path for opt in entry['opts']
+                    )
+                    assert exported == ['*.example.com', '192.168.79.0/24'], str(parsed)
+
     @pytest.mark.parametrize('entry_type,num,expect_alert', [
         pp('both', 0, False, id="confirm no alerts"),
         pp('hosts', 100, True, id="excessive hosts alert: 100"),
@@ -2053,6 +2399,33 @@ class TestNFSops:
         alerts = call('alert.list')
         this_alert = [entry for entry in alerts if entry['klass'] == "NFSHostListExcessive"]
         assert len(this_alert) == 0, f"Unexpectedly found alert for 'NFSHostListExcessive'.\n{alerts}"
+
+
+def test_pool_import_with_attached_share():
+    '''
+    Importing a pool that hosts NFS shares reloads NFS so that the shares
+    are restored to /etc/exports.
+    '''
+    def export_and_import(pool):
+        # The pool id changes across an export/import cycle, so look it up by guid
+        pool_id = call('pool.query', [['guid', '=', pool['guid']]], {'get': True})['id']
+        # Export without 'cascade' so any share is disabled rather than deleted
+        call('pool.export', pool_id, job=True)
+        call('pool.import_pool', {'guid': pool['guid'], 'name': pool['name']}, job=True)
+
+    with another_pool() as new_pool:
+        with manage_start_nfs():
+            # There are no NFS shares on this pool yet, so there is nothing to reload
+            export_and_import(new_pool)
+
+            with nfs_dataset("importme", pool=new_pool['name']) as ds:
+                share_path = f"/mnt/{ds}"
+                with nfs_share(share_path):
+                    assert share_path in [entry['path'] for entry in parse_exports()]
+
+                    # The pool.post_import hook reloads NFS for the restored share
+                    export_and_import(new_pool)
+                    assert share_path in [entry['path'] for entry in parse_exports()]
 
 
 def test_pool_delete_with_attached_share():
