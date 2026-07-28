@@ -52,6 +52,7 @@ FEATURE_DISPLAY_NAMES: Mapping[str, str] = {
     LicenseFeature.NVMEOF_SPDK: "NVMe-oF SPDK backend",
     LicenseFeature.SED: "SED",
     LicenseFeature.STIG: "STIG and FIPS",
+    LicenseFeature.TRUESEARCH: "TrueSearch",
     LicenseFeature.VMS: "virtual machines",
     LicenseFeature.ZFSTIER: "ZFS tiering",
     DerivedEntitlement.HA: "high availability",

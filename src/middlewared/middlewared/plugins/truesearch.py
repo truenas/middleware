@@ -5,6 +5,8 @@ import contextlib
 import os
 from typing import Any, AsyncGenerator, TYPE_CHECKING
 
+from truenas_pylicensed.features import LicenseFeature
+
 from middlewared.api.current import ZFSResourceQuery
 from middlewared.service import Service
 from middlewared.utils.smb import SearchProtocol
@@ -27,11 +29,9 @@ class TrueSearchService(Service):
         if await self.middleware.call('systemdataset.is_boot_pool'):
             reasons.append('The system dataset must not reside on the boot pool.')
 
-        if await self.call2(self.s.truenas.license.info_private) is None:
-            if (await self.middleware.call('tn_connect.config'))['status'] != 'CONFIGURED':
-                reasons.append(
-                    'The system must be connected to TrueNAS Connect, or have an Enterprise License key installed.'
-                )
+        entitlement = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.TRUESEARCH)
+        if not entitlement.entitled:
+            reasons.append(entitlement.message)
 
         return reasons
 
