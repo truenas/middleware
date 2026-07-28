@@ -31,6 +31,7 @@ from middlewared.service import (
 )
 import middlewared.sqlalchemy as sa
 from middlewared.utils.filter_list import filter_list
+from truenas_pylicensed.features import LicenseFeature
 from truenas_pynetif.address.constants import AddressFamily
 from truenas_pynetif.address.netlink import get_addresses, get_default_route, netlink_route
 from truenas_pynetif.ethtool import NetlinkError, get_ethtool
@@ -1231,7 +1232,8 @@ class InterfaceService(CRUDService):
 
         # Validate fec_mode field
         if 'fec_mode' in data:
-            if await self.middleware.call('system.is_enterprise'):
+            entitlement = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.NETWORK_FEC)
+            if entitlement.entitled:
                 if new['type'] == 'PHYSICAL':
                     if available := self.available_fec_modes(oid):
                         if data['fec_mode'] not in available:
@@ -1246,7 +1248,7 @@ class InterfaceService(CRUDService):
                 else:
                     verrors.add('interface_update.fec_mode', 'FEC mode can only be set on physical interfaces.')
             else:
-                verrors.add('interface_update.fec_mode', 'Configuring FEC mode is an enterprise feature.')
+                verrors.add('interface_update.fec_mode', entitlement.message)
 
         verrors.check()
 

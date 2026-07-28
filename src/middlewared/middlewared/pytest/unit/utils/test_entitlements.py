@@ -102,6 +102,7 @@ def test_live_policy_shape():
         LicenseFeature.TRUESEARCH,
         LicenseFeature.NFS_SNAPSHOT,
         LicenseFeature.NVMEOF_SPDK,
+        LicenseFeature.NETWORK_FEC,
         DerivedEntitlement.HA,
         DerivedEntitlement.PROACTIVE_SUPPORT,
     }
@@ -115,6 +116,7 @@ def test_live_policy_shape():
     assert isinstance(POLICY[LicenseFeature.TRUESEARCH], Vector)
     assert isinstance(POLICY[LicenseFeature.NFS_SNAPSHOT], Vector)
     assert isinstance(POLICY[LicenseFeature.NVMEOF_SPDK], Vector)
+    assert isinstance(POLICY[LicenseFeature.NETWORK_FEC], Vector)
     assert isinstance(POLICY[LicenseFeature.SED], LegacyRule)
     assert isinstance(POLICY[DerivedEntitlement.HA], LicenseTypeRule)
     assert isinstance(POLICY[DerivedEntitlement.PROACTIVE_SUPPORT], TierRule)
@@ -191,8 +193,8 @@ def test_dedup_key_missing_message_uses_display_name():
     assert entitlement.message == "This system's license does not include the ZFS deduplication feature."
 
 
-# ZFSTIER, STIG, TRUESEARCH, NFS_SNAPSHOT and NVMEOF_SPDK are live matrix Vectors
-# (0,0,0,1,0,1): key-only on either hardware side.
+# ZFSTIER, STIG, TRUESEARCH, NFS_SNAPSHOT, NVMEOF_SPDK and NETWORK_FEC are live
+# matrix Vectors (0,0,0,1,0,1): key-only on either hardware side.
 KEY_ONLY_TABLE = [
     (HardwareClass.TRUENAS_HW, "none", False, "NO_LICENSE", "HW"),
     (HardwareClass.TRUENAS_HW, "nokey", False, "KEY_MISSING", "HW+L"),
@@ -214,6 +216,7 @@ KEY_ONLY_TABLE = [
         LicenseFeature.TRUESEARCH,
         LicenseFeature.NFS_SNAPSHOT,
         LicenseFeature.NVMEOF_SPDK,
+        LicenseFeature.NETWORK_FEC,
     ],
 )
 @pytest.mark.parametrize("hardware_class,state,entitled,reason,column", KEY_ONLY_TABLE)
@@ -412,6 +415,34 @@ def test_nvmeof_spdk_bespoke_message_survives_vector_flip():
     entitlement = check_entitlement(LicenseFeature.NVMEOF_SPDK, facts, policy=policy)
     assert entitlement.reason == "KEY_MISSING"
     assert entitlement.message == "SPDK is limited to enterprise licensed systems only."
+
+
+# NETWORK_FEC is a key-only vector that keeps its pre-engine interface validation
+# wording through FEATURE_MESSAGES rather than the generic display-name template.
+NETWORK_FEC_MESSAGE = "Configuring FEC mode is an enterprise feature."
+
+
+def test_network_fec_bespoke_message_registered():
+    overrides = FEATURE_MESSAGES[LicenseFeature.NETWORK_FEC]
+    for reason in (Reason.NO_LICENSE, Reason.KEY_MISSING, Reason.WRONG_HARDWARE):
+        assert overrides[reason] == NETWORK_FEC_MESSAGE
+
+
+@pytest.mark.parametrize("hardware_class", [HardwareClass.TRUENAS_HW, HardwareClass.MINI, HardwareClass.GENERIC])
+@pytest.mark.parametrize("state", ["none", "nokey"])
+def test_network_fec_bespoke_message_from_live_policy(hardware_class, state):
+    facts = make_facts(hardware_class=hardware_class, license=_license_for(LicenseFeature.NETWORK_FEC, state))
+    entitlement = check_entitlement(LicenseFeature.NETWORK_FEC, facts)
+    assert entitlement.entitled is False
+    assert entitlement.message == NETWORK_FEC_MESSAGE
+
+
+def test_network_fec_bespoke_message_survives_vector_flip():
+    policy = {LicenseFeature.NETWORK_FEC: TARGET_VECTORS[LicenseFeature.NETWORK_FEC]}
+    facts = make_facts(hardware_class=HardwareClass.TRUENAS_HW, license=make_license(feature_names=()))
+    entitlement = check_entitlement(LicenseFeature.NETWORK_FEC, facts, policy=policy)
+    assert entitlement.reason == "KEY_MISSING"
+    assert entitlement.message == NETWORK_FEC_MESSAGE
 
 
 def test_legacy_sed_key_present_entitled():
