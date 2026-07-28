@@ -41,6 +41,8 @@ POLICY: Mapping[str, Rule] = MappingProxyType(
         LicenseFeature.NVMEOF_SPDK: TARGET_VECTORS[LicenseFeature.NVMEOF_SPDK],
         LicenseFeature.RDMA: TARGET_VECTORS[LicenseFeature.RDMA],
         LicenseFeature.SED: LegacyRule(func=legacy.sed),  # TODO: Validate logic with old impl
+        LicenseFeature.SMB_FASTPATH: TARGET_VECTORS[LicenseFeature.SMB_FASTPATH],
+        LicenseFeature.SMB_VEEAM: TARGET_VECTORS[LicenseFeature.SMB_VEEAM],
         LicenseFeature.STIG: TARGET_VECTORS[LicenseFeature.STIG],
         LicenseFeature.TRUESEARCH: TARGET_VECTORS[LicenseFeature.TRUESEARCH],
         LicenseFeature.VMS: TARGET_VECTORS[LicenseFeature.VMS],
