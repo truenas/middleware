@@ -103,6 +103,7 @@ def test_live_policy_shape():
         LicenseFeature.NFS_SNAPSHOT,
         LicenseFeature.NVMEOF_SPDK,
         LicenseFeature.NETWORK_FEC,
+        LicenseFeature.RDMA,
         DerivedEntitlement.HA,
         DerivedEntitlement.PROACTIVE_SUPPORT,
     }
@@ -117,6 +118,7 @@ def test_live_policy_shape():
     assert isinstance(POLICY[LicenseFeature.NFS_SNAPSHOT], Vector)
     assert isinstance(POLICY[LicenseFeature.NVMEOF_SPDK], Vector)
     assert isinstance(POLICY[LicenseFeature.NETWORK_FEC], Vector)
+    assert isinstance(POLICY[LicenseFeature.RDMA], Vector)
     assert isinstance(POLICY[LicenseFeature.SED], LegacyRule)
     assert isinstance(POLICY[DerivedEntitlement.HA], LicenseTypeRule)
     assert isinstance(POLICY[DerivedEntitlement.PROACTIVE_SUPPORT], TierRule)
@@ -193,8 +195,8 @@ def test_dedup_key_missing_message_uses_display_name():
     assert entitlement.message == "This system's license does not include the ZFS deduplication feature."
 
 
-# ZFSTIER, STIG, TRUESEARCH, NFS_SNAPSHOT, NVMEOF_SPDK and NETWORK_FEC are live
-# matrix Vectors (0,0,0,1,0,1): key-only on either hardware side.
+# ZFSTIER, STIG, TRUESEARCH, NFS_SNAPSHOT, NVMEOF_SPDK, NETWORK_FEC and RDMA are
+# live matrix Vectors (0,0,0,1,0,1): key-only on either hardware side.
 KEY_ONLY_TABLE = [
     (HardwareClass.TRUENAS_HW, "none", False, "NO_LICENSE", "HW"),
     (HardwareClass.TRUENAS_HW, "nokey", False, "KEY_MISSING", "HW+L"),
@@ -217,6 +219,7 @@ KEY_ONLY_TABLE = [
         LicenseFeature.NFS_SNAPSHOT,
         LicenseFeature.NVMEOF_SPDK,
         LicenseFeature.NETWORK_FEC,
+        LicenseFeature.RDMA,
     ],
 )
 @pytest.mark.parametrize("hardware_class,state,entitled,reason,column", KEY_ONLY_TABLE)
@@ -234,6 +237,7 @@ def test_key_only_vector_behavior(feature, hardware_class, state, entitled, reas
         (LicenseFeature.ZFSTIER, "ZFS tiering"),
         (LicenseFeature.STIG, "STIG and FIPS"),
         (LicenseFeature.TRUESEARCH, "TrueSearch"),
+        (LicenseFeature.RDMA, "RDMA"),
     ],
 )
 def test_key_only_key_missing_message_uses_display_name(feature, display):
