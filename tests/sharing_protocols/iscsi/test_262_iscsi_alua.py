@@ -4,6 +4,7 @@ import random
 import string
 from time import sleep
 
+import iscsi
 import pytest
 from assets.websocket.iscsi import (alua_enabled, initiator_portal, target, target_extent_associate, verify_capacity,
                                     verify_ha_inquiry, verify_luns, zvol_extent)
@@ -11,6 +12,7 @@ from assets.websocket.pool import zvol
 from assets.websocket.service import ensure_service_enabled
 from auto_config import extended_tests, ha, pool_name
 from protocols import iscsi_scsi_connection
+from pyscsi.pyscsi.scsi_command import SCSICommand
 
 from middlewared.test.integration.assets.hostkvm import get_kvm_domain, poweroff_vm, reset_vm, start_vm
 from middlewared.test.integration.assets.pool import dataset
@@ -20,9 +22,48 @@ from middlewared.test.integration.utils.client import truenas_server
 pytestmark = pytest.mark.skipif(not ha, reason='Tests applicable to HA only')
 skip_extended_tests = pytest.mark.skipif(not extended_tests, reason="Skip extended tests")
 
+# See: https://github.com/python-scsi/cython-iscsi/pull/8
+pyscsi_supports_check_condition = hasattr(iscsi.Task, 'raw_sense')
+skip_no_check_condition = pytest.mark.skipif(not pyscsi_supports_check_condition,
+                                             reason="PYSCSI does not support CHECK CONDITION")
+
 SERVICE_NAME = 'iscsitarget'
 MB = 1024 * 1024
 basename = 'iqn.2005-10.org.freenas.ctl'
+
+
+class CompareAndWrite(SCSICommand):
+    """COMPARE AND WRITE (SBC-3, opcode 0x89); pyscsi does not supply this CDB.
+
+    The Data-Out buffer holds nlb blocks of verify data followed by nlb
+    blocks of write data.
+    """
+
+    _cdb_bits = {
+        "opcode": [0xFF, 0],
+        "wrprotect": [0xE0, 1],
+        "dpo": [0x10, 1],
+        "fua": [0x08, 1],
+        "lba": [0xFFFFFFFFFFFFFFFF, 2],
+        "nlb": [0xFF, 13],
+        "group": [0x1F, 14],
+    }
+
+    def __init__(self, opcode, blocksize, lba, nlb, data,
+                 wrprotect=0, dpo=0, fua=0, group=0):
+        if blocksize == 0:
+            raise SCSICommand.MissingBlocksizeException
+        SCSICommand.__init__(self, opcode, blocksize * nlb * 2, 0)
+        self.dataout = data
+        self.cdb = self.build_cdb(
+            opcode=self.opcode.value,
+            lba=lba,
+            nlb=nlb,
+            wrprotect=wrprotect,
+            dpo=dpo,
+            fua=fua,
+            group=group,
+        )
 
 
 def other_domain(hadomain):
@@ -849,3 +890,156 @@ class TestFixtureConfiguredALUA:
         # Recovery (start_vm + wait_for_backup + wait_for_settle) is handled
         # by fix_lun_replace_recovery so it runs even if an assertion above
         # has already failed.
+
+    # ------------------------------------------------------------------
+    # Regression test for the COMPARE AND WRITE kernel BUG on the standby
+    # node (scst_lib.c, scst_cwr_read_cmd_finished).
+    #
+    # Background. SCST emulates COMPARE AND WRITE with an internal
+    # READ(16) followed by an internal WRITE(16). On the ALUA standby
+    # node the LUN is a dev_disk pass-through device forwarding to the
+    # active node over the internal HA iSCSI session. Pass-through
+    # completions (scst_do_cmd_done) copy the backend SCSI status into
+    # the command without zeroing resp_data_len, unlike the vdisk error
+    # paths (scst_set_cmd_error_status). scst_cwr_read_cmd_finished
+    # asserted sBUG_ON(cmd->resp_data_len != 0) for any failed READ, so
+    # the first CHECK CONDITION returned by the backend to a CAW's
+    # internal READ (e.g. a Unit Attention raised during ALUA failover)
+    # panicked the standby kernel.
+    #
+    # This test recreates the condition without a failover: it plants a
+    # CAPACITY DATA HAS CHANGED UA on the internal HA nexus by resizing
+    # the zvol on the active node, then immediately issues a COMPARE AND
+    # WRITE through the standby path so the UA is delivered to the CAW's
+    # internal READ. AEN is disabled on the internal HA target so the UA
+    # arrives as a CHECK CONDITION on the next backend command, exactly
+    # as it always does with a Fibre Channel front-end (where the bug
+    # was hit in the field).
+    #
+    # On an unfixed kernel the standby node panics (detected here as a
+    # broken iSCSI session and a standby uptime reset). On a fixed
+    # kernel the CAW fails cleanly with the UA sense and succeeds on
+    # retry.
+    # ------------------------------------------------------------------
+
+    CAW_BLOCKSIZE = 512
+    CAW_UA_ROUNDS = 8
+
+    def _compare_and_write(self, s, lba, verify_data, write_data):
+        cmd = CompareAndWrite(s.device.opcodes.COMPARE_AND_WRITE,
+                              self.CAW_BLOCKSIZE, lba, 1,
+                              verify_data + write_data)
+        s.execute(cmd)
+
+    def _drain_uas(self, s, attempts=5):
+        """Issue TURs until no Unit Attention remains on this nexus."""
+        for _ in range(attempts):
+            try:
+                s.testunitready()
+                return
+            except Exception as e:
+                if e.__class__.__name__ != 'CheckCondition':
+                    raise
+        raise AssertionError('Unit Attentions did not drain')
+
+    @skip_no_check_condition
+    @pytest.mark.timeout(900)
+    def test_standby_compare_and_write_backend_ua(self, alua_configured):
+        """COMPARE AND WRITE on the standby path must survive a backend CHECK CONDITION."""
+        config = alua_configured
+        portal_id = config['portal']['id']
+        digits = ''.join(random.choices(string.digits, k=4))
+        target_name = f'targetcaw{digits}'
+        iqn = f'{basename}:{target_name}'
+        zvol_name = f'extentcaw{digits}'
+        zvol_id = f'{pool_name}/{zvol_name}'
+        volsize_mb = 100
+
+        data_a = bytearray([0x41]) * self.CAW_BLOCKSIZE
+        data_b = bytearray([0x42]) * self.CAW_BLOCKSIZE
+
+        with target(target_name, [{'portal': portal_id}]) as target_config:
+            with self.target_lun(target_config['id'], zvol_name, volsize_mb, 0):
+                sleep(2)
+                self.wait_for_settle()
+
+                node = call('failover.node')
+                assert node in ['A', 'B']
+                active_ip = truenas_server.nodea_ip if node == 'A' else truenas_server.nodeb_ip
+                standby_ip = truenas_server.nodeb_ip if node == 'A' else truenas_server.nodea_ip
+
+                start_uptime = call('failover.call_remote', 'system.info')['uptime_seconds']
+
+                # Deliver UAs on the internal HA session as CHECK CONDITION
+                # (like FC) rather than via async event notification.
+                ha_iqn = f'{basename}:HA:{target_name}'
+                ssh(f'echo 1 > /sys/kernel/scst_tgt/targets/iscsi/{ha_iqn}/aen_disabled',
+                    ip=active_ip)
+
+                with iscsi_scsi_connection(standby_ip, iqn) as s:
+                    self._drain_uas(s)
+
+                    # Seed LBA 0 through the standby (forwarded) path.
+                    s.write16(0, 1, data_a)
+
+                    # Sanity: CAW works over the pass-through path.
+                    self._compare_and_write(s, 0, data_a, data_b)
+                    r = s.read16(0, 1)
+                    assert r.datain == data_b, r.datain
+
+                    # Sanity: a mismatch reports MISCOMPARE and leaves data alone.
+                    with pytest.raises(Exception) as excinfo:
+                        self._compare_and_write(s, 0, data_a, data_a)
+                    e = excinfo.value
+                    assert e.__class__.__name__ == 'CheckCondition', repr(e)
+                    assert 'MISCOMPARE' in str(e).upper(), str(e)
+                    r = s.read16(0, 1)
+                    assert r.datain == data_b, r.datain
+
+                    # The regression: plant a UA on the internal HA nexus by
+                    # growing the zvol on the active node, then let a CAW's
+                    # internal READ be the next backend command to absorb it.
+                    ua_rounds = 0
+                    for i in range(self.CAW_UA_ROUNDS):
+                        volsize_mb += 1
+                        call('pool.dataset.update', zvol_id, {'volsize': volsize_mb * MB})
+                        try:
+                            self._compare_and_write(s, 0, data_b, data_b)
+                        except Exception as e:
+                            assert e.__class__.__name__ == 'CheckCondition', (
+                                f'round {i}: COMPARE AND WRITE raised {e!r}; on an '
+                                'unfixed kernel this is the standby node crashing '
+                                '(sBUG in scst_cwr_read_cmd_finished)'
+                            )
+                            assert 'UNIT ATTENTION' in str(e).upper(), str(e)
+                            ua_rounds += 1
+                            # The UA may also have been replicated to our own
+                            # nexus; clear it and prove the LUN still works.
+                            self._drain_uas(s)
+                            self._compare_and_write(s, 0, data_b, data_b)
+                        if self.VERBOSE:
+                            _debug(f'CAW UA round {i} complete ({ua_rounds} UAs so far)')
+
+                    # If no round delivered a UA to the CAW then the test did
+                    # not exercise the regression path and needs attention.
+                    assert ua_rounds > 0, (
+                        'no resize UA reached COMPARE AND WRITE on the standby '
+                        'path; regression scenario was not exercised'
+                    )
+
+                    r = s.read16(0, 1)
+                    assert r.datain == data_b, r.datain
+
+                # Data is intact via the active (optimized) path too.
+                with iscsi_scsi_connection(active_ip, iqn) as s:
+                    self._drain_uas(s)
+                    r = s.read16(0, 1)
+                    assert r.datain == data_b, r.datain
+
+                # The standby node must not have rebooted (a panic in the CAW
+                # path would have reset its uptime).
+                end_uptime = call('failover.call_remote', 'system.info')['uptime_seconds']
+                assert end_uptime > start_uptime, (
+                    f'standby uptime went from {start_uptime} to {end_uptime}; '
+                    'the standby node appears to have rebooted (kernel panic?)'
+                )
