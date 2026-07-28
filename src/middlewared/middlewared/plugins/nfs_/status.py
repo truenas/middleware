@@ -40,7 +40,7 @@ class NFSService(Service):
         return entries
 
     @private
-    def clear_nfs3_rmtab(self, ip_to_clear=["all"]):
+    def clear_nfs3_rmtab(self, ip_to_clear=None):
         """
         Clear some or all NFSv3 client entries in rmtab.
         rmtab can become clogged with stale entries, this provides a
@@ -48,6 +48,9 @@ class NFSService(Service):
         Optional input: list of ip to remove, e.g. ip_to_clear=["a.b.c.d"]
         DEFAULT: Clear all entries
         """
+        if ip_to_clear is None:
+            ip_to_clear = ["all"]
+
         rmtab = os.path.join(NFSServicePathInfo.STATEDIR.path(), "rmtab")
         with suppress(FileNotFoundError):
             # Handle default:  clear all

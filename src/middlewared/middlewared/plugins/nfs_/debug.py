@@ -132,7 +132,8 @@ class NFSService(Service):
                 with open(f"/proc/sys/sunrpc/{svc}", "r") as f:
                     val = int(f.readline().strip(), 16)
 
-                for dbgflg in self.dbgcls[svc_name]:
+                dbgcls = self.dbgcls[svc_name]
+                for dbgflg in dbgcls:
                     if dbgflg.name == 'NONE':
                         continue
 
@@ -145,10 +146,10 @@ class NFSService(Service):
                     flags.append(dbgflg.name)
 
                 if not flags:
-                    flags = [dbgflg.NONE.name]
+                    flags = [dbgcls.NONE.name]
 
-                if dbgflg.ALL.name in flags:
-                    flags = [dbgflg.ALL.name]
+                if dbgcls.ALL.name in flags:
+                    flags = [dbgcls.ALL.name]
 
                 output[svc_name] = flags
 
