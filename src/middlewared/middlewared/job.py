@@ -17,6 +17,7 @@ import typing
 
 from middlewared.service_exception import CallError, ValidationError, ValidationErrors, adapt_exception
 from middlewared.pipe import Pipes
+from middlewared.utils.asyncio_ import ThreadsafeTimer
 from middlewared.utils.privilege import credential_is_limited_to_own_jobs, credential_has_full_admin
 from middlewared.utils.threading import thread_local_storage
 from middlewared.utils.time_utils import utc_now
@@ -889,7 +890,7 @@ class JobProgressBuffer:
             self.pending_update_body = percent, description, extra
 
             if self.pending_update is None:
-                self.pending_update = self.job.loop.call_later(self.interval, self._do_pending_update)
+                self.pending_update = ThreadsafeTimer(self.job.loop, self.interval, self._do_pending_update)
 
     def cancel(self):
         if self.pending_update is not None:

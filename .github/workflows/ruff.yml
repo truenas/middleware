@@ -36,7 +36,7 @@ jobs:
       id: ruff-check
       if: steps.new-files.outputs.found == 'true'
       with:
-        args: "format --diff"
+        args: "format --config src/middlewared/pyproject.toml --diff"
         src: "${{ steps.new-files.outputs.files }}"
     - name: Show formatting instructions
       if: failure() && steps.ruff-check.outcome == 'failure'
