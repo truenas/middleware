@@ -29,8 +29,11 @@ injection buckets mirror how today's gates read a legacy license:
   demotion rule product_type applies): the flags historically gated behind an
   is_enterprise check.
 """
-from functools import lru_cache
+
+from __future__ import annotations
+
 from datetime import date
+from functools import lru_cache
 import logging
 from types import MappingProxyType
 
@@ -39,9 +42,15 @@ from licenselib.utils import proactive_support_allowed
 from truenas_pylicensed import FEATURE_NAME_MAP, LicenseType
 from truenas_pylicensed.features import LicenseFeature
 
-from .license_utils import FeatureInfo, LicenseInfo
+from .constants import LEGACY_LICENSE_FILE, LICENSE_ADDHW_MAPPING
+from .types import FeatureInfo, LicenseInfo
 
 logger = logging.getLogger(__name__)
+
+__all__ = (
+    "get_legacy_license_info",
+    "parse_legacy_license",
+)
 
 
 # TODO: injecting APPS overrides the legacy jails bit, granting apps to HA capable systems that never purchased it
@@ -58,30 +67,12 @@ _ENT_ONLY_INJECT: frozenset[LicenseFeature] = frozenset({
 })
 
 
-LEGACY_LICENSE_FILE = '/data/license'
-LICENSE_ADDHW_MAPPING = MappingProxyType({
-    1: "E16",
-    2: "E24",
-    3: "E60",
-    4: "ES60",
-    5: "ES12",
-    6: "ES24",
-    7: "ES24F",
-    8: "ES60S",
-    9: "ES102",
-    10: "ES102G2",
-    11: "ES60G2",
-    12: "ES24N",
-    13: "ES60G3",
-})
-
-
 @lru_cache()
 def get_legacy_license_info() -> LicenseInfo | None:
     """Return a LicenseInfo built from the legacy on-disk license, or None."""
     try:
         with open(LEGACY_LICENSE_FILE) as f:
-            return parse_legacy_license(f.read().strip('\n'))
+            return parse_legacy_license(f.read().strip("\n"))
     except FileNotFoundError:
         return None
     except Exception as e:
@@ -119,9 +110,10 @@ def parse_legacy_license(text: str) -> LicenseInfo:
         id=f"legacy_{lic.system_serial}",
         type=LicenseType.ENTERPRISE_HA if lic.system_serial_ha else LicenseType.ENTERPRISE_SINGLE,
         model=model,
-        expires_at=lic.contract_end,
-        features=[
-            FeatureInfo(
+        support_expires_at=lic.contract_end,
+        license_expires_at=None,
+        features=MappingProxyType({
+            name: FeatureInfo(
                 name=name,
                 start_date=lic.contract_start,
                 expires_at=lic.contract_end,
@@ -129,12 +121,12 @@ def parse_legacy_license(text: str) -> LicenseInfo:
                 type=lic.contract_type.name.upper() if name == "SUPPORT" else None,
             )
             for name in feature_names
-        ],
-        serials=serials,
-        enclosures={
+        }),
+        serials=tuple(serials),
+        enclosures=MappingProxyType({
             LICENSE_ADDHW_MAPPING[code]: quantity
             for quantity, code in lic.addhw
             if code in LICENSE_ADDHW_MAPPING
-        },
+        }),
         contract_type=lic.contract_type.name.upper(),
     )

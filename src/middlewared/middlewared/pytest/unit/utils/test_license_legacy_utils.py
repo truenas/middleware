@@ -4,19 +4,18 @@ import pytest
 
 from truenas_pylicensed import LicenseType
 
-from middlewared.plugins.truenas.license_legacy_utils import parse_legacy_license
-from middlewared.plugins.truenas.license_utils import FeatureInfo, LicenseInfo
+from middlewared.utils.license import FeatureInfo, LicenseInfo, parse_legacy_license
 
 
 def _features(names, *, support_type=None, start=date(2026, 4, 8), end=date(2026, 4, 30)):
-    """Build the FeatureInfo list a legacy license translates to, in order."""
-    return [
-        FeatureInfo(
+    """Build the FeatureInfo mapping a legacy license translates to, in order."""
+    return {
+        name: FeatureInfo(
             name=name, start_date=start, expires_at=end, source="enterprise",
             type=support_type if name == "SUPPORT" else None,
         )
         for name in names
-    ]
+    }
 
 
 # Mirrors the production injection bucket that fires for every parseable legacy
@@ -37,7 +36,8 @@ _ALL_LEGACY_INJECT = [
             id="legacy_TEST-000001",
             type=LicenseType.ENTERPRISE_HA,
             model="H10",
-            expires_at=date(2026, 4, 30),
+            support_expires_at=date(2026, 4, 30),
+            license_expires_at=None,
             features=_features(
                 [
                     "FIBRECHANNEL", "VMS", "SUPPORT", "APPS", "AUTOTUNE", "CATALOG_ENTERPRISE_TRAIN", "CONTAINERS",
@@ -46,7 +46,7 @@ _ALL_LEGACY_INJECT = [
                 ],
                 support_type="GOLD",
             ),
-            serials=["TEST-000001", "TEST-000002"],
+            serials=("TEST-000001", "TEST-000002"),
             enclosures={"E24": 3, "E16": 2},
             contract_type="GOLD",
         )
@@ -60,13 +60,14 @@ _ALL_LEGACY_INJECT = [
             id="legacy_TEST-000001",
             type=LicenseType.ENTERPRISE_SINGLE,
             model="X10",
-            expires_at=date(2026, 4, 30),
+            support_expires_at=date(2026, 4, 30),
+            license_expires_at=None,
             features=_features([
                 "APPS", "AUTOTUNE", "CATALOG_ENTERPRISE_TRAIN", "CONTAINERS", "DIRECTORY_SERVICES",
                 "MISSION_CRITICAL", "NETWORK_FEC", "NFS_SNAPSHOT", "NVMEOF_SPDK", "RDMA", "SMB_FASTPATH",
                 "SMB_VEEAM", "STIG", "TRUESEARCH", "VMS",
             ]),
-            serials=["TEST-000001"],
+            serials=("TEST-000001",),
             enclosures={},
             contract_type="STANDARD",
         ),
@@ -80,9 +81,10 @@ _ALL_LEGACY_INJECT = [
             id="legacy_TEST-000001",
             type=LicenseType.ENTERPRISE_SINGLE,
             model="FREENAS-MINI",
-            expires_at=date(2026, 4, 30),
+            support_expires_at=date(2026, 4, 30),
+            license_expires_at=None,
             features=_features(_ALL_LEGACY_INJECT),
-            serials=["TEST-000001"],
+            serials=("TEST-000001",),
             enclosures={},
             contract_type="FREENASCERTIFIED",
         ),

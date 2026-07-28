@@ -1,13 +1,11 @@
 from __future__ import annotations
 
 import enum
-import typing
 from dataclasses import dataclass
 
 from ixhardware import TRUENAS_UNKNOWN
 
-if typing.TYPE_CHECKING:
-    from middlewared.plugins.truenas.license_utils import LicenseInfo
+from middlewared.utils.license import LicenseInfo
 
 
 class HardwareClass(enum.Enum):

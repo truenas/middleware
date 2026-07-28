@@ -6,7 +6,7 @@ from truenas_pylicensed import LicenseType
 from truenas_pylicensed.features import FEATURE_TIERS, LicenseFeature
 
 from middlewared.api.v26_0_0.system_product import SystemFeatureEnabledArgs
-from middlewared.plugins.truenas.license_utils import FeatureInfo, LicenseInfo
+from middlewared.utils.license import FeatureInfo, LicenseInfo
 from middlewared.utils.entitlements import (
     COLUMNS,
     FEATURE_DISPLAY_NAMES,
@@ -33,8 +33,8 @@ def make_license(
     expires_at: date | None = None,
     support_type: str | None = None,
 ) -> LicenseInfo:
-    features = [
-        FeatureInfo(
+    features = {
+        name: FeatureInfo(
             name=name,
             start_date=None,
             expires_at=expires_at,
@@ -42,14 +42,15 @@ def make_license(
             type=support_type if name == "SUPPORT" else None,
         )
         for name in feature_names
-    ]
+    }
     return LicenseInfo(
         id="test-license",
         type=type_,
         model=model,
-        expires_at=expires_at,
+        support_expires_at=expires_at,
+        license_expires_at=None,
         features=features,
-        serials=["TEST-000001"],
+        serials=("TEST-000001",),
         enclosures={},
         contract_type=support_type,
     )
@@ -568,7 +569,7 @@ def test_tier_passthrough_exposed_on_facts():
         license=make_license(feature_names=("SUPPORT",), support_type="GOLD"),
     )
     assert facts.license is not None
-    support = next(f for f in facts.license.features if f.name == "SUPPORT")
+    support = facts.license.features["SUPPORT"]
     assert support.type == "GOLD"
 
 

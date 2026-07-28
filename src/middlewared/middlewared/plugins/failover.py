@@ -52,8 +52,7 @@ from middlewared.plugins.failover_.ha_hardware import is_licensed_for_ha
 from middlewared.plugins.failover_.remote import NETWORK_ERRORS
 from middlewared.plugins.failover_.stcnith import stcnith_reboot
 from middlewared.plugins.system.reboot import RebootReason
-from middlewared.plugins.truenas.license_utils import LICENSE_FILE
-from middlewared.plugins.truenas.license_legacy_utils import LEGACY_LICENSE_FILE
+from middlewared.utils.license import LEGACY_LICENSE_FILE, LICENSE_FILE
 from middlewared.plugins.update_.install import STARTING_INSTALLER
 from middlewared.plugins.update_.update import SYSTEM_UPGRADE_REBOOT_REASON
 from middlewared.plugins.update_.utils import DOWNLOAD_UPDATE_FILE

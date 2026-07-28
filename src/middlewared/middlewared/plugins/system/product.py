@@ -3,7 +3,6 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
-from datetime import date
 from types import MappingProxyType
 
 from truenas_pylicensed.features import LicenseFeature
@@ -27,8 +26,7 @@ from middlewared.service import CallError, private, Service, ValidationError
 from middlewared.utils import ProductType, sw_info
 from middlewared.utils.version import parse_version_string
 
-from middlewared.plugins.truenas.license_utils import LICENSE_FILE
-from middlewared.plugins.truenas.license_legacy_utils import LEGACY_LICENSE_FILE, LICENSE_ADDHW_MAPPING
+from middlewared.utils.license import LEGACY_LICENSE_FILE, LICENSE_ADDHW_MAPPING, LICENSE_FILE
 
 PRODUCT_NAME = "TrueNAS"
 LICENSE_ADDHW_REVERSE_MAPPING = MappingProxyType({v: k for k, v in LICENSE_ADDHW_MAPPING.items()})
@@ -130,12 +128,12 @@ class SystemService(Service):
             'system_serial_ha': info.serials[1] if len(info.serials) > 1 else None,
             'contract_type': info.contract_type,
             'contract_start': None,
-            'contract_end': info.expires_at,
+            'contract_end': info.license_expires_at or info.support_expires_at,
             'legacy_contract_hardware': None,
             'legacy_contract_software': None,
             'customer_name': None,
-            'expired': info.expires_at is not None and info.expires_at < date.today(),
-            'features': [f.name for f in info.features],
+            'expired': info.expired(),
+            'features': list(info.features),
             'addhw': [],
             'addhw_detail': [],
         }
@@ -180,7 +178,7 @@ class SystemService(Service):
         """
         info = await self.call2(self.s.truenas.license.info_private)
         if info is not None:
-            return any(f.name == name for f in info.features)
+            return info.has_feature(name)
 
         return False
 

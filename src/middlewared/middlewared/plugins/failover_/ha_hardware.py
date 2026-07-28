@@ -6,8 +6,7 @@
 import enum
 import re
 
-from middlewared.plugins.truenas.license_legacy_utils import get_legacy_license_info
-from middlewared.plugins.truenas.license_utils import get_license_info
+from middlewared.utils.license import get_license
 
 from truenas_pylicensed import LicenseType
 
@@ -35,8 +34,5 @@ class HA_HARDWARE(enum.Enum):
 
 
 def is_licensed_for_ha() -> bool:
-    _license = get_license_info() or get_legacy_license_info()
-    if _license is None:
-        return False
-
-    return _license.type == LicenseType.ENTERPRISE_HA
+    _license = get_license()
+    return _license is not None and _license.type == LicenseType.ENTERPRISE_HA
