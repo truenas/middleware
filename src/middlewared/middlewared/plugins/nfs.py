@@ -5,6 +5,8 @@ import itertools
 import os
 import shutil
 
+from truenas_pylicensed.features import LicenseFeature
+
 from middlewared.api import api_method
 from middlewared.api.current import (
     NFSEntry,
@@ -626,7 +628,8 @@ class SharingNFSService(SharingService):
                 )
 
         if data["expose_snapshots"]:
-            if await self.middleware.call("system.is_enterprise"):
+            entitlement = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.NFS_SNAPSHOT)
+            if entitlement.entitled:
                 # check if mountpoint and whether snapdir is enabled
                 try:
                     # We're using statfs output because in future it should expose
@@ -642,10 +645,7 @@ class SharingNFSService(SharingService):
                     # doesn't have to be perfect.
                     pass
             else:
-                verrors.add(
-                    f"{schema_name}.expose_snapshots",
-                    "This is an enterprise feature and may not be enabled without a valid license."
-                )
+                verrors.add(f"{schema_name}.expose_snapshots", entitlement.message)
 
     @private
     async def sanitize_share_networks_and_hosts(self, data, schema_name, verrors):
