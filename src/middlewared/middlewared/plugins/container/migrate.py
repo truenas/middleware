@@ -364,10 +364,13 @@ class ContainerService(Service):
                 job.logs_fd.write(f"Successfully migrated container {name!r}.\n".encode())
             finally:
                 if needs_mount_revert:
-                    self.revert_incus_mount_properties(dataset["name"])
+                    self.revert_incus_mount_properties(job, dataset["name"])
+
+        if processed_parents_mountpoints:
+            self.restore_legacy_parent_mountpoints(pool)
 
     @private
-    def revert_incus_mount_properties(self, container_ds):
+    def revert_incus_mount_properties(self, job, container_ds):
         """Restore the mount properties incus set on a container dataset that stays put.
 
         Inspecting a legacy container means mounting it, which means replacing the
@@ -382,6 +385,7 @@ class ContainerService(Service):
             self.logger.warning(
                 "%s: failed to unmount after skipping migration", container_ds, exc_info=True,
             )
+            job.logs_fd.write(f"Failed to unmount {container_ds!r} after skipping it.\n".encode())
 
         try:
             self.middleware.call_sync(
@@ -396,6 +400,27 @@ class ContainerService(Service):
                 "%s: failed to restore mount properties after skipping migration",
                 container_ds, exc_info=True,
             )
+            job.logs_fd.write(
+                f"Failed to restore mount properties on {container_ds!r} after skipping it.\n".encode()
+            )
+
+    @private
+    def restore_legacy_parent_mountpoints(self, pool):
+        """Put the legacy parent datasets back the way incus had them.
+
+        Migrating a container needs its parents mounted, so they are given an inherited
+        mountpoint. Leaving them that way keeps the whole legacy tree mounted under
+        ``/mnt/<pool>/.ix-virt`` for good, even on a run where nothing was migrated.
+        Children first, so the parent is not unmounted out from under one of them.
+        """
+        for ds in (f"{pool}/.ix-virt/containers", f"{pool}/.ix-virt"):
+            try:
+                self.middleware.call_sync(
+                    "pool.dataset.update_impl",
+                    UpdateImplArgs(name=ds, zprops={"mountpoint": "legacy"}),
+                )
+            except Exception:
+                self.logger.warning("%s: failed to restore mountpoint after migration", ds, exc_info=True)
 
     @private
     def relocate_container_origin(self, container_ds):
