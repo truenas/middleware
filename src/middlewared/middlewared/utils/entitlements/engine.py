@@ -145,7 +145,7 @@ Rule = typing.Union[Vector, LegacyRule, TierRule, LicenseTypeRule]
 
 def has_key(feature: str, facts: EntitlementFacts) -> bool:
     """Membership-only key check: True iff a license is present and carries the feature."""
-    return facts.license is not None and any(f.name == feature for f in facts.license.features)
+    return facts.license is not None and facts.license.has_feature(feature)
 
 
 def _hw_side(facts: EntitlementFacts) -> bool:
@@ -186,7 +186,7 @@ def _check_tier(feature: str, rule: TierRule, facts: EntitlementFacts) -> Entitl
         reason: Reason = Reason.NO_LICENSE
         return Entitlement(entitled=False, reason=reason, column=column, message=_format_message(reason, feature))
 
-    info = next((f for f in facts.license.features if f.name == rule.feature), None)
+    info = facts.license.feature(rule.feature)
     if info is None:
         reason = Reason.KEY_MISSING
         return Entitlement(entitled=False, reason=reason, column=column, message=_format_message(reason, feature))
