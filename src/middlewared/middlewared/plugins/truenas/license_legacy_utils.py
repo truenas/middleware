@@ -16,6 +16,9 @@ injection buckets mirror how today's gates read a legacy license:
 - every legacy license: NVMEOF_SPDK. Its matrix vector is key-only on both
   hardware sides, while the gate it replaced granted SPDK to any HA capable
   system, so the flag is injected regardless of model.
+- every legacy license: NETWORK_FEC. Its matrix vector is key-only on both
+  hardware sides, so any legacy holder configuring FEC mode would lose it on
+  upgrade unless the flag is injected regardless of model.
 - enterprise models only (model present and not freenas-prefixed, the same
   demotion rule product_type applies): the flags historically gated behind an
   is_enterprise check.
@@ -40,10 +43,11 @@ logger = logging.getLogger(__name__)
 _ALL_LEGACY_INJECT: frozenset[LicenseFeature] = frozenset({
     LicenseFeature.STIG, LicenseFeature.TRUESEARCH, LicenseFeature.APPS, LicenseFeature.VMS,
     LicenseFeature.CONTAINERS, LicenseFeature.NFS_SNAPSHOT, LicenseFeature.NVMEOF_SPDK,
+    LicenseFeature.NETWORK_FEC,
 })
 _ENT_ONLY_INJECT: frozenset[LicenseFeature] = frozenset({
     LicenseFeature.RDMA, LicenseFeature.SMB_VEEAM, LicenseFeature.SMB_FASTPATH,
-    LicenseFeature.DIRECTORY_SERVICES, LicenseFeature.NETWORK_FEC, LicenseFeature.MISSION_CRITICAL,
+    LicenseFeature.DIRECTORY_SERVICES, LicenseFeature.MISSION_CRITICAL,
     LicenseFeature.AUTOTUNE, LicenseFeature.CATALOG_ENTERPRISE_TRAIN,
 })
 

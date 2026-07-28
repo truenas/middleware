@@ -49,6 +49,7 @@ FEATURE_DISPLAY_NAMES: Mapping[str, str] = {
     LicenseFeature.CONTAINERS: "containers",
     LicenseFeature.DEDUP: "ZFS deduplication",
     LicenseFeature.FIBRECHANNEL: "Fibre Channel",
+    LicenseFeature.NETWORK_FEC: "FEC mode configuration",
     LicenseFeature.NFS_SNAPSHOT: "NFS snapshot exposure",
     LicenseFeature.NVMEOF_SPDK: "NVMe-oF SPDK backend",
     LicenseFeature.SED: "SED",
@@ -64,6 +65,11 @@ FEATURE_DISPLAY_NAMES: Mapping[str, str] = {
 # templates. Lets a feature keep bespoke wording that would otherwise be lost
 # when its rule flips from a LegacyRule to a matrix Vector.
 FEATURE_MESSAGES: Mapping[str, Mapping[Reason, str]] = {
+    LicenseFeature.NETWORK_FEC: {
+        Reason.NO_LICENSE: "Configuring FEC mode is an enterprise feature.",
+        Reason.KEY_MISSING: "Configuring FEC mode is an enterprise feature.",
+        Reason.WRONG_HARDWARE: "Configuring FEC mode is an enterprise feature.",
+    },
     LicenseFeature.NFS_SNAPSHOT: {
         Reason.NO_LICENSE: "This is an enterprise feature and may not be enabled without a valid license.",
         Reason.KEY_MISSING: "This is an enterprise feature and may not be enabled without a valid license.",
