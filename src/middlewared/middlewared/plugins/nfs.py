@@ -24,6 +24,7 @@ from middlewared.service import CallError, ValidationError, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.plugins.nfs_.utils import get_domain, leftmost_has_wildcards, get_wildcard_domain
+from middlewared.plugins.rdma.constants import RDMAprotocols
 from middlewared.plugins.nfs_.validators import (
     confirm_unique, sanitize_networks, sanitize_hosts, validate_bind_ip
 )
@@ -162,6 +163,15 @@ class NFSService(SystemServiceService):
             self.middleware.call_sync('nfs.clear_nfs3_rmtab')
 
     @private
+    async def rdma_capable(self):
+        """Whether NFS over RDMA is available on this system, ignoring whether it is currently enabled.
+
+        Deliberately does not read the NFS config: this is called from nfs_extend, which is the
+        datastore_extend for nfs.config, so consulting the config here would recurse.
+        """
+        return RDMAprotocols.NFS.value in await self.middleware.call('rdma.capable_protocols')
+
+    @private
     async def nfs_extend(self, nfs):
         keytab_has_nfs = await self.middleware.call("kerberos.keytab.has_nfs_principal")
         nfs["v4_krb_enabled"] = (nfs["v4_krb"] or keytab_has_nfs)
@@ -180,7 +190,7 @@ class NFSService(SystemServiceService):
             nfs['managed_nfsd'] = False
 
         # Repair inconsistencies
-        nfs['rdma'] = nfs['rdma'] and await self.middleware.call('system.is_enterprise')
+        nfs['rdma'] = nfs['rdma'] and await self.rdma_capable()
 
         return nfs
 
@@ -190,9 +200,6 @@ class NFSService(SystemServiceService):
         nfs.pop("v4_krb_enabled")
         nfs.pop("keytab_has_nfs_spn")
         nfs["16"] = nfs.pop("userd_manage_gids")
-
-        # Repair inconsistencies
-        nfs['rdma'] = nfs['rdma'] and await self.middleware.call('system.is_enterprise')
 
         return nfs
 
@@ -368,8 +375,7 @@ class NFSService(SystemServiceService):
             verrors.add("nfs_update.v4_domain", "This option does not apply to NFSv3")
 
         if new["rdma"]:
-            available_rdma_protocols = await self.middleware.call('rdma.capable_protocols')
-            if 'NFS' not in available_rdma_protocols:
+            if not await self.rdma_capable():
                 verrors.add(
                     "nfs_update.rdma",
                     "This platform cannot support NFS over RDMA or is missing an RDMA capable NIC."

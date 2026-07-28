@@ -444,6 +444,7 @@ class EtcService(Service):
                 CtxMethod(method='iscsi.auth.query'),
                 CtxMethod(method='iscsi.extent.query', args=[[['enabled', '=', True]]]),
                 CtxMethod(method='iscsi.global.config'),
+                CtxMethod(method='iscsi.global.iser_enabled'),
                 CtxMethod(method='iscsi.initiator.query'),
                 CtxMethod(method='iscsi.portal.query'),
                 CtxMethod(method='iscsi.target.query'),

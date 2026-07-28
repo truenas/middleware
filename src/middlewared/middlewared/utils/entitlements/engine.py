@@ -52,6 +52,7 @@ FEATURE_DISPLAY_NAMES: Mapping[str, str] = {
     LicenseFeature.NETWORK_FEC: "FEC mode configuration",
     LicenseFeature.NFS_SNAPSHOT: "NFS snapshot exposure",
     LicenseFeature.NVMEOF_SPDK: "NVMe-oF SPDK backend",
+    LicenseFeature.RDMA: "RDMA",
     LicenseFeature.SED: "SED",
     LicenseFeature.STIG: "STIG and FIPS",
     LicenseFeature.TRUESEARCH: "TrueSearch",

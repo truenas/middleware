@@ -2,6 +2,8 @@ import json
 import subprocess
 from pathlib import Path
 
+from truenas_pylicensed.features import LicenseFeature
+
 from middlewared.api import api_method
 from middlewared.api.base import BaseModel
 from middlewared.api.current import (RDMACapableProtocolsArgs, RDMACapableProtocolsResult, RDMAGetCardChoicesArgs,
@@ -137,12 +139,13 @@ class RDMAService(Service):
         """Return the list of RDMA-capable protocols supported by this system.
 
         Possible values are ``NFS``, ``ISER``, and ``NVMET``. An empty array is
-        returned when the system is not enterprise, is a MINI, or has no RDMA-capable
+        returned when the system is not entitled to RDMA or has no RDMA-capable
         network cards installed.
         """
         result = []
-        is_ent = await self.middleware.call('system.is_enterprise')
-        if is_ent and 'MINI' not in await self.middleware.call('truenas.get_chassis_hardware'):
+        # Presence of an RDMA capable NIC is a physical fact the entitlement does not model, so it stays
+        # here. It is checked last because it shells out to the rdma tool.
+        if (await self.call2(self.s.truenas.entitlements.check, LicenseFeature.RDMA)).entitled:
             if await self.middleware.call('rdma.get_link_choices', True):
                 result.extend([RDMAprotocols.NFS.value, RDMAprotocols.ISER.value, RDMAprotocols.NVMET.value])
         return result
