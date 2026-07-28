@@ -805,7 +805,7 @@ class FailoverEventsService(Service):
                         {
                             "raise_connect_error": False,
                             "timeout": 2,
-                            "job": "RETURN"  # return immediately, no need to wate
+                            "job": "RETURN"  # return immediately, no need to wait
                         },
                     )
                     logger.info("Done scheduling disks retaste on standby node")
