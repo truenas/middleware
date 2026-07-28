@@ -33,7 +33,6 @@ from middlewared.alert.source import (  # noqa: F401
     license_status,
     memory_errors,
     mseries_nvdimm_and_bios,
-    nfs_bindaddr,
     nfs_exportsd,
     nfs_host,
     ntp,

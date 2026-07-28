@@ -5,7 +5,6 @@ import itertools
 import os
 import shutil
 
-from middlewared.alert.source.nfs_bindaddr import NFSBindAddressAlert
 from middlewared.alert.source.nfs_host import NFSHostListExcessiveAlert, NFSNetworkListExcessiveAlert
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -26,7 +25,7 @@ from middlewared.async_validators import check_path_resides_within_volume, valid
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
 from middlewared.plugins.dns_client import DNSClientForwardLookupData
 from middlewared.plugins.nfs_.utils import get_domain, get_wildcard_domain, leftmost_has_wildcards
-from middlewared.plugins.nfs_.validators import confirm_unique, sanitize_hosts, sanitize_networks, validate_bind_ip
+from middlewared.plugins.nfs_.validators import confirm_unique, sanitize_hosts, sanitize_networks
 from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
 from middlewared.service import (
     CallError,
@@ -216,33 +215,6 @@ class NFSService(SystemServiceService):
                 'interface.ip_in_use', {'static': True}
             )
         }
-
-    @private
-    async def bindip(self, config):
-        validate_bind_ip(config['bindip'])
-        bindip = [addr for addr in config['bindip'] if addr not in ['0.0.0.0', '::']]
-
-        if bindip:
-            found = False
-            for iface in await self.middleware.call('interface.query'):
-                for alias in iface['state']['aliases']:
-                    if alias['address'] in bindip:
-                        found = True
-                        break
-                if found:
-                    break
-        else:
-            found = True
-
-        if found:
-            await self.call2(self.s.alert.oneshot_delete, 'NFSBindAddress', None)
-
-            return bindip
-        else:
-            if await self.middleware.call('cache.has_key', 'interfaces_are_set_up'):
-                await self.call2(self.s.alert.oneshot_create, NFSBindAddressAlert())
-
-            return []
 
     @api_method(NFSUpdateArgs, NFSUpdateResult, audit='Update NFS configuration')
     async def do_update(self, data):
