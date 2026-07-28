@@ -116,15 +116,6 @@ def keys_are_null_terminated(name: str, data_type: TDBDataType) -> bool:
     Whether the on-disk keys of the TDB/CTDB database identified by `name` carry a
     trailing NUL terminator.
 
-    This MUST match how the database's owner encodes its keys, and it MUST be identical
-    for a given database whether that database is accessed as a local tdb file
-    (``TDBHandle``) or through ctdb (``CTDBHandle``) -- otherwise the two access paths
-    write mismatched keys into the same database. That exact drift broke SMB stateful
-    failover: ``secrets.tdb`` keys were written NUL-terminated into ctdb, but samba's
-    ``secrets_fetch()``/``secrets_store()`` key on ``string_tdb_data()`` (``strlen``, no
-    terminator), so winbindd could not fetch the domain SID and aborted with
-    "Could not fetch our SID - did we join?".
-
     ``secrets.tdb`` is the odd one out: unlike most samba databases (which key via
     ``string_term_tdb_data()`` == ``strlen + 1``) its keys have no terminator.
     """
