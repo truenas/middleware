@@ -25,6 +25,12 @@ injection buckets mirror how today's gates read a legacy license:
   outside the license, but the model half of that gate is dropped, so the flag
   is injected regardless of model to keep every legacy holder with the hardware
   able to use RDMA.
+- every legacy license: DIRECTORY_SERVICES, which gates directory-services
+  authentication to the UI and API rather than directory services themselves.
+  Its matrix vector is key-only on both hardware sides, so the flag is injected
+  regardless of model; a freenascertified holder gains ds_auth it could not
+  previously enable, which is accepted in exchange for no legacy holder losing
+  UI/API logins on upgrade.
 - enterprise models only (model present and not freenas-prefixed, the same
   demotion rule product_type applies): the flags historically gated behind an
   is_enterprise check.
@@ -58,11 +64,10 @@ __all__ = (
 _ALL_LEGACY_INJECT: frozenset[LicenseFeature] = frozenset({
     LicenseFeature.STIG, LicenseFeature.TRUESEARCH, LicenseFeature.APPS, LicenseFeature.VMS,
     LicenseFeature.CONTAINERS, LicenseFeature.NFS_SNAPSHOT, LicenseFeature.NVMEOF_SPDK,
-    LicenseFeature.NETWORK_FEC, LicenseFeature.RDMA,
+    LicenseFeature.NETWORK_FEC, LicenseFeature.RDMA, LicenseFeature.DIRECTORY_SERVICES,
 })
 _ENT_ONLY_INJECT: frozenset[LicenseFeature] = frozenset({
-    LicenseFeature.SMB_VEEAM, LicenseFeature.SMB_FASTPATH,
-    LicenseFeature.DIRECTORY_SERVICES, LicenseFeature.MISSION_CRITICAL,
+    LicenseFeature.SMB_VEEAM, LicenseFeature.SMB_FASTPATH, LicenseFeature.MISSION_CRITICAL,
     LicenseFeature.AUTOTUNE, LicenseFeature.CATALOG_ENTERPRISE_TRAIN,
 })
 
