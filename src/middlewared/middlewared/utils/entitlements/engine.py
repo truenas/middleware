@@ -64,11 +64,10 @@ FEATURE_DISPLAY_NAMES: Mapping[str, str] = {
 # templates. Lets a feature keep bespoke wording that would otherwise be lost
 # when its rule flips from a LegacyRule to a matrix Vector.
 FEATURE_MESSAGES: Mapping[str, Mapping[Reason, str]] = {
-    # Both key columns are set for this feature, so no hardware side can be
-    # denied outright and WRONG_HARDWARE is unreachable.
     LicenseFeature.NFS_SNAPSHOT: {
         Reason.NO_LICENSE: "This is an enterprise feature and may not be enabled without a valid license.",
         Reason.KEY_MISSING: "This is an enterprise feature and may not be enabled without a valid license.",
+        Reason.WRONG_HARDWARE: "This is an enterprise feature and may not be enabled without a valid license.",
     },
     LicenseFeature.NVMEOF_SPDK: {
         Reason.NO_LICENSE: "SPDK is limited to enterprise licensed systems only.",

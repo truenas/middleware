@@ -445,9 +445,8 @@ class SharingNFSService(SharingService):
         `hosts` is a list of IP's/hostnames which are allowed to access the share. If empty, all IP's/hostnames are
         allowed.
 
-        `expose_snapshots` enable TrueNAS Enterprise feature to allow access
-        to the ZFS snapshot directory over NFS. This feature requires a valid
-        enterprise license.
+        `expose_snapshots` allow access to the ZFS snapshot directory over NFS.
+        Requires a license carrying the NFS_SNAPSHOT feature, on any hardware.
         """
         verrors = ValidationErrors()
 
