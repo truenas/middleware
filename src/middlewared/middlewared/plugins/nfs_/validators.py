@@ -87,20 +87,3 @@ def sanitize_hosts(schema_name: str, hosts: list, verrors: ValidationErrors):
             f"No entry is required to configure 'allow everybody'.  "
             f"Please remove {v} or replace with '*'."
         )
-
-
-def validate_bind_ip(ips: list):
-    """ Validate list strings are IP addresses """
-    not_valid = []
-    for ip in ips:
-        # The join below does not play well with None
-        if ip is None:
-            ip = "None"
-        try:
-            ip_address(ip)
-        except ValueError:
-            not_valid.append(ip)
-    if not_valid:
-        raise ValueError(
-            f"The following do not appear to be valid IPv4 or IPv6 addresses: {', '.join(not_valid)}"
-        )
