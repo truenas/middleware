@@ -10,6 +10,9 @@ injection buckets mirror how today's gates read a legacy license:
   license that lacks the key, and today's gates only consult the license on
   HA capable hardware, so without these a legacy holder would lose apps and
   VMs on upgrade.
+- every legacy license: NFS_SNAPSHOT. Its matrix vector is key-only on both
+  hardware sides, so any legacy holder exposing snapshots over NFS would lose
+  the export on upgrade unless the flag is injected regardless of model.
 - enterprise models only (model present and not freenas-prefixed, the same
   demotion rule product_type applies): the flags historically gated behind an
   is_enterprise check.
@@ -33,13 +36,12 @@ logger = logging.getLogger(__name__)
 # TODO: injecting VMS overrides the legacy vm bit, granting VMs to HA capable systems that never purchased it
 _ALL_LEGACY_INJECT: frozenset[LicenseFeature] = frozenset({
     LicenseFeature.STIG, LicenseFeature.TRUESEARCH, LicenseFeature.APPS, LicenseFeature.VMS,
-    LicenseFeature.CONTAINERS,
+    LicenseFeature.CONTAINERS, LicenseFeature.NFS_SNAPSHOT,
 })
 _ENT_ONLY_INJECT: frozenset[LicenseFeature] = frozenset({
     LicenseFeature.RDMA, LicenseFeature.SMB_VEEAM, LicenseFeature.SMB_FASTPATH,
     LicenseFeature.DIRECTORY_SERVICES, LicenseFeature.NETWORK_FEC, LicenseFeature.MISSION_CRITICAL,
     LicenseFeature.AUTOTUNE, LicenseFeature.NVMEOF_SPDK, LicenseFeature.CATALOG_ENTERPRISE_TRAIN,
-    LicenseFeature.NFS_SNAPSHOT,
 })
 
 

@@ -100,6 +100,7 @@ def test_live_policy_shape():
         LicenseFeature.SED,
         LicenseFeature.STIG,
         LicenseFeature.TRUESEARCH,
+        LicenseFeature.NFS_SNAPSHOT,
         LicenseFeature.NVMEOF_SPDK,
         DerivedEntitlement.HA,
         DerivedEntitlement.PROACTIVE_SUPPORT,
@@ -112,6 +113,7 @@ def test_live_policy_shape():
     assert isinstance(POLICY[LicenseFeature.VMS], Vector)
     assert isinstance(POLICY[LicenseFeature.STIG], Vector)
     assert isinstance(POLICY[LicenseFeature.TRUESEARCH], Vector)
+    assert isinstance(POLICY[LicenseFeature.NFS_SNAPSHOT], Vector)
     assert isinstance(POLICY[LicenseFeature.SED], LegacyRule)
     assert isinstance(POLICY[LicenseFeature.NVMEOF_SPDK], LegacyRule)
     assert isinstance(POLICY[DerivedEntitlement.HA], LicenseTypeRule)
@@ -213,11 +215,14 @@ def test_key_only_vector_behavior(feature, hardware_class, state, entitled, reas
     assert entitlement.column == column
 
 
-@pytest.mark.parametrize("feature,display", [
-    (LicenseFeature.ZFSTIER, "ZFS tiering"),
-    (LicenseFeature.STIG, "STIG and FIPS"),
-    (LicenseFeature.TRUESEARCH, "TrueSearch"),
-])
+@pytest.mark.parametrize(
+    "feature,display",
+    [
+        (LicenseFeature.ZFSTIER, "ZFS tiering"),
+        (LicenseFeature.STIG, "STIG and FIPS"),
+        (LicenseFeature.TRUESEARCH, "TrueSearch"),
+    ],
+)
 def test_key_only_key_missing_message_uses_display_name(feature, display):
     facts = make_facts(hardware_class=HardwareClass.TRUENAS_HW, license=make_license())
     entitlement = check_entitlement(feature, facts)
@@ -227,19 +232,49 @@ def test_key_only_key_missing_message_uses_display_name(feature, display):
 # FIBRECHANNEL is a live matrix Vector (0,0,1,1,0,1): any license grants it on iX
 # hardware, while the CE side needs the key.
 FIBRECHANNEL_TABLE = [
-    (HardwareClass.TRUENAS_HW, "none", False, "NO_LICENSE", "HW",
-     "This system is not licensed to use the Fibre Channel feature."),
+    (
+        HardwareClass.TRUENAS_HW,
+        "none",
+        False,
+        "NO_LICENSE",
+        "HW",
+        "This system is not licensed to use the Fibre Channel feature.",
+    ),
     (HardwareClass.TRUENAS_HW, "nokey", True, "ENTITLED", "HW+L", ""),
     (HardwareClass.TRUENAS_HW, "key", True, "ENTITLED", "HW+K", ""),
-    (HardwareClass.MINI, "none", False, "NO_LICENSE", "CE",
-     "This system is not licensed to use the Fibre Channel feature."),
-    (HardwareClass.MINI, "nokey", False, "KEY_MISSING", "CE+L",
-     "This system's license does not include the Fibre Channel feature."),
+    (
+        HardwareClass.MINI,
+        "none",
+        False,
+        "NO_LICENSE",
+        "CE",
+        "This system is not licensed to use the Fibre Channel feature.",
+    ),
+    (
+        HardwareClass.MINI,
+        "nokey",
+        False,
+        "KEY_MISSING",
+        "CE+L",
+        "This system's license does not include the Fibre Channel feature.",
+    ),
     (HardwareClass.MINI, "key", True, "ENTITLED", "CE+K", ""),
-    (HardwareClass.GENERIC, "none", False, "NO_LICENSE", "CE",
-     "This system is not licensed to use the Fibre Channel feature."),
-    (HardwareClass.GENERIC, "nokey", False, "KEY_MISSING", "CE+L",
-     "This system's license does not include the Fibre Channel feature."),
+    (
+        HardwareClass.GENERIC,
+        "none",
+        False,
+        "NO_LICENSE",
+        "CE",
+        "This system is not licensed to use the Fibre Channel feature.",
+    ),
+    (
+        HardwareClass.GENERIC,
+        "nokey",
+        False,
+        "KEY_MISSING",
+        "CE+L",
+        "This system's license does not include the Fibre Channel feature.",
+    ),
     (HardwareClass.GENERIC, "key", True, "ENTITLED", "CE+K", ""),
 ]
 
@@ -279,11 +314,14 @@ def test_workload_vector_behavior(feature, hardware_class, state, entitled, reas
     assert entitlement.column == column
 
 
-@pytest.mark.parametrize("feature,display", [
-    (LicenseFeature.APPS, "applications"),
-    (LicenseFeature.CONTAINERS, "containers"),
-    (LicenseFeature.VMS, "virtual machines"),
-])
+@pytest.mark.parametrize(
+    "feature,display",
+    [
+        (LicenseFeature.APPS, "applications"),
+        (LicenseFeature.CONTAINERS, "containers"),
+        (LicenseFeature.VMS, "virtual machines"),
+    ],
+)
 def test_workload_key_missing_message_uses_display_name(feature, display):
     facts = make_facts(hardware_class=HardwareClass.TRUENAS_HW, license=make_license())
     entitlement = check_entitlement(feature, facts)
@@ -388,13 +426,17 @@ def test_reason_wrong_hardware():
 
 # (e) Revocation rule: a license lacking the key revokes a bare no-license grant.
 def test_revocation_apps_generic_no_license_entitled():
-    entitlement = check_entitlement(LicenseFeature.APPS, facts_for_column(LicenseFeature.APPS, "CE"), policy=TARGET_VECTORS)
+    entitlement = check_entitlement(
+        LicenseFeature.APPS, facts_for_column(LicenseFeature.APPS, "CE"), policy=TARGET_VECTORS
+    )
     assert entitlement.entitled is True
     assert entitlement.column == "CE"
 
 
 def test_revocation_apps_generic_keyless_license_revoked():
-    entitlement = check_entitlement(LicenseFeature.APPS, facts_for_column(LicenseFeature.APPS, "CE+L"), policy=TARGET_VECTORS)
+    entitlement = check_entitlement(
+        LicenseFeature.APPS, facts_for_column(LicenseFeature.APPS, "CE+L"), policy=TARGET_VECTORS
+    )
     assert entitlement.entitled is False
     assert entitlement.reason == "KEY_MISSING"
     assert entitlement.column == "CE+L"
