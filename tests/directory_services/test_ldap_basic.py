@@ -2,14 +2,20 @@ import pytest
 
 from middlewared.test.integration.assets.directory_service import directoryservice
 from middlewared.test.integration.assets.privilege import privilege
-from middlewared.test.integration.assets.product import product_type
-from middlewared.test.integration.utils import call, client
+from middlewared.test.integration.utils import call, client, mock
 
 
 @pytest.fixture(scope="module")
 def do_ldap_connection(request):
     with directoryservice('LDAP') as ldap_conn:
-        with product_type():
+        # test_account_privilege_authentication turns on ds_auth, which the
+        # DIRECTORY_SERVICES entitlement gates.
+        with mock('truenas.entitlements.check', args=['DIRECTORY_SERVICES', ], declaration="""
+            def mock(self, feature):
+                from middlewared.utils.entitlements import Entitlement, Reason
+
+                return Entitlement(entitled=True, reason=Reason.ENTITLED, column='HW+K', message='')
+        """):
             yield ldap_conn
 
 

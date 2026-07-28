@@ -93,6 +93,7 @@ def test_matrix_fixture(feature, column):
 def test_live_policy_shape():
     assert set(POLICY) == {
         LicenseFeature.DEDUP,
+        LicenseFeature.DIRECTORY_SERVICES,
         LicenseFeature.FIBRECHANNEL,
         LicenseFeature.ZFSTIER,
         LicenseFeature.APPS,
@@ -111,6 +112,7 @@ def test_live_policy_shape():
         DerivedEntitlement.PROACTIVE_SUPPORT,
     }
     assert isinstance(POLICY[LicenseFeature.DEDUP], Vector)
+    assert isinstance(POLICY[LicenseFeature.DIRECTORY_SERVICES], Vector)
     assert isinstance(POLICY[LicenseFeature.FIBRECHANNEL], Vector)
     assert isinstance(POLICY[LicenseFeature.ZFSTIER], Vector)
     assert isinstance(POLICY[LicenseFeature.APPS], Vector)
@@ -200,8 +202,9 @@ def test_dedup_key_missing_message_uses_display_name():
     assert entitlement.message == "This system's license does not include the ZFS deduplication feature."
 
 
-# ZFSTIER, STIG, TRUESEARCH, NFS_SNAPSHOT, NVMEOF_SPDK, NETWORK_FEC and RDMA are
-# live matrix Vectors (0,0,0,1,0,1): key-only on either hardware side.
+# ZFSTIER, STIG, TRUESEARCH, NFS_SNAPSHOT, NVMEOF_SPDK, NETWORK_FEC, RDMA and
+# DIRECTORY_SERVICES are live matrix Vectors (0,0,0,1,0,1): key-only on either
+# hardware side.
 KEY_ONLY_TABLE = [
     (HardwareClass.TRUENAS_HW, "none", False, "NO_LICENSE", "HW"),
     (HardwareClass.TRUENAS_HW, "nokey", False, "KEY_MISSING", "HW+L"),
@@ -227,6 +230,7 @@ KEY_ONLY_TABLE = [
         LicenseFeature.RDMA,
         LicenseFeature.SMB_FASTPATH,
         LicenseFeature.SMB_VEEAM,
+        LicenseFeature.DIRECTORY_SERVICES,
     ],
 )
 @pytest.mark.parametrize("hardware_class,state,entitled,reason,column", KEY_ONLY_TABLE)
@@ -484,6 +488,36 @@ def test_smb_veeam_bespoke_message_survives_vector_flip():
     assert entitlement.entitled is False
     assert entitlement.reason == "WRONG_HARDWARE"
     assert entitlement.message == SMB_VEEAM_MESSAGE
+
+
+# DIRECTORY_SERVICES gates directory-services authentication to the UI and API.
+# It is a key-only vector that keeps its pre-engine system.general.update
+# wording through FEATURE_MESSAGES rather than the generic display-name template.
+DIRECTORY_SERVICES_MESSAGE = "Directory services authentication for UI and API access requires an Enterprise license."
+
+
+def test_directory_services_bespoke_message_registered():
+    overrides = FEATURE_MESSAGES[LicenseFeature.DIRECTORY_SERVICES]
+    for reason in (Reason.NO_LICENSE, Reason.KEY_MISSING, Reason.WRONG_HARDWARE):
+        assert overrides[reason] == DIRECTORY_SERVICES_MESSAGE
+
+
+@pytest.mark.parametrize("hardware_class", [HardwareClass.TRUENAS_HW, HardwareClass.MINI, HardwareClass.GENERIC])
+@pytest.mark.parametrize("state", ["none", "nokey"])
+def test_directory_services_bespoke_message_from_live_policy(hardware_class, state):
+    facts = make_facts(hardware_class=hardware_class, license=_license_for(LicenseFeature.DIRECTORY_SERVICES, state))
+    entitlement = check_entitlement(LicenseFeature.DIRECTORY_SERVICES, facts)
+    assert entitlement.entitled is False
+    assert entitlement.message == DIRECTORY_SERVICES_MESSAGE
+
+
+def test_directory_services_bespoke_message_survives_vector_flip():
+    policy = {LicenseFeature.DIRECTORY_SERVICES: Vector(0, 0, 0, 1, 0, 0)}
+    facts = facts_for_column(LicenseFeature.DIRECTORY_SERVICES, "CE+K")
+    entitlement = check_entitlement(LicenseFeature.DIRECTORY_SERVICES, facts, policy=policy)
+    assert entitlement.entitled is False
+    assert entitlement.reason == "WRONG_HARDWARE"
+    assert entitlement.message == DIRECTORY_SERVICES_MESSAGE
 
 
 # SMB_FASTPATH is a key-only vector whose denial is silent in the smb.conf
