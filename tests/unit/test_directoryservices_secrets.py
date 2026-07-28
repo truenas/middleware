@@ -308,11 +308,6 @@ def test__ipa_cred_version_absent_reads_as_zero(secrets_tdb):
 
 
 @pytest.mark.parametrize('name,data_type,expected', [
-    # secrets.tdb is the odd one out: samba keys it via string_tdb_data() (strlen, no
-    # terminator), so its keys MUST NOT be null-terminated. The value returned here is
-    # consumed identically by the local TDBHandle and the clustered CTDBHandle; when the
-    # two disagreed (CTDBHandle hardcoded True) winbindd could not fetch the domain SID
-    # and SMB stateful failover broke ("Could not fetch our SID - did we join?").
     ('secrets.tdb', TDBDataType.BYTES, False),
     ('/var/lib/truenas-samba/private/secrets.tdb', TDBDataType.BYTES, False),
     # Most samba databases key via string_term_tdb_data() (strlen + 1).
