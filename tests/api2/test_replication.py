@@ -498,7 +498,7 @@ def test_create_disabled_periodic_snapshot_task_binding():
 
 
 def test_run_disabled_task():
-    """Running a disabled replication task raises an error."""
+    """Running a disabled replication task works."""
     with dataset("src") as src:
         with dataset("dst") as dst:
             with replication_task({
@@ -509,12 +509,16 @@ def test_run_disabled_task():
                 "target_dataset": dst,
                 "recursive": False,
                 "also_include_naming_schema": ["%Y-%m-%d-%H-%M-%S"],
-                "auto": False,
+                "auto": True,
+                "schedule": {},
                 "retention_policy": "NONE",
                 "enabled": False,
             }) as task:
-                with pytest.raises(ClientException, match="Task is not enabled"):
-                    call("replication.run", task["id"], job=True)
+                call("pool.snapshot.create", {"dataset": src, "name": "2026-01-01-00-00-00"})
+
+                call("replication.run", task["id"], job=True)
+
+                assert call("pool.snapshot.query", [["dataset", "=", dst]])
 
 
 def test_update_ssh_credentials_task(ssh_credentials):
