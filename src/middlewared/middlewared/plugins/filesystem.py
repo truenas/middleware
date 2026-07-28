@@ -3,7 +3,6 @@ import errno
 import functools
 import os
 import pathlib
-import shutil
 import stat as statlib
 import time
 from typing import Literal
@@ -43,6 +42,7 @@ from middlewared.utils.filesystem.constants import FileType
 from middlewared.utils.filesystem.directory import DirectoryIterator, DirectoryRequestMask
 from truenas_os_pyutils.io import safe_open
 from truenas_os_pyutils.mount import iter_mountinfo, statmount
+from truenas_os_pyutils.truenas_shutil import copysendfile, copysplice
 from middlewared.utils.nss import pwd, grp
 from middlewared.utils.path import FSLocation, path_location, is_child_realpath
 
@@ -573,7 +573,11 @@ class FilesystemService(Service):
             raise CallError(f'{path} is not a file')
 
         with safe_open(path, 'rb') as f:
-            shutil.copyfileobj(f, job.pipes.output.w)
+            # Stream the file to the download pipe with a zero-copy sendfile.
+            # Skip empty files: there is nothing to send, and copysendfile's
+            # userspace fallback would lseek() the pipe and raise ESPIPE.
+            if os.fstat(f.fileno()).st_size > 0:
+                copysendfile(f.fileno(), job.pipes.output.w.fileno())
 
     @api_method(FilesystemPutArgs, FilesystemPutResult, audit='Filesystem put', roles=['FULL_ADMIN'])
     @job(pipes=["input"])
@@ -605,9 +609,18 @@ class FilesystemService(Service):
         try:
             with safe_open(path, openmode) as f:
                 if mode:
-                    os.fchmod(f.fileno(), mode)
+                    # Strip any ACL the file inherited from its parent
+                    # directory before applying the requested mode. Otherwise
+                    # fchmod fails with EPERM on aclmode=restricted datasets,
+                    # and where it succeeds the inherited ACL (not the mode
+                    # bits) would still govern access, so the requested
+                    # permission would not actually take effect. fsetacl(fd,
+                    # None) resets the file to a trivial ACL derived from the
+                    # mode, and is a no-op when no ACL is present.
+                    truenas_os.fsetacl(f.fileno(), None)
+                    os.fchmod(f.fileno(), options.mode)
 
-                shutil.copyfileobj(job.pipes.input.r, f)
+                copysplice(job.pipes.input.r.fileno(), f.fileno())
         except PermissionError:
             raise CallError(f'Unable to put contents at {path!r} as the path exists on a locked dataset', errno.EINVAL)
 
