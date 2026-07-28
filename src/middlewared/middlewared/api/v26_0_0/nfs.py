@@ -162,8 +162,8 @@ class SharingNFSEntry(BaseModel):
     expose_snapshots: bool = Field(
         default=False,
         description=(
-            "Enterprise feature to enable access to the ZFS snapshot directory for the export. Export path must be the "
-            "root directory of a ZFS dataset."
+            "Enable access to the ZFS snapshot directory for the export. Requires a license carrying the "
+            "NFS_SNAPSHOT feature, on any hardware. Export path must be the root directory of a ZFS dataset."
         ),
     )
     tier: TierInfo | None = Field(
