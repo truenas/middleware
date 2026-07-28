@@ -257,6 +257,8 @@ class ContainerService(Service):
 
             dst_dataset = os.path.join(container_dataset(pool), f"containers/{name}")
             needs_mount_revert = False
+            renamed = False
+            container_instance = None
             try:
                 if not processed_parents_mountpoints:
                     for ds in (f"{pool}/.ix-virt", f"{pool}/.ix-virt/containers"):
@@ -324,6 +326,7 @@ class ContainerService(Service):
                 # From here on the dataset lives in its native location, where the mount
                 # properties set above are the correct ones to keep.
                 needs_mount_revert = False
+                renamed = True
 
                 container_instance = self.middleware.call_sync(
                     "container.create_with_dataset",
@@ -339,6 +342,21 @@ class ContainerService(Service):
                     "container.migrate_devices", job, manifest["container"], container_instance
                 )
             except Exception as e:
+                if renamed and container_instance is None:
+                    # The dataset was moved but no container row was created. Left there it
+                    # is invisible: the migration only ever looks under .ix-virt, and the
+                    # native tree is hidden from dataset queries and refuses deletion. Move
+                    # it back so it stays something the user can see and act on.
+                    try:
+                        self.call_sync2(self.s.zfs.resource.rename, dst_dataset, dataset["name"])
+                    except Exception:
+                        self.logger.error(
+                            "%s: failed to move back after an incomplete migration", dst_dataset,
+                            exc_info=True,
+                        )
+                    else:
+                        needs_mount_revert = True
+
                 self.logger.error("Unable to migrate container %r", name, exc_info=True)
                 job.logs_fd.write(f"Unable to migrate container {name!r}: {e!r}.\n".encode())
             else:
