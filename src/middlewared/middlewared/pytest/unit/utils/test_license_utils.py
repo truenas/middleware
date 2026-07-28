@@ -61,11 +61,17 @@ def test__from_license_status__renames_vm_to_vms():
         license_expires_at=None,
         features={
             "VMS": FeatureInfo(
-                name="VMS", start_date=date(2026, 4, 8), expires_at=date(2026, 4, 30), source="enterprise",
+                name="VMS",
+                start_date=date(2026, 4, 8),
+                expires_at=date(2026, 4, 30),
+                source="enterprise",
             ),
             "SUPPORT": FeatureInfo(
-                name="SUPPORT", start_date=date(2026, 4, 8), expires_at=date(2026, 4, 30),
-                source="enterprise", type="GOLD",
+                name="SUPPORT",
+                start_date=date(2026, 4, 8),
+                expires_at=date(2026, 4, 30),
+                source="enterprise",
+                type="GOLD",
             ),
         },
         serials=("TEST-000001", "TEST-000002"),
