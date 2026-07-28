@@ -1913,16 +1913,17 @@ class TestNFSops:
             )
         ]
 
-        with mock("system.is_enterprise", return_value=True):
-            with mock("rdma.capable_protocols", return_value=['NFS']):
-                with nfs_config():
-                    call("nfs.update", {"rdma": True})
+        # rdma.capable_protocols is the single entitlement chokepoint for RDMA: it gates both the
+        # nfs.update validator and the mask nfs.config applies on read, so mocking it is enough.
+        with mock("rdma.capable_protocols", return_value=['NFS']):
+            with nfs_config():
+                call("nfs.update", {"rdma": True})
 
-                    # 20049 is the default port for NFS over RDMA.
-                    confirm_nfs_config_settings([
-                        [['nfsd', 'rdma'], 'y'],
-                        [['nfsd', 'rdma-port'], '20049'],
-                    ])
+                # 20049 is the default port for NFS over RDMA.
+                confirm_nfs_config_settings([
+                    [['nfsd', 'rdma'], 'y'],
+                    [['nfsd', 'rdma-port'], '20049'],
+                ])
 
     def test_prevent_shell_changes(self, start_nfs):
         '''
@@ -1954,7 +1955,10 @@ class TestNFSops:
             res = ssh("ls /etc/nfs.conf.d/rogue.conf", check=False, complete_response=True)
             assert "No such file or directory" in res['stderr']
 
-        with mock("system.is_enterprise", return_value=False):
+        # Report no RDMA capable protocols so NFS over RDMA is unavailable. That makes nfs_extend
+        # mask the rdma bit, so one smuggled in via the shell or the DB is scrubbed on the next
+        # config read regardless of what the runner is licensed for.
+        with mock("rdma.capable_protocols", return_value=[]):
             with nfs_config():
                 with nfs_dataset("deleteme") as ds:
                     for monkey_business in [modnfsconf, rogueconf]:

@@ -39,6 +39,7 @@ POLICY: Mapping[str, Rule] = MappingProxyType(
         LicenseFeature.NETWORK_FEC: TARGET_VECTORS[LicenseFeature.NETWORK_FEC],
         LicenseFeature.NFS_SNAPSHOT: TARGET_VECTORS[LicenseFeature.NFS_SNAPSHOT],
         LicenseFeature.NVMEOF_SPDK: TARGET_VECTORS[LicenseFeature.NVMEOF_SPDK],
+        LicenseFeature.RDMA: TARGET_VECTORS[LicenseFeature.RDMA],
         LicenseFeature.SED: LegacyRule(func=legacy.sed),  # TODO: Validate logic with old impl
         LicenseFeature.STIG: TARGET_VECTORS[LicenseFeature.STIG],
         LicenseFeature.TRUESEARCH: TARGET_VECTORS[LicenseFeature.TRUESEARCH],

@@ -23,7 +23,7 @@ def _features(names, *, support_type=None, start=date(2026, 4, 8), end=date(2026
 # blob, in LicenseFeature declaration order. Injected flags are appended after
 # the license's own bits, also in declaration order.
 _ALL_LEGACY_INJECT = [
-    "APPS", "CONTAINERS", "NETWORK_FEC", "NFS_SNAPSHOT", "NVMEOF_SPDK", "STIG", "TRUESEARCH", "VMS",
+    "APPS", "CONTAINERS", "NETWORK_FEC", "NFS_SNAPSHOT", "NVMEOF_SPDK", "RDMA", "STIG", "TRUESEARCH", "VMS",
 ]
 
 
