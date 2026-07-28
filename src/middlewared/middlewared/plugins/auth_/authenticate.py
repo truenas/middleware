@@ -59,6 +59,14 @@ class AuthService(Service):
         groups = set(user['grouplist'])
         privileges = await self.middleware.call('privilege.privileges_for_groups', groups_key, groups)
         if not privileges:
+            if not user['local']:
+                # Directory services issues can be particularly difficult to pin down and
+                # so catching additional logging here is useful.
+                self.logger.info(
+                    '%s: authenticated directory services user matched no privilege granting API '
+                    'access; evaluated group list: %s.',
+                    user['pw_name'], sorted(groups)
+                )
             return None
 
         return {
