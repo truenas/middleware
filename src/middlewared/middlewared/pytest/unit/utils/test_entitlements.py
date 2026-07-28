@@ -114,8 +114,8 @@ def test_live_policy_shape():
     assert isinstance(POLICY[LicenseFeature.STIG], Vector)
     assert isinstance(POLICY[LicenseFeature.TRUESEARCH], Vector)
     assert isinstance(POLICY[LicenseFeature.NFS_SNAPSHOT], Vector)
+    assert isinstance(POLICY[LicenseFeature.NVMEOF_SPDK], Vector)
     assert isinstance(POLICY[LicenseFeature.SED], LegacyRule)
-    assert isinstance(POLICY[LicenseFeature.NVMEOF_SPDK], LegacyRule)
     assert isinstance(POLICY[DerivedEntitlement.HA], LicenseTypeRule)
     assert isinstance(POLICY[DerivedEntitlement.PROACTIVE_SUPPORT], TierRule)
 
@@ -191,8 +191,8 @@ def test_dedup_key_missing_message_uses_display_name():
     assert entitlement.message == "This system's license does not include the ZFS deduplication feature."
 
 
-# ZFSTIER, STIG, TRUESEARCH and NFS_SNAPSHOT are live matrix Vectors (0,0,0,1,0,1):
-# key-only on either hardware side.
+# ZFSTIER, STIG, TRUESEARCH, NFS_SNAPSHOT and NVMEOF_SPDK are live matrix Vectors
+# (0,0,0,1,0,1): key-only on either hardware side.
 KEY_ONLY_TABLE = [
     (HardwareClass.TRUENAS_HW, "none", False, "NO_LICENSE", "HW"),
     (HardwareClass.TRUENAS_HW, "nokey", False, "KEY_MISSING", "HW+L"),
@@ -213,6 +213,7 @@ KEY_ONLY_TABLE = [
         LicenseFeature.STIG,
         LicenseFeature.TRUESEARCH,
         LicenseFeature.NFS_SNAPSHOT,
+        LicenseFeature.NVMEOF_SPDK,
     ],
 )
 @pytest.mark.parametrize("hardware_class,state,entitled,reason,column", KEY_ONLY_TABLE)
@@ -368,27 +369,28 @@ def test_workload_key_missing_message_uses_display_name(feature, display):
     assert entitlement.message == f"This system's license does not include the {display} feature."
 
 
-def test_legacy_nvmet_spdk_ha_capable_entitled_even_unlicensed():
+# HA capability is not a prerequisite for SPDK and no longer grants it: an
+# HA capable system without a license is denied like any other unlicensed system.
+def test_nvmeof_spdk_ha_capable_unlicensed_denied():
     facts = make_facts(hardware_class=HardwareClass.GENERIC, is_ha_capable=True)
-    assert check_entitlement(LicenseFeature.NVMEOF_SPDK, facts).entitled is True
+    entitlement = check_entitlement(LicenseFeature.NVMEOF_SPDK, facts)
+    assert entitlement.entitled is False
+    assert entitlement.reason == "NO_LICENSE"
+    assert entitlement.column == "CE"
 
 
-def test_legacy_nvmet_spdk_certified_model_entitled():
-    facts = make_facts(hardware_class=HardwareClass.TRUENAS_HW, license=make_license(model="H10"))
-    assert check_entitlement(LicenseFeature.NVMEOF_SPDK, facts).entitled is True
+# The license model is not consulted at all: keylessness alone decides, so a
+# certified enterprise model is denied on the same terms as a freenas one.
+@pytest.mark.parametrize("model", ["H10", "FREENAS-XYZ", None])
+def test_nvmeof_spdk_licensed_without_key_denied_regardless_of_model(model):
+    facts = make_facts(hardware_class=HardwareClass.TRUENAS_HW, license=make_license(model=model))
+    entitlement = check_entitlement(LicenseFeature.NVMEOF_SPDK, facts)
+    assert entitlement.entitled is False
+    assert entitlement.reason == "KEY_MISSING"
+    assert entitlement.column == "HW+L"
 
 
-def test_legacy_nvmet_spdk_freenas_model_blocked():
-    facts = make_facts(hardware_class=HardwareClass.TRUENAS_HW, license=make_license(model="FREENAS-XYZ"))
-    assert check_entitlement(LicenseFeature.NVMEOF_SPDK, facts).entitled is False
-
-
-def test_legacy_nvmet_spdk_model_none_blocked():
-    facts = make_facts(hardware_class=HardwareClass.GENERIC, license=make_license(model=None))
-    assert check_entitlement(LicenseFeature.NVMEOF_SPDK, facts).entitled is False
-
-
-def test_legacy_nvmet_spdk_unlicensed_no_license():
+def test_nvmeof_spdk_unlicensed_no_license():
     facts = make_facts(hardware_class=HardwareClass.GENERIC)
     entitlement = check_entitlement(LicenseFeature.NVMEOF_SPDK, facts)
     assert entitlement.entitled is False
@@ -397,7 +399,7 @@ def test_legacy_nvmet_spdk_unlicensed_no_license():
 
 
 # NVMEOF_SPDK carries a bespoke message via FEATURE_MESSAGES so the wording
-# survives an eventual flip from the LegacyRule to its matrix Vector.
+# survived the flip from the LegacyRule to its matrix Vector.
 def test_nvmeof_spdk_bespoke_message_registered():
     overrides = FEATURE_MESSAGES[LicenseFeature.NVMEOF_SPDK]
     for reason in (Reason.NO_LICENSE, Reason.KEY_MISSING, Reason.WRONG_HARDWARE):
