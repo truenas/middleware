@@ -68,9 +68,6 @@ class NFSProtocol(str, enum.Enum):
     NFSv3 = 'NFSV3'
     NFSv4 = 'NFSV4'
 
-    def choices():
-        return [x.value for x in NFSProtocol]
-
 
 class NFSModel(sa.Model):
     __tablename__ = 'services_nfs'
