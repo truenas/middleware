@@ -208,7 +208,7 @@ def test__base_smb():
     assert conf['zfs_core:zfs_block_cloning'] is False
 
 
-def test__base_smb_enterprise():
+def test__base_smb_fastpath():
     conf = generate_smb_conf_dict(
         DISABLED_DS_CONFIG, BASE_SMB_CONFIG, [],
         BIND_IP_CHOICES, True, SYSTEM_SECURITY_DEFAULT

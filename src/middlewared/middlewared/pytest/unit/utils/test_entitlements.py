@@ -98,6 +98,8 @@ def test_live_policy_shape():
         LicenseFeature.CONTAINERS,
         LicenseFeature.VMS,
         LicenseFeature.SED,
+        LicenseFeature.SMB_FASTPATH,
+        LicenseFeature.SMB_VEEAM,
         LicenseFeature.STIG,
         LicenseFeature.TRUESEARCH,
         LicenseFeature.NFS_SNAPSHOT,
@@ -119,6 +121,8 @@ def test_live_policy_shape():
     assert isinstance(POLICY[LicenseFeature.NVMEOF_SPDK], Vector)
     assert isinstance(POLICY[LicenseFeature.NETWORK_FEC], Vector)
     assert isinstance(POLICY[LicenseFeature.RDMA], Vector)
+    assert isinstance(POLICY[LicenseFeature.SMB_FASTPATH], Vector)
+    assert isinstance(POLICY[LicenseFeature.SMB_VEEAM], Vector)
     assert isinstance(POLICY[LicenseFeature.SED], LegacyRule)
     assert isinstance(POLICY[DerivedEntitlement.HA], LicenseTypeRule)
     assert isinstance(POLICY[DerivedEntitlement.PROACTIVE_SUPPORT], TierRule)
@@ -220,6 +224,8 @@ KEY_ONLY_TABLE = [
         LicenseFeature.NVMEOF_SPDK,
         LicenseFeature.NETWORK_FEC,
         LicenseFeature.RDMA,
+        LicenseFeature.SMB_FASTPATH,
+        LicenseFeature.SMB_VEEAM,
     ],
 )
 @pytest.mark.parametrize("hardware_class,state,entitled,reason,column", KEY_ONLY_TABLE)
@@ -238,6 +244,7 @@ def test_key_only_vector_behavior(feature, hardware_class, state, entitled, reas
         (LicenseFeature.STIG, "STIG and FIPS"),
         (LicenseFeature.TRUESEARCH, "TrueSearch"),
         (LicenseFeature.RDMA, "RDMA"),
+        (LicenseFeature.SMB_FASTPATH, "SMB ZFS fastpath"),
     ],
 )
 def test_key_only_key_missing_message_uses_display_name(feature, display):
@@ -447,6 +454,41 @@ def test_network_fec_bespoke_message_survives_vector_flip():
     entitlement = check_entitlement(LicenseFeature.NETWORK_FEC, facts, policy=policy)
     assert entitlement.reason == "KEY_MISSING"
     assert entitlement.message == NETWORK_FEC_MESSAGE
+
+
+# SMB_VEEAM is a key-only vector that keeps its pre-engine share validation
+# wording through FEATURE_MESSAGES rather than the generic display-name template.
+SMB_VEEAM_MESSAGE = "Veeam repository shares require a TrueNAS enterprise license."
+
+
+def test_smb_veeam_bespoke_message_registered():
+    overrides = FEATURE_MESSAGES[LicenseFeature.SMB_VEEAM]
+    for reason in (Reason.NO_LICENSE, Reason.KEY_MISSING, Reason.WRONG_HARDWARE):
+        assert overrides[reason] == SMB_VEEAM_MESSAGE
+
+
+@pytest.mark.parametrize("hardware_class", [HardwareClass.TRUENAS_HW, HardwareClass.MINI, HardwareClass.GENERIC])
+@pytest.mark.parametrize("state", ["none", "nokey"])
+def test_smb_veeam_bespoke_message_from_live_policy(hardware_class, state):
+    facts = make_facts(hardware_class=hardware_class, license=_license_for(LicenseFeature.SMB_VEEAM, state))
+    entitlement = check_entitlement(LicenseFeature.SMB_VEEAM, facts)
+    assert entitlement.entitled is False
+    assert entitlement.message == SMB_VEEAM_MESSAGE
+
+
+def test_smb_veeam_bespoke_message_survives_vector_flip():
+    policy = {LicenseFeature.SMB_VEEAM: Vector(0, 0, 0, 1, 0, 0)}
+    facts = facts_for_column(LicenseFeature.SMB_VEEAM, "CE+K")
+    entitlement = check_entitlement(LicenseFeature.SMB_VEEAM, facts, policy=policy)
+    assert entitlement.entitled is False
+    assert entitlement.reason == "WRONG_HARDWARE"
+    assert entitlement.message == SMB_VEEAM_MESSAGE
+
+
+# SMB_FASTPATH is a key-only vector whose denial is silent in the smb.conf
+# render, so it keeps the generic display-name wording.
+def test_smb_fastpath_has_no_bespoke_message():
+    assert LicenseFeature.SMB_FASTPATH not in FEATURE_MESSAGES
 
 
 def test_legacy_sed_key_present_entitled():

@@ -54,6 +54,8 @@ FEATURE_DISPLAY_NAMES: Mapping[str, str] = {
     LicenseFeature.NVMEOF_SPDK: "NVMe-oF SPDK backend",
     LicenseFeature.RDMA: "RDMA",
     LicenseFeature.SED: "SED",
+    LicenseFeature.SMB_FASTPATH: "SMB ZFS fastpath",
+    LicenseFeature.SMB_VEEAM: "Veeam repository shares",
     LicenseFeature.STIG: "STIG and FIPS",
     LicenseFeature.TRUESEARCH: "TrueSearch",
     LicenseFeature.VMS: "virtual machines",
@@ -80,6 +82,11 @@ FEATURE_MESSAGES: Mapping[str, Mapping[Reason, str]] = {
         Reason.NO_LICENSE: "SPDK is limited to enterprise licensed systems only.",
         Reason.KEY_MISSING: "SPDK is limited to enterprise licensed systems only.",
         Reason.WRONG_HARDWARE: "SPDK is limited to enterprise licensed systems only.",
+    },
+    LicenseFeature.SMB_VEEAM: {
+        Reason.NO_LICENSE: "Veeam repository shares require a TrueNAS enterprise license.",
+        Reason.KEY_MISSING: "Veeam repository shares require a TrueNAS enterprise license.",
+        Reason.WRONG_HARDWARE: "Veeam repository shares require a TrueNAS enterprise license.",
     },
 }
 
