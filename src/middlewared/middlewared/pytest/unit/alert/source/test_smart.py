@@ -18,6 +18,16 @@ def _selftest_entry(passed):
     }
 
 
+def _selftest_entry_no_verdict(status_value, status_string):
+    # NAS-141951: smartctl omits "passed" when the result is unknown (status
+    # nibble 0x1-0x3, "aborted -> unknown" in ataprint.cpp).
+    return {
+        "type": {"value": 2, "string": "Extended offline"},
+        "status": {"value": status_value, "string": status_string},
+        "lifetime_hours": 46601,
+    }
+
+
 def _ata_data(self_test_log=None, attributes=None):
     """Build a minimal `smartctl -x -jc` ATA payload."""
     data = {
@@ -73,6 +83,33 @@ def _ata_data(self_test_log=None, attributes=None):
         # Regression guard: a (non-smartctl) top-level "table" must be ignored, not
         # read as the self-test log.
         pytest.param({"table": [_selftest_entry(False)]}, False, id="bogus-toplevel-table"),
+        # NAS-141951: entries without a "passed" verdict must not KeyError and must
+        # not alert -- the result is unknown, not a failure.
+        pytest.param(
+            {"extended": {"count": 1, "table": [_selftest_entry_no_verdict(0x10, "Aborted by host")]}},
+            False,
+            id="extended-newest-aborted-no-verdict",
+        ),
+        pytest.param(
+            {"extended": {"count": 1, "table": [_selftest_entry_no_verdict(0x20, "Interrupted (host reset)")]}},
+            False,
+            id="extended-newest-interrupted-no-verdict",
+        ),
+        pytest.param(
+            {"standard": {"table": [_selftest_entry_no_verdict(0x30, "Fatal or unknown error")]}},
+            False,
+            id="standard-newest-fatal-no-verdict",
+        ),
+        # An aborted newest test must not mask an older explicit failure either --
+        # only index 0 is consulted.
+        pytest.param(
+            {"extended": {
+                "count": 2,
+                "table": [_selftest_entry_no_verdict(0x10, "Aborted by host"), _selftest_entry(False)],
+            }},
+            False,
+            id="extended-aborted-then-older-failed",
+        ),
     ],
 )
 def test_parse_ata_self_test_failure(self_test_log, expected_testfail):
