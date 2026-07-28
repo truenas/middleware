@@ -108,6 +108,27 @@ class TDBOps:
     vacuum: Callable[..., Any]
 
 
+def keys_are_null_terminated(name: str, data_type: TDBDataType) -> bool:
+    """
+    Whether the on-disk keys of the TDB/CTDB database identified by `name` carry a
+    trailing NUL terminator.
+
+    ``secrets.tdb`` is the odd one out: unlike most samba databases (which key via
+    ``string_term_tdb_data()`` == ``strlen + 1``) its keys have no terminator.
+    """
+    match os.path.basename(name):
+        case 'gencache.tdb':
+            return True
+        case 'secrets.tdb':
+            return False
+        case 'group_mapping.tdb' | 'group_mapping_rejects.tdb' | 'passdb.tdb':
+            return True
+        case _:
+            # Most samba tdb files use NULL-terminated string keys; middleware-owned
+            # databases that store JSON/STRING values do not.
+            return data_type is TDBDataType.BYTES
+
+
 class TDBHandle:
     hdl: Any = None
     name: str | None = None
@@ -329,7 +350,6 @@ class TDBHandle:
             case 'gencache.tdb':
                 # See gencache_init() in source3/lib/gencache.c in Samba
                 tdb_flags = tdb.INCOMPATIBLE_HASH | tdb.NOSYNC | MUTEX_LOCKING
-                self.keys_null_terminated = True
                 open_flags = os.O_CREAT | os.O_RDWR
                 open_mode = 0o644
             case 'secrets.tdb':
@@ -338,16 +358,16 @@ class TDBHandle:
                 open_mode = 0o600
             case 'group_mapping.tdb' | 'group_mapping_rejects.tdb' | 'passdb.tdb':
                 tdb_flags = tdb.DEFAULT
-                open_flags = os.O_RDWR
-                self.keys_null_terminated = True
                 open_flags = os.O_CREAT | os.O_RDWR
                 open_mode = 0o600
             case _:
                 tdb_flags = tdb.DEFAULT
-                # Typically tdb files will have NULL-terminated keys
-                self.keys_null_terminated = options.data_type is TDBDataType.BYTES
                 open_flags = os.O_CREAT | os.O_RDWR
                 open_mode = 0o600
+
+        # Key NUL-termination is a property of the database itself, so it must be derived
+        # identically here and in CTDBHandle (see keys_are_null_terminated).
+        self.keys_null_terminated = keys_are_null_terminated(name, self.data_type)
 
         match self.path_type:
             case TDBPathType.CUSTOM:
@@ -473,7 +493,10 @@ class CTDBHandle(TDBHandle):
         self.data_type = TDBDataType(options.data_type)
         self.path_type = TDBPathType(options.backend)
         self.options = options
-        self.keys_null_terminated = True
+        # Must agree with the local-file TDBHandle for the same database (see
+        # keys_are_null_terminated). Hardcoding True here silently NUL-terminated
+        # secrets.tdb keys in ctdb and broke SMB stateful failover.
+        self.keys_null_terminated = keys_are_null_terminated(name, self.data_type)
 
         # lazy-initialize CTDB client
         try:
