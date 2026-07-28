@@ -271,7 +271,7 @@ class DomainSecrets(Service):
             return {'id': db['id']}
         return {'id': db['id']} | secrets
 
-    async def backup(self):
+    async def backup(self, allow_missing_machine_secret=False):
         """
         store backup of secrets.tdb contents (keyed on current netbios name) in
         freenas-v1.db file. Only the current netbiosname's entry is retained --
@@ -280,6 +280,12 @@ class DomainSecrets(Service):
         of historical hostnames indefinitely. In HA the netbiosname is shared
         (it's the virtual SMB hostname, not per-controller) so pruning never
         loses the standby's backup.
+
+        ``allow_missing_machine_secret`` permits overwriting the stored backup with a
+        secrets.tdb dump that contains no machine account password. This is only
+        expected when deliberately clearing the backup (for example after leaving a
+        domain). By default such an overwrite is refused so a machine-secret-less dump
+        cannot destroy an otherwise-good backup.
         """
         failover_status = await self.middleware.call('failover.status')
         if failover_status not in ('SINGLE', 'MASTER'):
@@ -293,6 +299,17 @@ class DomainSecrets(Service):
 
         if not (secrets := (await self.middleware.call('directoryservices.secrets.dump'))):
             self.logger.warning("Unable to parse secrets")
+            return
+
+        if not allow_missing_machine_secret and not any(
+            key.startswith(f'{Secrets.MACHINE_PASSWORD.value}/') for key in secrets
+        ):
+            self.logger.warning(
+                "Refusing to overwrite the stored directory services secrets backup: the "
+                "current secrets.tdb contains no machine account password. This can occur "
+                "transiently during startup before the machine account secret has been "
+                "restored from the database backup."
+            )
             return
 
         fresh = {f"{netbios_name.upper()}$": secrets}

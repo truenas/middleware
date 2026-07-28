@@ -125,6 +125,79 @@ def test__backup_skips_when_failover_status_is_backup(secrets_service):
     asyncio.run(secrets_service.backup())
 
 
+def test__backup_refuses_overwrite_when_machine_secret_absent(secrets_service):
+    """
+    A secrets.tdb dump that lacks a machine account password must NOT overwrite the stored
+    backup -- otherwise a transiently incomplete secrets.tdb (local SID written, machine
+    secret not yet restored) could replace a good backup with a machine-secret-less one.
+    """
+    fresh_dump = {
+        # Local SID only -- no SECRETS/MACHINE_PASSWORD/* entry.
+        "SECRETS/SID/NEWHOST": "c2lkYnl0ZXM=",
+    }
+    called = {"datastore_update": False}
+
+    async def fake_call(method, *args, **kwargs):
+        if method == "failover.status":
+            return "SINGLE"
+        if method == "smb.config":
+            return {"netbiosname": "NEWHOST"}
+        if method == "directoryservices.secrets.dump":
+            return fresh_dump
+        if method == "datastore.update":
+            called["datastore_update"] = True
+            return None
+        raise AssertionError(f"unexpected middleware call: {method}")
+
+    async def fake_get_db_secrets():
+        return {"id": 1, "NEWHOST$": {"SECRETS/MACHINE_PASSWORD/NEWDOMAIN": "Z29vZA=="}}
+
+    secrets_service.get_db_secrets = fake_get_db_secrets
+    secrets_service.middleware.call.side_effect = fake_call
+
+    asyncio.run(secrets_service.backup())
+
+    assert called["datastore_update"] is False, (
+        "backup() must not overwrite the stored secrets when the current secrets.tdb has no "
+        "machine account password -- doing so destroys the good backup."
+    )
+
+
+def test__backup_allows_missing_machine_secret_when_explicit(secrets_service):
+    """
+    The domain-leave path deliberately backs up a nuked secrets.tdb to clear the stored
+    secret. allow_missing_machine_secret=True must permit that overwrite.
+    """
+    fresh_dump = {"SECRETS/SID/NEWHOST": "c2lkYnl0ZXM="}
+    captured = {}
+
+    async def fake_call(method, *args, **kwargs):
+        if method == "failover.status":
+            return "SINGLE"
+        if method == "smb.config":
+            return {"netbiosname": "NEWHOST"}
+        if method == "directoryservices.secrets.dump":
+            return fresh_dump
+        if method == "datastore.update":
+            captured["args"] = args
+            return None
+        raise AssertionError(f"unexpected middleware call: {method}")
+
+    async def fake_get_db_secrets():
+        return {"id": 1, "NEWHOST$": {"SECRETS/MACHINE_PASSWORD/NEWDOMAIN": "Z29vZA=="}}
+
+    secrets_service.get_db_secrets = fake_get_db_secrets
+    secrets_service.middleware.call.side_effect = fake_call
+
+    asyncio.run(secrets_service.backup(allow_missing_machine_secret=True))
+
+    saved = json.loads(captured["args"][2]["secrets"])
+    assert saved == {"NEWHOST$": fresh_dump}, (
+        "With allow_missing_machine_secret=True the clearing backup must proceed and store "
+        "the (machine-secret-less) dump."
+    )
+
+
 def test__last_password_change_real_tdb_roundtrip(secrets_service, tmp_path, monkeypatch):
     """
     Regression for the stray ']' in the secrets.tdb key, exercised end-to-end against a real
