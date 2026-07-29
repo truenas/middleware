@@ -1,5 +1,5 @@
 """
-Unit tests for KerberosService.check_updated_keytab's decision to refresh the machine-account
+Unit tests for KerberosKeytabService.check_updated_keytab's decision to refresh the machine-account
 keytab / secrets backup.
 
 The skip guard must key on whether the machine account password is present (has_domain), NOT on
@@ -14,7 +14,7 @@ import logging
 
 from unittest.mock import AsyncMock, MagicMock
 
-from middlewared.plugins.kerberos import KerberosService
+from middlewared.plugins.kerberos import KerberosKeytabService
 
 
 WORKGROUP = "AD"
@@ -22,12 +22,12 @@ WORKGROUP = "AD"
 
 def _kerberos_service(*, has_domain, last_change, capture_warnings=False):
     """
-    Build a KerberosService whose middleware answers the calls check_updated_keytab makes.
+    Build a KerberosKeytabService whose middleware answers the calls check_updated_keytab makes.
     ``has_domain`` is the bool returned by directoryservices.secrets.has_domain; ``last_change``
     is the dict returned by directoryservices.get_last_password_change. Backup and keytab-store
     calls are recorded on svc.performed.
     """
-    svc = object.__new__(KerberosService)
+    svc = object.__new__(KerberosKeytabService)
     svc.middleware = MagicMock()
     svc.middleware.call = AsyncMock()
     svc.logger = MagicMock() if capture_warnings else logging.getLogger("test_kerberos_keytab")
