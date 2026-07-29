@@ -58,6 +58,8 @@ POLICY: Mapping[str, Rule] = MappingProxyType(
         LicenseFeature.STIG: TARGET_VECTORS[LicenseFeature.STIG],
         LicenseFeature.TRUESEARCH: TARGET_VECTORS[LicenseFeature.TRUESEARCH],
         LicenseFeature.VMS: TARGET_VECTORS[LicenseFeature.VMS],
+        # TODO: See if we should have runtime gates as well and not just config gates
+        LicenseFeature.WEBSHARE: TARGET_VECTORS[LicenseFeature.WEBSHARE],
         # TODO: Validate logic with old impl / Remember that zfstier client has license
         # logic as well which should be reviewed too
         LicenseFeature.ZFSTIER: TARGET_VECTORS[LicenseFeature.ZFSTIER],

@@ -101,6 +101,7 @@ def test_live_policy_shape():
         LicenseFeature.APPS,
         LicenseFeature.CONTAINERS,
         LicenseFeature.VMS,
+        LicenseFeature.WEBSHARE,
         LicenseFeature.SED,
         LicenseFeature.SMB_FASTPATH,
         LicenseFeature.SMB_VEEAM,
@@ -122,6 +123,7 @@ def test_live_policy_shape():
     assert isinstance(POLICY[LicenseFeature.APPS], Vector)
     assert isinstance(POLICY[LicenseFeature.CONTAINERS], Vector)
     assert isinstance(POLICY[LicenseFeature.VMS], Vector)
+    assert isinstance(POLICY[LicenseFeature.WEBSHARE], Vector)
     assert isinstance(POLICY[LicenseFeature.STIG], Vector)
     assert isinstance(POLICY[LicenseFeature.TRUESEARCH], Vector)
     assert isinstance(POLICY[LicenseFeature.NFS_SNAPSHOT], Vector)
@@ -206,8 +208,8 @@ def test_dedup_key_missing_message_uses_display_name():
     assert entitlement.message == "This system's license does not include the ZFS deduplication feature."
 
 
-# ZFSTIER, STIG, TRUESEARCH, NFS_SNAPSHOT, NVMEOF_SPDK, NETWORK_FEC, RDMA and
-# DIRECTORY_SERVICES are live matrix Vectors (0,0,0,1,0,1): key-only on either
+# ZFSTIER, STIG, TRUESEARCH, NFS_SNAPSHOT, NVMEOF_SPDK, NETWORK_FEC, RDMA,
+# WEBSHARE and DIRECTORY_SERVICES are live matrix Vectors (0,0,0,1,0,1): key-only on either
 # hardware side.
 KEY_ONLY_TABLE = [
     (HardwareClass.TRUENAS_HW, "none", False, "NO_LICENSE", "HW"),
@@ -236,6 +238,7 @@ KEY_ONLY_TABLE = [
         LicenseFeature.SMB_VEEAM,
         LicenseFeature.DIRECTORY_SERVICES,
         LicenseFeature.KMIP,
+        LicenseFeature.WEBSHARE,
     ],
 )
 @pytest.mark.parametrize("hardware_class,state,entitled,reason,column", KEY_ONLY_TABLE)
@@ -256,6 +259,7 @@ def test_key_only_vector_behavior(feature, hardware_class, state, entitled, reas
         (LicenseFeature.RDMA, "RDMA"),
         (LicenseFeature.SMB_FASTPATH, "SMB ZFS fastpath"),
         (LicenseFeature.KMIP, "KMIP key management"),
+        (LicenseFeature.WEBSHARE, "Webshare"),
     ],
 )
 def test_key_only_key_missing_message_uses_display_name(feature, display):
