@@ -34,6 +34,10 @@ injection buckets mirror how today's gates read a legacy license:
 - enterprise models only (model present and not freenas-prefixed, the same
   demotion rule product_type applies): the flags historically gated behind an
   is_enterprise check.
+- licenses whose additional-hardware list includes an ES24N expansion shelf:
+  JBOF. Legacy licenses have no way to carry a JBOF key, so shelf ownership
+  lives only in the enclosure counts and the flag is injected from those,
+  leaving licenses without a shelf untouched.
 """
 
 from __future__ import annotations
@@ -84,6 +88,9 @@ _ENT_ONLY_INJECT: frozenset[LicenseFeature] = frozenset(
         LicenseFeature.CATALOG_ENTERPRISE_TRAIN,
     }
 )
+# Keyed on the translated enclosure model rather than the raw addhw code so the
+# flag is derived from the same dict consumers read the shelf count from.
+_ADDHW_INJECT: MappingProxyType[str, LicenseFeature] = MappingProxyType({"ES24N": LicenseFeature.JBOF})
 
 
 @lru_cache()
@@ -118,9 +125,15 @@ def parse_legacy_license(text: str) -> LicenseInfo:
         feature_names.append("SUPPORT")
 
     model = lic.model or None
+    enclosures = {
+        LICENSE_ADDHW_MAPPING[code]: quantity for quantity, code in lic.addhw if code in LICENSE_ADDHW_MAPPING
+    }
     injected: set[LicenseFeature] = set(_ALL_LEGACY_INJECT)
     if model is not None and not model.lower().startswith("freenas"):
         injected |= _ENT_ONLY_INJECT
+    for enclosure, feat in _ADDHW_INJECT.items():
+        if enclosures.get(enclosure, 0) > 0:
+            injected.add(feat)
     for feat in LicenseFeature:
         if feat in injected and feat not in feature_names:
             feature_names.append(feat.value)
@@ -144,8 +157,6 @@ def parse_legacy_license(text: str) -> LicenseInfo:
             }
         ),
         serials=tuple(serials),
-        enclosures=MappingProxyType(
-            {LICENSE_ADDHW_MAPPING[code]: quantity for quantity, code in lic.addhw if code in LICENSE_ADDHW_MAPPING}
-        ),
+        enclosures=MappingProxyType(enclosures),
         contract_type=lic.contract_type.name.upper(),
     )
