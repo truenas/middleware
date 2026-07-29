@@ -131,6 +131,77 @@ _ALL_LEGACY_INJECT = [
                 contract_type="FREENASCERTIFIED",
             ),
         ),
+        # Enterprise single license (F60, STANDARD contract) owning one ES24N: no
+        # feature bits of its own, so JBOF can only come from the addhw list.
+        (
+            "AUY2MAAAAAAAAAAAAAAAAABURVNULTAwMDAwMQAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAADIwMjYwNDA4AAAAABYAAAAAAAAAaVhzeXN0ZW1z"
+            "IEluYy4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQEM",
+            LicenseInfo(
+                id="legacy_TEST-000001",
+                type=LicenseType.ENTERPRISE_SINGLE,
+                model="F60",
+                support_expires_at=date(2026, 4, 30),
+                license_expires_at=None,
+                features=_features(
+                    [
+                        "APPS",
+                        "AUTOTUNE",
+                        "CATALOG_ENTERPRISE_TRAIN",
+                        "CONTAINERS",
+                        "DIRECTORY_SERVICES",
+                        "JBOF",
+                        "MISSION_CRITICAL",
+                        "NETWORK_FEC",
+                        "NFS_SNAPSHOT",
+                        "NVMEOF_SPDK",
+                        "RDMA",
+                        "SMB_FASTPATH",
+                        "SMB_VEEAM",
+                        "STIG",
+                        "TRUESEARCH",
+                        "VMS",
+                    ]
+                ),
+                serials=("TEST-000001",),
+                enclosures={"ES24N": 1},
+                contract_type="STANDARD",
+            ),
+        ),
+        # Same license listing an ES24N with a quantity of zero: the enclosure is
+        # translated but owns nothing, so JBOF must not be injected.
+        (
+            "AUY2MAAAAAAAAAAAAAAAAABURVNULTAwMDAwMQAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAADIwMjYwNDA4AAAAABYAAAAAAAAAaVhzeXN0ZW1z"
+            "IEluYy4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAM",
+            LicenseInfo(
+                id="legacy_TEST-000001",
+                type=LicenseType.ENTERPRISE_SINGLE,
+                model="F60",
+                support_expires_at=date(2026, 4, 30),
+                license_expires_at=None,
+                features=_features(
+                    [
+                        "APPS",
+                        "AUTOTUNE",
+                        "CATALOG_ENTERPRISE_TRAIN",
+                        "CONTAINERS",
+                        "DIRECTORY_SERVICES",
+                        "MISSION_CRITICAL",
+                        "NETWORK_FEC",
+                        "NFS_SNAPSHOT",
+                        "NVMEOF_SPDK",
+                        "RDMA",
+                        "SMB_FASTPATH",
+                        "SMB_VEEAM",
+                        "STIG",
+                        "TRUESEARCH",
+                        "VMS",
+                    ]
+                ),
+                serials=("TEST-000001",),
+                enclosures={"ES24N": 0},
+                contract_type="STANDARD",
+            ),
+        ),
     ],
 )
 def test__parse_legacy_license(text, result):
