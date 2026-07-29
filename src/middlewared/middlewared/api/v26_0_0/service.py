@@ -8,7 +8,8 @@ from middlewared.api.base import BaseModel
 __all__ = [
     "ServiceEntry", "ServiceStartedArgs", "ServiceStartedResult",
     "ServiceStartedOrEnabledArgs", "ServiceStartedOrEnabledResult",
-    "ServiceUpdateArgs", "ServiceUpdateResult", "ServiceControlArgs", "ServiceControlResult",
+    "ServiceUpdateArgs", "ServiceUpdateResult",
+    "ServiceOptions", "ServiceControlArgs", "ServiceControlResult",
 ]
 
 
