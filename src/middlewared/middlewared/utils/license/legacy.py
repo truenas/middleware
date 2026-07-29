@@ -25,6 +25,10 @@ injection buckets mirror how today's gates read a legacy license:
   outside the license, but the model half of that gate is dropped, so the flag
   is injected regardless of model to keep every legacy holder with the hardware
   able to use RDMA.
+- every legacy license: KMIP. Its matrix vector is key-only on both hardware
+  sides and no legacy license can carry a KMIP key, while key management has no
+  license gate at all today, so every legacy holder can already use it. The flag
+  is injected regardless of model so nobody loses key management on upgrade.
 - every legacy license: DIRECTORY_SERVICES, which gates directory-services
   authentication to the UI and API rather than directory services themselves.
   Its matrix vector is key-only on both hardware sides, so the flag is injected
@@ -77,6 +81,7 @@ _ALL_LEGACY_INJECT: frozenset[LicenseFeature] = frozenset(
         LicenseFeature.NETWORK_FEC,
         LicenseFeature.RDMA,
         LicenseFeature.DIRECTORY_SERVICES,
+        LicenseFeature.KMIP,
     }
 )
 _ENT_ONLY_INJECT: frozenset[LicenseFeature] = frozenset(

@@ -46,6 +46,8 @@ POLICY: Mapping[str, Rule] = MappingProxyType(
         # list repeats the ES24N code, since the enclosure counts are built last-wins rather than summed, so
         # a trailing zero-quantity entry would leave the count at zero and suppress the injected key.
         LicenseFeature.JBOF: TARGET_VECTORS[LicenseFeature.JBOF],
+        # TODO: KMIP needs webui ticket as well to remove/update gate
+        LicenseFeature.KMIP: TARGET_VECTORS[LicenseFeature.KMIP],
         LicenseFeature.NETWORK_FEC: TARGET_VECTORS[LicenseFeature.NETWORK_FEC],
         LicenseFeature.NFS_SNAPSHOT: TARGET_VECTORS[LicenseFeature.NFS_SNAPSHOT],
         LicenseFeature.NVMEOF_SPDK: TARGET_VECTORS[LicenseFeature.NVMEOF_SPDK],
