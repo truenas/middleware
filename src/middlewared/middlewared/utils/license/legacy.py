@@ -29,6 +29,10 @@ injection buckets mirror how today's gates read a legacy license:
   sides and no legacy license can carry a KMIP key, while key management has no
   license gate at all today, so every legacy holder can already use it. The flag
   is injected regardless of model so nobody loses key management on upgrade.
+- every legacy license: WEBSHARE. Its matrix vector is key-only on both hardware
+  sides and no legacy license can carry a Webshare key, while Webshare has no
+  license gate at all today, so every legacy holder can already use it. The flag
+  is injected regardless of model so nobody loses shares on upgrade.
 - every legacy license: DIRECTORY_SERVICES, which gates directory-services
   authentication to the UI and API rather than directory services themselves.
   Its matrix vector is key-only on both hardware sides, so the flag is injected
@@ -82,6 +86,7 @@ _ALL_LEGACY_INJECT: frozenset[LicenseFeature] = frozenset(
         LicenseFeature.RDMA,
         LicenseFeature.DIRECTORY_SERVICES,
         LicenseFeature.KMIP,
+        LicenseFeature.WEBSHARE,
     }
 )
 _ENT_ONLY_INJECT: frozenset[LicenseFeature] = frozenset(

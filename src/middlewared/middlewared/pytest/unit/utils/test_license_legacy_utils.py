@@ -36,6 +36,7 @@ _ALL_LEGACY_INJECT = [
     "STIG",
     "TRUESEARCH",
     "VMS",
+    "WEBSHARE",
 ]
 
 
@@ -73,6 +74,7 @@ _ALL_LEGACY_INJECT = [
                         "SMB_VEEAM",
                         "STIG",
                         "TRUESEARCH",
+                        "WEBSHARE",
                     ],
                     support_type="GOLD",
                 ),
@@ -110,6 +112,7 @@ _ALL_LEGACY_INJECT = [
                         "STIG",
                         "TRUESEARCH",
                         "VMS",
+                        "WEBSHARE",
                     ]
                 ),
                 serials=("TEST-000001",),
@@ -164,6 +167,7 @@ _ALL_LEGACY_INJECT = [
                         "STIG",
                         "TRUESEARCH",
                         "VMS",
+                        "WEBSHARE",
                     ]
                 ),
                 serials=("TEST-000001",),
@@ -200,6 +204,7 @@ _ALL_LEGACY_INJECT = [
                         "STIG",
                         "TRUESEARCH",
                         "VMS",
+                        "WEBSHARE",
                     ]
                 ),
                 serials=("TEST-000001",),
