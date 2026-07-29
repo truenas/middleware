@@ -142,6 +142,20 @@ class ContainerService(Service):
             return
 
         legacy_config = legacy_config[0]
+        if await self.middleware.call("system.is_ha_capable"):
+            # Legacy containers were never migrated on a controller that can be paired, so
+            # there is no established path here and no reason to take the risk of inventing
+            # one during a failover event. The pool is cleared so this is not reconsidered
+            # on every boot; nothing on disk is touched, the legacy datasets stay as they
+            # are under `.ix-virt` if some user somehow was still using it.
+            self.logger.warning(
+                "Legacy virt pool was found set but this system is HA capable; migration skipped."
+            )
+            await self.middleware.call(
+                "datastore.update", "virt.global", legacy_config["id"], {"pool": None},
+            )
+            return
+
         if not await self.middleware.call("container.license_active"):
             # Returning before virt_global.pool is cleared leaves the legacy
             # configuration intact, so the migration runs on a later boot once
