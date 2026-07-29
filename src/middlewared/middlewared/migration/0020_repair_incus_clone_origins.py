@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import typing
 
+from middlewared.api.current import ZFSResourceQuery
+
 
 if typing.TYPE_CHECKING:
     from middlewared.main import Middleware
@@ -23,10 +25,16 @@ async def migrate(middleware: Middleware) -> None:
 
     Fresh upgraders have no ``container.container`` rows yet when this runs (the
     incus migration fires later, on ``system.ready``), so this is a no-op for them -
-    they are handled inside the migration itself. Best-effort throughout: nothing
-    here raises, so a system that cannot be repaired is left as it was rather than
-    having the migration re-run on every subsequent boot.
+    they are handled inside the migration itself. Best-effort throughout: a row that
+    cannot be repaired is logged and skipped rather than failing the migration.
     """
+    if await middleware.call("system.is_ha_capable"):
+        # Gated on the hardware rather than the HA license, so this never runs on a
+        # controller that can be paired. A licensed system has nothing to repair in any
+        # case: the incus migration hangs off `system.ready`, which HA ignores, so it
+        # never ran there, and its pools are not imported yet when migrations do.
+        return
+
     containers = await middleware.call("datastore.query", "container.container")
     for container in containers:
         dataset = container["dataset"]
@@ -57,7 +65,10 @@ async def migrate(middleware: Middleware) -> None:
     for pool in sorted({container["dataset"].split("/")[0] for container in containers}):
         # Skipped when the pool is not imported or the legacy tree is already gone,
         # so this does not log a failure for every dataset it cannot reach.
-        if not await middleware.call("zfs.resource.query", {"paths": [f"{pool}/.ix-virt"], "properties": None}):
+        if not await middleware.call2(
+            middleware.services.zfs.resource.query_impl,
+            ZFSResourceQuery(paths=[f"{pool}/.ix-virt"], properties=None),
+        ):
             continue
 
         await middleware.call("container.restore_legacy_parent_mountpoints", pool)
