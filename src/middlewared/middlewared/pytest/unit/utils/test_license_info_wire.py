@@ -67,6 +67,7 @@ LEGACY_EXPECTED = {
         _legacy_feature("SMB_VEEAM"),
         _legacy_feature("STIG"),
         _legacy_feature("TRUESEARCH"),
+        _legacy_feature("WEBSHARE"),
     ],
     "serials": ["TEST-000001", "TEST-000002"],
     "enclosures": {"E24": 3, "E16": 2},

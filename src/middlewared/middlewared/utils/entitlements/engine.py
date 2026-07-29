@@ -62,6 +62,7 @@ FEATURE_DISPLAY_NAMES: Mapping[str, str] = {
     LicenseFeature.STIG: "STIG and FIPS",
     LicenseFeature.TRUESEARCH: "TrueSearch",
     LicenseFeature.VMS: "virtual machines",
+    LicenseFeature.WEBSHARE: "Webshare",
     LicenseFeature.ZFSTIER: "ZFS tiering",
     DerivedEntitlement.HA: "high availability",
     DerivedEntitlement.PROACTIVE_SUPPORT: "proactive support",

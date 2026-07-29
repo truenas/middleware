@@ -3,6 +3,8 @@ from __future__ import annotations
 import errno
 from typing import Any, TYPE_CHECKING
 
+from truenas_pylicensed.features import LicenseFeature
+
 from middlewared.api import api_method
 from middlewared.api.current import (
     SharingWebshareEntry, SharingWebshareCreate, SharingWebshareCreateArgs, SharingWebshareCreateResult,
@@ -143,6 +145,14 @@ class SharingWebshareService(SharingService[SharingWebshareEntry]):
         verrors: ValidationErrors,
         old: SharingWebshareEntry | None = None,
     ) -> None:
+        # An update that leaves the share disabled is let through even without the entitlement,
+        # so a system that has lost it can still turn a share off instead of having to delete it.
+        # Everything else, creating a share included, stays gated.
+        if old is None or data.enabled:
+            entitlement = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.WEBSHARE)
+            if not entitlement.entitled:
+                verrors.add(schema_name, entitlement.message)
+
         await self.validate_share_name(data.name, schema_name, verrors, old)
 
         await self.validate_path_field(data, schema_name, verrors, split_path=True)
