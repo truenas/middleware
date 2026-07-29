@@ -96,6 +96,7 @@ def test_live_policy_shape():
         LicenseFeature.DIRECTORY_SERVICES,
         LicenseFeature.FIBRECHANNEL,
         LicenseFeature.JBOF,
+        LicenseFeature.KMIP,
         LicenseFeature.ZFSTIER,
         LicenseFeature.APPS,
         LicenseFeature.CONTAINERS,
@@ -116,6 +117,7 @@ def test_live_policy_shape():
     assert isinstance(POLICY[LicenseFeature.DIRECTORY_SERVICES], Vector)
     assert isinstance(POLICY[LicenseFeature.FIBRECHANNEL], Vector)
     assert isinstance(POLICY[LicenseFeature.JBOF], Vector)
+    assert isinstance(POLICY[LicenseFeature.KMIP], Vector)
     assert isinstance(POLICY[LicenseFeature.ZFSTIER], Vector)
     assert isinstance(POLICY[LicenseFeature.APPS], Vector)
     assert isinstance(POLICY[LicenseFeature.CONTAINERS], Vector)
@@ -233,6 +235,7 @@ KEY_ONLY_TABLE = [
         LicenseFeature.SMB_FASTPATH,
         LicenseFeature.SMB_VEEAM,
         LicenseFeature.DIRECTORY_SERVICES,
+        LicenseFeature.KMIP,
     ],
 )
 @pytest.mark.parametrize("hardware_class,state,entitled,reason,column", KEY_ONLY_TABLE)
@@ -252,6 +255,7 @@ def test_key_only_vector_behavior(feature, hardware_class, state, entitled, reas
         (LicenseFeature.TRUESEARCH, "TrueSearch"),
         (LicenseFeature.RDMA, "RDMA"),
         (LicenseFeature.SMB_FASTPATH, "SMB ZFS fastpath"),
+        (LicenseFeature.KMIP, "KMIP key management"),
     ],
 )
 def test_key_only_key_missing_message_uses_display_name(feature, display):

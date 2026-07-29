@@ -51,6 +51,7 @@ FEATURE_DISPLAY_NAMES: Mapping[str, str] = {
     LicenseFeature.DIRECTORY_SERVICES: "directory services authentication",
     LicenseFeature.FIBRECHANNEL: "Fibre Channel",
     LicenseFeature.JBOF: "NVMe expansion shelf",
+    LicenseFeature.KMIP: "KMIP key management",
     LicenseFeature.NETWORK_FEC: "FEC mode configuration",
     LicenseFeature.NFS_SNAPSHOT: "NFS snapshot exposure",
     LicenseFeature.NVMEOF_SPDK: "NVMe-oF SPDK backend",
