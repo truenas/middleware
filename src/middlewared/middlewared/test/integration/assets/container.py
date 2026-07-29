@@ -89,7 +89,7 @@ def container(image, options=None, start=False, startup_script=None, name="test"
     finally:
         # A test may legitimately delete the container itself.
         if call("container.query", [["id", "=", container["id"]]]):
-            if call("container.get_instance", container["id"])["status"]["state"] == "RUNNING":
+            if call("container.get_instance", container["id"])["status"]["state"] != "STOPPED":
                 call("container.stop", container["id"], {"force": True}, job=True)
             call("container.delete", container["id"], job=True)
 
