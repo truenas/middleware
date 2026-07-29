@@ -1,3 +1,5 @@
+from typing import Any
+
 from middlewared.plugins.nfs import NFSProtocol
 from middlewared.service import Service, private
 
@@ -11,7 +13,7 @@ class NFSService(Service):
         datastore_extend = 'nfs.nfs_extend'
 
     @private
-    async def sec(self, config, has_nfs_principal):
+    async def sec(self, config: dict[str, Any], has_nfs_principal: bool) -> list[str]:
         if NFSProtocol.NFSv4 in config["protocols"]:
             if config["v4_krb"]:
                 return ["krb5", "krb5i", "krb5p"]

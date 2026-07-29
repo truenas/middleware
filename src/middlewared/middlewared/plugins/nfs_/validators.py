@@ -1,10 +1,11 @@
 from ipaddress import ip_address, ip_network
 import re
+from typing import Any
 
 from middlewared.service import ValidationErrors
 
 
-def confirm_unique(schema_name: str, item_name: str, data: dict, verrors: ValidationErrors):
+def confirm_unique(schema_name: str, item_name: str, data: dict[str, Any], verrors: ValidationErrors) -> None:
     """ Generat validation errors if list includes non-unique items """
     s = set()
     not_unique = []
@@ -21,7 +22,8 @@ def confirm_unique(schema_name: str, item_name: str, data: dict, verrors: Valida
 
 
 def sanitize_networks(
-    schema_name: str, networks: list, verrors: ValidationErrors, strict_test=True, convert=False
+    schema_name: str, networks: list[str], verrors: ValidationErrors, strict_test: bool = True,
+    convert: bool = False
 ) -> list[str] | None:
     """ Entries must be acceptible to ip_network and make all valid entries CIDR formatted """
     not_valid = []
@@ -44,9 +46,9 @@ def sanitize_networks(
     elif found_all_networks:
         verrors.add(
             f"{schema_name}.networks",
-            f"Do not use {v} to represent all-networks.  "
+            f"Do not use {found_all_networks} to represent all-networks.  "
             f"No entry is required to configure 'allow everybody'.  "
-            f"Please remove {v}."
+            f"Please remove {found_all_networks}."
         )
     elif convert:
         # Perform the courtesy conversion to CIDR format
@@ -55,7 +57,7 @@ def sanitize_networks(
     return networks
 
 
-def sanitize_hosts(schema_name: str, hosts: list, verrors: ValidationErrors):
+def sanitize_hosts(schema_name: str, hosts: list[str], verrors: ValidationErrors) -> None:
     """ host entries cannot contain spaces or quotes """
     regex = re.compile(r'.*[\s"]')
     not_valid = []
@@ -83,7 +85,7 @@ def sanitize_hosts(schema_name: str, hosts: list, verrors: ValidationErrors):
     if found_all_hosts:
         verrors.add(
             f"{schema_name}.hosts",
-            f"Do not use {v} to represent all-hosts.  "
+            f"Do not use {found_all_hosts} to represent all-hosts.  "
             f"No entry is required to configure 'allow everybody'.  "
-            f"Please remove {v} or replace with '*'."
+            f"Please remove {found_all_hosts} or replace with '*'."
         )

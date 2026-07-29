@@ -3,7 +3,7 @@ import re
 RE_DOMAIN_WILDCARD = re.compile(r'\*|\?|\[|\]')
 
 
-def get_domain(hostname):
+def get_domain(hostname: str) -> str | None:
     """
     return the 'domain' part of the hostname
     e.g. gruff.billy.goat will return 'billy.goat'
@@ -22,7 +22,7 @@ def leftmost_has_wildcards(hostname: str) -> bool:
     return bool(RE_DOMAIN_WILDCARD.search(hostname.split('.')[0]))
 
 
-def get_wildcard_domain(hostname):
+def get_wildcard_domain(hostname: str) -> str | None:
     """
     If the left most level of the supplied hostname contains valid wildcard characters
        and there is more than one level in the name,
