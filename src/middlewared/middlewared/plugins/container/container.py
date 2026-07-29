@@ -374,8 +374,9 @@ class ContainerService(CRUDService):
         # Destroy the dataset first and only remove the DB/libvirt records once it is
         # actually gone, so a failed destroy never orphans the dataset with no
         # container row pointing at it. recursive=True mirrors the apps stack so a
-        # container that has snapshots can still be removed; bypass=True because the
-        # dataset lives under the now delete-guarded .truenas_containers.
+        # container that has snapshots can still be removed - note it also takes
+        # anything cloned from those snapshots; bypass=True because the dataset lives
+        # under the now delete-guarded .truenas_containers.
         try:
             failed = self.call_sync2(
                 self.s.zfs.resource.destroy_impl, container['dataset'], recursive=True, bypass=True,
