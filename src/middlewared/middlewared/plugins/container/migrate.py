@@ -261,6 +261,11 @@ class ContainerService(Service):
             container_instance = None
             try:
                 if not processed_parents_mountpoints:
+                    # Armed before the properties are touched, for the same reason the
+                    # per-container revert is: this flag also decides whether the parents
+                    # get restored at the end, and the first of the two can be applied
+                    # before the second one fails.
+                    processed_parents_mountpoints = True
                     for ds in (f"{pool}/.ix-virt", f"{pool}/.ix-virt/containers"):
                         self.middleware.call_sync(
                             "pool.dataset.update_impl",
@@ -270,7 +275,6 @@ class ContainerService(Service):
                                 iprops={"mountpoint"}
                             )
                         )
-                    processed_parents_mountpoints = True
 
                 # Armed before the properties are touched: a partial apply has to be
                 # reverted too, and update_impl can fail between the two of them.
