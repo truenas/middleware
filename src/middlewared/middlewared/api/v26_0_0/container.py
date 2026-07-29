@@ -166,7 +166,9 @@ class ContainerUpdateResult(BaseModel):
 class ContainerDeleteOptions(BaseModel):
     force: bool = Field(
         default=False,
-        description="Force deletion even if the container is currently running by stopping it first.",
+        description=(
+            "Force deletion of a container that is not stopped (running or suspended) by stopping it first."
+        ),
     )
 
 
