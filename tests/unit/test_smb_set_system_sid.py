@@ -34,7 +34,6 @@ def _smb_service(current_sid, *, idmap_started=True, sid_exc=None):
     """
     svc = object.__new__(SMBService)
     svc.middleware = MagicMock()
-    svc.s = MagicMock()
     svc.logger = logging.getLogger("test_smb_set_system_sid")
 
     def call_sync(name, *args, **kwargs):
