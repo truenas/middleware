@@ -106,7 +106,8 @@ class ContainerFSAttachmentDelegate(FSAttachmentDelegate):
         for attachment in attachments:
             try:
                 container = await self.middleware.call('container.get_instance', attachment['id'])
-                await self.middleware.call('container.delete_container_from_db_and_libvirt', container)
+                await self.middleware.call('container.delete_container_from_libvirt', container)
+                await self.middleware.call('container.delete_container_from_db', container)
             except Exception:
                 self.logger.warning('Unable to delete %r container', attachment['id'])
         else:

@@ -369,9 +369,10 @@ class ContainerService(CRUDService):
                     f'Container {container["name"]!r} is {container["status"]["state"].lower()}. Stop it first, '
                     f'or pass force=True to stop and delete it.'
                 )
-            self.middleware.call_sync('container.stop', id_, {'force': True}).wait_sync(raise_error=True)
 
-        # Destroy the dataset first and only remove the DB/libvirt records once it is
+        self.delete_container_from_libvirt(container)
+
+        # Destroy the dataset first and only remove the DB records once it is
         # actually gone, so a failed destroy never orphans the dataset with no
         # container row pointing at it. recursive=True mirrors the apps stack so a
         # container that has snapshots can still be removed - note it also takes
@@ -388,17 +389,19 @@ class ContainerService(CRUDService):
         if failed is not None:
             raise CallError(f'Failed to delete container {container["name"]!r} dataset: {failed}')
 
-        self.delete_container_from_db_and_libvirt(container)
+        self.delete_container_from_db(container)
         self.middleware.call_sync('etc.generate', 'libvirt_guests')
 
     @private
-    def delete_container_from_db_and_libvirt(self, container):
+    def delete_container_from_libvirt(self, container):
         pylibvirt_container = self.middleware.call_sync("container.pylibvirt_container", container)
         try:
             self.middleware.libvirt_domains_manager.containers.delete(pylibvirt_container)
         except DomainDoesNotExistError:
             pass
 
+    @private
+    def delete_container_from_db(self, container):
         for device in container['devices']:
             self.middleware.call_sync('datastore.delete', 'container.device', device['id'])
 
