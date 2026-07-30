@@ -1907,17 +1907,20 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
             self._save_coverage()
             os._exit(exit_code)
 
+        exitcode = 0
         try:
             self.loop.run_forever()
-        except RuntimeError as e:
-            if e.args[0] != "Event loop is closed":
-                raise
+        except BaseException as e:
+            if not (isinstance(e, RuntimeError) and e.args[0] == "Event loop is closed"):
+                sys.stderr.write("Unhandled exception in event loop:\n")
+                traceback.print_exc(file=sys.stderr)
+                exitcode = 1
 
         self._save_coverage()
 
         # Use os._exit rather than sys.exit to avoid Python-level cleanup (atexit handlers, thread joins, etc.)
         # that could block in this abnormal shutdown path.
-        os._exit(0)
+        os._exit(exitcode)
 
     async def __initialize(self):
         self._systemd_notifier = SystemdNotifier()
