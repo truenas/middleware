@@ -143,7 +143,8 @@ def test__enable_storm_vs_service_stop(iscsi_running):
     marker = kmsg_marker('storm')
 
     for cycle in range(SERVICE_CYCLES):
-        call('service.start', SERVICE_NAME)
+        call('service.control', 'START', SERVICE_NAME, job=True)
+        assert call('service.started', SERVICE_NAME) is True
 
         storm = f'''
 MGMT={ISCSI_SYSFS}/mgmt
@@ -169,9 +170,9 @@ true
         run_script(storm)
         # Stop the service while the detached writers are still hammering the
         # enabled attributes; this unregisters every target underneath them.
-        call('service.stop', SERVICE_NAME)
+        call('service.control', 'STOP', SERVICE_NAME, job=True)
 
-    call('service.start', SERVICE_NAME)
+    call('service.control', 'START', SERVICE_NAME, job=True)
 
     log_delta = dmesg_since(marker)
     assert_no_crash(log_delta)
