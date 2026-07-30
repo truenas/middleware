@@ -6,7 +6,6 @@ import time
 from typing import Literal
 
 from pydantic import Field, field_validator
-from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.api import api_method
 from middlewared.api.base import BaseModel, NotRequired, IPvAnyAddress, IPv4Address, IPv6Address
@@ -341,17 +340,6 @@ class JBOFService(CRUDService):
             for name, quantity in license_.enclosures.items():
                 if name == 'ES24N':
                     result += quantity
-
-        # Only worth a second round-trip to the license daemon once the license
-        # actually lists shelves; most systems own none.
-        if result:
-            entitlement = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.JBOF)
-            if not entitlement.entitled:
-                self.logger.warning(
-                    'License lists %d ES24N enclosure(s) but this system is not entitled to attach them (%s)',
-                    result, entitlement.reason
-                )
-                return 0
 
         return result
 
