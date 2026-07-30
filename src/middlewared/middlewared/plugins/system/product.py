@@ -181,12 +181,3 @@ class SystemService(Service):
             return info.has_feature(name)
 
         return False
-
-
-async def hook_license_update(middleware, had_license, *args, **kwargs):
-    if not had_license and await middleware.call("system.product_type") == "ENTERPRISE":
-        await middleware.call("system.advanced.update", {"autotune": True})
-
-
-async def setup(middleware):
-    middleware.register_hook("system.post_license_update", hook_license_update)

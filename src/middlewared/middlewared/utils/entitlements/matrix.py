@@ -18,6 +18,7 @@ if typing.TYPE_CHECKING:
 TARGET_VECTORS: Mapping[LicenseFeature, Vector] = MappingProxyType(
     {
         LicenseFeature.APPS: Vector(1, 1, 0, 1, 0, 1),
+        # TODO: Autotune needs fixes in the autotune script itself
         LicenseFeature.AUTOTUNE: Vector(0, 0, 0, 1, 0, 0),
         LicenseFeature.CATALOG_ENTERPRISE_TRAIN: Vector(0, 0, 0, 1, 0, 0),
         LicenseFeature.CONTAINERS: Vector(1, 1, 0, 1, 0, 1),
