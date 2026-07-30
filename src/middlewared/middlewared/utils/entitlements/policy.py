@@ -37,15 +37,6 @@ POLICY: Mapping[str, Rule] = MappingProxyType(
         LicenseFeature.DEDUP: TARGET_VECTORS[LicenseFeature.DEDUP],  # TODO: Validate logic with old impl
         LicenseFeature.DIRECTORY_SERVICES: TARGET_VECTORS[LicenseFeature.DIRECTORY_SERVICES],
         LicenseFeature.FIBRECHANNEL: TARGET_VECTORS[LicenseFeature.FIBRECHANNEL],
-        # TODO: JBOF is the only entry in this policy whose vector has ce_k = 0, so a system whose chassis
-        # does not detect as TrueNAS hardware is denied even when its license carries the key and lists the
-        # shelves. Confirm that against product intent.
-        # TODO: The gate this replaced never consulted a feature key at all. Check licenses in the field to
-        # confirm no system that could attach a shelf before is denied now. Two shapes to look for: a license
-        # that would land on the CE side with a license but no key, and a license whose additional-hardware
-        # list repeats the ES24N code, since the enclosure counts are built last-wins rather than summed, so
-        # a trailing zero-quantity entry would leave the count at zero and suppress the injected key.
-        LicenseFeature.JBOF: TARGET_VECTORS[LicenseFeature.JBOF],
         # TODO: KMIP needs webui ticket as well to remove/update gate
         LicenseFeature.KMIP: TARGET_VECTORS[LicenseFeature.KMIP],
         LicenseFeature.NETWORK_FEC: TARGET_VECTORS[LicenseFeature.NETWORK_FEC],

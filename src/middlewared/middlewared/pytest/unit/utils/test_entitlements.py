@@ -93,7 +93,6 @@ def test_live_policy_shape():
         LicenseFeature.DEDUP,
         LicenseFeature.DIRECTORY_SERVICES,
         LicenseFeature.FIBRECHANNEL,
-        LicenseFeature.JBOF,
         LicenseFeature.KMIP,
         LicenseFeature.ZFSTIER,
         LicenseFeature.APPS,
@@ -115,7 +114,6 @@ def test_live_policy_shape():
     assert isinstance(POLICY[LicenseFeature.DEDUP], Vector)
     assert isinstance(POLICY[LicenseFeature.DIRECTORY_SERVICES], Vector)
     assert isinstance(POLICY[LicenseFeature.FIBRECHANNEL], Vector)
-    assert isinstance(POLICY[LicenseFeature.JBOF], Vector)
     assert isinstance(POLICY[LicenseFeature.KMIP], Vector)
     assert isinstance(POLICY[LicenseFeature.ZFSTIER], Vector)
     assert isinstance(POLICY[LicenseFeature.APPS], Vector)
@@ -355,45 +353,6 @@ def test_fibrechannel_vector_behavior(hardware_class, state, entitled, reason, c
     assert entitlement.reason == reason
     assert entitlement.column == column
     assert entitlement.message == message
-
-
-# JBOF is a live matrix Vector (0,0,0,1,0,0) and the only live vector whose CE
-# key cell is 0: iX hardware plus the key is the sole entitled cell. Because the
-# reason is derived from the key cell for this hardware side before license
-# presence is looked at, every CE-side row -- unlicensed ones included -- comes
-# back WRONG_HARDWARE rather than NO_LICENSE or KEY_MISSING.
-JBOF_TABLE = [
-    (HardwareClass.TRUENAS_HW, "none", False, "NO_LICENSE", "HW"),
-    (HardwareClass.TRUENAS_HW, "nokey", False, "KEY_MISSING", "HW+L"),
-    (HardwareClass.TRUENAS_HW, "key", True, "ENTITLED", "HW+K"),
-    (HardwareClass.MINI, "none", False, "WRONG_HARDWARE", "CE"),
-    (HardwareClass.MINI, "nokey", False, "WRONG_HARDWARE", "CE+L"),
-    (HardwareClass.MINI, "key", False, "WRONG_HARDWARE", "CE+K"),
-    (HardwareClass.GENERIC, "none", False, "WRONG_HARDWARE", "CE"),
-    (HardwareClass.GENERIC, "nokey", False, "WRONG_HARDWARE", "CE+L"),
-    (HardwareClass.GENERIC, "key", False, "WRONG_HARDWARE", "CE+K"),
-]
-
-
-@pytest.mark.parametrize("hardware_class,state,entitled,reason,column", JBOF_TABLE)
-def test_jbof_vector_behavior(hardware_class, state, entitled, reason, column):
-    facts = make_facts(hardware_class=hardware_class, license=_license_for(LicenseFeature.JBOF, state))
-    entitlement = check_entitlement(LicenseFeature.JBOF, facts)
-    assert entitlement.entitled is entitled
-    assert entitlement.reason == reason
-    assert entitlement.column == column
-
-
-def test_jbof_wrong_hardware_message_uses_display_name():
-    facts = make_facts(hardware_class=HardwareClass.GENERIC, license=make_license(feature_names=("JBOF",)))
-    entitlement = check_entitlement(LicenseFeature.JBOF, facts)
-    assert entitlement.message == "The NVMe expansion shelf feature is not available on this system's hardware."
-
-
-def test_jbof_has_no_bespoke_message():
-    # jbof.validate keeps its own hard-coded wording, so an engine override
-    # would never reach a user.
-    assert LicenseFeature.JBOF not in FEATURE_MESSAGES
 
 
 # APPS, CONTAINERS and VMS are live matrix Vectors (1,1,0,1,0,1): granted with no
