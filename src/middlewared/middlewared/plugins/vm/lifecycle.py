@@ -4,7 +4,7 @@ import asyncio
 import os
 import typing
 
-from truenas_pylibvirt import VmBootloader, VmCpuMode
+from truenas_pylibvirt import Time, VmBootloader, VmCpuMode
 
 from middlewared.api.current import QueryOptions, VMEntry, VMStartOptions, VMStopOptions
 from middlewared.service import CallError, ServiceContext
@@ -116,6 +116,7 @@ def pylibvirt_vm(
     data.update({
         'bootloader': VmBootloader(data['bootloader']),
         'cpu_mode': VmCpuMode(data['cpu_mode']),
+        'time': Time(data['time']),
         'nvram_path': os.path.join(SYSTEM_NVRAM_FOLDER_PATH, get_vm_nvram_file_name(data['id'], data['name'])),
         'tpm_path': os.path.join(SYSTEM_TPM_FOLDER_PATH, get_vm_tpm_state_dir_name(data['id'], data['name'])),
         'devices': devices,
