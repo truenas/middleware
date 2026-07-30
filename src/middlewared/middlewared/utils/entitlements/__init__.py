@@ -2,7 +2,7 @@
 
 Import-safe and stateless: holds no middleware object and performs no I/O.
 Every feature's entitlement is a pure function of a small set of facts
-(hardware class, HA capability, license) evaluated against a policy.
+(hardware class, license) evaluated against a policy.
 
 A policy entry is one of a few rule kinds: a matrix ``Vector`` (resolved by
 column against the product feature matrix), a ``LegacyRule`` (an arbitrary

@@ -63,7 +63,9 @@ POLICY: Mapping[str, Rule] = MappingProxyType(
         # TODO: Validate logic with old impl / Remember that zfstier client has license
         # logic as well which should be reviewed too
         LicenseFeature.ZFSTIER: TARGET_VECTORS[LicenseFeature.ZFSTIER],
-        # TODO: Validate logic with old impl
+        # HA is a license *type*, not a feature key, so it deliberately has no TARGET_VECTORS
+        # entry. There is no LicenseFeature.HA to look up, which makes the HW+K/CE+K columns
+        # meaningless for it: only LicenseInfo.type can decide.
         DerivedEntitlement.HA: LicenseTypeRule(allowed_types=frozenset({LicenseType.ENTERPRISE_HA})),
         DerivedEntitlement.PROACTIVE_SUPPORT: TierRule(  # TODO: Validate logic with old impl
             feature=LicenseFeature.SUPPORT,
