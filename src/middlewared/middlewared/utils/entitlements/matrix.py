@@ -25,7 +25,6 @@ TARGET_VECTORS: Mapping[LicenseFeature, Vector] = MappingProxyType(
         LicenseFeature.DEDUP: Vector(1, 0, 0, 1, 0, 1),
         LicenseFeature.DIRECTORY_SERVICES: Vector(0, 0, 0, 1, 0, 1),
         LicenseFeature.FIBRECHANNEL: Vector(0, 0, 1, 1, 0, 1),
-        LicenseFeature.JBOF: Vector(0, 0, 0, 1, 0, 0),
         LicenseFeature.KMIP: Vector(0, 0, 0, 1, 0, 1),
         LicenseFeature.LTS: Vector(0, 0, 1, 1, 0, 1),
         LicenseFeature.MISSION_CRITICAL: Vector(0, 0, 0, 1, 0, 1),
