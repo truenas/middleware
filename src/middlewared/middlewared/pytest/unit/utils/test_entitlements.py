@@ -59,17 +59,15 @@ def make_license(
 def make_facts(
     *,
     hardware_class: HardwareClass,
-    is_ha_capable: bool = False,
     license: LicenseInfo | None = None,
 ) -> EntitlementFacts:
     return EntitlementFacts(
         hardware_class=hardware_class,
-        is_ha_capable=is_ha_capable,
         license=license,
     )
 
 
-def facts_for_column(feature: str, column: str, *, is_ha_capable: bool = False) -> EntitlementFacts:
+def facts_for_column(feature: str, column: str) -> EntitlementFacts:
     hardware_class = HardwareClass.TRUENAS_HW if column in ("HW", "HW+L", "HW+K") else HardwareClass.GENERIC
     if column in ("CE", "HW"):
         license = None
@@ -77,7 +75,7 @@ def facts_for_column(feature: str, column: str, *, is_ha_capable: bool = False) 
         license = make_license(feature_names=(feature,))
     else:  # HW+L / CE+L: licensed, but without this feature's key
         license = make_license(feature_names=())
-    return make_facts(hardware_class=hardware_class, is_ha_capable=is_ha_capable, license=license)
+    return make_facts(hardware_class=hardware_class, license=license)
 
 
 # (a) Matrix fixture: every feature vector against every column resolves to the matrix cell.
@@ -437,10 +435,10 @@ def test_workload_key_missing_message_uses_display_name(feature, display):
     assert entitlement.message == f"This system's license does not include the {display} feature."
 
 
-# HA capability is not a prerequisite for SPDK and no longer grants it: an
-# HA capable system without a license is denied like any other unlicensed system.
-def test_nvmeof_spdk_ha_capable_unlicensed_denied():
-    facts = make_facts(hardware_class=HardwareClass.GENERIC, is_ha_capable=True)
+# Nothing about the platform grants SPDK: an unlicensed system is denied on the
+# license alone, whatever else is true of the hardware it runs on.
+def test_nvmeof_spdk_unlicensed_denied_regardless_of_platform():
+    facts = make_facts(hardware_class=HardwareClass.GENERIC)
     entitlement = check_entitlement(LicenseFeature.NVMEOF_SPDK, facts)
     assert entitlement.entitled is False
     assert entitlement.reason == "NO_LICENSE"
@@ -733,3 +731,24 @@ def test_ha_unlicensed_is_no_license():
     entitlement = check_entitlement(DerivedEntitlement.HA, make_facts(hardware_class=HardwareClass.TRUENAS_HW))
     assert entitlement.entitled is False
     assert entitlement.reason == "NO_LICENSE"
+
+
+# HA is decided by the license type alone. Hardware class only names the column, so an
+# ENTERPRISE_HA license grants it on every hardware class and an ENTERPRISE_SINGLE one
+# grants it on none. These fail if HA is ever given a matrix Vector, since a Vector would
+# make the answer depend on the hardware side and on a LicenseFeature.HA key that does
+# not exist.
+@pytest.mark.parametrize("hardware_class", [HardwareClass.GENERIC, HardwareClass.MINI])
+def test_ha_license_type_grants_on_any_hardware_class(hardware_class):
+    facts = make_facts(hardware_class=hardware_class, license=make_license(type_=LicenseType.ENTERPRISE_HA))
+    assert check_entitlement(DerivedEntitlement.HA, facts).entitled is True
+
+
+def test_ha_not_granted_by_hardware_class_alone():
+    facts = make_facts(
+        hardware_class=HardwareClass.TRUENAS_HW,
+        license=make_license(type_=LicenseType.ENTERPRISE_SINGLE),
+    )
+    entitlement = check_entitlement(DerivedEntitlement.HA, facts)
+    assert entitlement.entitled is False
+    assert entitlement.reason == "WRONG_LICENSE_TYPE"

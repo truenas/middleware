@@ -216,3 +216,27 @@ _ALL_LEGACY_INJECT = [
 )
 def test__parse_legacy_license(text, result):
     assert parse_legacy_license(text) == result
+
+
+# A legacy blob carries no license type of its own: the second (HA) serial is the only
+# thing that distinguishes an HA license from a single-head one, and it is what the
+# translation turns into LicenseType.
+@pytest.mark.parametrize(
+    "text,type_",
+    [
+        # H10 with system_serial_ha = TEST-000002.
+        (
+            "AUgxMAAAAAAAAAAAAAAAAABURVNULTAwMDAwMQAAAAAAVEVTVC0wMDAwMDIAAAAAAAQAADIwMjYwNDA4AAAAABYAAAAAAAAAaVhzeXN0ZW1zIE"
+            "luYy4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwAAAAAAAAAAgMCAgE=",
+            LicenseType.ENTERPRISE_HA,
+        ),
+        # X10 with an empty system_serial_ha field.
+        (
+            "AVgxMAAAAAAAAAAAAAAAAABURVNULTAwMDAwMQAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAADIwMjYwNDA4AAAAABYAAAAAAAAAaVhzeXN0ZW1zIE"
+            "luYy4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAA==",
+            LicenseType.ENTERPRISE_SINGLE,
+        ),
+    ],
+)
+def test__parse_legacy_license_ha_type(text, type_):
+    assert parse_legacy_license(text).type is type_

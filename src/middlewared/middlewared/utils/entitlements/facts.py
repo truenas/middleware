@@ -26,7 +26,5 @@ class HardwareClass(enum.Enum):
 class EntitlementFacts:
     hardware_class: HardwareClass
     """Hardware class this system belongs to."""
-    is_ha_capable: bool
-    """Whether the platform is HA capable (failover.hardware != MANUAL)."""
     license: LicenseInfo | None
     """Parsed license, or None when the system is unlicensed."""
