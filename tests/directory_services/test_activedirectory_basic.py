@@ -69,11 +69,21 @@ def test_enable_leave_activedirectory():
     assert check_ad_started() is False
 
     if not ha:
-        # Take the license away rather than the entitlement, so the real engine
-        # stays in the path and produces both the denial and its wording. An
-        # unlicensed system lands on the CE/HW column, which DIRECTORY_SERVICES
-        # grants on neither hardware side.
-        with mock('truenas.license.info_private', return_value=None):
+        # Deny the entitlement the way an unlicensed system would: that lands on
+        # the CE/HW column, which DIRECTORY_SERVICES grants on neither hardware
+        # side. The wording still comes from the engine's message table rather
+        # than being restated here, since that is what the plugin surfaces.
+        with mock('truenas.entitlements.check', args=['DIRECTORY_SERVICES', ], declaration="""
+            def mock(self, feature):
+                from middlewared.utils.entitlements import FEATURE_MESSAGES, Entitlement, Reason
+
+                return Entitlement(
+                    entitled=False,
+                    reason=Reason.NO_LICENSE,
+                    column='CE',
+                    message=FEATURE_MESSAGES[feature][Reason.NO_LICENSE],
+                )
+        """):
             with pytest.raises(ValidationErrors, match='requires an Enterprise license'):
                 call("system.general.update", {"ds_auth": True})
 
