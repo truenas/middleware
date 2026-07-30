@@ -1161,7 +1161,7 @@ class FailoverEventsService(Service):
 
     def start_containers(self):
         logger.info('Starting Containers which are set to start on boot')
-        self.middleware.create_task(self.middleware.call('container.start_on_boot'))
+        self.middleware.create_task(self.middleware.call('container.migrate_and_start_on_boot'))
 
     def stop_containers(self):
         logger.info('Trying to gracefully stop Containers')

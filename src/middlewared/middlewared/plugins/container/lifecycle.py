@@ -90,6 +90,17 @@ async def _stop_one_container(middleware, container):
 class ContainerService(Service):
 
     @private
+    async def migrate_and_start_on_boot(self):
+        """Bring containers up on boot, migrating any legacy incus ones first.
+
+        Shared by the ``system.ready`` path and the failover path so the ordering
+        lives in one place: HA systems ignore ``system.ready`` and would otherwise
+        start containers without ever migrating them.
+        """
+        await self.middleware.call('container.maybe_migrate_legacy')
+        await self.middleware.call('container.start_on_boot')
+
+    @private
     async def start_on_boot(self):
         # Reap orphaned runtime state under /run/truenas_containers/ before any
         # autostart so a fresh start can't collide with a leaked staged path
@@ -331,11 +342,6 @@ def _build_idmap_items(passthroughs):
     return items
 
 
-async def __migrate_and_start(middleware):
-    await middleware.call('container.maybe_migrate_legacy')
-    await middleware.call('container.start_on_boot')
-
-
 async def __event_system_ready(middleware, event_type, args):
     # we ignore the 'ready' event on an HA system since the failover event plugin
     # is responsible for starting this service, however, the containers still need to be
@@ -343,7 +349,7 @@ async def __event_system_ready(middleware, event_type, args):
     if await middleware.call('failover.licensed'):
         return
 
-    middleware.create_task(__migrate_and_start(middleware))
+    middleware.create_task(middleware.call('container.migrate_and_start_on_boot'))
 
 
 async def __event_system_shutdown(middleware, event_type, args):

@@ -8,7 +8,7 @@ import time
 import pytest
 import websocket
 
-from truenas_api_client import ValidationErrors
+from truenas_api_client import ClientException, ValidationErrors
 from middlewared.test.integration.assets.account import (
     group as account_group,
     user as account_user,
@@ -16,6 +16,7 @@ from middlewared.test.integration.assets.account import (
 from middlewared.test.integration.assets.container import (
     ALPINE_IMAGE_NAME,
     UBUNTU_IMAGE_NAME,
+    VIRSH,
     configure_bridge,
     container,
     filesystem_device,
@@ -136,6 +137,38 @@ def test_container_rename(ubuntu_container):
         {"paths": [expected_dataset], "properties": ["mountpoint"]},
     )
     assert result, f"ZFS dataset {expected_dataset!r} does not exist after rename"
+
+
+def test_container_delete_running_refused(started_ubuntu_container):
+    with pytest.raises(ClientException) as exc_info:
+        call("container.delete", started_ubuntu_container["id"], job=True)
+
+    assert "Stop it first" in str(exc_info.value)
+
+    container = call("container.get_instance", started_ubuntu_container["id"])
+    assert container["status"]["state"] == "RUNNING"
+    assert call("zfs.resource.query", {"paths": [container["dataset"]], "properties": None})
+
+
+def test_container_delete_running_force(started_ubuntu_container):
+    container = started_ubuntu_container
+
+    call("container.delete", container["id"], {"force": True}, job=True)
+
+    assert not call("container.query", [["id", "=", container["id"]]])
+    assert not call("zfs.resource.query", {"paths": [container["dataset"]], "properties": None})
+    assert container["uuid"] not in ssh(f"{VIRSH} list --all")
+
+
+def test_container_delete_with_snapshot(ubuntu_container):
+    # The snapshot is taken over ssh because .truenas_containers is an internal
+    # path and the snapshot API refuses to operate on it.
+    ssh(f"zfs snapshot {ubuntu_container['dataset']}@test")
+
+    call("container.delete", ubuntu_container["id"], job=True)
+
+    assert not call("container.query", [["id", "=", ubuntu_container["id"]]])
+    assert not call("zfs.resource.query", {"paths": [ubuntu_container["dataset"]], "properties": None})
 
 
 def test_container_stop_force_after_timeout(ubuntu_container):

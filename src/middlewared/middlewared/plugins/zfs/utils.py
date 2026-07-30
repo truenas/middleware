@@ -20,7 +20,7 @@ __all__ = (
 INTERNAL_PATHS = (
     "ix-apps",
     "ix-applications",
-    ".system"
+    ".system",
 )
 
 

@@ -17,8 +17,10 @@ from middlewared.api.current import (
     ContainerDeleteArgs, ContainerDeleteResult,
     ContainerPoolChoicesArgs, ContainerPoolChoicesResult,
     ZFSResourceQuery,
+    ZFSResourceSnapshotCloneQuery,
     ZFSResourceSnapshotDestroyQuery,
 )
+from middlewared.plugins.zfs.exceptions import ZFSPathNotFoundException
 from middlewared.plugins.zfs.utils import get_encryption_info
 from middlewared.pylibvirt import gather_pylibvirt_domains_states, get_pylibvirt_domain_state
 from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
@@ -259,10 +261,18 @@ class ContainerService(CRUDService):
         # Populate dataset
         if pool == image_snapshot.split('@')[0].split('/')[0]:  # noqa
             # The container is in the same pool as images. We can just clone the image.
-            await self.middleware.call("pool.snapshot.clone", {
-                "snapshot": image_snapshot,  # noqa
-                "dataset_dst": data['dataset']
-            })
+            # Both the image snapshot and the destination live under
+            # .truenas_containers, which is an internal (delete-guarded) path, and
+            # pool.snapshot.clone has no bypass passthrough - so clone directly.
+            await self.call2(
+                self.s.zfs.resource.snapshot.clone_impl,
+                ZFSResourceSnapshotCloneQuery(
+                    snapshot=image_snapshot,  # noqa
+                    dataset=data['dataset'],
+                    bypass=True,
+                ),
+            )
+            await self.call2(self.s.zfs.resource.mount, data['dataset'])
         else:
             # The container is on the different pool. Let's replicate the image.
             source_dataset, source_snapshot = image_snapshot.split('@', 1)  # noqa
@@ -281,7 +291,7 @@ class ContainerService(CRUDService):
             ))
             await self.call2(
                 self.s.zfs.resource.snapshot.destroy_impl,
-                ZFSResourceSnapshotDestroyQuery(path=f'{data["dataset"]}@{source_snapshot}'),
+                ZFSResourceSnapshotDestroyQuery(path=f'{data["dataset"]}@{source_snapshot}', bypass=True),
             )
 
         return await self.create_with_dataset(data)
@@ -320,7 +330,7 @@ class ContainerService(CRUDService):
 
         name_changed = old['name'] != new['name']
         if name_changed:
-            if old['status']['state'] == 'RUNNING':
+            if old['status']['state'] != 'STOPPED':
                 raise CallError('Container must be stopped before renaming.')
 
             old_dataset = old['dataset']
@@ -345,24 +355,53 @@ class ContainerService(CRUDService):
         audit='Container delete',
         audit_callback=True,
     )
-    def do_delete(self, audit_callback, id_):
+    @job(lock=lambda args: f'container_delete:{args[0]}')
+    def do_delete(self, job, audit_callback, id_, options):
         """
         Delete a Container.
         """
         container = self.middleware.call_sync("container.get_instance", id_)
         audit_callback(container['name'])
-        self.delete_container_from_db_and_libvirt(container)
-        self.call_sync2(self.s.zfs.resource.destroy_impl, container['dataset'])
+
+        if container['status']['state'] != 'STOPPED':
+            if not options['force']:
+                raise CallError(
+                    f'Container {container["name"]!r} is {container["status"]["state"].lower()}. Stop it first, '
+                    f'or pass force=True to stop and delete it.'
+                )
+
+        self.delete_container_from_libvirt(container)
+
+        # Destroy the dataset first and only remove the DB records once it is
+        # actually gone, so a failed destroy never orphans the dataset with no
+        # container row pointing at it. recursive=True mirrors the apps stack so a
+        # container that has snapshots can still be removed - note it also takes
+        # anything cloned from those snapshots; bypass=True because the dataset lives
+        # under the now delete-guarded .truenas_containers.
+        try:
+            failed = self.call_sync2(
+                self.s.zfs.resource.destroy_impl, container['dataset'], bypass=True,
+            )[0]
+        except ZFSPathNotFoundException:
+            # Dataset already gone (e.g. a victim of a legacy .ix-virt deletion);
+            # fall through to clean up the now-dangling records.
+            failed = None
+        if failed is not None:
+            raise CallError(f'Failed to delete container {container["name"]!r} dataset: {failed}')
+
+        self.delete_container_from_db(container)
         self.middleware.call_sync('etc.generate', 'libvirt_guests')
 
     @private
-    def delete_container_from_db_and_libvirt(self, container):
+    def delete_container_from_libvirt(self, container):
         pylibvirt_container = self.middleware.call_sync("container.pylibvirt_container", container)
         try:
             self.middleware.libvirt_domains_manager.containers.delete(pylibvirt_container)
         except DomainDoesNotExistError:
             pass
 
+    @private
+    def delete_container_from_db(self, container):
         for device in container['devices']:
             self.middleware.call_sync('datastore.delete', 'container.device', device['id'])
 
