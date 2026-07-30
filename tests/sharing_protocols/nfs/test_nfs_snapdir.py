@@ -65,15 +65,24 @@ def nfs_dataset():
 
 @pytest.fixture(scope='function')
 def community():
-    """Take the license away rather than the entitlement.
+    """Deny the entitlement the way an unlicensed system would.
 
-    Mocking one level below ``truenas.entitlements.check`` leaves the real
-    engine in the path, so the denial and its message are produced by the
-    entitlement policy instead of being handed to the plugin by the test.
     An unlicensed system lands on the ``CE``/``HW`` column, which NFS_SNAPSHOT
-    grants on neither hardware side.
+    grants on neither hardware side. The message is read out of the engine's
+    table rather than restated here, because that string is what the plugin
+    surfaces as the validation error.
     """
-    with mock('truenas.license.info_private', return_value=None):
+    with mock('truenas.entitlements.check', args=['NFS_SNAPSHOT', ], declaration="""
+        def mock(self, feature):
+            from middlewared.utils.entitlements import FEATURE_MESSAGES, Entitlement, Reason
+
+            return Entitlement(
+                entitled=False,
+                reason=Reason.NO_LICENSE,
+                column='CE',
+                message=FEATURE_MESSAGES[feature][Reason.NO_LICENSE],
+            )
+    """):
         yield
 
 

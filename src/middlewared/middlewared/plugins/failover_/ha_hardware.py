@@ -6,15 +6,7 @@
 import enum
 import re
 
-from ixhardware import get_chassis_hardware
-
-from middlewared.utils.entitlements import (
-    DerivedEntitlement,
-    EntitlementFacts,
-    HardwareClass,
-    check_entitlement,
-)
-from middlewared.utils.license import get_license
+from middlewared.utils.entitlements import DerivedEntitlement, get_entitlement
 
 
 class HA_HARDWARE(enum.Enum):
@@ -44,12 +36,8 @@ def is_licensed_for_ha() -> bool:
 
     The rule itself lives in POLICY so there is one place to change it. This stays a
     plain function with no middleware dependency, because scripts/ha_panic.py imports
-    it directly and runs as an ExecStop= when middlewared may already be gone.
+    it directly and runs as an ExecStop= when middlewared may already be gone, so it
+    calls get_entitlement() rather than going through the truenas.entitlements
+    service: there may be no middleware left to ask.
     """
-    return check_entitlement(
-        DerivedEntitlement.HA,
-        EntitlementFacts(
-            hardware_class=HardwareClass.from_chassis(get_chassis_hardware()),
-            license=get_license(),
-        ),
-    ).entitled
+    return get_entitlement(DerivedEntitlement.HA).entitled
