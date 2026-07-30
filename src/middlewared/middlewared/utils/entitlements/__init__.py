@@ -1,8 +1,11 @@
 """Pure license-entitlement engine.
 
-Import-safe and stateless: holds no middleware object and performs no I/O.
-Every feature's entitlement is a pure function of a small set of facts
-(hardware class, license) evaluated against a policy.
+Holds no middleware object. Every feature's entitlement is a pure function of a
+small set of facts (hardware class, license) evaluated against a policy, and
+``check_entitlement`` takes those facts as an argument. The one exception is
+``get_entitlement``, which reads the license and the chassis to build them for
+the running system; it lives in ``system`` and nothing else here imports it, so
+the evaluation half stays pure and testable against synthesized facts.
 
 A policy entry is one of a few rule kinds: a matrix ``Vector`` (resolved by
 column against the product feature matrix), a ``LegacyRule`` (an arbitrary
@@ -35,6 +38,7 @@ from .engine import (
 from .facts import EntitlementFacts, HardwareClass
 from .matrix import TARGET_VECTORS
 from .policy import POLICY, check_entitlement
+from .system import get_entitlement
 
 __all__ = [
     "COLUMNS",
@@ -53,4 +57,5 @@ __all__ = [
     "TierRule",
     "Vector",
     "check_entitlement",
+    "get_entitlement",
 ]

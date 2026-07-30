@@ -62,7 +62,7 @@ def _license(type_):
 )
 def test_is_licensed_for_ha(license, expected):
     with (
-        patch("middlewared.plugins.failover_.ha_hardware.get_license", return_value=license),
-        patch("middlewared.plugins.failover_.ha_hardware.get_chassis_hardware", return_value="TRUENAS-M60"),
+        patch("middlewared.utils.entitlements.system.get_license", return_value=license),
+        patch("middlewared.utils.entitlements.system.get_chassis_hardware", return_value="TRUENAS-M60"),
     ):
         assert is_licensed_for_ha() is expected
