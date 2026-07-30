@@ -380,7 +380,7 @@ class ContainerService(CRUDService):
         # under the now delete-guarded .truenas_containers.
         try:
             failed = self.call_sync2(
-                self.s.zfs.resource.destroy_impl, container['dataset'], recursive=True, bypass=True,
+                self.s.zfs.resource.destroy_impl, container['dataset'], bypass=True,
             )[0]
         except ZFSPathNotFoundException:
             # Dataset already gone (e.g. a victim of a legacy .ix-virt deletion);

@@ -21,7 +21,6 @@ INTERNAL_PATHS = (
     "ix-apps",
     "ix-applications",
     ".system",
-    ".truenas_containers",
 )
 
 
