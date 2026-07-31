@@ -1,9 +1,8 @@
 from typing import Literal
 
 from pydantic import Field
-from pydantic.json_schema import SkipJsonSchema
 
-from middlewared.api.base import (BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString,
+from middlewared.api.base import (BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString, Private,
                                   single_argument_args, single_argument_result, SnapshotNameSchema, TcpPort,
                                   UniqueList)
 from .common import CronModel, TimeCronModel
@@ -288,7 +287,7 @@ class ReplicationDeleteResult(BaseModel):
 
 class ReplicationRunArgs(BaseModel):
     id: int = Field(description="ID of the replication task to run.")
-    really_run: SkipJsonSchema[bool] = Field(
+    really_run: Private[bool] = Field(
         default=True,
         description="Internal flag to confirm the operation should proceed.",
     )

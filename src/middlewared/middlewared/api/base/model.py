@@ -10,6 +10,7 @@ from pydantic.main import ModelT
 from pydantic.types import SecretType
 from pydantic_core import SchemaSerializer, core_schema
 
+from middlewared.api.base.private import guard_private_fields
 from middlewared.api.base.types.string import SECRET_VALUE, LongStringWrapper
 from middlewared.utils.lang import undefined
 from middlewared.utils.typing_ import is_union
@@ -121,6 +122,10 @@ class _BaseModelMetaclass(ModelMetaclass):
     def __new__(mcls, name: str, bases: tuple[type[Any], ...], namespace: dict[str, Any], **kwargs: Any):
         cls = super().__new__(mcls, name, bases, namespace, **kwargs)
 
+        # Attaches the guard as field-level metadata, which is where `SkipJsonSchema` (and therefore
+        # `Private`) has to stay in order to be honored.
+        has_private = guard_private_fields(cls)
+
         has_not_required = False
         for field in cls.model_fields.values():
             if field.default is NotRequired:
@@ -131,7 +136,17 @@ class _BaseModelMetaclass(ModelMetaclass):
 
         if has_not_required:
             # If any field has a default of `NotRequired`, apply the serializer to the model.
+            # This rebuilds the model, which is also required for any mutated `field.metadata`.
             _apply_model_serializer(cls, _not_required_serializer)
+        elif has_private:
+            # A mutated `field.metadata` only takes effect after the model is rebuilt.
+            cls.model_rebuild(
+                force=True,
+                # A model whose annotations contain forward references that are not defined yet cannot be
+                # built at this point. Pydantic leaves it incomplete and rebuilds it, picking up the guard,
+                # on first use.
+                raise_errors=False,
+            )
 
         return cls
 
@@ -145,6 +160,10 @@ class ForUpdateMetaclass(_BaseModelMetaclass):
 
     def __new__(mcls, name: str, bases: tuple[type[Any], ...], namespace: dict[str, Any], **kwargs: Any):
         cls = ModelMetaclass.__new__(mcls, name, bases, namespace, **kwargs)
+
+        # This bypasses `_BaseModelMetaclass.__new__`, so private fields have to be guarded here as well.
+        # No explicit rebuild is needed: `_apply_model_serializer` below rebuilds the model unconditionally.
+        guard_private_fields(cls)
 
         for field in cls.model_fields.values():
             # We want to back `default` and `default_factory` so that `model_subset` can later use them.
@@ -192,7 +211,7 @@ class BaseModel(PydanticBaseModel, metaclass=_BaseModelMetaclass):
 
                         raise TypeError(
                             f"Model {cls.__name__} has field {k} defined as {dump(v.annotation)}. {dump(option)} "
-                            "cannot be a member of an Optional or a Union, please make the whole field Private."
+                            "cannot be a member of an Optional or a Union, please make the whole field a `Secret`."
                         )
             if not v.description and (parent_field := cls.__base__.model_fields.get(k)):
                 v.description = parent_field.description
