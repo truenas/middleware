@@ -18,7 +18,10 @@ one-line data change.
 
 Layering is a strict DAG: ``facts`` <- ``engine`` <- ``legacy`` <- ``policy``.
 ``engine`` is pure evaluation with no knowledge of the live registry; ``policy``
-owns the registry and the ``check`` dispatch.
+owns the registry and the ``check`` dispatch. ``HardwareClass`` now originates
+in ``middlewared.utils.hardware.types`` -- detecting what a machine is is not
+an entitlement concern -- and is re-exported here for callers that only ever
+deal with it as an ingredient of ``EntitlementFacts``.
 """
 
 from __future__ import annotations
