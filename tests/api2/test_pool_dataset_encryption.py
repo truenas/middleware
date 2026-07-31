@@ -110,6 +110,16 @@ class TestNormalPool:
             ds = call('pool.dataset.get_instance', dataset)
             assert ds['key_format']['value'] == 'HEX'
 
+    def test_encrypted_root_uses_requested_pbkdf2iters(self):
+        payload = {
+            'name': dataset,
+            'encryption': True,
+            'inherit_encryption': False,
+            'encryption_options': {'passphrase': passphrase, 'pbkdf2iters': 2000000},
+        }
+        with create_dataset(payload) as ds:
+            assert ds['pbkdf2iters']['value'] == '2000000', ds
+
     def test_encryption_algorithm_cannot_be_specified(self):
         payload = {
             'name': dataset,

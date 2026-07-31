@@ -425,12 +425,8 @@ class PoolDatasetService(CRUDService):
             kwargs["crypto"] = tls.lzh.resource_cryptography_config(
                 keyformat=args.encrypt["keyformat"],
                 key=args.encrypt["key"],
+                pbkdf2iters=args.encrypt.get("pbkdf2iters"),
             )
-            if pb := args.encrypt.get("pbkdf2iters"):
-                if "properties" in kwargs:
-                    kwargs["properties"]["pbkdf2iters"] = str(pb)
-                else:
-                    kwargs["properties"] = {"pbkdf2iters": str(pb)}
 
         if args.create_ancestors:
             # If we need to create ancestors, we need to handle this differently
