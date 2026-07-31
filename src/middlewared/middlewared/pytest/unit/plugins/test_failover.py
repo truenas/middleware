@@ -5,6 +5,7 @@ from truenas_pylicensed import LicenseType
 
 from middlewared.plugins.failover import mismatch_nics
 from middlewared.plugins.failover_.ha_hardware import is_licensed_for_ha
+from middlewared.utils.hardware import HardwareClass
 from middlewared.utils.license import LicenseInfo
 
 
@@ -49,7 +50,7 @@ def _license(type_):
 
 
 # is_licensed_for_ha() answers out of the entitlement policy, so only get_license is
-# stubbed here and the real engine computes the result. Chassis detection is stubbed
+# stubbed here and the real engine computes the result. Hardware detection is stubbed
 # because it shells out to dmidecode; it cannot change the answer, which turns on the
 # license type alone.
 @pytest.mark.parametrize(
@@ -63,6 +64,9 @@ def _license(type_):
 def test_is_licensed_for_ha(license, expected):
     with (
         patch("middlewared.utils.entitlements.system.get_license", return_value=license),
-        patch("middlewared.utils.entitlements.system.get_chassis_hardware", return_value="TRUENAS-M60"),
+        patch(
+            "middlewared.utils.entitlements.system.get_hardware_class",
+            return_value=HardwareClass.TRUENAS_HW,
+        ),
     ):
         assert is_licensed_for_ha() is expected
