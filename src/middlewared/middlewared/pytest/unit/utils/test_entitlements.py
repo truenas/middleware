@@ -23,6 +23,7 @@ from middlewared.utils.entitlements import (
     Vector,
     check_entitlement,
 )
+from middlewared.utils.entitlements.legacy import sed as legacy_sed
 
 
 def make_license(
@@ -130,9 +131,12 @@ def test_live_policy_shape():
     assert isinstance(POLICY[LicenseFeature.RDMA], Vector)
     assert isinstance(POLICY[LicenseFeature.SMB_FASTPATH], Vector)
     assert isinstance(POLICY[LicenseFeature.SMB_VEEAM], Vector)
-    assert isinstance(POLICY[LicenseFeature.SED], LegacyRule)
+    assert isinstance(POLICY[LicenseFeature.SED], Vector)
     assert isinstance(POLICY[DerivedEntitlement.HA], LicenseTypeRule)
     assert isinstance(POLICY[DerivedEntitlement.PROACTIVE_SUPPORT], TierRule)
+    # Every feature is now bound to a matrix Vector; the LegacyRule kind is retained
+    # in the engine for future use but no live entry uses it.
+    assert not [rule for rule in POLICY.values() if isinstance(rule, LegacyRule)]
 
 
 # (c) Completeness (D-SYNC): adding a flag must not silently skip a site.
@@ -535,9 +539,40 @@ def test_smb_fastpath_has_no_bespoke_message():
     assert LicenseFeature.SMB_FASTPATH not in FEATURE_MESSAGES
 
 
+# SED is a live matrix Vector (0,1,1,1,1,1): denied only on an unlicensed
+# community system. Any license grants it, and so does iX hardware on its own.
+SED_TABLE = [
+    (HardwareClass.TRUENAS_HW, "none", True, "ENTITLED", "HW"),
+    (HardwareClass.TRUENAS_HW, "nokey", True, "ENTITLED", "HW+L"),
+    (HardwareClass.TRUENAS_HW, "key", True, "ENTITLED", "HW+K"),
+    (HardwareClass.MINI, "none", False, "NO_LICENSE", "CE"),
+    (HardwareClass.MINI, "nokey", True, "ENTITLED", "CE+L"),
+    (HardwareClass.MINI, "key", True, "ENTITLED", "CE+K"),
+    (HardwareClass.GENERIC, "none", False, "NO_LICENSE", "CE"),
+    (HardwareClass.GENERIC, "nokey", True, "ENTITLED", "CE+L"),
+    (HardwareClass.GENERIC, "key", True, "ENTITLED", "CE+K"),
+]
+
+
+@pytest.mark.parametrize("hardware_class,state,entitled,reason,column", SED_TABLE)
+def test_sed_vector_behavior(hardware_class, state, entitled, reason, column):
+    facts = make_facts(hardware_class=hardware_class, license=_license_for(LicenseFeature.SED, state))
+    entitlement = check_entitlement(LicenseFeature.SED, facts)
+    assert entitlement.entitled is entitled
+    assert entitlement.reason == reason
+    assert entitlement.column == column
+
+
+def test_sed_no_license_message_uses_display_name():
+    entitlement = check_entitlement(LicenseFeature.SED, make_facts(hardware_class=HardwareClass.GENERIC))
+    assert entitlement.message == "This system is not licensed to use the SED feature."
+
+
+# The legacy rule is no longer bound in the live POLICY, but the LegacyRule kind
+# is retained, so its behavior is still pinned by exercising the function itself.
 def test_legacy_sed_key_present_entitled():
     facts = make_facts(hardware_class=HardwareClass.TRUENAS_HW, license=make_license(feature_names=("SED",)))
-    assert check_entitlement(LicenseFeature.SED, facts).entitled is True
+    assert legacy_sed(facts).entitled is True
 
 
 def test_legacy_sed_expired_key_still_entitled():
@@ -546,18 +581,18 @@ def test_legacy_sed_expired_key_still_entitled():
         hardware_class=HardwareClass.TRUENAS_HW,
         license=make_license(feature_names=("SED",), expires_at=date.today() - timedelta(days=1)),
     )
-    assert check_entitlement(LicenseFeature.SED, facts).entitled is True
+    assert legacy_sed(facts).entitled is True
 
 
 def test_legacy_sed_no_key_key_missing():
     facts = make_facts(hardware_class=HardwareClass.TRUENAS_HW, license=make_license())
-    entitlement = check_entitlement(LicenseFeature.SED, facts)
+    entitlement = legacy_sed(facts)
     assert entitlement.entitled is False
     assert entitlement.reason == "KEY_MISSING"
 
 
 def test_legacy_sed_no_license():
-    entitlement = check_entitlement(LicenseFeature.SED, make_facts(hardware_class=HardwareClass.TRUENAS_HW))
+    entitlement = legacy_sed(make_facts(hardware_class=HardwareClass.TRUENAS_HW))
     assert entitlement.entitled is False
     assert entitlement.reason == "NO_LICENSE"
 
