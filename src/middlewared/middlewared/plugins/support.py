@@ -7,6 +7,7 @@ import time
 
 import aiohttp
 import requests
+from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -165,7 +166,8 @@ class SupportService(ConfigService):
 
         job.set_progress(1, 'Gathering data')
 
-        sw_name = 'freenas' if not await self.middleware.call('system.is_enterprise') else 'truenas'
+        entitled = (await self.call2(self.s.truenas.entitlements.check, LicenseFeature.SUPPORT)).entitled
+        sw_name = 'truenas' if entitled else 'freenas'
 
         if sw_name == 'freenas':
             required_attrs = ('type', 'token')
@@ -299,7 +301,8 @@ class SupportService(ConfigService):
 
         self.middleware.call_sync('network.general.will_perform_activity', 'support')
 
-        sw_name = 'freenas' if not self.middleware.call_sync('system.is_enterprise') else 'truenas'
+        entitled = self.call_sync2(self.s.truenas.entitlements.check, LicenseFeature.SUPPORT).entitled
+        sw_name = 'truenas' if entitled else 'freenas'
 
         data['ticketnum'] = data.pop('ticket')
         filename = data.pop('filename')
