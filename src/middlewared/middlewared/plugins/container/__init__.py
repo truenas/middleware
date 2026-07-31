@@ -9,6 +9,7 @@ from middlewared.api.current import (
     ContainerCreateArgs,
     ContainerCreateResult,
     ContainerDeleteArgs,
+    ContainerDeleteOptions,
     ContainerDeleteResult,
     ContainerEntry,
     ContainerMigrateArgs,
@@ -40,7 +41,7 @@ from .info import pool_choices
 from .lifecycle import handle_shutdown, start_on_boot
 from .lifecycle import start as start_container
 from .lifecycle import stop as stop_container
-from .migrate import maybe_migrate_legacy
+from .migrate import maybe_migrate_legacy, relocate_container_origin, restore_legacy_parent_mountpoints
 from .migrate import migrate as migrate_containers
 from .nsenter import nsenter
 
@@ -102,11 +103,16 @@ class ContainerService(GenericCRUDService[ContainerEntry]):
         audit_callback=True,
         check_annotations=True,
     )
-    def do_delete(self, audit_callback: AuditCallback, id_: int) -> None:
+    @job(lock=lambda args: f'container_delete:{args[0]}')
+    def do_delete(
+        self, job: Job, audit_callback: AuditCallback, id_: int, options: ContainerDeleteOptions,
+    ) -> None:
         """
         Delete a Container.
+
+        The container must be stopped, unless ``force`` is set - which tears it down first.
         """
-        return self._svc_part.do_delete(id_, audit_callback=audit_callback)
+        return self._svc_part.do_delete(id_, options, audit_callback=audit_callback)
 
     @api_method(ContainerStartArgs, ContainerStartResult, roles=['CONTAINER_WRITE'], check_annotations=True)
     def start(self, id_: int) -> None:
@@ -137,8 +143,23 @@ class ContainerService(GenericCRUDService[ContainerEntry]):
         return await self._svc_part.create_with_dataset(data)
 
     @private
-    def delete_container_from_db_and_libvirt(self, container: ContainerEntry) -> None:
-        self._svc_part.delete_container_from_db_and_libvirt(container)
+    def delete_container_from_libvirt(self, container: ContainerEntry) -> None:
+        self._svc_part.delete_container_from_libvirt(container)
+
+    @private
+    def delete_container_from_db(self, container: ContainerEntry) -> None:
+        self._svc_part.delete_container_from_db(container)
+
+    @private
+    async def migrate_and_start_on_boot(self) -> None:
+        """Bring containers up on boot, migrating any legacy incus ones first.
+
+        Shared by the ``system.ready`` path and the failover path so the ordering
+        lives in one place: HA systems ignore ``system.ready`` and would otherwise
+        start containers without ever migrating them.
+        """
+        await self.call2(self.s.container.maybe_migrate_legacy)
+        await self.call2(self.s.container.start_on_boot)
 
     @private
     def start_on_boot(self) -> None:
@@ -156,10 +177,13 @@ class ContainerService(GenericCRUDService[ContainerEntry]):
     async def maybe_migrate_legacy(self) -> None:
         return await maybe_migrate_legacy(self.context)
 
+    @private
+    def relocate_container_origin(self, container_ds: str) -> str:
+        return relocate_container_origin(self.context, container_ds)
 
-async def __migrate_and_start(middleware: Middleware) -> None:
-    await middleware.call2(middleware.services.container.maybe_migrate_legacy)
-    await middleware.call2(middleware.services.container.start_on_boot)
+    @private
+    def restore_legacy_parent_mountpoints(self, pool: str) -> None:
+        restore_legacy_parent_mountpoints(self.context, pool)
 
 
 async def __event_system_ready(middleware: Middleware, event_type: str, args: Any) -> None:
@@ -169,7 +193,7 @@ async def __event_system_ready(middleware: Middleware, event_type: str, args: An
     if await middleware.call('failover.licensed'):
         return
 
-    middleware.create_task(__migrate_and_start(middleware))
+    middleware.create_task(middleware.call2(middleware.services.container.migrate_and_start_on_boot))
 
 
 async def __event_system_shutdown(middleware: Middleware, event_type: str, args: Any) -> None:

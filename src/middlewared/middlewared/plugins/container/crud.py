@@ -15,14 +15,17 @@ from middlewared.api.base import BaseModel, Excluded, excluded_field
 from middlewared.api.current import (
     ContainerCreate,
     ContainerCreateResult,
+    ContainerDeleteOptions,
     ContainerEntry,
     ContainerUpdate,
     QueryOptions,
+    ZFSResourceQuery,
     ZFSResourceSnapshotDestroyQuery,
 )
 from middlewared.pylibvirt import gather_pylibvirt_domains_states, get_pylibvirt_domain_state
 from middlewared.service import CallError, CRUDServicePart, ValidationErrors
 import middlewared.sqlalchemy as sa
+from middlewared.utils.libvirt.utils import ACTIVE_STATES
 
 from .bridge import container_bridge_name
 from .dataset import ensure_datasets
@@ -253,7 +256,7 @@ class ContainerServicePart(CRUDServicePart[ContainerEntry]):
 
         name_changed = old.name != new.name
         if name_changed:
-            if old.status.state == 'RUNNING':
+            if old.status.state in ACTIVE_STATES:
                 raise CallError('Container must be stopped before renaming.')
 
             old_dataset = old.dataset
@@ -268,21 +271,48 @@ class ContainerServicePart(CRUDServicePart[ContainerEntry]):
 
         return entry
 
-    def do_delete(self, id_: int, *, audit_callback: AuditCallback) -> None:
+    def do_delete(self, id_: int, options: ContainerDeleteOptions, *, audit_callback: AuditCallback) -> None:
         container = self.get_instance__sync(id_)
         audit_callback(container.name)
 
-        self.delete_container_from_db_and_libvirt(container)
-        self.call_sync2(self.s.zfs.resource.destroy_impl, container.dataset)
+        if container.status.state in ACTIVE_STATES and not options.force:
+            raise CallError(
+                f'Container {container.name!r} is {container.status.state.lower()}. Stop it first, '
+                f'or pass force=True to stop and delete it.',
+                errno.EBUSY,
+            )
+
+        # Deleting the domain destroys it if it is active and gives its post-stop
+        # actions time to finish before undefining it, so the container's runtime
+        # mounts - the idmapped root under /run/truenas_containers/ among them - are
+        # gone before ZFS is touched. Stopping it instead returns while those are
+        # still being torn down and the destroy then fails on a busy dataset.
+        self.delete_container_from_libvirt(container)
+
+        # Destroy the dataset first and only remove the DB records once it is actually
+        # gone, so a failed destroy never orphans the dataset with no container row
+        # pointing at it. A dataset that is already missing - a victim of a legacy
+        # .ix-virt deletion, say - is not an error; fall through and clean up the
+        # now-dangling records.
+        if self.call_sync2(
+            self.s.zfs.resource.query_impl,
+            ZFSResourceQuery(paths=[container.dataset], properties=None),
+        ):
+            failed = self.call_sync2(self.s.zfs.resource.destroy_impl, container.dataset)[0]
+            if failed is not None:
+                raise CallError(f'Failed to delete container {container.name!r} dataset: {failed}')
+
+        self.delete_container_from_db(container)
         self.middleware.call_sync('etc.generate', 'libvirt_guests')
 
-    def delete_container_from_db_and_libvirt(self, container: ContainerEntry) -> None:
+    def delete_container_from_libvirt(self, container: ContainerEntry) -> None:
         pylibvirt_container_obj = pylibvirt_container(self, container)
         try:
             self.middleware.libvirt_domains_manager.containers.delete(pylibvirt_container_obj)
         except DomainDoesNotExistError:
             pass
 
+    def delete_container_from_db(self, container: ContainerEntry) -> None:
         for device in container.devices:
             self.middleware.call_sync('datastore.delete', 'container.device', device.id)
 
