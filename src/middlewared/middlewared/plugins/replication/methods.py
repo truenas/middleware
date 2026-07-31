@@ -39,9 +39,6 @@ async def run_task(context: ServiceContext, job: Job, id_: int, really_run: bool
     if really_run:
         task = await context.call2(context.s.replication.get_instance, id_)
 
-        if not task.enabled:
-            raise CallError("Task is not enabled")
-
         if task.state["state"] == "RUNNING":
             raise CallError("Task is already running")
 
