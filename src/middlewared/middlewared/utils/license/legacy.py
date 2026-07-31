@@ -33,6 +33,10 @@ injection buckets mirror how today's gates read a legacy license:
   sides and no legacy license can carry a Webshare key, while Webshare has no
   license gate at all today, so every legacy holder can already use it. The flag
   is injected regardless of model so nobody loses shares on upgrade.
+- every legacy license: SUPPORT. Its matrix vector is key-only on both hardware
+  sides and the tier a legacy license grants is carried by its contract type
+  rather than by a key, so the flag is injected regardless of contract type and
+  the tier is stamped onto it (see _support_tier).
 - every legacy license: DIRECTORY_SERVICES, which gates directory-services
   authentication to the UI and API rather than directory services themselves.
   Its matrix vector is key-only on both hardware sides, so the flag is injected
@@ -54,7 +58,7 @@ from types import MappingProxyType
 from licenselib.license import Features, License
 from licenselib.utils import proactive_support_allowed
 from truenas_pylicensed import FEATURE_NAME_MAP, LicenseType
-from truenas_pylicensed.features import LicenseFeature
+from truenas_pylicensed.features import LicenseFeature, SupportTier
 
 from .constants import LEGACY_LICENSE_FILE, LICENSE_ADDHW_MAPPING
 from .types import FeatureInfo, LicenseInfo
@@ -72,6 +76,7 @@ __all__ = (
 _ALL_LEGACY_INJECT: frozenset[LicenseFeature] = frozenset(
     {
         LicenseFeature.STIG,
+        LicenseFeature.SUPPORT,
         LicenseFeature.TRUESEARCH,
         LicenseFeature.APPS,
         LicenseFeature.VMS,
@@ -94,6 +99,26 @@ _ENT_ONLY_INJECT: frozenset[LicenseFeature] = frozenset(
         LicenseFeature.CATALOG_ENTERPRISE_TRAIN,
     }
 )
+
+
+def _support_tier(contract_type_name: str) -> str:
+    """Map a legacy contract type onto the SupportTier vocabulary.
+
+    This mapping is load-bearing. SUPPORT is injected into every legacy license
+    regardless of contract type, so the tier stamped here is the only thing
+    separating a legacy licensee from proactive support. Contract types outside
+    the SupportTier vocabulary collapse to BRONZE, which the proactive-support
+    tier gate rejects. Unconditional injection is only safe while that gate
+    keeps rejecting BRONZE; a tier-blind gate over an injected SUPPORT key would
+    hand proactive support to the entire legacy installed base.
+
+    Membership is derived from SupportTier rather than listed here so a newly
+    added tier cannot silently fall through to BRONZE.
+    """
+    try:
+        return SupportTier(contract_type_name.upper()).value
+    except ValueError:
+        return SupportTier.BRONZE.value
 
 
 @lru_cache()
@@ -151,7 +176,7 @@ def parse_legacy_license(text: str) -> LicenseInfo:
                     start_date=lic.contract_start,
                     expires_at=lic.contract_end,
                     source="enterprise",
-                    type=lic.contract_type.name.upper() if name == "SUPPORT" else None,
+                    type=_support_tier(lic.contract_type.name) if name == "SUPPORT" else None,
                 )
                 for name in feature_names
             }

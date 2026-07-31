@@ -15,6 +15,7 @@ import html2text
 from pydantic_core import ValidationError
 
 from truenas_api_client import ReserveFDException
+from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.alert.base import (
     AlertCategory,
@@ -620,7 +621,7 @@ class AlertService(Service):
                         except NetworkActivityDisabled:
                             pass
 
-                if await self.middleware.call("system.is_enterprise"):
+                if (await self.call2(self.s.truenas.entitlements.check, LicenseFeature.SUPPORT)).entitled:
                     gone_proactive_support_alerts = [
                         alert
                         for alert in gone_alerts

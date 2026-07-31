@@ -3,7 +3,15 @@ from datetime import date
 import pytest
 
 from truenas_pylicensed import LicenseType
+from truenas_pylicensed.features import LicenseFeature, SupportTier
 
+from middlewared.utils.entitlements import (
+    DerivedEntitlement,
+    EntitlementFacts,
+    HardwareClass,
+    Reason,
+    check_entitlement,
+)
 from middlewared.utils.license import FeatureInfo, LicenseInfo, parse_legacy_license
 
 
@@ -34,6 +42,7 @@ _ALL_LEGACY_INJECT = [
     "NVMEOF_SPDK",
     "RDMA",
     "STIG",
+    "SUPPORT",
     "TRUESEARCH",
     "VMS",
     "WEBSHARE",
@@ -83,8 +92,9 @@ _ALL_LEGACY_INJECT = [
                 contract_type="GOLD",
             ),
         ),
-        # Enterprise single license (X10, STANDARD contract): jails->APPS bit (no
-        # proactive SUPPORT), plus the all-legacy and enterprise-only injected flags.
+        # Enterprise single license (X10, STANDARD contract): jails->APPS bit, plus the
+        # all-legacy and enterprise-only injected flags. STANDARD is not a support tier,
+        # so the injected SUPPORT flag is stamped BRONZE.
         (
             "AVgxMAAAAAAAAAAAAAAAAABURVNULTAwMDAwMQAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAADIwMjYwNDA4AAAAABYAAAAAAAAAaVhzeXN0ZW1zIE"
             "luYy4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAA==",
@@ -110,10 +120,12 @@ _ALL_LEGACY_INJECT = [
                         "SMB_FASTPATH",
                         "SMB_VEEAM",
                         "STIG",
+                        "SUPPORT",
                         "TRUESEARCH",
                         "VMS",
                         "WEBSHARE",
-                    ]
+                    ],
+                    support_type="BRONZE",
                 ),
                 serials=("TEST-000001",),
                 enclosures={},
@@ -121,7 +133,8 @@ _ALL_LEGACY_INJECT = [
             ),
         ),
         # freenascertified license (freenas-prefixed model): only the all-legacy
-        # bucket injects; no enterprise-only flags, no proactive SUPPORT.
+        # bucket injects; no enterprise-only flags. FREENASCERTIFIED is not a support
+        # tier, so the injected SUPPORT flag is stamped BRONZE.
         (
             "AUZSRUVOQVMtTUlOSQAAAABURVNULTAwMDAwMQAAAAAAAAAAAAAAAAAAAAAAAAAAAAUAADIwMjYwNDA4AAAAABYAAAAAAAAAaVhzeXN0ZW1z"
             "IEluYy4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
@@ -131,7 +144,7 @@ _ALL_LEGACY_INJECT = [
                 model="FREENAS-MINI",
                 support_expires_at=date(2026, 4, 30),
                 license_expires_at=None,
-                features=_features(_ALL_LEGACY_INJECT),
+                features=_features(_ALL_LEGACY_INJECT, support_type="BRONZE"),
                 serials=("TEST-000001",),
                 enclosures={},
                 contract_type="FREENASCERTIFIED",
@@ -165,3 +178,67 @@ def test__parse_legacy_license(text, result):
 )
 def test__parse_legacy_license_ha_type(text, type_):
     assert parse_legacy_license(text).type is type_
+
+
+# X10, BRONZE contract, single head -- the same shape as the STANDARD blob above with
+# the contract type byte changed.
+LEGACY_BRONZE_BLOB = (
+    "AVgxMAAAAAAAAAAAAAAAAABURVNULTAwMDAwMQAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAADIwMjYwNDA4AAAAABYAAAAAAAAAaVhzeXN0ZW1zIE"
+    "luYy4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAA=="
+)
+
+
+# Interlock between the unconditional SUPPORT injection and the tier gate. SUPPORT is
+# injected into every legacy license, so the tier stamped on that injected key is the
+# only thing keeping proactive support away from the whole legacy installed base. Both
+# halves are asserted together: the key must be present (so anything gating on the key
+# alone keeps working) and proactive support must still be denied. If a later change
+# makes the tier gate tier-blind, or stops stamping BRONZE on contract types that never
+# bought proactive support, this fails rather than silently granting it to everyone.
+def test__legacy_bronze_gets_support_key_but_not_proactive_support():
+    info = parse_legacy_license(LEGACY_BRONZE_BLOB)
+    assert info.has_feature(LicenseFeature.SUPPORT)
+    assert info.feature_type(LicenseFeature.SUPPORT) == SupportTier.BRONZE
+
+    facts = EntitlementFacts(hardware_class=HardwareClass.TRUENAS_HW, license=info)
+    assert check_entitlement(LicenseFeature.SUPPORT, facts).entitled is True
+
+    proactive = check_entitlement(DerivedEntitlement.PROACTIVE_SUPPORT, facts)
+    assert proactive.entitled is False
+    assert proactive.reason == Reason.TIER_INSUFFICIENT
+
+
+# The same interlock for the contract types that are not support tiers at all: they
+# collapse to BRONZE rather than stamping a value the tier gate has never heard of.
+@pytest.mark.parametrize(
+    "text",
+    [
+        # X10, STANDARD contract.
+        "AVgxMAAAAAAAAAAAAAAAAABURVNULTAwMDAwMQAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAADIwMjYwNDA4AAAAABYAAAAAAAAAaVhzeXN0ZW1z"
+        "IEluYy4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAA==",
+        # FREENAS-MINI, FREENASCERTIFIED contract.
+        "AUZSRUVOQVMtTUlOSQAAAABURVNULTAwMDAwMQAAAAAAAAAAAAAAAAAAAAAAAAAAAAUAADIwMjYwNDA4AAAAABYAAAAAAAAAaVhzeXN0ZW1z"
+        "IEluYy4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+    ],
+)
+def test__legacy_non_tier_contract_types_get_no_proactive_support(text):
+    info = parse_legacy_license(text)
+    assert info.feature_type(LicenseFeature.SUPPORT) == SupportTier.BRONZE
+
+    facts = EntitlementFacts(hardware_class=HardwareClass.TRUENAS_HW, license=info)
+    proactive = check_entitlement(DerivedEntitlement.PROACTIVE_SUPPORT, facts)
+    assert proactive.entitled is False
+    assert proactive.reason == Reason.TIER_INSUFFICIENT
+
+
+# The contrast case: a gold contract still gets proactive support, so the interlock
+# above is not passing merely because the gate denies everything.
+def test__legacy_gold_contract_keeps_proactive_support():
+    info = parse_legacy_license(
+        "AUgxMAAAAAAAAAAAAAAAAABURVNULTAwMDAwMQAAAAAAVEVTVC0wMDAwMDIAAAAAAAQAADIwMjYwNDA4AAAAABYAAAAAAAAAaVhzeXN0ZW1z"
+        "IEluYy4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwAAAAAAAAAAgMCAgE="
+    )
+    assert info.feature_type(LicenseFeature.SUPPORT) == SupportTier.GOLD
+
+    facts = EntitlementFacts(hardware_class=HardwareClass.TRUENAS_HW, license=info)
+    assert check_entitlement(DerivedEntitlement.PROACTIVE_SUPPORT, facts).entitled is True
