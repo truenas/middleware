@@ -16,7 +16,8 @@ def _load_app_yaml(yaml_path: str) -> dict[str, typing.Any]:
     try:
         with open(yaml_path, 'r') as f:
             return safe_yaml_load(f, dict)
-    except (FileNotFoundError, yaml.YAMLError, ValueError):
+    except (OSError, yaml.YAMLError, ValueError):
+        # OSError covers a missing file as well as one we cannot read at all, i.e. EACCES/EIO/EISDIR
         return {}
 
 

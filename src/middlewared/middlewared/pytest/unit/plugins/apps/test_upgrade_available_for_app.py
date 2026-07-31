@@ -1,0 +1,60 @@
+import pytest
+
+from middlewared.plugins.apps.ix_apps.query import upgrade_available_for_app
+
+VERSION_MAPPING = {
+    "community": {
+        "actual-budget": {"version": "1.1.13", "app_version": "24.10.1"},
+    },
+}
+
+
+def complete_metadata():
+    return {
+        "custom_app": False,
+        "human_version": "24.10.1_1.1.0",
+        "metadata": {"name": "actual-budget", "train": "community", "version": "1.1.0"},
+        "migrated": False,
+        "portals": {},
+        "version": "1.1.0",
+    }
+
+
+def test_upgrade_available_for_complete_metadata():
+    upgrade_available, latest_version, latest_app_version = upgrade_available_for_app(
+        VERSION_MAPPING, complete_metadata()
+    )
+    assert upgrade_available is True
+    assert latest_version == "1.1.13"
+    assert latest_app_version == "24.10.1"
+
+
+@pytest.mark.parametrize(
+    "app_metadata",
+    [
+        # Nothing at all
+        {},
+        # Missing the catalog metadata dict entirely
+        {"custom_app": False, "version": "1.1.0"},
+        # Catalog metadata present but missing each key upgrade detection indexes
+        {"custom_app": False, "metadata": {"train": "community", "version": "1.1.0"}},
+        {"custom_app": False, "metadata": {"name": "actual-budget", "version": "1.1.0"}},
+        {"custom_app": False, "metadata": {"name": "actual-budget", "train": "community"}},
+        # Catalog metadata is not even a mapping
+        {"custom_app": False, "metadata": None},
+        # Missing custom_app, which decides which branch we take
+        {"metadata": {"name": "actual-budget", "train": "community", "version": "1.1.0"}},
+    ],
+)
+def test_unusable_metadata_does_not_raise(app_metadata):
+    assert upgrade_available_for_app(VERSION_MAPPING, app_metadata) == (False, None, None)
+
+
+@pytest.mark.parametrize("app_metadata", [{}, {"custom_app": True}, {"custom_app": True, "metadata": None}])
+def test_unusable_metadata_with_image_updates_does_not_raise(app_metadata):
+    upgrade_available, latest_version, latest_app_version = upgrade_available_for_app(
+        VERSION_MAPPING, app_metadata, image_updates_available=True
+    )
+    assert upgrade_available is bool(app_metadata.get("custom_app"))
+    assert latest_version is None
+    assert latest_app_version is None

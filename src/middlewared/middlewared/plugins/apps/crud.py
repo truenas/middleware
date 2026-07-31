@@ -84,6 +84,9 @@ def query_apps(
     for app_entry in apps:
         if app_entry['custom_app']:
             version_details = get_version_details()
+        elif not app_entry.get('version'):
+            # We cannot locate the app's version directory, so there is no schema to report
+            continue
         else:
             version_details = context.call_sync2(
                 context.s.catalog.app_version_details,

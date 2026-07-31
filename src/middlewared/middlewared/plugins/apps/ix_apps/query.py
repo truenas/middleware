@@ -42,16 +42,18 @@ def upgrade_available_for_app(
 ) -> tuple[bool, str | None, str | None]:
     # TODO: Eventually we would want this to work as well but this will always require middleware changes
     #  depending on what new functionality we want introduced for custom app, so let's take care of this at that point
-    catalog_app_metadata = app_metadata['metadata']
-    catalog_app = catalog_app_metadata['name']
+    catalog_app_metadata = app_metadata.get('metadata') or {}
+    catalog_app = catalog_app_metadata.get('name')
+    catalog_train = catalog_app_metadata.get('train')
     if (
-        app_metadata['custom_app'] is False
+        app_metadata.get('custom_app') is False
+        # Corrupt metadata can hold anything at all here, including values yaml parsed as a
+        # non-string, so these must be validated before they are used as lookup keys
+        and isinstance(catalog_app, str)
+        and isinstance(catalog_train, str)
+        and catalog_app_metadata.get('version')
         and (
-            latest_version_info := version_mapping.get(
-                catalog_app_metadata['train'], {}
-            ).get(
-                catalog_app_metadata['name']
-            )
+            latest_version_info := version_mapping.get(catalog_train, {}).get(catalog_app)
         )
         and latest_version_info['version']
     ):
@@ -60,7 +62,7 @@ def upgrade_available_for_app(
             latest_version_info['version'],
             latest_version_info['app_version']
         )
-    elif (app_metadata['custom_app'] or catalog_app == IX_APP_NAME) and image_updates_available:
+    elif (app_metadata.get('custom_app') or catalog_app == IX_APP_NAME) and image_updates_available:
         return True, None, None
     else:
         return False, None, None
@@ -156,9 +158,11 @@ def list_apps(
             'latest_app_version': latest_app_version,
             'image_updates_available': image_updates_available,
             'version_details': None,
-            **app_metadata | {'portals': normalize_portal_uris(app_metadata['portals'], host_ip)}
+            **app_metadata | {'portals': normalize_portal_uris(app_metadata.get('portals') or {}, host_ip)}
         }
-        if (app_data['custom_app'] or app_metadata['metadata']['name'] == IX_APP_NAME) and image_updates_available:
+        if (
+            app_data.get('custom_app') or (app_metadata.get('metadata') or {}).get('name') == IX_APP_NAME
+        ) and image_updates_available:
             # We want to mark custom apps and ix-apps as upgrade available if image updates are available
             # so if user tries to upgrade, we will just be pulling a newer version of the image
             # against the same docker tag
@@ -195,7 +199,7 @@ def list_apps(
                     'latest_app_version': latest_app_version,
                     'image_updates_available': False,
                     'version_details': None,
-                    **app_metadata | {'portals': normalize_portal_uris(app_metadata['portals'], host_ip)}
+                    **app_metadata | {'portals': normalize_portal_uris(app_metadata.get('portals') or {}, host_ip)}
                 }
                 apps.append(app_data | get_config_of_app(app_data, collective_config, retrieve_config))
     except FileNotFoundError:

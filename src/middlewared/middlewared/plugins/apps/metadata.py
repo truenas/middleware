@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import os
 from typing import TYPE_CHECKING
 
@@ -13,6 +14,8 @@ from .ix_apps.utils import dump_yaml
 if TYPE_CHECKING:
     from middlewared.job import Job
 
+logger = logging.getLogger('app_lifecycle')
+
 
 def app_metadata_generate(job: Job, blacklisted_apps: list[str] | None = None) -> None:
     config = {}
@@ -24,8 +27,17 @@ def app_metadata_generate(job: Job, blacklisted_apps: list[str] | None = None) -
                 # The app is malformed or something is seriously wrong with it
                 continue
 
-            metadata[entry.name] = app_metadata
-            config[entry.name] = get_current_app_config(entry.name, app_metadata['version'])
+            try:
+                metadata[entry.name] = app_metadata
+                config[entry.name] = get_current_app_config(entry.name, app_metadata['version'])
+            except Exception:
+                # A half-written app must not make it into the collective metadata, as consumers of that
+                # file index into it directly. Nor should it fail the whole job - every app lifecycle
+                # operation waits on this and would otherwise break because of one unrelated broken app.
+                metadata.pop(entry.name, None)
+                logger.warning(
+                    '%s: skipped while generating app metadata, app data is unusable', entry.name, exc_info=True
+                )
 
     with atomic_write(get_collective_metadata_path(), 'w') as f:
         f.write(dump_yaml(metadata))

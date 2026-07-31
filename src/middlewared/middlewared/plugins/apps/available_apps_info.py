@@ -73,8 +73,9 @@ def _available_raw(context: ServiceContext) -> list[dict[str, Any]]:
 
     results = []
     installed_apps = [
-        (app.metadata['name'], app.metadata['train'])
+        (app_metadata['name'], app_metadata['train'])
         for app in context.call_sync2(context.s.app.query)
+        if (app_metadata := app.metadata) and {'name', 'train'} <= app_metadata.keys()
     ]
 
     catalog = context.call_sync2(context.s.catalog.config)
