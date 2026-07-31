@@ -17,8 +17,10 @@ from middlewared.plugins.docker.state_utils import (
 from middlewared.plugins.docker.state_utils import (  # noqa: F401,I250
     DatasetDefaults as DatasetDefaults,
 )
+from middlewared.service_exception import CallError
 
 from .ix_apps.utils import PROJECT_PREFIX as PROJECT_PREFIX  # noqa: F401,I250
+from .ix_apps.utils import UNUSABLE_STATES
 
 if TYPE_CHECKING:
     from middlewared.job import Job
@@ -42,11 +44,31 @@ def to_entries(
     return [constructor(**row) for row in result]
 
 
+def assert_app_usable(app: AppEntry) -> None:
+    """
+    Refuse to manage an app whose on-disk data we cannot make sense of.
+    """
+    if app.state in UNUSABLE_STATES:
+        raise CallError(
+            f'{app.id!r} app cannot be managed because its metadata is unusable ({app.error_reason}). '
+            'The app can only be deleted.'
+        )
+
+
+def app_version(app: AppEntry) -> str:
+    """
+    Version of an app which has already passed ``assert_app_usable``.
+    """
+    assert app.version is not None, f'{app.id}: a usable app always has a version'
+    return app.version
+
+
 def upgrade_summary_info(app: AppEntry) -> AppUpgradeSummary:
+    assert app.human_version is not None, f'{app.id}: a usable app always has a human version'
     return AppUpgradeSummary(
-        latest_version=app.version,
+        latest_version=app_version(app),
         latest_human_version=app.human_version,
-        upgrade_version=app.version,
+        upgrade_version=app_version(app),
         upgrade_human_version=app.human_version,
         changelog='Image updates are available for this app',
         available_versions_for_upgrade=[],

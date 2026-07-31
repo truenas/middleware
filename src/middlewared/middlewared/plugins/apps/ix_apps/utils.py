@@ -1,17 +1,26 @@
 import enum
-from typing import Any
+from typing import Any, Literal, TypeAlias
 
 import yaml
 
 PROJECT_PREFIX = 'ix-'
 
+# Kept in sync by hand with `AppEntry.error_reason` in middlewared.api.<current version>.app,
+# which cannot import this module (API schemas may not import plugins).
+AppErrorReason: TypeAlias = Literal['METADATA_MISSING', 'METADATA_UNREADABLE', 'METADATA_INCOMPLETE']
+
 
 class AppState(enum.Enum):
     CRASHED = 'CRASHED'
     DEPLOYING = 'DEPLOYING'
+    ERROR = 'ERROR'
     RUNNING = 'RUNNING'
     STOPPED = 'STOPPED'
     STOPPING = 'STOPPING'
+
+
+# States in which an app's on-disk data is unusable, so it can only be deleted
+UNUSABLE_STATES: frozenset[str] = frozenset({AppState.ERROR.value})
 
 
 class ContainerState(enum.Enum):

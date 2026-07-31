@@ -13,6 +13,7 @@ from middlewared.api.current import (
     CatalogAppVersionDetails,
     QueryOptions,
 )
+from middlewared.job import State
 from middlewared.service import CallError, InstanceNotFound, ServiceContext, ValidationErrors
 from middlewared.utils.filter_list import filter_list
 
@@ -26,13 +27,35 @@ from .ix_apps.query import list_apps
 from .ix_apps.setup import setup_install_app_dir
 from .resources import delete_internal_resources, get_app_volume_ds, remove_failed_resources
 from .schema_normalization import normalize_and_validate_values
-from .utils import band_progress, to_entries
+from .utils import app_version, assert_app_usable, band_progress, to_entries
 from .version_utils import get_latest_version_from_app_versions
 
 if TYPE_CHECKING:
     from middlewared.api.base.server.app import App
     from middlewared.api.current import QueryOptionsCount, QueryOptionsGet
     from middlewared.job import Job
+
+
+def apps_being_installed(context: ServiceContext) -> set[str]:
+    """
+    Names of apps with an installation in flight, read from the in-memory job queue.
+
+    An app's directory is created shortly before its metadata is written to it, so without this an
+    install in progress is indistinguishable on disk from an app whose metadata has gone missing.
+    """
+    installing = set()
+    for job in context.middleware.jobs.all().values():
+        if job.method_name != 'app.create' or job.state not in (State.WAITING, State.RUNNING) or not job.args:
+            continue
+
+        # Depending on how the job was queued, its payload is either the raw dict from the caller
+        # or an already validated model
+        payload = job.args[0]
+        app_name = payload.get('app_name') if isinstance(payload, dict) else getattr(payload, 'app_name', None)
+        if app_name:
+            installing.add(app_name)
+
+    return installing
 
 
 @overload
@@ -70,6 +93,7 @@ def query_apps(
         'host_ip': host_ip,
         'retrieve_config': extra.get('retrieve_config', False),
         'image_update_cache': context.call_sync2(context.s.app.image.get_update_cache, True),
+        'installing': apps_being_installed(context),
     }
     if len(filters) == 1 and filters[0][0] in ('id', 'name') and filters[0][1] == '=':
         kwargs['specific_app'] = filters[0][2]
@@ -107,9 +131,19 @@ def get_instance(context: ServiceContext, app_name: str, options: QueryOptions |
     return results[0]
 
 
+def get_usable_instance(context: ServiceContext, app_name: str, options: QueryOptions | None = None) -> AppEntry:
+    """
+    Like ``get_instance`` but refuses apps we cannot manage. Deletion is the only operation that
+    should be using ``get_instance`` directly.
+    """
+    app = get_instance(context, app_name, options)
+    assert_app_usable(app)
+    return app
+
+
 def get_app_config(context: ServiceContext, app_name: str) -> dict[str, Any]:
-    app = get_instance(context, app_name)
-    return get_current_app_config(app_name, app.version)
+    app = get_usable_instance(context, app_name)
+    return get_current_app_config(app_name, app_version(app))
 
 
 def create_app(context: ServiceContext, job: Job, data: AppCreate) -> AppEntry:
@@ -235,7 +269,7 @@ def create_internal(
 
 
 def update_app(context: ServiceContext, job: Job, app_name: str, data: AppUpdate) -> AppEntry:
-    app = get_instance(context, app_name, QueryOptions(extra={'retrieve_config': True}))
+    app = get_usable_instance(context, app_name, QueryOptions(extra={'retrieve_config': True}))
     app = update_internal(context, job, app, data, trigger_compose=app.state != 'STOPPED')
     context.call_sync2(context.s.app.metadata_generate).wait_sync(raise_error=True)
     return app
@@ -246,16 +280,17 @@ def update_internal(
     data: AppUpdate, progress_keyword: str = 'Update', trigger_compose: bool = True,
 ) -> AppEntry:
     app_name = app.id
+    version = app_version(app)
     if app.custom_app:
         if progress_keyword == 'Update':
             new_values = validate_payload(data.model_dump(expose_secrets=True), 'app_update')
         else:
-            new_values = get_current_app_config(app_name, app.version)
+            new_values = get_current_app_config(app_name, version)
     else:
-        config = get_current_app_config(app_name, app.version)
+        config = get_current_app_config(app_name, version)
         config.update(data.values.get_secret_value())
         app_version_details = context.call_sync2(
-            context.s.catalog.app_version_details, get_installed_app_version_path(app_name, app.version)
+            context.s.catalog.app_version_details, get_installed_app_version_path(app_name, version)
         )
 
         new_values = context.run_coroutine(normalize_and_validate_values(
@@ -265,10 +300,10 @@ def update_internal(
 
     job.set_progress(25, 'Initial Validation completed')
 
-    update_app_config(app_name, app.version, new_values, custom_app=app.custom_app)
+    update_app_config(app_name, version, new_values, custom_app=app.custom_app)
     if app.custom_app is False:
         # TODO: Eventually we would want this to be executed for custom apps as well
-        update_app_metadata_for_portals(app_name, app.version)
+        update_app_metadata_for_portals(app_name, version)
     job.set_progress(60, 'Configuration updated')
     context.middleware.send_event(
         'app.query', 'CHANGED', id=app_name, fields=get_instance(context, app_name).model_dump()
@@ -276,7 +311,7 @@ def update_internal(
     if trigger_compose:
         job.set_progress(70, 'Updating docker resources')
         compose_action(
-            app_name, app.version, 'up', force_recreate=True, remove_orphans=True,
+            app_name, version, 'up', force_recreate=True, remove_orphans=True,
             progress_callback=band_progress(job, 70, 99), job=job,
         )
 
@@ -286,7 +321,9 @@ def update_internal(
 
 def delete_app(context: ServiceContext, job: Job, app_name: str, options: AppDelete) -> Literal[True]:
     app_config = get_instance(context, app_name)
-    if options.force_remove_custom_app and not app_config.custom_app:
+    if options.force_remove_custom_app and not app_config.custom_app and app_config.state != 'ERROR':
+        # A broken app always reports itself as not being a custom app because we cannot tell either
+        # way, so the flag must not stand in the way of removing it
         raise CallError('`force_remove_custom_app` flag is only valid for a custom app', errno=errno.EINVAL)
 
     return delete_internal_resources(context, app_name, app_config, options, job)

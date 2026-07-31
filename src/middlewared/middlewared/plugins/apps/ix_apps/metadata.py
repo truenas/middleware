@@ -8,7 +8,14 @@ from middlewared.utils.yaml import safe_yaml_load
 
 from .path import get_collective_config_path, get_collective_metadata_path, get_installed_app_metadata_path
 from .portals import get_portals_and_app_notes
-from .utils import dump_yaml
+from .utils import AppErrorReason, dump_yaml
+
+# Keys we cannot render an app without. Anything outside this set is defaulted instead of being
+# treated as fatal (portals -> {}, notes -> None, migrated -> False), so metadata written by an
+# older release is never misreported as broken - a false ERROR would block a working app.
+APP_METADATA_REQUIRED_KEYS: frozenset[str] = frozenset(('metadata', 'custom_app', 'version', 'human_version'))
+# Keys of the nested catalog metadata that upgrade detection indexes
+APP_CATALOG_METADATA_REQUIRED_KEYS: frozenset[str] = frozenset(('name', 'train', 'version'))
 
 
 def _load_app_yaml(yaml_path: str) -> dict[str, typing.Any]:
@@ -23,6 +30,66 @@ def _load_app_yaml(yaml_path: str) -> dict[str, typing.Any]:
 
 def get_app_metadata(app_name: str) -> dict[str, typing.Any]:
     return _load_app_yaml(get_installed_app_metadata_path(app_name))
+
+
+def app_metadata_error(app_metadata: dict[str, typing.Any]) -> AppErrorReason | None:
+    """
+    Report why ``app_metadata`` cannot be used, if it cannot. Performs no I/O.
+    """
+    if not app_metadata:
+        return 'METADATA_MISSING'
+
+    if not APP_METADATA_REQUIRED_KEYS.issubset(app_metadata):
+        return 'METADATA_INCOMPLETE'
+
+    catalog_metadata = app_metadata['metadata']
+    if not isinstance(catalog_metadata, dict) or not APP_CATALOG_METADATA_REQUIRED_KEYS.issubset(catalog_metadata):
+        return 'METADATA_INCOMPLETE'
+
+    return None
+
+
+def get_app_metadata_checked(app_name: str) -> tuple[dict[str, typing.Any], AppErrorReason | None]:
+    """
+    Like ``get_app_metadata`` but reports why the app's metadata is unusable, if it is.
+    """
+    try:
+        with open(get_installed_app_metadata_path(app_name), 'r') as f:
+            app_metadata: dict[str, typing.Any] = safe_yaml_load(f, dict)
+    except FileNotFoundError:
+        return {}, 'METADATA_MISSING'
+    except (OSError, yaml.YAMLError, ValueError):
+        # We cannot read it at all (EACCES/EIO/EISDIR), it is not valid YAML, or it is not a mapping
+        return {}, 'METADATA_UNREADABLE'
+
+    return app_metadata, app_metadata_error(app_metadata)
+
+
+def resolve_app_metadata(
+    app_name: str, collective_metadata: dict[str, typing.Any], has_resources: bool, installing: set[str],
+) -> tuple[dict[str, typing.Any], AppErrorReason | None, bool]:
+    """
+    Resolve one app's metadata along with the reason it is unusable, if any.
+
+    The returned boolean is ``False`` when the app should be ignored entirely. Costs no I/O for
+    apps present in ``collective_metadata``, which is every app on a healthy system.
+    """
+    if (app_metadata := collective_metadata.get(app_name)) is not None:
+        return app_metadata, app_metadata_error(app_metadata), True
+
+    app_metadata, error_reason = get_app_metadata_checked(app_name)
+    if error_reason is None:
+        # The app's own metadata is intact, it just has not made it into the collective metadata
+        # yet (or no longer is, mid-delete). Ignoring it here also means a collective metadata file
+        # that is itself missing or corrupt cannot flip every app on the system into ERROR.
+        return app_metadata, None, False
+
+    if error_reason == 'METADATA_MISSING' and not has_resources and app_name in installing:
+        # The app directory is created a moment before its metadata is written, so an install in
+        # flight is indistinguishable from an abandoned directory by looking at the filesystem alone
+        return app_metadata, None, False
+
+    return app_metadata, error_reason, True
 
 
 def update_app_metadata(

@@ -56,7 +56,7 @@ class AppContainerLogsFollowTailEventSource(
     def validate_log_args(self, app_name: str, container_id: str) -> None:
         app = self.middleware.call_sync2(self.middleware.services.app.get_instance, app_name)
         if app.state not in (AppState.CRASHED.value, AppState.RUNNING.value, AppState.DEPLOYING.value):
-            raise CallError(f'Unable to retrieve logs of stopped {app_name!r} app')
+            raise CallError(f'Unable to retrieve logs of {app_name!r} app in {app.state!r} state')
 
         if not any(c.id == container_id for c in app.active_workloads.container_details):
             raise CallError(f'Container "{container_id}" not found in app "{app_name}"', errno=errno.ENOENT)

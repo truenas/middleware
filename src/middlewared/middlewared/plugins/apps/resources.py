@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 import contextlib
+import logging
 import shutil
 from typing import TYPE_CHECKING, Any, Literal, cast
 
@@ -28,16 +29,19 @@ from .compose_utils import compose_action
 from .ix_apps.path import get_app_parent_volume_ds, get_installed_app_path
 from .ix_apps.utils import ContainerState
 from .resources_utils import get_normalized_gpu_choices
-from .utils import IX_APPS_MOUNT_PATH
+from .utils import IX_APPS_MOUNT_PATH, assert_app_usable
 
 if TYPE_CHECKING:
     from middlewared.job import Job
+
+logger = logging.getLogger('app_lifecycle')
 
 
 async def container_ids(
     context: ServiceContext, app_name: str, options: AppContainerIDOptions,
 ) -> AppContainerResponse:
     app = await context.call2(context.s.app.get_instance, app_name)
+    assert_app_usable(app)
     return AppContainerResponse(root={
         c.id: ContainerDetails(
             id=c.id,
@@ -170,16 +174,27 @@ def delete_internal_resources(
 ) -> Literal[True]:
     if job is not None:
         job.set_progress(20, f'Deleting {app_name!r} app')
+
+    app_broken = app_config.state == 'ERROR'
     try:
         compose_action(
             app_name, app_config.version, 'down', remove_orphans=True,
             remove_volumes=True, remove_images=options.remove_images,
+            # A broken app has no version we can trust and therefore no compose file to point at, so
+            # docker has to fall back to finding the project's resources by their labels
+            allow_missing_compose_files=app_broken,
         )
     except Exception:
+        if app_broken:
+            # Refusing here is how a broken app ends up impossible to remove, which is precisely what
+            # being able to report it in the first place is meant to solve
+            logger.warning(
+                '%s: failed to remove docker resources of a broken app, continuing', app_name, exc_info=True
+            )
         # We want to make sure if this fails for a custom app which has no resources deployed, and the explicit
         # boolean flag is set, we allow the deletion of the app as there really isn't anything which compose down
         # is going to accomplish as there are no containers/networks/volumes in place for the app
-        if not (
+        elif not (
             app_config.custom_app and options.force_remove_custom_app and all(
                 not getattr(app_config.active_workloads, k, [])
                 for k in ('container_details', 'volumes', 'networks')
@@ -193,7 +208,9 @@ def delete_internal_resources(
     if job is not None:
         job.set_progress(80, 'Cleaning up resources')
 
-    shutil.rmtree(get_installed_app_path(app_name))
+    # A broken app's directory may itself be part of what is wrong with it, so do not let cleaning it
+    # up be the thing that blocks the removal
+    shutil.rmtree(get_installed_app_path(app_name), ignore_errors=app_broken)
 
     if options.remove_ix_volumes and (apps_volume_ds := get_app_volume_ds(context, app_name)):
         context.call_sync2(context.s.zfs.resource.destroy_impl, apps_volume_ds, recursive=True, bypass=True)

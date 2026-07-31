@@ -21,17 +21,28 @@ logger = logging.getLogger('app_lifecycle')
 
 
 def compose_action(
-    app_name: str, app_version: str, action: typing.Literal['up', 'down', 'pull'], *,
+    app_name: str, app_version: str | None, action: typing.Literal['up', 'down', 'pull'], *,
     force_recreate: bool = False, remove_orphans: bool = False, remove_images: bool = False,
     remove_volumes: bool = False, pull_images: bool = False,
     progress_callback: ProgressCallback | None = None,
     job: Job | None = None,
+    allow_missing_compose_files: bool = False,
 ) -> None:
-    compose_files = list(itertools.chain(
-        *[('-f', item) for item in get_rendered_templates_of_app(app_name, app_version)]
-    ))
-    if not compose_files:
+    compose_files = []
+    if app_version is not None:
+        try:
+            compose_files = list(itertools.chain(
+                *[('-f', item) for item in get_rendered_templates_of_app(app_name, app_version)]
+            ))
+        except FileNotFoundError:
+            if not allow_missing_compose_files:
+                raise
+
+    if not compose_files and not allow_missing_compose_files:
         raise CallError(f'No compose files found for app {app_name!r}')
+
+    # Without any compose file, docker resolves the project from the labels it stamped on the
+    # containers, networks and volumes it created, which is all we have to go on for a broken app
 
     args = ['-p', f'{PROJECT_PREFIX}{app_name}', action]
 

@@ -81,8 +81,19 @@ class AppActiveWorkloads(BaseModel):
 class AppEntry(BaseModel):
     name: NonEmptyString = Field(description="The display name of the application.")
     id: NonEmptyString = Field(description="Unique identifier for the application instance.")
-    state: Literal['CRASHED', 'DEPLOYING', 'RUNNING', 'STOPPED', 'STOPPING'] = Field(
-        description="Current operational state of the application.",
+    state: Literal['CRASHED', 'DEPLOYING', 'ERROR', 'RUNNING', 'STOPPED', 'STOPPING'] = Field(
+        description=(
+            "Current operational state of the application. `ERROR` means the application's on-disk data could "
+            "not be read, in which case the only operation it supports is deletion."
+        ),
+    )
+    error_reason: Literal['METADATA_MISSING', 'METADATA_UNREADABLE', 'METADATA_INCOMPLETE'] | None = Field(
+        default=None,
+        description=(
+            "Why the application is in the `ERROR` state, or `null` if it is not. `METADATA_MISSING` means its "
+            "metadata file is absent, `METADATA_UNREADABLE` that the file could not be read or parsed, and "
+            "`METADATA_INCOMPLETE` that it was read but does not describe the application."
+        ),
     )
     upgrade_available: bool = Field(description="Whether a newer version of the application is available for upgrade.")
     latest_version: NonEmptyString | None = Field(
@@ -96,8 +107,14 @@ class AppEntry(BaseModel):
     )
     custom_app: bool = Field(description="Whether this is a custom application (`true`) or from a catalog (`false`).")
     migrated: bool = Field(description="Whether this application has been migrated from kubernetes.")
-    human_version: NonEmptyString = Field(description="Human-readable version string for display purposes.")
-    version: NonEmptyString = Field(description="Technical version identifier of the currently installed application.")
+    human_version: NonEmptyString | None = Field(
+        description="Human-readable version string for display purposes. `null` if the state is `ERROR`.",
+    )
+    version: NonEmptyString | None = Field(
+        description=(
+            "Technical version identifier of the currently installed application. `null` if the state is `ERROR`."
+        ),
+    )
     metadata: dict = Field(
         description="Application metadata including description, category, and other catalog information.",
     )
@@ -119,6 +136,19 @@ class AppEntry(BaseModel):
         default=None,
         description="Current configuration values for the application. `null` if configuration is not requested.",
     )
+
+    @classmethod
+    def to_previous(cls, value):
+        # Neither the `ERROR` state nor a null version existed before this version, so an app whose
+        # metadata cannot be read is reported to older clients the way any other broken app is
+        if value.get("state") == "ERROR":
+            value["state"] = "CRASHED"
+
+        for key in ("version", "human_version"):
+            if value.get(key) is None and key in value:
+                value[key] = "unknown"
+
+        return value
 
 
 class AppCreate(BaseModel):

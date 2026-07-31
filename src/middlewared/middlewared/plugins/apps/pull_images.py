@@ -7,15 +7,15 @@ from middlewared.plugins.apps_images.utils import normalize_reference
 from middlewared.service import ServiceContext
 
 from .compose_utils import compose_action
-from .crud import get_instance
-from .utils import band_progress, child_job_progress
+from .crud import get_usable_instance
+from .utils import app_version, band_progress, child_job_progress
 
 if TYPE_CHECKING:
     from middlewared.job import Job
 
 
 def outdated_docker_images_for_app(context: ServiceContext, app_name: str) -> list[str]:
-    app = get_instance(context, app_name)
+    app = get_usable_instance(context, app_name)
     image_update_cache = context.call_sync2(context.s.app.image.get_update_cache, True)
     images = []
     for image_tag in app.active_workloads.images:
@@ -26,7 +26,7 @@ def outdated_docker_images_for_app(context: ServiceContext, app_name: str) -> li
 
 
 def pull_images_for_app(context: ServiceContext, job: Job, app_name: str, options: AppPullImages) -> None:
-    app = get_instance(context, app_name)
+    app = get_usable_instance(context, app_name)
     return pull_images_internal(context, app_name, app, options, job)
 
 
@@ -38,7 +38,7 @@ def pull_images_internal(
         job.set_progress(20, 'Pulling app images')
         progress_callback = band_progress(job, 20, 75 if options.redeploy else 99)
 
-    compose_action(app_name, app.version, action='pull', progress_callback=progress_callback, job=job)
+    compose_action(app_name, app_version(app), action='pull', progress_callback=progress_callback, job=job)
     if job is not None:
         job.set_progress(80 if options.redeploy else 100, 'Images pulled successfully')
 
