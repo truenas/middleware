@@ -57,14 +57,13 @@ def passphrase_pool():
         'name': encrypted_pool_name,
         'encryption': True,
         'encryption_options': {
-            'algorithm': 'AES-128-CCM',
             'passphrase': pool_passphrase,
         },
     }):
         check_log_for(pool_passphrase)
         ds = call('pool.dataset.get_instance', encrypted_pool_name)
         assert ds['key_format']['value'] == 'PASSPHRASE', ds
-        assert ds['encryption_algorithm']['value'] == 'AES-128-CCM', ds
+        assert ds['encryption_algorithm']['value'] == 'AES-256-GCM', ds
         yield
 
 
@@ -74,14 +73,13 @@ def key_pool():
         'name': encrypted_pool_name,
         'encryption': True,
         'encryption_options': {
-            'algorithm': 'AES-128-CCM',
             'key': pool_token_hex,
         },
     }):
         check_log_for(pool_token_hex)
         ds = call('pool.dataset.get_instance', encrypted_pool_name)
         assert ds['key_format']['value'] == 'HEX', ds
-        assert ds['encryption_algorithm']['value'] == 'AES-128-CCM', ds
+        assert ds['encryption_algorithm']['value'] == 'AES-256-GCM', ds
         yield
 
 
@@ -94,7 +92,6 @@ class TestNormalPool:
             'encryption_options': {
                 'generate_key': False,
                 'pbkdf2iters': 1300000,
-                'algorithm': 'AES-128-CCM',
                 'passphrase': passphrase,
             },
             'encryption': True,
@@ -102,6 +99,7 @@ class TestNormalPool:
         }
         with create_dataset(payload) as ds:
             assert ds['key_format']['value'] == 'PASSPHRASE'
+            assert ds['encryption_algorithm']['value'] == 'AES-256-GCM', ds
             check_log_for(passphrase)
 
             # Add a comment
@@ -111,6 +109,16 @@ class TestNormalPool:
             call('pool.dataset.change_key', dataset, {'key': dataset_token_hex}, job=True)
             ds = call('pool.dataset.get_instance', dataset)
             assert ds['key_format']['value'] == 'HEX'
+
+    def test_encryption_algorithm_cannot_be_specified(self):
+        payload = {
+            'name': dataset,
+            'encryption': True,
+            'inherit_encryption': False,
+            'encryption_options': {'generate_key': True, 'algorithm': 'AES-128-GCM'},
+        }
+        with pytest.raises(ValidationErrors, match='Extra inputs are not permitted'):
+            call('pool.dataset.create', payload)
 
     @pytest.mark.parametrize('payload', [
         {'encryption': False},
@@ -222,7 +230,6 @@ class TestPassphraseEncryptedPool:
             'encryption_options': {
                 'generate_key': False,
                 'pbkdf2iters': 1300000,
-                'algorithm': 'AES-128-CCM',
                 'passphrase': passphrase,
             },
             'encryption': True,
