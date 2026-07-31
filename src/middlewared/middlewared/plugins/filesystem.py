@@ -618,7 +618,7 @@ class FilesystemService(Service):
                     # None) resets the file to a trivial ACL derived from the
                     # mode, and is a no-op when no ACL is present.
                     truenas_os.fsetacl(f.fileno(), None)
-                    os.fchmod(f.fileno(), options.mode)
+                    os.fchmod(f.fileno(), mode)
 
                 copysplice(job.pipes.input.r.fileno(), f.fileno())
         except PermissionError:
