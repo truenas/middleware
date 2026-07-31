@@ -6,7 +6,6 @@ from types import MappingProxyType
 from truenas_pylicensed import LicenseType
 from truenas_pylicensed.features import LicenseFeature, SupportTier
 
-from . import legacy
 from .engine import (
     DerivedEntitlement,
     Entitlement,
@@ -26,10 +25,10 @@ if typing.TYPE_CHECKING:
     from .facts import EntitlementFacts
 
 
-# Live policy. One entry per rule kind currently in active use: matrix
-# ``Vector``s where a feature has been flipped onto its product-matrix cells,
-# ``LegacyRule``s reproducing today's behavior verbatim for the rest, a
-# ``LicenseTypeRule`` for HA, and a ``TierRule`` for proactive support.
+# Live policy. Every feature resolves against its product-matrix cells as a
+# ``Vector``; the two derived entitlements that are not per-feature keys use a
+# ``LicenseTypeRule`` for HA and a ``TierRule`` for proactive support. The
+# ``LegacyRule`` kind is still supported by the dispatch below but unused here.
 POLICY: Mapping[str, Rule] = MappingProxyType(
     {
         LicenseFeature.APPS: TARGET_VECTORS[LicenseFeature.APPS],
@@ -43,7 +42,7 @@ POLICY: Mapping[str, Rule] = MappingProxyType(
         LicenseFeature.NFS_SNAPSHOT: TARGET_VECTORS[LicenseFeature.NFS_SNAPSHOT],
         LicenseFeature.NVMEOF_SPDK: TARGET_VECTORS[LicenseFeature.NVMEOF_SPDK],
         LicenseFeature.RDMA: TARGET_VECTORS[LicenseFeature.RDMA],
-        LicenseFeature.SED: LegacyRule(func=legacy.sed),  # TODO: Validate logic with old impl
+        LicenseFeature.SED: TARGET_VECTORS[LicenseFeature.SED],
         LicenseFeature.SMB_FASTPATH: TARGET_VECTORS[LicenseFeature.SMB_FASTPATH],
         LicenseFeature.SMB_VEEAM: TARGET_VECTORS[LicenseFeature.SMB_VEEAM],
         LicenseFeature.STIG: TARGET_VECTORS[LicenseFeature.STIG],
