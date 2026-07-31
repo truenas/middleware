@@ -284,8 +284,6 @@ class ISCSIGlobalService(SystemServiceService):
         """
         Returns whether iSCSI ALUA is enabled or not.
         """
-        if not await self.middleware.call('system.is_enterprise'):
-            return False
         if not await self.middleware.call('failover.licensed'):
             return False
 
