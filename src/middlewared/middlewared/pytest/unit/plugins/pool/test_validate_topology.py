@@ -1,8 +1,9 @@
 import pytest
-from unittest.mock import Mock
+from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.plugins.pool_.pool import PoolService
 from middlewared.pytest.unit.middleware import Middleware
+from middlewared.utils.entitlements import Entitlement, Reason
 
 
 def _new_vdev(vdev_type, num_disks):
@@ -26,9 +27,23 @@ def _pool_old(data, *, special=None, dedup=None):
     return {"topology": {"data": data, "special": special or [], "dedup": dedup or []}}
 
 
-def _service(is_enterprise=False):
+def _entitlements_stub(middleware, entitled):
+    """Stub truenas.entitlements.check; returns the list of features it was asked about."""
+    checked = []
+
+    def check(feature):
+        checked.append(feature)
+        if entitled:
+            return Entitlement(entitled=True, reason=Reason.ENTITLED, column="HW+K", message="")
+        return Entitlement(entitled=False, reason=Reason.KEY_MISSING, column="CE+L", message="")
+
+    middleware.services.truenas.entitlements.check = check
+    return checked
+
+
+def _service(entitled=False):
     middleware = Middleware()
-    middleware["system.is_enterprise"] = Mock(return_value=is_enterprise)
+    _entitlements_stub(middleware, entitled)
     return PoolService(middleware)
 
 
@@ -171,25 +186,31 @@ async def test_force_topology_does_not_bypass_minimum_disks():
 
 
 # ---------------------------------------------------------------------------
-# force_topology is not permitted on Enterprise-licensed systems
+# force_topology is not permitted on systems with a support entitlement
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.asyncio
-async def test_force_topology_rejected_on_enterprise():
-    verrors = await _service(is_enterprise=True)._validate_topology(
+async def test_force_topology_rejected_when_entitled():
+    middleware = Middleware()
+    checked = _entitlements_stub(middleware, entitled=True)
+
+    verrors = await PoolService(middleware)._validate_topology(
         _pool_data([_new_vdev("RAIDZ2", 7)], force_topology=True)
     )
     assert [e.attribute for e in verrors.errors] == ["force_topology"]
     assert verrors.errors[0].errmsg == (
-        "Bypassing pool topology validation is not supported on Enterprise-licensed systems."
+        "Bypassing pool topology validation is not permitted on systems with a support entitlement."
     )
+    assert checked == [LicenseFeature.SUPPORT]
 
 
 @pytest.mark.asyncio
 async def test_force_topology_not_checked_when_unset():
-    # system.is_enterprise must not even be consulted when force_topology is off.
-    service = _service(is_enterprise=True)
-    verrors = await service._validate_topology(_pool_data([_new_vdev("RAIDZ2", 7)]))
+    # The entitlement must not even be consulted when force_topology is off.
+    middleware = Middleware()
+    checked = _entitlements_stub(middleware, entitled=True)
+
+    verrors = await PoolService(middleware)._validate_topology(_pool_data([_new_vdev("RAIDZ2", 7)]))
     assert verrors.errors == []
-    service.middleware["system.is_enterprise"].assert_not_called()
+    assert checked == []

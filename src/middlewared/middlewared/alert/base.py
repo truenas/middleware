@@ -381,7 +381,7 @@ class AlertService(CallMixin):
 
     async def _format_alerts(self, alerts, gone_alerts, new_alerts):
         hostname = await self.middleware.call("system.hostname")
-        if await self.middleware.call("system.is_enterprise"):
+        if await self.middleware.call("system.is_ha_capable"):
             node_map = await self.middleware.call("alert.node_map")
         else:
             node_map = None
@@ -403,7 +403,7 @@ class ThreadedAlertService(AlertService):
 
     def _format_alerts(self, alerts, gone_alerts, new_alerts):
         hostname = self.middleware.call_sync("system.hostname")
-        if self.middleware.call_sync("system.is_enterprise"):
+        if self.middleware.call_sync("system.is_ha_capable"):
             node_map = self.middleware.call_sync("alert.node_map")
         else:
             node_map = None
