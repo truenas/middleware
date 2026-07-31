@@ -296,7 +296,7 @@ class AlertService(Service):
 
     @private
     async def initialize(self, load=True):
-        is_enterprise = await self.middleware.call("system.is_enterprise")
+        is_enterprise = await self.middleware.call("system.is_ha_capable")
 
         self.node = "A"
         if is_enterprise:

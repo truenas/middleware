@@ -201,7 +201,7 @@ def hook_datastore_execute_write(middleware, sql, params, options):
 
 
 async def setup(middleware):
-    if not await middleware.call('system.is_enterprise'):
+    if not await middleware.call('system.is_ha_capable'):
         return
 
     middleware.register_hook('datastore.post_execute_write', hook_datastore_execute_write, inline=True)
