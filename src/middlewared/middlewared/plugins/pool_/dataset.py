@@ -731,6 +731,9 @@ class PoolDatasetService(CRUDService):
             else:
                 zprops[i.real_name] = transformed
 
+        for up in data['user_properties']:
+            uprops[up['key']] = up['value']
+
         await self.middleware.call(
             'pool.dataset.create_impl',
             CreateImplArgs(
