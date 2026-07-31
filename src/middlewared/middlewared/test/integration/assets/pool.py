@@ -106,7 +106,7 @@ def snapshot(dataset, name, **kwargs):
 
     result = call(
         "zfs.resource.snapshot.create",
-        {"dataset": dataset, "name": name, "bypass": True, **kwargs}
+        {"dataset": dataset, "name": name, **kwargs}
     )
     id_ = f"{dataset}@{name}"
     try:

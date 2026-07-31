@@ -298,3 +298,21 @@ def test_zfs_resource_snapshot_destroy_protected_path_all_snapshots():
             {"path": "boot-pool", "all_snapshots": True},
         )
     assert "protected" in str(exc_info.value).lower()
+
+
+def test_zfs_resource_snapshot_destroy_bypass_is_not_settable():
+    """Test that an API client cannot skip the protected path check by passing `bypass`.
+
+    `bypass` is a `Private` field: it exists so that internal callers can destroy system datasets, and the
+    API must reject it the same way it rejects a key that does not exist at all. boot-pool is always
+    protected, and the check runs before the snapshot is looked up, so nothing is destroyed either way.
+    """
+    with pytest.raises(Exception) as exc_info:
+        call(
+            "zfs.resource.snapshot.destroy",
+            {"path": "boot-pool@test", "bypass": True},
+        )
+
+    error = str(exc_info.value)
+    assert "bypass" in error, error
+    assert "Extra inputs are not permitted" in error, error
