@@ -152,9 +152,6 @@ class PoolCreateEncryptionOptions(BaseModel):
             " brute force attacks but increase unlock time."
         ),
     )
-    algorithm: Literal[
-        "AES-128-CCM", "AES-192-CCM", "AES-256-CCM", "AES-128-GCM", "AES-192-GCM", "AES-256-GCM"
-    ] = Field(default="AES-256-GCM", description="Encryption algorithm to use for dataset encryption.")
     passphrase: Secret[Annotated[str, Field(min_length=8)] | None] = Field(
         default=None,
         description="Must be specified if encryption for root dataset is desired with a passphrase as a key.",

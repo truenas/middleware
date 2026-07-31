@@ -12,7 +12,7 @@ from middlewared.service import CallError, Service, ValidationErrors, job, priva
 from middlewared.service.decorators import pass_thread_local_storage
 from middlewared.utils import secrets
 
-from .utils import DATASET_DATABASE_MODEL_NAME, ZFSKeyFormat
+from .utils import DATASET_DATABASE_MODEL_NAME, ZFS_ENCRYPTION_ALGORITHM, ZFSKeyFormat
 
 
 class PoolDatasetService(Service):
@@ -112,7 +112,7 @@ class PoolDatasetService(Service):
             opts = {
                 'keyformat': (ZFSKeyFormat.PASSPHRASE if passphrase_key_format else ZFSKeyFormat.HEX).value.lower(),
                 'keylocation': 'prompt',
-                'encryption': encryption_dict['algorithm'].lower(),
+                'encryption': ZFS_ENCRYPTION_ALGORITHM,
                 'key': key,
                 **({'pbkdf2iters': encryption_dict['pbkdf2iters']} if passphrase_key_format else {}),
             }

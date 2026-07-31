@@ -28,9 +28,7 @@ ZFS_COMPRESSION_ALGORITHM_CHOICES = [
 ] + [f'ZSTD-{i}' for i in range(1, 20)] + [
     f'ZSTD-FAST-{i}' for i in itertools.chain(range(1, 11), range(20, 110, 10), range(500, 1500, 500))
 ]
-ZFS_ENCRYPTION_ALGORITHM_CHOICES = [
-    'AES-128-CCM', 'AES-192-CCM', 'AES-256-CCM', 'AES-128-GCM', 'AES-192-GCM', 'AES-256-GCM'
-]
+ZFS_ENCRYPTION_ALGORITHM = 'aes-256-gcm'
 ZFS_VOLUME_BLOCK_SIZE_CHOICES = {
     '512': 512,
     '512B': 512,
