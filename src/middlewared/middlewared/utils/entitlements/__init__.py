@@ -11,8 +11,9 @@ A policy entry is one of a few rule kinds: a matrix ``Vector`` (resolved by
 column against the product feature matrix), a ``LegacyRule`` (an arbitrary
 callable reproducing a today-behavior gate verbatim), a ``TierRule`` (gating on
 a per-feature ``FeatureInfo.type`` qualifier), or a ``LicenseTypeRule`` (gating
-on ``LicenseInfo.type``). The live ``POLICY`` mixes matrix ``Vector``s with a
-few remaining ``LegacyRule``s; flipping a feature to its matrix ``Vector`` is a
+on ``LicenseInfo.type``). Every live ``POLICY`` feature is now bound to its
+matrix ``Vector``; ``LegacyRule`` is retained as a rule kind for any feature
+that later needs a transitional shim. Flipping a feature between the two is a
 one-line data change.
 
 Layering is a strict DAG: ``facts`` <- ``engine`` <- ``legacy`` <- ``policy``.
