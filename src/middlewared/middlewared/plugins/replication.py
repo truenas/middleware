@@ -314,9 +314,6 @@ class ReplicationService(CRUDService):
         if really_run:
             task = await self.get_instance(id_)
 
-            if not task["enabled"]:
-                raise CallError("Task is not enabled")
-
             if task["state"]["state"] == "RUNNING":
                 raise CallError("Task is already running")
 
