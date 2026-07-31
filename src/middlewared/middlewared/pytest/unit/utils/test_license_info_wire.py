@@ -21,6 +21,14 @@ LEGACY_HA_BLOB = (
     "luYy4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwAAAAAAAAAAgMCAgE="
 )
 
+# Enterprise single license (X10, BRONZE contract). GOLD is the one contract type whose
+# SUPPORT entry the license itself carries; every other type has SUPPORT injected with a
+# tier stamped onto it, and only a non-GOLD fixture pins that on the wire.
+LEGACY_BRONZE_BLOB = (
+    "AVgxMAAAAAAAAAAAAAAAAABURVNULTAwMDAwMQAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAADIwMjYwNDA4AAAAABYAAAAAAAAAaVhzeXN0ZW1zIE"
+    "luYy4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAA=="
+)
+
 START = date(2026, 4, 8)
 END = date(2026, 4, 30)
 
@@ -74,6 +82,36 @@ LEGACY_EXPECTED = {
     "contract_type": "GOLD",
 }
 
+LEGACY_BRONZE_EXPECTED = {
+    "id": "legacy_TEST-000001",
+    "type": "ENTERPRISE_SINGLE",
+    "model": "X10",
+    "expires_at": END,
+    "features": [
+        _legacy_feature("APPS"),
+        _legacy_feature("AUTOTUNE"),
+        _legacy_feature("CATALOG_ENTERPRISE_TRAIN"),
+        _legacy_feature("CONTAINERS"),
+        _legacy_feature("DIRECTORY_SERVICES"),
+        _legacy_feature("KMIP"),
+        _legacy_feature("MISSION_CRITICAL"),
+        _legacy_feature("NETWORK_FEC"),
+        _legacy_feature("NFS_SNAPSHOT"),
+        _legacy_feature("NVMEOF_SPDK"),
+        _legacy_feature("RDMA"),
+        _legacy_feature("SMB_FASTPATH"),
+        _legacy_feature("SMB_VEEAM"),
+        _legacy_feature("STIG"),
+        _legacy_feature("SUPPORT", "BRONZE"),
+        _legacy_feature("TRUESEARCH"),
+        _legacy_feature("VMS"),
+        _legacy_feature("WEBSHARE"),
+    ],
+    "serials": ["TEST-000001"],
+    "enclosures": {},
+    "contract_type": "BRONZE",
+}
+
 
 def _v2_license():
     status = LicenseStatus(
@@ -102,7 +140,11 @@ def _v2_license():
     return info
 
 
-LICENSES = [("v2", _v2_license, V2_EXPECTED), ("legacy", lambda: parse_legacy_license(LEGACY_HA_BLOB), LEGACY_EXPECTED)]
+LICENSES = [
+    ("v2", _v2_license, V2_EXPECTED),
+    ("legacy", lambda: parse_legacy_license(LEGACY_HA_BLOB), LEGACY_EXPECTED),
+    ("legacy-bronze", lambda: parse_legacy_license(LEGACY_BRONZE_BLOB), LEGACY_BRONZE_EXPECTED),
+]
 
 
 @pytest.mark.parametrize("label,build,expected", LICENSES)
