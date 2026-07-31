@@ -1,12 +1,12 @@
 from typing import Literal
 
 from pydantic import Field
-from pydantic.json_schema import SkipJsonSchema
 
 from middlewared.api.base import (
     BaseModel,
     NonEmptyString,
     NotRequired,
+    Private,
     UniqueList,
 )
 
@@ -360,7 +360,7 @@ class ZFSResourceQuery(BaseModel):
             " specified path(s), not from the pool root."
         ),
     )
-    exclude_internal_paths: SkipJsonSchema[bool] = Field(default=True, description="Exclude internal paths.")
+    exclude_internal_paths: Private[bool] = Field(default=True, description="Exclude internal paths.")
     get_tier: bool = Field(
         default=False,
         description=(

@@ -1,12 +1,12 @@
 from typing import Literal
 
 from pydantic import Field
-from pydantic.json_schema import SkipJsonSchema
 
 from middlewared.api.base import (
     BaseModel,
     NonEmptyString,
     NotRequired,
+    Private,
     UniqueList,
 )
 
@@ -241,7 +241,7 @@ class ZFSResourceSnapshotDestroyQuery(BaseModel):
         description="If True, path should be a dataset path and all its snapshots will be destroyed.",
     )
     defer: bool = Field(default=False, description="Defer destruction if snapshot is in use (e.g., has clones).")
-    bypass: SkipJsonSchema[bool] = Field(
+    bypass: Private[bool] = Field(
         default=False,
         description=(
             "If true, will bypass the safety checks that prevent deleting zfs resources that are \"protected\"."
@@ -261,7 +261,7 @@ class ZFSResourceSnapshotRenameQuery(BaseModel):
     current_name: NonEmptyString = Field(description="Current snapshot path (e.g., 'pool/dataset@old_name').")
     new_name: NonEmptyString = Field(description="New snapshot path (e.g., 'pool/dataset@new_name').")
     recursive: bool = Field(default=False, description="Recursively rename matching snapshots in child datasets.")
-    bypass: SkipJsonSchema[bool] = Field(
+    bypass: Private[bool] = Field(
         default=False,
         description=(
             "If true, will bypass the safety checks that prevent deleting zfs resources that are \"protected\"."
@@ -281,7 +281,7 @@ class ZFSResourceSnapshotCloneQuery(BaseModel):
     snapshot: NonEmptyString = Field(description="Source snapshot path to clone (e.g., 'pool/dataset@snapshot').")
     dataset: NonEmptyString = Field(description="Destination dataset path for the clone (e.g., 'pool/clone').")
     properties: dict[str, str | int] = Field(default={}, description="ZFS properties to set on the cloned dataset.")
-    bypass: SkipJsonSchema[bool] = Field(
+    bypass: Private[bool] = Field(
         default=False,
         description=(
             "If true, will bypass the safety checks that prevent deleting zfs resources that are \"protected\"."
@@ -309,7 +309,7 @@ class ZFSResourceSnapshotCreateQuery(BaseModel):
             "'com.company:backup_type'). Regular ZFS properties cannot be set on snapshots at creation time."
         ),
     )
-    bypass: SkipJsonSchema[bool] = Field(
+    bypass: Private[bool] = Field(
         default=False,
         description=(
             "If true, will bypass the safety checks that prevent deleting zfs resources that are \"protected\"."
@@ -332,7 +332,7 @@ class ZFSResourceSnapshotHoldQuery(BaseModel):
         default=False,
         description="Apply hold recursively to matching snapshots in child datasets.",
     )
-    bypass: SkipJsonSchema[bool] = Field(
+    bypass: Private[bool] = Field(
         default=False,
         description=(
             "If true, will bypass the safety checks that prevent deleting zfs resources that are \"protected\"."
@@ -367,7 +367,7 @@ class ZFSResourceSnapshotReleaseQuery(BaseModel):
         default=False,
         description="Release holds recursively from matching snapshots in child datasets.",
     )
-    bypass: SkipJsonSchema[bool] = Field(
+    bypass: Private[bool] = Field(
         default=False,
         description=(
             "If true, will bypass the safety checks that prevent deleting zfs resources that are \"protected\"."
@@ -397,7 +397,7 @@ class ZFSResourceSnapshotRollbackQuery(BaseModel):
         default=False,
         description="Do a complete recursive rollback of each child snapshot. Fails if any child lacks the snapshot.",
     )
-    bypass: SkipJsonSchema[bool] = Field(
+    bypass: Private[bool] = Field(
         default=False,
         description=(
             "If true, will bypass the safety checks that prevent deleting zfs resources that are \"protected\"."

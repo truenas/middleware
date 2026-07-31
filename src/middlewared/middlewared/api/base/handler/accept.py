@@ -14,7 +14,8 @@ def accept_params(
     *,
     dump_models: bool = True,
     exclude_unset: bool = False,
-    expose_secrets: bool = True
+    expose_secrets: bool = True,
+    allow_private: bool = False,
 ) -> list[Any]:
     """
     Accepts a list of `args` for a method call and validates it using `model`.
@@ -28,6 +29,8 @@ def accept_params(
     :param dump_models: it true, will dump all pydantic models.
     :param exclude_unset: if true, will not append default parameters to the list.
     :param expose_secrets: if false, will replace `Secret` parameters with a placeholder.
+    :param allow_private: if false (the default), specifying a value for a `Private` field is rejected the same
+        way an unknown key is.
     :return: a validated list of method args.
     """
     if not dump_models and not expose_secrets:
@@ -41,12 +44,12 @@ def accept_params(
 
     if dump_models:
         result_dict = validate_model(model, args_as_dict, dump_models=True, exclude_unset=exclude_unset,
-                                     expose_secrets=expose_secrets)
+                                     expose_secrets=expose_secrets, allow_private=allow_private)
 
         return [result_dict[model.model_fields[field].alias or field] for field in fields]
     else:
         result = validate_model(model, args_as_dict, dump_models=False, exclude_unset=exclude_unset,
-                                expose_secrets=expose_secrets)
+                                expose_secrets=expose_secrets, allow_private=allow_private)
 
         return [getattr(result, field) for field in fields]
 
@@ -83,6 +86,7 @@ def validate_model(
     dump_models: Literal[True] = True,
     exclude_unset: bool = False,
     expose_secrets: bool = True,
+    allow_private: bool = True,
 ) -> dict[str, Any]:
     ...
 
@@ -95,6 +99,7 @@ def validate_model(
     dump_models: Literal[False],
     exclude_unset: bool = False,
     expose_secrets: bool = True,
+    allow_private: bool = True,
 ) -> BaseModel:
     ...
 
@@ -106,6 +111,7 @@ def validate_model(
     dump_models: bool = True,
     exclude_unset: bool = False,
     expose_secrets: bool = True,
+    allow_private: bool = True,
 ) -> dict[str, Any] | BaseModel:
     """
     Validates `data` against the `model`, sanitizes values, sets defaults.
@@ -117,13 +123,20 @@ def validate_model(
     :param dump_models: it true, will dump all pydantic models.
     :param exclude_unset: if true, will not add default values.
     :param expose_secrets: if false, will replace `Secret` fields with a placeholder.
+    :param allow_private: if false, specifying a value for a `Private` field is rejected the same way an
+        unknown key is. Defaults to true because this function validates data that middleware itself produced;
+        the API boundary is `accept_params`, which defaults to false.
     :return: validated data.
     """
     if not dump_models and not expose_secrets:
         raise ValueError("`expose_secrets=False` is not compatible with `dump_models=False`")
 
+    context: dict[str, bool] | None = None
+    if not allow_private:
+        context = {"allow_private": False}
+
     try:
-        instance = model(**data)
+        instance = model.model_validate(data, context=context)
     except ValidationError as e:
         union_errors = defaultdict(list)
 
