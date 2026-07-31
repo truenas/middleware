@@ -340,7 +340,7 @@ class FailoverService(ConfigService):
         """
         Force this controller to become MASTER, if it's not already.
         """
-        if not await self.middleware.call('system.is_enterprise'):
+        if not await self.middleware.call('system.is_ha_capable'):
             return False
 
         if await self.middleware.call('failover.status') == 'MASTER':
