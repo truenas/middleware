@@ -1,4 +1,8 @@
 <%
+    from truenas_pylicensed.features import LicenseFeature
+
+    from middlewared.utils.entitlements import get_entitlement
+
     users = render_ctx['user.query']
     groups = render_ctx['group.query']
 
@@ -33,7 +37,7 @@ ${f'%{group["group"]}'} ALL=(ALL) ${sudo_entry(group['sudo_commands'], group['su
 % endfor
 Defaults syslog_goodpri = debug
 Defaults secure_path = /sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
-% if render_ctx['system.is_enterprise']:
+% if get_entitlement(LicenseFeature.SUPPORT).entitled:
 Defaults log_subcmds
 Defaults log_format=json
 % endif

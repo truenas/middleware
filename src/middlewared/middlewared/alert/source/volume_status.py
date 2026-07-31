@@ -91,7 +91,7 @@ class VolumeStatusAlertSource(AlertSource):
         ]
 
     async def enabled(self):
-        if await self.middleware.call("system.is_enterprise"):
+        if await self.middleware.call("system.is_ha_capable"):
             status = await self.middleware.call("failover.status")
             return status in ("MASTER", "SINGLE")
 
