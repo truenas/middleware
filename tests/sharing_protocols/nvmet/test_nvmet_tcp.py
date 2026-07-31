@@ -132,7 +132,6 @@ def encrypted_zvol():
             'encryption': True,
             'inherit_encryption': False,
             'encryption_options': {
-                'algorithm': 'AES-128-CCM',
                 'passphrase': NVMET_ENCRYPTED_PASSPHRASE,
             },
         },
