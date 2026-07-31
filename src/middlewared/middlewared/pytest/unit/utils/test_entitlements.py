@@ -103,6 +103,7 @@ def test_live_policy_shape():
         LicenseFeature.SMB_FASTPATH,
         LicenseFeature.SMB_VEEAM,
         LicenseFeature.STIG,
+        LicenseFeature.SUPPORT,
         LicenseFeature.TRUESEARCH,
         LicenseFeature.NFS_SNAPSHOT,
         LicenseFeature.NVMEOF_SPDK,
@@ -121,6 +122,7 @@ def test_live_policy_shape():
     assert isinstance(POLICY[LicenseFeature.VMS], Vector)
     assert isinstance(POLICY[LicenseFeature.WEBSHARE], Vector)
     assert isinstance(POLICY[LicenseFeature.STIG], Vector)
+    assert isinstance(POLICY[LicenseFeature.SUPPORT], Vector)
     assert isinstance(POLICY[LicenseFeature.TRUESEARCH], Vector)
     assert isinstance(POLICY[LicenseFeature.NFS_SNAPSHOT], Vector)
     assert isinstance(POLICY[LicenseFeature.NVMEOF_SPDK], Vector)
@@ -204,7 +206,7 @@ def test_dedup_key_missing_message_uses_display_name():
     assert entitlement.message == "This system's license does not include the ZFS deduplication feature."
 
 
-# ZFSTIER, STIG, TRUESEARCH, NFS_SNAPSHOT, NVMEOF_SPDK, NETWORK_FEC, RDMA,
+# ZFSTIER, STIG, SUPPORT, TRUESEARCH, NFS_SNAPSHOT, NVMEOF_SPDK, NETWORK_FEC, RDMA,
 # WEBSHARE and DIRECTORY_SERVICES are live matrix Vectors (0,0,0,1,0,1): key-only on either
 # hardware side.
 KEY_ONLY_TABLE = [
@@ -225,6 +227,7 @@ KEY_ONLY_TABLE = [
     [
         LicenseFeature.ZFSTIER,
         LicenseFeature.STIG,
+        LicenseFeature.SUPPORT,
         LicenseFeature.TRUESEARCH,
         LicenseFeature.NFS_SNAPSHOT,
         LicenseFeature.NVMEOF_SPDK,

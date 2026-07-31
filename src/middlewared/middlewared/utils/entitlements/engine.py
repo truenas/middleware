@@ -59,6 +59,7 @@ FEATURE_DISPLAY_NAMES: Mapping[str, str] = {
     LicenseFeature.SMB_FASTPATH: "SMB ZFS fastpath",
     LicenseFeature.SMB_VEEAM: "Veeam repository shares",
     LicenseFeature.STIG: "STIG and FIPS",
+    LicenseFeature.SUPPORT: "support",
     LicenseFeature.TRUESEARCH: "TrueSearch",
     LicenseFeature.VMS: "virtual machines",
     LicenseFeature.WEBSHARE: "Webshare",

@@ -47,6 +47,12 @@ POLICY: Mapping[str, Rule] = MappingProxyType(
         LicenseFeature.SMB_FASTPATH: TARGET_VECTORS[LicenseFeature.SMB_FASTPATH],
         LicenseFeature.SMB_VEEAM: TARGET_VECTORS[LicenseFeature.SMB_VEEAM],
         LicenseFeature.STIG: TARGET_VECTORS[LicenseFeature.STIG],
+        # TODO: SUPPORT is injected into every legacy license, so on the installed base this
+        # grants wherever a license exists at all. Revisit which populations that hands access
+        # to before this ships: freenas-model and Mini licensees now route their support
+        # tickets to the enterprise endpoint instead of the community one, and an unlicensed
+        # HA-capable system moves the other way.
+        LicenseFeature.SUPPORT: TARGET_VECTORS[LicenseFeature.SUPPORT],
         LicenseFeature.TRUESEARCH: TARGET_VECTORS[LicenseFeature.TRUESEARCH],
         LicenseFeature.VMS: TARGET_VECTORS[LicenseFeature.VMS],
         # TODO: See if we should have runtime gates as well and not just config gates
