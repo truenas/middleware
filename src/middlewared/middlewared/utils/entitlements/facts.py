@@ -1,25 +1,14 @@
 from __future__ import annotations
 
-import enum
 from dataclasses import dataclass
 
-from ixhardware import TRUENAS_UNKNOWN
-
+from middlewared.utils.hardware import HardwareClass
 from middlewared.utils.license import LicenseInfo
 
-
-class HardwareClass(enum.Enum):
-    TRUENAS_HW = "TRUENAS_HW"
-    MINI = "MINI"
-    GENERIC = "GENERIC"
-
-    @classmethod
-    def from_chassis(cls, chassis: str) -> HardwareClass:
-        if chassis == TRUENAS_UNKNOWN:
-            return cls.GENERIC
-        if "MINI" in chassis:
-            return cls.MINI
-        return cls.TRUENAS_HW
+# HardwareClass is re-exported: it is half of EntitlementFacts, so everything
+# building facts wants both names, and only this package's own layering cares
+# that it is defined elsewhere.
+__all__ = ("EntitlementFacts", "HardwareClass")
 
 
 @dataclass(frozen=True, kw_only=True, slots=True)

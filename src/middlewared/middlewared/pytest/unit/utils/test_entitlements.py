@@ -651,28 +651,13 @@ def test_tier_passthrough_exposed_on_facts():
     assert support.type == "GOLD"
 
 
-# (g) HardwareClass.from_chassis.
-@pytest.mark.parametrize(
-    "chassis,expected",
-    [
-        ("TRUENAS-UNKNOWN", HardwareClass.GENERIC),
-        ("TRUENAS-MINI-X+", HardwareClass.MINI),
-        ("FREENAS-MINI-X", HardwareClass.MINI),
-        ("TRUENAS-M50", HardwareClass.TRUENAS_HW),
-        ("TRUENAS-F100", HardwareClass.TRUENAS_HW),
-    ],
-)
-def test_hardware_class_from_chassis(chassis, expected):
-    assert HardwareClass.from_chassis(chassis) is expected
-
-
-# (h) Unknown feature.
+# (g) Unknown feature.
 def test_unknown_feature_raises():
     with pytest.raises(ValueError):
         check_entitlement("NOPE", make_facts(hardware_class=HardwareClass.GENERIC))
 
 
-# (i) PROACTIVE_SUPPORT: live TierRule over the SUPPORT tier qualifier.
+# (h) PROACTIVE_SUPPORT: live TierRule over the SUPPORT tier qualifier.
 @pytest.mark.parametrize(
     "support_type,entitled,reason",
     [
@@ -708,7 +693,7 @@ def test_proactive_support_unlicensed_is_no_license():
     assert entitlement.reason == "NO_LICENSE"
 
 
-# (j) HA: live LicenseTypeRule over the license type.
+# (i) HA: live LicenseTypeRule over the license type.
 def test_ha_entitled_for_enterprise_ha():
     facts = make_facts(hardware_class=HardwareClass.TRUENAS_HW, license=make_license(type_=LicenseType.ENTERPRISE_HA))
     assert check_entitlement(DerivedEntitlement.HA, facts).entitled is True
