@@ -5,6 +5,7 @@
 
 import time
 
+from middlewared.alert.applicability import HardwareClass, HardwareRule
 from middlewared.alert.base import (
     AlertClass,
     AlertCategory,
@@ -17,12 +18,16 @@ from middlewared.utils import ProductType
 from middlewared.utils.crypto import generate_token
 
 
+TRUENAS_HARDWARE = HardwareRule(classes=frozenset({HardwareClass.TRUENAS_HW}))
+
+
 class SensorAlertClass(AlertClass):
     category = AlertCategory.HARDWARE
     level = AlertLevel.CRITICAL
     title = "Sensor Value Is Outside of Working Range"
     text = "Sensor %(name)s is %(relative)s %(level)s value: %(value)s %(event)s"
     products = (ProductType.ENTERPRISE,)
+    applies_to = TRUENAS_HARDWARE
 
 
 class PowerSupplyAlertClass(AlertClass):
@@ -33,6 +38,7 @@ class PowerSupplyAlertClass(AlertClass):
         "%(psu)s is %(state)s showing: %(errors)s. Contact support. Incident ID: %(id)s"
     )
     products = (ProductType.ENTERPRISE,)
+    applies_to = TRUENAS_HARDWARE
     proactive_support = True
     proactive_support_notify_gone = True
 

@@ -5,8 +5,12 @@
 
 from datetime import timedelta
 
+from middlewared.alert.applicability import HardwareClass, HardwareRule
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource, IntervalSchedule
 from middlewared.utils import ProductType
+
+
+TRUENAS_HARDWARE = HardwareRule(classes=frozenset({HardwareClass.TRUENAS_HW}))
 
 
 class SATADOMWearWarningAlertClass(AlertClass):
@@ -15,6 +19,7 @@ class SATADOMWearWarningAlertClass(AlertClass):
     title = "SATA DOM Lifetime: Less Than 20% Left"
     text = "%(lifetime)d%% of lifetime left on SATA DOM %(disk)s."
     products = (ProductType.ENTERPRISE,)
+    applies_to = TRUENAS_HARDWARE
 
 
 class SATADOMWearCriticalAlertClass(AlertClass):
@@ -23,11 +28,13 @@ class SATADOMWearCriticalAlertClass(AlertClass):
     title = "SATA DOM Lifetime: Less Than 10% Left"
     text = "%(lifetime)d%% of lifetime left on SATA DOM %(disk)s."
     products = (ProductType.ENTERPRISE,)
+    applies_to = TRUENAS_HARDWARE
 
 
 class SATADOMWearAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(hours=1))
     products = (ProductType.ENTERPRISE,)
+    applies_to = TRUENAS_HARDWARE
 
     async def check(self):
         dmi = await self.middleware.call("system.dmidecode_info")

@@ -3,6 +3,7 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
+from middlewared.alert.applicability import HardwareClass, HardwareRule
 from middlewared.alert.base import (
     Alert,
     AlertClass,
@@ -12,6 +13,9 @@ from middlewared.alert.base import (
 )
 from middlewared.utils import ProductType
 from middlewared.utils.version import parse_major_minor_version
+
+
+TRUENAS_HARDWARE = HardwareRule(classes=frozenset({HardwareClass.TRUENAS_HW}))
 
 
 class VSeriesUnstampedSPDAlertClass(AlertClass):
@@ -25,10 +29,12 @@ class VSeriesUnstampedSPDAlertClass(AlertClass):
         "Contact support."
     )
     products = (ProductType.ENTERPRISE,)
+    applies_to = TRUENAS_HARDWARE
 
 
 class VSeriesUnstampedSPDAlertSource(AlertSource):
     products = (ProductType.ENTERPRISE,)
+    applies_to = TRUENAS_HARDWARE
 
     async def check(self):
         """Fire on V-Series when the DMI Type 1 Version field isn't a strict
