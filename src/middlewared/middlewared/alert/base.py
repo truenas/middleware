@@ -8,6 +8,7 @@ from typing import Any, TypeAlias
 
 import html2text
 
+from middlewared.alert.applicability import Rule
 from middlewared.alert.schedule import IntervalSchedule
 from middlewared.utils import ProductName, ProductType
 from middlewared.utils.lang import undefined
@@ -58,6 +59,12 @@ class AlertClass(CallMixin, metaclass=AlertClassMeta):
 
     :cvar products: A list of `system.product_type` return values on which alerts of this class can be emitted.
 
+    :cvar applies_to: `Rule` describing the systems this alert class is meaningful on, or `None` for all of them. It
+        governs running the source, displaying the alert, sending it, and listing the class.
+
+    :cvar listed_when: `Rule` narrowing `applies_to` further, applied *only* in `alert.list_categories`. An alert class
+        excluded by it is still displayed and still sent; it is only hidden from the settings catalogue.
+
     :cvar proactive_support: Set this to `true` if, upon creation of the alert, a support ticket should be open for the
         systems that have a corresponding support license.
 
@@ -75,6 +82,8 @@ class AlertClass(CallMixin, metaclass=AlertClassMeta):
 
     exclude_from_list = False
     products = (ProductType.COMMUNITY_EDITION, ProductType.ENTERPRISE)
+    applies_to: Rule | None = None
+    listed_when: Rule | None = None
     proactive_support = False
     proactive_support_notify_gone = False
 
@@ -322,6 +331,9 @@ class AlertSource(CallMixin):
 
     :cvar products: A list of `system.product_type` return values for which this source will be ran.
 
+    :cvar applies_to: `Rule` describing the systems this source is meaningful on, or `None` for all of them. The source
+        is not ran where it does not apply.
+
     :cvar failover_related: should be `true` if this alert is HA failover related. Failover-related alerts are not ran
         within a specific time interval after failover to prevent false positives.
 
@@ -331,6 +343,7 @@ class AlertSource(CallMixin):
     schedule = IntervalSchedule(timedelta())
 
     products = (ProductType.COMMUNITY_EDITION, ProductType.ENTERPRISE)
+    applies_to: Rule | None = None
     failover_related = False
     run_on_backup_node = True
     require_stable_peer = False
