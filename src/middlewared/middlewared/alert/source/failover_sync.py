@@ -7,7 +7,6 @@ from middlewared.alert.applicability import HardwareClass, HardwareRule, License
 from middlewared.alert.base import (
     Alert, AlertClass, SimpleOneShotAlertClass, AlertCategory, AlertLevel, OneShotAlertClass
 )
-from middlewared.utils import ProductType
 
 
 HA_LICENSED = LicenseRule(requirement=LicenseRequirement.HA)
@@ -23,7 +22,6 @@ class FailoverSyncFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
         "the standby storage controller but failed. Use Sync to Peer on the "
         "System/Failover page to try and perform a manual sync."
     )
-    products = (ProductType.ENTERPRISE,)
     applies_to = TRUENAS_HARDWARE
     listed_when = HA_LICENSED
 
@@ -44,7 +42,6 @@ class FailoverKeysSyncFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
         "The automatic synchronization of encryption passphrases with the standby "
         "controller has failed. Please go to System > Failover and manually sync to peer."
     )
-    products = (ProductType.ENTERPRISE,)
     applies_to = TRUENAS_HARDWARE
     listed_when = HA_LICENSED
 
@@ -59,7 +56,6 @@ class FailoverKMIPKeysSyncFailedAlertClass(AlertClass, OneShotAlertClass):
         "The automatic synchronization of KMIP keys with the standby "
         "controller has failed due to %(error)s. Please go to System > Failover and manually sync to peer."
     )
-    products = (ProductType.ENTERPRISE,)
     applies_to = TRUENAS_HARDWARE
     listed_when = HA_LICENSED
 

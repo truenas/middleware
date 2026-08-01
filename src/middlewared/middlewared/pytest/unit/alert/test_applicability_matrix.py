@@ -1,14 +1,10 @@
-"""The review artifact for the alert applicability migration.
+"""The frozen inventory of what every alert declaration applies to.
 
-Every alert declaration used to be gated by ``system.product_type``, a predicate that conflated a
-chassis probe with a license read. Each declaration now states its own rule on one of two
-independent axes, so the populations it covers necessarily move. Those moves are the deliverable,
-not an accident, and they are reviewed here: this module regenerates a fixed-width table of the old
-answer against the new one for every declaration in ``alert/source``, and fails on any difference
-from the checked-in copy. One declaration changing rule touches one line of that file.
-
-The old predicate is reimplemented below rather than called. It is being removed from production
-code, and reproducing it there as a shim was the thing this work set out not to do.
+An alert's applicability is declared on two independent axes -- hardware class and license -- and
+is otherwise invisible: nothing in the alert itself says which systems will ever see it. This
+module renders that answer for every declaration in ``alert/source`` against a fixed set of
+populations, and fails on any difference from the checked-in copy. Changing one declaration's rule
+touches one line of that file, so a population change cannot land without being read in review.
 
 Regenerate with ``ALERT_MATRIX_REGENERATE=1 pytest .../test_applicability_matrix.py`` and read the
 resulting diff.
@@ -21,26 +17,25 @@ from dataclasses import dataclass
 import pytest
 from truenas_pylicensed import LicenseType
 
-from middlewared.alert.applicability import AlertFacts, HardwareClass, LicenseRequirement, LicenseRule, applies
-from middlewared.alert.base import AlertCategory, AlertClass, AlertSource, ThreadedAlertSource
+from middlewared.alert.applicability import AlertFacts, HardwareClass, applies
+from middlewared.alert.base import AlertClass, AlertSource, ThreadedAlertSource
 from middlewared.plugins.alert import should_list_alert_class
 from middlewared.pytest.unit.utils.test_entitlements import make_license
-from middlewared.utils import ProductType
 from middlewared.utils.license import LicenseInfo
 from middlewared.utils.plugins import load_classes, load_modules
 from middlewared.utils.python import get_middlewared_dir
 
 GOLDEN = os.path.join(os.path.dirname(__file__), "golden", "applicability.txt")
 SOURCE_PACKAGE = "middlewared.alert.source."
-HA_LICENSED = LicenseRule(requirement=LicenseRequirement.HA)
 
 
 @dataclass(frozen=True, kw_only=True, slots=True)
 class Population:
-    """A system the matrix is evaluated against.
+    """A system the inventory is evaluated against.
 
-    ``ha_capable`` is here for the old predicate alone -- it is a chassis probe that the new axes
-    deliberately do not carry, and it is not part of ``AlertFacts``.
+    ``ha_capable`` is descriptive only. It is a chassis probe that the axes deliberately do not
+    carry, and it is not part of ``AlertFacts``; it is recorded so the populations read as real
+    machines.
     """
 
     name: str
@@ -107,30 +102,6 @@ POPULATIONS = (
 )
 
 
-def old_product_type(population: Population) -> str:
-    """``system.product_type`` as it stands today (``plugins/system/product.py``).
-
-    Six lines, kept in the test fixture on purpose: the point of the migration is that no production
-    code answers this question any more.
-    """
-    if population.ha_capable:
-        return ProductType.ENTERPRISE
-
-    license = population.license
-    if license is not None and license.model is not None and not license.model.lower().startswith("freenas"):
-        return ProductType.ENTERPRISE
-
-    return ProductType.COMMUNITY_EDITION
-
-
-def old_listed(declaration, population: Population) -> bool:
-    """``should_list_alert_class`` as it stands today, including the undeclared `AlertCategory.HA` hack."""
-    if declaration.category == AlertCategory.HA and not applies(HA_LICENSED, population.facts):
-        return False
-
-    return old_product_type(population) in declaration.products
-
-
 def declarations():
     """Every declaration in ``alert/source``, loaded the way ``AlertService.load`` loads it.
 
@@ -152,23 +123,17 @@ def declarations():
     return sorted(set(sources + classes), key=lambda row: (row[0], row[1]))
 
 
-def answers(kind: str, declaration, population: Population) -> tuple[bool, bool]:
+def answer(kind: str, declaration, population: Population) -> bool:
     if kind == "listed":
-        return old_listed(declaration, population), should_list_alert_class(declaration, population.facts)
+        return should_list_alert_class(declaration, population.facts)
 
-    return old_product_type(population) in declaration.products, applies(declaration.applies_to, population.facts)
-
-
-def cell(old: bool, new: bool) -> str:
-    """``<old><new><marker>``: ``Y`` applies, ``.`` does not, ``+``/``-`` where the answer moved."""
-    marker = " " if old == new else ("+" if new else "-")
-    return f"{'Y' if old else '.'}{'Y' if new else '.'}{marker}"
+    return applies(declaration.applies_to, population.facts)
 
 
 def render() -> str:
     lines = [
-        "# Alert applicability: today's product_type gate (old) against the declared rule (new).",
-        "# Each cell is <old><new><marker>: Y applies, . does not, + gained, - lost.",
+        "# Alert applicability: the systems each declaration's rule covers.",
+        "# Each cell is Y where the declaration applies and . where it does not.",
         "# Generated by test_applicability_matrix.py -- do not edit by hand.",
         "#",
         "# Kinds: class  -- the class applies: displayed, sent, and offered in the catalogue",
@@ -186,13 +151,13 @@ def render() -> str:
     lines.append("")
 
     header = f"{'DECLARATION':<44}{'KIND':<8}"
-    header += "".join(f"{population.name:<5}" for population in POPULATIONS)
+    header += "".join(f"{population.name:<4}" for population in POPULATIONS)
     lines.append(header.rstrip())
 
     for name, kind, declaration in declarations():
         row = f"{name:<44}{kind:<8}"
         for population in POPULATIONS:
-            row += f"{cell(*answers(kind, declaration, population)):<5}"
+            row += f"{'Y' if answer(kind, declaration, population) else '.':<4}"
         lines.append(row.rstrip())
 
     return "\n".join(lines) + "\n"
@@ -211,16 +176,45 @@ def test_applicability_matrix():
         assert f.read() == matrix, "alert applicability changed; regenerate with ALERT_MATRIX_REGENERATE=1"
 
 
+def frozen_inventory() -> dict[tuple[str, str], list[str]]:
+    """The checked-in file, parsed. Deliberately not ``render()``: the point is to compare the tree
+    against what was last reviewed, not against itself."""
+    inventory = {}
+    with open(GOLDEN) as f:
+        for line in f:
+            line = line.rstrip("\n")
+            if not line or line.startswith("#") or line.startswith("DECLARATION"):
+                continue
+
+            inventory[(line[:44].strip(), line[44:52].strip())] = line[52:].split()
+
+    return inventory
+
+
 def test_every_declaration_carries_a_rule():
-    """A declaration left without a rule silently widens to every system, and reads as intentional."""
-    unruled = [
-        (name, kind)
-        for name, kind, declaration in declarations()
-        if kind != "listed"
-        and declaration.products != (ProductType.COMMUNITY_EDITION, ProductType.ENTERPRISE)
-        and declaration.applies_to is None
-        and getattr(declaration, "listed_when", None) is None
-    ]
+    """A declaration left without a rule silently widens to every system, and reads as intentional.
+
+    Every declaration the frozen inventory records as restricted anywhere must still hold a rule
+    saying so. Deleting one and regenerating the inventory defeats this, which is the intent: the
+    regeneration is what lands in the diff.
+    """
+    inventory = frozen_inventory()
+    live = {(name, kind): declaration for name, kind, declaration in declarations()}
+    assert set(inventory) == set(live), "the frozen inventory does not describe this tree; regenerate it"
+
+    unruled = []
+    for (name, kind), cells in inventory.items():
+        if all(cell == "Y" for cell in cells):
+            continue
+
+        declaration = live[(name, kind)]
+        rule = declaration.applies_to
+        if kind == "listed":
+            rule = rule or declaration.listed_when
+
+        if rule is None:
+            unruled.append((name, kind))
+
     assert unruled == []
 
 

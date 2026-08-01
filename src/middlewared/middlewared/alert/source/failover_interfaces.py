@@ -5,7 +5,6 @@
 
 from middlewared.alert.applicability import HardwareClass, HardwareRule, LicenseRequirement, LicenseRule
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, AlertSource, Alert
-from middlewared.utils import ProductType
 
 
 HA_LICENSED = LicenseRule(requirement=LicenseRequirement.HA)
@@ -16,13 +15,11 @@ class NoCriticalFailoverInterfaceFoundAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = 'At Least 1 Network Interface Is Required To Be Marked Critical For Failover'
     text = 'At least 1 network interface is required to be marked critical for failover.'
-    products = (ProductType.ENTERPRISE,)
     applies_to = HardwareRule(classes=frozenset({HardwareClass.TRUENAS_HW}))
     listed_when = HA_LICENSED
 
 
 class FailoverCriticalAlertSource(AlertSource):
-    products = (ProductType.ENTERPRISE,)
     applies_to = HA_LICENSED
     failover_related = True
     run_on_backup_node = False

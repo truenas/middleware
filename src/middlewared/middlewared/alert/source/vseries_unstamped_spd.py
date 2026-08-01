@@ -11,7 +11,6 @@ from middlewared.alert.base import (
     AlertLevel,
     AlertSource,
 )
-from middlewared.utils import ProductType
 from middlewared.utils.version import parse_major_minor_version
 
 
@@ -28,12 +27,10 @@ class VSeriesUnstampedSPDAlertClass(AlertClass):
         '"1.0" or "2.0"). Assuming >= 2.0 interconnect behavior. '
         "Contact support."
     )
-    products = (ProductType.ENTERPRISE,)
     applies_to = TRUENAS_HARDWARE
 
 
 class VSeriesUnstampedSPDAlertSource(AlertSource):
-    products = (ProductType.ENTERPRISE,)
     applies_to = TRUENAS_HARDWARE
 
     async def check(self):

@@ -3,7 +3,6 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 from dataclasses import dataclass
-from middlewared.utils import ProductType
 
 from middlewared.alert.applicability import HardwareClass, HardwareRule
 from middlewared.alert.base import (
@@ -36,7 +35,6 @@ class EnclosureUnhealthyAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = "Enclosure Status Is Not Healthy"
     text = 'Enclosure (%s): Element "%s" is reporting a status of "%s" with a value of "%s". (raw value "%s")'
-    products = (ProductType.ENTERPRISE,)
     applies_to = TRUENAS_HARDWARE
 
 
@@ -45,12 +43,10 @@ class EnclosureHealthyAlertClass(AlertClass):
     level = AlertLevel.INFO
     title = "Enclosure Status Is Healthy"
     text = "Enclosure (%s) is healthy."
-    products = (ProductType.ENTERPRISE,)
     applies_to = TRUENAS_HARDWARE
 
 
 class EnclosureStatusAlertSource(AlertSource):
-    products = (ProductType.ENTERPRISE,)
     applies_to = TRUENAS_HARDWARE
     failover_related = True
     run_on_backup_node = False
