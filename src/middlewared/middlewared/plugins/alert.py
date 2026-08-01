@@ -399,7 +399,6 @@ class AlertService(Service):
                             "id": alert_class.name,
                             "title": alert_class.title,
                             "level": alert_class.level.name,
-                            "product_types": list(alert_class.products),
                             "proactive_support": alert_class.proactive_support,
                         }
                         for alert_class in classes
@@ -1088,10 +1087,6 @@ class AlertService(Service):
             raise CallError(f"Alert source {name!r} not found.", errno.ENOENT)
 
         self.alert_source_last_run[alert_source.name] = datetime.min
-
-    @private
-    async def product_type(self):
-        return await self.middleware.call("system.product_type")
 
 
 class AlertServiceModel(sa.Model):

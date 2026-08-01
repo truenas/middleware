@@ -38,9 +38,6 @@ class AlertCategoryClass(BaseModel):
     id: str = Field(description="Unique identifier for the alert class.")
     title: str = Field(description="Human-readable title for the alert class.")
     level: str = Field(description="Default severity level for alerts in this class.")
-    product_types: list[Literal["COMMUNITY_EDITION", "ENTERPRISE"]] = Field(
-        description="Product types where this alert class is available.",
-    )
     proactive_support: bool = Field(description="Whether this alert class is included in proactive support monitoring.")
 
 

@@ -5,7 +5,6 @@
 
 from middlewared.alert.applicability import LicenseRequirement, LicenseRule
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource
-from middlewared.utils import ProductType
 
 
 LICENSED = LicenseRule(requirement=LicenseRequirement.LICENSED)
@@ -16,12 +15,10 @@ class ProactiveSupportAlertClass(AlertClass):
     level = AlertLevel.WARNING
     title = "Proactive Support Is Not Configured"
     text = "%s"
-    products = (ProductType.ENTERPRISE,)
     applies_to = LICENSED
 
 
 class ProactiveSupportAlertSource(AlertSource):
-    products = (ProductType.ENTERPRISE,)
     applies_to = LICENSED
     run_on_backup_node = False
 

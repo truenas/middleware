@@ -5,7 +5,6 @@
 
 from middlewared.alert.applicability import HardwareClass, HardwareRule, LicenseRequirement, LicenseRule
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource
-from middlewared.utils import ProductType
 
 TITLE = 'Missing Network Interface On '
 TEXT = 'Network interfaces %(interfaces)s present on '
@@ -20,7 +19,6 @@ class NetworkCardsMismatchOnStandbyNodeAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = TITLE + 'Standby Storage Controller'
     text = TEXT + 'active storage controller but missing on standby storage controller.'
-    products = (ProductType.ENTERPRISE,)
     applies_to = TRUENAS_HARDWARE
     listed_when = HA_LICENSED
 
@@ -30,13 +28,11 @@ class NetworkCardsMismatchOnActiveNodeAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = TITLE + 'Active Storage Controller'
     text = TEXT + 'standby storage controller but missing on active storage controller.'
-    products = (ProductType.ENTERPRISE,)
     applies_to = TRUENAS_HARDWARE
     listed_when = HA_LICENSED
 
 
 class FailoverNetworkCardsAlertSource(AlertSource):
-    products = (ProductType.ENTERPRISE,)
     applies_to = HA_LICENSED
     failover_related = True
     require_stable_peer = True
