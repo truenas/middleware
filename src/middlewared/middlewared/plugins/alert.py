@@ -17,6 +17,10 @@ from pydantic_core import ValidationError
 from truenas_api_client import ReserveFDException
 from truenas_pylicensed.features import LicenseFeature
 
+from middlewared.alert.applicability import AlertFacts, applies
+# Imported from the module rather than the package: the package deliberately does not re-export the
+# live reader, so that merely touching `alert.base` does not drag in the license-reading path.
+from middlewared.alert.applicability.system import get_alert_facts
 from middlewared.alert.base import (
     AlertCategory,
     alert_category_names,
@@ -186,7 +190,7 @@ class AlertSerializer:
         self.middleware = middleware
 
         self.initialized = False
-        self.product_type = None
+        self.facts = None
         self.classes = None
         self.nodes = None
 
@@ -210,7 +214,7 @@ class AlertSerializer:
     async def should_show_alert(self, alert):
         await self._ensure_initialized()
 
-        if self.product_type not in alert.klass.products:
+        if not applies(alert.klass.applies_to, self.facts):
             return False
 
         if (await self.get_alert_class(alert)).get("policy") == "NEVER":
@@ -220,7 +224,7 @@ class AlertSerializer:
 
     async def _ensure_initialized(self):
         if not self.initialized:
-            self.product_type = await self.middleware.call("alert.product_type")
+            self.facts = await self.middleware.run_in_thread(get_alert_facts)
             self.classes = (await self.middleware.call("alertclasses.config"))["classes"]
             self.nodes = await self.middleware.call("alert.node_map")
 
@@ -245,11 +249,14 @@ class AlertOneshotDeleteResult(BaseModel):
     result: None
 
 
-def should_list_alert_class(alert_class: type[AlertClass], product_type: str, failover_licensed: bool) -> bool:
-    if alert_class.category == AlertCategory.HA and not failover_licensed:
-        return False
+def should_list_alert_class(alert_class: type[AlertClass], facts: AlertFacts) -> bool:
+    """Whether `alert_class` belongs in the settings catalogue of a system with `facts`.
 
-    return product_type in alert_class.products
+    The only place `listed_when` is consulted. A class it excludes is still displayed and still sent;
+    it is only hidden from the catalogue, so this narrowing must not leak into any other enforcement
+    point.
+    """
+    return applies(alert_class.applies_to, facts) and applies(alert_class.listed_when, facts)
 
 
 class AlertService(Service):
@@ -367,14 +374,13 @@ class AlertService(Service):
         List all types of alerts which the system can issue.
         """
 
-        product_type = await self.middleware.call("alert.product_type")
-        failover_licensed = await self.middleware.call("failover.licensed")
+        facts = await self.middleware.run_in_thread(get_alert_facts)
 
         classes: list[type[AlertClass]] = []
         for alert_class in AlertClass.classes:
             if not (
                 options["include_all_products"] or
-                should_list_alert_class(alert_class, product_type, failover_licensed)
+                should_list_alert_class(alert_class, facts)
             ):
                 continue
 
@@ -546,8 +552,17 @@ class AlertService(Service):
             SEND_ALERTS_ON_READY = True
             return
 
-        product_type = await self.middleware.call("alert.product_type")
+        facts = await self.middleware.run_in_thread(get_alert_facts)
         classes = (await self.middleware.call("alertclasses.config"))["classes"]
+
+        applicable: dict[type[AlertClass], bool] = {}
+
+        def is_applicable(alert):
+            try:
+                return applicable[alert.klass]
+            except KeyError:
+                applicable[alert.klass] = result = applies(alert.klass.applies_to, facts)
+                return result
 
         now = utc_now()
         for policy_name, policy in self.policies.items():
@@ -559,7 +574,7 @@ class AlertService(Service):
                 service_alerts = [
                     alert for alert in self.alerts
                     if (
-                        product_type in alert.klass.products and
+                        is_applicable(alert) and
                         get_alert_level(alert, classes).value >= service_level.value and
                         get_alert_policy(alert, classes) != "NEVER"
                     )
@@ -567,7 +582,7 @@ class AlertService(Service):
                 service_gone_alerts = [
                     alert for alert in gone_alerts
                     if (
-                        product_type in alert.klass.products and
+                        is_applicable(alert) and
                         get_alert_level(alert, classes).value >= service_level.value and
                         get_alert_policy(alert, classes) == policy_name
                     )
@@ -575,7 +590,7 @@ class AlertService(Service):
                 service_new_alerts = [
                     alert for alert in new_alerts
                     if (
-                        product_type in alert.klass.products and
+                        is_applicable(alert) and
                         get_alert_level(alert, classes).value >= service_level.value and
                         get_alert_policy(alert, classes) == policy_name
                     )
@@ -787,14 +802,17 @@ class AlertService(Service):
         return other_node_alerts
 
     async def __run_alerts(self):
-        product_type = await self.middleware.call("alert.product_type")
+        facts = await self.middleware.run_in_thread(get_alert_facts)
         fi = await self.__get_failover_info()
         for k, source_lock in list(self.sources_locks.items()):
             if source_lock.expires_at <= time.monotonic():
                 await self.unblock_source(k)
 
         for alert_source in ALERT_SOURCES.values():
-            if product_type not in alert_source.products:
+            if not applies(alert_source.applies_to, facts):
+                # An excluded source still owns whatever it persisted before it
+                # was excluded; drop those rather than stranding them undismissable.
+                self.alerts = [a for a in self.alerts if a.source != alert_source.name]
                 continue
 
             if alert_source.failover_related and not fi.run_failover_related:

@@ -3,6 +3,7 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
+from middlewared.alert.applicability import HardwareClass, HardwareRule, LicenseRequirement, LicenseRule
 from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertLevel, AlertSource
 from middlewared.alert.schedule import CrontabSchedule
 from middlewared.utils import ProductType
@@ -15,6 +16,7 @@ class MemoryErrorsAlertClass(AlertClass):
     title = 'Uncorrected Memory Errors Detected'
     text = '%(count)d total uncorrected errors detected for %(loc)s.'
     products = (ProductType.ENTERPRISE,)
+    applies_to = HardwareRule(classes=frozenset({HardwareClass.TRUENAS_HW}))
     proactive_support = True
 
 
@@ -24,6 +26,8 @@ class MemorySizeMismatchAlertClass(AlertClass):
     title = 'Memory Size Mismatch Detected'
     text = "Memory size on this controller %(r1)s doesn't match other controller %(r2)s"
     products = (ProductType.ENTERPRISE,)
+    applies_to = HardwareRule(classes=frozenset({HardwareClass.TRUENAS_HW}))
+    listed_when = LicenseRule(requirement=LicenseRequirement.HA)
     proactive_support = True
 
 

@@ -1,3 +1,4 @@
+from middlewared.alert.applicability import HardwareClass, HardwareRule
 from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertLevel, AlertSource
 from middlewared.alert.schedule import CrontabSchedule
 from middlewared.utils import ProductType
@@ -44,6 +45,7 @@ class AdminSessionAlertSource(AlertSource):
     schedule = CrontabSchedule(hour=1)  # every 24 hours
     run_on_backup_node = True
     products = (ProductType.ENTERPRISE,)
+    applies_to = HardwareRule(classes=frozenset({HardwareClass.TRUENAS_HW}))
 
     async def check(self):
         now = int(time())

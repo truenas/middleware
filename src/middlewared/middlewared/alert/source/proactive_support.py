@@ -3,8 +3,12 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
+from middlewared.alert.applicability import LicenseRequirement, LicenseRule
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource
 from middlewared.utils import ProductType
+
+
+LICENSED = LicenseRule(requirement=LicenseRequirement.LICENSED)
 
 
 class ProactiveSupportAlertClass(AlertClass):
@@ -13,10 +17,12 @@ class ProactiveSupportAlertClass(AlertClass):
     title = "Proactive Support Is Not Configured"
     text = "%s"
     products = (ProductType.ENTERPRISE,)
+    applies_to = LICENSED
 
 
 class ProactiveSupportAlertSource(AlertSource):
     products = (ProductType.ENTERPRISE,)
+    applies_to = LICENSED
     run_on_backup_node = False
 
     async def check(self):

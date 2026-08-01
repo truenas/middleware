@@ -5,6 +5,7 @@
 
 import datetime
 
+from middlewared.alert.applicability import HardwareClass, HardwareRule
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 from middlewared.alert.schedule import IntervalSchedule
 from middlewared.utils import ProductType
@@ -14,12 +15,16 @@ WEBUI_SUPPORT_FORM = (
 )
 
 
+TRUENAS_HARDWARE = HardwareRule(classes=frozenset({HardwareClass.TRUENAS_HW}))
+
+
 class NVDIMMAlertClass(AlertClass):
     category = AlertCategory.HARDWARE
     level = AlertLevel.WARNING
     title = 'There Is An Issue With NVDIMM'
     text = 'NVDIMM: "%(dev)s" is reporting "%(value)s" with status "%(status)s".'
     products = (ProductType.ENTERPRISE,)
+    applies_to = TRUENAS_HARDWARE
 
 
 class NVDIMMESLifetimeWarningAlertClass(AlertClass):
@@ -28,6 +33,7 @@ class NVDIMMESLifetimeWarningAlertClass(AlertClass):
     title = 'NVDIMM Energy Source Lifetime Is Less Than 20%'
     text = 'NVDIMM Energy Source Remaining Lifetime for %(dev)s is %(value)d%%.'
     products = (ProductType.ENTERPRISE,)
+    applies_to = TRUENAS_HARDWARE
 
 
 class NVDIMMESLifetimeCriticalAlertClass(AlertClass):
@@ -36,6 +42,7 @@ class NVDIMMESLifetimeCriticalAlertClass(AlertClass):
     title = 'NVDIMM Energy Source Lifetime Is Less Than 10%'
     text = 'NVDIMM Energy Source Remaining Lifetime for %(dev)s is %(value)d%%.'
     products = (ProductType.ENTERPRISE,)
+    applies_to = TRUENAS_HARDWARE
 
 
 class NVDIMMMemoryModLifetimeWarningAlertClass(AlertClass):
@@ -44,6 +51,7 @@ class NVDIMMMemoryModLifetimeWarningAlertClass(AlertClass):
     title = 'NVDIMM Memory Module Lifetime Is Less Than 20%'
     text = 'NVDIMM Memory Module Remaining Lifetime for %(dev)s is %(value)d%%.'
     products = (ProductType.ENTERPRISE,)
+    applies_to = TRUENAS_HARDWARE
 
 
 class NVDIMMMemoryModLifetimeCriticalAlertClass(AlertClass):
@@ -52,6 +60,7 @@ class NVDIMMMemoryModLifetimeCriticalAlertClass(AlertClass):
     title = 'NVDIMM Memory Module Lifetime Is Less Than 10%'
     text = 'NVDIMM Memory Module Remaining Lifetime for %(dev)s is %(value)d%%.'
     products = (ProductType.ENTERPRISE,)
+    applies_to = TRUENAS_HARDWARE
 
 
 class NVDIMMInvalidFirmwareVersionAlertClass(AlertClass):
@@ -60,6 +69,7 @@ class NVDIMMInvalidFirmwareVersionAlertClass(AlertClass):
     title = 'Invalid NVDIMM Firmware Version'
     text = f'NVDIMM: "%(dev)s" is running invalid firmware. {WEBUI_SUPPORT_FORM}'
     products = (ProductType.ENTERPRISE,)
+    applies_to = TRUENAS_HARDWARE
     proactive_support = True
 
 
@@ -72,6 +82,7 @@ class NVDIMMRecommendedFirmwareVersionAlertClass(AlertClass):
         f'"%(uv)s". {WEBUI_SUPPORT_FORM}'
     )
     products = (ProductType.ENTERPRISE,)
+    applies_to = TRUENAS_HARDWARE
     proactive_support = True
 
 
@@ -81,12 +92,14 @@ class OldBiosVersionAlertClass(AlertClass):
     title = 'Old BIOS Version'
     text = f'This system is running an old BIOS version. {WEBUI_SUPPORT_FORM}'
     products = (ProductType.ENTERPRISE,)
+    applies_to = TRUENAS_HARDWARE
     proactive_support = True
 
 
 class NVDIMMAndBIOSAlertSource(ThreadedAlertSource):
     schedule = IntervalSchedule(datetime.timedelta(minutes=5))
     products = (ProductType.ENTERPRISE,)
+    applies_to = TRUENAS_HARDWARE
 
     def produce_alerts(self, nvdimm, alerts, old_bios):
         persistency_restored = 0x4
