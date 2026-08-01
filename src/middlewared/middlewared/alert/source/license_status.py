@@ -9,9 +9,15 @@ import textwrap
 
 from truenas_pylicensed import LicenseType
 
+from middlewared.alert.applicability import AnyOf, HardwareClass, HardwareRule, LicenseRequirement, LicenseRule
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 from middlewared.alert.schedule import IntervalSchedule
 from middlewared.utils import ProductType
+
+
+LICENSED = LicenseRule(requirement=LicenseRequirement.LICENSED)
+# A machine that is expected to carry a license: iX-built, or already licensed.
+EXPECTED_TO_BE_LICENSED = AnyOf(rules=(HardwareRule(classes=frozenset({HardwareClass.TRUENAS_HW})), LICENSED))
 
 
 class LicenseAlertClass(AlertClass):
@@ -20,6 +26,7 @@ class LicenseAlertClass(AlertClass):
     title = "TrueNAS License Issue"
     text = "%s"
     products = (ProductType.ENTERPRISE,)
+    applies_to = EXPECTED_TO_BE_LICENSED
 
 
 class LicenseIsExpiringAlertClass(AlertClass):
@@ -28,6 +35,7 @@ class LicenseIsExpiringAlertClass(AlertClass):
     title = "TrueNAS License Is Expiring"
     text = "%s"
     products = (ProductType.ENTERPRISE,)
+    applies_to = LICENSED
 
 
 class LicenseHasExpiredAlertClass(AlertClass):
@@ -36,10 +44,12 @@ class LicenseHasExpiredAlertClass(AlertClass):
     title = "TrueNAS License Has Expired"
     text = "%s"
     products = (ProductType.ENTERPRISE,)
+    applies_to = LICENSED
 
 
 class LicenseStatusAlertSource(ThreadedAlertSource):
     products = (ProductType.ENTERPRISE,)
+    applies_to = EXPECTED_TO_BE_LICENSED
     run_on_backup_node = False
     schedule = IntervalSchedule(timedelta(hours=24))
 

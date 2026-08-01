@@ -5,10 +5,14 @@
 
 import datetime
 
+from middlewared.alert.applicability import HardwareClass, HardwareRule
 from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertLevel, AlertSource, SimpleOneShotAlertClass
 from middlewared.alert.schedule import IntervalSchedule
 from middlewared.plugins.enclosure_.enums import ElementStatus, ElementType
 from middlewared.utils import ProductType
+
+
+TRUENAS_HARDWARE = HardwareRule(classes=frozenset({HardwareClass.TRUENAS_HW}))
 
 
 class JBOFTearDownFailureAlertClass(AlertClass, SimpleOneShotAlertClass):
@@ -27,6 +31,7 @@ class JBOFRedfishCommAlertClass(AlertClass):
     title = 'Failed to Communicate with JBOF'
     text = 'JBOF: "%(desc)s" (%(ip1)s/%(ip2)s) Failed to communicate with redfish interface.'
     products = (ProductType.ENTERPRISE,)
+    applies_to = TRUENAS_HARDWARE
 
 
 class JBOFInvalidDataAlertClass(AlertClass):
@@ -35,6 +40,7 @@ class JBOFInvalidDataAlertClass(AlertClass):
     title = 'JBOF has invalid data'
     text = 'JBOF: "%(desc)s" (%(ip1)s/%(ip2)s) does not provide valid data for: %(keys)s'
     products = (ProductType.ENTERPRISE,)
+    applies_to = TRUENAS_HARDWARE
 
 
 class JBOFElementWarningAlertClass(AlertClass):
@@ -43,6 +49,7 @@ class JBOFElementWarningAlertClass(AlertClass):
     title = 'JBOF element non-critical'
     text = 'JBOF: "%(desc)s" (%(ip1)s/%(ip2)s) %(etype)s %(key)s is noncritical: %(value)s'
     products = (ProductType.ENTERPRISE,)
+    applies_to = TRUENAS_HARDWARE
 
 
 class JBOFElementCriticalAlertClass(AlertClass):
@@ -51,10 +58,12 @@ class JBOFElementCriticalAlertClass(AlertClass):
     title = 'JBOF element critical'
     text = 'JBOF: "%(desc)s" (%(ip1)s/%(ip2)s) %(etype)s %(key)s is critical: %(value)s'
     products = (ProductType.ENTERPRISE,)
+    applies_to = TRUENAS_HARDWARE
 
 
 class JBOFAlertSource(AlertSource):
     products = (ProductType.ENTERPRISE,)
+    applies_to = TRUENAS_HARDWARE
     run_on_backup_node = False
     schedule = IntervalSchedule(datetime.timedelta(minutes=5))
 

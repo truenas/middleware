@@ -3,10 +3,15 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
+from middlewared.alert.applicability import HardwareClass, HardwareRule, LicenseRequirement, LicenseRule
 from middlewared.alert.base import (
     Alert, AlertClass, SimpleOneShotAlertClass, AlertCategory, AlertLevel, OneShotAlertClass
 )
 from middlewared.utils import ProductType
+
+
+HA_LICENSED = LicenseRule(requirement=LicenseRequirement.HA)
+TRUENAS_HARDWARE = HardwareRule(classes=frozenset({HardwareClass.TRUENAS_HW}))
 
 
 class FailoverSyncFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
@@ -19,6 +24,8 @@ class FailoverSyncFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
         "System/Failover page to try and perform a manual sync."
     )
     products = (ProductType.ENTERPRISE,)
+    applies_to = TRUENAS_HARDWARE
+    listed_when = HA_LICENSED
 
     async def create(self, args):
         return Alert(FailoverSyncFailedAlertClass, {'mins': args['mins']})
@@ -38,6 +45,8 @@ class FailoverKeysSyncFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
         "controller has failed. Please go to System > Failover and manually sync to peer."
     )
     products = (ProductType.ENTERPRISE,)
+    applies_to = TRUENAS_HARDWARE
+    listed_when = HA_LICENSED
 
 
 class FailoverKMIPKeysSyncFailedAlertClass(AlertClass, OneShotAlertClass):
@@ -51,6 +60,8 @@ class FailoverKMIPKeysSyncFailedAlertClass(AlertClass, OneShotAlertClass):
         "controller has failed due to %(error)s. Please go to System > Failover and manually sync to peer."
     )
     products = (ProductType.ENTERPRISE,)
+    applies_to = TRUENAS_HARDWARE
+    listed_when = HA_LICENSED
 
     async def create(self, args):
         return Alert(FailoverKMIPKeysSyncFailedAlertClass, args)

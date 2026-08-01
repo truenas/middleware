@@ -1,5 +1,9 @@
+from middlewared.alert.applicability import HardwareClass, HardwareRule
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, AlertSource, Alert
 from middlewared.utils import ProductType
+
+
+COMMUNITY_HARDWARE = HardwareRule(classes=frozenset({HardwareClass.GENERIC, HardwareClass.MINI}))
 
 
 class CoreFilesArePresentAlertClass(AlertClass):
@@ -14,10 +18,12 @@ class CoreFilesArePresentAlertClass(AlertClass):
         "from the system by opening shell and entering 'rm /var/db/system/cores/*'."
     )
     products = (ProductType.COMMUNITY_EDITION,)
+    applies_to = COMMUNITY_HARDWARE
 
 
 class CoreFilesArePresentAlertSource(AlertSource):
     products = (ProductType.COMMUNITY_EDITION,)
+    applies_to = COMMUNITY_HARDWARE
 
     async def should_alert(self, core):
         if core["corefile"] != "present" or not core["unit"]:
