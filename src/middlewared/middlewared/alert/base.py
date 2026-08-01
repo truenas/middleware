@@ -10,7 +10,7 @@ import html2text
 
 from middlewared.alert.applicability import Rule
 from middlewared.alert.schedule import IntervalSchedule
-from middlewared.utils import ProductName, ProductType
+from middlewared.utils import ProductName
 from middlewared.utils.lang import undefined
 from middlewared.utils.service.call_mixin import CallMixin
 
@@ -57,8 +57,6 @@ class AlertClass(CallMixin, metaclass=AlertClassMeta):
         want to hide some rare legacy hardware-specific alert. It will still be sent if it occurs, but users won't be
         able to disable it or change its level.
 
-    :cvar products: A list of `system.product_type` return values on which alerts of this class can be emitted.
-
     :cvar applies_to: `Rule` describing the systems this alert class is meaningful on, or `None` for all of them. It
         governs running the source, displaying the alert, sending it, and listing the class.
 
@@ -81,7 +79,6 @@ class AlertClass(CallMixin, metaclass=AlertClassMeta):
     text: str | None = None
 
     exclude_from_list = False
-    products = (ProductType.COMMUNITY_EDITION, ProductType.ENTERPRISE)
     applies_to: Rule | None = None
     listed_when: Rule | None = None
     proactive_support = False
@@ -329,8 +326,6 @@ class AlertSource(CallMixin):
     :cvar schedule: `BaseSchedule` instance that will be used to determine whether this alert source should be ran at
         any given moment. By default, alert checkers are ran every minute.
 
-    :cvar products: A list of `system.product_type` return values for which this source will be ran.
-
     :cvar applies_to: `Rule` describing the systems this source is meaningful on, or `None` for all of them. The source
         is not ran where it does not apply.
 
@@ -342,7 +337,6 @@ class AlertSource(CallMixin):
 
     schedule = IntervalSchedule(timedelta())
 
-    products = (ProductType.COMMUNITY_EDITION, ProductType.ENTERPRISE)
     applies_to: Rule | None = None
     failover_related = False
     run_on_backup_node = True

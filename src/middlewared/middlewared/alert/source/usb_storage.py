@@ -7,7 +7,6 @@ import os
 
 from middlewared.alert.applicability import HardwareClass, HardwareRule
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
-from middlewared.utils import ProductType
 
 
 TRUENAS_HARDWARE = HardwareRule(classes=frozenset({HardwareClass.TRUENAS_HW}))
@@ -19,13 +18,11 @@ class USBStorageAlertClass(AlertClass):
     title = 'A USB Storage Device Has Been Connected to This System'
     text = ('A USB storage device %r has been connected to this system. Please remove that USB device to '
             'prevent problems with system boot or HA failover.')
-    products = (ProductType.ENTERPRISE,)
     applies_to = TRUENAS_HARDWARE
     proactive_support = True
 
 
 class USBStorageAlertSource(ThreadedAlertSource):
-    products = (ProductType.ENTERPRISE,)
     applies_to = TRUENAS_HARDWARE
 
     def check_sync(self):

@@ -6,7 +6,6 @@
 from middlewared.alert.applicability import HardwareClass, HardwareRule, LicenseRequirement, LicenseRule
 from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertLevel, AlertSource
 from middlewared.alert.schedule import CrontabSchedule
-from middlewared.utils import ProductType
 from middlewared.utils.size import format_size
 
 
@@ -15,7 +14,6 @@ class MemoryErrorsAlertClass(AlertClass):
     level = AlertLevel.WARNING
     title = 'Uncorrected Memory Errors Detected'
     text = '%(count)d total uncorrected errors detected for %(loc)s.'
-    products = (ProductType.ENTERPRISE,)
     applies_to = HardwareRule(classes=frozenset({HardwareClass.TRUENAS_HW}))
     proactive_support = True
 
@@ -25,7 +23,6 @@ class MemorySizeMismatchAlertClass(AlertClass):
     level = AlertLevel.WARNING
     title = 'Memory Size Mismatch Detected'
     text = "Memory size on this controller %(r1)s doesn't match other controller %(r2)s"
-    products = (ProductType.ENTERPRISE,)
     applies_to = HardwareRule(classes=frozenset({HardwareClass.TRUENAS_HW}))
     listed_when = LicenseRule(requirement=LicenseRequirement.HA)
     proactive_support = True
