@@ -1,4 +1,4 @@
-from truenas_pylibvirt import VmBootloader, VmCpuMode
+from truenas_pylibvirt import Time, VmBootloader, VmCpuMode
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -157,6 +157,7 @@ class VMService(Service):
         vm.update({
             'bootloader': VmBootloader(vm["bootloader"]),
             'cpu_mode': VmCpuMode(vm["cpu_mode"]),
+            'time': Time(vm["time"]),
             'nvram_path': vm_nvram_path(vm['id'], vm['name']),
             'tpm_path': vm_tpm_path(vm['id'], vm['name']),
             'devices': devices,
