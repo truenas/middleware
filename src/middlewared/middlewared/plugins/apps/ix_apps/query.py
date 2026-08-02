@@ -3,7 +3,7 @@ from dataclasses import dataclass
 import os
 from typing import Any
 
-from packaging.version import Version
+from packaging.version import InvalidVersion, Version
 
 from middlewared.plugins.apps_images.utils import normalize_reference
 from middlewared.plugins.catalog.utils import IX_APP_NAME
@@ -35,6 +35,20 @@ class VolumeMount:
         return hash((self.source, self.destination, self.type))
 
 
+def parse_version(version: Any) -> Version | None:
+    """
+    ``version`` as something comparable, or ``None`` when it is not a version at all. Corrupt
+    metadata can hold anything here, and a catalog can name a version we cannot make sense of.
+    """
+    if not isinstance(version, str):
+        return None
+
+    try:
+        return Version(version)
+    except InvalidVersion:
+        return None
+
+
 def upgrade_available_for_app(
     version_mapping: dict[str, dict[str, dict[str, str | None]]],
     app_metadata: dict[str, Any],
@@ -42,25 +56,25 @@ def upgrade_available_for_app(
 ) -> tuple[bool, str | None, str | None]:
     # TODO: Eventually we would want this to work as well but this will always require middleware changes
     #  depending on what new functionality we want introduced for custom app, so let's take care of this at that point
-    catalog_app_metadata = app_metadata.get('metadata') or {}
+    catalog_app_metadata = app_metadata.get('metadata')
+    if not isinstance(catalog_app_metadata, dict):
+        catalog_app_metadata = {}
+
     catalog_app = catalog_app_metadata.get('name')
     catalog_train = catalog_app_metadata.get('train')
-    if (
-        app_metadata.get('custom_app') is False
-        # Corrupt metadata can hold anything at all here, including values yaml parsed as a
-        # non-string, so these must be validated before they are used as lookup keys
-        and isinstance(catalog_app, str)
-        and isinstance(catalog_train, str)
-        and catalog_app_metadata.get('version')
-        and (
-            latest_version_info := version_mapping.get(catalog_train, {}).get(catalog_app)
-        )
-        and latest_version_info['version']
-    ):
+    installed_version = parse_version(catalog_app_metadata.get('version'))
+    # Corrupt metadata can hold anything at all here, including values yaml parsed as a non-string,
+    # so these must be validated before they are used as lookup keys
+    latest_version_info = (
+        version_mapping.get(catalog_train, {}).get(catalog_app)
+        if isinstance(catalog_app, str) and isinstance(catalog_train, str) else None
+    ) or {}
+    latest_version = parse_version(latest_version_info.get('version'))
+    if app_metadata.get('custom_app') is False and installed_version is not None and latest_version is not None:
         return (
-            Version(catalog_app_metadata['version']) < Version(latest_version_info['version']),
+            installed_version < latest_version,
             latest_version_info['version'],
-            latest_version_info['app_version']
+            latest_version_info.get('app_version'),
         )
     elif (app_metadata.get('custom_app') or catalog_app == IX_APP_NAME) and image_updates_available:
         return True, None, None
@@ -83,18 +97,33 @@ def normalize_portal_uri(portal_uri: str, host_ip: str | None) -> str:
 def get_config_of_app(
     app_data: dict[str, Any], collective_config: dict[str, Any], retrieve_config: bool,
 ) -> dict[str, Any]:
-    if retrieve_config:
-        return {
-            'config': collective_config.get(app_data['name']) or (
-                get_current_app_config(app_data['name'], app_data['version']) if app_data['version'] else {}
-            )
-        }
-    else:
+    if not retrieve_config:
         return {'config': None}
 
+    if config := collective_config.get(app_data['name']):
+        return {'config': config}
 
-def normalize_portal_uris(portals: dict[str, str], host_ip: str | None) -> dict[str, str]:
-    return {name: normalize_portal_uri(uri, host_ip) for name, uri in portals.items()}
+    if not app_data['version']:
+        return {'config': {}}
+
+    try:
+        return {'config': get_current_app_config(app_data['name'], app_data['version'])}
+    except Exception:
+        # Letting this escape would take app.query down for every app on the box. It is not logged
+        # here - app.query runs constantly, and app_metadata_generate already reported the failure
+        # when it could not read the same file.
+        return {'config': {}}
+
+
+def normalize_portal_uris(portals: Any, host_ip: str | None) -> Any:
+    # Corrupt metadata can hold anything at all here, so anything we cannot normalize is returned as
+    # it stands and the model level guard on the row decides whether the app can be described at all
+    if not isinstance(portals, dict):
+        return portals
+
+    return {
+        name: normalize_portal_uri(uri, host_ip) if isinstance(uri, str) else uri for name, uri in portals.items()
+    }
 
 
 def error_app_data(

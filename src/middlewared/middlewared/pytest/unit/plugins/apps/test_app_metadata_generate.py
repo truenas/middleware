@@ -4,6 +4,7 @@ import logging
 from unittest.mock import MagicMock, patch
 
 import pytest
+import yaml
 
 from middlewared.plugins.apps.metadata import app_metadata_generate
 from middlewared.utils.yaml import safe_yaml_load
@@ -68,7 +69,7 @@ def test_healthy_apps_are_collected():
     [
         # `version` is absent, so building the app's config raises KeyError
         ({"custom_app": False, "metadata": {"name": "b", "train": "community"}}, False),
-        # `version` is present but the version directory is gone (mode 3)
+        # `version` is present but its config cannot be read (mode 3)
         (app_metadata(), True),
     ],
 )
@@ -81,10 +82,36 @@ def test_one_broken_app_does_not_stop_the_others(broken_metadata, failing_config
         return {"name": name}
 
     with generate(["app-a", "app-broken", "app-b"], metadata_map, get_config) as (metadata, config):
-        # The healthy apps still land on disk, and the broken one is left out of BOTH files so that
-        # consumers which index into the collective metadata directly cannot trip over it.
-        assert sorted(metadata) == ["app-a", "app-b"]
+        # The healthy apps still land on disk, and so does the broken one's metadata - only the
+        # config it has none of is left out.
+        assert sorted(metadata) == ["app-a", "app-b", "app-broken"]
         assert sorted(config) == ["app-a", "app-b"]
+
+
+@pytest.mark.parametrize(
+    "error",
+    [
+        FileNotFoundError(2, "No such file or directory"),
+        IsADirectoryError(21, "Is a directory"),
+        yaml.YAMLError("could not parse"),
+        ValueError("not a mapping"),
+        KeyError("version"),
+    ],
+)
+def test_app_whose_config_cannot_be_read_keeps_its_metadata(error):
+    """
+    Whatever the app's config died of, its metadata stays in the collective file. Being absent from
+    that file is how an app becomes invisible to `app.query`, and an app nobody can see is an app
+    nobody can delete.
+    """
+    metadata_map = {"app-broken": app_metadata()}
+
+    def get_config(name, version):
+        raise error
+
+    with generate(["app-broken"], metadata_map, get_config) as (metadata, config):
+        assert sorted(metadata) == ["app-broken"]
+        assert config == {}
 
 
 def test_broken_app_is_logged(caplog):
@@ -97,10 +124,10 @@ def test_broken_app_is_logged(caplog):
     # middlewared configures logging for real.
     with caplog.at_level(logging.WARNING, logger="app_lifecycle"):
         with generate(["app-broken"], metadata_map, get_config) as (metadata, config):
-            assert metadata == {}
+            assert sorted(metadata) == ["app-broken"]
             assert config == {}
 
-    assert "app-broken: skipped while generating app metadata" in caplog.text
+    assert "app-broken: app config could not be read" in caplog.text
 
 
 def test_unreadable_metadata_is_skipped():

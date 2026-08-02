@@ -32,18 +32,50 @@ def get_app_metadata(app_name: str) -> dict[str, typing.Any]:
     return _load_app_yaml(get_installed_app_metadata_path(app_name))
 
 
-def app_metadata_error(app_metadata: dict[str, typing.Any]) -> AppErrorReason | None:
+def _is_non_empty_str(value: typing.Any) -> bool:
+    return isinstance(value, str) and bool(value)
+
+
+def app_metadata_error(app_metadata: typing.Any) -> AppErrorReason | None:
     """
     Report why ``app_metadata`` cannot be used, if it cannot. Performs no I/O.
+
+    Only a key which is *present* holding something unusable is rejected - an absent optional key is
+    left to be defaulted, since reporting a working app as broken takes away every operation but
+    deletion.
     """
     if not app_metadata:
         return 'METADATA_MISSING'
 
-    if not APP_METADATA_REQUIRED_KEYS.issubset(app_metadata):
+    if not isinstance(app_metadata, dict) or not APP_METADATA_REQUIRED_KEYS.issubset(app_metadata):
+        # An app's entry in the collective metadata file is whatever yaml parsed it as, so it need
+        # not be a mapping at all - and a non-mapping cannot even be tested for the keys we need
+        return 'METADATA_INCOMPLETE'
+
+    if (
+        # The version doubles as the name of the app's installed directory, and both of these are
+        # reported to API consumers as non-empty strings
+        not _is_non_empty_str(app_metadata['version'])
+        or not _is_non_empty_str(app_metadata['human_version'])
+        or not isinstance(app_metadata['custom_app'], bool)
+    ):
+        return 'METADATA_INCOMPLETE'
+
+    if 'migrated' in app_metadata and not isinstance(app_metadata['migrated'], bool):
+        return 'METADATA_INCOMPLETE'
+
+    if 'portals' in app_metadata and not isinstance(app_metadata['portals'], dict):
+        return 'METADATA_INCOMPLETE'
+
+    if 'notes' in app_metadata and app_metadata['notes'] is not None and not isinstance(app_metadata['notes'], str):
         return 'METADATA_INCOMPLETE'
 
     catalog_metadata = app_metadata['metadata']
     if not isinstance(catalog_metadata, dict) or not APP_CATALOG_METADATA_REQUIRED_KEYS.issubset(catalog_metadata):
+        return 'METADATA_INCOMPLETE'
+
+    if any(not _is_non_empty_str(catalog_metadata[key]) for key in APP_CATALOG_METADATA_REQUIRED_KEYS):
+        # The train and the app name are used as catalog lookup keys and the version is parsed as one
         return 'METADATA_INCOMPLETE'
 
     return None

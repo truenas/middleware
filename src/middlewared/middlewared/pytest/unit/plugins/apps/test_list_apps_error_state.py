@@ -3,9 +3,18 @@ import unittest.mock
 import pytest
 
 from middlewared.api.current import AppEntry
-from middlewared.plugins.apps.ix_apps.query import error_app_data, list_apps
+from middlewared.plugins.apps.ix_apps.query import error_app_data, list_apps, normalize_portal_uris
 
 INCOMPLETE_METADATA = {"version": "1.1.13"}
+COMPLETE_METADATA = {
+    "custom_app": False,
+    "human_version": "24.10.1_1.1.13",
+    "metadata": {"name": "actual-budget", "train": "community", "version": "1.1.13"},
+    "migrated": False,
+    "notes": None,
+    "portals": {},
+    "version": "1.1.13",
+}
 RESOURCES = {
     "ix-actual-budget": {
         "containers": [
@@ -34,9 +43,12 @@ class FakeDirEntry:
 def query(monkeypatch):
     """Drive `list_apps` with a given collective metadata, docker resources and app_configs listing."""
 
-    def run(collective_metadata, resources=None, config_dirs=(), installing=None, **kwargs):
+    def run(collective_metadata, resources=None, config_dirs=(), installing=None, collective_config=None, **kwargs):
         monkeypatch.setattr(
             "middlewared.plugins.apps.ix_apps.query.get_collective_metadata", lambda: collective_metadata
+        )
+        monkeypatch.setattr(
+            "middlewared.plugins.apps.ix_apps.query.get_collective_config", lambda: collective_config or {}
         )
         monkeypatch.setattr(
             "middlewared.plugins.apps.ix_apps.query.list_resources_by_project", lambda **kw: resources or {}
@@ -118,22 +130,54 @@ def test_stopped_app_without_metadata_is_ignored_while_installing(query, monkeyp
 
 
 def test_healthy_apps_are_unaffected(query):
-    metadata = {
-        "actual-budget": {
-            "custom_app": False,
-            "human_version": "24.10.1_1.1.13",
-            "metadata": {"name": "actual-budget", "train": "community", "version": "1.1.13"},
-            "migrated": False,
-            "notes": None,
-            "portals": {},
-            "version": "1.1.13",
-        }
-    }
-    apps = query(metadata, resources=RESOURCES)
+    apps = query({"actual-budget": COMPLETE_METADATA}, resources=RESOURCES)
 
     assert apps[0]["state"] == "RUNNING"
     assert apps[0]["error_reason"] is None
     assert apps[0]["version"] == "1.1.13"
+
+
+@pytest.mark.parametrize("app_metadata", ["actual-budget", 1, 1.13, ["actual-budget"]])
+def test_metadata_entry_which_is_not_a_mapping_is_reported(query, app_metadata):
+    # An entry of the collective metadata file is whatever yaml parsed it as, and testing a
+    # non-mapping for the keys we need raises rather than answering
+    apps = query({"actual-budget": app_metadata}, resources=RESOURCES)
+
+    assert [(app["id"], app["state"], app["error_reason"]) for app in apps] == [
+        ("actual-budget", "ERROR", "METADATA_INCOMPLETE")
+    ]
+
+
+@pytest.mark.parametrize("resources,config_dirs", [(RESOURCES, ()), (None, ["actual-budget"])])
+def test_config_which_cannot_be_read_does_not_break_the_query(query, monkeypatch, resources, config_dirs):
+    """
+    An app whose config could not be read now survives into the collective metadata, so the query
+    reaches this file again - and letting the second failure escape would take `app.query` down for
+    every app on the box. Checked for a running app and a stopped one, i.e. both loops in `list_apps`.
+    """
+
+    def unreadable_config(app_name, version):
+        raise FileNotFoundError(2, "No such file or directory")
+
+    monkeypatch.setattr("middlewared.plugins.apps.ix_apps.query.get_current_app_config", unreadable_config)
+    apps = query(
+        {"actual-budget": COMPLETE_METADATA}, resources=resources, config_dirs=config_dirs, retrieve_config=True
+    )
+
+    assert [(app["id"], app["error_reason"], app["config"]) for app in apps] == [("actual-budget", None, {})]
+
+
+@pytest.mark.parametrize("portals", ["http://0.0.0.0:8080", 1, ["http://0.0.0.0:8080"]])
+def test_portals_which_cannot_be_normalized_are_returned_untouched(portals):
+    # `to_app_entry` is what reports such an app as broken, and it can only do so if what it is
+    # handed still carries the value the model will reject
+    assert normalize_portal_uris(portals, "10.0.0.1") == portals
+
+
+def test_portal_uris_which_are_not_strings_are_left_alone():
+    portals = {"web": 8080, "ui": "http://0.0.0.0:8081"}
+
+    assert normalize_portal_uris(portals, "10.0.0.1") == {"web": 8080, "ui": "http://10.0.0.1:8081"}
 
 
 @pytest.mark.parametrize("retrieve_config,expected_config", [(True, {}), (False, None)])

@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import errno
-from typing import TYPE_CHECKING, Any, Literal, overload
+import logging
+from typing import TYPE_CHECKING, Any, Literal, cast, overload
 
 from catalog_reader.custom_app import get_version_details
+from pydantic import ValidationError
 
 from middlewared.api.current import (
     AppCreate,
@@ -23,17 +25,19 @@ from .custom_app_utils import validate_payload
 from .ix_apps.lifecycle import add_context_to_values, get_current_app_config, update_app_config
 from .ix_apps.metadata import get_collective_metadata, update_app_metadata, update_app_metadata_for_portals
 from .ix_apps.path import get_installed_app_path, get_installed_app_version_path
-from .ix_apps.query import list_apps
+from .ix_apps.query import error_app_data, get_default_workload_values, list_apps
 from .ix_apps.setup import setup_install_app_dir
 from .resources import delete_internal_resources, get_app_volume_ds, remove_failed_resources
 from .schema_normalization import normalize_and_validate_values
-from .utils import app_version, assert_app_usable, band_progress, to_entries
+from .utils import app_version, assert_app_usable, band_progress
 from .version_utils import get_latest_version_from_app_versions
 
 if TYPE_CHECKING:
     from middlewared.api.base.server.app import App
     from middlewared.api.current import QueryOptionsCount, QueryOptionsGet
     from middlewared.job import Job
+
+logger = logging.getLogger('app_lifecycle')
 
 
 def apps_being_installed(context: ServiceContext) -> set[str]:
@@ -58,6 +62,57 @@ def apps_being_installed(context: ServiceContext) -> set[str]:
     return installing
 
 
+def to_app_entry(row: dict[str, Any], retrieve_config: bool) -> AppEntry:
+    """
+    One row of ``list_apps`` as an entry, or the error entry when the API model cannot describe it.
+
+    A row carries data we do not produce ourselves - every key of the app's metadata file, and the
+    workloads docker reports - so a metadata file which was hand edited, or written by a release we
+    know nothing about, can hold a key we do not expect or a value of a type we cannot use.
+    Reporting such an app the way one with unusable metadata is reported leaves it deletable, where
+    letting the validation error escape would take app.query down for every app on the box.
+    """
+    constructor = cast('type[AppEntry]', getattr(AppEntry, '__query_result_item__', AppEntry))
+    try:
+        # Validated rather than splatted: yaml mapping keys need not be strings, and `**row` would
+        # raise TypeError before the model ever got the chance to reject the key
+        return constructor.model_validate(row)
+    except ValidationError:
+        app_name = row.get('name') or row.get('id')
+        if not isinstance(app_name, str) or not app_name:
+            # There is no entry we could report an app we cannot even name as. A row of this shape
+            # only comes of a query which selected neither `name` nor `id`.
+            raise
+
+        # Worth a warning of its own: the app's on-disk data is the likely cause, but a change to
+        # the API model would land here for every app on the box while blaming the user's files
+        logger.warning('%s: reported as broken, the entry built for it is not one we can describe', app_name)
+
+    # Its real workloads keep the ports and volumes the app is still holding on to visible to
+    # conflict checks, where we can describe them
+    try:
+        return constructor.model_validate(error_app_data(
+            app_name, 'METADATA_INCOMPLETE', row.get('active_workloads') or {}, retrieve_config,
+        ))
+    except ValidationError:
+        # The workloads are themselves what cannot be described. Everything else in the error entry
+        # is a constant, so reporting no workloads at all always leaves a deletable app.
+        return constructor.model_validate(error_app_data(
+            app_name, 'METADATA_INCOMPLETE', get_default_workload_values(), retrieve_config,
+        ))
+
+
+def to_app_entries(
+    result: list[dict[str, Any]] | dict[str, Any] | int, retrieve_config: bool,
+) -> list[AppEntry] | AppEntry | int:
+    if isinstance(result, int):
+        return result
+    if isinstance(result, dict):
+        return to_app_entry(result, retrieve_config)
+
+    return [to_app_entry(row, retrieve_config) for row in result]
+
+
 @overload
 def query_apps(  # type: ignore[overload-overlap]
     context: ServiceContext, filters: list[Any], options: QueryOptionsCount, app: App | None = None,
@@ -79,10 +134,11 @@ def query_apps(
 def query_apps(
     context: ServiceContext, filters: list[Any], options: QueryOptions, app: App | None = None,
 ) -> list[AppEntry] | AppEntry | int:
-    if not context.call_sync2(context.s.docker.validate_state, False):
-        return to_entries(filter_list([], filters, options.model_dump()), AppEntry)
-
     extra = options.extra
+    retrieve_config = extra.get('retrieve_config', False)
+    if not context.call_sync2(context.s.docker.validate_state, False):
+        return to_app_entries(filter_list([], filters, options.model_dump()), retrieve_config)
+
     host_ip = extra.get('host_ip')
     if app is not None and not host_ip:
         if app.origin.is_tcp_ip_family:
@@ -91,7 +147,7 @@ def query_apps(
     retrieve_app_schema = extra.get('include_app_schema', False)
     kwargs = {
         'host_ip': host_ip,
-        'retrieve_config': extra.get('retrieve_config', False),
+        'retrieve_config': retrieve_config,
         'image_update_cache': context.call_sync2(context.s.app.image.get_update_cache, True),
         'installing': apps_being_installed(context),
     }
@@ -102,7 +158,7 @@ def query_apps(
 
     apps = list_apps(available_apps_mapping, **kwargs)
     if not retrieve_app_schema:
-        return to_entries(filter_list(apps, filters, options.model_dump()), AppEntry)
+        return to_app_entries(filter_list(apps, filters, options.model_dump()), retrieve_config)
 
     questions_context = context.call_sync2(context.s.catalog.get_normalized_questions_context)
     for app_entry in apps:
@@ -120,7 +176,7 @@ def query_apps(
 
         app_entry['version_details'] = version_details
 
-    return to_entries(filter_list(apps, filters, options.model_dump()), AppEntry)
+    return to_app_entries(filter_list(apps, filters, options.model_dump()), retrieve_config)
 
 
 def get_instance(context: ServiceContext, app_name: str, options: QueryOptions | None = None) -> AppEntry:
@@ -182,7 +238,12 @@ def create_app(context: ServiceContext, job: Job, data: AppCreate) -> AppEntry:
         catalog_app = data.catalog_app
         train = data.train
         for installed_app in get_collective_metadata().values():
-            installed_app_metadata = installed_app.get('metadata') or {}
+            # An entry of the collective metadata is whatever yaml parsed it as, so one broken app
+            # must not stand in the way of installing an unrelated one
+            if not isinstance(installed_app, dict) or not isinstance(installed_app.get('metadata'), dict):
+                continue
+
+            installed_app_metadata = installed_app['metadata']
             if installed_app_metadata.get('name') == catalog_app and installed_app_metadata.get('train') == train:
                 verrors.add(
                     'app_create.catalog_app',

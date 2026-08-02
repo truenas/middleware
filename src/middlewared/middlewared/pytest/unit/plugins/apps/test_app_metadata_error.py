@@ -53,6 +53,51 @@ def test_catalog_metadata_which_is_not_a_mapping_is_incomplete(catalog_metadata)
     assert app_metadata_error(complete_metadata() | {"metadata": catalog_metadata}) == "METADATA_INCOMPLETE"
 
 
+@pytest.mark.parametrize("app_metadata", ["actual-budget", 1, 1.13, True, ["actual-budget"]])
+def test_metadata_which_is_not_a_mapping_is_incomplete(app_metadata):
+    # An app's entry in the collective metadata file is whatever yaml parsed it as, and testing a
+    # non-mapping for the keys we need raises rather than answering
+    assert app_metadata_error(app_metadata) == "METADATA_INCOMPLETE"
+
+
+@pytest.mark.parametrize("key", sorted(APP_METADATA_REQUIRED_KEYS - {"metadata", "custom_app"}))
+@pytest.mark.parametrize("value", [None, "", 1.13, True, [], {}])
+def test_version_which_is_not_a_non_empty_string_is_incomplete(key, value):
+    # Both name a directory or are reported to API consumers as a non-empty string, and yaml parses
+    # an unquoted 1.13 as a float
+    assert app_metadata_error(complete_metadata() | {key: value}) == "METADATA_INCOMPLETE"
+
+
+@pytest.mark.parametrize("key", ["custom_app", "migrated"])
+@pytest.mark.parametrize("value", [None, "", "false", 0, 1, []])
+def test_flag_which_is_not_a_bool_is_incomplete(key, value):
+    assert app_metadata_error(complete_metadata() | {key: value}) == "METADATA_INCOMPLETE"
+
+
+@pytest.mark.parametrize("portals", ["http://0.0.0.0:8080", 1, ["http://0.0.0.0:8080"]])
+def test_portals_which_are_not_a_mapping_is_incomplete(portals):
+    assert app_metadata_error(complete_metadata() | {"portals": portals}) == "METADATA_INCOMPLETE"
+
+
+@pytest.mark.parametrize("notes", [1, ["a", "b"], {"a": "b"}])
+def test_notes_which_are_not_a_string_is_incomplete(notes):
+    assert app_metadata_error(complete_metadata() | {"notes": notes}) == "METADATA_INCOMPLETE"
+
+
+@pytest.mark.parametrize("key", sorted(APP_CATALOG_METADATA_REQUIRED_KEYS))
+@pytest.mark.parametrize("value", [None, "", 1.13, True, [], {}])
+def test_catalog_metadata_value_which_is_not_a_non_empty_string_is_incomplete(key, value):
+    app_metadata = complete_metadata()
+    app_metadata["metadata"][key] = value
+
+    assert app_metadata_error(app_metadata) == "METADATA_INCOMPLETE"
+
+
+@pytest.mark.parametrize("notes", [None, "Some notes"])
+def test_notes_a_string_or_null_is_usable(notes):
+    assert app_metadata_error(complete_metadata() | {"notes": notes}) is None
+
+
 @pytest.mark.parametrize("key", ["notes", "migrated", "portals", "action_required"])
 def test_defaulted_keys_are_not_required(key):
     # Metadata written by older releases can be missing these, and reporting a working app as broken

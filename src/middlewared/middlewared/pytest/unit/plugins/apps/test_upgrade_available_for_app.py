@@ -50,6 +50,36 @@ def test_unusable_metadata_does_not_raise(app_metadata):
     assert upgrade_available_for_app(VERSION_MAPPING, app_metadata) == (False, None, None)
 
 
+@pytest.mark.parametrize("installed_version", ["latest", "", "not a version", "1.1.13/../..", 1.13, None, []])
+def test_installed_version_which_cannot_be_parsed_does_not_raise(installed_version):
+    # `Version` raises `InvalidVersion` on anything it cannot parse, and an app whose versions
+    # cannot be compared simply has no upgrade available
+    app_metadata = complete_metadata()
+    app_metadata["metadata"]["version"] = installed_version
+
+    assert upgrade_available_for_app(VERSION_MAPPING, app_metadata) == (False, None, None)
+
+
+@pytest.mark.parametrize("latest_version", ["latest", "", "not a version", None])
+def test_catalog_version_which_cannot_be_parsed_does_not_raise(latest_version):
+    version_mapping = {"community": {"actual-budget": {"version": latest_version, "app_version": "24.10.1"}}}
+
+    assert upgrade_available_for_app(version_mapping, complete_metadata()) == (False, None, None)
+
+
+def test_catalog_entry_without_a_version_does_not_raise():
+    version_mapping = {"community": {"actual-budget": {"app_version": "24.10.1"}}}
+
+    assert upgrade_available_for_app(version_mapping, complete_metadata()) == (False, None, None)
+
+
+def test_unparseable_installed_version_still_reports_image_updates_for_a_custom_app():
+    app_metadata = complete_metadata() | {"custom_app": True}
+    app_metadata["metadata"]["version"] = "latest"
+
+    assert upgrade_available_for_app(VERSION_MAPPING, app_metadata, image_updates_available=True) == (True, None, None)
+
+
 @pytest.mark.parametrize("app_metadata", [{}, {"custom_app": True}, {"custom_app": True, "metadata": None}])
 def test_unusable_metadata_with_image_updates_does_not_raise(app_metadata):
     upgrade_available, latest_version, latest_app_version = upgrade_available_for_app(
