@@ -6,6 +6,7 @@
 __pycache__
 *.xml
 .cache
+.claude
 .coverage
 .pytest_cache
 /tests/auto_config.py
