@@ -30,8 +30,10 @@ def disk(dtype, path):
     return device(dtype, path=path)
 
 
-def vm(devices, state="STOPPED"):
-    return VMEntry.model_construct(id=1, name="myvm", devices=devices, status=VMStatus.model_construct(state=state))
+def vm(devices, state="STOPPED", autostart=True):
+    return VMEntry.model_construct(
+        id=1, name="myvm", devices=devices, autostart=autostart, status=VMStatus.model_construct(state=state)
+    )
 
 
 @pytest.mark.parametrize(
@@ -128,17 +130,23 @@ class StopJob:
 class StartOnUnlockDriver:
     """Drives `start_on_unlock` against a single autostart VM, recording the actions it takes."""
 
-    def __init__(self, state, devices=None, locked_paths=()):
+    def __init__(self, state, devices=None, locked_paths=(), autostart=True):
         self.actions: list[str] = []
-        self.vm = vm(devices or [disk("RAW", "/mnt/tank/ds/disk.img")], state=state)
+        self.vm = vm(devices or [disk("RAW", "/mnt/tank/ds/disk.img")], state=state, autostart=autostart)
         self.middleware = Middleware()
         self.middleware["filesystem.is_child"] = lambda child, parent: True
         self.middleware["pool.dataset.path_in_locked_datasets"] = lambda path: path in locked_paths
-        self.middleware.services.vm.query = lambda *args: [self.vm]
+        self.middleware.services.vm.query = self._query
         self.middleware.services.vm.status = lambda *args: self.vm.status
         self.middleware.services.vm.start = self._record("start")
         self.middleware.services.vm.stop = self._record("stop")
         self.delegate = VMFSAttachmentDelegate(self.middleware)
+
+    def _query(self, filters=None, *args):
+        # Honor the `autostart` filter the autostart-aware start paths pass down
+        if filters and ("autostart", "=", True) in filters and not self.vm.autostart:
+            return []
+        return [self.vm]
 
     def _record(self, action):
         def record(*args):
@@ -149,6 +157,10 @@ class StartOnUnlockDriver:
 
     async def run(self):
         await self.delegate.start_on_unlock([({"name": "tank/ds", "type": "FILESYSTEM"}, "/mnt/tank/ds")])
+        return self.actions
+
+    async def run_import(self):
+        await self.delegate.start_on_import("/mnt/tank")
         return self.actions
 
 
@@ -186,3 +198,14 @@ async def test_start_on_unlock_ignores_vm_not_on_unlocked_paths():
     driver = StartOnUnlockDriver("STOPPED")
     driver.middleware["filesystem.is_child"] = lambda child, parent: False
     assert await driver.run() == []
+
+
+@pytest.mark.asyncio
+async def test_start_on_import_starts_autostart_vm():
+    assert await StartOnUnlockDriver("STOPPED").run_import() == ["start"]
+
+
+@pytest.mark.asyncio
+async def test_start_on_import_skips_non_autostart_vm():
+    # A pool being re-imported must not boot VMs the user never asked to autostart
+    assert await StartOnUnlockDriver("STOPPED", autostart=False).run_import() == []

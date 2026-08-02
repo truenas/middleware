@@ -41,6 +41,32 @@ class PoolService(Service):
         except Exception:
             self.logger.warning('Failed to remove remaining directories after export', exc_info=True)
 
+    async def _destroy_pool_attachments(self, path, options, destroyed):
+        """
+        Let the attachment delegates discard configuration whose data went away with the pool.
+
+        Deliberately not folded into the `delete`/`disable` loop in `export`: that has to run before
+        the zpool is destroyed so the datasets are released, whereas discarding configuration is
+        only safe once the data it describes is confirmed unrecoverable. Everything in between --
+        the `pool.pre_export` hook, `kill_processes`, and the destroy itself -- can abort the job
+        with the pool still fully intact.
+
+        `cascade` still decides whether configuration may be discarded at all; `destroyed` on its
+        own does not, because destroying an OFFLINE pool leaves it untouched on its disks.
+        """
+        if not (options['cascade'] and destroyed):
+            return
+
+        for delegate in await self.middleware.call('pool.dataset.get_attachment_delegates_for_stop'):
+            # The pool is already gone, so a delegate failure here must not fail the export job
+            try:
+                await delegate.destroy(path)
+            except Exception:
+                self.logger.error(
+                    '%s: failed to clean up attachments after the pool was destroyed',
+                    delegate.name, exc_info=True,
+                )
+
     @api_method(PoolExportArgs, PoolExportResult, audit="Pool Export", audit_callback=True, roles=['POOL_WRITE'])
     @job(lock='pool_export')
     async def export(self, job, audit_callback, oid, options):
@@ -130,10 +156,18 @@ class PoolService(Service):
 
         await self.middleware.call_hook('pool.pre_export', pool=pool['name'], options=options, job=job)
 
+        # Whether the pool's data is really gone by the end of this job. `options['destroy']` alone
+        # does not answer that: an OFFLINE pool is not imported, so it is neither destroyed nor
+        # wiped and its contents survive on the disks. This is what gates
+        # `_destroy_pool_attachments` below, because a delegate that discards configuration on the
+        # strength of the data being unrecoverable cannot key off the requested option.
+        destroyed = False
+
         if pool['status'] == 'OFFLINE':
             # Pool exists only in database, it's not imported
             pass
         elif options['destroy']:
+            destroyed = True
             job.set_progress(60, 'Destroying pool')
             await self.middleware.call('zfs.pool.delete', pool['name'])
 
@@ -182,6 +216,8 @@ class PoolService(Service):
 
         # scrub needs to be regenerated in crontab
         await (await self.call2(self.s.service.control, 'RESTART', 'cron')).wait(raise_error=True)
+
+        await self._destroy_pool_attachments(pool['path'], options, destroyed)
 
         await self.middleware.call_hook('pool.post_export', pool=pool['name'], options=options)
         self.middleware.send_event('pool.query', 'REMOVED', id=oid)
