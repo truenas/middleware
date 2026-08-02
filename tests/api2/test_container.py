@@ -66,6 +66,14 @@ def bounding_set(capsh_print):
     return re.search("Bounding set =(.*)", capsh_print).group(1).strip().split(",")
 
 
+def dataset_exists(dataset):
+    # Asked over ssh so the test does not depend on how the dataset API treats
+    # datasets under .truenas_containers.
+    return (
+        ssh(f"zfs list {dataset}", check=False, complete_response=True)["returncode"] == 0
+    )
+
+
 @pytest.fixture(scope="module", autouse=True)
 def bridge():
     configure_bridge()
@@ -183,10 +191,66 @@ def test_container_delete_with_snapshot_refused(ubuntu_container):
         with pytest.raises(ClientException) as exc_info:
             call("container.delete", ubuntu_container["id"], job=True)
 
-        assert "has snapshots" in str(exc_info.value)
+        assert "snapshot(s)" in str(exc_info.value)
         assert call("container.query", [["id", "=", ubuntu_container["id"]]])
+        assert dataset_exists(ubuntu_container["dataset"])
     finally:
         ssh(f"zfs destroy {snapshot}")
+
+
+def test_container_delete_with_child_dataset_refused(ubuntu_container):
+    child = f"{ubuntu_container['dataset']}/child"
+    ssh(f"zfs create {child}")
+    try:
+        with pytest.raises(ClientException) as exc_info:
+            call("container.delete", ubuntu_container["id"], job=True)
+
+        assert "child datasets" in str(exc_info.value)
+        assert call("container.query", [["id", "=", ubuntu_container["id"]]])
+        assert dataset_exists(ubuntu_container["dataset"])
+    finally:
+        ssh(f"zfs destroy {child}")
+
+
+def test_container_delete_refused_keeps_libvirt_state(started_ubuntu_container):
+    # A libvirt domain only exists once the container has been started, so the
+    # container is started (by the fixture) and stopped to have state that a
+    # refused delete could destroy.
+    container = started_ubuntu_container
+    call("container.stop", container["id"], job=True)
+    assert container["uuid"] in ssh(f"{VIRSH} list --all")
+
+    snapshot = f"{container['dataset']}@test"
+    ssh(f"zfs snapshot {snapshot}")
+    try:
+        with pytest.raises(ClientException) as exc_info:
+            call("container.delete", container["id"], job=True)
+
+        assert "snapshot(s)" in str(exc_info.value)
+
+        # A refused delete must not touch libvirt, so the container is left exactly as
+        # it was and still starts.
+        assert container["uuid"] in ssh(f"{VIRSH} list --all")
+        call("container.start", container["id"])
+        assert (
+            call("container.get_instance", container["id"])["status"]["state"]
+            == "RUNNING"
+        )
+        call("container.stop", container["id"], job=True)
+    finally:
+        ssh(f"zfs destroy {snapshot}")
+
+
+def test_container_delete_recursive(ubuntu_container):
+    container = ubuntu_container
+    ssh(f"zfs create {container['dataset']}/child")
+    ssh(f"zfs snapshot {container['dataset']}@test")
+
+    call("container.delete", container["id"], {"recursive": True}, job=True)
+
+    assert not call("container.query", [["id", "=", container["id"]]])
+    assert not dataset_exists(container["dataset"])
+    assert container["uuid"] not in ssh(f"{VIRSH} list --all")
 
 
 def test_container_stop_force_after_timeout(ubuntu_container):

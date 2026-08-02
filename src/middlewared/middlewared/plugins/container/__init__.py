@@ -111,6 +111,10 @@ class ContainerService(GenericCRUDService[ContainerEntry]):
         Delete a Container.
 
         The container must be stopped, unless ``force`` is set - which tears it down first.
+
+        A container whose dataset has child datasets or snapshots is refused unless ``recursive`` is
+        set, which destroys them along with any clones of those snapshots - data that cannot be
+        recovered afterwards.
         """
         return self._svc_part.do_delete(id_, options, audit_callback=audit_callback)
 

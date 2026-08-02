@@ -173,6 +173,16 @@ class ContainerDeleteOptions(BaseModel):
             "Force deletion of a container that is not stopped (running or suspended) by stopping it first."
         ),
     )
+    recursive: bool = Field(
+        default=False,
+        description=(
+            "Destroy everything the container's dataset carries along with the container: its child datasets and "
+            "snapshots, any clones of those snapshots wherever in the pool they live, and any holds held on them - "
+            "releasing a hold can break a replication task that depends on it. Deleting a container whose dataset "
+            "has child datasets or snapshots fails without this. None of what is destroyed can be recovered "
+            "afterwards."
+        ),
+    )
 
 
 class ContainerDeleteArgs(BaseModel):

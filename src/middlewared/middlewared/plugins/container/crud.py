@@ -20,10 +20,11 @@ from middlewared.api.current import (
     ContainerUpdate,
     QueryOptions,
     ZFSResourceQuery,
+    ZFSResourceSnapshotCountQuery,
     ZFSResourceSnapshotDestroyQuery,
 )
 from middlewared.pylibvirt import gather_pylibvirt_domains_states, get_pylibvirt_domain_state
-from middlewared.service import CallError, CRUDServicePart, ValidationErrors
+from middlewared.service import CallError, CRUDServicePart, ValidationError, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.libvirt.utils import ACTIVE_STATES
 
@@ -276,11 +277,45 @@ class ContainerServicePart(CRUDServicePart[ContainerEntry]):
         audit_callback(container.name)
 
         if container.status.state in ACTIVE_STATES and not options.force:
-            raise CallError(
+            raise ValidationError(
+                'container_delete.force',
                 f'Container {container.name!r} is {container.status.state.lower()}. Stop it first, '
                 f'or pass force=True to stop and delete it.',
                 errno.EBUSY,
             )
+
+        # A dataset that is already missing - a victim of a legacy .ix-virt deletion,
+        # say - is not an error; the dangling records are still cleaned up below.
+        resources = self.call_sync2(
+            self.s.zfs.resource.query_impl,
+            ZFSResourceQuery(paths=[container.dataset], properties=None, get_children=True),
+        )
+        dataset_exists = bool(resources)
+
+        # Everything a non-recursive destroy would refuse has to be caught before libvirt is
+        # touched. Undefining the domain is not itself destructive - the next start rebuilds it
+        # from the container's configuration - but getting there kills a running container and
+        # discards a suspended one's state, and the destroy then fails anyway.
+        if dataset_exists and not options.recursive:
+            if len(resources) > 1:
+                raise ValidationError(
+                    'container_delete.recursive',
+                    f'Container {container.name!r} dataset {container.dataset!r} has child datasets. '
+                    'Set `recursive` to delete the container together with them.',
+                    errno.ENOTEMPTY,
+                )
+
+            snapshots = self.call_sync2(
+                self.s.zfs.resource.snapshot.count_impl,
+                ZFSResourceSnapshotCountQuery(paths=[container.dataset]),
+            ).get(container.dataset, 0)
+            if snapshots:
+                raise ValidationError(
+                    'container_delete.recursive',
+                    f'Container {container.name!r} dataset {container.dataset!r} has {snapshots} snapshot(s). '
+                    'Set `recursive` to delete the container together with them.',
+                    errno.ENOTEMPTY,
+                )
 
         # Deleting the domain destroys it if it is active and gives its post-stop
         # actions time to finish before undefining it, so the container's runtime
@@ -291,14 +326,14 @@ class ContainerServicePart(CRUDServicePart[ContainerEntry]):
 
         # Destroy the dataset first and only remove the DB records once it is actually
         # gone, so a failed destroy never orphans the dataset with no container row
-        # pointing at it. A dataset that is already missing - a victim of a legacy
-        # .ix-virt deletion, say - is not an error; fall through and clean up the
-        # now-dangling records.
-        if self.call_sync2(
-            self.s.zfs.resource.query_impl,
-            ZFSResourceQuery(paths=[container.dataset], properties=None),
-        ):
-            failed = self.call_sync2(self.s.zfs.resource.destroy_impl, container.dataset)[0]
+        # pointing at it.
+        if dataset_exists:
+            # bypass, because the container plugin owns everything under its own dataset and
+            # must keep being able to destroy it if that tree is ever marked a protected path.
+            failed = self.call_sync2(
+                self.s.zfs.resource.destroy_impl, container.dataset, recursive=options.recursive,
+                bypass=True,
+            )[0]
             if failed is not None:
                 raise CallError(f'Failed to delete container {container.name!r} dataset: {failed}')
 
