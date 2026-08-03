@@ -9,14 +9,9 @@ import textwrap
 
 from truenas_pylicensed import LicenseType
 
-from middlewared.alert.applicability import AnyOf, HardwareClass, HardwareRule, LicenseRequirement, LicenseRule
+from middlewared.alert.applicability import EXPECTED_TO_BE_LICENSED
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 from middlewared.alert.schedule import IntervalSchedule
-
-
-LICENSED = LicenseRule(requirement=LicenseRequirement.LICENSED)
-# A machine that is expected to carry a license: iX-built, or already licensed.
-EXPECTED_TO_BE_LICENSED = AnyOf(rules=(HardwareRule(classes=frozenset({HardwareClass.TRUENAS_HW})), LICENSED))
 
 
 class LicenseAlertClass(AlertClass):
@@ -32,7 +27,7 @@ class LicenseIsExpiringAlertClass(AlertClass):
     level = AlertLevel.WARNING
     title = "TrueNAS License Is Expiring"
     text = "%s"
-    applies_to = LICENSED
+    applies_to = EXPECTED_TO_BE_LICENSED
 
 
 class LicenseHasExpiredAlertClass(AlertClass):
@@ -40,7 +35,7 @@ class LicenseHasExpiredAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = "TrueNAS License Has Expired"
     text = "%s"
-    applies_to = LICENSED
+    applies_to = EXPECTED_TO_BE_LICENSED
 
 
 class LicenseStatusAlertSource(ThreadedAlertSource):

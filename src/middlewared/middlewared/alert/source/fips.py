@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from middlewared.alert.applicability import HardwareClass, HardwareRule
+from middlewared.alert.applicability import TRUENAS_HARDWARE
 from middlewared.alert.base import AlertClass, AlertCategory, Alert, AlertLevel, AlertSource
 from middlewared.alert.schedule import IntervalSchedule
 
@@ -15,7 +15,7 @@ class FIPSMisconfigurationAlertClass(AlertClass):
 class FIPSProviderAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(hours=1))
 
-    applies_to = HardwareRule(classes=frozenset({HardwareClass.TRUENAS_HW}))
+    applies_to = TRUENAS_HARDWARE
     run_on_backup_node = False
 
     async def check(self):

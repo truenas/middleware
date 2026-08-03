@@ -1,8 +1,5 @@
-from middlewared.alert.applicability import LicenseRequirement, LicenseRule
+from middlewared.alert.applicability import HA_LICENSED
 from middlewared.alert.base import Alert, AlertCategory, AlertClass, SimpleOneShotAlertClass, AlertLevel
-
-
-HA_LICENSED = LicenseRule(requirement=LicenseRequirement.HA)
 
 
 class FailoverRebootAlertClass(AlertClass, SimpleOneShotAlertClass):

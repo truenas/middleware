@@ -96,7 +96,10 @@ class AlertListResult(BaseModel):
 class AlertListCategoriesOptions(BaseModel):
     include_all_products: bool = Field(
         default=False,
-        description="Include alert classes for all products, not just the current one.",
+        description=(
+            "Include every alert class, including those that do not apply to this system's "
+            "hardware or license."
+        ),
     )
     include_hidden_classes: bool = Field(default=False, description="Include hidden alert classes.")
 

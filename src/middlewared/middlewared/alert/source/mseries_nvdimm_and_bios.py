@@ -5,16 +5,13 @@
 
 import datetime
 
-from middlewared.alert.applicability import HardwareClass, HardwareRule
+from middlewared.alert.applicability import TRUENAS_HARDWARE
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 from middlewared.alert.schedule import IntervalSchedule
 
 WEBUI_SUPPORT_FORM = (
     'Please contact iXsystems Support using the "File Ticket" button in the System Settings->General->Support form'
 )
-
-
-TRUENAS_HARDWARE = HardwareRule(classes=frozenset({HardwareClass.TRUENAS_HW}))
 
 
 class NVDIMMAlertClass(AlertClass):

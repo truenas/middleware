@@ -3,7 +3,7 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
-from middlewared.alert.applicability import HardwareClass, HardwareRule
+from middlewared.alert.applicability import TRUENAS_HARDWARE
 from middlewared.alert.base import (
     Alert,
     AlertClass,
@@ -12,9 +12,6 @@ from middlewared.alert.base import (
     AlertSource,
 )
 from middlewared.utils.version import parse_major_minor_version
-
-
-TRUENAS_HARDWARE = HardwareRule(classes=frozenset({HardwareClass.TRUENAS_HW}))
 
 
 class VSeriesUnstampedSPDAlertClass(AlertClass):
