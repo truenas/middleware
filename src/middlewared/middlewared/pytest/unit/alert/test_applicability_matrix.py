@@ -178,7 +178,9 @@ def render() -> str:
         "#",
         "# Kinds: class  -- the class applies: displayed, sent, and offered in the catalogue",
         "#        listed -- the class is offered in the settings catalogue, which listed_only_when narrows",
-        "#        source -- the source is ran",
+        "#        source -- the source's rule admits this system. Whether it is actually ran also",
+        "#                  turns on gates this matrix does not model: post_failover_blackout,",
+        "#                  require_stable_peer, the source's schedule, and source locks.",
         "#",
         "# Populations:",
     ]
