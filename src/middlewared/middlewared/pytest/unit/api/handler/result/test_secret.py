@@ -101,7 +101,7 @@ def test_remove_secrets_type_discriminator():
     }
 
 
-def test_private_union():
+def test_secret_union():
     with pytest.raises(TypeError) as ve:
         class UserModel(BaseModel):
             username: str
@@ -109,7 +109,7 @@ def test_private_union():
 
     assert ve.value.args[0] == ("Model UserModel has field password defined as Optional[pydantic.types.Secret[str]]. "
                                 "pydantic.types.Secret[str] cannot be a member of an Optional or a Union, please make "
-                                "the whole field Private.")
+                                "the whole field a `Secret`.")
 
 
 def test_remove_secrets_optional_model():

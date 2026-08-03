@@ -13,6 +13,7 @@ from pydantic.main import IncEx, ModelT
 from pydantic.types import SecretType
 from pydantic_core import PydanticUndefined, SchemaSerializer, core_schema
 
+from middlewared.api.base.private import guard_private_fields, is_private_guard
 from middlewared.api.base.types.string import SECRET_VALUE
 from middlewared.utils.lang import Undefined, undefined
 from middlewared.utils.typing_ import is_union
@@ -111,6 +112,15 @@ def _apply_model_serializer(cls: type["BaseModel"], model_serializer: PydanticDe
     cls.model_rebuild(force=True)
 
 
+def _is_field_level_metadata(metadata: Any) -> bool:
+    """Whether `metadata` must stay in `FieldInfo.metadata` instead of being folded into the annotation.
+
+    `SkipJsonSchema` (and therefore `Private`) stops being honored once it is nested inside a union member, and
+    the private guard has to see every supplied value, so neither may be folded by `_annotate_not_required`.
+    """
+    return isinstance(metadata, SkipJsonSchema) or is_private_guard(metadata)  # type: ignore[misc]
+
+
 def _annotate_not_required(annotation: Any | None, metadata: tuple[Any, ...] = ()) -> Any:
     if get_origin(annotation) is Secret:
         inner = get_args(annotation)[0]
@@ -134,6 +144,10 @@ class _BaseModelMetaclass(ModelMetaclass):
     def __new__(mcls, name: str, bases: tuple[type[Any], ...], namespace: dict[str, Any], **kwargs: Any) -> type:
         cls = super().__new__(mcls, name, bases, namespace, **kwargs)
 
+        # Must run before the `NotRequired` handling below so that the guard is treated as field-level
+        # metadata instead of being folded into the annotation.
+        has_private = guard_private_fields(cls)
+
         has_not_required = False
         wrapped_secret_default = False
         for field in cls.model_fields.values():  # type: ignore[attr-defined]
@@ -144,8 +158,10 @@ class _BaseModelMetaclass(ModelMetaclass):
                 # constraint applies to the typed arm of the union rather than only to the
                 # union as a whole — otherwise the model config's `str_max_length` wins for
                 # the bare `str` arm.
-                field.annotation = _annotate_not_required(field.annotation, field.metadata)
-                field.metadata = []
+                field_level = [metadata for metadata in field.metadata if _is_field_level_metadata(metadata)]
+                foldable = [metadata for metadata in field.metadata if not _is_field_level_metadata(metadata)]
+                field.annotation = _annotate_not_required(field.annotation, tuple(foldable))
+                field.metadata = field_level
                 has_not_required = True
             elif (
                 get_origin(field.annotation) is Secret
@@ -169,6 +185,15 @@ class _BaseModelMetaclass(ModelMetaclass):
         elif wrapped_secret_default:
             # A mutated `field.default` only takes effect on instantiation after the model is rebuilt.
             cls.model_rebuild(force=True)  # type: ignore[attr-defined]
+        elif has_private:
+            # Same for a mutated `field.metadata`.
+            cls.model_rebuild(  # type: ignore[attr-defined]
+                force=True,
+                # A model whose annotations contain forward references that are not defined yet cannot be
+                # built at this point. Pydantic leaves it incomplete and rebuilds it, picking up the guard,
+                # on first use.
+                raise_errors=False,
+            )
 
         return cls
 
@@ -182,6 +207,10 @@ class ForUpdateMetaclass(_BaseModelMetaclass):
 
     def __new__(mcls, name: str, bases: tuple[type[Any], ...], namespace: dict[str, Any], **kwargs: Any) -> type:
         cls = ModelMetaclass.__new__(mcls, name, bases, namespace, **kwargs)
+
+        # This bypasses `_BaseModelMetaclass.__new__`, so private fields have to be guarded here as well.
+        # No explicit rebuild is needed: `_apply_model_serializer` below rebuilds the model unconditionally.
+        guard_private_fields(cls)
 
         for field in cls.model_fields.values():  # type: ignore[attr-defined]
             # We want to back `default` and `default_factory` so that `model_subset` can later use them.
@@ -277,7 +306,7 @@ class BaseModel(DumpableModel, metaclass=_BaseModelMetaclass):
 
                         raise TypeError(
                             f"Model {cls.__name__} has field {k} defined as {dump(v.annotation)}. {dump(option)} "
-                            "cannot be a member of an Optional or a Union, please make the whole field Private."
+                            "cannot be a member of an Optional or a Union, please make the whole field a `Secret`."
                         )
             if not v.description and (parent_field := cls.__base__.model_fields.get(k)):  # type: ignore[union-attr]
                 v.description = parent_field.description

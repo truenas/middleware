@@ -1,13 +1,13 @@
 from typing import Literal
 
 from pydantic import Field
-from pydantic.json_schema import SkipJsonSchema
 
 from middlewared.api.base import (
     BaseModel,
     Excluded,
     ForUpdateMetaclass,
     NonEmptyString,
+    Private,
     SnapshotNameSchema,
     TcpPort,
     UniqueList,
@@ -25,7 +25,7 @@ __all__ = ["ReplicationEntry",
            "ReplicationCreateArgs", "ReplicationCreateResult",
            "ReplicationUpdateArgs", "ReplicationUpdateResult",
            "ReplicationDeleteArgs", "ReplicationDeleteResult",
-           "ReplicationRunArgs", "ReplicationRunResult",
+           "ReplicationRunOptions", "ReplicationRunArgs", "ReplicationRunResult",
            "ReplicationRunOnetimeArgs", "ReplicationRunOnetimeResult",
            "ReplicationListDatasetsArgs", "ReplicationListDatasetsResult",
            "ReplicationCreateDatasetArgs", "ReplicationCreateDatasetResult",
@@ -297,11 +297,18 @@ class ReplicationDeleteResult(BaseModel):
     result: bool = Field(description="Whether the replication task was successfully deleted.")
 
 
-class ReplicationRunArgs(BaseModel):
-    id: int = Field(description="ID of the replication task to run.")
-    really_run: SkipJsonSchema[bool] = Field(
+class ReplicationRunOptions(BaseModel):
+    really_run: Private[bool] = Field(
         default=True,
         description="Internal flag to confirm the operation should proceed.",
+    )
+
+
+class ReplicationRunArgs(BaseModel):
+    id: int = Field(description="ID of the replication task to run.")
+    options: ReplicationRunOptions = Field(
+        default_factory=ReplicationRunOptions,
+        description="Options for running the replication task.",
     )
 
 
