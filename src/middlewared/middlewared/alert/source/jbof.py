@@ -5,13 +5,10 @@
 
 import datetime
 
-from middlewared.alert.applicability import HardwareClass, HardwareRule
+from middlewared.alert.applicability import TRUENAS_HARDWARE
 from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertLevel, AlertSource, SimpleOneShotAlertClass
 from middlewared.alert.schedule import IntervalSchedule
 from middlewared.plugins.enclosure_.enums import ElementStatus, ElementType
-
-
-TRUENAS_HARDWARE = HardwareRule(classes=frozenset({HardwareClass.TRUENAS_HW}))
 
 
 class JBOFTearDownFailureAlertClass(AlertClass, SimpleOneShotAlertClass):

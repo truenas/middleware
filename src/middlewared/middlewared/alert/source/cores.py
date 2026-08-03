@@ -1,8 +1,5 @@
-from middlewared.alert.applicability import HardwareClass, HardwareRule
+from middlewared.alert.applicability import NOT_APPLIANCE_HARDWARE
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, AlertSource, Alert
-
-
-COMMUNITY_HARDWARE = HardwareRule(classes=frozenset({HardwareClass.GENERIC, HardwareClass.MINI}))
 
 
 class CoreFilesArePresentAlertClass(AlertClass):
@@ -16,11 +13,11 @@ class CoreFilesArePresentAlertClass(AlertClass):
         "and attach the core files and debug. After creating the ticket, the core files can be removed "
         "from the system by opening shell and entering 'rm /var/db/system/cores/*'."
     )
-    applies_to = COMMUNITY_HARDWARE
+    applies_to = NOT_APPLIANCE_HARDWARE
 
 
 class CoreFilesArePresentAlertSource(AlertSource):
-    applies_to = COMMUNITY_HARDWARE
+    applies_to = NOT_APPLIANCE_HARDWARE
 
     async def should_alert(self, core):
         if core["corefile"] != "present" or not core["unit"]:

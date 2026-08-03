@@ -3,15 +3,11 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
-from middlewared.alert.applicability import HardwareClass, HardwareRule, LicenseRequirement, LicenseRule
+from middlewared.alert.applicability import APPLIANCE_OR_HA_LICENSED, HA_LICENSED
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource
 
 TITLE = 'Disks Missing On '
 TEXT = 'Disks with serial %(serials)s present on '
-
-
-HA_LICENSED = LicenseRule(requirement=LicenseRequirement.HA)
-TRUENAS_HARDWARE = HardwareRule(classes=frozenset({HardwareClass.TRUENAS_HW}))
 
 
 class DisksAreNotPresentOnStandbyNodeAlertClass(AlertClass):
@@ -19,8 +15,8 @@ class DisksAreNotPresentOnStandbyNodeAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = TITLE + 'Standby Storage Controller'
     text = TEXT + 'active storage controller but missing on standby storage controller.'
-    applies_to = TRUENAS_HARDWARE
-    listed_when = HA_LICENSED
+    applies_to = APPLIANCE_OR_HA_LICENSED
+    listed_only_when = HA_LICENSED
 
 
 class DisksAreNotPresentOnActiveNodeAlertClass(AlertClass):
@@ -28,13 +24,13 @@ class DisksAreNotPresentOnActiveNodeAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = TITLE + 'Active Storage Controller'
     text = TEXT + 'standby storage controller but missing on active storage controller.'
-    applies_to = TRUENAS_HARDWARE
-    listed_when = HA_LICENSED
+    applies_to = APPLIANCE_OR_HA_LICENSED
+    listed_only_when = HA_LICENSED
 
 
 class FailoverDisksAlertSource(AlertSource):
     applies_to = HA_LICENSED
-    failover_related = True
+    post_failover_blackout = True
     require_stable_peer = True
     run_on_backup_node = False
 

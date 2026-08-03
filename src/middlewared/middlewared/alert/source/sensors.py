@@ -5,7 +5,7 @@
 
 import time
 
-from middlewared.alert.applicability import HardwareClass, HardwareRule
+from middlewared.alert.applicability import TRUENAS_HARDWARE
 from middlewared.alert.base import (
     AlertClass,
     AlertCategory,
@@ -15,9 +15,6 @@ from middlewared.alert.base import (
     UnavailableException,
 )
 from middlewared.utils.crypto import generate_token
-
-
-TRUENAS_HARDWARE = HardwareRule(classes=frozenset({HardwareClass.TRUENAS_HW}))
 
 
 class SensorAlertClass(AlertClass):
@@ -41,6 +38,8 @@ class PowerSupplyAlertClass(AlertClass):
 
 
 class PsuAlertSource(AlertSource):
+    applies_to = TRUENAS_HARDWARE
+
     def __init__(self, middleware):
         super().__init__(middleware)
         self.last_failure = time.monotonic()
@@ -93,6 +92,8 @@ class PsuAlertSource(AlertSource):
 
 
 class SensorsAlertSource(AlertSource):
+    applies_to = TRUENAS_HARDWARE
+
     async def should_alert(self):
         if (await self.middleware.call("system.dmidecode_info"))[
             "system-product-name"

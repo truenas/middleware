@@ -2,8 +2,8 @@
 
 An alert's applicability is declared on two independent axes -- hardware class and license -- and
 is otherwise invisible: nothing in the alert itself says which systems will ever see it. This
-module renders that answer for every declaration in ``alert/source`` against a fixed set of
-populations, and fails on any difference from the checked-in copy. Changing one declaration's rule
+module renders that answer for every declaration in the tree against a fixed set of populations,
+and fails on any difference from the checked-in copy. Changing one declaration's rule
 touches one line of that file, so a population change cannot land without being read in review.
 
 Regenerate with ``ALERT_MATRIX_REGENERATE=1 pytest .../test_applicability_matrix.py`` and read the
@@ -11,22 +11,23 @@ resulting diff.
 """
 
 import ast
+import importlib
 import os
 from dataclasses import dataclass
 
 import pytest
 from truenas_pylicensed import LicenseType
 
-from middlewared.alert.applicability import AlertFacts, HardwareClass, applies
-from middlewared.alert.base import AlertClass, AlertSource, ThreadedAlertSource
-from middlewared.plugins.alert import should_list_alert_class
+from middlewared.alert.applicability import HA_LICENSED, applies, applies_for_listing
+from middlewared.alert.base import AlertCategory, AlertClass, AlertSource, ThreadedAlertSource
 from middlewared.pytest.unit.utils.test_entitlements import make_license
+from middlewared.utils.entitlements import EntitlementFacts
+from middlewared.utils.hardware import HardwareClass
 from middlewared.utils.license import LicenseInfo
 from middlewared.utils.plugins import load_classes, load_modules
 from middlewared.utils.python import get_middlewared_dir
 
 GOLDEN = os.path.join(os.path.dirname(__file__), "golden", "applicability.txt")
-SOURCE_PACKAGE = "middlewared.alert.source."
 
 
 @dataclass(frozen=True, kw_only=True, slots=True)
@@ -34,8 +35,8 @@ class Population:
     """A system the inventory is evaluated against.
 
     ``ha_capable`` is descriptive only. It is a chassis probe that the axes deliberately do not
-    carry, and it is not part of ``AlertFacts``; it is recorded so the populations read as real
-    machines.
+    carry, and it is not part of ``EntitlementFacts``; it is recorded so the populations read as
+    real machines.
     """
 
     name: str
@@ -45,10 +46,15 @@ class Population:
     ha_capable: bool
 
     @property
-    def facts(self) -> AlertFacts:
-        return AlertFacts(hardware_class=self.hardware_class, license=self.license)
+    def facts(self) -> EntitlementFacts:
+        return EntitlementFacts(hardware_class=self.hardware_class, license=self.license)
 
 
+# GENERIC+HA and MINI+HA are absent deliberately. A machine can only reach them two ways: as a
+# Mini-tagged HA virtual machine, where classify_platform reads the chassis before the QEMU stamp
+# while detect_platform reads the QEMU stamp first, so the two disagree; or with a legacy
+# /data/license blob hand-placed on non-iX hardware. Neither exists in the fleet, and a population
+# no machine occupies would freeze answers nobody can check against a real system.
 POPULATIONS = (
     Population(
         name="G",
@@ -102,30 +108,60 @@ POPULATIONS = (
 )
 
 
+def _modules_declaring_alert_classes() -> list[str]:
+    """Every module in the tree that declares an ``AlertClass``, found without importing it.
+
+    ``AlertClass.classes`` is filled by the metaclass at import time, so what is in it depends on
+    what has been imported. Scanning first and importing the result makes the inventory the same
+    whatever else the test session touched, and picks up a class declared in a plugin the day it is
+    written rather than the day someone remembers to add it here.
+    """
+    root = get_middlewared_dir()
+    modules = []
+    for dirpath, dirnames, filenames in os.walk(root):
+        dirnames[:] = [d for d in dirnames if d not in ("__pycache__", "pytest", "alembic")]
+        for filename in filenames:
+            if not filename.endswith(".py"):
+                continue
+
+            path = os.path.join(dirpath, filename)
+            with open(path) as f:
+                tree = ast.parse(f.read())
+
+            if any(
+                isinstance(node, ast.ClassDef)
+                and any(isinstance(base, ast.Name) and base.id == "AlertClass" for base in node.bases)
+                for node in ast.walk(tree)
+            ):
+                relative = os.path.relpath(path, root).removesuffix(".py").replace(os.sep, ".")
+                modules.append(f"middlewared.{relative}")
+
+    return sorted(modules)
+
+
 def declarations():
-    """Every declaration in ``alert/source``, loaded the way ``AlertService.load`` loads it.
+    """Every alert declaration in the tree, source and class alike.
 
     Classes appear twice: once for applicability -- running, displaying and sending -- and once for
-    the settings catalogue, which `listed_when` narrows further and which nothing else consults.
+    the settings catalogue, which `listed_only_when` narrows further and which nothing else
+    consults.
     """
     sources = []
     for module in load_modules(os.path.join(get_middlewared_dir(), "alert", "source")):
         for cls in load_classes(module, AlertSource, (ThreadedAlertSource,)):
-            sources.append((cls.__name__.replace("AlertSource", ""), "source", cls))
+            sources.append((cls.__name__.removesuffix("AlertSource"), "source", cls))
 
-    classes = [
-        (cls.name, kind, cls)
-        for cls in AlertClass.classes
-        if cls.__module__.startswith(SOURCE_PACKAGE)
-        for kind in ("class", "listed")
-    ]
+    for name in _modules_declaring_alert_classes():
+        importlib.import_module(name)
+
+    classes = [(cls.name, kind, cls) for cls in AlertClass.classes for kind in ("class", "listed")]
 
     return sorted(set(sources + classes), key=lambda row: (row[0], row[1]))
 
 
 def answer(kind: str, declaration, population: Population) -> bool:
     if kind == "listed":
-        return should_list_alert_class(declaration, population.facts)
+        return applies_for_listing(declaration, population.facts)
 
     return applies(declaration.applies_to, population.facts)
 
@@ -137,7 +173,7 @@ def render() -> str:
         "# Generated by test_applicability_matrix.py -- do not edit by hand.",
         "#",
         "# Kinds: class  -- the class applies: displayed, sent, and offered in the catalogue",
-        "#        listed -- the class is offered in the settings catalogue, which listed_when narrows",
+        "#        listed -- the class is offered in the settings catalogue, which listed_only_when narrows",
         "#        source -- the source is ran",
         "#",
         "# Populations:",
@@ -210,7 +246,7 @@ def test_every_declaration_carries_a_rule():
         declaration = live[(name, kind)]
         rule = declaration.applies_to
         if kind == "listed":
-            rule = rule or declaration.listed_when
+            rule = rule or declaration.listed_only_when
 
         if rule is None:
             unruled.append((name, kind))
@@ -226,35 +262,65 @@ def test_every_declaration_carries_a_rule():
         "MemorySizeMismatch",
     ],
 )
-def test_listed_when_hides_without_silencing(class_name):
+def test_listed_only_when_hides_without_silencing(class_name):
     """An HA class on a non-HA-licensed system leaves the catalogue, and nothing else.
 
     The scheduled-reboot classes are deliberately not in this set: they are gated on the HA license
     itself, so on a system without one they are silenced rather than merely unlisted.
     """
-    facts = AlertFacts(hardware_class=HardwareClass.TRUENAS_HW, license=make_license(model="M50"))
+    facts = EntitlementFacts(hardware_class=HardwareClass.TRUENAS_HW, license=make_license(model="M50"))
     klass = AlertClass.class_by_name[class_name]
 
     assert applies(klass.applies_to, facts) is True
-    assert should_list_alert_class(klass, facts) is False
+    assert applies_for_listing(klass, facts) is False
 
 
-def test_listed_when_is_only_read_when_listing():
-    """``listed_when`` narrows the catalogue and nothing else, and only ``should_list_alert_class``
-    is entitled to read it. Anywhere else it would silence alerts that already exist."""
-    import middlewared.plugins.alert as alert_plugin
+def test_listed_only_when_is_read_only_where_listing_is_decided():
+    """``listed_only_when`` narrows the settings catalogue and nothing else.
 
-    with open(alert_plugin.__file__) as f:
-        tree = ast.parse(f.read())
-
-    reads = [node for node in ast.walk(tree) if isinstance(node, ast.Attribute) and node.attr == "listed_when"]
+    Read anywhere but the applicability engine it would silence alerts that already exist, so this
+    is a whole-tree check rather than a check of one file: a second reader cannot appear without
+    this failing. Declarations are unaffected -- assigning the attribute in a class body is a plain
+    name, not an attribute access. The unit-test tree is excluded: the frozen inventory reads the
+    attribute to check that a restricted declaration still carries a rule, which is bookkeeping
+    about declarations rather than an enforcement point.
+    """
+    allowed = (os.path.join("alert", "applicability"), os.path.join("alert", "base.py"))
+    root = get_middlewared_dir()
 
     readers = set()
-    for node in ast.walk(tree):
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            for child in ast.walk(node):
-                if isinstance(child, ast.Attribute) and child.attr == "listed_when":
-                    readers.add(node.name)
+    for dirpath, dirnames, filenames in os.walk(root):
+        dirnames[:] = [d for d in dirnames if d not in ("__pycache__", "pytest", "alembic")]
+        for filename in filenames:
+            if not filename.endswith(".py"):
+                continue
 
-    assert len(reads) == 1
-    assert readers == {"should_list_alert_class"}
+            path = os.path.join(dirpath, filename)
+            with open(path) as f:
+                tree = ast.parse(f.read())
+
+            if any(isinstance(node, ast.Attribute) and node.attr == "listed_only_when" for node in ast.walk(tree)):
+                readers.add(os.path.relpath(path, root))
+
+    assert {reader for reader in readers if not reader.startswith(allowed)} == set()
+
+
+def test_ha_classes_are_not_listed_without_an_ha_license():
+    """The old code hid every HA-category class on a system without an HA license, implicitly.
+
+    That rule is now hand-written on each of them, and ``test_every_declaration_carries_a_rule``
+    does not catch a new class that forgets it: a declaration whose inventory row is all ``Y`` is
+    skipped there, and an all-``Y`` row is exactly what forgetting looks like.
+    """
+    unlisted_populations = [p for p in POPULATIONS if not applies(HA_LICENSED, p.facts)]
+    assert unlisted_populations, "no population without an HA license; this test proves nothing"
+
+    listed = [
+        (klass.name, population.name)
+        for klass in AlertClass.classes
+        if klass.category is AlertCategory.HA
+        for population in unlisted_populations
+        if applies_for_listing(klass, population.facts)
+    ]
+
+    assert listed == []

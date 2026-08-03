@@ -1,10 +1,7 @@
-from middlewared.alert.applicability import HardwareClass, HardwareRule
+from middlewared.alert.applicability import MINI_HARDWARE
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, AlertSource, Alert
 
 URL = "https://www.truenas.com/docs/hardware/legacyhardware/miniseries/freenas-minis-2nd-gen/freenasminibmcwatchdog/"
-
-
-MINI_HARDWARE = HardwareRule(classes=frozenset({HardwareClass.MINI}))
 
 
 class TrueNASMiniBMCAlertClass(AlertClass):
