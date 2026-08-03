@@ -15,7 +15,7 @@ import ast
 import os
 
 from middlewared.alert import base as alert_base
-from middlewared.alert.applicability import applies
+from middlewared.alert.applicability import Applicability
 from middlewared.alert.base import AlertClass
 from middlewared.pytest.unit.alert.test_applicability_matrix import POPULATIONS, declarations
 from middlewared.utils.python import get_middlewared_dir
@@ -76,14 +76,15 @@ def test_every_source_resolves_to_at_least_one_class():
 def test_a_source_never_outruns_its_classes():
     """Wherever a source is ran, every class it can create must apply."""
     sources = {name: declaration for name, kind, declaration in declarations() if kind == "source"}
+    applicability = [(population, Applicability(population.facts)) for population in POPULATIONS]
 
     holes = []
     for source_name, class_names in sorted(_classes_a_source_may_create().items()):
         source = sources[source_name]
         for class_name in sorted(class_names):
             klass = AlertClass.class_by_name[class_name]
-            for population in POPULATIONS:
-                if applies(source.applies_to, population.facts) and not applies(klass.applies_to, population.facts):
+            for population, snapshot in applicability:
+                if snapshot.source_runs(source) and not snapshot.class_applies(klass):
                     holes.append(f"{source_name} runs on {population.name} but {class_name} does not apply")
 
     assert holes == []

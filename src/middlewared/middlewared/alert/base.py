@@ -57,11 +57,12 @@ class AlertClass(CallMixin, metaclass=AlertClassMeta):
         want to hide some rare legacy hardware-specific alert. It will still be sent if it occurs, but users won't be
         able to disable it or change its level.
 
-    :cvar applies_to: `Rule` describing the systems this alert class is meaningful on, or `None` for all of them. It
-        governs running the source, displaying the alert, sending it, and listing the class.
+    :cvar applies_to: a population from `middlewared.alert.applicability.vocabulary` naming the systems this alert
+        class is meaningful on, or `None` for all of them. It governs running the source, displaying the alert,
+        sending it, and listing the class.
 
-    :cvar listed_only_when: `Rule` narrowing `applies_to` further, applied *only* in `alert.list_categories`. An alert
-        class excluded by it is still displayed and still sent; it is only hidden from the settings catalogue.
+    :cvar listed_only_when: a population narrowing `applies_to` further, applied *only* in `alert.list_categories`. An
+        alert class excluded by it is still displayed and still sent; it is only hidden from the settings catalogue.
 
     :cvar proactive_support: Set this to `true` if, upon creation of the alert, a support ticket should be open for the
         systems that have a corresponding support license.
@@ -326,8 +327,8 @@ class AlertSource(CallMixin):
     :cvar schedule: `BaseSchedule` instance that will be used to determine whether this alert source should be ran at
         any given moment. By default, alert checkers are ran every minute.
 
-    :cvar applies_to: `Rule` describing the systems this source is meaningful on, or `None` for all of them. The source
-        is not ran where it does not apply.
+    :cvar applies_to: a population from `middlewared.alert.applicability.vocabulary` naming the systems this source is
+        meaningful on, or `None` for all of them. The source is not ran where it does not apply.
 
     :cvar post_failover_blackout: set this to `true` if this source's answer is unreliable for a while after a
         failover. Such a source is not ran until the blackout window following the last failover event has passed,
