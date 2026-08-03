@@ -7,7 +7,7 @@
 
 from datetime import datetime
 from middlewared.api.base import BaseModel, NonEmptyString
-from middlewared.service import filterable_api_method, Service, periodic
+from middlewared.service import Service, filterable_api_method, periodic, private
 from middlewared.utils.filter_list import filter_list
 from truenas_pam_session import iterate_sessions
 import truenas_keyring
@@ -81,6 +81,7 @@ class SystemSecurityInfoService(Service):
         return filter_list(truenas_session_iterator(), filters, options)
 
     @periodic(interval=KEYRING_KEEPALIVE_INTERVAL)
+    @private
     def keyring_keepalive(self) -> None:
         """ Reset the expiry timer on the uid=0 persistent keyring.
 
