@@ -11,7 +11,7 @@ so winbindd must still be restarted.
 
 import logging
 
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -36,6 +36,8 @@ def _smb_service(current_sid, *, idmap_started=True, sid_exc=None):
     svc.middleware = MagicMock()
     svc.logger = logging.getLogger("test_smb_set_system_sid")
 
+    restart_job = MagicMock()
+
     def call_sync(name, *args, **kwargs):
         if name == "datastore.config":
             return {"cifs_SID": SERVER_SID}
@@ -45,20 +47,13 @@ def _smb_service(current_sid, *, idmap_started=True, sid_exc=None):
             if sid_exc is not None:
                 raise sid_exc
             return current_sid
+        if name == "service.started":
+            return idmap_started
+        if name == "service.control":
+            return restart_job
         raise AssertionError(f"unexpected middleware call: {name}")
 
     svc.middleware.call_sync.side_effect = call_sync
-
-    restart_job = MagicMock()
-
-    def call_sync2(method, *args, **kwargs):
-        if method is svc.s.service.started:
-            return idmap_started
-        if method is svc.s.service.control:
-            return restart_job
-        raise AssertionError(f"unexpected call_sync2 target: {method}")
-
-    svc.call_sync2 = Mock(side_effect=call_sync2)
     svc._restart_job = restart_job
     return svc
 
@@ -66,8 +61,8 @@ def _smb_service(current_sid, *, idmap_started=True, sid_exc=None):
 def _restarted(svc):
     """True if a winbindd (idmap) RESTART was issued."""
     return any(
-        c.args[0] is svc.s.service.control and c.args[1] == "RESTART" and c.args[2] == "idmap"
-        for c in svc.call_sync2.call_args_list
+        c.args[0] == "service.control" and c.args[1] == "RESTART" and c.args[2] == "idmap"
+        for c in svc.middleware.call_sync.call_args_list
     )
 
 

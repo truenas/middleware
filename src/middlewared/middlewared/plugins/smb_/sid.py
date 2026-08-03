@@ -1,6 +1,5 @@
 import subprocess
 
-from middlewared.api.current import ServiceOptions
 from middlewared.service import Service, private
 from middlewared.service_exception import CallError, MatchNotFound
 from middlewared.utils.sid import random_sid
@@ -56,7 +55,7 @@ class SMBService(Service):
         if setsid.returncode != 0:
             raise CallError(f'setlocalsid failed: {setsid.stderr.decode()}')
 
-        if (current_sid is None and not sid_read_failed) or not self.call_sync2(self.s.service.started, 'idmap'):
+        if (current_sid is None and not sid_read_failed) or not self.middleware.call_sync('service.started', 'idmap'):
             # Skip the restart when we know there was no prior SID (a fresh secrets.tdb has
             # nothing stale for winbindd to rebuild) or when winbindd isn't running. When the
             # read failed instead, current_sid is None but sid_read_failed is True, so we fall
@@ -72,6 +71,6 @@ class SMBService(Service):
             'winbindd to rebuild its view of the local SAM domain.',
             netbiosname, current_sid, server_sid
         )
-        self.call_sync2(
-            self.s.service.control, 'RESTART', 'idmap', ServiceOptions(silent=False, ha_propagate=False)
+        self.middleware.call_sync(
+            'service.control', 'RESTART', 'idmap', {'silent': False, 'ha_propagate': False}
         ).wait_sync(raise_error=True)
