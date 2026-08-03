@@ -14,7 +14,7 @@ from truenas_pam_session import iterate_sessions
 
 from middlewared.api.base import BaseModel, NonEmptyString
 from middlewared.api.current import QueryOptions
-from middlewared.service import Service, filterable_api_method, periodic
+from middlewared.service import Service, filterable_api_method, periodic, private
 from middlewared.utils.filter_list import filter_list
 
 # The kernel expires the uid=0 persistent keyring after
@@ -88,6 +88,7 @@ class SystemSecuritySessionsService(Service):
         return filter_list(truenas_session_iterator(), filters, options, SecuritySessionEntry)
 
     @periodic(interval=KEYRING_KEEPALIVE_INTERVAL)
+    @private
     def keyring_keepalive(self) -> None:
         """ Reset the expiry timer on the uid=0 persistent keyring.
 
