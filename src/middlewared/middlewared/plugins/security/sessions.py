@@ -6,11 +6,20 @@
 # is called by the application, the information is removed.
 
 from datetime import datetime
-
 from middlewared.api.base import BaseModel, NonEmptyString
-from middlewared.service import filterable_api_method, Service
+from middlewared.service import filterable_api_method, Service, periodic
 from middlewared.utils.filter_list import filter_list
 from truenas_pam_session import iterate_sessions
+import truenas_keyring
+
+# The kernel expires the uid=0 persistent keyring after
+# kernel.keys.persistent_keyring_expiry seconds of non-use (3 days by default)
+# and reaps everything linked under it, including the PAM_TRUENAS keyring that
+# holds our session records. Every keyctl_get_persistent() resets that timer,
+# which authentication performs, so this only matters on an appliance where
+# nobody has authenticated for the whole window. Touch it well inside the
+# window so an idle system does not silently lose its open session records.
+KEYRING_KEEPALIVE_INTERVAL = 86400
 
 # Currently session info is private and consumed for STIG purposes but we can
 # expose in future by moving APIs here to formal external definitions
@@ -70,3 +79,12 @@ class SystemSecurityInfoService(Service):
         that use the PAM stack, so you'll see webshare sessions, FTP
         sessions, openssh sessions, etc. """
         return filter_list(truenas_session_iterator(), filters, options)
+
+    @periodic(interval=KEYRING_KEEPALIVE_INTERVAL)
+    def keyring_keepalive(self) -> None:
+        """ Reset the expiry timer on the uid=0 persistent keyring.
+
+        get_persistent_keyring() gets or creates the keyring rather than
+        searching within it, so this succeeds before anyone has authenticated
+        and does not depend on PAM_TRUENAS existing yet. """
+        truenas_keyring.get_persistent_keyring()
