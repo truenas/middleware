@@ -17,7 +17,7 @@ from pydantic_core import ValidationError
 from truenas_api_client import ReserveFDException
 from truenas_pylicensed.features import LicenseFeature
 
-from middlewared.alert.applicability import applies, applies_for_listing
+from middlewared.alert.applicability import Applicability, declaration_rule_name
 from middlewared.alert.base import (
     AlertCategory,
     alert_category_names,
@@ -189,11 +189,11 @@ def partition[T](predicate: Callable[[T], Any], iterable: Iterable[T]) -> tuple[
 
 
 class AlertSerializer:
-    def __init__(self, middleware):
+    def __init__(self, middleware, applicability):
         self.middleware = middleware
+        self.applicability = applicability
 
         self.initialized = False
-        self.facts = None
         self.classes = None
         self.nodes = None
 
@@ -217,7 +217,7 @@ class AlertSerializer:
     async def should_show_alert(self, alert):
         await self._ensure_initialized()
 
-        if not applies(alert.klass.applies_to, self.facts):
+        if not self.applicability.class_applies(alert.klass):
             return False
 
         if (await self.get_alert_class(alert)).get("policy") == "NEVER":
@@ -227,7 +227,6 @@ class AlertSerializer:
 
     async def _ensure_initialized(self):
         if not self.initialized:
-            self.facts = await self.middleware.run_in_thread(get_facts)
             self.classes = (await self.middleware.call("alertclasses.config"))["classes"]
             self.nodes = await self.middleware.call("alert.node_map")
 
@@ -278,12 +277,42 @@ class AlertService(Service):
 
         self.blocked_failover_alerts_until = 0
 
+        self._applicability = None
+
         self.sources_run_times = defaultdict(lambda: {
             "last": [],
             "max": 0,
             "total_count": 0,
             "total_time": 0,
         })
+
+    @private
+    async def applicability(self):
+        """Every applicability answer for this system, from one reading of the facts.
+
+        The single owner of that reading. Held for the life of the process, because the facts
+        only change on a license upload, which fires `system.post_license_update` and drops
+        this. Reading them per call instead let a run and the send that follows it disagree
+        within one cycle, since those are separate jobs.
+
+        A `None` license is never held: `get_license` returns `None` both for an unlicensed
+        system and for one whose license daemon did not answer, so caching it would strand a
+        licensed system on a single failed read until its next upload or reboot. Re-reading is
+        cheap in exactly that case -- an unlicensed system has no daemon listening, so the
+        socket fails immediately.
+        """
+        if self._applicability is not None:
+            return self._applicability
+
+        applicability = Applicability(await self.middleware.run_in_thread(get_facts))
+        if applicability.facts.license is not None:
+            self._applicability = applicability
+
+        return applicability
+
+    @private
+    async def invalidate_applicability(self):
+        self._applicability = None
 
     @private
     def load(self):
@@ -367,13 +396,13 @@ class AlertService(Service):
         List all types of alerts which the system can issue.
         """
 
-        facts = await self.middleware.run_in_thread(get_facts)
+        applicability = await self.applicability()
 
         classes: list[type[AlertClass]] = []
         for alert_class in AlertClass.classes:
             if not (
                 options["include_all_products"] or
-                applies_for_listing(alert_class, facts)
+                applicability.class_listed(alert_class)
             ):
                 continue
 
@@ -410,7 +439,7 @@ class AlertService(Service):
         List all types of alerts including active/dismissed currently in the system.
         """
 
-        as_ = AlertSerializer(self.middleware)
+        as_ = AlertSerializer(self.middleware, await self.applicability())
         classes = (await self.middleware.call("alertclasses.config"))["classes"]
 
         return [
@@ -510,7 +539,7 @@ class AlertService(Service):
         await self._send_alert_changed_event(alert)
 
     async def _send_alert_changed_event(self, alert):
-        as_ = AlertSerializer(self.middleware)
+        as_ = AlertSerializer(self.middleware, await self.applicability())
         if await as_.should_show_alert(alert):
             self.middleware.send_event("alert.list", "CHANGED", id=alert.uuid, fields=await as_.serialize(alert))
 
@@ -544,17 +573,11 @@ class AlertService(Service):
             SEND_ALERTS_ON_READY = True
             return
 
-        facts = await self.middleware.run_in_thread(get_facts)
+        applicability = await self.applicability()
         classes = (await self.middleware.call("alertclasses.config"))["classes"]
 
-        applicable: dict[type[AlertClass], bool] = {}
-
         def is_applicable(alert):
-            try:
-                return applicable[alert.klass]
-            except KeyError:
-                applicable[alert.klass] = result = applies(alert.klass.applies_to, facts)
-                return result
+            return applicability.class_applies(alert.klass)
 
         now = utc_now()
         for policy_name, policy in self.policies.items():
@@ -611,7 +634,7 @@ class AlertService(Service):
                         self.logger.error("Error in alert service %r", alert_service_desc["type"], exc_info=True)
 
             if policy_name == "IMMEDIATELY":
-                as_ = AlertSerializer(self.middleware)
+                as_ = AlertSerializer(self.middleware, applicability)
                 for alert in gone_alerts:
                     if await as_.should_show_alert(alert):
                         self._send_alert_deleted_event(alert)
@@ -797,7 +820,7 @@ class AlertService(Service):
         return other_node_alerts
 
     async def __run_alerts(self):
-        facts = await self.middleware.run_in_thread(get_facts)
+        applicability = await self.applicability()
         fi = await self.__get_failover_info()
         for k, source_lock in list(self.sources_locks.items()):
             if source_lock.expires_at <= time.monotonic():
@@ -812,7 +835,7 @@ class AlertService(Service):
         excluded = {
             alert_source.name
             for alert_source in ALERT_SOURCES.values()
-            if not applies(alert_source.applies_to, facts)
+            if not applicability.source_runs(type(alert_source))
         }
         if excluded:
             # An excluded source still owns whatever it persisted before it was excluded. Delete
@@ -856,26 +879,33 @@ class AlertService(Service):
             for talert, oalert in zip_longest(this_node_alerts, other_node_alerts, fillvalue=None):
                 if talert is not None:
                     talert.node = fi.this_node
-                    self.__handle_alert(talert, facts)
+                    self.__handle_alert(talert, applicability)
                 if oalert is not None:
                     oalert.node = fi.other_node
-                    self.__handle_alert(oalert, facts)
+                    self.__handle_alert(oalert, applicability)
 
             self.alerts = (
                 [a for a in self.alerts if a.source != alert_source.name] + this_node_alerts + other_node_alerts
             )
 
-    def __handle_alert(self, alert, facts):
-        if not applies(alert.klass.applies_to, facts):
+    def __handle_alert(self, alert, applicability):
+        if not applicability.class_applies(alert.klass):
             # The alert will be stored and then denied everywhere it would be shown. Nothing fails,
             # so nothing else reports it; the source's rule and the class's rule simply disagree.
+            # Both rules are named, because which of the two is wrong is the whole question and
+            # neither is visible from the alert.
             key = (alert.source or "", alert.klass.name)
             if key not in _REPORTED_INAPPLICABLE_CLASSES:
                 _REPORTED_INAPPLICABLE_CLASSES.add(key)
+                source = ALERT_SOURCES.get(alert.source)
                 self.logger.error(
                     "%s: produced a %r alert, but that class does not apply to this system. The "
-                    "alert will be stored and never shown.",
-                    alert.source or "alert.oneshot_create", alert.klass.name,
+                    "alert will be stored and never shown. The source applies to %s, the class to "
+                    "%s.",
+                    alert.source or "alert.oneshot_create",
+                    alert.klass.name,
+                    declaration_rule_name(type(source)) if source is not None else "no source rule",
+                    declaration_rule_name(alert.klass),
                 )
 
         try:
@@ -1043,8 +1073,7 @@ class AlertService(Service):
 
         alert.node = self.node
 
-        facts = await self.middleware.run_in_thread(get_facts)
-        self.__handle_alert(alert, facts)
+        self.__handle_alert(alert, await self.applicability())
 
         self.alerts = [a for a in self.alerts if a.uuid != alert.uuid] + [alert]
 
@@ -1333,6 +1362,10 @@ async def _event_system(middleware, event_type, args):
         await middleware.call("alert.send_alerts")
 
 
+async def _post_license_update(middleware, *args, **kwargs):
+    await middleware.call("alert.invalidate_applicability")
+
+
 async def setup(middleware):
     await middleware.call("alertservice.load")
     await middleware.call("alertservice.initialize")
@@ -1341,3 +1374,4 @@ async def setup(middleware):
     await middleware.call("alert.initialize")
 
     middleware.event_subscribe("system.ready", _event_system)
+    middleware.register_hook("system.post_license_update", _post_license_update)

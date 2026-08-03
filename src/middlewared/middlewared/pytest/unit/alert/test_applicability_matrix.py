@@ -18,7 +18,7 @@ from dataclasses import dataclass
 import pytest
 from truenas_pylicensed import LicenseType
 
-from middlewared.alert.applicability import HA_LICENSED, applies, applies_for_listing
+from middlewared.alert.applicability import HA_LICENSED, Applicability, applies, applies_for_listing, vocabulary
 from middlewared.alert.base import AlertCategory, AlertClass, AlertSource, ThreadedAlertSource
 from middlewared.pytest.unit.utils.test_entitlements import make_license
 from middlewared.utils.entitlements import EntitlementFacts
@@ -159,11 +159,15 @@ def declarations():
     return sorted(set(sources + classes), key=lambda row: (row[0], row[1]))
 
 
-def answer(kind: str, declaration, population: Population) -> bool:
+def answer(kind: str, declaration, applicability: Applicability) -> bool:
+    """Asked of the production path, so the frozen artifact cannot drift from what the daemon does."""
     if kind == "listed":
-        return applies_for_listing(declaration, population.facts)
+        return applicability.class_listed(declaration)
 
-    return applies(declaration.applies_to, population.facts)
+    if kind == "source":
+        return applicability.source_runs(declaration)
+
+    return applicability.class_applies(declaration)
 
 
 def render() -> str:
@@ -190,10 +194,12 @@ def render() -> str:
     header += "".join(f"{population.name:<4}" for population in POPULATIONS)
     lines.append(header.rstrip())
 
+    applicability = [Applicability(population.facts) for population in POPULATIONS]
+
     for name, kind, declaration in declarations():
         row = f"{name:<44}{kind:<8}"
-        for population in POPULATIONS:
-            row += f"{'Y' if answer(kind, declaration, population) else '.':<4}"
+        for snapshot in applicability:
+            row += f"{'Y' if answer(kind, declaration, snapshot) else '.':<4}"
         lines.append(row.rstrip())
 
     return "\n".join(lines) + "\n"
@@ -275,15 +281,37 @@ def test_listed_only_when_hides_without_silencing(class_name):
     assert applies_for_listing(klass, facts) is False
 
 
-def test_listed_only_when_is_read_only_where_listing_is_decided():
-    """``listed_only_when`` narrows the settings catalogue and nothing else.
+def test_every_rule_is_a_vocabulary_name():
+    """A declaration names a population; it does not build one.
 
-    Read anywhere but the applicability engine it would silence alerts that already exist, so this
-    is a whole-tree check rather than a check of one file: a second reader cannot appear without
-    this failing. Declarations are unaffected -- assigning the attribute in a class body is a plain
-    name, not an attribute access. The unit-test tree is excluded: the frozen inventory reads the
-    attribute to check that a restricted declaration still carries a rule, which is bookkeeping
-    about declarations rather than an enforcement point.
+    ``vocabulary`` says so in prose and nothing enforced it. Rules are ordinary functions now, so
+    an inline lambda or a one-off predicate written at a declaration site would work perfectly and
+    would put a population nobody reviewed in front of a hundred machines. This is also the only
+    guard over the declaration sites themselves: mypy does not check ``alert/source/``.
+    """
+    populations = {getattr(vocabulary, name) for name in vocabulary.__all__}
+
+    strays = []
+    for name, kind, declaration in declarations():
+        for attribute in ("applies_to", "listed_only_when"):
+            rule = getattr(declaration, attribute, None)
+            if rule is not None and rule not in populations:
+                strays.append(f"{name} {kind} {attribute}={rule!r}")
+
+    assert strays == []
+
+
+@pytest.mark.parametrize("attribute", ["applies_to", "listed_only_when"])
+def test_rules_are_read_only_where_applicability_is_decided(attribute):
+    """Applicability is decided in one place, and ``listed_only_when`` in one narrower place.
+
+    Read anywhere but the applicability engine, ``listed_only_when`` would silence alerts that
+    already exist, and a second reader of ``applies_to`` is a second answer that can disagree with
+    the one ``Applicability`` gives. So this is a whole-tree check rather than a check of one file:
+    a second reader cannot appear without this failing. Declarations are unaffected -- assigning
+    the attribute in a class body is a plain name, not an attribute access. The unit-test tree is
+    excluded: the frozen inventory reads the attribute to check that a restricted declaration still
+    carries a rule, which is bookkeeping about declarations rather than an enforcement point.
     """
     allowed = (os.path.join("alert", "applicability"), os.path.join("alert", "base.py"))
     root = get_middlewared_dir()
@@ -299,7 +327,7 @@ def test_listed_only_when_is_read_only_where_listing_is_decided():
             with open(path) as f:
                 tree = ast.parse(f.read())
 
-            if any(isinstance(node, ast.Attribute) and node.attr == "listed_only_when" for node in ast.walk(tree)):
+            if any(isinstance(node, ast.Attribute) and node.attr == attribute for node in ast.walk(tree)):
                 readers.add(os.path.relpath(path, root))
 
     assert {reader for reader in readers if not reader.startswith(allowed)} == set()
