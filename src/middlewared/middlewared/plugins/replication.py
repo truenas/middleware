@@ -307,10 +307,11 @@ class ReplicationService(CRUDService):
         roles=["REPLICATION_TASK_WRITE"],
     )
     @job(logs=True, read_roles=["REPLICATION_TASK_READ"])
-    async def run(self, job, id_, really_run):
+    async def run(self, job, id_, options):
         """
         Run Replication Task of `id`.
         """
+        really_run = options["really_run"]
         if really_run:
             task = await self.get_instance(id_)
 
