@@ -6,7 +6,7 @@ from pydantic.fields import FieldInfo
 from pydantic.json_schema import SkipJsonSchema
 from pydantic_core import PydanticCustomError, core_schema
 
-__all__ = ["Private"]
+__all__ = ["Private", "private_fields"]
 
 
 if TYPE_CHECKING:
@@ -58,6 +58,11 @@ def is_private_guard(metadata: Any) -> bool:
 def _is_private(field: FieldInfo) -> bool:
     """Whether `field` is `Private`, i.e. must not be settable by API callers."""
     return any(isinstance(metadata, Private) for metadata in field.metadata)  # type: ignore[arg-type, misc]
+
+
+def private_fields(cls: type[PydanticBaseModel]) -> list[str]:
+    """Names of the `Private` fields declared directly on `cls` (not on its nested models)."""
+    return [name for name, field in cls.model_fields.items() if _is_private(field)]
 
 
 def _guard(field: FieldInfo) -> _RejectPrivate | None:

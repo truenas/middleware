@@ -54,7 +54,7 @@ from zettarepl.utils.logging import (
 )
 from zettarepl.zettarepl import create_zettarepl
 
-from middlewared.api.current import PeriodicSnapshotTaskEntry
+from middlewared.api.current import PeriodicSnapshotTaskEntry, ReplicationRunOptions
 from middlewared.logger import setup_logging
 from middlewared.service.service import Service
 from middlewared.service_exception import CallError
@@ -1047,7 +1047,8 @@ class ZettareplService(Service):
 
                     # Start fake job if none are already running
                     if not self.replication_jobs_channels[message.task_id]:
-                        self.call_sync2(self.s.replication.run, int(message.task_id[5:]), False)
+                        self.call_sync2(self.s.replication.run, int(message.task_id[5:]),
+                                        ReplicationRunOptions(really_run=False))
 
                 if isinstance(message, ReplicationTaskLog):
                     for channel in self.replication_jobs_channels[message.task_id]:

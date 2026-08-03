@@ -24,6 +24,7 @@ from middlewared.api.current import (
     ReplicationRunArgs,
     ReplicationRunOnetimeArgs,
     ReplicationRunOnetimeResult,
+    ReplicationRunOptions,
     ReplicationRunResult,
     ReplicationTargetUnmatchedSnapshotsArgs,
     ReplicationTargetUnmatchedSnapshotsResult,
@@ -117,11 +118,11 @@ class ReplicationService(GenericCRUDService[ReplicationEntry]):
         check_annotations=True,
     )
     @job(logs=True, read_roles=["REPLICATION_TASK_READ"])
-    async def run(self, job: Job, id_: int, really_run: bool = True) -> None:
+    async def run(self, job: Job, id_: int, options: ReplicationRunOptions) -> None:
         """
         Run Replication Task of ``id``.
         """
-        await _methods.run_task(self.context, job, id_, really_run)
+        await _methods.run_task(self.context, job, id_, options.really_run)
 
     @api_method(
         ReplicationRunOnetimeArgs,
