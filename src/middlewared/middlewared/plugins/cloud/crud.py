@@ -8,11 +8,11 @@ from middlewared.api.base.model import model_subset
 from middlewared.api.current import CloudTaskAttributes, CredentialsEntry, ZFSResourceQuery
 from middlewared.plugins.cloud.rclone.base import BaseRcloneRemote
 from middlewared.plugins.cloud.remotes import REMOTES
-from middlewared.plugins.zfs.utils import has_internal_path
 from middlewared.plugins.zfs.zvol_utils import zvol_path_to_name
 from middlewared.service import CallError, SharingTaskServicePart
 from middlewared.service_exception import InstanceNotFound, ValidationErrors
 from middlewared.utils.privilege import credential_has_full_admin
+from middlewared.utils.zfs.managed_datasets import blocked_from_mutation
 
 if TYPE_CHECKING:
     from middlewared.api.base import BaseModel
@@ -187,7 +187,7 @@ class CloudTaskServiceMixin[
                 verrors.add(f"{name}.{self.path_field}", "Volume does not exist")
             elif not zz[0]["type"] == "VOLUME":
                 verrors.add(f"{name}.{self.path_field}", f"{zvol!r} is not a volume")
-            elif has_internal_path(zz[0]["name"]):
+            elif blocked_from_mutation(zz[0]["name"]):
                 verrors.add(f"{name}.{self.path_field}", f"{zvol!r} is an invalid location")
             else:
                 try:

@@ -11,6 +11,7 @@ from middlewared.plugins.zfs.encryption import change_encryption_root, change_ke
 from middlewared.service import CallError, Service, ValidationErrors, job, private
 from middlewared.service.decorators import pass_thread_local_storage
 from middlewared.utils import secrets
+from middlewared.utils.zfs.managed_datasets import deny_protected_path
 
 from .utils import DATASET_DATABASE_MODEL_NAME, ZFSKeyFormat
 
@@ -130,6 +131,11 @@ class PoolDatasetService(Service):
         1. It has encrypted roots as children that are encrypted with a key.
         2. It is a root dataset where the system dataset is located.
         """
+        # `change_key` reaches libzfs through a free function that only knows how to raise
+        # `ZFSException`, so there is no chokepoint below this to hang the refusal off. It goes
+        # first so that a managed dataset is refused before the lookup that would hide it.
+        deny_protected_path('pool.dataset.change_key', id_)
+
         ds = self.middleware.call_sync('pool.dataset.get_instance_quick', id_, {
             'encryption': True,
         })
@@ -223,6 +229,10 @@ class PoolDatasetService(Service):
         Allows inheriting parent's encryption root discarding its current encryption settings. This
         can only be done where ``id`` has an encrypted parent and ``id`` itself is an encryption root.
         """
+        # As in `change_key`: `change_encryption_root` is a free function with no schema of its own,
+        # so the refusal belongs here, ahead of the lookup that hides managed datasets.
+        deny_protected_path('pool.dataset.inherit_parent_encryption_properties', id_)
+
         ds = self.middleware.call_sync('pool.dataset.get_instance_quick', id_, {
             'encryption': True,
         })

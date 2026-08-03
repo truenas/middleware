@@ -32,6 +32,7 @@ from middlewared.utils.zfs.event import (
     ZfsStateChangeEvent,
     ZfsVdevClearEvent,
 )
+from middlewared.utils.zfs.managed_datasets import excluded_from_zfs_events
 
 CACHE_POOLS_STATUSES = 'system.system_health_pools'
 VOLUME_STATUS_ALERTS = 'VolumeStatusAlerts'
@@ -204,7 +205,7 @@ async def zfs_events(middleware, event: ZfsEvent):
         # we need to send events for dataset creation/updating/deletion in case it's done via cli
         event_type = event.history_internal_name
         ds_id = event.history_dsname
-        if await middleware.call('pool.dataset.is_internal_dataset', ds_id):
+        if excluded_from_zfs_events(ds_id):
             # We should not raise any event for system internal datasets
             return
 

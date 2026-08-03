@@ -100,7 +100,7 @@ def create_update_docker_datasets(context: ServiceContext, docker_ds: str) -> No
                 # if any of the zfs properties don't match what we expect we'll update all properties
                 context.middleware.call_sync(
                     'pool.dataset.update_impl',
-                    UpdateImplArgs(name=dataset_name, zprops=update_props)
+                    UpdateImplArgs(name=dataset_name, zprops=update_props, bypass=True)
                 )
         else:
             move_conflicting_dir(dataset_name)

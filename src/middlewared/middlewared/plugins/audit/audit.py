@@ -398,7 +398,7 @@ class AuditService(ConfigService):
         if not payload:
             return
 
-        args = UpdateImplArgs(name=ds['name'], zprops=zprops, uprops=uprops)
+        args = UpdateImplArgs(name=ds['name'], zprops=zprops, uprops=uprops, bypass=True)
         await self.middleware.call('pool.dataset.update_impl', args)
         if await self.middleware.call('failover.status') == 'MASTER':
             try:
@@ -490,7 +490,7 @@ class AuditService(ConfigService):
             try:
                 await self.middleware.call(
                     'pool.dataset.update_impl',
-                    UpdateImplArgs(name=ds_name, zprops=zprops)
+                    UpdateImplArgs(name=ds_name, zprops=zprops, bypass=True)
                 )
             except Exception:
                 self.logger.error(

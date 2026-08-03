@@ -650,7 +650,7 @@ class PoolService(CRUDService):
             # making it a "local" source.
             await self.middleware.call(
                 'pool.dataset.update_impl',
-                UpdateImplArgs(name=data['name'], iprops={'mountpoint'})
+                UpdateImplArgs(name=data['name'], iprops={'mountpoint'}, bypass=True)
             )
             await self.call2(self.s.zfs.resource.mount, data['name'])
 

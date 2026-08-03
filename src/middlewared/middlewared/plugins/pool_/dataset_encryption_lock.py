@@ -20,6 +20,7 @@ from middlewared.service import CallError, Service, ValidationErrors, job, priva
 from middlewared.service.decorators import pass_thread_local_storage
 from middlewared.utils.filesystem import attrs as fs_attrs
 from middlewared.utils.filesystem.directory import directory_is_empty
+from middlewared.utils.zfs.managed_datasets import deny_protected_path
 
 from .utils import (
     ZFSKeyFormat,
@@ -45,6 +46,11 @@ class PoolDatasetService(Service):
         the dataset was mounted before it was locked making sure that the path cannot be modified. Once the dataset
         is unlocked, it will not be affected by this change and consumers can continue consuming it.
         """
+        # `zfs.resource.unload_key` below is the chokepoint that actually refuses the datasets
+        # middleware manages, but it sits behind the lookup a few lines down, which hides those
+        # datasets and would answer with a misleading ENOENT instead.
+        deny_protected_path('pool.dataset.lock', id_)
+
         ds = await self.middleware.call('pool.dataset.get_instance_quick', id_, {
             'encryption': True,
         })
@@ -316,7 +322,12 @@ class PoolDatasetService(Service):
             to_mount_names = {d['name'] for d in to_mount}
             if not to_mount_names.intersection(unlocked):
                 try:
-                    self.call_sync2(self.s.zfs.resource.unload_key, name)
+                    # Undoing the `load_key` a few lines up, so this caller owns the key it is
+                    # unloading whatever the dataset is. Without saying so, unlocking the pool that
+                    # hosts the system dataset at boot would be refused here -- and because the
+                    # refusal is swallowed below, it would degrade to a warning and leave the
+                    # dataset effectively unlocked.
+                    self.call_sync2(self.s.zfs.resource.unload_key, name, bypass=True)
                 except Exception:
                     self.logger.warning(
                         '%s: failed to unload key after mount failures', name, exc_info=True

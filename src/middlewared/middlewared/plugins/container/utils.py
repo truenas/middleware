@@ -2,6 +2,8 @@ import os
 
 from truenas_os_pyutils.io import atomic_write
 
+from middlewared.utils.zfs.managed_datasets import CONTAINER_DS_NAME
+
 __all__ = (
     "CONTAINER_DS_NAME",
     "container_dataset",
@@ -10,8 +12,6 @@ __all__ = (
     "update_etc_hosts",
     "write_etc_hostname",
 )
-
-CONTAINER_DS_NAME = ".truenas_containers"
 
 
 def container_dataset(pool: str) -> str:

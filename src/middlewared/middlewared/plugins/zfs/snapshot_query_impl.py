@@ -3,9 +3,10 @@ from typing import Any
 
 from truenas_pylibzfs import ZFSError, ZFSException, ZFSType
 
+from middlewared.utils.zfs.managed_datasets import hidden_from_snapshot_listing
+
 from .exceptions import ZFSPathNotFoundException
 from .property_management import DeterminedProperties, build_set_of_zfs_snapshot_props
-from .utils import has_internal_path
 
 __all__ = ("query_snapshots_impl",)
 
@@ -58,12 +59,6 @@ def __snapshot_callback(snap_hdl: Any, state: SnapshotQueryState) -> bool:
 
     Returns True to continue iteration, False to stop.
     """
-    snap_name = snap_hdl.name
-
-    # Check if internal path should be excluded
-    if state.eip and has_internal_path(snap_name):
-        return True
-
     # Apply txg filtering
     createtxg = snap_hdl.createtxg
     min_txg = state.query_args["min_txg"]
@@ -108,7 +103,7 @@ def __dataset_iter_callback(ds_hdl: Any, state: SnapshotQueryState) -> bool:
     ds_name = ds_hdl.name
 
     # Check if internal path should be excluded
-    if state.eip and has_internal_path(ds_name):
+    if state.eip and hidden_from_snapshot_listing(ds_name):
         return True
 
     # Set parent type for snapshot property resolution
@@ -127,11 +122,12 @@ def __dataset_iter_callback(ds_hdl: Any, state: SnapshotQueryState) -> bool:
 def __should_exclude_internal_paths(data: dict[str, Any]) -> bool:
     """Determine if internal paths should be excluded from results."""
     for path in data.get("paths", []):
-        if has_internal_path(path):
+        if hidden_from_snapshot_listing(path):
             # Someone is explicitly querying an internal path
             return False
-    # Exclude internal paths by default
-    return data.get("exclude_internal_paths", True)  # type: ignore[no-any-return]
+    # Exclude internal paths by default. There is no request field to override this: the decision
+    # belongs to the caller rather than the request, and the loop above is the only way out of it.
+    return True
 
 
 def __query_snapshot_directly(hdl: Any, snap_path: str, state: SnapshotQueryState) -> None:
@@ -141,6 +137,14 @@ def __query_snapshot_directly(hdl: Any, snap_path: str, state: SnapshotQueryStat
     """
     # Parse dataset name from snapshot path
     dataset_name = snap_path.split("@")[0]
+
+    # The listing filter for this branch. The iteration branch asks about the dataset once in
+    # __dataset_iter_callback and every snapshot below it inherits that answer; this branch reaches
+    # a snapshot without ever asking, so it asks here. It cannot fire while the opt-out above stays
+    # request-wide -- naming a managed path is exactly what turns state.eip off -- and it is what
+    # begins filtering if that ever becomes per-path.
+    if state.eip and hidden_from_snapshot_listing(snap_path):
+        return
 
     try:
         # Open parent dataset to get its type

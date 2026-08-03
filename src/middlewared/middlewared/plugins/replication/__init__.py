@@ -153,6 +153,12 @@ class ReplicationService(GenericCRUDService[ReplicationEntry]):
         """
         return await _methods.list_datasets(self.context, transport, ssh_credentials)
 
+    # Deliberately does not refuse the datasets middleware manages on the user's behalf, unlike the
+    # other methods that bring a dataset into existence. Replication is how those datasets get
+    # backed up and restored in the first place, so refusing them here would take that away. It
+    # would also be answering the wrong question: the dataset is created by a shell `zfs create`
+    # run by zettarepl on the far side of the transport, which may well be a different system, and
+    # this one has no way to reason about which of that system's paths are managed.
     @api_method(
         ReplicationCreateDatasetArgs,
         ReplicationCreateDatasetResult,

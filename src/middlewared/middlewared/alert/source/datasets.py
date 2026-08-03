@@ -28,14 +28,9 @@ class UnencryptedDatasetsAlertSource(AlertSource):
     async def check(self) -> list[Alert[Any]] | Alert[Any] | None:
         unencrypted_datasets = []
         for dataset in await self.middleware.call('pool.dataset.query', [['encrypted', '=', True]]):
+            # No apps-dataset skip is needed here: pool.dataset.query already omits the datasets
+            # middleware manages, and it never descends into one, so no child can be under them.
             for child in dataset['children']:
-                if child['name'] in (
-                    f'{child["pool"]}/ix-applications', f'{child["pool"]}/ix-apps'
-                ) or child['name'].startswith((
-                    f'{child["pool"]}/ix-applications/', f'{child["pool"]}/ix-apps/'
-                )):
-                    continue
-
                 if not child['encrypted']:
                     unencrypted_datasets.append(child['name'])
 
