@@ -8,6 +8,7 @@ import typing
 
 from .handler.accept import accept_params
 from ..base.model import BaseModel
+from .private import private_fields
 
 
 __all__ = ["api_method"]
@@ -177,6 +178,15 @@ def api_method[**P, T](
 
     check_model_module(accepts, private)
     check_model_module(returns, private)
+
+    if accepts is not None and (names := private_fields(accepts)):
+        # A top-level `Private` field is unusable: middleware itself has to pass its own params to the method
+        # positionally, and a bare value is validated (and therefore rejected) like any caller-supplied one.
+        # Nesting it in a model lets internal callers pass an already-validated instance instead.
+        raise TypeError(
+            f"{accepts.__name__} declares top-level `Private` field(s) {', '.join(map(repr, names))}. This is not "
+            f"supported. Please, move `Private` field(s) to a nested model."
+        )
 
     def wrapper(func):
         if pass_app:
