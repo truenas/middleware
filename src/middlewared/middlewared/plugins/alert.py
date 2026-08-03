@@ -188,6 +188,25 @@ def partition[T](predicate: Callable[[T], Any], iterable: Iterable[T]) -> tuple[
     return matching, non_matching
 
 
+def source_run_gates_pass(source: type[AlertSource], fi: AlertFailoverInfo) -> bool:
+    """Whether the failover-related gates let `source` run this tick.
+
+    Neither gate asks anything about the license. `post_failover_blackout` is a time window: a
+    source whose answer is unreliable right after a failover stays quiet until the window closes,
+    whether or not this system was ever licensed for one. `require_stable_peer` asks whether a
+    peer was found in a state worth talking to.
+
+    Out of the loop so both can be checked without a middleware object or a running service.
+    """
+    if source.post_failover_blackout and not fi.past_failover_blackout:
+        return False
+
+    if source.require_stable_peer and not fi.run_on_backup_node:
+        return False
+
+    return True
+
+
 class AlertSerializer:
     def __init__(self, middleware, applicability):
         self.middleware = middleware
@@ -852,10 +871,7 @@ class AlertService(Service):
             if alert_source.name in excluded:
                 continue
 
-            if alert_source.post_failover_blackout and not fi.past_failover_blackout:
-                continue
-
-            if alert_source.require_stable_peer and not fi.run_on_backup_node:
+            if not source_run_gates_pass(type(alert_source), fi):
                 continue
 
             if not alert_source.schedule.should_run(utc_now(), self.alert_source_last_run[alert_source.name]):
