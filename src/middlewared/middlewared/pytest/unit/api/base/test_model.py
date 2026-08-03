@@ -5,6 +5,7 @@ from middlewared.api.base import (
     BaseModel,
     Excluded,
     ForUpdateMetaclass,
+    NotRequired,
     excluded_field,
     model_subset,
     single_argument_args,
@@ -14,6 +15,7 @@ from middlewared.api.base.handler.accept import accept_params, validate_model
 from middlewared.api.base.handler.result import serialize_result
 from middlewared.api.v25_04_0.pool_snapshottask import PoolSnapshotTaskCron
 from middlewared.service_exception import ValidationErrors
+from middlewared.utils.pydantic_ import model_json_schema
 
 
 class Object(BaseModel):
@@ -143,3 +145,33 @@ def test_model_subset_is_subclass():
     subset = model_subset(ModelSubsetTest, ["fast_list"])
     assert issubclass(subset, ModelSubsetTest)
     assert isinstance(subset(), ModelSubsetTest)
+
+
+class NotRequiredObject(BaseModel):
+    id: int
+    name: str = NotRequired
+
+
+class ForUpdateObject(BaseModel, metaclass=ForUpdateMetaclass):
+    id: int
+    name: str
+
+
+@pytest.mark.parametrize("model", [NotRequiredObject, ForUpdateObject])
+def test_serialization_schema_is_derived_from_fields(model):
+    """A sentinel-filtering serializer must not erase the model's schema.
+
+    Pydantic replaces a model's serialization-mode schema with its functional
+    serializer's declared return type, so annotating `_not_required_serializer`
+    or `_for_update_serializer` renders every model using `NotRequired` or
+    `ForUpdateMetaclass` as a bare object. `middlewared --dump-api` generates
+    return schemas in serialization mode, so anything building a client from the
+    dump then sees those models as having no fields at all.
+
+    Both models declare only plain fields: an `Excluded` field is absent from
+    the schema by design, so including one would make this assert the wrong
+    thing.
+    """
+    schema = model_json_schema(model, mode="serialization")
+
+    assert set(schema["properties"]) == set(model.model_fields)
