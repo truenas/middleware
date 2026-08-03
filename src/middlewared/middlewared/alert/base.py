@@ -8,7 +8,7 @@ from typing import Any, TypeAlias
 
 import html2text
 
-from middlewared.alert.applicability import Rule
+from middlewared.alert.applicability.engine import Rule
 from middlewared.alert.schedule import IntervalSchedule
 from middlewared.utils import ProductName
 from middlewared.utils.lang import undefined

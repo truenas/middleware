@@ -12,9 +12,9 @@ from middlewared.alert.applicability import (
     Applicability,
     applies,
     declaration_rule_name,
-    rule_name,
     vocabulary,
 )
+from middlewared.alert.applicability.engine import rule_name
 from middlewared.pytest.unit.utils.test_entitlements import make_license
 from middlewared.utils.entitlements import DerivedEntitlement, EntitlementFacts, check_entitlement
 from middlewared.utils.hardware import HardwareClass
