@@ -60,7 +60,7 @@ module = [
     "pyinotify.*",
     "pyudev.*",
     "tdb.*",
-    "trueans_keyring",
+    "truenas_keyring",
     "truenas_pam_faillog",
     "truenas_pam_session",
     "truenas_pylibsed.*",
