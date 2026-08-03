@@ -15,3 +15,4 @@ pynfs @ git+https://github.com/truenas/pynfs.git@truenas-pynfs-0.5
 xdrlib3
 zeroconf
 pyotp
+josepy
