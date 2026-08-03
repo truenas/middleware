@@ -18,12 +18,12 @@ from middlewared.api.current import (
     ContainerPoolChoicesArgs, ContainerPoolChoicesResult,
     ZFSResourceQuery,
     ZFSResourceSnapshotCloneQuery,
+    ZFSResourceSnapshotCountQuery,
     ZFSResourceSnapshotDestroyQuery,
 )
-from middlewared.plugins.zfs.exceptions import ZFSPathNotFoundException
 from middlewared.plugins.zfs.utils import get_encryption_info
 from middlewared.pylibvirt import gather_pylibvirt_domains_states, get_pylibvirt_domain_state
-from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
+from middlewared.service import CallError, CRUDService, job, private, ValidationError, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import BOOT_POOL_NAME_VALID
 from middlewared.utils.zfs import query_imported_fast_impl
@@ -359,35 +359,69 @@ class ContainerService(CRUDService):
     def do_delete(self, job, audit_callback, id_, options):
         """
         Delete a Container.
+
+        A container whose dataset has child datasets or snapshots is refused unless ``recursive`` is
+        set, which destroys them along with any clones of those snapshots - data that cannot be
+        recovered afterwards.
         """
         container = self.middleware.call_sync("container.get_instance", id_)
         audit_callback(container['name'])
 
-        if container['status']['state'] != 'STOPPED':
-            if not options['force']:
-                raise CallError(
-                    f'Container {container["name"]!r} is {container["status"]["state"].lower()}. Stop it first, '
-                    f'or pass force=True to stop and delete it.'
+        if container['status']['state'] != 'STOPPED' and not options['force']:
+            raise ValidationError(
+                'container_delete.force',
+                f'Container {container["name"]!r} is {container["status"]["state"].lower()}. Stop it first, '
+                f'or pass force=True to stop and delete it.',
+                errno.EBUSY,
+            )
+
+        # A dataset that is already missing - a victim of a legacy .ix-virt deletion,
+        # say - is not an error; the dangling records are still cleaned up below.
+        resources = self.call_sync2(
+            self.s.zfs.resource.query_impl,
+            ZFSResourceQuery(paths=[container['dataset']], properties=None, get_children=True),
+        )
+        dataset_exists = bool(resources)
+
+        # Everything a non-recursive destroy would refuse has to be caught before libvirt is
+        # touched. Undefining the domain is not itself destructive - the next start rebuilds it
+        # from the container's configuration - but getting there kills a running container and
+        # discards a suspended one's state, and the destroy then fails anyway.
+        if dataset_exists and not options['recursive']:
+            if len(resources) > 1:
+                raise ValidationError(
+                    'container_delete.recursive',
+                    f'Container {container["name"]!r} dataset {container["dataset"]!r} has child datasets. '
+                    'Set `recursive` to delete the container together with them.',
+                    errno.ENOTEMPTY,
+                )
+
+            snapshots = self.call_sync2(
+                self.s.zfs.resource.snapshot.count_impl,
+                ZFSResourceSnapshotCountQuery(paths=[container['dataset']]),
+            ).get(container['dataset'], 0)
+            if snapshots:
+                raise ValidationError(
+                    'container_delete.recursive',
+                    f'Container {container["name"]!r} dataset {container["dataset"]!r} has {snapshots} snapshot(s). '
+                    'Set `recursive` to delete the container together with them.',
+                    errno.ENOTEMPTY,
                 )
 
         self.delete_container_from_libvirt(container)
 
         # Destroy the dataset first and only remove the DB records once it is
         # actually gone, so a failed destroy never orphans the dataset with no
-        # container row pointing at it. recursive=True mirrors the apps stack so a
-        # container that has snapshots can still be removed - note it also takes
-        # anything cloned from those snapshots; bypass=True because the dataset lives
-        # under the now delete-guarded .truenas_containers.
-        try:
+        # container row pointing at it.
+        if dataset_exists:
+            # bypass, because the container plugin owns everything under its own dataset and
+            # must keep being able to destroy it if that tree is ever marked a protected path.
             failed = self.call_sync2(
-                self.s.zfs.resource.destroy_impl, container['dataset'], bypass=True,
+                self.s.zfs.resource.destroy_impl, container['dataset'], recursive=options['recursive'],
+                bypass=True,
             )[0]
-        except ZFSPathNotFoundException:
-            # Dataset already gone (e.g. a victim of a legacy .ix-virt deletion);
-            # fall through to clean up the now-dangling records.
-            failed = None
-        if failed is not None:
-            raise CallError(f'Failed to delete container {container["name"]!r} dataset: {failed}')
+            if failed is not None:
+                raise CallError(f'Failed to delete container {container["name"]!r} dataset: {failed}')
 
         self.delete_container_from_db(container)
         self.middleware.call_sync('etc.generate', 'libvirt_guests')
