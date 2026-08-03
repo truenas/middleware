@@ -4,7 +4,7 @@
 # See the file LICENSE.IX for complete terms and conditions
 from dataclasses import dataclass
 
-from middlewared.alert.applicability import HardwareClass, HardwareRule
+from middlewared.alert.applicability import TRUENAS_HARDWARE
 from middlewared.alert.base import (
     AlertClass,
     AlertCategory,
@@ -12,9 +12,6 @@ from middlewared.alert.base import (
     Alert,
     AlertSource,
 )
-
-
-TRUENAS_HARDWARE = HardwareRule(classes=frozenset({HardwareClass.TRUENAS_HW}))
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
@@ -48,7 +45,7 @@ class EnclosureHealthyAlertClass(AlertClass):
 
 class EnclosureStatusAlertSource(AlertSource):
     applies_to = TRUENAS_HARDWARE
-    failover_related = True
+    post_failover_blackout = True
     run_on_backup_node = False
     bad = ("critical", "noncritical", "unknown", "unrecoverable")
     bad_elements: list | list[tuple[BadElement, int]] = list()

@@ -1,4 +1,4 @@
-from middlewared.alert.applicability import HardwareClass, HardwareRule
+from middlewared.alert.applicability import TRUENAS_HARDWARE
 from middlewared.alert.base import Alert, AlertClass, AlertSource, SimpleOneShotAlertClass, AlertCategory, AlertLevel
 from middlewared.alert.schedule import CrontabSchedule
 from middlewared.utils import security
@@ -44,7 +44,7 @@ class AllAdminAccountsExpiredAlertClass(AlertClass, SimpleOneShotAlertClass):
 class SecurityLocalUserAccountExpirationAlertSource(AlertSource):
     schedule = CrontabSchedule(hour=0)
     run_on_backup_node = False
-    applies_to = HardwareRule(classes=frozenset({HardwareClass.TRUENAS_HW}))
+    applies_to = TRUENAS_HARDWARE
 
     async def check(self):
         alerts = []

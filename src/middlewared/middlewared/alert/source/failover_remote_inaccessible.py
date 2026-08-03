@@ -5,12 +5,9 @@
 
 import time
 
-from middlewared.alert.applicability import HardwareClass, HardwareRule, LicenseRequirement, LicenseRule
+from middlewared.alert.applicability import APPLIANCE_OR_HA_LICENSED, HA_LICENSED
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource, UnavailableException
 from middlewared.utils.crypto import generate_token
-
-
-HA_LICENSED = LicenseRule(requirement=LicenseRequirement.HA)
 
 
 class FailoverRemoteSystemInaccessibleAlertClass(AlertClass):
@@ -18,15 +15,15 @@ class FailoverRemoteSystemInaccessibleAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = 'Other Controller is Inaccessible'
     text = 'Other TrueNAS controller is inaccessible. Contact support. Incident ID: %s.'
-    applies_to = HardwareRule(classes=frozenset({HardwareClass.TRUENAS_HW}))
-    listed_when = HA_LICENSED
+    applies_to = APPLIANCE_OR_HA_LICENSED
+    listed_only_when = HA_LICENSED
     proactive_support = True
     proactive_support_notify_gone = True
 
 
 class FailoverRemoteSystemInaccessibleAlertSource(AlertSource):
     applies_to = HA_LICENSED
-    failover_related = True
+    post_failover_blackout = True
     run_on_backup_node = False
 
     def __init__(self, middleware):
