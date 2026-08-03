@@ -11,7 +11,7 @@ import time
 
 import pytest
 
-from middlewared.alert.applicability import rule_name
+from middlewared.alert.applicability import declaration_rule_name
 from middlewared.plugins.alert import (
     FAILOVER_ALERTS_BACKOFF_SECS,
     AlertFailoverInfo,
@@ -141,7 +141,7 @@ FailoverRemoteSystemInaccessible post_failover_blackout   HA_LICENSED
 
 def test_the_flag_carriers_are_what_was_reviewed():
     live = sorted(
-        (name, flag, rule_name(source.applies_to))
+        (name, flag, declaration_rule_name(source))
         for name, kind, source in declarations()
         if kind == "source"
         for flag in ("post_failover_blackout", "require_stable_peer")

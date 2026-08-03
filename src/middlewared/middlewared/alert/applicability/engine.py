@@ -5,9 +5,13 @@ from collections.abc import Callable
 
 from middlewared.utils.entitlements import EntitlementFacts
 
+if typing.TYPE_CHECKING:
+    # Type-checking only, and it has to stay that way: middlewared.alert.base imports ``Rule``
+    # from this package at runtime, so importing it back for real breaks middlewared at boot
+    # rather than anywhere a checker would point at.
+    from middlewared.alert.base import AlertClass, AlertSource
+
 __all__ = (
-    "Declaration",
-    "ListedDeclaration",
     "Rule",
     "applies",
     "applies_for_listing",
@@ -19,22 +23,9 @@ __all__ = (
 Rule: typing.TypeAlias = Callable[[EntitlementFacts], bool]
 """A predicate over the facts of one system.
 
-A rule is nothing but a function, so a population is defined the same way a feature flag is and
-the two can be the same object. Nothing introspects a rule's structure; the only thing ever asked
-of one is its answer, and -- for diagnostics -- the name it was defined under.
+Name your rules: a declaration's rule is reported by ``__name__`` when an alert turns out not to
+apply, so a lambda tells you nothing.
 """
-
-
-class Declaration(typing.Protocol):
-    """An alert class or source as the engine sees it."""
-
-    applies_to: Rule | None
-
-
-class ListedDeclaration(Declaration, typing.Protocol):
-    """An alert class as the settings catalogue sees it."""
-
-    listed_only_when: Rule | None
 
 
 def applies(rule: Rule | None, facts: EntitlementFacts) -> bool:
@@ -46,7 +37,7 @@ def applies(rule: Rule | None, facts: EntitlementFacts) -> bool:
     return True if rule is None else rule(facts)
 
 
-def applies_for_listing(declaration: type[ListedDeclaration], facts: EntitlementFacts) -> bool:
+def applies_for_listing(declaration: type[AlertClass], facts: EntitlementFacts) -> bool:
     """Whether `declaration` belongs in the settings catalogue of a system with `facts`.
 
     The only place ``listed_only_when`` is read. It narrows ``applies_to`` for the catalogue
@@ -61,7 +52,7 @@ def rule_name(rule: Rule | None) -> str:
     return "unconstrained" if rule is None else getattr(rule, "__name__", repr(rule))
 
 
-def declaration_rule_name(declaration: type[Declaration]) -> str:
+def declaration_rule_name(declaration: type[AlertSource] | type[AlertClass]) -> str:
     """The vocabulary name `declaration` gated itself on, for diagnostics.
 
     Here rather than at the call site so that ``applies_to`` keeps a single reader outside the
