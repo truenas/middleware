@@ -1,6 +1,7 @@
 import contextlib
 import random
 import string
+import time
 
 import pytest
 
@@ -360,3 +361,60 @@ def test_disable_task_preserves_state():
                 assert "last_snapshot" in state_after_disable, \
                     f"State 'last_snapshot' field should be preserved after disabling. " \
                     f"Before: {state_before_disable}, After: {state_after_disable}"
+
+
+def _poll_replication(id_, predicate, timeout, message):
+    deadline = time.monotonic() + timeout
+    while True:
+        task = call("replication.get_instance", id_)
+        if predicate(task):
+            return task
+
+        if time.monotonic() >= deadline:
+            raise AssertionError(f"{message} (waited {timeout} seconds, task = {task!r})")
+
+        time.sleep(1)
+
+
+def test_scheduled_run_is_tracked_by_a_job():
+    """A replication task started by the scheduler is tracked by a `replication.run` job.
+
+    When zettarepl starts a task on its own schedule there is no job behind it yet, so the observer
+    starts a "fake" one (`replication.run` with `really_run=False`) for the task's progress and logs to
+    be reported through. A manual `replication.run` attaches to the task before the observer gets a
+    chance to, so only a task that runs on schedule reaches this code.
+    """
+    with dataset("scheduled_run_src") as src:
+        call("pool.snapshot.create", {"dataset": src, "name": "2022-01-01-00-00-00"})
+
+        with dataset("scheduled_run_dst") as dst:
+            with replication_task({
+                "name": "test_scheduled_run_is_tracked_by_a_job",
+                "direction": "PUSH",
+                "transport": "LOCAL",
+                "source_datasets": [src],
+                "target_dataset": dst,
+                "recursive": False,
+                "also_include_naming_schema": ["%Y-%m-%d-%H-%M-%S"],
+                # Runs at every minute boundary, so the scheduler is guaranteed to pick it up.
+                "auto": True,
+                "schedule": {"minute": "*"},
+                "retention_policy": "NONE",
+            }) as task:
+                # Two minute boundaries worth of waiting, so a tick that is missed by a fraction of a
+                # second does not fail the test.
+                _poll_replication(
+                    task["id"],
+                    lambda task: task["job"] is not None,
+                    120,
+                    "The scheduler never started a job for the replication task",
+                )
+                finished = _poll_replication(
+                    task["id"],
+                    lambda task: task["job"]["state"] in ("SUCCESS", "FAILED", "ABORTED"),
+                    60,
+                    "The job tracking the replication task never finished",
+                )
+
+                assert finished["job"]["state"] == "SUCCESS", finished["job"]["error"]
+                assert finished["state"]["state"] == "FINISHED", finished["state"]
