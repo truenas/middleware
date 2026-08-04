@@ -107,7 +107,8 @@ async def post_license_update(
     *args: typing.Any,
     **kwargs: typing.Any,
 ) -> None:
-    if not had_license and await middleware.call('system.product_type') == 'ENTERPRISE':
+    # FIXME: Fix this properly once we have a decision on MISSION_CRITICAL
+    if not had_license and await middleware.call('system.is_ha_capable'):
         await middleware.call2(middleware.services.update.set_profile, UpdateProfiles.MISSION_CRITICAL.name)
 
 
