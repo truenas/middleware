@@ -207,6 +207,7 @@ class SMARTAlertSource(ThreadedAlertSource):
 
     def check_sync(self):
         alerts = list()
+        is_ha_capable = self.middleware.call_sync("system.is_ha_capable")
         for disk in self.middleware.call_sync("disk.get_disks"):
             if "pmem" in disk.name:
                 continue
@@ -237,7 +238,7 @@ class SMARTAlertSource(ThreadedAlertSource):
                         )
                     )
 
-                if self.middleware.call_sync("system.is_ha_capable") and sijson.get("model_name"):
+                if is_ha_capable and sijson.get("model_name"):
                     alerts.extend(self.micron_phison_check(sijson, parsed))
             except Exception:
                 self.middleware.logger.exception("Unexpected failure parsing SMART info")
