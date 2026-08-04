@@ -87,3 +87,60 @@ async def test_storage_locked_only_considers_disk_and_raw():
     # A locked CDROM (removable) must not block the VM from starting
     cdrom_vm = {"devices": [disk("CDROM", "/mnt/other/b.img")]}
     assert await delegate.storage_locked(cdrom_vm) is False
+
+
+class StopJob:
+    error = None
+
+    async def wait(self, raise_error=False):
+        pass
+
+
+class StartOnImportDriver:
+    """Drives `start_on_import` against a single autostart VM, recording the actions it takes."""
+
+    def __init__(self, state, autostart=True):
+        self.actions = []
+        self.vm = {
+            "id": 1,
+            "name": "myvm",
+            "autostart": autostart,
+            "devices": [disk("RAW", "/mnt/tank/ds/disk.img")],
+            "status": {"state": state},
+        }
+        self.middleware = Middleware()
+        self.middleware["filesystem.is_child"] = lambda child, parent: True
+        self.middleware["pool.dataset.path_in_locked_datasets"] = lambda path: False
+        self.middleware["vm.query"] = self._query
+        self.middleware["vm.status"] = lambda *args: self.vm["status"]
+        self.middleware["vm.start"] = self._record("start")
+        self.middleware["vm.stop"] = self._record("stop", StopJob())
+        self.delegate = VMFSAttachmentDelegate(self.middleware)
+
+    def _query(self, filters=None, *args):
+        # Honor the `autostart` filter the autostart-aware start paths pass down
+        if filters and ("autostart", "=", True) in filters and not self.vm["autostart"]:
+            return []
+        return [self.vm]
+
+    def _record(self, action, result=None):
+        def record(*args):
+            self.actions.append(action)
+            return result
+
+        return record
+
+    async def run(self):
+        await self.delegate.start_on_import("/mnt/tank")
+        return self.actions
+
+
+@pytest.mark.asyncio
+async def test_start_on_import_starts_autostart_vm():
+    assert await StartOnImportDriver("STOPPED").run() == ["start"]
+
+
+@pytest.mark.asyncio
+async def test_start_on_import_skips_non_autostart_vm():
+    # A pool being re-imported must not boot VMs the user never asked to autostart
+    assert await StartOnImportDriver("STOPPED", autostart=False).run() == []

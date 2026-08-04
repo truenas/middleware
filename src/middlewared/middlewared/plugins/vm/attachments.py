@@ -169,6 +169,17 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate):
             # the dataset's filesystem is mounted
             paths.add(os.path.join('/mnt', dataset['name']))
 
+        if paths:
+            await self.start_autostart_on_paths(paths)
+
+    async def start_on_import(self, path):
+        # Same reasoning as `start_on_unlock`: the generic path would start every stopped VM on the
+        # pool, ignoring autostart entirely.
+        await self.start_autostart_on_paths({path})
+
+    async def start_autostart_on_paths(self, paths):
+        # (Re)start the autostart VMs whose disks live on `paths`, now that those paths have become
+        # available again.
         vms = await self.middleware.call('vm.query', [('autostart', '=', True)], {'force_sql_filters': True})
         for vm in vms:
             if not await self.vm_on_paths(vm, paths):
@@ -184,7 +195,9 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate):
                 # while earlier VMs in this loop were being restarted (or a VM may have been deleted since)
                 state = (await self.middleware.call('vm.status', vm['id']))['state']
             except Exception:
-                self.logger.warning('Unable to query %r VM after unlock', vm['name'], exc_info=True)
+                self.logger.warning(
+                    'Unable to query %r VM after its storage became available', vm['name'], exc_info=True
+                )
                 continue
 
             if state == 'RUNNING':
@@ -206,7 +219,9 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate):
             try:
                 await self.middleware.call('vm.start', vm['id'])
             except Exception:
-                self.logger.error('Failed to start %r VM after unlock', vm['name'], exc_info=True)
+                self.logger.error(
+                    'Failed to start %r VM after its storage became available', vm['name'], exc_info=True
+                )
 
     async def vm_on_paths(self, vm, paths):
         # A VM is tied to the unlocked datasets if a DISK/RAW disk lives there: it cannot run without

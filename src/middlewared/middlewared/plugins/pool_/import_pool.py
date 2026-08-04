@@ -309,9 +309,14 @@ class PoolService(Service):
 
         job.set_progress(80, 'Re-enabling services')
 
-        for delegate in await self.middleware.call('pool.dataset.get_attachment_delegates'):
-            if attachments := await delegate.query(pool['path'], False):
-                await delegate.start(attachments)
+        for delegate in await self.middleware.call('pool.dataset.get_attachment_delegates_for_start'):
+            # The pool is already imported, so a delegate failure here must not abort the reimport
+            try:
+                await delegate.start_on_import(pool['path'])
+            except Exception:
+                self.logger.error(
+                    '%s: failed to start attachments after pool reimport', delegate.name, exc_info=True
+                )
 
         job.set_progress(90, 'Running post-import tasks')
 
