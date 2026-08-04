@@ -3,6 +3,7 @@ import os
 
 from collections import defaultdict
 from collections.abc import Iterable
+from contextlib import suppress
 from datetime import datetime, timedelta
 from itertools import batched
 
@@ -42,8 +43,6 @@ from uuid import uuid4
 # first is as expensive as generating the cache itself.
 LOG_CACHE_ENTRY_INTERVAL = 10  # Update progress of job every nth user / group
 
-TDB_LOCKS = defaultdict(Lock)
-
 CACHE_OPTIONS = TDBOptions(TDBPathType.CUSTOM, TDBDataType.JSON)
 CACHE_DIR = '/var/db/system/directory_services'
 
@@ -67,11 +66,12 @@ class DSCacheFill:
     users and groups that contain same keys as results for user.query and group.query
     via the method `fill_cache()` once the cache is filled. The temporary TDB
     files are renamed over the current ones in-use by middleware. On context manager
-    exit the handles on the TDB files are closed.
+    exit the handles on the TDB files are closed and any temporary file that was not
+    renamed over a live cache is removed.
 
-    NOTE: cache fill here is performed without taking on the USER_TDB_LOCK or
-    GROUP_TDB_LOCK because the middleware caches will only be renamed over when fill
-    is complete. This is to ensure relative continuity in cache results.
+    NOTE: cache fill here is performed without taking the handle lock in
+    `middlewared.utils.tdb` because the middleware caches will only be renamed over when
+    fill is complete. This is to ensure relative continuity in cache results.
     """
     users_handle = None
     groups_handle = None
@@ -79,31 +79,53 @@ class DSCacheFill:
     def __enter__(self):
         os.makedirs(CACHE_DIR, mode=0o700, exist_ok=True)
         file_prefix = f'directory_service_cache_tmp_{uuid4()}'
-        self.users_handle = TDBHandle(os.path.join(CACHE_DIR, f'{file_prefix}_user.tdb'), CACHE_OPTIONS)
-        self.groups_handle = TDBHandle(os.path.join(CACHE_DIR, f'{file_prefix}_group.tdb'), CACHE_OPTIONS)
-        # Ensure we have clean initial state and restrictive permissions
-        self.users_handle.clear()
-        os.chmod(self.users_handle.full_path, 0o600)
-        self.groups_handle.clear()
-        os.chmod(self.groups_handle.full_path, 0o600)
+        try:
+            self.users_handle = TDBHandle(os.path.join(CACHE_DIR, f'{file_prefix}_user.tdb'), CACHE_OPTIONS)
+            self.groups_handle = TDBHandle(os.path.join(CACHE_DIR, f'{file_prefix}_group.tdb'), CACHE_OPTIONS)
+            # Ensure we have clean initial state and restrictive permissions
+            self.users_handle.clear()
+            os.chmod(self.users_handle.full_path, 0o600)
+            self.groups_handle.clear()
+            os.chmod(self.groups_handle.full_path, 0o600)
+        except Exception:
+            # __exit__ is not called if __enter__ raises, so clean up here or the
+            # partially-created temporary files are stranded on the system dataset.
+            self._close_and_remove_temporary_files()
+            raise
+
         return self
 
     def __exit__(self, tp, value, tb):
-        stored_exception = None
-        try:
-            if self.users_handle:
-                self.users_handle.close()
-        except Exception as exc:
-            stored_exception = exc
-
-        try:
-            if self.groups_handle:
-                self.groups_handle.close()
-        except Exception as exc:
-            stored_exception = exc
-
+        stored_exception = self._close_and_remove_temporary_files()
         if stored_exception:
             raise stored_exception
+
+    def _close_and_remove_temporary_files(self) -> Exception | None:
+        """ Close both handles and unlink any temporary file that is still present.
+
+        A successful `_commit()` has already renamed the temporary files over the live
+        ones, so the unlink is a no-op in that case. If the fill failed partway (which is
+        expected for the errors documented on `fill_cache`), this is what keeps the
+        temporary files from accumulating in CACHE_DIR.
+
+        Returns the last exception raised while closing, if any.
+        """
+        stored_exception = None
+
+        for handle in (self.users_handle, self.groups_handle):
+            if handle is None:
+                continue
+
+            try:
+                handle.close()
+            except Exception as exc:
+                stored_exception = exc
+
+            if handle.full_path:
+                with suppress(FileNotFoundError):
+                    os.remove(handle.full_path)
+
+        return stored_exception
 
     def _commit(self):
         """
@@ -401,7 +423,7 @@ def insert_cache_entry(
     with get_tdb_handle(DSCacheFile[id_type.name].path, CACHE_OPTIONS) as handle:
         handle.batch_op([
             TDBBatchOperation(action=TDBBatchAction.SET, key=f'ID_{xid}', value=entry),
-            TDBBatchOperation(action=TDBBatchAction.SET, key=f'NAME_{xid}', value=entry),
+            TDBBatchOperation(action=TDBBatchAction.SET, key=f'NAME_{name}', value=entry),
         ])
 
 
@@ -409,7 +431,7 @@ def retrieve_cache_entry(
     id_type: IDType,
     name: str,
     xid: int
-) -> None:
+) -> dict:
     """
     Retrieve cache entry under lock using stored handle. If both name and xid
     are specified, preference is given to xid.
@@ -512,7 +534,7 @@ def expire_cache() -> None:
     NOTE: this is used in the CI pipeline for tests/directory_services. """
 
     # generate a timestamp in the past that's old enough to definitely trigger rebuild
-    ts = utc_now(naive=True) - timedelta(days=2)
+    ts = utc_now(naive=False) - timedelta(days=2)
 
     for cache_file in DSCacheFile:
         with get_tdb_handle(cache_file.path, CACHE_OPTIONS) as hdl:
