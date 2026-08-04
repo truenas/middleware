@@ -2,11 +2,12 @@ from __future__ import annotations
 
 import typing
 
+from truenas_pylicensed.features import LicenseFeature
+
 import middlewared.sqlalchemy as sa
 from middlewared.api.current import CatalogEntry, CatalogUpdate
 from middlewared.plugins.docker.state_utils import catalog_ds_path
 from middlewared.service import ConfigServicePart, ValidationErrors
-from middlewared.utils import ProductType
 
 from .state import dataset_mounted
 from .utils import OFFICIAL_ENTERPRISE_TRAIN, OFFICIAL_LABEL, TMP_IX_APPS_CATALOGS
@@ -48,14 +49,13 @@ class CatalogConfigPart(ConfigServicePart[CatalogEntry]):
                 'catalog_update.preferred_trains',
                 'At least 1 preferred train must be specified.'
             )
-        if (
-            await self.middleware.call('system.product_type') == ProductType.ENTERPRISE and
-            OFFICIAL_ENTERPRISE_TRAIN not in new.preferred_trains
-        ):
-            verrors.add(
-                'catalog_update.preferred_trains',
-                f'Enterprise systems must at least have {OFFICIAL_ENTERPRISE_TRAIN!r} train enabled'
-            )
+        if OFFICIAL_ENTERPRISE_TRAIN not in new.preferred_trains:
+            entitlement = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.CATALOG_ENTERPRISE_TRAIN)
+            if entitlement.entitled:
+                verrors.add(
+                    'catalog_update.preferred_trains',
+                    f'Enterprise systems must at least have {OFFICIAL_ENTERPRISE_TRAIN!r} train enabled'
+                )
 
         verrors.check()
 
@@ -70,14 +70,13 @@ class CatalogConfigPart(ConfigServicePart[CatalogEntry]):
 
     async def update_train_for_enterprise(self) -> None:
         catalog = await self.config()
-        if await self.middleware.call('system.product_type') == ProductType.ENTERPRISE:
+        entitlement = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.CATALOG_ENTERPRISE_TRAIN)
+        if entitlement.entitled:
             preferred_trains = []
             # Logic coming from here
             # https://github.com/truenas/middleware/blob/e7f2b29b6ff8fadcc9fdd8d7f104cbbf5172fc5a/src/middlewared
             # /middlewared/plugins/catalogs_linux/update.py#L341
-            can_have_multiple_trains = not await self.middleware.call('system.is_ha_capable') and not (
-                await self.middleware.call('failover.hardware')
-            ).startswith('TRUENAS-R')
+            can_have_multiple_trains = not await self.middleware.call('system.is_ha_capable')
             if OFFICIAL_ENTERPRISE_TRAIN not in catalog.preferred_trains and can_have_multiple_trains:
                 preferred_trains = catalog.preferred_trains + [OFFICIAL_ENTERPRISE_TRAIN]
             elif not can_have_multiple_trains:
