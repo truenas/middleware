@@ -96,9 +96,30 @@ class ContainerFSAttachmentDelegate(FSAttachmentDelegate[dict[str, Any]]):
             if await self.container_on_paths(container, paths):
                 yield container
 
+    async def containers_on_pool(self, pool: str) -> list[ContainerEntry]:
+        # Every container whose *root* dataset lives on `pool`, regardless of runtime state. This is
+        # the pool-identity counterpart to `containers_on_paths`, which answers the subtree question
+        # -- and includes bind-mount sources -- for the query and start paths; the two are not
+        # interchangeable, see `destroy`. Matched by name rather than through `filesystem.is_child`
+        # because its only caller runs once the pool is gone, leaving nothing to resolve against.
+        containers = await self.middleware.call2(self.s.container.query)
+        assert isinstance(containers, list)
+        return [c for c in containers if c.dataset.split('/')[0] == pool]
+
     def storage_paths(self, container: ContainerEntry) -> list[str]:
         # The paths whose datasets the container needs to run: its root dataset and every FILESYSTEM
         # device source.
+        #
+        # The root entry is deliberately derived from the dataset *name*, not from where the
+        # dataset is actually mounted (`container_instance_dataset_mountpoint`, which yields
+        # `/mnt/.truenas_containers/<pool>/containers/<name>`). Both consumers of this list need
+        # the name-derived form:
+        # - `filesystem.is_child` is asked whether the container lives under `/mnt/<pool>`, which
+        #   the real mountpoint is not a child of.
+        # - `pool.dataset.path_in_locked_datasets` strips `/mnt/` and re-parses the remainder as a
+        #   dataset name.
+        # Switching this to the real mountpoint would silently stop matching containers on pool
+        # export and pool lock.
         paths = [os.path.join('/mnt', container.dataset)]
         for device in container.devices:
             if isinstance(device.attributes, ContainerFilesystemDevice):
@@ -123,13 +144,58 @@ class ContainerFSAttachmentDelegate(FSAttachmentDelegate[dict[str, Any]]):
         return False
 
     async def delete(self, attachments: list[dict[str, Any]]) -> None:
+        # Tear the domain down through the libvirt delete rather than `stop`: our callers destroy the
+        # storage as soon as this returns, and `stop` comes back while the container's runtime mounts
+        # -- the idmapped root under /run/truenas_containers/ and every FILESYSTEM bind mount -- are
+        # still being unwound by the domain's stop event, so the destroy then fails on a busy dataset.
+        # Deleting the domain destroys it and gives that teardown time to finish before undefining it.
+        #
+        # Never remove the container's records here. The database row is the only copy of a
+        # container's definition (init, environment, devices, capabilities), and its rootfs dataset
+        # outlives this delegate: a pool may simply have been exported, in which case the storage is
+        # still there and is orphaned the moment the row goes. Freeing the container's idmap slice
+        # makes that unrecoverable, because a later container can claim the UID range the surviving
+        # rootfs is still owned by.
+        #
+        # Records are removed only where nothing recoverable is left -- when the pool was both
+        # cascaded and destroyed -- which `destroy` below handles, because that runs once the data
+        # is confirmed gone.
         for attachment in attachments:
             try:
                 container = await self.middleware.call2(self.s.container.get_instance, attachment['id'])
                 await self.middleware.call2(self.s.container.delete_container_from_libvirt, container)
+            except Exception:
+                self.logger.warning('%r: failed to tear down container', attachment['id'], exc_info=True)
+
+    async def destroy(self, path: str) -> None:
+        # The pool's data is gone, so the rootfs a container's record describes is gone with it. This
+        # is the one place where dropping the record loses nothing that still exists -- the
+        # definition can no longer be reunited with a rootfs, and its idmap slice is finally safe to
+        # hand out again -- which is why `delete` never does it.
+        #
+        # Deliberately not driven by the attachments `delete` was given:
+        # - it must ignore runtime state, or a pool holding only stopped containers keeps every
+        #   record while a pool of running ones is cleaned out;
+        # - it must match the *root* dataset only, or a container rooted on another pool that merely
+        #   bind-mounts this one loses its whole definition while its rootfs is still there.
+        #
+        # For the first of those reasons it also cannot assume `delete` already tore these domains
+        # down, hence the libvirt delete here as well -- it is idempotent.
+        removed = False
+        for container in await self.containers_on_pool(path.removeprefix('/mnt/')):
+            try:
+                await self.middleware.call2(self.s.container.delete_container_from_libvirt, container)
                 await self.middleware.call2(self.s.container.delete_container_from_db, container)
             except Exception:
-                self.logger.warning('Unable to delete %r container', attachment['id'])
+                self.logger.error(
+                    '%s: failed to remove container records after its pool was destroyed',
+                    container.name, exc_info=True,
+                )
+            else:
+                removed = True
+
+        if removed:
+            await self.middleware.call('etc.generate', 'libvirt_guests')
 
     async def toggle(self, attachments: list[dict[str, Any]], enabled: bool) -> None:
         await getattr(self, 'start' if enabled else 'stop')(attachments)
@@ -160,9 +226,17 @@ class ContainerFSAttachmentDelegate(FSAttachmentDelegate[dict[str, Any]]):
             mountpoint for dataset, mountpoint in datasets
             if dataset['type'] == 'FILESYSTEM' and mountpoint
         ]
-        if not paths:
-            return
+        if paths:
+            await self.start_autostart_on_paths(paths)
 
+    async def start_on_import(self, path: str) -> None:
+        # Same reasoning as `start_on_unlock`: the generic path would start every stopped container
+        # on the pool, ignoring autostart entirely.
+        await self.start_autostart_on_paths([path])
+
+    async def start_autostart_on_paths(self, paths: list[str]) -> None:
+        # (Re)start the autostart containers whose storage lives on `paths`, now that those paths
+        # have become available again.
         containers = await self.middleware.call2(
             self.s.container.query, [('autostart', '=', True)], QueryOptions(force_sql_filters=True)
         )
@@ -181,7 +255,8 @@ class ContainerFSAttachmentDelegate(FSAttachmentDelegate[dict[str, Any]]):
                 state = (await self.middleware.call2(self.s.container.get_instance, container.id)).status.state
             except Exception:
                 self.logger.warning(
-                    'Unable to query %r container after unlock', container.id, exc_info=True
+                    'Unable to query %r container after its storage became available',
+                    container.id, exc_info=True
                 )
                 continue
 
@@ -203,7 +278,10 @@ class ContainerFSAttachmentDelegate(FSAttachmentDelegate[dict[str, Any]]):
             try:
                 await self.middleware.call2(self.s.container.start, container.id)
             except Exception:
-                self.logger.error('Failed to start %r container after unlock', container.id, exc_info=True)
+                self.logger.error(
+                    'Failed to start %r container after its storage became available',
+                    container.id, exc_info=True
+                )
 
 
 async def setup(middleware: Middleware) -> None:
