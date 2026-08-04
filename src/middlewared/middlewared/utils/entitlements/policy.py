@@ -38,6 +38,7 @@ if typing.TYPE_CHECKING:
 POLICY: Mapping[str, Rule] = MappingProxyType(
     {
         LicenseFeature.APPS: TARGET_VECTORS[LicenseFeature.APPS],
+        LicenseFeature.CATALOG_ENTERPRISE_TRAIN: TARGET_VECTORS[LicenseFeature.CATALOG_ENTERPRISE_TRAIN],
         LicenseFeature.CONTAINERS: TARGET_VECTORS[LicenseFeature.CONTAINERS],
         LicenseFeature.DEDUP: TARGET_VECTORS[LicenseFeature.DEDUP],  # TODO: Validate logic with old impl
         LicenseFeature.DIRECTORY_SERVICES: TARGET_VECTORS[LicenseFeature.DIRECTORY_SERVICES],

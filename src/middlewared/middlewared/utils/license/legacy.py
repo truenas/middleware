@@ -96,6 +96,9 @@ _ENT_ONLY_INJECT: frozenset[LicenseFeature] = frozenset(
         LicenseFeature.SMB_FASTPATH,
         LicenseFeature.MISSION_CRITICAL,
         LicenseFeature.AUTOTUNE,
+        # CATALOG_ENTERPRISE_TRAIN is deliberately left in the enterprise-only bucket. Its
+        # matrix vector grants on HW+K alone, so injecting it into every legacy license
+        # would only move a holder from the CE+L cell to CE+K, and both are 0.
         LicenseFeature.CATALOG_ENTERPRISE_TRAIN,
     }
 )
