@@ -46,6 +46,7 @@ _MESSAGES: Mapping[Reason, str] = {
 # feature key is used when a name is not listed here.
 FEATURE_DISPLAY_NAMES: Mapping[str, str] = {
     LicenseFeature.APPS: "applications",
+    LicenseFeature.CATALOG_ENTERPRISE_TRAIN: "enterprise application train",
     LicenseFeature.CONTAINERS: "containers",
     LicenseFeature.DEDUP: "ZFS deduplication",
     LicenseFeature.DIRECTORY_SERVICES: "directory services authentication",
