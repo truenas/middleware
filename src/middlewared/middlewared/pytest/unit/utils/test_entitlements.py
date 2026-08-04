@@ -92,6 +92,7 @@ def test_matrix_fixture(feature, column):
 # (b) Live POLICY shape: one entry per rule kind currently in active use.
 def test_live_policy_shape():
     assert set(POLICY) == {
+        LicenseFeature.CATALOG_ENTERPRISE_TRAIN,
         LicenseFeature.DEDUP,
         LicenseFeature.DIRECTORY_SERVICES,
         LicenseFeature.FIBRECHANNEL,
@@ -114,6 +115,7 @@ def test_live_policy_shape():
         DerivedEntitlement.HA,
         DerivedEntitlement.PROACTIVE_SUPPORT,
     }
+    assert isinstance(POLICY[LicenseFeature.CATALOG_ENTERPRISE_TRAIN], Vector)
     assert isinstance(POLICY[LicenseFeature.DEDUP], Vector)
     assert isinstance(POLICY[LicenseFeature.DIRECTORY_SERVICES], Vector)
     assert isinstance(POLICY[LicenseFeature.FIBRECHANNEL], Vector)
@@ -317,6 +319,50 @@ def test_key_only_key_missing_message_uses_display_name(feature, display):
     facts = make_facts(hardware_class=HardwareClass.TRUENAS_HW, license=make_license())
     entitlement = check_entitlement(feature, facts)
     assert entitlement.message == f"This system's license does not include the {display} feature."
+
+
+# CATALOG_ENTERPRISE_TRAIN is a live matrix Vector (0,0,0,1,0,0) and the only live rule
+# whose ce_k cell is 0: an appliance holding the key is entitled, while on the community
+# side the key grants nothing, so that whole column denies with WRONG_HARDWARE.
+APPLIANCE_KEY_ONLY_TABLE = [
+    (HardwareClass.TRUENAS_HW, "none", False, "NO_LICENSE", "HW"),
+    (HardwareClass.TRUENAS_HW, "nokey", False, "KEY_MISSING", "HW+L"),
+    (HardwareClass.TRUENAS_HW, "key", True, "ENTITLED", "HW+K"),
+    (HardwareClass.MINI, "none", False, "WRONG_HARDWARE", "CE"),
+    (HardwareClass.MINI, "nokey", False, "WRONG_HARDWARE", "CE+L"),
+    (HardwareClass.MINI, "key", False, "WRONG_HARDWARE", "CE+K"),
+    (HardwareClass.GENERIC, "none", False, "WRONG_HARDWARE", "CE"),
+    (HardwareClass.GENERIC, "nokey", False, "WRONG_HARDWARE", "CE+L"),
+    (HardwareClass.GENERIC, "key", False, "WRONG_HARDWARE", "CE+K"),
+]
+
+
+@pytest.mark.parametrize("hardware_class,state,entitled,reason,column", APPLIANCE_KEY_ONLY_TABLE)
+def test_catalog_enterprise_train_vector_behavior(hardware_class, state, entitled, reason, column):
+    facts = make_facts(
+        hardware_class=hardware_class,
+        license=_license_for(LicenseFeature.CATALOG_ENTERPRISE_TRAIN, state),
+    )
+    entitlement = check_entitlement(LicenseFeature.CATALOG_ENTERPRISE_TRAIN, facts)
+    assert entitlement.entitled is entitled
+    assert entitlement.reason == reason
+    assert entitlement.column == column
+
+
+@pytest.mark.parametrize("hardware_class", [HardwareClass.MINI, HardwareClass.GENERIC])
+def test_catalog_enterprise_train_keyed_community_side_denies(hardware_class):
+    # WRONG_HARDWARE is reachable with the key present here, unlike every other live
+    # vector, because the community-side key cell grants nothing.
+    facts = make_facts(
+        hardware_class=hardware_class,
+        license=_license_for(LicenseFeature.CATALOG_ENTERPRISE_TRAIN, "key"),
+    )
+    entitlement = check_entitlement(LicenseFeature.CATALOG_ENTERPRISE_TRAIN, facts)
+    assert entitlement.entitled is False
+    assert entitlement.reason == "WRONG_HARDWARE"
+    assert entitlement.message == (
+        "The enterprise application train feature is not available on this system's hardware."
+    )
 
 
 # NFS_SNAPSHOT is a key-only vector too, but it keeps its pre-engine validation
