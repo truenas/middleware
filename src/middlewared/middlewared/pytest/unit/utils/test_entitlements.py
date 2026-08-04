@@ -3,12 +3,13 @@ from datetime import date, timedelta
 
 import pytest
 from truenas_pylicensed import LicenseType
-from truenas_pylicensed.features import FEATURE_TIERS, LicenseFeature
+from truenas_pylicensed.features import FEATURE_TIERS, LicenseFeature, SupportTier
 
 from middlewared.api.v26_0_0.system_product import SystemFeatureEnabledArgs
 from middlewared.utils.license import FeatureInfo, LicenseInfo
 from middlewared.utils.entitlements import (
     COLUMNS,
+    DERIVED_VECTORS,
     FEATURE_DISPLAY_NAMES,
     FEATURE_MESSAGES,
     POLICY,
@@ -146,6 +147,9 @@ def test_target_vectors_cover_every_license_feature():
 
 def test_policy_keys_are_known_vocabulary():
     assert set(POLICY) <= set(LicenseFeature) | set(DerivedEntitlement)
+    # And the other direction, so a new DerivedEntitlement member cannot be added
+    # without a rule and then quietly raise ValueError at its first call site.
+    assert set(DerivedEntitlement) <= set(POLICY)
 
 
 def test_policy_keys_have_display_names():
@@ -162,6 +166,50 @@ def test_declared_tiers_cover_tier_rules():
         if isinstance(rule, TierRule):
             assert rule.feature in FEATURE_TIERS
             assert rule.allowed_tiers <= set(FEATURE_TIERS[rule.feature])
+
+
+def test_tier_rule_vectors_come_from_the_matrix():
+    # A tier rule's cells are product data, so they must be looked up rather than written
+    # at the construction site. The two maps are key-disjoint: a TierRule keyed by a
+    # LicenseFeature legitimately sources from TARGET_VECTORS instead.
+    lookup = {**TARGET_VECTORS, **DERIVED_VECTORS}
+    for key, rule in POLICY.items():
+        if isinstance(rule, TierRule):
+            assert rule.vector == lookup[key], key
+
+
+def test_tier_rule_vectors_are_key_only():
+    # The constraint TierRule.__post_init__ enforces, pinned against the live policy as
+    # well, so it is visible in the suite and not only in the dataclass.
+    for key, rule in POLICY.items():
+        if isinstance(rule, TierRule):
+            vector = rule.vector
+            assert (vector.ce, vector.hw, vector.hw_l, vector.ce_l) == (0, 0, 0, 0), key
+
+
+def test_derived_vectors_are_derived_entitlements():
+    assert set(DERIVED_VECTORS) <= set(DerivedEntitlement)
+    # HA deliberately has no row: a license type cannot be expressed as matrix cells.
+    assert DerivedEntitlement.HA not in DERIVED_VECTORS
+
+
+@pytest.mark.parametrize(
+    "vector",
+    [
+        Vector(1, 0, 0, 1, 0, 1),  # ce
+        Vector(0, 1, 0, 1, 0, 1),  # hw
+        Vector(0, 0, 1, 1, 0, 1),  # hw_l -- the shape the product matrix used to carry
+        Vector(0, 0, 0, 1, 1, 1),  # ce_l
+    ],
+)
+def test_tier_rule_rejects_a_cell_outside_the_key_columns(vector):
+    with pytest.raises(ValueError, match="read off a feature key"):
+        TierRule(feature=LicenseFeature.SUPPORT, allowed_tiers=frozenset({SupportTier.GOLD}), vector=vector)
+
+
+def test_tier_rule_requires_a_vector():
+    with pytest.raises(TypeError):
+        TierRule(feature=LicenseFeature.SUPPORT, allowed_tiers=frozenset({SupportTier.GOLD}))
 
 
 def test_columns_match_vector_fields():
@@ -677,6 +725,9 @@ def test_proactive_support_tiers(support_type, entitled, reason):
     entitlement = check_entitlement(DerivedEntitlement.PROACTIVE_SUPPORT, facts)
     assert entitlement.entitled is entitled
     assert entitlement.reason == reason
+    # The tier is a qualifier on the key columns, so the SUPPORT key -- not the policy
+    # key, which no license carries -- is what resolves the column.
+    assert entitlement.column == "HW+K"
 
 
 def test_proactive_support_key_absent_is_key_missing():
@@ -684,6 +735,7 @@ def test_proactive_support_key_absent_is_key_missing():
     entitlement = check_entitlement(DerivedEntitlement.PROACTIVE_SUPPORT, facts)
     assert entitlement.entitled is False
     assert entitlement.reason == "KEY_MISSING"
+    assert entitlement.column == "HW+L"
 
 
 def test_proactive_support_unlicensed_is_no_license():
@@ -691,6 +743,112 @@ def test_proactive_support_unlicensed_is_no_license():
     entitlement = check_entitlement(DerivedEntitlement.PROACTIVE_SUPPORT, facts)
     assert entitlement.entitled is False
     assert entitlement.reason == "NO_LICENSE"
+    assert entitlement.column == "HW"
+
+
+def _proactive_support_license(state: str, support_type: str | None) -> LicenseInfo | None:
+    if state == "none":
+        return None
+    if state == "key":
+        return make_license(feature_names=("SUPPORT",), support_type=support_type)
+    return make_license(feature_names=())  # "nokey": licensed, without the SUPPORT key
+
+
+PROACTIVE_SUPPORT_NO_LICENSE = "This system is not licensed to use the proactive support feature."
+PROACTIVE_SUPPORT_KEY_MISSING = "This system's license does not include the proactive support feature."
+PROACTIVE_SUPPORT_TIER = "This system's support tier does not include the proactive support feature."
+
+# Every column of the live PROACTIVE_SUPPORT rule against every tier state that can reach
+# it. This is the fence around the vector: editing DERIVED_VECTORS[PROACTIVE_SUPPORT] has
+# to fail here rather than quietly re-granting proactive support to a population.
+PROACTIVE_SUPPORT_TABLE = [
+    (HardwareClass.TRUENAS_HW, "none", None, False, "NO_LICENSE", "HW", PROACTIVE_SUPPORT_NO_LICENSE),
+    (HardwareClass.TRUENAS_HW, "nokey", None, False, "KEY_MISSING", "HW+L", PROACTIVE_SUPPORT_KEY_MISSING),
+    (HardwareClass.TRUENAS_HW, "key", "GOLD", True, "ENTITLED", "HW+K", ""),
+    (HardwareClass.TRUENAS_HW, "key", "BRONZE", False, "TIER_INSUFFICIENT", "HW+K", PROACTIVE_SUPPORT_TIER),
+    (HardwareClass.TRUENAS_HW, "key", None, False, "TIER_INSUFFICIENT", "HW+K", PROACTIVE_SUPPORT_TIER),
+    (HardwareClass.MINI, "none", None, False, "NO_LICENSE", "CE", PROACTIVE_SUPPORT_NO_LICENSE),
+    (HardwareClass.MINI, "nokey", None, False, "KEY_MISSING", "CE+L", PROACTIVE_SUPPORT_KEY_MISSING),
+    (HardwareClass.MINI, "key", "GOLD", True, "ENTITLED", "CE+K", ""),
+    (HardwareClass.MINI, "key", "BRONZE", False, "TIER_INSUFFICIENT", "CE+K", PROACTIVE_SUPPORT_TIER),
+    (HardwareClass.GENERIC, "none", None, False, "NO_LICENSE", "CE", PROACTIVE_SUPPORT_NO_LICENSE),
+    (HardwareClass.GENERIC, "nokey", None, False, "KEY_MISSING", "CE+L", PROACTIVE_SUPPORT_KEY_MISSING),
+    (HardwareClass.GENERIC, "key", "GOLD", True, "ENTITLED", "CE+K", ""),
+    (HardwareClass.GENERIC, "key", "BRONZE", False, "TIER_INSUFFICIENT", "CE+K", PROACTIVE_SUPPORT_TIER),
+]
+
+
+@pytest.mark.parametrize("hardware_class,state,support_type,entitled,reason,column,message", PROACTIVE_SUPPORT_TABLE)
+def test_proactive_support_full_matrix(hardware_class, state, support_type, entitled, reason, column, message):
+    facts = make_facts(
+        hardware_class=hardware_class,
+        license=_proactive_support_license(state, support_type),
+    )
+    entitlement = check_entitlement(DerivedEntitlement.PROACTIVE_SUPPORT, facts)
+    assert entitlement.entitled is entitled
+    assert entitlement.reason == reason
+    assert entitlement.column == column
+    assert entitlement.message == message
+
+
+# A tier rule's vector is authoritative for the column, so a one-sided row denies on the
+# hardware side it omits even when the tier itself is fine. Nothing in the live policy is
+# one-sided, which is why this needs a synthetic rule -- and why the behavior would
+# otherwise go untested until the first such row shipped.
+_ONE_SIDED_TIER_POLICY = {
+    "SYNTHETIC_TIER": TierRule(
+        feature=LicenseFeature.SUPPORT,
+        allowed_tiers=frozenset({SupportTier.GOLD}),
+        vector=Vector(0, 0, 0, 1, 0, 0),  # HW+K only
+    )
+}
+
+
+@pytest.mark.parametrize("hardware_class", [HardwareClass.GENERIC, HardwareClass.MINI])
+def test_tier_rule_denies_where_its_vector_omits_the_hardware_side(hardware_class):
+    facts = make_facts(
+        hardware_class=hardware_class,
+        license=make_license(feature_names=("SUPPORT",), support_type="GOLD"),
+    )
+    entitlement = check_entitlement("SYNTHETIC_TIER", facts, policy=_ONE_SIDED_TIER_POLICY)
+    assert entitlement.entitled is False
+    # The cell is read before the tier, so the matrix's answer wins outright rather than
+    # the tier's -- a sufficient tier cannot rescue a cell the product did not grant.
+    assert entitlement.reason == "WRONG_HARDWARE"
+    assert entitlement.column == "CE+K"
+
+
+def test_tier_rule_grants_on_the_hardware_side_its_vector_keeps():
+    facts = make_facts(
+        hardware_class=HardwareClass.TRUENAS_HW,
+        license=make_license(feature_names=("SUPPORT",), support_type="GOLD"),
+    )
+    entitlement = check_entitlement("SYNTHETIC_TIER", facts, policy=_ONE_SIDED_TIER_POLICY)
+    assert entitlement.entitled is True
+    assert entitlement.column == "HW+K"
+
+
+def test_tier_rule_still_qualifies_by_tier_where_its_vector_grants():
+    facts = make_facts(
+        hardware_class=HardwareClass.TRUENAS_HW,
+        license=make_license(feature_names=("SUPPORT",), support_type="BRONZE"),
+    )
+    entitlement = check_entitlement("SYNTHETIC_TIER", facts, policy=_ONE_SIDED_TIER_POLICY)
+    assert entitlement.entitled is False
+    assert entitlement.reason == "TIER_INSUFFICIENT"
+
+
+def test_proactive_support_message_uses_its_own_display_name_not_the_qualifying_features():
+    # The column resolves against SUPPORT while the message must come from the policy key.
+    # Conflating the two is invisible to mypy -- both are str -- and would emit "the
+    # support feature" here, which is a different entitlement.
+    facts = make_facts(
+        hardware_class=HardwareClass.TRUENAS_HW,
+        license=make_license(feature_names=("SUPPORT",), support_type="BRONZE"),
+    )
+    entitlement = check_entitlement(DerivedEntitlement.PROACTIVE_SUPPORT, facts)
+    assert entitlement.message == PROACTIVE_SUPPORT_TIER
+    assert "the support feature" not in entitlement.message
 
 
 # (i) HA: live LicenseTypeRule over the license type.

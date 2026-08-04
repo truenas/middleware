@@ -143,6 +143,26 @@ class TierRule:
     """License feature whose per-feature ``type`` qualifier is inspected (e.g. "SUPPORT")."""
     allowed_tiers: frozenset[str]
     """Tier values (upper-cased) that grant the checked feature."""
+    vector: Vector
+    """Matrix cells for this entitlement, authoritative for the resolved column.
+
+    Only ``hw_k`` and ``ce_k`` may be set, and anything else is rejected outright. A tier
+    is read off ``FeatureInfo.type``, which exists only where the feature's key does, so a
+    cell set anywhere else would claim a tier could be evaluated with no key to read it
+    from.
+
+    ``LicenseInfo.contract_type`` is deliberately not consulted as a second source of
+    a tier: on a daemon license it is derived from this same feature, so it is absent
+    in exactly the columns where the key is.
+    """
+
+    def __post_init__(self) -> None:
+        vector = self.vector
+        if vector.ce or vector.hw or vector.hw_l or vector.ce_l:
+            raise ValueError(
+                f"TierRule({self.feature}): a tier is read off a feature key, so it cannot be "
+                f"evaluated without one. Only hw_k/ce_k may be set; got {vector}."
+            )
 
 
 @dataclass(frozen=True, kw_only=True, slots=True)
@@ -159,48 +179,74 @@ def has_key(feature: str, facts: EntitlementFacts) -> bool:
     return facts.license is not None and facts.license.has_feature(feature)
 
 
-def resolve_column(feature: str, facts: EntitlementFacts) -> str:
+def resolve_column(key_feature: str, facts: EntitlementFacts) -> str:
+    """Return the matrix column `facts` resolves to, keyed off `key_feature`.
+
+    `key_feature` is the license feature whose *key presence* decides the K axis, which
+    is not always the entitlement being checked: a rule whose policy key is not itself
+    a license feature key has to name the feature that carries its qualifier instead,
+    or the K columns are unreachable.
+    """
     hw_side = facts.hardware_class.is_appliance
     if facts.license is None:
         return "HW" if hw_side else "CE"
-    if has_key(feature, facts):
+    if has_key(key_feature, facts):
         return "HW+K" if hw_side else "CE+K"
     return "HW+L" if hw_side else "CE+L"
 
 
+def _vector_deny_reason(vector: Vector, facts: EntitlementFacts) -> Reason:
+    """Classify a vector's denial.
+
+    A key on this hardware side is what would grant the feature. If that cell is set,
+    the feature is achievable here (license missing vs key missing); otherwise this
+    hardware can never have it. Every rule kind that resolves by column shares this, so
+    their denials cannot drift apart.
+    """
+    key_cell = vector.hw_k if facts.hardware_class.is_appliance else vector.ce_k
+    if not key_cell:
+        return Reason.WRONG_HARDWARE
+    return Reason.KEY_MISSING if facts.license is not None else Reason.NO_LICENSE
+
+
 def _check_vector(feature: str, vector: Vector, facts: EntitlementFacts) -> Entitlement:
-    hw_side = facts.hardware_class.is_appliance
     column = resolve_column(feature, facts)
     if vector[COLUMNS.index(column)]:
         return Entitlement(entitled=True, reason=Reason.ENTITLED, column=column, message="")
 
-    # A key on this hardware side is what would grant the feature. If that cell
-    # is set, the feature is achievable here (license missing vs key missing);
-    # otherwise this hardware can never have it.
-    key_cell = vector.hw_k if hw_side else vector.ce_k
-    reason: Reason
-    if key_cell:
-        reason = Reason.KEY_MISSING if facts.license is not None else Reason.NO_LICENSE
-    else:
-        reason = Reason.WRONG_HARDWARE
-
+    reason = _vector_deny_reason(vector, facts)
     return Entitlement(entitled=False, reason=reason, column=column, message=_format_message(reason, feature))
 
 
-def _check_tier(feature: str, rule: TierRule, facts: EntitlementFacts) -> Entitlement:
-    column = resolve_column(feature, facts)
-    if facts.license is None:
-        reason: Reason = Reason.NO_LICENSE
-        return Entitlement(entitled=False, reason=reason, column=column, message=_format_message(reason, feature))
+def _check_tier(policy_key: str, rule: TierRule, facts: EntitlementFacts) -> Entitlement:
+    """Resolve `rule` against its matrix row, then qualify the grant by the feature's tier.
 
-    info = facts.license.feature(rule.feature)
+    The vector decides the column and is authoritative -- a tier cannot rescue a cell the
+    matrix does not grant, which is why the cell is read first. Because the vector is
+    key-only, a granting cell means the column is ``HW+K``/``CE+K``, so the tier is only
+    ever asked where the key that carries it exists.
+
+    The column resolves against ``rule.feature`` -- the key that carries the tier -- while
+    messages are formatted from `policy_key`. The two differ: proactive support is
+    qualified by the SUPPORT key, and "support" is not its wording.
+    """
+    column = resolve_column(rule.feature, facts)
+    if not rule.vector[COLUMNS.index(column)]:
+        reason = _vector_deny_reason(rule.vector, facts)
+        return Entitlement(entitled=False, reason=reason, column=column, message=_format_message(reason, policy_key))
+
+    info = facts.license.feature(rule.feature) if facts.license is not None else None
     if info is None:
+        # Unreachable while the vector stays key-only, since a granting cell is a K column
+        # and that is exactly where the license carries the feature. Kept as the narrowing
+        # for facts.license, and so that relaxing the constraint degrades to a denial rather
+        # than to an AttributeError.
         reason = Reason.KEY_MISSING
-        return Entitlement(entitled=False, reason=reason, column=column, message=_format_message(reason, feature))
+        return Entitlement(entitled=False, reason=reason, column=column, message=_format_message(reason, policy_key))
 
     if info.type is None or info.type.upper() not in rule.allowed_tiers:
         reason = Reason.TIER_INSUFFICIENT
-        return Entitlement(entitled=False, reason=reason, column=column, message=_format_message(reason, feature))
+        return Entitlement(entitled=False, reason=reason, column=column, message=_format_message(reason, policy_key))
 
     return Entitlement(entitled=True, reason=Reason.ENTITLED, column=column, message="")
 
