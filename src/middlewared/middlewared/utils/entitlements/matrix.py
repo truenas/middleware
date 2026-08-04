@@ -5,7 +5,7 @@ from types import MappingProxyType
 
 from truenas_pylicensed.features import LicenseFeature
 
-from .engine import Vector
+from .engine import DerivedEntitlement, Vector
 
 if typing.TYPE_CHECKING:
     from collections.abc import Mapping
@@ -41,5 +41,24 @@ TARGET_VECTORS: Mapping[LicenseFeature, Vector] = MappingProxyType(
         LicenseFeature.VMS: Vector(1, 1, 0, 1, 0, 1),
         LicenseFeature.WEBSHARE: Vector(0, 0, 0, 1, 0, 1),
         LicenseFeature.ZFSTIER: Vector(0, 0, 0, 1, 0, 1),
+    }
+)
+
+# Cells for the entitlements that are not license features, so cannot live in
+# TARGET_VECTORS (which is asserted equal to LicenseFeature). Keyed by the policy key
+# rather than by the feature a rule qualifies against, so that two rows which happen to
+# agree today stay free to diverge.
+#
+# PROACTIVE_SUPPORT is the product matrix's "Proactive Support" row, corrected from
+# 0,0,1,1,0,1 -- that row grants on a license alone, with no tier consulted, which is not
+# what proactive support means. It has only ever looked right because the tier check
+# denied a missing key before any cell was read. The spreadsheet has NOT been updated, so
+# do not re-sync this row from it.
+#
+# HA has no entry on purpose: it is a license type, not a key, so no cell can decide it
+# (see policy.py).
+DERIVED_VECTORS: Mapping[DerivedEntitlement, Vector] = MappingProxyType(
+    {
+        DerivedEntitlement.PROACTIVE_SUPPORT: Vector(0, 0, 0, 1, 0, 1),
     }
 )
