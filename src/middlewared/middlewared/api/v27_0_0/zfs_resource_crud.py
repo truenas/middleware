@@ -297,7 +297,10 @@ class ZFSResourceEntry(BaseModel):
     children: list | None = Field(description="The children of this zfs resource.")
     tier: TierInfo | None = Field(
         default=None,
-        description="Tier classification for FILESYSTEM resources. None if not requested or not applicable.",
+        description=(
+            "Tier classification for FILESYSTEM resources. None if not requested, not applicable, or "
+            "deduplication is enabled on the dataset."
+        ),
     )
 
 

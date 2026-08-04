@@ -51,7 +51,7 @@ from middlewared.api.current import (
     ZfsTierUpdateResult,
 )
 from middlewared.event import TypedEventSource
-from middlewared.plugins.pool_.utils import UpdateImplArgs
+from middlewared.plugins.pool_.utils import UpdateImplArgs, pool_has_special_vdev
 from middlewared.plugins.tunable.utils import set_zfs_parameter, zfs_parameter_value
 from middlewared.service import CallError, ConfigServicePart, GenericConfigService, ValidationError, private
 from middlewared.service.decorators import pass_thread_local_storage
@@ -194,6 +194,8 @@ def get_dataset_tier_info_cached(
     """
     Returns TierInfo for a single dataset using a caller-maintained pool cache.
     pool_special_cache is mutated: {pool_name -> has_special_vdevs}.
+    Returns None when the pool has no SPECIAL vdev or the dataset has
+    deduplication enabled.
     Does not check license or enabled flag — caller must do that.
     """
     pool_name = hdl.name.split("/")[0]
@@ -217,8 +219,13 @@ def get_dataset_tier_info_cached(
             properties={
                 truenas_pylibzfs.ZFSProperty.SPECIAL_SMALL_BLOCKS,
                 truenas_pylibzfs.ZFSProperty.RECORDSIZE,
+                truenas_pylibzfs.ZFSProperty.DEDUP,
             }
         )
+        dedup_slot = dprops.dedup
+        if dedup_slot is not None and dedup_slot.value not in (None, "off"):
+            # Deduplicated datasets are excluded from tiering.
+            return None
         ssb_slot = dprops.special_small_blocks
         ssb_value = ssb_slot.value if ssb_slot is not None else 0
         rs_slot = dprops.recordsize
@@ -414,6 +421,15 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
             raise ValidationError(field, f"{dataset_name!r}: dataset not found", errno.ENOENT)
 
         if current_info is None:
+            if (
+                await pool_has_special_vdev(self.middleware, dataset_name.split("/")[0])
+                and await self._dataset_dedup_enabled(dataset_name)
+            ):
+                raise ValidationError(
+                    field,
+                    f"{dataset_name!r}: tiering is not supported (ZFS deduplication is enabled on this dataset)",
+                    errno.EINVAL,
+                )
             raise ValidationError(
                 field,
                 f"{dataset_name!r}: tiering is not supported (pool has no SPECIAL vdev)",
@@ -544,6 +560,21 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
             raise ValidationError(field, f"{dataset_name!r}: dataset is read-only", errno.EROFS)
 
     @private
+    async def _dataset_dedup_enabled(self, dataset_name: str) -> bool:
+        """Return True when the dataset has an effective deduplication value other than off."""
+        try:
+            results = await self.call2(
+                self.s.zfs.resource.query_impl,
+                ZFSResourceQuery(paths=[dataset_name], properties=["dedup"]),
+            )
+        except Exception:
+            return False
+        if not results:
+            return False
+        dedup = (results[0]["properties"] or {}).get("dedup") or {}
+        return dedup.get("raw") not in (None, "off")
+
+    @private
     def _validate_tier_space(
         self,
         field: str,
@@ -588,7 +619,11 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
         audit_extended=lambda data: f"{data['dataset_name']} -> {data['tier_type']}",
     )
     async def dataset_set_tier(self, data: dict[str, typing.Any]) -> dict[str, typing.Any]:
-        """Set the performance tier for a ZFS dataset, optionally migrating existing data."""
+        """
+        Set the performance tier for a ZFS dataset, optionally migrating existing data.
+
+        Datasets with ZFS deduplication enabled cannot be assigned a tier.
+        """
         dataset_name = data["dataset_name"]
         tier_type = data["tier_type"]
         move_existing_data = data["move_existing_data"]
@@ -605,6 +640,15 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
             raise ValidationError(field, f"{dataset_name!r}: dataset not found", errno.ENOENT)
 
         if current_info is None:
+            if (
+                await pool_has_special_vdev(self.middleware, dataset_name.split("/")[0])
+                and await self._dataset_dedup_enabled(dataset_name)
+            ):
+                raise ValidationError(
+                    "zfs_tier_dataset_set_tier",
+                    f"{dataset_name!r}: tiering is not supported (ZFS deduplication is enabled on this dataset)",
+                    errno.EINVAL,
+                )
             raise ValidationError(
                 "zfs_tier_dataset_set_tier",
                 f"{dataset_name!r}: tiering is not supported (pool has no SPECIAL vdev)",
