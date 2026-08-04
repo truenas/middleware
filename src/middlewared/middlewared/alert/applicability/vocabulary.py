@@ -24,6 +24,7 @@ __all__ = (
     "MINI_HARDWARE",
     "NOT_APPLIANCE_HARDWARE",
     "TRUENAS_HARDWARE",
+    "TRUENAS_OR_MINI_HARDWARE",
 )
 
 
@@ -36,6 +37,14 @@ def TRUENAS_HARDWARE(facts: EntitlementFacts) -> bool:
 def MINI_HARDWARE(facts: EntitlementFacts) -> bool:
     """iX Mini appliances, licensed or not."""
     return facts.hardware_class is HardwareClass.MINI
+
+
+def TRUENAS_OR_MINI_HARDWARE(facts: EntitlementFacts) -> bool:
+    """Every machine iX builds, Minis included. The population for questions about hardware iX
+    shipped, where a Mini differs from an M-series only in size -- ECC memory reporting, for one.
+    Composed from the two hardware names rather than defined as "not GENERIC" so that a hardware
+    class added later lands outside it and has to be added here deliberately."""
+    return TRUENAS_HARDWARE(facts) or MINI_HARDWARE(facts)
 
 
 def NOT_APPLIANCE_HARDWARE(facts: EntitlementFacts) -> bool:
