@@ -17,7 +17,7 @@ from .engine import (
     _check_tier,
     _check_vector,
 )
-from .matrix import TARGET_VECTORS
+from .matrix import DERIVED_VECTORS, TARGET_VECTORS
 
 if typing.TYPE_CHECKING:
     from collections.abc import Mapping
@@ -29,6 +29,12 @@ if typing.TYPE_CHECKING:
 # ``Vector``; the two derived entitlements that are not per-feature keys use a
 # ``LicenseTypeRule`` for HA and a ``TierRule`` for proactive support. The
 # ``LegacyRule`` kind is still supported by the dispatch below but unused here.
+#
+# Only two of the four kinds resolve by matrix column, and the split is deliberate:
+# ``Vector`` and ``TierRule`` do, the latter against DERIVED_VECTORS with the tier as a
+# further qualifier. ``LicenseTypeRule`` does not -- see the HA entry below -- and a
+# ``LegacyRule``'s callable is the whole rule by definition. This is settled, not a
+# migration someone left half finished.
 POLICY: Mapping[str, Rule] = MappingProxyType(
     {
         LicenseFeature.APPS: TARGET_VECTORS[LicenseFeature.APPS],
@@ -59,13 +65,21 @@ POLICY: Mapping[str, Rule] = MappingProxyType(
         # TODO: Validate logic with old impl / Remember that zfstier client has license
         # logic as well which should be reviewed too
         LicenseFeature.ZFSTIER: TARGET_VECTORS[LicenseFeature.ZFSTIER],
-        # HA is a license *type*, not a feature key, so it deliberately has no TARGET_VECTORS
-        # entry. There is no LicenseFeature.HA to look up, which makes the HW+K/CE+K columns
-        # meaningless for it: only LicenseInfo.type can decide.
+        # HA is a license *type*, not a feature key, so it deliberately has no vector in
+        # either matrix map. There is no LicenseFeature.HA to look up, which makes the
+        # HW+K/CE+K columns meaningless for it: only LicenseInfo.type can decide. The
+        # product matrix does carry an "HA Functionality" row, and it is knowingly not
+        # honoured -- taken literally it would grant HA to any licensed appliance,
+        # ENTERPRISE_SINGLE included, and would withdraw it from the test-licensed pairs
+        # that are not iX hardware. Do not wire it up.
         DerivedEntitlement.HA: LicenseTypeRule(allowed_types=frozenset({LicenseType.ENTERPRISE_HA})),
+        # The vector is key-only, so it grants nothing the tier check would not also reach;
+        # it is what makes a future one-sided row (say, appliances but not keyed Minis)
+        # actually take effect instead of being silently ignored.
         DerivedEntitlement.PROACTIVE_SUPPORT: TierRule(  # TODO: Validate logic with old impl
             feature=LicenseFeature.SUPPORT,
             allowed_tiers=frozenset({SupportTier.GOLD, SupportTier.SILVER, SupportTier.SILVERINTERNATIONAL}),
+            vector=DERIVED_VECTORS[DerivedEntitlement.PROACTIVE_SUPPORT],
         ),
     }
 )
