@@ -65,12 +65,6 @@ class SystemService(Service):
         return await self.middleware.call("failover.hardware") != "MANUAL"
 
     @private
-    async def is_enterprise(self):
-        return (
-            await self.middleware.call("system.product_type") == ProductType.ENTERPRISE
-        )
-
-    @private
     def sed_enabled(self):
         return self.call_sync2(self.s.truenas.entitlements.check, LicenseFeature.SED).entitled
 
