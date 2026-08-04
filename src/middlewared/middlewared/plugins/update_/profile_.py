@@ -67,7 +67,8 @@ class UpdateProfiles(enum.IntEnum):
 async def profile_choices(context: ServiceContext) -> dict[str, UpdateProfileChoice]:
     profiles = {}
     config = await context.call2(context.s.update.config_safe)
-    is_enterprise = await context.middleware.call('system.is_enterprise')
+    # FIXME: See what is most appropriate here
+    is_enterprise = await context.middleware.call('system.is_ha_capable')
     current_profile = UpdateProfiles[await current_version_profile(context)]
     for profile in UpdateProfiles:
         available = profile.name == config.profile or profile <= current_profile
