@@ -189,25 +189,29 @@ class ISCSIGlobalService(SystemServiceService):
         new['isns_servers'] = '\n'.join(servers)
 
         licensed = await self.middleware.call('failover.licensed')
+        connected = await self.middleware.call('failover.remote_connected')
         if licensed and old['alua'] != new['alua']:
             if not new['alua']:
-                await self.middleware.call(
-                    'failover.call_remote', 'service.control', ['STOP', 'iscsitarget'], {'job': True}
-                )
-                # Ensure we have actually fully unloaded before we proceed
-                for retry in range(0, 20):
-                    loaded = await self.middleware.call(
-                        'failover.call_remote',
-                        'iscsi.scst.is_kernel_module_loaded'
+                if connected:
+                    await self.middleware.call(
+                        'failover.call_remote', 'service.control', ['STOP', 'iscsitarget'], {'job': True}
                     )
-                    if not loaded:
-                        if retry > 5:
-                            self.logger.debug('Delayed %r seconds when turning off ALUA', retry)
-                        break
-                    await asyncio.sleep(1)
-                if loaded:
-                    self.logger.warning('Insufficent unload delay when turning off ALUA')
-                await self.middleware.call('failover.call_remote', 'iscsi.target.logout_ha_targets')
+                    # Ensure we have actually fully unloaded before we proceed
+                    for retry in range(0, 20):
+                        loaded = await self.middleware.call(
+                            'failover.call_remote',
+                            'iscsi.scst.is_kernel_module_loaded'
+                        )
+                        if not loaded:
+                            if retry > 5:
+                                self.logger.debug('Delayed %r seconds when turning off ALUA', retry)
+                            break
+                        await asyncio.sleep(1)
+                    if loaded:
+                        self.logger.warning('Insufficent unload delay when turning off ALUA')
+                    await self.middleware.call('failover.call_remote', 'iscsi.target.logout_ha_targets')
+                else:
+                    self.logger.warning('Unable to contact remote node when turning off ALUA')
                 # Clear cluster_mode on ACTIVE
                 await self.middleware.call('iscsi.scst.set_all_cluster_mode', 0)
 
@@ -219,25 +223,27 @@ class ISCSIGlobalService(SystemServiceService):
 
         if old['direct_config'] != new['direct_config']:
             await self.middleware.call('etc.generate', 'scst_direct')
-            if licensed:
+            if licensed and connected:
                 await self.middleware.call(
                     'failover.call_remote', 'etc.generate', ['scst_direct']
                 )
 
-        if licensed and old['alua'] != new['alua']:
-            if new['alua']:
-                if await self.middleware.call('service.started', 'iscsitarget'):
+        if licensed and old['alua'] != new['alua'] and new['alua']:
+            if await self.middleware.call('service.started', 'iscsitarget'):
+                if connected:
                     await self.middleware.call(
                         'failover.call_remote',
                         'service.control',
                         ['START', 'iscsitarget'],
                         {'job': True},
                     )
+                else:
+                    self.logger.warning('Unable to contact remote node when turning on ALUA')
 
         # If we have just turned off iSNS then work around a short-coming in scstadmin reload
         if old['isns_servers'] != new['isns_servers'] and not servers:
             await self.middleware.call('iscsi.global.stop_active_isns')
-            if licensed:
+            if licensed and connected:
                 try:
                     await self.middleware.call('failover.call_remote', 'iscsi.global.stop_active_isns')
                 except Exception:
@@ -249,7 +255,7 @@ class ISCSIGlobalService(SystemServiceService):
                 await (
                     await self.middleware.call('service.control', 'RESTART', 'iscsitarget', {'ha_propagate': False})
                 ).wait(raise_error=True)
-                if licensed and new['alua'] and old['alua']:
+                if licensed and new['alua'] and old['alua'] and connected:
                     # Only need to restart the remote service if it was already running
                     await self.middleware.call(
                         'failover.call_remote', 'service.control', ['RESTART', 'iscsitarget'], {'job': True},
