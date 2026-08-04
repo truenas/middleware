@@ -3,10 +3,10 @@ import os
 from typing import Any
 
 from middlewared.api.current import ZFSResourceQuery
-from middlewared.plugins.zfs.utils import has_internal_path
 from middlewared.plugins.zfs.zvol_utils import zvol_name_to_path, zvol_path_to_name
 from middlewared.plugins.zfs_.validation_utils import check_zvol_in_boot_pool_using_path
 from middlewared.service_exception import ValidationErrors
+from middlewared.utils.zfs.managed_datasets import blocked_from_mutation
 
 from .delegate import DeviceDelegate
 from .utils import device_uniqueness_check
@@ -85,7 +85,7 @@ class DiskDelegate(StorageDelegate):
             if device['attributes'].get('path'):
                 verrors.add('attributes.path', 'The "path" attribute must not be specified when creating a zvol.')
 
-            if has_internal_path(device['attributes']['zvol_name']):
+            if blocked_from_mutation(device['attributes']['zvol_name']):
                 # before doing anything, let's make sure the zvol
                 # being created isn't within an internal path
                 verrors.add(
@@ -140,7 +140,7 @@ class DiskDelegate(StorageDelegate):
                     )
                 elif zvol[0]['type'] != 'VOLUME':
                     verrors.add('attributes.path', f'Path {path!r} ({zvol_name}) is not a volume.')
-                elif has_internal_path(zvol_name):
+                elif blocked_from_mutation(zvol_name):
                     verrors.add(
                         'attributes.path',
                         'Disk resides in an invalid location and is not supported.'

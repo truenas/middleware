@@ -796,7 +796,7 @@ class SystemDatasetService(ConfigService):
                 if update_props:
                     await self.middleware.call(
                         'pool.dataset.update_impl',
-                        UpdateImplArgs(name=dataset, zprops=update_props),
+                        UpdateImplArgs(name=dataset, zprops=update_props, bypass=True),
                     )
 
         return list(datasets.values())
@@ -1094,7 +1094,7 @@ class SystemDatasetService(ConfigService):
         if 'POSIXACL' in sysds_mntinfo['super_opts'] or 'NFSV4ACL' in sysds_mntinfo['super_opts']:
             self.middleware.call_sync(
                 'pool.dataset.update_impl',
-                UpdateImplArgs(name=config['basename'], zprops={'acltype': 'off'}),
+                UpdateImplArgs(name=config['basename'], zprops={'acltype': 'off'}, bypass=True),
             )
 
         self._bind_cores_to_coredump()

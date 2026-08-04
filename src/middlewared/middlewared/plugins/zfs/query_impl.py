@@ -3,11 +3,12 @@ from typing import Any
 
 from truenas_pylibzfs import ZFSError, ZFSException
 
+from middlewared.utils.zfs.managed_datasets import hidden_from_zfs_listing
+
 from .exceptions import ZFSPathNotFoundException
 from .normalization import normalize_asdict_result
 from .property_management import DeterminedProperties, build_set_of_zfs_props
 from .tier import get_dataset_tier_info_cached
-from .utils import has_internal_path
 
 __all__ = ("query_impl",)
 
@@ -30,7 +31,7 @@ class CallbackState:
 
 
 def __query_impl_callback(hdl: Any, state: CallbackState) -> bool:
-    if state.eip and has_internal_path(hdl.name):
+    if state.eip and hidden_from_zfs_listing(hdl.name):
         # returning False here will halt the iteration
         # entirely which is not what we want to do
         return True
@@ -97,7 +98,7 @@ def __query_impl_roots(hdl: Any, state: CallbackState) -> None:
 
 def __should_exclude_internal_paths(data: dict[str, Any]) -> bool:
     for path in data["paths"]:
-        if has_internal_path(path):
+        if hidden_from_zfs_listing(path):
             # somone is explicilty querying an
             # internal path
             return False

@@ -15,6 +15,7 @@ from middlewared.service.decorators import pass_thread_local_storage
 from middlewared.service_exception import ValidationError
 from middlewared.utils.filter_list import filter_list
 from middlewared.utils.nss import grp, pwd
+from middlewared.utils.zfs.managed_datasets import deny_protected_path
 
 
 def quota_cb(quota, state):
@@ -110,7 +111,9 @@ class PoolDatasetService(Service):
 
     @private
     @pass_thread_local_storage
-    def get_quota_impl(self, tls, ds, quota_type):
+    def get_quota_impl(self, tls, ds, quota_type, bypass: bool = False):
+        deny_protected_path('pool.dataset.get_quota', ds, bypass)
+
         rsrc = tls.lzh.open_resource(name=ds)
         quota_type = quota_type.upper()
         match quota_type:
@@ -166,7 +169,9 @@ class PoolDatasetService(Service):
 
     @private
     @pass_thread_local_storage
-    def set_quota_impl(self, tls, ds, inquotas):
+    def set_quota_impl(self, tls, ds, inquotas, bypass: bool = False):
+        deny_protected_path('pool.dataset.set_quota', ds, bypass)
+
         ds_quotas, quotas = dict(), list()
         for i in inquotas:
             if i['quota_type'] == 'DATASET':

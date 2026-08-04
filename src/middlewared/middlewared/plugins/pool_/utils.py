@@ -84,6 +84,9 @@ class UpdateImplArgs(TypedDict, total=False):
     """ZFS user properties to be applied during creation."""
     iprops: set
     """ZFS properties to be inherited from parent."""
+    bypass: bool
+    """Set by the subsystem that owns the dataset, which lifts the refusal to touch a dataset
+    middleware manages on the user's behalf."""
 
 
 @dataclasses.dataclass(slots=True, kw_only=True)

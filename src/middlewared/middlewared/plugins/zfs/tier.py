@@ -57,6 +57,7 @@ from middlewared.service import CallError, ConfigServicePart, GenericConfigServi
 from middlewared.service.decorators import pass_thread_local_storage
 import middlewared.sqlalchemy as sa
 from middlewared.utils.filter_list import filter_list
+from middlewared.utils.zfs.managed_datasets import deny_protected_path
 
 SPECIAL_SMALL_BLOCKS_PERFORMANCE = str(16 * 1024 * 1024)  # 16 MiB
 SPECIAL_SMALL_BLOCKS_REGULAR = "0"
@@ -401,6 +402,12 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
     )
     async def rewrite_job_create(self, data: dict[str, typing.Any]) -> dict[str, typing.Any]:
         """Create a new rewrite job for the specified ZFS dataset."""
+        # Nothing below is a chokepoint -- the job is created by an out-of-process daemon over its
+        # own socket -- so the refusal has to live here. It goes ahead of the "tiering is globally
+        # disabled" check because whether a dataset may be touched at all is a fact about the
+        # dataset, not about whether the daemon happens to be turned on.
+        deny_protected_path("zfs_tier_rewrite_job_create.dataset_name", data["dataset_name"])
+
         dataset_name = data["dataset_name"]
         field = "zfs_tier_rewrite_job_create.dataset_name"
 
@@ -491,6 +498,9 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
 
         return filter_list(failures, data.get("query-filters") or [], data.get("query-options") or {})
 
+    # Deliberately not refused for a managed dataset, unlike the rest of the rewrite job methods.
+    # Cancelling is the only way to stop a rewrite that is already moving blocks around, and being
+    # unable to stop one is worse than anything the refusal would prevent.
     @api_method(
         ZfsTierRewriteJobCancelArgs,
         ZfsTierRewriteJobCancelResult,
@@ -517,6 +527,11 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
     async def rewrite_job_recover(self, data: dict[str, typing.Any]) -> dict[str, typing.Any]:
         """Recover a rewrite job in ERROR state by reissuing failed rewrites."""
         dataset_name, job_uuid = _parse_tier_job_id(data["tier_job_id"])
+        # Recovery reissues rewrites, so it writes to the dataset. `rewrite_job_create` is the only
+        # way to produce a job through middleware and it already refuses managed datasets, which
+        # makes this unreachable in practice -- but the daemon holds its own job state across
+        # restarts and middleware is not its only possible client, so it is worth the line.
+        deny_protected_path("zfs_tier_rewrite_job_recover.tier_job_id", dataset_name)
         await self._validate_dataset_writable(dataset_name, "zfs_tier_rewrite_job_recover.tier_job_id")
         async with RewriteClient() as client:
             try:
@@ -589,10 +604,16 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
     )
     async def dataset_set_tier(self, data: dict[str, typing.Any]) -> dict[str, typing.Any]:
         """Set the performance tier for a ZFS dataset, optionally migrating existing data."""
+        # As in `rewrite_job_create`, ahead of the "tiering is globally disabled" check. The
+        # property write further down goes through `pool.dataset.update_impl`, which refuses a
+        # managed dataset as well, but it would report against its own schema rather than the field
+        # the caller sent -- and it is not reached until every other validation has passed.
         dataset_name = data["dataset_name"]
+        field = "zfs_tier_dataset_set_tier.dataset_name"
+        deny_protected_path(field, dataset_name)
+
         tier_type = data["tier_type"]
         move_existing_data = data["move_existing_data"]
-        field = "zfs_tier_dataset_set_tier.dataset_name"
 
         config = await self.config()
         if not config.enabled:

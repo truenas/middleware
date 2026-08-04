@@ -5,30 +5,16 @@ from typing import TypeAlias
 import truenas_pyfilter as _tf
 import truenas_pylibzfs
 
-from middlewared.plugins.container.utils import CONTAINER_DS_NAME
 from middlewared.plugins.zfs.tier import get_dataset_tier_info_cached
 from middlewared.plugins.zfs_.utils import TNUserProp
 from middlewared.service_exception import MatchNotFound
-from middlewared.utils.boot.pool import BOOT_POOL_NAME_VALID
 from middlewared.utils.filter_list import compile_filters, compile_options
 from middlewared.utils.size import format_size
+from middlewared.utils.zfs.managed_datasets import hidden_from_dataset_listing
 
 __all__ = ("generic_query",)
 
 
-INTERNAL_DATASETS = (
-    ".system",
-    "ix-applications",
-    "ix-apps",
-    CONTAINER_DS_NAME,
-)
-"""
-Tuple of internal dataset name patterns that should be filtered out by default.
-
-These patterns represent system-managed datasets that are typically hidden
-from user interfaces. Used by is_internal_dataset() to perform efficient
-string prefix matching.
-"""
 # String type annotations to prevent github CI
 # from exploding since truenas_pylibzfs module
 # isn't installed
@@ -130,9 +116,9 @@ class QueryFiltersCallbackState:
     """the count of objects if count_only == True"""
     exclude_internal_datasets: bool = True
     """Flag to control whether internal datasets should be filtered out.
-    When True, system datasets matching INTERNAL_DATASETS patterns and boot
-    pools will be excluded from query results. Allows for flexible control
-    over when system datasets should be included in results."""
+    When True, the datasets middleware manages on the user's behalf are
+    excluded from query results. Allows for flexible control over when
+    those datasets should be included in results."""
     tier_enabled: bool = False
     """When True, tier info is fetched per FILESYSTEM row inside generic_query_callback."""
     pool_special_cache: dict = field(default_factory=dict)
@@ -867,30 +853,6 @@ def snapshot_callback(snap_hdl, info):
     return True
 
 
-def is_internal_dataset(hdl):
-    """
-    Check if a dataset is an internal system dataset that should be filtered out.
-
-    Detects system datasets by checking against known boot pool names and
-    internal dataset patterns defined in INTERNAL_DATASETS.
-
-    Args:
-        hdl: ZFS handle from truenas_pylibzfs
-
-    Returns:
-        bool: True if the dataset is internal and should be filtered out,
-              False if it should be included in results
-    """
-    name = hdl.name
-    for i in BOOT_POOL_NAME_VALID:
-        if name == i or name.startswith(f"{i}/"):
-            return True
-    for i in INTERNAL_DATASETS:
-        if f"/{i}" in name:
-            return True
-    return False
-
-
 def generic_query_callback(hdl, state: QueryFiltersCallbackState):
     """
     Callback function for processing individual ZFS resources during iteration.
@@ -904,7 +866,7 @@ def generic_query_callback(hdl, state: QueryFiltersCallbackState):
     6. Recursively processing children if requested
 
     The function uses two focused filtering approaches:
-    - is_internal_dataset() for configurable system dataset filtering
+    - hidden_from_dataset_listing() for configurable system dataset filtering
     - exact_match_filters_specified_and_did_not_match() for performance optimization
 
     Args:
@@ -914,7 +876,7 @@ def generic_query_callback(hdl, state: QueryFiltersCallbackState):
     Returns:
         bool: True to continue iteration, False to halt iteration
     """
-    if state.exclude_internal_datasets and is_internal_dataset(hdl):
+    if state.exclude_internal_datasets and hidden_from_dataset_listing(hdl.name):
         # is an internal dataset and told to exclude them from results
         return True
 

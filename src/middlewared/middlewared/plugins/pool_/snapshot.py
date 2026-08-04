@@ -26,6 +26,7 @@ from middlewared.api.current import (
     ZFSResourceSnapshotHoldQuery,
     ZFSResourceSnapshotQuery,
     ZFSResourceSnapshotReleaseQuery,
+    ZFSResourceSnapshotRenameQuery,
     ZFSResourceSnapshotRollbackQuery,
 )
 from middlewared.plugins.zfs.exceptions import ZFSPathAlreadyExistsException, ZFSPathNotFoundException
@@ -442,4 +443,8 @@ class PoolSnapshotService(CRUDService):
                 'pool.snapshot.rename.new_name',
                 'Old and new snapshot must be part of the same ZFS dataset'
             )
-        await self.call2(self.s.zfs.resource.rename, id_, options['new_name'], options['recursive'])
+        await self.call2(self.s.zfs.resource.snapshot.rename, ZFSResourceSnapshotRenameQuery(
+            current_name=id_,
+            new_name=options['new_name'],
+            recursive=options['recursive'],
+        ))

@@ -8,7 +8,6 @@ import logging
 import multiprocessing
 import os
 import queue
-import re
 import signal
 import socket
 import threading
@@ -65,12 +64,7 @@ from middlewared.utils.string import make_sentence
 from middlewared.utils.threading import start_daemon_thread
 from middlewared.utils.time_utils import utc_now
 from middlewared.utils.timezone_choices import effective_timezone
-
-INVALID_DATASETS = (
-    re.compile(r"boot-pool($|/)"),
-    re.compile(r"freenas-boot($|/)"),
-    re.compile(r"[^/]+/\.system($|/)")
-)
+from middlewared.utils.zfs.managed_datasets import excluded_from_replication
 
 
 def lifetime_timedelta(value, unit):
@@ -578,7 +572,7 @@ class ZettareplService(Service):
         return [
             ds
             for ds in datasets
-            if not any(r.match(ds) for r in INVALID_DATASETS)
+            if not excluded_from_replication(ds)
         ]
 
     async def create_dataset(self, dataset, transport, ssh_credentials=None):

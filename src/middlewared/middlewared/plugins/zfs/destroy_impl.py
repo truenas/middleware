@@ -68,7 +68,6 @@ def destroy_impl(
     path: str,
     recursive: bool,
     all_snapshots: bool,
-    bypass: bool,
     defer: bool,
 ) -> tuple[str | None, int | None]:
     """
@@ -80,10 +79,6 @@ def destroy_impl(
             release any holds and destroy any clones or snapshots.
         all_snapshots: If true, will delete all snapshots ONLY for the
             given zfs resource. Will not delete the resource itself.
-        bypass: If true, will bypass the safety checks that prevent
-            deleting zfs resources that are "protected".
-            NOTE: This is only ever set by internal callers and is
-            not exposed to the public API.
         defer: Rather than returning error if the given snapshot is ineligible for immediate destruction,
             mark it for deferred, automatic destruction once it becomes eligible.
     """

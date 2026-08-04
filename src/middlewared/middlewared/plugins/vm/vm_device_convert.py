@@ -9,10 +9,10 @@ import subprocess
 from typing import TYPE_CHECKING, Any
 
 from middlewared.api.current import FilesystemStatData, VMDeviceConvert, VMDiskDevice, ZFSResourceQuery
-from middlewared.plugins.zfs.utils import has_internal_path
 from middlewared.service import CallError, ServiceContext
 from middlewared.service_exception import InstanceNotFound, ValidationError
 from middlewared.utils.libvirt.utils import ACTIVE_STATES
+from middlewared.utils.zfs.managed_datasets import blocked_from_mutation
 
 if TYPE_CHECKING:
     from middlewared.job import Job
@@ -99,7 +99,7 @@ def validate_convert_disk_image(
                 raise ValidationError(schema, f'{dip!r} is not a file', errno.EINVAL)
 
             vfs = context.middleware.call_sync('filesystem.statfs', dip)
-            if has_internal_path(vfs.source):
+            if blocked_from_mutation(vfs.source):
                 raise ValidationError(
                     schema,
                     f'{dip!r} is in a protected system path ({vfs.source})',
@@ -129,7 +129,7 @@ def validate_convert_disk_image(
                 raise ValidationError(schema, f'{sp!r} is not a directory', errno.EINVAL)
 
             vfs = context.middleware.call_sync('filesystem.statfs', dst.realpath)
-            if has_internal_path(vfs.source):
+            if blocked_from_mutation(vfs.source):
                 raise ValidationError(
                     schema,
                     f'{sp!r} is in a protected system path ({vfs.source})',
@@ -156,7 +156,7 @@ def validate_convert_zvol(
         raise ValidationError(schema, f'{ptn!r} does not exist', errno.ENOENT)
     elif zv[0]['type'] != 'VOLUME':
         raise ValidationError(schema, f'{ptn!r} is not a volume', errno.EINVAL)
-    elif has_internal_path(ptn):
+    elif blocked_from_mutation(ptn):
         raise ValidationError(schema, f'{ptn!r} is in a protected system path', errno.EACCES)
     elif not os.path.exists(ntp):
         raise ValidationError(schema, f'{ntp!r} does not exist', errno.ENOENT)

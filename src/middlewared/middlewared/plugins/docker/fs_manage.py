@@ -7,6 +7,7 @@ from middlewared.api.current import ZFSResourceQuery
 from middlewared.plugins.pool_.utils import UpdateImplArgs
 from middlewared.service import CallError, ServiceContext, ValidationError
 from middlewared.utils.filesystem.perms import enforce_mountpoint_perms
+from middlewared.utils.zfs.managed_datasets import is_boot_pool_path
 
 from .state_utils import IX_APPS_MOUNT_PATH, Status, docker_dataset_custom_props
 
@@ -34,7 +35,7 @@ async def ensure_ix_apps_mount_point(context: ServiceContext, docker_ds: str) ->
     if ds[0]["properties"]["mountpoint"]["value"] != IX_APPS_MOUNT_PATH:
         mp = docker_dataset_custom_props(docker_ds.split("/")[-1])["mountpoint"]
         await context.middleware.call(
-            "pool.dataset.update_impl", UpdateImplArgs(name=docker_ds, zprops={"mountpoint": mp})
+            "pool.dataset.update_impl", UpdateImplArgs(name=docker_ds, zprops={"mountpoint": mp}, bypass=True)
         )
 
 
@@ -49,7 +50,9 @@ async def ix_apps_is_mounted(context: ServiceContext, dataset_to_check: str | No
             return False
         raise
 
-    if fs_details.source.startswith("boot-pool/"):
+    # A rollback to a release without app support resets the mountpoint, which leaves the boot pool's
+    # root dataset mounted here. That is not the apps dataset, whichever boot pool this system has.
+    if is_boot_pool_path(fs_details.source):
         return False
 
     if dataset_to_check:
@@ -92,7 +95,7 @@ async def common_func(context: ServiceContext, mount: bool) -> Job | None:
                 raise
 
             await context.middleware.call(
-                "pool.dataset.update_impl", UpdateImplArgs(name=docker_ds, iprops={"mountpoint"})
+                "pool.dataset.update_impl", UpdateImplArgs(name=docker_ds, iprops={"mountpoint"}, bypass=True)
             )
         try:
             return await context.middleware.call("catalog.sync")  # type: ignore[no-any-return]
