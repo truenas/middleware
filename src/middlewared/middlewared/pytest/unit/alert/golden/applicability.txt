@@ -300,7 +300,7 @@ ScrubPaused                                 listed  Y   Y   Y   Y   Y   Y   Y
 ScrubPaused                                 source  Y   Y   Y   Y   Y   Y   Y
 ScrubStarted                                class   Y   Y   Y   Y   Y   Y   Y
 ScrubStarted                                listed  Y   Y   Y   Y   Y   Y   Y
-SecurityLocalUserAccountExpiration          source  .   .   .   Y   Y   .   Y
+SecurityLocalUserAccountExpiration          source  Y   Y   Y   Y   Y   Y   Y
 Sensor                                      class   .   .   .   Y   Y   .   Y
 Sensor                                      listed  .   .   .   Y   Y   .   Y
 Sensors                                     source  .   .   .   Y   Y   .   Y

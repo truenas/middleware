@@ -1,4 +1,3 @@
-from middlewared.alert.applicability import TRUENAS_HARDWARE
 from middlewared.alert.base import Alert, AlertClass, AlertSource, SimpleOneShotAlertClass, AlertCategory, AlertLevel
 from middlewared.alert.schedule import CrontabSchedule
 from middlewared.utils import security
@@ -44,7 +43,7 @@ class AllAdminAccountsExpiredAlertClass(AlertClass, SimpleOneShotAlertClass):
 class SecurityLocalUserAccountExpirationAlertSource(AlertSource):
     schedule = CrontabSchedule(hour=0)
     run_on_backup_node = False
-    applies_to = TRUENAS_HARDWARE
+    applies_to = None  # check() self-gates on max_password_age; narrowing this would silence the lockout recovery
 
     async def check(self):
         alerts = []
