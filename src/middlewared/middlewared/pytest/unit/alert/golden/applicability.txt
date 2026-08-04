@@ -116,7 +116,7 @@ FCHardwareReplaced                          class   Y   Y   Y   Y   Y   Y   Y
 FCHardwareReplaced                          listed  Y   Y   Y   Y   Y   Y   Y
 FIPSMisconfiguration                        class   Y   Y   Y   Y   Y   Y   Y
 FIPSMisconfiguration                        listed  Y   Y   Y   Y   Y   Y   Y
-FIPSProvider                                source  .   .   .   Y   Y   .   Y
+FIPSProvider                                source  .   .   Y   Y   Y   Y   Y
 Failover                                    source  .   .   .   .   .   .   Y
 FailoverCritical                            source  .   .   .   .   .   .   Y
 FailoverDisks                               source  .   .   .   .   .   .   Y

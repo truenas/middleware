@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from middlewared.alert.applicability import TRUENAS_HARDWARE
+from middlewared.alert.applicability import EXPECTED_TO_BE_LICENSED
 from middlewared.alert.base import AlertClass, AlertCategory, Alert, AlertLevel, AlertSource
 from middlewared.alert.schedule import IntervalSchedule
 
@@ -15,7 +15,7 @@ class FIPSMisconfigurationAlertClass(AlertClass):
 class FIPSProviderAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(hours=1))
 
-    applies_to = TRUENAS_HARDWARE
+    applies_to = EXPECTED_TO_BE_LICENSED
     run_on_backup_node = False
 
     async def check(self):
