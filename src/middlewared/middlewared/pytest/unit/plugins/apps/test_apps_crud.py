@@ -6,7 +6,8 @@ from pydantic import ValidationError
 import pytest
 
 from middlewared.api.current import AppCreate
-from middlewared.plugins.apps.crud import create_app, to_app_entries, to_app_entry
+from middlewared.job import State
+from middlewared.plugins.apps.crud import apps_being_installed, create_app, to_app_entries, to_app_entry
 from middlewared.plugins.apps.ix_apps.query import get_default_workload_values
 from middlewared.service import ValidationErrors
 
@@ -172,3 +173,56 @@ def test_an_instance_which_is_already_installed_is_still_refused():
             pass
 
     assert "does not allow multiple instances" in str(exc_info.value)
+
+
+def installing_apps(*jobs):
+    """Run `apps_being_installed` against a job queue holding `jobs`."""
+    context = MagicMock()
+    context.middleware.jobs.all.return_value = dict(enumerate(jobs))
+    return apps_being_installed(context)
+
+
+def fake_job(method_name, args, state=State.RUNNING):
+    return types.SimpleNamespace(method_name=method_name, args=args, state=state)
+
+
+@pytest.mark.parametrize("state", [State.WAITING, State.RUNNING])
+def test_an_install_queued_with_a_raw_payload_is_reported(state):
+    job = fake_job("app.create", [{"app_name": "actual-budget"}], state)
+
+    assert installing_apps(job) == {"actual-budget"}
+
+
+def test_an_install_queued_with_a_validated_payload_is_reported():
+    payload = AppCreate(app_name="actual-budget", catalog_app="actual-budget", train="community", version="1.1.13")
+
+    assert installing_apps(fake_job("app.create", [payload])) == {"actual-budget"}
+
+
+def test_a_conversion_is_reported():
+    # Converting an app deletes and recreates it in place, and the job is handed the name itself
+    assert installing_apps(fake_job("app.convert_to_custom", ["actual-budget"])) == {"actual-budget"}
+
+
+@pytest.mark.parametrize("state", [State.SUCCESS, State.FAILED, State.ABORTED])
+def test_a_job_which_is_no_longer_running_is_ignored(state):
+    job = fake_job("app.create", [{"app_name": "actual-budget"}], state)
+
+    assert installing_apps(job) == set()
+
+
+def test_a_job_of_another_method_is_ignored():
+    assert installing_apps(fake_job("app.delete", ["actual-budget"])) == set()
+
+
+@pytest.mark.parametrize("args", [[], [{}], [None]])
+def test_a_job_we_cannot_name_an_app_from_is_ignored(args):
+    assert installing_apps(fake_job("app.create", args)) == set()
+
+
+def test_every_app_in_flight_is_reported():
+    assert installing_apps(
+        fake_job("app.create", [{"app_name": "actual-budget"}]),
+        fake_job("app.convert_to_custom", ["plex"]),
+        fake_job("app.create", [{"app_name": "syncthing"}], State.SUCCESS),
+    ) == {"actual-budget", "plex"}

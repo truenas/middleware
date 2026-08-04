@@ -14,6 +14,11 @@ from .utils import AppErrorReason, dump_yaml
 # treated as fatal (portals -> {}, notes -> None, migrated -> False), so metadata written by an
 # older release is never misreported as broken - a false ERROR would block a working app.
 APP_METADATA_REQUIRED_KEYS: frozenset[str] = frozenset(('metadata', 'custom_app', 'version', 'human_version'))
+# Defaulted here rather than left to the API model: a query result makes every field optional so
+# that a caller can select a subset of them, so an app which does not carry these validates and then
+# reports them as undefined instead of as the values an entry promises. `portals` is defaulted where
+# it is normalized instead.
+APP_METADATA_DEFAULTS: dict[str, typing.Any] = {'migrated': False, 'notes': None}
 # Keys of the nested catalog metadata that upgrade detection indexes
 APP_CATALOG_METADATA_REQUIRED_KEYS: frozenset[str] = frozenset(('name', 'train', 'version'))
 
@@ -98,13 +103,16 @@ def get_app_metadata_checked(app_name: str) -> tuple[dict[str, typing.Any], AppE
 
 
 def resolve_app_metadata(
-    app_name: str, collective_metadata: dict[str, typing.Any], has_resources: bool, installing: set[str],
+    app_name: str, collective_metadata: dict[str, typing.Any], has_resources: bool,
+    installing: typing.Callable[[], set[str]],
 ) -> tuple[dict[str, typing.Any], AppErrorReason | None, bool]:
     """
     Resolve one app's metadata along with the reason it is unusable, if any.
 
     The returned boolean is ``False`` when the app should be ignored entirely. Costs no I/O for
-    apps present in ``collective_metadata``, which is every app on a healthy system.
+    apps present in ``collective_metadata``, which is every app on a healthy system. ``installing``
+    is called only for an app we would otherwise report as broken, since answering it means walking
+    the whole job queue.
     """
     if (app_metadata := collective_metadata.get(app_name)) is not None:
         return app_metadata, app_metadata_error(app_metadata), True
@@ -116,7 +124,7 @@ def resolve_app_metadata(
         # that is itself missing or corrupt cannot flip every app on the system into ERROR.
         return app_metadata, None, False
 
-    if error_reason == 'METADATA_MISSING' and not has_resources and app_name in installing:
+    if error_reason == 'METADATA_MISSING' and not has_resources and app_name in installing():
         # The app directory is created a moment before its metadata is written, so an install in
         # flight is indistinguishable from an abandoned directory by looking at the filesystem alone
         return app_metadata, None, False

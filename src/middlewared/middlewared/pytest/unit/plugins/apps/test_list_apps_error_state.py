@@ -3,6 +3,7 @@ import unittest.mock
 import pytest
 
 from middlewared.api.current import AppEntry
+from middlewared.plugins.apps.crud import to_app_entry
 from middlewared.plugins.apps.ix_apps.query import error_app_data, list_apps, normalize_portal_uris
 
 INCOMPLETE_METADATA = {"version": "1.1.13"}
@@ -15,6 +16,7 @@ COMPLETE_METADATA = {
     "portals": {},
     "version": "1.1.13",
 }
+METADATA_WITHOUT_DEFAULTS = {k: v for k, v in COMPLETE_METADATA.items() if k not in ("migrated", "notes")}
 RESOURCES = {
     "ix-actual-budget": {
         "containers": [
@@ -126,7 +128,34 @@ def test_stopped_app_without_metadata_is_ignored_while_installing(query, monkeyp
         lambda app_name: ({}, "METADATA_MISSING"),
     )
 
-    assert query({}, config_dirs=["actual-budget"], installing={"actual-budget"}) == []
+    assert query({}, config_dirs=["actual-budget"], installing=lambda: {"actual-budget"}) == []
+
+
+def test_the_job_queue_is_not_walked_for_a_healthy_system(query):
+    # Answering what is installing walks every job on the box, and app.query runs constantly
+    def installing():
+        raise AssertionError("the job queue was walked for an app which could not be mid-install")
+
+    apps = query({"actual-budget": COMPLETE_METADATA}, resources=RESOURCES, installing=installing)
+
+    assert apps[0]["error_reason"] is None
+
+
+def test_the_job_queue_is_walked_once_for_apps_missing_their_metadata(query, monkeypatch):
+    monkeypatch.setattr(
+        "middlewared.plugins.apps.ix_apps.metadata.get_app_metadata_checked",
+        lambda app_name: ({}, "METADATA_MISSING"),
+    )
+    asked = []
+
+    def installing():
+        asked.append(None)
+        return {"app-a"}
+
+    apps = query({}, config_dirs=["app-a", "app-b", "app-c"], installing=installing)
+
+    assert [app["id"] for app in apps] == ["app-b", "app-c"]
+    assert len(asked) == 1
 
 
 def test_healthy_apps_are_unaffected(query):
@@ -135,6 +164,41 @@ def test_healthy_apps_are_unaffected(query):
     assert apps[0]["state"] == "RUNNING"
     assert apps[0]["error_reason"] is None
     assert apps[0]["version"] == "1.1.13"
+
+
+@pytest.mark.parametrize(
+    "resources,config_dirs,state", [(RESOURCES, (), "RUNNING"), (None, ["actual-budget"], "STOPPED")]
+)
+def test_metadata_without_the_defaulted_keys_is_usable(query, resources, config_dirs, state):
+    # Metadata written by an older release, or hand edited, can be missing these. Checked for a
+    # running app and a stopped one, i.e. both loops in `list_apps`.
+    apps = query({"actual-budget": METADATA_WITHOUT_DEFAULTS}, resources=resources, config_dirs=config_dirs)
+
+    assert apps[0]["state"] == state
+    assert apps[0]["error_reason"] is None
+    assert (apps[0]["migrated"], apps[0]["notes"]) == (False, None)
+
+
+@pytest.mark.parametrize(
+    "resources,config_dirs,state", [(RESOURCES, (), "RUNNING"), (None, ["actual-budget"], "STOPPED")]
+)
+def test_an_app_without_the_defaulted_keys_survives_the_conversion(query, resources, config_dirs, state):
+    # A query result makes every field optional, so a row missing these converts without complaint
+    # and only the entry itself shows whether they were defaulted or left undefined
+    apps = query({"actual-budget": METADATA_WITHOUT_DEFAULTS}, resources=resources, config_dirs=config_dirs)
+
+    entry = to_app_entry(apps[0], False)
+
+    assert (entry.state, entry.error_reason) == (state, None)
+    assert (entry.migrated, entry.notes) == (False, None)
+
+
+def test_metadata_which_carries_the_defaulted_keys_keeps_them(query):
+    metadata = COMPLETE_METADATA | {"migrated": True, "notes": "Some notes"}
+
+    apps = query({"actual-budget": metadata}, resources=RESOURCES)
+
+    assert (apps[0]["migrated"], apps[0]["notes"]) == (True, "Some notes")
 
 
 @pytest.mark.parametrize(

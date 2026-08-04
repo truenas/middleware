@@ -37,22 +37,39 @@ if TYPE_CHECKING:
     from middlewared.job import Job
 
 
+# Methods which lay an app's directory down before its metadata is written into it
+APP_INSTALL_METHODS: frozenset[str] = frozenset(('app.create', 'app.convert_to_custom'))
+
+
 def apps_being_installed(context: ServiceContext) -> set[str]:
     """
     Names of apps with an installation in flight, read from the in-memory job queue.
 
     An app's directory is created shortly before its metadata is written to it, so without this an
     install in progress is indistinguishable on disk from an app whose metadata has gone missing.
+    Converting an app to a custom one deletes and recreates it in place, opening the same window on
+    an app which was working a moment ago.
     """
     installing = set()
     for job in context.middleware.jobs.all().values():
-        if job.method_name != 'app.create' or job.state not in (State.WAITING, State.RUNNING) or not job.args:
+        if (
+            job.method_name not in APP_INSTALL_METHODS
+            or job.state not in (State.WAITING, State.RUNNING)
+            or not job.args
+        ):
             continue
 
-        # Depending on how the job was queued, its payload is either the raw dict from the caller
-        # or an already validated model
+        # Conversion is handed the app name itself, while an install is handed either the raw dict
+        # from the caller or an already validated model, depending on how the job was queued
         payload = job.args[0]
-        app_name = payload.get('app_name') if isinstance(payload, dict) else getattr(payload, 'app_name', None)
+        app_name: str | None
+        if isinstance(payload, str):
+            app_name = payload
+        elif isinstance(payload, dict):
+            app_name = payload.get('app_name')
+        else:
+            app_name = getattr(payload, 'app_name', None)
+
         if app_name:
             installing.add(app_name)
 
@@ -142,7 +159,9 @@ def query_apps(
         'host_ip': host_ip,
         'retrieve_config': retrieve_config,
         'image_update_cache': context.call_sync2(context.s.app.image.get_update_cache, True),
-        'installing': apps_being_installed(context),
+        # Walking the job queue is only worth it for an app we would otherwise report as broken, so
+        # this is handed over as something to call rather than as an answer
+        'installing': lambda: apps_being_installed(context),
     }
     if len(filters) == 1 and filters[0][0] in ('id', 'name') and filters[0][1] == '=':
         kwargs['specific_app'] = filters[0][2]

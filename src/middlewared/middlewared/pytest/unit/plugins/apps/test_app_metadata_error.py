@@ -158,13 +158,13 @@ def test_metadata_in_collective_costs_no_io(app_configs):
     # Nothing is written to `app_configs`, so a filesystem read would fail to find anything
     collective = {"app-a": complete_metadata()}
 
-    assert resolve_app_metadata("app-a", collective, True, set()) == (complete_metadata(), None, True)
+    assert resolve_app_metadata("app-a", collective, True, lambda: set()) == (complete_metadata(), None, True)
 
 
 def test_incomplete_metadata_in_collective_is_reported(app_configs):
     collective = {"app-a": {"version": "1.1.13"}}
 
-    app_metadata, error_reason, present = resolve_app_metadata("app-a", collective, True, set())
+    app_metadata, error_reason, present = resolve_app_metadata("app-a", collective, True, lambda: set())
 
     assert (error_reason, present) == ("METADATA_INCOMPLETE", True)
 
@@ -173,30 +173,65 @@ def test_intact_metadata_outside_collective_is_ignored(app_configs):
     # An install or delete in flight, or a collective metadata file which is itself unreadable
     write_metadata(app_configs, "app-a", yaml.safe_dump(complete_metadata()))
 
-    assert resolve_app_metadata("app-a", {}, False, set()) == (complete_metadata(), None, False)
+    assert resolve_app_metadata("app-a", {}, False, lambda: set()) == (complete_metadata(), None, False)
 
 
 def test_unreadable_metadata_outside_collective_is_reported(app_configs):
     write_metadata(app_configs, "app-a", "{")
 
-    assert resolve_app_metadata("app-a", {}, False, set()) == ({}, "METADATA_UNREADABLE", True)
+    assert resolve_app_metadata("app-a", {}, False, lambda: set()) == ({}, "METADATA_UNREADABLE", True)
 
 
 def test_absent_metadata_is_reported_when_not_installing(app_configs):
     (app_configs / "app-a").mkdir()
 
-    assert resolve_app_metadata("app-a", {}, False, set()) == ({}, "METADATA_MISSING", True)
+    assert resolve_app_metadata("app-a", {}, False, lambda: set()) == ({}, "METADATA_MISSING", True)
 
 
 def test_absent_metadata_is_ignored_while_installing(app_configs):
     # The app directory is created moments before its metadata is written to it
     (app_configs / "app-a").mkdir()
 
-    assert resolve_app_metadata("app-a", {}, False, {"app-a"}) == ({}, None, False)
+    assert resolve_app_metadata("app-a", {}, False, lambda: {"app-a"}) == ({}, None, False)
 
 
 def test_absent_metadata_is_reported_while_installing_if_resources_exist(app_configs):
     # Containers only exist once the metadata has been written, so there is no install window here
     (app_configs / "app-a").mkdir()
 
-    assert resolve_app_metadata("app-a", {}, True, {"app-a"}) == ({}, "METADATA_MISSING", True)
+    assert resolve_app_metadata("app-a", {}, True, lambda: {"app-a"}) == ({}, "METADATA_MISSING", True)
+
+
+def refuse_to_answer():
+    raise AssertionError("the job queue was walked for an app which could not be mid-install")
+
+
+def test_metadata_in_collective_is_not_asked_what_is_installing(app_configs):
+    collective = {"app-a": complete_metadata()}
+
+    assert resolve_app_metadata("app-a", collective, True, refuse_to_answer) == (complete_metadata(), None, True)
+
+
+def test_intact_metadata_outside_collective_is_not_asked_what_is_installing(app_configs):
+    write_metadata(app_configs, "app-a", yaml.safe_dump(complete_metadata()))
+
+    assert resolve_app_metadata("app-a", {}, False, refuse_to_answer) == (complete_metadata(), None, False)
+
+
+def test_unreadable_metadata_is_not_asked_what_is_installing(app_configs):
+    # Only a directory holding no metadata at all can be an install in flight
+    write_metadata(app_configs, "app-a", "{")
+
+    assert resolve_app_metadata("app-a", {}, False, refuse_to_answer) == ({}, "METADATA_UNREADABLE", True)
+
+
+def test_absent_metadata_is_asked_what_is_installing(app_configs):
+    (app_configs / "app-a").mkdir()
+    asked = []
+
+    def installing():
+        asked.append(None)
+        return {"app-a"}
+
+    assert resolve_app_metadata("app-a", {}, False, installing) == ({}, None, False)
+    assert len(asked) == 1

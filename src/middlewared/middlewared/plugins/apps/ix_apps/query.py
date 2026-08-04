@@ -1,7 +1,8 @@
 from collections import defaultdict
 from dataclasses import dataclass
+import functools
 import os
-from typing import Any
+from typing import Any, Callable
 
 from packaging.version import InvalidVersion, Version
 
@@ -10,7 +11,7 @@ from middlewared.plugins.catalog.utils import IX_APP_NAME
 
 from .docker.query import list_resources_by_project
 from .lifecycle import get_current_app_config
-from .metadata import get_collective_config, get_collective_metadata, resolve_app_metadata
+from .metadata import APP_METADATA_DEFAULTS, get_collective_config, get_collective_metadata, resolve_app_metadata
 from .path import get_app_parent_config_path
 from .utils import PROJECT_PREFIX, AppErrorReason, AppState, ContainerState, get_app_name_from_project_name
 
@@ -164,10 +165,12 @@ def list_apps(
     host_ip: str | None = None,
     retrieve_config: bool = False,
     image_update_cache: dict[str, Any] | None = None,
-    installing: set[str] | None = None,
+    installing: Callable[[], set[str]] | None = None,
 ) -> list[dict[str, Any]]:
     apps = []
-    installing = installing or set()
+    # Answering this walks the whole job queue, so it is asked at most once per call and only for an
+    # app we would otherwise report as broken
+    installing = functools.cache(installing) if installing else (lambda: set())
     image_update_cache = image_update_cache or {}
     app_names = set()
     metadata = get_collective_metadata()
@@ -217,8 +220,9 @@ def list_apps(
         )
         app_data = {
             # Written into the metadata by an app which asks for it, and defaulted for one which
-            # does not - unlike the keys below, this one is the app's to set
+            # does not - unlike the keys below, these are the app's to set
             'action_required': False,
+            **APP_METADATA_DEFAULTS,
             **app_metadata,
             'portals': normalize_portal_uris(app_metadata.get('portals') or {}, host_ip),
             # Everything we determined ourselves comes last, so that metadata which was hand edited
@@ -270,6 +274,7 @@ def list_apps(
                 # See the app_data of a running app for why the keys are ordered this way
                 app_data = {
                     'action_required': False,
+                    **APP_METADATA_DEFAULTS,
                     **app_metadata,
                     'portals': normalize_portal_uris(app_metadata.get('portals') or {}, host_ip),
                     'name': entry.name,
