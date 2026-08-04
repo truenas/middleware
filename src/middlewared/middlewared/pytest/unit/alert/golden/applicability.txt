@@ -269,11 +269,6 @@ RsyncFailed                                 class   Y   Y   Y   Y   Y   Y   Y
 RsyncFailed                                 listed  Y   Y   Y   Y   Y   Y   Y
 RsyncSuccess                                class   Y   Y   Y   Y   Y   Y   Y
 RsyncSuccess                                listed  Y   Y   Y   Y   Y   Y   Y
-SATADOMWear                                 source  .   .   .   Y   Y   .   Y
-SATADOMWearCritical                         class   .   .   .   Y   Y   .   Y
-SATADOMWearCritical                         listed  .   .   .   Y   Y   .   Y
-SATADOMWearWarning                          class   .   .   .   Y   Y   .   Y
-SATADOMWearWarning                          listed  .   .   .   Y   Y   .   Y
 SMART                                       source  Y   Y   Y   Y   Y   Y   Y
 SMARTEraseCycleCount                        class   Y   Y   Y   Y   Y   Y   Y
 SMARTEraseCycleCount                        listed  Y   Y   Y   Y   Y   Y   Y
