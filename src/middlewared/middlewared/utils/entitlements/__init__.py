@@ -9,12 +9,17 @@ the evaluation half stays pure and testable against synthesized facts.
 
 A policy entry is one of a few rule kinds: a matrix ``Vector`` (resolved by
 column against the product feature matrix), a ``LegacyRule`` (an arbitrary
-callable reproducing a today-behavior gate verbatim), a ``TierRule`` (gating on
-a per-feature ``FeatureInfo.type`` qualifier), or a ``LicenseTypeRule`` (gating
-on ``LicenseInfo.type``). Every live ``POLICY`` feature is now bound to its
-matrix ``Vector``; ``LegacyRule`` is retained as a rule kind for any feature
-that later needs a transitional shim. Flipping a feature between the two is a
-one-line data change.
+callable reproducing a today-behavior gate verbatim), a ``TierRule`` (resolved
+by column against its ``DERIVED_VECTORS`` row, then qualified by a per-feature
+``FeatureInfo.type``), or a ``LicenseTypeRule`` (gating on ``LicenseInfo.type``
+alone, with no column). Every live ``POLICY`` feature is now bound to its matrix
+``Vector``; ``LegacyRule`` is retained as a rule kind for any feature that later
+needs a transitional shim. Flipping a feature between the two is a one-line data
+change.
+
+A ``TierRule``'s vector may only set the two key columns, because a tier is read
+off a feature key and cannot be evaluated without one; the rule rejects anything
+else at construction.
 
 Layering is a strict DAG: ``facts`` <- ``engine`` <- ``legacy`` <- ``policy``.
 ``engine`` is pure evaluation with no knowledge of the live registry; ``policy``
@@ -40,12 +45,13 @@ from .engine import (
     Vector,
 )
 from .facts import EntitlementFacts, HardwareClass
-from .matrix import TARGET_VECTORS
+from .matrix import DERIVED_VECTORS, TARGET_VECTORS
 from .policy import POLICY, check_entitlement
 from .system import get_entitlement
 
 __all__ = [
     "COLUMNS",
+    "DERIVED_VECTORS",
     "FEATURE_DISPLAY_NAMES",
     "FEATURE_MESSAGES",
     "POLICY",
