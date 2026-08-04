@@ -137,6 +137,40 @@ def test_healthy_apps_are_unaffected(query):
     assert apps[0]["version"] == "1.1.13"
 
 
+@pytest.mark.parametrize(
+    "overrides,key,expected",
+    [
+        ({"name": 1}, "name", "actual-budget"),
+        ({"id": 1}, "id", "actual-budget"),
+        ({"state": "SOMETHING"}, "state", "RUNNING"),
+        ({"error_reason": "METADATA_MISSING"}, "error_reason", None),
+        ({"upgrade_available": "yes"}, "upgrade_available", False),
+        ({"version_details": "none"}, "version_details", None),
+    ],
+)
+def test_metadata_does_not_override_what_we_determined_ourselves(query, overrides, key, expected):
+    # A metadata supplied `id` would leave the app undeletable, since `get_instance` looks it up by
+    # the name it was asked for, and the rest blind the checks which act on the state we reported
+    apps = query({"actual-budget": COMPLETE_METADATA | overrides}, resources=RESOURCES)
+
+    assert apps[0][key] == expected
+
+
+def test_metadata_does_not_override_the_workloads(query):
+    # These are what keeps the ports and volumes the app is holding visible to conflict detection
+    apps = query({"actual-budget": COMPLETE_METADATA | {"active_workloads": "none"}}, resources=RESOURCES)
+
+    assert apps[0]["active_workloads"]["containers"] == 1
+
+
+def test_metadata_the_api_model_cannot_describe_reaches_the_conversion(query):
+    # The row stays everything the metadata file holds, so that `to_app_entry` is the one which
+    # decides an app cannot be described rather than this silently dropping what it would reject
+    apps = query({"actual-budget": COMPLETE_METADATA | {"some_new_key": "value"}}, resources=RESOURCES)
+
+    assert apps[0]["some_new_key"] == "value"
+
+
 @pytest.mark.parametrize("app_metadata", ["actual-budget", 1, 1.13, ["actual-budget"]])
 def test_metadata_entry_which_is_not_a_mapping_is_reported(query, app_metadata):
     # An entry of the collective metadata file is whatever yaml parsed it as, and testing a

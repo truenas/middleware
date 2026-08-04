@@ -92,7 +92,8 @@ class AppEntry(BaseModel):
         description=(
             "Why the application is in the `ERROR` state, or `null` if it is not. `METADATA_MISSING` means its "
             "metadata file is absent, `METADATA_UNREADABLE` that the file could not be read or parsed, and "
-            "`METADATA_INCOMPLETE` that it was read but does not describe the application."
+            "`METADATA_INCOMPLETE` that it was read but does not describe the application - a key it cannot "
+            "be rendered without is absent, or one it holds cannot be interpreted."
         ),
     )
     upgrade_available: bool = Field(description="Whether a newer version of the application is available for upgrade.")

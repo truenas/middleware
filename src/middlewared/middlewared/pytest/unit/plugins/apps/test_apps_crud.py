@@ -1,5 +1,4 @@
 import contextlib
-import logging
 import types
 from unittest.mock import MagicMock, patch
 
@@ -75,23 +74,6 @@ def test_row_with_a_non_string_key_is_reported_as_broken(key):
     entry = to_app_entry(app_row() | {key: "value"}, False)
 
     assert (entry.id, entry.state, entry.error_reason) == ("actual-budget", "ERROR", "METADATA_INCOMPLETE")
-
-
-def test_broken_row_is_logged(caplog):
-    # A change to the API model would land here for every app on the box, and would otherwise do so
-    # silently while blaming the user's on-disk files
-    with caplog.at_level(logging.WARNING, logger="app_lifecycle"):
-        to_app_entry(app_row(version=1.13), False)
-
-    assert "actual-budget: reported as broken" in caplog.text
-
-
-def test_healthy_row_is_not_logged(caplog):
-    # `app.query` runs constantly, so the happy path has to stay quiet
-    with caplog.at_level(logging.WARNING, logger="app_lifecycle"):
-        to_app_entry(app_row(), False)
-
-    assert "actual-budget" not in caplog.text
 
 
 def test_row_we_cannot_even_name_is_not_swallowed():

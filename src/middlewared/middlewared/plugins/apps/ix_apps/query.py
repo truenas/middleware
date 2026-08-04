@@ -103,6 +103,8 @@ def get_config_of_app(
     if config := collective_config.get(app_data['name']):
         return {'config': config}
 
+    # app_metadata_error has already rejected an app whose version is not a usable path
+    # component, but the path this builds is only safe while that stays true
     if not app_data['version']:
         return {'config': {}}
 
@@ -214,18 +216,23 @@ def list_apps(
             train_to_apps_version_mapping, app_metadata
         )
         app_data = {
+            # Written into the metadata by an app which asks for it, and defaulted for one which
+            # does not - unlike the keys below, this one is the app's to set
+            'action_required': False,
+            **app_metadata,
+            'portals': normalize_portal_uris(app_metadata.get('portals') or {}, host_ip),
+            # Everything we determined ourselves comes last, so that metadata which was hand edited
+            # or written by a release we know nothing about cannot pass itself off as any of it
             'name': app_name,
             'id': app_name,
             'active_workloads': active_workloads,
             'state': state_value,
             'upgrade_available': upgrade_available,
             'latest_version': latest_version,
-            'action_required': False,
             'latest_app_version': latest_app_version,
             'image_updates_available': image_updates_available,
             'error_reason': None,
             'version_details': None,
-            **app_metadata | {'portals': normalize_portal_uris(app_metadata.get('portals') or {}, host_ip)}
         }
         if (
             app_data.get('custom_app') or (app_metadata.get('metadata') or {}).get('name') == IX_APP_NAME
@@ -260,19 +267,21 @@ def list_apps(
                 upgrade_available, latest_version, latest_app_version = upgrade_available_for_app(
                     train_to_apps_version_mapping, app_metadata
                 )
+                # See the app_data of a running app for why the keys are ordered this way
                 app_data = {
+                    'action_required': False,
+                    **app_metadata,
+                    'portals': normalize_portal_uris(app_metadata.get('portals') or {}, host_ip),
                     'name': entry.name,
                     'id': entry.name,
                     'active_workloads': get_default_workload_values(),
                     'state': AppState.STOPPED.value,
                     'upgrade_available': upgrade_available,
                     'latest_version': latest_version,
-                    'action_required': False,
                     'latest_app_version': latest_app_version,
                     'image_updates_available': False,
                     'error_reason': None,
                     'version_details': None,
-                    **app_metadata | {'portals': normalize_portal_uris(app_metadata.get('portals') or {}, host_ip)}
                 }
                 apps.append(app_data | get_config_of_app(app_data, collective_config, retrieve_config))
     except FileNotFoundError:

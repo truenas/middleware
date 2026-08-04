@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import errno
-import logging
 from typing import TYPE_CHECKING, Any, Literal, cast, overload
 
 from catalog_reader.custom_app import get_version_details
@@ -36,8 +35,6 @@ if TYPE_CHECKING:
     from middlewared.api.base.server.app import App
     from middlewared.api.current import QueryOptionsCount, QueryOptionsGet
     from middlewared.job import Job
-
-logger = logging.getLogger('app_lifecycle')
 
 
 def apps_being_installed(context: ServiceContext) -> set[str]:
@@ -83,10 +80,6 @@ def to_app_entry(row: dict[str, Any], retrieve_config: bool) -> AppEntry:
             # There is no entry we could report an app we cannot even name as. A row of this shape
             # only comes of a query which selected neither `name` nor `id`.
             raise
-
-        # Worth a warning of its own: the app's on-disk data is the likely cause, but a change to
-        # the API model would land here for every app on the box while blaming the user's files
-        logger.warning('%s: reported as broken, the entry built for it is not one we can describe', app_name)
 
     # Its real workloads keep the ports and volumes the app is still holding on to visible to
     # conflict checks, where we can describe them
