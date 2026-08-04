@@ -8,7 +8,6 @@ import contextlib
 import os
 import signal
 
-from middlewared.plugins.system.product import ProductType
 from middlewared.service import Service, CallError
 from middlewared.utils import MIDDLEWARE_RUN_DIR
 from middlewared.utils.cgroups import move_to_root_cgroups
@@ -117,10 +116,6 @@ class FencedService(Service):
 
 
 async def hook_pool_event(middleware, *args, **kwargs):
-    # only run this on SCALE Enterprise
-    if await middleware.call('system.product_type') != ProductType.ENTERPRISE:
-        return
-
     # HA licensed systems call fenced on their own
     if await middleware.call('failover.licensed'):
         return
