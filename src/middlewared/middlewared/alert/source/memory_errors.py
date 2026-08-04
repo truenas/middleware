@@ -3,7 +3,7 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
-from middlewared.alert.applicability import HA_LICENSED, TRUENAS_HARDWARE
+from middlewared.alert.applicability import HA_LICENSED, TRUENAS_HARDWARE, TRUENAS_OR_MINI_HARDWARE
 from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertLevel, AlertSource
 from middlewared.alert.schedule import CrontabSchedule
 from middlewared.utils.size import format_size
@@ -14,7 +14,7 @@ class MemoryErrorsAlertClass(AlertClass):
     level = AlertLevel.WARNING
     title = 'Uncorrected Memory Errors Detected'
     text = '%(count)d total uncorrected errors detected for %(loc)s.'
-    applies_to = TRUENAS_HARDWARE
+    applies_to = TRUENAS_OR_MINI_HARDWARE
     proactive_support = True
 
 
@@ -30,7 +30,7 @@ class MemorySizeMismatchAlertClass(AlertClass):
 
 class MemoryErrorsAlertSource(AlertSource):
     schedule = CrontabSchedule(hour=1)  # every 24hrs
-    applies_to = TRUENAS_HARDWARE
+    applies_to = TRUENAS_OR_MINI_HARDWARE
 
     async def check(self):
         alerts = []

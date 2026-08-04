@@ -9,6 +9,7 @@ from middlewared.alert.applicability import (
     MINI_HARDWARE,
     NOT_APPLIANCE_HARDWARE,
     TRUENAS_HARDWARE,
+    TRUENAS_OR_MINI_HARDWARE,
     Applicability,
     applies,
     declaration_rule_name,
@@ -36,6 +37,7 @@ GRIDS = (
     #                          TRUENAS_HW  MINI    GENERIC   -- and within each, unlicensed/plain/HA
     (TRUENAS_HARDWARE,         "YYY",      "...",  "..."),
     (MINI_HARDWARE,            "...",      "YYY",  "..."),
+    (TRUENAS_OR_MINI_HARDWARE, "YYY",      "YYY",  "..."),
     (NOT_APPLIANCE_HARDWARE,   "...",      "YYY",  "YYY"),
     (ANY_LICENSE,              ".YY",      ".YY",  ".YY"),
     (HA_LICENSED,              "..Y",      "..Y",  "..Y"),

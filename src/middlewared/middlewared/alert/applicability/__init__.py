@@ -36,6 +36,7 @@ from .vocabulary import (
     MINI_HARDWARE,
     NOT_APPLIANCE_HARDWARE,
     TRUENAS_HARDWARE,
+    TRUENAS_OR_MINI_HARDWARE,
 )
 
 __all__ = [
@@ -46,6 +47,7 @@ __all__ = [
     "MINI_HARDWARE",
     "NOT_APPLIANCE_HARDWARE",
     "TRUENAS_HARDWARE",
+    "TRUENAS_OR_MINI_HARDWARE",
     "Applicability",
     "Rule",
     "applies",

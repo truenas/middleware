@@ -200,9 +200,9 @@ LocalAccountExpired                         class   Y   Y   Y   Y   Y   Y   Y
 LocalAccountExpired                         listed  Y   Y   Y   Y   Y   Y   Y
 LocalAccountExpiring                        class   Y   Y   Y   Y   Y   Y   Y
 LocalAccountExpiring                        listed  Y   Y   Y   Y   Y   Y   Y
-MemoryErrors                                class   .   .   .   Y   Y   .   Y
-MemoryErrors                                listed  .   .   .   Y   Y   .   Y
-MemoryErrors                                source  .   .   .   Y   Y   .   Y
+MemoryErrors                                class   .   Y   Y   Y   Y   .   Y
+MemoryErrors                                listed  .   Y   Y   Y   Y   .   Y
+MemoryErrors                                source  .   Y   Y   Y   Y   .   Y
 MemorySizeMismatch                          class   .   .   .   Y   Y   .   Y
 MemorySizeMismatch                          listed  .   .   .   .   .   .   Y
 MemorySizeMismatch                          source  .   .   .   Y   Y   .   Y
