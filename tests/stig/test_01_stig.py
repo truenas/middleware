@@ -3,7 +3,7 @@ import pytest
 
 from middlewared.service_exception import CallError
 from middlewared.service_exception import ValidationErrors as Verr
-from middlewared.test.integration.assets.product import product_type, set_fips_available
+from middlewared.test.integration.assets.product import set_fips_available
 from middlewared.test.integration.assets.two_factor_auth import (
     enabled_twofactor_auth, get_user_secret, get_2fa_totp_token
 )
@@ -79,16 +79,14 @@ def clear_ratelimit(root_non_stig_client):
 
 @pytest.fixture(scope='function')
 def community_product():
-    with product_type('COMMUNITY_EDITION'):
-        with set_fips_available(False):
-            yield
+    with set_fips_available(False):
+        yield
 
 
 @pytest.fixture(scope='function')
 def enterprise_product(restore_after_stig):
-    with product_type('ENTERPRISE'):
-        with set_fips_available(True):
-            yield
+    with set_fips_available(True):
+        yield
 
 
 @pytest.fixture(scope='function')
@@ -199,8 +197,8 @@ def setup_stig(full_admin_w_2fa_builtin_admin, module_stig_enabled, root_non_sti
         # Restore default security, user and network settings (FIPS is mocked). Runs from
         # the finally below on success and on a failed/partial setup alike, so it opens its
         # own 2FA-authenticated sessions and tolerates STIG never having been enabled. It
-        # must finish before the product_type / set_fips_available mocks unwind, because
-        # their teardown logs in with a plain password.
+        # must finish before the set_fips_available mock unwinds, because its teardown
+        # logs in with a plain password.
         global STIG_ACTIVE
         with client(auth=None) as c:
             do_stig_auth(c, user_obj, secret)
@@ -228,54 +226,53 @@ def setup_stig(full_admin_w_2fa_builtin_admin, module_stig_enabled, root_non_sti
                 c2.call('user.update', id, {"password_disabled": False})
             c2.call('network.configuration.update', {"activity": {"type": "DENY", "activities": []}})
 
-    with product_type('ENTERPRISE'):
-        with set_fips_available(True):
-            try:
-                with client(auth=None) as c:
-                    # Do two-factor authentication before enabling STIG support
-                    do_stig_auth(c, user_obj, secret)
+    with set_fips_available(True):
+        try:
+            with client(auth=None) as c:
+                # Do two-factor authentication before enabling STIG support
+                do_stig_auth(c, user_obj, secret)
 
-                    # Disable password authentication for immutable admin accounts
-                    admin_id = get_excluded_admins()
-                    for id in admin_id:
-                        c.call('user.update', id, {"password_disabled": True})
+                # Disable password authentication for immutable admin accounts
+                admin_id = get_excluded_admins()
+                for id in admin_id:
+                    c.call('user.update', id, {"password_disabled": True})
 
-                    config_jobid = c.call('system.security.update', {'enable_fips': True, 'enable_gpos_stig': True})
-                    busy_wait_on_job(config_jobid, call_fn=c.call)
-                    STIG_ACTIVE = True
-                    if ha:
-                        wait_for_failover_disabled_reasons(["LOC_FIPS_REBOOT_REQ"], call_fn=c.call)
-                        c.call('system.reboot', 'setup_stig: configure')
-                        time.sleep(10)
+                config_jobid = c.call('system.security.update', {'enable_fips': True, 'enable_gpos_stig': True})
+                busy_wait_on_job(config_jobid, call_fn=c.call)
+                STIG_ACTIVE = True
+                if ha:
+                    wait_for_failover_disabled_reasons(["LOC_FIPS_REBOOT_REQ"], call_fn=c.call)
+                    c.call('system.reboot', 'setup_stig: configure')
+                    time.sleep(10)
 
-                # We may have rebooted both controllers at this point.
-                # Need to create a new client, so we can see the nodes
-                # stabilize.
-                with client(auth=None) as c:
-                    do_stig_auth(c, user_obj, secret)
-                    # We can no longer call private APIs
-                    if ha:
-                        wait_for_failover_disabled_reasons([], call_fn=c.call)
+            # We may have rebooted both controllers at this point.
+            # Need to create a new client, so we can see the nodes
+            # stabilize.
+            with client(auth=None) as c:
+                do_stig_auth(c, user_obj, secret)
+                # We can no longer call private APIs
+                if ha:
+                    wait_for_failover_disabled_reasons([], call_fn=c.call)
 
-                    # Since auth.get_authenticator_assurance_level is private,
-                    # we cannot call it now.
-                    #   aal = c.call('auth.get_authenticator_assurance_level')
-                    #   assert aal == 'LEVEL_2'
-                    # Instead, we can call auth.mechanism_choices and check that only
-                    # "PASSWORD_PLAIN" is there
-                    choices = c.call('auth.mechanism_choices')
-                    assert len(choices) == 1, choices
-                    assert choices[0] == "PASSWORD_PLAIN", choices
-                    aal = 'LEVEL_2'
+                # Since auth.get_authenticator_assurance_level is private,
+                # we cannot call it now.
+                #   aal = c.call('auth.get_authenticator_assurance_level')
+                #   assert aal == 'LEVEL_2'
+                # Instead, we can call auth.mechanism_choices and check that only
+                # "PASSWORD_PLAIN" is there
+                choices = c.call('auth.mechanism_choices')
+                assert len(choices) == 1, choices
+                assert choices[0] == "PASSWORD_PLAIN", choices
+                aal = 'LEVEL_2'
 
-                    yield {
-                        'connection': c,
-                        'user_obj': user_obj,
-                        'secret': secret,
-                        'aal': aal
-                    }
-            finally:
-                teardown_stig()
+                yield {
+                    'connection': c,
+                    'user_obj': user_obj,
+                    'secret': secret,
+                    'aal': aal
+                }
+        finally:
+            teardown_stig()
 
 
 # The order of the following tests is significant. We gradually add fixtures that have module scope
