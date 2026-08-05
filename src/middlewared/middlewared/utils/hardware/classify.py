@@ -2,8 +2,8 @@
 
 Every input arrives as an argument, so this module performs no I/O and can be
 exercised against synthesized ``DMIInfo`` without mocking. ``probe`` owns the
-one impure step -- reading DMI and the bhyve backplane -- and hands the result
-here.
+impure steps -- reading DMI and running ``detect``'s platform detection -- and
+hands both results here as plain data.
 """
 
 from __future__ import annotations
@@ -17,39 +17,45 @@ from .types import HardwareClass, HardwareInfo, Platform
 __all__ = ("classify", "classify_platform", "hardware_class_for")
 
 
-def classify_platform(dmi: DMIInfo, *, ha_backplane_present: bool = False) -> Platform:
+def classify_platform(dmi: DMIInfo, *, ha_platform: str) -> Platform:
     """Classify `dmi` into a ``Platform``.
+
+    `ha_platform` is the HARDWARE half of ``detect.detect_platform()``: the
+    platform team's codename for this machine, or ``"MANUAL"``. It has no
+    default -- defaulting it to ``"MANUAL"`` would silently demote every
+    ``IXKVM`` and ``BHYVE`` caller to ``GENERIC``, which is an entitlement
+    regression that raises nothing.
 
     Rules are applied in this order:
 
-    1. A recognized chassis tag wins outright: ``MINI`` when the tag names a
-       Mini, ``IX_HARDWARE`` otherwise.
-    2. QEMU whose system serial is stamped as an HA node (``ha`` prefix, or a
-       ``_c1``/``_c2`` suffix) is ``IXKVM``.
-    3. A bhyve guest is ``BHYVE`` only when the HA backplane was found; the
-       caller supplies that as `ha_backplane_present` because probing for it
-       is I/O.
-    4. Everything else is ``GENERIC``.
+    1. `ha_platform` wins outright when it named something. ``IXKVM`` and
+       ``BHYVE`` are the two HA virtual machine flavors; every other codename
+       is iX-built appliance hardware. Codenames this does not recognize
+       degrade to ``IX_HARDWARE`` rather than raising, so a platform shipped
+       after this was written is still entitled as hardware.
+    2. ``"MANUAL"`` is not an answer. It means only "not one half of an HA
+       pair", which is true of R-series, Z-series, Minis and whiteboxes
+       alike, so it falls through to the chassis tag: ``MINI`` when the tag
+       names a Mini, ``IX_HARDWARE`` for any other recognized tag.
+    3. Everything else is ``GENERIC``.
 
-    The chassis-first ordering deliberately differs from ``detect_platform``,
-    which tests for QEMU before it looks at the product name. The consequence
-    is intended: a QEMU virtual machine spoofing a ``TRUENAS-*`` product name
-    classifies as hardware here, because what this answers is "which column of
-    the feature matrix", and a machine claiming to be an appliance is taken at
-    its word. ``detect_platform`` is answering a different question -- which
-    HA node am I -- where the QEMU stamp is the more specific signal.
+    Detection ahead of the chassis tag is a deliberate reversal of the
+    ordering this used to apply. The consequence: a QEMU virtual machine
+    stamped as an HA node is ``IXKVM`` even when its chassis tag claims to be
+    a Mini, so it lands in the appliance column rather than the Mini one. The
+    HA stamp is the more specific signal, and such a machine is standing in
+    for an appliance whatever product name it advertises.
     """
+    if ha_platform == "IXKVM":
+        return Platform.IXKVM
+    if ha_platform == "BHYVE":
+        return Platform.BHYVE
+    if ha_platform != "MANUAL":
+        return Platform.IX_HARDWARE
+
     chassis: str = get_chassis_hardware(dmi)
     if chassis != TRUENAS_UNKNOWN:
         return Platform.MINI if "MINI" in chassis else Platform.IX_HARDWARE
-
-    if dmi.system_manufacturer == "QEMU":
-        serial: str = dmi.system_serial_number
-        if serial.startswith("ha") or serial.endswith(("_c1", "_c2")):
-            return Platform.IXKVM
-
-    if dmi.system_product_name == "BHYVE" and ha_backplane_present:
-        return Platform.BHYVE
 
     return Platform.GENERIC
 
@@ -70,10 +76,10 @@ def hardware_class_for(platform: Platform) -> HardwareClass:
     return _CLASS_BY_PLATFORM[platform]
 
 
-def classify(dmi: DMIInfo, *, ha_backplane_present: bool = False) -> HardwareInfo:
+def classify(dmi: DMIInfo, *, ha_platform: str) -> HardwareInfo:
     """Classify `dmi` into a full ``HardwareInfo``."""
     chassis: str = get_chassis_hardware(dmi)
-    platform = classify_platform(dmi, ha_backplane_present=ha_backplane_present)
+    platform = classify_platform(dmi, ha_platform=ha_platform)
     return HardwareInfo(
         platform=platform,
         hardware_class=hardware_class_for(platform),
