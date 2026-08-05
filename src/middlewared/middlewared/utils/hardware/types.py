@@ -55,6 +55,15 @@ class HardwareClass(enum.Enum):
             return cls.MINI
         return cls.TRUENAS_HW
 
+    @property
+    def is_appliance(self) -> bool:
+        """Whether this is iX-built appliance hardware.
+
+        A Mini is iX-built but is not this: it sits in its own matrix column, and every
+        gate that says "appliance" means the column a Mini is not in.
+        """
+        return self is HardwareClass.TRUENAS_HW
+
 
 @dataclass(frozen=True, kw_only=True, slots=True)
 class HardwareInfo:
