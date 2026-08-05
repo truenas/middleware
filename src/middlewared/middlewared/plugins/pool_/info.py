@@ -19,6 +19,8 @@ from middlewared.api.current import (
 from middlewared.plugins.zpool import get_zpool_disks_impl, get_zpool_features_impl, is_upgraded_impl
 from middlewared.service import Service, ValidationError, private
 
+from .dataset_processes_utils import processes_using_dataset_tree
+
 
 class PoolService(Service):
 
@@ -73,7 +75,7 @@ class PoolService(Service):
         pool = await self.middleware.call('pool.get_instance', oid)
         processes = []
         try:
-            processes = await self.middleware.call('pool.dataset.processes', pool['name'])
+            processes = await processes_using_dataset_tree(self.context, pool['name'])
         except ValidationError as e:
             if e.errno == errno.ENOENT:
                 # Dataset might not exist (e.g. not online), this is not an error

@@ -81,3 +81,46 @@ def test__open_path_and_check_proc(request, datasets, file_open_path, arg_path):
         finally:
             if opened:
                 ssh(f'kill -9 {open_pid}', check=False)
+
+
+@pytest.mark.parametrize("child,data,file_open_path", [
+    # A file on a child filesystem
+    ('parent/child', None, lambda ds: f'/mnt/{ds}/test_file'),
+    # A child zvol
+    ('parent/zvol', {'type': 'VOLUME', 'volsize': 1024 * 1024 * 100}, lambda ds: f'/dev/zvol/{ds}'),
+])
+def test__pool_processes_finds_child_dataset(child, data, file_open_path):
+    """
+    A pool-wide scan has to see processes holding a child dataset open.
+
+    Every ZFS dataset is a separate filesystem with its own device id, so scanning only the
+    pool root -- which is all `pool.dataset.processes` does -- never matches an open file on
+    a child filesystem, and `pool.export` then fails to unmount it.
+    """
+    with contextlib.ExitStack() as stack:
+        stack.enter_context(dataset('parent'))
+        child_ds = stack.enter_context(dataset(child, data))
+
+        test_file = file_open_path(child_ds)
+        open_pid = ssh(f"""python -c 'import time; f = open("{test_file}", "w+"); time.sleep(10)' > /dev/null 2>&1 & echo $!""")
+        open_pid = open_pid.strip()
+        assert open_pid.isdigit(), f'{open_pid!r} is not a digit'
+
+        try:
+            # spinning up python interpreter could take some time on busy system so sleep
+            # for a couple seconds to give it time
+            time.sleep(2)
+
+            pool_id = call('pool.query', [['name', '=', pool]], {'get': True})['id']
+            pool_wide = call('pool.processes', pool_id)
+            assert int(open_pid) in [proc['pid'] for proc in pool_wide], pool_wide
+
+            if data is None:
+                # Scanning the pool root alone cannot see a file open on a child filesystem.
+                # Child zvols are exempt: the root scan resolves `/dev/zvol/<pool>` as a
+                # directory and walks every device node underneath it.
+                root_only = call('pool.dataset.processes', pool)
+                assert int(open_pid) not in [proc['pid'] for proc in root_only], root_only
+
+        finally:
+            ssh(f'kill -9 {open_pid}', check=False)

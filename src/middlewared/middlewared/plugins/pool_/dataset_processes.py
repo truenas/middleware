@@ -8,6 +8,7 @@ from middlewared.api.current import PoolDatasetProcessesArgs, PoolDatasetProcess
 from middlewared.plugins.zfs_.utils import zvol_name_to_path
 from middlewared.service import CallError, Service, private
 
+from .dataset_processes_utils import processes_using_dataset_tree
 from .utils import dataset_mountpoint
 
 RE_ZD = re.compile(r'^/dev/zd[0-9]+$')
@@ -53,7 +54,7 @@ class PoolDatasetService(Service):
         need_restart_services = []
         need_stop_services = []
         midpid = os.getpid()
-        for process in await self.middleware.call('pool.dataset.processes', oid):
+        for process in await processes_using_dataset_tree(self.context, oid):
             service = process.get('service')
             if service is not None:
                 if any(
@@ -72,7 +73,7 @@ class PoolDatasetService(Service):
             })
 
         for i in range(max_tries):
-            processes = await self.middleware.call('pool.dataset.processes', oid)
+            processes = await processes_using_dataset_tree(self.context, oid)
             if not processes:
                 return
 
@@ -103,7 +104,7 @@ class PoolDatasetService(Service):
                     except CallError as e:
                         self.logger.warning('Error killing process: %r', e)
 
-        processes = await self.middleware.call('pool.dataset.processes', oid)
+        processes = await processes_using_dataset_tree(self.context, oid)
         if not processes:
             return
 
@@ -126,7 +127,9 @@ class PoolDatasetService(Service):
         These are not included by default.
         """
         exact_matches = set()
-        include_devs = []
+        # A pool-wide scan passes one path per dataset, and this is tested against every open
+        # file descriptor on the system, so keep the lookup O(1)
+        include_devs = set()
         for path in paths:
             if RE_ZD.match(path):
                 exact_matches.add(path)
@@ -140,7 +143,7 @@ class PoolDatasetService(Service):
                         else:
                             exact_matches.add(os.path.realpath(path))
                     else:
-                        include_devs.append(os.stat(path).st_dev)
+                        include_devs.add(os.stat(path).st_dev)
                 except FileNotFoundError:
                     continue
 
