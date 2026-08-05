@@ -7,6 +7,8 @@ import os
 
 from mako import exceptions
 from mako.template import Template
+from truenas_pylicensed.features import LicenseFeature
+
 from middlewared.plugins.account_.constants import CONTAINER_ROOT_UID
 from middlewared.service import CallError, Service
 from middlewared.utils.io import write_if_changed, FileChanges
@@ -247,6 +249,7 @@ class EtcService(Service):
                 CtxMethod(method='user.query', args=[[['local', '=', True], ['uid', '!=', CONTAINER_ROOT_UID]]]),
                 CtxMethod(method='group.query', args=[[['local', '=', True]]]),
                 CtxMethod(method='auth.twofactor.config'),
+                CtxMethod(method='truenas.entitlements.check', args=[LicenseFeature.SUPPORT]),
             ),
             entries=(
                 EtcEntry(renderer_type=RendererType.MAKO, path='group'),

@@ -2,14 +2,7 @@ import pytest
 
 from contextlib import contextmanager
 from middlewared.test.integration.assets import directory_service
-from middlewared.test.integration.assets.product import product_type
 from middlewared.test.integration.utils import call
-
-
-@pytest.fixture(scope="module")
-def set_product_type():
-    with product_type():
-        yield
 
 
 @pytest.fixture(scope="module")
@@ -165,7 +158,7 @@ def set_idmap_ad(ds_config):
         },
     ], None),
 ))
-def test_trusted_domain_configuration(set_product_type, join_ad, trusted_doms, error):
+def test_trusted_domain_configuration(join_ad, trusted_doms, error):
     # Substantive directory services changes require disabling / stopping them
     if error:
         with pytest.raises(Exception, match=error):
