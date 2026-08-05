@@ -24,6 +24,7 @@ from middlewared.api.current import (
 )
 from middlewared.service import CallError, private, Service, ValidationError
 from middlewared.utils import ProductType, sw_info
+from middlewared.utils.hardware import get_hardware_class
 from middlewared.utils.version import parse_version_string
 
 from middlewared.utils.license import LEGACY_LICENSE_FILE, LICENSE_ADDHW_MAPPING, LICENSE_FILE
@@ -33,32 +34,16 @@ LICENSE_ADDHW_REVERSE_MAPPING = MappingProxyType({v: k for k, v in LICENSE_ADDHW
 
 
 class SystemService(Service):
-    PRODUCT_TYPE = None
 
     @api_method(
         SystemProductTypeArgs, SystemProductTypeResult, roles=["SYSTEM_PRODUCT_READ"]
     )
     async def product_type(self):
         """Returns the type of the product"""
-        if SystemService.PRODUCT_TYPE is None:
-            if await self.is_ha_capable():
-                # HA capable hardware
-                SystemService.PRODUCT_TYPE = ProductType.ENTERPRISE
-            else:
-                if license_ := await self.call2(self.s.truenas.license.info_private):
-                    if license_.model is None or license_.model.lower().startswith("freenas"):
-                        # legacy freenas certified, or a model-less daemon license
-                        # (COMMERCIAL/COMMUNITY) which is not a certified hardware line
-                        SystemService.PRODUCT_TYPE = ProductType.COMMUNITY_EDITION
-                    else:
-                        # the license has been issued for a "certified" line
-                        # of hardware which is considered enterprise
-                        SystemService.PRODUCT_TYPE = ProductType.ENTERPRISE
-                else:
-                    # no license
-                    SystemService.PRODUCT_TYPE = ProductType.COMMUNITY_EDITION
+        if (await self.middleware.run_in_thread(get_hardware_class)).is_appliance:
+            return ProductType.ENTERPRISE
 
-        return SystemService.PRODUCT_TYPE
+        return ProductType.COMMUNITY_EDITION
 
     @private
     async def is_ha_capable(self):

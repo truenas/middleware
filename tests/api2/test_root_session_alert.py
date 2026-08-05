@@ -1,16 +1,6 @@
-import pytest
-
-from middlewared.test.integration.assets.product import product_type
 from middlewared.test.integration.utils.client import client, truenas_server
 from middlewared.test.integration.utils import call
 from time import sleep
-
-
-@pytest.fixture(scope="function")
-def set_product_type(request):
-    # force ENTERPRISE product type
-    with product_type():
-        yield
 
 
 def get_session_alert(call_fn, session_id):
@@ -31,7 +21,7 @@ def check_session_alert(call_fn):
     get_session_alert(call_fn, session_id)
 
 
-def test_root_session(set_product_type):
+def test_root_session():
     # In full CI runs cannot first check with our regular
     # persistent session, as it may be more than 100 sessions
     # ago.  However, we can check that the alert has already
