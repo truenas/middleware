@@ -112,6 +112,19 @@ class FSAttachmentDelegate(ServiceChangeMixin):
         if attachments:
             await self.start(attachments)
 
+    async def start_on_import(self, path):
+        """
+        Bring this delegate's attachments back up after the pool mounted at `path` was re-imported.
+
+        :param path: mountpoint of the re-imported pool (e.g. "/mnt/tank")
+
+        The default implementation starts the share/service style attachments that the generic
+        `query`/`start` contract describes. Stateful workloads (VMs, containers) override this to
+        honor their autostart configuration rather than booting everything that lives on the pool.
+        """
+        if attachments := await self.query(path, False):
+            await self.start(attachments)
+
     async def disable(self, attachments):
         """
         Disable said items, this is used when we export pool but do not want to delete
@@ -120,6 +133,26 @@ class FSAttachmentDelegate(ServiceChangeMixin):
         :return: None
         """
         await self.toggle(attachments, False)
+
+    async def destroy(self, path):
+        """
+        Discard whatever only made sense while the data on `path` existed, now that the pool
+        mounted there has actually been destroyed.
+
+        :param path: mountpoint of the destroyed pool (e.g. "/mnt/tank")
+
+        Called once per delegate by `pool.export`, only when the export was cascaded *and* the
+        pool's data really went away, and only after the zpool destroy has returned: `delete` has
+        to run first so the datasets are released, whereas discarding configuration is safe only
+        once the data it describes is confirmed gone.
+
+        Do not assume `delete` saw the same items. It is driven by `query(path, True)`, which
+        reports only running attachments and also matches items that merely reference this pool
+        from storage elsewhere, so this is handed the pool and selects for itself.
+
+        The default is a no-op: `delete` already disposed of the share/task style attachments
+        while the pool was still there.
+        """
 
 
 class LockableFSAttachmentDelegate[E](FSAttachmentDelegate):
