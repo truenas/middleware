@@ -1,4 +1,6 @@
+import base64
 from datetime import date
+from unittest.mock import mock_open, patch
 
 import pytest
 
@@ -12,7 +14,12 @@ from middlewared.utils.entitlements import (
     Reason,
     check_entitlement,
 )
-from middlewared.utils.license import FeatureInfo, LicenseInfo, parse_legacy_license
+from middlewared.utils.license import (
+    FeatureInfo,
+    LicenseInfo,
+    get_legacy_license_info,
+    parse_legacy_license,
+)
 
 
 def _features(names, *, support_type=None, start=date(2026, 4, 8), end=date(2026, 4, 30)):
@@ -29,24 +36,41 @@ def _features(names, *, support_type=None, start=date(2026, 4, 8), end=date(2026
     }
 
 
-# Mirrors the production injection bucket that fires for every parseable legacy
-# blob, in LicenseFeature declaration order. Injected flags are appended after
+# Mirrors the production injection set, which fires for every legacy blob that
+# parses, in LicenseFeature declaration order. Injected flags are appended after
 # the license's own bits, also in declaration order.
-_ALL_LEGACY_INJECT = [
+_LEGACY_INJECT = [
     "APPS",
+    "AUTOTUNE",
+    "CATALOG_ENTERPRISE_TRAIN",
     "CONTAINERS",
     "DIRECTORY_SERVICES",
     "KMIP",
+    "MISSION_CRITICAL",
     "NETWORK_FEC",
     "NFS_SNAPSHOT",
     "NVMEOF_SPDK",
     "RDMA",
+    "SMB_FASTPATH",
+    "SMB_VEEAM",
     "STIG",
     "SUPPORT",
     "TRUESEARCH",
     "VMS",
     "WEBSHARE",
 ]
+
+# X10, STANDARD contract, single head.
+X10_BLOB = (
+    "AVgxMAAAAAAAAAAAAAAAAABURVNULTAwMDAwMQAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAADIwMjYwNDA4AAAAABYAAAAAAAAAaVhzeXN0ZW1zIE"
+    "luYy4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAA=="
+)
+
+# FREENAS-MINI, FREENASCERTIFIED contract, single head.
+FREENAS_MINI_BLOB = (
+    "AUZSRUVOQVMtTUlOSQAAAABURVNULTAwMDAwMQAAAAAAAAAAAAAAAAAAAAAAAAAAAAUAADIwMjYwNDA4AAAAABYAAAAAAAAAaVhzeXN0ZW1z"
+    "IEluYy4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+)
 
 
 @pytest.mark.parametrize(
@@ -92,59 +116,36 @@ _ALL_LEGACY_INJECT = [
                 contract_type="GOLD",
             ),
         ),
-        # Enterprise single license (X10, STANDARD contract): jails->APPS bit, plus the
-        # all-legacy and enterprise-only injected flags. STANDARD is not a support tier,
-        # so the injected SUPPORT flag is stamped BRONZE.
+        # Enterprise single license (X10, STANDARD contract): the jails->APPS bit is
+        # already in the injection set, so the whole feature list is the injection set.
+        # STANDARD is not a support tier, so the injected SUPPORT flag is stamped BRONZE.
         (
-            "AVgxMAAAAAAAAAAAAAAAAABURVNULTAwMDAwMQAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAADIwMjYwNDA4AAAAABYAAAAAAAAAaVhzeXN0ZW1zIE"
-            "luYy4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAA==",
+            X10_BLOB,
             LicenseInfo(
                 id="legacy_TEST-000001",
                 type=LicenseType.ENTERPRISE_SINGLE,
                 model="X10",
                 support_expires_at=date(2026, 4, 30),
                 license_expires_at=None,
-                features=_features(
-                    [
-                        "APPS",
-                        "AUTOTUNE",
-                        "CATALOG_ENTERPRISE_TRAIN",
-                        "CONTAINERS",
-                        "DIRECTORY_SERVICES",
-                        "KMIP",
-                        "MISSION_CRITICAL",
-                        "NETWORK_FEC",
-                        "NFS_SNAPSHOT",
-                        "NVMEOF_SPDK",
-                        "RDMA",
-                        "SMB_FASTPATH",
-                        "SMB_VEEAM",
-                        "STIG",
-                        "SUPPORT",
-                        "TRUESEARCH",
-                        "VMS",
-                        "WEBSHARE",
-                    ],
-                    support_type="BRONZE",
-                ),
+                features=_features(_LEGACY_INJECT, support_type="BRONZE"),
                 serials=("TEST-000001",),
                 enclosures={},
                 contract_type="STANDARD",
             ),
         ),
-        # freenascertified license (freenas-prefixed model): only the all-legacy
-        # bucket injects; no enterprise-only flags. FREENASCERTIFIED is not a support
-        # tier, so the injected SUPPORT flag is stamped BRONZE.
+        # freenascertified license (freenas-prefixed model). parse_legacy_license still
+        # translates it in full -- the model is only rejected a layer up, in
+        # get_legacy_license_info. FREENASCERTIFIED is not a support tier, so the
+        # injected SUPPORT flag is stamped BRONZE.
         (
-            "AUZSRUVOQVMtTUlOSQAAAABURVNULTAwMDAwMQAAAAAAAAAAAAAAAAAAAAAAAAAAAAUAADIwMjYwNDA4AAAAABYAAAAAAAAAaVhzeXN0ZW1z"
-            "IEluYy4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+            FREENAS_MINI_BLOB,
             LicenseInfo(
                 id="legacy_TEST-000001",
                 type=LicenseType.ENTERPRISE_SINGLE,
                 model="FREENAS-MINI",
                 support_expires_at=date(2026, 4, 30),
                 license_expires_at=None,
-                features=_features(_ALL_LEGACY_INJECT, support_type="BRONZE"),
+                features=_features(_LEGACY_INJECT, support_type="BRONZE"),
                 serials=("TEST-000001",),
                 enclosures={},
                 contract_type="FREENASCERTIFIED",
@@ -169,11 +170,7 @@ def test__parse_legacy_license(text, result):
             LicenseType.ENTERPRISE_HA,
         ),
         # X10 with an empty system_serial_ha field.
-        (
-            "AVgxMAAAAAAAAAAAAAAAAABURVNULTAwMDAwMQAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAADIwMjYwNDA4AAAAABYAAAAAAAAAaVhzeXN0ZW1zIE"
-            "luYy4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAA==",
-            LicenseType.ENTERPRISE_SINGLE,
-        ),
+        (X10_BLOB, LicenseType.ENTERPRISE_SINGLE),
     ],
 )
 def test__parse_legacy_license_ha_type(text, type_):
@@ -212,14 +209,7 @@ def test__legacy_bronze_gets_support_key_but_not_proactive_support():
 # collapse to BRONZE rather than stamping a value the tier gate has never heard of.
 @pytest.mark.parametrize(
     "text",
-    [
-        # X10, STANDARD contract.
-        "AVgxMAAAAAAAAAAAAAAAAABURVNULTAwMDAwMQAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAADIwMjYwNDA4AAAAABYAAAAAAAAAaVhzeXN0ZW1z"
-        "IEluYy4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAA==",
-        # FREENAS-MINI, FREENASCERTIFIED contract.
-        "AUZSRUVOQVMtTUlOSQAAAABURVNULTAwMDAwMQAAAAAAAAAAAAAAAAAAAAAAAAAAAAUAADIwMjYwNDA4AAAAABYAAAAAAAAAaVhzeXN0ZW1z"
-        "IEluYy4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-    ],
+    [X10_BLOB, FREENAS_MINI_BLOB],
 )
 def test__legacy_non_tier_contract_types_get_no_proactive_support(text):
     info = parse_legacy_license(text)
@@ -242,3 +232,57 @@ def test__legacy_gold_contract_keeps_proactive_support():
 
     facts = EntitlementFacts(hardware_class=HardwareClass.TRUENAS_HW, license=info)
     assert check_entitlement(DerivedEntitlement.PROACTIVE_SUPPORT, facts).entitled is True
+
+
+def _legacy_info_for(blob):
+    """Run get_legacy_license_info with blob standing in for the on-disk license.
+
+    The result is lru_cached, so the cache is dropped on both sides of the call to
+    keep one case's answer from being handed to the next.
+    """
+    get_legacy_license_info.cache_clear()
+    try:
+        with patch("builtins.open", mock_open(read_data=blob)):
+            return get_legacy_license_info()
+    finally:
+        get_legacy_license_info.cache_clear()
+
+
+def _model_less_blob():
+    """The X10 blob with its model field zeroed, giving a legacy license with no model.
+
+    Legacy blobs carry neither a signature nor a checksum, so overwriting the field in
+    place produces a blob that still parses. Offsets are the version byte followed by
+    the 16-byte model field.
+    """
+    raw = bytearray(base64.b64decode(X10_BLOB))
+    raw[1:17] = b"\x00" * 16
+    return base64.b64encode(bytes(raw)).decode()
+
+
+# A freenas-model blob is not a license: the system reads as unlicensed rather than
+# picking up the flags the translation would otherwise inject into it.
+def test__get_legacy_license_info_drops_freenas_model():
+    assert _legacy_info_for(FREENAS_MINI_BLOB) is None
+
+
+# The positive control for the drop above, so it cannot pass because the stubbed read
+# or the parse failed for some reason unrelated to the model.
+def test__get_legacy_license_info_keeps_enterprise_model():
+    info = _legacy_info_for(X10_BLOB)
+    assert info is not None
+    assert info.model == "X10"
+
+
+# Only a freenas-prefixed model is rejected; a blob with no model at all is still a
+# license. It is also the only holder that the merged injection set widens, so the two
+# flags that widening actually grants are pinned here rather than left to drift.
+def test__get_legacy_license_info_keeps_model_less_blob():
+    blob = _model_less_blob()
+    assert parse_legacy_license(blob).model is None
+
+    info = _legacy_info_for(blob)
+    assert info is not None
+    assert info.model is None
+    assert info.has_feature(LicenseFeature.SMB_VEEAM)
+    assert info.has_feature(LicenseFeature.SMB_FASTPATH)
