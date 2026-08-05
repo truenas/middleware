@@ -3,26 +3,6 @@ import pytest
 from middlewared.utils.libvirt.utils import _extract_identity, device_uniqueness_check
 
 
-# Map used by the mock: (vendor_id, product_id) -> libvirt device name
-_MOCK_USB_IDS = {
-    ('0x1d6b', '0x0002'): 'usb_1_1',
-    ('0x0781', '0x5583'): 'usb_2_3',
-    ('0x1234', '0x5678'): 'usb_3_1_4',
-}
-
-
-def _mock_find_usb_device_by_ids(vendor_id: str, product_id: str) -> str | None:
-    return _MOCK_USB_IDS.get((vendor_id, product_id))
-
-
-@pytest.fixture(autouse=True)
-def mock_find_usb(monkeypatch):
-    monkeypatch.setattr(
-        'middlewared.utils.libvirt.utils.find_usb_device_by_ids',
-        _mock_find_usb_device_by_ids,
-    )
-
-
 # ---------------------------------------------------------------------------
 # Realistic VM/container instance fixtures
 # ---------------------------------------------------------------------------
@@ -77,7 +57,7 @@ VM_INSTANCE = {
             'attributes': {
                 'dtype': 'USB',
                 'usb': {'vendor_id': '0x1d6b', 'product_id': '0x0002'},
-                'device': None,
+                'port': None,
                 'controller_type': 'nec-xhci',
             },
             'vm': 10,
@@ -88,7 +68,7 @@ VM_INSTANCE = {
             'attributes': {
                 'dtype': 'USB',
                 'usb': None,
-                'device': 'usb_3_1_4',
+                'port': '3-1.4',
                 'controller_type': 'nec-xhci',
             },
             'vm': 10,
@@ -148,7 +128,7 @@ CONTAINER_INSTANCE = {
             'attributes': {
                 'dtype': 'USB',
                 'usb': {'vendor_id': '0x0781', 'product_id': '0x5583'},
-                'device': None,
+                'port': None,
             },
             'container': 20,
         },
@@ -223,43 +203,34 @@ def test_container_filesystem_duplicate_target_trailing_slash():
     ) is False
 
 
-def test_extract_identity_usb_device_path_priority():
-    """Host device path should take priority over vendor:product."""
+def test_extract_identity_usb_port_priority():
+    """The port takes priority over vendor:product."""
     device = {'attributes': {
-        'dtype': 'USB', 'device': 'usb_3_1_4',
+        'dtype': 'USB', 'port': '3-1.4',
         'usb': {'vendor_id': '0x1234', 'product_id': '0x5678'},
     }}
-    assert _extract_identity(device) == 'usb_3_1_4'
+    assert _extract_identity(device) == 'port:3-1.4'
 
 
 def test_extract_identity_usb_vendor_product():
-    """Vendor:product should resolve to the device path via find_usb_device_by_ids."""
+    """Vendor:product is used verbatim, without touching the hardware."""
     device = {'attributes': {
-        'dtype': 'USB', 'device': None,
-        'usb': {'vendor_id': '0x1d6b', 'product_id': '0x0002'},
+        'dtype': 'USB', 'port': None,
+        'usb': {'vendor_id': '0x1D6B', 'product_id': '0x0002'},
     }}
-    assert _extract_identity(device) == 'usb_1_1'
+    assert _extract_identity(device) == 'ids:0x1d6b:0x0002'
 
 
 def test_extract_identity_usb_no_identity():
-    device = {'attributes': {'dtype': 'USB', 'device': None, 'usb': None}}
+    device = {'attributes': {'dtype': 'USB', 'port': None, 'usb': None}}
     assert _extract_identity(device) is None
 
 
 def test_extract_identity_usb_partial_attrs():
     """Only vendor_id without product_id should return None."""
     device = {'attributes': {
-        'dtype': 'USB', 'device': None,
+        'dtype': 'USB', 'port': None,
         'usb': {'vendor_id': '0x1234', 'product_id': None},
-    }}
-    assert _extract_identity(device) is None
-
-
-def test_extract_identity_usb_vendor_product_not_on_system():
-    """When vendor:product cannot be resolved to a device path, returns None."""
-    device = {'attributes': {
-        'dtype': 'USB', 'device': None,
-        'usb': {'vendor_id': '0xffff', 'product_id': '0xffff'},
     }}
     assert _extract_identity(device) is None
 
@@ -338,7 +309,7 @@ def test_multiple_matches_misconfigured_fails():
 
 def test_none_identity_always_passes():
     """When identity is None (USB controller-only), the check is skipped."""
-    new_usb = {'attributes': {'dtype': 'USB', 'usb': None, 'device': None}}
+    new_usb = {'attributes': {'dtype': 'USB', 'usb': None, 'port': None}}
     assert device_uniqueness_check(new_usb, VM_INSTANCE, 'USB') is True
 
 
@@ -389,51 +360,38 @@ def test_vm_pci_different_device():
 def test_vm_usb_duplicate_vendor_product():
     """Adding USB with same vendor:product as id=5 on VM_INSTANCE should fail."""
     new_usb = {'attributes': {
-        'dtype': 'USB', 'device': None,
+        'dtype': 'USB', 'port': None,
         'usb': {'vendor_id': '0x1d6b', 'product_id': '0x0002'},
     }}
     assert device_uniqueness_check(new_usb, VM_INSTANCE, 'USB') is False
 
 
-def test_vm_usb_duplicate_device_path():
-    """Adding USB with same device path as id=6 on VM_INSTANCE should fail."""
-    new_usb = {'attributes': {'dtype': 'USB', 'device': 'usb_3_1_4', 'usb': None}}
+def test_vm_usb_duplicate_port():
+    """Adding USB with same port as id=6 on VM_INSTANCE should fail."""
+    new_usb = {'attributes': {'dtype': 'USB', 'port': '3-1.4', 'usb': None}}
     assert device_uniqueness_check(new_usb, VM_INSTANCE, 'USB') is False
 
 
-def test_vm_usb_different_device_passes():
+def test_vm_usb_different_port_passes():
     """Adding a USB with a completely different identity should pass."""
-    new_usb = {'attributes': {'dtype': 'USB', 'device': 'usb_5_2_0', 'usb': None}}
+    new_usb = {'attributes': {'dtype': 'USB', 'port': '5-2', 'usb': None}}
     assert device_uniqueness_check(new_usb, VM_INSTANCE, 'USB') is True
 
 
-def test_vm_usb_cross_format_vendor_product_duplicates_device_path():
-    """Adding USB by vendor:product that resolves to same device path as existing entry should fail."""
-    # Instance has id=6 with device='usb_3_1_4'
-    # Mock maps ('0x1234', '0x5678') -> 'usb_3_1_4'
-    new_usb = {'attributes': {
-        'dtype': 'USB', 'device': None,
-        'usb': {'vendor_id': '0x1234', 'product_id': '0x5678'},
-    }}
-    assert device_uniqueness_check(new_usb, VM_INSTANCE, 'USB') is False
-
-
-def test_vm_usb_cross_format_device_path_duplicates_vendor_product():
-    """Adding USB by device path that matches resolved path of existing vendor:product entry should fail."""
-    # Instance has id=5 with vendor:product '0x1d6b':'0x0002' -> resolves to 'usb_1_1'
-    new_usb = {'attributes': {'dtype': 'USB', 'device': 'usb_1_1', 'usb': None}}
-    assert device_uniqueness_check(new_usb, VM_INSTANCE, 'USB') is False
-
-
-def test_vm_usb_different_device_path_no_collision():
-    """USB by device path should not collide when it's a genuinely different device."""
-    new_usb = {'attributes': {'dtype': 'USB', 'device': 'usb_9_9_9', 'usb': None}}
-    assert device_uniqueness_check(new_usb, VM_INSTANCE, 'USB') is True
+@pytest.mark.parametrize('new_attributes', [
+    # id=6 sits in port 3-1.4; naming a device by ids never collides with a port.
+    {'dtype': 'USB', 'port': None, 'usb': {'vendor_id': '0x1234', 'product_id': '0x5678'}},
+    # id=5 is identified by ids; naming a port never collides with an id pair.
+    {'dtype': 'USB', 'port': '1-1', 'usb': None},
+])
+def test_vm_usb_port_and_ids_are_separate_identity_domains(new_attributes):
+    """A port and an ID pair are unrelated identities, so they can never duplicate each other."""
+    assert device_uniqueness_check({'attributes': new_attributes}, VM_INSTANCE, 'USB') is True
 
 
 def test_vm_usb_controller_only_no_collision():
     """USB controller-only devices (no identity) should never collide."""
-    new_usb = {'attributes': {'dtype': 'USB', 'device': None, 'usb': None}}
+    new_usb = {'attributes': {'dtype': 'USB', 'port': None, 'usb': None}}
     assert device_uniqueness_check(new_usb, VM_INSTANCE, 'USB') is True
 
 
@@ -506,7 +464,7 @@ def test_nic_no_mac_skips_check():
 def test_container_usb_duplicate_vendor_product():
     """Adding USB with same vendor:product as id=13 on CONTAINER_INSTANCE should fail."""
     new_usb = {'attributes': {
-        'dtype': 'USB', 'device': None,
+        'dtype': 'USB', 'port': None,
         'usb': {'vendor_id': '0x0781', 'product_id': '0x5583'},
     }}
     assert device_uniqueness_check(new_usb, CONTAINER_INSTANCE, 'USB') is False
@@ -515,7 +473,7 @@ def test_container_usb_duplicate_vendor_product():
 def test_container_usb_different_vendor_product():
     """Adding USB with different vendor:product should pass."""
     new_usb = {'attributes': {
-        'dtype': 'USB', 'device': None,
+        'dtype': 'USB', 'port': None,
         'usb': {'vendor_id': '0x1234', 'product_id': '0x0001'},
     }}
     assert device_uniqueness_check(new_usb, CONTAINER_INSTANCE, 'USB') is True

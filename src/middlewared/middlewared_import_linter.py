@@ -12,6 +12,8 @@ class APISchemaContract(Contract):
             "typing_extensions",
             "middlewared.api.base",
             "middlewared.utils.lang",
+            # stdlib-only leaf shared by the API adapter and the alembic migration
+            "middlewared.utils.usb",
             # FIXME: These should not be imported
             "middlewared.plugins.account_.constants",
             "middlewared.plugins.idmap_.idmap_constants",

@@ -1,10 +1,13 @@
-from pydantic import ConfigDict, Discriminator, Field
+from pydantic import ConfigDict, Discriminator, Field, model_validator
 from typing import Annotated, Literal, TypeAlias
 
 from middlewared.api.base import (
     BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString, single_argument_args,
     single_argument_result,
 )
+from middlewared.utils.usb import USB_PORT_PATTERN
+
+from .vm_device import USBAttributes, USBPassthroughDevice
 
 
 __all__ = [
@@ -59,27 +62,28 @@ class ContainerNICDevice(BaseModel):
     )
 
 
-class USBAttributes(BaseModel):
-    vendor_id: NonEmptyString = Field(
-        pattern='^0x.*',
-        description="USB vendor identifier in hexadecimal format (e.g., '0x1d6b' for Linux Foundation).",
-    )
-    product_id: NonEmptyString = Field(
-        pattern='^0x.*',
-        description="USB product identifier in hexadecimal format (e.g., '0x0002' for 2.0 root hub).",
-    )
-
-
 class ContainerUSBDevice(BaseModel):
     dtype: Literal['USB'] = Field(description="Device type identifier for USB devices.")
     usb: USBAttributes | None = Field(
         default=None,
-        description="USB device attributes for identification. `null` for USB host controller only.",
+        description="Vendor and product id of the host USB device to pass through. Whichever port that "
+                    "device is plugged into is passed through. Mutually exclusive with `port`, so `null` "
+                    "here means the device is identified by `port` instead.",
     )
-    device: NonEmptyString | None = Field(
+    port: NonEmptyString | None = Field(
         default=None,
-        description="Host USB device path to pass through. `null` for controller only.",
+        pattern=USB_PORT_PATTERN,
+        description="Host USB port to pass through, as a sysfs port path such as `1-4` or `1-4.2`. Whatever "
+                    "device is plugged into this port at start time is passed through. Mutually exclusive "
+                    "with `usb`, so `null` here means the device is identified by `usb` instead.",
     )
+
+    @model_validator(mode='after')
+    def validate_identity(self):
+        if (self.port is None) == (self.usb is None):
+            raise ValueError('Exactly one of `port` or `usb` must be specified')
+
+        return self
 
 
 ContainerDeviceType: TypeAlias = Annotated[
@@ -164,24 +168,6 @@ class ContainerDeviceNicAttachChoicesArgs(BaseModel):
 class ContainerDeviceNicAttachChoicesResult(BaseModel):
     BRIDGE: list[str] = Field(description="Available bridge interfaces for NIC attachment.")
     MACVLAN: list[str] = Field(description="Available parent interfaces for creating MACVLAN NIC devices.")
-
-
-class USBCapability(BaseModel):
-    product: str | None = Field(description="USB product name. `null` if not available.")
-    product_id: str | None = Field(description="USB product identifier. `null` if not available.")
-    vendor: str | None = Field(description="USB vendor name. `null` if not available.")
-    vendor_id: str | None = Field(description="USB vendor identifier. `null` if not available.")
-    bus: str | None = Field(description="USB bus number. `null` if not available.")
-    device: str | None = Field(description="USB device number on bus. `null` if not available.")
-
-
-class USBPassthroughDevice(BaseModel):
-    capability: USBCapability = Field(description="USB device capability and identification information.")
-    available: bool = Field(description="Whether the USB device is available for passthrough to virtual machines.")
-    error: str | None = Field(
-        description="Error message if the device cannot be used for passthrough. `null` if no error.",
-    )
-    description: str = Field(description="Human-readable description of the USB device.")
 
 
 class ContainerDeviceUsbChoicesArgs(BaseModel):

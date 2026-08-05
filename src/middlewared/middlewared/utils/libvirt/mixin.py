@@ -14,7 +14,7 @@ from middlewared.utils import run
 from middlewared.utils.types import AuditCallback
 
 from .storage_devices import IOTYPE_CHOICES
-from .utils import ACTIVE_STATES
+from .utils import ACTIVE_STATES, normalize_device_attributes
 
 if typing.TYPE_CHECKING:
     from middlewared.main import Middleware
@@ -51,7 +51,7 @@ class DeviceMixin:
     ) -> dict[str, typing.Any]:
         device = await self.get_instance(id_)
         new = copy.deepcopy(device)
-        new_attrs = data.pop('attributes', {})
+        new_attrs = normalize_device_attributes(data.pop('attributes', {}))
         new.update(data)
         new['attributes'].update(new_attrs)
         audit_callback(new["attributes"]["dtype"])

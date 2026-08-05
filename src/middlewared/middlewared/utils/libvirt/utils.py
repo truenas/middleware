@@ -1,9 +1,8 @@
 import os
 from typing import Any
 
-from truenas_pylibvirt.utils.usb import find_usb_device_by_ids
-
 from middlewared.plugins.zfs.zvol_utils import zvol_name_to_path
+from middlewared.utils.usb import libvirt_usb_name_to_port
 
 
 ACTIVE_STATES = ('RUNNING', 'SUSPENDED')
@@ -34,14 +33,36 @@ def _extract_identity(device: dict[str, Any]) -> str | None:
         case 'NIC':
             return device['attributes'].get('mac')
         case 'USB':
-            if device['attributes'].get('device'):
-                return device['attributes']['device']
+            # A port and an ID pair name devices in two different ways, and neither can be
+            # translated into the other without probing the host. They are kept in separate
+            # namespaces so that a port path can never be mistaken for an ID pair.
+            if port := device['attributes'].get('port'):
+                return f'port:{port}'
             usb = device['attributes'].get('usb')
             if usb and usb.get('vendor_id') and usb.get('product_id'):
-                return find_usb_device_by_ids(usb['vendor_id'], usb['product_id'])
+                return f'ids:{usb["vendor_id"].lower()}:{usb["product_id"].lower()}'
             return None
         case _:
             return None
+
+
+def normalize_device_attributes(attributes: dict[str, Any]) -> dict[str, Any]:
+    """Fold a legacy USB ``device`` key from an update payload into ``port``.
+
+    Update payloads are typed as a plain dict, so they bypass the API version adapter. Without
+    this, a `device` key sent by an older client would be merged straight into the stored row.
+    """
+    if attributes.get('dtype') == 'USB' and 'device' in attributes:
+        device = attributes.pop('device')
+        if device is None:
+            # A null `device` is how an older client says "this is no longer identified by a
+            # port". The key has to be nulled out explicitly, otherwise the stored port
+            # survives the merge and collides with whatever identity is being set instead.
+            attributes['port'] = None
+        elif not attributes.get('port'):
+            attributes['port'] = libvirt_usb_name_to_port(device)
+
+    return attributes
 
 
 def device_uniqueness_check(

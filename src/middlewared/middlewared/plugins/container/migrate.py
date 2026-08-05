@@ -2,14 +2,19 @@ import ipaddress
 import os
 import yaml
 
+from truenas_pylibvirt.utils.usb import USBInventory
+
 import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
+from middlewared.api.base.handler.accept import validate_model
 from middlewared.api.current import (
     ContainerMigrateArgs, ContainerMigrateResult,
+    ContainerUSBDevice,
     ZFSResourceQuery,
 )
 from middlewared.service import CallError, job, private, Service
 from middlewared.plugins.pool_.utils import UpdateImplArgs
+from middlewared.utils.usb import normalize_usb_id
 
 from .utils import container_dataset
 
@@ -35,6 +40,7 @@ class ContainerService(Service):
         nic_choices = await self.middleware.call("container.device.nic_attach_choices")
         all_nic_choices = set(nic_choices['BRIDGE']) | set(nic_choices['MACVLAN'])
         gpu_choices = await self.middleware.call("container.device.gpu_choices")
+        usb_inventory = await self.middleware.run_in_thread(USBInventory.collect)
         for device_name, device_data in devices.items():
             dtype = None
             try:
@@ -71,16 +77,33 @@ class ContainerService(Service):
                     }
                 elif dtype == "usb":
                     if (bus_num := device_data.get("busnum")) and (devnum := device_data.get("devnum")):
+                        # incus identified the device by an enumeration counter the kernel hands
+                        # out afresh on every replug. This is the only moment it can be turned
+                        # into a stable identity: the device is still plugged in and this is the
+                        # machine that owns it.
+                        info = usb_inventory.by_bus_devnum(str(bus_num), str(devnum))
+                        if info is None:
+                            await job.logs_fd_write((
+                                f"Skipping migration of USB device {device_name!r} for container "
+                                f"{container_name!r}: no USB device is currently connected at bus {bus_num} "
+                                f"address {devnum}, so its physical port cannot be determined. Plug the "
+                                f"device in and re-add it from the container's USB devices page.\n"
+                            ).encode())
+                            continue
+
                         device_payload = {
                             "dtype": "USB",
-                            "device": f"usb_{bus_num}_{devnum}",
+                            "port": info.port,
                             "usb": None,
                         }
                     elif (vendor_id := device_data.get("vendorid")) and (product_id := device_data.get("productid")):
                         device_payload = {
                             "dtype": "USB",
-                            "usb": {"vendor_id": f"0x{vendor_id}", "product_id": f"0x{product_id}"},
-                            "device": None
+                            "usb": {
+                                "vendor_id": normalize_usb_id(str(vendor_id)),
+                                "product_id": normalize_usb_id(str(product_id)),
+                            },
+                            "port": None,
                         }
                     else:
                         await job.logs_fd_write((
@@ -115,6 +138,20 @@ class ContainerService(Service):
                 continue
             else:
                 if device_payload:
+                    if dtype == "usb":
+                        # The rows go in through datastore.insert, which does not validate, so a
+                        # payload the API cannot read back would only surface later as a broken
+                        # device the user cannot even see.
+                        try:
+                            validate_model(ContainerUSBDevice, device_payload)
+                        except Exception as e:
+                            await job.logs_fd_write((
+                                f"Skipping migration of USB device {device_name!r} for container "
+                                f"{container_name!r} because the migrated configuration is not valid: "
+                                f"{e!r}.\n"
+                            ).encode())
+                            continue
+
                     try:
                         await self.middleware.call(
                             "datastore.insert", "container.device", {

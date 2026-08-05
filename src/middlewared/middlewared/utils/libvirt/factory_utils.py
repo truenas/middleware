@@ -68,10 +68,11 @@ def get_device(device: dict[str, Any], delegate: DeviceDelegate) -> Device:
                 device_delegate=delegate,
             )
         case 'USB':
+            usb = device['attributes'].get('usb') or {}
             return USBDevice(
-                vendor_id=device['attributes']['usb']['vendor_id'] if device['attributes']['usb'] else None,
-                product_id=device['attributes']['usb']['product_id'] if device['attributes']['usb'] else None,
-                device=device['attributes']['device'],
+                vendor_id=usb.get('vendor_id'),
+                product_id=usb.get('product_id'),
+                port=device['attributes'].get('port'),
                 controller_type=device['attributes'].get('controller_type'),
                 device_delegate=delegate,
             )

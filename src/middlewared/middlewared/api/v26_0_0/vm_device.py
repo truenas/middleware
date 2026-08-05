@@ -6,6 +6,9 @@ from middlewared.api.base import (
     BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString, single_argument_args,
     single_argument_result,
 )
+from middlewared.utils.usb import (
+    libvirt_usb_name_to_port, normalize_usb_id, USB_ID_PATTERN, USB_PORT_PATTERN,
+)
 
 
 __all__ = [
@@ -170,11 +173,11 @@ class VMDiskDevice(BaseModel):
 
 class USBAttributes(BaseModel):
     vendor_id: NonEmptyString = Field(
-        pattern='^0x.*',
+        pattern=USB_ID_PATTERN,
         description="USB vendor identifier in hexadecimal format (e.g., '0x1d6b' for Linux Foundation).",
     )
     product_id: NonEmptyString = Field(
-        pattern='^0x.*',
+        pattern=USB_ID_PATTERN,
         description="USB product identifier in hexadecimal format (e.g., '0x0002' for 2.0 root hub).",
     )
 
@@ -183,16 +186,50 @@ class VMUSBDevice(BaseModel):
     dtype: Literal['USB'] = Field(description="Device type identifier for USB devices.")
     usb: USBAttributes | None = Field(
         default=None,
-        description="USB device attributes for identification. `null` for USB host controller only.",
+        description="Vendor and product id of the host USB device to pass through. Whichever port that "
+                    "device is plugged into is passed through. Mutually exclusive with `port`, so `null` "
+                    "here means the device is identified by `port` instead.",
     )
     controller_type: Literal[
         'piix3-uhci', 'piix4-uhci', 'ehci', 'ich9-ehci1',
         'vt82c686b-uhci', 'pci-ohci', 'nec-xhci', 'qemu-xhci',
     ] = Field(default='nec-xhci', description="USB controller type for the virtual machine.")
-    device: NonEmptyString | None = Field(
+    port: NonEmptyString | None = Field(
         default=None,
-        description="Host USB device path to pass through. `null` for controller only.",
+        pattern=USB_PORT_PATTERN,
+        description="Host USB port to pass through, as a sysfs port path such as `1-4` or `1-4.2`. Whatever "
+                    "device is plugged into this port at start time is passed through. Mutually exclusive "
+                    "with `usb`, so `null` here means the device is identified by `usb` instead.",
     )
+
+    @model_validator(mode='after')
+    def validate_identity(self):
+        if (self.port is None) == (self.usb is None):
+            raise ValueError('Exactly one of `port` or `usb` must be specified')
+
+        return self
+
+    @classmethod
+    def from_previous(cls, value):
+        if (device := value.pop('device', None)) is not None:
+            value['port'] = libvirt_usb_name_to_port(device)
+        else:
+            value.setdefault('port', None)
+
+        # Older versions accepted any `0x`-prefixed string, so an id may arrive shorter than
+        # four digits or in uppercase. Both are valid ways of naming the same device.
+        if isinstance(usb := value.get('usb'), dict):
+            value['usb'] = usb = dict(usb)
+            for key in ('vendor_id', 'product_id'):
+                if isinstance(usb.get(key), str):
+                    usb[key] = normalize_usb_id(usb[key])
+
+        return value
+
+    @classmethod
+    def to_previous(cls, value):
+        value['device'] = value.pop('port', None)
+        return value
 
 
 VMDeviceType: TypeAlias = Annotated[
@@ -386,11 +423,21 @@ class USBCapability(BaseModel):
     vendor: str | None = Field(description="USB vendor name. `null` if not available.")
     vendor_id: str | None = Field(description="USB vendor identifier. `null` if not available.")
     bus: str | None = Field(description="USB bus number. `null` if not available.")
-    device: str | None = Field(description="USB device number on bus. `null` if not available.")
+    devnum: str | None = Field(
+        description="USB device number on the bus. The kernel reassigns this on every replug, so it "
+                    "cannot be used to identify a device across reboots. `null` if not available.",
+    )
+    port: str = Field(
+        description="Sysfs port path the device is plugged into, such as `1-4` or `1-4.2`. This names a "
+                    "physical socket, so it is what a device is configured for passthrough by.",
+    )
 
 
 class VMDeviceUsbPassthroughDeviceArgs(BaseModel):
-    device: NonEmptyString = Field(description="USB device identifier to get passthrough information for.")
+    port: NonEmptyString = Field(
+        pattern=USB_PORT_PATTERN,
+        description="Host USB port to get passthrough information for, as a sysfs port path such as `1-4`.",
+    )
 
 
 class USBPassthroughDevice(BaseModel):
@@ -407,7 +454,9 @@ class USBPassthroughInfo(RootModel[dict[str, USBPassthroughDevice]]):
 
 
 class VMDeviceUsbPassthroughDeviceResult(BaseModel):
-    result: USBPassthroughDevice = Field(description="Detailed information about the specified USB passthrough device.")
+    result: USBPassthroughDevice | None = Field(
+        description="Detailed information about the device in the specified port. `null` if the port is empty.",
+    )
 
 
 class VMDeviceUsbPassthroughChoicesArgs(BaseModel):
