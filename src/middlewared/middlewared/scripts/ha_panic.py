@@ -6,14 +6,20 @@ This is the STCNITH method (Shoot The Current Node In The Head).
 
 import sys
 
-from middlewared.plugins.failover_.detect_utils import detect_platform
 from middlewared.plugins.failover_.ha_hardware import is_licensed_for_ha
 from middlewared.plugins.failover_.stcnith import stcnith_reboot
 from middlewared.utils.db import query_config_table
+from middlewared.utils.hardware import detect_platform
 
 
 def is_ha_capable() -> bool:
-    """Check if system is HA-capable hardware."""
+    """Check if system is HA-capable hardware.
+
+    Deliberately not get_hardware_class().is_appliance: that is true of every
+    iX appliance, including the single-controller ones. 'MANUAL' is what says
+    this machine is not one half of an HA pair, and rebooting on anything
+    weaker than that would take down standalone R-series and Z-series boxes.
+    """
     return detect_platform()[0] != 'MANUAL'
 
 
