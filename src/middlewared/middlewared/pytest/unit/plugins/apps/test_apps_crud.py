@@ -1,4 +1,5 @@
 import contextlib
+import errno
 import types
 from unittest.mock import MagicMock, patch
 
@@ -9,7 +10,7 @@ from middlewared.api.current import AppCreate
 from middlewared.job import State
 from middlewared.plugins.apps.crud import apps_being_installed, create_app, to_app_entries, to_app_entry
 from middlewared.plugins.apps.ix_apps.query import get_default_workload_values
-from middlewared.service import ValidationErrors
+from middlewared.service import CallError, ValidationErrors
 
 
 def app_row(**overrides):
@@ -110,6 +111,22 @@ def test_broken_entry_reports_config_as_asked(retrieve_config, expected_config):
     assert entry.config == expected_config
 
 
+def test_an_app_we_cannot_name_does_not_fail_the_rest():
+    # `to_app_entry` has no entry it could report such a row as, and letting it re-raise returned
+    # nothing at all for every app on the box
+    rows = [app_row(), {"version": 1.13}, app_row(id="other", name="other")]
+
+    entries = to_app_entries(rows, False)
+
+    assert [entry.id for entry in entries] == ["actual-budget", "other"]
+
+
+def test_a_single_row_we_cannot_name_is_not_swallowed():
+    # `get: true` is typed as returning an entry, so there is nothing to leave out here
+    with pytest.raises(ValidationError):
+        to_app_entries({"version": 1.13}, False)
+
+
 def test_one_broken_app_does_not_fail_the_rest():
     rows = [
         app_row(),
@@ -148,6 +165,7 @@ def install(collective_metadata):
     context.call_sync2.return_value = APP_DETAILS
     with (
         patch("middlewared.plugins.apps.crud.query_apps", return_value=[]),
+        patch("middlewared.plugins.apps.crud.os.path.exists", return_value=False),
         patch("middlewared.plugins.apps.crud.get_collective_metadata", return_value=collective_metadata),
         patch("middlewared.plugins.apps.crud.create_internal") as create_internal,
     ):
@@ -173,6 +191,47 @@ def test_an_instance_which_is_already_installed_is_still_refused():
             pass
 
     assert "does not allow multiple instances" in str(exc_info.value)
+
+
+@pytest.fixture
+def app_configs(monkeypatch, tmp_path):
+    """Point the on-disk collision check of `create_app` at a directory the test controls."""
+    monkeypatch.setattr(
+        "middlewared.plugins.apps.crud.get_installed_app_path", lambda app_name: str(tmp_path / app_name)
+    )
+    return tmp_path
+
+
+def create(app_name):
+    """Run `create_app` against a box with nothing installed, returning the install."""
+    context = MagicMock()
+    context.call_sync2.return_value = APP_DETAILS
+    with (
+        patch("middlewared.plugins.apps.crud.query_apps", return_value=[]),
+        patch("middlewared.plugins.apps.crud.get_collective_metadata", return_value={}),
+        patch("middlewared.plugins.apps.crud.create_internal") as create_internal,
+    ):
+        create_app(
+            context,
+            MagicMock(),
+            AppCreate(app_name=app_name, catalog_app="actual-budget", train="community", version="1.1.13"),
+        )
+        return create_internal
+
+
+def test_a_name_an_abandoned_directory_holds_is_refused(app_configs):
+    # The query cannot see this app: it runs inside the `app.create` job for the same name, which
+    # hides an app with no metadata and no containers as an install in flight
+    (app_configs / "budget-two").mkdir()
+
+    with pytest.raises(CallError) as exc_info:
+        create("budget-two")
+
+    assert exc_info.value.errno == errno.EEXIST
+
+
+def test_a_name_nothing_on_disk_holds_still_installs(app_configs):
+    assert create("budget-two").call_count == 1
 
 
 def installing_apps(*jobs):

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import errno
+import os
 from typing import TYPE_CHECKING, Any, Literal, cast, overload
 
 from catalog_reader.custom_app import get_version_details
@@ -118,9 +119,21 @@ def to_app_entries(
     if isinstance(result, int):
         return result
     if isinstance(result, dict):
+        # One entry was asked for, so there is nothing to leave out - the caller has to be given it
+        # or told why not
         return to_app_entry(result, retrieve_config)
 
-    return [to_app_entry(row, retrieve_config) for row in result]
+    entries = []
+    for row in result:
+        try:
+            entries.append(to_app_entry(row, retrieve_config))
+        except ValidationError:
+            # An app `to_app_entry` could not even name, which only a `select` that took away both
+            # `name` and `id` produces. Leaving the row out keeps the rest of the query usable,
+            # where letting the error escape returns nothing at all for every app on the box
+            continue
+
+    return entries
 
 
 @overload
@@ -217,7 +230,13 @@ def get_app_config(context: ServiceContext, app_name: str) -> dict[str, Any]:
 def create_app(context: ServiceContext, job: Job, data: AppCreate) -> AppEntry:
     context.call_sync2(context.s.docker.validate_state)
 
-    if query_apps(context, [['id', '=', data.app_name]], QueryOptions()):
+    if query_apps(context, [['id', '=', data.app_name]], QueryOptions()) or os.path.exists(
+        get_installed_app_path(data.app_name)
+    ):
+        # The query alone is not enough: this runs inside the `app.create` job for this very name,
+        # so an app with no metadata and no containers is hidden from it as an install in flight -
+        # which is exactly what a directory an earlier install abandoned before writing any metadata
+        # looks like. Whatever is on disk, the name is taken until it is deleted
         raise CallError(f'Application with name {data.app_name} already exists', errno=errno.EEXIST)
 
     if data.custom_app:

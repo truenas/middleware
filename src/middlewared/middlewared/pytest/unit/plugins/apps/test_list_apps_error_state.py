@@ -265,6 +265,84 @@ def test_config_which_cannot_be_read_does_not_break_the_query(query, monkeypatch
     assert [(app["id"], app["error_reason"], app["config"]) for app in apps] == [("actual-budget", None, {})]
 
 
+@pytest.mark.parametrize("project_name", ["webserver", "portainer", "ix-"])
+def test_a_compose_project_which_is_not_ours_is_not_an_app(query, monkeypatch, project_name):
+    # Docker reports every compose project on the box, and taking the prefix off a name which does
+    # not carry one invents an app the UI then offers to delete - against a name which is not ours
+    monkeypatch.setattr(
+        "middlewared.plugins.apps.ix_apps.metadata.get_app_metadata_checked",
+        lambda app_name: ({}, "METADATA_MISSING"),
+    )
+
+    assert query({}, resources={project_name: RESOURCES["ix-actual-budget"]}) == []
+
+
+def test_a_compose_project_which_is_not_ours_does_not_hide_a_real_app(query):
+    # `webserver` reads as an app named `server`, which filters the real one out of the stopped loop
+    # and lends it containers it does not own
+    apps = query(
+        {"server": COMPLETE_METADATA},
+        resources={"webserver": RESOURCES["ix-actual-budget"]},
+        config_dirs=["server"],
+    )
+
+    assert [(app["id"], app["state"], app["active_workloads"]["containers"]) for app in apps] == [
+        ("server", "STOPPED", 0)
+    ]
+
+
+@pytest.mark.parametrize("collective_config", ["some-config", 1, ["key"], True])
+def test_collective_config_which_is_not_a_mapping_does_not_break_the_app(query, monkeypatch, collective_config):
+    # An entry of the collective config file is whatever yaml parsed it as, and reporting a value
+    # the API model cannot describe turned a healthy running app into a broken one
+    monkeypatch.setattr(
+        "middlewared.plugins.apps.ix_apps.query.get_current_app_config", lambda app_name, version: {"own": True}
+    )
+    apps = query(
+        {"actual-budget": COMPLETE_METADATA},
+        resources=RESOURCES,
+        collective_config={"actual-budget": collective_config},
+        retrieve_config=True,
+    )
+
+    assert [(app["id"], app["state"], app["error_reason"], app["config"]) for app in apps] == [
+        ("actual-budget", "RUNNING", None, {"own": True})
+    ]
+
+
+@pytest.mark.parametrize("collective_config", ["some-config", 1, ["key"], True])
+def test_an_app_whose_collective_config_is_not_a_mapping_still_converts(query, monkeypatch, collective_config):
+    # Where the harm lands: the row reaches the API model, which describes `config` as a mapping
+    monkeypatch.setattr(
+        "middlewared.plugins.apps.ix_apps.query.get_current_app_config", lambda app_name, version: {"own": True}
+    )
+    apps = query(
+        {"actual-budget": COMPLETE_METADATA},
+        resources=RESOURCES,
+        collective_config={"actual-budget": collective_config},
+        retrieve_config=True,
+    )
+
+    entry = to_app_entry(apps[0], True)
+
+    assert (entry.state, entry.error_reason, entry.config) == ("RUNNING", None, {"own": True})
+
+
+def test_a_collective_config_which_is_a_mapping_is_still_used(query, monkeypatch):
+    def unread_config(app_name, version):
+        raise AssertionError("the app's own config file was read instead of the collective one")
+
+    monkeypatch.setattr("middlewared.plugins.apps.ix_apps.query.get_current_app_config", unread_config)
+    apps = query(
+        {"actual-budget": COMPLETE_METADATA},
+        resources=RESOURCES,
+        collective_config={"actual-budget": {"key": "value"}},
+        retrieve_config=True,
+    )
+
+    assert apps[0]["config"] == {"key": "value"}
+
+
 @pytest.mark.parametrize("portals", ["http://0.0.0.0:8080", 1, ["http://0.0.0.0:8080"]])
 def test_portals_which_cannot_be_normalized_are_returned_untouched(portals):
     # `to_app_entry` is what reports such an app as broken, and it can only do so if what it is

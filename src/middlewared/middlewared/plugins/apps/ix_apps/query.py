@@ -101,7 +101,10 @@ def get_config_of_app(
     if not retrieve_config:
         return {'config': None}
 
-    if config := collective_config.get(app_data['name']):
+    # An entry of the collective config file is whatever yaml parsed it as, so it need not be a
+    # mapping at all - falling through to the app's own file is what stops a value the API model
+    # cannot describe from turning a healthy app into a broken one
+    if isinstance(config := collective_config.get(app_data['name']), dict) and config:
         return {'config': config}
 
     # app_metadata_error has already rejected an app whose version is not a usable path
@@ -176,10 +179,17 @@ def list_apps(
     metadata = get_collective_metadata()
     collective_config = get_collective_config() if retrieve_config else {}
     # This will only give us apps which are running or in deploying state
-    for app_name, app_resources in list_resources_by_project(
+    for project_name, app_resources in list_resources_by_project(
         project_name=f'{PROJECT_PREFIX}{specific_app}' if specific_app else None,
     ).items():
-        app_name = get_app_name_from_project_name(app_name)
+        app_name = get_app_name_from_project_name(project_name)
+        if not project_name.startswith(PROJECT_PREFIX) or not app_name:
+            # Docker reports every compose project on the box, including ones the user deployed
+            # themselves, and taking the prefix off a name which does not carry one invents an app
+            # no operation can act on - `webserver` reads as an app named `server`, and a project
+            # named exactly `ix-` as one with no name at all
+            continue
+
         app_names.add(app_name)
         app_metadata, error_reason, present = resolve_app_metadata(app_name, metadata, True, installing)
         if not present:
