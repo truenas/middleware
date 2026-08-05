@@ -48,6 +48,9 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
 
         local_license = self.call_sync2(self.s.truenas.license.info_private)
         if local_license is None:
+            if not self.middleware.call_sync('system.is_ha_capable'):
+                return []
+
             return Alert(LicenseAlertClass, "Your TrueNAS has no license, contact support.")
 
         # check if this node's system serial matches the serial in the license
