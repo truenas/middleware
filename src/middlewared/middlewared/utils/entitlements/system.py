@@ -7,7 +7,8 @@ evaluated against synthesized facts.
 
 This is the single entry point for a live entitlement question. Callers name a
 feature and nothing else; anything that builds ``EntitlementFacts`` by hand is
-either a test or a bug.
+either a test, or a caller asking a question the policy does not answer -- alert
+applicability being the one such caller, which is why ``get_facts`` is public.
 """
 
 from __future__ import annotations
@@ -19,20 +20,20 @@ from .engine import Entitlement
 from .facts import EntitlementFacts
 from .policy import check_entitlement
 
-__all__ = ("get_entitlement",)
+__all__ = ("get_entitlement", "get_facts")
+
+
+def get_facts() -> EntitlementFacts:
+    """Read what this system is, right now.
+
+    Deliberately not cached.
+    ``get_hardware_class()`` is cheap after the
+    first call in a process: ``get_hardware_info()`` is ``@cache``d,
+    so only that first call forks dmidecode and walks sysfs.
+    """
+    return EntitlementFacts(hardware_class=get_hardware_class(), license=get_license())
 
 
 def get_entitlement(feature: str) -> Entitlement:
-    """Return the entitlement for `feature` on this system.
-
-    ``get_hardware_class()`` is cheap after the first call in a process:
-    ``get_hardware_info()`` is ``@cache``d, so only that first call forks
-    dmidecode and walks sysfs.
-    """
-    return check_entitlement(
-        feature,
-        EntitlementFacts(
-            hardware_class=get_hardware_class(),
-            license=get_license(),
-        ),
-    )
+    """Return the entitlement for `feature` on this system."""
+    return check_entitlement(feature, get_facts())

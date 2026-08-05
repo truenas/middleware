@@ -2,10 +2,13 @@
 
 Holds no middleware object. Every feature's entitlement is a pure function of a
 small set of facts (hardware class, license) evaluated against a policy, and
-``check_entitlement`` takes those facts as an argument. The one exception is
-``get_entitlement``, which reads the license and the chassis to build them for
-the running system; it lives in ``system`` and nothing else here imports it, so
-the evaluation half stays pure and testable against synthesized facts.
+``check_entitlement`` takes those facts as an argument. The exceptions are
+``get_facts``, which reads the license and the chassis for the running system,
+and ``get_entitlement``, which evaluates the policy against them; both live in
+``system`` and nothing else here imports it, so the evaluation half stays pure
+and testable against synthesized facts. ``get_facts`` is the single live reader
+of the facts in the tree, for entitlement and alert-applicability questions
+alike.
 
 A policy entry is one of a few rule kinds: a matrix ``Vector`` (resolved by
 column against the product feature matrix), a ``LegacyRule`` (an arbitrary
@@ -47,7 +50,7 @@ from .engine import (
 from .facts import EntitlementFacts, HardwareClass
 from .matrix import DERIVED_VECTORS, TARGET_VECTORS
 from .policy import POLICY, check_entitlement
-from .system import get_entitlement
+from .system import get_entitlement, get_facts
 
 __all__ = [
     "COLUMNS",
@@ -68,4 +71,5 @@ __all__ = [
     "Vector",
     "check_entitlement",
     "get_entitlement",
+    "get_facts",
 ]
