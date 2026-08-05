@@ -5,7 +5,7 @@
 
 from middlewared.service import Service
 
-from .detect_utils import detect_platform
+from middlewared.utils.hardware import detect_platform
 
 
 class EnclosureDetectionService(Service):
