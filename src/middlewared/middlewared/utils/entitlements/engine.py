@@ -6,7 +6,7 @@ from enum import StrEnum
 
 from truenas_pylicensed.features import LicenseFeature
 
-from .facts import EntitlementFacts, HardwareClass
+from .facts import EntitlementFacts
 
 if typing.TYPE_CHECKING:
     from collections.abc import Callable, Mapping
@@ -159,12 +159,8 @@ def has_key(feature: str, facts: EntitlementFacts) -> bool:
     return facts.license is not None and facts.license.has_feature(feature)
 
 
-def _hw_side(facts: EntitlementFacts) -> bool:
-    return facts.hardware_class is HardwareClass.TRUENAS_HW
-
-
 def resolve_column(feature: str, facts: EntitlementFacts) -> str:
-    hw_side = _hw_side(facts)
+    hw_side = facts.hardware_class.is_appliance
     if facts.license is None:
         return "HW" if hw_side else "CE"
     if has_key(feature, facts):
@@ -173,7 +169,7 @@ def resolve_column(feature: str, facts: EntitlementFacts) -> str:
 
 
 def _check_vector(feature: str, vector: Vector, facts: EntitlementFacts) -> Entitlement:
-    hw_side = _hw_side(facts)
+    hw_side = facts.hardware_class.is_appliance
     column = resolve_column(feature, facts)
     if vector[COLUMNS.index(column)]:
         return Entitlement(entitled=True, reason=Reason.ENTITLED, column=column, message="")
