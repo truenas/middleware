@@ -20,6 +20,7 @@ from middlewared.api.current import (
     SharingSMBDeleteArgs, SharingSMBDeleteResult,
 )
 from middlewared.common.attachment import LockableFSAttachmentDelegate
+from middlewared.common.license_reconcile import LicenseReconcileAction, LicenseReconcileDelegate
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
 from middlewared.service import job, private, SharingService
 from middlewared.service import ConfigService, ValidationError, ValidationErrors
@@ -1886,6 +1887,35 @@ async def hook_post_generic(middleware, datasets):
     await (await middleware.call('service.control', 'RELOAD', 'cifs')).wait()
 
 
+class SMBLicenseReconcileDelegate(LicenseReconcileDelegate):
+    name = 'smb'
+    etc_groups = ('smb',)
+    service = 'cifs'
+    action = LicenseReconcileAction.RELOAD
+    order = 20
+    reason = (
+        "The `smb` etc group renders a single file, `local/smb4.conf`, out of a single ctx entry, "
+        "`smb.generate_smb_configuration`, and that method reaches the license by two independent "
+        "routes. "
+        "First, it reads the `SMB_FASTPATH` entitlement and hands it to `generate_smb_conf_dict` in "
+        "`plugins/smb_/util_smbconf.py`, where it becomes the values of `zfs_core:zfs_integrity_streams` "
+        "and `zfs_core:zfs_block_cloning`. On stable/26 that same argument was `system.is_enterprise`, "
+        "which was true on iX appliance hardware before any license was installed, so the parameters "
+        "never changed when a license arrived and never re-rendering the group was harmless. Now that "
+        "the predicate is a pure entitlement check it does change, and the group has to be re-rendered. "
+        "Second, the same method calls `smb.bindip_choices`, which consults `failover.licensed` and "
+        "returns failover virtual IPs on a licensed HA system versus ordinary in-use addresses "
+        "otherwise. Those choices are intersected with the configured bind IPs to produce the "
+        "`interfaces` line, so gaining or losing the license can leave smbd bound to the wrong "
+        "addresses, or to loopback only. "
+        "RELOAD is enough and is not disruptive: `CIFSService` is `reloadable` and its `reload()` is "
+        "`smbcontrol smbd reload-config`, which re-reads the config without dropping established "
+        "sessions. If SMB is not running, `service.control`'s reload path still regenerates the etc "
+        "group and then returns early without touching the unit, so a stopped service also ends up "
+        "with a config that matches the new license."
+    )
+
+
 async def setup(middleware):
     await middleware.call(
         'interface.register_listen_delegate',
@@ -1896,3 +1926,4 @@ async def setup(middleware):
     await middleware.call('pool.dataset.register_attachment_delegate', SMBFSAttachmentDelegate(middleware))
     middleware.register_hook('dataset.post_lock', hook_post_generic, sync=True)
     middleware.register_hook('pool.post_import', pool_post_import, sync=True)
+    await middleware.call('truenas.license.register_reconcile_delegate', SMBLicenseReconcileDelegate())

@@ -17,6 +17,7 @@ from middlewared.api.current import (
     SharingNFSUpdateArgs, SharingNFSUpdateResult,
     SharingNFSDeleteArgs, SharingNFSDeleteResult
 )
+from middlewared.common.license_reconcile import LicenseReconcileAction, LicenseReconcileDelegate
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
 from middlewared.async_validators import check_path_resides_within_volume, validate_port
 from middlewared.service import private, SharingService, SystemServiceService
@@ -980,10 +981,38 @@ async def pool_post_import(middleware, pool):
             break
 
 
+class NFSLicenseReconcileDelegate(LicenseReconcileDelegate):
+    name = 'nfsd'
+    etc_groups = ('nfsd',)
+    service = 'nfs'
+    action = LicenseReconcileAction.RELOAD
+    order = 20
+    reason = (
+        "The `nfsd` etc group binds `nfs.config` as ctx, `nfs.config` runs `nfs.nfs_extend` as its "
+        "`datastore_extend`, and `nfs_extend` masks the stored `rdma` column against `nfs.rdma_capable`, "
+        "which asks `rdma.capable_protocols`, which returns nothing at all unless the `RDMA` "
+        "entitlement is held. `etc_files/nfs.conf.mako` then emits `rdma = y` and `rdma-port = 20049` "
+        "only when that masked value survives. So a system whose stored config asks for NFS over RDMA "
+        "renders a config with RDMA off while unlicensed, and has to have it rendered back on when the "
+        "license arrives -- and vice versa -- with nothing else prompting the group to be regenerated. "
+        "Only `nfs.conf` varies with the license. The group's other entries -- `default/rpcbind`, "
+        "`idmapd.conf` and `exports` -- do not. `exports` is worth being explicit about because it "
+        "looks like it should: it renders per-share `expose_snapshots`, but that is a persisted column "
+        "and its `NFS_SNAPSHOT` entitlement is enforced only in the share create/update validator, "
+        "never at render time. Re-rendering `exports` under a changed license does not alter it, and it "
+        "must not be made to. "
+        "RELOAD is correct and does not disturb clients: `NFSService` is `reloadable` and does not "
+        "override `reload()`, so it takes the base implementation's systemd reload of `nfs-server`, "
+        "which re-reads the exports rather than restarting the server and dropping mounts."
+    )
+
+
 async def setup(middleware):
     await middleware.call(
         'interface.register_listen_delegate',
         SystemServiceListenMultipleDelegate(middleware, 'nfs', 'bindip'),
     )
+
+    await middleware.call('truenas.license.register_reconcile_delegate', NFSLicenseReconcileDelegate())
 
     middleware.register_hook('pool.post_import', pool_post_import, sync=True)

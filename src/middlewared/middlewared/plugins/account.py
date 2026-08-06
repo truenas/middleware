@@ -48,6 +48,7 @@ from middlewared.api.current import (
     UserUpdateArgs,
     UserUpdateResult,
 )
+from middlewared.common.license_reconcile import LicenseReconcileAction, LicenseReconcileDelegate
 from middlewared.service import CallError, CRUDService, ValidationErrors, private, job
 from middlewared.service_exception import MatchNotFound
 import middlewared.sqlalchemy as sa
@@ -2687,6 +2688,34 @@ class GroupService(CRUDService):
             )
 
 
+class UserLicenseReconcileDelegate(LicenseReconcileDelegate):
+    name = 'user'
+    etc_groups = ('user',)
+    service = 'user'
+    action = LicenseReconcileAction.RELOAD
+    order = 20
+    reason = (
+        "The `user` etc group is the only group in the tree that declares an entitlement check "
+        "directly in its ctx: `plugins/etc.py` binds "
+        "`CtxMethod(method='truenas.entitlements.check', args=[LicenseFeature.SUPPORT])`, and "
+        "`etc_files/local/sudoers.mako` emits `Defaults log_subcmds` and `Defaults log_format=json` "
+        "only when that check comes back entitled. Installing a license therefore has to turn sudo "
+        "command auditing on, and until this delegate existed nothing re-rendered the group when it "
+        "did: the directives stayed absent until some unrelated user or group change happened to "
+        "regenerate the group, or the system rebooted. A security control that silently is not "
+        "applied is the worst way for this to fail, which is why the group is reconciled even though "
+        "the rest of its entries (passwd, group, shadow, subuid/subgid, aliases) do not vary with "
+        "the license. "
+        "RELOAD rather than RENDER because the group is owned by the `user` pseudo service "
+        "(`plugins/service_/services/pseudo/misc.py`), which lists `etc = ['user']`, is `reloadable` "
+        "and whose `reload()` does nothing. `service.control RELOAD user` therefore reduces to "
+        "regenerating the group through `service.generate_etc`, which is exactly the minimum needed "
+        "here while still going through the service that owns the group. "
+        "Declared in this plugin because `account.py` is what regenerates this group on every user "
+        "and group change."
+    )
+
+
 async def setup(middleware):
     try:
         # ensure that our default home path is always immutable. If it's not immutable then
@@ -2698,6 +2727,8 @@ async def setup(middleware):
         )
     except Exception:
         middleware.logger.error('Failed to set immutable property on %r', DEFAULT_HOME_PATH, exc_info=True)
+
+    await middleware.call('truenas.license.register_reconcile_delegate', UserLicenseReconcileDelegate())
 
     if await middleware.call2(middleware.services.keyvalue.get, 'run_migration', False):
         await middleware.call('user.sync_builtin')

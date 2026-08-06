@@ -34,6 +34,7 @@ from middlewared.api.current import (
     FailoverStatusChangedEvent,
 )
 from middlewared.auth import TruenasNodeSessionManagerCredentials
+from middlewared.common.license_reconcile import LicenseReconcileAction, LicenseReconcileDelegate
 from middlewared.service import (
     job,
     private,
@@ -433,6 +434,21 @@ class FailoverService(ConfigService):
                 )
             except Exception as e:
                 self.logger.error(f'Failed to reset legacy license cache on the remote node: {e!r}')
+
+            # Clearing the cache only makes the peer read the blob we just copied over; nothing
+            # re-renders the config that was derived from the previous one. The branch above gets
+            # that for free, because `truenas.license.upload` fires this hook on the peer itself.
+            # Firing it here has both branches converge the peer identically, so a future caller of
+            # this method cannot silently get half the behaviour depending on which license format
+            # happens to be on disk. This is symmetry rather than a fix: the only caller that can
+            # reach this branch today is `failover.sync_to_peer`, which fires the same hook a few
+            # lines later, and the pass is idempotent.
+            try:
+                self.middleware.call_sync(
+                    'failover.call_remote', 'core.call_hook', ['system.post_license_update', [True]]
+                )
+            except Exception as e:
+                self.logger.error(f'Failed to run the license update hook on the remote node: {e!r}')
 
     @private
     def send_pwenc_secret(self):
@@ -1043,12 +1059,20 @@ async def interface_pre_sync_hook(middleware):
     await middleware.call('failover.internal_interface.pre_sync')
 
 
+async def hook_license_update_invalidate_status(middleware, *args, **kwargs):
+    """
+    Drop the cached `failover.status` so that everything running later in this hook sees a status
+    derived from the license we have just installed.
+
+    `failover.status` is answered out of a 300 second cache. Deliberately nothing else happens
+    here: this has to stay a local, sub-millisecond operation because it sits in front of the
+    whole reconcile pass.
+    """
+    await middleware.call('cache.pop', 'failover_status')
+
+
 async def hook_license_update(middleware, *args, **kwargs):
     await middleware.call('failover.status_refresh')
-    # ctdb's runstate depends on system being failover licensed and so we want to get its start / stop
-    # as close as possible to the actual event triggering it. Whether ctdb successfully starts depends
-    # on presence of the nodes file (which only gets generated if we're failover licensed).
-    await middleware.call('service.control', 'RESTART', 'ctdb')
 
 
 async def hook_post_rollback_setup_ha(middleware, *args, **kwargs):
@@ -1323,6 +1347,63 @@ def mismatch_nics(
     return missing_local, missing_remote
 
 
+class CtdbLicenseReconcileDelegate(LicenseReconcileDelegate):
+    name = 'ctdb'
+    etc_groups = ('ctdb',)
+    service = 'ctdb'
+    action = LicenseReconcileAction.RESTART
+    order = 0
+    reason = (
+        "The `ctdb` etc group binds `failover.licensed` as ctx in `plugins/etc.py`, and both of its "
+        "entries act on it: `etc_files/ctdb/nodes.mako` and `etc_files/ctdb/ctdb.conf.mako` each raise "
+        "`FileShouldNotExist` when the system is not failover licensed, which makes `etc.generate` "
+        "unlink the output file instead of writing it. The nodes template says why that matters in so "
+        "many words -- the presence of the nodes file is the ultimate arbiter of whether ctdb will "
+        "start -- so the license does not merely tune this config, it decides whether the daemon can "
+        "come up at all. That is also why ctdb's runstate wants to follow the licensing event as "
+        "closely as possible, which is what `order=0` buys: it runs ahead of every subsystem that "
+        "only needs its config rewritten. "
+        "RESTART rather than RELOAD because there is nothing for a running ctdb to re-read when its "
+        "config has just been deleted, or written for the very first time. `CTDBService` "
+        "(`plugins/service_/services/ctdb.py`) declares neither `restartable` nor `reloadable`, so "
+        "`service.control RESTART ctdb` falls through to the stop-then-start branch of "
+        "`service._restart`. "
+        "This replaces the unconditional `service.control RESTART ctdb` that the license update hook "
+        "in this plugin used to issue. Behaviour on the wire is unchanged; what changes is that the "
+        "restart is now ordered against the rest of the license reconcile pass, is bounded by its "
+        "timeout, and no longer runs when the license could not be read at all."
+    )
+
+
+class KeepalivedLicenseReconcileDelegate(LicenseReconcileDelegate):
+    name = 'keepalived'
+    etc_groups = ('keepalived',)
+    service = 'keepalived'
+    action = LicenseReconcileAction.RELOAD
+    order = 10
+    reason = (
+        "`etc_files/keepalived.conf.mako` reads `failover.licensed` in its very first block and "
+        "returns without emitting anything when the answer is no, so an unlicensed system ends up "
+        "with an empty keepalived config and a licensed one with a full VRRP instance per interface. "
+        "The license read lives inside the template rather than in the group's ctx -- the `keepalived` "
+        "`EtcGroup` in `plugins/etc.py` declares no ctx at all -- which means there is nothing "
+        "declarative anywhere tying this group to the license, and nothing that regenerates it when "
+        "one arrives. The only callers that do regenerate it are the interface sync path in "
+        "`plugins/interface/addresses.py` when VIPs change and the failover event handler, and a "
+        "license upload triggers neither. Without this delegate the config simply stays as it was "
+        "until one of those unrelated events happens to fire. "
+        "RELOAD, emphatically not RESTART. `KeepalivedService.restart()` "
+        "(`plugins/service_/services/keepalived.py`) carries a note that restarting makes every "
+        "interface on the node advertise priority 0, which is a MASTER to BACKUP transition -- in "
+        "other words a restart here would hand the pool to the other controller. A license upload "
+        "must never trigger a failover, so the reload path, which asks systemd to have keepalived "
+        "re-read its config in place, is the only acceptable verb. "
+        "If keepalived is not running, `service.control`'s reload path still regenerates the group "
+        "and then returns early without touching the unit, so a stopped service also ends up with a "
+        "config that matches the new license."
+    )
+
+
 async def setup(middleware):
     middleware.event_subscribe('system.ready', _event_system_ready)
     middleware.register_hook('core.on_connect', ha_permission, sync=True)
@@ -1342,8 +1423,17 @@ async def setup(middleware):
     )
     middleware.register_hook('kmip.sed_keys_sync', hook_kmip_sync, sync=True)
     middleware.register_hook('kmip.zfs_keys_sync', hook_kmip_sync, sync=True)
+    # This must stay ahead of the license reconcile pass, which runs at order=0. Half of the
+    # license sensitive etc groups read `failover.status` while rendering, so if this ordering is
+    # ever changed they will silently reconcile against the status cached under the old license.
+    middleware.register_hook(
+        'system.post_license_update', hook_license_update_invalidate_status, order=-100, sync=True
+    )
     middleware.register_hook('system.post_license_update', hook_license_update, sync=False)
     middleware.register_hook('service.pre_action', service_remote, sync=False)
+
+    await middleware.call('truenas.license.register_reconcile_delegate', CtdbLicenseReconcileDelegate())
+    await middleware.call('truenas.license.register_reconcile_delegate', KeepalivedLicenseReconcileDelegate())
 
     # Register callbacks to properly refresh HA status and send events on changes
     await middleware.call('failover.remote_subscribe', 'system.ready', remote_status_event)
