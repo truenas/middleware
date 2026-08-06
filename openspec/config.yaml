@@ -1,0 +1,8 @@
+schema: spec-driven
+
+context: |
+  Product: Linux rootfs image shipped as a whole. This project is a Python daemon running inside that image.
+
+  Scope of THIS project: check the CDN state, decide whether one of the available updates should be downloaded.
+
+  Update subsystem: src/middlewared/middlewared/plugins/update_/
