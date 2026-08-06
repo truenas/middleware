@@ -75,3 +75,24 @@ class HardwareInfo:
     """Matrix column that platform maps to."""
     chassis: str
     """Raw chassis tag, or ``TRUENAS_UNKNOWN`` when the system is not iX-built."""
+    ha_platform: str
+    """HARDWARE half of ``detect.detect_platform()``: the platform team's
+    codename for this machine, or ``"MANUAL"``.
+
+    It has no default on purpose. A default would have to be ``"MANUAL"``,
+    which is the not-HA-capable answer, and every construction site that
+    forgot to supply the real value would silently receive it with nothing
+    raising to say so.
+    """
+
+    @property
+    def is_ha_capable(self) -> bool:
+        """Whether this machine is one half of an HA pair.
+
+        Deliberately not ``hardware_class.is_appliance``: that is true of every
+        iX appliance, including the single-controller ones. ``"MANUAL"`` is
+        what says this machine is not one half of an HA pair, and acting on
+        anything weaker than that would take down standalone R-series and
+        Z-series boxes.
+        """
+        return self.ha_platform != "MANUAL"

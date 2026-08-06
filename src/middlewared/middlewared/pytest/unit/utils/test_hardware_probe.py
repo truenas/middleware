@@ -47,6 +47,14 @@ def test_node_half_is_discarded(wire):
     assert probe.get_hardware_info() == a
 
 
+def test_hardware_half_reaches_ha_platform(wire):
+    """ha_platform is populated from HARDWARE, not from the NODE half."""
+    wire(DMIInfo(system_product_name="TRUENAS-M50"), lambda: ("ECHOWARP", "B"))
+    info = probe.get_hardware_info()
+    assert info.ha_platform == "ECHOWARP"
+    assert info.is_ha_capable is True
+
+
 def test_manual_falls_through_to_dmi(wire):
     """MANUAL is not an answer, so the chassis tag decides."""
     wire(DMIInfo(system_product_name="TRUENAS-MINI-R"), lambda: ("MANUAL", "MANUAL"))

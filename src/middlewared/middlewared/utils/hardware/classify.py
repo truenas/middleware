@@ -84,4 +84,5 @@ def classify(dmi: DMIInfo, *, ha_platform: str) -> HardwareInfo:
         platform=platform,
         hardware_class=hardware_class_for(platform),
         chassis=chassis,
+        ha_platform=ha_platform,
     )
