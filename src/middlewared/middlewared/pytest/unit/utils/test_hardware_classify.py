@@ -170,6 +170,47 @@ def test_classify_bhyve():
     assert result.hardware_class is HardwareClass.TRUENAS_HW
 
 
+# (i2) ha_platform is carried onto the record verbatim, and is_ha_capable reads
+# off it rather than off the hardware class.
+def test_ha_platform_is_stored_verbatim():
+    """The codename is reported as detection gave it, not normalised."""
+    result = classify(dmi(system_product_name="TRUENAS-M50"), ha_platform="ECHOWARP")
+    assert result.ha_platform == "ECHOWARP"
+
+
+@pytest.mark.parametrize(
+    "codename",
+    ["LAJOLLA2", "SUBLIGHT", "LUDICROUS", "PLAID", "ECHOWARP", "PUMA", "IXKVM", "BHYVE"],
+)
+def test_codenames_are_ha_capable(codename):
+    assert classify(dmi(), ha_platform=codename).is_ha_capable is True
+
+
+def test_unknown_codename_is_ha_capable():
+    """Pairs with test_unknown_codename_degrades_to_ix_hardware: a platform
+    shipped after this was written is HA-capable, not demoted."""
+    assert classify(dmi(), ha_platform="WARPCORE9").is_ha_capable is True
+
+
+def test_appliance_can_be_not_ha_capable():
+    """The interlock. An iX appliance that is not one half of an HA pair is a
+    real machine, so is_ha_capable must never be collapsed into is_appliance."""
+    result = classify(dmi(system_product_name="TRUENAS-R20"), ha_platform="MANUAL")
+    assert result.ha_platform == "MANUAL"
+    assert result.is_ha_capable is False
+    assert result.hardware_class is HardwareClass.TRUENAS_HW
+
+
+def test_mini_is_not_ha_capable():
+    result = classify(dmi(system_product_name="TRUENAS-MINI-R"), ha_platform="MANUAL")
+    assert result.is_ha_capable is False
+    assert result.hardware_class is HardwareClass.MINI
+
+
+def test_generic_is_not_ha_capable():
+    assert classify(dmi(), ha_platform="MANUAL").is_ha_capable is False
+
+
 # (j) HardwareClass.from_chassis, migrated from test_entitlements.
 @pytest.mark.parametrize(
     "chassis,expected",
