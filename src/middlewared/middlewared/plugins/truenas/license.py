@@ -79,8 +79,6 @@ class TrueNASLicenseService(Service):
 
         get_legacy_license_info.cache_clear()
 
-        self.middleware.call_sync("etc.generate", "rc")
-
         self.middleware.call_sync("alert.alert_source_clear_run", "LicenseStatus")
 
         if options.ha_propagate:
