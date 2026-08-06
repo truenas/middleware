@@ -63,25 +63,26 @@ def test_dmi_still_supplies_the_chassis_field(wire):
     assert info.chassis == "TRUENAS-M50"
 
 
-def test_detection_failure_falls_back_to_manual(wire):
-    """A detector that raises must not take the whole classification with it;
-    it degrades to exactly the chassis-only path."""
+def test_detection_failure_propagates(wire):
+    """A detector that raises takes the whole classification with it. The
+    chassis tag cannot say whether this is one half of an HA pair, so there is
+    no honest answer to fall back to."""
 
     def boom():
         raise OSError("no enclosure")
 
     wire(DMIInfo(system_product_name="TRUENAS-MINI-R"), boom)
-    info = probe.get_hardware_info()
-    assert info.platform is Platform.MINI
-    assert info.hardware_class is HardwareClass.MINI
+    with pytest.raises(OSError):
+        probe.get_hardware_info()
 
 
-def test_detection_failure_on_a_whitebox_is_generic(wire):
+def test_detection_failure_on_a_whitebox_propagates(wire):
     def boom():
         raise RuntimeError("ipmi-raw exploded")
 
     wire(DMIInfo(system_manufacturer="Supermicro", system_product_name="X11SSH-F"), boom)
-    assert probe.get_hardware_info().hardware_class is HardwareClass.GENERIC
+    with pytest.raises(RuntimeError):
+        probe.get_hardware_info()
 
 
 def test_get_hardware_class_is_the_class_field(wire):
