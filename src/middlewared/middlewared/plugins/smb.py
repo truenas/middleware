@@ -20,6 +20,7 @@ from middlewared.api.current import (
     SharingSMBDeleteArgs, SharingSMBDeleteResult,
 )
 from middlewared.common.attachment import LockableFSAttachmentDelegate
+from middlewared.common.license_reconcile import LicenseReconcileAction, LicenseReconcileDelegate
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
 from middlewared.service import job, private, SharingService
 from middlewared.service import ConfigService, ValidationError, ValidationErrors
@@ -1886,6 +1887,14 @@ async def hook_post_generic(middleware, datasets):
     await (await middleware.call('service.control', 'RELOAD', 'cifs')).wait()
 
 
+class SMBLicenseReconcileDelegate(LicenseReconcileDelegate):
+    name = 'smb'
+    etc_groups = ('smb',)
+    service = 'cifs'
+    action = LicenseReconcileAction.RELOAD
+    order = 20
+
+
 async def setup(middleware):
     await middleware.call(
         'interface.register_listen_delegate',
@@ -1896,3 +1905,4 @@ async def setup(middleware):
     await middleware.call('pool.dataset.register_attachment_delegate', SMBFSAttachmentDelegate(middleware))
     middleware.register_hook('dataset.post_lock', hook_post_generic, sync=True)
     middleware.register_hook('pool.post_import', pool_post_import, sync=True)
+    await middleware.call('truenas.license.register_reconcile_delegate', SMBLicenseReconcileDelegate())
