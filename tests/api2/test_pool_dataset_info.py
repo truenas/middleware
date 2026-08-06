@@ -6,6 +6,11 @@ from middlewared.test.integration.assets.docker import docker
 from middlewared.test.integration.assets.pool import pool, another_pool, dataset, snapshot
 
 
+# Datasets that are internal to the product and so are never offered as choices. The container
+# dataset lives on every pool, hence the leading slash rather than a pool-qualified name.
+EXCLUDED = f"boot-pool|{pool}/.system|/.truenas_containers"
+
+
 @pytest.fixture(scope='function')
 def pool_dataset_zvol_snapshot_app():
     """ Create a pool, dataset, zvol, snapshot and an app dataset """
@@ -14,7 +19,7 @@ def pool_dataset_zvol_snapshot_app():
     pool_list = [line for line in ssh("zpool list -H -o name | grep -v boot-pool").split()]
 
     try:
-        ds_list = [line for line in ssh(f"zfs list -H -t fs -o name | grep -Ev 'boot-pool|{pool}/.system'").split()]
+        ds_list = [line for line in ssh(f"zfs list -H -t fs -o name | grep -Ev '{EXCLUDED}'").split()]
     except AssertionError:
         ds_list = []
 
@@ -24,7 +29,7 @@ def pool_dataset_zvol_snapshot_app():
         zv_list = []
 
     try:
-        snap_list = [line for line in ssh(f"zfs list -H -t snap -o name | grep -Ev 'boot-pool|{pool}/.system'").split()]
+        snap_list = [line for line in ssh(f"zfs list -H -t snap -o name | grep -Ev '{EXCLUDED}'").split()]
     except AssertionError:
         snap_list = []
 
@@ -62,7 +67,8 @@ def test_recommended_zvol_blocksize():
 
 def test_pool_filesystem_choices(pool_dataset_zvol_snapshot_app):
     """ filesystem_choices returns a list of datasets and pools
-        It should not list boot-pool or the system dataset (.system) """
+        It should not list boot-pool, the system dataset (.system) or the
+        container dataset (.truenas_containers) """
 
     created_items = pool_dataset_zvol_snapshot_app
     assert 'apps' in created_items
@@ -74,6 +80,7 @@ def test_pool_filesystem_choices(pool_dataset_zvol_snapshot_app):
     assert sorted(fc_set_all) == sorted(expected_set)
     assert 'boot-pool' not in fc_set_all
     assert f'{pool}.system' not in fc_set_all
+    assert not [i for i in fc_set_all if '/.truenas_containers' in i]
 
     # Test request for volumes
     fc_vol_list = call('pool.filesystem_choices', ["VOLUME"])

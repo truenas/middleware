@@ -98,7 +98,33 @@ class ContainerService(Service):
         start containers without ever migrating them.
         """
         await self.middleware.call('container.maybe_migrate_legacy')
+        await self.middleware.call('container.repair_pool_mountpoints')
         await self.middleware.call('container.start_on_boot')
+
+    @private
+    async def repair_pool_mountpoints(self):
+        """Repair the container dataset mountpoint on every pool hosting containers.
+
+        ``pool.import_pool`` and ``pool.reimport`` do this for the pool they import, but
+        ``pool.import_on_boot`` and the failover import never reset mountpoints at all, so on those
+        paths a drifted mountpoint goes unnoticed and the container starts on an empty directory.
+
+        Every pool with containers is covered, not just the autostart ones, so a later manual
+        ``container.start`` is safe too.
+        """
+        pools = {
+            container['dataset'].split('/')[0]
+            for container in await self.middleware.call('container.query')
+        }
+        for pool in sorted(pools):
+            try:
+                # A pool that is not imported simply has no container dataset to look at, so the
+                # query inside `ensure_pool_mountpoint` comes back empty and it does nothing.
+                await self.middleware.call('container.ensure_pool_mountpoint', pool)
+            except Exception:
+                self.logger.error(
+                    'Failed to repair container dataset mountpoint on %r', pool, exc_info=True
+                )
 
     @private
     async def start_on_boot(self):

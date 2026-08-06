@@ -9,7 +9,6 @@ from middlewared.api.current import (
     PoolReimportArgs, PoolReimportResult,
     ZFSResourceQuery,
 )
-from middlewared.plugins.container.utils import container_dataset, container_dataset_mountpoint
 from middlewared.plugins.pool_.utils import UpdateImplArgs
 from middlewared.service import CallError, InstanceNotFound, Service, ValidationError, job, private
 from middlewared.utils.filesystem import attrs as fs_attrs
@@ -32,8 +31,6 @@ class PoolService(Service):
         property. This usually happens when a zpool is foreign to
         TrueNAS or someone has unintentionally changed this property."""
         to_inherit = list()
-        container_mnt = container_dataset_mountpoint(pool_name)
-        container_ds = container_dataset(pool_name)
         for i in await self.call2(
             self.s.zfs.resource.query_impl,
             ZFSResourceQuery(paths=[pool_name], properties=['mountpoint'], max_depth=1, get_source=True)
@@ -63,21 +60,7 @@ class PoolService(Service):
                 # cause PVC's to not mount because "mountpoint=legacy" is expected.
                 continue
 
-            if i['name'] == container_ds:
-                if container_mnt != mntpnt.removeprefix('/mnt'):
-                    # TODO: fix the "removeprefix('/mnt')" logic. /mnt is altroot
-                    # set at the zpool but the container_dataset_mountpoint function
-                    # returns the mountpoint without it. Makes using it confusing
-                    # and non-obvious.
-                    # This dataset gets a custom mountpoint so user cannot
-                    # unintentionally share it via SMB, NFS, etc.
-                    await self.middleware.call(
-                        'pool.dataset.update_impl',
-                        UpdateImplArgs(name=i['name'], zprops={'mountpoint': container_mnt})
-                    )
-
-                # We do not do anything if the mountpoint is already correct
-            elif mntpnt != f'/mnt/{i["name"]}':
+            if mntpnt != f'/mnt/{i["name"]}':
                 to_inherit.append(i["name"])
 
         if to_inherit:
@@ -97,6 +80,16 @@ class PoolService(Service):
                     )
                 except Exception:
                     self.logger.exception('Failed inheriting mountpoint property for %r', i.name)
+
+        # The container dataset keeps a custom mountpoint and is an internal path, so neither the
+        # first-level query nor the inherit walk above ever sees it. Repair it by name instead.
+        # Nothing here may escape: the caller is midway through an import, and an exception would
+        # abort it after the pool is already imported at the ZFS layer but before it is recorded
+        # in the database.
+        try:
+            await self.middleware.call('container.ensure_pool_mountpoint', pool_name)
+        except Exception:
+            self.logger.exception('Failed repairing container dataset mountpoint for %r', pool_name)
 
     @api_method(PoolImportFindArgs, PoolImportFindResult, roles=['POOL_READ'])
     @job()
