@@ -21,6 +21,10 @@ INTERNAL_PATHS = (
     "ix-apps",
     "ix-applications",
     ".system",
+    # Kept in sync with `middlewared.plugins.container.utils.CONTAINER_DS_NAME` by a unit test
+    # rather than imported: this module sits on the zfs query hot path and the zfs layer should
+    # not reach into a plugin package ("ix-apps" is likewise a literal here).
+    ".truenas_containers",
 )
 
 
