@@ -9,6 +9,7 @@ from middlewared.api.current import (ISCSIGlobalAluaEnabledArgs, ISCSIGlobalAlua
                                      ISCSIGlobalIserEnabledArgs, ISCSIGlobalIserEnabledResult, ISCSIGlobalUpdateArgs,
                                      ISCSIGlobalUpdateResult)
 from middlewared.async_validators import validate_port
+from middlewared.common.license_reconcile import LicenseReconcileAction, LicenseReconcileDelegate
 from middlewared.plugins.rdma.constants import RDMAprotocols
 from middlewared.service import SystemServiceService, ValidationErrors, private
 from middlewared.utils import run
@@ -343,3 +344,43 @@ class ISCSIGlobalService(SystemServiceService):
             ):
                 return True
         return False
+
+
+class ISCSILicenseReconcileDelegate(LicenseReconcileDelegate):
+    name = 'iscsi'
+    etc_groups = ('scst', 'lio', 'scst_targets')
+    service = 'iscsitarget'
+    action = LicenseReconcileAction.RENDER
+    order = 30
+
+    async def resolve_groups(self, middleware):
+        """
+        Ask the service which of the mutually exclusive iSCSI groups is live on this system.
+
+        `etc_groups` lists `scst`, `lio` and `scst_targets` because it is the ownership
+        declaration -- what uniqueness checking is written against -- and it has to be knowable
+        without making a call. Only a subset of it is ever rendered, and which one depends on the
+        configured mode, so the actual choice needs a call.
+
+        `plugins/service_/services/iscsitarget.py` already carries that choice in its `select_etc()`
+        override, which is the only one in the tree. Deferring to it keeps the license path and the
+        service path from drifting apart. Note it returns `scst_targets` alongside `scst` and not
+        with `lio`, which is why `scst_targets` is declared as owned here even though it is not
+        always rendered.
+        """
+        return await (await middleware.call('service.object', 'iscsitarget')).select_etc()
+
+    async def should_run(self, middleware):
+        """
+        Only converge a target that is actually running.
+
+        With the service stopped there is no live state to bring in line, and starting it later
+        regenerates everything from scratch anyway -- `service.control`'s start path calls
+        `service.generate_etc` over `select_etc()` before it reaches the service's own `start()`.
+        With the service running this is the only thing that converges it after a license change.
+        """
+        return await middleware.call('service.started', 'iscsitarget')
+
+
+async def setup(middleware):
+    await middleware.call('truenas.license.register_reconcile_delegate', ISCSILicenseReconcileDelegate())
