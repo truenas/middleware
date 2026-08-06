@@ -9,14 +9,15 @@ sysfs directly rather than going through udev: the two are equivalent, and
 sysfs kept the module on the standard library and working even where udev is
 not running. Delegating to ``detect`` reverses that rationale -- ``detect``
 uses pyudev, so udev does now have to be running for a bhyve node to be
-recognized. That is the accepted price of there being one copy of the
-QEMU/bhyve rules instead of two that can drift apart.
+recognized. A detection failure propagates out of this module rather than
+degrading to a chassis-only classification: a chassis tag cannot say whether a
+machine is one half of an HA pair, so answering from it alone would be
+inventing an answer where none was obtained.
 """
 
 from __future__ import annotations
 
 from functools import cache
-import logging
 
 from ixhardware import parse_dmi
 
@@ -25,8 +26,6 @@ from .detect import detect_platform
 from .types import HardwareClass, HardwareInfo
 
 __all__ = ("get_hardware_class", "get_hardware_info")
-
-logger = logging.getLogger(__name__)
 
 
 @cache
@@ -38,19 +37,9 @@ def get_hardware_info() -> HardwareInfo:
     Nothing this reads can change without a reboot.
     """
     dmi = parse_dmi()
-    try:
-        # Only the HARDWARE half is wanted here. The NODE half answers "which
-        # side of an HA pair am I", which is not a question this package asks.
-        ha_platform: str = detect_platform()[0]
-    except Exception:
-        # Detection talks to enclosures and to the BMC, either of which can
-        # fail on a machine that is misbehaving. "MANUAL" falls through to
-        # chassis classification, which is exactly what this module did before
-        # it consulted detection at all, so failing this way is no worse than
-        # the behavior it replaced.
-        logger.error("Platform detection failed; classifying from the chassis tag alone", exc_info=True)
-        ha_platform = "MANUAL"
-
+    # Only the HARDWARE half is wanted here. The NODE half answers "which
+    # side of an HA pair am I", which is not a question this package asks.
+    ha_platform: str = detect_platform()[0]
     return classify(dmi, ha_platform=ha_platform)
 
 
