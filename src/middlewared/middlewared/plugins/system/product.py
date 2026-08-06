@@ -24,7 +24,7 @@ from middlewared.api.current import (
 )
 from middlewared.service import CallError, private, Service, ValidationError
 from middlewared.utils import ProductType, sw_info
-from middlewared.utils.hardware import get_hardware_class
+from middlewared.utils.hardware import get_hardware_class, get_hardware_info
 from middlewared.utils.version import parse_version_string
 
 from middlewared.utils.license import LEGACY_LICENSE_FILE, LICENSE_ADDHW_MAPPING, LICENSE_FILE
@@ -47,7 +47,7 @@ class SystemService(Service):
 
     @private
     async def is_ha_capable(self):
-        return await self.middleware.call("failover.hardware") != "MANUAL"
+        return (await self.middleware.run_in_thread(get_hardware_info)).is_ha_capable
 
     @private
     def sed_enabled(self):
