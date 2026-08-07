@@ -9,6 +9,12 @@ from middlewared.plugins.service.services.dbus_router import system_dbus
 from middlewared.utils.threading import start_daemon_thread
 
 IX_VEND_LOCK = asyncio.Lock()
+IX_VEND_DEBOUNCE_SECONDS = 5
+
+# Last-seen address set per interface index, used to suppress vendor service
+# restarts for events that do not change any address.
+_iface_ip_snapshot = {}
+_pending_vendor_restart = None
 
 # Netlink constants
 AF_NETLINK = 16
@@ -419,17 +425,39 @@ def netlink_events(middleware):
 
 
 async def _systemctl_restart_ixvendor(middleware):
-    if IX_VEND_LOCK.locked():
-        # A restart is already in progress; skip to avoid piling up
-        return
-
+    # The lock serializes restarts; a restart scheduled while another is in
+    # progress waits its turn instead of being dropped, so the vendor service
+    # always ends up restarted with the latest address state.
     async with IX_VEND_LOCK:
         if await middleware.call2(middleware.services.system.vendor.is_vendored):
             await system_dbus.call_unit_action_and_wait("ix-vendor.service", "Restart")
 
 
 async def _restart_vendor_service(middleware, event_type, args):
-    middleware.create_task(_systemctl_restart_ixvendor(middleware))
+    global _pending_vendor_restart
+
+    fields = args["fields"]
+    current_ips = frozenset(fields["available_ips"])
+    if _iface_ip_snapshot.get(fields["index"]) == current_ips:
+        # The kernel re-emits RTM_NEWADDR every time an address lifetime is
+        # refreshed by a router advertisement, so these events routinely fire
+        # (as often as every few seconds behind routers with aggressive RA
+        # timers) without any address actually changing. Only restart the
+        # vendor service when the interface's address set differs from what
+        # we last saw.
+        return
+
+    _iface_ip_snapshot[fields["index"]] = current_ips
+
+    # A single network change (DHCP renewal, docker start/stop, interface
+    # bounce) fires several events in quick succession; coalesce them so a
+    # single restart runs once the burst settles.
+    if _pending_vendor_restart is not None:
+        _pending_vendor_restart.cancel()
+    _pending_vendor_restart = asyncio.get_event_loop().call_later(
+        IX_VEND_DEBOUNCE_SECONDS,
+        lambda: middleware.create_task(_systemctl_restart_ixvendor(middleware)),
+    )
 
 
 def setup(middleware):
