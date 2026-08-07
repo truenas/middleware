@@ -22,6 +22,8 @@ DATASET_DATABASE_MODEL_NAME = 'storage.encrypteddataset'
 RE_DRAID_DATA_DISKS = re.compile(r':\d*d')
 RE_DRAID_SPARE_DISKS = re.compile(r':\d*s')
 RE_DRAID_NAME = re.compile(r'draid\d:\d+d:\d+c:\d+s-\d+')
+RE_ZFS_USER_PROP = re.compile(r'[A-Za-z0-9:._-]+')
+ZFS_USER_PROP_MAX_LEN = 255
 ZFS_CHECKSUM_CHOICES = ['ON', 'OFF', 'FLETCHER2', 'FLETCHER4', 'SHA256', 'SHA512', 'SKEIN', 'EDONR', 'BLAKE3']
 ZFS_COMPRESSION_ALGORITHM_CHOICES = [
     'ON', 'OFF', 'LZ4', 'GZIP', 'GZIP-1', 'GZIP-9', 'ZSTD', 'ZSTD-FAST', 'ZLE', 'LZJB',
