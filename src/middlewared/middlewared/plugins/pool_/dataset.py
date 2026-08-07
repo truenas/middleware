@@ -421,7 +421,7 @@ class PoolDatasetService(CRUDService):
         if args.uprops:
             kwargs["user_properties"] = args.uprops
 
-        if args.encrypt and args.encrypt.get("encryption") != "off":
+        if args.encrypt:
             kwargs["crypto"] = tls.lzh.resource_cryptography_config(
                 keyformat=args.encrypt["keyformat"],
                 key=args.encrypt["key"],
@@ -633,10 +633,7 @@ class PoolDatasetService(CRUDService):
                 f'{data["name"].rsplit("/", 1)[0]} must be unlocked to create {data["name"]}.'
             )
 
-        encryption_dict = {}
         inherit_encryption_properties = data.pop('inherit_encryption')
-        if not inherit_encryption_properties:
-            encryption_dict = {'encryption': 'off'}
 
         unencrypted_parent = False
         for parent in get_dataset_parents(data['name']):
@@ -690,7 +687,7 @@ class PoolDatasetService(CRUDService):
             'pool.dataset.validate_encryption_data', None, verrors,
             {'enabled': data.pop('encryption'), **data.pop('encryption_options'), 'key_file': False},
             'pool_dataset_create.encryption_options',
-        ) or encryption_dict
+        )
         verrors.check()
 
         if (
