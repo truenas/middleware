@@ -20,8 +20,9 @@ def test_pool_dataset_create_and_update_user_props():
             assert result['user_properties'].get(prop['key'], {}).get('value') == prop['value'], result
 
         # `comments` defaults to "INHERIT", which must not be written out as a property
+        # (`org.freenas:description` is reported under its API name)
         raw = call('zfs.resource.query', {'paths': [ds], 'get_user_properties': True})[0]
-        assert 'org.freenas:description' not in raw['user_properties'], raw
+        assert 'comments' not in raw['user_properties'], raw
 
         # replacing the set must drop only the properties the caller owns, and must not
         # trip over a TrueNAS-managed property that is reported under its API name
@@ -30,7 +31,7 @@ def test_pool_dataset_create_and_update_user_props():
         raw = call('zfs.resource.query', {'paths': [ds], 'get_user_properties': True})[0]
         assert raw['user_properties'].get('org.truenas.test:first') == 'one', raw
         assert 'org.truenas.test:second' not in raw['user_properties'], raw
-        assert raw['user_properties'].get('org.freenas:description') == 'a comment', raw
+        assert raw['user_properties'].get('comments') == 'a comment', raw
 
 
 @pytest.mark.parametrize('user_props, error', [
