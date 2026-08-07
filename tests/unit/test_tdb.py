@@ -30,6 +30,8 @@ def basic_tdb_ops(hdl: TDBHandle, datatype: TDBDataType):
     match datatype:
         case TDBDataType.JSON:
             data = {'foo': 'bar'}
+        case TDBDataType.RAW:
+            data = b'foobar_raw'
         case TDBDataType.BYTES:
             data = b64encode(b'foobar_bytes').decode()
         case TDBDataType.STRING:
@@ -57,6 +59,10 @@ def batched_tdb_ops(hdl: TDBHandle, datatype: TDBDataType):
             data1 = {'foo1': 'bar1'}
             data2 = {'foo2': 'bar2'}
             data3 = {'foo3': 'bar3'}
+        case TDBDataType.RAW:
+            data1 = b'foobar_raw1'
+            data2 = b'foobar_raw2'
+            data3 = b'foobar_raw3'
         case TDBDataType.BYTES:
             data1 = b64encode(b'foobar_bytes1').decode()
             data2 = b64encode(b'foobar_bytes2').decode()
@@ -208,3 +214,36 @@ def test__tdb_handle_invalidated_by_rename():
 
         # intentionally close so that our final count is correct
         hdl.close()
+
+
+@pytest.mark.parametrize('datatype,value,message', [
+    (TDBDataType.RAW, b64encode(b'canary').decode(), 'RAW values must be bytes'),
+    (TDBDataType.BYTES, 12345, 'BYTES values must be base64-encoded'),
+    (TDBDataType.JSON, 'canary', 'JSON values must be a dict'),
+    (TDBDataType.STRING, b'canary', 'STRING values must be a str'),
+])
+def test__store_rejects_mismatched_value_type(tmpdir, datatype, value, message):
+    """
+    The type a caller must supply follows from the data type the database was opened
+    with rather than from the signature of store(), so it cannot be checked statically.
+    """
+    custom_file = os.path.join(tmpdir, 'mismatch.tdb')
+    tdb_options = TDBOptions(TDBPathType.CUSTOM, datatype)
+
+    with closing(TDBHandle(custom_file, tdb_options)) as handle:
+        with pytest.raises(TypeError, match=message):
+            handle.store('test_key', value)
+
+
+def test__store_rejects_non_base64_bytes(tmpdir):
+    """
+    Packed bytes handed to a BYTES database must be rejected rather than truncated:
+    b64decode() discards everything outside its alphabet before checking padding, so
+    a short descriptor containing none of it would otherwise store as an empty record.
+    """
+    custom_file = os.path.join(tmpdir, 'notb64.tdb')
+    tdb_options = TDBOptions(TDBPathType.CUSTOM, TDBDataType.BYTES)
+
+    with closing(TDBHandle(custom_file, tdb_options)) as handle:
+        with pytest.raises(ValueError, match='must be base64-encoded'):
+            handle.store('test_key', b'\x01\x00\x04\x80\x00\x00\x00\x00')
