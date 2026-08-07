@@ -29,7 +29,6 @@ __all__ = [
     "PoolDatasetChangeKeyArgs", "PoolDatasetChangeKeyResult", "PoolDatasetInheritParentEncryptionPropertiesArgs",
     "PoolDatasetInheritParentEncryptionPropertiesResult", "PoolDatasetChecksumChoicesArgs",
     "PoolDatasetChecksumChoicesResult", "PoolDatasetCompressionChoicesArgs", "PoolDatasetCompressionChoicesResult",
-    "PoolDatasetEncryptionAlgorithmChoicesArgs", "PoolDatasetEncryptionAlgorithmChoicesResult",
     "PoolDatasetRecommendedZvolBlocksizeArgs", "PoolDatasetRecommendedZvolBlocksizeResult", "PoolDatasetProcessesArgs",
     "PoolDatasetProcessesResult", "PoolDatasetGetQuotaArgs", "PoolDatasetGetQuotaResult", "PoolDatasetSetQuotaArgs",
     "PoolDatasetSetQuotaResult", "PoolDatasetRecordsizeChoicesArgs", "PoolDatasetRecordsizeChoicesResult",
@@ -710,20 +709,6 @@ class PoolDatasetDetailsArgs(BaseModel):
 
 class PoolDatasetDetailsResult(BaseModel):
     result: list[dict] = Field(description="Array of detailed dataset information objects.")
-
-
-class PoolDatasetEncryptionAlgorithmChoicesArgs(BaseModel):
-    pass
-
-
-@single_argument_result
-class PoolDatasetEncryptionAlgorithmChoicesResult(BaseModel):
-    AES_128_CCM: Literal["AES-128-CCM"] = Field(alias="AES-128-CCM")
-    AES_192_CCM: Literal["AES-192-CCM"] = Field(alias="AES-192-CCM")
-    AES_256_CCM: Literal["AES-256-CCM"] = Field(alias="AES-256-CCM")
-    AES_128_GCM: Literal["AES-128-GCM"] = Field(alias="AES-128-GCM")
-    AES_192_GCM: Literal["AES-192-GCM"] = Field(alias="AES-192-GCM")
-    AES_256_GCM: Literal["AES-256-GCM"] = Field(alias="AES-256-GCM")
 
 
 class PoolDatasetEncryptionSummaryArgs(BaseModel):

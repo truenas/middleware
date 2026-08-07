@@ -4,14 +4,12 @@ from middlewared.api.current import (
     PoolDatasetChecksumChoicesResult,
     PoolDatasetCompressionChoicesArgs,
     PoolDatasetCompressionChoicesResult,
-    PoolDatasetEncryptionAlgorithmChoicesArgs,
-    PoolDatasetEncryptionAlgorithmChoicesResult,
     PoolDatasetRecommendedZvolBlocksizeArgs,
     PoolDatasetRecommendedZvolBlocksizeResult,
 )
 from middlewared.service import Service
 
-from .utils import ZFS_CHECKSUM_CHOICES, ZFS_COMPRESSION_ALGORITHM_CHOICES, ZFS_ENCRYPTION_ALGORITHM_CHOICES
+from .utils import ZFS_CHECKSUM_CHOICES, ZFS_COMPRESSION_ALGORITHM_CHOICES
 
 
 class PoolDatasetService(Service):
@@ -32,17 +30,6 @@ class PoolDatasetService(Service):
         Retrieve compression algorithm supported by ZFS.
         """
         return {v: v for v in ZFS_COMPRESSION_ALGORITHM_CHOICES}
-
-    @api_method(
-        PoolDatasetEncryptionAlgorithmChoicesArgs,
-        PoolDatasetEncryptionAlgorithmChoicesResult,
-        roles=['DATASET_READ']
-    )
-    async def encryption_algorithm_choices(self):
-        """
-        Retrieve encryption algorithms supported for ZFS dataset encryption.
-        """
-        return {v: v for v in ZFS_ENCRYPTION_ALGORITHM_CHOICES}
 
     @api_method(
         PoolDatasetRecommendedZvolBlocksizeArgs,

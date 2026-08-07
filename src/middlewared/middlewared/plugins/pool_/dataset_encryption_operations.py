@@ -112,7 +112,6 @@ class PoolDatasetService(Service):
             opts = {
                 'keyformat': (ZFSKeyFormat.PASSPHRASE if passphrase_key_format else ZFSKeyFormat.HEX).value.lower(),
                 'keylocation': 'prompt',
-                'encryption': encryption_dict['algorithm'].lower(),
                 'key': key,
                 **({'pbkdf2iters': encryption_dict['pbkdf2iters']} if passphrase_key_format else {}),
             }
@@ -191,13 +190,12 @@ class PoolDatasetService(Service):
             'pool.dataset.validate_encryption_data', job, verrors, {
                 'enabled': True, 'passphrase': options['passphrase'],
                 'generate_key': options['generate_key'], 'key_file': options['key_file'],
-                'pbkdf2iters': options['pbkdf2iters'], 'algorithm': 'on', 'key': options['key'],
+                'pbkdf2iters': options['pbkdf2iters'], 'key': options['key'],
             }, 'change_key_options'
         )
 
         verrors.check()
 
-        encryption_dict.pop('encryption')
         key = encryption_dict.pop('key')
 
         change_key(tls, id_, encryption_dict, key)
