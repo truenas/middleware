@@ -1,5 +1,5 @@
+from middlewared.alert.applicability import MINI_HARDWARE
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, AlertSource, Alert
-from middlewared.utils import ProductType
 
 URL = "https://www.truenas.com/docs/hardware/legacyhardware/miniseries/freenas-minis-2nd-gen/freenasminibmcwatchdog/"
 
@@ -13,11 +13,11 @@ class TrueNASMiniBMCAlertClass(AlertClass):
         f"<a href=\"{URL}\" target=\"_blank\">"
         "ASRock Rack C2750D4I BMC Watchdog Issue</a> for details."
     )
-    products = (ProductType.COMMUNITY_EDITION,)
+    applies_to = MINI_HARDWARE
 
 
 class TrueNASMiniBMCAlertSource(AlertSource):
-    products = (ProductType.COMMUNITY_EDITION,)
+    applies_to = MINI_HARDWARE
 
     async def check(self):
         dmi = await self.middleware.call("system.dmidecode_info")

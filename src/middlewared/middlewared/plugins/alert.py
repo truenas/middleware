@@ -17,6 +17,7 @@ from pydantic_core import ValidationError
 from truenas_api_client import ReserveFDException
 from truenas_pylicensed.features import LicenseFeature
 
+from middlewared.alert.applicability import Applicability, declaration_rule_name
 from middlewared.alert.base import (
     AlertCategory,
     alert_category_names,
@@ -48,6 +49,7 @@ from middlewared.service import (
 )
 from middlewared.service_exception import CallError, NetworkActivityDisabled
 import middlewared.sqlalchemy as sa
+from middlewared.utils.entitlements import get_facts
 from middlewared.utils.plugins import load_modules, load_classes
 from middlewared.utils.python import get_middlewared_dir
 from middlewared.utils.time_utils import utc_now
@@ -63,13 +65,18 @@ FAILOVER_ALERTS_BACKOFF_SECS = 900
 
 AlertSourceLock = namedtuple("AlertSourceLock", ["source_name", "expires_at"])
 
+# Source/class pairs already reported as disagreeing. Sources run every sixty seconds and a
+# declaration does not change while the process lives, so this is worth saying once rather than
+# once a minute.
+_REPORTED_INAPPLICABLE_CLASSES: set[tuple[str, str]] = set()
+
 
 @dataclass(slots=True, frozen=True, kw_only=True)
 class AlertFailoverInfo:
     this_node: str
     other_node: str
     run_on_backup_node: bool
-    run_failover_related: bool
+    past_failover_blackout: bool
 
 
 class AlertModel(sa.Model):
@@ -181,12 +188,31 @@ def partition[T](predicate: Callable[[T], Any], iterable: Iterable[T]) -> tuple[
     return matching, non_matching
 
 
+def source_run_gates_pass(source: type[AlertSource], fi: AlertFailoverInfo) -> bool:
+    """Whether the failover-related gates let `source` run this tick.
+
+    Neither gate asks anything about the license. `post_failover_blackout` is a time window: a
+    source whose answer is unreliable right after a failover stays quiet until the window closes,
+    whether or not this system was ever licensed for one. `require_stable_peer` asks whether a
+    peer was found in a state worth talking to.
+
+    Out of the loop so both can be checked without a middleware object or a running service.
+    """
+    if source.post_failover_blackout and not fi.past_failover_blackout:
+        return False
+
+    if source.require_stable_peer and not fi.run_on_backup_node:
+        return False
+
+    return True
+
+
 class AlertSerializer:
-    def __init__(self, middleware):
+    def __init__(self, middleware, applicability):
         self.middleware = middleware
+        self.applicability = applicability
 
         self.initialized = False
-        self.product_type = None
         self.classes = None
         self.nodes = None
 
@@ -210,7 +236,7 @@ class AlertSerializer:
     async def should_show_alert(self, alert):
         await self._ensure_initialized()
 
-        if self.product_type not in alert.klass.products:
+        if not self.applicability.class_applies(alert.klass):
             return False
 
         if (await self.get_alert_class(alert)).get("policy") == "NEVER":
@@ -220,7 +246,6 @@ class AlertSerializer:
 
     async def _ensure_initialized(self):
         if not self.initialized:
-            self.product_type = await self.middleware.call("alert.product_type")
             self.classes = (await self.middleware.call("alertclasses.config"))["classes"]
             self.nodes = await self.middleware.call("alert.node_map")
 
@@ -243,13 +268,6 @@ class AlertOneshotDeleteArgs(BaseModel):
 
 class AlertOneshotDeleteResult(BaseModel):
     result: None
-
-
-def should_list_alert_class(alert_class: type[AlertClass], product_type: str, failover_licensed: bool) -> bool:
-    if alert_class.category == AlertCategory.HA and not failover_licensed:
-        return False
-
-    return product_type in alert_class.products
 
 
 class AlertService(Service):
@@ -278,12 +296,42 @@ class AlertService(Service):
 
         self.blocked_failover_alerts_until = 0
 
+        self._applicability = None
+
         self.sources_run_times = defaultdict(lambda: {
             "last": [],
             "max": 0,
             "total_count": 0,
             "total_time": 0,
         })
+
+    @private
+    async def applicability(self):
+        """Every applicability answer for this system, from one reading of the facts.
+
+        The single owner of that reading. Held for the life of the process, because the facts
+        only change on a license upload, which fires `system.post_license_update` and drops
+        this. Reading them per call instead let a run and the send that follows it disagree
+        within one cycle, since those are separate jobs.
+
+        A `None` license is never held: `get_license` returns `None` both for an unlicensed
+        system and for one whose license daemon did not answer, so caching it would strand a
+        licensed system on a single failed read until its next upload or reboot. Re-reading is
+        cheap in exactly that case -- an unlicensed system has no daemon listening, so the
+        socket fails immediately.
+        """
+        if self._applicability is not None:
+            return self._applicability
+
+        applicability = Applicability(await self.middleware.run_in_thread(get_facts))
+        if applicability.facts.license is not None:
+            self._applicability = applicability
+
+        return applicability
+
+    @private
+    async def invalidate_applicability(self):
+        self._applicability = None
 
     @private
     def load(self):
@@ -367,14 +415,13 @@ class AlertService(Service):
         List all types of alerts which the system can issue.
         """
 
-        product_type = await self.middleware.call("alert.product_type")
-        failover_licensed = await self.middleware.call("failover.licensed")
+        applicability = await self.applicability()
 
         classes: list[type[AlertClass]] = []
         for alert_class in AlertClass.classes:
             if not (
                 options["include_all_products"] or
-                should_list_alert_class(alert_class, product_type, failover_licensed)
+                applicability.class_listed(alert_class)
             ):
                 continue
 
@@ -393,7 +440,6 @@ class AlertService(Service):
                             "id": alert_class.name,
                             "title": alert_class.title,
                             "level": alert_class.level.name,
-                            "product_types": list(alert_class.products),
                             "proactive_support": alert_class.proactive_support,
                         }
                         for alert_class in classes
@@ -412,7 +458,7 @@ class AlertService(Service):
         List all types of alerts including active/dismissed currently in the system.
         """
 
-        as_ = AlertSerializer(self.middleware)
+        as_ = AlertSerializer(self.middleware, await self.applicability())
         classes = (await self.middleware.call("alertclasses.config"))["classes"]
 
         return [
@@ -512,7 +558,7 @@ class AlertService(Service):
         await self._send_alert_changed_event(alert)
 
     async def _send_alert_changed_event(self, alert):
-        as_ = AlertSerializer(self.middleware)
+        as_ = AlertSerializer(self.middleware, await self.applicability())
         if await as_.should_show_alert(alert):
             self.middleware.send_event("alert.list", "CHANGED", id=alert.uuid, fields=await as_.serialize(alert))
 
@@ -546,8 +592,11 @@ class AlertService(Service):
             SEND_ALERTS_ON_READY = True
             return
 
-        product_type = await self.middleware.call("alert.product_type")
+        applicability = await self.applicability()
         classes = (await self.middleware.call("alertclasses.config"))["classes"]
+
+        def is_applicable(alert):
+            return applicability.class_applies(alert.klass)
 
         now = utc_now()
         for policy_name, policy in self.policies.items():
@@ -559,7 +608,7 @@ class AlertService(Service):
                 service_alerts = [
                     alert for alert in self.alerts
                     if (
-                        product_type in alert.klass.products and
+                        is_applicable(alert) and
                         get_alert_level(alert, classes).value >= service_level.value and
                         get_alert_policy(alert, classes) != "NEVER"
                     )
@@ -567,7 +616,7 @@ class AlertService(Service):
                 service_gone_alerts = [
                     alert for alert in gone_alerts
                     if (
-                        product_type in alert.klass.products and
+                        is_applicable(alert) and
                         get_alert_level(alert, classes).value >= service_level.value and
                         get_alert_policy(alert, classes) == policy_name
                     )
@@ -575,7 +624,7 @@ class AlertService(Service):
                 service_new_alerts = [
                     alert for alert in new_alerts
                     if (
-                        product_type in alert.klass.products and
+                        is_applicable(alert) and
                         get_alert_level(alert, classes).value >= service_level.value and
                         get_alert_policy(alert, classes) == policy_name
                     )
@@ -604,7 +653,7 @@ class AlertService(Service):
                         self.logger.error("Error in alert service %r", alert_service_desc["type"], exc_info=True)
 
             if policy_name == "IMMEDIATELY":
-                as_ = AlertSerializer(self.middleware)
+                as_ = AlertSerializer(self.middleware, applicability)
                 for alert in gone_alerts:
                     if await as_.should_show_alert(alert):
                         self._send_alert_deleted_event(alert)
@@ -694,14 +743,17 @@ class AlertService(Service):
 
     async def __get_failover_info(self):
         this_node, other_node = "A", "B"
-        run_on_backup_node = run_failover_related = False
-        run_failover_related = await self.middleware.call("failover.licensed")
-        if run_failover_related:
+        run_on_backup_node = False
+
+        # A time window, not a license question: a source whose answer is unreliable right after a
+        # failover has to stay quiet whether or not this system is licensed for one.
+        past_failover_blackout = time.monotonic() > self.blocked_failover_alerts_until
+
+        if await self.middleware.call("failover.licensed"):
             if await self.middleware.call("failover.node") != "A":
                 this_node, other_node = "B", "A"
 
-            run_failover_related = time.monotonic() > self.blocked_failover_alerts_until
-            if run_failover_related:
+            if past_failover_blackout:
                 args = ([], {"connect_timeout": 2})
 
                 # Do not run on backup if there is a software version mismatch
@@ -743,7 +795,7 @@ class AlertService(Service):
             this_node=this_node,
             other_node=other_node,
             run_on_backup_node=run_on_backup_node,
-            run_failover_related=run_failover_related
+            past_failover_blackout=past_failover_blackout,
         )
 
     async def __handle_locked_alert_source(self, name, this_node, other_node):
@@ -787,20 +839,39 @@ class AlertService(Service):
         return other_node_alerts
 
     async def __run_alerts(self):
-        product_type = await self.middleware.call("alert.product_type")
+        applicability = await self.applicability()
         fi = await self.__get_failover_info()
         for k, source_lock in list(self.sources_locks.items()):
             if source_lock.expires_at <= time.monotonic():
                 await self.unblock_source(k)
 
+        # FIXME: this drop trusts facts that can be wrong. get_license() returns None both for a
+        # system with no license and for a system whose license daemon did not answer, so a daemon
+        # hiccup at this moment makes every license-gated source look inapplicable and deletes the
+        # alerts it had persisted. Recovering is not free: when the daemon answers again the alerts
+        # are recreated with fresh timestamps and their dismissed state cleared, so an operator sees
+        # a wave of "new" alerts they had already dismissed.
+        excluded = {
+            alert_source.name
+            for alert_source in ALERT_SOURCES.values()
+            if not applicability.source_runs(type(alert_source))
+        }
+        if excluded:
+            # An excluded source still owns whatever it persisted before it was excluded. Delete
+            # those through the policies as well as out of the list: a policy that still remembers
+            # an alert reports it as gone on the next tick, and gone alerts are filtered by the
+            # class rule, which is deliberately wider than the source rule -- so an alert service
+            # would announce that something was resolved when it had only stopped being checked.
+            dropped, self.alerts = partition(lambda alert: alert.source in excluded, self.alerts)
+            for alert in dropped:
+                for policy in self.policies.values():
+                    policy.delete_alert(alert)
+
         for alert_source in ALERT_SOURCES.values():
-            if product_type not in alert_source.products:
+            if alert_source.name in excluded:
                 continue
 
-            if alert_source.failover_related and not fi.run_failover_related:
-                continue
-
-            if alert_source.require_stable_peer and not fi.run_on_backup_node:
+            if not source_run_gates_pass(type(alert_source), fi):
                 continue
 
             if not alert_source.schedule.should_run(utc_now(), self.alert_source_last_run[alert_source.name]):
@@ -824,16 +895,35 @@ class AlertService(Service):
             for talert, oalert in zip_longest(this_node_alerts, other_node_alerts, fillvalue=None):
                 if talert is not None:
                     talert.node = fi.this_node
-                    self.__handle_alert(talert)
+                    self.__handle_alert(talert, applicability)
                 if oalert is not None:
                     oalert.node = fi.other_node
-                    self.__handle_alert(oalert)
+                    self.__handle_alert(oalert, applicability)
 
             self.alerts = (
                 [a for a in self.alerts if a.source != alert_source.name] + this_node_alerts + other_node_alerts
             )
 
-    def __handle_alert(self, alert):
+    def __handle_alert(self, alert, applicability):
+        if not applicability.class_applies(alert.klass):
+            # The alert will be stored and then denied everywhere it would be shown. Nothing fails,
+            # so nothing else reports it; the source's rule and the class's rule simply disagree.
+            # Both rules are named, because which of the two is wrong is the whole question and
+            # neither is visible from the alert.
+            key = (alert.source or "", alert.klass.name)
+            if key not in _REPORTED_INAPPLICABLE_CLASSES:
+                _REPORTED_INAPPLICABLE_CLASSES.add(key)
+                source = ALERT_SOURCES.get(alert.source)
+                self.logger.error(
+                    "%s: produced a %r alert, but that class does not apply to this system. The "
+                    "alert will be stored and never shown. The source applies to %s, the class to "
+                    "%s.",
+                    alert.source or "alert.oneshot_create",
+                    alert.klass.name,
+                    declaration_rule_name(type(source)) if source is not None else "no source rule",
+                    declaration_rule_name(alert.klass),
+                )
+
         try:
             existing_alert = [
                 a for a in self.alerts
@@ -999,7 +1089,7 @@ class AlertService(Service):
 
         alert.node = self.node
 
-        self.__handle_alert(alert)
+        self.__handle_alert(alert, await self.applicability())
 
         self.alerts = [a for a in self.alerts if a.uuid != alert.uuid] + [alert]
 
@@ -1070,10 +1160,6 @@ class AlertService(Service):
             raise CallError(f"Alert source {name!r} not found.", errno.ENOENT)
 
         self.alert_source_last_run[alert_source.name] = datetime.min
-
-    @private
-    async def product_type(self):
-        return await self.middleware.call("system.product_type")
 
 
 class AlertServiceModel(sa.Model):
@@ -1292,6 +1378,10 @@ async def _event_system(middleware, event_type, args):
         await middleware.call("alert.send_alerts")
 
 
+async def _post_license_update(middleware, *args, **kwargs):
+    await middleware.call("alert.invalidate_applicability")
+
+
 async def setup(middleware):
     await middleware.call("alertservice.load")
     await middleware.call("alertservice.initialize")
@@ -1300,3 +1390,4 @@ async def setup(middleware):
     await middleware.call("alert.initialize")
 
     middleware.event_subscribe("system.ready", _event_system)
+    middleware.register_hook("system.post_license_update", _post_license_update)

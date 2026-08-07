@@ -3,10 +3,10 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
+from middlewared.alert.applicability import APPLIANCE_OR_HA_LICENSED, HA_LICENSED
 from middlewared.alert.base import (
     Alert, AlertClass, SimpleOneShotAlertClass, AlertCategory, AlertLevel, OneShotAlertClass
 )
-from middlewared.utils import ProductType
 
 
 class FailoverSyncFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
@@ -18,7 +18,8 @@ class FailoverSyncFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
         "the standby storage controller but failed. Use Sync to Peer on the "
         "System/Failover page to try and perform a manual sync."
     )
-    products = (ProductType.ENTERPRISE,)
+    applies_to = APPLIANCE_OR_HA_LICENSED
+    listed_only_when = HA_LICENSED
 
     async def create(self, args):
         return Alert(FailoverSyncFailedAlertClass, {'mins': args['mins']})
@@ -37,7 +38,8 @@ class FailoverKeysSyncFailedAlertClass(AlertClass, SimpleOneShotAlertClass):
         "The automatic synchronization of encryption passphrases with the standby "
         "controller has failed. Please go to System > Failover and manually sync to peer."
     )
-    products = (ProductType.ENTERPRISE,)
+    applies_to = APPLIANCE_OR_HA_LICENSED
+    listed_only_when = HA_LICENSED
 
 
 class FailoverKMIPKeysSyncFailedAlertClass(AlertClass, OneShotAlertClass):
@@ -50,7 +52,8 @@ class FailoverKMIPKeysSyncFailedAlertClass(AlertClass, OneShotAlertClass):
         "The automatic synchronization of KMIP keys with the standby "
         "controller has failed due to %(error)s. Please go to System > Failover and manually sync to peer."
     )
-    products = (ProductType.ENTERPRISE,)
+    applies_to = APPLIANCE_OR_HA_LICENSED
+    listed_only_when = HA_LICENSED
 
     async def create(self, args):
         return Alert(FailoverKMIPKeysSyncFailedAlertClass, args)
