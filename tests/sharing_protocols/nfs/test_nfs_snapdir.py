@@ -4,8 +4,7 @@ import pytest
 
 from middlewared.service_exception import InstanceNotFound, ValidationErrors
 from middlewared.test.integration.assets.filesystem import directory
-from middlewared.test.integration.assets.product import product_type
-from middlewared.test.integration.utils import call, pool, ssh
+from middlewared.test.integration.utils import call, mock, pool, ssh
 from middlewared.test.integration.utils.client import truenas_server
 from protocols.pynfs_proto import PynfsClient, PynfsClient3
 
@@ -14,7 +13,12 @@ SNAPDIR_EXPORTS_ENTRY = 'zfs_snapdir'
 
 @pytest.fixture(scope='function')
 def enterprise():
-    with product_type():
+    with mock('truenas.entitlements.check', args=['NFS_SNAPSHOT', ], declaration="""
+        def mock(self, feature):
+            from middlewared.utils.entitlements import Entitlement, Reason
+
+            return Entitlement(entitled=True, reason=Reason.ENTITLED, column='HW+K', message='')
+    """):
         yield
 
 
@@ -61,7 +65,24 @@ def nfs_dataset():
 
 @pytest.fixture(scope='function')
 def community():
-    with product_type('COMMUNITY_EDITION'):
+    """Deny the entitlement the way an unlicensed system would.
+
+    An unlicensed system lands on the ``CE``/``HW`` column, which NFS_SNAPSHOT
+    grants on neither hardware side. The message is read out of the engine's
+    table rather than restated here, because that string is what the plugin
+    surfaces as the validation error.
+    """
+    with mock('truenas.entitlements.check', args=['NFS_SNAPSHOT', ], declaration="""
+        def mock(self, feature):
+            from middlewared.utils.entitlements import FEATURE_MESSAGES, Entitlement, Reason
+
+            return Entitlement(
+                entitled=False,
+                reason=Reason.NO_LICENSE,
+                column='CE',
+                message=FEATURE_MESSAGES[feature][Reason.NO_LICENSE],
+            )
+    """):
         yield
 
 

@@ -335,11 +335,6 @@ class JBOFService(CRUDService):
         if not license_:
             return result
 
-        # check if this node's system serial matches the serial in the license
-        local_serial = (await self.middleware.call('system.dmidecode_info'))['system-serial-number']
-        if local_serial not in license_.serials:
-            return result
-
         # Check to see if we're licensed to attach a JBOF
         if license_.enclosures:
             for name, quantity in license_.enclosures.items():

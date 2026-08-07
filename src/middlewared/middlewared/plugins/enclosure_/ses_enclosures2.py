@@ -140,7 +140,7 @@ def _initialize_v_series_rear_enclosures(
     _extend_rv(rv, (enc,), asdict)
 
 
-def get_ses_enclosures(asdict=True):
+def get_ses_enclosures(asdict: bool = True) -> list:
     rv = list()
     deferred_front = list()
     deferred_rear = list()

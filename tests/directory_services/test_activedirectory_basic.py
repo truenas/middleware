@@ -8,8 +8,7 @@ from middlewared.test.integration.assets.directory_service import (
 )
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.privilege import privilege
-from middlewared.test.integration.assets.product import product_type
-from middlewared.test.integration.utils import call, client, ssh
+from middlewared.test.integration.utils import call, client, mock, ssh
 from middlewared.test.integration.utils.client import truenas_server
 from middlewared.test.integration.utils.system import reset_systemd_svcs, get_gssproxy_state
 
@@ -30,17 +29,22 @@ def check_ad_started():
 
 
 @pytest.fixture(scope="function")
-def set_product_type():
+def entitle_ds_auth():
     if ha:
         # HA product is already enterprise-licensed
         yield
     else:
-        with product_type():
+        with mock('truenas.entitlements.check', args=['DIRECTORY_SERVICES', ], declaration="""
+            def mock(self, feature):
+                from middlewared.utils.entitlements import Entitlement, Reason
+
+                return Entitlement(entitled=True, reason=Reason.ENTITLED, column='HW+K', message='')
+        """):
             yield
 
 
 @pytest.fixture(scope="function")
-def enable_ds_auth(set_product_type):
+def enable_ds_auth(entitle_ds_auth):
     call("system.general.update", {"ds_auth": True})
 
     try:
@@ -65,9 +69,23 @@ def test_enable_leave_activedirectory():
     assert check_ad_started() is False
 
     if not ha:
-        with pytest.raises(ValidationErrors):
-            # At this point we are not enterprise licensed
-            call("system.general.update", {"ds_auth": True})
+        # Deny the entitlement the way an unlicensed system would: that lands on
+        # the CE/HW column, which DIRECTORY_SERVICES grants on neither hardware
+        # side. The wording still comes from the engine's message table rather
+        # than being restated here, since that is what the plugin surfaces.
+        with mock('truenas.entitlements.check', args=['DIRECTORY_SERVICES', ], declaration="""
+            def mock(self, feature):
+                from middlewared.utils.entitlements import FEATURE_MESSAGES, Entitlement, Reason
+
+                return Entitlement(
+                    entitled=False,
+                    reason=Reason.NO_LICENSE,
+                    column='CE',
+                    message=FEATURE_MESSAGES[feature][Reason.NO_LICENSE],
+                )
+        """):
+            with pytest.raises(ValidationErrors, match='requires an Enterprise license'):
+                call("system.general.update", {"ds_auth": True})
 
     short_name = None
 

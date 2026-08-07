@@ -10,6 +10,7 @@ from middlewared.api.current import (
     ServiceStartedOrEnabledResult, ServiceUpdateArgs, ServiceUpdateResult,
     ServiceControlArgs, ServiceControlResult,
 )
+from middlewared.common.license_reconcile import LicenseReconcileAction, LicenseReconcileDelegate
 from middlewared.plugins.service_.services.all import all_services
 from middlewared.plugins.service_.services.base import IdentifiableServiceInterface
 from middlewared.plugins.service_.services.dbus_router import ServiceActionError
@@ -505,6 +506,26 @@ class ServiceService(CRUDService):
             await self.started(service.name)
 
 
+class RcLicenseReconcileDelegate(LicenseReconcileDelegate):
+    name = 'rc'
+    etc_groups = ('rc',)
+    service = None
+    action = LicenseReconcileAction.RENDER
+    order = -50
+    reason = (
+        "The `rc` etc group holds a single entry, the `systemd` python renderer, and that renderer "
+        "reads `failover.licensed`: on a licensed system it forces the `scst` unit disabled "
+        "regardless of what the services table says. Losing or gaining a license therefore changes "
+        "which units are enabled at boot, and nothing re-derives that on its own. "
+        "`etc_files/systemd.py` renders no file under /etc -- it returns None and applies the unit "
+        "state itself over systemd's dbus API -- so there is no config for a service to pick up "
+        "afterwards and RENDER is the whole of the work. "
+        "It is declared here, in the plugin that owns the services table, rather than derived from "
+        "the services themselves because four of them (`rc`, `powerd`, `routing`, `truecommand`) "
+        "list the group in their `etc`, and the group has to be claimed exactly once."
+    )
+
+
 async def __event_service_ready(middleware, event_type, args):
     middleware.create_task(middleware.call('service.check_deprecated_services'))
 
@@ -512,5 +533,7 @@ async def __event_service_ready(middleware, event_type, args):
 async def setup(middleware):
     for klass in all_services:
         await middleware.call('service.register_object', klass(middleware))
+
+    await middleware.call('truenas.license.register_reconcile_delegate', RcLicenseReconcileDelegate())
 
     middleware.event_subscribe('system.ready', __event_service_ready)

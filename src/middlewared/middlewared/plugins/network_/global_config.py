@@ -77,7 +77,7 @@ class NetworkConfigurationService(ConfigService):
         # needs to be used so it works with either TrueNAS COMMUNITY_EDITION or ENTERPRISE
         data['hostname_local'] = data['hostname']
 
-        if not self.middleware.call_sync('system.is_enterprise'):
+        if not self.middleware.call_sync('system.is_ha_capable'):
             data.pop('hostname_b')
             data.pop('hostname_virtual')
         else:

@@ -33,7 +33,7 @@ ${f'%{group["group"]}'} ALL=(ALL) ${sudo_entry(group['sudo_commands'], group['su
 % endfor
 Defaults syslog_goodpri = debug
 Defaults secure_path = /sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
-% if render_ctx['system.is_enterprise']:
+% if render_ctx['truenas.entitlements.check'].entitled:
 Defaults log_subcmds
 Defaults log_format=json
 % endif

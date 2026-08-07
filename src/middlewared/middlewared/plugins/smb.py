@@ -20,6 +20,7 @@ from middlewared.api.current import (
     SharingSMBDeleteArgs, SharingSMBDeleteResult,
 )
 from middlewared.common.attachment import LockableFSAttachmentDelegate
+from middlewared.common.license_reconcile import LicenseReconcileAction, LicenseReconcileDelegate
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
 from middlewared.service import job, private, SharingService
 from middlewared.service import ConfigService, ValidationError, ValidationErrors
@@ -53,6 +54,7 @@ from middlewared.utils.privilege import credential_has_full_admin
 from middlewared.utils.security_descriptor import CUSTOM_ACCESS_MASK_STRING
 from middlewared.utils.smb import SearchProtocol, SMBUnixCharset, SMBSharePurpose
 from middlewared.utils.tdb import TDBError
+from truenas_pylicensed.features import LicenseFeature
 
 
 BASE_SHARE_PARAMS = frozenset([
@@ -232,7 +234,7 @@ class SMBService(ConfigService):
                 share[share_field.AUDIT][field] = sids
 
         bind_ip_choices = self.middleware.call_sync('smb.bindip_choices')
-        is_enterprise = self.middleware.call_sync('system.is_enterprise')
+        smb_fastpath = self.call_sync2(self.s.truenas.entitlements.check, LicenseFeature.SMB_FASTPATH).entitled
         security_config = self.middleware.call_sync('system.security.config')
         tiering_enabled = self.call_sync2(self.s.zfs.tier.config).enabled
         veeam_repo_errors = []
@@ -273,7 +275,7 @@ class SMBService(ConfigService):
             smb_config,
             smb_shares,
             bind_ip_choices,
-            is_enterprise,
+            smb_fastpath,
             security_config,
             tiering_enabled,
         )
@@ -1324,10 +1326,11 @@ class SharingSMBService(SharingService):
                     )
 
             if data[share_field.PURPOSE] == SMBSharePurpose.VEEAM_REPOSITORY_SHARE:
-                if not await self.middleware.call('system.is_enterprise'):
+                entitlement = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.SMB_VEEAM)
+                if not entitlement.entitled:
                     verrors.add(
                         f'{schema_name}.{share_field.PURPOSE}',
-                        'Veeam repository shares require a TrueNAS enterprise license.'
+                        entitlement.message
                     )
                 bsize = (await self.middleware.call('filesystem.statfs', data[share_field.PATH]))['blocksize']
                 if bsize != VEEAM_REPO_BLOCKSIZE:
@@ -1884,6 +1887,35 @@ async def hook_post_generic(middleware, datasets):
     await (await middleware.call('service.control', 'RELOAD', 'cifs')).wait()
 
 
+class SMBLicenseReconcileDelegate(LicenseReconcileDelegate):
+    name = 'smb'
+    etc_groups = ('smb',)
+    service = 'cifs'
+    action = LicenseReconcileAction.RELOAD
+    order = 20
+    reason = (
+        "The `smb` etc group renders a single file, `local/smb4.conf`, out of a single ctx entry, "
+        "`smb.generate_smb_configuration`, and that method reaches the license by two independent "
+        "routes. "
+        "First, it reads the `SMB_FASTPATH` entitlement and hands it to `generate_smb_conf_dict` in "
+        "`plugins/smb_/util_smbconf.py`, where it becomes the values of `zfs_core:zfs_integrity_streams` "
+        "and `zfs_core:zfs_block_cloning`. On stable/26 that same argument was `system.is_enterprise`, "
+        "which was true on iX appliance hardware before any license was installed, so the parameters "
+        "never changed when a license arrived and never re-rendering the group was harmless. Now that "
+        "the predicate is a pure entitlement check it does change, and the group has to be re-rendered. "
+        "Second, the same method calls `smb.bindip_choices`, which consults `failover.licensed` and "
+        "returns failover virtual IPs on a licensed HA system versus ordinary in-use addresses "
+        "otherwise. Those choices are intersected with the configured bind IPs to produce the "
+        "`interfaces` line, so gaining or losing the license can leave smbd bound to the wrong "
+        "addresses, or to loopback only. "
+        "RELOAD is enough and is not disruptive: `CIFSService` is `reloadable` and its `reload()` is "
+        "`smbcontrol smbd reload-config`, which re-reads the config without dropping established "
+        "sessions. If SMB is not running, `service.control`'s reload path still regenerates the etc "
+        "group and then returns early without touching the unit, so a stopped service also ends up "
+        "with a config that matches the new license."
+    )
+
+
 async def setup(middleware):
     await middleware.call(
         'interface.register_listen_delegate',
@@ -1894,3 +1926,4 @@ async def setup(middleware):
     await middleware.call('pool.dataset.register_attachment_delegate', SMBFSAttachmentDelegate(middleware))
     middleware.register_hook('dataset.post_lock', hook_post_generic, sync=True)
     middleware.register_hook('pool.post_import', pool_post_import, sync=True)
+    await middleware.call('truenas.license.register_reconcile_delegate', SMBLicenseReconcileDelegate())

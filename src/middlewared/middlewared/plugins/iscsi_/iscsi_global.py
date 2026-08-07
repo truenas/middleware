@@ -9,6 +9,7 @@ from middlewared.api.current import (ISCSIGlobalAluaEnabledArgs, ISCSIGlobalAlua
                                      ISCSIGlobalIserEnabledArgs, ISCSIGlobalIserEnabledResult, ISCSIGlobalUpdateArgs,
                                      ISCSIGlobalUpdateResult)
 from middlewared.async_validators import validate_port
+from middlewared.common.license_reconcile import LicenseReconcileAction, LicenseReconcileDelegate
 from middlewared.plugins.rdma.constants import RDMAprotocols
 from middlewared.service import SystemServiceService, ValidationErrors, private
 from middlewared.utils import run
@@ -177,8 +178,7 @@ class ISCSIGlobalService(SystemServiceService):
         ))
 
         if new['iser'] and old['iser'] != new['iser']:
-            available_rdma_protocols = await self.middleware.call('rdma.capable_protocols')
-            if RDMAprotocols.ISER.value not in available_rdma_protocols:
+            if not await self.iser_capable():
                 verrors.add(
                     "iscsiglobal_update.iser",
                     "This platform cannot support iSER or is missing an RDMA capable NIC."
@@ -285,8 +285,6 @@ class ISCSIGlobalService(SystemServiceService):
         """
         Returns whether iSCSI ALUA is enabled or not.
         """
-        if not await self.middleware.call('system.is_enterprise'):
-            return False
         if not await self.middleware.call('failover.licensed'):
             return False
 
@@ -295,6 +293,13 @@ class ISCSIGlobalService(SystemServiceService):
         #     return True
 
         return (await self.middleware.call('iscsi.global.config'))['alua']
+
+    @private
+    async def iser_capable(self):
+        """
+        Returns whether iSER is available on this system, ignoring whether it is currently enabled.
+        """
+        return RDMAprotocols.ISER.value in await self.middleware.call('rdma.capable_protocols')
 
     @api_method(
         ISCSIGlobalIserEnabledArgs,
@@ -305,10 +310,10 @@ class ISCSIGlobalService(SystemServiceService):
         """
         Returns whether iSER is enabled or not.
         """
-        if not await self.middleware.call('system.is_enterprise'):
-            return False
+        if (await self.middleware.call('iscsi.global.config'))['iser']:
+            return await self.iser_capable()
 
-        return (await self.middleware.call('iscsi.global.config'))['iser']
+        return False
 
     @private
     async def direct_config_enabled(self):
@@ -339,3 +344,76 @@ class ISCSIGlobalService(SystemServiceService):
             ):
                 return True
         return False
+
+
+class ISCSILicenseReconcileDelegate(LicenseReconcileDelegate):
+    name = 'iscsi'
+    etc_groups = ('scst', 'lio')
+    service = 'iscsitarget'
+    action = LicenseReconcileAction.RENDER
+    order = 30
+    reason = (
+        "The iSCSI target config is license derived by three separate routes, and all three are "
+        "bound as ctx on the groups in `plugins/etc.py`. "
+        "`fc.capable` is ctx on both `scst` and `lio`. `fc.capable` in `plugins/fc/fc.py` is an "
+        "entitlement check on `LicenseFeature.FIBRECHANNEL` and'd with the presence of a QLogic HBA, "
+        "so on an appliance that has the card it flips purely with the license. When it is false "
+        "`scst.conf.mako` emits no `TARGET_DRIVER qla2x00t` section at all and "
+        "`utils/lio/config.py::_desired_fc_targets` returns an empty desired state, which is to say "
+        "every Fibre Channel target on the box disappears from the rendered config. "
+        "`iscsi.global.iser_enabled` is ctx on `lio`. It resolves through `iser_capable` in this "
+        "plugin to `rdma.capable_protocols`, which returns an empty list unless the `RDMA` "
+        "entitlement is held, so losing the license turns iSER off on every portal and stops "
+        "`ib_isert` being loaded. "
+        "`failover.licensed` is ctx on both and is also read directly inside "
+        "`utils/lio/config.py`. In `scst.conf.mako` it is the `is_ha` flag that decides whether the "
+        "ALUA device group and target group sections are written at all. "
+        "RENDER rather than RELOAD, and the two halves of that are not symmetric, so it is worth "
+        "spelling out. The `scst` group renders `scst.conf` and `scst.env`, which are inert files "
+        "that SCST only consults when it is started or explicitly reloaded -- so rendering them "
+        "brings the on-disk config in line with the license and changes nothing about the running "
+        "target. Applying them would mean `ISCSITargetService.reload()`, which is either "
+        "`iscsi.scst.apply_config_file` or a full `scstadmin -config /etc/scst.conf` run, and "
+        "reconfiguring a live target out from under initiators is not something a license upload "
+        "should ever do to IO in flight. The `lio` group is different: its single entry is a python "
+        "renderer that calls `utils/lio/config.py::write_lio_config`, which writes the LIO configfs "
+        "tree directly, so in LIO mode render *is* the apply step and there is nothing further to "
+        "reload -- `ISCSITargetService.reload()` in LIO mode is a documented no-op for exactly that "
+        "reason. That is acceptable because `write_lio_config` is the same create/update/delete "
+        "reconcile that every ordinary iSCSI config change already goes through, rather than a "
+        "teardown and rebuild. "
+        "The static `etc_groups` and the dynamic `resolve_groups()` deliberately differ here; see "
+        "the comment on `resolve_groups` below."
+    )
+
+    async def resolve_groups(self, middleware):
+        """
+        Ask the service which of the mutually exclusive iSCSI groups is live on this system.
+
+        `etc_groups` lists both `scst` and `lio` because it is the ownership declaration -- what
+        uniqueness checking and the coverage test are written against -- and it has to be knowable
+        without making a call. Only one of the two is ever rendered, and which one depends on the
+        configured mode, so the actual choice needs a call.
+
+        `plugins/service_/services/iscsitarget.py` already carries that choice in its `select_etc()`
+        override, which is the only one in the tree. Deferring to it keeps the license path and the
+        service path from drifting apart. Note it returns `scst_targets` alongside `scst`: that is
+        harmless, since re-rendering it when nothing changed is a no-op, and `scst_targets` is left
+        out of `etc_groups` so that another delegate stays free to claim it.
+        """
+        return await (await middleware.call('service.object', 'iscsitarget')).select_etc()
+
+    async def should_run(self, middleware):
+        """
+        Only converge a target that is actually running.
+
+        With the service stopped there is no live state to bring in line, and starting it later
+        regenerates everything from scratch anyway -- `service.control`'s start path calls
+        `service.generate_etc` over `select_etc()` before it reaches the service's own `start()`.
+        With the service running this is the only thing that converges it after a license change.
+        """
+        return await middleware.call('service.started', 'iscsitarget')
+
+
+async def setup(middleware):
+    await middleware.call('truenas.license.register_reconcile_delegate', ISCSILicenseReconcileDelegate())

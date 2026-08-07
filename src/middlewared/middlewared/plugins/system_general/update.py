@@ -1,5 +1,7 @@
 import asyncio
 
+from truenas_pylicensed.features import LicenseFeature
+
 import middlewared.sqlalchemy as sa
 
 from middlewared.api import api_method
@@ -97,11 +99,10 @@ class SystemGeneralService(ConfigService):
 
     @settings.fields_validator('ds_auth')
     async def _validate_ds_auth(self, verrors, ds_auth):
-        if ds_auth and not await self.middleware.call('system.is_enterprise'):
-            verrors.add(
-                'ds_auth',
-                'Directory services authentication for UI and API access requires an Enterprise license.'
-            )
+        if ds_auth:
+            entitlement = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.DIRECTORY_SERVICES)
+            if not entitlement.entitled:
+                verrors.add('ds_auth', entitlement.message)
 
     @settings.fields_validator('kbdmap')
     async def _validate_kbdmap(self, verrors, kbdmap):

@@ -5,6 +5,7 @@ from itertools import zip_longest
 from ipaddress import ip_address, ip_interface
 
 from middlewared.api import api_method
+from middlewared.common.license_reconcile import LicenseReconcileAction, LicenseReconcileDelegate
 from middlewared.plugins.interface.dhcp import dhcp_reload, dhcp_start
 from middlewared.api.current import (
     InterfaceEntry, InterfaceAvailableFecModesArgs, InterfaceAvailableFecModesResult,
@@ -31,6 +32,7 @@ from middlewared.service import (
 )
 import middlewared.sqlalchemy as sa
 from middlewared.utils.filter_list import filter_list
+from truenas_pylicensed.features import LicenseFeature
 from truenas_pynetif.address.constants import AddressFamily
 from truenas_pynetif.address.netlink import get_addresses, get_default_route, netlink_route
 from truenas_pynetif.ethtool import NetlinkError, get_ethtool
@@ -1231,7 +1233,8 @@ class InterfaceService(CRUDService):
 
         # Validate fec_mode field
         if 'fec_mode' in data:
-            if await self.middleware.call('system.is_enterprise'):
+            entitlement = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.NETWORK_FEC)
+            if entitlement.entitled:
                 if new['type'] == 'PHYSICAL':
                     if available := self.available_fec_modes(oid):
                         if data['fec_mode'] not in available:
@@ -1246,7 +1249,7 @@ class InterfaceService(CRUDService):
                 else:
                     verrors.add('interface_update.fec_mode', 'FEC mode can only be set on physical interfaces.')
             else:
-                verrors.add('interface_update.fec_mode', 'Configuring FEC mode is an enterprise feature.')
+                verrors.add('interface_update.fec_mode', entitlement.message)
 
         verrors.check()
 
@@ -1902,6 +1905,43 @@ async def __activate_service_announcements(middleware, event_type, args):
     await middleware.call("network.configuration.toggle_announcement", srv)
 
 
+class DiscoveryLicenseReconcileDelegate(LicenseReconcileDelegate):
+    name = 'discovery'
+    etc_groups = ('discovery',)
+    service = 'discovery'
+    action = LicenseReconcileAction.RELOAD
+    order = 20
+    reason = (
+        "The `discovery` etc group binds `failover.status` as ctx in `plugins/etc.py`, and every one "
+        "of its six entries -- `truenas-discoveryd.conf` plus the `services.d` fragments for ADISK, "
+        "DEV_INFO, HTTP, SMB and NUT -- opens by raising `FileShouldNotExist` when that status is "
+        "anything other than SINGLE or MASTER, so the whole service announcement config is removed "
+        "from disk on a standby node. `failover.status` reaches the license through "
+        "`plugins/failover_/status.py`, which returns SINGLE unconditionally the moment "
+        "`failover.licensed` is false. The status also picks the announced hostname: on MASTER "
+        "`truenas-discoveryd.conf` advertises the virtual hostname, otherwise the local one. "
+        "It is worth being honest about when this actually changes anything, because it is not the "
+        "obvious case. Licensing a system for the first time does not move the status: "
+        "`failover_/status.py` deliberately keeps returning SINGLE while no interface has a VIP "
+        "configured, and a VIP cannot be configured until the system is licensed, since "
+        "`interface._common_validation` in this plugin drops `failover_virtual_aliases` outright when "
+        "`failover.licensed` is false. So the transitions that genuinely re-render this group are the "
+        "reverse one -- a licensed node that was reading BACKUP falls back to SINGLE and has its "
+        "announcement config written back -- and the second node's view of a pair that is already "
+        "configured. It is registered anyway because the group is license derived and the cost of "
+        "converging it is a reload of a daemon that mostly ends up rewriting the same bytes. "
+        "RELOAD rather than RESTART: `DiscoveryService` is `reloadable`, and `service.control`'s "
+        "reload path regenerates the group first and only then decides what to do with the daemon -- "
+        "reloading it in place if it is running, and returning without touching it if it is not. "
+        "That keeps the config in step with the license without a gap in mDNS/NetBIOS/WSD responses, "
+        "and without starting a daemon on a node that had it stopped. "
+        "Declared here because service announcement is a network concern -- the config is rendered "
+        "out of `network.configuration.config`, and `network.configuration.toggle_announcement` in "
+        "`plugins/network_/global_config.py` is already what drives this service on every network "
+        "configuration change."
+    )
+
+
 async def setup(middleware):
     middleware.event_register('network.config', 'Sent on network configuration changes.')
 
@@ -1910,6 +1950,8 @@ async def setup(middleware):
     middleware.event_subscribe('network.config', configure_http_proxy)
     middleware.event_subscribe('system.ready', __activate_service_announcements)
     middleware.register_hook('udev.net', udevd_ifnet_hook, inline=True)
+
+    await middleware.call('truenas.license.register_reconcile_delegate', DiscoveryLicenseReconcileDelegate())
 
     # Only run DNS sync in the first run. This avoids calling the routine again
     # on middlewared restart.

@@ -1,34 +1,32 @@
+"""Talk to the license daemon and normalize what it reports."""
+
 from __future__ import annotations
 
 import base64
 import contextlib
-from dataclasses import dataclass
 from datetime import date
 import json
 import logging
 import os
 import shutil
 import time
+from types import MappingProxyType
 import typing
 
 from truenas_os_pyutils.io import atomic_write
-from truenas_pylicensed import FEATURE_NAME_MAP, LicenseStatus, LicenseType, get_fingerprint, verify
+from truenas_pylicensed import FEATURE_NAME_MAP, LicenseStatus, get_fingerprint, verify
 
-from middlewared.service import CallError, ValidationError
+from middlewared.service_exception import CallError
 
-if typing.TYPE_CHECKING:
-    from middlewared.main import Middleware
+from .constants import LICENSE_BACKUP, LICENSE_DIR, LICENSE_FILE
+from .types import FeatureInfo, LicenseInfo
 
 logger = logging.getLogger(__name__)
 
 __all__ = (
-    "LICENSE_FILE",
-    "FeatureInfo",
-    "LicenseInfo",
-    "upload_license",
-    "get_license_info",
+    "from_license_status",
     "get_fingerprint_b64",
-    "configure_ha_license",
+    "upload_license",
 )
 
 
@@ -54,42 +52,6 @@ def get_fingerprint_b64() -> str:
         else:
             flat[flat_key] = None
     return base64.b64encode(json.dumps(flat).encode()).decode()
-
-
-LICENSE_DIR = "/data/subsystems/truenas_license"
-LICENSE_FILE = f"{LICENSE_DIR}/license"
-LICENSE_BACKUP = f"{LICENSE_DIR}/license.bak"
-
-
-@dataclass(frozen=True, kw_only=True, slots=True)
-class FeatureInfo:
-    name: str
-    """Feature key (e.g. "DEDUP", "SED")."""
-    start_date: date | None
-    """Feature start date or None."""
-    expires_at: date | None
-    """Feature expiration date or None for perpetual."""
-
-
-@dataclass(frozen=True, kw_only=True, slots=True)
-class LicenseInfo:
-    id: str
-    """Unique UUID string for the license."""
-    type: LicenseType
-    """The license type."""
-    model: str | None
-    """Hardware model (e.g. "H30") for enterprise types, None otherwise."""
-    expires_at: date | None
-    """Synthesized expiration: top-level expires_at for test licenses,
-    SUPPORT feature expires_at for all other types."""
-    features: list[FeatureInfo]
-    """Licensed features."""
-    serials: list[str]
-    """System serial number(s) for hardware-bound licenses."""
-    enclosures: dict[str, int]
-    """Licensed enclosure models mapped to count."""
-    contract_type: str | None
-    """Support contract type."""
 
 
 @typing.overload
@@ -182,67 +144,42 @@ def upload_license(license_pem: str) -> typing.Generator[LicenseStatus, None, No
             os.unlink(LICENSE_BACKUP)
 
 
-def get_license_info(lic: LicenseStatus | None = None) -> LicenseInfo | None:
-    """Query the daemon for the current license. Returns None if no valid license."""
-    if lic is None:
-        lic = verify()
+def from_license_status(status: LicenseStatus | None = None) -> LicenseInfo | None:
+    """Normalize a daemon LicenseStatus. Returns None if no valid license."""
+    if status is None:
+        status = verify()
 
-    if not lic.valid:
+    if not status.valid:
         return None
 
-    support = lic.features.get("SUPPORT") if lic.features else None
+    support = status.features.get("SUPPORT") if status.features else None
 
     if support:
         contract_type: str | None = support.type
     else:
         contract_type = None
 
-    if lic.expires_at:
-        expires_at: date | None = date.fromisoformat(lic.expires_at)
-    elif support and support.expires_at:
-        expires_at = date.fromisoformat(support.expires_at)
-    else:
-        expires_at = None
-
-    return LicenseInfo(
-        id=lic.id,  # type: ignore[arg-type]
-        type=lic.type,  # type: ignore[arg-type]
-        model=lic.model,
-        expires_at=expires_at,
-        features=[
-            FeatureInfo(
-                name=FEATURE_NAME_MAP.get(name, name),
-                start_date=date.fromisoformat(f.start_date) if f.start_date else None,
-                expires_at=date.fromisoformat(f.expires_at) if f.expires_at else None,
-            )
-            for name, f in (lic.features or {}).items()
-        ],
-        serials=lic.system_id["serials"] if lic.system_id else [],
-        enclosures={model: entry["count"] for model, entry in (lic.enclosures or {}).items()},
-        contract_type=contract_type,
-    )
-
-
-def configure_ha_license(middleware: Middleware) -> None:
-    try:
-        middleware.call_sync("failover.ensure_remote_client")
-    except Exception as e:
-        # this is fatal because we can't determine what the remote ip address
-        # is to so any failover.call_remote calls will fail
-        raise ValidationError("license", f"Failed to determine remote heartbeat IP address: {e}")
-
-    try:
-        middleware.call_sync("failover.call_remote", "failover.ensure_remote_client")
-    except Exception:
-        # this is not fatal, so no reason to return early
-        # it just means that any "failover.call_remote" calls initiated from the remote node
-        # will fail but that shouldn't be happening anyway
-        logger.warning(
-            "Remote node failed to determine this nodes heartbeat IP address",
-            exc_info=True,
+    features: dict[str, FeatureInfo] = {}
+    for name, f in (status.features or {}).items():
+        key = str(FEATURE_NAME_MAP.get(name, name))
+        features[key] = FeatureInfo(
+            name=key,
+            start_date=date.fromisoformat(f.start_date) if f.start_date else None,
+            expires_at=date.fromisoformat(f.expires_at) if f.expires_at else None,
+            source=f.source,
+            type=f.type,
         )
 
-    try:
-        middleware.call_sync("failover.send_license")
-    except Exception:
-        logger.warning("Failed to send file to remote node", exc_info=True)
+    return LicenseInfo(
+        id=status.id,  # type: ignore[arg-type]
+        type=status.type,  # type: ignore[arg-type]
+        model=status.model,
+        support_expires_at=date.fromisoformat(support.expires_at) if support and support.expires_at else None,
+        license_expires_at=date.fromisoformat(status.expires_at) if status.expires_at else None,
+        features=MappingProxyType(features),
+        serials=tuple(status.system_id["serials"]) if status.system_id else (),
+        enclosures=MappingProxyType(
+            {model: entry["count"] for model, entry in (status.enclosures or {}).items()}
+        ),
+        contract_type=contract_type,
+    )

@@ -5,6 +5,8 @@ import itertools
 import os
 import shutil
 
+from truenas_pylicensed.features import LicenseFeature
+
 from middlewared.api import api_method
 from middlewared.api.current import (
     NFSEntry,
@@ -15,6 +17,7 @@ from middlewared.api.current import (
     SharingNFSUpdateArgs, SharingNFSUpdateResult,
     SharingNFSDeleteArgs, SharingNFSDeleteResult
 )
+from middlewared.common.license_reconcile import LicenseReconcileAction, LicenseReconcileDelegate
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
 from middlewared.async_validators import check_path_resides_within_volume, validate_port
 from middlewared.service import private, SharingService, SystemServiceService
@@ -22,6 +25,7 @@ from middlewared.service import CallError, ValidationError, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.plugins.nfs_.utils import get_domain, leftmost_has_wildcards, get_wildcard_domain
+from middlewared.plugins.rdma.constants import RDMAprotocols
 from middlewared.plugins.nfs_.validators import (
     confirm_unique, sanitize_networks, sanitize_hosts, validate_bind_ip
 )
@@ -160,6 +164,15 @@ class NFSService(SystemServiceService):
             self.middleware.call_sync('nfs.clear_nfs3_rmtab')
 
     @private
+    async def rdma_capable(self):
+        """Whether NFS over RDMA is available on this system, ignoring whether it is currently enabled.
+
+        Deliberately does not read the NFS config: this is called from nfs_extend, which is the
+        datastore_extend for nfs.config, so consulting the config here would recurse.
+        """
+        return RDMAprotocols.NFS.value in await self.middleware.call('rdma.capable_protocols')
+
+    @private
     async def nfs_extend(self, nfs):
         keytab_has_nfs = await self.middleware.call("kerberos.keytab.has_nfs_principal")
         nfs["v4_krb_enabled"] = (nfs["v4_krb"] or keytab_has_nfs)
@@ -178,7 +191,7 @@ class NFSService(SystemServiceService):
             nfs['managed_nfsd'] = False
 
         # Repair inconsistencies
-        nfs['rdma'] = nfs['rdma'] and await self.middleware.call('system.is_enterprise')
+        nfs['rdma'] = nfs['rdma'] and await self.rdma_capable()
 
         return nfs
 
@@ -188,9 +201,6 @@ class NFSService(SystemServiceService):
         nfs.pop("v4_krb_enabled")
         nfs.pop("keytab_has_nfs_spn")
         nfs["16"] = nfs.pop("userd_manage_gids")
-
-        # Repair inconsistencies
-        nfs['rdma'] = nfs['rdma'] and await self.middleware.call('system.is_enterprise')
 
         return nfs
 
@@ -366,8 +376,7 @@ class NFSService(SystemServiceService):
             verrors.add("nfs_update.v4_domain", "This option does not apply to NFSv3")
 
         if new["rdma"]:
-            available_rdma_protocols = await self.middleware.call('rdma.capable_protocols')
-            if 'NFS' not in available_rdma_protocols:
+            if not await self.rdma_capable():
                 verrors.add(
                     "nfs_update.rdma",
                     "This platform cannot support NFS over RDMA or is missing an RDMA capable NIC."
@@ -443,9 +452,8 @@ class SharingNFSService(SharingService):
         `hosts` is a list of IP's/hostnames which are allowed to access the share. If empty, all IP's/hostnames are
         allowed.
 
-        `expose_snapshots` enable TrueNAS Enterprise feature to allow access
-        to the ZFS snapshot directory over NFS. This feature requires a valid
-        enterprise license.
+        `expose_snapshots` allow access to the ZFS snapshot directory over NFS.
+        Requires a license carrying the NFS_SNAPSHOT feature, on any hardware.
         """
         verrors = ValidationErrors()
 
@@ -626,7 +634,8 @@ class SharingNFSService(SharingService):
                 )
 
         if data["expose_snapshots"]:
-            if await self.middleware.call("system.is_enterprise"):
+            entitlement = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.NFS_SNAPSHOT)
+            if entitlement.entitled:
                 # check if mountpoint and whether snapdir is enabled
                 try:
                     # We're using statfs output because in future it should expose
@@ -642,10 +651,7 @@ class SharingNFSService(SharingService):
                     # doesn't have to be perfect.
                     pass
             else:
-                verrors.add(
-                    f"{schema_name}.expose_snapshots",
-                    "This is an enterprise feature and may not be enabled without a valid license."
-                )
+                verrors.add(f"{schema_name}.expose_snapshots", entitlement.message)
 
     @private
     async def sanitize_share_networks_and_hosts(self, data, schema_name, verrors):
@@ -975,10 +981,38 @@ async def pool_post_import(middleware, pool):
             break
 
 
+class NFSLicenseReconcileDelegate(LicenseReconcileDelegate):
+    name = 'nfsd'
+    etc_groups = ('nfsd',)
+    service = 'nfs'
+    action = LicenseReconcileAction.RELOAD
+    order = 20
+    reason = (
+        "The `nfsd` etc group binds `nfs.config` as ctx, `nfs.config` runs `nfs.nfs_extend` as its "
+        "`datastore_extend`, and `nfs_extend` masks the stored `rdma` column against `nfs.rdma_capable`, "
+        "which asks `rdma.capable_protocols`, which returns nothing at all unless the `RDMA` "
+        "entitlement is held. `etc_files/nfs.conf.mako` then emits `rdma = y` and `rdma-port = 20049` "
+        "only when that masked value survives. So a system whose stored config asks for NFS over RDMA "
+        "renders a config with RDMA off while unlicensed, and has to have it rendered back on when the "
+        "license arrives -- and vice versa -- with nothing else prompting the group to be regenerated. "
+        "Only `nfs.conf` varies with the license. The group's other entries -- `default/rpcbind`, "
+        "`idmapd.conf` and `exports` -- do not. `exports` is worth being explicit about because it "
+        "looks like it should: it renders per-share `expose_snapshots`, but that is a persisted column "
+        "and its `NFS_SNAPSHOT` entitlement is enforced only in the share create/update validator, "
+        "never at render time. Re-rendering `exports` under a changed license does not alter it, and it "
+        "must not be made to. "
+        "RELOAD is correct and does not disturb clients: `NFSService` is `reloadable` and does not "
+        "override `reload()`, so it takes the base implementation's systemd reload of `nfs-server`, "
+        "which re-reads the exports rather than restarting the server and dropping mounts."
+    )
+
+
 async def setup(middleware):
     await middleware.call(
         'interface.register_listen_delegate',
         SystemServiceListenMultipleDelegate(middleware, 'nfs', 'bindip'),
     )
+
+    await middleware.call('truenas.license.register_reconcile_delegate', NFSLicenseReconcileDelegate())
 
     middleware.register_hook('pool.post_import', pool_post_import, sync=True)

@@ -30,6 +30,9 @@ jobs:
             middlewared/plugins/update_/ \
             middlewared/plugins/ups/ \
             middlewared/plugins/zfs/ \
+            middlewared/utils/entitlements/ \
+            middlewared/utils/hardware/ \
+            middlewared/utils/license/ \
             --exclude middlewared/etc_files \
             --follow-imports silent \
             --strict

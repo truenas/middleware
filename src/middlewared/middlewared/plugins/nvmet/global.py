@@ -1,11 +1,14 @@
 import pathlib
 
+from truenas_pylicensed.features import LicenseFeature
+
 import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
 from middlewared.api.current import (NVMetGlobalEntry,
                                      NVMetGlobalUpdateArgs,
                                      NVMetGlobalUpdateResult,
                                      NVMetGlobalSessionsItem)
+from middlewared.common.license_reconcile import LicenseReconcileAction, LicenseReconcileDelegate
 from middlewared.plugins.rdma.constants import RDMAprotocols
 from middlewared.service import SystemServiceService, ValidationErrors, filterable_api_method, private
 from middlewared.utils.filter_list import filter_list
@@ -70,8 +73,7 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
 
     async def __validate(self, verrors, data, schema_name, old=None):
         if data['rdma'] and old['rdma'] != data['rdma']:
-            available_rdma_protocols = await self.middleware.call('rdma.capable_protocols')
-            if RDMAprotocols.NVMET.value not in available_rdma_protocols:
+            if not await self.rdma_capable():
                 verrors.add(
                     f'{schema_name}.rdma',
                     'This platform cannot support NVMe-oF(RDMA) or is missing a RDMA capable NIC.'
@@ -84,11 +86,9 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
                 )
         if old['kernel'] != data['kernel']:
             if not data['kernel']:
-                if not await self.middleware.call('system.is_enterprise'):
-                    verrors.add(
-                        f'{schema_name}.kernel',
-                        'SPDK is limited to enterprise licensed systems only.'
-                    )
+                spdk = await self.middleware.call2(self.s.truenas.entitlements.check, LicenseFeature.NVMEOF_SPDK)
+                if not spdk.entitled:
+                    verrors.add(f'{schema_name}.kernel', spdk.message)
                 elif AVX2_FLAG not in (await self.middleware.call('system.cpu_flags')):
                     verrors.add(
                         f'{schema_name}.kernel',
@@ -126,14 +126,22 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
         return False
 
     @private
+    async def rdma_capable(self):
+        """
+        Returns whether NVMe-oF over RDMA is available on this system, ignoring whether it is
+        currently enabled.
+        """
+        return RDMAprotocols.NVMET.value in await self.middleware.call('rdma.capable_protocols')
+
+    @private
     async def rdma_enabled(self):
         """
         Returns whether RDMA is enabled or not.
         """
-        if not await self.middleware.call('system.is_enterprise'):
-            return False
+        if (await self.middleware.call('nvmet.global.config'))['rdma']:
+            return await self.rdma_capable()
 
-        return (await self.middleware.call('nvmet.global.config'))['rdma']
+        return False
 
     @filterable_api_method(item=NVMetGlobalSessionsItem, roles=['SHARING_NVME_TARGET_READ'])
     async def sessions(self, filters, options):
@@ -349,7 +357,62 @@ async def pool_post_import(middleware, pool):
             await (await middleware.call('service.control', 'RELOAD', NVMET_SERVICE_NAME)).wait(raise_error=True)
 
 
+class NVMeTargetLicenseReconcileDelegate(LicenseReconcileDelegate):
+    name = 'nvmet'
+    etc_groups = ('nvmet',)
+    service = NVMET_SERVICE_NAME
+    action = LicenseReconcileAction.RENDER
+    order = 30
+    reason = (
+        "The `nvmet` etc group binds `failover.licensed`, `nvmet.global.ana_active`, "
+        "`nvmet.global.ana_enabled` and `nvmet.global.rdma_enabled` as ctx in `plugins/etc.py`, and "
+        "each of those is license derived. "
+        "ANA: `ana_enabled` and `ana_active` in this file both return False outright when "
+        "`failover.licensed` is false. That answer decides which ports exist -- "
+        "`NvmetPortConfig.config_dict` in `utils/nvmet/kernel.py` injects a second, index offset "
+        "port for every port `nvmet.port.usage` reports as ANA -- and whether each port carries a "
+        "per node ANA group, since `ensure_ana_state` creates or removes that group and is itself "
+        "gated on `failover.licensed` a second time. "
+        "RDMA: `rdma_enabled` resolves through `rdma_capable` to `rdma.capable_protocols`, which "
+        "returns an empty list unless the `RDMA` entitlement is held. "
+        "`NvmetPortSubsysConfig.create_links` refuses to link a subsystem to an RDMA port when that "
+        "is false, so an unlicensed system quietly stops exporting over RDMA and a newly licensed "
+        "one has to have those links made. "
+        "RENDER is the whole of the work here, more plainly than anywhere else in this series. The "
+        "group's two entries, `etc_files/nvmet_kernel.py` and `etc_files/nvmet_spdk.py`, return None "
+        "and write kernel configfs and SPDK RPC state directly rather than any file under /etc, so "
+        "there is no config left over for a service to pick up. `NVMETargetService.reload()` in "
+        "`plugins/service_/services/pseudo/misc.py` is a bare `pass` carrying a comment that "
+        "`etc.generate` has already run by the time it is reached, so going through `service.control` "
+        "would buy a job and a hook round trip to arrive at the same single `etc.generate`. "
+        "Doing this to a live target is safe because the writers are reconcilers, not rebuilders: "
+        "`NvmetConfig.render` in `utils/nvmet/kernel.py` diffs the desired entity keys against what "
+        "is live and only creates the additions, writes back the attributes that differ on the "
+        "survivors, and removes what is no longer wanted. Converging under a new license therefore "
+        "adds or drops exactly the ANA groups and RDMA subsystem links that changed and leaves "
+        "unaffected ports, subsystems and namespaces alone, so established TCP sessions are not torn "
+        "down. It is the same path that already runs on every ordinary target config change. "
+        "Declared here rather than derived from the services because two of them, `nvmet` and "
+        "`nvmf`, both list this group in their `etc`, and a group has to be claimed exactly once. "
+        "`nvmet` is the one to name: it is the service that owns the target, while `nvmf` is only "
+        "the SPDK userspace daemon that `nvmet.global.start` and `stop` drive beneath it when the "
+        "kernel backend is not in use."
+    )
+
+    async def should_run(self, middleware):
+        """
+        Only converge a target that is actually running.
+
+        `nvmet.global.running` is the running notion for both backends -- the kernel module being
+        loaded, or the `nvmf` unit being started under SPDK. With nothing running there is no
+        configfs or RPC state to bring in line, and `nvmet.global.start` ends in
+        `etc.generate('nvmet')` so the next start renders everything from scratch regardless.
+        """
+        return await middleware.call('nvmet.global.running')
+
+
 async def setup(middleware):
+    await middleware.call('truenas.license.register_reconcile_delegate', NVMeTargetLicenseReconcileDelegate())
     middleware.register_hook("pool.post_import", pool_post_import, sync=True)
     if await middleware.call('system.ready'):
         await middleware.call('iscsi.auth.load_upgrade_alerts')

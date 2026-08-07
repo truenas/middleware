@@ -2,7 +2,7 @@ import pytest
 
 from middlewared.test.integration.assets.smb import smb_share
 from middlewared.test.integration.assets.pool import dataset
-from middlewared.test.integration.assets.product import product_type, set_fips_available
+from middlewared.test.integration.assets.product import set_fips_available
 from middlewared.test.integration.utils import call
 from middlewared.test.integration.utils.smb import smb_connection
 from samba import ntstatus, NTSTATUSError
@@ -28,9 +28,8 @@ def old_user(unprivileged_user_fixture):
 
 @pytest.fixture(scope='function')
 def enterprise_product():
-    with product_type('ENTERPRISE'):
-        with set_fips_available(True):
-            yield
+    with set_fips_available(True):
+        yield
 
 
 @pytest.fixture(scope='function')

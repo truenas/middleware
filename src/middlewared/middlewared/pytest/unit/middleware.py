@@ -5,6 +5,36 @@ from unittest.mock import AsyncMock, Mock
 from middlewared.utils.filter_list import filter_list
 
 
+class FakeJob:
+    """Stands in for a `Job` returned by a job-decorated method."""
+
+    def __init__(self, result=None):
+        self.result = result
+        # Every `(percent, description)` handed to `set_progress`, in order
+        self.progress = []
+
+    async def wait(self, raise_error: bool = False):
+        return self.result
+
+    def set_progress(self, percent, description=None, extra=None):
+        self.progress.append((percent, description))
+
+
+def fake_service_control(middleware, result=None):
+    """
+    Make `service.control` return a `FakeJob`, and return the list that records every
+    `(verb, service, options)` it was called with.
+    """
+    calls = []
+
+    def control(verb, service, options=None):
+        calls.append((verb, service, options))
+        return FakeJob(result)
+
+    middleware['service.control'] = control
+    return calls
+
+
 class Middleware(dict):
 
     def __init__(self, *args, **kwargs):

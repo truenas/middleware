@@ -8,7 +8,7 @@ from middlewared.pytest.unit.middleware import Middleware
 @pytest.mark.asyncio
 async def test_profile_choices():
     middleware = Middleware()
-    middleware["system.is_enterprise"] = Mock(return_value=True)
+    middleware["system.is_ha_capable"] = Mock(return_value=True)
     middleware.services.update.config_safe = AsyncMock(return_value=Mock(profile=None))
 
     service = UpdateService(middleware)
@@ -23,7 +23,7 @@ async def test_profile_choices():
 @pytest.mark.asyncio
 async def test_profile_choices_current_is_always_available():
     middleware = Middleware()
-    middleware["system.is_enterprise"] = Mock(return_value=True)
+    middleware["system.is_ha_capable"] = Mock(return_value=True)
     middleware.services.update.config_safe = AsyncMock(return_value=Mock(profile="MISSION_CRITICAL"))
 
     service = UpdateService(middleware)

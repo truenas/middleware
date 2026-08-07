@@ -67,7 +67,8 @@ class UpdateProfiles(enum.IntEnum):
 async def profile_choices(context: ServiceContext) -> dict[str, UpdateProfileChoice]:
     profiles = {}
     config = await context.call2(context.s.update.config_safe)
-    is_enterprise = await context.middleware.call('system.is_enterprise')
+    # FIXME: See what is most appropriate here
+    is_enterprise = await context.middleware.call('system.is_ha_capable')
     current_profile = UpdateProfiles[await current_version_profile(context)]
     for profile in UpdateProfiles:
         available = profile.name == config.profile or profile <= current_profile
@@ -106,7 +107,8 @@ async def post_license_update(
     *args: typing.Any,
     **kwargs: typing.Any,
 ) -> None:
-    if not had_license and await middleware.call('system.product_type') == 'ENTERPRISE':
+    # FIXME: Fix this properly once we have a decision on MISSION_CRITICAL
+    if not had_license and await middleware.call('system.is_ha_capable'):
         await middleware.call2(middleware.services.update.set_profile, UpdateProfiles.MISSION_CRITICAL.name)
 
 

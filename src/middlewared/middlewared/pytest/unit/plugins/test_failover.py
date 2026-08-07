@@ -1,6 +1,12 @@
+from unittest.mock import patch
+
 import pytest
+from truenas_pylicensed import LicenseType
 
 from middlewared.plugins.failover import mismatch_nics
+from middlewared.plugins.failover_.ha_hardware import is_licensed_for_ha
+from middlewared.utils.hardware import HardwareClass
+from middlewared.utils.license import LicenseInfo
 
 
 @pytest.mark.parametrize(
@@ -27,3 +33,40 @@ def test_mismatch_nics(local_mac_to_name, remote_mac_to_name, local_macs_to_remo
         missing_local,
         missing_remote,
     )
+
+
+def _license(type_):
+    return LicenseInfo(
+        id="test-license",
+        type=type_,
+        model="H10",
+        support_expires_at=None,
+        license_expires_at=None,
+        features={},
+        serials=("TEST-000001",),
+        enclosures={},
+        contract_type=None,
+    )
+
+
+# is_licensed_for_ha() answers out of the entitlement policy, so only get_license is
+# stubbed here and the real engine computes the result. Hardware detection is stubbed
+# because it shells out to dmidecode; it cannot change the answer, which turns on the
+# license type alone.
+@pytest.mark.parametrize(
+    "license,expected",
+    [
+        (_license(LicenseType.ENTERPRISE_HA), True),
+        (_license(LicenseType.ENTERPRISE_SINGLE), False),
+        (None, False),
+    ],
+)
+def test_is_licensed_for_ha(license, expected):
+    with (
+        patch("middlewared.utils.entitlements.system.get_license", return_value=license),
+        patch(
+            "middlewared.utils.entitlements.system.get_hardware_class",
+            return_value=HardwareClass.TRUENAS_HW,
+        ),
+    ):
+        assert is_licensed_for_ha() is expected
