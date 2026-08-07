@@ -55,16 +55,6 @@ def retaste_disks_impl(disk_serials: set = None):
 class DiskService(Service):
 
     @private
-    def update_partition_table_quick(self, devnode):
-        """
-        Call the BLKRRPATH ioctl to update the partition table on a single dev node
-        Used by 'wipe'
-        """
-        errors = {}
-        taste_it(devnode, errors)
-        return errors
-
-    @private
     @job(lock='disk_retaste', lock_queue_size=1)
     def retaste(self, job, disks_serials: list[str] | None = None):
         job.set_progress(85, 'Retasting disks')
