@@ -1,7 +1,13 @@
 import os
 import pytest
 
+from struct import pack
+
 from middlewared.plugins.smb_.util_groupmap import (
+    _groupmap_to_tdb_key_val,
+    _groupmem_to_tdb_key_val,
+    _parse_memberof,
+    _parse_unixgroup,
     insert_groupmap_entries,
     delete_groupmap_entry,
     list_foreign_group_memberships,
@@ -175,3 +181,41 @@ def test__insert_group_membership(groupmap_dir, local_sid):
     ], {})
 
     assert len(entries) == 0, str(entries)
+
+
+def test__groupmap_tdb_value_layout():
+    """
+    Test the packed layout of a group mapping entry.
+
+    add_mapping_entry() in source3/groupdb/mapping_tdb.c writes these with
+    tdb_pack(..., "ddff", map->gid, map->sid_name_use, map->nt_name, map->comment).
+    "d" is a little-endian uint32 (IVAL) and "f" a NUL-terminated string, so comparing
+    bytes rather than only round-tripping is what pins the encoding to samba's.
+    """
+    group_map = SMBGroupMap(
+        sid='S-1-5-21-1137207236-3870220311-645177593-200042',
+        gid=3000,
+        sid_type=lsa_sidtype.ALIAS,
+        name='smbgroup',
+        comment='comment'
+    )
+
+    tdb_key, tdb_val = _groupmap_to_tdb_key_val(group_map)
+
+    assert tdb_key == f'UNIXGROUP/{group_map.sid}'
+    assert tdb_val == pack('<I', 3000) + pack('<I', lsa_sidtype.ALIAS) + b'smbgroup\x00comment\x00'
+    assert _parse_unixgroup(tdb_key, tdb_val) == group_map
+
+
+def test__memberof_tdb_value_layout():
+    """ Test that a membership entry is a NUL-terminated space-delimited list of SIDs """
+    group_mem = SMBGroupMembership(
+        sid='S-1-5-21-1137207236-3870220311-645177593-200042',
+        groups=('S-1-5-32-544',)
+    )
+
+    tdb_key, tdb_val = _groupmem_to_tdb_key_val(group_mem)
+
+    assert tdb_key == f'MEMBEROF/{group_mem.sid}'
+    assert tdb_val == b'S-1-5-32-544\x00'
+    assert _parse_memberof(tdb_key, tdb_val) == group_mem
