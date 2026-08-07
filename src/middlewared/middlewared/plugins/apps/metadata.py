@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import os
 from typing import TYPE_CHECKING
 
@@ -13,6 +14,8 @@ from .ix_apps.utils import dump_yaml
 if TYPE_CHECKING:
     from middlewared.job import Job
 
+logger = logging.getLogger('app_lifecycle')
+
 
 def app_metadata_generate(job: Job, blacklisted_apps: list[str] | None = None) -> None:
     config = {}
@@ -24,8 +27,20 @@ def app_metadata_generate(job: Job, blacklisted_apps: list[str] | None = None) -
                 # The app is malformed or something is seriously wrong with it
                 continue
 
+            # Recorded even when the app is broken. Absence from this file is how an app becomes
+            # invisible to app.query, and an app nobody can see is an app nobody can delete.
+            # Consumers report an unusable entry as an app in the ERROR state instead of indexing
+            # into it blindly.
             metadata[entry.name] = app_metadata
-            config[entry.name] = get_current_app_config(entry.name, app_metadata['version'])
+
+            try:
+                config[entry.name] = get_current_app_config(entry.name, app_metadata['version'])
+            except Exception:
+                # This must not fail the whole job - every app lifecycle operation waits on it and
+                # would otherwise break because of one unrelated broken app.
+                logger.warning(
+                    '%s: app config could not be read while generating app metadata', entry.name, exc_info=True
+                )
 
     with atomic_write(get_collective_metadata_path(), 'w') as f:
         f.write(dump_yaml(metadata))

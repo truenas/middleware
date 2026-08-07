@@ -88,7 +88,7 @@ class DockerConfigServicePart(ConfigServicePart[DockerEntry]):
             if pool_changed:
                 await self.call2(self.s.app.clear_upgrade_alerts_for_all)
                 job.set_progress(15, 'Stopping Apps')
-                apps = await self.call2(self.s.app.query, [['state', '!=', 'STOPPED']])
+                apps = await self.call2(self.s.app.query, [['state', 'nin', ['STOPPED', 'ERROR']]])
                 batch_size = 10
                 for i in range(0, len(apps), batch_size):
                     await (await self.middleware.call(
@@ -148,7 +148,8 @@ class DockerConfigServicePart(ConfigServicePart[DockerEntry]):
                 job.set_progress(95, 'Initiating redeployment of applications to apply new address pools changes')
                 await self.middleware.call(
                     'core.bulk', 'app.redeploy', [
-                        [app.name] for app in await self.call2(self.s.app.query, [['state', '!=', 'STOPPED']])
+                        [app.name]
+                        for app in await self.call2(self.s.app.query, [['state', 'nin', ['STOPPED', 'ERROR']]])
                     ]
                 )
 

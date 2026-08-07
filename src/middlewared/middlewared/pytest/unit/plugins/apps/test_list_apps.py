@@ -66,14 +66,16 @@ def common_impl(
     mock_list_resources_by_project.return_value = collections.defaultdict(None, workload)
     mock_translate_resources_to_desired_workflow.return_value = workload['ix-actual-budget']
     mock_upgrade_available_for_app.return_value = (False, '1.21.0', '1.0.0')
-    mock_entry1 = unittest.mock.Mock(is_file=lambda: True, name='config1.json')
-    scandir.return_value.__enter__.return_value = [mock_entry1]
+    # These tests are about apps which have docker resources, so there is nothing for the
+    # `app_configs` scan to pick up
+    scandir.return_value.__enter__.return_value = []
 
     result = list_apps(AVAILABLE_MAPPING, **KWARGS)
     assert result is not None
     assert isinstance(result, list)
     assert isinstance(result[0], dict)
     assert result[0]['state'] == desired_state
+    assert result[0]['error_reason'] is None
 
 
 @pytest.mark.parametrize(

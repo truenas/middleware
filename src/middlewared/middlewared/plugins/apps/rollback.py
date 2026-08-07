@@ -12,6 +12,7 @@ from .ix_apps.path import get_installed_app_path, get_installed_app_version_path
 from .ix_apps.rollback import clean_newer_versions, get_rollback_versions
 from .resources import get_app_volume_ds
 from .schema_normalization import normalize_and_validate_values
+from .utils import app_version, assert_app_usable
 
 if TYPE_CHECKING:
     from middlewared.job import Job
@@ -22,10 +23,11 @@ def rollback(context: ServiceContext, job: Job, app_name: str, options: AppRollb
     Rollback `app_name` app to previous version.
     """
     app = context.call_sync2(context.s.app.get_instance, app_name, QueryOptions(extra={'retrieve_config': True}))
+    assert_app_usable(app)
     verrors = ValidationErrors()
     if options.app_version == app.version:
         verrors.add('options.app_version', 'Cannot rollback to same version')
-    elif options.app_version not in get_rollback_versions(app_name, app.version):
+    elif options.app_version not in get_rollback_versions(app_name, app_version(app)):
         verrors.add('options.app_version', 'Specified version is not available for rollback')
 
     if app.state == 'STOPPED':
@@ -87,4 +89,5 @@ def rollback(context: ServiceContext, job: Job, app_name: str, options: AppRollb
 
 def rollback_versions(context: ServiceContext, app_name: str) -> list[str]:
     app = context.call_sync2(context.s.app.get_instance, app_name)
-    return get_rollback_versions(app_name, app.version)
+    assert_app_usable(app)
+    return get_rollback_versions(app_name, app_version(app))

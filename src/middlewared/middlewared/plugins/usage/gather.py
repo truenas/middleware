@@ -175,7 +175,12 @@ async def gather_applications(service: Service, context: GatherContext) -> dict[
     apps = await service.call2(service.s.app.query)
     output["apps"] = len(apps)
     for app in apps:
-        output["catalog_items"][app.metadata["train"]][app.metadata["name"]][app.version] += 1
+        metadata = app.metadata
+        if not (metadata.get("train") and metadata.get("name") and app.version):
+            # Nothing to attribute this app to, its metadata is unusable
+            continue
+
+        output["catalog_items"][metadata["train"]][metadata["name"]][app.version] += 1
 
     for image in await service.call2(service.s.app.image.query):
         output["docker_images"].update(image.repo_tags)

@@ -13,6 +13,7 @@ from .ix_apps.lifecycle import get_rendered_template_config_of_app, update_app_c
 from .ix_apps.metadata import update_app_metadata
 from .ix_apps.setup import setup_install_app_dir
 from .resources import delete_internal_resources, remove_failed_resources
+from .utils import app_version, assert_app_usable
 
 if TYPE_CHECKING:
     from middlewared.job import Job
@@ -20,10 +21,11 @@ if TYPE_CHECKING:
 
 def convert_to_custom_app(context: ServiceContext, job: Job, app_name: str) -> AppEntry:
     app = context.call_sync2(context.s.app.get_instance, app_name)
+    assert_app_usable(app)
     if app.custom_app is True:
         raise CallError(f'{app_name!r} is already a custom app')
 
-    rendered_config = get_rendered_template_config_of_app(app_name, app.version)
+    rendered_config = get_rendered_template_config_of_app(app_name, app_version(app))
     if not rendered_config:
         raise CallError(f'No rendered config found for {app_name!r}')
 

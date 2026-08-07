@@ -40,7 +40,14 @@ from .migration_utils import get_migration_scripts
 from .pull_images import pull_images_internal
 from .resources import get_app_volume_ds, get_hostpaths_datasets
 from .schema_normalization import normalize_and_validate_values
-from .utils import band_progress, child_job_progress, get_upgrade_snap_name, upgrade_summary_info
+from .utils import (
+    app_version,
+    assert_app_usable,
+    band_progress,
+    child_job_progress,
+    get_upgrade_snap_name,
+    upgrade_summary_info,
+)
 from .version_utils import get_latest_version_from_app_versions
 
 if TYPE_CHECKING:
@@ -56,6 +63,7 @@ async def upgrade_summary(
     context: ServiceContext, app_name: str, options: AppUpgradeSummaryOptions
 ) -> AppUpgradeSummary:
     app = await context.call2(context.s.app.get_instance, app_name)
+    assert_app_usable(app)
     if app.upgrade_available is False:
         raise CallError(f'No upgrade available for {app_name!r}')
 
@@ -83,7 +91,7 @@ async def upgrade_summary(
         available_versions_for_upgrade=[
             AppVersionInfo(version=v['version'], human_version=v['human_version'])
             for v in versions_config['versions'].values()
-            if Version(v['version']) > Version(app.version)
+            if Version(v['version']) > Version(app_version(app))
         ],
     )
 
@@ -135,6 +143,7 @@ async def upgrade_app(context: ServiceContext, job: Job, app_name: str, options:
 
 def upgrade_impl(context: ServiceContext, job: Job, app_name: str, options: AppUpgradeOptions) -> AppEntry:
     app = context.call_sync2(context.s.app.get_instance, app_name, QueryOptions(extra={'retrieve_config': True}))
+    assert_app_usable(app)
     if app.state == 'STOPPED':
         raise CallError('In order to upgrade an app, it must not be in stopped state')
 
@@ -199,7 +208,7 @@ def upgrade_impl(context: ServiceContext, job: Job, app_name: str, options: AppU
         job.set_progress(40, f'Configuration updated for {app_name!r}, upgrading app')
 
         if app_volume_ds := get_app_volume_ds(context, app_name):
-            snap_name = f'{app_volume_ds}@{app.version}'
+            snap_name = f'{app_volume_ds}@{app_version(app)}'
             try:
                 context.call_sync2(context.s.zfs.resource.snapshot.destroy_impl, ZFSResourceSnapshotDestroyQuery(
                     path=snap_name,
@@ -211,7 +220,7 @@ def upgrade_impl(context: ServiceContext, job: Job, app_name: str, options: AppU
 
             context.call_sync2(context.s.zfs.resource.snapshot.create_impl, ZFSResourceSnapshotCreateQuery(
                 dataset=app_volume_ds,
-                name=app.version,
+                name=app_version(app),
                 recursive=True,
                 bypass=True,
             ))
@@ -246,7 +255,7 @@ async def get_versions(context: ServiceContext, app: AppEntry, new_version: str)
         raise CallError(f'Unable to locate {new_version!r} version for {metadata["name"]!r} app')
 
     verrors = ValidationErrors()
-    if Version(new_version) <= Version(app.version):
+    if Version(new_version) <= Version(app_version(app)):
         verrors.add('options.app_version', 'Upgrade version must be greater than current version')
 
     verrors.check()
@@ -281,14 +290,14 @@ def take_snapshot_of_hostpath(
 
             continue
 
-        snap_name = f'{dataset}@{get_upgrade_snap_name(app_info.name, app_info.version)}'
+        snap_name = f'{dataset}@{get_upgrade_snap_name(app_info.name, app_version(app_info))}'
         if context.call_sync2(context.s.zfs.resource.snapshot.exists, snap_name):
             logger.debug('Snapshot %r already exists for %r app', snap_name, app_info.name)
             continue
 
         context.call_sync2(context.s.zfs.resource.snapshot.create_impl, ZFSResourceSnapshotCreateQuery(
             dataset=dataset,
-            name=get_upgrade_snap_name(app_info.name, app_info.version),
+            name=get_upgrade_snap_name(app_info.name, app_version(app_info)),
             bypass=True,
         ))
         logger.debug('Created snapshot %r for %r app', snap_name, app_info.name)
@@ -321,7 +330,7 @@ def upgrade_values(app: AppEntry, upgrade_version: dict[str, Any]) -> dict[str, 
 
 
 def get_data_for_upgrade_values(app: AppEntry, upgrade_version: dict[str, Any]) -> tuple[list[str], dict[str, Any]]:
-    current_version = app.version
+    current_version = app_version(app)
     target_version = upgrade_version['version']
     migration_files_path = get_migration_scripts(app.name, current_version, target_version)
     config = get_current_app_config(app.name, current_version)

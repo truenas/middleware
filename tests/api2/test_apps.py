@@ -388,3 +388,81 @@ def test_drift_repair_ix_apps(docker_pool):
     # runs the drift-repair enforce_mountpoint_perms call.
     call("docker.start_service")
     assert _chokepoint_perms(IX_APPS_CHOKEPOINT) == (0o700, 0, 0)
+
+
+@pytest.mark.parametrize("corrupt,expected_reason", [
+    # Keeps `version`, so the incomplete metadata still lands in the collective metadata file and
+    # the app is classified from it without any extra read
+    (
+        "python3 -c \"import yaml,sys;p=sys.argv[1];d=yaml.safe_load(open(p));d.pop('metadata');"
+        "open(p,'w').write(yaml.safe_dump(d))\" {path}",
+        "METADATA_INCOMPLETE",
+    ),
+    # Unparseable, so the app is dropped from the collective metadata entirely and has to be
+    # classified by reading its own metadata file
+    ("printf '{{' > {path}", "METADATA_UNREADABLE"),
+])
+def test_app_with_unusable_metadata_is_reported_and_deletable(docker_pool, corrupt, expected_reason):
+    """
+    An app we cannot read the metadata of used to be invisible to `app.query`, which left no way to
+    remove it. It must now be reported, refused for everything but deletion, and actually deletable.
+    """
+    app_name = "actual-budget"
+    metadata_path = f"/mnt/.ix-apps/app_configs/{app_name}/metadata.yaml"
+    call(
+        "app.create",
+        {"app_name": app_name, "train": "community", "catalog_app": app_name},
+        job=True,
+    )
+    deleted = False
+    try:
+        ssh(f"cp {metadata_path} /tmp/{app_name}.metadata.bak")
+        ssh(corrupt.format(path=metadata_path))
+        call("app.metadata_generate", job=True)
+
+        app_info = call("app.query", [["id", "=", app_name]], {"get": True})
+        assert app_info["state"] == "ERROR", app_info
+        assert app_info["error_reason"] == expected_reason, app_info
+        assert app_info["version"] is None, app_info
+        assert app_info["human_version"] is None, app_info
+        assert app_info["metadata"] == {}, app_info
+
+        # Its containers are still running, so the ports they hold must stay accounted for
+        used_ports = app_info["active_workloads"]["used_ports"]
+        assert used_ports, app_info
+        assert used_ports[0]["host_ports"][0]["host_port"] in call("app.used_ports")
+
+        # One broken app must not take the rest of the apps subsystem down with it
+        assert call("app.query")
+        assert call("app.available", [["name", "=", app_name]])
+
+        for method, args, is_job in (
+            ("app.start", [app_name], True),
+            ("app.stop", [app_name], True),
+            ("app.redeploy", [app_name], True),
+            ("app.config", [app_name], False),
+            ("app.rollback_versions", [app_name], False),
+            ("app.outdated_docker_images", [app_name], False),
+            ("app.container_console_choices", [app_name], False),
+            ("app.convert_to_custom", [app_name], True),
+        ):
+            with pytest.raises(Exception) as exc_info:
+                call(method, *args, job=is_job)
+            assert "metadata is unusable" in str(exc_info.value), (method, exc_info.value)
+
+        call("app.delete", app_name, {"remove_images": True, "remove_ix_volumes": True}, job=True)
+        deleted = True
+
+        assert call("app.query", [["id", "=", app_name]]) == []
+        assert ssh(f"test -e /mnt/.ix-apps/app_configs/{app_name}; echo $?").strip() == "1"
+        assert call("app.get_app_volume_ds", app_name) is None
+    finally:
+        if not deleted:
+            # Later tests in this module reuse this app name, so it must not be left poisoned
+            ssh(f"cp /tmp/{app_name}.metadata.bak {metadata_path} || true")
+            try:
+                call("app.delete", app_name, {"remove_images": True, "remove_ix_volumes": True}, job=True)
+            except Exception:
+                ssh(f"rm -rf /mnt/.ix-apps/app_configs/{app_name}")
+            call("app.metadata_generate", job=True)
+        ssh(f"rm -f /tmp/{app_name}.metadata.bak")

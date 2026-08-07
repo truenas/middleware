@@ -1,18 +1,19 @@
 from collections import defaultdict
 from dataclasses import dataclass
+import functools
 import os
-from typing import Any
+from typing import Any, Callable
 
-from packaging.version import Version
+from packaging.version import InvalidVersion, Version
 
 from middlewared.plugins.apps_images.utils import normalize_reference
 from middlewared.plugins.catalog.utils import IX_APP_NAME
 
 from .docker.query import list_resources_by_project
 from .lifecycle import get_current_app_config
-from .metadata import get_collective_config, get_collective_metadata
+from .metadata import APP_METADATA_DEFAULTS, get_collective_config, get_collective_metadata, resolve_app_metadata
 from .path import get_app_parent_config_path
-from .utils import PROJECT_PREFIX, AppState, ContainerState, get_app_name_from_project_name
+from .utils import PROJECT_PREFIX, AppErrorReason, AppState, ContainerState, get_app_name_from_project_name
 
 COMPOSE_SERVICE_KEY: str = 'com.docker.compose.service'
 KNOWN_NORMAL_EXIT_CODES: tuple[int, ...] = (
@@ -35,6 +36,20 @@ class VolumeMount:
         return hash((self.source, self.destination, self.type))
 
 
+def parse_version(version: Any) -> Version | None:
+    """
+    ``version`` as something comparable, or ``None`` when it is not a version at all. Corrupt
+    metadata can hold anything here, and a catalog can name a version we cannot make sense of.
+    """
+    if not isinstance(version, str):
+        return None
+
+    try:
+        return Version(version)
+    except InvalidVersion:
+        return None
+
+
 def upgrade_available_for_app(
     version_mapping: dict[str, dict[str, dict[str, str | None]]],
     app_metadata: dict[str, Any],
@@ -42,25 +57,27 @@ def upgrade_available_for_app(
 ) -> tuple[bool, str | None, str | None]:
     # TODO: Eventually we would want this to work as well but this will always require middleware changes
     #  depending on what new functionality we want introduced for custom app, so let's take care of this at that point
-    catalog_app_metadata = app_metadata['metadata']
-    catalog_app = catalog_app_metadata['name']
-    if (
-        app_metadata['custom_app'] is False
-        and (
-            latest_version_info := version_mapping.get(
-                catalog_app_metadata['train'], {}
-            ).get(
-                catalog_app_metadata['name']
-            )
-        )
-        and latest_version_info['version']
-    ):
+    catalog_app_metadata = app_metadata.get('metadata')
+    if not isinstance(catalog_app_metadata, dict):
+        catalog_app_metadata = {}
+
+    catalog_app = catalog_app_metadata.get('name')
+    catalog_train = catalog_app_metadata.get('train')
+    installed_version = parse_version(catalog_app_metadata.get('version'))
+    # Corrupt metadata can hold anything at all here, including values yaml parsed as a non-string,
+    # so these must be validated before they are used as lookup keys
+    latest_version_info = (
+        version_mapping.get(catalog_train, {}).get(catalog_app)
+        if isinstance(catalog_app, str) and isinstance(catalog_train, str) else None
+    ) or {}
+    latest_version = parse_version(latest_version_info.get('version'))
+    if app_metadata.get('custom_app') is False and installed_version is not None and latest_version is not None:
         return (
-            Version(catalog_app_metadata['version']) < Version(latest_version_info['version']),
+            installed_version < latest_version,
             latest_version_info['version'],
-            latest_version_info['app_version']
+            latest_version_info.get('app_version'),
         )
-    elif (app_metadata['custom_app'] or catalog_app == IX_APP_NAME) and image_updates_available:
+    elif (app_metadata.get('custom_app') or catalog_app == IX_APP_NAME) and image_updates_available:
         return True, None, None
     else:
         return False, None, None
@@ -81,18 +98,68 @@ def normalize_portal_uri(portal_uri: str, host_ip: str | None) -> str:
 def get_config_of_app(
     app_data: dict[str, Any], collective_config: dict[str, Any], retrieve_config: bool,
 ) -> dict[str, Any]:
-    if retrieve_config:
-        return {
-            'config': collective_config.get(app_data['name']) or (
-                get_current_app_config(app_data['name'], app_data['version']) if app_data['version'] else {}
-            )
-        }
-    else:
+    if not retrieve_config:
         return {'config': None}
 
+    # An entry of the collective config file is whatever yaml parsed it as, so it need not be a
+    # mapping at all - falling through to the app's own file is what stops a value the API model
+    # cannot describe from turning a healthy app into a broken one
+    if isinstance(config := collective_config.get(app_data['name']), dict) and config:
+        return {'config': config}
 
-def normalize_portal_uris(portals: dict[str, str], host_ip: str | None) -> dict[str, str]:
-    return {name: normalize_portal_uri(uri, host_ip) for name, uri in portals.items()}
+    # app_metadata_error has already rejected an app whose version is not a usable path
+    # component, but the path this builds is only safe while that stays true
+    if not app_data['version']:
+        return {'config': {}}
+
+    try:
+        return {'config': get_current_app_config(app_data['name'], app_data['version'])}
+    except Exception:
+        # Letting this escape would take app.query down for every app on the box. It is not logged
+        # here - app.query runs constantly, and app_metadata_generate already reported the failure
+        # when it could not read the same file.
+        return {'config': {}}
+
+
+def normalize_portal_uris(portals: Any, host_ip: str | None) -> Any:
+    # Corrupt metadata can hold anything at all here, so anything we cannot normalize is returned as
+    # it stands and the model level guard on the row decides whether the app can be described at all
+    if not isinstance(portals, dict):
+        return portals
+
+    return {
+        name: normalize_portal_uri(uri, host_ip) if isinstance(uri, str) else uri for name, uri in portals.items()
+    }
+
+
+def error_app_data(
+    app_name: str, error_reason: AppErrorReason, workloads: dict[str, Any], retrieve_config: bool,
+) -> dict[str, Any]:
+    """
+    Entry for an app whose on-disk metadata is unusable. Everything we would normally read out of
+    that metadata is reported as unknown rather than guessed at.
+    """
+    return {
+        'name': app_name,
+        'id': app_name,
+        'active_workloads': workloads,
+        'state': AppState.ERROR.value,
+        'error_reason': error_reason,
+        'upgrade_available': False,
+        'latest_version': None,
+        'latest_app_version': None,
+        'image_updates_available': False,
+        'action_required': False,
+        'custom_app': False,
+        'migrated': False,
+        'human_version': None,
+        'version': None,
+        'metadata': {},
+        'portals': {},
+        'notes': None,
+        'version_details': None,
+        'config': {} if retrieve_config else None,
+    }
 
 
 def list_apps(
@@ -101,23 +168,40 @@ def list_apps(
     host_ip: str | None = None,
     retrieve_config: bool = False,
     image_update_cache: dict[str, Any] | None = None,
+    installing: Callable[[], set[str]] | None = None,
 ) -> list[dict[str, Any]]:
     apps = []
+    # Answering this walks the whole job queue, so it is asked at most once per call and only for an
+    # app we would otherwise report as broken
+    installing = functools.cache(installing) if installing else (lambda: set())
     image_update_cache = image_update_cache or {}
     app_names = set()
     metadata = get_collective_metadata()
     collective_config = get_collective_config() if retrieve_config else {}
     # This will only give us apps which are running or in deploying state
-    for app_name, app_resources in list_resources_by_project(
+    for project_name, app_resources in list_resources_by_project(
         project_name=f'{PROJECT_PREFIX}{specific_app}' if specific_app else None,
     ).items():
-        app_name = get_app_name_from_project_name(app_name)
+        app_name = get_app_name_from_project_name(project_name)
+        if not project_name.startswith(PROJECT_PREFIX) or not app_name:
+            # Docker reports every compose project on the box, including ones the user deployed
+            # themselves, and taking the prefix off a name which does not carry one invents an app
+            # no operation can act on - `webserver` reads as an app named `server`, and a project
+            # named exactly `ix-` as one with no name at all
+            continue
+
         app_names.add(app_name)
-        if app_name not in metadata:
-            # The app is malformed or something is seriously wrong with it
+        app_metadata, error_reason, present = resolve_app_metadata(app_name, metadata, True, installing)
+        if not present:
             continue
 
         workloads = translate_resources_to_desired_workflow(app_resources)
+        if error_reason is not None:
+            # Report the app's real workloads so that the ports and volumes it is still holding on to
+            # remain visible to conflict checks, even though we know nothing else about it
+            apps.append(error_app_data(app_name, error_reason, workloads, retrieve_config))
+            continue
+
         # When we stop docker service and start it again - the containers can be in exited
         # state which means we need to account for this.
         state = AppState.STOPPED
@@ -137,7 +221,6 @@ def list_apps(
 
         state_value: str = state.value
 
-        app_metadata = metadata[app_name]
         active_workloads = get_default_workload_values() if state_value == 'STOPPED' else workloads
         image_updates_available = any(
             image_update_cache.get(normalize_reference(k)['complete_tag']) for k in active_workloads['images']
@@ -146,19 +229,28 @@ def list_apps(
             train_to_apps_version_mapping, app_metadata
         )
         app_data = {
+            # Written into the metadata by an app which asks for it, and defaulted for one which
+            # does not - unlike the keys below, these are the app's to set
+            'action_required': False,
+            **APP_METADATA_DEFAULTS,
+            **app_metadata,
+            'portals': normalize_portal_uris(app_metadata.get('portals') or {}, host_ip),
+            # Everything we determined ourselves comes last, so that metadata which was hand edited
+            # or written by a release we know nothing about cannot pass itself off as any of it
             'name': app_name,
             'id': app_name,
             'active_workloads': active_workloads,
             'state': state_value,
             'upgrade_available': upgrade_available,
             'latest_version': latest_version,
-            'action_required': False,
             'latest_app_version': latest_app_version,
             'image_updates_available': image_updates_available,
+            'error_reason': None,
             'version_details': None,
-            **app_metadata | {'portals': normalize_portal_uris(app_metadata['portals'], host_ip)}
         }
-        if (app_data['custom_app'] or app_metadata['metadata']['name'] == IX_APP_NAME) and image_updates_available:
+        if (
+            app_data.get('custom_app') or (app_metadata.get('metadata') or {}).get('name') == IX_APP_NAME
+        ) and image_updates_available:
             # We want to mark custom apps and ix-apps as upgrade available if image updates are available
             # so if user tries to upgrade, we will just be pulling a newer version of the image
             # against the same docker tag
@@ -176,26 +268,35 @@ def list_apps(
                 lambda e: e.is_dir() and ((specific_app and e.name == specific_app) or e.name not in app_names), scan
             ):
                 app_names.add(entry.name)
-                if entry.name not in metadata:
-                    # The app is malformed or something is seriously wrong with it
+                app_metadata, error_reason, present = resolve_app_metadata(entry.name, metadata, False, installing)
+                if not present:
                     continue
 
-                app_metadata = metadata[entry.name]
+                if error_reason is not None:
+                    apps.append(error_app_data(
+                        entry.name, error_reason, get_default_workload_values(), retrieve_config,
+                    ))
+                    continue
+
                 upgrade_available, latest_version, latest_app_version = upgrade_available_for_app(
                     train_to_apps_version_mapping, app_metadata
                 )
+                # See the app_data of a running app for why the keys are ordered this way
                 app_data = {
+                    'action_required': False,
+                    **APP_METADATA_DEFAULTS,
+                    **app_metadata,
+                    'portals': normalize_portal_uris(app_metadata.get('portals') or {}, host_ip),
                     'name': entry.name,
                     'id': entry.name,
                     'active_workloads': get_default_workload_values(),
                     'state': AppState.STOPPED.value,
                     'upgrade_available': upgrade_available,
                     'latest_version': latest_version,
-                    'action_required': False,
                     'latest_app_version': latest_app_version,
                     'image_updates_available': False,
+                    'error_reason': None,
                     'version_details': None,
-                    **app_metadata | {'portals': normalize_portal_uris(app_metadata['portals'], host_ip)}
                 }
                 apps.append(app_data | get_config_of_app(app_data, collective_config, retrieve_config))
     except FileNotFoundError:
