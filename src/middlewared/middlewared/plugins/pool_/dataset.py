@@ -56,6 +56,31 @@ from .utils import (
 )
 
 
+def validate_user_properties(verrors, schema, user_properties):
+    """Reject user property keys that TrueNAS manages or that ZFS will not accept.
+
+    A property TrueNAS manages may still be removed, since that is the only way to
+    drop one that a previous release wrote out.
+
+    Args:
+        verrors: ValidationErrors instance to add any error to.
+        schema: Schema name of the list being validated.
+        user_properties: List of user properties, each with at least a `key`.
+    """
+    managed = user_property_names_to_be_renamed()
+    seen = set()
+    for index, prop in enumerate(user_properties):
+        prop_schema = f'{schema}.{index}.key'
+        if (key := prop['key']) in managed and not prop.get('remove'):
+            verrors.add(prop_schema, f'{key!r} is managed by TrueNAS, use the {managed[key]!r} field to set it.')
+        elif len(key) > ZFS_USER_PROP_MAX_LEN or not RE_ZFS_USER_PROP.fullmatch(key):
+            verrors.add(prop_schema, f'{key!r} is not a valid ZFS user property name.')
+        elif key in seen:
+            verrors.add(prop_schema, f'{key!r} is specified more than once.')
+        else:
+            seen.add(key)
+
+
 class PoolDatasetEncryptionModel(sa.Model):
     __tablename__ = 'storage_encrypteddataset'
 
@@ -362,24 +387,12 @@ class PoolDatasetService(CRUDService):
                 )
 
         if mode == 'CREATE':
-            managed_user_props = user_property_names_to_be_renamed()
-            seen_user_props = set()
-            for index, prop in enumerate(data.get('user_properties', [])):
-                prop_schema = f'{schema}.user_properties.{index}.key'
-                if (key := prop['key']) in managed_user_props:
-                    verrors.add(
-                        prop_schema,
-                        f'{key!r} is managed by TrueNAS, '
-                        f'use the {managed_user_props[key]!r} field to set it.'
-                    )
-                elif len(key) > ZFS_USER_PROP_MAX_LEN or not RE_ZFS_USER_PROP.fullmatch(key):
-                    verrors.add(prop_schema, f'{key!r} is not a valid ZFS user property name.')
-                elif key in seen_user_props:
-                    verrors.add(prop_schema, f'{key!r} is specified more than once.')
-                else:
-                    seen_user_props.add(key)
+            validate_user_properties(verrors, f'{schema}.user_properties', data.get('user_properties', []))
         elif mode == 'UPDATE':
             if data.get('user_properties_update') and not data.get('user_properties'):
+                validate_user_properties(
+                    verrors, f'{schema}.user_properties_update', data['user_properties_update']
+                )
                 for index, prop in enumerate(data['user_properties_update']):
                     prop_schema = f'{schema}.user_properties_update.{index}'
                     if 'value' in prop and prop.get('remove'):
@@ -392,14 +405,20 @@ class PoolDatasetService(CRUDService):
                     'Should not be specified when "user_properties" are explicitly specified'
                 )
             elif data.get('user_properties'):
-                # Let's normalize this so that we create/update/remove user props accordingly
+                validate_user_properties(verrors, f'{schema}.user_properties', data['user_properties'])
+                # Let's normalize this so that we create/update/remove user props accordingly.
+                # The properties TrueNAS manages are reported under their API names (`comments`
+                # and friends), which are not property names ZFS would accept, and they are owned
+                # by their own fields, so they are never removed here.
+                managed_user_props = set(user_property_names_to_be_renamed().values())
                 user_props = {p['key'] for p in data['user_properties']}
                 data['user_properties_update'] = data['user_properties']
-                for prop_key in [k for k in cur_dataset['user_properties'] if k not in user_props]:
-                    data['user_properties_update'].append({
-                        'key': prop_key,
-                        'remove': True,
-                    })
+                for prop_key in cur_dataset['user_properties']:
+                    if prop_key not in user_props and prop_key not in managed_user_props:
+                        data['user_properties_update'].append({
+                            'key': prop_key,
+                            'remove': True,
+                        })
 
     @private
     @pass_thread_local_storage
@@ -447,7 +466,7 @@ class PoolDatasetService(CRUDService):
                     key=args.encrypt["key"],
                     pbkdf2iters=args.encrypt.get("pbkdf2iters"),
                 )
-            except ValueError as e:
+            except (TypeError, ValueError) as e:
                 raise CallError(f"Failed to create dataset {args.name}: {e}")
 
         if args.create_ancestors:
