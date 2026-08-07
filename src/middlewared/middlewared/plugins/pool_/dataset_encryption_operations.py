@@ -191,7 +191,7 @@ class PoolDatasetService(Service):
             'pool.dataset.validate_encryption_data', job, verrors, {
                 'enabled': True, 'passphrase': options['passphrase'],
                 'generate_key': options['generate_key'], 'key_file': options['key_file'],
-                'pbkdf2iters': options['pbkdf2iters'], 'algorithm': 'on', 'key': options['key'],
+                'pbkdf2iters': options['pbkdf2iters'], 'key': options['key'],
             }, 'change_key_options'
         )
 
