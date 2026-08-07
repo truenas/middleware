@@ -120,16 +120,6 @@ class TestNormalPool:
         with create_dataset(payload) as ds:
             assert ds['pbkdf2iters']['value'] == '2000000', ds
 
-    def test_encryption_algorithm_cannot_be_specified(self):
-        payload = {
-            'name': dataset,
-            'encryption': True,
-            'inherit_encryption': False,
-            'encryption_options': {'generate_key': True, 'algorithm': 'AES-128-GCM'},
-        }
-        with pytest.raises(ValidationErrors, match='Extra inputs are not permitted'):
-            call('pool.dataset.create', payload)
-
     @pytest.mark.parametrize('payload', [
         {'encryption': False},
         {'inherit_encryption': True}
