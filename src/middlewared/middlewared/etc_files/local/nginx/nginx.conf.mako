@@ -184,6 +184,8 @@ http {
         '' close;
     }
 
+    allow_redirect off;
+
     map $http_origin $allow_origin {
         ~^${str(tn_connect_config.tnc_base_url).rstrip("/")}$ $http_origin;
 % if str(tn_connect_config.account_service_base_url).split('.')[1] in ('dev', 'staging'):
