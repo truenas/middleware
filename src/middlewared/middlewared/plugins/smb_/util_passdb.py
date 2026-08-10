@@ -1,6 +1,6 @@
 # Utilities that wrap around samba's passdb.tdb file
 #
-# test coverage provided by src/middlewared/middlewared/pytest/unit/utils/test_passdb.py
+# test coverage provided by tests/unit/test_passdb.py
 # sample tdb contents (via tdbdump)
 #
 # {
@@ -27,7 +27,6 @@
 import enum
 import os
 
-from base64 import b64decode, b64encode
 from collections.abc import Iterable
 from dataclasses import asdict, dataclass
 from middlewared.plugins.idmap_.idmap_constants import IDType
@@ -50,9 +49,9 @@ from .constants import SMBPath
 # Major and minor versions must be written to the passdb.tdb file
 # Major version identifies version of struct samu.
 MINOR_VERSION_KEY = 'INFO/minor_version'
-MINOR_VERSION_VAL = b64encode(pack('<I', 0))
+MINOR_VERSION_VAL = pack('<I', 0)
 MAJOR_VERSION_KEY = 'INFO/version'
-MAJOR_VERSION_VAL = b64encode(pack('<I', 4))
+MAJOR_VERSION_VAL = pack('<I', 4)
 
 NTHASH_LEN = 16
 
@@ -65,8 +64,8 @@ UNKNOWN_6 = 0x000004ec  # unknown value in samba struct samu
 USER_PREFIX = 'USER_'
 RID_PREFIX = 'RID_'
 
-PASSDB_TDB_OPTIONS = TDBOptions(TDBPathType.CUSTOM, TDBDataType.BYTES)
-PASSDB_CTDB_OPTIONS = TDBOptions(TDBPathType.PERSISTENT, TDBDataType.BYTES, True)
+PASSDB_TDB_OPTIONS = TDBOptions(TDBPathType.CUSTOM, TDBDataType.RAW)
+PASSDB_CTDB_OPTIONS = TDBOptions(TDBPathType.PERSISTENT, TDBDataType.RAW, True)
 PASSDB_PATH = f'{SMBPath.PASSDB_DIR.path}/passdb.tdb'
 PASSDB_TIME_T_MAX = 2085923199  # observed in recent samba versions. Should be output of get_time_t_max()
 PASSDB_TDB_CONFIG = (PASSDB_PATH, PASSDB_TDB_OPTIONS)
@@ -280,23 +279,21 @@ def _pack_pdb_entry(entry: PDBEntry) -> bytes:
     return data
 
 
-def _parse_passdb_entry(hdl: TDBHandle, tdb_key: str, tdb_val: str) -> PDBEntry:
+def _parse_passdb_entry(hdl: TDBHandle, tdb_key: str, tdb_val: bytes) -> PDBEntry:
     """
     Retrieve SAMU data based on passdb RID entry and parse bytes into a PDBEntry
     object.
 
 
     """
-    key = f'{USER_PREFIX}{b64decode(tdb_val)[:-1].decode()}'
+    key = f'{USER_PREFIX}{tdb_val[:-1].decode()}'
     try:
-        if (pdb_bytes := hdl.get(f'{USER_PREFIX}{b64decode(tdb_val)[:-1].decode()}')) is None:
-            # malformed passdb entry. Shouldn't happen we'll return None to force
-            # rewrite
-            raise PassdbMustReinit(f'{key}: passdb.tdb lacks expected key')
+        pdb_bytes = hdl.get(key)
     except MatchNotFound:
+        # malformed passdb entry, caller rewrites the file
         raise PassdbMustReinit(f'{key}: passdb.tdb lacks expected key') from None
 
-    return _unpack_pdb_bytes(b64decode(pdb_bytes))
+    return _unpack_pdb_bytes(pdb_bytes)
 
 
 def passdb_entries(as_dict: bool = False, clustered=False) -> Iterable[PDBEntry, dict]:
@@ -383,12 +380,12 @@ def insert_passdb_entries(entries: list[PDBEntry], clustered=False) -> None:
             TDBBatchOperation(
                 action=TDBBatchAction.SET,
                 key=f'{USER_PREFIX}{entry.username.lower()}',
-                value=b64encode(samu_data)
+                value=samu_data
             ),
             TDBBatchOperation(
                 action=TDBBatchAction.SET,
                 key=f'{RID_PREFIX}{entry.user_rid:08x}',
-                value=b64encode(entry.username.lower().encode() + b'\x00')
+                value=entry.username.lower().encode() + b'\x00'
             )
         ])
 
@@ -448,7 +445,7 @@ def update_passdb_entry(entry: PDBEntry, clustered=False) -> None:
     with get_tdb_handle(*_get_pdb_config(clustered)) as hdl:
         batch_ops = []
         try:
-            current_username = b64decode(hdl.get(f'{RID_PREFIX}{entry.user_rid:08x}'))[:-1].decode()
+            current_username = hdl.get(f'{RID_PREFIX}{entry.user_rid:08x}')[:-1].decode()
         except MatchNotFound:
             pass
         else:
@@ -467,12 +464,12 @@ def update_passdb_entry(entry: PDBEntry, clustered=False) -> None:
             TDBBatchOperation(
                 action=TDBBatchAction.SET,
                 key=f'{USER_PREFIX}{entry.username.lower()}',
-                value=b64encode(samu_data)
+                value=samu_data
             ),
             TDBBatchOperation(
                 action=TDBBatchAction.SET,
                 key=f'{RID_PREFIX}{entry.user_rid:08x}',
-                value=b64encode(entry.username.lower().encode() + b'\x00')
+                value=entry.username.lower().encode() + b'\x00'
             )
         ])
         hdl.batch_op(batch_ops)

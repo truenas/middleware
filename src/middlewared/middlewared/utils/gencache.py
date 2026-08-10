@@ -23,7 +23,7 @@ class IDMAPCacheType(enum.Enum):
     NAME2SID = 'NAME2SID'
 
 
-def fetch_gencache_entry(key: str) -> dict[str, Any] | str:
+def fetch_gencache_entry(key: str) -> dict[str, Any] | str | bytes:
     with get_tdb_handle(GENCACHE_FILE, GENCACHE_TDB_OPTIONS) as hdl:
         return hdl.get(key)
 

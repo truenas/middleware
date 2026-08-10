@@ -1,3 +1,4 @@
+import binascii
 import os
 import tdb
 import enum
@@ -48,13 +49,19 @@ class TDBDataType(enum.Enum):
     """
     Types of data to encode in TDB file
 
+    RAW - binary data submitted and returned as python bytes. This is the appropriate
+    type for interacting with TDB files used by 3rd party applications from within
+    middleware.
+
     BYTES - binary data. API consumer submits as b64encoded string that is decoded before insertion.
-    This is particularly relevant when interacting with TDB files used by 3rd party applications.
+    Prefer RAW unless the value is read or written by an API consumer, since base64 is a
+    transport encoding rather than a property of the database.
 
     JSON - submit as python dictionary and converted into JSON before insertion
 
     STRING - submit as python string and inserted as-is
     """
+    RAW = enum.auto()
     BYTES = enum.auto()
     JSON = enum.auto()
     STRING = enum.auto()
@@ -95,7 +102,7 @@ class TDBBatchOperation:
     """
     action: TDBBatchAction
     key: str
-    value: str | dict[str, Any] | None = None
+    value: str | bytes | dict[str, Any] | None = None
 
 
 @dataclass(slots=True, frozen=True)
@@ -126,7 +133,7 @@ def keys_are_null_terminated(name: str, data_type: TDBDataType) -> bool:
         case _:
             # Most samba tdb files use NULL-terminated string keys; middleware-owned
             # databases that store JSON/STRING values do not.
-            return data_type is TDBDataType.BYTES
+            return data_type in (TDBDataType.RAW, TDBDataType.BYTES)
 
 
 class TDBHandle:
@@ -168,8 +175,12 @@ class TDBHandle:
         # if file has been renamed or deleted from under us, readlink will show different path
         return os.readlink(f'/proc/self/fd/{self.hdl.fd}') == self.full_path
 
-    def parse_value(self, tdb_val: bytes) -> dict[str, Any] | str:
+    def parse_value(self, tdb_val: bytes) -> dict[str, Any] | str | bytes:
+        out: dict[str, Any] | str | bytes
+
         match self.data_type:
+            case TDBDataType.RAW:
+                out = tdb_val
             case TDBDataType.BYTES:
                 out = b64encode(tdb_val).decode()
             case TDBDataType.JSON:
@@ -185,13 +196,14 @@ class TDBHandle:
         """ Ensure sync of file to disk """
         os.fdatasync(self.hdl.fd)
 
-    def get(self, key: str) -> dict[str, Any] | str:
+    def get(self, key: str) -> dict[str, Any] | str | bytes:
         """
         Retrieve the specified key
 
         Returns:
-            dict if TDBDatatype is JSON
-            str if TDBDatatype is BYTES or STRING
+            bytes if TDBDataType is RAW
+            dict if TDBDataType is JSON
+            str if TDBDataType is BYTES or STRING
 
         Raises:
             MatchNotFound
@@ -211,29 +223,62 @@ class TDBHandle:
 
         return self.parse_value(tdb_val)
 
+    def encode_value(self, value: str | dict[str, Any] | bytes) -> bytes:
+        """
+        Convert `value` into the bytes to be written for this database's data type.
+
+        The type a caller must supply follows from `data_type` rather than from any
+        signature, and so cannot be expressed to a type checker. It is checked here to
+        keep a mismatch from reaching the database: b64decode() is asked to validate
+        because it otherwise discards everything outside its alphabet before checking
+        padding, and stores a truncated record instead of failing.
+
+        Raises:
+            TypeError
+            ValueError
+        """
+        match self.data_type:
+            case TDBDataType.RAW:
+                if not isinstance(value, bytes):
+                    raise TypeError(f'{type(value).__name__}: RAW values must be bytes')
+
+                return value
+            case TDBDataType.BYTES:
+                # bytes are accepted because b64encode() output is not decoded by most callers
+                if not isinstance(value, (str, bytes)):
+                    raise TypeError(f'{type(value).__name__}: BYTES values must be base64-encoded')
+
+                try:
+                    return b64decode(value, validate=True)
+                except binascii.Error as exc:
+                    raise ValueError(f'BYTES values must be base64-encoded: {exc}') from exc
+            case TDBDataType.JSON:
+                if not isinstance(value, dict):
+                    raise TypeError(f'{type(value).__name__}: JSON values must be a dict')
+
+                return json.dumps(value).encode()
+            case TDBDataType.STRING:
+                if not isinstance(value, str):
+                    raise TypeError(f'{type(value).__name__}: STRING values must be a str')
+
+                return value.encode()
+            case _:
+                raise ValueError(f'{self.data_type}: unknown data type')
+
     def store(self, key: str, value: str | dict[str, Any] | bytes) -> None:
         """
         Set the specified `key` to the specified `value`.
 
         Raises:
             RuntimeError
+            TypeError
             ValueError
         """
         tdb_key = key.encode()
         if self.keys_null_terminated:
             tdb_key += b'\x00'
 
-        match self.data_type:
-            case TDBDataType.BYTES:
-                tdb_val = b64decode(value)  # type: ignore[arg-type]
-            case TDBDataType.JSON:
-                tdb_val = json.dumps(value).encode()
-            case TDBDataType.STRING:
-                tdb_val = value.encode()  # type: ignore[union-attr]
-            case _:
-                raise ValueError(f'{self.data_type}: unknown data type')
-
-        self.ops.store(tdb_key, tdb_val)
+        self.ops.store(tdb_key, self.encode_value(value))
 
     def delete(self, key: str) -> None:
         """
@@ -262,10 +307,12 @@ class TDBHandle:
 
     @overload
     def entries(self, include_keys: Literal[False] = ..., key_prefix: str | None = None) -> (
-        Iterable[dict[str, Any] | str]
+        Iterable[dict[str, Any] | str | bytes]
     ): ...
 
-    def entries(self, include_keys: bool = True, key_prefix: str | None = None) -> Iterable[dict[str, Any] | str]:
+    def entries(
+        self, include_keys: bool = True, key_prefix: str | None = None
+    ) -> Iterable[dict[str, Any] | str | bytes]:
         """
         Iterate entries in TDB file:
 
@@ -318,7 +365,10 @@ class TDBHandle:
             for op in ops:
                 match op.action:
                     case TDBBatchAction.SET:
-                        self.store(op.key, op.value)  # type: ignore[arg-type]
+                        if op.value is None:
+                            raise ValueError(f'{op.key}: SET operation requires a value')
+
+                        self.store(op.key, op.value)
                     case TDBBatchAction.DEL:
                         self.delete(op.key)
                     case TDBBatchAction.GET:
@@ -409,12 +459,18 @@ class CTDBHandle(TDBHandle):
 
     @overload
     def entries(self, include_keys: Literal[False] = ..., key_prefix: str | None = None) -> (
-        Iterable[dict[str, Any] | str]
+        Iterable[dict[str, Any] | str | bytes]
     ): ...
 
-    def entries(self, include_keys: bool = True, key_prefix: str | None = None) -> Iterable[dict[str, Any] | str]:
+    def entries(
+        self, include_keys: bool = True, key_prefix: str | None = None
+    ) -> Iterable[dict[str, Any] | str | bytes]:
         for ctdb_key, ctdb_val in self.hdl.iter():
             key = ctdb_key.decode()
+            # Must match TDBHandle.entries(); batch_op() and store() add this terminator
+            if self.keys_null_terminated:
+                key = key[:-1]
+
             if key_prefix and not key.startswith(key_prefix):
                 continue
 
@@ -445,18 +501,13 @@ class CTDBHandle(TDBHandle):
 
             match op.action:
                 case TDBBatchAction.GET:
-                    batch_ops.append(pyctdb.BatchOp('GET', tdb_key, None))
+                    # pyctdb.BatchOp is a struct sequence and so takes a single tuple
+                    batch_ops.append(pyctdb.BatchOp(('GET', tdb_key, None)))
                 case TDBBatchAction.SET:
-                    match self.data_type:
-                        case TDBDataType.BYTES:
-                            tdb_val = b64decode(op.value)  # type: ignore[arg-type]
-                        case TDBDataType.JSON:
-                            tdb_val = json.dumps(op.value).encode()
-                        case TDBDataType.STRING:
-                            tdb_val = op.value.encode()  # type: ignore[union-attr]
-                        case _:
-                            raise ValueError(f'{self.data_type}: unknown data type')
-                    batch_ops.append(pyctdb.BatchOp(('SET', tdb_key, tdb_val)))
+                    if op.value is None:
+                        raise ValueError(f'{op.key}: SET operation requires a value')
+
+                    batch_ops.append(pyctdb.BatchOp(('SET', tdb_key, self.encode_value(op.value))))
                 case TDBBatchAction.DEL:
                     batch_ops.append(pyctdb.BatchOp(('DEL', tdb_key, None)))
                 case _:

@@ -316,6 +316,11 @@ def test__ipa_cred_version_absent_reads_as_zero(secrets_tdb):
     ('group_mapping_rejects.tdb', TDBDataType.BYTES, True),
     ('passdb.tdb', TDBDataType.BYTES, True),
     ('share_info.tdb', TDBDataType.BYTES, True),       # default: BYTES -> terminated
+    # RAW is the type these four are actually opened with
+    ('group_mapping.tdb', TDBDataType.RAW, True),
+    ('group_mapping_rejects.tdb', TDBDataType.RAW, True),
+    ('passdb.tdb', TDBDataType.RAW, True),
+    ('share_info.tdb', TDBDataType.RAW, True),         # default: RAW -> terminated
     ('winbindd_cache.tdb', TDBDataType.BYTES, True),   # default: BYTES -> terminated
     ('middleware_cache', TDBDataType.JSON, False),     # middleware-owned JSON -> not
 ])

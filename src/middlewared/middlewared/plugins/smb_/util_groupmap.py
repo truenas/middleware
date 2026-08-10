@@ -1,6 +1,6 @@
 # Utilities that wrap around samba's group_mapping.tdb file
 #
-# test coverage provided by src/middlewared/middlewared/pytest/unit/utils/test_groupmap.py
+# test coverage provided by tests/unit/test_groupmap.py
 # sample tdb contents (via tdbdump)
 #
 # {
@@ -50,7 +50,6 @@
 
 import enum
 
-from base64 import b64decode, b64encode
 from collections.abc import Iterable
 from dataclasses import asdict, dataclass
 from socket import htonl, ntohl
@@ -71,8 +70,8 @@ from middlewared.utils.tdb import (
 UNIX_GROUP_KEY_PREFIX = 'UNIXGROUP/'
 MEMBEROF_PREFIX = 'MEMBEROF/'
 
-GROUP_MAPPING_TDB_OPTIONS = TDBOptions(TDBPathType.CUSTOM, TDBDataType.BYTES)
-GROUP_MAPPING_CTDB_OPTIONS = TDBOptions(TDBPathType.PERSISTENT, TDBDataType.BYTES, clustered=True)
+GROUP_MAPPING_TDB_OPTIONS = TDBOptions(TDBPathType.CUSTOM, TDBDataType.RAW)
+GROUP_MAPPING_CTDB_OPTIONS = TDBOptions(TDBPathType.PERSISTENT, TDBDataType.RAW, clustered=True)
 
 
 class GroupmapEntryType(enum.Enum):
@@ -108,7 +107,7 @@ def _groupmap_file_to_options(gm: GroupmapFile) -> TDBOptions:
     return GROUP_MAPPING_TDB_OPTIONS
 
 
-def _parse_unixgroup(tdb_key: str, tdb_val: str) -> SMBGroupMap:
+def _parse_unixgroup(tdb_key: str, tdb_val: bytes) -> SMBGroupMap:
     """
     parsing function to convert TDB key/value pair into SMBGroupMap
 
@@ -126,18 +125,17 @@ def _parse_unixgroup(tdb_key: str, tdb_val: str) -> SMBGroupMap:
     the TDB value.
     """
     sid = tdb_key[len(UNIX_GROUP_KEY_PREFIX):]
-    data = b64decode(tdb_val)
 
     # unix groups are written into tdb file via tdb_pack
-    gid = htonl(int.from_bytes(data[0:4]))
-    sid_type = lsa_sidtype(htonl(int.from_bytes(data[4:8])))
+    gid = htonl(int.from_bytes(tdb_val[0:4]))
+    sid_type = lsa_sidtype(htonl(int.from_bytes(tdb_val[4:8])))
 
     # remaining bytes are two null-terminated strings
-    bname, bcomment = data[8:-1].split(b'\x00')
+    bname, bcomment = tdb_val[8:-1].split(b'\x00')
     return SMBGroupMap(sid, gid, sid_type, bname.decode(), bcomment.decode())
 
 
-def _parse_memberof(tdb_key: str, tdb_val: str) -> SMBGroupMembership:
+def _parse_memberof(tdb_key: str, tdb_val: bytes) -> SMBGroupMembership:
     """
     parsing function to convert TDB key/value pair into SMBGroupMembership
 
@@ -155,13 +153,12 @@ def _parse_memberof(tdb_key: str, tdb_val: str) -> SMBGroupMembership:
     specified in TDB value (groups of which _this_ sid is a member of).
     """
     sid = tdb_key[len(MEMBEROF_PREFIX):]
-    data = b64decode(tdb_val)
 
-    groups = tuple(data[:-1].decode().split())
+    groups = tuple(tdb_val[:-1].decode().split())
     return SMBGroupMembership(sid, groups)
 
 
-def _groupmap_to_tdb_key_val(group_map: SMBGroupMap) -> tuple[str, str]:
+def _groupmap_to_tdb_key_val(group_map: SMBGroupMap) -> tuple[str, bytes]:
     """ convert a SMBGroupMap object to TDB key-value pair for insertion into TDB file """
     tdb_key = f'{UNIX_GROUP_KEY_PREFIX}{group_map.sid}'
     gid = ntohl(group_map.gid).to_bytes(4)
@@ -170,14 +167,14 @@ def _groupmap_to_tdb_key_val(group_map: SMBGroupMap) -> tuple[str, str]:
     comment = group_map.comment.encode()
 
     data = gid + sid_type + name + b'\x00' + comment + b'\x00'
-    return (tdb_key, b64encode(data))
+    return (tdb_key, data)
 
 
-def _groupmem_to_tdb_key_val(group_mem: SMBGroupMembership) -> tuple[str, str]:
+def _groupmem_to_tdb_key_val(group_mem: SMBGroupMembership) -> tuple[str, bytes]:
     """ convert a SMBGroupMembership object to TDB key-value pair for insertion into TDB file """
     tdb_key = f'{MEMBEROF_PREFIX}{group_mem.sid}'
     data = ' '.join(set(group_mem.groups)).encode() + b'\x00'
-    return (tdb_key, b64encode(data))
+    return (tdb_key, data)
 
 
 def groupmap_entries(
