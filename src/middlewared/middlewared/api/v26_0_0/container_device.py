@@ -2,7 +2,7 @@ from pydantic import ConfigDict, Discriminator, Field
 from typing import Annotated, Literal, TypeAlias
 
 from middlewared.api.base import (
-    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString, single_argument_args,
+    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, MACAddress, NonEmptyString, single_argument_args,
     single_argument_result,
 )
 
@@ -52,9 +52,8 @@ class ContainerNICDevice(BaseModel):
         default=None,
         description="Host network interface or bridge to attach to. `null` for no attachment.",
     )
-    mac: str | None = Field(
+    mac: MACAddress | None = Field(
         default=None,
-        pattern='^([0-9A-Fa-f]{2}[:-]?){5}([0-9A-Fa-f]{2})$',
         description="MAC address for the virtual network interface. `null` for auto-generation.",
     )
 
