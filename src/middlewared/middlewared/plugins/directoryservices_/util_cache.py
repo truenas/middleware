@@ -1,7 +1,6 @@
 import enum
 import os
 
-from collections import defaultdict
 from collections.abc import Iterable
 from contextlib import suppress
 from datetime import datetime, timedelta
@@ -33,7 +32,6 @@ from middlewared.utils.tdb import (
     TDBHandle,
     TDBOptions
 )
-from threading import Lock
 from uuid import uuid4
 
 # Update progress of job every nth user / group, we expect possibly hundreds to
