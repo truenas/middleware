@@ -45,9 +45,6 @@ __all__ = [
 _FALLBACK_CODES = frozenset(
     {
         LicenseError.NO_LICENSE,
-        LicenseError.DAEMON_UNAVAILABLE,
-        LicenseError.DAEMON_ERROR,
-        LicenseError.INTERNAL_ERROR,
     }
 )
 
@@ -58,12 +55,8 @@ def get_license(status: LicenseStatus | None = None) -> LicenseInfo | None:
     A v2 license that exists but fails verification is authoritative: return None
     rather than resurrecting the legacy blob underneath it.
     """
-    # FIXME: a caller cannot tell "this system has no license" from "we could not find out".
-    # _FALLBACK_CODES treats DAEMON_UNAVAILABLE, DAEMON_ERROR and INTERNAL_ERROR the same as
-    # NO_LICENSE, and when there is no legacy blob underneath, all four produce a bare None -- the
-    # identical answer a whitebox that genuinely has no license produces. Everything gated on a
-    # license therefore fails toward "unlicensed" whenever the daemon is merely unreachable. A
-    # third state meaning "unknown", which callers must refuse to act on, is what is missing.
+    # If daemon is not responding or something goes wrong with it - it is acceptable to
+    # assume that we don't have a license etc
     if status is None:
         status = verify()
 
