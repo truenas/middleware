@@ -1,6 +1,6 @@
 """Smoke tests for the zfs.tier plugin: core config / job / set-tier paths.
 
-The 3+3 RAIDZ1 tier pool fixture (and the Enterprise-license skip) live in
+The 3+3 RAIDZ1 tier pool fixture (and the ZFSTIER-entitlement skip) live in
 ``conftest.py`` alongside this file. Tests run on a TrueNAS box with at
 least 6 unused disks.
 """
@@ -132,10 +132,10 @@ def test_dataset_set_tier_with_migration(tier_ds, slow_rewrite):
     assert matching, pprint.pformat(events)
 
 
-def test_dataset_set_tier_globally_disabled():
+def test_dataset_set_tier_globally_disabled(zfstier_entitlement):
     """Returns EINVAL when tiering is globally disabled."""
-    if not call("system.is_enterprise"):
-        pytest.skip("Requires enterprise to toggle enabled flag")
+    if not zfstier_entitlement["entitled"]:
+        pytest.skip(zfstier_entitlement["message"])
 
     original = call("zfs.tier.config")["enabled"]
     try:
