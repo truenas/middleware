@@ -13,6 +13,7 @@ from middlewared.api.current import (
     TrueNASLicenseInfoResult,
 )
 from middlewared.service import Service, ValidationError, private
+from middlewared.plugins.truenas.license_reconcile import TrueNASLicenseReconcileService
 from middlewared.plugins.truenas.tn import EULA_PENDING_PATH
 from middlewared.utils.license import (
     LEGACY_LICENSE_FILE,
@@ -50,7 +51,7 @@ def _license_info_json(info: LicenseInfo) -> dict[str, Any]:
     }
 
 
-class TrueNASLicenseService(Service):
+class TrueNASLicenseService(TrueNASLicenseReconcileService, Service):
     class Config:
         namespace = "truenas.license"
         cli_private = True
