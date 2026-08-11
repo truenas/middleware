@@ -179,6 +179,30 @@ def test_extract_identity_nic_no_mac():
     assert _extract_identity(device) is None
 
 
+@pytest.mark.parametrize('mac', ['00:A0:98:61:F2:A0', '00:a0:98:61:f2:A0'])
+def test_extract_identity_nic_mac_is_case_insensitive(mac):
+    device = {'attributes': {'dtype': 'NIC', 'mac': mac}}
+    assert _extract_identity(device) == '00:a0:98:61:f2:a0'
+
+
+@pytest.mark.parametrize('mac', ['00:A0:98:61:F2:A0', '00:a0:98:61:f2:A0'])
+def test_uppercase_mac_duplicating_existing_fails(mac):
+    """The same address in a different case is still the same address to libvirt."""
+    instance = {
+        'name': 'test_vm',
+        'devices': [{'id': 1, 'attributes': {'dtype': 'NIC', 'mac': '00:a0:98:61:f2:a0'}}],
+    }
+    device = {'attributes': {'dtype': 'NIC', 'mac': mac}}
+
+    assert device_uniqueness_check(device, instance, 'NIC') is False
+
+
+def test_extract_identity_disk_path_keeps_case():
+    """Only NIC identities are case-folded: paths are case-sensitive."""
+    device = {'attributes': {'dtype': 'DISK', 'path': '/mnt/tank/Disk1.img'}}
+    assert _extract_identity(device) == '/mnt/tank/Disk1.img'
+
+
 def test_extract_identity_disk_path():
     device = {'attributes': {'dtype': 'DISK', 'path': '/dev/zvol/tank/disk1'}}
     assert _extract_identity(device) == '/dev/zvol/tank/disk1'
