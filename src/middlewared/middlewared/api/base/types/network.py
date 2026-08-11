@@ -83,10 +83,14 @@ Domain = Annotated[str, AfterValidator(match_validator(
     re.compile(r"^[a-z.\-0-9]*$", re.IGNORECASE),
     "Domain can only contain letters, numbers, periods, and dashes"
 ))]
+# Normalized to lowercase: MAC addresses are case-insensitive and libvirt stores them lowercased, so
+# an uppercase spelling would otherwise be a distinct string to every comparison we make against one
+# (notably the per-instance duplicate check in middlewared.utils.libvirt.utils.device_uniqueness_check)
+# while still being the same address on the wire.
 MACAddress = Annotated[str, AfterValidator(match_validator(
-    re.compile(r"^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$"),
+    re.compile(r"^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}\Z"),
     'MAC address must be a colon-separated hexadecimal value (e.g. 00:a0:99:7e:bb:8a).'
-))]
+)), AfterValidator(str.lower)]
 IPv4Address = Annotated[str, AfterValidator(_validate_ipv4_address)]
 IPv6Address = Annotated[str, AfterValidator(_validate_ipv6_address)]
 IPvAnyAddress = Literal[''] | Annotated[str, AfterValidator(_validate_ipaddr)]

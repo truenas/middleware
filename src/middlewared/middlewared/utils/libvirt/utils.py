@@ -33,7 +33,9 @@ def _extract_identity(device: dict[str, Any]) -> str | None:
         case 'GPU':
             return device['attributes'].get('pci_address')  # type: ignore[no-any-return]
         case 'NIC':
-            return device['attributes'].get('mac')  # type: ignore[no-any-return]
+            # MAC addresses are case-insensitive, so compare them canonically
+            mac = device['attributes'].get('mac')
+            return str(mac).lower() if mac is not None else None
         case 'USB':
             if device['attributes'].get('device'):
                 return device['attributes']['device']  # type: ignore[no-any-return]

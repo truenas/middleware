@@ -13,14 +13,15 @@ class MACAddressModel(BaseModel):
 
 
 @pytest.mark.parametrize(
-    "value",
+    "value,expected",
     [
-        "00:a0:99:7e:bb:8a",  # canonical lowercase
-        "00:A0:99:7E:BB:8A",  # uppercase colon (libvirt accepts and lowercases)
+        ("00:a0:99:7e:bb:8a", "00:a0:99:7e:bb:8a"),  # canonical lowercase
+        ("00:A0:99:7E:BB:8A", "00:a0:99:7e:bb:8a"),  # uppercase is accepted, then normalized
+        ("00:A0:99:7e:bb:8A", "00:a0:99:7e:bb:8a"),  # as is mixed case
     ],
 )
-def test_mac_address_accepts_colon(value):
-    assert accept_params(MACAddressModel, [value]) == [value]
+def test_mac_address_accepts_colon_and_normalizes(value, expected):
+    assert accept_params(MACAddressModel, [value]) == [expected]
 
 
 @pytest.mark.parametrize(
@@ -32,6 +33,9 @@ def test_mac_address_accepts_colon(value):
         "00:a0-99:7e-bb:8a",  # mixed separators
         "00:a0:99:7e:bb",  # too short
         "gg:gg:gg:gg:gg:gg",  # colon-separated but non-hex
+        "00:a0:99:7e:bb:8a\n",  # trailing newline ($ in Python re matches before it)
+        "00:a0:99:7e:bb:8a ",  # trailing whitespace
+        " 00:a0:99:7e:bb:8a",  # leading whitespace
     ],
 )
 def test_mac_address_rejects_non_colon(value):
@@ -42,8 +46,9 @@ def test_mac_address_rejects_non_colon(value):
 
 
 @pytest.mark.parametrize("model", [VMNICDevice, ContainerNICDevice])
-def test_nic_device_mac_accepts_colon(model):
-    assert model(dtype="NIC", mac="00:a0:99:7e:bb:8a").mac == "00:a0:99:7e:bb:8a"
+@pytest.mark.parametrize("value", ["00:a0:99:7e:bb:8a", "00:A0:99:7E:BB:8A"])
+def test_nic_device_mac_accepts_colon(model, value):
+    assert model(dtype="NIC", mac=value).mac == "00:a0:99:7e:bb:8a"
 
 
 @pytest.mark.parametrize("model", [VMNICDevice, ContainerNICDevice])
@@ -52,6 +57,7 @@ def test_nic_device_mac_allows_null(model):
 
 
 @pytest.mark.parametrize("model", [VMNICDevice, ContainerNICDevice])
-def test_nic_device_mac_rejects_dash(model):
+@pytest.mark.parametrize("value", ["10-66-6a-1f-f1-b1", "00:a0:99:7e:bb:8a\n"])
+def test_nic_device_mac_rejects_invalid(model, value):
     with pytest.raises(pydantic.ValidationError):
-        model(dtype="NIC", mac="10-66-6a-1f-f1-b1")
+        model(dtype="NIC", mac=value)
