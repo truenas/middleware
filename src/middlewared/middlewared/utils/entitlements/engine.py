@@ -197,6 +197,11 @@ class LicenseTypeRule:
 
 Rule = typing.Union[Vector, LegacyRule, TierRule, LicenseTypeRule]
 
+# Anything the policy can be keyed by. A license carries its own feature keys, and
+# some entitlements exist only here because they fall out of the license type or
+# tier instead of a key, so both vocabularies are equally valid to ask about.
+EntitlementKey = LicenseFeature | DerivedEntitlement
+
 
 def has_key(feature: str, facts: EntitlementFacts) -> bool:
     """Membership-only key check: True iff a license is present and carries the feature."""

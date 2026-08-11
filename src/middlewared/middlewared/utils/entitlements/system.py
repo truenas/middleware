@@ -16,7 +16,7 @@ from __future__ import annotations
 from middlewared.utils.hardware import get_hardware_class
 from middlewared.utils.license import get_license
 
-from .engine import Entitlement
+from .engine import Entitlement, EntitlementKey
 from .facts import EntitlementFacts
 from .policy import check_entitlement
 
@@ -36,6 +36,6 @@ def get_facts() -> EntitlementFacts:
     return EntitlementFacts(hardware_class=get_hardware_class(), license=get_license())
 
 
-def get_entitlement(feature: str) -> Entitlement:
+def get_entitlement(feature: EntitlementKey) -> Entitlement:
     """Return the entitlement for `feature` on this system."""
     return check_entitlement(feature, get_facts())
