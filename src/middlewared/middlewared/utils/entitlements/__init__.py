@@ -34,12 +34,15 @@ deal with it as an ingredient of ``EntitlementFacts``.
 
 from __future__ import annotations
 
+from truenas_pylicensed.features import LicenseFeature
+
 from .engine import (
     COLUMNS,
     FEATURE_DISPLAY_NAMES,
     FEATURE_MESSAGES,
     DerivedEntitlement,
     Entitlement,
+    EntitlementKey,
     LegacyRule,
     LicenseTypeRule,
     Reason,
@@ -62,8 +65,10 @@ __all__ = [
     "DerivedEntitlement",
     "Entitlement",
     "EntitlementFacts",
+    "EntitlementKey",
     "HardwareClass",
     "LegacyRule",
+    "LicenseFeature",
     "LicenseTypeRule",
     "Reason",
     "Rule",
