@@ -198,10 +198,10 @@ def test_derived_vectors_are_derived_entitlements():
 @pytest.mark.parametrize(
     "vector",
     [
-        Vector(1, 0, 0, 1, 0, 1),  # ce
-        Vector(0, 1, 0, 1, 0, 1),  # hw
-        Vector(0, 0, 1, 1, 0, 1),  # hw_l -- the shape the product matrix used to carry
-        Vector(0, 0, 0, 1, 1, 1),  # ce_l
+        Vector(ce=1, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
+        Vector(ce=0, hw=1, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
+        Vector(ce=0, hw=0, hw_l=1, hw_k=1, ce_l=0, ce_k=1),  # the shape the product matrix used to carry
+        Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=1, ce_k=1),
     ],
 )
 def test_tier_rule_rejects_a_cell_outside_the_key_columns(vector):
@@ -388,7 +388,7 @@ def test_nfs_snapshot_bespoke_message_from_live_policy(hardware_class, state):
 def test_nfs_snapshot_bespoke_message_survives_vector_flip():
     # Dropping the CE key cell makes WRONG_HARDWARE reachable for this feature;
     # the wording must hold there too rather than falling back to the template.
-    policy = {LicenseFeature.NFS_SNAPSHOT: Vector(0, 0, 0, 1, 0, 0)}
+    policy = {LicenseFeature.NFS_SNAPSHOT: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=0)}
     facts = facts_for_column(LicenseFeature.NFS_SNAPSHOT, "CE+K")
     entitlement = check_entitlement(LicenseFeature.NFS_SNAPSHOT, facts, policy=policy)
     assert entitlement.entitled is False
@@ -589,7 +589,7 @@ def test_smb_veeam_bespoke_message_from_live_policy(hardware_class, state):
 
 
 def test_smb_veeam_bespoke_message_survives_vector_flip():
-    policy = {LicenseFeature.SMB_VEEAM: Vector(0, 0, 0, 1, 0, 0)}
+    policy = {LicenseFeature.SMB_VEEAM: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=0)}
     facts = facts_for_column(LicenseFeature.SMB_VEEAM, "CE+K")
     entitlement = check_entitlement(LicenseFeature.SMB_VEEAM, facts, policy=policy)
     assert entitlement.entitled is False
@@ -619,7 +619,7 @@ def test_directory_services_bespoke_message_from_live_policy(hardware_class, sta
 
 
 def test_directory_services_bespoke_message_survives_vector_flip():
-    policy = {LicenseFeature.DIRECTORY_SERVICES: Vector(0, 0, 0, 1, 0, 0)}
+    policy = {LicenseFeature.DIRECTORY_SERVICES: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=0)}
     facts = facts_for_column(LicenseFeature.DIRECTORY_SERVICES, "CE+K")
     entitlement = check_entitlement(LicenseFeature.DIRECTORY_SERVICES, facts, policy=policy)
     assert entitlement.entitled is False
@@ -710,7 +710,7 @@ def test_reason_fibrechannel_generic_keyless_license_is_key_missing():
 
 def test_reason_wrong_hardware():
     # Synthetic feature entitled only on HW+K -- a key on the CE side never grants it.
-    policy = {"SYNTHETIC_HW_ONLY": Vector(0, 0, 0, 1, 0, 0)}
+    policy = {"SYNTHETIC_HW_ONLY": Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=0)}
     entitlement = check_entitlement("SYNTHETIC_HW_ONLY", facts_for_column("SYNTHETIC_HW_ONLY", "CE+K"), policy=policy)
     assert entitlement.entitled is False
     assert entitlement.reason == "WRONG_HARDWARE"
@@ -845,7 +845,7 @@ _ONE_SIDED_TIER_POLICY = {
     "SYNTHETIC_TIER": TierRule(
         feature=LicenseFeature.SUPPORT,
         allowed_tiers=frozenset({SupportTier.GOLD}),
-        vector=Vector(0, 0, 0, 1, 0, 0),  # HW+K only
+        vector=Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=0),
     )
 }
 
