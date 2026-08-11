@@ -1,7 +1,7 @@
 import pytest
 
 from middlewared.common.license_reconcile import LicenseReconcileAction, LicenseReconcileDelegate
-from middlewared.plugins.truenas.license_reconcile import TrueNASLicenseService
+from middlewared.plugins.truenas.license import TrueNASLicenseService
 from middlewared.pytest.unit.helpers import create_service
 from middlewared.pytest.unit.middleware import FakeJob, Middleware, fake_service_control
 

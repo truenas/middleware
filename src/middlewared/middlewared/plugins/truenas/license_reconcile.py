@@ -18,12 +18,19 @@ RENDER_TIMEOUT = 30
 SERVICE_TIMEOUT = 180
 
 
-class TrueNASLicenseService(Service):
+class TrueNASLicenseReconcileService(Service):
     """
     Registry of the subsystems that have to be reconciled after a license change.
 
-    Declared in the `truenas.license` namespace so that it is merged into the same compound
-    service as the rest of the license plugin.
+    These methods reach the `truenas.license` namespace by inheritance: `license.py`'s
+    `TrueNASLicenseService` subclasses this one. Inheritance is the only merge available here,
+    because the namespace is owned by `plugins/truenas/__init__.py` -- it pre-instantiates
+    `license.py`'s service, and the loader skips its own compound service construction for a
+    namespace a container already owns. A class that only declared the namespace here, with
+    nothing inheriting it, would never be instantiated at all.
+
+    `Config` below is kept identical to `license.py`'s: dropping it would have the service
+    metaclass derive a namespace from this class name instead.
     """
 
     class Config:
