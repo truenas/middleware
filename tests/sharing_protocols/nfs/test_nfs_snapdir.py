@@ -15,9 +15,10 @@ SNAPDIR_EXPORTS_ENTRY = 'zfs_snapdir'
 def enterprise():
     with mock('truenas.entitlements.check', args=['NFS_SNAPSHOT', ], declaration="""
         def mock(self, feature):
-            from middlewared.utils.entitlements import Entitlement, Reason
+            from middlewared.plugins.truenas.entitlements import TrueNASEntitlementsCheckEntitlement
+            from middlewared.utils.entitlements import Reason
 
-            return Entitlement(entitled=True, reason=Reason.ENTITLED, column='HW+K', message='')
+            return TrueNASEntitlementsCheckEntitlement(entitled=True, reason=Reason.ENTITLED, column='HW+K', message='')
     """):
         yield
 
@@ -74,9 +75,10 @@ def community():
     """
     with mock('truenas.entitlements.check', args=['NFS_SNAPSHOT', ], declaration="""
         def mock(self, feature):
-            from middlewared.utils.entitlements import FEATURE_MESSAGES, Entitlement, Reason
+            from middlewared.plugins.truenas.entitlements import TrueNASEntitlementsCheckEntitlement
+            from middlewared.utils.entitlements import FEATURE_MESSAGES, Reason
 
-            return Entitlement(
+            return TrueNASEntitlementsCheckEntitlement(
                 entitled=False,
                 reason=Reason.NO_LICENSE,
                 column='CE',

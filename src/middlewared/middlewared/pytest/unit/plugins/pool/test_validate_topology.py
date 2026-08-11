@@ -2,8 +2,9 @@ import pytest
 from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.plugins.pool_.pool import PoolService
+from middlewared.plugins.truenas.entitlements import TrueNASEntitlementsCheckEntitlement
 from middlewared.pytest.unit.middleware import Middleware
-from middlewared.utils.entitlements import Entitlement, Reason
+from middlewared.utils.entitlements import Reason
 
 
 def _new_vdev(vdev_type, num_disks):
@@ -34,8 +35,8 @@ def _entitlements_stub(middleware, entitled):
     def check(feature):
         checked.append(feature)
         if entitled:
-            return Entitlement(entitled=True, reason=Reason.ENTITLED, column="HW+K", message="")
-        return Entitlement(entitled=False, reason=Reason.KEY_MISSING, column="CE+L", message="")
+            return TrueNASEntitlementsCheckEntitlement(entitled=True, reason=Reason.ENTITLED, column="HW+K", message="")
+        return TrueNASEntitlementsCheckEntitlement(entitled=False, reason=Reason.KEY_MISSING, column="CE+L", message="")
 
     middleware.services.truenas.entitlements.check = check
     return checked
