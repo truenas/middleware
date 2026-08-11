@@ -124,12 +124,35 @@ class Entitlement:
 
 
 class Vector(typing.NamedTuple):
+    """One row of the product feature matrix: six cells, where ``1`` grants and ``0`` denies.
+
+    Field order is ``COLUMNS`` order. That is the whole reason the engine can index a row by
+    the column the facts resolved to (``vector[COLUMNS.index(column)]``).
+
+    Which half of the row a system reads is decided by ``facts.hardware_class.is_appliance``:
+    iX appliance hardware takes the ``hw*`` cells and everything else takes the ``ce*`` cells.
+    Minis are iX hardware but fold to the CE side. Within a half the license axis has three
+    states -- no license at all, a license that does not carry this feature's key, and a
+    license that does.
+
+    So a license without the key is its own population rather than a superset of the
+    unlicensed one, and a row can grant ``ce`` while leaving ``ce_l`` clear: the feature is
+    available on an unlicensed community system and is revoked the moment a license lands
+    that omits the key. That falls out of column resolution and is never special-cased.
+    """
+
     ce: int
+    """CE side -- non-appliance hardware and Minis -- with no license present."""
     hw: int
+    """Appliance hardware with no license present."""
     hw_l: int
+    """Appliance hardware licensed, where the license does not carry this feature's key."""
     hw_k: int
+    """Appliance hardware licensed, where the license carries this feature's key."""
     ce_l: int
+    """CE side licensed, where the license does not carry this feature's key."""
     ce_k: int
+    """CE side licensed, where the license carries this feature's key."""
 
 
 @dataclass(frozen=True, kw_only=True, slots=True)

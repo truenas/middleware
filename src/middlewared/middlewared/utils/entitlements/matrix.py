@@ -17,30 +17,30 @@ if typing.TYPE_CHECKING:
 # Vector is a data change.
 TARGET_VECTORS: Mapping[LicenseFeature, Vector] = MappingProxyType(
     {
-        LicenseFeature.APPS: Vector(1, 1, 0, 1, 0, 1),
+        LicenseFeature.APPS: Vector(ce=1, hw=1, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
         # TODO: Autotune needs fixes in the autotune script itself
-        LicenseFeature.AUTOTUNE: Vector(0, 0, 0, 1, 0, 0),
-        LicenseFeature.CATALOG_ENTERPRISE_TRAIN: Vector(0, 0, 0, 1, 0, 0),
-        LicenseFeature.CONTAINERS: Vector(1, 1, 0, 1, 0, 1),
-        LicenseFeature.DEDUP: Vector(1, 0, 0, 1, 0, 1),
-        LicenseFeature.DIRECTORY_SERVICES: Vector(0, 0, 0, 1, 0, 1),
-        LicenseFeature.FIBRECHANNEL: Vector(0, 0, 1, 1, 0, 1),
-        LicenseFeature.KMIP: Vector(0, 0, 0, 1, 0, 1),
-        LicenseFeature.LTS: Vector(0, 0, 1, 1, 0, 1),
-        LicenseFeature.MISSION_CRITICAL: Vector(0, 0, 0, 1, 0, 1),
-        LicenseFeature.NETWORK_FEC: Vector(0, 0, 0, 1, 0, 1),
-        LicenseFeature.NFS_SNAPSHOT: Vector(0, 0, 0, 1, 0, 1),
-        LicenseFeature.NVMEOF_SPDK: Vector(0, 0, 0, 1, 0, 1),
-        LicenseFeature.RDMA: Vector(0, 0, 0, 1, 0, 1),
-        LicenseFeature.SED: Vector(0, 1, 1, 1, 1, 1),
-        LicenseFeature.SMB_FASTPATH: Vector(0, 0, 0, 1, 0, 1),
-        LicenseFeature.SMB_VEEAM: Vector(0, 0, 0, 1, 0, 1),
-        LicenseFeature.STIG: Vector(0, 0, 0, 1, 0, 1),
-        LicenseFeature.SUPPORT: Vector(0, 0, 0, 1, 0, 1),
-        LicenseFeature.TRUESEARCH: Vector(0, 0, 0, 1, 0, 1),
-        LicenseFeature.VMS: Vector(1, 1, 0, 1, 0, 1),
-        LicenseFeature.WEBSHARE: Vector(0, 0, 0, 1, 0, 1),
-        LicenseFeature.ZFSTIER: Vector(0, 0, 0, 1, 0, 1),
+        LicenseFeature.AUTOTUNE: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=0),
+        LicenseFeature.CATALOG_ENTERPRISE_TRAIN: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=0),
+        LicenseFeature.CONTAINERS: Vector(ce=1, hw=1, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
+        LicenseFeature.DEDUP: Vector(ce=1, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
+        LicenseFeature.DIRECTORY_SERVICES: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
+        LicenseFeature.FIBRECHANNEL: Vector(ce=0, hw=0, hw_l=1, hw_k=1, ce_l=0, ce_k=1),
+        LicenseFeature.KMIP: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
+        LicenseFeature.LTS: Vector(ce=0, hw=0, hw_l=1, hw_k=1, ce_l=0, ce_k=1),
+        LicenseFeature.MISSION_CRITICAL: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
+        LicenseFeature.NETWORK_FEC: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
+        LicenseFeature.NFS_SNAPSHOT: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
+        LicenseFeature.NVMEOF_SPDK: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
+        LicenseFeature.RDMA: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
+        LicenseFeature.SED: Vector(ce=0, hw=1, hw_l=1, hw_k=1, ce_l=1, ce_k=1),
+        LicenseFeature.SMB_FASTPATH: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
+        LicenseFeature.SMB_VEEAM: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
+        LicenseFeature.STIG: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
+        LicenseFeature.SUPPORT: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
+        LicenseFeature.TRUESEARCH: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
+        LicenseFeature.VMS: Vector(ce=1, hw=1, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
+        LicenseFeature.WEBSHARE: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
+        LicenseFeature.ZFSTIER: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
     }
 )
 
@@ -59,6 +59,6 @@ TARGET_VECTORS: Mapping[LicenseFeature, Vector] = MappingProxyType(
 # (see policy.py).
 DERIVED_VECTORS: Mapping[DerivedEntitlement, Vector] = MappingProxyType(
     {
-        DerivedEntitlement.PROACTIVE_SUPPORT: Vector(0, 0, 0, 1, 0, 1),
+        DerivedEntitlement.PROACTIVE_SUPPORT: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
     }
 )
