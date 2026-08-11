@@ -36,9 +36,12 @@ def entitle_ds_auth():
     else:
         with mock('truenas.entitlements.check', args=['DIRECTORY_SERVICES', ], declaration="""
             def mock(self, feature):
-                from middlewared.utils.entitlements import Entitlement, Reason
+                from middlewared.plugins.truenas.entitlements import TrueNASEntitlementsCheckEntitlement
+                from middlewared.utils.entitlements import Reason
 
-                return Entitlement(entitled=True, reason=Reason.ENTITLED, column='HW+K', message='')
+                return TrueNASEntitlementsCheckEntitlement(
+                    entitled=True, reason=Reason.ENTITLED, column='HW+K', message='',
+                )
         """):
             yield
 
@@ -75,9 +78,10 @@ def test_enable_leave_activedirectory():
         # than being restated here, since that is what the plugin surfaces.
         with mock('truenas.entitlements.check', args=['DIRECTORY_SERVICES', ], declaration="""
             def mock(self, feature):
-                from middlewared.utils.entitlements import FEATURE_MESSAGES, Entitlement, Reason
+                from middlewared.plugins.truenas.entitlements import TrueNASEntitlementsCheckEntitlement
+                from middlewared.utils.entitlements import FEATURE_MESSAGES, Reason
 
-                return Entitlement(
+                return TrueNASEntitlementsCheckEntitlement(
                     entitled=False,
                     reason=Reason.NO_LICENSE,
                     column='CE',

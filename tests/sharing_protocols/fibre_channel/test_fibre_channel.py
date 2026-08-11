@@ -573,9 +573,12 @@ class AbstractFibreChannel:
         with mock('fc.capable', return_value=True):
             with mock('truenas.entitlements.check', args=['FIBRECHANNEL',], declaration="""
                 def mock(self, feature):
-                    from middlewared.utils.entitlements import Entitlement, Reason
+                    from middlewared.plugins.truenas.entitlements import TrueNASEntitlementsCheckEntitlement
+                    from middlewared.utils.entitlements import Reason
 
-                    return Entitlement(entitled=True, reason=Reason.ENTITLED, column='HW+K', message='')
+                    return TrueNASEntitlementsCheckEntitlement(
+                        entitled=True, reason=Reason.ENTITLED, column='HW+K', message='',
+                    )
             """):
                 call('fc.fc_host.reset_wired', True)
                 with mock_ports(self.NODE_A_PORTS, self.NODE_B_PORTS):

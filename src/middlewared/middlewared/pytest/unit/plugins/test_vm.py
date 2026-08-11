@@ -1,10 +1,11 @@
 import pytest
 from truenas_pylicensed.features import LicenseFeature
 
+from middlewared.plugins.truenas.entitlements import TrueNASEntitlementsCheckEntitlement
 from middlewared.service_exception import ValidationErrors
 from middlewared.pytest.unit.helpers import load_compound_service
 from middlewared.pytest.unit.middleware import Middleware
-from middlewared.utils.entitlements import Entitlement, Reason
+from middlewared.utils.entitlements import Reason
 
 
 VMService = load_compound_service('vm')
@@ -23,7 +24,7 @@ async def test_vm_license_active_response(entitled, reason):
 
     def check(feature):
         checked.append(feature)
-        return Entitlement(entitled=entitled, reason=reason, column='HW+K', message='')
+        return TrueNASEntitlementsCheckEntitlement(entitled=entitled, reason=reason, column='HW+K', message='')
 
     m.services.truenas.entitlements.check = check
 
