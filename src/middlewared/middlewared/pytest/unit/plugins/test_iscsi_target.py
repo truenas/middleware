@@ -2,10 +2,11 @@ import pytest
 from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.plugins.iscsi_.targets import iSCSITargetService
+from middlewared.plugins.truenas.entitlements import TrueNASEntitlementsCheckEntitlement
 from middlewared.pytest.unit.helpers import create_service
 from middlewared.pytest.unit.middleware import Middleware
 from middlewared.service import ValidationErrors
-from middlewared.utils.entitlements import Entitlement, Reason
+from middlewared.utils.entitlements import Reason
 
 
 def target_middleware(entitlement):
@@ -38,7 +39,7 @@ async def validate(m, mode):
 @pytest.mark.asyncio
 async def test_target_mode_rejected_when_not_entitled(mode):
     m, checked = target_middleware(
-        Entitlement(
+        TrueNASEntitlementsCheckEntitlement(
             entitled=False,
             reason=Reason.KEY_MISSING,
             column="CE+L",
@@ -56,7 +57,9 @@ async def test_target_mode_rejected_when_not_entitled(mode):
 
 @pytest.mark.asyncio
 async def test_target_mode_allowed_when_entitled():
-    m, checked = target_middleware(Entitlement(entitled=True, reason=Reason.ENTITLED, column="HW+L", message=""))
+    m, checked = target_middleware(
+        TrueNASEntitlementsCheckEntitlement(entitled=True, reason=Reason.ENTITLED, column="HW+L", message="")
+    )
 
     verrors = await validate(m, "FC")
 
@@ -66,7 +69,9 @@ async def test_target_mode_allowed_when_entitled():
 
 @pytest.mark.asyncio
 async def test_iscsi_only_target_skips_entitlement_check():
-    m, checked = target_middleware(Entitlement(entitled=False, reason=Reason.NO_LICENSE, column="CE", message=""))
+    m, checked = target_middleware(
+        TrueNASEntitlementsCheckEntitlement(entitled=False, reason=Reason.NO_LICENSE, column="CE", message="")
+    )
 
     verrors = await validate(m, "ISCSI")
 
