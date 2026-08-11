@@ -1,11 +1,34 @@
+from typing import Annotated
+
+from pydantic import BeforeValidator
+
 from middlewared.api import api_method
 from middlewared.api.base import BaseModel
 from middlewared.service import Service
-from middlewared.utils.entitlements import get_entitlement
+from middlewared.utils.entitlements import DerivedEntitlement, EntitlementKey, LicenseFeature, get_entitlement
+
+
+def coerce_entitlement_key(value: object) -> object:
+    """Resolve a feature name to its enum member before the strict field check sees it.
+
+    Over the wire a feature arrives as a plain string, which a strict enum-typed field would
+    reject outright, and its own rejection message says nothing about which names are legal.
+    Non-string values are left alone so the strict check still refuses them.
+    """
+    if isinstance(value, LicenseFeature | DerivedEntitlement) or not isinstance(value, str):
+        return value
+
+    for vocabulary in (LicenseFeature, DerivedEntitlement):
+        try:
+            return vocabulary(value)
+        except ValueError:
+            continue
+
+    raise ValueError(f"{value!r} is neither a license feature nor a derived entitlement")
 
 
 class TrueNASEntitlementsCheckArgs(BaseModel):
-    feature: str
+    feature: Annotated[EntitlementKey, BeforeValidator(coerce_entitlement_key)]
 
 
 class TrueNASEntitlementsCheckEntitlement(BaseModel):
@@ -32,7 +55,7 @@ class TrueNASEntitlementsService(Service):
         private=True,
         check_annotations=True,
     )
-    def check(self, feature: str) -> TrueNASEntitlementsCheckEntitlement:
+    def check(self, feature: EntitlementKey) -> TrueNASEntitlementsCheckEntitlement:
         """Return the entitlement for `feature` computed from current system facts."""
         entitlement = get_entitlement(feature)
         # `middlewared.utils.entitlements.Entitlement` and the model above are two
