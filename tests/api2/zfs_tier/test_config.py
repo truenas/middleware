@@ -1,10 +1,11 @@
-"""Config CRUD: input validation bounds, license gating, kernel-param sync,
+"""Config CRUD: input validation bounds, entitlement gating, kernel-param sync,
 and service-control behavior on update.
 
 The bound-checking tests do not depend on the tier_pool fixture — they
 exercise the Pydantic input gate at the API layer, which runs before the
-method body's license check. The license, kernel-param, and service-control
-tests do require tier_pool (which itself requires Enterprise + 6 disks).
+method body's entitlement check. The entitlement, kernel-param, and
+service-control tests do require tier_pool (which itself requires the ZFSTIER
+entitlement + 6 disks).
 """
 
 import pytest
@@ -18,7 +19,7 @@ _KERNEL_PARAM_PATH = "/sys/module/zfs/parameters/zfs_special_class_metadata_rese
 
 # ----------------------------------------------------------------------------
 # Pydantic bounds: these run at the API gateway before any service code, so
-# they don't require an Enterprise license or a SPECIAL vdev.
+# they don't require the ZFSTIER entitlement or a SPECIAL vdev.
 # ----------------------------------------------------------------------------
 
 
@@ -55,17 +56,20 @@ def test_update_rejects_metadata_reserve_above_30():
 
 
 # ----------------------------------------------------------------------------
-# License gate: this only runs on a non-enterprise build. On enterprise the
-# tier_pool fixture will already be exercising the licensed path.
+# Entitlement gate: this only runs where the system lacks the ZFSTIER
+# entitlement. Where it has it, the tier_pool fixture is already exercising the
+# entitled path.
 # ----------------------------------------------------------------------------
 
 
-def test_update_requires_license_on_non_enterprise():
-    if call("system.is_enterprise"):
-        pytest.skip("license-required test only runs on non-enterprise builds")
+def test_update_requires_zfstier_entitlement(zfstier_entitlement):
+    if zfstier_entitlement["entitled"]:
+        pytest.skip("Denial test only runs where ZFSTIER is not entitled")
     with pytest.raises(CallError) as exc:
         call("zfs.tier.update", {"enabled": True})
-    assert "license" in str(exc.value).lower()
+    # zfs.tier.update raises CallError(ent.message) verbatim, so the denial the
+    # caller sees must be the engine's own wording, not merely license-ish text.
+    assert zfstier_entitlement["message"] in str(exc.value)
 
 
 # ----------------------------------------------------------------------------
