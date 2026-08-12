@@ -1,6 +1,9 @@
 import ipaddress
 import os
+import pyudev
 import yaml
+
+from truenas_pylibvirt.utils.usb import is_usb_hub, libvirt_device_name
 
 import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
@@ -12,6 +15,46 @@ from middlewared.service import CallError, job, private, Service
 from middlewared.plugins.pool_.utils import UpdateImplArgs
 
 from .utils import container_dataset
+
+
+def usb_id(value: str) -> str:
+    """Put an incus USB vendor or product id in the `0x`-prefixed form the API stores.
+
+    incus writes them bare (`046d`), but not always: prefixing unconditionally turns a value that
+    already carries one into `0x0x046d`, which matches no device and is accepted by a pattern that
+    only asks for a `0x` prefix.
+    """
+    return f'0x{str(value).lower().removeprefix("0x")}'
+
+
+def find_usb_device_name_by_bus_and_devnum(bus: str, devnum: str) -> str | None:
+    """Find the USB device name of the device that currently has `bus`/`devnum`.
+
+    incus identifies a USB device by its device number, which the kernel reassigns on every
+    replug and reboot, while a device name is built from the port the device is plugged into.
+    The pair only maps to a port while the device is plugged in, so this is only meaningful
+    during the migration itself.
+    """
+    target_bus = str(bus).lstrip('0') or '0'
+    target_devnum = str(devnum).lstrip('0') or '0'
+
+    context = pyudev.Context()
+    for device in context.list_devices(subsystem='usb', DEVTYPE='usb_device'):
+        props = device.properties
+        if (
+            (props.get('BUSNUM', '').lstrip('0') or '0') != target_bus
+            or (props.get('DEVNUM', '').lstrip('0') or '0') != target_devnum
+        ):
+            continue
+
+        # Device number 1 is always the root hub of its bus, and a hub is never something to pass
+        # through, so a pair landing on one is a leftover rather than a device worth keeping.
+        if is_usb_hub(device):
+            return None
+
+        return libvirt_device_name(device.sys_name)
+
+    return None
 
 
 class VirtGlobalModel(sa.Model):
@@ -70,16 +113,22 @@ class ContainerService(Service):
                         "mac": manifest["config"].get(f"volatile.{device_name}.hwaddr")
                     }
                 elif dtype == "usb":
+                    usb_device_name = None
                     if (bus_num := device_data.get("busnum")) and (devnum := device_data.get("devnum")):
+                        usb_device_name = await self.middleware.run_in_thread(
+                            find_usb_device_name_by_bus_and_devnum, bus_num, devnum
+                        )
+
+                    if usb_device_name:
                         device_payload = {
                             "dtype": "USB",
-                            "device": f"usb_{bus_num}_{devnum}",
+                            "device": usb_device_name,
                             "usb": None,
                         }
                     elif (vendor_id := device_data.get("vendorid")) and (product_id := device_data.get("productid")):
                         device_payload = {
                             "dtype": "USB",
-                            "usb": {"vendor_id": f"0x{vendor_id}", "product_id": f"0x{product_id}"},
+                            "usb": {"vendor_id": usb_id(vendor_id), "product_id": usb_id(product_id)},
                             "device": None
                         }
                     else:
