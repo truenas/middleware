@@ -120,8 +120,6 @@ def test_broken_app_is_logged(caplog):
     def get_config(name, version):
         raise FileNotFoundError(2, "No such file or directory")
 
-    # Bind to the named logger explicitly: `app_lifecycle` has propagation disabled once
-    # middlewared configures logging for real.
     with caplog.at_level(logging.WARNING, logger="app_lifecycle"):
         with generate(["app-broken"], metadata_map, get_config) as (metadata, config):
             assert sorted(metadata) == ["app-broken"]
