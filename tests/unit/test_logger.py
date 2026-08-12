@@ -29,6 +29,28 @@ def remove_logfile(path):
         pass
 
 
+@pytest.fixture(scope='function', autouse=True)
+def preserve_global_logging_state():
+    """ `setup_syslog_handler` attaches a queue handler to its target logger and turns off
+    propagation to root, neither of which it can undo. `tests/run_unit_tests.py` runs the
+    middleware pytest suite in this same interpreter afterwards, and a logger that no longer
+    propagates silently defeats `caplog` there, so unwind those mutations here. """
+    loggers = [logging.getLogger(tnlog.name) for tnlog in ALL_LOG_FILES]
+    propagation = [logger.propagate for logger in loggers]
+
+    try:
+        yield
+    finally:
+        for logger, propagate in zip(loggers, propagation):
+            # Only queue handlers belong to `setup_syslog_handler`. Anything else on the root
+            # logger is pytest's own log capture, and removing it would break log reporting.
+            for handler in logger.handlers[:]:
+                if isinstance(handler, logging.handlers.QueueHandler):
+                    logger.removeHandler(handler)
+
+            logger.propagate = propagate
+
+
 @pytest.fixture(scope='function')
 def current_test_name(request):
     return request.node.name
