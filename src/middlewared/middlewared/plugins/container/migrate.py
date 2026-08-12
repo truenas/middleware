@@ -27,34 +27,41 @@ def usb_id(value: str) -> str:
     return f'0x{str(value).lower().removeprefix("0x")}'
 
 
-def find_usb_device_name_by_bus_and_devnum(bus: str, devnum: str) -> str | None:
-    """Find the USB device name of the device that currently has `bus`/`devnum`.
+def normalize_bus_and_devnum(bus: str, devnum: str) -> tuple[str, str]:
+    """incus writes a bus or device number either padded (`001`) or not; udev reports it unpadded."""
+    return str(bus).lstrip('0') or '0', str(devnum).lstrip('0') or '0'
+
+
+def usb_device_names_by_bus_and_devnum() -> dict[tuple[str, str], str]:
+    """Map the bus and device number of every connected USB device to its device name.
 
     incus identifies a USB device by its device number, which the kernel reassigns on every
     replug and reboot, while a device name is built from the port the device is plugged into.
     The pair only maps to a port while the device is plugged in, so this is only meaningful
     during the migration itself.
+
+    The whole map comes out of one udev scan, so everything resolved through it is resolved
+    against the same view of the machine.
     """
-    target_bus = str(bus).lstrip('0') or '0'
-    target_devnum = str(devnum).lstrip('0') or '0'
+    names = {}
 
     context = pyudev.Context()
     for device in context.list_devices(subsystem='usb', DEVTYPE='usb_device'):
-        props = device.properties
-        if (
-            (props.get('BUSNUM', '').lstrip('0') or '0') != target_bus
-            or (props.get('DEVNUM', '').lstrip('0') or '0') != target_devnum
-        ):
+        # A hub is never something to pass through, so a pair landing on one has nothing to
+        # resolve to and is left out of the map entirely.
+        if is_usb_hub(device):
             continue
 
-        # Device number 1 is always the root hub of its bus, and a hub is never something to pass
-        # through, so a pair landing on one is a leftover rather than a device worth keeping.
-        if is_usb_hub(device):
-            return None
+        props = device.properties
+        address = normalize_bus_and_devnum(props.get('BUSNUM', ''), props.get('DEVNUM', ''))
+        names[address] = libvirt_device_name(device.sys_name)
 
-        return libvirt_device_name(device.sys_name)
+    return names
 
-    return None
+
+def find_usb_device_name_by_bus_and_devnum(bus: str, devnum: str) -> str | None:
+    """The device name of whatever currently has `bus`/`devnum`, or `None` for a hub or a gap."""
+    return usb_device_names_by_bus_and_devnum().get(normalize_bus_and_devnum(bus, devnum))
 
 
 class VirtGlobalModel(sa.Model):
