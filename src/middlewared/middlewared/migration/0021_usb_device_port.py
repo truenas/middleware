@@ -5,10 +5,6 @@ libvirt has always called them and what 25.10 stored. The 26.0 pre-releases buil
 of name out of the bus and device numbers instead, and a device number is an enumeration counter
 the kernel reissues on every replug, so those stored values name a port nobody chose.
 
-Only the live hardware can map a device number back to a port, which is why this is a middleware
-migration rather than an alembic one: it runs on the machine the devices are attached to, while
-they are still attached.
-
 `container_device` was created in 26.0 and has never existed in an earlier release, so every value
 in it was written that way and is converted. A `vm_device` value may predate 26.0, so it is kept
 whenever it already names a port that something is plugged into, and only converted otherwise.

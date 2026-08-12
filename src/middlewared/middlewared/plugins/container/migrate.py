@@ -13,6 +13,7 @@ from middlewared.api.current import (
 )
 from middlewared.service import CallError, job, private, Service
 from middlewared.plugins.pool_.utils import UpdateImplArgs
+from middlewared.utils.libvirt.nic import normalize_mac, random_mac
 
 from .utils import container_dataset
 
@@ -112,12 +113,26 @@ class ContainerService(Service):
                         ).encode())
                         continue
 
+                    # These rows are written straight to the datastore, so `MACAddress` never sees this
+                    # value and it has to be brought to libvirt's form here. incus stores an unquoted
+                    # address, which PyYAML resolves as a YAML 1.1 base-60 integer when every octet is
+                    # numeric and below 60, so `52:54:00:12:34:56` from qemu's own range is an int.
+                    hwaddr = manifest["config"].get(f"volatile.{device_name}.hwaddr")
+                    if (mac := normalize_mac(hwaddr)) is None:
+                        mac = random_mac()
+                        if hwaddr is not None:
+                            await job.logs_fd_write((
+                                f"MAC address {hwaddr!r} of {device_name!r} NIC device for "
+                                f"{container_name!r} is not one libvirt can parse, so {mac} was "
+                                f"generated in its place\n"
+                            ).encode())
+
                     device_payload = {
                         "dtype": "NIC",
                         "nic_attach": device_data["parent"],
                         "type": "VIRTIO",
                         "trust_guest_rx_filters": False,
-                        "mac": manifest["config"].get(f"volatile.{device_name}.hwaddr")
+                        "mac": mac,
                     }
                 elif dtype == "usb":
                     usb_device_name = None
