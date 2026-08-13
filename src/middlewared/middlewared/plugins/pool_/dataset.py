@@ -24,7 +24,7 @@ from middlewared.utils import BOOT_POOL_NAME_VALID
 from middlewared.utils.filesystem import attrs as fs_attrs
 from middlewared.utils.filter_list import filter_list
 
-from .dataset_query_utils import generic_query
+from .dataset_query_utils import generic_query, user_property_names_to_be_renamed
 from .utils import (
     CreateImplArgs,
     CreateImplArgsDataclass,
@@ -32,10 +32,12 @@ from .utils import (
     get_dataset_parents,
     POOL_DS_CREATE_PROPERTIES,
     POOL_DS_UPDATE_PROPERTIES,
+    RE_ZFS_USER_PROP,
     UpdateImplArgs,
     UpdateImplArgsDataclass,
     validate_dedup_license,
     ZFSKeyFormat,
+    ZFS_USER_PROP_MAX_LEN,
     ZFS_VOLUME_BLOCK_SIZE_CHOICES
 )
 
@@ -338,7 +340,24 @@ class PoolDatasetService(CRUDService):
                     'This field must be from zero to 16M'
                 )
 
-        if mode == 'UPDATE':
+        if mode == 'CREATE':
+            managed_user_props = user_property_names_to_be_renamed()
+            seen_user_props = set()
+            for index, prop in enumerate(data.get('user_properties', [])):
+                prop_schema = f'{schema}.user_properties.{index}.key'
+                if (key := prop['key']) in managed_user_props:
+                    verrors.add(
+                        prop_schema,
+                        f'{key!r} is managed by TrueNAS, '
+                        f'use the {managed_user_props[key]!r} field to set it.'
+                    )
+                elif len(key) > ZFS_USER_PROP_MAX_LEN or not RE_ZFS_USER_PROP.fullmatch(key):
+                    verrors.add(prop_schema, f'{key!r} is not a valid ZFS user property name.')
+                elif key in seen_user_props:
+                    verrors.add(prop_schema, f'{key!r} is specified more than once.')
+                else:
+                    seen_user_props.add(key)
+        elif mode == 'UPDATE':
             if data.get('user_properties_update') and not data.get('user_properties'):
                 for index, prop in enumerate(data['user_properties_update']):
                     prop_schema = f'{schema}.user_properties_update.{index}'
