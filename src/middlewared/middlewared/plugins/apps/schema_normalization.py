@@ -109,9 +109,16 @@ class AppSchemaService(Service):
         if all(gpu['vendor'] == 'NVIDIA' for gpu in gpu_choices.values()):
             value['use_all_gpus'] = False
 
-        for nvidia_gpu_pci_slot in list(value['nvidia_gpu_selection']):
+        for nvidia_gpu_pci_slot, gpu_config in list(value['nvidia_gpu_selection'].items()):
             if nvidia_gpu_pci_slot not in gpu_choices or gpu_choices[nvidia_gpu_pci_slot]['vendor'] != 'NVIDIA':
                 value['nvidia_gpu_selection'].pop(nvidia_gpu_pci_slot)
+            elif isinstance(gpu_config, dict) and (
+                gpu_uuid := gpu_choices[nvidia_gpu_pci_slot]['vendor_specific_config'].get('uuid')
+            ):
+                # The PCI slot is what identifies the selection, so the recorded UUID must track whichever
+                # card currently occupies that slot - otherwise replacing a GPU leaves the app configured
+                # with a UUID which no longer exists and the container runtime fails to start it
+                gpu_config['uuid'] = gpu_uuid
 
         return value
 
