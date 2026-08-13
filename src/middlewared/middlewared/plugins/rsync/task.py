@@ -71,18 +71,19 @@ def build_commandline(context: ServiceContext, id_: int) -> Iterator[str]:
         if rsync.extra:
             line.extend(shlex.quote(arg) for arg in rsync.extra)
 
-        remote = ""
+        remote_username = remote_host = ""
         if not rsync.ssh_credentials:
             # Do not use username if one is specified in host field
             # See #5096 for more details
             if rsync.remotehost and "@" in rsync.remotehost:
-                remote_username, remote_host = rsync.remotehost.rsplit('@', 1)
+                remote_username, remote_host = rsync.remotehost.rsplit("@", 1)
             else:
-                remote_username, remote_host = rsync.user, rsync.remotehost
+                remote_username, remote_host = rsync.user, rsync.remotehost or ""
 
         if rsync.mode == "MODULE":
-            remote = f'{shlex.quote(remote_username)}@{shlex.quote(remote_host)}'
-            module_args = [path, f'rsync://{remote}/{shlex.quote(rsync.remotemodule)}']
+            remote = f"{shlex.quote(remote_username)}@{shlex.quote(remote_host)}"
+            module = shlex.quote(rsync.remotemodule or "")
+            module_args = [path, f"rsync://{remote}/{module}"]
             if rsync.direction != "PUSH":
                 module_args.reverse()
             line += module_args
@@ -128,9 +129,9 @@ def build_commandline(context: ServiceContext, id_: int) -> Iterator[str]:
 
             if ":" in remote_host:
                 remote_host = f"[{remote_host}]"
-            remote = f'{shlex.quote(remote_username)}@{shlex.quote(remote_host)}'
+            remote = f"{shlex.quote(remote_username)}@{shlex.quote(remote_host)}"
 
-            line += ["-e", shlex.quote(f'ssh -p {port} -o BatchMode=yes -o StrictHostKeyChecking=yes {extra_args}')]
+            line += ["-e", shlex.quote(f"ssh -p {port} -o BatchMode=yes -o StrictHostKeyChecking=yes {extra_args}")]
             path_args = [path, f"{remote}:{shlex.quote(rsync.remotepath)}"]
             if rsync.direction != "PUSH":
                 path_args.reverse()
