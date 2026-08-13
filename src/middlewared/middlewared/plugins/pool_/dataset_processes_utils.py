@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from truenas_os_pyutils.mount import iter_mountinfo
 
-from middlewared.api.current import ZFSResourceQuery
 from middlewared.plugins.zfs.utils import has_internal_path
 from middlewared.plugins.zfs_.utils import zvol_name_to_path
 from middlewared.service import ServiceContext
@@ -20,21 +19,28 @@ def mounted_pool_paths(name: str) -> list[str]:
     filesystem it sits on rather than to this pool. Datasets mounted somewhere other
     than their default location are covered too.
 
+    ZFS snapshot automounts under `.zfs/snapshot` are included: they are unmounted
+    during a teardown like any other mount, so a process holding one open blocks an
+    export just the same.
+
     Args:
         name: Pool or dataset whose mount tree should be collected
 
     Returns:
-        Absolute mountpoint paths, excluding internal datasets
+        Absolute mountpoint paths, excluding internal datasets and their snapshots
     """
-    prefix = f"{name}/"
+    prefixes = (f"{name}/", f"{name}@")
     return [
         mnt["mountpoint"]
-        for mnt in iter_mountinfo()
-        if mnt["fs_type"] == "zfs"
-        and mnt["mountpoint"] is not None
-        and mnt["mount_source"] is not None
-        and (mnt["mount_source"] == name or mnt["mount_source"].startswith(prefix))
-        and not has_internal_path(mnt["mount_source"])
+        for mnt in iter_mountinfo(include_snapshot_mounts=True)
+        if (
+            mnt["fs_type"] == "zfs"
+            and mnt["mountpoint"] is not None
+            and (source := mnt["mount_source"]) is not None
+            and (source == name or source.startswith(prefixes))
+            # strip any @snapshot suffix so snapshots of internal datasets stay excluded
+            and not has_internal_path(source.split("@", 1)[0])
+        )
     ]
 
 
@@ -47,10 +53,10 @@ async def processes_using_dataset_tree(ctx: ServiceContext, name: str) -> list[d
     open is invisible to it. Anything acting on a whole pool has to scan the entire
     tree, otherwise a busy child is missed and the pool fails to export.
 
-    Internal datasets are left out, as they are by any other dataset query. Their
-    consumers are shut down separately (the attachment delegates for apps, the
-    `pool.pre_export` hook for the system dataset), and treating them as ordinary
-    datasets here would mean killing processes that hold the system dataset open.
+    Internal datasets are left out of the mount scan. Their consumers are shut down
+    separately (the attachment delegates for apps, the `pool.pre_export` hook for
+    the system dataset), and treating them as ordinary datasets here would mean
+    killing processes that hold the system dataset open.
 
     Args:
         ctx: Service context
@@ -62,13 +68,10 @@ async def processes_using_dataset_tree(ctx: ServiceContext, name: str) -> list[d
     paths = await ctx.to_thread(mounted_pool_paths, name)
 
     # Zvols are block devices rather than mounts, so mountinfo knows nothing about
-    # them and they have to be collected from ZFS itself. Only their names matter,
-    # hence no properties: a zvol with no device node yet is simply never matched.
-    for rsrc in await ctx.call2(
-        ctx.s.zfs.resource.query_impl,
-        ZFSResourceQuery(paths=[name], properties=None, get_children=True),
-    ):
-        if rsrc["type"] == "VOLUME":
-            paths.append(zvol_name_to_path(rsrc["name"]))
+    # them. /dev/zvol mirrors the pool's zvol hierarchy and processes_using_paths
+    # walks a /dev/zvol directory recursively, so this one path covers every zvol
+    # device in the tree, snapshot devices included. A zvol with no device node
+    # yet is never matched, but it cannot be held open either.
+    paths.append(zvol_name_to_path(name))
 
     return await ctx.middleware.call("pool.dataset.processes_using_paths", paths)

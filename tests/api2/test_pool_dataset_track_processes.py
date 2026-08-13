@@ -2,9 +2,9 @@ import contextlib
 import time
 
 import pytest
-from pytest_dependency import depends
+
 from middlewared.test.integration.utils import call, ssh
-from middlewared.test.integration.assets.pool import dataset, pool
+from middlewared.test.integration.assets.pool import another_pool, dataset, pool
 
 import os
 import sys
@@ -102,11 +102,11 @@ def test__pool_processes_finds_child_dataset(child, data, file_open_path):
         child_ds = stack.enter_context(dataset(child, data))
 
         test_file = file_open_path(child_ds)
-        open_pid = ssh(f"""python -c 'import time; f = open("{test_file}", "w+"); time.sleep(10)' > /dev/null 2>&1 & echo $!""")
-        open_pid = open_pid.strip()
-        assert open_pid.isdigit(), f'{open_pid!r} is not a digit'
-
+        open_pid = None
         try:
+            open_pid = ssh(f"""python -c 'import time; f = open("{test_file}", "w+"); time.sleep(10)' > /dev/null 2>&1 & echo $!""").strip()
+            assert open_pid.isdigit(), f'{open_pid!r} is not a digit'
+
             # spinning up python interpreter could take some time on busy system so sleep
             # for a couple seconds to give it time
             time.sleep(2)
@@ -123,4 +123,32 @@ def test__pool_processes_finds_child_dataset(child, data, file_open_path):
                 assert int(open_pid) not in [proc['pid'] for proc in root_only], root_only
 
         finally:
-            ssh(f'kill -9 {open_pid}', check=False)
+            if open_pid:
+                ssh(f'kill -9 {open_pid}', check=False)
+
+
+def test__pool_export_kills_process_holding_child_dataset():
+    """
+    `pool.export` must terminate a process holding a file open on a child dataset,
+    otherwise the export fails to unmount the child with EBUSY. This exercises the
+    full export path, not just the detection that `pool.processes` reports.
+    """
+    with another_pool() as temp_pool:
+        child = f'{temp_pool["name"]}/child'
+        call('pool.dataset.create', {'name': child})
+
+        open_pid = None
+        try:
+            # sleep far longer than the export takes, so the file stays open unless the
+            # export's process scan finds and terminates the holder
+            open_pid = ssh(f"""python -c 'import time; f = open("/mnt/{child}/test_file", "w+"); time.sleep(600)' > /dev/null 2>&1 & echo $!""").strip()
+            assert open_pid.isdigit(), f'{open_pid!r} is not a digit'
+
+            # spinning up python interpreter could take some time on busy system so sleep
+            # for a couple seconds to give it time
+            time.sleep(2)
+
+            call('pool.export', temp_pool['id'], {'destroy': True}, job=True)
+        finally:
+            if open_pid:
+                ssh(f'kill -9 {open_pid}', check=False)

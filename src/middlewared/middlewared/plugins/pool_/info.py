@@ -73,17 +73,7 @@ class PoolService(Service):
         Returns a list of running processes using this pool.
         """
         pool = await self.middleware.call('pool.get_instance', oid)
-        processes = []
-        try:
-            processes = await processes_using_dataset_tree(self.context, pool['name'])
-        except ValidationError as e:
-            if e.errno == errno.ENOENT:
-                # Dataset might not exist (e.g. not online), this is not an error
-                pass
-            else:
-                raise
-
-        return processes
+        return await processes_using_dataset_tree(self.context, pool['name'])
 
     @api_method(
         PoolGetDisksArgs,

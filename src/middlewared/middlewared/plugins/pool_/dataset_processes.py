@@ -56,7 +56,7 @@ class PoolDatasetService(Service):
         midpid = os.getpid()
         for process in await processes_using_dataset_tree(self.context, oid):
             service = process.get('service')
-            if service is not None:
+            if service is not None and service not in need_restart_services + need_stop_services:
                 if any(
                     attachment_delegate.service == service
                     for attachment_delegate in await self.middleware.call('pool.dataset.get_attachment_delegates')
@@ -77,6 +77,9 @@ class PoolDatasetService(Service):
             if not processes:
                 return
 
+            # a service usually owns many of the matched processes (e.g. one smbd per
+            # client), so control it once per pass rather than once per PID
+            controlled_services = set()
             for process in processes:
                 if process['pid'] == midpid:
                     self.logger.warning(
@@ -87,6 +90,9 @@ class PoolDatasetService(Service):
 
                 service = process.get('service')
                 if service is not None:
+                    if service in controlled_services:
+                        continue
+                    controlled_services.add(service)
                     if any(
                         attachment_delegate.service == service
                         for attachment_delegate in await self.middleware.call('pool.dataset.get_attachment_delegates')
@@ -144,7 +150,9 @@ class PoolDatasetService(Service):
                             exact_matches.add(os.path.realpath(path))
                     else:
                         include_devs.add(os.stat(path).st_dev)
-                except FileNotFoundError:
+                except OSError:
+                    # ENOENT for a vanished mountpoint, but also e.g. EIO from a faulted
+                    # pool; skip the path rather than abort the whole scan
                     continue
 
         result = []
