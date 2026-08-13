@@ -69,19 +69,21 @@ def build_commandline(context: ServiceContext, id_: int) -> Iterator[str]:
             if getattr(rsync, name):
                 line.append(flag)
         if rsync.extra:
-            line.append(" ".join(rsync.extra))
+            line.extend(shlex.quote(arg) for arg in rsync.extra)
 
-        remote = ""
+        remote_username = remote_host = ""
         if not rsync.ssh_credentials:
             # Do not use username if one is specified in host field
             # See #5096 for more details
             if rsync.remotehost and "@" in rsync.remotehost:
-                remote = rsync.remotehost
+                remote_username, remote_host = rsync.remotehost.rsplit("@", 1)
             else:
-                remote = f'"{rsync.user}"@{rsync.remotehost}'
+                remote_username, remote_host = rsync.user, rsync.remotehost or ""
 
         if rsync.mode == "MODULE":
-            module_args = [path, f'rsync://{remote}/"{rsync.remotemodule}"']
+            remote = f"{shlex.quote(remote_username)}@{shlex.quote(remote_host)}"
+            module = shlex.quote(rsync.remotemodule or "")
+            module_args = [path, f"rsync://{remote}/{module}"]
             if rsync.direction != "PUSH":
                 module_args.reverse()
             line += module_args
@@ -98,7 +100,8 @@ def build_commandline(context: ServiceContext, id_: int) -> Iterator[str]:
                     "SSH_KEY_PAIR",
                 )
 
-                remote = f'"{credentials.username}"@{credentials.host}'
+                remote_username = credentials.username
+                remote_host = credentials.host
                 port: int | None = credentials.port
 
                 private_key = key_pair.attributes.get_secret_value().private_key
@@ -124,12 +127,11 @@ def build_commandline(context: ServiceContext, id_: int) -> Iterator[str]:
                 port = rsync.remoteport
                 extra_args = ""
 
-            remote_username, remote_host = remote.rsplit("@", 1)
             if ":" in remote_host:
                 remote_host = f"[{remote_host}]"
-            remote = f"{remote_username}@{remote_host}"
+            remote = f"{shlex.quote(remote_username)}@{shlex.quote(remote_host)}"
 
-            line += ["-e", f'"ssh -p {port} -o BatchMode=yes -o StrictHostKeyChecking=yes {extra_args}"']
+            line += ["-e", shlex.quote(f"ssh -p {port} -o BatchMode=yes -o StrictHostKeyChecking=yes {extra_args}")]
             path_args = [path, f"{remote}:{shlex.quote(rsync.remotepath)}"]
             if rsync.direction != "PUSH":
                 path_args.reverse()
