@@ -40,10 +40,12 @@ because the gate it replaced already allowed it:
 - AUTOTUNE, CATALOG_ENTERPRISE_TRAIN, MISSION_CRITICAL, SMB_FASTPATH and
   SMB_VEEAM, the flags historically gated behind an is_enterprise check. With
   freenas models rejected outright, the only holder this widens is a legacy blob
-  carrying no model at all. AUTOTUNE and MISSION_CRITICAL have no entitlement
-  policy behind them, and CATALOG_ENTERPRISE_TRAIN grants on hardware plus key
-  so it stays denied off appliance hardware, which leaves SMB_FASTPATH and
-  SMB_VEEAM as the whole of the widening.
+  carrying no model at all. AUTOTUNE has no entitlement policy behind it, and
+  CATALOG_ENTERPRISE_TRAIN grants on hardware plus key so it stays denied off
+  appliance hardware, which leaves MISSION_CRITICAL, SMB_FASTPATH and SMB_VEEAM
+  as the whole of the widening. MISSION_CRITICAL is key-only on both hardware
+  sides, which is precisely what keeps a legacy holder on the Mission Critical
+  update profile after upgrade.
 """
 
 from __future__ import annotations
