@@ -97,6 +97,7 @@ def test_live_policy_shape():
         LicenseFeature.DIRECTORY_SERVICES,
         LicenseFeature.FIBRECHANNEL,
         LicenseFeature.KMIP,
+        LicenseFeature.MISSION_CRITICAL,
         LicenseFeature.ZFSTIER,
         LicenseFeature.APPS,
         LicenseFeature.CONTAINERS,
@@ -120,6 +121,7 @@ def test_live_policy_shape():
     assert isinstance(POLICY[LicenseFeature.DIRECTORY_SERVICES], Vector)
     assert isinstance(POLICY[LicenseFeature.FIBRECHANNEL], Vector)
     assert isinstance(POLICY[LicenseFeature.KMIP], Vector)
+    assert isinstance(POLICY[LicenseFeature.MISSION_CRITICAL], Vector)
     assert isinstance(POLICY[LicenseFeature.ZFSTIER], Vector)
     assert isinstance(POLICY[LicenseFeature.APPS], Vector)
     assert isinstance(POLICY[LicenseFeature.CONTAINERS], Vector)
@@ -261,8 +263,8 @@ def test_dedup_key_missing_message_uses_display_name():
 
 
 # ZFSTIER, STIG, SUPPORT, TRUESEARCH, NFS_SNAPSHOT, NVMEOF_SPDK, NETWORK_FEC, RDMA,
-# WEBSHARE and DIRECTORY_SERVICES are live matrix Vectors (0,0,0,1,0,1): key-only on either
-# hardware side.
+# MISSION_CRITICAL, WEBSHARE and DIRECTORY_SERVICES are live matrix Vectors (0,0,0,1,0,1):
+# key-only on either hardware side.
 KEY_ONLY_TABLE = [
     (HardwareClass.TRUENAS_HW, "none", False, "NO_LICENSE", "HW"),
     (HardwareClass.TRUENAS_HW, "nokey", False, "KEY_MISSING", "HW+L"),
@@ -291,6 +293,7 @@ KEY_ONLY_TABLE = [
         LicenseFeature.SMB_VEEAM,
         LicenseFeature.DIRECTORY_SERVICES,
         LicenseFeature.KMIP,
+        LicenseFeature.MISSION_CRITICAL,
         LicenseFeature.WEBSHARE,
     ],
 )
@@ -312,6 +315,7 @@ def test_key_only_vector_behavior(feature, hardware_class, state, entitled, reas
         (LicenseFeature.RDMA, "RDMA"),
         (LicenseFeature.SMB_FASTPATH, "SMB ZFS fastpath"),
         (LicenseFeature.KMIP, "KMIP key management"),
+        (LicenseFeature.MISSION_CRITICAL, "Mission Critical update profile"),
         (LicenseFeature.WEBSHARE, "Webshare"),
     ],
 )
