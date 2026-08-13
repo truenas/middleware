@@ -28,7 +28,12 @@ from middlewared.api.current import (
     ZFSResourceSnapshotReleaseQuery,
     ZFSResourceSnapshotRollbackQuery,
 )
-from middlewared.plugins.zfs.exceptions import ZFSPathAlreadyExistsException, ZFSPathNotFoundException
+from middlewared.plugins.zfs.exceptions import (
+    ZFSPathAlreadyExistsException,
+    ZFSPathNotASnapshotException,
+    ZFSPathNotFoundException,
+    ZFSRollbackConflictException,
+)
 from middlewared.service import CRUDService, InstanceNotFound, ValidationError, filterable_api_method
 from middlewared.utils.filter_list import filter_list
 
@@ -66,14 +71,28 @@ class PoolSnapshotService(CRUDService):
         .. warning::
 
             This operation is destructive. Any data written to the dataset after the snapshot was taken is
-            permanently lost. Snapshots and bookmarks more recent than ``id`` must also be destroyed for the
-            rollback to proceed; use the ``recursive``, ``recursive_clones``, or ``recursive_rollback`` options to
-            control how newer snapshots and their clones are handled.
+            permanently lost. Snapshots more recent than ``id`` must also be destroyed for the rollback to
+            proceed; use the ``recursive``, ``recursive_clones``, or ``recursive_rollback`` options to control
+            how newer snapshots and their clones are handled. A hold on a newer snapshot, or a clone that
+            cannot be destroyed, is reported as a JSON-RPC ``error`` response (code ``-32001``, *Method call
+            error*, errno ``EBUSY``); release a hold with :method:`pool.snapshot.release` first. Bookmarks are
+            not managed here: a bookmark more recent than ``id`` fails the rollback with errno ``EEXIST`` -
+            after any newer snapshots were already destroyed, when ``recursive`` was passed - and has to be
+            removed manually with ``zfs destroy <dataset>#<bookmark>``.
         """
-        self.call_sync2(self.s.zfs.resource.snapshot.rollback_impl, ZFSResourceSnapshotRollbackQuery(
-            path=id_,
-            **options,
-        ))
+        try:
+            self.call_sync2(self.s.zfs.resource.snapshot.rollback_impl, ZFSResourceSnapshotRollbackQuery(
+                path=id_,
+                **options,
+            ))
+        except ZFSPathNotFoundException as e:
+            raise ValidationError('pool.snapshot.rollback', e.message, errno.ENOENT)
+        except ZFSPathNotASnapshotException as e:
+            raise ValidationError('pool.snapshot.rollback', e.message, errno.EINVAL)
+        except ZFSRollbackConflictException as e:
+            raise ValidationError('pool.snapshot.rollback', e.message, errno.EINVAL)
+        except ValueError as e:
+            raise ValidationError('pool.snapshot.rollback', str(e), errno.EINVAL)
 
     @api_method(PoolSnapshotHoldArgs, PoolSnapshotHoldResult, roles=['SNAPSHOT_WRITE'])
     def hold(self, id_, options):
