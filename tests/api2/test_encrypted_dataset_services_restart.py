@@ -49,7 +49,6 @@ def test_service_restart_on_unlock_dataset(request):
     with dataset('testsvcunlock', data={
         'encryption': True,
         'encryption_options': {
-            'algorithm': 'AES-256-GCM',
             'pbkdf2iters': 1300000,
             'passphrase': PASSPHRASE,
         },
