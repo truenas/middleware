@@ -1,9 +1,40 @@
 from __future__ import annotations
 
+from truenas_os_pyutils.mount import iter_mountinfo
+
+from middlewared.plugins.zfs.utils import has_internal_path
 from middlewared.plugins.zfs_.utils import zvol_name_to_path
 from middlewared.service import ServiceContext
 
 __all__ = ("processes_using_dataset_tree",)
+
+
+def mounted_pool_paths(name: str) -> list[str]:
+    """Mountpoints of everything mounted from `name` or a dataset beneath it.
+
+    Read from mountinfo rather than from the dataset list, because what blocks a
+    teardown is the mount tree, not the datasets. Only mounted filesystems appear
+    here, which is what the caller needs: an unmounted dataset holds no open files,
+    and its mountpoint directory, if one is even left behind, belongs to whichever
+    filesystem it sits on rather than to this pool. Datasets mounted somewhere other
+    than their default location are covered too.
+
+    Args:
+        name: Pool or dataset whose mount tree should be collected
+
+    Returns:
+        Absolute mountpoint paths, excluding internal datasets
+    """
+    prefix = f"{name}/"
+    return [
+        mnt["mountpoint"]
+        for mnt in iter_mountinfo()
+        if mnt["fs_type"] == "zfs"
+        and mnt["mountpoint"] is not None
+        and mnt["mount_source"] is not None
+        and (mnt["mount_source"] == name or mnt["mount_source"].startswith(prefix))
+        and not has_internal_path(mnt["mount_source"])
+    ]
 
 
 async def processes_using_dataset_tree(ctx: ServiceContext, name: str) -> list[dict]:
@@ -27,25 +58,16 @@ async def processes_using_dataset_tree(ctx: ServiceContext, name: str) -> list[d
     Returns:
         Processes as reported by `pool.dataset.processes_using_paths`
     """
-    paths = []
+    paths = await ctx.to_thread(mounted_pool_paths, name)
+
+    # Zvols are block devices rather than mounts, so mountinfo knows nothing about
+    # them and they have to be collected from ZFS itself
     for ds in await ctx.middleware.call(
         "pool.dataset.query",
         [["OR", [["id", "=", name], ["id", "^", f"{name}/"]]]],
-        # `keystatus` is what populates `locked`. `mountpoint` is deliberately not
-        # requested: left out, it is reported as the live mount state (`null` when the
-        # dataset is not mounted) rather than as the ZFS property, which still holds a
-        # path. Only the mount state is usable here. An unmounted dataset has no open
-        # files by definition, and stat'ing its leftover mountpoint directory would
-        # report the device id of whichever filesystem that directory sits on -- the
-        # boot environment's /mnt dataset for an unmounted pool root -- so every match
-        # against it would be a process that has nothing to do with this pool.
         {"extra": {"properties": ["keystatus"], "retrieve_children": False}},
     ):
-        if ds["locked"]:
-            continue
-        elif ds["type"] == "VOLUME":
+        if ds["type"] == "VOLUME" and not ds["locked"]:
             paths.append(zvol_name_to_path(ds["name"]))
-        elif ds["mountpoint"]:
-            paths.append(ds["mountpoint"])
 
     return await ctx.middleware.call("pool.dataset.processes_using_paths", paths)
