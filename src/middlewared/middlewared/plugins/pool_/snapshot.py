@@ -28,7 +28,12 @@ from middlewared.api.current import (
     ZFSResourceSnapshotReleaseQuery,
     ZFSResourceSnapshotRollbackQuery,
 )
-from middlewared.plugins.zfs.exceptions import ZFSPathAlreadyExistsException, ZFSPathNotFoundException
+from middlewared.plugins.zfs.exceptions import (
+    ZFSPathAlreadyExistsException,
+    ZFSPathNotASnapshotException,
+    ZFSPathNotFoundException,
+    ZFSRollbackBlockedException,
+)
 from middlewared.service import CRUDService, InstanceNotFound, ValidationError, filterable_api_method
 from middlewared.utils.filter_list import filter_list
 
@@ -68,12 +73,22 @@ class PoolSnapshotService(CRUDService):
             This operation is destructive. Any data written to the dataset after the snapshot was taken is
             permanently lost. Snapshots and bookmarks more recent than ``id`` must also be destroyed for the
             rollback to proceed; use the ``recursive``, ``recursive_clones``, or ``recursive_rollback`` options to
-            control how newer snapshots and their clones are handled.
+            control how newer snapshots and their clones are handled. None of those options can clear a hold on a
+            newer snapshot; release it with :method:`pool.snapshot.release` first.
         """
-        self.call_sync2(self.s.zfs.resource.snapshot.rollback_impl, ZFSResourceSnapshotRollbackQuery(
-            path=id_,
-            **options,
-        ))
+        try:
+            self.call_sync2(self.s.zfs.resource.snapshot.rollback_impl, ZFSResourceSnapshotRollbackQuery(
+                path=id_,
+                **options,
+            ))
+        except ZFSPathNotFoundException as e:
+            raise ValidationError('pool.snapshot.rollback', e.message, errno.ENOENT)
+        except ZFSPathNotASnapshotException as e:
+            raise ValidationError('pool.snapshot.rollback', e.message, errno.EINVAL)
+        except ZFSRollbackBlockedException as e:
+            raise ValidationError('pool.snapshot.rollback', e.message, errno.EBUSY)
+        except ValueError as e:
+            raise ValidationError('pool.snapshot.rollback', str(e), errno.EINVAL)
 
     @api_method(PoolSnapshotHoldArgs, PoolSnapshotHoldResult, roles=['SNAPSHOT_WRITE'])
     def hold(self, id_, options):
