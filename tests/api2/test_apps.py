@@ -330,5 +330,5 @@ def test_drift_repair_ix_apps(docker_pool):
     ssh(f"chmod 0755 {IX_APPS_CHOKEPOINT}")
     # start_service is idempotent if docker is already running, but still
     # runs the drift-repair enforce_mountpoint_perms call.
-    call("docker.start_service")
+    call("docker.state.start_service")
     assert _chokepoint_perms(IX_APPS_CHOKEPOINT) == (0o700, 0, 0)
