@@ -1,6 +1,8 @@
 import errno
 from typing import Any
 
+import truenas_pylibzfs
+
 from middlewared.api import api_method
 from middlewared.api.current import (
     ZFSResourceSnapshotCloneArgs,
@@ -38,7 +40,7 @@ from middlewared.api.current import (
 )
 from middlewared.service import Service, private
 from middlewared.service.decorators import pass_thread_local_storage
-from middlewared.service_exception import ValidationError
+from middlewared.service_exception import CallError, ValidationError
 
 from .destroy_impl import destroy_impl
 from .exceptions import (
@@ -47,6 +49,9 @@ from .exceptions import (
     ZFSPathHasHoldsException,
     ZFSPathNotASnapshotException,
     ZFSPathNotFoundException,
+    ZFSRollbackBlockedException,
+    ZFSRollbackConflictException,
+    ZFSRollbackFailedException,
 )
 from .rename_promote_clone_impl import clone_impl, rename_impl
 from .snapshot_count_impl import count_snapshots_impl
@@ -774,14 +779,21 @@ class ZFSResourceSnapshotService(Service):
             if has_internal_path(check_path):
                 raise ValidationError(schema, f"{data.path!r} is a protected path.", errno.EACCES)
 
-        return rollback_impl(
-            tls,
-            path=data.path,
-            recursive=data.recursive,
-            recursive_clones=data.recursive_clones,
-            force=data.force,
-            recursive_rollback=data.recursive_rollback,
-        )
+        try:
+            return rollback_impl(
+                tls,
+                path=data.path,
+                recursive=data.recursive,
+                recursive_clones=data.recursive_clones,
+                force=data.force,
+                recursive_rollback=data.recursive_rollback,
+            )
+        except truenas_pylibzfs.ZFSException as e:
+            raise CallError(f"Failed to rollback {data.path!r}: {e}")
+        except ZFSRollbackBlockedException as e:
+            raise CallError(e.message, errno.EBUSY)
+        except ZFSRollbackFailedException as e:
+            raise CallError(e.message, e.errnum)
 
     @api_method(
         ZFSResourceSnapshotRollbackArgs,
@@ -802,8 +814,31 @@ class ZFSResourceSnapshotService(Service):
         ``-32602``, *Invalid params*); each failing condition appears in the error's
         ``data.extra`` array with its own ``errno``. A validation error is raised when:
 
-        - the snapshot does not exist
-        - the rollback cannot be completed
+        - the snapshot, or a child's snapshot, does not exist (errno ``ENOENT``)
+        - ``path`` is not a snapshot path (errno ``EINVAL``)
+        - snapshots more recent than ``path`` exist and neither ``recursive`` nor
+          ``recursive_clones`` was passed (errno ``EINVAL``)
+        - ``path`` is a protected path and the call did not come from the middleware itself
+          (errno ``EACCES``)
+
+        A JSON-RPC ``error`` response (code ``-32001``, *Method call error*) is returned instead
+        of a result when:
+
+        - a snapshot that has to be destroyed first has holds, or clones that ``recursive_clones``
+          cannot destroy (errno ``EBUSY``); release a hold with
+          :method:`zfs.resource.snapshot.release`
+        - the dataset itself is in use, by an in-flight replication or a ``.zfs/snapshot``
+          automount for instance (errno ``EBUSY``)
+        - the pool cannot satisfy the dataset's ``refquota`` or ``refreservation`` after the
+          rollback (errno ``EDQUOT`` or ``ENOSPC``)
+        - the rollback fails for any other reason, with the errno the kernel reported
+
+        .. note::
+
+            Bookmarks are not managed by this method. A bookmark more recent than ``path``
+            blocks the rollback in the kernel and fails it with errno ``EEXIST`` - after any
+            more recent snapshots were already destroyed, when ``recursive`` was passed - and
+            has to be removed manually with ``zfs destroy <dataset>#<bookmark>``.
 
         Examples:
 
@@ -837,6 +872,14 @@ class ZFSResourceSnapshotService(Service):
         except ZFSPathNotFoundException as e:
             raise ValidationError(
                 "zfs.resource.snapshot.rollback", e.message, errno.ENOENT
+            )
+        except ZFSPathNotASnapshotException as e:
+            raise ValidationError(
+                "zfs.resource.snapshot.rollback", e.message, errno.EINVAL
+            )
+        except ZFSRollbackConflictException as e:
+            raise ValidationError(
+                "zfs.resource.snapshot.rollback", e.message, errno.EINVAL
             )
         except ValueError as e:
             raise ValidationError(
