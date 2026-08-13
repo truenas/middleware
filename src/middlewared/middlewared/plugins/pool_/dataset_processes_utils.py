@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from truenas_os_pyutils.mount import iter_mountinfo
 
+from middlewared.api.current import ZFSResourceQuery
 from middlewared.plugins.zfs.utils import has_internal_path
 from middlewared.plugins.zfs_.utils import zvol_name_to_path
 from middlewared.service import ServiceContext
@@ -61,13 +62,13 @@ async def processes_using_dataset_tree(ctx: ServiceContext, name: str) -> list[d
     paths = await ctx.to_thread(mounted_pool_paths, name)
 
     # Zvols are block devices rather than mounts, so mountinfo knows nothing about
-    # them and they have to be collected from ZFS itself
-    for ds in await ctx.middleware.call(
-        "pool.dataset.query",
-        [["OR", [["id", "=", name], ["id", "^", f"{name}/"]]]],
-        {"extra": {"properties": ["keystatus"], "retrieve_children": False}},
+    # them and they have to be collected from ZFS itself. Only their names matter,
+    # hence no properties: a zvol with no device node yet is simply never matched.
+    for rsrc in await ctx.call2(
+        ctx.s.zfs.resource.query_impl,
+        ZFSResourceQuery(paths=[name], properties=None, get_children=True),
     ):
-        if ds["type"] == "VOLUME" and not ds["locked"]:
-            paths.append(zvol_name_to_path(ds["name"]))
+        if rsrc["type"] == "VOLUME":
+            paths.append(zvol_name_to_path(rsrc["name"]))
 
     return await ctx.middleware.call("pool.dataset.processes_using_paths", paths)
