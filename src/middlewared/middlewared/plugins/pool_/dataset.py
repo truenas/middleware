@@ -37,10 +37,12 @@ from middlewared.utils.boot.pool import BOOT_POOL_NAME_VALID
 from middlewared.utils.filesystem import attrs as fs_attrs
 from middlewared.utils.filter_list import filter_list
 
-from .dataset_query_utils import generic_query
+from .dataset_query_utils import generic_query, user_property_names_to_be_renamed
 from .utils import (
     POOL_DS_CREATE_PROPERTIES,
     POOL_DS_UPDATE_PROPERTIES,
+    RE_ZFS_USER_PROP,
+    ZFS_USER_PROP_MAX_LEN,
     ZFS_VOLUME_BLOCK_SIZE_CHOICES,
     CreateImplArgs,
     CreateImplArgsDataclass,
@@ -52,6 +54,31 @@ from .utils import (
     validate_dedup_license,
     validate_dedup_tiering,
 )
+
+
+def validate_user_properties(verrors, schema, user_properties):
+    """Reject user property keys that TrueNAS manages or that ZFS will not accept.
+
+    A property TrueNAS manages may still be removed, since that is the only way to
+    drop one that a previous release wrote out.
+
+    Args:
+        verrors: ValidationErrors instance to add any error to.
+        schema: Schema name of the list being validated.
+        user_properties: List of user properties, each with at least a `key`.
+    """
+    managed = user_property_names_to_be_renamed()
+    seen = set()
+    for index, prop in enumerate(user_properties):
+        prop_schema = f'{schema}.{index}.key'
+        if (key := prop['key']) in managed and not prop.get('remove'):
+            verrors.add(prop_schema, f'{key!r} is managed by TrueNAS, use the {managed[key]!r} field to set it.')
+        elif len(key) > ZFS_USER_PROP_MAX_LEN or not RE_ZFS_USER_PROP.fullmatch(key):
+            verrors.add(prop_schema, f'{key!r} is not a valid ZFS user property name.')
+        elif key in seen:
+            verrors.add(prop_schema, f'{key!r} is specified more than once.')
+        else:
+            seen.add(key)
 
 
 class PoolDatasetEncryptionModel(sa.Model):
@@ -359,8 +386,13 @@ class PoolDatasetService(CRUDService):
                     'This field must be from zero to 16M'
                 )
 
-        if mode == 'UPDATE':
+        if mode == 'CREATE':
+            validate_user_properties(verrors, f'{schema}.user_properties', data.get('user_properties', []))
+        elif mode == 'UPDATE':
             if data.get('user_properties_update') and not data.get('user_properties'):
+                validate_user_properties(
+                    verrors, f'{schema}.user_properties_update', data['user_properties_update']
+                )
                 for index, prop in enumerate(data['user_properties_update']):
                     prop_schema = f'{schema}.user_properties_update.{index}'
                     if 'value' in prop and prop.get('remove'):
@@ -373,14 +405,20 @@ class PoolDatasetService(CRUDService):
                     'Should not be specified when "user_properties" are explicitly specified'
                 )
             elif data.get('user_properties'):
-                # Let's normalize this so that we create/update/remove user props accordingly
+                validate_user_properties(verrors, f'{schema}.user_properties', data['user_properties'])
+                # Let's normalize this so that we create/update/remove user props accordingly.
+                # The properties TrueNAS manages are reported under their API names (`comments`
+                # and friends), which are not property names ZFS would accept, and they are owned
+                # by their own fields, so they are never removed here.
+                managed_user_props = set(user_property_names_to_be_renamed().values())
                 user_props = {p['key'] for p in data['user_properties']}
                 data['user_properties_update'] = data['user_properties']
-                for prop_key in [k for k in cur_dataset['user_properties'] if k not in user_props]:
-                    data['user_properties_update'].append({
-                        'key': prop_key,
-                        'remove': True,
-                    })
+                for prop_key in cur_dataset['user_properties']:
+                    if prop_key not in user_props and prop_key not in managed_user_props:
+                        data['user_properties_update'].append({
+                            'key': prop_key,
+                            'remove': True,
+                        })
 
     @private
     @pass_thread_local_storage
@@ -421,16 +459,15 @@ class PoolDatasetService(CRUDService):
         if args.uprops:
             kwargs["user_properties"] = args.uprops
 
-        if args.encrypt and args.encrypt.get("encryption") != "off":
-            kwargs["crypto"] = tls.lzh.resource_cryptography_config(
-                keyformat=args.encrypt["keyformat"],
-                key=args.encrypt["key"],
-            )
-            if pb := args.encrypt.get("pbkdf2iters"):
-                if "properties" in kwargs:
-                    kwargs["properties"]["pbkdf2iters"] = str(pb)
-                else:
-                    kwargs["properties"] = {"pbkdf2iters": str(pb)}
+        if args.encrypt:
+            try:
+                kwargs["crypto"] = tls.lzh.resource_cryptography_config(
+                    keyformat=args.encrypt["keyformat"],
+                    key=args.encrypt["key"],
+                    pbkdf2iters=args.encrypt.get("pbkdf2iters"),
+                )
+            except (TypeError, ValueError) as e:
+                raise CallError(f"Failed to create dataset {args.name}: {e}")
 
         if args.create_ancestors:
             # If we need to create ancestors, we need to handle this differently
@@ -637,10 +674,7 @@ class PoolDatasetService(CRUDService):
                 f'{data["name"].rsplit("/", 1)[0]} must be unlocked to create {data["name"]}.'
             )
 
-        encryption_dict = {}
         inherit_encryption_properties = data.pop('inherit_encryption')
-        if not inherit_encryption_properties:
-            encryption_dict = {'encryption': 'off'}
 
         unencrypted_parent = False
         for parent in get_dataset_parents(data['name']):
@@ -694,7 +728,7 @@ class PoolDatasetService(CRUDService):
             'pool.dataset.validate_encryption_data', None, verrors,
             {'enabled': data.pop('encryption'), **data.pop('encryption_options'), 'key_file': False},
             'pool_dataset_create.encryption_options',
-        ) or encryption_dict
+        )
         verrors.check()
 
         if (
@@ -720,10 +754,7 @@ class PoolDatasetService(CRUDService):
 
         zprops, uprops = {}, {}
         for i in POOL_DS_CREATE_PROPERTIES:
-            if (
-                i.api_name not in data
-                or (i.inheritable and data[i.api_name] == 'INHERIT')
-            ):
+            if i.api_name not in data or data[i.api_name] == 'INHERIT':
                 continue
             if i.transform:
                 transformed = i.transform(data[i.api_name])
@@ -734,6 +765,9 @@ class PoolDatasetService(CRUDService):
                 uprops[i.real_name] = transformed
             else:
                 zprops[i.real_name] = transformed
+
+        for up in data['user_properties']:
+            uprops[up['key']] = up['value']
 
         await self.middleware.call(
             'pool.dataset.create_impl',

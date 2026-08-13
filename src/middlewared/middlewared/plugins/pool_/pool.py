@@ -23,7 +23,13 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils.boot.pool import BOOT_POOL_NAME_VALID
 from middlewared.utils.size import format_size
 
-from .utils import RE_DRAID_DATA_DISKS, RE_DRAID_SPARE_DISKS, ZPOOL_CACHE_FILE, validate_dedup_license
+from .utils import (
+    RE_DRAID_DATA_DISKS,
+    RE_DRAID_SPARE_DISKS,
+    ZFS_ENCRYPTION_ALGORITHM,
+    ZPOOL_CACHE_FILE,
+    validate_dedup_license,
+)
 
 # Redundancy/parity level per vdev type. Used to enforce that a redundant data
 # class is not paired with a non-redundant (parity 0) special vdev.
@@ -608,8 +614,11 @@ class PoolService(CRUDService):
             'compression': 'lz4',
             'xattr': 'sa',
             'mountpoint': f'/{data["name"]}',
-            **encryption_dict
         }
+
+        if encryption_dict:
+            fsoptions['encryption'] = ZFS_ENCRYPTION_ALGORITHM
+            fsoptions.update(encryption_dict)
 
         if any(
             topology['type'].startswith('DRAID')
