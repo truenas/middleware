@@ -126,6 +126,45 @@ from middlewared.service import ServiceContext
             'nvidia_gpu_selection': {}
         }
 
+    ),
+    (
+        # GPU in slot 0000:02:00.0 has been swapped out for a different card, so the UUID
+        # recorded against that slot must be refreshed to the one currently reported
+        [
+            {
+                'pci_slot': '0000:02:00.0',
+                'description': 'NVIDIA GeForce RTX 3060 Ti',
+                'vendor': 'NVIDIA',
+                'vendor_specific_config': {'uuid': 'GPU-899dd4a1-ac45-57c5-019a-08b06c7172d3'},
+                'available_to_host': True,
+                'error': None,
+            },
+            {
+                'pci_slot': '0000:03:00.0',
+                'description': 'NVIDIA GeForce RTX 3080',
+                'vendor': 'NVIDIA',
+                'vendor_specific_config': {'uuid': 'GPU-11111111-2222-3333-4444-555555555555'},
+                'available_to_host': True,
+                'error': None,
+            },
+        ],
+        {
+            'use_all_gpus': False,
+            'kfd_device_exists': False,
+            'nvidia_gpu_selection': {
+                '0000:02:00.0': {'use_gpu': True, 'uuid': 'GPU-00ef4f92-c70a-446a-8248-d61c7fac9f07'},
+                '0000:03:00.0': {'use_gpu': False, 'uuid': 'GPU-11111111-2222-3333-4444-555555555555'},
+            }
+        },
+        {
+            'use_all_gpus': False,
+            'kfd_device_exists': False,
+            'nvidia_gpu_selection': {
+                '0000:02:00.0': {'use_gpu': True, 'uuid': 'GPU-899dd4a1-ac45-57c5-019a-08b06c7172d3'},
+                '0000:03:00.0': {'use_gpu': False, 'uuid': 'GPU-11111111-2222-3333-4444-555555555555'},
+            }
+        }
+
     )
 ])
 @patch('middlewared.plugins.apps.schema_normalization.kfd_exists', return_value=False)
