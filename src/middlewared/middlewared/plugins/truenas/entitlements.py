@@ -4,8 +4,22 @@ from pydantic import BeforeValidator
 
 from middlewared.api import api_method
 from middlewared.api.base import BaseModel
+from middlewared.api.current import (
+    EntitlementEntry,
+    EntitlementsInfo,
+    TrueNASEntitlementsInfoArgs,
+    TrueNASEntitlementsInfoResult,
+)
 from middlewared.service import Service
-from middlewared.utils.entitlements import DerivedEntitlement, EntitlementKey, LicenseFeature, get_entitlement
+from middlewared.utils.entitlements import (
+    POLICY,
+    DerivedEntitlement,
+    EntitlementKey,
+    LicenseFeature,
+    check_entitlement,
+    get_entitlement,
+    get_facts,
+)
 
 
 def coerce_entitlement_key(value: object) -> object:
@@ -47,7 +61,7 @@ class TrueNASEntitlementsCheckResult(BaseModel):
 class TrueNASEntitlementsService(Service):
     class Config:
         namespace = "truenas.entitlements"
-        private = True
+        cli_private = True
 
     @api_method(
         TrueNASEntitlementsCheckArgs,
@@ -70,3 +84,30 @@ class TrueNASEntitlementsService(Service):
             column=entitlement.column,
             message=entitlement.message,
         )
+
+    @api_method(
+        TrueNASEntitlementsInfoArgs,
+        TrueNASEntitlementsInfoResult,
+        roles=["SYSTEM_PRODUCT_READ"],
+        check_annotations=True,
+    )
+    def info(self) -> EntitlementsInfo:
+        """Return the entitlement decision for every license-gated feature."""
+        # Read the facts once and evaluate the pure policy against them. `get_facts()` is
+        # uncached and its license read is a round trip to the license daemon, so asking
+        # `get_entitlement()` per feature would pay for that round trip once per key.
+        facts = get_facts()
+        features: dict[str, EntitlementEntry] = {}
+        # `POLICY` rather than the feature vocabulary: some license features deliberately
+        # have no rule, and `check_entitlement` raises for a key it cannot resolve.
+        for key in POLICY:
+            entitlement = check_entitlement(key, facts)
+            # `column` is left out on purpose. It is the matrix coordinate the facts
+            # resolved to, and publishing it would make the matrix's shape a contract.
+            features[str(key)] = EntitlementEntry(
+                entitled=entitlement.entitled,
+                reason=entitlement.reason,
+                message=entitlement.message,
+            )
+
+        return EntitlementsInfo(features=features)
