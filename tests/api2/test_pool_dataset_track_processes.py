@@ -32,7 +32,9 @@ def file_held_open(path):
         f"""[ -e {marker} ] && echo "$pid ready" || echo "$pid timeout" """
     ).strip()
 
-    pid, status = out.split()
+    # parse with partition, which cannot raise: the holder must be killed even if the
+    # echoed output is malformed
+    pid, _, status = out.partition(' ')
     try:
         assert pid.isdigit(), f'{pid!r} is not a digit'
         assert status == 'ready', f'holder process never opened {path!r}'
@@ -93,7 +95,10 @@ def test__open_path_and_check_proc(datasets, file_open_path, arg_path):
             assert result['cmdline'] == holder.cmdline, f'{result["cmdline"]!r} does not match {holder.cmdline!r}'
             assert 'paths' in result
             assert len(result['paths']) == 1
-            assert result['paths'][0] == test_file if test_file.startswith('/mnt') else '/dev/zd0'
+            # a zvol is reported by its resolved /dev/zd* device node rather than the
+            # /dev/zvol path it was opened through
+            expected_path = test_file if test_file.startswith('/mnt') else ssh(f'readlink -f {test_file}').strip()
+            assert result['paths'][0] == expected_path, result['paths']
 
 
 @pytest.mark.parametrize("child,data,file_open_path", [
