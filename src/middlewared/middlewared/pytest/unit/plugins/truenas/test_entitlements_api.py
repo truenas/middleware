@@ -147,13 +147,12 @@ def test_info_reports_every_policy_feature_and_nothing_else(facts, monkeypatch):
     assert set(TrueNASEntitlementsService.info(None).features) == {str(key) for key in POLICY}
 
 
-@pytest.mark.parametrize("feature", [LicenseFeature.AUTOTUNE, LicenseFeature.LTS])
-def test_info_omits_a_license_feature_the_policy_does_not_rule_on(feature, monkeypatch):
-    """These two carry a matrix row but no policy entry, and the engine raises for a key it
+def test_info_omits_a_license_feature_the_policy_does_not_rule_on(monkeypatch):
+    """AUTOTUNE carries a matrix row but no policy entry, and the engine raises for a key it
     cannot resolve -- so enumerating the feature vocabulary here would fail outright."""
     monkeypatch.setattr(plugin, "get_facts", lambda: UNLICENSED_APPLIANCE)
 
-    assert str(feature) not in TrueNASEntitlementsService.info(None).features
+    assert str(LicenseFeature.AUTOTUNE) not in TrueNASEntitlementsService.info(None).features
 
 
 @pytest.mark.parametrize("facts", FACTS_TABLE)
