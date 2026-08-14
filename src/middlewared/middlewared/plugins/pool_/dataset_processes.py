@@ -154,9 +154,14 @@ class PoolDatasetService(Service):
                             exact_matches.add(os.path.realpath(path))
                     else:
                         include_devs.add(os.stat(path).st_dev)
+                except FileNotFoundError:
+                    # the path went away while we were looking at it, nothing holds it
+                    continue
                 except OSError:
-                    # ENOENT for a vanished mountpoint, but also e.g. EIO from a faulted
-                    # pool; skip the path rather than abort the whole scan
+                    # e.g. EIO from a faulted pool. Skip the path rather than abort the
+                    # whole scan, but say so: holders on it are now invisible, and the
+                    # caller would otherwise read the result as "nothing is using this"
+                    self.logger.warning('%s: cannot scan path for open files', path, exc_info=True)
                     continue
 
         result = []
