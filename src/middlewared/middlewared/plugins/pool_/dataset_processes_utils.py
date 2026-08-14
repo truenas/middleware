@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+
 from truenas_os_pyutils.mount import iter_mountinfo
 
 from middlewared.plugins.zfs.utils import has_internal_path
@@ -9,41 +11,56 @@ from middlewared.service import ServiceContext
 __all__ = ("processes_using_dataset_tree",)
 
 
-def mounted_pool_paths(name: str) -> list[str]:
-    """Mountpoints of everything mounted from `name` or a dataset beneath it.
+def pool_scan_targets(name: str) -> tuple[list[int], list[str]]:
+    """Device ids and paths to scan for open files under `name`.
 
-    Read from mountinfo rather than from the dataset list, because what blocks a
-    teardown is the mount tree, not the datasets. Only mounted filesystems appear
-    here, which is what the caller needs: an unmounted dataset holds no open files,
-    and its mountpoint directory, if one is even left behind, belongs to whichever
-    filesystem it sits on rather than to this pool. Datasets mounted somewhere other
-    than their default location are covered too.
+    The devices come from mountinfo rather than from the dataset list, because what
+    blocks a teardown is the mount tree, not the datasets. Only mounted filesystems
+    appear there, which is what the caller needs: an unmounted dataset holds no open
+    files, and its mountpoint directory, if one is even left behind, belongs to
+    whichever filesystem it sits on rather than to this pool. Datasets mounted
+    somewhere other than their default location are covered too.
+
+    Taking the device id straight from mountinfo also avoids stat'ing the mountpoint,
+    which resolves whatever is mounted topmost at that path. A dataset with a foreign
+    filesystem mounted over it would otherwise report the overmount's device and hide
+    its own holders.
 
     ZFS snapshot automounts under `.zfs/snapshot` are included: they are unmounted
     during a teardown like any other mount, so a process holding one open blocks an
     export just the same.
 
     Args:
-        name: Pool or dataset whose mount tree should be collected
+        name: Pool or dataset whose scan targets should be collected
 
     Returns:
-        Absolute mountpoint paths, excluding internal datasets and their snapshots
+        Device ids of the mounted filesystems, and paths for anything not represented
+        by a mount, excluding internal datasets and their snapshots
     """
     prefixes = (f"{name}/", f"{name}@")
-    paths = []
+    devices = []
     for mnt in iter_mountinfo(include_snapshot_mounts=True):
-        mountpoint, source = mnt["mountpoint"], mnt["mount_source"]
+        source = mnt["mount_source"]
         if (
             mnt["fs_type"] == "zfs"
-            and mountpoint is not None
             and source is not None
             and (source == name or source.startswith(prefixes))
             # strip any @snapshot suffix so snapshots of internal datasets stay excluded
             and not has_internal_path(source.split("@", 1)[0])
         ):
-            paths.append(mountpoint)
+            devices.append(mnt["device_id"]["dev_t"])
 
-    return paths
+    # Zvols are block devices rather than mounts, so mountinfo knows nothing about
+    # them. /dev/zvol mirrors the pool's zvol hierarchy and processes_using_paths
+    # walks a /dev/zvol directory recursively, so this one path covers every zvol
+    # device in the tree, snapshot devices included. Skip it when the pool has no
+    # zvols at all: a path that resolves to nothing still counts as something to
+    # match against, which costs a readlink on every open file descriptor scanned.
+    paths = []
+    if os.path.exists(zvol_path := zvol_name_to_path(name)):
+        paths.append(zvol_path)
+
+    return devices, paths
 
 
 async def processes_using_dataset_tree(ctx: ServiceContext, name: str) -> list[dict]:
@@ -67,13 +84,7 @@ async def processes_using_dataset_tree(ctx: ServiceContext, name: str) -> list[d
     Returns:
         Processes as reported by `pool.dataset.processes_using_paths`
     """
-    paths = await ctx.to_thread(mounted_pool_paths, name)
+    devices, paths = await ctx.to_thread(pool_scan_targets, name)
 
-    # Zvols are block devices rather than mounts, so mountinfo knows nothing about
-    # them. /dev/zvol mirrors the pool's zvol hierarchy and processes_using_paths
-    # walks a /dev/zvol directory recursively, so this one path covers every zvol
-    # device in the tree, snapshot devices included. A zvol with no device node
-    # yet is never matched, but it cannot be held open either.
-    paths.append(zvol_name_to_path(name))
-
-    return await ctx.middleware.call("pool.dataset.processes_using_paths", paths)
+    # positional args are paths, include_paths, include_middleware, devices
+    return await ctx.middleware.call("pool.dataset.processes_using_paths", paths, False, False, devices)
