@@ -26,7 +26,6 @@ TARGET_VECTORS: Mapping[LicenseFeature, Vector] = MappingProxyType(
         LicenseFeature.DIRECTORY_SERVICES: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
         LicenseFeature.FIBRECHANNEL: Vector(ce=0, hw=0, hw_l=1, hw_k=1, ce_l=0, ce_k=1),
         LicenseFeature.KMIP: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
-        LicenseFeature.LTS: Vector(ce=0, hw=0, hw_l=1, hw_k=1, ce_l=0, ce_k=1),
         LicenseFeature.MISSION_CRITICAL: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
         LicenseFeature.NETWORK_FEC: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
         LicenseFeature.NFS_SNAPSHOT: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
