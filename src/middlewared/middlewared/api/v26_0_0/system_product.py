@@ -24,7 +24,7 @@ __all__ = (
 class SystemFeatureEnabledArgs(BaseModel):
     feature: Literal[
         "APPS", "AUTOTUNE", "CATALOG_ENTERPRISE_TRAIN", "CONTAINERS", "DEDUP", "DIRECTORY_SERVICES",
-        "FIBRECHANNEL", "KMIP", "LTS", "MISSION_CRITICAL", "NETWORK_FEC", "NFS_SNAPSHOT",
+        "FIBRECHANNEL", "KMIP", "MISSION_CRITICAL", "NETWORK_FEC", "NFS_SNAPSHOT",
         "NVMEOF_SPDK", "RDMA", "SED", "SMB_FASTPATH", "SMB_VEEAM", "STIG", "SUPPORT", "TRUESEARCH",
         "VMS", "WEBSHARE", "ZFSTIER",
     ] = Field(
