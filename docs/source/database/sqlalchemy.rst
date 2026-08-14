@@ -12,7 +12,7 @@ TrueNAS configuration we only use the following components:
 
 Database tables are defined as classes in corresponding middleware plugins:
 
-.. literalinclude:: /../../src/middlewared/middlewared/plugins/api_key.py
+.. literalinclude:: /../../src/middlewared/middlewared/plugins/api_key/crud.py
     :pyobject: APIKeyModel
     :caption:
 
