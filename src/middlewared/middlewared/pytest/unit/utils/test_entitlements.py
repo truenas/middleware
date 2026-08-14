@@ -6,6 +6,7 @@ from truenas_pylicensed import LicenseType
 from truenas_pylicensed.features import FEATURE_TIERS, LicenseFeature, SupportTier
 
 from middlewared.api.v26_0_0.system_product import SystemFeatureEnabledArgs
+from middlewared.api.v26_0_0.truenas import EntitlementEntry
 from middlewared.utils.license import FeatureInfo, LicenseInfo
 from middlewared.utils.entitlements import (
     COLUMNS,
@@ -163,6 +164,14 @@ def test_policy_keys_have_display_names():
 def test_api_feature_literal_matches_license_features():
     literal = SystemFeatureEnabledArgs.model_fields["feature"].annotation
     assert set(typing.get_args(literal)) == {f.value for f in LicenseFeature}
+
+
+def test_api_reason_literal_matches_engine_reason():
+    # The import contract keeps modules under middlewared.api.v* away from the engine, so the
+    # public reason vocabulary has to be spelled out again there. This is what keeps the copy
+    # honest.
+    literal = EntitlementEntry.model_fields["reason"].annotation
+    assert set(typing.get_args(literal)) == {r.value for r in Reason}
 
 
 def test_declared_tiers_cover_tier_rules():
