@@ -30,18 +30,20 @@ def mounted_pool_paths(name: str) -> list[str]:
         Absolute mountpoint paths, excluding internal datasets and their snapshots
     """
     prefixes = (f"{name}/", f"{name}@")
-    return [
-        mnt["mountpoint"]
-        for mnt in iter_mountinfo(include_snapshot_mounts=True)
+    paths = []
+    for mnt in iter_mountinfo(include_snapshot_mounts=True):
+        mountpoint, source = mnt["mountpoint"], mnt["mount_source"]
         if (
             mnt["fs_type"] == "zfs"
-            and mnt["mountpoint"] is not None
-            and (source := mnt["mount_source"]) is not None
+            and mountpoint is not None
+            and source is not None
             and (source == name or source.startswith(prefixes))
             # strip any @snapshot suffix so snapshots of internal datasets stay excluded
             and not has_internal_path(source.split("@", 1)[0])
-        )
-    ]
+        ):
+            paths.append(mountpoint)
+
+    return paths
 
 
 async def processes_using_dataset_tree(ctx: ServiceContext, name: str) -> list[dict]:
