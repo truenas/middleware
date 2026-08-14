@@ -1,5 +1,6 @@
 import contextlib
-import time
+import uuid
+from collections import namedtuple
 
 import pytest
 
@@ -9,6 +10,35 @@ from middlewared.test.integration.assets.pool import another_pool, dataset, pool
 import os
 import sys
 sys.path.append(os.getcwd())
+
+Holder = namedtuple('Holder', ['pid', 'cmdline'])
+
+
+@contextlib.contextmanager
+def file_held_open(path):
+    """Hold `path` open in a background process on the test system.
+
+    Yields the holder's pid and the cmdline it reports through /proc, once the file is
+    confirmed open. Readiness is polled rather than slept on, because interpreter
+    startup on a loaded box can outrun any constant we would pick. The holder sleeps
+    far longer than any caller needs and is killed on the way out, so its own timeout
+    never bounds the test.
+    """
+    marker = f'/tmp/holder_ready_{uuid.uuid4().hex}'
+    script = f'f = open("{path}", "w+"); open("{marker}", "w").close(); import time; time.sleep(600)'
+    out = ssh(
+        f"""python -c '{script}' > /dev/null 2>&1 & pid=$!; """
+        f"""for _ in $(seq 200); do [ -e {marker} ] && break; sleep 0.05; done; """
+        f"""[ -e {marker} ] && echo "$pid ready" || echo "$pid timeout" """
+    ).strip()
+
+    pid, status = out.split()
+    try:
+        assert pid.isdigit(), f'{pid!r} is not a digit'
+        assert status == 'ready', f'holder process never opened {path!r}'
+        yield Holder(pid=int(pid), cmdline=f'python -c {script}')
+    finally:
+        ssh(f'kill -9 {pid}; rm -f {marker}', check=False)
 
 
 @pytest.mark.parametrize("datasets,file_open_path,arg_path", [
@@ -40,47 +70,30 @@ sys.path.append(os.getcwd())
         lambda ssh: f'/dev/zvol/{pool}/test',
     ),
 ])
-def test__open_path_and_check_proc(request, datasets, file_open_path, arg_path):
+def test__open_path_and_check_proc(datasets, file_open_path, arg_path):
     with contextlib.ExitStack() as stack:
         for name, data in datasets:
             stack.enter_context(dataset(name, data))
 
-        opened = False
-        try:
-            test_file = file_open_path
-            open_pid = ssh(f"""python -c 'import time; f = open("{test_file}", "w+"); time.sleep(10)' > /dev/null 2>&1 & echo $!""")
-            open_pid = open_pid.strip()
-            assert open_pid.isdigit(), f'{open_pid!r} is not a digit'
-            opened = True
-
-            # spinning up python interpreter could take some time on busy system so sleep
-            # for a couple seconds to give it time
-            time.sleep(2)
-
-            # what the cmdline output is formatted to
-            cmdline = f"""python -c import time; f = open(\"{test_file}\", \"w+\"); time.sleep(10)"""
-
+        test_file = file_open_path
+        with file_held_open(test_file) as holder:
             # have to use websocket since the method being called is private
             res = call('pool.dataset.processes_using_paths', [arg_path(ssh)])
             assert len(res) == 1
 
             result = res[0]
-            assert result['pid'] == int(open_pid), f'{result["pid"]!r} does not match {open_pid!r}'
-            assert result['cmdline'] == cmdline, f'{result["cmdline"]!r} does not match {cmdline!r}'
+            assert result['pid'] == holder.pid, f'{result["pid"]!r} does not match {holder.pid!r}'
+            assert result['cmdline'] == holder.cmdline, f'{result["cmdline"]!r} does not match {holder.cmdline!r}'
             assert 'paths' not in result
 
             res = call('pool.dataset.processes_using_paths', [arg_path(ssh)], True)
             assert len(res) == 1
             result = res[0]
-            assert result['pid'] == int(open_pid), f'{result["pid"]!r} does not match {open_pid!r}'
-            assert result['cmdline'] == cmdline, f'{result["cmdline"]!r} does not match {cmdline!r}'
+            assert result['pid'] == holder.pid, f'{result["pid"]!r} does not match {holder.pid!r}'
+            assert result['cmdline'] == holder.cmdline, f'{result["cmdline"]!r} does not match {holder.cmdline!r}'
             assert 'paths' in result
             assert len(result['paths']) == 1
             assert result['paths'][0] == test_file if test_file.startswith('/mnt') else '/dev/zd0'
-
-        finally:
-            if opened:
-                ssh(f'kill -9 {open_pid}', check=False)
 
 
 @pytest.mark.parametrize("child,data,file_open_path", [
@@ -101,30 +114,17 @@ def test__pool_processes_finds_child_dataset(child, data, file_open_path):
         stack.enter_context(dataset('parent'))
         child_ds = stack.enter_context(dataset(child, data))
 
-        test_file = file_open_path(child_ds)
-        open_pid = None
-        try:
-            open_pid = ssh(f"""python -c 'import time; f = open("{test_file}", "w+"); time.sleep(10)' > /dev/null 2>&1 & echo $!""").strip()
-            assert open_pid.isdigit(), f'{open_pid!r} is not a digit'
-
-            # spinning up python interpreter could take some time on busy system so sleep
-            # for a couple seconds to give it time
-            time.sleep(2)
-
+        with file_held_open(file_open_path(child_ds)) as holder:
             pool_id = call('pool.query', [['name', '=', pool]], {'get': True})['id']
             pool_wide = call('pool.processes', pool_id)
-            assert int(open_pid) in [proc['pid'] for proc in pool_wide], pool_wide
+            assert holder.pid in [proc['pid'] for proc in pool_wide], pool_wide
 
             if data is None:
                 # Scanning the pool root alone cannot see a file open on a child filesystem.
                 # Child zvols are exempt: the root scan resolves `/dev/zvol/<pool>` as a
                 # directory and walks every device node underneath it.
                 root_only = call('pool.dataset.processes', pool)
-                assert int(open_pid) not in [proc['pid'] for proc in root_only], root_only
-
-        finally:
-            if open_pid:
-                ssh(f'kill -9 {open_pid}', check=False)
+                assert holder.pid not in [proc['pid'] for proc in root_only], root_only
 
 
 def test__pool_export_kills_process_holding_child_dataset():
@@ -137,18 +137,5 @@ def test__pool_export_kills_process_holding_child_dataset():
         child = f'{temp_pool["name"]}/child'
         call('pool.dataset.create', {'name': child})
 
-        open_pid = None
-        try:
-            # sleep far longer than the export takes, so the file stays open unless the
-            # export's process scan finds and terminates the holder
-            open_pid = ssh(f"""python -c 'import time; f = open("/mnt/{child}/test_file", "w+"); time.sleep(600)' > /dev/null 2>&1 & echo $!""").strip()
-            assert open_pid.isdigit(), f'{open_pid!r} is not a digit'
-
-            # spinning up python interpreter could take some time on busy system so sleep
-            # for a couple seconds to give it time
-            time.sleep(2)
-
+        with file_held_open(f'/mnt/{child}/test_file'):
             call('pool.export', temp_pool['id'], {'destroy': True}, job=True)
-        finally:
-            if open_pid:
-                ssh(f'kill -9 {open_pid}', check=False)
