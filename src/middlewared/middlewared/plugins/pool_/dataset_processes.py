@@ -54,13 +54,18 @@ class PoolDatasetService(Service):
         need_restart_services = []
         need_stop_services = []
         midpid = os.getpid()
+        # a service usually owns many of the matched processes (e.g. one smbd per
+        # client), so each one is only worth classifying once
+        restartable = {
+            attachment_delegate.service
+            for attachment_delegate in await self.middleware.call('pool.dataset.get_attachment_delegates')
+        }
+        seen_services = set()
         for process in await processes_using_dataset_tree(self.context, oid):
             service = process.get('service')
-            if service is not None and service not in need_restart_services + need_stop_services:
-                if any(
-                    attachment_delegate.service == service
-                    for attachment_delegate in await self.middleware.call('pool.dataset.get_attachment_delegates')
-                ):
+            if service is not None and service not in seen_services:
+                seen_services.add(service)
+                if service in restartable:
                     need_restart_services.append(service)
                 else:
                     need_stop_services.append(service)
@@ -77,8 +82,7 @@ class PoolDatasetService(Service):
             if not processes:
                 return
 
-            # a service usually owns many of the matched processes (e.g. one smbd per
-            # client), so control it once per pass rather than once per PID
+            # likewise control a service once per pass rather than once per PID
             controlled_services = set()
             for process in processes:
                 if process['pid'] == midpid:
@@ -93,10 +97,7 @@ class PoolDatasetService(Service):
                     if service in controlled_services:
                         continue
                     controlled_services.add(service)
-                    if any(
-                        attachment_delegate.service == service
-                        for attachment_delegate in await self.middleware.call('pool.dataset.get_attachment_delegates')
-                    ):
+                    if service in restartable:
                         self.logger.info('Restarting service %r that holds dataset %r', service, oid)
                         await (await self.call2(self.s.service.control, 'RESTART', service)).wait(raise_error=True)
                     else:
