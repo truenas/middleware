@@ -4,7 +4,9 @@ from typing import Awaitable, Callable
 
 from middlewared.api.base import BaseModel, ForUpdateMetaclass
 from middlewared.api.base.handler.accept import validate_model
-from middlewared.api.base.handler.inspect import model_field_is_model, model_field_is_list_of_models
+from middlewared.api.base.handler.inspect import (
+    model_field_is_model, model_field_is_list_of_models, model_field_is_dict_of_models,
+)
 from middlewared.api.base.handler.model_provider import ModelProvider, ModelFactory
 from middlewared.api.base.model import _NotRequired
 from middlewared.utils.lang import Undefined
@@ -174,14 +176,25 @@ class APIVersionsAdapter:
             return alias_to_field, field_to_alias
 
         def _adapt_nested_value(val, current_field, new_field):
-            """Adapt nested model values (dict or list of models)."""
+            """Adapt nested model values (a model, or a list or dict of models)."""
             if isinstance(val, dict):
+                # A single nested model and a map of models are both `dict` at runtime, so the
+                # single model must be tried first, otherwise its keys are mistaken for map keys.
                 if (
                     (current_nested := model_field_is_model(current_field, value_hint=val))
                     and (new_nested := model_field_is_model(new_field, name_hint=current_nested.__name__))
                     and current_nested.__name__ == new_nested.__name__
                 ):
                     return self._adapt_value(val, current_nested, new_nested, direction)
+
+                if (
+                    (current_nested := model_field_is_dict_of_models(current_field))
+                    and (current_nested := model_field_is_model(current_nested))
+                    and (new_nested := model_field_is_dict_of_models(new_field))
+                    and (new_nested := model_field_is_model(new_nested))
+                    and current_nested.__name__ == new_nested.__name__
+                ):
+                    return {k: self._adapt_value(v, current_nested, new_nested, direction) for k, v in val.items()}
             elif isinstance(val, list):
                 if (
                     (current_nested := model_field_is_list_of_models(current_field))
