@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64
 import collections
 import configparser
+import io
 import itertools
 import json
 import logging
@@ -45,6 +46,28 @@ RE_CHECKS = re.compile(r"Checks:\s*(?P<checks>[0-9 /]+)(, (?P<progress>[0-9]+)%)
 RcloneConfigTuple = collections.namedtuple("RcloneConfigTuple", ["config_path", "remote_path", "extra_args"])
 
 
+def serialize_rclone_config(sections: dict[str, dict[str, Any]]) -> str:
+    parser = configparser.RawConfigParser()
+    # rclone config keys are case-sensitive; keep them verbatim instead of lower-casing them.
+    parser.optionxform = str  # type: ignore[method-assign,assignment]
+    for section, items in sections.items():
+        parser.add_section(section)
+        for key, value in items.items():
+            if isinstance(value, bool):
+                value = json.dumps(value)
+            else:
+                value = str(value)
+
+            key = key.replace("\r", "").replace("\n", "")
+            value = value.replace("\r", "").replace("\n", "")
+
+            parser.set(section, key, value)
+
+    buf = io.StringIO()
+    parser.write(buf)
+    return buf.getvalue()
+
+
 class RcloneConfig:
     def __init__(
         self,
@@ -74,6 +97,7 @@ class RcloneConfig:
 
         remote_path = None
         extra_args = []
+        sections: dict[str, dict[str, Any]] = {}
 
         if self.task is not None:
             raw_attributes = self.task.attributes.model_dump(expose_secrets=True)
@@ -91,15 +115,14 @@ class RcloneConfig:
             if self.task.encryption:
                 encryption_password = self.task.encryption_password.get_secret_value()
                 encryption_salt = self.task.encryption_salt.get_secret_value()
-                self.tmp_file.write("[encrypted]\n")
-                self.tmp_file.write("type = crypt\n")
-                self.tmp_file.write(f"remote = {remote_path}\n")
-                self.tmp_file.write(
-                    "filename_encryption = {}\n".format("standard" if self.task.filename_encryption else "off")
-                )
-                self.tmp_file.write("password = {}\n".format(rclone_encrypt_password(encryption_password)))
+                sections["encrypted"] = {
+                    "type": "crypt",
+                    "remote": remote_path,
+                    "filename_encryption": "standard" if self.task.filename_encryption else "off",
+                    "password": rclone_encrypt_password(encryption_password),
+                }
                 if encryption_salt:
-                    self.tmp_file.write("password2 = {}\n".format(rclone_encrypt_password(encryption_salt)))
+                    sections["encrypted"]["password2"] = rclone_encrypt_password(encryption_salt)
 
                 remote_path = "encrypted:/"
 
@@ -132,11 +155,9 @@ class RcloneConfig:
             self.tmp_file_filter.flush()
             extra_args.extend(["--filter-from", self.tmp_file_filter.name])
 
-        self.tmp_file.write("[remote]\n")
-        for k, v in config.items():
-            if isinstance(v, bool):
-                v = json.dumps(v)
-            self.tmp_file.write(f"{k} = {v}\n")
+        sections["remote"] = config
+
+        self.tmp_file.write(serialize_rclone_config(sections))
 
         self.tmp_file.flush()
 
