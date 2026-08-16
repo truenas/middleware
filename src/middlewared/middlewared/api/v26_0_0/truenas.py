@@ -21,6 +21,7 @@ __all__ = [
     'TrueNASLicenseFingerprintArgs', 'TrueNASLicenseFingerprintResult',
     'EntitlementEntry', 'EntitlementsInfo',
     'TrueNASEntitlementsInfoArgs', 'TrueNASEntitlementsInfoResult',
+    'TrueNASEntitlementsFeatureArgs', 'TrueNASEntitlementsFeatureResult',
 ]
 
 
@@ -132,7 +133,8 @@ class EntitlementEntry(BaseModel):
 
     entitled: bool = Field(description="Whether this system is entitled to use the feature.")
     reason: Literal[
-        "ENTITLED", "NO_LICENSE", "KEY_MISSING", "WRONG_HARDWARE", "TIER_INSUFFICIENT", "WRONG_LICENSE_TYPE"
+        "ENTITLED", "NO_LICENSE", "KEY_MISSING", "WRONG_HARDWARE", "TIER_INSUFFICIENT", "WRONG_LICENSE_TYPE",
+        "NOT_GATED",
     ] = Field(
         description=(
             "Machine-readable classification of the decision:\n"
@@ -143,6 +145,7 @@ class EntitlementEntry(BaseModel):
             "* `WRONG_HARDWARE`: this hardware can never provide the feature\n"
             "* `TIER_INSUFFICIENT`: the support tier does not cover the feature\n"
             "* `WRONG_LICENSE_TYPE`: the license type does not cover the feature\n"
+            "* `NOT_GATED`: nothing on this system restricts the feature\n"
             "\n"
             "New values may be added; treat an unrecognized value as a generic denial."
         )
@@ -166,3 +169,16 @@ class TrueNASEntitlementsInfoArgs(BaseModel):
 
 class TrueNASEntitlementsInfoResult(BaseModel):
     result: EntitlementsInfo = Field(description="Entitlement decisions for all license-gated features on this system.")
+
+
+class TrueNASEntitlementsFeatureArgs(BaseModel):
+    feature: NonEmptyString = Field(
+        description=(
+            "Feature identifier to evaluate. A feature this system does not recognize or does not "
+            "gate is reported as `NOT_GATED`."
+        )
+    )
+
+
+class TrueNASEntitlementsFeatureResult(BaseModel):
+    result: EntitlementEntry = Field(description="Entitlement decision for the requested feature.")

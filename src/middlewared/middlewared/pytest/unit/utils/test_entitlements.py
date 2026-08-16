@@ -5,7 +5,6 @@ import pytest
 from truenas_pylicensed import LicenseType
 from truenas_pylicensed.features import FEATURE_TIERS, LicenseFeature, SupportTier
 
-from middlewared.api.v26_0_0.system_product import SystemFeatureEnabledArgs
 from middlewared.api.v26_0_0.truenas import EntitlementEntry
 from middlewared.utils.license import FeatureInfo, LicenseInfo
 from middlewared.utils.entitlements import (
@@ -25,6 +24,7 @@ from middlewared.utils.entitlements import (
     Vector,
     check_entitlement,
 )
+from middlewared.utils.entitlements.engine import _MESSAGES
 from middlewared.utils.entitlements.legacy import sed as legacy_sed
 
 
@@ -161,9 +161,10 @@ def test_policy_keys_have_display_names():
     assert set(POLICY) <= set(FEATURE_DISPLAY_NAMES)
 
 
-def test_api_feature_literal_matches_license_features():
-    literal = SystemFeatureEnabledArgs.model_fields["feature"].annotation
-    assert set(typing.get_args(literal)) == {f.value for f in LicenseFeature}
+def test_every_reason_has_a_message_template():
+    # `_format_message` looks the reason up in this map, so a member added without an entry
+    # would only surface at the first call site that produced it.
+    assert set(Reason) == set(_MESSAGES)
 
 
 def test_api_reason_literal_matches_engine_reason():

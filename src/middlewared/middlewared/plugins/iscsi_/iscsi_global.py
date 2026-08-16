@@ -288,10 +288,6 @@ class ISCSIGlobalService(SystemServiceService):
         if not await self.middleware.call('failover.licensed'):
             return False
 
-        # If FIBRECHANNEL is licensed then allow ALUA
-        # if await self.middleware.call('system.feature_enabled', 'FIBRECHANNEL'):
-        #     return True
-
         return (await self.middleware.call('iscsi.global.config'))['alua']
 
     @private

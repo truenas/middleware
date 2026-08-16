@@ -150,13 +150,10 @@ class SystemService(Service):
         SystemFeatureEnabledArgs,
         SystemFeatureEnabledResult,
         roles=["SYSTEM_PRODUCT_READ"],
+        removed_in="v26",
     )
     async def feature_enabled(self, name):
         """
         Returns whether the `feature` is enabled or not
         """
-        info = await self.call2(self.s.truenas.license.info_private)
-        if info is not None:
-            return info.has_feature(name)
-
-        return False
+        return (await self.call2(self.s.truenas.entitlements.feature, name)).entitled
