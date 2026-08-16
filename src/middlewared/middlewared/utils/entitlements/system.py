@@ -36,6 +36,10 @@ def get_facts() -> EntitlementFacts:
     return EntitlementFacts(hardware_class=get_hardware_class(), license=get_license())
 
 
-def get_entitlement(feature: EntitlementKey) -> Entitlement:
-    """Return the entitlement for `feature` on this system."""
+def get_entitlement(feature: EntitlementKey | str) -> Entitlement:
+    """Return the entitlement for `feature` on this system.
+
+    A plain `str` is accepted because the public API cannot name the vocabulary: the import
+    contract keeps the engine out of ``middlewared.api.v*``. An unruled key still raises.
+    """
     return check_entitlement(feature, get_facts())

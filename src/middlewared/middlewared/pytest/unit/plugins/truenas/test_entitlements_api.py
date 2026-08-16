@@ -5,7 +5,7 @@ from truenas_pylicensed import LicenseType
 
 from middlewared.api.base.handler.accept import accept_params
 from middlewared.api.base.handler.result import serialize_result
-from middlewared.api.current import TrueNASEntitlementsInfoResult
+from middlewared.api.current import EntitlementEntry, TrueNASEntitlementsInfoResult
 from middlewared.plugins.truenas import entitlements as plugin
 from middlewared.plugins.truenas.entitlements import (
     TrueNASEntitlementsCheckArgs,
@@ -23,6 +23,7 @@ from middlewared.utils.entitlements import (
     HardwareClass,
     LicenseFeature,
     Reason,
+    check_entitlement,
 )
 from middlewared.utils.license import FeatureInfo, LicenseInfo
 
@@ -92,6 +93,59 @@ def test_unknown_feature_name_is_rejected_at_the_boundary():
         accept_params(TrueNASEntitlementsCheckArgs, ["NOT_A_FEATURE"], dump_models=False)
 
     assert "neither a license feature nor a derived entitlement" in str(exc_info.value)
+
+
+def test_feature_reports_not_gated_for_an_unknown_identifier(monkeypatch):
+    """The issuer's vocabulary can run ahead of ours, so the public endpoint answers for a name
+    it has never heard of instead of refusing it."""
+
+    def raise_unknown(feature):
+        raise ValueError(f"Unknown feature: {feature!r}")
+
+    monkeypatch.setattr(plugin, "get_entitlement", raise_unknown)
+
+    result = TrueNASEntitlementsService.feature(None, "QUANTUM_TELEPORT")
+
+    assert (result.entitled, result.reason, result.message) == (True, "NOT_GATED", "")
+
+
+def test_feature_reports_not_gated_for_autotune(monkeypatch):
+    """AUTOTUNE is a license feature with no policy rule, so the live engine raises for it. The
+    public endpoint has to answer rather than propagate that."""
+    monkeypatch.setattr(
+        plugin,
+        "get_entitlement",
+        lambda feature: check_entitlement(
+            feature, EntitlementFacts(hardware_class=HardwareClass.TRUENAS_HW, license=None)
+        ),
+    )
+
+    result = TrueNASEntitlementsService.feature(None, str(LicenseFeature.AUTOTUNE))
+
+    assert (result.entitled, result.reason, result.message) == (True, "NOT_GATED", "")
+
+
+def test_feature_does_not_swallow_an_engine_bug(monkeypatch):
+    """Only the engine's `ValueError` for an unruled key is an answer; anything else is a bug and
+    must reach the caller."""
+
+    def raise_bug(feature):
+        raise RuntimeError("engine exploded")
+
+    monkeypatch.setattr(plugin, "get_entitlement", raise_bug)
+
+    with pytest.raises(RuntimeError):
+        TrueNASEntitlementsService.feature(None, "SED")
+
+
+def test_public_entry_is_the_private_model_minus_column():
+    """The two projections of one decision stay pinned together, so a field added to the private
+    model is a conscious decision about the public one rather than a silent omission."""
+    private = set(TrueNASEntitlementsCheckEntitlement.model_fields)
+    public = set(EntitlementEntry.model_fields)
+
+    assert private - public == {"column"}
+    assert public - private == set()
 
 
 def make_license(feature_names, license_type, support_type):
