@@ -24,6 +24,7 @@ class Reason(StrEnum):
     WRONG_HARDWARE = "WRONG_HARDWARE"
     TIER_INSUFFICIENT = "TIER_INSUFFICIENT"
     WRONG_LICENSE_TYPE = "WRONG_LICENSE_TYPE"
+    NOT_GATED = "NOT_GATED"
 
 
 class DerivedEntitlement(StrEnum):
@@ -40,6 +41,7 @@ _MESSAGES: Mapping[Reason, str] = {
     Reason.WRONG_HARDWARE: "The {feature} feature is not available on this system's hardware.",
     Reason.TIER_INSUFFICIENT: "This system's support tier does not include the {feature} feature.",
     Reason.WRONG_LICENSE_TYPE: "This system's license type does not include the {feature} feature.",
+    Reason.NOT_GATED: "",
 }
 
 # Human-facing names substituted into the generic message templates; the raw
@@ -109,7 +111,7 @@ def _format_message(reason: Reason, feature: str) -> str:
     if overrides is not None and reason in overrides:
         return overrides[reason]
     display = FEATURE_DISPLAY_NAMES.get(feature, feature)
-    return _MESSAGES[reason].format(feature=display)
+    return _MESSAGES.get(reason, "").format(feature=display)
 
 
 @dataclass(frozen=True, kw_only=True, slots=True)

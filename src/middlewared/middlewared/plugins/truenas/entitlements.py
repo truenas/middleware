@@ -7,6 +7,8 @@ from middlewared.api.base import BaseModel
 from middlewared.api.current import (
     EntitlementEntry,
     EntitlementsInfo,
+    TrueNASEntitlementsFeatureArgs,
+    TrueNASEntitlementsFeatureResult,
     TrueNASEntitlementsInfoArgs,
     TrueNASEntitlementsInfoResult,
 )
@@ -16,6 +18,7 @@ from middlewared.utils.entitlements import (
     DerivedEntitlement,
     EntitlementKey,
     LicenseFeature,
+    Reason,
     check_entitlement,
     get_entitlement,
     get_facts,
@@ -82,6 +85,31 @@ class TrueNASEntitlementsService(Service):
             entitled=entitlement.entitled,
             reason=entitlement.reason,
             column=entitlement.column,
+            message=entitlement.message,
+        )
+
+    @api_method(
+        TrueNASEntitlementsFeatureArgs,
+        TrueNASEntitlementsFeatureResult,
+        roles=["SYSTEM_PRODUCT_READ"],
+        check_annotations=True,
+    )
+    def feature(self, feature: str) -> EntitlementEntry:
+        """Return the entitlement decision for `feature`."""
+        try:
+            entitlement = get_entitlement(feature)
+        except ValueError:
+            # The engine raises for a key it has no rule for. Over the API that is not an error:
+            # the issuer's vocabulary can run ahead of ours, and a feature nothing here gates is a
+            # feature nothing here restricts. Internal callers keep the raise -- they name features
+            # as enum members, so a missing rule for one of those is a bug worth failing on.
+            return EntitlementEntry(entitled=True, reason=Reason.NOT_GATED, message="")
+
+        # `column` is left out for the same reason `info` omits it: it is the matrix coordinate
+        # the facts resolved to, and publishing it would make the matrix's shape a contract.
+        return EntitlementEntry(
+            entitled=entitlement.entitled,
+            reason=entitlement.reason,
             message=entitlement.message,
         )
 
