@@ -102,6 +102,21 @@ def root_with_password_disabled():
             c.call("etc.generate", "user")
 
 
+@pytest.fixture()
+def root_is_only_local_administrator():
+    """
+    CI doesn't set up `truenas_admin` user so this should never happen there.
+    Developer machines installed in a normal user-facing way, however, do, and some tests break on such installs.
+    """
+    administrators = sorted(entry["username"] for entry in call("privilege.local_administrators"))
+    if administrators != ["root"]:
+        pytest.fail(
+            f"This test requires root to be the only password-enabled local administrator, but "
+            f"{', '.join(administrators)} can log in with a password. Disable password login for "
+            f"the other accounts before running it."
+        )
+
+
 @pytest.fixture(scope="module")
 def test_user():
     with user({
