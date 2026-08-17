@@ -2,9 +2,8 @@ import pytest
 from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.plugins.pool_.pool import PoolService
-from middlewared.plugins.truenas.entitlements import TrueNASEntitlementsCheckEntitlement
+from middlewared.pytest.unit.entitlements import install_entitlements_for_column
 from middlewared.pytest.unit.middleware import Middleware
-from middlewared.utils.entitlements import Reason
 
 
 def _new_vdev(vdev_type, num_disks):
@@ -28,23 +27,14 @@ def _pool_old(data, *, special=None, dedup=None):
     return {"topology": {"data": data, "special": special or [], "dedup": dedup or []}}
 
 
-def _entitlements_stub(middleware, entitled):
-    """Stub truenas.entitlements.check; returns the list of features it was asked about."""
-    checked = []
-
-    def check(feature):
-        checked.append(feature)
-        if entitled:
-            return TrueNASEntitlementsCheckEntitlement(entitled=True, reason=Reason.ENTITLED, column="HW+K", message="")
-        return TrueNASEntitlementsCheckEntitlement(entitled=False, reason=Reason.KEY_MISSING, column="CE+L", message="")
-
-    middleware.services.truenas.entitlements.check = check
-    return checked
+def _entitlements(middleware, entitled):
+    """Point the entitlement endpoints at the live engine; returns the features asked about."""
+    return install_entitlements_for_column(middleware, LicenseFeature.SUPPORT, "HW+K" if entitled else "CE+L")
 
 
 def _service(entitled=False):
     middleware = Middleware()
-    _entitlements_stub(middleware, entitled)
+    _entitlements(middleware, entitled)
     return PoolService(middleware)
 
 
@@ -194,7 +184,7 @@ async def test_force_topology_does_not_bypass_minimum_disks():
 @pytest.mark.asyncio
 async def test_force_topology_rejected_when_entitled():
     middleware = Middleware()
-    checked = _entitlements_stub(middleware, entitled=True)
+    checked = _entitlements(middleware, entitled=True)
 
     verrors = await PoolService(middleware)._validate_topology(
         _pool_data([_new_vdev("RAIDZ2", 7)], force_topology=True)
@@ -210,7 +200,7 @@ async def test_force_topology_rejected_when_entitled():
 async def test_force_topology_not_checked_when_unset():
     # The entitlement must not even be consulted when force_topology is off.
     middleware = Middleware()
-    checked = _entitlements_stub(middleware, entitled=True)
+    checked = _entitlements(middleware, entitled=True)
 
     verrors = await PoolService(middleware)._validate_topology(_pool_data([_new_vdev("RAIDZ2", 7)]))
     assert verrors.errors == []

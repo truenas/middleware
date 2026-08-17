@@ -3,25 +3,15 @@ from unittest.mock import AsyncMock, Mock
 import pytest
 from truenas_pylicensed.features import LicenseFeature
 
-from middlewared.plugins.truenas.entitlements import TrueNASEntitlementsCheckEntitlement
 from middlewared.plugins.truesearch import TrueSearchService
+from middlewared.pytest.unit.entitlements import install_entitlements_for_column
 from middlewared.pytest.unit.helpers import create_service
 from middlewared.pytest.unit.middleware import Middleware
-from middlewared.utils.entitlements import Reason
 
 BOOT_POOL_REASON = "The system dataset must not reside on the boot pool."
+# The unlicensed wording, so the denial columns below must be the ones with no license at
+# all. A licensed-without-the-key column reports a different sentence.
 NOT_LICENSED = "This system is not licensed to use the TrueSearch feature."
-
-
-def entitlements_stub(m, entitlement):
-    checked = []
-
-    def check(feature):
-        checked.append(feature)
-        return entitlement
-
-    m.services.truenas.entitlements.check = check
-    return checked
 
 
 @pytest.mark.asyncio
@@ -88,12 +78,7 @@ async def test_legacy_mountpoint():
 async def test_unavailable_reasons_reports_entitlement_message_when_not_entitled():
     m = Middleware()
     m["systemdataset.is_boot_pool"] = lambda *args: False
-    checked = entitlements_stub(m, TrueNASEntitlementsCheckEntitlement(
-        entitled=False,
-        reason=Reason.NO_LICENSE,
-        column="CE",
-        message=NOT_LICENSED,
-    ))
+    checked = install_entitlements_for_column(m, LicenseFeature.TRUESEARCH, "CE")
 
     assert await create_service(m, TrueSearchService).unavailable_reasons() == [NOT_LICENSED]
     assert checked == [LicenseFeature.TRUESEARCH]
@@ -103,9 +88,7 @@ async def test_unavailable_reasons_reports_entitlement_message_when_not_entitled
 async def test_unavailable_reasons_omits_licensing_reason_when_entitled():
     m = Middleware()
     m["systemdataset.is_boot_pool"] = lambda *args: False
-    checked = entitlements_stub(
-        m, TrueNASEntitlementsCheckEntitlement(entitled=True, reason=Reason.ENTITLED, column="HW+K", message="")
-    )
+    checked = install_entitlements_for_column(m, LicenseFeature.TRUESEARCH, "HW+K")
 
     assert await create_service(m, TrueSearchService).unavailable_reasons() == []
     assert checked == [LicenseFeature.TRUESEARCH]
@@ -115,9 +98,7 @@ async def test_unavailable_reasons_omits_licensing_reason_when_entitled():
 async def test_unavailable_reasons_reports_boot_pool_when_entitled():
     m = Middleware()
     m["systemdataset.is_boot_pool"] = lambda *args: True
-    entitlements_stub(
-        m, TrueNASEntitlementsCheckEntitlement(entitled=True, reason=Reason.ENTITLED, column="HW+K", message="")
-    )
+    install_entitlements_for_column(m, LicenseFeature.TRUESEARCH, "HW+K")
 
     assert await create_service(m, TrueSearchService).unavailable_reasons() == [BOOT_POOL_REASON]
 
@@ -126,11 +107,6 @@ async def test_unavailable_reasons_reports_boot_pool_when_entitled():
 async def test_unavailable_reasons_reports_boot_pool_and_licensing_together():
     m = Middleware()
     m["systemdataset.is_boot_pool"] = lambda *args: True
-    entitlements_stub(m, TrueNASEntitlementsCheckEntitlement(
-        entitled=False,
-        reason=Reason.KEY_MISSING,
-        column="HW+L",
-        message=NOT_LICENSED,
-    ))
+    install_entitlements_for_column(m, LicenseFeature.TRUESEARCH, "CE")
 
     assert await create_service(m, TrueSearchService).unavailable_reasons() == [BOOT_POOL_REASON, NOT_LICENSED]

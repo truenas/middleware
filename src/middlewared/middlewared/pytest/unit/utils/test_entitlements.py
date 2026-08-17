@@ -6,7 +6,11 @@ from truenas_pylicensed import LicenseType
 from truenas_pylicensed.features import FEATURE_TIERS, LicenseFeature, SupportTier
 
 from middlewared.api.v26_0_0.truenas import EntitlementEntry
-from middlewared.utils.license import FeatureInfo, LicenseInfo
+
+# Re-exported here rather than imported directly by every caller: these three predate the
+# shared helper and other suites already reach for them at this path.
+from middlewared.pytest.unit.entitlements import facts_for_column, make_facts, make_license
+from middlewared.utils.license import LicenseInfo
 from middlewared.utils.entitlements import (
     COLUMNS,
     DERIVED_VECTORS,
@@ -15,7 +19,6 @@ from middlewared.utils.entitlements import (
     POLICY,
     TARGET_VECTORS,
     DerivedEntitlement,
-    EntitlementFacts,
     HardwareClass,
     LegacyRule,
     LicenseTypeRule,
@@ -26,59 +29,6 @@ from middlewared.utils.entitlements import (
 )
 from middlewared.utils.entitlements.engine import _MESSAGES
 from middlewared.utils.entitlements.legacy import sed as legacy_sed
-
-
-def make_license(
-    *,
-    feature_names: tuple[str, ...] = (),
-    type_: LicenseType = LicenseType.ENTERPRISE_SINGLE,
-    model: str | None = "H10",
-    expires_at: date | None = None,
-    support_type: str | None = None,
-) -> LicenseInfo:
-    features = {
-        name: FeatureInfo(
-            name=name,
-            start_date=None,
-            expires_at=expires_at,
-            source="enterprise",
-            type=support_type if name == "SUPPORT" else None,
-        )
-        for name in feature_names
-    }
-    return LicenseInfo(
-        id="test-license",
-        type=type_,
-        model=model,
-        support_expires_at=expires_at,
-        license_expires_at=None,
-        features=features,
-        serials=("TEST-000001",),
-        enclosures={},
-        contract_type=support_type,
-    )
-
-
-def make_facts(
-    *,
-    hardware_class: HardwareClass,
-    license: LicenseInfo | None = None,
-) -> EntitlementFacts:
-    return EntitlementFacts(
-        hardware_class=hardware_class,
-        license=license,
-    )
-
-
-def facts_for_column(feature: str, column: str) -> EntitlementFacts:
-    hardware_class = HardwareClass.TRUENAS_HW if column in ("HW", "HW+L", "HW+K") else HardwareClass.GENERIC
-    if column in ("CE", "HW"):
-        license = None
-    elif column in ("HW+K", "CE+K"):
-        license = make_license(feature_names=(feature,))
-    else:  # HW+L / CE+L: licensed, but without this feature's key
-        license = make_license(feature_names=())
-    return make_facts(hardware_class=hardware_class, license=license)
 
 
 # (a) Matrix fixture: every feature vector against every column resolves to the matrix cell.
