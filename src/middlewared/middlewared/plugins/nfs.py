@@ -565,9 +565,7 @@ class SharingNFSService(SharingService):
         confirm_unique(schema_name, 'hosts', data, verrors)
 
         # Validate networks and sanitize: Convert IP addresses CIDR format
-        data['networks'] = sanitize_networks(
-            schema_name, data['networks'], verrors, strict_test=False, convert=True
-        )
+        data['networks'] = sanitize_networks(schema_name, data['networks'], verrors)
 
         # Register a warning level alert for excessively long list of network entries
         if (netlen := len(data['networks'])) >= NFS_NETWORKS_WARNING_THRESHOLD:

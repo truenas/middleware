@@ -21,11 +21,8 @@ def confirm_unique(schema_name: str, item_name: str, data: dict[str, Any], verro
         )
 
 
-def sanitize_networks(
-    schema_name: str, networks: list[str], verrors: ValidationErrors, strict_test: bool = True,
-    convert: bool = False
-) -> list[str] | None:
-    """ Entries must be acceptible to ip_network and make all valid entries CIDR formatted """
+def sanitize_networks(schema_name: str, networks: list[str], verrors: ValidationErrors) -> list[str]:
+    """Entries must be acceptable to ip_network and make all valid entries CIDR formatted."""
     not_valid = []
     found_all_networks = ""  # If found, this will be 0.0.0.0/0 or ::/0 which we would like to exclude
 
@@ -33,7 +30,7 @@ def sanitize_networks(
         try:
             # Validity test and trap the old-school 'all-networks' entries: 0.0.0.0/0
             # Exclude these entries as they should be represented with no entry.
-            if int(ip_network(v, strict=strict_test).network_address) == 0:
+            if int(ip_network(v, strict=False).network_address) == 0:
                 found_all_networks = v
         except ValueError:
             not_valid.append(v)
@@ -50,7 +47,7 @@ def sanitize_networks(
             f"No entry is required to configure 'allow everybody'.  "
             f"Please remove {found_all_networks}."
         )
-    elif convert:
+    else:
         # Perform the courtesy conversion to CIDR format
         return [str(ip_network(v, strict=False)) for v in networks]
 

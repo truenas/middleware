@@ -1,4 +1,6 @@
+import base64
 import contextlib
+import errno
 import ipaddress
 import os
 from copy import copy
@@ -2365,6 +2367,220 @@ class TestNFSops:
         alerts = call('alert.list')
         this_alert = [entry for entry in alerts if entry['klass'] == "NFSHostListExcessive"]
         assert len(this_alert) == 0, f"Unexpectedly found alert for 'NFSHostListExcessive'.\n{alerts}"
+
+    def test_runtime_debug_empty_selection(self, start_nfs):
+        '''
+        An empty flag list is a request to leave that service alone.
+        This is distinct from ["NONE"], which clears the flags.
+        '''
+        assert start_nfs is True
+        disabled = {"NFS": ["NONE"], "NFSD": ["NONE"], "NLM": ["NONE"], "RPC": ["NONE"]}
+        try:
+            call('nfs.set_debug', {"NFS": ["PROC"], "NLM": ["SVC"]})
+            res = call('nfs.get_debug')
+            assert res["NFS"] == ["PROC"], res
+            assert res["NLM"] == ["SVC"], res
+
+            # An empty list is a no-op: the current settings survive
+            call('nfs.set_debug', {"NFS": [], "NLM": []})
+            res = call('nfs.get_debug')
+            assert res["NFS"] == ["PROC"], res
+            assert res["NLM"] == ["SVC"], res
+        finally:
+            call('nfs.set_debug', disabled)
+            assert call('nfs.get_debug') == disabled
+
+    @pytest.mark.parametrize('protocols,v4_krb,has_nfs_principal,expected', [
+        pp(["NFSV3", "NFSV4"], True, False, ["krb5", "krb5i", "krb5p"], id="v4_krb requires kerberos"),
+        pp(["NFSV3", "NFSV4"], True, True, ["krb5", "krb5i", "krb5p"], id="v4_krb overrides the principal"),
+        pp(["NFSV3", "NFSV4"], False, True, ["sys", "krb5", "krb5i", "krb5p"], id="nfs principal permits kerberos"),
+        pp(["NFSV3", "NFSV4"], False, False, ["sys"], id="no kerberos available"),
+        pp(["NFSV3"], True, True, [], id="NFSv3 only has no security flavors"),
+    ])
+    def test_security_flavors(self, start_nfs, protocols, v4_krb, has_nfs_principal, expected):
+        '''
+        The 'sec' entries generated for /etc/exports are driven by the enabled
+        protocols, the v4_krb setting and the presence of an NFS principal in
+        the kerberos keytab.  This exercises the generator directly: creating a
+        kerberos keytab with an NFS principal is out of scope here.
+        '''
+        assert start_nfs is True
+
+        config = call('nfs.config') | {'protocols': protocols, 'v4_krb': v4_krb}
+        assert call('nfs.sec', config, has_nfs_principal) == expected
+
+    @pytest.mark.parametrize('bindip,expected_ips', [
+        pp(['192.168.222.1'], ['192.168.222.1'], id="bound to a single address"),
+        pp(['192.168.222.1', '192.168.222.2'], ['192.168.222.1', '192.168.222.2'], id="bound to two addresses"),
+        pp(['0.0.0.0', '192.168.222.1'], ['0.0.0.0'], id="a wildcard entry wins"),
+        pp([], ['0.0.0.0'], id="unbound is the wildcard"),
+    ])
+    def test_port_delegate_bindip(self, start_nfs, bindip, expected_ips):
+        '''
+        The port delegate reports the addresses the RPC services are bound to so
+        that other services are prevented from claiming the same address/port.
+        nfs.bindip_choices is limited to the addresses configured on the system,
+        so the config is mocked to get deterministic coverage of the reporting.
+        '''
+        assert start_nfs is True
+
+        ports = {'mountd_port': 618, 'rpcstatd_port': 871, 'rpclockd_port': 32803}
+        config = call('nfs.config') | ports | {'bindip': bindip}
+
+        with mock("nfs.config", return_value=config):
+            in_use = call('port.get_in_use')
+
+        nfs_in_use = [entry for entry in in_use if entry.get('namespace') == 'nfs']
+        assert len(nfs_in_use) == 1, str(in_use)
+        reported = [tuple(entry) for entry in nfs_in_use[0]['ports']]
+
+        # nfsd itself is always on the wildcard address
+        assert ('0.0.0.0', 2049) in reported, str(reported)
+
+        expected = {(ip, port) for ip in expected_ips for port in ports.values()}
+        assert expected.issubset(set(reported)), f"expected {expected}, reported {reported}"
+
+    def test_clear_nfs3_rmtab_selected_entries(self, start_nfs):
+        '''
+        rmtab collects an entry per NFSv3 client.  The entries are removed
+        either wholesale or by client address.
+        '''
+        assert start_nfs is True
+
+        rmtab = os.path.join(call('systemdataset.sysdataset_path'), 'nfs', 'rmtab')
+        entries = [
+            "192.168.111.1:/mnt/one:0x00000001",
+            "192.168.111.2:/mnt/two:0x00000001",
+            "192.168.111.3:/mnt/three:0x00000001",
+        ]
+        content = "".join(f"{entry}\n" for entry in entries)
+        call('filesystem.file_receive', rmtab, base64.b64encode(content.encode()).decode())
+
+        # Only the requested clients are removed
+        call('nfs.clear_nfs3_rmtab', ["192.168.111.1", "192.168.111.3"])
+        assert ssh(f"cat {rmtab}").splitlines() == [entries[1]]
+
+        # An unknown client is a no-op
+        call('nfs.clear_nfs3_rmtab', ["192.168.111.99"])
+        assert ssh(f"cat {rmtab}").splitlines() == [entries[1]]
+
+        # No argument clears everything
+        call('nfs.clear_nfs3_rmtab')
+        assert ssh(f"cat {rmtab}").strip() == ""
+
+    def test_nfs4_client_without_implementation_id(self, start_nfs, nfs_dataset_and_share):
+        '''
+        NAS-135435: the client supplied strings are sanitized.  An NFSv4.0
+        client has no EXCHANGE_ID, so it reports no implementation id at all
+        and only 'name' is available to sanitize.
+        '''
+        assert start_nfs is True
+        nfsid = nfs_dataset_and_share['nfsid']
+        assert nfsid is not None
+
+        with nfs_share_config(nfsid):
+            # Earlier tests leave host and network restrictions behind
+            call('sharing.nfs.update', nfsid, {'hosts': [], 'networks': []})
+
+            with SSH_NFS(truenas_server.ip, NFS_PATH, vers='4.0',
+                         user=user, password=password, ip=truenas_server.ip) as n:
+                n.ls('/')
+                clients = call('nfs.get_nfs4_clients')
+                assert len(clients) == 1, f"Expected to find 1, but found {len(clients)}"
+
+                info = clients[0]['info']
+                assert info['minor version'] == 0, str(info)
+                assert info['name'].isprintable(), str(info)
+                for absent in ('Implementation domain', 'Implementation name'):
+                    assert absent not in info, str(info)
+
+    def test_close_client_state(self, start_nfs, nfs_dataset_and_share, nfs_allow_nonroot):
+        '''
+        Forcibly revoke the state held by an NFSv4 client.  The client entry is
+        removed from /proc/fs/nfsd/clients when the state is expired.
+        '''
+        assert start_nfs is True
+        nfsid = nfs_dataset_and_share['nfsid']
+        assert nfsid is not None
+
+        # An unknown client is silently ignored
+        call('nfs.close_client_state', 'nosuchclient')
+
+        with nfs_share_config(nfsid):
+            # Earlier tests leave host and network restrictions behind
+            call('sharing.nfs.update', nfsid, {'hosts': [], 'networks': []})
+
+            with _nfs_client(4):
+                clients = call('nfs.get_nfs4_clients')
+                assert len(clients) == 1, f"Expected to find 1, but found {len(clients)}"
+
+                call('nfs.close_client_state', clients[0]['id'])
+
+                for _ in range(10):
+                    remaining = [entry['id'] for entry in call('nfs.get_nfs4_clients')]
+                    if clients[0]['id'] not in remaining:
+                        break
+                    sleep(0.5)
+
+                assert clients[0]['id'] not in remaining, f"Client state was not revoked: {remaining}"
+
+    def test_threadpool_mode_locked_while_running(self, start_nfs):
+        '''
+        The sunrpc pool map is pinned for as long as a service is using it, so
+        the kernel refuses a mode change with EBUSY while nfsd is running.
+        '''
+        assert start_nfs is True
+
+        # Multiple restarts cause systemd failures.  Reset the systemd counters.
+        reset_svcs("nfs-idmapd nfs-mountd nfs-server rpcbind rpc-statd")
+
+        was_managed = call('nfs.config')['managed_nfsd']
+        try:
+            with nfs_config():
+                # A server running a single thread does not pin the map
+                call('nfs.update', {'servers': 4})
+                confirm_nfsd_processes(4)
+                assert get_nfs_service_state() == "RUNNING"
+
+                current_mode = call('nfs.get_threadpool_mode')
+                other_mode = next(m for m in ("AUTO", "GLOBAL", "PERCPU", "PERNODE") if m != current_mode)
+
+                with pytest.raises(CallError) as ce:
+                    call('nfs.set_threadpool_mode', other_mode)
+                assert ce.value.errno == errno.EBUSY, str(ce.value)
+                assert 'NFS service must be stopped' in str(ce.value), str(ce.value)
+
+                # The refused write left the mode alone
+                assert call('nfs.get_threadpool_mode') == current_mode
+        finally:
+            # Setting an explicit server count clears managed_nfsd, and nfs_config
+            # restores the count rather than the flag.  Hand it back ourselves.
+            if was_managed:
+                call('nfs.update', {'servers': None})
+                assert call('nfs.config')['managed_nfsd'] is True
+
+    def test_share_removed_with_the_dataset(self, start_nfs):
+        '''
+        Deleting a dataset removes the NFS shares it hosted and reloads NFS so
+        that the export is dropped from /etc/exports.
+        '''
+        assert start_nfs is True
+
+        nfsid = None
+        try:
+            with nfs_dataset('nfs_attached') as ds:
+                nfsid = call('sharing.nfs.create', {'path': f"/mnt/{ds}"})['id']
+                assert call('sharing.nfs.query', [['id', '=', nfsid]]) != []
+                assert f"/mnt/{ds}" in [entry['path'] for entry in parse_exports()]
+
+            # nfs_dataset deleted the dataset on exit, which takes the share with it
+            assert call('sharing.nfs.query', [['id', '=', nfsid]]) == []
+            assert f"/mnt/{ds}" not in [entry['path'] for entry in parse_exports()]
+        finally:
+            # Do not leave a stray export behind if the dataset could not be deleted
+            if nfsid is not None:
+                with contextlib.suppress(InstanceNotFound):
+                    call('sharing.nfs.delete', nfsid)
 
 
 def test_pool_import_with_attached_share():
