@@ -87,9 +87,7 @@ class TestAddressRefreshFilter:
 
     def test_deladdr_is_never_filtered(self):
         """Removal of a previously refreshed address is a real change."""
-        events = events_from(
-            addr_msg(msg_type=RTM_DELADDR, cacheinfo=(300, 300, 1000, 9000))
-        )
+        events = events_from(addr_msg(msg_type=RTM_DELADDR, cacheinfo=(300, 300, 1000, 9000)))
         assert len(events) == 1
         assert events[0]["event"] == "remove"
 
@@ -143,10 +141,7 @@ class TestVendorRestartCoalescing:
         await first_started.wait()
 
         # Five requests while the restart is blocked mid run
-        extra = [
-            asyncio.ensure_future(netlink_events._systemctl_restart_ixvendor(middleware))
-            for _ in range(5)
-        ]
+        extra = [asyncio.ensure_future(netlink_events._systemctl_restart_ixvendor(middleware)) for _ in range(5)]
         await asyncio.sleep(0)
         assert dbus_mock.call_unit_action_and_wait.await_count == 1
 
@@ -169,9 +164,7 @@ class TestVendorRestartCoalescing:
     async def test_failed_restart_leaves_clean_state(self, dbus_env):
         """A restart failure releases the lock and clears the queued flag."""
         middleware, dbus_mock = dbus_env
-        dbus_mock.call_unit_action_and_wait = AsyncMock(
-            side_effect=[RuntimeError("dbus down"), None]
-        )
+        dbus_mock.call_unit_action_and_wait = AsyncMock(side_effect=[RuntimeError("dbus down"), None])
         with pytest.raises(RuntimeError):
             await netlink_events._systemctl_restart_ixvendor(middleware)
         assert netlink_events._restart_queued is False
