@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 from typing import Any
 
 from middlewared.alert.base import (
@@ -10,6 +10,7 @@ from middlewared.alert.base import (
     AlertSource,
     NonDataclassAlertClass,
 )
+from middlewared.utils.time_utils import utc_now
 
 
 class ScrubPausedAlert(NonDataclassAlertClass[str], AlertClass):
@@ -29,6 +30,6 @@ class ScrubPausedAlertSource(AlertSource):
         for pool in await self.middleware.call("pool.query"):
             if pool["scan"] is not None:
                 if pool["scan"]["pause"] is not None:
-                    if pool["scan"]["pause"] < datetime.now() - timedelta(hours=8):
+                    if pool["scan"]["pause"] < utc_now() - timedelta(hours=8):
                         alerts.append(Alert(ScrubPausedAlert(pool["name"])))
         return alerts
