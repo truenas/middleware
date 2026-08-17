@@ -161,13 +161,14 @@ def upgrade_impl(context: ServiceContext, job: Job, app_name: str, options: AppU
             )
         finally:
             app = context.call_sync2(context.s.app.get_instance, app_name)
-            if app.upgrade_available is False or app.custom_app:
+            upgrade_completed = app.upgrade_available is False or app.custom_app
+            if upgrade_completed:
                 # Pull may have succeeded but redeploy failed - refresh the app state here
                 # so that the caller can update alerts based on it either way. Note that this
                 # must not return, as a return inside `finally` discards an in-flight exception.
                 context.middleware.send_event('app.query', 'CHANGED', id=app_name, fields=app.model_dump())
 
-        if app.upgrade_available is False or app.custom_app:
+        if upgrade_completed:
             job.set_progress(100, 'App successfully upgraded and redeployed')
             return app
 
