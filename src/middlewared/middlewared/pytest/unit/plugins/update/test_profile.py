@@ -3,33 +3,20 @@ from unittest.mock import AsyncMock, Mock, patch
 
 from truenas_pylicensed.features import LicenseFeature
 
-from middlewared.plugins.truenas.entitlements import TrueNASEntitlementsCheckEntitlement
 from middlewared.plugins.update_ import UpdateService
 from middlewared.plugins.update_.profile_ import post_license_update
+from middlewared.pytest.unit.entitlements import install_entitlements_for_column
 from middlewared.pytest.unit.middleware import Middleware
-from middlewared.utils.entitlements import Reason
 
 
-def entitlements_stub(m, entitled):
-    checked = []
-
-    def check(feature):
-        checked.append(feature)
-        return TrueNASEntitlementsCheckEntitlement(
-            entitled=entitled,
-            reason=Reason.ENTITLED if entitled else Reason.KEY_MISSING,
-            column="HW+K" if entitled else "CE+L",
-            message="",
-        )
-
-    m.services.truenas.entitlements.check = check
-    return checked
+def mission_critical(m, entitled):
+    return install_entitlements_for_column(m, LicenseFeature.MISSION_CRITICAL, "HW+K" if entitled else "CE+L")
 
 
 @pytest.mark.asyncio
 async def test_profile_choices():
     middleware = Middleware()
-    checked = entitlements_stub(middleware, True)
+    checked = mission_critical(middleware, True)
     middleware.services.update.config_safe = AsyncMock(return_value=Mock(profile=None))
 
     service = UpdateService(middleware)
@@ -47,7 +34,7 @@ async def test_profile_choices():
 @pytest.mark.asyncio
 async def test_profile_choices_current_is_always_available():
     middleware = Middleware()
-    checked = entitlements_stub(middleware, True)
+    checked = mission_critical(middleware, True)
     middleware.services.update.config_safe = AsyncMock(return_value=Mock(profile="MISSION_CRITICAL"))
 
     service = UpdateService(middleware)
@@ -64,7 +51,7 @@ async def test_profile_choices_current_is_always_available():
 @pytest.mark.asyncio
 async def test_profile_choices_when_not_entitled():
     middleware = Middleware()
-    checked = entitlements_stub(middleware, False)
+    checked = mission_critical(middleware, False)
     middleware.services.update.config_safe = AsyncMock(return_value=Mock(profile=None))
 
     service = UpdateService(middleware)
@@ -81,7 +68,7 @@ async def test_profile_choices_when_not_entitled():
 @pytest.mark.asyncio
 async def test_post_license_update_sets_profile_when_entitled():
     middleware = Middleware()
-    checked = entitlements_stub(middleware, True)
+    checked = mission_critical(middleware, True)
     middleware.services.update.set_profile = AsyncMock()
 
     await post_license_update(middleware, False)
@@ -93,7 +80,7 @@ async def test_post_license_update_sets_profile_when_entitled():
 @pytest.mark.asyncio
 async def test_post_license_update_does_nothing_when_not_entitled():
     middleware = Middleware()
-    checked = entitlements_stub(middleware, False)
+    checked = mission_critical(middleware, False)
     middleware.services.update.set_profile = AsyncMock()
 
     await post_license_update(middleware, False)
@@ -105,7 +92,7 @@ async def test_post_license_update_does_nothing_when_not_entitled():
 @pytest.mark.asyncio
 async def test_post_license_update_skips_when_already_licensed():
     middleware = Middleware()
-    checked = entitlements_stub(middleware, True)
+    checked = mission_critical(middleware, True)
     middleware.services.update.set_profile = AsyncMock()
 
     await post_license_update(middleware, True)

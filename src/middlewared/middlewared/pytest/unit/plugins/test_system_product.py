@@ -1,10 +1,10 @@
 import pytest
+from truenas_pylicensed.features import LicenseFeature
 
-from middlewared.api.current import EntitlementEntry
 from middlewared.plugins.system.product import SystemService
+from middlewared.pytest.unit.entitlements import install_entitlements_for_column
 from middlewared.pytest.unit.helpers import create_service
 from middlewared.pytest.unit.middleware import Middleware
-from middlewared.utils.entitlements import Reason
 from middlewared.utils.hardware import HardwareClass, HardwareInfo, Platform
 
 
@@ -31,24 +31,18 @@ async def test_is_ha_capable(monkeypatch, ha_platform, expected):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "entry,expected",
+    "name,column,expected",
     [
-        (EntitlementEntry(entitled=True, reason=Reason.ENTITLED, message=""), True),
-        (EntitlementEntry(entitled=False, reason=Reason.KEY_MISSING, message="denied"), False),
+        (LicenseFeature.TRUESEARCH, "HW+K", True),
+        (LicenseFeature.TRUESEARCH, "CE+L", False),
         # A name the engine has no rule for is not an error here either: the endpoint answers
         # NOT_GATED and this method hands that answer straight back.
-        (EntitlementEntry(entitled=True, reason=Reason.NOT_GATED, message=""), True),
+        ("QUANTUM_TELEPORT", "HW+K", True),
     ],
 )
-async def test_feature_enabled_delegates_to_the_entitlement_check(entry, expected):
+async def test_feature_enabled_delegates_to_the_entitlement_check(name, column, expected):
     m = Middleware()
-    checked = []
+    checked = install_entitlements_for_column(m, name, column)
 
-    def feature(name):
-        checked.append(name)
-        return entry
-
-    m.services.truenas.entitlements.feature = feature
-
-    assert await create_service(m, SystemService).feature_enabled("QUANTUM_TELEPORT") is expected
-    assert checked == ["QUANTUM_TELEPORT"]
+    assert await create_service(m, SystemService).feature_enabled(name) is expected
+    assert checked == [name]

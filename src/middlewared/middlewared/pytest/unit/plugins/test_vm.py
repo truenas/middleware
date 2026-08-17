@@ -1,32 +1,25 @@
 import pytest
 from truenas_pylicensed.features import LicenseFeature
 
-from middlewared.plugins.truenas.entitlements import TrueNASEntitlementsCheckEntitlement
 from middlewared.service_exception import ValidationErrors
+from middlewared.pytest.unit.entitlements import install_entitlements_for_column
 from middlewared.pytest.unit.helpers import load_compound_service
 from middlewared.pytest.unit.middleware import Middleware
-from middlewared.utils.entitlements import Reason
 
 
 VMService = load_compound_service('vm')
 
 
-@pytest.mark.parametrize('entitled,reason', [
-    (True, Reason.ENTITLED),
-    (False, Reason.KEY_MISSING),
+@pytest.mark.parametrize('column,entitled', [
+    ('HW+K', True),
+    ('CE+L', False),
 ])
 @pytest.mark.asyncio
-async def test_vm_license_active_response(entitled, reason):
+async def test_vm_license_active_response(column, entitled):
     m = Middleware()
     vm_svc = VMService(m)
 
-    checked = []
-
-    def check(feature):
-        checked.append(feature)
-        return TrueNASEntitlementsCheckEntitlement(entitled=entitled, reason=reason, column='HW+K', message='')
-
-    m.services.truenas.entitlements.check = check
+    checked = install_entitlements_for_column(m, LicenseFeature.VMS, column)
 
     assert await vm_svc.license_active() is entitled
     assert checked == [LicenseFeature.VMS]
