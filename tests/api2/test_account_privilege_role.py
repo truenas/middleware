@@ -7,7 +7,7 @@ import pytest
 from middlewared.service_exception import CallError
 from middlewared.test.integration.assets.account import unprivileged_user_client
 from middlewared.test.integration.assets.pool import dataset, snapshot
-from middlewared.test.integration.utils import client
+from middlewared.test.integration.utils import call, client
 
 logger = logging.getLogger(__name__)
 
@@ -189,3 +189,19 @@ def test_can_not_subscribe_to_event():
 def test_can_subscribe_to_event():
     with unprivileged_user_client(["READONLY_ADMIN"]) as unprivileged:
         unprivileged.subscribe("alert.list", lambda *args, **kwargs: None)
+
+
+def test_roles_query():
+    full_admin = call("privilege.roles", [["name", "=", "FULL_ADMIN"]], {"get": True})
+    assert full_admin["title"] == "FULL_ADMIN"
+    assert full_admin["builtin"] is False
+
+
+def test_dump_role_manager():
+    dumped = call("privilege.dump_role_manager")
+
+    assert set(dumped) == {"method_resources", "method_allowlists", "event_resources", "event_allowlists"}
+    assert "ACCOUNT_READ" in dumped["method_resources"]["user.query"]
+    assert "ACCOUNT_READ" in dumped["method_allowlists"]
+    assert dumped["event_resources"]
+    assert dumped["event_allowlists"]

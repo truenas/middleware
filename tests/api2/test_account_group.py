@@ -1,3 +1,5 @@
+import errno
+
 import pytest
 
 from middlewared.service_exception import CallError, InstanceNotFound, ValidationErrors
@@ -233,3 +235,14 @@ def test_group_toggle_smb():
         assert call("group.get_instance", g["id"])["smb"] is True
         call("group.update", g["id"], {"smb": False})
         assert call("group.get_instance", g["id"])["smb"] is False
+
+
+# ---------------------------------------------------------------------------
+# builtin gid cache
+# ---------------------------------------------------------------------------
+def test_get_builtin_group_id_nonexistent():
+    with pytest.raises(CallError) as ve:
+        call("group.get_builtin_group_id", "cov_nonexistent_builtin")
+
+    assert ve.value.errno == errno.ENOENT
+    assert ve.value.errmsg == "'cov_nonexistent_builtin' group not found"
