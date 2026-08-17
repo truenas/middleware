@@ -4,10 +4,12 @@ from unittest.mock import mock_open, patch
 
 import pytest
 
-from truenas_pylicensed import LicenseType
+from licenselib.license import Features
+from truenas_pylicensed import FEATURE_NAME_MAP, LicenseType
 from truenas_pylicensed.features import LicenseFeature, SupportTier
 
 from middlewared.utils.entitlements import (
+    POLICY,
     DerivedEntitlement,
     EntitlementFacts,
     HardwareClass,
@@ -20,6 +22,7 @@ from middlewared.utils.license import (
     get_legacy_license_info,
     parse_legacy_license,
 )
+from middlewared.utils.license.legacy import _LEGACY_INJECT as _LEGACY_INJECT_SET
 
 
 def _features(names, *, support_type=None, start=date(2026, 4, 8), end=date(2026, 4, 30)):
@@ -36,29 +39,18 @@ def _features(names, *, support_type=None, start=date(2026, 4, 8), end=date(2026
     }
 
 
-# Mirrors the production injection set, which fires for every legacy blob that
-# parses, in LicenseFeature declaration order. Injected flags are appended after
-# the license's own bits, also in declaration order.
-_LEGACY_INJECT = [
-    "APPS",
-    "AUTOTUNE",
-    "CATALOG_ENTERPRISE_TRAIN",
-    "CONTAINERS",
-    "DIRECTORY_SERVICES",
-    "KMIP",
-    "MISSION_CRITICAL",
-    "NETWORK_FEC",
-    "NFS_SNAPSHOT",
-    "NVMEOF_SPDK",
-    "RDMA",
-    "SMB_FASTPATH",
-    "SMB_VEEAM",
-    "STIG",
-    "SUPPORT",
-    "TRUESEARCH",
-    "VMS",
-    "WEBSHARE",
-]
+# The production injection set, which fires for every legacy blob that parses, ordered the
+# way parse_legacy_license appends it: by LicenseFeature declaration, after the license's
+# own bits. Derived rather than copied, so the expectations below cannot drift from the set
+# they describe. test__legacy_injection_set_is_pinned is what keeps that from making the
+# comparison vacuous.
+_LEGACY_INJECT = [f.value for f in LicenseFeature if f in _LEGACY_INJECT_SET]
+
+# H10, GOLD contract, HA pair. Carries the FibreChannel and VM feature bits.
+H10_HA_BLOB = (
+    "AUgxMAAAAAAAAAAAAAAAAABURVNULTAwMDAwMQAAAAAAVEVTVC0wMDAwMDIAAAAAAAQAADIwMjYwNDA4AAAAABYAAAAAAAAAaVhzeXN0ZW1zIE"
+    "luYy4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwAAAAAAAAAAgMCAgE="
+)
 
 # X10, STANDARD contract, single head.
 X10_BLOB = (
@@ -79,8 +71,7 @@ FREENAS_MINI_BLOB = (
         # Enterprise HA license (H10, GOLD contract): FibreChannel + VM bits, proactive
         # SUPPORT, plus the all-legacy and enterprise-only injected flags.
         (
-            "AUgxMAAAAAAAAAAAAAAAAABURVNULTAwMDAwMQAAAAAAVEVTVC0wMDAwMDIAAAAAAAQAADIwMjYwNDA4AAAAABYAAAAAAAAAaVhzeXN0ZW1zIE"
-            "luYy4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwAAAAAAAAAAgMCAgE=",
+            H10_HA_BLOB,
             LicenseInfo(
                 id="legacy_TEST-000001",
                 type=LicenseType.ENTERPRISE_HA,
@@ -165,8 +156,7 @@ def test__parse_legacy_license(text, result):
     [
         # H10 with system_serial_ha = TEST-000002.
         (
-            "AUgxMAAAAAAAAAAAAAAAAABURVNULTAwMDAwMQAAAAAAVEVTVC0wMDAwMDIAAAAAAAQAADIwMjYwNDA4AAAAABYAAAAAAAAAaVhzeXN0ZW1zIE"
-            "luYy4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwAAAAAAAAAAgMCAgE=",
+            H10_HA_BLOB,
             LicenseType.ENTERPRISE_HA,
         ),
         # X10 with an empty system_serial_ha field.
@@ -224,10 +214,7 @@ def test__legacy_non_tier_contract_types_get_no_proactive_support(text):
 # The contrast case: a gold contract still gets proactive support, so the interlock
 # above is not passing merely because the gate denies everything.
 def test__legacy_gold_contract_keeps_proactive_support():
-    info = parse_legacy_license(
-        "AUgxMAAAAAAAAAAAAAAAAABURVNULTAwMDAwMQAAAAAAVEVTVC0wMDAwMDIAAAAAAAQAADIwMjYwNDA4AAAAABYAAAAAAAAAaVhzeXN0ZW1z"
-        "IEluYy4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwAAAAAAAAAAgMCAgE="
-    )
+    info = parse_legacy_license(H10_HA_BLOB)
     assert info.feature_type(LicenseFeature.SUPPORT) == SupportTier.GOLD
 
     facts = EntitlementFacts(hardware_class=HardwareClass.TRUENAS_HW, license=info)
@@ -286,3 +273,89 @@ def test__get_legacy_license_info_keeps_model_less_blob():
     assert info.model is None
     assert info.has_feature(LicenseFeature.SMB_VEEAM)
     assert info.has_feature(LicenseFeature.SMB_FASTPATH)
+
+
+# Deriving _LEGACY_INJECT from the production set keeps the expectations above from drifting,
+# but on its own it also makes them tautological. This is the fence that recovers them: both
+# membership and the order flags land in are written out once. Widening the set hands a
+# feature to the entire legacy installed base, so it has to be written down here too.
+def test__legacy_injection_set_is_pinned():
+    assert _LEGACY_INJECT == [
+        "APPS",
+        "AUTOTUNE",
+        "CATALOG_ENTERPRISE_TRAIN",
+        "CONTAINERS",
+        "DIRECTORY_SERVICES",
+        "KMIP",
+        "MISSION_CRITICAL",
+        "NETWORK_FEC",
+        "NFS_SNAPSHOT",
+        "NVMEOF_SPDK",
+        "RDMA",
+        "SMB_FASTPATH",
+        "SMB_VEEAM",
+        "STIG",
+        "SUPPORT",
+        "TRUESEARCH",
+        "VMS",
+        "WEBSHARE",
+    ]
+
+
+# The point of the injection: a flag put on the license has to survive the engine, or the
+# upgrade path it exists to protect is broken. Every legacy blob in the field goes through
+# this translation, so this is the entitlement floor for the whole installed base.
+def test__legacy_license_is_entitled_to_every_injected_feature():
+    facts = EntitlementFacts(hardware_class=HardwareClass.TRUENAS_HW, license=parse_legacy_license(X10_BLOB))
+    denied = [f.value for f in _LEGACY_INJECT_SET if f in POLICY and not check_entitlement(f, facts).entitled]
+    assert denied == []
+
+
+def test__injected_features_without_a_policy_rule_are_pinned():
+    # The check above can only speak for keys the engine has a rule for. Naming the rest
+    # means a feature gaining a POLICY entry gets asserted rather than silently skipped.
+    assert {f for f in _LEGACY_INJECT_SET if f not in POLICY} == {LicenseFeature.AUTOTUNE}
+
+
+# The five feature bits the legacy format could carry, in the modern vocabulary.
+_LEGACY_BITMASK_FEATURES = {str(FEATURE_NAME_MAP.get(f.name.upper(), f.name.upper())) for f in Features}
+
+
+def test__legacy_bitmask_is_the_other_route_onto_a_legacy_license():
+    # SED, FIBRECHANNEL and DEDUP are not injected, so a legacy holder only has them if the
+    # blob's own bits carry them. Dropping one of these from the bitmask translation would
+    # revoke it from every legacy licensee that bought it.
+    assert _LEGACY_BITMASK_FEATURES - {f.value for f in _LEGACY_INJECT_SET} == {"SED", "FIBRECHANNEL", "DEDUP"}
+
+
+def test__legacy_fibrechannel_bit_is_observable_end_to_end():
+    # The positive control for the route above. The CE side is where a key is visible:
+    # FIBRECHANNEL's vector grants CE+K and denies CE+L, whereas appliance hardware is
+    # granted by any license at all and so cannot tell the two apart.
+    with_bit = parse_legacy_license(H10_HA_BLOB)
+    without_bit = parse_legacy_license(X10_BLOB)
+    assert with_bit.has_feature(LicenseFeature.FIBRECHANNEL)
+    assert not without_bit.has_feature(LicenseFeature.FIBRECHANNEL)
+
+    def entitled(info):
+        facts = EntitlementFacts(hardware_class=HardwareClass.GENERIC, license=info)
+        return check_entitlement(LicenseFeature.FIBRECHANNEL, facts).entitled
+
+    assert entitled(with_bit) is True
+    assert entitled(without_bit) is False
+
+
+@pytest.mark.parametrize("hardware_class", [HardwareClass.TRUENAS_HW, HardwareClass.MINI, HardwareClass.GENERIC])
+@pytest.mark.parametrize("blob", [H10_HA_BLOB, X10_BLOB, FREENAS_MINI_BLOB])
+def test__zfstier_is_denied_on_every_legacy_license(blob, hardware_class):
+    # ZFSTIER has neither a legacy feature bit nor an injection entry, so no legacy blob can
+    # put the key on the license, and its vector grants only where the key is. Legacy holders
+    # are therefore permanently denied it -- a deliberate outcome, pinned so that adding a
+    # route in either direction is a decision rather than an accident.
+    assert LicenseFeature.ZFSTIER not in _LEGACY_INJECT_SET
+    assert LicenseFeature.ZFSTIER.value not in _LEGACY_BITMASK_FEATURES
+
+    info = parse_legacy_license(blob)
+    assert not info.has_feature(LicenseFeature.ZFSTIER)
+    facts = EntitlementFacts(hardware_class=hardware_class, license=info)
+    assert check_entitlement(LicenseFeature.ZFSTIER, facts).entitled is False
