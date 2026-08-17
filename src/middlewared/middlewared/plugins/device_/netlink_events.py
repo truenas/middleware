@@ -1,3 +1,4 @@
+import asyncio
 import dataclasses
 import select
 import socket
@@ -7,6 +8,10 @@ import time
 from middlewared.utils import run
 from middlewared.utils.threading import start_daemon_thread
 
+IX_VEND_LOCK = asyncio.Lock()
+# True while a restart is waiting on the lock. Requests arriving in that
+# window are covered by the waiter, so at most one restart is ever queued.
+_restart_queued = False
 
 # Netlink constants
 AF_NETLINK = 16
@@ -49,6 +54,7 @@ IFA_ADDRESS = 1
 IFA_LOCAL = 2
 IFA_LABEL = 3
 IFA_BROADCAST = 4
+IFA_CACHEINFO = 6
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
@@ -311,6 +317,29 @@ def create_address_event(sock, msg_type, ifa_msg, ip_addr, if_name):
     return event_data
 
 
+def is_address_refresh(msg_type, ifa_msg):
+    """Return True when the kernel re-announced an already existing address.
+
+    The kernel emits RTM_NEWADDR not only when an address is added but also
+    every time an address lifetime is refreshed, for example by the periodic
+    router advertisements that renew SLAAC addresses. IFA_CACHEINFO carries
+    the creation and last update timestamps. They are equal for a brand new
+    address and differ on a re-announcement, so each message classifies
+    itself and no state needs to be tracked. Messages without cacheinfo are
+    treated as real changes.
+    """
+    if msg_type != RTM_NEWADDR:
+        return False
+
+    cacheinfo = ifa_msg.attributes.get(IFA_CACHEINFO)
+    if cacheinfo is None or len(cacheinfo) < 16:
+        return False
+
+    # struct ifa_cacheinfo is four u32s (prefered, valid, cstamp, tstamp)
+    cstamp, tstamp = struct.unpack("II", cacheinfo[8:16])
+    return tstamp != cstamp
+
+
 def process_netlink_data(sock, data):
     """Process netlink data and yield IP address change events"""
     offset = 0
@@ -322,30 +351,35 @@ def process_netlink_data(sock, data):
             if msg.type in (RTM_NEWADDR, RTM_DELADDR):
                 ifa_msg = parse_ifaddr_message(msg.payload)
 
-                # Get interface name from IFA_LABEL attribute or fallback to netlink query
-                if_name = None
-                if IFA_LABEL in ifa_msg.attributes:
-                    if_name = (
-                        ifa_msg.attributes[IFA_LABEL].rstrip(b"\x00").decode("utf-8")
-                    )
+                if is_address_refresh(msg.type, ifa_msg):
+                    # Nothing changed, so emitting an event would only make
+                    # subscribers do pointless work
+                    pass
                 else:
-                    if_name = get_interface_name(sock, ifa_msg.index)
+                    # Get interface name from IFA_LABEL attribute or fallback to netlink query
+                    if_name = None
+                    if IFA_LABEL in ifa_msg.attributes:
+                        if_name = (
+                            ifa_msg.attributes[IFA_LABEL].rstrip(b"\x00").decode("utf-8")
+                        )
+                    else:
+                        if_name = get_interface_name(sock, ifa_msg.index)
 
-                # Get address
-                local_addr = ifa_msg.attributes.get(IFA_LOCAL)
-                addr = ifa_msg.attributes.get(IFA_ADDRESS)
+                    # Get address
+                    local_addr = ifa_msg.attributes.get(IFA_LOCAL)
+                    addr = ifa_msg.attributes.get(IFA_ADDRESS)
 
-                # Use LOCAL if available, otherwise ADDRESS
-                ip_addr = None
-                if local_addr:
-                    ip_addr = format_address(ifa_msg.family, local_addr)
-                elif addr:
-                    ip_addr = format_address(ifa_msg.family, addr)
+                    # Use LOCAL if available, otherwise ADDRESS
+                    ip_addr = None
+                    if local_addr:
+                        ip_addr = format_address(ifa_msg.family, local_addr)
+                    elif addr:
+                        ip_addr = format_address(ifa_msg.family, addr)
 
-                if ip_addr:
-                    yield create_address_event(
-                        sock, msg.type, ifa_msg, ip_addr, if_name
-                    )
+                    if ip_addr:
+                        yield create_address_event(
+                            sock, msg.type, ifa_msg, ip_addr, if_name
+                        )
 
             # Move to next message
             offset += (msg.length + 3) & ~3  # Align to 4 bytes
@@ -417,8 +451,18 @@ def netlink_events(middleware):
 
 
 async def _systemctl_restart_ixvendor(middleware):
-    if await middleware.call("system.vendor.is_vendored"):
-        await run(["systemctl", "restart", "ix-vendor"], check=False)
+    global _restart_queued
+
+    if _restart_queued:
+        # The queued restart has not started yet, so it will already pick
+        # up whatever change produced this request
+        return
+
+    _restart_queued = True
+    async with IX_VEND_LOCK:
+        _restart_queued = False
+        if await middleware.call("system.vendor.is_vendored"):
+            await run(["systemctl", "restart", "ix-vendor"], check=False)
 
 
 async def _restart_vendor_service(middleware, event_type, args):
