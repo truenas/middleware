@@ -2,7 +2,6 @@ from datetime import datetime
 
 from middlewared.alert.base import AlertClass, SimpleOneShotAlertClass, AlertCategory, AlertLevel, Alert, AlertSource
 from middlewared.alert.schedule import CrontabSchedule
-from middlewared.utils.time_utils import utc_now
 
 
 class CertificateIsExpiringAlertClass(AlertClass):
@@ -63,7 +62,7 @@ class CertificateChecksAlertSource(AlertSource):
             else:
                 # check the parsed certificate(s) for expiration
                 if cert['cert_type'] == 'CERTIFICATE':
-                    diff = (datetime.strptime(cert['until'], '%a %b %d %H:%M:%S %Y') - utc_now()).days
+                    diff = (datetime.strptime(cert['until'], '%a %b %d %H:%M:%S %Y') - datetime.now()).days
                     alert_threshold = (cert.get('renew_days') or 10) - 1
                     if diff < alert_threshold:
                         if diff >= 0:
