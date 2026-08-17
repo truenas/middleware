@@ -120,7 +120,7 @@ class TestVendorRestartCoalescing:
         dbus_mock = MagicMock()
         monkeypatch.setattr(netlink_events, "system_dbus", dbus_mock)
         middleware = MagicMock()
-        middleware.call2 = AsyncMock(return_value=True)
+        middleware.call = AsyncMock(return_value=True)
         return middleware, dbus_mock
 
     @pytest.mark.asyncio
