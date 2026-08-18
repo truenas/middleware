@@ -27,7 +27,33 @@ SOURCE_DIR = os.path.join(get_middlewared_dir(), "alert", "source")
 FRAMEWORK_NAMES = frozenset(alert_base.__all__)
 
 
+def _alert_class_reference(node: ast.AST) -> str | None:
+    """The alert class a node names, whether spelled ``FooAlertClass`` or ``module.FooAlertClass``."""
+    if isinstance(node, ast.Name):
+        name = node.id
+    elif isinstance(node, ast.Attribute):
+        name = node.attr
+    else:
+        return None
+
+    if name.endswith("AlertClass") and name not in FRAMEWORK_NAMES:
+        return name
+
+    return None
+
+
 def _classes_a_source_may_create() -> dict[str, set[str]]:
+    """Every alert class each loaded source's body could reach, keyed by source name.
+
+    Which class definitions count as sources comes from `declarations()`, which resolves them by
+    base class the way `AlertService.load` does. Deriving it from the class name instead -- a
+    ``*AlertSource`` suffix -- silently dropped every source not following that convention, and
+    the tree has one.
+    """
+    sources_by_class_name = {
+        declaration.__name__: name for name, kind, declaration in declarations() if kind == "source"
+    }
+
     edges: dict[str, set[str]] = {}
     for entry in sorted(os.listdir(SOURCE_DIR)):
         if not entry.endswith(".py"):
@@ -37,13 +63,13 @@ def _classes_a_source_may_create() -> dict[str, set[str]]:
             tree = ast.parse(f.read())
 
         for node in ast.walk(tree):
-            if not (isinstance(node, ast.ClassDef) and node.name.endswith("AlertSource")):
+            if not (isinstance(node, ast.ClassDef) and node.name in sources_by_class_name):
                 continue
 
             names: set[str] = set()
             for child in ast.walk(node):
-                if isinstance(child, ast.Name) and child.id.endswith("AlertClass") and child.id not in FRAMEWORK_NAMES:
-                    names.add(child.id.removesuffix("AlertClass"))
+                if (referenced := _alert_class_reference(child)) is not None:
+                    names.add(referenced.removesuffix("AlertClass"))
 
                 # `alert.oneshot_create("<Name>", ...)` names its class as a string.
                 if (
@@ -57,9 +83,20 @@ def _classes_a_source_may_create() -> dict[str, set[str]]:
                 ):
                     names.add(child.args[1].value)
 
-            edges[node.name.removesuffix("AlertSource")] = names
+            edges[sources_by_class_name[node.name]] = names
 
     return edges
+
+
+def test_the_scan_sees_every_source_that_is_loaded():
+    """A source the scan does not see is not checked below, and nothing says so.
+
+    This is also what makes the `sources[source_name]` lookup in that check safe: the two
+    modules cannot disagree about what a source is without failing here first.
+    """
+    loaded = {name for name, kind, _ in declarations() if kind == "source"}
+
+    assert set(_classes_a_source_may_create()) == loaded
 
 
 def test_every_source_resolves_to_at_least_one_class():

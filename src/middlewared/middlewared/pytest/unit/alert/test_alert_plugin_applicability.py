@@ -8,26 +8,23 @@ guard instead, one per site that asks an applicability question.
 """
 
 import pytest
-from truenas_pylicensed import LicenseType
 
 from middlewared.alert.base import Alert
+from middlewared.alert.source.memory_errors import MemorySizeMismatchAlertClass
 from middlewared.alert.source.scheduled_reboot import FailoverRebootAlertClass
 from middlewared.plugins import alert as alert_plugin
 from middlewared.plugins.alert import AlertService
-from middlewared.pytest.unit.utils.test_entitlements import make_license
-from middlewared.utils.entitlements import EntitlementFacts
-from middlewared.utils.hardware import HardwareClass
-
-UNLICENSED = EntitlementFacts(hardware_class=HardwareClass.TRUENAS_HW, license=None)
-LICENSED = EntitlementFacts(hardware_class=HardwareClass.TRUENAS_HW, license=make_license(model="M50"))
-HA_LICENSED_FACTS = EntitlementFacts(
-    hardware_class=HardwareClass.TRUENAS_HW,
-    license=make_license(model="M50", type_=LicenseType.ENTERPRISE_HA),
-)
+from middlewared.pytest.unit.alert.harness import HA_LICENSED_FACTS, LICENSED, UNLICENSED, RecordingLogger
 
 # An HA-only one-shot class, so a single declaration covers listing, displaying and creating.
 HA_ONLY = FailoverRebootAlertClass
 HA_ONLY_ARGS = {"fqdn": "tn.example.com", "now": "2026-01-01 00:00:00"}
+
+# Applies on any iX appliance, but is only catalogued where the licence grants HA. The one shape
+# where the two questions give different answers, and the only way to tell the catalogue's rule
+# apart from the display rule.
+UNLISTED_BUT_APPLICABLE = MemorySizeMismatchAlertClass
+UNLISTED_BUT_APPLICABLE_ARGS = {"r1": "64 GiB", "r2": "32 GiB"}
 
 
 class StubMiddleware:
@@ -54,20 +51,6 @@ class StubMiddleware:
             return None
 
         raise AssertionError(f"unexpected call {method!r}")
-
-
-class RecordingLogger:
-    def __init__(self):
-        self.errors = []
-
-    def error(self, message, *args, **kwargs):
-        self.errors.append(message % args if args else message)
-
-    def debug(self, *args, **kwargs):
-        pass
-
-    def trace(self, *args, **kwargs):
-        pass
 
 
 def make_service(monkeypatch, facts, reads=None):
@@ -189,3 +172,26 @@ async def test_oneshot_create_is_quiet_where_the_class_applies(monkeypatch):
 
     assert len(service.alerts) == 1
     assert service.logger.errors == []
+
+
+@pytest.mark.asyncio
+async def test_the_catalogue_drops_a_class_it_still_displays(monkeypatch):
+    """`listed_only_when` takes a class out of the catalogue and out of nothing else.
+
+    Every other class in this module is either listed and displayed or neither, which is why
+    reading the wrong one of the two rules in `list_categories` goes unnoticed. This is the one
+    declaration in the tree where the two answers differ, so it is the only place the catalogue's
+    rule can be told apart from the display rule through production code.
+    """
+    service = make_service(monkeypatch, LICENSED)
+    service.alerts = [Alert(UNLISTED_BUT_APPLICABLE, UNLISTED_BUT_APPLICABLE_ARGS, node="A", _uuid="alert-uuid")]
+
+    assert UNLISTED_BUT_APPLICABLE.name not in await listed_class_ids(service)
+    assert [alert["klass"] for alert in await AlertService.list(service)] == [UNLISTED_BUT_APPLICABLE.name]
+
+
+@pytest.mark.asyncio
+async def test_the_catalogue_offers_it_once_the_licence_grants_ha(monkeypatch):
+    service = make_service(monkeypatch, HA_LICENSED_FACTS)
+
+    assert UNLISTED_BUT_APPLICABLE.name in await listed_class_ids(service)
