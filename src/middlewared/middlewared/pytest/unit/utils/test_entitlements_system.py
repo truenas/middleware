@@ -1,7 +1,7 @@
 import pytest
 from truenas_pylicensed import LicenseType
 
-from middlewared.pytest.unit.utils.test_entitlements import make_license
+from middlewared.pytest.unit.entitlements import make_license
 from middlewared.utils.entitlements import get_facts
 from middlewared.utils.hardware import HardwareClass
 

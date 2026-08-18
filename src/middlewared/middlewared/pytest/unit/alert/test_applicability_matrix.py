@@ -20,7 +20,7 @@ from truenas_pylicensed import LicenseType
 
 from middlewared.alert.applicability import HA_LICENSED, Applicability, applies, applies_for_listing, vocabulary
 from middlewared.alert.base import AlertCategory, AlertClass, AlertSource, ThreadedAlertSource
-from middlewared.pytest.unit.utils.test_entitlements import make_license
+from middlewared.pytest.unit.entitlements import make_license
 from middlewared.utils.entitlements import EntitlementFacts
 from middlewared.utils.hardware import HardwareClass
 from middlewared.utils.license import LicenseInfo
@@ -108,6 +108,21 @@ POPULATIONS = (
 )
 
 
+def _base_name(base: ast.expr) -> str | None:
+    """The name of a base class as written, whether spelled ``AlertClass`` or ``base.AlertClass``.
+
+    A scan blind to one of the two spellings does not report a gap: it simply never looks at the
+    module, and every declaration in it drops out of the inventory silently.
+    """
+    if isinstance(base, ast.Name):
+        return base.id
+
+    if isinstance(base, ast.Attribute):
+        return base.attr
+
+    return None
+
+
 def _modules_declaring_alert_classes() -> list[str]:
     """Every module in the tree that declares an ``AlertClass``, found without importing it.
 
@@ -129,14 +144,32 @@ def _modules_declaring_alert_classes() -> list[str]:
                 tree = ast.parse(f.read())
 
             if any(
-                isinstance(node, ast.ClassDef)
-                and any(isinstance(base, ast.Name) and base.id == "AlertClass" for base in node.bases)
+                isinstance(node, ast.ClassDef) and any(_base_name(base) == "AlertClass" for base in node.bases)
                 for node in ast.walk(tree)
             ):
                 relative = os.path.relpath(path, root).removesuffix(".py").replace(os.sep, ".")
                 modules.append(f"middlewared.{relative}")
 
     return sorted(modules)
+
+
+def test_the_scan_reaches_every_module_that_declares_a_class():
+    """Whatever the metaclass registered, the scan has to have found the module it came from.
+
+    The scan decides what gets imported, so on its own it could agree with the registry by
+    keeping both empty. It cannot here: `declarations()` loads every module under
+    ``alert/source`` through `load_modules`, independently of this scan, and that is where
+    almost every alert class in the tree lives. A module the scan cannot read is therefore in
+    the registry and not in its result, and this is the only thing that says so.
+    """
+    declarations()
+
+    scanned = set(_modules_declaring_alert_classes())
+    registered = {
+        klass.__module__ for klass in AlertClass.classes if not klass.__module__.startswith("middlewared.pytest.")
+    }
+
+    assert registered - scanned == set()
 
 
 def declarations():

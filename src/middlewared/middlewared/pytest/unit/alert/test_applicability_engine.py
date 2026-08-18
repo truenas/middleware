@@ -16,7 +16,7 @@ from middlewared.alert.applicability import (
     vocabulary,
 )
 from middlewared.alert.applicability.engine import rule_name
-from middlewared.pytest.unit.utils.test_entitlements import make_license
+from middlewared.pytest.unit.entitlements import make_facts, make_license
 from middlewared.utils.entitlements import DerivedEntitlement, EntitlementFacts, check_entitlement
 from middlewared.utils.hardware import HardwareClass
 
@@ -59,10 +59,6 @@ CASE_IDS = [
 ]
 
 
-def make_facts(hardware_class, license):
-    return EntitlementFacts(hardware_class=hardware_class, license=license)
-
-
 def test_the_grid_covers_every_shipped_population():
     """A population added without a row here would ship with nothing saying what it covers."""
     assert {rule.__name__ for rule, *_ in GRIDS} == set(vocabulary.__all__)
@@ -70,13 +66,13 @@ def test_the_grid_covers_every_shipped_population():
 
 @pytest.mark.parametrize("rule,hardware_class,license,expected", CASES, ids=CASE_IDS)
 def test_applies(rule, hardware_class, license, expected):
-    assert applies(rule, make_facts(hardware_class, license)) is expected
+    assert applies(rule, make_facts(hardware_class=hardware_class, license=license)) is expected
 
 
 @pytest.mark.parametrize("hardware_class", HARDWARE_CLASSES)
 @pytest.mark.parametrize("license", LICENSES)
 def test_an_undeclared_rule_states_no_constraint(hardware_class, license):
-    assert applies(None, make_facts(hardware_class, license)) is True
+    assert applies(None, make_facts(hardware_class=hardware_class, license=license)) is True
 
 
 def test_ha_matches_the_entitlement_policy():
@@ -91,7 +87,8 @@ def test_ha_matches_the_entitlement_policy():
                 DerivedEntitlement.HA,
                 EntitlementFacts(hardware_class=hardware_class, license=license),
             )
-            assert applies(HA_LICENSED, make_facts(hardware_class, license)) is entitlement.entitled
+            facts = make_facts(hardware_class=hardware_class, license=license)
+            assert applies(HA_LICENSED, facts) is entitlement.entitled
 
 
 class HardwareOnlyDeclaration:
@@ -118,7 +115,7 @@ def test_rule_name_reports_the_population_a_declaration_named():
 
 
 def test_applicability_answers_all_three_questions():
-    appliance = Applicability(make_facts(HardwareClass.TRUENAS_HW, PLAIN_LICENSE))
+    appliance = Applicability(make_facts(hardware_class=HardwareClass.TRUENAS_HW, license=PLAIN_LICENSE))
 
     assert appliance.class_applies(HardwareOnlyDeclaration) is True
     assert appliance.class_listed(HardwareOnlyDeclaration) is True
@@ -144,7 +141,7 @@ def test_applicability_evaluates_each_declaration_once():
         applies_to = COUNTED
         listed_only_when = None
 
-    applicability = Applicability(make_facts(HardwareClass.GENERIC, NO_LICENSE))
+    applicability = Applicability(make_facts(hardware_class=HardwareClass.GENERIC, license=NO_LICENSE))
 
     assert applicability.class_applies(Declared) is True
     assert applicability.class_applies(Declared) is True
@@ -157,7 +154,7 @@ def test_applicability_evaluates_each_declaration_once():
 
 
 def test_applicability_holds_one_reading_of_the_facts():
-    facts = make_facts(HardwareClass.TRUENAS_HW, NO_LICENSE)
+    facts = make_facts(hardware_class=HardwareClass.TRUENAS_HW, license=NO_LICENSE)
 
     assert Applicability(facts).facts is facts
 
@@ -178,7 +175,9 @@ def test_distinct_facts_give_distinct_answers(hardware_class, license, expected)
         applies_to = HA_LICENSED
         listed_only_when = None
 
-    assert Applicability(make_facts(hardware_class, license)).class_applies(HaDeclaration) is expected
+    facts = make_facts(hardware_class=hardware_class, license=license)
+
+    assert Applicability(facts).class_applies(HaDeclaration) is expected
 
 
 def test_a_rule_is_read_off_the_class_never_an_instance():
@@ -186,7 +185,7 @@ def test_a_rule_is_read_off_the_class_never_an_instance():
 
     ``ALERT_SOURCES`` holds instances, which is why ``source_runs`` takes the class.
     """
-    facts = make_facts(HardwareClass.TRUENAS_HW, NO_LICENSE)
+    facts = make_facts(hardware_class=HardwareClass.TRUENAS_HW, license=NO_LICENSE)
     instance = HardwareOnlyDeclaration()
 
     assert Applicability(facts).source_runs(type(instance)) is True
