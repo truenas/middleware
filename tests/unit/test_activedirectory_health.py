@@ -305,7 +305,6 @@ def test__recover_ad_stale_local_sid_reconciles_and_restarts_winbind(harness):
     reconcile is required for the fault to converge.
     """
     restart_job = MagicMock()
-    harness.call_sync2 = Mock(return_value=restart_job)
 
     calls = []
 
@@ -313,6 +312,8 @@ def test__recover_ad_stale_local_sid_reconciles_and_restarts_winbind(harness):
         calls.append(name)
         if name == "smb.set_system_sid":
             return None
+        if name == "service.control":
+            return restart_job
         raise AssertionError(f"unexpected middleware call: {name}")
 
     harness.middleware.call_sync.side_effect = call_sync
@@ -324,8 +325,8 @@ def test__recover_ad_stale_local_sid_reconciles_and_restarts_winbind(harness):
     assert "smb.set_system_sid" in calls, (
         "recovery must reconcile the on-disk SID via smb.set_system_sid so the restart converges"
     )
-    control_call = harness.call_sync2.call_args
-    assert control_call.args[0] is harness.s.service.control
+    control_call = harness.middleware.call_sync.call_args_list[-1]
+    assert control_call.args[0] == "service.control"
     assert control_call.args[1] == "RESTART"
     assert control_call.args[2] == "idmap"
     restart_job.wait_sync.assert_called_once_with(raise_error=True)
