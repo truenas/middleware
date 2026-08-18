@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import typing
-from typing import Any
+from typing import Any, TypeAlias
 
 from middlewared.alert.base import Alert, AlertLevel, OneShotAlertClass
 from middlewared.api.current import Alert as AlertListItem
+from middlewared.api.current import AlertClassConfiguration
 from middlewared.service import ServiceContext
 
 from .state import DEFAULT_POLICY
@@ -12,13 +13,32 @@ from .state import DEFAULT_POLICY
 if typing.TYPE_CHECKING:
     from collections.abc import Callable, Iterable
 
-
-def get_alert_level(alert: Alert[Any], classes: dict[str, Any]) -> AlertLevel:
-    return AlertLevel[classes.get(alert.instance.config.name, {}).get("level", alert.instance.config.level.name)]
+AlertClasses: TypeAlias = dict[str, AlertClassConfiguration]
 
 
-def get_alert_policy(alert: Alert[Any], classes: dict[str, Any]) -> str:
-    return classes.get(alert.instance.config.name, {}).get("policy", DEFAULT_POLICY)  # type: ignore[no-any-return]
+def get_alert_level(alert: Alert[Any], classes: AlertClasses) -> AlertLevel:
+    if (config := classes.get(alert.instance.config.name)) is not None and "level" in config.model_fields_set:
+        return AlertLevel[config.level]
+
+    level: AlertLevel = alert.instance.config.level
+    return level
+
+
+def get_alert_policy(alert: Alert[Any], classes: AlertClasses) -> str:
+    if (config := classes.get(alert.instance.config.name)) is not None and "policy" in config.model_fields_set:
+        return config.policy
+
+    return DEFAULT_POLICY
+
+
+def get_alert_proactive_support(alert: Alert[Any], classes: AlertClasses) -> bool:
+    if (
+        (config := classes.get(alert.instance.config.name)) is not None
+        and "proactive_support" in config.model_fields_set
+    ):
+        return config.proactive_support
+
+    return True
 
 
 def partition[T](predicate: Callable[[T], Any], iterable: Iterable[T]) -> tuple[list[T], list[T]]:
@@ -43,7 +63,7 @@ class AlertSerializer:
 
         self.initialized: bool = False
         self.product_type: str = ""
-        self.classes: dict[str, dict[str, Any]] = {}
+        self.classes: AlertClasses = {}
         self.nodes: dict[str, str] = {}
 
     async def serialize(self, alert: Alert[Any]) -> AlertListItem:
@@ -62,14 +82,14 @@ class AlertSerializer:
             dismissed=alert.dismissed,
             mail=alert.mail,
             text=alert.text,
-            level=self.classes.get(alert.instance.config.name, {}).get("level", alert.instance.config.level.name),
+            level=get_alert_level(alert, self.classes).name,
             formatted=alert.formatted,
             one_shot=isinstance(alert.instance, OneShotAlertClass) and not alert.instance.config.deleted_automatically,
         )
 
-    async def get_alert_class(self, alert: Alert[Any]) -> dict[str, Any]:
+    async def proactive_support(self, alert: Alert[Any]) -> bool:
         await self._ensure_initialized()
-        return self.classes.get(alert.instance.config.name, {})
+        return get_alert_proactive_support(alert, self.classes)
 
     async def should_show_alert(self, alert: Alert[Any]) -> bool:
         await self._ensure_initialized()
@@ -77,7 +97,7 @@ class AlertSerializer:
         if self.product_type not in alert.instance.config.products:
             return False
 
-        if (await self.get_alert_class(alert)).get("policy") == "NEVER":
+        if get_alert_policy(alert, self.classes) == "NEVER":
             return False
 
         return True
@@ -85,7 +105,7 @@ class AlertSerializer:
     async def _ensure_initialized(self) -> None:
         if not self.initialized:
             self.product_type = await self.context.call2(self.context.s.alert.product_type)
-            self.classes = (await self.context.call2(self.context.s.alertclasses.config)).classes  # type: ignore[assignment]
+            self.classes = (await self.context.call2(self.context.s.alertclasses.config)).classes
             self.nodes = await self.context.call2(self.context.s.alert.node_map)
 
             self.initialized = True

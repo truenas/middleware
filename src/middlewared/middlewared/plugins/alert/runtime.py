@@ -31,7 +31,7 @@ from .alert_classes import (
     AlertSourceRunFailedOnBackupNodeAlert,
     AutomaticAlertFailedAlert,
 )
-from .serialize import AlertSerializer, get_alert_level, get_alert_policy
+from .serialize import AlertClasses, AlertSerializer, get_alert_level, get_alert_policy
 from .state import FAILOVER_ALERTS_BACKOFF_SECS, AlertFailoverInfo, AlertState
 
 
@@ -57,7 +57,7 @@ async def send_alerts(context: ServiceContext, state: AlertState) -> None:
         return
 
     product_type: str = await context.call2(context.s.alert.product_type)
-    classes: dict[str, Any] = (await context.call2(context.s.alertclasses.config)).classes
+    classes: AlertClasses = (await context.call2(context.s.alertclasses.config)).classes
 
     now = utc_now()
     for policy_name, policy in state.policies.items():
@@ -70,7 +70,7 @@ async def send_alerts(context: ServiceContext, state: AlertState) -> None:
 
 
 def _visible_service_alerts(
-    alerts: list[Alert[Any]], product_type: str, classes: dict[str, Any], service_level: AlertLevel
+    alerts: list[Alert[Any]], product_type: str, classes: AlertClasses, service_level: AlertLevel
 ) -> list[Alert[Any]]:
     """Alerts for the running product, at or above `service_level`, whose policy is not ``NEVER``."""
     result: list[Alert[Any]] = []
@@ -88,7 +88,7 @@ def _visible_service_alerts(
 
 
 def _policy_alerts(
-    alerts: list[Alert[Any]], product_type: str, classes: dict[str, Any], service_level: AlertLevel, policy_name: str
+    alerts: list[Alert[Any]], product_type: str, classes: AlertClasses, service_level: AlertLevel, policy_name: str
 ) -> list[Alert[Any]]:
     """Alerts for the running product, at or above `service_level`, whose policy is exactly `policy_name`."""
     result: list[Alert[Any]] = []
@@ -129,7 +129,7 @@ async def _dispatch_policy_to_services(
     state: AlertState,
     policy_name: str,
     product_type: str,
-    classes: dict[str, Any],
+    classes: AlertClasses,
     gone_alerts: list[Alert[Any]],
     new_alerts: list[Alert[Any]],
 ) -> None:
@@ -211,16 +211,14 @@ async def _maybe_open_proactive_support_ticket(
     for alert in gone_alerts:
         if (
             alert.instance.config.proactive_support
-            and (await as_.get_alert_class(alert)).get("proactive_support", True)
+            and await as_.proactive_support(alert)
             and alert.instance.config.proactive_support_notify_gone
         ):
             gone_proactive_support_alerts.append(alert)
 
     new_proactive_support_alerts: list[Alert[Any]] = []
     for alert in new_alerts:
-        if alert.instance.config.proactive_support and (await as_.get_alert_class(alert)).get(
-            "proactive_support", True
-        ):
+        if alert.instance.config.proactive_support and await as_.proactive_support(alert):
             new_proactive_support_alerts.append(alert)
 
     if not gone_proactive_support_alerts and not new_proactive_support_alerts:
