@@ -6,6 +6,13 @@ from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.utils import call
 
 
+@pytest.fixture(scope="module", autouse=True)
+def reset_alert_classes():
+    """Alert class overrides are global, so they must not leak into the other test modules."""
+    yield
+    call("alertclasses.update", {"classes": {}})
+
+
 def test__normal_alert_class():
     value = {
         "classes": {
@@ -23,40 +30,49 @@ def test__normal_alert_class():
 
 def test__nonexisting_alert_class():
     with pytest.raises(ValidationErrors) as ve:
-        call("alertclasses.update", {
-            "classes": {
-                "Invalid": {
-                    "level": "WARNING",
-                    "policy": "IMMEDIATELY",
+        call(
+            "alertclasses.update",
+            {
+                "classes": {
+                    "Invalid": {
+                        "level": "WARNING",
+                        "policy": "IMMEDIATELY",
+                    },
                 },
             },
-        })
+        )
 
     assert ve.value.errors[0].attribute == "alert_class_update.classes.Invalid"
 
 
 def test__enable_proactive_support_for_valid_alert_class(request):
-    call("alertclasses.update", {
-        "classes": {
-            "ZpoolCapacityNotice": {
-                "level": "WARNING",
-                "policy": "IMMEDIATELY",
-                "proactive_support": True,
-            },
-        },
-    })
-
-
-def test__enable_proactive_support_for_invalid_alert_class(request):
-    with pytest.raises(ValidationErrors) as ve:
-        call("alertclasses.update", {
+    call(
+        "alertclasses.update",
+        {
             "classes": {
-                "UPSBatteryLow": {
+                "ZpoolCapacityNotice": {
                     "level": "WARNING",
                     "policy": "IMMEDIATELY",
                     "proactive_support": True,
                 },
             },
-        })
+        },
+    )
+
+
+def test__enable_proactive_support_for_invalid_alert_class(request):
+    with pytest.raises(ValidationErrors) as ve:
+        call(
+            "alertclasses.update",
+            {
+                "classes": {
+                    "UPSBatteryLow": {
+                        "level": "WARNING",
+                        "policy": "IMMEDIATELY",
+                        "proactive_support": True,
+                    },
+                },
+            },
+        )
 
     assert ve.value.errors[0].attribute == "alert_class_update.classes.UPSBatteryLow.proactive_support"
