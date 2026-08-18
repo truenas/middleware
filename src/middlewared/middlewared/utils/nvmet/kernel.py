@@ -388,6 +388,19 @@ class NvmetSubsysConfig(NvmetConfig):
     query = 'nvmet.subsys.query'
     query_key = 'subnqn'
 
+    def update_attrs(self, path: pathlib.Path, attrs: dict, render_ctx: dict):
+        # The kernel will not allow attr_allow_any_host to be set to 1 while
+        # explicit per-host symlinks still exist under allowed_hosts.  Those
+        # symlinks are normally removed later by NvmetHostSubsysConfig, so
+        # if we are transitioning 0 -> 1 we must remove them here first,
+        # before writing the attribute below.
+        if attrs.get('allow_any_host'):
+            allow_any_host_path = pathlib.Path(path, 'attr_allow_any_host')
+            if allow_any_host_path.read_text().strip() == '0':
+                for host_link in pathlib.Path(path, 'allowed_hosts').iterdir():
+                    host_link.unlink()
+        super().update_attrs(path, attrs, render_ctx)
+
     def pre_delete(self, path: pathlib.Path, render_ctx: dict):
         # If we are force deleting a subsystem, then namespaces
         # will have been deleted from the config, but not yet
@@ -580,6 +593,9 @@ class NvmetHostSubsysConfig(NvmetLinkConfig):
 
     def dst_name(self, entry):
         return f'{entry[self.dst_query_keys[0]][self.dst_query_keys[1]]}'
+
+    def create_links(self, entry: dict, render_ctx: dict):
+        return not entry['subsys']['allow_any_host']
 
 
 class NvmetPortSubsysConfig(NvmetLinkConfig):
