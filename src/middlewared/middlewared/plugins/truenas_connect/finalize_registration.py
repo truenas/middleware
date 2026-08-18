@@ -64,6 +64,10 @@ async def finalize_registration_impl(context: ServiceContext) -> None:
             try_num += 1
 
         if result is FinalizeResult.SUCCESS:
+            if not (await context.call2(context.s.tn_connect.config)).enabled:
+                logger.debug('TNC was disabled while registration was being finalized, discarding token')
+                return
+
             token = poll_status['response']['token']
             try:
                 decoded_token = decode_and_validate_token(token)

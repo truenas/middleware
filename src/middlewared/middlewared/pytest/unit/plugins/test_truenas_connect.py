@@ -914,3 +914,57 @@ async def test_handle_heartbeat_response_202_pending_without_pem_is_quiet():
 
     install.assert_not_called()
     warn.assert_not_called()
+
+
+# --- Disable while a background flow is in flight -----------------------------------------------
+
+@pytest.mark.asyncio
+async def test_set_status_ignored_when_disabled():
+    """A background flow finishing after TNC was disabled must not write a configured status."""
+    from middlewared.plugins.truenas_connect import internal
+
+    ctx = MagicMock()
+    ctx.middleware = MagicMock()
+    ctx.middleware.call = AsyncMock()
+    ctx.middleware.send_event = MagicMock()
+    ctx.call2 = AsyncMock(return_value=make_tnc_entry(enabled=False, status=Status.DISABLED.name))
+
+    await internal.set_status(ctx, Status.CONFIGURED.name, {'certificate': 2})
+
+    ctx.middleware.call.assert_not_awaited()
+    ctx.middleware.send_event.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_set_status_writes_when_enabled():
+    from middlewared.plugins.truenas_connect import internal
+
+    ctx = MagicMock()
+    ctx.middleware = MagicMock()
+    ctx.middleware.call = AsyncMock()
+    ctx.middleware.send_event = MagicMock()
+    ctx.call2 = AsyncMock(return_value=make_tnc_entry(status=Status.CERT_GENERATION_SUCCESS.name))
+
+    await internal.set_status(ctx, Status.CONFIGURED.name)
+
+    ctx.middleware.call.assert_awaited_once_with(
+        'datastore.update', 'truenas_connect', 1, {'status': Status.CONFIGURED.name},
+    )
+    ctx.middleware.send_event.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_cert_generation_discarded_when_disabled_midway():
+    """Disabling TNC while the cert job runs must not insert the cert or flip status back to configured."""
+    from middlewared.plugins.truenas_connect.acme import TNCACMEService
+
+    service = TNCACMEService(MagicMock())
+    service.initiate_cert_generation_impl = AsyncMock(return_value={'cert': 'c', 'private_key': 'k', 'csr': 's'})
+    service.update_ui = AsyncMock()
+    service.middleware.call = AsyncMock()
+    service.call2 = AsyncMock(return_value=make_tnc_entry(enabled=False, status=Status.DISABLED.name))
+
+    await service.initiate_cert_generation()
+
+    service.middleware.call.assert_not_awaited()
+    service.update_ui.assert_not_awaited()

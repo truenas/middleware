@@ -73,6 +73,10 @@ class TNCACMEService(Service):
             logger.error('Failed to complete certificate generation for TNC', exc_info=True)
             await set_status(self.context, Status.CERT_GENERATION_FAILED.name)
         else:
+            if not (await self.call2(self.s.tn_connect.config)).enabled:
+                logger.debug('TNC was disabled while certificate was being generated, discarding it')
+                return
+
             cert_id = await self.middleware.call(
                 'datastore.insert',
                 'system.certificate', {
@@ -114,6 +118,10 @@ class TNCACMEService(Service):
             logger.error('Failed to renew certificate for TNC', exc_info=True)
             await set_status(self.context, Status.CERT_RENEWAL_FAILURE.name)
         else:
+            if not (await self.call2(self.s.tn_connect.config)).enabled:
+                logger.debug('TNC was disabled while certificate was being renewed, discarding it')
+                return
+
             logger.debug('TNC certificate renewed successfully, updating database')
             # renewal_job.wait(raise_error=True) above guarantees a successful result.
             assert renewal_job.result is not None
