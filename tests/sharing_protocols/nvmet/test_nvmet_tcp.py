@@ -4,10 +4,13 @@ import json
 import random
 import string
 import time
+import uuid
 from collections import defaultdict
 from functools import cache
 
 import pytest
+from nvmeof_client import NVMeoFClient, NVMeoFConnectionError
+
 from assets.websocket.pool import zvol
 from assets.websocket.service import ensure_service_enabled, ensure_service_started
 from auto_config import ha, pool_name
@@ -2300,3 +2303,93 @@ class TestManySubsystems:
             # One extra for the discovery target.
             res = nc.discover()
             assert len(res['records']) == self.SUBSYS_COUNT + 1
+
+
+class TestAllowAnyHostToggle(NVMeRunning):
+    """
+    Regression test for toggling allow_any_host while a host_subsys link
+    to a specific host is still active.
+
+    Previously (see kernel.py NvmetSubsysConfig), flipping allow_any_host
+    False -> True wrote the subsys attribute before the now-superfluous
+    allowed_hosts symlink had been removed, which the kernel target
+    rejected. This test flips allow_any_host in both directions while a
+    host_subsys link remains active throughout, and uses NVMeoFClient
+    directly (rather than the loopback nvme CLI) so that each connection
+    attempt can present an arbitrary host NQN without touching any system
+    state on the loopback client.
+    """
+
+    @pytest.fixture(scope='class')
+    def fixture_port(self, fixture_nvmet_running):
+        assert truenas_server.ip in call('nvmet.port.transport_address_choices', 'TCP')
+        with nvmet_port(truenas_server.ip) as port:
+            yield port
+
+    def _client(self, subsys_nqn, host_nqn):
+        return NVMeoFClient(
+            truenas_server.ip,
+            subsys_nqn,
+            NVME_DEFAULT_TCP_PORT,
+            timeout=10.0,
+            host_nqn=host_nqn,
+        )
+
+    def _assert_can_connect(self, subsys_nqn, host_nqn, namespace_count):
+        client = self._client(subsys_nqn, host_nqn)
+        client.connect()
+        try:
+            assert len(client.list_namespaces()) == namespace_count
+        finally:
+            client.disconnect()
+
+    def _assert_cannot_connect(self, subsys_nqn, host_nqn):
+        client = self._client(subsys_nqn, host_nqn)
+        with pytest.raises(NVMeoFConnectionError):
+            client.connect()
+
+    def test__allow_any_host_toggle_with_active_host_link(
+        self, fixture_port, zvol1
+    ):
+        """
+        Verify that toggling allow_any_host in either direction succeeds,
+        and takes effect correctly, even while a specific host_subsys link
+        remains active throughout.
+        """
+        permitted_nqn = f'nqn.2014-08.org.nvmexpress:uuid:{uuid.uuid4()}'
+        other_nqn = f'nqn.2014-08.org.nvmexpress:uuid:{uuid.uuid4()}'
+
+        subsys_nqn = f'{basenqn()}:{SUBSYS_NAME1}'
+        with nvmet_subsys(SUBSYS_NAME1, allow_any_host=False) as subsys:
+            subsys_id = subsys['id']
+            with nvmet_port_subsys(subsys_id, fixture_port['id']):
+                with nvmet_namespace(subsys_id, f'zvol/{zvol1["name"]}'):
+                    with nvmet_host(permitted_nqn) as host:
+                        with nvmet_host_subsys(host['id'], subsys_id):
+                            # Sanity check pre-toggle behavior.
+                            self._assert_can_connect(subsys_nqn, permitted_nqn, 1)
+                            self._assert_cannot_connect(subsys_nqn, other_nqn)
+
+                            # The regression case: this must succeed even
+                            # though the allowed_hosts link for permitted_nqn
+                            # is still present at the time of the toggle.
+                            call(
+                                'nvmet.subsys.update',
+                                subsys_id,
+                                {'allow_any_host': True},
+                            )
+
+                            # Now ANY host should be able to connect.
+                            self._assert_can_connect(subsys_nqn, permitted_nqn, 1)
+                            self._assert_can_connect(subsys_nqn, other_nqn, 1)
+
+                            # Toggle back while the link is still active.
+                            call(
+                                'nvmet.subsys.update',
+                                subsys_id,
+                                {'allow_any_host': False},
+                            )
+
+                            # Only the permitted host should be allowed again.
+                            self._assert_can_connect(subsys_nqn, permitted_nqn, 1)
+                            self._assert_cannot_connect(subsys_nqn, other_nqn)
