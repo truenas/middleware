@@ -92,12 +92,12 @@ def test_dataset_set_tier_regular(tier_ds):
     assert props[0]["properties"]["special_small_blocks"]["value"] == 0
 
 
-def test_dataset_set_tier_with_migration(tier_ds):
-    # Many MiB-sized files keep the rewrite walker busy long enough for
-    # the event source's 5s poll cycle to fire and for per-file callbacks
-    # to flush LMDB state.
+def test_dataset_set_tier_with_migration(tier_ds, slow_rewrite):
+    # The slow-rewrite sentinel keeps the migration job alive long enough
+    # for the event source's 5s poll cycle to fire and for per-file
+    # callbacks to flush LMDB state; the files give it real work.
     ssh(
-        f"cd /mnt/{tier_ds} && seq 1 5000 | "
+        f"cd /mnt/{tier_ds} && seq 1 200 | "
         "xargs -P 16 -I X dd if=/dev/urandom of=fX bs=1M count=1 2>/dev/null"
     )
 

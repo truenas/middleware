@@ -24,17 +24,18 @@ _FAKE_JOB_ID = "tank/nonexistent@00000000-0000-0000-0000-000000000000"
 
 
 def _stage_pending_rewrite(ds):
-    """Set tier=PERFORMANCE, create 5000 1MiB files (blocks land on SPECIAL),
+    """Set tier=PERFORMANCE, create 200 1MiB files (blocks land on SPECIAL),
     then flip tier=REGULAR (special_small_blocks=0). Every block is now on
-    SPECIAL but policy says NORMAL — a rewrite must walk all 5000 inodes
-    and move every block. Per-file callbacks flush LMDB state on the
-    daemon's 1s stats_flush_interval cadence."""
+    SPECIAL but policy says NORMAL — a rewrite must walk all 200 inodes and
+    move every block. With the slow-rewrite sentinel active the job stays
+    alive for at least 200 * SLOW_REWRITE_DELAY_MS, and the staged data is
+    small enough not to pressure the pool's space thresholds."""
     call(
         "zfs.tier.dataset_set_tier",
         {"dataset_name": ds, "tier_type": "PERFORMANCE"},
     )
     ssh(
-        f"cd /mnt/{ds} && seq 1 5000 | "
+        f"cd /mnt/{ds} && seq 1 200 | "
         "xargs -P 16 -I X dd if=/dev/urandom of=fX bs=1M count=1 2>/dev/null"
     )
     call(
@@ -113,93 +114,77 @@ def test_rewrite_job_cancel_invalid_id_format_raises_callerror():
 
 
 def test_rewrite_job_query_multiple_status_filter_includes_active(
-    tier_pool, wait_for_job_status
+    make_tier_ds, slow_rewrite, wait_for_job_status
 ):
     """Filtering with a list of statuses (including the active job's actual
     status) should include the active job."""
-    ds1 = f"{tier_pool['name']}/jq_multi1_{time.monotonic_ns()}"
-    ds2 = f"{tier_pool['name']}/jq_multi2_{time.monotonic_ns()}"
-    call("pool.dataset.create", {"name": ds1})
-    call("pool.dataset.create", {"name": ds2})
-    try:
-        _stage_pending_rewrite(ds1)
-        _stage_pending_rewrite(ds2)
-        e1 = call("zfs.tier.rewrite_job_create", {"dataset_name": ds1})
-        e2 = call("zfs.tier.rewrite_job_create", {"dataset_name": ds2})
+    ds1 = make_tier_ds("jq_multi1")
+    ds2 = make_tier_ds("jq_multi2")
+    _stage_pending_rewrite(ds1)
+    _stage_pending_rewrite(ds2)
+    e1 = call("zfs.tier.rewrite_job_create", {"dataset_name": ds1})
+    e2 = call("zfs.tier.rewrite_job_create", {"dataset_name": ds2})
 
-        # Wait until the daemon has written initial LMDB state for both.
-        all_statuses = {
-            "QUEUED",
-            "RUNNING",
-            "COMPLETE",
-            "CANCELLED",
-            "STOPPED",
-            "ERROR",
-        }
-        wait_for_job_status(e1["tier_job_id"], all_statuses, timeout=30)
-        wait_for_job_status(e2["tier_job_id"], all_statuses, timeout=30)
+    # Wait until the daemon has written initial LMDB state for both.
+    all_statuses = {
+        "QUEUED",
+        "RUNNING",
+        "COMPLETE",
+        "CANCELLED",
+        "STOPPED",
+        "ERROR",
+    }
+    wait_for_job_status(e1["tier_job_id"], all_statuses, timeout=30)
+    wait_for_job_status(e2["tier_job_id"], all_statuses, timeout=30)
 
-        active = call(
-            "zfs.tier.rewrite_job_query",
-            {"status": ["QUEUED", "RUNNING", "COMPLETE"]},
-        )
-        ids = {j["tier_job_id"] for j in active}
-        assert e1["tier_job_id"] in ids
-        assert e2["tier_job_id"] in ids
+    active = call(
+        "zfs.tier.rewrite_job_query",
+        {"status": ["QUEUED", "RUNNING", "COMPLETE"]},
+    )
+    ids = {j["tier_job_id"] for j in active}
+    assert e1["tier_job_id"] in ids
+    assert e2["tier_job_id"] in ids
 
-        cancelled_only = call("zfs.tier.rewrite_job_query", {"status": ["CANCELLED"]})
-        cancelled_ids = {j["tier_job_id"] for j in cancelled_only}
-        assert e1["tier_job_id"] not in cancelled_ids
-        assert e2["tier_job_id"] not in cancelled_ids
-    finally:
-        for ds in (ds1, ds2):
-            try:
-                call("pool.dataset.delete", ds, {"recursive": True})
-            except Exception:
-                pass
+    cancelled_only = call("zfs.tier.rewrite_job_query", {"status": ["CANCELLED"]})
+    cancelled_ids = {j["tier_job_id"] for j in cancelled_only}
+    assert e1["tier_job_id"] not in cancelled_ids
+    assert e2["tier_job_id"] not in cancelled_ids
 
 
-def test_rewrite_job_query_pagination_via_query_options(tier_pool, wait_for_job_status):
+def test_rewrite_job_query_pagination_via_query_options(
+    make_tier_ds, slow_rewrite, wait_for_job_status
+):
     """rewrite_job_query honors the standard query-options pagination."""
-    ds1 = f"{tier_pool['name']}/jq_page1_{time.monotonic_ns()}"
-    ds2 = f"{tier_pool['name']}/jq_page2_{time.monotonic_ns()}"
-    call("pool.dataset.create", {"name": ds1})
-    call("pool.dataset.create", {"name": ds2})
-    try:
-        _stage_pending_rewrite(ds1)
-        _stage_pending_rewrite(ds2)
-        e1 = call("zfs.tier.rewrite_job_create", {"dataset_name": ds1})
-        e2 = call("zfs.tier.rewrite_job_create", {"dataset_name": ds2})
-        all_statuses = {
-            "QUEUED",
-            "RUNNING",
-            "COMPLETE",
-            "CANCELLED",
-            "STOPPED",
-            "ERROR",
-        }
-        wait_for_job_status(e1["tier_job_id"], all_statuses, timeout=30)
-        wait_for_job_status(e2["tier_job_id"], all_statuses, timeout=30)
+    ds1 = make_tier_ds("jq_page1")
+    ds2 = make_tier_ds("jq_page2")
+    _stage_pending_rewrite(ds1)
+    _stage_pending_rewrite(ds2)
+    e1 = call("zfs.tier.rewrite_job_create", {"dataset_name": ds1})
+    e2 = call("zfs.tier.rewrite_job_create", {"dataset_name": ds2})
+    all_statuses = {
+        "QUEUED",
+        "RUNNING",
+        "COMPLETE",
+        "CANCELLED",
+        "STOPPED",
+        "ERROR",
+    }
+    wait_for_job_status(e1["tier_job_id"], all_statuses, timeout=30)
+    wait_for_job_status(e2["tier_job_id"], all_statuses, timeout=30)
 
-        page_one = call(
-            "zfs.tier.rewrite_job_query",
-            {"query-options": {"limit": 1, "offset": 0}},
-        )
-        assert len(page_one) <= 1
+    page_one = call(
+        "zfs.tier.rewrite_job_query",
+        {"query-options": {"limit": 1, "offset": 0}},
+    )
+    assert len(page_one) <= 1
 
-        all_jobs = call("zfs.tier.rewrite_job_query", {})
-        # Sanity: with limit unspecified, both should show
-        ids = {j["tier_job_id"] for j in all_jobs}
-        # The two we created should both be present
-        # (we don't assert on count because other jobs may exist)
-        # but limit=1 should have given us at most 1 row.
-        assert len(ids) >= 2
-    finally:
-        for ds in (ds1, ds2):
-            try:
-                call("pool.dataset.delete", ds, {"recursive": True})
-            except Exception:
-                pass
+    all_jobs = call("zfs.tier.rewrite_job_query", {})
+    # Sanity: with limit unspecified, both should show
+    ids = {j["tier_job_id"] for j in all_jobs}
+    # The two we created should both be present
+    # (we don't assert on count because other jobs may exist)
+    # but limit=1 should have given us at most 1 row.
+    assert len(ids) >= 2
 
 
 # ----------------------------------------------------------------------------
