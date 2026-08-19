@@ -113,12 +113,16 @@ class AppService(Service):
                 self.middleware.call_sync('app.pull_images_internal', app_name, app, {'redeploy': True})
             finally:
                 app = self.middleware.call_sync('app.get_instance', app_name)
-                if app['upgrade_available'] is False or app['custom_app']:
-                    # Pull may have succeeded but redeploy failed - we early-return here
-                    # so that the caller can update alerts based on the refreshed app state
+                upgrade_completed = app['upgrade_available'] is False or app['custom_app']
+                if upgrade_completed:
+                    # Pull may have succeeded but redeploy failed - refresh the app state here
+                    # so that the caller can update alerts based on it either way. Note that this
+                    # must not return, as a return inside `finally` discards an in-flight exception.
                     self.middleware.send_event('app.query', 'CHANGED', id=app_name, fields=app)
-                    job.set_progress(100, 'App successfully upgraded and redeployed')
-                    return app
+
+            if upgrade_completed:
+                job.set_progress(100, 'App successfully upgraded and redeployed')
+                return app
 
         job.set_progress(15, f'Retrieving versions for {app_name!r} app')
         versions_config = self.middleware.call_sync('app.get_versions', app, options)
