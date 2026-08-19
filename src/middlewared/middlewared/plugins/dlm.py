@@ -22,6 +22,7 @@ class DistributedLockManagerService(Service):
         namespace = 'dlm'
 
     resetting = False
+    polling_remote_down = False
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -322,6 +323,18 @@ class DistributedLockManagerService(Service):
             # await self.middleware.call('dlm.kernel.comms_remove_node', nodeid)
 
     @private
+    async def dlm_port_reachable(self, peer_ip):
+        try:
+            _, writer = await asyncio.wait_for(
+                asyncio.open_connection(peer_ip, DLM_PORT), timeout=3
+            )
+            writer.close()
+            await writer.wait_closed()
+            return True
+        except Exception:
+            return False
+
+    @private
     async def remote_down(self):
         """
         Handle the HA remote node going down.
@@ -334,6 +347,13 @@ class DistributedLockManagerService(Service):
           restarted; skip to avoid unnecessarily tearing down iSCSI sessions.
         - If we have logged-in extents, we are in standby or mid-transition to
           master; the failover event is already handling cleanup.
+
+        This is invoked synchronously from the HA connection thread's disconnect
+        handler (via call_sync), so it must return quickly. If the peer's DLM port
+        is unreachable, the up-to-60-second poll that decides whether to call
+        reset_active runs as a background task rather than being awaited here,
+        so it doesn't block reconnection attempts or other disconnect callbacks
+        (e.g. failover status updates).
         """
         if await self.middleware.call('failover.status') != 'MASTER':
             return
@@ -349,20 +369,13 @@ class DistributedLockManagerService(Service):
             self.logger.warning('remote_down: peer IP unknown, skipping reset_active')
             return
 
-        try:
-            _, writer = await asyncio.wait_for(
-                asyncio.open_connection(peer_ip, DLM_PORT), timeout=3
-            )
-            writer.close()
-            await writer.wait_closed()
+        if await self.dlm_port_reachable(peer_ip):
             self.logger.info(
                 'remote_down: DLM port reachable on %s; '
                 'remote middleware restarted, skipping reset_active',
                 peer_ip,
             )
             return
-        except Exception:
-            pass
 
         if await self.middleware.call('iscsi.extent.logged_in_extents'):
             self.logger.info(
@@ -370,28 +383,36 @@ class DistributedLockManagerService(Service):
             )
             return
 
-        # Poll for up to 60 seconds before declaring node dead
+        if DistributedLockManagerService.polling_remote_down:
+            self.logger.debug('remote_down: already polling peer, skipping duplicate poll')
+            return
+
         self.logger.info(
             'remote_down: DLM port unreachable on %s; checking whether transient',
             peer_ip,
         )
-        deadline = time.monotonic() + 60
-        while time.monotonic() < deadline:
-            await asyncio.sleep(5)
-            try:
-                _, writer = await asyncio.wait_for(
-                    asyncio.open_connection(peer_ip, DLM_PORT), timeout=3
-                )
-                writer.close()
-                await writer.wait_closed()
-                # Port is back — peer recovered, skip reset_active
-                self.logger.info('remote_down: DLM port recovered, skipping reset_active')
-                return
-            except Exception:
-                pass  # still unreachable, keep waiting
+        self.middleware.create_task(self.poll_remote_down(peer_ip))
 
-        self.logger.info('remote_down: DLM port unreachable for 60s; calling reset_active')
-        await self.middleware.call('dlm.reset_active')
+    @private
+    async def poll_remote_down(self, peer_ip):
+        """
+        Poll the peer's DLM port for up to 60 seconds; call reset_active if it stays
+        down the whole time. Runs as a background task kicked off from remote_down.
+        """
+        DistributedLockManagerService.polling_remote_down = True
+        try:
+            deadline = time.monotonic() + 60
+            while time.monotonic() < deadline:
+                await asyncio.sleep(5)
+                if await self.dlm_port_reachable(peer_ip):
+                    # Port is back — peer recovered, skip reset_active
+                    self.logger.info('remote_down: DLM port recovered, skipping reset_active')
+                    return
+
+            self.logger.info('remote_down: DLM port unreachable for 60s; calling reset_active')
+            await self.middleware.call('dlm.reset_active')
+        finally:
+            DistributedLockManagerService.polling_remote_down = False
 
     @private
     async def local_remove_peer(self, lockspace_name):
