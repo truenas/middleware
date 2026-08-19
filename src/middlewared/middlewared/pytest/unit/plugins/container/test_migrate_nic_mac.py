@@ -41,10 +41,12 @@ def test_normalize_mac_rejects_what_is_not_an_address(value):
 
 
 def test_yaml_resolves_a_numeric_mac_as_an_integer():
-    """The manifest value the migration reads is not always a string.
+    """Why the migration cannot assume the value it reads is a string.
 
     Every octet of qemu's own `52:54:00:` range can be numeric and below 60, which is the YAML 1.1
-    sexagesimal form, so an unquoted address of that shape arrives as an `int`.
+    sexagesimal form, so an unquoted address of that shape arrives as an `int`. incus quotes the
+    addresses it writes, so this is what `normalize_mac` rejecting a non-string is defending against
+    rather than something a manifest is expected to contain.
     """
     assert yaml.safe_load("hwaddr: 52:54:00:12:34:56") == {"hwaddr": 41135085296}
     assert yaml.safe_load("hwaddr: 00:16:3e:aa:bb:cc") == {"hwaddr": "00:16:3e:aa:bb:cc"}

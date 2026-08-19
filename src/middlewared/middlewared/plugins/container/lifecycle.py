@@ -5,7 +5,7 @@ import os
 import truenas_os
 from truenas_pylibvirt import (
     ContainerCapabilitiesPolicy, ContainerDomain, ContainerDomainConfiguration, ContainerIdmapConfiguration,
-    ContainerIdmapConfigurationItem, NICDevice, NICDeviceType, Time,
+    ContainerIdmapConfigurationItem, Error as PyLibvirtError, NICDevice, NICDeviceType, Time,
 )
 
 from middlewared.api import api_method
@@ -171,7 +171,10 @@ class ContainerService(Service):
         except Exception:
             self.logger.warning('Failed to configure hostname for container %r', container['name'], exc_info=True)
 
-        self.middleware.libvirt_domains_manager.containers.start(pylibvirt_obj)
+        try:
+            self.middleware.libvirt_domains_manager.containers.start(pylibvirt_obj)
+        except PyLibvirtError as e:
+            raise CallError(str(e))
 
     @api_method(ContainerStopArgs, ContainerStopResult, roles=["CONTAINER_WRITE"])
     @job(lock=lambda args: f'container_stop_{args[0]}')
