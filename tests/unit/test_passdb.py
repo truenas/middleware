@@ -5,6 +5,7 @@ import string
 import subprocess
 
 from dataclasses import asdict
+from struct import pack
 from middlewared.plugins.smb_ import util_passdb
 from middlewared.plugins.smb_.util_account_policy import (
     SMBAccountPolicy, sync_account_policy, get_account_policy
@@ -283,3 +284,56 @@ def test__invalid_smb_hash(nthash_str, error):
             util_passdb.user_entry_to_passdb_entry(PDB_DOMAIN, user)
     else:
         util_passdb.user_entry_to_passdb_entry(PDB_DOMAIN, user)
+
+
+def test__passdb_constants_match_samba():
+    """
+    Test the version keys and values written to a new passdb.tdb.
+
+    source3/passdb/pdb_tdb.c defines TDBSAM_VERSION 4, TDBSAM_MINOR_VERSION 0,
+    TDBSAM_VERSION_STRING "INFO/version", TDBSAM_MINOR_VERSION_STRING
+    "INFO/minor_version", USERPREFIX "USER_" and RIDPREFIX "RID_".
+    """
+    assert util_passdb.MAJOR_VERSION_KEY == 'INFO/version'
+    assert util_passdb.MINOR_VERSION_KEY == 'INFO/minor_version'
+    assert util_passdb.MAJOR_VERSION_VAL == pack('<I', 4)
+    assert util_passdb.MINOR_VERSION_VAL == pack('<I', 0)
+    assert util_passdb.USER_PREFIX == 'USER_'
+    assert util_passdb.RID_PREFIX == 'RID_'
+
+
+def test__pdb_entry_buffer_layout(pdb_times):
+    """
+    Test the leading fields of a packed samu buffer.
+
+    init_samu_from_buffer_v3() in source3/passdb/passdb.c reads SAMU_BUFFER_FORMAT_V3
+    as seven "d" timestamps followed by "B" fields in the order username, domain,
+    nt_username, fullname. "d" is a little-endian uint32 and "B" a little-endian uint32
+    length followed by that many bytes, the length of a string field counting its NUL.
+    """
+    entry = util_passdb.PDBEntry(**(PDB_DICT_DEFAULTS | {
+        'username': 'pdbuser',
+        'full_name': 'pdbuser_name',
+        'user_rid': 20070,
+        'nt_pw': SAMPLE_USER['smbhash'],
+        'times': pdb_times,
+    }))
+
+    data = util_passdb._pack_pdb_entry(entry)
+
+    assert data[0:28] == pack(
+        '<iiiiiii',
+        pdb_times.logon,
+        pdb_times.logoff,
+        pdb_times.kickoff,
+        pdb_times.bad_password,
+        pdb_times.pass_last_set,
+        pdb_times.pass_can_change,
+        pdb_times.pass_must_change,
+    )
+    assert data[28:].startswith(pack('<I', len('pdbuser') + 1) + b'pdbuser\x00')
+
+    # the NT hash is packed as 16 raw bytes, not as a NUL-terminated string
+    assert pack('<I', 16) + bytes.fromhex(SAMPLE_USER['smbhash']) in data
+
+    assert util_passdb._unpack_pdb_bytes(data) == entry

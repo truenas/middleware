@@ -231,3 +231,85 @@ def test_restore_via_synchronize(setup_smb_share):
         # Verify we got it back
         acl = call('sharing.smb.getacl', {'share_name': setup_smb_share['name']})
         assert acl['share_acl'][0]['ae_who_sid'] == sid
+
+
+@pytest.fixture(scope="module")
+def legacy_acl_share():
+    with dataset(
+        "smb-sharesec-legacy",
+        {'share_type': 'SMB'},
+    ) as ds:
+        with smb_share(f'/mnt/{ds}', "my_sharesec_legacy") as share:
+            yield share
+
+
+def set_legacy_share_acl(share, aclstr):
+    """ Write a TrueNAS CORE format share ACL directly into the config database """
+    call(
+        'datastore.update', 'sharing.cifs_share', share['id'],
+        {'cifs_share_acl': aclstr}
+    )
+
+
+@pytest.mark.parametrize('aclstr,expected', [
+    # A security descriptor for a single well-known SID packs into a short byte string
+    # that contains no base64 alphabet characters, so an encoding mismatch on it yields
+    # an empty value rather than an error.
+    (
+        'S-1-1-0:ALLOWED/0x0/FULL',
+        [{'ae_who_sid': 'S-1-1-0', 'ae_perm': 'FULL', 'ae_type': 'ALLOWED'}],
+    ),
+    (
+        'S-1-5-32-544:ALLOWED/0x0/FULL',
+        [{'ae_who_sid': 'S-1-5-32-544', 'ae_perm': 'FULL', 'ae_type': 'ALLOWED'}],
+    ),
+    (
+        'S-1-5-32-544:ALLOWED/0x0/FULL S-1-5-32-545:ALLOWED/0x0/READ',
+        [
+            {'ae_who_sid': 'S-1-5-32-544', 'ae_perm': 'FULL', 'ae_type': 'ALLOWED'},
+            {'ae_who_sid': 'S-1-5-32-545', 'ae_perm': 'READ', 'ae_type': 'ALLOWED'},
+        ],
+    ),
+])
+def test_flush_legacy_share_acl(legacy_acl_share, aclstr, expected):
+    """ Share ACLs migrated from TrueNAS CORE are stored as a space-delimited string
+    rather than a packed security descriptor and must be converted on flush. """
+    set_legacy_share_acl(legacy_acl_share, aclstr)
+
+    call('smb.sharesec.flush_share_info')
+
+    entry = call(
+        'smb.sharesec.entries',
+        [['key', '=', f'SECDESC/{legacy_acl_share["name"].lower()}']],
+        {'get': True}
+    )
+    assert entry['value'] != ''
+
+    acl = call('sharing.smb.getacl', {'share_name': legacy_acl_share['name']})
+    assert len(acl['share_acl']) == len(expected)
+    for idx, ace in enumerate(expected):
+        assert acl['share_acl'][idx]['ae_who_sid'] == ace['ae_who_sid']
+        assert acl['share_acl'][idx]['ae_perm'] == ace['ae_perm']
+        assert acl['share_acl'][idx]['ae_type'] == ace['ae_type']
+
+
+def test_legacy_share_acl_converted_in_config(legacy_acl_share):
+    """ Once flushed, the legacy string in the config database is replaced by the
+    packed security descriptor read back out of share_info.tdb. """
+    set_legacy_share_acl(legacy_acl_share, 'S-1-5-32-544:ALLOWED/0x0/CHANGE')
+
+    call('smb.sharesec.flush_share_info')
+    call('smb.sharesec.synchronize_acls')
+
+    stored = call(
+        'datastore.query', 'sharing.cifs_share',
+        [['id', '=', legacy_acl_share['id']]],
+        {'get': True}
+    )['cifs_share_acl']
+
+    assert stored != ''
+    assert not stored.startswith('S-1-')
+
+    acl = call('sharing.smb.getacl', {'share_name': legacy_acl_share['name']})
+    assert acl['share_acl'][0]['ae_who_sid'] == 'S-1-5-32-544'
+    assert acl['share_acl'][0]['ae_perm'] == 'CHANGE'
