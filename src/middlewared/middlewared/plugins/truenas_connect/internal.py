@@ -35,7 +35,9 @@ async def set_status(
 ) -> None:
     assert new_status in Status.__members__
     entry = await context.call2(context.s.tn_connect.config)
-    if not entry.enabled and new_status != Status.DISABLED.name:
+    # db_payload may itself be enabling TNC (post-install bootstrap), so it takes precedence over the persisted value
+    will_be_enabled = (db_payload or {}).get("enabled", entry.enabled)
+    if not will_be_enabled and new_status != Status.DISABLED.name:
         # Cert generation/renewal or registration finalization may finish after TNC was disabled
         logger.warning("TNC is disabled, ignoring status transition to %r", new_status)
         return

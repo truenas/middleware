@@ -954,6 +954,26 @@ async def test_set_status_writes_when_enabled():
 
 
 @pytest.mark.asyncio
+async def test_set_status_writes_when_payload_enables():
+    """Post-install bootstrap enables TNC through the payload while the row is still disabled."""
+    from middlewared.plugins.truenas_connect import internal
+
+    ctx = MagicMock()
+    ctx.middleware = MagicMock()
+    ctx.middleware.call = AsyncMock()
+    ctx.middleware.send_event = MagicMock()
+    ctx.call2 = AsyncMock(return_value=make_tnc_entry(enabled=False, status=Status.DISABLED.name))
+
+    await internal.set_status(ctx, Status.CONFIGURED.name, {'enabled': True, 'certificate': 2})
+
+    ctx.middleware.call.assert_awaited_once_with(
+        'datastore.update', 'truenas_connect', 1,
+        {'status': Status.CONFIGURED.name, 'enabled': True, 'certificate': 2},
+    )
+    ctx.middleware.send_event.assert_called_once()
+
+
+@pytest.mark.asyncio
 async def test_cert_generation_discarded_when_disabled_midway():
     """Disabling TNC while the cert job runs must not insert the cert or flip status back to configured."""
     from middlewared.plugins.truenas_connect.acme import TNCACMEService
