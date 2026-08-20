@@ -1,4 +1,4 @@
-from truenas_pylibvirt import Time, VmBootloader, VmCpuMode
+from truenas_pylibvirt import Error as PyLibvirtError, Time, VmBootloader, VmCpuMode
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -49,8 +49,10 @@ class VMService(Service):
                         'Please remove PCI/USB devices from VM before starting it in HA capable machines'
                     )
 
-        # Start the VM using pylibvirt
-        self.middleware.libvirt_domains_manager.vms.start(self.pylibvirt_vm(vm, options))
+        try:
+            self.middleware.libvirt_domains_manager.vms.start(self.pylibvirt_vm(vm, options))
+        except PyLibvirtError as e:
+            raise CallError(str(e))
 
         # Reload HTTP service for display device changes
         self.middleware.call_sync('service.control', 'RELOAD', 'http').wait_sync(raise_error=True)
