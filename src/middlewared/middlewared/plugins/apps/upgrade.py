@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import errno
 import logging
 import os
 import subprocess
@@ -26,7 +27,7 @@ from middlewared.api.current import (
     ZFSResourceSnapshotCreateQuery,
     ZFSResourceSnapshotDestroyQuery,
 )
-from middlewared.plugins.catalog.utils import IX_APP_NAME
+from middlewared.plugins.catalog.utils import IX_APP_NAME, OFFICIAL_LABEL
 from middlewared.service import CallError, ServiceContext, ValidationErrors
 from middlewared.service_exception import InstanceNotFound
 from middlewared.utils.yaml import safe_yaml_load
@@ -65,6 +66,14 @@ async def upgrade_summary(
     app = await context.call2(context.s.app.get_instance, app_name)
     assert_app_usable(app)
     if app.upgrade_available is False:
+        # A custom app's upgrades come from its images rather than the catalog, so only a catalog app
+        # can be reporting "no upgrade" purely because there is nothing to compare against.
+        if not app.custom_app and not await context.call2(context.s.catalog.train_data_available):
+            raise CallError(
+                f'Unable to determine upgrades for {app_name!r} because no app data is available from the '
+                f'{OFFICIAL_LABEL!r} catalog', errno.ENODATA
+            )
+
         raise CallError(f'No upgrade available for {app_name!r}')
 
     if app.custom_app:
@@ -362,6 +371,11 @@ async def update_app_upgrade_alert(context: ServiceContext) -> None:
     Deletes existing app update alerts and creates a single consolidated alert
     if any apps have updates available.
     """
+    if not await context.call2(context.s.catalog.train_data_available):
+        # With no catalog data every app reports no upgrade available, which reads as evidence that
+        # nothing needs updating. Abstain rather than clear a valid alert on the strength of that.
+        return
+
     # Get all apps with updates
     # We only raise alerts in 2 cases:
     # 1) app version changed

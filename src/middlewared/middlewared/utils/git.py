@@ -4,6 +4,12 @@ import textwrap
 
 from middlewared.service import CallError
 
+CLONE_TIMEOUT = 900
+PULL_TIMEOUT = 600
+RESET_TIMEOUT = 120
+CHECKOUT_TIMEOUT = 120
+STATUS_TIMEOUT = 30
+
 
 def clone_repository(
     repository_uri: str, destination: str, branch: str | None = None, depth: int | None = None
@@ -18,7 +24,16 @@ def clone_repository(
     ):
         args.extend(arg)  # type: ignore[arg-type]
 
-    cp = subprocess.run(['git', 'clone'] + args + [repository_uri, destination], capture_output=True)
+    try:
+        cp = subprocess.run(
+            ['git', 'clone'] + args + [repository_uri, destination], capture_output=True, timeout=CLONE_TIMEOUT
+        )
+    except subprocess.TimeoutExpired:
+        raise CallError(
+            f'Timed out after {CLONE_TIMEOUT} seconds cloning {repository_uri!r} repository '
+            f'at {destination!r} destination'
+        )
+
     if cp.returncode:
         error_message = textwrap.shorten(cp.stderr.decode(), width=50, placeholder='...')
         raise CallError(
@@ -27,7 +42,16 @@ def clone_repository(
 
 
 def checkout_repository(destination: str, branch: str) -> None:
-    cp = subprocess.run(['git', '-C', destination, 'checkout', branch], capture_output=True)
+    try:
+        cp = subprocess.run(
+            ['git', '-C', destination, 'checkout', branch], capture_output=True, timeout=CHECKOUT_TIMEOUT
+        )
+    except subprocess.TimeoutExpired:
+        raise CallError(
+            f'Timed out after {CHECKOUT_TIMEOUT} seconds checking out {branch!r} branch '
+            f'for {destination!r} repository'
+        )
+
     if cp.returncode:
         error_message = textwrap.shorten(cp.stderr.decode(), width=50, placeholder='...')
         raise CallError(
@@ -38,14 +62,27 @@ def checkout_repository(destination: str, branch: str) -> None:
 def update_repo(destination: str, branch: str) -> None:
     # Always reset to ensure working directory matches the repository state
     # This handles cases where files are missing, modified, or corrupted
-    cp = subprocess.run(['git', '-C', destination, 'reset', '--hard', f'origin/{branch}'], capture_output=True)
+    try:
+        cp = subprocess.run(
+            ['git', '-C', destination, 'reset', '--hard', f'origin/{branch}'],
+            capture_output=True, timeout=RESET_TIMEOUT,
+        )
+    except subprocess.TimeoutExpired:
+        raise CallError(f'Timed out after {RESET_TIMEOUT} seconds resetting {destination!r} repository')
+
     if cp.returncode:
         error_message = textwrap.shorten(cp.stderr.decode(), width=50, placeholder='...')
         raise CallError(
             f'Failed to reset {destination!r} repository: {error_message}'
         )
 
-    cp = subprocess.run(['git', '-C', destination, 'pull', 'origin', branch], capture_output=True)
+    try:
+        cp = subprocess.run(
+            ['git', '-C', destination, 'pull', 'origin', branch], capture_output=True, timeout=PULL_TIMEOUT
+        )
+    except subprocess.TimeoutExpired:
+        raise CallError(f'Timed out after {PULL_TIMEOUT} seconds updating {destination!r} repository')
+
     if cp.returncode:
         error_message = textwrap.shorten(cp.stderr.decode(), width=50, placeholder='...')
         raise CallError(
@@ -54,5 +91,9 @@ def update_repo(destination: str, branch: str) -> None:
 
 
 def validate_git_repo(destination: str) -> bool:
-    cp = subprocess.run(['git', '-C', destination, 'status'], capture_output=True)
+    try:
+        cp = subprocess.run(['git', '-C', destination, 'status'], capture_output=True, timeout=STATUS_TIMEOUT)
+    except subprocess.TimeoutExpired:
+        raise CallError(f'Timed out after {STATUS_TIMEOUT} seconds reading status of {destination!r} repository')
+
     return cp.returncode == 0

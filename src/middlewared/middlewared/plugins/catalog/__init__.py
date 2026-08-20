@@ -40,6 +40,9 @@ from .apps_details import (
     get_normalized_questions_context as get_nqc_impl,
 )
 from .apps_details import (
+    train_data_available as train_data_available_impl,
+)
+from .apps_details import (
     train_to_apps_version_mapping as train_to_apps_version_mapping_impl,
 )
 from .config import CatalogConfigPart
@@ -113,6 +116,10 @@ class CatalogService(GenericConfigService[CatalogEntry]):
         return CatalogTrainsResponse.model_validate(
             list(apps_impl(self.context, CatalogApps(cache=True, cache_only=True)).root)
         )
+
+    @private
+    async def train_data_available(self) -> bool:
+        return await train_data_available_impl(self.context)
 
     @private
     def train_to_apps_version_mapping(self) -> dict[str, dict[str, dict[str, str | None]]]:

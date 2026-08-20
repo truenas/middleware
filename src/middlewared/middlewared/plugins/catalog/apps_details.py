@@ -67,13 +67,18 @@ def apps(context: ServiceContext, options: CatalogApps) -> CatalogAppsResponse:
     cache_available = False
 
     if options.cache:
-        cache_key = get_cache_key(catalog.label)
+        cache_key = get_cache_key(catalog.label, catalog.location)
         try:
             orig_cached_data = context.middleware.call_sync('cache.get', cache_key)
         except KeyError:
             orig_cached_data = None
 
-        cache_available = orig_cached_data is not None
+        cache_available = bool(orig_cached_data)
+        if orig_cached_data is not None and not cache_available:
+            # An empty mapping is not an answer, it is the absence of one. The cache lives on tmpfs
+            # and survives a middlewared restart, so drop it here to let a later sync repopulate it.
+            context.logger.warning('%s: discarding empty cached catalog data', catalog.label)
+            context.middleware.call_sync('cache.pop', cache_key)
 
     if options.cache and options.cache_only and not cache_available:
         return CatalogAppsResponse.model_validate({})
@@ -94,22 +99,19 @@ def apps(context: ServiceContext, options: CatalogApps) -> CatalogAppsResponse:
     elif not os.path.exists(catalog.location):
         return CatalogAppsResponse.model_validate({})
 
-    if all_trains:
-        # We can only safely say that the catalog is healthy if we retrieve data for all trains
-        context.middleware.call_sync2(
-            context.middleware.services.alert.oneshot_delete, 'CatalogNotHealthy', catalog.label
-        )
-
     trains = get_trains(context, catalog, options)
 
-    if all_trains:
+    if all_trains and trains:
         # We will only update cache if we are retrieving data of all trains for a catalog
         # which happens when we sync catalog(s) periodically or manually
         # We cache for 90000 seconds giving system an extra 1 hour to refresh it's cache which
         # happens after 24h - which means that for a small amount of time it's possible that user
         # come with a case where system is trying to access cached data but it has expired and it's
         # reading again from disk hence the extra 1 hour.
-        context.middleware.call_sync('cache.put', get_cache_key(catalog.label), trains, 90000)
+        context.middleware.call_sync('cache.put', get_cache_key(catalog.label, catalog.location), trains, 90000)
+    elif all_trains:
+        # Caching this would make every later reader believe the catalog is legitimately empty
+        context.logger.warning('%s: no train data read from catalog, leaving cache untouched', catalog.label)
 
     return CatalogAppsResponse.model_validate(trains)
 
@@ -117,12 +119,16 @@ def apps(context: ServiceContext, options: CatalogApps) -> CatalogAppsResponse:
 def get_trains(
     context: ServiceContext, catalog: CatalogEntry, options: CatalogApps,
 ) -> dict[str, dict[str, typing.Any]]:
+    # This must not raise - `app.available` and friends read through here and are required to
+    # degrade to an empty result rather than error out.
     if os.path.exists(os.path.join(catalog.location, CACHED_CATALOG_FILE_NAME)):
         # If the data is malformed or something similar, let's read the data then from filesystem
         try:
             return retrieve_trains_data_from_json(context, catalog, options)
         except (json.JSONDecodeError, JsonValidationError):
             context.logger.error('Invalid catalog json file specified for %r catalog', catalog.id)
+    else:
+        context.logger.error('Catalog json file is missing for %r catalog', catalog.id)
 
     return {}
 
@@ -173,8 +179,27 @@ def retrieve_trains_data_from_json(
                 catalog=catalog.id, apps=', '.join(unhealthy_apps)
             )
         )
+    elif options.retrieve_all_trains:
+        # Only a successful read of every train proves the catalog is healthy. Clearing the alert
+        # anywhere else would dismiss the very breakage it describes.
+        context.middleware.call_sync2(
+            context.middleware.services.alert.oneshot_delete, 'CatalogNotHealthy', catalog.label
+        )
 
     return data
+
+
+async def train_data_available(context: ServiceContext) -> bool:
+    """Report whether train data for the catalog has actually been read at least once.
+
+    This is only meaningful because `apps` never caches an empty mapping and pops one if it finds
+    it, so a present key always means real data. `apps` must remain the only writer of that key.
+    """
+    catalog = await context.call2(context.s.catalog.config)
+    available: bool = await context.middleware.call(
+        'cache.has_key', get_cache_key(catalog.label, catalog.location)
+    )
+    return available
 
 
 async def get_normalized_questions_context(context: ServiceContext) -> NormalizedQuestions:
