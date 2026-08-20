@@ -329,6 +329,9 @@ class DistributedLockManagerService(Service):
         if await self.middleware.call('failover.status') != 'MASTER':
             return
 
+        if not await self.middleware.call('service.started', 'iscsitarget'):
+            return
+
         peer_ip = self.nodes.get(self.peernodeID, {}).get('ip')
         if not peer_ip:
             self.logger.warning('remote_down: peer IP unknown, skipping reset_active')
@@ -387,10 +390,6 @@ class DistributedLockManagerService(Service):
 
             if await self.middleware.call('failover.status') != 'MASTER':
                 self.logger.info('remote_down: no longer ACTIVE, skipping reset_active')
-                return
-
-            if not await self.middleware.call('iscsi.global.using_dlm'):
-                self.logger.info('remote_down: no longer DLM, skipping reset_active')
                 return
 
             self.logger.info('remote_down: peer unreachable for 60s; calling reset_active')
