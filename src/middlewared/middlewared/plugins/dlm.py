@@ -396,8 +396,14 @@ class DistributedLockManagerService(Service):
     @private
     async def poll_remote_down(self, peer_ip):
         """
-        Poll the peer's DLM port for up to 60 seconds; call reset_active if it stays
-        down the whole time. Runs as a background task kicked off from remote_down.
+        Poll for up to 60 seconds for any sign the peer is still alive (its DLM port
+        or its middleware coming back); call reset_active only if neither recovers
+        the whole time. Runs as a background task kicked off from remote_down.
+
+        If the peer is only transiently unreachable, no action is needed — it will
+        recover on its own. If it has truly died, it will call reset_active on us
+        itself once it reboots and comes back up. So this is a last resort for the
+        case where the peer never comes back, and any sign of life should cancel it.
         """
         DistributedLockManagerService.polling_remote_down = True
         try:
@@ -409,7 +415,12 @@ class DistributedLockManagerService(Service):
                     self.logger.info('remote_down: DLM port recovered, skipping reset_active')
                     return
 
-            self.logger.info('remote_down: DLM port unreachable for 60s; calling reset_active')
+                if await self.middleware.call('failover.remote_connected'):
+                    # Middleware is back — peer recovered, skip reset_active
+                    self.logger.info('remote_down: remote middleware reconnected, skipping reset_active')
+                    return
+
+            self.logger.info('remote_down: peer unreachable for 60s; calling reset_active')
             await self.middleware.call('dlm.reset_active')
         finally:
             DistributedLockManagerService.polling_remote_down = False
