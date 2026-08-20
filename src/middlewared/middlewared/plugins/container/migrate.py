@@ -2,14 +2,17 @@ from __future__ import annotations
 
 import ipaddress
 import os
+import re
 import typing
 
+from truenas_pylibvirt.utils.usb import get_all_usb_devices
 import yaml
 
 from middlewared.api.current import ContainerEntry, ZFSResourceQuery
 from middlewared.plugins.pool_.utils import UpdateImplArgs
 from middlewared.service import CallError, ServiceContext
 import middlewared.sqlalchemy as sa
+from middlewared.utils.libvirt.nic import normalize_mac, random_mac
 
 from .crud import ContainerCreateWithDataset
 from .dataset import ensure_datasets
@@ -18,6 +21,110 @@ from .utils import container_dataset
 
 if typing.TYPE_CHECKING:
     from middlewared.job import Job
+
+
+RE_USB_ID = re.compile(r'(?:0[xX])?[0-9a-fA-F]{4}')
+
+
+def usb_id(value: typing.Any) -> str | None:
+    """The `0x`-prefixed lowercase form of an incus USB vendor or product id, or None.
+
+    The API pattern behind these only asks for a leading `0x`, so prefixing unconditionally turns a
+    value that already carries one into `0x0x046d` and stores something no device can ever match.
+    Anything that is not four hex digits is rejected outright rather than coerced: coercion is not
+    invertible, and an id that can never resolve is worse than one treated as absent.
+    """
+    if not isinstance(value, str) or not RE_USB_ID.fullmatch(value):
+        return None
+
+    return f'0x{value.lower().removeprefix("0x")}'
+
+
+def connected_usb_devices() -> dict[tuple[str, str], list[str]]:
+    """Index the ports of every usable, connected, non-hub USB device by its ids, from one udev scan.
+
+    A device name is the port a device is plugged into, and survives a replug. Several devices can
+    carry one pair of ids (two identical dongles is an ordinary thing to own), so the value is a
+    list, ordered by device name: something has to be picked out of it, and picking by a stable key
+    beats picking by whichever one udev happened to enumerate first.
+
+    Entries that pylibvirt could not read in full are left out, along with hubs. A hub resolves to
+    nothing rather than to a device that would hand a guest everything plugged in behind it, and an
+    unreadable entry resolves to nothing rather than to a port whose start-time failure would claim
+    nothing is plugged into it while something is.
+    """
+    connected: dict[tuple[str, str], list[str]] = {}
+    for device_name, device in sorted(get_all_usb_devices().items()):
+        if not device.get('available') or device.get('error'):
+            continue
+
+        capability = device['capability']
+        vendor_id = usb_id(capability['vendor_id'])
+        product_id = usb_id(capability['product_id'])
+        if vendor_id is not None and product_id is not None:
+            connected.setdefault((vendor_id, product_id), []).append(device_name)
+
+    return connected
+
+
+def resolve_usb_device(
+    device_data: dict[str, typing.Any], connected: dict[tuple[str, str], list[str]],
+    claimed: set[str | tuple[str, str]],
+) -> tuple[dict[str, typing.Any] | None, str]:
+    """Resolve an incus USB device to a row payload, with the reason it resolved that way.
+
+    Only the vendor and product ids identify a device, and both must be there and parse. A bus and
+    device number is an enumeration counter the kernel reissues, so it says where the device sat
+    when incus last looked and nothing at all about which device it is; it takes no part in this.
+    A manifest device without both ids is dropped for good: this migration runs once per machine
+    and can never be repeated, and a row guessed from a stale address is a wrong row that nobody
+    afterwards can tell is wrong.
+
+    Ids that no connected device carries are still stored as ids: the device is merely unplugged,
+    and a row carrying what the user asked for stays visible, stays editable, and fails at start
+    with a message that names the device it is about.
+
+    `claimed` is what the rows already written for this container point at, and is added to here.
+    Two rows naming one port, or one pair of ids, collide the moment the container starts, so the
+    first device to reach a given identity keeps it and any later one is dropped.
+    """
+    vendor_id = usb_id(device_data.get('vendorid'))
+    product_id = usb_id(device_data.get('productid'))
+    if vendor_id is None or product_id is None:
+        return None, 'does not carry both a usable vendor id and a usable product id'
+
+    if candidates := connected.get((vendor_id, product_id)):
+        # A container configured for two of the same device gets two of them: taking the first
+        # unclaimed one rather than the first one hands the second row the other device instead of
+        # dropping it. Which of two identical devices ends up on which row is arbitrary either way.
+        device_name = next((name for name in candidates if name not in claimed), None)
+        if device_name is None:
+            return None, (
+                f'carries vendor id {vendor_id} product id {product_id}, and every one of the '
+                f'{len(candidates)} connected devices carrying them is already taken by an earlier '
+                'device of this container'
+            )
+
+        claimed.add(device_name)
+        of_several = (
+            f', the first free of {len(candidates)} connected devices carrying them' if len(candidates) > 1 else ''
+        )
+        return (
+            {'dtype': 'USB', 'device': device_name, 'usb': None},
+            f'resolved to port {device_name} by vendor id {vendor_id} product id {product_id}{of_several}',
+        )
+
+    if (vendor_id, product_id) in claimed:
+        return None, (
+            f'carries vendor id {vendor_id} product id {product_id}, which an earlier device of this '
+            'container already took'
+        )
+
+    claimed.add((vendor_id, product_id))
+    return (
+        {'dtype': 'USB', 'usb': {'vendor_id': vendor_id, 'product_id': product_id}, 'device': None},
+        f'was stored by vendor id {vendor_id} product id {product_id} because no connected device carries them',
+    )
 
 
 class VirtGlobalModel(sa.Model):
@@ -122,10 +229,15 @@ async def migrate(context: ServiceContext, job: Job) -> None:
 
     storage_pools = {pool} | set(filter(bool, (legacy_configuration[0]['storage_pools'] or '').split()))
     existing_containers = [container.name for container in await context.call2(context.s.container.query)]
+    # Scanned once for the whole run: a USB device replugged midway through would otherwise
+    # hand two containers two different views of the same machine.
+    connected_usb = await context.to_thread(connected_usb_devices)
     for storage_pool in storage_pools:
         # One unusable pool must not stop the pools that come after it.
         try:
-            await context.to_thread(migrate_specific_pool, context, job, storage_pool, existing_containers)
+            await context.to_thread(
+                migrate_specific_pool, context, job, storage_pool, existing_containers, connected_usb
+            )
         except Exception as e:
             context.logger.error('Unable to migrate containers on pool %r', storage_pool, exc_info=True)
             await job.logs_fd_write(
@@ -134,13 +246,18 @@ async def migrate(context: ServiceContext, job: Job) -> None:
 
 
 async def migrate_devices(
-    context: ServiceContext, job: Job, manifest: dict[str, typing.Any], container_instance: ContainerEntry
+    context: ServiceContext, job: Job, manifest: dict[str, typing.Any], container_instance: ContainerEntry,
+    connected_usb: dict[tuple[str, str], list[str]],
 ) -> None:
     devices = manifest['devices']
     container_name = container_instance.name
     nic_choices = await context.call2(context.s.container.device.nic_attach_choices)
     all_nic_choices = set(nic_choices.BRIDGE) | set(nic_choices.MACVLAN)
     gpu_choices = await context.call2(context.s.container.device.gpu_choices)
+    # What the USB rows written for this container already point at. Per container, not per
+    # run: two containers configured for the same dongle is valid, only one of them can be
+    # running at a time, whereas one container holding two rows for it never starts at all.
+    claimed_usb: set[str | tuple[str, str]] = set()
     for device_name, device_data in devices.items():
         dtype = None
         try:
@@ -168,30 +285,45 @@ async def migrate_devices(
                     ).encode())
                     continue
 
+                # These rows are written straight to the datastore, so `MACAddress` never sees this
+                # value and it has to be brought to libvirt's form here. incus quotes the address
+                # in its manifest, so in practice a well-formed string arrives; normalizing is
+                # defence against a manifest written some other way, including one where PyYAML
+                # resolves an unquoted address as a YAML 1.1 base-60 integer.
+                hwaddr = manifest['config'].get(f'volatile.{device_name}.hwaddr')
+                if (mac := normalize_mac(hwaddr)) is None:
+                    mac = random_mac()
+                    if hwaddr is not None:
+                        await job.logs_fd_write((
+                            f'MAC address {hwaddr!r} of {device_name!r} NIC device for '
+                            f'{container_name!r} is not one libvirt can parse, so {mac} was '
+                            f'generated in its place\n'
+                        ).encode())
+
                 device_payload = {
                     'dtype': 'NIC',
                     'nic_attach': device_data['parent'],
                     'type': 'VIRTIO',
                     'trust_guest_rx_filters': False,
-                    'mac': manifest['config'].get(f'volatile.{device_name}.hwaddr')
+                    'mac': mac,
                 }
             elif dtype == 'usb':
-                if (bus_num := device_data.get('busnum')) and (devnum := device_data.get('devnum')):
-                    device_payload = {
-                        'dtype': 'USB',
-                        'device': f'usb_{bus_num}_{devnum}',
-                        'usb': None,
-                    }
-                elif (vendor_id := device_data.get('vendorid')) and (product_id := device_data.get('productid')):
-                    device_payload = {
-                        'dtype': 'USB',
-                        'usb': {'vendor_id': f'0x{vendor_id}', 'product_id': f'0x{product_id}'},
-                        'device': None
-                    }
-                else:
+                device_payload, reason = resolve_usb_device(device_data, connected_usb, claimed_usb)
+                # Deliberately logged even when it works. This runs once per machine and cannot
+                # be repeated, and nothing on the row records which identity it was resolved
+                # from, so this is the only thing that makes a wrong outcome reconstructable
+                # afterwards. The job log does not survive a restart; middlewared.log does.
+                context.logger.info(
+                    'container %r: incus USB device %r (busnum=%r devnum=%r vendorid=%r productid=%r): %s',
+                    container_name, device_name,
+                    device_data.get('busnum'), device_data.get('devnum'),
+                    device_data.get('vendorid'), device_data.get('productid'),
+                    reason,
+                )
+                if device_payload is None:
                     await job.logs_fd_write((
-                        f'Skipping migration of USB device {device_name!r} for container {container_name!r} '
-                        'because the USB data is invalid or incomplete\n'
+                        f'Skipping migration of USB device {device_name!r} for container '
+                        f'{container_name!r} because it {reason}\n'
                     ).encode())
                     continue
 
@@ -236,7 +368,10 @@ async def migrate_devices(
                     )
 
 
-def migrate_specific_pool(context: ServiceContext, job: Job, pool: str, existing_containers: list[str]) -> None:
+def migrate_specific_pool(
+    context: ServiceContext, job: Job, pool: str, existing_containers: list[str],
+    connected_usb: dict[tuple[str, str], list[str]],
+) -> None:
     assert job.logs_fd is not None
     processed_parents_mountpoints = False
     datasets = context.call_sync2(
@@ -356,7 +491,9 @@ def migrate_specific_pool(context: ServiceContext, job: Job, pool: str, existing
                 )
             )
             existing_containers.append(name)
-            context.run_coroutine(migrate_devices(context, job, manifest['container'], container_instance))
+            context.run_coroutine(
+                migrate_devices(context, job, manifest['container'], container_instance, connected_usb)
+            )
         except Exception as e:
             if renamed and container_instance is None:
                 # The dataset was moved but no container row was created. Left there it

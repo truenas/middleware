@@ -4,6 +4,7 @@ import asyncio
 import os
 import typing
 
+from truenas_pylibvirt import Error as PyLibvirtError
 from truenas_pylibvirt import Time, VmBootloader, VmCpuMode
 
 from middlewared.api.current import QueryOptions, VMEntry, VMStartOptions, VMStopOptions
@@ -39,9 +40,12 @@ def start_vm(context: ServiceContext, id_: int, options: VMStartOptions) -> None
                 )
 
     # Start the VM using pylibvirt
-    context.middleware.libvirt_domains_manager.vms.start(
-        pylibvirt_vm(context, vm, options)
-    )
+    try:
+        context.middleware.libvirt_domains_manager.vms.start(
+            pylibvirt_vm(context, vm, options)
+        )
+    except PyLibvirtError as e:
+        raise CallError(str(e))
 
     # Reload HTTP service for display device changes
     context.call_sync2(context.s.service.control, 'RELOAD', 'http').wait_sync(raise_error=True)
