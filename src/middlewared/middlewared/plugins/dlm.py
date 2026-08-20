@@ -385,6 +385,14 @@ class DistributedLockManagerService(Service):
                     self.logger.info('remote_down: remote middleware reconnected, skipping reset_active')
                     return
 
+            if await self.middleware.call('failover.status') != 'MASTER':
+                self.logger.info('remote_down: no longer ACTIVE, skipping reset_active')
+                return
+
+            if not await self.middleware.call('iscsi.global.using_dlm'):
+                self.logger.info('remote_down: no longer DLM, skipping reset_active')
+                return
+
             self.logger.info('remote_down: peer unreachable for 60s; calling reset_active')
             await self.middleware.call('dlm.reset_active')
         finally:
