@@ -61,6 +61,7 @@ from middlewared.alert.source import (  # noqa: F401
     update,
     ups,
     usb_storage,
+    virtualization,
     vmware_login,
     vmware_snapshot,
     volume_status,

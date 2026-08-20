@@ -6,6 +6,7 @@ import typing
 
 from truenas_pylibvirt import Time, VmBootloader, VmCpuMode
 
+from middlewared.alert.source.virtualization import VMAutostartFailedAlert
 from middlewared.api.current import QueryOptions, VMEntry, VMStartOptions, VMStopOptions
 from middlewared.service import CallError, ServiceContext
 from middlewared.utils.libvirt.utils import ACTIVE_STATES
@@ -154,11 +155,20 @@ def suspend_vms(context: ServiceContext, vm_ids: list[int]) -> None:
 
 
 async def start_on_boot(context: ServiceContext) -> None:
+    # Clear any alert from the previous pass up front so the alert, if any, always describes
+    # the pass that just ran.
+    await context.call2(context.s.alert.oneshot_delete, 'VMAutostartFailed', None)
+
+    failures: list[str] = []
     for vm in await context.call2(context.s.vm.query, [('autostart', '=', True)], QueryOptions(force_sql_filters=True)):
         try:
             await context.to_thread(start_vm, context, vm.id, VMStartOptions())
-        except Exception as e:
-            context.logger.error(f'Failed to start VM {vm.name}: {e}')
+        except Exception:
+            context.logger.error('Failed to start VM %r', vm.name, exc_info=True)
+            failures.append(vm.name)
+
+    if failures:
+        await context.call2(context.s.alert.oneshot_create, VMAutostartFailedAlert(vms=', '.join(failures)))
 
 
 async def _stop_one_vm(context: ServiceContext, vm: typing.Any) -> None:

@@ -15,6 +15,7 @@ from truenas_pylibvirt import (
     Time,
 )
 
+from middlewared.alert.source.virtualization import ContainerAutostartFailedAlert
 from middlewared.api.current import ContainerEntry, ContainerStopOptions, QueryOptions, ZFSResourceQuery
 from middlewared.plugins.account_.constants import CONTAINER_ROOT_UID, IDMAP_COUNT
 from middlewared.service import CallError, ServiceContext
@@ -80,6 +81,10 @@ def _build_idmapped_root_acl() -> "truenas_os.POSIXACL":
 
 
 def start_on_boot(context: ServiceContext) -> None:
+    # Clear any alert from the previous pass up front so the alert, if any, always describes
+    # the pass that just ran.
+    context.call_sync2(context.s.alert.oneshot_delete, "ContainerAutostartFailed", None)
+
     # Reap orphaned runtime state under /run/truenas_containers/ before any
     # autostart so a fresh start can't collide with a leaked staged path
     # from a previous unclean shutdown (libvirtd or middlewared crash).
@@ -88,13 +93,20 @@ def start_on_boot(context: ServiceContext) -> None:
     except Exception:
         context.logger.error('Failed to reconcile container runtime state', exc_info=True)
 
+    failures: list[str] = []
     for container in context.call_sync2(
         context.s.container.query, [("autostart", "=", True)], QueryOptions(force_sql_filters=True)
     ):
         try:
             start(context, container.id)
-        except Exception as e:
-            context.logger.error(f"Failed to start {container.name!r} container: {e}")
+        except Exception:
+            context.logger.error("Failed to start %r container", container.name, exc_info=True)
+            failures.append(container.name)
+
+    if failures:
+        context.call_sync2(
+            context.s.alert.oneshot_create, ContainerAutostartFailedAlert(containers=", ".join(failures))
+        )
 
 
 async def _stop_one_container(context: ServiceContext, container: typing.Any) -> None:

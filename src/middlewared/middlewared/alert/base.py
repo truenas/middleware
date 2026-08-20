@@ -244,6 +244,7 @@ class AlertCategory(enum.Enum):
     TASKS = "TASKS"
     TRUENAS_CONNECT = "TRUENAS_CONNECT"
     UPS = "UPS"
+    VIRTUALIZATION = "VIRTUALIZATION"
 
 
 alert_category_names = {
@@ -265,6 +266,7 @@ alert_category_names = {
     AlertCategory.TASKS: "Tasks",
     AlertCategory.TRUENAS_CONNECT: "TrueNAS Connect Service",
     AlertCategory.UPS: "UPS",
+    AlertCategory.VIRTUALIZATION: "Virtualization",
 }
 
 
