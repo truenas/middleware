@@ -14,6 +14,7 @@ from truenas_pylibvirt import (
     NICDeviceType,
     Time,
 )
+from truenas_pylibvirt import Error as PyLibvirtError
 
 from middlewared.api.current import ContainerEntry, ContainerStopOptions, QueryOptions, ZFSResourceQuery
 from middlewared.plugins.account_.constants import CONTAINER_ROOT_UID, IDMAP_COUNT
@@ -128,7 +129,10 @@ def start(context: ServiceContext, id_: int) -> None:
     except Exception:
         context.logger.warning("Failed to configure hostname for container %r", container.name, exc_info=True)
 
-    context.middleware.libvirt_domains_manager.containers.start(pylibvirt_obj)
+    try:
+        context.middleware.libvirt_domains_manager.containers.start(pylibvirt_obj)
+    except PyLibvirtError as e:
+        raise CallError(str(e))
 
 
 def stop(context: ServiceContext, id_: int, options: ContainerStopOptions) -> None:
