@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import errno
 from typing import TYPE_CHECKING, Any
 
 import aiohttp
@@ -73,11 +74,18 @@ async def sync(context: ServiceContext, job: Job) -> None:
         await context.to_thread(get_feature_map, context, False)
         await retrieve_recommended_apps(context, False)
 
-        await context.call2(context.s.catalog.apps, CatalogApps(
+        catalog_apps = await context.call2(context.s.catalog.apps, CatalogApps(
             cache=False,
             cache_only=False,
             retrieve_all_trains=True,
         ))
+        if not catalog_apps.root:
+            # Reading no trains at all means the repository or its catalog.json is unusable. Failing
+            # here keeps `catalog.synced` false instead of publishing "no apps" as a valid catalog.
+            raise CallError(
+                f'No app data could be read from {OFFICIAL_LABEL!r} catalog', errno.ENODATA
+            )
+
         await update_popularity_cache(context)
     except Exception as e:
         await context.middleware.call2(

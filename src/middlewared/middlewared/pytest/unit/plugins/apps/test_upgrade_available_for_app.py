@@ -73,18 +73,10 @@ def test_catalog_entry_without_a_version_does_not_raise():
     assert upgrade_available_for_app(version_mapping, complete_metadata()) == (False, None, None)
 
 
-def test_unparseable_installed_version_still_reports_image_updates_for_a_custom_app():
-    app_metadata = complete_metadata() | {"custom_app": True}
-    app_metadata["metadata"]["version"] = "latest"
-
-    assert upgrade_available_for_app(VERSION_MAPPING, app_metadata, image_updates_available=True) == (True, None, None)
-
-
-@pytest.mark.parametrize("app_metadata", [{}, {"custom_app": True}, {"custom_app": True, "metadata": None}])
-def test_unusable_metadata_with_image_updates_does_not_raise(app_metadata):
-    upgrade_available, latest_version, latest_app_version = upgrade_available_for_app(
-        VERSION_MAPPING, app_metadata, image_updates_available=True
+def test_a_custom_app_never_reports_an_upgrade_from_here():
+    # Metadata that would otherwise report an upgrade, so the only thing holding the answer at False
+    # is the custom app check. A custom app tracks its image, and whether that image has an update
+    # pending is decided by `list_apps`, not here.
+    assert upgrade_available_for_app(VERSION_MAPPING, complete_metadata() | {"custom_app": True}) == (
+        False, None, None,
     )
-    assert upgrade_available is bool(app_metadata.get("custom_app"))
-    assert latest_version is None
-    assert latest_app_version is None
