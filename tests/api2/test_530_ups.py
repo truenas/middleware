@@ -7,6 +7,8 @@ import pytest
 from assets.websocket.service import ensure_service_enabled, ensure_service_started
 from auto_config import password, user
 
+from middlewared.service_exception import ValidationErrors
+from middlewared.test.integration.assets.account import unprivileged_user_client
 from middlewared.test.integration.utils import call, mock, ssh
 from middlewared.test.integration.utils.client import truenas_server
 from middlewared.test.integration.utils.legacy_functions import send_file
@@ -229,3 +231,18 @@ def test__ups_online_to_onbatt_lowbattery(ups_running, dummy_ups_driver_configur
     assert alert
     assert 'battery.charge: 10' in alert['formatted'], alert
     assert did_shutdown()
+
+
+@pytest.mark.parametrize('field,value', [
+    ('shutdowncmd', '/bin/sh -c id'),
+    ('options', 'user = root'),
+    ('optionsupsd', 'LISTEN 0.0.0.0 3493'),
+    ('extrausers', '[hax]\n\tpassword = hax\n\tupsmon master'),
+])
+def test__pass_through_fields_may_only_be_changed_by_a_full_admin(field, value):
+    """These land verbatim in the NUT config; `shutdowncmd` is what upsmon runs as root (NAS-142160)."""
+    with unprivileged_user_client(['SYSTEM_GENERAL_WRITE']) as c:
+        with pytest.raises(ValidationErrors) as ve:
+            c.call('ups.update', {field: value})
+
+    assert any(error.attribute == f'data.{field}' for error in ve.value.errors), ve.value.errors

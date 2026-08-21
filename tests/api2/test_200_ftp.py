@@ -12,7 +12,8 @@ import pytest
 from pytest_dependency import depends
 
 from assets.websocket.server import reboot
-from middlewared.test.integration.assets.account import user as ftp_user
+from middlewared.service_exception import ValidationErrors
+from middlewared.test.integration.assets.account import unprivileged_user_client, user as ftp_user
 from middlewared.test.integration.assets.pool import dataset as dataset_asset
 from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.utils.client import truenas_server, host as init_truenas_server
@@ -1409,3 +1410,16 @@ def test_100_ftp_service_stop():
     rv = query_ftp_service()
     assert rv['state'] == 'STOPPED'
     assert rv['enable'] is False
+
+
+def test_options_may_only_be_changed_by_a_full_admin():
+    """`options` lands verbatim in proftpd.conf, so SHARING_FTP_WRITE alone may not touch it (NAS-142160)."""
+    current = call('ftp.config')['options']
+    with unprivileged_user_client(['SHARING_FTP_WRITE']) as c:
+        with pytest.raises(ValidationErrors) as ve:
+            c.call('ftp.update', {'options': 'RootLogin on'})
+
+        assert any(error.attribute == 'data.options' for error in ve.value.errors), ve.value.errors
+
+        # Writing the current value back is not a change, so an ordinary edit still works.
+        assert c.call('ftp.update', {'options': current})['options'] == current

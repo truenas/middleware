@@ -2,7 +2,9 @@ import threading
 
 import pytest
 
+from middlewared.service_exception import ValidationErrors as ServiceValidationErrors
 from middlewared.test.integration.utils import call, client, ssh
+from middlewared.test.integration.assets.account import unprivileged_user_client
 from middlewared.test.integration.assets.apps import app
 from middlewared.test.integration.assets.docker import docker
 from middlewared.test.integration.assets.pool import another_pool
@@ -466,3 +468,22 @@ def test_app_with_unusable_metadata_is_reported_and_deletable(docker_pool, corru
                 ssh(f"rm -rf /mnt/.ix-apps/app_configs/{app_name}")
             call("app.metadata_generate", job=True)
         ssh(f"rm -f /tmp/{app_name}.metadata.bak")
+
+
+def test_custom_compose_config_may_only_be_set_by_a_full_admin():
+    """A custom app is an arbitrary compose file, so APPS_WRITE alone may not supply one (NAS-142160).
+
+    The check runs in `CRUDService.create`, before `do_create`'s job exists, so this arrives as an ordinary
+    synchronous validation error rather than as the job failure the rest of this module expects.
+    """
+    with unprivileged_user_client(["APPS_WRITE"]) as c:
+        with pytest.raises(ServiceValidationErrors) as ve:
+            c.call("app.create", {
+                "app_name": "custom-budget",
+                "custom_app": True,
+                "custom_compose_config": CUSTOM_CONFIG,
+            })
+
+        assert any(
+            error.attribute == "app_create.custom_compose_config" for error in ve.value.errors
+        ), ve.value.errors
