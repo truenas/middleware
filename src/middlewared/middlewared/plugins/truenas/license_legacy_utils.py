@@ -57,7 +57,7 @@ def parse_legacy_license(text: str) -> LicenseInfo:
         if Features.dedup in lic.features and Features.jails in lic.features:
             features.append(Features.fibrechannel)
 
-    feature_names = [FEATURE_NAME_MAP.get(f.name.upper(), f.name.upper()) for f in features]
+    feature_names: list[str] = [FEATURE_NAME_MAP.get(f.name.upper(), f.name.upper()) for f in features]
     if proactive_support_allowed(lic.contract_type.name):
         feature_names.append("SUPPORT")
 
