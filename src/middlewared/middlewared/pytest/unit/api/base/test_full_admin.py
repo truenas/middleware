@@ -1,3 +1,4 @@
+import asyncio
 from typing import Annotated, Literal, Union
 
 from pydantic import Discriminator, Field, Secret
@@ -5,6 +6,7 @@ import pytest
 
 from middlewared.api.base import BaseModel, ForUpdateMetaclass, FullAdmin, LongString
 from middlewared.api.base.handler.full_admin import full_admin_fields, full_admin_payload_fields
+from middlewared.service.full_admin import check_full_admin_payload
 from middlewared.service_exception import ValidationErrors
 from middlewared.utils.privilege import check_full_admin_fields
 
@@ -168,3 +170,78 @@ class TestPayloadShapes:
             options: Nested | None = None
 
         assert check(full_admin_fields(Share), {"options": None}) == []
+
+
+def test_an_aliased_marked_field_is_refused():
+    """`populate_by_name` would let a caller supply it under the field name, which the check never looks at."""
+
+    class Aliased(BaseModel):
+        options_: FullAdmin[str] = Field(default="", alias="options")
+
+    with pytest.raises(TypeError, match="`FullAdmin` field with an alias"):
+        full_admin_fields(Aliased)
+
+
+class _Credential:
+    is_user_session = True
+    allowlist = None
+    user = {"privilege": {"roles": ["SOME_WRITE"]}}
+
+
+class _FullAdminCredential(_Credential):
+    user = {"privilege": {"roles": ["FULL_ADMIN"]}}
+
+
+def _app(credential):
+    return type("App", (), {"authenticated_credentials": credential})()
+
+
+def _method(model):
+    return type("Method", (), {"new_style_accepts": model})()
+
+
+def _payload(data, old=None, credential=None):
+    """Drive `check_full_admin_payload` the way `CRUDService` and `ConfigService` do."""
+    return asyncio.run(
+        check_full_admin_payload(
+            _app(credential) if credential is not None else None,
+            _method(TaskCreateArgs),
+            data,
+            (lambda: asyncio.sleep(0, old)) if old is not None else None,
+        )
+    )
+
+
+class TestCheckFullAdminPayload:
+    """The wrapper the CRUD and config services call, including how it normalises the stored entry."""
+
+    def test_reads_a_stored_entry_model(self):
+        """A `generic` service returns the entry model rather than a dict, and dumping it must not raise.
+
+        Regression test: passing `expose_secrets` in `context` raises `ValueError` out of
+        `DumpableModel.model_dump`, which broke every non-FULL_ADMIN update.
+        """
+        stored = Task(name="t", extra=["--stats"])
+
+        _payload({"name": "renamed"}, stored, _Credential())
+        _payload({"extra": ["--stats"]}, stored, _Credential())
+
+        with pytest.raises(ValidationErrors) as ve:
+            _payload({"extra": ["-e", "sh"]}, stored, _Credential())
+
+        assert [error.attribute for error in ve.value.errors] == ["task_create.extra"]
+
+    def test_reads_a_stored_dict(self):
+        """A non-`generic` service returns a plain dict."""
+        stored = {"name": "t", "extra": ["--stats"]}
+
+        _payload({"extra": ["--stats"]}, stored, _Credential())
+
+        with pytest.raises(ValidationErrors):
+            _payload({"extra": ["-e", "sh"]}, stored, _Credential())
+
+    def test_a_full_admin_is_not_checked(self):
+        _payload({"extra": ["-e", "sh"]}, None, _FullAdminCredential())
+
+    def test_an_internal_call_is_not_checked(self):
+        _payload({"extra": ["-e", "sh"]})

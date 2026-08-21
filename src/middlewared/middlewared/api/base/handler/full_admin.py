@@ -25,7 +25,7 @@ class FullAdminField(typing.NamedTuple):
     default: Any
 
 
-@functools.lru_cache
+@functools.cache
 def full_admin_fields(model: type[BaseModel]) -> tuple[FullAdminField, ...]:
     """Every `FullAdmin` field of `model`, including those of the models it nests.
 
@@ -35,7 +35,7 @@ def full_admin_fields(model: type[BaseModel]) -> tuple[FullAdminField, ...]:
     return tuple(_walk(model, (), frozenset()))
 
 
-@functools.lru_cache
+@functools.cache
 def full_admin_payload_fields(accepts: type[BaseModel]) -> tuple[str, tuple[FullAdminField, ...]]:
     """The `FullAdmin` fields of the payload that `accepts` wraps.
 
@@ -67,13 +67,21 @@ def _walk(
     """Yield every `FullAdmin` field reachable from `annotation`, prefixed with `prefix`."""
     for model in _models(annotation):
         if model in seen:
-            # Models may reference each other. A cycle cannot contain a reachable field anyway, since the path
-            # leading to it would be infinite.
+            # Models may reference each other; re-entering one would not terminate. A marked field hanging off a
+            # re-entered model is therefore missed. No model in the API has that shape, and the coverage test
+            # would not catch it, so do not give a marked field a cyclic home.
             continue
 
         for name, field in model.model_fields.items():
             path = prefix + (field.alias or name,)
             if is_full_admin_field(field):
+                if field.alias is not None and field.alias != name:
+                    raise TypeError(
+                        f"{model.__name__}.{name} is a `FullAdmin` field with an alias. This is not supported: "
+                        f"`populate_by_name` lets a caller supply it under either key, but enforcement addresses "
+                        f"it by one. Please drop the alias or rename the field."
+                    )
+
                 yield FullAdminField(path, _default(field))
                 continue
 
@@ -120,7 +128,7 @@ def _unwrap(annotation: Any) -> typing.Iterator[Any]:
 def _default(field: FieldInfo) -> Any:
     try:
         default = field.get_default(call_default_factory=True)
-    except TypeError:
+    except (TypeError, ValueError):
         # A `default_factory` that consumes already-validated data cannot be resolved outside of validation. No
         # supplied value compares equal to this, so such a field is treated as always changed.
         return PydanticUndefined

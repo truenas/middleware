@@ -22,7 +22,8 @@ async def check_full_admin_payload(
     This is the single enforcement point for `FullAdmin`. `CRUDService` and `ConfigService` funnel every public
     create and update through it before the plugin's own `do_create` / `do_update` runs, so marking a field in the
     API model is all a plugin has to do. A method that does not route through those wrappers has to call this
-    itself; `middlewared.pytest.unit.api.test_full_admin_coverage` fails if one forgets.
+    itself; `test_full_admin_fields_are_enforced` in `middlewared.pytest.unit.api.test_api_structure` fails
+    if one forgets.
 
     :param app: the calling application, or `None` for an internal call.
     :param methodobj: the `do_create` / `do_update` that will receive `data`.
@@ -44,7 +45,8 @@ async def check_full_admin_payload(
     if old is not None and hasattr(old, "model_dump"):
         # A `generic` service hands back the entry model rather than a dict. Dump it so that its values compare
         # equal to the raw ones in `data` (in particular, so that `Secret` fields yield what they wrap).
-        old = old.model_dump(context={"expose_secrets": True}, warnings=False, by_alias=True)
+        # `expose_secrets` is an explicit parameter of `DumpableModel.model_dump`, which rejects it in `context`.
+        old = old.model_dump(expose_secrets=True, warnings=False)
 
     verrors = ValidationErrors()
     check_full_admin_fields(schema_name, fields, data, old, verrors)

@@ -13,7 +13,7 @@ import pytest
 import middlewared
 import middlewared.api
 from middlewared.api.base import BaseModel
-from middlewared.api.base.handler.full_admin import full_admin_fields
+from middlewared.api.base.handler.full_admin import full_admin_fields, full_admin_payload_fields
 from middlewared.api.base.server.doc import reflow_docstring
 
 PUBLIC_API_DECORATORS = frozenset({"api_method", "filterable_api_method"})
@@ -386,7 +386,7 @@ def _calls_full_admin_helper(node):
     )
 
 
-def test_full_admin_fields_are_enforced(full_admin_args_models, api_method_consumers):
+def test_full_admin_fields_are_enforced(full_admin_args_models, api_method_consumers, current_api_package):
     """No API method may declare a `FullAdmin` field that nothing checks.
 
     Marking a field restricts nothing on its own: enforcement lives in ``CRUDService.create`` /
@@ -405,7 +405,20 @@ def test_full_admin_fields_are_enforced(full_admin_args_models, api_method_consu
             continue
 
         for location, name, enforces in consumers:
-            if name in FULL_ADMIN_WRAPPED_METHODS or enforces:
+            if name in FULL_ADMIN_WRAPPED_METHODS:
+                # The wrappers only walk the method's *last* parameter, which is where every CRUD and config
+                # method carries its payload. A marked field anywhere else would be silently skipped.
+                if len(full_admin_payload_fields(getattr(current_api_package, model))[1]) != len(paths):
+                    errors.append(AssertionError(
+                        f"{location} accepts {model}, which declares FullAdmin field(s) {sorted(paths)} outside "
+                        f"its last parameter. CRUDService and ConfigService only check the last one, so the "
+                        f"marker on the others does nothing. Please, move them into the payload parameter or "
+                        f"call {FULL_ADMIN_ENFORCEMENT_HELPER} explicitly."
+                    ))
+
+                continue
+
+            if enforces:
                 continue
 
             errors.append(AssertionError(

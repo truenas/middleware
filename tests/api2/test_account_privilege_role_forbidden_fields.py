@@ -6,6 +6,7 @@ from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.account import unprivileged_user_client
 from middlewared.test.integration.assets.cloud_sync import local_ftp_credential
 from middlewared.test.integration.assets.pool import dataset
+from middlewared.test.integration.utils import call
 
 
 @pytest.fixture(scope="module")
@@ -27,10 +28,11 @@ def cloudsync_template():
             }
 
 
+# `args` is deliberately absent here: it rides along on the shared `BaseCloudEntry`, but nothing under
+# `plugins/cloud_backup/` reads it (the restic path ignores it), so `cloudsync` covers it instead.
 @pytest.mark.parametrize("param,value,attribute", [
     ("pre_script", "rm -rf /", "cloud_backup_create.pre_script"),
     ("post_script", "rm -rf /", "cloud_backup_create.post_script"),
-    ("args", "--rc --rc-no-auth", "cloud_backup.args"),
 ])
 def test_cloud_backup(unprivileged_client, cloudsync_template, param, value, attribute):
     with pytest.raises(ValidationErrors) as ve:
@@ -90,15 +92,37 @@ def test_cloud_sync_sync_onetime_args(unprivileged_client, cloudsync_template):
 
 
 def test_rsync_task_extra(unprivileged_client, cloudsync_template):
-    """`extra` are raw rsync flags, and `-e` names the program rsync spawns (NAS-142160)."""
+    """`extra` are raw rsync flags, and `-e` names the program rsync spawns (NAS-142160).
+
+    This is also the only end-to-end cover for `CRUDService.update`, whose baseline is the *stored* value
+    rather than the field default.
+    """
+    task = {
+        "path": cloudsync_template["path"],
+        "user": "root",
+        "mode": "MODULE",
+        "remotehost": "127.0.0.1",
+        "remotemodule": "test",
+    }
+
     with pytest.raises(ValidationErrors) as ve:
-        unprivileged_client.call("rsynctask.create", {
-            "path": cloudsync_template["path"],
-            "user": "root",
-            "mode": "MODULE",
-            "remotehost": "127.0.0.1",
-            "remotemodule": "test",
-            "extra": ["-e", "sh -c id"],
-        })
+        unprivileged_client.call("rsynctask.create", {**task, "extra": ["-e", "sh -c id"]})
 
     assert any(error.attribute == "rsync_task_create.extra" for error in ve.value.errors), ve
+
+    created = call("rsynctask.create", {**task, "extra": ["--stats"]})
+    try:
+        with pytest.raises(ValidationErrors) as ve:
+            unprivileged_client.call("rsynctask.update", created["id"], {"extra": ["-e", "sh -c id"]})
+
+        assert any(error.attribute == "rsync_task_update.extra" for error in ve.value.errors), ve
+
+        # Echoing the stored value back is not a change, so an ordinary edit still works.
+        updated = unprivileged_client.call("rsynctask.update", created["id"], {
+            "extra": ["--stats"],
+            "desc": "edited by an unprivileged user",
+        })
+        assert updated["desc"] == "edited by an unprivileged user"
+        assert updated["extra"] == ["--stats"]
+    finally:
+        call("rsynctask.delete", created["id"])

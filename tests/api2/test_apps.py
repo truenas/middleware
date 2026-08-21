@@ -475,6 +475,11 @@ def test_custom_compose_config_may_only_be_set_by_a_full_admin():
 
     The check runs in `CRUDService.create`, before `do_create`'s job exists, so this arrives as an ordinary
     synchronous validation error rather than as the job failure the rest of this module expects.
+
+    `app.update` on an existing custom app is likewise closed to this role: `AppEntry` carries no compose
+    field, so the baseline falls back to the default (empty), while `validate_payload` requires a non-empty
+    compose. That is intended -- editing a custom app is editing its compose -- but it means there is no
+    payload that satisfies both.
     """
     with unprivileged_user_client(["APPS_WRITE"]) as c:
         with pytest.raises(ServiceValidationErrors) as ve:
