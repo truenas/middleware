@@ -2,7 +2,7 @@ from typing import Any, Literal, TypeAlias
 
 from pydantic import ConfigDict, Field, RootModel, Secret
 
-from middlewared.api.base import BaseModel, LongString, NonEmptyString, single_argument_result
+from middlewared.api.base import BaseModel, FullAdmin, LongString, NonEmptyString, single_argument_result
 
 from .catalog import CatalogAppInfo
 
@@ -162,12 +162,12 @@ class AppCreate(BaseModel):
         validate_default=True,
         description="Configuration values for the application installation.",
     )
-    custom_compose_config: Secret[dict] = Field(
+    custom_compose_config: FullAdmin[Secret[dict]] = Field(
         default_factory=dict,
         validate_default=True,
         description="Docker Compose configuration as a structured object for custom applications.",
     )
-    custom_compose_config_string: Secret[LongString] = Field(
+    custom_compose_config_string: FullAdmin[Secret[LongString]] = Field(
         default='',
         validate_default=True,
         description="Docker Compose configuration as a YAML string for custom applications.",
@@ -215,12 +215,12 @@ class AppUpdate(BaseModel):
         validate_default=True,
         description="Updated configuration values for the application.",
     )
-    custom_compose_config: Secret[dict] = Field(
+    custom_compose_config: FullAdmin[Secret[dict]] = Field(
         default_factory=dict,
         validate_default=True,
         description="Updated Docker Compose configuration as a structured object.",
     )
-    custom_compose_config_string: Secret[LongString] = Field(
+    custom_compose_config_string: FullAdmin[Secret[LongString]] = Field(
         default='',
         validate_default=True,
         description="Updated Docker Compose configuration as a YAML string.",

@@ -2,7 +2,7 @@ from typing import Annotated, Literal
 
 from pydantic import Field, ValidationInfo, field_validator
 
-from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, UnixPerm, excluded_field
+from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, FullAdmin, UnixPerm, excluded_field
 
 __all__ = ["FTPEntry", "FTPUpdate", "FTPUpdateArgs", "FTPUpdateResult"]
 
@@ -119,7 +119,7 @@ class FTPEntry(BaseModel):
             "ID of the certificate to use for TLS/SSL connections. `null` to use the default system certificate."
         ),
     )
-    options: str = Field(
+    options: FullAdmin[str] = Field(
         description=(
             "Additional ProFTPD configuration directives to include in the server configuration. Manual directives may "
             "render the FTP service non-functional and should be used with caution."

@@ -38,6 +38,7 @@ from middlewared.api.current import (
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.plugins.cloud.remotes import remote_classes
 from middlewared.service import GenericTaskPathService, job
+from middlewared.service.full_admin import check_full_admin_model
 from middlewared.utils.service.task_state import TaskStateMixin
 
 from .crud import (
@@ -142,9 +143,10 @@ class CloudSyncService(GenericTaskPathService[CloudSyncEntry], TaskStateMixin):
         return list_buckets_impl(self._svc_part, credentials_id)
 
     @api_method(
-        CloudSyncListDirectoryArgs, CloudSyncListDirectoryResult, roles=["CLOUD_SYNC_WRITE"], check_annotations=True
+        CloudSyncListDirectoryArgs, CloudSyncListDirectoryResult, roles=["CLOUD_SYNC_WRITE"], pass_app=True,
+        check_annotations=True,
     )
-    def list_directory(self, cloud_sync_ls: CloudSyncListDirectory) -> list[dict[str, Any]]:
+    def list_directory(self, app: App, cloud_sync_ls: CloudSyncListDirectory) -> list[dict[str, Any]]:
         """
         List contents of a remote bucket / directory.
 
@@ -152,6 +154,7 @@ class CloudSyncService(GenericTaskPathService[CloudSyncEntry], TaskStateMixin):
         ``attributes``; otherwise it is constructed from the ``folder`` key alone. For example, an S3 path is
         ``bucketname/directory/name`` and a Dropbox path is ``directory/name``.
         """
+        check_full_admin_model(app, "cloud_sync_ls", CloudSyncListDirectory, cloud_sync_ls)
         return list_directory_impl(self._svc_part, cloud_sync_ls)
 
     @api_method(CloudSyncSyncArgs, CloudSyncSyncResult, roles=["CLOUD_SYNC_WRITE"], check_annotations=True)
@@ -169,13 +172,17 @@ class CloudSyncService(GenericTaskPathService[CloudSyncEntry], TaskStateMixin):
         do_sync(self.context, job, id_, options)
 
     @api_method(
-        CloudSyncSyncOnetimeArgs, CloudSyncSyncOnetimeResult, roles=["CLOUD_SYNC_WRITE"], check_annotations=True
+        CloudSyncSyncOnetimeArgs, CloudSyncSyncOnetimeResult, roles=["CLOUD_SYNC_WRITE"], pass_app=True,
+        check_annotations=True,
     )
     @job(logs=True, abortable=True)
-    def sync_onetime(self, job: Job, cloud_sync: CloudSyncCreate, options: CloudSyncSyncOptions) -> None:
+    def sync_onetime(
+        self, app: App, job: Job, cloud_sync: CloudSyncCreate, options: CloudSyncSyncOptions,
+    ) -> None:
         """
         Run cloud sync task without creating it.
         """
+        check_full_admin_model(app, "cloud_sync_sync_onetime", CloudSyncCreate, cloud_sync)
         do_sync_onetime(self.context, self._svc_part, job, cloud_sync, options)
 
     @api_method(CloudSyncAbortArgs, CloudSyncAbortResult, roles=["CLOUD_SYNC_WRITE"], check_annotations=True)
