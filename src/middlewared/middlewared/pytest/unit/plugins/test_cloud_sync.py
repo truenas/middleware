@@ -377,11 +377,12 @@ def test__rclone_config_section_strips_line_breaks_from_value(payload):
 
 @pytest.mark.parametrize("value,written", [
     # goconfig treats a value opening with a backtick or a triple double-quote as quoted: with no closing quote it
-    # rejects the whole file, with one it truncates the value at the last matching quote.
+    # rejects the whole file, with a closing quote it takes everything through the last matching quote.
     ("`x", '"""`x"""'),
     ('"""x', '""""""x"""'),
     # goconfig trims whitespace around a value before quote detection, so a quote char behind leading whitespace
-    # still triggers quoting, and an unquoted padded value would be silently trimmed.
+    # still triggers quoting, and an unquoted padded value would be silently trimmed. the serializer is deliberately
+    # triple-quoting it so that goconfig reads it literally rather than interpreting the leading backtick
     (" `x", '""" `x"""'),
     (" padded ", '""" padded """'),
     ("\tpadded", '"""\tpadded"""'),
