@@ -233,16 +233,19 @@ def test__ups_online_to_onbatt_lowbattery(ups_running, dummy_ups_driver_configur
     assert did_shutdown()
 
 
-@pytest.mark.parametrize('field,value', [
-    ('shutdowncmd', '/bin/sh -c id'),
-    ('options', 'user = root'),
-    ('optionsupsd', 'LISTEN 0.0.0.0 3493'),
-    ('extrausers', '[hax]\n\tpassword = hax\n\tupsmon master'),
-])
-def test__pass_through_fields_may_only_be_changed_by_a_full_admin(field, value):
-    """These land verbatim in the NUT config; `shutdowncmd` is what upsmon runs as root (NAS-142160)."""
+def test__pass_through_fields_may_only_be_changed_by_a_full_admin():
+    """These land verbatim in the NUT config; `shutdowncmd` is what upsmon runs as root (NAS-142160).
+
+    All four are sent in one call because every offending field is reported at once.
+    """
+    fields = {
+        'shutdowncmd': '/bin/sh -c id',
+        'options': 'user = root',
+        'optionsupsd': 'LISTEN 0.0.0.0 3493',
+        'extrausers': '[hax]\n\tpassword = hax\n\tupsmon master',
+    }
     with unprivileged_user_client(['SYSTEM_GENERAL_WRITE']) as c:
         with pytest.raises(ValidationErrors) as ve:
-            c.call('ups.update', {field: value})
+            c.call('ups.update', fields)
 
-    assert any(error.attribute == f'data.{field}' for error in ve.value.errors), ve.value.errors
+    assert {error.attribute for error in ve.value.errors} == {f'data.{field}' for field in fields}

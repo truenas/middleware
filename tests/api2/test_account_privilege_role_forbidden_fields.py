@@ -1,5 +1,7 @@
 import pytest
 
+from truenas_api_client import ValidationErrors as ClientValidationErrors
+
 from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.account import unprivileged_user_client
 from middlewared.test.integration.assets.cloud_sync import local_ftp_credential
@@ -25,11 +27,12 @@ def cloudsync_template():
             }
 
 
-@pytest.mark.parametrize("param,value", [
-    ("pre_script", "rm -rf /"),
-    ("post_script", "rm -rf /"),
+@pytest.mark.parametrize("param,value,attribute", [
+    ("pre_script", "rm -rf /", "cloud_backup_create.pre_script"),
+    ("post_script", "rm -rf /", "cloud_backup_create.post_script"),
+    ("args", "--rc --rc-no-auth", "cloud_backup.args"),
 ])
-def test_cloud_backup(unprivileged_client, cloudsync_template, param, value):
+def test_cloud_backup(unprivileged_client, cloudsync_template, param, value, attribute):
     with pytest.raises(ValidationErrors) as ve:
         unprivileged_client.call("cloud_backup.create", {
             **cloudsync_template,
@@ -38,14 +41,15 @@ def test_cloud_backup(unprivileged_client, cloudsync_template, param, value):
             param: value,
         })
 
-    assert any(error.attribute == f"cloud_backup_create.{param}" for error in ve.value.errors), ve
+    assert any(error.attribute == attribute for error in ve.value.errors), ve
 
 
-@pytest.mark.parametrize("param,value", [
-    ("pre_script", "rm -rf /"),
-    ("post_script", "rm -rf /"),
+@pytest.mark.parametrize("param,value,attribute", [
+    ("pre_script", "rm -rf /", "cloud_sync_create.pre_script"),
+    ("post_script", "rm -rf /", "cloud_sync_create.post_script"),
+    ("args", "--rc --rc-no-auth", "cloud_sync_create.args"),
 ])
-def test_cloud_sync(unprivileged_client, cloudsync_template, param, value):
+def test_cloud_sync(unprivileged_client, cloudsync_template, param, value, attribute):
     with pytest.raises(ValidationErrors) as ve:
         unprivileged_client.call("cloudsync.create", {
             **cloudsync_template,
@@ -54,33 +58,7 @@ def test_cloud_sync(unprivileged_client, cloudsync_template, param, value):
             param: value,
         })
 
-    assert any(error.attribute == f"cloud_sync_create.{param}" for error in ve.value.errors), ve
-
-
-def test_cloud_backup_args(unprivileged_client, cloudsync_template):
-    """`args` is appended to the restic command line, which runs as root (NAS-142160)."""
-    with pytest.raises(ValidationErrors) as ve:
-        unprivileged_client.call("cloud_backup.create", {
-            **cloudsync_template,
-            "password": "test",
-            "keep_last": 10,
-            "args": "--rc --rc-no-auth",
-        })
-
-    assert any(error.attribute == "cloud_backup.args" for error in ve.value.errors), ve
-
-
-def test_cloud_sync_args(unprivileged_client, cloudsync_template):
-    """`args` is appended to the rclone command line, which runs as root (NAS-142160)."""
-    with pytest.raises(ValidationErrors) as ve:
-        unprivileged_client.call("cloudsync.create", {
-            **cloudsync_template,
-            "direction": "PUSH",
-            "transfer_mode": "COPY",
-            "args": "--rc --rc-no-auth",
-        })
-
-    assert any(error.attribute == "cloud_sync_create.args" for error in ve.value.errors), ve
+    assert any(error.attribute == attribute for error in ve.value.errors), ve
 
 
 def test_cloud_sync_list_directory_args(unprivileged_client, cloudsync_template):
@@ -96,8 +74,11 @@ def test_cloud_sync_list_directory_args(unprivileged_client, cloudsync_template)
 
 
 def test_cloud_sync_sync_onetime_args(unprivileged_client, cloudsync_template):
-    """`cloudsync.sync_onetime` runs a task without storing it, so it checks `args` itself."""
-    with pytest.raises(ValidationErrors) as ve:
+    """`cloudsync.sync_onetime` runs a task without storing it, so it checks `args` itself.
+
+    A failing job re-raises the client-side `ValidationErrors`, not the middleware one.
+    """
+    with pytest.raises(ClientValidationErrors) as ve:
         unprivileged_client.call("cloudsync.sync_onetime", {
             **cloudsync_template,
             "direction": "PUSH",
