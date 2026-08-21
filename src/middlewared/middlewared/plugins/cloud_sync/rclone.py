@@ -45,6 +45,34 @@ RE_CHECKS = re.compile(r"Checks:\s*(?P<checks>[0-9 /]+)(, (?P<progress>[0-9]+)%)
 RcloneConfigTuple = collections.namedtuple("RcloneConfigTuple", ["config_path", "remote_path", "extra_args"])
 
 
+def rclone_config_section(name: str, items: dict[str, Any]) -> str:
+    """
+    Serialize one section of an rclone config file.
+
+    rclone parses its config with goconfig, which has no continuation lines or escaping: a line break inside a value
+    ends it and the remainder is parsed as the next key (or fails the parse), so CR/LF are stripped. This keeps a
+    pasted multi-line JSON token or service account file a valid single-line value.
+
+    goconfig trims whitespace around a value before treating one that starts with a backtick or a triple double-quote
+    as quoted, either truncating it at the last matching quote or rejecting the whole file. Wrapping such values (and
+    values with leading/trailing whitespace, which would otherwise be silently trimmed) in goconfig's own triple
+    double-quotes makes them read back verbatim: goconfig closes the quote at the last triple double-quote on the
+    line, so any newline-free value round-trips exactly.
+    """
+    out = f"[{name}]\n"
+    for key, value in items.items():
+        if isinstance(value, bool):
+            value = json.dumps(value)
+        else:
+            value = str(value)
+        value = value.replace("\r", "").replace("\n", "")
+        stripped = value.strip()
+        if value != stripped or stripped.startswith(("`", '"""')):
+            value = f'"""{value}"""'
+        out += f"{key} = {value}\n"
+    return out
+
+
 class RcloneConfig:
     def __init__(
         self,
@@ -91,15 +119,15 @@ class RcloneConfig:
             if self.task.encryption:
                 encryption_password = self.task.encryption_password.get_secret_value()
                 encryption_salt = self.task.encryption_salt.get_secret_value()
-                self.tmp_file.write("[encrypted]\n")
-                self.tmp_file.write("type = crypt\n")
-                self.tmp_file.write(f"remote = {remote_path}\n")
-                self.tmp_file.write(
-                    "filename_encryption = {}\n".format("standard" if self.task.filename_encryption else "off")
-                )
-                self.tmp_file.write("password = {}\n".format(rclone_encrypt_password(encryption_password)))
+                encrypted_section = {
+                    "type": "crypt",
+                    "remote": remote_path,
+                    "filename_encryption": "standard" if self.task.filename_encryption else "off",
+                    "password": rclone_encrypt_password(encryption_password),
+                }
                 if encryption_salt:
-                    self.tmp_file.write("password2 = {}\n".format(rclone_encrypt_password(encryption_salt)))
+                    encrypted_section["password2"] = rclone_encrypt_password(encryption_salt)
+                self.tmp_file.write(rclone_config_section("encrypted", encrypted_section))
 
                 remote_path = "encrypted:/"
 
@@ -132,11 +160,7 @@ class RcloneConfig:
             self.tmp_file_filter.flush()
             extra_args.extend(["--filter-from", self.tmp_file_filter.name])
 
-        self.tmp_file.write("[remote]\n")
-        for k, v in config.items():
-            if isinstance(v, bool):
-                v = json.dumps(v)
-            self.tmp_file.write(f"{k} = {v}\n")
+        self.tmp_file.write(rclone_config_section("remote", config))
 
         self.tmp_file.flush()
 

@@ -4,7 +4,7 @@ import textwrap
 
 import pytest
 
-from middlewared.plugins.cloud_sync import lsjson_error_excerpt, RcloneVerboseLogCutter
+from middlewared.plugins.cloud_sync import lsjson_error_excerpt, RcloneVerboseLogCutter, rclone_config_section
 
 
 @pytest.mark.parametrize("error,excerpt", [
@@ -79,3 +79,65 @@ def test__RcloneVerboseLogCutter(input, output):
         out += result
 
     assert out == output
+
+
+def test__rclone_config_section_basic():
+    out = rclone_config_section("remote", {"type": "sftp", "host": "h", "user": "u"})
+    assert out == "[remote]\ntype = sftp\nhost = h\nuser = u\n"
+
+
+def test__rclone_config_section_bool_rendered_lowercase():
+    out = rclone_config_section("remote", {"fast_list": True, "skip_region": False})
+    assert out == "[remote]\nfast_list = true\nskip_region = false\n"
+
+
+def test__rclone_config_section_stringifies_non_str_values():
+    out = rclone_config_section("remote", {"port": 22})
+    assert out == "[remote]\nport = 22\n"
+
+
+@pytest.mark.parametrize("payload", ["x\ntype = local", "x\r\ntype = local", "x\rtype = local"])
+def test__rclone_config_section_strips_line_breaks_from_value(payload):
+    out = rclone_config_section("remote", {"type": "sftp", "host": payload})
+    assert out == "[remote]\ntype = sftp\nhost = xtype = local\n"
+
+
+@pytest.mark.parametrize("value,written", [
+    # goconfig treats a value opening with a backtick (2+ chars) or a triple double-quote (6+ chars) as quoted: with
+    # no closing quote it rejects the whole file, with a closing quote it takes everything through the last matching
+    # quote.
+    ("`x", '"""`x"""'),
+    ('"""xyz', '""""""xyz"""'),
+    # goconfig trims whitespace around a value before quote detection, so a quote char behind leading whitespace
+    # still triggers quoting, and an unquoted padded value would be silently trimmed. the serializer is deliberately
+    # triple-quoting it so that goconfig reads it literally rather than interpreting the leading backtick
+    (" `x", '""" `x"""'),
+    (" padded ", '""" padded """'),
+    ("\tpadded", '"""\tpadded"""'),
+])
+def test__rclone_config_section_quotes_values_goconfig_would_mangle(value, written):
+    out = rclone_config_section("remote", {"pass": value})
+    assert out == f"[remote]\npass = {written}\n"
+
+
+@pytest.mark.parametrize("value,written", [
+    # these fall under goconfig's quote-detection length gates (2 chars for a backtick, 6 for a triple double-quote)
+    # and would parse literally even unquoted; the serializer quotes them anyway, and they read back identically.
+    ("`", '"""`"""'),
+    ('"""x', '""""""x"""'),
+])
+def test__rclone_config_section_quoting_below_goconfig_length_gates_is_harmless(value, written):
+    out = rclone_config_section("remote", {"pass": value})
+    assert out == f"[remote]\npass = {written}\n"
+
+
+@pytest.mark.parametrize("value", [
+    "a`b",           # backtick not at the start is literal
+    'a"""b',         # triple quote not at the start is literal
+    '"x"',           # single double-quotes are only special for keys, not values
+    "ab%2Fcd%s",     # no interpolation layer
+    "",
+])
+def test__rclone_config_section_leaves_safe_values_verbatim(value):
+    out = rclone_config_section("remote", {"pass": value})
+    assert out == f"[remote]\npass = {value}\n"
