@@ -1,6 +1,8 @@
 import errno
 from typing import Any
 
+import truenas_pylibzfs
+
 from middlewared.api import api_method
 from middlewared.api.current import (
     ZFSResourceSnapshotCloneArgs,
@@ -38,7 +40,7 @@ from middlewared.api.current import (
 )
 from middlewared.service import Service, private
 from middlewared.service.decorators import pass_thread_local_storage
-from middlewared.service_exception import ValidationError
+from middlewared.service_exception import CallError, ValidationError
 
 from .destroy_impl import destroy_impl
 from .exceptions import (
@@ -47,6 +49,7 @@ from .exceptions import (
     ZFSPathHasHoldsException,
     ZFSPathNotASnapshotException,
     ZFSPathNotFoundException,
+    ZFSRollbackBlockedException,
 )
 from .rename_promote_clone_impl import clone_impl, rename_impl
 from .snapshot_count_impl import count_snapshots_impl
@@ -774,14 +777,17 @@ class ZFSResourceSnapshotService(Service):
             if has_internal_path(check_path):
                 raise ValidationError(schema, f"{data.path!r} is a protected path.", errno.EACCES)
 
-        return rollback_impl(
-            tls,
-            path=data.path,
-            recursive=data.recursive,
-            recursive_clones=data.recursive_clones,
-            force=data.force,
-            recursive_rollback=data.recursive_rollback,
-        )
+        try:
+            return rollback_impl(
+                tls,
+                path=data.path,
+                recursive=data.recursive,
+                recursive_clones=data.recursive_clones,
+                force=data.force,
+                recursive_rollback=data.recursive_rollback,
+            )
+        except truenas_pylibzfs.ZFSException as e:
+            raise CallError(f"Failed to rollback {data.path!r}: {e}")
 
     @api_method(
         ZFSResourceSnapshotRollbackArgs,
@@ -803,6 +809,7 @@ class ZFSResourceSnapshotService(Service):
         ``data.extra`` array with its own ``errno``. A validation error is raised when:
 
         - the snapshot does not exist
+        - a snapshot that has to be destroyed first has clones or holds of its own
         - the rollback cannot be completed
 
         Examples:
@@ -837,6 +844,14 @@ class ZFSResourceSnapshotService(Service):
         except ZFSPathNotFoundException as e:
             raise ValidationError(
                 "zfs.resource.snapshot.rollback", e.message, errno.ENOENT
+            )
+        except ZFSPathNotASnapshotException as e:
+            raise ValidationError(
+                "zfs.resource.snapshot.rollback", e.message, errno.EINVAL
+            )
+        except ZFSRollbackBlockedException as e:
+            raise ValidationError(
+                "zfs.resource.snapshot.rollback", e.message, errno.EBUSY
             )
         except ValueError as e:
             raise ValidationError(
