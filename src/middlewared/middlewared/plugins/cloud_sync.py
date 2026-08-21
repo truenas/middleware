@@ -2,7 +2,6 @@ import base64
 import collections
 import configparser
 import enum
-import io
 import itertools
 import json
 import logging
@@ -75,26 +74,32 @@ RcloneConfigTuple = collections.namedtuple("RcloneConfigTuple", ["config_path", 
 logger = logging.getLogger(__name__)
 
 
-def serialize_rclone_config(sections: dict[str, dict[str, Any]]) -> str:
-    parser = configparser.RawConfigParser()
-    # rclone config keys are case-sensitive; keep them verbatim instead of lower-casing them.
-    parser.optionxform = str  # type: ignore[method-assign,assignment]
-    for section, items in sections.items():
-        parser.add_section(section)
-        for key, value in items.items():
-            if isinstance(value, bool):
-                value = json.dumps(value)
-            else:
-                value = str(value)
+def rclone_config_section(name: str, items: dict[str, Any]) -> str:
+    """
+    Serialize one section of an rclone config file.
 
-            key = key.replace("\r", "").replace("\n", "")
-            value = value.replace("\r", "").replace("\n", "")
+    rclone parses its config with goconfig, which has no continuation lines or escaping: a line break inside a value
+    ends it and the remainder is parsed as the next key (or fails the parse), so CR/LF are stripped. This keeps a
+    pasted multi-line JSON token or service account file a valid single-line value.
 
-            parser.set(section, key, value)
-
-    buf = io.StringIO()
-    parser.write(buf)
-    return buf.getvalue()
+    goconfig trims whitespace around a value before treating one that starts with a backtick or a triple double-quote
+    as quoted, either truncating it at the last matching quote or rejecting the whole file. Wrapping such values (and
+    values with leading/trailing whitespace, which would otherwise be silently trimmed) in goconfig's own triple
+    double-quotes makes them read back verbatim: goconfig closes the quote at the last triple double-quote on the
+    line, so any newline-free value round-trips exactly.
+    """
+    out = f"[{name}]\n"
+    for key, value in items.items():
+        if isinstance(value, bool):
+            value = json.dumps(value)
+        else:
+            value = str(value)
+        value = value.replace("\r", "").replace("\n", "")
+        stripped = value.strip()
+        if value != stripped or stripped.startswith(("`", '"""')):
+            value = f'"""{value}"""'
+        out += f"{key} = {value}\n"
+    return out
 
 
 class RcloneConfig:
@@ -118,7 +123,6 @@ class RcloneConfig:
 
         remote_path = None
         extra_args = []
-        sections: dict[str, dict[str, Any]] = {}
 
         if "attributes" in self.cloud_sync:
             extra_args = self.provider.get_task_extra_args(self.cloud_sync)
@@ -132,16 +136,17 @@ class RcloneConfig:
             remote_path = f"remote:{remote_path}"
 
             if self.cloud_sync["encryption"]:
-                sections["encrypted"] = {
+                encrypted_section = {
                     "type": "crypt",
                     "remote": remote_path,
                     "filename_encryption": "standard" if self.cloud_sync["filename_encryption"] else "off",
                     "password": rclone_encrypt_password(self.cloud_sync["encryption_password"]),
                 }
                 if self.cloud_sync["encryption_salt"]:
-                    sections["encrypted"]["password2"] = rclone_encrypt_password(
+                    encrypted_section["password2"] = rclone_encrypt_password(
                         self.cloud_sync["encryption_salt"]
                     )
+                self.tmp_file.write(rclone_config_section("encrypted", encrypted_section))
 
                 remote_path = "encrypted:/"
 
@@ -172,9 +177,7 @@ class RcloneConfig:
             self.tmp_file_filter.flush()
             extra_args.extend(["--filter-from", self.tmp_file_filter.name])
 
-        sections["remote"] = config
-
-        self.tmp_file.write(serialize_rclone_config(sections))
+        self.tmp_file.write(rclone_config_section("remote", config))
 
         self.tmp_file.flush()
 
