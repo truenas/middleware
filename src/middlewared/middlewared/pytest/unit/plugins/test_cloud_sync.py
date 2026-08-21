@@ -103,10 +103,11 @@ def test__rclone_config_section_strips_line_breaks_from_value(payload):
 
 
 @pytest.mark.parametrize("value,written", [
-    # goconfig treats a value opening with a backtick or a triple double-quote as quoted: with no closing quote it
-    # rejects the whole file, with a closing quote it takes everything through the last matching quote.
+    # goconfig treats a value opening with a backtick (2+ chars) or a triple double-quote (6+ chars) as quoted: with
+    # no closing quote it rejects the whole file, with a closing quote it takes everything through the last matching
+    # quote.
     ("`x", '"""`x"""'),
-    ('"""x', '""""""x"""'),
+    ('"""xyz', '""""""xyz"""'),
     # goconfig trims whitespace around a value before quote detection, so a quote char behind leading whitespace
     # still triggers quoting, and an unquoted padded value would be silently trimmed. the serializer is deliberately
     # triple-quoting it so that goconfig reads it literally rather than interpreting the leading backtick
@@ -115,6 +116,17 @@ def test__rclone_config_section_strips_line_breaks_from_value(payload):
     ("\tpadded", '"""\tpadded"""'),
 ])
 def test__rclone_config_section_quotes_values_goconfig_would_mangle(value, written):
+    out = rclone_config_section("remote", {"pass": value})
+    assert out == f"[remote]\npass = {written}\n"
+
+
+@pytest.mark.parametrize("value,written", [
+    # these fall under goconfig's quote-detection length gates (2 chars for a backtick, 6 for a triple double-quote)
+    # and would parse literally even unquoted; the serializer quotes them anyway, and they read back identically.
+    ("`", '"""`"""'),
+    ('"""x', '""""""x"""'),
+])
+def test__rclone_config_section_quoting_below_goconfig_length_gates_is_harmless(value, written):
     out = rclone_config_section("remote", {"pass": value})
     assert out == f"[remote]\npass = {written}\n"
 
