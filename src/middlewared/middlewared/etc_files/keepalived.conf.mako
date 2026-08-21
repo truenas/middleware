@@ -65,6 +65,17 @@
     # here so we don't generate an empty entry in the config
     ips = [i for i in ips if i['aliases']]
 
+    # keepalived binds the unicast receive socket to the advert source address.
+    # Without unicast_src_ip it uses the first address it learns on the interface
+    # (the link-local for IPv6) while the peer sends to our configured address,
+    # so adverts are never received and both nodes become MASTER. Use the
+    # address the peer is configured to send to.
+    for i in ips:
+        if node == 'A':
+            i['unicast_src_ip'] = i['aliases'][0]['address']
+        else:
+            i['unicast_src_ip'] = i['failover_aliases'][0]['address']
+
 %>\
 global_defs {
     vrrp_notify_fifo /var/run/vrrpd.fifo
@@ -86,6 +97,7 @@ vrrp_instance ${i['name']} {
     virtual_router_id 20
     priority ${prio}
     version 3
+    unicast_src_ip ${i['unicast_src_ip']}
     unicast_peer {
     % for j in i['failover_aliases'] if node == 'A' else i['aliases']:
         ${j['address']}
