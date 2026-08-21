@@ -4,7 +4,7 @@ import textwrap
 
 import pytest
 
-from middlewared.plugins.cloud_sync import lsjson_error_excerpt, RcloneVerboseLogCutter, serialize_rclone_config
+from middlewared.plugins.cloud_sync import lsjson_error_excerpt, RcloneVerboseLogCutter, rclone_config_section
 
 
 @pytest.mark.parametrize("error,excerpt", [
@@ -81,42 +81,50 @@ def test__RcloneVerboseLogCutter(input, output):
     assert out == output
 
 
-def test__serialize_rclone_config_basic():
-    out = serialize_rclone_config({"remote": {"type": "sftp", "host": "h", "user": "u"}})
-    assert out == "[remote]\ntype = sftp\nhost = h\nuser = u\n\n"
+def test__rclone_config_section_basic():
+    out = rclone_config_section("remote", {"type": "sftp", "host": "h", "user": "u"})
+    assert out == "[remote]\ntype = sftp\nhost = h\nuser = u\n"
 
 
-def test__serialize_rclone_config_preserves_key_case():
-    out = serialize_rclone_config({"remote": {"Mixed_Case_Key": "v"}})
-    assert out == "[remote]\nMixed_Case_Key = v\n\n"
+def test__rclone_config_section_bool_rendered_lowercase():
+    out = rclone_config_section("remote", {"fast_list": True, "skip_region": False})
+    assert out == "[remote]\nfast_list = true\nskip_region = false\n"
 
 
-def test__serialize_rclone_config_bool_rendered_lowercase():
-    out = serialize_rclone_config({"remote": {"fast_list": True, "skip_region": False}})
-    assert out == "[remote]\nfast_list = true\nskip_region = false\n\n"
-
-
-def test__serialize_rclone_config_stringifies_non_str_values():
-    out = serialize_rclone_config({"remote": {"port": 22, "empty": None}})
-    assert out == "[remote]\nport = 22\nempty = None\n\n"
-
-
-def test__serialize_rclone_config_does_not_interpolate_percent():
-    out = serialize_rclone_config({"remote": {"pass": "ab%2Fcd%s"}})
-    assert out == "[remote]\npass = ab%2Fcd%s\n\n"
-
-
-def test__serialize_rclone_config_preserves_section_order():
-    out = serialize_rclone_config({"encrypted": {"type": "crypt"}, "remote": {"type": "sftp"}})
-    assert out == "[encrypted]\ntype = crypt\n\n[remote]\ntype = sftp\n\n"
+def test__rclone_config_section_stringifies_non_str_values():
+    out = rclone_config_section("remote", {"port": 22})
+    assert out == "[remote]\nport = 22\n"
 
 
 @pytest.mark.parametrize("payload", ["x\ntype = local", "x\r\ntype = local", "x\rtype = local"])
-def test__serialize_rclone_config_strips_line_breaks_from_value(payload):
-    out = serialize_rclone_config({"remote": {"type": "sftp", "host": payload}})
-    assert out == "[remote]\ntype = sftp\nhost = xtype = local\n\n"
+def test__rclone_config_section_strips_line_breaks_from_value(payload):
+    out = rclone_config_section("remote", {"type": "sftp", "host": payload})
+    assert out == "[remote]\ntype = sftp\nhost = xtype = local\n"
 
 
-def test__serialize_rclone_config_strips_line_breaks_from_key():
-    out = serialize_rclone_config({"remote": {"ho\nst": "v"}})
-    assert out == "[remote]\nhost = v\n\n"
+@pytest.mark.parametrize("value,written", [
+    # goconfig treats a value opening with a backtick or a triple double-quote as quoted: with no closing quote it
+    # rejects the whole file, with one it truncates the value at the last matching quote.
+    ("`x", '"""`x"""'),
+    ('"""x', '""""""x"""'),
+    # goconfig trims whitespace around a value before quote detection, so a quote char behind leading whitespace
+    # still triggers quoting, and an unquoted padded value would be silently trimmed.
+    (" `x", '""" `x"""'),
+    (" padded ", '""" padded """'),
+    ("\tpadded", '"""\tpadded"""'),
+])
+def test__rclone_config_section_quotes_values_goconfig_would_mangle(value, written):
+    out = rclone_config_section("remote", {"pass": value})
+    assert out == f"[remote]\npass = {written}\n"
+
+
+@pytest.mark.parametrize("value", [
+    "a`b",           # backtick not at the start is literal
+    'a"""b',         # triple quote not at the start is literal
+    '"x"',           # single double-quotes are only special for keys, not values
+    "ab%2Fcd%s",     # no interpolation layer
+    "",
+])
+def test__rclone_config_section_leaves_safe_values_verbatim(value):
+    out = rclone_config_section("remote", {"pass": value})
+    assert out == f"[remote]\npass = {value}\n"

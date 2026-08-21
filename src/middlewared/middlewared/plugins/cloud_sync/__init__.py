@@ -51,7 +51,7 @@ from .directory import list_buckets as list_buckets_impl
 from .directory import list_directory as list_directory_impl
 from .directory import providers as providers_impl
 from .lock import FsLockManager
-from .rclone import RcloneConfig, RcloneVerboseLogCutter, lsjson_error_excerpt, serialize_rclone_config
+from .rclone import RcloneConfig, RcloneVerboseLogCutter, lsjson_error_excerpt, rclone_config_section
 from .sync import do_abort, do_restore, do_sync, do_sync_onetime
 
 if TYPE_CHECKING:
@@ -70,7 +70,7 @@ __all__ = (
     "RcloneConfig",
     "RcloneVerboseLogCutter",
     "lsjson_error_excerpt",
-    "serialize_rclone_config",
+    "rclone_config_section",
 )
 
 
