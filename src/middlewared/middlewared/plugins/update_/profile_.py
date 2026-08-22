@@ -3,6 +3,8 @@ from __future__ import annotations
 import enum
 import typing
 
+from truenas_pylicensed.features import LicenseFeature
+
 from middlewared.api.current import UpdateProfileChoice
 from middlewared.service import ServiceContext
 from middlewared.service_exception import CallError
@@ -22,7 +24,7 @@ class UpdateProfiles(enum.IntEnum):
     def display_name(self) -> str:
         return self.describe(False, True).name
 
-    def describe(self, is_enterprise: bool, available: bool) -> UpdateProfileChoice:
+    def describe(self, mission_critical_entitled: bool, available: bool) -> UpdateProfileChoice:
         return {
             UpdateProfiles.DEVELOPER: UpdateProfileChoice(
                 name='Developer',
@@ -45,7 +47,7 @@ class UpdateProfiles(enum.IntEnum):
             ),
             UpdateProfiles.GENERAL: UpdateProfileChoice(
                 name='General',
-                footnote='(not recommended)' if is_enterprise else '(Default)',
+                footnote='(not recommended)' if mission_critical_entitled else '(Default)',
                 description=(
                     'Field tested software with mature features. Few issues are expected.'
                 ),
@@ -67,12 +69,14 @@ class UpdateProfiles(enum.IntEnum):
 async def profile_choices(context: ServiceContext) -> dict[str, UpdateProfileChoice]:
     profiles = {}
     config = await context.call2(context.s.update.config_safe)
-    is_enterprise = await context.middleware.call('system.is_enterprise')
+    mission_critical_entitled = (
+        await context.call2(context.s.truenas.entitlements.check, LicenseFeature.MISSION_CRITICAL)
+    ).entitled
     current_profile = UpdateProfiles[await current_version_profile(context)]
     for profile in UpdateProfiles:
         available = profile.name == config.profile or profile <= current_profile
-        info = profile.describe(is_enterprise, available)
-        if is_enterprise:
+        info = profile.describe(mission_critical_entitled, available)
+        if mission_critical_entitled:
             if profile >= UpdateProfiles.GENERAL:
                 profiles[profile.name] = info
         else:
@@ -106,7 +110,12 @@ async def post_license_update(
     *args: typing.Any,
     **kwargs: typing.Any,
 ) -> None:
-    if not had_license and await middleware.call('system.product_type') == 'ENTERPRISE':
+    # Only the unlicensed -> licensed transition force-sets the profile, so `had_license` is
+    # checked first and an already-licensed system never queries the entitlement. Removing a
+    # license deliberately does not move the profile back down.
+    if not had_license and (
+        await middleware.call2(middleware.services.truenas.entitlements.check, LicenseFeature.MISSION_CRITICAL)
+    ).entitled:
         await middleware.call2(middleware.services.update.set_profile, UpdateProfiles.MISSION_CRITICAL.name)
 
 

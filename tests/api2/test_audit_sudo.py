@@ -8,8 +8,7 @@ import pytest
 
 from auto_config import pool_name
 from middlewared.test.integration.assets.account import user
-from middlewared.test.integration.assets.product import product_type
-from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.utils import call, mock, ssh
 from middlewared.test.integration.utils.time_utils import utc_now
 
 EVENT_KEYS = {
@@ -147,12 +146,22 @@ def initialize_for_sudo_tests(username, password, data):
 
 @pytest.fixture(scope='module')
 def enable_sudo_auditing():
-    with product_type():
-        call('etc.generate', 'user')
-        try:
-            yield
-        finally:
+    try:
+        with mock('truenas.entitlements.check', args=['SUPPORT', ], declaration="""
+            def mock(self, feature):
+                from middlewared.plugins.truenas.entitlements import TrueNASEntitlementsCheckEntitlement
+                from middlewared.utils.entitlements import Reason
+
+                return TrueNASEntitlementsCheckEntitlement(
+                    entitled=True, reason=Reason.ENTITLED, column='HW+K', message='',
+                )
+        """):
             call('etc.generate', 'user')
+            yield
+    finally:
+        # Regenerate outside the mock so /etc/sudoers goes back to what this
+        # system is actually entitled to.
+        call('etc.generate', 'user')
 
 
 @pytest.fixture(scope='module')

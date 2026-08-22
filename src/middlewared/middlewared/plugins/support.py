@@ -7,6 +7,7 @@ import time
 
 import aiohttp
 import requests
+from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -21,6 +22,7 @@ from middlewared.plugins.system.utils import DEBUG_MAX_SIZE
 from middlewared.service import CallError, ConfigService, job, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import sw_version
+from middlewared.utils.entitlements import DerivedEntitlement
 from middlewared.utils.network import INTERNET_TIMEOUT
 
 ADDRESS = 'support-proxy.truenas.com'
@@ -103,10 +105,7 @@ class SupportService(ConfigService):
         if await self.middleware.call('system.vendor.name'):
             return False
 
-        if not await self.middleware.call('system.is_enterprise'):
-            return False
-
-        return await self.middleware.call('system.feature_enabled', 'SUPPORT')
+        return (await self.call2(self.s.truenas.entitlements.check, DerivedEntitlement.PROACTIVE_SUPPORT)).entitled
 
     @api_method(SupportIsAvailableAndEnabledArgs, SupportIsAvailableAndEnabledResult, roles=['SUPPORT_READ'])
     async def is_available_and_enabled(self):
@@ -167,7 +166,8 @@ class SupportService(ConfigService):
 
         job.set_progress(1, 'Gathering data')
 
-        sw_name = 'freenas' if not await self.middleware.call('system.is_enterprise') else 'truenas'
+        entitled = (await self.call2(self.s.truenas.entitlements.check, LicenseFeature.SUPPORT)).entitled
+        sw_name = 'truenas' if entitled else 'freenas'
 
         if sw_name == 'freenas':
             required_attrs = ('type', 'token')
@@ -301,7 +301,8 @@ class SupportService(ConfigService):
 
         self.middleware.call_sync('network.general.will_perform_activity', 'support')
 
-        sw_name = 'freenas' if not self.middleware.call_sync('system.is_enterprise') else 'truenas'
+        entitled = self.call_sync2(self.s.truenas.entitlements.check, LicenseFeature.SUPPORT).entitled
+        sw_name = 'truenas' if entitled else 'freenas'
 
         data['ticketnum'] = data.pop('ticket')
         filename = data.pop('filename')

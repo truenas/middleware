@@ -3,17 +3,22 @@ import time
 import pytest
 
 from middlewared.test.integration.assets.pool import dataset
-from middlewared.test.integration.assets.product import product_type
 from middlewared.test.integration.assets.smb import smb_share
-from middlewared.test.integration.utils import call
+from middlewared.test.integration.utils import call, mock
 
 SHARE_NAME = 'offset_test'
 VEEAM_BLOCKSIZE = 131072
 
 
 @pytest.fixture(autouse=True)
-def enterprise_licensed():
-    with product_type('ENTERPRISE'):
+def veeam_entitled():
+    with mock('truenas.entitlements.check', args=['SMB_VEEAM', ], declaration="""
+        def mock(self, feature):
+            from middlewared.plugins.truenas.entitlements import TrueNASEntitlementsCheckEntitlement
+            from middlewared.utils.entitlements import Reason
+
+            return TrueNASEntitlementsCheckEntitlement(entitled=True, reason=Reason.ENTITLED, column='HW+K', message='')
+    """):
         yield
 
 

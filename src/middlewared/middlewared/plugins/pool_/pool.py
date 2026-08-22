@@ -6,6 +6,7 @@ from types import MappingProxyType
 import middlewared.sqlalchemy as sa
 
 from fenced.fence import ExitCode as FencedExitCodes
+from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.api import api_method
 from middlewared.api.base import BaseModel, Excluded, excluded_field
@@ -371,13 +372,13 @@ class PoolService(CRUDService):
         # Structural checks (minimum disks, dRAID configuration) always apply.
         force_topology = data.get('force_topology', False)
 
-        # force_topology is a footgun; it is not permitted on Enterprise-licensed
-        # systems, which are expected to use supported topologies.
-        if force_topology and await self.middleware.call('system.is_enterprise'):
+        # force_topology is a footgun; it is not permitted on systems with a
+        # support entitlement, which are expected to use supported topologies.
+        if force_topology and (await self.call2(self.s.truenas.entitlements.check, LicenseFeature.SUPPORT)).entitled:
             verrors.add(
                 'force_topology',
-                'Bypassing pool topology validation is not supported on '
-                'Enterprise-licensed systems.',
+                'Bypassing pool topology validation is not permitted on '
+                'systems with a support entitlement.',
             )
 
         def disk_to_stripe(topology_type):

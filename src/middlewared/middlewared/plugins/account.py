@@ -48,6 +48,7 @@ from middlewared.api.current import (
     UserUpdateArgs,
     UserUpdateResult,
 )
+from middlewared.common.license_reconcile import LicenseReconcileAction, LicenseReconcileDelegate
 from middlewared.service import CallError, CRUDService, ValidationErrors, private, job
 from middlewared.service_exception import MatchNotFound
 import middlewared.sqlalchemy as sa
@@ -2687,6 +2688,14 @@ class GroupService(CRUDService):
             )
 
 
+class UserLicenseReconcileDelegate(LicenseReconcileDelegate):
+    name = 'user'
+    etc_groups = ('user',)
+    service = 'user'
+    action = LicenseReconcileAction.RELOAD
+    order = 20
+
+
 async def setup(middleware):
     try:
         # ensure that our default home path is always immutable. If it's not immutable then
@@ -2698,6 +2707,8 @@ async def setup(middleware):
         )
     except Exception:
         middleware.logger.error('Failed to set immutable property on %r', DEFAULT_HOME_PATH, exc_info=True)
+
+    await middleware.call('truenas.license.register_reconcile_delegate', UserLicenseReconcileDelegate())
 
     if await middleware.call2(middleware.services.keyvalue.get, 'run_migration', False):
         await middleware.call('user.sync_builtin')

@@ -6,15 +6,19 @@ This is the STCNITH method (Shoot The Current Node In The Head).
 
 import sys
 
-from middlewared.plugins.failover_.detect_utils import detect_platform
 from middlewared.plugins.failover_.ha_hardware import is_licensed_for_ha
 from middlewared.plugins.failover_.stcnith import stcnith_reboot
 from middlewared.utils.db import query_config_table
+from middlewared.utils.hardware import get_hardware_info
 
 
 def is_ha_capable() -> bool:
-    """Check if system is HA-capable hardware."""
-    return detect_platform()[0] != 'MANUAL'
+    """Check if system is HA-capable hardware.
+
+    Answered off the hardware probe rather than by asking middleware: this
+    runs as an ExecStop=, so there may be no middleware left to ask.
+    """
+    return get_hardware_info().is_ha_capable
 
 
 def is_failover_enabled() -> bool:

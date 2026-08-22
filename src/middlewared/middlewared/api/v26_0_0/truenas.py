@@ -1,8 +1,8 @@
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import Field
 
-from middlewared.api.base import BaseModel, LongString, LongNonEmptyString
+from middlewared.api.base import BaseModel, LongString, LongNonEmptyString, NonEmptyString
 
 from .support import SupportNewTicket
 
@@ -19,6 +19,9 @@ __all__ = [
     'TrueNASLicenseUploadOptions', 'TrueNASLicenseUploadArgs', 'TrueNASLicenseUploadResult',
     'TrueNASLicenseInfoArgs', 'TrueNASLicenseInfoResult',
     'TrueNASLicenseFingerprintArgs', 'TrueNASLicenseFingerprintResult',
+    'EntitlementEntry', 'EntitlementsInfo',
+    'TrueNASEntitlementsInfoArgs', 'TrueNASEntitlementsInfoResult',
+    'TrueNASEntitlementsFeatureArgs', 'TrueNASEntitlementsFeatureResult',
 ]
 
 
@@ -123,3 +126,59 @@ class TrueNASLicenseFingerprintArgs(BaseModel):
 
 class TrueNASLicenseFingerprintResult(BaseModel):
     result: LongString = Field(description="Base64-encoded JSON of the system hardware fingerprint.")
+
+
+class EntitlementEntry(BaseModel):
+    """Decision for a single license-gated feature."""
+
+    entitled: bool = Field(description="Whether this system is entitled to use the feature.")
+    reason: Literal[
+        "ENTITLED", "NO_LICENSE", "KEY_MISSING", "WRONG_HARDWARE", "TIER_INSUFFICIENT", "WRONG_LICENSE_TYPE",
+        "NOT_GATED",
+    ] = Field(
+        description=(
+            "Machine-readable classification of the decision:\n"
+            "\n"
+            "* `ENTITLED`: the feature is available\n"
+            "* `NO_LICENSE`: no license is installed and the feature requires one\n"
+            "* `KEY_MISSING`: a license is installed but does not carry this feature\n"
+            "* `WRONG_HARDWARE`: this hardware can never provide the feature\n"
+            "* `TIER_INSUFFICIENT`: the support tier does not cover the feature\n"
+            "* `WRONG_LICENSE_TYPE`: the license type does not cover the feature\n"
+            "* `NOT_GATED`: nothing on this system restricts the feature\n"
+            "\n"
+            "New values may be added; treat an unrecognized value as a generic denial."
+        )
+    )
+    message: str = Field(description="Human-readable explanation of the decision. Empty when entitled.")
+
+
+class EntitlementsInfo(BaseModel):
+    features: dict[NonEmptyString, EntitlementEntry] = Field(
+        description=(
+            "Entitlement decision for every license-gated feature known to this system, keyed by feature "
+            "identifier. Identifiers are added over time: ignore keys you do not recognize, and treat an "
+            "absent key as not gated."
+        )
+    )
+
+
+class TrueNASEntitlementsInfoArgs(BaseModel):
+    pass
+
+
+class TrueNASEntitlementsInfoResult(BaseModel):
+    result: EntitlementsInfo = Field(description="Entitlement decisions for all license-gated features on this system.")
+
+
+class TrueNASEntitlementsFeatureArgs(BaseModel):
+    feature: NonEmptyString = Field(
+        description=(
+            "Feature identifier to evaluate. A feature this system does not recognize or does not "
+            "gate is reported as `NOT_GATED`."
+        )
+    )
+
+
+class TrueNASEntitlementsFeatureResult(BaseModel):
+    result: EntitlementEntry = Field(description="Entitlement decision for the requested feature.")

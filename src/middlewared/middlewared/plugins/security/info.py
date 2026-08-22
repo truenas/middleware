@@ -1,5 +1,7 @@
 from subprocess import run
 
+from truenas_pylicensed.features import LicenseFeature
+
 from middlewared.api import api_method
 from middlewared.api.current import (
     SystemSecurityInfoFipsAvailableArgs, SystemSecurityInfoFipsAvailableResult,
@@ -20,8 +22,10 @@ class SystemSecurityInfoService(Service):
     )
     def fips_available(self):
         """Returns a boolean identifying whether FIPS mode may be toggled on this system"""
-        # being able to toggle fips mode is hinged on whether this is an iX licensed piece of hardware
-        return bool(self.call_sync2(self.s.truenas.license.info))
+        # FIPS mode has no entitlement of its own: the product feature matrix covers it and GPOS
+        # STIG mode with a single STIG row. Callers gate every enterprise security option on this,
+        # password policy included, so the STIG entitlement governs all of them.
+        return self.middleware.call_sync2(self.s.truenas.entitlements.check, LicenseFeature.STIG).entitled
 
     @api_method(
         SystemSecurityInfoFipsEnabledArgs, SystemSecurityInfoFipsEnabledResult,

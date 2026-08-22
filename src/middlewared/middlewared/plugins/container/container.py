@@ -4,9 +4,9 @@ import os
 import re
 import uuid
 
-from ixhardware.chassis import TRUENAS_UNKNOWN
 from truenas_pylibvirt import DomainDoesNotExistError
 from truenas_pylibvirt.domain.base.configuration import parse_numeric_set
+from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.api import api_method
 from middlewared.api.base import BaseModel, Excluded, excluded_field
@@ -468,13 +468,6 @@ class ContainerService(CRUDService):
     @private
     async def license_active(self):
         """
-        If this is iX enterprise hardware and has NOT been licensed to run containers
-        then this will return False, otherwise this will return true.
+        Returns whether this system is entitled to run containers.
         """
-        system_chassis = await self.middleware.call('truenas.get_chassis_hardware')
-        if system_chassis == TRUENAS_UNKNOWN or 'MINI' in system_chassis:
-            # 1. if it's not iX branded hardware
-            # 2. OR if it's a MINI, then allow containers/vms
-            return True
-
-        return await self.middleware.call('system.feature_enabled', 'APPS')
+        return (await self.call2(self.s.truenas.entitlements.check, LicenseFeature.CONTAINERS)).entitled

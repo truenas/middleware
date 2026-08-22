@@ -1,8 +1,21 @@
 import pytest
 
 from middlewared.test.integration.assets.pool import dataset
-from middlewared.test.integration.utils import call
+from middlewared.test.integration.utils import call, mock
 
+
+@pytest.fixture(scope='module', autouse=True)
+def webshare_entitled():
+    # Creating a share and enabling an existing one are gated by the WEBSHARE entitlement,
+    # which an unlicensed test runner does not have.
+    with mock('truenas.entitlements.check', args=['WEBSHARE', ], declaration="""
+        def mock(self, feature):
+            from middlewared.plugins.truenas.entitlements import TrueNASEntitlementsCheckEntitlement
+            from middlewared.utils.entitlements import Reason
+
+            return TrueNASEntitlementsCheckEntitlement(entitled=True, reason=Reason.ENTITLED, column='HW+K', message='')
+    """):
+        yield
 
 
 def test_webshare_is_home_base_field():
