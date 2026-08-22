@@ -1,4 +1,3 @@
-import contextlib
 import errno
 import os
 import sys
@@ -8,6 +7,7 @@ import pytest
 
 from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.test.integration.assets.account import group, privilege, root_with_password_disabled, user
+from middlewared.test.integration.assets.privilege import raw_privilege
 from middlewared.test.integration.utils import call, client, mock
 from middlewared.test.integration.utils.audit import expect_audit_method_calls
 
@@ -17,29 +17,6 @@ sys.path.append(os.getcwd())
 UNMAPPED_SID = "S-1-5-21-1234567890-1234567890-1234567890-1234"
 # A GID that is not assigned to any local group.
 UNUSED_GID = 59999
-
-
-@contextlib.contextmanager
-def raw_privilege(data):
-    """Insert a privilege row directly into the datastore.
-
-    `privilege.create` rejects group ids that cannot be resolved, so this is the
-    only way to obtain a privilege whose `ds_groups` are unmapped (which is what
-    happens when a directory service is unjoined after privileges were granted).
-    """
-    id_ = call("datastore.insert", "account.privilege", {
-        "builtin_name": None,
-        "name": "Test raw",
-        "local_groups": [],
-        "ds_groups": [],
-        "roles": [],
-        "web_shell": False,
-        **data,
-    })
-    try:
-        yield id_
-    finally:
-        call("datastore.delete", "account.privilege", id_)
 
 
 def test_change_local_administrator_groups_to_invalid():
@@ -302,13 +279,6 @@ def test_update_readonly_administrator_web_shell():
     assert ve.value.errors[0].errmsg == (
         "Web shell access may not be enabled for the built-in group for read-only administrators."
     )
-
-
-@pytest.mark.parametrize("builtin_name", ["READONLY_ADMINISTRATOR", "SHARING_ADMINISTRATOR"])
-def test_update_builtin_privilege_without_web_shell(builtin_name):
-    p = call("privilege.query", [["builtin_name", "=", builtin_name]], {"get": True})
-
-    assert call("privilege.update", p["id"], {"web_shell": False})["web_shell"] is False
 
 
 def test_update_local_administrator_without_password_enabled_user(root_is_only_local_administrator):

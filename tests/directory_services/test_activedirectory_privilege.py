@@ -7,42 +7,13 @@ stand-alone side (entries that resolve to nothing, or to a local account) lives 
 tests/api2/test_account_privilege.py.
 """
 
-import contextlib
-
 import pytest
 
 from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.directory_service import directoryservice
-from middlewared.test.integration.assets.privilege import privilege
+from middlewared.test.integration.assets.privilege import privilege, raw_privilege
 from middlewared.test.integration.utils import call
 from middlewared.test.integration.utils.system import reset_systemd_svcs
-
-
-@contextlib.contextmanager
-def raw_privilege(data):
-    """Insert a privilege row directly into the datastore.
-
-    `privilege.create` rejects a domain group in `local_groups`, so this is the only way to
-    obtain such a privilege (which is what an administrator ends up with after moving a
-    group between the local database and the domain).
-    """
-    id_ = call(
-        "datastore.insert",
-        "account.privilege",
-        {
-            "builtin_name": None,
-            "name": "AD test raw",
-            "local_groups": [],
-            "ds_groups": [],
-            "roles": [],
-            "web_shell": False,
-            **data,
-        },
-    )
-    try:
-        yield id_
-    finally:
-        call("datastore.delete", "account.privilege", id_)
 
 
 @pytest.fixture(scope="module")
