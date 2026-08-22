@@ -112,8 +112,8 @@ class ReportingGetDataResponse(BaseModel):
     """Specific instance identifier for the metric. `null` for system-wide metrics."""
     data: list
     """Array of time-series data points for the requested time period."""
-    aggregations: Aggregations
-    """Statistical aggregations of the data over the time period."""
+    aggregations: Aggregations | None
+    """Statistical aggregations of the data over the time period. `null` when `aggregate` was not requested."""
     start: timestamp
     """Actual start timestamp of the returned data."""
     end: timestamp
