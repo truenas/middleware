@@ -6,7 +6,7 @@ from middlewared.test.integration.assets.account import user
 from middlewared.test.integration.assets.pool import dataset
 
 
-def test_root_password_disabled():
+def test_root_password_disabled(root_is_only_local_administrator):
     with client() as c:
         root_user_id = c.call(
             "datastore.query",

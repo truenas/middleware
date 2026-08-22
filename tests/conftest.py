@@ -13,7 +13,7 @@ from middlewared.test.integration.utils.pytest import failed
 # making them available (in scope) for all test modules.
 # See: https://stackoverflow.com/questions/75647682/how-can-i-resolve-flake8-unused-import-error-for-pytest-fixture-imported-from
 from middlewared.test.integration.assets.roles import unprivileged_user_fixture  # noqa
-from middlewared.test.integration.assets.account import test_user  # noqa
+from middlewared.test.integration.assets.account import root_is_only_local_administrator, test_user  # noqa
 
 # When STIG is active we are not able to call test.notify_test_start
 # or test.notify_test_end

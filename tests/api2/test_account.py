@@ -1117,3 +1117,12 @@ def test_delete_user_removes_webui_attribute():
         assert call("datastore.query", "account.bsdusers_webui_attribute", [["uid", "=", uid]]) == []
 
 
+# ---------------------------------------------------------------------------
+# builtin uid cache
+# ---------------------------------------------------------------------------
+def test_get_builtin_user_id_nonexistent():
+    with pytest.raises(CallError) as ve:
+        call("user.get_builtin_user_id", "cov_nonexistent_builtin")
+
+    assert ve.value.errno == errno.ENOENT
+    assert ve.value.errmsg == "'cov_nonexistent_builtin' user not found"
