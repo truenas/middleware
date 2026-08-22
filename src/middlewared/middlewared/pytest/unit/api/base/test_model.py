@@ -5,8 +5,10 @@ from middlewared.api.base import (
     BaseModel,
     Excluded,
     ForUpdateMetaclass,
+    NotRequired,
     excluded_field,
     model_subset,
+    query_result_item,
     single_argument_args,
     single_argument_result,
 )
@@ -143,3 +145,38 @@ def test_model_subset_is_subclass():
     subset = model_subset(ModelSubsetTest, ["fast_list"])
     assert issubclass(subset, ModelSubsetTest)
     assert isinstance(subset(), ModelSubsetTest)
+
+
+def test_serialization_schema_describes_fields():
+    """`_not_required_serializer` and `_for_update_serializer` must not declare a return type.
+
+    Pydantic derives a model's serialization-mode JSON schema from its functional serializer's
+    return annotation instead of from the model's fields, so annotating those two collapses every
+    model that uses them to a bare `{"type": "object"}` in `middlewared --dump-api` output.
+    Nothing fails at runtime when that happens, hence this test.
+    """
+    class NotRequiredObject(BaseModel):
+        id: int
+        name: str = NotRequired
+
+    class ForUpdateObject(BaseModel, metaclass=ForUpdateMetaclass):
+        id: int
+        name: str
+
+    class ItemEntry(BaseModel):
+        id: int
+        name: str
+
+    SERIALIZER_NAME = "serializer"  # defined in model.py
+
+    # `query_result_item` applies `ForUpdateMetaclass`, so this covers every `*.query` return value.
+    for model, serializer in (
+        (NotRequiredObject, "_not_required_serializer"),
+        (ForUpdateObject, "_for_update_serializer"),
+        (query_result_item(ItemEntry), "_for_update_serializer"),
+    ):
+        # Without this the test would still pass for a model that has no serializer at all.
+        assert getattr(model, SERIALIZER_NAME).__name__ == serializer, model.__name__
+
+        schema = model.model_json_schema(mode="serialization")
+        assert set(schema.get("properties", {})) == set(model.schema_model_fields()), model.__name__
