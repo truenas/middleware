@@ -5,8 +5,8 @@
 
 import errno
 
+from middlewared.alert.applicability import APPLIANCE_OR_HA_LICENSED, HA_LICENSED
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource, UnavailableException
-from middlewared.utils import ProductType
 from middlewared.service_exception import CallError
 
 
@@ -15,7 +15,8 @@ class FailoverInterfaceNotFoundAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = 'Failover Internal Interface Not Found'
     text = 'Failover internal interface not found. Contact support.'
-    products = (ProductType.ENTERPRISE,)
+    applies_to = APPLIANCE_OR_HA_LICENSED
+    listed_only_when = HA_LICENSED
 
 
 class TrueNASVersionsMismatchAlertClass(AlertClass):
@@ -23,7 +24,8 @@ class TrueNASVersionsMismatchAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = 'TrueNAS Software Versions Must Match Between Storage Controllers'
     text = 'TrueNAS software versions must match between storage controllers.'
-    products = (ProductType.ENTERPRISE,)
+    applies_to = APPLIANCE_OR_HA_LICENSED
+    listed_only_when = HA_LICENSED
 
 
 class FailoverStatusCheckFailedAlertClass(AlertClass):
@@ -31,7 +33,8 @@ class FailoverStatusCheckFailedAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = 'Failed to Check Failover Status with the Other Controller'
     text = 'Failed to check failover status with the other controller: %s.'
-    products = (ProductType.ENTERPRISE,)
+    applies_to = APPLIANCE_OR_HA_LICENSED
+    listed_only_when = HA_LICENSED
 
 
 class FailoverFailedAlertClass(AlertClass):
@@ -39,7 +42,8 @@ class FailoverFailedAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = 'Failover Failed'
     text = 'Failover failed. Check /var/log/failover.log on both controllers.'
-    products = (ProductType.ENTERPRISE,)
+    applies_to = APPLIANCE_OR_HA_LICENSED
+    listed_only_when = HA_LICENSED
 
 
 class VRRPStatesDoNotAgreeAlertClass(AlertClass):
@@ -47,12 +51,13 @@ class VRRPStatesDoNotAgreeAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = 'Controllers VRRP States Do Not Agree'
     text = 'Controllers VRRP states do not agree: %(error)s.'
-    products = (ProductType.ENTERPRISE,)
+    applies_to = APPLIANCE_OR_HA_LICENSED
+    listed_only_when = HA_LICENSED
 
 
 class FailoverAlertSource(AlertSource):
-    products = (ProductType.ENTERPRISE,)
-    failover_related = True
+    applies_to = HA_LICENSED
+    post_failover_blackout = True
     run_on_backup_node = False
 
     async def check(self):
