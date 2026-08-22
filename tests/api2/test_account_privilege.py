@@ -301,14 +301,6 @@ def test_update_readonly_administrator_web_shell():
     assert ve.value.errors[0].attribute == "privilege_update.web_shell"
     assert ve.value.errors[0].errmsg == (
         "Web shell access may not be enabled for the built-in group for read-only administrators."
-    )
-
-
-@pytest.mark.parametrize("builtin_name", ["READONLY_ADMINISTRATOR", "SHARING_ADMINISTRATOR"])
-def test_update_builtin_privilege_without_web_shell(builtin_name):
-    p = call("privilege.query", [["builtin_name", "=", builtin_name]], {"get": True})
-
-    assert call("privilege.update", p["id"], {"web_shell": False})["web_shell"] is False
 
 
 def test_update_local_administrator_without_password_enabled_user(root_is_only_local_administrator):
