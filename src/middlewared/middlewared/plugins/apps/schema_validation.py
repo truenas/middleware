@@ -6,6 +6,7 @@ from typing import Any
 from middlewared.api.current import AppEntry
 from middlewared.service import ServiceContext, ValidationErrors
 
+from .ix_apps.path import is_app_mounts_path
 from .resources import certificate_choices, used_ports
 from .schema_construction_utils import NOT_PROVIDED, RESERVED_NAMES, USER_VALUES, construct_schema
 
@@ -120,6 +121,15 @@ async def validate_acl_entries(
 ) -> None:
     path = value.get('path')
     if not path or value.get('options', {}).get('force'):
+        return
+
+    if is_app_mounts_path(path):
+        # Everything under the app mounts directory is created and owned by middleware, so whether it holds
+        # data is not middleware's call to refuse a save over - a stored `force: false` on an ix volume would
+        # otherwise make the config permanently unsavable once the app has written anything into its volume.
+        # Skipping only drops the pre-flight message: filesystem.add_to_acl still refuses an unforced apply
+        # over a populated path, and `force` is written in exactly one place - normalize_ix_volume - which
+        # only ever sets it for the requesting app's own volume.
         return
     try:
         if await context.to_thread(_acl_path_has_data, path):

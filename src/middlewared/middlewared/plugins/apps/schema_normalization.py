@@ -7,7 +7,7 @@ from typing import Any
 from middlewared.api.current import AppEntry
 from middlewared.service import ServiceContext
 
-from .ix_apps.path import get_app_volume_path
+from .ix_apps.path import get_app_volume_path, is_app_volume_path
 from .resources import gpu_choices_internal
 from .schema_action_context import apply_acls, update_volumes
 from .schema_construction_utils import RESERVED_NAMES
@@ -25,11 +25,12 @@ async def normalize_and_validate_values(
     context: ServiceContext, item_details: dict[str, Any], values: dict[str, Any], update: bool,
     app_dir: str, app_data: AppEntry | None = None, perform_actions: bool = True,
 ) -> dict[str, Any]:
+    app_name = app_dir.split('/')[-1]
     new_values = await validate_values(context, item_details, values, update, app_data)
     new_values, normalization_context = await normalize_values(
         context, item_details['schema']['questions'], new_values, update, {
             'app': {
-                'name': app_dir.split('/')[-1],
+                'name': app_name,
                 'path': app_dir,
             },
             'actions': [],
@@ -188,6 +189,16 @@ async def normalize_ix_volume(
 
     if acl_dict:
         acl_dict['path'] = host_path
+        if is_app_volume_path(host_path, normalization_context['app']['name']):
+            # An ix volume is created and owned by middleware, so applying an ACL to one can never clobber data
+            # the user deliberately placed there, and the schema we serve already reflects that by hiding `force`
+            # and defaulting it to true. Clients can still submit an explicit false though, and older configs may
+            # have one persisted, which trips the "path contains existing data" guard as soon as the app writes
+            # anything into its volume. The containment check is not redundant: `dataset_name` is not validated
+            # as a path anywhere, so an absolute or `..`-laden one lands `host_path` outside the app's own tree,
+            # and forcing there would be forcing over somebody else's data. Since this is the same dict which
+            # gets written back to the app config, a stored false heals itself on the next update.
+            acl_dict.setdefault('options', {})['force'] = True
         await normalize_acl(context, {'schema': {'type': 'dict'}}, acl_dict, complete_config, normalization_context)
     return value
 
