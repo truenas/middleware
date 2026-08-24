@@ -345,9 +345,26 @@ class KRB5Conf():
         NOTE: if admin_server, kdc, or kpasswd_server are unspecified, then they will be
         resolved through DNS.
         """
+        # MIT krb5 matches [realms] section names with a case-sensitive comparison, but
+        # some clients ask for the realm using whatever spelling the domain controller
+        # handed them. Samba's `net ads join` is one of these: once the computer account
+        # exists it reconnects as the machine account and kinits as
+        # MACHINE$@<dns_domain_name>, where dns_domain_name comes from
+        # lsa_QueryInfoPolicy2 and is lower case. Because we pin `kdc` entries and set
+        # dns_lookup_kdc = false, a miss here has no DNS fallback and fails outright with
+        # KRB5_REALM_UNKNOWN ("Cannot find KDC for requested realm"). Alias the case
+        # variants onto the same KDCs so that every spelling resolves. An explicitly
+        # configured realm always wins over an alias generated for another one.
         clean_realms = {}
         for realm in realms:
-            clean_realms.update(self.__parse_realm(realm))
+            for name, realm_conf in self.__parse_realm(realm).items():
+                clean_realms[name] = realm_conf
+
+                for alias in (name.lower(), name.upper()):
+                    if alias in clean_realms:
+                        continue
+
+                    clean_realms[alias] = realm_conf.copy()
 
         self.realms = clean_realms
 
@@ -403,17 +420,23 @@ class KRB5Conf():
         kconf = '[realms]\n'
         for realm in list(self.realms.keys()):
             this_realm = self.realms[realm].copy()
-            this_realm.pop('realm')
+            # `realm` here may be a case alias, so default_domain comes from the
+            # canonical realm name rather than the section name.
+            default_domain = this_realm.pop('realm')
 
             kconf += self.__dump_a_parameter(
-                realm, {'default_domain': realm} | this_realm
+                realm, {'default_domain': default_domain} | this_realm
             )
 
         return kconf + '\n'
 
     def __generate_domain_realms(self):
-        kconf = '[domain_realms]\n'
-        for realm in self.realms.keys():
+        # NOTE: the section name MIT krb5 reads is "domain_realm" (singular). Any other
+        # spelling parses without error and is then silently ignored.
+        kconf = '[domain_realm]\n'
+        # self.realms may hold case aliases of the same realm. Map hostnames onto the
+        # canonical name only, otherwise we emit redundant (and conflicting) entries.
+        for realm in dict.fromkeys(r['realm'] for r in self.realms.values()):
             kconf += f'\t{realm.lower()} = {realm}\n'
             kconf += f'\t.{realm.lower()} = {realm}\n'
             kconf += f'\t{realm.upper()} = {realm}\n'
