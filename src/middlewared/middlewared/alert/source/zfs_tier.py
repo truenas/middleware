@@ -8,30 +8,19 @@ from middlewared.alert.base import (
     AlertCategory,
     AlertClass,
     AlertLevel,
-    OneShotAlertClass,
     ThreadedAlertSource,
 )
 from middlewared.plugins.zfs.tier import special_vdev_thresholds
 
-_TERMINAL_STATUSES = (RewriteJobStatus.ERROR, RewriteJobStatus.COMPLETE)
 
-
-class TierJobErrorAlertClass(AlertClass, OneShotAlertClass):
-    deleted_automatically = False
+class TierJobErrorAlertClass(AlertClass):
     category = AlertCategory.TASKS
     level = AlertLevel.CRITICAL
     title = "Tier Migration Job Error"
     text = "Tier migration job %(tier_job_id)s encountered an error: %(error)s"
 
-    async def create(self, args):
-        return Alert(TierJobErrorAlertClass, args, key=args["tier_job_id"])
 
-    async def delete(self, alerts, query):
-        return list(filter(lambda alert: alert.key != str(query), alerts))
-
-
-class TierJobCompleteAlertClass(AlertClass, OneShotAlertClass):
-    deleted_automatically = False
+class TierJobCompleteAlertClass(AlertClass):
     category = AlertCategory.TASKS
     level = AlertLevel.NOTICE
     title = "Tier Migration Job Complete"
@@ -40,15 +29,8 @@ class TierJobCompleteAlertClass(AlertClass, OneShotAlertClass):
         "migrated to %(tier)s for a total of %(size)s bytes of data."
     )
 
-    async def create(self, args):
-        return Alert(TierJobCompleteAlertClass, args, key=args["tier_job_id"])
 
-    async def delete(self, alerts, query):
-        return list(filter(lambda alert: alert.key != str(query), alerts))
-
-
-class TierSpecialVdevCriticalAlertClass(AlertClass, OneShotAlertClass):
-    deleted_automatically = False
+class TierSpecialVdevCriticalAlertClass(AlertClass):
     category = AlertCategory.STORAGE
     level = AlertLevel.CRITICAL
     title = "Special Allocation Class Space Critical"
@@ -58,15 +40,8 @@ class TierSpecialVdevCriticalAlertClass(AlertClass, OneShotAlertClass):
         "writes may overflow into the REGULAR tier."
     )
 
-    async def create(self, args):
-        return Alert(TierSpecialVdevCriticalAlertClass, args, key=args["pool_name"])
 
-    async def delete(self, alerts, query):
-        return list(filter(lambda alert: alert.key != str(query), alerts))
-
-
-class TierSpecialVdevWarningAlertClass(AlertClass, OneShotAlertClass):
-    deleted_automatically = False
+class TierSpecialVdevWarningAlertClass(AlertClass):
     category = AlertCategory.STORAGE
     level = AlertLevel.WARNING
     title = "Special Allocation Class Space Warning"
@@ -75,96 +50,103 @@ class TierSpecialVdevWarningAlertClass(AlertClass, OneShotAlertClass):
         "%(threshold)d%% — within 10 points of the configured critical cap."
     )
 
-    async def create(self, args):
-        return Alert(TierSpecialVdevWarningAlertClass, args, key=args["pool_name"])
 
-    async def delete(self, alerts, query):
-        return list(filter(lambda alert: alert.key != str(query), alerts))
+# Sorted (dataset_name, job_uuid) pairs of the ERROR and COMPLETE jobs seen on
+# a poll — identifies the job set a cached computation belongs to.
+_JobAlertsCacheKey = tuple[tuple[tuple[str, str], ...], tuple[tuple[str, str], ...]]
+
+
+class _JobAlertsCache:
+    """Single-slot memo of the alerts computed for a set of terminal jobs.
+
+    ``get_info()`` and ``bulk_get_tier_info()`` results are stable for a
+    given terminal job, so the previous poll's alerts can be reused while
+    the set of terminal jobs is unchanged. Re-serving the same ``Alert``
+    instances is safe: the framework re-derives their bookkeeping fields
+    (uuid, datetime, dismissed, node) per poll, keyed by alert class and
+    alert key.
+    """
+
+    def __init__(self) -> None:
+        self._key: _JobAlertsCacheKey | None = None
+        self._alerts: list[Alert] = []
+
+    @staticmethod
+    def _key_for(error_jobs: list[Any], complete_jobs: list[Any]) -> _JobAlertsCacheKey:
+        return (
+            tuple(sorted((job.dataset_name, job.job_uuid) for job in error_jobs)),
+            tuple(sorted((job.dataset_name, job.job_uuid) for job in complete_jobs)),
+        )
+
+    def get(self, error_jobs: list[Any], complete_jobs: list[Any]) -> list[Alert] | None:
+        """Return the alerts cached for this job set, or ``None`` on miss."""
+        if self._key != self._key_for(error_jobs, complete_jobs):
+            return None
+        return list(self._alerts)
+
+    def store(self, error_jobs: list[Any], complete_jobs: list[Any], alerts: list[Alert]) -> None:
+        self._key = self._key_for(error_jobs, complete_jobs)
+        self._alerts = list(alerts)
+
+    def clear(self) -> None:
+        self._key = None
+        self._alerts = []
 
 
 class TierJobAlertSource(ThreadedAlertSource):
-    """Single threaded source that drives every Tier* OneShot alert.
+    """Single threaded source that drives every Tier* alert.
 
     Gated at runtime on ``zfs.tier.config.enabled`` — community and
-    licensed-but-disabled boxes both early-exit. The two job alerts
-    (ERROR / COMPLETE) are fired once per terminal-state UUID, tracked
-    in memory so dismissal sticks across polls; the two SPECIAL-vdev
-    alerts are fired/cleared every poll based on the current
-    ``class_special_used / class_special_usable`` ratio per pool.
+    licensed-but-disabled boxes both return no alerts, which clears any
+    previously raised ones. The two job alerts (ERROR / COMPLETE) exist
+    for as long as the corresponding job record sits in that terminal
+    state; the two SPECIAL-vdev alerts reflect the current
+    ``class_special_used / class_special_usable`` ratio per pool. All
+    lifecycle management (dedup by key, dismissal, clearing) is handled
+    by the alert framework.
     """
+
+    run_on_backup_node = False
 
     def __init__(self, middleware: Any) -> None:
         super().__init__(middleware)
-        self._fired_terminal_jobs: set[str] = set()
-        self._fired_special_pools: set[str] = set()
+        self._job_alerts_cache = _JobAlertsCache()
 
-    def check_sync(self) -> list:
-        try:
-            config = self.middleware.call_sync("zfs.tier.config")
-        except Exception:
-            self.middleware.logger.warning("Failed to read zfs.tier.config", exc_info=True)
-            return []
-
+    def check_sync(self) -> list[Alert]:
+        config = self.call_sync2(self.s.zfs.tier.config)
         if not config.enabled:
-            self._clear_all_oneshots()
+            # Drop the cache: tier info baked into cached COMPLETE alerts
+            # (e.g. tier_type) may change while tiering is disabled.
+            self._job_alerts_cache.clear()
             return []
 
         warning_pct, critical_pct = special_vdev_thresholds(config)
+        return self._check_jobs() + self._check_special_vdev_usage(warning_pct, critical_pct)
 
-        try:
-            self._check_jobs()
-        except Exception:
-            self.middleware.logger.warning("Failed to check tier job alerts", exc_info=True)
-
-        try:
-            self._check_special_vdev_usage(warning_pct, critical_pct)
-        except Exception:
-            self.middleware.logger.warning("Failed to check special vdev space alerts", exc_info=True)
-
-        return []
-
-    # ------------------------------------------------------------------
-    # Job ERROR/COMPLETE OneShots
-    # ------------------------------------------------------------------
-
-    def _check_jobs(self) -> None:
-        current_terminal: set[str] = set()
+    def _check_jobs(self) -> list[Alert]:
+        error_jobs = []
+        complete_jobs = []
 
         # Materialize first: enum_jobs() holds an LMDB read transaction open for
-        # the life of the iterator, and _fire_job_alert() -> get_info() below opens
-        # another read transaction on the same thread. LMDB permits one read
-        # transaction per thread, so reading inside the live iterator raises
-        # MDB_BAD_RSLOT.
+        # the life of the iterator, and get_info() below opens another read
+        # transaction on the same thread. LMDB permits one read transaction per
+        # thread, so reading inside the live iterator raises MDB_BAD_RSLOT.
         for job in list(enum_jobs()):
+            if job.status == RewriteJobStatus.ERROR:
+                error_jobs.append(job)
+            elif job.status == RewriteJobStatus.COMPLETE:
+                complete_jobs.append(job)
+
+        cached = self._job_alerts_cache.get(error_jobs, complete_jobs)
+        if cached is not None:
+            return cached
+
+        alerts: list[Alert] = []
+
+        for job in error_jobs:
             tier_job_id = f"{job.dataset_name}@{job.job_uuid}"
-
-            if job.status in _TERMINAL_STATUSES:
-                current_terminal.add(tier_job_id)
-                if tier_job_id in self._fired_terminal_jobs:
-                    continue
-                self._fire_job_alert(job, tier_job_id)
-                self._fired_terminal_jobs.add(tier_job_id)
-            else:
-                if tier_job_id in self._fired_terminal_jobs:
-                    self.middleware.call_sync(
-                        "alert.oneshot_delete",
-                        "TierJobError",
-                        tier_job_id,
-                    )
-                    self.middleware.call_sync(
-                        "alert.oneshot_delete",
-                        "TierJobComplete",
-                        tier_job_id,
-                    )
-                    self._fired_terminal_jobs.discard(tier_job_id)
-
-        self._fired_terminal_jobs &= current_terminal
-
-    def _fire_job_alert(self, job: Any, tier_job_id: str) -> None:
-        if job.status == RewriteJobStatus.ERROR:
             try:
-                info = get_info(job.dataset_name, job.job_uuid)
-                error = info.error or ""
+                error = get_info(job.dataset_name, job.job_uuid).error or ""
             except Exception:
                 self.middleware.logger.debug(
                     "Failed to get info for tier job %s",
@@ -172,54 +154,54 @@ class TierJobAlertSource(ThreadedAlertSource):
                     exc_info=True,
                 )
                 error = ""
-            self.middleware.call_sync(
-                "alert.oneshot_create",
-                "TierJobError",
+            alerts.append(Alert(
+                TierJobErrorAlertClass,
                 {"tier_job_id": tier_job_id, "error": error},
+                key=tier_job_id,
+            ))
+
+        if complete_jobs:
+            tier_map = self.call_sync2(
+                self.s.zfs.tier.bulk_get_tier_info,
+                [job.dataset_name for job in complete_jobs],
             )
-            return
+            for job in complete_jobs:
+                tier_info = tier_map.get(job.dataset_name)
+                if not tier_info:
+                    continue
 
-        try:
-            info = get_info(job.dataset_name, job.job_uuid)
-            stats = info.stats
-        except Exception:
-            self.middleware.logger.debug(
-                "Failed to get info for tier job %s",
-                tier_job_id,
-                exc_info=True,
-            )
-            stats = None
+                tier_job_id = f"{job.dataset_name}@{job.job_uuid}"
+                try:
+                    stats = get_info(job.dataset_name, job.job_uuid).stats
+                except Exception:
+                    self.middleware.logger.debug(
+                        "Failed to get info for tier job %s",
+                        tier_job_id,
+                        exc_info=True,
+                    )
+                    stats = None
 
-        tier_map = self.middleware.call_sync(
-            "zfs.tier.bulk_get_tier_info",
-            [job.dataset_name],
-        )
-        tier_info = tier_map.get(job.dataset_name)
-        if not tier_info:
-            return
+                alerts.append(Alert(
+                    TierJobCompleteAlertClass,
+                    {
+                        "tier_job_id": tier_job_id,
+                        "files": stats.success if stats else 0,
+                        "tier": tier_info["tier_type"],
+                        "size": str(stats.count_bytes if stats else 0),
+                    },
+                    key=tier_job_id,
+                ))
 
-        self.middleware.call_sync(
-            "alert.oneshot_create",
-            "TierJobComplete",
-            {
-                "tier_job_id": tier_job_id,
-                "files": stats.success if stats else 0,
-                "tier": tier_info["tier_type"],
-                "size": str(stats.count_bytes if stats else 0),
-            },
-        )
+        self._job_alerts_cache.store(error_jobs, complete_jobs, alerts)
+        return alerts
 
-    # ------------------------------------------------------------------
-    # SPECIAL-vdev space OneShots
-    # ------------------------------------------------------------------
-
-    def _check_special_vdev_usage(self, warning_pct: int, critical_pct: int) -> None:
+    def _check_special_vdev_usage(self, warning_pct: int, critical_pct: int) -> list[Alert]:
         pools = self.middleware.call_sync(
             "zpool.query_impl",
             {"properties": ["class_special_usable", "class_special_used"]},
         )
 
-        current_pools: set[str] = set()
+        alerts: list[Alert] = []
         for pool in pools:
             props = pool.get("properties") or {}
             usable_prop = props.get("class_special_usable") or {}
@@ -228,91 +210,23 @@ class TierJobAlertSource(ThreadedAlertSource):
             used = used_prop.get("value") if isinstance(used_prop, dict) else None
 
             if not usable or used is None:
+                # Pool has no SPECIAL vdev — skip.
                 continue
 
-            pool_name = pool.get("name")
-            if not pool_name:
-                continue
-
-            current_pools.add(pool_name)
+            pool_name = pool["name"]
             pct = (used / usable) * 100
 
             if pct > critical_pct:
-                self.middleware.call_sync(
-                    "alert.oneshot_create",
-                    "TierSpecialVdevCritical",
+                alerts.append(Alert(
+                    TierSpecialVdevCriticalAlertClass,
                     {"pool_name": pool_name, "threshold": critical_pct},
-                )
-                self.middleware.call_sync(
-                    "alert.oneshot_delete",
-                    "TierSpecialVdevWarning",
-                    pool_name,
-                )
+                    key=pool_name,
+                ))
             elif pct > warning_pct:
-                self.middleware.call_sync(
-                    "alert.oneshot_create",
-                    "TierSpecialVdevWarning",
+                alerts.append(Alert(
+                    TierSpecialVdevWarningAlertClass,
                     {"pool_name": pool_name, "threshold": warning_pct},
-                )
-                self.middleware.call_sync(
-                    "alert.oneshot_delete",
-                    "TierSpecialVdevCritical",
-                    pool_name,
-                )
-            else:
-                self.middleware.call_sync(
-                    "alert.oneshot_delete",
-                    "TierSpecialVdevWarning",
-                    pool_name,
-                )
-                self.middleware.call_sync(
-                    "alert.oneshot_delete",
-                    "TierSpecialVdevCritical",
-                    pool_name,
-                )
+                    key=pool_name,
+                ))
 
-        for stale in self._fired_special_pools - current_pools:
-            self.middleware.call_sync(
-                "alert.oneshot_delete",
-                "TierSpecialVdevWarning",
-                stale,
-            )
-            self.middleware.call_sync(
-                "alert.oneshot_delete",
-                "TierSpecialVdevCritical",
-                stale,
-            )
-        self._fired_special_pools = current_pools
-
-    def _clear_all_oneshots(self) -> None:
-        for pool_name in self._fired_special_pools:
-            try:
-                self.middleware.call_sync(
-                    "alert.oneshot_delete",
-                    "TierSpecialVdevWarning",
-                    pool_name,
-                )
-                self.middleware.call_sync(
-                    "alert.oneshot_delete",
-                    "TierSpecialVdevCritical",
-                    pool_name,
-                )
-            except Exception:
-                pass
-        self._fired_special_pools.clear()
-
-        for tier_job_id in self._fired_terminal_jobs:
-            try:
-                self.middleware.call_sync(
-                    "alert.oneshot_delete",
-                    "TierJobError",
-                    tier_job_id,
-                )
-                self.middleware.call_sync(
-                    "alert.oneshot_delete",
-                    "TierJobComplete",
-                    tier_job_id,
-                )
-            except Exception:
-                pass
-        self._fired_terminal_jobs.clear()
+        return alerts
