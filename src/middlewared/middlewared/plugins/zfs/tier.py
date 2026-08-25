@@ -390,7 +390,10 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
         await self.middleware.call("etc.generate", "truenas_zfstierd")
         if new.special_class_metadata_reserve_pct != old.special_class_metadata_reserve_pct:
             await self.middleware.run_in_thread(
-                _apply_metadata_reserve_pct, self.middleware, new.special_class_metadata_reserve_pct, True
+                _apply_metadata_reserve_pct,
+                self.middleware,
+                new.special_class_metadata_reserve_pct,
+                await self.middleware.call("failover.licensed"),
             )
         if new.max_concurrent_jobs != old.max_concurrent_jobs:
             verb: Literal["RESTART", "RELOAD"] = "RESTART"
