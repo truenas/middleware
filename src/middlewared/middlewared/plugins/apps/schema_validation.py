@@ -3,6 +3,7 @@ from pathlib import Path
 from middlewared.service import Service
 from middlewared.utils.filter_list import filter_list
 
+from .ix_apps.path import is_app_mounts_path
 from .schema_construction_utils import construct_schema, NOT_PROVIDED, RESERVED_NAMES
 
 
@@ -99,13 +100,24 @@ class AppSchemaService(Service):
             verrors.extend(sub_verrors)
 
     def validate_acl_entries(self, verrors, value, question, schema_name, app_data):
+        path = value.get('path')
+        if not path or value.get('options', {}).get('force'):
+            return
+
+        if is_app_mounts_path(path):
+            # Everything under the app mounts directory is created and owned by middleware, so whether it holds
+            # data is not middleware's call to refuse a save over - a stored `force: false` on an ix volume would
+            # otherwise make the config permanently unsavable once the app has written anything into its volume.
+            # Skipping only drops the pre-flight message: filesystem.add_to_acl still refuses an unforced apply
+            # over a populated path, and `force` is written in exactly one place - normalize_ix_volume - which
+            # only ever sets it for the requesting app's own volume.
+            return
+
         try:
-            if value.get('path') and not value.get('options', {}).get('force') and next(
-                Path(value['path']).iterdir(), None
-            ):
-                verrors.add(schema_name, f'{value["path"]}: path contains existing data and `force` was not specified')
+            if next(Path(path).iterdir(), None):
+                verrors.add(schema_name, f'{path}: path contains existing data and `force` was not specified')
         except FileNotFoundError:
-            verrors.add(schema_name, f'{value["path"]}: path does not exist')
+            verrors.add(schema_name, f'{path}: path does not exist')
 
     async def validate_port_available_on_node(self, verrors, value, question, schema_name, app_data):
         for port_entry in (app_data['active_workloads']['used_ports'] if app_data else []):
