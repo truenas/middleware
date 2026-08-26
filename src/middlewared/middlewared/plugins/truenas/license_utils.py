@@ -197,8 +197,12 @@ def get_license_info(lic: LicenseStatus | None = None) -> LicenseInfo | None:
     else:
         contract_type = None
 
-    if lic.expires_at:
-        expires_at: date | None = date.fromisoformat(lic.expires_at)
+    # The license schema replaced the top-level expiry with an issued_at mint date, so
+    # newer builds of the SDK do not define this attribute at all. Expiry now lives on
+    # the support contract.
+    license_expires_at = getattr(lic, "expires_at", None)
+    if license_expires_at:
+        expires_at: date | None = date.fromisoformat(license_expires_at)
     elif support and support.expires_at:
         expires_at = date.fromisoformat(support.expires_at)
     else:
