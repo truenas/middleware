@@ -15,7 +15,7 @@ from pydantic_core import PydanticUndefined, SchemaSerializer, core_schema
 
 from middlewared.api.base.private import guard_private_fields, is_private_guard
 from middlewared.api.base.types.string import SECRET_VALUE
-from middlewared.utils.lang import Undefined, undefined
+from middlewared.utils.lang import undefined
 from middlewared.utils.typing_ import is_union
 
 __all__ = ["DumpableModel", "BaseModel", "ForUpdateMetaclass",
@@ -73,10 +73,10 @@ Secret.__pydantic_serializer__ = SchemaSerializer(
 
 
 @model_serializer(mode="wrap")
-def _not_required_serializer(
+def _not_required_serializer(  # type: ignore[no-untyped-def]
     self: "BaseModel",
     serializer: core_schema.SerializerFunctionWrapHandler,
-) -> dict[str, Any]:
+):
     """Exclude all fields that are set to `NotRequired`."""
     return {
         k: v
@@ -86,13 +86,13 @@ def _not_required_serializer(
 
 
 @model_serializer(mode="wrap")
-def _for_update_serializer(
+def _for_update_serializer(  # type: ignore[no-untyped-def]
     self: "BaseModel",
     serializer: core_schema.SerializerFunctionWrapHandler,
-) -> dict[str, Any] | Undefined:
+):
     if self is undefined:  # type: ignore[comparison-overlap]
         # Can happen if `ForUpdateMetaclass` models are nestsed. Defer serialization to the outer model.
-        return self  # type: ignore[return-value]
+        return self
 
     aliases = {field.alias or name: name for name, field in self.model_fields.items()}
 
