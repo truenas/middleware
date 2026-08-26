@@ -14,7 +14,6 @@ def _make_status(features: dict[str, FeatureEntry]) -> LicenseStatus:
         version=1,
         type=LicenseType.ENTERPRISE_HA,
         model="H10",
-        expires_at=None,
         features=features,
         system_id={"serials": ["TEST-000001", "TEST-000002"]},
         enclosures={"E24": {"count": 3}},
