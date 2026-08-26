@@ -25,7 +25,7 @@ class LicenseAlertClass(AlertClass):
 class LicenseIsExpiringAlertClass(AlertClass):
     category = AlertCategory.SYSTEM
     level = AlertLevel.WARNING
-    title = "TrueNAS License Is Expiring"
+    title = "Support Contract Is Expiring"
     text = "%s"
     applies_to = EXPECTED_TO_BE_LICENSED
 
@@ -33,7 +33,7 @@ class LicenseIsExpiringAlertClass(AlertClass):
 class LicenseHasExpiredAlertClass(AlertClass):
     category = AlertCategory.SYSTEM
     level = AlertLevel.CRITICAL
-    title = "TrueNAS License Has Expired"
+    title = "Support Contract Has Expired"
     text = "%s"
     applies_to = EXPECTED_TO_BE_LICENSED
 
