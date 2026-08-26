@@ -1413,13 +1413,15 @@ def test_100_ftp_service_stop():
 
 
 def test_options_may_only_be_changed_by_a_full_admin():
-    """`options` lands verbatim in proftpd.conf, so SHARING_FTP_WRITE alone may not touch it (NAS-142160)."""
-    current = call('ftp.config')['options']
+    """`options` lands verbatim in proftpd.conf, so SHARING_FTP_WRITE alone may not touch it (NAS-142160).
+
+    Rejection happens before `do_update`, so this does not depend on the rest of the stored config being
+    valid. Deliberately no "writing the current value back is allowed" case: that would be a real update,
+    which revalidates the whole config and fails on unrelated leftovers (e.g. an `anonpath` pointing at a
+    torn-down dataset). `test_rsync_task_extra` covers the unchanged-value path instead.
+    """
     with unprivileged_user_client(['SHARING_FTP_WRITE']) as c:
         with pytest.raises(ValidationErrors) as ve:
             c.call('ftp.update', {'options': 'RootLogin on'})
 
-        assert any(error.attribute == 'data.options' for error in ve.value.errors), ve.value.errors
-
-        # Writing the current value back is not a change, so an ordinary edit still works.
-        assert c.call('ftp.update', {'options': current})['options'] == current
+    assert any(error.attribute == 'data.options' for error in ve.value.errors), ve.value.errors
