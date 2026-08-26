@@ -38,7 +38,6 @@ def make_license(
         type=type_,
         model=model,
         support_expires_at=expires_at,
-        license_expires_at=None,
         features=features,
         serials=("TEST-000001",),
         enclosures={},

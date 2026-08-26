@@ -41,7 +41,6 @@ def _license(type_):
         type=type_,
         model="H10",
         support_expires_at=None,
-        license_expires_at=None,
         features={},
         serials=("TEST-000001",),
         enclosures={},

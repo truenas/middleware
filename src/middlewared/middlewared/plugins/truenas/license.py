@@ -29,12 +29,15 @@ from truenas_pylicensed import LicenseType
 def _license_info_json(info: LicenseInfo) -> dict[str, Any]:
     """
     Project a LicenseInfo onto the public `truenas.license.info` payload.
+
+    There is no license-wide expiry to project. Expiry belongs to individual features,
+    so `features[].expires_at` is the only date here, and the end of the support
+    contract is the SUPPORT entry's.
     """
     return {
         "id": info.id,
         "type": info.type.name,
         "model": info.model,
-        "expires_at": info.license_expires_at or info.support_expires_at,
         "features": [
             {
                 "name": feature.name,
@@ -132,7 +135,11 @@ class TrueNASLicenseService(TrueNASLicenseReconcileService, Service):
         check_annotations=True,
     )
     def info(self) -> dict[str, Any] | None:
-        """Returns the parsed license object, or null if no license exists."""
+        """Returns the parsed license object, or null if no license exists.
+
+        The license itself has no expiration. Where a feature expires, its date is on
+        that feature's own entry.
+        """
         info = self.info_private()
         return _license_info_json(info) if info is not None else None
 

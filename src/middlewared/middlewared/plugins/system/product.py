@@ -97,21 +97,30 @@ class SystemService(Service):
 
     @private
     def license(self, include_raw_license: bool = False):
+        """The license as the dashboard consumes it.
+
+        A license does not expire, so nothing here reports that it has. The `contract_*`
+        keys carry the SUPPORT feature's dates, which is the only expiry a license holds.
+        """
         info = self.call_sync2(self.s.truenas.license.info_private)
         if info is None:
             return None
 
+        support = info.feature("SUPPORT")
         result = {
             'model': info.model,
             'system_serial': info.serials[0] if info.serials else None,
             'system_serial_ha': info.serials[1] if len(info.serials) > 1 else None,
             'contract_type': info.contract_type,
-            'contract_start': None,
-            'contract_end': info.license_expires_at or info.support_expires_at,
+            'contract_start': support.start_date if support is not None else None,
+            # The 25.10 dashboard reads remote_info.license.contract_end without a null
+            # guard, and an upgraded standby's payload is merged into an un-upgraded
+            # active's for as long as the operator leaves the active running, so this key
+            # stays until no supported upgrade starts on 25.10.
+            'contract_end': info.support_expires_at,
             'legacy_contract_hardware': None,
             'legacy_contract_software': None,
             'customer_name': None,
-            'expired': info.expired(),
             'features': list(info.features),
             'addhw': [],
             'addhw_detail': [],

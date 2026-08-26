@@ -48,9 +48,12 @@ class LicenseInfo:
     model: str | None
     """Hardware model (e.g. "H30") for enterprise types, None otherwise."""
     support_expires_at: date | None
-    """End of the support contract, or None when the license carries no support."""
-    license_expires_at: date | None
-    """Expiration of the license itself, or None when it is perpetual."""
+    """End of the support contract, or None when the license carries no support.
+
+    This is the only expiry a license carries. A license itself does not expire;
+    expiry is a property of individual features, and SUPPORT is the only one
+    whose expiry anything acts on.
+    """
     features: Mapping[str, FeatureInfo]
     """Licensed features, keyed by the feature name each one carries."""
     serials: Sequence[str]
@@ -77,7 +80,13 @@ class LicenseInfo:
         """Whether *serial* is one of the systems this license was issued for."""
         return serial in self.serials
 
-    def expired(self, today: date | None = None) -> bool:
-        """Whether this license has passed whichever expiry it carries."""
-        expires_at = self.license_expires_at or self.support_expires_at
+    def support_lapsed(self, today: date | None = None) -> bool:
+        """Whether the support contract ended before *today*.
+
+        A contract is in force through its end date, so the comparison is strict -- on the
+        final day this is still False. There is no license-wide equivalent: a license does
+        not expire, only individual features can, and SUPPORT is the only one whose expiry
+        anything acts on.
+        """
+        expires_at = self.support_expires_at
         return expires_at is not None and expires_at < (today or date.today())
