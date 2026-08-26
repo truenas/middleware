@@ -175,7 +175,6 @@ def from_license_status(status: LicenseStatus | None = None) -> LicenseInfo | No
         type=status.type,  # type: ignore[arg-type]
         model=status.model,
         support_expires_at=date.fromisoformat(support.expires_at) if support and support.expires_at else None,
-        license_expires_at=date.fromisoformat(status.expires_at) if status.expires_at else None,
         features=MappingProxyType(features),
         serials=tuple(status.system_id["serials"]) if status.system_id else (),
         enclosures=MappingProxyType(

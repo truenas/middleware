@@ -31,7 +31,7 @@ def _features(names, *, support_type=None, start=date(2026, 4, 8), end=date(2026
         name: FeatureInfo(
             name=name,
             start_date=start,
-            expires_at=end,
+            expires_at=end if name == "SUPPORT" else None,
             source="enterprise",
             type=support_type if name == "SUPPORT" else None,
         )
@@ -77,7 +77,6 @@ FREENAS_MINI_BLOB = (
                 type=LicenseType.ENTERPRISE_HA,
                 model="H10",
                 support_expires_at=date(2026, 4, 30),
-                license_expires_at=None,
                 features=_features(
                     [
                         "FIBRECHANNEL",
@@ -117,7 +116,6 @@ FREENAS_MINI_BLOB = (
                 type=LicenseType.ENTERPRISE_SINGLE,
                 model="X10",
                 support_expires_at=date(2026, 4, 30),
-                license_expires_at=None,
                 features=_features(_LEGACY_INJECT, support_type="BRONZE"),
                 serials=("TEST-000001",),
                 enclosures={},
@@ -135,7 +133,6 @@ FREENAS_MINI_BLOB = (
                 type=LicenseType.ENTERPRISE_SINGLE,
                 model="FREENAS-MINI",
                 support_expires_at=date(2026, 4, 30),
-                license_expires_at=None,
                 features=_features(_LEGACY_INJECT, support_type="BRONZE"),
                 serials=("TEST-000001",),
                 enclosures={},
@@ -146,6 +143,19 @@ FREENAS_MINI_BLOB = (
 )
 def test__parse_legacy_license(text, result):
     assert parse_legacy_license(text) == result
+
+
+# A legacy blob carries no per-feature dates, so the only date the translation can honestly
+# put on a feature is the support contract's end, on SUPPORT. Stamping it onto the rest would
+# claim an expiry that was never sold, and nothing gates on a feature's date, so the only way
+# this stays true is by being asserted.
+@pytest.mark.parametrize("text", [H10_HA_BLOB, X10_BLOB, FREENAS_MINI_BLOB])
+def test__legacy_expiry_lands_on_support_alone(text):
+    info = parse_legacy_license(text)
+
+    assert info.features["SUPPORT"].expires_at == date(2026, 4, 30)
+    assert [name for name, f in info.features.items() if f.expires_at is not None] == ["SUPPORT"]
+    assert all(f.start_date == date(2026, 4, 8) for f in info.features.values())
 
 
 # A legacy blob carries no license type of its own: the second (HA) serial is the only

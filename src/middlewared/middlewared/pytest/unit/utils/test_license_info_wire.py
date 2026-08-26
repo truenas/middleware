@@ -33,15 +33,14 @@ START = date(2026, 4, 8)
 END = date(2026, 4, 30)
 
 
-def _legacy_feature(name, type_=None):
-    return {"name": name, "start_date": START, "expires_at": END, "source": "enterprise", "type": type_}
+def _legacy_feature(name, type_=None, expires_at=None):
+    return {"name": name, "start_date": START, "expires_at": expires_at, "source": "enterprise", "type": type_}
 
 
 V2_EXPECTED = {
     "id": "test-id",
     "type": "ENTERPRISE_HA",
     "model": "H10",
-    "expires_at": END,
     "features": [
         {"name": "VMS", "start_date": START, "expires_at": END, "source": "enterprise", "type": None},
         {"name": "SUPPORT", "start_date": START, "expires_at": END, "source": "enterprise", "type": "GOLD"},
@@ -55,11 +54,10 @@ LEGACY_EXPECTED = {
     "id": "legacy_TEST-000001",
     "type": "ENTERPRISE_HA",
     "model": "H10",
-    "expires_at": END,
     "features": [
         _legacy_feature("FIBRECHANNEL"),
         _legacy_feature("VMS"),
-        _legacy_feature("SUPPORT", "GOLD"),
+        _legacy_feature("SUPPORT", "GOLD", END),
         _legacy_feature("APPS"),
         _legacy_feature("AUTOTUNE"),
         _legacy_feature("CATALOG_ENTERPRISE_TRAIN"),
@@ -86,7 +84,6 @@ LEGACY_BRONZE_EXPECTED = {
     "id": "legacy_TEST-000001",
     "type": "ENTERPRISE_SINGLE",
     "model": "X10",
-    "expires_at": END,
     "features": [
         _legacy_feature("APPS"),
         _legacy_feature("AUTOTUNE"),
@@ -102,7 +99,7 @@ LEGACY_BRONZE_EXPECTED = {
         _legacy_feature("SMB_FASTPATH"),
         _legacy_feature("SMB_VEEAM"),
         _legacy_feature("STIG"),
-        _legacy_feature("SUPPORT", "BRONZE"),
+        _legacy_feature("SUPPORT", "BRONZE", END),
         _legacy_feature("TRUESEARCH"),
         _legacy_feature("VMS"),
         _legacy_feature("WEBSHARE"),
@@ -121,7 +118,6 @@ def _v2_license():
         version=1,
         type=LicenseType.ENTERPRISE_HA,
         model="H10",
-        expires_at=None,
         features={
             "VM": FeatureEntry(name="VM", source="enterprise", start_date="2026-04-08", expires_at="2026-04-30"),
             "SUPPORT": FeatureEntry(
@@ -176,7 +172,6 @@ def test_projection_emits_date_objects_not_strings(label, build, expected):
     # back to a date on the client.
     result = _license_info_json(build())
 
-    assert isinstance(result["expires_at"], date)
     for feature in result["features"]:
         assert isinstance(feature["start_date"], date)
-        assert isinstance(feature["expires_at"], date)
+        assert feature["expires_at"] is None or isinstance(feature["expires_at"], date)

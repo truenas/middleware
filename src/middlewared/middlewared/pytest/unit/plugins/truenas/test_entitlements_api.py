@@ -164,7 +164,6 @@ def make_license(feature_names, license_type, support_type):
         type=license_type,
         model="H10",
         support_expires_at=None,
-        license_expires_at=None,
         features=features,
         serials=("TEST-000001",),
         enclosures={},

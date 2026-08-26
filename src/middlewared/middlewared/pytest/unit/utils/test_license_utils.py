@@ -6,7 +6,7 @@ from truenas_pylicensed import FeatureEntry, LicenseError, LicenseStatus, Licens
 from middlewared.utils.license import FeatureInfo, LicenseInfo, from_license_status
 
 
-def _make_status(features: dict[str, FeatureEntry], expires_at: str | None = None) -> LicenseStatus:
+def _make_status(features: dict[str, FeatureEntry]) -> LicenseStatus:
     return LicenseStatus(
         valid=True,
         code=LicenseError.OK,
@@ -14,7 +14,6 @@ def _make_status(features: dict[str, FeatureEntry], expires_at: str | None = Non
         version=1,
         type=LicenseType.ENTERPRISE_HA,
         model="H10",
-        expires_at=expires_at,
         features=features,
         system_id={"serials": ["TEST-000001", "TEST-000002"]},
         enclosures={"E24": {"count": 3}},
@@ -27,7 +26,6 @@ def _license(**overrides) -> LicenseInfo:
         "type": LicenseType.ENTERPRISE_HA,
         "model": "H10",
         "support_expires_at": None,
-        "license_expires_at": None,
         "features": {},
         "serials": (),
         "enclosures": {},
@@ -58,7 +56,6 @@ def test__from_license_status__renames_vm_to_vms():
         type=LicenseType.ENTERPRISE_HA,
         model="H10",
         support_expires_at=date(2026, 4, 30),
-        license_expires_at=None,
         features={
             "VMS": FeatureInfo(
                 name="VMS",
@@ -105,44 +102,28 @@ def test__from_license_status__returns_none_for_invalid_license(status):
     assert from_license_status(status) is None
 
 
-def test__from_license_status__keeps_the_two_expiries_apart():
-    status = _make_status(
-        {"SUPPORT": FeatureEntry(name="SUPPORT", source="enterprise", expires_at="2026-04-30", type="GOLD")},
-        expires_at="2027-01-31",
-    )
-
-    info = from_license_status(status)
-
-    assert info is not None
-    assert info.support_expires_at == date(2026, 4, 30)
-    assert info.license_expires_at == date(2027, 1, 31)
-
-
 def test__from_license_status__no_support_feature_leaves_support_expiry_unset():
     info = from_license_status(_make_status({"DEDUP": FeatureEntry(name="DEDUP", source="enterprise")}))
 
     assert info is not None
     assert info.support_expires_at is None
-    assert info.license_expires_at is None
 
 
 @pytest.mark.parametrize(
-    "support_expires_at,license_expires_at,expected",
+    "support_expires_at,today,expected",
     [
-        (None, None, False),
-        (date(2026, 4, 30), None, True),
-        (date(2026, 5, 2), None, False),
-        (None, date(2026, 4, 30), True),
-        (None, date(2026, 5, 2), False),
-        # A license expiry, when present, is what decides.
-        (date(2026, 5, 2), date(2026, 4, 30), True),
-        (date(2026, 4, 30), date(2026, 5, 2), False),
+        (None, date(2026, 5, 1), False),
+        (date(2026, 4, 30), date(2026, 5, 1), True),
+        (date(2026, 5, 2), date(2026, 5, 1), False),
+        # The contract is in force through its end date, so the final day is not lapsed.
+        (date(2026, 4, 30), date(2026, 4, 30), False),
+        (date(2026, 4, 30), date(2026, 4, 29), False),
     ],
 )
-def test__license_info_expired(support_expires_at, license_expires_at, expected):
-    info = _license(support_expires_at=support_expires_at, license_expires_at=license_expires_at)
+def test__license_info_support_lapsed(support_expires_at, today, expected):
+    info = _license(support_expires_at=support_expires_at)
 
-    assert info.expired(today=date(2026, 5, 1)) is expected
+    assert info.support_lapsed(today=today) is expected
 
 
 def test__license_info_is_unhashable_but_still_compares():

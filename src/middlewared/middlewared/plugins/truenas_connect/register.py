@@ -96,9 +96,10 @@ class TrueNASConnectService(Service):
             'port': (await self.middleware.call('system.general.config'))['ui_httpsport']
         }
 
-        # Add license information if valid license exists
+        # A license is a perpetual grant, so the state of the support contract says nothing
+        # about its validity and never withholds it.
         license_info = await self.middleware.call('system.license', True)
-        if license_info is not None and not license_info.get('expired', True):
+        if license_info is not None and license_info['raw_license'] is not None:
             query_params['license'] = license_info['raw_license']
 
         return f'{get_registration_uri(config)}?{urlencode(query_params)}'

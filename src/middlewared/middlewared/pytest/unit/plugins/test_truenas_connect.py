@@ -6,6 +6,7 @@ from truenas_connect_utils.status import Status
 from middlewared.service import CallError, ValidationErrors
 from middlewared.plugins.truenas_connect.acme import TNCACMEService
 from middlewared.plugins.truenas_connect.heartbeat import TNCHeartbeatService
+from middlewared.plugins.truenas_connect.register import TrueNASConnectService as TNCRegistrationService
 from middlewared.plugins.truenas_connect.state import TrueNASConnectStateService
 from middlewared.plugins.truenas_connect.update import TrueNASConnectService
 from middlewared.plugins.truenas_connect.hostname import TNCHostnameService
@@ -793,3 +794,60 @@ async def test_handle_response_202_pending_without_pem_is_quiet():
 
     install.assert_not_called()
     warn.assert_not_called()
+
+
+# --- Registration URI: the license PEM is attached unconditionally ---------------------------------
+
+def _registration_service(license_info):
+    service = TNCRegistrationService(MagicMock())
+
+    async def mock_call(method, *args, **kwargs):
+        if method == 'tn_connect.config':
+            return {'enabled': True, 'tnc_base_url': 'https://tnc.example/'}
+        if method == 'cache.get':
+            return 'CLAIM-TOKEN'
+        if method == 'system.version_short':
+            return '26.0.0'
+        if method == 'truenas.get_chassis_hardware':
+            return 'TRUENAS-H10'
+        if method == 'system.global.id':
+            return 'SYS-ID'
+        if method == 'system.general.config':
+            return {'ui_httpsport': 443}
+        if method == 'system.license':
+            return license_info
+        raise ValueError(f'Unexpected: {method}')
+
+    service.middleware.call = AsyncMock(side_effect=mock_call)
+    return service
+
+
+@pytest.mark.asyncio
+async def test_registration_uri_sends_pem_when_support_contract_has_lapsed():
+    # A license is a perpetual grant, so a lapsed support contract must not withhold it.
+    # The old gate defaulted to refusing, which made this fail closed and silently.
+    service = _registration_service({'raw_license': 'THE-PEM', 'contract_end': '2020-01-01'})
+
+    uri = await service.get_registration_uri()
+
+    assert 'license=THE-PEM' in uri
+
+
+@pytest.mark.asyncio
+async def test_registration_uri_omits_license_when_pem_is_unreadable():
+    # system.license sets raw_license to None when neither license file can be read;
+    # urlencode would otherwise send the literal string "None".
+    service = _registration_service({'raw_license': None})
+
+    uri = await service.get_registration_uri()
+
+    assert 'license=' not in uri
+
+
+@pytest.mark.asyncio
+async def test_registration_uri_omits_license_when_unlicensed():
+    service = _registration_service(None)
+
+    uri = await service.get_registration_uri()
+
+    assert 'license=' not in uri
