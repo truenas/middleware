@@ -19,6 +19,7 @@ __all__ = [
     "AlertListPoliciesResult",
     "AlertRestoreArgs",
     "AlertRestoreResult",
+    "AlertClassConfiguration",
     "AlertClassesEntry",
     "AlertClassesUpdate",
     "AlertClassesUpdateArgs",

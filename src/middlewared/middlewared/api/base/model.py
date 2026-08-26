@@ -27,7 +27,20 @@ __all__ = ["DumpableModel", "BaseModel", "ForUpdateMetaclass",
 
 
 class _NotRequired:
-    pass
+    # `_not_required_serializer` filters this sentinel out of serialized models by identity, so cloning
+    # a model must never clone the sentinel along with it.
+    def __copy__(self) -> "_NotRequired":
+        return self
+
+    def __deepcopy__(self, memo: dict[int, Any]) -> "_NotRequired":
+        return self
+
+    def __reduce__(self) -> tuple[Callable[[], "_NotRequired"], tuple[()]]:
+        return _get_not_required, ()
+
+
+def _get_not_required() -> "_NotRequired":
+    return NotRequired
 
 
 NotRequired = _NotRequired()
