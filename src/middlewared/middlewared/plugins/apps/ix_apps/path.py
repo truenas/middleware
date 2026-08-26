@@ -1,4 +1,5 @@
 import os
+from pathlib import PurePath
 
 from middlewared.plugins.docker.state_utils import IX_APPS_MOUNT_PATH
 
@@ -33,6 +34,24 @@ def get_app_parent_volume_path() -> str:
 
 def get_app_volume_path(app_name: str) -> str:
     return os.path.join(get_app_parent_volume_path(), app_name)
+
+
+def is_app_volume_path(path: str, app_name: str) -> bool:
+    """Whether `path` is the app's ix-volume directory or lives inside it.
+
+    The comparison is purely lexical - `..` segments are collapsed but symlinks are not resolved, so
+    this stays cheap enough to call from the event loop.
+    """
+    return PurePath(os.path.normpath(path)).is_relative_to(get_app_volume_path(app_name))
+
+
+def is_app_mounts_path(path: str) -> bool:
+    """Whether `path` is the directory holding every app's ix-volumes or lives inside it.
+
+    The comparison is purely lexical - `..` segments are collapsed but symlinks are not resolved, so
+    this stays cheap enough to call from the event loop.
+    """
+    return PurePath(os.path.normpath(path)).is_relative_to(get_app_parent_volume_path())
 
 
 def get_installed_app_path(app_name: str) -> str:
