@@ -45,6 +45,10 @@ class DiskService(Service):
         # 3) If any of them are uninitialized, try to initialize them using global sed pass
         # 4) If anything fails in 2/3, let's raise an appropriate error
         verrors = ValidationErrors()
+        if not await self.middleware.call('system.sed_enabled'):
+            verrors.add(schema_name, 'System is not licensed for SED functionality.')
+            verrors.check()
+
         filters = [['name', 'in', list(disks)]]
         if validate_all_disks_are_sed is False:
             filters.append(['sed', '=', True])
