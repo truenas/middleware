@@ -57,6 +57,22 @@ def test__volatile_timeout():
             c.call('cache.get', 'timeout_key', 'VOLATILE')
 
 
+def test__volatile_has_key_respects_timeout():
+    """Test that has_key reports an expired key as absent."""
+    with Client(py_exceptions=True) as c:
+        # Put a key with 1 second timeout
+        c.call('cache.put', 'has_key_timeout_key', 'timeout_value', 1, 'VOLATILE')
+
+        # Should exist immediately
+        assert c.call('cache.has_key', 'has_key_timeout_key', 'VOLATILE')
+
+        # Wait for timeout
+        time.sleep(1.5)
+
+        # Should be reported as absent after timeout
+        assert not c.call('cache.has_key', 'has_key_timeout_key', 'VOLATILE')
+
+
 def test__volatile_complex_data():
     """Test storing complex data structures in volatile cache."""
     with Client(py_exceptions=True) as c:

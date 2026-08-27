@@ -35,14 +35,17 @@ class KVCache:
         self.time_fn = time_fn
 
     def has_key(self, key: str) -> bool:
-        """Check if given `key` exists in persistent cache."""
-        with get_tdb_handle(self.path, self.tdb_options) as hdl:
-            try:
-                hdl.get(key)
-            except (FileNotFoundError, MatchNotFound):
-                return False
-            else:
-                return True
+        """
+        Check whether `key` is present in the persistent cache and has not expired.
+
+        An expired entry is removed from the cache and reported as absent.
+        """
+        try:
+            self.get(key)
+        except KeyError:
+            return False
+        else:
+            return True
 
     def get(self, key: str) -> Any:
         """
@@ -122,6 +125,8 @@ class KVCache:
         If key exists and is not expired, returns cached value.
         Otherwise, calls method() to generate a new value, caches it, and returns it.
 
+        A `timeout` of 0 means the generated value never expires.
+
         NOTE: This operation is atomic for the local persistent cache, but not for clustered cache.
         More design work will be required if atomicity is needed on clustered database.
         """
@@ -138,7 +143,8 @@ class KVCache:
 
             if call_method:
                 value = method()
-                hdl.store(key, {'timeout': self.time_fn() + timeout, 'value': value})
+                expires_at = self.time_fn() + timeout if timeout != 0 else 0
+                hdl.store(key, {'timeout': expires_at, 'value': value})
             else:
                 value = data['value']
 
