@@ -28,6 +28,7 @@ from middlewared.utils.filter_list import filter_list
 from middlewared.utils.functools_ import cache
 
 from .schema.middleware import AUDIT_EVENT_MIDDLEWARE_JSON_SCHEMAS, AUDIT_EVENT_MIDDLEWARE_PARAM_SET
+from .schema.s3 import AUDIT_EVENT_S3_JSON_SCHEMAS, AUDIT_EVENT_S3_PARAM_SET
 from .schema.smb import AUDIT_EVENT_SMB_JSON_SCHEMAS, AUDIT_EVENT_SMB_PARAM_SET
 from .schema.sudo import AUDIT_EVENT_SUDO_JSON_SCHEMAS, AUDIT_EVENT_SUDO_PARAM_SET
 from .schema.system import AUDIT_EVENT_SYSTEM_JSON_SCHEMAS, AUDIT_EVENT_SYSTEM_PARAM_SET
@@ -120,7 +121,7 @@ class AuditService(ConfigService):
         data['space']['used_by_reservation'] = ds_info['properties']['usedbyrefreservation']['value']
         data['space']['used_by_snapshots'] = ds_info['properties']['usedbysnapshots']['value']
         data['space']['available'] = ds_info['properties']['available']['value']
-        data['enabled_services'] = {'MIDDLEWARE': [], 'SMB': [], 'SUDO': []}
+        data['enabled_services'] = {'MIDDLEWARE': [], 'S3': [], 'SMB': [], 'SUDO': []}
         audited_smb_shares = self.middleware.call_sync(
             'sharing.smb.query',
             [['audit.enable', '=', True], ['enable', '=', True]],
@@ -191,6 +192,7 @@ class AuditService(ConfigService):
 
                 if entry not in (
                     AUDIT_EVENT_MIDDLEWARE_PARAM_SET
+                    | AUDIT_EVENT_S3_PARAM_SET
                     | AUDIT_EVENT_SMB_PARAM_SET
                     | AUDIT_EVENT_SUDO_PARAM_SET
                     | AUDIT_EVENT_SYSTEM_PARAM_SET
@@ -521,6 +523,7 @@ class AuditService(ConfigService):
         return filter_list(
             (
                 AUDIT_EVENT_MIDDLEWARE_JSON_SCHEMAS +
+                AUDIT_EVENT_S3_JSON_SCHEMAS +
                 AUDIT_EVENT_SMB_JSON_SCHEMAS +
                 AUDIT_EVENT_SUDO_JSON_SCHEMAS +
                 AUDIT_EVENT_SYSTEM_JSON_SCHEMAS

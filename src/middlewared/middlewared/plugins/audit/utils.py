@@ -12,7 +12,7 @@ AUDIT_DEFAULT_QUOTA = 0
 AUDIT_DEFAULT_FILL_CRITICAL = 95
 AUDIT_DEFAULT_FILL_WARNING = 75
 AUDIT_REPORTS_DIR = os.path.join(AUDIT_DATASET_PATH, 'reports')
-AUDITED_SERVICES = (('MIDDLEWARE', 0.1), ('SMB', 0.1), ('SUDO', 0.1), ('SYSTEM', 0.1))
+AUDITED_SERVICES = (('MIDDLEWARE', 0.1), ('S3', 0.1), ('SMB', 0.1), ('SUDO', 0.1), ('SYSTEM', 0.1))
 SQL_SAFE_FIELDS = frozenset([
     'audit_id',
     'message_timestamp',
