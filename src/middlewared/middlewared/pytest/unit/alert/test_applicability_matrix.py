@@ -6,8 +6,9 @@ module renders that answer for every declaration in the tree against a fixed set
 and fails on any difference from the checked-in copy. Changing one declaration's rule
 touches one line of that file, so a population change cannot land without being read in review.
 
-Regenerate with ``ALERT_MATRIX_REGENERATE=1 pytest .../test_applicability_matrix.py`` and read the
-resulting diff.
+Regenerate from ``src/middlewared`` with ``ALERT_MATRIX_REGENERATE=1 PYTHONPATH=. FAKE_ENV=1 pytest-3
+middlewared/pytest/unit/alert/test_applicability_matrix.py``, then read the resulting diff. Running it
+from the repository root imports the installed ``middlewared`` instead of the working tree.
 """
 
 import ast

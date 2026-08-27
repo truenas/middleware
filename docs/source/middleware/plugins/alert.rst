@@ -94,7 +94,13 @@ Regenerate the inventory yourself, in the same commit as the change:
 
 .. code-block:: bash
 
-    ALERT_MATRIX_REGENERATE=1 pytest src/middlewared/middlewared/pytest/unit/alert/test_applicability_matrix.py
+    cd src/middlewared
+    ALERT_MATRIX_REGENERATE=1 PYTHONPATH=. FAKE_ENV=1 pytest-3 \
+        middlewared/pytest/unit/alert/test_applicability_matrix.py
+
+Run it from `src/middlewared` with `PYTHONPATH=.` as shown, the same way CI runs the unit suite. From
+the repository root the import resolves to the installed `middlewared` rather than your working tree,
+and collection fails before the test regenerates anything.
 
 Then read `git diff` on the inventory. Every changed line is a real change to the set of machines that
 sees an alert; if a line moved that you did not mean to move, the rule is wrong, so fix the rule rather
