@@ -3,7 +3,7 @@ from collections.abc import Callable
 
 from middlewared.service import Service
 
-from .ix_apps.path import get_app_volume_path
+from .ix_apps.path import get_app_volume_path, is_app_volume_path
 from .schema_construction_utils import RESERVED_NAMES
 
 
@@ -152,6 +152,16 @@ class AppSchemaService(Service):
 
         if acl_dict:
             acl_dict['path'] = host_path
+            if is_app_volume_path(host_path, context['app']['name']):
+                # An ix volume is created and owned by middleware, so applying an ACL to one can never clobber data
+                # the user deliberately placed there, and the schema we serve already reflects that by hiding `force`
+                # and defaulting it to true. Clients can still submit an explicit false though, and older configs may
+                # have one persisted, which trips the "path contains existing data" guard as soon as the app writes
+                # anything into its volume. The containment check is not redundant: `dataset_name` is not validated
+                # as a path anywhere, so an absolute or `..`-laden one lands `host_path` outside the app's own tree,
+                # and forcing there would be forcing over somebody else's data. Since this is the same dict which
+                # gets written back to the app config, a stored false heals itself on the next update.
+                acl_dict.setdefault('options', {})['force'] = True
             await self.normalize_acl({'schema': {'type': 'dict'}}, acl_dict, complete_config, context)
         return value
 
