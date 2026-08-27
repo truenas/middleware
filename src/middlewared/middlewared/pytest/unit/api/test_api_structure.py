@@ -408,7 +408,12 @@ def test_full_admin_fields_are_enforced(full_admin_args_models, api_method_consu
             if name in FULL_ADMIN_WRAPPED_METHODS:
                 # The wrappers only walk the method's *last* parameter, which is where every CRUD and config
                 # method carries its payload. A marked field anywhere else would be silently skipped.
-                if len(full_admin_payload_fields(getattr(current_api_package, model))[1]) != len(paths):
+                # `full_admin_payload_fields` reports paths relative to the payload parameter, so put its
+                # name back on before comparing with the whole-model walk. Sets, not counts: two arms of a
+                # union may legitimately declare the same field.
+                payload_name, payload_fields = full_admin_payload_fields(getattr(current_api_package, model))
+                payload_paths = {".".join((payload_name, *field.path)) for field in payload_fields}
+                if payload_paths != paths:
                     errors.append(AssertionError(
                         f"{location} accepts {model}, which declares FullAdmin field(s) {sorted(paths)} outside "
                         f"its last parameter. CRUDService and ConfigService only check the last one, so the "

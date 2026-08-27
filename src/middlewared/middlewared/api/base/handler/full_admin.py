@@ -17,8 +17,9 @@ class FullAdminField(typing.NamedTuple):
     """A `FullAdmin` field found inside a method's payload.
 
     :ivar path: the field's location within the payload, as the sequence of keys leading to it.
-    :ivar default: the field's default value, used as the comparison baseline when the payload being checked has
-        no stored counterpart (i.e. on create).
+    :ivar default: the comparison baseline when the payload being checked has no stored counterpart (i.e. on
+        create). This is the field's default, except on a `ForUpdateMetaclass` model, where every default is the
+        `undefined` sentinel; nothing compares equal to it, so such a field fails closed.
     """
 
     path: tuple[str, ...]
@@ -63,8 +64,14 @@ def _walk(
     annotation: Any,
     prefix: tuple[str, ...],
     seen: frozenset[type[BaseModel]],
+    aliased: tuple[str, ...] = (),
 ) -> typing.Iterator[FullAdminField]:
-    """Yield every `FullAdmin` field reachable from `annotation`, prefixed with `prefix`."""
+    """Yield every `FullAdmin` field reachable from `annotation`, prefixed with `prefix`.
+
+    :param aliased: fields already crossed on this path whose alias differs from their name. Enforcement
+        addresses a field by one key per level, but `populate_by_name` accepts either, so any such field -- the
+        marked one or an ancestor of it -- would let a caller sidestep the check.
+    """
     for model in _models(annotation):
         if model in seen:
             # Models may reference each other; re-entering one would not terminate. A marked field hanging off a
@@ -74,21 +81,28 @@ def _walk(
 
         for name, field in model.model_fields.items():
             path = prefix + (field.alias or name,)
+            is_aliased = field.alias is not None and field.alias != name
             if is_full_admin_field(field):
-                if field.alias is not None and field.alias != name:
+                if offenders := (*aliased, f"{model.__name__}.{name}") if is_aliased else aliased:
                     raise TypeError(
-                        f"{model.__name__}.{name} is a `FullAdmin` field with an alias. This is not supported: "
-                        f"`populate_by_name` lets a caller supply it under either key, but enforcement addresses "
-                        f"it by one. Please drop the alias or rename the field."
+                        f"{'.'.join(path)} is a `FullAdmin` field reached through aliased field(s) "
+                        f"{', '.join(offenders)}. This is not supported: `populate_by_name` lets a caller supply "
+                        f"an aliased field under either key, but enforcement addresses it by one. Please drop the "
+                        f"alias or rename the field."
                     )
 
                 yield FullAdminField(path, _default(field))
                 continue
 
-            yield from _walk(field.annotation, path, seen | {model})
+            yield from _walk(
+                field.annotation,
+                path,
+                seen | {model},
+                (*aliased, f"{model.__name__}.{name}") if is_aliased else aliased,
+            )
 
             for element in _elements(field.annotation):
-                if next(_walk(element, path, seen | {model}), None) is not None:
+                if next(_walk(element, path, seen | {model}, aliased), None) is not None:
                     raise TypeError(
                         f"{model.__name__}.{name} is a collection whose items declare `FullAdmin` field(s). This "
                         f"is not supported: such a field is addressed by the sequence of keys leading to it, which "
@@ -114,9 +128,12 @@ def _elements(annotation: Any) -> typing.Iterator[Any]:
 
 
 def _unwrap(annotation: Any) -> typing.Iterator[Any]:
-    """Strip `Annotated` and flatten unions, leaving the types `annotation` may actually hold."""
+    """Strip `Annotated` and `Secret`, and flatten unions, leaving the types `annotation` may actually hold."""
     origin = typing.get_origin(annotation)
     if origin is Annotated:
+        yield from _unwrap(typing.get_args(annotation)[0])
+    elif origin is Secret:
+        # `Secret` is a transparent wrapper, and `Secret[SomeModel]` is a shape the API really uses.
         yield from _unwrap(typing.get_args(annotation)[0])
     elif is_union(origin):
         for arg in typing.get_args(annotation):

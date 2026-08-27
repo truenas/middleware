@@ -178,8 +178,33 @@ def test_an_aliased_marked_field_is_refused():
     class Aliased(BaseModel):
         options_: FullAdmin[str] = Field(default="", alias="options")
 
-    with pytest.raises(TypeError, match="`FullAdmin` field with an alias"):
+    with pytest.raises(TypeError, match="reached through aliased field"):
         full_admin_fields(Aliased)
+
+
+def test_an_aliased_field_on_the_path_is_refused():
+    """An aliased *ancestor* defeats the check just as thoroughly as an aliased marked field."""
+
+    class Nested_(BaseModel):
+        aux: FullAdmin[str] = Field(default="")
+
+    class Outer(BaseModel):
+        options_: Nested_ = Field(default=None, alias="options")
+
+    with pytest.raises(TypeError, match="reached through aliased field"):
+        full_admin_fields(Outer)
+
+
+def test_finds_a_field_wrapped_in_secret():
+    """`Secret[SomeModel]` is a shape the API really uses, e.g. keychain credential attributes."""
+
+    class Inner(BaseModel):
+        aux: FullAdmin[str] = Field(default="")
+
+    class Outer(BaseModel):
+        blob: Secret[Inner] = Field(default=None)
+
+    assert {field.path for field in full_admin_fields(Outer)} == {("blob", "aux")}
 
 
 class _Credential:
@@ -245,3 +270,56 @@ class TestCheckFullAdminPayload:
 
     def test_an_internal_call_is_not_checked(self):
         _payload({"extra": ["-e", "sh"]})
+
+
+def test_an_unset_for_update_field_is_not_a_supplied_value():
+    """A `check_annotations` method receives a model instance; its unset fields hold the `undefined` sentinel.
+
+    Reading that as a supplied value would reject every marked field the caller never mentioned.
+    """
+    stored = {"name": "t", "extra": ["--stats"], "nested": {"aux": "keep"}, "secret": "s"}
+
+    assert check(full_admin_fields(TaskUpdate), TaskUpdate(name="renamed"), stored) == []
+
+
+def test_the_stored_entry_is_not_loaded_when_nothing_marked_is_supplied():
+    """`get_old` is a full entry query for most services, so it must not run on an unrelated edit."""
+    loaded = False
+
+    async def get_old():
+        nonlocal loaded
+        loaded = True
+        return Task(name="t")
+
+    asyncio.run(
+        check_full_admin_payload(
+            _app(_Credential()),
+            _method(TaskCreateArgs),
+            {"name": "renamed"},
+            get_old,
+        )
+    )
+    assert not loaded
+
+    asyncio.run(
+        check_full_admin_payload(
+            _app(_Credential()),
+            _method(TaskCreateArgs),
+            {"extra": []},
+            get_old,
+        )
+    )
+    assert loaded
+
+
+def test_an_app_without_credentials_is_checked():
+    """Fail closed: an `app` carrying no credentials is not a full admin, so it must not be waved through."""
+    with pytest.raises(ValidationErrors):
+        asyncio.run(
+            check_full_admin_payload(
+                _app(None),
+                _method(TaskCreateArgs),
+                {"extra": ["-e", "sh"]},
+                None,
+            )
+        )

@@ -3,7 +3,11 @@ from typing import TYPE_CHECKING, Any
 
 from middlewared.api.base.handler.full_admin import full_admin_fields, full_admin_payload_fields
 from middlewared.service_exception import ValidationErrors
-from middlewared.utils.privilege import app_needs_full_admin_check, check_full_admin_fields
+from middlewared.utils.privilege import (
+    app_needs_full_admin_check,
+    check_full_admin_fields,
+    supplied_full_admin_fields,
+)
 
 if TYPE_CHECKING:
     from middlewared.api.base.server.app import App
@@ -38,7 +42,9 @@ async def check_full_admin_payload(
         return
 
     schema_name, fields = full_admin_payload_fields(accepts)
-    if not fields:
+    if not (fields := supplied_full_admin_fields(fields, data)):
+        # The caller named none of them, so nothing marked can have changed. Bail out before `get_old`, which
+        # for most services is a full entry query.
         return
 
     old = await get_old() if get_old is not None else None
@@ -68,7 +74,7 @@ def check_full_admin_model(app: "App | None", schema_name: str, model: Any, data
     if not app_needs_full_admin_check(app):
         return
 
-    if not (fields := full_admin_fields(model)):
+    if not (fields := supplied_full_admin_fields(full_admin_fields(model), data)):
         return
 
     verrors = ValidationErrors()

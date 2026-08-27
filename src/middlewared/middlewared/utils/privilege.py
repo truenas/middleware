@@ -4,7 +4,9 @@ from collections.abc import Iterable, Mapping
 from typing import TYPE_CHECKING, Any
 
 from middlewared.auth import TruenasNodeSessionManagerCredentials
+from middlewared.api.base.full_admin import RESTRICTION
 from middlewared.role import ROLES
+from middlewared.utils.lang import Undefined
 
 if TYPE_CHECKING:
     from middlewared.api.base.handler.full_admin import FullAdminField
@@ -113,12 +115,27 @@ def app_needs_full_admin_check(app: App | None) -> bool:
     """Whether `app` must be checked against the `FullAdmin` fields of the method it is calling.
 
     False for an internal `middleware.call` (which has no `app` at all), for the HA peer, and for any credential
-    that already holds `FULL_ADMIN`.
+    that already holds `FULL_ADMIN`. An `app` carrying no credentials at all is checked rather than waved
+    through: it is by definition not a full admin.
     """
-    if app is None or app.authenticated_credentials is None:
+    if app is None:
         return False
 
+    if app.authenticated_credentials is None:
+        return True
+
     return not credential_has_full_admin(app.authenticated_credentials)
+
+
+def supplied_full_admin_fields(
+    fields: Iterable[FullAdminField],
+    new: Any,
+) -> list[FullAdminField]:
+    """The `FullAdmin` fields that `new` actually mentions.
+
+    A caller who names none of them cannot have changed one, so there is no need to load what is stored.
+    """
+    return [field for field in fields if _lookup(new, field.path) is not _NOT_SUPPLIED]
 
 
 def check_full_admin_fields(
@@ -156,10 +173,7 @@ def check_full_admin_fields(
         if value == current:
             continue
 
-        verrors.add(
-            '.'.join((schema_name, *path)),
-            'Changes to this parameter are restricted to users with full administrative privileges.',
-        )
+        verrors.add('.'.join((schema_name, *path)), RESTRICTION)
 
 
 def _lookup(data: Any, path: Iterable[str]) -> Any:
@@ -178,6 +192,11 @@ def _lookup(data: Any, path: Iterable[str]) -> Any:
             data = getattr(data, key, _NOT_SUPPLIED)
             if data is _NOT_SUPPLIED:
                 return _NOT_SUPPLIED
+
+    if isinstance(data, Undefined):
+        # An unset field of a `ForUpdateMetaclass` model instance, which `check_annotations` methods receive.
+        # The caller did not supply it.
+        return _NOT_SUPPLIED
 
     if hasattr(data, 'get_secret_value'):
         # Validating a `Secret` field wraps its value. Unwrap it so that it compares equal to the plain value the
