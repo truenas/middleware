@@ -81,12 +81,14 @@ def _walk(
 
         for name, field in model.model_fields.items():
             path = prefix + (field.alias or name,)
-            is_aliased = field.alias is not None and field.alias != name
+            trail = (
+                (*aliased, f"{model.__name__}.{name}") if field.alias is not None and field.alias != name else aliased
+            )
             if is_full_admin_field(field):
-                if offenders := (*aliased, f"{model.__name__}.{name}") if is_aliased else aliased:
+                if trail:
                     raise TypeError(
                         f"{'.'.join(path)} is a `FullAdmin` field reached through aliased field(s) "
-                        f"{', '.join(offenders)}. This is not supported: `populate_by_name` lets a caller supply "
+                        f"{', '.join(trail)}. This is not supported: `populate_by_name` lets a caller supply "
                         f"an aliased field under either key, but enforcement addresses it by one. Please drop the "
                         f"alias or rename the field."
                     )
@@ -94,12 +96,7 @@ def _walk(
                 yield FullAdminField(path, _default(field))
                 continue
 
-            yield from _walk(
-                field.annotation,
-                path,
-                seen | {model},
-                (*aliased, f"{model.__name__}.{name}") if is_aliased else aliased,
-            )
+            yield from _walk(field.annotation, path, seen | {model}, trail)
 
             for element in _elements(field.annotation):
                 if next(_walk(element, path, seen | {model}, aliased), None) is not None:
@@ -118,22 +115,30 @@ def _models(annotation: Any) -> typing.Iterator[type[BaseModel]]:
 
 
 def _elements(annotation: Any) -> typing.Iterator[Any]:
-    """Annotations of the items of `annotation`, if it is a collection of something."""
+    """Annotations of the items of `annotation`, at any collection depth.
+
+    Recursive so that a collection of collections is probed too: a marked field two levels down is just as
+    unenforceable as one, and must raise rather than be skipped in silence.
+    """
     for candidate in _unwrap(annotation):
         origin = typing.get_origin(candidate)
         if origin in (list, set, frozenset, tuple):
-            yield from typing.get_args(candidate)
-        elif origin is dict and len(args := typing.get_args(candidate)) == 2:
-            yield args[1]
+            args: tuple[Any, ...] = typing.get_args(candidate)
+        elif origin is dict and len(pair := typing.get_args(candidate)) == 2:
+            args = (pair[1],)
+        else:
+            continue
+
+        for arg in args:
+            yield arg
+            yield from _elements(arg)
 
 
 def _unwrap(annotation: Any) -> typing.Iterator[Any]:
     """Strip `Annotated` and `Secret`, and flatten unions, leaving the types `annotation` may actually hold."""
     origin = typing.get_origin(annotation)
-    if origin is Annotated:
-        yield from _unwrap(typing.get_args(annotation)[0])
-    elif origin is Secret:
-        # `Secret` is a transparent wrapper, and `Secret[SomeModel]` is a shape the API really uses.
+    if origin in (Annotated, Secret):
+        # Both are transparent wrappers, and `Secret[SomeModel]` is a shape the API really uses.
         yield from _unwrap(typing.get_args(annotation)[0])
     elif is_union(origin):
         for arg in typing.get_args(annotation):

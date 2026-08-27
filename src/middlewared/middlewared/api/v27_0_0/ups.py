@@ -1,5 +1,6 @@
-from typing import Literal
+from typing import Annotated, Literal
 
+from annotated_types import MinLen
 from pydantic import Field
 
 from middlewared.api.base import (
@@ -9,6 +10,7 @@ from middlewared.api.base import (
     FullAdmin,
     LongString,
     NonEmptyString,
+    SingleLineString,
     excluded_field,
 )
 
@@ -37,8 +39,12 @@ class UPSEntry(BaseModel):
         ),
     )
     hostsync: int = Field(ge=0, description="Maximum seconds to wait for other systems to shutdown before continuing.")
-    description: str = Field(description="Human-readable description of this UPS configuration.")
-    driver: str = Field(description="UPS driver name that handles communication with the specific UPS hardware model.")
+    description: SingleLineString = Field(
+        description="Human-readable description of this UPS configuration.",
+    )
+    driver: SingleLineString = Field(
+        description="UPS driver name that handles communication with the specific UPS hardware model.",
+    )
     extrausers: FullAdmin[LongString] = Field(description="Additional user configurations for UPS monitoring access.")
     identifier: NonEmptyString = Field(
         description="Unique identifier name for this UPS device within the monitoring system.",
@@ -50,12 +56,18 @@ class UPSEntry(BaseModel):
             "* `SLAVE` monitors remotely"
         ),
     )
-    monpwd: str = Field(description="Password for UPS monitoring authentication.")
-    monuser: NonEmptyString = Field(description="Username for UPS monitoring authentication.")
+    monpwd: SingleLineString = Field(description="Password for UPS monitoring authentication.")
+    monuser: Annotated[SingleLineString, MinLen(1)] = Field(
+        description="Username for UPS monitoring authentication.",
+    )
     options: FullAdmin[LongString] = Field(description="Additional configuration options passed to the UPS driver.")
     optionsupsd: FullAdmin[LongString] = Field(description="Additional configuration options for the UPS daemon.")
-    port: str = Field(description="Serial port or device path for UPS communication.")
-    remotehost: str = Field(description="Hostname or IP address of remote UPS server when operating in SLAVE mode.")
+    port: SingleLineString = Field(
+        description="Serial port or device path for UPS communication.",
+    )
+    remotehost: SingleLineString = Field(
+        description="Hostname or IP address of remote UPS server when operating in SLAVE mode.",
+    )
     shutdown: Literal['LOWBATT', 'BATT'] = Field(
         description="Shutdown trigger condition: LOWBATT on low battery, BATT when on battery power.",
     )
@@ -68,7 +80,9 @@ class UPSEntry(BaseModel):
 class UPSUpdate(UPSEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
     complete_identifier: Excluded = excluded_field()
-    monpwd: NonEmptyString = Field(description="Password for UPS monitoring authentication (required for updates).")
+    monpwd: Annotated[SingleLineString, MinLen(1)] = Field(
+        description="Password for UPS monitoring authentication (required for updates).",
+    )
 
 
 class UPSUpdateArgs(BaseModel):

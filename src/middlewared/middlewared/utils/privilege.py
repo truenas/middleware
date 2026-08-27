@@ -3,8 +3,8 @@ from __future__ import annotations
 from collections.abc import Iterable, Mapping
 from typing import TYPE_CHECKING, Any
 
-from middlewared.auth import TruenasNodeSessionManagerCredentials
 from middlewared.api.base.full_admin import RESTRICTION
+from middlewared.auth import TruenasNodeSessionManagerCredentials
 from middlewared.role import ROLES
 from middlewared.utils.lang import Undefined
 
@@ -183,6 +183,7 @@ def _lookup(data: Any, path: Iterable[str]) -> Any:
     `check_annotations`, hence the attribute fallback.
     """
     for key in path:
+        data = _unwrap_secret(data)
         if isinstance(data, Mapping):
             if key not in data:
                 return _NOT_SUPPLIED
@@ -198,9 +199,16 @@ def _lookup(data: Any, path: Iterable[str]) -> Any:
         # The caller did not supply it.
         return _NOT_SUPPLIED
 
+    return _unwrap_secret(data)
+
+
+def _unwrap_secret(data: Any) -> Any:
+    """Unwrap a validated `Secret`, so it compares equal to the plain value a raw payload holds.
+
+    Applied at every step, not just the last: the field walker descends into `Secret[SomeModel]`, so a marked
+    field can sit behind one.
+    """
     if hasattr(data, 'get_secret_value'):
-        # Validating a `Secret` field wraps its value. Unwrap it so that it compares equal to the plain value the
-        # same field holds in a raw payload.
         return data.get_secret_value()
 
     return data

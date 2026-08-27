@@ -41,8 +41,8 @@ async def check_full_admin_payload(
     if (accepts := getattr(methodobj, "new_style_accepts", None)) is None:
         return
 
-    schema_name, fields = full_admin_payload_fields(accepts)
-    if not (fields := supplied_full_admin_fields(fields, data)):
+    schema_name, declared = full_admin_payload_fields(accepts)
+    if not (fields := supplied_full_admin_fields(declared, data)):
         # The caller named none of them, so nothing marked can have changed. Bail out before `get_old`, which
         # for most services is a full entry query.
         return
@@ -74,7 +74,7 @@ def check_full_admin_model(app: "App | None", schema_name: str, model: Any, data
     if not app_needs_full_admin_check(app):
         return
 
-    if not (fields := supplied_full_admin_fields(full_admin_fields(model), data)):
+    if not (fields := full_admin_fields(model)):
         return
 
     verrors = ValidationErrors()

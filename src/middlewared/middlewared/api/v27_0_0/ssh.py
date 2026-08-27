@@ -3,7 +3,13 @@ from typing import Literal
 from pydantic import Field
 
 from middlewared.api.base import (
-    BaseModel, Excluded, ForUpdateMetaclass, FullAdmin, LongString, TcpPort, excluded_field,
+    BaseModel,
+    Excluded,
+    ForUpdateMetaclass,
+    FullAdmin,
+    LongString,
+    TcpPort,
+    excluded_field,
 )
 
 __all__ = [

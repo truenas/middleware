@@ -7,7 +7,7 @@ from pydantic.fields import FieldInfo
 __all__ = ["FullAdmin", "FullAdminOnly", "document_full_admin_fields", "is_full_admin_field"]
 
 
-RESTRICTION = "Only a user with the FULL_ADMIN role may set or change this field."
+RESTRICTION = "Only a user with the `FULL_ADMIN` role may set or change this field."
 """The rule, worded once: appended to the field's description and raised as the validation error."""
 
 

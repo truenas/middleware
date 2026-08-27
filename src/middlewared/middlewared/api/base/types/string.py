@@ -18,16 +18,39 @@ from middlewared.utils.netbios import validate_netbios_domain, validate_netbios_
 from middlewared.utils.smb import validate_smb_share_name
 
 __all__ = [
-    "HttpUrl", "LongString", "NonEmptyString", "LongNonEmptyString", "SECRET_VALUE", "TimeString", "NetbiosDomain",
-    "NetbiosName", "SnapshotNameSchema", "EmailString", "SmbShareName", "UUIDv4String",
+    "HttpUrl",
+    "LongString",
+    "NonEmptyString",
+    "LongNonEmptyString",
+    "SECRET_VALUE",
+    "TimeString",
+    "NetbiosDomain",
+    "NetbiosName",
+    "SnapshotNameSchema",
+    "EmailString",
+    "SmbShareName",
+    "SingleLineString",
+    "UUIDv4String",
 ]
+
+
+def validate_single_line(value: str) -> str:
+    """Reject a line break.
+
+    For a field whose value is interpolated into a line-oriented configuration file. Such a field is not
+    free-form -- a line break in it lets the caller append directives of their own to the generated file.
+    """
+    if "\n" in value or "\r" in value:
+        raise ValueError("Line breaks are not allowed")
+
+    return value
 
 
 def uuidv4_validator(value: str) -> str:
     try:
         uuid.UUID(value, version=4)
     except ValueError:
-        raise ValueError('UUID is not valid version 4')
+        raise ValueError("UUID is not valid version 4")
 
     return value
 
@@ -37,8 +60,9 @@ if TYPE_CHECKING:
 else:
     HttpUrl = Annotated[_HttpUrl, AfterValidator(str)]
 
+SingleLineString = Annotated[str, AfterValidator(validate_single_line)]
 # By default, our strings are no more than 1024 characters long. This string is 2**31-1 characters long (SQLite limit).
-LongString = Annotated[str, MaxLen(2 ** 31 - 1)]
+LongString = Annotated[str, MaxLen(2**31 - 1)]
 NonEmptyString = Annotated[str, MinLen(1)]
 LongNonEmptyString = Annotated[LongString, MinLen(1)]
 TimeString = Annotated[

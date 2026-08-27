@@ -5,12 +5,11 @@ from pydantic import Discriminator, Field, Secret
 import pytest
 
 from middlewared.api.base import BaseModel, ForUpdateMetaclass, FullAdmin, LongString
+from middlewared.api.base.full_admin import RESTRICTION
 from middlewared.api.base.handler.full_admin import full_admin_fields, full_admin_payload_fields
 from middlewared.service.full_admin import check_full_admin_payload
 from middlewared.service_exception import ValidationErrors
 from middlewared.utils.privilege import check_full_admin_fields
-
-ERRMSG = "Changes to this parameter are restricted to users with full administrative privileges."
 
 
 class Nested(BaseModel):
@@ -41,6 +40,8 @@ class TaskUpdateArgs(BaseModel):
 def check(fields, new, old=None):
     verrors = ValidationErrors()
     check_full_admin_fields("task_create", fields, new, old, verrors)
+    # Every rejection carries the one shared wording, which names the role the caller is missing.
+    assert all(error.errmsg == RESTRICTION for error in verrors.errors), verrors.errors
     return [error.attribute for error in verrors.errors]
 
 
@@ -323,3 +324,13 @@ def test_an_app_without_credentials_is_checked():
                 None,
             )
         )
+
+
+def test_the_error_names_the_role_and_matches_the_documented_wording():
+    """The description note and the validation error are the same sentence, so they cannot drift apart."""
+    verrors = ValidationErrors()
+    check_full_admin_fields("task_create", full_admin_fields(Task), {"extra": ["-e", "sh"]}, None, verrors)
+
+    assert [error.errmsg for error in verrors.errors] == [RESTRICTION]
+    assert "FULL_ADMIN" in RESTRICTION
+    assert Task.model_fields["extra"].description.endswith(RESTRICTION)
