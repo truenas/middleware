@@ -67,13 +67,14 @@ def apps(context: ServiceContext, options: CatalogApps) -> CatalogAppsResponse:
     cache_available = False
 
     if options.cache:
-        cache_key = get_cache_key(catalog.label)
+        cache_key = get_cache_key(catalog.label, catalog.location)
         try:
             orig_cached_data = context.middleware.call_sync('cache.get', cache_key)
         except KeyError:
             orig_cached_data = None
 
-        cache_available = orig_cached_data is not None
+        # We explicitly check if cache is boolean true/false to determine if cache is available or not
+        cache_available = bool(orig_cached_data)
 
     if options.cache and options.cache_only and not cache_available:
         return CatalogAppsResponse.model_validate({})
@@ -94,22 +95,16 @@ def apps(context: ServiceContext, options: CatalogApps) -> CatalogAppsResponse:
     elif not os.path.exists(catalog.location):
         return CatalogAppsResponse.model_validate({})
 
-    if all_trains:
-        # We can only safely say that the catalog is healthy if we retrieve data for all trains
-        context.middleware.call_sync2(
-            context.middleware.services.alert.oneshot_delete, 'CatalogNotHealthy', catalog.label
-        )
-
     trains = get_trains(context, catalog, options)
 
-    if all_trains:
+    if all_trains and trains:
         # We will only update cache if we are retrieving data of all trains for a catalog
         # which happens when we sync catalog(s) periodically or manually
         # We cache for 90000 seconds giving system an extra 1 hour to refresh it's cache which
         # happens after 24h - which means that for a small amount of time it's possible that user
         # come with a case where system is trying to access cached data but it has expired and it's
         # reading again from disk hence the extra 1 hour.
-        context.middleware.call_sync('cache.put', get_cache_key(catalog.label), trains, 90000)
+        context.middleware.call_sync('cache.put', get_cache_key(catalog.label, catalog.location), trains, 90000)
 
     return CatalogAppsResponse.model_validate(trains)
 
@@ -173,8 +168,25 @@ def retrieve_trains_data_from_json(
                 catalog=catalog.id, apps=', '.join(unhealthy_apps)
             )
         )
+    elif options.retrieve_all_trains and data:
+        # Only a successful read of every train proves the catalog is healthy, and reading nothing at
+        # all is not that. Clearing the alert anywhere else would dismiss the breakage it describes.
+        # What the catalog does report is taken at face value - a train that carries no apps is a
+        # statement about the catalog's contents, not a sign that we failed to read it.
+        context.middleware.call_sync2(
+            context.middleware.services.alert.oneshot_delete, 'CatalogNotHealthy', catalog.label
+        )
 
     return data
+
+
+async def train_data_available(context: ServiceContext) -> bool:
+    """Report whether train data for the catalog has actually been read at least once."""
+    catalog = await context.call2(context.s.catalog.config)
+    available: bool = await context.middleware.call(
+        'cache.has_key', get_cache_key(catalog.label, catalog.location)
+    )
+    return available
 
 
 async def get_normalized_questions_context(context: ServiceContext) -> NormalizedQuestions:

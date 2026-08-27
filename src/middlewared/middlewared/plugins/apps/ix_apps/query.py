@@ -53,7 +53,6 @@ def parse_version(version: Any) -> Version | None:
 def upgrade_available_for_app(
     version_mapping: dict[str, dict[str, dict[str, str | None]]],
     app_metadata: dict[str, Any],
-    image_updates_available: bool = False,
 ) -> tuple[bool, str | None, str | None]:
     # TODO: Eventually we would want this to work as well but this will always require middleware changes
     #  depending on what new functionality we want introduced for custom app, so let's take care of this at that point
@@ -77,8 +76,6 @@ def upgrade_available_for_app(
             latest_version_info['version'],
             latest_version_info.get('app_version'),
         )
-    elif (app_metadata.get('custom_app') or catalog_app == IX_APP_NAME) and image_updates_available:
-        return True, None, None
     else:
         return False, None, None
 
@@ -248,12 +245,15 @@ def list_apps(
             'error_reason': None,
             'version_details': None,
         }
-        if (
-            app_data.get('custom_app') or (app_metadata.get('metadata') or {}).get('name') == IX_APP_NAME
-        ) and image_updates_available:
+        # Corrupt metadata can hold anything at all here, so it is only indexed once we know it is a mapping
+        catalog_app_metadata = app_metadata.get('metadata')
+        is_ix_app = isinstance(catalog_app_metadata, dict) and catalog_app_metadata.get('name') == IX_APP_NAME
+        if (app_data.get('custom_app') or is_ix_app) and image_updates_available:
             # We want to mark custom apps and ix-apps as upgrade available if image updates are available
             # so if user tries to upgrade, we will just be pulling a newer version of the image
-            # against the same docker tag
+            # against the same docker tag. This override lives here rather than in
+            # `upgrade_available_for_app` because an ix-app is a catalog app, so the version comparison
+            # there answers first and would otherwise hide a pending image update.
             app_data['upgrade_available'] = True
 
         apps.append(app_data | get_config_of_app(app_data, collective_config, retrieve_config))
