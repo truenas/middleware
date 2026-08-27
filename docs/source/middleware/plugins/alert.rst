@@ -70,33 +70,19 @@ A declaration does not build its own rule. It names one of the populations from
 .. automodule:: middlewared.alert.applicability.vocabulary
     :members:
 
-Writing a lambda or a one-off predicate at the declaration site instead of naming a population is
-rejected by the test suite, as is reading `applies_to` or `listed_only_when` anywhere outside the
-applicability package -- a second reader is a second answer that can disagree with the first. Every
-answer comes from `middlewared.alert.applicability.Applicability`, which reads the facts once and
-memoizes per declaration.
+Every answer comes from `middlewared.alert.applicability.Applicability`, which reads the facts once
+and memoizes per declaration. Nothing outside the applicability package reads `applies_to` or
+`listed_only_when` -- a second reader is a second answer that can disagree with the first.
 
 The applicability inventory
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Applicability is declared per alert and summarised nowhere, so a one-word change to a rule can add or
 remove an alert across a whole class of machines with nothing in the diff to show it. The inventory at
-`src/middlewared/middlewared/pytest/unit/alert/golden/applicability.txt` is what makes that visible.
-It is generated, checked in, and compared byte for byte by `test_applicability_matrix`:
-
-.. code-block:: text
-
-    DECLARATION                                 KIND    G   C0  C   A   B   Di  HA
-    AdminSession                                class   Y   Y   Y   Y   Y   Y   Y
-    AdminSession                                listed  Y   Y   Y   Y   Y   Y   Y
-    AdminSession                                source  .   .   .   Y   Y   .   Y
-
-Each row is one declaration and one kind -- `class` (the class applies: displayed, sent, and offered
-in the catalogue), `listed` (offered in the settings catalogue, which `listed_only_when` narrows) or
-`source` (the source's rule admits this system). Each column is one population of real machines,
-described in the file's own header. A `source` cell says only that the rule admits the system; whether
-the source is actually ran also turns on `post_failover_blackout`, `require_stable_peer`, its schedule
-and source locks, none of which the inventory models.
+`src/middlewared/middlewared/pytest/unit/alert/inventory/applicability.txt` is there to double-check
+exactly that: it records which systems every declaration covers, one line at a time. It is generated,
+checked in, and compared byte for byte by `test_applicability_matrix`; its own header explains the
+rows and columns.
 
 The answers are asked of the production `Applicability` object rather than recomputed, so the file
 cannot drift from what the daemon does.

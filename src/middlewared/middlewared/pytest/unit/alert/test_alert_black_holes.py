@@ -71,18 +71,6 @@ def _classes_a_source_may_create() -> dict[str, set[str]]:
                 if (referenced := _alert_class_reference(child)) is not None:
                     names.add(referenced.removesuffix("AlertClass"))
 
-                # `alert.oneshot_create("<Name>", ...)` names its class as a string.
-                if (
-                    isinstance(child, ast.Call)
-                    and isinstance(child.func, ast.Attribute)
-                    and child.func.attr in ("call", "call_sync")
-                    and len(child.args) >= 2
-                    and isinstance(child.args[0], ast.Constant)
-                    and child.args[0].value == "alert.oneshot_create"
-                    and isinstance(child.args[1], ast.Constant)
-                ):
-                    names.add(child.args[1].value)
-
             edges[sources_by_class_name[node.name]] = names
 
     return edges

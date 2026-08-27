@@ -27,7 +27,7 @@ from middlewared.utils.license import LicenseInfo
 from middlewared.utils.plugins import load_classes, load_modules
 from middlewared.utils.python import get_middlewared_dir
 
-GOLDEN = os.path.join(os.path.dirname(__file__), "golden", "applicability.txt")
+INVENTORY_FILE = os.path.join(os.path.dirname(__file__), "inventory", "applicability.txt")
 
 
 @dataclass(frozen=True, kw_only=True, slots=True)
@@ -245,11 +245,11 @@ def test_applicability_matrix():
     matrix = render()
 
     if os.environ.get("ALERT_MATRIX_REGENERATE"):
-        os.makedirs(os.path.dirname(GOLDEN), exist_ok=True)
-        with open(GOLDEN, "w") as f:
+        os.makedirs(os.path.dirname(INVENTORY_FILE), exist_ok=True)
+        with open(INVENTORY_FILE, "w") as f:
             f.write(matrix)
 
-    with open(GOLDEN) as f:
+    with open(INVENTORY_FILE) as f:
         assert f.read() == matrix, "alert applicability changed; regenerate with ALERT_MATRIX_REGENERATE=1"
 
 
@@ -257,7 +257,7 @@ def frozen_inventory() -> dict[tuple[str, str], list[str]]:
     """The checked-in file, parsed. Deliberately not ``render()``: the point is to compare the tree
     against what was last reviewed, not against itself."""
     inventory = {}
-    with open(GOLDEN) as f:
+    with open(INVENTORY_FILE) as f:
         for line in f:
             line = line.rstrip("\n")
             if not line or line.startswith("#") or line.startswith("DECLARATION"):
