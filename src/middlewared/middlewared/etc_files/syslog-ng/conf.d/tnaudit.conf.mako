@@ -81,9 +81,6 @@ log {
 % if svc == 'MIDDLEWARE':
   source(s_tn_middleware);
 % elif svc in ('S3', 'SYSTEM'):
-## S3 events travel the kernel-audit chain: the S3 daemon emits netlink
-## records, and the auditd handler forwards them here on the same socket
-## that carries the SYSTEM events, under the TNAUDIT_S3 program name.
   source(s_tn_auditd);
 % else:
   source(s_src);

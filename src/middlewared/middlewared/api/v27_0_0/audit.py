@@ -33,13 +33,7 @@ class AuditEntrySpace(BaseModel):
 
 class AuditEntryEnabledServices(BaseModel):
     MIDDLEWARE: list = Field(description="Array of middleware audit event types that are enabled.")
-    S3: list = Field(
-        default=[],
-        description=(
-            "Array of S3 bucket names for which auditing is enabled. Currently empty: the S3 deployment "
-            "configuration is not yet enumerable through the API."
-        ),
-    )
+    S3: list = Field(description="Array of S3 bucket names for which auditing is enabled.")
     SMB: list = Field(description="Array of SMB share names or audit event types that are enabled.")
     SUDO: list[str] = Field(description="Array of sudo commands or users that are being audited.")
 

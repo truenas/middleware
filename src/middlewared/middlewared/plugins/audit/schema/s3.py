@@ -15,10 +15,21 @@ from .common import AuditEvent, AuditEventVersion, convert_schema_to_set
 # The thirteen bucket-configuration probes route as one operation whose
 # rendering names the probed subresource.
 S3_PROBE_EVENTS = tuple(
-    f'GetBucketProbe({probe})' for probe in (
-        'Accelerate', 'Cors', 'Encryption', 'Lifecycle', 'Logging',
-        'ObjectLock', 'OwnershipControls', 'Policy', 'PolicyStatus',
-        'PublicAccessBlock', 'RequestPayment', 'Tagging', 'Website',
+    f"GetBucketProbe({probe})"
+    for probe in (
+        "Accelerate",
+        "Cors",
+        "Encryption",
+        "Lifecycle",
+        "Logging",
+        "ObjectLock",
+        "OwnershipControls",
+        "Policy",
+        "PolicyStatus",
+        "PublicAccessBlock",
+        "RequestPayment",
+        "Tagging",
+        "Website",
     )
 )
 
@@ -37,8 +48,9 @@ class AuditEventS3EventData(BaseModel):
     `status` and `err` are absent together on a request that died
     without an answer.
     """
+
     vers: AuditEventVersion
-    record_type: Literal['TRUSTED_APP', 'USER_AUTH', 'USER_ACCT', 'DAC_CHECK']
+    record_type: Literal["TRUSTED_APP", "USER_AUTH", "USER_ACCT", "DAC_CHECK"]
     req: str
     acct_uid: int | None = None
     keyid: str | None = None
@@ -54,7 +66,7 @@ class AuditEventS3EventData(BaseModel):
 
 class AuditEventS3(AuditEvent):
     event_data: AuditEventS3EventData
-    service: Literal['S3']
+    service: Literal["S3"]
     service_data: AuditEventS3ServiceData
 
 
@@ -63,7 +75,7 @@ class AuditEventS3ReadEventData(AuditEventS3EventData):
 
 
 class AuditEventS3Read(AuditEventS3):
-    event: Literal['GetObject', 'HeadObject']
+    event: Literal["GetObject", "HeadObject"]
     event_data: AuditEventS3ReadEventData
 
 
@@ -72,7 +84,7 @@ class AuditEventS3PutEventData(AuditEventS3EventData):
 
 
 class AuditEventS3Put(AuditEventS3):
-    event: Literal['PutObject']
+    event: Literal["PutObject"]
     event_data: AuditEventS3PutEventData
 
 
@@ -83,7 +95,7 @@ class AuditEventS3CopyEventData(AuditEventS3EventData):
 
 
 class AuditEventS3Copy(AuditEventS3):
-    event: Literal['CopyObject']
+    event: Literal["CopyObject"]
     event_data: AuditEventS3CopyEventData
 
 
@@ -92,7 +104,7 @@ class AuditEventS3DeleteEventData(AuditEventS3EventData):
 
 
 class AuditEventS3Delete(AuditEventS3):
-    event: Literal['DeleteObject']
+    event: Literal["DeleteObject"]
     event_data: AuditEventS3DeleteEventData
 
 
@@ -100,6 +112,7 @@ class AuditEventS3BatchDeleteEventData(AuditEventS3EventData):
     """One record for the whole batch: counts partitioning an ordered
     key list, truncated to the record's size budget with the remainder
     accounted."""
+
     deleted: int | None = None
     denied: int | None = None
     errors: int | None = None
@@ -108,7 +121,7 @@ class AuditEventS3BatchDeleteEventData(AuditEventS3EventData):
 
 
 class AuditEventS3BatchDelete(AuditEventS3):
-    event: Literal['DeleteObjects']
+    event: Literal["DeleteObjects"]
     event_data: AuditEventS3BatchDeleteEventData
 
 
@@ -118,7 +131,9 @@ class AuditEventS3UploadEventData(AuditEventS3EventData):
 
 class AuditEventS3Upload(AuditEventS3):
     event: Literal[
-        'CreateMultipartUpload', 'AbortMultipartUpload', 'ListParts',
+        "CreateMultipartUpload",
+        "AbortMultipartUpload",
+        "ListParts",
     ]
     event_data: AuditEventS3UploadEventData
 
@@ -130,7 +145,7 @@ class AuditEventS3PartEventData(AuditEventS3EventData):
 
 
 class AuditEventS3Part(AuditEventS3):
-    event: Literal['UploadPart']
+    event: Literal["UploadPart"]
     event_data: AuditEventS3PartEventData
 
 
@@ -140,7 +155,7 @@ class AuditEventS3CompleteEventData(AuditEventS3EventData):
 
 
 class AuditEventS3Complete(AuditEventS3):
-    event: Literal['CompleteMultipartUpload']
+    event: Literal["CompleteMultipartUpload"]
     event_data: AuditEventS3CompleteEventData
 
 
@@ -149,7 +164,7 @@ class AuditEventS3ListingEventData(AuditEventS3EventData):
 
 
 class AuditEventS3Listing(AuditEventS3):
-    event: Literal['ListObjects', 'ListObjectsV2', 'ListMultipartUploads']
+    event: Literal["ListObjects", "ListObjectsV2", "ListMultipartUploads"]
     event_data: AuditEventS3ListingEventData
 
 
@@ -158,13 +173,15 @@ class AuditEventS3AccountEventData(AuditEventS3EventData):
 
 
 class AuditEventS3Account(AuditEventS3):
-    event: Literal['ListBuckets']
+    event: Literal["ListBuckets"]
     event_data: AuditEventS3AccountEventData
 
 
 class AuditEventS3BucketRead(AuditEventS3):
     event: Literal[
-        'HeadBucket', 'GetBucketLocation', 'GetBucketVersioning',
+        "HeadBucket",
+        "GetBucketLocation",
+        "GetBucketVersioning",
         *S3_PROBE_EVENTS,
     ]
     event_data: AuditEventS3EventData
