@@ -96,8 +96,6 @@ class TrueNASConnectService(Service):
             'port': (await self.middleware.call('system.general.config'))['ui_httpsport']
         }
 
-        # A license is a perpetual grant, so the state of the support contract says nothing
-        # about its validity and never withholds it.
         license_info = await self.middleware.call('system.license', True)
         if license_info is not None and license_info['raw_license'] is not None:
             query_params['license'] = license_info['raw_license']

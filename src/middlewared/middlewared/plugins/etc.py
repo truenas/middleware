@@ -249,7 +249,11 @@ class EtcService(Service):
                 CtxMethod(method='user.query', args=[[['local', '=', True], ['uid', '!=', CONTAINER_ROOT_UID]]]),
                 CtxMethod(method='group.query', args=[[['local', '=', True]]]),
                 CtxMethod(method='auth.twofactor.config'),
-                CtxMethod(method='truenas.entitlements.check', args=[LicenseFeature.SUPPORT]),
+                CtxMethod(
+                    method='truenas.entitlements.check',
+                    args=[LicenseFeature.SUPPORT],
+                    ctx_prefix='support',
+                ),
             ),
             entries=(
                 EtcEntry(renderer_type=RendererType.MAKO, path='group'),

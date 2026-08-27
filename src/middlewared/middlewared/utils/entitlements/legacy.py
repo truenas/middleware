@@ -1,9 +1,3 @@
-"""Today-behavior legacy rules: arbitrary callables reproducing a pre-matrix gate verbatim.
-
-No live ``POLICY`` entry uses one. The kind and this module are retained so a
-feature that needs a transitional shim has somewhere to put it.
-"""
-
 from __future__ import annotations
 
 from truenas_pylicensed.features import LicenseFeature

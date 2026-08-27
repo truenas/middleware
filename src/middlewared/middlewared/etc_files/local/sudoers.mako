@@ -1,6 +1,7 @@
 <%
     users = render_ctx['user.query']
     groups = render_ctx['group.query']
+    support_entitled = render_ctx['support.truenas.entitlements.check'].entitled
 
     def sudo_entry(commands, commands_nopasswd):
         entry = []
@@ -33,7 +34,7 @@ ${f'%{group["group"]}'} ALL=(ALL) ${sudo_entry(group['sudo_commands'], group['su
 % endfor
 Defaults syslog_goodpri = debug
 Defaults secure_path = /sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
-% if render_ctx['truenas.entitlements.check'].entitled:
+% if support_entitled:
 Defaults log_subcmds
 Defaults log_format=json
 % endif

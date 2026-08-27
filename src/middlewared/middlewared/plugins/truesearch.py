@@ -251,8 +251,6 @@ async def on_system_ready(middleware: Middleware, event_type: str, args: Any) ->
 
 
 async def setup(middleware: Middleware) -> None:
-    # `configure` awaits a `service.control` job to completion,
-    # which can take the full 120 seconds service timeout
     middleware.register_hook("system.post_license_update", post_license_update, sync=False)
     middleware.register_hook("zfs.dataset.mounted", on_dataset_mounted)
     middleware.event_subscribe("system.ready", on_system_ready)

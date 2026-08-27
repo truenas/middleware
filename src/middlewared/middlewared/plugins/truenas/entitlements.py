@@ -99,14 +99,8 @@ class TrueNASEntitlementsService(Service):
         try:
             entitlement = get_entitlement(feature)
         except ValueError:
-            # The engine raises for a key it has no rule for. Over the API that is not an error:
-            # the issuer's vocabulary can run ahead of ours, and a feature nothing here gates is a
-            # feature nothing here restricts. Internal callers keep the raise -- they name features
-            # as enum members, so a missing rule for one of those is a bug worth failing on.
             return EntitlementEntry(entitled=True, reason=Reason.NOT_GATED, message="")
 
-        # `column` is left out for the same reason `info` omits it: it is the matrix coordinate
-        # the facts resolved to, and publishing it would make the matrix's shape a contract.
         return EntitlementEntry(
             entitled=entitlement.entitled,
             reason=entitlement.reason,
