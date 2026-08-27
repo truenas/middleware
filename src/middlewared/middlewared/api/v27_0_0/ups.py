@@ -40,9 +40,7 @@ class UPSEntry(BaseModel):
     )
     hostsync: int = Field(ge=0, description="Maximum seconds to wait for other systems to shutdown before continuing.")
     description: str = Field(description="Human-readable description of this UPS configuration.")
-    driver: str = Field(
-        description="UPS driver name that handles communication with the specific UPS hardware model.",
-    )
+    driver: str = Field(description="UPS driver name that handles communication with the specific UPS hardware model.")
     extrausers: FullAdmin[LongString] = Field(description="Additional user configurations for UPS monitoring access.")
     identifier: NonEmptyString = Field(
         description="Unique identifier name for this UPS device within the monitoring system.",
@@ -59,9 +57,7 @@ class UPSEntry(BaseModel):
     options: FullAdmin[LongString] = Field(description="Additional configuration options passed to the UPS driver.")
     optionsupsd: FullAdmin[LongString] = Field(description="Additional configuration options for the UPS daemon.")
     port: str = Field(description="Serial port or device path for UPS communication.")
-    remotehost: str = Field(
-        description="Hostname or IP address of remote UPS server when operating in SLAVE mode.",
-    )
+    remotehost: str = Field(description="Hostname or IP address of remote UPS server when operating in SLAVE mode.")
     shutdown: Literal['LOWBATT', 'BATT'] = Field(
         description="Shutdown trigger condition: LOWBATT on low battery, BATT when on battery power.",
     )
@@ -80,27 +76,15 @@ class UPSUpdate(UPSEntry, metaclass=ForUpdateMetaclass):
     """
     id: Excluded = excluded_field()
     complete_identifier: Excluded = excluded_field()
-    description: SingleLineString = Field(
-        description="Human-readable description of this UPS configuration.",
-    )
-    driver: SingleLineString = Field(
-        description="UPS driver name that handles communication with the specific UPS hardware model.",
-    )
-    identifier: SingleLineNonEmptyString = Field(
-        description="Unique identifier name for this UPS device within the monitoring system.",
-    )
+    description: SingleLineString
+    driver: SingleLineString
+    identifier: SingleLineNonEmptyString
     monpwd: SingleLineNonEmptyString = Field(
         description="Password for UPS monitoring authentication (required for updates).",
     )
-    monuser: SingleLineNonEmptyString = Field(
-        description="Username for UPS monitoring authentication.",
-    )
-    port: SingleLineString = Field(
-        description="Serial port or device path for UPS communication.",
-    )
-    remotehost: SingleLineString = Field(
-        description="Hostname or IP address of remote UPS server when operating in SLAVE mode.",
-    )
+    monuser: SingleLineNonEmptyString
+    port: SingleLineString
+    remotehost: SingleLineString
 
 
 class UPSUpdateArgs(BaseModel):
