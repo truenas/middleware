@@ -33,6 +33,13 @@ class AuditEntrySpace(BaseModel):
 
 class AuditEntryEnabledServices(BaseModel):
     MIDDLEWARE: list = Field(description="Array of middleware audit event types that are enabled.")
+    S3: list = Field(
+        default=[],
+        description=(
+            "Array of S3 bucket names for which auditing is enabled. Currently empty: the S3 deployment "
+            "configuration is not yet enumerable through the API."
+        ),
+    )
     SMB: list = Field(description="Array of SMB share names or audit event types that are enabled.")
     SUDO: list[str] = Field(description="Array of sudo commands or users that are being audited.")
 
@@ -89,7 +96,7 @@ class AuditEntry(BaseModel):
 
 
 class AuditQuery(BaseModel):
-    services: list[Literal['MIDDLEWARE', 'SMB', 'SUDO', 'SYSTEM']] = Field(
+    services: list[Literal['MIDDLEWARE', 'S3', 'SMB', 'SUDO', 'SYSTEM']] = Field(
         default=['MIDDLEWARE'],
         description="Array of services to include in the audit query.",
     )
@@ -143,7 +150,7 @@ class AuditQueryResultItem(BaseModel):
     address: str = Field(description="IP address of client performing action that generated the audit message.")
     username: str = Field(description="Username used by client performing action.")
     session: UUID | None = Field(description="GUID uniquely identifying the client session.")
-    service: Literal['MIDDLEWARE', 'SMB', 'SUDO', 'SYSTEM'] = Field(
+    service: Literal['MIDDLEWARE', 'S3', 'SMB', 'SUDO', 'SYSTEM'] = Field(
         description=(
             "Name of the service that generated the message. This will be one of the names specified in `services`."
         ),
