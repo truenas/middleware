@@ -80,7 +80,7 @@ ${textwrap.indent(get_db(svc), '  ')}
 log {
 % if svc == 'MIDDLEWARE':
   source(s_tn_middleware);
-% elif svc == 'SYSTEM':
+% elif svc in ('S3', 'SYSTEM'):
   source(s_tn_auditd);
 % else:
   source(s_src);
