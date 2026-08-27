@@ -45,7 +45,7 @@ class ISCSIGlobalEntry(BaseModel):
     direct_config: bool | None = Field(
         description="Whether configuration is written into the kernel directly by middlewared.",
     )
-    mode: int = Field(ge=0, le=1, description="Internal iSCSI operational mode.")
+    mode: int = Field(ge=0, le=2, description="Internal iSCSI operational mode.")
 
 
 @single_argument_args('iscsi_update')
