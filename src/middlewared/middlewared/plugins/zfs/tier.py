@@ -50,6 +50,7 @@ from middlewared.api.current import (
     ZfsTierUpdateArgs,
     ZfsTierUpdateResult,
 )
+from middlewared.common.license_reconcile import LicenseReconcileAction, LicenseReconcileDelegate
 from middlewared.event import EventSource
 from middlewared.plugins.pool_.utils import UpdateImplArgs, pool_has_special_vdev
 from middlewared.plugins.tunables import zfs_parameter_value
@@ -766,6 +767,19 @@ class ZfsTierService(ConfigService[ZfsTierEntry]):
         return {ds: (None if v is _DATASET_NOT_FOUND else v) for ds, v in raw.items()}
 
 
+class ZfsTierLicenseReconcileDelegate(LicenseReconcileDelegate):
+    name = "zfs_tier"
+    etc_groups = ("truenas_zfstierd",)
+    service = "truenas_zfstierd"
+    # RELOAD, not RENDER: the SIGHUP is the point. The daemon's reload handler aborts every
+    # active job on a true->false transition, and service.control renders the service's own
+    # select_etc() on the way into the verb -- including when the unit is stopped, which is
+    # what converges an HA standby.
+    action = LicenseReconcileAction.RELOAD
+    order = 40
+
+
 async def setup(middleware: Middleware) -> None:
+    await middleware.call("truenas.license.register_reconcile_delegate", ZfsTierLicenseReconcileDelegate())
     config = await middleware.call("zfs.tier.config")
     await middleware.run_in_thread(_apply_metadata_reserve_pct, middleware, config.special_class_metadata_reserve_pct)
