@@ -20,6 +20,8 @@ __all__ = [
     "AuditExportArgs", "AuditExportResult", "AuditUpdateArgs", "AuditUpdateResult",
 ]
 
+AuditService = Literal['MIDDLEWARE', 'S3', 'SMB', 'SUDO', 'SYSTEM']
+
 
 class AuditEntrySpace(BaseModel):
     used: int = Field(description="Total space used by the audit dataset in bytes.")
@@ -90,7 +92,7 @@ class AuditEntry(BaseModel):
 
 
 class AuditQuery(BaseModel):
-    services: list[Literal['MIDDLEWARE', 'S3', 'SMB', 'SUDO', 'SYSTEM']] = Field(
+    services: list[AuditService] = Field(
         default=['MIDDLEWARE'],
         description="Array of services to include in the audit query.",
     )
@@ -144,7 +146,7 @@ class AuditQueryResultItem(BaseModel):
     address: str = Field(description="IP address of client performing action that generated the audit message.")
     username: str = Field(description="Username used by client performing action.")
     session: UUID | None = Field(description="GUID uniquely identifying the client session.")
-    service: Literal['MIDDLEWARE', 'S3', 'SMB', 'SUDO', 'SYSTEM'] = Field(
+    service: AuditService = Field(
         description=(
             "Name of the service that generated the message. This will be one of the names specified in `services`."
         ),
