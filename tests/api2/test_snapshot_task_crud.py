@@ -1,6 +1,6 @@
 import pytest
 
-from middlewared.service_exception import CallError, InstanceNotFound, ValidationErrors
+from middlewared.service_exception import CallError, InstanceNotFound, ValidationError, ValidationErrors
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.replication import replication_task
 from middlewared.test.integration.assets.snapshot_task import snapshot_task
@@ -254,3 +254,15 @@ def test_snapshot_task_is_not_deleted_when_deleting_a_child_dataset():
                 call("pool.dataset.delete", child)
 
                 assert call("pool.snapshottask.get_instance", t["id"])
+
+
+@pytest.mark.parametrize("lifetime", [0, -1])
+def test_create_invalid_lifetime(lifetime):
+    with dataset("snapcrud_create") as ds:
+        with pytest.raises(ValidationErrors) as ve:
+            with snapshot_task({**TASK_DATA, "dataset": ds, "lifetime_value": lifetime}):
+                pass
+
+        assert ve.value.errors ==[
+            ValidationError("data.lifetime_value", "Input should be greater than or equal to 1", 22)
+        ]
