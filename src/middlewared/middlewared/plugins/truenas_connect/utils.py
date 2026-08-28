@@ -19,6 +19,9 @@ CONFIGURED_TNC_STATES = (
     Status.CERT_RENEWAL_FAILURE.name,
 )
 HEARTBEAT_INTERVAL = 120
+# How long the heartbeat keeps retrying after the first failure in a streak before it gives up and
+# alerts. The alert text states this figure in prose, so keep the two in step.
+HEARTBEAT_MAX_ELAPSED_DAYS = 7
 TNC_CERT_PREFIX = 'truenas_connect_'
 TNC_IPS_CACHE_KEY = 'truenas_connect_sync_ips'
 
@@ -53,7 +56,8 @@ def calculate_sleep(failure_dt_str: str | None, base_sleep: int = 60) -> int | N
     Behavior:
       - If no failure datetime is provided, returns base_sleep (default 60 seconds).
       - If the provided datetime is in the future, returns None.
-      - If more than 48 hours have elapsed since the failure datetime, returns None.
+      - If more than HEARTBEAT_MAX_ELAPSED_DAYS days have elapsed since the failure datetime,
+        returns None.
       - Otherwise, uses an exponential backoff schedule:
           * First 3 attempts use a sleep time of base_sleep seconds.
           * Next 3 attempts use a sleep time of base_sleep × 2 seconds.
@@ -90,9 +94,9 @@ def calculate_sleep(failure_dt_str: str | None, base_sleep: int = 60) -> int | N
         return None
 
     elapsed = (now - first_failure).total_seconds()
-    max_elapsed = 48 * 3600  # maximum elapsed time threshold: 48 hours
+    max_elapsed = HEARTBEAT_MAX_ELAPSED_DAYS * 24 * 3600
 
-    # If more than 48 hours have passed, no sleep is required.
+    # Past the retry window the caller gives up, so there is nothing left to sleep for.
     if elapsed > max_elapsed:
         return None
 

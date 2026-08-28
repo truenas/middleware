@@ -12,6 +12,7 @@ from middlewared.utils.version import parse_version_string
 from .mixin import TNCAPIMixin
 from .utils import (
     calculate_sleep, CONFIGURED_TNC_STATES, decode_and_validate_token, HEARTBEAT_INTERVAL,
+    HEARTBEAT_MAX_ELAPSED_DAYS,
 )
 
 
@@ -135,11 +136,12 @@ class TNCHeartbeatService(Service, TNCAPIMixin):
 
                 sleep_secs = calculate_sleep(last_failure, HEARTBEAT_INTERVAL)
                 if sleep_secs is None:
-                    # This means that either we have a time mismatch or it's been 48 hours and we have
-                    # not been able to establish contact with TNC, so an alert should be raised
+                    # This means that either we have a time mismatch or we have exhausted the retry
+                    # window without establishing contact with TNC, so an alert should be raised
                     logger.debug(
-                        'TNC Heartbeat: Unable to calculate sleep time, raising alert as it has likely been 48 hours '
-                        'since the last successful heartbeat (last failure: %s)', last_failure,
+                        'TNC Heartbeat: Unable to calculate sleep time, raising alert as it has likely been %d days '
+                        'since the last successful heartbeat (last failure: %s)',
+                        HEARTBEAT_MAX_ELAPSED_DAYS, last_failure,
                     )
                     await self.middleware.call('alert.oneshot_create', 'TNCHeartbeatConnectionFailure', None)
                     break
