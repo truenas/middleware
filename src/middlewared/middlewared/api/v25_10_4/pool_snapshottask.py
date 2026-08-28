@@ -31,7 +31,7 @@ class PoolSnapshotTaskCreate(BaseModel):
     """The dataset to take snapshots of."""
     recursive: bool = False
     """Whether to recursively snapshot child datasets."""
-    lifetime_value: int = 2
+    lifetime_value: int = Field(default=2, ge=1)
     """Number of time units to retain snapshots. `lifetime_unit` gives the time unit."""
     lifetime_unit: Literal["HOUR", "DAY", "WEEK", "MONTH", "YEAR"] = "WEEK"
     """Unit of time for snapshot retention."""
