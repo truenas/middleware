@@ -845,12 +845,6 @@ class AlertService(Service):
             if source_lock.expires_at <= time.monotonic():
                 await self.unblock_source(k)
 
-        # FIXME: this drop trusts facts that can be wrong. get_license() returns None both for a
-        # system with no license and for a system whose license daemon did not answer, so a daemon
-        # hiccup at this moment makes every license-gated source look inapplicable and deletes the
-        # alerts it had persisted. Recovering is not free: when the daemon answers again the alerts
-        # are recreated with fresh timestamps and their dismissed state cleared, so an operator sees
-        # a wave of "new" alerts they had already dismissed.
         excluded = {
             alert_source.name
             for alert_source in ALERT_SOURCES.values()
