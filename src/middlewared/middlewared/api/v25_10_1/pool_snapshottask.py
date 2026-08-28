@@ -28,6 +28,7 @@ class PoolSnapshotTaskCreate(BaseModel):
     recursive: bool = Field(default=False, description="Whether to recursively snapshot child datasets.")
     lifetime_value: int = Field(
         default=2,
+        ge=1,
         description="Number of time units to retain snapshots. `lifetime_unit` gives the time unit.",
     )
     lifetime_unit: Literal["HOUR", "DAY", "WEEK", "MONTH", "YEAR"] = Field(
