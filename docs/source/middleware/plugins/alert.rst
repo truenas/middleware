@@ -157,5 +157,4 @@ All of these live in `middlewared/pytest/unit/alert/`.
 
 `test_the_flag_carriers_are_what_was_reviewed`
     A second frozen inventory, of the two run gates the applicability matrix deliberately does not
-    model. Update it in `test_run_gates.py` when you add or remove `post_failover_blackout` or
-    `require_stable_peer`.
+    model. Update it when you add or remove `post_failover_blackout` or `require_stable_peer`.

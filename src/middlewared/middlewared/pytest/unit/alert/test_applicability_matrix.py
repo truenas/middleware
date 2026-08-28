@@ -19,7 +19,14 @@ from dataclasses import dataclass
 import pytest
 from truenas_pylicensed import LicenseType
 
-from middlewared.alert.applicability import HA_LICENSED, Applicability, applies, applies_for_listing, vocabulary
+from middlewared.alert.applicability import (
+    HA_LICENSED,
+    Applicability,
+    applies,
+    applies_for_listing,
+    declaration_rule_name,
+    vocabulary,
+)
 from middlewared.alert.base import AlertCategory, AlertClass, AlertSource, ThreadedAlertSource
 from middlewared.pytest.unit.entitlements import make_license
 from middlewared.utils.entitlements import EntitlementFacts
@@ -388,3 +395,33 @@ def test_ha_classes_are_not_listed_without_an_ha_license():
     ]
 
     assert listed == []
+
+
+# The two run gates, which say when a source's answer is worth having rather than which systems it
+# is meaningful on, so the populations above deliberately do not model them. Frozen because the
+# interesting fact is the odd row out: EnclosureStatus is the only carrier that is not gated on an
+# HA license, which is why pairing the blackout flag with a license check -- as it once was --
+# silenced enclosure faults on every iX appliance without one, and changed nothing else. A new
+# carrier, or an existing one changing population, has to be written down here and read in review.
+CARRIERS = """
+EnclosureStatus                  post_failover_blackout   TRUENAS_HARDWARE
+Failover                         post_failover_blackout   HA_LICENSED
+FailoverCritical                 post_failover_blackout   HA_LICENSED
+FailoverDisks                    post_failover_blackout   HA_LICENSED
+FailoverDisks                    require_stable_peer      HA_LICENSED
+FailoverNetworkCards             post_failover_blackout   HA_LICENSED
+FailoverNetworkCards             require_stable_peer      HA_LICENSED
+FailoverRemoteSystemInaccessible post_failover_blackout   HA_LICENSED
+"""
+
+
+def test_the_flag_carriers_are_what_was_reviewed():
+    live = sorted(
+        (name, flag, declaration_rule_name(source))
+        for name, kind, source in declarations()
+        if kind == "source"
+        for flag in ("post_failover_blackout", "require_stable_peer")
+        if getattr(source, flag)
+    )
+
+    assert live == sorted(tuple(line.split()) for line in CARRIERS.strip().splitlines())
