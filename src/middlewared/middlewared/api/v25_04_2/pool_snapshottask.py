@@ -26,7 +26,7 @@ class PoolSnapshotTaskCron(CronModel):
 class PoolSnapshotTaskCreate(BaseModel):
     dataset: str
     recursive: bool = False
-    lifetime_value: int = 2
+    lifetime_value: int = Field(default=2, ge=1)
     lifetime_unit: Literal["HOUR", "DAY", "WEEK", "MONTH", "YEAR"] = "WEEK"
     enabled: bool = True
     exclude: list[str] = []
