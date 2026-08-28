@@ -215,8 +215,8 @@ class ApiKeyServicePart(CRUDServicePart[ApiKeyEntry]):
         if not users:
             verrors.add("api_key_create", "User does not exist.")
         elif not await self.middleware.call("privilege.roles_for_user", data.username):
-            # The directory services cache holds no group membership and so is
-            # not authoritative for roles; this goes directly through NSS.
+            # We cannot use user[0]['roles'] as a fast check because it is not populated
+            # for directory services users via cache.
             verrors.add("api_key_create", "User lacks privilege role membership.")
 
         verrors.check()
