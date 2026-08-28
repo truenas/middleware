@@ -6,7 +6,7 @@ class TNCHeartbeatConnectionFailureAlert(OneShotAlertClass):
         category=AlertCategory.TRUENAS_CONNECT,
         level=AlertLevel.ERROR,
         title='Unable to connect to TrueNAS Connect Heartbeat Service',
-        text='Failed to connect to TrueNAS Connect Heartbeat Service in the last 48 hours',
+        text='Failed to connect to TrueNAS Connect Heartbeat Service in the last 7 days',
         deleted_automatically=False,
         keys=[],
     )
