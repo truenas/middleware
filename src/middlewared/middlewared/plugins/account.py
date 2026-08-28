@@ -2708,7 +2708,10 @@ async def setup(middleware):
     except Exception:
         middleware.logger.error('Failed to set immutable property on %r', DEFAULT_HOME_PATH, exc_info=True)
 
-    await middleware.call('truenas.license.register_reconcile_delegate', UserLicenseReconcileDelegate())
+    await middleware.call2(
+        middleware.services.truenas.license.register_reconcile_delegate,
+        UserLicenseReconcileDelegate(),
+    )
 
     if await middleware.call2(middleware.services.keyvalue.get, 'run_migration', False):
         await middleware.call('user.sync_builtin')

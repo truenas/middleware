@@ -1905,4 +1905,7 @@ async def setup(middleware):
     await middleware.call('pool.dataset.register_attachment_delegate', SMBFSAttachmentDelegate(middleware))
     middleware.register_hook('dataset.post_lock', hook_post_generic, sync=True)
     middleware.register_hook('pool.post_import', pool_post_import, sync=True)
-    await middleware.call('truenas.license.register_reconcile_delegate', SMBLicenseReconcileDelegate())
+    await middleware.call2(
+        middleware.services.truenas.license.register_reconcile_delegate,
+        SMBLicenseReconcileDelegate(),
+    )

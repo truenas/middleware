@@ -97,4 +97,7 @@ class CronLicenseReconcileDelegate(LicenseReconcileDelegate):
 
 
 async def setup(middleware: Middleware) -> None:
-    await middleware.call('truenas.license.register_reconcile_delegate', CronLicenseReconcileDelegate())
+    await middleware.call2(
+        middleware.services.truenas.license.register_reconcile_delegate,
+        CronLicenseReconcileDelegate(),
+    )

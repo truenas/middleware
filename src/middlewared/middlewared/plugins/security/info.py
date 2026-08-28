@@ -25,7 +25,7 @@ class SystemSecurityInfoService(Service):
         # FIPS mode has no entitlement of its own: the product feature matrix covers it and GPOS
         # STIG mode with a single STIG row. Callers gate every enterprise security option on this,
         # password policy included, so the STIG entitlement governs all of them.
-        return self.middleware.call_sync2(self.s.truenas.entitlements.check, LicenseFeature.STIG).entitled
+        return self.call_sync2(self.s.truenas.entitlements.check, LicenseFeature.STIG).entitled
 
     @api_method(
         SystemSecurityInfoFipsEnabledArgs, SystemSecurityInfoFipsEnabledResult,

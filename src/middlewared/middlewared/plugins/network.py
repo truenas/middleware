@@ -1922,7 +1922,10 @@ async def setup(middleware):
     middleware.event_subscribe('system.ready', __activate_service_announcements)
     middleware.register_hook('udev.net', udevd_ifnet_hook, inline=True)
 
-    await middleware.call('truenas.license.register_reconcile_delegate', DiscoveryLicenseReconcileDelegate())
+    await middleware.call2(
+        middleware.services.truenas.license.register_reconcile_delegate,
+        DiscoveryLicenseReconcileDelegate(),
+    )
 
     # Only run DNS sync in the first run. This avoids calling the routine again
     # on middlewared restart.

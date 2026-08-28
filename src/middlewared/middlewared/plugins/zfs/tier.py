@@ -780,6 +780,9 @@ class ZfsTierLicenseReconcileDelegate(LicenseReconcileDelegate):
 
 
 async def setup(middleware: Middleware) -> None:
-    await middleware.call("truenas.license.register_reconcile_delegate", ZfsTierLicenseReconcileDelegate())
+    await middleware.call2(
+        middleware.services.truenas.license.register_reconcile_delegate,
+        ZfsTierLicenseReconcileDelegate(),
+    )
     config = await middleware.call("zfs.tier.config")
     await middleware.run_in_thread(_apply_metadata_reserve_pct, middleware, config.special_class_metadata_reserve_pct)

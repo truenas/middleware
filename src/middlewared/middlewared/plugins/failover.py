@@ -1372,7 +1372,10 @@ async def setup(middleware):
     middleware.register_hook('system.post_license_update', hook_license_update, sync=False)
     middleware.register_hook('service.pre_action', service_remote, sync=False)
 
-    await middleware.call('truenas.license.register_reconcile_delegate', CtdbLicenseReconcileDelegate())
+    await middleware.call2(
+        middleware.services.truenas.license.register_reconcile_delegate,
+        CtdbLicenseReconcileDelegate(),
+    )
 
     # Register callbacks to properly refresh HA status and send events on changes
     await middleware.call('failover.remote_subscribe', 'system.ready', remote_status_event)

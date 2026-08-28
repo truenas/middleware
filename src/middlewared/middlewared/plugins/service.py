@@ -522,6 +522,9 @@ async def setup(middleware):
     for klass in all_services:
         await middleware.call('service.register_object', klass(middleware))
 
-    await middleware.call('truenas.license.register_reconcile_delegate', RcLicenseReconcileDelegate())
+    await middleware.call2(
+        middleware.services.truenas.license.register_reconcile_delegate,
+        RcLicenseReconcileDelegate(),
+    )
 
     middleware.event_subscribe('system.ready', __event_service_ready)

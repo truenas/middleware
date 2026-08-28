@@ -379,4 +379,7 @@ class ISCSILicenseReconcileDelegate(LicenseReconcileDelegate):
 
 
 async def setup(middleware):
-    await middleware.call('truenas.license.register_reconcile_delegate', ISCSILicenseReconcileDelegate())
+    await middleware.call2(
+        middleware.services.truenas.license.register_reconcile_delegate,
+        ISCSILicenseReconcileDelegate(),
+    )

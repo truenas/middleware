@@ -86,7 +86,7 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
                 )
         if old['kernel'] != data['kernel']:
             if not data['kernel']:
-                spdk = await self.middleware.call2(self.s.truenas.entitlements.check, LicenseFeature.NVMEOF_SPDK)
+                spdk = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.NVMEOF_SPDK)
                 if not spdk.entitled:
                     verrors.add(f'{schema_name}.kernel', spdk.message)
                 elif AVX2_FLAG not in (await self.middleware.call('system.cpu_flags')):
@@ -377,7 +377,10 @@ class NVMeTargetLicenseReconcileDelegate(LicenseReconcileDelegate):
 
 
 async def setup(middleware):
-    await middleware.call('truenas.license.register_reconcile_delegate', NVMeTargetLicenseReconcileDelegate())
+    await middleware.call2(
+        middleware.services.truenas.license.register_reconcile_delegate,
+        NVMeTargetLicenseReconcileDelegate(),
+    )
     middleware.register_hook("pool.post_import", pool_post_import, sync=True)
     if await middleware.call('system.ready'):
         await middleware.call('iscsi.auth.load_upgrade_alerts')
