@@ -231,14 +231,14 @@ class DiskService(CRUDService):
         return not bool(await self.middleware.call('disk.list_partitions', disk))
 
     @private
-    async def configure_power_management(self):
+    def configure_power_management(self):
         """
         This runs on boot to properly configure all power management options
         (Advanced Power Management and IDLE) for all disks.
         """
-        if not (await self.middleware.run_in_thread(get_hardware_class)).is_appliance:
-            for disk in await self.middleware.call('disk.query'):
-                await self.middleware.call('disk.power_management', disk['name'], disk)
+        if not get_hardware_class().is_appliance:
+            for disk in self.middleware.call_sync('disk.query'):
+                self.middleware.call_sync('disk.power_management', disk['name'], disk)
 
     @private
     async def power_management(self, dev, disk=None):

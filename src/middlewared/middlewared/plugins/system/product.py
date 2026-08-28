@@ -38,16 +38,16 @@ class SystemService(Service):
     @api_method(
         SystemProductTypeArgs, SystemProductTypeResult, roles=["SYSTEM_PRODUCT_READ"]
     )
-    async def product_type(self):
+    def product_type(self):
         """Returns the type of the product"""
-        if (await self.middleware.run_in_thread(get_hardware_class)).is_appliance:
+        if get_hardware_class().is_appliance:
             return ProductType.ENTERPRISE
 
         return ProductType.COMMUNITY_EDITION
 
     @private
-    async def is_ha_capable(self):
-        return (await self.middleware.run_in_thread(get_hardware_info)).is_ha_capable
+    def is_ha_capable(self):
+        return get_hardware_info().is_ha_capable
 
     @private
     def sed_enabled(self):
