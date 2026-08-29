@@ -83,7 +83,14 @@ def _sync_ip4_impl(ctx: ServiceContext, sock: socket.socket, dbgw: str | None) -
                 cur_gw.gateway,
                 dbgw,
             )
-            change_route(sock, gateway=dbgw)
+            try:
+                change_route(sock, gateway=dbgw)
+            except NetlinkError as e:
+                # same class of failure as add_route() above: the
+                # gateway may be unreachable (e.g. the db value
+                # predates a move to a different network). Log it
+                # instead of aborting the rest of the sync.
+                ctx.logger.error("Failed changing default gateway to %s: %r", dbgw, e)
     elif cur_gw:
         # there is no gateway in the database but there is
         # one installed in the OS so we'll remove it
