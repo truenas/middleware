@@ -1,17 +1,23 @@
 """Golden test for the `truenas.license.info` payload.
 
-The expected dicts below were captured from the `dataclasses.asdict()` projection
-this code replaced, run against these same fixtures. `truenas.license.info` is
-still an untyped `dict[str, Any]`, so nothing else pins its shape: an accidental
-added key has to fail as loudly as a removed one, hence the whole-dict equality.
+The assertions run the projection through `serialize_result`, so what is compared is
+the payload as it leaves the API rather than the projection's Python output. That is
+what pins the WebUI contract, which nothing else here can reach. `allow_fallback` is
+`False` so a shape error raises, unlike production where it degrades to a warning.
+An accidental added key has to fail as loudly as a removed one, hence whole-dict
+equality.
 """
 
+import json
 from datetime import date
 
 import pytest
+from truenas_api_client import ejson
 from truenas_pylicensed import FeatureEntry, LicenseError, LicenseStatus, LicenseType
 
-from middlewared.plugins.truenas.license import _license_info_json
+from middlewared.api.base.handler.result import serialize_result
+from middlewared.api.current import TrueNASLicenseInfoResult
+from middlewared.plugins.truenas.license import _license_entry
 from middlewared.utils.license import from_license_status, parse_legacy_license
 
 # Enterprise HA license (H10, GOLD contract) -- the same blob the legacy
@@ -105,6 +111,19 @@ LICENSES = [
 ]
 
 
+def _serialized(info):
+    return serialize_result(TrueNASLicenseInfoResult, _license_entry(info), True, False)
+
+
 @pytest.mark.parametrize("label,build,expected", LICENSES)
 def test_projection_matches_the_recorded_wire(label, build, expected):
-    assert _license_info_json(build()) == expected
+    assert _serialized(build()) == expected
+
+
+def test_dates_reach_the_client_as_ejson_dates():
+    # WebUI's `ApiDate` is `{$type: 'date', $value: string}`. Keeping the fields as `date`
+    # objects through `model_dump()` is what produces that; a `datetime` would emit `$date`
+    # and a `str` a bare ISO string, either of which breaks the dashboard.
+    # Decoded with plain `json`, since `ejson.loads` would turn the wrapper back into a `date`.
+    encoded = json.loads(ejson.dumps(_serialized(_v2_license())))
+    assert encoded["features"][0]["start_date"] == {"$type": "date", "$value": "2026-04-08"}

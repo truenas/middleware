@@ -1,4 +1,5 @@
-from typing import Any, Literal
+from datetime import date
+from typing import Literal
 
 from pydantic import Field
 
@@ -17,6 +18,7 @@ __all__ = [
     'TrueNASGetChassisHardwareArgs', 'TrueNASGetChassisHardwareResult',
     'TrueNASManagedByTruecommandArgs', 'TrueNASManagedByTruecommandResult',
     'TrueNASLicenseUploadOptions', 'TrueNASLicenseUploadArgs', 'TrueNASLicenseUploadResult',
+    'LicenseFeatureEntry', 'LicenseInfoEntry',
     'TrueNASLicenseInfoArgs', 'TrueNASLicenseInfoResult',
     'TrueNASLicenseFingerprintArgs', 'TrueNASLicenseFingerprintResult',
     'EntitlementEntry', 'EntitlementsInfo',
@@ -110,13 +112,46 @@ class TrueNASLicenseUploadResult(BaseModel):
     result: None = Field(description="Returns `null` on successful license upload.")
 
 
+class LicenseFeatureEntry(BaseModel):
+    """A single feature an installed license grants."""
+
+    name: str = Field(description="Feature identifier, for example `SUPPORT` or `VMS`.")
+    start_date: date | None = Field(
+        description="Date the feature became active, or `null` when the license records no start date.",
+    )
+    expires_at: date | None = Field(description="Date the feature expires, or `null` when it is perpetual.")
+    source: str = Field(description="How the feature was granted, for example `enterprise`.")
+    type: str | None = Field(
+        description="Tier qualifier the feature carries, for example `GOLD`. `null` when it carries none.",
+    )
+
+
+class LicenseInfoEntry(BaseModel):
+    """An installed license, normalized identically whichever format produced it."""
+
+    id: str = Field(description="Identifier of the installed license.")
+    type: str = Field(
+        description=(
+            "License type: one of `ENTERPRISE_SINGLE`, `ENTERPRISE_HA`, `COMMERCIAL`, `COMMUNITY` or `UNKNOWN`. "
+            "New values may be added; treat an unrecognized value as `UNKNOWN`."
+        ),
+    )
+    model: str | None = Field(description="Hardware model the license was issued for, or `null` if unspecified.")
+    features: list[LicenseFeatureEntry] = Field(description="Every feature this license grants.")
+    serials: list[str] = Field(description="System serial numbers the license covers.")
+    enclosures: dict[str, int] = Field(description="Count of licensed expansion shelves, keyed by enclosure model.")
+    contract_type: str | None = Field(
+        description="Support contract tier, or `null` when the license carries no support entitlement.",
+    )
+
+
 class TrueNASLicenseInfoArgs(BaseModel):
     pass
 
 
 class TrueNASLicenseInfoResult(BaseModel):
-    result: dict[str, Any] | None = Field(
-        description="Parsed license JSON object, or `null` if no license file exists.",
+    result: LicenseInfoEntry | None = Field(
+        description="Parsed license, or `null` if no license is installed.",
     )
 
 

@@ -1,9 +1,10 @@
 import contextlib
 import os
-from typing import Any
 
 from middlewared.api import api_method
 from middlewared.api.current import (
+    LicenseFeatureEntry,
+    LicenseInfoEntry,
     TrueNASLicenseUploadOptions,
     TrueNASLicenseUploadArgs,
     TrueNASLicenseUploadResult,
@@ -26,32 +27,37 @@ from middlewared.utils.license import (
 from truenas_pylicensed import LicenseType
 
 
-def _license_info_json(info: LicenseInfo) -> dict[str, Any]:
+def _license_entry(info: LicenseInfo) -> LicenseInfoEntry:
     """
     Project a LicenseInfo onto the public `truenas.license.info` payload.
 
     There is no license-wide expiry to project. Expiry belongs to individual features,
     so `features[].expires_at` is the only date here, and the end of the support
     contract is the SUPPORT entry's.
+
+    `serials` and `enclosures` are copied rather than passed through: the source holds
+    them as a tuple and a `MappingProxyType`, neither of which pydantic accepts for a
+    `list` or a `dict` in strict mode. `type` is emitted by name because `LicenseType`
+    is an `IntEnum` and would otherwise go out as a bare integer.
     """
-    return {
-        "id": info.id,
-        "type": info.type.name,
-        "model": info.model,
-        "features": [
-            {
-                "name": feature.name,
-                "start_date": feature.start_date,
-                "expires_at": feature.expires_at,
-                "source": feature.source,
-                "type": feature.type,
-            }
+    return LicenseInfoEntry(
+        id=info.id,
+        type=info.type.name,
+        model=info.model,
+        features=[
+            LicenseFeatureEntry(
+                name=feature.name,
+                start_date=feature.start_date,
+                expires_at=feature.expires_at,
+                source=feature.source,
+                type=feature.type,
+            )
             for feature in info.features.values()
         ],
-        "serials": list(info.serials),
-        "enclosures": dict(info.enclosures),
-        "contract_type": info.contract_type,
-    }
+        serials=list(info.serials),
+        enclosures=dict(info.enclosures),
+        contract_type=info.contract_type,
+    )
 
 
 class TrueNASLicenseService(TrueNASLicenseReconcileService, Service):
@@ -134,14 +140,17 @@ class TrueNASLicenseService(TrueNASLicenseReconcileService, Service):
         roles=["READONLY_ADMIN"],
         check_annotations=True,
     )
-    def info(self) -> dict[str, Any] | None:
+    def info(self) -> LicenseInfoEntry | None:
         """Returns the parsed license object, or null if no license exists.
 
         The license itself has no expiration. Where a feature expires, its date is on
         that feature's own entry.
+
+        This is the wire representation and has no in-process callers; local code reads
+        `info_private()` and works with the `LicenseInfo` directly.
         """
         info = self.info_private()
-        return _license_info_json(info) if info is not None else None
+        return _license_entry(info) if info is not None else None
 
     @api_method(
         TrueNASLicenseFingerprintArgs,
