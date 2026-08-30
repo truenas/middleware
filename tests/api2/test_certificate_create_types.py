@@ -63,6 +63,60 @@ def test_create_csr_ec(ec_curve):
         call("certificate.delete", csr["id"], job=True)
 
 
+CSR_PROFILE_NAMES = {
+    "server_rsa": "TLS Server (e.g. Web UI, FTPS, Apps) - RSA",
+    "server_ec": "TLS Server (e.g. Web UI, FTPS, Apps) - EC",
+    "client_rsa": "TLS Client (e.g. Syslog, LDAP, KMIP) - RSA",
+    "client_ec": "TLS Client (e.g. Syslog, LDAP, KMIP) - EC",
+}
+
+
+@pytest.mark.parametrize("profile_key", list(CSR_PROFILE_NAMES))
+def test_create_csr_from_profile(profile_key):
+    # The profiles only prefill the CSR form in the UI, so nothing server side validates them.
+    # Every one of them still has to be something certificate.create accepts, otherwise the UI
+    # hands the user a form that cannot be submitted. The names are spelled out here rather than
+    # taken from the response so that a profile going missing fails instead of silently shrinking
+    # the parameter set.
+    profile_name = CSR_PROFILE_NAMES[profile_key]
+    profiles = call("webui.crypto.csr_profiles")
+    assert set(profiles) == set(CSR_PROFILE_NAMES.values()), list(profiles)
+
+    profile = profiles[profile_name]
+    params = {**get_cert_params(), **profile}
+    if "key_length" not in profile:
+        params.pop("key_length", None)
+
+    csr = call(
+        "certificate.create",
+        {
+            "name": f"csr_profile_{profile_key}",
+            "create_type": "CERTIFICATE_CREATE_CSR",
+            **params,
+        },
+        job=True,
+    )
+    try:
+        assert csr["cert_type_CSR"] is True, csr
+        assert csr["parsed"] is True, csr
+
+        extensions = csr["extensions"]
+        if profile_key.startswith("client"):
+            assert extensions["ExtendedKeyUsage"] == "TLS Web Client Authentication", csr
+        else:
+            # Asking for exactly one purpose is what keeps the request acceptable to every public CA.
+            assert extensions["ExtendedKeyUsage"] == "TLS Web Server Authentication", csr
+
+        # Spelled out in full rather than checking that keyAgreement is absent, so that the assertion
+        # still means something if the extension itself stops being emitted.
+        if profile_key == "server_rsa":
+            assert extensions["KeyUsage"] == "Digital Signature, Key Encipherment", csr
+        else:
+            assert extensions["KeyUsage"] == "Digital Signature", csr
+    finally:
+        call("certificate.delete", csr["id"], job=True)
+
+
 def test_create_csr_validation_empty_san():
     params = {**get_cert_params(), "san": []}
     with pytest.raises(ValidationErrors):
