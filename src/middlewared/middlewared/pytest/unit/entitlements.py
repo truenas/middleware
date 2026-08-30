@@ -1,8 +1,8 @@
 """Facts builders and live-engine stand-ins for `truenas.entitlements` in unit tests.
 
-Kept out of `middleware.py` on purpose: `TrueNASEntitlementsCheckEntitlement` drags
-`middlewared.api.current` and `middlewared.service` onto the import path of every test that
-touches the fake middleware, and `middleware.py` is imported by nearly all of them.
+Kept out of `middleware.py` on purpose: `EntitlementEntry` drags `middlewared.api.current` onto
+the import path of every test that touches the fake middleware, and `middleware.py` is imported
+by nearly all of them.
 """
 
 from datetime import date
@@ -10,7 +10,6 @@ from datetime import date
 from truenas_pylicensed import LicenseType
 
 from middlewared.api.current import EntitlementEntry
-from middlewared.plugins.truenas.entitlements import TrueNASEntitlementsCheckEntitlement
 from middlewared.utils.entitlements import EntitlementFacts, HardwareClass, Reason, check_entitlement
 from middlewared.utils.license import FeatureInfo, LicenseInfo
 
@@ -68,7 +67,7 @@ def facts_for_column(feature: str, column: str) -> EntitlementFacts:
 
 
 def install_entitlements(middleware, facts) -> list[str]:
-    """Point truenas.entitlements.check and .feature at the live engine over `facts`.
+    """Point truenas.entitlements.check at the live engine over `facts`.
 
     Returns the keys asked about, in call order, so a test can still assert which feature a
     gate names -- and that a gate it should not reach was not consulted.
@@ -77,22 +76,10 @@ def install_entitlements(middleware, facts) -> list[str]:
 
     def check(feature):
         checked.append(feature)
-        # Deliberately unguarded: the engine raises ValueError for an unruled key and so does
-        # production's `check`. Swallowing it would let a gate name a feature POLICY lacks.
-        entitlement = check_entitlement(feature, facts)
-        return TrueNASEntitlementsCheckEntitlement(
-            entitled=entitlement.entitled,
-            reason=entitlement.reason,
-            column=entitlement.column,
-            message=entitlement.message,
-        )
-
-    def feature(name):
-        checked.append(name)
-        # Mirrors TrueNASEntitlementsService.feature, which does NOT raise: over the public
-        # endpoint an unruled key means "nothing gates this", not "error".
+        # Mirrors TrueNASEntitlementsService.check, which does NOT raise: an unruled key means
+        # "nothing gates this", not "error".
         try:
-            entitlement = check_entitlement(name, facts)
+            entitlement = check_entitlement(feature, facts)
         except ValueError:
             return EntitlementEntry(entitled=True, reason=Reason.NOT_GATED, message="")
         return EntitlementEntry(
@@ -102,7 +89,6 @@ def install_entitlements(middleware, facts) -> list[str]:
         )
 
     middleware.services.truenas.entitlements.check = check
-    middleware.services.truenas.entitlements.feature = feature
     return checked
 
 

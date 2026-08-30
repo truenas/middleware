@@ -1,23 +1,16 @@
-from typing import Annotated
-
-from pydantic import BeforeValidator
-
 from middlewared.api import api_method
-from middlewared.api.base import BaseModel
 from middlewared.api.current import (
     EntitlementEntry,
     EntitlementsInfo,
-    TrueNASEntitlementsFeatureArgs,
-    TrueNASEntitlementsFeatureResult,
+    TrueNASEntitlementsCheckArgs,
+    TrueNASEntitlementsCheckResult,
     TrueNASEntitlementsInfoArgs,
     TrueNASEntitlementsInfoResult,
 )
 from middlewared.service import Service
 from middlewared.utils.entitlements import (
     POLICY,
-    DerivedEntitlement,
-    EntitlementKey,
-    LicenseFeature,
+    Entitlement,
     Reason,
     check_entitlement,
     get_entitlement,
@@ -25,40 +18,22 @@ from middlewared.utils.entitlements import (
 )
 
 
-def coerce_entitlement_key(value: object) -> object:
-    """Resolve a feature name to its enum member before the strict field check sees it.
+def _entry(entitlement: Entitlement) -> EntitlementEntry:
+    """Project an engine decision onto its API representation.
 
-    Over the wire a feature arrives as a plain string, which a strict enum-typed field would
-    reject outright, and its own rejection message says nothing about which names are legal.
-    Non-string values are left alone so the strict check still refuses them.
+    The engine is a pure package, and importing `middlewared.api.base` into it would break the
+    `entitlements_layers` import contract. So `get_entitlement()` keeps returning the dataclass,
+    and callers that do not go through this service (`failover_/ha_hardware.py`) still get it.
+    This function is the only place the two meet.
+
+    `column` is not carried across. It is the matrix coordinate the facts resolved to, and
+    publishing it would make the matrix's shape a contract.
     """
-    if isinstance(value, LicenseFeature | DerivedEntitlement) or not isinstance(value, str):
-        return value
-
-    for vocabulary in (LicenseFeature, DerivedEntitlement):
-        try:
-            return vocabulary(value)
-        except ValueError:
-            continue
-
-    raise ValueError(f"{value!r} is neither a license feature nor a derived entitlement")
-
-
-class TrueNASEntitlementsCheckArgs(BaseModel):
-    feature: Annotated[EntitlementKey, BeforeValidator(coerce_entitlement_key)]
-
-
-class TrueNASEntitlementsCheckEntitlement(BaseModel):
-    """API representation of an entitlement decision."""
-
-    entitled: bool
-    reason: str
-    column: str
-    message: str
-
-
-class TrueNASEntitlementsCheckResult(BaseModel):
-    result: TrueNASEntitlementsCheckEntitlement
+    return EntitlementEntry(
+        entitled=entitlement.entitled,
+        reason=entitlement.reason,
+        message=entitlement.message,
+    )
 
 
 class TrueNASEntitlementsService(Service):
@@ -69,43 +44,24 @@ class TrueNASEntitlementsService(Service):
     @api_method(
         TrueNASEntitlementsCheckArgs,
         TrueNASEntitlementsCheckResult,
-        private=True,
-        check_annotations=True,
-    )
-    def check(self, feature: EntitlementKey) -> TrueNASEntitlementsCheckEntitlement:
-        """Return the entitlement for `feature` computed from current system facts."""
-        entitlement = get_entitlement(feature)
-        # `middlewared.utils.entitlements.Entitlement` and the model above are two
-        # representations of one concept, and they stay apart on purpose. The engine is a pure
-        # package -- importing `middlewared.api.base` into it would break the
-        # `entitlements_layers` import contract -- so `get_entitlement()` keeps returning the
-        # dataclass, and callers that bypass this endpoint (`failover_/ha_hardware.py`) still
-        # get it. This method is the only place the two meet; do not "unify" them.
-        return TrueNASEntitlementsCheckEntitlement(
-            entitled=entitlement.entitled,
-            reason=entitlement.reason,
-            column=entitlement.column,
-            message=entitlement.message,
-        )
-
-    @api_method(
-        TrueNASEntitlementsFeatureArgs,
-        TrueNASEntitlementsFeatureResult,
         roles=["SYSTEM_PRODUCT_READ"],
         check_annotations=True,
     )
-    def feature(self, feature: str) -> EntitlementEntry:
-        """Return the entitlement decision for `feature`."""
+    def check(self, feature: str) -> EntitlementEntry:
+        """Return the entitlement for `feature` computed from current system facts.
+
+        A caller may name a feature by its vocabulary member or by its plain name; both arrive
+        here as the name, and `POLICY` is keyed by members whose hash is the plain string's.
+        """
         try:
             entitlement = get_entitlement(feature)
         except ValueError:
+            # `POLICY` is the register of what this product gates, so a key it does not carry
+            # is a decision rather than an error: nothing on this system restricts the feature.
+            # The engine still raises, because a lookup must not invent an answer.
             return EntitlementEntry(entitled=True, reason=Reason.NOT_GATED, message="")
 
-        return EntitlementEntry(
-            entitled=entitlement.entitled,
-            reason=entitlement.reason,
-            message=entitlement.message,
-        )
+        return _entry(entitlement)
 
     @api_method(
         TrueNASEntitlementsInfoArgs,
@@ -123,13 +79,6 @@ class TrueNASEntitlementsService(Service):
         # `POLICY` rather than the feature vocabulary: some license features deliberately
         # have no rule, and `check_entitlement` raises for a key it cannot resolve.
         for key in POLICY:
-            entitlement = check_entitlement(key, facts)
-            # `column` is left out on purpose. It is the matrix coordinate the facts
-            # resolved to, and publishing it would make the matrix's shape a contract.
-            features[str(key)] = EntitlementEntry(
-                entitled=entitlement.entitled,
-                reason=entitlement.reason,
-                message=entitlement.message,
-            )
+            features[str(key)] = _entry(check_entitlement(key, facts))
 
         return EntitlementsInfo(features=features)

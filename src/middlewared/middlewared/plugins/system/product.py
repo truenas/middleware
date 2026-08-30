@@ -165,4 +165,4 @@ class SystemService(Service):
         """
         Returns whether the `feature` is enabled or not
         """
-        return (await self.call2(self.s.truenas.entitlements.feature, name)).entitled
+        return (await self.call2(self.s.truenas.entitlements.check, name)).entitled

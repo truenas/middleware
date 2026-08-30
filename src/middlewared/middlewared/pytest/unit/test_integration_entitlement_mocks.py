@@ -15,9 +15,17 @@ import os
 
 import pytest
 
-from middlewared.utils.entitlements import POLICY
+from middlewared.utils.entitlements import POLICY, DerivedEntitlement, LicenseFeature
+from middlewared.utils.python import get_middlewared_dir
 
 ENDPOINT = "truenas.entitlements.check"
+
+VOCABULARIES = {"LicenseFeature": LicenseFeature, "DerivedEntitlement": DerivedEntitlement}
+
+# The endpoint answers `NOT_GATED` for a key `POLICY` does not carry rather than raising, so a
+# gate naming an unruled feature is silently open. Scanning the source is what replaces that
+# runtime complaint, which means it has to see the gates: a scan that matches nothing passes.
+MINIMUM_GATES = 25
 
 # There is no precedent in this tree for locating the repo root from a unit test -- the alert
 # AST scanners use get_middlewared_dir(), which resolves inside the installed package. That
@@ -98,3 +106,64 @@ def test_mocked_features_are_in_the_live_policy():
                 unknown.append((os.path.relpath(path, TESTS_DIR), lineno, name))
 
     assert unknown == []
+
+
+def _dotted(node):
+    """Render an attribute chain as its dotted source text, or None if it is not one."""
+    parts = []
+    while isinstance(node, ast.Attribute):
+        parts.append(node.attr)
+        node = node.value
+    if not isinstance(node, ast.Name):
+        return None
+    parts.append(node.id)
+    return ".".join(reversed(parts))
+
+
+def _names_the_endpoint(call):
+    """Whether `call` hands the endpoint to something, by bound method or by name.
+
+    A gate reaches it as `<something>.truenas.entitlements.check` passed to `call2`, and
+    `plugins/etc.py` reaches it as a `method=` string on a `CtxMethod`.
+    """
+    for value in [*call.args, *(keyword.value for keyword in call.keywords)]:
+        if _literal(value) == ENDPOINT or (_dotted(value) or "").endswith(ENDPOINT):
+            return True
+    return False
+
+
+def test_production_gates_name_a_feature_the_live_policy_rules_on():
+    """Every feature a gate spells out has to have a rule, or the gate is permanently open."""
+    known = {str(key) for key in POLICY}
+    gates = 0
+    unruled = []
+    source_dir = get_middlewared_dir()
+    for dirpath, dirnames, filenames in os.walk(source_dir):
+        # This package holds the tests themselves, several of which name unruled features on
+        # purpose to pin what the endpoint answers for one.
+        dirnames[:] = [name for name in dirnames if name != "pytest"]
+        for filename in sorted(filenames):
+            if not filename.endswith(".py"):
+                continue
+            path = os.path.join(dirpath, filename)
+            with open(path, encoding="utf-8") as f:
+                tree = ast.parse(f.read(), filename=path)
+
+            for node in ast.walk(tree):
+                if not isinstance(node, ast.Call) or not _names_the_endpoint(node):
+                    continue
+
+                gates += 1
+                for inner in ast.walk(node):
+                    if not isinstance(inner, ast.Attribute) or not isinstance(inner.value, ast.Name):
+                        continue
+                    vocabulary = VOCABULARIES.get(inner.value.id)
+                    if vocabulary is None:
+                        continue
+                    member = vocabulary.__members__.get(inner.attr)
+                    if member is None or str(member) not in known:
+                        location = (os.path.relpath(path, source_dir), node.lineno)
+                        unruled.append((*location, f"{inner.value.id}.{inner.attr}"))
+
+    assert unruled == []
+    assert gates >= MINIMUM_GATES

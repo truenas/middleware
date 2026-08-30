@@ -5,17 +5,15 @@ from truenas_pylicensed import LicenseType
 
 from middlewared.api.base.handler.accept import accept_params
 from middlewared.api.base.handler.result import serialize_result
-from middlewared.api.current import EntitlementEntry, TrueNASEntitlementsInfoResult
-from middlewared.plugins.truenas import entitlements as plugin
-from middlewared.plugins.truenas.entitlements import (
+from middlewared.api.current import (
+    EntitlementEntry,
     TrueNASEntitlementsCheckArgs,
-    TrueNASEntitlementsCheckEntitlement,
     TrueNASEntitlementsCheckResult,
-    TrueNASEntitlementsService,
+    TrueNASEntitlementsInfoResult,
 )
-from middlewared.service_exception import ValidationErrors
+from middlewared.plugins.truenas import entitlements as plugin
+from middlewared.plugins.truenas.entitlements import TrueNASEntitlementsService
 from middlewared.utils.entitlements import (
-    COLUMNS,
     POLICY,
     DerivedEntitlement,
     Entitlement,
@@ -39,18 +37,17 @@ def test_check_returns_the_endpoint_model_not_the_engine_dataclass(monkeypatch):
 
     result = TrueNASEntitlementsService.check(None, "SED")
 
-    assert isinstance(result, TrueNASEntitlementsCheckEntitlement)
+    assert isinstance(result, EntitlementEntry)
     assert not isinstance(result, Entitlement)
-    assert (result.entitled, result.reason, result.column, result.message) == (True, "ENTITLED", "HW+K", "")
+    assert (result.entitled, result.reason, result.message) == (True, "ENTITLED", "")
 
 
-@pytest.mark.parametrize("column", COLUMNS)
 @pytest.mark.parametrize("reason", list(Reason))
-def test_entitlement_round_trips_to_json(reason, column, monkeypatch):
+def test_entitlement_round_trips_to_json(reason, monkeypatch):
     engine_result = Entitlement(
         entitled=reason is Reason.ENTITLED,
         reason=reason,
-        column=column,
+        column="HW+K",
         message="" if reason is Reason.ENTITLED else f"denied: {reason}",
     )
     monkeypatch.setattr(plugin, "get_entitlement", lambda feature: engine_result)
@@ -62,7 +59,6 @@ def test_entitlement_round_trips_to_json(reason, column, monkeypatch):
     assert result == {
         "entitled": engine_result.entitled,
         "reason": str(reason),
-        "column": column,
         "message": engine_result.message,
     }
     assert type(result["reason"]) is str
@@ -70,29 +66,13 @@ def test_entitlement_round_trips_to_json(reason, column, monkeypatch):
 
 
 @pytest.mark.parametrize("member", [LicenseFeature.SED, DerivedEntitlement.HA])
-def test_entitlement_key_member_survives_the_boundary_unchanged(member):
-    """Both vocabularies are accepted, and a member is handed on as itself rather than reduced
-    to its value."""
+def test_entitlement_key_member_survives_the_boundary_as_its_name(member):
+    """Every gate in the tree names its feature with a vocabulary member. The boundary accepts
+    members of both vocabularies and flattens them to the plain name `POLICY` is keyed by."""
     (feature,) = accept_params(TrueNASEntitlementsCheckArgs, [member], dump_models=False)
 
-    assert feature is member
-
-
-@pytest.mark.parametrize("name,expected", [("SED", LicenseFeature.SED), ("HA", DerivedEntitlement.HA)])
-def test_feature_name_coerces_to_its_enum_member(name, expected):
-    """A caller over the wire can only send a string, so the boundary has to resolve it against
-    both vocabularies."""
-    (feature,) = accept_params(TrueNASEntitlementsCheckArgs, [name], dump_models=False)
-
-    assert feature is expected
-
-
-def test_unknown_feature_name_is_rejected_at_the_boundary():
-    """An unrecognized name must not reach the engine, and the rejection has to say why."""
-    with pytest.raises(ValidationErrors) as exc_info:
-        accept_params(TrueNASEntitlementsCheckArgs, ["NOT_A_FEATURE"], dump_models=False)
-
-    assert "neither a license feature nor a derived entitlement" in str(exc_info.value)
+    assert type(feature) is str
+    assert feature == member
 
 
 def test_feature_reports_not_gated_for_an_unknown_identifier(monkeypatch):
@@ -104,7 +84,7 @@ def test_feature_reports_not_gated_for_an_unknown_identifier(monkeypatch):
 
     monkeypatch.setattr(plugin, "get_entitlement", raise_unknown)
 
-    result = TrueNASEntitlementsService.feature(None, "QUANTUM_TELEPORT")
+    result = TrueNASEntitlementsService.check(None, "QUANTUM_TELEPORT")
 
     assert (result.entitled, result.reason, result.message) == (True, "NOT_GATED", "")
 
@@ -120,7 +100,7 @@ def test_feature_reports_not_gated_for_autotune(monkeypatch):
         ),
     )
 
-    result = TrueNASEntitlementsService.feature(None, str(LicenseFeature.AUTOTUNE))
+    result = TrueNASEntitlementsService.check(None, str(LicenseFeature.AUTOTUNE))
 
     assert (result.entitled, result.reason, result.message) == (True, "NOT_GATED", "")
 
@@ -135,17 +115,7 @@ def test_feature_does_not_swallow_an_engine_bug(monkeypatch):
     monkeypatch.setattr(plugin, "get_entitlement", raise_bug)
 
     with pytest.raises(RuntimeError):
-        TrueNASEntitlementsService.feature(None, "SED")
-
-
-def test_public_entry_is_the_private_model_minus_column():
-    """The two projections of one decision stay pinned together, so a field added to the private
-    model is a conscious decision about the public one rather than a silent omission."""
-    private = set(TrueNASEntitlementsCheckEntitlement.model_fields)
-    public = set(EntitlementEntry.model_fields)
-
-    assert private - public == {"column"}
-    assert public - private == set()
+        TrueNASEntitlementsService.check(None, "SED")
 
 
 def make_license(feature_names, license_type, support_type):

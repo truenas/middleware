@@ -14,10 +14,10 @@ VEEAM_BLOCKSIZE = 131072
 def veeam_entitled():
     with mock('truenas.entitlements.check', args=['SMB_VEEAM', ], declaration="""
         def mock(self, feature):
-            from middlewared.plugins.truenas.entitlements import TrueNASEntitlementsCheckEntitlement
+            from middlewared.api.current import EntitlementEntry
             from middlewared.utils.entitlements import Reason
 
-            return TrueNASEntitlementsCheckEntitlement(entitled=True, reason=Reason.ENTITLED, column='HW+K', message='')
+            return EntitlementEntry(entitled=True, reason=Reason.ENTITLED, message='')
     """):
         yield
 

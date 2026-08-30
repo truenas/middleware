@@ -21,7 +21,7 @@ __all__ = [
     'TrueNASLicenseFingerprintArgs', 'TrueNASLicenseFingerprintResult',
     'EntitlementEntry', 'EntitlementsInfo',
     'TrueNASEntitlementsInfoArgs', 'TrueNASEntitlementsInfoResult',
-    'TrueNASEntitlementsFeatureArgs', 'TrueNASEntitlementsFeatureResult',
+    'TrueNASEntitlementsCheckArgs', 'TrueNASEntitlementsCheckResult',
 ]
 
 
@@ -171,14 +171,14 @@ class TrueNASEntitlementsInfoResult(BaseModel):
     result: EntitlementsInfo = Field(description="Entitlement decisions for all license-gated features on this system.")
 
 
-class TrueNASEntitlementsFeatureArgs(BaseModel):
+class TrueNASEntitlementsCheckArgs(BaseModel):
     feature: NonEmptyString = Field(
         description=(
-            "Feature identifier to evaluate. A feature this system does not recognize or does not "
-            "gate is reported as `NOT_GATED`."
+            "Feature identifier to evaluate. A feature this system does not gate is reported as "
+            "`NOT_GATED`, the same as its absence from the `truenas.entitlements.info` map."
         )
     )
 
 
-class TrueNASEntitlementsFeatureResult(BaseModel):
+class TrueNASEntitlementsCheckResult(BaseModel):
     result: EntitlementEntry = Field(description="Entitlement decision for the requested feature.")
