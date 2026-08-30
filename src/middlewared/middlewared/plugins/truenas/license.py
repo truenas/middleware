@@ -145,9 +145,6 @@ class TrueNASLicenseService(TrueNASLicenseReconcileService, Service):
 
         The license itself has no expiration. Where a feature expires, its date is on
         that feature's own entry.
-
-        This is the wire representation and has no in-process callers; local code reads
-        `info_private()` and works with the `LicenseInfo` directly.
         """
         info = self.info_private()
         return _license_entry(info) if info is not None else None

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 from typing import Any, TYPE_CHECKING
 
@@ -37,7 +39,7 @@ class TrueNASLicenseReconcileService(Service):
         namespace = "truenas.license"
         cli_private = True
 
-    def __init__(self, middleware: "Middleware"):
+    def __init__(self, middleware: Middleware):
         super().__init__(middleware)
         self.reconcile_delegates_list: list[LicenseReconcileDelegate] = []
 
@@ -69,7 +71,7 @@ class TrueNASLicenseReconcileService(Service):
 
     @private
     @job(lock="license_reconcile", lock_queue_size=1)
-    async def reconcile(self, job: "Job") -> None:
+    async def reconcile(self, job: Job) -> None:
         """
         Bring the registered subsystems back in line with the current license.
 
@@ -96,18 +98,8 @@ class TrueNASLicenseReconcileService(Service):
                         for group in await delegate.resolve_groups(self.middleware):
                             await self.middleware.call("etc.generate", group)
                     else:
-                        # No `etc.generate` loop here: `service.control` renders the service's own
-                        # `select_etc()` on the way into reload and restart alike. Rendering here as
-                        # well would regenerate every group a second time, and some of those
-                        # renderers are expensive enough for that to stretch the pass out.
-                        #
-                        # `ha_propagate` is decided here rather than per delegate because it is a
-                        # property of how this hook runs, not of any subsystem: on an HA pair both
-                        # nodes reach `system.post_license_update` independently (the peer via
-                        # `failover.send_license` uploading with `ha_propagate=False`, or via the
-                        # remote `core.call_hook` that `failover.sync_to_peer` issues). Leaving the
-                        # default of True would have `failover.service_remote` replay every verb on
-                        # a node that is already reconciling itself.
+                        #  Another node is also running truenas.license.reconcile` via
+                        #  `system.post_license_update` hook, no need to propagate the action
                         service_job = await self.middleware.call(
                             "service.control",
                             delegate.action.value,
@@ -120,16 +112,15 @@ class TrueNASLicenseReconcileService(Service):
                 # subsystem cannot hold every subsystem behind it out of convergence indefinitely.
                 self.logger.error("%s: timed out reconciling license state after %d seconds", delegate.name, timeout)
             except Exception:
-                # Deliberately not `asyncio.gather`: a subsystem that fails to converge must not
-                # take the remaining ones down with it.
+                # A subsystem that fails to converge must not take the remaining ones down with it
                 self.logger.error("%s: failed to reconcile license state", delegate.name, exc_info=True)
 
         job.set_progress(100, "License state reconciled")
 
 
-async def _post_license_update(middleware: "Middleware", *args: Any, **kwargs: Any) -> None:
+async def _post_license_update(middleware: Middleware, *args: Any, **kwargs: Any) -> None:
     await middleware.call("truenas.license.reconcile")
 
 
-async def setup(middleware: "Middleware") -> None:
+async def setup(middleware: Middleware) -> None:
     middleware.register_hook("system.post_license_update", _post_license_update, sync=True, order=0)
