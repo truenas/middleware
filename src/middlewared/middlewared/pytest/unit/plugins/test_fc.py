@@ -8,22 +8,13 @@ from middlewared.pytest.unit.middleware import Middleware
 
 
 @pytest.mark.asyncio
-async def test_fc_capable_denied_when_not_entitled():
+@pytest.mark.parametrize("column,entitled", [("HW+K", True), ("CE+L", False)])
+async def test_fc_capable_follows_the_entitlement(column, entitled):
     m = Middleware()
     m["fc.hba_present"] = lambda *args: True
-    checked = install_entitlements_for_column(m, LicenseFeature.FIBRECHANNEL, "CE+L")
+    checked = install_entitlements_for_column(m, LicenseFeature.FIBRECHANNEL, column)
 
-    assert await create_service(m, FCService).capable() is False
-    assert checked == [LicenseFeature.FIBRECHANNEL]
-
-
-@pytest.mark.asyncio
-async def test_fc_capable_granted_when_entitled():
-    m = Middleware()
-    m["fc.hba_present"] = lambda *args: True
-    checked = install_entitlements_for_column(m, LicenseFeature.FIBRECHANNEL, "HW+K")
-
-    assert await create_service(m, FCService).capable() is True
+    assert await create_service(m, FCService).capable() is entitled
     assert checked == [LicenseFeature.FIBRECHANNEL]
 
 

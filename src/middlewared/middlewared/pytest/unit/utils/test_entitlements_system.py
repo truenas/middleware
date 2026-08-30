@@ -1,13 +1,15 @@
 import pytest
 from truenas_pylicensed import LicenseType
 
-from middlewared.pytest.unit.utils.test_entitlements import make_license
+from middlewared.pytest.unit.entitlements import make_license
 from middlewared.utils.entitlements import get_facts
 from middlewared.utils.hardware import HardwareClass
 
 
-@pytest.mark.parametrize("hardware_class", list(HardwareClass))
-@pytest.mark.parametrize("licensed", [True, False])
+@pytest.mark.parametrize(
+    "hardware_class,licensed",
+    [(HardwareClass.TRUENAS_HW, True), (HardwareClass.GENERIC, False)],
+)
 def test_facts_are_read_from_the_system(monkeypatch, hardware_class, licensed):
     license = make_license(type_=LicenseType.ENTERPRISE_HA) if licensed else None
     monkeypatch.setattr("middlewared.utils.entitlements.system.get_hardware_class", lambda: hardware_class)

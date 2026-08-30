@@ -66,36 +66,25 @@ async def test_profile_choices_when_not_entitled():
 
 
 @pytest.mark.asyncio
-async def test_post_license_update_sets_profile_when_entitled():
+@pytest.mark.parametrize(
+    "was_licensed,entitled,expect_checked,expect_set",
+    [
+        (False, True, [LicenseFeature.MISSION_CRITICAL], True),
+        (False, False, [LicenseFeature.MISSION_CRITICAL], False),
+        # A system that was already licensed keeps whatever profile it is on, so the
+        # entitlement is not consulted at all.
+        (True, True, [], False),
+    ],
+)
+async def test_post_license_update(was_licensed, entitled, expect_checked, expect_set):
     middleware = Middleware()
-    checked = mission_critical(middleware, True)
+    checked = mission_critical(middleware, entitled)
     middleware.services.update.set_profile = AsyncMock()
 
-    await post_license_update(middleware, False)
+    await post_license_update(middleware, was_licensed)
 
-    assert checked == [LicenseFeature.MISSION_CRITICAL]
-    middleware.services.update.set_profile.assert_called_once_with("MISSION_CRITICAL")
-
-
-@pytest.mark.asyncio
-async def test_post_license_update_does_nothing_when_not_entitled():
-    middleware = Middleware()
-    checked = mission_critical(middleware, False)
-    middleware.services.update.set_profile = AsyncMock()
-
-    await post_license_update(middleware, False)
-
-    assert checked == [LicenseFeature.MISSION_CRITICAL]
-    middleware.services.update.set_profile.assert_not_called()
-
-
-@pytest.mark.asyncio
-async def test_post_license_update_skips_when_already_licensed():
-    middleware = Middleware()
-    checked = mission_critical(middleware, True)
-    middleware.services.update.set_profile = AsyncMock()
-
-    await post_license_update(middleware, True)
-
-    assert checked == []
-    middleware.services.update.set_profile.assert_not_called()
+    assert checked == expect_checked
+    if expect_set:
+        middleware.services.update.set_profile.assert_called_once_with("MISSION_CRITICAL")
+    else:
+        middleware.services.update.set_profile.assert_not_called()

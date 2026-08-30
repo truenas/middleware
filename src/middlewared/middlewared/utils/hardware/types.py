@@ -1,17 +1,14 @@
 """Hardware vocabulary.
 
 Definitions only: the enums and the record every other module in this package
-speaks in. No detection, no policy, no I/O -- the sole piece of logic here is
-``HardwareClass.from_chassis``, which is a pure string classification kept
-beside the enum it produces.
+speaks in. No detection, no policy, no I/O -- the only logic here is the two
+properties that read off a field already decided elsewhere.
 """
 
 from __future__ import annotations
 
 import enum
 from dataclasses import dataclass
-
-from ixhardware import TRUENAS_UNKNOWN
 
 __all__ = ("HardwareClass", "HardwareInfo", "Platform")
 
@@ -46,14 +43,6 @@ class HardwareClass(enum.Enum):
     TRUENAS_HW = "TRUENAS_HW"
     MINI = "MINI"
     GENERIC = "GENERIC"
-
-    @classmethod
-    def from_chassis(cls, chassis: str) -> HardwareClass:
-        if chassis == TRUENAS_UNKNOWN:
-            return cls.GENERIC
-        if "MINI" in chassis:
-            return cls.MINI
-        return cls.TRUENAS_HW
 
     @property
     def is_appliance(self) -> bool:

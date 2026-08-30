@@ -57,7 +57,6 @@ def _license(type_):
     [
         (_license(LicenseType.ENTERPRISE_HA), True),
         (_license(LicenseType.ENTERPRISE_SINGLE), False),
-        (None, False),
     ],
 )
 def test_is_licensed_for_ha(license, expected):

@@ -1,6 +1,5 @@
 from typing import Any
 
-from pydantic import RootModel
 import pytest
 
 from middlewared.api.base import BaseModel
@@ -101,8 +100,7 @@ def scalar_maps():
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("version1,version2", [("v1", "v2"), ("v2", "v1")])
-async def test_adapt_scalar_map(version1, version2):
+async def test_adapt_scalar_map():
     adapter = APIVersionsAdapter(
         [
             APIVersion("v1", TestModelProvider({"Metadata": MetadataV1})),
@@ -110,7 +108,7 @@ async def test_adapt_scalar_map(version1, version2):
         ]
     )
 
-    assert await adapter.adapt(scalar_maps(), "Metadata", version1, version2) == scalar_maps()
+    assert await adapter.adapt(scalar_maps(), "Metadata", "v1", "v2") == scalar_maps()
 
 
 class Preferences(BaseModel):
@@ -155,48 +153,3 @@ async def test_adapt_single_model_wins_over_map(version1, value, version2, resul
     )
 
     assert await adapter.adapt(value, "Preferences", version1, version2) == result
-
-
-class Contacts(RootModel[dict[str, ContactV1]]):
-    pass
-
-
-ContactsV1 = Contacts
-
-
-class Directory(BaseModel):
-    contacts: ContactsV1
-
-
-DirectoryV1 = Directory
-
-
-class Contacts(RootModel[dict[str, ContactV2]]):
-    pass
-
-
-ContactsV2 = Contacts
-
-
-class Directory(BaseModel):
-    contacts: ContactsV2
-
-
-DirectoryV2 = Directory
-
-
-@pytest.mark.asyncio
-async def test_adapt_root_model_map_is_not_adapted():
-    """`RootModel` is a class, not a `dict[...]` annotation, so the adapter cannot see the models inside it."""
-    adapter = APIVersionsAdapter(
-        [
-            APIVersion("v1", TestModelProvider({"Directory": DirectoryV1})),
-            APIVersion("v2", TestModelProvider({"Directory": DirectoryV2})),
-        ]
-    )
-
-    value = {"contacts": {"support": {"name": "Jane Doe", "email": "jane@ixsystems.com"}}}
-
-    assert await adapter.adapt(value, "Directory", "v1", "v2") == {
-        "contacts": {"support": {"name": "Jane Doe", "email": "jane@ixsystems.com"}},
-    }

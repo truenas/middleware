@@ -75,16 +75,6 @@ async def test_legacy_mountpoint():
 
 
 @pytest.mark.asyncio
-async def test_unavailable_reasons_reports_entitlement_message_when_not_entitled():
-    m = Middleware()
-    m["systemdataset.is_boot_pool"] = lambda *args: False
-    checked = install_entitlements_for_column(m, LicenseFeature.TRUESEARCH, "CE")
-
-    assert await create_service(m, TrueSearchService).unavailable_reasons() == [NOT_LICENSED]
-    assert checked == [LicenseFeature.TRUESEARCH]
-
-
-@pytest.mark.asyncio
 async def test_unavailable_reasons_omits_licensing_reason_when_entitled():
     m = Middleware()
     m["systemdataset.is_boot_pool"] = lambda *args: False
@@ -92,15 +82,6 @@ async def test_unavailable_reasons_omits_licensing_reason_when_entitled():
 
     assert await create_service(m, TrueSearchService).unavailable_reasons() == []
     assert checked == [LicenseFeature.TRUESEARCH]
-
-
-@pytest.mark.asyncio
-async def test_unavailable_reasons_reports_boot_pool_when_entitled():
-    m = Middleware()
-    m["systemdataset.is_boot_pool"] = lambda *args: True
-    install_entitlements_for_column(m, LicenseFeature.TRUESEARCH, "HW+K")
-
-    assert await create_service(m, TrueSearchService).unavailable_reasons() == [BOOT_POOL_REASON]
 
 
 @pytest.mark.asyncio

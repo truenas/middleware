@@ -24,7 +24,7 @@ A ``TierRule``'s vector may only set the two key columns, because a tier is read
 off a feature key and cannot be evaluated without one; the rule rejects anything
 else at construction.
 
-Layering is a strict DAG: ``facts`` <- ``engine`` <- ``legacy`` <- ``policy``.
+Layering is a strict DAG: ``facts`` <- ``engine`` <- ``matrix`` <- ``policy``.
 ``engine`` is pure evaluation with no knowledge of the live registry; ``policy``
 owns the registry and the ``check`` dispatch. ``HardwareClass`` now originates
 in ``middlewared.utils.hardware.types`` -- detecting what a machine is is not

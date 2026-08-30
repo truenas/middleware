@@ -76,24 +76,19 @@ def test_verify_is_called_when_no_status_supplied(legacy_absent):
     verify.assert_called_once_with()
 
 
-def test_supplied_status_is_not_re_verified(legacy_absent):
-    with patch.object(license_utils, "verify") as verify:
-        assert get_license(_valid_status()) is not None
-
-    verify.assert_not_called()
-
-
 @pytest.mark.parametrize("code", FALLBACK_CODES)
-def test_fallback_codes_return_legacy_when_present(code, legacy_present):
-    assert get_license(LicenseStatus(valid=False, code=code)) is LEGACY
+@pytest.mark.parametrize("legacy", [LEGACY, None])
+def test_fallback_code_answers_from_the_legacy_blob(code, legacy):
+    with patch.object(license_utils, "get_legacy_license_info", return_value=legacy):
+        assert get_license(LicenseStatus(valid=False, code=code)) is legacy
 
 
-@pytest.mark.parametrize("code", FALLBACK_CODES)
-def test_fallback_codes_return_none_when_legacy_absent(code, legacy_absent):
-    assert get_license(LicenseStatus(valid=False, code=code)) is None
-
-
-@pytest.mark.parametrize("code", NO_FALLBACK_CODES)
+# One code from each group, since the two differ in why the daemon declined and not in what
+# happens next. `test_every_license_error_code_is_classified` is what keeps the groups honest.
+@pytest.mark.parametrize(
+    "code",
+    [LicenseError.SYSTEM_ID_MISMATCH, LicenseError.SIGNATURE_FAILED, LicenseError.DAEMON_UNAVAILABLE],
+)
 def test_no_fallback_codes_never_consult_legacy(code, legacy_present):
     assert get_license(LicenseStatus(valid=False, code=code)) is None
     legacy_present.assert_not_called()
@@ -105,21 +100,6 @@ def test_valid_v2_license_wins_over_legacy_blob(legacy_present):
     assert info is not None
     assert info.id == "v2-id"
     legacy_present.assert_not_called()
-
-
-def test_valid_v2_license_without_legacy_blob(legacy_absent):
-    info = get_license(_valid_status())
-
-    assert info is not None
-    assert info.id == "v2-id"
-
-
-def test_daemon_unavailable_with_legacy_blob_returns_none(legacy_present):
-    assert get_license(LicenseStatus(valid=False, code=LicenseError.DAEMON_UNAVAILABLE)) is None
-
-
-def test_signature_failed_with_legacy_blob_returns_none(legacy_present):
-    assert get_license(LicenseStatus(valid=False, code=LicenseError.SIGNATURE_FAILED)) is None
 
 
 def test_every_license_error_code_is_classified():

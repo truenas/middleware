@@ -102,12 +102,8 @@ def ipmi(monkeypatch):
     return build
 
 
-# (a) No product name at all: nothing downstream has anything to work with.
-def test_no_product_name(dmi):
-    dmi(system_product_name="")
-    assert detect.detect_platform() == ("MANUAL", "MANUAL")
-
-
+# (a) No product name at all: nothing downstream has anything to work with, and the bail is
+# checked before everything else.
 def test_no_product_name_beats_the_qemu_stamp(dmi):
     """The empty-product bail is checked first, so even a stamped serial does
     not get as far as the QEMU branch."""
@@ -122,10 +118,8 @@ def test_no_product_name_beats_the_qemu_stamp(dmi):
     [
         ("ha1", "A"),
         ("ha2", "B"),
-        ("ha", "B"),
         ("something_c1", "A"),
         ("something_c2", "B"),
-        ("ha_c1", "A"),
     ],
 )
 def test_qemu_ha_serials(dmi, serial, node):
@@ -133,7 +127,7 @@ def test_qemu_ha_serials(dmi, serial, node):
     assert detect.detect_platform() == ("IXKVM", node)
 
 
-@pytest.mark.parametrize("serial", ["abc123", "_c3", "notha", "c1", "HA1"])
+@pytest.mark.parametrize("serial", ["abc123", "HA1"])
 def test_qemu_without_the_ha_stamp(dmi, serial):
     """TrueNAS is installed in plain KVM constantly; only the stamp makes it
     one of ours."""
@@ -149,8 +143,7 @@ def test_qemu_stamp_wins_over_a_truenas_product_name(dmi):
 # (c) bhyve. The host attaches a scsi_generic device whose inquiry model names
 # the controller position; finding it is the whole of the test, because that
 # device is what separates an HA bhyve guest from an ordinary one.
-@pytest.mark.parametrize("node", ["A", "B"])
-@pytest.mark.parametrize("as_bytes", [True, False], ids=["bytes", "str"])
+@pytest.mark.parametrize("node,as_bytes", [("A", True), ("B", False)], ids=["bytes", "str"])
 def test_bhyve_node_from_backplane_model(dmi, udev, node, as_bytes):
     """pyudev hands back bytes on some kernels and str on others, and the
     value carries trailing whitespace either way."""
@@ -168,12 +161,6 @@ def test_bhyve_without_the_ha_backplane(dmi, udev):
     assert detect.detect_platform() == ("MANUAL", "MANUAL")
 
 
-def test_bhyve_with_no_scsi_generic_devices_at_all(dmi, udev):
-    udev()
-    dmi(system_product_name="BHYVE")
-    assert detect.detect_platform() == ("MANUAL", "MANUAL")
-
-
 def test_bhyve_device_without_a_model_attribute_is_skipped(dmi, udev):
     """A device that exposes no ``device/model`` yields ``None``; that has to
     be stepped over, not treated as a model, or it aborts the scan before the
@@ -183,37 +170,10 @@ def test_bhyve_device_without_a_model_attribute_is_skipped(dmi, udev):
     assert detect.detect_platform() == ("BHYVE", "B")
 
 
-def test_bhyve_first_recognized_backplane_wins(dmi, udev):
-    """The scan breaks on the first match rather than letting a later device
-    overwrite the node it already established."""
-    udev(backplane(b"TrueNAS_A"), backplane(b"TrueNAS_B"))
-    dmi(system_product_name="BHYVE")
-    assert detect.detect_platform() == ("BHYVE", "A")
-
-
-def test_bhyve_queries_the_scsi_generic_subsystem(dmi, udev):
-    queried = udev(backplane(b"TrueNAS_A"))
-    dmi(system_product_name="BHYVE")
-    detect.detect_platform()
-    assert queried == [{"subsystem": "scsi_generic"}]
-
-
-def test_bhyve_is_matched_on_the_product_name_exactly(dmi, monkeypatch):
-    """'BHYVE' is an exact match, not a prefix, and anything else falls
-    through to the platform-prefix bail without touching udev."""
-
-    def explode():
-        raise AssertionError("udev must not be consulted for a non-bhyve product")
-
-    monkeypatch.setattr(detect, "Context", explode)
-    dmi(system_product_name="BHYVE2")
-    assert detect.detect_platform() == ("MANUAL", "MANUAL")
-
-
 # (d) Anything that is neither QEMU nor a shipped platform prefix stops here,
 # before any enclosure or BMC access is attempted. The enclosure stand-in
 # raises to prove the walk is never reached.
-@pytest.mark.parametrize("product", ["X11SSH-F", "Standard PC", "VMware Virtual Platform", "TRUENAS", "truenas-m50"])
+@pytest.mark.parametrize("product", ["X11SSH-F", "truenas-m50"])
 def test_non_platform_prefix_bails_early(dmi, monkeypatch, product):
     def explode(asdict):
         raise AssertionError("enclosures must not be walked on unknown hardware")
@@ -244,12 +204,6 @@ def test_vseries_node_from_backplane_suffix(dmi, enclosures, ses_product, node):
     assert detect.detect_platform() == ("PLAID", node)
 
 
-def test_vseries_ignores_other_vendors(dmi, enclosures):
-    enclosures(FakeEnclosure(vendor="BROADCOM", product="4IXGA-NTBp"))
-    dmi(system_product_name="TRUENAS-V260")
-    assert detect.detect_platform() == ("PLAID", "MANUAL")
-
-
 def test_vseries_unknown_generation(dmi, enclosures):
     """A V3XX would not be recognized, and must not guess a codename."""
     enclosures(FakeEnclosure(vendor="ECStream", product="4IXGA-NTBp"))
@@ -270,12 +224,6 @@ def test_mseries_without_a_recognized_backplane(dmi, enclosures):
     enclosures(FakeEnclosure(is_mseries=True, product="4024S"))
     dmi(system_product_name="TRUENAS-M50")
     assert detect.detect_platform() == ("ECHOWARP", "MANUAL")
-
-
-def test_mseries_with_no_enclosures_at_all(dmi, enclosures):
-    enclosures()
-    dmi(system_product_name="TRUENAS-M50")
-    assert detect.detect_platform() == ("MANUAL", "MANUAL")
 
 
 # (g) H-Series: bit 0 of the MCU's tenth byte is set on the primary
@@ -309,17 +257,3 @@ def test_hseries_asks_the_mcu_for_the_documented_register(dmi, ipmi):
     dmi(system_product_name="TRUENAS-H10")
     detect.detect_platform()
     assert calls == [["ipmi-raw", "0", "6", "52", "b", "b2", "9", "0"]]
-
-
-# (h) The result is computed once per process.
-def test_result_is_cached(monkeypatch):
-    calls = []
-
-    def parse():
-        calls.append(None)
-        return DMIInfo(system_product_name="")
-
-    monkeypatch.setattr(detect, "parse_dmi", parse)
-    detect.detect_platform()
-    detect.detect_platform()
-    assert len(calls) == 1

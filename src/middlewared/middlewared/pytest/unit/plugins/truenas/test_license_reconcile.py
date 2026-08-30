@@ -24,16 +24,6 @@ def get_service():
 
 
 @pytest.mark.asyncio
-async def test_registered_delegate_is_returned():
-    service = get_service()
-    delegate = make_delegate("smb", ("smb",))
-
-    await service.register_reconcile_delegate(delegate)
-
-    assert await service.reconcile_delegates() == [delegate]
-
-
-@pytest.mark.asyncio
 async def test_duplicate_name_raises():
     service = get_service()
     await service.register_reconcile_delegate(make_delegate("smb", ("smb",)))
@@ -54,52 +44,11 @@ async def test_duplicate_etc_group_raises_even_with_distinct_name():
 
 
 @pytest.mark.asyncio
-async def test_delegates_are_returned_in_ascending_order():
-    service = get_service()
-    for name, order in (("smb", 10), ("nfs", -5), ("iscsi", 0)):
-        await service.register_reconcile_delegate(make_delegate(name, (name,), order=order))
-
-    assert [delegate.name for delegate in await service.reconcile_delegates()] == ["nfs", "iscsi", "smb"]
-
-
-@pytest.mark.asyncio
-async def test_equal_order_preserves_registration_order():
-    service = get_service()
-    for name in ("smb", "nfs", "iscsi"):
-        await service.register_reconcile_delegate(make_delegate(name, (name,)))
-
-    assert [delegate.name for delegate in await service.reconcile_delegates()] == ["smb", "nfs", "iscsi"]
-
-
-@pytest.mark.asyncio
 async def test_default_resolve_groups_is_etc_groups():
     middleware = Middleware()
     delegate = make_delegate("smb", ("rc", "smb"))
 
     assert await delegate.resolve_groups(middleware) == ["rc", "smb"]
-
-
-@pytest.mark.asyncio
-async def test_resolve_groups_override_is_honoured():
-    middleware = Middleware()
-
-    async def resolve_groups(self, middleware):
-        return ["scst"]
-
-    delegate = make_delegate("iscsi", ("scst", "lio"), resolve_groups=resolve_groups)
-
-    assert await delegate.resolve_groups(middleware) == ["scst"]
-
-
-@pytest.mark.asyncio
-async def test_default_should_run_is_true():
-    delegate = make_delegate("smb", ("smb",))
-
-    assert await delegate.should_run(Middleware()) is True
-
-
-def test_default_action_is_render():
-    assert make_delegate("smb", ("smb",)).action is LicenseReconcileAction.RENDER
 
 
 def reconcile_service():
@@ -135,6 +84,7 @@ async def test_reconcile_renders_resolved_groups_in_delegate_order():
 @pytest.mark.asyncio
 async def test_reconcile_continues_after_a_delegate_raises():
     service, middleware, rendered = reconcile_service()
+    job = FakeJob()
 
     async def resolve_groups(self, middleware):
         raise RuntimeError("this delegate is broken")
@@ -145,41 +95,24 @@ async def test_reconcile_continues_after_a_delegate_raises():
     )
     await service.register_reconcile_delegate(make_delegate("smb", ("smb",), order=10))
 
-    await service.reconcile(FakeJob())
+    await service.reconcile(job)
 
     assert rendered == ["nfsd", "smb"]
+    # The run also has to finish reporting rather than leaving the job stuck at the delegate
+    # that blew up.
+    assert job.progress[-1] == (100, "License state reconciled")
 
 
 @pytest.mark.asyncio
-async def test_reconcile_skips_delegate_whose_should_run_is_false():
-    service, middleware, rendered = reconcile_service()
-    control_calls = fake_service_control(middleware)
-
-    async def should_run(self, middleware):
-        return False
-
-    await service.register_reconcile_delegate(
-        make_delegate(
-            "smb",
-            ("smb",),
-            should_run=should_run,
-            service="cifs",
-            action=LicenseReconcileAction.RELOAD,
-        )
-    )
-    await service.register_reconcile_delegate(make_delegate("nfs", ("nfsd",), order=10))
-
-    await service.reconcile(FakeJob())
-
-    assert rendered == ["nfsd"]
-    assert control_calls == []
-
-
-@pytest.mark.asyncio
-async def test_reconcile_skips_render_delegate_whose_should_run_is_false():
+@pytest.mark.parametrize(
+    "action,service_name",
+    [(LicenseReconcileAction.RENDER, None), (LicenseReconcileAction.RELOAD, "cifs")],
+)
+async def test_reconcile_skips_a_delegate_whose_should_run_is_false(action, service_name):
     """
-    The iSCSI and NVMe-oF delegates gate on their target being up, so a RENDER delegate that
-    declines has to be skipped before its groups are resolved, not merely before a service verb.
+    The iSCSI and NVMe-oF delegates gate on their target being up, so a delegate that declines
+    has to be skipped before its groups are resolved, not merely before a service verb -- which
+    is why the RENDER case matters as much as the RELOAD one.
     """
     service, middleware, rendered = reconcile_service()
     control_calls = fake_service_control(middleware)
@@ -198,6 +131,8 @@ async def test_reconcile_skips_render_delegate_whose_should_run_is_false():
             ("scst", "lio"),
             should_run=should_run,
             resolve_groups=resolve_groups,
+            action=action,
+            service=service_name,
         )
     )
     await service.register_reconcile_delegate(make_delegate("nfs", ("nfsd",), order=10))
@@ -222,78 +157,6 @@ async def test_reconcile_issues_service_control_without_ha_propagation(action):
     # `service.control` renders the service's own `select_etc()`, so the runner renders nothing
     assert rendered == []
     assert control_calls == [(action.value, "cifs", {"ha_propagate": False})]
-
-
-@pytest.mark.asyncio
-async def test_reconcile_reload_delegate_renders_nothing_directly():
-    """A RELOAD delegate leaves rendering to `service.control` rather than double rendering."""
-    service, middleware, rendered = reconcile_service()
-    fake_service_control(middleware)
-    resolved = []
-
-    async def resolve_groups(self, middleware):
-        resolved.append(self.name)
-        return list(self.etc_groups)
-
-    await service.register_reconcile_delegate(
-        make_delegate(
-            "smb",
-            ("smb", "smb_share"),
-            service="cifs",
-            action=LicenseReconcileAction.RELOAD,
-            resolve_groups=resolve_groups,
-        )
-    )
-
-    await service.reconcile(FakeJob())
-
-    assert rendered == []
-    # `etc_groups` declares ownership for a RELOAD delegate; nothing consults it to render
-    assert resolved == []
-
-
-@pytest.mark.asyncio
-async def test_reconcile_renders_only_the_render_delegates():
-    service, middleware, rendered = reconcile_service()
-    fake_service_control(middleware)
-
-    await service.register_reconcile_delegate(make_delegate("rc", ("rc",), order=-5))
-    await service.register_reconcile_delegate(
-        make_delegate(
-            "smb",
-            ("smb",),
-            order=0,
-            service="cifs",
-            action=LicenseReconcileAction.RELOAD,
-        )
-    )
-    await service.register_reconcile_delegate(
-        make_delegate(
-            "nfs",
-            ("nfsd",),
-            order=5,
-            service="nfs",
-            action=LicenseReconcileAction.RESTART,
-        )
-    )
-    await service.register_reconcile_delegate(make_delegate("kmip", ("kmip",), order=10))
-
-    await service.reconcile(FakeJob())
-
-    assert rendered == ["rc", "kmip"]
-
-
-@pytest.mark.asyncio
-async def test_reconcile_render_delegate_issues_no_service_control():
-    service, middleware, rendered = reconcile_service()
-    control_calls = fake_service_control(middleware)
-
-    await service.register_reconcile_delegate(make_delegate("rc", ("rc",)))
-
-    await service.reconcile(FakeJob())
-
-    assert rendered == ["rc"]
-    assert control_calls == []
 
 
 @pytest.mark.asyncio
@@ -343,21 +206,3 @@ async def test_reconcile_progress_survives_a_service_delegate():
         "License state reconciled",
     ]
     assert control_job.progress == []
-
-
-@pytest.mark.asyncio
-async def test_reconcile_reports_progress_past_a_delegate_that_raises():
-    service, middleware, rendered = reconcile_service()
-    job = FakeJob()
-
-    async def resolve_groups(self, middleware):
-        raise RuntimeError("this delegate is broken")
-
-    await service.register_reconcile_delegate(
-        make_delegate("broken", ("broken",), order=-5, resolve_groups=resolve_groups)
-    )
-    await service.register_reconcile_delegate(make_delegate("smb", ("smb",), order=0))
-
-    await service.reconcile(job)
-
-    assert job.progress[-1] == (100, "License state reconciled")

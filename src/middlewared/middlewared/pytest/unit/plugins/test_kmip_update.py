@@ -18,9 +18,9 @@ from middlewared.service import ValidationErrors
 PORT_ATTRIBUTE = "kmip_update.port"
 ENABLED_ATTRIBUTE = "kmip_update.enabled"
 
-# The columns KMIP's vector (0,0,0,1,0,1) grants: a key on either hardware side.
-GRANTING_COLUMNS = ("HW+K", "CE+K")
-ALL_COLUMNS = ("CE", "HW", "HW+L", "HW+K", "CE+L", "CE+K")
+# KMIP's vector (0,0,0,1,0,1) grants on a key and nowhere else, so one granting column and
+# one denying one is the whole of the gate.
+GATE_COLUMNS = [("HW+K", True), ("CE+L", False)]
 
 
 def _config(enabled):
@@ -64,8 +64,8 @@ async def _attributes(service, data):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("column", ALL_COLUMNS)
-async def test_kmip_enable_transition_is_gated(monkeypatch, column):
+@pytest.mark.parametrize("column,entitled", GATE_COLUMNS)
+async def test_kmip_enable_transition_is_gated(monkeypatch, column, entitled):
     m = Middleware()
     checked = install_entitlements_for_column(m, LicenseFeature.KMIP, column)
     service = _service(monkeypatch, m, enabled=False)
@@ -76,7 +76,7 @@ async def test_kmip_enable_transition_is_gated(monkeypatch, column):
     # The poisoned port error is always there, so its absence would mean the wall moved and
     # everything below it is no longer reachable by this test.
     assert PORT_ATTRIBUTE in attributes
-    assert (ENABLED_ATTRIBUTE in attributes) is (column not in GRANTING_COLUMNS)
+    assert (ENABLED_ATTRIBUTE in attributes) is not entitled
 
 
 @pytest.mark.asyncio

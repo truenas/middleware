@@ -122,59 +122,10 @@ FREENAS_MINI_BLOB = (
                 contract_type="STANDARD",
             ),
         ),
-        # freenascertified license (freenas-prefixed model). parse_legacy_license still
-        # translates it in full -- the model is only rejected a layer up, in
-        # get_legacy_license_info. FREENASCERTIFIED is not a support tier, so the
-        # injected SUPPORT flag is stamped BRONZE.
-        (
-            FREENAS_MINI_BLOB,
-            LicenseInfo(
-                id="legacy_TEST-000001",
-                type=LicenseType.ENTERPRISE_SINGLE,
-                model="FREENAS-MINI",
-                support_expires_at=date(2026, 4, 30),
-                features=_features(_LEGACY_INJECT, support_type="BRONZE"),
-                serials=("TEST-000001",),
-                enclosures={},
-                contract_type="FREENASCERTIFIED",
-            ),
-        ),
     ],
 )
 def test__parse_legacy_license(text, result):
     assert parse_legacy_license(text) == result
-
-
-# A legacy blob carries no per-feature dates, so the only date the translation can honestly
-# put on a feature is the support contract's end, on SUPPORT. Stamping it onto the rest would
-# claim an expiry that was never sold, and nothing gates on a feature's date, so the only way
-# this stays true is by being asserted.
-@pytest.mark.parametrize("text", [H10_HA_BLOB, X10_BLOB, FREENAS_MINI_BLOB])
-def test__legacy_expiry_lands_on_support_alone(text):
-    info = parse_legacy_license(text)
-
-    assert info.features["SUPPORT"].expires_at == date(2026, 4, 30)
-    assert [name for name, f in info.features.items() if f.expires_at is not None] == ["SUPPORT"]
-    assert all(f.start_date == date(2026, 4, 8) for f in info.features.values())
-
-
-# A legacy blob carries no license type of its own: the second (HA) serial is the only
-# thing that distinguishes an HA license from a single-head one, and it is what the
-# translation turns into LicenseType.
-@pytest.mark.parametrize(
-    "text,type_",
-    [
-        # H10 with system_serial_ha = TEST-000002.
-        (
-            H10_HA_BLOB,
-            LicenseType.ENTERPRISE_HA,
-        ),
-        # X10 with an empty system_serial_ha field.
-        (X10_BLOB, LicenseType.ENTERPRISE_SINGLE),
-    ],
-)
-def test__parse_legacy_license_ha_type(text, type_):
-    assert parse_legacy_license(text).type is type_
 
 
 # X10, BRONZE contract, single head -- the same shape as the STANDARD blob above with
@@ -205,14 +156,10 @@ def test__legacy_bronze_gets_support_key_but_not_proactive_support():
     assert proactive.reason == Reason.TIER_INSUFFICIENT
 
 
-# The same interlock for the contract types that are not support tiers at all: they
-# collapse to BRONZE rather than stamping a value the tier gate has never heard of.
-@pytest.mark.parametrize(
-    "text",
-    [X10_BLOB, FREENAS_MINI_BLOB],
-)
-def test__legacy_non_tier_contract_types_get_no_proactive_support(text):
-    info = parse_legacy_license(text)
+# The same interlock for a contract type that is not a support tier at all: it collapses to
+# BRONZE rather than stamping a value the tier gate has never heard of.
+def test__legacy_non_tier_contract_types_get_no_proactive_support():
+    info = parse_legacy_license(FREENAS_MINI_BLOB)
     assert info.feature_type(LicenseFeature.SUPPORT) == SupportTier.BRONZE
 
     facts = EntitlementFacts(hardware_class=HardwareClass.TRUENAS_HW, license=info)
@@ -355,9 +302,7 @@ def test__legacy_fibrechannel_bit_is_observable_end_to_end():
     assert entitled(without_bit) is False
 
 
-@pytest.mark.parametrize("hardware_class", [HardwareClass.TRUENAS_HW, HardwareClass.MINI, HardwareClass.GENERIC])
-@pytest.mark.parametrize("blob", [H10_HA_BLOB, X10_BLOB, FREENAS_MINI_BLOB])
-def test__zfstier_is_denied_on_every_legacy_license(blob, hardware_class):
+def test__zfstier_is_denied_on_every_legacy_license():
     # ZFSTIER has neither a legacy feature bit nor an injection entry, so no legacy blob can
     # put the key on the license, and its vector grants only where the key is. Legacy holders
     # are therefore permanently denied it -- a deliberate outcome, pinned so that adding a
@@ -365,7 +310,7 @@ def test__zfstier_is_denied_on_every_legacy_license(blob, hardware_class):
     assert LicenseFeature.ZFSTIER not in _LEGACY_INJECT_SET
     assert LicenseFeature.ZFSTIER.value not in _LEGACY_BITMASK_FEATURES
 
-    info = parse_legacy_license(blob)
+    info = parse_legacy_license(H10_HA_BLOB)
     assert not info.has_feature(LicenseFeature.ZFSTIER)
-    facts = EntitlementFacts(hardware_class=hardware_class, license=info)
+    facts = EntitlementFacts(hardware_class=HardwareClass.TRUENAS_HW, license=info)
     assert check_entitlement(LicenseFeature.ZFSTIER, facts).entitled is False

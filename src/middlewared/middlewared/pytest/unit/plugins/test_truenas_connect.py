@@ -834,19 +834,15 @@ async def test_registration_uri_sends_pem_when_support_contract_has_lapsed():
 
 
 @pytest.mark.asyncio
-async def test_registration_uri_omits_license_when_pem_is_unreadable():
+@pytest.mark.parametrize('license_info', [
     # system.license sets raw_license to None when neither license file can be read;
     # urlencode would otherwise send the literal string "None".
-    service = _registration_service({'raw_license': None})
-
-    uri = await service.get_registration_uri()
-
-    assert 'license=' not in uri
-
-
-@pytest.mark.asyncio
-async def test_registration_uri_omits_license_when_unlicensed():
-    service = _registration_service(None)
+    {'raw_license': None},
+    # An unlicensed system has no system.license at all.
+    None,
+])
+async def test_registration_uri_omits_license_when_there_is_no_pem(license_info):
+    service = _registration_service(license_info)
 
     uri = await service.get_registration_uri()
 

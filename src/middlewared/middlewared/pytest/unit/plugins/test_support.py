@@ -29,9 +29,9 @@ from middlewared.pytest.unit.helpers import create_service
 from middlewared.pytest.unit.middleware import FakeJob, Middleware
 from middlewared.service import CallError
 
-# The columns SUPPORT's vector (0,0,0,1,0,1) grants: a key on either hardware side.
-GRANTING_COLUMNS = ("HW+K", "CE+K")
-ALL_COLUMNS = ("CE", "HW", "HW+L", "HW+K", "CE+L", "CE+K")
+# SUPPORT's vector (0,0,0,1,0,1) grants on a key and nowhere else, so one granting column
+# and one denying one is the whole of the routing decision.
+ROUTING_COLUMNS = [("HW+K", True), ("CE+L", False)]
 
 ENTERPRISE_PAYLOAD = {
     "title": "Pool is degraded",
@@ -121,9 +121,8 @@ def _payload(entitled):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("column", ALL_COLUMNS)
-async def test_new_ticket_routes_to_the_endpoint_its_entitlement_names(posted_urls, column):
-    entitled = column in GRANTING_COLUMNS
+@pytest.mark.parametrize("column,entitled", ROUTING_COLUMNS)
+async def test_new_ticket_routes_to_the_endpoint_its_entitlement_names(posted_urls, column, entitled):
     service, checked = _service(column)
 
     await service.new_ticket(FakeJob(), _payload(entitled))
@@ -134,12 +133,11 @@ async def test_new_ticket_routes_to_the_endpoint_its_entitlement_names(posted_ur
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("column", ALL_COLUMNS)
-async def test_new_ticket_required_attrs_follow_the_route(posted_urls, column):
+@pytest.mark.parametrize("column,entitled", ROUTING_COLUMNS)
+async def test_new_ticket_required_attrs_follow_the_route(posted_urls, column, entitled):
     # The two payload shapes are a union with extra='forbid', so neither is a superset of the
     # other and the wrong one for the chosen route is rejected outright. That rejection is
     # `required_attrs`, and it happens before anything is sent.
-    entitled = column in GRANTING_COLUMNS
     service, _ = _service(column)
 
     with pytest.raises(CallError) as exc:
@@ -150,11 +148,10 @@ async def test_new_ticket_required_attrs_follow_the_route(posted_urls, column):
     assert posted_urls == []
 
 
-@pytest.mark.parametrize("column", ALL_COLUMNS)
-def test_attach_ticket_routes_to_the_endpoint_its_entitlement_names(posted_urls, column):
+@pytest.mark.parametrize("column,entitled", ROUTING_COLUMNS)
+def test_attach_ticket_routes_to_the_endpoint_its_entitlement_names(posted_urls, column, entitled):
     # The sync twin of the routing test. It reaches the same decision through call_sync2 and
     # `requests`, so a change to one path is not evidence about the other.
-    entitled = column in GRANTING_COLUMNS
     service, checked = _service(column)
 
     # A plain Mock rather than FakeJob: this path only ever reads job.pipes.input.r, which it

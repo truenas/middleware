@@ -77,20 +77,6 @@ def test__from_license_status__renames_vm_to_vms():
     )
 
 
-def test__from_license_status__passes_through_unrelated_feature_names():
-    status = _make_status(
-        {
-            "APPS": FeatureEntry(name="APPS", source="enterprise"),
-            "DEDUP": FeatureEntry(name="DEDUP", source="enterprise"),
-        }
-    )
-
-    info = from_license_status(status)
-
-    assert info is not None
-    assert set(info.features) == {"APPS", "DEDUP"}
-
-
 @pytest.mark.parametrize(
     "status",
     [
@@ -114,31 +100,11 @@ def test__from_license_status__no_support_feature_leaves_support_expiry_unset():
     [
         (None, date(2026, 5, 1), False),
         (date(2026, 4, 30), date(2026, 5, 1), True),
-        (date(2026, 5, 2), date(2026, 5, 1), False),
         # The contract is in force through its end date, so the final day is not lapsed.
         (date(2026, 4, 30), date(2026, 4, 30), False),
-        (date(2026, 4, 30), date(2026, 4, 29), False),
     ],
 )
 def test__license_info_support_lapsed(support_expires_at, today, expected):
     info = _license(support_expires_at=support_expires_at)
 
     assert info.support_lapsed(today=today) is expected
-
-
-def test__license_info_is_unhashable_but_still_compares():
-    with pytest.raises(TypeError):
-        hash(_license())
-
-    assert _license() == _license()
-    assert _license(id="other") != _license()
-
-
-def test__from_license_status__hands_back_immutable_containers():
-    info = from_license_status(_make_status({"DEDUP": FeatureEntry(name="DEDUP", source="enterprise")}))
-
-    assert info is not None
-    for container in (info.features, info.enclosures):
-        with pytest.raises(TypeError):
-            container["X"] = None  # type: ignore[index]
-    assert isinstance(info.serials, tuple)

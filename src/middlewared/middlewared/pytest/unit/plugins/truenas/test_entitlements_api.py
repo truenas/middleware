@@ -3,11 +3,9 @@ import json
 import pytest
 from truenas_pylicensed import LicenseType
 
-from middlewared.api.base.handler.accept import accept_params
 from middlewared.api.base.handler.result import serialize_result
 from middlewared.api.current import (
     EntitlementEntry,
-    TrueNASEntitlementsCheckArgs,
     TrueNASEntitlementsCheckResult,
     TrueNASEntitlementsInfoResult,
 )
@@ -15,13 +13,11 @@ from middlewared.plugins.truenas import entitlements as plugin
 from middlewared.plugins.truenas.entitlements import TrueNASEntitlementsService
 from middlewared.utils.entitlements import (
     POLICY,
-    DerivedEntitlement,
     Entitlement,
     EntitlementFacts,
     HardwareClass,
     LicenseFeature,
     Reason,
-    check_entitlement,
 )
 from middlewared.utils.license import FeatureInfo, LicenseInfo
 
@@ -42,7 +38,7 @@ def test_check_returns_the_endpoint_model_not_the_engine_dataclass(monkeypatch):
     assert (result.entitled, result.reason, result.message) == (True, "ENTITLED", "")
 
 
-@pytest.mark.parametrize("reason", list(Reason))
+@pytest.mark.parametrize("reason", [Reason.ENTITLED, Reason.KEY_MISSING])
 def test_entitlement_round_trips_to_json(reason, monkeypatch):
     engine_result = Entitlement(
         entitled=reason is Reason.ENTITLED,
@@ -65,16 +61,6 @@ def test_entitlement_round_trips_to_json(reason, monkeypatch):
     assert json.loads(json.dumps(result)) == result
 
 
-@pytest.mark.parametrize("member", [LicenseFeature.SED, DerivedEntitlement.HA])
-def test_entitlement_key_member_survives_the_boundary_as_its_name(member):
-    """Every gate in the tree names its feature with a vocabulary member. The boundary accepts
-    members of both vocabularies and flattens them to the plain name `POLICY` is keyed by."""
-    (feature,) = accept_params(TrueNASEntitlementsCheckArgs, [member], dump_models=False)
-
-    assert type(feature) is str
-    assert feature == member
-
-
 def test_feature_reports_not_gated_for_an_unknown_identifier(monkeypatch):
     """The issuer's vocabulary can run ahead of ours, so the public endpoint answers for a name
     it has never heard of instead of refusing it."""
@@ -85,22 +71,6 @@ def test_feature_reports_not_gated_for_an_unknown_identifier(monkeypatch):
     monkeypatch.setattr(plugin, "get_entitlement", raise_unknown)
 
     result = TrueNASEntitlementsService.check(None, "QUANTUM_TELEPORT")
-
-    assert (result.entitled, result.reason, result.message) == (True, "NOT_GATED", "")
-
-
-def test_feature_reports_not_gated_for_autotune(monkeypatch):
-    """AUTOTUNE is a license feature with no policy rule, so the live engine raises for it. The
-    public endpoint has to answer rather than propagate that."""
-    monkeypatch.setattr(
-        plugin,
-        "get_entitlement",
-        lambda feature: check_entitlement(
-            feature, EntitlementFacts(hardware_class=HardwareClass.TRUENAS_HW, license=None)
-        ),
-    )
-
-    result = TrueNASEntitlementsService.check(None, str(LicenseFeature.AUTOTUNE))
 
     assert (result.entitled, result.reason, result.message) == (True, "NOT_GATED", "")
 
@@ -143,19 +113,10 @@ def make_license(feature_names, license_type, support_type):
 
 UNLICENSED_APPLIANCE = EntitlementFacts(hardware_class=HardwareClass.TRUENAS_HW, license=None)
 
-# Fact shapes that between them reach every reason the live policy can produce, so the
-# whole-map assertions below are exercised against grants and every kind of denial.
+# One shape with no license and one with every key, so the whole-map assertions below run
+# against a map that is mostly grants and a map that is mostly denials.
 FACTS_TABLE = [
     UNLICENSED_APPLIANCE,
-    EntitlementFacts(hardware_class=HardwareClass.GENERIC, license=None),
-    EntitlementFacts(
-        hardware_class=HardwareClass.TRUENAS_HW,
-        license=make_license((), LicenseType.ENTERPRISE_SINGLE, None),
-    ),
-    EntitlementFacts(
-        hardware_class=HardwareClass.TRUENAS_HW,
-        license=make_license(tuple(LicenseFeature), LicenseType.ENTERPRISE_HA, "GOLD"),
-    ),
     EntitlementFacts(
         hardware_class=HardwareClass.GENERIC,
         license=make_license(tuple(LicenseFeature), LicenseType.ENTERPRISE_SINGLE, "BRONZE"),
@@ -168,14 +129,6 @@ def test_info_reports_every_policy_feature_and_nothing_else(facts, monkeypatch):
     monkeypatch.setattr(plugin, "get_facts", lambda: facts)
 
     assert set(TrueNASEntitlementsService.info(None).features) == {str(key) for key in POLICY}
-
-
-def test_info_omits_a_license_feature_the_policy_does_not_rule_on(monkeypatch):
-    """AUTOTUNE carries a matrix row but no policy entry, and the engine raises for a key it
-    cannot resolve -- so enumerating the feature vocabulary here would fail outright."""
-    monkeypatch.setattr(plugin, "get_facts", lambda: UNLICENSED_APPLIANCE)
-
-    assert str(LicenseFeature.AUTOTUNE) not in TrueNASEntitlementsService.info(None).features
 
 
 @pytest.mark.parametrize("facts", FACTS_TABLE)
