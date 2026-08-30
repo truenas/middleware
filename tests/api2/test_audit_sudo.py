@@ -6,9 +6,11 @@ import time
 
 import pytest
 
+
 from auto_config import pool_name
 from middlewared.test.integration.assets.account import user
-from middlewared.test.integration.utils import call, mock, ssh
+from middlewared.test.integration.assets.entitlements import entitled
+from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.utils.time_utils import utc_now
 
 EVENT_KEYS = {
@@ -147,15 +149,7 @@ def initialize_for_sudo_tests(username, password, data):
 @pytest.fixture(scope='module')
 def enable_sudo_auditing():
     try:
-        with mock('truenas.entitlements.check', args=['SUPPORT', ], declaration="""
-            def mock(self, feature):
-                from middlewared.api.current import EntitlementEntry
-                from middlewared.utils.entitlements import Reason
-
-                return EntitlementEntry(
-                    entitled=True, reason=Reason.ENTITLED, message='',
-                )
-        """):
+        with entitled("SUPPORT"):
             call('etc.generate', 'user')
             yield
     finally:

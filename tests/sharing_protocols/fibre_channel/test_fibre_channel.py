@@ -9,6 +9,7 @@ from auto_config import ha, pool_name
 
 from middlewared.service_exception import InstanceNotFound, ValidationError, ValidationErrors
 from middlewared.test.integration.assets.alert import AlertMixin
+from middlewared.test.integration.assets.entitlements import entitled
 from middlewared.test.integration.utils import call, mock, ssh
 
 REL_TGT_ID_FC_OFFSET = 5000
@@ -571,15 +572,7 @@ class AbstractFibreChannel:
         # Make sure iSCSI service is not running.  Would go boom
         assert call('service.query', [['service', '=', 'iscsitarget']], {'get': True})['state'] == 'STOPPED'
         with mock('fc.capable', return_value=True):
-            with mock('truenas.entitlements.check', args=['FIBRECHANNEL',], declaration="""
-                def mock(self, feature):
-                    from middlewared.api.current import EntitlementEntry
-                    from middlewared.utils.entitlements import Reason
-
-                    return EntitlementEntry(
-                        entitled=True, reason=Reason.ENTITLED, message='',
-                    )
-            """):
+            with entitled("FIBRECHANNEL"):
                 call('fc.fc_host.reset_wired', True)
                 with mock_ports(self.NODE_A_PORTS, self.NODE_B_PORTS):
                     yield

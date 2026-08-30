@@ -1,7 +1,8 @@
 import pytest
 
 from middlewared.test.integration.assets.directory_service import directoryservice
-from middlewared.test.integration.utils import call, client, mock, ssh
+from middlewared.test.integration.assets.entitlements import entitled
+from middlewared.test.integration.utils import call, client, ssh
 from middlewared.test.integration.utils.client import truenas_server
 
 
@@ -16,15 +17,7 @@ def entitle_ds_auth():
     if truenas_server.server_type == 'ENTERPRISE_HA':
         yield
     else:
-        with mock('truenas.entitlements.check', args=['DIRECTORY_SERVICES', ], declaration="""
-            def mock(self, feature):
-                from middlewared.api.current import EntitlementEntry
-                from middlewared.utils.entitlements import Reason
-
-                return EntitlementEntry(
-                    entitled=True, reason=Reason.ENTITLED, message='',
-                )
-        """):
+        with entitled("DIRECTORY_SERVICES"):
             yield
 
 

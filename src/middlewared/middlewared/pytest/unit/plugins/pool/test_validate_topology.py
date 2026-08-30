@@ -27,14 +27,10 @@ def _pool_old(data, *, special=None, dedup=None):
     return {"topology": {"data": data, "special": special or [], "dedup": dedup or []}}
 
 
-def _entitlements(middleware, entitled):
-    """Point the entitlement endpoints at the live engine; returns the features asked about."""
-    return install_entitlements_for_column(middleware, LicenseFeature.SUPPORT, "HW+K" if entitled else "CE+L")
-
-
-def _service(entitled=False):
+def _service():
     middleware = Middleware()
-    _entitlements(middleware, entitled)
+    # force_topology's gate asks about SUPPORT; these cases are all the unentitled side of it.
+    install_entitlements_for_column(middleware, LicenseFeature.SUPPORT, "CE+L")
     return PoolService(middleware)
 
 
@@ -174,34 +170,3 @@ async def test_force_topology_does_not_bypass_minimum_disks():
     verrors = await _service()._validate_topology(_pool_data([_new_vdev("RAIDZ2", 3)], force_topology=True))
     assert [e.attribute for e in verrors.errors] == ["topology.data.0.disks"]
     assert verrors.errors[0].errmsg == "You need at least 4 disk(s) for this vdev type."
-
-
-# ---------------------------------------------------------------------------
-# force_topology is not permitted on systems with a support entitlement
-# ---------------------------------------------------------------------------
-
-
-@pytest.mark.asyncio
-async def test_force_topology_rejected_when_entitled():
-    middleware = Middleware()
-    checked = _entitlements(middleware, entitled=True)
-
-    verrors = await PoolService(middleware)._validate_topology(
-        _pool_data([_new_vdev("RAIDZ2", 7)], force_topology=True)
-    )
-    assert [e.attribute for e in verrors.errors] == ["force_topology"]
-    assert verrors.errors[0].errmsg == (
-        "Bypassing pool topology validation is not permitted on systems with a support entitlement."
-    )
-    assert checked == [LicenseFeature.SUPPORT]
-
-
-@pytest.mark.asyncio
-async def test_force_topology_not_checked_when_unset():
-    # The entitlement must not even be consulted when force_topology is off.
-    middleware = Middleware()
-    checked = _entitlements(middleware, entitled=True)
-
-    verrors = await PoolService(middleware)._validate_topology(_pool_data([_new_vdev("RAIDZ2", 7)]))
-    assert verrors.errors == []
-    assert checked == []

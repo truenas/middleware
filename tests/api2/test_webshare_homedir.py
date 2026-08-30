@@ -1,20 +1,15 @@
 import pytest
 
+from middlewared.test.integration.assets.entitlements import entitled
 from middlewared.test.integration.assets.pool import dataset
-from middlewared.test.integration.utils import call, mock
+from middlewared.test.integration.utils import call
 
 
 @pytest.fixture(scope='module', autouse=True)
 def webshare_entitled():
     # Creating a share and enabling an existing one are gated by the WEBSHARE entitlement,
     # which an unlicensed test runner does not have.
-    with mock('truenas.entitlements.check', args=['WEBSHARE', ], declaration="""
-        def mock(self, feature):
-            from middlewared.api.current import EntitlementEntry
-            from middlewared.utils.entitlements import Reason
-
-            return EntitlementEntry(entitled=True, reason=Reason.ENTITLED, message='')
-    """):
+    with entitled("WEBSHARE"):
         yield
 
 

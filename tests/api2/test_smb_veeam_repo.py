@@ -2,9 +2,10 @@ import os
 import time
 import pytest
 
+from middlewared.test.integration.assets.entitlements import entitled
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.smb import smb_share
-from middlewared.test.integration.utils import call, mock
+from middlewared.test.integration.utils import call
 
 SHARE_NAME = 'offset_test'
 VEEAM_BLOCKSIZE = 131072
@@ -12,13 +13,7 @@ VEEAM_BLOCKSIZE = 131072
 
 @pytest.fixture(autouse=True)
 def veeam_entitled():
-    with mock('truenas.entitlements.check', args=['SMB_VEEAM', ], declaration="""
-        def mock(self, feature):
-            from middlewared.api.current import EntitlementEntry
-            from middlewared.utils.entitlements import Reason
-
-            return EntitlementEntry(entitled=True, reason=Reason.ENTITLED, message='')
-    """):
+    with entitled("SMB_VEEAM"):
         yield
 
 

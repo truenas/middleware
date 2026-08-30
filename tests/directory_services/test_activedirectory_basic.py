@@ -2,13 +2,15 @@ import os
 from time import sleep
 
 import pytest
+
 from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.directory_service import (
     directoryservice, AD_DOM2_LIMITED_USER, AD_DOM2_LIMITED_USER_PASSWORD
 )
+from middlewared.test.integration.assets.entitlements import entitled
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.privilege import privilege
-from middlewared.test.integration.utils import call, client, mock, ssh
+from middlewared.test.integration.utils import call, client, ssh
 from middlewared.test.integration.utils.client import truenas_server
 from middlewared.test.integration.utils.system import reset_systemd_svcs, get_gssproxy_state
 
@@ -34,15 +36,7 @@ def entitle_ds_auth():
         # HA product is already enterprise-licensed
         yield
     else:
-        with mock('truenas.entitlements.check', args=['DIRECTORY_SERVICES', ], declaration="""
-            def mock(self, feature):
-                from middlewared.api.current import EntitlementEntry
-                from middlewared.utils.entitlements import Reason
-
-                return EntitlementEntry(
-                    entitled=True, reason=Reason.ENTITLED, message='',
-                )
-        """):
+        with entitled("DIRECTORY_SERVICES"):
             yield
 
 
@@ -76,17 +70,7 @@ def test_enable_leave_activedirectory():
         # the CE/HW column, which DIRECTORY_SERVICES grants on neither hardware
         # side. The wording still comes from the engine's message table rather
         # than being restated here, since that is what the plugin surfaces.
-        with mock('truenas.entitlements.check', args=['DIRECTORY_SERVICES', ], declaration="""
-            def mock(self, feature):
-                from middlewared.api.current import EntitlementEntry
-                from middlewared.utils.entitlements import FEATURE_MESSAGES, Reason
-
-                return EntitlementEntry(
-                    entitled=False,
-                    reason=Reason.NO_LICENSE,
-                    message=FEATURE_MESSAGES[feature][Reason.NO_LICENSE],
-                )
-        """):
+        with entitled("DIRECTORY_SERVICES", False):
             with pytest.raises(ValidationErrors, match='requires an Enterprise license'):
                 call("system.general.update", {"ds_auth": True})
 

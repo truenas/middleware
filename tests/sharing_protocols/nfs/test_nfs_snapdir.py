@@ -3,8 +3,9 @@ from time import sleep
 import pytest
 
 from middlewared.service_exception import InstanceNotFound, ValidationErrors
+from middlewared.test.integration.assets.entitlements import entitled
 from middlewared.test.integration.assets.filesystem import directory
-from middlewared.test.integration.utils import call, mock, pool, ssh
+from middlewared.test.integration.utils import call, pool, ssh
 from middlewared.test.integration.utils.client import truenas_server
 from protocols.pynfs_proto import PynfsClient, PynfsClient3
 
@@ -13,13 +14,7 @@ SNAPDIR_EXPORTS_ENTRY = 'zfs_snapdir'
 
 @pytest.fixture(scope='function')
 def enterprise():
-    with mock('truenas.entitlements.check', args=['NFS_SNAPSHOT', ], declaration="""
-        def mock(self, feature):
-            from middlewared.api.current import EntitlementEntry
-            from middlewared.utils.entitlements import Reason
-
-            return EntitlementEntry(entitled=True, reason=Reason.ENTITLED, message='')
-    """):
+    with entitled("NFS_SNAPSHOT"):
         yield
 
 
@@ -73,17 +68,7 @@ def community():
     table rather than restated here, because that string is what the plugin
     surfaces as the validation error.
     """
-    with mock('truenas.entitlements.check', args=['NFS_SNAPSHOT', ], declaration="""
-        def mock(self, feature):
-            from middlewared.api.current import EntitlementEntry
-            from middlewared.utils.entitlements import FEATURE_MESSAGES, Reason
-
-            return EntitlementEntry(
-                entitled=False,
-                reason=Reason.NO_LICENSE,
-                message=FEATURE_MESSAGES[feature][Reason.NO_LICENSE],
-            )
-    """):
+    with entitled("NFS_SNAPSHOT", False):
         yield
 
 

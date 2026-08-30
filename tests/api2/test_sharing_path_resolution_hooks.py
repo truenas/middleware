@@ -7,8 +7,9 @@ created while the dataset was locked.
 """
 import pytest
 
+from middlewared.test.integration.assets.entitlements import entitled
 from middlewared.test.integration.assets.pool import dataset
-from middlewared.test.integration.utils import call, mock, ssh
+from middlewared.test.integration.utils import call, ssh
 
 
 PASSPHRASE = 'test_passphrase_12345'
@@ -180,13 +181,7 @@ def test_nfs_share_path_resolution_after_unlock(encrypted_dataset):
 def webshare_entitled():
     # sharing.webshare.create is gated by the WEBSHARE entitlement, which an unlicensed
     # test runner does not have.
-    with mock('truenas.entitlements.check', args=['WEBSHARE', ], declaration="""
-        def mock(self, feature):
-            from middlewared.api.current import EntitlementEntry
-            from middlewared.utils.entitlements import Reason
-
-            return EntitlementEntry(entitled=True, reason=Reason.ENTITLED, message='')
-    """):
+    with entitled("WEBSHARE"):
         yield
 
 
