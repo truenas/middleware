@@ -1054,7 +1054,7 @@ async def hook_license_update_invalidate_status(middleware, *args, **kwargs):
     here: this has to stay a local, sub-millisecond operation because it sits in front of the
     whole reconcile pass.
     """
-    await middleware.call('cache.pop', 'failover_status')
+    await middleware.call('failover.status_refresh')
 
 
 async def hook_license_update(middleware, *args, **kwargs):

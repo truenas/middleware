@@ -17,8 +17,6 @@ inventing an answer where none was obtained.
 
 from __future__ import annotations
 
-from functools import cache
-
 from ixhardware import parse_dmi
 
 from .classify import classify
@@ -28,7 +26,6 @@ from .types import HardwareClass, HardwareInfo
 __all__ = ("get_hardware_class", "get_hardware_info")
 
 
-@cache
 def get_hardware_info() -> HardwareInfo:
     """Return what this system is, computed once per process.
 
