@@ -9,7 +9,7 @@ Layering is a strict DAG: ``types`` <- (``classify``, ``detect``) <-
 ``probe``. ``types`` holds the vocabulary, ``classify`` is pure and takes DMI
 as an argument, ``detect`` is the platform team's HA platform/node detector
 kept verbatim, and ``probe`` is the single sanctioned impurity -- it reads the
-system, runs ``detect``, and caches what it found. Nothing here imports
+system and runs ``detect``, which is where the caching lives. Nothing here imports
 ``middlewared.service`` or ``middlewared.utils.entitlements``; entitlements
 depends on this package, so the reverse would be a cycle.
 

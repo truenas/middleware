@@ -27,11 +27,13 @@ __all__ = ("get_hardware_class", "get_hardware_info")
 
 
 def get_hardware_info() -> HardwareInfo:
-    """Return what this system is, computed once per process.
+    """Return what this system is.
 
-    ``ixhardware.parse_dmi()`` is itself cached, but detection forks
-    ``ipmi-raw`` and issues SES ioctls, so the result is cached here as well.
-    Nothing this reads can change without a reboot.
+    Not cached: there would be nothing left to cache. Both impure inputs
+    memoize themselves -- ``ixhardware.parse_dmi()`` and ``detect_platform()``
+    are each cached, and the latter is what forks ``ipmi-raw`` and issues the
+    SES ioctls -- and ``classify`` is pure, so every call after the first is
+    two dict lookups and some string comparisons.
     """
     dmi = parse_dmi()
     # Only the HARDWARE half is wanted here. The NODE half answers "which

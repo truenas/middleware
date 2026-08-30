@@ -7,14 +7,11 @@ from middlewared.utils.hardware.types import HardwareClass, Platform
 
 @pytest.fixture(autouse=True)
 def uncached():
-    """Both ``get_hardware_info`` and the detector it calls cache, so every
-    test here has to start from a cold cache and must not leave a warm one
-    behind for the next file. ``detect_platform`` is mocked out below, but
-    clearing only one of the two would go wrong the first time it is not."""
-    probe.get_hardware_info.cache_clear()
+    """``detect_platform`` caches, so every test here has to start from a cold
+    cache and must not leave a warm one behind for the next file. It is mocked
+    out below, but a real call would otherwise leak across tests."""
     detect.detect_platform.cache_clear()
     yield
-    probe.get_hardware_info.cache_clear()
     detect.detect_platform.cache_clear()
 
 
@@ -54,16 +51,3 @@ def test_detection_failure_propagates(wire):
     wire(DMIInfo(system_product_name="TRUENAS-MINI-R"), boom)
     with pytest.raises(OSError):
         probe.get_hardware_info()
-
-
-def test_result_is_cached(wire):
-    calls = []
-
-    def detect():
-        calls.append(None)
-        return ("MANUAL", "MANUAL")
-
-    wire(DMIInfo(system_product_name="TRUENAS-M50"), detect)
-    probe.get_hardware_info()
-    probe.get_hardware_info()
-    assert len(calls) == 1

@@ -28,10 +28,11 @@ def get_facts() -> EntitlementFacts:
 
     Deliberately not cached.
     ``get_hardware_class()`` is cheap after the
-    first call in a process: ``get_hardware_info()`` is ``@cache``d,
-    so only that first call pays for detection. That first call is not
-    trivial -- besides forking dmidecode it may also fork ``ipmi-raw`` and
-    issue SES ioctls to the enclosures, depending on the platform.
+    first call in a process: it reads DMI and runs platform detection, both of
+    which memoize themselves, so only that first call pays for detection. That
+    first call is not trivial -- besides forking dmidecode it may also fork
+    ``ipmi-raw`` and issue SES ioctls to the enclosures, depending on the
+    platform.
     """
     return EntitlementFacts(hardware_class=get_hardware_class(), license=get_license())
 
