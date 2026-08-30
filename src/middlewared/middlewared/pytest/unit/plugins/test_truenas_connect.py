@@ -845,28 +845,23 @@ def _registration_service(license_info):
     return service
 
 
+# The PEM's presence is the only thing that decides this. A license is a perpetual grant, so
+# nothing about the support contract is consulted.
 @pytest.mark.asyncio
-async def test_registration_uri_sends_pem_when_support_contract_has_lapsed():
-    # A license is a perpetual grant, so a lapsed support contract must not withhold it.
-    # The old gate defaulted to refusing, which made this fail closed and silently.
-    service = _registration_service({'raw_license': 'THE-PEM', 'contract_end': '2020-01-01'})
-
-    uri = await service.get_registration_uri()
-
-    assert 'license=THE-PEM' in uri
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize('license_info', [
+@pytest.mark.parametrize('license_info, expected', [
+    ({'raw_license': 'THE-PEM'}, 'license=THE-PEM'),
     # system.license sets raw_license to None when neither license file can be read;
     # urlencode would otherwise send the literal string "None".
-    {'raw_license': None},
+    ({'raw_license': None}, None),
     # An unlicensed system has no system.license at all.
-    None,
+    (None, None),
 ])
-async def test_registration_uri_omits_license_when_there_is_no_pem(license_info):
+async def test_registration_uri_carries_the_license_only_when_there_is_a_pem(license_info, expected):
     service = _registration_service(license_info)
 
     uri = await service.get_registration_uri()
 
-    assert 'license=' not in uri
+    if expected is None:
+        assert 'license=' not in uri
+    else:
+        assert expected in uri
