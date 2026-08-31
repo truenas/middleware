@@ -6,7 +6,7 @@ class TNCHeartbeatConnectionFailureAlertClass(AlertClass, OneShotAlertClass):
     level = AlertLevel.ERROR
     category = AlertCategory.TRUENAS_CONNECT
     title = 'Unable to connect to TrueNAS Connect Heartbeat Service'
-    text = 'Failed to connect to TrueNAS Connect Heartbeat Service in the last 48 hours'
+    text = 'Failed to connect to TrueNAS Connect Heartbeat Service in the last 7 days'
 
     async def create(self, args):
         return Alert(TNCHeartbeatConnectionFailureAlertClass, args)
