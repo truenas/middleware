@@ -32,7 +32,13 @@ END = date(2026, 4, 30)
 
 
 def _legacy_feature(name, type_=None, expires_at=None):
-    return {"name": name, "start_date": START, "expires_at": expires_at, "source": "enterprise", "type": type_}
+    return {
+        "name": name,
+        "start_date": START if name == "SUPPORT" else None,
+        "expires_at": expires_at,
+        "source": "enterprise",
+        "type": type_,
+    }
 
 
 V2_EXPECTED = {

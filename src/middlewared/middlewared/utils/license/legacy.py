@@ -167,14 +167,13 @@ def parse_legacy_license(text: str) -> LicenseInfo:
         type=LicenseType.ENTERPRISE_HA if lic.system_serial_ha else LicenseType.ENTERPRISE_SINGLE,
         model=model,
         support_expires_at=lic.contract_end,
-        # Only the support contract ends. The other flags were bought outright, and a legacy
-        # blob carries no per-feature dates at all, so stamping the contract end onto them
-        # claimed an expiry that was never sold. start_date is truthful for every feature.
+        # A legacy blob carries no per-feature dates, only the support contract's, so SUPPORT
+        # is the only feature that gets dated.
         features=MappingProxyType(
             {
                 name: FeatureInfo(
                     name=name,
-                    start_date=lic.contract_start,
+                    start_date=lic.contract_start if name == "SUPPORT" else None,
                     expires_at=lic.contract_end if name == "SUPPORT" else None,
                     source="enterprise",
                     type=_support_tier(lic.contract_type.name) if name == "SUPPORT" else None,
