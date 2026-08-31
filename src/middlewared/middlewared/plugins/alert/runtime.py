@@ -292,7 +292,7 @@ async def get_failover_info(context: ServiceContext, state: AlertState) -> Alert
 
         run_failover_related = time.monotonic() > state.blocked_failover_alerts_until
         if run_failover_related:
-            args: tuple[list[Any], dict[str, Any]] = ([], {"connect_timeout": 2})
+            args: tuple[list[Any], dict[str, Any]] = ([], {"timeout": 2, "connect_timeout": 2})
 
             # Do not run on backup if there is a software version mismatch
             try:
