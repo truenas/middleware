@@ -18,6 +18,7 @@ from .request import Mode, auth_headers, tnc_request
 from .utils import (
     CONFIGURED_TNC_STATES,
     HEARTBEAT_INTERVAL,
+    HEARTBEAT_MAX_ELAPSED_DAYS,
     calculate_sleep,
     decode_and_validate_token,
 )
@@ -191,11 +192,12 @@ async def heartbeat_start_impl(context: ServiceContext) -> None:
 
             sleep_secs = calculate_sleep(last_failure, HEARTBEAT_INTERVAL)
             if sleep_secs is None:
-                # This means that either we have a time mismatch or it's been 48 hours and we have
-                # not been able to establish contact with TNC, so an alert should be raised
+                # This means that either we have a time mismatch or we have exhausted the retry
+                # window without establishing contact with TNC, so an alert should be raised
                 logger.debug(
-                    'TNC Heartbeat: Unable to calculate sleep time, raising alert as it has likely been 48 hours '
-                    'since the last successful heartbeat (last failure: %s)', last_failure,
+                    'TNC Heartbeat: Unable to calculate sleep time, raising alert as it has likely been %d days '
+                    'since the last successful heartbeat (last failure: %s)',
+                    HEARTBEAT_MAX_ELAPSED_DAYS, last_failure,
                 )
                 await context.call2(context.s.alert.oneshot_create, TNCHeartbeatConnectionFailureAlert())
                 break
