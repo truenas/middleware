@@ -850,7 +850,8 @@ class AuthService(Service):
             if await self.middleware.call('failover.status') == 'BACKUP':
                 try:
                     rem_status = await self.middleware.call(
-                        'failover.call_remote', 'failover.status', [], {'connect_timeout': 2}
+                        'failover.call_remote', 'failover.status', [],
+                        {'raise_connect_error': False, 'timeout': 2, 'connect_timeout': 2}
                     )
                     if rem_status == 'MASTER':
                         return {
