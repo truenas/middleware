@@ -1057,10 +1057,6 @@ async def hook_license_update_invalidate_status(middleware, *args, **kwargs):
     await middleware.call('failover.status_refresh')
 
 
-async def hook_license_update(middleware, *args, **kwargs):
-    await middleware.call('failover.status_refresh')
-
-
 async def hook_post_rollback_setup_ha(middleware, *args, **kwargs):
     """
     This hook needs to be run after a NIC rollback operation and before
@@ -1369,7 +1365,6 @@ async def setup(middleware):
     middleware.register_hook(
         'system.post_license_update', hook_license_update_invalidate_status, order=-100, sync=True
     )
-    middleware.register_hook('system.post_license_update', hook_license_update, sync=False)
     middleware.register_hook('service.pre_action', service_remote, sync=False)
 
     await middleware.call2(
