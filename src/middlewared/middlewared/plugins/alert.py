@@ -701,7 +701,7 @@ class AlertService(Service):
 
             run_failover_related = time.monotonic() > self.blocked_failover_alerts_until
             if run_failover_related:
-                args = ([], {"connect_timeout": 2})
+                args = ([], {"timeout": 2, "connect_timeout": 2})
 
                 # Do not run on backup if there is a software version mismatch
                 try:
