@@ -16,7 +16,7 @@ from typing import Any, TypedDict
 
 import requests
 from truenas_api_client import CALL_TIMEOUT, Client, ClientException
-from websocket._exceptions import WebSocketBadStatusException
+from truenas_api_client.exc import ClientHandshakeError
 
 from middlewared.service import CallError, Service, private
 from middlewared.service_exception import ValidationError
@@ -119,7 +119,7 @@ class RemoteClient:
                         self.client.subscribe(name, partial(self._sub_callback, name))
                 self._on_connect()
                 c._closed.wait()
-        except WebSocketBadStatusException as e:
+        except ClientHandshakeError as e:
             if not legacy and e.status_code == 404:
                 # 24.10 middleware and earlier gives 404 when trying to access `/api/current`.
                 # We should try legacy API server in that case.
