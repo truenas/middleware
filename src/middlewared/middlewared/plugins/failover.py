@@ -1050,9 +1050,9 @@ async def hook_license_update_invalidate_status(middleware, *args, **kwargs):
     Drop the cached `failover.status` so that everything running later in this hook sees a status
     derived from the license we have just installed.
 
-    `failover.status` is answered out of a 300 second cache. Deliberately nothing else happens
-    here: this has to stay a local, sub-millisecond operation because it sits in front of the
-    whole reconcile pass.
+    `status_refresh` rather than a bare cache drop because it also re-emits the status and
+    disabled-reasons events. It can take seconds when the local node falls back to remote probes,
+    and it runs here so that cost lands outside any reconcile delegate's timeout.
     """
     await middleware.call('failover.status_refresh')
 
