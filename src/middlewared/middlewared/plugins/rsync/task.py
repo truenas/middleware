@@ -55,7 +55,12 @@ def build_commandline(context: ServiceContext, id_: int) -> Iterator[str]:
     path = shlex.quote(rsync.path)
 
     with contextlib.ExitStack() as exit_stack:
-        line = ["rsync"]
+        line = [
+            "rsync",
+            # Default timeout is zero. We're still being generous with timeouts so that rsync survives the remote
+            # side spending time on a huge delta computation or long directory scan.
+            "--timeout=300",
+        ]
         for name, flag in (
             ("archive", "-a"),
             ("compress", "-zz"),
@@ -86,7 +91,7 @@ def build_commandline(context: ServiceContext, id_: int) -> Iterator[str]:
             module_args = [path, f"rsync://{remote}/{module}"]
             if rsync.direction != "PUSH":
                 module_args.reverse()
-            line += module_args
+            line += ["--contimeout=30"] + module_args
         else:
             if rsync.ssh_credentials:
                 credentials = context.call_sync2(
