@@ -5,8 +5,9 @@ from pydantic import Field
 from middlewared.api.base import BaseModel
 
 __all__ = [
-    "ServiceEntry", "ServiceStartedArgs", "ServiceStartedResult",
-    "ServiceStartedOrEnabledArgs", "ServiceStartedOrEnabledResult",
+    "ServiceEntry", "ServiceReloadArgs", "ServiceReloadResult", "ServiceRestartArgs", "ServiceRestartResult",
+    "ServiceStartArgs", "ServiceStartResult", "ServiceStartedArgs", "ServiceStartedResult",
+    "ServiceStartedOrEnabledArgs", "ServiceStartedOrEnabledResult", "ServiceStopArgs", "ServiceStopResult",
     "ServiceUpdateArgs", "ServiceUpdateResult", "ServiceControlArgs", "ServiceControlResult",
 ]
 
@@ -53,6 +54,42 @@ class ServiceControlResult(BaseModel):
     )
 
 
+class ServiceReloadArgs(BaseModel):
+    service: str = Field(description="Name of the service to reload.")
+    options: ServiceOptions = Field(
+        default_factory=ServiceOptions,
+        description="Options for controlling the reload operation behavior.",
+    )
+
+
+class ServiceReloadResult(BaseModel):
+    result: bool = Field(description="The service is running after reload.")
+
+
+class ServiceRestartArgs(BaseModel):
+    service: str = Field(description="Name of the service to restart.")
+    options: ServiceOptions = Field(
+        default_factory=ServiceOptions,
+        description="Options for controlling the restart operation behavior.",
+    )
+
+
+class ServiceRestartResult(BaseModel):
+    result: bool = Field(description="The service is running after the restart.")
+
+
+class ServiceStartArgs(BaseModel):
+    service: str = Field(description="Name of the service to start.")
+    options: ServiceOptions = Field(
+        default_factory=ServiceOptions,
+        description="Options for controlling the start operation behavior.",
+    )
+
+
+class ServiceStartResult(BaseModel):
+    result: bool = Field(description="`true` if the service started successfully.")
+
+
 class ServiceStartedArgs(BaseModel):
     service: str = Field(description="Name of the service to check if running.")
 
@@ -67,6 +104,18 @@ class ServiceStartedOrEnabledArgs(BaseModel):
 
 class ServiceStartedOrEnabledResult(BaseModel):
     result: bool = Field(description="Service is running or set to start on boot.")
+
+
+class ServiceStopArgs(BaseModel):
+    service: str = Field(description="Name of the service to stop.")
+    options: ServiceOptions = Field(
+        default_factory=ServiceOptions,
+        description="Options for controlling the stop operation behavior.",
+    )
+
+
+class ServiceStopResult(BaseModel):
+    result: bool = Field(description="`true` if the service stopped successfully.")
 
 
 class ServiceUpdateArgs(BaseModel):
