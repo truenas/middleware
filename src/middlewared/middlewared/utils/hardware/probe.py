@@ -1,8 +1,9 @@
 """Detect the hardware this process is running on.
 
-The only module in this package that touches the system, and the only one that
-needs mocking to test. It reads DMI, asks ``detect`` which platform this is,
-and hands both to the pure ``classify`` half.
+The entry point callers use to read the system: it reads DMI, asks ``detect``
+which platform this is, and hands both to the pure ``classify`` half. ``detect``
+reaches hardware as well -- it forks ``ipmi-raw``, queries udev and issues SES
+ioctls -- so testing this path means mocking both.
 
 This module used to carry its own bhyve backplane scan, justified by reading
 sysfs directly rather than going through udev: the two are equivalent, and

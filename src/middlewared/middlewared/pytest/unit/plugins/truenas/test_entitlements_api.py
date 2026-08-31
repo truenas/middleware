@@ -10,6 +10,7 @@ from middlewared.api.current import (
     TrueNASEntitlementsInfoResult,
 )
 from middlewared.plugins.truenas import entitlements as plugin
+from middlewared.service import CallError
 from middlewared.plugins.truenas.entitlements import TrueNASEntitlementsService
 from middlewared.utils.entitlements import (
     POLICY,
@@ -76,16 +77,19 @@ def test_feature_reports_not_gated_for_an_unknown_identifier(monkeypatch):
 
 
 def test_feature_does_not_swallow_an_engine_bug(monkeypatch):
-    """Only the engine's `ValueError` for an unruled key is an answer; anything else is a bug and
-    must reach the caller."""
+    """Only the engine's `ValueError` for an unruled key is an answer. Anything else reaches the
+    caller as a CallError naming the feature, with the original chained to it."""
 
     def raise_bug(feature):
         raise RuntimeError("engine exploded")
 
     monkeypatch.setattr(plugin, "get_entitlement", raise_bug)
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(CallError) as exc:
         TrueNASEntitlementsService.check(None, "SED")
+
+    assert "SED" in str(exc.value)
+    assert isinstance(exc.value.__context__, RuntimeError)
 
 
 def make_license(feature_names, license_type, support_type):

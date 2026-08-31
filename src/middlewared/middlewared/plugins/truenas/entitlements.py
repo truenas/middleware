@@ -7,7 +7,7 @@ from middlewared.api.current import (
     TrueNASEntitlementsInfoArgs,
     TrueNASEntitlementsInfoResult,
 )
-from middlewared.service import Service
+from middlewared.service import CallError, Service
 from middlewared.utils.entitlements import (
     POLICY,
     Entitlement,
@@ -60,6 +60,8 @@ class TrueNASEntitlementsService(Service):
             # is a decision rather than an error: nothing on this system restricts the feature.
             # The engine still raises, because a lookup must not invent an answer.
             return EntitlementEntry(entitled=True, reason=Reason.NOT_GATED, message="")
+        except Exception as e:
+            raise CallError(f"Unable to determine entitlement for {feature!r}: {e}")
 
         return _entry(entitlement)
 
@@ -74,7 +76,11 @@ class TrueNASEntitlementsService(Service):
         # Read the facts once and evaluate the pure policy against them. `get_facts()` is
         # uncached and its license read is a round trip to the license daemon, so asking
         # `get_entitlement()` per feature would pay for that round trip once per key.
-        facts = get_facts()
+        try:
+            facts = get_facts()
+        except Exception as e:
+            raise CallError(f"Unable to determine entitlement facts: {e}")
+
         features: dict[str, EntitlementEntry] = {}
         # `POLICY` rather than the feature vocabulary: some license features deliberately
         # have no rule, and `check_entitlement` raises for a key it cannot resolve.
