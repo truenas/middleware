@@ -431,8 +431,6 @@ class KRB5Conf():
         return kconf + '\n'
 
     def __generate_domain_realms(self):
-        # NOTE: the section name MIT krb5 reads is "domain_realm" (singular). Any other
-        # spelling parses without error and is then silently ignored.
         kconf = '[domain_realm]\n'
         # self.realms may hold case aliases of the same realm. Map hostnames onto the
         # canonical name only, otherwise we emit redundant (and conflicting) entries.
