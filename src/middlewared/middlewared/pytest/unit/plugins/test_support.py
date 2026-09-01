@@ -1,19 +1,10 @@
 """Support ticket routing: the endpoint a ticket goes to is the entitlement's answer.
 
-`new_ticket` and `attach_ticket` make the same decision independently -- one async through
-`post`, one sync through `requests` -- so they can drift apart, and each is asserted here.
+`new_ticket` and `attach_ticket` make that decision independently -- one async through `post`,
+one sync through `requests` -- so they can drift apart, and each is asserted here.
 
-Network safety is structural rather than incidental. A previous cycle's tests reached the
-real support proxy and filed an iX case, so patching `post` is not treated as sufficient:
-
-1. An autouse fixture replaces `post`, `requests` and `sw_version` for every test in this
-   module, present and future, without the test having to ask. That deviates from this
-   tree's no-fixture convention deliberately -- a test added later must not be able to opt
-   out of it by forgetting.
-2. A second autouse fixture makes an outbound `connect` raise, catching any path the first
-   one did not anticipate.
-3. Every assertion is on the URL the stand-in recorded, so a `post` that was silently never
-   called fails instead of passing vacuously.
+The autouse fixtures exist because an earlier version of these tests reached the real support
+proxy and filed an iX case; a test added later must not be able to opt out by forgetting.
 """
 
 import socket
@@ -29,8 +20,8 @@ from middlewared.pytest.unit.helpers import create_service
 from middlewared.pytest.unit.middleware import FakeJob, Middleware
 from middlewared.service import CallError
 
-# SUPPORT's vector (0,0,0,1,0,1) grants on a key and nowhere else, so one granting column
-# and one denying one is the whole of the routing decision.
+# SUPPORT grants on a key and nowhere else, so one granting column and one denying one is
+# the whole of the routing decision.
 ROUTING_COLUMNS = [("HW+K", True), ("CE+L", False)]
 
 ENTERPRISE_PAYLOAD = {
@@ -135,9 +126,8 @@ async def test_new_ticket_routes_to_the_endpoint_its_entitlement_names(posted_ur
 @pytest.mark.asyncio
 @pytest.mark.parametrize("column,entitled", ROUTING_COLUMNS)
 async def test_new_ticket_required_attrs_follow_the_route(posted_urls, column, entitled):
-    # The two payload shapes are a union with extra='forbid', so neither is a superset of the
-    # other and the wrong one for the chosen route is rejected outright. That rejection is
-    # `required_attrs`, and it happens before anything is sent.
+    # Neither payload shape is a superset of the other, so the wrong one for the chosen route
+    # is missing a mandatory field. `required_attrs` rejects it before anything is sent.
     service, _ = _service(column)
 
     with pytest.raises(CallError) as exc:
@@ -150,8 +140,6 @@ async def test_new_ticket_required_attrs_follow_the_route(posted_urls, column, e
 
 @pytest.mark.parametrize("column,entitled", ROUTING_COLUMNS)
 def test_attach_ticket_routes_to_the_endpoint_its_entitlement_names(posted_urls, column, entitled):
-    # The sync twin of the routing test. It reaches the same decision through call_sync2 and
-    # `requests`, so a change to one path is not evidence about the other.
     service, checked = _service(column)
 
     # A plain Mock rather than FakeJob: this path only ever reads job.pipes.input.r, which it

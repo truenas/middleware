@@ -97,11 +97,7 @@ class SystemService(Service):
 
     @private
     def license(self, include_raw_license: bool = False):
-        """The license as the dashboard consumes it.
-
-        A license does not expire, so nothing here reports that it has. The `contract_*`
-        keys carry the SUPPORT feature's dates, which is the only expiry a license holds.
-        """
+        """The license as the dashboard consumes it."""
         info = self.call_sync2(self.s.truenas.license.info_private)
         if info is None:
             return None
@@ -113,10 +109,8 @@ class SystemService(Service):
             'system_serial_ha': info.serials[1] if len(info.serials) > 1 else None,
             'contract_type': info.contract_type,
             'contract_start': support.start_date if support is not None else None,
-            # The 25.10 dashboard reads remote_info.license.contract_end without a null
-            # guard, and an upgraded standby's payload is merged into an un-upgraded
-            # active's for as long as the operator leaves the active running, so this key
-            # stays until no supported upgrade starts on 25.10.
+            # Kept for mixed-version HA upgrades: an un-upgraded peer's UI still reads this
+            # key from the merged remote payload.
             'contract_end': info.support_expires_at,
             'legacy_contract_hardware': None,
             'legacy_contract_software': None,

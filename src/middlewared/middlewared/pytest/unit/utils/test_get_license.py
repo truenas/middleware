@@ -26,8 +26,6 @@ DAEMON_FAILURE_CODES = [
     LicenseError.DAEMON_ERROR,
     LicenseError.INTERNAL_ERROR,
 ]
-# The two groups differ in why the daemon declined to hand over a license, but they
-# share the outcome.
 NO_FALLBACK_CODES = UNTRUSTWORTHY_CODES + DAEMON_FAILURE_CODES
 
 LEGACY = LicenseInfo(
@@ -83,8 +81,8 @@ def test_fallback_code_answers_from_the_legacy_blob(code, legacy):
         assert get_license(LicenseStatus(valid=False, code=code)) is legacy
 
 
-# One code from each group, since the two differ in why the daemon declined and not in what
-# happens next. `test_every_license_error_code_is_classified` is what keeps the groups honest.
+# Representatives from both no-fallback groups, which differ in why the daemon declined and not
+# in what happens next. `test_every_license_error_code_is_classified` keeps the groups honest.
 @pytest.mark.parametrize(
     "code",
     [LicenseError.SYSTEM_ID_MISMATCH, LicenseError.SIGNATURE_FAILED, LicenseError.DAEMON_UNAVAILABLE],

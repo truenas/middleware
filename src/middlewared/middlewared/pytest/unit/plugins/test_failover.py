@@ -48,10 +48,8 @@ def _license(type_):
     )
 
 
-# is_licensed_for_ha() answers out of the entitlement policy, so only get_license is
-# stubbed here and the real engine computes the result. Hardware detection is stubbed
-# because it shells out to dmidecode; it cannot change the answer, which turns on the
-# license type alone.
+# HA is a LicenseTypeRule, so hardware cannot change the answer; detection is stubbed only
+# because it forks dmidecode.
 @pytest.mark.parametrize(
     "license,expected",
     [

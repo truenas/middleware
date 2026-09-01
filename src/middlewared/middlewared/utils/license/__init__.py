@@ -4,9 +4,8 @@ A license reaches us either from the license daemon (``daemon``) or from a
 pre-daemon on-disk blob (``legacy``). Both produce the same ``LicenseInfo``,
 so no consumer needs to know which one answered.
 
-Layering is a strict DAG: ``constants``/``types`` <- ``daemon``/``legacy`` <-
-this module. Nothing here imports ``middlewared.service``, so ``LicenseInfo``
-is reachable without dragging in the service framework.
+Nothing in this package may import ``middlewared.service``, so ``LicenseInfo``
+stays reachable without dragging in the service framework.
 """
 
 from __future__ import annotations
@@ -41,7 +40,9 @@ __all__ = [
 ]
 
 # Codes that mean the daemon had nothing to say about a v2 license, so the
-# legacy blob underneath is still the best answer available.
+# legacy blob underneath is still the best answer available. Only NO_LICENSE
+# falls back: a daemon that is unreachable or erroring reads as unlicensed
+# rather than resurrecting the legacy blob.
 _FALLBACK_CODES = frozenset(
     {
         LicenseError.NO_LICENSE,
@@ -55,8 +56,6 @@ def get_license(status: LicenseStatus | None = None) -> LicenseInfo | None:
     A v2 license that exists but fails verification is authoritative: return None
     rather than resurrecting the legacy blob underneath it.
     """
-    # If daemon is not responding or something goes wrong with it - it is acceptable to
-    # assume that we don't have a license etc
     if status is None:
         status = verify()
 

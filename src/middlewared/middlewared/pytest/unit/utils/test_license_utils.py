@@ -100,7 +100,7 @@ def test__from_license_status__no_support_feature_leaves_support_expiry_unset():
     [
         (None, date(2026, 5, 1), False),
         (date(2026, 4, 30), date(2026, 5, 1), True),
-        # The contract is in force through its end date, so the final day is not lapsed.
+        # In force through the end date.
         (date(2026, 4, 30), date(2026, 4, 30), False),
     ],
 )

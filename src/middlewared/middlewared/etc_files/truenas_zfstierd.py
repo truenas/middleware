@@ -8,10 +8,10 @@ def render(service, middleware):
         middleware.services.truenas.entitlements.check, LicenseFeature.ZFSTIER
     ).entitled
     if config.enabled and not entitled:
-        # Gated on config.enabled so a community box, where the row is false anyway, stays
-        # silent. Raising instead of warning is not an option: plugins/etc.py catches a
-        # render exception and continues, leaving the previous file in place -- the exact
-        # stale config this gate exists to prevent.
+        # Gated on config.enabled so a system that never turned tiering on stays silent.
+        # Raising instead of warning is not an option: a render exception is swallowed and
+        # the previous file left in place -- the exact stale config this gate exists to
+        # prevent.
         middleware.logger.warning(
             "ZFS tiering is enabled in configuration but this system is not entitled to the "
             "ZFSTIER feature; rendering the daemon configuration with tiering disabled."

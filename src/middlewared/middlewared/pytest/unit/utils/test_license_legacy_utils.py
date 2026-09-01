@@ -39,11 +39,8 @@ def _features(names, *, support_type=None, start=date(2026, 4, 8), end=date(2026
     }
 
 
-# The production injection set, which fires for every legacy blob that parses, ordered the
-# way parse_legacy_license appends it: by LicenseFeature declaration, after the license's
-# own bits. Derived rather than copied, so the expectations below cannot drift from the set
-# they describe. test__legacy_injection_set_is_pinned is what keeps that from making the
-# comparison vacuous.
+# Derived from the production injection set rather than copied, so the expectations below
+# cannot drift from it; test__legacy_injection_set_is_pinned is what keeps that non-vacuous.
 _LEGACY_INJECT = [f.value for f in LicenseFeature if f in _LEGACY_INJECT_SET]
 
 # H10, GOLD contract, HA pair. Carries the FibreChannel and VM feature bits.
@@ -69,7 +66,7 @@ FREENAS_MINI_BLOB = (
     "text,result",
     [
         # Enterprise HA license (H10, GOLD contract): FibreChannel + VM bits, proactive
-        # SUPPORT, plus the all-legacy and enterprise-only injected flags.
+        # SUPPORT, plus everything the legacy translation injects.
         (
             H10_HA_BLOB,
             LicenseInfo(
@@ -136,13 +133,8 @@ LEGACY_BRONZE_BLOB = (
 )
 
 
-# Interlock between the unconditional SUPPORT injection and the tier gate. SUPPORT is
-# injected into every legacy license, so the tier stamped on that injected key is the
-# only thing keeping proactive support away from the whole legacy installed base. Both
-# halves are asserted together: the key must be present (so anything gating on the key
-# alone keeps working) and proactive support must still be denied. If a later change
-# makes the tier gate tier-blind, or stops stamping BRONZE on contract types that never
-# bought proactive support, this fails rather than silently granting it to everyone.
+# SUPPORT is injected into every legacy license, so the tier stamped on that injected key is
+# the only thing keeping proactive support from the whole legacy installed base.
 def test__legacy_bronze_gets_support_key_but_not_proactive_support():
     info = parse_legacy_license(LEGACY_BRONZE_BLOB)
     assert info.has_feature(LicenseFeature.SUPPORT)
@@ -168,8 +160,7 @@ def test__legacy_non_tier_contract_types_get_no_proactive_support():
     assert proactive.reason == Reason.TIER_INSUFFICIENT
 
 
-# The contrast case: a gold contract still gets proactive support, so the interlock
-# above is not passing merely because the gate denies everything.
+# Positive control, so the interlock is not passing merely because the gate denies everything.
 def test__legacy_gold_contract_keeps_proactive_support():
     info = parse_legacy_license(H10_HA_BLOB)
     assert info.feature_type(LicenseFeature.SUPPORT) == SupportTier.GOLD
@@ -210,17 +201,14 @@ def test__get_legacy_license_info_drops_freenas_model():
     assert _legacy_info_for(FREENAS_MINI_BLOB) is None
 
 
-# The positive control for the drop above, so it cannot pass because the stubbed read
-# or the parse failed for some reason unrelated to the model.
 def test__get_legacy_license_info_keeps_enterprise_model():
     info = _legacy_info_for(X10_BLOB)
     assert info is not None
     assert info.model == "X10"
 
 
-# Only a freenas-prefixed model is rejected; a blob with no model at all is still a
-# license. It is also the only holder that the merged injection set widens, so the two
-# flags that widening actually grants are pinned here rather than left to drift.
+# Only a freenas-prefixed model is rejected; a blob with no model at all is still a license
+# and gets the same unconditional injection set as any other.
 def test__get_legacy_license_info_keeps_model_less_blob():
     blob = _model_less_blob()
     assert parse_legacy_license(blob).model is None
@@ -232,10 +220,6 @@ def test__get_legacy_license_info_keeps_model_less_blob():
     assert info.has_feature(LicenseFeature.SMB_FASTPATH)
 
 
-# Deriving _LEGACY_INJECT from the production set keeps the expectations above from drifting,
-# but on its own it also makes them tautological. This is the fence that recovers them: both
-# membership and the order flags land in are written out once. Widening the set hands a
-# feature to the entire legacy installed base, so it has to be written down here too.
 def test__legacy_injection_set_is_pinned():
     assert _LEGACY_INJECT == [
         "APPS",
@@ -274,7 +258,7 @@ def test__injected_features_without_a_policy_rule_are_pinned():
     assert {f for f in _LEGACY_INJECT_SET if f not in POLICY} == {LicenseFeature.AUTOTUNE}
 
 
-# The five feature bits the legacy format could carry, in the modern vocabulary.
+# The feature bits the legacy format could carry, in the modern vocabulary.
 _LEGACY_BITMASK_FEATURES = {str(FEATURE_NAME_MAP.get(f.name.upper(), f.name.upper())) for f in Features}
 
 
@@ -303,10 +287,7 @@ def test__legacy_fibrechannel_bit_is_observable_end_to_end():
 
 
 def test__zfstier_is_denied_on_every_legacy_license():
-    # ZFSTIER has neither a legacy feature bit nor an injection entry, so no legacy blob can
-    # put the key on the license, and its vector grants only where the key is. Legacy holders
-    # are therefore permanently denied it -- a deliberate outcome, pinned so that adding a
-    # route in either direction is a decision rather than an accident.
+    # No legacy blob can carry ZFSTIER; pinned so adding a route is a decision, not an accident.
     assert LicenseFeature.ZFSTIER not in _LEGACY_INJECT_SET
     assert LicenseFeature.ZFSTIER.value not in _LEGACY_BITMASK_FEATURES
 

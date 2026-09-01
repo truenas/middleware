@@ -1,25 +1,15 @@
 """What machine is this?
 
 One place to ask, so nothing else has to know that the answer comes from DMI,
-a chassis tag, or a scsi_generic inquiry. Callers that only care which column
-of the product feature matrix a system sits in want ``get_hardware_class``;
-callers that need the finer platform distinction want ``get_hardware_info``.
+a chassis tag, or a scsi_generic inquiry.
 
-Layering is a strict DAG: ``types`` <- (``classify``, ``detect``) <-
-``probe``. ``types`` holds the vocabulary, ``classify`` is pure and takes DMI
-as an argument, ``detect`` is the platform team's HA platform/node detector
-kept verbatim, and ``probe`` is the single sanctioned impurity -- it reads the
-system and runs ``detect``, which is where the caching lives. Nothing here imports
-``middlewared.service`` or ``middlewared.utils.entitlements``; entitlements
-depends on this package, so the reverse would be a cycle.
+Nothing here imports ``middlewared.service`` or
+``middlewared.utils.entitlements``; entitlements depends on this package, so
+the reverse would be a cycle.
 
-``detect`` imports ``middlewared.plugins.enclosure_`` and that is an accepted
-exception rather than an oversight: reading SES enclosures is how several iX
-platforms report which controller they are, the enumeration code lives in that
-plugin package, and duplicating it here to keep the import graph tidy would
-give us two copies of hardware facts that must not disagree. That package
-imports nothing from ``middlewared.service`` or from this one, so it adds no
-cycle.
+``detect`` imports the single submodule
+``middlewared.plugins.enclosure_.ses_enclosures2``, whose transitive imports
+reach neither of those.
 """
 
 from __future__ import annotations

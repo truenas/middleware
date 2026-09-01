@@ -52,10 +52,6 @@ async def test_default_resolve_groups_is_etc_groups():
 
 
 def reconcile_service():
-    """
-    Build the service alongside the middleware it will drive, plus the list that records every
-    `etc.generate` it issues, in order.
-    """
     middleware = Middleware()
     rendered = []
     middleware["etc.generate"] = rendered.append
@@ -161,10 +157,6 @@ async def test_reconcile_issues_service_control_without_ha_propagation(action):
 
 @pytest.mark.asyncio
 async def test_reconcile_names_each_delegate_in_progress():
-    """
-    A delegate sitting on its timeout has to be identifiable from `core.get_jobs`, which means
-    its name must be reported before it runs rather than after it returns.
-    """
     service, middleware, rendered = reconcile_service()
     job = FakeJob()
 

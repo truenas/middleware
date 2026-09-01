@@ -1,8 +1,7 @@
 """Hardware vocabulary.
 
-Definitions only: the enums and the record every other module in this package
-speaks in. No detection, no policy, no I/O -- the only logic here is the two
-properties that read off a field already decided elsewhere.
+The enums and the record every other module in this package speaks in.
+Definitions only: no detection, no policy, no I/O.
 """
 
 from __future__ import annotations
@@ -16,9 +15,9 @@ __all__ = ("HardwareClass", "HardwareInfo", "Platform")
 class Platform(enum.Enum):
     """What kind of machine this is, at the granularity detection can resolve.
 
-    Finer-grained than ``HardwareClass``: it separates the two HA virtual
-    machine flavors from each other and from real iX hardware, which matters
-    for detection even where it does not change the entitlement answer.
+    Finer-grained than ``HardwareClass``: it separates the HA virtual machine
+    flavors from each other and from real iX hardware, which matters for
+    detection even where it does not change the entitlement answer.
     """
 
     IX_HARDWARE = "IX_HARDWARE"
@@ -59,9 +58,7 @@ class HardwareInfo:
     """Everything detection concluded about this machine."""
 
     platform: Platform
-    """Platform this system was classified as."""
     hardware_class: HardwareClass
-    """Matrix column that platform maps to."""
     chassis: str
     """Raw chassis tag, or ``TRUENAS_UNKNOWN`` when the system is not iX-built."""
     ha_platform: str
@@ -78,10 +75,8 @@ class HardwareInfo:
     def is_ha_capable(self) -> bool:
         """Whether this machine is one half of an HA pair.
 
-        Deliberately not ``hardware_class.is_appliance``: that is true of every
-        iX appliance, including the single-controller ones. ``"MANUAL"`` is
-        what says this machine is not one half of an HA pair, and acting on
-        anything weaker than that would take down standalone R-series and
-        Z-series boxes.
+        Deliberately not ``hardware_class.is_appliance``, which is true of
+        single-controller appliances too. ``"MANUAL"`` is what says this
+        machine is not one half of an HA pair.
         """
         return self.ha_platform != "MANUAL"

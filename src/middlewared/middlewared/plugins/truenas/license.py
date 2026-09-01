@@ -34,12 +34,10 @@ def _license_entry(info: LicenseInfo) -> LicenseInfoEntry:
     There is no license-wide expiry to project. Expiry belongs to individual features,
     so `features[].expires_at` is the only date here, and the end of the support
     contract is the SUPPORT entry's.
-
-    `serials` and `enclosures` are copied rather than passed through: the source holds
-    them as a tuple and a `MappingProxyType`, neither of which pydantic accepts for a
-    `list` or a `dict` in strict mode. `type` is emitted by name because `LicenseType`
-    is an `IntEnum` and would otherwise go out as a bare integer.
     """
+    # Copied rather than passed through: pydantic's strict mode rejects a tuple for a list and a
+    # MappingProxyType for a dict, and LicenseType is an IntEnum that would otherwise go out as a
+    # bare integer.
     return LicenseInfoEntry(
         id=info.id,
         type=info.type.name,
@@ -141,11 +139,7 @@ class TrueNASLicenseService(TrueNASLicenseReconcileService, Service):
         check_annotations=True,
     )
     def info(self) -> LicenseInfoEntry | None:
-        """Returns the parsed license object, or null if no license exists.
-
-        The license itself has no expiration. Where a feature expires, its date is on
-        that feature's own entry.
-        """
+        """Returns the parsed license object, or null if no license exists."""
         info = self.info_private()
         return _license_entry(info) if info is not None else None
 

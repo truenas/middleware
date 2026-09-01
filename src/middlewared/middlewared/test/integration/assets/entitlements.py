@@ -21,9 +21,9 @@ _DECLARATION = """
 def entitled(feature, value=True, reason=None):
     """Make `truenas.entitlements.check(feature)` answer `value` for the duration.
 
-    Replaces the `product_type('ENTERPRISE')` asset: gates ask whether the system is entitled to
-    one named feature, not what product it is. Reaches `call2` gates as well as `middleware.call`
-    ones, because `get_method_by_callable` consults the mock registry too.
+    Gates ask whether the system is entitled to one named feature, not what product it is.
+    Reaches `call2` gates as well as `middleware.call` ones, because `get_method_by_callable`
+    consults the mock registry too.
     """
     if reason is None:
         reason = "ENTITLED" if value else "NO_LICENSE"

@@ -4,8 +4,6 @@ The assertions run the projection through `serialize_result`, so what is compare
 the payload as it leaves the API rather than the projection's Python output. That is
 what pins the WebUI contract, which nothing else here can reach. `allow_fallback` is
 `False` so a shape error raises, unlike production where it degrades to a warning.
-An accidental added key has to fail as loudly as a removed one, hence whole-dict
-equality.
 """
 
 import json
@@ -20,8 +18,7 @@ from middlewared.api.current import TrueNASLicenseInfoResult
 from middlewared.plugins.truenas.license import _license_entry
 from middlewared.utils.license import from_license_status, parse_legacy_license
 
-# Enterprise HA license (H10, GOLD contract) -- the same blob the legacy
-# normalizer tests decode.
+# Enterprise HA license (H10, GOLD contract).
 LEGACY_HA_BLOB = (
     "AUgxMAAAAAAAAAAAAAAAAABURVNULTAwMDAwMQAAAAAAVEVTVC0wMDAwMDIAAAAAAAQAADIwMjYwNDA4AAAAABYAAAAAAAAAaVhzeXN0ZW1zIE"
     "luYy4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwAAAAAAAAAAgMCAgE="

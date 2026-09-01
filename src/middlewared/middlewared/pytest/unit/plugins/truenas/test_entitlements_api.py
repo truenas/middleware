@@ -118,7 +118,7 @@ def make_license(feature_names, license_type, support_type):
 UNLICENSED_APPLIANCE = EntitlementFacts(hardware_class=HardwareClass.TRUENAS_HW, license=None)
 
 # One shape with no license and one with every key, so the whole-map assertions below run
-# against a map that is mostly grants and a map that is mostly denials.
+# against a map that is mostly denials and a map that is mostly grants.
 FACTS_TABLE = [
     UNLICENSED_APPLIANCE,
     EntitlementFacts(
@@ -157,8 +157,6 @@ def test_info_carries_a_message_exactly_where_it_denies(facts, monkeypatch):
 
 
 def test_info_reads_the_system_facts_once(monkeypatch):
-    """One facts read answers the whole map. `get_facts()` is uncached and its license read is
-    a round trip to the license daemon, so a read per feature is a round trip per key."""
     reads = []
 
     def counting_get_facts():

@@ -845,8 +845,7 @@ def _registration_service(license_info):
     return service
 
 
-# The PEM's presence is the only thing that decides this. A license is a perpetual grant, so
-# nothing about the support contract is consulted.
+# The PEM's presence is the only thing that decides this.
 @pytest.mark.asyncio
 @pytest.mark.parametrize('license_info, expected', [
     ({'raw_license': 'THE-PEM'}, 'license=THE-PEM'),

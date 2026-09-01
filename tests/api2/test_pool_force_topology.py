@@ -4,11 +4,9 @@ from truenas_api_client import ValidationErrors
 from middlewared.test.integration.assets.entitlements import entitled
 from middlewared.test.integration.utils import call
 
-# Four names that cannot exist. `pool.create` validates topology before it looks at disks --
-# `_process_topology` runs `verrors.check()` on `_validate_topology`'s result before
-# `disk.check_disks_availability` -- so the gate is reachable without consuming a disk and no
-# pool is created. Four, because RAIDZ2's minimum is 4 and a shorter list would add a
-# min-disks error alongside the one being asserted.
+# Four names that cannot exist. `pool.create` validates topology before it looks at disks, so
+# the gate is reachable without consuming a disk and no pool is created. Four, because RAIDZ2's
+# minimum is 4 and a shorter list would add a min-disks error alongside the one being asserted.
 FAKE_DISKS = ["nosuchdisk0", "nosuchdisk1", "nosuchdisk2", "nosuchdisk3"]
 
 

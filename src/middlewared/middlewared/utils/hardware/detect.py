@@ -5,12 +5,9 @@
 
 """Which HA platform is this, and which node of it.
 
-Verbatim move of the detector that lived in
-``middlewared.plugins.failover_.detect_utils``; ``failover.hardware`` and the
-hardware classifier now share this one copy. The platform team owns these
-rules -- the codenames, the DMI strings, the SES product suffixes and the MCU
-bit math are all facts about shipped hardware, not choices this package makes.
-Do not edit the function without platform-team review.
+The platform team owns these rules -- the codenames, the DMI strings, the SES
+product suffixes and the MCU bit math are all facts about shipped hardware,
+not choices this package makes.
 """
 
 import logging
@@ -23,8 +20,8 @@ from pyudev import Context
 
 from middlewared.plugins.enclosure_.ses_enclosures2 import get_ses_enclosures
 
-# The function below is a verbatim move and stays byte-identical to its
-# previous home, so formatting is suppressed for the rest of the file.
+# The function below is a verbatim move that must stay byte-identical, so the
+# formatter is held off for the rest of the file.
 # fmt: off
 
 logger = logging.getLogger(__name__)

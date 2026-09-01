@@ -11,6 +11,4 @@ __all__ = ("EntitlementFacts", "HardwareClass")
 @dataclass(frozen=True, kw_only=True, slots=True)
 class EntitlementFacts:
     hardware_class: HardwareClass
-    """Hardware class this system belongs to."""
     license: LicenseInfo | None
-    """Parsed license, or None when the system is unlicensed."""

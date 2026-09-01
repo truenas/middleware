@@ -368,10 +368,8 @@ class NVMeTargetLicenseReconcileDelegate(LicenseReconcileDelegate):
         """
         Only converge a target that is actually running.
 
-        `nvmet.global.running` is the running notion for both backends -- the kernel module being
-        loaded, or the `nvmf` unit being started under SPDK. With nothing running there is no
-        configfs or RPC state to bring in line, and `nvmet.global.start` ends in
-        `etc.generate('nvmet')` so the next start renders everything from scratch regardless.
+        With nothing running there is no configfs or RPC state to bring in line, and the next
+        start renders config from scratch regardless.
         """
         return await middleware.call('nvmet.global.running')
 

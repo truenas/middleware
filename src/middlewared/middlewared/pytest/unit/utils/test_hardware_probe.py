@@ -7,9 +7,9 @@ from middlewared.utils.hardware.types import HardwareClass, Platform
 
 @pytest.fixture(autouse=True)
 def uncached():
-    """``detect_platform`` caches, so every test here has to start from a cold
-    cache and must not leave a warm one behind for the next file. It is mocked
-    out below, but a real call would otherwise leak across tests."""
+    """Defensive only: no test here warms the real cache, because ``wire`` patches probe's
+    own binding rather than ``detect_platform`` itself. Clearing keeps that true if it
+    stops holding."""
     detect.detect_platform.cache_clear()
     yield
     detect.detect_platform.cache_clear()
@@ -27,9 +27,6 @@ def wire(monkeypatch):
 
 
 def test_hardware_half_reaches_ha_platform(wire):
-    """Only the HARDWARE half of the detect tuple is wanted here: it is what reaches
-    `classify` and what populates `ha_platform`. The NODE half says which side of an HA pair
-    this is, which is not a question this package asks."""
     wire(DMIInfo(system_product_name="TRUENAS-M50"), lambda: ("ECHOWARP", "B"))
 
     info = probe.get_hardware_info()
@@ -41,9 +38,7 @@ def test_hardware_half_reaches_ha_platform(wire):
 
 
 def test_detection_failure_propagates(wire):
-    """A detector that raises takes the whole classification with it. The
-    chassis tag cannot say whether this is one half of an HA pair, so there is
-    no honest answer to fall back to."""
+    """The chassis tag cannot say whether this is one half of an HA pair, so there is no honest fallback."""
 
     def boom():
         raise OSError("no enclosure")

@@ -66,10 +66,6 @@ def test_enable_leave_activedirectory():
     assert check_ad_started() is False
 
     if not ha:
-        # Deny the entitlement the way an unlicensed system would: that lands on
-        # the CE/HW column, which DIRECTORY_SERVICES grants on neither hardware
-        # side. The wording still comes from the engine's message table rather
-        # than being restated here, since that is what the plugin surfaces.
         with entitled("DIRECTORY_SERVICES", False):
             with pytest.raises(ValidationErrors, match='requires an Enterprise license'):
                 call("system.general.update", {"ds_auth": True})

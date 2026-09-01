@@ -771,8 +771,8 @@ class ZfsTierLicenseReconcileDelegate(LicenseReconcileDelegate):
     name = "zfs_tier"
     etc_groups = ("truenas_zfstierd",)
     service = "truenas_zfstierd"
-    # RELOAD, not RENDER: the SIGHUP is the point. The daemon's reload handler aborts every
-    # active job on a true->false transition, and service.control renders the service's own
+    # RELOAD, not RENDER: the SIGHUP is the point, since the daemon has to be told to drop
+    # active jobs when the entitlement goes away. service.control renders the service's own
     # select_etc() on the way into the verb -- including when the unit is stopped, which is
     # what converges an HA standby.
     action = LicenseReconcileAction.RELOAD

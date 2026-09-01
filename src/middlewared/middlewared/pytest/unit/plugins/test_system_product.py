@@ -38,7 +38,7 @@ def _info(**overrides) -> LicenseInfo:
 # system.license is an untyped dict that the dashboard consumes directly, so nothing but an
 # exact whole-dict match can catch either half of the risk: a re-added `expired`, or -- far
 # worse -- a dropped `contract_end`, which the 25.10 dashboard dereferences without a null
-# guard. The contract dates are the SUPPORT feature's; the license itself carries none.
+# guard. Both contract dates are the SUPPORT feature's; the license carries no expiry of its own.
 def test_license_matches_the_recorded_wire():
     assert _license_service(_info()).license() == {
         "model": "H10",

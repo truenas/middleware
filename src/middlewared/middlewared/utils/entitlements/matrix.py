@@ -39,8 +39,7 @@ TARGET_VECTORS: Mapping[LicenseFeature, Vector] = MappingProxyType(
     }
 )
 
-# HA has no entry on purpose: it is a license type, not a key, so no cell can decide it
-# (see policy.py).
+# HA has no entry on purpose: it is a license type, not a key, so no cell can decide it.
 DERIVED_VECTORS: Mapping[DerivedEntitlement, Vector] = MappingProxyType(
     {
         DerivedEntitlement.PROACTIVE_SUPPORT: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),

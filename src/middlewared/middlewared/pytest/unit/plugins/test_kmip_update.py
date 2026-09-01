@@ -1,9 +1,9 @@
 """KMIP's entitlement gate: the enable transition, and nothing else.
 
 `do_update` runs its whole validation half before `verrors.check()` and only mutates anything
-after it. That is what makes this testable without standing up the fifteen collaborators the
-second half needs: `validate_port` is monkeypatched to always report an error, so the check
-is a wall the call can never get past, and every assertion is about the errors raised at it.
+after it. That is what makes this testable without standing up the collaborators the mutation
+half needs: `validate_port` is monkeypatched to always report an error, so the check is a wall
+the call can never get past, and every assertion is about the errors raised at it.
 """
 
 import pytest
@@ -18,8 +18,8 @@ from middlewared.service import ValidationErrors
 PORT_ATTRIBUTE = "kmip_update.port"
 ENABLED_ATTRIBUTE = "kmip_update.enabled"
 
-# KMIP's vector (0,0,0,1,0,1) grants on a key and nowhere else, so one granting column and
-# one denying one is the whole of the gate.
+# KMIP grants on a key and nowhere else, so one granting column and one denying one is the
+# whole of the gate.
 GATE_COLUMNS = [("HW+K", True), ("CE+L", False)]
 
 

@@ -76,8 +76,8 @@ def install_entitlements(middleware, facts) -> list[str]:
 
     def check(feature):
         checked.append(feature)
-        # Mirrors TrueNASEntitlementsService.check, which does NOT raise: an unruled key means
-        # "nothing gates this", not "error".
+        # An unruled key means "nothing gates this", not an error, so it answers rather than
+        # propagating the engine's ValueError.
         try:
             entitlement = check_entitlement(feature, facts)
         except ValueError:

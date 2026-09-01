@@ -1,51 +1,12 @@
 """Translate legacy on-disk licenses into the normalized LicenseInfo shape.
 
-A legacy license whose model starts with "freenas" is not honoured at all:
-get_legacy_license_info returns None and the system reads as unlicensed. Those
-blobs were issued for FreeNAS Certified and FreeNAS Mini hardware, which bought
-none of the functionality the injection below hands out, and there is no useful
-subset to inject for them instead. The rejection is deliberately silent, so a
-caller cannot distinguish a rejected blob from a missing one.
-
-Every legacy license that survives that check gets the same flags injected.
 Legacy licenses predate the per-feature key vocabulary, so a modern gate reading
-one sees only the handful of bits the old format could carry, and an existing
-holder would lose working functionality on upgrade. Each injected flag is here
-because the gate it replaced already allowed it:
+one would see almost no keys and revoke functionality the holder already has.
+Every surviving legacy blob therefore gets _LEGACY_INJECT granted outright.
 
-- APPS, VMS and CONTAINERS. Their matrix vectors deny a license that lacks the
-  key, and today's gates only consult the license on HA capable hardware, so
-  without these a legacy holder would lose apps and VMs on upgrade.
-- STIG and TRUESEARCH, matching gates that key off any valid license regardless
-  of product type.
-- NFS_SNAPSHOT and NETWORK_FEC. Their matrix vectors are key-only on both
-  hardware sides, so a legacy holder exposing snapshots over NFS or running a
-  configured FEC mode would lose it on upgrade.
-- NVMEOF_SPDK. Key-only on both hardware sides, while the gate it replaced
-  granted SPDK to any HA capable system.
-- RDMA. Key-only on both hardware sides, while the gate it replaced required an
-  enterprise system that was not a MINI and had an RDMA capable NIC fitted. The
-  NIC remains a hardware check outside the license; only the model half of that
-  gate is dropped.
-- KMIP and WEBSHARE. Key-only on both hardware sides and no legacy license can
-  carry either key, while neither key management nor Webshare has a license gate
-  at all today, so every legacy holder can already use them.
-- DIRECTORY_SERVICES, which gates directory-services authentication to the UI
-  and API rather than directory services themselves. Key-only on both hardware
-  sides, so no legacy holder loses UI/API logins on upgrade.
-- SUPPORT. Key-only on both hardware sides, and the tier a legacy license grants
-  is carried by its contract type rather than by a key, so the flag is injected
-  regardless of contract type and the tier is stamped onto it (see
-  _support_tier).
-- AUTOTUNE, CATALOG_ENTERPRISE_TRAIN, MISSION_CRITICAL, SMB_FASTPATH and
-  SMB_VEEAM, the flags historically gated behind an is_enterprise check. With
-  freenas models rejected outright, the only holder this widens is a legacy blob
-  carrying no model at all. AUTOTUNE has no entitlement policy behind it, and
-  CATALOG_ENTERPRISE_TRAIN grants on hardware plus key so it stays denied off
-  appliance hardware, which leaves MISSION_CRITICAL, SMB_FASTPATH and SMB_VEEAM
-  as the whole of the widening. MISSION_CRITICAL is key-only on both hardware
-  sides, which is precisely what keeps a legacy holder on the Mission Critical
-  update profile after upgrade.
+A blob whose model starts with "freenas" bought none of that functionality, so it
+is rejected entirely and the system reads as unlicensed. The rejection is silent:
+a caller cannot distinguish a rejected blob from a missing one.
 """
 
 from __future__ import annotations
@@ -104,9 +65,7 @@ def _support_tier(contract_type_name: str) -> str:
     regardless of contract type, so the tier stamped here is the only thing
     separating a legacy licensee from proactive support. Contract types outside
     the SupportTier vocabulary collapse to BRONZE, which the proactive-support
-    tier gate rejects. Unconditional injection is only safe while that gate
-    keeps rejecting BRONZE; a tier-blind gate over an injected SUPPORT key would
-    hand proactive support to the entire legacy installed base.
+    tier gate rejects.
 
     Membership is derived from SupportTier rather than listed here so a newly
     added tier cannot silently fall through to BRONZE.
@@ -119,7 +78,6 @@ def _support_tier(contract_type_name: str) -> str:
 
 @lru_cache()
 def get_legacy_license_info() -> LicenseInfo | None:
-    """Return a LicenseInfo built from the legacy on-disk license, or None."""
     try:
         with open(LEGACY_LICENSE_FILE) as f:
             info = parse_legacy_license(f.read().strip("\n"))
@@ -167,8 +125,7 @@ def parse_legacy_license(text: str) -> LicenseInfo:
         type=LicenseType.ENTERPRISE_HA if lic.system_serial_ha else LicenseType.ENTERPRISE_SINGLE,
         model=model,
         support_expires_at=lic.contract_end,
-        # A legacy blob carries no per-feature dates, only the support contract's, so SUPPORT
-        # is the only feature that gets dated.
+        # A legacy blob carries only the support contract's dates, not per-feature ones.
         features=MappingProxyType(
             {
                 name: FeatureInfo(

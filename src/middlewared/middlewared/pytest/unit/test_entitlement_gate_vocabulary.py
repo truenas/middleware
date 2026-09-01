@@ -19,6 +19,7 @@ ENDPOINT = "truenas.entitlements.check"
 
 VOCABULARIES = {"LicenseFeature": LicenseFeature, "DerivedEntitlement": DerivedEntitlement}
 
+# A floor, not a count: it catches a scan that matched nothing, and a mass loss of gates.
 MINIMUM_GATES = 25
 
 
@@ -51,7 +52,6 @@ def _names_the_endpoint(call):
 
 
 def test_production_gates_name_a_feature_the_live_policy_rules_on():
-    """Every feature a gate spells out has to have a rule, or the gate is permanently open."""
     known = {str(key) for key in POLICY}
     gates = 0
     unruled = []

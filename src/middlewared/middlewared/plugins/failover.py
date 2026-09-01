@@ -1333,9 +1333,8 @@ class CtdbLicenseReconcileDelegate(LicenseReconcileDelegate):
     name = 'ctdb'
     etc_groups = ('ctdb',)
     service = 'ctdb'
-    # RESTART, not RELOAD: `CTDBService` (`plugins/service_/services/ctdb.py`) declares neither
-    # `restartable` nor `reloadable`, so RESTART takes the stop-then-start branch, which is what
-    # can actually bring ctdb up on a node that has only just become licensed.
+    # RESTART, not RELOAD: the reload path regenerates config but returns without starting a unit
+    # that is not running, and ctdb is stopped on a node that has only just become licensed.
     action = LicenseReconcileAction.RESTART
     order = 0
 
@@ -1359,9 +1358,9 @@ async def setup(middleware):
     )
     middleware.register_hook('kmip.sed_keys_sync', hook_kmip_sync, sync=True)
     middleware.register_hook('kmip.zfs_keys_sync', hook_kmip_sync, sync=True)
-    # This must stay ahead of the license reconcile pass, which runs at order=0. Half of the
-    # license sensitive etc groups read `failover.status` while rendering, so if this ordering is
-    # ever changed they will silently reconcile against the status cached under the old license.
+    # This must stay ahead of the license reconcile pass, which runs at order=0. License sensitive
+    # etc groups read `failover.status` while rendering, so if this ordering is ever changed they
+    # will silently reconcile against the status cached under the old license.
     middleware.register_hook(
         'system.post_license_update', hook_license_update_invalidate_status, order=-100, sync=True
     )

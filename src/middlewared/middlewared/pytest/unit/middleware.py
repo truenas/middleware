@@ -10,7 +10,6 @@ class FakeJob:
 
     def __init__(self, result=None):
         self.result = result
-        # Every `(percent, description)` handed to `set_progress`, in order
         self.progress = []
 
     async def wait(self, raise_error: bool = False):

@@ -24,7 +24,7 @@ from middlewared.utils.entitlements import (
 from middlewared.utils.entitlements.engine import _MESSAGES
 
 
-# (a) The product feature matrix, written out. Every row is a decision about who gets what,
+# The product feature matrix, written out. Every row is a decision about who gets what,
 # so a cell that changes has to change here too rather than riding along with a refactor.
 # It is also what makes the single representative-per-shape table below safe: the features
 # that share a shape are pinned here instead of being swept there.
@@ -55,7 +55,7 @@ def test_target_vectors_match_the_product_matrix():
     }
 
 
-# (b) Live POLICY shape: which keys have a rule, and of which kind.
+# Live POLICY shape: which keys have a rule, and of which kind.
 def test_live_policy_shape():
     assert set(POLICY) == {
         LicenseFeature.CATALOG_ENTERPRISE_TRAIN,
@@ -87,19 +87,19 @@ def test_live_policy_shape():
     # Every license feature the policy rules on is bound to a matrix Vector.
     for key in set(POLICY) - set(DerivedEntitlement):
         assert isinstance(POLICY[key], Vector), key
-    # The LegacyRule kind is retained in the engine for future use but no live entry uses it.
+    # LegacyRule is still dispatched by the engine, but no live entry uses it.
     assert not [rule for rule in POLICY.values() if isinstance(rule, LegacyRule)]
 
 
-# (c) Completeness (D-SYNC): adding a flag must not silently skip a site.
+# Completeness: adding a flag must not silently skip a site.
 def test_target_vectors_cover_every_license_feature():
     assert set(LicenseFeature) == set(TARGET_VECTORS)
 
 
 def test_policy_keys_are_known_vocabulary():
     assert set(POLICY) <= set(LicenseFeature) | set(DerivedEntitlement)
-    # And the other direction, so a new DerivedEntitlement member cannot be added
-    # without a rule and then quietly raise ValueError at its first call site.
+    # And the other direction: an unruled DerivedEntitlement member comes back NOT_GATED --
+    # entitled -- from the public endpoint, rather than being denied.
     assert set(DerivedEntitlement) <= set(POLICY)
 
 
@@ -108,8 +108,8 @@ def test_policy_keys_have_display_names():
 
 
 def test_every_reason_has_a_message_template():
-    # `_format_message` looks the reason up in this map, so a member added without an entry
-    # would only surface at the first call site that produced it.
+    # `_format_message` does `_MESSAGES.get(reason, "")`, so a member added without an entry
+    # silently yields an empty message rather than failing anywhere.
     assert set(Reason) == set(_MESSAGES)
 
 
@@ -133,7 +133,7 @@ def test_declared_tiers_cover_tier_rules():
     [
         Vector(ce=1, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
         Vector(ce=0, hw=1, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
-        Vector(ce=0, hw=0, hw_l=1, hw_k=1, ce_l=0, ce_k=1),  # the shape the product matrix used to carry
+        Vector(ce=0, hw=0, hw_l=1, hw_k=1, ce_l=0, ce_k=1),
         Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=1, ce_k=1),
     ],
 )
@@ -154,14 +154,8 @@ def _license_for(feature: str, state: str) -> LicenseInfo | None:
     return make_license(feature_names=())  # "nokey": licensed, without this feature's key
 
 
-# (d) Vector resolution, once per distinct live vector shape.
-#
-# The features sharing a shape are pinned by the matrix test above, so sweeping them here
-# would only run the same six cells again. The engine reads `hardware_class` solely through
-# `.is_appliance`, so TRUENAS_HW and GENERIC are the two sides it can tell apart -- the one
-# MINI row at the end is what pins Minis onto the CE side rather than their own.
-#
-# Between them these reach all six columns and all four reasons a vector can produce.
+# Vector resolution, once per distinct live vector shape.
+# The features sharing a shape are pinned by the matrix test above, so sweeping them would repeat it.
 VECTOR_TABLE = [
     # APPS/CONTAINERS/VMS (1,1,0,1,0,1): granted unlicensed on either side, and a license
     # without the key revokes it.
@@ -171,8 +165,8 @@ VECTOR_TABLE = [
     (LicenseFeature.APPS, HardwareClass.GENERIC, "none", True, "ENTITLED", "CE"),
     (LicenseFeature.APPS, HardwareClass.GENERIC, "nokey", False, "KEY_MISSING", "CE+L"),
     (LicenseFeature.APPS, HardwareClass.GENERIC, "key", True, "ENTITLED", "CE+K"),
-    # CATALOG_ENTERPRISE_TRAIN (0,0,0,1,0,0): the only live shape whose CE key cell is 0, so
-    # it is the only one where a key on the community side still denies.
+    # CATALOG_ENTERPRISE_TRAIN: a shape whose CE key cell is 0, so a key on the community side
+    # still denies.
     (LicenseFeature.CATALOG_ENTERPRISE_TRAIN, HardwareClass.TRUENAS_HW, "none", False, "NO_LICENSE", "HW"),
     (LicenseFeature.CATALOG_ENTERPRISE_TRAIN, HardwareClass.TRUENAS_HW, "nokey", False, "KEY_MISSING", "HW+L"),
     (LicenseFeature.CATALOG_ENTERPRISE_TRAIN, HardwareClass.TRUENAS_HW, "key", True, "ENTITLED", "HW+K"),
@@ -186,7 +180,7 @@ VECTOR_TABLE = [
     (LicenseFeature.DEDUP, HardwareClass.GENERIC, "none", True, "ENTITLED", "CE"),
     (LicenseFeature.DEDUP, HardwareClass.GENERIC, "nokey", False, "KEY_MISSING", "CE+L"),
     (LicenseFeature.DEDUP, HardwareClass.GENERIC, "key", True, "ENTITLED", "CE+K"),
-    # ZFSTIER, and the thirteen other features sharing (0,0,0,1,0,1): key-only on either side.
+    # ZFSTIER, and the other features sharing (0,0,0,1,0,1): key-only on either side.
     (LicenseFeature.ZFSTIER, HardwareClass.TRUENAS_HW, "none", False, "NO_LICENSE", "HW"),
     (LicenseFeature.ZFSTIER, HardwareClass.TRUENAS_HW, "nokey", False, "KEY_MISSING", "HW+L"),
     (LicenseFeature.ZFSTIER, HardwareClass.TRUENAS_HW, "key", True, "ENTITLED", "HW+K"),
@@ -223,7 +217,7 @@ def test_vector_behavior(feature, hardware_class, state, entitled, reason, colum
     assert entitlement.column == column
 
 
-# (e) Where a denial's wording comes from. A feature may register bespoke wording that has to
+# Where a denial's wording comes from. A feature may register bespoke wording that has to
 # win over the generic template on every reason it registers, and a feature with no display
 # name has to fall back to its raw key rather than emitting an empty phrase.
 _CE_KEY_DROPPED = Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=0)
@@ -258,7 +252,7 @@ def test_message_source(feature, column, vector, message):
     assert entitlement.message == message
 
 
-# (f) Unknown feature.
+# Unknown feature.
 def test_unknown_feature_raises():
     with pytest.raises(ValueError):
         check_entitlement("NOPE", make_facts(hardware_class=HardwareClass.GENERIC))
@@ -276,7 +270,7 @@ PROACTIVE_SUPPORT_NO_LICENSE = "This system is not licensed to use the proactive
 PROACTIVE_SUPPORT_KEY_MISSING = "This system's license does not include the proactive support feature."
 PROACTIVE_SUPPORT_TIER = "This system's support tier does not include the proactive support feature."
 
-# (g) PROACTIVE_SUPPORT: the live TierRule, which is the only rule kind that reads a
+# PROACTIVE_SUPPORT: the live TierRule, which is the only rule kind that reads a
 # qualifier off a feature key other than its own policy key. The messages are asserted
 # because that split is invisible to mypy -- both are `str` -- and conflating them would
 # emit "the support feature" here, which is a different entitlement.
@@ -309,11 +303,9 @@ def test_tier_rule_behavior(hardware_class, state, support_type, entitled, reaso
     assert entitlement.message == message
 
 
-# (h) HA: the live LicenseTypeRule. The license type decides outright and the hardware class
+# HA: the live LicenseTypeRule. The license type decides outright and the hardware class
 # only names the column, so an ENTERPRISE_HA license grants it everywhere and an
-# ENTERPRISE_SINGLE one grants it nowhere. These fail if HA is ever given a matrix Vector,
-# since a Vector would make the answer depend on the hardware side and on a LicenseFeature.HA
-# key that does not exist.
+# ENTERPRISE_SINGLE one grants it nowhere.
 LICENSE_TYPE_TABLE = [
     (HardwareClass.TRUENAS_HW, LicenseType.ENTERPRISE_HA, True, "ENTITLED", "HW+L"),
     (HardwareClass.TRUENAS_HW, LicenseType.ENTERPRISE_SINGLE, False, "WRONG_LICENSE_TYPE", "HW+L"),

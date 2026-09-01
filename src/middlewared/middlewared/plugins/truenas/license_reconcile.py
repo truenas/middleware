@@ -11,12 +11,10 @@ if TYPE_CHECKING:
     from middlewared.main import Middleware
 
 
-# A delegate that only re-renders config talks to the etc plugin and nothing else, so it has no
-# business taking half a minute. A delegate that also drives a service verb is bounded by that
-# verb's own timeout, which `ServiceOptions.timeout` defaults to 120 seconds, so the outer bound
-# here has to sit above it: otherwise this timeout fires first and the verb's own one, which is
-# the informative one, never reports.
+# A delegate that only re-renders config has no business taking half a minute.
 RENDER_TIMEOUT = 30
+# Must exceed `service.control`'s own timeout, or this fires first and the verb's more
+# informative error never surfaces.
 SERVICE_TIMEOUT = 180
 
 
@@ -24,15 +22,11 @@ class TrueNASLicenseReconcileService(Service):
     """
     Registry of the subsystems that have to be reconciled after a license change.
 
-    These methods reach the `truenas.license` namespace by inheritance: `license.py`'s
-    `TrueNASLicenseService` subclasses this one. Inheritance is the only merge available here,
-    because the namespace is owned by `plugins/truenas/__init__.py` -- it pre-instantiates
-    `license.py`'s service, and the loader skips its own compound service construction for a
-    namespace a container already owns. A class that only declared the namespace here, with
-    nothing inheriting it, would never be instantiated at all.
-
-    `Config` below is kept identical to `license.py`'s: dropping it would have the service
-    metaclass derive a namespace from this class name instead.
+    These methods are mixed into `TrueNASLicenseService` rather than declared standalone: the
+    `truenas.license` namespace is already owned by a pre-instantiated container service, so the
+    loader never builds a compound service for it and a standalone class here would never be
+    instantiated. `Config` has to match the owning service's, or the service metaclass derives a
+    different namespace from this class name.
     """
 
     class Config:
@@ -62,11 +56,7 @@ class TrueNASLicenseReconcileService(Service):
 
     @private
     async def reconcile_delegates(self) -> list[LicenseReconcileDelegate]:
-        """
-        Return the registered delegates in the order they should be processed.
-
-        `sorted` is stable, so delegates sharing an `order` keep their registration order.
-        """
+        """Return the registered delegates in the order they should be processed."""
         return sorted(self.reconcile_delegates_list, key=lambda delegate: delegate.order)
 
     @private
@@ -75,13 +65,8 @@ class TrueNASLicenseReconcileService(Service):
         """
         Bring the registered subsystems back in line with the current license.
 
-        A delegate whose `should_run` returns False is skipped entirely -- neither its `etc`
-        groups nor its service verb are touched -- so this does not converge everything that
-        is registered, only everything that wants converging on this system right now.
-
         A job rather than a plain method because the pass is bounded in minutes rather than
-        seconds, and `job.set_progress` below is what makes a stuck delegate nameable in
-        `core.get_jobs` while it is stuck.
+        seconds.
         """
         delegates = await self.reconcile_delegates()
         for index, delegate in enumerate(delegates):
@@ -98,8 +83,8 @@ class TrueNASLicenseReconcileService(Service):
                         for group in await delegate.resolve_groups(self.middleware):
                             await self.middleware.call("etc.generate", group)
                     else:
-                        #  Another node is also running truenas.license.reconcile` via
-                        #  `system.post_license_update` hook, no need to propagate the action
+                        # The peer runs its own reconcile pass off its own `system.post_license_update`
+                        # hook, so there is nothing to propagate.
                         service_job = await self.middleware.call(
                             "service.control",
                             delegate.action.value,

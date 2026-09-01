@@ -13,20 +13,10 @@ def dmi(**kwargs) -> DMIInfo:
     return DMIInfo(**kwargs)
 
 
-# `classify` ties the four fields together, and every rule the classifier applies is visible
-# in the answer, so one table over whole results covers the lot:
-#
-#  * `ha_platform` is consulted before the chassis tag -- IXKVM and BHYVE are the two HA VM
-#    flavors, and any other codename, including one shipped after this was written, is
-#    appliance hardware rather than a raise.
-#  * "MANUAL" is not an answer. It only says "not one half of an HA pair", which is true of
-#    Minis, whiteboxes and single-controller appliances alike, so it falls through to the tag.
-#  * The chassis tag is reported as DMI gave it, even where detection moved the column.
-#  * `is_ha_capable` reads off `ha_platform`, never off the hardware class.
+# One table over whole `classify()` results, so every rule the classifier applies is visible in the answer.
 CLASSIFY_TABLE = [
-    # MANUAL falls through to an appliance tag, and that appliance is not HA-capable.
     (dmi(system_product_name="TRUENAS-M50"), "MANUAL", Platform.IX_HARDWARE, HardwareClass.TRUENAS_HW, "TRUENAS-M50"),
-    # ... and to a Mini tag, which is iX-built but its own column.
+    # A Mini is iX-built but gets its own column.
     (
         dmi(system_product_name="TRUENAS-MINI-R"),
         "MANUAL",
@@ -71,8 +61,7 @@ CLASSIFY_TABLE = [
         "TRUENAS-MINI-R",
     ),
     (dmi(system_product_name="BHYVE"), "BHYVE", Platform.BHYVE, HardwareClass.TRUENAS_HW, "TRUENAS-UNKNOWN"),
-    # A codename this does not recognize is a platform shipped after this was written; it
-    # must land in the appliance column rather than being demoted.
+    # An unrecognized codename must land in the appliance column rather than being demoted.
     (dmi(), "WARPCORE9", Platform.IX_HARDWARE, HardwareClass.TRUENAS_HW, "TRUENAS-UNKNOWN"),
 ]
 
@@ -84,8 +73,6 @@ def test_classify(info, ha_platform, platform, hardware_class, chassis):
     assert result.platform is platform
     assert result.hardware_class is hardware_class
     assert result.chassis == chassis
-    # The codename is carried onto the record as detection gave it, not normalised, and it is
-    # the only thing is_ha_capable reads -- an appliance on MANUAL is not one half of a pair.
     assert result.ha_platform == ha_platform
     assert result.is_ha_capable is (ha_platform != "MANUAL")
 

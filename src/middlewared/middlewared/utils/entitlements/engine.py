@@ -44,8 +44,6 @@ _MESSAGES: Mapping[Reason, str] = {
     Reason.NOT_GATED: "",
 }
 
-# Human-facing names substituted into the generic message templates; the raw
-# feature key is used when a name is not listed here.
 FEATURE_DISPLAY_NAMES: Mapping[str, str] = {
     LicenseFeature.APPS: "applications",
     LicenseFeature.CATALOG_ENTERPRISE_TRAIN: "enterprise application train",
@@ -73,8 +71,7 @@ FEATURE_DISPLAY_NAMES: Mapping[str, str] = {
 }
 
 # Per-feature, per-reason message overrides consulted before the generic
-# templates. Lets a feature keep bespoke wording that would otherwise be lost
-# when its rule flips from a LegacyRule to a matrix Vector.
+# templates, so a feature keeps the exact wording users already see.
 FEATURE_MESSAGES: Mapping[str, Mapping[Reason, str]] = {
     LicenseFeature.DIRECTORY_SERVICES: {
         Reason.NO_LICENSE: "Directory services authentication for UI and API access requires an Enterprise license.",
@@ -117,70 +114,46 @@ def _format_message(reason: Reason, feature: str) -> str:
 @dataclass(frozen=True, kw_only=True, slots=True)
 class Entitlement:
     entitled: bool
-    """Whether the system is entitled to the feature."""
     reason: Reason
-    """Machine-readable classification of the outcome."""
     column: str
     """Feature-matrix column the facts resolved to (one of COLUMNS)."""
     message: str
-    """Human-facing explanation, empty when entitled."""
 
 
 class Vector(typing.NamedTuple):
     """One row of the product feature matrix: six cells, where ``1`` grants and ``0`` denies.
 
-    Field order is ``COLUMNS`` order. That is the whole reason the engine can index a row by
-    the column the facts resolved to (``vector[COLUMNS.index(column)]``).
+    Field order is ``COLUMNS`` order, which is what lets the engine index a row by the column
+    the facts resolved to (``vector[COLUMNS.index(column)]``).
 
-    Which half of the row a system reads is decided by ``facts.hardware_class.is_appliance``:
-    iX appliance hardware takes the ``hw*`` cells and everything else takes the ``ce*`` cells.
-    Minis are iX hardware but fold to the CE side. Within a half the license axis has three
-    states -- no license at all, a license that does not carry this feature's key, and a
-    license that does.
-
-    So a license without the key is its own population rather than a superset of the
-    unlicensed one, and a row can grant ``ce`` while leaving ``ce_l`` clear: the feature is
-    available on an unlicensed community system and is revoked the moment a license lands
-    that omits the key. That falls out of column resolution and is never special-cased.
+    A license that does not carry this feature's key is its own population, not a superset of
+    the unlicensed one.
     """
 
     ce: int
-    """CE side -- non-appliance hardware and Minis -- with no license present."""
     hw: int
-    """Appliance hardware with no license present."""
     hw_l: int
-    """Appliance hardware licensed, where the license does not carry this feature's key."""
     hw_k: int
-    """Appliance hardware licensed, where the license carries this feature's key."""
     ce_l: int
-    """CE side licensed, where the license does not carry this feature's key."""
     ce_k: int
-    """CE side licensed, where the license carries this feature's key."""
 
 
 @dataclass(frozen=True, kw_only=True, slots=True)
 class LegacyRule:
     func: Callable[[EntitlementFacts], Entitlement]
-    """Callable reproducing a today-behavior gate over the given facts."""
 
 
 @dataclass(frozen=True, kw_only=True, slots=True)
 class TierRule:
     feature: str
-    """License feature whose per-feature ``type`` qualifier is inspected (e.g. "SUPPORT")."""
     allowed_tiers: frozenset[str]
     """Tier values (upper-cased) that grant the checked feature."""
     vector: Vector
     """Matrix cells for this entitlement, authoritative for the resolved column.
 
-    Only ``hw_k`` and ``ce_k`` may be set, and anything else is rejected outright. A tier
-    is read off ``FeatureInfo.type``, which exists only where the feature's key does, so a
-    cell set anywhere else would claim a tier could be evaluated with no key to read it
-    from.
-
-    ``LicenseInfo.contract_type`` is deliberately not consulted as a second source of
-    a tier: on a daemon license it is derived from this same feature, so it is absent
-    in exactly the columns where the key is.
+    ``LicenseInfo.contract_type`` is deliberately not consulted as a second source of a tier: on
+    a daemon license it is copied off this same feature, and on a legacy one it is the
+    un-normalized contract type, so it is never a better source than ``FeatureInfo.type``.
     """
 
     def __post_init__(self) -> None:
@@ -200,14 +173,11 @@ class LicenseTypeRule:
 
 Rule = typing.Union[Vector, LegacyRule, TierRule, LicenseTypeRule]
 
-# Anything the policy can be keyed by. A license carries its own feature keys, and
-# some entitlements exist only here because they fall out of the license type or
-# tier instead of a key, so both vocabularies are equally valid to ask about.
 EntitlementKey = LicenseFeature | DerivedEntitlement
 
 
 def has_key(feature: str, facts: EntitlementFacts) -> bool:
-    """Membership-only key check: True iff a license is present and carries the feature."""
+    """Membership-only: True iff a license is present and carries the feature. Expiry never gates."""
     return facts.license is not None and facts.license.has_feature(feature)
 
 
@@ -230,10 +200,9 @@ def resolve_column(key_feature: str, facts: EntitlementFacts) -> str:
 def _vector_deny_reason(vector: Vector, facts: EntitlementFacts) -> Reason:
     """Classify a vector's denial.
 
-    A key on this hardware side is what would grant the feature. If that cell is set,
-    the feature is achievable here (license missing vs key missing); otherwise this
-    hardware can never have it. Every rule kind that resolves by column shares this, so
-    their denials cannot drift apart.
+    A key on this hardware side is what would grant the feature. If that cell is set, the
+    feature is achievable here (license missing vs key missing); otherwise this hardware can
+    never have it.
     """
     key_cell = vector.hw_k if facts.hardware_class.is_appliance else vector.ce_k
     if not key_cell:
@@ -253,14 +222,9 @@ def _check_vector(feature: str, vector: Vector, facts: EntitlementFacts) -> Enti
 def _check_tier(policy_key: str, rule: TierRule, facts: EntitlementFacts) -> Entitlement:
     """Resolve `rule` against its matrix row, then qualify the grant by the feature's tier.
 
-    The vector decides the column and is authoritative -- a tier cannot rescue a cell the
-    matrix does not grant, which is why the cell is read first. Because the vector is
-    key-only, a granting cell means the column is ``HW+K``/``CE+K``, so the tier is only
-    ever asked where the key that carries it exists.
-
     The column resolves against ``rule.feature`` -- the key that carries the tier -- while
-    messages are formatted from `policy_key`. The two differ: proactive support is
-    qualified by the SUPPORT key, and "support" is not its wording.
+    messages are formatted from `policy_key`. The two differ: proactive support is qualified
+    by the SUPPORT key, and "support" is not its wording.
     """
     column = resolve_column(rule.feature, facts)
     if not rule.vector[COLUMNS.index(column)]:
@@ -269,10 +233,7 @@ def _check_tier(policy_key: str, rule: TierRule, facts: EntitlementFacts) -> Ent
 
     info = facts.license.feature(rule.feature) if facts.license is not None else None
     if info is None:
-        # Unreachable while the vector stays key-only, since a granting cell is a K column
-        # and that is exactly where the license carries the feature. Kept as the narrowing
-        # for facts.license, and so that relaxing the constraint degrades to a denial rather
-        # than to an AttributeError.
+        # Unreachable while the vector stays key-only; kept as the narrowing for facts.license.
         reason = Reason.KEY_MISSING
         return Entitlement(entitled=False, reason=reason, column=column, message=_format_message(reason, policy_key))
 

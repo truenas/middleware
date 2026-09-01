@@ -358,11 +358,8 @@ class ISCSILicenseReconcileDelegate(LicenseReconcileDelegate):
         without making a call. Only a subset of it is ever rendered, and which one depends on the
         configured mode, so the actual choice needs a call.
 
-        `plugins/service_/services/iscsitarget.py` already carries that choice in its `select_etc()`
-        override, which is the only one in the tree. Deferring to it keeps the license path and the
-        service path from drifting apart. Note it returns `scst_targets` alongside `scst` and not
-        with `lio`, which is why `scst_targets` is declared as owned here even though it is not
-        always rendered.
+        Deferring to the service's own `select_etc()` keeps the license path and the service path
+        from choosing different groups.
         """
         return await (await middleware.call('service.object', 'iscsitarget')).select_etc()
 
@@ -371,9 +368,8 @@ class ISCSILicenseReconcileDelegate(LicenseReconcileDelegate):
         Only converge a target that is actually running.
 
         With the service stopped there is no live state to bring in line, and starting it later
-        regenerates everything from scratch anyway -- `service.control`'s start path calls
-        `service.generate_etc` over `select_etc()` before it reaches the service's own `start()`.
-        With the service running this is the only thing that converges it after a license change.
+        regenerates config from scratch anyway. With the service running this is the only thing
+        that converges it after a license change.
         """
         return await middleware.call('service.started', 'iscsitarget')
 

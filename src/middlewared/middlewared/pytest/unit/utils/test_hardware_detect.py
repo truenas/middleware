@@ -1,9 +1,8 @@
-"""Coverage for the moved platform detector.
+"""Coverage for ``detect_platform``.
 
-Everything here drives ``detect_platform`` through its four impure inputs --
-DMI, udev, the SES enclosure enumeration and ``ipmi-raw`` -- with stand-ins.
-The paths that cannot be reached that way are called out in the tests that get
-closest to them.
+Everything here drives it through its impure inputs -- DMI, udev, the SES enclosure
+enumeration, ``ipmi-raw`` and a sysfs read -- with stand-ins. The F-Series (LAJOLLA2)
+and X-Series (PUMA) arms are not exercised at all.
 """
 
 from dataclasses import dataclass, field
@@ -102,8 +101,6 @@ def ipmi(monkeypatch):
     return build
 
 
-# (a) No product name at all: nothing downstream has anything to work with, and the bail is
-# checked before everything else.
 def test_no_product_name_beats_the_qemu_stamp(dmi):
     """The empty-product bail is checked first, so even a stamped serial does
     not get as far as the QEMU branch."""
@@ -111,7 +108,7 @@ def test_no_product_name_beats_the_qemu_stamp(dmi):
     assert detect.detect_platform() == ("MANUAL", "MANUAL")
 
 
-# (b) QEMU. The serial has to carry the HA stamp, and its last character
+# QEMU. The serial has to carry the HA stamp, and its last character
 # assigns the node.
 @pytest.mark.parametrize(
     "serial,node",
@@ -140,7 +137,7 @@ def test_qemu_stamp_wins_over_a_truenas_product_name(dmi):
     assert detect.detect_platform() == ("IXKVM", "A")
 
 
-# (c) bhyve. The host attaches a scsi_generic device whose inquiry model names
+# bhyve. The host attaches a scsi_generic device whose inquiry model names
 # the controller position; finding it is the whole of the test, because that
 # device is what separates an HA bhyve guest from an ordinary one.
 @pytest.mark.parametrize("node,as_bytes", [("A", True), ("B", False)], ids=["bytes", "str"])
@@ -170,9 +167,8 @@ def test_bhyve_device_without_a_model_attribute_is_skipped(dmi, udev):
     assert detect.detect_platform() == ("BHYVE", "B")
 
 
-# (d) Anything that is neither QEMU nor a shipped platform prefix stops here,
-# before any enclosure or BMC access is attempted. The enclosure stand-in
-# raises to prove the walk is never reached.
+# Anything that is neither QEMU nor a shipped platform prefix stops here,
+# before any enclosure or BMC access is attempted.
 @pytest.mark.parametrize("product", ["X11SSH-F", "truenas-m50"])
 def test_non_platform_prefix_bails_early(dmi, monkeypatch, product):
     def explode(asdict):
@@ -183,7 +179,7 @@ def test_non_platform_prefix_bails_early(dmi, monkeypatch, product):
     assert detect.detect_platform() == ("MANUAL", "MANUAL")
 
 
-# (e) V-Series: the digit after the prefix picks the codename, and the SES
+# V-Series: the digit after the prefix picks the codename, and the SES
 # product suffix picks the node.
 @pytest.mark.parametrize("product,hardware", [("TRUENAS-V100", "LUDICROUS"), ("TRUENAS-V260", "PLAID")])
 def test_vseries_codename(dmi, enclosures, product, hardware):
@@ -197,8 +193,6 @@ def test_vseries_codename(dmi, enclosures, product, hardware):
     [("4IXGA-NTBp", "A"), ("4IXGA-NTGp", "A"), ("4IXGA-NTBs", "B"), ("4IXGA-NTGs", "B")],
 )
 def test_vseries_node_from_backplane_suffix(dmi, enclosures, ses_product, node):
-    """NTB is the original V-Series board, NTG the 4IXGA_PEX89032 one; both
-    use the same -p/-s suffix for controller position."""
     enclosures(FakeEnclosure(vendor="ECStream", product=ses_product))
     dmi(system_product_name="TRUENAS-V260")
     assert detect.detect_platform() == ("PLAID", node)
@@ -211,7 +205,7 @@ def test_vseries_unknown_generation(dmi, enclosures):
     assert detect.detect_platform() == ("MANUAL", "MANUAL")
 
 
-# (f) M-Series: the enclosure product names the controller position.
+# M-Series: the enclosure product names the controller position.
 @pytest.mark.parametrize("ses_product,node", [("4024Sp", "A"), ("4024Ss", "B")])
 def test_mseries_node(dmi, enclosures, ses_product, node):
     enclosures(FakeEnclosure(is_mseries=True, product=ses_product))
@@ -226,9 +220,8 @@ def test_mseries_without_a_recognized_backplane(dmi, enclosures):
     assert detect.detect_platform() == ("ECHOWARP", "MANUAL")
 
 
-# (g) H-Series: bit 0 of the MCU's tenth byte is set on the primary
-# controller. The value is masked with 1, so only 0 and 1 can come out and
-# the "unexpected value" guard in the function is unreachable from here.
+# H-Series: the MCU value is masked with ``& 1``, so only 0 and 1 can come
+# out and the "unexpected value" guard in the function is unreachable from here.
 @pytest.mark.parametrize(
     "stdout,node",
     [
