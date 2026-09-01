@@ -14,7 +14,9 @@ if typing.TYPE_CHECKING:
     from truenas_pylicensed import LicenseType
 
 
-COLUMNS: tuple[str, ...] = ("CE", "HW", "HW+L", "HW+K", "CE+L", "CE+K")
+Column = typing.Literal["CE", "HW", "HW+L", "HW+K", "CE+L", "CE+K"]
+
+COLUMNS: tuple[Column, ...] = typing.get_args(Column)
 
 
 class Reason(StrEnum):
@@ -115,8 +117,7 @@ def _format_message(reason: Reason, feature: str) -> str:
 class Entitlement:
     entitled: bool
     reason: Reason
-    column: str
-    """Feature-matrix column the facts resolved to (one of COLUMNS)."""
+    column: Column
     message: str
 
 
@@ -187,7 +188,7 @@ def has_key(feature: str, facts: EntitlementFacts) -> bool:
     return facts.license is not None and facts.license.has_feature(feature)
 
 
-def resolve_column(key_feature: str, facts: EntitlementFacts) -> str:
+def resolve_column(key_feature: str, facts: EntitlementFacts) -> Column:
     """Return the matrix column `facts` resolves to, keyed off `key_feature`.
 
     `key_feature` is the license feature whose *key presence* decides the K axis, which
