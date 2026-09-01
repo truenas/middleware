@@ -410,8 +410,8 @@ class ZFSResourceCreateEncryption(BaseModel):
 class ZFSResourceCreateProperties(BaseModel):
     """ZFS properties that may be set at creation time.
 
-    Each field is the native ZFS property name and values are handed to ZFS verbatim. A field left as null is
-    simply not sent to ZFS so the property inherits from the parent as usual.
+    Each field is the native ZFS property name and values are handed to ZFS verbatim.
+    A field left as null is simply not sent to ZFS so the property inherits from the parent as usual.
     """
 
     aclinherit: str | None = Field(
