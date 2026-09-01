@@ -68,7 +68,28 @@ class ApiKeyServicePart(CRUDServicePart[ApiKeyEntry]):
         # need here (e.g. 2FA status), so query the table directly.
         users = await self.middleware.call("datastore.query", "account.bsdusers", [], {"prefix": "bsdusr_"})
 
-        by_id: dict[int, str] = {x["id"]: x["username"] for x in users}
+        by_id: dict[int, str | None] = {x["id"]: x["username"] for x in users}
+
+        # Keys for directory services accounts that have no SID (plain LDAP)
+        # are stored by the `user.query` id synthesized from the account's UID,
+        # which the local user table cannot resolve. Look each distinct one up
+        # through NSS once per query.
+        for row in rows:
+            if not row["user_identifier"].isdigit():
+                continue
+
+            synthetic_id = int(row["user_identifier"])
+            if synthetic_id < BASE_SYNTHETIC_DATASTORE_ID or synthetic_id in by_id:
+                continue
+
+            try:
+                pwdobj = await self.middleware.call(
+                    "user.get_user_obj", {"uid": synthetic_id - BASE_SYNTHETIC_DATASTORE_ID}
+                )
+            except KeyError:
+                by_id[synthetic_id] = None
+            else:
+                by_id[synthetic_id] = pwdobj["pw_name"]
 
         # Convert legacy keys into the appropriate local administrator account.
         if result := _tf.tnfilter(users, filters=_ADMIN_UID_FILTER, options=_ADMIN_UID_GET_OPTS):
@@ -79,7 +100,6 @@ class ApiKeyServicePart(CRUDServicePart[ApiKeyEntry]):
         return {
             "by_id": by_id,
             "by_sid": {},
-            "by_uid": {},
             "now": utc_now(naive=False),
             "root_name": root_name,
         }
@@ -113,24 +133,9 @@ class ApiKeyServicePart(CRUDServicePart[ApiKeyEntry]):
             # If we can't resolve the ID then the account was probably deleted
             # and we didn't quite get to clean up yet.
             data["user_identifier"] = int(user_identifier)
-            if data["user_identifier"] >= BASE_SYNTHETIC_DATASTORE_ID:
-                # Directory services account that has no SID (plain LDAP). Its
-                # `user.query` id is synthesized from the UID.
-                data["local"] = False
-                uid = data["user_identifier"] - BASE_SYNTHETIC_DATASTORE_ID
-                if uid not in context["by_uid"]:
-                    # Feed the account we looked up back into our extend context
-                    # because there may be multiple keys for the same UID value.
-                    try:
-                        pwdobj = await self.middleware.call("user.get_user_obj", {"uid": uid})
-                    except KeyError:
-                        context["by_uid"][uid] = None
-                    else:
-                        context["by_uid"][uid] = pwdobj["pw_name"]
-
-                data["username"] = context["by_uid"][uid]
-            else:
-                data["username"] = context["by_id"].get(data["user_identifier"])
+            # Ids at or above the synthetic base belong to directory services accounts.
+            data["local"] = data["user_identifier"] < BASE_SYNTHETIC_DATASTORE_ID
+            data["username"] = context["by_id"].get(data["user_identifier"])
         elif user_identifier == LEGACY_API_KEY_USERNAME:
             # This may be magic string designating a migrated API key
             data["username"] = context["root_name"]
