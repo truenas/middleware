@@ -1,12 +1,12 @@
 """Validation rules for zfs.resource.create.
 
-Rules are small functions with a uniform signature. Each one takes the
-request model and a CreateContext of resolved values, raises a single
-ValidationError on a failed check, and returns nothing otherwise. The
-service calls them explicitly and in order from its create_impl so the
-control flow reads top to bottom in one place. Most rules are pure. The
-encryption rule also takes the service so it can query the existing
-ancestors it needs to judge the request.
+Rules are small pure functions with a uniform signature. Each one takes
+the request model and a CreateContext of resolved values and gathered
+facts, raises a single ValidationError on a failed check, and returns
+nothing otherwise. Rules never perform I/O. The service calls them
+explicitly and in order from its create_impl so the control flow reads
+top to bottom in one place. When a rule needs a new fact the service
+gathers it and the context grows a field.
 """
 
 import dataclasses
@@ -17,7 +17,6 @@ import typing
 
 import truenas_pylibzfs
 
-from middlewared.api.current import ZFSResourceQuery
 from middlewared.service_exception import ValidationError
 from middlewared.utils.crypto import generate_token
 
@@ -29,12 +28,14 @@ if typing.TYPE_CHECKING:
 
 __all__ = (
     "CreateContext",
+    "ancestor_chain",
     "check_denied_properties",
     "check_encryption",
     "check_name_valid",
     "check_path_shape",
     "check_protected_path",
     "check_user_property_names",
+    "check_volume_capacity",
     "check_volume_has_volsize",
     "resolve_create_request",
 )
@@ -50,9 +51,18 @@ class CreateContext:
     """Effective zfs properties after creation defaults are applied."""
     encrypt: dict[str, typing.Any] | None
     """Resolved encryption config when a new encryption root is requested."""
+    ancestors: dict[str, typing.Any] = dataclasses.field(default_factory=dict)
+    """Existing ancestors of the new resource keyed by name with their
+    available space and encryption properties. Populated by the service
+    when a rule needs them. A missing ancestor has no entry."""
     # TODO uncomment when the truenas.entitlements API is merged
     # dedup_entitled: bool = False
     # """Whether this system is licensed to use ZFS deduplication."""
+
+
+def ancestor_chain(path: str) -> list[str]:
+    """Return the ancestors of `path` ordered nearest first."""
+    return [i.as_posix() for i in pathlib.PurePosixPath(path).parents if i.as_posix() != "."]
 
 
 def _secret_value(value: typing.Any) -> str | None:
@@ -190,7 +200,42 @@ def check_volume_has_volsize(data: "ZFSResourceCreateArgsData", ctx: CreateConte
         )
 
 
-def check_encryption(service: typing.Any, data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> None:
+def check_volume_capacity(data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> None:
+    """A volume reservation may not consume more than 80% of the available space.
+
+    The effective refreservation (the volsize for a thick volume) is
+    compared against the available space of the nearest existing
+    ancestor. Sparse volumes reserve nothing so they are exempt, which
+    makes oversubscription a deliberate request rather than a force
+    flag. The check is skipped when the reservation is not expressed in
+    bytes since the library validates values itself.
+
+    The service calls this only for volumes and after the ancestor
+    entries have been gathered.
+    """
+    try:
+        reservation = int(ctx.properties.get("refreservation", 0))
+    except ValueError:
+        # a word value like none means the volume is sparse and reserves nothing
+        return
+
+    for ancestor in ancestor_chain(data.path):
+        rv = ctx.ancestors.get(ancestor)
+        if rv is None:
+            # a missing ancestor is created (or rejected) later
+            continue
+        if reservation > rv["properties"]["available"]["value"] * 0.8:
+            raise ValidationError(
+                f"{SCHEMA}.properties",
+                "The requested refreservation would consume more than 80% of the "
+                f"available space on {ancestor!r}. Reduce volsize or create a sparse "
+                "volume by setting refreservation to none.",
+                errno.EINVAL,
+            )
+        return
+
+
+def check_encryption(data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> None:
     """Validate a request to create a new encryption root.
 
     Exactly one source of key material must be provided. The existing
@@ -201,7 +246,8 @@ def check_encryption(service: typing.Any, data: "ZFSResourceCreateArgsData", ctx
     passphrase encrypted parent since it could not be unlocked while its
     parent is locked.
 
-    The service calls this only when `data.encryption` is set.
+    The service calls this only when `data.encryption` is set and after
+    the ancestor entries have been gathered.
     """
     provided = [
         name
@@ -220,17 +266,9 @@ def check_encryption(service: typing.Any, data: "ZFSResourceCreateArgsData", ctx
             errno.EINVAL,
         )
 
-    ancestors = [i.as_posix() for i in pathlib.PurePosixPath(data.path).parents if i.as_posix() != "."]
-    results = {
-        rv["name"]: rv
-        for rv in service.call_sync2(
-            service.s.zfs.resource.query_impl,
-            ZFSResourceQuery(paths=ancestors, properties=["encryption"]),
-        )
-    }
     seen_unencrypted = False
-    for ancestor in ancestors:
-        rv = results.get(ancestor)
+    for ancestor in ancestor_chain(data.path):
+        rv = ctx.ancestors.get(ancestor)
         if rv is None:
             # a missing ancestor is created (or rejected) later
             continue

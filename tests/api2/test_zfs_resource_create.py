@@ -90,6 +90,33 @@ def test_zfs_resource_create_volume_sparse():
         destroy(path)
 
 
+def test_zfs_resource_create_volume_capacity_guardrail():
+    """Test that a thick volume reserving over 80% of the available space is
+    rejected while a sparse volume of the same size is allowed"""
+    avail = call("zfs.resource.query", {"paths": [pool_name], "properties": ["available"]})
+    volsize = (int(avail[0]["properties"]["available"]["value"] * 0.9) // 16384) * 16384
+    path = os.path.join(pool_name, "test_create_zvol_capacity")
+    try:
+        with pytest.raises(Exception) as exc_info:
+            call(
+                "zfs.resource.create",
+                {"path": path, "type": "VOLUME", "properties": {"volsize": volsize}},
+            )
+        assert "create a sparse volume" in str(exc_info.value)
+
+        entry = call(
+            "zfs.resource.create",
+            {
+                "path": path,
+                "type": "VOLUME",
+                "properties": {"volsize": volsize, "refreservation": "none"},
+            },
+        )
+        assert entry["properties"]["volsize"]["value"] == volsize
+    finally:
+        destroy(path)
+
+
 def test_zfs_resource_create_volume_requires_volsize():
     """Test that creating a VOLUME without volsize fails"""
     path = os.path.join(pool_name, "test_create_zvol_novolsize")

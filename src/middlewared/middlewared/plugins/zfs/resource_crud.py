@@ -28,6 +28,7 @@ from middlewared.utils.filter_list import filter_list
 from .create_impl import ZFS_INVALID_INPUT_ERRORS, create_impl
 from .create_rules import (
     CreateContext,
+    ancestor_chain,
     # check_dedup_entitlement,  TODO uncomment when the truenas.entitlements API is merged
     check_denied_properties,
     check_encryption,
@@ -35,6 +36,7 @@ from .create_rules import (
     check_path_shape,
     check_protected_path,
     check_user_property_names,
+    check_volume_capacity,
     check_volume_has_volsize,
     resolve_create_request,
 )
@@ -399,8 +401,19 @@ class ZFSResourceService(Service):
         check_user_property_names(data, ctx)
         check_volume_has_volsize(data, ctx)
 
+        if data.type == "VOLUME" or data.encryption:
+            # one query serves both the capacity and encryption rules
+            ctx.ancestors = {
+                rv["name"]: rv
+                for rv in self.call_sync2(
+                    self.s.zfs.resource.query_impl,
+                    ZFSResourceQuery(paths=ancestor_chain(path), properties=["available", "encryption"]),
+                )
+            }
+        if data.type == "VOLUME":
+            check_volume_capacity(data, ctx)
         if data.encryption:
-            check_encryption(self, data, ctx)
+            check_encryption(data, ctx)
 
         # TODO uncomment when the truenas.entitlements API is merged
         # from truenas_pylicensed.features import LicenseFeature
@@ -492,6 +505,9 @@ class ZFSResourceService(Service):
         - ``encryption`` provides a hex key beneath a passphrase-encrypted parent, or
           would create an encryption root beneath an unencrypted dataset that itself
           sits inside an encrypted one (``EINVAL``)
+        - a thick volume's reservation would consume more than 80% of the available
+          space - create a sparse volume (``refreservation`` of ``none``) to
+          deliberately oversubscribe (``EINVAL``)
 
         Examples:
 
