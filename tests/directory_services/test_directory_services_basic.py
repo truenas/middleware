@@ -1,7 +1,9 @@
 import pytest
 from functions import SSH_TEST
 
+from middlewared.test.integration.assets.api_key import api_key
 from middlewared.test.integration.assets.directory_service import directoryservice
+from middlewared.test.integration.assets.privilege import privilege
 from middlewared.test.integration.utils import call
 from middlewared.test.integration.utils.audit import expect_audit_method_calls
 from middlewared.service_exception import ValidationErrors
@@ -69,3 +71,33 @@ def test_directory_services_network_domain(service_type):
     # Final test: restore default (if necessary)
     if service_type == 'LDAP':
         call('network.configuration.update', {'domain': DEFAULT_NETWORK_DOMAIN})
+
+
+@pytest.mark.parametrize('service_type', ['ACTIVEDIRECTORY', 'IPA', 'LDAP'])
+def test_directory_services_api_key(service_type):
+    """
+    API keys may only be created for accounts that have roles granted to them by
+    a privilege. Directory services cache entries carry no group membership and
+    so `user.query` reports no roles for them, which means the check has to
+    evaluate the group membership of the account through NSS.
+    """
+    with directoryservice(service_type) as ds:
+        username = ds['account'].user_obj['pw_name']
+
+        with pytest.raises(Exception, match='User lacks privilege role membership'):
+            with api_key(username):
+                pass
+
+        with privilege({
+            'name': f'DS API key privilege ({service_type})',
+            'local_groups': [],
+            'ds_groups': [ds['account'].user_obj['pw_gid']],
+            'roles': ['READONLY_ADMIN'],
+            'web_shell': False,
+        }):
+            assert 'READONLY_ADMIN' in call('privilege.roles_for_user', username)
+
+            with api_key(username):
+                key_info = call('api_key.query', [['username', '=', username]], {'get': True})
+                assert key_info['local'] is False
+                assert key_info['revoked'] is False, key_info['revoked_reason']
