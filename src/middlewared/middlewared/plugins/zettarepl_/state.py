@@ -195,7 +195,9 @@ class ZettareplService(Service, TaskStateMixin):
                 self.state[task_id] = state["state"]
 
     async def flush_state(self):
-        for task_id, state in self.serializable_state.items():
+        # Prevent `RuntimeError: dictionary changed size during iteration` when `serializable_state` is mutated
+        # from other threads
+        for task_id, state in list(self.serializable_state.items()):
             if RE_PERIODIC_SNAPSHOT_TASK_ID.match(task_id):
                 try:
                     await self.middleware.call("datastore.update", "storage.task", int(task_id.split("_")[-1]),
