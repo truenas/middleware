@@ -574,8 +574,8 @@ class iSCSILIOService(Service):
 
     @private
     def resync_lun_size_for_zvol(self, name):
-        (IBLOCK_DIR / sanitize_lio_extent(name) / 'control').write_text('rescan')
+        (IBLOCK_DIR / sanitize_lio_extent(name) / 'control').write_text('rescan=1')
 
     @private
     def resync_lun_size_for_file(self, name):
-        (FILEIO_DIR / sanitize_lio_extent(name) / 'control').write_text('rescan')
+        (FILEIO_DIR / sanitize_lio_extent(name) / 'control').write_text('rescan=1')
