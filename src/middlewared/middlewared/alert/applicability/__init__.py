@@ -5,18 +5,8 @@ the hardware is, and what the license grants -- evaluated against a rule the dec
 states for itself. ``applies`` takes those facts as an argument and holds no middleware
 object, so every declaration in the tree can be evaluated against synthesized facts.
 
-A rule is a predicate over the facts, or ``None`` for the unconstrained case. Declarations do
-not build rules, they name one from ``vocabulary``, which is where the set of distinctions
-worth making is decided.
-
-The facts are ``EntitlementFacts``. An applicability question and an entitlement question
-rest on the same two facts, so there is one shape for them, no conversion between them, and
-one live reader -- ``middlewared.utils.entitlements.get_facts``, which reads the license and
-the chassis and is deliberately uncached. ``Applicability`` is the one place that reading is
-turned into answers: it takes facts, memoizes per declaration, and is what callers hold
-rather than a rule and a set of facts they each evaluate for themselves.
-
-Layering is a strict DAG: ``engine`` <- ``vocabulary`` <- ``snapshot``.
+The facts are ``EntitlementFacts``, the same shape an entitlement question is asked in, so
+there is no conversion between the two.
 """
 
 from __future__ import annotations

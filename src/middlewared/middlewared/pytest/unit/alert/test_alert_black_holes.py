@@ -6,9 +6,9 @@ denied at every point it would be shown -- a black hole that reports nothing at 
 that no other test in this tree can see, because each declaration is individually consistent.
 
 The source-to-class relation is inferred from the syntax and deliberately over-approximates:
-every ``*AlertClass`` name appearing anywhere in a source's body is an edge, reachable or not.
-Over-approximating is the safe direction -- a spurious edge can only produce a failure that a
-human then reads, whereas a missed edge produces a black hole nobody sees.
+every ``*AlertClass`` name appearing anywhere in a source's body is an edge, reachable or not. A
+spurious edge can only produce a failure a human then reads; a missed edge produces a black hole
+nobody sees.
 """
 
 import ast
@@ -28,7 +28,6 @@ FRAMEWORK_NAMES = frozenset(alert_base.__all__)
 
 
 def _alert_class_reference(node: ast.AST) -> str | None:
-    """The alert class a node names, whether spelled ``FooAlertClass`` or ``module.FooAlertClass``."""
     if isinstance(node, ast.Name):
         name = node.id
     elif isinstance(node, ast.Attribute):
@@ -47,8 +46,8 @@ def _classes_a_source_may_create() -> dict[str, set[str]]:
 
     Which class definitions count as sources comes from `declarations()`, which resolves them by
     base class the way `AlertService.load` does. Deriving it from the class name instead -- a
-    ``*AlertSource`` suffix -- silently dropped every source not following that convention, and
-    the tree has one.
+    ``*AlertSource`` suffix -- silently drops any source not following that convention, and
+    ``BondStatus`` does not.
     """
     sources_by_class_name = {
         declaration.__name__: name for name, kind, declaration in declarations() if kind == "source"
@@ -79,8 +78,8 @@ def _classes_a_source_may_create() -> dict[str, set[str]]:
 def test_the_scan_sees_every_source_that_is_loaded():
     """A source the scan does not see is not checked below, and nothing says so.
 
-    This is also what makes the `sources[source_name]` lookup in that check safe: the two
-    modules cannot disagree about what a source is without failing here first.
+    This is also what makes the source lookup in `test_a_source_never_outruns_its_classes` safe:
+    the two modules cannot disagree about what a source is without failing here first.
     """
     loaded = {name for name, kind, _ in declarations() if kind == "source"}
 
@@ -88,18 +87,14 @@ def test_the_scan_sees_every_source_that_is_loaded():
 
 
 def test_every_source_resolves_to_at_least_one_class():
-    """A source whose classes cannot be inferred is a gap in the check below, not a pass.
-
-    Without this, a source built in a shape the scan does not model would sail through with an
-    empty edge set and its black holes would go unreported.
-    """
+    """A source whose classes cannot be inferred is a gap in the check below, not a pass."""
     unresolved = sorted(name for name, classes in _classes_a_source_may_create().items() if not classes)
 
     assert unresolved == []
 
 
 def test_a_source_never_outruns_its_classes():
-    """Wherever a source is ran, every class it can create must apply."""
+    """Wherever a source runs, every class it can create must apply."""
     sources = {name: declaration for name, kind, declaration in declarations() if kind == "source"}
     applicability = [(population, Applicability(population.facts)) for population in POPULATIONS]
 

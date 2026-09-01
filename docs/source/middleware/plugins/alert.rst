@@ -54,8 +54,9 @@ Which systems an alert applies to
 
 Not every alert is meaningful on every machine. A declaration says which systems it applies to on two
 independent axes -- what the hardware is, and what the license grants -- by setting `applies_to`, and
-a class may narrow the settings catalogue further with `listed_only_when`. Both are documented as
-class variables on `AlertClass` and `AlertSource` above.
+a class may narrow the settings catalogue further with `listed_only_when`. `applies_to` is documented
+as a class variable on both `AlertClass` and `AlertSource` above; `listed_only_when` exists on
+`AlertClass` only.
 
 A declaration does not build its own rule. It names one of the populations from
 `middlewared.alert.applicability.vocabulary`:
@@ -70,9 +71,10 @@ A declaration does not build its own rule. It names one of the populations from
 .. automodule:: middlewared.alert.applicability.vocabulary
     :members:
 
-Every answer comes from `middlewared.alert.applicability.Applicability`, which reads the facts once
-and memoizes per declaration. Nothing outside the applicability package reads `applies_to` or
-`listed_only_when` -- a second reader is a second answer that can disagree with the first.
+Every answer comes from `middlewared.alert.applicability.Applicability`, which is handed one reading
+of the facts and memoizes per declaration. Nothing outside that package may read `applies_to` or
+`listed_only_when` -- a second reader is a second answer that can disagree with the first. A guard
+test enforces it.
 
 The applicability inventory
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -83,9 +85,6 @@ remove an alert across a whole class of machines with nothing in the diff to sho
 exactly that: it records which systems every declaration covers, one line at a time. It is generated,
 checked in, and compared byte for byte by `test_applicability_matrix`; its own header explains the
 rows and columns.
-
-The answers are asked of the production `Applicability` object rather than recomputed, so the file
-cannot drift from what the daemon does.
 
 If you change an alert
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -98,9 +97,8 @@ Regenerate the inventory yourself, in the same commit as the change:
     ALERT_MATRIX_REGENERATE=1 PYTHONPATH=. FAKE_ENV=1 pytest-3 \
         middlewared/pytest/unit/alert/test_applicability_matrix.py
 
-Run it from `src/middlewared` with `PYTHONPATH=.` as shown, the same way CI runs the unit suite. From
-the repository root the import resolves to the installed `middlewared` rather than your working tree,
-and collection fails before the test regenerates anything.
+Run it from `src/middlewared`; from the repository root the import resolves to the installed
+`middlewared` and collection fails before anything is regenerated.
 
 Then read `git diff` on the inventory. Every changed line is a real change to the set of machines that
 sees an alert; if a line moved that you did not mean to move, the rule is wrong, so fix the rule rather
@@ -116,9 +114,9 @@ Regenerate when you:
 - change the entitlement policy behind `HA_LICENSED`.
 
 You do not need to when you only change an alert's text, level or the body of `check()` -- no cell
-moves. `test_a_source_never_outruns_its_classes` does read `check()` to infer which classes a source
-produces, so a `check()` that starts creating a different class can fail that test with the inventory
-unchanged.
+moves. `test_a_source_never_outruns_its_classes` does read the whole body of a source class, not just
+`check()`, to infer which classes it produces, so a source that starts naming a different class can
+fail that test with the inventory unchanged.
 
 A declaration with no `applies_to` applies everywhere and its inventory row is all `Y`. That is the
 right declaration for most alerts, and it is also what forgetting looks like, so the suite cannot flag
@@ -129,32 +127,5 @@ commodity hardware, say so explicitly.
 What the guard tests mean when they fail
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-All of these live in `middlewared/pytest/unit/alert/`.
-
-`test_applicability_matrix`
-    The inventory no longer describes the tree. Regenerate it and read the diff.
-
-`test_every_declaration_carries_a_rule`
-    A declaration recorded as restricted has lost its rule, so it now applies everywhere. Restore the
-    rule, or regenerate the inventory if the widening is intended.
-
-`test_every_rule_is_a_vocabulary_name`
-    A declaration gates on something other than a named population. Add the population to
-    `vocabulary` and name it. This is also the only static guard over `alert/source/`, which mypy does
-    not check.
-
-`test_rules_are_read_only_where_applicability_is_decided`
-    Something outside the applicability package reads `applies_to` or `listed_only_when`. Ask
-    `Applicability` instead.
-
-`test_ha_classes_are_not_listed_without_an_ha_license`
-    An `AlertCategory.HA` class would be offered in the catalogue on a system with no HA license. Give
-    it `listed_only_when = HA_LICENSED`.
-
-`test_a_source_never_outruns_its_classes`
-    A source's rule is satisfied where its class's rule is not, so it creates alerts that are stored
-    and never shown. Narrow the source or widen the class.
-
-`test_the_flag_carriers_are_what_was_reviewed`
-    A second frozen inventory, of the two run gates the applicability matrix deliberately does not
-    model. Update it when you add or remove `post_failover_blackout` or `require_stable_peer`.
+The guards live in `middlewared/pytest/unit/alert/`. Read the failing test's docstring; a failure is
+a real change to which machines see an alert, not a test that needs relaxing.

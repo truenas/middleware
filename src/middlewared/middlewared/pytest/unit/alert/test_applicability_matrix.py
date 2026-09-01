@@ -3,12 +3,11 @@
 An alert's applicability is declared on two independent axes -- hardware class and license -- and
 is otherwise invisible: nothing in the alert itself says which systems will ever see it. This
 module renders that answer for every declaration in the tree against a fixed set of populations,
-and fails on any difference from the checked-in copy. Changing one declaration's rule
-touches one line of that file, so a population change cannot land without being read in review.
+and fails on any difference from the checked-in copy. Changing one declaration's rule shows up as
+changed rows in that file, so a population change cannot land without being read in review.
 
-Regenerate from ``src/middlewared`` with ``ALERT_MATRIX_REGENERATE=1 PYTHONPATH=. FAKE_ENV=1 pytest-3
-middlewared/pytest/unit/alert/test_applicability_matrix.py``, then read the resulting diff. Running it
-from the repository root imports the installed ``middlewared`` instead of the working tree.
+``docs/source/middleware/plugins/alert.rst`` has the regeneration command and what to look for in
+the resulting diff.
 """
 
 import ast
@@ -42,9 +41,7 @@ INVENTORY_FILE = os.path.join(os.path.dirname(__file__), "inventory", "applicabi
 class Population:
     """A system the inventory is evaluated against.
 
-    ``ha_capable`` is descriptive only. It is a chassis probe that the axes deliberately do not
-    carry, and it is not part of ``EntitlementFacts``; it is recorded so the populations read as
-    real machines.
+    ``ha_capable`` is descriptive only: it is not an axis, and no answer here is derived from it.
     """
 
     name: str
@@ -58,11 +55,10 @@ class Population:
         return EntitlementFacts(hardware_class=self.hardware_class, license=self.license)
 
 
-# GENERIC+HA and MINI+HA are absent deliberately. A machine can only reach them two ways: as a
-# Mini-tagged HA virtual machine, where classify_platform reads the chassis before the QEMU stamp
-# while detect_platform reads the QEMU stamp first, so the two disagree; or with a legacy
-# /data/license blob hand-placed on non-iX hardware. Neither exists in the fleet, and a population
-# no machine occupies would freeze answers nobody can check against a real system.
+# GENERIC+HA and MINI+HA are absent. An HA license cannot be uploaded onto anything that is not HA
+# capable, and everything HA capable classifies as TRUENAS_HW, so the only route to these cells is a
+# legacy blob hand-placed on non-iX hardware. Freezing an answer for a machine nobody can stand in
+# front of is worse than not freezing it.
 POPULATIONS = (
     Population(
         name="G",
@@ -117,11 +113,7 @@ POPULATIONS = (
 
 
 def _base_name(base: ast.expr) -> str | None:
-    """The name of a base class as written, whether spelled ``AlertClass`` or ``base.AlertClass``.
-
-    A scan blind to one of the two spellings does not report a gap: it simply never looks at the
-    module, and every declaration in it drops out of the inventory silently.
-    """
+    """The name of a base class as written, whether spelled ``AlertClass`` or ``base.AlertClass``."""
     if isinstance(base, ast.Name):
         return base.id
 
@@ -162,14 +154,7 @@ def _modules_declaring_alert_classes() -> list[str]:
 
 
 def test_the_scan_reaches_every_module_that_declares_a_class():
-    """Whatever the metaclass registered, the scan has to have found the module it came from.
-
-    The scan decides what gets imported, so on its own it could agree with the registry by
-    keeping both empty. It cannot here: `declarations()` loads every module under
-    ``alert/source`` through `load_modules`, independently of this scan, and that is where
-    almost every alert class in the tree lives. A module the scan cannot read is therefore in
-    the registry and not in its result, and this is the only thing that says so.
-    """
+    """Whatever the metaclass registered, the scan has to have found the module it came from."""
     declarations()
 
     scanned = set(_modules_declaring_alert_classes())
@@ -249,7 +234,7 @@ def render() -> str:
 
 
 def test_applicability_matrix():
-    """Fails on any population change, so every one of them is read in review."""
+    """Fails on any change to which systems a declaration covers. Regenerate it and read the diff."""
     matrix = render()
 
     if os.environ.get("ALERT_MATRIX_REGENERATE"):
@@ -277,12 +262,7 @@ def frozen_inventory() -> dict[tuple[str, str], list[str]]:
 
 
 def test_every_declaration_carries_a_rule():
-    """A declaration left without a rule silently widens to every system, and reads as intentional.
-
-    Every declaration the frozen inventory records as restricted anywhere must still hold a rule
-    saying so. Deleting one and regenerating the inventory defeats this, which is the intent: the
-    regeneration is what lands in the diff.
-    """
+    """A declaration left without a rule silently widens to every system, and reads as intentional."""
     inventory = frozen_inventory()
     live = {(name, kind): declaration for name, kind, declaration in declarations()}
     assert set(inventory) == set(live), "the frozen inventory does not describe this tree; regenerate it"
@@ -312,10 +292,11 @@ def test_every_declaration_carries_a_rule():
     ],
 )
 def test_listed_only_when_hides_without_silencing(class_name):
-    """An HA class on a non-HA-licensed system leaves the catalogue, and nothing else.
+    """A class carrying ``listed_only_when = HA_LICENSED`` leaves the catalogue, and nothing else.
 
-    The scheduled-reboot classes are deliberately not in this set: they are gated on the HA license
-    itself, so on a system without one they are silenced rather than merely unlisted.
+    Its ``applies_to`` still admits the system, so it is still evaluated, displayed and sent there.
+    The scheduled-reboot classes are deliberately not in this set: they name the HA license in
+    ``applies_to`` itself, so on a system without one they are silenced rather than merely unlisted.
     """
     facts = EntitlementFacts(hardware_class=HardwareClass.TRUENAS_HW, license=make_license(model="M50"))
     klass = AlertClass.class_by_name[class_name]
@@ -327,10 +308,9 @@ def test_listed_only_when_hides_without_silencing(class_name):
 def test_every_rule_is_a_vocabulary_name():
     """A declaration names a population; it does not build one.
 
-    ``vocabulary`` says so in prose and nothing enforced it. Rules are ordinary functions now, so
-    an inline lambda or a one-off predicate written at a declaration site would work perfectly and
-    would put a population nobody reviewed in front of a hundred machines. This is also the only
-    guard over the declaration sites themselves: mypy does not check ``alert/source/``.
+    A rule is an ordinary function, so an inline lambda or a one-off predicate written at a
+    declaration site would work perfectly and would put a population nobody chose in front of real
+    machines.
     """
     populations = {getattr(vocabulary, name) for name in vocabulary.__all__}
 
@@ -348,13 +328,11 @@ def test_every_rule_is_a_vocabulary_name():
 def test_rules_are_read_only_where_applicability_is_decided(attribute):
     """Applicability is decided in one place, and ``listed_only_when`` in one narrower place.
 
-    Read anywhere but the applicability engine, ``listed_only_when`` would silence alerts that
-    already exist, and a second reader of ``applies_to`` is a second answer that can disagree with
-    the one ``Applicability`` gives. So this is a whole-tree check rather than a check of one file:
-    a second reader cannot appear without this failing. Declarations are unaffected -- assigning
-    the attribute in a class body is a plain name, not an attribute access. The unit-test tree is
-    excluded: the frozen inventory reads the attribute to check that a restricted declaration still
-    carries a rule, which is bookkeeping about declarations rather than an enforcement point.
+    A whole-tree check rather than a check of one file, so a second reader cannot appear anywhere
+    without this failing. Declarations are unaffected -- assigning the attribute in a class body is
+    a plain name, not an attribute access. The unit-test tree is excluded: the frozen inventory
+    reads the attribute to check that a restricted declaration still carries a rule, which is
+    bookkeeping about declarations rather than an enforcement point.
     """
     allowed = (os.path.join("alert", "applicability"), os.path.join("alert", "base.py"))
     root = get_middlewared_dir()
@@ -377,11 +355,11 @@ def test_rules_are_read_only_where_applicability_is_decided(attribute):
 
 
 def test_ha_classes_are_not_listed_without_an_ha_license():
-    """The old code hid every HA-category class on a system without an HA license, implicitly.
+    """Every HA-category class hides from the catalogue without an HA license, and says so by hand.
 
-    That rule is now hand-written on each of them, and ``test_every_declaration_carries_a_rule``
-    does not catch a new class that forgets it: a declaration whose inventory row is all ``Y`` is
-    skipped there, and an all-``Y`` row is exactly what forgetting looks like.
+    ``test_every_declaration_carries_a_rule`` does not catch a new class that forgets it: a
+    declaration whose inventory row is all ``Y`` is skipped there, and an all-``Y`` row is exactly
+    what forgetting looks like.
     """
     unlisted_populations = [p for p in POPULATIONS if not applies(HA_LICENSED, p.facts)]
     assert unlisted_populations, "no population without an HA license; this test proves nothing"
@@ -397,12 +375,11 @@ def test_ha_classes_are_not_listed_without_an_ha_license():
     assert listed == []
 
 
-# The two run gates, which say when a source's answer is worth having rather than which systems it
-# is meaningful on, so the populations above deliberately do not model them. Frozen because the
-# interesting fact is the odd row out: EnclosureStatus is the only carrier that is not gated on an
-# HA license, which is why pairing the blackout flag with a license check -- as it once was --
-# silenced enclosure faults on every iX appliance without one, and changed nothing else. A new
-# carrier, or an existing one changing population, has to be written down here and read in review.
+# The run gates say when a source's answer is worth having rather than which systems it is
+# meaningful on, so the populations above deliberately do not model them. Frozen because the
+# interesting fact is the odd row out: EnclosureStatus is the only carrier not gated on an HA
+# license, so pairing a blackout flag with a license check silences enclosure faults on every iX
+# appliance without one, and changes nothing else.
 CARRIERS = """
 EnclosureStatus                  post_failover_blackout   TRUENAS_HARDWARE
 Failover                         post_failover_blackout   HA_LICENSED
@@ -416,6 +393,7 @@ FailoverRemoteSystemInaccessible post_failover_blackout   HA_LICENSED
 
 
 def test_the_flag_carriers_are_what_was_reviewed():
+    """The run gates the matrix does not model, pinned so that a new carrier is read in review."""
     live = sorted(
         (name, flag, declaration_rule_name(source))
         for name, kind, source in declarations()

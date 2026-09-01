@@ -24,14 +24,11 @@ NO_LICENSE = None
 PLAIN_LICENSE = make_license(type_=LicenseType.ENTERPRISE_SINGLE)
 HA_LICENSE = make_license(type_=LicenseType.ENTERPRISE_HA)
 
-# Every axis value the two facts can take, so a grid below is exhaustive by construction.
 HARDWARE_CLASSES = (HardwareClass.TRUENAS_HW, HardwareClass.MINI, HardwareClass.GENERIC)
 LICENSES = (NO_LICENSE, PLAIN_LICENSE, HA_LICENSE)
 
-# Every shipped population, spelled out against every system it can be asked about. One row per
-# hardware class in the order above; one cell per license in the order above; ``Y`` where the
-# population covers that system. These are the objects the tree's declarations actually carry, so
-# a cell here is the answer a real declaration gets, not the answer a copy of the rule would give.
+# Every shipped population against every system it can be asked about. These are the objects the
+# tree's declarations carry, so a cell is the answer a real declaration gets, not a copy's.
 # fmt: off
 GRIDS = (
     #                          TRUENAS_HW  MINI    GENERIC   -- and within each, unlicensed/plain/HA
@@ -107,7 +104,7 @@ class UnconstrainedDeclaration:
 
 
 def test_rule_name_reports_the_population_a_declaration_named():
-    """The name is what makes a rule readable in a log; a dataclass instance would not carry one."""
+    """A rule is reported by the vocabulary name the declaration used, which is what reads in a log."""
     assert rule_name(TRUENAS_HARDWARE) == "TRUENAS_HARDWARE"
     assert rule_name(None) == "unconstrained"
     assert declaration_rule_name(HardwareOnlyDeclaration) == "TRUENAS_HARDWARE"
@@ -121,7 +118,6 @@ def test_applicability_answers_all_three_questions():
     assert appliance.class_listed(HardwareOnlyDeclaration) is True
     assert appliance.source_runs(HardwareOnlyDeclaration) is True
 
-    # listed_only_when narrows the catalogue and nothing else.
     assert appliance.class_applies(NarrowedDeclaration) is True
     assert appliance.class_listed(NarrowedDeclaration) is False
 
@@ -148,8 +144,7 @@ def test_applicability_evaluates_each_declaration_once():
     assert applicability.source_runs(Declared) is True
     assert applicability.source_runs(Declared) is True
 
-    # Once for the class question, once for the source question: they are separate answers about
-    # separate declarations in the tree and share no memo.
+    # The class and source memos are separate, so one declaration used as both is evaluated twice.
     assert len(calls) == 2
 
 
@@ -181,10 +176,7 @@ def test_distinct_facts_give_distinct_answers(hardware_class, license, expected)
 
 
 def test_a_rule_is_read_off_the_class_never_an_instance():
-    """A rule is a function, so an instance read would bind the instance as its first argument.
-
-    ``ALERT_SOURCES`` holds instances, which is why ``source_runs`` takes the class.
-    """
+    """``ALERT_SOURCES`` holds instances, which is why ``source_runs`` takes the class."""
     facts = make_facts(hardware_class=HardwareClass.TRUENAS_HW, license=NO_LICENSE)
     instance = HardwareOnlyDeclaration()
 

@@ -5,7 +5,7 @@ here is a policy decision, not a convenience: a new name asserts that some set o
 worth distinguishing from every other set, and every declaration that takes it inherits that
 assertion. Changing what a name covers moves every declaration using it at once, which is the
 point -- the population a declaration applies to is decided and reviewed in this one file
-rather than reconstructed from a rule expression at each of a hundred declaration sites.
+rather than reconstructed from a rule expression at each declaration site.
 
 A population is a plain predicate over the facts, so one can be written in terms of another and
 a name reads at its declaration site exactly as it reads here.
@@ -40,10 +40,10 @@ def MINI_HARDWARE(facts: EntitlementFacts) -> bool:
 
 
 def TRUENAS_OR_MINI_HARDWARE(facts: EntitlementFacts) -> bool:
-    """Every machine iX builds, Minis included. The population for questions about hardware iX
-    shipped, where a Mini differs from an M-series only in size -- ECC memory reporting, for one.
-    Composed from the two hardware names rather than defined as "not GENERIC" so that a hardware
-    class added later lands outside it and has to be added here deliberately."""
+    """Every machine iX builds, Minis included, for questions about the hardware rather than what
+    it was licensed as -- ECC memory reporting, for one. Composed from the two names rather than as
+    the complement of GENERIC so a hardware class added later lands outside it and has to be added
+    here deliberately."""
     return TRUENAS_HARDWARE(facts) or MINI_HARDWARE(facts)
 
 
@@ -57,22 +57,22 @@ def NOT_APPLIANCE_HARDWARE(facts: EntitlementFacts) -> bool:
 
 def ANY_LICENSE(facts: EntitlementFacts) -> bool:
     """Machines carrying a license of any type, on any hardware. For declarations whose subject is
-    the license itself. This is not "is this an enterprise system": a Mini with a MINI-R license
-    satisfies it and an unlicensed M-series does not."""
+    the license itself. This is not "is this an enterprise system": a licensed Mini satisfies it and
+    an unlicensed appliance does not."""
     return facts.license is not None
 
 
 def HA_LICENSED(facts: EntitlementFacts) -> bool:
-    """Machines whose license grants high availability. Resolved by the entitlement policy, so this
-    is the same answer ``failover.licensed`` gives and there is one definition of HA in the tree."""
+    """Machines whose license grants high availability, as the entitlement policy resolves it --
+    every consumer of HA in the tree asks the policy the same question."""
     return check_entitlement(DerivedEntitlement.HA, facts).entitled
 
 
 def APPLIANCE_OR_HA_LICENSED(facts: EntitlementFacts) -> bool:
     """Machines where high availability is a live concern: an iX appliance, which can be licensed
-    for HA at any moment, or a machine already licensed for it. Alert classes in the HA family use
-    this rather than the hardware half alone, so that a machine which is HA-licensed but not iX
-    hardware can still display and send what its source produced."""
+    for HA at any moment, or a machine already licensed for it. The HA alert classes take this
+    rather than the hardware half alone, so an HA-licensed machine on non-iX hardware can still
+    display and send what its source produced."""
     return TRUENAS_HARDWARE(facts) or HA_LICENSED(facts)
 
 

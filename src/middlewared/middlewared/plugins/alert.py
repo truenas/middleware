@@ -65,9 +65,8 @@ FAILOVER_ALERTS_BACKOFF_SECS = 900
 
 AlertSourceLock = namedtuple("AlertSourceLock", ["source_name", "expires_at"])
 
-# Source/class pairs already reported as disagreeing. Sources run every sixty seconds and a
-# declaration does not change while the process lives, so this is worth saying once rather than
-# once a minute.
+# Source/class pairs already reported as disagreeing. Logged once per pair, since a declaration
+# cannot change while the process lives.
 _REPORTED_INAPPLICABLE_CLASSES: set[tuple[str, str]] = set()
 
 
@@ -173,11 +172,7 @@ def get_alert_policy(alert, classes):
 
 
 def partition[T](predicate: Callable[[T], Any], iterable: Iterable[T]) -> tuple[list[T], list[T]]:
-    """Split *iterable* into ``(matching, non_matching)`` lists by *predicate*.
-
-    Order within each list is preserved from the input. The predicate is
-    evaluated exactly once per item.
-    """
+    """Split *iterable* into ``(matching, non_matching)`` lists by *predicate*."""
     matching: list[T] = []
     non_matching: list[T] = []
     for item in iterable:
@@ -191,12 +186,10 @@ def partition[T](predicate: Callable[[T], Any], iterable: Iterable[T]) -> tuple[
 def source_run_gates_pass(source: type[AlertSource], fi: AlertFailoverInfo) -> bool:
     """Whether the failover-related gates let `source` run this tick.
 
-    Neither gate asks anything about the license. `post_failover_blackout` is a time window: a
-    source whose answer is unreliable right after a failover stays quiet until the window closes,
-    whether or not this system was ever licensed for one. `require_stable_peer` asks whether a
-    peer was found in a state worth talking to.
-
-    Out of the loop so both can be checked without a middleware object or a running service.
+    `post_failover_blackout` is a time window: a source whose answer is unreliable right after a
+    failover stays quiet until the window closes, whatever the license says. `require_stable_peer`
+    asks whether a peer was found in a state worth talking to, so it is only ever satisfied where
+    there is a peer.
     """
     if source.post_failover_blackout and not fi.past_failover_blackout:
         return False
@@ -309,16 +302,13 @@ class AlertService(Service):
     async def applicability(self):
         """Every applicability answer for this system, from one reading of the facts.
 
-        The single owner of that reading. Held for the life of the process, because the facts
-        only change on a license upload, which fires `system.post_license_update` and drops
-        this. Reading them per call instead let a run and the send that follows it disagree
-        within one cycle, since those are separate jobs.
+        The single owner of that reading. Held across calls so that a run and the send that
+        follows it -- separate jobs -- cannot disagree within one cycle; dropped on
+        `system.post_license_update`.
 
         A `None` license is never held: `get_license` returns `None` both for an unlicensed
         system and for one whose license daemon did not answer, so caching it would strand a
-        licensed system on a single failed read until its next upload or reboot. Re-reading is
-        cheap in exactly that case -- an unlicensed system has no daemon listening, so the
-        socket fails immediately.
+        licensed system on a single failed read until its next upload or reboot.
         """
         if self._applicability is not None:
             return self._applicability
@@ -745,8 +735,6 @@ class AlertService(Service):
         this_node, other_node = "A", "B"
         run_on_backup_node = False
 
-        # A time window, not a license question: a source whose answer is unreliable right after a
-        # failover has to stay quiet whether or not this system is licensed for one.
         past_failover_blackout = time.monotonic() > self.blocked_failover_alerts_until
 
         if await self.middleware.call("failover.licensed"):
@@ -851,11 +839,9 @@ class AlertService(Service):
             if not applicability.source_runs(type(alert_source))
         }
         if excluded:
-            # An excluded source still owns whatever it persisted before it was excluded. Delete
-            # those through the policies as well as out of the list: a policy that still remembers
-            # an alert reports it as gone on the next tick, and gone alerts are filtered by the
-            # class rule, which is deliberately wider than the source rule -- so an alert service
-            # would announce that something was resolved when it had only stopped being checked.
+            # Drop what an excluded source persisted from the policies too, or a policy that still
+            # remembers one reports it as gone and an alert service announces a resolution that
+            # never happened.
             dropped, self.alerts = partition(lambda alert: alert.source in excluded, self.alerts)
             for alert in dropped:
                 for policy in self.policies.values():
@@ -900,10 +886,6 @@ class AlertService(Service):
 
     def __handle_alert(self, alert, applicability):
         if not applicability.class_applies(alert.klass):
-            # The alert will be stored and then denied everywhere it would be shown. Nothing fails,
-            # so nothing else reports it; the source's rule and the class's rule simply disagree.
-            # Both rules are named, because which of the two is wrong is the whole question and
-            # neither is visible from the alert.
             key = (alert.source or "", alert.klass.name)
             if key not in _REPORTED_INAPPLICABLE_CLASSES:
                 _REPORTED_INAPPLICABLE_CLASSES.add(key)

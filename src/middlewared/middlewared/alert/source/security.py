@@ -43,7 +43,7 @@ class AllAdminAccountsExpiredAlertClass(AlertClass, SimpleOneShotAlertClass):
 class SecurityLocalUserAccountExpirationAlertSource(AlertSource):
     schedule = CrontabSchedule(hour=0)
     run_on_backup_node = False
-    applies_to = None  # check() self-gates on max_password_age; narrowing this would silence the lockout recovery
+    applies_to = None  # deliberately unconstrained: narrowing it would silence the admin-lockout recovery
 
     async def check(self):
         alerts = []
