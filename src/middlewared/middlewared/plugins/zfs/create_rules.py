@@ -31,13 +31,16 @@ __all__ = (
     "CreateContext",
     "ancestor_chain",
     "apply_draid_defaults",
+    "apply_tier_placement",
     "check_acl_combination",
+    "check_dedup_tiering",
     "check_denied_properties",
     "check_encryption",
     "check_name_valid",
     "check_parent_not_readonly",
     "check_path_shape",
     "check_protected_path",
+    "check_tier_managed_ssb",
     "check_user_property_names",
     "check_volume_capacity",
     "check_volume_has_volsize",
@@ -59,9 +62,11 @@ class CreateContext:
     encrypt: dict[str, typing.Any] | None
     """Resolved encryption config when a new encryption root is requested."""
     ancestors: dict[str, typing.Any] = dataclasses.field(default_factory=dict)
-    """Existing ancestors of the new resource keyed by name with their
-    available space and encryption properties. Populated by the service
-    when a rule needs them. A missing ancestor has no entry."""
+    """Existing ancestors of the new resource keyed by name with the
+    properties the active rules read. Populated by the service. A missing
+    ancestor has no entry."""
+    tier_enabled: bool = False
+    """Whether ZFS tiering is enabled on this system."""
     # TODO uncomment when the truenas.entitlements API is merged
     # dedup_entitled: bool = False
     # """Whether this system is licensed to use ZFS deduplication."""
@@ -91,6 +96,25 @@ def _size_bytes(value: str | int) -> int | None:
         return int(value) * multiplier
     except ValueError:
         return None
+
+
+def _nearest_ancestor_entry(data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> typing.Any | None:
+    """Return the gathered entry of the nearest existing ancestor."""
+    for ancestor in ancestor_chain(data.path):
+        rv = ctx.ancestors.get(ancestor)
+        if rv is not None:
+            return rv
+    return None
+
+
+def _pool_has_special_vdev(service: typing.Any, pool_name: str) -> bool:
+    """Return whether the pool has a SPECIAL allocation class vdev."""
+    if pool := service.middleware.call_sync(
+        "zpool.query_impl", {"pool_names": [pool_name], "properties": ["class_special_size"]}
+    ):
+        size = ((pool[0].get("properties") or {}).get("class_special_size") or {}).get("value")
+        return isinstance(size, int) and size > 0
+    return False
 
 
 def pool_is_draid(service: typing.Any, pool_name: str) -> bool:
@@ -295,6 +319,85 @@ def check_parent_not_readonly(data: "ZFSResourceCreateArgsData", ctx: CreateCont
                 errno.EINVAL,
             )
         return
+
+
+def check_tier_managed_ssb(data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> None:
+    """The tier manager owns special_small_blocks while tiering is enabled.
+
+    The service calls this only when tiering is enabled.
+    """
+    if "special_small_blocks" in data.properties:
+        raise ValidationError(
+            f"{SCHEMA}.properties",
+            "ZFS tiering is enabled. Use `zfs.tier.dataset_set_tier` to manage "
+            "'special_small_blocks'.",
+            errno.EINVAL,
+        )
+
+
+def apply_tier_placement(data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> None:
+    """Pin the special_small_blocks placement of the new resource.
+
+    With tiering enabled a new filesystem is pinned to its parent's
+    effective tier. That is 16M when the parent places data on the
+    special vdev (PERFORMANCE) and 0 otherwise (REGULAR). This keeps the
+    tier manager the owner of placement instead of floating inheritance.
+    A volume whose blocks are smaller than the parent's threshold would
+    land entirely on the special vdev so it is pinned to 0 regardless of
+    tiering. Both only apply when the caller did not request the
+    property.
+
+    The service calls this after the ancestor entries have been gathered.
+    """
+    if "special_small_blocks" in ctx.properties:
+        return
+    if data.type == "FILESYSTEM" and not ctx.tier_enabled:
+        return
+    parent = _nearest_ancestor_entry(data, ctx)
+    if parent is None:
+        return
+
+    parent_ssb = parent["properties"]["special_small_blocks"]["value"] or 0
+    if data.type == "FILESYSTEM":
+        parent_rs = parent["properties"]["recordsize"]["value"] or 0
+        performance = parent_rs > 0 and parent_ssb >= parent_rs
+        ctx.properties["special_small_blocks"] = 16 * 1024 * 1024 if performance else 0
+    else:
+        volblocksize = _size_bytes(ctx.properties.get("volblocksize", 16384)) or 16384
+        if parent_ssb and volblocksize < parent_ssb:
+            ctx.properties["special_small_blocks"] = 0
+
+
+def check_dedup_tiering(service: typing.Any, data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> None:
+    """Deduplication may not be enabled on a PERFORMANCE tier filesystem.
+
+    With tiering enabled a filesystem whose effective special_small_blocks
+    is above zero has its data placed on the special vdev and such data
+    may not be deduplicated. The pool topology is only inspected once the
+    cheaper conditions have passed.
+
+    The service calls this only when a dedup value other than off is
+    requested and after the tier placement has been applied.
+    """
+    if data.type != "FILESYSTEM" or not ctx.tier_enabled:
+        return
+    ssb = ctx.properties.get("special_small_blocks")
+    if ssb is None:
+        parent = _nearest_ancestor_entry(data, ctx)
+        ssb = (parent["properties"]["special_small_blocks"]["value"] or 0) if parent else 0
+    else:
+        ssb = _size_bytes(ssb) or 0
+    if not ssb:
+        return
+    if not _pool_has_special_vdev(service, data.path.split("/")[0]):
+        return
+    raise ValidationError(
+        f"{SCHEMA}.properties",
+        "ZFS deduplication is incompatible with tiering and cannot be enabled on a "
+        "dataset assigned to the PERFORMANCE tier (its data is placed on the SPECIAL "
+        "vdev). Switch it to the REGULAR tier first.",
+        errno.EINVAL,
+    )
 
 
 def _effective_value(name: str, data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> str | None:

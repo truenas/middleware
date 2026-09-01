@@ -30,7 +30,9 @@ from .create_rules import (
     CreateContext,
     ancestor_chain,
     apply_draid_defaults,
+    apply_tier_placement,
     check_acl_combination,
+    check_dedup_tiering,
     # check_dedup_entitlement,  TODO uncomment when the truenas.entitlements API is merged
     check_denied_properties,
     check_encryption,
@@ -38,6 +40,7 @@ from .create_rules import (
     check_parent_not_readonly,
     check_path_shape,
     check_protected_path,
+    check_tier_managed_ssb,
     check_user_property_names,
     check_volume_capacity,
     check_volume_has_volsize,
@@ -407,18 +410,34 @@ class ZFSResourceService(Service):
         if data.type == "VOLUME" or "recordsize" not in properties:
             apply_draid_defaults(self, data, ctx)
 
-        # one query serves the readonly, acl, capacity and encryption rules
+        ctx.tier_enabled = self.call_sync2(self.s.zfs.tier.config).enabled
+
+        # one query serves the readonly, tier, acl, capacity and encryption
+        # rules. Only the properties the rules below will read are requested.
+        ancestor_props = ["readonly"]
+        if data.type == "VOLUME":
+            ancestor_props.extend(["available", "special_small_blocks"])
+        else:
+            if "acltype" in properties or "aclmode" in properties:
+                ancestor_props.extend(["acltype", "aclmode"])
+            if ctx.tier_enabled and "special_small_blocks" not in data.properties:
+                ancestor_props.extend(["special_small_blocks", "recordsize"])
+        if data.encryption:
+            ancestor_props.append("encryption")
         ctx.ancestors = {
             rv["name"]: rv
             for rv in self.call_sync2(
                 self.s.zfs.resource.query_impl,
-                ZFSResourceQuery(
-                    paths=ancestor_chain(path),
-                    properties=["available", "acltype", "aclmode", "encryption", "readonly"],
-                ),
+                ZFSResourceQuery(paths=ancestor_chain(path), properties=ancestor_props),
             )
         }
+
         check_parent_not_readonly(data, ctx)
+        if ctx.tier_enabled:
+            check_tier_managed_ssb(data, ctx)
+        apply_tier_placement(data, ctx)
+        if str(properties.get("dedup", "off")).lower() != "off":
+            check_dedup_tiering(self, data, ctx)
         if data.type == "FILESYSTEM" and ("acltype" in properties or "aclmode" in properties):
             check_acl_combination(data, ctx)
         if data.type == "VOLUME":
@@ -524,6 +543,10 @@ class ZFSResourceService(Service):
           combined with the nfsv4 acltype (``EINVAL``)
         - the nearest existing ancestor is readonly - the new filesystem could not be
           mounted beneath it (``EINVAL``)
+        - ``special_small_blocks`` is supplied while ZFS tiering is enabled - placement
+          is managed with :method:`zfs.tier.dataset_set_tier` (``EINVAL``)
+        - deduplication is requested for a filesystem whose data would be placed on the
+          SPECIAL vdev (the PERFORMANCE tier) while ZFS tiering is enabled (``EINVAL``)
 
         Examples:
 

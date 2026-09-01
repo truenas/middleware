@@ -672,3 +672,147 @@ def test_zfs_resource_create_under_readonly_parent_fails():
         assert "readonly" in str(exc_info.value)
     finally:
         destroy(parent)
+
+
+def test_zfs_resource_create_ssb_behavior_without_tiering():
+    """Test special_small_blocks passthrough, volume pinning and filesystem
+    inheritance while tiering is disabled"""
+    if call("zfs.tier.config")["enabled"]:
+        pytest.skip("ZFS tiering is enabled on this system")
+
+    parent = os.path.join(pool_name, "test_create_ssb_parent")
+    # explicit special_small_blocks passes straight through to zfs
+    entry = call(
+        "zfs.resource.create",
+        {"path": parent, "properties": {"special_small_blocks": "128K"}},
+    )
+    assert entry["properties"]["special_small_blocks"]["value"] == 128 * 1024, entry["properties"]
+    try:
+        # a volume with blocks under the parent threshold is pinned to zero
+        vol = f"{parent}/vol"
+        call(
+            "zfs.resource.create",
+            {
+                "path": vol,
+                "type": "VOLUME",
+                "properties": {"volsize": 128 * 1024**2, "refreservation": "none"},
+            },
+        )
+        result = call(
+            "zfs.resource.query",
+            {"paths": [vol], "properties": ["special_small_blocks"], "get_source": True},
+        )
+        prop = result[0]["properties"]["special_small_blocks"]
+        assert prop["value"] in (0, None), prop
+        assert prop["source"]["type"] == "LOCAL", prop
+
+        # a volume with blocks at the threshold inherits as usual
+        vol2 = f"{parent}/vol2"
+        call(
+            "zfs.resource.create",
+            {
+                "path": vol2,
+                "type": "VOLUME",
+                "properties": {
+                    "volsize": 128 * 1024**2,
+                    "volblocksize": "128K",
+                    "refreservation": "none",
+                },
+            },
+        )
+        result = call(
+            "zfs.resource.query",
+            {"paths": [vol2], "properties": ["special_small_blocks"], "get_source": True},
+        )
+        prop = result[0]["properties"]["special_small_blocks"]
+        assert prop["value"] == 128 * 1024, prop
+        assert prop["source"]["type"] == "INHERITED", prop
+
+        # a filesystem is not pinned when tiering is disabled
+        fs = f"{parent}/fs"
+        call("zfs.resource.create", {"path": fs})
+        result = call(
+            "zfs.resource.query",
+            {"paths": [fs], "properties": ["special_small_blocks"], "get_source": True},
+        )
+        prop = result[0]["properties"]["special_small_blocks"]
+        assert prop["source"]["type"] == "INHERITED", prop
+    finally:
+        destroy(parent)
+
+
+@pytest.fixture(scope="module")
+def tier_pool():
+    if not call("system.is_enterprise"):
+        pytest.skip("ZFS tiering requires an Enterprise license")
+    unused_disks = call("disk.get_unused")
+    if len(unused_disks) < 6:
+        pytest.skip("Need at least 6 unused disks for a tier pool")
+    with another_pool({
+        "topology": {
+            "data": [{"type": "RAIDZ1", "disks": [d["name"] for d in unused_disks[:3]]}],
+            "special": [{"type": "RAIDZ1", "disks": [d["name"] for d in unused_disks[3:6]]}],
+        },
+        "allow_duplicate_serials": True,
+    }) as pool:
+        original = call("zfs.tier.config")
+        call("zfs.tier.update", {"enabled": True})
+        try:
+            yield pool["name"]
+        finally:
+            call("zfs.tier.update", {"enabled": original["enabled"]})
+
+
+def test_zfs_resource_create_tier_managed_ssb_denied(tier_pool):
+    """Test that special_small_blocks is rejected while tiering is enabled"""
+    with pytest.raises(Exception) as exc_info:
+        call(
+            "zfs.resource.create",
+            {"path": f"{tier_pool}/x", "properties": {"special_small_blocks": "64K"}},
+        )
+    assert "zfs.tier.dataset_set_tier" in str(exc_info.value)
+
+
+def test_zfs_resource_create_tier_snaps_filesystem_placement(tier_pool):
+    """Test that a new filesystem is pinned to its parent's effective tier"""
+    # the pool root is REGULAR so the child pins to zero
+    fs = f"{tier_pool}/tier_fs"
+    call("zfs.resource.create", {"path": fs})
+    result = call(
+        "zfs.resource.query",
+        {"paths": [fs], "properties": ["special_small_blocks"], "get_source": True},
+    )
+    prop = result[0]["properties"]["special_small_blocks"]
+    assert prop["value"] in (0, None), prop
+    assert prop["source"]["type"] == "LOCAL", prop
+
+    # a PERFORMANCE parent pins the child to 16M
+    ssh(f"zfs set special_small_blocks=16M {fs}")
+    child = f"{fs}/child"
+    call("zfs.resource.create", {"path": child})
+    result = call(
+        "zfs.resource.query",
+        {"paths": [child], "properties": ["special_small_blocks"], "get_source": True},
+    )
+    prop = result[0]["properties"]["special_small_blocks"]
+    assert prop["value"] == 16 * 1024**2, prop
+    assert prop["source"]["type"] == "LOCAL", prop
+
+
+def test_zfs_resource_create_tier_dedup_denied_on_performance(tier_pool):
+    """Test that dedup is rejected beneath a PERFORMANCE parent but allowed on REGULAR"""
+    parent = f"{tier_pool}/dedup_parent"
+    call("zfs.resource.create", {"path": parent})
+    ssh(f"zfs set special_small_blocks=16M {parent}")
+    with pytest.raises(Exception) as exc_info:
+        call(
+            "zfs.resource.create",
+            {"path": f"{parent}/child", "properties": {"dedup": "on"}},
+        )
+    assert "PERFORMANCE tier" in str(exc_info.value)
+
+    entry = call(
+        "zfs.resource.create",
+        {"path": f"{tier_pool}/dedup_ok", "properties": {"dedup": "on"}},
+    )
+    assert entry["properties"]["dedup"]["raw"] == "on", entry["properties"]
