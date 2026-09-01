@@ -10,6 +10,7 @@ from truenas_pynetif.address.bond import BondXmitHashPolicy, BondLacpRate
 from truenas_pynetif.netlink import LinkInfo
 from middlewared.service import ServiceContext
 
+from .lag_options import LacpduRateChoices, XmitHashChoices
 from .sync_data import SyncData
 
 __all__ = ("configure_bonds_impl",)
@@ -82,12 +83,18 @@ def configure_bond_impl(
     # Map xmit_hash_policy to enum
     xmit_hash_policy = None
     if lxhp := bond.get("lagg_xmit_hash_policy"):
-        xmit_hash_policy = getattr(BondXmitHashPolicy, lxhp.upper(), None)
+        try:
+            xmit_hash_policy = BondXmitHashPolicy[XmitHashChoices(lxhp.upper()).name]
+        except (KeyError, ValueError):
+            ctx.logger.error("%s: unsupported xmit_hash_policy %r", name, lxhp)
 
     # Map lacpdu_rate to enum
     lacpdu_rate = None
     if llr := bond.get("lagg_lacpdu_rate"):
-        lacpdu_rate = getattr(BondLacpRate, llr.upper(), None)
+        try:
+            lacpdu_rate = BondLacpRate[LacpduRateChoices(llr.upper()).name]
+        except (KeyError, ValueError):
+            ctx.logger.error("%s: unsupported lacpdu_rate %r", name, llr)
 
     # Get primary interface for FAILOVER mode
     primary = member_names[0] if mode == "FAILOVER" and member_names else None
