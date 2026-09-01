@@ -8,11 +8,11 @@ if TYPE_CHECKING:
     from middlewared.main import Middleware
 
 import truenas_pylibzfs
+from truenas_pylicensed.features import LicenseFeature
 from truenas_zfstierd_client import (
     RewriteClient,
     RewriteClientException,
     enum_jobs,
-    feature_is_licensed,
     get_info,
     get_last_job,
     get_resolved_failures,
@@ -50,6 +50,7 @@ from middlewared.api.current import (
     ZfsTierUpdateArgs,
     ZfsTierUpdateResult,
 )
+from middlewared.common.license_reconcile import LicenseReconcileAction, LicenseReconcileDelegate
 from middlewared.event import EventSource
 from middlewared.plugins.pool_.utils import UpdateImplArgs, pool_has_special_vdev
 from middlewared.plugins.tunables import zfs_parameter_value
@@ -374,8 +375,9 @@ class ZfsTierService(ConfigService[ZfsTierEntry]):
         audit="ZFS tier config update",
     )
     async def do_update(self, data: dict[str, typing.Any]) -> ZfsTierEntry:
-        if not feature_is_licensed():
-            raise CallError("ZFS tiering requires a license.")
+        ent = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.ZFSTIER)
+        if not ent.entitled:
+            raise CallError(ent.message)
 
         old = await self.config()
         new = await self._svc_part.do_update(data)
@@ -765,6 +767,22 @@ class ZfsTierService(ConfigService[ZfsTierEntry]):
         return {ds: (None if v is _DATASET_NOT_FOUND else v) for ds, v in raw.items()}
 
 
+class ZfsTierLicenseReconcileDelegate(LicenseReconcileDelegate):
+    name = "zfs_tier"
+    etc_groups = ("truenas_zfstierd",)
+    service = "truenas_zfstierd"
+    # RELOAD, not RENDER: the SIGHUP is the point, since the daemon has to be told to drop
+    # active jobs when the entitlement goes away. service.control renders the service's own
+    # select_etc() on the way into the verb -- including when the unit is stopped, which is
+    # what converges an HA standby.
+    action = LicenseReconcileAction.RELOAD
+    order = 40
+
+
 async def setup(middleware: Middleware) -> None:
+    await middleware.call2(
+        middleware.services.truenas.license.register_reconcile_delegate,
+        ZfsTierLicenseReconcileDelegate(),
+    )
     config = await middleware.call("zfs.tier.config")
     await middleware.run_in_thread(_apply_metadata_reserve_pct, middleware, config.special_class_metadata_reserve_pct)

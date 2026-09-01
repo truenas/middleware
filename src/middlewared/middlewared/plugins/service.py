@@ -10,6 +10,7 @@ from middlewared.api.current import (
     ServiceStartedOrEnabledResult, ServiceUpdateArgs, ServiceUpdateResult,
     ServiceControlArgs, ServiceControlResult,
 )
+from middlewared.common.license_reconcile import LicenseReconcileAction, LicenseReconcileDelegate
 from middlewared.plugins.service_.services.all import all_services
 from middlewared.plugins.service_.services.base import IdentifiableServiceInterface
 from middlewared.plugins.service_.services.dbus_router import ServiceActionError
@@ -505,6 +506,14 @@ class ServiceService(CRUDService):
             await self.started(service.name)
 
 
+class RcLicenseReconcileDelegate(LicenseReconcileDelegate):
+    name = 'rc'
+    etc_groups = ('rc',)
+    service = None
+    action = LicenseReconcileAction.RENDER
+    order = -50
+
+
 async def __event_service_ready(middleware, event_type, args):
     middleware.create_task(middleware.call('service.check_deprecated_services'))
 
@@ -512,5 +521,10 @@ async def __event_service_ready(middleware, event_type, args):
 async def setup(middleware):
     for klass in all_services:
         await middleware.call('service.register_object', klass(middleware))
+
+    await middleware.call2(
+        middleware.services.truenas.license.register_reconcile_delegate,
+        RcLicenseReconcileDelegate(),
+    )
 
     middleware.event_subscribe('system.ready', __event_service_ready)

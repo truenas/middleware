@@ -1,11 +1,17 @@
 import pytest
+from datetime import date
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from truenas_connect_utils.status import Status
+from truenas_pylicensed import LicenseType
 
+from middlewared.pytest.unit.helpers import create_service
+from middlewared.pytest.unit.middleware import Middleware
 from middlewared.service import CallError, ValidationErrors
+from middlewared.utils.license import FeatureInfo, LicenseInfo
 from middlewared.plugins.truenas_connect.acme import TNCACMEService
 from middlewared.plugins.truenas_connect.heartbeat import TNCHeartbeatService
+from middlewared.plugins.truenas_connect.register import TrueNASConnectService as TNCRegistrationService
 from middlewared.plugins.truenas_connect.state import TrueNASConnectStateService
 from middlewared.plugins.truenas_connect.update import TrueNASConnectService
 from middlewared.plugins.truenas_connect.hostname import TNCHostnameService
@@ -586,30 +592,48 @@ async def test_heartbeat_guard_rejects_when_no_creds():
 
 # --- Heartbeat request payload --------------------------------------------------------------------
 
+def _license_info(id_='LIC-1'):
+    """The same object `truenas.license.info_private` hands production."""
+    return LicenseInfo(
+        id=id_,
+        type=LicenseType.ENTERPRISE_HA,
+        model='H10',
+        support_expires_at=date(2026, 4, 30),
+        features={
+            'SUPPORT': FeatureInfo(
+                name='SUPPORT',
+                start_date=date(2026, 4, 8),
+                expires_at=date(2026, 4, 30),
+                source='enterprise',
+                type='GOLD',
+            ),
+        },
+        serials=('TEST-000001',),
+        enclosures={'E24': 3},
+        contract_type='GOLD',
+    )
+
+
 def _payload_service(license_info, fingerprint='FP', fingerprint_raises=False):
-    """A TNCHeartbeatService whose middleware.call serves what payload() needs."""
-    service = TNCHeartbeatService(MagicMock())
+    """A TNCHeartbeatService whose middleware serves what payload() needs."""
+    def raise_or_return():
+        if fingerprint_raises:
+            raise CallError('daemon down')
+        return fingerprint
 
-    async def mock_call(method, *args, **kwargs):
-        if method == 'reporting.realtime.stats':
-            return {}
-        if method in ('app.query', 'vm.query', 'alert.list'):
-            return []
-        if method == 'truenas.license.fingerprint':
-            if fingerprint_raises:
-                raise CallError('daemon down')
-            return fingerprint
-        if method == 'truenas.license.info':
-            return license_info
-        raise ValueError(f'Unexpected: {method}')
-
-    service.middleware.call = AsyncMock(side_effect=mock_call)
-    return service
+    m = Middleware()
+    m['reporting.realtime.stats'] = lambda disk_mapping: {}
+    m['app.query'] = lambda: []
+    m['vm.query'] = lambda: []
+    m['alert.list'] = lambda: []
+    m['truenas.license.fingerprint'] = raise_or_return
+    m.services.truenas.license.info_private = lambda: license_info
+    return create_service(m, TNCHeartbeatService)
 
 
 @pytest.mark.asyncio
 async def test_payload_reports_fingerprint_and_license_id():
-    service = _payload_service(license_info={'id': 'LIC-1'}, fingerprint='FP-XYZ')
+    service = _payload_service(license_info=_license_info(), fingerprint='FP-XYZ')
     payload = await service.payload({})
     assert payload['fingerprint'] == 'FP-XYZ'
     assert payload['license_id'] == 'LIC-1'
@@ -624,7 +648,7 @@ async def test_payload_license_id_null_when_unlicensed():
 
 @pytest.mark.asyncio
 async def test_payload_fingerprint_failure_degrades_to_null():
-    service = _payload_service(license_info={'id': 'LIC-1'}, fingerprint_raises=True)
+    service = _payload_service(license_info=_license_info(), fingerprint_raises=True)
     payload = await service.payload({})
     assert payload['fingerprint'] is None
     assert payload['license_id'] == 'LIC-1'  # other fields still populated
@@ -793,3 +817,50 @@ async def test_handle_response_202_pending_without_pem_is_quiet():
 
     install.assert_not_called()
     warn.assert_not_called()
+
+
+# --- Registration URI: the license PEM is attached unconditionally ---------------------------------
+
+def _registration_service(license_info):
+    service = TNCRegistrationService(MagicMock())
+
+    async def mock_call(method, *args, **kwargs):
+        if method == 'tn_connect.config':
+            return {'enabled': True, 'tnc_base_url': 'https://tnc.example/'}
+        if method == 'cache.get':
+            return 'CLAIM-TOKEN'
+        if method == 'system.version_short':
+            return '26.0.0'
+        if method == 'truenas.get_chassis_hardware':
+            return 'TRUENAS-H10'
+        if method == 'system.global.id':
+            return 'SYS-ID'
+        if method == 'system.general.config':
+            return {'ui_httpsport': 443}
+        if method == 'system.license':
+            return license_info
+        raise ValueError(f'Unexpected: {method}')
+
+    service.middleware.call = AsyncMock(side_effect=mock_call)
+    return service
+
+
+# The PEM's presence is the only thing that decides this.
+@pytest.mark.asyncio
+@pytest.mark.parametrize('license_info, expected', [
+    ({'raw_license': 'THE-PEM'}, 'license=THE-PEM'),
+    # system.license sets raw_license to None when neither license file can be read;
+    # urlencode would otherwise send the literal string "None".
+    ({'raw_license': None}, None),
+    # An unlicensed system has no system.license at all.
+    (None, None),
+])
+async def test_registration_uri_carries_the_license_only_when_there_is_a_pem(license_info, expected):
+    service = _registration_service(license_info)
+
+    uri = await service.get_registration_uri()
+
+    if expected is None:
+        assert 'license=' not in uri
+    else:
+        assert expected in uri

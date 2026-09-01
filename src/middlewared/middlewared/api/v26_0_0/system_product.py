@@ -22,8 +22,11 @@ __all__ = (
 
 
 class SystemFeatureEnabledArgs(BaseModel):
-    feature: Literal["APPS", "DEDUP", "FIBRECHANNEL", "SED", "SUPPORT", "VMS", "ZFSTIER"] = Field(
-        description="Feature to check for availability on this system.",
+    feature: NonEmptyString = Field(
+        description=(
+            "Feature to check for availability on this system. A feature this system does not "
+            "recognize or does not gate is reported as available."
+        ),
     )
 
     @classmethod

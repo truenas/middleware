@@ -1,7 +1,7 @@
 import pytest
 
 from middlewared.test.integration.assets.directory_service import directoryservice
-from middlewared.test.integration.assets.product import product_type
+from middlewared.test.integration.assets.entitlements import entitled
 from middlewared.test.integration.utils import call, client, ssh
 from middlewared.test.integration.utils.client import truenas_server
 
@@ -13,16 +13,16 @@ def do_freeipa_connection():
 
 
 @pytest.fixture(scope="function")
-def override_product():
+def entitle_ds_auth():
     if truenas_server.server_type == 'ENTERPRISE_HA':
         yield
     else:
-        with product_type():
+        with entitled("DIRECTORY_SERVICES"):
             yield
 
 
 @pytest.fixture(scope="function")
-def enable_ds_auth(override_product):
+def enable_ds_auth(entitle_ds_auth):
     sys_config = call('system.general.update', {'ds_auth': True})
     try:
         yield sys_config

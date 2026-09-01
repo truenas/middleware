@@ -1,10 +1,10 @@
 import contextlib
-from dataclasses import asdict
 import os
-from typing import Any
 
 from middlewared.api import api_method
 from middlewared.api.current import (
+    LicenseFeatureEntry,
+    LicenseInfoEntry,
     TrueNASLicenseUploadOptions,
     TrueNASLicenseUploadArgs,
     TrueNASLicenseUploadResult,
@@ -14,21 +14,51 @@ from middlewared.api.current import (
     TrueNASLicenseInfoResult,
 )
 from middlewared.service import Service, ValidationError, private
-from middlewared.plugins.system.product import SystemService
+from middlewared.plugins.truenas.license_reconcile import TrueNASLicenseReconcileService
 from middlewared.plugins.truenas.tn import EULA_PENDING_PATH
-from truenas_pylicensed import LicenseError, LicenseType, verify
-
-from .license_legacy_utils import LEGACY_LICENSE_FILE, get_legacy_license_info
-from .license_utils import (
+from middlewared.utils.license import (
+    LEGACY_LICENSE_FILE,
     LicenseInfo,
-    configure_ha_license,
     get_fingerprint_b64,
-    get_license_info,
+    get_legacy_license_info,
+    get_license,
     upload_license,
 )
+from truenas_pylicensed import LicenseType
 
 
-class TrueNASLicenseService(Service):
+def _license_entry(info: LicenseInfo) -> LicenseInfoEntry:
+    """
+    Project a LicenseInfo onto the public `truenas.license.info` payload.
+
+    There is no license-wide expiry to project. Expiry belongs to individual features,
+    so `features[].expires_at` is the only date here, and the end of the support
+    contract is the SUPPORT entry's.
+    """
+    # Copied rather than passed through: pydantic's strict mode rejects a tuple for a list and a
+    # MappingProxyType for a dict, and LicenseType is an IntEnum that would otherwise go out as a
+    # bare integer.
+    return LicenseInfoEntry(
+        id=info.id,
+        type=info.type.name,
+        model=info.model,
+        features=[
+            LicenseFeatureEntry(
+                name=feature.name,
+                start_date=feature.start_date,
+                expires_at=feature.expires_at,
+                source=feature.source,
+                type=feature.type,
+            )
+            for feature in info.features.values()
+        ],
+        serials=list(info.serials),
+        enclosures=dict(info.enclosures),
+        contract_type=info.contract_type,
+    )
+
+
+class TrueNASLicenseService(TrueNASLicenseReconcileService, Service):
     class Config:
         namespace = "truenas.license"
         cli_private = True
@@ -57,10 +87,6 @@ class TrueNASLicenseService(Service):
 
         get_legacy_license_info.cache_clear()
 
-        SystemService.PRODUCT_TYPE = None
-
-        self.middleware.call_sync("etc.generate", "rc")
-
         self.middleware.call_sync("alert.alert_source_clear_run", "LicenseStatus")
 
         if options.ha_propagate:
@@ -69,7 +95,7 @@ class TrueNASLicenseService(Service):
                 LicenseType.ENTERPRISE_SINGLE
             ):
                 if lic.type == LicenseType.ENTERPRISE_HA:
-                    configure_ha_license(self.middleware)
+                    self._configure_ha_license()
 
                 with open(EULA_PENDING_PATH, "a+") as f:
                     os.fchmod(f.fileno(), 0o600)
@@ -77,6 +103,30 @@ class TrueNASLicenseService(Service):
         self.middleware.run_coroutine(
             self.middleware.call_hook('system.post_license_update', had_license=had_license), wait=False,
         )
+
+    def _configure_ha_license(self) -> None:
+        try:
+            self.middleware.call_sync("failover.ensure_remote_client")
+        except Exception as e:
+            # this is fatal because we can't determine what the remote ip address
+            # is to so any failover.call_remote calls will fail
+            raise ValidationError("license", f"Failed to determine remote heartbeat IP address: {e}")
+
+        try:
+            self.middleware.call_sync("failover.call_remote", "failover.ensure_remote_client")
+        except Exception:
+            # this is not fatal, so no reason to return early
+            # it just means that any "failover.call_remote" calls initiated from the remote node
+            # will fail but that shouldn't be happening anyway
+            self.logger.warning(
+                "Remote node failed to determine this nodes heartbeat IP address",
+                exc_info=True,
+            )
+
+        try:
+            self.middleware.call_sync("failover.send_license")
+        except Exception:
+            self.logger.warning("Failed to send file to remote node", exc_info=True)
 
     @private
     def reset_legacy_license_cache(self) -> None:
@@ -88,15 +138,10 @@ class TrueNASLicenseService(Service):
         roles=["READONLY_ADMIN"],
         check_annotations=True,
     )
-    def info(self) -> dict[str, Any] | None:
+    def info(self) -> LicenseInfoEntry | None:
         """Returns the parsed license object, or null if no license exists."""
-        result: dict[str, Any] | None = None
         info = self.info_private()
-        if info is not None:
-            result = asdict(info)
-            result["type"] = info.type.name
-
-        return result
+        return _license_entry(info) if info is not None else None
 
     @api_method(
         TrueNASLicenseFingerprintArgs,
@@ -110,9 +155,4 @@ class TrueNASLicenseService(Service):
 
     @private
     def info_private(self) -> LicenseInfo | None:
-        license_status = verify()
-
-        if license_status.code in [LicenseError.NO_LICENSE, LicenseError.DAEMON_UNAVAILABLE]:
-            return get_legacy_license_info()
-
-        return get_license_info(license_status)
+        return get_license()

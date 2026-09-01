@@ -1,11 +1,14 @@
 import pathlib
 
+from truenas_pylicensed.features import LicenseFeature
+
 import middlewared.sqlalchemy as sa
 from middlewared.api import api_method
 from middlewared.api.current import (NVMetGlobalEntry,
                                      NVMetGlobalUpdateArgs,
                                      NVMetGlobalUpdateResult,
                                      NVMetGlobalSessionsItem)
+from middlewared.common.license_reconcile import LicenseReconcileAction, LicenseReconcileDelegate
 from middlewared.plugins.rdma.constants import RDMAprotocols
 from middlewared.service import SystemServiceService, ValidationErrors, filterable_api_method, private
 from middlewared.utils.filter_list import filter_list
@@ -70,8 +73,7 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
 
     async def __validate(self, verrors, data, schema_name, old=None):
         if data['rdma'] and old['rdma'] != data['rdma']:
-            available_rdma_protocols = await self.middleware.call('rdma.capable_protocols')
-            if RDMAprotocols.NVMET.value not in available_rdma_protocols:
+            if not await self.rdma_capable():
                 verrors.add(
                     f'{schema_name}.rdma',
                     'This platform cannot support NVMe-oF(RDMA) or is missing a RDMA capable NIC.'
@@ -84,11 +86,9 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
                 )
         if old['kernel'] != data['kernel']:
             if not data['kernel']:
-                if not await self.middleware.call('system.is_enterprise'):
-                    verrors.add(
-                        f'{schema_name}.kernel',
-                        'SPDK is limited to enterprise licensed systems only.'
-                    )
+                spdk = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.NVMEOF_SPDK)
+                if not spdk.entitled:
+                    verrors.add(f'{schema_name}.kernel', spdk.message)
                 elif AVX2_FLAG not in (await self.middleware.call('system.cpu_flags')):
                     verrors.add(
                         f'{schema_name}.kernel',
@@ -126,14 +126,22 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
         return False
 
     @private
+    async def rdma_capable(self):
+        """
+        Returns whether NVMe-oF over RDMA is available on this system, ignoring whether it is
+        currently enabled.
+        """
+        return RDMAprotocols.NVMET.value in await self.middleware.call('rdma.capable_protocols')
+
+    @private
     async def rdma_enabled(self):
         """
         Returns whether RDMA is enabled or not.
         """
-        if not await self.middleware.call('system.is_enterprise'):
-            return False
+        if (await self.middleware.call('nvmet.global.config'))['rdma']:
+            return await self.rdma_capable()
 
-        return (await self.middleware.call('nvmet.global.config'))['rdma']
+        return False
 
     @filterable_api_method(item=NVMetGlobalSessionsItem, roles=['SHARING_NVME_TARGET_READ'])
     async def sessions(self, filters, options):
@@ -349,7 +357,28 @@ async def pool_post_import(middleware, pool):
             await (await middleware.call('service.control', 'RELOAD', NVMET_SERVICE_NAME)).wait(raise_error=True)
 
 
+class NVMeTargetLicenseReconcileDelegate(LicenseReconcileDelegate):
+    name = 'nvmet'
+    etc_groups = ('nvmet',)
+    service = NVMET_SERVICE_NAME
+    action = LicenseReconcileAction.RENDER
+    order = 30
+
+    async def should_run(self, middleware):
+        """
+        Only converge a target that is actually running.
+
+        With nothing running there is no configfs or RPC state to bring in line, and the next
+        start renders config from scratch regardless.
+        """
+        return await middleware.call('nvmet.global.running')
+
+
 async def setup(middleware):
+    await middleware.call2(
+        middleware.services.truenas.license.register_reconcile_delegate,
+        NVMeTargetLicenseReconcileDelegate(),
+    )
     middleware.register_hook("pool.post_import", pool_post_import, sync=True)
     if await middleware.call('system.ready'):
         await middleware.call('iscsi.auth.load_upgrade_alerts')

@@ -2,8 +2,8 @@ import os
 import time
 import pytest
 
+from middlewared.test.integration.assets.entitlements import entitled
 from middlewared.test.integration.assets.pool import dataset
-from middlewared.test.integration.assets.product import product_type
 from middlewared.test.integration.assets.smb import smb_share
 from middlewared.test.integration.utils import call
 
@@ -12,8 +12,8 @@ VEEAM_BLOCKSIZE = 131072
 
 
 @pytest.fixture(autouse=True)
-def enterprise_licensed():
-    with product_type('ENTERPRISE'):
+def veeam_entitled():
+    with entitled("SMB_VEEAM"):
         yield
 
 

@@ -107,13 +107,13 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
                 'Unlicensed Expansion shelf detected. This system is not licensed for additional expansion shelves.'
             ))
 
-        if local_license.expires_at is None:
+        if local_license.support_expires_at is None:
             return alerts
 
         for days in [0, 14, 30, 90, 180]:
-            if local_license.expires_at <= date.today() + timedelta(days=days):
+            if local_license.support_expires_at <= date.today() + timedelta(days=days):
                 serial_numbers = ", ".join(list(filter(None, local_license.serials)))
-                contract_expiration = local_license.expires_at.strftime("%B %-d, %Y")
+                contract_expiration = local_license.support_expires_at.strftime("%B %-d, %Y")
 
                 if days == 0:
                     alert_klass = LicenseHasExpiredAlertClass
@@ -138,7 +138,7 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
                         on {contract_expiration}. Renewal options may be available — contact your authorized
                         reseller or TrueNAS: sales@TrueNAS.com, 1-855-473-7449.
                     """)
-                    days_left = (local_license.expires_at - date.today()).days
+                    days_left = (local_license.support_expires_at - date.today()).days
                     subject = f"Your TrueNAS support contract will expire in {days_left} days"
                     if days == 14:
                         opening = textwrap.dedent("""\

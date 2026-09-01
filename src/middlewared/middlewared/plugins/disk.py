@@ -6,8 +6,8 @@ from middlewared.api.current import (
 )
 from middlewared.service import filterable_api_method, private, CRUDService
 import middlewared.sqlalchemy as sa
-from middlewared.utils import ProductType
 from middlewared.utils.disks_.disk_class import DiskEntry as DiskEntryObj
+from middlewared.utils.hardware import get_hardware_class
 
 
 class DiskModel(sa.Model):
@@ -231,14 +231,14 @@ class DiskService(CRUDService):
         return not bool(await self.middleware.call('disk.list_partitions', disk))
 
     @private
-    async def configure_power_management(self):
+    def configure_power_management(self):
         """
         This runs on boot to properly configure all power management options
         (Advanced Power Management and IDLE) for all disks.
         """
-        if await self.middleware.call('system.product_type') != ProductType.ENTERPRISE:
-            for disk in await self.middleware.call('disk.query'):
-                await self.middleware.call('disk.power_management', disk['name'], disk)
+        if not get_hardware_class().is_appliance:
+            for disk in self.middleware.call_sync('disk.query'):
+                self.middleware.call_sync('disk.power_management', disk['name'], disk)
 
     @private
     async def power_management(self, dev, disk=None):

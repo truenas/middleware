@@ -7,6 +7,8 @@ import os
 
 from mako import exceptions
 from mako.template import Template
+from truenas_pylicensed.features import LicenseFeature
+
 from middlewared.plugins.account_.constants import CONTAINER_ROOT_UID
 from middlewared.service import CallError, Service
 from middlewared.utils.io import write_if_changed, FileChanges
@@ -244,10 +246,14 @@ class EtcService(Service):
         'user': EtcGroup(
             ctx=(
                 CtxMethod(method='system.security.config'),
-                CtxMethod(method='system.is_enterprise'),
                 CtxMethod(method='user.query', args=[[['local', '=', True], ['uid', '!=', CONTAINER_ROOT_UID]]]),
                 CtxMethod(method='group.query', args=[[['local', '=', True]]]),
                 CtxMethod(method='auth.twofactor.config'),
+                CtxMethod(
+                    method='truenas.entitlements.check',
+                    args=[LicenseFeature.SUPPORT],
+                    ctx_prefix='support',
+                ),
             ),
             entries=(
                 EtcEntry(renderer_type=RendererType.MAKO, path='group'),
@@ -444,6 +450,7 @@ class EtcService(Service):
                 CtxMethod(method='iscsi.auth.query'),
                 CtxMethod(method='iscsi.extent.query', args=[[['enabled', '=', True]]]),
                 CtxMethod(method='iscsi.global.config'),
+                CtxMethod(method='iscsi.global.iser_enabled'),
                 CtxMethod(method='iscsi.initiator.query'),
                 CtxMethod(method='iscsi.portal.query'),
                 CtxMethod(method='iscsi.target.query'),

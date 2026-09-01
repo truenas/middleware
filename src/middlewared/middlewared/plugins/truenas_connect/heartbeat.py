@@ -187,11 +187,11 @@ class TNCHeartbeatService(Service, TNCAPIMixin):
 
         # license_id is the delivery acknowledgement: once we report the id of an installed license,
         # TNC marks it accepted and stops resending the PEM. Null when we hold no valid license.
-        license_info = await self.middleware.call('truenas.license.info')
+        license_info = await self.call2(self.s.truenas.license.info_private)
 
         return {
             'alerts': await self.middleware.call('alert.list'),
             'stats': stats,
             'fingerprint': fingerprint,
-            'license_id': license_info['id'] if license_info else None,
+            'license_id': license_info.id if license_info else None,
         }

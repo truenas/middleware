@@ -151,12 +151,10 @@ class SMARTAlertSource(ThreadedAlertSource):
             case _:
                 return SmartInfo(unknown_device=True)
 
-    def micron_phison_check(self, sijson, si, is_ent):
+    def micron_phison_check(self, sijson, si):
         alerts = list()
-        model = sijson.get("model_name", "")
-        if not is_ent or not model:
-            return alerts
 
+        model = sijson.get("model_name", "")
         is_micron = model.startswith("Micron_5210")
         is_phison = model.startswith("QSP")
         if not any((is_micron, is_phison)):
@@ -209,7 +207,7 @@ class SMARTAlertSource(ThreadedAlertSource):
 
     def check_sync(self):
         alerts = list()
-        is_ent = self.middleware.call_sync("system.is_enterprise")
+        is_ha_capable = self.middleware.call_sync("system.is_ha_capable")
         for disk in self.middleware.call_sync("disk.get_disks"):
             if "pmem" in disk.name:
                 continue
@@ -239,7 +237,9 @@ class SMARTAlertSource(ThreadedAlertSource):
                             {"name": disk.name, "serial": disk.serial},
                         )
                     )
-                alerts.extend(self.micron_phison_check(sijson, parsed, is_ent))
+
+                if is_ha_capable and sijson.get("model_name"):
+                    alerts.extend(self.micron_phison_check(sijson, parsed))
             except Exception:
                 self.middleware.logger.exception("Unexpected failure parsing SMART info")
                 continue

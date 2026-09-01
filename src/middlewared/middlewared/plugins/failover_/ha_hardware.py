@@ -6,10 +6,7 @@
 import enum
 import re
 
-from middlewared.plugins.truenas.license_legacy_utils import get_legacy_license_info
-from middlewared.plugins.truenas.license_utils import get_license_info
-
-from truenas_pylicensed import LicenseType
+from middlewared.utils.entitlements import DerivedEntitlement, get_entitlement
 
 
 class HA_HARDWARE(enum.Enum):
@@ -35,8 +32,12 @@ class HA_HARDWARE(enum.Enum):
 
 
 def is_licensed_for_ha() -> bool:
-    _license = get_license_info() or get_legacy_license_info()
-    if _license is None:
-        return False
+    """Whether this system holds an ENTERPRISE_HA license.
 
-    return _license.type == LicenseType.ENTERPRISE_HA
+    The rule itself lives in POLICY so there is one place to change it. This stays a
+    plain function with no middleware dependency, because scripts/ha_panic.py imports
+    it directly and runs as an ExecStop= when middlewared may already be gone, so it
+    calls get_entitlement() rather than going through the truenas.entitlements
+    service: there may be no middleware left to ask.
+    """
+    return get_entitlement(DerivedEntitlement.HA).entitled

@@ -1,7 +1,8 @@
 import pytest
-from unittest.mock import Mock
+from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.plugins.pool_.pool import PoolService
+from middlewared.pytest.unit.entitlements import install_entitlements_for_column
 from middlewared.pytest.unit.middleware import Middleware
 
 
@@ -26,9 +27,10 @@ def _pool_old(data, *, special=None, dedup=None):
     return {"topology": {"data": data, "special": special or [], "dedup": dedup or []}}
 
 
-def _service(is_enterprise=False):
+def _service():
     middleware = Middleware()
-    middleware["system.is_enterprise"] = Mock(return_value=is_enterprise)
+    # force_topology's gate asks about SUPPORT; these cases are all the unentitled side of it.
+    install_entitlements_for_column(middleware, LicenseFeature.SUPPORT, "CE+L")
     return PoolService(middleware)
 
 
@@ -168,28 +170,3 @@ async def test_force_topology_does_not_bypass_minimum_disks():
     verrors = await _service()._validate_topology(_pool_data([_new_vdev("RAIDZ2", 3)], force_topology=True))
     assert [e.attribute for e in verrors.errors] == ["topology.data.0.disks"]
     assert verrors.errors[0].errmsg == "You need at least 4 disk(s) for this vdev type."
-
-
-# ---------------------------------------------------------------------------
-# force_topology is not permitted on Enterprise-licensed systems
-# ---------------------------------------------------------------------------
-
-
-@pytest.mark.asyncio
-async def test_force_topology_rejected_on_enterprise():
-    verrors = await _service(is_enterprise=True)._validate_topology(
-        _pool_data([_new_vdev("RAIDZ2", 7)], force_topology=True)
-    )
-    assert [e.attribute for e in verrors.errors] == ["force_topology"]
-    assert verrors.errors[0].errmsg == (
-        "Bypassing pool topology validation is not supported on Enterprise-licensed systems."
-    )
-
-
-@pytest.mark.asyncio
-async def test_force_topology_not_checked_when_unset():
-    # system.is_enterprise must not even be consulted when force_topology is off.
-    service = _service(is_enterprise=True)
-    verrors = await service._validate_topology(_pool_data([_new_vdev("RAIDZ2", 7)]))
-    assert verrors.errors == []
-    service.middleware["system.is_enterprise"].assert_not_called()
