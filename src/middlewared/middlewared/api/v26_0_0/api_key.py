@@ -42,7 +42,9 @@ class ApiKeyEntry(BaseModel):
         default=None,
         description="Expiration timestamp for the API key or `null` for no expiration.",
     )
-    local: bool = Field(description="Whether this API key is for local system use only.")
+    local: bool = Field(
+        description="Whether the API key belongs to a local user account rather than a directory services one.",
+    )
     revoked: bool = Field(description="Whether the API key has been revoked and is no longer valid.")
     revoked_reason: str | None = Field(description="Reason for API key revocation or `null` if not revoked.")
 

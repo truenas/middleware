@@ -14,6 +14,7 @@ from middlewared.api.current import (
     ApiKeyScramData,
     ApiKeyUpdate,
 )
+from middlewared.plugins.idmap_.idmap_constants import BASE_SYNTHETIC_DATASTORE_ID
 from middlewared.service import CallError, CRUDServicePart, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.auth import LEGACY_API_KEY_USERNAME
@@ -67,7 +68,28 @@ class ApiKeyServicePart(CRUDServicePart[ApiKeyEntry]):
         # need here (e.g. 2FA status), so query the table directly.
         users = await self.middleware.call("datastore.query", "account.bsdusers", [], {"prefix": "bsdusr_"})
 
-        by_id: dict[int, str] = {x["id"]: x["username"] for x in users}
+        by_id: dict[int, str | None] = {x["id"]: x["username"] for x in users}
+
+        # Keys for directory services accounts that have no SID (plain LDAP)
+        # are stored by the `user.query` id synthesized from the account's UID,
+        # which the local user table cannot resolve. Look each distinct one up
+        # through NSS once per query.
+        for row in rows:
+            if not row["user_identifier"].isdigit():
+                continue
+
+            synthetic_id = int(row["user_identifier"])
+            if synthetic_id < BASE_SYNTHETIC_DATASTORE_ID or synthetic_id in by_id:
+                continue
+
+            try:
+                pwdobj = await self.middleware.call(
+                    "user.get_user_obj", {"uid": synthetic_id - BASE_SYNTHETIC_DATASTORE_ID}
+                )
+            except KeyError:
+                by_id[synthetic_id] = None
+            else:
+                by_id[synthetic_id] = pwdobj["pw_name"]
 
         # Convert legacy keys into the appropriate local administrator account.
         if result := _tf.tnfilter(users, filters=_ADMIN_UID_FILTER, options=_ADMIN_UID_GET_OPTS):
@@ -111,11 +133,14 @@ class ApiKeyServicePart(CRUDServicePart[ApiKeyEntry]):
             # If we can't resolve the ID then the account was probably deleted
             # and we didn't quite get to clean up yet.
             data["user_identifier"] = int(user_identifier)
+            # Ids at or above the synthetic base belong to directory services accounts.
+            data["local"] = data["user_identifier"] < BASE_SYNTHETIC_DATASTORE_ID
             data["username"] = context["by_id"].get(data["user_identifier"])
         elif user_identifier == LEGACY_API_KEY_USERNAME:
             # This may be magic string designating a migrated API key
             data["username"] = context["root_name"]
         elif sid_is_valid(user_identifier):
+            data["local"] = False
             if (username := context["by_sid"].get(user_identifier)) is None:
                 resp = await self.middleware.call("idmap.convert_sids", [user_identifier])
                 if entry := resp["mapped"].get(user_identifier):
@@ -194,7 +219,9 @@ class ApiKeyServicePart(CRUDServicePart[ApiKeyEntry]):
         )
         if not users:
             verrors.add("api_key_create", "User does not exist.")
-        elif not users[0]["roles"]:
+        elif not await self.middleware.call("privilege.roles_for_user", data.username):
+            # We cannot use user[0]['roles'] as a fast check because it is not populated
+            # for directory services users via cache.
             verrors.add("api_key_create", "User lacks privilege role membership.")
 
         verrors.check()

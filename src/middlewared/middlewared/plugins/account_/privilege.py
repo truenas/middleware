@@ -402,6 +402,37 @@ class PrivilegeService(CRUDService):
         return compose
 
     @private
+    async def roles_for_user(self, username):
+        """
+        Return the roles currently granted to `username` by evaluating its
+        group membership as reported by NSS.
+
+        Directory services cache entries are not authoritative for privilege
+        determination. They carry no group membership, because populating it
+        while enumerating the domain would require a group lookup per account
+        and overload the domain controller, and so `user.query` reports an
+        empty `roles` list for every directory services account. Anything that
+        determines privilege must go directly through NSS the way that
+        authentication does.
+        """
+        try:
+            user_obj = await self.middleware.call('user.get_user_obj', {
+                'username': username, 'get_groups': True
+            })
+        except KeyError:
+            return []
+
+        privileges = await self.privileges_for_groups(
+            'local_groups' if user_obj['local'] else 'ds_groups',
+            # synthetic accounts (container root) have no group list
+            user_obj['grouplist'] or []
+        )
+        if not privileges:
+            return []
+
+        return sorted((await self.compose_privilege(privileges))['roles'])
+
+    @private
     async def full_privilege(self):
         return {
             'roles': {'FULL_ADMIN'},
