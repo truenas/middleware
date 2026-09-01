@@ -12,9 +12,12 @@ a caller cannot distinguish a rejected blob from a missing one.
 from __future__ import annotations
 
 from datetime import date
+from enum import StrEnum
+import errno
 from functools import lru_cache
 import logging
 from types import MappingProxyType
+from typing import Any
 
 from licenselib.license import Features, License
 from licenselib.utils import proactive_support_allowed
@@ -27,9 +30,20 @@ from .types import FeatureInfo, LicenseInfo
 logger = logging.getLogger(__name__)
 
 __all__ = (
+    "LegacyStatus",
+    "describe_legacy_license",
     "get_legacy_license_info",
+    "legacy_license_fields",
     "parse_legacy_license",
 )
+
+
+class LegacyStatus(StrEnum):
+    NOT_PRESENT = "NOT_PRESENT"
+    READ_ERROR = "READ_ERROR"
+    MALFORMED = "MALFORMED"
+    REJECTED_FREENAS_MODEL = "REJECTED_FREENAS_MODEL"
+    DECODED = "DECODED"
 
 
 _LEGACY_INJECT: frozenset[LicenseFeature] = frozenset(
@@ -74,6 +88,10 @@ def _support_tier(contract_type_name: str) -> str:
         return SupportTier.BRONZE.value
 
 
+def _is_freenas_model(model: str | None) -> bool:
+    return model is not None and model.lower().startswith("freenas")
+
+
 @lru_cache()
 def get_legacy_license_info() -> LicenseInfo | None:
     try:
@@ -85,10 +103,65 @@ def get_legacy_license_info() -> LicenseInfo | None:
         logger.warning("Error loading legacy license: %r", e)
         return None
 
-    if info.model is not None and info.model.lower().startswith("freenas"):
+    if _is_freenas_model(info.model):
         return None
 
     return info
+
+
+def legacy_license_fields(lic: Any) -> dict[str, Any]:
+    """Project a decoded license onto the fields a debug bundle may carry.
+
+    An allowlist so that a field added to ``License`` upstream cannot arrive here by default:
+    it carries ``customer_name`` and ``customer_key``. ``licenselib`` is untyped, hence ``Any``.
+    """
+    contract_type = lic.contract_type
+    return {
+        "version": lic.version,
+        "model": lic.model or None,
+        "system_serial": lic.system_serial or None,
+        "system_serial_ha": lic.system_serial_ha or None,
+        # ``License.load`` leaves the raw byte in place when it matches no ContractType member.
+        "contract_type": {
+            "value": getattr(contract_type, "value", contract_type),
+            "name": getattr(contract_type, "name", None),
+        },
+        "contract_start": lic.contract_start.isoformat(),
+        "contract_end": lic.contract_end.isoformat(),
+        "features": [feature.name for feature in lic.features],
+        "addhw": [list(entry) for entry in lic.addhw],
+    }
+
+
+def describe_legacy_license(path: str = LEGACY_LICENSE_FILE) -> dict[str, Any]:
+    """Report the on-disk legacy license as it actually is.
+
+    Uncached, and separate from ``get_legacy_license_info``, which answers ``None`` for an
+    absent, an unreadable, a malformed and a rejected blob alike. A rejected blob is reported
+    with its fields: that is the case where a system lost functionality it used to have.
+    """
+    try:
+        with open(path) as f:
+            text = f.read().strip("\n")
+    except FileNotFoundError:
+        return {"status": LegacyStatus.NOT_PRESENT.value, "error": None, "fields": None}
+    except OSError as e:
+        code = e.errno
+        return {
+            "status": LegacyStatus.READ_ERROR.value,
+            "error": errno.errorcode.get(code, str(code)) if code is not None else None,
+            "fields": None,
+        }
+
+    try:
+        lic = License.load(text)
+        fields = legacy_license_fields(lic)
+    except Exception as e:
+        # Neither the blob nor `lic` may reach this string: a License repr carries customer_key.
+        return {"status": LegacyStatus.MALFORMED.value, "error": f"{type(e).__name__}: {e}", "fields": None}
+
+    status = LegacyStatus.REJECTED_FREENAS_MODEL if _is_freenas_model(fields["model"]) else LegacyStatus.DECODED
+    return {"status": status.value, "error": None, "fields": fields}
 
 
 def parse_legacy_license(text: str) -> LicenseInfo:
