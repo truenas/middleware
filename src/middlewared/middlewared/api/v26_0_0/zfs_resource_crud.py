@@ -1,6 +1,6 @@
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import Field
+from pydantic import Field, Secret
 
 from middlewared.api.base import (
     BaseModel,
@@ -14,6 +14,11 @@ from .zfs_tier import TierInfo
 
 __all__ = (
     "ZFSResourceEntry",
+    "ZFSResourceCreateArgsData",
+    "ZFSResourceCreateArgs",
+    "ZFSResourceCreateEncryption",
+    "ZFSResourceCreateProperties",
+    "ZFSResourceCreateResult",
     "ZFSResourceDestroyArgsData",
     "ZFSResourceDestroyArgs",
     "ZFSResourceDestroyResult",
@@ -313,17 +318,17 @@ class ZFSResourceQuery(BaseModel):
             "the requested information is retrieved as efficiently and quickly as possible.\n"
             "\n"
             "Example 1:\n"
-            "    {\"paths\": [\"tank/foo\"]} will query the relevant information for this resource only.\n"
+            '    {"paths": ["tank/foo"]} will query the relevant information for this resource only.\n'
             "Example 2:\n"
-            "    {\"paths\": [\"tank/foo\", \"dozer/test\"]} will query the relevant information for these resources "
+            '    {"paths": ["tank/foo", "dozer/test"]} will query the relevant information for these resources '
             "only.\n"
             "\n"
             "NOTE:\n"
             "    paths must be non-overlapping if `get_children` is True.\n"
             "    (i.e. this won't work and will raise a validation error)\n"
             "        {\n"
-            "            \"paths\": [\"tank/foo1\", \"tank/foo1/foo2\"],\n"
-            "            \"get_children\": True\n"
+            '            "paths": ["tank/foo1", "tank/foo1/foo2"],\n'
+            '            "get_children": True\n'
             "        }"
         ),
     )
@@ -373,11 +378,173 @@ class ZFSResourceQuery(BaseModel):
     )
 
 
+class ZFSResourceCreateEncryption(BaseModel):
+    """Exactly one of `key`, `passphrase`, or `generate_key` must be provided."""
+
+    generate_key: bool = Field(
+        default=False,
+        description="Automatically generate a 64-character hex key for the new encryption root.",
+    )
+    key: Secret[Annotated[str, Field(min_length=64, max_length=64, pattern=r"^[0-9a-fA-F]+$")] | None] = Field(
+        default=None,
+        description="A 64-character hex-encoded key for the new encryption root.",
+    )
+    passphrase: Secret[Annotated[str, Field(min_length=8)] | None] = Field(
+        default=None,
+        description=(
+            "A passphrase (at least 8 characters) for the new encryption root. Passphrases are never stored by the "
+            "system. The resource can only be unlocked by someone who knows it."
+        ),
+    )
+    pbkdf2iters: int = Field(
+        ge=1_300_000,
+        le=10_000_000,
+        default=1_300_000,
+        description=(
+            "Number of PBKDF2 iterations for key derivation from the passphrase. Only meaningful together with "
+            "`passphrase`. Higher values improve resistance to brute force attacks but increase unlock time."
+        ),
+    )
+
+
+class ZFSResourceCreateProperties(BaseModel):
+    """ZFS properties that may be set at creation time.
+
+    Each field is the native ZFS property name and values are handed to ZFS verbatim.
+    A field left as null is simply not sent to ZFS so the property inherits from the parent as usual.
+    """
+
+    aclinherit: str | None = Field(
+        default=None,
+        description="ACL inheritance behavior for new files and directories.",
+    )
+    aclmode: str | None = Field(default=None, description="How ACLs are modified during chmod operations.")
+    acltype: str | None = Field(default=None, description="The type of ACL to use (off, posix, or nfsv4).")
+    atime: str | None = Field(default=None, description="Whether file access times are updated on read.")
+    casesensitivity: str | None = Field(
+        default=None,
+        description="Filename matching sensitivity. Settable at creation time only.",
+    )
+    checksum: str | None = Field(default=None, description="Checksum algorithm used to verify data integrity.")
+    compression: str | None = Field(default=None, description="Compression algorithm for the resource.")
+    copies: str | int | None = Field(default=None, description="Number of copies of data blocks to store.")
+    dedup: str | None = Field(default=None, description="Deduplication setting for the resource.")
+    exec: str | None = Field(default=None, description="Whether programs can be executed from the filesystem.")
+    quota: str | int | None = Field(
+        default=None,
+        description="Maximum space the dataset and its descendants may consume.",
+    )
+    readonly: str | None = Field(default=None, description="Whether the resource can be modified.")
+    recordsize: str | int | None = Field(default=None, description="Suggested block size for files in the filesystem.")
+    refquota: str | int | None = Field(default=None, description="Maximum space the dataset itself may consume.")
+    refreservation: str | int | None = Field(
+        default=None,
+        description="Minimum space reserved for the resource itself. Set to 'none' to create a sparse volume.",
+    )
+    reservation: str | int | None = Field(
+        default=None,
+        description="Minimum space reserved for the dataset and its descendants.",
+    )
+    snapdev: str | None = Field(default=None, description="Snapshot device visibility under /dev/zvol.")
+    snapdir: str | None = Field(default=None, description="Visibility of the .zfs/snapshot directory.")
+    special_small_blocks: str | int | None = Field(
+        default=None,
+        description="Size threshold below which blocks are stored on the SPECIAL vdev.",
+    )
+    sync: str | None = Field(default=None, description="Synchronous write behavior.")
+    volblocksize: str | int | None = Field(
+        default=None,
+        description="Block size of the volume. Settable at creation time only.",
+    )
+    volsize: str | int | None = Field(
+        default=None,
+        description="Logical size of the volume in bytes. Required when creating a VOLUME.",
+    )
+    xattr: str | None = Field(
+        default=None,
+        description="Extended attribute storage mode. Defaults to 'sa' for performance.",
+    )
+
+
+class ZFSResourceCreateArgsData(BaseModel):
+    path: NonEmptyString = Field(
+        description=(
+            "Path of the zfs resource (dataset or volume) to be created. Must be of the form 'pool/name'. It cannot "
+            "be an absolute path or end with '/'. Snapshot paths (containing '@') are not accepted one must use "
+            "`zfs.resource.snapshot.create` instead."
+        ),
+    )
+    type: Literal["FILESYSTEM", "VOLUME"] = Field(
+        default="FILESYSTEM",
+        description=(
+            "The type of ZFS resource to create. A FILESYSTEM is a mountable dataset; a VOLUME (zvol) is a virtual "
+            "block device."
+        ),
+    )
+    properties: ZFSResourceCreateProperties = Field(
+        default_factory=ZFSResourceCreateProperties,
+        description=(
+            "ZFS properties to set at creation time. Values are handed to ZFS verbatim and canonicalized by ZFS "
+            "itself. Read the returned entry for the effective values. A property left as null is simply not sent "
+            "to ZFS and inherits from the parent as usual. Any property not in this model may not be set at "
+            "creation time.\n"
+            "\n"
+            "Creating a VOLUME requires 'volsize'. Volumes are thick-provisioned by default ('refreservation' "
+            "defaults to the volsize, like `zfs create -V`). Set 'refreservation' to 'none' to create a sparse "
+            "(thin) volume.\n"
+            "\n"
+            "A FILESYSTEM defaults 'xattr' to 'sa' (a TrueNAS performance default) unless explicitly specified. An "
+            "explicit 'acltype' also defaults the coupled acl properties. An nfsv4 acltype defaults 'aclinherit' to "
+            "'passthrough' while a posix or off acltype defaults both 'aclmode' and 'aclinherit' to 'discard'.\n"
+            "\n"
+            "Encryption is configured through the `encryption` argument and shares are managed with the "
+            "`sharing.nfs` and `sharing.smb` APIs. Neither may be configured through these properties."
+        ),
+    )
+    user_properties: dict[str, str] = Field(
+        default={},
+        description=(
+            "User properties to set at creation time. Property names must contain a colon (e.g. 'org.truenas:custom')."
+        ),
+    )
+    create_ancestors: bool = Field(
+        default=False,
+        description="Create any missing ancestor filesystems.",
+    )
+    encryption: ZFSResourceCreateEncryption | None = Field(
+        default=None,
+        description=(
+            "Make the new resource its own ZFS encryption root, encrypted (aes-256-gcm) with the given key or "
+            "passphrase. When omitted (the default), the resource simply inherits its parent's encryption state. A "
+            "child of an encrypted parent is encrypted as part of the parent's encryption root, a child of an "
+            "unencrypted parent is unencrypted.\n"
+            "\n"
+            "A key-encrypted root may NOT be created beneath a passphrase-encrypted parent. Such a child could "
+            "not be unlocked while its parent is locked."
+        ),
+    )
+    bypass: Private[bool] = Field(
+        default=False,
+        description=(
+            'If true, will bypass the safety checks that prevent creating zfs resources under "protected" paths.'
+        ),
+    )
+
+
+class ZFSResourceCreateArgs(BaseModel):
+    data: ZFSResourceCreateArgsData = Field(description="Create parameters for creating a ZFS resource.")
+
+
+class ZFSResourceCreateResult(BaseModel):
+    result: ZFSResourceEntry
+
+
 class ZFSResourceDestroyArgsData(BaseModel):
     path: NonEmptyString = Field(
         description=(
-            "Path of the zfs resource (dataset or volume) to be destroyed. Snapshot paths (containing '@') are not "
-            "accepted - use `zfs.resource.snapshot.destroy` instead."
+            "Path of the zfs resource (dataset or volume) to be destroyed. Must be of the form 'pool/name'. It cannot "
+            "be an absolute path or end with '/'. Snapshot paths (containing '@') are not accepted. One must use "
+            "`zfs.resource.snapshot.destroy` instead."
         ),
     )
     recursive: bool = Field(

@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from middlewared.test.integration.utils import call
+from middlewared.test.integration.utils import call, ssh
 
 from auto_config import pool_name
 
@@ -45,8 +45,13 @@ def test_zfs_resource_destroy_recursive_filesystem():
     """Test recursive deletion of filesystem hierarchy"""
     root_name = "test_fs_recursive"
     root = create_resource(root_name)
-    create_resource(os.path.join(root_name, "lvl0/lvl1/lvl2/lvl3"), {"create_ancestors": True})
-    result = call("zfs.resource.query", {"paths": [root], "get_children": True, "properties": None})
+    create_resource(
+        os.path.join(root_name, "lvl0/lvl1/lvl2/lvl3"), {"create_ancestors": True}
+    )
+    result = call(
+        "zfs.resource.query",
+        {"paths": [root], "get_children": True, "properties": None},
+    )
     assert len(result) == 5
     call("zfs.resource.destroy", {"path": root, "recursive": True})
     result = call("zfs.resource.query", {"paths": [root]})
@@ -56,7 +61,7 @@ def test_zfs_resource_destroy_recursive_filesystem():
 def test_zfs_resource_destroy_volume():
     """Test deletion of zvols"""
     vol = "test_zvol"
-    args = {"type": "VOLUME", "sparse": True, "volsize": 1024 ** 3}
+    args = {"type": "VOLUME", "sparse": True, "volsize": 1024**3}
     zvol = create_resource(vol, args)
     result = call("zfs.resource.query", {"paths": [zvol]})
     assert len(result) == 1
@@ -88,7 +93,10 @@ def test_zfs_resource_destroy_with_clone():
     snap = "snap"
     call("zfs.resource.snapshot.create", {"dataset": source, "name": snap})
     clone_name = os.path.join(source.split("/")[0], "test_fs_clone")
-    call("zfs.resource.snapshot.clone", {"snapshot": f"{source}@{snap}", "dataset": clone_name})
+    call(
+        "zfs.resource.snapshot.clone",
+        {"snapshot": f"{source}@{snap}", "dataset": clone_name},
+    )
     # Try to destroy source dataset without removing clone (should fail)
     with pytest.raises(Exception) as exc_info:
         call("zfs.resource.destroy", {"path": source})
@@ -143,11 +151,15 @@ def test_zfs_resource_destroy_non_recursive_with_snapshots_fails():
 @pytest.mark.parametrize(
     "path,error",
     [
-        pytest.param("tank", "root filesystem", id="delete root filesystem not allowed"),
+        pytest.param(
+            "tank", "root filesystem", id="delete root filesystem not allowed"
+        ),
         pytest.param("/tank/dataset", "absolute", id="absolute paths not allowed"),
         pytest.param("tank/dataset/", "slash", id="trailing forward-slash not allowed"),
-        pytest.param("tank/nonexistent_dataset_xyz123", "not exist", id="dataset doesnt exist")
-    ]
+        pytest.param(
+            "tank/nonexistent_dataset_xyz123", "not exist", id="dataset doesnt exist"
+        ),
+    ],
 )
 def test_zfs_resource_destroy_validation_errors(path, error):
     """Test various validation errors"""
@@ -155,6 +167,19 @@ def test_zfs_resource_destroy_validation_errors(path, error):
     with pytest.raises(Exception) as exc_info:
         call("zfs.resource.destroy", {"path": path})
     assert error in str(exc_info.value).lower()
+
+
+def test_zfs_resource_destroy_locked_dataset_removes_mountpoint():
+    """Test that destroying a locked dataset removes its mountpoint directory,
+    which the lock flow marked immutable"""
+    path = os.path.join(pool_name, "test_destroy_locked")
+    call(
+        "zfs.resource.create",
+        {"path": path, "encryption": {"passphrase": "passphrase123"}},
+    )
+    assert call("pool.dataset.lock", path, job=True) is True
+    call("zfs.resource.destroy", {"path": path})
+    assert ssh(f"test -d /mnt/{path} && echo exists || echo gone").strip() == "gone"
 
 
 def test_zfs_resource_destroy_complex_hierarchy():
@@ -165,14 +190,17 @@ def test_zfs_resource_destroy_complex_hierarchy():
     branch1 = "/".join([f"branch1_{i}" for i in range(1, 4)])
     branch2 = "/".join([f"branch2_{i}" for i in range(1, 4)])
     br1 = create_resource(os.path.join(lvl0, branch1), {"create_ancestors": True})
-    br1 = br1.removeprefix(f'{pool_name}/')
-    args = {"type": "VOLUME", "sparse": True, "volsize": 1024 ** 3}
+    br1 = br1.removeprefix(f"{pool_name}/")
+    args = {"type": "VOLUME", "sparse": True, "volsize": 1024**3}
     create_resource(f"{br1}/zv1", args)
     br2 = create_resource(os.path.join(lvl0, branch2), {"create_ancestors": True})
-    br2 = br2.removeprefix(f'{pool_name}/')
+    br2 = br2.removeprefix(f"{pool_name}/")
     zv2 = create_resource(f"{br2}/zv2", args)
     snap1 = "snap1"
-    call("zfs.resource.snapshot.create", {"dataset": root, "name": snap1, "recursive": True})
+    call(
+        "zfs.resource.snapshot.create",
+        {"dataset": root, "name": snap1, "recursive": True},
+    )
     snap2 = "snap2"
     call("zfs.resource.snapshot.create", {"dataset": zv2, "name": snap2})
 
@@ -183,6 +211,6 @@ def test_zfs_resource_destroy_complex_hierarchy():
             "paths": [root],
             "properties": None,
             "get_children": True,
-        }
+        },
     )
     assert len(result) == 0
