@@ -3,8 +3,13 @@ import os
 import pathlib
 import typing
 
+import truenas_pylibzfs
+
 from middlewared.api import api_method
 from middlewared.api.current import (
+    ZFSResourceCreateArgs,
+    ZFSResourceCreateArgsData,
+    ZFSResourceCreateResult,
     ZFSResourceDestroyArgs,
     ZFSResourceDestroyArgsData,
     ZFSResourceDestroyResult,
@@ -17,9 +22,31 @@ from middlewared.api.current import (
 from middlewared.plugins.zfs.snapshot_crud import ZFSResourceSnapshotService
 from middlewared.service import Service, private
 from middlewared.service.decorators import pass_thread_local_storage
-from middlewared.service_exception import ValidationError
+from middlewared.service_exception import CallError, ValidationError
 from middlewared.utils.filter_list import filter_list
 
+from .create_impl import ZFS_INVALID_INPUT_ERRORS, create_impl
+from .create_rules import (
+    CreateContext,
+    ancestor_chain,
+    apply_draid_recordsize,
+    apply_draid_volblocksize,
+    apply_tier_snap,
+    apply_volume_ssb_pin,
+    check_acl_combination,
+    check_dedup_tiering,
+    # check_dedup_entitlement,  TODO uncomment when the truenas.entitlements API is merged
+    check_encryption,
+    check_name_valid,
+    check_parent_not_readonly,
+    check_path_shape,
+    check_protected_path,
+    check_tier_managed_ssb,
+    check_user_property_names,
+    check_volume_capacity,
+    check_volume_has_volsize,
+    resolve_create_request,
+)
 from .destroy_impl import destroy_impl
 from .exceptions import (
     ZFSPathAlreadyExistsException,
@@ -104,9 +131,7 @@ class ZFSResourceService(Service):
         try:
             promote_impl(tls, current_name)
         except ZFSPathInvalidException:
-            raise ValidationError(
-                schema, f"{current_name!r} is ineligible for promotion."
-            )
+            raise ValidationError(schema, f"{current_name!r} is ineligible for promotion.")
         except ZFSPathNotProvidedException:
             raise ValidationError(schema, "'current_name' key is required")
         except ZFSPathNotFoundException as e:
@@ -276,9 +301,7 @@ class ZFSResourceService(Service):
                 "Use `zfs.resource.snapshot.rename` to rename snapshots.",
             )
         try:
-            rename_impl(
-                tls, current_name, new_name, recursive, no_unmount, force_unmount
-            )
+            rename_impl(tls, current_name, new_name, recursive, no_unmount, force_unmount)
         except ZFSPathNotASnapshotException:
             raise ValidationError(schema, "recursive is only valid for snapshots")
         except ZFSPathAlreadyExistsException as e:
@@ -365,6 +388,253 @@ class ZFSResourceService(Service):
 
     @private
     @pass_thread_local_storage
+    def create_impl(self, tls: typing.Any, data: ZFSResourceCreateArgsData) -> dict[str, typing.Any]:
+        """
+        Internal implementation for creating a ZFS resource.
+
+        Validates the path and properties, creates the resource (and any
+        requested ancestors), mounts it, and returns the created resource
+        re-queried from ZFS.
+        """
+        schema = "zfs.resource.create"
+        path = data.path
+        properties, encrypt = resolve_create_request(data)
+        ctx = CreateContext(properties=properties, encrypt=encrypt)
+
+        check_path_shape(data, ctx)
+        check_protected_path(data, ctx)
+        check_name_valid(data, ctx)
+        check_user_property_names(data, ctx)
+
+        ctx.tier_enabled = self.call_sync2(self.s.zfs.tier.config).enabled
+
+        # one query serves the readonly, tier, acl, capacity and encryption
+        # rules. Only the properties the rules below will read are requested.
+        ancestor_props = ["readonly"]
+        if data.type == "VOLUME":
+            ancestor_props.extend(["available", "special_small_blocks"])
+        else:
+            if properties.acltype is not None or properties.aclmode is not None:
+                ancestor_props.extend(["acltype", "aclmode"])
+            if ctx.tier_enabled and data.properties.special_small_blocks is None:
+                ancestor_props.extend(["special_small_blocks", "recordsize"])
+        if data.encryption:
+            ancestor_props.append("encryption")
+        ctx.ancestors = {
+            rv["name"]: rv
+            for rv in self.call_sync2(
+                self.s.zfs.resource.query_impl,
+                ZFSResourceQuery(paths=ancestor_chain(path), properties=ancestor_props),
+            )
+        }
+
+        check_parent_not_readonly(data, ctx)
+        if ctx.tier_enabled:
+            check_tier_managed_ssb(data, ctx)
+
+        if data.type == "VOLUME":
+            check_volume_has_volsize(data, ctx)
+            apply_draid_volblocksize(self, data, ctx)
+            if properties.special_small_blocks is None:
+                apply_volume_ssb_pin(data, ctx)
+            check_volume_capacity(data, ctx)
+        else:
+            if properties.recordsize is None:
+                apply_draid_recordsize(self, data, ctx)
+            if ctx.tier_enabled and properties.special_small_blocks is None:
+                apply_tier_snap(data, ctx)
+            if ctx.tier_enabled and str(properties.dedup or "off").lower() != "off":
+                check_dedup_tiering(self, data, ctx)
+            if properties.acltype is not None or properties.aclmode is not None:
+                check_acl_combination(data, ctx)
+
+        if data.encryption:
+            check_encryption(data, ctx)
+
+        # TODO uncomment when the truenas.entitlements API is merged
+        # from truenas_pylicensed.features import LicenseFeature
+        # if str(properties.dedup or "off").lower() != "off":
+        #     ctx.dedup_entitled = self.call_sync2(self.s.truenas.entitlements.check, LicenseFeature.DEDUP).entitled
+        #     check_dedup_entitlement(data, ctx)
+
+        props = {k: v for k, v in properties.model_dump().items() if v is not None}
+        try:
+            create_impl(tls, path, data.type, props, data.user_properties, data.create_ancestors, encrypt)
+        except truenas_pylibzfs.ZFSException as e:
+            if e.code in ZFS_INVALID_INPUT_ERRORS:
+                raise ValidationError(schema, str(e), errno.EINVAL)
+            elif e.code == truenas_pylibzfs.ZFSError.EZFS_CRYPTOFAILED:
+                raise CallError(
+                    f"Failed to create {path!r}: the parent's encryption key is not "
+                    "loaded. Unlock the parent dataset and try again.",
+                    errno.EACCES,
+                )
+            raise CallError(f"Failed to create {path!r}: {e}")
+
+        if encrypt:
+            # Hex keys are stored by the system (passphrases deliberately are
+            # not) so unlock/export/KMIP flows work; the post_create hook syncs
+            # key material to the standby controller on HA systems. The
+            # storage_encrypteddataset table remains the system of record for
+            # dataset keys.
+            self.middleware.call_sync(
+                "pool.dataset.insert_or_update_encrypted_record",
+                {"name": path, "encryption_key": encrypt["key"], "key_format": encrypt["keyformat"]},
+            )
+            self.middleware.call_hook_sync(
+                "dataset.post_create",
+                {
+                    "encrypted": True,
+                    "name": path,
+                    "encryption_key": encrypt["key"],
+                    "key_format": encrypt["keyformat"],
+                },
+            )
+
+        requested = any(v is not None for v in data.properties.model_dump().values())
+        report_props = list(props) if requested else []
+        if encrypt:
+            report_props.append("encryption")
+        return self.call_sync2(
+            self.s.zfs.resource.query_impl,
+            ZFSResourceQuery(
+                paths=[path],
+                properties=report_props,
+                get_user_properties=bool(data.user_properties),
+            ),
+        )[0]
+
+    @api_method(
+        ZFSResourceCreateArgs,
+        ZFSResourceCreateResult,
+        roles=["ZFS_RESOURCE_WRITE"],
+        check_annotations=True,
+    )
+    def create(self, data: ZFSResourceCreateArgsData) -> ZFSResourceEntry:
+        """
+        Create a ZFS resource (filesystem or volume) and mount it.
+
+        Properties are given by native ZFS property name - exactly the names
+        :method:`zfs.resource.query` returns - and are handed to ZFS as-is. The created
+        resource is re-queried after creation and returned, so the entry reflects the
+        values as canonicalized by ZFS, not the input.
+
+        To create snapshots, use :method:`zfs.resource.snapshot.create` instead.
+
+        Invalid input is returned to the client as a JSON-RPC ``error`` response (code
+        ``-32602``, *Invalid params*); each failing condition appears in the error's
+        ``data.extra`` array with its own ``errno``. A validation error is raised when:
+
+        - a snapshot path (containing ``@``) is supplied
+          (use :method:`zfs.resource.snapshot.create`)
+        - the resource already exists (``EEXIST``)
+        - the pool, or the parent dataset when ``create_ancestors`` is ``false``, does
+          not exist (``ENOENT``)
+        - the target is a pool root filesystem, the path is absolute, ends with ``/``,
+          or is not a valid ZFS name (``EINVAL``)
+        - the path references a protected internal resource (``EACCES``)
+        - a property outside the allowed creation set is supplied, or an allowed
+          property is invalid for the resource type or has an invalid value
+          (``EINVAL``)
+        - an encryption or ZFS native sharing property is supplied through
+          ``properties``, ``volsize`` is missing for a VOLUME, or a user property name
+          lacks a colon (``EINVAL``)
+        - ``encryption`` provides a hex key beneath a passphrase-encrypted parent, or
+          would create an encryption root beneath an unencrypted dataset that itself
+          sits inside an encrypted one (``EINVAL``)
+        - a thick volume's reservation would consume more than 80% of the available
+          space - create a sparse volume (``refreservation`` of ``none``) to
+          deliberately oversubscribe (``EINVAL``)
+        - the effective ``acltype`` and ``aclmode`` combination is unusable - a posix
+          or off acltype requires a discard aclmode and a discard aclmode may not be
+          combined with the nfsv4 acltype (``EINVAL``)
+        - the nearest existing ancestor is readonly - the new filesystem could not be
+          mounted beneath it (``EINVAL``)
+        - ``special_small_blocks`` is supplied while ZFS tiering is enabled - placement
+          is managed with :method:`zfs.tier.dataset_set_tier` (``EINVAL``)
+        - deduplication is requested for a filesystem whose data would be placed on the
+          SPECIAL vdev (the PERFORMANCE tier) while ZFS tiering is enabled (``EINVAL``)
+
+        Examples:
+
+        Create a filesystem:
+
+        .. code:: json
+
+            {"path": "tank/documents"}
+
+        Create a filesystem with properties, creating missing ancestors:
+
+        .. code:: json
+
+            {
+                "path": "tank/a/b/documents",
+                "properties": {"compression": "lz4", "atime": "off"},
+                "create_ancestors": true
+            }
+
+        Create a sparse 10GiB volume:
+
+        .. code:: json
+
+            {
+                "path": "tank/vol1",
+                "type": "VOLUME",
+                "properties": {"volsize": 10737418240, "refreservation": "none"}
+            }
+
+        Create an encryption root with a generated key:
+
+        .. code:: json
+
+            {"path": "tank/secure", "encryption": {"generate_key": true}}
+
+        Create an encryption root protected by a passphrase:
+
+        .. code:: json
+
+            {"path": "tank/private", "encryption": {"passphrase": "correct horse battery staple"}}
+
+        .. note::
+
+            Volumes are thick-provisioned by default (``refreservation`` defaults to
+            the volsize, like ``zfs create -V``); set ``refreservation`` to ``none``
+            for a sparse volume. Filesystems default ``xattr`` to ``sa``.
+
+        .. note::
+
+            A resource created under an encrypted parent inherits that encryption
+            unless ``encryption`` makes it its own encryption root - an unencrypted
+            child cannot be created beneath an encrypted parent. The parent's
+            encryption key must be loaded (unlocked) or the creation fails with a
+            JSON-RPC ``error`` response (code ``-32001``, *Method call error*, errno
+            ``EACCES``).
+
+        .. note::
+
+            Hex keys (provided or generated) are stored by the system and may be
+            retrieved with :method:`pool.dataset.export_key`; passphrases are never
+            stored.
+        """
+        schema = "zfs.resource.create"
+        try:
+            return ZFSResourceEntry(**self.call_sync2(self.s.zfs.resource.create_impl, data))
+        except ZFSPathAlreadyExistsException as e:
+            raise ValidationError(schema, e.message, errno.EEXIST)
+        except ZFSPathNotFoundException as e:
+            missing = e.args[0]
+            if "/" not in missing:
+                msg = f"Pool {missing!r} does not exist."
+            elif data.create_ancestors:
+                msg = f"Parent dataset {missing!r} does not exist."
+            else:
+                msg = f"Parent dataset {missing!r} does not exist. Set create_ancestors to create it."
+            raise ValidationError(schema, msg, errno.ENOENT)
+        except ValueError as e:
+            raise ValidationError(schema, str(e), errno.EINVAL)
+
+    @private
+    @pass_thread_local_storage
     def destroy_impl(
         self,
         tls: typing.Any,
@@ -398,15 +668,11 @@ class ZFSResourceService(Service):
                 errno.EINVAL,
             )
         elif path.endswith("/"):
-            raise ValidationError(
-                schema, "Path must not end with a forward-slash.", errno.EINVAL
-            )
+            raise ValidationError(schema, "Path must not end with a forward-slash.", errno.EINVAL)
         elif not bypass and has_internal_path(path):
             # NOTE: `bypass` is a value only exposed to
             # internal callers and not to our public API.
-            raise ValidationError(
-                schema, f"{path!r} is a protected path.", errno.EACCES
-            )
+            raise ValidationError(schema, f"{path!r} is a protected path.", errno.EACCES)
 
         if "@" in path:
             raise ValidationError(
@@ -416,9 +682,7 @@ class ZFSResourceService(Service):
 
         tmp = path.split("/")
         if len(tmp) == 1 or tmp[-1] == "":
-            raise ValidationError(
-                schema, "Destroying the root filesystem is not allowed.", errno.EINVAL
-            )
+            raise ValidationError(schema, "Destroying the root filesystem is not allowed.", errno.EINVAL)
 
         if not recursive:
             rv = self.call_sync2(
@@ -429,18 +693,15 @@ class ZFSResourceService(Service):
             if not rv:
                 raise ValidationError(schema, f"{path!r} does not exist.", errno.ENOENT)
             elif len(rv) > 1:
-                raise ValidationError(
-                    schema, f"{path!r} has children. {extra}", errno.ENOTEMPTY
-                )
+                raise ValidationError(schema, f"{path!r} has children. {extra}", errno.ENOTEMPTY)
             else:
                 # Check if dataset has snapshots using snapshot.count
                 snap_counts = self.call_sync2(
-                    self.s.zfs.resource.snapshot.count, ZFSResourceSnapshotCountQuery(paths=[path]),
+                    self.s.zfs.resource.snapshot.count,
+                    ZFSResourceSnapshotCountQuery(paths=[path]),
                 )
                 if snap_counts.get(path, 0) > 0:
-                    raise ValidationError(
-                        schema, f"{path!r} has snapshots. {extra}", errno.ENOTEMPTY
-                    )
+                    raise ValidationError(schema, f"{path!r} has snapshots. {extra}", errno.ENOTEMPTY)
 
         return destroy_impl(tls, path, recursive, all_snapshots, bypass, defer)
 
@@ -567,9 +828,6 @@ class ZFSResourceService(Service):
             {"paths": ["tank"], "nest_results": true, "get_children": true}
         """
         try:
-            return [
-                ZFSResourceEntry(**resource)
-                for resource in self.call_sync2(self.s.zfs.resource.query_impl, data)
-            ]
+            return [ZFSResourceEntry(**resource) for resource in self.call_sync2(self.s.zfs.resource.query_impl, data)]
         except ZFSPathNotFoundException as e:
             raise ValidationError("zfs.resource.query", e.message, errno.ENOENT)
