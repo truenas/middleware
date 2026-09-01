@@ -32,8 +32,6 @@ __all__ = (
 )
 
 
-# TODO: injecting APPS overrides the legacy jails bit, granting apps to HA capable systems that never purchased it
-# TODO: injecting VMS overrides the legacy vm bit, granting VMs to HA capable systems that never purchased it
 _LEGACY_INJECT: frozenset[LicenseFeature] = frozenset(
     {
         LicenseFeature.APPS,

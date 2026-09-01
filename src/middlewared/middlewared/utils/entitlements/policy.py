@@ -33,7 +33,7 @@ POLICY: Mapping[str, Rule] = MappingProxyType(
         LicenseFeature.APPS: TARGET_VECTORS[LicenseFeature.APPS],
         LicenseFeature.CATALOG_ENTERPRISE_TRAIN: TARGET_VECTORS[LicenseFeature.CATALOG_ENTERPRISE_TRAIN],
         LicenseFeature.CONTAINERS: TARGET_VECTORS[LicenseFeature.CONTAINERS],
-        LicenseFeature.DEDUP: TARGET_VECTORS[LicenseFeature.DEDUP],  # TODO: Validate logic with old impl
+        LicenseFeature.DEDUP: TARGET_VECTORS[LicenseFeature.DEDUP],
         LicenseFeature.DIRECTORY_SERVICES: TARGET_VECTORS[LicenseFeature.DIRECTORY_SERVICES],
         LicenseFeature.FIBRECHANNEL: TARGET_VECTORS[LicenseFeature.FIBRECHANNEL],
         # TODO: KMIP needs webui ticket as well to remove/update gate
@@ -47,18 +47,11 @@ POLICY: Mapping[str, Rule] = MappingProxyType(
         LicenseFeature.SMB_FASTPATH: TARGET_VECTORS[LicenseFeature.SMB_FASTPATH],
         LicenseFeature.SMB_VEEAM: TARGET_VECTORS[LicenseFeature.SMB_VEEAM],
         LicenseFeature.STIG: TARGET_VECTORS[LicenseFeature.STIG],
-        # TODO: SUPPORT is injected into every legacy license, so on the installed base this
-        # grants wherever a license exists at all. Revisit which populations that hands access
-        # to before this ships: freenas-model and Mini licensees now route their support
-        # tickets to the enterprise endpoint instead of the community one, and an unlicensed
-        # HA-capable system moves the other way.
         LicenseFeature.SUPPORT: TARGET_VECTORS[LicenseFeature.SUPPORT],
         LicenseFeature.TRUESEARCH: TARGET_VECTORS[LicenseFeature.TRUESEARCH],
         LicenseFeature.VMS: TARGET_VECTORS[LicenseFeature.VMS],
         # TODO: See if we should have runtime gates as well and not just config gates
         LicenseFeature.WEBSHARE: TARGET_VECTORS[LicenseFeature.WEBSHARE],
-        # TODO: Validate logic with old impl / Remember that zfstier client has license
-        # logic as well which should be reviewed too
         LicenseFeature.ZFSTIER: TARGET_VECTORS[LicenseFeature.ZFSTIER],
         # Do not wire the product matrix's "HA Functionality" row up. HA is a license *type*,
         # not a feature key, so there is no LicenseFeature.HA to look up and the HW+K/CE+K
@@ -68,7 +61,7 @@ POLICY: Mapping[str, Rule] = MappingProxyType(
         DerivedEntitlement.HA: LicenseTypeRule(allowed_types=frozenset({LicenseType.ENTERPRISE_HA})),
         # The vector grants nothing the tier check would not also reach, but it decides the denial
         # reason on the unlicensed columns, and it is what makes a one-sided row take effect.
-        DerivedEntitlement.PROACTIVE_SUPPORT: TierRule(  # TODO: Validate logic with old impl
+        DerivedEntitlement.PROACTIVE_SUPPORT: TierRule(
             feature=LicenseFeature.SUPPORT,
             allowed_tiers=frozenset({SupportTier.GOLD, SupportTier.SILVER, SupportTier.SILVERINTERNATIONAL}),
             vector=DERIVED_VECTORS[DerivedEntitlement.PROACTIVE_SUPPORT],
