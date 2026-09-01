@@ -436,7 +436,9 @@ class ZFSResourceCreateArgsData(BaseModel):
             "A FILESYSTEM defaults 'xattr' to 'sa' (a TrueNAS performance default) unless explicitly specified.\n"
             "\n"
             "The encryption properties ('encryption', 'keyformat', 'keylocation', 'pbkdf2iters') may not be set "
-            "here. One must use the `encryption` field to create an encryption root."
+            "here. One must use the `encryption` field to create an encryption root. The ZFS native sharing "
+            "properties ('sharenfs', 'sharesmb') may not be set either. Shares are managed with the `sharing.nfs` "
+            "and `sharing.smb` APIs."
         ),
     )
     user_properties: dict[str, str] = Field(

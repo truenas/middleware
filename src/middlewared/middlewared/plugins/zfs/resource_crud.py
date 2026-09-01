@@ -28,6 +28,7 @@ from middlewared.utils.filter_list import filter_list
 
 from .create_impl import (
     ENCRYPTION_PROPERTIES,
+    SHARING_PROPERTIES,
     ZFS_INVALID_INPUT_ERRORS,
     ZFS_TYPE_MAP,
     create_impl,
@@ -415,10 +416,30 @@ class ZFSResourceService(Service):
                 raise ValidationError(
                     f"{schema}.properties",
                     f"{prop!r} may not be set through generic properties. A resource "
-                    "inherits its parent's encryption by default; use the `encryption` "
+                    "inherits its parent's encryption by default. Use the `encryption` "
                     "argument to create a new encryption root.",
                     errno.EINVAL,
                 )
+            elif prop.lower() in SHARING_PROPERTIES:
+                raise ValidationError(
+                    f"{schema}.properties",
+                    f"{prop!r} may not be set through generic properties. Shares are "
+                    "managed with the `sharing.nfs` and `sharing.smb` APIs.",
+                    errno.EINVAL,
+                )
+
+        # TODO uncomment when the truenas.entitlements API is merged. Every dedup
+        # value other than off enables deduplication and requires the license
+        # entitlement to permit it.
+        # if str(properties.get("dedup", "off")).lower() != "off":
+        #     from truenas_pylicensed.features import LicenseFeature
+        #     if not self.call_sync2(self.s.truenas.entitlements.check, LicenseFeature.DEDUP).entitled:
+        #         raise ValidationError(
+        #             f"{schema}.properties",
+        #             "This system is not licensed to use ZFS deduplication.",
+        #             errno.EINVAL,
+        #         )
+
         for key in data.user_properties:
             if ":" not in key:
                 raise ValidationError(
@@ -583,8 +604,9 @@ class ZFSResourceService(Service):
         - the path references a protected internal resource (``EACCES``)
         - a property is unknown, read-only, invalid for the resource type, or has an
           invalid value (``EINVAL``)
-        - an encryption property is supplied through ``properties``, ``volsize`` is
-          missing for a VOLUME, or a user property name lacks a colon (``EINVAL``)
+        - an encryption or ZFS native sharing property is supplied through
+          ``properties``, ``volsize`` is missing for a VOLUME, or a user property name
+          lacks a colon (``EINVAL``)
         - ``encryption`` provides a hex key beneath a passphrase-encrypted parent, or
           would create an encryption root beneath an unencrypted dataset that itself
           sits inside an encrypted one (``EINVAL``)

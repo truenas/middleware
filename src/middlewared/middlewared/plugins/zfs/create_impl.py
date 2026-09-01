@@ -8,6 +8,7 @@ from .mount_unmount_impl import mount_impl
 
 __all__ = (
     "ENCRYPTION_PROPERTIES",
+    "SHARING_PROPERTIES",
     "ZFS_INVALID_INPUT_ERRORS",
     "ZFS_TYPE_MAP",
     "create_impl",
@@ -20,10 +21,15 @@ ZFS_TYPE_MAP = {
 
 ENCRYPTION_PROPERTIES = frozenset({"encryption", "keyformat", "keylocation", "pbkdf2iters"})
 """Properties rejected at creation time. With these denied, a resource
-always inherits its parent's encryption - so an unencrypted child can
-never be created beneath an encrypted parent. Creating a new encryption
-root requires key material and will be exposed through a dedicated,
-typed encryption flow rather than smuggled through generic properties."""
+always inherits its parent's encryption. This means an unencrypted child
+can never be created beneath an encrypted parent. Creating a new
+encryption root requires key material which travels through the typed
+`encryption` argument rather than generic properties."""
+
+SHARING_PROPERTIES = frozenset({"sharenfs", "sharesmb"})
+"""Properties rejected at creation time. These create ZFS native NFS and
+SMB exports outside of middleware share management. Shares are managed
+with the sharing.nfs and sharing.smb APIs."""
 
 ZFS_INVALID_INPUT_ERRORS = frozenset(
     {

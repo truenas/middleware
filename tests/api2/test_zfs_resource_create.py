@@ -238,6 +238,33 @@ def test_zfs_resource_create_encryption_property_denied():
     assert "may not be set through generic properties" in str(exc_info.value)
 
 
+@pytest.mark.skip(reason="enable when the truenas.entitlements API is merged and the dedup license check is active")
+def test_zfs_resource_create_dedup_requires_license():
+    """Test that enabling deduplication requires the DEDUP license entitlement"""
+    path = os.path.join(pool_name, "test_create_fs_dedup")
+    if call("truenas.entitlements.check", "DEDUP")["entitled"]:
+        try:
+            entry = call("zfs.resource.create", {"path": path, "properties": {"dedup": "on"}})
+            assert entry["properties"]["dedup"]["raw"] == "on"
+        finally:
+            destroy(path)
+    else:
+        with pytest.raises(Exception) as exc_info:
+            call("zfs.resource.create", {"path": path, "properties": {"dedup": "on"}})
+        assert "not licensed" in str(exc_info.value)
+
+
+@pytest.mark.parametrize("prop", ["sharenfs", "sharesmb"])
+def test_zfs_resource_create_sharing_property_denied(prop):
+    """Test that ZFS native sharing properties may not be set through generic properties"""
+    path = os.path.join(pool_name, "test_create_fs_sharing")
+    with pytest.raises(Exception) as exc_info:
+        call("zfs.resource.create", {"path": path, "properties": {prop: "on"}})
+    emsg = str(exc_info.value)
+    assert "may not be set through generic properties" in emsg
+    assert "sharing.nfs" in emsg
+
+
 def test_zfs_resource_create_encryption_root_with_key():
     """Test creating an encryption root with an explicit hex key; the key is stored by the system"""
     path = os.path.join(pool_name, "test_create_enc_key")
