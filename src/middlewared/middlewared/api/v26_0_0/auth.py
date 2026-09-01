@@ -331,6 +331,13 @@ class AuthLoginExResult(BaseModel):
         description="Authentication response indicating success, failure, or additional steps required.",
     )
 
+    @classmethod
+    def to_previous(cls, value: Any) -> Any:
+        if value["result"]["response_type"] in ["SCRAM_RESPONSE", "DENIED"]:
+            return {"result": {"response_type": "AUTH_ERR"}}
+
+        return value
+
 
 class AuthLoginExContinueArgs(BaseModel):
     login_data: AuthOTPToken = Field(description="OTP token data to continue two-factor authentication flow.")
