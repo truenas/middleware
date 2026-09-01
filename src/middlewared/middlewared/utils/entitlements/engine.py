@@ -131,11 +131,17 @@ class Vector(typing.NamedTuple):
     """
 
     ce: int
+    """Community Edition: anything that is not an iX appliance -- Mini, whitebox, VM -- and unlicensed."""
     hw: int
+    """iX appliance hardware, Minis excluded, and unlicensed."""
     hw_l: int
+    """iX appliance hardware holding a license that does not carry this feature's key."""
     hw_k: int
+    """iX appliance hardware holding a license that carries this feature's key."""
     ce_l: int
+    """Community Edition hardware holding a license that does not carry this feature's key."""
     ce_k: int
+    """Community Edition hardware holding a license that carries this feature's key."""
 
 
 @dataclass(frozen=True, kw_only=True, slots=True)
