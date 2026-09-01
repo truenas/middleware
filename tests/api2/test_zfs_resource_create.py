@@ -1,11 +1,10 @@
 import os
 
 import pytest
-
+from auto_config import pool_name
+from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.pool import another_pool
 from middlewared.test.integration.utils import call, ssh
-
-from auto_config import pool_name
 
 GiB = 1024**3
 
@@ -380,7 +379,7 @@ def test_zfs_resource_create_encryption_root_passphrase():
 def test_zfs_resource_create_encryption_shape_errors(encryption):
     """Test invalid encryption option combinations are rejected"""
     path = os.path.join(pool_name, "test_create_enc_invalid")
-    with pytest.raises(Exception):
+    with pytest.raises(ValidationErrors):
         call("zfs.resource.create", {"path": path, "encryption": encryption})
 
 

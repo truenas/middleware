@@ -502,6 +502,10 @@ def check_encryption(data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> N
     The service calls this only when `data.encryption` is set and after
     the ancestor entries have been gathered.
     """
+    # narrow the optional type for mypy. The service only calls this
+    # when an encryption root is requested
+    assert data.encryption is not None
+
     provided = [
         name
         for name, value in (
@@ -518,6 +522,10 @@ def check_encryption(data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> N
             "Exactly one of `key`, `passphrase`, or `generate_key` must be provided.",
             errno.EINVAL,
         )
+
+    # the resolved encryption config exists once exactly one source of
+    # key material was provided
+    assert ctx.encrypt is not None
 
     seen_unencrypted = False
     for ancestor in ancestor_chain(data.path):
