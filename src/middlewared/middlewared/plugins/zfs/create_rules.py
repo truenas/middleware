@@ -8,6 +8,7 @@ control flow reads top to bottom in one place. Most rules are pure. The
 encryption rule also takes the service so it can query the existing
 ancestors it needs to judge the request.
 """
+
 import dataclasses
 import errno
 import os
