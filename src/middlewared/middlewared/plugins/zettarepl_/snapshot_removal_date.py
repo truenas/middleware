@@ -114,7 +114,7 @@ class ZettareplService(Service):
                     else:
                         self.removal_dates[k1][k2] = destroy_at
 
-    def annotate_snapshots(self, snapshots: list[dict], pop_user_props: bool = False):
+    def annotate_snapshots(self, snapshots: list[dict]):
         property_name = self.call_sync2(self.s.pool.snapshottask.removal_date_property)
         zettarepl_tasks = [
             PeriodicSnapshotTask.from_data(task.id, self.middleware.call_sync(
@@ -147,14 +147,11 @@ class ZettareplService(Service):
                                 task_destroy_at_id = snapshot_owner.periodic_snapshot_task.id
 
             property_destroy_at = None
-            if pop_user_props:
-                sup = snapshot.pop("user_properties", {})
-            else:
-                sup = snapshot["user_properties"]
+            user_properties = snapshot.pop("user_properties", {})
 
-            if property_name in sup:
+            if property_name in user_properties:
                 try:
-                    property_destroy_at = datetime.fromisoformat(sup[property_name])
+                    property_destroy_at = datetime.fromisoformat(user_properties[property_name])
                 except Exception:
                     self.logger.warning(
                         "Error parsing snapshot %r %s",
