@@ -2,6 +2,7 @@ import os
 
 import pytest
 
+from middlewared.test.integration.assets.pool import another_pool
 from middlewared.test.integration.utils import call, ssh
 
 from auto_config import pool_name
@@ -489,3 +490,78 @@ def test_zfs_resource_create_unmounted_when_canmount_off():
         assert result[0]["properties"]["mounted"]["raw"] == "no"
     finally:
         destroy(path)
+
+
+@pytest.fixture(scope="module")
+def draid_pool():
+    unused_disks = call("disk.get_unused")
+    if len(unused_disks) < 2:
+        pytest.skip("Insufficient number of unused disks for a dRAID pool")
+    with another_pool({
+        "name": "test_zr_draid",
+        "topology": {
+            "data": [{
+                "disks": [disk["name"] for disk in unused_disks[:2]],
+                "type": "DRAID1",
+                "draid_data_disks": 1,
+            }],
+        },
+        "allow_duplicate_serials": True,
+    }) as pool:
+        yield pool
+
+
+def test_zfs_resource_create_draid_filesystem_recordsize_default(draid_pool):
+    """Test that a filesystem on a dRAID pool defaults to a 1M recordsize"""
+    path = f"{draid_pool['name']}/fs"
+    call("zfs.resource.create", {"path": path})
+    result = call("zfs.resource.query", {"paths": [path], "properties": ["recordsize"]})
+    assert result[0]["properties"]["recordsize"]["value"] == 1024**2, result[0]["properties"]
+
+
+def test_zfs_resource_create_draid_volume_volblocksize_default(draid_pool):
+    """Test that a volume on a dRAID pool defaults to a 128K volblocksize"""
+    path = f"{draid_pool['name']}/vol"
+    call(
+        "zfs.resource.create",
+        {
+            "path": path,
+            "type": "VOLUME",
+            "properties": {"volsize": 128 * 1024**2, "refreservation": "none"},
+        },
+    )
+    result = call("zfs.resource.query", {"paths": [path], "properties": ["volblocksize"]})
+    assert result[0]["properties"]["volblocksize"]["value"] == 128 * 1024, result[0]["properties"]
+
+
+def test_zfs_resource_create_draid_volume_small_volblocksize_rejected(draid_pool):
+    """Test that a volblocksize under 32K is rejected on a dRAID pool"""
+    path = f"{draid_pool['name']}/vol_small"
+    with pytest.raises(Exception) as exc_info:
+        call(
+            "zfs.resource.create",
+            {
+                "path": path,
+                "type": "VOLUME",
+                "properties": {
+                    "volsize": 128 * 1024**2,
+                    "volblocksize": "16K",
+                    "refreservation": "none",
+                },
+            },
+        )
+    assert "32K" in str(exc_info.value)
+
+    entry = call(
+        "zfs.resource.create",
+        {
+            "path": path,
+            "type": "VOLUME",
+            "properties": {
+                "volsize": 128 * 1024**2,
+                "volblocksize": "32K",
+                "refreservation": "none",
+            },
+        },
+    )
+    assert entry["properties"]["volblocksize"]["value"] == 32768, entry["properties"]

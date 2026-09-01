@@ -6,7 +6,8 @@ facts, raises a single ValidationError on a failed check, and returns
 nothing otherwise. Rules never perform I/O. The service calls them
 explicitly and in order from its create_impl so the control flow reads
 top to bottom in one place. When a rule needs a new fact the service
-gathers it and the context grows a field.
+gathers it and the context grows a field. apply_draid_defaults also
+takes the service since it must inspect the pool topology itself.
 """
 
 import dataclasses
@@ -29,6 +30,7 @@ if typing.TYPE_CHECKING:
 __all__ = (
     "CreateContext",
     "ancestor_chain",
+    "apply_draid_defaults",
     "check_denied_properties",
     "check_encryption",
     "check_name_valid",
@@ -68,6 +70,59 @@ def ancestor_chain(path: str) -> list[str]:
 def _secret_value(value: typing.Any) -> str | None:
     # an unset Secret field holds Secret(None), not None
     return value.get_secret_value() if value else None
+
+
+def _size_bytes(value: str | int) -> int | None:
+    """Parse a zfs block size value into bytes. Returns None when the
+    value is not understood so the library can judge it instead."""
+    if isinstance(value, int):
+        return value
+    value = value.strip().upper().removesuffix("B")
+    multiplier = 1
+    if value and value[-1] in ("K", "M"):
+        multiplier = 1024 if value[-1] == "K" else 1024 * 1024
+        value = value[:-1]
+    try:
+        return int(value) * multiplier
+    except ValueError:
+        return None
+
+
+def pool_is_draid(service: typing.Any, pool_name: str) -> bool:
+    """Return whether the pool stores data on dRAID vdevs."""
+    if pool := service.middleware.call_sync("zpool.query_impl", {"pool_names": [pool_name], "topology": True}):
+        for group in pool[0]["topology"]["data"] + pool[0]["topology"].get("special", []):
+            if group["vdev_type"].startswith("draid"):
+                return True
+    return False
+
+
+def apply_draid_defaults(service: typing.Any, data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> None:
+    """Apply the dRAID specific defaults and constraints.
+
+    Small blocks perform poorly on dRAID vdevs. A filesystem therefore
+    defaults to a 1M recordsize, a volume defaults to a 128K
+    volblocksize and an explicitly requested volblocksize must be at
+    least 32K. These match the defaults pool.dataset applies.
+
+    The service calls this only when the resource is a volume or a
+    filesystem without an explicit recordsize.
+    """
+    if not pool_is_draid(service, data.path.split("/")[0]):
+        return
+    if data.type == "FILESYSTEM":
+        ctx.properties["recordsize"] = "1M"
+        return
+
+    volblocksize = ctx.properties.get("volblocksize")
+    if volblocksize is None:
+        ctx.properties["volblocksize"] = "128K"
+    elif (parsed := _size_bytes(volblocksize)) is not None and parsed < 32768:
+        raise ValidationError(
+            f"{SCHEMA}.properties",
+            "Volume block size must be greater than or equal to 32K for dRAID pools.",
+            errno.EINVAL,
+        )
 
 
 def resolve_create_request(

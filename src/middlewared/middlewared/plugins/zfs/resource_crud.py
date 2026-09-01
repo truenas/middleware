@@ -29,6 +29,7 @@ from .create_impl import ZFS_INVALID_INPUT_ERRORS, create_impl
 from .create_rules import (
     CreateContext,
     ancestor_chain,
+    apply_draid_defaults,
     # check_dedup_entitlement,  TODO uncomment when the truenas.entitlements API is merged
     check_denied_properties,
     check_encryption,
@@ -400,6 +401,9 @@ class ZFSResourceService(Service):
         check_denied_properties(data, ctx)
         check_user_property_names(data, ctx)
         check_volume_has_volsize(data, ctx)
+
+        if data.type == "VOLUME" or "recordsize" not in properties:
+            apply_draid_defaults(self, data, ctx)
 
         if data.type == "VOLUME" or data.encryption:
             # one query serves both the capacity and encryption rules
