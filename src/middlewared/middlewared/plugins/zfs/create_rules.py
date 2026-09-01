@@ -22,11 +22,11 @@ import truenas_pylibzfs
 from middlewared.service_exception import ValidationError
 from middlewared.utils.crypto import generate_token
 
-from .create_impl import ALLOWED_PROPERTIES, ENCRYPTION_PROPERTIES, SHARING_PROPERTIES, ZFS_TYPE_MAP
+from .create_impl import ZFS_TYPE_MAP
 from .utils import has_internal_path
 
 if typing.TYPE_CHECKING:
-    from middlewared.api.current import ZFSResourceCreateArgsData
+    from middlewared.api.current import ZFSResourceCreateArgsData, ZFSResourceCreateProperties
 
 __all__ = (
     "CreateContext",
@@ -37,7 +37,6 @@ __all__ = (
     "apply_volume_ssb_pin",
     "check_acl_combination",
     "check_dedup_tiering",
-    "check_denied_properties",
     "check_encryption",
     "check_name_valid",
     "check_parent_not_readonly",
@@ -60,8 +59,9 @@ _POSIX_OR_OFF_ACLTYPES = frozenset({"posix", "posixacl", "off", "noacl"})
 class CreateContext:
     """Resolved values and gathered facts that the rules read."""
 
-    properties: dict[str, str | int]
-    """Effective zfs properties after creation defaults are applied."""
+    properties: "ZFSResourceCreateProperties"
+    """Effective zfs properties after creation defaults are applied. A
+    field left as None is not sent to ZFS."""
     encrypt: dict[str, typing.Any] | None
     """Resolved encryption config when a new encryption root is requested."""
     ancestors: dict[str, typing.Any] = dataclasses.field(default_factory=dict)
@@ -139,7 +139,7 @@ def apply_draid_recordsize(service: typing.Any, data: "ZFSResourceCreateArgsData
     recordsize.
     """
     if pool_is_draid(service, data.path.split("/")[0]):
-        ctx.properties["recordsize"] = "1M"
+        ctx.properties.recordsize = "1M"
 
 
 def apply_draid_volblocksize(service: typing.Any, data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> None:
@@ -153,10 +153,9 @@ def apply_draid_volblocksize(service: typing.Any, data: "ZFSResourceCreateArgsDa
     """
     if not pool_is_draid(service, data.path.split("/")[0]):
         return
-    volblocksize = ctx.properties.get("volblocksize")
-    if volblocksize is None:
-        ctx.properties["volblocksize"] = "128K"
-    elif (parsed := _size_bytes(volblocksize)) is not None and parsed < 32768:
+    if ctx.properties.volblocksize is None:
+        ctx.properties.volblocksize = "128K"
+    elif (parsed := _size_bytes(ctx.properties.volblocksize)) is not None and parsed < 32768:
         raise ValidationError(
             f"{SCHEMA}.properties",
             "Volume block size must be greater than or equal to 32K for dRAID pools.",
@@ -166,35 +165,39 @@ def apply_draid_volblocksize(service: typing.Any, data: "ZFSResourceCreateArgsDa
 
 def resolve_create_request(
     data: "ZFSResourceCreateArgsData",
-) -> tuple[dict[str, str | int], dict[str, typing.Any] | None]:
+) -> tuple["ZFSResourceCreateProperties", dict[str, typing.Any] | None]:
     """Apply creation defaults and resolve the requested encryption.
 
-    Returns the effective zfs properties and the resolved encryption
-    config. The encryption config is None when no encryption root is
-    requested or when the request provides no key material at all. The
-    rules judge the request afterwards so nothing here raises.
+    Returns a copy of the requested properties with the creation
+    defaults applied and the resolved encryption config. The encryption
+    config is None when no encryption root is requested or when the
+    request provides no key material at all. The rules judge the request
+    afterwards so nothing here raises.
     """
-    properties: dict[str, str | int] = dict(data.properties)
+    properties = data.properties.model_copy()
     if data.type == "VOLUME":
-        if "volsize" in properties:
+        if properties.volsize is not None and properties.refreservation is None:
             # thick provision unless told otherwise, like `zfs create -V`.
             # NOTE the CLI sets refreservation=auto (volsize plus metadata
             # overhead) but libzfs cannot resolve "auto" through our create
             # path, so reserve the volsize itself
-            properties.setdefault("refreservation", properties["volsize"])
+            properties.refreservation = properties.volsize
     else:
-        if "xattr" not in properties:
+        if properties.xattr is None:
             # its important to set this as "sa" for performance reasons
-            properties["xattr"] = "sa"
-        acltype = str(properties.get("acltype", "")).lower()
+            properties.xattr = "sa"
+        acltype = str(properties.acltype or "").lower()
         if acltype == "nfsv4":
             # inherited ACL entries must pass through or chmod strips them
-            properties.setdefault("aclinherit", "passthrough")
+            if properties.aclinherit is None:
+                properties.aclinherit = "passthrough"
         elif acltype in _POSIX_OR_OFF_ACLTYPES:
             # a non discard aclmode can prevent the ZFS_ACL_TRIVIAL flag from
             # being set which results in spurious permission errors
-            properties.setdefault("aclmode", "discard")
-            properties.setdefault("aclinherit", "discard")
+            if properties.aclmode is None:
+                properties.aclmode = "discard"
+            if properties.aclinherit is None:
+                properties.aclinherit = "discard"
 
     encrypt = None
     if data.encryption:
@@ -254,52 +257,6 @@ def check_name_valid(data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> N
         raise ValidationError(SCHEMA, "Trailing spaces are not permitted in resource names.", errno.EINVAL)
 
 
-def check_denied_properties(data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> None:
-    """Only the allowed set of properties may be given at creation time.
-
-    Properties with dedicated APIs get a pointer to that API and
-    everything outside the allowed set is denied outright. The raw
-    request is inspected rather than the resolved properties so the
-    defaults this API injects itself are never judged.
-    """
-    for prop in data.properties:
-        lowered = prop.lower()
-        if lowered in ENCRYPTION_PROPERTIES:
-            raise ValidationError(
-                f"{SCHEMA}.properties",
-                f"{prop!r} may not be set through generic properties. A resource "
-                "inherits its parent's encryption by default. Use the `encryption` "
-                "argument to create a new encryption root.",
-                errno.EINVAL,
-            )
-        elif lowered in SHARING_PROPERTIES:
-            raise ValidationError(
-                f"{SCHEMA}.properties",
-                f"{prop!r} may not be set through generic properties. Shares are "
-                "managed with the `sharing.nfs` and `sharing.smb` APIs.",
-                errno.EINVAL,
-            )
-        elif lowered not in ALLOWED_PROPERTIES:
-            raise ValidationError(
-                f"{SCHEMA}.properties",
-                f"{prop!r} may not be set at creation time.",
-                errno.EINVAL,
-            )
-
-
-# TODO uncomment when the truenas.entitlements API is merged. The service
-# gathers the entitlement fact and calls this only when a dedup value
-# other than off is requested.
-# def check_dedup_entitlement(data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> None:
-#     """Enabling deduplication requires a license entitlement."""
-#     if not ctx.dedup_entitled:
-#         raise ValidationError(
-#             f"{SCHEMA}.properties",
-#             "This system is not licensed to use ZFS deduplication.",
-#             errno.EINVAL,
-#         )
-
-
 def check_user_property_names(data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> None:
     """User property names must contain a colon."""
     for key in data.user_properties:
@@ -316,7 +273,7 @@ def check_volume_has_volsize(data: "ZFSResourceCreateArgsData", ctx: CreateConte
 
     The service calls this only for volumes.
     """
-    if "volsize" not in ctx.properties:
+    if ctx.properties.volsize is None:
         raise ValidationError(
             f"{SCHEMA}.properties",
             "'volsize' is required when creating a VOLUME.",
@@ -352,7 +309,7 @@ def check_tier_managed_ssb(data: "ZFSResourceCreateArgsData", ctx: CreateContext
 
     The service calls this only when tiering is enabled.
     """
-    if "special_small_blocks" in data.properties:
+    if data.properties.special_small_blocks is not None:
         raise ValidationError(
             f"{SCHEMA}.properties",
             "ZFS tiering is enabled. Use `zfs.tier.dataset_set_tier` to manage 'special_small_blocks'.",
@@ -377,7 +334,7 @@ def apply_tier_snap(data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> No
     parent_ssb = parent["properties"]["special_small_blocks"]["value"] or 0
     parent_rs = parent["properties"]["recordsize"]["value"] or 0
     performance = parent_rs > 0 and parent_ssb >= parent_rs
-    ctx.properties["special_small_blocks"] = 16 * 1024 * 1024 if performance else 0
+    ctx.properties.special_small_blocks = 16 * 1024 * 1024 if performance else 0
 
 
 def apply_volume_ssb_pin(data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> None:
@@ -395,9 +352,9 @@ def apply_volume_ssb_pin(data: "ZFSResourceCreateArgsData", ctx: CreateContext) 
     if parent is None:
         return
     parent_ssb = parent["properties"]["special_small_blocks"]["value"] or 0
-    volblocksize = _size_bytes(ctx.properties.get("volblocksize", 16384)) or 16384
+    volblocksize = _size_bytes(ctx.properties.volblocksize or 16384) or 16384
     if parent_ssb and volblocksize < parent_ssb:
-        ctx.properties["special_small_blocks"] = 0
+        ctx.properties.special_small_blocks = 0
 
 
 def check_dedup_tiering(service: typing.Any, data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> None:
@@ -412,7 +369,7 @@ def check_dedup_tiering(service: typing.Any, data: "ZFSResourceCreateArgsData", 
     value other than off while tiering is enabled and after the tier
     placement has been applied.
     """
-    ssb = ctx.properties.get("special_small_blocks")
+    ssb = ctx.properties.special_small_blocks
     if ssb is None:
         parent = _nearest_ancestor_entry(data, ctx)
         ssb = (parent["properties"]["special_small_blocks"]["value"] or 0) if parent else 0
@@ -435,7 +392,7 @@ def _effective_value(name: str, data: "ZFSResourceCreateArgsData", ctx: CreateCo
     """Return the lowercased effective value of a property. That is the
     requested value or the value inherited from the nearest existing
     ancestor."""
-    value = ctx.properties.get(name)
+    value = getattr(ctx.properties, name)
     if value is None:
         for ancestor in ancestor_chain(data.path):
             rv = ctx.ancestors.get(ancestor)
@@ -486,7 +443,7 @@ def check_volume_capacity(data: "ZFSResourceCreateArgsData", ctx: CreateContext)
     entries have been gathered.
     """
     try:
-        reservation = int(ctx.properties.get("refreservation", 0))
+        reservation = int(ctx.properties.refreservation or 0)
     except ValueError:
         # a word value like none means the volume is sparse and reserves nothing
         return

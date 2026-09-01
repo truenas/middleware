@@ -36,7 +36,6 @@ from .create_rules import (
     check_acl_combination,
     check_dedup_tiering,
     # check_dedup_entitlement,  TODO uncomment when the truenas.entitlements API is merged
-    check_denied_properties,
     check_encryption,
     check_name_valid,
     check_parent_not_readonly,
@@ -405,7 +404,6 @@ class ZFSResourceService(Service):
         check_path_shape(data, ctx)
         check_protected_path(data, ctx)
         check_name_valid(data, ctx)
-        check_denied_properties(data, ctx)
         check_user_property_names(data, ctx)
 
         ctx.tier_enabled = self.call_sync2(self.s.zfs.tier.config).enabled
@@ -416,9 +414,9 @@ class ZFSResourceService(Service):
         if data.type == "VOLUME":
             ancestor_props.extend(["available", "special_small_blocks"])
         else:
-            if "acltype" in properties or "aclmode" in properties:
+            if properties.acltype is not None or properties.aclmode is not None:
                 ancestor_props.extend(["acltype", "aclmode"])
-            if ctx.tier_enabled and "special_small_blocks" not in data.properties:
+            if ctx.tier_enabled and data.properties.special_small_blocks is None:
                 ancestor_props.extend(["special_small_blocks", "recordsize"])
         if data.encryption:
             ancestor_props.append("encryption")
@@ -437,17 +435,17 @@ class ZFSResourceService(Service):
         if data.type == "VOLUME":
             check_volume_has_volsize(data, ctx)
             apply_draid_volblocksize(self, data, ctx)
-            if "special_small_blocks" not in properties:
+            if properties.special_small_blocks is None:
                 apply_volume_ssb_pin(data, ctx)
             check_volume_capacity(data, ctx)
         else:
-            if "recordsize" not in properties:
+            if properties.recordsize is None:
                 apply_draid_recordsize(self, data, ctx)
-            if ctx.tier_enabled and "special_small_blocks" not in properties:
+            if ctx.tier_enabled and properties.special_small_blocks is None:
                 apply_tier_snap(data, ctx)
-            if ctx.tier_enabled and str(properties.get("dedup", "off")).lower() != "off":
+            if ctx.tier_enabled and str(properties.dedup or "off").lower() != "off":
                 check_dedup_tiering(self, data, ctx)
-            if "acltype" in properties or "aclmode" in properties:
+            if properties.acltype is not None or properties.aclmode is not None:
                 check_acl_combination(data, ctx)
 
         if data.encryption:
@@ -455,12 +453,13 @@ class ZFSResourceService(Service):
 
         # TODO uncomment when the truenas.entitlements API is merged
         # from truenas_pylicensed.features import LicenseFeature
-        # if str(properties.get("dedup", "off")).lower() != "off":
+        # if str(properties.dedup or "off").lower() != "off":
         #     ctx.dedup_entitled = self.call_sync2(self.s.truenas.entitlements.check, LicenseFeature.DEDUP).entitled
         #     check_dedup_entitlement(data, ctx)
 
+        props = {k: v for k, v in properties.model_dump().items() if v is not None}
         try:
-            create_impl(tls, path, data.type, properties, data.user_properties, data.create_ancestors, encrypt)
+            create_impl(tls, path, data.type, props, data.user_properties, data.create_ancestors, encrypt)
         except truenas_pylibzfs.ZFSException as e:
             if e.code in ZFS_INVALID_INPUT_ERRORS:
                 raise ValidationError(schema, str(e), errno.EINVAL)
@@ -492,7 +491,8 @@ class ZFSResourceService(Service):
                 },
             )
 
-        report_props = list(properties) if data.properties else []
+        requested = any(v is not None for v in data.properties.model_dump().values())
+        report_props = list(props) if requested else []
         if encrypt:
             report_props.append("encryption")
         return self.call_sync2(

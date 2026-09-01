@@ -237,7 +237,7 @@ def test_zfs_resource_create_property_outside_allowed_set(prop):
     path = os.path.join(pool_name, "test_create_fs_badprop")
     with pytest.raises(Exception) as exc_info:
         call("zfs.resource.create", {"path": path, "properties": {prop: "on"}})
-    assert "may not be set at creation time" in str(exc_info.value)
+    assert "Extra inputs are not permitted" in str(exc_info.value)
 
 
 def test_zfs_resource_create_property_invalid_for_type():
@@ -249,11 +249,11 @@ def test_zfs_resource_create_property_invalid_for_type():
 
 
 def test_zfs_resource_create_encryption_property_denied():
-    """Test that encryption properties may not be set through generic properties"""
+    """Test that encryption properties are rejected by the schema"""
     path = os.path.join(pool_name, "test_create_fs_crypto")
     with pytest.raises(Exception) as exc_info:
         call("zfs.resource.create", {"path": path, "properties": {"encryption": "on"}})
-    assert "may not be set through generic properties" in str(exc_info.value)
+    assert "Extra inputs are not permitted" in str(exc_info.value)
 
 
 @pytest.mark.skip(reason="enable when the truenas.entitlements API is merged and the dedup license check is active")
@@ -274,13 +274,11 @@ def test_zfs_resource_create_dedup_requires_license():
 
 @pytest.mark.parametrize("prop", ["sharenfs", "sharesmb"])
 def test_zfs_resource_create_sharing_property_denied(prop):
-    """Test that ZFS native sharing properties may not be set through generic properties"""
+    """Test that ZFS native sharing properties are rejected by the schema"""
     path = os.path.join(pool_name, "test_create_fs_sharing")
     with pytest.raises(Exception) as exc_info:
         call("zfs.resource.create", {"path": path, "properties": {prop: "on"}})
-    emsg = str(exc_info.value)
-    assert "may not be set through generic properties" in emsg
-    assert "sharing.nfs" in emsg
+    assert "Extra inputs are not permitted" in str(exc_info.value)
 
 
 def test_zfs_resource_create_encryption_root_with_key():
@@ -430,7 +428,7 @@ def test_zfs_resource_create_under_encrypted_parent():
                 "zfs.resource.create",
                 {"path": f"{parent}/child2", "properties": {"encryption": "off"}},
             )
-        assert "may not be set through generic properties" in str(exc_info.value)
+        assert "Extra inputs are not permitted" in str(exc_info.value)
     finally:
         destroy(parent)
 

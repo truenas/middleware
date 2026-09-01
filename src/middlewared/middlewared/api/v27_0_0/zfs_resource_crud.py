@@ -17,6 +17,7 @@ __all__ = (
     "ZFSResourceCreateArgsData",
     "ZFSResourceCreateArgs",
     "ZFSResourceCreateEncryption",
+    "ZFSResourceCreateProperties",
     "ZFSResourceCreateResult",
     "ZFSResourceDestroyArgsData",
     "ZFSResourceDestroyArgs",
@@ -406,6 +407,65 @@ class ZFSResourceCreateEncryption(BaseModel):
     )
 
 
+class ZFSResourceCreateProperties(BaseModel):
+    """ZFS properties that may be set at creation time.
+
+    Each field is the native ZFS property name and values are handed to ZFS verbatim. A field left as null is
+    simply not sent to ZFS so the property inherits from the parent as usual.
+    """
+
+    aclinherit: str | None = Field(
+        default=None,
+        description="ACL inheritance behavior for new files and directories.",
+    )
+    aclmode: str | None = Field(default=None, description="How ACLs are modified during chmod operations.")
+    acltype: str | None = Field(default=None, description="The type of ACL to use (off, posix, or nfsv4).")
+    atime: str | None = Field(default=None, description="Whether file access times are updated on read.")
+    casesensitivity: str | None = Field(
+        default=None,
+        description="Filename matching sensitivity. Settable at creation time only.",
+    )
+    checksum: str | None = Field(default=None, description="Checksum algorithm used to verify data integrity.")
+    compression: str | None = Field(default=None, description="Compression algorithm for the resource.")
+    copies: str | int | None = Field(default=None, description="Number of copies of data blocks to store.")
+    dedup: str | None = Field(default=None, description="Deduplication setting for the resource.")
+    exec: str | None = Field(default=None, description="Whether programs can be executed from the filesystem.")
+    quota: str | int | None = Field(
+        default=None,
+        description="Maximum space the dataset and its descendants may consume.",
+    )
+    readonly: str | None = Field(default=None, description="Whether the resource can be modified.")
+    recordsize: str | int | None = Field(default=None, description="Suggested block size for files in the filesystem.")
+    refquota: str | int | None = Field(default=None, description="Maximum space the dataset itself may consume.")
+    refreservation: str | int | None = Field(
+        default=None,
+        description="Minimum space reserved for the resource itself. Set to 'none' to create a sparse volume.",
+    )
+    reservation: str | int | None = Field(
+        default=None,
+        description="Minimum space reserved for the dataset and its descendants.",
+    )
+    snapdev: str | None = Field(default=None, description="Snapshot device visibility under /dev/zvol.")
+    snapdir: str | None = Field(default=None, description="Visibility of the .zfs/snapshot directory.")
+    special_small_blocks: str | int | None = Field(
+        default=None,
+        description="Size threshold below which blocks are stored on the SPECIAL vdev.",
+    )
+    sync: str | None = Field(default=None, description="Synchronous write behavior.")
+    volblocksize: str | int | None = Field(
+        default=None,
+        description="Block size of the volume. Settable at creation time only.",
+    )
+    volsize: str | int | None = Field(
+        default=None,
+        description="Logical size of the volume in bytes. Required when creating a VOLUME.",
+    )
+    xattr: str | None = Field(
+        default=None,
+        description="Extended attribute storage mode. Defaults to 'sa' for performance.",
+    )
+
+
 class ZFSResourceCreateArgsData(BaseModel):
     path: NonEmptyString = Field(
         description=(
@@ -421,18 +481,13 @@ class ZFSResourceCreateArgsData(BaseModel):
             "block device."
         ),
     )
-    properties: dict[str, str | int] = Field(
-        default={},
+    properties: ZFSResourceCreateProperties = Field(
+        default_factory=ZFSResourceCreateProperties,
         description=(
-            "ZFS properties to set at creation time, keyed by native ZFS property name (exactly the names) "
-            "`zfs.resource.query` returns (e.g. 'compression', 'recordsize', 'volsize'). Values are handed to ZFS "
-            "as-is and canonicalized by ZFS itself. Read the returned entry for the effective values. An omitted "
-            "property inherits from the parent as usual.\n"
-            "\n"
-            "Only the following properties may be set at creation time. Anything else is rejected: 'aclinherit', "
-            "'aclmode', 'acltype', 'atime', 'casesensitivity', 'checksum', 'compression', 'copies', 'dedup', "
-            "'exec', 'quota', 'readonly', 'recordsize', 'refquota', 'refreservation', 'reservation', 'snapdev', "
-            "'snapdir', 'special_small_blocks', 'sync', 'volblocksize', 'volsize', 'xattr'.\n"
+            "ZFS properties to set at creation time. Values are handed to ZFS verbatim and canonicalized by ZFS "
+            "itself. Read the returned entry for the effective values. A property left as null is simply not sent "
+            "to ZFS and inherits from the parent as usual. Any property not in this model may not be set at "
+            "creation time.\n"
             "\n"
             "Creating a VOLUME requires 'volsize'. Volumes are thick-provisioned by default ('refreservation' "
             "defaults to the volsize, like `zfs create -V`). Set 'refreservation' to 'none' to create a sparse "
@@ -442,10 +497,8 @@ class ZFSResourceCreateArgsData(BaseModel):
             "explicit 'acltype' also defaults the coupled acl properties. An nfsv4 acltype defaults 'aclinherit' to "
             "'passthrough' while a posix or off acltype defaults both 'aclmode' and 'aclinherit' to 'discard'.\n"
             "\n"
-            "The encryption properties ('encryption', 'keyformat', 'keylocation', 'pbkdf2iters') may not be set "
-            "here. One must use the `encryption` field to create an encryption root. The ZFS native sharing "
-            "properties ('sharenfs', 'sharesmb') may not be set either. Shares are managed with the `sharing.nfs` "
-            "and `sharing.smb` APIs."
+            "Encryption is configured through the `encryption` argument and shares are managed with the "
+            "`sharing.nfs` and `sharing.smb` APIs. Neither may be configured through these properties."
         ),
     )
     user_properties: dict[str, str] = Field(
