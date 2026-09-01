@@ -23,15 +23,20 @@ from middlewared.plugins.zfs.snapshot_crud import ZFSResourceSnapshotService
 from middlewared.service import Service, private
 from middlewared.service.decorators import pass_thread_local_storage
 from middlewared.service_exception import CallError, ValidationError
-from middlewared.utils.crypto import generate_token
 from middlewared.utils.filter_list import filter_list
 
-from .create_impl import (
-    ENCRYPTION_PROPERTIES,
-    SHARING_PROPERTIES,
-    ZFS_INVALID_INPUT_ERRORS,
-    ZFS_TYPE_MAP,
-    create_impl,
+from .create_impl import ZFS_INVALID_INPUT_ERRORS, create_impl
+from .create_rules import (
+    CreateContext,
+    # check_dedup_entitlement,  TODO uncomment when the truenas.entitlements API is merged
+    check_denied_properties,
+    check_encryption,
+    check_name_valid,
+    check_path_shape,
+    check_protected_path,
+    check_user_property_names,
+    check_volume_has_volsize,
+    resolve_create_request,
 )
 from .destroy_impl import destroy_impl
 from .exceptions import (
@@ -384,147 +389,24 @@ class ZFSResourceService(Service):
         """
         schema = "zfs.resource.create"
         path = data.path
-        if os.path.isabs(path):
-            raise ValidationError(
-                schema,
-                "Absolute path is invalid. Must be in form of <pool>/<resource>.",
-                errno.EINVAL,
-            )
-        elif path.endswith("/"):
-            raise ValidationError(schema, "Path must not end with a forward-slash.", errno.EINVAL)
-        elif "@" in path:
-            raise ValidationError(
-                schema,
-                "Use `zfs.resource.snapshot.create` to create snapshots.",
-            )
-        elif "/" not in path:
-            raise ValidationError(
-                schema,
-                "Creating a root filesystem (zpool) is not allowed.",
-                errno.EINVAL,
-            )
-        elif not data.bypass and has_internal_path(path):
-            # NOTE: `bypass` is a value only exposed to
-            # internal callers and not to our public API.
-            raise ValidationError(schema, f"{path!r} is a protected path.", errno.EACCES)
-        elif not truenas_pylibzfs.name_is_valid(name=path, type=ZFS_TYPE_MAP[data.type]):
-            raise ValidationError(schema, f"{path!r} is not a valid ZFS resource name.", errno.EINVAL)
+        properties, encrypt = resolve_create_request(data)
+        ctx = CreateContext(properties=properties, encrypt=encrypt)
 
-        properties: dict[str, str | int] = dict(data.properties)
-        for prop in properties:
-            if prop.lower() in ENCRYPTION_PROPERTIES:
-                raise ValidationError(
-                    f"{schema}.properties",
-                    f"{prop!r} may not be set through generic properties. A resource "
-                    "inherits its parent's encryption by default. Use the `encryption` "
-                    "argument to create a new encryption root.",
-                    errno.EINVAL,
-                )
-            elif prop.lower() in SHARING_PROPERTIES:
-                raise ValidationError(
-                    f"{schema}.properties",
-                    f"{prop!r} may not be set through generic properties. Shares are "
-                    "managed with the `sharing.nfs` and `sharing.smb` APIs.",
-                    errno.EINVAL,
-                )
+        check_path_shape(data, ctx)
+        check_protected_path(data, ctx)
+        check_name_valid(data, ctx)
+        check_denied_properties(data, ctx)
+        check_user_property_names(data, ctx)
+        check_volume_has_volsize(data, ctx)
 
-        # TODO uncomment when the truenas.entitlements API is merged. Every dedup
-        # value other than off enables deduplication and requires the license
-        # entitlement to permit it.
-        # if str(properties.get("dedup", "off")).lower() != "off":
-        #     from truenas_pylicensed.features import LicenseFeature
-        #     if not self.call_sync2(self.s.truenas.entitlements.check, LicenseFeature.DEDUP).entitled:
-        #         raise ValidationError(
-        #             f"{schema}.properties",
-        #             "This system is not licensed to use ZFS deduplication.",
-        #             errno.EINVAL,
-        #         )
-
-        for key in data.user_properties:
-            if ":" not in key:
-                raise ValidationError(
-                    f"{schema}.user_properties",
-                    f"{key!r} is not a valid user property name (must contain a colon).",
-                    errno.EINVAL,
-                )
-
-        if data.type == "VOLUME":
-            if "volsize" not in properties:
-                raise ValidationError(
-                    f"{schema}.properties",
-                    "'volsize' is required when creating a VOLUME.",
-                    errno.EINVAL,
-                )
-            # thick provision unless told otherwise, like `zfs create -V`.
-            # NOTE: the CLI sets refreservation=auto (volsize + metadata
-            # overhead) but libzfs cannot resolve "auto" through our create
-            # path, so reserve the volsize itself.
-            properties.setdefault("refreservation", properties["volsize"])
-        elif "xattr" not in properties:
-            # its important to set this as "sa" for performance reasons
-            properties["xattr"] = "sa"
-
-        encrypt = None
         if data.encryption:
-            # an unset Secret field holds Secret(None), not None
-            passphrase = data.encryption.passphrase.get_secret_value() if data.encryption.passphrase else None
-            key = data.encryption.key.get_secret_value() if data.encryption.key else None
-            provided = [name for name, value in (("key", key), ("passphrase", passphrase)) if value is not None]
-            if data.encryption.generate_key:
-                provided.append("generate_key")
-            if len(provided) != 1:
-                raise ValidationError(
-                    f"{schema}.encryption",
-                    "Exactly one of `key`, `passphrase`, or `generate_key` must be provided.",
-                    errno.EINVAL,
-                )
-            if passphrase is not None:
-                encrypt = {
-                    "keyformat": "passphrase",
-                    "key": passphrase,
-                    "pbkdf2iters": data.encryption.pbkdf2iters,
-                }
-            elif data.encryption.generate_key:
-                encrypt = {"keyformat": "hex", "key": generate_token(32)}
-            else:
-                encrypt = {"keyformat": "hex", "key": key}
+            check_encryption(self, data, ctx)
 
-            # Enforce the same parent-chain policy as pool.dataset. Walk the
-            # existing ancestors nearest-first; only the nearest encrypted
-            # ancestor (if any) matters.
-            seen_unencrypted = False
-            for parent in pathlib.PurePosixPath(path).parents:
-                ancestor = parent.as_posix()
-                if ancestor == ".":
-                    continue
-                try:
-                    rv = self.call_sync2(
-                        self.s.zfs.resource.query_impl,
-                        ZFSResourceQuery(paths=[ancestor], properties=["encryption"]),
-                    )[0]
-                except ZFSPathNotFoundException:
-                    # a missing ancestor is created (or rejected) later
-                    continue
-                if rv["properties"]["encryption"]["raw"] == "off":
-                    seen_unencrypted = True
-                    continue
-                if seen_unencrypted:
-                    raise ValidationError(
-                        f"{schema}.encryption",
-                        "Creating an encryption root beneath an unencrypted dataset "
-                        f"that is itself inside encrypted dataset {ancestor!r} is not "
-                        "allowed.",
-                        errno.EINVAL,
-                    )
-                if encrypt["keyformat"] == "hex" and rv["properties"]["keyformat"]["raw"] == "passphrase":
-                    raise ValidationError(
-                        f"{schema}.encryption.key",
-                        f"{ancestor!r} is encrypted with a passphrase; a key-encrypted "
-                        "child cannot be created beneath it because it could not be "
-                        "unlocked while its parent is locked. Use a passphrase instead.",
-                        errno.EINVAL,
-                    )
-                break
+        # TODO uncomment when the truenas.entitlements API is merged
+        # from truenas_pylicensed.features import LicenseFeature
+        # if str(properties.get("dedup", "off")).lower() != "off":
+        #     ctx.dedup_entitled = self.call_sync2(self.s.truenas.entitlements.check, LicenseFeature.DEDUP).entitled
+        #     check_dedup_entitlement(data, ctx)
 
         try:
             create_impl(
