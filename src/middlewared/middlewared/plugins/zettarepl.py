@@ -44,9 +44,7 @@ from zettarepl.replication.task.name_pattern import compile_name_regex
 from zettarepl.snapshot.list import group_snapshots_by_datasets, multilist_snapshots
 from zettarepl.snapshot.name import parse_snapshots_names_with_multiple_schemas
 from zettarepl.transport.create import create_transport
-from zettarepl.transport.interface import ExecException
 from zettarepl.transport.local import LocalShell
-from zettarepl.transport.zfscli import get_properties_recursive
 from zettarepl.utils.logging import (
     LongStringsFilter,
     ReplicationTaskLoggingLevelFilter,
@@ -657,28 +655,6 @@ class ZettareplService(Service):
                 errors[target_dataset] = unmatched_snapshots
 
         return errors
-
-    async def datasets_have_encryption(self, datasets, recursive, transport, ssh_credentials=None):
-        async with self._handle_ssh_exceptions():
-            async with self._get_zettarepl_shell(transport, ssh_credentials) as shell:
-                try:
-                    properties_result = await self.middleware.run_in_thread(
-                        get_properties_recursive, shell, datasets, {"encryption": str}, recursive=recursive,
-                    )
-                except ExecException as e:
-                    self.middleware.logger.debug("Encryption not supported on shell %r: %r (exit code = %d)",
-                                                 shell, e.stdout.split("\n")[0], e.returncode)
-                    return []
-
-        result = []
-        for dataset, properties in properties_result.items():
-            if properties["encryption"] != "off":
-                if any(dataset.startswith(f"{parent}/") for parent in result):
-                    continue
-
-                result.append(dataset)
-
-        return result
 
     async def get_definition(self):
         config = await self.middleware.call("replication.config.config")
