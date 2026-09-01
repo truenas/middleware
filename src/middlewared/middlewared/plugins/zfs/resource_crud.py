@@ -30,6 +30,7 @@ from .create_rules import (
     CreateContext,
     ancestor_chain,
     apply_draid_defaults,
+    check_acl_combination,
     # check_dedup_entitlement,  TODO uncomment when the truenas.entitlements API is merged
     check_denied_properties,
     check_encryption,
@@ -405,15 +406,21 @@ class ZFSResourceService(Service):
         if data.type == "VOLUME" or "recordsize" not in properties:
             apply_draid_defaults(self, data, ctx)
 
-        if data.type == "VOLUME" or data.encryption:
-            # one query serves both the capacity and encryption rules
+        needs_acl_check = data.type == "FILESYSTEM" and ("acltype" in properties or "aclmode" in properties)
+        if data.type == "VOLUME" or data.encryption or needs_acl_check:
+            # one query serves the capacity, acl and encryption rules
             ctx.ancestors = {
                 rv["name"]: rv
                 for rv in self.call_sync2(
                     self.s.zfs.resource.query_impl,
-                    ZFSResourceQuery(paths=ancestor_chain(path), properties=["available", "encryption"]),
+                    ZFSResourceQuery(
+                        paths=ancestor_chain(path),
+                        properties=["available", "acltype", "aclmode", "encryption"],
+                    ),
                 )
             }
+        if needs_acl_check:
+            check_acl_combination(data, ctx)
         if data.type == "VOLUME":
             check_volume_capacity(data, ctx)
         if data.encryption:
@@ -512,6 +519,9 @@ class ZFSResourceService(Service):
         - a thick volume's reservation would consume more than 80% of the available
           space - create a sparse volume (``refreservation`` of ``none``) to
           deliberately oversubscribe (``EINVAL``)
+        - the effective ``acltype`` and ``aclmode`` combination is unusable - a posix
+          or off acltype requires a discard aclmode and a discard aclmode may not be
+          combined with the nfsv4 acltype (``EINVAL``)
 
         Examples:
 

@@ -31,6 +31,7 @@ __all__ = (
     "CreateContext",
     "ancestor_chain",
     "apply_draid_defaults",
+    "check_acl_combination",
     "check_denied_properties",
     "check_encryption",
     "check_name_valid",
@@ -43,6 +44,9 @@ __all__ = (
 )
 
 SCHEMA = "zfs.resource.create"
+
+_POSIX_OR_OFF_ACLTYPES = frozenset({"posix", "posixacl", "off", "noacl"})
+"""The native acltype values (aliases included) that are not nfsv4."""
 
 
 @dataclasses.dataclass(slots=True, kw_only=True)
@@ -143,9 +147,19 @@ def resolve_create_request(
             # overhead) but libzfs cannot resolve "auto" through our create
             # path, so reserve the volsize itself
             properties.setdefault("refreservation", properties["volsize"])
-    elif "xattr" not in properties:
-        # its important to set this as "sa" for performance reasons
-        properties["xattr"] = "sa"
+    else:
+        if "xattr" not in properties:
+            # its important to set this as "sa" for performance reasons
+            properties["xattr"] = "sa"
+        acltype = str(properties.get("acltype", "")).lower()
+        if acltype == "nfsv4":
+            # inherited ACL entries must pass through or chmod strips them
+            properties.setdefault("aclinherit", "passthrough")
+        elif acltype in _POSIX_OR_OFF_ACLTYPES:
+            # a non discard aclmode can prevent the ZFS_ACL_TRIVIAL flag from
+            # being set which results in spurious permission errors
+            properties.setdefault("aclmode", "discard")
+            properties.setdefault("aclinherit", "discard")
 
     encrypt = None
     if data.encryption:
@@ -251,6 +265,47 @@ def check_volume_has_volsize(data: "ZFSResourceCreateArgsData", ctx: CreateConte
         raise ValidationError(
             f"{SCHEMA}.properties",
             "'volsize' is required when creating a VOLUME.",
+            errno.EINVAL,
+        )
+
+
+def _effective_value(name: str, data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> str | None:
+    """Return the lowercased effective value of a property. That is the
+    requested value or the value inherited from the nearest existing
+    ancestor."""
+    value = ctx.properties.get(name)
+    if value is None:
+        for ancestor in ancestor_chain(data.path):
+            rv = ctx.ancestors.get(ancestor)
+            if rv is not None:
+                value = rv["properties"][name]["raw"]
+                break
+    return str(value).lower() if value is not None else None
+
+
+def check_acl_combination(data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> None:
+    """The requested acl properties must form a usable combination.
+
+    The effective acltype and aclmode (the requested value or the value
+    inherited from the nearest existing ancestor) are checked together.
+    A posix or off acltype requires a discard aclmode and a discard
+    aclmode strips nfsv4 acls on chmod.
+
+    The service calls this only for filesystems that request acltype or
+    aclmode and after the ancestor entries have been gathered.
+    """
+    acltype = _effective_value("acltype", data, ctx)
+    aclmode = _effective_value("aclmode", data, ctx)
+    if acltype in _POSIX_OR_OFF_ACLTYPES and aclmode != "discard":
+        raise ValidationError(
+            f"{SCHEMA}.properties",
+            "'aclmode' must be discard when the effective 'acltype' is posix or off.",
+            errno.EINVAL,
+        )
+    elif acltype == "nfsv4" and aclmode == "discard":
+        raise ValidationError(
+            f"{SCHEMA}.properties",
+            "A discard 'aclmode' may not be used with the nfsv4 'acltype'.",
             errno.EINVAL,
         )
 

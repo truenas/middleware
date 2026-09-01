@@ -565,3 +565,87 @@ def test_zfs_resource_create_draid_volume_small_volblocksize_rejected(draid_pool
         },
     )
     assert entry["properties"]["volblocksize"]["value"] == 32768, entry["properties"]
+
+
+def test_zfs_resource_create_acl_normalization():
+    """Test that an explicit acltype defaults the coupled acl properties"""
+    path = os.path.join(pool_name, "test_create_fs_acl_posix")
+    try:
+        entry = call("zfs.resource.create", {"path": path, "properties": {"acltype": "posix"}})
+        props = entry["properties"]
+        assert props["acltype"]["raw"] == "posix", props
+        assert props["aclmode"]["raw"] == "discard", props
+        assert props["aclinherit"]["raw"] == "discard", props
+    finally:
+        destroy(path)
+
+    path = os.path.join(pool_name, "test_create_fs_acl_nfsv4")
+    try:
+        entry = call(
+            "zfs.resource.create",
+            {"path": path, "properties": {"acltype": "nfsv4", "aclmode": "passthrough"}},
+        )
+        props = entry["properties"]
+        assert props["acltype"]["raw"] == "nfsv4", props
+        assert props["aclinherit"]["raw"] == "passthrough", props
+    finally:
+        destroy(path)
+
+
+@pytest.mark.parametrize(
+    "properties,error",
+    [
+        pytest.param(
+            {"acltype": "nfsv4", "aclmode": "discard"}, "nfsv4", id="nfsv4 with discard aclmode"
+        ),
+        pytest.param(
+            {"acltype": "posix", "aclmode": "passthrough"},
+            "posix or off",
+            id="posix with non discard aclmode",
+        ),
+    ],
+)
+def test_zfs_resource_create_acl_invalid_combinations(properties, error):
+    """Test that unusable acltype and aclmode combinations are rejected"""
+    path = os.path.join(pool_name, "test_create_fs_acl_bad")
+    with pytest.raises(Exception) as exc_info:
+        call("zfs.resource.create", {"path": path, "properties": properties})
+    assert error in str(exc_info.value)
+
+
+def test_zfs_resource_create_acl_effective_from_parent():
+    """Test that a missing acl property resolves from the nearest existing ancestor"""
+    parent = os.path.join(pool_name, "test_create_acl_parent")
+    call("zfs.resource.create", {"path": parent})
+    try:
+        # the parent's effective aclmode is the zfs default of discard
+        with pytest.raises(Exception) as exc_info:
+            call(
+                "zfs.resource.create",
+                {"path": f"{parent}/child", "properties": {"acltype": "nfsv4"}},
+            )
+        assert "nfsv4" in str(exc_info.value)
+
+        # the parent's effective acltype is the zfs default of off
+        with pytest.raises(Exception) as exc_info:
+            call(
+                "zfs.resource.create",
+                {"path": f"{parent}/child", "properties": {"aclmode": "passthrough"}},
+            )
+        assert "posix or off" in str(exc_info.value)
+    finally:
+        destroy(parent)
+
+    parent = os.path.join(pool_name, "test_create_acl_parent_nfsv4")
+    call(
+        "zfs.resource.create",
+        {"path": parent, "properties": {"acltype": "nfsv4", "aclmode": "passthrough"}},
+    )
+    try:
+        entry = call(
+            "zfs.resource.create",
+            {"path": f"{parent}/child", "properties": {"acltype": "nfsv4"}},
+        )
+        assert entry["properties"]["aclinherit"]["raw"] == "passthrough", entry["properties"]
+    finally:
+        destroy(parent)
