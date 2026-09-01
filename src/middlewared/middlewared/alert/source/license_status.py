@@ -9,9 +9,9 @@ import textwrap
 
 from truenas_pylicensed import LicenseType
 
+from middlewared.alert.applicability import EXPECTED_TO_BE_LICENSED
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 from middlewared.alert.schedule import IntervalSchedule
-from middlewared.utils import ProductType
 
 
 class LicenseAlertClass(AlertClass):
@@ -19,27 +19,27 @@ class LicenseAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = "TrueNAS License Issue"
     text = "%s"
-    products = (ProductType.ENTERPRISE,)
+    applies_to = EXPECTED_TO_BE_LICENSED
 
 
 class LicenseIsExpiringAlertClass(AlertClass):
     category = AlertCategory.SYSTEM
     level = AlertLevel.WARNING
-    title = "TrueNAS License Is Expiring"
+    title = "Support Contract Is Expiring"
     text = "%s"
-    products = (ProductType.ENTERPRISE,)
+    applies_to = EXPECTED_TO_BE_LICENSED
 
 
 class LicenseHasExpiredAlertClass(AlertClass):
     category = AlertCategory.SYSTEM
     level = AlertLevel.CRITICAL
-    title = "TrueNAS License Has Expired"
+    title = "Support Contract Has Expired"
     text = "%s"
-    products = (ProductType.ENTERPRISE,)
+    applies_to = EXPECTED_TO_BE_LICENSED
 
 
 class LicenseStatusAlertSource(ThreadedAlertSource):
-    products = (ProductType.ENTERPRISE,)
+    applies_to = EXPECTED_TO_BE_LICENSED
     run_on_backup_node = False
     schedule = IntervalSchedule(timedelta(hours=24))
 
@@ -48,6 +48,9 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
 
         local_license = self.call_sync2(self.s.truenas.license.info_private)
         if local_license is None:
+            if not self.middleware.call_sync('system.is_ha_capable'):
+                return []
+
             return Alert(LicenseAlertClass, "Your TrueNAS has no license, contact support.")
 
         # check if this node's system serial matches the serial in the license

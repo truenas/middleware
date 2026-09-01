@@ -1,6 +1,6 @@
+from middlewared.alert.applicability import TRUENAS_HARDWARE
 from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertLevel, AlertSource
 from middlewared.alert.schedule import CrontabSchedule
-from middlewared.utils import ProductType
 from middlewared.utils.audit import UNAUTHENTICATED
 from time import time
 
@@ -43,7 +43,7 @@ def audit_entry_to_msg(entry):
 class AdminSessionAlertSource(AlertSource):
     schedule = CrontabSchedule(hour=1)  # every 24 hours
     run_on_backup_node = True
-    products = (ProductType.ENTERPRISE,)
+    applies_to = TRUENAS_HARDWARE
 
     async def check(self):
         now = int(time())

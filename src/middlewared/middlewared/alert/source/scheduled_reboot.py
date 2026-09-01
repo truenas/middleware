@@ -1,3 +1,4 @@
+from middlewared.alert.applicability import HA_LICENSED
 from middlewared.alert.base import Alert, AlertCategory, AlertClass, SimpleOneShotAlertClass, AlertLevel
 
 
@@ -10,6 +11,7 @@ class FailoverRebootAlertClass(AlertClass, SimpleOneShotAlertClass):
         "proper failover occurred. The operating system successfully came "
         "back online at %(now)s."
     )
+    applies_to = HA_LICENSED
 
     async def create(self, args):
         return Alert(FailoverRebootAlertClass, {'fqdn': args['fqdn'], 'now': args['now']})
@@ -27,6 +29,7 @@ class FencedRebootAlertClass(AlertClass, SimpleOneShotAlertClass):
         'SCSI reservations were lost and/or cleared. The operating system successfully '
         'came back online at %(now)s.'
     )
+    applies_to = HA_LICENSED
 
     async def create(self, args):
         return Alert(FencedRebootAlertClass, {'fqdn': args['fqdn'], 'now': args['now']})
