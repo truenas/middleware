@@ -435,7 +435,6 @@ class FailoverService(ConfigService):
             except Exception as e:
                 self.logger.error(f'Failed to reset legacy license cache on the remote node: {e!r}')
 
-
     @private
     def send_pwenc_secret(self):
         try:
