@@ -29,8 +29,10 @@ from .create_impl import ZFS_INVALID_INPUT_ERRORS, create_impl
 from .create_rules import (
     CreateContext,
     ancestor_chain,
-    apply_draid_defaults,
-    apply_tier_placement,
+    apply_draid_recordsize,
+    apply_draid_volblocksize,
+    apply_tier_snap,
+    apply_volume_ssb_pin,
     check_acl_combination,
     check_dedup_tiering,
     # check_dedup_entitlement,  TODO uncomment when the truenas.entitlements API is merged
@@ -405,10 +407,6 @@ class ZFSResourceService(Service):
         check_name_valid(data, ctx)
         check_denied_properties(data, ctx)
         check_user_property_names(data, ctx)
-        check_volume_has_volsize(data, ctx)
-
-        if data.type == "VOLUME" or "recordsize" not in properties:
-            apply_draid_defaults(self, data, ctx)
 
         ctx.tier_enabled = self.call_sync2(self.s.zfs.tier.config).enabled
 
@@ -435,13 +433,23 @@ class ZFSResourceService(Service):
         check_parent_not_readonly(data, ctx)
         if ctx.tier_enabled:
             check_tier_managed_ssb(data, ctx)
-        apply_tier_placement(data, ctx)
-        if str(properties.get("dedup", "off")).lower() != "off":
-            check_dedup_tiering(self, data, ctx)
-        if data.type == "FILESYSTEM" and ("acltype" in properties or "aclmode" in properties):
-            check_acl_combination(data, ctx)
+
         if data.type == "VOLUME":
+            check_volume_has_volsize(data, ctx)
+            apply_draid_volblocksize(self, data, ctx)
+            if "special_small_blocks" not in properties:
+                apply_volume_ssb_pin(data, ctx)
             check_volume_capacity(data, ctx)
+        else:
+            if "recordsize" not in properties:
+                apply_draid_recordsize(self, data, ctx)
+            if ctx.tier_enabled and "special_small_blocks" not in properties:
+                apply_tier_snap(data, ctx)
+            if ctx.tier_enabled and str(properties.get("dedup", "off")).lower() != "off":
+                check_dedup_tiering(self, data, ctx)
+            if "acltype" in properties or "aclmode" in properties:
+                check_acl_combination(data, ctx)
+
         if data.encryption:
             check_encryption(data, ctx)
 

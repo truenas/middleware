@@ -6,8 +6,9 @@ facts, raises a single ValidationError on a failed check, and returns
 nothing otherwise. Rules never perform I/O. The service calls them
 explicitly and in order from its create_impl so the control flow reads
 top to bottom in one place. When a rule needs a new fact the service
-gathers it and the context grows a field. apply_draid_defaults also
-takes the service since it must inspect the pool topology itself.
+gathers it and the context grows a field. The draid and dedup tiering
+functions also take the service since they must inspect the pool
+themselves.
 """
 
 import dataclasses
@@ -30,8 +31,10 @@ if typing.TYPE_CHECKING:
 __all__ = (
     "CreateContext",
     "ancestor_chain",
-    "apply_draid_defaults",
-    "apply_tier_placement",
+    "apply_draid_recordsize",
+    "apply_draid_volblocksize",
+    "apply_tier_snap",
+    "apply_volume_ssb_pin",
     "check_acl_combination",
     "check_dedup_tiering",
     "check_denied_properties",
@@ -126,23 +129,30 @@ def pool_is_draid(service: typing.Any, pool_name: str) -> bool:
     return False
 
 
-def apply_draid_defaults(service: typing.Any, data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> None:
-    """Apply the dRAID specific defaults and constraints.
+def apply_draid_recordsize(service: typing.Any, data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> None:
+    """Default a filesystem on a dRAID pool to a 1M recordsize.
 
-    Small blocks perform poorly on dRAID vdevs. A filesystem therefore
-    defaults to a 1M recordsize, a volume defaults to a 128K
-    volblocksize and an explicitly requested volblocksize must be at
-    least 32K. These match the defaults pool.dataset applies.
+    Small blocks perform poorly on dRAID vdevs. Matches the default
+    pool.dataset applies.
 
-    The service calls this only when the resource is a volume or a
-    filesystem without an explicit recordsize.
+    The service calls this only for filesystems without an explicit
+    recordsize.
+    """
+    if pool_is_draid(service, data.path.split("/")[0]):
+        ctx.properties["recordsize"] = "1M"
+
+
+def apply_draid_volblocksize(service: typing.Any, data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> None:
+    """Apply the dRAID volume block size default and floor.
+
+    Small blocks perform poorly on dRAID vdevs. A volume defaults to a
+    128K volblocksize and an explicitly requested volblocksize must be
+    at least 32K. These match the defaults pool.dataset applies.
+
+    The service calls this only for volumes.
     """
     if not pool_is_draid(service, data.path.split("/")[0]):
         return
-    if data.type == "FILESYSTEM":
-        ctx.properties["recordsize"] = "1M"
-        return
-
     volblocksize = ctx.properties.get("volblocksize")
     if volblocksize is None:
         ctx.properties["volblocksize"] = "128K"
@@ -302,8 +312,11 @@ def check_user_property_names(data: "ZFSResourceCreateArgsData", ctx: CreateCont
 
 
 def check_volume_has_volsize(data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> None:
-    """A volume cannot be created without a size."""
-    if data.type == "VOLUME" and "volsize" not in ctx.properties:
+    """A volume cannot be created without a size.
+
+    The service calls this only for volumes.
+    """
+    if "volsize" not in ctx.properties:
         raise ValidationError(
             f"{SCHEMA}.properties",
             "'volsize' is required when creating a VOLUME.",
@@ -347,37 +360,44 @@ def check_tier_managed_ssb(data: "ZFSResourceCreateArgsData", ctx: CreateContext
         )
 
 
-def apply_tier_placement(data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> None:
-    """Pin the special_small_blocks placement of the new resource.
+def apply_tier_snap(data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> None:
+    """Pin a new filesystem to its parent's effective tier.
 
-    With tiering enabled a new filesystem is pinned to its parent's
-    effective tier. That is 16M when the parent places data on the
-    special vdev (PERFORMANCE) and 0 otherwise (REGULAR). This keeps the
-    tier manager the owner of placement instead of floating inheritance.
-    A volume whose blocks are smaller than the parent's threshold would
-    land entirely on the special vdev so it is pinned to 0 regardless of
-    tiering. Both only apply when the caller did not request the
-    property.
+    That is 16M when the parent places data on the special vdev
+    (PERFORMANCE) and 0 otherwise (REGULAR). This keeps the tier manager
+    the owner of placement instead of floating inheritance.
 
-    The service calls this after the ancestor entries have been gathered.
+    The service calls this only for filesystems that do not request
+    special_small_blocks while tiering is enabled and after the ancestor
+    entries have been gathered.
     """
-    if "special_small_blocks" in ctx.properties:
-        return
-    if data.type == "FILESYSTEM" and not ctx.tier_enabled:
-        return
     parent = _nearest_ancestor_entry(data, ctx)
     if parent is None:
         return
-
     parent_ssb = parent["properties"]["special_small_blocks"]["value"] or 0
-    if data.type == "FILESYSTEM":
-        parent_rs = parent["properties"]["recordsize"]["value"] or 0
-        performance = parent_rs > 0 and parent_ssb >= parent_rs
-        ctx.properties["special_small_blocks"] = 16 * 1024 * 1024 if performance else 0
-    else:
-        volblocksize = _size_bytes(ctx.properties.get("volblocksize", 16384)) or 16384
-        if parent_ssb and volblocksize < parent_ssb:
-            ctx.properties["special_small_blocks"] = 0
+    parent_rs = parent["properties"]["recordsize"]["value"] or 0
+    performance = parent_rs > 0 and parent_ssb >= parent_rs
+    ctx.properties["special_small_blocks"] = 16 * 1024 * 1024 if performance else 0
+
+
+def apply_volume_ssb_pin(data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> None:
+    """Pin special_small_blocks to 0 for a volume below the threshold.
+
+    A volume whose blocks are smaller than the parent's threshold would
+    land entirely on the special vdev so it is pinned to 0 regardless of
+    tiering.
+
+    The service calls this only for volumes that do not request
+    special_small_blocks and after the ancestor entries have been
+    gathered.
+    """
+    parent = _nearest_ancestor_entry(data, ctx)
+    if parent is None:
+        return
+    parent_ssb = parent["properties"]["special_small_blocks"]["value"] or 0
+    volblocksize = _size_bytes(ctx.properties.get("volblocksize", 16384)) or 16384
+    if parent_ssb and volblocksize < parent_ssb:
+        ctx.properties["special_small_blocks"] = 0
 
 
 def check_dedup_tiering(service: typing.Any, data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> None:
@@ -388,11 +408,10 @@ def check_dedup_tiering(service: typing.Any, data: "ZFSResourceCreateArgsData", 
     may not be deduplicated. The pool topology is only inspected once the
     cheaper conditions have passed.
 
-    The service calls this only when a dedup value other than off is
-    requested and after the tier placement has been applied.
+    The service calls this only for filesystems that request a dedup
+    value other than off while tiering is enabled and after the tier
+    placement has been applied.
     """
-    if data.type != "FILESYSTEM" or not ctx.tier_enabled:
-        return
     ssb = ctx.properties.get("special_small_blocks")
     if ssb is None:
         parent = _nearest_ancestor_entry(data, ctx)
