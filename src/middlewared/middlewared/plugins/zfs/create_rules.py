@@ -35,6 +35,7 @@ __all__ = (
     "check_denied_properties",
     "check_encryption",
     "check_name_valid",
+    "check_parent_not_readonly",
     "check_path_shape",
     "check_protected_path",
     "check_user_property_names",
@@ -267,6 +268,29 @@ def check_volume_has_volsize(data: "ZFSResourceCreateArgsData", ctx: CreateConte
             "'volsize' is required when creating a VOLUME.",
             errno.EINVAL,
         )
+
+
+def check_parent_not_readonly(data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> None:
+    """The nearest existing ancestor must not be readonly.
+
+    ZFS allows creating beneath a readonly parent but the new filesystem
+    then fails to mount and a new volume fails on first write. Refuse up
+    front with a clear message instead.
+
+    The service calls this after the ancestor entries have been gathered.
+    """
+    for ancestor in ancestor_chain(data.path):
+        rv = ctx.ancestors.get(ancestor)
+        if rv is None:
+            # a missing ancestor is created (or rejected) later
+            continue
+        if rv["properties"]["readonly"]["raw"] == "on":
+            raise ValidationError(
+                SCHEMA,
+                f"Turn off readonly mode on {ancestor!r} to create {data.path!r}.",
+                errno.EINVAL,
+            )
+        return
 
 
 def _effective_value(name: str, data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> str | None:

@@ -35,6 +35,7 @@ from .create_rules import (
     check_denied_properties,
     check_encryption,
     check_name_valid,
+    check_parent_not_readonly,
     check_path_shape,
     check_protected_path,
     check_user_property_names,
@@ -406,20 +407,19 @@ class ZFSResourceService(Service):
         if data.type == "VOLUME" or "recordsize" not in properties:
             apply_draid_defaults(self, data, ctx)
 
-        needs_acl_check = data.type == "FILESYSTEM" and ("acltype" in properties or "aclmode" in properties)
-        if data.type == "VOLUME" or data.encryption or needs_acl_check:
-            # one query serves the capacity, acl and encryption rules
-            ctx.ancestors = {
-                rv["name"]: rv
-                for rv in self.call_sync2(
-                    self.s.zfs.resource.query_impl,
-                    ZFSResourceQuery(
-                        paths=ancestor_chain(path),
-                        properties=["available", "acltype", "aclmode", "encryption"],
-                    ),
-                )
-            }
-        if needs_acl_check:
+        # one query serves the readonly, acl, capacity and encryption rules
+        ctx.ancestors = {
+            rv["name"]: rv
+            for rv in self.call_sync2(
+                self.s.zfs.resource.query_impl,
+                ZFSResourceQuery(
+                    paths=ancestor_chain(path),
+                    properties=["available", "acltype", "aclmode", "encryption", "readonly"],
+                ),
+            )
+        }
+        check_parent_not_readonly(data, ctx)
+        if data.type == "FILESYSTEM" and ("acltype" in properties or "aclmode" in properties):
             check_acl_combination(data, ctx)
         if data.type == "VOLUME":
             check_volume_capacity(data, ctx)
@@ -522,6 +522,8 @@ class ZFSResourceService(Service):
         - the effective ``acltype`` and ``aclmode`` combination is unusable - a posix
           or off acltype requires a discard aclmode and a discard aclmode may not be
           combined with the nfsv4 acltype (``EINVAL``)
+        - the nearest existing ancestor is readonly - the new filesystem could not be
+          mounted beneath it (``EINVAL``)
 
         Examples:
 

@@ -649,3 +649,23 @@ def test_zfs_resource_create_acl_effective_from_parent():
         assert entry["properties"]["aclinherit"]["raw"] == "passthrough", entry["properties"]
     finally:
         destroy(parent)
+
+
+def test_zfs_resource_create_under_readonly_parent_fails():
+    """Test that creating beneath a readonly parent is refused up front"""
+    parent = os.path.join(pool_name, "test_create_ro_parent")
+    call("zfs.resource.create", {"path": parent, "properties": {"readonly": "on"}})
+    try:
+        with pytest.raises(Exception) as exc_info:
+            call("zfs.resource.create", {"path": f"{parent}/child"})
+        assert f"Turn off readonly mode on {parent!r}" in str(exc_info.value)
+
+        # the nearest existing ancestor is checked when creating ancestors too
+        with pytest.raises(Exception) as exc_info:
+            call(
+                "zfs.resource.create",
+                {"path": f"{parent}/a/b", "create_ancestors": True},
+            )
+        assert "readonly" in str(exc_info.value)
+    finally:
+        destroy(parent)
