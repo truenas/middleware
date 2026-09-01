@@ -94,7 +94,9 @@ def test_zfs_resource_create_volume_sparse():
 def test_zfs_resource_create_volume_capacity_guardrail():
     """Test that a thick volume reserving over 80% of the available space is
     rejected while a sparse volume of the same size is allowed"""
-    avail = call("zfs.resource.query", {"paths": [pool_name], "properties": ["available"]})
+    avail = call(
+        "zfs.resource.query", {"paths": [pool_name], "properties": ["available"]}
+    )
     volsize = (int(avail[0]["properties"]["available"]["value"] * 0.9) // 16384) * 16384
     path = os.path.join(pool_name, "test_create_zvol_capacity")
     try:
@@ -226,7 +228,9 @@ def test_zfs_resource_create_already_exists():
         ),
         pytest.param("boot-pool/test", "protected", id="protected paths not allowed"),
         pytest.param(
-            "tank/dataset ", "not a valid ZFS resource name", id="trailing space not allowed"
+            "tank/dataset ",
+            "not a valid ZFS resource name",
+            id="trailing space not allowed",
         ),
     ],
 )
@@ -265,13 +269,17 @@ def test_zfs_resource_create_encryption_property_denied():
     assert "may not be set through generic properties" in str(exc_info.value)
 
 
-@pytest.mark.skip(reason="enable when the truenas.entitlements API is merged and the dedup license check is active")
+@pytest.mark.skip(
+    reason="enable when the truenas.entitlements API is merged and the dedup license check is active"
+)
 def test_zfs_resource_create_dedup_requires_license():
     """Test that enabling deduplication requires the DEDUP license entitlement"""
     path = os.path.join(pool_name, "test_create_fs_dedup")
     if call("truenas.entitlements.check", "DEDUP")["entitled"]:
         try:
-            entry = call("zfs.resource.create", {"path": path, "properties": {"dedup": "on"}})
+            entry = call(
+                "zfs.resource.create", {"path": path, "properties": {"dedup": "on"}}
+            )
             assert entry["properties"]["dedup"]["raw"] == "on"
         finally:
             destroy(path)
@@ -474,24 +482,26 @@ def test_zfs_resource_create_under_locked_parent_fails():
         destroy(parent)
 
 
-
-
 @pytest.fixture(scope="module")
 def draid_pool():
     unused_disks = call("disk.get_unused")
     if len(unused_disks) < 2:
         pytest.skip("Insufficient number of unused disks for a dRAID pool")
-    with another_pool({
-        "name": "test_zr_draid",
-        "topology": {
-            "data": [{
-                "disks": [disk["name"] for disk in unused_disks[:2]],
-                "type": "DRAID1",
-                "draid_data_disks": 1,
-            }],
-        },
-        "allow_duplicate_serials": True,
-    }) as pool:
+    with another_pool(
+        {
+            "name": "test_zr_draid",
+            "topology": {
+                "data": [
+                    {
+                        "disks": [disk["name"] for disk in unused_disks[:2]],
+                        "type": "DRAID1",
+                        "draid_data_disks": 1,
+                    }
+                ],
+            },
+            "allow_duplicate_serials": True,
+        }
+    ) as pool:
         yield pool
 
 
@@ -500,7 +510,9 @@ def test_zfs_resource_create_draid_filesystem_recordsize_default(draid_pool):
     path = f"{draid_pool['name']}/fs"
     call("zfs.resource.create", {"path": path})
     result = call("zfs.resource.query", {"paths": [path], "properties": ["recordsize"]})
-    assert result[0]["properties"]["recordsize"]["value"] == 1024**2, result[0]["properties"]
+    assert result[0]["properties"]["recordsize"]["value"] == 1024**2, result[0][
+        "properties"
+    ]
 
 
 def test_zfs_resource_create_draid_volume_volblocksize_default(draid_pool):
@@ -514,8 +526,12 @@ def test_zfs_resource_create_draid_volume_volblocksize_default(draid_pool):
             "properties": {"volsize": 128 * 1024**2, "refreservation": "none"},
         },
     )
-    result = call("zfs.resource.query", {"paths": [path], "properties": ["volblocksize"]})
-    assert result[0]["properties"]["volblocksize"]["value"] == 128 * 1024, result[0]["properties"]
+    result = call(
+        "zfs.resource.query", {"paths": [path], "properties": ["volblocksize"]}
+    )
+    assert result[0]["properties"]["volblocksize"]["value"] == 128 * 1024, result[0][
+        "properties"
+    ]
 
 
 def test_zfs_resource_create_draid_volume_small_volblocksize_rejected(draid_pool):
@@ -555,7 +571,9 @@ def test_zfs_resource_create_acl_normalization():
     """Test that an explicit acltype defaults the coupled acl properties"""
     path = os.path.join(pool_name, "test_create_fs_acl_posix")
     try:
-        entry = call("zfs.resource.create", {"path": path, "properties": {"acltype": "posix"}})
+        entry = call(
+            "zfs.resource.create", {"path": path, "properties": {"acltype": "posix"}}
+        )
         props = entry["properties"]
         assert props["acltype"]["raw"] == "posix", props
         assert props["aclmode"]["raw"] == "discard", props
@@ -567,7 +585,10 @@ def test_zfs_resource_create_acl_normalization():
     try:
         entry = call(
             "zfs.resource.create",
-            {"path": path, "properties": {"acltype": "nfsv4", "aclmode": "passthrough"}},
+            {
+                "path": path,
+                "properties": {"acltype": "nfsv4", "aclmode": "passthrough"},
+            },
         )
         props = entry["properties"]
         assert props["acltype"]["raw"] == "nfsv4", props
@@ -580,7 +601,9 @@ def test_zfs_resource_create_acl_normalization():
     "properties,error",
     [
         pytest.param(
-            {"acltype": "nfsv4", "aclmode": "discard"}, "nfsv4", id="nfsv4 with discard aclmode"
+            {"acltype": "nfsv4", "aclmode": "discard"},
+            "nfsv4",
+            id="nfsv4 with discard aclmode",
         ),
         pytest.param(
             {"acltype": "posix", "aclmode": "passthrough"},
@@ -630,7 +653,9 @@ def test_zfs_resource_create_acl_effective_from_parent():
             "zfs.resource.create",
             {"path": f"{parent}/child", "properties": {"acltype": "nfsv4"}},
         )
-        assert entry["properties"]["aclinherit"]["raw"] == "passthrough", entry["properties"]
+        assert entry["properties"]["aclinherit"]["raw"] == "passthrough", entry[
+            "properties"
+        ]
     finally:
         destroy(parent)
 
@@ -667,7 +692,9 @@ def test_zfs_resource_create_ssb_behavior_without_tiering():
         "zfs.resource.create",
         {"path": parent, "properties": {"special_small_blocks": "128K"}},
     )
-    assert entry["properties"]["special_small_blocks"]["value"] == 128 * 1024, entry["properties"]
+    assert entry["properties"]["special_small_blocks"]["value"] == 128 * 1024, entry[
+        "properties"
+    ]
     try:
         # a volume with blocks under the parent threshold is pinned to zero
         vol = f"{parent}/vol"
@@ -681,7 +708,11 @@ def test_zfs_resource_create_ssb_behavior_without_tiering():
         )
         result = call(
             "zfs.resource.query",
-            {"paths": [vol], "properties": ["special_small_blocks"], "get_source": True},
+            {
+                "paths": [vol],
+                "properties": ["special_small_blocks"],
+                "get_source": True,
+            },
         )
         prop = result[0]["properties"]["special_small_blocks"]
         assert prop["value"] in (0, None), prop
@@ -703,7 +734,11 @@ def test_zfs_resource_create_ssb_behavior_without_tiering():
         )
         result = call(
             "zfs.resource.query",
-            {"paths": [vol2], "properties": ["special_small_blocks"], "get_source": True},
+            {
+                "paths": [vol2],
+                "properties": ["special_small_blocks"],
+                "get_source": True,
+            },
         )
         prop = result[0]["properties"]["special_small_blocks"]
         assert prop["value"] == 128 * 1024, prop
@@ -729,13 +764,19 @@ def tier_pool():
     unused_disks = call("disk.get_unused")
     if len(unused_disks) < 6:
         pytest.skip("Need at least 6 unused disks for a tier pool")
-    with another_pool({
-        "topology": {
-            "data": [{"type": "RAIDZ1", "disks": [d["name"] for d in unused_disks[:3]]}],
-            "special": [{"type": "RAIDZ1", "disks": [d["name"] for d in unused_disks[3:6]]}],
-        },
-        "allow_duplicate_serials": True,
-    }) as pool:
+    with another_pool(
+        {
+            "topology": {
+                "data": [
+                    {"type": "RAIDZ1", "disks": [d["name"] for d in unused_disks[:3]]}
+                ],
+                "special": [
+                    {"type": "RAIDZ1", "disks": [d["name"] for d in unused_disks[3:6]]}
+                ],
+            },
+            "allow_duplicate_serials": True,
+        }
+    ) as pool:
         original = call("zfs.tier.config")
         call("zfs.tier.update", {"enabled": True})
         try:
