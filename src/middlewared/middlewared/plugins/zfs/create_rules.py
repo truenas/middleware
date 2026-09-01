@@ -211,9 +211,13 @@ def check_protected_path(data: "ZFSResourceCreateArgsData", ctx: CreateContext) 
 
 
 def check_name_valid(data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> None:
-    """The name must be acceptable to ZFS for the requested type."""
+    """The name must be acceptable to ZFS for the requested type and may
+    not end with a space."""
     if not truenas_pylibzfs.name_is_valid(name=data.path, type=ZFS_TYPE_MAP[data.type]):
         raise ValidationError(SCHEMA, f"{data.path!r} is not a valid ZFS resource name.", errno.EINVAL)
+    elif data.path.endswith(" "):
+        # ZFS itself accepts a trailing space but it is a classic footgun
+        raise ValidationError(SCHEMA, "Trailing spaces are not permitted in resource names.", errno.EINVAL)
 
 
 def check_denied_properties(data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> None:

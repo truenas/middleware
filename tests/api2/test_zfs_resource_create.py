@@ -225,6 +225,9 @@ def test_zfs_resource_create_already_exists():
             "tank", "root filesystem", id="creating root filesystem not allowed"
         ),
         pytest.param("boot-pool/test", "protected", id="protected paths not allowed"),
+        pytest.param(
+            "tank/dataset ", "not a valid ZFS resource name", id="trailing space not allowed"
+        ),
     ],
 )
 def test_zfs_resource_create_validation_errors(path, error):
