@@ -452,9 +452,7 @@ class ZFSResourceService(Service):
         #     check_dedup_entitlement(data, ctx)
 
         try:
-            create_impl(
-                tls, path, data.type, properties, data.user_properties, data.create_ancestors, encrypt
-            )
+            create_impl(tls, path, data.type, properties, data.user_properties, data.create_ancestors, encrypt)
         except truenas_pylibzfs.ZFSException as e:
             if e.code in ZFS_INVALID_INPUT_ERRORS:
                 raise ValidationError(schema, str(e), errno.EINVAL)

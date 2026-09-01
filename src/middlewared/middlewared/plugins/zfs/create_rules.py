@@ -329,8 +329,7 @@ def check_tier_managed_ssb(data: "ZFSResourceCreateArgsData", ctx: CreateContext
     if "special_small_blocks" in data.properties:
         raise ValidationError(
             f"{SCHEMA}.properties",
-            "ZFS tiering is enabled. Use `zfs.tier.dataset_set_tier` to manage "
-            "'special_small_blocks'.",
+            "ZFS tiering is enabled. Use `zfs.tier.dataset_set_tier` to manage 'special_small_blocks'.",
             errno.EINVAL,
         )
 
