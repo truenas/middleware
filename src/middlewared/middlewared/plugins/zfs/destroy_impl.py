@@ -4,10 +4,29 @@ from typing import Any
 
 import truenas_pylibzfs
 
+from middlewared.utils.filesystem import attrs as fs_attrs
+
 from .exceptions import ZFSPathHasClonesException, ZFSPathHasHoldsException
 from .utils import open_resource
 
 __all__ = ("destroy_impl",)
+
+
+def _remove_mountpoint_dir(mountpoint: str) -> None:
+    """Remove the destroyed resource's now-unused mountpoint directory.
+
+    The lock flow marks a locked dataset's mountpoint immutable, so clear
+    that first or the rmdir fails and the directory lingers. All failures
+    are silently ignored, which mimics upstream zfs.
+    """
+    try:
+        fs_attrs.set_zfs_file_attributes_dict(mountpoint, {"immutable": False})
+    except Exception:
+        pass
+    try:
+        os.rmdir(mountpoint)
+    except Exception:
+        pass
 
 
 def destroy_nonrecursive_impl(tls: Any, path: str, defer: bool) -> tuple[str | None, int | None]:
@@ -46,12 +65,7 @@ def destroy_nonrecursive_impl(tls: Any, path: str, defer: bool) -> tuple[str | N
         else:
             mntpnt = rsrc.get_properties(properties={truenas_pylibzfs.ZFSProperty.MOUNTPOINT})
             if mntpnt.mountpoint.value != "legacy":
-                try:
-                    os.rmdir(mntpnt.mountpoint.value)
-                except Exception:
-                    # silently ignore rmdir ops
-                    # which mimics upstream zfs
-                    pass
+                _remove_mountpoint_dir(mntpnt.mountpoint.value)
 
     # Both ZFS_TYPE_FILESYSTEM and ZFS_TYPE_VOLUME
     try:
@@ -159,11 +173,6 @@ def destroy_impl(
                 failed += f" ({truenas_pylibzfs.ZFSError(errnum)})"
     else:
         for i in mntpnts:
-            try:
-                os.rmdir(i.mountpoint.value)
-            except Exception:
-                # silently ignore rmdir ops
-                # which mimics upstream zfs
-                pass
+            _remove_mountpoint_dir(i.mountpoint.value)
 
     return failed, errnum

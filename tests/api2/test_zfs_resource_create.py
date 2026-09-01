@@ -1,0 +1,437 @@
+import os
+
+import pytest
+
+from middlewared.test.integration.utils import call, ssh
+
+from auto_config import pool_name
+
+GiB = 1024**3
+
+
+def destroy(path: str):
+    call("zfs.resource.destroy", {"path": path, "recursive": True})
+
+
+def test_zfs_resource_create_basic_filesystem():
+    """Test basic filesystem creation returns the created entry and mounts it"""
+    path = os.path.join(pool_name, "test_create_fs_basic")
+    try:
+        entry = call("zfs.resource.create", {"path": path})
+        assert entry["name"] == path
+        assert entry["pool"] == pool_name
+        assert entry["type"] == "FILESYSTEM"
+
+        result = call(
+            "zfs.resource.query", {"paths": [path], "properties": ["mounted", "xattr"]}
+        )
+        assert len(result) == 1
+        assert result[0]["properties"]["mounted"]["raw"] == "yes"
+        # TrueNAS defaults xattr to sa on filesystems
+        assert result[0]["properties"]["xattr"]["raw"] == "sa"
+    finally:
+        destroy(path)
+
+
+def test_zfs_resource_create_with_properties():
+    """Test that native property names are accepted and returned canonicalized"""
+    path = os.path.join(pool_name, "test_create_fs_props")
+    try:
+        entry = call(
+            "zfs.resource.create",
+            {
+                "path": path,
+                "properties": {
+                    "compression": "lz4",
+                    "atime": "off",
+                    "recordsize": "1M",
+                },
+            },
+        )
+        props = entry["properties"]
+        assert props["compression"]["raw"] == "lz4"
+        assert props["atime"]["raw"] == "off"
+        # "1M" is canonicalized by ZFS to its byte value
+        assert props["recordsize"]["value"] == 1024**2
+    finally:
+        destroy(path)
+
+
+def test_zfs_resource_create_volume_thick_by_default():
+    """Test volume creation is thick provisioned unless refreservation is given"""
+    path = os.path.join(pool_name, "test_create_zvol_thick")
+    try:
+        entry = call(
+            "zfs.resource.create",
+            {"path": path, "type": "VOLUME", "properties": {"volsize": GiB}},
+        )
+        assert entry["type"] == "VOLUME"
+        assert entry["properties"]["volsize"]["value"] == GiB
+        assert entry["properties"]["refreservation"]["value"] == GiB
+    finally:
+        destroy(path)
+
+
+def test_zfs_resource_create_volume_sparse():
+    """Test sparse volume creation via refreservation=none"""
+    path = os.path.join(pool_name, "test_create_zvol_sparse")
+    try:
+        entry = call(
+            "zfs.resource.create",
+            {
+                "path": path,
+                "type": "VOLUME",
+                "properties": {"volsize": GiB, "refreservation": "none"},
+            },
+        )
+        assert entry["type"] == "VOLUME"
+        assert entry["properties"]["refreservation"]["value"] in (0, None)
+    finally:
+        destroy(path)
+
+
+def test_zfs_resource_create_volume_requires_volsize():
+    """Test that creating a VOLUME without volsize fails"""
+    path = os.path.join(pool_name, "test_create_zvol_novolsize")
+    with pytest.raises(Exception) as exc_info:
+        call("zfs.resource.create", {"path": path, "type": "VOLUME"})
+    assert "volsize" in str(exc_info.value)
+
+
+def test_zfs_resource_create_with_user_properties():
+    """Test user properties are set at creation time"""
+    path = os.path.join(pool_name, "test_create_fs_uprops")
+    try:
+        entry = call(
+            "zfs.resource.create",
+            {"path": path, "user_properties": {"org.test:canary": "value1"}},
+        )
+        assert entry["user_properties"]["org.test:canary"] == "value1"
+    finally:
+        destroy(path)
+
+
+def test_zfs_resource_create_invalid_user_property_name():
+    """Test that user property names without a colon are rejected"""
+    path = os.path.join(pool_name, "test_create_fs_bad_uprop")
+    with pytest.raises(Exception) as exc_info:
+        call(
+            "zfs.resource.create",
+            {"path": path, "user_properties": {"nocolon": "value"}},
+        )
+    assert "colon" in str(exc_info.value).lower()
+
+
+def test_zfs_resource_create_ancestors():
+    """Test creating missing ancestors like `zfs create -p`"""
+    root = os.path.join(pool_name, "test_create_anc")
+    path = os.path.join(root, "a/b/c")
+    try:
+        entry = call("zfs.resource.create", {"path": path, "create_ancestors": True})
+        assert entry["name"] == path
+
+        result = call(
+            "zfs.resource.query",
+            {"paths": [root], "get_children": True, "properties": ["mounted"]},
+        )
+        assert len(result) == 4
+        assert all(i["properties"]["mounted"]["raw"] == "yes" for i in result)
+    finally:
+        destroy(root)
+
+
+def test_zfs_resource_create_missing_parent_fails():
+    """Test that a missing parent without create_ancestors fails with a helpful message"""
+    parent = os.path.join(pool_name, "test_create_noparent")
+    with pytest.raises(Exception) as exc_info:
+        call("zfs.resource.create", {"path": os.path.join(parent, "child")})
+    emsg = str(exc_info.value)
+    assert f"Parent dataset {parent!r} does not exist" in emsg
+    assert "create_ancestors" in emsg
+
+
+@pytest.mark.parametrize(
+    "path,create_ancestors",
+    [
+        pytest.param(
+            "nonexistent_pool_xyz123/child", False, id="without create_ancestors"
+        ),
+        # a deep path so the failure comes from ancestor creation
+        pytest.param("nonexistent_pool_xyz123/a/b", True, id="with create_ancestors"),
+    ],
+)
+def test_zfs_resource_create_missing_pool_fails(path, create_ancestors):
+    """Test that a nonexistent pool fails with a clear message, with and without create_ancestors"""
+    with pytest.raises(Exception) as exc_info:
+        call(
+            "zfs.resource.create", {"path": path, "create_ancestors": create_ancestors}
+        )
+    assert "Pool 'nonexistent_pool_xyz123' does not exist" in str(exc_info.value)
+
+
+def test_zfs_resource_create_already_exists():
+    """Test that creating an existing resource fails"""
+    path = os.path.join(pool_name, "test_create_exists")
+    try:
+        call("zfs.resource.create", {"path": path})
+        with pytest.raises(Exception) as exc_info:
+            call("zfs.resource.create", {"path": path})
+        assert "already exists" in str(exc_info.value).lower()
+    finally:
+        destroy(path)
+
+
+@pytest.mark.parametrize(
+    "path,error",
+    [
+        pytest.param("/tank/dataset", "absolute", id="absolute paths not allowed"),
+        pytest.param(
+            "tank/dataset/", "forward-slash", id="trailing forward-slash not allowed"
+        ),
+        pytest.param(
+            "tank/dataset@snap",
+            "zfs.resource.snapshot.create",
+            id="snapshot paths not allowed",
+        ),
+        pytest.param(
+            "tank", "root filesystem", id="creating root filesystem not allowed"
+        ),
+        pytest.param("boot-pool/test", "protected", id="protected paths not allowed"),
+    ],
+)
+def test_zfs_resource_create_validation_errors(path, error):
+    """Test various path validation errors"""
+    with pytest.raises(Exception) as exc_info:
+        call("zfs.resource.create", {"path": path})
+    assert error in str(exc_info.value)
+
+
+def test_zfs_resource_create_invalid_property():
+    """Test that unknown property names are rejected"""
+    path = os.path.join(pool_name, "test_create_fs_badprop")
+    with pytest.raises(Exception) as exc_info:
+        call("zfs.resource.create", {"path": path, "properties": {"notaprop": "on"}})
+    assert "not a valid ZFS property" in str(exc_info.value)
+
+
+def test_zfs_resource_create_readonly_property():
+    """Test that read-only properties are rejected"""
+    path = os.path.join(pool_name, "test_create_fs_roprop")
+    with pytest.raises(Exception) as exc_info:
+        call("zfs.resource.create", {"path": path, "properties": {"used": 123}})
+    assert "read" in str(exc_info.value).lower()
+
+
+def test_zfs_resource_create_property_invalid_for_type():
+    """Test that volume-only properties are rejected on filesystems"""
+    path = os.path.join(pool_name, "test_create_fs_volprop")
+    with pytest.raises(Exception) as exc_info:
+        call("zfs.resource.create", {"path": path, "properties": {"volsize": GiB}})
+    assert "invalid for zfs type" in str(exc_info.value)
+
+
+def test_zfs_resource_create_encryption_property_denied():
+    """Test that encryption properties may not be set through generic properties"""
+    path = os.path.join(pool_name, "test_create_fs_crypto")
+    with pytest.raises(Exception) as exc_info:
+        call("zfs.resource.create", {"path": path, "properties": {"encryption": "on"}})
+    assert "may not be set through generic properties" in str(exc_info.value)
+
+
+def test_zfs_resource_create_encryption_root_with_key():
+    """Test creating an encryption root with an explicit hex key; the key is stored by the system"""
+    path = os.path.join(pool_name, "test_create_enc_key")
+    key = "0123456789abcdef" * 4
+    try:
+        entry = call("zfs.resource.create", {"path": path, "encryption": {"key": key}})
+        props = entry["properties"]
+        assert props["encryption"]["raw"] != "off", props
+        assert props["encryptionroot"]["raw"] == path, props
+        assert props["keyformat"]["raw"] == "hex", props
+        assert props["keystatus"]["raw"] == "available", props
+        assert call("pool.dataset.export_key", path, job=True) == key
+    finally:
+        destroy(path)
+
+
+def test_zfs_resource_create_encryption_root_generate_key():
+    """Test creating an encryption root with a generated key retrievable via export_key"""
+    path = os.path.join(pool_name, "test_create_enc_genkey")
+    try:
+        entry = call(
+            "zfs.resource.create", {"path": path, "encryption": {"generate_key": True}}
+        )
+        assert entry["properties"]["keyformat"]["raw"] == "hex", entry["properties"]
+        key = call("pool.dataset.export_key", path, job=True)
+        assert len(key) == 64
+        int(key, 16)  # valid hex
+    finally:
+        destroy(path)
+
+
+def test_zfs_resource_create_encryption_root_passphrase():
+    """Test creating a passphrase encryption root that the legacy lock flow can lock"""
+    path = os.path.join(pool_name, "test_create_enc_pass")
+    try:
+        entry = call(
+            "zfs.resource.create",
+            {"path": path, "encryption": {"passphrase": "passphrase123"}},
+        )
+        props = entry["properties"]
+        assert props["keyformat"]["raw"] == "passphrase", props
+        assert props["encryptionroot"]["raw"] == path, props
+        res = call(
+            "zfs.resource.query", {"paths": [path], "properties": ["pbkdf2iters"]}
+        )
+        assert res[0]["properties"]["pbkdf2iters"]["value"] == 1300000, res[0][
+            "properties"
+        ]
+        assert call("pool.dataset.lock", path, job=True) is True
+    finally:
+        destroy(path)
+
+
+@pytest.mark.parametrize(
+    "encryption",
+    [
+        pytest.param({}, id="nothing provided"),
+        pytest.param(
+            {"key": "0" * 64, "passphrase": "passphrase123"}, id="key and passphrase"
+        ),
+        pytest.param(
+            {"generate_key": True, "passphrase": "passphrase123"},
+            id="generate_key and passphrase",
+        ),
+        pytest.param({"passphrase": "short"}, id="short passphrase"),
+        pytest.param({"key": "notahexkey"}, id="invalid key"),
+        pytest.param({"key": "0" * 63}, id="wrong key length"),
+        pytest.param(
+            {"passphrase": "passphrase123", "pbkdf2iters": 1000},
+            id="pbkdf2iters too low",
+        ),
+        pytest.param(
+            {"passphrase": "passphrase123", "pbkdf2iters": 100_000_000},
+            id="pbkdf2iters too high",
+        ),
+    ],
+)
+def test_zfs_resource_create_encryption_shape_errors(encryption):
+    """Test invalid encryption option combinations are rejected"""
+    path = os.path.join(pool_name, "test_create_enc_invalid")
+    with pytest.raises(Exception):
+        call("zfs.resource.create", {"path": path, "encryption": encryption})
+
+
+def test_zfs_resource_create_key_child_under_passphrase_parent():
+    """Test that a key-encrypted root is denied beneath a passphrase parent while a
+    passphrase root is allowed"""
+    parent = os.path.join(pool_name, "test_create_pass_parent")
+    call(
+        "zfs.resource.create",
+        {"path": parent, "encryption": {"passphrase": "passphrase123"}},
+    )
+    try:
+        with pytest.raises(Exception) as exc_info:
+            call(
+                "zfs.resource.create",
+                {"path": f"{parent}/keychild", "encryption": {"generate_key": True}},
+            )
+        assert "encrypted with a passphrase" in str(exc_info.value)
+
+        child = f"{parent}/passchild"
+        entry = call(
+            "zfs.resource.create",
+            {"path": child, "encryption": {"passphrase": "passphrase456"}},
+        )
+        assert entry["properties"]["encryptionroot"]["raw"] == child, entry[
+            "properties"
+        ]
+    finally:
+        destroy(parent)
+
+
+def test_zfs_resource_create_encryption_sandwich_denied():
+    """Test that an encryption root cannot be created beneath an unencrypted dataset
+    that itself sits inside an encrypted one"""
+    root = os.path.join(pool_name, "test_create_sandwich")
+    key_file = "/tmp/test_create_sandwich.key"
+    # enc -> unenc ancestry can only be built outside the API
+    ssh(
+        f"echo -n {'0' * 64} > {key_file} && "
+        f"zfs create -o encryption=on -o keyformat=hex -o keylocation=file://{key_file} {root} && "
+        f"zfs create -o encryption=off {root}/unenc"
+    )
+    try:
+        with pytest.raises(Exception) as exc_info:
+            call(
+                "zfs.resource.create",
+                {"path": f"{root}/unenc/child", "encryption": {"generate_key": True}},
+            )
+        assert "beneath an unencrypted dataset" in str(exc_info.value)
+    finally:
+        destroy(root)
+        ssh(f"rm -f {key_file}")
+
+
+def test_zfs_resource_create_under_encrypted_parent():
+    """Test that a child of an encrypted parent inherits the encryption and
+    that an unencrypted child cannot be created beneath it"""
+    parent = os.path.join(pool_name, "test_create_enc_parent")
+    call(
+        "zfs.resource.create",
+        {"path": parent, "encryption": {"passphrase": "passphrase123"}},
+    )
+    try:
+        child = f"{parent}/child"
+        call("zfs.resource.create", {"path": child})
+        props = call(
+            "zfs.resource.query", {"paths": [child], "properties": ["encryption"]}
+        )[0]["properties"]
+        assert props["encryption"]["raw"] != "off", props
+        assert props["encryptionroot"]["raw"] == parent, props
+        assert props["keystatus"]["raw"] == "available", props
+
+        # the only way ZFS allows an unencrypted child (encryption=off) is denied
+        with pytest.raises(Exception) as exc_info:
+            call(
+                "zfs.resource.create",
+                {"path": f"{parent}/child2", "properties": {"encryption": "off"}},
+            )
+        assert "may not be set through generic properties" in str(exc_info.value)
+    finally:
+        destroy(parent)
+
+
+def test_zfs_resource_create_under_locked_parent_fails():
+    """Test that creating beneath a locked encrypted parent fails with a clear message"""
+    parent = os.path.join(pool_name, "test_create_locked_parent")
+    call(
+        "zfs.resource.create",
+        {"path": parent, "encryption": {"passphrase": "passphrase123"}},
+    )
+    try:
+        call("pool.dataset.lock", parent, job=True)
+        with pytest.raises(Exception) as exc_info:
+            call("zfs.resource.create", {"path": f"{parent}/child"})
+        emsg = str(exc_info.value)
+        assert "encryption key is not loaded" in emsg
+        assert "Unlock the parent dataset" in emsg
+    finally:
+        destroy(parent)
+
+
+def test_zfs_resource_create_unmounted_when_canmount_off():
+    """Test that canmount=off filesystems are created but not mounted"""
+    path = os.path.join(pool_name, "test_create_fs_canmount")
+    try:
+        entry = call(
+            "zfs.resource.create",
+            {"path": path, "properties": {"canmount": "off"}},
+        )
+        assert entry["name"] == path
+        result = call(
+            "zfs.resource.query", {"paths": [path], "properties": ["mounted"]}
+        )
+        assert result[0]["properties"]["mounted"]["raw"] == "no"
+    finally:
+        destroy(path)
