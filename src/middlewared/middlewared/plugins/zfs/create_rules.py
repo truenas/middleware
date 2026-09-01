@@ -21,7 +21,7 @@ import truenas_pylibzfs
 from middlewared.service_exception import ValidationError
 from middlewared.utils.crypto import generate_token
 
-from .create_impl import ENCRYPTION_PROPERTIES, SHARING_PROPERTIES, ZFS_TYPE_MAP
+from .create_impl import ALLOWED_PROPERTIES, ENCRYPTION_PROPERTIES, SHARING_PROPERTIES, ZFS_TYPE_MAP
 from .utils import has_internal_path
 
 if typing.TYPE_CHECKING:
@@ -245,9 +245,16 @@ def check_name_valid(data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> N
 
 
 def check_denied_properties(data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> None:
-    """Properties with dedicated APIs may not ride in generic properties."""
-    for prop in ctx.properties:
-        if prop.lower() in ENCRYPTION_PROPERTIES:
+    """Only the allowed set of properties may be given at creation time.
+
+    Properties with dedicated APIs get a pointer to that API and
+    everything outside the allowed set is denied outright. The raw
+    request is inspected rather than the resolved properties so the
+    defaults this API injects itself are never judged.
+    """
+    for prop in data.properties:
+        lowered = prop.lower()
+        if lowered in ENCRYPTION_PROPERTIES:
             raise ValidationError(
                 f"{SCHEMA}.properties",
                 f"{prop!r} may not be set through generic properties. A resource "
@@ -255,11 +262,17 @@ def check_denied_properties(data: "ZFSResourceCreateArgsData", ctx: CreateContex
                 "argument to create a new encryption root.",
                 errno.EINVAL,
             )
-        elif prop.lower() in SHARING_PROPERTIES:
+        elif lowered in SHARING_PROPERTIES:
             raise ValidationError(
                 f"{SCHEMA}.properties",
                 f"{prop!r} may not be set through generic properties. Shares are "
                 "managed with the `sharing.nfs` and `sharing.smb` APIs.",
+                errno.EINVAL,
+            )
+        elif lowered not in ALLOWED_PROPERTIES:
+            raise ValidationError(
+                f"{SCHEMA}.properties",
+                f"{prop!r} may not be set at creation time.",
                 errno.EINVAL,
             )
 

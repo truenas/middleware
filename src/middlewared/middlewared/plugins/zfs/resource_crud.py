@@ -525,8 +525,9 @@ class ZFSResourceService(Service):
         - the target is a pool root filesystem, the path is absolute, ends with ``/``,
           or is not a valid ZFS name (``EINVAL``)
         - the path references a protected internal resource (``EACCES``)
-        - a property is unknown, read-only, invalid for the resource type, or has an
-          invalid value (``EINVAL``)
+        - a property outside the allowed creation set is supplied, or an allowed
+          property is invalid for the resource type or has an invalid value
+          (``EINVAL``)
         - an encryption or ZFS native sharing property is supplied through
           ``properties``, ``volsize`` is missing for a VOLUME, or a user property name
           lacks a colon (``EINVAL``)

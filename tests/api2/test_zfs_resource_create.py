@@ -237,20 +237,16 @@ def test_zfs_resource_create_validation_errors(path, error):
     assert error in str(exc_info.value)
 
 
-def test_zfs_resource_create_invalid_property():
-    """Test that unknown property names are rejected"""
+@pytest.mark.parametrize(
+    "prop",
+    ["notaprop", "used", "canmount", "mountpoint", "logbias", "primarycache", "sparse"],
+)
+def test_zfs_resource_create_property_outside_allowed_set(prop):
+    """Test that any property outside the allowed creation set is rejected"""
     path = os.path.join(pool_name, "test_create_fs_badprop")
     with pytest.raises(Exception) as exc_info:
-        call("zfs.resource.create", {"path": path, "properties": {"notaprop": "on"}})
-    assert "not a valid ZFS property" in str(exc_info.value)
-
-
-def test_zfs_resource_create_readonly_property():
-    """Test that read-only properties are rejected"""
-    path = os.path.join(pool_name, "test_create_fs_roprop")
-    with pytest.raises(Exception) as exc_info:
-        call("zfs.resource.create", {"path": path, "properties": {"used": 123}})
-    assert "read" in str(exc_info.value).lower()
+        call("zfs.resource.create", {"path": path, "properties": {prop: "on"}})
+    assert "may not be set at creation time" in str(exc_info.value)
 
 
 def test_zfs_resource_create_property_invalid_for_type():
@@ -478,21 +474,6 @@ def test_zfs_resource_create_under_locked_parent_fails():
         destroy(parent)
 
 
-def test_zfs_resource_create_unmounted_when_canmount_off():
-    """Test that canmount=off filesystems are created but not mounted"""
-    path = os.path.join(pool_name, "test_create_fs_canmount")
-    try:
-        entry = call(
-            "zfs.resource.create",
-            {"path": path, "properties": {"canmount": "off"}},
-        )
-        assert entry["name"] == path
-        result = call(
-            "zfs.resource.query", {"paths": [path], "properties": ["mounted"]}
-        )
-        assert result[0]["properties"]["mounted"]["raw"] == "no"
-    finally:
-        destroy(path)
 
 
 @pytest.fixture(scope="module")

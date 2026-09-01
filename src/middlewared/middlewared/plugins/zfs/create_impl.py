@@ -7,6 +7,7 @@ from .exceptions import ZFSPathAlreadyExistsException, ZFSPathNotFoundException
 from .mount_unmount_impl import mount_impl
 
 __all__ = (
+    "ALLOWED_PROPERTIES",
     "ENCRYPTION_PROPERTIES",
     "SHARING_PROPERTIES",
     "ZFS_INVALID_INPUT_ERRORS",
@@ -30,6 +31,38 @@ SHARING_PROPERTIES = frozenset({"sharenfs", "sharesmb"})
 """Properties rejected at creation time. These create ZFS native NFS and
 SMB exports outside of middleware share management. Shares are managed
 with the sharing.nfs and sharing.smb APIs."""
+
+ALLOWED_PROPERTIES = frozenset(
+    {
+        "aclinherit",
+        "aclmode",
+        "acltype",
+        "atime",
+        "casesensitivity",
+        "checksum",
+        "compression",
+        "copies",
+        "dedup",
+        "exec",
+        "quota",
+        "readonly",
+        "recordsize",
+        "refquota",
+        "refreservation",
+        "reservation",
+        "snapdev",
+        "snapdir",
+        "special_small_blocks",
+        "sync",
+        "volblocksize",
+        "volsize",
+        "xattr",
+    }
+)
+"""The only zfs properties that may be set at creation time. Carried over
+from the pool.dataset.create allow list plus xattr which this API also
+defaults and documents. Every other property is denied so the supported
+surface stays small and deliberate. Grow this set consciously."""
 
 ZFS_INVALID_INPUT_ERRORS = frozenset(
     {
