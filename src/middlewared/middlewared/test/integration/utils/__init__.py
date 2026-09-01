@@ -6,6 +6,7 @@ from .filesystem import * # noqa
 from .ha import * # noqa
 from .job import *  # noqa
 from .mock import *  # noqa
+from .poll import *  # noqa
 from .pool import *  # noqa
 from .pytest import * # noqa
 from .run import * # noqa
