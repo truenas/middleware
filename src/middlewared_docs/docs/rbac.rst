@@ -272,6 +272,9 @@ session when ``system.security`` has ``enable_gpos_stig=true``.
    * - Sharing — NVMe-oF
      - ``SHARING_NVME_TARGET_READ``, ``SHARING_NVME_TARGET_WRITE``
      -
+   * - Sharing — S3
+     - ``SHARING_S3_READ``, ``SHARING_S3_WRITE``
+     -
    * - Sharing — SMB
      - ``SHARING_SMB_READ``, ``SHARING_SMB_WRITE``
      -
