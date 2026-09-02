@@ -102,6 +102,7 @@ from middlewared.plugins.keyvalue import KeyValueService
 from middlewared.plugins.ntp import NTPServerService
 from middlewared.plugins.snapshot import PeriodicSnapshotTaskService
 from middlewared.plugins.truenas import TrueNASService
+from middlewared.plugins.truenas_s3 import S3AccesskeyService
 from middlewared.plugins.truesearch import TrueSearchService
 from middlewared.plugins.webshare.config import WebshareService
 from middlewared.plugins.webshare.sharing import SharingWebshareService
@@ -162,6 +163,12 @@ class PoolServicesContainer(BaseServiceContainer):
         self.snapshottask = PeriodicSnapshotTaskService(middleware)
 
 
+class S3ServicesContainer(BaseServiceContainer):
+    def __init__(self, middleware: "Middleware"):
+        super().__init__(middleware)
+        self.accesskey = S3AccesskeyService(middleware)
+
+
 class SharingServicesContainer(BaseServiceContainer):
     def __init__(self, middleware: "Middleware"):
         super().__init__(middleware)
@@ -190,6 +197,7 @@ class ServiceContainer(BaseServiceContainer):
         self.initshutdownscript = InitShutdownScriptService(middleware)
         self.keyvalue = KeyValueService(middleware)
         self.pool = PoolServicesContainer(middleware)
+        self.s3 = S3ServicesContainer(middleware)
         self.sharing = SharingServicesContainer(middleware)
         self.system = SystemServicesContainer(middleware)
         self.truenas = TrueNASService(middleware)
