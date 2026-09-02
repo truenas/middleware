@@ -203,6 +203,17 @@ class EtcService(Service):
         'truesearch': EtcGroup(entries=(
             EtcEntry(renderer_type=RendererType.PY, path='truesearch/config.json'),
         )),
+        'truenas_s3': EtcGroup(entries=(
+            # the INI files describe buckets on user pools, so they wait for the
+            # boot-time bulk import; the unit drop-in does not
+            EtcEntry(renderer_type=RendererType.PY, path='truenas_s3/buckets.conf', checkpoint=Checkpoint.POOL_IMPORT),
+            EtcEntry(renderer_type=RendererType.PY, path='truenas_s3/policies.conf', checkpoint=Checkpoint.POOL_IMPORT),
+            EtcEntry(
+                renderer_type=RendererType.PY, path='truenas_s3/credentials.conf', mode=0o600,
+                checkpoint=Checkpoint.POOL_IMPORT,
+            ),
+            EtcEntry(renderer_type=RendererType.PY, path='systemd/system/truenas_s3.service.d/override.conf'),
+        )),
         'webshare': EtcGroup(entries=(
             # All webshare-related entries refuse to generate their config files if `WEBSHARE_PATH` does not exist.
             # `WEBSHARE_PATH` resides on the system dataset, so system dataset must be mounted before we try to generate
@@ -386,6 +397,7 @@ class EtcService(Service):
                 EtcEntry(renderer_type=RendererType.MAKO, path='security/limits.conf'),
                 EtcEntry(renderer_type=RendererType.MAKO, path='pam.d/truenas'),
                 EtcEntry(renderer_type=RendererType.MAKO, path='pam.d/truenas-api-key'),
+                EtcEntry(renderer_type=RendererType.MAKO, path='pam.d/truenas-s3'),
                 EtcEntry(renderer_type=RendererType.MAKO, path='pam.d/truenas-session'),
                 EtcEntry(renderer_type=RendererType.MAKO, path='pam.d/truenas-unix'),
                 EtcEntry(renderer_type=RendererType.PY, path='pam_keyring'),
