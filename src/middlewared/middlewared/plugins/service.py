@@ -153,14 +153,14 @@ class ServiceService(CRUDService):
                'SHARING_FTP_WRITE', 'SHARING_NVME_TARGET_WRITE'],
         pass_app=True,
         audit='Service Control:',
-        audit_extended=lambda verb, service: f'{verb} {service}',
+        audit_extended=lambda verb, service, options=None: f'{verb} {service}',
     )
     @job(lock=lambda args: f'service_{args[1]}')
     async def control(self, app, job, verb, service, options):
         # Check permissions before calling the private method
         if not app_has_write_privilege_for_service(app, service):
             raise CallError(f'{service}: authenticated session lacks privilege to {verb.lower()} service', errno.EPERM)
-        return await getattr(self, verb.lower())(service, options)
+        return await getattr(self, verb.lower())(app, service, options)
 
     @api_method(
         ServiceStartArgs,
@@ -169,7 +169,7 @@ class ServiceService(CRUDService):
         pass_app=True,
         removed_in="v26",
         audit='Service Control: START',
-        audit_extended=lambda service: service,
+        audit_extended=lambda service, options=None: service,
     )
     async def start(self, app, service: str, options) -> bool:
         """
@@ -266,7 +266,7 @@ class ServiceService(CRUDService):
         pass_app=True,
         removed_in="v26",
         audit='Service Control: STOP',
-        audit_extended=lambda service: service,
+        audit_extended=lambda service, options=None: service,
     )
     async def stop(self, app, service, options) -> bool:
         """
@@ -314,7 +314,7 @@ class ServiceService(CRUDService):
         pass_app=True,
         removed_in="v26",
         audit='Service Control: RESTART',
-        audit_extended=lambda service: service,
+        audit_extended=lambda service, options=None: service,
     )
     async def restart(self, app, service, options) -> bool:
         """
@@ -416,17 +416,17 @@ class ServiceService(CRUDService):
         pass_app=True,
         removed_in="v26",
         audit='Service Control: RELOAD',
-        audit_extended=lambda service: service,
+        audit_extended=lambda service, options=None: service,
     )
     async def reload(self, app, service, options) -> bool:
         """
         Reload the service specified by `service`.
         """
-        service_object = await self.middleware.call('service.object', service)
-
         # Check permissions before calling the private method
         if not app_has_write_privilege_for_service(app, service):
             raise CallError(f'{service}: authenticated session lacks privilege to reload service', errno.EPERM)
+
+        service_object = await self.middleware.call('service.object', service)
 
         try:
             async with asyncio.timeout(options['timeout']):
