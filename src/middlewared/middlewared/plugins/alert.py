@@ -640,7 +640,11 @@ class AlertService(Service):
                     try:
                         await alert_service.send(alerts, service_gone_alerts, service_new_alerts)
                     except Exception:
-                        self.logger.error("Error in alert service %r", alert_service_desc["type"], exc_info=True)
+                        self.logger.error(
+                            "Error in alert service %r",
+                            alert_service_desc["attributes"]["type"],
+                            exc_info=True,
+                        )
 
             if policy_name == "IMMEDIATELY":
                 as_ = AlertSerializer(self.middleware, applicability)
