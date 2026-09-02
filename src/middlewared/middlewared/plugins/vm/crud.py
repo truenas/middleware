@@ -327,6 +327,13 @@ class VMServicePart(CRUDServicePart[VMEntry]):
         if data.uuid is None:
             data = data.model_copy(update={'uuid': str(uuid.uuid4())})
 
+        if not old or data.uuid != old.uuid:
+            uuid_filters: list[tuple[str, str, Any]] = [('uuid', '=', data.uuid)]
+            if old:
+                uuid_filters.append(('id', '!=', old.id))
+            if await self.middleware.call('datastore.query', 'vm.vm', uuid_filters):
+                verrors.add(f'{schema_name}.uuid', 'A VM with this UUID already exists.', errno.EEXIST)
+
         if not await license_active(self):
             verrors.add(f'{schema_name}.name', 'System is not licensed to use VMs')
 

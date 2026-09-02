@@ -170,7 +170,9 @@ class VMEntry(BaseModel):
         default=None,
         description="Virtual machine type/chipset. `null` to use hypervisor default.",
     )
-    uuid: UUIDv4String = Field(description="Unique UUID for the VM.")
+    uuid: UUIDv4String = Field(
+        description="Unique UUID for the VM. Assigned when the VM is created and cannot be changed afterwards.",
+    )
     devices: list[VMDeviceEntry] = Field(description="Array of virtual devices attached to this VM.")
     display_available: bool = Field(description="Whether at least one display device is available for this VM.")
     id: int = Field(description="Unique identifier for the virtual machine.")
@@ -186,7 +188,10 @@ class VMCreate(VMEntry):
     id: Excluded = excluded_field()
     display_available: Excluded = excluded_field()
     devices: Excluded = excluded_field()
-    uuid: UUIDv4String | None = Field(default=None, description="Unique UUID for the VM. `null` to auto-generate.")
+    uuid: UUIDv4String | None = Field(
+        default=None,
+        description="Unique UUID for the VM. `null` to auto-generate. It cannot be changed after creation.",
+    )
     bootloader_ovmf: str | None = Field(
         default=None,
         examples=['OVMF_CODE.fd', 'OVMF_CODE.secboot.fd'],
@@ -203,6 +208,7 @@ class VMCreateResult(BaseModel):
 
 
 class VMUpdate(VMCreate, metaclass=ForUpdateMetaclass):
+    uuid: Excluded = excluded_field()
     bootloader_ovmf: Excluded = excluded_field()
     enable_secure_boot: Excluded = excluded_field()
 

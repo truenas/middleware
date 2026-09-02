@@ -365,6 +365,13 @@ class ContainerServicePart(CRUDServicePart[ContainerEntry]):
         if data.uuid is None:
             data = data.model_copy(update={'uuid': str(uuid.uuid4())})
 
+        if not old or data.uuid != old.uuid:
+            uuid_filters: list[tuple[str, str, Any]] = [('uuid', '=', data.uuid)]
+            if old:
+                uuid_filters.append(('id', '!=', old.id))
+            if await self.middleware.call('datastore.query', 'container.container', uuid_filters):
+                verrors.add(f'{schema_name}.uuid', 'A container with this UUID already exists.', errno.EEXIST)
+
         if data.idmap is not None:
             if data.idmap.type == 'ISOLATED':
                 if data.idmap.slice is None:
