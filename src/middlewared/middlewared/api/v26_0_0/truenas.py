@@ -1,7 +1,7 @@
 from datetime import date
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, Secret
 
 from middlewared.api.base import BaseModel, LongString, LongNonEmptyString, NonEmptyString
 
@@ -104,7 +104,7 @@ class TrueNASLicenseUploadOptions(BaseModel):
 
 
 class TrueNASLicenseUploadArgs(BaseModel):
-    license: LongNonEmptyString = Field(description="PEM-wrapped license to apply to the system.")
+    license: Secret[LongNonEmptyString] = Field(description="PEM-wrapped license to apply to the system.")
     options: TrueNASLicenseUploadOptions = Field(default=TrueNASLicenseUploadOptions(), description="Options.")
 
 
