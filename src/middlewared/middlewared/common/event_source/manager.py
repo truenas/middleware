@@ -152,8 +152,7 @@ class EventSourceManager:
         try:
             await instance.send_initial_state(subscriber)
         except Exception:
-            self.middleware.logger.error("EventSource %r:%r send_initial_state() failed", name, arg,
-                                         exc_info=True)
+            self.middleware.logger.exception("EventSource %r:%r send_initial_state() failed", name, arg)
 
     async def unsubscribe(self, ident: str, error: Exception | None = None) -> None:
         ident_data = self.idents.pop(ident, None)
