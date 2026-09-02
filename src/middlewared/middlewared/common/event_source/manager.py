@@ -131,9 +131,9 @@ class EventSourceManager:
         self.idents[ident] = IdentData(subscriber, name, arg)
         self.subscriptions[name][arg].add(ident)
 
-        if arg not in self.instances[name]:
+        if (instance := self.instances[name].get(arg)) is None:
             self.middleware.logger.trace("Creating new instance of event source %r:%r", name, arg)
-            self.instances[name][arg] = self.event_sources[name](
+            instance = self.instances[name][arg] = self.event_sources[name](
                 self.middleware, name, arg,
                 functools.partial(self._send_event, name, arg),
                 functools.partial(self._unsubscribe_all, name, arg),
@@ -143,10 +143,17 @@ class EventSourceManager:
                 await self.instances[name][arg].validate_arg()
             except ValidationErrors as e:
                 await self.unsubscribe(ident, e)
+                return
             else:
                 self.middleware.create_task(self.instances[name][arg].process())
         else:
             self.middleware.logger.trace("Re-using existing instance of event source %r:%r", name, arg)
+
+        try:
+            await instance.send_initial_state(subscriber)
+        except Exception:
+            self.middleware.logger.error("EventSource %r:%r send_initial_state() failed", name, arg,
+                                         exc_info=True)
 
     async def unsubscribe(self, ident: str, error: Exception | None = None) -> None:
         ident_data = self.idents.pop(ident, None)
