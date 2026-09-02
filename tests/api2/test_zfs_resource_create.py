@@ -2,7 +2,7 @@ import os
 
 import pytest
 from auto_config import pool_name
-from middlewared.service_exception import ValidationErrors
+from middlewared.service_exception import ValidationError, ValidationErrors
 from middlewared.test.integration.assets.pool import another_pool
 from middlewared.test.integration.utils import call, ssh
 
@@ -205,7 +205,7 @@ def test_zfs_resource_create_already_exists():
 @pytest.mark.parametrize(
     "path,error",
     [
-        pytest.param("/tank/dataset", "absolute", id="absolute paths not allowed"),
+        pytest.param("/tank/dataset", "Absolute path", id="absolute paths not allowed"),
         pytest.param("tank/dataset/", "forward-slash", id="trailing forward-slash not allowed"),
         pytest.param(
             "tank/dataset@snap",
@@ -345,31 +345,40 @@ def test_zfs_resource_create_encryption_root_passphrase():
 
 
 @pytest.mark.parametrize(
-    "encryption",
+    "encryption,exc",
     [
-        pytest.param({}, id="nothing provided"),
-        pytest.param({"key": "0" * 64, "passphrase": "passphrase123"}, id="key and passphrase"),
+        # the exactly-one-of rule lives in the plugin and raises a single ValidationError
+        pytest.param({}, ValidationError, id="nothing provided"),
+        pytest.param(
+            {"key": "0" * 64, "passphrase": "passphrase123"},
+            ValidationError,
+            id="key and passphrase",
+        ),
         pytest.param(
             {"generate_key": True, "passphrase": "passphrase123"},
+            ValidationError,
             id="generate_key and passphrase",
         ),
-        pytest.param({"passphrase": "short"}, id="short passphrase"),
-        pytest.param({"key": "notahexkey"}, id="invalid key"),
-        pytest.param({"key": "0" * 63}, id="wrong key length"),
+        # per-field shape constraints live on the model and are rejected by the schema
+        pytest.param({"passphrase": "short"}, ValidationErrors, id="short passphrase"),
+        pytest.param({"key": "notahexkey"}, ValidationErrors, id="invalid key"),
+        pytest.param({"key": "0" * 63}, ValidationErrors, id="wrong key length"),
         pytest.param(
             {"passphrase": "passphrase123", "pbkdf2iters": 1000},
+            ValidationErrors,
             id="pbkdf2iters too low",
         ),
         pytest.param(
             {"passphrase": "passphrase123", "pbkdf2iters": 100_000_000},
+            ValidationErrors,
             id="pbkdf2iters too high",
         ),
     ],
 )
-def test_zfs_resource_create_encryption_shape_errors(encryption):
+def test_zfs_resource_create_encryption_shape_errors(encryption, exc):
     """Test invalid encryption option combinations are rejected"""
     path = os.path.join(pool_name, "test_create_enc_invalid")
-    with pytest.raises(ValidationErrors):
+    with pytest.raises(exc):
         call("zfs.resource.create", {"path": path, "encryption": encryption})
 
 
