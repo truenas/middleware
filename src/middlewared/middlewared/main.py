@@ -148,6 +148,7 @@ from middlewared.plugins.system_vendor.vendor import is_vendored
 from middlewared.plugins.truecommand import TruecommandService
 from middlewared.plugins.truenas import TrueNASService
 from middlewared.plugins.truenas_connect import TrueNASConnectService
+from middlewared.plugins.truenas_s3 import S3AccesskeyService
 from middlewared.plugins.truesearch import TrueSearchService
 from middlewared.plugins.tunable import TunableService
 from middlewared.plugins.update_ import UpdateService
@@ -239,6 +240,12 @@ class PoolServicesContainer(BaseServiceContainer):
         self.snapshottask = PeriodicSnapshotTaskService(middleware)
 
 
+class S3ServicesContainer(BaseServiceContainer):
+    def __init__(self, middleware: "Middleware"):
+        super().__init__(middleware)
+        self.accesskey = S3AccesskeyService(middleware)
+
+
 class SharingServicesContainer(BaseServiceContainer):
     def __init__(self, middleware: "Middleware"):
         super().__init__(middleware)
@@ -296,6 +303,7 @@ class ServiceContainer(BaseServiceContainer):
         self.reporting = ReportingService(middleware)
         self.route = RouteService(middleware)
         self.rsynctask = RsyncTaskService(middleware)
+        self.s3 = S3ServicesContainer(middleware)
         self.service = ServiceService(middleware)
         self.sharing = SharingServicesContainer(middleware)
         self.snmp = SNMPService(middleware)
