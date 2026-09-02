@@ -412,6 +412,7 @@ class ZFSResourceCreateProperties(BaseModel):
 
     Each field is the native ZFS property name and values are handed to ZFS verbatim.
     A field left as null is simply not sent to ZFS so the property inherits from the parent as usual.
+    Fields marked `Private` are settable by internal callers only.
     """
 
     aclinherit: str | None = Field(
@@ -463,6 +464,60 @@ class ZFSResourceCreateProperties(BaseModel):
     xattr: str | None = Field(
         default=None,
         description="Extended attribute storage mode. Defaults to 'sa' for performance.",
+    )
+    # Internal-only properties. Hidden from the published schema and rejected for
+    # API callers exactly like an unknown property (see `Private`). Internal callers
+    # construct this model directly. Each is a foot-gun for API users but a
+    # requirement for system-managed datasets (.system, ix-apps, containers).
+    canmount: Private[str | None] = Field(
+        default=None,
+        description=(
+            "Whether the filesystem is mounted after creation (on, off, or noauto). Anything but on leaves the "
+            "new filesystem unmounted for the caller to mount itself."
+        ),
+    )
+    encryption: Private[Literal["off"] | None] = Field(
+        default=None,
+        description=(
+            "Set to off to create an unencrypted resource beneath an encrypted parent so system datasets stay "
+            "usable while a passphrase-encrypted pool is locked. Enabling encryption goes through the "
+            "`encryption` argument, never through this property."
+        ),
+    )
+    mountpoint: Private[str | None] = Field(
+        default=None,
+        description=(
+            "Mount point of the filesystem, or legacy / none. API callers always get the TrueNAS default "
+            "beneath /mnt/<pool>; system datasets need legacy or a fixed location."
+        ),
+    )
+    normalization: Private[str | None] = Field(
+        default=None,
+        description="Unicode normalization applied to filenames. Settable at creation time only.",
+    )
+    overlay: Private[str | None] = Field(
+        default=None,
+        description="Whether the filesystem may be mounted over a non-empty directory.",
+    )
+    prefetch: Private[str | None] = Field(
+        default=None,
+        description="Prefetch behavior for the resource (all, metadata, or none).",
+    )
+    primarycache: Private[str | None] = Field(
+        default=None,
+        description="What the ARC caches for this resource (all, metadata, or none).",
+    )
+    secondarycache: Private[str | None] = Field(
+        default=None,
+        description="What the L2ARC caches for this resource (all, metadata, or none).",
+    )
+    setuid: Private[str | None] = Field(
+        default=None,
+        description="Whether the setuid and setgid bits are honored on the filesystem.",
+    )
+    utf8only: Private[str | None] = Field(
+        default=None,
+        description="Whether only UTF-8 filenames are allowed. Settable at creation time only.",
     )
 
 
