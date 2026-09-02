@@ -28,6 +28,7 @@ from middlewared.api.current import (
     FilesystemPutArgs, FilesystemPutResult,
     FileFollowTailEventSourceArgs, FileFollowTailEventSourceEvent,
 )
+from middlewared.common.event_source.manager import Subscriber
 from middlewared.event import EventSource
 from middlewared.utils.pwenc import PWENC_FILE_SECRET
 from middlewared.plugins.account_.constants import SYNTHETIC_CONTAINER_ROOT
@@ -72,6 +73,19 @@ class FileFollowTailEventSource(EventSource):
     args = FileFollowTailEventSourceArgs
     event = FileFollowTailEventSourceEvent
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._buffer: list[str] = []
+
+    async def send_initial_state(self, subscriber: Subscriber) -> None:
+        if buffer := self._buffer:
+            subscriber.send_event('ADDED', fields={'data': ''.join(buffer)})
+
+    def send_lines(self, lines: list[str]) -> None:
+        buffer = self._buffer + lines
+        self._buffer = buffer[max(len(buffer) - self.arg['tail_lines'], 0):]
+        self.send_event('ADDED', fields={'data': ''.join(lines)})
+
     def run_sync(self):
         path, lines = self.arg['path'], self.arg['tail_lines']
 
@@ -95,11 +109,11 @@ class FileFollowTailEventSource(EventSource):
                 if len(data) >= lines or f.tell() == 0:
                     break
 
-            self.send_event('ADDED', fields={'data': ''.join(data[-lines:])})
+            self.send_lines(data[-lines:])
             f.seek(fsize)
 
-            for data in self._follow_path(path, f):
-                self.send_event('ADDED', fields={'data': data})
+            for chunk in self._follow_path(path, f):
+                self.send_lines(chunk)
 
     def _follow_path(self, path, f):
         queue = []
@@ -109,7 +123,7 @@ class FileFollowTailEventSource(EventSource):
 
         data = f.read()
         if data:
-            yield data
+            yield data.splitlines(keepends=True)
 
         last_sent_at = time.monotonic()
         interval = 0.5  # For performance reasons do not send websocket events more than twice a second
@@ -117,9 +131,8 @@ class FileFollowTailEventSource(EventSource):
             notifier.process_events()
 
             if time.monotonic() - last_sent_at >= interval:
-                data = "".join(queue)
-                if data:
-                    yield data
+                if queue:
+                    yield queue[:]
                 queue[:] = []
                 last_sent_at = time.monotonic()
 
@@ -131,7 +144,7 @@ class FileFollowTailEventSource(EventSource):
     def _follow_callback(self, queue, f, event):
         data = f.read()
         if data:
-            queue.append(data)
+            queue.extend(data.splitlines(keepends=True))
 
 
 class FilesystemService(Service):
