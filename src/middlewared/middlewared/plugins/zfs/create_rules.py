@@ -482,6 +482,15 @@ def check_encryption(data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> N
     # when an encryption root is requested
     assert data.encryption is not None
 
+    if ctx.properties.encryption is not None:
+        # the internal-only property opts out of the parent's encryption. It
+        # cannot be combined with a request for a new encryption root
+        raise ValidationError(
+            f"{SCHEMA}.encryption",
+            "An encryption root cannot be requested together with the 'encryption' property.",
+            errno.EINVAL,
+        )
+
     provided = [
         name
         for name, value in (
