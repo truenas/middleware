@@ -230,7 +230,23 @@ def test_zfs_resource_create_validation_errors(path, error):
 
 @pytest.mark.parametrize(
     "prop",
-    ["notaprop", "used", "canmount", "mountpoint", "logbias", "primarycache", "sparse"],
+    [
+        "notaprop",
+        "used",
+        "logbias",
+        "sparse",
+        # internal-only (Private) properties must be indistinguishable from unknown ones
+        "canmount",
+        "encryption",
+        "mountpoint",
+        "normalization",
+        "overlay",
+        "prefetch",
+        "primarycache",
+        "secondarycache",
+        "setuid",
+        "utf8only",
+    ],
 )
 def test_zfs_resource_create_property_outside_allowed_set(prop):
     """Test that any property outside the allowed creation set is rejected"""
