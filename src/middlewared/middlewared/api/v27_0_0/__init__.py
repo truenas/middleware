@@ -91,6 +91,7 @@ from .reporting import *
 from .reporting_exporters import *
 from .route import *
 from .rsync_task import *
+from .s3 import *
 from .service import *
 from .smb import *
 from .snmp import *

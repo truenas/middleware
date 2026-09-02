@@ -2,7 +2,7 @@ from base64 import b64encode
 from hashlib import pbkdf2_hmac
 from hmac import compare_digest
 from ssl import RAND_bytes
-from string import ascii_letters, digits, punctuation
+from string import ascii_letters, ascii_uppercase, digits, punctuation
 from typing import TypedDict
 from uuid import UUID
 
@@ -37,6 +37,27 @@ def generate_string(string_size: int = 8, punctuation_chars: bool = False, extra
     # remove any duplicates since extra_chars is user-provided
     initial_string = ''.join(set(initial_string))
     return ''.join(choice(initial_string) for i in range(string_size))
+
+
+S3_ACCESS_KEY_SIZE = 20
+S3_SECRET_KEY_SIZE = 40
+
+
+def generate_s3_access_key(string_size: int = S3_ACCESS_KEY_SIZE) -> str:
+    """
+    Generate an AWS-shaped S3 access key id of `string_size` uppercase ASCII letters and digits.
+    That character set is what keeps it safe inside the quoted section heading of the S3
+    service's credentials file.
+    """
+    return ''.join(choice(ascii_uppercase + digits) for _ in range(string_size))
+
+
+def generate_s3_secret_key(string_size: int = S3_SECRET_KEY_SIZE) -> str:
+    """
+    Generate an S3 secret access key of `string_size` ASCII letters and digits. The S3 service's
+    config reader trims whitespace, so the secret must survive it byte for byte.
+    """
+    return generate_string(string_size=string_size)
 
 
 def generate_token(size: int, url_safe: bool = False) -> str:

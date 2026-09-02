@@ -60,6 +60,10 @@ class PWEncService(Service):
         self.middleware.call_sync('datastore.sql', 'DELETE FROM container_device')
         # If config is restored without secret seed then SMB auth won't be possible. Disable SMB for all users.
         self.middleware.call_sync('datastore.sql', 'UPDATE account_bsdusers SET bsdusr_smb=0')
+        # An S3 access key stores a recoverable secret. Without the seed it decrypts to an empty
+        # string, which the S3 service would refuse whole, so drop it; the key reads SECRET_LOST
+        # until an administrator rotates it.
+        self.middleware.call_sync('datastore.sql', 'UPDATE truenas_s3_accesskey SET secret = NULL')
 
     def _reset_pwenc_check_field(self) -> None:
         settings = self.middleware.call_sync('datastore.config', 'system.settings')
