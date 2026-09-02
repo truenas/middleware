@@ -74,9 +74,7 @@ def test_supplied_pair_is_accepted(s3_user):
         "access_key": "AKTNASSUPPLIEDKEY001",
         "secret": "supplied/secret+value%1234567890",
     }
-    key = call(
-        "s3.accesskey.create", {"name": "supplied key", "username": S3_USER, **supplied}
-    )
+    key = call("s3.accesskey.create", {"name": "supplied key", "username": S3_USER, **supplied})
     try:
         assert key["access_key"] == supplied["access_key"]
         assert key["secret"] == supplied["secret"]
@@ -140,10 +138,7 @@ def test_rotate_keeps_the_access_key(accesskey):
     assert rotated["access_key"] == accesskey["access_key"]
     assert rotated["secret"] != accesskey["secret"]
     assert SECRET_RE.match(rotated["secret"])
-    assert (
-        call("s3.accesskey.get_instance", accesskey["id"])["secret"]
-        == rotated["secret"]
-    )
+    assert call("s3.accesskey.get_instance", accesskey["id"])["secret"] == rotated["secret"]
 
 
 def test_update_cannot_change_the_account_or_the_pair(accesskey):
@@ -198,9 +193,7 @@ def test_deleted_user_flips_the_status():
             "password": "test1234",
         }
     ):
-        key = call(
-            "s3.accesskey.create", {"name": "orphaned key", "username": "s3keygone"}
-        )
+        key = call("s3.accesskey.create", {"name": "orphaned key", "username": "s3keygone"})
 
     try:
         entry = call("s3.accesskey.get_instance", key["id"])
