@@ -15,6 +15,7 @@ from aiohttp.web import WebSocketResponse, WSMsgType
 from truenas_api_client import json
 from truenas_api_client.jsonrpc import JSONRPCError
 
+from middlewared.api.base.server.repr_allowlist import REPR_ALLOWLIST
 from middlewared.service_exception import (
     CallError,
     CallException,
@@ -63,7 +64,7 @@ class RpcWebSocketApp(App):
 
     def send(self, data: dict[str, Any]) -> None:
         try:
-            data_ = json.dumps(data)
+            data_ = json.dumps(data, repr_allowlist=REPR_ALLOWLIST)
         except Exception as e:
             self.middleware.logger.error(f"Failed to JSON serialize server message: {e}", exc_info=True)
             self.send_truenas_error(
