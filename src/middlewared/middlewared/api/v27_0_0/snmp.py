@@ -3,7 +3,7 @@ from typing import Annotated, Literal
 from pydantic import EmailStr, Field, Secret
 from pydantic.types import StringConstraints
 
-from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, excluded_field
+from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, FullAdmin, excluded_field
 
 __all__ = ["SNMPEntry", "SNMPUpdate", "SNMPUpdateArgs", "SNMPUpdateResult"]
 
@@ -43,7 +43,7 @@ class SNMPEntry(BaseModel):
         default=None,
         description="Privacy passphrase for SNMP version 3 encryption. This field is required when `privproto` is set.",
     )
-    options: str = Field(
+    options: FullAdmin[str] = Field(
         description=(
             "Additional SNMP daemon configuration options. Manual settings should be used with caution as they may "
             "render the SNMP service non-functional."

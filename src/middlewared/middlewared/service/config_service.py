@@ -8,6 +8,7 @@ from middlewared.api.base.model import BaseModel
 
 from .base import ServiceBase
 from .decorators import pass_app, private
+from .full_admin import check_full_admin_payload
 from .service import Service
 from .service_mixin import ServiceChangeMixin
 
@@ -97,6 +98,7 @@ class ConfigService[E](ServiceChangeMixin, Service, metaclass=ConfigServiceMetab
 
     @pass_app(message_id=True)
     async def update(self, app, message_id, data) -> E:
+        await check_full_admin_payload(app, self.do_update, data, self.config)
         rv = await self.middleware._call(
             f'{self._config.namespace}.update', self, self.do_update, [data], app=app, message_id=message_id,
         )

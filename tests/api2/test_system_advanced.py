@@ -1,6 +1,7 @@
 import pytest
 
 from middlewared.service_exception import ValidationErrors, ValidationError
+from middlewared.test.integration.assets.account import unprivileged_user_client
 from middlewared.test.integration.utils import call, ssh
 
 
@@ -49,3 +50,13 @@ def test_debugkernel_initrd():
         assert any("debug" in initrd for initrd in initrds)
     finally:
         call("system.advanced.update", {"debugkernel": False})
+
+
+def test_kernel_extra_options_may_only_be_changed_by_a_full_admin():
+    """`kernel_extra_options` reaches the kernel command line, so SYSTEM_ADVANCED_WRITE alone may not touch it
+    (NAS-142160)."""
+    with unprivileged_user_client(['SYSTEM_ADVANCED_WRITE']) as c:
+        with pytest.raises(ValidationErrors) as ve:
+            c.call('system.advanced.update', {'kernel_extra_options': 'init=/bin/sh'})
+
+    assert any(error.attribute == 'data.kernel_extra_options' for error in ve.value.errors), ve.value.errors

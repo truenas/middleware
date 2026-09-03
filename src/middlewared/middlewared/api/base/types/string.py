@@ -19,8 +19,21 @@ from middlewared.utils.smb import validate_smb_share_name
 
 __all__ = [
     "HttpUrl", "LongString", "NonEmptyString", "LongNonEmptyString", "SECRET_VALUE", "TimeString", "NetbiosDomain",
-    "NetbiosName", "SnapshotNameSchema", "EmailString", "SmbShareName", "UUIDv4String",
+    "NetbiosName", "SnapshotNameSchema", "EmailString", "SmbShareName", "SingleLineString", "SingleLineNonEmptyString",
+    "UUIDv4String",
 ]
+
+
+def validate_single_line(value: str) -> str:
+    """Reject a line break.
+
+    For a field whose value is interpolated into a line-oriented configuration file. Such a field is not
+    free-form -- a line break in it lets the caller append directives of their own to the generated file.
+    """
+    if "\n" in value or "\r" in value:
+        raise ValueError("Line breaks are not allowed")
+
+    return value
 
 
 def uuidv4_validator(value: str) -> str:
@@ -37,9 +50,11 @@ if TYPE_CHECKING:
 else:
     HttpUrl = Annotated[_HttpUrl, AfterValidator(str)]
 
+SingleLineString = Annotated[str, AfterValidator(validate_single_line)]
 # By default, our strings are no more than 1024 characters long. This string is 2**31-1 characters long (SQLite limit).
 LongString = Annotated[str, MaxLen(2 ** 31 - 1)]
 NonEmptyString = Annotated[str, MinLen(1)]
+SingleLineNonEmptyString = Annotated[str, MinLen(1), AfterValidator(validate_single_line)]
 LongNonEmptyString = Annotated[LongString, MinLen(1)]
 TimeString = Annotated[
     str, AfterValidator(time_validator), JsonSchemaExtra(examples=["00:00", "06:30", "18:00", "23:00"])

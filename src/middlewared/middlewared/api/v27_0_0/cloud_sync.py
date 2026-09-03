@@ -6,6 +6,7 @@ from middlewared.api.base import (
     BaseModel,
     Excluded,
     ForUpdateMetaclass,
+    FullAdmin,
     LongNonEmptyString,
     NonEmptyString,
     TimeString,
@@ -184,7 +185,10 @@ class CloudSyncListDirectory(BaseModel):
     encryption_password: Secret[str] = Field(default="", description="Password for decrypting files and filenames.")
     encryption_salt: Secret[str] = Field(default="", description="Salt value for encryption key derivation.")
     attributes: CloudTaskAttributes = Field(description="Cloud provider-specific attributes for the listing operation.")
-    args: str = Field(default="", description="Additional arguments for the directory listing command.")
+    args: FullAdmin[str] = Field(
+        default="",
+        description="Additional arguments for the directory listing command.",
+    )
 
 
 class CloudSyncListDirectoryArgs(BaseModel):

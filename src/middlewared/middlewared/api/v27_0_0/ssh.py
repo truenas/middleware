@@ -2,7 +2,15 @@ from typing import Literal
 
 from pydantic import Field
 
-from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, LongString, TcpPort, excluded_field
+from middlewared.api.base import (
+    BaseModel,
+    Excluded,
+    ForUpdateMetaclass,
+    FullAdmin,
+    LongString,
+    TcpPort,
+    excluded_field,
+)
 
 __all__ = [
     'SSHEntry', 'SSHUpdate', 'SSHBindifaceChoicesArgs', 'SSHBindifaceChoicesResult', 'SSHUpdateArgs',
@@ -28,7 +36,7 @@ class SSHEntry(BaseModel):
     weak_ciphers: list[Literal['AES128-CBC', 'NONE']] = Field(
         description="Array of weak ciphers to enable for compatibility with legacy clients.",
     )
-    options: LongString = Field(description="Additional SSH daemon configuration options.")
+    options: FullAdmin[LongString] = Field(description="Additional SSH daemon configuration options.")
     privatekey: LongString = Field(description="SSH host private key data.")
     host_dsa_key: LongString | None = Field(description="DSA host private key. `null` if not configured.")
     host_dsa_key_pub: LongString | None = Field(description="DSA host public key. `null` if not configured.")

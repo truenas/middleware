@@ -13,6 +13,7 @@ import pytest
 import middlewared
 import middlewared.api
 from middlewared.api.base import BaseModel
+from middlewared.api.base.handler.full_admin import full_admin_fields, full_admin_payload_fields
 from middlewared.api.base.server.doc import reflow_docstring
 
 PUBLIC_API_DECORATORS = frozenset({"api_method", "filterable_api_method"})
@@ -320,3 +321,117 @@ def test_api_method_docstrings_sphinx_lint(api_doc_pages):
     ]
     if errors:
         raise ExceptionGroup("Public API method docstring(s) flagged by sphinx-lint", errors)
+
+
+FULL_ADMIN_ENFORCEMENT_HELPER = "check_full_admin_model"
+"""What a method that bypasses the CRUD and config wrappers must call to enforce its own `FullAdmin` fields."""
+
+FULL_ADMIN_WRAPPED_METHODS = frozenset({"do_create", "do_update"})
+"""Method names whose `FullAdmin` fields `CRUDService` and `ConfigService` check before dispatching to them."""
+
+
+@pytest.fixture(scope="module")
+def full_admin_args_models(current_api_package):
+    """``{args model name: {dotted path, ...}}`` for every args model that declares `FullAdmin` field(s)."""
+    result = {}
+    for name in dir(current_api_package):
+        model = getattr(current_api_package, name)
+        if not (isinstance(model, type) and issubclass(model, BaseModel) and name.endswith("Args")):
+            continue
+
+        # Walk the whole args model, not just its payload: a method free to put its payload anywhere in its
+        # parameter list is exactly the kind this test exists to catch.
+        if paths := {".".join(field.path) for field in full_admin_fields(model)}:
+            result[name] = paths
+
+    return result
+
+
+@pytest.fixture(scope="module")
+def api_method_consumers():
+    """``{args model name: [(location, function name, enforces itself), ...]}`` for every ``@api_method``."""
+    package_root = pathlib.Path(middlewared.__file__).parent
+    result = {}
+    for path in sorted(package_root.rglob("*.py")):
+        if "pytest" in path.relative_to(package_root).parts:
+            continue
+
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        for node in ast.walk(tree):
+            if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                continue
+
+            for model in _accepts_models(node):
+                location = f"{path.relative_to(package_root)}:{node.lineno} {node.name}"
+                result.setdefault(model, []).append((location, node.name, _calls_full_admin_helper(node)))
+
+    return result
+
+
+def _accepts_models(node):
+    """The args model name of each ``@api_method(Model, ...)`` decorating ``node``."""
+    for decorator in node.decorator_list:
+        if not isinstance(decorator, ast.Call) or _node_name(decorator.func) != "api_method":
+            continue
+
+        if decorator.args and (name := _node_name(decorator.args[0])):
+            yield name
+
+
+def _calls_full_admin_helper(node):
+    """Whether ``node``'s body calls the enforcement helper."""
+    return any(
+        isinstance(call, ast.Call) and _node_name(call.func) == FULL_ADMIN_ENFORCEMENT_HELPER
+        for call in ast.walk(node)
+    )
+
+
+def test_full_admin_fields_are_enforced(full_admin_args_models, api_method_consumers, current_api_package):
+    """No API method may declare a `FullAdmin` field that nothing checks.
+
+    Marking a field restricts nothing on its own: enforcement lives in ``CRUDService.create`` /
+    ``CRUDService.update`` / ``ConfigService.update``, and a method that does not route through those wrappers
+    has to call ``check_full_admin_model`` itself. Marking a field on such a method looks right and does
+    nothing, which is the class of hole NAS-142160 exists to close.
+    """
+    errors = []
+    for model, paths in sorted(full_admin_args_models.items()):
+        if not (consumers := api_method_consumers.get(model)):
+            errors.append(AssertionError(
+                f"{model} declares FullAdmin field(s) {sorted(paths)} but no @api_method accepts it. Either the "
+                f"model is dead and the marker is pointless, or it is reached some other way and nothing "
+                f"enforces the marker."
+            ))
+            continue
+
+        for location, name, enforces in consumers:
+            if name in FULL_ADMIN_WRAPPED_METHODS:
+                # The wrappers only walk the method's *last* parameter, which is where every CRUD and config
+                # method carries its payload. A marked field anywhere else would be silently skipped.
+                # `full_admin_payload_fields` reports paths relative to the payload parameter, so put its
+                # name back on before comparing with the whole-model walk. Sets, not counts: two arms of a
+                # union may legitimately declare the same field.
+                payload_name, payload_fields = full_admin_payload_fields(getattr(current_api_package, model))
+                payload_paths = {".".join((payload_name, *field.path)) for field in payload_fields}
+                if payload_paths != paths:
+                    errors.append(AssertionError(
+                        f"{location} accepts {model}, which declares FullAdmin field(s) {sorted(paths)} outside "
+                        f"its last parameter. CRUDService and ConfigService only check the last one, so the "
+                        f"marker on the others does nothing. Please, move them into the payload parameter or "
+                        f"call {FULL_ADMIN_ENFORCEMENT_HELPER} explicitly."
+                    ))
+
+                continue
+
+            if enforces:
+                continue
+
+            errors.append(AssertionError(
+                f"{location} accepts {model}, which declares FullAdmin field(s) {sorted(paths)}, but it is "
+                f"neither a {'/'.join(sorted(FULL_ADMIN_WRAPPED_METHODS))} (which CRUDService and ConfigService "
+                f"check before calling) nor does it call {FULL_ADMIN_ENFORCEMENT_HELPER}. As written, the marker "
+                f"on those fields does nothing."
+            ))
+
+    if errors:
+        raise ExceptionGroup("Unenforced FullAdmin field(s)", errors)

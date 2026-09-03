@@ -7,6 +7,8 @@ import time
 import pytest
 import websocket
 
+from middlewared.service_exception import ValidationErrors
+from middlewared.test.integration.assets.account import unprivileged_user_client
 from middlewared.test.integration.assets.pool import another_pool, dataset
 from middlewared.test.integration.utils import call, ssh, websocket_url
 from auto_config import interface
@@ -242,3 +244,19 @@ def ubuntu_vm(image_info, options=None):
 def test_vm(ubuntu_image_snapshot):
     with ubuntu_vm(ubuntu_image_snapshot) as vm:
         assert "Ubuntu" in ssh_vm(vm, "cat /etc/issue")
+
+
+def test_command_line_args_may_only_be_set_by_a_full_admin():
+    """`command_line_args` becomes raw QEMU argv, bypassing the device model, so VM_WRITE alone may not supply
+    it (NAS-142160)."""
+    with unprivileged_user_client(["VM_WRITE"]) as c:
+        with pytest.raises(ValidationErrors) as ve:
+            c.call("vm.create", {
+                "name": "full-admin-fields",
+                "memory": 512,
+                "command_line_args": "-drive file=/dev/sda,format=raw",
+            })
+
+        assert any(
+            error.attribute == "vm_create.command_line_args" for error in ve.value.errors
+        ), ve.value.errors
