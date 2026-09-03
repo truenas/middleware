@@ -132,8 +132,11 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
             )
         if not listeners:
             verrors.extend(await validate_port(self.middleware, "s3_update.listeners", 9000, "s3", "0.0.0.0"))
-        if any(listener.tls for listener in listeners) and new.certificate is None:
-            verrors.add("s3_update.certificate", "A listener served over TLS needs a certificate.")
+        if any(listener.tls for listener in listeners) and await self.effective_certificate(new.certificate) is None:
+            verrors.add(
+                "s3_update.certificate",
+                "A listener served over TLS needs a certificate, and no UI certificate is set to fall back on.",
+            )
 
         # every thread is a ring with its own pool; more than the CPUs
         # the system has serves nothing but the memory bill
@@ -154,7 +157,7 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
         await validate_grants(self.middleware, "s3_update.global_grants", new.global_grants, verrors)
         verrors.check()
 
-        if old.certificate is None and new.certificate is not None:
+        if new.certificate is not None and new.certificate != old.certificate:
             # the certificate files are rendered by the ssl group; make sure
             # they exist before the daemon is pointed at them
             await (await self.middleware.call("service.control", "START", "ssl")).wait(raise_error=True)
@@ -172,6 +175,14 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
         # an S3 audit entitlement exists in truenas_license.
         return await self.middleware.call("system.license") is not None
 
+    async def effective_certificate(self, cert_id: int | None) -> int | None:
+        """The certificate the TLS listeners serve: the chosen one, or the
+        UI's when none is chosen. One certificate to manage for the box
+        unless a deployment wants otherwise."""
+        if cert_id is not None:
+            return cert_id
+        return (await self.middleware.call("system.general.config"))["ui_certificate"]
+
     async def certificate_paths(self, cert_id: int | None) -> tuple[str | None, str | None]:
         if cert_id is None:
             return None, None
@@ -187,7 +198,7 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
         """Everything the renderers need, shaped for `render.py`."""
         config = await self.config()
         identity = await self._identity()
-        tls_cert, tls_key = await self.certificate_paths(config.certificate)
+        tls_cert, tls_key = await self.certificate_paths(await self.effective_certificate(config.certificate))
         buckets = [b.model_dump() for b in await self.middleware.call("sharing.s3.query")]
         datasets = (
             {
@@ -253,10 +264,11 @@ class S3Service(SystemServiceService[S3Entry]):
         """
         Update the S3 service configuration.
 
-        Changing the listeners, the reactor thread count or the region, or
-        setting or clearing the certificate, restarts the S3 service,
-        draining in-flight requests for up to 30 seconds. Every other
-        change, a renewed certificate included, applies with a reload.
+        Changing the listeners, the reactor thread count or the region
+        restarts the S3 service, draining in-flight requests for up to 30
+        seconds. Every other change applies with a reload, the certificate
+        included: a different one, or the UI certificate changing while
+        the service follows it, rotates in place.
         """
         return await self._svc_part.do_update(data)
 
@@ -274,6 +286,10 @@ class S3Service(SystemServiceService[S3Entry]):
     @private
     async def audit_licensed(self) -> bool:
         return await self._svc_part.audit_licensed()
+
+    @private
+    async def effective_certificate(self, cert_id: int | None) -> int | None:
+        return await self._svc_part.effective_certificate(cert_id)
 
     @private
     async def reconfigure(self, force_restart: bool = False) -> str | None:

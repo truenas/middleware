@@ -58,7 +58,17 @@ class S3CertificateAttachment(CertificateServiceAttachmentDelegate):
     HUMAN_NAME = "S3 Service"
     NAMESPACE = "s3"
     SERVICE = SERVICE
-    # the daemon re-reads the certificate files on SIGHUP: a renewal rides a reload
+    # the daemon rotates the pair on a reload: a renewal rides one
+
+    async def state(self, cert_id: int) -> bool:
+        # a chosen certificate is held whether or not a listener serves it
+        # yet; the UI's is held only while none is chosen and one does
+        config = (await self.middleware.call("s3.config")).model_dump()
+        if config["certificate"] is not None:
+            return config["certificate"] == cert_id
+        if not any(listener["tls"] for listener in config["listeners"]):
+            return False
+        return await self.middleware.call("s3.effective_certificate", None) == cert_id
 
 
 async def _reconfigure(middleware: Middleware, *_args: Any, **_kwargs: Any) -> None:
@@ -75,6 +85,15 @@ async def _user_deleted(middleware: Middleware, user_id: int) -> None:
     except Exception:
         middleware.logger.error("s3: failed to remove the access keys of deleted user %d", user_id, exc_info=True)
     await _reconfigure(middleware)
+
+
+async def _ui_settings_updated(middleware: Middleware, config: dict[str, Any]) -> None:
+    # a service following the UI certificate follows it here: the files
+    # a different certificate renders to are other paths, which the
+    # daemon rotates to on reload
+    s3 = (await middleware.call("s3.config")).model_dump()
+    if s3["certificate"] is None and any(listener["tls"] for listener in s3["listeners"]):
+        await _reconfigure(middleware)
 
 
 async def _pool_post_import(middleware: Middleware, pool: dict[str, Any] | None) -> None:
@@ -110,4 +129,5 @@ async def setup(middleware: Middleware) -> None:
     ):
         middleware.register_hook(hook, _reconfigure, sync=True)
     middleware.register_hook("user.post_delete", _user_deleted, sync=True)
+    middleware.register_hook("system.general.post_update", _ui_settings_updated, sync=True)
     middleware.register_hook("pool.post_import", _pool_post_import, sync=True)

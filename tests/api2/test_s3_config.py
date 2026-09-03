@@ -87,7 +87,6 @@ def test_listener_validation():
         ([listener("203.0.113.7")], "valid ip address"),
         ([listener(f"203.0.113.{i}") for i in range(1, 10)], "at most 8"),
         ([listener(), listener()], "only be listed once"),
-        ([listener(port=9443, tls=True)], "needs a certificate"),
     ):
         with pytest.raises(ValidationErrors) as ve:
             call("s3.update", {"listeners": bad})
@@ -234,33 +233,82 @@ def test_audit_follows_the_license():
         assert "default_audit" not in parse(BUCKETS_CONF)["server"]
 
 
+@contextlib.contextmanager
+def imported_certificate(name):
+    """A self-signed certificate of its own, imported as `name`."""
+    # not a CA: openssl marks a bare -x509 request as one, which a service
+    # certificate may not be
+    ssh(
+        f"openssl req -x509 -newkey rsa:2048 -nodes -days 2 -subj /CN={name} "
+        "-addext basicConstraints=critical,CA:FALSE "
+        f"-keyout /tmp/{name}.key -out /tmp/{name}.crt >/dev/null 2>&1"
+    )
+    cert = call(
+        "certificate.create",
+        {
+            "name": name,
+            "create_type": "CERTIFICATE_CREATE_IMPORTED",
+            "certificate": ssh(f"cat /tmp/{name}.crt"),
+            "privatekey": ssh(f"cat /tmp/{name}.key"),
+        },
+        job=True,
+    )
+    try:
+        yield cert
+    finally:
+        call("certificate.delete", cert["id"], job=True)
+        ssh(f"rm -f /tmp/{name}.crt /tmp/{name}.key")
+
+
+def served_subject():
+    return ssh("echo | openssl s_client -connect 127.0.0.1:9443 2>/dev/null | openssl x509 -noout -subject").strip()
+
+
 def test_a_tls_listener_serves_beside_a_plaintext_one():
     """The two doors of a multi-homed system: one address in the clear, one
-    over TLS with the chosen certificate. The pair renders only with a TLS
-    listener, and clearing the certificate under one is refused."""
-    cert = call("certificate.query", [["name", "=", "truenas_default"]], {"get": True})
-    with running_service():
+    over TLS. With no certificate chosen the TLS door serves the UI's; a
+    chosen one replaces it on a reload; the pair renders only beside a TLS
+    listener."""
+    ui_cert = call("certificate.get_instance", call("system.general.config")["ui_certificate"])
+    with imported_certificate("s3-test-cert") as own, running_service():
         pid = service()["pids"]
-        with config(
-            listeners=[listener(), listener("127.0.0.1", 9443, tls=True)],
-            certificate=cert["id"],
-        ):
+        with config(listeners=[listener(), listener("127.0.0.1", 9443, tls=True)]):
             server = parse(BUCKETS_CONF)["server"]
             assert server["listen"] == "0.0.0.0:9000"
             assert server["listen_tls"] == "127.0.0.1:9443"
-            assert server["tls_cert"] == cert["certificate_path"]
-            assert server["tls_key"] == cert["privatekey_path"]
+            assert server["tls_cert"] == ui_cert["certificate_path"]
+            assert server["tls_key"] == ui_cert["privatekey_path"]
             assert service()["pids"] != pid, "a new listener is a restart"
             assert "<HostId>" in ssh("curl -sk https://127.0.0.1:9443/")
             assert "<HostId>" in ssh("curl -s http://127.0.0.1:9000/")
             assert "<HostId>" not in ssh("curl -s --max-time 3 http://127.0.0.1:9443/ || true")
+            assert ui_cert["common"] in served_subject()
 
-            with pytest.raises(ValidationErrors) as ve:
-                call("s3.update", {"certificate": None})
-            assert "needs a certificate" in ve.value.errors[0].errmsg
+            # a chosen certificate replaces the UI's in place
+            pid = service()["pids"]
+            with config(certificate=own["id"]):
+                assert parse(BUCKETS_CONF)["server"]["tls_cert"] == own["certificate_path"]
+                assert service()["pids"] == pid, "a different certificate is a reload"
+                assert "s3-test-cert" in served_subject()
+            assert parse(BUCKETS_CONF)["server"]["tls_cert"] == ui_cert["certificate_path"]
+            assert ui_cert["common"] in served_subject()
+
+            # and so does the UI certificate changing while the service follows it
+            call("system.general.update", {"ui_certificate": own["id"]})
+            try:
+                assert parse(BUCKETS_CONF)["server"]["tls_cert"] == own["certificate_path"]
+                assert service()["pids"] == pid, "the UI certificate moving is a reload"
+                assert "s3-test-cert" in served_subject()
+            finally:
+                call("system.general.update", {"ui_certificate": ui_cert["id"]})
+            assert ui_cert["common"] in served_subject()
 
             # a plaintext-only deployment renders no pair even with a
-            # certificate chosen
-            call("s3.update", {"listeners": [listener()]})
-            server = parse(BUCKETS_CONF)["server"]
-            assert "listen_tls" not in server and "tls_cert" not in server
+            # certificate chosen, and still holds the certificate against
+            # deletion
+            with config(certificate=own["id"]):
+                call("s3.update", {"listeners": [listener()]})
+                server = parse(BUCKETS_CONF)["server"]
+                assert "listen_tls" not in server and "tls_cert" not in server
+                with pytest.raises(Exception, match="in use|attach|S3"):
+                    call("certificate.delete", own["id"], job=True)
