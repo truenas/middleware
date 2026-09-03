@@ -47,6 +47,7 @@ async def test_vm_creation_for_licensed_and_unlicensed_systems(license_active):
     m['vm.bootloader_ovmf_choices'] = lambda *args: {'OVMF_CODE.fd': 'OVMF_CODE.fd'}
     m['vm.license_active'] = lambda *args: license_active
     m['vm.query'] = lambda *args: []
+    m['datastore.query'] = lambda *args, **kwargs: []
     m['vm.flags'] = lambda *args: {'intel_vmx': True, 'unrestricted_guest': True, 'amd_rvi': False, 'amd_asids': False}
     m['vm.maximum_supported_vcpus'] = lambda *args: 255
     m['vm.supports_virtualization'] = lambda *args: True
@@ -127,6 +128,7 @@ async def test_vm_secure_boot_ovmf_validation(enable_secure_boot, bootloader_ovm
     }
     m['vm.license_active'] = lambda *args: True
     m['vm.query'] = mock_vm_query
+    m['datastore.query'] = lambda *args, **kwargs: []
     m['vm.flags'] = lambda *args: {'intel_vmx': True, 'unrestricted_guest': True, 'amd_rvi': False, 'amd_asids': False}
     m['vm.maximum_supported_vcpus'] = lambda *args: 255
     m['vm.supports_virtualization'] = lambda *args: True

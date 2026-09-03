@@ -149,6 +149,7 @@ class ContainerCreateResult(BaseModel):
 
 
 class ContainerUpdate(ContainerCreate, metaclass=ForUpdateMetaclass):
+    uuid: Excluded = excluded_field()
     pool: Excluded = excluded_field()
     image: Excluded = excluded_field()
     idmap: Excluded = excluded_field()
