@@ -4,6 +4,10 @@ enabling or disabling a bucket restarts the service; its owner, grants
 and audit mask reload."""
 
 import contextlib
+import hashlib
+import os
+import re
+import tempfile
 from configparser import RawConfigParser
 
 import pytest
@@ -370,25 +374,55 @@ def grantee(username):
             call("s3.accesskey.delete", key["id"])
 
 
+def client(key):
+    """A boto3 client on the daemon. The checksum stance is stated rather
+    than inherited from the installed botocore: CRC32, composed COMPOSITE
+    over a multipart upload, which is what the daemon serves."""
+    boto3 = pytest.importorskip("boto3")
+    from botocore.config import Config
+
+    return boto3.client(
+        "s3",
+        endpoint_url="http://127.0.0.1:9000",
+        aws_access_key_id=key["access_key"],
+        aws_secret_access_key=key["secret"],
+        region_name="us-east-1",
+        config=Config(
+            signature_version="s3v4",
+            s3={"addressing_style": "path"},
+            request_checksum_calculation="when_supported",
+            response_checksum_validation="when_supported",
+        ),
+    )
+
+
+def random_file(size):
+    """`size` bytes of noise in a temp file, and their md5."""
+    digest = hashlib.md5()
+    with tempfile.NamedTemporaryFile(suffix=".bin", delete=False) as f:
+        left = size
+        while left:
+            chunk = os.urandom(min(left, 1 << 20))
+            f.write(chunk)
+            digest.update(chunk)
+            left -= len(chunk)
+        return f.name, digest.hexdigest()
+
+
+def md5_of(path):
+    digest = hashlib.md5()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 def test_boto3_roundtrip(owner):
     """The whole chain: a bucket with grants, access keys for the grantees,
     and clients that put and get objects through the daemon. Two grantees,
     because every write is published under the requester's own uid: the
     second one writing into a prefix the first created, and over the
     first's object, is what the data directory's inherited ACL is for."""
-    boto3 = pytest.importorskip("boto3")
-    from botocore.config import Config
-
-    def client(key):
-        return boto3.client(
-            "s3",
-            endpoint_url="http://127.0.0.1:9000",
-            aws_access_key_id=key["access_key"],
-            aws_secret_access_key=key["secret"],
-            region_name="us-east-1",
-            config=Config(signature_version="s3v4", s3={"addressing_style": "path"}),
-        )
-
     with (
         grantee("s3client") as (grant_a, key_a),
         grantee("s3client2") as (
@@ -420,3 +454,73 @@ def test_boto3_roundtrip(owner):
             ] == ["pfx/other.txt"]
         finally:
             call("service.control", "STOP", SERVICE, {"silent": False}, job=True)
+
+
+@pytest.mark.parametrize(
+    "size,threshold,parts",
+    [
+        # one PUT: the transfer manager only splits above its threshold
+        (5 << 20, 8 << 20, 1),
+        # three parts: the multipart path, staged in the side tree the
+        # daemon owns and published into data/ under the requester
+        (12 << 20, 5 << 20, 3),
+    ],
+    ids=["single_put", "multipart"],
+)
+def test_a_file_survives_the_round_trip(owner, size, threshold, parts):
+    """A real file up and back down through the transfer manager, byte
+    for byte, landing in data/ as the uploader's own file while the side
+    tree beside it stays the daemon's. The bucket middleware provisioned
+    has to carry both, which no tiny put_object proves."""
+    from boto3.s3.transfer import TransferConfig
+
+    transfer = TransferConfig(
+        multipart_threshold=threshold, multipart_chunksize=5 << 20
+    )
+    source, expected = random_file(size)
+    fetched = source + ".down"
+    try:
+        with grantee("s3client") as (grant, key), bucket(grants=[grant]):
+            assert call(
+                "service.control", "START", SERVICE, {"silent": False}, job=True
+            )
+            try:
+                s3 = client(key)
+                s3.upload_file(
+                    source,
+                    "test-bucket",
+                    "big/file.bin",
+                    ExtraArgs={"ChecksumAlgorithm": "CRC32"},
+                    Config=transfer,
+                )
+                head = s3.head_object(Bucket="test-bucket", Key="big/file.bin")
+                assert head["ContentLength"] == size
+                # the ETag says which path the bytes took: a composite is
+                # the md5 of the part md5s with the part count appended, a
+                # single put a minted UUID
+                etag = head["ETag"].strip('"')
+                if parts > 1:
+                    assert re.fullmatch(rf"[0-9a-f]{{32}}-{parts}", etag), etag
+                else:
+                    assert re.fullmatch(r"[0-9a-f-]{36}", etag), etag
+
+                s3.download_file(
+                    "test-bucket", "big/file.bin", fetched, Config=transfer
+                )
+                assert md5_of(fetched) == expected
+
+                on_disk = f"/mnt/{DATASET}/data/big/file.bin"
+                assert ssh(f"md5sum {on_disk}").split()[0] == expected
+                uid = call(
+                    "user.query", [["username", "=", "s3client"]], {"get": True}
+                )["uid"]
+                assert call("filesystem.stat", on_disk)["uid"] == uid
+                assert (
+                    call("filesystem.stat", f"/mnt/{DATASET}/.truenas_s3")["uid"] == 0
+                )
+            finally:
+                call("service.control", "STOP", SERVICE, {"silent": False}, job=True)
+    finally:
+        for path in (source, fetched):
+            with contextlib.suppress(FileNotFoundError):
+                os.unlink(path)
