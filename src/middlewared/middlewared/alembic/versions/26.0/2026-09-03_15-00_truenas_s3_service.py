@@ -44,7 +44,6 @@ def upgrade():
     sa.Column('path', sa.String(length=255), nullable=False),
     sa.Column('relative_path', sa.String(length=255), nullable=True),
     sa.Column('enabled', sa.Boolean(), nullable=False, server_default='1'),
-    sa.Column('owner', sa.String(length=200), nullable=False),
     sa.Column('owner_uid', sa.Integer(), nullable=False),
     sa.Column('grants', sa.TEXT(), nullable=False, server_default='[]'),
     sa.Column('permissions_model', sa.String(length=16), nullable=False, server_default='S3'),

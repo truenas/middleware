@@ -293,11 +293,12 @@ class SharingS3Entry(BaseModel):
     enabled: bool = Field(default=True, description="Whether the bucket is served. Toggling restarts the S3 service.")
     owner: NonEmptyString = Field(
         description=(
-            "Account that owns the bucket and bypasses its grants. Its uid is captured when set, so a later rename "
-            "or reuse of the name never changes who owns the bucket."
+            "Account that owns the bucket and bypasses its grants. Given by name, held by uid: the name is resolved "
+            "when set and again whenever the bucket is read, so a renamed account reads as its new name, a reused "
+            "name never inherits the bucket, and an account that no longer exists reads as its uid."
         ),
     )
-    owner_uid: int = Field(description="The uid the owner resolved to when it was set.")
+    owner_uid: int = Field(description="The uid that owns the bucket.")
     grants: list[S3GrantEntry] = Field(default=[], description="Who may access the bucket and how, beyond its owner.")
     permissions_model: Literal["S3", "MULTIPROTOCOL"] = Field(
         default="S3",

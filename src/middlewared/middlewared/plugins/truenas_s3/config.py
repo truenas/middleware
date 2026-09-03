@@ -21,7 +21,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils.crypto import generate_token, ssl_uuid4
 
 from .accesskey_crud import S3AccesskeyService
-from .grants import resolve_grant_names, validate_grants
+from .grants import grant_principals, label_grants, principal_names, validate_grants
 from .lifecycle import render_and_apply
 
 if TYPE_CHECKING:
@@ -74,7 +74,8 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
             data["certificate"] = data["certificate"]["id"]
         for key in ("host_id", "owner_id_seed"):
             data.pop(key, None)
-        data["global_grants"] = await resolve_grant_names(self.middleware, data["global_grants"])
+        names = await principal_names(self.middleware, *grant_principals(data["global_grants"]))
+        data["global_grants"] = label_grants(data["global_grants"], names)
         return data
 
     async def _identity(self) -> dict[str, str]:
