@@ -5,10 +5,10 @@ class S3BucketDatasetMissingAlertClass(AlertClass, OneShotAlertClass):
     deleted_automatically = False
     level = AlertLevel.WARNING
     category = AlertCategory.SHARING
-    title = "S3 Bucket Dataset Is Missing Or Moved"
+    title = "S3 Bucket Dataset Is Missing"
     text = (
-        'S3 bucket "%(name)s" is unavailable because its dataset %(dataset)s is missing or no longer mounted where it '
-        "was registered. Restore the dataset, or delete and recreate the bucket."
+        'S3 bucket "%(name)s" is unavailable because its dataset %(dataset)s no longer exists. Restore the dataset, '
+        "or delete and recreate the bucket."
     )
 
     async def create(self, args):

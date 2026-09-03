@@ -75,10 +75,10 @@ def bucket(**overrides):
 def test_create_owns_the_dataset(owner):
     """The dataset is created with every property the S3 on-disk format
     requires, its data directory belongs to the owner under an ACL every
-    grantee satisfies, and the bucket captures its mount point and the
-    owner's uid."""
+    grantee satisfies, the bucket holds the owner's uid, and the row
+    renders at the dataset's mount point without storing it."""
     with bucket() as b:
-        assert b["path"] == f"/mnt/{DATASET}"
+        assert "path" not in b
         assert b["owner"] == OWNER
         assert b["owner_uid"] == owner["uid"]
         assert b["enabled"] is True
@@ -105,9 +105,9 @@ def test_create_owns_the_dataset(owner):
             "aclinherit": "passthrough",
         }
 
-        root = call("filesystem.stat", b["path"])
+        root = call("filesystem.stat", f"/mnt/{DATASET}")
         assert (root["uid"], root["gid"]) == (0, 0), "the side tree stays root's"
-        data = call("filesystem.getacl", f"{b['path']}/data")
+        data = call("filesystem.getacl", f"/mnt/{DATASET}/data")
         assert data["uid"] == owner["uid"]
         assert data["gid"] == owner["group"]["bsdgrp_gid"]
         assert data["acltype"] == "NFS4"
@@ -241,16 +241,6 @@ def test_object_lock_rules(owner):
             {
                 "object_lock": True,
                 "versioning": "ENABLED",
-                "object_lock_default_mode": "COMPLIANCE",
-                "object_lock_default_days": 30,
-                "object_lock_default_years": 1,
-            },
-            "object_lock_default_years",
-        ),
-        (
-            {
-                "object_lock": True,
-                "versioning": "ENABLED",
                 "object_lock_default_days": 36501,
             },
             "object_lock_default_days",
@@ -263,22 +253,22 @@ def test_object_lock_rules(owner):
             )
         assert field in ve.value.errors[0].attribute
 
+    # the period is days, however long: the daemon's years are 365 days
+    # each, so the one field spells every rule it could
     with bucket(
         name="locked",
         versioning="ENABLED",
         object_lock=True,
         object_lock_default_mode="COMPLIANCE",
-        object_lock_default_years=1,
-        sosapi_block_size=1024,
+        object_lock_default_days=365,
     ):
         call("etc.generate", "truenas_s3")
         row = parse(BUCKETS_CONF)['bucket "locked"']
         assert row["versioning"] == "enabled"
         assert row["object_lock"] == "enabled"
         assert row["object_lock_default_mode"] == "compliance"
-        assert row["object_lock_default_years"] == "1"
-        assert "object_lock_default_days" not in row
-        assert row["sosapi_block_size"] == "1024"
+        assert row["object_lock_default_days"] == "365"
+        assert "object_lock_default_years" not in row
 
 
 def test_registry_changes_restart_and_the_rest_reload(owner):
@@ -333,10 +323,10 @@ def test_owner_change_hands_over_the_data_directory(owner):
         ssh(f"touch /mnt/{DATASET}/data/theirs")
         updated = call("sharing.s3.update", b["id"], {"owner": "s3newowner"})
         assert updated["owner_uid"] == new["uid"]
-        data = call("filesystem.stat", f"{b['path']}/data")
+        data = call("filesystem.stat", f"/mnt/{DATASET}/data")
         assert (data["uid"], data["gid"]) == (new["uid"], new["group"]["bsdgrp_gid"])
         # not recursive: what the old owner wrote stays theirs
-        assert call("filesystem.stat", f"{b['path']}/data/theirs")["uid"] == 0
+        assert call("filesystem.stat", f"/mnt/{DATASET}/data/theirs")["uid"] == 0
         call("etc.generate", "truenas_s3")
         row = parse(BUCKETS_CONF)['bucket "test-bucket"']
         assert (row["owner"], row["owner_id"]) == ("s3newowner", str(new["uid"]))
@@ -450,6 +440,35 @@ def test_boto3_roundtrip(owner):
             assert a.get_object(Bucket="test-bucket", Key="pfx/hello.txt")["Body"].read() == b"b over a"
             b.delete_object(Bucket="test-bucket", Key="pfx/hello.txt")
             assert [o["Key"] for o in a.list_objects_v2(Bucket="test-bucket")["Contents"]] == ["pfx/other.txt"]
+        finally:
+            call("service.control", "STOP", SERVICE, {"silent": False}, job=True)
+
+
+SOSAPI_SYSTEM = ".system-d26a9498-cb7c-4a87-a44a-8ae204f5ba6c/system.xml"
+
+
+def test_the_sosapi_block_size_follows_the_recordsize(owner):
+    """Nothing about the block size is stored: the daemon reads the
+    dataset's recordsize when Veeam asks for system.xml, so tuning the
+    dataset changes the recommendation at the next ask with no reload
+    and no restart. ZFS's 128K default recommends nothing."""
+    with grantee("s3veeam") as (grant, key), bucket(grants=[grant]):
+        assert call("service.control", "START", SERVICE, {"silent": False}, job=True)
+        try:
+            pid = service()["pids"]
+            s3 = client(key)
+
+            def system_xml():
+                return s3.get_object(Bucket="test-bucket", Key=SOSAPI_SYSTEM)["Body"].read().decode()
+
+            assert "SystemRecommendations" not in system_xml()
+            ssh(f"zfs set recordsize=1M {DATASET}")
+            assert "<SystemRecommendations><KbBlockSize>1024</KbBlockSize></SystemRecommendations>" in system_xml()
+            ssh(f"zfs set recordsize=2M {DATASET}")
+            assert "<KbBlockSize>4096</KbBlockSize>" in system_xml()
+            ssh(f"zfs inherit recordsize {DATASET}")
+            assert "SystemRecommendations" not in system_xml()
+            assert service()["pids"] == pid
         finally:
             call("service.control", "STOP", SERVICE, {"silent": False}, job=True)
 

@@ -8,14 +8,11 @@ def render(service, middleware):
 
     # every enabled bucket renders unconditionally: the daemon excludes a
     # row it cannot mount and answers 503 for it, which is the honest
-    # answer for a dataset that vanished or moved outside middleware. The
-    # alert is what tells the operator
+    # answer for a dataset that vanished outside middleware. The alert is
+    # what tells the operator
     for bucket in data["buckets"]:
         args = {"id": bucket["id"], "name": bucket["name"], "dataset": bucket["dataset"]}
-        gone = bucket["enabled"] and (
-            bucket["dataset_missing"] or (bucket["live_mountpoint"] and bucket["live_mountpoint"] != bucket["path"])
-        )
-        if gone:
+        if bucket["enabled"] and bucket["dataset_missing"]:
             middleware.call_sync("alert.oneshot_create", MISSING_ALERT, args)
         else:
             middleware.call_sync("alert.oneshot_delete", MISSING_ALERT, bucket["id"])

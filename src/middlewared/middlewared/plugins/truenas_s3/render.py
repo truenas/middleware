@@ -94,7 +94,7 @@ def render_buckets(config: dict[str, Any], buckets: list[dict[str, Any]], audit_
         parser.add_section(section)
         row = parser[section]
         row["dataset"] = bucket["dataset"]
-        row["path"] = bucket["path"]
+        row["path"] = bucket["mountpoint"]
         row["owner"] = bucket["owner_label"]
         row["owner_id"] = str(bucket["owner_id"])
         row["permissions_model"] = _lower(bucket["permissions_model"])
@@ -104,10 +104,6 @@ def render_buckets(config: dict[str, Any], buckets: list[dict[str, Any]], audit_
             row["object_lock_default_mode"] = _lower(bucket["object_lock_default_mode"])
         if bucket["object_lock_default_days"]:
             row["object_lock_default_days"] = str(bucket["object_lock_default_days"])
-        if bucket["object_lock_default_years"]:
-            row["object_lock_default_years"] = str(bucket["object_lock_default_years"])
-        if bucket["sosapi_block_size"]:
-            row["sosapi_block_size"] = str(bucket["sosapi_block_size"])
         if audit_licensed:
             # None inherits the server default by omission; an empty list is
             # the empty mask, which must be rendered so it shadows the default
