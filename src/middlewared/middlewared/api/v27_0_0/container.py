@@ -60,7 +60,11 @@ class ContainerStatus(BaseModel):
 
 class ContainerEntry(BaseModel):
     id: int = Field(description="Container ID.")
-    uuid: UUIDv4String = Field(description="Container UUID (for libvirt).")
+    uuid: UUIDv4String = Field(
+        description=(
+            "Container UUID (for libvirt). Assigned when the container is created and cannot be changed afterwards."
+        ),
+    )
     name: NonEmptyString = Field(description="Container name.")
     description: str = Field(default="", description="Container description.")
     devices: list[ContainerDeviceEntry] = Field(default=[], description="Container's devices.")
@@ -127,7 +131,9 @@ class ContainerCreate(ContainerEntry):
     default_network: Excluded = excluded_field()
     uuid: UUIDv4String | None = Field(
         default=None,
-        description="Container UUID (for libvirt). Auto-generated if not provided.",
+        description=(
+            "Container UUID (for libvirt). Auto-generated if not provided. It cannot be changed after creation."
+        ),
     )
     pool: str | None = Field(
         default=None,
@@ -152,6 +158,7 @@ class ContainerCreateResult(BaseModel):
 
 
 class ContainerUpdate(ContainerCreate, metaclass=ForUpdateMetaclass):
+    uuid: Excluded = excluded_field()
     pool: Excluded = excluded_field()
     image: Excluded = excluded_field()
     idmap: Excluded = excluded_field()
