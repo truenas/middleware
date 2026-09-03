@@ -343,6 +343,24 @@ def test_owner_change_hands_over_the_data_directory(owner):
         row = parse(BUCKETS_CONF)['bucket "test-bucket"']
         assert (row["owner"], row["owner_id"]) == ("s3newowner", str(new["uid"]))
 
+        # the name is resolved from the uid on every read, never stored
+        call("user.update", new["id"], {"username": "s3renamedowner"})
+        assert call("sharing.s3.get_instance", b["id"])["owner"] == "s3renamedowner"
+        assert (
+            call("sharing.s3.query", [["owner_uid", "=", new["uid"]]], {"get": True})[
+                "owner"
+            ]
+            == "s3renamedowner"
+        )
+        call("etc.generate", "truenas_s3")
+        row = parse(BUCKETS_CONF)['bucket "test-bucket"']
+        assert (row["owner"], row["owner_id"]) == ("s3renamedowner", str(new["uid"]))
+        # naming the same account again is not a change of owner
+        assert (
+            call("sharing.s3.update", b["id"], {"owner": "s3renamedowner"})["owner_uid"]
+            == new["uid"]
+        )
+
 
 def test_audit_choices():
     choices = call("sharing.s3.audit_choices")

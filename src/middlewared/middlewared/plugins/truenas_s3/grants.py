@@ -10,7 +10,33 @@ if TYPE_CHECKING:
     from middlewared.main import Middleware
 
 
-async def resolve_grant_names(middleware: Middleware, grants: list[dict[str, Any]]) -> list[dict[str, Any]]:
+async def principal_names(middleware: Middleware, uids: set[int], gids: set[int]) -> dict[str, dict[int, str]]:
+    """The current name of each uid and gid, resolved once each through
+    NSS, which is what the daemon will resolve them through too. An id
+    that does not resolve is left out; readers fall back to the id."""
+    users: dict[int, str] = {}
+    for uid in uids:
+        try:
+            users[uid] = (await middleware.call("user.get_user_obj", {"uid": uid}))["pw_name"]
+        except KeyError:
+            pass
+    groups: dict[int, str] = {}
+    for gid in gids:
+        try:
+            groups[gid] = (await middleware.call("group.get_group_obj", {"gid": gid}))["gr_name"]
+        except KeyError:
+            pass
+    return {"users": users, "groups": groups}
+
+
+def grant_principals(grants: list[dict[str, Any]]) -> tuple[set[int], set[int]]:
+    """The uids and gids a grant list names."""
+    uids = {g["xid"] for g in grants if g["principal_type"] == "USER"}
+    gids = {g["xid"] for g in grants if g["principal_type"] == "GROUP"}
+    return uids, gids
+
+
+def label_grants(grants: list[dict[str, Any]], names: dict[str, dict[int, str]]) -> list[dict[str, Any]]:
     """Attach the current user or group name to each grant for display.
     The daemon never matches on it; the xid is the identity. A principal
     that no longer resolves keeps its xid as the name."""
@@ -18,15 +44,9 @@ async def resolve_grant_names(middleware: Middleware, grants: list[dict[str, Any
     for grant in grants:
         name = ""
         if grant["principal_type"] == "USER":
-            try:
-                name = (await middleware.call("user.get_user_obj", {"uid": grant["xid"]}))["pw_name"]
-            except KeyError:
-                name = str(grant["xid"])
+            name = names["users"].get(grant["xid"], str(grant["xid"]))
         elif grant["principal_type"] == "GROUP":
-            try:
-                name = (await middleware.call("group.get_group_obj", {"gid": grant["xid"]}))["gr_name"]
-            except KeyError:
-                name = str(grant["xid"])
+            name = names["groups"].get(grant["xid"], str(grant["xid"]))
         out.append({**grant, "name": name})
     return out
 

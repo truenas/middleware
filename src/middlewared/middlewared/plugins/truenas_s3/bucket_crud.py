@@ -40,7 +40,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils.path import FSLocation
 from middlewared.utils.types import AuditCallback
 
-from .grants import resolve_grant_names, validate_grants
+from .grants import grant_principals, label_grants, principal_names, validate_grants
 from .lifecycle import render_and_apply
 
 if TYPE_CHECKING:
@@ -89,7 +89,9 @@ class SharingS3Model(sa.Model):
     path = sa.Column(sa.String(255))
     relative_path = sa.Column(sa.String(255), nullable=True)
     enabled = sa.Column(sa.Boolean(), default=True)
-    owner = sa.Column(sa.String(200))
+    # the uid is the owner; its name is resolved when read, never stored,
+    # so a renamed account reads as its new name and a reused name never
+    # inherits a bucket
     owner_uid = sa.Column(sa.Integer())
     grants = sa.Column(sa.JSON(list), default=[])
     permissions_model = sa.Column(sa.String(16), default="S3")
@@ -130,11 +132,25 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         generic = True
         entry = SharingS3Entry
         datastore_extend = "sharing.s3.bucket_extend"
+        datastore_extend_context = "sharing.s3.bucket_extend_context"
 
     @private
-    async def bucket_extend(self, data: dict[str, Any]) -> dict[str, Any]:
+    async def bucket_extend_context(self, rows: list[dict[str, Any]], extra: dict[str, Any]) -> dict[str, Any]:
+        """Every owner and grant principal across the rows, resolved once
+        each rather than once per row."""
+        uids = {row["owner_uid"] for row in rows}
+        gids: set[int] = set()
+        for row in rows:
+            row_uids, row_gids = grant_principals(row["grants"])
+            uids |= row_uids
+            gids |= row_gids
+        return await principal_names(self.middleware, uids, gids)
+
+    @private
+    async def bucket_extend(self, data: dict[str, Any], names: dict[str, dict[int, str]]) -> dict[str, Any]:
         data.pop("relative_path", None)
-        data["grants"] = await resolve_grant_names(self.middleware, data["grants"])
+        data["owner"] = names["users"].get(data["owner_uid"], str(data["owner_uid"]))
+        data["grants"] = label_grants(data["grants"], names)
         return data
 
     @private
@@ -187,7 +203,7 @@ class SharingS3Service(SharingService[SharingS3Entry]):
 
     @private
     def compress(self, data: SharingS3Entry, owner_uid: int, path: str | None = None) -> dict[str, Any]:
-        row = data.model_dump(exclude={"id", "locked"})
+        row = data.model_dump(exclude={"id", "locked", "owner"})
         row["grants"] = [g.model_dump(exclude={"name"}) for g in data.grants]
         row["owner_uid"] = owner_uid
         if path is not None:
@@ -328,9 +344,14 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         new = old.updated(data)
         verrors = ValidationErrors()
         await self.validate(new, "sharing_s3_update", verrors, old)
+        # an owner given by name is compared by the uid it resolves to: a
+        # renamed account is the same owner, a deleted and recreated one
+        # under the old name is not
         owner = None
-        if new.owner != old.owner:
-            owner = await self.resolve_owner("sharing_s3_update", new.owner, verrors)
+        if "owner" in data.model_dump(exclude_unset=True):
+            resolved = await self.resolve_owner("sharing_s3_update", new.owner, verrors)
+            if resolved is not None and resolved[0] != old.owner_uid:
+                owner = resolved
         verrors.check()
 
         if owner is not None:
