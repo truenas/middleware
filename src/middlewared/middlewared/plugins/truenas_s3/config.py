@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ipaddress
 import os
 from typing import Any, TYPE_CHECKING
 
@@ -22,7 +23,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils.crypto import generate_token, ssl_uuid4
 
 from .accesskey_crud import S3AccesskeyService
-from .grants import grant_principals, label_grants, principal_names, validate_grants
+from .grants import grant_label, grant_principals, label_grants, principal_names, validate_grants
 from .lifecycle import render_and_apply
 
 if TYPE_CHECKING:
@@ -56,6 +57,35 @@ class S3Model(sa.Model):
     # moved. Generated on the first read and never exposed through the API.
     host_id = sa.Column(sa.String(64), default="")
     owner_id_seed = sa.Column(sa.String(64), default="")
+
+
+MISSING_ALERT = "S3BucketDatasetMissing"
+
+
+def _listen_text(listeners: list[dict[str, Any]]) -> tuple[str, str]:
+    """[server] listen and listen_tls: the plaintext and the TLS addresses,
+    comma separated, an IPv6 address in brackets. No listener at all is
+    every address on port 9000 in plaintext."""
+    if not listeners:
+        listeners = [{"address": "0.0.0.0", "port": 9000, "tls": False}]
+    plain, secure = [], []
+    for listener in listeners:
+        ip, port = listener["address"], listener["port"]
+        text = f"[{ip}]:{port}" if isinstance(ipaddress.ip_address(ip), ipaddress.IPv6Address) else f"{ip}:{port}"
+        (secure if listener["tls"] else plain).append(text)
+    return ", ".join(plain), ", ".join(secure)
+
+
+def _renderable_grants(grants: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Each grant with the label its heading carries. A user and a group may
+    share a label, but the same principal twice is a duplicate section the
+    daemon refuses; validation keeps a list free of those, and the last one
+    wins here as a backstop."""
+    by_principal = {}
+    for grant in grants:
+        label = grant_label(grant.get("name"), grant.get("xid"))
+        by_principal[(grant["principal_type"], grant.get("xid"))] = {**grant, "label": label}
+    return list(by_principal.values())
 
 
 class S3ConfigPart(SystemServicePart[S3Entry]):
@@ -195,10 +225,27 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
         return cert["certificate_path"], cert["privatekey_path"]
 
     async def render_data(self) -> dict[str, Any]:
-        """Everything the renderers need, shaped for `render.py`."""
+        """Everything the etc templates render, gathered once per generate
+        and shaped so a template only loops and prints.
+
+        The daemon reads every file whole and one malformed value refuses
+        the entire load, so what a template must never print is decided
+        here: a TLS listener with no usable certificate pair is dropped
+        rather than served in the clear, a pair with no TLS listener is not
+        rendered, a grant heading's label is stripped of what would break
+        its grammar, and a bucket whose dataset is gone keeps its row at the
+        mount point it would have, so the daemon answers 503 for it rather
+        than saying it never existed. That last case raises the alert here
+        too, since this is where it is seen.
+        """
         config = await self.config()
         identity = await self._identity()
         tls_cert, tls_key = await self.certificate_paths(await self.effective_certificate(config.certificate))
+        listen, listen_tls = _listen_text(config.model_dump()["listeners"])
+        if listen_tls and not (tls_cert and tls_key):
+            listen_tls = ""
+        if not listen_tls:
+            tls_cert = tls_key = None
         buckets = [b.model_dump() for b in await self.middleware.call("sharing.s3.query")]
         datasets = (
             {
@@ -217,32 +264,46 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
             live = datasets.get(bucket["dataset"])
             mountpoint = live["properties"]["mountpoint"]["value"] if live else None
             if not mountpoint or not mountpoint.startswith("/"):
-                # a dataset that is gone still renders its row, at the mount
-                # point it would have, so the daemon answers 503 for the
-                # bucket rather than saying it never existed
                 mountpoint = f"/mnt/{bucket['dataset']}"
+            args = {"id": bucket["id"], "name": bucket["name"], "dataset": bucket["dataset"]}
+            if bucket["enabled"] and live is None:
+                await self.middleware.call("alert.oneshot_create", MISSING_ALERT, args)
+            else:
+                await self.middleware.call("alert.oneshot_delete", MISSING_ALERT, bucket["id"])
             rendered_buckets.append(
                 {
                     **bucket,
-                    "owner_label": bucket["owner"],
-                    "owner_id": bucket["owner_uid"],
-                    "dataset_missing": live is None,
+                    "grants": _renderable_grants(bucket["grants"]),
                     "mountpoint": mountpoint,
                 }
             )
+
+        accesskeys = [
+            key.model_dump(context={"expose_secrets": True}) for key in await self.middleware.call("s3.accesskey.query")
+        ]
+        for key in accesskeys:
+            if key["status"] == "USER_MISSING" and not key["local"]:
+                # a directory services account that does not resolve right now
+                # may just be a directory that is not answering; the key renders
+                # disabled until the next render finds the account again
+                self.logger.warning(
+                    "s3: access key %s belongs to a directory services account that does not resolve, rendered "
+                    "disabled",
+                    key["access_key"],
+                )
 
         return {
             "config": {
                 **config.model_dump(),
                 **identity,
+                "global_grants": _renderable_grants(config.model_dump()["global_grants"]),
+                "listen": listen,
+                "listen_tls": listen_tls,
                 "tls_cert": tls_cert,
                 "tls_key": tls_key,
             },
             "buckets": rendered_buckets,
-            "accesskeys": [
-                key.model_dump(context={"expose_secrets": True})
-                for key in await self.middleware.call("s3.accesskey.query")
-            ],
+            "accesskeys": accesskeys,
             "audit_licensed": await self.audit_licensed(),
         }
 

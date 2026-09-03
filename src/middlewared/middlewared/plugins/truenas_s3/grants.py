@@ -36,6 +36,14 @@ def grant_principals(grants: list[dict[str, Any]]) -> tuple[set[int], set[int]]:
     return uids, gids
 
 
+def grant_label(name: str | None, xid: int | None) -> str:
+    """The quoted NAME of a rendered grant heading. A label the daemon never
+    resolves, but a quote inside it breaks the heading grammar and an empty
+    one is refused, either of which refuses the whole load."""
+    label = (name or "").replace('"', "").replace("\n", "").replace("\r", "").strip()
+    return label or str(xid)
+
+
 def label_grants(grants: list[dict[str, Any]], names: dict[str, dict[int, str]]) -> list[dict[str, Any]]:
     """Attach the current user or group name to each grant for display.
     The daemon never matches on it; the xid is the identity. A principal
