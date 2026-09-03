@@ -1,7 +1,8 @@
 """The S3 service's global configuration, the files it renders and the
-verb each change costs. The daemon takes most changes on a reload and
-silently refuses or half applies the rest, so the tests watch the
-service's pid: a reload keeps it, a restart replaces it."""
+verb each change costs. The daemon answers a reload request with whether
+it took the files or wants a restart, and middleware acts on that, so
+the tests watch the service's pid: a reload keeps it, a restart replaces
+it."""
 
 import contextlib
 from configparser import RawConfigParser
@@ -15,7 +16,6 @@ SERVICE = "truenas_s3"
 BUCKETS_CONF = "/etc/truenas_s3/buckets.conf"
 POLICIES_CONF = "/etc/truenas_s3/policies.conf"
 CREDENTIALS_CONF = "/etc/truenas_s3/credentials.conf"
-DROPIN = "/etc/systemd/system/truenas_s3.service.d/override.conf"
 
 
 def parse(path):
@@ -76,8 +76,8 @@ def test_bindip_choices_and_validation():
     assert "valid ip address" in ve.value.errors[0].errmsg
 
     with pytest.raises(ValidationErrors) as ve:
-        call("s3.update", {"bindip": ["203.0.113.7", "203.0.113.8"]})
-    assert "at most one" in ve.value.errors[0].errmsg
+        call("s3.update", {"bindip": [f"203.0.113.{i}" for i in range(1, 10)]})
+    assert "at most 8" in ve.value.errors[0].errmsg
 
 
 def test_servers_is_bounded_by_the_daemon_and_the_cpus():
@@ -104,6 +104,7 @@ def test_rendered_files_on_start():
         assert service()["state"] == "RUNNING"
 
         server = parse(BUCKETS_CONF)["server"]
+        assert server["listen"] == "0.0.0.0:9000"
         assert len(server["host_id"]) == 36
         assert len(server["owner_id_seed"]) == 56
         assert server["log_level"] == "notice"
@@ -112,11 +113,8 @@ def test_rendered_files_on_start():
 
         assert ssh(f"stat -c '%a %U' {CREDENTIALS_CONF}").strip() == "600 root"
         assert parse(POLICIES_CONF) == {}
-        assert (
-            ssh(f"cat {DROPIN}")
-            == "[Service]\nExecStart=\nExecStart=/usr/bin/s3d 0.0.0.0:9000\n"
-        )
-        assert "@include common-account" in ssh("cat /etc/pam.d/truenas-s3")
+        # the address is the daemon's to read, so the unit carries none
+        assert "s3d 0.0.0.0" not in ssh("systemctl cat truenas_s3")
         assert ":9000" in ssh("ss -Hltn sport = :9000")
 
         # the identities never move
@@ -136,7 +134,7 @@ def test_reload_keeps_the_process_and_restart_replaces_it():
             assert service()["pids"] == pid, "a log level change is a reload"
 
         with config(port=9001):
-            assert ssh(f"cat {DROPIN}").endswith("s3d 0.0.0.0:9001\n")
+            assert parse(BUCKETS_CONF)["server"]["listen"] == "0.0.0.0:9001"
             assert service()["pids"] != pid, "a listen address change is a restart"
             assert ":9001" in ssh("ss -Hltn sport = :9001")
 

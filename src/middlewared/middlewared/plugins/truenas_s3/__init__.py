@@ -30,15 +30,16 @@ class S3ServicePortDelegate(ServicePortDelegate):
     namespace = "s3"
     title = "S3 Service"
     port_fields = ["port"]
-    bind_address_field = "bindip"
 
     async def config(self) -> dict[str, Any]:
         # the base class reads the config as a dict
         return (await self.middleware.call("s3.config")).model_dump()
 
-    def bind_address(self, config: dict[str, Any]) -> str:
-        # the daemon listens on one address; an empty list is every address
-        return config["bindip"][0] if config["bindip"] else "0.0.0.0"
+    async def get_ports_internal(self) -> list[tuple[str, int]]:
+        # the daemon binds the port on every address in bindip; an empty
+        # list is every address
+        config = await self.config()
+        return [(ip, config["port"]) for ip in config["bindip"] or ["0.0.0.0"]]
 
 
 class S3CertificateAttachment(CertificateServiceAttachmentDelegate):

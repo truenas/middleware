@@ -19,28 +19,7 @@ import io
 import ipaddress
 from typing import Any
 
-S3D_BINARY = "/usr/bin/s3d"
 WILDCARD_BUCKET = "*"
-
-RESTART_BUCKET_KEYS = (
-    "dataset",
-    "path",
-    "permissions_model",
-    "versioning",
-    "object_lock",
-    "object_lock_default_mode",
-    "object_lock_default_days",
-    "object_lock_default_years",
-    "sosapi_block_size",
-)
-"""The bucket keys the daemon's registry consumes once at startup. A
-reload that moves one, or adds or drops a bucket section, is refused
-whole with "restart to apply"."""
-
-RESTART_SERVER_KEYS = ("tls_cert", "tls_key", "region")
-"""The [server] keys a reload silently leaves half applied: the TLS
-listener is built at startup, and the storage engine keeps the region
-it was built with."""
 
 
 def _parser() -> RawConfigParser:
@@ -84,6 +63,7 @@ def render_buckets(config: dict[str, Any], buckets: list[dict[str, Any]], audit_
     parser.add_section("server")
     server = parser["server"]
 
+    server["listen"] = listen_value(config["bindip"], config["port"])
     server["servers"] = str(config["servers"])
     if config["region"]:
         server["region"] = config["region"]
@@ -184,50 +164,13 @@ def render_credentials(accesskeys: list[dict[str, Any]]) -> str:
     return _dump(parser)
 
 
-def listen_address(bindip: list[str], port: int) -> str:
-    """The daemon's one listen address. An empty list is every address."""
-    if not bindip:
-        return f"0.0.0.0:{port}"
-    ip = bindip[0]
-    if isinstance(ipaddress.ip_address(ip), ipaddress.IPv6Address):
-        return f"[{ip}]:{port}"
-    return f"{ip}:{port}"
-
-
-def render_unit_dropin(config: dict[str, Any]) -> str:
-    """The systemd drop-in carrying the listen address, which is the
-    unit's concern rather than the config files'. The empty ExecStart
-    clears the packaged one first: a Type=simple unit refuses two."""
-    return "[Service]\nExecStart=\nExecStart={} {}\n".format(
-        S3D_BINARY, listen_address(config["bindip"], config["port"])
-    )
-
-
-def parse(text: str) -> RawConfigParser:
-    parser = _parser()
-    parser.read_string(text)
-    return parser
-
-
-def needs_restart(old_buckets: str, new_buckets: str, old_dropin: str, new_dropin: str) -> bool:
-    """Whether the change between two renders is one the daemon cannot
-    take on SIGHUP: a bucket section added or dropped, a registry key
-    moved, a [server] key the reload leaves half applied, or a new
-    listen address. Everything else is a reload."""
-    if old_dropin != new_dropin:
-        return True
-
-    old, new = parse(old_buckets), parse(new_buckets)
-    for key in RESTART_SERVER_KEYS:
-        if old["server"].get(key) != new["server"].get(key):
-            return True
-
-    old_rows = {s: old[s] for s in old.sections() if s.startswith("bucket ")}
-    new_rows = {s: new[s] for s in new.sections() if s.startswith("bucket ")}
-    if old_rows.keys() != new_rows.keys():
-        return True
-    for section, row in new_rows.items():
-        for key in RESTART_BUCKET_KEYS:
-            if old_rows[section].get(key) != row.get(key):
-                return True
-    return False
+def listen_value(bindip: list[str], port: int) -> str:
+    """[server] listen: every address the daemon binds, comma separated,
+    an IPv6 address in brackets. An empty list is every address."""
+    addresses = []
+    for ip in bindip or ["0.0.0.0"]:
+        if isinstance(ipaddress.ip_address(ip), ipaddress.IPv6Address):
+            addresses.append(f"[{ip}]:{port}")
+        else:
+            addresses.append(f"{ip}:{port}")
+    return ", ".join(addresses)

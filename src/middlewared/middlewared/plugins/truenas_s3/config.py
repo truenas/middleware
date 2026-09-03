@@ -32,6 +32,9 @@ __all__ = ("S3Service",)
 OWNER_ID_SEED_BYTES = 28
 """The seed is 56 hex digits; generate_token returns hex, two per byte."""
 
+MAX_BINDIP = 8
+"""The daemon's ceiling on [server] listen addresses."""
+
 MAX_SERVERS = 8
 """The daemon's ceiling on reactor threads, its credential broker's ring limit."""
 
@@ -97,8 +100,8 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
         new = old.updated(data)
         verrors = ValidationErrors()
 
-        if len(new.bindip) > 1:
-            verrors.add("s3_update.bindip", "The S3 service listens on one address. Provide at most one.")
+        if len(new.bindip) > MAX_BINDIP:
+            verrors.add("s3_update.bindip", f"The S3 service listens on at most {MAX_BINDIP} addresses.")
         choices = await self.bindip_choices()
         for i, ip in enumerate(new.bindip):
             if ip not in choices:
@@ -224,9 +227,10 @@ class S3Service(SystemServiceService[S3Entry]):
         """
         Update the S3 service configuration.
 
-        Changing the listen address, port, reactor thread count, certificate
-        or region restarts the S3 service, draining in-flight requests for up
-        to 30 seconds. Every other change applies with a reload.
+        Changing the listen addresses, port, reactor thread count,
+        certificate or region restarts the S3 service, draining in-flight
+        requests for up to 30 seconds. Every other change applies with a
+        reload.
         """
         return await self._svc_part.do_update(data)
 
