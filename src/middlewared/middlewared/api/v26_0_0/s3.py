@@ -205,8 +205,8 @@ class S3Entry(BaseModel):
     bindip: UniqueList[str] = Field(
         default=[],
         description=(
-            "IP addresses the S3 service listens on. An empty list listens on every address. Choices come from "
-            "`s3.bindip_choices`. The service accepts one address today; a list with more than one entry is refused."
+            "IP addresses the S3 service listens on, at most eight. An empty list listens on every address. Choices "
+            "come from `s3.bindip_choices`."
         ),
     )
     port: Annotated[int, Field(ge=1, le=65535)] = Field(default=9000, description="TCP port the S3 service listens on.")
