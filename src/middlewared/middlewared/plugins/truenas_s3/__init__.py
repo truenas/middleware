@@ -29,17 +29,28 @@ class S3ServicePortDelegate(ServicePortDelegate):
     name = "s3"
     namespace = "s3"
     title = "S3 Service"
-    port_fields = ["port"]
+    port_fields = ["listeners"]
 
     async def config(self) -> dict[str, Any]:
         # the base class reads the config as a dict
         return (await self.middleware.call("s3.config")).model_dump()
 
     async def get_ports_internal(self) -> list[tuple[str, int]]:
-        # the daemon binds the port on every address in bindip; an empty
-        # list is every address
+        # every listener is a bound port; none is every address on 9000
         config = await self.config()
-        return [(ip, config["port"]) for ip in config["bindip"] or ["0.0.0.0"]]
+        return [(each["address"], each["port"]) for each in config["listeners"]] or [("0.0.0.0", 9000)]
+
+
+class S3ListenDelegate(SystemServiceListenMultipleDelegate):
+    """What an interface losing a static address does to the listeners
+    naming it: the base reads a list of addresses, this reads the
+    address out of each listener."""
+
+    async def get_listen_state(self, ips: list[str]) -> list[dict[str, Any]]:
+        return (await self.middleware.call("s3.config")).model_dump()["listeners"]
+
+    async def listens_on(self, state: list[dict[str, Any]], ip: str) -> bool:
+        return any(listener["address"] == ip for listener in state)
 
 
 class S3CertificateAttachment(CertificateServiceAttachmentDelegate):
@@ -85,9 +96,7 @@ async def _pool_post_import(middleware: Middleware, pool: dict[str, Any] | None)
 async def setup(middleware: Middleware) -> None:
     await middleware.call("port.register_attachment_delegate", S3ServicePortDelegate(middleware))
     await middleware.call("certificate.register_attachment_delegate", S3CertificateAttachment(middleware))
-    await middleware.call(
-        "interface.register_listen_delegate", SystemServiceListenMultipleDelegate(middleware, "s3", "bindip")
-    )
+    await middleware.call("interface.register_listen_delegate", S3ListenDelegate(middleware, "s3", "listeners"))
     # an access key change re-renders the credentials file; an account change
     # can move a resolved name or turn a key into USER_MISSING, and a stale
     # file at the daemon's next load would refuse the whole credentials file

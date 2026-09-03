@@ -63,16 +63,24 @@ def render_buckets(config: dict[str, Any], buckets: list[dict[str, Any]], audit_
     parser.add_section("server")
     server = parser["server"]
 
-    server["listen"] = listen_value(config["bindip"], config["port"])
+    plain, secure = listen_values(config["listeners"])
+    # the daemon holds the certificate pair to listen_tls: a TLS listener
+    # with no usable pair is left out rather than served in the clear, and
+    # a pair with no TLS listener is not rendered
+    if secure and not (config["tls_cert"] and config["tls_key"]):
+        secure = ""
+    if plain:
+        server["listen"] = plain
+    if secure:
+        server["listen_tls"] = secure
+        server["tls_cert"] = config["tls_cert"]
+        server["tls_key"] = config["tls_key"]
     server["servers"] = str(config["servers"])
     if config["region"]:
         server["region"] = config["region"]
     server["host_id"] = config["host_id"]
     server["owner_id_seed"] = config["owner_id_seed"]
     server["log_level"] = _lower(config["log_level"])
-    if config["tls_cert"] and config["tls_key"]:
-        server["tls_cert"] = config["tls_cert"]
-        server["tls_key"] = config["tls_key"]
     if audit_licensed:
         if config["default_audit"]:
             server["default_audit"] = _audit_value(config["default_audit"])
@@ -164,13 +172,18 @@ def render_credentials(accesskeys: list[dict[str, Any]]) -> str:
     return _dump(parser)
 
 
-def listen_value(bindip: list[str], port: int) -> str:
-    """[server] listen: every address the daemon binds, comma separated,
-    an IPv6 address in brackets. An empty list is every address."""
-    addresses = []
-    for ip in bindip or ["0.0.0.0"]:
+def listen_values(listeners: list[dict[str, Any]]) -> tuple[str, str]:
+    """[server] listen and listen_tls: the plaintext and the TLS
+    addresses, comma separated, an IPv6 address in brackets. No listener
+    at all is every address on port 9000 in plaintext."""
+    if not listeners:
+        listeners = [{"address": "0.0.0.0", "port": 9000, "tls": False}]
+    plain, secure = [], []
+    for listener in listeners:
+        ip, port = listener["address"], listener["port"]
         if isinstance(ipaddress.ip_address(ip), ipaddress.IPv6Address):
-            addresses.append(f"[{ip}]:{port}")
+            text = f"[{ip}]:{port}"
         else:
-            addresses.append(f"{ip}:{port}")
-    return ", ".join(addresses)
+            text = f"{ip}:{port}"
+        (secure if listener["tls"] else plain).append(text)
+    return ", ".join(plain), ", ".join(secure)

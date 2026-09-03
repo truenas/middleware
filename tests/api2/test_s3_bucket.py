@@ -18,7 +18,11 @@ from middlewared.test.integration.assets.account import user
 from middlewared.test.integration.assets.pool import dataset, pool
 from middlewared.test.integration.utils import call, ssh
 
-pytestmark = pytest.mark.skip(reason="the truenas_s3 daemon is not in the TrueNAS image yet")
+# TRUENAS_S3_DAEMON=1 runs them on a box that has the daemon installed by hand.
+pytestmark = pytest.mark.skipif(
+    not os.environ.get("TRUENAS_S3_DAEMON"),
+    reason="the truenas_s3 daemon is not in the TrueNAS image yet",
+)
 
 SERVICE = "truenas_s3"
 BUCKETS_CONF = "/etc/truenas_s3/buckets.conf"

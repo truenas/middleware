@@ -11,7 +11,6 @@ from middlewared.api.base import (
     NonEmptyString,
     LocalUsername,
     RemoteUsername,
-    UniqueList,
 )
 
 
@@ -26,6 +25,7 @@ __all__ = [
     "S3AccesskeyDeleteArgs",
     "S3AccesskeyDeleteResult",
     "S3AuditAction",
+    "S3Listener",
     "S3Grant",
     "S3GrantEntry",
     "S3Entry",
@@ -200,16 +200,30 @@ class S3GrantEntry(S3Grant):
     )
 
 
-class S3Entry(BaseModel):
-    id: int = Field(description="Placeholder identifier. Not used as there is only one.")
-    bindip: UniqueList[str] = Field(
-        default=[],
+class S3Listener(BaseModel):
+    address: NonEmptyString = Field(
+        description="IP address to listen on, from `s3.bindip_choices`: a static address, a loopback or a wildcard.",
+    )
+    port: Annotated[int, Field(ge=1, le=65535)] = Field(default=9000, description="TCP port to listen on.")
+    tls: bool = Field(
+        default=False,
         description=(
-            "IP addresses the S3 service listens on, at most eight. An empty list listens on every address. Choices "
-            "come from `s3.bindip_choices`."
+            "Serve this address over TLS with `certificate`, which must then be set. Plaintext otherwise. A "
+            "multi-homed system may serve a storage network in the clear and a management network over TLS."
         ),
     )
-    port: Annotated[int, Field(ge=1, le=65535)] = Field(default=9000, description="TCP port the S3 service listens on.")
+
+
+class S3Entry(BaseModel):
+    id: int = Field(description="Placeholder identifier. Not used as there is only one.")
+    listeners: list[S3Listener] = Field(
+        default=[],
+        description=(
+            "Where the S3 service listens, at most eight entries, each an address and port served in plaintext or "
+            "over TLS. An empty list listens on every address on port 9000 in plaintext. Changing it restarts the "
+            "service."
+        ),
+    )
     servers: Annotated[int, Field(ge=1, le=8)] = Field(
         default=1,
         description=(
@@ -220,7 +234,10 @@ class S3Entry(BaseModel):
     )
     certificate: int | None = Field(
         default=None,
-        description="ID of the certificate that terminates TLS, or `null` to serve plaintext HTTP.",
+        description=(
+            "ID of the certificate the TLS listeners serve. Required while any listener has `tls` set; `null` "
+            "otherwise."
+        ),
     )
     region: str = Field(
         default="", description="Region name echoed to clients. Empty accepts whatever a client signs for."
@@ -270,7 +287,9 @@ class S3BindipChoicesArgs(BaseModel):
 
 
 class S3BindipChoicesResult(BaseModel):
-    result: dict[str, str] = Field(description="IP addresses the S3 service may listen on, keyed by address.")
+    result: dict[str, str] = Field(
+        description="IP addresses a listener may name, keyed by address: static ones, loopbacks and the wildcards."
+    )
 
 
 class SharingS3Entry(BaseModel):
