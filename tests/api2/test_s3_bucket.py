@@ -18,9 +18,7 @@ from middlewared.test.integration.assets.account import user
 from middlewared.test.integration.assets.pool import dataset, pool
 from middlewared.test.integration.utils import call, ssh
 
-pytestmark = pytest.mark.skip(
-    reason="the truenas_s3 daemon is not in the TrueNAS image yet"
-)
+pytestmark = pytest.mark.skip(reason="the truenas_s3 daemon is not in the TrueNAS image yet")
 
 SERVICE = "truenas_s3"
 BUCKETS_CONF = "/etc/truenas_s3/buckets.conf"
@@ -129,9 +127,7 @@ def test_create_owns_the_dataset(owner):
 
 
 def test_delete_keeps_the_dataset(owner):
-    entry = call(
-        "sharing.s3.create", {"name": "keeps-data", "dataset": DATASET, "owner": OWNER}
-    )
+    entry = call("sharing.s3.create", {"name": "keeps-data", "dataset": DATASET, "owner": OWNER})
     try:
         ssh(f"touch /mnt/{DATASET}/marker")
         call("sharing.s3.delete", entry["id"])
@@ -147,15 +143,11 @@ def test_delete_keeps_the_dataset(owner):
 def test_existing_dataset_is_refused(owner):
     with dataset("s3-preexisting") as ds:
         with pytest.raises(ValidationErrors):
-            call(
-                "sharing.s3.create", {"name": "adopt-me", "dataset": ds, "owner": OWNER}
-            )
+            call("sharing.s3.create", {"name": "adopt-me", "dataset": ds, "owner": OWNER})
         assert not call("sharing.s3.query", [["name", "=", "adopt-me"]])
 
 
-@pytest.mark.parametrize(
-    "name", ["UPPER", "ab", "a..b", "192.168.1.1", "-lead", "trail-"]
-)
+@pytest.mark.parametrize("name", ["UPPER", "ab", "a..b", "192.168.1.1", "-lead", "trail-"])
 def test_bad_names_are_refused(owner, name):
     with pytest.raises(ValidationErrors):
         call("sharing.s3.create", {"name": name, "dataset": DATASET, "owner": OWNER})
@@ -195,9 +187,7 @@ def test_grants_live_on_the_bucket(owner):
         )
         assert [g["access"] for g in updated["grants"]] == ["DENY"]
         call("etc.generate", "truenas_s3")
-        assert parse(POLICIES_CONF) == {
-            'grant everyone "test-bucket"': {"access": "deny"}
-        }
+        assert parse(POLICIES_CONF) == {'grant everyone "test-bucket"': {"access": "deny"}}
 
         for bad, message in (
             (
@@ -315,9 +305,7 @@ def test_registry_changes_restart_and_the_rest_reload(owner):
 
 
 def test_destroying_the_dataset_deregisters_the_bucket(owner):
-    entry = call(
-        "sharing.s3.create", {"name": "doomed", "dataset": DATASET, "owner": OWNER}
-    )
+    entry = call("sharing.s3.create", {"name": "doomed", "dataset": DATASET, "owner": OWNER})
     assert call("pool.dataset.attachments", entry["dataset"]) == [
         {"type": "S3 Bucket", "service": SERVICE, "attachments": ["doomed"]}
     ]
@@ -352,20 +340,12 @@ def test_owner_change_hands_over_the_data_directory(owner):
         # the name is resolved from the uid on every read, never stored
         call("user.update", new["id"], {"username": "s3renamedowner"})
         assert call("sharing.s3.get_instance", b["id"])["owner"] == "s3renamedowner"
-        assert (
-            call("sharing.s3.query", [["owner_uid", "=", new["uid"]]], {"get": True})[
-                "owner"
-            ]
-            == "s3renamedowner"
-        )
+        assert call("sharing.s3.query", [["owner_uid", "=", new["uid"]]], {"get": True})["owner"] == "s3renamedowner"
         call("etc.generate", "truenas_s3")
         row = parse(BUCKETS_CONF)['bucket "test-bucket"']
         assert (row["owner"], row["owner_id"]) == ("s3renamedowner", str(new["uid"]))
         # naming the same account again is not a change of owner
-        assert (
-            call("sharing.s3.update", b["id"], {"owner": "s3renamedowner"})["owner_uid"]
-            == new["uid"]
-        )
+        assert call("sharing.s3.update", b["id"], {"owner": "s3renamedowner"})["owner_uid"] == new["uid"]
 
 
 def test_audit_choices():
@@ -386,9 +366,7 @@ def grantee(username):
             "password": "test1234",
         }
     ) as u:
-        key = call(
-            "s3.accesskey.create", {"name": f"{username} key", "username": username}
-        )
+        key = call("s3.accesskey.create", {"name": f"{username} key", "username": username})
         try:
             yield (
                 {"principal_type": "USER", "xid": u["uid"], "access": "READWRITE"},
@@ -460,22 +438,14 @@ def test_boto3_roundtrip(owner):
             a, b = client(key_a), client(key_b)
             assert [x["Name"] for x in a.list_buckets()["Buckets"]] == ["test-bucket"]
             a.put_object(Bucket="test-bucket", Key="pfx/hello.txt", Body=b"from a")
-            assert (
-                a.get_object(Bucket="test-bucket", Key="pfx/hello.txt")["Body"].read()
-                == b"from a"
-            )
+            assert a.get_object(Bucket="test-bucket", Key="pfx/hello.txt")["Body"].read() == b"from a"
             assert ssh(f"cat /mnt/{DATASET}/data/pfx/hello.txt") == "from a"
 
             b.put_object(Bucket="test-bucket", Key="pfx/other.txt", Body=b"from b")
             b.put_object(Bucket="test-bucket", Key="pfx/hello.txt", Body=b"b over a")
-            assert (
-                a.get_object(Bucket="test-bucket", Key="pfx/hello.txt")["Body"].read()
-                == b"b over a"
-            )
+            assert a.get_object(Bucket="test-bucket", Key="pfx/hello.txt")["Body"].read() == b"b over a"
             b.delete_object(Bucket="test-bucket", Key="pfx/hello.txt")
-            assert [
-                o["Key"] for o in a.list_objects_v2(Bucket="test-bucket")["Contents"]
-            ] == ["pfx/other.txt"]
+            assert [o["Key"] for o in a.list_objects_v2(Bucket="test-bucket")["Contents"]] == ["pfx/other.txt"]
         finally:
             call("service.control", "STOP", SERVICE, {"silent": False}, job=True)
 
@@ -498,16 +468,12 @@ def test_a_file_survives_the_round_trip(owner, size, threshold, parts):
     has to carry both, which no tiny put_object proves."""
     from boto3.s3.transfer import TransferConfig
 
-    transfer = TransferConfig(
-        multipart_threshold=threshold, multipart_chunksize=5 << 20
-    )
+    transfer = TransferConfig(multipart_threshold=threshold, multipart_chunksize=5 << 20)
     source, expected = random_file(size)
     fetched = source + ".down"
     try:
         with grantee("s3client") as (grant, key), bucket(grants=[grant]):
-            assert call(
-                "service.control", "START", SERVICE, {"silent": False}, job=True
-            )
+            assert call("service.control", "START", SERVICE, {"silent": False}, job=True)
             try:
                 s3 = client(key)
                 s3.upload_file(
@@ -528,20 +494,14 @@ def test_a_file_survives_the_round_trip(owner, size, threshold, parts):
                 else:
                     assert re.fullmatch(r"[0-9a-f-]{36}", etag), etag
 
-                s3.download_file(
-                    "test-bucket", "big/file.bin", fetched, Config=transfer
-                )
+                s3.download_file("test-bucket", "big/file.bin", fetched, Config=transfer)
                 assert md5_of(fetched) == expected
 
                 on_disk = f"/mnt/{DATASET}/data/big/file.bin"
                 assert ssh(f"md5sum {on_disk}").split()[0] == expected
-                uid = call(
-                    "user.query", [["username", "=", "s3client"]], {"get": True}
-                )["uid"]
+                uid = call("user.query", [["username", "=", "s3client"]], {"get": True})["uid"]
                 assert call("filesystem.stat", on_disk)["uid"] == uid
-                assert (
-                    call("filesystem.stat", f"/mnt/{DATASET}/.truenas_s3")["uid"] == 0
-                )
+                assert call("filesystem.stat", f"/mnt/{DATASET}/.truenas_s3")["uid"] == 0
             finally:
                 call("service.control", "STOP", SERVICE, {"silent": False}, job=True)
     finally:

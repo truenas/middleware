@@ -14,9 +14,7 @@ from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.account import user
 from middlewared.test.integration.utils import call, ssh
 
-pytestmark = pytest.mark.skip(
-    reason="the truenas_s3 daemon is not in the TrueNAS image yet"
-)
+pytestmark = pytest.mark.skip(reason="the truenas_s3 daemon is not in the TrueNAS image yet")
 
 SERVICE = "truenas_s3"
 BUCKETS_CONF = "/etc/truenas_s3/buckets.conf"
@@ -166,11 +164,7 @@ def test_global_grants_render_as_wildcard_rows():
             "password": "test1234",
         }
     ) as u:
-        with config(
-            global_grants=[
-                {"principal_type": "USER", "xid": u["uid"], "access": "DENY"}
-            ]
-        ):
+        with config(global_grants=[{"principal_type": "USER", "xid": u["uid"], "access": "DENY"}]):
             cfg = call("s3.config")
             assert cfg["global_grants"] == [
                 {
