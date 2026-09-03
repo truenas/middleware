@@ -193,8 +193,7 @@ def test_deleted_user_takes_its_keys():
         }
     ):
         keys = [
-            call("s3.accesskey.create", {"name": f"doomed key {i}", "username": "s3keygone"})["id"]
-            for i in range(2)
+            call("s3.accesskey.create", {"name": f"doomed key {i}", "username": "s3keygone"})["id"] for i in range(2)
         ]
         assert len(call("s3.accesskey.query", [["id", "in", keys]])) == 2
 
@@ -207,8 +206,7 @@ def test_unresolved_directory_account_flips_the_status(accesskey):
     enabled row the S3 service cannot resolve."""
     call(
         "datastore.sql",
-        "UPDATE truenas_s3_accesskey SET user_identifier = 'S-1-5-21-1-2-3-4567' "
-        f"WHERE id = {accesskey['id']}",
+        f"UPDATE truenas_s3_accesskey SET user_identifier = 'S-1-5-21-1-2-3-4567' WHERE id = {accesskey['id']}",
     )
     entry = call("s3.accesskey.get_instance", accesskey["id"])
     assert entry["username"] is None
