@@ -1,3 +1,5 @@
+# TODO: re-enable once the truenas_s3 daemon is added to the TrueNAS image.
+# Every test here starts the service and talks to the daemon.
 """The S3 service's global configuration, the files it renders and the
 verb each change costs. The daemon answers a reload request with whether
 it took the files or wants a restart, and middleware acts on that, so
@@ -11,6 +13,10 @@ import pytest
 from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.account import user
 from middlewared.test.integration.utils import call, ssh
+
+pytestmark = pytest.mark.skip(
+    reason="the truenas_s3 daemon is not in the TrueNAS image yet"
+)
 
 SERVICE = "truenas_s3"
 BUCKETS_CONF = "/etc/truenas_s3/buckets.conf"
