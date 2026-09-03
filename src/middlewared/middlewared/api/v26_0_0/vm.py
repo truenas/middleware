@@ -178,6 +178,7 @@ class VMCreateResult(BaseModel):
 
 
 class VMUpdate(VMCreate, metaclass=ForUpdateMetaclass):
+    uuid: Excluded = excluded_field()
     bootloader_ovmf: Excluded = excluded_field()
     enable_secure_boot: Excluded = excluded_field()
 

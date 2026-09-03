@@ -217,6 +217,13 @@ class VMService(CRUDService):
         if not data.get('uuid'):
             data['uuid'] = str(uuid.uuid4())
 
+        if not old or data['uuid'] != old['uuid']:
+            uuid_filters = [('uuid', '=', data['uuid'])]
+            if old:
+                uuid_filters.append(('id', '!=', old['id']))
+            if await self.middleware.call('datastore.query', 'vm.vm', uuid_filters):
+                verrors.add(f'{schema_name}.uuid', 'A VM with this UUID already exists.', errno.EEXIST)
+
         if not await self.middleware.call('vm.license_active'):
             verrors.add(
                 f'{schema_name}.name',
