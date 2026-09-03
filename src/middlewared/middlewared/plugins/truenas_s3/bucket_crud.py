@@ -83,11 +83,6 @@ class SharingS3Model(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     name = sa.Column(sa.String(63), unique=True)
     dataset = sa.Column(sa.String(255), unique=True)
-    # the mount point captured when the dataset was created, never re-derived
-    # at render: the daemon consumes it once, and a moved mount point must
-    # surface as a restart rather than silently shift the render
-    path = sa.Column(sa.String(255))
-    relative_path = sa.Column(sa.String(255), nullable=True)
     enabled = sa.Column(sa.Boolean(), default=True)
     # the uid is the owner; its name is resolved when read, never stored,
     # so a renamed account reads as its new name and a reused name never
@@ -99,8 +94,6 @@ class SharingS3Model(sa.Model):
     object_lock = sa.Column(sa.Boolean(), default=False)
     object_lock_default_mode = sa.Column(sa.String(16), nullable=True)
     object_lock_default_days = sa.Column(sa.Integer(), nullable=True)
-    object_lock_default_years = sa.Column(sa.Integer(), nullable=True)
-    sosapi_block_size = sa.Column(sa.Integer(), nullable=True)
     # NULL inherits the service default; an empty list audits nothing
     audit = sa.Column(sa.JSON(None), nullable=True)
     audit_overflow = sa.Column(sa.String(16), nullable=True)
@@ -135,6 +128,15 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         datastore_extend_context = "sharing.s3.bucket_extend_context"
 
     @private
+    async def get_path_field(self, data: SharingS3Entry | dict[str, Any]) -> str:
+        # the bucket is its dataset, mounted where every dataset middleware
+        # makes is: what the share machinery asks a path for (the locked
+        # check, the dataset attachment delegate) is answered from the
+        # dataset name rather than stored beside it
+        dataset = data["dataset"] if isinstance(data, dict) else data.dataset
+        return f"/mnt/{dataset}"
+
+    @private
     async def bucket_extend_context(self, rows: list[dict[str, Any]], extra: dict[str, Any]) -> dict[str, Any]:
         """Every owner and grant principal across the rows, resolved once
         each rather than once per row."""
@@ -148,7 +150,6 @@ class SharingS3Service(SharingService[SharingS3Entry]):
 
     @private
     async def bucket_extend(self, data: dict[str, Any], names: dict[str, dict[int, str]]) -> dict[str, Any]:
-        data.pop("relative_path", None)
         data["owner"] = names["users"].get(data["owner_uid"], str(data["owner_uid"]))
         data["grants"] = label_grants(data["grants"], names)
         return data
@@ -173,16 +174,13 @@ class SharingS3Service(SharingService[SharingS3Entry]):
                     f"{schema}.permissions_model",
                     "Object lock requires the S3 permissions model: another protocol could rewrite a locked object.",
                 )
-        rule = (data.object_lock_default_mode, data.object_lock_default_days, data.object_lock_default_years)
-        if any(v is not None for v in rule):
+        if data.object_lock_default_mode is not None or data.object_lock_default_days is not None:
             if not data.object_lock:
                 verrors.add(f"{schema}.object_lock", "A default retention rule requires object lock to be enabled.")
             if data.object_lock_default_mode is None:
                 verrors.add(f"{schema}.object_lock_default_mode", "A default retention rule needs a mode.")
-            if data.object_lock_default_days is None and data.object_lock_default_years is None:
-                verrors.add(f"{schema}.object_lock_default_days", "A default retention rule needs days or years.")
-            if data.object_lock_default_days is not None and data.object_lock_default_years is not None:
-                verrors.add(f"{schema}.object_lock_default_years", "Specify days or years, not both.")
+            if data.object_lock_default_days is None:
+                verrors.add(f"{schema}.object_lock_default_days", "A default retention rule needs a period.")
 
         if (data.audit is not None or data.audit_overflow is not None) and not await self.middleware.call(
             "s3.audit_licensed"
@@ -202,13 +200,22 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         return user["pw_uid"], user["pw_gid"]
 
     @private
-    def compress(self, data: SharingS3Entry, owner_uid: int, path: str | None = None) -> dict[str, Any]:
+    def compress(self, data: SharingS3Entry, owner_uid: int) -> dict[str, Any]:
         row = data.model_dump(exclude={"id", "locked", "owner"})
         row["grants"] = [g.model_dump(exclude={"name"}) for g in data.grants]
         row["owner_uid"] = owner_uid
-        if path is not None:
-            row["path"] = path
         return row
+
+    @private
+    async def mountpoint(self, dataset: str) -> str | None:
+        """Where the bucket's dataset is mounted, or None when the dataset
+        is gone. Read from ZFS whenever it is needed rather than kept: the
+        dataset is the bucket's identity and its mount point follows it."""
+        rows = await self.call2(
+            self.s.zfs.resource.query_impl, ZFSResourceQuery(paths=[dataset], properties=["mountpoint"])
+        )
+        mountpoint = rows[0]["properties"]["mountpoint"]["value"] if rows else None
+        return mountpoint if mountpoint and mountpoint.startswith("/") else None
 
     @private
     async def create_dataset(self, schema: str, name: str, owner: tuple[int, int]) -> str:
@@ -237,13 +244,10 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         except ValueError as e:
             verrors.add(f"{schema}.dataset", str(e), errno.EINVAL)
         verrors.check()
-        rows = await self.call2(
-            self.s.zfs.resource.query_impl, ZFSResourceQuery(paths=[name], properties=["mountpoint"])
-        )
-        mountpoint = rows[0]["properties"]["mountpoint"]["value"] if rows else None
-        if not mountpoint or not mountpoint.startswith("/"):
+        mountpoint = await self.mountpoint(name)
+        if mountpoint is None:
             await self.destroy_dataset(name)
-            raise CallError(f"{name}: the new dataset has no usable mount point ({mountpoint!r}).")
+            raise CallError(f"{name}: the new dataset has no usable mount point.")
         try:
             await self.provision_data(mountpoint, owner)
         except Exception:
@@ -311,11 +315,9 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         verrors.check()
         assert owner is not None
 
-        path = await self.create_dataset("sharing_s3_create", data.dataset, owner)
+        await self.create_dataset("sharing_s3_create", data.dataset, owner)
         try:
-            id_ = await self.middleware.call(
-                "datastore.insert", self._config.datastore, self.compress(data, owner[0], path)
-            )
+            id_ = await self.middleware.call("datastore.insert", self._config.datastore, self.compress(data, owner[0]))
             await render_and_apply(self.middleware)
         except Exception:
             await self.destroy_dataset(data.dataset)
@@ -354,8 +356,8 @@ class SharingS3Service(SharingService[SharingS3Entry]):
                 owner = resolved
         verrors.check()
 
-        if owner is not None:
-            await self.chown_data(old.path, owner)
+        if owner is not None and (mountpoint := await self.mountpoint(old.dataset)) is not None:
+            await self.chown_data(mountpoint, owner)
         owner_uid = old.owner_uid if owner is None else owner[0]
         await self.middleware.call("datastore.update", self._config.datastore, id_, self.compress(new, owner_uid))
         await render_and_apply(self.middleware)

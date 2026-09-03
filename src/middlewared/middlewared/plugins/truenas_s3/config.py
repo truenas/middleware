@@ -215,13 +215,19 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
         rendered_buckets = []
         for bucket in buckets:
             live = datasets.get(bucket["dataset"])
+            mountpoint = live["properties"]["mountpoint"]["value"] if live else None
+            if not mountpoint or not mountpoint.startswith("/"):
+                # a dataset that is gone still renders its row, at the mount
+                # point it would have, so the daemon answers 503 for the
+                # bucket rather than saying it never existed
+                mountpoint = f"/mnt/{bucket['dataset']}"
             rendered_buckets.append(
                 {
                     **bucket,
                     "owner_label": bucket["owner"],
                     "owner_id": bucket["owner_uid"],
                     "dataset_missing": live is None,
-                    "live_mountpoint": live["properties"]["mountpoint"]["value"] if live else None,
+                    "mountpoint": mountpoint,
                 }
             )
 

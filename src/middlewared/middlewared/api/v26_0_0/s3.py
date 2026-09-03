@@ -301,12 +301,10 @@ class SharingS3Entry(BaseModel):
         ),
     )
     dataset: NonEmptyString = Field(
-        description="The ZFS dataset the bucket is. Created by `sharing.s3.create` and owned by it.",
-    )
-    path: str = Field(
         description=(
-            "Mount point of the bucket's dataset. Objects live under its `data` directory, which is created owned by "
-            "`owner` with an inheritable ACL every grantee satisfies, so the grants alone decide access."
+            "The ZFS dataset the bucket is. Created by `sharing.s3.create` and owned by it. Objects live in the "
+            "`data` directory under its mount point, which is created owned by `owner` with an inheritable ACL "
+            "every grantee satisfies, so the grants alone decide access."
         ),
     )
     enabled: bool = Field(default=True, description="Whether the bucket is served. Toggling restarts the S3 service.")
@@ -338,15 +336,7 @@ class SharingS3Entry(BaseModel):
     )
     object_lock_default_days: Annotated[int, Field(ge=1, le=36500)] | None = Field(
         default=None,
-        description="Retention period of the default object lock rule in days. Mutually exclusive with years.",
-    )
-    object_lock_default_years: Annotated[int, Field(ge=1, le=100)] | None = Field(
-        default=None,
-        description="Retention period of the default object lock rule in years. Mutually exclusive with days.",
-    )
-    sosapi_block_size: Literal[256, 512, 1024, 4096, 8192] | None = Field(
-        default=None,
-        description="Block size in KiB recommended to Veeam through SOSAPI, or `null` to recommend nothing.",
+        description="Retention period of the default object lock rule in days, up to 36500 (a hundred years).",
     )
     audit: S3AuditMask | None = Field(
         default=None,
@@ -364,7 +354,6 @@ class SharingS3Entry(BaseModel):
 
 class SharingS3Create(SharingS3Entry):
     id: Excluded = excluded_field()
-    path: Excluded = excluded_field()
     owner_uid: Excluded = excluded_field()
     grants: list[S3Grant] = Field(default=[], description="Who may access the bucket and how, beyond its owner.")
     locked: Excluded = excluded_field()
