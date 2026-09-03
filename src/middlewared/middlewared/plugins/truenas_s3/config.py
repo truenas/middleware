@@ -10,6 +10,7 @@ from middlewared.api.current import (
     S3BindipChoicesArgs,
     S3BindipChoicesResult,
     S3Entry,
+    S3Listener,
     S3Update,
     S3UpdateArgs,
     S3UpdateResult,
@@ -32,8 +33,8 @@ __all__ = ("S3Service",)
 OWNER_ID_SEED_BYTES = 28
 """The seed is 56 hex digits; generate_token returns hex, two per byte."""
 
-MAX_BINDIP = 8
-"""The daemon's ceiling on [server] listen addresses."""
+MAX_LISTENERS = 8
+"""The daemon's ceiling on listen addresses, plaintext and TLS together."""
 
 MAX_SERVERS = 8
 """The daemon's ceiling on reactor threads, its credential broker's ring limit."""
@@ -43,8 +44,7 @@ class S3Model(sa.Model):
     __tablename__ = "services_truenas_s3"
 
     id = sa.Column(sa.Integer(), primary_key=True)
-    bindip = sa.Column(sa.JSON(list), default=[])
-    port = sa.Column(sa.Integer(), default=9000)
+    listeners = sa.Column(sa.JSON(list), default=[])
     servers = sa.Column(sa.Integer(), default=1)
     certificate_id = sa.Column(sa.ForeignKey("system_certificate.id"), index=True, nullable=True)
     region = sa.Column(sa.String(120), default="")
@@ -94,21 +94,46 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
         return {"host_id": row["host_id"], "owner_id_seed": row["owner_id_seed"]}
 
     async def bindip_choices(self) -> dict[str, str]:
-        return {d["address"]: d["address"] for d in await self.middleware.call("interface.ip_in_use", {"static": True})}
+        # the static addresses (the VIPs on HA), the loopbacks for a
+        # deployment served only from the box itself, and the wildcards
+        choices = await self.middleware.call(
+            "interface.ip_in_use", {"static": True, "loopback": True, "any": True, "ipv4": True, "ipv6": True}
+        )
+        return {d["address"]: d["address"] for d in choices}
 
     async def do_update(self, data: S3Update) -> S3Entry:
         old = await self.config()
         new = old.updated(data)
         verrors = ValidationErrors()
 
-        if len(new.bindip) > MAX_BINDIP:
-            verrors.add("s3_update.bindip", f"The S3 service listens on at most {MAX_BINDIP} addresses.")
+        # the base builds the entry without validating it, so a list the
+        # update did not touch holds plain dicts; the ones it did hold
+        # models. One shape for the checks below, whichever side it came from
+        listeners = [S3Listener.model_validate(row) for row in new.model_dump()["listeners"]]
+        if len(listeners) > MAX_LISTENERS:
+            verrors.add("s3_update.listeners", f"The S3 service listens on at most {MAX_LISTENERS} addresses.")
         choices = await self.bindip_choices()
-        for i, ip in enumerate(new.bindip):
-            if ip not in choices:
-                verrors.add(f"s3_update.bindip.{i}", f"Cannot use {ip}. Please provide a valid ip address.")
-        for ip in new.bindip or ["0.0.0.0"]:
-            verrors.extend(await validate_port(self.middleware, "s3_update.port", new.port, "s3", ip))
+        seen: set[tuple[str, int]] = set()
+        for i, listener in enumerate(listeners):
+            if listener.address not in choices:
+                verrors.add(
+                    f"s3_update.listeners.{i}.address",
+                    f"Cannot use {listener.address}. Please provide a valid ip address.",
+                )
+            # the daemon binds every entry, and the same address twice
+            # would bind twice
+            if (listener.address, listener.port) in seen:
+                verrors.add(f"s3_update.listeners.{i}", "The same address and port may only be listed once.")
+            seen.add((listener.address, listener.port))
+            verrors.extend(
+                await validate_port(
+                    self.middleware, f"s3_update.listeners.{i}.port", listener.port, "s3", listener.address
+                )
+            )
+        if not listeners:
+            verrors.extend(await validate_port(self.middleware, "s3_update.listeners", 9000, "s3", "0.0.0.0"))
+        if any(listener.tls for listener in listeners) and new.certificate is None:
+            verrors.add("s3_update.certificate", "A listener served over TLS needs a certificate.")
 
         # every thread is a ring with its own pool; more than the CPUs
         # the system has serves nothing but the memory bill
@@ -228,17 +253,17 @@ class S3Service(SystemServiceService[S3Entry]):
         """
         Update the S3 service configuration.
 
-        Changing the listen addresses, port, reactor thread count,
-        certificate or region restarts the S3 service, draining in-flight
-        requests for up to 30 seconds. Every other change applies with a
-        reload.
+        Changing the listeners, the reactor thread count or the region, or
+        setting or clearing the certificate, restarts the S3 service,
+        draining in-flight requests for up to 30 seconds. Every other
+        change, a renewed certificate included, applies with a reload.
         """
         return await self._svc_part.do_update(data)
 
     @api_method(S3BindipChoicesArgs, S3BindipChoicesResult, check_annotations=True)
     async def bindip_choices(self) -> dict[str, str]:
         """
-        Returns the IP addresses the S3 service may listen on.
+        Returns the IP addresses a listener may name.
         """
         return await self._svc_part.bindip_choices()
 

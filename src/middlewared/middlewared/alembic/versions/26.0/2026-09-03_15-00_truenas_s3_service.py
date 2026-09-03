@@ -19,8 +19,7 @@ depends_on = None
 def upgrade():
     op.create_table('services_truenas_s3',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('bindip', sa.TEXT(), nullable=False, server_default='[]'),
-    sa.Column('port', sa.Integer(), nullable=False, server_default='9000'),
+    sa.Column('listeners', sa.TEXT(), nullable=False, server_default='[]'),
     sa.Column('servers', sa.Integer(), nullable=False, server_default='1'),
     sa.Column('certificate_id', sa.Integer(), nullable=True),
     sa.Column('region', sa.String(length=120), nullable=False, server_default=''),

@@ -7,6 +7,7 @@ the tests watch the service's pid: a reload keeps it, a restart replaces
 it."""
 
 import contextlib
+import os
 from configparser import RawConfigParser
 
 import pytest
@@ -14,7 +15,11 @@ from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.account import user
 from middlewared.test.integration.utils import call, ssh
 
-pytestmark = pytest.mark.skip(reason="the truenas_s3 daemon is not in the TrueNAS image yet")
+# TRUENAS_S3_DAEMON=1 runs them on a box that has the daemon installed by hand.
+pytestmark = pytest.mark.skipif(
+    not os.environ.get("TRUENAS_S3_DAEMON"),
+    reason="the truenas_s3 daemon is not in the TrueNAS image yet",
+)
 
 SERVICE = "truenas_s3"
 BUCKETS_CONF = "/etc/truenas_s3/buckets.conf"
@@ -57,8 +62,7 @@ def config(**changes):
 
 def test_defaults():
     cfg = call("s3.config")
-    assert cfg["bindip"] == []
-    assert cfg["port"] == 9000
+    assert cfg["listeners"] == []
     assert cfg["servers"] == 1
     assert cfg["certificate"] is None
     assert cfg["region"] == ""
@@ -69,19 +73,25 @@ def test_defaults():
     assert "host_id" not in cfg and "owner_id_seed" not in cfg
 
 
-def test_bindip_choices_and_validation():
-    # the choices are the static addresses (the VIPs on HA); a box on DHCP
-    # has none, and an address outside them is refused either way
+def listener(address="0.0.0.0", port=9000, tls=False):
+    return {"address": address, "port": port, "tls": tls}
+
+
+def test_listener_validation():
+    # the choices are the static addresses (the VIPs on HA), the loopbacks
+    # and the wildcards; an address outside them is refused
     choices = call("s3.bindip_choices")
-    assert isinstance(choices, dict)
+    assert {"0.0.0.0", "::", "127.0.0.1", "::1"} <= set(choices)
 
-    with pytest.raises(ValidationErrors) as ve:
-        call("s3.update", {"bindip": ["203.0.113.7"]})
-    assert "valid ip address" in ve.value.errors[0].errmsg
-
-    with pytest.raises(ValidationErrors) as ve:
-        call("s3.update", {"bindip": [f"203.0.113.{i}" for i in range(1, 10)]})
-    assert "at most 8" in ve.value.errors[0].errmsg
+    for bad, message in (
+        ([listener("203.0.113.7")], "valid ip address"),
+        ([listener(f"203.0.113.{i}") for i in range(1, 10)], "at most 8"),
+        ([listener(), listener()], "only be listed once"),
+        ([listener(port=9443, tls=True)], "needs a certificate"),
+    ):
+        with pytest.raises(ValidationErrors) as ve:
+            call("s3.update", {"listeners": bad})
+        assert message in ve.value.errors[0].errmsg, ve.value.errors
 
 
 def test_servers_is_bounded_by_the_daemon_and_the_cpus():
@@ -97,7 +107,7 @@ def test_servers_is_bounded_by_the_daemon_and_the_cpus():
 
 def test_port_conflict_is_refused():
     with pytest.raises(ValidationErrors) as ve:
-        call("s3.update", {"port": 22})
+        call("s3.update", {"listeners": [listener(port=22)]})
     assert "used by" in ve.value.errors[0].errmsg
 
 
@@ -109,6 +119,7 @@ def test_rendered_files_on_start():
 
         server = parse(BUCKETS_CONF)["server"]
         assert server["listen"] == "0.0.0.0:9000"
+        assert "listen_tls" not in server
         assert len(server["host_id"]) == 36
         assert len(server["owner_id_seed"]) == 56
         assert server["log_level"] == "notice"
@@ -137,9 +148,9 @@ def test_reload_keeps_the_process_and_restart_replaces_it():
             assert parse(BUCKETS_CONF)["server"]["log_level"] == "debug"
             assert service()["pids"] == pid, "a log level change is a reload"
 
-        with config(port=9001):
+        with config(listeners=[listener(port=9001)]):
             assert parse(BUCKETS_CONF)["server"]["listen"] == "0.0.0.0:9001"
-            assert service()["pids"] != pid, "a listen address change is a restart"
+            assert service()["pids"] != pid, "a listener change is a restart"
             assert ":9001" in ssh("ss -Hltn sport = :9001")
 
         with config(region="us-east-1"):
@@ -221,3 +232,35 @@ def test_audit_follows_the_license():
         assert "Enterprise license" in ve.value.errors[0].errmsg
         call("etc.generate", "truenas_s3")
         assert "default_audit" not in parse(BUCKETS_CONF)["server"]
+
+
+def test_a_tls_listener_serves_beside_a_plaintext_one():
+    """The two doors of a multi-homed system: one address in the clear, one
+    over TLS with the chosen certificate. The pair renders only with a TLS
+    listener, and clearing the certificate under one is refused."""
+    cert = call("certificate.query", [["name", "=", "truenas_default"]], {"get": True})
+    with running_service():
+        pid = service()["pids"]
+        with config(
+            listeners=[listener(), listener("127.0.0.1", 9443, tls=True)],
+            certificate=cert["id"],
+        ):
+            server = parse(BUCKETS_CONF)["server"]
+            assert server["listen"] == "0.0.0.0:9000"
+            assert server["listen_tls"] == "127.0.0.1:9443"
+            assert server["tls_cert"] == cert["certificate_path"]
+            assert server["tls_key"] == cert["privatekey_path"]
+            assert service()["pids"] != pid, "a new listener is a restart"
+            assert "<HostId>" in ssh("curl -sk https://127.0.0.1:9443/")
+            assert "<HostId>" in ssh("curl -s http://127.0.0.1:9000/")
+            assert "<HostId>" not in ssh("curl -s --max-time 3 http://127.0.0.1:9443/ || true")
+
+            with pytest.raises(ValidationErrors) as ve:
+                call("s3.update", {"certificate": None})
+            assert "needs a certificate" in ve.value.errors[0].errmsg
+
+            # a plaintext-only deployment renders no pair even with a
+            # certificate chosen
+            call("s3.update", {"listeners": [listener()]})
+            server = parse(BUCKETS_CONF)["server"]
+            assert "listen_tls" not in server and "tls_cert" not in server
