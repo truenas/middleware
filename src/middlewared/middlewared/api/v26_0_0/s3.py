@@ -235,8 +235,8 @@ class S3Entry(BaseModel):
     certificate: int | None = Field(
         default=None,
         description=(
-            "ID of the certificate the TLS listeners serve. Required while any listener has `tls` set; `null` "
-            "otherwise."
+            "ID of the certificate the TLS listeners serve. `null` serves them with the UI certificate "
+            "(`system.general.ui_certificate`), so a renewal or a change there reaches the S3 service too."
         ),
     )
     region: str = Field(
