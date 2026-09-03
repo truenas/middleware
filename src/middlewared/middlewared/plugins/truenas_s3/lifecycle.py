@@ -22,6 +22,7 @@ if TYPE_CHECKING:
 
 SERVICE = "truenas_s3"
 ETC_GROUP = "truenas_s3"
+MISSING_ALERT = "S3BucketDatasetMissing"
 CONTROL_SOCKET = "/run/truenas_s3/control"
 # a reload resolves every credential through NSS before it answers; a
 # directory that is slow to answer is the daemon's to time out, not ours

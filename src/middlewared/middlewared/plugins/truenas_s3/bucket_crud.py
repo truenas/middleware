@@ -41,7 +41,7 @@ from middlewared.utils.path import FSLocation
 from middlewared.utils.types import AuditCallback
 
 from .grants import grant_principals, label_grants, principal_names, validate_grants
-from .lifecycle import render_and_apply
+from .lifecycle import MISSING_ALERT, render_and_apply
 
 if TYPE_CHECKING:
     from middlewared.main import Middleware
@@ -381,6 +381,7 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         bucket = await self.get_instance(id_)
         audit_callback(bucket.name)
         await self.middleware.call("datastore.delete", self._config.datastore, id_)
+        await self.middleware.call("alert.oneshot_delete", MISSING_ALERT, id_)
         await render_and_apply(self.middleware)
         return True
 
@@ -411,6 +412,14 @@ class S3FSAttachmentDelegate(LockableFSAttachmentDelegate[SharingS3Entry]):
     title = "S3 Bucket"
     service = "truenas_s3"
     service_class = SharingS3Service
+
+    async def remove_alert(self, attachment: SharingS3Entry | dict[str, Any]) -> None:
+        # the missing-dataset alert is keyed by bucket id like the locked
+        # one, and a bucket that is deleted or toggled with its dataset is
+        # not missing it; a render raises it again if it still is
+        await super().remove_alert(attachment)
+        id_ = attachment["id"] if isinstance(attachment, dict) else attachment.id
+        await self.middleware.call("alert.oneshot_delete", MISSING_ALERT, id_)
 
     async def restart_reload_services(self, attachments: list[SharingS3Entry]) -> None:
         # every path here is a registry change: a bucket disabled for an

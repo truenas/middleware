@@ -24,7 +24,7 @@ from middlewared.utils.crypto import generate_token, ssl_uuid4
 
 from .accesskey_crud import S3AccesskeyService
 from .grants import grant_label, grant_principals, label_grants, principal_names, validate_grants
-from .lifecycle import render_and_apply
+from .lifecycle import MISSING_ALERT, render_and_apply
 
 if TYPE_CHECKING:
     from middlewared.main import Middleware
@@ -57,9 +57,6 @@ class S3Model(sa.Model):
     # moved. Generated on the first read and never exposed through the API.
     host_id = sa.Column(sa.String(64), default="")
     owner_id_seed = sa.Column(sa.String(64), default="")
-
-
-MISSING_ALERT = "S3BucketDatasetMissing"
 
 
 def _listen_text(listeners: list[dict[str, Any]]) -> tuple[str, str]:
