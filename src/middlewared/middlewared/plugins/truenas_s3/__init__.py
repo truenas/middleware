@@ -56,6 +56,15 @@ async def _reconfigure(middleware: Middleware, *_args: Any, **_kwargs: Any) -> N
         middleware.logger.error("s3: failed to apply the configuration change", exc_info=True)
 
 
+async def _user_deleted(middleware: Middleware, user_id: int) -> None:
+    # a local account's keys go with it, then the credentials file follows
+    try:
+        await middleware.call("s3.accesskey.delete_for_user", user_id)
+    except Exception:
+        middleware.logger.error("s3: failed to remove the access keys of deleted user %d", user_id, exc_info=True)
+    await _reconfigure(middleware)
+
+
 async def _pool_post_import(middleware: Middleware, pool: dict[str, Any] | None) -> None:
     if pool is None:
         # the boot-time bulk import renders the etc group through its own
@@ -86,9 +95,9 @@ async def setup(middleware: Middleware) -> None:
         "s3.accesskey.post_update",
         "s3.accesskey.post_delete",
         "user.post_update",
-        "user.post_delete",
         "group.post_update",
         "group.post_delete",
     ):
         middleware.register_hook(hook, _reconfigure, sync=True)
+    middleware.register_hook("user.post_delete", _user_deleted, sync=True)
     middleware.register_hook("pool.post_import", _pool_post_import, sync=True)

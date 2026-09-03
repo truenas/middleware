@@ -17,7 +17,7 @@ from middlewared.api.current import (
     S3AccesskeyUpdateResult,
 )
 from middlewared.plugins.idmap_.idmap_constants import BASE_SYNTHETIC_DATASTORE_ID
-from middlewared.service import CRUDService, CRUDServicePart, ValidationErrors
+from middlewared.service import CRUDService, CRUDServicePart, ValidationErrors, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils.crypto import generate_s3_access_key, generate_s3_secret_key
 from middlewared.utils.sid import sid_is_valid
@@ -216,6 +216,16 @@ class S3AccesskeyServicePart(CRUDServicePart[S3AccesskeyEntry]):
 
         await self._delete(id_)
 
+    async def delete_for_user(self, user_id: int) -> list[int]:
+        """Every key a deleted local account held. Directory accounts are
+        keyed by SID and never pass through user.delete; a key of theirs
+        whose SID no longer resolves reads USER_MISSING instead."""
+        rows = await self.middleware.call("datastore.query", self._datastore, [["user_identifier", "=", str(user_id)]])
+        for row in rows:
+            await self.middleware.call("datastore.delete", self._datastore, row["id"])
+            self.middleware.send_event("s3.accesskey.query", "REMOVED", id=row["id"])
+        return [row["id"] for row in rows]
+
 
 class S3AccesskeyService(CRUDService[S3AccesskeyEntry]):
     class Config:
@@ -286,3 +296,7 @@ class S3AccesskeyService(CRUDService[S3AccesskeyEntry]):
         """
         await self._svc_part.do_delete(audit_callback, id_)
         return True
+
+    @private
+    async def delete_for_user(self, user_id: int) -> list[int]:
+        return await self._svc_part.delete_for_user(user_id)

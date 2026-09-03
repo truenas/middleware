@@ -115,8 +115,9 @@ class S3AccesskeyEntry(BaseModel):
     status: S3AccesskeyStatus = Field(
         description=(
             "Effective state of the access key. Only `ENABLED` keys are usable. `DISABLED` was set by an "
-            "administrator, `EXPIRED` passed its expiration, `USER_MISSING` belongs to an account that no longer "
-            "exists, and `SECRET_LOST` lost its secret to a configuration restore without the secret seed and "
+            "administrator, `EXPIRED` passed its expiration, `USER_MISSING` belongs to a directory account that no "
+            "longer resolves (a deleted local account takes its keys with it), and `SECRET_LOST` lost its secret to a "
+            "configuration restore without the secret seed and "
             "must be rotated."
         ),
     )
