@@ -41,7 +41,7 @@ import middlewared.sqlalchemy as sa
 from middlewared.utils.path import FSLocation
 from middlewared.utils.types import AuditCallback
 
-from .grants import grant_principals, label_grants, principal_names, validate_grants
+from .grants import PrincipalNames, Principals, grant_principals, label_grants, principal_names, validate_grants
 from .lifecycle import MISSING_ALERT, render_and_apply
 
 if TYPE_CHECKING:
@@ -149,20 +149,17 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         return f"/mnt/{dataset}"
 
     @private
-    async def bucket_extend_context(self, rows: list[dict[str, Any]], extra: dict[str, Any]) -> dict[str, Any]:
+    async def bucket_extend_context(self, rows: list[dict[str, Any]], extra: dict[str, Any]) -> PrincipalNames:
         """Every owner and grant principal across the rows, resolved once
         each rather than once per row."""
-        uids = {row["owner_uid"] for row in rows}
-        gids: set[int] = set()
+        principals = Principals(uids=frozenset(row["owner_uid"] for row in rows), gids=frozenset())
         for row in rows:
-            row_uids, row_gids = grant_principals(row["grants"])
-            uids |= row_uids
-            gids |= row_gids
-        return await principal_names(self.middleware, uids, gids)
+            principals |= grant_principals(row["grants"])
+        return await principal_names(self.middleware, principals)
 
     @private
-    async def bucket_extend(self, data: dict[str, Any], names: dict[str, dict[int, str]]) -> dict[str, Any]:
-        data["owner"] = names["users"].get(data["owner_uid"], str(data["owner_uid"]))
+    async def bucket_extend(self, data: dict[str, Any], names: PrincipalNames) -> dict[str, Any]:
+        data["owner"] = names.user(data["owner_uid"])
         data["grants"] = label_grants(data["grants"], names)
         return data
 
