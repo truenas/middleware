@@ -1,7 +1,7 @@
 import errno
 import pytest
 
-from middlewared.service_exception import CallError, ValidationErrors
+from middlewared.service_exception import CallError, ValidationError, ValidationErrors
 from middlewared.test.integration.utils import client, call
 
 
@@ -78,6 +78,12 @@ def test_onetime_password_generate_token_fail(onetime_password):
             c.call('auth.generate_token')
 
         assert ce.value.errno == errno.EOPNOTSUPP
+
+
+def test_onetime_password_nonexistent_user():
+    """Generating a one-time password for an unknown username is a validation error."""
+    with pytest.raises(ValidationError, match='user does not exist'):
+        call('auth.generate_onetime_password', {'username': 'this_user_does_not_exist_zzz'})
 
 
 @pytest.mark.parametrize('data,revert,errmsg', (
