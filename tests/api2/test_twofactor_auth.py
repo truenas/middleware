@@ -49,8 +49,8 @@ def ensure_small_time_difference():
 
 @pytest.fixture(scope='function')
 def enterprise_ad():
-    # ds_auth below is gated by the DIRECTORY_SERVICES entitlement.
-    with entitled("DIRECTORY_SERVICES"):
+    # ds_auth below is gated by the DIRECTORY_SERVICES_AUTH entitlement.
+    with entitled("DIRECTORY_SERVICES_AUTH"):
         with directoryservice('ACTIVEDIRECTORY') as ad:
             call("system.general.update", {"ds_auth": True})
             try:

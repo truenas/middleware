@@ -49,7 +49,7 @@ GATES = [
     ("plugins/support/execute.py", "LicenseFeature.SUPPORT"),
     ("plugins/system/product.py", None),
     ("plugins/system/product.py", "LicenseFeature.SED"),
-    ("plugins/system_general/update.py", "LicenseFeature.DIRECTORY_SERVICES"),
+    ("plugins/system_general/update.py", "LicenseFeature.DIRECTORY_SERVICES_AUTH"),
     ("plugins/truesearch.py", "LicenseFeature.TRUESEARCH"),
     ("plugins/update_/profile_.py", "LicenseFeature.MISSION_CRITICAL"),
     ("plugins/update_/profile_.py", "LicenseFeature.MISSION_CRITICAL"),
