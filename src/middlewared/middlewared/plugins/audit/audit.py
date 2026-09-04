@@ -131,6 +131,8 @@ class AuditService(ConfigService):
         for share in audited_smb_shares:
             data['enabled_services']['SMB'].append(share['name'])
 
+        data['enabled_services']['S3'] = self.middleware.call_sync('sharing.s3.audited_bucket_names')
+
         return data
 
     @private

@@ -67,6 +67,7 @@ jobs:
             middlewared/plugins/truecommand/ \
             middlewared/plugins/truenas/ \
             middlewared/plugins/truenas_connect/ \
+            middlewared/plugins/truenas_s3/ \
             middlewared/plugins/truesearch.py \
             middlewared/plugins/tunable/ \
             middlewared/plugins/webshare/ \
@@ -133,6 +134,7 @@ jobs:
             middlewared/etc_files/sysctl.d \
             middlewared/etc_files/syslog-ng/conf.d/tnaudit.conf.mako \
             middlewared/etc_files/syslog-ng/conf.d/tndestinations.conf.mako \
+            middlewared/etc_files/truenas_s3 \
             middlewared/etc_files/wireguard \
             --follow-imports silent \
             --strict
