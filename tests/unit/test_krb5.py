@@ -370,9 +370,16 @@ def validate_realms_section(data):
     \t\tkdc = ip1 ip2 ip3\n
     \t\tadmin_server = ip1\n
     \t\tkpasswd_server = ip1 ip2 ip3\n
+
+    Every realm is also emitted under its lower- and upper-case spelling so that
+    clients which learn the realm from the domain controller (samba's `net ads
+    join` kinits as MACHINE$@<lower-case dns domain>) still find the pinned KDCs.
+    Those aliases carry the same settings and the canonical default_domain.
     """
-    def validate_realm(idx, realm):
-        this = REALMS[idx]
+    def validate_realm(section_name, realm):
+        matching = [r for r in REALMS if r['realm'].casefold() == section_name.casefold()]
+        assert len(matching) == 1, f'{section_name}: no matching realm in {REALMS}'
+        this = matching[0]
         lidx = 0
         for line in realm.splitlines():
             if not line.strip():
@@ -380,7 +387,7 @@ def validate_realms_section(data):
 
             match lidx:
                 case 0:
-                    assert line.startswith(f'\t{this["realm"]} =')
+                    assert line.startswith(f'\t{section_name} =')
                 case 1:
                     assert line.strip() == f'default_domain = {this["realm"]}', str(realm)
                 case _:
@@ -399,15 +406,26 @@ def validate_realms_section(data):
 
             lidx += 1
 
-    for idx, realm in enumerate(data.split('}')):
+    seen = []
+    for realm in data.split('}'):
         if not realm.strip():
             continue
 
-        validate_realm(idx, realm)
+        section_name = realm.strip().splitlines()[0].split('=')[0].strip()
+        seen.append(section_name)
+        validate_realm(section_name, realm)
+
+    # each configured realm must appear under both case spellings
+    for entry in REALMS:
+        assert entry['realm'].lower() in seen, seen
+        assert entry['realm'].upper() in seen, seen
 
 
 def validate_domain_realms_section(data):
     """
+    Case aliases in [realms] must not multiply these entries: hostnames map onto
+    the canonical realm name only.
+
     data will consist of approximately following:
 
     \tad02.tn.ixsystems.net = AD02.TN.IXSYSTEMS.NET\n
@@ -457,17 +475,84 @@ def test__krb5conf_realm():
     # Convert our stored kerberos realm configuration into krb5.conf
     # data via `generate()` method and validate it's what we expect.
     for section in kconf.generate().split('\n\n'):
-        if not section.startswith(('[realms]', '[domain_realms]')):
+        if not section.startswith(('[realms]', '[domain_realm]')):
             continue
 
         section_name, data = section.split('\n', 1)
         match section_name:
             case '[realms]':
                 validate_realms_section(data)
-            case '[domain_realms]':
+            case '[domain_realm]':
                 validate_domain_realms_section(data)
             case _:
                 raise ValueError(f'{section_name}: unexpected entry')
+
+
+def realms_section(conf):
+    """
+    Return the lines of the [realms] section of a generated krb5.conf, stripped of
+    leading whitespace (krb5.conf indentation is cosmetic).
+    """
+    lines = conf.splitlines()
+    start = lines.index('[realms]')
+    out = []
+    for line in lines[start + 1:]:
+        if line.startswith('['):
+            break
+        out.append(line.strip())
+
+    return out
+
+
+def test__krb5conf_realm_case_aliases():
+    """
+    MIT krb5 looks up [realms] sections case-sensitively, and we set
+    dns_lookup_kdc = false whenever KDCs are pinned. Clients that learn the realm
+    from the domain controller get the lower-case DNS domain -- samba's
+    `net ads join` kinits as MACHINE$@<dns_domain_name> when it reconnects as the
+    machine account -- so both spellings must resolve to the same KDCs. Otherwise
+    the kinit fails with KRB5_REALM_UNKNOWN and, when NTLM fallback is disabled
+    (`client use kerberos = required`, which the GPOS STIG sets), the join fails.
+    """
+    kconf = krb5_conf.KRB5Conf()
+    kconf.add_realms(REALMS)
+    realms = realms_section(kconf.generate())
+
+    for entry in REALMS:
+        realm = entry['realm']
+        assert f'{realm.upper()} = {{' in realms
+        assert f'{realm.lower()} = {{' in realms
+
+        for kdc in entry['kdc']:
+            # the alias must carry the same pinned KDCs, not fall back to DNS
+            assert realms.count(f'kdc = {kdc}') == 2, realms
+
+    # aliases keep the canonical realm as default_domain
+    for entry in REALMS:
+        assert f'default_domain = {entry["realm"].lower()}' not in realms
+        assert realms.count(f'default_domain = {entry["realm"]}') == 2, realms
+
+
+def test__krb5conf_realm_already_lowercase_not_duplicated():
+    kconf = krb5_conf.KRB5Conf()
+    kconf.add_realms([dict(REALMS[0], realm='acme.test')])
+    realms = realms_section(kconf.generate())
+
+    assert realms.count('acme.test = {') == 1
+    assert realms.count('ACME.TEST = {') == 1
+
+
+def test__krb5conf_domain_realm_section_name():
+    """
+    MIT krb5 reads "domain_realm" (singular). Any other spelling parses without
+    error and is then silently ignored, leaving host -> realm unconfigured.
+    """
+    kconf = krb5_conf.KRB5Conf()
+    kconf.add_realms(REALMS)
+    conf = kconf.generate()
+
+    assert '[domain_realm]\n' in conf
+    assert '[domain_realms]' not in conf
 
 
 def test__krb5conf_libdefaults():
