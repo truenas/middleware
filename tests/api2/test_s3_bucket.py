@@ -46,6 +46,30 @@ def zfs_props(name, props):
     return {p: rows[0]["properties"][p]["raw"] for p in props} if rows else None
 
 
+@contextlib.contextmanager
+def running_service():
+    assert call("service.control", "START", SERVICE, {"silent": False}, job=True)
+    try:
+        yield
+    finally:
+        call("service.control", "STOP", SERVICE, {"silent": False}, job=True)
+
+
+# the ACL a deployment puts on the share root when more than the owner is
+# to write into it, as it would for any share: every write is published
+# under the requesting account, and the daemon leaves the directory it
+# created at 0755 owned by the owner
+OPEN_ACL = [
+    {"tag": "owner@", "type": "ALLOW", "perms": {"BASIC": "FULL_CONTROL"}, "flags": {"BASIC": "INHERIT"}},
+    {"tag": "group@", "type": "ALLOW", "perms": {"BASIC": "FULL_CONTROL"}, "flags": {"BASIC": "INHERIT"}},
+    {"tag": "everyone@", "type": "ALLOW", "perms": {"BASIC": "MODIFY"}, "flags": {"BASIC": "INHERIT"}},
+]
+
+
+def open_share_root(uid, gid):
+    call("filesystem.setacl", {"path": f"/mnt/{DATASET}/s3data", "dacl": OPEN_ACL, "uid": uid, "gid": gid}, job=True)
+
+
 @pytest.fixture(scope="module")
 def owner():
     with user(
@@ -74,9 +98,9 @@ def bucket(**overrides):
 
 def test_create_owns_the_dataset(owner):
     """The dataset is created with every property the S3 on-disk format
-    requires, its data directory belongs to the owner under an ACL every
-    grantee satisfies, the bucket holds the owner's uid, and the row
-    renders at the dataset's mount point without storing it."""
+    requires, the bucket holds the owner's uid, the row renders at the
+    dataset's mount point without storing it, and the share root is the
+    daemon's to make: absent until the service starts, then the owner's."""
     with bucket() as b:
         assert "path" not in b
         assert b["owner"] == OWNER
@@ -106,14 +130,12 @@ def test_create_owns_the_dataset(owner):
         }
 
         root = call("filesystem.stat", f"/mnt/{DATASET}")
-        assert (root["uid"], root["gid"]) == (0, 0), "the side tree stays root's"
-        data = call("filesystem.getacl", f"/mnt/{DATASET}/data")
-        assert data["uid"] == owner["uid"]
-        assert data["gid"] == owner["group"]["bsdgrp_gid"]
-        assert data["acltype"] == "NFS4"
-        everyone = [ace for ace in data["acl"] if ace["tag"] == "everyone@"]
-        assert everyone[0]["perms"] == {"BASIC": "MODIFY"}
-        assert everyone[0]["flags"] == {"BASIC": "INHERIT"}
+        assert (root["uid"], root["gid"]) == (0, 0), "the dataset root stays the daemon's"
+        assert ssh(f"test -e /mnt/{DATASET}/s3data || echo absent").strip() == "absent"
+        with running_service():
+            data = call("filesystem.stat", f"/mnt/{DATASET}/s3data")
+            assert (data["uid"], data["gid"]) == (owner["uid"], owner["group"]["bsdgrp_gid"])
+            assert data["mode"] & 0o777 == 0o755
 
         call("etc.generate", "truenas_s3")
         row = parse(BUCKETS_CONF)['bucket "test-bucket"']
@@ -133,11 +155,13 @@ def test_create_owns_the_dataset(owner):
 def test_delete_keeps_the_dataset(owner):
     entry = call("sharing.s3.create", {"name": "keeps-data", "dataset": DATASET, "owner": OWNER})
     try:
-        ssh(f"touch /mnt/{DATASET}/marker")
+        with running_service():
+            ssh(f"touch /mnt/{DATASET}/s3data/marker")
         call("sharing.s3.delete", entry["id"])
         assert not call("sharing.s3.query", [["id", "=", entry["id"]]])
         assert zfs_props(DATASET, ["mounted"]) == {"mounted": "yes"}
-        assert ssh(f"ls /mnt/{DATASET}").split() == ["data", "marker"]
+        assert ssh(f"ls -A /mnt/{DATASET}").split() == [".truenas_s3", "s3data"]
+        assert ssh(f"ls /mnt/{DATASET}/s3data").split() == ["marker"]
         call("etc.generate", "truenas_s3")
         assert 'bucket "keeps-data"' not in parse(BUCKETS_CONF)
     finally:
@@ -308,7 +332,10 @@ def test_destroying_the_dataset_deregisters_the_bucket(owner):
     assert zfs_props(DATASET, ["mountpoint"]) is None
 
 
-def test_owner_change_hands_over_the_data_directory(owner):
+def test_owner_change_moves_the_grants_not_the_directory(owner):
+    """A new owner takes the bypass and the render, and nothing on disk:
+    the share root is the deployment's once the daemon has made it, and
+    the daemon leaves it as found on every later start."""
     with (
         user(
             {
@@ -319,14 +346,14 @@ def test_owner_change_hands_over_the_data_directory(owner):
             }
         ) as new,
         bucket() as b,
+        running_service(),
     ):
-        ssh(f"touch /mnt/{DATASET}/data/theirs")
+        pid = service()["pids"]
         updated = call("sharing.s3.update", b["id"], {"owner": "s3newowner"})
         assert updated["owner_uid"] == new["uid"]
-        data = call("filesystem.stat", f"/mnt/{DATASET}/data")
-        assert (data["uid"], data["gid"]) == (new["uid"], new["group"]["bsdgrp_gid"])
-        # not recursive: what the old owner wrote stays theirs
-        assert call("filesystem.stat", f"/mnt/{DATASET}/data/theirs")["uid"] == 0
+        assert service()["pids"] == pid, "an owner change is a reload"
+        data = call("filesystem.stat", f"/mnt/{DATASET}/s3data")
+        assert (data["uid"], data["gid"]) == (owner["uid"], owner["group"]["bsdgrp_gid"])
         call("etc.generate", "truenas_s3")
         row = parse(BUCKETS_CONF)['bucket "test-bucket"']
         assert (row["owner"], row["owner_id"]) == ("s3newowner", str(new["uid"]))
@@ -418,7 +445,9 @@ def test_boto3_roundtrip(owner):
     and clients that put and get objects through the daemon. Two grantees,
     because every write is published under the requester's own uid: the
     second one writing into a prefix the first created, and over the
-    first's object, is what the data directory's inherited ACL is for."""
+    first's object, is what an inheritable ACL on the share root is for,
+    and without one the second grantee is refused at the root: the daemon
+    makes the directory the owner's and every write is the requester's."""
     with (
         grantee("s3client") as (grant_a, key_a),
         grantee("s3client2") as (
@@ -431,9 +460,12 @@ def test_boto3_roundtrip(owner):
         try:
             a, b = client(key_a), client(key_b)
             assert [x["Name"] for x in a.list_buckets()["Buckets"]] == ["test-bucket"]
+            with pytest.raises(Exception, match="AccessDenied"):
+                a.put_object(Bucket="test-bucket", Key="pfx/hello.txt", Body=b"from a")
+            open_share_root(owner["uid"], owner["group"]["bsdgrp_gid"])
             a.put_object(Bucket="test-bucket", Key="pfx/hello.txt", Body=b"from a")
             assert a.get_object(Bucket="test-bucket", Key="pfx/hello.txt")["Body"].read() == b"from a"
-            assert ssh(f"cat /mnt/{DATASET}/data/pfx/hello.txt") == "from a"
+            assert ssh(f"cat /mnt/{DATASET}/s3data/pfx/hello.txt") == "from a"
 
             b.put_object(Bucket="test-bucket", Key="pfx/other.txt", Body=b"from b")
             b.put_object(Bucket="test-bucket", Key="pfx/hello.txt", Body=b"b over a")
@@ -489,8 +521,8 @@ def test_snapshots_serve_as_versions(owner):
     restart, after which the listing consults only the newest N while a
     selected snapshot past the cap still reads by id."""
     with (
-        grantee("s3history") as (grant, key),
-        bucket(grants=[grant], versioning="SUSPENDED", snapshot_versions=["s3-*"]),
+        grantee("s3history") as (_grant, key),
+        bucket(owner="s3history", versioning="SUSPENDED", snapshot_versions=["s3-*"]),
     ):
         assert call("service.control", "START", SERVICE, {"silent": False}, job=True)
         made = []
@@ -542,7 +574,7 @@ def test_the_sosapi_block_size_follows_the_recordsize(owner):
     dataset's recordsize when Veeam asks for system.xml, so tuning the
     dataset changes the recommendation at the next ask with no reload
     and no restart. ZFS's 128K default recommends nothing."""
-    with grantee("s3veeam") as (grant, key), bucket(grants=[grant]):
+    with grantee("s3veeam") as (_grant, key), bucket(owner="s3veeam"):
         assert call("service.control", "START", SERVICE, {"silent": False}, job=True)
         try:
             pid = service()["pids"]
@@ -569,14 +601,14 @@ def test_the_sosapi_block_size_follows_the_recordsize(owner):
         # one PUT: the transfer manager only splits above its threshold
         (5 << 20, 8 << 20, 1),
         # three parts: the multipart path, staged in the side tree the
-        # daemon owns and published into data/ under the requester
+        # daemon owns and published into s3data/ under the requester
         (12 << 20, 5 << 20, 3),
     ],
     ids=["single_put", "multipart"],
 )
 def test_a_file_survives_the_round_trip(owner, size, threshold, parts):
     """A real file up and back down through the transfer manager, byte
-    for byte, landing in data/ as the uploader's own file while the side
+    for byte, landing in s3data/ as the uploader's own file while the side
     tree beside it stays the daemon's. The bucket middleware provisioned
     has to carry both, which no tiny put_object proves."""
     from boto3.s3.transfer import TransferConfig
@@ -585,7 +617,7 @@ def test_a_file_survives_the_round_trip(owner, size, threshold, parts):
     source, expected = random_file(size)
     fetched = source + ".down"
     try:
-        with grantee("s3client") as (grant, key), bucket(grants=[grant]):
+        with grantee("s3client") as (_grant, key), bucket(owner="s3client"):
             assert call("service.control", "START", SERVICE, {"silent": False}, job=True)
             try:
                 s3 = client(key)
@@ -610,7 +642,7 @@ def test_a_file_survives_the_round_trip(owner, size, threshold, parts):
                 s3.download_file("test-bucket", "big/file.bin", fetched, Config=transfer)
                 assert md5_of(fetched) == expected
 
-                on_disk = f"/mnt/{DATASET}/data/big/file.bin"
+                on_disk = f"/mnt/{DATASET}/s3data/big/file.bin"
                 assert ssh(f"md5sum {on_disk}").split()[0] == expected
                 uid = call("user.query", [["username", "=", "s3client"]], {"get": True})["uid"]
                 assert call("filesystem.stat", on_disk)["uid"] == uid

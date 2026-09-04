@@ -305,16 +305,19 @@ class SharingS3Entry(BaseModel):
     dataset: NonEmptyString = Field(
         description=(
             "The ZFS dataset the bucket is. Created by `sharing.s3.create` and owned by it. Objects live in the "
-            "`data` directory under its mount point, which is created owned by `owner` with an inheritable ACL "
-            "every grantee satisfies, so the grants alone decide access."
+            "`s3data` directory under its mount point, which the S3 service creates on its next start, owned by "
+            "`owner`. Every object is written under the account that put it, so a grantee other than the owner "
+            "can write only where that directory's permissions allow; set an ACL on it as for any share."
         ),
     )
     enabled: bool = Field(default=True, description="Whether the bucket is served. Toggling restarts the S3 service.")
     owner: NonEmptyString = Field(
         description=(
-            "Account that owns the bucket and bypasses its grants. Given by name, held by uid: the name is resolved "
-            "when set and again whenever the bucket is read, so a renamed account reads as its new name, a reused "
-            "name never inherits the bucket, and an account that no longer exists reads as its uid."
+            "Account that owns the bucket and bypasses its grants, and owns the `s3data` directory when the S3 "
+            "service creates it. Given by name, held by uid: the name is resolved when set and again whenever the "
+            "bucket is read, so a renamed account reads as its new name, a reused name never inherits the bucket, "
+            "and an account that no longer exists reads as its uid. Changing the owner later moves the grants, not "
+            "the directory."
         ),
     )
     owner_uid: int = Field(description="The uid that owns the bucket.")

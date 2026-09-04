@@ -68,16 +68,6 @@ BUCKET_DATASET_PROPERTIES = {
     "aclinherit": "passthrough",
 }
 
-# the ACL on a fresh bucket's data directory, the share root. Every write is
-# published under the requester's own uid and no capability bypasses that
-# check, so an ACL any grantee's uid satisfies is what leaves the S3 grants
-# as the only gate. Inherited by the prefix directories requesters create
-DATA_ACL = [
-    {"tag": "owner@", "type": "ALLOW", "perms": {"BASIC": "FULL_CONTROL"}, "flags": {"BASIC": "INHERIT"}},
-    {"tag": "group@", "type": "ALLOW", "perms": {"BASIC": "FULL_CONTROL"}, "flags": {"BASIC": "INHERIT"}},
-    {"tag": "everyone@", "type": "ALLOW", "perms": {"BASIC": "MODIFY"}, "flags": {"BASIC": "INHERIT"}},
-]
-
 
 class SharingS3Model(sa.Model):
     """No column carries a default: every row is inserted whole from the
@@ -111,12 +101,6 @@ class SharingS3Model(sa.Model):
 # matches with; a comma is outside it, which is what lets the patterns
 # render comma separated
 SNAPSHOT_PATTERN_CHARS = frozenset(string.ascii_letters + string.digits + "-_.: *?")
-
-
-def data_dir(mountpoint: str) -> str:
-    """The bucket root: objects sit one level below the mount point, beside
-    the daemon's side tree, so a share over the objects never reaches it."""
-    return f"{mountpoint}/data"
 
 
 def is_ipv4_address(name: str) -> bool:
@@ -218,14 +202,15 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         await validate_grants(self.middleware, f"{schema}.grants", data.grants, verrors)
 
     @private
-    async def resolve_owner(self, schema: str, username: str, verrors: ValidationErrors) -> tuple[int, int] | None:
-        """The owner's uid and primary gid."""
+    async def resolve_owner(self, schema: str, username: str, verrors: ValidationErrors) -> int | None:
+        """The owner's uid."""
         try:
             user = await self.middleware.call("user.get_user_obj", {"username": username})
         except KeyError:
             verrors.add(f"{schema}.owner", f"User {username!r} does not exist.")
             return None
-        return user["pw_uid"], user["pw_gid"]
+        uid: int = user["pw_uid"]
+        return uid
 
     @private
     def compress(self, data: SharingS3Entry, owner_uid: int) -> dict[str, Any]:
@@ -246,13 +231,15 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         return mountpoint if mountpoint and mountpoint.startswith("/") else None
 
     @private
-    async def create_dataset(self, schema: str, name: str, owner: tuple[int, int]) -> str:
+    async def create_dataset(self, schema: str, name: str) -> None:
         """Create the bucket's dataset with the properties the S3 on-disk
-        format requires, provision its data directory and return the mount
-        point. The properties are stated here in full rather than inherited
-        from any other layer's defaults; normalization and utf8only are
-        internal-only create properties, which is what lets them override a
-        parent that would otherwise pass its own values down."""
+        format requires. The properties are stated here in full rather than
+        inherited from any other layer's defaults; normalization and utf8only
+        are internal-only create properties, which is what lets them override
+        a parent that would otherwise pass its own values down. The share
+        root under it, `s3data`, is the daemon's to create: registration
+        makes it on the first start, owned by the bucket's owner, and leaves
+        it as found from then on."""
         verrors = ValidationErrors()
         try:
             await self.call2(
@@ -272,43 +259,9 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         except ValueError as e:
             verrors.add(f"{schema}.dataset", str(e), errno.EINVAL)
         verrors.check()
-        mountpoint = await self.mountpoint(name)
-        if mountpoint is None:
+        if await self.mountpoint(name) is None:
             await self.destroy_dataset(name)
             raise CallError(f"{name}: the new dataset has no usable mount point.")
-        try:
-            await self.provision_data(mountpoint, owner)
-        except Exception:
-            await self.destroy_dataset(name)
-            raise
-        return mountpoint
-
-    @private
-    async def provision_data(self, mountpoint: str, owner: tuple[int, int]) -> None:
-        """The share root, owned by the bucket's owner and open to every
-        grantee. The dataset root above it stays the daemon's: it holds the
-        side tree, and a root the owner could write would let them rename
-        the version history away."""
-        uid, gid = owner
-        await self.middleware.call("filesystem.mkdir", {"path": data_dir(mountpoint), "options": {"mode": "755"}})
-        job = await self.middleware.call(
-            "filesystem.setacl", {"path": data_dir(mountpoint), "dacl": DATA_ACL, "uid": uid, "gid": gid}
-        )
-        await job.wait(raise_error=True)
-
-    @private
-    async def chown_data(self, mountpoint: str, owner: tuple[int, int]) -> None:
-        """Hand the share root to a new owner. Not recursive: what the old
-        owner wrote stays theirs, as it would under any other share."""
-        uid, gid = owner
-        try:
-            await self.middleware.call("filesystem.stat", data_dir(mountpoint))
-        except CallError as e:
-            if e.errno == errno.ENOENT:
-                return
-            raise
-        job = await self.middleware.call("filesystem.chown", {"path": data_dir(mountpoint), "uid": uid, "gid": gid})
-        await job.wait(raise_error=True)
 
     @private
     async def destroy_dataset(self, name: str) -> None:
@@ -329,23 +282,25 @@ class SharingS3Service(SharingService[SharingS3Entry]):
 
         The bucket's dataset is created here, with the properties the S3
         service requires, and must not exist beforehand. Objects live in its
-        ``data`` directory, which is owned by ``owner`` and carries an
-        inheritable ACL open to every grantee, so the grants are what decide
-        access. Grants may be given in the same call. Registering a bucket
-        restarts the S3 service, draining in-flight requests for up to 30
-        seconds.
+        ``s3data`` directory, which the S3 service creates on its next start
+        owned by ``owner``. Every object is written under the account that
+        put it, so a grantee other than the owner can write only where that
+        directory's permissions let the account write; set an ACL on it as
+        for any share. Grants may be given in the same call. Registering a
+        bucket restarts the S3 service, draining in-flight requests for up to
+        30 seconds.
         """
         verrors = ValidationErrors()
         await self.validate(data, "sharing_s3_create", verrors)
-        owner = await self.resolve_owner("sharing_s3_create", data.owner, verrors)
+        owner_uid = await self.resolve_owner("sharing_s3_create", data.owner, verrors)
         if await self.query([["dataset", "=", data.dataset]], {"select": ["id"]}):
             verrors.add("sharing_s3_create.dataset", "Another bucket already uses this dataset.")
         verrors.check()
-        assert owner is not None
+        assert owner_uid is not None
 
-        await self.create_dataset("sharing_s3_create", data.dataset, owner)
+        await self.create_dataset("sharing_s3_create", data.dataset)
         try:
-            id_ = await self.middleware.call("datastore.insert", self._config.datastore, self.compress(data, owner[0]))
+            id_ = await self.middleware.call("datastore.insert", self._config.datastore, self.compress(data, owner_uid))
             await render_and_apply(self.middleware)
         except Exception:
             await self.destroy_dataset(data.dataset)
@@ -377,16 +332,15 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         # an owner given by name is compared by the uid it resolves to: a
         # renamed account is the same owner, a deleted and recreated one
         # under the old name is not
-        owner = None
+        owner_uid = old.owner_uid
         if "owner" in data.model_dump(exclude_unset=True):
             resolved = await self.resolve_owner("sharing_s3_update", new.owner, verrors)
-            if resolved is not None and resolved[0] != old.owner_uid:
-                owner = resolved
+            if resolved is not None:
+                owner_uid = resolved
         verrors.check()
 
-        if owner is not None and (mountpoint := await self.mountpoint(old.dataset)) is not None:
-            await self.chown_data(mountpoint, owner)
-        owner_uid = old.owner_uid if owner is None else owner[0]
+        # a new owner takes the grants, not the directory: the share root is
+        # the deployment's once it exists, as it would be under any share
         await self.middleware.call("datastore.update", self._config.datastore, id_, self.compress(new, owner_uid))
         await render_and_apply(self.middleware)
         return await self.get_instance(id_)
