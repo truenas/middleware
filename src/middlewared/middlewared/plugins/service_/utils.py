@@ -8,6 +8,7 @@ class ServiceWriteRole(enum.Enum):
     ISCSITARGET = 'SHARING_ISCSI_WRITE'
     FTP = 'SHARING_FTP_WRITE'
     NVMET = 'SHARING_NVME_TARGET_WRITE'
+    TRUENAS_S3 = 'SHARING_S3_WRITE'
 
 
 def app_has_write_privilege_for_service(

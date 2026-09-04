@@ -182,9 +182,8 @@ def test_expiry_flips_the_status(s3_user):
         call("s3.accesskey.delete", key["id"])
 
 
-def test_deleted_user_flips_the_status():
-    """A key whose account is gone reads USER_MISSING, so the credentials
-    file never carries an enabled row the S3 service cannot resolve."""
+def test_deleted_user_takes_its_keys():
+    """Deleting a local account deletes every key it held."""
     with user(
         {
             "username": "s3keygone",
@@ -193,14 +192,26 @@ def test_deleted_user_flips_the_status():
             "password": "test1234",
         }
     ):
-        key = call("s3.accesskey.create", {"name": "orphaned key", "username": "s3keygone"})
+        keys = [
+            call("s3.accesskey.create", {"name": f"doomed key {i}", "username": "s3keygone"})["id"] for i in range(2)
+        ]
+        assert len(call("s3.accesskey.query", [["id", "in", keys]])) == 2
 
-    try:
-        entry = call("s3.accesskey.get_instance", key["id"])
-        assert entry["username"] is None
-        assert entry["status"] == "USER_MISSING"
-    finally:
-        call("s3.accesskey.delete", key["id"])
+    assert call("s3.accesskey.query", [["id", "in", keys]]) == []
+
+
+def test_unresolved_directory_account_flips_the_status(accesskey):
+    """A directory account's key is bound to its SID. One that no longer
+    resolves reads USER_MISSING, so the credentials file never carries an
+    enabled row the S3 service cannot resolve."""
+    call(
+        "datastore.sql",
+        f"UPDATE truenas_s3_accesskey SET user_identifier = 'S-1-5-21-1-2-3-4567' WHERE id = {accesskey['id']}",
+    )
+    entry = call("s3.accesskey.get_instance", accesskey["id"])
+    assert entry["username"] is None
+    assert entry["local"] is False
+    assert entry["status"] == "USER_MISSING"
 
 
 def test_lost_secret_flips_the_status(accesskey):
