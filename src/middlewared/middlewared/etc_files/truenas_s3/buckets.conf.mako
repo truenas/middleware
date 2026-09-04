@@ -59,6 +59,7 @@ versioning = ${b.versioning.lower()}
 snapshot_versions = ${", ".join(b.snapshot_versions)}
 snapshot_versions_max = ${b.snapshot_versions_max}
 % endif
+multipart_etag = ${b.multipart_etag.lower()}
 object_lock = ${"enabled" if b.object_lock else "off"}
 % if b.object_lock_default_mode:
 object_lock_default_mode = ${b.object_lock_default_mode.lower()}
