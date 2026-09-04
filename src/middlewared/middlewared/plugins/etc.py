@@ -203,6 +203,23 @@ class EtcService(Service):
         'truesearch': EtcGroup(entries=(
             EtcEntry(renderer_type=RendererType.PY, path='truesearch/config.json'),
         )),
+        'truenas_s3': EtcGroup(
+            ctx=(CtxMethod(method='s3.render_data'),),
+            entries=(
+                # the files describe buckets on user pools, so they wait for the
+                # boot-time bulk import
+                EtcEntry(
+                    renderer_type=RendererType.MAKO, path='truenas_s3/buckets.conf', checkpoint=Checkpoint.POOL_IMPORT,
+                ),
+                EtcEntry(
+                    renderer_type=RendererType.MAKO, path='truenas_s3/policies.conf', checkpoint=Checkpoint.POOL_IMPORT,
+                ),
+                EtcEntry(
+                    renderer_type=RendererType.MAKO, path='truenas_s3/credentials.conf', mode=0o600,
+                    checkpoint=Checkpoint.POOL_IMPORT,
+                ),
+            ),
+        ),
         'webshare': EtcGroup(entries=(
             # All webshare-related entries refuse to generate their config files if `WEBSHARE_PATH` does not exist.
             # `WEBSHARE_PATH` resides on the system dataset, so system dataset must be mounted before we try to generate

@@ -269,6 +269,8 @@ RsyncFailed                                 class   Y   Y   Y   Y   Y   Y   Y
 RsyncFailed                                 listed  Y   Y   Y   Y   Y   Y   Y
 RsyncSuccess                                class   Y   Y   Y   Y   Y   Y   Y
 RsyncSuccess                                listed  Y   Y   Y   Y   Y   Y   Y
+S3BucketDatasetMissing                      class   Y   Y   Y   Y   Y   Y   Y
+S3BucketDatasetMissing                      listed  Y   Y   Y   Y   Y   Y   Y
 SMART                                       source  Y   Y   Y   Y   Y   Y   Y
 SMARTEraseCycleCount                        class   Y   Y   Y   Y   Y   Y   Y
 SMARTEraseCycleCount                        listed  Y   Y   Y   Y   Y   Y   Y
