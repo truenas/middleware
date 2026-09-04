@@ -108,7 +108,9 @@ def test_query_method(legacy_api_client, query_method, misc_method_names):
             "privilege.query",
             "replication.query",
             "rsynctask.query",
+            "s3.accesskey.query",
             "service.query",
+            "sharing.s3.query",
             "sharing.smb.query",
             "sharing.webshare.query",
             "tunable.query",
@@ -141,6 +143,7 @@ def test_config_method(legacy_api_client, config_method):
             "network.configuration.config",
             "nvmet.global.config",
             "replication.config.config",
+            "s3.config",
             "ssh.config",
             "support.config",
             "system.advanced.config",
@@ -159,6 +162,7 @@ def test_config_method(legacy_api_client, config_method):
         version in APIVersions.GE.value
         and config_method in {
             "lxc.config",
+            "s3.config",
             "webshare.config",
             "zfs.tier.config",
         }
