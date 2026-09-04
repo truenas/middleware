@@ -26,6 +26,7 @@ jobs:
             middlewared/plugins/keyvalue.py \
             middlewared/plugins/ntp/ \
             middlewared/plugins/truenas/ \
+            middlewared/plugins/truenas_s3/ \
             middlewared/plugins/truesearch.py \
             middlewared/plugins/webshare/ \
             middlewared/plugins/update_/ \

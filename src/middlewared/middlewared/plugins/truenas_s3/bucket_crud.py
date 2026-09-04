@@ -19,6 +19,7 @@ from typing import Any, Literal, TYPE_CHECKING
 from middlewared.api import api_method
 from middlewared.api.current import (
     S3AuditAction,
+    S3Entry,
     SharingS3AuditChoicesArgs,
     SharingS3AuditChoicesResult,
     SharingS3Create,
@@ -100,8 +101,9 @@ class SharingS3Model(sa.Model):
     object_lock = sa.Column(sa.Boolean())
     object_lock_default_mode = sa.Column(sa.String(16), nullable=True)
     object_lock_default_days = sa.Column(sa.Integer(), nullable=True)
-    # NULL inherits the service default; an empty list audits nothing
-    audit = sa.Column(sa.JSON(None), nullable=True)
+    # NULL inherits the service default; an empty list audits nothing, so
+    # the column carries no type to turn NULL into an empty value
+    audit = sa.Column(sa.JSON(None), nullable=True)  # type: ignore[arg-type]
     audit_overflow = sa.Column(sa.String(16), nullable=True)
 
 
@@ -424,10 +426,11 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         `audit.config`."""
         if not await self.middleware.call("s3.audit_licensed"):
             return []
-        default = (await self.middleware.call("s3.config")).default_audit
+        config: S3Entry = await self.middleware.call("s3.config")
+        buckets: list[SharingS3Entry] = await self.middleware.call("sharing.s3.query", [["enabled", "=", True]])
         names = []
-        for bucket in await self.query([["enabled", "=", True]]):
-            mask = bucket.audit if bucket.audit is not None else default
+        for bucket in buckets:
+            mask = bucket.audit if bucket.audit is not None else config.default_audit
             if mask:
                 names.append(bucket.name)
         return names
@@ -443,7 +446,7 @@ class S3FSAttachmentDelegate(LockableFSAttachmentDelegate[SharingS3Entry]):
         # the missing-dataset alert is keyed by bucket id like the locked
         # one, and a bucket that is deleted or toggled with its dataset is
         # not missing it; a render raises it again if it still is
-        await super().remove_alert(attachment)
+        await super().remove_alert(attachment)  # type: ignore[no-untyped-call]
         id_ = attachment["id"] if isinstance(attachment, dict) else attachment.id
         await self.middleware.call("alert.oneshot_delete", MISSING_ALERT, id_)
 
@@ -456,4 +459,7 @@ class S3FSAttachmentDelegate(LockableFSAttachmentDelegate[SharingS3Entry]):
 
 
 async def setup(middleware: Middleware) -> None:
-    await middleware.call("pool.dataset.register_attachment_delegate", S3FSAttachmentDelegate(middleware))
+    await middleware.call(
+        "pool.dataset.register_attachment_delegate",
+        S3FSAttachmentDelegate(middleware),  # type: ignore[no-untyped-call]
+    )

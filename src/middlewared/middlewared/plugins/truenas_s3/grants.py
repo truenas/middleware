@@ -1,15 +1,15 @@
 """Grant lists, shared by buckets and the service's global grants.
 
-The datastore holds a grant as a row of three keys. Everything past the
-two functions that read those rows, `grant_principals` and
-`label_grants`, works on the API's grant models.
+The datastore holds a grant as a row of three keys, and a query hands
+those rows over untyped. `GrantRow` is what the two functions that read
+them ask for, so that boundary is the last place a grant is a dict.
 """
 
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
-from typing import Any, TYPE_CHECKING, TypedDict
+from typing import TYPE_CHECKING, TypedDict
 
 from middlewared.api.current import S3Access, S3Grant, S3GrantEntry, S3PrincipalType
 from middlewared.service import ValidationErrors
@@ -81,14 +81,14 @@ async def principal_names(middleware: Middleware, principals: Principals) -> Pri
     return PrincipalNames(users=users, groups=groups)
 
 
-def grant_principals(rows: Iterable[GrantRow | Mapping[str, Any]]) -> Principals:
+def grant_principals(rows: Iterable[GrantRow]) -> Principals:
     """The uids and gids a stored grant list names."""
     uids = {row["xid"] for row in rows if row["principal_type"] == "USER" and row["xid"] is not None}
     gids = {row["xid"] for row in rows if row["principal_type"] == "GROUP" and row["xid"] is not None}
     return Principals(uids=frozenset(uids), gids=frozenset(gids))
 
 
-def label_grants(rows: Iterable[GrantRow | Mapping[str, Any]], names: PrincipalNames) -> list[S3GrantEntry]:
+def label_grants(rows: Iterable[GrantRow], names: PrincipalNames) -> list[S3GrantEntry]:
     """The stored grants as entries, each carrying its principal's current
     name for display. The daemon never matches on the name; the xid is the
     identity."""
