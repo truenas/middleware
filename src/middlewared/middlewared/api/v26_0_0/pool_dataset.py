@@ -65,6 +65,25 @@ class PoolDatasetEntryProperty(BaseModel, metaclass=ForUpdateMetaclass):
     )
 
 
+class PoolDatasetEntryUserProperties(BaseModel, metaclass=ForUpdateMetaclass):
+    model_config = ConfigDict(extra="allow")
+
+    comments: PoolDatasetEntryProperty = Field(
+        description="ZFS comments property for storing descriptive text about the dataset.",
+    )
+    quota_warning: PoolDatasetEntryProperty = Field(description="ZFS quota warning threshold property as a percentage.")
+    quota_critical: PoolDatasetEntryProperty = Field(
+        description="ZFS quota critical threshold property as a percentage.",
+    )
+    refquota_warning: PoolDatasetEntryProperty = Field(
+        description="ZFS reference quota warning threshold property as a percentage.",
+    )
+    refquota_critical: PoolDatasetEntryProperty = Field(
+        description="ZFS reference quota critical threshold property as a percentage.",
+    )
+    managedby: PoolDatasetEntryProperty = Field(description="Identifies which service or system manages this dataset.")
+
+
 class PoolDatasetEntry(BaseModel, metaclass=ForUpdateMetaclass):
     model_config = ConfigDict(extra="allow", strict=False)
     id: str = Field(examples=['tank/dataset/child'], description="The full dataset path including pool name.")
@@ -81,7 +100,7 @@ class PoolDatasetEntry(BaseModel, metaclass=ForUpdateMetaclass):
         ),
     )
     children: list = Field(description="Array of child dataset objects nested under this dataset.")
-    user_properties: dict = Field(
+    user_properties: PoolDatasetEntryUserProperties = Field(
         description="Custom user-defined ZFS properties set on this dataset as key-value pairs.",
     )
     locked: bool = Field(description="Whether an encrypted dataset is currently locked (key not loaded).")
@@ -91,20 +110,6 @@ class PoolDatasetEntry(BaseModel, metaclass=ForUpdateMetaclass):
             "deduplication is enabled on the dataset."
         ),
     )
-    comments: PoolDatasetEntryProperty = Field(
-        description="ZFS comments property for storing descriptive text about the dataset.",
-    )
-    quota_warning: PoolDatasetEntryProperty = Field(description="ZFS quota warning threshold property as a percentage.")
-    quota_critical: PoolDatasetEntryProperty = Field(
-        description="ZFS quota critical threshold property as a percentage.",
-    )
-    refquota_warning: PoolDatasetEntryProperty = Field(
-        description="ZFS reference quota warning threshold property as a percentage.",
-    )
-    refquota_critical: PoolDatasetEntryProperty = Field(
-        description="ZFS reference quota critical threshold property as a percentage.",
-    )
-    managedby: PoolDatasetEntryProperty = Field(description="Identifies which service or system manages this dataset.")
     deduplication: PoolDatasetEntryProperty = Field(
         description="ZFS deduplication setting - whether identical data blocks are stored only once.",
     )
