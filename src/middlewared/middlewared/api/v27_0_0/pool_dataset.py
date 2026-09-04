@@ -16,6 +16,7 @@ from middlewared.plugins.zfs_.validation_utils import validate_dataset_name
 
 from .common import QueryFilters, QueryOptions
 from .pool import PoolAttachment, PoolCreateEncryptionOptions, PoolProcess
+from .zfs_tier import TierInfo
 
 __all__ = [
     "PoolDatasetEntry", "PoolDatasetAttachmentsArgs", "PoolDatasetAttachmentsResult", "PoolDatasetCreateArgs",
@@ -108,6 +109,12 @@ class PoolDatasetEntry(BaseModel, metaclass=ForUpdateMetaclass):
         description="Custom user-defined ZFS properties set on this dataset as key-value pairs.",
     )
     locked: bool = Field(description="Whether an encrypted dataset is currently locked (key not loaded).")
+    tier: TierInfo | None = Field(
+        description=(
+            "Performance tier. `null` if tiering disabled, if underlying pool does not support tiering, or if "
+            "deduplication is enabled on the dataset."
+        ),
+    )
     deduplication: PoolDatasetEntryProperty = Field(
         description="ZFS deduplication setting - whether identical data blocks are stored only once.",
     )
