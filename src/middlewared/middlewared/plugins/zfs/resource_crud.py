@@ -4,7 +4,6 @@ import pathlib
 import typing
 
 import truenas_pylibzfs
-from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -35,8 +34,8 @@ from .create_rules import (
     apply_tier_snap,
     apply_volume_ssb_pin,
     check_acl_combination,
-    check_dedup_entitlement,
     check_dedup_tiering,
+    # check_dedup_entitlement,  TODO uncomment when the truenas.entitlements API is merged
     check_encryption,
     check_name_valid,
     check_parent_not_readonly,
@@ -409,14 +408,6 @@ class ZFSResourceService(Service):
 
         ctx.tier_enabled = self.call_sync2(self.s.zfs.tier.config).enabled
 
-        # any value other than off (on, verify, a checksum) enables dedup.
-        # The entitlement is settled before anything is gathered from the
-        # pool so an unlicensed request fails without further work.
-        dedup_requested = str(properties.dedup or "off").lower() != "off"
-        if dedup_requested:
-            ctx.dedup_entitlement = self.call_sync2(self.s.truenas.entitlements.check, LicenseFeature.DEDUP)
-            check_dedup_entitlement(data, ctx)
-
         # one query serves the readonly, tier, acl, capacity and encryption
         # rules. Only the properties the rules below will read are requested.
         ancestor_props = ["readonly"]
@@ -452,13 +443,19 @@ class ZFSResourceService(Service):
                 apply_draid_recordsize(self, data, ctx)
             if ctx.tier_enabled and properties.special_small_blocks is None:
                 apply_tier_snap(data, ctx)
-            if ctx.tier_enabled and dedup_requested:
+            if ctx.tier_enabled and str(properties.dedup or "off").lower() != "off":
                 check_dedup_tiering(self, data, ctx)
             if properties.acltype is not None or properties.aclmode is not None:
                 check_acl_combination(data, ctx)
 
         if data.encryption:
             check_encryption(data, ctx)
+
+        # TODO uncomment when the truenas.entitlements API is merged
+        # from truenas_pylicensed.features import LicenseFeature
+        # if str(properties.dedup or "off").lower() != "off":
+        #     ctx.dedup_entitled = self.call_sync2(self.s.truenas.entitlements.check, LicenseFeature.DEDUP).entitled
+        #     check_dedup_entitlement(data, ctx)
 
         props = {k: v for k, v in properties.model_dump().items() if v is not None}
         try:
@@ -553,8 +550,6 @@ class ZFSResourceService(Service):
           combined with the nfsv4 acltype (``EINVAL``)
         - the nearest existing ancestor is readonly - the new filesystem could not be
           mounted beneath it (``EINVAL``)
-        - deduplication is requested on a system that is not entitled to it - licensed
-          systems must carry the DEDUP feature (``EINVAL``)
         - ``special_small_blocks`` is supplied while ZFS tiering is enabled - placement
           is managed with :method:`zfs.tier.dataset_set_tier` (``EINVAL``)
         - deduplication is requested for a filesystem whose data would be placed on the
