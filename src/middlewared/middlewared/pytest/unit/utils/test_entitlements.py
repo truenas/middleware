@@ -35,7 +35,7 @@ def test_target_vectors_match_the_product_matrix():
         LicenseFeature.CATALOG_ENTERPRISE_TRAIN: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=0),
         LicenseFeature.CONTAINERS: Vector(ce=1, hw=1, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
         LicenseFeature.DEDUP: Vector(ce=1, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
-        LicenseFeature.DIRECTORY_SERVICES: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
+        LicenseFeature.DIRECTORY_SERVICES_AUTH: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
         LicenseFeature.FIBRECHANNEL: Vector(ce=0, hw=0, hw_l=1, hw_k=1, ce_l=0, ce_k=1),
         LicenseFeature.KMIP: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
         LicenseFeature.MISSION_CRITICAL: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
@@ -60,7 +60,7 @@ def test_live_policy_shape():
     assert set(POLICY) == {
         LicenseFeature.CATALOG_ENTERPRISE_TRAIN,
         LicenseFeature.DEDUP,
-        LicenseFeature.DIRECTORY_SERVICES,
+        LicenseFeature.DIRECTORY_SERVICES_AUTH,
         LicenseFeature.FIBRECHANNEL,
         LicenseFeature.KMIP,
         LicenseFeature.MISSION_CRITICAL,

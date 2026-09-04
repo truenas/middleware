@@ -36,7 +36,7 @@ def entitle_ds_auth():
         # HA product is already enterprise-licensed
         yield
     else:
-        with entitled("DIRECTORY_SERVICES"):
+        with entitled("DIRECTORY_SERVICES_AUTH"):
             yield
 
 
@@ -66,7 +66,7 @@ def test_enable_leave_activedirectory():
     assert check_ad_started() is False
 
     if not ha:
-        with entitled("DIRECTORY_SERVICES", False):
+        with entitled("DIRECTORY_SERVICES_AUTH", False):
             with pytest.raises(ValidationErrors, match='requires an Enterprise license'):
                 call("system.general.update", {"ds_auth": True})
 
