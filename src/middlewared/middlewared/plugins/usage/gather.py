@@ -367,7 +367,7 @@ async def gather_ftp(service: Service, context: GatherContext) -> dict[str, Any]
 @gather_stat
 async def gather_sharing(service: Service, context: GatherContext) -> dict[str, Any]:
     sharing_list = []
-    for share_service in {"iscsi", "nfs", "smb"}:
+    for share_service in {"iscsi", "nfs", "smb", "webshare"}:
         service_upper = share_service.upper()
         namespace = f"sharing.{share_service}" if share_service != "iscsi" else "iscsi.targetextent"
         for s in await service.middleware.call(f"{namespace}.query"):
@@ -375,6 +375,8 @@ async def gather_sharing(service: Service, context: GatherContext) -> dict[str, 
                 sharing_list.append({"type": service_upper, "purpose": s["purpose"]})
             elif share_service == "nfs":
                 sharing_list.append({"type": service_upper, "readonly": s["ro"]})
+            elif share_service == "webshare":
+                sharing_list.append({"type": service_upper, "enabled": s["enabled"], "is_home_base": s["is_home_base"]})
             elif share_service == "iscsi":
                 tar = await service.middleware.call("iscsi.target.query", [("id", "=", s["target"])], {"get": True})
                 ext = await service.middleware.call(
