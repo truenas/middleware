@@ -169,7 +169,61 @@ class InterfaceEntryState(BaseModel):
     )
 
 
-class InterfaceEntry(BaseModel):
+class InterfaceCommonOptions(BaseModel):
+    bridge_members: list[str] = Field(
+        default=[],
+        description="Interface names that are members of this bridge. Only relevant for BRIDGE interfaces.",
+    )
+    enable_learning: bool = Field(
+        default=NotRequired,
+        description=(
+            "Whether MAC address learning is enabled for bridge interfaces. When enabled, the bridge learns MAC "
+            "addresses from incoming frames and builds a forwarding table to optimize traffic flow."
+        ),
+    )
+    stp: bool = Field(
+        default=NotRequired,
+        description=(
+            "Whether Spanning Tree Protocol is enabled for bridge interfaces. STP prevents network loops by blocking "
+            "redundant paths and enables automatic failover when the primary path fails."
+        ),
+    )
+    lag_ports: list[str] = Field(
+        default=[],
+        description="Interface names that are members of this link aggregation group.",
+    )
+    xmit_hash_policy: Literal["LAYER2", "LAYER2+3", "LAYER3+4", None] = Field(
+        default=NotRequired,
+        description=(
+            "Transmit hash policy for load balancing in link aggregation. LAYER2 uses MAC addresses, LAYER2+3 adds IP "
+            "addresses, and LAYER3+4 includes TCP/UDP ports for distribution. Only relevant for LACP and LOADBALANCE "
+            "link aggregations."
+        ),
+    )
+    lacpdu_rate: Literal["SLOW", "FAST", None] = Field(
+        default=NotRequired,
+        description=(
+            "LACP data unit transmission rate. SLOW sends LACPDUs every 30 seconds, FAST sends every 1 second for "
+            "quicker link failure detection. Only relevant for LACP link aggregations."
+        ),
+    )
+    failover_critical: bool = Field(
+        default=NotRequired,
+        description=(
+            "Whether this interface is critical for failover. Critical interfaces are monitored for failover events "
+            "and can trigger failover when they fail. Only relevant on HA-capable systems."
+        ),
+    )
+    failover_group: int | None = Field(
+        default=NotRequired,
+        description=(
+            "Failover group identifier for clustering. Interfaces in the same group fail over together during "
+            "failover events. Only relevant on HA-capable systems."
+        ),
+    )
+
+
+class InterfaceEntry(InterfaceCommonOptions):
     id: str = Field(description="Unique identifier for the network interface.")
     name: str = Field(description="Name of the network interface.")
     fake: bool = Field(description="Whether this is a fake/simulated interface for testing purposes.")
@@ -212,26 +266,6 @@ class InterfaceEntry(BaseModel):
         default=NotRequired,
         description="Link aggregation protocol (LACP, FAILOVER, LOADBALANCE, etc.).",
     )
-    lag_ports: list[str] = Field(
-        default=[],
-        description="List of interface names that are members of this link aggregation group.",
-    )
-    bridge_members: list[str] = Field(
-        default=[],
-        description="List of interface names that are members of this bridge.",
-    )
-    enable_learning: bool = Field(
-        default=NotRequired,
-        description="Whether MAC address learning is enabled for bridge interfaces.",
-    )
-    failover_critical: bool = Field(
-        default=NotRequired,
-        description="Whether this interface is critical for failover. Only present on HA-capable systems.",
-    )
-    failover_group: int | None = Field(
-        default=NotRequired,
-        description="Failover group identifier for clustering. Only present on HA-capable systems.",
-    )
     failover_vhid: int | None = Field(
         default=NotRequired,
         description="VRRP Virtual Host ID for failover. Only present on HA-capable systems.",
@@ -252,9 +286,6 @@ class InterfaceEntry(BaseModel):
             "`interface.update`, each entry here also includes a `netmask`."
         ),
     )
-
-    class Config:
-        extra = "allow"
 
 
 class InterfaceChoicesOptions(BaseModel):
@@ -298,7 +329,7 @@ class InterfaceCreateAlias(InterfaceCreateFailoverAlias):
     netmask: int = Field(description="The network mask in CIDR notation.")
 
 
-class InterfaceCreate(BaseModel):
+class InterfaceCreate(InterfaceCommonOptions):
     name: str = Field(
         default=NotRequired,
         description="Generate a name if not provided based on `type`, e.g. \"br0\", \"bond1\", \"vlan0\".",
@@ -316,13 +347,6 @@ class InterfaceCreate(BaseModel):
         description=(
             "Whether this interface is critical for failover functionality. Critical interfaces are monitored for "
             "failover events and can trigger failover when they fail."
-        ),
-    )
-    failover_group: int | None = Field(
-        default=NotRequired,
-        description=(
-            "Failover group identifier for clustering. Interfaces in the same group fail over together during failover "
-            "events."
         ),
     )
     failover_vhid: Annotated[int, Field(ge=1, le=255)] | None = Field(
@@ -346,7 +370,6 @@ class InterfaceCreate(BaseModel):
             "during failover events."
         ),
     )
-    bridge_members: list = Field(default=[], description="List of interfaces to add as members of this bridge.")
     enable_learning: bool = Field(
         default=True,
         description=(
@@ -381,10 +404,6 @@ class InterfaceCreate(BaseModel):
             "LACP data unit transmission rate. SLOW sends LACPDUs every 30 seconds, FAST sends every 1 second for "
             "quicker link failure detection."
         ),
-    )
-    lag_ports: list[str] = Field(
-        default=[],
-        description="List of interface names to include in the link aggregation group.",
     )
     vlan_parent_interface: str = Field(default=NotRequired, description="Parent interface for VLAN configuration.")
     vlan_tag: int = Field(ge=1, le=4094, default=NotRequired, description="VLAN tag number (1-4094).")
