@@ -2,19 +2,23 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 import ipaddress
 import os
 from typing import Any, TYPE_CHECKING
 
 from middlewared.api import api_method
 from middlewared.api.current import (
+    S3AccesskeyEntry,
     S3BindipChoicesArgs,
     S3BindipChoicesResult,
     S3Entry,
+    S3GrantEntry,
     S3Listener,
     S3Update,
     S3UpdateArgs,
     S3UpdateResult,
+    SharingS3Entry,
     ZFSResourceQuery,
 )
 from middlewared.async_validators import validate_port
@@ -59,29 +63,69 @@ class S3Model(sa.Model):
     owner_id_seed = sa.Column(sa.String(64), default="")
 
 
-def _listen_text(listeners: list[dict[str, Any]]) -> tuple[str, str]:
+@dataclass(slots=True)
+class RenderedGrant:
+    """One [grant …] section: the heading, minus its brackets, and the row."""
+
+    heading: str
+    grant: S3GrantEntry
+
+
+@dataclass(slots=True)
+class RenderedBucket:
+    """A bucket beside what the render adds to it."""
+
+    entry: SharingS3Entry
+    mountpoint: str
+    grants: list[RenderedGrant]
+
+
+@dataclass(slots=True)
+class RenderData:
+    """Everything the etc templates read, gathered once per generate."""
+
+    config: S3Entry
+    host_id: str
+    owner_id_seed: str
+    listen: str
+    listen_tls: str
+    tls_cert: str | None
+    tls_key: str | None
+    global_grants: list[RenderedGrant]
+    buckets: list[RenderedBucket]
+    accesskeys: list[S3AccesskeyEntry]
+    audit_licensed: bool
+
+
+def _listen_text(listeners: list[S3Listener]) -> tuple[str, str]:
     """[server] listen and listen_tls: the plaintext and the TLS addresses,
     comma separated, an IPv6 address in brackets. No listener at all is
     every address on port 9000 in plaintext."""
     if not listeners:
-        listeners = [{"address": "0.0.0.0", "port": 9000, "tls": False}]
+        listeners = [S3Listener(address="0.0.0.0")]
     plain, secure = [], []
     for listener in listeners:
-        ip, port = listener["address"], listener["port"]
+        ip, port = listener.address, listener.port
         text = f"[{ip}]:{port}" if isinstance(ipaddress.ip_address(ip), ipaddress.IPv6Address) else f"{ip}:{port}"
-        (secure if listener["tls"] else plain).append(text)
+        (secure if listener.tls else plain).append(text)
     return ", ".join(plain), ", ".join(secure)
 
 
-def _renderable_grants(grants: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Each grant with the label its heading carries. A user and a group may
-    share a label, but the same principal twice is a duplicate section the
-    daemon refuses; validation keeps a list free of those, and the last one
-    wins here as a backstop."""
-    by_principal = {}
+def _rendered_grants(grants: list[S3GrantEntry], bucket: str) -> list[RenderedGrant]:
+    """Each grant under the heading its section carries: the principal
+    kind, its label (quoted, stripped of what would break the grammar) and
+    the bucket, `*` for every bucket. A user and a group may share a label,
+    but the same principal twice is a duplicate section the daemon refuses;
+    validation keeps a list free of those, and the last one wins here as a
+    backstop."""
+    by_principal: dict[tuple[str, int | None], RenderedGrant] = {}
     for grant in grants:
-        label = grant_label(grant.get("name"), grant.get("xid"))
-        by_principal[(grant["principal_type"], grant.get("xid"))] = {**grant, "label": label}
+        kind = grant.principal_type.lower()
+        if kind == "everyone":
+            heading = f'grant everyone "{bucket}"'
+        else:
+            heading = f'grant {kind} "{grant_label(grant.name, grant.xid)}" "{bucket}"'
+        by_principal[(grant.principal_type, grant.xid)] = RenderedGrant(heading, grant)
     return list(by_principal.values())
 
 
@@ -196,10 +240,6 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
         return await self.config()
 
     async def audit_licensed(self) -> bool:
-        # the audit trail is an Enterprise feature the daemon knows nothing
-        # about: middleware withholds every audit key from the rendered
-        # config on an unlicensed system. Gated on holding a license until
-        # an S3 audit entitlement exists in truenas_license.
         return await self.middleware.call("system.license") is not None
 
     async def effective_certificate(self, cert_id: int | None) -> int | None:
@@ -220,7 +260,7 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
         cert = await self.middleware.call("certificate.query", [["id", "=", cert_id]], {"get": True})
         return cert["certificate_path"], cert["privatekey_path"]
 
-    async def render_data(self) -> dict[str, Any]:
+    async def render_data(self) -> RenderData:
         """Everything the etc templates render, gathered once per generate
         and shaped so a template only loops and prints.
 
@@ -236,16 +276,20 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
         config = await self.config()
         identity = await self._identity()
         tls_cert, tls_key = await self.certificate_paths(await self.effective_certificate(config.certificate))
-        listen, listen_tls = _listen_text(config.model_dump()["listeners"])
+        # the config entry is constructed, not validated, so its nested rows
+        # are plain dicts until asked to be models
+        listen, listen_tls = _listen_text([S3Listener.model_validate(row) for row in config.listeners])
         if not listen_tls:
             tls_cert = tls_key = None
-        buckets = [b.model_dump() for b in await self.middleware.call("sharing.s3.query")]
+        global_grants = [S3GrantEntry.model_validate(row) for row in config.global_grants]
+
+        buckets: list[SharingS3Entry] = await self.middleware.call("sharing.s3.query")
         datasets = (
             {
                 row["name"]: row
                 for row in await self.call2(
                     self.s.zfs.resource.query_impl,
-                    ZFSResourceQuery(paths=[b["dataset"] for b in buckets], properties=["mountpoint"]),
+                    ZFSResourceQuery(paths=[b.dataset for b in buckets], properties=["mountpoint"]),
                 )
             }
             if buckets
@@ -254,51 +298,42 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
 
         rendered_buckets = []
         for bucket in buckets:
-            live = datasets.get(bucket["dataset"])
+            live = datasets.get(bucket.dataset)
             mountpoint = live["properties"]["mountpoint"]["value"] if live else None
             if not mountpoint or not mountpoint.startswith("/"):
-                mountpoint = f"/mnt/{bucket['dataset']}"
-            args = {"id": bucket["id"], "name": bucket["name"], "dataset": bucket["dataset"]}
-            if bucket["enabled"] and live is None:
+                mountpoint = f"/mnt/{bucket.dataset}"
+            if bucket.enabled and live is None:
+                args = {"id": bucket.id, "name": bucket.name, "dataset": bucket.dataset}
                 await self.middleware.call("alert.oneshot_create", MISSING_ALERT, args)
             else:
-                await self.middleware.call("alert.oneshot_delete", MISSING_ALERT, bucket["id"])
-            rendered_buckets.append(
-                {
-                    **bucket,
-                    "grants": _renderable_grants(bucket["grants"]),
-                    "mountpoint": mountpoint,
-                }
-            )
+                await self.middleware.call("alert.oneshot_delete", MISSING_ALERT, bucket.id)
+            rendered_buckets.append(RenderedBucket(bucket, mountpoint, _rendered_grants(bucket.grants, bucket.name)))
 
-        accesskeys = [
-            key.model_dump(context={"expose_secrets": True}) for key in await self.middleware.call("s3.accesskey.query")
-        ]
+        accesskeys: list[S3AccesskeyEntry] = await self.middleware.call("s3.accesskey.query")
         for key in accesskeys:
-            if key["status"] == "USER_MISSING" and not key["local"]:
+            if key.status == "USER_MISSING" and not key.local:
                 # a directory services account that does not resolve right now
                 # may just be a directory that is not answering; the key renders
                 # disabled until the next render finds the account again
                 self.logger.warning(
                     "s3: access key %s belongs to a directory services account that does not resolve, rendered "
                     "disabled",
-                    key["access_key"],
+                    key.access_key,
                 )
 
-        return {
-            "config": {
-                **config.model_dump(),
-                **identity,
-                "global_grants": _renderable_grants(config.model_dump()["global_grants"]),
-                "listen": listen,
-                "listen_tls": listen_tls,
-                "tls_cert": tls_cert,
-                "tls_key": tls_key,
-            },
-            "buckets": rendered_buckets,
-            "accesskeys": accesskeys,
-            "audit_licensed": await self.audit_licensed(),
-        }
+        return RenderData(
+            config=config,
+            host_id=identity["host_id"],
+            owner_id_seed=identity["owner_id_seed"],
+            listen=listen,
+            listen_tls=listen_tls,
+            tls_cert=tls_cert,
+            tls_key=tls_key,
+            global_grants=_rendered_grants(global_grants, "*"),
+            buckets=rendered_buckets,
+            accesskeys=accesskeys,
+            audit_licensed=await self.audit_licensed(),
+        )
 
 
 class S3Service(SystemServiceService[S3Entry]):
@@ -340,7 +375,7 @@ class S3Service(SystemServiceService[S3Entry]):
         return await self._svc_part.bindip_choices()
 
     @private
-    async def render_data(self) -> dict[str, Any]:
+    async def render_data(self) -> RenderData:
         return await self._svc_part.render_data()
 
     @private
