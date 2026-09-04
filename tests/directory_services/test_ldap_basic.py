@@ -10,8 +10,8 @@ from middlewared.test.integration.utils import call, client
 def do_ldap_connection(request):
     with directoryservice('LDAP') as ldap_conn:
         # test_account_privilege_authentication turns on ds_auth, which the
-        # DIRECTORY_SERVICES entitlement gates.
-        with entitled("DIRECTORY_SERVICES"):
+        # DIRECTORY_SERVICES_AUTH entitlement gates.
+        with entitled("DIRECTORY_SERVICES_AUTH"):
             yield ldap_conn
 
 
