@@ -199,10 +199,6 @@ class AppDelete(BaseModel):
         description="Whether to remove Docker images associated with the application.",
     )
     remove_ix_volumes: bool = Field(default=False, description="Whether to remove TrueNAS-managed storage volumes.")
-    force_remove_ix_volumes: bool = Field(
-        default=False,
-        description="Force removal of TrueNAS-managed volumes even if they contain data.",
-    )
     force_remove_custom_app: bool = Field(
         default=False,
         description="Force removal of custom applications that might have important data or configurations.",
