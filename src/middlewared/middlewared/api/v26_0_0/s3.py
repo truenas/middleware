@@ -324,6 +324,22 @@ class SharingS3Entry(BaseModel):
         ),
     )
     versioning: Literal["OFF", "ENABLED", "SUSPENDED"] = Field(default="OFF", description="Bucket versioning state.")
+    snapshot_versions: list[NonEmptyString] = Field(
+        default=[],
+        description=(
+            "Patterns over the names of the bucket dataset's ZFS snapshots, `*` and `?` the only metacharacters, "
+            "each matched against a whole name. Every snapshot a pattern selects serves each object's state frozen "
+            "in it as a read-only version: listed by `ListObjectVersions` and read by its version id. Empty serves "
+            "none. Requires `versioning` to be `ENABLED` or `SUSPENDED`."
+        ),
+    )
+    snapshot_versions_max: Annotated[int, Field(ge=1, le=4294967295)] = Field(
+        default=64,
+        description=(
+            "How many of the newest selected snapshots one `ListObjectVersions` listing consults. Bounds the listing "
+            "alone: a selected snapshot beyond it still serves by its version id."
+        ),
+    )
     object_lock: bool = Field(
         default=False,
         description=(

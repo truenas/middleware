@@ -444,6 +444,96 @@ def test_boto3_roundtrip(owner):
             call("service.control", "STOP", SERVICE, {"silent": False}, job=True)
 
 
+def test_snapshot_version_rules(owner):
+    """The selection needs a versioning state that lists versions, a
+    pattern keeps to the daemon's grammar, and the pair renders only
+    beside a selection."""
+    for bad, field in (
+        ({"snapshot_versions": ["s3-*"]}, "versioning"),
+        ({"versioning": "ENABLED", "snapshot_versions": ["s3/*"]}, "snapshot_versions.0"),
+        ({"versioning": "ENABLED", "snapshot_versions": ["a,b"]}, "snapshot_versions.0"),
+        ({"versioning": "ENABLED", "snapshot_versions": [" s3-*"]}, "snapshot_versions.0"),
+        ({"versioning": "ENABLED", "snapshot_versions": ["s3-*", "s3-*"]}, "snapshot_versions.1"),
+        ({"versioning": "ENABLED", "snapshot_versions": ["*"], "snapshot_versions_max": 0}, "snapshot_versions_max"),
+    ):
+        with pytest.raises(ValidationErrors) as ve:
+            call("sharing.s3.create", {"name": "frozen", "dataset": DATASET, "owner": OWNER, **bad})
+        assert field in ve.value.errors[0].attribute, ve.value.errors
+
+    with bucket(name="frozen", versioning="SUSPENDED", snapshot_versions=["daily-*", "manual keep"]) as b:
+        assert b["snapshot_versions_max"] == 64
+        call("etc.generate", "truenas_s3")
+        row = parse(BUCKETS_CONF)['bucket "frozen"']
+        assert row["versioning"] == "suspended"
+        assert row["snapshot_versions"] == "daily-*, manual keep"
+        assert row["snapshot_versions_max"] == "64"
+
+        call("sharing.s3.update", b["id"], {"snapshot_versions": [], "snapshot_versions_max": 3})
+        call("etc.generate", "truenas_s3")
+        row = parse(BUCKETS_CONF)['bucket "frozen"']
+        assert "snapshot_versions" not in row and "snapshot_versions_max" not in row
+
+
+def snapshot_id(name):
+    """The wire id of a snapshot-derived version: `zfs.` then the name in
+    lowercase hex."""
+    return "zfs." + name.encode().hex()
+
+
+def test_snapshots_serve_as_versions(owner):
+    """The dataset's own snapshots, selected by pattern, serve each key's
+    frozen state as a read-only version: listed beside the live one and
+    read by id. The snapshots are taken before the first listing, since
+    the daemon caches a bucket's snapshot set once a listing reads it.
+    Raising or lowering the listing cap is a registry change, so a
+    restart, after which the listing consults only the newest N while a
+    selected snapshot past the cap still reads by id."""
+    with (
+        grantee("s3history") as (grant, key),
+        bucket(grants=[grant], versioning="SUSPENDED", snapshot_versions=["s3-*"]),
+    ):
+        assert call("service.control", "START", SERVICE, {"silent": False}, job=True)
+        made = []
+        try:
+            s3 = client(key)
+            s3.put_object(Bucket="test-bucket", Key="k1", Body=b"alpha state")
+            ssh(f"zfs snapshot {DATASET}@s3-alpha")
+            made.append("s3-alpha")
+            s3.put_object(Bucket="test-bucket", Key="k1", Body=b"beta state")
+            ssh(f"zfs snapshot {DATASET}@s3-beta")
+            made.append("s3-beta")
+            ssh(f"zfs snapshot {DATASET}@manual-keep")
+            made.append("manual-keep")
+            s3.put_object(Bucket="test-bucket", Key="k1", Body=b"live state")
+
+            alpha, beta, keep = snapshot_id("s3-alpha"), snapshot_id("s3-beta"), snapshot_id("manual-keep")
+            assert s3.get_bucket_versioning(Bucket="test-bucket")["Status"] == "Suspended"
+            versions = s3.list_object_versions(Bucket="test-bucket").get("Versions", [])
+            ids = [v["VersionId"] for v in versions if v["Key"] == "k1"]
+            assert "null" in ids and alpha in ids and beta in ids, ids
+            assert keep not in ids, "an unselected snapshot serves nothing"
+            assert s3.get_object(Bucket="test-bucket", Key="k1", VersionId=alpha)["Body"].read() == b"alpha state"
+            assert s3.get_object(Bucket="test-bucket", Key="k1", VersionId=beta)["Body"].read() == b"beta state"
+            assert s3.get_object(Bucket="test-bucket", Key="k1")["Body"].read() == b"live state"
+            with pytest.raises(Exception, match="NoSuchVersion"):
+                s3.get_object(Bucket="test-bucket", Key="k1", VersionId=keep)
+
+            pid = service()["pids"]
+            b = call("sharing.s3.query", [["name", "=", "test-bucket"]], {"get": True})
+            call("sharing.s3.update", b["id"], {"snapshot_versions_max": 1})
+            assert service()["pids"] != pid, "the listing cap is a restart"
+            versions = s3.list_object_versions(Bucket="test-bucket").get("Versions", [])
+            ids = [v["VersionId"] for v in versions if v["Key"] == "k1"]
+            assert beta in ids and alpha not in ids, ids
+            assert s3.get_object(Bucket="test-bucket", Key="k1", VersionId=alpha)["Body"].read() == b"alpha state"
+        finally:
+            call("service.control", "STOP", SERVICE, {"silent": False}, job=True)
+            for name in made:
+                # a snapshot a reader crossed into is mounted, and its unmount
+                # can trail the reader by a moment
+                ssh(f"for i in 1 2 3 4 5; do zfs destroy {DATASET}@{name} && break; sleep 1; done")
+
+
 SOSAPI_SYSTEM = ".system-d26a9498-cb7c-4a87-a44a-8ae204f5ba6c/system.xml"
 
 
