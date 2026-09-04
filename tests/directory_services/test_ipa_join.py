@@ -17,7 +17,7 @@ def entitle_ds_auth():
     if truenas_server.server_type == 'ENTERPRISE_HA':
         yield
     else:
-        with entitled("DIRECTORY_SERVICES"):
+        with entitled("DIRECTORY_SERVICES_AUTH"):
             yield
 
 

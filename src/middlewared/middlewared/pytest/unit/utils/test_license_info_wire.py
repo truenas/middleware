@@ -63,7 +63,7 @@ LEGACY_EXPECTED = {
         _legacy_feature("AUTOTUNE"),
         _legacy_feature("CATALOG_ENTERPRISE_TRAIN"),
         _legacy_feature("CONTAINERS"),
-        _legacy_feature("DIRECTORY_SERVICES"),
+        _legacy_feature("DIRECTORY_SERVICES_AUTH"),
         _legacy_feature("KMIP"),
         _legacy_feature("MISSION_CRITICAL"),
         _legacy_feature("NETWORK_FEC"),

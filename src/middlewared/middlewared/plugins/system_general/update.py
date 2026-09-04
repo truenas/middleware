@@ -100,7 +100,7 @@ class SystemGeneralService(ConfigService):
     @settings.fields_validator('ds_auth')
     async def _validate_ds_auth(self, verrors, ds_auth):
         if ds_auth:
-            entitlement = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.DIRECTORY_SERVICES)
+            entitlement = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.DIRECTORY_SERVICES_AUTH)
             if not entitlement.entitled:
                 verrors.add('ds_auth', entitlement.message)
 

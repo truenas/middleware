@@ -34,7 +34,7 @@ POLICY: Mapping[str, Rule] = MappingProxyType(
         LicenseFeature.CATALOG_ENTERPRISE_TRAIN: TARGET_VECTORS[LicenseFeature.CATALOG_ENTERPRISE_TRAIN],
         LicenseFeature.CONTAINERS: TARGET_VECTORS[LicenseFeature.CONTAINERS],
         LicenseFeature.DEDUP: TARGET_VECTORS[LicenseFeature.DEDUP],
-        LicenseFeature.DIRECTORY_SERVICES: TARGET_VECTORS[LicenseFeature.DIRECTORY_SERVICES],
+        LicenseFeature.DIRECTORY_SERVICES_AUTH: TARGET_VECTORS[LicenseFeature.DIRECTORY_SERVICES_AUTH],
         LicenseFeature.FIBRECHANNEL: TARGET_VECTORS[LicenseFeature.FIBRECHANNEL],
         # TODO: KMIP needs webui ticket as well to remove/update gate
         LicenseFeature.KMIP: TARGET_VECTORS[LicenseFeature.KMIP],

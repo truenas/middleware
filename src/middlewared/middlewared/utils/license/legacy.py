@@ -52,7 +52,7 @@ _LEGACY_INJECT: frozenset[LicenseFeature] = frozenset(
         LicenseFeature.AUTOTUNE,
         LicenseFeature.CATALOG_ENTERPRISE_TRAIN,
         LicenseFeature.CONTAINERS,
-        LicenseFeature.DIRECTORY_SERVICES,
+        LicenseFeature.DIRECTORY_SERVICES_AUTH,
         LicenseFeature.KMIP,
         LicenseFeature.MISSION_CRITICAL,
         LicenseFeature.NETWORK_FEC,
