@@ -26,7 +26,7 @@ from .create_impl import ZFS_TYPE_MAP
 from .utils import has_internal_path
 
 if typing.TYPE_CHECKING:
-    from middlewared.api.current import EntitlementEntry, ZFSResourceCreateArgsData, ZFSResourceCreateProperties
+    from middlewared.api.current import ZFSResourceCreateArgsData, ZFSResourceCreateProperties
 
 __all__ = (
     "CreateContext",
@@ -36,7 +36,6 @@ __all__ = (
     "apply_tier_snap",
     "apply_volume_ssb_pin",
     "check_acl_combination",
-    "check_dedup_entitlement",
     "check_dedup_tiering",
     "check_encryption",
     "check_name_valid",
@@ -71,9 +70,9 @@ class CreateContext:
     ancestor has no entry."""
     tier_enabled: bool = False
     """Whether ZFS tiering is enabled on this system."""
-    dedup_entitlement: "EntitlementEntry | None" = None
-    """The DEDUP entitlement decision for this system. Populated by the
-    service only when the request enables deduplication."""
+    # TODO uncomment when the truenas.entitlements API is merged
+    # dedup_entitled: bool = False
+    # """Whether this system is licensed to use ZFS deduplication."""
 
 
 def ancestor_chain(path: str) -> list[str]:
@@ -356,25 +355,6 @@ def apply_volume_ssb_pin(data: "ZFSResourceCreateArgsData", ctx: CreateContext) 
     volblocksize = _size_bytes(ctx.properties.volblocksize or 16384) or 16384
     if parent_ssb and volblocksize < parent_ssb:
         ctx.properties.special_small_blocks = 0
-
-
-def check_dedup_entitlement(data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> None:
-    """Deduplication may only be enabled on a system entitled to it.
-
-    Licensed systems must carry the DEDUP feature; unlicensed iX hardware
-    is blocked; Community Edition may use it freely. The entitlement
-    engine decides and supplies the message. Matches the gate
-    pool.dataset applies.
-
-    The service calls this only for requests with a dedup value other
-    than off and after the entitlement has been gathered.
-    """
-    # narrow the optional type for mypy. The service only calls this
-    # after gathering the entitlement
-    assert ctx.dedup_entitlement is not None
-
-    if not ctx.dedup_entitlement.entitled:
-        raise ValidationError(f"{SCHEMA}.properties", ctx.dedup_entitlement.message, errno.EINVAL)
 
 
 def check_dedup_tiering(service: typing.Any, data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> None:
