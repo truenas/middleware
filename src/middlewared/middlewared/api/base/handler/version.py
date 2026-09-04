@@ -238,8 +238,9 @@ class APIVersionsAdapter:
             case Direction.UPGRADE:
                 value = new_model.from_previous(value)
 
+        new_model_allows_extra = new_model.model_config.get("extra") == "allow"
         for k, v in list(value.items()):
-            if k in current_model.model_fields and k not in new_model.model_fields:
+            if k in current_model.model_fields and k not in new_model.model_fields and not new_model_allows_extra:
                 value.pop(k)
             elif isinstance(v, (Undefined, _NotRequired)):
                 value.pop(k)
