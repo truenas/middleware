@@ -22,7 +22,6 @@ from middlewared.api.current import (
     SharingS3Entry,
     ZFSResourceQuery,
 )
-from middlewared.async_validators import validate_port
 from middlewared.service import SystemServicePart, SystemServiceService, ValidationErrors, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils.crypto import generate_token, ssl_uuid4
@@ -104,7 +103,8 @@ def _listen_text(listeners: Sequence[S3Listener]) -> tuple[str, str]:
     every address on port 9000 in plaintext."""
     if not listeners:
         listeners = [S3Listener(address="0.0.0.0")]
-    plain, secure = [], []
+    plain: list[str] = []
+    secure: list[str] = []
     for listener in listeners:
         ip, port = listener.address, listener.port
         text = f"[{ip}]:{port}" if isinstance(ipaddress.ip_address(ip), ipaddress.IPv6Address) else f"{ip}:{port}"
@@ -199,12 +199,14 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
                 verrors.add(f"s3_update.listeners.{i}", "The same address and port may only be listed once.")
             seen.add((listener.address, listener.port))
             verrors.extend(
-                await validate_port(
-                    self.middleware, f"s3_update.listeners.{i}.port", listener.port, "s3", listener.address
+                await self.middleware.call(
+                    "port.validate_port", f"s3_update.listeners.{i}.port", listener.port, listener.address, "s3"
                 )
             )
         if not listeners:
-            verrors.extend(await validate_port(self.middleware, "s3_update.listeners", 9000, "s3", "0.0.0.0"))
+            verrors.extend(
+                await self.middleware.call("port.validate_port", "s3_update.listeners", 9000, "0.0.0.0", "s3")
+            )
         if any(listener.tls for listener in listeners) and await self.effective_certificate(new.certificate) is None:
             verrors.add(
                 "s3_update.certificate",
@@ -250,7 +252,8 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
         unless a deployment wants otherwise."""
         if cert_id is not None:
             return cert_id
-        return (await self.middleware.call("system.general.config"))["ui_certificate"]
+        ui_certificate: int | None = (await self.middleware.call("system.general.config"))["ui_certificate"]
+        return ui_certificate
 
     async def certificate_paths(self, cert_id: int | None) -> tuple[str | None, str | None]:
         """Where the certificate's pair is rendered, or nothing when none is

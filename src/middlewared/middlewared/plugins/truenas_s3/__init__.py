@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from typing import Any, TYPE_CHECKING
 
+from middlewared.api.current import S3Entry
 from middlewared.common.attachment.certificate import CertificateServiceAttachmentDelegate
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
 from middlewared.common.ports import ServicePortDelegate
@@ -25,15 +26,18 @@ if TYPE_CHECKING:
 __all__ = ("S3Service", "S3AccesskeyService", "SharingS3Service")
 
 
+# the delegate bases declare their class attributes as NotImplemented
+# sentinels, so every concrete value is an override of the sentinel's type
 class S3ServicePortDelegate(ServicePortDelegate):
-    name = "s3"
-    namespace = "s3"
-    title = "S3 Service"
-    port_fields = ["listeners"]
+    name = "s3"  # type: ignore[assignment]
+    namespace = "s3"  # type: ignore[assignment]
+    title = "S3 Service"  # type: ignore[assignment]
+    port_fields = ["listeners"]  # type: ignore[assignment]
 
     async def config(self) -> dict[str, Any]:
         # the base class reads the config as a dict
-        return (await self.middleware.call("s3.config")).model_dump()
+        config: S3Entry = await self.middleware.call("s3.config")
+        return config.model_dump()
 
     async def get_ports_internal(self) -> list[tuple[str, int]]:
         # every listener is a bound port; none is every address on 9000
@@ -47,7 +51,8 @@ class S3ListenDelegate(SystemServiceListenMultipleDelegate):
     address out of each listener."""
 
     async def get_listen_state(self, ips: list[str]) -> list[dict[str, Any]]:
-        return (await self.middleware.call("s3.config")).model_dump()["listeners"]
+        config: S3Entry = await self.middleware.call("s3.config")
+        return [listener.model_dump() for listener in config.listeners]
 
     async def listens_on(self, state: list[dict[str, Any]], ip: str) -> bool:
         return any(listener["address"] == ip for listener in state)
@@ -55,20 +60,21 @@ class S3ListenDelegate(SystemServiceListenMultipleDelegate):
 
 class S3CertificateAttachment(CertificateServiceAttachmentDelegate):
     CERT_FIELD = "certificate"
-    HUMAN_NAME = "S3 Service"
-    NAMESPACE = "s3"
-    SERVICE = SERVICE
+    HUMAN_NAME = "S3 Service"  # type: ignore[assignment]
+    NAMESPACE = "s3"  # type: ignore[assignment]
+    SERVICE = SERVICE  # type: ignore[assignment]
     # the daemon rotates the pair on a reload: a renewal rides one
 
     async def state(self, cert_id: int) -> bool:
         # a chosen certificate is held whether or not a listener serves it
         # yet; the UI's is held only while none is chosen and one does
-        config = (await self.middleware.call("s3.config")).model_dump()
-        if config["certificate"] is not None:
-            return config["certificate"] == cert_id
-        if not any(listener["tls"] for listener in config["listeners"]):
+        config: S3Entry = await self.middleware.call("s3.config")
+        if config.certificate is not None:
+            return config.certificate == cert_id
+        if not any(listener.tls for listener in config.listeners):
             return False
-        return await self.middleware.call("s3.effective_certificate", None) == cert_id
+        effective: int | None = await self.middleware.call("s3.effective_certificate", None)
+        return effective == cert_id
 
 
 async def _reconfigure(middleware: Middleware, *_args: Any, **_kwargs: Any) -> None:
@@ -91,8 +97,8 @@ async def _ui_settings_updated(middleware: Middleware, config: dict[str, Any]) -
     # a service following the UI certificate follows it here: the files
     # a different certificate renders to are other paths, which the
     # daemon rotates to on reload
-    s3 = (await middleware.call("s3.config")).model_dump()
-    if s3["certificate"] is None and any(listener["tls"] for listener in s3["listeners"]):
+    s3: S3Entry = await middleware.call("s3.config")
+    if s3.certificate is None and any(listener.tls for listener in s3.listeners):
         await _reconfigure(middleware)
 
 
@@ -113,9 +119,18 @@ async def _pool_post_import(middleware: Middleware, pool: dict[str, Any] | None)
 
 
 async def setup(middleware: Middleware) -> None:
-    await middleware.call("port.register_attachment_delegate", S3ServicePortDelegate(middleware))
-    await middleware.call("certificate.register_attachment_delegate", S3CertificateAttachment(middleware))
-    await middleware.call("interface.register_listen_delegate", S3ListenDelegate(middleware, "s3", "listeners"))
+    await middleware.call(
+        "port.register_attachment_delegate",
+        S3ServicePortDelegate(middleware),  # type: ignore[no-untyped-call]
+    )
+    await middleware.call(
+        "certificate.register_attachment_delegate",
+        S3CertificateAttachment(middleware),  # type: ignore[no-untyped-call]
+    )
+    await middleware.call(
+        "interface.register_listen_delegate",
+        S3ListenDelegate(middleware, "s3", "listeners"),  # type: ignore[no-untyped-call]
+    )
     # an access key change re-renders the credentials file; an account change
     # can move a resolved name or turn a key into USER_MISSING, and a stale
     # file at the daemon's next load would refuse the whole credentials file
