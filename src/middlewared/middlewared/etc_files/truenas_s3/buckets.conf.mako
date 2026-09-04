@@ -7,73 +7,73 @@
     # it cannot mount and answers 503 for it, where an omitted row would
     # answer NoSuchBucket.
     data = render_ctx["s3.render_data"]
-    config = data["config"]
-    audit_licensed = data["audit_licensed"]
+    config = data.config
 
     def audit_value(mask):
         # ALL is the daemon's `all`; a list, empty included, is the mask
         return "all" if mask == "ALL" else ",".join(mask)
 %>\
 [server]
-% if config["listen"]:
-listen = ${config["listen"]}
+% if data.listen:
+listen = ${data.listen}
 % endif
 ## a TLS listener renders whatever pair the deployment has, a missing
 ## half included: the daemon refuses the load rather than serve the
 ## address in the clear, and that refusal is the answer the caller gets
-% if config["listen_tls"]:
-listen_tls = ${config["listen_tls"]}
-% if config["tls_cert"]:
-tls_cert = ${config["tls_cert"]}
+% if data.listen_tls:
+listen_tls = ${data.listen_tls}
+% if data.tls_cert:
+tls_cert = ${data.tls_cert}
 % endif
-% if config["tls_key"]:
-tls_key = ${config["tls_key"]}
+% if data.tls_key:
+tls_key = ${data.tls_key}
 % endif
 % endif
-servers = ${config["servers"]}
-% if config["region"]:
-region = ${config["region"]}
+servers = ${config.servers}
+% if config.region:
+region = ${config.region}
 % endif
-host_id = ${config["host_id"]}
-owner_id_seed = ${config["owner_id_seed"]}
-log_level = ${config["log_level"].lower()}
-% if audit_licensed:
-% if config["default_audit"]:
-default_audit = ${audit_value(config["default_audit"])}
+host_id = ${data.host_id}
+owner_id_seed = ${data.owner_id_seed}
+log_level = ${config.log_level.lower()}
+% if data.audit_licensed:
+% if config.default_audit:
+default_audit = ${audit_value(config.default_audit)}
 % endif
-default_audit_overflow = ${config["default_audit_overflow"].lower()}
+default_audit_overflow = ${config.default_audit_overflow.lower()}
 % endif
-% for bucket in data["buckets"]:
-% if bucket["enabled"]:
+% for bucket in data.buckets:
+<% b = bucket.entry %>\
+% if b.enabled:
 
-[bucket "${bucket["name"]}"]
-dataset = ${bucket["dataset"]}
-path = ${bucket["mountpoint"]}
-owner = ${bucket["owner"]}
-owner_id = ${bucket["owner_uid"]}
-permissions_model = ${bucket["permissions_model"].lower()}
-versioning = ${bucket["versioning"].lower()}
+[bucket "${b.name}"]
+dataset = ${b.dataset}
+path = ${bucket.mountpoint}
+owner = ${b.owner}
+owner_id = ${b.owner_uid}
+permissions_model = ${b.permissions_model.lower()}
+versioning = ${b.versioning.lower()}
 ## a selection of none is the key omitted, never rendered empty; the cap
 ## is inert without a selection, so it rides beside one
-% if bucket["snapshot_versions"]:
-snapshot_versions = ${", ".join(bucket["snapshot_versions"])}
-snapshot_versions_max = ${bucket["snapshot_versions_max"]}
+% if b.snapshot_versions:
+snapshot_versions = ${", ".join(b.snapshot_versions)}
+snapshot_versions_max = ${b.snapshot_versions_max}
 % endif
-object_lock = ${"enabled" if bucket["object_lock"] else "off"}
-% if bucket["object_lock_default_mode"]:
-object_lock_default_mode = ${bucket["object_lock_default_mode"].lower()}
+object_lock = ${"enabled" if b.object_lock else "off"}
+% if b.object_lock_default_mode:
+object_lock_default_mode = ${b.object_lock_default_mode.lower()}
 % endif
-% if bucket["object_lock_default_days"]:
-object_lock_default_days = ${bucket["object_lock_default_days"]}
+% if b.object_lock_default_days:
+object_lock_default_days = ${b.object_lock_default_days}
 % endif
-% if audit_licensed:
+% if data.audit_licensed:
 ## None inherits the server default by omission; an empty list is the
 ## empty mask, rendered so it shadows the default
-% if bucket["audit"] is not None:
-audit = ${audit_value(bucket["audit"])}
+% if b.audit is not None:
+audit = ${audit_value(b.audit)}
 % endif
-% if bucket["audit_overflow"]:
-audit_overflow = ${bucket["audit_overflow"].lower()}
+% if b.audit_overflow:
+audit_overflow = ${b.audit_overflow.lower()}
 % endif
 % endif
 % endif
