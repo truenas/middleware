@@ -45,6 +45,8 @@ def upgrade():
     sa.Column('grants', sa.TEXT(), nullable=False, server_default='[]'),
     sa.Column('permissions_model', sa.String(length=16), nullable=False, server_default='S3'),
     sa.Column('versioning', sa.String(length=16), nullable=False, server_default='OFF'),
+    sa.Column('snapshot_versions', sa.TEXT(), nullable=False, server_default='[]'),
+    sa.Column('snapshot_versions_max', sa.Integer(), nullable=False, server_default='64'),
     sa.Column('object_lock', sa.Boolean(), nullable=False, server_default='0'),
     sa.Column('object_lock_default_mode', sa.String(length=16), nullable=True),
     sa.Column('object_lock_default_days', sa.Integer(), nullable=True),

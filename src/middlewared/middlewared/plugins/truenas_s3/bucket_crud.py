@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import errno
 import ipaddress
+import string
 import typing
 from typing import Any, Literal, TYPE_CHECKING
 
@@ -91,12 +92,20 @@ class SharingS3Model(sa.Model):
     grants = sa.Column(sa.JSON(list), default=[])
     permissions_model = sa.Column(sa.String(16), default="S3")
     versioning = sa.Column(sa.String(16), default="OFF")
+    snapshot_versions = sa.Column(sa.JSON(list), default=[])
+    snapshot_versions_max = sa.Column(sa.Integer(), default=64)
     object_lock = sa.Column(sa.Boolean(), default=False)
     object_lock_default_mode = sa.Column(sa.String(16), nullable=True)
     object_lock_default_days = sa.Column(sa.Integer(), nullable=True)
     # NULL inherits the service default; an empty list audits nothing
     audit = sa.Column(sa.JSON(None), nullable=True)
     audit_overflow = sa.Column(sa.String(16), nullable=True)
+
+
+# ZFS's snapshot name charset plus the two metacharacters the daemon
+# matches with; a comma is outside it, which is what lets the patterns
+# render comma separated
+SNAPSHOT_PATTERN_CHARS = frozenset(string.ascii_letters + string.digits + "-_.: *?")
 
 
 def data_dir(mountpoint: str) -> str:
@@ -174,6 +183,23 @@ class SharingS3Service(SharingService[SharingS3Entry]):
                     f"{schema}.permissions_model",
                     "Object lock requires the S3 permissions model: another protocol could rewrite a locked object.",
                 )
+        if data.snapshot_versions:
+            if data.versioning == "OFF":
+                verrors.add(
+                    f"{schema}.versioning",
+                    "Serving snapshots as versions requires versioning to be ENABLED or SUSPENDED.",
+                )
+            seen: set[str] = set()
+            for i, pattern in enumerate(data.snapshot_versions):
+                field = f"{schema}.snapshot_versions.{i}"
+                if pattern != pattern.strip() or len(pattern) > 255:
+                    verrors.add(field, "A pattern is at most 255 characters with no leading or trailing whitespace.")
+                elif not set(pattern) <= SNAPSHOT_PATTERN_CHARS:
+                    verrors.add(field, "A pattern may contain letters, digits, `-`, `_`, `.`, `:`, space, `*` and `?`.")
+                elif pattern in seen:
+                    verrors.add(field, "This pattern is listed twice.")
+                seen.add(pattern)
+
         if data.object_lock_default_mode is not None or data.object_lock_default_days is not None:
             if not data.object_lock:
                 verrors.add(f"{schema}.object_lock", "A default retention rule requires object lock to be enabled.")

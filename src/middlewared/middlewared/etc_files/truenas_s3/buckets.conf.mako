@@ -46,6 +46,12 @@ owner = ${bucket["owner"]}
 owner_id = ${bucket["owner_uid"]}
 permissions_model = ${bucket["permissions_model"].lower()}
 versioning = ${bucket["versioning"].lower()}
+## a selection of none is the key omitted, never rendered empty; the cap
+## is inert without a selection, so it rides beside one
+% if bucket["snapshot_versions"]:
+snapshot_versions = ${", ".join(bucket["snapshot_versions"])}
+snapshot_versions_max = ${bucket["snapshot_versions_max"]}
+% endif
 object_lock = ${"enabled" if bucket["object_lock"] else "off"}
 % if bucket["object_lock_default_mode"]:
 object_lock_default_mode = ${bucket["object_lock_default_mode"].lower()}
