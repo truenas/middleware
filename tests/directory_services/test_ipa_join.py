@@ -4,6 +4,7 @@ from middlewared.test.integration.assets.directory_service import directoryservi
 from middlewared.test.integration.assets.product import product_type
 from middlewared.test.integration.utils import call, client, ssh
 from middlewared.test.integration.utils.client import truenas_server
+from middlewared.utils.directoryservices.common import ds_config_to_fqdn
 
 
 @pytest.fixture(scope="module")
@@ -108,8 +109,10 @@ def test_admin_privilege(do_freeipa_connection, enable_ds_auth):
 
 
 def test_dns_resolution(do_freeipa_connection):
-    ipa_config = do_freeipa_connection['config']['configuration']
-    fqdn = f'{ipa_config["hostname"]}.{ipa_config["domain"]}'
+    # An IPA hostname may itself be a complete FQDN (registering the host in a DNS zone
+    # other than the IPA domain), so the name must be derived the same way the join does
+    # rather than by appending the domain unconditionally.
+    fqdn = ds_config_to_fqdn(do_freeipa_connection['config'])
 
     addresses = call('dnsclient.forward_lookup', {'names': [fqdn]})
     assert len(addresses) != 0
