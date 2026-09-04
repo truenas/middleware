@@ -41,8 +41,8 @@ class S3AccesskeyModel(sa.Model):
     # recoverable. NULL means it was lost to a config restore without the
     # secret seed and the key must be rotated
     secret = sa.Column(sa.EncryptedText(), nullable=True)
-    enabled = sa.Column(sa.Boolean(), default=True)
-    expiry = sa.Column(sa.Integer(), default=0)
+    enabled = sa.Column(sa.Boolean())
+    expiry = sa.Column(sa.Integer())
     created_at = sa.Column(sa.DateTime())
 
 
