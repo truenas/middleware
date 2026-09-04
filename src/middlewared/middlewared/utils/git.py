@@ -7,6 +7,14 @@ from middlewared.service import CallError
 
 logger = logging.getLogger(__name__)
 
+# GitHub answers rate limited unauthenticated requests with a 401 rather than a 403, which git
+# reports as a missing credential ("could not read Username for 'https://github.com'") instead of
+# retrying. The rejections land almost exclusively on HTTP/2 connections, so every request that
+# leaves the appliance is pinned to HTTP/1.1. This is a temporary solution until GitHub starts
+# limiting more aggressively.
+# See https://github.com/orgs/community/discussions/206581
+NETWORK_GIT_ARGS = ['git', '-c', 'http.version=HTTP/1.1']
+
 CLONE_TIMEOUT = 900
 PULL_TIMEOUT = 600
 RESET_TIMEOUT = 120
@@ -29,7 +37,8 @@ def clone_repository(
 
     try:
         cp = subprocess.run(
-            ['git', 'clone'] + args + [repository_uri, destination], capture_output=True, timeout=CLONE_TIMEOUT
+            NETWORK_GIT_ARGS + ['clone'] + args + [repository_uri, destination],
+            capture_output=True, timeout=CLONE_TIMEOUT,
         )
     except subprocess.TimeoutExpired:
         raise CallError(
@@ -81,7 +90,8 @@ def update_repo(destination: str, branch: str) -> None:
 
     try:
         cp = subprocess.run(
-            ['git', '-C', destination, 'pull', 'origin', branch], capture_output=True, timeout=PULL_TIMEOUT
+            NETWORK_GIT_ARGS + ['-C', destination, 'pull', 'origin', branch],
+            capture_output=True, timeout=PULL_TIMEOUT,
         )
     except subprocess.TimeoutExpired:
         raise CallError(f'Timed out after {PULL_TIMEOUT} seconds updating {destination!r} repository')
