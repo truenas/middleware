@@ -25,7 +25,7 @@ from truenas_pylicensed import FEATURE_NAME_MAP, LicenseType
 from truenas_pylicensed.features import LicenseFeature, SupportTier
 
 from .constants import LEGACY_LICENSE_FILE, LICENSE_ADDHW_MAPPING
-from .types import FeatureInfo, LicenseInfo
+from .types import FeatureInfo, LicenseInfo, LicenseOrigin
 
 logger = logging.getLogger(__name__)
 
@@ -203,7 +203,8 @@ def parse_legacy_license(text: str) -> LicenseInfo:
     enclosures = {
         LICENSE_ADDHW_MAPPING[code]: quantity for quantity, code in lic.addhw if code in LICENSE_ADDHW_MAPPING
     }
-    if lic.customer_key == HW_ONLY_MARKER:
+    hw_only = lic.customer_key == HW_ONLY_MARKER
+    if hw_only:
         # Replaces the list rather than extending it: the bitmask-derived names and the
         # conditional SUPPORT append both already happened above, and replacing is what
         # holds a marked record to the bare hardware set.
@@ -219,7 +220,7 @@ def parse_legacy_license(text: str) -> LicenseInfo:
         type=LicenseType.ENTERPRISE_HA if lic.system_serial_ha else LicenseType.ENTERPRISE_SINGLE,
         model=model,
         # A marked record has no support contract behind it, so it carries no expiry to act on.
-        support_expires_at=None if lic.customer_key == HW_ONLY_MARKER else lic.contract_end,
+        support_expires_at=None if hw_only else lic.contract_end,
         # A legacy blob carries only the support contract's dates, not per-feature ones.
         features=MappingProxyType(
             {
@@ -236,4 +237,5 @@ def parse_legacy_license(text: str) -> LicenseInfo:
         serials=tuple(serials),
         enclosures=MappingProxyType(enclosures),
         contract_type=lic.contract_type.name.upper(),
+        origin=LicenseOrigin.SYSTEM_GENERATED if hw_only else LicenseOrigin.ISSUED,
     )

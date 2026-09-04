@@ -12,6 +12,7 @@ from middlewared.api.current import (
     TrueNASConnectGenerateClaimTokenArgs, TrueNASConnectGenerateClaimTokenResult,
 )
 from middlewared.utils.crypto import ssl_uuid4
+from middlewared.utils.license import LicenseOrigin
 from middlewared.service import CallError, Service
 
 from .utils import CLAIM_TOKEN_CACHE_KEY
@@ -96,8 +97,10 @@ class TrueNASConnectService(Service):
             'port': (await self.middleware.call('system.general.config'))['ui_httpsport']
         }
 
-        license_info = await self.middleware.call('system.license', True)
-        if license_info is not None and license_info['raw_license'] is not None:
-            query_params['license'] = license_info['raw_license']
+        info = await self.middleware.call('truenas.license.info_private')
+        if info is not None and info.origin is LicenseOrigin.ISSUED:
+            license_info = await self.middleware.call('system.license', True)
+            if license_info is not None and license_info['raw_license'] is not None:
+                query_params['license'] = license_info['raw_license']
 
         return f'{get_registration_uri(config)}?{urlencode(query_params)}'

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import enum
 import typing
 from dataclasses import dataclass
 from datetime import date
@@ -11,7 +12,17 @@ if typing.TYPE_CHECKING:
 
     from truenas_pylicensed import LicenseType
 
-__all__ = ("FeatureInfo", "LicenseInfo")
+__all__ = ("FeatureInfo", "LicenseInfo", "LicenseOrigin")
+
+
+class LicenseOrigin(enum.Enum):
+    """Exists so a no-license grant on enterprise hardware is expressible.
+
+    TODO: Remove once legacy licenses are removed.
+    """
+
+    ISSUED = "ISSUED"
+    SYSTEM_GENERATED = "SYSTEM_GENERATED"
 
 
 @dataclass(frozen=True, kw_only=True, slots=True)
@@ -59,6 +70,8 @@ class LicenseInfo:
     """Licensed enclosure models mapped to count."""
     contract_type: str | None
     """Support contract type."""
+    origin: LicenseOrigin = LicenseOrigin.ISSUED
+    """Whether an issuer signed this record or the system wrote it for itself."""
 
     def has_feature(self, name: str) -> bool:
         return name in self.features  # membership only; the feature's own expiry is not consulted

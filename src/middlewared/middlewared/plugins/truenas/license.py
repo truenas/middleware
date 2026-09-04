@@ -22,6 +22,7 @@ from middlewared.plugins.truenas.tn import EULA_PENDING_PATH
 from middlewared.utils.license import (
     LEGACY_LICENSE_FILE,
     LicenseInfo,
+    LicenseOrigin,
     get_fingerprint_b64,
     get_legacy_license_info,
     get_license,
@@ -75,7 +76,8 @@ class TrueNASLicenseService(TrueNASLicenseReconcileService, Service):
     )
     def upload(self, license_: Secret[LongNonEmptyString], options: TrueNASLicenseUploadOptions) -> None:
         """Upload a PEM-wrapped license file."""
-        had_license = self.info_private() is not None
+        current = self.info_private()
+        had_license = current is not None and current.origin is LicenseOrigin.ISSUED
 
         # `check_annotations` hands the method the undumped model value, so the PEM has to be
         # unwrapped twice: out of the Secret that keeps it off the audit trail, then out of the
