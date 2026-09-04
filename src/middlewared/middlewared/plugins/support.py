@@ -23,6 +23,7 @@ from middlewared.service import CallError, ConfigService, job, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import sw_version
 from middlewared.utils.entitlements import DerivedEntitlement
+from middlewared.utils.license import LicenseOrigin
 from middlewared.utils.network import INTERNET_TIMEOUT
 
 ADDRESS = 'support-proxy.truenas.com'
@@ -175,7 +176,7 @@ class SupportService(ConfigService):
             required_attrs = ('category', 'phone', 'name', 'email', 'criticality', 'environment')
             data['serial'] = (await self.middleware.call('system.dmidecode_info'))['system-serial-number']
             license_ = (await self.call2(self.s.truenas.license.info_private))
-            if license_:
+            if license_ and license_.origin is LicenseOrigin.ISSUED:
                 data['license_id'] = license_.id
 
         for i in required_attrs:

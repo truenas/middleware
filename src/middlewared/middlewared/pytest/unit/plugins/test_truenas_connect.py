@@ -8,7 +8,7 @@ from truenas_pylicensed import LicenseType
 from middlewared.pytest.unit.helpers import create_service
 from middlewared.pytest.unit.middleware import Middleware
 from middlewared.service import CallError, ValidationErrors
-from middlewared.utils.license import FeatureInfo, LicenseInfo
+from middlewared.utils.license import FeatureInfo, LicenseInfo, LicenseOrigin
 from middlewared.plugins.truenas_connect.acme import TNCACMEService
 from middlewared.plugins.truenas_connect.heartbeat import TNCHeartbeatService
 from middlewared.plugins.truenas_connect.register import TrueNASConnectService as TNCRegistrationService
@@ -819,7 +819,7 @@ async def test_handle_response_202_pending_without_pem_is_quiet():
     warn.assert_not_called()
 
 
-# --- Registration URI: the license PEM is attached unconditionally ---------------------------------
+# --- Registration URI: the license PEM is attached when an issuer signed it ------------------------
 
 def _registration_service(license_info):
     service = TNCRegistrationService(MagicMock())
@@ -839,13 +839,15 @@ def _registration_service(license_info):
             return {'ui_httpsport': 443}
         if method == 'system.license':
             return license_info
+        if method == 'truenas.license.info_private':
+            return None if license_info is None else MagicMock(origin=LicenseOrigin.ISSUED)
         raise ValueError(f'Unexpected: {method}')
 
     service.middleware.call = AsyncMock(side_effect=mock_call)
     return service
 
 
-# The PEM's presence is the only thing that decides this.
+# These all hold an issued license, so the PEM's presence is what decides them.
 @pytest.mark.asyncio
 @pytest.mark.parametrize('license_info, expected', [
     ({'raw_license': 'THE-PEM'}, 'license=THE-PEM'),

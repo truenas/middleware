@@ -3,9 +3,10 @@
 
 Runs chrooted inside the new boot environment partway through an upgrade, before
 middleware has ever started there. An appliance that shipped from iX carrying no
-license blob reads as wholly unlicensed once the per-feature entitlement gates
-apply, which withdraws capabilities the chassis was sold with. A minimal legacy
-record restores them.
+license blob resolves entitlements on the unlicensed column, which leaves nowhere
+to gate a feature that every appliance of this class is meant to have. Writing a
+minimal legacy record moves it onto the licensed column, where such a feature can
+be granted without also granting it to commodity hardware.
 
 The record is stamped with a marker in its customer_key so the legacy parser can
 tell it apart from a license an issuer actually signed, and bound it to the bare

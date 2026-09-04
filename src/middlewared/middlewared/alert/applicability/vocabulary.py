@@ -57,8 +57,9 @@ def NOT_APPLIANCE_HARDWARE(facts: EntitlementFacts) -> bool:
 
 def ANY_LICENSE(facts: EntitlementFacts) -> bool:
     """Machines carrying a license of any type, on any hardware. For declarations whose subject is
-    the license itself. This is not "is this an enterprise system": a licensed Mini satisfies it and
-    an unlicensed appliance does not."""
+    the license itself. This is not "is this an enterprise system": a licensed Mini satisfies it, and
+    an appliance satisfies it only once it holds a record -- including one the system generated for
+    itself."""
     return facts.license is not None
 
 

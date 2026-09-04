@@ -2,7 +2,8 @@
 
 Legacy licenses predate the per-feature key vocabulary, so a modern gate reading
 one would see almost no keys and revoke functionality the holder already has.
-Every surviving legacy blob therefore gets _LEGACY_INJECT granted outright.
+Every surviving legacy blob therefore gets _LEGACY_INJECT granted outright, except a
+system-generated record, which gets _HW_ONLY_INJECT.
 
 A blob whose model starts with "freenas" bought none of that functionality, so it
 is rejected entirely and the system reads as unlicensed. The rejection is silent:
@@ -25,7 +26,7 @@ from truenas_pylicensed import FEATURE_NAME_MAP, LicenseType
 from truenas_pylicensed.features import LicenseFeature, SupportTier
 
 from .constants import LEGACY_LICENSE_FILE, LICENSE_ADDHW_MAPPING
-from .types import FeatureInfo, LicenseInfo
+from .types import FeatureInfo, LicenseInfo, LicenseOrigin
 
 logger = logging.getLogger(__name__)
 
@@ -72,10 +73,10 @@ _LEGACY_INJECT: frozenset[LicenseFeature] = frozenset(
 
 HW_ONLY_MARKER: Final[str] = "TRUENAS-HW-ONLY-V1"
 
-# Reproduces the bare TRUENAS_HW entitlement column: what an iX chassis carries on the
-# strength of the hardware alone, with no support contract behind it. Deliberately not a
-# subset of _LEGACY_INJECT -- SED is a bitmask feature a real blob could carry, so it was
-# never among the names injected into one.
+# The keys a system-generated record carries. Writing the record moves the appliance off the
+# unlicensed column, so this list is what holds it to the answers the bare chassis already gave --
+# but only for features the matrix gates on a key. One gated on holding a license at all is
+# granted by the record's existence, whatever this list says.
 _HW_ONLY_INJECT: frozenset[LicenseFeature] = frozenset(
     {
         LicenseFeature.APPS,
@@ -203,10 +204,8 @@ def parse_legacy_license(text: str) -> LicenseInfo:
     enclosures = {
         LICENSE_ADDHW_MAPPING[code]: quantity for quantity, code in lic.addhw if code in LICENSE_ADDHW_MAPPING
     }
-    if lic.customer_key == HW_ONLY_MARKER:
-        # Replaces the list rather than extending it: the bitmask-derived names and the
-        # conditional SUPPORT append both already happened above, and replacing is what
-        # holds a marked record to the bare hardware set.
+    hw_only = lic.customer_key == HW_ONLY_MARKER
+    if hw_only:
         feature_names = [f.value for f in LicenseFeature if f in _HW_ONLY_INJECT]
     else:
         # Iterate the enum rather than the frozenset so injected names land in declaration order.
@@ -219,7 +218,7 @@ def parse_legacy_license(text: str) -> LicenseInfo:
         type=LicenseType.ENTERPRISE_HA if lic.system_serial_ha else LicenseType.ENTERPRISE_SINGLE,
         model=model,
         # A marked record has no support contract behind it, so it carries no expiry to act on.
-        support_expires_at=None if lic.customer_key == HW_ONLY_MARKER else lic.contract_end,
+        support_expires_at=None if hw_only else lic.contract_end,
         # A legacy blob carries only the support contract's dates, not per-feature ones.
         features=MappingProxyType(
             {
@@ -236,4 +235,5 @@ def parse_legacy_license(text: str) -> LicenseInfo:
         serials=tuple(serials),
         enclosures=MappingProxyType(enclosures),
         contract_type=lic.contract_type.name.upper(),
+        origin=LicenseOrigin.SYSTEM_GENERATED if hw_only else LicenseOrigin.ISSUED,
     )
