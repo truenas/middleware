@@ -305,12 +305,6 @@ class AppService(CRUDService):
         """
         Delete `app_name` app.
 
-        `force_remove_ix_volumes` should be set when the ix-volumes were created by the system for apps which were
-        migrated from k8s to docker and the user wants to remove them. This is to prevent accidental deletion of
-        the original ix-volumes which were created in dragonfish and before for kubernetes based apps. When this
-        is set, it will result in the deletion of ix-volumes from both docker based apps and k8s based apps and should
-        be carefully set.
-
         `force_remove_custom_app` should be set when the app being deleted is a custom app and the user wants to
         forcefully remove the app. A use-case for this attribute is that user had an invalid yaml in his custom
         app and there are no actual docker resources (network/containers/volumes) in place for the custom app, then
