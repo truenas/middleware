@@ -174,16 +174,9 @@ def test_global_grants_render_as_wildcard_rows():
             "password": "test1234",
         }
     ) as u:
+        granted = {"principal_type": "USER", "xid": u["uid"], "access": "DENY", "name": "s3globaluser"}
         with config(global_grants=[{"principal_type": "USER", "xid": u["uid"], "access": "DENY"}]):
-            cfg = call("s3.config")
-            assert cfg["global_grants"] == [
-                {
-                    "principal_type": "USER",
-                    "xid": u["uid"],
-                    "access": "DENY",
-                    "name": "s3globaluser",
-                }
-            ]
+            assert call("s3.config")["global_grants"] == [granted]
             call("etc.generate", "truenas_s3")
             assert parse(POLICIES_CONF) == {
                 'grant user "s3globaluser" "*"': {
@@ -191,6 +184,13 @@ def test_global_grants_render_as_wildcard_rows():
                     "access": "deny",
                 },
             }
+
+            # an update elsewhere starts from the stored grants, not from
+            # the request, and must carry them through as grants
+            with config(log_level="INFO"):
+                assert call("s3.config")["global_grants"] == [granted]
+                call("etc.generate", "truenas_s3")
+                assert 'grant user "s3globaluser" "*"' in parse(POLICIES_CONF)
 
         for bad, message in (
             (

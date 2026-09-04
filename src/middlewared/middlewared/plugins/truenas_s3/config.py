@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 import ipaddress
 import os
@@ -63,7 +64,7 @@ class S3Model(sa.Model):
     owner_id_seed = sa.Column(sa.String(64), default="")
 
 
-@dataclass(slots=True)
+@dataclass(frozen=True, slots=True, kw_only=True)
 class RenderedGrant:
     """One [grant …] section: the heading, minus its brackets, and the row."""
 
@@ -71,7 +72,7 @@ class RenderedGrant:
     grant: S3GrantEntry
 
 
-@dataclass(slots=True)
+@dataclass(frozen=True, slots=True, kw_only=True)
 class RenderedBucket:
     """A bucket beside what the render adds to it."""
 
@@ -80,7 +81,7 @@ class RenderedBucket:
     grants: list[RenderedGrant]
 
 
-@dataclass(slots=True)
+@dataclass(frozen=True, slots=True, kw_only=True)
 class RenderData:
     """Everything the etc templates read, gathered once per generate."""
 
@@ -97,7 +98,7 @@ class RenderData:
     audit_licensed: bool
 
 
-def _listen_text(listeners: list[S3Listener]) -> tuple[str, str]:
+def _listen_text(listeners: Sequence[S3Listener]) -> tuple[str, str]:
     """[server] listen and listen_tls: the plaintext and the TLS addresses,
     comma separated, an IPv6 address in brackets. No listener at all is
     every address on port 9000 in plaintext."""
@@ -111,7 +112,7 @@ def _listen_text(listeners: list[S3Listener]) -> tuple[str, str]:
     return ", ".join(plain), ", ".join(secure)
 
 
-def _rendered_grants(grants: list[S3GrantEntry], bucket: str) -> list[RenderedGrant]:
+def _rendered_grants(grants: Sequence[S3GrantEntry], bucket: str) -> list[RenderedGrant]:
     """Each grant under the heading its section carries: the principal
     kind, its label (quoted, stripped of what would break the grammar) and
     the bucket, `*` for every bucket. A user and a group may share a label,
@@ -124,8 +125,8 @@ def _rendered_grants(grants: list[S3GrantEntry], bucket: str) -> list[RenderedGr
         if kind == "everyone":
             heading = f'grant everyone "{bucket}"'
         else:
-            heading = f'grant {kind} "{grant_label(grant.name, grant.xid)}" "{bucket}"'
-        by_principal[(grant.principal_type, grant.xid)] = RenderedGrant(heading, grant)
+            heading = f'grant {kind} "{grant_label(grant)}" "{bucket}"'
+        by_principal[(grant.principal_type, grant.xid)] = RenderedGrant(heading=heading, grant=grant)
     return list(by_principal.values())
 
 
@@ -141,11 +142,15 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
         return entry
 
     async def extend(self, data: dict[str, Any]) -> dict[str, Any]:
+        """The entry is constructed from this rather than validated, so the
+        nested rows are made models here, once, and every reader past this
+        point holds `S3Listener` and `S3GrantEntry`."""
         if isinstance(data.get("certificate"), dict):
             data["certificate"] = data["certificate"]["id"]
         for key in ("host_id", "owner_id_seed"):
             data.pop(key, None)
-        names = await principal_names(self.middleware, *grant_principals(data["global_grants"]))
+        data["listeners"] = [S3Listener.model_validate(row) for row in data["listeners"]]
+        names = await principal_names(self.middleware, grant_principals(data["global_grants"]))
         data["global_grants"] = label_grants(data["global_grants"], names)
         return data
 
@@ -177,10 +182,7 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
         new = old.updated(data)
         verrors = ValidationErrors()
 
-        # the base builds the entry without validating it, so a list the
-        # update did not touch holds plain dicts; the ones it did hold
-        # models. One shape for the checks below, whichever side it came from
-        listeners = [S3Listener.model_validate(row) for row in new.model_dump()["listeners"]]
+        listeners = new.listeners
         if len(listeners) > MAX_LISTENERS:
             verrors.add("s3_update.listeners", f"The S3 service listens on at most {MAX_LISTENERS} addresses.")
         choices = await self.bindip_choices()
@@ -276,12 +278,9 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
         config = await self.config()
         identity = await self._identity()
         tls_cert, tls_key = await self.certificate_paths(await self.effective_certificate(config.certificate))
-        # the config entry is constructed, not validated, so its nested rows
-        # are plain dicts until asked to be models
-        listen, listen_tls = _listen_text([S3Listener.model_validate(row) for row in config.listeners])
+        listen, listen_tls = _listen_text(config.listeners)
         if not listen_tls:
             tls_cert = tls_key = None
-        global_grants = [S3GrantEntry.model_validate(row) for row in config.global_grants]
 
         buckets: list[SharingS3Entry] = await self.middleware.call("sharing.s3.query")
         datasets = (
@@ -307,7 +306,9 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
                 await self.middleware.call("alert.oneshot_create", MISSING_ALERT, args)
             else:
                 await self.middleware.call("alert.oneshot_delete", MISSING_ALERT, bucket.id)
-            rendered_buckets.append(RenderedBucket(bucket, mountpoint, _rendered_grants(bucket.grants, bucket.name)))
+            rendered_buckets.append(
+                RenderedBucket(entry=bucket, mountpoint=mountpoint, grants=_rendered_grants(bucket.grants, bucket.name))
+            )
 
         accesskeys: list[S3AccesskeyEntry] = await self.middleware.call("s3.accesskey.query")
         for key in accesskeys:
@@ -329,7 +330,7 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
             listen_tls=listen_tls,
             tls_cert=tls_cert,
             tls_key=tls_key,
-            global_grants=_rendered_grants(global_grants, "*"),
+            global_grants=_rendered_grants(config.global_grants, "*"),
             buckets=rendered_buckets,
             accesskeys=accesskeys,
             audit_licensed=await self.audit_licensed(),
