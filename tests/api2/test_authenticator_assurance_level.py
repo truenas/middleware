@@ -40,6 +40,24 @@ def test_mechanism_choices(level, expected):
         assert call('auth.mechanism_choices') == expected
 
 
+def test_get_and_set_assurance_level_3():
+    """LEVEL_3 round-trips through set/get before being restored to LEVEL_1."""
+    with client() as c:
+        try:
+            c.call('auth.set_authenticator_assurance_level', 'LEVEL_3')
+            assert c.call('auth.get_authenticator_assurance_level') == 'LEVEL_3'
+        finally:
+            c.call('auth.set_authenticator_assurance_level', 'LEVEL_1')
+        assert c.call('auth.get_authenticator_assurance_level') == 'LEVEL_1'
+
+
+def test_set_unknown_assurance_level():
+    """An unrecognized assurance level is rejected."""
+    with client() as c:
+        with pytest.raises(CallError, match='unknown authenticator assurance level'):
+            c.call('auth.set_authenticator_assurance_level', 'LEVEL_BOGUS')
+
+
 def test_level2_api_key_plain():
     """ API_KEY_PLAIN lacks replay resistance
     and so authentication attempts must fail with AUTH_ERR

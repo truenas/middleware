@@ -29,19 +29,32 @@ def test_works_for_token():
         assert 'LOCAL' in user['account_attributes']
 
 
+def _clear_root_webui_attribute(key):
+    rows = call("datastore.query", "account.bsdusers_webui_attribute", [["uid", "=", 0]])
+    if rows and key in rows[0]["attributes"]:
+        remaining = {k: v for k, v in rows[0]["attributes"].items() if k != key}
+        call("datastore.update", "account.bsdusers_webui_attribute", rows[0]["id"], {"attributes": remaining})
+
+
 def test_attributes():
-    user = call("auth.me")
-    assert "test" not in user["attributes"]
+    # Keep this idempotent: auth.set_attribute persists in the datastore, so remove any
+    # leftover value from a previous run before asserting and clean up afterwards.
+    _clear_root_webui_attribute("test")
+    try:
+        user = call("auth.me")
+        assert "test" not in user["attributes"]
 
-    call("auth.set_attribute", "test", "value")
+        call("auth.set_attribute", "test", "value")
 
-    user = call("auth.me")
-    assert user["attributes"]["test"] == "value"
+        user = call("auth.me")
+        assert user["attributes"]["test"] == "value"
 
-    call("auth.set_attribute", "test", "new_value")
+        call("auth.set_attribute", "test", "new_value")
 
-    user = call("auth.me")
-    assert user["attributes"]["test"] == "new_value"
+        user = call("auth.me")
+        assert user["attributes"]["test"] == "new_value"
+    finally:
+        _clear_root_webui_attribute("test")
 
 
 def test_distinguishes_attributes():
