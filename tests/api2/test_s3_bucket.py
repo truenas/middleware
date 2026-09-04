@@ -1,5 +1,3 @@
-# TODO: re-enable once the truenas_s3 daemon is added to the TrueNAS image.
-# Every test here starts the service and talks to the daemon.
 """S3 buckets: a dataset this plugin creates and registers with the S3
 service, with its access grants embedded. Registering, dropping,
 enabling or disabling a bucket restarts the service; its owner, grants
@@ -17,12 +15,6 @@ from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.account import user
 from middlewared.test.integration.assets.pool import dataset, pool
 from middlewared.test.integration.utils import call, ssh
-
-# TRUENAS_S3_DAEMON=1 runs them on a box that has the daemon installed by hand.
-pytestmark = pytest.mark.skipif(
-    not os.environ.get("TRUENAS_S3_DAEMON"),
-    reason="the truenas_s3 daemon is not in the TrueNAS image yet",
-)
 
 SERVICE = "truenas_s3"
 BUCKETS_CONF = "/etc/truenas_s3/buckets.conf"
