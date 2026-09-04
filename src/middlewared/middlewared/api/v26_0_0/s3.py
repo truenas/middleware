@@ -306,15 +306,17 @@ class SharingS3Entry(BaseModel):
         description=(
             "The ZFS dataset the bucket is. Created by `sharing.s3.create` and owned by it. Objects live in the "
             "`s3data` directory under its mount point, which the S3 service creates on its next start, owned by "
-            "`owner`. Every object is written under the account that put it, so a grantee other than the owner "
-            "can write only where that directory's permissions allow; set an ACL on it as for any share."
+            "`owner`. Under the `S3` and `MULTIPROTOCOL` permissions models every object is written under the "
+            "account that put it, so a grantee other than the owner can write only where that directory's "
+            "permissions allow; set an ACL on it as for any share, or choose `S3_BUCKET_OWNER_ENFORCED`."
         ),
     )
     enabled: bool = Field(default=True, description="Whether the bucket is served. Toggling restarts the S3 service.")
     owner: NonEmptyString = Field(
         description=(
-            "Account that owns the bucket and bypasses its grants, and owns the `s3data` directory when the S3 "
-            "service creates it. Given by name, held by uid: the name is resolved when set and again whenever the "
+            "Account that owns the bucket and bypasses its grants, owns the `s3data` directory when the S3 "
+            "service creates it, and owns every object under the `S3_BUCKET_OWNER_ENFORCED` permissions model. "
+            "Given by name, held by uid: the name is resolved when set and again whenever the "
             "bucket is read, so a renamed account reads as its new name, a reused name never inherits the bucket, "
             "and an account that no longer exists reads as its uid. Changing the owner later moves the grants, not "
             "the directory."
@@ -322,10 +324,16 @@ class SharingS3Entry(BaseModel):
     )
     owner_uid: int = Field(description="The uid that owns the bucket.")
     grants: list[S3GrantEntry] = Field(default=[], description="Who may access the bucket and how, beyond its owner.")
-    permissions_model: Literal["S3", "MULTIPROTOCOL"] = Field(
+    permissions_model: Literal["S3", "MULTIPROTOCOL", "S3_BUCKET_OWNER_ENFORCED"] = Field(
         default="S3",
         description=(
-            "`S3` when only the S3 service writes the dataset. `MULTIPROTOCOL` when other protocols share the tree."
+            "Whose account the S3 service touches the dataset under. `S3` when only the S3 service writes it: "
+            "the grants alone decide a read, and every object is written under the account that put it. "
+            "`MULTIPROTOCOL` when other protocols share the tree: a read is also subject to the file permissions "
+            "those protocols set. `S3_BUCKET_OWNER_ENFORCED` when only the S3 service writes it and every object "
+            "is to be `owner`'s: every read and write runs as the owner, so the grants are the whole of the "
+            "bucket's access control and a grantee needs no permissions on the `s3data` directory. A request is "
+            "still authorized and audited as the account that made it."
         ),
     )
     versioning: Literal["OFF", "ENABLED", "SUSPENDED"] = Field(default="OFF", description="Bucket versioning state.")
@@ -345,10 +353,22 @@ class SharingS3Entry(BaseModel):
             "alone: a selected snapshot beyond it still serves by its version id."
         ),
     )
+    multipart_etag: Literal["COMPOSITE", "MINTED"] = Field(
+        default="COMPOSITE",
+        description=(
+            "What the ETag of an object assembled from a multipart upload is. `COMPOSITE` is the S3 construction: "
+            "each part's ETag is the MD5 of its bytes and the object's is the MD5 of those digests with the part "
+            "count appended, which costs an MD5 pass over every part. `MINTED` skips that pass for a part whose "
+            "upload carried no `Content-MD5` and gives the object an opaque token instead. Choose it only where "
+            "nothing writing the bucket reads its ETags, such as a backup target that declares its own checksums: "
+            "a client that recomputes the composite to verify or resume an upload sees a value it cannot match."
+        ),
+    )
     object_lock: bool = Field(
         default=False,
         description=(
-            "Whether object lock is enabled. Requires `versioning` to be `ENABLED` and the `S3` permissions model."
+            "Whether object lock is enabled. Requires `versioning` to be `ENABLED` and a permissions model other "
+            "than `MULTIPROTOCOL`: a locked bucket is the S3 service's alone."
         ),
     )
     object_lock_default_mode: Literal["GOVERNANCE", "COMPLIANCE"] | None = Field(

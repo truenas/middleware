@@ -146,6 +146,7 @@ def test_create_owns_the_dataset(owner):
             "owner_id": str(owner["uid"]),
             "permissions_model": "s3",
             "versioning": "off",
+            "multipart_etag": "composite",
             "object_lock": "off",
         }
 
@@ -278,16 +279,19 @@ def test_object_lock_rules(owner):
         assert field in ve.value.errors[0].attribute
 
     # the period is days, however long: the daemon's years are 365 days
-    # each, so the one field spells every rule it could
+    # each, so the one field spells every rule it could. Either S3-only
+    # model may carry a lock; only a shared tree may not
     with bucket(
         name="locked",
         versioning="ENABLED",
+        permissions_model="S3_BUCKET_OWNER_ENFORCED",
         object_lock=True,
         object_lock_default_mode="COMPLIANCE",
         object_lock_default_days=365,
     ):
         call("etc.generate", "truenas_s3")
         row = parse(BUCKETS_CONF)['bucket "locked"']
+        assert row["permissions_model"] == "s3_bucket_owner_enforced"
         assert row["versioning"] == "enabled"
         assert row["object_lock"] == "enabled"
         assert row["object_lock_default_mode"] == "compliance"
@@ -310,9 +314,13 @@ def test_registry_changes_restart_and_the_rest_reload(owner):
             )
             assert service()["pids"] == after_create, "a grant change is a reload"
 
+            call("sharing.s3.update", b["id"], {"multipart_etag": "MINTED"})
+            after_etag = service()["pids"]
+            assert after_etag != after_create, "the ETag mode is registered, so a restart"
+
             call("sharing.s3.update", b["id"], {"enabled": False})
             after_disable = service()["pids"]
-            assert after_disable != after_create, "disabling a bucket is a restart"
+            assert after_disable != after_etag, "disabling a bucket is a restart"
             assert 'bucket "test-bucket"' not in parse(BUCKETS_CONF)
 
             call("sharing.s3.update", b["id"], {"enabled": True})
@@ -476,6 +484,34 @@ def test_boto3_roundtrip(owner):
             call("service.control", "STOP", SERVICE, {"silent": False}, job=True)
 
 
+def test_bucket_owner_enforced_writes_as_the_owner(owner):
+    """Under `S3_BUCKET_OWNER_ENFORCED` the grants are the whole of the
+    access control: the same two grantees write into the share root the
+    daemon made the owner's, and over each other, with nothing opened on
+    it, and everything they publish lands on disk as the owner's rather
+    than the writer's. A key with no grant is still refused, since the
+    model moves the uid the kernel sees and not who is authorized."""
+    with (
+        grantee("s3client") as (grant_a, key_a),
+        grantee("s3client2") as (grant_b, key_b),
+        grantee("s3stranger") as (_ungranted, key_c),
+        bucket(grants=[grant_a, grant_b], permissions_model="S3_BUCKET_OWNER_ENFORCED"),
+        running_service(),
+    ):
+        call("etc.generate", "truenas_s3")
+        assert parse(BUCKETS_CONF)['bucket "test-bucket"']["permissions_model"] == "s3_bucket_owner_enforced"
+
+        a, b, stranger = client(key_a), client(key_b), client(key_c)
+        a.put_object(Bucket="test-bucket", Key="pfx/hello.txt", Body=b"from a")
+        b.put_object(Bucket="test-bucket", Key="pfx/hello.txt", Body=b"b over a")
+        assert a.get_object(Bucket="test-bucket", Key="pfx/hello.txt")["Body"].read() == b"b over a"
+        with pytest.raises(Exception, match="AccessDenied"):
+            stranger.put_object(Bucket="test-bucket", Key="pfx/hello.txt", Body=b"from nobody")
+        assert ssh(f"cat /mnt/{DATASET}/s3data/pfx/hello.txt") == "b over a"
+        for path in ("s3data", "s3data/pfx", "s3data/pfx/hello.txt"):
+            assert call("filesystem.stat", f"/mnt/{DATASET}/{path}")["uid"] == owner["uid"], path
+
+
 def test_snapshot_version_rules(owner):
     """The selection needs a versioning state that lists versions, a
     pattern keeps to the daemon's grammar, and the pair renders only
@@ -596,17 +632,21 @@ def test_the_sosapi_block_size_follows_the_recordsize(owner):
 
 
 @pytest.mark.parametrize(
-    "size,threshold,parts",
+    "size,threshold,parts,multipart_etag",
     [
         # one PUT: the transfer manager only splits above its threshold
-        (5 << 20, 8 << 20, 1),
+        (5 << 20, 8 << 20, 1, "COMPOSITE"),
         # three parts: the multipart path, staged in the side tree the
         # daemon owns and published into s3data/ under the requester
-        (12 << 20, 5 << 20, 3),
+        (12 << 20, 5 << 20, 3, "COMPOSITE"),
+        # the same three parts on a row that declines to hash them: the
+        # transfer manager declares CRC32 and sends no Content-MD5, so
+        # nothing gives the daemon a reason to, and the object is minted
+        (12 << 20, 5 << 20, 3, "MINTED"),
     ],
-    ids=["single_put", "multipart"],
+    ids=["single_put", "multipart", "minted_multipart"],
 )
-def test_a_file_survives_the_round_trip(owner, size, threshold, parts):
+def test_a_file_survives_the_round_trip(owner, size, threshold, parts, multipart_etag):
     """A real file up and back down through the transfer manager, byte
     for byte, landing in s3data/ as the uploader's own file while the side
     tree beside it stays the daemon's. The bucket middleware provisioned
@@ -617,7 +657,7 @@ def test_a_file_survives_the_round_trip(owner, size, threshold, parts):
     source, expected = random_file(size)
     fetched = source + ".down"
     try:
-        with grantee("s3client") as (_grant, key), bucket(owner="s3client"):
+        with grantee("s3client") as (_grant, key), bucket(owner="s3client", multipart_etag=multipart_etag):
             assert call("service.control", "START", SERVICE, {"silent": False}, job=True)
             try:
                 s3 = client(key)
@@ -631,10 +671,11 @@ def test_a_file_survives_the_round_trip(owner, size, threshold, parts):
                 head = s3.head_object(Bucket="test-bucket", Key="big/file.bin")
                 assert head["ContentLength"] == size
                 # the ETag says which path the bytes took: a composite is
-                # the md5 of the part md5s with the part count appended, a
-                # single put a minted UUID
+                # the md5 of the part md5s with the part count appended; a
+                # single put, or a multipart the row declined to hash, is
+                # a minted UUID
                 etag = head["ETag"].strip('"')
-                if parts > 1:
+                if parts > 1 and multipart_etag == "COMPOSITE":
                     assert re.fullmatch(rf"[0-9a-f]{{32}}-{parts}", etag), etag
                 else:
                     assert re.fullmatch(r"[0-9a-f-]{36}", etag), etag

@@ -84,10 +84,11 @@ class SharingS3Model(sa.Model):
     # inherits a bucket
     owner_uid = sa.Column(sa.Integer())
     grants = sa.Column(sa.JSON(list))
-    permissions_model = sa.Column(sa.String(16))
+    permissions_model = sa.Column(sa.String(32))
     versioning = sa.Column(sa.String(16))
     snapshot_versions = sa.Column(sa.JSON(list))
     snapshot_versions_max = sa.Column(sa.Integer())
+    multipart_etag = sa.Column(sa.String(16))
     object_lock = sa.Column(sa.Boolean())
     object_lock_default_mode = sa.Column(sa.String(16), nullable=True)
     object_lock_default_days = sa.Column(sa.Integer(), nullable=True)
@@ -164,10 +165,11 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         if data.object_lock:
             if data.versioning != "ENABLED":
                 verrors.add(f"{schema}.versioning", "Object lock requires versioning to be ENABLED.")
-            if data.permissions_model != "S3":
+            if data.permissions_model == "MULTIPROTOCOL":
                 verrors.add(
                     f"{schema}.permissions_model",
-                    "Object lock requires the S3 permissions model: another protocol could rewrite a locked object.",
+                    "Object lock requires an S3-only permissions model: another protocol could rewrite a locked "
+                    "object.",
                 )
         if data.snapshot_versions:
             if data.versioning == "OFF":
@@ -283,12 +285,14 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         The bucket's dataset is created here, with the properties the S3
         service requires, and must not exist beforehand. Objects live in its
         ``s3data`` directory, which the S3 service creates on its next start
-        owned by ``owner``. Every object is written under the account that
-        put it, so a grantee other than the owner can write only where that
-        directory's permissions let the account write; set an ACL on it as
-        for any share. Grants may be given in the same call. Registering a
-        bucket restarts the S3 service, draining in-flight requests for up to
-        30 seconds.
+        owned by ``owner``. Under the ``S3`` and ``MULTIPROTOCOL`` permissions
+        models every object is written under the account that put it, so a
+        grantee other than the owner can write only where that directory's
+        permissions let the account write; set an ACL on it as for any share,
+        or choose ``S3_BUCKET_OWNER_ENFORCED``, under which every object is
+        written as the owner and the grants alone decide. Grants may be given
+        in the same call. Registering a bucket restarts the S3 service,
+        draining in-flight requests for up to 30 seconds.
         """
         verrors = ValidationErrors()
         await self.validate(data, "sharing_s3_create", verrors)
