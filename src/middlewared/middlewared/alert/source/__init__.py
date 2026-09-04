@@ -57,6 +57,7 @@ from middlewared.alert.source import (  # noqa: F401
     timezone,
     truecommand,
     truenas_connect,
+    truenas_s3,
     truenas_verify,
     update,
     ups,

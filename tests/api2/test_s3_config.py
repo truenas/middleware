@@ -1,0 +1,325 @@
+# TODO: re-enable once the truenas_s3 daemon is added to the TrueNAS image.
+# Every test here starts the service and talks to the daemon.
+"""The S3 service's global configuration, the files it renders and the
+verb each change costs. The daemon answers a reload request with whether
+it took the files or wants a restart, and middleware acts on that, so
+the tests watch the service's pid: a reload keeps it, a restart replaces
+it."""
+
+import contextlib
+import os
+from configparser import RawConfigParser
+
+import pytest
+from middlewared.service_exception import ValidationErrors
+from middlewared.test.integration.assets.account import user
+from middlewared.test.integration.utils import call, ssh
+
+# TRUENAS_S3_DAEMON=1 runs them on a box that has the daemon installed by hand.
+pytestmark = pytest.mark.skipif(
+    not os.environ.get("TRUENAS_S3_DAEMON"),
+    reason="the truenas_s3 daemon is not in the TrueNAS image yet",
+)
+
+SERVICE = "truenas_s3"
+BUCKETS_CONF = "/etc/truenas_s3/buckets.conf"
+POLICIES_CONF = "/etc/truenas_s3/policies.conf"
+CREDENTIALS_CONF = "/etc/truenas_s3/credentials.conf"
+
+
+def parse(path):
+    parser = RawConfigParser(interpolation=None)
+    parser.read_string(ssh(f"cat {path}"))
+    return {section: dict(parser[section]) for section in parser.sections()}
+
+
+def service():
+    return call("service.query", [["service", "=", SERVICE]], {"get": True})
+
+
+def audit_licensed():
+    return call("system.license") is not None
+
+
+@contextlib.contextmanager
+def running_service():
+    assert call("service.control", "START", SERVICE, {"silent": False}, job=True)
+    try:
+        yield
+    finally:
+        call("service.control", "STOP", SERVICE, {"silent": False}, job=True)
+
+
+@contextlib.contextmanager
+def config(**changes):
+    old = call("s3.config")
+    call("s3.update", changes)
+    try:
+        yield
+    finally:
+        call("s3.update", {k: old[k] for k in changes})
+
+
+def test_defaults():
+    cfg = call("s3.config")
+    assert cfg["listeners"] == []
+    assert cfg["servers"] == 1
+    assert cfg["certificate"] is None
+    assert cfg["region"] == ""
+    assert cfg["log_level"] == "NOTICE"
+    assert cfg["default_audit"] == []
+    assert cfg["default_audit_overflow"] == "DROP"
+    assert cfg["global_grants"] == []
+    assert "host_id" not in cfg and "owner_id_seed" not in cfg
+
+
+def listener(address="0.0.0.0", port=9000, tls=False):
+    return {"address": address, "port": port, "tls": tls}
+
+
+def test_listener_validation():
+    # the choices are the static addresses (the VIPs on HA), the loopbacks
+    # and the wildcards; an address outside them is refused
+    choices = call("s3.bindip_choices")
+    assert {"0.0.0.0", "::", "127.0.0.1", "::1"} <= set(choices)
+
+    for bad, message in (
+        ([listener("203.0.113.7")], "valid ip address"),
+        ([listener(f"203.0.113.{i}") for i in range(1, 10)], "at most 8"),
+        ([listener(), listener()], "only be listed once"),
+    ):
+        with pytest.raises(ValidationErrors) as ve:
+            call("s3.update", {"listeners": bad})
+        assert message in ve.value.errors[0].errmsg, ve.value.errors
+
+
+def test_servers_is_bounded_by_the_daemon_and_the_cpus():
+    for bad in (0, 9):
+        with pytest.raises(ValidationErrors):
+            call("s3.update", {"servers": bad})
+    cpus = int(ssh("nproc"))
+    if cpus < 8:
+        with pytest.raises(ValidationErrors) as ve:
+            call("s3.update", {"servers": cpus + 1})
+        assert f"at most {cpus}" in ve.value.errors[0].errmsg
+
+
+def test_port_conflict_is_refused():
+    with pytest.raises(ValidationErrors) as ve:
+        call("s3.update", {"listeners": [listener(port=22)]})
+    assert "used by" in ve.value.errors[0].errmsg
+
+
+def test_rendered_files_on_start():
+    """Starting the service renders every file the daemon reads, with the
+    identities generated once and the credentials file root-only."""
+    with running_service():
+        assert service()["state"] == "RUNNING"
+
+        server = parse(BUCKETS_CONF)["server"]
+        assert server["listen"] == "0.0.0.0:9000"
+        assert "listen_tls" not in server
+        assert len(server["host_id"]) == 36
+        assert len(server["owner_id_seed"]) == 56
+        assert server["log_level"] == "notice"
+        assert "region" not in server
+        assert "tls_cert" not in server
+
+        assert ssh(f"stat -c '%a %U' {CREDENTIALS_CONF}").strip() == "600 root"
+        assert parse(POLICIES_CONF) == {}
+        # the address is the daemon's to read, so the unit carries none
+        assert "s3d 0.0.0.0" not in ssh("systemctl cat truenas_s3")
+        assert ":9000" in ssh("ss -Hltn sport = :9000")
+
+        # the identities never move
+        call("s3.update", {"log_level": "INFO"})
+        assert parse(BUCKETS_CONF)["server"]["host_id"] == server["host_id"]
+        assert parse(BUCKETS_CONF)["server"]["owner_id_seed"] == server["owner_id_seed"]
+        call("s3.update", {"log_level": "NOTICE"})
+
+
+def test_reload_keeps_the_process_and_restart_replaces_it():
+    with running_service():
+        pid = service()["pids"]
+        assert pid
+
+        with config(log_level="DEBUG"):
+            assert parse(BUCKETS_CONF)["server"]["log_level"] == "debug"
+            assert service()["pids"] == pid, "a log level change is a reload"
+
+        with config(listeners=[listener(port=9001)]):
+            assert parse(BUCKETS_CONF)["server"]["listen"] == "0.0.0.0:9001"
+            assert service()["pids"] != pid, "a listener change is a restart"
+            assert ":9001" in ssh("ss -Hltn sport = :9001")
+
+        with config(region="us-east-1"):
+            assert parse(BUCKETS_CONF)["server"]["region"] == "us-east-1"
+            assert service()["state"] == "RUNNING"
+
+        if int(ssh("nproc")) >= 2:
+            pid = service()["pids"]
+            with config(servers=2):
+                assert parse(BUCKETS_CONF)["server"]["servers"] == "2"
+                assert service()["pids"] != pid, "a thread count change is a restart"
+                # every ring binds the address itself, under SO_REUSEPORT
+                assert len(ssh("ss -Hltn sport = :9000").splitlines()) == 2
+
+
+def test_global_grants_render_as_wildcard_rows():
+    with user(
+        {
+            "username": "s3globaluser",
+            "full_name": "global",
+            "group_create": True,
+            "password": "test1234",
+        }
+    ) as u:
+        granted = {"principal_type": "USER", "xid": u["uid"], "access": "DENY", "name": "s3globaluser"}
+        with config(global_grants=[{"principal_type": "USER", "xid": u["uid"], "access": "DENY"}]):
+            assert call("s3.config")["global_grants"] == [granted]
+            call("etc.generate", "truenas_s3")
+            assert parse(POLICIES_CONF) == {
+                'grant user "s3globaluser" "*"': {
+                    "xid": str(u["uid"]),
+                    "access": "deny",
+                },
+            }
+
+            # an update elsewhere starts from the stored grants, not from
+            # the request, and must carry them through as grants
+            with config(log_level="INFO"):
+                assert call("s3.config")["global_grants"] == [granted]
+                call("etc.generate", "truenas_s3")
+                assert 'grant user "s3globaluser" "*"' in parse(POLICIES_CONF)
+
+        for bad, message in (
+            (
+                [{"principal_type": "EVERYONE", "xid": 5, "access": "READONLY"}],
+                "not allowed",
+            ),
+            ([{"principal_type": "USER", "access": "READONLY"}], "required"),
+            (
+                [{"principal_type": "USER", "xid": 4294967000, "access": "READONLY"}],
+                "No user",
+            ),
+            (
+                [
+                    {"principal_type": "USER", "xid": u["uid"], "access": "READONLY"},
+                    {"principal_type": "USER", "xid": u["uid"], "access": "DENY"},
+                ],
+                "only be granted once",
+            ),
+        ):
+            with pytest.raises(ValidationErrors) as ve:
+                call("s3.update", {"global_grants": bad})
+            assert message in ve.value.errors[0].errmsg
+
+
+def test_audit_follows_the_license():
+    if audit_licensed():
+        with config(
+            default_audit=["GetObject", "PutObject"],
+            default_audit_overflow="BACKPRESSURE",
+        ):
+            call("etc.generate", "truenas_s3")
+            server = parse(BUCKETS_CONF)["server"]
+            assert server["default_audit"] == "GetObject,PutObject"
+            assert server["default_audit_overflow"] == "backpressure"
+    else:
+        with pytest.raises(ValidationErrors) as ve:
+            call("s3.update", {"default_audit": "ALL"})
+        assert "Enterprise license" in ve.value.errors[0].errmsg
+        call("etc.generate", "truenas_s3")
+        assert "default_audit" not in parse(BUCKETS_CONF)["server"]
+
+
+@contextlib.contextmanager
+def imported_certificate(name):
+    """A self-signed certificate of its own, imported as `name`."""
+    # not a CA: openssl marks a bare -x509 request as one, which a service
+    # certificate may not be
+    ssh(
+        f"openssl req -x509 -newkey rsa:2048 -nodes -days 2 -subj /CN={name} "
+        "-addext basicConstraints=critical,CA:FALSE "
+        f"-keyout /tmp/{name}.key -out /tmp/{name}.crt >/dev/null 2>&1"
+    )
+    cert = call(
+        "certificate.create",
+        {
+            "name": name,
+            "create_type": "CERTIFICATE_CREATE_IMPORTED",
+            "certificate": ssh(f"cat /tmp/{name}.crt"),
+            "privatekey": ssh(f"cat /tmp/{name}.key"),
+        },
+        job=True,
+    )
+    try:
+        yield cert
+    finally:
+        call("certificate.delete", cert["id"], job=True)
+        ssh(f"rm -f /tmp/{name}.crt /tmp/{name}.key")
+
+
+def served_subject():
+    return ssh("echo | openssl s_client -connect 127.0.0.1:9443 2>/dev/null | openssl x509 -noout -subject").strip()
+
+
+def test_a_tls_listener_serves_beside_a_plaintext_one():
+    """The two doors of a multi-homed system: one address in the clear, one
+    over TLS. With no certificate chosen the TLS door serves the UI's; a
+    chosen one replaces it on a reload; the pair renders only beside a TLS
+    listener."""
+    ui_cert = call("certificate.get_instance", call("system.general.config")["ui_certificate"])
+    with imported_certificate("s3-test-cert") as own, running_service():
+        pid = service()["pids"]
+        with config(listeners=[listener(), listener("127.0.0.1", 9443, tls=True)]):
+            server = parse(BUCKETS_CONF)["server"]
+            assert server["listen"] == "0.0.0.0:9000"
+            assert server["listen_tls"] == "127.0.0.1:9443"
+            assert server["tls_cert"] == ui_cert["certificate_path"]
+            assert server["tls_key"] == ui_cert["privatekey_path"]
+            assert service()["pids"] != pid, "a new listener is a restart"
+            assert "<HostId>" in ssh("curl -sk https://127.0.0.1:9443/")
+            assert "<HostId>" in ssh("curl -s http://127.0.0.1:9000/")
+            assert "<HostId>" not in ssh("curl -s --max-time 3 http://127.0.0.1:9443/ || true")
+            assert ui_cert["common"] in served_subject()
+
+            # a chosen certificate replaces the UI's in place
+            pid = service()["pids"]
+            with config(certificate=own["id"]):
+                assert parse(BUCKETS_CONF)["server"]["tls_cert"] == own["certificate_path"]
+                assert service()["pids"] == pid, "a different certificate is a reload"
+                assert "s3-test-cert" in served_subject()
+            assert parse(BUCKETS_CONF)["server"]["tls_cert"] == ui_cert["certificate_path"]
+            assert ui_cert["common"] in served_subject()
+
+            # and so does the UI certificate changing while the service follows it
+            call("system.general.update", {"ui_certificate": own["id"]})
+            try:
+                assert parse(BUCKETS_CONF)["server"]["tls_cert"] == own["certificate_path"]
+                assert service()["pids"] == pid, "the UI certificate moving is a reload"
+                assert "s3-test-cert" in served_subject()
+            finally:
+                call("system.general.update", {"ui_certificate": ui_cert["id"]})
+            assert ui_cert["common"] in served_subject()
+
+            # a TLS-only deployment renders no plaintext listener at all:
+            # the daemon's own default is plaintext on loopback, so the
+            # render never leaves both keys out
+            call("s3.update", {"listeners": [listener("127.0.0.1", 9443, tls=True)]})
+            server = parse(BUCKETS_CONF)["server"]
+            assert "listen" not in server
+            assert server["listen_tls"] == "127.0.0.1:9443"
+            assert server["tls_cert"] == ui_cert["certificate_path"]
+            assert "<HostId>" in ssh("curl -sk https://127.0.0.1:9443/")
+            assert "<HostId>" not in ssh("curl -s --max-time 3 http://127.0.0.1:9000/ || true")
+
+            # a plaintext-only deployment renders no pair even with a
+            # certificate chosen, and still holds the certificate against
+            # deletion
+            with config(certificate=own["id"]):
+                call("s3.update", {"listeners": [listener()]})
+                server = parse(BUCKETS_CONF)["server"]
+                assert "listen_tls" not in server and "tls_cert" not in server
+                with pytest.raises(Exception, match="in use|attach|S3"):
+                    call("certificate.delete", own["id"], job=True)

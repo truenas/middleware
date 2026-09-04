@@ -86,6 +86,13 @@ details of enabled services. For example, the SMB service provides a list of
 names of shares for which auditing is enabled. This is somewhat free-form, but
 the webui team should be consulted for feedback about what they want.
 
+The S3 service lists the enabled buckets whose effective audit mask is not
+empty (`sharing.s3.audited_bucket_names`). A bucket's `audit` is a list of
+S3 action names or `ALL`, or `null` to inherit `s3.config`'s `default_audit`;
+the accepted names are `sharing.s3.audit_choices`. Both settings are refused
+without an Enterprise license, and middleware withholds them from the
+daemon's configuration on an unlicensed system.
+
 3. Determine contents of global svc_data for all audited events
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 `svc_data` is free-form JSON data that the developer determines is relevant for
@@ -123,6 +130,10 @@ include the parameters from the new audited service.
 The syslog-ng service filters audit messages based on the ident of the message
 received so that they are inserted into the correct audit database. The service
 in this case must set the ident to TNAUDIT_{service name}, for example `TNAUDIT_SMB`.
+
+The S3 service is the exception: it writes to the kernel audit socket rather
+than syslog, and the `audit_rules` handler reformats the auditd stream into
+the schema in `plugins/audit/schema/s3.py` before handing it to syslog-ng.
 
 7.2. Audit message format
 Audit entries are generated via specially crafted  syslog messages of the format:
