@@ -17,7 +17,7 @@ import errno
 from functools import lru_cache
 import logging
 from types import MappingProxyType
-from typing import Any
+from typing import Any, Final
 
 from licenselib.license import Features, License
 from licenselib.utils import proactive_support_allowed
@@ -30,6 +30,7 @@ from .types import FeatureInfo, LicenseInfo
 logger = logging.getLogger(__name__)
 
 __all__ = (
+    "HW_ONLY_MARKER",
     "LegacyStatus",
     "describe_legacy_license",
     "get_legacy_license_info",
@@ -66,6 +67,21 @@ _LEGACY_INJECT: frozenset[LicenseFeature] = frozenset(
         LicenseFeature.TRUESEARCH,
         LicenseFeature.VMS,
         LicenseFeature.WEBSHARE,
+    }
+)
+
+HW_ONLY_MARKER: Final[str] = "TRUENAS-HW-ONLY-V1"
+
+# Reproduces the bare TRUENAS_HW entitlement column: what an iX chassis carries on the
+# strength of the hardware alone, with no support contract behind it. Deliberately not a
+# subset of _LEGACY_INJECT -- SED is a bitmask feature a real blob could carry, so it was
+# never among the names injected into one.
+_HW_ONLY_INJECT: frozenset[LicenseFeature] = frozenset(
+    {
+        LicenseFeature.APPS,
+        LicenseFeature.CONTAINERS,
+        LicenseFeature.SED,
+        LicenseFeature.VMS,
     }
 )
 
@@ -130,6 +146,7 @@ def legacy_license_fields(lic: Any) -> dict[str, Any]:
         "contract_end": lic.contract_end.isoformat(),
         "features": [feature.name for feature in lic.features],
         "addhw": [list(entry) for entry in lic.addhw],
+        "hw_only": lic.customer_key == HW_ONLY_MARKER,
     }
 
 
@@ -186,16 +203,23 @@ def parse_legacy_license(text: str) -> LicenseInfo:
     enclosures = {
         LICENSE_ADDHW_MAPPING[code]: quantity for quantity, code in lic.addhw if code in LICENSE_ADDHW_MAPPING
     }
-    # Iterate the enum rather than the frozenset so injected names land in declaration order.
-    for feat in LicenseFeature:
-        if feat in _LEGACY_INJECT and feat not in feature_names:
-            feature_names.append(feat.value)
+    if lic.customer_key == HW_ONLY_MARKER:
+        # Replaces the list rather than extending it: the bitmask-derived names and the
+        # conditional SUPPORT append both already happened above, and replacing is what
+        # holds a marked record to the bare hardware set.
+        feature_names = [f.value for f in LicenseFeature if f in _HW_ONLY_INJECT]
+    else:
+        # Iterate the enum rather than the frozenset so injected names land in declaration order.
+        for feat in LicenseFeature:
+            if feat in _LEGACY_INJECT and feat not in feature_names:
+                feature_names.append(feat.value)
 
     return LicenseInfo(
         id=f"legacy_{lic.system_serial}",
         type=LicenseType.ENTERPRISE_HA if lic.system_serial_ha else LicenseType.ENTERPRISE_SINGLE,
         model=model,
-        support_expires_at=lic.contract_end,
+        # A marked record has no support contract behind it, so it carries no expiry to act on.
+        support_expires_at=None if lic.customer_key == HW_ONLY_MARKER else lic.contract_end,
         # A legacy blob carries only the support contract's dates, not per-feature ones.
         features=MappingProxyType(
             {
