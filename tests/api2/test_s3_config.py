@@ -303,6 +303,17 @@ def test_a_tls_listener_serves_beside_a_plaintext_one():
                 call("system.general.update", {"ui_certificate": ui_cert["id"]})
             assert ui_cert["common"] in served_subject()
 
+            # a TLS-only deployment renders no plaintext listener at all:
+            # the daemon's own default is plaintext on loopback, so the
+            # render never leaves both keys out
+            call("s3.update", {"listeners": [listener("127.0.0.1", 9443, tls=True)]})
+            server = parse(BUCKETS_CONF)["server"]
+            assert "listen" not in server
+            assert server["listen_tls"] == "127.0.0.1:9443"
+            assert server["tls_cert"] == ui_cert["certificate_path"]
+            assert "<HostId>" in ssh("curl -sk https://127.0.0.1:9443/")
+            assert "<HostId>" not in ssh("curl -s --max-time 3 http://127.0.0.1:9000/ || true")
+
             # a plaintext-only deployment renders no pair even with a
             # certificate chosen, and still holds the certificate against
             # deletion

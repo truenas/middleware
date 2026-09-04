@@ -211,12 +211,11 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
         return (await self.middleware.call("system.general.config"))["ui_certificate"]
 
     async def certificate_paths(self, cert_id: int | None) -> tuple[str | None, str | None]:
+        """Where the certificate's pair is rendered, or nothing when none is
+        chosen. Not judged here: the daemon checks the pair at start-up and
+        on every reload and refuses the deployment when it is unusable,
+        which keeps a TLS listener from ever serving without it."""
         if cert_id is None:
-            return None, None
-        try:
-            await self.middleware.call("certificate.cert_services_validation", cert_id, "s3.certificate")
-        except Exception:
-            self.logger.warning("s3: certificate %d is not usable, serving plaintext", cert_id)
             return None, None
         cert = await self.middleware.call("certificate.query", [["id", "=", cert_id]], {"get": True})
         return cert["certificate_path"], cert["privatekey_path"]
@@ -227,9 +226,8 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
 
         The daemon reads every file whole and one malformed value refuses
         the entire load, so what a template must never print is decided
-        here: a TLS listener with no usable certificate pair is dropped
-        rather than served in the clear, a pair with no TLS listener is not
-        rendered, a grant heading's label is stripped of what would break
+        here: a certificate pair with no TLS listener is not rendered, a
+        grant heading's label is stripped of what would break
         its grammar, and a bucket whose dataset is gone keeps its row at the
         mount point it would have, so the daemon answers 503 for it rather
         than saying it never existed. That last case raises the alert here
@@ -239,8 +237,6 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
         identity = await self._identity()
         tls_cert, tls_key = await self.certificate_paths(await self.effective_certificate(config.certificate))
         listen, listen_tls = _listen_text(config.model_dump()["listeners"])
-        if listen_tls and not (tls_cert and tls_key):
-            listen_tls = ""
         if not listen_tls:
             tls_cert = tls_key = None
         buckets = [b.model_dump() for b in await self.middleware.call("sharing.s3.query")]
