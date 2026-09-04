@@ -18,10 +18,17 @@
 % if config["listen"]:
 listen = ${config["listen"]}
 % endif
+## a TLS listener renders whatever pair the deployment has, a missing
+## half included: the daemon refuses the load rather than serve the
+## address in the clear, and that refusal is the answer the caller gets
 % if config["listen_tls"]:
 listen_tls = ${config["listen_tls"]}
+% if config["tls_cert"]:
 tls_cert = ${config["tls_cert"]}
+% endif
+% if config["tls_key"]:
 tls_key = ${config["tls_key"]}
+% endif
 % endif
 servers = ${config["servers"]}
 % if config["region"]:
