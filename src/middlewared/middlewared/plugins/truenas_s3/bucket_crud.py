@@ -79,22 +79,25 @@ DATA_ACL = [
 
 
 class SharingS3Model(sa.Model):
+    """No column carries a default: every row is inserted whole from the
+    API model, whose defaults are the one place they are stated."""
+
     __tablename__ = "truenas_s3_bucket"
 
     id = sa.Column(sa.Integer(), primary_key=True)
     name = sa.Column(sa.String(63), unique=True)
     dataset = sa.Column(sa.String(255), unique=True)
-    enabled = sa.Column(sa.Boolean(), default=True)
+    enabled = sa.Column(sa.Boolean())
     # the uid is the owner; its name is resolved when read, never stored,
     # so a renamed account reads as its new name and a reused name never
     # inherits a bucket
     owner_uid = sa.Column(sa.Integer())
-    grants = sa.Column(sa.JSON(list), default=[])
-    permissions_model = sa.Column(sa.String(16), default="S3")
-    versioning = sa.Column(sa.String(16), default="OFF")
-    snapshot_versions = sa.Column(sa.JSON(list), default=[])
-    snapshot_versions_max = sa.Column(sa.Integer(), default=64)
-    object_lock = sa.Column(sa.Boolean(), default=False)
+    grants = sa.Column(sa.JSON(list))
+    permissions_model = sa.Column(sa.String(16))
+    versioning = sa.Column(sa.String(16))
+    snapshot_versions = sa.Column(sa.JSON(list))
+    snapshot_versions_max = sa.Column(sa.Integer())
+    object_lock = sa.Column(sa.Boolean())
     object_lock_default_mode = sa.Column(sa.String(16), nullable=True)
     object_lock_default_days = sa.Column(sa.Integer(), nullable=True)
     # NULL inherits the service default; an empty list audits nothing
