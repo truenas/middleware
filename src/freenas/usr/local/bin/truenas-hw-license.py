@@ -14,12 +14,14 @@ hardware entitlement set instead of everything a legacy license implies. Nothing
 is written if any license record already exists.
 """
 
+import json
 import os
 import sys
-from datetime import date
+from datetime import date, datetime, timezone
 
 from ixhardware import TRUENAS_UNKNOWN, get_chassis_hardware, parse_dmi
 from licenselib.license import ContractHardware, ContractSoftware, ContractType, License
+from truenas_os_pyutils.io import atomic_write
 
 # Duplicated from middlewared/utils/license/constants.py and legacy.py rather than
 # imported: middlewared.utils.license executes its package __init__, which pulls in
@@ -28,6 +30,7 @@ from licenselib.license import ContractHardware, ContractSoftware, ContractType,
 LEGACY_LICENSE_FILE = "/data/license"
 LICENSE_FILE = "/data/subsystems/truenas_license/license"
 LICENSE_BACKUP = "/data/subsystems/truenas_license/license.bak"
+HW_LICENSE_RESULT_FILE = "/data/truenas-hw-license.json"
 HW_ONLY_MARKER = "TRUENAS-HW-ONLY-V1"
 
 # An allowlist rather than a denylist, so a platform family added to ixhardware
@@ -35,42 +38,72 @@ HW_ONLY_MARKER = "TRUENAS-HW-ONLY-V1"
 MINTABLE_PREFIXES = ("TRUENAS-R",)
 
 
-def log(message):
-    print(message, file=sys.stderr)
+def record_outcome(outcome, chassis=None, serial=None, model=None, error=None):
+    """Leave a record middleware relays into middlewared.log and deletes on first boot.
+
+    Every outcome is recorded, not just failures: a chassis reading as unknown is
+    indistinguishable here from dmidecode having failed,
+    so which outcomes deserve attention is middleware's call, not ours.
+    """
+    try:
+        record = {
+            "version": 1,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "outcome": outcome,
+            "chassis": chassis,
+            "serial": serial,
+            "model": model,
+            "error": None if error is None else str(error)[:512],
+        }
+        with atomic_write(HW_LICENSE_RESULT_FILE, "w", perms=0o600) as f:
+            f.write(json.dumps(record) + "\n")
+    except Exception:
+        pass
 
 
 def main():
     for path in (LEGACY_LICENSE_FILE, LICENSE_FILE, LICENSE_BACKUP):
         if os.path.exists(path):
-            log(f"{path} exists, leaving the license on this system alone")
+            record_outcome("license_present")
             return
 
     dmi = parse_dmi()
     chassis = get_chassis_hardware(dmi)
     if chassis == TRUENAS_UNKNOWN:
-        log("Chassis does not identify itself as iX hardware")
+        record_outcome("chassis_unknown")
         return
 
     if "MINI" in chassis:
-        log(f"{chassis} is a Mini")
+        record_outcome("mini", chassis=chassis)
         return
 
     if not chassis.startswith(MINTABLE_PREFIXES):
-        log(f"{chassis} is not an eligible platform")
+        record_outcome("ineligible_platform", chassis=chassis)
         return
 
     serial = dmi.system_serial_number.strip()
     if not serial:
-        log("Chassis reports no system serial number")
+        record_outcome("serial", chassis=chassis, error="Chassis reports no system serial number")
         return
 
     if len(serial.encode()) > 16:
-        log(f"System serial number does not fit the license field: {serial!r}")
+        record_outcome(
+            "serial",
+            chassis=chassis,
+            serial=serial,
+            error=f"System serial number does not fit the license field: {serial!r}",
+        )
         return
 
     model = chassis.removeprefix("TRUENAS-").split("-")[0]
     if len(model.encode()) > 16:
-        log(f"Model does not fit the license field: {model!r}")
+        record_outcome(
+            "model",
+            chassis=chassis,
+            serial=serial,
+            model=model,
+            error=f"Model does not fit the license field: {model!r}",
+        )
         return
 
     lic = License(
@@ -93,24 +126,21 @@ def main():
         [],
     )
 
-    fd = os.open(LEGACY_LICENSE_FILE, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
     try:
-        # The installer's pass over /data has already applied its modes by this point, so
-        # nothing comes along afterwards to correct a file created here.
-        os.fchmod(fd, 0o600)
-        os.fchown(fd, 0, 0)
-        os.write(fd, lic.dump() + b"\n")
-    finally:
-        os.close(fd)
+        with atomic_write(LEGACY_LICENSE_FILE, "wb", perms=0o600, noclobber=True) as f:
+            f.write(lic.dump() + b"\n")
+    except Exception as e:
+        record_outcome("write", chassis=chassis, serial=serial, model=model, error=repr(e))
+        return
 
-    log(f"Wrote a hardware entitlement record for {chassis} ({serial})")
+    record_outcome("written", chassis=chassis, serial=serial, model=model)
 
 
 if __name__ == "__main__":
     try:
         main()
     except Exception as e:
-        log(f"Failed to write a hardware entitlement record: {e!r}")
+        record_outcome("unexpected", error=repr(e))
 
     # An upgrade must not fail over entitlement bookkeeping.
     sys.exit(0)

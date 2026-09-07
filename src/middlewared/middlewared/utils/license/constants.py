@@ -5,6 +5,7 @@ from __future__ import annotations
 from types import MappingProxyType
 
 __all__ = (
+    "HW_LICENSE_RESULT_FILE",
     "LEGACY_LICENSE_FILE",
     "LICENSE_ADDHW_MAPPING",
     "LICENSE_BACKUP",
@@ -17,6 +18,8 @@ LICENSE_FILE = f"{LICENSE_DIR}/license"
 LICENSE_BACKUP = f"{LICENSE_DIR}/license.bak"
 
 LEGACY_LICENSE_FILE = "/data/license"
+
+HW_LICENSE_RESULT_FILE = "/data/truenas-hw-license.json"
 
 LICENSE_ADDHW_MAPPING = MappingProxyType(
     {
