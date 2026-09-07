@@ -13,6 +13,7 @@ from __future__ import annotations
 from truenas_pylicensed import LicenseError, LicenseStatus, verify
 
 from .constants import (
+    HW_LICENSE_RESULT_FILE,
     LEGACY_LICENSE_FILE,
     LICENSE_ADDHW_MAPPING,
     LICENSE_BACKUP,
@@ -24,6 +25,7 @@ from .legacy import describe_legacy_license, get_legacy_license_info, parse_lega
 from .types import FeatureInfo, LicenseInfo, LicenseOrigin
 
 __all__ = [
+    "HW_LICENSE_RESULT_FILE",
     "LEGACY_LICENSE_FILE",
     "LICENSE_ADDHW_MAPPING",
     "LICENSE_BACKUP",
