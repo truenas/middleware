@@ -51,12 +51,11 @@ def test_zfs_resource_snapshot_rollback_more_recent_snapshots():
                 )
 
             assert ve.value.errno == errno.EINVAL
-            assert "Cannot rollback: more recent snapshots or bookmarks exist" in ve.value.errmsg
+            assert "Cannot rollback: more recent snapshots exist" in ve.value.errmsg
             # The error must list the snapshots that prevent the rollback
             assert f"{ds}@snap2" in ve.value.errmsg
             assert f"{ds}@snap3" in ve.value.errmsg
 
-            # The rollback was refused up front, so nothing was destroyed
             result = call("zfs.resource.snapshot.query", {"paths": [ds]})
             assert {snap["snapshot_name"] for snap in result} == {"snap1", "snap2", "snap3"}
 
@@ -78,12 +77,10 @@ def test_zfs_resource_snapshot_rollback_newer_bookmark_fails_and_says_how_to_pro
             assert ce.value.errno == errno.EEXIST
             assert "bookmark" in ce.value.errmsg
             assert f"zfs destroy {ds}#<bookmark>" in ce.value.errmsg
-            # Nothing was destroyed, so nothing can have been lost
             assert "were already destroyed" not in ce.value.errmsg
             result = call("zfs.resource.snapshot.query", {"paths": [ds]})
             assert [snap["snapshot_name"] for snap in result] == ["snap1"]
 
-        # Removing the bookmark by hand is all the rollback was waiting for
         ssh(f"zfs destroy {ds}#bm2")
         call("zfs.resource.snapshot.rollback", {"path": f"{ds}@snap1"})
 
@@ -103,8 +100,6 @@ def test_zfs_resource_snapshot_rollback_newer_bookmark_fails_after_snapshots_are
 
         assert ce.value.errno == errno.EEXIST
         assert "bookmark" in ce.value.errmsg
-        # The destroy of the newer snapshots is committed before the rollback is
-        # attempted, and it cannot be undone
         assert "were already destroyed" in ce.value.errmsg
         result = call("zfs.resource.snapshot.query", {"paths": [ds]})
         assert [snap["snapshot_name"] for snap in result] == ["snap1"]
@@ -134,9 +129,7 @@ def test_zfs_resource_snapshot_rollback_path_validation():
             call("zfs.resource.snapshot.rollback", {"path": ds})
         assert "must be a snapshot path" in str(exc_info.value).lower()
 
-        # A path with an empty component or a second '@' is not a snapshot path
-        # either, and must be refused as invalid input rather than surfacing a
-        # raw ZFS open failure.
+        # These must be refused as invalid input, not surface a raw ZFS open failure.
         for bad_path in (f"{ds}@", "@snap1", f"{ds}@a@b"):
             with pytest.raises(ValidationError) as ve:
                 call("zfs.resource.snapshot.rollback", {"path": bad_path})
@@ -188,7 +181,6 @@ def test_zfs_resource_snapshot_rollback_clone_blocks_recursive():
             assert clone in ce.value.errmsg
             assert "recursive_clones" in ce.value.errmsg
 
-            # Nothing was destroyed
             result = call("zfs.resource.snapshot.query", {"paths": [ds]})
             assert {snap["snapshot_name"] for snap in result} == {"snap1", "snap2"}
 
@@ -251,7 +243,6 @@ def test_zfs_resource_snapshot_rollback_nested_clone_refused():
                 assert clone in ce.value.errmsg
                 assert f"{clone}@c1" in ce.value.errmsg
 
-                # Nothing was destroyed
                 assert ssh(f"zfs list -H -o name {clone}", check=False, complete_response=True)["result"] is True
                 result = call("zfs.resource.snapshot.query", {"paths": [ds]})
                 assert {snap["snapshot_name"] for snap in result} == {"snap1", "snap2"}
@@ -285,11 +276,8 @@ def test_zfs_resource_snapshot_rollback_snapshot_in_use_blocks_rollback():
     """A snapshot the kernel holds open is reported from the kernel's own error list"""
     with dataset("test_snap_rollback_in_use") as ds:
         with snapshot(ds, "snap1"), snapshot(ds, "snap2"):
-            # An automounted snapshot is long-held by the kernel only while something
-            # keeps it busy: the kernel unmounts an idle automount as part of the
-            # destroy, so merely walking into it is not enough. A process parked
-            # inside it pins it, and the pre-flight cannot see that hold either way:
-            # get_holds() only reports user holds.
+            # The kernel unmounts an idle automount as part of the destroy, so merely
+            # walking into it is not enough - a process has to stay parked inside.
             pinner = ssh(
                 f"cd /mnt/{ds}/.zfs/snapshot/snap2; setsid sleep 300 </dev/null >/dev/null 2>&1 & echo $!"
             ).strip()
@@ -336,7 +324,6 @@ def test_zfs_resource_snapshot_rollback_recursive_rollback_child_blocker_leaves_
             assert f"{child}@snap2" in ce.value.errmsg
             assert clone in ce.value.errmsg
 
-            # The parent was not rolled back on the way to discovering the blocker
             ssh(f"test -f /mnt/{ds}/marker")
         finally:
             ssh(f"zfs destroy -r {clone} || true")
@@ -420,7 +407,6 @@ def test_zfs_resource_snapshot_rollback_recursive_rollback_missing_child_snapsho
         assert ve.value.errno == errno.ENOENT
         assert f"{child}@snap1" in ve.value.errmsg
 
-        # The parent was not rolled back on the way to discovering the missing child
         ssh(f"test -f /mnt/{ds}/marker")
 
 
@@ -442,23 +428,18 @@ def test_zfs_resource_snapshot_rollback_recursive_rollback_refuses_before_parent
         assert ve.value.errno == errno.EINVAL
         assert f"{child}@snap2" in ve.value.errmsg
 
-        # The parent was not rolled back on the way to discovering the conflict
         ssh(f"test -f /mnt/{ds}/marker")
 
 
 def test_zfs_resource_snapshot_rollback_thick_zvol_keeps_refreservation():
     """A rollback that shrinks the volsize of a thick volume brings its refreservation along"""
-    # A volume created through the middleware gets `refreservation` set to the literal
-    # volsize, which is the shape the rollback restores. `zfs create -V` would instead
-    # give it a larger synthetic refreservation, which is deliberately left alone.
     with dataset("test_snap_rollback_thick_zvol", {"type": "VOLUME", "volsize": 64 * 1024 ** 2}) as vol:
         ssh(f"zfs snapshot {vol}@snap1")
         ssh(f"zfs set volsize={128 * 1024 ** 2} {vol}")
         # Growing the volsize recomputes the refreservation, so put it back to the
-        # literal volsize the middleware would have used
+        # literal volsize that qualifies for restoration
         ssh(f"zfs set refreservation={128 * 1024 ** 2} {vol}")
 
-        # snap1 is the only snapshot, so there is nothing newer to destroy
         call("zfs.resource.snapshot.rollback", {"path": f"{vol}@snap1"})
 
         assert int(ssh(f"zfs get -Hp -o value volsize {vol}").strip()) == 64 * 1024 ** 2

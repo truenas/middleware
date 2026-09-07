@@ -91,7 +91,10 @@ def _clone_destroy_blockers(tls: Any, clone: str, limit: int = CLONE_BLOCKER_LIM
         if len(state.names) < limit:
             clone_rsrc.iter_snapshots(callback=__collect_first_names_callback, state=state, fast=True)
     except truenas_pylibzfs.ZFSException as e:
-        raise ValueError(f"Failed to enumerate the descendants of {clone!r}: {e}") from None
+        raise ZFSRollbackFailedException(
+            f"Failed to enumerate the descendants of {clone!r}: {e}",
+            errno.EFAULT,
+        ) from None
 
     return tuple(state.names)
 
@@ -119,14 +122,17 @@ def _collect_rollback_blockers(
             try:
                 snap_rsrc = open_resource(tls, snap_path)
             except ZFSPathNotFoundException:
-                # Pruned while we were looking at it, so it blocks nothing.
+                # Pruned since it was enumerated, so it blocks nothing.
                 continue
 
             try:
                 holds = snap_rsrc.get_holds()
                 clones = snap_rsrc.get_clones()
             except truenas_pylibzfs.ZFSException as e:
-                raise ValueError(f"Failed to inspect snapshot {snap_path!r}: {e}") from None
+                raise ZFSRollbackFailedException(
+                    f"Failed to inspect snapshot {snap_path!r}: {e}",
+                    errno.EFAULT,
+                ) from None
 
             if holds:
                 blockers.append(ZFSRollbackBlocker(
@@ -229,12 +235,12 @@ def rollback_impl(
         ZFSRollbackConflictException: If snapshots newer than the target exist and may
             not be destroyed
         ZFSRollbackBlockedException: If a snapshot that has to be destroyed first cannot be destroyed
-        ZFSRollbackFailedException: If the rollback, or a destroy it depends on, failed
-        ValueError: If the state the rollback depends on could not be established
+        ZFSRollbackFailedException: If the rollback, a destroy it depends on, or the enumeration
+            the decision to destroy rests on, failed
+        truenas_pylibzfs.ZFSException: If a resource the rollback depends on could not be opened
+            or walked
     """
 
-    # Parse snapshot path. Both components must be non-empty and the dataset half
-    # must not itself contain '@', or the name is not a snapshot path at all.
     if "@" not in path:
         raise ZFSPathNotASnapshotException(path)
 
@@ -242,7 +248,6 @@ def rollback_impl(
     if not dataset or not snap_name or "@" in dataset:
         raise ZFSPathNotASnapshotException(path)
 
-    # Collect datasets to rollback
     if recursive_rollback:
         ds_hdl = open_resource(tls, dataset)
         datasets = [dataset]
@@ -250,10 +255,8 @@ def rollback_impl(
     else:
         datasets = [dataset]
 
-    # Enumerate before anything is destroyed or rolled back: every dataset has to have
-    # the target snapshot, and every conflict has to be known, before the first dataset
-    # is touched. Otherwise a blocker on a child is only found once the parent has
-    # already been rolled back, leaving the tree half rolled back.
+    # Enumerated for the whole tree before anything is touched: a blocker found lazily on a
+    # child would only surface once the parent had already been rolled back.
     newer = [(ds, _collect_newer_snapshot_paths(tls, ds, snap_name)) for ds in datasets]
 
     destroy_newer = recursive or recursive_clones
@@ -292,7 +295,10 @@ def _collect_newer_snapshots(ds_hdl: Any, target_txg: int) -> list[str]:
             order_by_transaction_group=True,
         )
     except truenas_pylibzfs.ZFSException as e:
-        raise ValueError(f"Failed to enumerate snapshots of {ds_hdl.name!r}: {e}") from None
+        raise ZFSRollbackFailedException(
+            f"Failed to enumerate snapshots of {ds_hdl.name!r}: {e}",
+            errno.EFAULT,
+        ) from None
     return state.snaps
 
 
@@ -341,7 +347,6 @@ def _destroy_newer_snapshots(
 
 
 def _destroy_failure_prefix(dataset: str, target_snap: str) -> str:
-    """Opening of the message reporting that the destroy the rollback depends on failed."""
     return f"Failed to destroy the snapshots newer than {target_snap!r} on {dataset!r} before rolling it back: "
 
 
@@ -414,7 +419,8 @@ def _raise_destroy_failure(
         try:
             leftover = _collect_newer_snapshot_paths(tls, dataset, target_snap)
             still_there = "\n".join(f"  {name}" for name in leftover) or "  (none)"
-        except (ZFSPathNotFoundException, ValueError, truenas_pylibzfs.ZFSException, RuntimeError):
+        except Exception:
+            # Nothing here may replace the interrupted destroy raised below.
             still_there = "  (could not be listed)"
         raise ZFSRollbackFailedException(
             prefix + f"{os.strerror(failure.code)}. The destroy was interrupted after it started, so an unknown "
@@ -450,7 +456,6 @@ def _destroy_clones_of(tls: Any, snap_path: str, force: bool, completed: Sequenc
     try:
         snap_rsrc = open_resource(tls, snap_path)
     except ZFSPathNotFoundException:
-        # Pruned since it was collected, so there is nothing left to destroy.
         return
 
     try:
@@ -462,7 +467,6 @@ def _destroy_clones_of(tls: Any, snap_path: str, force: bool, completed: Sequenc
             completed=completed,
         ) from None
 
-    # get_clones() returns an empty tuple when there are none.
     for clone in clones:
         _destroy_clone(tls, clone, force, completed)
 
@@ -491,15 +495,12 @@ def _destroy_clone(tls: Any, clone: str, force: bool, completed: Sequence[str]) 
             pass
 
     try:
-        tls.lzh.destroy_resource(name=clone)
+        with _tolerate_history_write_failure(f"destroy of clone {clone!r}"):
+            tls.lzh.destroy_resource(name=clone)
     except truenas_pylibzfs.ZFSException as e:
         if e.code == truenas_pylibzfs.ZFSError.EZFS_NOENT:
-            # Destroyed by something else, which is all this call wanted.
             return
-        # A clone that cannot be destroyed - typically because something is
-        # holding it open - is an operational failure, not bad input, and in a
-        # recursive rollback it can strike after earlier datasets already
-        # rolled back, so the exception has to carry the completed list.
+        # EBUSY because a clone that resists destruction is almost always held open.
         raise ZFSRollbackFailedException(
             f"Failed to destroy clone {clone!r} prior to rollback: {e}",
             errno.EBUSY,
@@ -518,9 +519,10 @@ def _capture_volume_reservation(tls: Any, dataset: str) -> int | None:
     """Return the ``volsize`` of ``dataset`` when its ``refreservation`` has to be restored afterwards.
 
     A rollback can change the volsize of a volume, which leaves a thick
-    provisioned volume with a ``refreservation`` that no longer covers it.
-    ``None`` means there is nothing to restore: ``dataset`` is not a volume, it
-    is thin provisioned, or it could not be inspected.
+    provisioned volume with a ``refreservation`` that no longer matches it - too
+    small if the volsize grew, too large if it shrank. ``None`` means there is
+    nothing to restore: ``dataset`` is not a volume, it is thin provisioned, or
+    it could not be inspected.
     """
     try:
         rsrc = open_resource(tls, dataset)
@@ -533,9 +535,9 @@ def _capture_volume_reservation(tls: Any, dataset: str) -> int | None:
         })
         volsize = _prop_int(props.volsize)
         refreservation = _prop_int(props.refreservation)
-    except (ZFSPathNotFoundException, truenas_pylibzfs.ZFSException, RuntimeError):
-        # A property that cannot be read is no reason to refuse a rollback that
-        # would otherwise go ahead, so the refreservation is simply left as it is.
+    except Exception:
+        # A property that cannot be read is no reason to refuse a rollback that would
+        # otherwise go ahead, so nothing here may propagate.
         logger.warning(
             "%s: could not be inspected for a refreservation to restore after the rollback",
             dataset,
@@ -543,11 +545,9 @@ def _capture_volume_reservation(tls: Any, dataset: str) -> int | None:
         )
         return None
 
-    # The equality gate follows zfs_rollback(), which restores the refreservation only
-    # when it exactly covered the volsize beforehand. Volumes the middleware creates set
-    # refreservation to the literal volsize, so they qualify; one created by
-    # `zfs create -V` carries a larger synthetic refreservation (volsize times copies,
-    # plus metadata overhead) and is deliberately left alone, as zfs(8) leaves it.
+    # Matching zfs(8): only a refreservation that exactly covered the volsize is restored.
+    # The middleware sets it to the literal volsize; a volume from `zfs create -V` carries a
+    # larger synthetic value and is deliberately left alone.
     if volsize != refreservation:
         return None
     return volsize
@@ -563,10 +563,12 @@ def _restore_volume_reservation(tls: Any, dataset: str, old_volsize: int) -> Non
             return
         with _tolerate_history_write_failure(f"refreservation update of {dataset!r}"):
             rsrc.set_properties(properties={"refreservation": str(new_volsize)})
-    except (ZFSPathNotFoundException, truenas_pylibzfs.ZFSException, RuntimeError):
+    except Exception:
+        # The rollback has already committed, so nothing here may be reported as its failure.
         logger.warning(
-            "%s: rolled back, but its refreservation could not be restored to match the new volsize; "
-            "the volume is now thin provisioned",
+            "%s: rolled back, but its refreservation could not be updated to match the new volsize; it is "
+            "still set to %d bytes, which no longer matches the volume",
             dataset,
+            old_volsize,
             exc_info=True,
         )

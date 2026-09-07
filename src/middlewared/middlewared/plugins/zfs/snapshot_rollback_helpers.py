@@ -1,11 +1,9 @@
 """Pure helpers for the snapshot rollback implementation.
 
 Everything here takes plain data - names, errnos, the dicts and tuples that
-`truenas_pylibzfs` hands back - so it can be unit tested without a live ZFS.
-Do not import `truenas_pylibzfs` from this module. Nothing enforces that:
-`middlewared.fake_env` fakes the module away in unit runs, so an accidental
-import of the implementation module would only fail on a real system. The rule
-is a convention, and it is what keeps these tests worth running.
+`truenas_pylibzfs` hands back - so it can be unit tested without a live ZFS. Do
+not import `truenas_pylibzfs` from this module; that is what keeps the tests
+runnable off a real system.
 """
 
 from collections.abc import Collection, Sequence
@@ -87,8 +85,7 @@ def classify_destroy_failure(
     other: list[tuple[str, int]] = []
     for name, err in per_object:
         if err == errno.ENOENT:
-            # The kernel silently ignores objects that are already gone, so this is
-            # defensive only.
+            # Defensive: the kernel silently ignores objects that are already gone.
             vanished.append(name)
         elif err == errno.EBUSY:
             blockers.append(ZFSRollbackBlocker(snapshot=name, reason=ZFSRollbackBlockerReason.IN_USE, names=()))

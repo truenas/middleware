@@ -75,10 +75,7 @@ class PoolSnapshotService(CRUDService):
             proceed; use the ``recursive``, ``recursive_clones``, or ``recursive_rollback`` options to control
             how newer snapshots and their clones are handled. A hold on a newer snapshot, or a clone that
             cannot be destroyed, is reported as a JSON-RPC ``error`` response (code ``-32001``, *Method call
-            error*, errno ``EBUSY``); release a hold with :method:`pool.snapshot.release` first. Bookmarks are
-            not managed here: a bookmark more recent than ``id`` fails the rollback with errno ``EEXIST`` -
-            after any newer snapshots were already destroyed, when ``recursive`` was passed - and has to be
-            removed manually with ``zfs destroy <dataset>#<bookmark>``.
+            error*, errno ``EBUSY``); release a hold with :method:`pool.snapshot.release` first.
         """
         try:
             self.call_sync2(self.s.zfs.resource.snapshot.rollback_impl, ZFSResourceSnapshotRollbackQuery(

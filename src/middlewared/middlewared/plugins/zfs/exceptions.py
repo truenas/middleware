@@ -153,8 +153,8 @@ class ZFSRollbackConflictException(Exception):
         self.path = path
         self.conflicts = tuple(conflicts)
         self.message = (
-            "Cannot rollback: more recent snapshots or bookmarks exist. Please pass `recursive: true` to "
-            "delete the following snapshots and bookmarks recursively:\n" +
+            "Cannot rollback: more recent snapshots exist. Please pass `recursive: true` to "
+            "delete the following snapshots recursively:\n" +
             "\n".join(f"  {conflict}" for conflict in self.conflicts)
         )
         super().__init__(path, self.conflicts)

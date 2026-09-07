@@ -833,13 +833,6 @@ class ZFSResourceSnapshotService(Service):
           rollback (errno ``EDQUOT`` or ``ENOSPC``)
         - the rollback fails for any other reason, with the errno the kernel reported
 
-        .. note::
-
-            Bookmarks are not managed by this method. A bookmark more recent than ``path``
-            blocks the rollback in the kernel and fails it with errno ``EEXIST`` - after any
-            more recent snapshots were already destroyed, when ``recursive`` was passed - and
-            has to be removed manually with ``zfs destroy <dataset>#<bookmark>``.
-
         Examples:
 
         Roll back to a snapshot:

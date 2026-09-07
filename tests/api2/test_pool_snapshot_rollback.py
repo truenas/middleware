@@ -42,7 +42,7 @@ def test_pool_snapshot_rollback_newer_snapshots_without_flags():
                 call("pool.snapshot.rollback", f"{ds}@snap1")
 
             assert ve.value.errno == errno.EINVAL
-            assert "more recent snapshots or bookmarks exist" in ve.value.errmsg
+            assert "more recent snapshots exist" in ve.value.errmsg
             assert f"{ds}@snap2" in ve.value.errmsg
 
 

@@ -158,10 +158,7 @@ class PoolSnapshotReleaseOptions(BaseModel):
 class PoolSnapshotRollbackOptions(BaseModel):
     recursive: bool = Field(
         default=False,
-        description=(
-            "Destroy any snapshots more recent than the one specified. Bookmarks are not destroyed: a bookmark "
-            "more recent than the specified snapshot causes the rollback to fail and has to be removed manually."
-        ),
+        description="Destroy any snapshots more recent than the one specified.",
     )
     recursive_clones: bool = Field(default=False, description="Just like `recursive`, but also destroy any clones.")
     force: bool = Field(default=False, description="Force unmount of any clones.")
