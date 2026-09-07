@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 
 from middlewared.alert.base import AlertClass, DismissableAlertClass, AlertCategory, AlertLevel, Alert, AlertSource
 from middlewared.alert.schedule import IntervalSchedule
+from middlewared.utils.time_utils import utc_now
 
 
 THRESHOLD_SENSOR_TYPES = (
@@ -50,6 +51,32 @@ def remove_orphaned_assertions(records, sensor_states):
             and sensor_states.get(r["name"]) == "Nominal"
         )
     ]
+
+
+class CorrectableMemoryErrorAlertClass(AlertClass):
+    category = AlertCategory.HARDWARE
+    level = AlertLevel.WARNING
+    title = "Correctable Memory Errors"
+    text = "%(count)s correctable memory errors occurred in the last 24 hours."
+
+
+def pop_correctable_memory_error_alert(threshold, records):
+    datetimes = []
+    filtered_records = []
+    for record in records:
+        if record["event_direction"] == "Assertion Event" and record["event"].startswith("Correctable memory error"):
+            if record["datetime"] >= threshold:
+                datetimes.append(record["datetime"])
+        else:
+            filtered_records.append(record)
+
+    count = len(datetimes)
+    if count > 10:
+        # We're not interested in receiving any notifications if the count changes, hence `key=None`.
+        alert = Alert(CorrectableMemoryErrorAlertClass, {"count": count}, key=None, datetime=max(datetimes))
+        return alert, filtered_records
+    else:
+        return None, filtered_records
 
 
 class IPMISELAlertClass(AlertClass, DismissableAlertClass):
@@ -141,6 +168,15 @@ class IPMISELAlertSource(AlertSource):
             records = remove_orphaned_assertions(records, sensor_states)
 
         alerts = []
+
+        correctable_memory_error_alert, records = pop_correctable_memory_error_alert(
+            utc_now() - timedelta(hours=24),
+            records,
+        )
+
+        if correctable_memory_error_alert:
+            alerts.append(correctable_memory_error_alert)
+
         if records:
             if await self.call2(self.s.keyvalue.has_key, self.dismissed_datetime_kv_key):
                 dismissed_datetime = (
@@ -165,7 +201,8 @@ class IPMISELAlertSource(AlertSource):
                     datetime=dt,
                 )
                 alerts_by_key[alert.key] = alert
-            alerts = list(alerts_by_key.values())
+
+            alerts += list(alerts_by_key.values())
 
         return alerts
 
