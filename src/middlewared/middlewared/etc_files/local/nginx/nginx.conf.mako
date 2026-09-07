@@ -281,6 +281,13 @@ ${spaces}gzip off;
             proxy_set_header X-Forwarded-For $remote_addr;
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection $connection_upgrade;
+            # Every SPICE channel gets its own websocket, and the server only
+            # pings the inputs and cursor channels every 300s, so the 60s
+            # default closes them on a console nobody is touching. The display
+            # channel keeps painting, which leaves a console that looks alive
+            # but ignores the keyboard and mouse.
+            proxy_read_timeout 3600;
+            proxy_send_timeout 3600;
         }
 % endfor
         location /progress {
