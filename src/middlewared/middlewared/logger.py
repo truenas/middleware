@@ -66,6 +66,7 @@ APP_MIGRATION_LOGFILE = '/var/log/app_migrations.log'
 AUDIT_HANDLER_LOGFILE = '/var/log/audit/audit_handler.log'
 DOCKER_IMAGE_LOGFILE = '/var/log/docker_image.log'
 FAILOVER_LOGFILE = '/var/log/failover.log'
+GIT_LOGFILE = '/var/log/git.log'
 LOGFILE = '/var/log/middlewared.log'
 DEFAULT_LOGFORMAT = '[%(asctime)s] (%(levelname)s) %(name)s.%(funcName)s():%(lineno)d - %(message)s'
 FALLBACK_LOGFILE = '/var/log/fallback-middlewared.log'
@@ -117,6 +118,7 @@ ALL_LOG_FILES = (
     TNLog('audit_handler', AUDIT_HANDLER_LOGFILE),
     TNLog('docker_image', DOCKER_IMAGE_LOGFILE),
     TNLog('failover', FAILOVER_LOGFILE),
+    TNLog('git', GIT_LOGFILE),
     TNLog('netdata_api', NETDATA_API_LOGFILE),
     TNLog('truenas_connect', TRUENAS_CONNECT_LOGFILE),
     TNLog('zettarepl', ZETTAREPL_LOGFILE, ZETTAREPL_LOGFORMAT),
