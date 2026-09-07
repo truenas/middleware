@@ -82,6 +82,8 @@ CloudSyncTaskFailed                         listed  Y   Y   Y   Y   Y   Y   Y
 CoreFilesArePresent                         class   Y   Y   Y   .   .   Y   .
 CoreFilesArePresent                         listed  Y   Y   Y   .   .   Y   .
 CoreFilesArePresent                         source  Y   Y   Y   .   .   Y   .
+CorrectableMemoryError                      class   Y   Y   Y   Y   Y   Y   Y
+CorrectableMemoryError                      listed  Y   Y   Y   Y   Y   Y   Y
 CurrentlyRunningVersionDoesNotMatchProfile  class   Y   Y   Y   Y   Y   Y   Y
 CurrentlyRunningVersionDoesNotMatchProfile  listed  Y   Y   Y   Y   Y   Y   Y
 DeprecatedService                           class   Y   Y   Y   Y   Y   Y   Y
