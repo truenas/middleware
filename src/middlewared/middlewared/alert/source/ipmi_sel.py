@@ -13,6 +13,7 @@ from middlewared.alert.base import (
     DismissableAlertClass,
 )
 from middlewared.alert.schedule import IntervalSchedule
+from middlewared.utils.time_utils import utc_now
 
 THRESHOLD_SENSOR_TYPES = (
     "Fan",
@@ -62,6 +63,42 @@ def remove_orphaned_assertions(
             and sensor_states.get(r["name"]) == "Nominal"
         )
     ]
+
+
+@dataclass(kw_only=True)
+class CorrectableMemoryErrorAlert(AlertClass):
+    config = AlertClassConfig(
+        category=AlertCategory.HARDWARE,
+        level=AlertLevel.WARNING,
+        title="Correctable Memory Errors",
+        text="%(count)s correctable memory errors occurred in the last 24 hours.",
+    )
+
+    count: int
+
+    @classmethod
+    def key_from_args(cls, args: Any) -> Any:
+        # We're not interested in receiving any notifications if the count changes.
+        return None
+
+
+def pop_correctable_memory_error_alert(threshold: datetime, records: list[dict[str, Any]]) -> tuple[
+    Alert[CorrectableMemoryErrorAlert] | None, list[dict[str, Any]],
+]:
+    datetimes: list[datetime] = []
+    filtered_records = []
+    for record in records:
+        if record["event_direction"] == "Assertion Event" and record["event"].startswith("Correctable memory error"):
+            if record["datetime"] >= threshold:
+                datetimes.append(record["datetime"])
+        else:
+            filtered_records.append(record)
+
+    count = len(datetimes)
+    if count > 10:
+        return Alert(CorrectableMemoryErrorAlert(count=count), datetime=max(datetimes)), filtered_records
+    else:
+        return None, filtered_records
 
 
 @dataclass(kw_only=True)
@@ -183,7 +220,16 @@ class IPMISELAlertSource(AlertSource):
             sensor_states = {s["name"]: s["state"] for s in live_sensors}
             records = remove_orphaned_assertions(records, sensor_states)
 
-        alerts = []
+        alerts: list[Alert[Any]] = []
+
+        correctable_memory_error_alert, records = pop_correctable_memory_error_alert(
+            utc_now() - timedelta(hours=24),
+            records,
+        )
+
+        if correctable_memory_error_alert:
+            alerts.append(correctable_memory_error_alert)
+
         if records:
             if await self.call2(self.s.keyvalue.has_key, self.dismissed_datetime_kv_key):
                 dismissed_datetime = (
@@ -211,7 +257,8 @@ class IPMISELAlertSource(AlertSource):
                     datetime=dt,
                 )
                 alerts_by_key[alert.key] = alert
-            alerts = list(alerts_by_key.values())
+
+            alerts += list(alerts_by_key.values())
 
         return alerts
 
