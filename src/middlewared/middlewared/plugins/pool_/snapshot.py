@@ -102,7 +102,7 @@ class PoolSnapshotService(CRUDService):
         ))
 
     def _transform_snapshot_entry(self, snap, *, include_holds=True, include_user_properties=False,
-                                  requested_props=None):
+                                  requested_props=None, requested_user_props=None):
         """Transform zfs.resource.snapshot.query result to PoolSnapshotEntry format.
 
         Args:
@@ -127,6 +127,18 @@ class PoolSnapshotService(CRUDService):
                     'rawvalue': prop_data.get('raw', ''),
                     'source': source,
                     'parsed': prop_data.get('value'),
+                }
+
+        # ZFS reports no source for a user property, so it is called LOCAL here.
+        # `pool.dataset.query` makes the same compromise in normalize_user_properties().
+        for prop_name in requested_user_props or ():
+            value = snap.get('user_properties', {}).get(prop_name)
+            if value is not None:
+                old_props[prop_name] = {
+                    'value': value,
+                    'rawvalue': value,
+                    'source': 'LOCAL',
+                    'parsed': value,
                 }
 
         # Add fast-path properties to properties dict if they were explicitly requested
@@ -232,7 +244,12 @@ class PoolSnapshotService(CRUDService):
         # Determine which properties were requested and filter out fast-path ones
         # Fast-path properties (name, createtxg) don't need ZFS property lookup
         requested_props = set(extra.get('properties', []))
-        non_fast_path_props = requested_props - frozenset({'name', 'createtxg'})
+
+        # A ZFS user property is exactly a name containing a colon. Those are read
+        # with `get_user_properties`; naming one alongside the native properties
+        # gets it dropped by the property builder without a word.
+        requested_user_props = {i for i in requested_props if ':' in i}
+        non_fast_path_props = requested_props - requested_user_props - frozenset({'name', 'createtxg'})
 
         # Only pass non-fast-path properties to the backend
         if non_fast_path_props:
@@ -252,6 +269,9 @@ class PoolSnapshotService(CRUDService):
             # are no paths that were requested, then set recursive
             # to be true.
             query_args['recursive'] = True
+
+        if requested_user_props:
+            query_args["get_user_properties"] = True
 
         if extra.get("holds", False):
             query_args["get_holds"] = True
@@ -280,6 +300,7 @@ class PoolSnapshotService(CRUDService):
                     i,
                     include_user_properties=include_user_properties,
                     requested_props=requested_props if requested_props else None,
+                    requested_user_props=requested_user_props or None,
                 ))
         except ZFSPathNotFoundException:
             # Path not found - return empty results (legacy behavior)
