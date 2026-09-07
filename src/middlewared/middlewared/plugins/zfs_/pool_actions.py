@@ -1,11 +1,22 @@
 import errno
 import functools
+from threading import Lock
 
 import libzfs
 
 from middlewared.service import CallError, Service
 
 from .pool_utils import SEARCH_PATHS, find_vdev
+
+
+# Pool discovery (`zfs.find_import`) reads the label of every candidate block
+# device and then re-opens it O_EXCL to verify it is not in use. Two discovery
+# scans running at the same time make each other's exclusive opens fail with
+# EBUSY, and a device that cannot be opened is dropped from the result instead
+# of being retried, so a scan that loses the race reports an exported pool with
+# missing members (its disks then look unused) or omits the pool entirely.
+# Serialize discovery so that every caller sees a complete view.
+POOL_DISCOVERY_LOCK = Lock()
 
 
 class ZFSPoolService(Service):
@@ -118,7 +129,7 @@ class ZFSPoolService(Service):
 
     def find_import(self):
         sp = self.get_search_paths()
-        with libzfs.ZFS() as zfs:
+        with POOL_DISCOVERY_LOCK, libzfs.ZFS() as zfs:
             return [i.asdict() for i in zfs.find_import(search_paths=sp)]
 
     def import_pool(
@@ -138,10 +149,11 @@ class ZFSPoolService(Service):
             found = None
             sp = self.get_search_paths()
             try:
-                for pool in zfs.find_import(cachefile=cachefile, search_paths=sp):
-                    if pool.name == name_or_guid or str(pool.guid) == name_or_guid:
-                        found = pool
-                        break
+                with POOL_DISCOVERY_LOCK:
+                    for pool in zfs.find_import(cachefile=cachefile, search_paths=sp):
+                        if pool.name == name_or_guid or str(pool.guid) == name_or_guid:
+                            found = pool
+                            break
             except libzfs.ZFSInvalidCachefileException:
                 raise CallError('Invalid or missing cachefile', errno.ENOENT)
             except libzfs.ZFSException as e:
