@@ -189,6 +189,14 @@ class DiskService(Service, ServiceChangeMixin):
             if disk := [i for i in qs if i['disk_identifier'] == disk_identifier]:
                 new = False
                 disk = disk[0]
+                if (other := disk['disk_name']) != name and other in sys_disks:
+                    # Two present block devices produced the same identifier, so they
+                    # share this row and only one of them is reachable through
+                    # disk.query. USB enclosures that report a canned serial do this.
+                    self.logger.warning(
+                        'Disks %r and %r share identifier %r; only one of them will be '
+                        'visible in disk.query', other, name, disk_identifier,
+                    )
                 job.set_progress(progress_percent, f'Updating disk {name!r}')
             else:
                 new = True
