@@ -19,3 +19,6 @@ class App:
         self.py_exceptions = False
         self.websocket = False
         self.rest = False
+        # Set when the connection is torn down, before its CLOSE callbacks
+        # run, so that work still in flight can tell it has gone away.
+        self.closed = False

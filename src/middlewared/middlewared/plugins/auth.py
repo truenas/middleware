@@ -121,9 +121,44 @@ class SessionManager:
         self.sessions = {}
         self.middleware = None
 
+    async def __aborted_because_closed(self, app, credentials, resp) -> bool:
+        """ Undo a login whose connection went away while it was running.
+
+        Method calls are dispatched with ensure_future, so the read loop
+        reaches its CLOSE callbacks as soon as the socket closes, which can be
+        before this login has registered one. Such a close is delivered to
+        nobody: the session would stay in self.sessions, which holds the
+        credentials, so neither logout() nor __del__ would return the utmp
+        session id to the pool, and the id scavenger only reclaims ids that
+        have no utmp entry. Release the credentials here instead, before there
+        is a session to leak.
+        """
+        if not app.closed:
+            return False
+
+        if resp.code == pam.PAM_SUCCESS:
+            if not is_internal_login(app, credentials):
+                # credentials.login() has already written the utmp and wtmp
+                # login records, so record the attempt rather than leaving
+                # those with no matching audit entry. The caller never reaches
+                # the point where a successful authentication is logged.
+                await self.middleware.log_audit_message(app, "AUTHENTICATION", {
+                    "credentials": dump_credentials(credentials),
+                    "error": "Connection was closed while logging in.",
+                }, False)
+
+            # Only a login that reached PAM_SUCCESS holds a utmp entry and a
+            # session id to give back. logout() on an authenticator at any
+            # other stage raises instead.
+            await self.middleware.run_in_thread(credentials.logout)
+
+        return True
+
     async def login(self, app, credentials):
         if app.authenticated:
-            await self.middleware.run_in_thread(credentials.login, app.session_id)
+            resp = await self.middleware.run_in_thread(credentials.login, app.session_id)
+            if await self.__aborted_because_closed(app, credentials, resp):
+                return
             # If previous credential had associated utmp entry then it will be automatically
             # cleared when old credentials object is garbage collected
             self.sessions[app.session_id].credentials = credentials
@@ -144,6 +179,9 @@ class SessionManager:
 
         if resp.code != pam.PAM_SUCCESS:
             raise CallError(f'Login with credentials failed: {resp.reason}')
+
+        if await self.__aborted_because_closed(app, credentials, resp):
+            return
 
         session = Session(self, credentials, app)
         self.sessions[app.session_id] = session
@@ -213,19 +251,22 @@ class Session:
         }
 
 
-def is_internal_session(session) -> bool:
+def is_internal_login(app, credentials) -> bool:
+    """ Whether a login is internal, for a caller that has no Session yet
+    and so has not set app.authenticated_credentials. """
     try:
-        is_root_sock = session.app.origin.is_unix_family and session.app.origin.uid == 0
+        is_root_sock = app.origin.is_unix_family and app.origin.uid == 0
         if is_root_sock:
             return True
     except AttributeError:
-        # session.app.origin can be NoneType
+        # app.origin can be NoneType
         pass
 
-    if isinstance(session.app.authenticated_credentials, TruenasNodeSessionManagerCredentials):
-        return True
+    return isinstance(credentials, TruenasNodeSessionManagerCredentials)
 
-    return False
+
+def is_internal_session(session) -> bool:
+    return is_internal_login(session.app, session.app.authenticated_credentials)
 
 
 class UserWebUIAttributeModel(sa.Model):
@@ -1107,7 +1148,10 @@ class AuthService(Service):
         match resp['pam_response']['code']:
             case pam.PAM_SUCCESS:
                 response['response_type'] = AuthResp.SUCCESS
-                if data['login_options']['user_info']:
+                if data['login_options']['user_info'] and app.authenticated_credentials is not None:
+                    # The credentials are unset when the connection closed
+                    # while the login was running, in which case there is no
+                    # session to describe and nobody left to describe it to.
                     response['user_info'] = await self.me(app)
                 else:
                     response['user_info'] = None

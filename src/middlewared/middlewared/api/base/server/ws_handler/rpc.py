@@ -131,6 +131,13 @@ class RpcWebSocketApp(App):
         self.callbacks[event.value].append(callback)
 
     async def run_callback(self, event, *args, **kwargs):
+        if event is RpcWebSocketAppEvent.CLOSE:
+            # CLOSE is dispatched once, when the connection is torn down.
+            # Record it before running the callbacks, so that work still in
+            # flight can tell the connection has gone away and does not rely
+            # on a callback it registers too late to be run.
+            self.closed = True
+
         for callback in self.callbacks[event.value]:
             try:
                 if asyncio.iscoroutinefunction(callback):
