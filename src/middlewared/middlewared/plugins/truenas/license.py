@@ -1,5 +1,4 @@
 import contextlib
-import json
 import os
 from typing import Any, TYPE_CHECKING
 
@@ -22,7 +21,7 @@ from middlewared.service import Service, ValidationError, private
 from middlewared.plugins.truenas.license_reconcile import TrueNASLicenseReconcileService
 from middlewared.plugins.truenas.tn import EULA_PENDING_PATH
 from middlewared.utils.license import (
-    HW_LICENSE_RESULT_FILE,
+    HW_LICENSE_ERROR_FILE,
     LEGACY_LICENSE_FILE,
     LicenseInfo,
     LicenseOrigin,
@@ -172,29 +171,20 @@ class TrueNASLicenseService(TrueNASLicenseReconcileService, Service):
         return get_license()
 
     @private
-    def process_hw_license_result(self) -> None:
-        if os.path.exists(HW_LICENSE_RESULT_FILE):
+    def process_hw_license_error(self) -> None:
+        if os.path.exists(HW_LICENSE_ERROR_FILE):
             try:
-                with open(HW_LICENSE_RESULT_FILE) as f:
-                    data = json.load(f)
-
-                # The record is written for every outcome, most of which are the script
-                # correctly declining to act. An error is what makes one worth surfacing.
-                if data.get("error"):
-                    self.logger.error(
-                        "truenas-hw-license.py did not write a record during upgrade: "
-                        "outcome %r, chassis %r, serial %r: %s",
-                        data.get("outcome"), data.get("chassis"), data.get("serial"), data.get("error"),
-                    )
+                with open(HW_LICENSE_ERROR_FILE) as f:
+                    self.logger.error("truenas-hw-license.py: %s", f.read().strip())
             finally:
-                os.unlink(HW_LICENSE_RESULT_FILE)
+                os.unlink(HW_LICENSE_ERROR_FILE)
 
 
 async def on_system_ready(middleware: "Middleware", event_type: str, args: Any) -> None:
     try:
-        await middleware.call("truenas.license.process_hw_license_result")
+        await middleware.call("truenas.license.process_hw_license_error")
     except Exception:
-        middleware.logger.error("Error processing hardware entitlement result file", exc_info=True)
+        middleware.logger.error("Error processing hardware entitlement error file", exc_info=True)
 
 
 async def setup(middleware: "Middleware") -> None:
