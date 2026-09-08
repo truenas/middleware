@@ -17,7 +17,7 @@ from middlewared.api.current import (
     RsyncTaskRunArgs, RsyncTaskRunResult,
 )
 from middlewared.common.attachment import LockableFSAttachmentDelegate
-from middlewared.plugins.rsync_.utils import get_host_key_file_contents_from_ssh_credentials
+from middlewared.plugins.rsync_.utils import get_host_key_file_contents_from_ssh_credentials, quote_extra_args
 from middlewared.service import (
     CallError, ValidationErrors, job, private, TaskPathService,
 )
@@ -508,7 +508,7 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
                 if rsync[name]:
                     line.append(flag)
             if rsync['extra']:
-                line.extend(shlex.quote(arg) for arg in rsync['extra'])
+                line.extend(quote_extra_args(rsync['extra']))
 
             if not rsync['ssh_credentials']:
                 # Do not use username if one is specified in host field
