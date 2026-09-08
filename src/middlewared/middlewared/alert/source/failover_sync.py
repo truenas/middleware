@@ -7,7 +7,6 @@ from dataclasses import dataclass
 
 from middlewared.alert.applicability import APPLIANCE_OR_HA_LICENSED, HA_LICENSED
 from middlewared.alert.base import AlertCategory, AlertClassConfig, AlertLevel, OneShotAlertClass
-from middlewared.utils import ProductType
 
 
 @dataclass(kw_only=True)
@@ -21,7 +20,6 @@ class FailoverSyncFailedAlert(OneShotAlertClass):
             "the standby storage controller but failed. Use Sync to Peer on the "
             "System/Failover page to try and perform a manual sync."
         ),
-        products=(ProductType.ENTERPRISE,),
         applies_to=APPLIANCE_OR_HA_LICENSED,
         listed_only_when=HA_LICENSED,
         keys=[],
@@ -39,7 +37,6 @@ class FailoverKeysSyncFailedAlert(OneShotAlertClass):
             "The automatic synchronization of encryption passphrases with the standby "
             "controller has failed. Please go to System > Failover and manually sync to peer."
         ),
-        products=(ProductType.ENTERPRISE,),
         applies_to=APPLIANCE_OR_HA_LICENSED,
         listed_only_when=HA_LICENSED,
         deleted_automatically=False,
@@ -56,7 +53,6 @@ class FailoverKMIPKeysSyncFailedAlert(OneShotAlertClass):
             "The automatic synchronization of KMIP keys with the standby "
             "controller has failed due to %(error)s. Please go to System > Failover and manually sync to peer."
         ),
-        products=(ProductType.ENTERPRISE,),
         applies_to=APPLIANCE_OR_HA_LICENSED,
         listed_only_when=HA_LICENSED,
         deleted_automatically=False,

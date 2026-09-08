@@ -22,7 +22,6 @@ from middlewared.alert.base import (
 )
 from middlewared.alert.schedule import IntervalSchedule
 from middlewared.api.current import MailSendMessage
-from middlewared.utils import ProductType
 
 
 class LicenseAlert(NonDataclassAlertClass[str], AlertClass):
@@ -31,7 +30,6 @@ class LicenseAlert(NonDataclassAlertClass[str], AlertClass):
         level=AlertLevel.CRITICAL,
         title="TrueNAS License Issue",
         text="%s",
-        products=(ProductType.ENTERPRISE,),
         applies_to=EXPECTED_TO_BE_LICENSED,
     )
 
@@ -42,7 +40,6 @@ class LicenseIsExpiringAlert(NonDataclassAlertClass[str], AlertClass):
         level=AlertLevel.WARNING,
         title="Support Contract Is Expiring",
         text="%s",
-        products=(ProductType.ENTERPRISE,),
         applies_to=EXPECTED_TO_BE_LICENSED,
     )
 
@@ -53,13 +50,11 @@ class LicenseHasExpiredAlert(NonDataclassAlertClass[str], AlertClass):
         level=AlertLevel.CRITICAL,
         title="Support Contract Has Expired",
         text="%s",
-        products=(ProductType.ENTERPRISE,),
         applies_to=EXPECTED_TO_BE_LICENSED,
     )
 
 
 class LicenseStatusAlertSource(ThreadedAlertSource):
-    products = (ProductType.ENTERPRISE,)
     applies_to = EXPECTED_TO_BE_LICENSED
     run_on_backup_node = False
     schedule = IntervalSchedule(timedelta(hours=24))

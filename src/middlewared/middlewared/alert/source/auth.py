@@ -5,7 +5,6 @@ from typing import Any
 from middlewared.alert.applicability import TRUENAS_HARDWARE
 from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertClassConfig, AlertLevel, AlertSource
 from middlewared.alert.schedule import CrontabSchedule
-from middlewared.utils import ProductType
 from middlewared.utils.audit import UNAUTHENTICATED
 
 URL = "https://www.truenas.com/docs/scale/scaletutorials/credentials/adminroles/"
@@ -66,7 +65,6 @@ def audit_entry_to_msg(entry: dict[str, Any]) -> str:
 class AdminSessionAlertSource(AlertSource):
     schedule = CrontabSchedule(hour=1)  # every 24 hours
     run_on_backup_node = True
-    products = (ProductType.ENTERPRISE,)
     applies_to = TRUENAS_HARDWARE
 
     async def check(self) -> Alert[AdminSessionAlert] | None:

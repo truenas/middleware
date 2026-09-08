@@ -19,7 +19,6 @@ from middlewared.alert.base import (
     UnavailableException,
 )
 from middlewared.service_exception import CallError
-from middlewared.utils import ProductType
 
 
 class FailoverInterfaceNotFoundAlert(AlertClass):
@@ -28,7 +27,6 @@ class FailoverInterfaceNotFoundAlert(AlertClass):
         level=AlertLevel.CRITICAL,
         title='Failover Internal Interface Not Found',
         text='Failover internal interface not found. Contact support.',
-        products=(ProductType.ENTERPRISE,),
         applies_to=APPLIANCE_OR_HA_LICENSED,
         listed_only_when=HA_LICENSED,
     )
@@ -40,7 +38,6 @@ class TrueNASVersionsMismatchAlert(AlertClass):
         level=AlertLevel.CRITICAL,
         title='TrueNAS Software Versions Must Match Between Storage Controllers',
         text='TrueNAS software versions must match between storage controllers.',
-        products=(ProductType.ENTERPRISE,),
         applies_to=APPLIANCE_OR_HA_LICENSED,
         listed_only_when=HA_LICENSED,
     )
@@ -52,7 +49,6 @@ class FailoverStatusCheckFailedAlert(NonDataclassAlertClass[list[str]], AlertCla
         level=AlertLevel.CRITICAL,
         title='Failed to Check Failover Status with the Other Controller',
         text='Failed to check failover status with the other controller: %s.',
-        products=(ProductType.ENTERPRISE,),
         applies_to=APPLIANCE_OR_HA_LICENSED,
         listed_only_when=HA_LICENSED,
     )
@@ -64,7 +60,6 @@ class FailoverFailedAlert(AlertClass):
         level=AlertLevel.CRITICAL,
         title='Failover Failed',
         text='Failover failed. Check /var/log/failover.log on both controllers.',
-        products=(ProductType.ENTERPRISE,),
         applies_to=APPLIANCE_OR_HA_LICENSED,
         listed_only_when=HA_LICENSED,
     )
@@ -77,7 +72,6 @@ class VRRPStatesDoNotAgreeAlert(AlertClass):
         level=AlertLevel.CRITICAL,
         title='Controllers VRRP States Do Not Agree',
         text='Controllers VRRP states do not agree: %(error)s.',
-        products=(ProductType.ENTERPRISE,),
         applies_to=APPLIANCE_OR_HA_LICENSED,
         listed_only_when=HA_LICENSED,
     )
@@ -86,9 +80,8 @@ class VRRPStatesDoNotAgreeAlert(AlertClass):
 
 
 class FailoverAlertSource(AlertSource):
-    products = (ProductType.ENTERPRISE,)
     applies_to = HA_LICENSED
-    failover_related = True
+    post_failover_blackout = True
     run_on_backup_node = False
 
     async def check(self) -> list[Alert[Any]]:

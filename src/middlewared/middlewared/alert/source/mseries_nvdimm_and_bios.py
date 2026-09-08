@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING, Any
 from middlewared.alert.applicability import TRUENAS_HARDWARE
 from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertClassConfig, AlertLevel, ThreadedAlertSource
 from middlewared.alert.schedule import IntervalSchedule
-from middlewared.utils import ProductType
 
 if TYPE_CHECKING:
     from middlewared.plugins.hardware.m_series_nvdimm import NvdimmInfo
@@ -29,7 +28,6 @@ class NVDIMMAlert(AlertClass):
         level=AlertLevel.WARNING,
         title='There Is An Issue With NVDIMM',
         text='NVDIMM: "%(dev)s" is reporting "%(value)s" with status "%(status)s".',
-        products=(ProductType.ENTERPRISE,),
         applies_to=TRUENAS_HARDWARE,
     )
 
@@ -45,7 +43,6 @@ class NVDIMMESLifetimeWarningAlert(AlertClass):
         level=AlertLevel.WARNING,
         title='NVDIMM Energy Source Lifetime Is Less Than 20%',
         text='NVDIMM Energy Source Remaining Lifetime for %(dev)s is %(value)d%%.',
-        products=(ProductType.ENTERPRISE,),
         applies_to=TRUENAS_HARDWARE,
     )
 
@@ -60,7 +57,6 @@ class NVDIMMESLifetimeCriticalAlert(AlertClass):
         level=AlertLevel.CRITICAL,
         title='NVDIMM Energy Source Lifetime Is Less Than 10%',
         text='NVDIMM Energy Source Remaining Lifetime for %(dev)s is %(value)d%%.',
-        products=(ProductType.ENTERPRISE,),
         applies_to=TRUENAS_HARDWARE,
     )
 
@@ -75,7 +71,6 @@ class NVDIMMMemoryModLifetimeWarningAlert(AlertClass):
         level=AlertLevel.WARNING,
         title='NVDIMM Memory Module Lifetime Is Less Than 20%',
         text='NVDIMM Memory Module Remaining Lifetime for %(dev)s is %(value)d%%.',
-        products=(ProductType.ENTERPRISE,),
         applies_to=TRUENAS_HARDWARE,
     )
 
@@ -90,7 +85,6 @@ class NVDIMMMemoryModLifetimeCriticalAlert(AlertClass):
         level=AlertLevel.CRITICAL,
         title='NVDIMM Memory Module Lifetime Is Less Than 10%',
         text='NVDIMM Memory Module Remaining Lifetime for %(dev)s is %(value)d%%.',
-        products=(ProductType.ENTERPRISE,),
         applies_to=TRUENAS_HARDWARE,
     )
 
@@ -105,7 +99,6 @@ class NVDIMMInvalidFirmwareVersionAlert(AlertClass):
         level=AlertLevel.CRITICAL,
         title='Invalid NVDIMM Firmware Version',
         text=f'NVDIMM: "%(dev)s" is running invalid firmware. {WEBUI_SUPPORT_FORM}',
-        products=(ProductType.ENTERPRISE,),
         applies_to=TRUENAS_HARDWARE,
         proactive_support=True,
     )
@@ -123,7 +116,6 @@ class NVDIMMRecommendedFirmwareVersionAlert(AlertClass):
             'NVDIMM: "%(dev)s" is running firmware version "%(rv)s" which can be upgraded to '
             f'"%(uv)s". {WEBUI_SUPPORT_FORM}'
         ),
-        products=(ProductType.ENTERPRISE,),
         applies_to=TRUENAS_HARDWARE,
         proactive_support=True,
     )
@@ -139,7 +131,6 @@ class OldBiosVersionAlert(AlertClass):
         level=AlertLevel.WARNING,
         title='Old BIOS Version',
         text=f'This system is running an old BIOS version. {WEBUI_SUPPORT_FORM}',
-        products=(ProductType.ENTERPRISE,),
         applies_to=TRUENAS_HARDWARE,
         proactive_support=True,
     )
@@ -147,7 +138,6 @@ class OldBiosVersionAlert(AlertClass):
 
 class NVDIMMAndBIOSAlertSource(ThreadedAlertSource):
     schedule = IntervalSchedule(datetime.timedelta(minutes=5))
-    products = (ProductType.ENTERPRISE,)
     applies_to = TRUENAS_HARDWARE
 
     def produce_alerts(self, nvdimm: NvdimmInfo, alerts: list[Alert[Any]], old_bios: bool) -> None:

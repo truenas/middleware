@@ -9,7 +9,6 @@ from typing import Any
 from middlewared.alert.applicability import HA_LICENSED, TRUENAS_HARDWARE, TRUENAS_OR_MINI_HARDWARE
 from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertClassConfig, AlertLevel, AlertSource
 from middlewared.alert.schedule import CrontabSchedule
-from middlewared.utils import ProductType
 from middlewared.utils.size import format_size
 
 
@@ -20,7 +19,6 @@ class MemoryErrorsAlert(AlertClass):
         level=AlertLevel.WARNING,
         title='Uncorrected Memory Errors Detected',
         text='%(count)d total uncorrected errors detected for %(loc)s.',
-        products=(ProductType.ENTERPRISE,),
         applies_to=TRUENAS_OR_MINI_HARDWARE,
         proactive_support=True,
     )
@@ -36,7 +34,6 @@ class MemorySizeMismatchAlert(AlertClass):
         level=AlertLevel.WARNING,
         title='Memory Size Mismatch Detected',
         text="Memory size on this controller %(r1)s doesn't match other controller %(r2)s",
-        products=(ProductType.ENTERPRISE,),
         applies_to=TRUENAS_HARDWARE,
         listed_only_when=HA_LICENSED,
         proactive_support=True,

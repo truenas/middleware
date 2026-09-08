@@ -17,7 +17,6 @@ from middlewared.alert.base import (
     NonDataclassAlertClass,
     UnavailableException,
 )
-from middlewared.utils import ProductType
 from middlewared.utils.crypto import generate_token
 
 
@@ -27,7 +26,6 @@ class FailoverRemoteSystemInaccessibleAlert(NonDataclassAlertClass[list[str]], A
         level=AlertLevel.CRITICAL,
         title='Other Controller is Inaccessible',
         text='Other TrueNAS controller is inaccessible. Contact support. Incident ID: %s.',
-        products=(ProductType.ENTERPRISE,),
         applies_to=APPLIANCE_OR_HA_LICENSED,
         listed_only_when=HA_LICENSED,
         proactive_support=True,
@@ -36,9 +34,8 @@ class FailoverRemoteSystemInaccessibleAlert(NonDataclassAlertClass[list[str]], A
 
 
 class FailoverRemoteSystemInaccessibleAlertSource(AlertSource):
-    products = (ProductType.ENTERPRISE,)
     applies_to = HA_LICENSED
-    failover_related = True
+    post_failover_blackout = True
     run_on_backup_node = False
 
     def __init__(self, middleware: Any) -> None:

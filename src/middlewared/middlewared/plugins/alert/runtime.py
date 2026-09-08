@@ -381,11 +381,12 @@ async def get_failover_info(context: ServiceContext, state: AlertState) -> Alert
 def source_run_gates_pass(source: type[AlertSource], fi: AlertFailoverInfo) -> bool:
     """Whether the failover-related gates let `source` run this tick.
 
-    The blackout is a time window: a source whose answer is unreliable right after a failover stays
-    quiet until the window closes, whatever the license says. `require_stable_peer` asks whether a
-    peer was found in a state worth talking to, so it is only ever satisfied where there is a peer.
+    `post_failover_blackout` is a time window: a source whose answer is unreliable right after a
+    failover stays quiet until the window closes, whatever the license says. `require_stable_peer`
+    asks whether a peer was found in a state worth talking to, so it is only ever satisfied where
+    there is a peer.
     """
-    if source.failover_related and not fi.past_failover_blackout:
+    if source.post_failover_blackout and not fi.past_failover_blackout:
         return False
 
     if source.require_stable_peer and not fi.run_on_backup_node:

@@ -10,7 +10,6 @@ from middlewared.alert.base import (
     AlertClassConfig,
     AlertLevel,
     AlertSource,
-    ProductType,
 )
 from middlewared.alert.schedule import IntervalSchedule
 
@@ -31,7 +30,6 @@ class FIPSMisconfigurationAlert(AlertClass):
 class FIPSProviderAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(hours=1))
 
-    products = (ProductType.ENTERPRISE,)
     applies_to = EXPECTED_TO_BE_LICENSED
     run_on_backup_node = False
 

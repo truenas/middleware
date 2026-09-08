@@ -15,7 +15,6 @@ from middlewared.alert.base import (
     AlertSource,
     NonDataclassAlertClass,
 )
-from middlewared.utils import ProductType
 
 
 class ProactiveSupportAlert(NonDataclassAlertClass[str], AlertClass):
@@ -24,13 +23,11 @@ class ProactiveSupportAlert(NonDataclassAlertClass[str], AlertClass):
         level=AlertLevel.WARNING,
         title="Proactive Support Is Not Configured",
         text="%s",
-        products=(ProductType.ENTERPRISE,),
         applies_to=ANY_LICENSE,
     )
 
 
 class ProactiveSupportAlertSource(AlertSource):
-    products = (ProductType.ENTERPRISE,)
     applies_to = ANY_LICENSE
     run_on_backup_node = False
 

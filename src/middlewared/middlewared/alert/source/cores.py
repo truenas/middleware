@@ -3,7 +3,6 @@ from typing import Any
 
 from middlewared.alert.applicability import NOT_APPLIANCE_HARDWARE
 from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertClassConfig, AlertLevel, AlertSource
-from middlewared.utils import ProductType
 
 
 @dataclass(kw_only=True)
@@ -19,7 +18,6 @@ class CoreFilesArePresentAlert(AlertClass):
             "and attach the core files and debug. After creating the ticket, the core files can be removed "
             "from the system by opening shell and entering 'rm /var/db/system/cores/*'."
         ),
-        products=(ProductType.COMMUNITY_EDITION,),
         applies_to=NOT_APPLIANCE_HARDWARE,
     )
 
@@ -27,7 +25,6 @@ class CoreFilesArePresentAlert(AlertClass):
 
 
 class CoreFilesArePresentAlertSource(AlertSource):
-    products = (ProductType.COMMUNITY_EDITION,)
     applies_to = NOT_APPLIANCE_HARDWARE
 
     async def should_alert(self, core: dict[str, Any]) -> bool:
