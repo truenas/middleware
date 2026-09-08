@@ -7,6 +7,7 @@ from truenas_connect_utils.urls import get_heartbeat_url
 
 from middlewared.service import CallError, Service
 from middlewared.utils.disks_.disk_class import iterate_disks
+from middlewared.utils.license import LicenseOrigin
 from middlewared.utils.version import parse_version_string
 
 from .mixin import TNCAPIMixin
@@ -188,10 +189,11 @@ class TNCHeartbeatService(Service, TNCAPIMixin):
         # license_id is the delivery acknowledgement: once we report the id of an installed license,
         # TNC marks it accepted and stops resending the PEM. Null when we hold no valid license.
         license_info = await self.call2(self.s.truenas.license.info_private)
+        issued = license_info is not None and license_info.origin is LicenseOrigin.ISSUED
 
         return {
             'alerts': await self.middleware.call('alert.list'),
             'stats': stats,
             'fingerprint': fingerprint,
-            'license_id': license_info.id if license_info else None,
+            'license_id': license_info.id if issued else None,
         }
