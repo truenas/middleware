@@ -11,6 +11,7 @@ import typing
 from truenas_pylibvirt import GuestAgentError
 from truenas_pylibvirt.utils import kvm_supported
 from truenas_pylibvirt.utils.cpu import get_cpu_model_choices
+from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.api.current import (
     VMDisplayDevice,
@@ -93,11 +94,7 @@ def log_file_download(context: ServiceContext, job: Job, vm_id: int) -> None:
 
 
 async def license_active(context: ServiceContext) -> bool:
-    can_run_vms = True
-    if await context.middleware.call('system.is_ha_capable'):
-        can_run_vms = await context.middleware.call('system.feature_enabled', 'VMS')
-
-    return can_run_vms
+    return (await context.call2(context.s.truenas.entitlements.check, LicenseFeature.VMS)).entitled
 
 
 def virtualization_details() -> VMVirtualizationDetails:

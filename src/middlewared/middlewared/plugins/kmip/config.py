@@ -8,6 +8,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from truenas_crypto_utils.validation import validate_cert_with_chain
+from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.api.current import KMIPEntry, KMIPUpdate
 from middlewared.async_validators import validate_port
@@ -70,6 +71,14 @@ class KMIPConfigServicePart(ConfigServicePart[KMIPEntry]):
                 verrors.extend(sub_verrors)
 
         verrors.extend(await validate_port(self.middleware, 'kmip_update.port', new['port'], 'kmip'))
+
+        # Only the enable transition is gated. Disabling is how escrowed ZFS and SED keys are pulled
+        # back to the local database, so a system that loses the entitlement must still be able to
+        # turn KMIP off and recover its keys.
+        if new['enabled'] and not old.enabled:
+            entitlement = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.KMIP)
+            if not entitlement.entitled:
+                verrors.add('kmip_update.enabled', entitlement.message)
 
         ca_list = await self.call2(
             self.s.certificate.query,

@@ -4,6 +4,7 @@ import time
 import pytest
 
 from middlewared.test.integration.assets.crypto import generate_self_signed_pem, imported_certificate
+from middlewared.test.integration.assets.entitlements import entitled
 from middlewared.test.integration.assets.kmip import KMIP_HOST, KMIP_PORT, kmip_enabled, kmip_server
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call
@@ -27,6 +28,19 @@ KMIP_RESET = {
     "force_clear": True,
     "validate": False,
 }
+
+
+@pytest.fixture(scope="module", autouse=True)
+def kmip_entitled():
+    """KMIP grants on a license key alone, so an unlicensed runner denies every enable here.
+
+    The denial is added to the same ``ValidationErrors`` the rest of ``do_update`` accumulates
+    into, and ``verrors.check()`` runs before the server and certificate checks below it, so
+    without this the negative tests would fail on ``kmip_update.enabled`` rather than on the
+    attribute they are about.
+    """
+    with entitled("KMIP"):
+        yield
 
 
 @pytest.fixture(scope="module")
