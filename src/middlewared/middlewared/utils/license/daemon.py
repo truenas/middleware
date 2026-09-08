@@ -19,7 +19,7 @@ from truenas_pylicensed import FEATURE_NAME_MAP, LicenseStatus, get_fingerprint,
 from middlewared.service_exception import CallError
 
 from .constants import LICENSE_BACKUP, LICENSE_DIR, LICENSE_FILE
-from .types import FeatureInfo, LicenseInfo
+from .types import FeatureInfo, LicenseInfo, LicenseOrigin
 
 logger = logging.getLogger(__name__)
 
@@ -181,4 +181,5 @@ def from_license_status(status: LicenseStatus | None = None) -> LicenseInfo | No
             {model: entry["count"] for model, entry in (status.enclosures or {}).items()}
         ),
         contract_type=contract_type,
+        origin=LicenseOrigin.ISSUED,
     )

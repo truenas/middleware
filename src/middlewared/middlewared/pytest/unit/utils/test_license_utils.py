@@ -3,7 +3,7 @@ from datetime import date
 import pytest
 from truenas_pylicensed import FeatureEntry, LicenseError, LicenseStatus, LicenseType
 
-from middlewared.utils.license import FeatureInfo, LicenseInfo, from_license_status
+from middlewared.utils.license import FeatureInfo, LicenseInfo, LicenseOrigin, from_license_status
 
 
 def _make_status(features: dict[str, FeatureEntry]) -> LicenseStatus:
@@ -30,6 +30,7 @@ def _license(**overrides) -> LicenseInfo:
         "serials": (),
         "enclosures": {},
         "contract_type": None,
+        "origin": LicenseOrigin.ISSUED,
     }
     fields.update(overrides)
     return LicenseInfo(**fields)
@@ -74,6 +75,7 @@ def test__from_license_status__renames_vm_to_vms():
         serials=("TEST-000001", "TEST-000002"),
         enclosures={"E24": 3},
         contract_type="GOLD",
+        origin=LicenseOrigin.ISSUED,
     )
 
 
