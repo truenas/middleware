@@ -26,6 +26,7 @@ from middlewared.job import Job
 from middlewared.service import Service, job, private
 from middlewared.utils.dmi import cached_dmi
 
+from .entitlements import TrueNASEntitlementsService
 from .license import TrueNASLicenseService
 from .tn import (
     accept_eula as tn_accept_eula,
@@ -67,6 +68,7 @@ class TrueNASService(Service):
     def __init__(self, middleware: Middleware):
         super().__init__(middleware)
         self.license = TrueNASLicenseService(middleware)
+        self.entitlements = TrueNASEntitlementsService(middleware)
 
     @api_method(
         TrueNASManagedByTruecommandArgs, TrueNASManagedByTruecommandResult,
