@@ -272,7 +272,6 @@ def test_zfs_resource_create_encryption_property_denied():
     assert "Extra inputs are not permitted" in str(exc_info.value)
 
 
-@pytest.mark.skip(reason="enable when the truenas.entitlements API is merged and the dedup license check is active")
 def test_zfs_resource_create_dedup_requires_license():
     """Test that enabling deduplication requires the DEDUP license entitlement"""
     path = os.path.join(pool_name, "test_create_fs_dedup")
@@ -285,7 +284,7 @@ def test_zfs_resource_create_dedup_requires_license():
     else:
         with pytest.raises(Exception) as exc_info:
             call("zfs.resource.create", {"path": path, "properties": {"dedup": "on"}})
-        assert "not licensed" in str(exc_info.value)
+        assert "ZFS deduplication" in str(exc_info.value)
 
 
 @pytest.mark.parametrize("prop", ["sharenfs", "sharesmb"])

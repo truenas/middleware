@@ -55,6 +55,7 @@ GATES = [
     ("plugins/update_/profile_.py", "LicenseFeature.MISSION_CRITICAL"),
     ("plugins/vm/info.py", "LicenseFeature.VMS"),
     ("plugins/webshare/sharing.py", "LicenseFeature.WEBSHARE"),
+    ("plugins/zfs/resource_crud.py", "LicenseFeature.DEDUP"),
     ("plugins/zfs/tier.py", "LicenseFeature.ZFSTIER"),
     ("test/integration/assets/entitlements.py", None),
 ]
