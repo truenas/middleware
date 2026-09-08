@@ -74,7 +74,7 @@ class LicenseInfo:
     """Licensed enclosure models mapped to count."""
     contract_type: str | None
     """Support contract type."""
-    origin: LicenseOrigin = LicenseOrigin.ISSUED
+    origin: LicenseOrigin
     """Whether an issuer signed this record or the system wrote it for itself."""
 
     def has_feature(self, name: str) -> bool:

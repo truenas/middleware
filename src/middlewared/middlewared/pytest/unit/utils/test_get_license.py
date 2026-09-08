@@ -4,7 +4,7 @@ import pytest
 from truenas_pylicensed import LicenseError, LicenseStatus, LicenseType
 
 import middlewared.utils.license as license_utils
-from middlewared.utils.license import LicenseInfo, get_license
+from middlewared.utils.license import LicenseInfo, LicenseOrigin, get_license
 
 # The daemon is certain there is no v2 license, which is the only condition under
 # which the legacy blob underneath is consulted.
@@ -37,6 +37,7 @@ LEGACY = LicenseInfo(
     serials=("TEST-000001",),
     enclosures={},
     contract_type="GOLD",
+    origin=LicenseOrigin.ISSUED,
 )
 
 

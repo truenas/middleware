@@ -611,6 +611,7 @@ def _license_info(id_='LIC-1'):
         serials=('TEST-000001',),
         enclosures={'E24': 3},
         contract_type='GOLD',
+        origin=LicenseOrigin.ISSUED,
     )
 
 
