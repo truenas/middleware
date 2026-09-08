@@ -1,14 +1,17 @@
+from datetime import date
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from truenas_connect_utils.status import Status
+from truenas_pylicensed import LicenseType
 
 from middlewared.api.current import TrueNASConnectEntry
 from middlewared.plugins.truenas_connect.config import TrueNASConnectConfigServicePart
 from middlewared.plugins.truenas_connect.hostname import TNCHostnameService
 from middlewared.plugins.truenas_connect.utils import CONFIGURED_TNC_STATES, TNC_IPS_CACHE_KEY
 from middlewared.service import CallError, ValidationErrors
+from middlewared.utils.license import FeatureInfo, LicenseInfo
 
 
 def make_tnc_entry(**overrides: Any) -> TrueNASConnectEntry:
@@ -680,11 +683,39 @@ async def test_state_check_failure_triggers_renew_and_heartbeat():
 
 # --- Heartbeat request payload --------------------------------------------------------------------
 
+def _license_info(id_='LIC-1'):
+    """The same object `truenas.license.info_private` hands production."""
+    return LicenseInfo(
+        id=id_,
+        type=LicenseType.ENTERPRISE_HA,
+        model='H10',
+        support_expires_at=date(2026, 4, 30),
+        features={
+            'SUPPORT': FeatureInfo(
+                name='SUPPORT',
+                start_date=date(2026, 4, 8),
+                expires_at=date(2026, 4, 30),
+                source='enterprise',
+                type='GOLD',
+            ),
+        },
+        serials=('TEST-000001',),
+        enclosures={'E24': 3},
+        contract_type='GOLD',
+    )
+
+
 def _payload_ctx(license_info, fingerprint='FP', fingerprint_raises=False):
     """ctx whose middleware.call serves the methods _build_payload needs."""
     ctx = MagicMock()
     ctx.middleware = MagicMock()
-    ctx.call2 = AsyncMock(return_value=[])  # app.query / vm.query / alert.list all return lists
+
+    async def mock_call2(method, *args, **kwargs):
+        if method is ctx.s.truenas.license.info_private:
+            return license_info
+        return []  # app.query / vm.query / alert.list all return lists
+
+    ctx.call2 = AsyncMock(side_effect=mock_call2)
 
     async def mock_call(method, *args, **kwargs):
         if method == 'reporting.realtime.stats':
@@ -693,8 +724,6 @@ def _payload_ctx(license_info, fingerprint='FP', fingerprint_raises=False):
             if fingerprint_raises:
                 raise CallError('daemon down')
             return fingerprint
-        if method == 'truenas.license.info':
-            return license_info
         raise ValueError(f'Unexpected: {method}')
 
     ctx.middleware.call = AsyncMock(side_effect=mock_call)
@@ -704,7 +733,7 @@ def _payload_ctx(license_info, fingerprint='FP', fingerprint_raises=False):
 @pytest.mark.asyncio
 async def test_build_payload_reports_fingerprint_and_license_id():
     from middlewared.plugins.truenas_connect import heartbeat as hb
-    ctx = _payload_ctx(license_info={'id': 'LIC-1'}, fingerprint='FP-XYZ')
+    ctx = _payload_ctx(license_info=_license_info(), fingerprint='FP-XYZ')
     payload = await hb._build_payload(ctx, {})
     assert payload['fingerprint'] == 'FP-XYZ'
     assert payload['license_id'] == 'LIC-1'
@@ -721,7 +750,7 @@ async def test_build_payload_license_id_null_when_unlicensed():
 @pytest.mark.asyncio
 async def test_build_payload_fingerprint_failure_degrades_to_null():
     from middlewared.plugins.truenas_connect import heartbeat as hb
-    ctx = _payload_ctx(license_info={'id': 'LIC-1'}, fingerprint_raises=True)
+    ctx = _payload_ctx(license_info=_license_info(), fingerprint_raises=True)
     payload = await hb._build_payload(ctx, {})
     assert payload['fingerprint'] is None
     assert payload['license_id'] == 'LIC-1'  # other fields still populated

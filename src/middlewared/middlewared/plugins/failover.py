@@ -44,8 +44,6 @@ from middlewared.plugins.failover_.remote import NETWORK_ERRORS
 from middlewared.plugins.failover_.stcnith import stcnith_reboot
 from middlewared.plugins.failover_.zpool_cachefile import ZPOOL_CACHE_FILE, ZPOOL_CACHE_FILE_OVERWRITE
 from middlewared.plugins.system.reboot import RebootReason
-from middlewared.plugins.truenas.license_legacy_utils import LEGACY_LICENSE_FILE
-from middlewared.plugins.truenas.license_utils import LICENSE_FILE
 from middlewared.plugins.update_.install import STARTING_INSTALLER
 from middlewared.plugins.update_.update import SYSTEM_UPGRADE_REBOOT_REASON
 from middlewared.plugins.update_.utils import DOWNLOAD_UPDATE_FILE
@@ -53,6 +51,7 @@ from middlewared.plugins.update_.utils_linux import mount_update
 from middlewared.service import CallError, ConfigService, ValidationError, ValidationErrors, job, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils.contextlib import asyncnullcontext
+from middlewared.utils.license import LEGACY_LICENSE_FILE, LICENSE_FILE
 from middlewared.utils.pwenc import PWENC_FILE_SECRET
 
 ENCRYPTION_CACHE_LOCK = asyncio.Lock()

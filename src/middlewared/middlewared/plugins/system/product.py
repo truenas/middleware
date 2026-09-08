@@ -3,7 +3,6 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
-from datetime import date
 from types import MappingProxyType
 
 import truenas_pylicensed
@@ -24,10 +23,9 @@ from middlewared.api.current import (
     SystemVersionShortArgs,
     SystemVersionShortResult,
 )
-from middlewared.plugins.truenas.license_legacy_utils import LEGACY_LICENSE_FILE, LICENSE_ADDHW_MAPPING
-from middlewared.plugins.truenas.license_utils import LICENSE_FILE
 from middlewared.service import CallError, Service, ValidationError, private
 from middlewared.utils import ProductType, sw_info
+from middlewared.utils.license import LEGACY_LICENSE_FILE, LICENSE_ADDHW_MAPPING, LICENSE_FILE
 from middlewared.utils.version import parse_version_string
 
 PRODUCT_NAME = "TrueNAS"
@@ -120,18 +118,20 @@ class SystemService(Service):
         if info is None:
             return None
 
+        support = info.feature("SUPPORT")
         result = {
             'model': info.model,
             'system_serial': info.serials[0] if info.serials else None,
             'system_serial_ha': info.serials[1] if len(info.serials) > 1 else None,
             'contract_type': info.contract_type,
-            'contract_start': None,
-            'contract_end': info.expires_at,
+            'contract_start': support.start_date if support is not None else None,
+            # Kept for mixed-version HA upgrades: an un-upgraded peer's UI still reads this
+            # key from the merged remote payload.
+            'contract_end': info.support_expires_at,
             'legacy_contract_hardware': None,
             'legacy_contract_software': None,
             'customer_name': None,
-            'expired': info.expires_at is not None and info.expires_at < date.today(),
-            'features': [f.name for f in info.features],
+            'features': list(info.features),
             'addhw': [],
             'addhw_detail': [],
         }
@@ -176,7 +176,7 @@ class SystemService(Service):
         """
         info = await self.call2(self.s.truenas.license.info_private)
         if info is not None:
-            return any(f.name == name for f in info.features)
+            return name in info.features
 
         return False
 
