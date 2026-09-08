@@ -51,7 +51,7 @@ FEATURE_DISPLAY_NAMES: Mapping[str, str] = {
     LicenseFeature.CATALOG_ENTERPRISE_TRAIN: "enterprise application train",
     LicenseFeature.CONTAINERS: "containers",
     LicenseFeature.DEDUP: "ZFS deduplication",
-    LicenseFeature.DIRECTORY_SERVICES: "directory services authentication",
+    LicenseFeature.DIRECTORY_SERVICES_AUTH: "directory services authentication",
     LicenseFeature.FIBRECHANNEL: "Fibre Channel",
     LicenseFeature.KMIP: "KMIP key management",
     LicenseFeature.MISSION_CRITICAL: "Mission Critical update profile",
@@ -75,7 +75,7 @@ FEATURE_DISPLAY_NAMES: Mapping[str, str] = {
 # Per-feature, per-reason message overrides consulted before the generic
 # templates, so a feature keeps the exact wording users already see.
 FEATURE_MESSAGES: Mapping[str, Mapping[Reason, str]] = {
-    LicenseFeature.DIRECTORY_SERVICES: {
+    LicenseFeature.DIRECTORY_SERVICES_AUTH: {
         Reason.NO_LICENSE: "Directory services authentication for UI and API access requires an Enterprise license.",
         Reason.KEY_MISSING: "Directory services authentication for UI and API access requires an Enterprise license.",
         Reason.WRONG_HARDWARE: (
