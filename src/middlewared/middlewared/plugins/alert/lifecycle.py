@@ -12,10 +12,10 @@ from .state import AlertPolicy, AlertState
 
 
 async def initialize(context: ServiceContext, state: AlertState, load: bool = True) -> None:
-    is_enterprise: bool = await context.middleware.call("system.is_enterprise")
+    is_ha_capable: bool = await context.middleware.call("system.is_ha_capable")
 
     state.node = "A"
-    if is_enterprise:
+    if is_ha_capable:
         if await context.middleware.call("failover.node") == "B":
             state.node = "B"
 

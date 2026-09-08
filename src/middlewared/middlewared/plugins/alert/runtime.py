@@ -9,6 +9,7 @@ import uuid
 
 import html2text
 from truenas_api_client.exc import ReserveFDException
+from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.alert.base import (
     Alert,
@@ -174,7 +175,7 @@ async def _handle_immediate_policy(
     await _emit_alert_events(context, as_, gone_alerts, new_alerts)
     await _send_alert_mail(context, new_alerts)
 
-    if await context.middleware.call("system.is_enterprise"):
+    if (await context.call2(context.s.truenas.entitlements.check, LicenseFeature.SUPPORT)).entitled:
         await _maybe_open_proactive_support_ticket(context, as_, gone_alerts, new_alerts)
 
 

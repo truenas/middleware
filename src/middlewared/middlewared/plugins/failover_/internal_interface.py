@@ -197,7 +197,7 @@ class InternalInterfaceService(Service):
                 )
 
     async def pre_sync(self):
-        if not await self.middleware.call('system.is_enterprise'):
+        if not await self.middleware.call('system.is_ha_capable'):
             return
 
         await self.middleware.run_in_thread(self.ensure_vseries_bond)

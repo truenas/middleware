@@ -472,7 +472,7 @@ class AlertService(CallMixin, ABC):
         new_alerts: list[Alert[Any]],
     ) -> str:
         hostname = await self.middleware.call("system.hostname")
-        if await self.middleware.call("system.is_enterprise"):
+        if await self.middleware.call("system.is_ha_capable"):
             node_map = await self.call2(self.s.alert.node_map)
         else:
             node_map = None
@@ -510,7 +510,7 @@ class ThreadedAlertService(AlertService):
         new_alerts: list[Alert[Any]],
     ) -> str:
         hostname = self.middleware.call_sync("system.hostname")
-        if self.middleware.call_sync("system.is_enterprise"):
+        if self.middleware.call_sync("system.is_ha_capable"):
             node_map = self.call_sync2(self.s.alert.node_map)
         else:
             node_map = None

@@ -5,11 +5,10 @@ import json
 import os
 import stat
 import sys
-from truenas_api_client import Client
 from pathlib import Path
 from subprocess import run
 
-from middlewared.utils import ProductType
+from middlewared.utils.hardware import get_hardware_class
 from middlewared.utils.rootfs_protection import rootfs_protection_lock
 from truenas_os_pyutils.mount import statmount
 
@@ -19,8 +18,8 @@ TO_CHMOD = ['apt', 'dpkg']
 EXECUTE_BITS = stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
 PKG_MGMT_DISABLED_PATH = '/usr/local/bin/pkg_mgmt_disabled'
 FORCE_COMMENT = (
-    'Force disable rootfs protection on enterprise-licensed hardware. This is '
-    'a developer option that will result in an unsupported configuration.'
+    'Force disable rootfs protection on enterprise hardware. This is a '
+    'developer option that will result in an unsupported configuration.'
 )
 
 
@@ -123,14 +122,13 @@ if __name__ == '__main__':
     # run this script then run install-dev-tools to get full development
     # environment.
     if rv.stdout.decode().strip() != 'on' and not args.force:
-        with Client() as c:
-            if c.call('system.product_type') == ProductType.ENTERPRISE:
-                print((
-                    'Root filesystem protections may not be administratively disabled '
-                    'on Enterprise-licensed TrueNAS products. Circumventing this '
-                    'restriction is considered an unsupported configuration.'
-                ))
-                sys.exit(1)
+        if get_hardware_class().is_appliance:
+            print((
+                'Root filesystem protections may not be administratively disabled '
+                'on Enterprise TrueNAS products. Circumventing this restriction is '
+                'considered an unsupported configuration.'
+            ))
+            sys.exit(1)
     try:
         # The following file is created during TrueNAS installation
         # and contains dataset configuration and guid details

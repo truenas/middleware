@@ -1,8 +1,17 @@
 from unittest.mock import AsyncMock, Mock
 
 import pytest
+from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.plugins.truesearch import TrueSearchService
+from middlewared.pytest.unit.entitlements import install_entitlements_for_column
+from middlewared.pytest.unit.helpers import create_service
+from middlewared.pytest.unit.middleware import Middleware
+
+BOOT_POOL_REASON = "The system dataset must not reside on the boot pool."
+# The unlicensed wording, so the denial columns below must be the ones with no license at
+# all. A licensed-without-the-key column reports a different sentence.
+NOT_LICENSED = "This system is not licensed to use the TrueSearch feature."
 
 
 @pytest.mark.asyncio
@@ -63,3 +72,22 @@ async def test_legacy_mountpoint():
         },
     ])
     assert await TrueSearchService(middleware).process_directories({"/mnt/tank/users"}) == ["/mnt/tank/users"]
+
+
+@pytest.mark.asyncio
+async def test_unavailable_reasons_omits_licensing_reason_when_entitled():
+    m = Middleware()
+    m["systemdataset.is_boot_pool"] = lambda *args: False
+    checked = install_entitlements_for_column(m, LicenseFeature.TRUESEARCH, "HW+K")
+
+    assert await create_service(m, TrueSearchService).unavailable_reasons() == []
+    assert checked == [LicenseFeature.TRUESEARCH]
+
+
+@pytest.mark.asyncio
+async def test_unavailable_reasons_reports_boot_pool_and_licensing_together():
+    m = Middleware()
+    m["systemdataset.is_boot_pool"] = lambda *args: True
+    install_entitlements_for_column(m, LicenseFeature.TRUESEARCH, "CE")
+
+    assert await create_service(m, TrueSearchService).unavailable_reasons() == [BOOT_POOL_REASON, NOT_LICENSED]
