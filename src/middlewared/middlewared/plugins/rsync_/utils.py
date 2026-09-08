@@ -1,3 +1,6 @@
+import shlex
+
+
 def get_host_key_file_contents_from_ssh_credentials(credentials: dict) -> str:
     return '\n'.join([
         (
@@ -7,3 +10,12 @@ def get_host_key_file_contents_from_ssh_credentials(credentials: dict) -> str:
         for host_key in credentials['remote_host_key'].split('\n')
         if host_key.strip() and not host_key.strip().startswith('#')
     ])
+
+
+def quote_extra_args(extra: list[str]) -> list[str]:
+    try:
+        args = shlex.split(' '.join(extra))
+    except ValueError:
+        args = extra
+
+    return [shlex.quote(arg) for arg in args]
