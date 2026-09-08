@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+from middlewared.alert.applicability import HA_LICENSED
 from middlewared.alert.base import AlertCategory, AlertClassConfig, AlertLevel, OneShotAlertClass
 
 
@@ -14,6 +15,7 @@ class FailoverRebootAlert(OneShotAlertClass):
             "proper failover occurred. The operating system successfully came "
             "back online at %(now)s."
         ),
+        applies_to=HA_LICENSED,
         keys=[],
     )
 
@@ -32,6 +34,7 @@ class FencedRebootAlert(OneShotAlertClass):
             'SCSI reservations were lost and/or cleared. The operating system successfully '
             'came back online at %(now)s.'
         ),
+        applies_to=HA_LICENSED,
         keys=[],
     )
 

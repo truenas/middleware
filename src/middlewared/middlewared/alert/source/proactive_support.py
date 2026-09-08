@@ -5,6 +5,7 @@
 
 from typing import Any
 
+from middlewared.alert.applicability import ANY_LICENSE
 from middlewared.alert.base import (
     Alert,
     AlertCategory,
@@ -24,11 +25,13 @@ class ProactiveSupportAlert(NonDataclassAlertClass[str], AlertClass):
         title="Proactive Support Is Not Configured",
         text="%s",
         products=(ProductType.ENTERPRISE,),
+        applies_to=ANY_LICENSE,
     )
 
 
 class ProactiveSupportAlertSource(AlertSource):
     products = (ProductType.ENTERPRISE,)
+    applies_to = ANY_LICENSE
     run_on_backup_node = False
 
     async def check(self) -> list[Alert[Any]] | Alert[Any] | None:

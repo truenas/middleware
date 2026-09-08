@@ -6,6 +6,7 @@
 from dataclasses import dataclass
 from typing import Any
 
+from middlewared.alert.applicability import APPLIANCE_OR_HA_LICENSED, HA_LICENSED
 from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertClassConfig, AlertLevel, AlertSource
 from middlewared.utils import ProductType
 
@@ -21,6 +22,8 @@ class DisksAreNotPresentOnStandbyNodeAlert(AlertClass):
         title=TITLE + 'Standby Storage Controller',
         text=TEXT + 'active storage controller but missing on standby storage controller.',
         products=(ProductType.ENTERPRISE,),
+        applies_to=APPLIANCE_OR_HA_LICENSED,
+        listed_only_when=HA_LICENSED,
     )
 
     serials: str
@@ -34,6 +37,8 @@ class DisksAreNotPresentOnActiveNodeAlert(AlertClass):
         title=TITLE + 'Active Storage Controller',
         text=TEXT + 'standby storage controller but missing on active storage controller.',
         products=(ProductType.ENTERPRISE,),
+        applies_to=APPLIANCE_OR_HA_LICENSED,
+        listed_only_when=HA_LICENSED,
     )
 
     serials: str
@@ -41,6 +46,7 @@ class DisksAreNotPresentOnActiveNodeAlert(AlertClass):
 
 class FailoverDisksAlertSource(AlertSource):
     products = (ProductType.ENTERPRISE,)
+    applies_to = HA_LICENSED
     failover_related = True
     require_stable_peer = True
     run_on_backup_node = False

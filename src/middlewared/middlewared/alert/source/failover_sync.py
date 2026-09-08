@@ -5,6 +5,7 @@
 
 from dataclasses import dataclass
 
+from middlewared.alert.applicability import APPLIANCE_OR_HA_LICENSED, HA_LICENSED
 from middlewared.alert.base import AlertCategory, AlertClassConfig, AlertLevel, OneShotAlertClass
 from middlewared.utils import ProductType
 
@@ -21,6 +22,8 @@ class FailoverSyncFailedAlert(OneShotAlertClass):
             "System/Failover page to try and perform a manual sync."
         ),
         products=(ProductType.ENTERPRISE,),
+        applies_to=APPLIANCE_OR_HA_LICENSED,
+        listed_only_when=HA_LICENSED,
         keys=[],
     )
 
@@ -37,6 +40,8 @@ class FailoverKeysSyncFailedAlert(OneShotAlertClass):
             "controller has failed. Please go to System > Failover and manually sync to peer."
         ),
         products=(ProductType.ENTERPRISE,),
+        applies_to=APPLIANCE_OR_HA_LICENSED,
+        listed_only_when=HA_LICENSED,
         deleted_automatically=False,
     )
 
@@ -52,6 +57,8 @@ class FailoverKMIPKeysSyncFailedAlert(OneShotAlertClass):
             "controller has failed due to %(error)s. Please go to System > Failover and manually sync to peer."
         ),
         products=(ProductType.ENTERPRISE,),
+        applies_to=APPLIANCE_OR_HA_LICENSED,
+        listed_only_when=HA_LICENSED,
         deleted_automatically=False,
         keys=[],
     )

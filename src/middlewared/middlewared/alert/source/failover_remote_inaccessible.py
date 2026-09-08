@@ -6,6 +6,7 @@
 import time
 from typing import Any
 
+from middlewared.alert.applicability import APPLIANCE_OR_HA_LICENSED, HA_LICENSED
 from middlewared.alert.base import (
     Alert,
     AlertCategory,
@@ -27,6 +28,8 @@ class FailoverRemoteSystemInaccessibleAlert(NonDataclassAlertClass[list[str]], A
         title='Other Controller is Inaccessible',
         text='Other TrueNAS controller is inaccessible. Contact support. Incident ID: %s.',
         products=(ProductType.ENTERPRISE,),
+        applies_to=APPLIANCE_OR_HA_LICENSED,
+        listed_only_when=HA_LICENSED,
         proactive_support=True,
         proactive_support_notify_gone=True,
     )
@@ -34,6 +37,7 @@ class FailoverRemoteSystemInaccessibleAlert(NonDataclassAlertClass[list[str]], A
 
 class FailoverRemoteSystemInaccessibleAlertSource(AlertSource):
     products = (ProductType.ENTERPRISE,)
+    applies_to = HA_LICENSED
     failover_related = True
     run_on_backup_node = False
 

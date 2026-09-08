@@ -6,6 +6,7 @@
 import os
 from typing import Any
 
+from middlewared.alert.applicability import TRUENAS_HARDWARE
 from middlewared.alert.base import (
     Alert,
     AlertCategory,
@@ -26,12 +27,14 @@ class USBStorageAlert(NonDataclassAlertClass[str], AlertClass):
         text=('A USB storage device %r has been connected to this system. Please remove that USB device to '
               'prevent problems with system boot or HA failover.'),
         products=(ProductType.ENTERPRISE,),
+        applies_to=TRUENAS_HARDWARE,
         proactive_support=True,
     )
 
 
 class USBStorageAlertSource(ThreadedAlertSource):
     products = (ProductType.ENTERPRISE,)
+    applies_to = TRUENAS_HARDWARE
 
     def check_sync(self) -> list[Alert[Any]] | Alert[Any] | None:
         alerts: list[Alert[Any]] = []

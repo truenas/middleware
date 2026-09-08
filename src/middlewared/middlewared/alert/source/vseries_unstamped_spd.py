@@ -6,6 +6,7 @@
 from dataclasses import dataclass
 from typing import Any
 
+from middlewared.alert.applicability import TRUENAS_HARDWARE
 from middlewared.alert.base import (
     Alert,
     AlertCategory,
@@ -31,12 +32,14 @@ class VSeriesUnstampedSPDAlert(AlertClass):
             "Contact support."
         ),
         products=(ProductType.ENTERPRISE,),
+        applies_to=TRUENAS_HARDWARE,
     )
     observed: str
 
 
 class VSeriesUnstampedSPDAlertSource(AlertSource):
     products = (ProductType.ENTERPRISE,)
+    applies_to = TRUENAS_HARDWARE
 
     async def check(self) -> list[Alert[Any]]:
         """Fire on V-Series when the DMI Type 1 Version field isn't a strict

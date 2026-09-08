@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from time import time
 from typing import Any
 
+from middlewared.alert.applicability import TRUENAS_HARDWARE
 from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertClassConfig, AlertLevel, AlertSource
 from middlewared.alert.schedule import CrontabSchedule
 from middlewared.utils import ProductType
@@ -66,6 +67,7 @@ class AdminSessionAlertSource(AlertSource):
     schedule = CrontabSchedule(hour=1)  # every 24 hours
     run_on_backup_node = True
     products = (ProductType.ENTERPRISE,)
+    applies_to = TRUENAS_HARDWARE
 
     async def check(self) -> Alert[AdminSessionAlert] | None:
         now = int(time())

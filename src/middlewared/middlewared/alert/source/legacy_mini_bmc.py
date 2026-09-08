@@ -1,5 +1,6 @@
 from typing import Any
 
+from middlewared.alert.applicability import MINI_HARDWARE
 from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertClassConfig, AlertLevel, AlertSource
 from middlewared.utils import ProductType
 
@@ -17,11 +18,13 @@ class TrueNASMiniBMCAlert(AlertClass):
             "ASRock Rack C2750D4I BMC Watchdog Issue</a> for details."
         ),
         products=(ProductType.COMMUNITY_EDITION,),
+        applies_to=MINI_HARDWARE,
     )
 
 
 class TrueNASMiniBMCAlertSource(AlertSource):
     products = (ProductType.COMMUNITY_EDITION,)
+    applies_to = MINI_HARDWARE
 
     async def check(self) -> list[Alert[Any]] | Alert[Any] | None:
         dmi = await self.middleware.call("system.dmidecode_info")

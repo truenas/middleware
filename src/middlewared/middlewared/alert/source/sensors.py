@@ -8,6 +8,7 @@ from dataclasses import dataclass
 import time
 from typing import TYPE_CHECKING, Any
 
+from middlewared.alert.applicability import TRUENAS_HARDWARE
 from middlewared.alert.base import (
     Alert,
     AlertCategory,
@@ -32,6 +33,7 @@ class SensorAlert(AlertClass):
         title="Sensor Value Is Outside of Working Range",
         text="Sensor %(name)s is %(relative)s %(level)s value: %(value)s %(event)s",
         products=(ProductType.ENTERPRISE,),
+        applies_to=TRUENAS_HARDWARE,
     )
 
     name: str
@@ -51,6 +53,7 @@ class PowerSupplyAlert(AlertClass):
             "%(psu)s is %(state)s showing: %(errors)s. Contact support. Incident ID: %(id)s"
         ),
         products=(ProductType.ENTERPRISE,),
+        applies_to=TRUENAS_HARDWARE,
         proactive_support=True,
         proactive_support_notify_gone=True,
     )
@@ -62,6 +65,8 @@ class PowerSupplyAlert(AlertClass):
 
 
 class PsuAlertSource(AlertSource):
+    applies_to = TRUENAS_HARDWARE
+
     def __init__(self, middleware: Middleware) -> None:
         super().__init__(middleware)
         self.last_failure = time.monotonic()
@@ -113,6 +118,8 @@ class PsuAlertSource(AlertSource):
 
 
 class SensorsAlertSource(AlertSource):
+    applies_to = TRUENAS_HARDWARE
+
     async def should_alert(self) -> bool:
         if (await self.middleware.call("system.dmidecode_info"))[
             "system-product-name"

@@ -10,6 +10,7 @@ from typing import Any
 
 from truenas_pylicensed import LicenseType
 
+from middlewared.alert.applicability import EXPECTED_TO_BE_LICENSED
 from middlewared.alert.base import (
     Alert,
     AlertCategory,
@@ -31,6 +32,7 @@ class LicenseAlert(NonDataclassAlertClass[str], AlertClass):
         title="TrueNAS License Issue",
         text="%s",
         products=(ProductType.ENTERPRISE,),
+        applies_to=EXPECTED_TO_BE_LICENSED,
     )
 
 
@@ -41,6 +43,7 @@ class LicenseIsExpiringAlert(NonDataclassAlertClass[str], AlertClass):
         title="TrueNAS License Is Expiring",
         text="%s",
         products=(ProductType.ENTERPRISE,),
+        applies_to=EXPECTED_TO_BE_LICENSED,
     )
 
 
@@ -51,11 +54,13 @@ class LicenseHasExpiredAlert(NonDataclassAlertClass[str], AlertClass):
         title="TrueNAS License Has Expired",
         text="%s",
         products=(ProductType.ENTERPRISE,),
+        applies_to=EXPECTED_TO_BE_LICENSED,
     )
 
 
 class LicenseStatusAlertSource(ThreadedAlertSource):
     products = (ProductType.ENTERPRISE,)
+    applies_to = EXPECTED_TO_BE_LICENSED
     run_on_backup_node = False
     schedule = IntervalSchedule(timedelta(hours=24))
 
