@@ -1,3 +1,5 @@
+import shlex
+
 from middlewared.api.current import SSHCredentials
 
 
@@ -13,3 +15,14 @@ def get_host_key_file_contents_from_ssh_credentials(credentials: SSHCredentials)
             if host_key.strip() and not host_key.strip().startswith("#")
         ]
     )
+
+
+def quote_extra_args(extra: list[str]) -> list[str]:
+    args = []
+    for arg in extra:
+        try:
+            args.extend(shlex.split(arg))
+        except ValueError:
+            args.append(arg)
+
+    return [shlex.quote(arg) for arg in args]
