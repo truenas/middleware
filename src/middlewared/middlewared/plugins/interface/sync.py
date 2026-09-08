@@ -22,7 +22,7 @@ def sync_impl(
     ctx: ServiceContext,
     sync_data: SyncData,
     internal_interfaces: tuple[str, ...],
-) -> tuple[list[str], list[str], list[str]]:
+) -> tuple[list[str], list[str], list[str], list[str]]:
     """Configure all interfaces from database to OS, unconfigure those not in database.
 
     Args:
@@ -31,7 +31,7 @@ def sync_impl(
         internal_interfaces: Interface name prefixes to skip (internal/system interfaces)
 
     Returns:
-        Tuple of (configured_interfaces, interfaces_needing_dhcp, interfaces_to_autoconfigure)
+        Tuple of (configured_interfaces, interfaces_needing_dhcp, interfaces_to_autoconfigure, failures)
     """
     configured = []
     run_dhcp = []  # interfaces configured in database with int_dhcp=True
@@ -83,7 +83,7 @@ def sync_impl(
                     )
 
         # 4. Configure bridges
-        bridge_names = configure_bridges_impl(ctx, sock, links, sync_data)
+        bridge_names, failures = configure_bridges_impl(ctx, sock, links, sync_data)
         for name in bridge_names:
             configured.append(name)
             if name in sync_data.interfaces:
@@ -116,7 +116,7 @@ def sync_impl(
                 # Interface is not in database, so unconfigure it
                 unconfigure_impl(ctx, sock, links, name, configured, sync_data)
 
-    return configured, run_dhcp, autoconfigure
+    return configured, run_dhcp, autoconfigure, failures
 
 
 def sync_interface_impl(
