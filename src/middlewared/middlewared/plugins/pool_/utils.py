@@ -8,7 +8,7 @@ import re
 import typing
 from typing import TypedDict
 
-from truenas_pydmi.models import TRUENAS_UNKNOWN
+from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.plugins.zfs_.utils import TNUserProp
 from middlewared.service_exception import CallError
@@ -17,6 +17,7 @@ from middlewared.utils.size import MB
 
 if typing.TYPE_CHECKING:
     from middlewared.main import Middleware
+    from middlewared.service_exception import ValidationErrors
 
 DATASET_DATABASE_MODEL_NAME = 'storage.encrypteddataset'
 RE_DRAID_DATA_DISKS = re.compile(r':\d*d')
@@ -101,7 +102,9 @@ class UpdateImplArgsDataclass:
     """ZFS properties to be inherited from parent."""
 
 
-async def validate_dedup_license(middleware, verrors, schema, deduplication):
+async def validate_dedup_license(
+    middleware: 'Middleware', verrors: 'ValidationErrors', schema: str, deduplication: str | None,
+) -> None:
     """Reject enabling ZFS deduplication on systems that are not entitled to it.
 
     Licensed systems must carry the DEDUP feature flag; unlicensed TrueNAS hardware
@@ -111,21 +114,9 @@ async def validate_dedup_license(middleware, verrors, schema, deduplication):
     if deduplication not in ('ON', 'VERIFY'):
         return
 
-    if await middleware.call('system.license') is not None:
-        # Any licensed system must carry the explicit DEDUP feature flag.
-        if not await middleware.call('system.feature_enabled', 'DEDUP'):
-            verrors.add(
-                f'{schema}.deduplication',
-                "This system's license does not include the ZFS deduplication feature."
-            )
-    else:
-        # Unlicensed: Community Edition (incl. minis) may use dedup; TrueNAS hardware may not.
-        chassis = await middleware.call('truenas.get_chassis_hardware')
-        if chassis != TRUENAS_UNKNOWN and 'MINI' not in chassis:
-            verrors.add(
-                f'{schema}.deduplication',
-                'This system is not licensed to use ZFS deduplication.'
-            )
+    entitlement = await middleware.call2(middleware.services.truenas.entitlements.check, LicenseFeature.DEDUP)
+    if not entitlement.entitled:
+        verrors.add(f'{schema}.deduplication', entitlement.message)
 
 
 async def pool_has_special_vdev(middleware: 'Middleware', pool_name: str) -> bool:

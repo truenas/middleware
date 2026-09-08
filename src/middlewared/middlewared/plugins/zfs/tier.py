@@ -8,11 +8,11 @@ if TYPE_CHECKING:
     from middlewared.main import Middleware
 
 import truenas_pylibzfs
+from truenas_pylicensed.features import LicenseFeature
 from truenas_zfstierd_client import (
     RewriteClient,
     RewriteClientException,
     enum_jobs,
-    feature_is_licensed,
     get_info,
     get_last_job,
     get_resolved_failures,
@@ -380,11 +380,12 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
         metadata. Applying the new configuration regenerates the ``truenas_zfstierd`` daemon configuration and
         reloads (or restarts, if ``max_concurrent_jobs`` changed) the daemon.
 
-        ZFS tiering requires a license. A JSON-RPC ``error`` response (code ``-32001``, *Method call error*) is
-        returned when the system is not licensed for this feature.
+        ZFS tiering requires a license carrying the ZFSTIER feature. A JSON-RPC ``error`` response (code
+        ``-32001``, *Method call error*) is returned when the system is not entitled to this feature.
         """
-        if not feature_is_licensed():
-            raise CallError("ZFS tiering requires a license.")
+        ent = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.ZFSTIER)
+        if not ent.entitled:
+            raise CallError(ent.message)
 
         old = await self.config()
         new = await self._svc_part.do_update(data)

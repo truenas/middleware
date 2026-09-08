@@ -184,8 +184,7 @@ class ISCSIGlobalService(SystemServiceService):
         ))
 
         if new['iser'] and old['iser'] != new['iser']:
-            available_rdma_protocols = await self.middleware.call('rdma.capable_protocols')
-            if RDMAprotocols.ISER.value not in available_rdma_protocols:
+            if not await self.iser_capable():
                 verrors.add(
                     "iscsiglobal_update.iser",
                     "This platform cannot support iSER or is missing an RDMA capable NIC."
@@ -294,16 +293,17 @@ class ISCSIGlobalService(SystemServiceService):
         """
         Returns whether iSCSI ALUA is enabled or not.
         """
-        if not await self.middleware.call('system.is_enterprise'):
-            return False
         if not await self.middleware.call('failover.licensed'):
             return False
 
-        # If FIBRECHANNEL is licensed then allow ALUA
-        # if await self.middleware.call('system.feature_enabled', 'FIBRECHANNEL'):
-        #     return True
-
         return (await self.middleware.call('iscsi.global.config'))['alua']
+
+    @private
+    async def iser_capable(self):
+        """
+        Returns whether iSER is available on this system, ignoring whether it is currently enabled.
+        """
+        return RDMAprotocols.ISER.value in await self.middleware.call('rdma.capable_protocols')
 
     @api_method(
         ISCSIGlobalIserEnabledArgs,
@@ -314,10 +314,10 @@ class ISCSIGlobalService(SystemServiceService):
         """
         Returns whether iSER is enabled or not.
         """
-        if not await self.middleware.call('system.is_enterprise'):
-            return False
+        if (await self.middleware.call('iscsi.global.config'))['iser']:
+            return await self.iser_capable()
 
-        return (await self.middleware.call('iscsi.global.config'))['iser']
+        return False
 
     @private
     async def direct_config_enabled(self):

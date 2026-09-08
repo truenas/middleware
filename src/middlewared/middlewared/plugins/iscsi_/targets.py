@@ -8,6 +8,7 @@ import re
 import subprocess
 
 from pydantic import IPvAnyNetwork
+from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.api import api_method
 from middlewared.api.base import BaseModel
@@ -213,7 +214,7 @@ class iSCSITargetService(CRUDService):
 
         if (
             data['mode'] != 'ISCSI' and
-            not await self.middleware.call('system.feature_enabled', 'FIBRECHANNEL')
+            not (await self.call2(self.s.truenas.entitlements.check, LicenseFeature.FIBRECHANNEL)).entitled
         ):
             verrors.add(f'{schema_name}.mode', 'Fibre Channel not enabled')
 

@@ -6,6 +6,7 @@ from pathlib import Path
 import uuid
 
 from truenas_os_pyutils.mount import iter_mountinfo, statmount
+from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.alert.source.smb_audit import SMBAuditShareDisabledAlert
 from middlewared.alert.source.smb_recordsize import SMBVeeamFastCloneAlert
@@ -251,7 +252,7 @@ class SMBService(ConfigService):
                 share[share_field.AUDIT][field] = sids
 
         bind_ip_choices = self.middleware.call_sync('smb.bindip_choices')
-        is_enterprise = self.middleware.call_sync('system.is_enterprise')
+        smb_fastpath = self.call_sync2(self.s.truenas.entitlements.check, LicenseFeature.SMB_FASTPATH).entitled
         security_config = self.call_sync2(self.s.system.security.config)
         tiering_enabled = self.call_sync2(self.s.zfs.tier.config).enabled
         veeam_repo_errors = []
@@ -292,7 +293,7 @@ class SMBService(ConfigService):
             smb_config,
             smb_shares,
             bind_ip_choices,
-            is_enterprise,
+            smb_fastpath,
             security_config,
             tiering_enabled,
         )
@@ -1353,10 +1354,11 @@ class SharingSMBService(SharingService):
                     )
 
             if data[share_field.PURPOSE] == SMBSharePurpose.VEEAM_REPOSITORY_SHARE:
-                if not await self.middleware.call('system.is_enterprise'):
+                entitlement = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.SMB_VEEAM)
+                if not entitlement.entitled:
                     verrors.add(
                         f'{schema_name}.{share_field.PURPOSE}',
-                        'Veeam repository shares require a TrueNAS enterprise license.'
+                        entitlement.message
                     )
                 bsize = (await self.middleware.call('filesystem.statfs', data[share_field.PATH])).blocksize
                 if bsize != VEEAM_REPO_BLOCKSIZE:

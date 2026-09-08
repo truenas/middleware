@@ -1,5 +1,7 @@
 import pathlib
 
+from truenas_pylicensed.features import LicenseFeature
+
 from middlewared.api import api_method
 from middlewared.api.current import (
     NVMetGlobalEntry,
@@ -75,8 +77,7 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
 
     async def __validate(self, verrors, data, schema_name, old=None):
         if data['rdma'] and old['rdma'] != data['rdma']:
-            available_rdma_protocols = await self.middleware.call('rdma.capable_protocols')
-            if RDMAprotocols.NVMET.value not in available_rdma_protocols:
+            if not await self.rdma_capable():
                 verrors.add(
                     f'{schema_name}.rdma',
                     'This platform cannot support NVMe-oF(RDMA) or is missing a RDMA capable NIC.'
@@ -89,11 +90,9 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
                 )
         if old['kernel'] != data['kernel']:
             if not data['kernel']:
-                if not await self.middleware.call('system.is_enterprise'):
-                    verrors.add(
-                        f'{schema_name}.kernel',
-                        'SPDK is limited to enterprise licensed systems only.'
-                    )
+                spdk = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.NVMEOF_SPDK)
+                if not spdk.entitled:
+                    verrors.add(f'{schema_name}.kernel', spdk.message)
                 elif AVX2_FLAG not in (await self.middleware.call('system.cpu_flags')):
                     verrors.add(
                         f'{schema_name}.kernel',
@@ -131,14 +130,22 @@ class NVMetGlobalService(SystemServiceService, NVMetStandbyMixin):
         return False
 
     @private
+    async def rdma_capable(self):
+        """
+        Returns whether NVMe-oF over RDMA is available on this system, ignoring whether it is
+        currently enabled.
+        """
+        return RDMAprotocols.NVMET.value in await self.middleware.call('rdma.capable_protocols')
+
+    @private
     async def rdma_enabled(self):
         """
         Returns whether RDMA is enabled or not.
         """
-        if not await self.middleware.call('system.is_enterprise'):
-            return False
+        if (await self.middleware.call('nvmet.global.config'))['rdma']:
+            return await self.rdma_capable()
 
-        return (await self.middleware.call('nvmet.global.config'))['rdma']
+        return False
 
     @filterable_api_method(item=NVMetGlobalSessionsItem, roles=['SHARING_NVME_TARGET_READ'])
     async def sessions(self, filters, options):

@@ -276,7 +276,7 @@ class PoolCreate(BaseModel):
             "the rest of the pool, RAIDZ/mirror vdevs wider than the recommended maximum, and special "
             "or dedup vdevs whose redundancy does not match the data vdevs. Structural requirements "
             "(minimum disks per vdev type, dRAID configuration) still apply. This option is not "
-            "permitted on Enterprise-licensed systems."
+            "permitted on systems with a support entitlement."
         ),
     )
 
