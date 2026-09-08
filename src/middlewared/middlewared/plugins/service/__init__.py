@@ -30,6 +30,7 @@ from middlewared.api.current import (
     ServiceUpdateArgs,
     ServiceUpdateResult,
 )
+from middlewared.common.license_reconcile import LicenseReconcileAction, LicenseReconcileDelegate
 from middlewared.service import CallError, CRUDService, filterable_api_method, job, periodic, private
 from middlewared.service_exception import MatchNotFound, ValidationError
 import middlewared.sqlalchemy as sa
@@ -651,6 +652,14 @@ class ServiceService(CRUDService[ServiceEntry]):
         return []
 
 
+class RcLicenseReconcileDelegate(LicenseReconcileDelegate):
+    name = 'rc'
+    etc_groups = ('rc',)
+    service = None
+    action = LicenseReconcileAction.RENDER
+    order = -50
+
+
 async def __event_service_ready(middleware: Middleware, event_type: Any, args: Any) -> None:
     middleware.create_task(middleware.call2(middleware.services.service.check_deprecated_services))
 
@@ -658,5 +667,10 @@ async def __event_service_ready(middleware: Middleware, event_type: Any, args: A
 async def setup(middleware: Middleware) -> None:
     for klass in all_services:
         await middleware.call2(middleware.services.service.register_object, klass(middleware))
+
+    await middleware.call2(
+        middleware.services.truenas.license.register_reconcile_delegate,
+        RcLicenseReconcileDelegate(),
+    )
 
     middleware.event_subscribe('system.ready', __event_service_ready)

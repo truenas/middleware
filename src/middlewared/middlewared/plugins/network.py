@@ -57,6 +57,7 @@ from middlewared.api.current import (
     InterfaceXmitHashPolicyChoicesArgs,
     InterfaceXmitHashPolicyChoicesResult,
 )
+from middlewared.common.license_reconcile import LicenseReconcileAction, LicenseReconcileDelegate
 from middlewared.plugins.interface.dhcp import dhcp_reload, dhcp_start
 from middlewared.service import CallError, CRUDService, ServiceContext, ValidationErrors, filterable_api_method, private
 import middlewared.sqlalchemy as sa
@@ -1964,6 +1965,14 @@ async def __activate_service_announcements(middleware, event_type, args):
     await middleware.call("network.configuration.toggle_announcement", srv)
 
 
+class DiscoveryLicenseReconcileDelegate(LicenseReconcileDelegate):
+    name = 'discovery'
+    etc_groups = ('discovery',)
+    service = 'discovery'
+    action = LicenseReconcileAction.RELOAD
+    order = 20
+
+
 async def setup(middleware):
     middleware.event_register('network.config', 'Sent on network configuration changes.')
 
@@ -1972,6 +1981,11 @@ async def setup(middleware):
     middleware.event_subscribe('network.config', configure_http_proxy)
     middleware.event_subscribe('system.ready', __activate_service_announcements)
     middleware.register_hook('udev.net', udevd_ifnet_hook, inline=True)
+
+    await middleware.call2(
+        middleware.services.truenas.license.register_reconcile_delegate,
+        DiscoveryLicenseReconcileDelegate(),
+    )
 
     # Only run DNS sync in the first run. This avoids calling the routine again
     # on middlewared restart.

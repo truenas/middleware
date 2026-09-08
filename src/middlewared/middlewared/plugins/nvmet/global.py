@@ -8,6 +8,7 @@ from middlewared.api.current import (
     NVMetGlobalUpdateResult,
     QueryOptions,
 )
+from middlewared.common.license_reconcile import LicenseReconcileAction, LicenseReconcileDelegate
 from middlewared.plugins.rdma.constants import RDMAprotocols
 from middlewared.service import SystemServiceService, ValidationErrors, filterable_api_method, private
 import middlewared.sqlalchemy as sa
@@ -358,7 +359,28 @@ async def pool_post_import(middleware, pool):
             )).wait(raise_error=True)
 
 
+class NVMeTargetLicenseReconcileDelegate(LicenseReconcileDelegate):
+    name = 'nvmet'
+    etc_groups = ('nvmet',)
+    service = NVMET_SERVICE_NAME
+    action = LicenseReconcileAction.RENDER
+    order = 30
+
+    async def should_run(self, middleware):
+        """
+        Only converge a target that is actually running.
+
+        With nothing running there is no configfs or RPC state to bring in line, and the next
+        start renders config from scratch regardless.
+        """
+        return await middleware.call('nvmet.global.running')
+
+
 async def setup(middleware):
+    await middleware.call2(
+        middleware.services.truenas.license.register_reconcile_delegate,
+        NVMeTargetLicenseReconcileDelegate(),
+    )
     middleware.register_hook("pool.post_import", pool_post_import, sync=True)
     if await middleware.call('system.ready'):
         await middleware.call('iscsi.auth.load_upgrade_alerts')
