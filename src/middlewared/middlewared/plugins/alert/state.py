@@ -11,6 +11,8 @@ from middlewared.alert.base import Alert, AlertSource
 if typing.TYPE_CHECKING:
     from collections.abc import Callable
 
+    from middlewared.alert.applicability import Applicability
+
 POLICIES: list[str] = ["IMMEDIATELY", "HOURLY", "DAILY", "NEVER"]
 DEFAULT_POLICY: str = "IMMEDIATELY"
 # The below value come from observation from support of how long an M-series boot can take.
@@ -80,3 +82,4 @@ class AlertState:
         self.policies: dict[str, AlertPolicy] = {}
         self.alert_sources_errors: set[str] = set()
         self.send_alerts_on_ready: bool = False
+        self.applicability: Applicability | None = None

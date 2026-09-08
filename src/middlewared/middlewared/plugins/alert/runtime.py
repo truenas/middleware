@@ -11,6 +11,7 @@ import html2text
 from truenas_api_client.exc import ReserveFDException
 from truenas_pylicensed.features import LicenseFeature
 
+from middlewared.alert.applicability import Applicability
 from middlewared.alert.base import (
     Alert,
     AlertClass,
@@ -25,6 +26,7 @@ from middlewared.api.current import SupportNewTicketEnterprise
 from middlewared.plugins.failover_.remote import NETWORK_ERRORS
 from middlewared.service import ServiceContext
 from middlewared.service_exception import CallError, NetworkActivityDisabled
+from middlewared.utils.entitlements import get_facts
 from middlewared.utils.time_utils import utc_now
 
 from .alert_classes import (
@@ -34,6 +36,31 @@ from .alert_classes import (
 )
 from .serialize import AlertClasses, AlertSerializer, get_alert_level, get_alert_policy
 from .state import FAILOVER_ALERTS_BACKOFF_SECS, AlertFailoverInfo, AlertState
+
+
+async def get_applicability(context: ServiceContext, state: AlertState) -> Applicability:
+    """Every applicability answer for this system, from one reading of the facts.
+
+    The single owner of that reading. Held across calls so that a run and the send that follows
+    it -- separate jobs -- cannot disagree within one cycle; dropped on
+    ``system.post_license_update``.
+
+    A `None` license is never held: ``get_license`` returns `None` both for an unlicensed system
+    and for one whose license daemon did not answer, so caching it would strand a licensed system
+    on a single failed read until its next upload or reboot.
+    """
+    if state.applicability is not None:
+        return state.applicability
+
+    applicability = Applicability(await context.to_thread(get_facts))
+    if applicability.facts.license is not None:
+        state.applicability = applicability
+
+    return applicability
+
+
+async def invalidate_applicability(state: AlertState) -> None:
+    state.applicability = None
 
 
 async def process_alerts(context: ServiceContext, state: AlertState) -> None:

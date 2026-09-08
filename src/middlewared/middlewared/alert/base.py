@@ -6,10 +6,11 @@ from datetime import datetime, timedelta
 import enum
 import json
 import logging
-from typing import TYPE_CHECKING, Any, Self, TypeAlias
+from typing import TYPE_CHECKING, Any, ClassVar, Self, TypeAlias
 
 import html2text
 
+from middlewared.alert.applicability.engine import Rule
 from middlewared.alert.schedule import BaseSchedule, CrontabSchedule, IntervalSchedule
 from middlewared.api.current import MailSendMessage
 from middlewared.utils import ProductName, ProductType
@@ -51,6 +52,13 @@ class AlertClassConfig:
 
     :param products: A list of `system.product_type` return values on which alerts of this class can be emitted.
 
+    :param applies_to: a population from `middlewared.alert.applicability.vocabulary` naming the systems this alert
+        class is meaningful on, or `None` for all of them. It governs running the source, displaying the alert,
+        sending it, and listing the class.
+
+    :param listed_only_when: a population narrowing `applies_to` further, applied *only* in `alert.list_categories`. An
+        alert class excluded by it is still displayed and still sent; it is only hidden from the settings catalogue.
+
     :param proactive_support: Set this to `true` if, upon creation of the alert, a support ticket should be open for
         the systems that have a corresponding support license.
 
@@ -77,6 +85,8 @@ class AlertClassConfig:
     text: str | None = None
     exclude_from_list: bool = False
     products: tuple[str, ...] = (ProductType.COMMUNITY_EDITION, ProductType.ENTERPRISE)
+    applies_to: Rule | None = None
+    listed_only_when: Rule | None = None
     proactive_support: bool = False
     proactive_support_notify_gone: bool = False
     deleted_automatically: bool = True
@@ -371,6 +381,9 @@ class AlertSource(CallMixin, ABC):
 
     :cvar products: A list of `system.product_type` return values for which this source will be ran.
 
+    :cvar applies_to: a population from `middlewared.alert.applicability.vocabulary` naming the systems this source is
+        meaningful on, or `None` for all of them. The source is not ran where it does not apply.
+
     :cvar failover_related: should be `true` if this alert is HA failover related. Failover-related alerts are not ran
         within a specific time interval after failover to prevent false positives.
 
@@ -382,6 +395,7 @@ class AlertSource(CallMixin, ABC):
     schedule: BaseSchedule = IntervalSchedule(timedelta())
 
     products: tuple[str, ...] = (ProductType.COMMUNITY_EDITION, ProductType.ENTERPRISE)
+    applies_to: ClassVar[Rule | None] = None
     failover_related = False
     run_on_backup_node = True
     require_stable_peer = False
