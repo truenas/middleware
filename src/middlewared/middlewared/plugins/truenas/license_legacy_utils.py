@@ -67,7 +67,7 @@ def parse_legacy_license(text: str) -> LicenseInfo:
         model=lic.model or None,
         expires_at=lic.contract_end,
         features=[
-            FeatureInfo(name=name, start_date=lic.contract_start, expires_at=lic.contract_end)
+            FeatureInfo(name=name, start_date=lic.contract_start, expires_at=lic.contract_end, source="enterprise")
             for name in feature_names
         ],
         serials=serials,

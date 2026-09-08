@@ -46,7 +46,6 @@ module = [
     "google_auth_httplib2.*",
     "googleapiclient.*",
     "influxdb.*",
-    "ixhardware.*",
     "jeepney.*",
     "josepy.*",
     "kmip.*",
