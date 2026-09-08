@@ -16,10 +16,6 @@ def firstboot(middleware):
         # we do not want the clone to have the file in it.
         os.unlink(FIRST_INSTALL_SENTINEL)
 
-        if middleware.call_sync('system.is_enterprise'):
-            config = middleware.call_sync('datastore.config', 'system.advanced')
-            middleware.call_sync('datastore.update', 'system.advanced', config['id'], {'adv_autotune': True})
-
 
 def firstboot_after_upgrade(middleware):
     if not os.path.exists(BOOTENV_FIRSTBOOT_SENTINEL):

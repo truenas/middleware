@@ -1,15 +1,17 @@
 import pytest
 
 from middlewared.test.integration.assets.directory_service import directoryservice
+from middlewared.test.integration.assets.entitlements import entitled
 from middlewared.test.integration.assets.privilege import privilege
-from middlewared.test.integration.assets.product import product_type
 from middlewared.test.integration.utils import call, client
 
 
 @pytest.fixture(scope="module")
 def do_ldap_connection(request):
     with directoryservice('LDAP') as ldap_conn:
-        with product_type():
+        # test_account_privilege_authentication turns on ds_auth, which the
+        # DIRECTORY_SERVICES entitlement gates.
+        with entitled("DIRECTORY_SERVICES"):
             yield ldap_conn
 
 

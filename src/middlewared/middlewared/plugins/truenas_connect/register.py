@@ -80,9 +80,8 @@ async def get_registration_uri_impl(context: ServiceContext) -> str:
         'port': (await context.middleware.call('system.general.config'))['ui_httpsport']
     }
 
-    # Add license information if valid license exists
     license_info = await context.middleware.call('system.license', True)
-    if license_info is not None and not license_info.get('expired', True):
+    if license_info is not None and license_info['raw_license'] is not None:
         query_params['license'] = license_info['raw_license']
 
     # get_registration_uri composes from raw config dict — pass config_internal()'s dict shape.

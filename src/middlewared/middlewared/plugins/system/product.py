@@ -5,11 +5,10 @@
 
 from types import MappingProxyType
 
-import truenas_pylicensed
+from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    SystemAdvancedUpdate,
     SystemFeatureEnabledArgs,
     SystemFeatureEnabledResult,
     SystemLicenseUpdateArgs,
@@ -25,6 +24,7 @@ from middlewared.api.current import (
 )
 from middlewared.service import CallError, Service, ValidationError, private
 from middlewared.utils import ProductType, sw_info
+from middlewared.utils.hardware import get_hardware_class, get_hardware_info
 from middlewared.utils.license import LEGACY_LICENSE_FILE, LICENSE_ADDHW_MAPPING, LICENSE_FILE
 from middlewared.utils.version import parse_version_string
 
@@ -33,45 +33,24 @@ LICENSE_ADDHW_REVERSE_MAPPING = MappingProxyType({v: k for k, v in LICENSE_ADDHW
 
 
 class SystemService(Service):
-    PRODUCT_TYPE = None
 
     @api_method(
         SystemProductTypeArgs, SystemProductTypeResult, roles=["SYSTEM_PRODUCT_READ"]
     )
-    async def product_type(self):
+    def product_type(self):
         """Returns the type of the product."""
-        if SystemService.PRODUCT_TYPE is None:
-            if await self.is_ha_capable():
-                # HA capable hardware
-                SystemService.PRODUCT_TYPE = ProductType.ENTERPRISE
-            else:
-                if license_ := await self.call2(self.s.truenas.license.info_private):
-                    if license_.model.lower().startswith("freenas"):
-                        # legacy freenas certified
-                        SystemService.PRODUCT_TYPE = ProductType.COMMUNITY_EDITION
-                    else:
-                        # the license has been issued for a "certified" line
-                        # of hardware which is considered enterprise
-                        SystemService.PRODUCT_TYPE = ProductType.ENTERPRISE
-                else:
-                    # no license
-                    SystemService.PRODUCT_TYPE = ProductType.COMMUNITY_EDITION
+        if get_hardware_class().is_appliance:
+            return ProductType.ENTERPRISE
 
-        return SystemService.PRODUCT_TYPE
+        return ProductType.COMMUNITY_EDITION
 
     @private
-    async def is_ha_capable(self):
-        return await self.middleware.call("failover.hardware") != "MANUAL"
-
-    @private
-    async def is_enterprise(self):
-        return (
-            await self.middleware.call("system.product_type") == ProductType.ENTERPRISE
-        )
+    def is_ha_capable(self):
+        return get_hardware_info().is_ha_capable
 
     @private
     def sed_enabled(self):
-        return truenas_pylicensed.is_feature_licensed("SED")
+        return self.call_sync2(self.s.truenas.entitlements.check, LicenseFeature.SED).entitled
 
     @api_method(
         SystemVersionShortArgs,
@@ -169,22 +148,10 @@ class SystemService(Service):
         SystemFeatureEnabledArgs,
         SystemFeatureEnabledResult,
         roles=["SYSTEM_PRODUCT_READ"],
+        removed_in="v26",
     )
     async def feature_enabled(self, name):
         """
         Returns whether the ``feature`` is enabled.
         """
-        info = await self.call2(self.s.truenas.license.info_private)
-        if info is not None:
-            return name in info.features
-
-        return False
-
-
-async def hook_license_update(middleware, had_license, *args, **kwargs):
-    if not had_license and await middleware.call("system.product_type") == "ENTERPRISE":
-        await middleware.call2(middleware.services.system.advanced.update, SystemAdvancedUpdate(autotune=True))
-
-
-async def setup(middleware):
-    middleware.register_hook("system.post_license_update", hook_license_update)
+        return (await self.call2(self.s.truenas.entitlements.check, name)).entitled

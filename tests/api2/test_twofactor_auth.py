@@ -7,11 +7,11 @@ import pytest
 from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.test.integration.assets.account import user as user_create
 from middlewared.test.integration.assets.directory_service import directoryservice
+from middlewared.test.integration.assets.entitlements import entitled
 from middlewared.test.integration.assets.two_factor_auth import (
     enabled_twofactor_auth, get_user_secret, get_user_secret_sid, get_2fa_totp_token,
 )
 from middlewared.test.integration.assets.account import unprivileged_user
-from middlewared.test.integration.assets.product import product_type
 from middlewared.test.integration.utils import call, client
 
 
@@ -49,7 +49,8 @@ def ensure_small_time_difference():
 
 @pytest.fixture(scope='function')
 def enterprise_ad():
-    with product_type():
+    # ds_auth below is gated by the DIRECTORY_SERVICES entitlement.
+    with entitled("DIRECTORY_SERVICES"):
         with directoryservice('ACTIVEDIRECTORY') as ad:
             call("system.general.update", {"ds_auth": True})
             try:

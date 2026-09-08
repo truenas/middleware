@@ -1,8 +1,16 @@
 import pytest
 
+from middlewared.test.integration.assets.entitlements import entitled
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call
 
+
+@pytest.fixture(scope='module', autouse=True)
+def webshare_entitled():
+    # Creating a share and enabling an existing one are gated by the WEBSHARE entitlement,
+    # which an unlicensed test runner does not have.
+    with entitled("WEBSHARE"):
+        yield
 
 
 def test_webshare_is_home_base_field():

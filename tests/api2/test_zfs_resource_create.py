@@ -741,8 +741,9 @@ def test_zfs_resource_create_ssb_behavior_without_tiering():
 
 @pytest.fixture(scope="module")
 def tier_pool():
-    if not call("system.is_enterprise"):
-        pytest.skip("ZFS tiering requires an Enterprise license")
+    entitlement = call("truenas.entitlements.check", "ZFSTIER")
+    if not entitlement["entitled"]:
+        pytest.skip(entitlement["message"])
     unused_disks = call("disk.get_unused")
     if len(unused_disks) < 6:
         pytest.skip("Need at least 6 unused disks for a tier pool")

@@ -13,6 +13,7 @@ from middlewared.service_exception import (
 )
 from middlewared.test.integration.assets.account import group as create_group
 from middlewared.test.integration.assets.account import user as create_user
+from middlewared.test.integration.assets.entitlements import entitled
 from middlewared.test.integration.assets.filesystem import directory
 from middlewared.test.integration.assets.pool import another_pool
 from middlewared.test.integration.utils import call, mock, ssh
@@ -1955,16 +1956,17 @@ class TestNFSops:
             )
         ]
 
-        with mock("system.is_enterprise", return_value=True):
-            with mock("rdma.capable_protocols", return_value=['NFS']):
-                with nfs_config():
-                    call("nfs.update", {"rdma": True})
+        # rdma.capable_protocols is the single entitlement chokepoint for RDMA: it gates both the
+        # nfs.update validator and the mask nfs.config applies on read, so mocking it is enough.
+        with mock("rdma.capable_protocols", return_value=['NFS']):
+            with nfs_config():
+                call("nfs.update", {"rdma": True})
 
-                    # 20049 is the default port for NFS over RDMA.
-                    confirm_nfs_config_settings([
-                        [['nfsd', 'rdma'], 'y'],
-                        [['nfsd', 'rdma-port'], '20049'],
-                    ])
+                # 20049 is the default port for NFS over RDMA.
+                confirm_nfs_config_settings([
+                    [['nfsd', 'rdma'], 'y'],
+                    [['nfsd', 'rdma-port'], '20049'],
+                ])
 
     def test_prevent_shell_changes(self, start_nfs):
         '''
@@ -1996,7 +1998,10 @@ class TestNFSops:
             res = ssh("ls /etc/nfs.conf.d/rogue.conf", check=False, complete_response=True)
             assert "No such file or directory" in res['stderr']
 
-        with mock("system.is_enterprise", return_value=False):
+        # Report no RDMA capable protocols so NFS over RDMA is unavailable. That makes nfs_extend
+        # mask the rdma bit, so one smuggled in via the shell or the DB is scrubbed on the next
+        # config read regardless of what the runner is licensed for.
+        with mock("rdma.capable_protocols", return_value=[]):
             with nfs_config():
                 with nfs_dataset("deleteme") as ds:
                     for monkey_business in [modnfsconf, rogueconf]:
@@ -2161,7 +2166,7 @@ class TestNFSops:
         nfsid = nfs_dataset_and_share['nfsid']
 
         # Not licensed
-        with mock("system.is_enterprise", return_value=False):
+        with entitled("NFS_SNAPSHOT", False):
             with pytest.raises(ValidationErrors) as ve:
                 call('sharing.nfs.update', nfsid, {'expose_snapshots': True})
             assert ve.value.errors == [
@@ -2172,7 +2177,7 @@ class TestNFSops:
                 )
             ]
 
-        with mock("system.is_enterprise", return_value=True):
+        with entitled("NFS_SNAPSHOT"):
             # The share path is the root of a dataset
             with nfs_share_config(nfsid):
                 assert call('sharing.nfs.update', nfsid, {'expose_snapshots': True})['expose_snapshots'] is True
