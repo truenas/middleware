@@ -1,5 +1,6 @@
 import contextlib
 import os
+from typing import Any, TYPE_CHECKING
 
 from pydantic import Secret
 
@@ -20,14 +21,19 @@ from middlewared.service import Service, ValidationError, private
 from middlewared.plugins.truenas.license_reconcile import TrueNASLicenseReconcileService
 from middlewared.plugins.truenas.tn import EULA_PENDING_PATH
 from middlewared.utils.license import (
+    HW_LICENSE_ERROR_FILE,
     LEGACY_LICENSE_FILE,
     LicenseInfo,
+    LicenseOrigin,
     get_fingerprint_b64,
     get_legacy_license_info,
     get_license,
     upload_license,
 )
 from truenas_pylicensed import LicenseType
+
+if TYPE_CHECKING:
+    from middlewared.main import Middleware
 
 
 def _license_entry(info: LicenseInfo) -> LicenseInfoEntry:
@@ -75,7 +81,8 @@ class TrueNASLicenseService(TrueNASLicenseReconcileService, Service):
     )
     def upload(self, license_: Secret[LongNonEmptyString], options: TrueNASLicenseUploadOptions) -> None:
         """Upload a PEM-wrapped license file."""
-        had_license = self.info_private() is not None
+        current = self.info_private()
+        had_license = current is not None and current.origin is LicenseOrigin.ISSUED
 
         # `check_annotations` hands the method the undumped model value, so the PEM has to be
         # unwrapped twice: out of the Secret that keeps it off the audit trail, then out of the
@@ -162,3 +169,23 @@ class TrueNASLicenseService(TrueNASLicenseReconcileService, Service):
     @private
     def info_private(self) -> LicenseInfo | None:
         return get_license()
+
+    @private
+    def process_hw_license_error(self) -> None:
+        if os.path.exists(HW_LICENSE_ERROR_FILE):
+            try:
+                with open(HW_LICENSE_ERROR_FILE) as f:
+                    self.logger.error("truenas-hw-license.py: %s", f.read().strip())
+            finally:
+                os.unlink(HW_LICENSE_ERROR_FILE)
+
+
+async def on_system_ready(middleware: "Middleware", event_type: str, args: Any) -> None:
+    try:
+        await middleware.call("truenas.license.process_hw_license_error")
+    except Exception:
+        middleware.logger.error("Error processing hardware entitlement error file", exc_info=True)
+
+
+async def setup(middleware: "Middleware") -> None:
+    middleware.event_subscribe("system.ready", on_system_ready)
