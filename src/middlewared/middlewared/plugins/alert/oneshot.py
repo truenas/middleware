@@ -19,7 +19,7 @@ async def oneshot_create(context: ServiceContext, state: AlertState, instance: O
     alert.source = ""
     alert.node = state.node
 
-    handle_alert(state, alert)
+    handle_alert(context, state, alert, await context.call2(context.s.alert.applicability))
 
     state.alerts = [a for a in state.alerts if a.uuid != alert.uuid] + [alert]
 

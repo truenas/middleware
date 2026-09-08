@@ -40,7 +40,7 @@ class LicenseIsExpiringAlert(NonDataclassAlertClass[str], AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
         level=AlertLevel.WARNING,
-        title="TrueNAS License Is Expiring",
+        title="Support Contract Is Expiring",
         text="%s",
         products=(ProductType.ENTERPRISE,),
         applies_to=EXPECTED_TO_BE_LICENSED,
@@ -51,7 +51,7 @@ class LicenseHasExpiredAlert(NonDataclassAlertClass[str], AlertClass):
     config = AlertClassConfig(
         category=AlertCategory.SYSTEM,
         level=AlertLevel.CRITICAL,
-        title="TrueNAS License Has Expired",
+        title="Support Contract Has Expired",
         text="%s",
         products=(ProductType.ENTERPRISE,),
         applies_to=EXPECTED_TO_BE_LICENSED,
@@ -69,6 +69,9 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
 
         local_license = self.call_sync2(self.s.truenas.license.info_private)
         if local_license is None:
+            if not self.middleware.call_sync('system.is_ha_capable'):
+                return []
+
             return Alert(LicenseAlert("Your TrueNAS has no license, contact support."))
 
         # check if this node's system serial matches the serial in the license

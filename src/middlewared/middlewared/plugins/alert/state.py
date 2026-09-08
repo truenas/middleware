@@ -24,7 +24,7 @@ class AlertFailoverInfo:
     this_node: str
     other_node: str
     run_on_backup_node: bool
-    run_failover_related: bool
+    past_failover_blackout: bool
 
 
 @dataclass(slots=True, frozen=True)

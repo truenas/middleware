@@ -202,10 +202,6 @@ class AlertService(Service):
         return await queries.node_map(self.context)
 
     @private
-    async def product_type(self) -> str:
-        return await queries.get_product_type(self.context)
-
-    @private
     async def applicability(self) -> Applicability:
         return await runtime.get_applicability(self.context, self._state)
 

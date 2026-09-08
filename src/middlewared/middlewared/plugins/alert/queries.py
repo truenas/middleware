@@ -43,23 +43,12 @@ def list_policies() -> list[str]:
     return POLICIES
 
 
-def should_list_alert_class(alert_class: type[AlertClass], product_type: str, failover_licensed: bool) -> bool:
-    if alert_class.config.category == AlertCategory.HA and not failover_licensed:
-        return False
-
-    return product_type in alert_class.config.products
-
-
 async def list_categories(context: ServiceContext, options: AlertListCategoriesOptions) -> list[AlertCategoryListItem]:
-    product_type = await context.call2(context.s.alert.product_type)
-    failover_licensed: bool = await context.middleware.call("failover.licensed")
+    applicability = await context.call2(context.s.alert.applicability)
 
     classes: list[type[AlertClass]] = []
     for alert_class in AlertClass.classes:
-        if not (
-            options.include_all_products or
-            should_list_alert_class(alert_class, product_type, failover_licensed)
-        ):
+        if not (options.include_all_products or applicability.class_listed(alert_class)):
             continue
 
         if not (options.include_hidden_classes or not alert_class.config.exclude_from_list):
@@ -79,7 +68,6 @@ async def list_categories(context: ServiceContext, options: AlertListCategoriesO
                     id=alert_class.config.name,
                     title=alert_class.config.title,
                     level=alert_class.config.level.name,
-                    product_types=list(alert_class.config.products),  # type: ignore[arg-type]
                     proactive_support=alert_class.config.proactive_support,
                 )
             )
@@ -100,7 +88,7 @@ async def list_categories(context: ServiceContext, options: AlertListCategoriesO
 
 
 async def list_alerts(context: ServiceContext, state: AlertState) -> list[AlertListItem]:
-    as_ = AlertSerializer(context)
+    as_ = AlertSerializer(context, await context.call2(context.s.alert.applicability))
     classes = (await context.call2(context.s.alertclasses.config)).classes
 
     sorted_alerts = sorted(
@@ -146,7 +134,7 @@ async def dismiss(context: ServiceContext, state: AlertState, uuid: str) -> None
         delete_on_dismiss(context, state, alert)
     else:
         alert.dismissed = True
-        await send_alert_changed_event(context, alert)
+        await send_alert_changed_event(context, await context.call2(context.s.alert.applicability), alert)
 
 
 def delete_on_dismiss(context: ServiceContext, state: AlertState, alert: Alert[Any]) -> None:
@@ -170,7 +158,7 @@ async def restore(context: ServiceContext, state: AlertState, uuid: str) -> None
 
     alert.dismissed = False
 
-    await send_alert_changed_event(context, alert)
+    await send_alert_changed_event(context, await context.call2(context.s.alert.applicability), alert)
 
 
 async def node_map(context: ServiceContext) -> dict[str, str]:
@@ -234,7 +222,3 @@ def alert_source_clear_run(state: AlertState, name: str) -> None:
         raise CallError(f"Alert source {name!r} not found.", errno.ENOENT)
 
     state.alert_source_last_run[alert_source.name] = datetime.min
-
-
-async def get_product_type(context: ServiceContext) -> str:
-    return await context.middleware.call("system.product_type")  # type: ignore[no-any-return]
