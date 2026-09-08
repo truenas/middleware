@@ -173,7 +173,7 @@ def test_list_categories_include_all_products():
 
     default = class_ids({})
     all_products = class_ids({"include_all_products": True})
-    assert default < all_products, "No ENTERPRISE-only alert classes were filtered out"
+    assert default < all_products, "No alert classes were filtered out as inapplicable to this system"
 
 
 # ---------------------------------------------------------------------------
@@ -357,20 +357,6 @@ def test_alerts_with_never_policy_are_not_dispatched():
     call("alert.oneshot_delete", MOCK_ALERT_CLASS)
 
 
-def test_alerts_for_other_product_types_are_not_dispatched():
-    call("alert.oneshot_delete", MOCK_ALERT_CLASS)
-
-    # Entering the inner mock creates a `SystemTesting` alert, which is dispatched to the alert
-    # service while the product type does not match any alert class.
-    with (
-        alert_service(),
-        mock("alert.product_type", return_value="COVERAGE_TEST_PRODUCT"),
-    ):
-        assert call("alert.list") == []
-
-    call("alert.oneshot_delete", MOCK_ALERT_CLASS)
-
-
 def test_dismissed_alerts_are_not_dispatched(db_alert):
     """A dismissed alert is not included in the alert service payload."""
     call("alert.oneshot_delete", MOCK_ALERT_CLASS)
@@ -492,13 +478,17 @@ def test_alerts_are_not_processed_until_the_system_is_ready():
 def test_alerts_collected_while_shutting_down_are_discarded():
     """If the system stops being `READY` while the sources run, their results are thrown away.
 
-    `alert.product_type` is the first thing `run_alerts` does, so mocking it is a reliable way to
-    make `system.state` change exactly once the alert sources are about to run.
+    `alert.applicability` is the first thing `run_alerts` does, so mocking it is a reliable way to
+    make `system.state` change exactly once the alert sources are about to run. The mock builds the
+    snapshot itself because calling `alert.applicability` would re-enter it.
     """
-    product_type = """\
+    applicability = """\
         async def mock(self):
+            from middlewared.alert.applicability import Applicability
+            from middlewared.utils.entitlements import get_facts
+
             self.middleware._coverage_shutting_down = True
-            return await self.middleware.call("system.product_type")
+            return Applicability(await self.middleware.run_in_thread(get_facts))
     """
     system_state = """\
         async def mock(self):
@@ -509,7 +499,7 @@ def test_alerts_collected_while_shutting_down_are_discarded():
             return "READY"
     """
     with (
-        mock("alert.product_type", declaration=product_type),
+        mock("alert.applicability", declaration=applicability),
         mock("system.state", declaration=system_state),
     ):
         run_alerts(fresh=True)
