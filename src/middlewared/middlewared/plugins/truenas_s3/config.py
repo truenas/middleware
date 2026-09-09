@@ -23,6 +23,7 @@ from middlewared.api.current import (
     SharingS3Entry,
     ZFSResourceQuery,
 )
+from middlewared.plugins.zfs.exceptions import ZFSPathNotFoundException
 from middlewared.service import SystemServicePart, SystemServiceService, ValidationErrors, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils.crypto import generate_token, ssl_uuid4
@@ -58,6 +59,7 @@ class S3Model(sa.Model):
     default_audit = sa.Column(sa.JSON(list), default=[])
     default_audit_overflow = sa.Column(sa.String(16), default="DROP")
     global_grants = sa.Column(sa.JSON(list), default=[])
+    managed_root_dataset = sa.Column(sa.String(255), default="")
     # the two per-appliance identities the daemon wants stated once and never
     # moved. Generated on the first read and never exposed through the API.
     host_id = sa.Column(sa.String(64), default="")
@@ -230,6 +232,9 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
         if (new.default_audit or new.default_audit_overflow != "DROP") and not await self.audit_licensed():
             verrors.add("s3_update.default_audit", "Auditing the S3 service requires an Enterprise license.")
 
+        if new.managed_root_dataset:
+            await self._validate_managed_root(new.managed_root_dataset, verrors)
+
         await validate_grants(self.middleware, "s3_update.global_grants", new.global_grants, verrors)
         verrors.check()
 
@@ -243,6 +248,29 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
         await self.middleware.call("datastore.update", self._datastore, old.id, update)
         await render_and_apply(self.middleware)
         return await self.config()
+
+    async def _validate_managed_root(self, dataset: str, verrors: ValidationErrors) -> None:
+        """Check the parent dataset for buckets created through S3.
+
+        Checked at update time, not at create time. An S3 client cannot
+        correct this setting. The administrator who sets it gets one
+        error here, instead of one error for each bucket create.
+
+        The dataset must exist. This method does not create it: a typed
+        name can be a typo, and a new dataset would have no owner, no
+        quota and no chosen properties.
+        """
+        field = "s3_update.managed_root_dataset"
+        try:
+            rows = await self.call2(
+                self.s.zfs.resource.query_impl, ZFSResourceQuery(paths=[dataset], properties=None)
+            )
+        except ZFSPathNotFoundException:
+            rows = []
+        if not rows:
+            verrors.add(field, f"{dataset!r} does not exist.")
+        elif rows[0]["type"] != "FILESYSTEM":
+            verrors.add(field, f"{dataset!r} is a volume, not a dataset.")
 
     async def audit_licensed(self) -> bool:
         return await self.middleware.call("system.license") is not None
