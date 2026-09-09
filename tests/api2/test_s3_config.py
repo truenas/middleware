@@ -28,8 +28,8 @@ def service():
     return call("service.query", [["service", "=", SERVICE]], {"get": True})
 
 
-def audit_licensed():
-    return call("system.license") is not None
+def audit_supported():
+    return call("system.product_type") == "ENTERPRISE"
 
 
 @contextlib.contextmanager
@@ -206,8 +206,8 @@ def test_global_grants_render_as_wildcard_rows():
             assert message in ve.value.errors[0].errmsg
 
 
-def test_audit_follows_the_license():
-    if audit_licensed():
+def test_audit_follows_the_hardware():
+    if audit_supported():
         with config(
             default_audit=["GetObject", "PutObject"],
             default_audit_overflow="BACKPRESSURE",
@@ -219,7 +219,7 @@ def test_audit_follows_the_license():
     else:
         with pytest.raises(ValidationErrors) as ve:
             call("s3.update", {"default_audit": "ALL"})
-        assert "Enterprise license" in ve.value.errors[0].errmsg
+        assert "appliance hardware" in ve.value.errors[0].errmsg
         call("etc.generate", "truenas_s3")
         assert "default_audit" not in parse(BUCKETS_CONF)["server"]
 
