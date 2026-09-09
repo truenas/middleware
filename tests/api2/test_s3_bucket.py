@@ -147,6 +147,67 @@ def test_delete_keeps_the_dataset(owner):
         call("zfs.resource.destroy", {"path": DATASET, "recursive": True})
 
 
+@contextlib.contextmanager
+def managed_root(value):
+    """Set `value` as the S3 service's managed root, then restore the old
+    value. A bucket created without a `dataset` goes under this root."""
+    was = call("s3.config")["managed_root_dataset"]
+    call("s3.update", {"managed_root_dataset": value})
+    try:
+        yield value
+    finally:
+        call("s3.update", {"managed_root_dataset": was})
+
+
+def test_a_bucket_with_no_dataset_lands_under_the_managed_root(owner):
+    """An S3 client sends only a bucket name, so the service selects the
+    dataset."""
+    with dataset("s3-managed-root") as root, managed_root(root):
+        entry = call("sharing.s3.create", {"name": "derived", "owner": OWNER})
+        try:
+            assert entry["dataset"] == f"{root}/derived"
+            # the derived dataset is the bucket's own, with the same
+            # properties an explicitly named one gets
+            assert zfs_props(entry["dataset"], ["xattr", "acltype"]) == {
+                "xattr": "sa",
+                "acltype": "nfsv4",
+            }
+        finally:
+            call("sharing.s3.delete", entry["id"])
+
+
+def test_a_recreated_bucket_does_not_land_on_the_old_data(owner):
+    """`sharing.s3.delete` keeps the dataset and its objects. A second
+    bucket with the same name must get a new dataset. If it does not, it
+    serves the objects of the first bucket."""
+    with dataset("s3-managed-reuse") as root, managed_root(root):
+        first = call("sharing.s3.create", {"name": "recycled", "owner": OWNER})
+        assert first["dataset"] == f"{root}/recycled"
+        call("sharing.s3.delete", first["id"])
+        assert zfs_props(first["dataset"], ["mountpoint"]) is not None, "the dataset is kept"
+
+        second = call("sharing.s3.create", {"name": "recycled", "owner": OWNER})
+        try:
+            assert second["dataset"] == f"{root}/recycled_1"
+        finally:
+            call("sharing.s3.delete", second["id"])
+
+
+def test_no_managed_root_refuses_a_bucket_with_no_dataset(owner):
+    with managed_root(""):
+        with pytest.raises(ValidationErrors) as ve:
+            call("sharing.s3.create", {"name": "nowhere", "owner": OWNER})
+        assert "dataset" in ve.value.errors[0].attribute
+        assert not call("sharing.s3.query", [["name", "=", "nowhere"]])
+
+
+def test_the_managed_root_must_exist():
+    with pytest.raises(ValidationErrors) as ve:
+        call("s3.update", {"managed_root_dataset": f"{pool}/s3-no-such-root"})
+    assert "managed_root_dataset" in ve.value.errors[0].attribute
+    assert call("s3.config")["managed_root_dataset"] != f"{pool}/s3-no-such-root"
+
+
 def test_existing_dataset_is_refused(owner):
     with dataset("s3-preexisting") as ds:
         with pytest.raises(ValidationErrors):

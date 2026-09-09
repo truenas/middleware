@@ -56,6 +56,12 @@ AUDIT_ACTIONS: tuple[str, ...] = typing.get_args(S3AuditAction)
 # a whole bucket row, whichever of the two shapes the caller sent one in
 EntryT = TypeVar("EntryT", bound=SharingS3Entry)
 
+MANAGED_NAME_MAX_SUFFIX = 10
+"""Highest `_N` suffix a derived dataset name uses. The names tried under the
+managed root are the name of the bucket, then that name with `_1` to `_10`.
+The limit stops an endless loop and gives an error the administrator can
+read."""
+
 
 def bucket_dataset_properties() -> ZFSResourceCreateProperties:
     """What the S3 on-disk format requires of a bucket's dataset. A fresh
@@ -213,9 +219,7 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         await validate_grants(self.middleware, f"{schema}.grants", data.grants, verrors)
 
     @private
-    def normalize_ownership(
-        self, data: EntryT, given: set[str], schema: str, verrors: ValidationErrors
-    ) -> EntryT:
+    def normalize_ownership(self, data: EntryT) -> EntryT:
         """The pair a row is stored as.
 
         `permissions_model` and `object_ownership` are one axis each:
@@ -223,14 +227,6 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         permissions on the tree, the second which account an S3
         operation runs as and whether the bucket supports S3 ACLs.
         Neither is always stored as it was given.
-
-        The undocumented `S3_BUCKET_OWNER_ENFORCED` is the pair spelled
-        as one value and is stored as `S3` with `BUCKET_OWNER_ENFORCED`.
-        It carries the last API consumer over and goes when that
-        consumer does. Naming it beside a different `object_ownership`
-        in the same call is refused rather than resolved: picking one
-        silently would serve a bucket under a gate the caller did not
-        ask for.
 
         A `MULTIPROTOCOL` row folds to `OBJECT_WRITER` whatever it was
         given, as the S3 service does with it: the other protocols'
@@ -241,15 +237,7 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         folded so the row reads back as the service runs it.
         """
         model, ownership = data.permissions_model, data.object_ownership
-        if model == "S3_BUCKET_OWNER_ENFORCED":
-            if "object_ownership" in given and ownership != "BUCKET_OWNER_ENFORCED":
-                verrors.add(
-                    f"{schema}.object_ownership",
-                    "The S3_BUCKET_OWNER_ENFORCED permissions model is the S3 model with BUCKET_OWNER_ENFORCED "
-                    "object ownership, so it cannot be given beside another ownership setting.",
-                )
-            model, ownership = "S3", "BUCKET_OWNER_ENFORCED"
-        elif model == "MULTIPROTOCOL":
+        if model == "MULTIPROTOCOL":
             ownership = "OBJECT_WRITER"
         return data.model_copy(update={"permissions_model": model, "object_ownership": ownership})
 
@@ -281,6 +269,76 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         )
         mountpoint = rows[0]["properties"]["mountpoint"]["value"] if rows else None
         return mountpoint if mountpoint and mountpoint.startswith("/") else None
+
+    @private
+    async def derive_dataset(self, schema: str, name: str, verrors: ValidationErrors) -> str | None:
+        """Select the dataset for a bucket that gives no `dataset` value.
+
+        This service decides the location, not the S3 daemon. An S3
+        client sends only a bucket name. The parent is the S3 service's
+        `managed_root_dataset` and the leaf is the name of the bucket.
+
+        If the leaf is in use, add a `_N` suffix. Do not use the existing
+        dataset and do not remove it. `sharing.s3.delete` keeps the
+        dataset and its objects. A new bucket with an old name must get a
+        new dataset. If it does not, it serves the objects of the old
+        bucket.
+
+        The separator is an underscore because a bucket name cannot
+        contain one. ZFS also permits `A-Z`, `:` and space, but an
+        underscore has no other meaning in a path, a shell or a ZFS user
+        property. The suffix is therefore unambiguous: `backups_1` is
+        always the second dataset for the bucket `backups`. A hyphen is
+        ambiguous, because `backups-1` is also the dataset for a bucket
+        named `backups-1`.
+        """
+        root = (await self.middleware.call("s3.config")).managed_root_dataset
+        if not root:
+            verrors.add(
+                f"{schema}.dataset",
+                "This bucket named no dataset, and the S3 service has no managed_root_dataset to put one under.",
+            )
+            return None
+        try:
+            rows = await self.call2(
+                self.s.zfs.resource.query_impl,
+                ZFSResourceQuery(paths=[root], properties=None, max_depth=1),
+            )
+        except ZFSPathNotFoundException:
+            rows = []
+        if not rows:
+            # `s3.update` refuses a root that does not exist, so the root
+            # was removed after that check. Reported here to name the
+            # setting. The create below would name the derived dataset
+            # and report a missing parent instead.
+            verrors.add(
+                f"{schema}.dataset",
+                f"The S3 service's managed_root_dataset {root!r} does not exist.",
+                errno.ENOENT,
+            )
+            return None
+        taken = {row["name"] for row in rows}
+        # A bucket row keeps its dataset name even when the dataset is
+        # gone. The column is unique, so a derived name that matches one
+        # fails the insert instead of giving a validation error.
+        taken |= {
+            row["dataset"]
+            for row in await self.middleware.call(
+                "datastore.query", self._config.datastore, [], {"select": ["dataset"]}
+            )
+        }
+        for suffix in range(MANAGED_NAME_MAX_SUFFIX + 1):
+            leaf = name if suffix == 0 else f"{name}_{suffix}"
+            candidate = f"{root}/{leaf}"
+            if candidate not in taken:
+                return candidate
+        verrors.add(
+            f"{schema}.dataset",
+            f"{root!r} already holds a dataset named {name!r} and every suffix to "
+            f"_{MANAGED_NAME_MAX_SUFFIX}. Remove an unused dataset, or give a dataset value.",
+            errno.EEXIST,
+        )
+        return None
 
     @private
     async def create_dataset(self, schema: str, name: str) -> None:
@@ -330,7 +388,11 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         Create an S3 bucket.
 
         The bucket's dataset is created here, with the properties the S3
-        service requires, and must not exist beforehand. Objects live in its
+        service requires, and must not exist beforehand. If you omit
+        ``dataset``, the dataset is created under the S3 service's
+        ``managed_root_dataset`` and takes the name of the bucket, with a
+        ``_N`` suffix if that name is in use. A bucket created through the S3
+        protocol always uses that default. Objects live in its
         ``s3data`` directory, which the S3 service creates on its next start
         owned by ``owner``. Under the ``S3`` permissions model the filesystem
         permissions on that tree are ignored and the bucket's grants decide;
@@ -344,13 +406,16 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         the S3 service, draining in-flight requests for up to 30 seconds.
         """
         verrors = ValidationErrors()
-        data = self.normalize_ownership(data, data.model_fields_set, "sharing_s3_create", verrors)
+        data = self.normalize_ownership(data)
         await self.validate(data, "sharing_s3_create", verrors)
         owner_uid = await self.resolve_owner("sharing_s3_create", data.owner, verrors)
-        if await self.query([["dataset", "=", data.dataset]], {"select": ["id"]}):
+        if data.dataset is None:
+            data.dataset = await self.derive_dataset("sharing_s3_create", data.name, verrors)
+        elif await self.query([["dataset", "=", data.dataset]], {"select": ["id"]}):
             verrors.add("sharing_s3_create.dataset", "Another bucket already uses this dataset.")
         verrors.check()
         assert owner_uid is not None
+        assert data.dataset is not None
 
         await self.create_dataset("sharing_s3_create", data.dataset)
         try:
@@ -382,10 +447,7 @@ class SharingS3Service(SharingService[SharingS3Entry]):
 
         new = old.updated(data)
         verrors = ValidationErrors()
-        # the pair is resolved against the fields *this* call named: a
-        # stored row never holds the folded-away model value, so naming it
-        # here is what makes it a statement about both halves
-        new = self.normalize_ownership(new, data.model_fields_set, "sharing_s3_update", verrors)
+        new = self.normalize_ownership(new)
         await self.validate(new, "sharing_s3_update", verrors, old)
         # an owner given by name is compared by the uid it resolves to: a
         # renamed account is the same owner, a deleted and recreated one

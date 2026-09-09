@@ -14,5 +14,8 @@ secret_key = ${key.secret.get_secret_value()}
 user = ${key.username}
 % endif
 enabled = ${"true" if key.status == "ENABLED" else "false"}
+% if key.manage_buckets:
+manage_buckets = true
+% endif
 
 % endfor

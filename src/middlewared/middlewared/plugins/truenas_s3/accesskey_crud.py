@@ -43,6 +43,10 @@ class S3AccesskeyModel(sa.Model):
     enabled = sa.Column(sa.Boolean())
     expiry = sa.Column(sa.Integer())
     created_at = sa.Column(sa.DateTime())
+    # unix seconds, like expiry: the S3 service reports it over JSON-RPC
+    # and an integer needs no agreement about timezones. 0 is never used
+    last_used = sa.Column(sa.Integer(), default=0)
+    manage_buckets = sa.Column(sa.Boolean(), default=False)
 
 
 class S3AccesskeyServicePart(CRUDServicePart[S3AccesskeyEntry]):
@@ -81,8 +85,11 @@ class S3AccesskeyServicePart(CRUDServicePart[S3AccesskeyEntry]):
     async def extend(self, data: dict[str, Any], context: dict[str, Any]) -> dict[str, Any]:
         user_identifier = data["user_identifier"]
         expiry = data.pop("expiry")
+        last_used = data.pop("last_used")
 
         data.update({"username": None, "local": True, "expires_at": None})
+        # 0 is a key the S3 service has never accepted a request for
+        data["last_used_at"] = datetime.fromtimestamp(last_used, UTC) if last_used else None
         if user_identifier.isdigit():
             data["user_identifier"] = int(user_identifier)
             # Ids at or above the synthetic base belong to directory services accounts.
@@ -131,7 +138,11 @@ class S3AccesskeyServicePart(CRUDServicePart[S3AccesskeyEntry]):
         if isinstance(out.get("user_identifier"), int):
             out["user_identifier"] = str(out["user_identifier"])
 
-        for key in ("username", "local", "status", "rotate"):
+        # `last_used_at` is on the entry, so an update model-dumps it back
+        # here. Dropped rather than converted: only `report_usage` moves
+        # it, and writing back what the update read would undo a flush
+        # that landed in between.
+        for key in ("username", "local", "status", "rotate", "last_used_at"):
             out.pop(key, None)
 
         return out
@@ -150,6 +161,37 @@ class S3AccesskeyServicePart(CRUDServicePart[S3AccesskeyEntry]):
         if expires_at is not None and utc_now(naive=False) > expires_at:
             verrors.add(f"{schema_name}.expires_at", "Expiration date is in the past")
 
+    async def _validate_manage_buckets(self, schema_name: str, username: str | None, verrors: ValidationErrors) -> None:
+        """The account must hold the role the flag lets its key spend.
+
+        `manage_buckets` lets a key ask middleware to create and delete
+        buckets, and middleware answers as the account the key belongs
+        to. Setting it for an account without `SHARING_S3_WRITE` builds
+        a key whose every bucket call is refused, so it is refused here
+        instead, where the administrator can read why.
+
+        Roles come from `privilege.roles_for_user`, which resolves group
+        membership through NSS: `user.query` reports an empty role list
+        for every directory services account, so a check against that
+        would pass a key it should refuse. The composed list already
+        expands what a role includes, so an account holding
+        `SHARING_WRITE`, `SHARING_ADMIN` or `FULL_ADMIN` reads as
+        holding this one.
+        """
+        if username is None:
+            verrors.add(
+                f"{schema_name}.manage_buckets",
+                "This access key belongs to an account that no longer exists, so it cannot manage buckets.",
+            )
+            return
+        roles = await self.middleware.call("privilege.roles_for_user", username)
+        if "SHARING_S3_WRITE" not in roles:
+            verrors.add(
+                f"{schema_name}.manage_buckets",
+                f"Account {username!r} does not hold the SHARING_S3_WRITE role, so a key of theirs cannot manage "
+                "buckets. Grant the account a privilege that includes it, or leave manage_buckets off.",
+            )
+
     async def do_create(self, data: S3AccesskeyCreate) -> S3AccesskeyEntry:
         verrors = ValidationErrors()
         await self._validate("s3_accesskey_create", data.name, data.expires_at, verrors)
@@ -162,6 +204,9 @@ class S3AccesskeyServicePart(CRUDServicePart[S3AccesskeyEntry]):
             "datastore.query", self._datastore, [["access_key", "=", data.access_key]]
         ):
             verrors.add("s3_accesskey_create.access_key", "access_key must be unique")
+
+        if data.manage_buckets:
+            await self._validate_manage_buckets("s3_accesskey_create", data.username, verrors)
 
         verrors.check()
 
@@ -189,6 +234,7 @@ class S3AccesskeyServicePart(CRUDServicePart[S3AccesskeyEntry]):
                 "enabled": data.enabled,
                 "expires_at": data.expires_at,
                 "created_at": utc_now(),
+                "manage_buckets": data.manage_buckets,
             }
         )
 
@@ -201,6 +247,13 @@ class S3AccesskeyServicePart(CRUDServicePart[S3AccesskeyEntry]):
 
         verrors = ValidationErrors()
         await self._validate("s3_accesskey_update", new.name, new.expires_at, verrors, id_=id_)
+        # Checked when this call turns it on, not whenever the row holds
+        # it: an account may lose the role afterwards, and re-checking on
+        # every update would fail an unrelated rename for a reason the
+        # caller did not ask about. A stale flag grants nothing on its
+        # own — middleware refuses the bucket call the key makes with it.
+        if "manage_buckets" in data.model_fields_set and new.manage_buckets:
+            await self._validate_manage_buckets("s3_accesskey_update", old.username, verrors)
         verrors.check()
 
         update = new.model_dump(expose_secrets=True, exclude={"id", "created_at"})
@@ -291,3 +344,38 @@ class S3AccesskeyService(GenericCRUDService[S3AccesskeyEntry]):
     @private
     async def delete_for_user(self, user_id: int) -> list[int]:
         return await self._svc_part.delete_for_user(user_id)
+
+    @private
+    async def report_usage(self, used: list[dict[str, Any]]) -> int:
+        """Record when each access key was last used. Returns the number
+        of rows changed.
+
+        **Consumed by the truenas_s3 daemon and by nothing else.** The
+        daemon counts uses in memory and calls this at intervals over the
+        unix socket as root. It is private because no administrator has a
+        reason to report usage, and because it deliberately skips the
+        config render: a timestamp changes no file the daemon reads, so a
+        reload for one would be pure cost.
+
+        Each entry is `{"access_key": str, "last_used": <unix seconds>}`.
+        Seconds rather than a timestamp string: the daemon is the only
+        caller, and an integer needs no agreement about timezones or
+        formats across that boundary. A stored value only moves forward,
+        so a flush that arrives late or repeats after a restart cannot
+        move a key backwards. An access key the table no longer holds is
+        skipped: deleting a key between its use and this call is ordinary.
+        """
+        rows = await self.middleware.call(
+            "datastore.query", self._svc_part._datastore, [], {"select": ["id", "access_key", "last_used"]}
+        )
+        by_key = {row["access_key"]: row for row in rows}
+        changed = 0
+        for entry in used:
+            row = by_key.get(entry["access_key"])
+            if row is None or row["last_used"] >= entry["last_used"]:
+                continue
+            await self.middleware.call(
+                "datastore.update", self._svc_part._datastore, row["id"], {"last_used": entry["last_used"]}
+            )
+            changed += 1
+        return changed
