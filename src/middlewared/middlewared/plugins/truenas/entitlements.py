@@ -1,3 +1,7 @@
+from typing import Any
+
+from truenas_pylicensed import verify
+
 from middlewared.api import api_method
 from middlewared.api.current import (
     EntitlementEntry,
@@ -7,7 +11,7 @@ from middlewared.api.current import (
     TrueNASEntitlementsInfoArgs,
     TrueNASEntitlementsInfoResult,
 )
-from middlewared.service import CallError, Service
+from middlewared.service import CallError, Service, private
 from middlewared.utils.entitlements import (
     POLICY,
     Entitlement,
@@ -16,6 +20,8 @@ from middlewared.utils.entitlements import (
     get_entitlement,
     get_facts,
 )
+from middlewared.utils.hardware import get_hardware_info
+from middlewared.utils.license import describe_legacy_license
 
 
 def _entry(entitlement: Entitlement) -> EntitlementEntry:
@@ -85,3 +91,61 @@ class TrueNASEntitlementsService(Service):
             features[str(key)] = _entry(check_entitlement(key, facts))
 
         return EntitlementsInfo(features=features)
+
+    @private
+    def debug_info(self) -> dict[str, Any]:
+        """Each section degrades to an error rather than raising: the systems this is collected
+        from are the ones whose licensing is already misbehaving."""
+        info: dict[str, Any] = {}
+
+        try:
+            hw = get_hardware_info()
+            info["hardware"] = {
+                "error": None,
+                "platform": hw.platform.value,
+                "hardware_class": hw.hardware_class.value,
+                "chassis": hw.chassis,
+                "ha_platform": hw.ha_platform,
+                "is_ha_capable": hw.is_ha_capable,
+            }
+        except Exception as e:
+            info["hardware"] = {"error": f"{type(e).__name__}: {e}"}
+
+        try:
+            status = verify()
+            info["daemon"] = {
+                "error": None,
+                "valid": status.valid,
+                "code": status.code.name,
+                "message": status.error,
+                "test": status.test,
+                "reload_seq": status.reload_seq,
+                "version": status.version,
+                "issued_at": status.issued_at,
+            }
+        except Exception as e:
+            info["daemon"] = {"error": f"{type(e).__name__}: {e}"}
+
+        try:
+            facts = get_facts()
+            decisions: dict[str, Any] = {"error": None}
+            for key in POLICY:
+                entitlement = check_entitlement(key, facts)
+                decisions[str(key)] = {
+                    "entitled": entitlement.entitled,
+                    "reason": str(entitlement.reason),
+                    # `_entry` withholds this from the public API.
+                    "column": entitlement.column,
+                    "message": entitlement.message,
+                }
+
+            info["decisions"] = decisions
+        except Exception as e:
+            info["decisions"] = {"error": f"{type(e).__name__}: {e}"}
+
+        try:
+            info["legacy"] = describe_legacy_license()
+        except Exception as e:
+            info["legacy"] = {"error": f"{type(e).__name__}: {e}"}
+
+        return info
