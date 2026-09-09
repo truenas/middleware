@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from datetime import timedelta
 from typing import Any
 
+from middlewared.alert.applicability import EXPECTED_TO_BE_LICENSED
 from middlewared.alert.base import (
     Alert,
     AlertCategory,
@@ -9,7 +10,6 @@ from middlewared.alert.base import (
     AlertClassConfig,
     AlertLevel,
     AlertSource,
-    ProductType,
 )
 from middlewared.alert.schedule import IntervalSchedule
 
@@ -30,7 +30,7 @@ class FIPSMisconfigurationAlert(AlertClass):
 class FIPSProviderAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(hours=1))
 
-    products = (ProductType.ENTERPRISE,)
+    applies_to = EXPECTED_TO_BE_LICENSED
     run_on_backup_node = False
 
     async def check(self) -> list[Alert[Any]] | Alert[Any] | None:

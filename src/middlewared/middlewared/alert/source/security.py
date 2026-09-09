@@ -11,7 +11,7 @@ from middlewared.alert.base import (
     OneShotAlertClass,
 )
 from middlewared.alert.schedule import CrontabSchedule
-from middlewared.utils import ProductType, security
+from middlewared.utils import security
 
 
 @dataclass(kw_only=True)
@@ -65,7 +65,7 @@ class AllAdminAccountsExpiredAlert(OneShotAlertClass):
 class SecurityLocalUserAccountExpirationAlertSource(AlertSource):
     schedule = CrontabSchedule(hour=0)
     run_on_backup_node = False
-    products = (ProductType.ENTERPRISE,)
+    applies_to = None  # deliberately unconstrained: narrowing it would silence the admin-lockout recovery
 
     async def check(self) -> list[Alert[Any]]:
         sec = await self.middleware.call2(self.middleware.services.system.security.config)

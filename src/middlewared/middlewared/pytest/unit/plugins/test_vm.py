@@ -1,13 +1,12 @@
-import logging
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.api.current import VMCreate, VMFlags
-from middlewared.plugins.vm.info import license_active
+from middlewared.pytest.unit.entitlements import install_entitlements_for_column
 from middlewared.pytest.unit.helpers import load_compound_service
 from middlewared.pytest.unit.middleware import Middleware
-from middlewared.service.context import ServiceContext
 from middlewared.service_exception import ValidationErrors
 
 VMService = load_compound_service('vm')
@@ -43,29 +42,13 @@ VM_PAYLOAD = {
 VM_FLAGS = VMFlags(intel_vmx=True, unrestricted_guest=True, amd_rvi=False, amd_asids=False)
 
 
-@pytest.mark.parametrize('ha_capable,feature_enabled,should_work', [
-    (True, False, False),
-    (True, True, True),
-    (False, False, True),
-])
+@pytest.mark.parametrize('column,is_licensed', [('HW+K', True), ('CE+L', False)])
 @pytest.mark.asyncio
-async def test_vm_license_active_response(ha_capable, feature_enabled, should_work):
-    m = Middleware()
-    m['system.is_ha_capable'] = lambda *args: ha_capable
-    m['system.feature_enabled'] = lambda *args: feature_enabled
-
-    context = ServiceContext(m, logging.getLogger('test'))
-    assert await license_active(context) is should_work
-
-
-@pytest.mark.parametrize('is_licensed', [True, False])
-@pytest.mark.asyncio
-async def test_vm_creation_for_licensed_and_unlicensed_systems(is_licensed):
+async def test_vm_creation_for_licensed_and_unlicensed_systems(column, is_licensed):
     m = Middleware()
     vm_svc = VMService(m)
 
-    m['system.is_ha_capable'] = lambda *args: True
-    m['system.feature_enabled'] = lambda *args: is_licensed
+    install_entitlements_for_column(m, LicenseFeature.VMS, column)
     m['datastore.query'] = lambda *args, **kwargs: []
 
     with patch('middlewared.plugins.vm.crud.vm_flags', new=MagicMock(return_value=VM_FLAGS)):
@@ -91,7 +74,7 @@ async def test_vm_secure_boot_ovmf_validation(enable_secure_boot, bootloader_ovm
     m = Middleware()
     vm_svc = VMService(m)
 
-    m['system.is_ha_capable'] = lambda *args: False
+    install_entitlements_for_column(m, LicenseFeature.VMS, 'CE')
     m['datastore.query'] = lambda *args, **kwargs: []
     m['etc.generate'] = lambda *args: None
 

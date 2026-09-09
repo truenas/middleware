@@ -6,6 +6,7 @@ import builtins
 import typing
 from typing import Any
 
+from middlewared.alert.applicability import Applicability
 from middlewared.alert.base import AlertSource, OneShotAlertClass
 import middlewared.alert.source  # noqa: F401
 from middlewared.api import Event, api_method
@@ -201,13 +202,21 @@ class AlertService(Service):
         return await queries.node_map(self.context)
 
     @private
-    async def product_type(self) -> str:
-        return await queries.get_product_type(self.context)
+    async def applicability(self) -> Applicability:
+        return await runtime.get_applicability(self.context, self._state)
+
+    @private
+    async def invalidate_applicability(self) -> None:
+        await runtime.invalidate_applicability(self._state)
 
 
 async def _event_system(middleware: Middleware, event_type: str, args: dict[str, Any]) -> None:
     if middleware.services.alert._state.send_alerts_on_ready:
         await middleware.call2(middleware.services.alert.send_alerts)
+
+
+async def _post_license_update(middleware: Middleware, *args: Any, **kwargs: Any) -> None:
+    await middleware.call2(middleware.services.alert.invalidate_applicability)
 
 
 async def setup(middleware: Middleware) -> None:
@@ -216,3 +225,4 @@ async def setup(middleware: Middleware) -> None:
     await middleware.call2(middleware.services.alert.initialize)
 
     middleware.event_subscribe("system.ready", _event_system)
+    middleware.register_hook("system.post_license_update", _post_license_update)

@@ -5,8 +5,10 @@ from __future__ import annotations
 from unittest.mock import patch
 
 import pytest
+from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.api.current import VMCreate, VMFlags
+from middlewared.pytest.unit.entitlements import install_entitlements_for_column
 from middlewared.pytest.unit.helpers import load_compound_service
 from middlewared.pytest.unit.middleware import Middleware
 from middlewared.service_exception import ValidationErrors
@@ -54,7 +56,7 @@ _AARCH64_BASE = {
 
 def _make_svc():
     m = Middleware()
-    m["system.is_ha_capable"] = lambda *args: False
+    install_entitlements_for_column(m, LicenseFeature.VMS, "CE")
     m["datastore.query"] = lambda *args, **kwargs: []
     return VMService(m)
 

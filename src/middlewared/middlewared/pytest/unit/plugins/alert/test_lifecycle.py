@@ -85,7 +85,7 @@ def alert_row(**changes):
 @asynccontextmanager
 async def lifecycle_test(**mocked_calls):
     calls = {
-        "system.is_enterprise": AsyncMock(return_value=False),
+        "system.is_ha_capable": AsyncMock(return_value=False),
         "failover.node": AsyncMock(return_value="A"),
         "failover.licensed": AsyncMock(return_value=False),
         "failover.status": AsyncMock(return_value="MASTER"),
@@ -261,9 +261,9 @@ async def test_initialize_without_load_discards_the_stored_alerts():
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("node", ["A", "B"])
-async def test_initialize_takes_the_node_from_failover_on_enterprise(node):
+async def test_initialize_takes_the_node_from_failover_on_ha_capable_hardware(node):
     async with lifecycle_test(
-        **{"system.is_enterprise": AsyncMock(return_value=True), "failover.node": AsyncMock(return_value=node)}
+        **{"system.is_ha_capable": AsyncMock(return_value=True), "failover.node": AsyncMock(return_value=node)}
     ) as t:
         t.state.node = "this will be overwritten"
 
@@ -273,7 +273,7 @@ async def test_initialize_takes_the_node_from_failover_on_enterprise(node):
 
 
 @pytest.mark.asyncio
-async def test_initialize_does_not_ask_failover_for_the_node_on_community_edition():
+async def test_initialize_does_not_ask_failover_for_the_node_when_not_ha_capable():
     async with lifecycle_test() as t:
         t.state.node = "B"
 

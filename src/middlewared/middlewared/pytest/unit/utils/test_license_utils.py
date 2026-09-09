@@ -1,0 +1,110 @@
+from datetime import date
+
+import pytest
+from truenas_pylicensed import FeatureEntry, LicenseError, LicenseStatus, LicenseType
+
+from middlewared.utils.license import FeatureInfo, LicenseInfo, from_license_status
+
+
+def _make_status(features: dict[str, FeatureEntry]) -> LicenseStatus:
+    return LicenseStatus(
+        valid=True,
+        code=LicenseError.OK,
+        id="test-id",
+        version=1,
+        type=LicenseType.ENTERPRISE_HA,
+        model="H10",
+        features=features,
+        system_id={"serials": ["TEST-000001", "TEST-000002"]},
+        enclosures={"E24": {"count": 3}},
+    )
+
+
+def _license(**overrides) -> LicenseInfo:
+    fields: dict = {
+        "id": "test-id",
+        "type": LicenseType.ENTERPRISE_HA,
+        "model": "H10",
+        "support_expires_at": None,
+        "features": {},
+        "serials": (),
+        "enclosures": {},
+        "contract_type": None,
+    }
+    fields.update(overrides)
+    return LicenseInfo(**fields)
+
+
+def test__from_license_status__renames_vm_to_vms():
+    status = _make_status(
+        {
+            "VM": FeatureEntry(name="VM", source="enterprise", start_date="2026-04-08", expires_at="2026-04-30"),
+            "SUPPORT": FeatureEntry(
+                name="SUPPORT",
+                source="enterprise",
+                start_date="2026-04-08",
+                expires_at="2026-04-30",
+                type="GOLD",
+            ),
+        }
+    )
+
+    info = from_license_status(status)
+
+    assert info == LicenseInfo(
+        id="test-id",
+        type=LicenseType.ENTERPRISE_HA,
+        model="H10",
+        support_expires_at=date(2026, 4, 30),
+        features={
+            "VMS": FeatureInfo(
+                name="VMS",
+                start_date=date(2026, 4, 8),
+                expires_at=date(2026, 4, 30),
+                source="enterprise",
+            ),
+            "SUPPORT": FeatureInfo(
+                name="SUPPORT",
+                start_date=date(2026, 4, 8),
+                expires_at=date(2026, 4, 30),
+                source="enterprise",
+                type="GOLD",
+            ),
+        },
+        serials=("TEST-000001", "TEST-000002"),
+        enclosures={"E24": 3},
+        contract_type="GOLD",
+    )
+
+
+@pytest.mark.parametrize(
+    "status",
+    [
+        LicenseStatus(valid=False, code=LicenseError.NO_LICENSE),
+        LicenseStatus(valid=False, code=LicenseError.DAEMON_UNAVAILABLE),
+    ],
+)
+def test__from_license_status__returns_none_for_invalid_license(status):
+    assert from_license_status(status) is None
+
+
+def test__from_license_status__no_support_feature_leaves_support_expiry_unset():
+    info = from_license_status(_make_status({"DEDUP": FeatureEntry(name="DEDUP", source="enterprise")}))
+
+    assert info is not None
+    assert info.support_expires_at is None
+
+
+@pytest.mark.parametrize(
+    "support_expires_at,today,expected",
+    [
+        (None, date(2026, 5, 1), False),
+        (date(2026, 4, 30), date(2026, 5, 1), True),
+        # In force through the end date.
+        (date(2026, 4, 30), date(2026, 4, 30), False),
+    ],
+)
+def test__license_info_support_lapsed(support_expires_at, today, expected):
+    info = _license(support_expires_at=support_expires_at)
+
+    assert info.support_lapsed(today=today) is expected

@@ -3,9 +3,11 @@ from unittest.mock import patch
 
 from pydantic import ValidationError as PydanticValidationError
 import pytest
+from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.api.current import DockerEntry, DockerRegistryMirror, DockerUpdate
 from middlewared.plugins.docker.config import DockerConfigServicePart
+from middlewared.pytest.unit.entitlements import install_entitlements_for_column
 from middlewared.pytest.unit.middleware import Middleware
 from middlewared.service.context import ServiceContext
 from middlewared.service_exception import ValidationErrors
@@ -51,7 +53,7 @@ DEFAULTS = dict(id=1, enable_image_updates=True, nvidia=False, cidr_v6='fdd0::/6
 async def test_docker_registry_mirrors_validation(new_mirrors, old_mirrors, error_msgs):
     m = Middleware()
     m['interface.ip_in_use'] = lambda *arg: []
-    m['system.is_ha_capable'] = lambda *arg: False
+    install_entitlements_for_column(m, LicenseFeature.APPS, 'CE')
     svc_part = make_svc_part(m)
 
     new_config = DockerEntry.model_construct(

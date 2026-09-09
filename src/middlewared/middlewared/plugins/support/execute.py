@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Any
 
 import aiohttp
 import requests
+from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.api.current import (
     SupportAttachTicket,
@@ -77,7 +78,8 @@ async def new_ticket(
 
     job.set_progress(1, "Gathering data")
 
-    sw_name = "freenas" if not await context.middleware.call("system.is_enterprise") else "truenas"
+    entitled = (await context.call2(context.s.truenas.entitlements.check, LicenseFeature.SUPPORT)).entitled
+    sw_name = "truenas" if entitled else "freenas"
 
     payload = data.model_dump(expose_secrets=True)
 
@@ -208,7 +210,8 @@ async def new_ticket(
 def attach_ticket(context: ServiceContext, job: Job, data: SupportAttachTicket) -> None:
     context.middleware.call_sync("network.general.will_perform_activity", "support")
 
-    sw_name = "freenas" if not context.middleware.call_sync("system.is_enterprise") else "truenas"
+    entitled = context.call_sync2(context.s.truenas.entitlements.check, LicenseFeature.SUPPORT).entitled
+    sw_name = "truenas" if entitled else "freenas"
 
     payload = data.model_dump(expose_secrets=True)
     payload["ticketnum"] = payload.pop("ticket")

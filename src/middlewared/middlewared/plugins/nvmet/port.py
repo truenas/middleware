@@ -13,7 +13,6 @@ from middlewared.api.current import (
     NVMetPortUpdateArgs,
     NVMetPortUpdateResult,
 )
-from middlewared.plugins.rdma.constants import RDMAprotocols
 from middlewared.service import CRUDService, private
 from middlewared.service_exception import MatchNotFound, ValidationErrors
 import middlewared.sqlalchemy as sa
@@ -315,8 +314,7 @@ class NVMetPortService(CRUDService):
                                     f'Cannot change {key} on an active port.  Disable first to allow change.')
 
         if data.get('addr_trtype') == 'RDMA':
-            available_rdma_protocols = await self.middleware.call('rdma.capable_protocols')
-            if RDMAprotocols.NVMET.value not in available_rdma_protocols:
+            if not await self.middleware.call('nvmet.global.rdma_capable'):
                 verrors.add(f'{schema_name}.addr_trtype',
                             "This platform cannot support NVMe-oF(RDMA) or is missing an RDMA capable NIC.")
 
@@ -352,9 +350,7 @@ class NVMetPortService(CRUDService):
                                 choices[alias['address']] = alias['address']
 
             case PORT_TRTYPE.RDMA.api:
-                if not (await self.middleware.call('nvmet.global.config'))['rdma']:
-                    return choices
-                if RDMAprotocols.NVMET.value not in await self.middleware.call('rdma.capable_protocols'):
+                if not await self.middleware.call('nvmet.global.rdma_enabled'):
                     return choices
                 rdma_netdevs = [link['netdev'] for link in await self.middleware.call('rdma.get_link_choices', True)]
                 vlans = await self.middleware.call(

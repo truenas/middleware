@@ -1,4 +1,4 @@
-from truenas_pydmi.models import TRUENAS_UNKNOWN
+from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.api.current import ZFSResourceQuery
 from middlewared.plugins.zfs.utils import get_encryption_info
@@ -9,16 +9,9 @@ from middlewared.utils.zfs import query_imported_fast_impl
 
 async def license_active(context: ServiceContext) -> bool:
     """
-    If this is iX enterprise hardware and has NOT been licensed to run containers
-    then this will return False, otherwise this will return true.
+    Returns whether this system is entitled to run containers.
     """
-    system_chassis = await context.call2(context.s.truenas.get_chassis_hardware)
-    if system_chassis == TRUENAS_UNKNOWN or 'MINI' in system_chassis:
-        # 1. if it's not iX branded hardware
-        # 2. OR if it's a MINI, then allow containers/vms
-        return True
-
-    return await context.middleware.call('system.feature_enabled', 'APPS')  # type: ignore[no-any-return]
+    return (await context.call2(context.s.truenas.entitlements.check, LicenseFeature.CONTAINERS)).entitled
 
 
 async def pool_choices(context: ServiceContext) -> dict[str, str]:

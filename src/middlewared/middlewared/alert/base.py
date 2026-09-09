@@ -6,13 +6,14 @@ from datetime import datetime, timedelta
 import enum
 import json
 import logging
-from typing import TYPE_CHECKING, Any, Self, TypeAlias
+from typing import TYPE_CHECKING, Any, ClassVar, Self, TypeAlias
 
 import html2text
 
+from middlewared.alert.applicability.engine import Rule
 from middlewared.alert.schedule import BaseSchedule, CrontabSchedule, IntervalSchedule
 from middlewared.api.current import MailSendMessage
-from middlewared.utils import ProductName, ProductType
+from middlewared.utils import ProductName
 from middlewared.utils.service.call_mixin import CallMixin
 
 if TYPE_CHECKING:
@@ -22,7 +23,7 @@ __all__ = [
     "UnavailableException", "AlertClassConfig", "AlertClass", "NonDataclassAlertClass", "OneShotAlertClass",
     "DismissableAlertClass", "AlertCategory", "AlertLevel", "Alert", "AlertSource", "ThreadedAlertSource",
     "AlertService", "ThreadedAlertService", "ProThreadedAlertService", "format_alerts", "ellipsis",
-    "alert_category_names", "CrontabSchedule", "IntervalSchedule", "ProductType",
+    "alert_category_names", "CrontabSchedule", "IntervalSchedule",
 ]
 
 logger = logging.getLogger(__name__)
@@ -49,7 +50,12 @@ class AlertClassConfig:
         want to hide some rare legacy hardware-specific alert. It will still be sent if it occurs, but users won't be
         able to disable it or change its level.
 
-    :param products: A list of `system.product_type` return values on which alerts of this class can be emitted.
+    :param applies_to: a population from `middlewared.alert.applicability.vocabulary` naming the systems this alert
+        class is meaningful on, or `None` for all of them. It governs running the source, displaying the alert,
+        sending it, and listing the class.
+
+    :param listed_only_when: a population narrowing `applies_to` further, applied *only* in `alert.list_categories`. An
+        alert class excluded by it is still displayed and still sent; it is only hidden from the settings catalogue.
 
     :param proactive_support: Set this to `true` if, upon creation of the alert, a support ticket should be open for
         the systems that have a corresponding support license.
@@ -76,7 +82,8 @@ class AlertClassConfig:
     title: str
     text: str | None = None
     exclude_from_list: bool = False
-    products: tuple[str, ...] = (ProductType.COMMUNITY_EDITION, ProductType.ENTERPRISE)
+    applies_to: Rule | None = None
+    listed_only_when: Rule | None = None
     proactive_support: bool = False
     proactive_support_notify_gone: bool = False
     deleted_automatically: bool = True
@@ -369,10 +376,12 @@ class AlertSource(CallMixin, ABC):
     :cvar schedule: `BaseSchedule` instance that will be used to determine whether this alert source should be ran at
         any given moment. By default, alert checkers are ran every minute.
 
-    :cvar products: A list of `system.product_type` return values for which this source will be ran.
+    :cvar applies_to: a population from `middlewared.alert.applicability.vocabulary` naming the systems this source is
+        meaningful on, or `None` for all of them. The source is not ran where it does not apply.
 
-    :cvar failover_related: should be `true` if this alert is HA failover related. Failover-related alerts are not ran
-        within a specific time interval after failover to prevent false positives.
+    :cvar post_failover_blackout: set this to `true` if this source's answer is unreliable for a while after a
+        failover. Such a source is not ran until the blackout window following the last failover event has passed,
+        which prevents false positives from a system still settling.
 
     :cvar run_on_backup_node: set this to `false` to prevent running this alert on HA `BACKUP` node.
     """
@@ -381,8 +390,8 @@ class AlertSource(CallMixin, ABC):
 
     schedule: BaseSchedule = IntervalSchedule(timedelta())
 
-    products: tuple[str, ...] = (ProductType.COMMUNITY_EDITION, ProductType.ENTERPRISE)
-    failover_related = False
+    applies_to: ClassVar[Rule | None] = None
+    post_failover_blackout = False
     run_on_backup_node = True
     require_stable_peer = False
 
@@ -472,7 +481,7 @@ class AlertService(CallMixin, ABC):
         new_alerts: list[Alert[Any]],
     ) -> str:
         hostname = await self.middleware.call("system.hostname")
-        if await self.middleware.call("system.is_enterprise"):
+        if await self.middleware.call("system.is_ha_capable"):
             node_map = await self.call2(self.s.alert.node_map)
         else:
             node_map = None
@@ -510,7 +519,7 @@ class ThreadedAlertService(AlertService):
         new_alerts: list[Alert[Any]],
     ) -> str:
         hostname = self.middleware.call_sync("system.hostname")
-        if self.middleware.call_sync("system.is_enterprise"):
+        if self.middleware.call_sync("system.is_ha_capable"):
             node_map = self.call_sync2(self.s.alert.node_map)
         else:
             node_map = None

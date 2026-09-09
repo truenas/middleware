@@ -2,9 +2,11 @@ import logging
 from unittest.mock import patch
 
 import pytest
+from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.api.current import DockerEntry
 from middlewared.plugins.docker.config import DockerConfigServicePart
+from middlewared.pytest.unit.entitlements import install_entitlements_for_column
 from middlewared.pytest.unit.middleware import Middleware
 from middlewared.service.context import ServiceContext
 from middlewared.service_exception import ValidationErrors
@@ -300,7 +302,7 @@ async def test_docker_update_validation(system_state, new_config, old_config, mi
     m['interface.ip_in_use'] = lambda *arg: []
     m['datastore.query'] = lambda *arg: system_state['available_keys']
     m.services.zfs.resource.query_impl = mock_zfs_resource_query_impl(system_state)
-    m['system.is_ha_capable'] = lambda *arg: False
+    install_entitlements_for_column(m, LicenseFeature.APPS, 'CE')
     svc_part = make_svc_part(m)
     with patch('middlewared.plugins.docker.config.query_imported_fast_impl') as run:
         run.return_value = system_state['import_query_pool']

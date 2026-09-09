@@ -30,6 +30,7 @@ from middlewared.api.current import (
 )
 from middlewared.plugins.system.utils import DEBUG_MAX_SIZE
 from middlewared.service import GenericConfigService, job
+from middlewared.utils.entitlements import DerivedEntitlement
 
 from .config import SupportConfigServicePart
 from .execute import attach_ticket, new_ticket, similar_issues
@@ -62,15 +63,12 @@ class SupportService(GenericConfigService[SupportEntry]):
     @api_method(SupportIsAvailableArgs, SupportIsAvailableResult, roles=["SUPPORT_READ"], check_annotations=True)
     async def is_available(self) -> bool:
         """
-        Returns whether Proactive Support is available for this product type and current license.
+        Returns whether Proactive Support is available for the current license.
         """
         if await self.call2(self.s.system.vendor.name):
             return False
 
-        if not await self.middleware.call("system.is_enterprise"):
-            return False
-
-        return bool(await self.middleware.call("system.feature_enabled", "SUPPORT"))
+        return (await self.call2(self.s.truenas.entitlements.check, DerivedEntitlement.PROACTIVE_SUPPORT)).entitled
 
     @api_method(
         SupportIsAvailableAndEnabledArgs,

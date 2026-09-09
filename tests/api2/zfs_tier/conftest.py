@@ -3,7 +3,7 @@
 The pool fixture uses a 3-wide RAIDZ1 data vdev plus a 3-wide RAIDZ1 SPECIAL
 vdev (6 disks total). All tier tests require:
 
-  - An Enterprise license (zfs.tier.update is license-gated).
+  - The ZFSTIER entitlement (zfs.tier.update refuses to run without it).
   - At least 6 unused disks on the target VM.
 """
 
@@ -25,11 +25,17 @@ SLOW_REWRITE_SENTINEL = "/var/run/truenas_zfstierd/slow_rewrite"
 SLOW_REWRITE_DELAY_MS = 100
 
 
+@pytest.fixture(scope="session")
+def zfstier_entitlement():
+    """The ZFSTIER entitlement exactly as `zfs.tier.update` computes it."""
+    return call("truenas.entitlements.check", "ZFSTIER")
+
+
 @pytest.fixture(scope="module")
-def tier_pool():
+def tier_pool(zfstier_entitlement):
     """A pool with a SPECIAL vdev, with tiering globally enabled."""
-    if not call("system.is_enterprise"):
-        pytest.skip("ZFS tiering requires an Enterprise license")
+    if not zfstier_entitlement["entitled"]:
+        pytest.skip(zfstier_entitlement["message"])
 
     unused = call("disk.get_unused")
     if len(unused) < 6:

@@ -9,11 +9,14 @@ import uuid
 
 import html2text
 from truenas_api_client.exc import ReserveFDException
+from truenas_pylicensed.features import LicenseFeature
 
+from middlewared.alert.applicability import Applicability, class_rule_name, source_rule_name
 from middlewared.alert.base import (
     Alert,
     AlertClass,
     AlertLevel,
+    AlertSource,
     OneShotAlertClass,
     UnavailableException,
 )
@@ -24,6 +27,7 @@ from middlewared.api.current import SupportNewTicketEnterprise
 from middlewared.plugins.failover_.remote import NETWORK_ERRORS
 from middlewared.service import ServiceContext
 from middlewared.service_exception import CallError, NetworkActivityDisabled
+from middlewared.utils.entitlements import get_facts
 from middlewared.utils.time_utils import utc_now
 
 from .alert_classes import (
@@ -31,8 +35,37 @@ from .alert_classes import (
     AlertSourceRunFailedOnBackupNodeAlert,
     AutomaticAlertFailedAlert,
 )
-from .serialize import AlertClasses, AlertSerializer, get_alert_level, get_alert_policy
+from .serialize import AlertClasses, AlertSerializer, get_alert_level, get_alert_policy, partition
 from .state import FAILOVER_ALERTS_BACKOFF_SECS, AlertFailoverInfo, AlertState
+
+# Source/class pairs already reported as disagreeing. Logged once per pair, since a declaration
+# cannot change while the process lives.
+_REPORTED_INAPPLICABLE_CLASSES: set[tuple[str, str]] = set()
+
+
+async def get_applicability(context: ServiceContext, state: AlertState) -> Applicability:
+    """Every applicability answer for this system, from one reading of the facts.
+
+    The single owner of that reading. Held across calls so that a run and the send that follows
+    it -- separate jobs -- cannot disagree within one cycle; dropped on
+    ``system.post_license_update``.
+
+    A `None` license is never held: ``get_license`` returns `None` both for an unlicensed system
+    and for one whose license daemon did not answer, so caching it would strand a licensed system
+    on a single failed read until its next upload or reboot.
+    """
+    if state.applicability is not None:
+        return state.applicability
+
+    applicability = Applicability(await context.to_thread(get_facts))
+    if applicability.facts.license is not None:
+        state.applicability = applicability
+
+    return applicability
+
+
+async def invalidate_applicability(state: AlertState) -> None:
+    state.applicability = None
 
 
 async def process_alerts(context: ServiceContext, state: AlertState) -> None:
@@ -56,26 +89,26 @@ async def send_alerts(context: ServiceContext, state: AlertState) -> None:
         state.send_alerts_on_ready = True
         return
 
-    product_type: str = await context.call2(context.s.alert.product_type)
+    applicability: Applicability = await context.call2(context.s.alert.applicability)
     classes: AlertClasses = (await context.call2(context.s.alertclasses.config)).classes
 
     now = utc_now()
     for policy_name, policy in state.policies.items():
         gone_alerts, new_alerts = policy.receive_alerts(now, state.alerts)
 
-        await _dispatch_policy_to_services(context, state, policy_name, product_type, classes, gone_alerts, new_alerts)
+        await _dispatch_policy_to_services(context, state, policy_name, applicability, classes, gone_alerts, new_alerts)
 
         if policy_name == "IMMEDIATELY":
-            await _handle_immediate_policy(context, gone_alerts, new_alerts)
+            await _handle_immediate_policy(context, applicability, gone_alerts, new_alerts)
 
 
 def _visible_service_alerts(
-    alerts: list[Alert[Any]], product_type: str, classes: AlertClasses, service_level: AlertLevel
+    alerts: list[Alert[Any]], applicability: Applicability, classes: AlertClasses, service_level: AlertLevel
 ) -> list[Alert[Any]]:
-    """Alerts for the running product, at or above `service_level`, whose policy is not ``NEVER``."""
+    """Alerts that apply to this system, at or above `service_level`, whose policy is not ``NEVER``."""
     result: list[Alert[Any]] = []
     for alert in alerts:
-        if product_type not in alert.instance.config.products:
+        if not applicability.class_applies(type(alert.instance)):
             continue
         if get_alert_level(alert, classes).value < service_level.value:
             continue
@@ -88,12 +121,16 @@ def _visible_service_alerts(
 
 
 def _policy_alerts(
-    alerts: list[Alert[Any]], product_type: str, classes: AlertClasses, service_level: AlertLevel, policy_name: str
+    alerts: list[Alert[Any]],
+    applicability: Applicability,
+    classes: AlertClasses,
+    service_level: AlertLevel,
+    policy_name: str,
 ) -> list[Alert[Any]]:
-    """Alerts for the running product, at or above `service_level`, whose policy is exactly `policy_name`."""
+    """Alerts that apply to this system, at or above `service_level`, whose policy is exactly `policy_name`."""
     result: list[Alert[Any]] = []
     for alert in alerts:
-        if product_type not in alert.instance.config.products:
+        if not applicability.class_applies(type(alert.instance)):
             continue
         if get_alert_level(alert, classes).value < service_level.value:
             continue
@@ -128,7 +165,7 @@ async def _dispatch_policy_to_services(
     context: ServiceContext,
     state: AlertState,
     policy_name: str,
-    product_type: str,
+    applicability: Applicability,
     classes: AlertClasses,
     gone_alerts: list[Alert[Any]],
     new_alerts: list[Alert[Any]],
@@ -136,9 +173,9 @@ async def _dispatch_policy_to_services(
     for alert_service_desc in await context.call2(context.s.alertservice.query, [["enabled", "=", True]]):
         service_level = AlertLevel[alert_service_desc.level]
 
-        service_alerts = _visible_service_alerts(state.alerts, product_type, classes, service_level)
-        service_gone_alerts = _policy_alerts(gone_alerts, product_type, classes, service_level, policy_name)
-        service_new_alerts = _policy_alerts(new_alerts, product_type, classes, service_level, policy_name)
+        service_alerts = _visible_service_alerts(state.alerts, applicability, classes, service_level)
+        service_gone_alerts = _policy_alerts(gone_alerts, applicability, classes, service_level, policy_name)
+        service_new_alerts = _policy_alerts(new_alerts, applicability, classes, service_level, policy_name)
 
         _remove_matching_pairs(service_gone_alerts, service_new_alerts)
 
@@ -167,14 +204,17 @@ async def _dispatch_policy_to_services(
 
 
 async def _handle_immediate_policy(
-    context: ServiceContext, gone_alerts: list[Alert[Any]], new_alerts: list[Alert[Any]]
+    context: ServiceContext,
+    applicability: Applicability,
+    gone_alerts: list[Alert[Any]],
+    new_alerts: list[Alert[Any]],
 ) -> None:
-    as_ = AlertSerializer(context)
+    as_ = AlertSerializer(context, applicability)
 
     await _emit_alert_events(context, as_, gone_alerts, new_alerts)
     await _send_alert_mail(context, new_alerts)
 
-    if await context.middleware.call("system.is_enterprise"):
+    if (await context.call2(context.s.truenas.entitlements.check, LicenseFeature.SUPPORT)).entitled:
         await _maybe_open_proactive_support_ticket(context, as_, gone_alerts, new_alerts)
 
 
@@ -285,13 +325,14 @@ async def should_run_or_send_alerts(context: ServiceContext) -> bool:
 async def get_failover_info(context: ServiceContext, state: AlertState) -> AlertFailoverInfo:
     this_node, other_node = "A", "B"
     run_on_backup_node = False
-    run_failover_related = await context.middleware.call("failover.licensed")
-    if run_failover_related:
+
+    past_failover_blackout = time.monotonic() > state.blocked_failover_alerts_until
+
+    if await context.middleware.call("failover.licensed"):
         if await context.middleware.call("failover.node") != "A":
             this_node, other_node = "B", "A"
 
-        run_failover_related = time.monotonic() > state.blocked_failover_alerts_until
-        if run_failover_related:
+        if past_failover_blackout:
             args: tuple[list[Any], dict[str, Any]] = ([], {"timeout": 2, "connect_timeout": 2})
 
             # Do not run on backup if there is a software version mismatch
@@ -333,8 +374,25 @@ async def get_failover_info(context: ServiceContext, state: AlertState) -> Alert
         this_node=this_node,
         other_node=other_node,
         run_on_backup_node=run_on_backup_node,
-        run_failover_related=run_failover_related,
+        past_failover_blackout=past_failover_blackout,
     )
+
+
+def source_run_gates_pass(source: type[AlertSource], fi: AlertFailoverInfo) -> bool:
+    """Whether the failover-related gates let `source` run this tick.
+
+    `post_failover_blackout` is a time window: a source whose answer is unreliable right after a
+    failover stays quiet until the window closes, whatever the license says. `require_stable_peer`
+    asks whether a peer was found in a state worth talking to, so it is only ever satisfied where
+    there is a peer.
+    """
+    if source.post_failover_blackout and not fi.past_failover_blackout:
+        return False
+
+    if source.require_stable_peer and not fi.run_on_backup_node:
+        return False
+
+    return True
 
 
 async def handle_locked_alert_source(
@@ -387,20 +445,31 @@ async def run_other_node_alert_source(context: ServiceContext, name: str) -> lis
 
 
 async def run_alerts(context: ServiceContext, state: AlertState) -> None:
-    product_type: str = await context.call2(context.s.alert.product_type)
+    applicability: Applicability = await context.call2(context.s.alert.applicability)
     fi = await get_failover_info(context, state)
     for k, source_lock in list(state.sources_locks.items()):
         if source_lock.expires_at <= time.monotonic():
             await context.call2(context.s.alert.unblock_source, k)
 
+    excluded = {
+        alert_source.name
+        for alert_source in state.alert_sources.values()
+        if not applicability.source_runs(type(alert_source))
+    }
+    if excluded:
+        # Drop what an excluded source persisted from the policies too, or a policy that still
+        # remembers one reports it as gone and an alert service announces a resolution that
+        # never happened.
+        dropped, state.alerts = partition(lambda alert: alert.source in excluded, state.alerts)
+        for dropped_alert in dropped:
+            for policy in state.policies.values():
+                policy.delete_alert(dropped_alert)
+
     for alert_source in state.alert_sources.values():
-        if product_type not in alert_source.products:
+        if alert_source.name in excluded:
             continue
 
-        if alert_source.failover_related and not fi.run_failover_related:
-            continue
-
-        if alert_source.require_stable_peer and not fi.run_on_backup_node:
+        if not source_run_gates_pass(type(alert_source), fi):
             continue
 
         if not alert_source.schedule.should_run(utc_now(), state.alert_source_last_run[alert_source.name]):
@@ -424,15 +493,30 @@ async def run_alerts(context: ServiceContext, state: AlertState) -> None:
         for talert, oalert in zip_longest(this_node_alerts, other_node_alerts, fillvalue=None):
             if talert is not None:
                 talert.node = fi.this_node
-                handle_alert(state, talert)
+                handle_alert(context, state, talert, applicability)
             if oalert is not None:
                 oalert.node = fi.other_node
-                handle_alert(state, oalert)
+                handle_alert(context, state, oalert, applicability)
 
         state.alerts = [a for a in state.alerts if a.source != alert_source.name] + this_node_alerts + other_node_alerts
 
 
-def handle_alert(state: AlertState, alert: Alert[Any]) -> None:
+def handle_alert(context: ServiceContext, state: AlertState, alert: Alert[Any], applicability: Applicability) -> None:
+    if not applicability.class_applies(type(alert.instance)):
+        key = (alert.source or "", alert.instance.config.name)
+        if key not in _REPORTED_INAPPLICABLE_CLASSES:
+            _REPORTED_INAPPLICABLE_CLASSES.add(key)
+            source = state.alert_sources.get(alert.source)
+            context.logger.error(
+                "%s: produced a %r alert, but that class does not apply to this system. The "
+                "alert will be stored and never shown. The source applies to %s, the class to "
+                "%s.",
+                alert.source or "alert.oneshot_create",
+                alert.instance.config.name,
+                source_rule_name(type(source)) if source is not None else "no source rule",
+                class_rule_name(type(alert.instance)),
+            )
+
     existing_alert: Alert[Any] | None = None
     for a in state.alerts:
         if (a.node, a.source, a.instance.config.name, a.key) == (
@@ -522,8 +606,8 @@ async def run_source(context: ServiceContext, state: AlertState, source_name: st
     return alerts
 
 
-async def send_alert_changed_event(context: ServiceContext, alert: Alert[Any]) -> None:
-    as_ = AlertSerializer(context)
+async def send_alert_changed_event(context: ServiceContext, applicability: Applicability, alert: Alert[Any]) -> None:
+    as_ = AlertSerializer(context, applicability)
     if await as_.should_show_alert(alert):
         context.middleware.send_event("alert.list", "CHANGED", id=alert.uuid, fields=await as_.serialize(alert))
 

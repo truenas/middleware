@@ -17,6 +17,7 @@ from middlewared.api.current import (
     CronJobUpdateArgs,
     CronJobUpdateResult,
 )
+from middlewared.common.license_reconcile import LicenseReconcileAction, LicenseReconcileDelegate
 from middlewared.service import GenericCRUDService, job, private
 
 from .crud import CronJobServicePart
@@ -84,3 +85,18 @@ class CronJobService(GenericCRUDService[CronJobEntry]):
         if not isinstance(schedule, CronJobSchedule):
             schedule = CronJobSchedule(**schedule)
         return _construct_cron_command(schedule, user, command, stdout, stderr)
+
+
+class CronLicenseReconcileDelegate(LicenseReconcileDelegate):
+    name = 'cron'
+    etc_groups = ('cron',)
+    service = None
+    action = LicenseReconcileAction.RENDER
+    order = 20
+
+
+async def setup(middleware: Middleware) -> None:
+    await middleware.call2(
+        middleware.services.truenas.license.register_reconcile_delegate,
+        CronLicenseReconcileDelegate(),
+    )

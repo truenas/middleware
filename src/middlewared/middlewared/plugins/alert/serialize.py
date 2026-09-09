@@ -13,6 +13,8 @@ from .state import DEFAULT_POLICY
 if typing.TYPE_CHECKING:
     from collections.abc import Callable, Iterable
 
+    from middlewared.alert.applicability import Applicability
+
 AlertClasses: TypeAlias = dict[str, AlertClassConfiguration]
 
 
@@ -58,11 +60,11 @@ def partition[T](predicate: Callable[[T], Any], iterable: Iterable[T]) -> tuple[
 
 
 class AlertSerializer:
-    def __init__(self, context: ServiceContext) -> None:
+    def __init__(self, context: ServiceContext, applicability: Applicability) -> None:
         self.context = context
+        self.applicability = applicability
 
         self.initialized: bool = False
-        self.product_type: str = ""
         self.classes: AlertClasses = {}
         self.nodes: dict[str, str] = {}
 
@@ -94,7 +96,7 @@ class AlertSerializer:
     async def should_show_alert(self, alert: Alert[Any]) -> bool:
         await self._ensure_initialized()
 
-        if self.product_type not in alert.instance.config.products:
+        if not self.applicability.class_applies(type(alert.instance)):
             return False
 
         if get_alert_policy(alert, self.classes) == "NEVER":
@@ -104,7 +106,6 @@ class AlertSerializer:
 
     async def _ensure_initialized(self) -> None:
         if not self.initialized:
-            self.product_type = await self.context.call2(self.context.s.alert.product_type)
             self.classes = (await self.context.call2(self.context.s.alertclasses.config)).classes
             self.nodes = await self.context.call2(self.context.s.alert.node_map)
 

@@ -886,12 +886,12 @@ def test_create_user_userns_idmap_privileged_group():
 # ---------------------------------------------------------------------------
 @contextlib.contextmanager
 def _password_security(**settings):
-    # Password policy fields are gated to TrueNAS Enterprise, so we present as
-    # Enterprise (with FIPS available) for the duration of the test.
-    from middlewared.test.integration.assets.product import product_type, set_fips_available
+    # Password policy fields are gated on FIPS being available, so we present it as
+    # available for the duration of the test.
+    from middlewared.test.integration.assets.product import set_fips_available
 
     fields = ["password_complexity_ruleset", "min_password_length", "password_history_length"]
-    with product_type("ENTERPRISE"), set_fips_available(True):
+    with set_fips_available(True):
         old = call("system.security.config")
         restore = {k: old[k] for k in fields}
         call("system.security.update", settings, job=True)
@@ -957,9 +957,9 @@ def test_password_history_capped_at_max():
 
 
 def test_user_password_change_required_soft_limit():
-    from middlewared.test.integration.assets.product import product_type, set_fips_available
+    from middlewared.test.integration.assets.product import set_fips_available
 
-    with product_type("ENTERPRISE"), set_fips_available(True):
+    with set_fips_available(True):
         call("system.security.update", {"max_password_age": 30}, job=True)
         try:
             with user(_vuser(username="covpwage")) as u:

@@ -7,6 +7,7 @@ created while the dataset was locked.
 """
 import pytest
 
+from middlewared.test.integration.assets.entitlements import entitled
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call, ssh
 
@@ -176,7 +177,15 @@ def test_nfs_share_path_resolution_after_unlock(encrypted_dataset):
         call('sharing.nfs.delete', share['id'])
 
 
-def test_webshare_path_resolution_after_unlock(encrypted_dataset):
+@pytest.fixture
+def webshare_entitled():
+    # sharing.webshare.create is gated by the WEBSHARE entitlement, which an unlicensed
+    # test runner does not have.
+    with entitled("WEBSHARE"):
+        yield
+
+
+def test_webshare_path_resolution_after_unlock(webshare_entitled, encrypted_dataset):
     """
     Test that Webshare dataset/relative_path are resolved after unlocking.
     """

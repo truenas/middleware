@@ -5,6 +5,7 @@
 from dataclasses import dataclass
 from typing import Any
 
+from middlewared.alert.applicability import TRUENAS_HARDWARE
 from middlewared.alert.base import (
     Alert,
     AlertCategory,
@@ -14,7 +15,6 @@ from middlewared.alert.base import (
     AlertSource,
     NonDataclassAlertClass,
 )
-from middlewared.utils import ProductType
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
@@ -36,7 +36,7 @@ class EnclosureUnhealthyAlert(NonDataclassAlertClass[list[str | int]], AlertClas
         level=AlertLevel.CRITICAL,
         title="Enclosure Status Is Not Healthy",
         text='Enclosure (%s): Element "%s" is reporting a status of "%s" with a value of "%s". (raw value "%s")',
-        products=(ProductType.ENTERPRISE,),
+        applies_to=TRUENAS_HARDWARE,
     )
 
 
@@ -46,13 +46,13 @@ class EnclosureHealthyAlert(NonDataclassAlertClass[list[str]], AlertClass):
         level=AlertLevel.INFO,
         title="Enclosure Status Is Healthy",
         text="Enclosure (%s) is healthy.",
-        products=(ProductType.ENTERPRISE,),
+        applies_to=TRUENAS_HARDWARE,
     )
 
 
 class EnclosureStatusAlertSource(AlertSource):
-    products = (ProductType.ENTERPRISE,)
-    failover_related = True
+    applies_to = TRUENAS_HARDWARE
+    post_failover_blackout = True
     run_on_backup_node = False
     bad = ("critical", "noncritical", "unknown", "unrecoverable")
     bad_elements: list[tuple[BadElement, int]] = list()

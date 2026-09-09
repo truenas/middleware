@@ -272,7 +272,6 @@ def test_zfs_resource_create_encryption_property_denied():
     assert "Extra inputs are not permitted" in str(exc_info.value)
 
 
-@pytest.mark.skip(reason="enable when the truenas.entitlements API is merged and the dedup license check is active")
 def test_zfs_resource_create_dedup_requires_license():
     """Test that enabling deduplication requires the DEDUP license entitlement"""
     path = os.path.join(pool_name, "test_create_fs_dedup")
@@ -285,7 +284,7 @@ def test_zfs_resource_create_dedup_requires_license():
     else:
         with pytest.raises(Exception) as exc_info:
             call("zfs.resource.create", {"path": path, "properties": {"dedup": "on"}})
-        assert "not licensed" in str(exc_info.value)
+        assert "ZFS deduplication" in str(exc_info.value)
 
 
 @pytest.mark.parametrize("prop", ["sharenfs", "sharesmb"])
@@ -741,8 +740,9 @@ def test_zfs_resource_create_ssb_behavior_without_tiering():
 
 @pytest.fixture(scope="module")
 def tier_pool():
-    if not call("system.is_enterprise"):
-        pytest.skip("ZFS tiering requires an Enterprise license")
+    entitlement = call("truenas.entitlements.check", "ZFSTIER")
+    if not entitlement["entitled"]:
+        pytest.skip(entitlement["message"])
     unused_disks = call("disk.get_unused")
     if len(unused_disks) < 6:
         pytest.skip("Need at least 6 unused disks for a tier pool")

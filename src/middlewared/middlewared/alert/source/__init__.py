@@ -41,7 +41,6 @@ from middlewared.alert.source import (  # noqa: F401
     quota,
     replication,
     rsync,
-    sata_dom_wear,
     scheduled_reboot,
     scrub_paused,
     security,
