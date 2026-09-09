@@ -121,6 +121,17 @@ def test_unknown_user_is_refused():
     assert "User does not exist" in ve.value.errors[0].errmsg
 
 
+def test_root_may_not_hold_an_access_key():
+    """The S3 service runs a signed request as the account the key belongs
+    to, and uid 0 is the account no bucket grant and no filesystem
+    permission restrains."""
+    with pytest.raises(ValidationErrors) as ve:
+        call("s3.accesskey.create", {"name": "root key", "username": "root"})
+    assert "username" in ve.value.errors[0].attribute
+    assert "root" in ve.value.errors[0].errmsg
+    assert not call("s3.accesskey.query", [["name", "=", "root key"]])
+
+
 def test_access_key_never_authenticates_to_the_api(accesskey):
     """Nothing in the API authentication path reads this table."""
     with client(auth=None) as c:
