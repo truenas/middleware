@@ -47,21 +47,6 @@ def running_service():
         call("service.control", "STOP", SERVICE, {"silent": False}, job=True)
 
 
-# the ACL a deployment puts on the share root when more than the owner is
-# to write into it, as it would for any share: every write is published
-# under the requesting account, and the daemon leaves the directory it
-# created at 0755 owned by the owner
-OPEN_ACL = [
-    {"tag": "owner@", "type": "ALLOW", "perms": {"BASIC": "FULL_CONTROL"}, "flags": {"BASIC": "INHERIT"}},
-    {"tag": "group@", "type": "ALLOW", "perms": {"BASIC": "FULL_CONTROL"}, "flags": {"BASIC": "INHERIT"}},
-    {"tag": "everyone@", "type": "ALLOW", "perms": {"BASIC": "MODIFY"}, "flags": {"BASIC": "INHERIT"}},
-]
-
-
-def open_share_root(uid, gid):
-    call("filesystem.setacl", {"path": f"/mnt/{DATASET}/s3data", "dacl": OPEN_ACL, "uid": uid, "gid": gid}, job=True)
-
-
 @pytest.fixture(scope="module")
 def owner():
     with user(
@@ -137,6 +122,7 @@ def test_create_owns_the_dataset(owner):
             "owner": OWNER,
             "owner_id": str(owner["uid"]),
             "permissions_model": "s3",
+            "object_ownership": "bucket_owner_enforced",
             "versioning": "off",
             "multipart_etag": "composite",
             "object_lock": "off",
@@ -231,6 +217,36 @@ def test_grants_live_on_the_bucket(owner):
     assert parse(POLICIES_CONF) == {}
 
 
+def test_object_ownership_is_its_own_key(owner):
+    """`permissions_model` and `object_ownership` are one axis each: the
+    first says how the S3 service treats the filesystem permissions on
+    the tree, the second which account an S3 operation runs as and
+    whether the bucket supports S3 ACLs. A shared tree folds to the one
+    uid it can run as."""
+    with bucket() as b:
+        assert (b["permissions_model"], b["object_ownership"]) == ("S3", "BUCKET_OWNER_ENFORCED")
+        call("etc.generate", "truenas_s3")
+        row = parse(BUCKETS_CONF)['bucket "test-bucket"']
+        assert (row["permissions_model"], row["object_ownership"]) == ("s3", "bucket_owner_enforced")
+
+        updated = call("sharing.s3.update", b["id"], {"object_ownership": "BUCKET_OWNER_PREFERRED"})
+        assert (updated["permissions_model"], updated["object_ownership"]) == ("S3", "BUCKET_OWNER_PREFERRED")
+        call("etc.generate", "truenas_s3")
+        assert parse(BUCKETS_CONF)['bucket "test-bucket"']["object_ownership"] == "bucket_owner_preferred"
+
+        # a shared tree runs as the caller whatever it is given: the other
+        # protocols' users own the filesystem permissions there
+        updated = call(
+            "sharing.s3.update",
+            b["id"],
+            {"permissions_model": "MULTIPROTOCOL", "object_ownership": "BUCKET_OWNER_ENFORCED"},
+        )
+        assert (updated["permissions_model"], updated["object_ownership"]) == ("MULTIPROTOCOL", "OBJECT_WRITER")
+        call("etc.generate", "truenas_s3")
+        row = parse(BUCKETS_CONF)['bucket "test-bucket"']
+        assert (row["permissions_model"], row["object_ownership"]) == ("multiprotocol", "object_writer")
+
+
 def test_object_lock_rules(owner):
     for bad, field in (
         ({"object_lock": True}, "versioning"),
@@ -271,19 +287,20 @@ def test_object_lock_rules(owner):
         assert field in ve.value.errors[0].attribute
 
     # the period is days, however long: the daemon's years are 365 days
-    # each, so the one field spells every rule it could. Either S3-only
-    # model may carry a lock; only a shared tree may not
+    # each, so the one field spells every rule it could. Only a shared
+    # tree may not carry a lock, whatever the bucket's object ownership
     with bucket(
         name="locked",
         versioning="ENABLED",
-        permissions_model="S3_BUCKET_OWNER_ENFORCED",
+        object_ownership="OBJECT_WRITER",
         object_lock=True,
         object_lock_default_mode="COMPLIANCE",
         object_lock_default_days=365,
     ):
         call("etc.generate", "truenas_s3")
         row = parse(BUCKETS_CONF)['bucket "locked"']
-        assert row["permissions_model"] == "s3_bucket_owner_enforced"
+        assert row["permissions_model"] == "s3"
+        assert row["object_ownership"] == "object_writer"
         assert row["versioning"] == "enabled"
         assert row["object_lock"] == "enabled"
         assert row["object_lock_default_mode"] == "compliance"
@@ -443,29 +460,33 @@ def md5_of(path):
 def test_boto3_roundtrip(owner):
     """The whole chain: a bucket with grants, access keys for the grantees,
     and clients that put and get objects through the daemon. Two grantees,
-    because every write is published under the requester's own uid: the
-    second one writing into a prefix the first created, and over the
-    first's object, is what an inheritable ACL on the share root is for,
-    and without one the second grantee is refused at the root: the daemon
-    makes the directory the owner's and every write is the requester's."""
+    because under `OBJECT_WRITER` every write is published under the
+    requester's own uid, and the second one writing into a prefix the
+    first created, and over the first's object, is what proves the `S3`
+    permissions model ignores the modes those writes leave behind: the
+    daemon makes the share root the owner's at 0755, nothing is opened on
+    it, and neither grantee is fenced by it."""
     with (
         grantee("s3client") as (grant_a, key_a),
         grantee("s3client2") as (
             grant_b,
             key_b,
         ),
-        bucket(grants=[grant_a, grant_b]),
+        bucket(grants=[grant_a, grant_b], object_ownership="OBJECT_WRITER"),
     ):
         assert call("service.control", "START", SERVICE, {"silent": False}, job=True)
         try:
             a, b = client(key_a), client(key_b)
             assert [x["Name"] for x in a.list_buckets()["Buckets"]] == ["test-bucket"]
-            with pytest.raises(Exception, match="AccessDenied"):
-                a.put_object(Bucket="test-bucket", Key="pfx/hello.txt", Body=b"from a")
-            open_share_root(owner["uid"], owner["group"]["bsdgrp_gid"])
+            root = call("filesystem.stat", f"/mnt/{DATASET}/s3data")
+            assert (root["uid"], root["mode"] & 0o777) == (owner["uid"], 0o755), "left as the daemon made it"
+
             a.put_object(Bucket="test-bucket", Key="pfx/hello.txt", Body=b"from a")
             assert a.get_object(Bucket="test-bucket", Key="pfx/hello.txt")["Body"].read() == b"from a"
             assert ssh(f"cat /mnt/{DATASET}/s3data/pfx/hello.txt") == "from a"
+            # OBJECT_WRITER: the publish records the account that made it
+            on_disk = call("filesystem.stat", f"/mnt/{DATASET}/s3data/pfx/hello.txt")
+            assert on_disk["uid"] == grant_a["xid"]
 
             b.put_object(Bucket="test-bucket", Key="pfx/other.txt", Body=b"from b")
             b.put_object(Bucket="test-bucket", Key="pfx/hello.txt", Body=b"b over a")
@@ -477,21 +498,22 @@ def test_boto3_roundtrip(owner):
 
 
 def test_bucket_owner_enforced_writes_as_the_owner(owner):
-    """Under `S3_BUCKET_OWNER_ENFORCED` the grants are the whole of the
-    access control: the same two grantees write into the share root the
-    daemon made the owner's, and over each other, with nothing opened on
-    it, and everything they publish lands on disk as the owner's rather
-    than the writer's. A key with no grant is still refused, since the
-    model moves the uid the kernel sees and not who is authorized."""
+    """Under `BUCKET_OWNER_ENFORCED` object ownership the grants are the
+    whole of the access control: the same two grantees write into the
+    share root the daemon made the owner's, and over each other, and
+    everything they publish lands on disk as the owner's rather than the
+    writer's. A key with no grant is still refused, since the value moves
+    the uid the kernel sees and not who is authorized."""
     with (
         grantee("s3client") as (grant_a, key_a),
         grantee("s3client2") as (grant_b, key_b),
         grantee("s3stranger") as (_ungranted, key_c),
-        bucket(grants=[grant_a, grant_b], permissions_model="S3_BUCKET_OWNER_ENFORCED"),
+        bucket(grants=[grant_a, grant_b], object_ownership="BUCKET_OWNER_ENFORCED"),
         running_service(),
     ):
         call("etc.generate", "truenas_s3")
-        assert parse(BUCKETS_CONF)['bucket "test-bucket"']["permissions_model"] == "s3_bucket_owner_enforced"
+        row = parse(BUCKETS_CONF)['bucket "test-bucket"']
+        assert (row["permissions_model"], row["object_ownership"]) == ("s3", "bucket_owner_enforced")
 
         a, b, stranger = client(key_a), client(key_b), client(key_c)
         a.put_object(Bucket="test-bucket", Key="pfx/hello.txt", Body=b"from a")
@@ -649,7 +671,10 @@ def test_a_file_survives_the_round_trip(owner, size, threshold, parts, multipart
     source, expected = random_file(size)
     fetched = source + ".down"
     try:
-        with grantee("s3client") as (_grant, key), bucket(owner="s3client", multipart_etag=multipart_etag):
+        with (
+            grantee("s3client") as (_grant, key),
+            bucket(owner="s3client", multipart_etag=multipart_etag, object_ownership="OBJECT_WRITER"),
+        ):
             assert call("service.control", "START", SERVICE, {"silent": False}, job=True)
             try:
                 s3 = client(key)

@@ -54,6 +54,11 @@ path = ${bucket.mountpoint}
 owner = ${b.owner}
 owner_id = ${b.owner_uid}
 permissions_model = ${b.permissions_model.lower()}
+## the row states both halves of the pair: the model is only ever s3 or
+## multiprotocol here, the third value the API takes having been resolved
+## into the two before it was stored, so the file can carry no
+## contradiction for the daemon to refuse
+object_ownership = ${b.object_ownership.lower()}
 versioning = ${b.versioning.lower()}
 ## a selection of none is the key omitted, never rendered empty; the cap
 ## is inert without a selection, so it rides beside one
