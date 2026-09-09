@@ -12,7 +12,7 @@ from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.account import user
 from middlewared.test.integration.utils import call, ssh
 
-SERVICE = "truenas_s3"
+SERVICE = "s3"
 BUCKETS_CONF = "/etc/truenas_s3/buckets.conf"
 POLICIES_CONF = "/etc/truenas_s3/policies.conf"
 CREDENTIALS_CONF = "/etc/truenas_s3/credentials.conf"

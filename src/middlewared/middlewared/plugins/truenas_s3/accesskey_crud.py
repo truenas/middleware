@@ -200,6 +200,17 @@ class S3AccesskeyServicePart(CRUDServicePart[S3AccesskeyEntry]):
         users = await self.middleware.call("user.query", [["username", "=", data.username]])
         if not users:
             verrors.add("s3_accesskey_create.username", "User does not exist.")
+        elif users[0]["uid"] == 0:
+            # the S3 service runs a signed request as the account the key
+            # belongs to, and uid 0 is the account no filesystem permission
+            # and no bucket grant restrains. Such a key reaches every object
+            # on the appliance whatever its bucket allows, and every object
+            # it writes lands owned by root
+            verrors.add(
+                "s3_accesskey_create.username",
+                "An access key may not belong to root. Give the key an account that owns only what it should "
+                "reach.",
+            )
 
         if data.access_key is not None and await self.middleware.call(
             "datastore.query", self._datastore, [["access_key", "=", data.access_key]]
