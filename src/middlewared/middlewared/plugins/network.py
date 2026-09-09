@@ -674,6 +674,8 @@ class InterfaceService(CRUDService):
     async def commit(self, options):
         """
         Commit/apply pending interfaces changes.
+
+        Fails if any interface could not be configured, rolling the changes back first when ``rollback`` is set.
         """
         verrors = ValidationErrors()
         schema = 'interface.commit'
@@ -682,7 +684,8 @@ class InterfaceService(CRUDService):
         verrors.check()
 
         try:
-            await self.sync()
+            if failures := await self.sync():
+                raise CallError(f'Failed to apply interface changes: {"; ".join(failures)}')
         except Exception:
             if options['rollback']:
                 await self.rollback()
@@ -873,6 +876,7 @@ class InterfaceService(CRUDService):
                     await self.middleware.call('interface.validate_name', InterfaceType.BRIDGE, data['name'])
                 except ValueError as e:
                     verrors.add(f'{schema_name}.name', str(e))
+            nic_attach_used = await self.nic_attach_users() if data.get('bridge_members') else {}
             for i, member in enumerate(data.get('bridge_members') or []):
                 if member not in ifaces:
                     verrors.add(f'{schema_name}.bridge_members.{i}', 'Not a valid interface.')
@@ -886,6 +890,12 @@ class InterfaceService(CRUDService):
                     verrors.add(
                         f'{schema_name}.bridge_members.{i}',
                         f'Interface {member} is currently in use by {lag_used[member]}.',
+                    )
+                elif member in nic_attach_used:
+                    verrors.add(
+                        f'{schema_name}.bridge_members.{i}',
+                        f'Interface {member} is currently in use by {", ".join(nic_attach_used[member])} '
+                        '(NIC device attached directly to it). Attach the device to the bridge instead.',
                     )
         elif itype == 'LINK_AGGREGATION':
             if 'name' in data:
@@ -1566,7 +1576,25 @@ class InterfaceService(CRUDService):
             # if it was also added to the exclusion list
             include.update({interface['id']: interface['id']})
 
+        exclude.update({i: i for i in await self.nic_attach_users()})
+
         return {k: v for k, v in include.items() if k not in exclude}
+
+    @private
+    async def nic_attach_users(self):
+        """
+        Map each interface hosting a VM or container NIC device attached directly to it (MACVLAN mode) to the
+        names of those VMs and containers. Such an interface cannot also be a bridge member: the kernel lets a
+        NIC carry either macvlan/macvtap ports or a bridge port, not both.
+        """
+        users = {}
+        for kind, method in (('VM', 'vm.query'), ('container', 'container.query')):
+            for instance in await self.middleware.call(method):
+                for device in instance['devices']:
+                    nic = device['attributes'].get('nic_attach')
+                    if device['attributes']['dtype'] == 'NIC' and nic and not nic.startswith('br'):
+                        users.setdefault(nic, []).append(f'{kind} {instance["name"]!r}')
+        return users
 
     @api_method(InterfaceLagPortsChoicesArgs, InterfaceLagPortsChoicesResult, roles=['NETWORK_INTERFACE_READ'])
     async def lag_ports_choices(self, id_):
@@ -1630,6 +1658,9 @@ class InterfaceService(CRUDService):
     async def sync(self, wait_dhcp: int | None = None):
         """
         Sync interfaces configured in database to the OS.
+
+        Returns a description of each interface that could not be configured. The sync carries on past those so
+        that boot and rollback still bring up everything else; `interface.commit` turns them into an error.
         """
         await self.middleware.call_hook('interface.pre_sync')
         # The VRRP event thread just reads directly from the database
@@ -1668,7 +1699,7 @@ class InterfaceService(CRUDService):
         internal_interfaces = tuple(await self.middleware.call('interface.internal_interfaces'))
 
         # Configure all interfaces and unconfigure those not in database
-        cloned_interfaces, run_dhcp, autoconfigure = await self.middleware.run_in_thread(
+        cloned_interfaces, run_dhcp, autoconfigure, failures = await self.middleware.run_in_thread(
             sync_impl,
             self.context,
             sync_data,
@@ -1742,6 +1773,8 @@ class InterfaceService(CRUDService):
             self.logger.info('Failed to sync routes', exc_info=True)
 
         await self.middleware.call_hook('interface.post_sync')
+
+        return failures
 
     @private
     async def run_dhcp(self, name, wait_dhcp: int | None = None):
