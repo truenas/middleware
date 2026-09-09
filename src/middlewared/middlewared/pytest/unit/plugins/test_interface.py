@@ -113,6 +113,8 @@ async def test__interfaces_service__create_bridge_invalid_ports():
     m['interface.query'] = Mock(return_value=INTERFACES)
     m['datastore.query'] = Mock(return_value=[])
     m['network.common.check_failover_disabled'] = Mock()
+    m['vm.query'] = Mock(return_value=[])
+    m['container.query'] = Mock(return_value=[])
 
     with pytest.raises(ValidationErrors) as ve:
         await create_service(m, InterfaceService).do_create({
@@ -129,6 +131,8 @@ async def test__interfaces_service__create_bridge_invalid_ports_used():
     m['interface.query'] = Mock(return_value=INTERFACES_WITH_BRIDGE)
     m['datastore.query'] = Mock(return_value=[])
     m['network.common.check_failover_disabled'] = Mock()
+    m['vm.query'] = Mock(return_value=[])
+    m['container.query'] = Mock(return_value=[])
 
     with pytest.raises(ValidationErrors) as ve:
         await create_service(m, InterfaceService).do_create({
