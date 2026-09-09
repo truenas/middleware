@@ -1,46 +1,28 @@
 from collections.abc import Sequence
 import dataclasses
 import errno
-import logging
 import os
-from typing import Any, NoReturn
+from typing import Any
 
 import truenas_pylibzfs
 
+from .destroy_impl import destroy_impl
 from .exceptions import (
     ZFSPathNotASnapshotException,
     ZFSPathNotFoundException,
     ZFSRollbackBlockedException,
-    ZFSRollbackBlocker,
-    ZFSRollbackBlockerReason,
     ZFSRollbackConflictException,
     ZFSRollbackFailedException,
-)
-from .snapshot_rollback_helpers import (
-    DestroyFailure,
-    classify_destroy_failure,
-    rollback_failure_message,
 )
 from .utils import open_resource
 
 __all__ = ("rollback_impl",)
-
-logger = logging.getLogger(__name__)
-
-CLONE_BLOCKER_LIMIT = 5
-"""How many descendants of a single clone are collected before giving up on listing the rest."""
 
 
 @dataclasses.dataclass(slots=True, kw_only=True)
 class CollectNewerSnapshotsState:
     target_txg: int
     snaps: list[str]
-
-
-@dataclasses.dataclass(slots=True, kw_only=True)
-class CollectFirstNamesState:
-    names: list[str]
-    limit: int
 
 
 # FIXME: add `hdl` to `truenas_pylibzfs` stubs
@@ -51,141 +33,111 @@ def __collect_child_datasets_callback(child_hdl: Any, state: list[str]) -> bool:
     return True
 
 
-def _collect_child_datasets(ds_hdl: Any, datasets: list[str]) -> None:
-    """Recursively collect all child dataset names."""
-    ds_hdl.iter_filesystems(callback=__collect_child_datasets_callback, state=datasets)
-
-
 def __collect_newer_snapshots_callback(snap_hdl: Any, state: CollectNewerSnapshotsState) -> bool:
     """Callback for collecting snapshots newer than target."""
     props = snap_hdl.get_properties(properties={truenas_pylibzfs.ZFSProperty.CREATETXG})
-    snap_txg = int(props.createtxg.value)
-    if snap_txg > state.target_txg:
+    if int(props.createtxg.value) > state.target_txg:
         state.snaps.append(snap_hdl.name)
     return True
 
 
-def __collect_first_names_callback(hdl: Any, state: CollectFirstNamesState) -> bool:
-    """Callback for collecting resource names, stopping once ``limit`` names have been seen."""
-    state.names.append(hdl.name)
-    return len(state.names) < state.limit
+def _collect_newer_snapshots(tls: Any, dataset: str, snap_name: str) -> list[str]:
+    """Return the snapshots of ``dataset`` newer than ``snap_name``, oldest first.
 
-
-def _clone_destroy_blockers(tls: Any, clone: str, limit: int = CLONE_BLOCKER_LIMIT) -> tuple[str, ...]:
-    """Return the names of the descendants that stop ``clone`` from being destroyed.
-
-    Clones are destroyed non-recursively, so child datasets and snapshots of
-    ``clone`` have to be dealt with by the caller first. An empty tuple means
-    the clone can be destroyed. At most ``limit`` names are collected, so a
-    full result means there may be more.
+    Raises:
+        ZFSPathNotFoundException: ``dataset`` has no ``snap_name``.
     """
-    try:
-        clone_rsrc = open_resource(tls, clone)
-    except ZFSPathNotFoundException:
-        return ()
-
-    state = CollectFirstNamesState(names=[], limit=limit)
-    try:
-        clone_rsrc.iter_filesystems(callback=__collect_first_names_callback, state=state)
-        if len(state.names) < limit:
-            clone_rsrc.iter_snapshots(callback=__collect_first_names_callback, state=state, fast=True)
-    except truenas_pylibzfs.ZFSException as e:
-        raise ZFSRollbackFailedException(
-            f"Failed to enumerate the descendants of {clone!r}: {e}",
-            errno.EFAULT,
-        ) from None
-
-    return tuple(state.names)
+    target_txg = int(open_resource(tls, f"{dataset}@{snap_name}").createtxg)
+    state = CollectNewerSnapshotsState(target_txg=target_txg, snaps=[])
+    open_resource(tls, dataset).iter_snapshots(
+        callback=__collect_newer_snapshots_callback,
+        state=state,
+        min_transaction_group=target_txg,
+        order_by_transaction_group=True,
+    )
+    return state.snaps
 
 
-def _collect_rollback_blockers(
-    tls: Any,
-    newer: Sequence[tuple[str, list[str]]],
-    destroy_clones: bool,
-) -> list[ZFSRollbackBlocker]:
-    """Return every reason the snapshots newer than the rollback target cannot be destroyed.
+def _collect_blockers(tls: Any, newer_snaps: Sequence[str], destroy_clones: bool) -> list[str]:
+    """Describe each of ``newer_snaps`` that cannot be destroyed, and why."""
+    blockers = []
+    for snap_path in newer_snaps:
+        try:
+            snap_rsrc = open_resource(tls, snap_path)
+        except ZFSPathNotFoundException:
+            continue
 
-    ``newer`` pairs each affected dataset with the snapshot paths newer than the
-    target. Every dataset is inspected and every blocker recorded, so the caller
-    can refuse the whole rollback in one go and report all of it at once.
-
-    This is best effort. ``get_holds()`` only reflects user holds
-    (``ds_userrefs``), while the kernel also refuses to destroy a snapshot that
-    is long held - by an in-flight send or a ``.zfs/snapshot`` automount, for
-    instance - which nothing here can observe; the batched destroy reports those
-    from the kernel's own error list instead.
-    """
-    blockers: list[ZFSRollbackBlocker] = []
-    for _, newer_snaps in newer:
-        for snap_path in newer_snaps:
-            try:
-                snap_rsrc = open_resource(tls, snap_path)
-            except ZFSPathNotFoundException:
-                # Pruned since it was enumerated, so it blocks nothing.
-                continue
-
-            try:
-                holds = snap_rsrc.get_holds()
-                clones = snap_rsrc.get_clones()
-            except truenas_pylibzfs.ZFSException as e:
-                raise ZFSRollbackFailedException(
-                    f"Failed to inspect snapshot {snap_path!r}: {e}",
-                    errno.EFAULT,
-                ) from None
-
-            if holds:
-                blockers.append(ZFSRollbackBlocker(
-                    snapshot=snap_path,
-                    reason=ZFSRollbackBlockerReason.HOLDS,
-                    names=tuple(holds),
-                ))
-
-            if not clones:
-                continue
-
-            if not destroy_clones:
-                blockers.append(ZFSRollbackBlocker(
-                    snapshot=snap_path,
-                    reason=ZFSRollbackBlockerReason.CLONES,
-                    names=tuple(clones),
-                ))
-                continue
-
-            for clone in clones:
-                if names := _clone_destroy_blockers(tls, clone):
-                    blockers.append(ZFSRollbackBlocker(
-                        snapshot=snap_path,
-                        reason=ZFSRollbackBlockerReason.UNDESTROYABLE_CLONE,
-                        names=names,
-                        clone=clone,
-                        truncated=len(names) >= CLONE_BLOCKER_LIMIT,
-                    ))
-
+        if holds := snap_rsrc.get_holds():
+            blockers.append(f"{snap_path!r} has holds: {', '.join(holds)}. Release them before rolling back.")
+        if (clones := snap_rsrc.get_clones()) and not destroy_clones:
+            blockers.append(
+                f"{snap_path!r} has dependent clones: {', '.join(clones)}. "
+                "Pass `recursive_clones: true` to destroy them."
+            )
     return blockers
 
 
-def _rollback_single(dataset: str, snap_name: str, completed: Sequence[str], destroyed_newer: bool) -> None:
-    """Roll ``dataset`` back to its ``snap_name`` snapshot.
+def _destroy_clones_of(tls: Any, snap_path: str, force: bool) -> None:
+    """Destroy the clones of ``snap_path``, descendants included, so that the snapshot itself can be destroyed.
 
-    ``destroyed_newer`` says whether the newer snapshots of ``dataset`` were
-    destroyed to get this far, which is the part of a failure here that cannot
-    be undone.
-
-    Raises:
-        ZFSRollbackFailedException: The kernel refused the rollback.
+    Matches ``zfs rollback -R``, which destroys a clone's own children and snapshots along with it.
     """
-    path = f"{dataset}@{snap_name}"
+    try:
+        clones = open_resource(tls, snap_path).get_clones()
+    except ZFSPathNotFoundException:
+        return
+
+    for clone in clones:
+        try:
+            clone_rsrc = open_resource(tls, clone)
+        except ZFSPathNotFoundException:
+            continue
+
+        if force and clone_rsrc.type == truenas_pylibzfs.ZFSType.ZFS_TYPE_FILESYSTEM:
+            # The recursive destroy unmounts the clone tree itself, but never forcibly.
+            try:
+                clone_rsrc.unmount(force=True, recursive=True, unload_encryption_key=False)
+            except truenas_pylibzfs.ZFSException:
+                pass  # The destroy below reports why the unmount was needed.
+
+        failed, errnum = destroy_impl(tls, clone, recursive=True, all_snapshots=False, bypass=True, defer=False)
+        if failed:
+            raise ZFSRollbackFailedException(
+                f"{failed}. It is a clone of {snap_path!r}, which has to be destroyed for the rollback.",
+                errnum or errno.EFAULT,
+            )
+
+
+def _destroy_newer_snapshots(
+    tls: Any, dataset: str, snap_name: str, newer_snaps: Sequence[str], destroy_clones: bool, force: bool
+) -> None:
+    """Destroy ``newer_snaps`` in one ioctl, so the kernel either destroys all of them or none."""
+    if destroy_clones:
+        for snap_path in newer_snaps:
+            _destroy_clones_of(tls, snap_path, force)
+
+    try:
+        truenas_pylibzfs.lzc.destroy_snapshots(snapshot_names=newer_snaps, defer_destroy=False)
+    except truenas_pylibzfs.lzc.ZFSCoreException as e:
+        details = "; ".join(f"{name}: {os.strerror(err)}" for name, err in e.errors or ()) or str(e)
+        raise ZFSRollbackFailedException(
+            f"Failed to destroy the snapshots newer than {snap_name!r} on {dataset!r}: {details}", e.code
+        ) from None
+
+
+def _rollback(dataset: str, snap_name: str) -> None:
+    """Roll ``dataset`` back to ``snap_name``."""
     try:
         truenas_pylibzfs.lzc.rollback(resource_name=dataset, snapshot_name=snap_name)
     except OSError as e:
         errnum = e.errno or errno.EFAULT
-        message = rollback_failure_message(path=path, dataset=dataset, errnum=errnum)
-        if destroyed_newer:
+        message = f"Failed to rollback to {dataset}@{snap_name}: {os.strerror(errnum)}."
+        if errnum == errno.EEXIST:
             message += (
-                f" The snapshots newer than {snap_name!r} were already destroyed, so "
-                f"{dataset!r} cannot be returned to its previous state."
+                " Something newer than the snapshot still exists. Bookmarks are not destroyed by this "
+                f"operation; remove one with `zfs destroy {dataset}#<bookmark>` and try again."
             )
-        raise ZFSRollbackFailedException(message, errnum, completed=completed) from None
+        raise ZFSRollbackFailedException(message, errnum) from None
 
 
 def rollback_impl(
@@ -212,15 +164,11 @@ def rollback_impl(
     Raises:
         ZFSPathNotASnapshotException: If path is not a snapshot path
         ZFSPathNotFoundException: If the snapshot, or a child's snapshot, doesn't exist
-        ZFSRollbackConflictException: If snapshots newer than the target exist and may
-            not be destroyed
-        ZFSRollbackBlockedException: If a snapshot that has to be destroyed first cannot be destroyed
-        ZFSRollbackFailedException: If the rollback, a destroy it depends on, or the enumeration
-            the decision to destroy rests on, failed
-        truenas_pylibzfs.ZFSException: If a resource the rollback depends on could not be opened
-            or walked
+        ZFSRollbackConflictException: If newer snapshots exist and no flag allows destroying them
+        ZFSRollbackBlockedException: If a newer snapshot has holds, or clones that may not be destroyed
+        ZFSRollbackFailedException: If a destroy or the rollback itself failed
+        truenas_pylibzfs.ZFSException: If a resource could not be opened or walked
     """
-
     if "@" not in path:
         raise ZFSPathNotASnapshotException(path)
 
@@ -228,320 +176,22 @@ def rollback_impl(
     if not dataset or not snap_name or "@" in dataset:
         raise ZFSPathNotASnapshotException(path)
 
+    datasets = [dataset]
     if recursive_rollback:
-        ds_hdl = open_resource(tls, dataset)
-        datasets = [dataset]
-        _collect_child_datasets(ds_hdl, datasets)
-    else:
-        datasets = [dataset]
+        open_resource(tls, dataset).iter_filesystems(callback=__collect_child_datasets_callback, state=datasets)
 
     # Enumerated for the whole tree before anything is touched: a blocker found lazily on a
     # child would only surface once the parent had already been rolled back.
-    newer = [(ds, _collect_newer_snapshot_paths(tls, ds, snap_name)) for ds in datasets]
+    newer = [(ds, _collect_newer_snapshots(tls, ds, snap_name)) for ds in datasets]
 
     destroy_newer = recursive or recursive_clones
     if not destroy_newer:
         if conflicts := [snap for _, snaps in newer for snap in snaps]:
             raise ZFSRollbackConflictException(path, conflicts)
-    elif blockers := _collect_rollback_blockers(tls, newer, recursive_clones):
+    elif blockers := [b for _, snaps in newer for b in _collect_blockers(tls, snaps, recursive_clones)]:
         raise ZFSRollbackBlockedException(path, blockers)
 
-    completed: list[str] = []
     for ds, newer_snaps in newer:
-        destroyed_newer = destroy_newer and bool(newer_snaps)
-        if destroy_newer:
-            _destroy_newer_snapshots(tls, ds, newer_snaps, snap_name, recursive_clones, force, completed)
-
-        reservation = _capture_volume_reservation(tls, ds)
-        _rollback_single(ds, snap_name, completed, destroyed_newer)
-        if reservation is not None:
-            _restore_volume_reservation(tls, ds, reservation)
-
-        completed.append(ds)
-
-
-def _collect_newer_snapshots(ds_hdl: Any, target_txg: int) -> list[str]:
-    """Return the snapshots of ``ds_hdl`` that are newer than ``target_txg``.
-
-    The names are ordered by ascending creation transaction group, matching the
-    order ``zfs rollback -r`` reports the snapshots it would force-delete.
-    """
-    state = CollectNewerSnapshotsState(target_txg=target_txg, snaps=[])
-    try:
-        ds_hdl.iter_snapshots(
-            callback=__collect_newer_snapshots_callback,
-            state=state,
-            min_transaction_group=target_txg,
-            order_by_transaction_group=True,
-        )
-    except truenas_pylibzfs.ZFSException as e:
-        raise ZFSRollbackFailedException(
-            f"Failed to enumerate snapshots of {ds_hdl.name!r}: {e}",
-            errno.EFAULT,
-        ) from None
-    return state.snaps
-
-
-def _collect_newer_snapshot_paths(tls: Any, dataset: str, target_snap: str) -> list[str]:
-    """Enumerate the snapshots newer than ``dataset@target_snap``, once.
-
-    Raises:
-        ZFSPathNotFoundException: ``dataset`` has no ``target_snap``, which is how a
-            recursive rollback finds a child that cannot be rolled back before
-            anything is destroyed.
-    """
-    target_rsrc = open_resource(tls, f"{dataset}@{target_snap}")
-    target_txg = int(target_rsrc.createtxg)
-    ds_hdl = open_resource(tls, dataset)
-    return _collect_newer_snapshots(ds_hdl, target_txg)
-
-
-def _destroy_newer_snapshots(
-    tls: Any,
-    dataset: str,
-    snapshots: Sequence[str],
-    target_snap: str,
-    destroy_clones: bool,
-    force: bool,
-    completed: Sequence[str],
-) -> None:
-    """Destroy the snapshots newer than ``target_snap`` so ``dataset`` can be rolled back.
-
-    Clones are destroyed one at a time first: a snapshot with a clone cannot be
-    destroyed, and the clone has to be unmounted before it can go. The snapshots
-    themselves then go in a single ioctl.
-    """
-    if destroy_clones:
-        for snap_path in reversed(snapshots):
-            _destroy_clones_of(tls, snap_path, force, completed)
-
-    _destroy_batch(
-        tls,
-        snapshots=list(reversed(snapshots)),
-        dataset=dataset,
-        target_snap=target_snap,
-        clones_destroyed=destroy_clones,
-        completed=completed,
-    )
-
-
-def _destroy_failure_prefix(dataset: str, target_snap: str) -> str:
-    return f"Failed to destroy the snapshots newer than {target_snap!r} on {dataset!r} before rolling it back: "
-
-
-def _destroy_batch(
-    tls: Any,
-    *,
-    snapshots: Sequence[str],
-    dataset: str,
-    target_snap: str,
-    clones_destroyed: bool,
-    completed: Sequence[str],
-) -> None:
-    """Destroy ``snapshots``, the ones newer than ``target_snap``, in one ioctl.
-
-    The kernel checks every snapshot before destroying any, so the ioctl either
-    destroys the whole batch or destroys nothing, and the exception names the
-    snapshots that stood in the way - including the long holds the pre-flight
-    cannot see. Snapshots destroyed by something else in the meantime are
-    silently ignored by the kernel.
-    """
-    if not snapshots:
-        return
-
-    try:
-        truenas_pylibzfs.lzc.destroy_snapshots(snapshot_names=snapshots, defer_destroy=False)
-    except truenas_pylibzfs.lzc.ZFSCoreException as e:
-        failure = classify_destroy_failure(
-            submitted=set(snapshots),
-            errors=e.errors,
-            code=e.code,
-            clones_destroyed=clones_destroyed,
-        )
-        _raise_destroy_failure(
-            tls,
-            failure,
-            dataset=dataset,
-            target_snap=target_snap,
-            completed=completed,
-        )
-    except truenas_pylibzfs.ZFSException as e:
-        raise ZFSRollbackFailedException(
-            _destroy_failure_prefix(dataset, target_snap) + str(e),
-            errno.EFAULT,
-            completed=completed,
-        ) from None
-
-
-def _raise_destroy_failure(
-    tls: Any,
-    failure: DestroyFailure,
-    *,
-    dataset: str,
-    target_snap: str,
-    completed: Sequence[str],
-) -> NoReturn:
-    """Raise the exception that describes a failed batched destroy."""
-    prefix = _destroy_failure_prefix(dataset, target_snap)
-    if failure.blockers:
-        blockers = [_with_clone_names(tls, blocker) for blocker in failure.blockers]
-        raise ZFSRollbackBlockedException(f"{dataset}@{target_snap}", blockers, completed=completed) from None
-    elif failure.other:
-        raise ZFSRollbackFailedException(
-            prefix + "; ".join(f"{name}: {os.strerror(err)}" for name, err in failure.other),
-            failure.other[0][1],
-            completed=completed,
-        ) from None
-    elif failure.state_unknown:
-        try:
-            leftover = _collect_newer_snapshot_paths(tls, dataset, target_snap)
-            still_there = "\n".join(f"  {name}" for name in leftover) or "  (none)"
-        except Exception:
-            # Nothing here may replace the interrupted destroy raised below.
-            still_there = "  (could not be listed)"
-        raise ZFSRollbackFailedException(
-            prefix + f"{os.strerror(failure.code)}. The destroy was interrupted after it started, so an unknown "
-            f"number of them are already gone and {dataset!r} was not rolled back. Snapshots still newer than "
-            f"{target_snap!r}:\n{still_there}",
-            failure.code,
-            completed=completed,
-        ) from None
-    else:
-        raise ZFSRollbackFailedException(
-            prefix + f"{os.strerror(failure.code)}.",
-            failure.code,
-            completed=completed,
-        ) from None
-
-
-def _with_clone_names(tls: Any, blocker: ZFSRollbackBlocker) -> ZFSRollbackBlocker:
-    """Name the clones of a kernel-reported clone blocker, which reports an errno and nothing else."""
-    if blocker.reason not in (ZFSRollbackBlockerReason.CLONES, ZFSRollbackBlockerReason.CLONE_DESTROY_FAILED):
-        return blocker
-
-    try:
-        clones = open_resource(tls, blocker.snapshot).get_clones()
-    except (ZFSPathNotFoundException, truenas_pylibzfs.ZFSException):
-        return blocker
-    return dataclasses.replace(blocker, names=tuple(clones))
-
-
-def _destroy_clones_of(tls: Any, snap_path: str, force: bool, completed: Sequence[str]) -> None:
-    """Destroy the clones of ``snap_path`` so that the snapshot itself can be destroyed."""
-    try:
-        snap_rsrc = open_resource(tls, snap_path)
-    except ZFSPathNotFoundException:
-        return
-
-    try:
-        clones = snap_rsrc.get_clones()
-    except truenas_pylibzfs.ZFSException as e:
-        raise ZFSRollbackFailedException(
-            f"Failed to inspect snapshot {snap_path!r}: {e}",
-            errno.EFAULT,
-            completed=completed,
-        ) from None
-
-    for clone in clones:
-        _destroy_clone(tls, clone, force, completed)
-
-
-def _destroy_clone(tls: Any, clone: str, force: bool, completed: Sequence[str]) -> None:
-    """Destroy ``clone`` so that the snapshot it originates from can be destroyed.
-
-    The clone is always unmounted first because destroying a resource does not
-    unmount it, and a mounted filesystem is held by the kernel and so cannot be
-    destroyed. ``force`` therefore controls how forcefully the unmount is
-    attempted, not whether it is attempted at all. The encryption key is left
-    loaded, matching what the ``zfs rollback`` CLI does when it unmounts a
-    dependent clone.
-    """
-    try:
-        clone_rsrc = open_resource(tls, clone)
-    except ZFSPathNotFoundException:
-        return
-
-    if clone_rsrc.type == truenas_pylibzfs.ZFSType.ZFS_TYPE_FILESYSTEM:
-        try:
-            clone_rsrc.unmount(force=force, unload_encryption_key=False)
-        except truenas_pylibzfs.ZFSException:
-            # A failed unmount is deliberately not reported: the destroy below
-            # fails too, with the reason the unmount was needed in the first place.
-            pass
-
-    try:
-        tls.lzh.destroy_resource(name=clone)
-    except truenas_pylibzfs.ZFSException as e:
-        if e.code == truenas_pylibzfs.ZFSError.EZFS_NOENT:
-            return
-        # EBUSY because a clone that resists destruction is almost always held open.
-        raise ZFSRollbackFailedException(
-            f"Failed to destroy clone {clone!r} prior to rollback: {e}",
-            errno.EBUSY,
-            completed=completed,
-        ) from None
-
-
-def _prop_int(prop: Any) -> int:
-    """Read a numeric ZFS property, treating an unset property as zero."""
-    if prop is None or prop.value is None:
-        return 0
-    return int(prop.value)
-
-
-def _capture_volume_reservation(tls: Any, dataset: str) -> int | None:
-    """Return the ``volsize`` of ``dataset`` when its ``refreservation`` has to be restored afterwards.
-
-    A rollback can change the volsize of a volume, which leaves a thick
-    provisioned volume with a ``refreservation`` that no longer matches it - too
-    small if the volsize grew, too large if it shrank. ``None`` means there is
-    nothing to restore: ``dataset`` is not a volume, it is thin provisioned, or
-    it could not be inspected.
-    """
-    try:
-        rsrc = open_resource(tls, dataset)
-        if rsrc.type != truenas_pylibzfs.ZFSType.ZFS_TYPE_VOLUME:
-            return None
-
-        props = rsrc.get_properties(properties={
-            truenas_pylibzfs.ZFSProperty.VOLSIZE,
-            truenas_pylibzfs.ZFSProperty.REFRESERVATION,
-        })
-        volsize = _prop_int(props.volsize)
-        refreservation = _prop_int(props.refreservation)
-    except Exception:
-        # A property that cannot be read is no reason to refuse a rollback that would
-        # otherwise go ahead, so nothing here may propagate.
-        logger.warning(
-            "%s: could not be inspected for a refreservation to restore after the rollback",
-            dataset,
-            exc_info=True,
-        )
-        return None
-
-    # Matching zfs(8): only a refreservation that exactly covered the volsize is restored.
-    # The middleware sets it to the literal volsize; a volume from `zfs create -V` carries a
-    # larger synthetic value and is deliberately left alone.
-    if volsize != refreservation:
-        return None
-    return volsize
-
-
-def _restore_volume_reservation(tls: Any, dataset: str, old_volsize: int) -> None:
-    """Re-set the ``refreservation`` of ``dataset`` when the rollback changed its volsize."""
-    try:
-        rsrc = open_resource(tls, dataset)
-        props = rsrc.get_properties(properties={truenas_pylibzfs.ZFSProperty.VOLSIZE})
-        new_volsize = _prop_int(props.volsize)
-        if new_volsize == old_volsize:
-            return
-        rsrc.set_properties(properties={"refreservation": str(new_volsize)})
-    except Exception:
-        # The rollback has already committed, so nothing here may be reported as its failure.
-        logger.warning(
-            "%s: rolled back, but its refreservation could not be updated to match the new volsize; it is "
-            "still set to %d bytes, which no longer matches the volume",
-            dataset,
-            old_volsize,
-            exc_info=True,
-        )
+        if newer_snaps:
+            _destroy_newer_snapshots(tls, ds, snap_name, newer_snaps, recursive_clones, force)
+        _rollback(ds, snap_name)

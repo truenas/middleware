@@ -824,14 +824,10 @@ class ZFSResourceSnapshotService(Service):
         A JSON-RPC ``error`` response (code ``-32001``, *Method call error*) is returned instead
         of a result when:
 
-        - a snapshot that has to be destroyed first has holds, or clones that ``recursive_clones``
-          cannot destroy (errno ``EBUSY``); release a hold with
+        - a snapshot that has to be destroyed first has holds, or has clones and
+          ``recursive_clones`` was not passed (errno ``EBUSY``); release a hold with
           :method:`zfs.resource.snapshot.release`
-        - the dataset itself is in use, by an in-flight replication or a ``.zfs/snapshot``
-          automount for instance (errno ``EBUSY``)
-        - the pool cannot satisfy the dataset's ``refquota`` or ``refreservation`` after the
-          rollback (errno ``EDQUOT`` or ``ENOSPC``)
-        - the rollback fails for any other reason, with the errno the kernel reported
+        - a destroy or the rollback itself fails, with the errno the kernel reported
 
         Examples:
 
