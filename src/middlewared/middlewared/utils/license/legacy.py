@@ -2,7 +2,8 @@
 
 Legacy licenses predate the per-feature key vocabulary, so a modern gate reading
 one would see almost no keys and revoke functionality the holder already has.
-Every surviving legacy blob therefore gets _LEGACY_INJECT granted outright.
+Every surviving legacy blob therefore gets _LEGACY_INJECT granted outright, except a
+system-generated record, which gets _HW_ONLY_INJECT.
 
 A blob whose model starts with "freenas" bought none of that functionality, so it
 is rejected entirely and the system reads as unlicensed. The rejection is silent:
@@ -17,7 +18,7 @@ import errno
 from functools import lru_cache
 import logging
 from types import MappingProxyType
-from typing import Any
+from typing import Any, Final
 
 from licenselib.license import Features, License
 from licenselib.utils import proactive_support_allowed
@@ -25,11 +26,12 @@ from truenas_pylicensed import FEATURE_NAME_MAP, LicenseType
 from truenas_pylicensed.features import LicenseFeature, SupportTier
 
 from .constants import LEGACY_LICENSE_FILE, LICENSE_ADDHW_MAPPING
-from .types import FeatureInfo, LicenseInfo
+from .types import FeatureInfo, LicenseInfo, LicenseOrigin
 
 logger = logging.getLogger(__name__)
 
 __all__ = (
+    "HW_ONLY_MARKER",
     "LegacyStatus",
     "describe_legacy_license",
     "get_legacy_license_info",
@@ -66,6 +68,21 @@ _LEGACY_INJECT: frozenset[LicenseFeature] = frozenset(
         LicenseFeature.TRUESEARCH,
         LicenseFeature.VMS,
         LicenseFeature.WEBSHARE,
+    }
+)
+
+HW_ONLY_MARKER: Final[str] = "TRUENAS-HW-ONLY-V1"
+
+# The keys a system-generated record carries. Writing the record moves the appliance off the
+# unlicensed column, so this list is what holds it to the answers the bare chassis already gave --
+# but only for features the matrix gates on a key. One gated on holding a license at all is
+# granted by the record's existence, whatever this list says.
+_HW_ONLY_INJECT: frozenset[LicenseFeature] = frozenset(
+    {
+        LicenseFeature.APPS,
+        LicenseFeature.CONTAINERS,
+        LicenseFeature.SED,
+        LicenseFeature.VMS,
     }
 )
 
@@ -130,6 +147,7 @@ def legacy_license_fields(lic: Any) -> dict[str, Any]:
         "contract_end": lic.contract_end.isoformat(),
         "features": [feature.name for feature in lic.features],
         "addhw": [list(entry) for entry in lic.addhw],
+        "hw_only": lic.customer_key == HW_ONLY_MARKER,
     }
 
 
@@ -186,16 +204,21 @@ def parse_legacy_license(text: str) -> LicenseInfo:
     enclosures = {
         LICENSE_ADDHW_MAPPING[code]: quantity for quantity, code in lic.addhw if code in LICENSE_ADDHW_MAPPING
     }
-    # Iterate the enum rather than the frozenset so injected names land in declaration order.
-    for feat in LicenseFeature:
-        if feat in _LEGACY_INJECT and feat not in feature_names:
-            feature_names.append(feat.value)
+    hw_only = lic.customer_key == HW_ONLY_MARKER
+    if hw_only:
+        feature_names = [f.value for f in LicenseFeature if f in _HW_ONLY_INJECT]
+    else:
+        # Iterate the enum rather than the frozenset so injected names land in declaration order.
+        for feat in LicenseFeature:
+            if feat in _LEGACY_INJECT and feat not in feature_names:
+                feature_names.append(feat.value)
 
     return LicenseInfo(
         id=f"legacy_{lic.system_serial}",
         type=LicenseType.ENTERPRISE_HA if lic.system_serial_ha else LicenseType.ENTERPRISE_SINGLE,
         model=model,
-        support_expires_at=lic.contract_end,
+        # A marked record has no support contract behind it, so it carries no expiry to act on.
+        support_expires_at=None if hw_only else lic.contract_end,
         # A legacy blob carries only the support contract's dates, not per-feature ones.
         features=MappingProxyType(
             {
@@ -212,4 +235,5 @@ def parse_legacy_license(text: str) -> LicenseInfo:
         serials=tuple(serials),
         enclosures=MappingProxyType(enclosures),
         contract_type=lic.contract_type.name.upper(),
+        origin=LicenseOrigin.SYSTEM_GENERATED if hw_only else LicenseOrigin.ISSUED,
     )

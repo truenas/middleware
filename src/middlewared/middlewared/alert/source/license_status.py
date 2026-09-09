@@ -22,6 +22,7 @@ from middlewared.alert.base import (
 )
 from middlewared.alert.schedule import IntervalSchedule
 from middlewared.api.current import MailSendMessage
+from middlewared.utils.license import LicenseOrigin
 
 
 class LicenseAlert(NonDataclassAlertClass[str], AlertClass):
@@ -63,7 +64,9 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
         alerts: list[Alert[Any]] = []
 
         local_license = self.call_sync2(self.s.truenas.license.info_private)
-        if local_license is None:
+        # A system-generated record licenses no shelves, so the shelf check below would fire on it
+        # permanently.
+        if local_license is None or local_license.origin is LicenseOrigin.SYSTEM_GENERATED:
             if not self.middleware.call_sync('system.is_ha_capable'):
                 return []
 

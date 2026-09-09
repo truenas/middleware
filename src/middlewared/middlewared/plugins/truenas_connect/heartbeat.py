@@ -11,6 +11,7 @@ from truenas_connect_utils.urls import get_heartbeat_url
 from middlewared.alert.source.truenas_connect import TNCHeartbeatConnectionFailureAlert
 from middlewared.service import CallError, ServiceContext
 from middlewared.utils.disks_.disk_class import iterate_disks
+from middlewared.utils.license import LicenseOrigin
 from middlewared.utils.version import parse_version_string
 
 from .internal import config_internal, handle_tnc_deregistration
@@ -67,12 +68,13 @@ async def _build_payload(
     # license_id is the delivery acknowledgement: once we report the id of an installed license,
     # TNC marks it accepted and stops resending the PEM. Null when we hold no valid license.
     license_info = await context.call2(context.s.truenas.license.info_private)
+    license_id = license_info.id if license_info is not None and license_info.origin is LicenseOrigin.ISSUED else None
 
     return {
         'alerts': [alert.model_dump() for alert in await context.call2(context.s.alert.list)],
         'stats': stats,
         'fingerprint': fingerprint,
-        'license_id': license_info.id if license_info else None,
+        'license_id': license_id,
     }
 
 

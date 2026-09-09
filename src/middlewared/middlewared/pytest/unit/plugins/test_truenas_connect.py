@@ -11,7 +11,7 @@ from middlewared.plugins.truenas_connect.config import TrueNASConnectConfigServi
 from middlewared.plugins.truenas_connect.hostname import TNCHostnameService
 from middlewared.plugins.truenas_connect.utils import CONFIGURED_TNC_STATES, TNC_IPS_CACHE_KEY
 from middlewared.service import CallError, ValidationErrors
-from middlewared.utils.license import FeatureInfo, LicenseInfo
+from middlewared.utils.license import FeatureInfo, LicenseInfo, LicenseOrigin
 
 
 def make_tnc_entry(**overrides: Any) -> TrueNASConnectEntry:
@@ -702,6 +702,7 @@ def _license_info(id_='LIC-1'):
         serials=('TEST-000001',),
         enclosures={'E24': 3},
         contract_type='GOLD',
+        origin=LicenseOrigin.ISSUED,
     )
 
 

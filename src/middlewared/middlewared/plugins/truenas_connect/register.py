@@ -11,6 +11,7 @@ from truenas_connect_utils.urls import get_registration_uri
 
 from middlewared.service import CallError, ServiceContext
 from middlewared.utils.crypto import ssl_uuid4
+from middlewared.utils.license import LicenseOrigin
 
 from .internal import config_internal, set_status
 from .utils import CLAIM_TOKEN_CACHE_KEY
@@ -80,9 +81,11 @@ async def get_registration_uri_impl(context: ServiceContext) -> str:
         'port': (await context.middleware.call('system.general.config'))['ui_httpsport']
     }
 
-    license_info = await context.middleware.call('system.license', True)
-    if license_info is not None and license_info['raw_license'] is not None:
-        query_params['license'] = license_info['raw_license']
+    info = await context.call2(context.s.truenas.license.info_private)
+    if info is not None and info.origin is LicenseOrigin.ISSUED:
+        license_info = await context.middleware.call('system.license', True)
+        if license_info is not None and license_info['raw_license'] is not None:
+            query_params['license'] = license_info['raw_license']
 
     # get_registration_uri composes from raw config dict — pass config_internal()'s dict shape.
     raw_config = await config_internal(context)
