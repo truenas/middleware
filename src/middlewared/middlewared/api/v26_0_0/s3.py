@@ -76,11 +76,7 @@ S3AuditOverflow = Literal["DROP", "BACKPRESSURE"]
 S3Access = Literal["READONLY", "WRITEONLY", "READWRITE", "DENY"]
 S3PrincipalType = Literal["USER", "GROUP", "EVERYONE"]
 
-# `S3_BUCKET_OWNER_ENFORCED` is accepted and stored as `S3` beside an
-# `object_ownership` of `BUCKET_OWNER_ENFORCED`, undocumented on purpose:
-# it carries the last API consumer over and goes when that consumer does,
-# with `SharingS3Service.normalize_ownership`'s handling of it.
-S3PermissionsModel = Literal["S3", "MULTIPROTOCOL", "S3_BUCKET_OWNER_ENFORCED"]
+S3PermissionsModel = Literal["S3", "MULTIPROTOCOL"]
 """How the S3 service treats the filesystem permissions on a bucket's
 tree."""
 
@@ -128,6 +124,22 @@ class S3AccesskeyEntry(BaseModel):
         description="Expiration timestamp for the access key or `null` for no expiration.",
     )
     created_at: datetime = Field(description="Timestamp when the access key was created.")
+    last_used_at: datetime | None = Field(
+        default=None,
+        description=(
+            "Time the S3 service last accepted a request signed with this key, or `null` if the key has never "
+            "been used. The S3 service reports this at intervals, so a recent request can be absent for a short "
+            "time. This field is read-only."
+        ),
+    )
+    manage_buckets: bool = Field(
+        default=False,
+        description=(
+            "Whether this access key may create and delete buckets through the S3 protocol. The account that owns "
+            "the key must also hold the `SHARING_S3_WRITE` role. This field can only remove that permission from "
+            "one key, never add it."
+        ),
+    )
     status: S3AccesskeyStatus = Field(
         description=(
             "Effective state of the access key. Only `ENABLED` keys are usable. `DISABLED` was set by an "
@@ -154,6 +166,7 @@ class S3AccesskeyCreate(S3AccesskeyEntry):
     )
     enabled: bool = Field(default=True, description="Whether the access key may be used.")
     created_at: Excluded = excluded_field()
+    last_used_at: Excluded = excluded_field()
     status: Excluded = excluded_field()
 
 
@@ -281,6 +294,14 @@ class S3Entry(BaseModel):
         description=(
             "Grants that apply to every bucket. A `DENY` here suspends the principal everywhere, outranking every "
             "bucket grant. Listing buckets never needs one of these."
+        ),
+    )
+    managed_root_dataset: str = Field(
+        default="",
+        description=(
+            "Path where datasets for S3 buckets created through S3 protocol CreateBucket requests are created, "
+            "for example `tank/s3`. The path is a dataset name, not a mount point, and the dataset must already "
+            "exist. If this field is empty (the default), S3 protocol CreateBucket requests are refused."
         ),
     )
 
@@ -431,6 +452,15 @@ class SharingS3Entry(BaseModel):
 class SharingS3Create(SharingS3Entry):
     id: Excluded = excluded_field()
     owner_uid: Excluded = excluded_field()
+    dataset: NonEmptyString | None = Field(
+        default=None,
+        description=(
+            "ZFS dataset for the bucket, created by this method. If you give no value, the dataset is created "
+            "under the S3 service's `managed_root_dataset` and takes the name of the bucket. An S3 protocol "
+            "CreateBucket request always uses that default. If that name is in use, a `_N` suffix is added. An "
+            "existing dataset is never used: `sharing.s3.delete` keeps the dataset and its objects."
+        ),
+    )
     grants: list[S3Grant] = Field(default=[], description="Who may access the bucket and how, beyond its owner.")
     locked: Excluded = excluded_field()
 
