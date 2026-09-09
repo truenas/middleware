@@ -18,6 +18,7 @@ from middlewared.utils.entitlements import (
 from middlewared.utils.license import (
     FeatureInfo,
     LicenseInfo,
+    LicenseOrigin,
     get_legacy_license_info,
     parse_legacy_license,
 )
@@ -100,6 +101,7 @@ FREENAS_MINI_BLOB = (
                 serials=("TEST-000001", "TEST-000002"),
                 enclosures={"E24": 3, "E16": 2},
                 contract_type="GOLD",
+                origin=LicenseOrigin.ISSUED,
             ),
         ),
         # Enterprise single license (X10, STANDARD contract): the jails->APPS bit is
@@ -116,6 +118,7 @@ FREENAS_MINI_BLOB = (
                 serials=("TEST-000001",),
                 enclosures={},
                 contract_type="STANDARD",
+                origin=LicenseOrigin.ISSUED,
             ),
         ),
     ],

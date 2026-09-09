@@ -11,7 +11,7 @@ from truenas_pylicensed import LicenseType
 
 from middlewared.api.current import EntitlementEntry
 from middlewared.utils.entitlements import EntitlementFacts, HardwareClass, Reason, check_entitlement
-from middlewared.utils.license import FeatureInfo, LicenseInfo
+from middlewared.utils.license import FeatureInfo, LicenseInfo, LicenseOrigin
 
 
 def make_license(
@@ -21,6 +21,7 @@ def make_license(
     model: str | None = "H10",
     expires_at: date | None = None,
     support_type: str | None = None,
+    origin: LicenseOrigin = LicenseOrigin.ISSUED,
 ) -> LicenseInfo:
     features = {
         name: FeatureInfo(
@@ -41,6 +42,7 @@ def make_license(
         serials=("TEST-000001",),
         enclosures={},
         contract_type=support_type,
+        origin=origin,
     )
 
 

@@ -20,7 +20,7 @@ from middlewared.utils.entitlements import (
     LicenseFeature,
     Reason,
 )
-from middlewared.utils.license import FeatureInfo, LicenseInfo
+from middlewared.utils.license import FeatureInfo, LicenseInfo, LicenseOrigin
 
 
 def test_check_returns_the_endpoint_model_not_the_engine_dataclass(monkeypatch):
@@ -112,6 +112,7 @@ def make_license(feature_names, license_type, support_type):
         serials=("TEST-000001",),
         enclosures={},
         contract_type=support_type,
+        origin=LicenseOrigin.ISSUED,
     )
 
 

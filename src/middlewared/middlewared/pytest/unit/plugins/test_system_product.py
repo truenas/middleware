@@ -5,7 +5,7 @@ from truenas_pylicensed import LicenseType
 from middlewared.plugins.system.product import SystemService
 from middlewared.pytest.unit.helpers import create_service
 from middlewared.pytest.unit.middleware import Middleware
-from middlewared.utils.license import FeatureInfo, LicenseInfo
+from middlewared.utils.license import FeatureInfo, LicenseInfo, LicenseOrigin
 
 START = date(2026, 4, 8)
 END = date(2026, 4, 30)
@@ -30,6 +30,7 @@ def _info(**overrides) -> LicenseInfo:
         "serials": ("TEST-000001", "TEST-000002"),
         "enclosures": {"E24": 3},
         "contract_type": "GOLD",
+        "origin": LicenseOrigin.ISSUED,
     }
     fields.update(overrides)
     return LicenseInfo(**fields)

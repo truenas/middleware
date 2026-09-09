@@ -6,7 +6,7 @@ from truenas_pylicensed import LicenseType
 from middlewared.plugins.failover import mismatch_nics
 from middlewared.plugins.failover_.ha_hardware import is_licensed_for_ha
 from middlewared.utils.hardware import HardwareClass
-from middlewared.utils.license import LicenseInfo
+from middlewared.utils.license import LicenseInfo, LicenseOrigin
 
 
 @pytest.mark.parametrize(
@@ -45,6 +45,7 @@ def _license(type_):
         serials=("TEST-000001",),
         enclosures={},
         contract_type=None,
+        origin=LicenseOrigin.ISSUED,
     )
 
 

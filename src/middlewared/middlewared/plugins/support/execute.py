@@ -23,6 +23,7 @@ from middlewared.pipe import InputPipes, Pipes
 from middlewared.plugins.system.utils import DEBUG_MAX_SIZE
 from middlewared.service import CallError
 from middlewared.utils import sw_version
+from middlewared.utils.license import LicenseOrigin
 from middlewared.utils.network import INTERNET_TIMEOUT
 
 if TYPE_CHECKING:
@@ -90,7 +91,7 @@ async def new_ticket(
         required_attrs = ("category", "phone", "name", "email", "criticality", "environment")
         payload["serial"] = (await context.middleware.call("system.dmidecode_info"))["system-serial-number"]
         license_ = await context.call2(context.s.truenas.license.info_private)
-        if license_:
+        if license_ and license_.origin is LicenseOrigin.ISSUED:
             payload["license_id"] = license_.id
 
     for attr in required_attrs:
