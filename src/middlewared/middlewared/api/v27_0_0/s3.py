@@ -28,6 +28,8 @@ __all__ = [
     "S3AuditMask",
     "S3Listener",
     "S3PrincipalType",
+    "S3PermissionsModel",
+    "S3ObjectOwnership",
     "S3Grant",
     "S3GrantEntry",
     "S3Entry",
@@ -73,6 +75,18 @@ S3AuditMask = list[S3AuditAction] | Literal["ALL"]
 S3AuditOverflow = Literal["DROP", "BACKPRESSURE"]
 S3Access = Literal["READONLY", "WRITEONLY", "READWRITE", "DENY"]
 S3PrincipalType = Literal["USER", "GROUP", "EVERYONE"]
+
+# `S3_BUCKET_OWNER_ENFORCED` is accepted and stored as `S3` beside an
+# `object_ownership` of `BUCKET_OWNER_ENFORCED`, undocumented on purpose:
+# it carries the last API consumer over and goes when that consumer does,
+# with `SharingS3Service.normalize_ownership`'s handling of it.
+S3PermissionsModel = Literal["S3", "MULTIPROTOCOL", "S3_BUCKET_OWNER_ENFORCED"]
+"""How the S3 service treats the filesystem permissions on a bucket's
+tree."""
+
+S3ObjectOwnership = Literal["BUCKET_OWNER_ENFORCED", "BUCKET_OWNER_PREFERRED", "OBJECT_WRITER"]
+"""S3 Object Ownership: the bucket-level setting that controls ownership
+of objects uploaded to a bucket and disables or enables ACLs."""
 
 S3AccessKeyId = Annotated[str, Field(pattern=r"^[A-Z0-9]{16,128}$")]
 """An S3 access key id. Uppercase alphanumerics only, so it is safe inside
@@ -306,16 +320,17 @@ class SharingS3Entry(BaseModel):
         description=(
             "The ZFS dataset the bucket is. Created by `sharing.s3.create` and owned by it. Objects live in the "
             "`s3data` directory under its mount point, which the S3 service creates on its next start, owned by "
-            "`owner`. Under the `S3` and `MULTIPROTOCOL` permissions models every object is written under the "
-            "account that put it, so a grantee other than the owner can write only where that directory's "
-            "permissions allow; set an ACL on it as for any share, or choose `S3_BUCKET_OWNER_ENFORCED`."
+            "`owner`. Under the `MULTIPROTOCOL` permissions model the filesystem permissions on that tree "
+            "govern S3 callers too, so a grantee other than the owner reaches only what they allow; set an ACL "
+            "on the directory as for any share. Under `S3` they are ignored and the grants decide instead."
         ),
     )
     enabled: bool = Field(default=True, description="Whether the bucket is served. Toggling restarts the S3 service.")
     owner: NonEmptyString = Field(
         description=(
             "Account that owns the bucket and bypasses its grants, owns the `s3data` directory when the S3 "
-            "service creates it, and owns every object under the `S3_BUCKET_OWNER_ENFORCED` permissions model. "
+            "service creates it, and owns every object written under the `BUCKET_OWNER_ENFORCED` object "
+            "ownership setting. "
             "Given by name, held by uid: the name is resolved when set and again whenever the "
             "bucket is read, so a renamed account reads as its new name, a reused name never inherits the bucket, "
             "and an account that no longer exists reads as its uid. Changing the owner later moves the grants, not "
@@ -324,16 +339,36 @@ class SharingS3Entry(BaseModel):
     )
     owner_uid: int = Field(description="The uid that owns the bucket.")
     grants: list[S3GrantEntry] = Field(default=[], description="Who may access the bucket and how, beyond its owner.")
-    permissions_model: Literal["S3", "MULTIPROTOCOL", "S3_BUCKET_OWNER_ENFORCED"] = Field(
+    permissions_model: S3PermissionsModel = Field(
         default="S3",
         description=(
-            "Whose account the S3 service touches the dataset under. `S3` when only the S3 service writes it: "
-            "the grants alone decide a read, and every object is written under the account that put it. "
-            "`MULTIPROTOCOL` when other protocols share the tree: a read is also subject to the file permissions "
-            "those protocols set. `S3_BUCKET_OWNER_ENFORCED` when only the S3 service writes it and every object "
-            "is to be `owner`'s: every read and write runs as the owner, so the grants are the whole of the "
-            "bucket's access control and a grantee needs no permissions on the `s3data` directory. A request is "
-            "still authorized and audited as the account that made it."
+            "How the S3 service treats the filesystem permissions on the bucket's tree. `S3` when the S3 "
+            "service is the only door: those permissions are ignored in their entirety, and access is decided "
+            "by the bucket's grants and, where `object_ownership` supports them, its S3 ACLs. `MULTIPROTOCOL` "
+            "when SMB or NFS share the tree: the filesystem ACL is enforced as well as the grants, so an ACL "
+            "set on the tree governs S3 callers too and narrowing it takes effect for them immediately. S3 ACLs "
+            "are not supported on such a bucket at all, whatever `object_ownership` says, since no stored S3 "
+            "record may decide what a write from another protocol could contradict. Which account an S3 "
+            "operation runs as is `object_ownership`'s answer, not this one's."
+        ),
+    )
+    object_ownership: S3ObjectOwnership = Field(
+        default="BUCKET_OWNER_ENFORCED",
+        description=(
+            "S3 Object Ownership, the bucket-level setting that controls ownership of objects uploaded to the "
+            "bucket and disables or enables ACLs, and what `GetBucketOwnershipControls` reports. "
+            "`BUCKET_OWNER_ENFORCED` (the default): ACLs are disabled, and the bucket owner automatically owns "
+            "and has full control over every object in the bucket. ACLs no longer affect permissions to data in "
+            "the bucket, and the bucket uses its grants to define access control. Requests to set or update "
+            "ACLs fail with `AccessControlListNotSupported`; requests to read ACLs are supported. Only uploads "
+            "with bucket owner full control ACLs, or uploads that do not specify an ACL, are accepted. "
+            "`BUCKET_OWNER_PREFERRED`: the bucket owner owns and has full control over new objects that other "
+            "accounts write to the bucket with the `bucket-owner-full-control` canned ACL. Objects uploaded "
+            "with other ACLs are owned by the writing account. ACLs can be updated and can grant permissions. "
+            "`OBJECT_WRITER`: the account that uploads an object owns the object, has full control over it, and "
+            "can grant other users access to it through ACLs. "
+            "A `MULTIPROTOCOL` bucket is always `OBJECT_WRITER` whatever is given here, and its ACLs stay "
+            "disabled: the other protocols' users own the filesystem permissions on the tree."
         ),
     )
     versioning: Literal["OFF", "ENABLED", "SUSPENDED"] = Field(default="OFF", description="Bucket versioning state.")
