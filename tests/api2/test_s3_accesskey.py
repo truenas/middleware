@@ -3,6 +3,7 @@ serves. They live in their own table, linked to local or directory
 services accounts the way API keys are, and nothing in the TrueNAS API
 authentication path ever reads them."""
 
+import json
 import re
 from datetime import UTC, datetime, timedelta
 from time import sleep
@@ -10,12 +11,13 @@ from time import sleep
 import pytest
 from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.test.integration.assets.account import unprivileged_user_client, user
-from middlewared.test.integration.utils import call, client
+from middlewared.test.integration.utils import call, client, ssh
 
 S3_USER = "s3keyuser"
 ACCESS_KEY_RE = re.compile(r"^[A-Z0-9]{20}$")
 SECRET_RE = re.compile(r"^[A-Za-z0-9]{40}$")
 REDACTED = "********"
+CREDENTIALS_CONF = "/etc/truenas_s3/credentials.conf"
 
 
 @pytest.fixture(scope="module")
@@ -227,3 +229,135 @@ def test_lost_secret_flips_the_status(accesskey):
     rotated = call("s3.accesskey.update", accesskey["id"], {"rotate": True})
     assert rotated["status"] == "ENABLED"
     assert SECRET_RE.match(rotated["secret"])
+
+
+def report_usage(entries):
+    """Call the private reporting method the way the S3 daemon does.
+
+    `midclt` runs locally as root with an unset loginuid, which is the
+    origin `_can_call_private_methods` admits. The daemon reaches it the
+    same way over the unix socket, so the test exercises the path that
+    ships instead of one the API layer only tolerates.
+    """
+    payload = json.dumps(entries).replace("'", "'\\''")
+    return int(ssh(f"midclt call s3.accesskey.report_usage '{payload}'").strip())
+
+
+def test_a_new_key_manages_no_buckets_and_has_no_use(accesskey):
+    """Both fields start closed. `manage_buckets` must default to false,
+    or an upgrade would widen every key that already exists."""
+    assert accesskey["manage_buckets"] is False
+    assert accesskey["last_used_at"] is None
+
+
+def test_manage_buckets_is_settable_and_rendered(accesskey):
+    """The S3 service reads the flag from the credentials file, so the
+    render is the only way it reaches the daemon."""
+    updated = call("s3.accesskey.update", accesskey["id"], {"manage_buckets": True})
+    assert updated["manage_buckets"] is True
+
+    call("etc.generate", "truenas_s3")
+    rendered = ssh(f"cat {CREDENTIALS_CONF}")
+    assert "manage_buckets = true" in rendered
+
+    call("s3.accesskey.update", accesskey["id"], {"manage_buckets": False})
+    call("etc.generate", "truenas_s3")
+    assert "manage_buckets" not in ssh(f"cat {CREDENTIALS_CONF}")
+
+
+def test_reported_usage_only_moves_forward(accesskey):
+    """The daemon reports what it has seen since its last call. A flush
+    that arrives late, or repeats after a restart, must not move a key
+    backwards."""
+    key = accesskey["access_key"]
+    later = int(datetime.now(UTC).timestamp())
+    earlier = later - 3600
+
+    assert report_usage([{"access_key": key, "last_used": later}]) == 1
+    first = call("s3.accesskey.get_instance", accesskey["id"])["last_used_at"]
+    assert first is not None
+
+    assert report_usage([{"access_key": key, "last_used": earlier}]) == 0
+    assert call("s3.accesskey.get_instance", accesskey["id"])["last_used_at"] == first
+
+
+def test_manage_buckets_needs_the_write_role(s3_user):
+    """The flag lets a key ask middleware to create buckets, and
+    middleware answers as the account the key belongs to. An account
+    without the role would have every such call refused, so the key is
+    refused here instead. The module's user deliberately holds no roles."""
+    with pytest.raises(ValidationErrors) as ve:
+        call(
+            "s3.accesskey.create",
+            {"name": "would-be admin", "username": S3_USER, "manage_buckets": True},
+        )
+    assert "manage_buckets" in ve.value.errors[0].attribute
+    assert "SHARING_S3_WRITE" in ve.value.errors[0].errmsg
+    assert not call("s3.accesskey.query", [["name", "=", "would-be admin"]])
+
+
+@pytest.mark.parametrize("role", ["SHARING_S3_WRITE", "SHARING_WRITE"])
+def test_manage_buckets_is_allowed_for_a_role_holder(role):
+    """`SHARING_WRITE` includes `SHARING_S3_WRITE`, and the composed role
+    list is what the check reads, so a role that merely includes it
+    passes."""
+    with unprivileged_user_client(roles=[role]) as c:
+        key = call(
+            "s3.accesskey.create",
+            {"name": f"admin key {role}", "username": c.username, "manage_buckets": True},
+        )
+        try:
+            assert key["manage_buckets"] is True
+        finally:
+            call("s3.accesskey.delete", key["id"])
+
+
+def test_turning_manage_buckets_on_is_checked_too(accesskey):
+    """The update path takes the same check, so a key cannot reach the
+    flag by being created without it and edited afterwards."""
+    with pytest.raises(ValidationErrors) as ve:
+        call("s3.accesskey.update", accesskey["id"], {"manage_buckets": True})
+    assert "manage_buckets" in ve.value.errors[0].attribute
+    assert call("s3.accesskey.get_instance", accesskey["id"])["manage_buckets"] is False
+
+
+def test_update_cannot_set_the_usage_timestamp(accesskey):
+    """`last_used_at` is the S3 service's to move and nobody else's. The
+    entry model excludes it from the update shape, and the base model
+    forbids extra fields, so naming it is a validation error rather than
+    a value that is quietly dropped."""
+    with pytest.raises(ValidationErrors):
+        call(
+            "s3.accesskey.update",
+            accesskey["id"],
+            {"last_used_at": datetime.now(UTC).isoformat()},
+        )
+
+
+def test_an_ordinary_update_does_not_disturb_the_usage_timestamp(accesskey):
+    """An update model-dumps the whole entry, so the stored timestamp
+    travels back through compress. It must be dropped there: writing back
+    what the update read would undo a flush that landed in between."""
+    used = int(datetime.now(UTC).timestamp())
+    assert report_usage([{"access_key": accesskey["access_key"], "last_used": used}]) == 1
+    before = call("s3.accesskey.get_instance", accesskey["id"])["last_used_at"]
+    assert before is not None
+
+    renamed = call("s3.accesskey.update", accesskey["id"], {"name": "renamed key"})
+    assert renamed["name"] == "renamed key"
+    assert renamed["last_used_at"] == before
+
+
+def test_reported_usage_skips_a_key_that_is_gone(accesskey):
+    """A key deleted between its use and the next flush is ordinary, so
+    it is skipped rather than failing the whole batch."""
+    assert (
+        report_usage(
+            [
+                {"access_key": "AKIAGONEGONEGONEGONE", "last_used": int(datetime.now(UTC).timestamp())},
+                {"access_key": accesskey["access_key"], "last_used": int(datetime.now(UTC).timestamp())},
+            ]
+        )
+        == 1
+    )
+    assert call("s3.accesskey.get_instance", accesskey["id"])["last_used_at"] is not None
