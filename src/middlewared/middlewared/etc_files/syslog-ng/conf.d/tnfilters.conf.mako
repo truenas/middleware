@@ -64,6 +64,13 @@ filter f_scst {
 filter f_discovery {
   program("truenas-discoveryd");
 };
+## the S3 daemon's own messages. It never opens /dev/log: under systemd it
+## writes journal-native datagrams carrying SYSLOG_IDENTIFIER=s3d, which
+## the system() source reads back as $PROGRAM. Its audit records are a
+## separate path, arriving on s_tn_auditd as TNAUDIT_S3
+filter f_truenas_s3 {
+  program("s3d");
+};
 
 # TrueNAS middleware filters
 % for tnlog in ALL_LOG_FILES:
@@ -77,7 +84,8 @@ filter f_truenas_exclude {
   not filter(f_tnaudit_all) and
   not filter(f_ctdb) and
   not filter(f_scst) and
-  not filter(f_discovery);
+  not filter(f_discovery) and
+  not filter(f_truenas_s3);
 };
 
 #####################

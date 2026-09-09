@@ -136,7 +136,7 @@ def _rendered_grants(grants: Sequence[S3GrantEntry], bucket: str) -> list[Render
 class S3ConfigPart(SystemServicePart[S3Entry]):
     _datastore = "services.truenas_s3"
     _entry = S3Entry
-    _service = "truenas_s3"
+    _service = "s3"
 
     async def config(self) -> S3Entry:
         # the base get-or-insert creates the row the identities are stored in
@@ -373,7 +373,7 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
 
 class S3Service(SystemServiceService[S3Entry]):
     class Config:
-        service = "truenas_s3"
+        service = "s3"
         service_verb = "reload"
         datastore = "services.truenas_s3"
         cli_namespace = "service.s3"

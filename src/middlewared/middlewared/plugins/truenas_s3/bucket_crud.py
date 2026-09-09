@@ -243,13 +243,23 @@ class SharingS3Service(SharingService[SharingS3Entry]):
 
     @private
     async def resolve_owner(self, schema: str, username: str, verrors: ValidationErrors) -> int | None:
-        """The owner's uid."""
+        """The owner's uid, refusing root.
+
+        The owner bypasses the bucket's grants, owns the `s3data`
+        directory the service creates, and owns every object written
+        under `BUCKET_OWNER_ENFORCED`. As uid 0 that is an owner the
+        filesystem does not restrain either, which leaves the bucket's
+        access control stating nothing about what its owner reaches.
+        """
         try:
             user = await self.middleware.call("user.get_user_obj", {"username": username})
         except KeyError:
             verrors.add(f"{schema}.owner", f"User {username!r} does not exist.")
             return None
         uid: int = user["pw_uid"]
+        if uid == 0:
+            verrors.add(f"{schema}.owner", "A bucket may not be owned by root.")
+            return None
         return uid
 
     @private
@@ -513,7 +523,7 @@ class SharingS3Service(SharingService[SharingS3Entry]):
 class S3FSAttachmentDelegate(LockableFSAttachmentDelegate[SharingS3Entry]):
     name = "s3"
     title = "S3 Bucket"
-    service = "truenas_s3"
+    service = "s3"
     service_class = SharingS3Service
 
     async def remove_alert(self, attachment: SharingS3Entry) -> None:
