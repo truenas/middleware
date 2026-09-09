@@ -2,9 +2,8 @@ import contextlib
 import os
 from typing import TYPE_CHECKING, Any
 
-from truenas_pylicensed import LicenseType
-
 from pydantic import Secret
+from truenas_pylicensed import LicenseType
 
 from middlewared.api import api_method
 from middlewared.api.base import LongNonEmptyString
@@ -85,10 +84,9 @@ class TrueNASLicenseService(TrueNASLicenseReconcileService, Service):
         current = self.info_private()
         had_license = current is not None and current.origin is LicenseOrigin.ISSUED
 
-        # `check_annotations` hands the method the undumped model value, so the PEM has to be
-        # unwrapped twice: out of the Secret that keeps it off the audit trail, then out of the
-        # LongStringWrapper that carries strings over the default length limit.
-        with upload_license(license_.get_secret_value().value) as lic:
+        # `check_annotations` hands the method the undumped model value, so the PEM arrives still
+        # boxed in the Secret that keeps it off the audit trail.
+        with upload_license(license_.get_secret_value()) as lic:
             if not lic.valid:
                 raise ValidationError("license", f"Invalid license: {lic.error}")
 
