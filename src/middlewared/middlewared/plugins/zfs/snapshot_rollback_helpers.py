@@ -1,9 +1,7 @@
 """Pure helpers for the snapshot rollback implementation.
 
-Everything here takes plain data - names, errnos, the dicts and tuples that
-`truenas_pylibzfs` hands back - so it can be unit tested without a live ZFS. Do
-not import `truenas_pylibzfs` from this module; that is what keeps the tests
-runnable off a real system.
+Everything here takes plain data - names, errnos, the tuples that
+`truenas_pylibzfs` hands back - and touches no ZFS state.
 """
 
 from collections.abc import Collection, Sequence
@@ -41,20 +39,13 @@ class DestroyFailure:
 
     code: int
     """Errno the destroy failed with."""
-    vanished: tuple[str, ...]
-    """Objects the kernel could not find, so they need not be destroyed at all."""
     blockers: tuple[ZFSRollbackBlocker, ...]
     """Objects the kernel refuses to destroy, and why. `names` is always empty: the kernel
     reports an errno, not the holder, so the caller fills the names in if it can."""
     other: tuple[tuple[str, int], ...]
-    """Per-object failures that are neither `vanished` nor a known blocker."""
+    """Per-object failures that are not a known blocker."""
     state_unknown: bool
     """Whether an unknown number of the submitted objects may already have been destroyed."""
-
-    @property
-    def reported_per_object(self) -> bool:
-        """Whether the kernel named the objects it failed on, which means nothing was destroyed."""
-        return bool(self.vanished or self.blockers or self.other)
 
 
 def classify_destroy_failure(
@@ -74,20 +65,15 @@ def classify_destroy_failure(
     if not per_object:
         return DestroyFailure(
             code=code,
-            vanished=(),
             blockers=(),
             other=(),
             state_unknown=code in INTERRUPTED_DESTROY_ERRNOS,
         )
 
-    vanished: list[str] = []
     blockers: list[ZFSRollbackBlocker] = []
     other: list[tuple[str, int]] = []
     for name, err in per_object:
-        if err == errno.ENOENT:
-            # Defensive: the kernel silently ignores objects that are already gone.
-            vanished.append(name)
-        elif err == errno.EBUSY:
+        if err == errno.EBUSY:
             blockers.append(ZFSRollbackBlocker(snapshot=name, reason=ZFSRollbackBlockerReason.IN_USE, names=()))
         elif err == errno.EEXIST:
             reason = (
@@ -99,7 +85,6 @@ def classify_destroy_failure(
 
     return DestroyFailure(
         code=code,
-        vanished=tuple(vanished),
         blockers=tuple(blockers),
         other=tuple(other),
         state_unknown=False,

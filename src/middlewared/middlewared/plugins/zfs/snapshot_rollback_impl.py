@@ -1,10 +1,9 @@
-from collections.abc import Callable, Iterator, Sequence
-import contextlib
+from collections.abc import Sequence
 import dataclasses
 import errno
 import logging
 import os
-from typing import Any
+from typing import Any, NoReturn
 
 import truenas_pylibzfs
 
@@ -165,24 +164,6 @@ def _collect_rollback_blockers(
     return blockers
 
 
-@contextlib.contextmanager
-def _tolerate_history_write_failure(action: str) -> Iterator[None]:
-    """Run one committed ZFS operation, tolerating a failed ``zpool history`` write.
-
-    ``truenas_pylibzfs`` logs to the pool history only after the operation has
-    already succeeded, and raises a bare RuntimeError when that write fails. The
-    operation is done at that point, so the failure is logged and swallowed.
-    ZFSException and ZFSCoreException both derive from RuntimeError, so only the
-    exact type is tolerated.
-    """
-    try:
-        yield
-    except RuntimeError as e:
-        if type(e) is not RuntimeError:
-            raise
-        logger.warning("%s: succeeded, but the pool history entry could not be written", action, exc_info=True)
-
-
 def _rollback_single(dataset: str, snap_name: str, completed: Sequence[str], destroyed_newer: bool) -> None:
     """Roll ``dataset`` back to its ``snap_name`` snapshot.
 
@@ -195,8 +176,7 @@ def _rollback_single(dataset: str, snap_name: str, completed: Sequence[str], des
     """
     path = f"{dataset}@{snap_name}"
     try:
-        with _tolerate_history_write_failure(f"rollback of {dataset!r} to {snap_name!r}"):
-            truenas_pylibzfs.lzc.rollback(resource_name=dataset, snapshot_name=snap_name)
+        truenas_pylibzfs.lzc.rollback(resource_name=dataset, snapshot_name=snap_name)
     except OSError as e:
         errnum = e.errno or errno.EFAULT
         message = rollback_failure_message(path=path, dataset=dataset, errnum=errnum)
@@ -337,8 +317,7 @@ def _destroy_newer_snapshots(
 
     _destroy_batch(
         tls,
-        objects=list(reversed(snapshots)),
-        destroy=lambda names: truenas_pylibzfs.lzc.destroy_snapshots(snapshot_names=names, defer_destroy=False),
+        snapshots=list(reversed(snapshots)),
         dataset=dataset,
         target_snap=target_snap,
         clones_destroyed=destroy_clones,
@@ -353,30 +332,28 @@ def _destroy_failure_prefix(dataset: str, target_snap: str) -> str:
 def _destroy_batch(
     tls: Any,
     *,
-    objects: Sequence[str],
-    destroy: Callable[[Sequence[str]], None],
+    snapshots: Sequence[str],
     dataset: str,
     target_snap: str,
     clones_destroyed: bool,
     completed: Sequence[str],
 ) -> None:
-    """Destroy ``objects``, the snapshots newer than ``target_snap``, in one ioctl.
+    """Destroy ``snapshots``, the ones newer than ``target_snap``, in one ioctl.
 
-    The kernel checks every object before destroying any, so the ioctl either
+    The kernel checks every snapshot before destroying any, so the ioctl either
     destroys the whole batch or destroys nothing, and the exception names the
-    objects that stood in the way - including the long holds the pre-flight
-    cannot see. Objects destroyed by something else in the meantime are silently
-    ignored by the kernel.
+    snapshots that stood in the way - including the long holds the pre-flight
+    cannot see. Snapshots destroyed by something else in the meantime are
+    silently ignored by the kernel.
     """
-    if not objects:
+    if not snapshots:
         return
 
     try:
-        with _tolerate_history_write_failure(f"destroy of the newer snapshots of {dataset!r}"):
-            destroy(objects)
+        truenas_pylibzfs.lzc.destroy_snapshots(snapshot_names=snapshots, defer_destroy=False)
     except truenas_pylibzfs.lzc.ZFSCoreException as e:
         failure = classify_destroy_failure(
-            submitted=set(objects),
+            submitted=set(snapshots),
             errors=e.errors,
             code=e.code,
             clones_destroyed=clones_destroyed,
@@ -403,8 +380,8 @@ def _raise_destroy_failure(
     dataset: str,
     target_snap: str,
     completed: Sequence[str],
-) -> None:
-    """Report a failed batched destroy, returning only when everything that failed had vanished."""
+) -> NoReturn:
+    """Raise the exception that describes a failed batched destroy."""
     prefix = _destroy_failure_prefix(dataset, target_snap)
     if failure.blockers:
         blockers = [_with_clone_names(tls, blocker) for blocker in failure.blockers]
@@ -429,14 +406,12 @@ def _raise_destroy_failure(
             failure.code,
             completed=completed,
         ) from None
-    elif not failure.reported_per_object:
+    else:
         raise ZFSRollbackFailedException(
             prefix + f"{os.strerror(failure.code)}.",
             failure.code,
             completed=completed,
         ) from None
-    else:
-        logger.warning("%s: the kernel reported these as already gone: %s", dataset, ", ".join(failure.vanished))
 
 
 def _with_clone_names(tls: Any, blocker: ZFSRollbackBlocker) -> ZFSRollbackBlocker:
@@ -495,8 +470,7 @@ def _destroy_clone(tls: Any, clone: str, force: bool, completed: Sequence[str]) 
             pass
 
     try:
-        with _tolerate_history_write_failure(f"destroy of clone {clone!r}"):
-            tls.lzh.destroy_resource(name=clone)
+        tls.lzh.destroy_resource(name=clone)
     except truenas_pylibzfs.ZFSException as e:
         if e.code == truenas_pylibzfs.ZFSError.EZFS_NOENT:
             return
@@ -561,8 +535,7 @@ def _restore_volume_reservation(tls: Any, dataset: str, old_volsize: int) -> Non
         new_volsize = _prop_int(props.volsize)
         if new_volsize == old_volsize:
             return
-        with _tolerate_history_write_failure(f"refreservation update of {dataset!r}"):
-            rsrc.set_properties(properties={"refreservation": str(new_volsize)})
+        rsrc.set_properties(properties={"refreservation": str(new_volsize)})
     except Exception:
         # The rollback has already committed, so nothing here may be reported as its failure.
         logger.warning(

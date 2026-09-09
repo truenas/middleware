@@ -853,13 +853,6 @@ class ZFSResourceSnapshotService(Service):
 
             {"path": "tank@backup", "recursive_rollback": true}
         """
-        # Validate path is a snapshot
-        if "@" not in data.path:
-            raise ValidationError(
-                "zfs.resource.snapshot.rollback",
-                "path must be a snapshot path (containing '@').",
-            )
-
         try:
             self.call_sync2(self.s.zfs.resource.snapshot.rollback_impl, data)
         except ZFSPathNotFoundException as e:

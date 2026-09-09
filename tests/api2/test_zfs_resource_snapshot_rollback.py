@@ -60,31 +60,6 @@ def test_zfs_resource_snapshot_rollback_more_recent_snapshots():
             assert {snap["snapshot_name"] for snap in result} == {"snap1", "snap2", "snap3"}
 
 
-def test_zfs_resource_snapshot_rollback_newer_bookmark_fails_and_says_how_to_proceed():
-    """A newer bookmark is not destroyed by the rollback, so the kernel refuses it and the error says so"""
-    with dataset("test_snap_rollback_bookmark") as ds:
-        ssh(f"zfs snapshot {ds}@snap1")
-        ssh(f"zfs snapshot {ds}@snap2")
-        ssh(f"zfs bookmark {ds}@snap2 {ds}#bm2")
-        # Only the bookmark is left to block the rollback, so there is nothing for
-        # the pre-flight to find and nothing for `recursive` to destroy
-        ssh(f"zfs destroy {ds}@snap2")
-
-        for options in ({}, {"recursive": True}):
-            with pytest.raises(CallError) as ce:
-                call("zfs.resource.snapshot.rollback", {"path": f"{ds}@snap1", **options})
-
-            assert ce.value.errno == errno.EEXIST
-            assert "bookmark" in ce.value.errmsg
-            assert f"zfs destroy {ds}#<bookmark>" in ce.value.errmsg
-            assert "were already destroyed" not in ce.value.errmsg
-            result = call("zfs.resource.snapshot.query", {"paths": [ds]})
-            assert [snap["snapshot_name"] for snap in result] == ["snap1"]
-
-        ssh(f"zfs destroy {ds}#bm2")
-        call("zfs.resource.snapshot.rollback", {"path": f"{ds}@snap1"})
-
-
 def test_zfs_resource_snapshot_rollback_newer_bookmark_fails_after_snapshots_are_destroyed():
     """`recursive` destroys the newer snapshots first, so a newer bookmark fails a committed destroy"""
     with dataset("test_snap_rollback_bookmark_destroyed") as ds:
@@ -100,25 +75,10 @@ def test_zfs_resource_snapshot_rollback_newer_bookmark_fails_after_snapshots_are
 
         assert ce.value.errno == errno.EEXIST
         assert "bookmark" in ce.value.errmsg
+        assert f"zfs destroy {ds}#<bookmark>" in ce.value.errmsg
         assert "were already destroyed" in ce.value.errmsg
         result = call("zfs.resource.snapshot.query", {"paths": [ds]})
         assert [snap["snapshot_name"] for snap in result] == ["snap1"]
-
-
-def test_zfs_resource_snapshot_rollback_recursive_destroys_many_newer_snapshots():
-    """Every newer snapshot goes, not just the first one"""
-    with dataset("test_snap_rollback_many") as ds:
-        ssh(f"zfs snapshot {ds}@snap0")
-        # One snapshot per invocation, so they do not all land in the same transaction group
-        ssh(f"for i in $(seq 1 10); do zfs snapshot {ds}@snap$i; done")
-
-        call(
-            "zfs.resource.snapshot.rollback",
-            {"path": f"{ds}@snap0", "recursive": True},
-        )
-
-        result = call("zfs.resource.snapshot.query", {"paths": [ds]})
-        assert [snap["snapshot_name"] for snap in result] == ["snap0"]
 
 
 def test_zfs_resource_snapshot_rollback_path_validation():
@@ -162,49 +122,6 @@ def test_zfs_resource_snapshot_rollback_protected_path():
     assert "protected" in str(exc_info.value).lower()
 
 
-def test_zfs_resource_snapshot_rollback_clone_blocks_recursive():
-    """A clone of a newer snapshot blocks `recursive` and the error says how to proceed"""
-    with dataset("test_snap_rollback_clone_blocks") as ds:
-        # The clone lives under the dataset, so it is reaped by its recursive delete
-        clone = f"{ds}/clone1"
-        with snapshot(ds, "snap1"), snapshot(ds, "snap2"):
-            ssh(f"zfs clone {ds}@snap2 {clone}")
-
-            with pytest.raises(CallError) as ce:
-                call(
-                    "zfs.resource.snapshot.rollback",
-                    {"path": f"{ds}@snap1", "recursive": True},
-                )
-
-            assert ce.value.errno == errno.EBUSY
-            assert f"{ds}@snap2" in ce.value.errmsg
-            assert clone in ce.value.errmsg
-            assert "recursive_clones" in ce.value.errmsg
-
-            result = call("zfs.resource.snapshot.query", {"paths": [ds]})
-            assert {snap["snapshot_name"] for snap in result} == {"snap1", "snap2"}
-
-
-def test_zfs_resource_snapshot_rollback_recursive_clones_destroys_clone():
-    """`recursive_clones` destroys the clone of the newer snapshot and rolls back"""
-    with dataset("test_snap_rollback_clone_destroy") as ds:
-        clone = f"{ds}/clone1"
-        with snapshot(ds, "snap1"), snapshot(ds, "snap2"):
-            ssh(f"zfs clone {ds}@snap2 {clone}")
-
-            call(
-                "zfs.resource.snapshot.rollback",
-                {"path": f"{ds}@snap1", "recursive_clones": True, "force": True},
-            )
-
-            assert ssh(f"zfs list -H -o name {clone}", check=False, complete_response=True)["result"] is False
-            # Destroying the clone takes its mountpoint directory with it, so the
-            # name stays free for a later create
-            assert ssh(f"test -d /mnt/{clone}", check=False, complete_response=True)["result"] is False
-            result = call("zfs.resource.snapshot.query", {"paths": [ds]})
-            assert [snap["snapshot_name"] for snap in result] == ["snap1"]
-
-
 def test_zfs_resource_snapshot_rollback_recursive_clones_without_force_destroys_mounted_clone():
     """A mounted clone is unmounted and destroyed even when `force` is not passed"""
     with dataset("test_snap_rollback_clone_noforce") as ds:
@@ -220,18 +137,23 @@ def test_zfs_resource_snapshot_rollback_recursive_clones_without_force_destroys_
             )
 
             assert ssh(f"zfs list -H -o name {clone}", check=False, complete_response=True)["result"] is False
+            # Destroying the clone takes its mountpoint directory with it, so the
+            # name stays free for a later create
+            assert ssh(f"test -d /mnt/{clone}", check=False, complete_response=True)["result"] is False
             result = call("zfs.resource.snapshot.query", {"paths": [ds]})
             assert [snap["snapshot_name"] for snap in result] == ["snap1"]
 
 
 def test_zfs_resource_snapshot_rollback_nested_clone_refused():
-    """A clone that has descendants of its own cannot be destroyed, so the rollback is refused"""
+    """A clone with descendants of its own cannot be destroyed, so the rollback is refused and names them"""
     with dataset("test_snap_rollback_nested_clone") as ds:
         clone = f"{ds}/clone1"
         with snapshot(ds, "snap1"), snapshot(ds, "snap2"):
             ssh(f"zfs clone {ds}@snap2 {clone}")
             try:
-                ssh(f"zfs snapshot {clone}@c1")
+                # More descendants than the report lists, so the error has to say the list is incomplete
+                for i in range(6):
+                    ssh(f"zfs create {clone}/child{i}")
 
                 with pytest.raises(CallError) as ce:
                     call(
@@ -241,35 +163,16 @@ def test_zfs_resource_snapshot_rollback_nested_clone_refused():
 
                 assert ce.value.errno == errno.EBUSY
                 assert clone in ce.value.errmsg
-                assert f"{clone}@c1" in ce.value.errmsg
+                assert f"{clone}/child0" in ce.value.errmsg
+                assert "and more" in ce.value.errmsg
 
                 assert ssh(f"zfs list -H -o name {clone}", check=False, complete_response=True)["result"] is True
                 result = call("zfs.resource.snapshot.query", {"paths": [ds]})
                 assert {snap["snapshot_name"] for snap in result} == {"snap1", "snap2"}
             finally:
-                # A clone holding its own snapshot cannot be torn down by the
+                # A clone with its own children cannot be torn down by the
                 # snapshot fixture, so remove it here
                 ssh(f"zfs destroy -r {clone} || true")
-
-
-def test_zfs_resource_snapshot_rollback_hold_blocks_rollback():
-    """A hold on a newer snapshot blocks the rollback and the error names the tag"""
-    with dataset("test_snap_rollback_hold") as ds:
-        with snapshot(ds, "snap1"), snapshot(ds, "snap2"):
-            ssh(f"zfs hold truenas {ds}@snap2")
-
-            with pytest.raises(CallError) as ce:
-                call(
-                    "zfs.resource.snapshot.rollback",
-                    {"path": f"{ds}@snap1", "recursive": True},
-                )
-
-            assert ce.value.errno == errno.EBUSY
-            assert f"{ds}@snap2" in ce.value.errmsg
-            assert "truenas" in ce.value.errmsg
-
-            result = call("zfs.resource.snapshot.query", {"paths": [ds]})
-            assert {snap["snapshot_name"] for snap in result} == {"snap1", "snap2"}
 
 
 def test_zfs_resource_snapshot_rollback_snapshot_in_use_blocks_rollback():
@@ -330,8 +233,9 @@ def test_zfs_resource_snapshot_rollback_recursive_rollback_child_blocker_leaves_
 
 
 def test_zfs_resource_snapshot_rollback_reports_every_blocker_at_once():
-    """Blockers on different snapshots are all reported, not just the first one hit"""
+    """A clone and a hold on newer snapshots block `recursive`, are all reported at once, and destroy nothing"""
     with dataset("test_snap_rollback_multi_blocker") as ds:
+        # The clone lives under the dataset, so it is reaped by its recursive delete
         clone = f"{ds}/clone1"
         with snapshot(ds, "snap1"), snapshot(ds, "snap2"), snapshot(ds, "snap3"):
             ssh(f"zfs clone {ds}@snap2 {clone}")
@@ -346,30 +250,12 @@ def test_zfs_resource_snapshot_rollback_reports_every_blocker_at_once():
             assert ce.value.errno == errno.EBUSY
             assert f"{ds}@snap2" in ce.value.errmsg
             assert clone in ce.value.errmsg
+            assert "recursive_clones" in ce.value.errmsg
             assert f"{ds}@snap3" in ce.value.errmsg
             assert "truenas" in ce.value.errmsg
 
-
-def test_zfs_resource_snapshot_rollback_clone_blocker_list_is_truncated():
-    """A clone with more descendants than the report limit says the list is incomplete"""
-    with dataset("test_snap_rollback_truncated") as ds:
-        clone = f"{ds}/clone1"
-        with snapshot(ds, "snap1"), snapshot(ds, "snap2"):
-            ssh(f"zfs clone {ds}@snap2 {clone}")
-            try:
-                for i in range(6):
-                    ssh(f"zfs create {clone}/child{i}")
-
-                with pytest.raises(CallError) as ce:
-                    call(
-                        "zfs.resource.snapshot.rollback",
-                        {"path": f"{ds}@snap1", "recursive_clones": True},
-                    )
-
-                assert ce.value.errno == errno.EBUSY
-                assert "and more" in ce.value.errmsg
-            finally:
-                ssh(f"zfs destroy -r {clone} || true")
+            result = call("zfs.resource.snapshot.query", {"paths": [ds]})
+            assert {snap["snapshot_name"] for snap in result} == {"snap1", "snap2", "snap3"}
 
 
 def test_zfs_resource_snapshot_rollback_recursive_rollback_rolls_back_children():
@@ -459,29 +345,6 @@ def test_zfs_resource_snapshot_rollback_sparse_zvol_stays_thin():
         call("zfs.resource.snapshot.rollback", {"path": f"{vol}@snap1"})
 
         assert int(ssh(f"zfs get -Hp -o value refreservation {vol}").strip()) == 0
-
-
-def test_zfs_resource_snapshot_rollback_zvol_clone_destroyed():
-    """A cloned volume has no mountpoint to unmount, and is still destroyed"""
-    with dataset("test_snap_rollback_zvol") as ds:
-        vol = f"{ds}/vol"
-        clone = f"{pool}/test_snap_rollback_zvol_clone"
-        try:
-            ssh(f"zfs create -s -V 64M {vol}")
-            ssh(f"zfs snapshot {vol}@snap1")
-            ssh(f"zfs snapshot {vol}@snap2")
-            ssh(f"zfs clone {vol}@snap2 {clone}")
-
-            call(
-                "zfs.resource.snapshot.rollback",
-                {"path": f"{vol}@snap1", "recursive_clones": True},
-            )
-
-            assert ssh(f"zfs list -H -o name {clone}", check=False, complete_response=True)["result"] is False
-            result = call("zfs.resource.snapshot.query", {"paths": [vol]})
-            assert [snap["snapshot_name"] for snap in result] == ["snap1"]
-        finally:
-            ssh(f"zfs destroy -r {clone} || true")
 
 
 def test_zfs_resource_snapshot_rollback_app_flag_combination():

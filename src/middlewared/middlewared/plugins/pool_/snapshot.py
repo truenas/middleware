@@ -88,8 +88,6 @@ class PoolSnapshotService(CRUDService):
             raise ValidationError('pool.snapshot.rollback', e.message, errno.EINVAL)
         except ZFSRollbackConflictException as e:
             raise ValidationError('pool.snapshot.rollback', e.message, errno.EINVAL)
-        except ValueError as e:
-            raise ValidationError('pool.snapshot.rollback', str(e), errno.EINVAL)
 
     @api_method(PoolSnapshotHoldArgs, PoolSnapshotHoldResult, roles=['SNAPSHOT_WRITE'])
     def hold(self, id_, options):
