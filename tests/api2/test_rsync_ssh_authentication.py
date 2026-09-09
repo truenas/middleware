@@ -811,6 +811,27 @@ def test_run_with_extra_options(cleanup, localuser, remoteuser, src, dst, ssh_cr
     assert "excluded_file" not in files
 
 
+def test_run_with_quoted_multiword_rsync_path(cleanup, localuser, remoteuser, src, dst, ssh_credentials):
+    """A quoted multi-word ``--rsync-path`` (e.g. ``"sudo rsync"``) must reach rsync without its quotes.
+
+    Quoting the value verbatim makes rsync ask the remote shell for a single word named
+    ``/usr/bin/env rsync``, which fails with ``command not found``.
+    """
+    with task({
+        "path": f"{src}/",
+        "user": "localuser",
+        "ssh_credentials": ssh_credentials["credentials"]["id"],
+        "mode": "SSH",
+        "remotepath": dst,
+        "extra": ['--rsync-path="/usr/bin/env rsync"'],
+    }) as t:
+        assert t["extra"] == ['--rsync-path="/usr/bin/env rsync"']
+
+        run_task(t)
+
+    assert ssh(f"ls -1 {dst}") == "test\n"
+
+
 def test_run_quiet(cleanup, localuser, remoteuser, src, dst, ssh_credentials):
     with task({
         "path": f"{src}/",

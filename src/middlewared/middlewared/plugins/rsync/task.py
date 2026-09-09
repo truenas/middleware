@@ -12,7 +12,7 @@ from middlewared.alert.source.rsync import RsyncFailedAlert, RsyncSuccessAlert
 from middlewared.service import CallError, ServiceContext
 from middlewared.utils.user_context import run_command_with_user_context
 
-from .utils import get_host_key_file_contents_from_ssh_credentials
+from .utils import get_host_key_file_contents_from_ssh_credentials, quote_extra_args
 
 if TYPE_CHECKING:
     from middlewared.job import Job
@@ -74,7 +74,7 @@ def build_commandline(context: ServiceContext, id_: int) -> Iterator[str]:
             if getattr(rsync, name):
                 line.append(flag)
         if rsync.extra:
-            line.extend(shlex.quote(arg) for arg in rsync.extra)
+            line.extend(quote_extra_args(rsync.extra))
 
         remote_username = remote_host = ""
         if not rsync.ssh_credentials:
