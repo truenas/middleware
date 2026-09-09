@@ -135,9 +135,10 @@ class S3AccesskeyEntry(BaseModel):
     manage_buckets: bool = Field(
         default=False,
         description=(
-            "Whether this access key may create and delete buckets through the S3 protocol. The account that owns "
-            "the key must also hold the `SHARING_S3_WRITE` role. This field can only remove that permission from "
-            "one key, never add it."
+            "Whether this access key may create and delete buckets through the S3 protocol. Setting it requires "
+            "the account that owns the key to hold the `SHARING_S3_WRITE` role, checked when a call turns it on. "
+            "It scopes the key, not the account: an account may hold several access keys, and leaving this off on "
+            "one of them affects neither its other keys nor its own access to `sharing.s3.create`."
         ),
     )
     status: S3AccesskeyStatus = Field(
