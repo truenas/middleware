@@ -1,6 +1,6 @@
 import pytest
 
-from middlewared.plugins.rsync_.utils import quote_extra_args
+from middlewared.plugins.rsync.utils import quote_extra_args
 
 
 @pytest.mark.parametrize(
@@ -49,6 +49,10 @@ def test_glob_is_quoted_against_the_local_shell():
     [
         (['"'], ["'\"'"]),
         (["--exclude", '"unclosed'], ["--exclude", "'\"unclosed'"]),
+        (
+            ['--rsync-path="sudo rsync"', "--exclude=foo\\"],
+            ["'--rsync-path=sudo rsync'", "'--exclude=foo\\'"],
+        ),
     ],
 )
 def test_unbalanced_quotes_are_passed_through(extra, expected):
