@@ -44,6 +44,7 @@ def upgrade():
     sa.Column('owner_uid', sa.Integer(), nullable=False),
     sa.Column('grants', sa.TEXT(), nullable=False, server_default='[]'),
     sa.Column('permissions_model', sa.String(length=32), nullable=False, server_default='S3'),
+    sa.Column('object_ownership', sa.String(length=32), nullable=False, server_default='BUCKET_OWNER_ENFORCED'),
     sa.Column('versioning', sa.String(length=16), nullable=False, server_default='OFF'),
     sa.Column('snapshot_versions', sa.TEXT(), nullable=False, server_default='[]'),
     sa.Column('snapshot_versions_max', sa.Integer(), nullable=False, server_default='64'),

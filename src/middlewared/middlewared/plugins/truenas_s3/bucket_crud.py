@@ -14,7 +14,7 @@ import errno
 import ipaddress
 import string
 import typing
-from typing import Any, Literal, TYPE_CHECKING
+from typing import Any, Literal, TypeVar, TYPE_CHECKING
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -52,6 +52,9 @@ __all__ = ("SharingS3Service", "S3FSAttachmentDelegate")
 
 AUDIT_ACTIONS: tuple[str, ...] = typing.get_args(S3AuditAction)
 
+# a whole bucket row, whichever of the two shapes the caller sent one in
+EntryT = TypeVar("EntryT", bound=SharingS3Entry)
+
 BUCKET_DATASET_PROPERTIES = {
     # what the S3 on-disk format requires of a bucket's dataset. The first
     # three are create-time only and would otherwise inherit from the parent;
@@ -85,6 +88,7 @@ class SharingS3Model(sa.Model):
     owner_uid = sa.Column(sa.Integer())
     grants = sa.Column(sa.JSON(list))
     permissions_model = sa.Column(sa.String(32))
+    object_ownership = sa.Column(sa.String(32))
     versioning = sa.Column(sa.String(16))
     snapshot_versions = sa.Column(sa.JSON(list))
     snapshot_versions_max = sa.Column(sa.Integer())
@@ -204,6 +208,47 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         await validate_grants(self.middleware, f"{schema}.grants", data.grants, verrors)
 
     @private
+    def normalize_ownership(
+        self, data: EntryT, given: set[str], schema: str, verrors: ValidationErrors
+    ) -> EntryT:
+        """The pair a row is stored as.
+
+        `permissions_model` and `object_ownership` are one axis each:
+        the first says how the S3 service treats the filesystem
+        permissions on the tree, the second which account an S3
+        operation runs as and whether the bucket supports S3 ACLs.
+        Neither is always stored as it was given.
+
+        The undocumented `S3_BUCKET_OWNER_ENFORCED` is the pair spelled
+        as one value and is stored as `S3` with `BUCKET_OWNER_ENFORCED`.
+        It carries the last API consumer over and goes when that
+        consumer does. Naming it beside a different `object_ownership`
+        in the same call is refused rather than resolved: picking one
+        silently would serve a bucket under a gate the caller did not
+        ask for.
+
+        A `MULTIPROTOCOL` row folds to `OBJECT_WRITER` whatever it was
+        given, as the S3 service does with it: the other protocols'
+        users own the filesystem permissions, so the caller's own uid is
+        the only one that may act, and such a row supports no S3 ACLs
+        under any value. Folded rather than refused, so that a shared
+        bucket may be created without restating the default, and stored
+        folded so the row reads back as the service runs it.
+        """
+        model, ownership = data.permissions_model, data.object_ownership
+        if model == "S3_BUCKET_OWNER_ENFORCED":
+            if "object_ownership" in given and ownership != "BUCKET_OWNER_ENFORCED":
+                verrors.add(
+                    f"{schema}.object_ownership",
+                    "The S3_BUCKET_OWNER_ENFORCED permissions model is the S3 model with BUCKET_OWNER_ENFORCED "
+                    "object ownership, so it cannot be given beside another ownership setting.",
+                )
+            model, ownership = "S3", "BUCKET_OWNER_ENFORCED"
+        elif model == "MULTIPROTOCOL":
+            ownership = "OBJECT_WRITER"
+        return data.model_copy(update={"permissions_model": model, "object_ownership": ownership})
+
+    @private
     async def resolve_owner(self, schema: str, username: str, verrors: ValidationErrors) -> int | None:
         """The owner's uid."""
         try:
@@ -285,16 +330,19 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         The bucket's dataset is created here, with the properties the S3
         service requires, and must not exist beforehand. Objects live in its
         ``s3data`` directory, which the S3 service creates on its next start
-        owned by ``owner``. Under the ``S3`` and ``MULTIPROTOCOL`` permissions
-        models every object is written under the account that put it, so a
-        grantee other than the owner can write only where that directory's
-        permissions let the account write; set an ACL on it as for any share,
-        or choose ``S3_BUCKET_OWNER_ENFORCED``, under which every object is
-        written as the owner and the grants alone decide. Grants may be given
-        in the same call. Registering a bucket restarts the S3 service,
-        draining in-flight requests for up to 30 seconds.
+        owned by ``owner``. Under the ``S3`` permissions model the filesystem
+        permissions on that tree are ignored and the bucket's grants decide;
+        under ``MULTIPROTOCOL`` they are enforced as well, so a grantee other
+        than the owner reaches only what they allow and an ACL is set on the
+        directory as for any share. Which account a write is recorded as is
+        ``object_ownership``'s answer: the owner under
+        ``BUCKET_OWNER_ENFORCED``, which is the default and supports no S3
+        ACLs, and the account that put the object under the other two values.
+        Grants may be given in the same call. Registering a bucket restarts
+        the S3 service, draining in-flight requests for up to 30 seconds.
         """
         verrors = ValidationErrors()
+        data = self.normalize_ownership(data, data.model_fields_set, "sharing_s3_create", verrors)
         await self.validate(data, "sharing_s3_create", verrors)
         owner_uid = await self.resolve_owner("sharing_s3_create", data.owner, verrors)
         if await self.query([["dataset", "=", data.dataset]], {"select": ["id"]}):
@@ -332,6 +380,10 @@ class SharingS3Service(SharingService[SharingS3Entry]):
 
         new = old.updated(data)
         verrors = ValidationErrors()
+        # the pair is resolved against the fields *this* call named: a
+        # stored row never holds the deprecated model, so naming it here
+        # is what makes it a statement about both halves
+        new = self.normalize_ownership(new, data.model_fields_set, "sharing_s3_update", verrors)
         await self.validate(new, "sharing_s3_update", verrors, old)
         # an owner given by name is compared by the uid it resolves to: a
         # renamed account is the same owner, a deleted and recreated one
