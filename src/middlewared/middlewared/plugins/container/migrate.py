@@ -258,6 +258,40 @@ class ContainerService(Service):
                         )
 
     @private
+    async def alert_unmigrated_vm_instances(self, legacy_config):
+        """Alert about VM-type incus instances, which the migration never carries over.
+
+        Only `.ix-virt/containers` is walked, so a VM-type instance is left where it is and
+        nothing else reports it: the migration job still ends up looking successful.
+        """
+        pools = {legacy_config["pool"]} | set(
+            filter(bool, (legacy_config["storage_pools"] or "").split())
+        )
+        for pool in sorted(filter(bool, pools)):
+            dataset = f"{pool}/.ix-virt/virtual-machines"
+            # Empty when the pool is not imported or the legacy tree is already gone.
+            resources = await self.call2(
+                self.s.zfs.resource.query_impl,
+                ZFSResourceQuery(paths=[dataset], get_children=True, properties=None),
+            )
+            instances = sorted({
+                resource["name"].split("/")[-1].removesuffix(".block")
+                for resource in resources
+                if resource["name"].count("/") == 3
+            })
+            if not instances:
+                continue
+
+            self.logger.warning(
+                "%s: legacy VM instances are not migrated: %s", dataset, ", ".join(instances)
+            )
+            await self.middleware.call(
+                "alert.oneshot_create",
+                "LegacyVMInstancesNotMigrated",
+                {"dataset": dataset, "instances": ", ".join(instances)},
+            )
+
+    @private
     async def maybe_migrate_legacy(self):
         """Check for legacy incus containers and auto-migrate if found.
 
@@ -270,6 +304,11 @@ class ContainerService(Service):
             return
 
         legacy_config = legacy_config[0]
+        # Ahead of the HA and license branches below: both return without migrating, and the
+        # HA one clears the pool, so this is the only pass that still knows where the legacy
+        # datasets are.
+        await self.alert_unmigrated_vm_instances(legacy_config)
+
         if await self.middleware.call("system.is_ha_capable"):
             # Legacy containers were never migrated on a controller that can be paired, so
             # there is no established path here and no reason to take the risk of inventing

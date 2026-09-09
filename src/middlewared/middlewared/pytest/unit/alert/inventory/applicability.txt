@@ -189,6 +189,8 @@ KMIPZFSDatasetsSyncFailure                  class   Y   Y   Y   Y   Y   Y   Y
 KMIPZFSDatasetsSyncFailure                  listed  Y   Y   Y   Y   Y   Y   Y
 KdumpNotReady                               class   Y   Y   Y   Y   Y   Y   Y
 KdumpNotReady                               listed  Y   Y   Y   Y   Y   Y   Y
+LegacyVMInstancesNotMigrated                class   Y   Y   Y   Y   Y   Y   Y
+LegacyVMInstancesNotMigrated                listed  Y   Y   Y   Y   Y   Y   Y
 License                                     class   .   .   Y   Y   Y   Y   Y
 License                                     listed  .   .   Y   Y   Y   Y   Y
 LicenseHasExpired                           class   .   .   Y   Y   Y   Y   Y
