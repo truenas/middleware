@@ -20,7 +20,7 @@ from middlewared.service_exception import CallError
 if TYPE_CHECKING:
     from middlewared.main import Middleware
 
-SERVICE = "truenas_s3"
+SERVICE = "s3"
 ETC_GROUP = "truenas_s3"
 MISSING_ALERT = "S3BucketDatasetMissing"
 CONTROL_SOCKET = "/run/truenas_s3/control"

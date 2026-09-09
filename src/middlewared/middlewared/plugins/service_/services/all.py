@@ -16,7 +16,7 @@ from .ups import UPSService
 from .keepalived import KeepalivedService
 from .idmap import IdmapService
 from .openipmi import OpenIpmiService
-from .truenas_s3 import TrueNASS3Service
+from .s3 import TrueNASS3Service
 from .webshare import WebShareService
 
 from .pseudo.libvirtd import LibvirtdService, LibvirtGuestService

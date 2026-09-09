@@ -2,7 +2,7 @@ from .base import SimpleService
 
 
 class TrueNASS3Service(SimpleService):
-    name = "truenas_s3"
+    name = "s3"
     etc = ["truenas_s3"]
     reloadable = True
     restartable = True
