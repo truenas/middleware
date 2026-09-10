@@ -162,6 +162,8 @@ ISCSIDiscoveryAuthMultipleMutualCHAP        listed  Y   Y   Y   Y   Y   Y   Y
 ISCSIPortalIP                               class   Y   Y   Y   Y   Y   Y   Y
 ISCSIPortalIP                               listed  Y   Y   Y   Y   Y   Y   Y
 ISCSIPortalIP                               source  Y   Y   Y   Y   Y   Y   Y
+IncusVirtualMachinesWereNotMigrated         class   Y   Y   Y   Y   Y   Y   Y
+IncusVirtualMachinesWereNotMigrated         listed  Y   Y   Y   Y   Y   Y   Y
 InvalidGpuPciIds                            class   Y   Y   Y   Y   Y   Y   Y
 InvalidGpuPciIds                            listed  Y   Y   Y   Y   Y   Y   Y
 JBOF                                        source  .   .   .   Y   Y   .   Y

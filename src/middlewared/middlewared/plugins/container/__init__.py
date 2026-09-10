@@ -165,7 +165,7 @@ class ContainerService(GenericCRUDService[ContainerEntry]):
         lives in one place: HA systems ignore ``system.ready`` and would otherwise
         start containers without ever migrating them.
         """
-        await self.call2(self.s.container.maybe_migrate_legacy)
+        await maybe_migrate_legacy(self.context)
         await self.call2(self.s.container.start_on_boot)
 
     @private
@@ -179,10 +179,6 @@ class ContainerService(GenericCRUDService[ContainerEntry]):
     @private
     async def nsenter(self, id_: int) -> list[str]:
         return await nsenter(self.context, id_)
-
-    @private
-    async def maybe_migrate_legacy(self) -> None:
-        return await maybe_migrate_legacy(self.context)
 
     @private
     def relocate_container_origin(self, container_ds: str) -> str:
