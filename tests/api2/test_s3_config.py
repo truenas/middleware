@@ -28,6 +28,7 @@ def service():
     return call("service.query", [["service", "=", SERVICE]], {"get": True})
 
 
+@pytest.fixture(scope="module")
 def audit_supported():
     return call("system.product_type") == "ENTERPRISE"
 
@@ -206,22 +207,29 @@ def test_global_grants_render_as_wildcard_rows():
             assert message in ve.value.errors[0].errmsg
 
 
-def test_audit_follows_the_hardware():
-    if audit_supported():
-        with config(
-            default_audit=["GetObject", "PutObject"],
-            default_audit_overflow="BACKPRESSURE",
-        ):
-            call("etc.generate", "truenas_s3")
-            server = parse(BUCKETS_CONF)["server"]
-            assert server["default_audit"] == "GetObject,PutObject"
-            assert server["default_audit_overflow"] == "backpressure"
-    else:
-        with pytest.raises(ValidationErrors) as ve:
-            call("s3.update", {"default_audit": "ALL"})
-        assert "appliance hardware" in ve.value.errors[0].errmsg
+def test_audit_renders_on_appliance_hardware(audit_supported):
+    if not audit_supported:
+        pytest.skip("S3 auditing is gated on appliance hardware, which this system is not")
+
+    with config(
+        default_audit=["GetObject", "PutObject"],
+        default_audit_overflow="BACKPRESSURE",
+    ):
         call("etc.generate", "truenas_s3")
-        assert "default_audit" not in parse(BUCKETS_CONF)["server"]
+        server = parse(BUCKETS_CONF)["server"]
+        assert server["default_audit"] == "GetObject,PutObject"
+        assert server["default_audit_overflow"] == "backpressure"
+
+
+def test_audit_refused_off_appliance_hardware(audit_supported):
+    if audit_supported:
+        pytest.skip("This system is appliance hardware, where S3 auditing is allowed")
+
+    with pytest.raises(ValidationErrors) as ve:
+        call("s3.update", {"default_audit": "ALL"})
+    assert "appliance hardware" in ve.value.errors[0].errmsg
+    call("etc.generate", "truenas_s3")
+    assert "default_audit" not in parse(BUCKETS_CONF)["server"]
 
 
 @contextlib.contextmanager
