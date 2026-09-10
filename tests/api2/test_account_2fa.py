@@ -64,7 +64,7 @@ def test_renew_2fa_secret(twofactor_user):
     assert twofactor_config["secret_configured"] is True
     assert twofactor_config["otp_digits"] == 8
     assert twofactor_config["interval"] == 60
-    assert twofactor_config["provisioning_uri"].startswith("otpauth://totp/iXsystems:cov2fa-")
+    assert twofactor_config["provisioning_uri"].startswith("otpauth://totp/TrueNAS:cov2fa-")
     assert "digits=8" in twofactor_config["provisioning_uri"]
     assert "period=60" in twofactor_config["provisioning_uri"]
 
