@@ -167,9 +167,6 @@ class TLSClientECProfile(BaseModel):
 
 @final
 class CSRProfilesModel(BaseModel):
-    # This catalogue is declared identically in v26_0_0 and v27_0_0, because v26_0_0 is the current version
-    # on the stable branch and carries the to_previous conversion for earlier clients. Editing one copy alone
-    # is caught by tests/api2/test_legacy_api.py::test_misc_methods rather than by anything at import time.
     tls_server_rsa: TLSServerRSAProfile = Field(
         default_factory=TLSServerRSAProfile,
         alias="TLS Server (e.g. Web UI, FTPS, Apps) - RSA",
