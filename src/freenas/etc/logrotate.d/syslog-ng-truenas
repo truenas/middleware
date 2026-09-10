@@ -24,6 +24,7 @@
 /var/log/debug
 /var/log/messages
 /var/log/error
+/var/log/git.log
 {
 	rotate 3
 	size 10M
