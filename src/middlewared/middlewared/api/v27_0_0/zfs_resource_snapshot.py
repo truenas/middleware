@@ -389,7 +389,7 @@ class ZFSResourceSnapshotRollbackQuery(BaseModel):
     path: NonEmptyString = Field(description="Snapshot path to rollback to (e.g., 'pool/dataset@snapshot').")
     recursive: bool = Field(
         default=False,
-        description="Destroy any snapshots and bookmarks more recent than the one specified.",
+        description="Destroy any snapshots more recent than the one specified.",
     )
     recursive_clones: bool = Field(default=False, description="Like recursive, but also destroy any clones.")
     force: bool = Field(default=False, description="Force unmount of any clones.")
