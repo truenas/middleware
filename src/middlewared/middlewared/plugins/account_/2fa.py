@@ -50,7 +50,7 @@ class UserService(Service):
         ).provisioning_uri(
             f'{username}-{await self.middleware.call("system.hostname")}'
             f'@{ProductName.PRODUCT_NAME}',
-            'iXsystems'
+            'TrueNAS'
         )
 
     @api_method(UserProvisioningUriArgs, UserProvisioningUriResult, private=True)
