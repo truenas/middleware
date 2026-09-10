@@ -16,7 +16,7 @@ from middlewared.test.integration.assets.account import user
 from middlewared.test.integration.assets.pool import dataset, pool
 from middlewared.test.integration.utils import call, ssh
 
-SERVICE = "truenas_s3"
+SERVICE = "s3"
 BUCKETS_CONF = "/etc/truenas_s3/buckets.conf"
 POLICIES_CONF = "/etc/truenas_s3/policies.conf"
 OWNER = "s3bucketowner"
@@ -229,6 +229,25 @@ def test_unknown_owner_is_refused():
         )
     assert "does not exist" in ve.value.errors[0].errmsg
     assert zfs_props(DATASET, ["mountpoint"]) is None, "nothing was created"
+
+
+def test_root_may_not_own_a_bucket(owner):
+    """The owner bypasses the bucket's grants and owns every object written
+    under `BUCKET_OWNER_ENFORCED`, and uid 0 is an owner the filesystem
+    does not restrain either. Refused on both paths that set one."""
+    with pytest.raises(ValidationErrors) as ve:
+        call(
+            "sharing.s3.create",
+            {"name": "root-owned", "dataset": DATASET, "owner": "root"},
+        )
+    assert "owner" in ve.value.errors[0].attribute
+    assert zfs_props(DATASET, ["mountpoint"]) is None, "nothing was created"
+
+    with bucket() as b:
+        with pytest.raises(ValidationErrors) as ve:
+            call("sharing.s3.update", b["id"], {"owner": "root"})
+        assert "owner" in ve.value.errors[0].attribute
+        assert call("sharing.s3.get_instance", b["id"])["owner"] == OWNER
 
 
 def test_grants_live_on_the_bucket(owner):

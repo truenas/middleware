@@ -150,6 +150,13 @@ log {
   flags(final);
 };
 
+log {
+  source(s_src);
+  filter(f_truenas_s3);
+  destination { file("/var/log/truenas_s3.log"); };
+  flags(final);
+};
+
 #######################
 # Middlewared-related log files
 ########################

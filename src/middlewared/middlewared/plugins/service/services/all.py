@@ -34,11 +34,11 @@ from .pseudo.misc import (
     TimeservicesService,
     UserService,
 )
+from .s3 import TrueNASS3Service
 from .snmp import SNMPService
 from .ssh import SSHService
 from .sssd import SSSDService
 from .truecommand import TruecommandService
-from .truenas_s3 import TrueNASS3Service
 from .truenas_zfstierd import TruenasZfstierdService
 from .truesearch import TruesearchService
 from .ups import UPSService
