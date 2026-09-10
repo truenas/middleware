@@ -29,7 +29,12 @@ from middlewared.api.current import (
     ZFSResourceSnapshotQuery,
 )
 from middlewared.service import CRUDService, filterable_api_method, InstanceNotFound, ValidationError
-from middlewared.plugins.zfs.exceptions import ZFSPathAlreadyExistsException, ZFSPathNotFoundException
+from middlewared.plugins.zfs.exceptions import (
+    ZFSPathAlreadyExistsException,
+    ZFSPathNotASnapshotException,
+    ZFSPathNotFoundException,
+    ZFSRollbackConflictException,
+)
 from middlewared.utils.filter_list import filter_list
 
 
@@ -60,10 +65,17 @@ class PoolSnapshotService(CRUDService):
         roles=['SNAPSHOT_WRITE', 'POOL_WRITE']
     )
     def rollback(self, id_, options):
-        self.call_sync2(self.s.zfs.resource.snapshot.rollback_impl, ZFSResourceSnapshotRollbackQuery(
-            path=id_,
-            **options,
-        ))
+        try:
+            self.call_sync2(self.s.zfs.resource.snapshot.rollback_impl, ZFSResourceSnapshotRollbackQuery(
+                path=id_,
+                **options,
+            ))
+        except ZFSPathNotFoundException as e:
+            raise ValidationError('pool.snapshot.rollback', e.message, errno.ENOENT)
+        except ZFSPathNotASnapshotException as e:
+            raise ValidationError('pool.snapshot.rollback', e.message, errno.EINVAL)
+        except ZFSRollbackConflictException as e:
+            raise ValidationError('pool.snapshot.rollback', e.message, errno.EINVAL)
 
     @api_method(PoolSnapshotHoldArgs, PoolSnapshotHoldResult, roles=['SNAPSHOT_WRITE'])
     def hold(self, id_, options):
