@@ -1,6 +1,7 @@
 import ipaddress
 import os
 import re
+import textwrap
 import yaml
 
 from typing import Any
@@ -8,6 +9,7 @@ from typing import Any
 from truenas_pylibvirt.utils.usb import get_all_usb_devices
 
 import middlewared.sqlalchemy as sa
+from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertLevel, OneShotAlertClass
 from middlewared.api import api_method
 from middlewared.api.current import (
     ContainerMigrateArgs, ContainerMigrateResult,
@@ -21,6 +23,37 @@ from .utils import container_dataset
 
 
 RE_USB_ID = re.compile(r'(?:0[xX])?[0-9a-fA-F]{4}')
+
+
+class IncusVirtualMachinesWereNotMigratedAlertClass(AlertClass, OneShotAlertClass):
+    deleted_automatically = False
+
+    category = AlertCategory.SYSTEM
+    level = AlertLevel.WARNING
+    title = "Incus Virtual Machines Were Not Migrated"
+    text = textwrap.dedent("""\
+        Pool %(pool)r contains Incus VM instance(s) that were not migrated during the upgrade to the new container
+        implementation: %(datasets)s (datasets under %(vm_dataset)s).
+
+        Only containers are migrated automatically; these virtual machines will not start and are not shown in the
+        Containers UI, but their data has not been deleted. To restore them, follow the "Migrating Containers
+        Virtual Machines" procedure in the TrueNAS documentation:
+        https://www.truenas.com/docs/scale/25.10/scaletutorials/virtualmachines/#migrating-containers-vms
+    """)
+
+    async def create(self, args):
+        return Alert(IncusVirtualMachinesWereNotMigratedAlertClass, args, key=args["pool"])
+
+    async def delete(self, alerts, query):
+        return list(filter(
+            lambda alert: alert.key != query,
+            alerts
+        ))
+
+
+def legacy_configuration_pools(legacy_configuration: dict[str, Any]) -> set[str]:
+    pool = legacy_configuration["pool"]
+    return {pool} | set(filter(bool, (legacy_configuration["storage_pools"] or "").split()))
 
 
 def usb_id(value: Any) -> str | None:
@@ -270,6 +303,27 @@ class ContainerService(Service):
             return
 
         legacy_config = legacy_config[0]
+
+        for pool in legacy_configuration_pools(legacy_config):
+            vm_dataset = f"{pool}/.ix-virt/virtual-machines"
+            if datasets := {
+                dataset["name"].split("/")[-1].removesuffix(".block")
+                for dataset in await self.call2(
+                    self.s.zfs.resource.query_impl,
+                    ZFSResourceQuery(paths=[vm_dataset], max_depth=1, properties=None)
+                )
+                if dataset["name"] != vm_dataset
+            }:
+                await self.middleware.call(
+                    "alert.oneshot_create",
+                    "IncusVirtualMachinesWereNotMigrated",
+                    {
+                        "pool": pool,
+                        "datasets": ", ".join(sorted(datasets)),
+                        "vm_dataset": vm_dataset,
+                    },
+                )
+
         if await self.middleware.call("system.is_ha_capable"):
             # Legacy containers were never migrated on a controller that can be paired, so
             # there is no established path here and no reason to take the risk of inventing
@@ -346,9 +400,7 @@ class ContainerService(Service):
         if not await self.middleware.call("container.license_active"):
             raise CallError("System is not licensed to use containers.")
 
-        pool = legacy_configuration[0]["pool"]
-
-        storage_pools = {pool} | set(filter(bool, (legacy_configuration[0]["storage_pools"] or "").split()))
+        storage_pools = legacy_configuration_pools(legacy_configuration[0])
         existing_containers = {
             container["name"]: container for container in await self.middleware.call("container.query")
         }
