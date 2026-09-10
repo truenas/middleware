@@ -15,6 +15,17 @@ if typing.TYPE_CHECKING:
 
 WHEN_ARG = typing.Literal['PREINIT', 'POSTINIT', 'SHUTDOWN']
 
+# User scripts must not inherit middlewared's environment
+SCRIPT_ENV = (
+    'LANG',
+    'PATH',
+    'REQUESTS_CA_BUNDLE',
+    'TZ',
+    'USER',
+    'http_proxy',
+    'https_proxy',
+)
+
 
 def get_cmd(task: InitShutdownScriptEntry) -> str | None:
     if task.type == 'COMMAND':
@@ -31,7 +42,8 @@ async def execute_task(context: ServiceContext, task: InitShutdownScriptEntry) -
         return
 
     try:
-        proc = await run(['sh', '-c', cmd], stderr=subprocess.STDOUT, check=False)
+        env = {k: v for k, v in os.environ.items() if k in SCRIPT_ENV}
+        proc = await run(['sh', '-c', cmd], env=env, stderr=subprocess.STDOUT, check=False)
         if proc.returncode:
             context.logger.debug('Failed to execute %r with error %r', cmd, proc.stdout.decode())
     except Exception:
