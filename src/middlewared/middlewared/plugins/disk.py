@@ -1,5 +1,7 @@
 import asyncio
 
+from truenas_pylicensed.features import LicenseFeature
+
 from middlewared.api import Event, api_method
 from middlewared.api.current import (
     DiskEntry,
@@ -9,7 +11,7 @@ from middlewared.api.current import (
     DiskUpdateArgs,
     DiskUpdateResult,
 )
-from middlewared.service import CRUDService, filterable_api_method, private
+from middlewared.service import CRUDService, ValidationError, filterable_api_method, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils.disks_.disk_class import DiskEntry as DiskEntryObj
 from middlewared.utils.hardware import get_hardware_class
@@ -195,6 +197,13 @@ class DiskService(CRUDService):
         self._expand_enclosure(old)
         new = old.copy()
         new.update(data)
+
+        # Only setting a password is gated. Clearing one stays available unconditionally so a system
+        # without the entitlement can still drop a secret it is no longer allowed to use.
+        if new['passwd'] and old['passwd'] != new['passwd']:
+            entitlement = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.SED)
+            if not entitlement.entitled:
+                raise ValidationError('disk_update.passwd', entitlement.message)
 
         if not new['passwd'] and old['passwd'] != new['passwd']:
             # We want to make sure kmip uid is None in this case

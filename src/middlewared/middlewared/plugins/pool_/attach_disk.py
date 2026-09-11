@@ -5,6 +5,8 @@ from middlewared.api import api_method
 from middlewared.api.current import PoolAttachArgs, PoolAttachResult
 from middlewared.service import Service, ValidationErrors, job
 
+from .utils import validate_sed_license
+
 
 class PoolService(Service):
 
@@ -65,6 +67,7 @@ class PoolService(Service):
             verrors.check()
 
             if pool['all_sed']:
+                await validate_sed_license(self.middleware, verrors, 'pool_attach', 'new_disk')
                 disk = await self.middleware.call(
                     'disk.query', [['name', '=', options['new_disk']]], {'get': True, 'force_sql_filters': True}
                 )
@@ -73,7 +76,7 @@ class PoolService(Service):
                         'pool_attach.new_disk',
                         f'{options["new_disk"]} must be SED capable because {pool["name"]} is all SED.'
                     )
-                    verrors.check()
+                verrors.check()
 
             job.set_progress(3, 'Completed validation')
 
