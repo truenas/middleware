@@ -7,7 +7,9 @@ import pytest
 from middlewared.api.current import VMDeviceConvert, VMDiskDevice
 from middlewared.plugins.vm import vm_device_convert
 from middlewared.plugins.vm.vm_device_convert import (
-    convert_disk, validate_convert_disk_image, validate_convert_zvol,
+    convert_disk,
+    validate_convert_disk_image,
+    validate_convert_zvol,
 )
 from middlewared.service import CallError
 from middlewared.service_exception import ValidationError
