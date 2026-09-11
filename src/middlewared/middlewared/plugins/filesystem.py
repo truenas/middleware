@@ -53,6 +53,7 @@ from middlewared.api.current import (
     QueryOptions,
     ZFSFileAttrsData,
 )
+from middlewared.common.event_source.manager import Subscriber
 from middlewared.event import TypedEventSource
 from middlewared.plugins.account_.constants import SYNTHETIC_CONTAINER_ROOT
 from middlewared.plugins.docker.state_utils import IX_APPS_DIR_NAME
@@ -89,6 +90,18 @@ class FilesystemReceiveFileResult(BaseModel):
     result: Literal[True]
 
 
+MAX_LINE_LENGTH = 1024
+
+
+def splitlines_maxlen(data: str, maxlen: int) -> list[str]:
+    """Split `data` into lines, also splitting lines longer than `maxlen` characters."""
+    return [
+        line[i:i + maxlen]
+        for line in data.splitlines(keepends=True)
+        for i in range(0, len(line), maxlen)
+    ]
+
+
 class FileFollowTailEventSource(TypedEventSource[FileFollowTailEventSourceArgs]):
     """
     Retrieve last ``tail_lines`` lines specified as an integer argument for a specified ``path`` and then
@@ -97,6 +110,19 @@ class FileFollowTailEventSource(TypedEventSource[FileFollowTailEventSourceArgs])
     args = FileFollowTailEventSourceArgs
     event = FileFollowTailEventSourceEvent
 
+    def __init__(self, *args: Any, **kwargs: Any):
+        super().__init__(*args, **kwargs)
+        self._buffer: list[str] = []
+
+    async def send_initial_state(self, subscriber: Subscriber) -> None:
+        if buffer := self._buffer:
+            subscriber.send_event('ADDED', fields={'data': ''.join(buffer)})
+
+    def send_lines(self, lines: list[str]) -> None:
+        buffer = self._buffer + lines
+        self._buffer = buffer[max(len(buffer) - self.typed_arg.tail_lines, 0):]
+        self.send_event('ADDED', fields={'data': ''.join(lines)})
+
     def run_sync(self) -> None:
         path, lines = self.typed_arg.path, self.typed_arg.tail_lines
 
@@ -104,29 +130,25 @@ class FileFollowTailEventSource(TypedEventSource[FileFollowTailEventSourceArgs])
             # FIXME: Error?
             return
 
-        bufsize = 8192
         fsize = os.stat(path).st_size
-        if fsize < bufsize:
-            bufsize = fsize
-        i = 0
         with safe_open(path, encoding='utf-8', errors='ignore') as f:
-            data = []
+            read_back = lines * 100  # average log file line length
             while True:
-                i += 1
-                if bufsize * i > fsize:
+                offset = max(fsize - read_back, 0)
+                f.seek(offset)
+                data = splitlines_maxlen(f.read(), MAX_LINE_LENGTH)
+                # The first line read is incomplete unless we are at the very beginning of the file
+                if len(data) > lines or offset == 0:
                     break
-                f.seek(fsize - bufsize * i)
-                data.extend(f.readlines())
-                if len(data) >= lines or f.tell() == 0:
-                    break
+                read_back *= 2
 
-            self.send_event('ADDED', fields={'data': ''.join(data[-lines:])})
+            self.send_lines(data[-lines:])
             f.seek(fsize)
 
             for chunk in self._follow_path(path, f):
-                self.send_event('ADDED', fields={'data': chunk})
+                self.send_lines(chunk)
 
-    def _follow_path(self, path: str, f: IO[str]) -> Generator[str, None, None]:
+    def _follow_path(self, path: str, f: IO[str]) -> Generator[list[str], None, None]:
         queue: list[str] = []
         watch_manager = pyinotify.WatchManager()
         notifier = pyinotify.Notifier(watch_manager)
@@ -134,7 +156,7 @@ class FileFollowTailEventSource(TypedEventSource[FileFollowTailEventSourceArgs])
 
         data = f.read()
         if data:
-            yield data
+            yield splitlines_maxlen(data, MAX_LINE_LENGTH)
 
         last_sent_at = time.monotonic()
         interval = 0.5  # For performance reasons do not send websocket events more than twice a second
@@ -142,9 +164,8 @@ class FileFollowTailEventSource(TypedEventSource[FileFollowTailEventSourceArgs])
             notifier.process_events()
 
             if time.monotonic() - last_sent_at >= interval:
-                data = "".join(queue)
-                if data:
-                    yield data
+                if queue:
+                    yield queue[:]
                 queue[:] = []
                 last_sent_at = time.monotonic()
 
@@ -156,7 +177,7 @@ class FileFollowTailEventSource(TypedEventSource[FileFollowTailEventSourceArgs])
     def _follow_callback(self, queue: list[str], f: IO[str], event: Any) -> None:
         data = f.read()
         if data:
-            queue.append(data)
+            queue.extend(splitlines_maxlen(data, MAX_LINE_LENGTH))
 
 
 class FilesystemService(Service):
