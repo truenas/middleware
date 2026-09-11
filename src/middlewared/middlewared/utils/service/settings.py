@@ -16,17 +16,8 @@ class SettingsHelper:
 
         return wrapper
 
-    async def validate(
-        self,
-        plugin: Any,
-        schema_name: str,
-        old: dict[str, Any],
-        new: dict[str, Any],
-        verrors: ValidationErrors | None = None,
-    ) -> None:
-        # A caller that validates something outside the entry passes its own accumulator so those
-        # errors are reported alongside these rather than pre-empting them.
-        verrors = ValidationErrors() if verrors is None else verrors
+    async def validate(self, plugin: Any, schema_name: str, old: dict[str, Any], new: dict[str, Any]) -> None:
+        verrors = ValidationErrors()
         for field_names, validator in self.fields_validators:
             if any(old[k] != new[k] for k in field_names):
                 child_verrors = ValidationErrors()
