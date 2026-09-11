@@ -74,7 +74,7 @@ class PoolService(Service):
                 disk = await self.middleware.call(
                     'disk.query', [['name', '=', options['new_disk']]], {'get': True, 'force_sql_filters': True}
                 )
-                if disk['sed'] is not True:
+                if not disk['sed']:
                     verrors.add(
                         'pool_attach.new_disk',
                         f'{options["new_disk"]} must be SED capable because {pool["name"]} is all SED.'
