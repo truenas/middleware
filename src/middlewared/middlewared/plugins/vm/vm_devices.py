@@ -201,9 +201,12 @@ class VMDeviceService(CRUDService, DeviceMixin):
         elif not os.path.exists(ntp):
             raise ValidationError(schema, f'{ntp!r} does not exist', errno.ENOENT)
 
+        logical_sectorsize = None
         for i in self.middleware.call_sync('vm.device.query', [['attributes.dtype', '=', 'DISK']]):
             vmzv = i['attributes'].get('path')
             if vmzv and vmzv == ntp:
+                if i['attributes'].get('logical_sectorsize') not in (None, 512):
+                    logical_sectorsize = i['attributes']['logical_sectorsize']
                 try:
                     vm = self.middleware.call_sync('vm.get_instance', i['vm'])
                     if vm['status']['state'] in ACTIVE_STATES:
@@ -216,7 +219,7 @@ class VMDeviceService(CRUDService, DeviceMixin):
                 except InstanceNotFound:
                     pass
 
-        return zv[0], ntp
+        return zv[0], ntp, logical_sectorsize
 
     @api_method(
         VMDeviceVirtualSizeArgs,
@@ -278,7 +281,7 @@ class VMDeviceService(CRUDService, DeviceMixin):
             progress_desc = "Convert to disk image progress"
 
         st = self.validate_convert_disk_image(source_image, schema, converting_from_image_to_zvol)
-        zv, abs_zvolpath = self.validate_convert_zvol(zvol, schema)
+        zv, abs_zvolpath, logical_sectorsize = self.validate_convert_zvol(zvol, schema)
         cmd_args = ['qemu-img', 'convert', '-p']
         if converting_from_image_to_zvol:
             virtual_size = self.virtual_size_impl(schema, st['realpath'])
@@ -296,6 +299,13 @@ class VMDeviceService(CRUDService, DeviceMixin):
             dl = data['destination'].lower()
             for fmt in VALID_DISK_FORMATS:
                 if dl.endswith(f'.{fmt}'):
+                    if logical_sectorsize not in (None, 512) and fmt in ('vdi', 'vhdx', 'vmdk'):
+                        raise ValidationError(
+                            schema,
+                            f'{fmt.upper()} images only support 512 byte sectors but {zv["name"]} is attached to '
+                            f'a VM using {logical_sectorsize} byte sectors. Export to RAW or QCOW2 instead.',
+                            errno.EINVAL
+                        )
                     cmd_args.extend(['-f', 'raw', '-O', fmt, abs_zvolpath, source_image])
                     break
             else:
