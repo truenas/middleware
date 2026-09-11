@@ -68,6 +68,10 @@ class PoolService(Service):
 
             if pool['all_sed']:
                 await validate_sed_license(self.middleware, verrors, 'pool_attach', 'new_disk')
+                # `disk.query` below raises when the disk has no row yet, which would discard
+                # anything already accumulated, so the license denial has to surface first.
+                verrors.check()
+
                 disk = await self.middleware.call(
                     'disk.query', [['name', '=', options['new_disk']]], {'get': True, 'force_sql_filters': True}
                 )
