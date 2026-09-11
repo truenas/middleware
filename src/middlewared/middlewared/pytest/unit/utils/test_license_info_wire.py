@@ -70,6 +70,7 @@ LEGACY_EXPECTED = {
         _legacy_feature("NFS_SNAPSHOT"),
         _legacy_feature("NVMEOF_SPDK"),
         _legacy_feature("RDMA"),
+        _legacy_feature("SED"),
         _legacy_feature("SMB_FASTPATH"),
         _legacy_feature("SMB_VEEAM"),
         _legacy_feature("STIG"),
