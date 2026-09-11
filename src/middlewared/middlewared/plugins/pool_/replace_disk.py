@@ -4,8 +4,7 @@ from middlewared.api import api_method
 from middlewared.api.current import PoolReplaceArgs, PoolReplaceResult
 from middlewared.service import Service, ValidationErrors, job
 from middlewared.service_exception import MatchNotFound
-
-from .utils import validate_sed_license
+from middlewared.utils.service.entitlement import validate_sed_license
 
 
 def find_disk_from_identifier(disks, ident):
@@ -66,7 +65,7 @@ class PoolService(Service):
             verrors.add('options.label', f'Label {options["label"]} not found.', errno.ENOENT)
 
         if pool['all_sed']:
-            await validate_sed_license(self.middleware, verrors, 'options', 'disk')
+            await validate_sed_license(self.middleware, verrors, 'options.disk')
 
         if pool['all_sed'] and disk['sed'] is not True:
             verrors.add(
