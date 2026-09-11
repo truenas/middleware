@@ -11,7 +11,7 @@ from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.api.current import SystemAdvancedEntry, SystemAdvancedUpdate
 from middlewared.plugins.initramfs import write_initramfs_flags
-from middlewared.service import ConfigServicePart, ValidationError, ValidationErrors
+from middlewared.service import ConfigServicePart, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
 from middlewared.utils.boot.models import BootUpdateInitramfsOptions
@@ -206,12 +206,13 @@ class SystemAdvancedConfigServicePart(ConfigServicePart[SystemAdvancedEntry]):
         update = data.model_dump(expose_secrets=True)
         new_sed = update.get('sed_passwd', old_sed)
 
+        verrors = ValidationErrors()
         # Only setting a password is gated. Clearing one stays available unconditionally so a system
         # without the entitlement can still drop a secret it is no longer allowed to use.
         if new_sed and new_sed != old_sed:
             entitlement = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.SED)
             if not entitlement.entitled:
-                raise ValidationError('system_advanced_update.sed_passwd', entitlement.message)
+                verrors.add('system_advanced_update.sed_passwd', entitlement.message)
 
         consolemsg = None
         if 'consolemsg' in update:
@@ -229,7 +230,9 @@ class SystemAdvancedConfigServicePart(ConfigServicePart[SystemAdvancedEntry]):
             ],
         })
 
-        await settings.validate(self, 'system_advanced_update', old_config.model_dump(), new_config.model_dump())
+        await settings.validate(
+            self, 'system_advanced_update', old_config.model_dump(), new_config.model_dump(), verrors
+        )
 
         if new_config != old_config or new_sed != old_sed:
             write = new_config.model_dump()
