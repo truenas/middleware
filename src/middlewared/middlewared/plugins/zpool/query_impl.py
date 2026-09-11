@@ -283,12 +283,14 @@ def query_impl(lzh: libzfs_types.ZFS, data: dict) -> list[dict]:
     for name in pool_names:
         try:
             pool = lzh.open_pool(name=name)
-            results.append(_build_pool_dict(pool, lzh, data))
         except ZFSException as e:
+            # Only open_pool() can mean "no such pool". EZFS_NOENT from
+            # status collection (e.g. an error log entry whose dataset was
+            # destroyed) must not drop a healthy pool from the results.
             if e.code == ZFSError.EZFS_NOENT:
                 if data.get("raise_on_noent", False):
                     raise ZpoolNotFoundException(name) from e
-                else:
-                    continue
+                continue
             raise
+        results.append(_build_pool_dict(pool, lzh, data))
     return results
