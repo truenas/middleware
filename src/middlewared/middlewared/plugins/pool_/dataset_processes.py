@@ -8,6 +8,7 @@ from middlewared.api.current import PoolDatasetProcessesArgs, PoolDatasetProcess
 from middlewared.plugins.zfs_.utils import zvol_name_to_path
 from middlewared.service import CallError, Service, private
 
+from .dataset_processes_utils import processes_using_dataset_tree
 from .utils import dataset_mountpoint
 
 RE_ZD = re.compile(r'^/dev/zd[0-9]+$')
@@ -53,13 +54,18 @@ class PoolDatasetService(Service):
         need_restart_services = []
         need_stop_services = []
         midpid = os.getpid()
-        for process in await self.middleware.call('pool.dataset.processes', oid):
+        # a service usually owns many of the matched processes (e.g. one smbd per
+        # client), so each one is only worth classifying once
+        restartable = {
+            attachment_delegate.service
+            for attachment_delegate in await self.middleware.call('pool.dataset.get_attachment_delegates')
+        }
+        seen_services = set()
+        for process in await processes_using_dataset_tree(self.context, oid):
             service = process.get('service')
-            if service is not None:
-                if any(
-                    attachment_delegate.service == service
-                    for attachment_delegate in await self.middleware.call('pool.dataset.get_attachment_delegates')
-                ):
+            if service is not None and service not in seen_services:
+                seen_services.add(service)
+                if service in restartable:
                     need_restart_services.append(service)
                 else:
                     need_stop_services.append(service)
@@ -72,10 +78,12 @@ class PoolDatasetService(Service):
             })
 
         for i in range(max_tries):
-            processes = await self.middleware.call('pool.dataset.processes', oid)
+            processes = await processes_using_dataset_tree(self.context, oid)
             if not processes:
                 return
 
+            # likewise control a service once per pass rather than once per PID
+            controlled_services = set()
             for process in processes:
                 if process['pid'] == midpid:
                     self.logger.warning(
@@ -86,10 +94,10 @@ class PoolDatasetService(Service):
 
                 service = process.get('service')
                 if service is not None:
-                    if any(
-                        attachment_delegate.service == service
-                        for attachment_delegate in await self.middleware.call('pool.dataset.get_attachment_delegates')
-                    ):
+                    if service in controlled_services:
+                        continue
+                    controlled_services.add(service)
+                    if service in restartable:
                         self.logger.info('Restarting service %r that holds dataset %r', service, oid)
                         await (await self.call2(self.s.service.control, 'RESTART', service)).wait(raise_error=True)
                     else:
@@ -103,7 +111,7 @@ class PoolDatasetService(Service):
                     except CallError as e:
                         self.logger.warning('Error killing process: %r', e)
 
-        processes = await self.middleware.call('pool.dataset.processes', oid)
+        processes = await processes_using_dataset_tree(self.context, oid)
         if not processes:
             return
 
@@ -114,7 +122,7 @@ class PoolDatasetService(Service):
         })
 
     @private
-    def processes_using_paths(self, paths, include_paths=False, include_middleware=False):
+    def processes_using_paths(self, paths, include_paths=False, include_middleware=False, devices=None):
         """
         Find processes using paths supplied via `paths`. Path may be an absolute path for
         a directory (e.g. /var/db/system) or a path in /dev/zvol or /dev/zd*
@@ -124,9 +132,15 @@ class PoolDatasetService(Service):
 
         `include_middleware`: include files opened by the middlewared process in output.
         These are not included by default.
+
+        `devices`: device ids to match directly, for callers that already know them.
+        Preferred over passing a mountpoint, which has to be stat'ed and so resolves
+        whatever is mounted topmost at that path rather than the filesystem intended.
         """
         exact_matches = set()
-        include_devs = []
+        # A pool-wide scan passes one entry per dataset, and this is tested against every
+        # open file descriptor on the system, so keep the lookup O(1)
+        include_devs: set[int] = set(devices or ())
         for path in paths:
             if RE_ZD.match(path):
                 exact_matches.add(path)
@@ -140,8 +154,15 @@ class PoolDatasetService(Service):
                         else:
                             exact_matches.add(os.path.realpath(path))
                     else:
-                        include_devs.append(os.stat(path).st_dev)
+                        include_devs.add(os.stat(path).st_dev)
                 except FileNotFoundError:
+                    # the path went away while we were looking at it, nothing holds it
+                    continue
+                except OSError:
+                    # e.g. EIO from a faulted pool. Skip the path rather than abort the
+                    # whole scan, but say so: holders on it are now invisible, and the
+                    # caller would otherwise read the result as "nothing is using this"
+                    self.logger.warning('%s: cannot scan path for open files', path, exc_info=True)
                     continue
 
         result = []

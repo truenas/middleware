@@ -4,7 +4,7 @@ import shutil
 
 from middlewared.api import api_method
 from middlewared.api.current import PoolExportArgs, PoolExportResult
-from middlewared.service import CallError, Service, ValidationError, job, private
+from middlewared.service import CallError, Service, job, private
 from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.utils.filesystem import attrs as fs_attrs
 
@@ -139,15 +139,7 @@ class PoolService(Service):
             await self.call2(self.s.keyvalue.delete, enable_on_import_key)
 
         job.set_progress(20, 'Terminating processes that are using this pool')
-        try:
-            await self.middleware.call('pool.dataset.kill_processes', pool['name'],
-                                       options.get('restart_services', False))
-        except ValidationError as e:
-            if e.errno == errno.ENOENT:
-                # Dataset might not exist (e.g. pool is not decrypted), this is not an error
-                pass
-            else:
-                raise
+        await self.middleware.call('pool.dataset.kill_processes', pool['name'], options.get('restart_services', False))
 
         await self.middleware.call('iscsi.global.terminate_luns_for_pool', pool['name'])
 
