@@ -207,9 +207,11 @@ class SharingS3Service(SharingService[SharingS3Entry]):
                 verrors.add(f"{schema}.object_lock_default_days", "A default retention rule needs a period.")
 
         if (data.audit is not None or data.audit_overflow is not None) and not await self.middleware.call(
-            "s3.audit_licensed"
+            "s3.audit_supported"
         ):
-            verrors.add(f"{schema}.audit", "Auditing the S3 service requires an Enterprise license.")
+            verrors.add(
+                f"{schema}.audit", "Auditing the S3 service requires TrueNAS Enterprise appliance hardware."
+            )
 
         await validate_grants(self.middleware, f"{schema}.grants", data.grants, verrors)
 
@@ -506,7 +508,7 @@ class SharingS3Service(SharingService[SharingS3Entry]):
     async def audited_bucket_names(self) -> list[str]:
         """Enabled buckets whose effective audit mask is not empty, for
         `audit.config`."""
-        if not await self.middleware.call("s3.audit_licensed"):
+        if not await self.middleware.call("s3.audit_supported"):
             return []
         config: S3Entry = await self.middleware.call("s3.config")
         buckets: list[SharingS3Entry] = await self.middleware.call("sharing.s3.query", [["enabled", "=", True]])
