@@ -1,7 +1,6 @@
 import contextlib
 import random
 import string
-import time
 
 import pytest
 
@@ -10,7 +9,7 @@ from middlewared.test.integration.assets.keychain import localhost_ssh_credentia
 from middlewared.test.integration.assets.pool import another_pool, dataset
 from middlewared.test.integration.assets.replication import replication_task
 from middlewared.test.integration.assets.snapshot_task import snapshot_task
-from middlewared.test.integration.utils import call, pool, ssh
+from middlewared.test.integration.utils import call, poll, pool, ssh
 
 from truenas_api_client import ClientException
 
@@ -619,16 +618,12 @@ def test_query_check_dataset_encryption_keys():
 
 
 def _poll_replication(id_, predicate, timeout, message):
-    deadline = time.monotonic() + timeout
-    while True:
-        task = call("replication.get_instance", id_)
-        if predicate(task):
-            return task
-
-        if time.monotonic() >= deadline:
-            raise AssertionError(f"{message} (waited {timeout} seconds, task = {task!r})")
-
-        time.sleep(1)
+    return poll(
+        lambda: call("replication.get_instance", id_),
+        condition=predicate,
+        timeout=timeout,
+        message=message,
+    )
 
 
 def test_scheduled_run_is_tracked_by_a_job():
@@ -673,3 +668,63 @@ def test_scheduled_run_is_tracked_by_a_job():
 
                 assert finished["job"]["state"] == "SUCCESS", finished["job"]["error"]
                 assert finished["state"]["state"] == "FINISHED", finished["state"]
+
+
+def test_restore_multiple_source_datasets():
+    """Restoring a task with multiple source datasets reverses each source/target pair."""
+    with dataset("multi") as parent:
+        with dataset("multi/a") as src_a, dataset("multi/b") as src_b:
+            with replication_task({
+                "name": "test_restore_multiple_sources",
+                "direction": "PUSH",
+                "transport": "LOCAL",
+                "source_datasets": [src_a, src_b],
+                "target_dataset": "data/dst",
+                "recursive": False,
+                "name_regex": ".+",
+                "auto": False,
+                "retention_policy": "NONE",
+            }) as task:
+                restored = call("replication.restore", task["id"], {
+                    "name": "test_restore_multiple_sources restore",
+                    "target_dataset": f"{parent}/restore",
+                })
+                try:
+                    assert sorted(restored["source_datasets"]) == ["data/dst/a", "data/dst/b"]
+                finally:
+                    call("replication.delete", restored["id"])
+
+
+def test_run_onetime_hold_source_pool_missing():
+    """A one-time replication task from a nonexistent pool fails with the hold reason."""
+    with dataset("onetime_hold_dst") as dst:
+        with pytest.raises(ClientException, match="Pool nonexistent_pool_zrepl does not exist"):
+            call("replication.run_onetime", {
+                "direction": "PUSH",
+                "transport": "LOCAL",
+                "source_datasets": ["nonexistent_pool_zrepl/src"],
+                "target_dataset": dst,
+                "recursive": False,
+                "name_regex": ".+",
+                "retention_policy": "NONE",
+            }, job=True)
+
+
+def test_run_replication_task_error_no_snapshots():
+    """Running a task with no matching snapshots fails both the job and the task state."""
+    with dataset("norun_src") as src, dataset("norun_dst") as dst:
+        with replication_task({
+            "name": "test_run_error_no_snapshots",
+            "direction": "PUSH",
+            "transport": "LOCAL",
+            "source_datasets": [src],
+            "target_dataset": dst,
+            "recursive": False,
+            "name_regex": ".+",
+            "auto": False,
+            "retention_policy": "NONE",
+        }) as task:
+            with pytest.raises(ClientException, match="does not have any matching snapshots"):
+                call("replication.run", task["id"], job=True)
+
+            assert call("replication.get_instance", task["id"])["state"]["state"] == "ERROR"
