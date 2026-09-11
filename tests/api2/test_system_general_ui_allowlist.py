@@ -1,16 +1,14 @@
-import socket
 import time
 
 import requests
 import websocket
 
-from middlewared.test.integration.utils import call, host, ssh, url, websocket_url
+from middlewared.test.integration.utils import call, ssh, url, websocket_url
 
 
 def test_system_general_ui_allowlist():
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.connect((host().ip, 1))  # connect() for UDP doesn't send packets
-    local_ip = s.getsockname()[0]
+    my_session = call("auth.sessions", [["current", "=", True]], {"get": True})
+    local_ip = my_session["origin"].split(":")[0]
 
     try:
         protected_endpoints = (
