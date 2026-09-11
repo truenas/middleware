@@ -511,6 +511,8 @@ def test_line_breaks_are_rejected_on_every_field_rendered_into_snmpd_conf():
         'contact': 'admin\nrwcommunity hax',
         'community': 'public\nrwcommunity hax',
         'v3_username': 'v3\nrwuser hax',
+        'v3_password': 'abcdefgh"\nrwcommunity hax\n#',
+        'v3_privpassphrase': 'abcdefgh"\nrwcommunity hax\n#',
     }
     with pytest.raises(ValidationErrors) as ve:
         call('snmp.update', fields)

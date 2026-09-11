@@ -111,6 +111,18 @@ def test_create_invalid_zfs():
     assert ve.value.errors[0].attribute == "tunable_create.var"
 
 
+def test_line_breaks_are_rejected_in_sysctl_and_zfs_values():
+    """A line break would append a directive of the caller's own to sysctl.d or to the initramfs modprobe.d."""
+    for data in (
+        {"type": "SYSCTL", "var": SYSCTL, "value": "0\nkernel.core_pattern=|/bin/sh"},
+        {"type": "ZFS", "var": ZFS, "value": "0\ninstall zfs /bin/sh"},
+    ):
+        with pytest.raises(ValidationErrors) as ve:
+            call("tunable.create", data, job=True)
+
+        assert ve.value.errors[0].attribute == "tunable_create.value", ve.value.errors
+
+
 def test_values_run_as_root_require_full_admin():
     """A udev rule can `RUN+=` a command and `kernel.core_pattern` names a program; both run as root (NAS-142160)."""
     udev = {"type": "UDEV", "var": "10-disable-usb", "value": "BUS==\"usb\", OPTIONS+=\"ignore_device\""}

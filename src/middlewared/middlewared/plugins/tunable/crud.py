@@ -15,6 +15,7 @@ from .utils import (
     get_sysctl,
     get_sysctls,
     handle_tunable_change,
+    line_break_restriction,
     reset_sysctl,
     reset_zfs_parameter,
     root_exec_restriction,
@@ -85,7 +86,9 @@ class TunableServicePart(CRUDServicePart[TunableEntry]):
                     errno.ENOENT,
                 )
 
-        if app_needs_full_admin_check(app) and (restriction := root_exec_restriction(data.type, data.var)):
+        if restriction := line_break_restriction(data.type, data.value):
+            verrors.add('tunable_create.value', restriction)
+        elif app_needs_full_admin_check(app) and (restriction := root_exec_restriction(data.type, data.var)):
             verrors.add('tunable_create.value', restriction, errno.EPERM)
 
         verrors.check()
@@ -125,8 +128,12 @@ class TunableServicePart(CRUDServicePart[TunableEntry]):
         failover_licensed = await self._check_ha()
 
         new = old.updated(data)
-        if new.value != old.value and app_needs_full_admin_check(app):
-            if restriction := root_exec_restriction(new.type, new.var):
+        if new.value != old.value:
+            if restriction := line_break_restriction(new.type, new.value):
+                verrors = ValidationErrors()
+                verrors.add('tunable_update.value', restriction)
+                raise verrors
+            if app_needs_full_admin_check(app) and (restriction := root_exec_restriction(new.type, new.var)):
                 verrors = ValidationErrors()
                 verrors.add('tunable_update.value', restriction, errno.EPERM)
                 raise verrors
