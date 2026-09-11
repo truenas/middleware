@@ -617,6 +617,85 @@ class UserService(CRUDService):
 
         return target
 
+    @private
+    def validate_sshpubkey_home_access(
+        self, verrors, schema, username, uid, gid, groups, home, new_mode, new_owner_uid
+    ):
+        """Verify that sshd will be able to read `home`/.ssh/authorized_keys.
+
+        `username`, `uid`, `gid` and `groups` describe the account as it will exist once the operation completes.
+
+        `new_mode` and `new_owner_uid` are the mode and the owner that the home directory will be given by this
+        operation, or None when it is left as it is.
+        """
+
+        if new_mode is not None:
+            probe_path = os.path.dirname(home)
+        else:
+            probe_path = home
+
+        access_errors = self.middleware.call_sync(
+            'filesystem.can_access_as_cred_errors',
+            {'pw_name': username, 'pw_uid': uid, 'pw_gid': gid, 'grouplist': groups},
+            probe_path,
+            ['EXECUTE'],
+            False,
+            True,
+        )
+        if access_errors:
+            # access_errors[0] is the shallowest component of the path that the credential cannot use.
+            component = access_errors[0].failing_component.decode()
+            try:
+                st = os.stat(component)
+                details = f'it is mode {stat.S_IMODE(st.st_mode):03o}, owned by uid {st.st_uid} and gid {st.st_gid}'
+            except OSError:
+                details = os.strerror(access_errors[0].errnum)
+
+            verrors.add(
+                f'{schema}.sshpubkey',
+                f'User {username!r} is not allowed to access {component!r} ({details}). OpenSSH will reject the public '
+                f'key. Please set permissions that allow the user to traverse every directory leading to {home!r}.',
+            )
+            return
+
+        if new_mode is not None:
+            mode = int(new_mode, 8)
+        else:
+            mode = None
+        owner_uid = new_owner_uid
+        if mode is None or owner_uid is None:
+            try:
+                st = os.stat(home)
+            except FileNotFoundError:
+                # The home directory is created as part of this operation, so its `owner_uid` and `mode` are already
+                # correct.
+                pass
+            else:
+                if mode is None:
+                    mode = stat.S_IMODE(st.st_mode)
+                if owner_uid is None:
+                    owner_uid = st.st_uid
+
+        if owner_uid is not None and owner_uid not in (0, uid):
+            verrors.add(
+                f'{schema}.sshpubkey',
+                f'Home directory {home!r} is owned by uid {owner_uid}, which is neither the user nor root. OpenSSH '
+                'will reject the public key. Please set correct home directory ownership.'
+            )
+
+        if mode is not None and mode & 0o002:
+            verrors.add(
+                f'{schema}.sshpubkey',
+                f'Home directory {home!r} is world-writable (mode {mode:03o}). OpenSSH will reject the public key. '
+                'Please set correct home directory permissions.'
+            )
+
+    @private
+    def group_ids_to_gids(self, group_ids):
+        return [
+            grp['gid'] for grp in self.middleware.call_sync('group.query', [['id', 'in', list(group_ids)]])
+        ]
+
     @api_method(UserCreateArgs, UserCreateResult, audit='Create user', audit_extended=lambda data: data['username'])
     def do_create(self, data):
         """
@@ -703,6 +782,31 @@ class UserService(CRUDService):
                 if group_created:
                     self.middleware.call_sync('group.delete', data['group'])
                 idmap_verrors.check()
+
+        if data['sshpubkey'] and data['home'] and data['home'] != DEFAULT_HOME_PATH:
+            if data['home_create']:
+                home = os.path.join(data['home'], data['username'])
+            else:
+                home = data['home']
+
+            pubkey_verrors = ValidationErrors()
+            self.validate_sshpubkey_home_access(
+                pubkey_verrors,
+                'user_create',
+                data['username'],
+                data['uid'],
+                group['gid'],
+                self.group_ids_to_gids(data['groups']),
+                home,
+                data['home_mode'],
+                data['uid'],
+            )
+            if pubkey_verrors:
+                with SYNC_NEXT_UID_LOCK:
+                    self.ReservedUids.remove_entry(data['uid'])
+                if group_created:
+                    self.middleware.call_sync('group.delete', data['group'])
+                pubkey_verrors.check()
 
         new_homedir = False
         home_mode = data.pop('home_mode')
@@ -894,6 +998,22 @@ class UserService(CRUDService):
                 self.middleware.call_sync('filesystem.is_dataset_path', home)
             ):
                 verrors.add('user_update.sshpubkey', 'Home directory is not writable, leave this blank"')
+            elif has_home:
+                new_home = home
+                if 'home' in data and data.get('home_create', False):
+                    new_home = os.path.join(home, data.get('username') or user['username'])
+
+                self.validate_sshpubkey_home_access(
+                    verrors,
+                    'user_update',
+                    user['username'],
+                    user['uid'],
+                    group['bsdgrp_gid'],
+                    self.group_ids_to_gids(group_ids),
+                    new_home,
+                    data.get('home_mode'),
+                    None,
+                )
 
         # Do not allow attributes to be changed for builtin user
         if user['immutable']:
