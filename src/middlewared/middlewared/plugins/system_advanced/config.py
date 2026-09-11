@@ -7,9 +7,11 @@ import textwrap
 from typing import Any
 import warnings
 
+from truenas_pylicensed.features import LicenseFeature
+
 from middlewared.api.current import SystemAdvancedEntry, SystemAdvancedUpdate
 from middlewared.plugins.initramfs import write_initramfs_flags
-from middlewared.service import ConfigServicePart, ValidationErrors
+from middlewared.service import ConfigServicePart, ValidationError, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
 from middlewared.utils.boot.models import BootUpdateInitramfsOptions
@@ -189,6 +191,12 @@ class SystemAdvancedConfigServicePart(ConfigServicePart[SystemAdvancedEntry]):
                 f'NVIDIA GPUs: {", ".join(c.name for c in containers)}. Please stop these containers first.'
             )
 
+    @settings.fields_validator('sed_user')
+    async def _validate_sed_user(self, verrors: ValidationErrors, /, sed_user: str) -> None:
+        entitlement = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.SED)
+        if not entitlement.entitled:
+            verrors.add('sed_user', entitlement.message)
+
     async def do_update(self, data: SystemAdvancedUpdate) -> SystemAdvancedEntry:
         old_config = await self.config()
         old_sed = await self.sed_global_password()
@@ -197,6 +205,13 @@ class SystemAdvancedConfigServicePart(ConfigServicePart[SystemAdvancedEntry]):
         # side-channel values here since they are handled separately from the entry merge below.
         update = data.model_dump(expose_secrets=True)
         new_sed = update.get('sed_passwd', old_sed)
+
+        # Only setting a password is gated. Clearing one stays available unconditionally so a system
+        # without the entitlement can still drop a secret it is no longer allowed to use.
+        if new_sed and new_sed != old_sed:
+            entitlement = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.SED)
+            if not entitlement.entitled:
+                raise ValidationError('system_advanced_update.sed_passwd', entitlement.message)
 
         consolemsg = None
         if 'consolemsg' in update:
