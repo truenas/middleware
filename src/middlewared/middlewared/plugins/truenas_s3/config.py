@@ -26,6 +26,7 @@ from middlewared.plugins.zfs.exceptions import ZFSPathNotFoundException
 from middlewared.service import SystemServicePart, SystemServiceService, ValidationErrors, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils.crypto import generate_token, ssl_uuid4
+from middlewared.utils.hardware import get_hardware_class
 
 from .accesskey_crud import S3AccesskeyService
 from .grants import grant_label, grant_principals, label_grants, principal_names, validate_grants
@@ -96,7 +97,7 @@ class RenderData:
     global_grants: list[RenderedGrant]
     buckets: list[RenderedBucket]
     accesskeys: list[S3AccesskeyEntry]
-    audit_licensed: bool
+    audit_supported: bool
 
 
 def _listen_text(listeners: Sequence[S3Listener]) -> tuple[str, str]:
@@ -228,8 +229,11 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
                 )
             )
 
-        if (new.default_audit or new.default_audit_overflow != "DROP") and not await self.audit_licensed():
-            verrors.add("s3_update.default_audit", "Auditing the S3 service requires an Enterprise license.")
+        if (new.default_audit or new.default_audit_overflow != "DROP") and not await self.audit_supported():
+            verrors.add(
+                "s3_update.default_audit",
+                "Auditing the S3 service requires TrueNAS Enterprise appliance hardware.",
+            )
 
         if new.managed_root_dataset:
             await self._validate_managed_root(new.managed_root_dataset, verrors)
@@ -271,8 +275,15 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
         elif rows[0]["type"] != "FILESYSTEM":
             verrors.add(field, f"{dataset!r} is a volume, not a dataset.")
 
-    async def audit_licensed(self) -> bool:
-        return await self.middleware.call("system.license") is not None
+    async def audit_supported(self) -> bool:
+        """Whether S3 requests are audited on this machine.
+
+        Read from the chassis rather than the license: the audit records
+        land in the same database the kernel audit handler feeds, which is
+        gated on the hardware class too, so both halves of the audit trail
+        have to answer to the same thing.
+        """
+        return get_hardware_class().is_appliance
 
     async def effective_certificate(self, cert_id: int | None) -> int | None:
         """The certificate the TLS listeners serve: the chosen one, or the
@@ -364,7 +375,7 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
             global_grants=_rendered_grants(config.global_grants, "*"),
             buckets=rendered_buckets,
             accesskeys=accesskeys,
-            audit_licensed=await self.audit_licensed(),
+            audit_supported=await self.audit_supported(),
         )
 
 
@@ -411,8 +422,8 @@ class S3Service(SystemServiceService[S3Entry]):
         return await self._svc_part.render_data()
 
     @private
-    async def audit_licensed(self) -> bool:
-        return await self._svc_part.audit_licensed()
+    async def audit_supported(self) -> bool:
+        return await self._svc_part.audit_supported()
 
     @private
     async def effective_certificate(self, cert_id: int | None) -> int | None:
