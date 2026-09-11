@@ -1,6 +1,11 @@
+from datetime import datetime, timedelta
+
 import pytest
 
+from middlewared.alert.base import Alert
 from middlewared.alert.source.ipmi_sel import (
+    CorrectableMemoryErrorAlert,
+    pop_correctable_memory_error_alert,
     remove_deasserted_records,
     remove_orphaned_assertions,
 )
@@ -106,3 +111,60 @@ FAN_DEASSERT = {
 ])
 def test_remove_orphaned_assertions(records, sensor_states, expected):
     assert remove_orphaned_assertions(records, sensor_states) == expected
+
+
+THRESHOLD = datetime(2026, 9, 7, 16, 0) - timedelta(days=1)
+BASE = datetime(2026, 9, 7, 15, 0)
+OLDBASE = datetime(2026, 9, 6, 15, 0)
+MEMORY_EVENT = {
+    "name": "Sensor #0",
+    "event_direction": "Assertion Event",
+    "event": "Correctable memory error ; OEM Event Data2 code = 10h ; OEM Event Data3 code = 00h",
+}
+@pytest.mark.parametrize("records,result", [
+    (
+        # Only 10 recent events, need 11
+        (
+            [PSU_FAILURE] +
+            [{**MEMORY_EVENT, "datetime": BASE + timedelta(seconds=s)} for s in range(5)] +
+            [CPU_TEMP_WARNING] +
+            [{**MEMORY_EVENT, "datetime": BASE + timedelta(seconds=s)} for s in range(5, 10)] +
+            [FAN5_NONCRITICAL]
+        ),
+        (
+            None, [PSU_FAILURE, CPU_TEMP_WARNING, FAN5_NONCRITICAL],
+        ),
+    ),
+    (
+        # 11 recent events, alert emitted
+        (
+            [PSU_FAILURE] +
+            [{**MEMORY_EVENT, "datetime": BASE + timedelta(seconds=s)} for s in range(5)] +
+            [CPU_TEMP_WARNING] +
+            [{**MEMORY_EVENT, "datetime": BASE + timedelta(seconds=s)} for s in range(5, 11)] +
+            [FAN5_NONCRITICAL]
+        ),
+        (
+            Alert(
+                CorrectableMemoryErrorAlert(count=11),
+                datetime=datetime(2026, 9, 7, 15, 0, 10)
+            ),
+            [PSU_FAILURE, CPU_TEMP_WARNING, FAN5_NONCRITICAL],
+        ),
+    ),
+    (
+        # 11 events, but 5 of them are too old
+        (
+            [PSU_FAILURE] +
+            [{**MEMORY_EVENT, "datetime": OLDBASE + timedelta(seconds=s)} for s in range(5)] +
+            [CPU_TEMP_WARNING] +
+            [{**MEMORY_EVENT, "datetime": BASE + timedelta(seconds=s)} for s in range(5, 11)] +
+            [FAN5_NONCRITICAL]
+        ),
+        (
+            None, [PSU_FAILURE, CPU_TEMP_WARNING, FAN5_NONCRITICAL],
+        ),
+    ),
+])
+def test_pop_correctable_memory_error_alert(records, result):
+    assert pop_correctable_memory_error_alert(THRESHOLD, records) == result
