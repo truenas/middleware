@@ -38,7 +38,7 @@ region = ${config.region}
 host_id = ${data.host_id}
 owner_id_seed = ${data.owner_id_seed}
 log_level = ${config.log_level.lower()}
-% if data.audit_licensed:
+% if data.audit_supported:
 % if config.default_audit:
 default_audit = ${audit_value(config.default_audit)}
 % endif
@@ -74,7 +74,7 @@ object_lock_default_mode = ${b.object_lock_default_mode.lower()}
 % if b.object_lock_default_days:
 object_lock_default_days = ${b.object_lock_default_days}
 % endif
-% if data.audit_licensed:
+% if data.audit_supported:
 ## None inherits the server default by omission; an empty list is the
 ## empty mask, rendered so it shadows the default
 % if b.audit is not None:

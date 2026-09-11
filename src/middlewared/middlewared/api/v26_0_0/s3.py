@@ -280,7 +280,7 @@ class S3Entry(BaseModel):
         default=[],
         description=(
             "Actions audited on every bucket that does not set its own `audit`, or `ALL`. An empty list audits "
-            "nothing. Requires an Enterprise license."
+            "nothing. Requires TrueNAS Enterprise appliance hardware."
         ),
     )
     default_audit_overflow: S3AuditOverflow = Field(
@@ -440,7 +440,7 @@ class SharingS3Entry(BaseModel):
         default=None,
         description=(
             "Actions audited on this bucket, `ALL`, or an empty list to audit nothing. `null` inherits the service's "
-            "`default_audit`. Requires an Enterprise license."
+            "`default_audit`. Requires TrueNAS Enterprise appliance hardware."
         ),
     )
     audit_overflow: S3AuditOverflow | None = Field(
