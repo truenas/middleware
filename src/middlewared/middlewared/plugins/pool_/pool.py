@@ -30,6 +30,7 @@ from .utils import (
     ZFS_ENCRYPTION_ALGORITHM,
     ZPOOL_CACHE_FILE,
     validate_dedup_license,
+    validate_sed_license,
 )
 
 # Redundancy/parity level per vdev type. Used to enforce that a redundant data
@@ -566,6 +567,9 @@ class PoolService(CRUDService):
 
         await validate_dedup_license(self.middleware, verrors, 'pool_create', data['deduplication'])
 
+        if data['all_sed']:
+            await validate_sed_license(self.middleware, verrors, 'pool_create', 'all_sed')
+
         verrors.check()
 
         disks, vdevs = await self._process_topology('pool_create', data, None, data['all_sed'])
@@ -765,6 +769,8 @@ class PoolService(CRUDService):
 
         verrors = ValidationErrors()
         dedup_table_quota_value = await self.validate_dedup_table_quota(data, verrors, 'pool_update')
+        if 'topology' in data and pool['all_sed']:
+            await validate_sed_license(self.middleware, verrors, 'pool_update', 'topology')
         verrors.check()
 
         disks = vdevs = None
