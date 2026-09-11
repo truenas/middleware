@@ -90,6 +90,7 @@ FREENAS_MINI_BLOB = (
                         "NFS_SNAPSHOT",
                         "NVMEOF_SPDK",
                         "RDMA",
+                        "SED",
                         "SMB_FASTPATH",
                         "SMB_VEEAM",
                         "STIG",
@@ -235,6 +236,7 @@ def test__legacy_injection_set_is_pinned():
         "NFS_SNAPSHOT",
         "NVMEOF_SPDK",
         "RDMA",
+        "SED",
         "SMB_FASTPATH",
         "SMB_VEEAM",
         "STIG",
@@ -265,10 +267,10 @@ _LEGACY_BITMASK_FEATURES = {str(FEATURE_NAME_MAP.get(f.name.upper(), f.name.uppe
 
 
 def test__legacy_bitmask_is_the_other_route_onto_a_legacy_license():
-    # SED, FIBRECHANNEL and DEDUP are not injected, so a legacy holder only has them if the
-    # blob's own bits carry them. Dropping one of these from the bitmask translation would
-    # revoke it from every legacy licensee that bought it.
-    assert _LEGACY_BITMASK_FEATURES - {f.value for f in _LEGACY_INJECT_SET} == {"SED", "FIBRECHANNEL", "DEDUP"}
+    # FIBRECHANNEL and DEDUP are not injected, so a legacy holder only has them if the blob's
+    # own bits carry them. Dropping one of these from the bitmask translation would revoke it
+    # from every legacy licensee that bought it.
+    assert _LEGACY_BITMASK_FEATURES - {f.value for f in _LEGACY_INJECT_SET} == {"FIBRECHANNEL", "DEDUP"}
 
 
 def test__legacy_fibrechannel_bit_is_observable_end_to_end():

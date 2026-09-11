@@ -43,7 +43,7 @@ def test_target_vectors_match_the_product_matrix():
         LicenseFeature.NFS_SNAPSHOT: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
         LicenseFeature.NVMEOF_SPDK: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
         LicenseFeature.RDMA: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
-        LicenseFeature.SED: Vector(ce=0, hw=1, hw_l=1, hw_k=1, ce_l=1, ce_k=1),
+        LicenseFeature.SED: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=0),
         LicenseFeature.SMB_FASTPATH: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
         LicenseFeature.SMB_VEEAM: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
         LicenseFeature.STIG: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
@@ -168,8 +168,8 @@ VECTOR_TABLE = [
     (LicenseFeature.APPS, HardwareClass.GENERIC, "none", True, "ENTITLED", "CE"),
     (LicenseFeature.APPS, HardwareClass.GENERIC, "nokey", False, "KEY_MISSING", "CE+L"),
     (LicenseFeature.APPS, HardwareClass.GENERIC, "key", True, "ENTITLED", "CE+K"),
-    # CATALOG_ENTERPRISE_TRAIN: a shape whose CE key cell is 0, so a key on the community side
-    # still denies.
+    # CATALOG_ENTERPRISE_TRAIN, and SED which shares its shape: a shape whose CE key cell is 0, so
+    # a key on the community side still denies.
     (LicenseFeature.CATALOG_ENTERPRISE_TRAIN, HardwareClass.TRUENAS_HW, "none", False, "NO_LICENSE", "HW"),
     (LicenseFeature.CATALOG_ENTERPRISE_TRAIN, HardwareClass.TRUENAS_HW, "nokey", False, "KEY_MISSING", "HW+L"),
     (LicenseFeature.CATALOG_ENTERPRISE_TRAIN, HardwareClass.TRUENAS_HW, "key", True, "ENTITLED", "HW+K"),
@@ -198,13 +198,6 @@ VECTOR_TABLE = [
     (LicenseFeature.FIBRECHANNEL, HardwareClass.GENERIC, "none", False, "NO_LICENSE", "CE"),
     (LicenseFeature.FIBRECHANNEL, HardwareClass.GENERIC, "nokey", False, "KEY_MISSING", "CE+L"),
     (LicenseFeature.FIBRECHANNEL, HardwareClass.GENERIC, "key", True, "ENTITLED", "CE+K"),
-    # SED (0,1,1,1,1,1): denied only on an unlicensed community system.
-    (LicenseFeature.SED, HardwareClass.TRUENAS_HW, "none", True, "ENTITLED", "HW"),
-    (LicenseFeature.SED, HardwareClass.TRUENAS_HW, "nokey", True, "ENTITLED", "HW+L"),
-    (LicenseFeature.SED, HardwareClass.TRUENAS_HW, "key", True, "ENTITLED", "HW+K"),
-    (LicenseFeature.SED, HardwareClass.GENERIC, "none", False, "NO_LICENSE", "CE"),
-    (LicenseFeature.SED, HardwareClass.GENERIC, "nokey", True, "ENTITLED", "CE+L"),
-    (LicenseFeature.SED, HardwareClass.GENERIC, "key", True, "ENTITLED", "CE+K"),
     # A Mini is iX-built hardware that reads the CE half of every row, so unlicensed DEDUP is
     # granted here and denied on the appliance row above.
     (LicenseFeature.DEDUP, HardwareClass.MINI, "none", True, "ENTITLED", "CE"),

@@ -61,6 +61,7 @@ _LEGACY_INJECT: frozenset[LicenseFeature] = frozenset(
         LicenseFeature.NFS_SNAPSHOT,
         LicenseFeature.NVMEOF_SPDK,
         LicenseFeature.RDMA,
+        LicenseFeature.SED,
         LicenseFeature.SMB_FASTPATH,
         LicenseFeature.SMB_VEEAM,
         LicenseFeature.STIG,
