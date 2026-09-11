@@ -68,7 +68,7 @@ class PoolService(Service):
         if pool['all_sed']:
             await validate_sed_license(self.middleware, verrors, 'options', 'disk')
 
-        if pool['all_sed'] and disk['sed'] is False:
+        if pool['all_sed'] and disk['sed'] is not True:
             verrors.add(
                 'options.disk',
                 'Replacement should be a SED disk in a SED pool.'
