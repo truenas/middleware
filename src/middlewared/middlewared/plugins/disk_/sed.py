@@ -68,7 +68,7 @@ class DiskService(Service):
                 to_setup_sed_disks.append(disk)
             elif status == 'FAILED':
                 failed_sed_status_disks.append(disk['name'])
-            elif status == 'NO_SED' or (validate_all_disks_are_sed and disk['sed'] is not True):
+            elif status == 'NO_SED' or (validate_all_disks_are_sed and not disk['sed']):
                 non_sed_disks.append(disk['name'])
 
         if non_sed_disks:
@@ -147,7 +147,7 @@ class DiskService(Service):
         verrors.check()
 
         disk = disk[0]
-        if disk['sed'] is not True:
+        if not disk['sed']:
             verrors.add(f'{schema}.name', f'{options["name"]!r} is not a SED disk')
 
         verrors.check()
