@@ -30,7 +30,7 @@ TARGET_VECTORS: Mapping[LicenseFeature, Vector] = MappingProxyType(
         LicenseFeature.RDMA: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
         LicenseFeature.S3_AUDIT: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
         LicenseFeature.S3_VERSIONING: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
-        LicenseFeature.SED: Vector(ce=0, hw=1, hw_l=1, hw_k=1, ce_l=1, ce_k=1),
+        LicenseFeature.SED: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=0),
         LicenseFeature.SMB_FASTPATH: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
         LicenseFeature.SMB_VEEAM: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
         LicenseFeature.STIG: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
