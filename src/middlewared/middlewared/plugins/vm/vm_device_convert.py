@@ -145,7 +145,7 @@ def validate_convert_disk_image(
 
 def validate_convert_zvol(
     context: ServiceContext, zvp: str, schema: str,
-) -> tuple[dict[str, Any], str]:
+) -> tuple[dict[str, Any], str, int | None]:
     ptn = zvp.removeprefix('/dev/zvol/').replace('+', ' ')
     ntp = os.path.join('/dev/zvol', ptn.replace(' ', '+'))
     zv = context.call_sync2(
@@ -161,11 +161,14 @@ def validate_convert_zvol(
     elif not os.path.exists(ntp):
         raise ValidationError(schema, f'{ntp!r} does not exist', errno.ENOENT)
 
+    logical_sectorsize = None
     for device in context.call_sync2(context.s.vm.device.query, [['attributes.dtype', '=', 'DISK']]):
         if not isinstance(device.attributes, VMDiskDevice):
             continue
         vmzv = device.attributes.path
         if vmzv and vmzv == ntp:
+            if device.attributes.logical_sectorsize not in (None, 512):
+                logical_sectorsize = device.attributes.logical_sectorsize
             try:
                 vm = context.call_sync2(context.s.vm.get_instance, device.vm)
                 if vm.status.state in ACTIVE_STATES:
@@ -178,7 +181,7 @@ def validate_convert_zvol(
             except InstanceNotFound:
                 pass
 
-    return zv[0], ntp
+    return zv[0], ntp, logical_sectorsize
 
 
 def convert_disk(context: ServiceContext, job: Job, data: VMDeviceConvert) -> bool:
@@ -208,7 +211,7 @@ def convert_disk(context: ServiceContext, job: Job, data: VMDeviceConvert) -> bo
         progress_desc = "Convert to disk image progress"
 
     st = validate_convert_disk_image(context, source_image, schema, converting_from_image_to_zvol)
-    zv, abs_zvolpath = validate_convert_zvol(context, zvol, schema)
+    zv, abs_zvolpath, logical_sectorsize = validate_convert_zvol(context, zvol, schema)
     cmd_args = ['qemu-img', 'convert', '-p']
     if converting_from_image_to_zvol:
         assert st is not None
@@ -227,6 +230,13 @@ def convert_disk(context: ServiceContext, job: Job, data: VMDeviceConvert) -> bo
         dl = data.destination.lower()
         for fmt in VALID_DISK_FORMATS:
             if dl.endswith(f'.{fmt}'):
+                if logical_sectorsize not in (None, 512) and fmt in ('vdi', 'vhdx', 'vmdk'):
+                    raise ValidationError(
+                        schema,
+                        f'{fmt.upper()} images only support 512 byte sectors but {zv["name"]} is attached to a VM '
+                        f'using {logical_sectorsize} byte sectors. Export to RAW or QCOW2 instead.',
+                        errno.EINVAL
+                    )
                 cmd_args.extend(['-f', 'raw', '-O', fmt, abs_zvolpath, source_image])
                 break
         else:

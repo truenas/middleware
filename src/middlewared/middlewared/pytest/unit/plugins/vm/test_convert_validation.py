@@ -4,9 +4,13 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from middlewared.api.current import VMDiskDevice
+from middlewared.api.current import VMDeviceConvert, VMDiskDevice
 from middlewared.plugins.vm import vm_device_convert
-from middlewared.plugins.vm.vm_device_convert import validate_convert_disk_image, validate_convert_zvol
+from middlewared.plugins.vm.vm_device_convert import (
+    convert_disk,
+    validate_convert_disk_image,
+    validate_convert_zvol,
+)
 from middlewared.service import CallError
 from middlewared.service_exception import ValidationError
 
@@ -68,9 +72,12 @@ def test_zvol_to_image_internal_dataset_destination_is_rejected():
 # validate_convert_zvol blocks conversion of any active VM's zvol
 
 
-def _zvol_context(state):
+def _zvol_context(state, logical_sectorsize=None):
     zv = [{"type": "VOLUME", "name": "tank/foo", "properties": {"volsize": {"value": 1024**3}}}]
-    device = SimpleNamespace(attributes=VMDiskDevice(dtype="DISK", path="/dev/zvol/tank/foo"), vm=1)
+    device = SimpleNamespace(
+        attributes=VMDiskDevice(dtype="DISK", path="/dev/zvol/tank/foo", logical_sectorsize=logical_sectorsize),
+        vm=1,
+    )
     vm = SimpleNamespace(name="myvm", status=SimpleNamespace(state=state))
 
     context = Mock()
@@ -99,9 +106,34 @@ def test_convert_zvol_blocked_for_active_vm(state):
     assert state.lower() in exc.value.errmsg
 
 
-def test_convert_zvol_allowed_for_stopped_vm():
-    context = _zvol_context("STOPPED")
+@pytest.mark.parametrize("sectorsize,expected", [(None, None), (512, None), (4096, 4096)])
+def test_convert_zvol_allowed_for_stopped_vm(sectorsize, expected):
+    context = _zvol_context("STOPPED", sectorsize)
     with patch.object(vm_device_convert.os.path, "exists", return_value=True):
-        zv, ntp = validate_convert_zvol(context, "/dev/zvol/tank/foo", SCHEMA)
+        zv, ntp, logical_sectorsize = validate_convert_zvol(context, "/dev/zvol/tank/foo", SCHEMA)
     assert zv["type"] == "VOLUME"
     assert ntp == "/dev/zvol/tank/foo"
+    assert logical_sectorsize == expected
+
+
+# convert_disk refuses formats that can only store 512 byte sectors
+
+
+@pytest.mark.parametrize("sectorsize,raises", [(None, False), (512, False), (4096, True)])
+def test_convert_disk_rejects_non_512_sectors_for_vhdx(sectorsize, raises):
+    context = _zvol_context("STOPPED", sectorsize)
+    data = VMDeviceConvert(source="/dev/zvol/tank/foo", destination="/mnt/tank/foo.vhdx")
+    with (
+        patch.object(vm_device_convert.os.path, "exists", return_value=True),
+        patch.object(vm_device_convert, "validate_convert_disk_image", return_value=None),
+        patch.object(vm_device_convert, "run_convert_cmd") as run_cmd,
+    ):
+        if raises:
+            with pytest.raises(ValidationError) as exc:
+                convert_disk(context, Mock(), data)
+            assert exc.value.errno == errno.EINVAL
+            assert "VHDX" in exc.value.errmsg
+            run_cmd.assert_not_called()
+        else:
+            assert convert_disk(context, Mock(), data) is True
+            run_cmd.assert_called_once()
