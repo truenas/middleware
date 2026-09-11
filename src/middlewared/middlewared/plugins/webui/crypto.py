@@ -36,10 +36,15 @@ class WebUICryptoService(Service):
         roles=['CERTIFICATE_READ']
     )
     async def csr_profiles(self):
-        """Return predefined CSR profiles for common certificate types.
+        """Return predefined CSR profiles for common certificate roles.
 
-        Each profile provides recommended defaults for key type, key length or
-        curve, lifetime, digest algorithm, and X.509 extensions (basic constraints,
-        key usage, extended key usage).
+        There is a profile for each combination of role (a TLS server certificate, or a TLS
+        client certificate used when TrueNAS authenticates itself to a remote service) and key
+        type (RSA or EC). Each one provides recommended defaults for the key parameters, the
+        digest algorithm, and the X.509 extensions (basic constraints, key usage, extended key
+        usage).
+
+        The profiles are advisory: they are intended to prefill the CSR form and are not applied
+        by :method:`certificate.create`, which must be passed these values explicitly.
         """
         return CSRProfilesModel().model_dump()
