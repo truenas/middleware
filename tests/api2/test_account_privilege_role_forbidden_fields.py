@@ -31,8 +31,8 @@ def cloudsync_template():
 # `args` is deliberately absent here: it rides along on the shared `BaseCloudEntry`, but nothing under
 # `plugins/cloud_backup/` reads it (the restic path ignores it), so `cloudsync` covers it instead.
 @pytest.mark.parametrize("param,value,attribute", [
-    ("pre_script", "rm -rf /", "cloud_backup_create.pre_script"),
-    ("post_script", "rm -rf /", "cloud_backup_create.post_script"),
+    ("pre_script", "rm -rf /", "cloud_backup.pre_script"),
+    ("post_script", "rm -rf /", "cloud_backup.post_script"),
 ])
 def test_cloud_backup(unprivileged_client, cloudsync_template, param, value, attribute):
     with pytest.raises(ValidationErrors) as ve:

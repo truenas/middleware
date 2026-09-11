@@ -12,11 +12,9 @@ from middlewared.plugins.zfs.utils import has_internal_path
 from middlewared.plugins.zfs.zvol_utils import zvol_path_to_name
 from middlewared.service import CallError, SharingTaskServicePart
 from middlewared.service_exception import InstanceNotFound, ValidationErrors
-from middlewared.utils.privilege import credential_has_full_admin
 
 if TYPE_CHECKING:
     from middlewared.api.base import BaseModel
-    from middlewared.api.base.server.app import App
 
 
 def task_attributes[T: BaseModel](remote: BaseRcloneRemote[T]) -> list[str]:
@@ -97,16 +95,16 @@ class CloudTaskServiceMixin[
     allow_zvol = False
     schema_prefix: str
 
-    async def do_create(self, app: App | None, data: CreateT) -> EntryT:
-        compressed = await self.to_thread(self._validate_and_compress, app, f"{self.schema_prefix}_create", data)
+    async def do_create(self, data: CreateT) -> EntryT:
+        compressed = await self.to_thread(self._validate_and_compress, f"{self.schema_prefix}_create", data)
         entry = await self._create(compressed)
         await (await self.call2(self.s.service.control, "RESTART", "cron")).wait(raise_error=True)
         return entry
 
-    async def do_update(self, app: App | None, id_: int, data: UpdateT) -> EntryT:
+    async def do_update(self, id_: int, data: UpdateT) -> EntryT:
         old = await self.get_instance(id_)
         new = old.updated(data)
-        compressed = await self.to_thread(self._validate_and_compress, app, f"{self.schema_prefix}_update", new)
+        compressed = await self.to_thread(self._validate_and_compress, f"{self.schema_prefix}_update", new)
         entry = await self._update(id_, compressed)
         await (await self.call2(self.s.service.control, "RESTART", "cron")).wait(raise_error=True)
         return entry
@@ -119,9 +117,9 @@ class CloudTaskServiceMixin[
     async def _pre_delete(self, id_: int) -> None:
         raise NotImplementedError
 
-    def _validate_and_compress(self, app: App | None, schema: str, entry: EntryT | CreateT) -> dict[str, Any]:
+    def _validate_and_compress(self, schema: str, entry: EntryT | CreateT) -> dict[str, Any]:
         verrors = ValidationErrors()
-        self._validate(app, verrors, schema, entry)
+        self._validate(verrors, schema, entry)
         verrors.check()
 
         data = entry.model_dump(expose_secrets=True)
@@ -165,7 +163,7 @@ class CloudTaskServiceMixin[
             remote.validate_task_basic(attributes, credentials.provider, verrors)
             entry.attributes = attributes
 
-    def _validate(self, app: App | None, verrors: ValidationErrors, name: str, entry: EntryT | CreateT) -> None:
+    def _validate(self, verrors: ValidationErrors, name: str, entry: EntryT | CreateT) -> None:
         self._basic_validate(verrors, name, entry)
 
         if not verrors:
@@ -214,12 +212,3 @@ class CloudTaskServiceMixin[
                         f"{name}.snapshot", "This option is only available for datasets that have no further nesting"
                     )
                     break
-
-        if app and not (app.authenticated_credentials and credential_has_full_admin(app.authenticated_credentials)):
-            for k in ["pre_script", "post_script"]:
-                if getattr(entry, k):
-                    verrors.add(
-                        f"{name}.{k}",
-                        "The ability to edit pre-scripts and post-scripts is limited to "
-                        "users who have full administrative credentials",
-                    )

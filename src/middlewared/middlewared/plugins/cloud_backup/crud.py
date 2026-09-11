@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from middlewared.alert.base import AlertCategory, AlertClassConfig, AlertLevel, OneShotAlertClass
 from middlewared.api.current import CloudBackupCreate, CloudBackupEntry, CloudBackupUpdate
@@ -16,9 +16,6 @@ from middlewared.utils.path import FSLocation
 
 from .init import IncorrectPassword
 from .utils import resolve_credentials
-
-if TYPE_CHECKING:
-    from middlewared.api.base.server.app import App
 
 
 class CloudBackupModel(CloudTaskModelMixin, sa.Model):
@@ -92,10 +89,8 @@ class CloudBackupServicePart(CloudTaskServiceMixin[CloudBackupEntry, CloudBackup
         ):
             raise CallError("Backed up zvol must be used by a local or VMware VM")
 
-    def _validate(
-        self, app: App | None, verrors: ValidationErrors, name: str, entry: CloudBackupCreate | CloudBackupEntry,
-    ) -> None:
-        super()._validate(app, verrors, name, entry)
+    def _validate(self, verrors: ValidationErrors, name: str, entry: CloudBackupCreate | CloudBackupEntry) -> None:
+        super()._validate(verrors, name, entry)
 
         if entry.snapshot and entry.absolute_paths:
             verrors.add(f"{name}.snapshot", "This option can't be used when absolute paths are enabled")

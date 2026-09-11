@@ -95,19 +95,19 @@ class CloudSyncService(GenericTaskPathService[CloudSyncEntry], TaskStateMixin):
         self.credentials = CredentialsService(middleware)
         self._svc_part = CloudSyncServicePart(self.context)
 
-    @api_method(CloudSyncCreateArgs, CloudSyncCreateResult, pass_app=True, check_annotations=True)
-    async def do_create(self, app: App, data: CloudSyncCreate) -> CloudSyncEntry:
+    @api_method(CloudSyncCreateArgs, CloudSyncCreateResult, check_annotations=True)
+    async def do_create(self, data: CloudSyncCreate) -> CloudSyncEntry:
         """
         Creates a new cloud_sync entry.
         """
-        return await self._svc_part.do_create(app, data)
+        return await self._svc_part.do_create(data)
 
-    @api_method(CloudSyncUpdateArgs, CloudSyncUpdateResult, pass_app=True, check_annotations=True)
-    async def do_update(self, app: App, id_: int, data: CloudSyncUpdate) -> CloudSyncEntry:
+    @api_method(CloudSyncUpdateArgs, CloudSyncUpdateResult, check_annotations=True)
+    async def do_update(self, id_: int, data: CloudSyncUpdate) -> CloudSyncEntry:
         """
         Updates the cloud_sync entry ``id`` with ``data``.
         """
-        return await self._svc_part.do_update(app, id_, data)
+        return await self._svc_part.do_update(id_, data)
 
     @api_method(CloudSyncDeleteArgs, CloudSyncDeleteResult, check_annotations=True)
     async def do_delete(self, id_: int) -> Literal[True]:

@@ -94,8 +94,11 @@ class BaseCloudEntry(BaseModel):
         default_factory=CloudCron,
         description="Cron schedule dictating when the task should run.",
     )
-    pre_script: LongString = Field(default="", description="A Bash script to run immediately before every backup.")
-    post_script: LongString = Field(
+    pre_script: FullAdmin[LongString] = Field(
+        default="",
+        description="A Bash script to run immediately before every backup.",
+    )
+    post_script: FullAdmin[LongString] = Field(
         default="",
         description="A Bash script to run immediately after every backup if it succeeds.",
     )

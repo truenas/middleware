@@ -46,7 +46,6 @@ from .snapshot import list_snapshots as list_snapshots_impl
 from .sync import TRANSFER_SETTING_ARGS, do_abort, do_sync
 
 if TYPE_CHECKING:
-    from middlewared.api.base.server.app import App
     from middlewared.job import Job
     from middlewared.main import Middleware
 
@@ -71,15 +70,15 @@ class CloudBackupService(GenericTaskPathService[CloudBackupEntry], TaskStateMixi
         super().__init__(middleware)
         self._svc_part = CloudBackupServicePart(self.context)
 
-    @api_method(CloudBackupCreateArgs, CloudBackupCreateResult, pass_app=True, check_annotations=True)
-    async def do_create(self, app: App, data: CloudBackupCreate) -> CloudBackupEntry:
+    @api_method(CloudBackupCreateArgs, CloudBackupCreateResult, check_annotations=True)
+    async def do_create(self, data: CloudBackupCreate) -> CloudBackupEntry:
         """Create a new cloud backup task."""
-        return await self._svc_part.do_create(app, data)
+        return await self._svc_part.do_create(data)
 
-    @api_method(CloudBackupUpdateArgs, CloudBackupUpdateResult, pass_app=True, check_annotations=True)
-    async def do_update(self, app: App, id_: int, data: CloudBackupUpdate) -> CloudBackupEntry:
+    @api_method(CloudBackupUpdateArgs, CloudBackupUpdateResult, check_annotations=True)
+    async def do_update(self, id_: int, data: CloudBackupUpdate) -> CloudBackupEntry:
         """Update the cloud backup entry ``id`` with ``data``."""
-        return await self._svc_part.do_update(app, id_, data)
+        return await self._svc_part.do_update(id_, data)
 
     @api_method(CloudBackupDeleteArgs, CloudBackupDeleteResult, check_annotations=True)
     async def do_delete(self, id_: int) -> Literal[True]:

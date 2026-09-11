@@ -191,3 +191,13 @@ def test_options_may_only_be_changed_by_a_full_admin():
             c.call('ssh.update', {'options': 'PermitRootLogin yes'})
 
     assert any(error.attribute == 'data.options' for error in ve.value.errors), ve.value.errors
+
+
+def test_password_login_groups_are_quoted_into_sshd_config(ws_client):
+    """A line break or a double quote in a group name would let SSH_WRITE add the directives `options` denies."""
+    with pytest.raises(ValidationErrors) as ve:
+        ws_client.call('ssh.update', {'password_login_groups': ['wheel\nMatch all', 'wheel" User "root']})
+
+    assert {error.attribute for error in ve.value.errors} == {
+        'data.password_login_groups.0', 'data.password_login_groups.1',
+    }

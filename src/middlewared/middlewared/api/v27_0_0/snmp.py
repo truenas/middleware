@@ -3,15 +3,25 @@ from typing import Annotated, Literal
 from pydantic import EmailStr, Field, Secret
 from pydantic.types import StringConstraints
 
-from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, FullAdmin, excluded_field
+from middlewared.api.base import (
+    BaseModel,
+    Excluded,
+    ForUpdateMetaclass,
+    FullAdmin,
+    SingleLineString,
+    excluded_field,
+)
 
 __all__ = ["SNMPEntry", "SNMPUpdate", "SNMPUpdateArgs", "SNMPUpdateResult"]
+
+_CONTACT_PATTERN = r'^[-_a-zA-Z0-9\s]*$'
+_COMMUNITY_PATTERN = r'^[!\$%&()\+\-_={}\[\]<>,\.\?a-zA-Z0-9\s]*$'
 
 
 class SNMPEntry(BaseModel):
     id: int = Field(description="Placeholder identifier.  Not used as there is only one.")
     location: str = Field(description="A comment describing the physical location of the server.")
-    contact: EmailStr | Annotated[str, StringConstraints(pattern=r'^[-_a-zA-Z0-9\s]*$')] = Field(
+    contact: EmailStr | Annotated[str, StringConstraints(pattern=_CONTACT_PATTERN)] = Field(
         description="Contact information for the system administrator (email or name).",
     )
     traps: bool = Field(description="Whether SNMP traps are enabled.")
@@ -21,7 +31,7 @@ class SNMPEntry(BaseModel):
         ),
     )
     community: str = Field(
-        pattern=r'^[!\$%&()\+\-_={}\[\]<>,\.\?a-zA-Z0-9\s]*$',
+        pattern=_COMMUNITY_PATTERN,
         default='public',
         description=(
             "SNMP community string for v1/v2c access. Allows letters and numbers: a-zA-Z0-9 special characters: "
@@ -58,7 +68,17 @@ class SNMPEntry(BaseModel):
 
 
 class SNMPUpdate(SNMPEntry, metaclass=ForUpdateMetaclass):
+    """Changes to the SNMP service configuration.
+
+    Line breaks are rejected on every field interpolated bare into `snmpd.conf`.
+    Such a break would let the caller append directives, `rwcommunity` say, that `options` is marked to deny.
+    The constraint is on this model rather than `SNMPEntry`, so a value stored before it existed stays readable.
+    """
     id: Excluded = excluded_field()
+    location: SingleLineString
+    contact: EmailStr | Annotated[SingleLineString, StringConstraints(pattern=_CONTACT_PATTERN)]
+    community: SingleLineString = Field(pattern=_COMMUNITY_PATTERN)
+    v3_username: SingleLineString = Field(max_length=20)
 
 
 class SNMPUpdateArgs(BaseModel):

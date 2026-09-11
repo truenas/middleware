@@ -502,3 +502,17 @@ def test_options_may_only_be_changed_by_a_full_admin():
             c.call('snmp.update', {'options': 'extend hax /bin/sh -c id'})
 
     assert any(error.attribute == 'snmp_update.options' for error in ve.value.errors), ve.value.errors
+
+
+def test_line_breaks_are_rejected_on_every_field_rendered_into_snmpd_conf():
+    """A line break would let SYSTEM_GENERAL_WRITE append the directives that `options` is marked to deny."""
+    fields = {
+        'location': 'rack 1\nrwcommunity hax',
+        'contact': 'admin\nrwcommunity hax',
+        'community': 'public\nrwcommunity hax',
+        'v3_username': 'v3\nrwuser hax',
+    }
+    with pytest.raises(ValidationErrors) as ve:
+        call('snmp.update', fields)
+
+    assert {error.attribute for error in ve.value.errors} == {f'snmp_update.{field}' for field in fields}
