@@ -7,14 +7,13 @@ import textwrap
 from typing import Any
 import warnings
 
-from truenas_pylicensed.features import LicenseFeature
-
 from middlewared.api.current import SystemAdvancedEntry, SystemAdvancedUpdate
 from middlewared.plugins.initramfs import write_initramfs_flags
 from middlewared.service import ConfigServicePart, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
 from middlewared.utils.boot.models import BootUpdateInitramfsOptions
+from middlewared.utils.service.entitlement import validate_sed_license
 from middlewared.utils.service.settings import SettingsHelper
 
 from .nvidia import handle_nvidia_toggle
@@ -193,9 +192,16 @@ class SystemAdvancedConfigServicePart(ConfigServicePart[SystemAdvancedEntry]):
 
     @settings.fields_validator('sed_user')
     async def _validate_sed_user(self, verrors: ValidationErrors, /, sed_user: str) -> None:
-        entitlement = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.SED)
-        if not entitlement.entitled:
-            verrors.add('sed_user', entitlement.message)
+        await validate_sed_license(self.middleware, verrors, 'sed_user')
+
+    @settings.fields_validator('sed_passwd')
+    async def _validate_sed_passwd(self, verrors: ValidationErrors, /, sed_passwd: str) -> None:
+        if not sed_passwd:
+            # Clearing stays available unconditionally so a system without the entitlement can
+            # still drop a secret it is no longer allowed to use.
+            return
+
+        await validate_sed_license(self.middleware, verrors, 'sed_passwd')
 
     async def do_update(self, data: SystemAdvancedUpdate) -> SystemAdvancedEntry:
         old_config = await self.config()
@@ -205,14 +211,6 @@ class SystemAdvancedConfigServicePart(ConfigServicePart[SystemAdvancedEntry]):
         # side-channel values here since they are handled separately from the entry merge below.
         update = data.model_dump(expose_secrets=True)
         new_sed = update.get('sed_passwd', old_sed)
-
-        verrors = ValidationErrors()
-        # Only setting a password is gated. Clearing one stays available unconditionally so a system
-        # without the entitlement can still drop a secret it is no longer allowed to use.
-        if new_sed and new_sed != old_sed:
-            entitlement = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.SED)
-            if not entitlement.entitled:
-                verrors.add('system_advanced_update.sed_passwd', entitlement.message)
 
         consolemsg = None
         if 'consolemsg' in update:
@@ -230,8 +228,12 @@ class SystemAdvancedConfigServicePart(ConfigServicePart[SystemAdvancedEntry]):
             ],
         })
 
+        # `sed_passwd` is not on the entry, so it is merged in here to be visible to its validator.
         await settings.validate(
-            self, 'system_advanced_update', old_config.model_dump(), new_config.model_dump(), verrors
+            self,
+            'system_advanced_update',
+            old_config.model_dump() | {'sed_passwd': old_sed},
+            new_config.model_dump() | {'sed_passwd': new_sed},
         )
 
         if new_config != old_config or new_sed != old_sed:

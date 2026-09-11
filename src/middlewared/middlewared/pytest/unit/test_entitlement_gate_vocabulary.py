@@ -41,7 +41,6 @@ GATES = [
     ("plugins/nvmet/global.py", "LicenseFeature.NVMEOF_SPDK"),
     ("plugins/pool_/pool.py", "LicenseFeature.SUPPORT"),
     ("plugins/pool_/utils.py", "LicenseFeature.DEDUP"),
-    ("plugins/pool_/utils.py", "LicenseFeature.SED"),
     ("plugins/rdma/rdma.py", "LicenseFeature.RDMA"),
     ("plugins/security/info.py", "LicenseFeature.STIG"),
     ("plugins/smb.py", "LicenseFeature.SMB_FASTPATH"),
@@ -51,8 +50,6 @@ GATES = [
     ("plugins/support/execute.py", "LicenseFeature.SUPPORT"),
     ("plugins/system/product.py", None),
     ("plugins/system/product.py", "LicenseFeature.SED"),
-    ("plugins/system_advanced/config.py", "LicenseFeature.SED"),
-    ("plugins/system_advanced/config.py", "LicenseFeature.SED"),
     ("plugins/system_general/update.py", "LicenseFeature.DIRECTORY_SERVICES_AUTH"),
     ("plugins/truenas_s3/bucket_crud.py", "LicenseFeature.S3_AUDIT"),
     ("plugins/truenas_s3/bucket_crud.py", "LicenseFeature.S3_AUDIT"),
@@ -67,6 +64,7 @@ GATES = [
     ("plugins/zfs/resource_create.py", "LicenseFeature.DEDUP"),
     ("plugins/zfs/tier.py", "LicenseFeature.ZFSTIER"),
     ("test/integration/assets/entitlements.py", None),
+    ("utils/service/entitlement.py", "LicenseFeature.SED"),
 ]
 
 

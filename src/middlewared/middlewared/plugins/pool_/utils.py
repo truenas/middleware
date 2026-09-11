@@ -119,18 +119,6 @@ async def validate_dedup_license(
         verrors.add(f'{schema}.deduplication', entitlement.message)
 
 
-async def validate_sed_license(
-    middleware: 'Middleware', verrors: 'ValidationErrors', schema: str, field: str,
-) -> None:
-    """Reject enabling SED functionality on systems that are not entitled to it.
-
-    SED requires TrueNAS hardware carrying a license with the SED feature key.
-    """
-    entitlement = await middleware.call2(middleware.services.truenas.entitlements.check, LicenseFeature.SED)
-    if not entitlement.entitled:
-        verrors.add(f'{schema}.{field}', entitlement.message)
-
-
 async def pool_has_special_vdev(middleware: 'Middleware', pool_name: str) -> bool:
     """Whether the pool has a SPECIAL allocation class vdev. Returns False when the
     pool cannot be inspected."""
