@@ -586,6 +586,45 @@ class ZFSResourceSnapshotService(Service):
 
     @private
     @pass_thread_local_storage
+    def update_impl(
+        self, tls: Any, path: str, user_properties: dict[str, str], remove: list[str]
+    ) -> dict[str, Any]:
+        """Set and/or clear user properties on a single snapshot.
+
+        Args:
+            tls: Thread local storage containing lzh (libzfs handle)
+            path: Snapshot path (e.g. 'pool/dataset@snapshot').
+            user_properties: Property names mapped to their new values.
+            remove: Property names to clear. Applied after `user_properties`,
+                so a name given in both ends up removed.
+
+        Returns:
+            dict: The snapshot as it stands after the change.
+        """
+        schema = "zfs.resource.snapshot.update"
+
+        # open_resource() opens any resource type, so without this a dataset
+        # path would write the properties to the dataset itself.
+        if "@" not in path:
+            raise ValidationError(
+                schema, f"{path!r} must be a snapshot path (containing '@').", errno.EINVAL
+            )
+        if has_internal_path(path.split("@")[0]):
+            raise ValidationError(schema, f"{path!r} is a protected path.", errno.EACCES)
+
+        snap = open_resource(tls, path)
+        if user_properties:
+            snap.set_user_properties(user_properties=user_properties)
+        for key in remove:
+            snap.inherit_property(property=key)
+
+        # The requested properties are the ones the create path returns.
+        return query_snapshots_impl(
+            tls.lzh, {"paths": [path], "properties": ["creation", "createtxg"]}
+        )[0]
+
+    @private
+    @pass_thread_local_storage
     def hold_impl(self, tls: Any, data: ZFSResourceSnapshotHoldQuery) -> None:
         schema = "zfs.resource.snapshot.hold"
 

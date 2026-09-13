@@ -1,6 +1,8 @@
 import errno
 from typing import Any
 
+from truenas_pylibzfs import ZFSException
+
 from middlewared.api import api_method
 from middlewared.api.current import (
     PoolSnapshotCloneArgs,
@@ -395,10 +397,28 @@ class PoolSnapshotService(CRUDService):
 
     @api_method(PoolSnapshotUpdateArgs, PoolSnapshotUpdateResult)
     def do_update(self, snap_id, data):
-        """Update the user properties of the snapshot identified by ``snap_id``."""
-        # TODO: add zfs.resource.snapshot.update (what is this even used for???)
-        data['user_properties_update'].extend({'key': k, 'remove': True} for k in data.pop('user_properties_remove'))
-        # return self.middleware.call_sync('zfs.snapshot.update', snap_id, data)
+        """Update the user properties of the snapshot identified by ``id``.
+
+        A property named in both ``user_properties_update`` and ``user_properties_remove``
+        ends up removed.
+        """
+        try:
+            snap = self.call_sync2(
+                self.s.zfs.resource.snapshot.update_impl,
+                snap_id,
+                {i['key']: i['value'] for i in data['user_properties_update']},
+                data['user_properties_remove'],
+            )
+        except ZFSPathNotFoundException as e:
+            raise InstanceNotFound(e.message)
+        except ZFSException as e:
+            raise ValidationError('pool.snapshot.update', f'Failed to update properties: {e}')
+
+        entry = self._transform_snapshot_entry(snap, include_holds=False)
+        self.middleware.send_event(
+            f'{self._config.namespace}.query', 'CHANGED', id=entry['id'], fields=entry
+        )
+        return entry
 
     @api_method(PoolSnapshotDeleteArgs, PoolSnapshotDeleteResult)
     def do_delete(self, id_, options):
