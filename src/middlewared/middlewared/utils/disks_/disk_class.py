@@ -47,14 +47,18 @@ class TempEntry:
     crit: float | None = None
     """This value is reported as celsius.
 
-    For SCSI drives (as described in SPC-6):
-        The REFERENCE TEMPERATURE field indicates
-        the maximum reported sensor temperature in
-        degrees Celsius at which the SCSI target
-        device is capable of operating continuously
-        without degrading the SCSI target device's
-        operation or reliability beyond manufacturer
-        accepted limits.
+    This is the temperature at which the device is
+    expected to be damaged, throttled or shut down.
+    It is read from hwmon's `temp1_crit`.
+
+    For SCSI drives:
+        Only reported by drives that implement log
+        page 0x0D subpage 0x02 (environmental
+        limits), in which case it is the high
+        critical temperature limit trigger. The
+        REFERENCE TEMPERATURE on subpage 0x00 is an
+        "operate continuously" limit and is reported
+        as `max_c` below, not here.
 
     For NVMe drives (as described in base spec 2.0e)
         The critical composite temperature threshold
@@ -71,6 +75,42 @@ class TempEntry:
         maximum temperature limit. Operating the device
         over this temperature may cause physical damage to
         the device.
+    """
+    max_c: float | None = None
+    """This value is reported as celsius.
+
+    This is the highest temperature at which the device
+    itself claims it can be operated continuously. It is
+    not a failure threshold: exceeding it means the device
+    is running outside the range for which the vendor
+    guarantees operation and reliability, not that damage
+    is imminent. It is read from hwmon's `temp1_max`.
+
+    NOTE: this is only populated for the `drivetemp`
+    driver. For NVMe, reading `temp1_max` issues a Get
+    Features admin command on every read (see
+    nvme_get_temp_thresh() in drivers/nvme/host/hwmon.c),
+    which is too expensive for the rate this is polled at.
+
+    For SCSI drives (as described in SPC-5):
+        Either the high operating temperature limit
+        trigger from log page 0x0D subpage 0x02
+        (environmental limits), or, on drives that do not
+        implement that subpage, the REFERENCE TEMPERATURE
+        field (log page 0x0D, parameter 0x0001): the
+        maximum reported sensor temperature in degrees
+        Celsius at which the SCSI target device is capable
+        of operating continuously without degrading its
+        operation or reliability beyond manufacturer
+        accepted limits. Its ETC bit is 0 ("no threshold
+        comparison is made on this value") and the standard
+        states that no comparison is performed between it
+        and the current temperature in parameter 0x0000.
+
+    For ATA drives (as described in ATA/ATAPI Command Set)
+        The "Max Operating Limit" field (byte 6 of the SCT
+        status response), i.e. the maximum recommended
+        continuous operating temperature.
     """
 
 
@@ -283,6 +323,20 @@ class DiskEntry:
         return "HDD" if fr == "1" else "SSD"
 
     @functools.cached_property
+    def rotational(self) -> bool | None:
+        """Whether the disk is rotational, or None when sysfs does not
+        report it.
+
+        Unlike `media_type`, an unreadable value is not silently reported
+        as non-rotational. Callers that pick a safety threshold based on
+        the device class need to be able to tell "not rotational" from
+        "do not know"."""
+        fr = self.__opener(relative_path="queue/rotational")
+        if fr is None:
+            return None
+        return fr == "1"
+
+    @functools.cached_property
     def identifier(self) -> str:
         """Return, ideally, a unique identifier for the disk.
 
@@ -403,6 +457,7 @@ class DiskEntry:
 
         temp_c: float | None = None
         crit: float | None = None
+        max_c: float | None = None
         try:
             with os.scandir(path) as sdir:
                 for i in filter(
@@ -435,11 +490,26 @@ class DiskEntry:
                     else:
                         # syfs values are stored in millidegrees celsius
                         crit = crit / 1000
+
+                    if name == "drivetemp":
+                        # `temp1_max` is answered from cached driver state
+                        # by drivetemp, but the nvme driver turns it into a
+                        # Get Features admin command on every read, so it is
+                        # only read for drivetemp.
+                        try:
+                            max_c = int(
+                                self.__opener(absolute_path=f"{i.path}/temp1_max")  # type: ignore[arg-type]
+                            )
+                        except Exception:
+                            pass
+                        else:
+                            # sysfs values are stored in millidegrees celsius
+                            max_c = max_c / 1000
         except FileNotFoundError:
             # pmem devices dont have this, for example
             pass
 
-        return TempEntry(temp_c=temp_c, crit=crit)
+        return TempEntry(temp_c=temp_c, crit=crit, max_c=max_c)
 
     def partitions(self, dev_fd: int | None = None) -> tuple[GptPartEntry, ...] | None:
         """Return a tuple of `GptPartEntry` objects for any

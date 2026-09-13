@@ -122,6 +122,22 @@ def test_media_type_hdd_regression(mock_sysfs):
         assert DiskEntry(name="sda", devpath="/dev/sda").media_type == "HDD"
 
 
+@pytest.mark.parametrize("raw,expected", [
+    ("1\n", True),
+    ("0\n", False),
+])
+def test_rotational(mock_sysfs, raw, expected):
+    with mock_sysfs({"sda/queue/rotational": raw}):
+        assert DiskEntry(name="sda", devpath="/dev/sda").rotational is expected
+
+
+def test_rotational_missing_is_none(mock_sysfs):
+    """Unlike media_type, an absent rotational file is not reported as
+    non-rotational."""
+    with mock_sysfs({}):
+        assert DiskEntry(name="sda", devpath="/dev/sda").rotational is None
+
+
 # ---------------------------------------------------------------------------
 # 3. vendor
 # ---------------------------------------------------------------------------
@@ -329,6 +345,44 @@ def test_temp_with_crit(mock_sysfs):
     }):
         result = DiskEntry(name="sda", devpath="/dev/sda").temp()
         assert result == TempEntry(temp_c=35.0, crit=70.0)
+
+
+def test_temp_with_max(mock_sysfs):
+    """SATA: SCT byte 6 (recommended max) is exposed as temp1_max and must
+    not be confused with temp1_crit (SCT byte 7)."""
+    with mock_sysfs({
+        "sda/device/hwmon/hwmon0/name": "drivetemp\n",
+        "sda/device/hwmon/hwmon0/temp1_input": "35000\n",
+        "sda/device/hwmon/hwmon0/temp1_max": "55000\n",
+        "sda/device/hwmon/hwmon0/temp1_crit": "70000\n",
+    }):
+        result = DiskEntry(name="sda", devpath="/dev/sda").temp()
+        assert result == TempEntry(temp_c=35.0, crit=70.0, max_c=55.0)
+
+
+def test_temp_max_without_crit(mock_sysfs):
+    """SAS: a drive that only implements log page 0x0D subpage 0x00 reports
+    its reference temperature as temp1_max and no temp1_crit at all."""
+    with mock_sysfs({
+        "sda/device/hwmon/hwmon0/name": "drivetemp\n",
+        "sda/device/hwmon/hwmon0/temp1_input": "46000\n",
+        "sda/device/hwmon/hwmon0/temp1_max": "40000\n",
+    }):
+        result = DiskEntry(name="sda", devpath="/dev/sda").temp()
+        assert result == TempEntry(temp_c=46.0, crit=None, max_c=40.0)
+
+
+def test_temp_nvme_max_not_read(mock_sysfs):
+    """Reading temp1_max on nvme issues a Get Features admin command, so it
+    is deliberately not read for the nvme driver."""
+    with mock_sysfs({
+        "nvme0n1/device/hwmon0/name": "nvme\n",
+        "nvme0n1/device/hwmon0/temp1_input": "42000\n",
+        "nvme0n1/device/hwmon0/temp1_crit": "84000\n",
+        "nvme0n1/device/hwmon0/temp1_max": "70000\n",
+    }):
+        result = DiskEntry(name="nvme0n1", devpath="/dev/nvme0n1").temp()
+        assert result == TempEntry(temp_c=42.0, crit=84.0, max_c=None)
 
 
 def test_temp_no_hwmon_dir(mock_sysfs):
