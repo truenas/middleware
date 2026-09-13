@@ -337,6 +337,14 @@ class WebSocketApplication(RpcWebSocketApp):
                     self.middleware.create_task(
                         self.call_method(message, serviceobj, methodobj)
                     )
+        elif message["msg"] == "ping":
+            # DDP heartbeat. Without this a client that keeps the connection warm
+            # the way the protocol describes gets no answer and concludes the peer
+            # is gone, even though the socket is fine.
+            pong = {"msg": "pong"}
+            if "id" in message:
+                pong["id"] = message["id"]
+            self._send(pong)
         elif message["msg"] == "sub":
             if not self.middleware.can_subscribe(
                 self, message["name"].split(":", 1)[0]
