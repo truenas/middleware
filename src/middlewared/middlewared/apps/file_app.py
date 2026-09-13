@@ -15,6 +15,7 @@ from middlewared.auth import (
     LoginPasswordSessionManagerCredentials,
     TokenSessionManagerCredentials,
 )
+from middlewared.job import State as JobState
 from middlewared.pipe import InputPipes, Pipes
 from middlewared.plugins.auth_.login_ex_impl import login_ex_password_plain
 from middlewared.service_exception import CallError
@@ -312,6 +313,19 @@ class FileApplication:
             resp = web.Response()
             resp.set_status(410)
             return resp
+
+        if job.state in (JobState.FAILED, JobState.ABORTED):
+            # The response below is prepared with a 200 before anything is read
+            # from the pipe, so a job that failed before writing would be served
+            # as a successful, empty download. Report the failure instead, and
+            # release the pipe and its cleanup timer the way the copy below
+            # does on its way out.
+            await self._cleanup_cancel(job_id)
+            await job.pipes.close()
+            return web.Response(
+                status=500,
+                body=job.error or f"Job {job_id} {job.state.name.lower()}",
+            )
 
         resp = web.StreamResponse(
             status=200,
