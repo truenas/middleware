@@ -96,7 +96,7 @@ class PoolService(Service):
             f.write(str(priority.scrub_max_active))
 
     @api_method(PoolScrubArgs, PoolScrubResult, roles=['POOL_WRITE'])
-    @job(transient=True)
+    @job()
     async def scrub(self, job, oid, action):
         """
         Performs a scrub action to pool of ``id``.
