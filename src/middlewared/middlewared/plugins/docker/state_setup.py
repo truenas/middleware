@@ -113,6 +113,32 @@ def create_update_docker_datasets(context: ServiceContext, docker_ds: str) -> No
                 )
             )
 
+    set_canmount_noauto(context, docker_ds)
+
+
+def enforce_canmount_noauto(context: ServiceContext, pool_name: str) -> None:
+    config = context.call_sync2(context.s.docker.config)
+    if config.pool != pool_name or config.dataset is None:
+        return
+
+    set_canmount_noauto(context, config.dataset)
+
+
+def set_canmount_noauto(context: ServiceContext, docker_ds: str) -> None:
+    # canmount cannot be inherited in zfs and its default is `on`, so every dataset of the
+    # tree has to be set individually instead of picking the value up from the apps root
+    for ds in context.call_sync2(
+        context.s.zfs.resource.query_impl,
+        ZFSResourceQuery(paths=[docker_ds], get_children=True, properties=['canmount'])
+    ):
+        if ds['type'] != 'FILESYSTEM' or ds['properties']['canmount']['raw'] == 'noauto':
+            continue
+
+        context.middleware.call_sync(
+            'pool.dataset.update_impl',
+            UpdateImplArgs(name=ds['name'], zprops={'canmount': 'noauto'})
+        )
+
 
 def move_conflicting_dir(ds_name: str) -> None:
     base_ds_name = os.path.basename(ds_name)

@@ -392,6 +392,24 @@ def test_drift_repair_ix_apps(docker_pool):
     assert _chokepoint_perms(IX_APPS_CHOKEPOINT) == (0o700, 0, 0)
 
 
+def test_drift_repair_app_volume_canmount(docker_pool):
+    with app(
+        "actual-budget",
+        {"train": "community", "catalog_app": "actual-budget"},
+        {"remove_images": False},
+    ):
+        volume_name = call("app.ix_volume.query", [["app_name", "=", "actual-budget"]])[0]["name"]
+        app_volume_ds = call("app.get_app_volume_ds", "actual-budget")
+        volume_ds = f"{app_volume_ds}/{volume_name}"
+        ssh(f"zfs set canmount=on {volume_ds}")
+
+        call("docker.start_service")
+
+        assert ssh(f"zfs get -H -o value canmount {volume_ds}").strip() == "noauto"
+        volume_path = f"{IX_APPS_CHOKEPOINT}/app_mounts/actual-budget/{volume_name}"
+        assert call("filesystem.stat", volume_path)["type"] == "DIRECTORY"
+
+
 @pytest.mark.parametrize("corrupt,expected_reason", [
     # Keeps `version`, so the incomplete metadata still lands in the collective metadata file and
     # the app is classified from it without any extra read
