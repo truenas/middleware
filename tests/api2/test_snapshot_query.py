@@ -58,3 +58,47 @@ def test_query_names_by_pool_or_dataset(fixture1, filters, names):
         snapshot["name"]
         for snapshot in call("pool.snapshot.query", filters, {"select": ["name"]})
     } == names
+
+
+def test_extra_properties_returns_user_properties():
+    """A name containing a colon is a user property and is read as one."""
+    with dataset("test_snap_query_user_props") as ds:
+        call("pool.snapshot.create", {
+            "dataset": ds, "name": "snap",
+            "properties": {"com.example:one": "1", "com.example:two": "2"},
+        })
+
+        snap = call("pool.snapshot.query", [["dataset", "=", ds]], {
+            "extra": {"properties": ["creation", "com.example:one", "com.example:two"]},
+        })[0]
+
+        assert snap["properties"]["com.example:one"]["value"] == "1"
+        assert snap["properties"]["com.example:one"]["source"] == "LOCAL"
+        assert snap["properties"]["com.example:two"]["value"] == "2"
+        assert snap["properties"]["creation"]["source"] == "NONE"
+
+
+def test_extra_properties_omits_user_properties_that_are_not_set():
+    with dataset("test_snap_query_unset_user_prop") as ds:
+        call("pool.snapshot.create", {"dataset": ds, "name": "snap"})
+
+        snap = call("pool.snapshot.query", [["dataset", "=", ds]], {
+            "extra": {"properties": ["com.example:nope"]},
+        })[0]
+
+        assert snap["properties"] == {}
+
+
+def test_extra_properties_user_properties_alongside_retention_and_holds():
+    with dataset("test_snap_query_user_props_extra") as ds:
+        call("pool.snapshot.create", {
+            "dataset": ds, "name": "snap", "properties": {"com.example:one": "1"},
+        })
+
+        snap = call("pool.snapshot.query", [["dataset", "=", ds]], {
+            "extra": {"retention": True, "holds": True, "properties": ["com.example:one"]},
+        })[0]
+
+        assert snap["properties"]["com.example:one"]["value"] == "1"
+        assert "holds" in snap
+        assert "retention" in snap
