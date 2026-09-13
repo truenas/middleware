@@ -61,6 +61,7 @@ _LEGACY_INJECT: frozenset[LicenseFeature] = frozenset(
         LicenseFeature.NFS_SNAPSHOT,
         LicenseFeature.NVMEOF_SPDK,
         LicenseFeature.RDMA,
+        LicenseFeature.SED,
         LicenseFeature.SMB_FASTPATH,
         LicenseFeature.SMB_VEEAM,
         LicenseFeature.STIG,
@@ -74,9 +75,10 @@ _LEGACY_INJECT: frozenset[LicenseFeature] = frozenset(
 HW_ONLY_MARKER: Final[str] = "TRUENAS-HW-ONLY-V1"
 
 # The keys a system-generated record carries. Writing the record moves the appliance off the
-# unlicensed column, so this list is what holds it to the answers the bare chassis already gave --
-# but only for features the matrix gates on a key. One gated on holding a license at all is
-# granted by the record's existence, whatever this list says.
+# unlicensed column, so for most members this list is what holds it to the answers the bare chassis
+# already gave. SED is the exception and is deliberate: its row denies on bare hardware, so the
+# record is the only thing that grants it on an appliance nobody has licensed. A feature gated on
+# holding a license at all is granted by the record's existence, whatever this list says.
 _HW_ONLY_INJECT: frozenset[LicenseFeature] = frozenset(
     {
         LicenseFeature.APPS,

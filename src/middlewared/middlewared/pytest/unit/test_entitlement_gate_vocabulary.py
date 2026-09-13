@@ -30,6 +30,7 @@ GATES = [
     ("plugins/catalog/config.py", "LicenseFeature.CATALOG_ENTERPRISE_TRAIN"),
     ("plugins/catalog/config.py", "LicenseFeature.CATALOG_ENTERPRISE_TRAIN"),
     ("plugins/container/info.py", "LicenseFeature.CONTAINERS"),
+    ("plugins/disk.py", "LicenseFeature.SED"),
     ("plugins/docker/service_utils.py", "LicenseFeature.APPS"),
     ("plugins/etc.py", "LicenseFeature.SUPPORT"),
     ("plugins/fc/fc.py", "LicenseFeature.FIBRECHANNEL"),
@@ -58,6 +59,7 @@ GATES = [
     ("plugins/zfs/resource_crud.py", "LicenseFeature.DEDUP"),
     ("plugins/zfs/tier.py", "LicenseFeature.ZFSTIER"),
     ("test/integration/assets/entitlements.py", None),
+    ("utils/service/entitlement.py", "LicenseFeature.SED"),
 ]
 
 
