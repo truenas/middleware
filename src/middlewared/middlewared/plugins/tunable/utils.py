@@ -16,8 +16,41 @@ if TYPE_CHECKING:
 
 
 TUNABLE_TYPES: list[str] = ['SYSCTL', 'UDEV', 'ZFS']
+USERMODE_HELPER_SYSCTLS = frozenset({'kernel.core_pattern', 'kernel.hotplug', 'kernel.modprobe', 'kernel.poweroff_cmd'})
+"""Sysctls whose value names a program that the kernel executes as root."""
 
 _SYSCTLS: set[str] = set()
+
+
+def line_break_restriction(type_: str, value: str) -> str | None:
+    """Why `value` may not carry a line break, or `None` if it may.
+
+    A `SYSCTL` value is written as `var=value` into `sysctl.d`, and a `ZFS` value into the `modprobe.d` file baked
+    into the initramfs; a line break in either appends a directive of the caller's own. A udev rules file is
+    legitimately multi-line.
+    """
+    if type_ != 'UDEV' and ('\n' in value or '\r' in value):
+        return 'Line breaks are not allowed'
+
+    return None
+
+
+def root_exec_restriction(type_: str, var: str) -> str | None:
+    """Why only a user with `FULL_ADMIN` may set the value of this tunable, or `None` if any caller may.
+
+    A udev rule may carry `RUN+=`, and a usermode-helper sysctl names a program; either is run as root, so
+    such a value hands the caller more than `SYSTEM_TUNABLE_WRITE` was meant to grant.
+    """
+    if type_ == 'UDEV':
+        return 'A udev rule can run a command as root, so only a user with the `FULL_ADMIN` role may set one.'
+
+    if type_ == 'SYSCTL' and var in USERMODE_HELPER_SYSCTLS:
+        return (
+            f'The kernel runs the program named by {var!r} as root, so only a user with the `FULL_ADMIN` role '
+            'may set it.'
+        )
+
+    return None
 
 
 def get_sysctls() -> set[str]:

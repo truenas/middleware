@@ -2,26 +2,32 @@ from __future__ import annotations
 
 import errno
 import os
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from middlewared.api.current import TunableCreate, TunableEntry, TunableUpdate
 from middlewared.service import CRUDServicePart, ValidationErrors
 from middlewared.service_exception import CallError
 import middlewared.sqlalchemy as sa
+from middlewared.utils.privilege import app_needs_full_admin_check
 
 from .utils import (
     generate_sysctl,
     get_sysctl,
     get_sysctls,
     handle_tunable_change,
+    line_break_restriction,
     reset_sysctl,
     reset_zfs_parameter,
+    root_exec_restriction,
     set_sysctl,
     set_zfs_parameter,
     update_initramfs,
     zfs_parameter_path,
     zfs_parameter_value,
 )
+
+if TYPE_CHECKING:
+    from middlewared.api.base.server.app import App
 
 
 class TunableModel(sa.Model):
@@ -45,7 +51,7 @@ class TunableServicePart(CRUDServicePart[TunableEntry]):
         data.pop('update_initramfs', None)
         return data
 
-    async def do_create(self, data: TunableCreate) -> TunableEntry:
+    async def do_create(self, app: App | None, data: TunableCreate) -> TunableEntry:
         failover_licensed = await self._check_ha()
 
         verrors = ValidationErrors()
@@ -80,6 +86,11 @@ class TunableServicePart(CRUDServicePart[TunableEntry]):
                     errno.ENOENT,
                 )
 
+        if restriction := line_break_restriction(data.type, data.value):
+            verrors.add('tunable_create.value', restriction)
+        elif app_needs_full_admin_check(app) and (restriction := root_exec_restriction(data.type, data.var)):
+            verrors.add('tunable_create.value', restriction, errno.EPERM)
+
         verrors.check()
 
         orig_value = ''
@@ -111,12 +122,21 @@ class TunableServicePart(CRUDServicePart[TunableEntry]):
 
         return entry
 
-    async def do_update(self, id_: int, data: TunableUpdate) -> TunableEntry:
+    async def do_update(self, app: App | None, id_: int, data: TunableUpdate) -> TunableEntry:
         old = await self.get_instance(id_)
 
         failover_licensed = await self._check_ha()
 
         new = old.updated(data)
+        if new.value != old.value:
+            if restriction := line_break_restriction(new.type, new.value):
+                verrors = ValidationErrors()
+                verrors.add('tunable_update.value', restriction)
+                raise verrors
+            if app_needs_full_admin_check(app) and (restriction := root_exec_restriction(new.type, new.var)):
+                verrors = ValidationErrors()
+                verrors.add('tunable_update.value', restriction, errno.EPERM)
+                raise verrors
 
         if old.model_dump(exclude={'update_initramfs'}) == new.model_dump(exclude={'update_initramfs'}):
             return old

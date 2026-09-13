@@ -6,6 +6,7 @@ from middlewared.api.base import (
     BaseModel,
     Excluded,
     ForUpdateMetaclass,
+    FullAdmin,
     IPvAnyAddress,
     NonEmptyString,
     UUIDv4String,
@@ -51,7 +52,7 @@ class VMStatus(BaseModel):
 
 
 class VMEntry(BaseModel):
-    command_line_args: str = Field(
+    command_line_args: FullAdmin[str] = Field(
         default='',
         description="Additional command line arguments passed to the VM hypervisor.",
     )

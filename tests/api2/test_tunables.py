@@ -5,6 +5,7 @@ import pytest
 
 from auto_config import ha
 from truenas_api_client import ValidationErrors
+from middlewared.test.integration.assets.account import unprivileged_user_client
 from middlewared.test.integration.utils import call, ssh, truenas_server
 from middlewared.test.integration.utils.mock_binary import mock_binary
 
@@ -108,6 +109,41 @@ def test_create_invalid_zfs():
         }, job=True)
 
     assert ve.value.errors[0].attribute == "tunable_create.var"
+
+
+def test_line_breaks_are_rejected_in_sysctl_and_zfs_values():
+    """A line break would append a directive of the caller's own to sysctl.d or to the initramfs modprobe.d."""
+    for data in (
+        {"type": "SYSCTL", "var": SYSCTL, "value": "0\nkernel.core_pattern=|/bin/sh"},
+        {"type": "ZFS", "var": ZFS, "value": "0\ninstall zfs /bin/sh"},
+    ):
+        with pytest.raises(ValidationErrors) as ve:
+            call("tunable.create", data, job=True)
+
+        assert ve.value.errors[0].attribute == "tunable_create.value", ve.value.errors
+
+
+def test_values_run_as_root_require_full_admin():
+    """A udev rule can `RUN+=` a command and `kernel.core_pattern` names a program; both run as root (NAS-142160)."""
+    udev = {"type": "UDEV", "var": "10-disable-usb", "value": "BUS==\"usb\", OPTIONS+=\"ignore_device\""}
+    with unprivileged_user_client(["SYSTEM_TUNABLE_WRITE"]) as c:
+        for data in (udev, {"type": "SYSCTL", "var": "kernel.core_pattern", "value": "|/bin/sh"}):
+            with pytest.raises(ValidationErrors) as ve:
+                c.call("tunable.create", data, job=True)
+
+            assert ve.value.errors[0].attribute == "tunable_create.value", ve.value.errors
+
+        tunable = call("tunable.create", udev, job=True)
+        try:
+            with pytest.raises(ValidationErrors) as ve:
+                c.call("tunable.update", tunable["id"], {"value": 'ACTION=="add", RUN+="/bin/sh -c id"'}, job=True)
+
+            assert ve.value.errors[0].attribute == "tunable_update.value", ve.value.errors
+
+            # Only the value is restricted: the rule was written by a full admin, and disabling it runs nothing.
+            assert c.call("tunable.update", tunable["id"], {"enabled": False}, job=True)["enabled"] is False
+        finally:
+            call("tunable.delete", tunable["id"], job=True)
 
 
 def test_sysctl_lifecycle():

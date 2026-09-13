@@ -22,7 +22,6 @@ from middlewared.utils.path import FSLocation
 from .directory import list_directory
 
 if TYPE_CHECKING:
-    from middlewared.api.base.server.app import App
     from middlewared.main import Middleware
 
 
@@ -121,14 +120,8 @@ class CloudSyncServicePart(CloudTaskServiceMixin[CloudSyncEntry, CloudSyncCreate
 
         super()._basic_validate(verrors, name, entry)
 
-    def _validate(
-        self,
-        app: App | None,
-        verrors: ValidationErrors,
-        name: str,
-        entry: CloudSyncCreate | CloudSyncEntry,
-    ) -> None:
-        super()._validate(app, verrors, name, entry)
+    def _validate(self, verrors: ValidationErrors, name: str, entry: CloudSyncCreate | CloudSyncEntry) -> None:
+        super()._validate(verrors, name, entry)
 
         for i, (limit1, limit2) in enumerate(zip(entry.bwlimit, entry.bwlimit[1:])):
             if limit1.time >= limit2.time:

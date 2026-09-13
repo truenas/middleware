@@ -6,6 +6,7 @@ import subprocess
 import pytest
 
 from middlewared.service_exception import ValidationErrors
+from middlewared.test.integration.assets.account import unprivileged_user_client
 from middlewared.test.integration.assets.pool import dataset, snapshot
 from middlewared.test.integration.assets.filesystem import directory, mkfile
 from middlewared.test.integration.utils import call, ssh
@@ -492,3 +493,28 @@ class TestSNMP:
         with snapshot(created_items['zv'][0], "snmpsnap01"):
             snmp_res = v2c_snmpwalk('1.3.6.1.4.1.50536.1.2.1.1.2')
             assert all(v in created_items['zv'] for v in snmp_res), f"expected {created_items['zv']}, but found {snmp_res}"
+
+
+def test_options_may_only_be_changed_by_a_full_admin():
+    """`options` lands verbatim in snmpd.conf, so SYSTEM_GENERAL_WRITE alone may not touch it (NAS-142160)."""
+    with unprivileged_user_client(['SYSTEM_GENERAL_WRITE']) as c:
+        with pytest.raises(ValidationErrors) as ve:
+            c.call('snmp.update', {'options': 'extend hax /bin/sh -c id'})
+
+    assert any(error.attribute == 'snmp_update.options' for error in ve.value.errors), ve.value.errors
+
+
+def test_line_breaks_are_rejected_on_every_field_rendered_into_snmpd_conf():
+    """A line break would let SYSTEM_GENERAL_WRITE append the directives that `options` is marked to deny."""
+    fields = {
+        'location': 'rack 1\nrwcommunity hax',
+        'contact': 'admin\nrwcommunity hax',
+        'community': 'public\nrwcommunity hax',
+        'v3_username': 'v3\nrwuser hax',
+        'v3_password': 'abcdefgh"\nrwcommunity hax\n#',
+        'v3_privpassphrase': 'abcdefgh"\nrwcommunity hax\n#',
+    }
+    with pytest.raises(ValidationErrors) as ve:
+        call('snmp.update', fields)
+
+    assert {error.attribute for error in ve.value.errors} == {f'snmp_update.{field}' for field in fields}

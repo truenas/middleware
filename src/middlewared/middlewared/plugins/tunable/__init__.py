@@ -23,6 +23,7 @@ from .crud import TunableServicePart
 from .utils import TUNABLE_TYPES, handle_tunable_change, set_sysctl, set_zfs_parameter
 
 if TYPE_CHECKING:
+    from middlewared.api.base.server.app import App
     from middlewared.job import Job
     from middlewared.main import Middleware
 
@@ -52,17 +53,21 @@ class TunableService(GenericCRUDService[TunableEntry]):
         """Retrieve the supported tunable types that can be changed."""
         return {k: k for k in TUNABLE_TYPES}  # type: ignore[return-value]
 
-    @api_method(TunableCreateArgs, TunableCreateResult, audit='Tunable create', check_annotations=True)
+    @api_method(
+        TunableCreateArgs, TunableCreateResult, audit='Tunable create', pass_app=True, check_annotations=True,
+    )
     @job(lock='tunable_crud')
-    async def do_create(self, job: Job, data: TunableCreate) -> TunableEntry:
+    async def do_create(self, app: App, job: Job, data: TunableCreate) -> TunableEntry:
         """Create a tunable."""
-        return await self._svc_part.do_create(data)
+        return await self._svc_part.do_create(app, data)
 
-    @api_method(TunableUpdateArgs, TunableUpdateResult, audit='Tunable update', check_annotations=True)
+    @api_method(
+        TunableUpdateArgs, TunableUpdateResult, audit='Tunable update', pass_app=True, check_annotations=True,
+    )
     @job(lock='tunable_crud')
-    async def do_update(self, job: Job, id_: int, data: TunableUpdate) -> TunableEntry:
+    async def do_update(self, app: App, job: Job, id_: int, data: TunableUpdate) -> TunableEntry:
         """Update Tunable of ``id``."""
-        return await self._svc_part.do_update(id_, data)
+        return await self._svc_part.do_update(app, id_, data)
 
     @api_method(TunableDeleteArgs, TunableDeleteResult, audit='Tunable delete', check_annotations=True)
     @job(lock='tunable_crud')

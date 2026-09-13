@@ -40,17 +40,8 @@ def do_sync_onetime(
     options: CloudSyncSyncOptions,
 ) -> None:
     verrors = ValidationErrors()
-
-    # Forbid unprivileged users to execute scripts as root this way.
-    for k in ["pre_script", "post_script"]:
-        if getattr(cloud_sync, k):
-            verrors.add(
-                f"cloud_sync_sync_onetime.{k}",
-                "This option may not be used for onetime cloud sync operations",
-            )
-
     # `_validate` performs the remote folder listing itself (gated on the cheap checks passing).
-    part._validate(None, verrors, "cloud_sync_sync_onetime", cloud_sync)
+    part._validate(verrors, "cloud_sync_sync_onetime", cloud_sync)
 
     verrors.check()
 

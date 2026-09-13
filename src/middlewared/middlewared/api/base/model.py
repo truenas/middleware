@@ -13,6 +13,7 @@ from pydantic.main import IncEx, ModelT
 from pydantic.types import SecretType
 from pydantic_core import PydanticUndefined, SchemaSerializer, core_schema
 
+from middlewared.api.base.full_admin import FullAdminOnly, document_full_admin_fields
 from middlewared.api.base.private import guard_private_fields, is_private_guard
 from middlewared.api.base.types.string import SECRET_VALUE
 from middlewared.utils.lang import undefined
@@ -130,8 +131,12 @@ def _is_field_level_metadata(metadata: Any) -> bool:
 
     `SkipJsonSchema` (and therefore `Private`) stops being honored once it is nested inside a union member, and
     the private guard has to see every supplied value, so neither may be folded by `_annotate_not_required`.
+    `FullAdminOnly` is looked up on the field itself, so folding it would silently unprotect the field.
     """
-    return isinstance(metadata, SkipJsonSchema) or is_private_guard(metadata)  # type: ignore[misc]
+    return (
+        isinstance(metadata, (SkipJsonSchema, FullAdminOnly))  # type: ignore[misc]
+        or is_private_guard(metadata)
+    )
 
 
 def _annotate_not_required(annotation: Any | None, metadata: tuple[Any, ...] = ()) -> Any:
@@ -160,6 +165,7 @@ class _BaseModelMetaclass(ModelMetaclass):
         # Must run before the `NotRequired` handling below so that the guard is treated as field-level
         # metadata instead of being folded into the annotation.
         has_private = guard_private_fields(cls)
+        documented_full_admin = document_full_admin_fields(cls)
 
         has_not_required = False
         wrapped_secret_default = False
@@ -198,8 +204,8 @@ class _BaseModelMetaclass(ModelMetaclass):
         elif wrapped_secret_default:
             # A mutated `field.default` only takes effect on instantiation after the model is rebuilt.
             cls.model_rebuild(force=True)  # type: ignore[attr-defined]
-        elif has_private:
-            # Same for a mutated `field.metadata`.
+        elif has_private or documented_full_admin:
+            # Same for a mutated `field.metadata` or `field.description`.
             cls.model_rebuild(  # type: ignore[attr-defined]
                 force=True,
                 # A model whose annotations contain forward references that are not defined yet cannot be
@@ -221,9 +227,11 @@ class ForUpdateMetaclass(_BaseModelMetaclass):
     def __new__(mcls, name: str, bases: tuple[type[Any], ...], namespace: dict[str, Any], **kwargs: Any) -> type:
         cls = ModelMetaclass.__new__(mcls, name, bases, namespace, **kwargs)
 
-        # This bypasses `_BaseModelMetaclass.__new__`, so private fields have to be guarded here as well.
+        # This bypasses `_BaseModelMetaclass.__new__`, so private fields have to be guarded, and `FullAdmin`
+        # fields documented, here as well.
         # No explicit rebuild is needed: `_apply_model_serializer` below rebuilds the model unconditionally.
         guard_private_fields(cls)
+        document_full_admin_fields(cls)
 
         for field in cls.model_fields.values():  # type: ignore[attr-defined]
             # We want to back `default` and `default_factory` so that `model_subset` can later use them.

@@ -7,6 +7,7 @@ from middlewared.api.base import (
     EmptyDict,
     Excluded,
     ForUpdateMetaclass,
+    FullAdmin,
     NonEmptyString,
     NotRequired,
     excluded_field,
@@ -101,7 +102,9 @@ class SystemAdvancedEntry(BaseModel):
     isolated_gpu_pci_ids: list[str] = Field(
         description="List of GPU PCI IDs to isolate from the host system for VM passthrough.",
     )
-    kernel_extra_options: str = Field(description="Additional kernel boot parameters to pass to the Linux kernel.")
+    kernel_extra_options: FullAdmin[str] = Field(
+        description="Additional kernel boot parameters to pass to the Linux kernel.",
+    )
     nvidia: bool = Field(description="Whether NVIDIA GPU support is enabled.")
 
 

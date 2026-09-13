@@ -4,6 +4,7 @@ import pytest
 from truenas_api_client import ValidationErrors as ClientValidationErrors
 
 from middlewared.service_exception import CallError, ValidationErrors
+from middlewared.test.integration.assets.account import unprivileged_user_client
 from middlewared.test.integration.assets.cloud_sync import credential, task
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call
@@ -105,14 +106,17 @@ def test_push_to_readonly_remote():
             assert "cloud_sync_create.direction" in ve.value
 
 
-def test_sync_onetime_forbids_scripts():
+def test_sync_onetime_scripts_require_full_admin():
     with dataset("cloudsync_local") as local_dataset:
         with offline_ftp_credential() as c:
-            # A failing job re-raises the client-side ValidationErrors, not the middleware one
-            with pytest.raises(ClientValidationErrors) as ve:
-                call("cloudsync.sync_onetime", push_task(c, f"/mnt/{local_dataset}", pre_script="echo hi"), job=True)
+            with unprivileged_user_client(roles=["CLOUD_SYNC_WRITE"]) as client:
+                # A failing job re-raises the client-side ValidationErrors, not the middleware one
+                with pytest.raises(ClientValidationErrors) as ve:
+                    client.call(
+                        "cloudsync.sync_onetime", push_task(c, f"/mnt/{local_dataset}", pre_script="echo hi"), job=True,
+                    )
 
-            assert any(e.attribute == "cloud_sync_sync_onetime.pre_script" for e in ve.value.errors)
+                assert any(e.attribute == "cloud_sync_sync_onetime.pre_script" for e in ve.value.errors)
 
 
 def test_create_bucket_invalid_credentials():

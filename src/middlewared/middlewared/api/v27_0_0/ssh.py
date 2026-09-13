@@ -1,8 +1,18 @@
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import Field
+from pydantic.types import StringConstraints
 
-from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, LongString, TcpPort, excluded_field
+from middlewared.api.base import (
+    BaseModel,
+    Excluded,
+    ForUpdateMetaclass,
+    FullAdmin,
+    LongString,
+    SingleLineString,
+    TcpPort,
+    excluded_field,
+)
 
 __all__ = [
     'SSHEntry', 'SSHUpdate', 'SSHBindifaceChoicesArgs', 'SSHBindifaceChoicesResult', 'SSHUpdateArgs',
@@ -28,7 +38,7 @@ class SSHEntry(BaseModel):
     weak_ciphers: list[Literal['AES128-CBC', 'NONE']] = Field(
         description="Array of weak ciphers to enable for compatibility with legacy clients.",
     )
-    options: LongString = Field(description="Additional SSH daemon configuration options.")
+    options: FullAdmin[LongString] = Field(description="Additional SSH daemon configuration options.")
     privatekey: LongString = Field(description="SSH host private key data.")
     host_dsa_key: LongString | None = Field(description="DSA host private key. `null` if not configured.")
     host_dsa_key_pub: LongString | None = Field(description="DSA host public key. `null` if not configured.")
@@ -55,7 +65,14 @@ class SSHEntry(BaseModel):
 
 
 class SSHUpdate(SSHEntry, metaclass=ForUpdateMetaclass):
+    """Changes to the SSH service configuration.
+
+    Each of `password_login_groups` is quoted into a `Match Group` line of `sshd_config`.
+    A line break or a double quote in one would let the caller add directives that `options` is marked to deny.
+    The constraint is on this model rather than `SSHEntry`, so a value stored before it existed stays readable.
+    """
     id: Excluded = excluded_field()
+    password_login_groups: list[Annotated[SingleLineString, StringConstraints(pattern=r'^[^"]*$')]]
     privatekey: Excluded = excluded_field()
     host_dsa_key: Excluded = excluded_field()
     host_dsa_key_pub: Excluded = excluded_field()
