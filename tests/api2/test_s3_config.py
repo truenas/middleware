@@ -30,7 +30,7 @@ def service():
 
 @pytest.fixture(scope="module")
 def audit_supported():
-    return call("system.product_type") == "ENTERPRISE"
+    return call("truenas.entitlements.facts")["hardware_type"] == "TRUENAS"
 
 
 @contextlib.contextmanager

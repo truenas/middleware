@@ -266,8 +266,10 @@ class UsageService(Service):
         return info
 
     async def gather_system_version(self, context):
+        facts = await self.call2(self.s.truenas.entitlements.facts)
+        product_type = 'ENTERPRISE' if facts.hardware_type == 'TRUENAS' else 'COMMUNITY_EDITION'
         return {
-            'platform': f'TrueNAS-{await self.middleware.call("system.product_type")}',
+            'platform': f'TrueNAS-{product_type}',
             'version': await self.middleware.call('system.version'),
             'is_vendored': await self.middleware.call('system.vendor.is_vendored'),
             'vendor_name': await self.middleware.call('system.vendor.name'),
