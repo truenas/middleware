@@ -53,15 +53,6 @@ class ZFSResourceService(Service):
 
     @private
     @pass_thread_local_storage
-    def estimate_object_count(self, tls: Any, dataset_name: str) -> int:
-        """Estimate total objects in a ZFS dataset using quota accounting.
-
-        Returns 0 if the estimate is unavailable.
-        """
-        return _ops.estimate_object_count(tls, dataset_name)
-
-    @private
-    @pass_thread_local_storage
     def promote(self, tls: Any, current_name: str) -> None:
         """
         Promote a ZFS clone to be independent of its origin snapshot.

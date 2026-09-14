@@ -15,7 +15,6 @@ from .exceptions import (
 )
 from .load_unload_impl import unload_key_impl
 from .mount_unmount_impl import mount_impl, unmount_impl
-from .object_count_impl import estimate_object_count_impl
 from .rename_promote_clone_impl import promote_impl, rename_impl
 from .zvol_utils import get_zvol_attachments_impl, unlocked_zvols_fast_impl
 
@@ -45,10 +44,6 @@ def unlocked_zvols_fast(
         filters,
         options,
     )
-
-
-def estimate_object_count(tls: Any, dataset_name: str) -> int:
-    return estimate_object_count_impl(tls, dataset_name)
 
 
 def promote(tls: Any, current_name: str) -> None:
