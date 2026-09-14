@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 from collections.abc import Collection
 from dataclasses import dataclass
 import errno
 import pathlib
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 import truenas_pylibzfs
 
@@ -11,6 +13,9 @@ from middlewared.utils.boot.pool import BOOT_POOL_NAME_VALID
 
 from .exceptions import ZFSPathNotFoundException, ZFSPathNotProvidedException
 
+if TYPE_CHECKING:
+    from middlewared.api.current import ZfsTierEntry
+
 __all__ = (
     "get_encryption_info",
     "group_paths_by_parents",
@@ -18,6 +23,7 @@ __all__ = (
     "open_resource",
     "reject_overlapping_paths",
     "reject_protected_path",
+    "special_vdev_thresholds",
 )
 
 
@@ -154,3 +160,24 @@ def open_resource(tls: Any, path: str) -> Any:
             raise ZFSPathNotFoundException(path)
         else:
             raise e from None
+
+
+def special_vdev_thresholds(config: ZfsTierEntry) -> tuple[int, int]:
+    """Return ``(warning, critical)`` SPECIAL-vdev fill thresholds in percent.
+
+    ``critical`` is the lower of the user's configured cap
+    (``max_used_percentage``) and the actual ZFS overflow point
+    (``100 - special_class_metadata_reserve_pct``) — beyond which the
+    kernel stops sending small blocks to SPECIAL and spills them to
+    NORMAL, so letting the user set the cap higher than that is
+    meaningless.
+
+    ``warning`` sits 10 points below critical with a floor of 50% so the
+    warning stays useful even at the minimum cap settings.
+    """
+    critical = min(
+        config.max_used_percentage,
+        100 - config.special_class_metadata_reserve_pct,
+    )
+    warning = max(critical - 10, 50)
+    return warning, critical

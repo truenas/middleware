@@ -58,7 +58,8 @@ from middlewared.service import CallError, ConfigServicePart, GenericConfigServi
 from middlewared.service.decorators import pass_thread_local_storage
 import middlewared.sqlalchemy as sa
 from middlewared.utils.filter_list import filter_list
-from middlewared.utils.zfs.tier import special_vdev_thresholds
+
+from .utils import special_vdev_thresholds
 
 SPECIAL_SMALL_BLOCKS_PERFORMANCE = str(16 * 1024 * 1024)  # 16 MiB
 SPECIAL_SMALL_BLOCKS_REGULAR = "0"
