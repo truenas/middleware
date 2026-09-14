@@ -2,13 +2,40 @@ from __future__ import annotations
 
 import os
 
-from truenas_os_pyutils.mount import iter_mountinfo
+from truenas_os_pyutils.mount import StatmountResultDict, iter_mountinfo
 
 from middlewared.plugins.zfs.utils import has_internal_path
 from middlewared.plugins.zfs_.utils import zvol_name_to_path
-from middlewared.service import ServiceContext
+from middlewared.service import CallError, ServiceContext
 
 __all__ = ("processes_using_dataset_tree",)
+
+MOUNTINFO_ATTEMPTS = 5
+
+
+def read_mountinfo(name: str) -> list[StatmountResultDict]:
+    """Read the whole mount table, ZFS snapshot automounts included.
+
+    `iter_mountinfo` resolves each id it gets from `listmount(2)` with its own
+    `statmount(2)`, so a mount unmounted in between raises `FileNotFoundError` and
+    ends the generator with the rest of the table unread. That is ordinary churn (ZFS
+    snapshot automounts alone expire on a timer), and a partial table is unusable
+    here: an entry missing from the end may be the busy dataset. So the read starts
+    over, a bounded number of times.
+
+    Args:
+        name: Pool being scanned, for the error message
+
+    Returns:
+        Every mount on the system, as read in a single uninterrupted pass
+    """
+    for _ in range(MOUNTINFO_ATTEMPTS):
+        try:
+            return list(iter_mountinfo(include_snapshot_mounts=True))
+        except FileNotFoundError as e:
+            error = e
+
+    raise CallError(f"{name}: mount table kept changing while it was being read to scan for open files") from error
 
 
 def pool_scan_targets(name: str) -> tuple[list[int], list[str]]:
@@ -39,7 +66,7 @@ def pool_scan_targets(name: str) -> tuple[list[int], list[str]]:
     """
     prefixes = (f"{name}/", f"{name}@")
     devices = []
-    for mnt in iter_mountinfo(include_snapshot_mounts=True):
+    for mnt in read_mountinfo(name):
         source = mnt["mount_source"]
         if (
             mnt["fs_type"] == "zfs"
