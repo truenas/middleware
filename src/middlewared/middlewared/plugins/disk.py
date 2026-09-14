@@ -198,8 +198,6 @@ class DiskService(CRUDService):
         new = old.copy()
         new.update(data)
 
-        # Only setting a password is gated. Clearing one stays available unconditionally so a system
-        # without the entitlement can still drop a secret it is no longer allowed to use.
         if new['passwd'] and old['passwd'] != new['passwd']:
             entitlement = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.SED)
             if not entitlement.entitled:
