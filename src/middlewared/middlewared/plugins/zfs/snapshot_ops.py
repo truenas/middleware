@@ -34,7 +34,6 @@ from .exceptions import (
 )
 from .rename_promote_clone_impl import clone_impl as _raw_clone
 from .rename_promote_clone_impl import rename_impl as _raw_rename
-from .snapshot_count_impl import count_snapshots_impl
 from .snapshot_create_impl import create_snapshots_impl
 from .snapshot_hold_release_impl import hold_impl as _raw_hold
 from .snapshot_hold_release_impl import release_impl as _raw_release
@@ -78,10 +77,6 @@ def exists(context: ServiceContext, snap_name: str) -> bool:
     except ZFSPathNotFoundException:
         return False
     return True
-
-
-def count_impl(tls: Any, data: ZFSResourceSnapshotCountQuery) -> dict[str, int]:
-    return count_snapshots_impl(tls, data)
 
 
 def count(context: ServiceContext, data: ZFSResourceSnapshotCountQuery) -> dict[str, int]:

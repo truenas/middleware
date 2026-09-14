@@ -40,6 +40,7 @@ from middlewared.service import Service, private
 from middlewared.service.decorators import pass_thread_local_storage
 
 from . import snapshot_ops as _ops
+from .snapshot_count_impl import count_snapshots_impl
 
 __all__ = ("ZFSResourceSnapshotService",)
 
@@ -100,7 +101,7 @@ class ZFSResourceSnapshotService(Service):
     @private
     @pass_thread_local_storage
     def count_impl(self, tls: Any, data: ZFSResourceSnapshotCountQuery) -> dict[str, int]:
-        return _ops.count_impl(tls, data)
+        return count_snapshots_impl(tls, data)
 
     @api_method(
         ZFSResourceSnapshotCountArgs,

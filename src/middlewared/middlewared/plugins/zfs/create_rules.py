@@ -25,7 +25,6 @@ from middlewared.service_exception import ValidationError
 from middlewared.utils.crypto import generate_token
 
 from .create_impl import ZFS_TYPE_MAP
-from .utils import reject_protected_path
 
 if typing.TYPE_CHECKING:
     from middlewared.api.current import EntitlementEntry, ZFSResourceCreateArgsData, ZFSResourceCreateProperties
@@ -45,7 +44,6 @@ __all__ = (
     "check_name_valid",
     "check_parent_not_readonly",
     "check_path_shape",
-    "check_protected_path",
     "check_tier_managed_ssb",
     "check_user_property_names",
     "check_volume_capacity",
@@ -241,11 +239,6 @@ def check_path_shape(data: ZFSResourceCreateArgsData, ctx: CreateContext) -> Non
             "Creating a root filesystem (zpool) is not allowed.",
             errno.EINVAL,
         )
-
-
-def check_protected_path(data: ZFSResourceCreateArgsData, ctx: CreateContext) -> None:
-    """Internal paths may only be touched by internal callers."""
-    reject_protected_path(SCHEMA, data.path, data.bypass)
 
 
 def check_name_valid(data: ZFSResourceCreateArgsData, ctx: CreateContext) -> None:

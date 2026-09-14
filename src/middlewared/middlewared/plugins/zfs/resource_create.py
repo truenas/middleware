@@ -29,7 +29,6 @@ from .create_rules import (
     check_name_valid,
     check_parent_not_readonly,
     check_path_shape,
-    check_protected_path,
     check_tier_managed_ssb,
     check_user_property_names,
     check_volume_capacity,
@@ -37,6 +36,7 @@ from .create_rules import (
     resolve_create_request,
 )
 from .exceptions import ZFSPathAlreadyExistsException, ZFSPathNotFoundException
+from .utils import reject_protected_path
 
 if TYPE_CHECKING:
     from middlewared.service import ServiceContext
@@ -50,7 +50,7 @@ def create_impl(context: ServiceContext, tls: Any, data: ZFSResourceCreateArgsDa
     ctx = CreateContext(properties=properties, encrypt=encrypt)
 
     check_path_shape(data, ctx)
-    check_protected_path(data, ctx)
+    reject_protected_path(SCHEMA, data.path, data.bypass)
     check_name_valid(data, ctx)
     check_user_property_names(data, ctx)
 
