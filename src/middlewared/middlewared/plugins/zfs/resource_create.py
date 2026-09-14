@@ -107,7 +107,10 @@ def create_impl(context: ServiceContext, tls: Any, data: ZFSResourceCreateArgsDa
     if data.encryption:
         check_encryption(data, ctx)
 
-    props = {k: v for k, v in properties.model_dump().items() if v is not None}
+    props = dict()
+    for k, v in properties:
+        if v is not None:
+            props[k] = v
     try:
         _raw_create(tls, path, data.type, props, data.user_properties, data.create_ancestors, encrypt)
     except truenas_pylibzfs.ZFSException as e:
@@ -141,7 +144,11 @@ def create_impl(context: ServiceContext, tls: Any, data: ZFSResourceCreateArgsDa
             },
         )
 
-    requested = any(v is not None for v in data.properties.model_dump().values())
+    requested = False
+    for _, v in data.properties:
+        if v is not None:
+            requested = True
+            break
     report_props = list(props) if requested else []
     if encrypt:
         report_props.append("encryption")
