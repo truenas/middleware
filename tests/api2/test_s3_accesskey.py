@@ -261,19 +261,26 @@ def test_a_new_key_manages_no_buckets_and_has_no_use(accesskey):
     assert accesskey["last_used_at"] is None
 
 
-def test_manage_buckets_is_settable_and_rendered(accesskey):
+def test_manage_buckets_is_settable_and_rendered():
     """The S3 service reads the flag from the credentials file, so the
-    render is the only way it reaches the daemon."""
-    updated = call("s3.accesskey.update", accesskey["id"], {"manage_buckets": True})
-    assert updated["manage_buckets"] is True
+    render is the only way it reaches the daemon. The flag needs a key
+    whose account holds `SHARING_S3_WRITE`, and the module's own user
+    holds no roles, so the test creates its own."""
+    with unprivileged_user_client(roles=["SHARING_S3_WRITE"]) as c:
+        key = call("s3.accesskey.create", {"name": "rendered key", "username": c.username})
+        try:
+            updated = call("s3.accesskey.update", key["id"], {"manage_buckets": True})
+            assert updated["manage_buckets"] is True
 
-    call("etc.generate", "truenas_s3")
-    rendered = ssh(f"cat {CREDENTIALS_CONF}")
-    assert "manage_buckets = true" in rendered
+            call("etc.generate", "truenas_s3")
+            rendered = ssh(f"cat {CREDENTIALS_CONF}")
+            assert "manage_buckets = true" in rendered
 
-    call("s3.accesskey.update", accesskey["id"], {"manage_buckets": False})
-    call("etc.generate", "truenas_s3")
-    assert "manage_buckets" not in ssh(f"cat {CREDENTIALS_CONF}")
+            call("s3.accesskey.update", key["id"], {"manage_buckets": False})
+            call("etc.generate", "truenas_s3")
+            assert "manage_buckets" not in ssh(f"cat {CREDENTIALS_CONF}")
+        finally:
+            call("s3.accesskey.delete", key["id"])
 
 
 def test_reported_usage_only_moves_forward(accesskey):
