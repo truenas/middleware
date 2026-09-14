@@ -25,7 +25,6 @@ from middlewared.api.current import (
     ZFSResourceSnapshotHoldsResult,
     ZFSResourceSnapshotQuery,
     ZFSResourceSnapshotQueryArgs,
-    ZFSResourceSnapshotQueryBase,
     ZFSResourceSnapshotQueryResult,
     ZFSResourceSnapshotReleaseArgs,
     ZFSResourceSnapshotReleaseQuery,
@@ -50,10 +49,6 @@ class ZFSResourceSnapshotService(Service):
         namespace = "zfs.resource.snapshot"
         cli_private = True
         entry = ZFSResourceSnapshotEntry
-
-    @private
-    def validate_recursive_paths(self, schema: str, data: ZFSResourceSnapshotQueryBase) -> None:
-        _ops.validate_recursive_paths(schema, data)
 
     @private
     @pass_thread_local_storage

@@ -195,14 +195,6 @@ class ZFSResourceService(Service):
         _ops.rename(tls, current_name, new_name, recursive, no_unmount, force_unmount)
 
     @private
-    def validate_query_args(self, data: ZFSResourceQuery) -> None:
-        _query.validate_query_args(data)
-
-    @private
-    def nest_paths(self, flat_list: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        return _query.nest_paths(flat_list)
-
-    @private
     @pass_thread_local_storage
     def query_impl(self, tls: Any, data: ZFSResourceQuery) -> list[dict[str, Any]]:
         return _query.query_impl(self.context, tls, data)
