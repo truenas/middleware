@@ -36,7 +36,10 @@ LICENSE_ADDHW_REVERSE_MAPPING = MappingProxyType({v: k for k, v in LICENSE_ADDHW
 class SystemService(Service):
 
     @api_method(
-        SystemProductTypeArgs, SystemProductTypeResult, roles=["SYSTEM_PRODUCT_READ"]
+        SystemProductTypeArgs,
+        SystemProductTypeResult,
+        roles=["SYSTEM_PRODUCT_READ"],
+        removed_in="v27",
     )
     def product_type(self):
         """Returns the type of the product"""
