@@ -44,8 +44,13 @@ class DockerService(SimpleService):
             )
 
     async def stop(self):
-        await super().stop()
-        await self._systemd_unit('docker.socket', 'stop')
+        # A pending stop job on docker.socket makes systemd refuse activation
+        # requests, so a client connecting during teardown cannot resurrect the
+        # service being stopped.
+        try:
+            await self._systemd_unit('docker.socket', 'stop')
+        finally:
+            await super().stop()
         await self._systemd_unit('containerd.service', 'stop')
 
     async def after_start(self):
