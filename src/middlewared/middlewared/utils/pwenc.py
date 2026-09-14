@@ -4,10 +4,11 @@ import uuid
 
 import truenas_pypwenc
 
-__all__ = ['PWENC_FILE_SECRET', 'PWENC_FILE_SECRET_MODE', 'pwenc_rename', 'pwenc_encrypt', 'pwenc_decrypt',
-           'pwenc_generate_secret']
+__all__ = ['PWENC_CHECK', 'PWENC_FILE_SECRET', 'PWENC_FILE_SECRET_MODE', 'pwenc_rename', 'pwenc_encrypt',
+           'pwenc_decrypt', 'pwenc_generate_secret', 'pwenc_secret_matches']
 
 
+PWENC_CHECK = 'Donuts!'
 PWENC_PADDING = b'{'  # This is for legacy compatibility. aes-256-ctr doesn't need padding
 PWENC_FILE_SECRET = truenas_pypwenc.DEFAULT_SECRET_PATH
 PWENC_FILE_SECRET_MODE = 0o600
@@ -121,6 +122,23 @@ def pwenc_generate_secret() -> None:
         # to recreate on reload. Next caller can get the context properly
         ctx = truenas_pypwenc.get_context(create=True, watch=True)
         assert ctx.created
+
+
+def pwenc_secret_matches(secret_path: str, pwenc_check: str) -> bool:
+    """ Check whether the secret file at `secret_path` is the one that encrypted `pwenc_check`.
+
+    `secret_path` must be absolute. It is opened directly rather than through the cached global
+    context so that a secret belonging to another system can be checked without disturbing ours.
+    """
+    try:
+        ctx = truenas_pypwenc.get_context(create=False, watch=False, secret_path=secret_path)
+        decrypted = ctx.decrypt(pwenc_check.encode()).rstrip(PWENC_PADDING).decode()
+    except (truenas_pypwenc.PwencError, UnicodeDecodeError):
+        # aes-256-ctr is unauthenticated, so a wrong secret yields garbage rather than raising. The
+        # comparison below is what detects that; this only catches input that will not parse at all.
+        return False
+
+    return decrypted == PWENC_CHECK
 
 
 def encrypt(decrypted: str) -> str:
