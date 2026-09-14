@@ -361,8 +361,8 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
         metadata. Applying the new configuration regenerates the ``truenas_zfstierd`` daemon configuration and
         reloads (or restarts, if ``max_concurrent_jobs`` changed) the daemon.
 
-        ZFS tiering requires a license carrying the ZFSTIER feature. A JSON-RPC ``error`` response (code
-        ``-32001``, *Method call error*) is returned when the system is not entitled to this feature.
+        ZFS tiering requires a license carrying the ZFSTIER feature. The call fails when the system is not
+        entitled to this feature.
         """
         ent = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.ZFSTIER)
         if not ent.entitled:

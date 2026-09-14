@@ -158,9 +158,7 @@ class ZFSResourceSnapshotService(Service):
         """
         Destroy ZFS snapshots.
 
-        Invalid input is returned to the client as a JSON-RPC ``error`` response (code
-        ``-32602``, *Invalid params*); each failing condition appears in the error's
-        ``data.extra`` array with its own ``errno``. A validation error is raised when:
+        A validation error is raised when:
 
         - the snapshot does not exist (``ENOENT``)
         - it has dependent clones and ``defer`` is ``false`` (``ENOTEMPTY``)
@@ -216,9 +214,7 @@ class ZFSResourceSnapshotService(Service):
         """
         Rename a ZFS snapshot.
 
-        Invalid input is returned to the client as a JSON-RPC ``error`` response (code
-        ``-32602``, *Invalid params*); each failing condition appears in the error's
-        ``data.extra`` array with its own ``errno``. A validation error is raised when:
+        A validation error is raised when:
 
         - the snapshot does not exist
         - the new name already exists
@@ -255,9 +251,7 @@ class ZFSResourceSnapshotService(Service):
         """
         Clone a ZFS snapshot to create a new dataset.
 
-        Invalid input is returned to the client as a JSON-RPC ``error`` response (code
-        ``-32602``, *Invalid params*); each failing condition appears in the error's
-        ``data.extra`` array with its own ``errno``. A validation error is raised when:
+        A validation error is raised when:
 
         - the source snapshot does not exist
         - the destination dataset already exists
@@ -298,9 +292,7 @@ class ZFSResourceSnapshotService(Service):
         """
         Create a ZFS snapshot.
 
-        Invalid input is returned to the client as a JSON-RPC ``error`` response (code
-        ``-32602``, *Invalid params*); each failing condition appears in the error's
-        ``data.extra`` array with its own ``errno``. A validation error is raised when:
+        A validation error is raised when:
 
         - the dataset does not exist
         - the snapshot already exists
@@ -345,9 +337,7 @@ class ZFSResourceSnapshotService(Service):
         A hold prevents a snapshot from being destroyed. Multiple holds can be placed on a
         snapshot with different tags.
 
-        Invalid input is returned to the client as a JSON-RPC ``error`` response (code
-        ``-32602``, *Invalid params*); each failing condition appears in the error's
-        ``data.extra`` array with its own ``errno``. A validation error is raised when:
+        A validation error is raised when:
 
         - the snapshot does not exist
         - the hold cannot be created
@@ -414,9 +404,7 @@ class ZFSResourceSnapshotService(Service):
         """
         Release hold(s) from a ZFS snapshot.
 
-        Invalid input is returned to the client as a JSON-RPC ``error`` response (code
-        ``-32602``, *Invalid params*); each failing condition appears in the error's
-        ``data.extra`` array with its own ``errno``. A validation error is raised when:
+        A validation error is raised when:
 
         - the snapshot does not exist
         - the hold cannot be released
@@ -463,9 +451,7 @@ class ZFSResourceSnapshotService(Service):
             This is a destructive change. All data written since the target snapshot was
             taken will be discarded.
 
-        Invalid input is returned to the client as a JSON-RPC ``error`` response (code
-        ``-32602``, *Invalid params*); each failing condition appears in the error's
-        ``data.extra`` array with its own ``errno``. A validation error is raised when:
+        A validation error is raised when:
 
         - the snapshot, or a child's snapshot, does not exist (errno ``ENOENT``)
         - ``path`` is not a snapshot path (errno ``EINVAL``)
@@ -474,8 +460,7 @@ class ZFSResourceSnapshotService(Service):
         - ``path`` is a protected path and the call did not come from the middleware itself
           (errno ``EACCES``)
 
-        A JSON-RPC ``error`` response (code ``-32001``, *Method call error*) is returned instead
-        of a result when:
+        The call fails when:
 
         - a snapshot that has to be destroyed first has holds, or has clones and
           ``recursive_clones`` was not passed (errno ``EBUSY``); release a hold with

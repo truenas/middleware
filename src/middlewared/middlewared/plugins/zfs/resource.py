@@ -212,9 +212,7 @@ class ZFSResourceService(Service):
 
         To create snapshots, use :method:`zfs.resource.snapshot.create` instead.
 
-        Invalid input is returned to the client as a JSON-RPC ``error`` response (code
-        ``-32602``, *Invalid params*); each failing condition appears in the error's
-        ``data.extra`` array with its own ``errno``. A validation error is raised when:
+        A validation error is raised when:
 
         - a snapshot path (containing ``@``) is supplied
           (use :method:`zfs.resource.snapshot.create`)
@@ -299,9 +297,8 @@ class ZFSResourceService(Service):
             A resource created under an encrypted parent inherits that encryption
             unless ``encryption`` makes it its own encryption root - an unencrypted
             child cannot be created beneath an encrypted parent. The parent's
-            encryption key must be loaded (unlocked) or the creation fails with a
-            JSON-RPC ``error`` response (code ``-32001``, *Method call error*, errno
-            ``EACCES``).
+            encryption key must be loaded (unlocked) or the creation fails with
+            ``EACCES``.
 
         .. note::
 
@@ -353,9 +350,7 @@ class ZFSResourceService(Service):
         To destroy snapshots, use
         :method:`zfs.resource.snapshot.destroy` instead.
 
-        Invalid input is returned to the client as a JSON-RPC ``error`` response (code
-        ``-32602``, *Invalid params*); each failing condition appears in the error's
-        ``data.extra`` array with its own ``errno``. A validation error is raised when:
+        A validation error is raised when:
 
         - a snapshot path (containing ``@``) is supplied
           (use :method:`zfs.resource.snapshot.destroy`)
@@ -404,9 +399,7 @@ class ZFSResourceService(Service):
 
         To query snapshots, use :method:`zfs.resource.snapshot.query` instead.
 
-        Invalid input is returned to the client as a JSON-RPC ``error`` response (code
-        ``-32602``, *Invalid params*); each failing condition appears in the error's
-        ``data.extra`` array with its own ``errno``. A validation error is raised when:
+        A validation error is raised when:
 
         - a snapshot path is supplied (use :method:`zfs.resource.snapshot.query`)
         - overlapping paths are supplied with ``get_children`` enabled
