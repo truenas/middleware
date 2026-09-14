@@ -129,11 +129,11 @@ def test_count_method_calls():
 
     # Multiple calls in the same SSH session
     ssh('midclt call system.host_id;' * 3)
-    ssh('midclt call system.product_type; midclt call system.version; midclt call failover.licensed')
+    ssh('midclt call truenas.entitlements.facts; midclt call system.version; midclt call failover.licensed')
 
     # Reopen websocket connection
     with client(ssl=False) as c:
-        c.call('system.product_type')
+        c.call('truenas.entitlements.facts')
 
     # Check the reported number of calls against the
     # expected number for each method that was called
@@ -142,7 +142,7 @@ def test_count_method_calls():
         'system.version': 2,
         'system.ready': 1,
         'system.host_id': 3,
-        'system.product_type': 2,
+        'truenas.entitlements.facts': 2,
         'failover.licensed': 1,
     }
     latest_stats = call('usage.gather')['method_stats']

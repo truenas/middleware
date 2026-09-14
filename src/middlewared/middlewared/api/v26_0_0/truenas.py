@@ -23,6 +23,8 @@ __all__ = [
     'EntitlementReason', 'EntitlementEntry', 'EntitlementsInfo',
     'TrueNASEntitlementsInfoArgs', 'TrueNASEntitlementsInfoResult',
     'TrueNASEntitlementsCheckArgs', 'TrueNASEntitlementsCheckResult',
+    'HardwareType', 'EntitlementFactsEntry',
+    'TrueNASEntitlementsFactsArgs', 'TrueNASEntitlementsFactsResult',
 ]
 
 
@@ -219,3 +221,26 @@ class TrueNASEntitlementsCheckArgs(BaseModel):
 
 class TrueNASEntitlementsCheckResult(BaseModel):
     result: EntitlementEntry = Field(description="Entitlement decision for the requested feature.")
+
+
+HardwareType = Literal["TRUENAS", "COMMUNITY"]
+
+
+class EntitlementFactsEntry(BaseModel):
+    hardware_type: HardwareType = Field(
+        description="Hardware this system runs on. `TRUENAS` for iX appliance hardware, `COMMUNITY` otherwise.",
+    )
+    license_type: str | None = Field(
+        description=(
+            "Type of the installed license, e.g. `COMMUNITY`, `ENTERPRISE_SINGLE` or `COMMERCIAL`. "
+            "`null` when no license issued by iX is installed."
+        ),
+    )
+
+
+class TrueNASEntitlementsFactsArgs(BaseModel):
+    pass
+
+
+class TrueNASEntitlementsFactsResult(BaseModel):
+    result: EntitlementFactsEntry = Field(description="Hardware and license facts for this system.")

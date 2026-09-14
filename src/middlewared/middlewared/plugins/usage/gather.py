@@ -271,8 +271,9 @@ async def gather_network(service: Service, context: GatherContext) -> dict[str, 
 
 @gather_stat
 async def gather_system_version(service: Service, context: GatherContext) -> dict[str, Any]:
+    facts = await service.call2(service.s.truenas.entitlements.facts)
     return {
-        "platform": f"TrueNAS-{await service.middleware.call('system.product_type')}",
+        "platform": f"TrueNAS-{'ENTERPRISE' if facts.hardware_type == 'TRUENAS' else 'COMMUNITY_EDITION'}",
         "version": await service.middleware.call("system.version"),
         "is_vendored": await service.call2(service.s.system.vendor.is_vendored),
         "vendor_name": await service.call2(service.s.system.vendor.name),

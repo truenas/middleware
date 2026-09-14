@@ -10,7 +10,7 @@ def require_enterprise():
     # SYSTEM audit events are produced by the tnaudit handler daemon, which only
     # processes auditd events on Enterprise systems (it no-ops on Community
     # Edition). Skip these tests where the pipeline is intentionally inactive.
-    if call('system.product_type') != 'ENTERPRISE':
+    if call('truenas.entitlements.facts')['hardware_type'] != 'TRUENAS':
         pytest.skip('SYSTEM auditing is only active on Enterprise systems')
 
 
