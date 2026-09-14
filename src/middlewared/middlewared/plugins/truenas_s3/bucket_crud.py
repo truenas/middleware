@@ -1,11 +1,13 @@
 """Buckets: the S3 service's share-like entity.
 
 A bucket is a ZFS dataset this plugin creates and registers with the
-daemon. The daemon pins a registered dataset's mount and consumes the
-registry once at startup, so creating, dropping, enabling or disabling
-a bucket restarts the service; the owner, the grants and the audit mask
-move on a reload. The grants live on the bucket, so they can never
-outlive it.
+daemon. The daemon pins a registered dataset's mount. Creating,
+dropping, enabling or disabling a bucket and changing the owner, the
+grants or the audit mask apply to a running service on a reload;
+changing a field consumed at registration (the dataset, the models,
+the ETag mode) requires a restart. The daemon reports which applies
+per change, and middleware acts on that (lifecycle.py). The grants
+live on the bucket, so they can never outlive it.
 """
 
 from __future__ import annotations
@@ -414,8 +416,8 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         ``object_ownership``'s answer: the owner under
         ``BUCKET_OWNER_ENFORCED``, which is the default and supports no S3
         ACLs, and the account that put the object under the other two values.
-        Grants may be given in the same call. Registering a bucket restarts
-        the S3 service, draining in-flight requests for up to 30 seconds.
+        Grants may be given in the same call. Creating a bucket reloads a
+        running S3 service rather than restarting it.
         """
         verrors = ValidationErrors()
         data = self.normalize_ownership(data)
@@ -449,10 +451,11 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         """
         Update S3 bucket ``id``.
 
-        ``grants`` replaces the bucket's whole grant list. Changing the owner,
-        the grants or the audit settings reloads the S3 service; changing
-        anything the service registers at startup, or enabling and disabling
-        the bucket, restarts it.
+        ``grants`` replaces the bucket's whole grant list. Enabling or
+        disabling the bucket and changing the owner, the grants or the audit
+        settings apply to a running S3 service on a reload; changing the
+        dataset, the permissions model, the object ownership, the ETag mode,
+        the snapshot selection or object-lock enablement restarts it.
         """
         old = await self.get_instance(id_)
         audit_callback(old.name)
