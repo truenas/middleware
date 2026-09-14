@@ -228,12 +228,12 @@ HardwareType = Literal["TRUENAS", "COMMUNITY"]
 
 class EntitlementFactsEntry(BaseModel):
     hardware_type: HardwareType = Field(
-        description="Hardware this system runs on. `TRUENAS` for iX appliance hardware, `COMMUNITY` otherwise.",
+        description="Hardware this system runs on. `TRUENAS` for TrueNAS appliance hardware, `COMMUNITY` otherwise.",
     )
     license_type: str | None = Field(
         description=(
-            "Type of the installed license, e.g. `COMMUNITY`, `ENTERPRISE_SINGLE` or `COMMERCIAL`. "
-            "`null` when no license issued by iX is installed."
+            "Type of the installed license, e.g. `COMMUNITY`, `ENTERPRISE` or `COMMERCIAL`. "
+            "`null` when no license issued by TrueNAS is installed."
         ),
     )
 
