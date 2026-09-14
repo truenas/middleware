@@ -7,9 +7,11 @@ nothing otherwise. Rules never perform I/O. The service calls them
 explicitly and in order from its create_impl so the control flow reads
 top to bottom in one place. When a rule needs a new fact the service
 gathers it and the context grows a field. The draid and dedup tiering
-functions also take the service since they must inspect the pool
+functions also take a ServiceContext since they must inspect the pool
 themselves.
 """
+
+from __future__ import annotations
 
 import dataclasses
 import errno
@@ -27,6 +29,7 @@ from .utils import has_internal_path
 
 if typing.TYPE_CHECKING:
     from middlewared.api.current import EntitlementEntry, ZFSResourceCreateArgsData, ZFSResourceCreateProperties
+    from middlewared.service import ServiceContext
 
 __all__ = (
     "CreateContext",
@@ -60,7 +63,7 @@ _POSIX_OR_OFF_ACLTYPES = frozenset({"posix", "posixacl", "off", "noacl"})
 class CreateContext:
     """Resolved values and gathered facts that the rules read."""
 
-    properties: "ZFSResourceCreateProperties"
+    properties: ZFSResourceCreateProperties
     """Effective zfs properties after creation defaults are applied. A
     field left as None is not sent to ZFS."""
     encrypt: dict[str, typing.Any] | None
@@ -71,7 +74,7 @@ class CreateContext:
     ancestor has no entry."""
     tier_enabled: bool = False
     """Whether ZFS tiering is enabled on this system."""
-    dedup_entitlement: "EntitlementEntry | None" = None
+    dedup_entitlement: EntitlementEntry | None = None
     """The DEDUP entitlement decision for this system. Populated by the
     service only when the request enables deduplication."""
 
@@ -102,7 +105,7 @@ def _size_bytes(value: str | int) -> int | None:
         return None
 
 
-def _nearest_ancestor_entry(data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> typing.Any | None:
+def _nearest_ancestor_entry(data: ZFSResourceCreateArgsData, ctx: CreateContext) -> typing.Any | None:
     """Return the gathered entry of the nearest existing ancestor."""
     for ancestor in ancestor_chain(data.path):
         rv = ctx.ancestors.get(ancestor)
@@ -111,9 +114,9 @@ def _nearest_ancestor_entry(data: "ZFSResourceCreateArgsData", ctx: CreateContex
     return None
 
 
-def _pool_has_special_vdev(service: typing.Any, pool_name: str) -> bool:
+def _pool_has_special_vdev(context: ServiceContext, pool_name: str) -> bool:
     """Return whether the pool has a SPECIAL allocation class vdev."""
-    if pool := service.middleware.call_sync(
+    if pool := context.middleware.call_sync(
         "zpool.query_impl", {"pool_names": [pool_name], "properties": ["class_special_size"]}
     ):
         size = ((pool[0].get("properties") or {}).get("class_special_size") or {}).get("value")
@@ -121,16 +124,16 @@ def _pool_has_special_vdev(service: typing.Any, pool_name: str) -> bool:
     return False
 
 
-def pool_is_draid(service: typing.Any, pool_name: str) -> bool:
+def pool_is_draid(context: ServiceContext, pool_name: str) -> bool:
     """Return whether the pool stores data on dRAID vdevs."""
-    if pool := service.middleware.call_sync("zpool.query_impl", {"pool_names": [pool_name], "topology": True}):
+    if pool := context.middleware.call_sync("zpool.query_impl", {"pool_names": [pool_name], "topology": True}):
         for group in pool[0]["topology"]["data"] + pool[0]["topology"].get("special", []):
             if group["vdev_type"].startswith("draid"):
                 return True
     return False
 
 
-def apply_draid_recordsize(service: typing.Any, data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> None:
+def apply_draid_recordsize(context: ServiceContext, data: ZFSResourceCreateArgsData, ctx: CreateContext) -> None:
     """Default a filesystem on a dRAID pool to a 1M recordsize.
 
     Small blocks perform poorly on dRAID vdevs. Matches the default
@@ -139,11 +142,11 @@ def apply_draid_recordsize(service: typing.Any, data: "ZFSResourceCreateArgsData
     The service calls this only for filesystems without an explicit
     recordsize.
     """
-    if pool_is_draid(service, data.path.split("/")[0]):
+    if pool_is_draid(context, data.path.split("/")[0]):
         ctx.properties.recordsize = "1M"
 
 
-def apply_draid_volblocksize(service: typing.Any, data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> None:
+def apply_draid_volblocksize(context: ServiceContext, data: ZFSResourceCreateArgsData, ctx: CreateContext) -> None:
     """Apply the dRAID volume block size default and floor.
 
     Small blocks perform poorly on dRAID vdevs. A volume defaults to a
@@ -152,7 +155,7 @@ def apply_draid_volblocksize(service: typing.Any, data: "ZFSResourceCreateArgsDa
 
     The service calls this only for volumes.
     """
-    if not pool_is_draid(service, data.path.split("/")[0]):
+    if not pool_is_draid(context, data.path.split("/")[0]):
         return
     if ctx.properties.volblocksize is None:
         ctx.properties.volblocksize = "128K"
@@ -165,8 +168,8 @@ def apply_draid_volblocksize(service: typing.Any, data: "ZFSResourceCreateArgsDa
 
 
 def resolve_create_request(
-    data: "ZFSResourceCreateArgsData",
-) -> tuple["ZFSResourceCreateProperties", dict[str, typing.Any] | None]:
+    data: ZFSResourceCreateArgsData,
+) -> tuple[ZFSResourceCreateProperties, dict[str, typing.Any] | None]:
     """Apply creation defaults and resolve the requested encryption.
 
     Returns a copy of the requested properties with the creation
@@ -217,7 +220,7 @@ def resolve_create_request(
     return properties, encrypt
 
 
-def check_path_shape(data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> None:
+def check_path_shape(data: ZFSResourceCreateArgsData, ctx: CreateContext) -> None:
     """The path must be a relative pool/resource path and not a snapshot."""
     if os.path.isabs(data.path):
         raise ValidationError(
@@ -240,7 +243,7 @@ def check_path_shape(data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> N
         )
 
 
-def check_protected_path(data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> None:
+def check_protected_path(data: ZFSResourceCreateArgsData, ctx: CreateContext) -> None:
     """Internal paths may only be touched by internal callers."""
     # NOTE `bypass` is a value only exposed to internal
     # callers and not to our public API
@@ -248,7 +251,7 @@ def check_protected_path(data: "ZFSResourceCreateArgsData", ctx: CreateContext) 
         raise ValidationError(SCHEMA, f"{data.path!r} is a protected path.", errno.EACCES)
 
 
-def check_name_valid(data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> None:
+def check_name_valid(data: ZFSResourceCreateArgsData, ctx: CreateContext) -> None:
     """The name must be acceptable to ZFS for the requested type and may
     not end with a space."""
     if not truenas_pylibzfs.name_is_valid(name=data.path, type=ZFS_TYPE_MAP[data.type]):
@@ -258,7 +261,7 @@ def check_name_valid(data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> N
         raise ValidationError(SCHEMA, "Trailing spaces are not permitted in resource names.", errno.EINVAL)
 
 
-def check_user_property_names(data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> None:
+def check_user_property_names(data: ZFSResourceCreateArgsData, ctx: CreateContext) -> None:
     """User property names must contain a colon."""
     for key in data.user_properties:
         if ":" not in key:
@@ -269,7 +272,7 @@ def check_user_property_names(data: "ZFSResourceCreateArgsData", ctx: CreateCont
             )
 
 
-def check_volume_has_volsize(data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> None:
+def check_volume_has_volsize(data: ZFSResourceCreateArgsData, ctx: CreateContext) -> None:
     """A volume cannot be created without a size.
 
     The service calls this only for volumes.
@@ -282,7 +285,7 @@ def check_volume_has_volsize(data: "ZFSResourceCreateArgsData", ctx: CreateConte
         )
 
 
-def check_parent_not_readonly(data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> None:
+def check_parent_not_readonly(data: ZFSResourceCreateArgsData, ctx: CreateContext) -> None:
     """The nearest existing ancestor must not be readonly.
 
     ZFS allows creating beneath a readonly parent but the new filesystem
@@ -305,7 +308,7 @@ def check_parent_not_readonly(data: "ZFSResourceCreateArgsData", ctx: CreateCont
         return
 
 
-def check_tier_managed_ssb(data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> None:
+def check_tier_managed_ssb(data: ZFSResourceCreateArgsData, ctx: CreateContext) -> None:
     """The tier manager owns special_small_blocks while tiering is enabled.
 
     The service calls this only when tiering is enabled.
@@ -318,7 +321,7 @@ def check_tier_managed_ssb(data: "ZFSResourceCreateArgsData", ctx: CreateContext
         )
 
 
-def apply_tier_snap(data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> None:
+def apply_tier_snap(data: ZFSResourceCreateArgsData, ctx: CreateContext) -> None:
     """Pin a new filesystem to its parent's effective tier.
 
     That is 16M when the parent places data on the special vdev
@@ -338,7 +341,7 @@ def apply_tier_snap(data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> No
     ctx.properties.special_small_blocks = 16 * 1024 * 1024 if performance else 0
 
 
-def apply_volume_ssb_pin(data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> None:
+def apply_volume_ssb_pin(data: ZFSResourceCreateArgsData, ctx: CreateContext) -> None:
     """Pin special_small_blocks to 0 for a volume below the threshold.
 
     A volume whose blocks are smaller than the parent's threshold would
@@ -358,7 +361,7 @@ def apply_volume_ssb_pin(data: "ZFSResourceCreateArgsData", ctx: CreateContext) 
         ctx.properties.special_small_blocks = 0
 
 
-def check_dedup_entitlement(data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> None:
+def check_dedup_entitlement(data: ZFSResourceCreateArgsData, ctx: CreateContext) -> None:
     """Deduplication may only be enabled on a system entitled to it.
 
     Licensed systems must carry the DEDUP feature; unlicensed iX hardware
@@ -377,7 +380,7 @@ def check_dedup_entitlement(data: "ZFSResourceCreateArgsData", ctx: CreateContex
         raise ValidationError(f"{SCHEMA}.properties", ctx.dedup_entitlement.message, errno.EINVAL)
 
 
-def check_dedup_tiering(service: typing.Any, data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> None:
+def check_dedup_tiering(context: ServiceContext, data: ZFSResourceCreateArgsData, ctx: CreateContext) -> None:
     """Deduplication may not be enabled on a PERFORMANCE tier filesystem.
 
     With tiering enabled a filesystem whose effective special_small_blocks
@@ -397,7 +400,7 @@ def check_dedup_tiering(service: typing.Any, data: "ZFSResourceCreateArgsData", 
         ssb = _size_bytes(ssb) or 0
     if not ssb:
         return
-    if not _pool_has_special_vdev(service, data.path.split("/")[0]):
+    if not _pool_has_special_vdev(context, data.path.split("/")[0]):
         return
     raise ValidationError(
         f"{SCHEMA}.properties",
@@ -408,7 +411,7 @@ def check_dedup_tiering(service: typing.Any, data: "ZFSResourceCreateArgsData", 
     )
 
 
-def _effective_value(name: str, data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> str | None:
+def _effective_value(name: str, data: ZFSResourceCreateArgsData, ctx: CreateContext) -> str | None:
     """Return the lowercased effective value of a property. That is the
     requested value or the value inherited from the nearest existing
     ancestor."""
@@ -422,7 +425,7 @@ def _effective_value(name: str, data: "ZFSResourceCreateArgsData", ctx: CreateCo
     return str(value).lower() if value is not None else None
 
 
-def check_acl_combination(data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> None:
+def check_acl_combination(data: ZFSResourceCreateArgsData, ctx: CreateContext) -> None:
     """The requested acl properties must form a usable combination.
 
     The effective acltype and aclmode (the requested value or the value
@@ -449,7 +452,7 @@ def check_acl_combination(data: "ZFSResourceCreateArgsData", ctx: CreateContext)
         )
 
 
-def check_volume_capacity(data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> None:
+def check_volume_capacity(data: ZFSResourceCreateArgsData, ctx: CreateContext) -> None:
     """A volume reservation may not consume more than 80% of the available space.
 
     The effective refreservation (the volsize for a thick volume) is
@@ -484,7 +487,7 @@ def check_volume_capacity(data: "ZFSResourceCreateArgsData", ctx: CreateContext)
         return
 
 
-def check_encryption(data: "ZFSResourceCreateArgsData", ctx: CreateContext) -> None:
+def check_encryption(data: ZFSResourceCreateArgsData, ctx: CreateContext) -> None:
     """Validate a request to create a new encryption root.
 
     Exactly one source of key material must be provided. The existing

@@ -157,7 +157,7 @@ from middlewared.plugins.usage import UsageService
 from middlewared.plugins.vm import VMService
 from middlewared.plugins.webshare import WebshareService
 from middlewared.plugins.webshare.sharing import SharingWebshareService
-from middlewared.plugins.zfs.resource_crud import ZFSResourceService
+from middlewared.plugins.zfs.resource import ZFSResourceService
 from middlewared.plugins.zfs.tier import ZfsTierService
 
 _SubHandler = typing.Callable[['Middleware', 'EventType', dict], typing.Awaitable[None]]

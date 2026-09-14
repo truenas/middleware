@@ -5,7 +5,7 @@ overrides.
 
 Implementation under test:
   - src/middlewared/middlewared/plugins/pool_/dataset.py:324-349, 688-702
-  - src/middlewared/middlewared/plugins/zfs/snapshot_crud.py:399-405
+  - src/middlewared/middlewared/plugins/zfs/snapshot_ops.py (clone_impl)
 """
 
 import contextlib
