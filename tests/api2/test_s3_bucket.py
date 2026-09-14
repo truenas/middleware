@@ -1,7 +1,8 @@
 """S3 buckets: a dataset this plugin creates and registers with the S3
-service, with its access grants embedded. Registering, dropping,
-enabling or disabling a bucket restarts the service; its owner, grants
-and audit mask reload."""
+service, with its access grants embedded. Creating, dropping, enabling
+or disabling a bucket and changing the owner, the grants or the audit
+mask apply on a reload; changing a field consumed at registration,
+such as the ETag mode, restarts the service."""
 
 import contextlib
 import hashlib
@@ -15,6 +16,7 @@ from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.account import user
 from middlewared.test.integration.assets.pool import dataset, pool
 from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.utils.client import truenas_server
 
 SERVICE = "s3"
 BUCKETS_CONF = "/etc/truenas_s3/buckets.conf"
@@ -77,7 +79,9 @@ def test_create_owns_the_dataset(owner):
     """The dataset is created with every property the S3 on-disk format
     requires, the bucket holds the owner's uid, the row renders at the
     dataset's mount point without storing it, and the share root is the
-    daemon's to make: absent until the service starts, then the owner's."""
+    daemon's to make: absent until the service starts, then the owner's.
+    Under the default `BUCKET_OWNER_ENFORCED` that tree is owner-only:
+    `0700`, group `0`."""
     with bucket() as b:
         assert "path" not in b
         assert b["owner"] == OWNER
@@ -111,8 +115,8 @@ def test_create_owns_the_dataset(owner):
         assert ssh(f"test -e /mnt/{DATASET}/s3data || echo absent").strip() == "absent"
         with running_service():
             data = call("filesystem.stat", f"/mnt/{DATASET}/s3data")
-            assert (data["uid"], data["gid"]) == (owner["uid"], owner["group"]["bsdgrp_gid"])
-            assert data["mode"] & 0o777 == 0o755
+            assert (data["uid"], data["gid"]) == (owner["uid"], 0)
+            assert data["mode"] & 0o777 == 0o700
 
         call("etc.generate", "truenas_s3")
         row = parse(BUCKETS_CONF)['bucket "test-bucket"']
@@ -129,6 +133,21 @@ def test_create_owns_the_dataset(owner):
         }
 
     assert zfs_props(DATASET, ["mountpoint"]) is None
+
+
+def test_object_writer_share_root_is_provisioned_once(owner):
+    """Under `OBJECT_WRITER` the share root is created once, as the
+    owner and their primary group at `0755`; a later start leaves an
+    existing tree as found, so an operator's rechown stands."""
+    with bucket(object_ownership="OBJECT_WRITER"):
+        with running_service():
+            data = call("filesystem.stat", f"/mnt/{DATASET}/s3data")
+            assert (data["uid"], data["gid"]) == (owner["uid"], owner["group"]["bsdgrp_gid"])
+            assert data["mode"] & 0o777 == 0o755
+        ssh(f"chown 0:0 /mnt/{DATASET}/s3data")
+        with running_service():
+            data = call("filesystem.stat", f"/mnt/{DATASET}/s3data")
+            assert (data["uid"], data["gid"]) == (0, 0), "an existing tree is left exactly as found"
 
 
 def test_delete_keeps_the_dataset(owner):
@@ -388,32 +407,36 @@ def test_object_lock_rules(owner):
         assert "object_lock_default_years" not in row
 
 
-def test_registry_changes_restart_and_the_rest_reload(owner):
+def test_registry_changes_reload_and_consumed_fields_restart(owner):
+    """Creating, disabling, enabling and dropping a bucket, and a grant
+    change, keep the service's pid (a reload); changing a field consumed
+    at registration — the ETag mode here — restarts it."""
     assert call("service.control", "START", SERVICE, {"silent": False}, job=True)
     try:
         pid = service()["pids"]
         with bucket() as b:
-            after_create = service()["pids"]
-            assert after_create != pid, "registering a bucket is a restart"
+            assert service()["pids"] == pid, "registering a bucket is a reload"
+            assert 'bucket "test-bucket"' in parse(BUCKETS_CONF)
 
             call(
                 "sharing.s3.update",
                 b["id"],
                 {"grants": [{"principal_type": "EVERYONE", "access": "READONLY"}]},
             )
-            assert service()["pids"] == after_create, "a grant change is a reload"
+            assert service()["pids"] == pid, "a grant change is a reload"
 
             call("sharing.s3.update", b["id"], {"multipart_etag": "MINTED"})
             after_etag = service()["pids"]
-            assert after_etag != after_create, "the ETag mode is registered, so a restart"
+            assert after_etag != pid, "the ETag mode is registered, so a restart"
 
             call("sharing.s3.update", b["id"], {"enabled": False})
-            after_disable = service()["pids"]
-            assert after_disable != after_etag, "disabling a bucket is a restart"
+            assert service()["pids"] == after_etag, "disabling a bucket is a reload"
             assert 'bucket "test-bucket"' not in parse(BUCKETS_CONF)
 
             call("sharing.s3.update", b["id"], {"enabled": True})
+            assert service()["pids"] == after_etag, "enabling a bucket is a reload"
             assert 'bucket "test-bucket"' in parse(BUCKETS_CONF)
+        assert service()["pids"] == after_etag, "dropping a bucket is a reload"
         assert service()["state"] == "RUNNING"
     finally:
         call("service.control", "STOP", SERVICE, {"silent": False}, job=True)
@@ -429,10 +452,10 @@ def test_destroying_the_dataset_deregisters_the_bucket(owner):
     assert zfs_props(DATASET, ["mountpoint"]) is None
 
 
-def test_owner_change_moves_the_grants_not_the_directory(owner):
-    """A new owner takes the bypass and the render, and nothing on disk:
-    the share root is the deployment's once the daemon has made it, and
-    the daemon leaves it as found on every later start."""
+def test_owner_change_reattaches_an_enforced_bucket(owner):
+    """Under the default `BUCKET_OWNER_ENFORCED` an owner change is a
+    reload: the new owner lands in the render and the daemon moves the
+    owner-only share root to the new account."""
     with (
         user(
             {
@@ -450,7 +473,7 @@ def test_owner_change_moves_the_grants_not_the_directory(owner):
         assert updated["owner_uid"] == new["uid"]
         assert service()["pids"] == pid, "an owner change is a reload"
         data = call("filesystem.stat", f"/mnt/{DATASET}/s3data")
-        assert (data["uid"], data["gid"]) == (owner["uid"], owner["group"]["bsdgrp_gid"])
+        assert (data["uid"], data["gid"]) == (new["uid"], 0), "the share root moves to the new owner"
         call("etc.generate", "truenas_s3")
         row = parse(BUCKETS_CONF)['bucket "test-bucket"']
         assert (row["owner"], row["owner_id"]) == ("s3newowner", str(new["uid"]))
@@ -464,6 +487,29 @@ def test_owner_change_moves_the_grants_not_the_directory(owner):
         assert (row["owner"], row["owner_id"]) == ("s3renamedowner", str(new["uid"]))
         # naming the same account again is not a change of owner
         assert call("sharing.s3.update", b["id"], {"owner": "s3renamedowner"})["owner_uid"] == new["uid"]
+
+
+def test_owner_change_leaves_a_shared_directory_as_found(owner):
+    """Under `OBJECT_WRITER` an owner change is a reload and leaves the
+    share root's ownership and mode untouched."""
+    with (
+        user(
+            {
+                "username": "s3newowner",
+                "full_name": "new owner",
+                "group_create": True,
+                "password": "test1234",
+            }
+        ) as new,
+        bucket(object_ownership="OBJECT_WRITER") as b,
+        running_service(),
+    ):
+        pid = service()["pids"]
+        assert call("sharing.s3.update", b["id"], {"owner": "s3newowner"})["owner_uid"] == new["uid"]
+        assert service()["pids"] == pid, "an owner change is a reload"
+        data = call("filesystem.stat", f"/mnt/{DATASET}/s3data")
+        assert (data["uid"], data["gid"]) == (owner["uid"], owner["group"]["bsdgrp_gid"])
+        assert data["mode"] & 0o777 == 0o755
 
 
 def test_audit_choices():
@@ -495,15 +541,16 @@ def grantee(username):
 
 
 def client(key):
-    """A boto3 client on the daemon. The checksum stance is stated rather
-    than inherited from the installed botocore: CRC32, composed COMPOSITE
-    over a multipart upload, which is what the daemon serves."""
+    """A boto3 client against the server under test on port 9000. The
+    checksum stance is stated rather than inherited from the installed
+    botocore: CRC32, composed COMPOSITE over a multipart upload, which
+    is what the daemon serves."""
     boto3 = pytest.importorskip("boto3")
     from botocore.config import Config
 
     return boto3.client(
         "s3",
-        endpoint_url="http://127.0.0.1:9000",
+        endpoint_url=f"http://{truenas_server.ip}:9000",
         aws_access_key_id=key["access_key"],
         aws_secret_access_key=key["secret"],
         region_name="us-east-1",
