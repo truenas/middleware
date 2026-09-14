@@ -10,8 +10,10 @@ __all__ = [
 
 class ConfigSave(BaseModel):
     secretseed: bool = Field(
-        default=False,
-        description="Whether to include the secret seed in the configuration backup.",
+        default=True,
+        description="Whether to include the secret seed in the configuration backup. The seed decrypts every password, "
+                    "private key and API key the backup contains, so treat a backup that includes it as a secret. A "
+                    "backup saved without it cannot be uploaded.",
     )
     pool_keys: bool = Field(
         default=False,

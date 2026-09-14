@@ -11,13 +11,18 @@ from middlewared.api.base.decorator import private_method
 from middlewared.auth import TruenasNodeSessionManagerCredentials
 from middlewared.service import Service
 from middlewared.service_exception import CallError
-from middlewared.utils.pwenc import PWENC_FILE_SECRET, decrypt, encrypt, pwenc_generate_secret, pwenc_rename
+from middlewared.utils.pwenc import (
+    PWENC_CHECK,
+    PWENC_FILE_SECRET,
+    decrypt,
+    encrypt,
+    pwenc_generate_secret,
+    pwenc_rename,
+)
 
 if TYPE_CHECKING:
     from middlewared.api.base.server.app import App
     from middlewared.main import Middleware
-
-PWENC_CHECK = 'Donuts!'
 
 
 class PWEncService(Service):
