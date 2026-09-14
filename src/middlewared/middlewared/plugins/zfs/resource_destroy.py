@@ -17,7 +17,7 @@ from .exceptions import (
     ZFSPathHasHoldsException,
     ZFSPathNotFoundException,
 )
-from .utils import has_internal_path
+from .utils import reject_protected_path
 
 if TYPE_CHECKING:
     from middlewared.service import ServiceContext
@@ -42,10 +42,8 @@ def destroy_impl(
         )
     elif path.endswith("/"):
         raise ValidationError(SCHEMA, "Path must not end with a forward-slash.", errno.EINVAL)
-    elif not bypass and has_internal_path(path):
-        # NOTE: `bypass` is a value only exposed to
-        # internal callers and not to our public API.
-        raise ValidationError(SCHEMA, f"{path!r} is a protected path.", errno.EACCES)
+
+    reject_protected_path(SCHEMA, path, bypass)
 
     if "@" in path:
         raise ValidationError(SCHEMA, "Use `zfs.resource.snapshot.destroy` to destroy snapshots.")

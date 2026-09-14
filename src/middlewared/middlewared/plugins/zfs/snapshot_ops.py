@@ -40,34 +40,17 @@ from .snapshot_hold_release_impl import hold_impl as _raw_hold
 from .snapshot_hold_release_impl import release_impl as _raw_release
 from .snapshot_query_impl import query_snapshots_impl
 from .snapshot_rollback_impl import rollback_impl as _raw_rollback
-from .utils import group_paths_by_parents, has_internal_path, open_resource
+from .utils import open_resource, reject_overlapping_paths, reject_protected_path
 
 if TYPE_CHECKING:
     from middlewared.service import ServiceContext
 
 
-def _dataset_of(path: str) -> str:
-    """A snapshot inherits the protection status of the dataset it belongs to."""
-    return path.split("@")[0] if "@" in path else path
-
-
-def _reject_protected(schema: str, path: str, check_path: str, bypass: bool) -> None:
-    if not bypass and has_internal_path(check_path):
-        raise ValidationError(schema, f"{path!r} is a protected path.", errno.EACCES)
-
-
 def validate_recursive_paths(schema: str, data: ZFSResourceSnapshotQueryBase) -> None:
-    if not data.recursive:
-        return
-
-    # Snapshot paths ("tank@snap") are direct lookups rather than recursive walks, so only
-    # the dataset paths can overlap. Duplicates are already rejected by Pydantic UniqueList.
-    dataset_paths = [p for p in data.paths if "@" not in p]
-    if group_paths_by_parents(dataset_paths):
-        raise ValidationError(
-            schema,
-            ("Paths must be non-overlapping - no path can be relative to another when recursive is set to True."),
-        )
+    if data.recursive:
+        # Snapshot paths ("tank@snap") are direct lookups rather than recursive walks, so only
+        # the dataset paths can overlap. Duplicates are already rejected by Pydantic UniqueList.
+        reject_overlapping_paths(schema, [p for p in data.paths if "@" not in p], "recursive")
 
 
 def query_impl(tls: Any, data: ZFSResourceSnapshotQuery) -> list[dict[str, Any]]:
@@ -110,7 +93,7 @@ def count(context: ServiceContext, data: ZFSResourceSnapshotCountQuery) -> dict[
 
 
 def destroy_impl(tls: Any, data: ZFSResourceSnapshotDestroyQuery) -> tuple[str | None, int | None]:
-    _reject_protected("zfs.resource.snapshot.destroy", data.path, _dataset_of(data.path), data.bypass)
+    reject_protected_path("zfs.resource.snapshot.destroy", data.path, data.bypass)
     return _raw_destroy(tls, data.path, data.recursive, data.all_snapshots, data.bypass, data.defer)
 
 
@@ -140,12 +123,7 @@ def destroy(context: ServiceContext, data: ZFSResourceSnapshotDestroyQuery) -> N
 
 
 def rename_impl(tls: Any, data: ZFSResourceSnapshotRenameQuery) -> None:
-    _reject_protected(
-        "zfs.resource.snapshot.rename",
-        data.current_name,
-        _dataset_of(data.current_name),
-        data.bypass,
-    )
+    reject_protected_path("zfs.resource.snapshot.rename", data.current_name, data.bypass)
     return _raw_rename(tls, data.current_name, data.new_name, data.recursive, False, False)
 
 
@@ -181,8 +159,8 @@ def clone_impl(context: ServiceContext, tls: Any, data: ZFSResourceSnapshotClone
                 errno.EINVAL,
             )
 
-    _reject_protected(schema, data.snapshot, _dataset_of(data.snapshot), data.bypass)
-    _reject_protected(schema, data.dataset, data.dataset, data.bypass)
+    reject_protected_path(schema, data.snapshot, data.bypass)
+    reject_protected_path(schema, data.dataset, data.bypass)
 
     return _raw_clone(tls, current_name=data.snapshot, new_name=data.dataset, properties=data.properties)
 
@@ -205,7 +183,7 @@ def clone(context: ServiceContext, data: ZFSResourceSnapshotCloneQuery) -> None:
 
 
 def create_impl(tls: Any, data: ZFSResourceSnapshotCreateQuery) -> Any:
-    _reject_protected("zfs.resource.snapshot.create", data.dataset, data.dataset, data.bypass)
+    reject_protected_path("zfs.resource.snapshot.create", data.dataset, data.bypass)
     return create_snapshots_impl(
         tls,
         dataset=data.dataset,
@@ -234,7 +212,7 @@ def create(context: ServiceContext, data: ZFSResourceSnapshotCreateQuery) -> ZFS
 
 
 def hold_impl(tls: Any, data: ZFSResourceSnapshotHoldQuery) -> None:
-    _reject_protected("zfs.resource.snapshot.hold", data.path, _dataset_of(data.path), data.bypass)
+    reject_protected_path("zfs.resource.snapshot.hold", data.path, data.bypass)
     return _raw_hold(tls, path=data.path, tag=data.tag, recursive=data.recursive)
 
 
@@ -268,7 +246,7 @@ def holds(context: ServiceContext, data: ZFSResourceSnapshotHoldsQuery) -> list[
 
 
 def release_impl(tls: Any, data: ZFSResourceSnapshotReleaseQuery) -> None:
-    _reject_protected("zfs.resource.snapshot.release", data.path, _dataset_of(data.path), data.bypass)
+    reject_protected_path("zfs.resource.snapshot.release", data.path, data.bypass)
     return _raw_release(tls, path=data.path, tag=data.tag, recursive=data.recursive)
 
 
@@ -284,7 +262,7 @@ def release(context: ServiceContext, data: ZFSResourceSnapshotReleaseQuery) -> N
 
 
 def rollback_impl(tls: Any, data: ZFSResourceSnapshotRollbackQuery) -> None:
-    _reject_protected("zfs.resource.snapshot.rollback", data.path, _dataset_of(data.path), data.bypass)
+    reject_protected_path("zfs.resource.snapshot.rollback", data.path, data.bypass)
     try:
         return _raw_rollback(
             tls,

@@ -9,7 +9,7 @@ from middlewared.service_exception import ValidationError
 
 from .exceptions import ZFSPathNotFoundException
 from .query_impl import query_impl as _raw_query
-from .utils import group_paths_by_parents
+from .utils import reject_overlapping_paths
 
 if TYPE_CHECKING:
     from middlewared.service import ServiceContext
@@ -23,11 +23,8 @@ def validate_query_args(data: ZFSResourceQuery) -> None:
                 "Use `zfs.resource.snapshot.query` to query snapshot information.",
             )
 
-    if data.get_children and group_paths_by_parents(data.paths):
-        raise ValidationError(
-            "zfs.resource.query",
-            ("Paths must be non-overlapping - no path can be relative to another when get_children is set to True."),
-        )
+    if data.get_children:
+        reject_overlapping_paths("zfs.resource.query", data.paths, "get_children")
 
 
 def nest_paths(flat_list: list[dict[str, Any]]) -> list[dict[str, Any]]:

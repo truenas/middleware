@@ -25,7 +25,7 @@ from middlewared.service_exception import ValidationError
 from middlewared.utils.crypto import generate_token
 
 from .create_impl import ZFS_TYPE_MAP
-from .utils import has_internal_path
+from .utils import reject_protected_path
 
 if typing.TYPE_CHECKING:
     from middlewared.api.current import EntitlementEntry, ZFSResourceCreateArgsData, ZFSResourceCreateProperties
@@ -245,10 +245,7 @@ def check_path_shape(data: ZFSResourceCreateArgsData, ctx: CreateContext) -> Non
 
 def check_protected_path(data: ZFSResourceCreateArgsData, ctx: CreateContext) -> None:
     """Internal paths may only be touched by internal callers."""
-    # NOTE `bypass` is a value only exposed to internal
-    # callers and not to our public API
-    if not data.bypass and has_internal_path(data.path):
-        raise ValidationError(SCHEMA, f"{data.path!r} is a protected path.", errno.EACCES)
+    reject_protected_path(SCHEMA, data.path, data.bypass)
 
 
 def check_name_valid(data: ZFSResourceCreateArgsData, ctx: CreateContext) -> None:

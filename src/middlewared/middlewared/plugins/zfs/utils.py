@@ -1,10 +1,12 @@
 from collections.abc import Collection
 from dataclasses import dataclass
+import errno
 import pathlib
 from typing import Any, Literal
 
 import truenas_pylibzfs
 
+from middlewared.service_exception import ValidationError
 from middlewared.utils.boot.pool import BOOT_POOL_NAME_VALID
 
 from .exceptions import ZFSPathNotFoundException, ZFSPathNotProvidedException
@@ -14,6 +16,8 @@ __all__ = (
     "group_paths_by_parents",
     "has_internal_path",
     "open_resource",
+    "reject_overlapping_paths",
+    "reject_protected_path",
 )
 
 
@@ -118,6 +122,25 @@ def group_paths_by_parents(paths: Collection[str]) -> dict[str, list[str]]:
         if subpaths:
             root_dict[path] = subpaths
     return root_dict
+
+
+def reject_protected_path(schema: str, path: str, bypass: bool = False) -> None:
+    """Raise if ``path`` is an internal path and the caller may not touch it.
+
+    A snapshot inherits the protection status of the dataset it belongs to.
+    ``bypass`` is only exposed to internal callers, never to the public API.
+    """
+    if not bypass and has_internal_path(path.split("@", 1)[0]):
+        raise ValidationError(schema, f"{path!r} is a protected path.", errno.EACCES)
+
+
+def reject_overlapping_paths(schema: str, paths: Collection[str], option: str) -> None:
+    """Raise if any path is relative to another. A recursive walk must not overlap."""
+    if group_paths_by_parents(paths):
+        raise ValidationError(
+            schema,
+            f"Paths must be non-overlapping - no path can be relative to another when {option} is set to True.",
+        )
 
 
 def open_resource(tls: Any, path: str) -> Any:
