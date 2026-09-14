@@ -5,9 +5,12 @@ from truenas_pylicensed import verify
 from middlewared.api import api_method
 from middlewared.api.current import (
     EntitlementEntry,
+    EntitlementFactsEntry,
     EntitlementsInfo,
     TrueNASEntitlementsCheckArgs,
     TrueNASEntitlementsCheckResult,
+    TrueNASEntitlementsFactsArgs,
+    TrueNASEntitlementsFactsResult,
     TrueNASEntitlementsInfoArgs,
     TrueNASEntitlementsInfoResult,
 )
@@ -21,7 +24,7 @@ from middlewared.utils.entitlements import (
     get_facts,
 )
 from middlewared.utils.hardware import get_hardware_info
-from middlewared.utils.license import describe_legacy_license
+from middlewared.utils.license import LicenseOrigin, describe_legacy_license
 
 
 def _entry(entitlement: Entitlement) -> EntitlementEntry:
@@ -91,6 +94,31 @@ class TrueNASEntitlementsService(Service):
             features[str(key)] = _entry(check_entitlement(key, facts))
 
         return EntitlementsInfo(features=features)
+
+    @api_method(
+        TrueNASEntitlementsFactsArgs,
+        TrueNASEntitlementsFactsResult,
+        roles=["SYSTEM_PRODUCT_READ"],
+        check_annotations=True,
+    )
+    def facts(self) -> EntitlementFactsEntry:
+        """
+        Return the hardware and license facts every entitlement decision is computed from.
+        """
+        # This is purely for UI to consume for branding purposes
+        try:
+            facts = get_facts()
+        except Exception as e:
+            raise CallError(f"Unable to determine entitlement facts: {e}")
+
+        license_type = None
+        if facts.license is not None and facts.license.origin is LicenseOrigin.ISSUED:
+            license_type = facts.license.type.name
+
+        return EntitlementFactsEntry(
+            hardware_type="TRUENAS" if facts.hardware_class.is_appliance else "COMMUNITY",
+            license_type=license_type,
+        )
 
     @private
     def debug_info(self) -> dict[str, Any]:
