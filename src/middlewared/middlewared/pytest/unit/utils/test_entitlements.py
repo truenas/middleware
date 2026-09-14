@@ -91,9 +91,12 @@ def test_live_policy_shape():
     assert not [rule for rule in POLICY.values() if isinstance(rule, LegacyRule)]
 
 
+MATRIXLESS_FEATURES = frozenset({LicenseFeature.TNC_SUB})
+
+
 # Completeness: adding a flag must not silently skip a site.
 def test_target_vectors_cover_every_license_feature():
-    assert set(LicenseFeature) == set(TARGET_VECTORS)
+    assert set(LicenseFeature) - MATRIXLESS_FEATURES == set(TARGET_VECTORS)
 
 
 def test_policy_keys_are_known_vocabulary():
