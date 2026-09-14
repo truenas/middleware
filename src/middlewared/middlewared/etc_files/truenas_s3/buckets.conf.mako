@@ -12,8 +12,11 @@
     config = data.config
 
     def audit_value(mask: S3AuditMask) -> str:
-        # ALL is the daemon's `all`; a list, empty included, is the mask
-        return "all" if mask == "ALL" else ",".join(mask)
+        # ALL is the daemon's `all`; a list, empty included, is the mask.
+        # The daemon refuses a duplicated name and the plugin stores masks
+        # deduplicated; dict.fromkeys covers a row read from a datastore
+        # that predates that, keeping the stored order
+        return "all" if mask == "ALL" else ",".join(dict.fromkeys(mask))
 %>\
 [server]
 % if data.listen:
@@ -35,8 +38,20 @@ servers = ${config.servers}
 % if config.region:
 region = ${config.region}
 % endif
+## the system's own names, screened against the daemon's grammar where
+## they are gathered; empty renders nothing and the daemon stays
+## path-style only
+% if data.base_hosts:
+base_hosts = ${data.base_hosts}
+% endif
 host_id = ${data.host_id}
 owner_id_seed = ${data.owner_id_seed}
+## the release the SOSAPI ModelName names; screened where it is
+## gathered, and empty renders nothing — the daemon then names its own
+## version
+% if data.truenas_version:
+truenas_version = ${data.truenas_version}
+% endif
 log_level = ${config.log_level.lower()}
 % if data.audit_supported:
 % if config.default_audit:

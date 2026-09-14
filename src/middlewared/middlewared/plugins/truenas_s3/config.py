@@ -6,6 +6,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 import ipaddress
 import os
+import string
 from typing import TYPE_CHECKING, Any
 
 from middlewared.alert.source.truenas_s3 import S3BucketDatasetMissingAlert
@@ -46,6 +47,15 @@ MAX_LISTENERS = 8
 
 MAX_SERVERS = 8
 """The daemon's ceiling on reactor threads, its credential broker's ring limit."""
+
+BASE_HOST_CHARS = frozenset(string.ascii_lowercase + string.digits + ".-")
+"""The daemon's base-host grammar: lowercase DNS name bytes and nothing else."""
+
+NUMERIC_HOST_CHARS = frozenset(string.digits + ".")
+"""A name of only these is an address-shaped literal, never a DNS base."""
+
+VERSION_TOKEN_CHARS = frozenset(string.ascii_letters + string.digits + "._+-")
+"""The daemon's `truenas_version` grammar: a version-shaped token."""
 
 
 class S3Model(sa.Model):
@@ -91,8 +101,10 @@ class RenderData:
     config: S3Entry
     host_id: str
     owner_id_seed: str
+    truenas_version: str
     listen: str
     listen_tls: str
+    base_hosts: str
     tls_cert: str | None
     tls_key: str | None
     global_grants: list[RenderedGrant]
@@ -116,22 +128,82 @@ def _listen_text(listeners: Sequence[S3Listener]) -> tuple[str, str]:
     return ", ".join(plain), ", ".join(secure)
 
 
+def _base_hosts(*names: str | None) -> str:
+    """[server] base_hosts: the DNS bases the S3 service answers
+    virtual-hosted requests under, derived from the system's own hostname
+    rather than asked for. Each candidate is folded to lowercase and
+    screened against the daemon's grammar — DNS name bytes only, no leading
+    or trailing dot, never an all-numeric dotted name — because the daemon
+    refuses the whole file over one entry outside it, and the hostname
+    fields admit spellings (an FQDN's trailing dot, say) it does not. A
+    name the screen drops costs virtual-hosted addressing under that name,
+    never the service; path-style requests are served either way."""
+    hosts: list[str] = []
+    for name in names:
+        host = (name or "").lower().removesuffix(".")
+        if (
+            not host
+            or host.startswith(".")
+            or host.endswith(".")
+            or not set(host) <= BASE_HOST_CHARS
+            or set(host) <= NUMERIC_HOST_CHARS
+            or host in hosts
+        ):
+            continue
+        hosts.append(host)
+    return ", ".join(hosts)
+
+
+def _version_token(version: str) -> str:
+    """The appliance release for the S3 service's `truenas_version` key,
+    which the SOSAPI declaration's `ModelName` carries. The daemon refuses
+    the whole file over a value outside its version-token grammar, so a
+    release string that ever fell outside it is omitted instead — the
+    daemon then names its own version."""
+    return version if 0 < len(version) <= 64 and set(version) <= VERSION_TOKEN_CHARS else ""
+
+
 def _rendered_grants(grants: Sequence[S3GrantEntry], bucket: str) -> list[RenderedGrant]:
     """Each grant under the heading its section carries: the principal
     kind, its label (quoted, stripped of what would break the grammar) and
     the bucket, `*` for every bucket. A user and a group may share a label,
     but the same principal twice is a duplicate section the daemon refuses;
     validation keeps a list free of those, and the last one wins here as a
-    backstop."""
-    by_principal: dict[tuple[str, int | None], RenderedGrant] = {}
+    backstop.
+
+    Two *different* principals may still share a label — a local and a
+    directory account resolving to one name, or a stripped label landing
+    on another's — and a duplicated heading refuses the whole file, so
+    colliders are disambiguated with their xid. The label is display
+    only; the xid key below is what the daemon matches on."""
+    by_principal: dict[tuple[str, int | None], S3GrantEntry] = {}
     for grant in grants:
-        kind = grant.principal_type.lower()
-        if kind == "everyone":
+        by_principal[(grant.principal_type, grant.xid)] = grant
+    labels = {
+        key: grant_label(grant) for key, grant in by_principal.items() if grant.principal_type != "EVERYONE"
+    }
+    # Suffix every member of a colliding label group with its own xid. A
+    # suffixed label can in turn collide with a literal one, so repeat
+    # until the headings are unique — which each round's distinct-xid
+    # suffix guarantees is reached.
+    while True:
+        groups: dict[tuple[str, str], list[tuple[str, int | None]]] = {}
+        for key, label in labels.items():
+            groups.setdefault((key[0], label), []).append(key)
+        collided = [keys for keys in groups.values() if len(keys) > 1]
+        if not collided:
+            break
+        for keys in collided:
+            for key in keys:
+                labels[key] = f"{labels[key]} ({key[1]})"
+    rows = []
+    for key, grant in by_principal.items():
+        if grant.principal_type == "EVERYONE":
             heading = f'grant everyone "{bucket}"'
         else:
-            heading = f'grant {kind} "{grant_label(grant)}" "{bucket}"'
-        by_principal[(grant.principal_type, grant.xid)] = RenderedGrant(heading=heading, grant=grant)
-    return list(by_principal.values())
+            heading = f'grant {grant.principal_type.lower()} "{labels[key]}" "{bucket}"'
+        rows.append(RenderedGrant(heading=heading, grant=grant))
+    return rows
 
 
 class S3ConfigPart(SystemServicePart[S3Entry]):
@@ -233,7 +305,7 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
         if (new.default_audit or new.default_audit_overflow != "DROP") and not await self.audit_supported():
             verrors.add(
                 "s3_update.default_audit",
-                "Auditing the S3 service requires TrueNAS Enterprise appliance hardware.",
+                "Auditing the S3 service is a licensed feature.",
             )
 
         if new.managed_root_dataset:
@@ -249,6 +321,11 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
 
         update = new.model_dump(exclude={"id"})
         update["global_grants"] = [g.model_dump(exclude={"name"}) for g in new.global_grants]
+        # Set semantics with the given order kept: the S3 service refuses a
+        # mask that names an action twice, and a real set would render in
+        # hash order, churning the file between generates.
+        if isinstance(update["default_audit"], list):
+            update["default_audit"] = list(dict.fromkeys(update["default_audit"]))
         await self.middleware.call("datastore.update", self._datastore, old.id, update)
         await render_and_apply(self.middleware)
         return await self.config()
@@ -325,6 +402,16 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
         if not listen_tls:
             tls_cert = tls_key = None
 
+        # virtual-hosted addressing under the system's own names: the
+        # virtual hostname is the one clients reach an HA pair by
+        net = await self.middleware.call("network.configuration.config")
+        host = net.get("hostname_virtual") or net["hostname"]
+        domain = net.get("domain") or ""
+        base_hosts = _base_hosts(host, f"{host}.{domain}" if host and domain else None)
+
+        # the release the SOSAPI ModelName names
+        truenas_version = _version_token(await self.middleware.call("system.version_short"))
+
         buckets: list[SharingS3Entry] = await self.middleware.call("sharing.s3.query")
         datasets = (
             {
@@ -371,8 +458,10 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
             config=config,
             host_id=identity["host_id"],
             owner_id_seed=identity["owner_id_seed"],
+            truenas_version=truenas_version,
             listen=listen,
             listen_tls=listen_tls,
+            base_hosts=base_hosts,
             tls_cert=tls_cert,
             tls_key=tls_key,
             global_grants=_rendered_grants(config.global_grants, "*"),

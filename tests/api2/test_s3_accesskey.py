@@ -196,6 +196,30 @@ def test_expiry_flips_the_status(s3_user):
         call("s3.accesskey.delete", key["id"])
 
 
+def test_a_naive_expiry_is_taken_as_utc(s3_user):
+    """An expiry given without a timezone is UTC on both paths that read
+    one: the in-the-past comparison, which is aware on its other side, and
+    the Unix timestamp the credentials file renders."""
+    with pytest.raises(ValidationErrors) as ve:
+        call(
+            "s3.accesskey.create",
+            {"name": "naive past", "username": S3_USER, "expires_at": "2000-01-01T00:00:00"},
+        )
+    assert "in the past" in ve.value.errors[0].errmsg
+
+    key = call(
+        "s3.accesskey.create",
+        {"name": "naive future", "username": S3_USER, "expires_at": "2100-01-01T00:00:00"},
+    )
+    try:
+        assert key["status"] == "ENABLED"
+        call("etc.generate", "truenas_s3")
+        rendered = ssh(f"grep -A5 '{key['access_key']}' {CREDENTIALS_CONF}")
+        assert f"expires_at = {int(datetime(2100, 1, 1, tzinfo=UTC).timestamp())}" in rendered
+    finally:
+        call("s3.accesskey.delete", key["id"])
+
+
 def test_deleted_user_takes_its_keys():
     """Deleting a local account deletes every key it held."""
     with user(

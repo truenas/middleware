@@ -12,21 +12,30 @@ from .common import AuditEvent, AuditEventVersion, convert_schema_to_set
 # field sets below. The producer's contract is AUDIT.md in the truenas_s3
 # repository; the event name is the S3 wire operation, verbatim.
 
-# The thirteen bucket-configuration probes route as one operation whose
-# rendering names the probed subresource.
+# The bucket-configuration probes route as one operation whose rendering
+# names the probed subresource. The names are the daemon's BucketProbe
+# variants, verbatim; ObjectLock is no longer among them — the lock
+# configuration pair became operations of its own — and is kept here for
+# records written while it was.
 S3_PROBE_EVENTS = tuple(
     f"GetBucketProbe({probe})"
     for probe in (
         "Accelerate",
+        "Analytics",
         "Cors",
         "Encryption",
+        "IntelligentTiering",
+        "Inventory",
         "Lifecycle",
         "Logging",
+        "Metrics",
+        "Notification",
         "ObjectLock",
         "OwnershipControls",
         "Policy",
         "PolicyStatus",
         "PublicAccessBlock",
+        "Replication",
         "RequestPayment",
         "Tagging",
         "Website",
@@ -149,6 +158,19 @@ class AuditEventS3Part(AuditEventS3):
     event_data: AuditEventS3PartEventData
 
 
+class AuditEventS3PartCopyEventData(AuditEventS3EventData):
+    upload: str | None = None
+    part: int | None = None
+    src_bucket: str | None = None
+    src_obj: str | None = None
+    src_ver: str | None = None
+
+
+class AuditEventS3PartCopy(AuditEventS3):
+    event: Literal["UploadPartCopy"]
+    event_data: AuditEventS3PartCopyEventData
+
+
 class AuditEventS3CompleteEventData(AuditEventS3EventData):
     upload: str | None = None
     parts: int | None = None
@@ -164,7 +186,7 @@ class AuditEventS3ListingEventData(AuditEventS3EventData):
 
 
 class AuditEventS3Listing(AuditEventS3):
-    event: Literal["ListObjects", "ListObjectsV2", "ListMultipartUploads"]
+    event: Literal["ListObjects", "ListObjectsV2", "ListObjectVersions", "ListMultipartUploads"]
     event_data: AuditEventS3ListingEventData
 
 
@@ -187,6 +209,42 @@ class AuditEventS3BucketRead(AuditEventS3):
     event_data: AuditEventS3EventData
 
 
+class AuditEventS3ObjectConfig(AuditEventS3):
+    """An object's configuration surfaces — tags, retention, legal hold,
+    ACL. The envelope's `obj`/`ver` name the object; the records carry no
+    per-event fields."""
+
+    event: Literal[
+        "GetObjectTagging",
+        "PutObjectTagging",
+        "DeleteObjectTagging",
+        "GetObjectRetention",
+        "PutObjectRetention",
+        "GetObjectLegalHold",
+        "PutObjectLegalHold",
+        "GetObjectAcl",
+        "PutObjectAcl",
+    ]
+    event_data: AuditEventS3EventData
+
+
+class AuditEventS3BucketConfig(AuditEventS3):
+    """The bucket plane: the bucket ACL pair, the lock-configuration pair
+    (bucket-scoped despite the name), versioning state, and the bucket
+    lifecycle itself. Envelope-only records."""
+
+    event: Literal[
+        "GetBucketAcl",
+        "PutBucketAcl",
+        "GetObjectLockConfiguration",
+        "PutObjectLockConfiguration",
+        "PutBucketVersioning",
+        "CreateBucket",
+        "DeleteBucket",
+    ]
+    event_data: AuditEventS3EventData
+
+
 AUDIT_EVENT_S3_JSON_SCHEMAS = [
     add_attrs(replace_refs(model_json_schema(event_model)))
     for event_model in (
@@ -197,10 +255,13 @@ AUDIT_EVENT_S3_JSON_SCHEMAS = [
         AuditEventS3BatchDelete,
         AuditEventS3Upload,
         AuditEventS3Part,
+        AuditEventS3PartCopy,
         AuditEventS3Complete,
         AuditEventS3Listing,
         AuditEventS3Account,
         AuditEventS3BucketRead,
+        AuditEventS3ObjectConfig,
+        AuditEventS3BucketConfig,
     )
 ]
 

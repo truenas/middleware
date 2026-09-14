@@ -29,6 +29,15 @@ if TYPE_CHECKING:
 __all__ = ("S3AccesskeyService",)
 
 
+def _assume_utc(value: datetime | None) -> datetime | None:
+    """An expiry given without a timezone is taken as UTC: the value is
+    compared against and stored as UTC, and a naive one would otherwise
+    fail the aware comparison and be stamped in the server's local time."""
+    if value is not None and value.tzinfo is None:
+        return value.replace(tzinfo=UTC)
+    return value
+
+
 class S3AccesskeyModel(sa.Model):
     __tablename__ = "truenas_s3_accesskey"
 
@@ -193,6 +202,7 @@ class S3AccesskeyServicePart(CRUDServicePart[S3AccesskeyEntry]):
             )
 
     async def do_create(self, data: S3AccesskeyCreate) -> S3AccesskeyEntry:
+        data.expires_at = _assume_utc(data.expires_at)
         verrors = ValidationErrors()
         await self._validate("s3_accesskey_create", data.name, data.expires_at, verrors)
 
@@ -255,6 +265,7 @@ class S3AccesskeyServicePart(CRUDServicePart[S3AccesskeyEntry]):
 
         rotate = data.model_dump(exclude_unset=True).get("rotate", False)
         new = old.updated(data)
+        new.expires_at = _assume_utc(new.expires_at)
 
         verrors = ValidationErrors()
         await self._validate("s3_accesskey_update", new.name, new.expires_at, verrors, id_=id_)
