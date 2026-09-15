@@ -1,7 +1,7 @@
 import pytest
 
 from middlewared.test.integration.assets.pool import dataset, snapshot
-from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.utils import call, pool, ssh
 
 
 def test_zfs_resource_snapshot_query_specific_path():
@@ -322,3 +322,102 @@ def test_zfs_resource_snapshot_query_duplicate_paths():
                 {"paths": [ds, ds, ds]},
             )
         assert "unique" in str(exc_info.value).lower()
+
+
+def test_zfs_resource_snapshot_exists():
+    """zfs.resource.snapshot.exists is an existence probe, not a property fetch"""
+    with dataset("test_snap_exists") as ds:
+        with snapshot(ds, "snap1") as snap:
+            assert call("zfs.resource.snapshot.exists", snap) is True
+        assert call("zfs.resource.snapshot.exists", snap) is False
+
+
+def test_zfs_resource_snapshot_exists_missing_dataset():
+    assert call("zfs.resource.snapshot.exists", "nosuchpool/nosuchds@snap") is False
+
+
+def test_zfs_resource_snapshot_query_without_properties():
+    """properties=None reports identity fields only"""
+    with dataset("test_snap_query_noprops") as ds:
+        with snapshot(ds, "snap1") as snap:
+            result = call(
+                "zfs.resource.snapshot.query", {"paths": [snap], "properties": None}
+            )
+            assert len(result) == 1
+            assert result[0]["name"] == snap
+            assert result[0]["dataset"] == ds
+            assert result[0]["snapshot_name"] == "snap1"
+            assert result[0]["properties"] is None
+
+
+def test_zfs_resource_snapshot_query_with_source():
+    """get_source reports where each property value comes from"""
+    with dataset("test_snap_query_source") as ds:
+        with snapshot(ds, "snap1") as snap:
+            result = call(
+                "zfs.resource.snapshot.query",
+                {"paths": [snap], "properties": ["creation"], "get_source": True},
+            )
+            assert len(result) == 1
+            assert result[0]["properties"]["creation"]["source"]["type"] == "NONE"
+
+
+def test_zfs_resource_snapshot_query_internal_datasets():
+    """A recursive walk skips internal snapshots unless they are asked for"""
+    path = f"{pool}/.system"
+    snap = f"{path}@test_snap_query_internal"
+    ssh(f"zfs snapshot {snap}")
+    try:
+        walked = call(
+            "zfs.resource.snapshot.query",
+            {"paths": [pool], "recursive": True, "properties": None},
+        )
+        assert snap not in [r["name"] for r in walked]
+
+        asked_for = call(
+            "zfs.resource.snapshot.query", {"paths": [path], "properties": None}
+        )
+        assert [r["name"] for r in asked_for] == [snap]
+    finally:
+        ssh(f"zfs destroy {snap}")
+
+
+def test_zfs_resource_snapshot_query_property_cache_across_datasets():
+    """The per-parent-type property set is built once and reused"""
+    with dataset("test_snap_query_cache_fs1") as fs1:
+        with dataset("test_snap_query_cache_fs2") as fs2:
+            with snapshot(fs1, "snap"), snapshot(fs2, "snap"):
+                result = call(
+                    "zfs.resource.snapshot.query",
+                    {"paths": [fs1, fs2], "properties": ["used", "referenced"]},
+                )
+                assert len(result) == 2
+                assert all(set(r["properties"]) >= {"used", "referenced"} for r in result)
+
+
+def test_zfs_resource_snapshot_query_property_cache_across_volumes():
+    with dataset(
+        "test_snap_query_cache_v1", {"type": "VOLUME", "volsize": 1024 * 1024}
+    ) as v1:
+        with dataset(
+            "test_snap_query_cache_v2", {"type": "VOLUME", "volsize": 1024 * 1024}
+        ) as v2:
+            with snapshot(v1, "snap"), snapshot(v2, "snap"):
+                result = call(
+                    "zfs.resource.snapshot.query",
+                    {"paths": [v1, v2], "properties": ["used"]},
+                )
+                assert len(result) == 2
+                assert all("used" in r["properties"] for r in result)
+
+
+def test_zfs_resource_snapshot_query_unknown_property_is_ignored():
+    with dataset("test_snap_query_badprop") as ds:
+        with snapshot(ds, "snap") as snap:
+            result = call(
+                "zfs.resource.snapshot.query",
+                {"paths": [snap], "properties": ["notaproperty", "used"]},
+            )
+            assert len(result) == 1
+            assert "notaproperty" not in result[0]["properties"]
+            assert "used" in result[0]["properties"]

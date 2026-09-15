@@ -1,7 +1,10 @@
+import errno
+
 import pytest
 
+from middlewared.service_exception import ValidationError
 from middlewared.test.integration.assets.pool import dataset, snapshot
-from middlewared.test.integration.utils import call
+from middlewared.test.integration.utils import call, ssh
 
 
 def test_zfs_resource_snapshot_hold_basic():
@@ -230,3 +233,97 @@ def test_zfs_resource_snapshot_release_protected_path():
             {"path": "boot-pool@test", "tag": "test"},
         )
     assert "protected" in str(exc_info.value).lower()
+
+
+def test_zfs_resource_snapshot_hold_non_snapshot_path_is_rejected():
+    with dataset("test_snap_hold_notsnap") as ds:
+        with pytest.raises(ValidationError) as ve:
+            call("zfs.resource.snapshot.hold", {"path": ds})
+        assert ve.value.errmsg == "path must be a snapshot path (containing '@')."
+
+
+def test_zfs_resource_snapshot_hold_nonexistent_raises_enoent():
+    with dataset("test_snap_hold_missing") as ds:
+        snap = f"{ds}@nosuchsnap"
+        with pytest.raises(ValidationError) as ve:
+            call("zfs.resource.snapshot.hold", {"path": snap})
+        assert ve.value.errmsg == f"{snap!r} not found"
+        assert ve.value.errno == errno.ENOENT
+
+
+def test_zfs_resource_snapshot_hold_recursive_missing_parent_raises_enoent():
+    with dataset("test_snap_hold_rec_missing") as ds:
+        snap = f"{ds}@nosuchsnap"
+        with pytest.raises(ValidationError) as ve:
+            call("zfs.resource.snapshot.hold", {"path": snap, "recursive": True})
+        assert ve.value.errmsg == f"{snap!r} not found"
+        assert ve.value.errno == errno.ENOENT
+
+
+def test_zfs_resource_snapshot_hold_recursive_skips_children_without_the_snapshot():
+    """A child that never got the snapshot is skipped rather than failing the hold"""
+    with dataset("test_snap_hold_rec_partial") as parent:
+        with dataset("test_snap_hold_rec_partial/with_snap") as with_snap:
+            with dataset("test_snap_hold_rec_partial/without_snap") as without_snap:
+                ssh(f"zfs snapshot {parent}@shared")
+                ssh(f"zfs snapshot {with_snap}@shared")
+                try:
+                    call(
+                        "zfs.resource.snapshot.hold",
+                        {"path": f"{parent}@shared", "recursive": True},
+                    )
+                    assert call(
+                        "zfs.resource.snapshot.holds", {"path": f"{parent}@shared"}
+                    ) == ["truenas"]
+                    assert call(
+                        "zfs.resource.snapshot.holds", {"path": f"{with_snap}@shared"}
+                    ) == ["truenas"]
+                    assert call(
+                        "zfs.resource.snapshot.query", {"paths": [without_snap]}
+                    ) == []
+                finally:
+                    call(
+                        "zfs.resource.snapshot.release",
+                        {"path": f"{parent}@shared", "recursive": True},
+                    )
+                    ssh(f"zfs destroy {with_snap}@shared")
+                    ssh(f"zfs destroy {parent}@shared")
+
+
+def test_zfs_resource_snapshot_release_non_snapshot_path_is_rejected():
+    with dataset("test_snap_release_notsnap") as ds:
+        with pytest.raises(ValidationError) as ve:
+            call("zfs.resource.snapshot.release", {"path": ds})
+        assert ve.value.errmsg == "path must be a snapshot path (containing '@')."
+
+
+def test_zfs_resource_snapshot_release_nonexistent_raises_enoent():
+    with dataset("test_snap_release_missing") as ds:
+        snap = f"{ds}@nosuchsnap"
+        with pytest.raises(ValidationError) as ve:
+            call("zfs.resource.snapshot.release", {"path": snap})
+        assert ve.value.errmsg == f"{snap!r} not found"
+        assert ve.value.errno == errno.ENOENT
+
+
+def test_zfs_resource_snapshot_release_without_holds_is_a_noop():
+    with dataset("test_snap_release_noholds") as ds:
+        with snapshot(ds, "snap") as snap:
+            call("zfs.resource.snapshot.release", {"path": snap})
+            assert call("zfs.resource.snapshot.holds", {"path": snap}) == []
+
+
+def test_zfs_resource_snapshot_holds_non_snapshot_path_is_rejected():
+    with dataset("test_snap_holds_notsnap") as ds:
+        with pytest.raises(ValidationError) as ve:
+            call("zfs.resource.snapshot.holds", {"path": ds})
+        assert ve.value.errmsg == "path must be a snapshot path (containing '@')."
+
+
+def test_zfs_resource_snapshot_holds_nonexistent_raises_enoent():
+    with dataset("test_snap_holds_missing") as ds:
+        snap = f"{ds}@nosuchsnap"
+        with pytest.raises(ValidationError) as ve:
+            call("zfs.resource.snapshot.holds", {"path": snap})
+        assert ve.value.errmsg == f"{snap!r} not found"
+        assert ve.value.errno == errno.ENOENT

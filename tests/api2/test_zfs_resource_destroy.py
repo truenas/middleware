@@ -1,7 +1,9 @@
+import errno
 import os
 
 import pytest
 
+from middlewared.service_exception import ValidationError
 from middlewared.test.integration.utils import call, ssh
 
 from auto_config import pool_name
@@ -214,3 +216,92 @@ def test_zfs_resource_destroy_complex_hierarchy():
         },
     )
     assert len(result) == 0
+
+
+def test_zfs_resource_destroy_unmount_failure_is_reported():
+    """A foreign mount under the dataset blocks the unmount and the destroy"""
+    fs = create_resource("test_fs_busy_mount")
+    sub = f"/mnt/{fs}/sub"
+    ssh(f"mkdir -p {sub}")
+    ssh(f"mount -t tmpfs tmpfs {sub}")
+    try:
+        with pytest.raises(ValidationError) as ve:
+            call("zfs.resource.destroy", {"path": fs})
+        assert fs in ve.value.errmsg
+        assert call("zfs.resource.query", {"paths": [fs], "properties": None})
+    finally:
+        ssh(f"umount {sub}")
+        ssh(f"rmdir {sub}")
+        call("zfs.resource.destroy", {"path": fs, "recursive": True})
+
+
+def test_zfs_resource_destroy_recursive_with_undestroyable_clone_is_reported():
+    """A clone that is itself cloned cannot be destroyed, so the whole destroy fails"""
+    fs = create_resource("test_fs_clone_chain")
+    clone_a = os.path.join(pool_name, "test_fs_clone_chain_a")
+    clone_b = os.path.join(pool_name, "test_fs_clone_chain_b")
+    ssh(f"zfs snapshot {fs}@snap1")
+    ssh(f"zfs clone {fs}@snap1 {clone_a}")
+    ssh(f"zfs snapshot {clone_a}@snap_a")
+    ssh(f"zfs clone {clone_a}@snap_a {clone_b}")
+    try:
+        with pytest.raises(ValidationError) as ve:
+            call("zfs.resource.destroy", {"path": fs, "recursive": True})
+        assert ve.value.errno == errno.EBUSY
+        assert "There are clones" in ve.value.errmsg
+        assert call("zfs.resource.query", {"paths": [fs], "properties": None})
+    finally:
+        for path in (clone_b, clone_a, fs):
+            ssh(f"zfs destroy -r {path} 2>/dev/null || true")
+
+
+def test_zfs_resource_destroy_absolute_path_is_rejected():
+    with pytest.raises(ValidationError) as ve:
+        call("zfs.resource.destroy", {"path": f"/mnt/{pool_name}/foo"})
+    assert ve.value.errmsg == (
+        "Absolute path is invalid. Must be in form of <pool>/<resource>."
+    )
+    assert ve.value.errno == errno.EINVAL
+
+
+def test_zfs_resource_destroy_snapshot_path_is_rejected():
+    with pytest.raises(ValidationError) as ve:
+        call("zfs.resource.destroy", {"path": f"{pool_name}/foo@snap"})
+    assert ve.value.errmsg == (
+        "Use `zfs.resource.snapshot.destroy` to destroy snapshots."
+    )
+
+
+def test_zfs_resource_destroy_root_filesystem_is_rejected():
+    with pytest.raises(ValidationError) as ve:
+        call("zfs.resource.destroy", {"path": pool_name})
+    assert ve.value.errmsg == "Destroying the root filesystem is not allowed."
+    assert ve.value.errno == errno.EINVAL
+
+
+def test_zfs_resource_destroy_nonexistent_raises_enoent():
+    path = os.path.join(pool_name, "test_fs_destroy_missing")
+    with pytest.raises(ValidationError) as ve:
+        call("zfs.resource.destroy", {"path": path})
+    assert ve.value.errmsg == f"{path!r} does not exist."
+    assert ve.value.errno == errno.ENOENT
+
+
+def test_zfs_resource_destroy_protected_path_is_rejected():
+    path = os.path.join(pool_name, ".system")
+    with pytest.raises(ValidationError) as ve:
+        call("zfs.resource.destroy", {"path": path})
+    assert ve.value.errmsg == f"{path!r} is a protected path."
+    assert ve.value.errno == errno.EACCES
+
+
+def test_zfs_resource_destroy_recursive_removes_child_mountpoint_dirs():
+    """A recursive destroy takes the whole mountpoint tree with it"""
+    root = create_resource("test_fs_mntpnt_tree")
+    create_resource("test_fs_mntpnt_tree/a/b", {"create_ancestors": True})
+    for path in (root, f"{root}/a", f"{root}/a/b"):
+        ssh(f"test -d /mnt/{path}")
+
+    call("zfs.resource.destroy", {"path": root, "recursive": True})
+
+    assert ssh(f"test -e /mnt/{root}", check=False, complete_response=True)["result"] is False
