@@ -1,6 +1,6 @@
 from collections.abc import Callable
 import socket
-from typing import Concatenate, ParamSpec
+from typing import Concatenate
 
 from truenas_pynetif.address.constants import AddressFamily
 from truenas_pynetif.address.netlink import (
@@ -18,10 +18,8 @@ from middlewared.service import ServiceContext
 
 __all__ = ("sync_impl",)
 
-P = ParamSpec("P")
 
-
-def _apply_route(
+def _apply_route[**P](
     ctx: ServiceContext,
     op: Callable[Concatenate[socket.socket, P], None],
     sock: socket.socket,
