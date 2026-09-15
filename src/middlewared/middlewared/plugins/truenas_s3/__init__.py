@@ -76,7 +76,7 @@ class S3ListenDelegate(SystemServiceListenMultipleDelegate):
         return any(listener["address"] == ip for listener in state)
 
     async def reset_listens(self, state: list[dict[str, Any]]) -> None:
-        await self.set_listen_state(_wildcard_listeners(state))
+        await self.set_listen_state(_wildcard_listeners(state))  # type: ignore[no-untyped-call]
 
 
 
