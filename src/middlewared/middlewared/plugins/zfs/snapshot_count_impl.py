@@ -1,6 +1,7 @@
 import dataclasses
 import logging
 import os
+import time
 from typing import Any
 
 from truenas_pylibzfs import ZFSProperty, ZFSType
@@ -129,8 +130,9 @@ def __count_dataset_snapshots_cached(ds_hdl: Any, batch_ops: list[TDBBatchOperat
     # Cache miss - count and update cache
     count = __count_dataset_snapshots_uncached(ds_hdl)
 
-    # Update cache if we have a valid timestamp
-    if changed_ts:
+    # `snapshots_changed` only resolves to the second, so an entry stamped with
+    # the current second could still go stale inside it and must not be cached.
+    if changed_ts and changed_ts < int(time.time()):
         batch_ops.append(
             TDBBatchOperation(
                 action=TDBBatchAction.SET,
