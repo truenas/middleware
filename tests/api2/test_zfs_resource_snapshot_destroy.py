@@ -1,5 +1,8 @@
+import errno
+
 import pytest
 
+from middlewared.service_exception import ValidationError
 from middlewared.test.integration.assets.pool import dataset, snapshot
 from middlewared.test.integration.utils import call, ssh
 
@@ -316,3 +319,22 @@ def test_zfs_resource_snapshot_destroy_bypass_is_not_settable():
     error = str(exc_info.value)
     assert "bypass" in error, error
     assert "Extra inputs are not permitted" in error, error
+
+
+def test_zfs_resource_snapshot_destroy_busy_snapshot_reports_ebusy():
+    """A process sitting inside the automounted snapshot keeps it busy"""
+    with dataset("test_snap_destroy_busy") as ds:
+        with snapshot(ds, "snap1") as snap:
+            snapdir = f"/mnt/{ds}/.zfs/snapshot/snap1"
+            # a process whose cwd is the automounted snapshot holds it open
+            pid = ssh(f"cd {snapdir} && nohup sleep 120 >/dev/null 2>&1 & echo $!").split()[-1]
+            try:
+                with pytest.raises(ValidationError) as ve:
+                    call("zfs.resource.snapshot.destroy", {"path": snap})
+                assert ve.value.errno == errno.EBUSY
+                assert f"Failed to destroy {snap!r}" in ve.value.errmsg
+                assert "Device or resource busy" in ve.value.errmsg
+                assert call("zfs.resource.snapshot.query", {"paths": [snap]})
+            finally:
+                ssh(f"kill {pid}", check=False)
+                ssh(f"umount {snapdir}", check=False)

@@ -1,5 +1,8 @@
+import errno
+
 import pytest
 
+from middlewared.service_exception import ValidationError
 from middlewared.test.integration.assets.pool import another_pool
 from middlewared.test.integration.utils import call
 
@@ -165,3 +168,52 @@ def test_pool_snapshot_rename_recursive(rename_test_pool):
             call("pool.dataset.delete", root, {"recursive": True})
         except Exception:
             pass
+
+
+def test_zfs_resource_rename_snapshot_path_is_rejected(rename_test_pool):
+    """A snapshot must go through zfs.resource.snapshot.rename"""
+    pool = rename_test_pool["name"]
+    with pytest.raises(ValidationError) as ve:
+        call("zfs.resource.rename", f"{pool}@snap", f"{pool}@snap2")
+    assert ve.value.attribute == "zfs.resource.rename"
+    assert ve.value.errmsg == (
+        "Use `zfs.resource.snapshot.rename` to rename snapshots."
+    )
+
+
+def test_zfs_resource_rename_onto_existing_name_is_rejected(rename_test_pool):
+    """Renaming onto a name that is taken reports EEXIST"""
+    pool = rename_test_pool["name"]
+    src = f"{pool}/test_rename_exists_src"
+    dst = f"{pool}/test_rename_exists_dst"
+    call("pool.dataset.create", {"name": src})
+    call("pool.dataset.create", {"name": dst})
+    try:
+        with pytest.raises(ValidationError) as ve:
+            call("zfs.resource.rename", src, dst)
+        assert ve.value.errmsg == f"{dst!r} already exists"
+        assert ve.value.errno == errno.EEXIST
+    finally:
+        for path in (src, dst):
+            call("pool.dataset.delete", path)
+
+
+def test_zfs_resource_rename_nonexistent_raises_enoent(rename_test_pool):
+    pool = rename_test_pool["name"]
+    src = f"{pool}/test_rename_missing"
+    with pytest.raises(ValidationError) as ve:
+        call("zfs.resource.rename", src, f"{pool}/test_rename_missing_new")
+    assert ve.value.errmsg == f"{src!r} not found"
+    assert ve.value.errno == errno.ENOENT
+
+
+def test_zfs_resource_rename_empty_new_name_is_rejected(rename_test_pool):
+    pool = rename_test_pool["name"]
+    src = f"{pool}/test_rename_empty_new"
+    call("pool.dataset.create", {"name": src})
+    try:
+        with pytest.raises(ValidationError) as ve:
+            call("zfs.resource.rename", src, "")
+        assert ve.value.errmsg == "'current_name' key is required"
+    finally:
+        call("pool.dataset.delete", src)
