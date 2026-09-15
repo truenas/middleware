@@ -22,6 +22,7 @@ from middlewared.plugins.zfs_.validation_utils import validate_pool_name
 from middlewared.service import CallError, CRUDService, ValidationErrors, job, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils.boot.pool import BOOT_POOL_NAME_VALID
+from middlewared.utils.service.entitlement import validate_sed_license
 from middlewared.utils.size import format_size
 
 from .utils import (
@@ -566,6 +567,9 @@ class PoolService(CRUDService):
 
         await validate_dedup_license(self.middleware, verrors, 'pool_create', data['deduplication'])
 
+        if data['all_sed']:
+            await validate_sed_license(self.middleware, verrors, 'pool_create.all_sed')
+
         verrors.check()
 
         disks, vdevs = await self._process_topology('pool_create', data, None, data['all_sed'])
@@ -765,6 +769,8 @@ class PoolService(CRUDService):
 
         verrors = ValidationErrors()
         dedup_table_quota_value = await self.validate_dedup_table_quota(data, verrors, 'pool_update')
+        if 'topology' in data and pool['all_sed']:
+            await validate_sed_license(self.middleware, verrors, 'pool_update.topology')
         verrors.check()
 
         disks = vdevs = None
