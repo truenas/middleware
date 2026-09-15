@@ -5,7 +5,7 @@ overrides.
 
 Implementation under test:
   - src/middlewared/middlewared/plugins/pool_/dataset.py:324-349, 688-702
-  - src/middlewared/middlewared/plugins/zfs/snapshot_crud.py:399-405
+  - src/middlewared/middlewared/plugins/zfs/snapshot_ops.py (clone_impl)
 """
 
 import contextlib
@@ -217,7 +217,7 @@ def test_clone_with_ssb_property_override_rejected_when_tiering_enabled(
     )
     try:
         clone_name = f"{tier_ds_regular}_clone_{time.monotonic_ns()}"
-        # snapshot_crud.clone_impl raises a single ValidationError, not a
+        # snapshot_ops.clone_impl raises a single ValidationError, not a
         # ValidationErrors collection.
         with pytest.raises((ValidationError, ValidationErrors)) as exc:
             call(

@@ -108,7 +108,7 @@ from middlewared.plugins.webshare.config import WebshareService
 from middlewared.plugins.webshare.sharing import SharingWebshareService
 from middlewared.plugins.update_ import UpdateService
 from middlewared.plugins.ups import UPSService
-from middlewared.plugins.zfs.resource_crud import ZFSResourceService
+from middlewared.plugins.zfs.resource import ZFSResourceService
 from middlewared.plugins.zfs.tier import ZfsTierService
 
 _SubHandler = typing.Callable[['Middleware', 'EventType', dict], typing.Awaitable[None]]
@@ -288,7 +288,7 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
 
         return serviceobj, methodobj
 
-    def create_task(self, coro, *, name=None):
+    def create_task[T](self, coro: Coroutine[typing.Any, typing.Any, T], *, name: str | None = None) -> asyncio.Task[T]:
         task = self.loop.create_task(coro, name=name)
         self.tasks.add(task)
         task.add_done_callback(self.tasks.discard)

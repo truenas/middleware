@@ -1,19 +1,29 @@
+from __future__ import annotations
+
 from collections.abc import Collection
+import errno
 import pathlib
 from dataclasses import dataclass
-from typing import Any, Literal
+from typing import Any, Literal, TYPE_CHECKING
 
 import truenas_pylibzfs
 
+from middlewared.service_exception import ValidationError
 from middlewared.utils import BOOT_POOL_NAME_VALID
 
 from .exceptions import ZFSPathNotProvidedException, ZFSPathNotFoundException
+
+if TYPE_CHECKING:
+    from middlewared.api.current import ZfsTierEntry
 
 __all__ = (
     "get_encryption_info",
     "group_paths_by_parents",
     "has_internal_path",
     "open_resource",
+    "reject_overlapping_paths",
+    "reject_protected_path",
+    "special_vdev_thresholds",
 )
 
 
@@ -124,6 +134,25 @@ def group_paths_by_parents(paths: Collection[str]) -> dict[str, list[str]]:
     return root_dict
 
 
+def reject_protected_path(schema: str, path: str, bypass: bool = False) -> None:
+    """Raise if ``path`` is an internal path and the caller may not touch it.
+
+    A snapshot inherits the protection status of the dataset it belongs to.
+    ``bypass`` is only exposed to internal callers, never to the public API.
+    """
+    if not bypass and has_internal_path(path.split("@", 1)[0]):
+        raise ValidationError(schema, f"{path!r} is a protected path.", errno.EACCES)
+
+
+def reject_overlapping_paths(schema: str, paths: Collection[str], option: str) -> None:
+    """Raise if any path is relative to another. A recursive walk must not overlap."""
+    if group_paths_by_parents(paths):
+        raise ValidationError(
+            schema,
+            f"Paths must be non-overlapping - no path can be relative to another when {option} is set to True.",
+        )
+
+
 def open_resource(tls: Any, path: str) -> Any:
     if not path:
         raise ZFSPathNotProvidedException()
@@ -135,3 +164,24 @@ def open_resource(tls: Any, path: str) -> Any:
             raise ZFSPathNotFoundException(path)
         else:
             raise e from None
+
+
+def special_vdev_thresholds(config: ZfsTierEntry) -> tuple[int, int]:
+    """Return ``(warning, critical)`` SPECIAL-vdev fill thresholds in percent.
+
+    ``critical`` is the lower of the user's configured cap
+    (``max_used_percentage``) and the actual ZFS overflow point
+    (``100 - special_class_metadata_reserve_pct``) — beyond which the
+    kernel stops sending small blocks to SPECIAL and spills them to
+    NORMAL, so letting the user set the cap higher than that is
+    meaningless.
+
+    ``warning`` sits 10 points below critical with a floor of 50% so the
+    warning stays useful even at the minimum cap settings.
+    """
+    critical = min(
+        config.max_used_percentage,
+        100 - config.special_class_metadata_reserve_pct,
+    )
+    warning = max(critical - 10, 50)
+    return warning, critical

@@ -7,7 +7,7 @@ unsupported.
 
 Implementation under test:
   - src/middlewared/middlewared/plugins/zfs/query_impl.py:50-51, 113-126
-  - src/middlewared/middlewared/plugins/zfs/resource_crud.py:352-364
+  - src/middlewared/middlewared/plugins/zfs/resource_query.py (query_impl)
   - src/middlewared/middlewared/plugins/pool_/dataset.py:142-153
   - src/middlewared/middlewared/plugins/pool_/dataset_query_utils.py:953-954
   - src/middlewared/middlewared/plugins/zfs/tier.py:160-215 (get_dataset_tier_info_cached)

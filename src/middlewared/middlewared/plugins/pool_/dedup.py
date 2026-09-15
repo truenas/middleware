@@ -33,7 +33,7 @@ class PoolService(Service):
         .. versionremoved:: 26
             Use ``pool.prefetch`` instead, which prefetches both DDT and BRT metadata.
         """
-        return await self.middleware.call('zfs.resource.pool.prefetch', pool_name)
+        await self.call2(self.s.zfs.resource.pool.prefetch, pool_name)
 
     @api_method(PoolPrefetchArgs, PoolPrefetchResult, roles=['POOL_WRITE'])
     @job(lock=lambda args: f'pool_prefetch_{args[0]}')
@@ -49,4 +49,4 @@ class PoolService(Service):
         The DDT tracks deduplication metadata, while the BRT tracks block cloning
         metadata used for efficient copy-on-write operations.
         """
-        return await self.middleware.call('zfs.resource.pool.prefetch', pool_name)
+        await self.call2(self.s.zfs.resource.pool.prefetch, pool_name)
