@@ -8,6 +8,7 @@ from middlewared.role import RoleManager
 from middlewared.service import ValidationErrors
 if typing.TYPE_CHECKING:
     from middlewared.api.base import BaseModel
+    from middlewared.common.event_source.manager import Subscriber
     from middlewared.main import Middleware
     from middlewared.utils.types import EventType
 
@@ -131,6 +132,9 @@ class EventSource:
 
     def run_sync(self):
         raise NotImplementedError('run_sync() method not implemented')
+
+    async def send_initial_state(self, subscriber: 'Subscriber') -> None:
+        pass
 
     async def cancel(self):
         self._canceled = True
