@@ -1,7 +1,11 @@
+import errno
+import time
+
 import pytest
 
+from middlewared.service_exception import ValidationError
 from middlewared.test.integration.assets.pool import dataset, snapshot
-from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.utils import call, mock, pool, ssh
 
 
 def test_zfs_resource_snapshot_count_single_dataset():
@@ -220,3 +224,170 @@ def test_zfs_resource_snapshot_count_zvol_recursive():
                     assert result[zvol] == 1
                 finally:
                     ssh(f"zfs destroy {zvol}@zsnap")
+
+
+def test_zfs_resource_snapshot_count_snapshot_path():
+    """A snapshot path counts as one snapshot of its dataset"""
+    with dataset("test_snap_count_snappath") as ds:
+        with snapshot(ds, "snap1") as snap1:
+            with snapshot(ds, "snap2") as snap2:
+                result = call(
+                    "zfs.resource.snapshot.count", {"paths": [snap1, snap2]}
+                )
+                assert result == {ds: 2}
+
+
+def test_zfs_resource_snapshot_count_excludes_internal_datasets():
+    """A recursive walk of the pool root skips the internal system datasets"""
+    result = call(
+        "zfs.resource.snapshot.count", {"paths": [pool], "recursive": True}
+    )
+    assert not [name for name in result if name.startswith(f"{pool}/.system")]
+
+
+def test_zfs_resource_snapshot_count_internal_dataset_when_asked_for():
+    """Asking for an internal dataset explicitly opts out of the exclusion"""
+    path = f"{pool}/.system"
+    result = call(
+        "zfs.resource.snapshot.count", {"paths": [path], "recursive": True}
+    )
+    assert path in result
+
+
+def test_zfs_resource_snapshot_count_no_paths_walks_every_pool():
+    with dataset("test_snap_count_rootwalk") as ds:
+        with snapshot(ds, "snap1"):
+            result = call("zfs.resource.snapshot.count", {})
+            assert pool in result
+            assert ds not in result
+
+            result = call("zfs.resource.snapshot.count", {"recursive": True})
+            assert result[ds] == 1
+
+
+def test_zfs_resource_snapshot_count_volume():
+    """A zvol has no mountpoint so its snapshots are iterated"""
+    with dataset(
+        "test_snap_count_zvol", {"type": "VOLUME", "volsize": 1024 * 1024}
+    ) as zvol:
+        with snapshot(zvol, "snap1"):
+            assert call("zfs.resource.snapshot.count", {"paths": [zvol]}) == {zvol: 1}
+
+
+def test_zfs_resource_snapshot_count_nonexistent_raises_enoent():
+    path = f"{pool}/test_snap_count_missing"
+    with pytest.raises(ValidationError) as ve:
+        call("zfs.resource.snapshot.count", {"paths": [path]})
+    assert ve.value.errmsg == f"{path!r} not found"
+    assert ve.value.errno == errno.ENOENT
+
+
+def test_zfs_resource_snapshot_count_recursive_overlapping_paths_rejected():
+    with dataset("test_snap_count_overlap") as parent:
+        with dataset("test_snap_count_overlap/child") as child:
+            with pytest.raises(ValidationError) as ve:
+                call(
+                    "zfs.resource.snapshot.count",
+                    {"paths": [parent, child], "recursive": True},
+                )
+            assert "non-overlapping" in ve.value.errmsg
+
+
+def test_zfs_resource_snapshot_count_mounted_dataset_uses_the_snapdir():
+    """A mounted filesystem is counted from .zfs/snapshot rather than by iterating"""
+    with dataset("test_snap_count_snapdir") as ds:
+        assert call("zfs.resource.snapshot.count", {"paths": [ds]}) == {ds: 0}
+        with snapshot(ds, "snap1"):
+            assert call("zfs.resource.snapshot.count", {"paths": [ds]}) == {ds: 1}
+            with snapshot(ds, "snap2"):
+                assert call("zfs.resource.snapshot.count", {"paths": [ds]}) == {ds: 2}
+            assert call("zfs.resource.snapshot.count", {"paths": [ds]}) == {ds: 1}
+
+
+SAME_SECOND_SNAPSHOT_COUNT = """\
+    def mock(self, dataset):
+        def query(prop):
+            return self.middleware.call_sync(
+                "zfs.resource.query", {"paths": [dataset], "properties": [prop]}
+            )[0]
+
+        def snapshots_changed():
+            return query("snapshots_changed").properties.snapshots_changed.raw
+
+        def count():
+            return self.middleware.call_sync(
+                "zfs.resource.snapshot.count", {"paths": [dataset]}
+            )[dataset]
+
+        def take(name):
+            self.middleware.call_sync(
+                "zfs.resource.snapshot.create", {"dataset": dataset, "name": name}
+            )
+
+        # Two snapshots only share a `snapshots_changed` when the clock does not
+        # tick between them, so keep taking pairs until one lands that way.
+        taken = 0
+        for attempt in range(30):
+            take(f"a{attempt}")
+            taken += 1
+            before = snapshots_changed()
+            first = count()
+
+            take(f"b{attempt}")
+            taken += 1
+            after = snapshots_changed()
+            second = count()
+
+            if before == after:
+                return {
+                    "same_second": True,
+                    "counted": [first, second],
+                    "actual": [taken - 1, taken],
+                    "attempts": attempt + 1,
+                }
+
+        return {"same_second": False, "counted": [], "actual": [], "attempts": 30}
+"""
+
+
+def settle_snapshots_changed():
+    """Wait until the count cache is willing to store an entry.
+
+    It holds a count back until the second that `snapshots_changed` names is
+    safely past, so a count taken before then is never cached.
+    """
+    time.sleep(2.1)
+
+
+def test_zfs_resource_snapshot_count_cache_follows_snapshots_changed():
+    """A repeated count is served from cache and still tracks new snapshots"""
+    with dataset("test_snap_count_cache") as ds:
+        with snapshot(ds, "snap1"):
+            settle_snapshots_changed()
+            # the first count fills the cache, the second is served from it
+            assert call("zfs.resource.snapshot.count", {"paths": [ds]}) == {ds: 1}
+            assert call("zfs.resource.snapshot.count", {"paths": [ds]}) == {ds: 1}
+
+            with snapshot(ds, "snap2"):
+                settle_snapshots_changed()
+                assert call("zfs.resource.snapshot.count", {"paths": [ds]}) == {ds: 2}
+                assert call("zfs.resource.snapshot.count", {"paths": [ds]}) == {ds: 2}
+
+            settle_snapshots_changed()
+            assert call("zfs.resource.snapshot.count", {"paths": [ds]}) == {ds: 1}
+
+
+def test_zfs_resource_snapshot_count_is_not_cached_within_the_same_second():
+    """A count taken in the second a snapshot appeared must not be cached.
+
+    `snapshots_changed` only resolves to the second, so an entry stamped with
+    the current second can still go stale inside it. Both snapshots and both
+    counts run inside middleware, where no network round trip can push them
+    into the next second.
+    """
+    with dataset("test_snap_count_same_second") as ds:
+        with mock("test.test1", declaration=SAME_SECOND_SNAPSHOT_COUNT):
+            result = call("test.test1", ds)
+
+    assert result["same_second"], "no pair of snapshots shared a `snapshots_changed`"
+    assert result["counted"] == result["actual"], result

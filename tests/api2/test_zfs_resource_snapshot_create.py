@@ -1,5 +1,8 @@
+import errno
+
 import pytest
 
+from middlewared.service_exception import ValidationError
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call
 
@@ -215,3 +218,23 @@ def test_zfs_resource_snapshot_create_protected_path():
             {"dataset": "boot-pool", "name": "test"},
         )
     assert "protected" in str(exc_info.value).lower()
+
+
+def test_zfs_resource_snapshot_create_excluding_everything_is_rejected():
+    """Excluding the dataset and all its children leaves nothing to snapshot"""
+    with dataset("test_snap_create_excl_all") as parent:
+        with dataset("test_snap_create_excl_all/child") as child:
+            with pytest.raises(ValidationError) as ve:
+                call(
+                    "zfs.resource.snapshot.create",
+                    {
+                        "dataset": parent,
+                        "name": "snap",
+                        "recursive": True,
+                        "exclude": [parent, child],
+                    },
+                )
+            assert ve.value.attribute == "zfs.resource.snapshot.create.exclude"
+            assert ve.value.errno == errno.EINVAL
+            assert "No datasets to snapshot" in ve.value.errmsg
+            assert call("zfs.resource.snapshot.query", {"paths": [parent]}) == []
