@@ -97,9 +97,7 @@ def create_snapshots_impl(
         datasets_to_snap.extend(child_datasets)
 
     if not datasets_to_snap:
-        raise ZFSPathInvalidException(
-            f"No datasets to snapshot - '{dataset}' and all children are excluded"
-        )
+        raise ZFSPathInvalidException(dataset, "and all of its children are excluded, leaving nothing to snapshot")
 
     # Build snapshot names: "{dataset}@{name}"
     snapshot_names = [f"{ds}@{snap_name}" for ds in datasets_to_snap]
