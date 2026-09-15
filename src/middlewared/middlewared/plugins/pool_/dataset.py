@@ -986,9 +986,15 @@ class PoolDatasetService(CRUDService):
             )
 
         async with self.s.truesearch.remove_mountpoint(mountpoint):
-            await self.call2(
+            # destroy_impl reports a failed destroy by return value, not by
+            # raising, so it has to be checked or a failure is reported to the
+            # caller as a successful delete.
+            failed, errnum = await self.call2(
                 self.s.zfs.resource.destroy_impl, id_, recursive=options['recursive']
             )
+
+        if failed:
+            raise CallError(failed, errnum or errno.EFAULT)
 
         return True
 

@@ -67,7 +67,14 @@ def destroy_nonrecursive_impl(tls: Any, path: str, defer: bool) -> tuple[str | N
             if mntpnt.mountpoint.value != "legacy":
                 _remove_mountpoint_dir(mntpnt.mountpoint.value)
 
-    # Both ZFS_TYPE_FILESYSTEM and ZFS_TYPE_VOLUME
+    # Both ZFS_TYPE_FILESYSTEM and ZFS_TYPE_VOLUME.
+    #
+    # Discard any unmount failure recorded above first. The destroy is
+    # attempted either way, and the return value describes the destroy, so a
+    # failed unmount followed by a successful destroy has to report success.
+    # Otherwise callers that check this tuple report a delete that did happen
+    # as a failure.
+    failed, errnum = None, None
     try:
         tls.lzh.destroy_resource(name=path)
     except truenas_pylibzfs.ZFSException as e:
