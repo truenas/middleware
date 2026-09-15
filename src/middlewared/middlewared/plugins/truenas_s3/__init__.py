@@ -53,7 +53,7 @@ def _wildcard_listeners(state: list[dict[str, Any]]) -> list[dict[str, Any]]:
     certificate still held and nothing to say TLS had stopped."""
     wanted: dict[tuple[str, int], bool] = {}
     for listener in state:
-        v6 = isinstance(ipaddress.ip_address(listener["address"]), ipaddress.IPv6Address)
+        v6 = ipaddress.ip_address(listener["address"]).version == 6
         key = ("::" if v6 else "0.0.0.0", listener["port"])
         wanted[key] = wanted.get(key, False) or listener["tls"]
     return [{"address": address, "port": port, "tls": tls} for (address, port), tls in sorted(wanted.items())]
