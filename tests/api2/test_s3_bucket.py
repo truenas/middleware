@@ -14,6 +14,7 @@ from configparser import RawConfigParser
 import pytest
 from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.account import user
+from middlewared.test.integration.assets.entitlements import entitled
 from middlewared.test.integration.assets.pool import dataset, pool
 from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.utils.client import truenas_server
@@ -48,6 +49,12 @@ def running_service():
         yield
     finally:
         call("service.control", "STOP", SERVICE, {"silent": False}, job=True)
+
+
+@pytest.fixture
+def versioning_licensed():
+    with entitled("S3_VERSIONING"):
+        yield
 
 
 @pytest.fixture(scope="module")
@@ -372,7 +379,18 @@ def test_object_ownership_is_its_own_key(owner):
         assert (updated["permissions_model"], updated["object_ownership"]) == ("S3", "BUCKET_OWNER_ENFORCED")
 
 
-def test_object_lock_rules(owner):
+def test_versioning_requires_a_license(owner):
+    with entitled("S3_VERSIONING", False):
+        with pytest.raises(ValidationErrors) as ve:
+            call(
+                "sharing.s3.create",
+                {"name": "versioned", "dataset": DATASET, "owner": OWNER, "versioning": "ENABLED"},
+            )
+        assert ve.value.errors[0].attribute == "sharing_s3_create.versioning"
+        assert "S3 object versioning" in ve.value.errors[0].errmsg
+
+
+def test_object_lock_rules(owner, versioning_licensed):
     for bad, field in (
         ({"object_lock": True}, "versioning"),
         (
@@ -433,7 +451,7 @@ def test_object_lock_rules(owner):
         assert "object_lock_default_years" not in row
 
 
-def test_the_one_way_fields_hold(owner):
+def test_the_one_way_fields_hold(owner, versioning_licensed):
     """Object lock and versioning move one way. The dataset root's lock
     latch never lowers and the S3 service refuses to serve a row that
     contradicts it, so disabling the lock would only take the bucket out
@@ -768,7 +786,7 @@ def test_bucket_owner_enforced_writes_as_the_owner(owner):
             assert call("filesystem.stat", f"/mnt/{DATASET}/{path}")["uid"] == owner["uid"], path
 
 
-def test_snapshot_version_rules(owner):
+def test_snapshot_version_rules(owner, versioning_licensed):
     """The selection needs a versioning state that lists versions, a
     pattern keeps to the daemon's grammar, and the pair renders only
     beside a selection."""
@@ -804,7 +822,7 @@ def snapshot_id(name):
     return "zfs." + name.encode().hex()
 
 
-def test_snapshots_serve_as_versions(owner):
+def test_snapshots_serve_as_versions(owner, versioning_licensed):
     """The dataset's own snapshots, selected by pattern, serve each key's
     frozen state as a read-only version: listed beside the live one and
     read by id. The snapshots are taken before the first listing, since
