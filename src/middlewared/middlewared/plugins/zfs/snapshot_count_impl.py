@@ -132,7 +132,10 @@ def __count_dataset_snapshots_cached(ds_hdl: Any, batch_ops: list[TDBBatchOperat
 
     # `snapshots_changed` only resolves to the second, so an entry stamped with
     # the current second could still go stale inside it and must not be cached.
-    if changed_ts and changed_ts < int(time.time()):
+    # ZFS also stamps it from CLOCK_REALTIME_COARSE that reads a few
+    # milliseconds behind CLOCK_REALTIME used by `time.time`.
+    # Holding a count back by two seconds resolves both issues.
+    if changed_ts and changed_ts < int(time.time()) - 2:
         batch_ops.append(
             TDBBatchOperation(
                 action=TDBBatchAction.SET,
