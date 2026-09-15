@@ -12,7 +12,7 @@ from middlewared.alert.base import (
     AlertLevel,
     ThreadedAlertSource,
 )
-from middlewared.plugins.zfs.tier import special_vdev_thresholds
+from middlewared.plugins.zfs.utils import special_vdev_thresholds
 
 
 @dataclass(kw_only=True)

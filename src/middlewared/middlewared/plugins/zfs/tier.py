@@ -59,32 +59,13 @@ from middlewared.service.decorators import pass_thread_local_storage
 import middlewared.sqlalchemy as sa
 from middlewared.utils.filter_list import filter_list
 
+from .utils import special_vdev_thresholds
+
 SPECIAL_SMALL_BLOCKS_PERFORMANCE = str(16 * 1024 * 1024)  # 16 MiB
 SPECIAL_SMALL_BLOCKS_REGULAR = "0"
 _ZFS_METADATA_RESERVE_PARAM = "zfs_special_class_metadata_reserve_pct"
 
 _DATASET_NOT_FOUND = object()  # sentinel: dataset does not exist (distinct from None = pool has no SPECIAL vdev)
-
-
-def special_vdev_thresholds(config: typing.Any) -> tuple[int, int]:
-    """Return ``(warning, critical)`` SPECIAL-vdev fill thresholds in percent.
-
-    ``critical`` is the lower of the user's configured cap
-    (``max_used_percentage``) and the actual ZFS overflow point
-    (``100 - special_class_metadata_reserve_pct``) — beyond which the
-    kernel stops sending small blocks to SPECIAL and spills them to
-    NORMAL, so letting the user set the cap higher than that is
-    meaningless.
-
-    ``warning`` sits 10 points below critical with a floor of 50% so the
-    warning stays useful even at the minimum cap settings.
-    """
-    critical = min(
-        config.max_used_percentage,
-        100 - config.special_class_metadata_reserve_pct,
-    )
-    warning = max(critical - 10, 50)
-    return warning, critical
 
 
 def _apply_metadata_reserve_pct(middleware: Middleware, value: int, ha_propagate: bool = False) -> None:
@@ -380,8 +361,8 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
         metadata. Applying the new configuration regenerates the ``truenas_zfstierd`` daemon configuration and
         reloads (or restarts, if ``max_concurrent_jobs`` changed) the daemon.
 
-        ZFS tiering requires a license carrying the ZFSTIER feature. A JSON-RPC ``error`` response (code
-        ``-32001``, *Method call error*) is returned when the system is not entitled to this feature.
+        ZFS tiering requires a license carrying the ZFSTIER feature. The call fails when the system is not
+        entitled to this feature.
         """
         ent = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.ZFSTIER)
         if not ent.entitled:
