@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import errno
 import ipaddress
+import os
 import string
 import typing
 from typing import TYPE_CHECKING, Any, Literal, TypeVar
@@ -32,6 +33,8 @@ from middlewared.api.current import (
     SharingS3DeleteArgs,
     SharingS3DeleteResult,
     SharingS3Entry,
+    SharingS3ForceDisableVersioningArgs,
+    SharingS3ForceDisableVersioningResult,
     SharingS3Update,
     SharingS3UpdateArgs,
     SharingS3UpdateResult,
@@ -41,7 +44,7 @@ from middlewared.api.current import (
 )
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.plugins.zfs.exceptions import ZFSPathAlreadyExistsException, ZFSPathNotFoundException
-from middlewared.service import CallError, SharingService, ValidationErrors, private
+from middlewared.service import CallError, SharingService, ValidationError, ValidationErrors, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils.path import FSLocation
 from middlewared.utils.types import AuditCallback
@@ -136,6 +139,21 @@ def is_ipv4_shaped(name: str) -> bool:
     return True
 
 
+def has_latch(mount: str) -> bool:
+    """Whether the dataset root carries the S3 service's Object Lock latch.
+    Presence is the whole test: the record is the daemon's to decode, and
+    the daemon never clears or weakens it, so a root carrying it is a
+    locked bucket whatever the row says (`trusted.tns3_latch`,
+    ARCHITECTURE.METADATA.md in the truenas_s3 repository)."""
+    try:
+        os.getxattr(mount, "trusted.tns3_latch")
+    except OSError as e:
+        if e.errno in (errno.ENODATA, errno.ENOENT, errno.ENOTDIR):
+            return False
+        raise
+    return True
+
+
 class SharingS3Service(SharingService[SharingS3Entry]):
     share_task_type = "S3"
     allowed_path_types = [FSLocation.LOCAL]
@@ -199,7 +217,8 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         # bucket out of service. Versioning has no way back to OFF — the
         # on-disk format's own rule: stored versions would go unreachable, and
         # a delete would unlink the live object where a versioned bucket mints
-        # a delete marker.
+        # a delete marker. force_disable_versioning is the one deliberate
+        # exception, and destroying the stored versions is its contract.
         if old:
             if old.object_lock and not data.object_lock:
                 verrors.add(f"{schema}.object_lock", "Object lock cannot be disabled once enabled.")
@@ -207,7 +226,8 @@ class SharingS3Service(SharingService[SharingS3Entry]):
                 verrors.add(
                     f"{schema}.versioning",
                     "Versioning cannot be returned to OFF once enabled. Suspend it instead: a suspended bucket "
-                    "keeps its stored versions.",
+                    "keeps its stored versions. sharing.s3.force_disable_versioning forces it off, destroying "
+                    "every prior object version.",
                 )
 
         if data.object_lock:
@@ -506,8 +526,9 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         permissions model, the object ownership, the ETag mode, the snapshot
         selection or object-lock enablement restarts it. The dataset cannot
         be changed, and two fields move one way: object lock cannot be
-        disabled once enabled, and versioning cannot return to ``OFF``.
-        Moving ``permissions_model`` off ``MULTIPROTOCOL`` requires
+        disabled once enabled, and versioning cannot return to ``OFF``
+        (:method:`sharing.s3.force_disable_versioning` is the destructive
+        exception). Moving ``permissions_model`` off ``MULTIPROTOCOL`` requires
         ``object_ownership`` to be stated in the same call: the stored
         value on such a bucket is its ``OBJECT_WRITER`` fold, which would
         otherwise take effect and enable S3 ACLs.
@@ -572,6 +593,76 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         await self.call2(self.s.alert.oneshot_delete, MISSING_ALERT, id_)
         await render_and_apply(self.middleware)
         return True
+
+    @api_method(
+        SharingS3ForceDisableVersioningArgs,
+        SharingS3ForceDisableVersioningResult,
+        audit="S3 bucket force disable versioning",
+        audit_callback=True,
+        roles=["SHARING_S3_WRITE"],
+        check_annotations=True,
+    )
+    async def force_disable_versioning(self, audit_callback: AuditCallback, id_: int) -> SharingS3Entry:
+        """
+        Force versioning off for S3 bucket ``id``, destroying its version
+        history.
+
+        :method:`sharing.s3.update` refuses to turn versioning off once it has
+        been enabled or suspended, because the version history the bucket has
+        accumulated cannot survive it. This method is the deliberate
+        exception, for a bucket whose history is no longer wanted: it sets
+        ``versioning`` to ``OFF``, clears ``snapshot_versions``, and restarts
+        the S3 service — the one versioning change that applies only by a
+        restart, so expect the brief interruption; a stopped service applies
+        it at its next start. A bucket with object lock enabled is refused: a
+        locked bucket keeps its version history for as long as it exists.
+
+        .. warning::
+
+            This operation is destructive and irreversible. Every prior
+            version of every object, and every delete marker, is permanently
+            lost. Version history stops being served the moment the change
+            applies, and the S3 service then slowly removes the previously
+            written version files in the background, so the space they occupy
+            is reclaimed gradually. ZFS snapshots of the bucket's dataset
+            still hold the old versions until those snapshots are destroyed.
+
+        Versioning may be enabled again later. That begins new history and
+        does not restore what this method destroyed, though old versions the
+        background cleanup has not yet removed reappear in the bucket's
+        history until it finishes.
+        """
+        bucket = await self.get_instance(id_)
+        audit_callback(bucket.name)
+        # the row, then the latch: the daemon never clears the latch, so a
+        # root carrying one is a locked bucket even under a row that
+        # (historically) stopped saying so
+        locked = bucket.object_lock
+        if not locked and (mount := await self.mountpoint(bucket.dataset)) is not None:
+            locked = await self.middleware.run_in_thread(has_latch, mount)
+        if locked:
+            raise ValidationError(
+                "sharing_s3_force_disable_versioning.id",
+                "Versioning cannot be disabled on a bucket with object lock enabled: a locked bucket keeps its "
+                "version history for as long as it exists.",
+                errno.EPERM,
+            )
+
+        changed = bucket.versioning != "OFF" or bool(bucket.snapshot_versions)
+        if changed:
+            new = bucket.model_copy(update={"versioning": "OFF", "snapshot_versions": []})
+            await self.middleware.call(
+                "datastore.update", self._config.datastore, id_, self.compress(new, bucket.owner_uid)
+            )
+        # rendered and applied even when the row did not move, so a call that
+        # failed between the row write and the apply can be retried
+        await render_and_apply(self.middleware)
+        entry = await self.get_instance(id_)
+        if changed:
+            # the CRUD wrapper emits CHANGED for create/update/delete; a
+            # custom row mutation owes sharing.s3.query subscribers the same
+            self.middleware.send_event("sharing.s3.query", "CHANGED", id=id_, fields=entry.model_dump())
+        return entry
 
     @api_method(SharingS3AuditChoicesArgs, SharingS3AuditChoicesResult, check_annotations=True)
     async def audit_choices(self) -> dict[str, str]:

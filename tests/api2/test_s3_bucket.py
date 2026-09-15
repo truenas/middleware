@@ -12,8 +12,8 @@ import tempfile
 from configparser import RawConfigParser
 
 import pytest
-from middlewared.service_exception import ValidationErrors
-from middlewared.test.integration.assets.account import user
+from middlewared.service_exception import CallError, ValidationErrors
+from middlewared.test.integration.assets.account import unprivileged_user_client, user
 from middlewared.test.integration.assets.entitlements import entitled
 from middlewared.test.integration.assets.pool import dataset, pool
 from middlewared.test.integration.utils import call, ssh
@@ -467,12 +467,14 @@ def test_the_one_way_fields_hold(owner, versioning_licensed):
             assert field in ve.value.errors[0].attribute
 
     # an unlocked bucket may suspend, which keeps its versions; OFF is
-    # refused there too
+    # refused there too, and the refusal names the destructive escape
+    # hatch
     with bucket(name="one-way", versioning="ENABLED") as b:
         assert call("sharing.s3.update", b["id"], {"versioning": "SUSPENDED"})["versioning"] == "SUSPENDED"
         with pytest.raises(ValidationErrors) as ve:
             call("sharing.s3.update", b["id"], {"versioning": "OFF"})
         assert "versioning" in ve.value.errors[0].attribute
+        assert "force_disable_versioning" in ve.value.errors[0].errmsg
 
 
 NFS4_DACL = [
@@ -813,6 +815,97 @@ def test_snapshot_version_rules(owner, versioning_licensed):
         call("etc.generate", "truenas_s3")
         row = parse(BUCKETS_CONF)['bucket "frozen"']
         assert "snapshot_versions" not in row and "snapshot_versions_max" not in row
+
+
+def test_force_disable_versioning_refuses_object_lock(owner, versioning_licensed):
+    """A locked bucket keeps its version history for as long as it
+    exists: the on-disk lock latch never clears, so a forced disable
+    could only take the bucket out of service."""
+    with bucket(name="locked", versioning="ENABLED", object_lock=True) as b:
+        with pytest.raises(ValidationErrors) as ve:
+            call("sharing.s3.force_disable_versioning", b["id"])
+        assert "object lock" in ve.value.errors[0].errmsg
+
+    # the latch outlives the config: a dataset root carrying it is a
+    # locked bucket whatever the row says, and is refused the same way
+    with bucket(name="latched") as b:
+        ssh(f"setfattr -n trusted.tns3_latch -v 0x5453334200000001 /mnt/{DATASET}")
+        with pytest.raises(ValidationErrors) as ve:
+            call("sharing.s3.force_disable_versioning", b["id"])
+        assert "object lock" in ve.value.errors[0].errmsg
+
+
+def test_force_disable_versioning_clears_the_snapshot_selection(owner, versioning_licensed):
+    """`snapshot_versions` cannot stand beside `versioning = off`, so the
+    forced disable clears the selection in the same row write; the inert
+    cap stays."""
+    with bucket(name="frozen", versioning="SUSPENDED", snapshot_versions=["s3-*"]) as b:
+        entry = call("sharing.s3.force_disable_versioning", b["id"])
+        assert entry["versioning"] == "OFF"
+        assert entry["snapshot_versions"] == []
+        call("etc.generate", "truenas_s3")
+        row = parse(BUCKETS_CONF)['bucket "frozen"']
+        assert row["versioning"] == "off"
+        assert "snapshot_versions" not in row
+
+
+@pytest.mark.parametrize("role", ["SHARING_S3_WRITE", "SHARING_WRITE"])
+def test_force_disable_versioning_roles(owner, role):
+    """The endpoint carries the same write role as the CRUD methods, and
+    a read-only holder is refused."""
+    with bucket() as b:
+        with unprivileged_user_client(roles=["SHARING_S3_READ"]) as c:
+            with pytest.raises(CallError, match="Not authorized"):
+                c.call("sharing.s3.force_disable_versioning", b["id"])
+        with unprivileged_user_client(roles=[role]) as c:
+            assert c.call("sharing.s3.force_disable_versioning", b["id"])["versioning"] == "OFF"
+
+
+def test_force_disable_versioning_destroys_history(owner, versioning_licensed):
+    """The whole workflow over the wire: an enabled bucket accumulates
+    versions and a delete marker; the forced disable restarts the
+    service, versioning reads never-enabled, minted ids stop resolving,
+    and a deleted key stays deleted. The version files' physical removal
+    is the daemon's background sweep and is not waited on here."""
+    with (
+        grantee("s3history") as (grant, key),
+        bucket(versioning="ENABLED", grants=[grant]) as b,
+        running_service(),
+    ):
+        s3 = client(key)
+        s3.put_object(Bucket="test-bucket", Key="k1", Body=b"one")
+        s3.put_object(Bucket="test-bucket", Key="k1", Body=b"two")
+        s3.put_object(Bucket="test-bucket", Key="k2", Body=b"doomed")
+        s3.delete_object(Bucket="test-bucket", Key="k2")
+
+        assert s3.get_bucket_versioning(Bucket="test-bucket")["Status"] == "Enabled"
+        listing = s3.list_object_versions(Bucket="test-bucket")
+        assert len([v for v in listing["Versions"] if v["Key"] == "k1"]) == 2
+        assert [m["Key"] for m in listing["DeleteMarkers"]] == ["k2"]
+        superseded = next(
+            v["VersionId"] for v in listing["Versions"] if v["Key"] == "k1" and not v["IsLatest"]
+        )
+
+        pid = service()["pids"]
+        entry = call("sharing.s3.force_disable_versioning", b["id"])
+        assert entry["versioning"] == "OFF"
+        assert service()["pids"] != pid, "the forced disable is a restart"
+
+        assert "Status" not in s3.get_bucket_versioning(Bucket="test-bucket")
+        listing = s3.list_object_versions(Bucket="test-bucket")
+        assert [(v["Key"], v["VersionId"]) for v in listing.get("Versions", [])] == [("k1", "null")]
+        assert listing.get("DeleteMarkers", []) == []
+        assert s3.get_object(Bucket="test-bucket", Key="k1")["Body"].read() == b"two"
+        with pytest.raises(Exception, match="NoSuchVersion"):
+            s3.get_object(Bucket="test-bucket", Key="k1", VersionId=superseded)
+        with pytest.raises(Exception, match="NoSuchKey"):
+            s3.get_object(Bucket="test-bucket", Key="k2")
+
+        # already off: the second call is an idempotent no-op — the row
+        # stands and the service reloads rather than restarts
+        pid = service()["pids"]
+        assert call("sharing.s3.force_disable_versioning", b["id"])["versioning"] == "OFF"
+        assert service()["pids"] == pid
 
 
 def snapshot_id(name):

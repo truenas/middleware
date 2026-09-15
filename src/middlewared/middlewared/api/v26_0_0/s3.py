@@ -47,6 +47,8 @@ __all__ = [
     "SharingS3UpdateResult",
     "SharingS3DeleteArgs",
     "SharingS3DeleteResult",
+    "SharingS3ForceDisableVersioningArgs",
+    "SharingS3ForceDisableVersioningResult",
     "SharingS3AuditChoicesArgs",
     "SharingS3AuditChoicesResult",
 ]
@@ -412,8 +414,9 @@ class SharingS3Entry(BaseModel):
         default="OFF",
         description=(
             "Bucket versioning state. One-way: a bucket that has been `ENABLED` or `SUSPENDED` cannot return to "
-            "`OFF`, only move between those two, so its stored versions never go unreachable. NOTE: this is a "
-            "licensed feature."
+            "`OFF` here, only move between those two, so its stored versions never go unreachable. "
+            "`sharing.s3.force_disable_versioning` is the one destructive way back, and it destroys every prior "
+            "object version. NOTE: this is a licensed feature."
         ),
     )
     snapshot_versions: list[NonEmptyString] = Field(
@@ -518,6 +521,14 @@ class SharingS3DeleteArgs(BaseModel):
 
 class SharingS3DeleteResult(BaseModel):
     result: Literal[True] = Field(description="Returns `true` when the bucket is successfully deregistered.")
+
+
+class SharingS3ForceDisableVersioningArgs(BaseModel):
+    id: int = Field(description="ID of the bucket whose versioning is forced off.")
+
+
+class SharingS3ForceDisableVersioningResult(BaseModel):
+    result: SharingS3Entry = Field(description="The updated bucket, with versioning `OFF`.")
 
 
 class SharingS3AuditChoicesArgs(BaseModel):
