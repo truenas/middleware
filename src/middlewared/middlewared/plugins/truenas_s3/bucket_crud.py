@@ -18,6 +18,8 @@ import string
 import typing
 from typing import TYPE_CHECKING, Any, Literal, TypeVar
 
+from truenas_pylicensed.features import LicenseFeature
+
 from middlewared.api import api_method
 from middlewared.api.current import (
     S3AuditAction,
@@ -184,6 +186,13 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         if await self.query(filters, {"select": ["id"]}):
             verrors.add(f"{schema}.name", "A bucket with this name already exists.")
 
+        # Turning versioning on needs the license. A bucket that already has it
+        # keeps it, since the one way rule below never lets it return to OFF.
+        if data.versioning != "OFF" and (old is None or old.versioning == "OFF"):
+            entitlement = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.S3_VERSIONING)
+            if not entitlement.entitled:
+                verrors.add(f"{schema}.versioning", entitlement.message)
+
         # Two one-way fields. Object lock enablement is latched on the dataset
         # root and never lowers: the S3 service refuses to serve a bucket whose
         # row contradicts the latch, so turning it off here would only take the
@@ -235,12 +244,10 @@ class SharingS3Service(SharingService[SharingS3Entry]):
             if data.object_lock_default_days is None:
                 verrors.add(f"{schema}.object_lock_default_days", "A default retention rule needs a period.")
 
-        if (data.audit is not None or data.audit_overflow is not None) and not await self.middleware.call(
-            "s3.audit_supported"
-        ):
-            verrors.add(
-                f"{schema}.audit", "Auditing the S3 service is a licensed feature."
-            )
+        if data.audit is not None or data.audit_overflow is not None:
+            entitlement = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.S3_AUDIT)
+            if not entitlement.entitled:
+                verrors.add(f"{schema}.audit", entitlement.message)
 
         await validate_grants(self.middleware, f"{schema}.grants", data.grants, verrors)
 
@@ -577,7 +584,7 @@ class SharingS3Service(SharingService[SharingS3Entry]):
     async def audited_bucket_names(self) -> list[str]:
         """Enabled buckets whose effective audit mask is not empty, for
         `audit.config`."""
-        if not await self.middleware.call("s3.audit_supported"):
+        if not (await self.call2(self.s.truenas.entitlements.check, LicenseFeature.S3_AUDIT)).entitled:
             return []
         config: S3Entry = await self.middleware.call("s3.config")
         buckets: list[SharingS3Entry] = await self.middleware.call("sharing.s3.query", [["enabled", "=", True]])

@@ -9,6 +9,8 @@ import os
 import string
 from typing import TYPE_CHECKING, Any
 
+from truenas_pylicensed.features import LicenseFeature
+
 from middlewared.alert.source.truenas_s3 import S3BucketDatasetMissingAlert
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -28,7 +30,6 @@ from middlewared.plugins.zfs.exceptions import ZFSPathNotFoundException
 from middlewared.service import SystemServicePart, SystemServiceService, ValidationErrors, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils.crypto import generate_token, ssl_uuid4
-from middlewared.utils.hardware import get_hardware_class
 
 from .accesskey_crud import S3AccesskeyService
 from .grants import grant_label, grant_principals, label_grants, principal_names, validate_grants
@@ -302,11 +303,10 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
                 )
             )
 
-        if (new.default_audit or new.default_audit_overflow != "DROP") and not await self.audit_supported():
-            verrors.add(
-                "s3_update.default_audit",
-                "Auditing the S3 service is a licensed feature.",
-            )
+        if new.default_audit or new.default_audit_overflow != "DROP":
+            entitlement = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.S3_AUDIT)
+            if not entitlement.entitled:
+                verrors.add("s3_update.default_audit", entitlement.message)
 
         if new.managed_root_dataset:
             await self._validate_managed_root(new.managed_root_dataset, verrors)
@@ -352,16 +352,6 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
             verrors.add(field, f"{dataset!r} does not exist.")
         elif rows[0]["type"] != "FILESYSTEM":
             verrors.add(field, f"{dataset!r} is a volume, not a dataset.")
-
-    async def audit_supported(self) -> bool:
-        """Whether S3 requests are audited on this machine.
-
-        Read from the chassis rather than the license: the audit records
-        land in the same database the kernel audit handler feeds, which is
-        gated on the hardware class too, so both halves of the audit trail
-        have to answer to the same thing.
-        """
-        return get_hardware_class().is_appliance
 
     async def effective_certificate(self, cert_id: int | None) -> int | None:
         """The certificate the TLS listeners serve: the chosen one, or the
@@ -467,7 +457,7 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
             global_grants=_rendered_grants(config.global_grants, "*"),
             buckets=rendered_buckets,
             accesskeys=accesskeys,
-            audit_supported=await self.audit_supported(),
+            audit_supported=(await self.call2(self.s.truenas.entitlements.check, LicenseFeature.S3_AUDIT)).entitled,
         )
 
 
@@ -512,10 +502,6 @@ class S3Service(SystemServiceService[S3Entry]):
     @private
     async def render_data(self) -> RenderData:
         return await self._svc_part.render_data()
-
-    @private
-    async def audit_supported(self) -> bool:
-        return await self._svc_part.audit_supported()
 
     @private
     async def effective_certificate(self, cert_id: int | None) -> int | None:
