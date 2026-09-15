@@ -44,7 +44,7 @@ from middlewared.api.current import (
 )
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.plugins.zfs.exceptions import ZFSPathAlreadyExistsException, ZFSPathNotFoundException
-from middlewared.service import CallError, SharingService, ValidationErrors, private
+from middlewared.service import CallError, SharingService, ValidationError, ValidationErrors, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils.path import FSLocation
 from middlewared.utils.types import AuditCallback
@@ -640,15 +640,13 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         locked = bucket.object_lock
         if not locked and (mount := await self.mountpoint(bucket.dataset)) is not None:
             locked = await self.middleware.run_in_thread(has_latch, mount)
-        verrors = ValidationErrors()
         if locked:
-            verrors.add(
+            raise ValidationError(
                 "sharing_s3_force_disable_versioning.id",
                 "Versioning cannot be disabled on a bucket with object lock enabled: a locked bucket keeps its "
                 "version history for as long as it exists.",
                 errno.EPERM,
             )
-        verrors.check()
 
         changed = bucket.versioning != "OFF" or bool(bucket.snapshot_versions)
         if changed:
