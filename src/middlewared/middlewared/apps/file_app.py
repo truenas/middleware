@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 import base64
 import binascii
@@ -13,7 +15,8 @@ from middlewared.auth import (
     LoginPasswordSessionManagerCredentials,
     TokenSessionManagerCredentials,
 )
-from middlewared.pipe import Pipes, InputPipes
+from middlewared.job import Job, State
+from middlewared.pipe import InputPipes, Pipes
 from middlewared.plugins.auth_.login_ex_impl import login_ex_password_plain
 from middlewared.service_exception import CallError
 from middlewared.utils.auth import AA_LEVEL1, CURRENT_AAL
@@ -223,6 +226,16 @@ async def create_application(
     return await asyncio.to_thread(create_application_impl, request, credentials)
 
 
+def job_error(job: Job) -> str | None:
+    match job.state:
+        case State.FAILED:
+            return job.error or f'Job {job.id} failed'
+        case State.ABORTED:
+            return f'Job {job.id} was aborted'
+        case _:
+            return None
+
+
 def copy_multipart_to_pipe(loop: asyncio.AbstractEventLoop, filepart: 'BodyPartReader', pipe: 'Pipe') -> None:
     try:
         try:
@@ -309,26 +322,34 @@ class FileApplication:
             resp.set_status(410)
             return resp
 
-        resp = web.StreamResponse(
-            status=200,
-            reason="OK",
-            headers={
-                "Content-Type": "application/octet-stream",
-                "Content-Disposition": f'attachment; filename="{filename}"',
-                "Transfer-Encoding": "chunked",
-            },
-        )
-        await resp.prepare(request)
-
-        def do_copy():
-            while True:
-                read = job.pipes.output.r.read(1048576)
-                if read == b"":
-                    break
-                asyncio.run_coroutine_threadsafe(resp.write(read), loop=self.loop).result()
-
+        await self._cleanup_cancel(job_id)
         try:
-            await self._cleanup_cancel(job_id)
+            if (error := job_error(job)) is not None:
+                return web.Response(status=422, text=error)
+
+            # Wait for job to actually start and have the chance to fail. `read1` because we want just _some_ output,
+            # not full chunk.
+            first_chunk = await self.middleware.run_in_thread(job.pipes.output.r.read1, 1048576)
+            if (error := job_error(job)) is not None:
+                return web.Response(status=422, text=error)
+
+            resp = web.StreamResponse(
+                status=200,
+                reason="OK",
+                headers={
+                    "Content-Type": "application/octet-stream",
+                    "Content-Disposition": f'attachment; filename="{filename}"',
+                    "Transfer-Encoding": "chunked",
+                },
+            )
+            await resp.prepare(request)
+
+            def do_copy():
+                read = first_chunk
+                while read != b"":
+                    asyncio.run_coroutine_threadsafe(resp.write(read), loop=self.loop).result()
+                    read = job.pipes.output.r.read(1048576)
+
             await self.middleware.run_in_thread(do_copy)
         finally:
             await job.pipes.close()
