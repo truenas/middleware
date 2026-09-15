@@ -43,6 +43,8 @@ POLICY: Mapping[str, Rule] = MappingProxyType(
         LicenseFeature.NFS_SNAPSHOT: TARGET_VECTORS[LicenseFeature.NFS_SNAPSHOT],
         LicenseFeature.NVMEOF_SPDK: TARGET_VECTORS[LicenseFeature.NVMEOF_SPDK],
         LicenseFeature.RDMA: TARGET_VECTORS[LicenseFeature.RDMA],
+        LicenseFeature.S3_AUDIT: TARGET_VECTORS[LicenseFeature.S3_AUDIT],
+        LicenseFeature.S3_VERSIONING: TARGET_VECTORS[LicenseFeature.S3_VERSIONING],
         LicenseFeature.SED: TARGET_VECTORS[LicenseFeature.SED],
         LicenseFeature.SMB_FASTPATH: TARGET_VECTORS[LicenseFeature.SMB_FASTPATH],
         LicenseFeature.SMB_VEEAM: TARGET_VECTORS[LicenseFeature.SMB_VEEAM],

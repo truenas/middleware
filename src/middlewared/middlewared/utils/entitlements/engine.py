@@ -59,6 +59,8 @@ FEATURE_DISPLAY_NAMES: Mapping[str, str] = {
     LicenseFeature.NFS_SNAPSHOT: "NFS snapshot exposure",
     LicenseFeature.NVMEOF_SPDK: "NVMe-oF SPDK backend",
     LicenseFeature.RDMA: "RDMA",
+    LicenseFeature.S3_AUDIT: "S3 audit logging",
+    LicenseFeature.S3_VERSIONING: "S3 object versioning",
     LicenseFeature.SED: "SED",
     LicenseFeature.SMB_FASTPATH: "SMB ZFS fastpath",
     LicenseFeature.SMB_VEEAM: "Veeam repository shares",

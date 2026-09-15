@@ -43,6 +43,8 @@ def test_target_vectors_match_the_product_matrix():
         LicenseFeature.NFS_SNAPSHOT: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
         LicenseFeature.NVMEOF_SPDK: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
         LicenseFeature.RDMA: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
+        LicenseFeature.S3_AUDIT: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
+        LicenseFeature.S3_VERSIONING: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
         LicenseFeature.SED: Vector(ce=0, hw=1, hw_l=1, hw_k=1, ce_l=1, ce_k=1),
         LicenseFeature.SMB_FASTPATH: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
         LicenseFeature.SMB_VEEAM: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
@@ -79,6 +81,8 @@ def test_live_policy_shape():
         LicenseFeature.NVMEOF_SPDK,
         LicenseFeature.NETWORK_FEC,
         LicenseFeature.RDMA,
+        LicenseFeature.S3_AUDIT,
+        LicenseFeature.S3_VERSIONING,
         DerivedEntitlement.HA,
         DerivedEntitlement.PROACTIVE_SUPPORT,
     }
