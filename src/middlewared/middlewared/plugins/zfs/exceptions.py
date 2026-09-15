@@ -63,6 +63,16 @@ class ZFSPathHasHoldsException(Exception):
         return self.message
 
 
+class ZFSPathInvalidException(Exception):
+    def __init__(self, path: str, reason: str = "is invalid"):
+        self.path = path
+        self.message = f"{path!r} {reason}"
+        super().__init__(path, reason)
+
+    def __str__(self) -> str:
+        return self.message
+
+
 class ZFSRollbackBlockedException(Exception):
     """Snapshots newer than the rollback target have holds, or clones that may not be destroyed."""
 
@@ -106,12 +116,6 @@ class ZFSRollbackFailedException(Exception):
 
     def __str__(self) -> str:
         return self.message
-
-
-class ZFSPathInvalidException(Exception):
-    def __init__(self, message: str):
-        self.message = message
-        super().__init__(message)
 
 
 class ZFSPathNotASnapshotException(Exception):
