@@ -235,11 +235,6 @@ class SharingS3Service(SharingService[SharingS3Entry]):
                     "object.",
                 )
         if data.snapshot_versions:
-            if data.versioning == "OFF":
-                verrors.add(
-                    f"{schema}.versioning",
-                    "Serving snapshots as versions requires versioning to be ENABLED or SUSPENDED.",
-                )
             seen: set[str] = set()
             for i, pattern in enumerate(data.snapshot_versions):
                 field = f"{schema}.snapshot_versions.{i}"
