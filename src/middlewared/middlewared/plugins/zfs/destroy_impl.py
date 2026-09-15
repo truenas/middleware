@@ -1,6 +1,7 @@
+from collections.abc import Iterable
 import errno
 import os
-from typing import Any
+from typing import Any, Literal
 
 import truenas_pylibzfs
 
@@ -27,6 +28,41 @@ def _remove_mountpoint_dir(mountpoint: str) -> None:
         os.rmdir(mountpoint)
     except Exception:
         pass
+
+
+def _own_mountpoint(hdl: Any) -> str | None:
+    """Return the directory `hdl` owns, or None when it owns none.
+
+    A "legacy" or "none" mountpoint is not a path and owns no directory.
+    """
+    mountpoint = hdl.get_properties(properties={truenas_pylibzfs.ZFSProperty.MOUNTPOINT}).mountpoint.value
+    return mountpoint if mountpoint and mountpoint.startswith("/") else None
+
+
+def _collect_mountpoints_callback(hdl: Any, state: list[str]) -> Literal[True]:
+    _collect_mountpoints(hdl, state)
+    return True
+
+
+def _collect_mountpoints(hdl: Any, state: list[str]) -> None:
+    """Collect the mountpoint of `hdl` and of every filesystem below it.
+
+    The descendants are needed because their directories sit inside their
+    parent's, and the parent's rmdir only succeeds once they are gone.
+    """
+    if hdl.type != truenas_pylibzfs.ZFSType.ZFS_TYPE_FILESYSTEM:
+        return
+
+    if (mountpoint := _own_mountpoint(hdl)) is not None:
+        state.append(mountpoint)
+
+    hdl.iter_filesystems(callback=_collect_mountpoints_callback, state=state)
+
+
+def _remove_mountpoint_dirs(mountpoints: Iterable[str]) -> None:
+    """Remove the destroyed resources' mountpoint directories, deepest first."""
+    for mountpoint in sorted(set(mountpoints), reverse=True):
+        _remove_mountpoint_dir(mountpoint)
 
 
 def destroy_nonrecursive_impl(tls: Any, path: str, defer: bool) -> tuple[str | None, int | None]:
@@ -67,9 +103,10 @@ def destroy_nonrecursive_impl(tls: Any, path: str, defer: bool) -> tuple[str | N
             failed = f"Failed to unmount {path!r}: {e}"
             errnum = e.code
         else:
-            mntpnt = rsrc.get_properties(properties={truenas_pylibzfs.ZFSProperty.MOUNTPOINT})
-            if mntpnt.mountpoint.value != "legacy":
-                _remove_mountpoint_dir(mntpnt.mountpoint.value)
+            # `path` has no children: a non-recursive destroy of a filesystem
+            # that has any is rejected before it reaches here
+            if (mountpoint := _own_mountpoint(rsrc)) is not None:
+                _remove_mountpoint_dir(mountpoint)
 
     # Both ZFS_TYPE_FILESYSTEM and ZFS_TYPE_VOLUME
     try:
@@ -116,7 +153,7 @@ def destroy_impl(
         "target": target,
     }
     readonly = False
-    mntpnts = list()
+    mntpnts: list[str] = list()
     if "@" in path:
         script = truenas_pylibzfs.lzc.ChannelProgramEnum.DESTROY_SNAPSHOTS
         script_arguments_dict.update({"pattern": path.split("@")[-1]})
@@ -125,9 +162,7 @@ def destroy_impl(
     else:
         rsrc = open_resource(tls, path)
         if rsrc.type == truenas_pylibzfs.ZFSType.ZFS_TYPE_FILESYSTEM:
-            mnt = rsrc.get_properties(properties={truenas_pylibzfs.ZFSProperty.MOUNTPOINT})
-            if mnt.mountpoint.value != "legacy":
-                mntpnts.append(mnt)
+            _collect_mountpoints(rsrc, mntpnts)
             rsrc.unmount(recursive=recursive)
         script = truenas_pylibzfs.lzc.ChannelProgramEnum.DESTROY_RESOURCES
 
@@ -148,9 +183,7 @@ def destroy_impl(
             if err == errno.EBUSY:
                 rsrc = open_resource(tls, clone)
                 if rsrc.type == truenas_pylibzfs.ZFSType.ZFS_TYPE_FILESYSTEM:
-                    mnt = rsrc.get_properties(properties={truenas_pylibzfs.ZFSProperty.MOUNTPOINT})
-                    if mnt.mountpoint.value != "legacy":
-                        mntpnts.append(mnt)
+                    _collect_mountpoints(rsrc, mntpnts)
                     rsrc.unmount(recursive=recursive)
             # TODO: else raise ZFSException(err) if not EBUSY??
 
@@ -176,7 +209,6 @@ def destroy_impl(
             if isinstance(errnum, int) and errnum in truenas_pylibzfs.ZFSError:
                 failed += f" ({truenas_pylibzfs.ZFSError(errnum)})"
     else:
-        for i in mntpnts:
-            _remove_mountpoint_dir(i.mountpoint.value)
+        _remove_mountpoint_dirs(mntpnts)
 
     return failed, errnum
