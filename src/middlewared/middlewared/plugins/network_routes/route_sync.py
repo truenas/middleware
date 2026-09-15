@@ -1,4 +1,6 @@
+from collections.abc import Callable
 import socket
+from typing import Concatenate, ParamSpec
 
 from truenas_pynetif.address.constants import AddressFamily
 from truenas_pynetif.address.netlink import (
@@ -15,6 +17,25 @@ from middlewared.plugins.interface.dhcp import dhcp_leases
 from middlewared.service import ServiceContext
 
 __all__ = ("sync_impl",)
+
+P = ParamSpec("P")
+
+
+def _apply_route(
+    ctx: ServiceContext,
+    op: Callable[Concatenate[socket.socket, P], None],
+    sock: socket.socket,
+    msg: str,
+    /,
+    *args: P.args,
+    **kwargs: P.kwargs,
+) -> None:
+    """Run a route operation and log failures so the rest of the sync continues."""
+    try:
+        op(sock, *args, **kwargs)
+    except (NetlinkError, OSError) as e:
+        # OSError covers a gateway interface name that no longer exists
+        ctx.logger.error("%s: %r", msg, e)
 
 
 def _get_default_ip4_route_from_dhcpcd(
@@ -53,27 +74,24 @@ def _sync_ip4_impl(ctx: ServiceContext, sock: socket.socket, dbgw: str | None) -
             # we don't currently have one installed in OS (cur_gw)
             # so we'll add it
             ctx.logger.info("Adding IPv4 default route to %s", dbgw)
-            try:
-                add_route(sock, gateway=dbgw)
-            except NetlinkError as e:
-                # Error could be (101, Network host unreachable)
-                # This error occurs in random race conditions.
-                # For example, can occur in the following scenario:
-                #   1. delete all configured interfaces on system
-                #   2. interface.sync() gets called and starts dhcp
-                #       on all interfaces detected on the system
-                #   3. route.sync() gets called which eventually
-                #       calls dhcp_leases which reads a file on
-                #       disk to see if we have any previously
-                #       defined default gateways from DHCP.
-                #       However, by the time we read this file,
-                #       DHCP could still be requesting an
-                #       address from the DHCP server
-                #   4. so when we try to install our own default
-                #       gateway manually (even though DHCP will
-                #       do this for us) it will fail expectedly here.
-                # Either way, let's log the error.
-                ctx.logger.error("Failed adding %s as default gateway: %r", dbgw, e)
+            # Error could be (101, Network host unreachable)
+            # This error occurs in random race conditions.
+            # For example, can occur in the following scenario:
+            #   1. delete all configured interfaces on system
+            #   2. interface.sync() gets called and starts dhcp
+            #       on all interfaces detected on the system
+            #   3. route.sync() gets called which eventually
+            #       calls dhcp_leases which reads a file on
+            #       disk to see if we have any previously
+            #       defined default gateways from DHCP.
+            #       However, by the time we read this file,
+            #       DHCP could still be requesting an
+            #       address from the DHCP server
+            #   4. so when we try to install our own default
+            #       gateway manually (even though DHCP will
+            #       do this for us) it will fail expectedly here.
+            # Either way, let's log the error.
+            _apply_route(ctx, add_route, sock, f"Failed adding IPv4 default route to {dbgw}", gateway=dbgw)
         elif cur_gw.gateway != dbgw:
             # there is a gateway installed in OS (cur_gw) but
             # it doesn't match what the gateway is in our db
@@ -83,12 +101,18 @@ def _sync_ip4_impl(ctx: ServiceContext, sock: socket.socket, dbgw: str | None) -
                 cur_gw.gateway,
                 dbgw,
             )
-            change_route(sock, gateway=dbgw)
+            _apply_route(ctx, change_route, sock, f"Failed changing IPv4 default route to {dbgw}", gateway=dbgw)
     elif cur_gw:
         # there is no gateway in the database but there is
         # one installed in the OS so we'll remove it
         ctx.logger.info("Removing IPv4 default route: %s", cur_gw.gateway)
-        delete_route(sock, gateway=cur_gw.gateway)
+        _apply_route(
+            ctx,
+            delete_route,
+            sock,
+            f"Failed removing IPv4 default route {cur_gw.gateway}",
+            gateway=cur_gw.gateway,
+        )
 
 
 def _sync_ip6_impl(ctx: ServiceContext, sock: socket.socket, dbgw: str | None) -> None:
@@ -104,7 +128,14 @@ def _sync_ip6_impl(ctx: ServiceContext, sock: socket.socket, dbgw: str | None) -
             # we don't currently have one installed in OS (cur_gw)
             # so we'll add it
             ctx.logger.info("Adding IPv6 default route to %s", dbgw)
-            add_route(sock, gateway=dbgw, name=dbgw_iface)
+            _apply_route(
+                ctx,
+                add_route,
+                sock,
+                f"Failed adding IPv6 default route to {dbgw}",
+                gateway=dbgw,
+                name=dbgw_iface,
+            )
         elif cur_gw.gateway != dbgw:
             # there is a gateway installed in OS (cur_gw) but
             # it doesn't match what the gateway is in our db
@@ -114,7 +145,14 @@ def _sync_ip6_impl(ctx: ServiceContext, sock: socket.socket, dbgw: str | None) -
                 cur_gw.gateway,
                 dbgw,
             )
-            change_route(sock, gateway=dbgw, name=dbgw_iface)
+            _apply_route(
+                ctx,
+                change_route,
+                sock,
+                f"Failed changing IPv6 default route to {dbgw}",
+                gateway=dbgw,
+                name=dbgw_iface,
+            )
     elif cur_gw:
         # there is no gateway in the database but there is
         # one installed in the OS. If we do not have any
@@ -129,7 +167,14 @@ def _sync_ip6_impl(ctx: ServiceContext, sock: socket.socket, dbgw: str | None) -
             ],
         ):
             ctx.logger.info("Removing IPv6 default route: %s", cur_gw.gateway)
-            delete_route(sock, gateway=cur_gw.gateway, index=cur_gw.oif)
+            _apply_route(
+                ctx,
+                delete_route,
+                sock,
+                f"Failed removing IPv6 default route {cur_gw.gateway}",
+                gateway=cur_gw.gateway,
+                index=cur_gw.oif,
+            )
 
 
 def sync_impl(ctx: ServiceContext) -> None:
