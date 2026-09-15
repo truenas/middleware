@@ -62,7 +62,7 @@ def promote_impl(tls: Any, current_name: str) -> None:
     rsrc = open_resource(tls, current_name)
     origin = rsrc.get_properties(properties={ZFSProperty.ORIGIN}).origin
     if origin.value is None:
-        raise ZFSPathInvalidException(current_name, 'is not a clone and cannot be promoted')
+        raise ZFSPathInvalidException(current_name, "is not a clone and cannot be promoted")
     rsrc.promote()
 
 
