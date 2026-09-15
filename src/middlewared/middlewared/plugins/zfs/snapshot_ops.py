@@ -205,7 +205,7 @@ def create(context: ServiceContext, data: ZFSResourceSnapshotCreateQuery) -> ZFS
         raise ValidationError(schema, e.message, errno.EEXIST)
     except ZFSPathInvalidException as e:
         # create_snapshots_impl only raises this when `exclude` leaves no dataset to snapshot
-        raise ValidationError(f"{schema}.exclude", str(e), errno.EINVAL)
+        raise ValidationError(f"{schema}.exclude", e.message, errno.EINVAL)
     except ValueError as e:
         raise ValidationError(schema, str(e), errno.EINVAL)
 
