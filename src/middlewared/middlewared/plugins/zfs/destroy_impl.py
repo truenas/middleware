@@ -52,6 +52,10 @@ def destroy_nonrecursive_impl(tls: Any, path: str, defer: bool) -> tuple[str | N
 
         try:
             truenas_pylibzfs.lzc.destroy_snapshots(snapshot_names=(path,), defer_destroy=defer)
+        except truenas_pylibzfs.lzc.ZFSCoreException as e:
+            # ZFSCoreException is a RuntimeError, not a ZFSException
+            failed = f"Failed to destroy {path!r}: {os.strerror(e.code)}"
+            errnum = e.code
         except truenas_pylibzfs.ZFSException as e:
             failed = f"Failed to destroy {path!r}: {e}"
             errnum = e.code
