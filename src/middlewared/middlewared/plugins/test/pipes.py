@@ -1,10 +1,11 @@
+import asyncio
 import json
 import time
 from typing import Any
 
 from middlewared.api import api_method
 from middlewared.api.base import BaseModel
-from middlewared.service import Service, job
+from middlewared.service import CallError, Service, job
 
 
 class TestArgs(BaseModel):
@@ -43,3 +44,26 @@ class TestService(Service):
         time.sleep(5)
         job.pipes.output.w.write(json.dumps(arg).encode("utf-8"))
         job.pipes.output.w.close()
+
+    @api_method(TestArgs, TestResult, authorization_required=False)
+    @job(pipes=["output"])
+    def test_download_failing_pipe(self, job, arg):
+        raise CallError(json.dumps(arg))
+
+    @api_method(TestArgs, TestResult, authorization_required=False)
+    @job(pipes=["output"])
+    def test_download_slow_failing_pipe(self, job, arg):
+        time.sleep(2)
+        raise CallError(json.dumps(arg))
+
+    @api_method(TestArgs, TestResult, authorization_required=False)
+    @job(pipes=["output"])
+    def test_download_failing_pipe_with_partial_output(self, job, arg):
+        job.pipes.output.w.write(json.dumps(arg).encode("utf-8"))
+        job.pipes.output.w.flush()
+        raise CallError(json.dumps(arg))
+
+    @api_method(TestArgs, TestResult, authorization_required=False)
+    @job(pipes=["output"])
+    async def test_download_abortable_pipe(self, job, arg):
+        await asyncio.sleep(3600)
