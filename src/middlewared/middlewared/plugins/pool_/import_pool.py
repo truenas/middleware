@@ -185,6 +185,13 @@ class PoolService(Service):
         # reset (recursively) the mountpoint property (if required)
         await self.reset_mountpoint_recursively(pool_name)
 
+        try:
+            await self.call2(self.s.docker.enforce_canmount_noauto, pool_name)
+        except Exception:
+            self.logger.warning(
+                '%r: failed to enforce canmount on the apps dataset tree', pool_name, exc_info=True
+            )
+
         # We want to set immutable flag on all of locked datasets
         for encrypted_ds in await self.middleware.call(
             'pool.dataset.query_encrypted_datasets', pool_name, {'key_loaded': False}
@@ -469,6 +476,15 @@ class PoolService(Service):
         # normalize ZFS dataset properties on boot. Pool may be foreign to SCALE
         # (including those created on CORE)
         self.normalize_root_dataset_properties(vol_name, vol_guid)
+
+        # the recursive mount that follows descends past a canmount=noauto dataset into children
+        # that are not, so the apps tree has to be corrected while nothing of it is mounted yet
+        try:
+            self.call_sync2(self.s.docker.enforce_canmount_noauto, vol_name)
+        except Exception:
+            self.logger.warning(
+                '%r: failed to enforce canmount on the apps dataset tree', vol_name, exc_info=True
+            )
 
         return True
 
