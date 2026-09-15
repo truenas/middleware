@@ -13,6 +13,7 @@ live on the bucket, so they can never outlive it.
 from __future__ import annotations
 
 import errno
+import ipaddress
 import string
 import typing
 from typing import TYPE_CHECKING, Any, Literal, TypeVar
@@ -121,16 +122,16 @@ SNAPSHOT_PATTERN_CHARS = frozenset(string.ascii_letters + string.digits + "-_.: 
 
 
 def is_ipv4_shaped(name: str) -> bool:
-    """The S3 service's own dotted-quad test: four all-digit groups of one to
-    three characters, each of numeric value at most 255 — leading zeros
-    included, so `192.168.001.001` is shaped where `ipaddress.IPv4Address`
-    raises. The two vocabularies must match exactly: a name only one side
-    refuses is either a rendered row the service refuses whole-file, or an
-    S3 protocol create refused for a reason its error cannot carry."""
-    groups = name.split(".")
-    return len(groups) == 4 and all(
-        group.isascii() and group.isdecimal() and len(group) <= 3 and int(group) <= 255 for group in groups
-    )
+    """Whether the standard parser reads `name` as an IPv4 address. The S3
+    service applies the same test (Rust's `std::net::Ipv4Addr`, the same
+    grammar), and the two must agree: a name only one side refuses is either
+    a rendered row the service refuses whole-file, or an S3 protocol create
+    refused for a reason its error cannot carry."""
+    try:
+        ipaddress.IPv4Address(name)
+    except ValueError:
+        return False
+    return True
 
 
 class SharingS3Service(SharingService[SharingS3Entry]):

@@ -235,24 +235,22 @@ def test_existing_dataset_is_refused(owner):
 
 
 @pytest.mark.parametrize(
-    # the two dotted quads with leading zeros are the S3 service's own
-    # reading of "shaped like an IPv4 address", which `ipaddress` rejects
-    # as spellings: a name only one side refuses would render a row the
-    # service refuses whole-file
     "name",
-    ["UPPER", "ab", "a..b", "192.168.1.1", "192.168.001.001", "010.020.030.040", "-lead", "trail-"],
+    ["UPPER", "ab", "a..b", "192.168.1.1", "-lead", "trail-"],
 )
 def test_bad_names_are_refused(owner, name):
     with pytest.raises(ValidationErrors):
         call("sharing.s3.create", {"name": name, "dataset": DATASET, "owner": OWNER})
 
 
-def test_a_name_that_merely_looks_numeric_is_allowed(owner):
-    # 999 is no octet, so the name is not an IPv4 address — as on AWS,
-    # and as the S3 service reads it
-    with bucket(name="999.1.1.1"):
+@pytest.mark.parametrize("name", ["999.1.1.1", "192.168.001.001"])
+def test_a_name_that_merely_looks_numeric_is_allowed(owner, name):
+    # not IPv4 addresses to the standard parser (999 is no octet; leading
+    # zeros are RFC 3986 reg-names) — middleware and the S3 service both
+    # use it, so the two vocabularies agree
+    with bucket(name=name):
         call("etc.generate", "truenas_s3")
-        assert 'bucket "999.1.1.1"' in parse(BUCKETS_CONF)
+        assert f'bucket "{name}"' in parse(BUCKETS_CONF)
 
 
 def test_unknown_owner_is_refused():
