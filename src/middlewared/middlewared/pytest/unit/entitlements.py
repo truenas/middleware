@@ -17,7 +17,7 @@ from middlewared.utils.license import FeatureInfo, LicenseInfo, LicenseOrigin
 def make_license(
     *,
     feature_names: tuple[str, ...] = (),
-    type_: LicenseType = LicenseType.ENTERPRISE_SINGLE,
+    type_: LicenseType = LicenseType.ENTERPRISE,
     model: str | None = "H10",
     expires_at: date | None = None,
     support_type: str | None = None,

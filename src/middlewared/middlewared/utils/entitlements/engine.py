@@ -11,8 +11,6 @@ from .facts import EntitlementFacts
 if typing.TYPE_CHECKING:
     from collections.abc import Callable, Mapping
 
-    from truenas_pylicensed import LicenseType
-
 
 Column = typing.Literal["CE", "HW", "HW+L", "HW+K", "CE+L", "CE+K"]
 
@@ -30,9 +28,8 @@ class Reason(StrEnum):
 
 
 class DerivedEntitlement(StrEnum):
-    """Entitlements computed from license type/tier rather than a license feature flag."""
+    """Entitlements computed from a license tier rather than a license feature flag."""
 
-    HA = "HA"
     PROACTIVE_SUPPORT = "PROACTIVE_SUPPORT"
 
 
@@ -53,6 +50,7 @@ FEATURE_DISPLAY_NAMES: Mapping[str, str] = {
     LicenseFeature.DEDUP: "ZFS deduplication",
     LicenseFeature.DIRECTORY_SERVICES_AUTH: "directory services authentication",
     LicenseFeature.FIBRECHANNEL: "Fibre Channel",
+    LicenseFeature.HA: "high availability",
     LicenseFeature.KMIP: "KMIP key management",
     LicenseFeature.MISSION_CRITICAL: "Mission Critical update profile",
     LicenseFeature.NETWORK_FEC: "FEC mode configuration",
@@ -70,7 +68,6 @@ FEATURE_DISPLAY_NAMES: Mapping[str, str] = {
     LicenseFeature.VMS: "virtual machines",
     LicenseFeature.WEBSHARE: "Webshare",
     LicenseFeature.ZFSTIER: "ZFS tiering",
-    DerivedEntitlement.HA: "high availability",
     DerivedEntitlement.PROACTIVE_SUPPORT: "proactive support",
 }
 
@@ -174,13 +171,7 @@ class TierRule:
             )
 
 
-@dataclass(frozen=True, kw_only=True, slots=True)
-class LicenseTypeRule:
-    allowed_types: frozenset[LicenseType]
-    """License types that grant the checked feature."""
-
-
-Rule = typing.Union[Vector, LegacyRule, TierRule, LicenseTypeRule]
+Rule = typing.Union[Vector, LegacyRule, TierRule]
 
 EntitlementKey = LicenseFeature | DerivedEntitlement
 
@@ -249,18 +240,5 @@ def _check_tier(policy_key: str, rule: TierRule, facts: EntitlementFacts) -> Ent
     if info.type is None or info.type.upper() not in rule.allowed_tiers:
         reason = Reason.TIER_INSUFFICIENT
         return Entitlement(entitled=False, reason=reason, column=column, message=_format_message(reason, policy_key))
-
-    return Entitlement(entitled=True, reason=Reason.ENTITLED, column=column, message="")
-
-
-def _check_license_type(feature: str, rule: LicenseTypeRule, facts: EntitlementFacts) -> Entitlement:
-    column = resolve_column(feature, facts)
-    if facts.license is None:
-        reason: Reason = Reason.NO_LICENSE
-        return Entitlement(entitled=False, reason=reason, column=column, message=_format_message(reason, feature))
-
-    if facts.license.type not in rule.allowed_types:
-        reason = Reason.WRONG_LICENSE_TYPE
-        return Entitlement(entitled=False, reason=reason, column=column, message=_format_message(reason, feature))
 
     return Entitlement(entitled=True, reason=Reason.ENTITLED, column=column, message="")

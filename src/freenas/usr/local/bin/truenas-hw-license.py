@@ -74,8 +74,7 @@ def main():
         # model, so that alert cannot report a mismatch against the record written here.
         model,
         serial,
-        # An empty HA serial holds the parsed type at ENTERPRISE_SINGLE, keeping
-        # failover.licensed false; a populated one would advertise a single head as a pair.
+        # A populated HA serial would advertise this single head as a pair.
         "",
         ContractType.legacy,
         ContractHardware.parts,

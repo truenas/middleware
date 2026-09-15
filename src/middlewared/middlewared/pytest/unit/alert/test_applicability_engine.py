@@ -1,5 +1,4 @@
 import pytest
-from truenas_pylicensed import LicenseType
 
 from middlewared.alert.applicability import (
     ANY_LICENSE,
@@ -19,12 +18,12 @@ from middlewared.alert.applicability import (
 from middlewared.alert.applicability.engine import rule_name
 from middlewared.alert.base import AlertCategory, AlertClassConfig, AlertLevel
 from middlewared.pytest.unit.entitlements import make_facts, make_license
-from middlewared.utils.entitlements import DerivedEntitlement, EntitlementFacts, check_entitlement
+from middlewared.utils.entitlements import EntitlementFacts, LicenseFeature, check_entitlement
 from middlewared.utils.hardware import HardwareClass
 
 NO_LICENSE = None
-PLAIN_LICENSE = make_license(type_=LicenseType.ENTERPRISE_SINGLE)
-HA_LICENSE = make_license(type_=LicenseType.ENTERPRISE_HA)
+PLAIN_LICENSE = make_license()
+HA_LICENSE = make_license(feature_names=("HA",))
 
 HARDWARE_CLASSES = (HardwareClass.TRUENAS_HW, HardwareClass.MINI, HardwareClass.GENERIC)
 LICENSES = (NO_LICENSE, PLAIN_LICENSE, HA_LICENSE)
@@ -39,8 +38,8 @@ GRIDS = (
     (TRUENAS_OR_MINI_HARDWARE, "YYY",      "YYY",  "..."),
     (NOT_APPLIANCE_HARDWARE,   "...",      "YYY",  "YYY"),
     (ANY_LICENSE,              ".YY",      ".YY",  ".YY"),
-    (HA_LICENSED,              "..Y",      "..Y",  "..Y"),
-    (APPLIANCE_OR_HA_LICENSED, "YYY",      "..Y",  "..Y"),
+    (HA_LICENSED,              "..Y",      "...",  "..."),
+    (APPLIANCE_OR_HA_LICENSED, "YYY",      "...",  "..."),
     (EXPECTED_TO_BE_LICENSED,  "YYY",      ".YY",  ".YY"),
 )
 # fmt: on
@@ -93,7 +92,7 @@ def test_ha_matches_the_entitlement_policy():
     for hardware_class in HardwareClass:
         for license in (NO_LICENSE, PLAIN_LICENSE, HA_LICENSE):
             entitlement = check_entitlement(
-                DerivedEntitlement.HA,
+                LicenseFeature.HA,
                 EntitlementFacts(hardware_class=hardware_class, license=license),
             )
             facts = make_facts(hardware_class=hardware_class, license=license)
@@ -173,7 +172,7 @@ def test_applicability_holds_one_reading_of_the_facts():
     [
         (HardwareClass.TRUENAS_HW, NO_LICENSE, False),
         (HardwareClass.TRUENAS_HW, HA_LICENSE, True),
-        (HardwareClass.GENERIC, HA_LICENSE, True),
+        (HardwareClass.GENERIC, HA_LICENSE, False),
         (HardwareClass.GENERIC, PLAIN_LICENSE, False),
     ],
 )
