@@ -10,6 +10,7 @@ from configparser import RawConfigParser
 import pytest
 from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.account import user
+from middlewared.test.integration.assets.entitlements import entitled
 from middlewared.test.integration.utils import call, ssh
 
 SERVICE = "s3"
@@ -26,11 +27,6 @@ def parse(path):
 
 def service():
     return call("service.query", [["service", "=", SERVICE]], {"get": True})
-
-
-@pytest.fixture(scope="module")
-def audit_supported():
-    return call("truenas.entitlements.facts")["hardware_type"] == "TRUENAS"
 
 
 @contextlib.contextmanager
@@ -228,39 +224,35 @@ def test_global_grants_render_as_wildcard_rows():
             assert message in ve.value.errors[0].errmsg
 
 
-def test_audit_renders_when_licensed(audit_supported):
-    if not audit_supported:
-        pytest.skip("S3 auditing is not licensed on this system")
+def test_audit_renders_when_licensed():
+    with entitled("S3_AUDIT"):
+        # CreateBucket and PutBucketAcl are the vocabulary's late joiners —
+        # the bucket plane and the ACL four — and the default mask is the
+        # only one that can select a create at all
+        with config(
+            default_audit=["GetObject", "PutObject", "CreateBucket", "PutBucketAcl"],
+            default_audit_overflow="BACKPRESSURE",
+        ):
+            call("etc.generate", "truenas_s3")
+            server = parse(BUCKETS_CONF)["server"]
+            assert server["default_audit"] == "GetObject,PutObject,CreateBucket,PutBucketAcl"
+            assert server["default_audit_overflow"] == "backpressure"
 
-    # CreateBucket and PutBucketAcl are the vocabulary's late joiners —
-    # the bucket plane and the ACL four — and the default mask is the
-    # only one that can select a create at all
-    with config(
-        default_audit=["GetObject", "PutObject", "CreateBucket", "PutBucketAcl"],
-        default_audit_overflow="BACKPRESSURE",
-    ):
+        # set semantics with the order kept: the daemon refuses a mask that
+        # names an action twice, so a repeat is stored and rendered once
+        with config(default_audit=["GetObject", "PutObject", "GetObject"]):
+            assert call("s3.config")["default_audit"] == ["GetObject", "PutObject"]
+            call("etc.generate", "truenas_s3")
+            assert parse(BUCKETS_CONF)["server"]["default_audit"] == "GetObject,PutObject"
+
+
+def test_audit_refused_when_unlicensed():
+    with entitled("S3_AUDIT", False):
+        with pytest.raises(ValidationErrors) as ve:
+            call("s3.update", {"default_audit": "ALL"})
+        assert "S3 audit logging" in ve.value.errors[0].errmsg
         call("etc.generate", "truenas_s3")
-        server = parse(BUCKETS_CONF)["server"]
-        assert server["default_audit"] == "GetObject,PutObject,CreateBucket,PutBucketAcl"
-        assert server["default_audit_overflow"] == "backpressure"
-
-    # set semantics with the order kept: the daemon refuses a mask that
-    # names an action twice, so a repeat is stored and rendered once
-    with config(default_audit=["GetObject", "PutObject", "GetObject"]):
-        assert call("s3.config")["default_audit"] == ["GetObject", "PutObject"]
-        call("etc.generate", "truenas_s3")
-        assert parse(BUCKETS_CONF)["server"]["default_audit"] == "GetObject,PutObject"
-
-
-def test_audit_refused_when_unlicensed(audit_supported):
-    if audit_supported:
-        pytest.skip("S3 auditing is licensed on this system, so the refusal cannot be seen")
-
-    with pytest.raises(ValidationErrors) as ve:
-        call("s3.update", {"default_audit": "ALL"})
-    assert "licensed feature" in ve.value.errors[0].errmsg
-    call("etc.generate", "truenas_s3")
-    assert "default_audit" not in parse(BUCKETS_CONF)["server"]
+        assert "default_audit" not in parse(BUCKETS_CONF)["server"]
 
 
 @contextlib.contextmanager

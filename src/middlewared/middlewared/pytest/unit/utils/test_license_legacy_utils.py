@@ -298,3 +298,15 @@ def test__zfstier_is_denied_on_every_legacy_license():
     assert not info.has_feature(LicenseFeature.ZFSTIER)
     facts = EntitlementFacts(hardware_class=HardwareClass.TRUENAS_HW, license=info)
     assert check_entitlement(LicenseFeature.ZFSTIER, facts).entitled is False
+
+
+@pytest.mark.parametrize("feature", [LicenseFeature.S3_AUDIT, LicenseFeature.S3_VERSIONING])
+def test__s3_features_are_denied_on_every_legacy_license(feature):
+    # The S3 service is new, so no legacy license carries these keys.
+    assert feature not in _LEGACY_INJECT_SET
+    assert feature.value not in _LEGACY_BITMASK_FEATURES
+
+    info = parse_legacy_license(H10_HA_BLOB)
+    assert not info.has_feature(feature)
+    facts = EntitlementFacts(hardware_class=HardwareClass.TRUENAS_HW, license=info)
+    assert check_entitlement(feature, facts).entitled is False
