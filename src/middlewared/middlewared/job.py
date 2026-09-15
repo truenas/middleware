@@ -685,23 +685,28 @@ class Job:
             if isinstance(evalue, ValidationError):
                 extra = [(evalue.attribute, evalue.errmsg, evalue.errno)]
                 errno = evalue.errno
+                errname = evalue.errname
                 etype = 'VALIDATION'
             elif isinstance(evalue, ValidationErrors):
                 extra = list(evalue)
                 errno = None
+                errname = None
                 etype = 'VALIDATION'
             elif isinstance(evalue, CallError):
                 etype = etype.__name__
                 errno = evalue.errno
+                errname = evalue.errname
                 extra = evalue.extra
             else:
                 etype = etype.__name__
                 errno = None
+                errname = None
                 extra = None
             exc_info = {
                 'repr': repr(evalue),
                 'type': etype,
                 'errno': errno,
+                'errname': errname,
                 'extra': extra,
             }
 
