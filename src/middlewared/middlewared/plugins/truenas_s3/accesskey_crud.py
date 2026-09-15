@@ -137,7 +137,7 @@ class S3AccesskeyServicePart(CRUDServicePart[S3AccesskeyEntry]):
     def compress(self, data: dict[str, Any]) -> dict[str, Any]:
         out = data.copy()
         if "expires_at" in out:
-            if (expires_at := out.pop("expires_at")) is None:
+            if (expires_at := _assume_utc(out.pop("expires_at"))) is None:
                 out["expiry"] = 0
             else:
                 out["expiry"] = int(expires_at.timestamp())
@@ -164,6 +164,7 @@ class S3AccesskeyServicePart(CRUDServicePart[S3AccesskeyEntry]):
         verrors: ValidationErrors,
         id_: int | None = None,
     ) -> None:
+        expires_at = _assume_utc(expires_at)
         if await self.middleware.call("datastore.query", self._datastore, [["name", "=", name], ["id", "!=", id_]]):
             verrors.add(f"{schema_name}.name", "name must be unique")
 
@@ -202,7 +203,6 @@ class S3AccesskeyServicePart(CRUDServicePart[S3AccesskeyEntry]):
             )
 
     async def do_create(self, data: S3AccesskeyCreate) -> S3AccesskeyEntry:
-        data.expires_at = _assume_utc(data.expires_at)
         verrors = ValidationErrors()
         await self._validate("s3_accesskey_create", data.name, data.expires_at, verrors)
 
@@ -265,7 +265,6 @@ class S3AccesskeyServicePart(CRUDServicePart[S3AccesskeyEntry]):
 
         rotate = data.model_dump(exclude_unset=True).get("rotate", False)
         new = old.updated(data)
-        new.expires_at = _assume_utc(new.expires_at)
 
         verrors = ValidationErrors()
         await self._validate("s3_accesskey_update", new.name, new.expires_at, verrors, id_=id_)
