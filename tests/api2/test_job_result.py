@@ -1,3 +1,7 @@
+import itertools
+
+import pytest
+
 from middlewared.test.integration.utils import call, mock
 
 
@@ -38,3 +42,13 @@ def test_job_result():
         # but we should also be able to get unredacted result if needed
         job = call("core.get_jobs", [["id", "=", job_id]], {"get": True, "extra": {"raw_result": True}})
         assert job["result"] == "canary"
+
+
+@pytest.mark.timeout(30)
+def test_job_not_a_job():
+    nonexistent_job_id = 2 << 31
+    with mock("test.test1", return_value=nonexistent_job_id):
+        with pytest.raises(Exception, match="The method is not a job"):
+            # It expects to get a job id as a result, so, without proper checks, it waits for a nonexistent job and
+            # times out
+            call("test.test1", job=True)
