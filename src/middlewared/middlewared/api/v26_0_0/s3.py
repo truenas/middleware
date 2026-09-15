@@ -66,10 +66,19 @@ S3AuditAction = Literal[
     "PutObjectRetention",
     "PutObjectLegalHold",
     "ListAllMyBuckets",
+    "GetObjectAcl",
+    "PutObjectAcl",
+    "GetBucketAcl",
+    "PutBucketAcl",
+    "PutBucketVersioning",
+    "CreateBucket",
+    "DeleteBucket",
 ]
 """The actions an audit mask may name, spelled exactly as the S3 service
-reads them. The one middleware-side vocabulary; the service refuses its
-whole config for an unknown name, so the live tests set every one."""
+reads them: its maskable vocabulary in full. The service refuses its
+whole config for an unknown name, and refuses `BypassGovernanceRetention`
+in a mask — that probe rides beside an operation's own action and would
+match no request — so it is the one action name not here."""
 
 S3AuditMask = list[S3AuditAction] | Literal["ALL"]
 S3AuditOverflow = Literal["DROP", "BACKPRESSURE"]
@@ -269,8 +278,12 @@ class S3Entry(BaseModel):
             "(`system.general.ui_certificate`), so a renewal or a change there reaches the S3 service too."
         ),
     )
-    region: str = Field(
-        default="", description="Region name echoed to clients. Empty accepts whatever a client signs for."
+    region: Annotated[str, Field(max_length=63, pattern=r"^[a-z0-9-]*$")] = Field(
+        default="",
+        description=(
+            "Region name echoed to clients: at most 63 characters of lowercase letters, digits and hyphens, "
+            "`us-east-1` shaped. Empty accepts whatever a client signs for."
+        ),
     )
     log_level: Literal["ERROR", "WARNING", "NOTICE", "INFO", "DEBUG"] = Field(
         default="NOTICE",
@@ -280,7 +293,9 @@ class S3Entry(BaseModel):
         default=[],
         description=(
             "Actions audited on every bucket that does not set its own `audit`, or `ALL`. An empty list audits "
-            "nothing. Requires TrueNAS Enterprise appliance hardware."
+            "nothing. Also the only mask that can select `CreateBucket` and `ListAllMyBuckets`: a create precedes "
+            "its bucket's registration, and listing buckets is account-scoped, so neither ever consults a bucket's "
+            "own mask. NOTE: this is a licensed feature."
         ),
     )
     default_audit_overflow: S3AuditOverflow = Field(
@@ -393,7 +408,14 @@ class SharingS3Entry(BaseModel):
             "disabled: the other protocols' users own the filesystem permissions on the tree."
         ),
     )
-    versioning: Literal["OFF", "ENABLED", "SUSPENDED"] = Field(default="OFF", description="Bucket versioning state.")
+    versioning: Literal["OFF", "ENABLED", "SUSPENDED"] = Field(
+        default="OFF",
+        description=(
+            "Bucket versioning state. One-way: a bucket that has been `ENABLED` or `SUSPENDED` cannot return to "
+            "`OFF`, only move between those two, so its stored versions never go unreachable. NOTE: this is a "
+            "licensed feature."
+        ),
+    )
     snapshot_versions: list[NonEmptyString] = Field(
         default=[],
         description=(
@@ -425,7 +447,8 @@ class SharingS3Entry(BaseModel):
         default=False,
         description=(
             "Whether object lock is enabled. Requires `versioning` to be `ENABLED` and a permissions model other "
-            "than `MULTIPROTOCOL`: a locked bucket is the S3 service's alone."
+            "than `MULTIPROTOCOL`: a locked bucket is the S3 service's alone. One-way: the lock is latched on the "
+            "bucket's dataset and cannot be disabled once enabled. NOTE: this is a licensed feature."
         ),
     )
     object_lock_default_mode: Literal["GOVERNANCE", "COMPLIANCE"] | None = Field(
@@ -440,7 +463,9 @@ class SharingS3Entry(BaseModel):
         default=None,
         description=(
             "Actions audited on this bucket, `ALL`, or an empty list to audit nothing. `null` inherits the service's "
-            "`default_audit`. Requires TrueNAS Enterprise appliance hardware."
+            "`default_audit`. `CreateBucket` and `ListAllMyBuckets` never match here — the service `default_audit` "
+            "governs both — while `DeleteBucket` does match this bucket's own deletion. NOTE: this is a licensed "
+            "feature."
         ),
     )
     audit_overflow: S3AuditOverflow | None = Field(
