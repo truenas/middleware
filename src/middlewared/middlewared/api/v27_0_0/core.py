@@ -80,6 +80,7 @@ class CoreGetJobsItemExcInfo(BaseModel):
     )
     type: str | None = Field(description="Exception type name. `null` if no exception occurred.")
     errno: int | None = Field(description="System error number if applicable. `null` otherwise.")
+    errname: str | None = Field(description="Error code (i.e. ENONET).")
     extra: Any = Field(description="Additional exception information.")
 
 
