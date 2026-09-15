@@ -1,6 +1,6 @@
 from collections.abc import Callable
 import socket
-from typing import Concatenate, ParamSpec
+from typing import Concatenate
 
 from middlewared.plugins.interface.dhcp import dhcp_leases
 from middlewared.service import ServiceContext
@@ -18,10 +18,8 @@ from truenas_pynetif.netlink import NetlinkError
 
 __all__ = ("sync_impl",)
 
-P = ParamSpec("P")
 
-
-def _apply_route(
+def _apply_route[**P](
     ctx: ServiceContext,
     op: Callable[Concatenate[socket.socket, P], None],
     sock: socket.socket,
