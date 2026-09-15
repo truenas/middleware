@@ -12,7 +12,7 @@ def _make_status(features: dict[str, FeatureEntry]) -> LicenseStatus:
         code=LicenseError.OK,
         id="test-id",
         version=1,
-        type=LicenseType.ENTERPRISE_HA,
+        type=LicenseType.ENTERPRISE,
         model="H10",
         features=features,
         system_id={"serials": ["TEST-000001", "TEST-000002"]},
@@ -23,7 +23,7 @@ def _make_status(features: dict[str, FeatureEntry]) -> LicenseStatus:
 def _license(**overrides) -> LicenseInfo:
     fields: dict = {
         "id": "test-id",
-        "type": LicenseType.ENTERPRISE_HA,
+        "type": LicenseType.ENTERPRISE,
         "model": "H10",
         "support_expires_at": None,
         "features": {},
@@ -54,7 +54,7 @@ def test__from_license_status__renames_vm_to_vms():
 
     assert info == LicenseInfo(
         id="test-id",
-        type=LicenseType.ENTERPRISE_HA,
+        type=LicenseType.ENTERPRISE,
         model="H10",
         support_expires_at=date(2026, 4, 30),
         features={

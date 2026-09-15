@@ -2,7 +2,7 @@ import base64
 from datetime import date
 from unittest.mock import mock_open, patch
 
-from licenselib.license import Features
+from licenselib.license import ContractHardware, ContractSoftware, ContractType, Features, License
 import pytest
 from truenas_pylicensed import FEATURE_NAME_MAP, LicenseType
 from truenas_pylicensed.features import LicenseFeature, SupportTier
@@ -23,6 +23,7 @@ from middlewared.utils.license import (
     parse_legacy_license,
 )
 from middlewared.utils.license.legacy import _LEGACY_INJECT as _LEGACY_INJECT_SET
+from middlewared.utils.license.legacy import HW_ONLY_MARKER
 
 
 def _features(names, *, support_type=None, start=date(2026, 4, 8), end=date(2026, 4, 30)):
@@ -71,7 +72,7 @@ FREENAS_MINI_BLOB = (
             H10_HA_BLOB,
             LicenseInfo(
                 id="legacy_TEST-000001",
-                type=LicenseType.ENTERPRISE_HA,
+                type=LicenseType.ENTERPRISE,
                 model="H10",
                 support_expires_at=date(2026, 4, 30),
                 features=_features(
@@ -84,6 +85,7 @@ FREENAS_MINI_BLOB = (
                         "CATALOG_ENTERPRISE_TRAIN",
                         "CONTAINERS",
                         "DIRECTORY_SERVICES_AUTH",
+                        "HA",
                         "KMIP",
                         "MISSION_CRITICAL",
                         "NETWORK_FEC",
@@ -111,7 +113,7 @@ FREENAS_MINI_BLOB = (
             X10_BLOB,
             LicenseInfo(
                 id="legacy_TEST-000001",
-                type=LicenseType.ENTERPRISE_SINGLE,
+                type=LicenseType.ENTERPRISE,
                 model="X10",
                 support_expires_at=date(2026, 4, 30),
                 features=_features(_LEGACY_INJECT, support_type="BRONZE"),
@@ -243,6 +245,35 @@ def test__legacy_injection_set_is_pinned():
         "VMS",
         "WEBSHARE",
     ]
+
+
+def _hw_only_blob(system_serial_ha):
+    """A system-generated record, built the way truenas-hw-license.py builds one."""
+    lic = License(
+        1,
+        "M50",
+        "TEST-000001",
+        system_serial_ha,
+        ContractType.legacy,
+        ContractHardware.parts,
+        ContractSoftware.none,
+        date(2026, 4, 8),
+        36500,
+        "",
+        HW_ONLY_MARKER,
+        [],
+        [],
+    )
+    return lic.dump().decode()
+
+
+# A legacy blob has no HA key, so the second controller serial is the only thing that can stand in
+# for one. The system-generated case is the one worth pinning: the wholesale rebinding to the
+# hardware-only set is all that keeps a second serial from advertising a single head as a pair.
+def test__legacy_ha_key_comes_from_the_second_serial():
+    assert parse_legacy_license(H10_HA_BLOB).has_feature(LicenseFeature.HA)
+    assert not parse_legacy_license(X10_BLOB).has_feature(LicenseFeature.HA)
+    assert not parse_legacy_license(_hw_only_blob("TEST-000002")).has_feature(LicenseFeature.HA)
 
 
 # The point of the injection: a flag put on the license has to survive the engine, or the
