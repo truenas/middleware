@@ -50,8 +50,8 @@ def promote(tls: Any, current_name: str) -> None:
     schema = "zfs.resource.promote"
     try:
         promote_impl(tls, current_name)
-    except ZFSPathInvalidException:
-        raise ValidationError(schema, f"{current_name!r} is ineligible for promotion.")
+    except ZFSPathInvalidException as e:
+        raise ValidationError(schema, e.message, errno.EINVAL)
     except ZFSPathNotProvidedException:
         raise ValidationError(schema, "'current_name' key is required")
     except ZFSPathNotFoundException as e:

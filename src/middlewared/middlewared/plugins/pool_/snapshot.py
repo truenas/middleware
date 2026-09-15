@@ -31,6 +31,7 @@ from middlewared.api.current import (
 from middlewared.service import CRUDService, filterable_api_method, InstanceNotFound, ValidationError
 from middlewared.plugins.zfs.exceptions import (
     ZFSPathAlreadyExistsException,
+    ZFSPathInvalidException,
     ZFSPathNotASnapshotException,
     ZFSPathNotFoundException,
     ZFSRollbackConflictException,
@@ -362,6 +363,9 @@ class PoolSnapshotService(CRUDService):
                 f"{name} already exists.",
                 errno.EEXIST
             )
+        except ZFSPathInvalidException as e:
+            # create_impl only raises this when `exclude` leaves no dataset to snapshot
+            raise ValidationError("pool.snapshot.create.exclude", e.message, errno.EINVAL)
         finally:
             if affected_vms:
                 self.middleware.call_sync('vm.resume_suspended_vms', list(affected_vms))
