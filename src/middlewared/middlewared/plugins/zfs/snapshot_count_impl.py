@@ -73,10 +73,8 @@ def __try_count_via_nlink(ds_hdl: Any) -> int | None:
 
     # Get mountpoint property
     try:
-        mp_prop = ds_hdl.get_property(ZFSProperty.MOUNTPOINT)
-        if mp_prop is None:
-            return None
-        mountpoint = mp_prop.value
+        props = ds_hdl.get_properties(properties={ZFSProperty.MOUNTPOINT})
+        mountpoint = props.mountpoint.value
     except Exception:
         return None
 
@@ -116,8 +114,8 @@ def __count_dataset_snapshots_cached(ds_hdl: Any, batch_ops: list[TDBBatchOperat
 
     # Get snapshots_changed timestamp for cache invalidation
     try:
-        sc_prop = ds_hdl.get_property(ZFSProperty.SNAPSHOTS_CHANGED)
-        changed_ts = sc_prop.value if sc_prop else None
+        props = ds_hdl.get_properties(properties={ZFSProperty.SNAPSHOTS_CHANGED})
+        changed_ts = props.snapshots_changed.value
     except Exception:
         changed_ts = None
 
