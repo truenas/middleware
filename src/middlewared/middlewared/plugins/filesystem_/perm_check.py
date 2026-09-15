@@ -2,6 +2,7 @@ import errno
 import os
 import pathlib
 from types import MappingProxyType
+from typing import Any
 
 import truenas_os
 
@@ -111,8 +112,37 @@ class FilesystemService(Service):
         Check whether `username` is granted every permission in `perms` on `path`.
 
         `perms` is a list of ``"READ"`` / ``"WRITE"`` / ``"EXECUTE"`` tokens —
-        at least one must be specified.  Returns True iff every requested bit
+        at least one must be specified.  Returns True if every requested bit
         is granted by the filesystem (mode bits + native ACLs).
+        """
+        return not self.can_access_as_user_errors(username, path, perms)
+
+    @private
+    def can_access_as_user_errors(
+        self, username: str, path: str, perms: list[str], path_must_exist: bool = True,
+        probe_ancestors: bool = False
+    ) -> list[truenas_os.AccessFailure]:
+        """
+        `can_access_as_user` but return a list of access errors.
+        """
+        try:
+            user_details = self.middleware.call_sync('user.get_user_obj', {'username': username, 'get_groups': True})
+        except KeyError:
+            raise CallError(f'{username!r} user does not exist', errno=errno.ENOENT)
+
+        return self.can_access_as_cred_errors(
+            user_details, path, perms, path_must_exist, probe_ancestors
+        )
+
+    @private
+    def can_access_as_cred_errors(
+        self, user_details: dict[str, Any], path: str, perms: list[str], path_must_exist: bool = True,
+        probe_ancestors: bool = False
+    ) -> list[truenas_os.AccessFailure]:
+        """
+        `can_access_as_user_errors` but for user that might not exist yet.
+
+        Setting `path_must_exist` to False skips missing components.
         """
         if not perms:
             raise CallError('At least one of READ/WRITE/EXECUTE must be set', errno.EINVAL)
@@ -122,22 +152,27 @@ class FilesystemService(Service):
         path_obj = pathlib.Path(path)
         if not path_obj.is_absolute():
             raise CallError('A valid absolute path must be provided', errno.EINVAL)
-        elif not path_obj.exists():
+        elif path_must_exist and not path_obj.exists():
             raise CallError(f'{path!r} does not exist', errno.EINVAL)
 
-        try:
-            user_details = self.middleware.call_sync('user.get_user_obj', {'username': username, 'get_groups': True})
-        except KeyError:
-            raise CallError(f'{username!r} user does not exist', errno=errno.ENOENT)
+        cred_entry = _cred_from_user_details({**user_details, 'id_name': user_details['pw_name']})
 
-        user_details['id_name'] = user_details['pw_name']
-        failures = truenas_os.check_path_access(
-            creds=[_cred_from_user_details(user_details)],
+        if probe_ancestors:
+            if ancestors := _path_ancestor_components(path):
+                failures = truenas_os.check_path_access(
+                    creds=[cred_entry],
+                    components=ancestors,
+                    path_must_exist=path_must_exist,
+                )
+                if failures:
+                    return failures
+
+        return truenas_os.check_path_access(
+            creds=[cred_entry],
             components=[path.encode()],
             mode=mode,
-            path_must_exist=True,
+            path_must_exist=path_must_exist,
         )
-        return not failures
 
     @private
     def check_path_execute(self, path, id_type, xid, path_must_exist):
