@@ -9,7 +9,9 @@ def get_errname(code: int) -> str:
 
 
 class CallException(ErrnoMixin, Exception):
-    pass
+    @property
+    def errname(self) -> str:
+        return get_errname(self.errno)
 
 
 class CallError(CallException):
@@ -19,8 +21,7 @@ class CallError(CallException):
         self.extra = extra
 
     def __str__(self):
-        errname = get_errname(self.errno)
-        return f'[{errname}] {self.errmsg}'
+        return f'[{self.errname}] {self.errmsg}'
 
 
 class ValidationError(CallException):
@@ -35,8 +36,7 @@ class ValidationError(CallException):
         self.errno = errno
 
     def __str__(self):
-        errname = get_errname(self.errno)
-        return f'[{errname}] {self.attribute}: {self.errmsg}'
+        return f'[{self.errname}] {self.attribute}: {self.errmsg}'
 
     def __eq__(self, other):
         return (
