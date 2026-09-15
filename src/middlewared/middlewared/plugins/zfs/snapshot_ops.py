@@ -26,6 +26,7 @@ from .exceptions import (
     ZFSPathAlreadyExistsException,
     ZFSPathHasClonesException,
     ZFSPathHasHoldsException,
+    ZFSPathInvalidException,
     ZFSPathNotASnapshotException,
     ZFSPathNotFoundException,
     ZFSRollbackBlockedException,
@@ -202,6 +203,9 @@ def create(context: ServiceContext, data: ZFSResourceSnapshotCreateQuery) -> ZFS
         raise ValidationError(schema, e.message, errno.ENOENT)
     except ZFSPathAlreadyExistsException as e:
         raise ValidationError(schema, e.message, errno.EEXIST)
+    except ZFSPathInvalidException as e:
+        # create_snapshots_impl only raises this when `exclude` leaves no dataset to snapshot
+        raise ValidationError(f"{schema}.exclude", str(e), errno.EINVAL)
     except ValueError as e:
         raise ValidationError(schema, str(e), errno.EINVAL)
 
