@@ -157,7 +157,55 @@ class FilesystemService(Service):
                     f'{path}: dataset underlying path has the readonly property enabled.'
                 )
 
+            if data['options'].get('recursive'):
+                self._validate_s3_bucket_recursion(schema, st, data['options'].get('traverse'), verrors)
+
         return loc
+
+    def _validate_s3_bucket_recursion(self, schema, st, traverse, verrors):
+        """
+        Refuse a recursive change over the whole of an S3 bucket, whether the target is the mountpoint of a
+        bucket's dataset or a traverse from above would descend into one. Only the bucket's ``s3data``
+        directory is the administrator's to manage; the rest of the dataset is the S3 service's, and a
+        change over all of it may leave the bucket in a state the service does not expect.
+        """
+        path = os.path.realpath(st.realpath)
+        # dataset -> mountpoint of every mount the change covers in full: the target's own when it is a
+        # mount root, and each one beneath it when the recursion crosses mounts
+        covered = {}
+        if st.is_mountpoint:
+            covered[statmount(path=path, as_dict=True)["mount_source"]] = path
+        if traverse:
+            for entry in iter_mountinfo(target_mnt_id=st.mount_id, as_dict=True):
+                if entry["mountpoint"].startswith(f"{path}/"):
+                    covered[entry["mount_source"]] = entry["mountpoint"]
+        if not covered:
+            return
+
+        buckets = self.middleware.call_sync(
+            "sharing.s3.query", [["dataset", "in", list(covered)]], {"select": ["name", "dataset"]}
+        )
+        crossed = []
+        for bucket in buckets:
+            mountpoint = covered[bucket.dataset]
+            if mountpoint == path:
+                verrors.add(
+                    f"{schema}.path",
+                    f"{path} is the mountpoint of the dataset consumed by S3 bucket {bucket.name!r}. "
+                    "Recursive permissions changes on the whole bucket are rejected because they may have "
+                    "undefined behavior and expose security risks. Apply the change to the s3data directory "
+                    f"inside the bucket ({path}/s3data) instead.",
+                )
+            else:
+                crossed.append(f"{bucket.name!r} ({mountpoint})")
+        if crossed:
+            verrors.add(
+                f"{schema}.options.traverse",
+                f"Traversing from {path} would recursively change permissions on the whole of S3 "
+                f"bucket(s) {', '.join(crossed)}. This is rejected because recursive permissions changes "
+                "on a whole bucket may have undefined behavior and expose security risks. Apply the "
+                "change to the s3data directory inside each bucket instead.",
+            )
 
     @private
     def path_get_acltype(self, path):
@@ -195,6 +243,9 @@ class FilesystemService(Service):
 
         If ``traverse`` and ``recursive`` are specified, then the chown
         operation will traverse filesystem mount points.
+
+        A recursive change may not target the mountpoint of a dataset consumed by an S3 bucket, nor traverse
+        into one; apply it to the bucket's ``s3data`` directory instead.
         """
         job.set_progress(0, 'Preparing to change owner.')
         verrors = ValidationErrors()
@@ -249,6 +300,9 @@ class FilesystemService(Service):
         If no ``mode`` is set and ``stripacl`` is ``true``, then non-trivial ACLs are converted to
         trivial ACLs. An ACL is trivial if it can be expressed as a file mode without losing any
         access rules.
+
+        A recursive change may not target the mountpoint of a dataset consumed by an S3 bucket, nor traverse
+        into one; apply it to the bucket's ``s3data`` directory instead.
 
         .. important::
 
@@ -617,6 +671,9 @@ class FilesystemService(Service):
 
             If ``user``, ``uid``, ``group``, or ``gid`` is specified in a recursive operation, then the
             owning user, group, or both for *all* files will be changed.
+
+        A recursive change may not target the mountpoint of a dataset consumed by an S3 bucket, nor traverse
+        into one; apply it to the bucket's ``s3data`` directory instead.
 
         The following notes about ACL entries are necessarily terse. If more detail is required, please
         consult relevant TrueNAS documentation.

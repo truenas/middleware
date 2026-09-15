@@ -17,6 +17,7 @@ from middlewared.test.integration.assets.account import user
 from middlewared.test.integration.assets.pool import dataset, pool
 from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.utils.client import truenas_server
+from truenas_api_client import ValidationErrors as ClientValidationErrors
 
 SERVICE = "s3"
 BUCKETS_CONF = "/etc/truenas_s3/buckets.conf"
@@ -454,6 +455,58 @@ def test_the_one_way_fields_hold(owner):
         with pytest.raises(ValidationErrors) as ve:
             call("sharing.s3.update", b["id"], {"versioning": "OFF"})
         assert "versioning" in ve.value.errors[0].attribute
+
+
+NFS4_DACL = [
+    {"tag": tag, "id": -1, "type": "ALLOW", "perms": {"BASIC": basic}, "flags": {"BASIC": "INHERIT"}}
+    for tag, basic in (("owner@", "FULL_CONTROL"), ("everyone@", "READ"))
+]
+
+
+def permissions_change(method, path, uid=0, **options):
+    """The `method` permissions change on `path`, each with a payload that is
+    otherwise valid for an NFSv4 dataset, so that only the path and the
+    options decide whether it is refused."""
+    data = {"path": path, "options": options}
+    match method:
+        case "filesystem.chown":
+            data["uid"] = uid
+        case "filesystem.setperm":
+            data["mode"] = "755"
+            data["options"]["stripacl"] = True
+        case "filesystem.setacl":
+            data["dacl"] = NFS4_DACL
+            data["options"]["validate_effective_acl"] = False
+    return call(method, data, job=True)
+
+
+def test_recursive_permissions_changes_stop_at_the_bucket(owner):
+    """A recursive change over the whole bucket is refused, whether it targets
+    the mountpoint of the bucket's dataset or traverses into it from above,
+    and points at the bucket's `s3data` directory instead. The same change on
+    that directory, and a non-recursive one on the mountpoint, go through."""
+    with dataset("s3-perm-parent", {"share_type": "SMB"}) as parent, bucket(dataset=f"{parent}/inner") as b:
+        mountpoint = f"/mnt/{b['dataset']}"
+        for method in ("filesystem.chown", "filesystem.setperm", "filesystem.setacl"):
+            with pytest.raises(ClientValidationErrors) as ve:
+                permissions_change(method, mountpoint, recursive=True)
+            (error,) = ve.value.errors
+            assert error.attribute == f"{method}.path", method
+            assert b["name"] in error.errmsg, method
+            assert f"{mountpoint}/s3data" in error.errmsg, method
+
+            with pytest.raises(ClientValidationErrors) as ve:
+                permissions_change(method, f"/mnt/{parent}", recursive=True, traverse=True)
+            (error,) = ve.value.errors
+            assert error.attribute == f"{method}.options.traverse", method
+            assert b["name"] in error.errmsg, method
+            assert "s3data" in error.errmsg, method
+
+        with running_service():
+            permissions_change("filesystem.chown", f"{mountpoint}/s3data", uid=owner["uid"], recursive=True)
+            permissions_change("filesystem.chown", mountpoint)
+            # the parent is no bucket, and without traverse the recursion stops at its edge
+            permissions_change("filesystem.chown", f"/mnt/{parent}", recursive=True)
 
 
 def test_registry_changes_reload_and_consumed_fields_restart(owner):
