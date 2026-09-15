@@ -102,6 +102,17 @@ def test_port_conflict_is_refused():
     assert "used by" in ve.value.errors[0].errmsg
 
 
+def test_region_is_a_region_shaped_name():
+    """The value lands verbatim in a strict config file the daemon refuses
+    whole, so only a region-shaped name — lowercase letters, digits,
+    hyphens — may reach it."""
+    for bad in ("US-EAST-1", "us east 1", "x\ny", "a" * 64):
+        with pytest.raises(ValidationErrors):
+            call("s3.update", {"region": bad})
+    with config(region="eu-west-1"):
+        assert call("s3.config")["region"] == "eu-west-1"
+
+
 def test_rendered_files_on_start():
     """Starting the service renders every file the daemon reads, with the
     identities generated once and the credentials file root-only."""
@@ -116,6 +127,16 @@ def test_rendered_files_on_start():
         assert server["log_level"] == "notice"
         assert "region" not in server
         assert "tls_cert" not in server
+
+        # virtual-hosted addressing under the system's own names: the
+        # hostname and, with a domain set, the fully qualified one
+        net = call("network.configuration.config")
+        host = (net.get("hostname_virtual") or net["hostname"]).lower()
+        expected = f"{host}, {host}.{net['domain'].lower()}" if net["domain"] else host
+        assert server["base_hosts"] == expected
+
+        # the SOSAPI ModelName names the appliance release
+        assert server["truenas_version"] == call("system.version_short")
 
         assert ssh(f"stat -c '%a %U' {CREDENTIALS_CONF}").strip() == "600 root"
         assert parse(POLICIES_CONF) == {}
@@ -207,27 +228,37 @@ def test_global_grants_render_as_wildcard_rows():
             assert message in ve.value.errors[0].errmsg
 
 
-def test_audit_renders_on_appliance_hardware(audit_supported):
+def test_audit_renders_when_licensed(audit_supported):
     if not audit_supported:
-        pytest.skip("S3 auditing is gated on appliance hardware, which this system is not")
+        pytest.skip("S3 auditing is not licensed on this system")
 
+    # CreateBucket and PutBucketAcl are the vocabulary's late joiners —
+    # the bucket plane and the ACL four — and the default mask is the
+    # only one that can select a create at all
     with config(
-        default_audit=["GetObject", "PutObject"],
+        default_audit=["GetObject", "PutObject", "CreateBucket", "PutBucketAcl"],
         default_audit_overflow="BACKPRESSURE",
     ):
         call("etc.generate", "truenas_s3")
         server = parse(BUCKETS_CONF)["server"]
-        assert server["default_audit"] == "GetObject,PutObject"
+        assert server["default_audit"] == "GetObject,PutObject,CreateBucket,PutBucketAcl"
         assert server["default_audit_overflow"] == "backpressure"
 
+    # set semantics with the order kept: the daemon refuses a mask that
+    # names an action twice, so a repeat is stored and rendered once
+    with config(default_audit=["GetObject", "PutObject", "GetObject"]):
+        assert call("s3.config")["default_audit"] == ["GetObject", "PutObject"]
+        call("etc.generate", "truenas_s3")
+        assert parse(BUCKETS_CONF)["server"]["default_audit"] == "GetObject,PutObject"
 
-def test_audit_refused_off_appliance_hardware(audit_supported):
+
+def test_audit_refused_when_unlicensed(audit_supported):
     if audit_supported:
-        pytest.skip("This system is appliance hardware, where S3 auditing is allowed")
+        pytest.skip("S3 auditing is licensed on this system, so the refusal cannot be seen")
 
     with pytest.raises(ValidationErrors) as ve:
         call("s3.update", {"default_audit": "ALL"})
-    assert "appliance hardware" in ve.value.errors[0].errmsg
+    assert "licensed feature" in ve.value.errors[0].errmsg
     call("etc.generate", "truenas_s3")
     assert "default_audit" not in parse(BUCKETS_CONF)["server"]
 
