@@ -91,10 +91,6 @@ def __query_impl_paths(hdl: Any, state: CallbackState) -> None:
             raise
 
 
-def __query_impl_roots(hdl: Any, state: CallbackState) -> None:
-    hdl.iter_root_filesystems(callback=__query_impl_callback, state=state)
-
-
 def __should_exclude_internal_paths(data: dict[str, Any]) -> bool:
     for path in data["paths"]:
         if has_internal_path(path):
@@ -127,5 +123,5 @@ def query_impl(hdl: Any, data: dict[str, Any], tier_enabled: bool = False) -> li
     if state.query_args["paths"]:
         __query_impl_paths(hdl, state)
     else:
-        __query_impl_roots(hdl, state)
+        hdl.iter_root_filesystems(callback=__query_impl_callback, state=state)
     return state.results
