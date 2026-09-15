@@ -29,6 +29,15 @@ if TYPE_CHECKING:
 __all__ = ("S3AccesskeyService",)
 
 
+def _assume_utc(value: datetime | None) -> datetime | None:
+    """An expiry given without a timezone is taken as UTC: the value is
+    compared against and stored as UTC, and a naive one would otherwise
+    fail the aware comparison and be stamped in the server's local time."""
+    if value is not None and value.tzinfo is None:
+        return value.replace(tzinfo=UTC)
+    return value
+
+
 class S3AccesskeyModel(sa.Model):
     __tablename__ = "truenas_s3_accesskey"
 
@@ -128,7 +137,7 @@ class S3AccesskeyServicePart(CRUDServicePart[S3AccesskeyEntry]):
     def compress(self, data: dict[str, Any]) -> dict[str, Any]:
         out = data.copy()
         if "expires_at" in out:
-            if (expires_at := out.pop("expires_at")) is None:
+            if (expires_at := _assume_utc(out.pop("expires_at"))) is None:
                 out["expiry"] = 0
             else:
                 out["expiry"] = int(expires_at.timestamp())
@@ -155,6 +164,7 @@ class S3AccesskeyServicePart(CRUDServicePart[S3AccesskeyEntry]):
         verrors: ValidationErrors,
         id_: int | None = None,
     ) -> None:
+        expires_at = _assume_utc(expires_at)
         if await self.middleware.call("datastore.query", self._datastore, [["name", "=", name], ["id", "!=", id_]]):
             verrors.add(f"{schema_name}.name", "name must be unique")
 

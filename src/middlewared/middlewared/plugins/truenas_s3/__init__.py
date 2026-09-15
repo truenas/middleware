@@ -8,6 +8,7 @@ daemon's files and reloads or restarts it as the diff requires.
 
 from __future__ import annotations
 
+import ipaddress
 from typing import TYPE_CHECKING, Any
 
 from middlewared.api.current import S3Entry
@@ -43,13 +44,29 @@ class S3ServicePortDelegate(ServicePortDelegate):
         return [(each["address"], each["port"]) for each in config["listeners"]] or [("0.0.0.0", 9000)]
 
 
+def _wildcard_listeners(state: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """The listeners a reset falls back to: one wildcard per address
+    family and port the old list served, TLS kept — and preferred, where
+    one port carried plaintext and TLS on different addresses of one
+    family. Falling back to the daemon's plaintext default instead would
+    take a TLS-only deployment into the clear on every address, with the
+    certificate still held and nothing to say TLS had stopped."""
+    wanted: dict[tuple[str, int], bool] = {}
+    for listener in state:
+        v6 = ipaddress.ip_address(listener["address"]).version == 6
+        key = ("::" if v6 else "0.0.0.0", listener["port"])
+        wanted[key] = wanted.get(key, False) or listener["tls"]
+    return [{"address": address, "port": port, "tls": tls} for (address, port), tls in sorted(wanted.items())]
+
+
 class S3ListenDelegate(
     SystemServiceListenDelegateMixin[list[dict[str, Any]]], ConfigServiceListenDelegate[list[dict[str, Any]]]
 ):
     """What an interface losing a static address does to the listeners
     naming it: the multiple-address base reads a list of addresses, this
-    reads the address out of each listener, and an empty list is the
-    daemon's default address."""
+    reads the address out of each listener, and a reset falls back to
+    wildcards that keep each port's TLS posture rather than to the
+    daemon's plaintext default."""
 
     async def get_listen_state(self, ips: list[str]) -> list[dict[str, Any]]:
         config: S3Entry = await self.middleware.call("s3.config")
@@ -59,7 +76,7 @@ class S3ListenDelegate(
         return any(listener["address"] == ip for listener in state)
 
     async def reset_listens(self, state: list[dict[str, Any]]) -> None:
-        await self.set_listen_state([])
+        await self.set_listen_state(_wildcard_listeners(state))
 
 
 class S3CertificateAttachment(CertificateServiceAttachmentDelegate):
@@ -137,7 +154,8 @@ async def setup(middleware: Middleware) -> None:
     )
     # an access key change re-renders the credentials file; an account change
     # can move a resolved name or turn a key into USER_MISSING, and a stale
-    # file at the daemon's next load would refuse the whole credentials file
+    # file at the daemon's next load would refuse the whole credentials file;
+    # a network change can move the hostname the base_hosts derive from
     for hook in (
         "s3.accesskey.post_create",
         "s3.accesskey.post_update",
@@ -145,6 +163,7 @@ async def setup(middleware: Middleware) -> None:
         "user.post_update",
         "group.post_update",
         "group.post_delete",
+        "network.configuration.post_update",
     ):
         middleware.register_hook(hook, _reconfigure, sync=True)
     middleware.register_hook("user.post_delete", _user_deleted, sync=True)

@@ -234,10 +234,23 @@ def test_existing_dataset_is_refused(owner):
         assert not call("sharing.s3.query", [["name", "=", "adopt-me"]])
 
 
-@pytest.mark.parametrize("name", ["UPPER", "ab", "a..b", "192.168.1.1", "-lead", "trail-"])
+@pytest.mark.parametrize(
+    "name",
+    ["UPPER", "ab", "a..b", "192.168.1.1", "-lead", "trail-"],
+)
 def test_bad_names_are_refused(owner, name):
     with pytest.raises(ValidationErrors):
         call("sharing.s3.create", {"name": name, "dataset": DATASET, "owner": OWNER})
+
+
+@pytest.mark.parametrize("name", ["999.1.1.1", "192.168.001.001"])
+def test_a_name_that_merely_looks_numeric_is_allowed(owner, name):
+    # not IPv4 addresses to the standard parser (999 is no octet; leading
+    # zeros are RFC 3986 reg-names) — middleware and the S3 service both
+    # use it, so the two vocabularies agree
+    with bucket(name=name):
+        call("etc.generate", "truenas_s3")
+        assert f'bucket "{name}"' in parse(BUCKETS_CONF)
 
 
 def test_unknown_owner_is_refused():
@@ -345,6 +358,18 @@ def test_object_ownership_is_its_own_key(owner):
         row = parse(BUCKETS_CONF)['bucket "test-bucket"']
         assert (row["permissions_model"], row["object_ownership"]) == ("multiprotocol", "object_writer")
 
+        # leaving the shared model must name the ownership: the stored
+        # OBJECT_WRITER fold would otherwise take effect and enable ACLs
+        with pytest.raises(ValidationErrors) as ve:
+            call("sharing.s3.update", b["id"], {"permissions_model": "S3"})
+        assert "object_ownership" in ve.value.errors[0].attribute
+        updated = call(
+            "sharing.s3.update",
+            b["id"],
+            {"permissions_model": "S3", "object_ownership": "BUCKET_OWNER_ENFORCED"},
+        )
+        assert (updated["permissions_model"], updated["object_ownership"]) == ("S3", "BUCKET_OWNER_ENFORCED")
+
 
 def test_object_lock_rules(owner):
     for bad, field in (
@@ -405,6 +430,30 @@ def test_object_lock_rules(owner):
         assert row["object_lock_default_mode"] == "compliance"
         assert row["object_lock_default_days"] == "365"
         assert "object_lock_default_years" not in row
+
+
+def test_the_one_way_fields_hold(owner):
+    """Object lock and versioning move one way. The dataset root's lock
+    latch never lowers and the S3 service refuses to serve a row that
+    contradicts it, so disabling the lock would only take the bucket out
+    of service; and a versioned bucket has no way back to OFF — its
+    stored versions would go unreachable."""
+    with bucket(name="one-way", versioning="ENABLED", object_lock=True) as b:
+        for change, field in (
+            ({"object_lock": False}, "object_lock"),
+            ({"versioning": "OFF"}, "versioning"),
+        ):
+            with pytest.raises(ValidationErrors) as ve:
+                call("sharing.s3.update", b["id"], change)
+            assert field in ve.value.errors[0].attribute
+
+    # an unlocked bucket may suspend, which keeps its versions; OFF is
+    # refused there too
+    with bucket(name="one-way", versioning="ENABLED") as b:
+        assert call("sharing.s3.update", b["id"], {"versioning": "SUSPENDED"})["versioning"] == "SUSPENDED"
+        with pytest.raises(ValidationErrors) as ve:
+            call("sharing.s3.update", b["id"], {"versioning": "OFF"})
+        assert "versioning" in ve.value.errors[0].attribute
 
 
 def test_registry_changes_reload_and_consumed_fields_restart(owner):
@@ -514,9 +563,21 @@ def test_owner_change_leaves_a_shared_directory_as_found(owner):
 
 def test_audit_choices():
     choices = call("sharing.s3.audit_choices")
-    assert len(choices) == 14
+    # the S3 service's maskable vocabulary in full: every grantable
+    # action plus the bucket plane, minus the bypass probe
+    assert len(choices) == 21
     assert "BypassGovernanceRetention" not in choices
     assert choices["ListAllMyBuckets"] == "ListAllMyBuckets"
+    for late in (
+        "GetObjectAcl",
+        "PutObjectAcl",
+        "GetBucketAcl",
+        "PutBucketAcl",
+        "PutBucketVersioning",
+        "CreateBucket",
+        "DeleteBucket",
+    ):
+        assert choices[late] == late
 
 
 @contextlib.contextmanager

@@ -121,7 +121,12 @@ class SharingS3Model(sa.Model):
 SNAPSHOT_PATTERN_CHARS = frozenset(string.ascii_letters + string.digits + "-_.: *?")
 
 
-def is_ipv4_address(name: str) -> bool:
+def is_ipv4_shaped(name: str) -> bool:
+    """Whether the standard parser reads `name` as an IPv4 address. The S3
+    service applies the same test (Rust's `std::net::Ipv4Addr`, the same
+    grammar), and the two must agree: a name only one side refuses is either
+    a rendered row the service refuses whole-file, or an S3 protocol create
+    refused for a reason its error cannot carry."""
     try:
         ipaddress.IPv4Address(name)
     except ValueError:
@@ -171,13 +176,30 @@ class SharingS3Service(SharingService[SharingS3Entry]):
     async def validate(
         self, data: SharingS3Entry, schema: str, verrors: ValidationErrors, old: SharingS3Entry | None = None
     ) -> None:
-        if ".." in data.name or is_ipv4_address(data.name):
+        if ".." in data.name or is_ipv4_shaped(data.name):
             verrors.add(f"{schema}.name", "Bucket names may not contain adjacent dots or look like an IPv4 address.")
         filters: list[Any] = [["name", "=", data.name]]
         if old:
             filters.append(["id", "!=", old.id])
         if await self.query(filters, {"select": ["id"]}):
             verrors.add(f"{schema}.name", "A bucket with this name already exists.")
+
+        # Two one-way fields. Object lock enablement is latched on the dataset
+        # root and never lowers: the S3 service refuses to serve a bucket whose
+        # row contradicts the latch, so turning it off here would only take the
+        # bucket out of service. Versioning has no way back to OFF — the
+        # on-disk format's own rule: stored versions would go unreachable, and
+        # a delete would unlink the live object where a versioned bucket mints
+        # a delete marker.
+        if old:
+            if old.object_lock and not data.object_lock:
+                verrors.add(f"{schema}.object_lock", "Object lock cannot be disabled once enabled.")
+            if old.versioning != "OFF" and data.versioning == "OFF":
+                verrors.add(
+                    f"{schema}.versioning",
+                    "Versioning cannot be returned to OFF once enabled. Suspend it instead: a suspended bucket "
+                    "keeps its stored versions.",
+                )
 
         if data.object_lock:
             if data.versioning != "ENABLED":
@@ -217,7 +239,7 @@ class SharingS3Service(SharingService[SharingS3Entry]):
             "s3.audit_supported"
         ):
             verrors.add(
-                f"{schema}.audit", "Auditing the S3 service requires TrueNAS Enterprise appliance hardware."
+                f"{schema}.audit", "Auditing the S3 service is a licensed feature."
             )
 
         await validate_grants(self.middleware, f"{schema}.grants", data.grants, verrors)
@@ -271,6 +293,11 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         row = data.model_dump(exclude={"id", "locked", "owner"})
         row["grants"] = [g.model_dump(exclude={"name"}) for g in data.grants]
         row["owner_uid"] = owner_uid
+        # Set semantics with the given order kept: the S3 service refuses a
+        # mask that names an action twice, and a real set would render in
+        # hash order, churning the file between generates.
+        if isinstance(row["audit"], list):
+            row["audit"] = list(dict.fromkeys(row["audit"]))
         return row
 
     @private
@@ -432,11 +459,26 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         assert data.dataset is not None
 
         await self.create_dataset("sharing_s3_create", data.dataset)
+        id_: int | None = None
         try:
             id_ = await self.middleware.call("datastore.insert", self._config.datastore, self.compress(data, owner_uid))
             await render_and_apply(self.middleware)
         except Exception:
-            await self.destroy_dataset(data.dataset)
+            # Unwind to "no bucket": the row goes first, and the dataset only
+            # with it — a row that cannot be removed keeps its dataset, which
+            # is a consistent bucket, rather than a registered name with no
+            # storage behind it.
+            if id_ is not None:
+                try:
+                    await self.middleware.call("datastore.delete", self._config.datastore, id_)
+                except Exception:
+                    self.logger.warning(
+                        "%s: failed to remove the bucket row after a failed create", data.name, exc_info=True
+                    )
+                else:
+                    await self.destroy_dataset(data.dataset)
+            else:
+                await self.destroy_dataset(data.dataset)
             raise
         return await self.get_instance(id_)
 
@@ -454,21 +496,43 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         ``grants`` replaces the bucket's whole grant list. Enabling or
         disabling the bucket and changing the owner, the grants or the audit
         settings apply to a running S3 service on a reload; changing the
-        dataset, the permissions model, the object ownership, the ETag mode,
-        the snapshot selection or object-lock enablement restarts it.
+        permissions model, the object ownership, the ETag mode, the snapshot
+        selection or object-lock enablement restarts it. The dataset cannot
+        be changed, and two fields move one way: object lock cannot be
+        disabled once enabled, and versioning cannot return to ``OFF``.
+        Moving ``permissions_model`` off ``MULTIPROTOCOL`` requires
+        ``object_ownership`` to be stated in the same call: the stored
+        value on such a bucket is its ``OBJECT_WRITER`` fold, which would
+        otherwise take effect and enable S3 ACLs.
         """
         old = await self.get_instance(id_)
         audit_callback(old.name)
 
         new = old.updated(data)
+        given = data.model_dump(exclude_unset=True)
         verrors = ValidationErrors()
         new = self.normalize_ownership(new)
+        # Leaving MULTIPROTOCOL must name the ownership. The stored value
+        # on such a row is its OBJECT_WRITER fold, so a merge that kept it
+        # would land the flip on the loosest model — live S3 ACLs,
+        # writer-owned objects — when the bucket's creator never chose it.
+        if (
+            old.permissions_model == "MULTIPROTOCOL"
+            and new.permissions_model != "MULTIPROTOCOL"
+            and "object_ownership" not in given
+        ):
+            verrors.add(
+                "sharing_s3_update.object_ownership",
+                "State object_ownership when moving permissions_model off MULTIPROTOCOL. The stored value on a "
+                "MULTIPROTOCOL bucket is its OBJECT_WRITER fold, which would otherwise take effect and enable "
+                "S3 ACLs.",
+            )
         await self.validate(new, "sharing_s3_update", verrors, old)
         # an owner given by name is compared by the uid it resolves to: a
         # renamed account is the same owner, a deleted and recreated one
         # under the old name is not
         owner_uid = old.owner_uid
-        if "owner" in data.model_dump(exclude_unset=True):
+        if "owner" in given:
             resolved = await self.resolve_owner("sharing_s3_update", new.owner, verrors)
             if resolved is not None:
                 owner_uid = resolved
