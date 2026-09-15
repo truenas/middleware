@@ -1,13 +1,16 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 import ipaddress
 import os
 import re
+import textwrap
 import typing
 
 from truenas_pylibvirt.utils.usb import get_all_usb_devices
 import yaml
 
+from middlewared.alert.base import AlertCategory, AlertClassConfig, AlertLevel, OneShotAlertClass
 from middlewared.api.current import ContainerEntry, ZFSResourceQuery
 from middlewared.plugins.pool_.utils import UpdateImplArgs
 from middlewared.service import CallError, ServiceContext
@@ -24,6 +27,34 @@ if typing.TYPE_CHECKING:
 
 
 RE_USB_ID = re.compile(r'(?:0[xX])?[0-9a-fA-F]{4}')
+
+
+@dataclass(kw_only=True)
+class IncusVirtualMachinesWereNotMigratedAlert(OneShotAlertClass):
+    config = AlertClassConfig(
+        category=AlertCategory.SYSTEM,
+        level=AlertLevel.WARNING,
+        title="Incus Virtual Machines Were Not Migrated",
+        text=textwrap.dedent("""\
+            Pool %(pool)r contains Incus VM instance(s) that were not migrated during the upgrade to the new container
+            implementation: %(datasets)s (datasets under %(vm_dataset)s).
+
+            Only containers are migrated automatically; these virtual machines will not start and are not shown in the
+            Containers UI, but their data has not been deleted. To restore them, follow the "Migrating Containers
+            Virtual Machines" procedure in the TrueNAS documentation:
+            https://www.truenas.com/docs/scale/25.10/scaletutorials/virtualmachines/#migrating-containers-vms
+        """),
+        deleted_automatically=False,
+        keys=["pool"],
+    )
+
+    pool: str
+    datasets: str
+    vm_dataset: str
+
+    @classmethod
+    def key_from_args(cls, args: typing.Any) -> typing.Any:
+        return args["pool"]
 
 
 def usb_id(value: typing.Any) -> str | None:
@@ -152,6 +183,26 @@ async def maybe_migrate_legacy(context: ServiceContext) -> None:
         return
 
     legacy_config = legacy_config[0]
+
+    for pool in legacy_configuration_pools(legacy_config):
+        vm_dataset = f"{pool}/.ix-virt/virtual-machines"
+        if datasets := {
+            dataset["name"].split("/")[-1].removesuffix(".block")
+            for dataset in await context.call2(
+                context.s.zfs.resource.query_impl,
+                ZFSResourceQuery(paths=[vm_dataset], max_depth=1, properties=None)
+            )
+            if dataset["name"] != vm_dataset
+        }:
+            await context.call2(
+                context.s.alert.oneshot_create,
+                IncusVirtualMachinesWereNotMigratedAlert(
+                    pool=pool,
+                    datasets=", ".join(sorted(datasets)),
+                    vm_dataset=vm_dataset,
+                ),
+            )
+
     if await context.middleware.call('system.is_ha_capable'):
         # Legacy containers were never migrated on a controller that can be paired, so
         # there is no established path here and no reason to take the risk of inventing
@@ -225,9 +276,7 @@ async def migrate(context: ServiceContext, job: Job) -> None:
     if not await license_active(context):
         raise CallError('System is not licensed to use containers.')
 
-    pool = legacy_configuration[0]['pool']
-
-    storage_pools = {pool} | set(filter(bool, (legacy_configuration[0]['storage_pools'] or '').split()))
+    storage_pools = legacy_configuration_pools(legacy_configuration[0])
     existing_containers = [container.name for container in await context.call2(context.s.container.query)]
     # Scanned once for the whole run: a USB device replugged midway through would otherwise
     # hand two containers two different views of the same machine.
@@ -243,6 +292,11 @@ async def migrate(context: ServiceContext, job: Job) -> None:
             await job.logs_fd_write(
                 f'Unable to migrate containers on pool {storage_pool!r}: {e!r}.\n'.encode()
             )
+
+
+def legacy_configuration_pools(legacy_configuration: dict[str, typing.Any]) -> set[str]:
+    pool = legacy_configuration['pool']
+    return {pool} | set(filter(bool, (legacy_configuration['storage_pools'] or '').split()))
 
 
 async def migrate_devices(
