@@ -1,3 +1,6 @@
+import errno
+import time
+
 import pytest
 from truenas_api_client import ClientException
 
@@ -46,12 +49,19 @@ def test_snapshot_task_run_success():
 def test_snapshot_task_run_already_existed():
     with dataset("snaprun_dup") as ds:
         with snapshot_task({**TASK_DATA, "dataset": ds}) as task:
+            seconds_remaining = 60 - call("system.info")["datetime"].second
+            if seconds_remaining < 5:
+                # So that both runs are at the same minute
+                time.sleep(seconds_remaining + 1)
+
             # First manual run creates the snapshot
             call("pool.snapshottask.run", task["id"], job=True)
 
             # Second manual run within the same minute produces the same snapshot name and hits "already existed"
-            with pytest.raises(Exception, match="already existed.*ran on schedule"):
+            with pytest.raises(ClientException, match="already existed.*ran on schedule") as ve:
                 call("pool.snapshottask.run", task["id"], job=True)
+
+            assert ve.value.errno == errno.EEXIST
 
             # This error should not affect the snapshot task status
             state = call("pool.snapshottask.get_instance", task["id"])["state"]

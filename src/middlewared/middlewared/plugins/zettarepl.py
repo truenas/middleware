@@ -453,7 +453,8 @@ class ZettareplService(Service):
                     if message.already_existed:
                         raise CallError(
                             f"Snapshot {message.dataset}@{message.snapshot} already existed. "
-                            f"This probably happened because the task already ran on schedule."
+                            "This probably happened because the task already ran on schedule.",
+                            errno.EEXIST,
                         )
                     return
 

@@ -147,6 +147,8 @@ class PeriodicSnapshotTaskService(GenericCRUDService[PeriodicSnapshotTaskEntry])
     async def run(self, job: Job, id_: int) -> None:
         """
         Execute a Periodic Snapshot Task of ``id``.
+
+        Returns a ``EEXIST`` error code if the snapshot already existed (i.e. because the task already ran on schedule).
         """
         await _run(self.context, id_)
 
