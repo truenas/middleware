@@ -788,11 +788,11 @@ def test_bucket_owner_enforced_writes_as_the_owner(owner):
 
 
 def test_snapshot_version_rules(owner, versioning_licensed):
-    """The selection needs a versioning state that lists versions, a
-    pattern keeps to the daemon's grammar, and the pair renders only
-    beside a selection."""
+    """A pattern keeps to the daemon's grammar, and the pair renders
+    only beside a selection. The selection composes with every
+    versioning state; `test_snapshot_versions_need_no_license` proves
+    the `OFF` composition."""
     for bad, field in (
-        ({"snapshot_versions": ["s3-*"]}, "versioning"),
         ({"versioning": "ENABLED", "snapshot_versions": ["s3/*"]}, "snapshot_versions.0"),
         ({"versioning": "ENABLED", "snapshot_versions": ["a,b"]}, "snapshot_versions.0"),
         ({"versioning": "ENABLED", "snapshot_versions": [" s3-*"]}, "snapshot_versions.0"),
@@ -906,6 +906,30 @@ def test_force_disable_versioning_destroys_history(owner, versioning_licensed):
         pid = service()["pids"]
         assert call("sharing.s3.force_disable_versioning", b["id"])["versioning"] == "OFF"
         assert service()["pids"] == pid
+
+
+def test_snapshot_versions_need_no_license(owner):
+    """The snapshot selection is independent of the versioning state and
+    of the `S3_VERSIONING` entitlement: a never-versioned bucket serves
+    its dataset's snapshots as read-only history, the pair renders with
+    the row's `off`, and the versioning knob itself stays gated."""
+    with (
+        entitled("S3_VERSIONING", False),
+        bucket(name="attic", snapshot_versions=["s3-*"]) as b,
+    ):
+        assert b["versioning"] == "OFF"
+        assert b["snapshot_versions"] == ["s3-*"]
+        call("etc.generate", "truenas_s3")
+        row = parse(BUCKETS_CONF)['bucket "attic"']
+        assert row["versioning"] == "off"
+        assert row["snapshot_versions"] == "s3-*"
+        assert row["snapshot_versions_max"] == "64"
+        # The selection loosened nothing: moving the knob off OFF is
+        # still the licensed feature, on this bucket like any other.
+        with pytest.raises(ValidationErrors) as ve:
+            call("sharing.s3.update", b["id"], {"versioning": "SUSPENDED"})
+        assert ve.value.errors[0].attribute == "sharing_s3_update.versioning"
+        assert "S3 object versioning" in ve.value.errors[0].errmsg
 
 
 def snapshot_id(name):
