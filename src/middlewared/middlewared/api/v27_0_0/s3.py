@@ -424,8 +424,8 @@ class SharingS3Entry(BaseModel):
         description=(
             "Patterns over the names of the bucket dataset's ZFS snapshots, `*` and `?` the only metacharacters, "
             "each matched against a whole name. Every snapshot a pattern selects serves each object's state frozen "
-            "in it as a read-only version: listed by `ListObjectVersions` and read by its version id. Empty serves "
-            "none. Requires `versioning` to be `ENABLED` or `SUSPENDED`."
+            "in it as a read-only version: listed by `ListObjectVersions` and read by its version id. Empty "
+            "disables surfacing object versions from ZFS snapshots."
         ),
     )
     snapshot_versions_max: Annotated[int, Field(ge=1, le=4294967295)] = Field(
