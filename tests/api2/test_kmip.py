@@ -38,8 +38,11 @@ def kmip_entitled():
     into, and ``verrors.check()`` runs before the server and certificate checks below it, so
     without this the negative tests would fail on ``kmip_update.enabled`` rather than on the
     attribute they are about.
+
+    SED is mocked for the same reason: ``global_sed_password`` sets a non-empty password, which
+    an unlicensed runner refuses.
     """
-    with entitled("KMIP"):
+    with entitled("KMIP"), entitled("SED"):
         yield
 
 

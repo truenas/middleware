@@ -4,6 +4,7 @@ from collections import defaultdict
 from middlewared.api import api_method
 from middlewared.api.current import PoolAttachArgs, PoolAttachResult
 from middlewared.service import Service, ValidationErrors, job
+from middlewared.utils.service.entitlement import validate_sed_license
 
 
 class PoolService(Service):
@@ -65,15 +66,20 @@ class PoolService(Service):
             verrors.check()
 
             if pool['all_sed']:
+                await validate_sed_license(self.middleware, verrors, 'pool_attach.new_disk')
+                # `disk.query` below raises when the disk has no row yet, which would discard
+                # anything already accumulated, so the license denial has to surface first.
+                verrors.check()
+
                 disk = await self.middleware.call(
                     'disk.query', [['name', '=', options['new_disk']]], {'get': True, 'force_sql_filters': True}
                 )
-                if disk['sed'] is False:
+                if not disk['sed']:
                     verrors.add(
                         'pool_attach.new_disk',
                         f'{options["new_disk"]} must be SED capable because {pool["name"]} is all SED.'
                     )
-                    verrors.check()
+                verrors.check()
 
             job.set_progress(3, 'Completed validation')
 
