@@ -22,10 +22,10 @@ class ZFSPathException(Exception):
 
     reason = "is invalid"
 
-    def __init__(self, path: str, reason: str | None = None):
+    def __init__(self, path: str, *args: object):
         self.path = path
-        self.message = f"{path!r} {reason or self.reason}"
-        super().__init__(path)
+        self.message = f"{path!r} {self.reason}"
+        super().__init__(path, *args)
 
     def __str__(self) -> str:
         return self.message
@@ -46,17 +46,24 @@ class ZFSPathAlreadyExistsException(ZFSPathException):
 class ZFSPathHasClonesException(ZFSPathException):
     def __init__(self, path: str, clones: Sequence[str]):
         self.clones = tuple(clones)
-        super().__init__(path, f"has the following clones: {', '.join(self.clones)}")
+        self.reason = f"has the following clones: {', '.join(self.clones)}"
+        super().__init__(path, self.clones)
 
 
 class ZFSPathHasHoldsException(ZFSPathException):
     def __init__(self, path: str, holds: Sequence[str]):
         self.holds = tuple(holds)
-        super().__init__(path, f"has the following holds: {', '.join(self.holds)}")
+        self.reason = f"has the following holds: {', '.join(self.holds)}"
+        super().__init__(path, self.holds)
 
 
 class ZFSPathInvalidException(ZFSPathException):
     """The path is unfit for the requested operation. Pass a ``reason`` saying why."""
+
+    def __init__(self, path: str, reason: str | None = None):
+        if reason is not None:
+            self.reason = reason
+        super().__init__(path, reason)
 
 
 class ZFSPathNotASnapshotException(ZFSPathException):
@@ -68,9 +75,10 @@ class ZFSPathNotFoundException(ZFSPathException):
 
 
 class ZFSPathNotProvidedException(Exception):
-    def __init__(self) -> None:
-        self.message = "path not provided"
-        super().__init__(self.message)
+    message = "path not provided"
+
+    def __str__(self) -> str:
+        return self.message
 
 
 class ZFSRollbackBlockedException(Exception):
