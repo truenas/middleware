@@ -16,13 +16,21 @@ class SNMPTrapAlertService(ThreadedAlertService):
             "host": self.attributes["host"],
             "port": self.attributes["port"],
             "v3": self.attributes["v3"],
-            "community": self.attributes["community"],
-            "v3_username": self.attributes["v3_username"],
-            "v3_authprotocol": self.attributes["v3_authprotocol"],
-            "v3_authkey": self.attributes["v3_authkey"],
-            "v3_privprotocol": self.attributes["v3_privprotocol"],
-            "v3_privkey": self.attributes["v3_privkey"],
         }
+        if self.attributes["v3"]:
+            auth = {
+                **auth,
+                "v3_username": self.attributes["v3_username"],
+                "v3_authprotocol": self.attributes["v3_authprotocol"],
+                "v3_authkey": self.attributes["v3_authkey"],
+                "v3_privprotocol": self.attributes["v3_privprotocol"],
+                "v3_privkey": self.attributes["v3_privkey"],
+            }
+        else:
+            auth = {
+                **auth,
+                "community": self.attributes["community"],
+            }
 
         classes = (self.middleware.call_sync("alertclasses.config"))["classes"]
 
