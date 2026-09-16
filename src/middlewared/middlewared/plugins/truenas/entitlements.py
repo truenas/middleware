@@ -14,6 +14,7 @@ from middlewared.api.current import (
     TrueNASEntitlementsInfoArgs,
     TrueNASEntitlementsInfoResult,
 )
+from middlewared.plugins.truenas.entitlement_usage import PROBES
 from middlewared.service import CallError, Service, private
 from middlewared.utils.entitlements import (
     POLICY,
@@ -177,3 +178,44 @@ class TrueNASEntitlementsService(Service):
             info["legacy"] = {"error": f"{type(e).__name__}: {e}"}
 
         return info
+
+    @private
+    async def usage(self) -> dict[str, Any]:
+        """Report every gated feature's entitlement alongside whether this system is configured to
+        use it. `in_use` mirrors `entitled` for `SMB_FASTPATH` and `SUPPORT`, which leave no
+        configuration behind to observe, and for any feature whose probe failed, which also carries
+        an `error`. `CATALOG_ENTERPRISE_TRAIN` and `MISSION_CRITICAL` are set by the licensing hooks
+        themselves, so they read as in use on almost every licensed system."""
+        daemon_error: str | None = None
+        try:
+            features = (await self.call2(self.s.truenas.entitlements.info)).features
+        except Exception as e:
+            daemon_error = f"{type(e).__name__}: {e}"
+            features = {
+                str(key): EntitlementEntry(entitled=False, reason=Reason.NO_LICENSE.value, message="")
+                for key in POLICY
+            }
+
+        usage: dict[str, Any] = {}
+        for key, entitlement in features.items():
+            in_use, error = await self._in_use(key, entitlement.entitled)
+            usage[key] = {
+                "entitled": entitlement.entitled,
+                "reason": entitlement.reason,
+                "message": entitlement.message,
+                "in_use": in_use,
+                "error": error or daemon_error,
+            }
+
+        return usage
+
+    async def _in_use(self, key: str, entitled: bool) -> tuple[bool, str | None]:
+        probe = PROBES.get(key)
+        if probe is None:
+            return entitled, None
+
+        try:
+            return await probe(self.context), None
+        except Exception as e:
+            self.logger.warning("%s: unable to determine whether feature is in use", key, exc_info=True)
+            return entitled, f"{type(e).__name__}: {e}"
