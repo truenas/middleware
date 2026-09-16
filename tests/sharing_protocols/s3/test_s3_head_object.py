@@ -46,7 +46,11 @@ def test_a_head_of_an_absent_key_is_404(s3, bucket):
     assert status_of(caught.value) == 404
 
 
-def test_a_head_of_an_absent_bucket_is_404(s3):
+def test_a_head_of_an_absent_bucket_is_404(s3, wildcard_grant):
+    """Under `wildcard_grant`: authorization is answered ahead of the
+    engine, so a caller with no grant for the name is refused `403` and
+    never learns whether the bucket is there. `test_s3_buckets.py` pins
+    that; this is the answer behind it."""
     with pytest.raises(Exception) as caught:
         s3.head_object(Bucket="no-such-bucket-here", Key="k")
     assert status_of(caught.value) == 404

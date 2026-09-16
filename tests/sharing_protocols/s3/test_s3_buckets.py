@@ -135,10 +135,43 @@ def test_a_failed_registration_is_unservable_not_absent(s3, buckets):
 
 
 @pytest.mark.parametrize("op", ["head_bucket", "get_bucket_location"])
-def test_an_unconfigured_name_is_an_ordinary_404(s3, op):
+def test_an_unconfigured_name_is_an_ordinary_404(s3, wildcard_grant, op):
+    """A name nothing holds a row for, to a caller authorized for it.
+
+    The wildcard grant is what makes this observable: authorization runs
+    ahead of the engine, so without one the answer is the `403` below
+    and the bucket's own condition is never reached.
+    """
     with pytest.raises(Exception) as caught:
         getattr(s3, op)(Bucket="no-such-bucket-configured")
     assert status_of(caught.value) == 404
+
+
+def test_a_name_the_caller_has_no_grant_for_hides_its_own_condition(s3, buckets):
+    """`403` precedes existence, and three answers collapse into it.
+
+    Authorization runs before the engine is consulted, so a caller with
+    no grant for a name cannot tell an unconfigured bucket from an
+    unservable one from a name that is not a bucket name at all — every
+    one is the same bare `AccessDenied`. That is what stops error codes
+    being used to map what a deployment holds.
+
+    One case rather than three, because what matters is that they are
+    *indistinguishable*, which no single parametrized run can show. Each
+    is answered on its own merits elsewhere in this file, under
+    `wildcard_grant`, where the caller is authorized for the name.
+    """
+    answers = {}
+    for name, why in (
+        ("no-such-bucket-configured", "nothing holds a row for it"),
+        (buckets["excluded"], "a row stands and its storage does not"),
+        ("a..b", "the grammar refuses the name outright"),
+    ):
+        with pytest.raises(Exception) as caught:
+            s3.list_objects_v2(Bucket=name)
+        answers[why] = (status_of(caught.value), code_of(caught.value))
+
+    assert set(answers.values()) == {(403, "AccessDenied")}, answers
 
 
 @pytest.mark.parametrize("op", ["create_bucket", "delete_bucket"])
@@ -168,7 +201,7 @@ def test_provisioning_without_the_flag_is_walled(s3, op):
         "ab_c",  # underscore
     ],
 )
-def test_the_bucket_name_grammar_refuses(s3, name):
+def test_the_bucket_name_grammar_refuses(s3, wildcard_grant, name):
     """`InvalidBucketName`, and a 400 rather than a 404.
 
     A name the grammar refuses is answered before any lookup, so it
@@ -176,6 +209,10 @@ def test_the_bucket_name_grammar_refuses(s3, name):
     must not become `NoSuchBucket`, which tells a client to go and create
     one. Read over a listing rather than a `HEAD`, because HTTP gives a
     HEAD no body and an error code lives in the body.
+
+    Under `wildcard_grant`, because authorization is answered first: a
+    caller with no grant for the name gets the `403` above instead, and
+    never reaches the grammar.
     """
     with pytest.raises(Exception) as caught:
         s3.list_objects_v2(Bucket=name)

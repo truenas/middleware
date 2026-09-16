@@ -349,6 +349,32 @@ def admin_s3(s3_deployment):
     return client_for(s3_deployment["accounts"]["main"].admin_key, s3_deployment["endpoint"])
 
 
+@pytest.fixture
+def wildcard_grant(accounts):
+    """A grant over every bucket, for the duration of one case.
+
+    **403 precedes existence.** Authorization runs before the engine is
+    consulted, so a caller with no grant for a name cannot tell an
+    unconfigured bucket from an unservable one from a name the grammar
+    refuses — all three are the same bare `AccessDenied`, which is what
+    stops error codes being used to map what exists.
+
+    `main` holds per-bucket grants, so it can never see past that for a
+    name it does not own. A case that is *about* one of those answers
+    takes this: a global grant renders against bucket `*` and reaches
+    every name, including ones nothing holds a row for, and the
+    operation's own answer surfaces. Restored on the way out, because
+    the grant coverage of every other module depends on `main` reaching
+    only what its own rows name.
+    """
+    was = call("s3.config")["global_grants"]
+    call("s3.update", {"global_grants": [user_grant(accounts["main"].uid)]})
+    try:
+        yield
+    finally:
+        call("s3.update", {"global_grants": [{k: v for k, v in g.items() if k != "name"} for g in was]})
+
+
 @pytest.fixture(scope="session")
 def alt_s3(s3_deployment):
     """The second principal: authenticated, holding no grant anywhere.

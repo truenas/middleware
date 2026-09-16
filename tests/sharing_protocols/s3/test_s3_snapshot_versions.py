@@ -26,7 +26,7 @@ import contextlib
 import time
 
 from middlewared.test.integration.assets.s3 import s3_account, s3_bucket, s3_pids, s3_service, user_grant
-from middlewared.test.integration.utils import call, pool
+from middlewared.test.integration.utils import call, pool, ssh
 import pytest
 from s3_client import client_for, code_of, drain, status_of
 
@@ -55,20 +55,35 @@ def take(dataset: str, name: str) -> None:
     call("zfs.resource.snapshot.create", {"dataset": dataset, "name": name})
 
 
-def destroy(dataset: str, name: str) -> None:
-    """Destroy one snapshot, riding out a transient busy.
+#: How long a destroy will wait out the mount a reader left behind.
+#: Generous on purpose: the alternative to waiting is a flaky case, and
+#: the automount this contends with is released on the kernel's schedule
+#: rather than on the daemon's.
+DESTROY_ATTEMPTS = 30
 
-    A snapshot a reader crossed into is mounted, and its unmount can
-    trail the reader by a moment. Retention middleware retries exactly
-    like this.
+
+def destroy(dataset: str, name: str) -> None:
+    """Destroy one snapshot, riding out the mount a reader left behind.
+
+    **A listing that crossed into a snapshot leaves it mounted**, and ZFS
+    refuses to destroy a mounted snapshot with `EBUSY` — so the case that
+    reads a frozen version and then destroys it races its own automount.
+    Retention middleware meets the same thing and retries the same way.
+
+    The lazy unmount comes in only after the first few tries: detaching a
+    tree the daemon still holds a descriptor on is the bigger hammer, and
+    where the mount is simply idling the retry alone is enough.
     """
-    for attempt in range(5):
+    target = f"{dataset}@{name}"
+    for attempt in range(DESTROY_ATTEMPTS):
         try:
-            call("zfs.resource.snapshot.destroy", {"path": f"{dataset}@{name}", "recursive": True})
+            call("zfs.resource.snapshot.destroy", {"path": target, "recursive": True})
             return
         except Exception:
-            if attempt == 4:
+            if attempt == DESTROY_ATTEMPTS - 1:
                 raise
+            if attempt >= 3:
+                ssh(f"umount -l /mnt/{dataset}/.zfs/snapshot/{name} 2>/dev/null || true", check=False)
             time.sleep(1)
 
 
