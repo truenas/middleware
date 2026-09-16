@@ -1,6 +1,7 @@
 from collections.abc import Iterable
 import errno
 import os
+import time
 from typing import Any, Literal
 
 import truenas_pylibzfs
@@ -11,6 +12,25 @@ from .exceptions import ZFSPathHasClonesException, ZFSPathHasHoldsException
 from .utils import open_resource
 
 __all__ = ("destroy_impl",)
+
+ZVOL_DESTROY_RETRY_INTERVAL = 0.01
+ZVOL_DESTROY_RETRY_TIMEOUT = 1.0
+
+
+def _destroy_volume(tls: Any, path: str) -> None:
+    # udev opens a new zvol for a few milliseconds right after it is created.
+    # A destroy inside that window fails with EBUSY. Upstream zfs retries the
+    # same way in zfs_ioc_create() in module/zfs/zfs_ioctl.c when it has to
+    # undo a failed volume create.
+    deadline = time.monotonic() + ZVOL_DESTROY_RETRY_TIMEOUT
+    while True:
+        try:
+            tls.lzh.destroy_resource(name=path)
+            return
+        except truenas_pylibzfs.ZFSException as e:
+            if e.code != truenas_pylibzfs.ZFSError.EZFS_BUSY or time.monotonic() >= deadline:
+                raise
+            time.sleep(ZVOL_DESTROY_RETRY_INTERVAL)
 
 
 def _remove_mountpoint_dir(mountpoint: str) -> None:
@@ -110,7 +130,10 @@ def destroy_nonrecursive_impl(tls: Any, path: str, defer: bool) -> tuple[str | N
 
     # Both ZFS_TYPE_FILESYSTEM and ZFS_TYPE_VOLUME
     try:
-        tls.lzh.destroy_resource(name=path)
+        if rsrc.type == truenas_pylibzfs.ZFSType.ZFS_TYPE_VOLUME:
+            _destroy_volume(tls, path)
+        else:
+            tls.lzh.destroy_resource(name=path)
     except truenas_pylibzfs.ZFSException as e:
         failed = f"Failed to destroy {path!r}: {e}"
         errnum = e.code
