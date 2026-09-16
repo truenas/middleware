@@ -2,12 +2,16 @@ from __future__ import annotations
 
 import datetime
 
+from truenas_crypto_utils.read import load_private_key
+
 from middlewared.api.current import CertificateEntry
 from middlewared.plugins.truenas_connect.utils import TNC_CERT_PREFIX
 from middlewared.service import ServiceContext, ValidationErrors
 
 
-def _cert_checks(cert: CertificateEntry, verrors: ValidationErrors, schema_name: str) -> None:
+async def _cert_checks(
+    context: ServiceContext, cert: CertificateEntry, verrors: ValidationErrors, schema_name: str
+) -> None:
     valid_key_size = {"EC": 28, "RSA": 2048}
     if not cert.fingerprint:
         verrors.add(
@@ -23,10 +27,16 @@ def _cert_checks(cert: CertificateEntry, verrors: ValidationErrors, schema_name:
             schema_name,
             "Selected certificate does not have a private key",
         )
-    elif not cert.key_length:
+    elif not await context.to_thread(load_private_key, pk_inner):
+        # certificate.query no longer parses private keys, so parse the one about to be put to use.
         verrors.add(
             schema_name,
             "Failed to parse certificate's private key",
+        )
+    elif not cert.key_length:
+        verrors.add(
+            schema_name,
+            "Failed to determine certificate's key size",
         )
     elif cert.key_type and cert.key_length < valid_key_size[cert.key_type]:
         verrors.add(
@@ -76,7 +86,7 @@ async def cert_services_validation(
                 "Selected certificate must be a valid certificate and not a CSR or CA",
             )
         else:
-            _cert_checks(cert, verrors, schema_name)
+            await _cert_checks(context, cert, verrors, schema_name)
     else:
         verrors.add(
             schema_name,

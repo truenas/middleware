@@ -298,3 +298,23 @@ def test_corrupt_csr_does_not_break_pydantic_validation():
     entry = validate_through_query_result_item(row)
     assert entry.parsed is False
     assert entry.extensions == {}
+
+
+def test_corrupt_private_key_does_not_hide_key_from_certificate(signed_cert_pair):
+    """Key type and size come from the certificate's public key. A private key that fails to
+    parse is reported by the service checks when the certificate is put to use, not here."""
+    cert_pem, _ = signed_cert_pair
+    row = make_row(
+        name="bad_key",
+        type_flag=CERT_TYPE_EXISTING,
+        certificate=cert_pem,
+        privatekey="-----BEGIN PRIVATE KEY-----\nthis is not a key\n-----END PRIVATE KEY-----\n",
+    )
+
+    normalize_cert_attrs(row)
+
+    assert row["parsed"] is True
+    assert row["key_type"] == "RSA"
+    assert row["key_length"] == 2048
+
+    validate_through_query_result_item(row)
