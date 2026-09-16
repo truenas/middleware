@@ -56,13 +56,22 @@ def bucket_name(leaf: str) -> str:
     return f"{PREFIX}-{leaf}"
 
 
-def _clean_leftovers() -> None:
+@pytest.fixture(scope="session")
+def s3_clean_slate():
     """Remove what an interrupted run left behind.
 
-    Deregistering a bucket keeps its dataset on purpose, so a run that
-    died between the two leaves a dataset whose name the next run's
-    create needs. Both halves go here, the rows first: a dataset a live
-    row still names is one the daemon has registered.
+    **Ordered ahead of everything this suite makes, which is the whole
+    point.** Every name here is matched by prefix, so running it after
+    the accounts exist deletes the keys the session just created — the
+    service then holds no credential for them and every signed request
+    answers `InvalidAccessKeyId`, which is a whole run's worth of
+    failures with one cause.
+
+    Rows before datasets: deregistering a bucket keeps its dataset on
+    purpose, so a run that died between the two leaves a dataset whose
+    name this run's create needs. A leftover that will not go is not
+    suppressed into silence — the create that follows fails on the name,
+    which says the same thing louder.
     """
     for row in call("sharing.s3.query", [["name", "^", f"{PREFIX}-"]]):
         with contextlib.suppress(Exception):
@@ -70,11 +79,34 @@ def _clean_leftovers() -> None:
     for row in call("s3.accesskey.query", [["name", "^", PREFIX]]):
         with contextlib.suppress(Exception):
             call("s3.accesskey.delete", row["id"])
-    for name in call("zfs.resource.query", {"paths": [pool], "properties": None, "get_children": True}):
-        leaf = name["name"]
-        if leaf.startswith(f"{pool}/{PREFIX}-"):
+    for row in call("user.query", [["username", "^", PREFIX]]):
+        with contextlib.suppress(Exception):
+            call("user.delete", row["id"])
+    for row in call("zfs.resource.query", {"paths": [pool], "properties": None, "get_children": True}):
+        if row["name"].startswith(f"{pool}/{PREFIX}-"):
             with contextlib.suppress(Exception):
-                call("zfs.resource.destroy", {"path": leaf, "recursive": True})
+                call("zfs.resource.destroy", {"path": row["name"], "recursive": True})
+
+
+def _prove_signable(client, label: str) -> None:
+    """Fail the session unless the S3 service holds this key.
+
+    A credential the service does not hold refuses *every* request, so a
+    suite that did not check would report hundreds of failures with one
+    cause — and would pass, spuriously, every case that asserts a bare
+    403. `alt` legitimately has nothing to list, so the assertion is on
+    the credential layer alone rather than on the call succeeding.
+    """
+    import botocore.exceptions
+
+    try:
+        client.list_buckets()
+    except botocore.exceptions.ClientError as err:
+        code = err.response["Error"]["Code"]
+        assert code not in ("InvalidAccessKeyId", "SignatureDoesNotMatch"), (
+            f"{label}: the S3 service does not hold this key ({code}). "
+            f"Every signed request this session makes would be refused."
+        )
 
 
 @pytest.fixture(scope="session")
@@ -97,7 +129,7 @@ def s3_licensed():
 
 
 @pytest.fixture(scope="session")
-def s3_accounts(s3_licensed):
+def s3_accounts(s3_licensed, s3_clean_slate):
     """The two principals the matrix needs, and their keys.
 
     `main` owns most of the buckets and holds a grant on each, so it is
@@ -135,7 +167,6 @@ def s3_deployment(s3_accounts):
     dataset costs a directory fanout before the socket ever accepts.
     """
     main = s3_accounts["main"]
-    _clean_leftovers()
 
     # Every row grants `main` and nothing else: `alt` reaching anything
     # is what a stored ACL has to explain.
@@ -235,8 +266,22 @@ def s3_deployment(s3_accounts):
 
         with s3_service():
             wait_for_listener(DEFAULT_S3_PORT)
+            endpoint = s3_endpoint(DEFAULT_S3_PORT)
+
+            # The credentials reached the service, before a single case
+            # depends on it. Checked here rather than left to the first
+            # test because the failure is indistinguishable per-test from
+            # an authorization one, and silent in every case that asserts
+            # a bare 403.
+            for label, key in (
+                ("main", main.key),
+                ("admin", main.admin_key),
+                ("alt", s3_accounts["alt"].key),
+            ):
+                _prove_signable(client_for(key, endpoint), label)
+
             yield {
-                "endpoint": s3_endpoint(DEFAULT_S3_PORT),
+                "endpoint": endpoint,
                 "accounts": s3_accounts,
                 "buckets": {leaf: entry["name"] for leaf, entry in made.items()},
                 "entries": made,

@@ -12,6 +12,13 @@ bucket owner and every allow mode, which is what makes it usable as an
 operator's immediate stop — and what makes its blast radius worth
 pinning: it suspends the principal on *that bucket* and takes neither
 the account listing nor any other bucket down with it.
+
+**The allow modes are driven on a bucket with no ACL surface.** An
+allow mode that does not carry an operation is not a refusal of it:
+where the bucket has live S3 ACLs the evaluator defers to the object's
+own record, and a grantee owns what it wrote. Only under
+`BUCKET_OWNER_ENFORCED`, where no stored record is consulted, is what
+a mode carries observable at all.
 """
 
 from middlewared.test.integration.assets.s3 import (
@@ -107,7 +114,15 @@ def granted(owner, grantee, daemon):
             BUCKET,
             dataset=DATASET,
             owner=owner.username,
-            object_ownership="OBJECT_WRITER",
+            # **`BUCKET_OWNER_ENFORCED`, and the mode matters here.** A
+            # bucket with a live ACL surface does not refuse an operation
+            # its grants do not carry — it defers to the object's own
+            # stored record, and a grantee owns what it wrote. So on an
+            # `OBJECT_WRITER` bucket a `WRITEONLY` grantee reads back its
+            # own uploads and a revoked grant leaves them reachable,
+            # which says nothing about the grant. Enforced ownership
+            # consults no stored record, so what is left is the grant.
+            object_ownership="BUCKET_OWNER_ENFORCED",
             grants=[],
         ) as entry,
         s3_service(),

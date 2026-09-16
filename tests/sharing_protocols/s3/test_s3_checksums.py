@@ -50,10 +50,16 @@ def test_a_write_that_sent_none_stores_none(s3, s3_unsummed, bucket):
     assert bare["ContentLength"] == 5
 
 
-@pytest.mark.parametrize(
-    "algorithm",
-    ["CRC32", "CRC32C", "SHA1", "SHA256"],
-)
+#: `CRC32C` is absent on purpose: asking botocore to *compute* one needs
+#: the `botocore[crt]` extra, which the test runner does not install, and
+#: a case that required it would fail for the runner rather than for the
+#: server. The wire lane is still covered — `test_a_wrong_checksum_is_bad_digest`
+#: sends a literal `x-amz-checksum-crc32c`, which the server verifies and
+#: the client never computes.
+COMPUTED = ["CRC32", "SHA1", "SHA256"]
+
+
+@pytest.mark.parametrize("algorithm", COMPUTED)
 def test_each_algorithm_round_trips(s3, bucket, algorithm):
     """A client picks the algorithm; the object answers the one it was
     given and no other."""
