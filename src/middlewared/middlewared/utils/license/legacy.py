@@ -3,7 +3,8 @@
 Legacy licenses predate the per-feature key vocabulary, so a modern gate reading
 one would see almost no keys and revoke functionality the holder already has.
 Every surviving legacy blob therefore gets _LEGACY_INJECT granted outright, except a
-system-generated record, which gets _HW_ONLY_INJECT.
+system-generated record, which gets _HW_ONLY_INJECT. HA belongs to neither set: a blob
+carries it only when it names a second controller serial.
 
 A blob whose model starts with "freenas" bought none of that functionality, so it
 is rejected entirely and the system reads as unlicensed. The rejection is silent:
@@ -208,14 +209,15 @@ def parse_legacy_license(text: str) -> LicenseInfo:
     if hw_only:
         feature_names = [f.value for f in LicenseFeature if f in _HW_ONLY_INJECT]
     else:
+        inject = _LEGACY_INJECT | {LicenseFeature.HA} if lic.system_serial_ha else _LEGACY_INJECT
         # Iterate the enum rather than the frozenset so injected names land in declaration order.
         for feat in LicenseFeature:
-            if feat in _LEGACY_INJECT and feat not in feature_names:
+            if feat in inject and feat not in feature_names:
                 feature_names.append(feat.value)
 
     return LicenseInfo(
         id=f"legacy_{lic.system_serial}",
-        type=LicenseType.ENTERPRISE_HA if lic.system_serial_ha else LicenseType.ENTERPRISE_SINGLE,
+        type=LicenseType.ENTERPRISE,
         model=model,
         # A marked record has no support contract behind it, so it carries no expiry to act on.
         support_expires_at=None if hw_only else lic.contract_end,

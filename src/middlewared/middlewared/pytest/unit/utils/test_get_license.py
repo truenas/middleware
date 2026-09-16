@@ -30,7 +30,7 @@ NO_FALLBACK_CODES = UNTRUSTWORTHY_CODES + DAEMON_FAILURE_CODES
 
 LEGACY = LicenseInfo(
     id="legacy_TEST-000001",
-    type=LicenseType.ENTERPRISE_HA,
+    type=LicenseType.ENTERPRISE,
     model="H10",
     support_expires_at=None,
     features={},
@@ -47,7 +47,7 @@ def _valid_status() -> LicenseStatus:
         code=LicenseError.OK,
         id="v2-id",
         version=1,
-        type=LicenseType.ENTERPRISE_SINGLE,
+        type=LicenseType.ENTERPRISE,
         model="F60",
         features={},
         system_id={"serials": ["TEST-000009"]},

@@ -7,9 +7,8 @@ and the layering that keeps it out of the evaluation half is enforced by the
 
 A policy entry is one of a few rule kinds: a matrix ``Vector`` (resolved by column against the
 product feature matrix), a ``LegacyRule`` (an arbitrary callable reproducing a today-behavior
-gate verbatim), a ``TierRule`` (resolved by column against its ``DERIVED_VECTORS`` row, then
-qualified by a per-feature ``FeatureInfo.type``), or a ``LicenseTypeRule`` (decided on
-``LicenseInfo.type`` alone).
+gate verbatim), or a ``TierRule`` (resolved by column against its ``DERIVED_VECTORS`` row, then
+qualified by a per-feature ``FeatureInfo.type``).
 
 A ``TierRule``'s vector may only set the two key columns, because a tier is read off a feature
 key and cannot be evaluated without one; the rule rejects anything else at construction.
@@ -30,7 +29,6 @@ from .engine import (
     Entitlement,
     EntitlementKey,
     LegacyRule,
-    LicenseTypeRule,
     Reason,
     Rule,
     TierRule,
@@ -55,7 +53,6 @@ __all__ = [
     "HardwareClass",
     "LegacyRule",
     "LicenseFeature",
-    "LicenseTypeRule",
     "Reason",
     "Rule",
     "TierRule",
