@@ -119,6 +119,7 @@ class DiskUpdate(DiskEntry, metaclass=ForUpdateMetaclass):
     type: Excluded = excluded_field()
     zfs_guid: Excluded = excluded_field()
     devname: Excluded = excluded_field()
+    sed: Excluded = excluded_field()
 
 
 class DiskDetailsArgs(BaseModel):
