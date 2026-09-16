@@ -33,6 +33,45 @@ def _destroy_volume(tls: Any, path: str) -> None:
             time.sleep(ZVOL_DESTROY_RETRY_INTERVAL)
 
 
+def _busy_volumes(tls: Any, failed: dict[str, int]) -> set[str]:
+    """Return the entries of `failed` that are volumes failing with EBUSY."""
+    return {
+        name for name, err in failed.items()
+        if err == errno.EBUSY and open_resource(tls, name).type == truenas_pylibzfs.ZFSType.ZFS_TYPE_VOLUME
+    }
+
+
+def _only_volumes_busy(failed: dict[str, int], volumes: set[str]) -> bool:
+    """Return whether every failure of a recursive destroy comes from a busy volume.
+
+    A volume that udev still holds open fails with EBUSY, and each of its
+    ancestors then fails with EEXIST because it still has a child. Any other
+    failure is real and must not be retried.
+    """
+    busy = {name for name, err in failed.items() if err == errno.EBUSY}
+    if not busy or not busy <= volumes:
+        return False
+
+    return all(
+        err == errno.EBUSY or (err == errno.EEXIST and any(volume.startswith(f"{name}/") for volume in busy))
+        for name, err in failed.items()
+    )
+
+
+def _root_cause(failed: dict[str, int]) -> tuple[str, int]:
+    """Return the failure that caused the rest.
+
+    A dataset cannot be destroyed while anything below it remains, so its own
+    error only echoes a failure further down. The cause is a failed entry with
+    no failed descendant or snapshot of its own.
+    """
+    name = next(
+        name for name in sorted(failed)
+        if not any(other.startswith((f"{name}/", f"{name}@")) for other in failed)
+    )
+    return name, failed[name]
+
+
 def _remove_mountpoint_dir(mountpoint: str) -> None:
     """Remove the destroyed resource's now-unused mountpoint directory.
 
@@ -218,6 +257,18 @@ def destroy_impl(
             readonly=readonly,
         )
 
+    if script == truenas_pylibzfs.lzc.ChannelProgramEnum.DESTROY_RESOURCES:
+        volumes = _busy_volumes(tls, res["return"]["failed"])
+        deadline = time.monotonic() + ZVOL_DESTROY_RETRY_TIMEOUT
+        while _only_volumes_busy(res["return"]["failed"], volumes) and time.monotonic() < deadline:
+            time.sleep(ZVOL_DESTROY_RETRY_INTERVAL)
+            res = truenas_pylibzfs.lzc.run_channel_program(
+                pool_name=pool_name,
+                script=script,
+                script_arguments_dict=script_arguments_dict,
+                readonly=readonly,
+            )
+
     failed, errnum = None, None
     if res["return"]["failed"]:
         failed = f"Failed to destroy {path!r}"
@@ -228,9 +279,8 @@ def destroy_impl(
             failed += f" There are holds ({','.join(tuple(res['return']['holds'].keys()))})"
             errnum = errno.EBUSY
         else:
-            errnum = res["return"]["failed"].get(path, errno.EFAULT)
-            if isinstance(errnum, int) and errnum in truenas_pylibzfs.ZFSError:
-                failed += f" ({truenas_pylibzfs.ZFSError(errnum)})"
+            cause, errnum = _root_cause(res["return"]["failed"])
+            failed += f" ({cause!r}: {os.strerror(errnum)})"
     else:
         _remove_mountpoint_dirs(mntpnts)
 
