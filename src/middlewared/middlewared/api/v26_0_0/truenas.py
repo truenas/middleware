@@ -134,8 +134,8 @@ class LicenseInfoEntry(BaseModel):
     id: str = Field(description="Identifier of the installed license.")
     type: str = Field(
         description=(
-            "License type: one of `ENTERPRISE_SINGLE`, `ENTERPRISE_HA`, `COMMERCIAL`, `COMMUNITY` or `UNKNOWN`. "
-            "New values may be added; treat an unrecognized value as `UNKNOWN`."
+            "License type: one of `ENTERPRISE`, `COMMERCIAL`, `COMMUNITY` or `UNKNOWN`. New values may be "
+            "added; treat an unrecognized value as `UNKNOWN`."
         ),
     )
     model: str | None = Field(description="Hardware model the license was issued for, or `null` if unspecified.")

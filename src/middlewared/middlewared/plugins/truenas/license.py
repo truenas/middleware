@@ -31,6 +31,7 @@ from middlewared.utils.license import (
     upload_license,
 )
 from truenas_pylicensed import LicenseType
+from truenas_pylicensed.features import LicenseFeature
 
 if TYPE_CHECKING:
     from middlewared.main import Middleware
@@ -91,7 +92,7 @@ class TrueNASLicenseService(TrueNASLicenseReconcileService, Service):
             if not lic.valid:
                 raise ValidationError("license", f"Invalid license: {lic.error}")
 
-            if lic.type == LicenseType.ENTERPRISE_HA:
+            if lic.has_feature(LicenseFeature.HA):
                 if not self.middleware.call_sync("system.is_ha_capable"):
                     raise ValidationError("license", "This is not an HA capable system")
 
@@ -103,11 +104,8 @@ class TrueNASLicenseService(TrueNASLicenseReconcileService, Service):
         self.middleware.call_sync("alert.alert_source_clear_run", "LicenseStatus")
 
         if options.ha_propagate:
-            if lic.type in (
-                LicenseType.ENTERPRISE_HA,
-                LicenseType.ENTERPRISE_SINGLE
-            ):
-                if lic.type == LicenseType.ENTERPRISE_HA:
+            if lic.type == LicenseType.ENTERPRISE:
+                if lic.has_feature(LicenseFeature.HA):
                     self._configure_ha_license()
 
                 with open(EULA_PENDING_PATH, "a+") as f:

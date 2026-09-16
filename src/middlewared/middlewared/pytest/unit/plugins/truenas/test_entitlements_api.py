@@ -124,7 +124,7 @@ FACTS_TABLE = [
     UNLICENSED_APPLIANCE,
     EntitlementFacts(
         hardware_class=HardwareClass.GENERIC,
-        license=make_license(tuple(LicenseFeature), LicenseType.ENTERPRISE_SINGLE, "BRONZE"),
+        license=make_license(tuple(LicenseFeature), LicenseType.ENTERPRISE, "BRONZE"),
     ),
 ]
 
