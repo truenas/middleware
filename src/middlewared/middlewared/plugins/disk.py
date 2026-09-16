@@ -1,10 +1,12 @@
 import asyncio
 
+from truenas_pylicensed.features import LicenseFeature
+
 from middlewared.api import api_method, Event
 from middlewared.api.current import (
     DiskEntry, DiskUpdateArgs, DiskUpdateResult, DiskQueryAddedEvent, DiskQueryChangedEvent, DiskQueryRemovedEvent,
 )
-from middlewared.service import filterable_api_method, private, CRUDService
+from middlewared.service import filterable_api_method, private, CRUDService, ValidationError
 import middlewared.sqlalchemy as sa
 from middlewared.utils.disks_.disk_class import DiskEntry as DiskEntryObj
 from middlewared.utils.hardware import get_hardware_class
@@ -186,6 +188,11 @@ class DiskService(CRUDService):
         self._expand_enclosure(old)
         new = old.copy()
         new.update(data)
+
+        if new['passwd'] and old['passwd'] != new['passwd']:
+            entitlement = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.SED)
+            if not entitlement.entitled:
+                raise ValidationError('disk_update.passwd', entitlement.message)
 
         if not new['passwd'] and old['passwd'] != new['passwd']:
             # We want to make sure kmip uid is None in this case
