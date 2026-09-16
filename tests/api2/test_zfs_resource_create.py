@@ -3,6 +3,7 @@ import os
 import pytest
 from auto_config import pool_name
 from middlewared.service_exception import ValidationError, ValidationErrors
+from middlewared.test.integration.assets.entitlements import entitled
 from middlewared.test.integration.assets.pool import another_pool
 from middlewared.test.integration.utils import call, ssh
 
@@ -740,12 +741,10 @@ def test_zfs_resource_create_ssb_behavior_without_tiering():
 
 @pytest.fixture(scope="module")
 def tier_pool():
-    if not call("system.is_enterprise"):
-        pytest.skip("ZFS tiering requires an Enterprise license")
     unused_disks = call("disk.get_unused")
     if len(unused_disks) < 6:
         pytest.skip("Need at least 6 unused disks for a tier pool")
-    with another_pool(
+    with entitled("ZFSTIER"), another_pool(
         {
             "topology": {
                 "data": [{"type": "RAIDZ1", "disks": [d["name"] for d in unused_disks[:3]]}],
