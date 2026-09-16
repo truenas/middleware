@@ -147,24 +147,29 @@ def test_an_unconfigured_name_is_an_ordinary_404(s3, wildcard_grant, op):
     assert status_of(caught.value) == 404
 
 
-def test_a_name_the_caller_has_no_grant_for_hides_its_own_condition(s3, buckets):
-    """`403` precedes existence, and three answers collapse into it.
+def test_a_name_the_caller_cannot_reach_hides_why(s3, buckets):
+    """`403` precedes existence, and three different facts collapse into
+    it.
 
-    Authorization runs before the engine is consulted, so a caller with
-    no grant for a name cannot tell an unconfigured bucket from an
-    unservable one from a name that is not a bucket name at all — every
-    one is the same bare `AccessDenied`. That is what stops error codes
-    being used to map what a deployment holds.
+    Authorization runs before the engine is consulted, so a caller the
+    grants refuse cannot tell a bucket that does not exist from one that
+    exists and serves from a name that is not a bucket name at all —
+    every one is the same bare `AccessDenied`. That is what stops error
+    codes being used to map what a deployment holds.
 
     One case rather than three, because what matters is that they are
-    *indistinguishable*, which no single parametrized run can show. Each
-    is answered on its own merits elsewhere in this file, under
-    `wildcard_grant`, where the caller is authorized for the name.
+    *indistinguishable*, which no single parametrized run can show.
+
+    **A grant is what buys the honest answer**, and the contrast is the
+    point: `main` holds a row on the excluded bucket, so it is told `503
+    ServiceUnavailable` rather than this — see
+    `test_a_failed_registration_is_unservable_not_absent`. The hiding is
+    of what the caller may not reach, not of everything.
     """
     answers = {}
     for name, why in (
         ("no-such-bucket-configured", "nothing holds a row for it"),
-        (buckets["excluded"], "a row stands and its storage does not"),
+        (buckets["denied"], "a row that stands and serves, refused by a DENY"),
         ("a..b", "the grammar refuses the name outright"),
     ):
         with pytest.raises(Exception) as caught:
