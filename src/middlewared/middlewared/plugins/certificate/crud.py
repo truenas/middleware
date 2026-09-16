@@ -65,8 +65,10 @@ class CertificateServicePart(CRUDServicePart[CertificateEntry]):
     _datastore_prefix = "cert_"
     _entry = CertificateEntry
 
-    def extend(self, data: dict[str, Any], context: dict[str, Any]) -> dict[str, Any]:
-        normalize_cert_attrs(data)
+    async def extend(self, data: dict[str, Any], context: dict[str, Any]) -> dict[str, Any]:
+        # normalize_cert_attrs parses the certificate and loads and validates the private key,
+        # which takes seconds per RSA-4096 key on slow hardware. Keep that off the event loop.
+        await self.to_thread(normalize_cert_attrs, data)
         return data
 
     async def do_create(self, job: Job, data: CertificateCreate) -> CertificateEntry:
