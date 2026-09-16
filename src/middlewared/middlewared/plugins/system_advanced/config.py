@@ -16,6 +16,7 @@ from middlewared.api.current import (
 )
 from middlewared.service import ConfigService, private
 from middlewared.utils import run
+from middlewared.utils.service.entitlement import validate_sed_license
 from middlewared.utils.service.settings import SettingsHelper
 
 settings = SettingsHelper()
@@ -167,6 +168,19 @@ class SystemAdvancedService(ConfigService):
                 f'NVIDIA GPU support cannot be disabled while the following containers are using '
                 f'NVIDIA GPUs: {", ".join(c["name"] for c in containers)}. Please stop these containers first.'
             )
+
+    @settings.fields_validator('sed_user')
+    async def _validate_sed_user(self, verrors, sed_user):
+        await validate_sed_license(self.middleware, verrors, 'sed_user')
+
+    @settings.fields_validator('sed_passwd')
+    async def _validate_sed_passwd(self, verrors, sed_passwd):
+        if not sed_passwd:
+            # Clearing stays available unconditionally so a system without the entitlement can
+            # still drop a secret it is no longer allowed to use.
+            return
+
+        await validate_sed_license(self.middleware, verrors, 'sed_passwd')
 
     def _syslogd_changes(self, orig_config: dict, new_config: dict) -> bool:
         """Return `True` if syslogd should be restarted to apply the new configuration."""
