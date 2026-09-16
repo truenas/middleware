@@ -20,7 +20,7 @@ def _license_service(info):
 def _info(**overrides) -> LicenseInfo:
     fields: dict = {
         "id": "legacy_TEST-000001",
-        "type": LicenseType.ENTERPRISE_HA,
+        "type": LicenseType.ENTERPRISE,
         "model": "H10",
         "support_expires_at": END,
         "features": {

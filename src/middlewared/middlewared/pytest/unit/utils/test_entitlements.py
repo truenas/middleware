@@ -1,7 +1,6 @@
 import typing
 
 import pytest
-from truenas_pylicensed import LicenseType
 from truenas_pylicensed.features import FEATURE_TIERS, LicenseFeature, SupportTier
 
 from middlewared.api.v26_0_0.truenas import EntitlementEntry
@@ -15,7 +14,6 @@ from middlewared.utils.entitlements import (
     DerivedEntitlement,
     HardwareClass,
     LegacyRule,
-    LicenseTypeRule,
     Reason,
     TierRule,
     Vector,
@@ -37,6 +35,7 @@ def test_target_vectors_match_the_product_matrix():
         LicenseFeature.DEDUP: Vector(ce=1, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
         LicenseFeature.DIRECTORY_SERVICES_AUTH: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
         LicenseFeature.FIBRECHANNEL: Vector(ce=0, hw=0, hw_l=1, hw_k=1, ce_l=0, ce_k=1),
+        LicenseFeature.HA: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=0),
         LicenseFeature.KMIP: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
         LicenseFeature.MISSION_CRITICAL: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
         LicenseFeature.NETWORK_FEC: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
@@ -64,6 +63,7 @@ def test_live_policy_shape():
         LicenseFeature.DEDUP,
         LicenseFeature.DIRECTORY_SERVICES_AUTH,
         LicenseFeature.FIBRECHANNEL,
+        LicenseFeature.HA,
         LicenseFeature.KMIP,
         LicenseFeature.MISSION_CRITICAL,
         LicenseFeature.ZFSTIER,
@@ -83,16 +83,22 @@ def test_live_policy_shape():
         LicenseFeature.RDMA,
         LicenseFeature.S3_AUDIT,
         LicenseFeature.S3_VERSIONING,
-        DerivedEntitlement.HA,
         DerivedEntitlement.PROACTIVE_SUPPORT,
     }
-    assert isinstance(POLICY[DerivedEntitlement.HA], LicenseTypeRule)
+    assert isinstance(POLICY[LicenseFeature.HA], Vector)
     assert isinstance(POLICY[DerivedEntitlement.PROACTIVE_SUPPORT], TierRule)
     # Every license feature the policy rules on is bound to a matrix Vector.
     for key in set(POLICY) - set(DerivedEntitlement):
         assert isinstance(POLICY[key], Vector), key
     # LegacyRule is still dispatched by the engine, but no live entry uses it.
     assert not [rule for rule in POLICY.values() if isinstance(rule, LegacyRule)]
+
+
+def test_ha_has_exactly_one_policy_entry():
+    """Any other ``StrEnum`` member spelled ``"HA"`` would collapse into this entry rather than sit
+    beside it, keeping the first key's identity and the last value written."""
+    assert [type(key) for key in POLICY if key == "HA"] == [LicenseFeature]
+    assert isinstance(POLICY["HA"], Vector)
 
 
 MATRIXLESS_FEATURES = frozenset({LicenseFeature.TNC_SUB})
@@ -310,22 +316,22 @@ def test_tier_rule_behavior(hardware_class, state, support_type, entitled, reaso
     assert entitlement.message == message
 
 
-# HA: the live LicenseTypeRule. The license type decides outright and the hardware class
-# only names the column, so an ENTERPRISE_HA license grants it everywhere and an
-# ENTERPRISE_SINGLE one grants it nowhere.
-LICENSE_TYPE_TABLE = [
-    (HardwareClass.TRUENAS_HW, LicenseType.ENTERPRISE_HA, True, "ENTITLED", "HW+L"),
-    (HardwareClass.TRUENAS_HW, LicenseType.ENTERPRISE_SINGLE, False, "WRONG_LICENSE_TYPE", "HW+L"),
+# HA. A virtual machine stamped as an HA node classifies as appliance hardware, so the CE half of
+# the row covers only machines that cannot be one half of a pair: Minis, whiteboxes, and anything
+# whose hardware probe degraded.
+HA_TABLE = [
+    (HardwareClass.TRUENAS_HW, (LicenseFeature.HA,), True, "ENTITLED", "HW+K"),
+    (HardwareClass.TRUENAS_HW, (), False, "KEY_MISSING", "HW+L"),
     (HardwareClass.TRUENAS_HW, None, False, "NO_LICENSE", "HW"),
-    (HardwareClass.GENERIC, LicenseType.ENTERPRISE_HA, True, "ENTITLED", "CE+L"),
-    (HardwareClass.MINI, LicenseType.ENTERPRISE_HA, True, "ENTITLED", "CE+L"),
+    (HardwareClass.GENERIC, (LicenseFeature.HA,), False, "WRONG_HARDWARE", "CE+K"),
+    (HardwareClass.MINI, (LicenseFeature.HA,), False, "WRONG_HARDWARE", "CE+K"),
 ]
 
 
-@pytest.mark.parametrize("hardware_class,type_,entitled,reason,column", LICENSE_TYPE_TABLE)
-def test_license_type_rule_behavior(hardware_class, type_, entitled, reason, column):
-    license = None if type_ is None else make_license(type_=type_)
-    entitlement = check_entitlement(DerivedEntitlement.HA, make_facts(hardware_class=hardware_class, license=license))
+@pytest.mark.parametrize("hardware_class,feature_names,entitled,reason,column", HA_TABLE)
+def test_ha_behavior(hardware_class, feature_names, entitled, reason, column):
+    license = None if feature_names is None else make_license(feature_names=feature_names)
+    entitlement = check_entitlement(LicenseFeature.HA, make_facts(hardware_class=hardware_class, license=license))
     assert entitlement.entitled is entitled
     assert entitlement.reason == reason
     assert entitlement.column == column
