@@ -35,6 +35,7 @@ make reinstall_container
 # Run specific test directory
 ./tests/runtest.py --ip <IP> --password <PASSWORD> --interface <INTERFACE> --test_dir api2
 ./tests/runtest.py --ip <IP> --password <PASSWORD> --interface <INTERFACE> --test_dir sharing_protocols
+./tests/runtest.py --ip <IP> --password <PASSWORD> --interface <INTERFACE> --test_dir sharing_protocols/s3
 
 # Run specific test file
 ./tests/runtest.py --ip <IP> --password <PASSWORD> --interface <INTERFACE> --test test_smb.py
@@ -185,7 +186,7 @@ job_id = await self.middleware.call('service.long_running_method', arg1)
 | `src/middlewared/middlewared/alembic/` | Database migrations |
 | `tests/` | Integration and API test suites |
 | `tests/api2/` | Main API tests (200+ tests) |
-| `tests/sharing_protocols/` | SMB, NFS, iSCSI, Fibre Channel, NVMe-oF tests |
+| `tests/sharing_protocols/` | SMB, NFS, iSCSI, Fibre Channel, NVMe-oF, S3 tests |
 | `tests/directory_services/` | AD, LDAP, FreeIPA, SSH tests |
 | `tests/unit/` | Internal middleware unit tests |
 
