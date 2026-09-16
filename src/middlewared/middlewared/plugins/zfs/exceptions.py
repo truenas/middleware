@@ -1,9 +1,10 @@
-from typing import Iterable, Sequence
+from collections.abc import Sequence
 
 __all__ = (
     "ZFSKeyAlreadyLoadedException",
     "ZFSNotEncryptedException",
     "ZFSPathAlreadyExistsException",
+    "ZFSPathException",
     "ZFSPathHasClonesException",
     "ZFSPathHasHoldsException",
     "ZFSPathInvalidException",
@@ -16,46 +17,60 @@ __all__ = (
 )
 
 
-class ZFSKeyAlreadyLoadedException(Exception):
-    def __init__(self, path: str):
-        self.message = f"{path!r} key is already loaded"
-        super().__init__(self.message)
+class ZFSPathException(Exception):
+    """Base for errors about one ZFS path. Subclasses set ``reason``, the predicate that follows the path."""
 
+    reason = "is invalid"
 
-class ZFSNotEncryptedException(Exception):
-    def __init__(self, path: str):
-        self.message = f"{path!r} is not encrypted"
-        super().__init__(self.message)
-
-
-class ZFSPathAlreadyExistsException(Exception):
-    def __init__(self, path: str):
-        self.message = f"{path!r} already exists"
-        super().__init__(self.message)
-
-
-class ZFSPathHasClonesException(Exception):
-    def __init__(self, path: str, clones: Iterable[str]):
+    def __init__(self, path: str, reason: str | None = None):
         self.path = path
-        self.clones = clones
-        self.message = f"{path!r} has the following clones: {','.join(clones)}"
-        super().__init__(self.message)
-
-
-class ZFSPathHasHoldsException(Exception):
-    def __init__(self, path: str, holds: Iterable[str]):
-        self.message = f"{path!r} has the following holds: {','.join(holds)}"
-        super().__init__(self.message)
-
-
-class ZFSPathInvalidException(Exception):
-    def __init__(self, path: str, reason: str = "is invalid"):
-        self.path = path
-        self.message = f"{path!r} {reason}"
-        super().__init__(path, reason)
+        self.message = f"{path!r} {reason or self.reason}"
+        super().__init__(path)
 
     def __str__(self) -> str:
         return self.message
+
+
+class ZFSKeyAlreadyLoadedException(ZFSPathException):
+    reason = "key is already loaded"
+
+
+class ZFSNotEncryptedException(ZFSPathException):
+    reason = "is not encrypted"
+
+
+class ZFSPathAlreadyExistsException(ZFSPathException):
+    reason = "already exists"
+
+
+class ZFSPathHasClonesException(ZFSPathException):
+    def __init__(self, path: str, clones: Sequence[str]):
+        self.clones = tuple(clones)
+        super().__init__(path, f"has the following clones: {', '.join(self.clones)}")
+
+
+class ZFSPathHasHoldsException(ZFSPathException):
+    def __init__(self, path: str, holds: Sequence[str]):
+        self.holds = tuple(holds)
+        super().__init__(path, f"has the following holds: {', '.join(self.holds)}")
+
+
+class ZFSPathInvalidException(ZFSPathException):
+    """The path is unfit for the requested operation. Pass a ``reason`` saying why."""
+
+
+class ZFSPathNotASnapshotException(ZFSPathException):
+    reason = "must be a snapshot path (containing '@')"
+
+
+class ZFSPathNotFoundException(ZFSPathException):
+    reason = "not found"
+
+
+class ZFSPathNotProvidedException(Exception):
+    def __init__(self) -> None:
+        self.message = "path not provided"
+        super().__init__(self.message)
 
 
 class ZFSRollbackBlockedException(Exception):
@@ -68,7 +83,7 @@ class ZFSRollbackBlockedException(Exception):
             f"Cannot rollback to {path!r}: the following snapshots must be destroyed first, but are blocked:\n"
             + "\n".join(f"  {blocker}" for blocker in self.blockers)
         )
-        super().__init__(self.message)
+        super().__init__(path, self.blockers)
 
     def __str__(self) -> str:
         return self.message
@@ -101,20 +116,3 @@ class ZFSRollbackFailedException(Exception):
 
     def __str__(self) -> str:
         return self.message
-
-
-class ZFSPathNotASnapshotException(Exception):
-    def __init__(self, path: str):
-        self.message = f"{path!r} must be a snapshot path (containing '@')"
-        super().__init__(self.message)
-
-
-class ZFSPathNotFoundException(Exception):
-    def __init__(self, path: str):
-        self.path = path
-        self.message = f"{path!r} not found"
-        super().__init__(self.message)
-
-
-class ZFSPathNotProvidedException(Exception):
-    pass
