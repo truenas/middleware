@@ -16,7 +16,6 @@ import os
 from dataclasses import dataclass
 
 import pytest
-from truenas_pylicensed import LicenseType
 
 from middlewared.alert.applicability import (
     HA_LICENSED,
@@ -106,7 +105,7 @@ POPULATIONS = (
         name="HA",
         description="iX appliance with an HA license",
         hardware_class=HardwareClass.TRUENAS_HW,
-        license=make_license(model="M50", type_=LicenseType.ENTERPRISE_HA),
+        license=make_license(model="M50", feature_names=("HA",)),
         ha_capable=True,
     ),
 )

@@ -40,7 +40,7 @@ def _legacy_feature(name, type_=None, expires_at=None):
 
 V2_EXPECTED = {
     "id": "test-id",
-    "type": "ENTERPRISE_HA",
+    "type": "ENTERPRISE",
     "model": "H10",
     "features": [
         {"name": "VMS", "start_date": START, "expires_at": END, "source": "enterprise", "type": None},
@@ -53,7 +53,7 @@ V2_EXPECTED = {
 
 LEGACY_EXPECTED = {
     "id": "legacy_TEST-000001",
-    "type": "ENTERPRISE_HA",
+    "type": "ENTERPRISE",
     "model": "H10",
     "features": [
         _legacy_feature("FIBRECHANNEL"),
@@ -64,6 +64,7 @@ LEGACY_EXPECTED = {
         _legacy_feature("CATALOG_ENTERPRISE_TRAIN"),
         _legacy_feature("CONTAINERS"),
         _legacy_feature("DIRECTORY_SERVICES_AUTH"),
+        _legacy_feature("HA"),
         _legacy_feature("KMIP"),
         _legacy_feature("MISSION_CRITICAL"),
         _legacy_feature("NETWORK_FEC"),
@@ -88,7 +89,7 @@ def _v2_license():
         code=LicenseError.OK,
         id="test-id",
         version=1,
-        type=LicenseType.ENTERPRISE_HA,
+        type=LicenseType.ENTERPRISE,
         model="H10",
         features={
             "VM": FeatureEntry(name="VM", source="enterprise", start_date="2026-04-08", expires_at="2026-04-30"),

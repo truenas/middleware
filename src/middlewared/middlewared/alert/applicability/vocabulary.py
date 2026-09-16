@@ -13,7 +13,7 @@ a name reads at its declaration site exactly as it reads here.
 
 from __future__ import annotations
 
-from middlewared.utils.entitlements import DerivedEntitlement, EntitlementFacts, check_entitlement
+from middlewared.utils.entitlements import EntitlementFacts, LicenseFeature, check_entitlement
 from middlewared.utils.hardware import HardwareClass
 
 __all__ = (
@@ -66,14 +66,12 @@ def ANY_LICENSE(facts: EntitlementFacts) -> bool:
 def HA_LICENSED(facts: EntitlementFacts) -> bool:
     """Machines whose license grants high availability, as the entitlement policy resolves it --
     every consumer of HA in the tree asks the policy the same question."""
-    return check_entitlement(DerivedEntitlement.HA, facts).entitled
+    return check_entitlement(LicenseFeature.HA, facts).entitled
 
 
 def APPLIANCE_OR_HA_LICENSED(facts: EntitlementFacts) -> bool:
     """Machines where high availability is a live concern: an iX appliance, which can be licensed
-    for HA at any moment, or a machine already licensed for it. The HA alert classes take this
-    rather than the hardware half alone, so an HA-licensed machine on non-iX hardware can still
-    display and send what its source produced."""
+    for HA at any moment, or a machine already licensed for it."""
     return TRUENAS_HARDWARE(facts) or HA_LICENSED(facts)
 
 
