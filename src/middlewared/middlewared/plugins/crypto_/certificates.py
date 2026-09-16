@@ -1,7 +1,7 @@
 import datetime
 
 from truenas_crypto_utils.csr import generate_certificate_signing_request
-from truenas_crypto_utils.read import load_certificate, load_certificate_request, RE_CERTIFICATE
+from truenas_crypto_utils.read import load_certificate, load_certificate_request, load_private_key, RE_CERTIFICATE
 from truenas_crypto_utils.validation import validate_certificate_with_key, validate_private_key
 
 import middlewared.sqlalchemy as sa
@@ -113,10 +113,16 @@ class CertificateService(CRUDService):
                 schema_name,
                 'Selected certificate does not have a private key'
             )
-        elif not cert['key_length']:
+        elif not await self.middleware.run_in_thread(load_private_key, cert['privatekey']):
+            # certificate.query no longer parses private keys, so parse the one about to be put to use
             verrors.add(
                 schema_name,
                 "Failed to parse certificate's private key"
+            )
+        elif not cert['key_length']:
+            verrors.add(
+                schema_name,
+                "Failed to determine certificate's key size"
             )
         elif cert['key_length'] < valid_key_size[cert['key_type']]:
             verrors.add(
