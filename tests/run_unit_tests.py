@@ -5,7 +5,6 @@
 # NOTE: this requires `make install_tests` to have been run on the TrueNAS VM.
 
 import argparse
-import middlewared
 import os
 import pytest
 import sys
@@ -14,7 +13,6 @@ from contextlib import contextmanager
 from collections.abc import Generator
 from dataclasses import dataclass
 from junitparser import JUnitXml
-from shutil import copytree, rmtree
 from truenas_api_client import Client
 from uuid import uuid4
 
@@ -25,16 +23,10 @@ DESCRIPTION = (
 )
 
 UNIT_TESTS = 'tests/unit'
-MIDDLEWARE_MODULE_PATH = '/usr/lib/python3/dist-packages/middlewared'
-MIDDLEWARE_PYTEST = 'src/middlewared/middlewared/pytest'
-MIDDLEWARE_UNIT_TESTS = os.path.join(MIDDLEWARE_PYTEST, 'unit')
-MIDDLEWARE_PYTEST_MODULE = os.path.join(MIDDLEWARE_MODULE_PATH, 'pytest')
+MIDDLEWARE_SOURCE = 'src/middlewared'
+MIDDLEWARE_UNIT_TESTS = os.path.join(MIDDLEWARE_SOURCE, 'middlewared', 'pytest', 'unit')
 RESULT_FILE = 'unit_tests_result.xml'
 PYTEST_CONFTEST_FILE = 'tests/conftest.py'
-
-if not os.path.exists(MIDDLEWARE_MODULE_PATH):
-    # If middlware has been reinstalled then we should try to find where it's located
-    MIDDLEWARE_MODULE_PATH = os.path.dirname(os.path.abspath(middlewared.__file__))
 
 
 @dataclass()
@@ -129,20 +121,6 @@ def disable_api_test_config(path: str) -> Generator[None, None, None]:
         )
 
 
-@contextmanager
-def setup_middleware_tests(path: str) -> Generator[None, None, None]:
-    """ temporarily setup our pytest tests in the python dir """
-    try:
-        copytree(
-            os.path.join(path, MIDDLEWARE_PYTEST),
-            os.path.join(MIDDLEWARE_PYTEST_MODULE),
-            dirs_exist_ok=True
-        )
-        yield
-    finally:
-        rmtree(MIDDLEWARE_PYTEST_MODULE)
-
-
 def main() -> None:
     parser = argparse.ArgumentParser(description=DESCRIPTION)
     parser.add_argument(
@@ -156,9 +134,14 @@ def main() -> None:
         assert c.call('system.ready')
 
     args = parser.parse_args()
+
+    # These tests read the tree they were collected from -- walking it, and comparing it against
+    # files checked in beside them -- so the `middlewared` they import has to be that same tree
+    # rather than the installed copy.
+    sys.path.insert(0, os.path.abspath(os.path.join(args.path, MIDDLEWARE_SOURCE)))
+
     with disable_api_test_config(args.path):
-        with setup_middleware_tests(args.path):
-            exit_code = run_unit_tests(args.path)
+        exit_code = run_unit_tests(args.path)
 
     sys.exit(exit_code)
 
