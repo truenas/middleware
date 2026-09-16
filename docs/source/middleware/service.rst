@@ -270,3 +270,10 @@ For complex responses, create nested models:
         """Status code."""
         details: MyServiceStatusDetails | None
         """Detailed status information."""
+
+Field Markers
+^^^^^^^^^^^^^
+
+A field's annotation may be wrapped in ``Secret``, ``Private`` or ``FullAdmin`` to change how middleware treats it:
+redacted in results, hidden from API callers, or mutable only by a full administrator. Decide this for every new
+field; :doc:`/api/field_markers` has the checklist and asks you to have Claude review the model.
