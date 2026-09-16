@@ -627,7 +627,7 @@ class ZFSResourceService(Service):
         except ZFSPathAlreadyExistsException as e:
             raise ValidationError(schema, e.message, errno.EEXIST)
         except ZFSPathNotFoundException as e:
-            missing = e.args[0]
+            missing = e.path
             if "/" not in missing:
                 msg = f"Pool {missing!r} does not exist."
             elif data.create_ancestors:

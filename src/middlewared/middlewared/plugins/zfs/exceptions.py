@@ -55,6 +55,7 @@ class ZFSPathNotASnapshotException(Exception):
 
 class ZFSPathNotFoundException(Exception):
     def __init__(self, path: str):
+        self.path = path
         self.message = f"{path!r} not found"
         super().__init__(self.message)
 
