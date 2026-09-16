@@ -4,14 +4,14 @@ from collections.abc import Awaitable, Callable
 
 from truenas_pylicensed.features import LicenseFeature
 
-from middlewared.api.current import QueryOptions, ZFSResourceQuery
+from middlewared.api.current import ZFSResourceQuery
 from middlewared.service import ServiceContext
 from middlewared.utils.entitlements import DerivedEntitlement
 from middlewared.utils.smb import SearchProtocol
 
 
 async def _apps(context: ServiceContext) -> bool:
-    return bool((await context.call2(context.s.docker.config)).pool)
+    return bool((await context.middleware.call("docker.config"))["pool"])
 
 
 async def _catalog_enterprise_train(context: ServiceContext) -> bool:
@@ -19,7 +19,7 @@ async def _catalog_enterprise_train(context: ServiceContext) -> bool:
 
 
 async def _containers(context: ServiceContext) -> bool:
-    return bool(await context.call2(context.s.container.query, [], QueryOptions(count=True)))
+    return bool(await context.middleware.call("container.query", [], {"count": True}))
 
 
 async def _dedup(context: ServiceContext) -> bool:
@@ -49,7 +49,7 @@ async def _ha(context: ServiceContext) -> bool:
 
 
 async def _kmip(context: ServiceContext) -> bool:
-    return bool((await context.call2(context.s.kmip.config)).server)
+    return bool((await context.middleware.call("kmip.config"))["server"])
 
 
 async def _mission_critical(context: ServiceContext) -> bool:
@@ -72,8 +72,8 @@ async def _nvmeof_spdk(context: ServiceContext) -> bool:
 
 
 async def _proactive_support(context: ServiceContext) -> bool:
-    config = await context.call2(context.s.support.config)
-    return bool(config.enabled and config.email)
+    config = await context.middleware.call("support.config")
+    return bool(config["enabled"] and config["email"])
 
 
 async def _rdma(context: ServiceContext) -> bool:
@@ -100,19 +100,17 @@ async def _s3_audit(context: ServiceContext) -> bool:
         await context.call2(
             context.s.sharing.s3.query,
             [["OR", [["audit", "!=", None], ["audit_overflow", "!=", None]]]],
-            QueryOptions(count=True),
+            {"count": True},
         )
     )
 
 
 async def _s3_versioning(context: ServiceContext) -> bool:
-    return bool(
-        await context.call2(context.s.sharing.s3.query, [["versioning", "!=", "OFF"]], QueryOptions(count=True))
-    )
+    return bool(await context.call2(context.s.sharing.s3.query, [["versioning", "!=", "OFF"]], {"count": True}))
 
 
 async def _sed(context: ServiceContext) -> bool:
-    if await context.call2(context.s.system.advanced.sed_global_password_is_set):
+    if await context.middleware.call("system.advanced.sed_global_password_is_set"):
         return True
 
     # A KMIP-managed disk holds its password on the KMIP server, so it matches on `kmip_uid` alone.
@@ -136,15 +134,15 @@ async def _smb_veeam(context: ServiceContext) -> bool:
 
 
 async def _stig(context: ServiceContext) -> bool:
-    config = await context.call2(context.s.system.security.config)
+    config = await context.middleware.call("system.security.config")
     return bool(
-        config.enable_fips
-        or config.enable_gpos_stig
-        or config.min_password_age
-        or config.max_password_age
-        or config.password_complexity_ruleset
-        or config.min_password_length
-        or config.password_history_length
+        config["enable_fips"]
+        or config["enable_gpos_stig"]
+        or config["min_password_age"]
+        or config["max_password_age"]
+        or config["password_complexity_ruleset"]
+        or config["min_password_length"]
+        or config["password_history_length"]
     )
 
 
@@ -156,11 +154,11 @@ async def _truesearch(context: ServiceContext) -> bool:
 
 
 async def _vms(context: ServiceContext) -> bool:
-    return bool(await context.call2(context.s.vm.query, [], QueryOptions(count=True)))
+    return bool(await context.middleware.call("vm.query", [], {"count": True}))
 
 
 async def _webshare(context: ServiceContext) -> bool:
-    return bool(await context.call2(context.s.sharing.webshare.query, [], QueryOptions(count=True)))
+    return bool(await context.call2(context.s.sharing.webshare.query, [], {"count": True}))
 
 
 async def _zfstier(context: ServiceContext) -> bool:
