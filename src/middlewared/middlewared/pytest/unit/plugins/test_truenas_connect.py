@@ -596,7 +596,7 @@ def _license_info(id_='LIC-1'):
     """The same object `truenas.license.info_private` hands production."""
     return LicenseInfo(
         id=id_,
-        type=LicenseType.ENTERPRISE_HA,
+        type=LicenseType.ENTERPRISE,
         model='H10',
         support_expires_at=date(2026, 4, 30),
         features={

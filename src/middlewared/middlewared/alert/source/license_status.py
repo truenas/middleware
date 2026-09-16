@@ -7,8 +7,6 @@ from collections import defaultdict
 from datetime import date, timedelta
 import textwrap
 
-from truenas_pylicensed import LicenseType
-
 from middlewared.alert.applicability import EXPECTED_TO_BE_LICENSED
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
 from middlewared.alert.schedule import IntervalSchedule
@@ -63,7 +61,7 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
 
         standby_license = standby_serial = None
         try:
-            if local_license.type == LicenseType.ENTERPRISE_HA:
+            if self.middleware.call_sync('failover.licensed'):
                 standby_license = self.middleware.call_sync('failover.call_remote', 'truenas.license.info')
                 standby_serial = self.middleware.call_sync(
                     'failover.call_remote', 'system.dmidecode_info')['system-serial-number']

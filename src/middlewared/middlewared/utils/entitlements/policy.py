@@ -3,17 +3,14 @@ from __future__ import annotations
 import typing
 from types import MappingProxyType
 
-from truenas_pylicensed import LicenseType
 from truenas_pylicensed.features import LicenseFeature, SupportTier
 
 from .engine import (
     DerivedEntitlement,
     Entitlement,
     LegacyRule,
-    LicenseTypeRule,
     Rule,
     TierRule,
-    _check_license_type,
     _check_tier,
     _check_vector,
 )
@@ -26,8 +23,7 @@ if typing.TYPE_CHECKING:
 
 
 # Only ``Vector`` and ``TierRule`` *decide* by matrix cell, the latter against DERIVED_VECTORS
-# with the tier as a further qualifier. ``LicenseTypeRule`` reports a column but decides on
-# ``LicenseInfo.type`` alone -- see the HA entry below.
+# with the tier as a further qualifier.
 POLICY: Mapping[str, Rule] = MappingProxyType(
     {
         LicenseFeature.APPS: TARGET_VECTORS[LicenseFeature.APPS],
@@ -36,6 +32,7 @@ POLICY: Mapping[str, Rule] = MappingProxyType(
         LicenseFeature.DEDUP: TARGET_VECTORS[LicenseFeature.DEDUP],
         LicenseFeature.DIRECTORY_SERVICES_AUTH: TARGET_VECTORS[LicenseFeature.DIRECTORY_SERVICES_AUTH],
         LicenseFeature.FIBRECHANNEL: TARGET_VECTORS[LicenseFeature.FIBRECHANNEL],
+        LicenseFeature.HA: TARGET_VECTORS[LicenseFeature.HA],
         # TODO: KMIP needs webui ticket as well to remove/update gate
         LicenseFeature.KMIP: TARGET_VECTORS[LicenseFeature.KMIP],
         LicenseFeature.MISSION_CRITICAL: TARGET_VECTORS[LicenseFeature.MISSION_CRITICAL],
@@ -55,12 +52,6 @@ POLICY: Mapping[str, Rule] = MappingProxyType(
         # TODO: See if we should have runtime gates as well and not just config gates
         LicenseFeature.WEBSHARE: TARGET_VECTORS[LicenseFeature.WEBSHARE],
         LicenseFeature.ZFSTIER: TARGET_VECTORS[LicenseFeature.ZFSTIER],
-        # Do not wire the product matrix's "HA Functionality" row up. HA is a license *type*,
-        # not a feature key, so there is no LicenseFeature.HA to look up and the HW+K/CE+K
-        # columns are meaningless for it: only LicenseInfo.type can decide. Honouring the row
-        # literally would grant HA to any licensed appliance, ENTERPRISE_SINGLE included, and
-        # withdraw it from test-licensed pairs that are not iX hardware.
-        DerivedEntitlement.HA: LicenseTypeRule(allowed_types=frozenset({LicenseType.ENTERPRISE_HA})),
         # The vector grants nothing the tier check would not also reach, but it decides the denial
         # reason on the unlicensed columns, and it is what makes a one-sided row take effect.
         DerivedEntitlement.PROACTIVE_SUPPORT: TierRule(
@@ -88,6 +79,4 @@ def check_entitlement(
         return rule.func(facts)
     if isinstance(rule, TierRule):
         return _check_tier(feature, rule, facts)
-    if isinstance(rule, LicenseTypeRule):
-        return _check_license_type(feature, rule, facts)
     return _check_vector(feature, rule, facts)
