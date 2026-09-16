@@ -150,10 +150,7 @@ def preferred(buckets):
     grant row admits — a bucket whose owner is already its writer
     answers both ways identically and could show nothing.
     """
-    name = buckets.get("preferred")
-    if not name:
-        pytest.skip("no preferred bucket: the session could not provision one")
-    return name
+    return buckets["preferred"]
 
 
 @pytest.fixture(scope="module")

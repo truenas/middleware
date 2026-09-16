@@ -25,18 +25,12 @@ EARLIER = datetime.datetime(2034, 1, 1, tzinfo=datetime.timezone.utc)
 
 @pytest.fixture(scope="module")
 def locked(buckets):
-    name = buckets.get("locked")
-    if not name:
-        pytest.skip("no locked bucket: the session could not provision one")
-    return name
+    return buckets["locked"]
 
 
 @pytest.fixture(scope="module")
 def defaulted(buckets):
-    name = buckets.get("defaulted")
-    if not name:
-        pytest.skip("no default-rule bucket: the session could not provision one")
-    return name
+    return buckets["defaulted"]
 
 
 def put_locked(s3, bucket, key, mode, until=UNTIL):

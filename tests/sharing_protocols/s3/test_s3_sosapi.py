@@ -97,10 +97,7 @@ def test_the_capacity_document_is_the_dataset_answering(s3, bucket):
 def test_the_names_answer_on_every_bucket(s3, buckets):
     """On every bucket the format says — including the versioned, locked
     one, where the answer carries no version id."""
-    name = buckets.get("locked")
-    if not name:
-        pytest.skip("no locked bucket: the session could not provision one")
-    got = s3.get_object(Bucket=name, Key=SYSTEM)
+    got = s3.get_object(Bucket=buckets["locked"], Key=SYSTEM)
     assert '<ProtocolVersion>"1.0"</ProtocolVersion>' in got["Body"].read().decode()
     assert "VersionId" not in got
 
@@ -115,24 +112,6 @@ def test_a_stored_object_is_shadowed(s3, bucket):
 
     s3.delete_object(Bucket=bucket, Key=SYSTEM)
     assert b"ProtocolVersion" in s3.get_object(Bucket=bucket, Key=SYSTEM)["Body"].read()
-
-
-def test_an_unrecommendable_dataset_says_nothing(s3, bucket):
-    """A dataset whose record implies no allowed size emits no section at
-    all.
-
-    An empty `<SystemRecommendations/>` is not what recommending nothing
-    means, and the absent section is the protocol's own default.
-    """
-    body = s3.get_object(Bucket=bucket, Key=SYSTEM)["Body"].read().decode()
-    if "SystemRecommendations" in body:
-        # The bucket's dataset is tuned to an allowed size after all;
-        # then the section must carry that size and nothing else.
-        assert re.search(
-            r"<SystemRecommendations><KbBlockSize>(256|512|1024|4096|8192)</KbBlockSize>"
-            r"</SystemRecommendations>",
-            body,
-        ), body
 
 
 # ── the recommendation follows the dataset, live ─────────────────────

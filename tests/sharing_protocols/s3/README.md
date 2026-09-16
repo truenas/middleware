@@ -31,9 +31,10 @@ Two accounts:
 | `s3protomain` | `SHARING_S3_WRITE` | `s3` (plain key), `admin_s3` (same account, `manage_buckets` key) |
 | `s3protoalt` | none | `alt_s3` — no grant anywhere, so any allow it sees came from a stored ACL |
 
-Nine buckets. `buckets["<leaf>"]` is the name, or `None` if it could not
-be provisioned; modules skip rather than fall back to the ordinary
-bucket.
+Nine buckets, all required. `buckets["<leaf>"]` is the name; a row that
+will not provision fails the session rather than skipping its module.
+Nothing in this suite skips — a green run that had quietly declined to
+test object lock is worse than a red one.
 
 | leaf | configuration |
 |---|---|

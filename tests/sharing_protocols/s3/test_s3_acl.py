@@ -637,10 +637,7 @@ def test_the_bucket_grants_admit_exactly_their_operation_family(s3, alt_s3, priv
 def test_versioned_acls_are_per_version(s3, buckets):
     """`?versionId` addresses one version's record; the versionless put
     lands on the current version; a fresh PUT starts at the default."""
-    versioned = buckets.get("locked")
-    if not versioned:
-        pytest.skip("no versioned bucket: the session could not provision one")
-
+    versioned = buckets["locked"]
     key = "acl/versioned.bin"
     old = s3.put_object(Bucket=versioned, Key=key, Body=b"one")["VersionId"]
     new = s3.put_object(Bucket=versioned, Key=key, Body=b"two")["VersionId"]

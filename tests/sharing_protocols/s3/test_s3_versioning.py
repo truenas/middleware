@@ -31,17 +31,11 @@ def test_an_unversioned_bucket_reports_no_status(s3, bucket):
 
 
 def test_a_versioned_bucket_reports_enabled(s3, buckets):
-    locked = buckets["locked"]
-    if not locked:
-        pytest.skip("no versioned bucket: the session could not provision one")
-    assert s3.get_bucket_versioning(Bucket=locked).get("Status") == "Enabled"
+    assert s3.get_bucket_versioning(Bucket=buckets["locked"]).get("Status") == "Enabled"
 
 
 def test_a_suspended_bucket_reports_suspended(s3, buckets):
-    history = buckets["history"]
-    if not history:
-        pytest.skip("no suspended bucket: the session could not provision one")
-    assert s3.get_bucket_versioning(Bucket=history).get("Status") == "Suspended"
+    assert s3.get_bucket_versioning(Bucket=buckets["history"]).get("Status") == "Suspended"
 
 
 def test_a_suspended_write_returns_no_version_id(s3, buckets):
@@ -59,9 +53,6 @@ def test_a_suspended_write_returns_no_version_id(s3, buckets):
     either way — and this is the emission half.
     """
     bucket = buckets["history"]
-    if not bucket:
-        pytest.skip("no suspended bucket: the session could not provision one")
-
     answered = s3.put_object(Bucket=bucket, Key="suspended/no-id.bin", Body=b"body")
     assert "VersionId" not in answered, answered.get("VersionId")
 

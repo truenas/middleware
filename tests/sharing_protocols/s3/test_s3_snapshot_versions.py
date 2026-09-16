@@ -77,10 +77,8 @@ def destroy(dataset: str, name: str) -> None:
 
 @pytest.fixture(scope="module")
 def history(buckets, s3):
-    """The suspended, snapshot-selecting bucket, or a skip."""
-    name = buckets.get("history")
-    if not name:
-        pytest.skip("no suspended bucket: the session could not provision one")
+    """The suspended, snapshot-selecting bucket and its dataset."""
+    name = buckets["history"]
     return name, dataset_of(name)
 
 
@@ -291,9 +289,7 @@ def test_a_destroyed_snapshot_drops_from_the_listing(s3, frozen):
 
 @pytest.fixture(scope="module")
 def attic(buckets, s3):
-    name = buckets.get("attic")
-    if not name:
-        pytest.skip("no attic bucket: the session could not provision one")
+    name = buckets["attic"]
     return name, dataset_of(name)
 
 

@@ -36,10 +36,7 @@ BUCKET = "s3proto-grants"
 
 @pytest.fixture(scope="module")
 def denied(buckets):
-    name = buckets.get("denied")
-    if not name:
-        pytest.skip("no denied bucket: the session could not provision one")
-    return name
+    return buckets["denied"]
 
 
 def refusal(call_):

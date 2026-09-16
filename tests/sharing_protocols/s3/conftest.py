@@ -16,9 +16,11 @@ behind decides another module's page.
 at registration, a bucket's ETag mode and object ownership are read per
 bucket, and the snapshot layer composes with two different versioning
 states — so each of those needs a bucket configured for it beside one
-that is not. `buckets` carries them by what they prove, `None` where the
-session could not provision one, and every module that needs one skips
-rather than proving something weaker against the ordinary bucket.
+that is not. `buckets` carries them by what they prove, and **every one
+of them is required**: a row that will not provision fails the session
+here rather than skipping its module, because a suite that reports green
+having silently declined to test object lock is worse than one that
+fails.
 """
 
 import contextlib
@@ -213,36 +215,30 @@ def s3_deployment(s3_accounts):
         "excluded": {"object_ownership": "OBJECT_WRITER", "owner": MAIN_USER, "grants": mine},
     }
 
+    # **Every row is required, and a failure here fails the session.**
+    # Nothing in the set above has an environmental precondition this
+    # lane does not meet: there is a pool, `sharing.s3.create` makes the
+    # datasets, and the two licensed features are mocked entitled above.
+    # So a row that will not provision is the defect the suite exists to
+    # find — and tolerating it would skip that row's whole module and
+    # report the run green.
     with contextlib.ExitStack() as stack:
-        made = {}
-        for leaf, options in rows.items():
-            name = bucket_name(leaf)
-            try:
-                made[leaf] = stack.enter_context(s3_bucket(name, dataset=dataset_for(leaf), **options))
-            except Exception as exc:
-                if leaf == "attached":
-                    raise
-                # An optional row the deployment could not provision
-                # costs its own cases and nothing else. Reported, so a
-                # module that skips says why rather than going quiet.
-                print(f"s3: could not provision the {leaf!r} bucket: {exc}")
+        made = {
+            leaf: stack.enter_context(s3_bucket(bucket_name(leaf), dataset=dataset_for(leaf), **options))
+            for leaf, options in rows.items()
+        }
 
-        if "excluded" in made:
-            # Not `pool.dataset.delete`, which runs the share attachment
-            # delegates and would deregister the bucket with it. The row
-            # has to stand while its storage does not.
-            try:
-                call("zfs.resource.destroy", {"path": made["excluded"]["dataset"], "recursive": True})
-            except Exception as exc:
-                print(f"s3: could not strip the excluded bucket's dataset: {exc}")
-                made.pop("excluded")
+        # Not `pool.dataset.delete`, which runs the share attachment
+        # delegates and would deregister the bucket with it. The row has
+        # to stand while its storage does not.
+        call("zfs.resource.destroy", {"path": made["excluded"]["dataset"], "recursive": True})
 
         with s3_service():
             wait_for_listener(DEFAULT_S3_PORT)
             yield {
                 "endpoint": s3_endpoint(DEFAULT_S3_PORT),
                 "accounts": s3_accounts,
-                "buckets": {leaf: (made[leaf]["name"] if leaf in made else None) for leaf in rows},
+                "buckets": {leaf: entry["name"] for leaf, entry in made.items()},
                 "entries": made,
             }
 

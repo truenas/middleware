@@ -42,15 +42,11 @@ def test_the_listing_shows_what_serves_and_omits_what_does_not(s3, buckets):
     rows = s3.list_buckets().get("Buckets", [])
     listed = [b["Name"] for b in rows]
 
-    attached = [buckets["attached"]]
-    if buckets["locked"]:
-        attached.append(buckets["locked"])
-    for name in attached:
+    for name in (buckets["attached"], buckets["locked"]):
         assert name in listed, listed
         assert "CreationDate" in next(b for b in rows if b["Name"] == name)
 
-    if buckets["excluded"]:
-        assert buckets["excluded"] not in listed, listed
+    assert buckets["excluded"] not in listed, listed
     assert listed == sorted(listed), listed
 
 
@@ -62,8 +58,6 @@ def test_a_denied_bucket_leaves_the_listing_without_erroring_it(s3, buckets):
     filtered out per row rather than failing the whole listing.
     """
     denied = buckets["denied"]
-    if not denied:
-        pytest.skip("no denied bucket: the session could not provision one")
     names = [b["Name"] for b in s3.list_buckets()["Buckets"]]
     assert buckets["attached"] in names
     assert denied not in names
@@ -129,9 +123,6 @@ def test_a_failed_registration_is_unservable_not_absent(s3, buckets):
     in the wrong place.
     """
     excluded = buckets["excluded"]
-    if not excluded:
-        pytest.skip("no excluded bucket: the session could not provision one")
-
     with pytest.raises(Exception) as caught:
         s3.get_bucket_location(Bucket=excluded)
     assert status_of(caught.value) == 503

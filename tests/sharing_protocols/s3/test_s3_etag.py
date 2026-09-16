@@ -91,10 +91,7 @@ def test_the_default_bucket_composes_a_multipart_etag(s3, bucket):
 
 @pytest.fixture(scope="module")
 def minted(buckets):
-    name = buckets.get("minted")
-    if not name:
-        pytest.skip("no minted bucket: the session could not provision one")
-    return name
+    return buckets["minted"]
 
 
 @pytest.fixture
