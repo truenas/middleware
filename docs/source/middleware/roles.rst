@@ -95,6 +95,13 @@ all `service.query` events for all CRUD services.
 Additional checks
 *****************
 
+FullAdmin fields
+================
+
+A field of an API model may be wrapped in ``FullAdmin[...]`` so that only a ``FULL_ADMIN`` credential may set or change
+it, while the endpoint itself stays open to its ordinary roles. Use it for a field whose value middleware passes through
+to a root command line or to a privileged daemon's configuration file. See :doc:`/api/field_markers`.
+
 app.authenticated_credentials.has_role
 ======================================
 

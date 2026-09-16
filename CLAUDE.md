@@ -110,6 +110,14 @@ async def do_create(self, app, data):
 - This is enforced by `test_api_docstrings` in the unit test suite.
 - Description can be formatted with Markdown.
 
+**API Model Field Markers** (full guide: `docs/source/api/field_markers.rst`):
+- For every field you add or change in a public API model, decide whether its annotation needs a marker from `middlewared.api.base`, and state the decision for each new field when you report the change. Trace where the value ends up (command line, configuration file, database, result) before deciding.
+- `Secret[T]`: passwords, keys, tokens, passphrases. Must wrap the whole field (`Secret[str | None]`, never `Secret[str] | None`). Internal code reads it with `model_dump(expose_secrets=True)`.
+- `Private[T]`: a field only middleware may set. It is dropped from the published schema and a caller who supplies it gets the same error as an unknown key.
+- `FullAdmin[T]`: a value passed unvalidated to a root command line, a privileged daemon's configuration file, or the kernel command line ("extra options", "additional arguments", "auxiliary parameters"). Only `FULL_ADMIN` may set or change it; the field stays in the schema. Enforced by `CRUDService.create`/`update` and `ConfigService.update`; a method that accepts such a payload outside those wrappers must call `check_full_admin_model`, and `test_full_admin_fields_are_enforced` fails otherwise.
+- `SingleLineString`: any field interpolated bare into a line-oriented configuration file, on the update model only (never the entry model, or stored values with a line break become unreadable). Without it a sibling field can append the directives a `FullAdmin` field denies.
+- When the whole endpoint is the capability (tunables), gate the case in the plugin with `app_needs_full_admin_check` instead of marking a field.
+
 **Method Docstrings**:
 - Every public API method (decorated with `@api_method`) **must** have a docstring.
 - The docstring is a description of the method, formatted with reStructuredText (RST).
