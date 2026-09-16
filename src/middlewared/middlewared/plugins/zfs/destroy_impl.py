@@ -228,16 +228,13 @@ def destroy_impl(
             rsrc.unmount(recursive=recursive)
         script = truenas_pylibzfs.lzc.ChannelProgramEnum.DESTROY_RESOURCES
 
-    def run() -> dict[str, Any]:
-        return truenas_pylibzfs.lzc.run_channel_program(
-            pool_name=pool_name,
-            script=script,
-            script_arguments_dict=script_arguments_dict,
-            readonly=readonly,
-        )
-
     try_again = False
-    res = run()
+    res = truenas_pylibzfs.lzc.run_channel_program(
+        pool_name=pool_name,
+        script=script,
+        script_arguments_dict=script_arguments_dict,
+        readonly=readonly,
+    )
     if res["return"]["holds"]:
         try_again = True
         truenas_pylibzfs.lzc.release_holds(holds=set(res["return"]["holds"].items()))
@@ -253,14 +250,24 @@ def destroy_impl(
             # TODO: else raise ZFSException(err) if not EBUSY??
 
     if try_again:
-        res = run()
+        res = truenas_pylibzfs.lzc.run_channel_program(
+            pool_name=pool_name,
+            script=script,
+            script_arguments_dict=script_arguments_dict,
+            readonly=readonly,
+        )
 
     if script == truenas_pylibzfs.lzc.ChannelProgramEnum.DESTROY_RESOURCES:
         volumes = _busy_volumes(tls, res["return"]["failed"])
         deadline = time.monotonic() + ZVOL_DESTROY_RETRY_TIMEOUT
         while _only_volumes_busy(res["return"]["failed"], volumes) and time.monotonic() < deadline:
             time.sleep(ZVOL_DESTROY_RETRY_INTERVAL)
-            res = run()
+            res = truenas_pylibzfs.lzc.run_channel_program(
+                pool_name=pool_name,
+                script=script,
+                script_arguments_dict=script_arguments_dict,
+                readonly=readonly,
+            )
 
     failed, errnum = None, None
     if res["return"]["failed"]:
