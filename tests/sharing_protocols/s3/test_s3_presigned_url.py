@@ -77,15 +77,36 @@ def test_a_presigned_get_cannot_move_keys(s3, bucket, signed):
     assert status == 403
 
 
+#: How long to let a one-second window actually close. The link expires
+#: at `X-Amz-Date + X-Amz-Expires`, a stamp from the *runner's* clock
+#: compared against the *appliance's*, so the wait that closes it is the
+#: window plus whatever those two disagree by. Bounded rather than slept:
+#: it returns as soon as the window shuts, and only spends the budget on
+#: a deployment whose clocks are far apart.
+EXPIRY_BUDGET = 30
+
+
 def test_an_expired_link_is_refused(s3, bucket, signed):
-    """One second is enough: the window has closed by the time the
-    request lands, and the signature is still perfectly valid — which is
-    the case a shared URL actually reaches."""
+    """A link whose window has closed is refused, its signature still
+    perfectly valid — the case a shared URL actually reaches.
+
+    **Polled rather than slept.** `sleep(2)` against a one-second window
+    asserts that two machines agree about the time: the stamp in the URL
+    is the runner's and the comparison is the appliance's, so an
+    appliance a couple of seconds behind still serves the link and the
+    case fails for the clocks rather than for the server. Waiting for the
+    transition tests the transition; a fixed sleep tests NTP.
+    """
     key, _body, _url = signed
     expiring = s3.generate_presigned_url("get_object", Params={"Bucket": bucket, "Key": key}, ExpiresIn=1)
-    time.sleep(2)
-    status, _ = raw(expiring)
-    assert status == 403
+
+    deadline = time.monotonic() + EXPIRY_BUDGET
+    while True:
+        status, _ = raw(expiring)
+        if status == 403 or time.monotonic() >= deadline:
+            break
+        time.sleep(1)
+    assert status == 403, f"the window never closed within {EXPIRY_BUDGET}s"
 
 
 def test_a_presigned_put_stores(s3, bucket):

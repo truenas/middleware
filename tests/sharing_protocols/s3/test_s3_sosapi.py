@@ -22,6 +22,12 @@ from middlewared.test.integration.utils import pool, ssh
 import pytest
 from s3_client import client_for
 
+#: The protocol drops to non-SOSAPI processing on a document older
+#: than ten minutes, silently. Used as the tolerance rather than a
+#: second: the comparison crosses two machines' clocks, and what is
+#: worth catching is a stamp that is genuinely stale.
+STALENESS = 600
+
 SYSTEM = ".system-d26a9498-cb7c-4a87-a44a-8ae204f5ba6c/system.xml"
 CAPACITY = ".system-d26a9498-cb7c-4a87-a44a-8ae204f5ba6c/capacity.xml"
 
@@ -78,14 +84,36 @@ def test_the_documents_are_stamped_with_the_moment_they_were_served(s3, bucket, 
     and no capacity in its interface.
 
     A synthesized answer cannot go stale, and this is what says so.
+
+    **Two reads rather than a clock comparison.** The stamp is the
+    appliance's and `time.time()` is the runner's, so pinning the two
+    within a second asserts that the machines agree about now — which is
+    NTP's business and not this server's. What "synthesized when asked"
+    actually means is that the stamp *moves*: a stored mtime answers the
+    same value twice however long you wait. That comparison is entirely
+    server-side.
+
+    The clock is still consulted, at the protocol's own tolerance rather
+    than at a second, which is what catches a stamp that is genuinely
+    old — an mtime from when the image was built, say.
     """
-    before = time.time()
-    got = s3.get_object(Bucket=bucket, Key=key)
-    got["Body"].read()
-    after = time.time()
-    # Whole seconds on the wire, so the window is the request's own,
-    # widened by the stamp's resolution at each end.
-    assert before - 1 <= served_at(got) <= after + 1, key
+    first = s3.get_object(Bucket=bucket, Key=key)
+    first["Body"].read()
+
+    # Whole seconds on the wire, so two reads inside one second carry the
+    # same stamp however freshly each was made.
+    time.sleep(1.1)
+
+    second = s3.get_object(Bucket=bucket, Key=key)
+    second["Body"].read()
+
+    assert served_at(second) > served_at(first), (
+        f"{key}: the stamp did not move between reads, so it is stored rather than served"
+    )
+    assert abs(time.time() - served_at(second)) < STALENESS, (
+        f"{key}: the stamp is {abs(time.time() - served_at(second)):.0f}s from now, "
+        f"past the {STALENESS}s a backup server tolerates before dropping to non-SOSAPI"
+    )
 
 
 def test_the_capacity_document_is_the_dataset_answering(s3, bucket):
