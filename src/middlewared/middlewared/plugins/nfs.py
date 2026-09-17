@@ -333,6 +333,7 @@ class SharingNFSService(SharingService):
 
     include_tier_info = True
     share_task_type = 'NFS'
+    readonly_field = 'ro'
 
     @private
     async def human_identifier(self, share_task):
@@ -475,6 +476,7 @@ class SharingNFSService(SharingService):
         data['dataset'], data['relative_path'] = await self.middleware.run_in_thread(
             resolve_dataset_path, data['path'], self.middleware
         )
+        await self.validate_s3_export(data, schema_name, verrors)
 
         filters = []
         if old:

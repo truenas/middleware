@@ -69,6 +69,12 @@ managed root are the name of the bucket, then that name with `_1` to `_10`.
 The limit stops an endless loop and gives an error the administrator can
 read."""
 
+SHARE_ROOT = "s3data"
+"""The directory under a bucket's mount point that holds its objects. The
+daemon creates it at registration, and it is the one part of the dataset
+the administrator manages and another protocol may export; the rest of the
+dataset is the daemon's own state."""
+
 
 def bucket_dataset_properties() -> ZFSResourceCreateProperties:
     """What the S3 on-disk format requires of a bucket's dataset. A fresh
@@ -265,6 +271,83 @@ class SharingS3Service(SharingService[SharingS3Entry]):
                 verrors.add(f"{schema}.audit", entitlement.message)
 
         await validate_grants(self.middleware, f"{schema}.grants", data.grants, verrors)
+
+    @private
+    async def validate_export(
+        self,
+        verrors: ValidationErrors,
+        protocol: str,
+        path_field: str,
+        path: str,
+        dataset: str | None,
+        relative_path: str | None,
+        readonly_field: str | None,
+        readonly: bool | None,
+    ) -> None:
+        """Refuse an export of a bucket's dataset by another protocol unless
+        it is read-only and of the bucket's `s3data` directory.
+
+        `s3data` holds the objects and is the one part of the dataset another
+        protocol may hand its clients; the rest is the daemon's own state. The
+        export is read-only whatever the protocol: `readonly_field` is where
+        the protocol's flag lives, or None for a protocol that has no
+        read-only mode, which then may not export a bucket at all. The path
+        is matched by the dataset the kernel resolved it to (`dataset` and
+        `relative_path`, as the share stores them), which a case-insensitive
+        parent, a symlink or a bind mount cannot disguise; the deepest bucket
+        answers where one bucket's dataset sits inside another's. A path the
+        kernel could not resolve -- one below a locked bucket's mount point --
+        is matched against `/mnt/<dataset>`, where every dataset middleware
+        makes is mounted (`get_path_field`).
+
+        A share above a bucket is not refused here: smbd declines to enter a
+        bucket's dataset by the daemon's root marker, and NFS does not cross
+        a mount.
+        """
+        real = path if dataset is not None else await self.middleware.run_in_thread(os.path.realpath, path)
+
+        def within(bucket: str) -> str | None:
+            """The path within `bucket` that the share names, or None when
+            the share is not in it."""
+            if dataset is not None:
+                if dataset != bucket and not dataset.startswith(f"{bucket}/"):
+                    return None
+                # a child dataset of the bucket mounts at <bucket>/<its leaf path>
+                return "/".join(part for part in (dataset[len(bucket) + 1:], relative_path) if part)
+            mountpoint = f"/mnt/{bucket}"
+            if real != mountpoint and not real.startswith(f"{mountpoint}/"):
+                return None
+            return real[len(mountpoint) + 1:]
+
+        # the rows rather than the entries: this runs on every share change
+        # of every protocol, and the extend resolves each owner through NSS
+        rows = await self.middleware.call(
+            "datastore.query", self._config.datastore, [], {"select": ["name", "dataset"]}
+        )
+        inside: tuple[str, str, str] | None = None
+        for row in rows:
+            rel = within(row["dataset"])
+            if rel is not None and (inside is None or len(row["dataset"]) > len(inside[1])):
+                inside = (row["name"], row["dataset"], rel)
+        if inside is None:
+            return
+        name, bucket, rel = inside
+        if readonly_field is None:
+            verrors.add(
+                path_field,
+                f"S3 bucket {name!r} cannot be exported over {protocol}: a bucket may be exported by another "
+                f"protocol only read-only, and {protocol} has no read-only mode.",
+            )
+            return
+        if rel != SHARE_ROOT and not rel.startswith(f"{SHARE_ROOT}/"):
+            verrors.add(
+                path_field,
+                f"{path} is on the dataset of S3 bucket {name!r}. Another protocol may export the bucket's "
+                f"objects, under /mnt/{bucket}/{SHARE_ROOT}, and nothing else on the dataset: the rest is the S3 "
+                "service's own state.",
+            )
+        if not readonly:
+            verrors.add(readonly_field, f"{protocol} exports of S3 bucket {name!r} must be read-only.")
 
     @private
     def normalize_ownership(self, data: EntryT) -> EntryT:
