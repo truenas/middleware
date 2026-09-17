@@ -1,7 +1,10 @@
+import errno
+
 import pytest
 
+from middlewared.service_exception import ValidationError, ValidationErrors
 from middlewared.test.integration.assets.pool import another_pool
-from middlewared.test.integration.utils import call
+from middlewared.test.integration.utils import call, ssh
 
 
 POOL_NAME = "test_rename_pool"
@@ -161,6 +164,98 @@ def test_pool_snapshot_rename_recursive(rename_test_pool):
         assert f"{child}@{snap}" not in snap_names
     finally:
         # cleanup
+        try:
+            call("pool.dataset.delete", root, {"recursive": True})
+        except Exception:
+            pass
+
+
+def test_zfs_resource_rename_public(rename_test_pool):
+    """`zfs.resource.rename` needs `force` and moves the resource to its new id."""
+    pool_name = rename_test_pool["name"]
+    original = f"{pool_name}/test_public_rename"
+    new = f"{pool_name}/test_public_rename_done"
+
+    call("pool.dataset.create", {"name": original})
+
+    try:
+        with pytest.raises(ValidationErrors) as ve:
+            call("zfs.resource.rename", {"current_name": original, "new_name": new})
+        assert ve.value.errors[0].attribute == "zfs.resource.rename.force"
+
+        call("zfs.resource.rename", {"current_name": original, "new_name": new, "force": True})
+
+        assert call("zfs.resource.get_instance", new)["id"] == new
+        with pytest.raises(ValidationError) as ve:
+            call("zfs.resource.get_instance", original)
+        assert ve.value.errno == errno.ENOENT
+    finally:
+        for path in (new, original):
+            try:
+                call("pool.dataset.delete", path)
+            except Exception:
+                pass
+
+
+def test_zfs_resource_promote(rename_test_pool):
+    """`zfs.resource.promote` detaches a clone from the snapshot it came from."""
+    pool_name = rename_test_pool["name"]
+    origin = f"{pool_name}/test_promote_origin"
+    clone = f"{pool_name}/test_promote_clone"
+
+    call("pool.dataset.create", {"name": origin})
+    ssh(f"zfs snapshot {origin}@base")
+    ssh(f"zfs clone {origin}@base {clone}")
+
+    try:
+        before = call(
+            "zfs.resource.query", [["id", "=", clone]], {"extra": {"properties": ["origin"]}}
+        )[0]
+        assert before["properties"]["origin"]["value"] == f"{origin}@base"
+
+        call("zfs.resource.promote", {"path": clone})
+
+        after = call(
+            "zfs.resource.query", [["id", "=", clone]], {"extra": {"properties": ["origin"]}}
+        )[0]
+        assert after["properties"]["origin"]["value"] != f"{origin}@base"
+    finally:
+        for path in (clone, origin):
+            try:
+                call("pool.dataset.delete", path, {"recursive": True})
+            except Exception:
+                pass
+
+
+def test_pool_snapshot_rename_shim(rename_test_pool):
+    """`pool.snapshot.rename` reaches the snapshot implementation, recursively when asked."""
+    pool_name = rename_test_pool["name"]
+    root = f"{pool_name}/test_snap_rename_shim"
+    child = f"{root}/child"
+
+    call("pool.dataset.create", {"name": root})
+    call("pool.dataset.create", {"name": child})
+    call("zfs.resource.snapshot.create", {"dataset": root, "name": "a"})
+
+    try:
+        call("pool.snapshot.rename", f"{root}@a", {"new_name": f"{root}@b", "force": True})
+        assert [
+            s["name"] for s in call("zfs.resource.snapshot.query", {"paths": [root]})
+        ] == [f"{root}@b"]
+
+        call("zfs.resource.snapshot.create", {"dataset": root, "name": "c", "recursive": True})
+        call(
+            "pool.snapshot.rename",
+            f"{root}@c",
+            {"new_name": f"{root}@d", "recursive": True, "force": True},
+        )
+        names = [
+            s["name"]
+            for s in call("zfs.resource.snapshot.query", {"paths": [root], "recursive": True})
+        ]
+        assert f"{root}@d" in names
+        assert f"{child}@d" in names
+    finally:
         try:
             call("pool.dataset.delete", root, {"recursive": True})
         except Exception:

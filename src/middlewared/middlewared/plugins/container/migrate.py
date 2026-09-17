@@ -11,7 +11,7 @@ from truenas_pylibvirt.utils.usb import get_all_usb_devices
 import yaml
 
 from middlewared.alert.base import AlertCategory, AlertClassConfig, AlertLevel, OneShotAlertClass
-from middlewared.api.current import ContainerEntry, ZFSResourceQuery
+from middlewared.api.current import ContainerEntry, ZFSResourceQuery, ZFSResourceRenameArgsData
 from middlewared.plugins.pool_.utils import UpdateImplArgs
 from middlewared.service import CallError, ServiceContext
 import middlewared.sqlalchemy as sa
@@ -529,7 +529,10 @@ def migrate_specific_pool(
             os.chown(parent_path, rootfs_stats.st_uid, rootfs_stats.st_gid)
             os.rmdir(rootfs_path)
 
-            context.call_sync2(context.s.zfs.resource.rename, dataset['name'], dst_dataset)
+            context.call_sync2(
+                context.s.zfs.resource.rename_impl,
+                ZFSResourceRenameArgsData(current_name=dataset['name'], new_name=dst_dataset),
+            )
             # From here on the dataset lives in its native location, where the mount
             # properties set above are the correct ones to keep.
             needs_mount_revert = False
@@ -555,7 +558,10 @@ def migrate_specific_pool(
                 # native tree is hidden from dataset queries. Move it back so it stays
                 # something the user can see and act on.
                 try:
-                    context.call_sync2(context.s.zfs.resource.rename, dst_dataset, dataset['name'])
+                    context.call_sync2(
+                        context.s.zfs.resource.rename_impl,
+                        ZFSResourceRenameArgsData(current_name=dst_dataset, new_name=dataset['name']),
+                    )
                 except Exception:
                     context.logger.error(
                         '%s: failed to move back after an incomplete migration', dst_dataset,
@@ -725,7 +731,10 @@ def relocate_container_origin(context: ServiceContext, container_ds: str) -> str
             'pool.dataset.update_impl',
             UpdateImplArgs(name=origin_dataset, zprops={'canmount': 'noauto'}),
         )
-        context.call_sync2(context.s.zfs.resource.rename, origin_dataset, final_target)
+        context.call_sync2(
+            context.s.zfs.resource.rename_impl,
+            ZFSResourceRenameArgsData(current_name=origin_dataset, new_name=final_target),
+        )
     except Exception:
         context.logger.error(
             '%s: failed to relocate origin image %r out of .ix-virt',

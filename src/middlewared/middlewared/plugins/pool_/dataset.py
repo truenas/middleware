@@ -17,7 +17,9 @@ from middlewared.api.current import (
     PoolDatasetRenameResult,
     PoolDatasetUpdateArgs,
     PoolDatasetUpdateResult,
+    ZFSResourcePromoteArgsData,
     ZFSResourceQuery,
+    ZFSResourceRenameArgsData,
 )
 from middlewared.plugins.container.utils import CONTAINER_DS_NAME
 from middlewared.plugins.zfs.utils import has_internal_path
@@ -995,7 +997,7 @@ class PoolDatasetService(CRUDService):
     @api_method(PoolDatasetPromoteArgs, PoolDatasetPromoteResult, roles=['DATASET_WRITE'])
     async def promote(self, id_):
         """Promote a cloned dataset."""
-        return await self.call2(self.s.zfs.resource.promote, id_)
+        return await self.call2(self.s.zfs.resource.promote_impl, ZFSResourcePromoteArgsData(path=id_))
 
     @api_method(
         PoolDatasetRenameArgs,
@@ -1025,11 +1027,9 @@ class PoolDatasetService(CRUDService):
                 'No safety checks are performed when renaming ZFS resources; this may break existing usages. '
                 'If you understand the risks, please set force and proceed.'
             )
+        if options['recursive']:
+            raise ValidationError('pool.dataset.rename.recursive', 'recursive is only valid for snapshots')
         return await self.call2(
-            self.s.zfs.resource.rename,
-            id_,
-            options['new_name'],
-            options['recursive'],
-            False,  # no_unmount
-            options['force'],
+            self.s.zfs.resource.rename_impl,
+            ZFSResourceRenameArgsData(current_name=id_, new_name=options['new_name']),
         )

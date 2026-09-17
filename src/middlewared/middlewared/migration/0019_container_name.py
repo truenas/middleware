@@ -3,6 +3,8 @@ from __future__ import annotations
 import os
 import typing
 
+from middlewared.api.current import ZFSResourceRenameArgsData
+
 if typing.TYPE_CHECKING:
     from middlewared.main import Middleware
 
@@ -28,7 +30,10 @@ async def migrate(middleware: Middleware) -> None:
 
         middleware.logger.info('Renaming container dataset %r to %r', dataset, new_dataset)
         try:
-            await middleware.call2(middleware.services.zfs.resource.rename, dataset, new_dataset)
+            await middleware.call2(
+                middleware.services.zfs.resource.rename_impl,
+                ZFSResourceRenameArgsData(current_name=dataset, new_name=new_dataset),
+            )
         except Exception:
             middleware.logger.error(
                 'Failed to rename container dataset %r to %r', dataset, new_dataset, exc_info=True,

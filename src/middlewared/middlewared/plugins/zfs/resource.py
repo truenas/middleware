@@ -15,12 +15,18 @@ from middlewared.api.current import (
     ZFSResourceDestroyArgsData,
     ZFSResourceDestroyResult,
     ZFSResourceEntry,
+    ZFSResourcePromoteArgs,
+    ZFSResourcePromoteArgsData,
+    ZFSResourcePromoteResult,
     ZFSResourceQuery,
     ZFSResourceQueryArgs,
     ZFSResourceQueryOptions,
     ZFSResourceQueryOptionsCount,
     ZFSResourceQueryOptionsGet,
     ZFSResourceQueryResult,
+    ZFSResourceRenameArgs,
+    ZFSResourceRenameArgsData,
+    ZFSResourceRenameResult,
 )
 from middlewared.service import CRUDService, private
 from middlewared.service.decorators import pass_thread_local_storage
@@ -66,14 +72,33 @@ class ZFSResourceService(CRUDService[ZFSResourceEntry]):
 
     @private
     @pass_thread_local_storage
-    def promote(self, tls: Any, current_name: str) -> None:
-        """
-        Promote a ZFS clone to be independent of its origin snapshot.
+    def promote_impl(self, tls: Any, data: ZFSResourcePromoteArgsData) -> None:
+        _ops.promote_impl(tls, data)
 
-        Args:
-            current_name: The name of the zfs resource to be promoted.
+    @api_method(
+        ZFSResourcePromoteArgs,
+        ZFSResourcePromoteResult,
+        roles=["ZFS_RESOURCE_WRITE"],
+        check_annotations=True,
+    )
+    def promote(self, data: ZFSResourcePromoteArgsData) -> None:
         """
-        _ops.promote(tls, current_name)
+        Promote a cloned ZFS resource so that it no longer depends on the snapshot it was cloned from.
+
+        The origin snapshot and every snapshot older than it move to the promoted resource, which makes the
+        resource it was cloned from the dependent one instead. This is how a clone is made destroyable
+        independently of its origin.
+
+        A validation error is raised when the resource does not exist (``ENOENT``) or is not a clone
+        (``EINVAL``).
+
+        Example:
+
+        .. code:: json
+
+            {"path": "tank/clone"}
+        """
+        _ops.promote(self.context, data)
 
     @private
     @pass_thread_local_storage
@@ -163,40 +188,43 @@ class ZFSResourceService(CRUDService[ZFSResourceEntry]):
 
     @private
     @pass_thread_local_storage
-    def rename(
-        self,
-        tls: Any,
-        current_name: str,
-        new_name: str,
-        recursive: bool = False,
-        no_unmount: bool = False,
-        force_unmount: bool = True,
-    ) -> None:
+    def rename_impl(self, tls: Any, data: ZFSResourceRenameArgsData) -> None:
+        _ops.rename_impl(tls, data)
+
+    @api_method(
+        ZFSResourceRenameArgs,
+        ZFSResourceRenameResult,
+        roles=["ZFS_RESOURCE_WRITE"],
+        check_annotations=True,
+    )
+    def rename(self, data: ZFSResourceRenameArgsData) -> None:
         """
-        Rename a ZFS resource.
+        Rename a ZFS resource (filesystem or volume), remounting it at its new location.
 
-        Args:
-            current_name: The existing name of the zfs resource to be renamed.
-            new_name: New name for ZFS object. The new name may not change the
-                pool name component of the original name and contain
-                alphanumeric characters and the following special characters:
+        To rename snapshots, use :method:`zfs.resource.snapshot.rename` instead. A dataset rename can never
+        be recursive; renaming a resource renames its descendants along with it.
 
-                * Underscore (_)
-                * Hyphen (-)
-                * Colon (:)
-                * Period (.)
+        .. warning::
 
-                The name length may not exceed 255 bytes, but it is generally advisable
-                to limit the length to something significantly less than the absolute
-                name length limit.
-            recursive: Recursively rename the snapshots of all descendant resources. Snapshots
-                are the only resource that can be renamed recursively.
-            no_unmount: Do not remount file systems during rename. If a filesystem's mountpoint
-                property is set to legacy or none, the file system is not unmounted even
-                if this option is False (default).
-            force_unmount: Force unmount any file systems that need to be unmounted in the process.
+            No safety checks are performed. If the resource is in use by services such as SMB, iSCSI,
+            snapshot tasks, replication, or cloud sync, renaming it may cause disruptions or service
+            failures. Proceed only if you are certain the resource is not in use, and set ``force`` to
+            acknowledge that.
+
+        A validation error is raised when:
+
+        - ``force`` was not set
+        - a snapshot path (containing ``@``) is supplied
+        - the resource does not exist (``ENOENT``)
+        - the new name is already taken (``EEXIST``)
+
+        Example:
+
+        .. code:: json
+
+            {"current_name": "tank/documents", "new_name": "tank/archive", "force": true}
         """
-        _ops.rename(tls, current_name, new_name, recursive, no_unmount, force_unmount)
+        _ops.rename(self.context, data)
 
     @private
     @pass_thread_local_storage

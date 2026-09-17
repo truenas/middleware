@@ -12,6 +12,7 @@ from middlewared.api.base import (
 )
 
 from .common import QueryArgs, QueryOptions
+from .pool_dataset import DATASET_NAME
 from .zfs_resource_property import PropertyValue
 from .zfs_resource_snapshot import ZFSResourceSnapshotEntry
 from .zfs_tier import TierInfo
@@ -30,6 +31,12 @@ __all__ = (
     "ZFSResourceDestroyArgsData",
     "ZFSResourceDestroyArgs",
     "ZFSResourceDestroyResult",
+    "ZFSResourcePromoteArgsData",
+    "ZFSResourcePromoteArgs",
+    "ZFSResourcePromoteResult",
+    "ZFSResourceRenameArgsData",
+    "ZFSResourceRenameArgs",
+    "ZFSResourceRenameResult",
     "ZFSResourceQuery",
     "ZFSResourceQueryArgs",
     "ZFSResourceQueryExtra",
@@ -760,6 +767,61 @@ class ZFSResourceDestroyArgs(BaseModel):
 
 
 class ZFSResourceDestroyResult(BaseModel):
+    result: None
+
+
+class ZFSResourceRenameArgsData(BaseModel):
+    current_name: DATASET_NAME = Field(
+        description=(
+            "The existing name of the zfs resource to be renamed. Snapshot paths (containing '@') are not accepted; "
+            "use `zfs.resource.snapshot.rename` instead."
+        ),
+    )
+    new_name: DATASET_NAME = Field(
+        description=(
+            "The new name for the zfs resource. It must stay within the same pool and may contain alphanumeric "
+            "characters along with underscore, hyphen, colon and period."
+        ),
+    )
+    no_unmount: bool = Field(
+        default=False,
+        description=(
+            "Do not remount filesystems during the rename. A filesystem whose mountpoint property is legacy or none "
+            "is never unmounted regardless of this setting."
+        ),
+    )
+    force_unmount: bool = Field(
+        default=True,
+        description="Force unmount any filesystem that has to be unmounted in the process.",
+    )
+    force: bool = Field(
+        default=False,
+        description=(
+            "This operation does not check whether the resource is currently in use. Renaming an active resource may "
+            "disrupt SMB shares, iSCSI targets, snapshots, replication, and other services.\n"
+            "\n"
+            "Set Force only if you understand and accept the risks."
+        ),
+    )
+
+
+class ZFSResourceRenameArgs(BaseModel):
+    data: ZFSResourceRenameArgsData = Field(description="Rename parameters for renaming a ZFS resource.")
+
+
+class ZFSResourceRenameResult(BaseModel):
+    result: None
+
+
+class ZFSResourcePromoteArgsData(BaseModel):
+    path: NonEmptyString = Field(description="Path of the cloned zfs resource to be promoted.")
+
+
+class ZFSResourcePromoteArgs(BaseModel):
+    data: ZFSResourcePromoteArgsData = Field(description="Promote parameters for promoting a ZFS clone.")
+
+
+class ZFSResourcePromoteResult(BaseModel):
     result: None
 
 
