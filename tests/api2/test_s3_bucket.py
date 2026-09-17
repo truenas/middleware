@@ -2,13 +2,16 @@
 service, with its access grants embedded. Creating, dropping, enabling
 or disabling a bucket and changing the owner, the grants or the audit
 mask apply on a reload; changing a field consumed at registration,
-such as the ETag mode, restarts the service."""
+such as the ETag mode, restarts the service.
+
+What is here is the *configuration* plane — validation, the rows the
+render writes, and which verb each change costs the service. The cases
+that drove boto3 against the running daemon moved to
+``tests/sharing_protocols/s3/``, beside the rest of the S3 protocol
+conformance: what a bucket's stored options mean is only observable over
+the wire, and that is not an api2 test."""
 
 import contextlib
-import hashlib
-import os
-import re
-import tempfile
 from configparser import RawConfigParser
 
 import pytest
@@ -17,7 +20,6 @@ from middlewared.test.integration.assets.account import unprivileged_user_client
 from middlewared.test.integration.assets.entitlements import entitled
 from middlewared.test.integration.assets.pool import dataset, pool
 from middlewared.test.integration.utils import call, ssh
-from middlewared.test.integration.utils.client import truenas_server
 from truenas_api_client import ValidationErrors as ClientValidationErrors
 
 SERVICE = "s3"
@@ -653,141 +655,6 @@ def test_audit_choices():
         assert choices[late] == late
 
 
-@contextlib.contextmanager
-def grantee(username):
-    """A user, an access key for them, and the grant row that names them."""
-    with user(
-        {
-            "username": username,
-            "full_name": username,
-            "group_create": True,
-            "password": "test1234",
-        }
-    ) as u:
-        key = call("s3.accesskey.create", {"name": f"{username} key", "username": username})
-        try:
-            yield (
-                {"principal_type": "USER", "xid": u["uid"], "access": "READWRITE"},
-                key,
-            )
-        finally:
-            call("s3.accesskey.delete", key["id"])
-
-
-def client(key):
-    """A boto3 client against the server under test on port 9000. The
-    checksum stance is stated rather than inherited from the installed
-    botocore: CRC32, composed COMPOSITE over a multipart upload, which
-    is what the daemon serves."""
-    boto3 = pytest.importorskip("boto3")
-    from botocore.config import Config
-
-    return boto3.client(
-        "s3",
-        endpoint_url=f"http://{truenas_server.ip}:9000",
-        aws_access_key_id=key["access_key"],
-        aws_secret_access_key=key["secret"],
-        region_name="us-east-1",
-        config=Config(
-            signature_version="s3v4",
-            s3={"addressing_style": "path"},
-            request_checksum_calculation="when_supported",
-            response_checksum_validation="when_supported",
-        ),
-    )
-
-
-def random_file(size):
-    """`size` bytes of noise in a temp file, and their md5."""
-    digest = hashlib.md5()
-    with tempfile.NamedTemporaryFile(suffix=".bin", delete=False) as f:
-        left = size
-        while left:
-            chunk = os.urandom(min(left, 1 << 20))
-            f.write(chunk)
-            digest.update(chunk)
-            left -= len(chunk)
-        return f.name, digest.hexdigest()
-
-
-def md5_of(path):
-    digest = hashlib.md5()
-    with open(path, "rb") as f:
-        for chunk in iter(lambda: f.read(1 << 20), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
-
-
-def test_boto3_roundtrip(owner):
-    """The whole chain: a bucket with grants, access keys for the grantees,
-    and clients that put and get objects through the daemon. Two grantees,
-    because under `OBJECT_WRITER` every write is published under the
-    requester's own uid, and the second one writing into a prefix the
-    first created, and over the first's object, is what proves the `S3`
-    permissions model ignores the modes those writes leave behind: the
-    daemon makes the share root the owner's at 0755, nothing is opened on
-    it, and neither grantee is fenced by it."""
-    with (
-        grantee("s3client") as (grant_a, key_a),
-        grantee("s3client2") as (
-            grant_b,
-            key_b,
-        ),
-        bucket(grants=[grant_a, grant_b], object_ownership="OBJECT_WRITER"),
-    ):
-        assert call("service.control", "START", SERVICE, {"silent": False}, job=True)
-        try:
-            a, b = client(key_a), client(key_b)
-            assert [x["Name"] for x in a.list_buckets()["Buckets"]] == ["test-bucket"]
-            root = call("filesystem.stat", f"/mnt/{DATASET}/s3data")
-            assert (root["uid"], root["mode"] & 0o777) == (owner["uid"], 0o755), "left as the daemon made it"
-
-            a.put_object(Bucket="test-bucket", Key="pfx/hello.txt", Body=b"from a")
-            assert a.get_object(Bucket="test-bucket", Key="pfx/hello.txt")["Body"].read() == b"from a"
-            assert ssh(f"cat /mnt/{DATASET}/s3data/pfx/hello.txt") == "from a"
-            # OBJECT_WRITER: the publish records the account that made it
-            on_disk = call("filesystem.stat", f"/mnt/{DATASET}/s3data/pfx/hello.txt")
-            assert on_disk["uid"] == grant_a["xid"]
-
-            b.put_object(Bucket="test-bucket", Key="pfx/other.txt", Body=b"from b")
-            b.put_object(Bucket="test-bucket", Key="pfx/hello.txt", Body=b"b over a")
-            assert a.get_object(Bucket="test-bucket", Key="pfx/hello.txt")["Body"].read() == b"b over a"
-            b.delete_object(Bucket="test-bucket", Key="pfx/hello.txt")
-            assert [o["Key"] for o in a.list_objects_v2(Bucket="test-bucket")["Contents"]] == ["pfx/other.txt"]
-        finally:
-            call("service.control", "STOP", SERVICE, {"silent": False}, job=True)
-
-
-def test_bucket_owner_enforced_writes_as_the_owner(owner):
-    """Under `BUCKET_OWNER_ENFORCED` object ownership the grants are the
-    whole of the access control: the same two grantees write into the
-    share root the daemon made the owner's, and over each other, and
-    everything they publish lands on disk as the owner's rather than the
-    writer's. A key with no grant is still
-    refused, since the value moves the uid the kernel sees and not who is
-    authorized."""
-    with (
-        grantee("s3client") as (grant_a, key_a),
-        grantee("s3client2") as (grant_b, key_b),
-        grantee("s3stranger") as (_ungranted, key_c),
-        bucket(grants=[grant_a, grant_b], object_ownership="BUCKET_OWNER_ENFORCED"),
-        running_service(),
-    ):
-        call("etc.generate", "truenas_s3")
-        row = parse(BUCKETS_CONF)['bucket "test-bucket"']
-        assert (row["permissions_model"], row["object_ownership"]) == ("s3", "bucket_owner_enforced")
-
-        a, b, stranger = client(key_a), client(key_b), client(key_c)
-        a.put_object(Bucket="test-bucket", Key="pfx/hello.txt", Body=b"from a")
-        b.put_object(Bucket="test-bucket", Key="pfx/hello.txt", Body=b"b over a")
-        assert a.get_object(Bucket="test-bucket", Key="pfx/hello.txt")["Body"].read() == b"b over a"
-        with pytest.raises(Exception, match="AccessDenied"):
-            stranger.put_object(Bucket="test-bucket", Key="pfx/hello.txt", Body=b"from nobody")
-        assert ssh(f"cat /mnt/{DATASET}/s3data/pfx/hello.txt") == "b over a"
-        for path in ("s3data", "s3data/pfx", "s3data/pfx/hello.txt"):
-            assert call("filesystem.stat", f"/mnt/{DATASET}/{path}")["uid"] == owner["uid"], path
-
-
 def test_snapshot_version_rules(owner, versioning_licensed):
     """A pattern keeps to the daemon's grammar, and the pair renders
     only beside a selection. The selection composes with every
@@ -862,53 +729,6 @@ def test_force_disable_versioning_roles(owner, role):
             assert c.call("sharing.s3.force_disable_versioning", b["id"])["versioning"] == "OFF"
 
 
-def test_force_disable_versioning_destroys_history(owner, versioning_licensed):
-    """The whole workflow over the wire: an enabled bucket accumulates
-    versions and a delete marker; the forced disable restarts the
-    service, versioning reads never-enabled, minted ids stop resolving,
-    and a deleted key stays deleted. The version files' physical removal
-    is the daemon's background sweep and is not waited on here."""
-    with (
-        grantee("s3history") as (grant, key),
-        bucket(versioning="ENABLED", grants=[grant]) as b,
-        running_service(),
-    ):
-        s3 = client(key)
-        s3.put_object(Bucket="test-bucket", Key="k1", Body=b"one")
-        s3.put_object(Bucket="test-bucket", Key="k1", Body=b"two")
-        s3.put_object(Bucket="test-bucket", Key="k2", Body=b"doomed")
-        s3.delete_object(Bucket="test-bucket", Key="k2")
-
-        assert s3.get_bucket_versioning(Bucket="test-bucket")["Status"] == "Enabled"
-        listing = s3.list_object_versions(Bucket="test-bucket")
-        assert len([v for v in listing["Versions"] if v["Key"] == "k1"]) == 2
-        assert [m["Key"] for m in listing["DeleteMarkers"]] == ["k2"]
-        superseded = next(
-            v["VersionId"] for v in listing["Versions"] if v["Key"] == "k1" and not v["IsLatest"]
-        )
-
-        pid = service()["pids"]
-        entry = call("sharing.s3.force_disable_versioning", b["id"])
-        assert entry["versioning"] == "OFF"
-        assert service()["pids"] != pid, "the forced disable is a restart"
-
-        assert "Status" not in s3.get_bucket_versioning(Bucket="test-bucket")
-        listing = s3.list_object_versions(Bucket="test-bucket")
-        assert [(v["Key"], v["VersionId"]) for v in listing.get("Versions", [])] == [("k1", "null")]
-        assert listing.get("DeleteMarkers", []) == []
-        assert s3.get_object(Bucket="test-bucket", Key="k1")["Body"].read() == b"two"
-        with pytest.raises(Exception, match="NoSuchVersion"):
-            s3.get_object(Bucket="test-bucket", Key="k1", VersionId=superseded)
-        with pytest.raises(Exception, match="NoSuchKey"):
-            s3.get_object(Bucket="test-bucket", Key="k2")
-
-        # already off: the second call is an idempotent no-op — the row
-        # stands and the service reloads rather than restarts
-        pid = service()["pids"]
-        assert call("sharing.s3.force_disable_versioning", b["id"])["versioning"] == "OFF"
-        assert service()["pids"] == pid
-
-
 def test_snapshot_versions_need_no_license(owner):
     """The snapshot selection is independent of the versioning state and
     of the `S3_VERSIONING` entitlement: a never-versioned bucket serves
@@ -931,160 +751,3 @@ def test_snapshot_versions_need_no_license(owner):
             call("sharing.s3.update", b["id"], {"versioning": "SUSPENDED"})
         assert ve.value.errors[0].attribute == "sharing_s3_update.versioning"
         assert "S3 object versioning" in ve.value.errors[0].errmsg
-
-
-def snapshot_id(name):
-    """The wire id of a snapshot-derived version: `zfs.` then the name in
-    lowercase hex."""
-    return "zfs." + name.encode().hex()
-
-
-def test_snapshots_serve_as_versions(owner, versioning_licensed):
-    """The dataset's own snapshots, selected by pattern, serve each key's
-    frozen state as a read-only version: listed beside the live one and
-    read by id. The snapshots are taken before the first listing, since
-    the daemon caches a bucket's snapshot set once a listing reads it.
-    Raising or lowering the listing cap is a registry change, so a
-    restart, after which the listing consults only the newest N while a
-    selected snapshot past the cap still reads by id."""
-    with (
-        grantee("s3history") as (_grant, key),
-        bucket(owner="s3history", versioning="SUSPENDED", snapshot_versions=["s3-*"]),
-    ):
-        assert call("service.control", "START", SERVICE, {"silent": False}, job=True)
-        made = []
-        try:
-            s3 = client(key)
-            s3.put_object(Bucket="test-bucket", Key="k1", Body=b"alpha state")
-            ssh(f"zfs snapshot {DATASET}@s3-alpha")
-            made.append("s3-alpha")
-            s3.put_object(Bucket="test-bucket", Key="k1", Body=b"beta state")
-            ssh(f"zfs snapshot {DATASET}@s3-beta")
-            made.append("s3-beta")
-            ssh(f"zfs snapshot {DATASET}@manual-keep")
-            made.append("manual-keep")
-            s3.put_object(Bucket="test-bucket", Key="k1", Body=b"live state")
-
-            alpha, beta, keep = snapshot_id("s3-alpha"), snapshot_id("s3-beta"), snapshot_id("manual-keep")
-            assert s3.get_bucket_versioning(Bucket="test-bucket")["Status"] == "Suspended"
-            versions = s3.list_object_versions(Bucket="test-bucket").get("Versions", [])
-            ids = [v["VersionId"] for v in versions if v["Key"] == "k1"]
-            assert "null" in ids and alpha in ids and beta in ids, ids
-            assert keep not in ids, "an unselected snapshot serves nothing"
-            assert s3.get_object(Bucket="test-bucket", Key="k1", VersionId=alpha)["Body"].read() == b"alpha state"
-            assert s3.get_object(Bucket="test-bucket", Key="k1", VersionId=beta)["Body"].read() == b"beta state"
-            assert s3.get_object(Bucket="test-bucket", Key="k1")["Body"].read() == b"live state"
-            with pytest.raises(Exception, match="NoSuchVersion"):
-                s3.get_object(Bucket="test-bucket", Key="k1", VersionId=keep)
-
-            pid = service()["pids"]
-            b = call("sharing.s3.query", [["name", "=", "test-bucket"]], {"get": True})
-            call("sharing.s3.update", b["id"], {"snapshot_versions_max": 1})
-            assert service()["pids"] != pid, "the listing cap is a restart"
-            versions = s3.list_object_versions(Bucket="test-bucket").get("Versions", [])
-            ids = [v["VersionId"] for v in versions if v["Key"] == "k1"]
-            assert beta in ids and alpha not in ids, ids
-            assert s3.get_object(Bucket="test-bucket", Key="k1", VersionId=alpha)["Body"].read() == b"alpha state"
-        finally:
-            call("service.control", "STOP", SERVICE, {"silent": False}, job=True)
-            for name in made:
-                # a snapshot a reader crossed into is mounted, and its unmount
-                # can trail the reader by a moment
-                ssh(f"for i in 1 2 3 4 5; do zfs destroy {DATASET}@{name} && break; sleep 1; done")
-
-
-SOSAPI_SYSTEM = ".system-d26a9498-cb7c-4a87-a44a-8ae204f5ba6c/system.xml"
-
-
-def test_the_sosapi_block_size_follows_the_recordsize(owner):
-    """Nothing about the block size is stored: the daemon reads the
-    dataset's recordsize when Veeam asks for system.xml, so tuning the
-    dataset changes the recommendation at the next ask with no reload
-    and no restart. ZFS's 128K default recommends nothing."""
-    with grantee("s3veeam") as (_grant, key), bucket(owner="s3veeam"):
-        assert call("service.control", "START", SERVICE, {"silent": False}, job=True)
-        try:
-            pid = service()["pids"]
-            s3 = client(key)
-
-            def system_xml():
-                return s3.get_object(Bucket="test-bucket", Key=SOSAPI_SYSTEM)["Body"].read().decode()
-
-            assert "SystemRecommendations" not in system_xml()
-            ssh(f"zfs set recordsize=1M {DATASET}")
-            assert "<SystemRecommendations><KbBlockSize>1024</KbBlockSize></SystemRecommendations>" in system_xml()
-            ssh(f"zfs set recordsize=2M {DATASET}")
-            assert "<KbBlockSize>4096</KbBlockSize>" in system_xml()
-            ssh(f"zfs inherit recordsize {DATASET}")
-            assert "SystemRecommendations" not in system_xml()
-            assert service()["pids"] == pid
-        finally:
-            call("service.control", "STOP", SERVICE, {"silent": False}, job=True)
-
-
-@pytest.mark.parametrize(
-    "size,threshold,parts,multipart_etag",
-    [
-        # one PUT: the transfer manager only splits above its threshold
-        (5 << 20, 8 << 20, 1, "COMPOSITE"),
-        # three parts: the multipart path, staged in the side tree the
-        # daemon owns and published into s3data/ under the requester
-        (12 << 20, 5 << 20, 3, "COMPOSITE"),
-        # the same three parts on a row that declines to hash them: the
-        # transfer manager declares CRC32 and sends no Content-MD5, so
-        # nothing gives the daemon a reason to, and the object is minted
-        (12 << 20, 5 << 20, 3, "MINTED"),
-    ],
-    ids=["single_put", "multipart", "minted_multipart"],
-)
-def test_a_file_survives_the_round_trip(owner, size, threshold, parts, multipart_etag):
-    """A real file up and back down through the transfer manager, byte
-    for byte, landing in s3data/ as the uploader's own file while the side
-    tree beside it stays the daemon's. The bucket middleware provisioned
-    has to carry both, which no tiny put_object proves."""
-    from boto3.s3.transfer import TransferConfig
-
-    transfer = TransferConfig(multipart_threshold=threshold, multipart_chunksize=5 << 20)
-    source, expected = random_file(size)
-    fetched = source + ".down"
-    try:
-        with (
-            grantee("s3client") as (_grant, key),
-            bucket(owner="s3client", multipart_etag=multipart_etag, object_ownership="OBJECT_WRITER"),
-        ):
-            assert call("service.control", "START", SERVICE, {"silent": False}, job=True)
-            try:
-                s3 = client(key)
-                s3.upload_file(
-                    source,
-                    "test-bucket",
-                    "big/file.bin",
-                    ExtraArgs={"ChecksumAlgorithm": "CRC32"},
-                    Config=transfer,
-                )
-                head = s3.head_object(Bucket="test-bucket", Key="big/file.bin")
-                assert head["ContentLength"] == size
-                # the ETag says which path the bytes took: a composite is
-                # the md5 of the part md5s with the part count appended; a
-                # single put, or a multipart the row declined to hash, is
-                # a minted UUID
-                etag = head["ETag"].strip('"')
-                if parts > 1 and multipart_etag == "COMPOSITE":
-                    assert re.fullmatch(rf"[0-9a-f]{{32}}-{parts}", etag), etag
-                else:
-                    assert re.fullmatch(r"[0-9a-f-]{36}", etag), etag
-
-                s3.download_file("test-bucket", "big/file.bin", fetched, Config=transfer)
-                assert md5_of(fetched) == expected
-
-                on_disk = f"/mnt/{DATASET}/s3data/big/file.bin"
-                assert ssh(f"md5sum {on_disk}").split()[0] == expected
-                uid = call("user.query", [["username", "=", "s3client"]], {"get": True})["uid"]
-                assert call("filesystem.stat", on_disk)["uid"] == uid
-                assert call("filesystem.stat", f"/mnt/{DATASET}/.truenas_s3")["uid"] == 0
-            finally:
-                call("service.control", "STOP", SERVICE, {"silent": False}, job=True)
-    finally:
-        for path in (source, fetched):
-            with contextlib.suppress(FileNotFoundError):
-                os.unlink(path)

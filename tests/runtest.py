@@ -24,6 +24,7 @@ TEST_DIR_TO_RESULT = {
     'sharing_protocols/iscsi': 'results/sharing_protocols_iscsi_tests_result.xml',
     'sharing_protocols/nfs': 'results/sharing_protocols_nfs_tests_result.xml',
     'sharing_protocols/nvmet': 'results/sharing_protocols_nvmet_tests_result.xml',
+    'sharing_protocols/s3': 'results/sharing_protocols_s3_tests_result.xml',
     'sharing_protocols/smb': 'results/sharing_protocols_smb_tests_result.xml',
     'cloud': 'results/cloud_tests_result.xml',
     'vm': 'results/vm_result.xml',
