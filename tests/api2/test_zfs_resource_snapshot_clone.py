@@ -15,7 +15,7 @@ def test_zfs_resource_snapshot_clone_basic():
                     "zfs.resource.snapshot.clone",
                     {"snapshot": snap, "dataset": clone_path},
                 )
-                result = call("zfs.resource.query", {"paths": [clone_path]})
+                result = call("zfs.resource.query", [], {"extra": {"paths": [clone_path]}})
                 assert result[0]["name"] == clone_path
                 assert result[0]["type"] == "FILESYSTEM"
             finally:
@@ -45,7 +45,7 @@ def test_zfs_resource_snapshot_clone_with_properties():
                 )
                 result = call(
                     "zfs.resource.query",
-                    {"paths": [clone_path], "properties": ["compression"]},
+                    [], {"extra": {"paths": [clone_path], "properties": ["compression"]}},
                 )
                 assert result[0]["properties"]["compression"]["value"] == "zstd"
             finally:
@@ -122,7 +122,7 @@ def test_zfs_resource_snapshot_clone_zvol():
                     "zfs.resource.snapshot.clone",
                     {"snapshot": snap, "dataset": clone_path},
                 )
-                result = call("zfs.resource.query", {"paths": [clone_path]})
+                result = call("zfs.resource.query", [], {"extra": {"paths": [clone_path]}})
                 assert result[0]["name"] == clone_path
                 assert result[0]["type"] == "VOLUME"
             finally:
@@ -148,7 +148,7 @@ def test_zfs_resource_snapshot_clone_nested():
                     "zfs.resource.snapshot.clone",
                     {"snapshot": snap, "dataset": clone_path},
                 )
-                result = call("zfs.resource.query", {"paths": [clone_path]})
+                result = call("zfs.resource.query", [], {"extra": {"paths": [clone_path]}})
                 assert len(result) == 1
             finally:
                 call(

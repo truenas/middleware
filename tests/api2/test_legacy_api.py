@@ -11,6 +11,16 @@ class APIVersions(enum.Enum):
     GE = ("25.10.0", "25.10.1", "25.10.2", "25.10.3", "25.10.4", "25.10.5",)
 
 
+ZFS_RESOURCE_QUERY_FIRST_VERSION = {
+    "zfs.resource.query": "25.10.0",
+}
+
+
+def _zfs_resource_query_exists(version: str, query_method: str) -> bool:
+    first = ZFS_RESOURCE_QUERY_FIRST_VERSION.get(query_method)
+    return first is not None and version >= first
+
+
 def get_api_versions():
     with session() as s:
         return s.get(f"{url()}/api/versions").json()
@@ -65,8 +75,10 @@ def misc_method_names(misc_methods) -> list[str]:
 
 def test_query_method(legacy_api_client, query_method, misc_method_names):
     client, version = legacy_api_client
+    if query_method.startswith("zfs.resource.") and not _zfs_resource_query_exists(version, query_method):
+        return
+
     # Methods that do not exist in the previous API versions
-    _startswith = ("zfs.resource.",)
     if (
         version in APIVersions.FT.value
         and query_method in (
@@ -74,7 +86,6 @@ def test_query_method(legacy_api_client, query_method, misc_method_names):
             "vm.query",
             "vm.device.query",
         )
-        or query_method.startswith(_startswith)
     ):
         return
 
@@ -117,7 +128,6 @@ def test_query_method(legacy_api_client, query_method, misc_method_names):
             "tunable.query",
             "vmware.query",
         )
-        or query_method.startswith(_startswith)
     ):
         return
 

@@ -51,14 +51,14 @@ def test_docker_app_migration(docker_pool, migration_pool):
         # Verify source pool's ix-apps has inherited mountpoint (not /.ix-apps)
         source_ix_apps = call(
             'zfs.resource.query',
-            {'paths': [f'{source_pool_name}/ix-apps'], 'properties': ['mountpoint']}
+            [], {"extra": {'paths': [f'{source_pool_name}/ix-apps'], 'properties': ['mountpoint']}}
         )
         assert source_ix_apps[0]['properties']['mountpoint']['value'] != IX_APPS_MOUNT_PATH
 
         # Verify destination pool's ix-apps has the correct /.ix-apps mountpoint
         dest_ix_apps = call(
             'zfs.resource.query',
-            {'paths': [f'{migration_pool["name"]}/ix-apps'], 'properties': ['mountpoint']}
+            [], {"extra": {'paths': [f'{migration_pool["name"]}/ix-apps'], 'properties': ['mountpoint']}}
         )
         assert dest_ix_apps[0]['properties']['mountpoint']['value'] == IX_APPS_MOUNT_PATH
     finally:

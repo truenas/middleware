@@ -142,14 +142,14 @@ def test_zfs_resource_query_tier_requires_get_tier_flag(tier_ds_performance):
     is None / absent). With get_tier=True, the field carries TierInfo."""
     rows_default = call(
         "zfs.resource.query",
-        {"paths": [tier_ds_performance]},
+        [], {"extra": {"paths": [tier_ds_performance]}},
     )
     assert rows_default
     assert rows_default[0].get("tier") is None
 
     rows_with_tier = call(
         "zfs.resource.query",
-        {"paths": [tier_ds_performance], "get_tier": True},
+        [], {"extra": {"paths": [tier_ds_performance], "get_tier": True}},
     )
     assert rows_with_tier
     assert rows_with_tier[0]["tier"] is not None
@@ -161,7 +161,7 @@ def test_zfs_resource_query_get_tier_returns_null_when_disabled(tier_ds_performa
     with _temporarily_disabled():
         rows = call(
             "zfs.resource.query",
-            {"paths": [tier_ds_performance], "get_tier": True},
+            [], {"extra": {"paths": [tier_ds_performance], "get_tier": True}},
         )
         assert rows
         assert rows[0]["tier"] is None
@@ -172,7 +172,7 @@ def test_zfs_resource_query_get_tier_returns_null_on_pool_without_special(tier_p
     with dataset("tier_resource_no_special") as ds:
         rows = call(
             "zfs.resource.query",
-            {"paths": [ds], "get_tier": True},
+            [], {"extra": {"paths": [ds], "get_tier": True}},
         )
         assert rows
         assert rows[0]["tier"] is None

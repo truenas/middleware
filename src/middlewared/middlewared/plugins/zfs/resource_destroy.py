@@ -5,6 +5,7 @@ import os
 from typing import TYPE_CHECKING, Any
 
 from middlewared.api.current import (
+    ZFSResourceDeleteOptions,
     ZFSResourceDestroyArgsData,
     ZFSResourceQuery,
     ZFSResourceSnapshotCountQuery,
@@ -54,7 +55,7 @@ def destroy_impl(
 
     if not recursive:
         rv = context.call_sync2(
-            context.s.zfs.resource.query,
+            context.s.zfs.resource.query_impl,
             ZFSResourceQuery(paths=[path], properties=None, get_children=True),
         )
         extra = "Set recursive=True to remove them."
@@ -73,22 +74,30 @@ def destroy_impl(
     return _raw_destroy(tls, path, recursive, all_snapshots, bypass, defer)
 
 
-def destroy(context: ServiceContext, data: ZFSResourceDestroyArgsData) -> None:
+def destroy(context: ServiceContext, data: ZFSResourceDestroyArgsData, schema: str = SCHEMA) -> None:
     try:
         failed, errnum = context.call_sync2(context.s.zfs.resource.destroy_impl, data.path, data.recursive)
     except ZFSPathHasClonesException as e:
         raise ValidationError(
-            f"{SCHEMA}.defer",
+            f"{schema}.defer",
             f"Snapshot {e.path!r} has dependent clones: {', '.join(e.clones)}",
             errno.ENOTEMPTY,
         )
     except ZFSPathHasHoldsException as e:
-        raise ValidationError(SCHEMA, e.message, errno.ENOTEMPTY)
+        raise ValidationError(schema, e.message, errno.ENOTEMPTY)
     except ZFSPathNotFoundException as e:
-        raise ValidationError(SCHEMA, e.message, errno.ENOENT)
+        raise ValidationError(schema, e.message, errno.ENOENT)
     else:
         if failed:
             # A recursive destroy runs as a channel program, which executes atomically behind
             # the scenes and so reports its failure as a return value rather than an exception.
             assert errnum is not None
-            raise ValidationError(SCHEMA, failed, errnum)
+            raise ValidationError(schema, failed, errnum)
+
+
+def delete(context: ServiceContext, id_: str, options: ZFSResourceDeleteOptions) -> None:
+    destroy(
+        context,
+        ZFSResourceDestroyArgsData(path=id_, recursive=options.recursive),
+        schema="zfs.resource.delete",
+    )

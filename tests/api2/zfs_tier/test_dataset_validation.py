@@ -68,7 +68,7 @@ def _child_ssb(parent_ds, suffix):
     try:
         props = call(
             "zfs.resource.query",
-            {"paths": [child], "properties": ["special_small_blocks"]},
+            [], {"extra": {"paths": [child], "properties": ["special_small_blocks"]}},
         )
         return child, props[0]["properties"]["special_small_blocks"]["value"]
     except Exception:
@@ -195,7 +195,7 @@ def test_disabled_tiering_falls_back_to_legacy_validation(tier_pool):
         try:
             props = call(
                 "zfs.resource.query",
-                {"paths": [child_ok], "properties": ["special_small_blocks"]},
+                [], {"extra": {"paths": [child_ok], "properties": ["special_small_blocks"]}},
             )
             assert props[0]["properties"]["special_small_blocks"]["value"] == 8192
         finally:

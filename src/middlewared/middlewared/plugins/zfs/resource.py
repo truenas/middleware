@@ -1,22 +1,30 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, overload
 
 from middlewared.api import api_method
 from middlewared.api.current import (
+    QueryFilters,
     ZFSResourceCreateArgs,
     ZFSResourceCreateArgsData,
     ZFSResourceCreateResult,
+    ZFSResourceDeleteArgs,
+    ZFSResourceDeleteOptions,
+    ZFSResourceDeleteResult,
     ZFSResourceDestroyArgs,
     ZFSResourceDestroyArgsData,
     ZFSResourceDestroyResult,
     ZFSResourceEntry,
     ZFSResourceQuery,
     ZFSResourceQueryArgs,
+    ZFSResourceQueryOptions,
+    ZFSResourceQueryOptionsCount,
+    ZFSResourceQueryOptionsGet,
     ZFSResourceQueryResult,
 )
-from middlewared.service import Service, private
+from middlewared.service import CRUDService, private
 from middlewared.service.decorators import pass_thread_local_storage
+from middlewared.service_exception import InstanceNotFound
 
 from . import resource_create as _create
 from . import resource_destroy as _destroy
@@ -31,11 +39,16 @@ if TYPE_CHECKING:
 __all__ = ("ZFSResourceService",)
 
 
-class ZFSResourceService(Service):
+class ZFSResourceService(CRUDService[ZFSResourceEntry]):
     class Config:
         namespace = "zfs.resource"
         cli_private = True
         entry = ZFSResourceEntry
+        role_prefix = "ZFS_RESOURCE"
+        role_separate_delete = True
+        event_send = False
+        datastore_primary_key_type = "string"
+        verbose_name = "ZFS resource"
 
     def __init__(self, middleware: Middleware):
         super().__init__(middleware)
@@ -198,10 +211,9 @@ class ZFSResourceService(Service):
     @api_method(
         ZFSResourceCreateArgs,
         ZFSResourceCreateResult,
-        roles=["ZFS_RESOURCE_WRITE"],
         check_annotations=True,
     )
-    def create(self, data: ZFSResourceCreateArgsData) -> ZFSResourceEntry:
+    def do_create(self, data: ZFSResourceCreateArgsData) -> ZFSResourceEntry:
         """
         Create a ZFS resource (filesystem or volume) and mount it.
 
@@ -384,51 +396,123 @@ class ZFSResourceService(Service):
         _destroy.destroy(self.context, data)
 
     @api_method(
+        ZFSResourceDeleteArgs,
+        ZFSResourceDeleteResult,
+        check_annotations=True,
+    )
+    def do_delete(self, id_: str, options: ZFSResourceDeleteOptions) -> None:
+        """
+        Destroy the ZFS resource (filesystem or volume) named by ``id``.
+
+        This is the CRUD spelling of :method:`zfs.resource.destroy` and enforces the same rules.
+
+        To destroy snapshots, use :method:`zfs.resource.snapshot.destroy` instead.
+        """
+        _destroy.delete(self.context, id_, options)
+
+    async def get_instance(self, id_: str, options: dict[str, Any] | None = None) -> ZFSResourceEntry:
+        """
+        Retrieve the ZFS resource named by ``id``, which may be any filesystem or volume, not only a pool
+        root. An ``ENOENT`` error is raised when it does not exist or is an internal dataset.
+
+        Only ``options.extra`` is honoured; every other query option would be meaningless for a single
+        resource. See :method:`zfs.resource.query` for what ``extra`` accepts.
+        """
+        instance = await self.middleware.call(
+            "zfs.resource.query",
+            [["id", "=", id_]],
+            {"extra": (options or {}).get("extra", {})},
+        )
+        if not instance:
+            raise InstanceNotFound(f"{self._config.verbose_name} {id_} does not exist")
+
+        return instance[0]  # type: ignore[no-any-return]
+
+    @overload  # type: ignore[override]
+    def query(  # type: ignore[overload-overlap]
+        self, filters: QueryFilters, options: ZFSResourceQueryOptionsCount
+    ) -> int: ...
+
+    @overload
+    def query(  # type: ignore[overload-overlap]
+        self, filters: QueryFilters, options: ZFSResourceQueryOptionsGet
+    ) -> ZFSResourceEntry: ...
+
+    @overload
+    def query(
+        self, filters: QueryFilters, options: ZFSResourceQueryOptions = ...
+    ) -> list[ZFSResourceEntry]: ...
+
+    @api_method(
         ZFSResourceQueryArgs,
         ZFSResourceQueryResult,
         roles=["ZFS_RESOURCE_READ"],
         check_annotations=True,
     )
-    def query(self, data: ZFSResourceQuery) -> list[ZFSResourceEntry]:
+    def query(
+        self, filters: QueryFilters, options: ZFSResourceQueryOptions = ZFSResourceQueryOptions()
+    ) -> list[ZFSResourceEntry] | ZFSResourceEntry | int:
         """
-        Query ZFS resources (datasets and volumes) with flexible filtering options.
+        Query ZFS filesystems and volumes.
 
-        This method provides a high-performance interface for retrieving information about ZFS
-        resources, including their properties, hierarchical relationships, and metadata. The query
-        can be customized to retrieve specific resources, properties, and control the output format.
+        .. important::
+           Unlike every other query method, ``filters`` never widen what is walked. The
+           dataset tree is traversed only as far as ``options.extra`` says; filters are
+           then applied to what that traversal returned. With no ``extra`` the traversal
+           is the pool roots only, so ``[["type", "=", "VOLUME"]]`` on its own returns an
+           empty list even when volumes exist. Declare the scope you want first, for
+           example ``{"extra": {"get_children": true}}`` for every dataset on the system
+           or ``{"extra": {"paths": ["tank/foo"], "max_depth": 2}}`` for a subtree, and
+           filter within it. This keeps the cost of a query explicit instead of letting a
+           one-line filter walk every dataset on a large array.
 
-        To query snapshots, use :method:`zfs.resource.snapshot.query` instead.
+        The one exception is an identity filter: ``[["id", "=", path]]``, ``[["name", "=", path]]``
+        or the ``in`` form of either opens exactly those paths, without descending into
+        children, regardless of ``extra.paths``, ``extra.get_children`` and ``extra.max_depth``.
+        This is what makes :method:`zfs.resource.get_instance` cheap and correct for any dataset.
+        Paths named this way never expose internal datasets; only paths listed in
+        ``extra.paths`` do.
 
-        A validation error is raised when:
+        Once the traversal is done, ``filters``, ``select``, ``order_by``, ``limit``, ``offset``,
+        ``count`` and ``get`` behave exactly as they do on any other query method. A path listed in
+        ``extra.paths`` that does not exist is skipped rather than reported as an error, so a query
+        over a mixture of live and destroyed paths returns the ones that survived.
 
-        - a snapshot path is supplied (use :method:`zfs.resource.snapshot.query`)
-        - overlapping paths are supplied with ``get_children`` enabled
-        - a requested path does not exist (``ENOENT``)
+        Any ZFS property a filter or ``select`` refers to is fetched automatically, whether or not
+        ``extra.properties`` lists it, and referring to ``properties.<name>.source`` turns
+        ``extra.get_source`` on. A name that is not a ZFS property fails the query with ``EINVAL``
+        instead of silently matching nothing. ``extra.properties`` itself is the default set of space
+        properties when left as an empty list, and no properties at all when set to ``null``.
+
+        ``extra.get_crypto``, ``extra.get_snapshot_count`` and ``extra.get_snapshots`` fill in
+        ``crypto``, ``snapshot_count`` and ``snapshots``, which are ``null`` otherwise. The snapshot
+        enrichments are read after the tree has been walked, so a resource destroyed in between
+        carries ``null`` rather than failing the whole query.
+
+        To query snapshots directly, use :method:`zfs.resource.snapshot.query` instead. A snapshot
+        path in ``extra.paths`` is a validation error, as are overlapping paths when the traversal
+        descends into children.
 
         Examples:
 
-        Query all resources with default properties:
+        Every dataset and volume on the system:
 
         .. code:: json
 
-            {}
+            [[], {"extra": {"get_children": true}}]
 
-        Query specific resources:
-
-        .. code:: json
-
-            {"paths": ["tank/documents", "tank/media"]}
-
-        Query specific properties with children:
+        One dataset by name:
 
         .. code:: json
 
-            {"paths": ["tank"], "properties": ["mounted", "compression", "used"], "get_children": true}
+            [[["id", "=", "tank/foo"]], {}]
 
-        Get a hierarchical view of resources:
+        Every lz4-compressed dataset:
 
         .. code:: json
 
-            {"paths": ["tank"], "nest_results": true, "get_children": true}
+            [[["properties.compression.value", "=", "lz4"]], {"extra": {"get_children": true}}]
         """
-        return _query.query(self.context, data)
+        return self._handle_generic_query_result(
+            _query.query(self.context, filters, options), options.count, options.get
+        )

@@ -31,8 +31,8 @@ def configure_bridge():
 
 
 def get_mountpoint(dataset):
-    rv = call("zfs.resource.query", {"paths": [dataset], "properties": ["mountpoint"]})
-    return rv[0]["properties"]["mountpoint"]["value"]
+    rv = call("zfs.resource.get_instance", dataset, {"extra": {"properties": ["mountpoint"]}})
+    return rv["properties"]["mountpoint"]["value"]
 
 
 @contextlib.contextmanager

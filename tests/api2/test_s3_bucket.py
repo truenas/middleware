@@ -40,7 +40,7 @@ def service():
 
 
 def zfs_props(name, props):
-    rows = call("zfs.resource.query", {"paths": [name], "properties": props})
+    rows = call("zfs.resource.query", [], {"extra": {"paths": [name], "properties": props}})
     return {p: rows[0]["properties"][p]["raw"] for p in props} if rows else None
 
 

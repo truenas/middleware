@@ -237,7 +237,7 @@ def get_client_count():
 def get_zvol_property(zvolid, property_name):
     return call(
         'zfs.resource.query',
-        {'paths': [zvolid], 'properties': [property_name]}
+        [], {"extra": {'paths': [zvolid], 'properties': [property_name]}}
     )[0]['properties'][property_name]['value']
 
 

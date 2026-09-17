@@ -87,22 +87,21 @@ class PoolService(Service):
                 to_inherit.append(i["name"])
 
         if to_inherit:
-            # NOTE: we use zfs.resource.query which will hide internal
-            # paths. This is important so don't change it unless you
-            # understand the implications fully.
+            # Internal datasets are deliberately left out; the services that own them manage their
+            # mountpoints.
             for i in await self.call2(
-                self.s.zfs.resource.query,
+                self.s.zfs.resource.query_impl,
                 ZFSResourceQuery(paths=to_inherit, properties=None, get_children=True)
             ):
-                if i.type != 'FILESYSTEM':
+                if i['type'] != 'FILESYSTEM':
                     continue
                 try:
                     await self.middleware.call(
                         'pool.dataset.update_impl',
-                        UpdateImplArgs(name=i.name, iprops={'mountpoint'})
+                        UpdateImplArgs(name=i['name'], iprops={'mountpoint'})
                     )
                 except Exception:
-                    self.logger.exception('Failed inheriting mountpoint property for %r', i.name)
+                    self.logger.exception('Failed inheriting mountpoint property for %r', i['name'])
 
     @api_method(PoolImportFindArgs, PoolImportFindResult, roles=['POOL_READ'])
     @job()

@@ -56,7 +56,7 @@ def test_dedup_dataset_tier_is_none_in_queries(tier_pool):
         row = call("pool.dataset.query", [["name", "=", ds]], {"get": True})
         assert row.get("tier") is None
 
-        rows = call("zfs.resource.query", {"paths": [ds], "get_tier": True})
+        rows = call("zfs.resource.query", [], {"extra": {"paths": [ds], "get_tier": True}})
         assert rows
         assert rows[0].get("tier") is None
 

@@ -63,7 +63,7 @@ def test_dataset_set_tier_performance(tier_ds):
     # Verify the ZFS property was actually set (16 MiB)
     props = call(
         "zfs.resource.query",
-        {"paths": [tier_ds], "properties": ["special_small_blocks"]},
+        [], {"extra": {"paths": [tier_ds], "properties": ["special_small_blocks"]}},
     )
     assert props[0]["properties"]["special_small_blocks"]["value"] == 16 * 1024 * 1024
 
@@ -87,7 +87,7 @@ def test_dataset_set_tier_regular(tier_ds):
 
     props = call(
         "zfs.resource.query",
-        {"paths": [tier_ds], "properties": ["special_small_blocks"]},
+        [], {"extra": {"paths": [tier_ds], "properties": ["special_small_blocks"]}},
     )
     assert props[0]["properties"]["special_small_blocks"]["value"] == 0
 

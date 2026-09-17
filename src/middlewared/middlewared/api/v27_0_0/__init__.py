@@ -126,6 +126,7 @@ from .webui_crypto import *
 from .webui_enclosure import *
 from .webui_main_dashboard import *
 from .zfs_resource_crud import *
+from .zfs_resource_property import *
 from .zfs_resource_snapshot import *
 from .zfs_tier import *
 from .zpool_query import *

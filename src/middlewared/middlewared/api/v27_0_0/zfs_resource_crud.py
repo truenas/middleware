@@ -1,4 +1,4 @@
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import Field, Secret
 
@@ -8,8 +8,12 @@ from middlewared.api.base import (
     NotRequired,
     Private,
     UniqueList,
+    query_result,
 )
 
+from .common import QueryArgs, QueryOptions
+from .zfs_resource_property import PropertyValue
+from .zfs_resource_snapshot import ZFSResourceSnapshotEntry
 from .zfs_tier import TierInfo
 
 __all__ = (
@@ -19,26 +23,21 @@ __all__ = (
     "ZFSResourceCreateEncryption",
     "ZFSResourceCreateProperties",
     "ZFSResourceCreateResult",
+    "ZFSResourceCryptoInfo",
+    "ZFSResourceDeleteArgs",
+    "ZFSResourceDeleteOptions",
+    "ZFSResourceDeleteResult",
     "ZFSResourceDestroyArgsData",
     "ZFSResourceDestroyArgs",
     "ZFSResourceDestroyResult",
     "ZFSResourceQuery",
     "ZFSResourceQueryArgs",
+    "ZFSResourceQueryExtra",
+    "ZFSResourceQueryOptions",
+    "ZFSResourceQueryOptionsCount",
+    "ZFSResourceQueryOptionsGet",
     "ZFSResourceQueryResult",
 )
-
-PROP_SRC = Literal["NONE", "DEFAULT", "TEMPORARY", "LOCAL", "INHERITED", "RECEIVED"]
-
-
-class SourceValue(BaseModel):
-    type: PROP_SRC = Field(description="The source type.")
-    value: str | None = Field(description="The source value.")
-
-
-class PropertyValue(BaseModel):
-    raw: str = Field(description="The raw value of the property.")
-    source: SourceValue | None = Field(description="The source from where this property received its value.")
-    value: int | float | str | bool | None = Field(description="The parsed raw value of the property.")
 
 
 class ZFSPropertiesEntry(BaseModel):
@@ -289,7 +288,17 @@ class ZFSPropertiesEntry(BaseModel):
     volthreading: PropertyValue = Field(default=NotRequired, description="Controls volume threading behavior.")
 
 
+class ZFSResourceCryptoInfo(BaseModel):
+    encrypted: bool = Field(description="Whether the resource is encrypted.")
+    encryption_root: str | None = Field(
+        description="The resource that owns the encryption key this resource is encrypted with.",
+    )
+    key_loaded: bool = Field(description="Whether the encryption key is currently loaded into ZFS.")
+    locked: bool = Field(description="Whether the resource is locked, i.e. its encryption key is not loaded.")
+
+
 class ZFSResourceEntry(BaseModel):
+    id: str = Field(description="The name of the zfs resource. Always equal to `name`.")
     createtxg: int = Field(description="Transaction group when resource was created.")
     guid: int = Field(description="Globally unique identifier for the resource.")
     name: str = Field(description="The name of the zfs resource.")
@@ -299,7 +308,6 @@ class ZFSResourceEntry(BaseModel):
     user_properties: dict[str, str] | None = Field(
         description="Custom metadata properties with colon-separated names (max 256 chars).",
     )
-    children: list | None = Field(description="The children of this zfs resource.")
     tier: TierInfo | None = Field(
         default=None,
         description=(
@@ -307,6 +315,31 @@ class ZFSResourceEntry(BaseModel):
             "deduplication is enabled on the dataset."
         ),
     )
+    crypto: ZFSResourceCryptoInfo | None = Field(
+        default=None,
+        description="Encryption state of the resource. Null unless `get_crypto` was requested.",
+    )
+    snapshot_count: int | None = Field(
+        default=None,
+        description=(
+            "The number of snapshots of this resource. Null unless `get_snapshot_count` was requested, and also "
+            "null when the resource was destroyed between being walked and being counted. This is a live count; "
+            "`properties.snapshot_count` is the ZFS property of the same name."
+        ),
+    )
+    snapshots: list[ZFSResourceSnapshotEntry] | None = Field(
+        default=None,
+        description=(
+            "The snapshots of this resource. Null unless `get_snapshots` was requested, and also null when the "
+            "resource was destroyed between being walked and being queried."
+        ),
+    )
+
+    @classmethod
+    def to_previous(cls, value: dict[str, Any]) -> dict[str, Any]:
+        # Older entry models require ``children``; the flat result has no tree to put in it.
+        value["children"] = None
+        return value
 
 
 class ZFSResourceQuery(BaseModel):
@@ -369,6 +402,13 @@ class ZFSResourceQuery(BaseModel):
         ),
     )
     exclude_internal_paths: Private[bool] = Field(default=True, description="Exclude internal paths.")
+    allow_internal_paths: Private[bool] = Field(
+        default=True,
+        description=(
+            "Whether an internal path listed in `paths` disables internal path hiding for the whole call. Set to "
+            "False when the paths were synthesised by middleware rather than named by the caller."
+        ),
+    )
     get_tier: bool = Field(
         default=False,
         description=(
@@ -376,6 +416,110 @@ class ZFSResourceQuery(BaseModel):
             " license with ZFS tiering enabled."
         ),
     )
+    get_crypto: bool = Field(
+        default=False,
+        description="Retrieve the encryption state (encrypted, encryption root, key loaded, locked) of the resource.",
+    )
+    get_snapshot_count: bool = Field(
+        default=False,
+        description="Retrieve the number of snapshots of the resource.",
+    )
+    get_snapshots: bool = Field(default=False, description="Retrieve the snapshots of the resource.")
+    snapshots_properties: list[str] | None = Field(
+        default=list(),
+        description=(
+            "A list of zfs properties to be retrieved for each snapshot returned by `get_snapshots`. Defaults to an "
+            "empty list which will return a default set of zfs properties. Setting this to None will retrieve no zfs "
+            "properties."
+        ),
+    )
+
+
+class ZFSResourceQueryExtra(BaseModel):
+    paths: UniqueList[str] = Field(
+        default=list(),
+        description=(
+            "A list of zfs filesystem or volume paths to walk. Each path is opened directly, which is far cheaper "
+            "than walking the whole tree. A path that does not exist is skipped rather than reported as an error.\n"
+            "\n"
+            "Paths must be non-overlapping when the walk descends into children (`get_children` is set or "
+            "`max_depth` is greater than 0), otherwise the same resource would be returned twice."
+        ),
+    )
+    get_children: bool = Field(
+        default=False,
+        description="Descend into the children of every walked path, without limit unless `max_depth` says otherwise.",
+    )
+    max_depth: int = Field(
+        default=0,
+        ge=0,
+        description=(
+            "Maximum depth to descend, measured from the walked path rather than from the pool root. A value greater "
+            "than 0 descends that many levels and implies `get_children`; a value of 0 descends without limit when "
+            "`get_children` is set and not at all otherwise."
+        ),
+    )
+    properties: list[str] | None = Field(
+        default=list(),
+        description=(
+            "A list of zfs properties to be retrieved. Defaults to an empty list which will return a default set of "
+            "zfs properties. Setting this to None will retrieve no zfs properties beyond the ones the `filters` and "
+            "`options.select` of the query reference."
+        ),
+    )
+    get_user_properties: bool = Field(default=False, description="Retrieve user properties for zfs resource(s).")
+    get_source: bool = Field(default=False, description="Retrieve source information for a zfs property.")
+    get_tier: bool = Field(
+        default=False,
+        description=(
+            "Retrieve tier classification (REGULAR/PERFORMANCE) for FILESYSTEM resources. Requires an active Enterprise"
+            " license with ZFS tiering enabled."
+        ),
+    )
+    get_crypto: bool = Field(
+        default=False,
+        description="Retrieve the encryption state (encrypted, encryption root, key loaded, locked) of the resource.",
+    )
+    get_snapshot_count: bool = Field(
+        default=False,
+        description=(
+            "Retrieve the number of snapshots of each returned resource. A resource destroyed between being walked "
+            "and being counted carries a null count rather than failing the query."
+        ),
+    )
+    get_snapshots: bool = Field(
+        default=False,
+        description=(
+            "Retrieve the snapshots of each returned resource. A resource destroyed between being walked and being "
+            "queried carries a null list rather than failing the query."
+        ),
+    )
+    snapshots_properties: list[str] | None = Field(
+        default=list(),
+        description=(
+            "A list of zfs properties to be retrieved for each snapshot returned by `get_snapshots`. Defaults to an "
+            "empty list which will return a default set of zfs properties. Setting this to None will retrieve no zfs "
+            "properties."
+        ),
+    )
+    exclude_internal_paths: Private[bool] = Field(default=True, description="Exclude internal paths.")
+
+
+class ZFSResourceQueryOptions(QueryOptions):
+    extra: ZFSResourceQueryExtra = Field(  # type: ignore[assignment]
+        default_factory=ZFSResourceQueryExtra,
+        description="Declares how far the ZFS tree is walked and what is retrieved for each walked resource.",
+    )
+
+
+class ZFSResourceQueryOptionsGet(ZFSResourceQueryOptions):
+    get: Literal[True]
+    count: Literal[False]
+
+
+class ZFSResourceQueryOptionsCount(ZFSResourceQueryOptions):
+    count: Literal[True]
+    get: Literal[False]
 
 
 class ZFSResourceCreateEncryption(BaseModel):
@@ -619,12 +763,42 @@ class ZFSResourceDestroyResult(BaseModel):
     result: None
 
 
-class ZFSResourceQueryArgs(BaseModel):
-    data: ZFSResourceQuery = Field(
-        default=ZFSResourceQuery(),
-        description="Query parameters for retrieving ZFS resource information.",
+class ZFSResourceDeleteOptions(BaseModel):
+    recursive: bool = Field(
+        default=False,
+        description=(
+            "Recursively destroy all descendants of the resource, including child datasets, snapshots, clones, and "
+            "holds."
+        ),
     )
 
 
-class ZFSResourceQueryResult(BaseModel):
-    result: list[ZFSResourceEntry]
+class ZFSResourceDeleteArgs(BaseModel):
+    id: NonEmptyString = Field(description="Path of the zfs resource (dataset or volume) to be destroyed.")
+    options: ZFSResourceDeleteOptions = Field(
+        default_factory=ZFSResourceDeleteOptions,
+        description="Options controlling how the resource is destroyed.",
+    )
+
+
+class ZFSResourceDeleteResult(BaseModel):
+    result: None
+
+
+class ZFSResourceQueryArgs(QueryArgs):
+    options: ZFSResourceQueryOptions = Field(  # type: ignore[assignment]
+        default_factory=ZFSResourceQueryOptions,
+        description="Query options including pagination, ordering, and the ZFS traversal parameters.",
+    )
+
+    @classmethod
+    def from_previous(cls, value: dict[str, Any]) -> dict[str, Any]:
+        # Older clients send one object in place of filters and options; that object is the typed extra, minus
+        # nesting, which the public query does not offer.
+        data = value.pop("data")
+        data.pop("nest_results", None)
+        value["options"] = {"extra": data}
+        return value
+
+
+ZFSResourceQueryResult = query_result(ZFSResourceEntry)
