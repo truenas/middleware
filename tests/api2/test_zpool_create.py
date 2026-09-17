@@ -95,6 +95,8 @@ def test_create_properties_pass_through_and_defaults_apply():
         assert pool["properties"]["autotrim"]["value"] == "on"
         assert pool["properties"]["comment"]["value"] == "zpool.create test"
         assert pool["properties"]["ashift"]["value"] == 12
+        # dedup on the root filesystem sizes the dedup table quota to the dedup vdevs
+        assert pool["properties"]["dedup_table_quota"]["raw"] == "auto"
 
         root = call("pool.dataset.get_instance", POOL)
         assert root["deduplication"]["value"] == "ON"
@@ -112,6 +114,22 @@ def test_create_properties_pass_through_and_defaults_apply():
             ]["mountpoint"]["source"]["type"]
             != "LOCAL"
         )
+
+
+def test_create_bad_filesystem_property_fails_before_formatting():
+    disks = _unused_devnames(1)
+    topology = {"data": [{"type": "disk", "disks": disks[0:1]}]}
+    errors = _create_fails(topology, filesystem_properties={"compression": "bogus"})
+    assert any("filesystem_properties.compression" in e.attribute for e in errors)
+    assert set(disks) <= {d["devname"] for d in call("disk.get_unused")}
+
+
+def test_create_duplicate_disk_fails_before_formatting():
+    disks = _unused_devnames(2)
+    topology = {"data": [{"type": "mirror", "disks": disks[0:2]}], "spares": disks[1:2]}
+    errors = _create_fails(topology)
+    assert any(e.attribute == "zpool.create.topology.spares" for e in errors)
+    assert set(disks) <= {d["devname"] for d in call("disk.get_unused")}
 
 
 def test_create_duplicate_name_fails():

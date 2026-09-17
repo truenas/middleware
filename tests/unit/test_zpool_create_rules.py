@@ -20,6 +20,7 @@ from middlewared.plugins.zpool.create_impl import (
 from middlewared.plugins.zpool.create_rules import (
     CreateContext,
     check_dedup_entitlement,
+    check_disks_unique,
     check_force_entitlement,
     check_layout,
     check_pool_absent,
@@ -83,6 +84,52 @@ def test_vdev_type_vocabulary_is_native(vtype):
         request(topology={"data": [{"type": vtype, "disks": ["sda"]}]})
 
 
+@pytest.mark.parametrize(
+    "prop",
+    [
+        {"compression": "bogus"},
+        {"compression": "LZ4"},
+        {"checksum": "SHA512"},
+        {"dedup": "maybe"},
+        {"atime": "yes"},
+        {"xattr": "yes"},
+        {"copies": 4},
+        {"recordsize": "3M"},
+        {"recordsize": "32M"},
+        {"recordsize": "256"},
+        {"quota": "lots"},
+        {"special_small_blocks": "3K"},
+        {"sync": "sometimes"},
+    ],
+)
+def test_bad_filesystem_property_values_are_rejected_by_the_model(prop):
+    """A bad -O value must never reach the binding, since the disks are formatted first."""
+    with pytest.raises(ValidationErrors):
+        request(filesystem_properties=prop)
+
+
+@pytest.mark.parametrize(
+    "prop",
+    [
+        {"compression": "zstd-fast-500"},
+        {"compression": "gzip-9"},
+        {"dedup": "sha256,verify"},
+        {"recordsize": "128K"},
+        {"recordsize": 131072},
+        {"recordsize": "16M"},
+        {"quota": "none"},
+        {"quota": "10G"},
+        {"refreservation": "1TB"},
+        {"special_small_blocks": 0},
+        {"special_small_blocks": "64K"},
+        {"copies": "2"},
+    ],
+)
+def test_native_filesystem_property_values_are_accepted(prop):
+    data = request(filesystem_properties=prop)
+    assert properties_to_zfs(data.filesystem_properties) == {k: str(v) for k, v in prop.items()}
+
+
 def test_public_properties_are_accepted():
     data = request(
         properties={"autotrim": "on", "comment": "lab", "dedup_table_quota": 1024},
@@ -130,6 +177,19 @@ def test_draid_defaults_recordsize():
     )
     _, fs = resolve_create_request(data)
     assert fs.recordsize == "512K"
+
+
+def test_dedup_table_quota_defaults_to_auto_with_dedup():
+    assert resolve_create_request(request())[0].dedup_table_quota is None
+    assert resolve_create_request(request(filesystem_properties={"dedup": "off"}))[0].dedup_table_quota is None
+    assert resolve_create_request(request(filesystem_properties={"dedup": "on"}))[0].dedup_table_quota == "auto"
+    assert (
+        resolve_create_request(request(filesystem_properties={"dedup": "sha512,verify"}))[0].dedup_table_quota == "auto"
+    )
+    properties, _ = resolve_create_request(
+        request(filesystem_properties={"dedup": "on"}, properties={"dedup_table_quota": "none"})
+    )
+    assert properties.dedup_table_quota == "none"
 
 
 def test_resolve_does_not_mutate_the_request():
@@ -342,6 +402,24 @@ def test_check_layout_reports_every_vdev():
         "topology.data.1.type",
         "topology.special.0.type",
     ]
+
+
+def test_check_disks_unique():
+    data = request(
+        topology={
+            "data": [{"type": "mirror", "disks": ["a", "b"]}, {"type": "mirror", "disks": ["b", "c"]}],
+            "log": [{"type": "disk", "disks": ["d"]}],
+            "cache": ["a"],
+            "spares": ["d", "e"],
+        }
+    )
+    errors = run(check_disks_unique, data, context(data))
+    assert errors == [
+        ("topology.data.1", "Disk 'b' is already used by data.0."),
+        ("topology.cache", "Disk 'a' is already used by data.0."),
+        ("topology.spares", "Disk 'd' is already used by log.0."),
+    ]
+    assert run(check_disks_unique, request(), context(request())) == []
 
 
 def test_check_spare_sizes():
