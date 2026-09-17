@@ -7,7 +7,7 @@ from middlewared.service_exception import ValidationError, ValidationErrors
 from middlewared.test.integration.assets.entitlements import entitled
 from middlewared.test.integration.assets.pool import another_pool
 from middlewared.test.integration.assets.zfs_resource import destroy_zfs_resource, zfs_resource
-from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.utils import call, mock, ssh
 
 GiB = 1024**3
 
@@ -781,16 +781,25 @@ def test_zfs_resource_create_rejects_a_property_value_zfs_refuses():
     assert call("zfs.resource.query", {"paths": [path], "properties": None}) == []
 
 
-def test_zfs_resource_create_under_a_volume_parent_is_rejected():
-    """A volume cannot hold children, and create_ancestors does not change that"""
+@pytest.mark.parametrize("tier_enabled", [False, True], ids=["tiering off", "tiering on"])
+@pytest.mark.parametrize("child_type", ["FILESYSTEM", "VOLUME"])
+def test_zfs_resource_create_under_a_volume_parent_is_rejected(tier_enabled, child_type):
+    """A volume cannot hold children, and neither create_ancestors nor tiering changes that.
+
+    Tiering is mocked because its rules read filesystem-only properties from the
+    parent, and most test systems are not licensed to turn it on for real.
+    """
     vol = os.path.join(pool_name, "test_create_vol_parent")
+    child = os.path.join(vol, "child")
+    data = {"path": child, "type": child_type, "create_ancestors": True}
+    if child_type == "VOLUME":
+        data["properties"] = {"volsize": 100 * 1024 * 1024}
+
     with zfs_resource(
         vol, {"type": "VOLUME", "properties": {"volsize": 100 * 1024 * 1024}}
     ):
-        with pytest.raises(ValidationError) as ve:
-            call(
-                "zfs.resource.create",
-                {"path": os.path.join(vol, "child"), "create_ancestors": True},
-            )
+        with mock("zfs.tier.config", return_value={**call("zfs.tier.config"), "enabled": tier_enabled}):
+            with pytest.raises(ValidationError) as ve:
+                call("zfs.resource.create", data)
         assert ve.value.errno == errno.EINVAL
-        assert "parent is not a filesystem" in ve.value.errmsg
+        assert ve.value.errmsg == f"{vol!r} is a volume and cannot hold {child!r}."
