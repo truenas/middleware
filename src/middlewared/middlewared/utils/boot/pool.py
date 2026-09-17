@@ -54,7 +54,7 @@ class BootPoolState:
         invalidate after the boot pool changes).
         """
         if not use_cache or self._disks is None:
-            status = await middleware.call("zpool.status", {"name": self.get_name(), "real_paths": True})
+            status = await middleware.call2(middleware.services.zpool.status, name=self.get_name(), real_paths=True)
             self._disks = tuple(status["disks"])
         return list(self._disks)
 

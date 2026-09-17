@@ -163,20 +163,19 @@ class RecordingContext:
         self.draid = draid
         self.descendants = list(descendants)
         self.calls = []
-        self.middleware = SimpleNamespace(call_sync=self.call_sync)
-        self.s = SimpleNamespace(zfs=SimpleNamespace(resource=SimpleNamespace(list_impl="zfs.resource.list_impl")))
+        self.s = SimpleNamespace(
+            zfs=SimpleNamespace(resource=SimpleNamespace(list_impl="zfs.resource.list_impl")),
+            zpool=SimpleNamespace(query_impl="zpool.query_impl"),
+        )
 
-    def call_sync(self, method, *args):
-        if method == "zpool.query_impl" and args[0].get("topology"):
+    def call_sync2(self, method, query):
+        if method == "zpool.query_impl" and query.topology:
             self.calls.append("topology")
             vdev_type = "draid1:1d:3c:0s" if self.draid else "mirror"
             return [{"topology": {"data": [{"vdev_type": vdev_type}], "special": []}}]
         if method == "zpool.query_impl":
             self.calls.append("class_special_size")
             return [{"properties": {"class_special_size": {"value": GiB if self.special_vdev else 0}}}]
-        raise AssertionError(f"unexpected call {method}")
-
-    def call_sync2(self, method, query):
         self.calls.append(method)
         if method == "zfs.resource.list_impl" and query.get_children:
             return [descendant(query.paths[0], 0, "LOCAL"), *self.descendants]

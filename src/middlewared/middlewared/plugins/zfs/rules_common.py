@@ -10,6 +10,7 @@ import errno
 import re
 import typing
 
+from middlewared.api.current import ZPoolQuery
 from middlewared.service_exception import ValidationError
 
 from .property_choices import DRAID_MINIMUM_RECORDSIZE
@@ -67,8 +68,8 @@ def apply_acl_defaults(properties: ZFSResourceCreateProperties, leave: Collectio
 
 def pool_has_special_vdev_sync(context: ServiceContext, pool_name: str) -> bool:
     """Return whether the pool has a SPECIAL allocation class vdev."""
-    if pool := context.middleware.call_sync(
-        "zpool.query_impl", {"pool_names": [pool_name], "properties": ["class_special_size"]}
+    if pool := context.call_sync2(
+        context.s.zpool.query_impl, ZPoolQuery(pool_names=[pool_name], properties=["class_special_size"])
     ):
         size = ((pool[0].get("properties") or {}).get("class_special_size") or {}).get("value")
         return isinstance(size, int) and size > 0

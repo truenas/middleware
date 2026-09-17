@@ -30,7 +30,7 @@ class Stand:
         self.zpool_reads = []
         self.created = []
         middleware = Middleware()
-        middleware["zpool.query_impl"] = self.zpool_query_impl
+        middleware.services.zpool.query_impl = self.zpool_query_impl
         middleware.services.zfs.tier.config = lambda: SimpleNamespace(enabled=False)
         middleware.services.zfs.resource.list_impl = self.list_impl
         middleware.call_hook_sync = Mock()

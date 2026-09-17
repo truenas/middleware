@@ -164,6 +164,7 @@ from middlewared.plugins.webshare.sharing import SharingWebshareService
 from middlewared.plugins.zettarepl import ZettareplService
 from middlewared.plugins.zfs.resource import ZFSResourceService
 from middlewared.plugins.zfs.tier import ZfsTierService
+from middlewared.plugins.zpool.zpool import ZPoolService
 
 _SubHandler = typing.Callable[['Middleware', 'EventType', dict], typing.Awaitable[None]]
 SYSTEMD_EXTEND_USECS = 240000000  # 4mins in microseconds
@@ -328,6 +329,7 @@ class ServiceContainer(BaseServiceContainer):
         self.webshare = WebshareService(middleware)
         self.zettarepl = ZettareplService(middleware)
         self.zfs = ZfsServicesContainer(middleware)
+        self.zpool = ZPoolService(middleware)
 
         self.methods = get_methods(self)
         for method_name, method in self.methods.items():

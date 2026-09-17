@@ -90,6 +90,7 @@ jobs:
             middlewared/plugins/vm/ \
             middlewared/plugins/zettarepl/ \
             middlewared/plugins/zfs/ \
+            middlewared/plugins/zpool/ \
             middlewared/plugins/dns_client.py \
             middlewared/plugins/filesystem.py \
             middlewared/plugins/keyvalue.py \
