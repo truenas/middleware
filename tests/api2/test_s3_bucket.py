@@ -532,6 +532,48 @@ def test_recursive_permissions_changes_stop_at_the_bucket(owner):
             permissions_change("filesystem.chown", f"/mnt/{parent}", recursive=True)
 
 
+def test_another_protocol_exports_the_share_root_read_only(owner):
+    """Another protocol may export a bucket only read-only and only its
+    `s3data` directory, which holds the objects: a share of the mountpoint
+    is refused on its path, one of `s3data` that is not read-only on its
+    read-only flag, and a read-only one of `s3data` or of a prefix under it
+    goes through, on an update as on a create. Webshare has no read-only
+    mode and may not export a bucket at all."""
+
+    def refused(method, *args):
+        with pytest.raises(ValidationErrors) as ve:
+            call(method, *args)
+        (error,) = ve.value.errors
+        assert "test-bucket" in error.errmsg, method
+        return error.attribute
+
+    with bucket() as b:
+        mountpoint = f"/mnt/{b['dataset']}"
+        share_root = f"{mountpoint}/s3data"
+        ssh(f"mkdir -p {share_root}/prefix")
+
+        for api, schema, ro, data in (
+            ("sharing.smb", "sharingsmb", "readonly", {"name": "s3-export"}),
+            ("sharing.nfs", "sharingnfs", "ro", {}),
+        ):
+            assert refused(f"{api}.create", {**data, "path": mountpoint, ro: True}) == f"{schema}_create.path"
+            assert refused(f"{api}.create", {**data, "path": share_root, ro: False}) == f"{schema}_create.{ro}"
+            share = call(f"{api}.create", {**data, "path": share_root, ro: True})
+            try:
+                assert refused(f"{api}.update", share["id"], {"path": mountpoint}) == f"{schema}_update.path"
+                assert refused(f"{api}.update", share["id"], {ro: False}) == f"{schema}_update.{ro}"
+                prefix = f"{share_root}/prefix"
+                assert call(f"{api}.update", share["id"], {"path": prefix})["path"] == prefix
+            finally:
+                call(f"{api}.delete", share["id"])
+
+        with entitled("WEBSHARE"):
+            assert (
+                refused("sharing.webshare.create", {"name": "s3-export", "path": share_root})
+                == "sharing_webshare_create.path"
+            )
+
+
 def test_registry_changes_reload_and_consumed_fields_restart(owner):
     """Creating, disabling, enabling and dropping a bucket, and a grant
     change, keep the service's pid (a reload); changing a field consumed
