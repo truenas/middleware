@@ -11,15 +11,16 @@ from __future__ import annotations
 import ipaddress
 from typing import Any, TYPE_CHECKING
 
-from middlewared.api.current import S3Entry
+from middlewared.api.current import S3Entry, ServiceEntry
 from middlewared.common.attachment.certificate import CertificateServiceAttachmentDelegate
+from middlewared.common.license_reconcile import LicenseReconcileAction, LicenseReconcileDelegate
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
 from middlewared.common.ports import ServicePortDelegate
 
 from .accesskey_crud import S3AccesskeyService
 from .bucket_crud import SharingS3Service
 from .config import S3Service
-from .lifecycle import SERVICE, start_or_restart
+from .lifecycle import ETC_GROUP, SERVICE, start_or_restart
 
 if TYPE_CHECKING:
     from middlewared.main import Middleware
@@ -78,6 +79,37 @@ class S3ListenDelegate(SystemServiceListenMultipleDelegate):
     async def reset_listens(self, state: list[dict[str, Any]]) -> None:
         await self.set_listen_state(_wildcard_listeners(state))  # type: ignore[no-untyped-call]
 
+
+
+class S3LicenseReconcileDelegate(LicenseReconcileDelegate):
+    """What a license change does to a running S3 service: a restart.
+
+    The daemon asks `truenas.entitlements.check` for `S3_VERSIONING` and
+    `S3_AUDIT` once, before it registers a bucket, and holds the answer
+    for the life of the process -- a reload re-reads its files and not
+    the license, by design, so that every registration-consumed fact
+    arrives the same way. A restart is therefore the only thing that
+    puts a new license in force: a revoked versioning entitlement stops
+    minting versions and a granted one brings an object-lock bucket the
+    daemon excluded at start back into service. Nothing else restarts
+    the service on a license change.
+
+    RESTART starts a unit that is not running, which a license change
+    must not do, so the delegate runs only while the service is up; a
+    stopped service reads the license fresh at its next start anyway.
+    """
+
+    name = "s3"
+    etc_groups = (ETC_GROUP,)
+    service = SERVICE
+    action = LicenseReconcileAction.RESTART
+    # after `user`: the credentials file the restart renders resolves
+    # every access key's account through NSS
+    order = 30
+
+    async def should_run(self, middleware: Middleware) -> bool:
+        svc: ServiceEntry = await middleware.call("service.query", [["service", "=", SERVICE]], {"get": True})
+        return svc.state.lower() == "running"
 
 
 class S3CertificateAttachment(CertificateServiceAttachmentDelegate):
@@ -152,6 +184,10 @@ async def setup(middleware: Middleware) -> None:
     await middleware.call(
         "interface.register_listen_delegate",
         S3ListenDelegate(middleware, "s3", "listeners"),  # type: ignore[no-untyped-call]
+    )
+    await middleware.call2(
+        middleware.services.truenas.license.register_reconcile_delegate,
+        S3LicenseReconcileDelegate(),
     )
     # an access key change re-renders the credentials file; an account change
     # can move a resolved name or turn a key into USER_MISSING, and a stale
