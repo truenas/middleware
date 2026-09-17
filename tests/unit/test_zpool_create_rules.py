@@ -11,9 +11,9 @@ from middlewared.api.base.handler.accept import accept_params
 from middlewared.api.current import ZpoolCreate, ZpoolCreateArgs
 from middlewared.plugins.zpool.create_impl import (
     assemble_create_pool_vdev_kwargs,
+    binding_location,
     build_vdev_spec,
     convert_topology_to_vdevs,
-    default_draid_ndata,
     properties_to_zfs,
 )
 from middlewared.plugins.zpool.create_rules import (
@@ -29,7 +29,7 @@ from middlewared.plugins.zpool.create_rules import (
     dedup_requested,
     resolve_create_request,
 )
-from middlewared.plugins.zpool.exceptions import ZpoolTopologyRejected
+from middlewared.plugins.zpool.exceptions import ZpoolCreateRejected
 from middlewared.service_exception import ValidationError, ValidationErrors
 
 RAIDZ1 = {"data": [{"type": "raidz1", "disks": ["sda", "sdb", "sdc"]}]}
@@ -87,47 +87,21 @@ def test_vdev_type_vocabulary_is_native(vtype):
 @pytest.mark.parametrize(
     "prop",
     [
-        {"compression": "bogus"},
-        {"compression": "LZ4"},
-        {"checksum": "SHA512"},
-        {"dedup": "maybe"},
-        {"atime": "yes"},
-        {"xattr": "yes"},
-        {"copies": 4},
-        {"recordsize": "3M"},
-        {"recordsize": "32M"},
-        {"recordsize": "256"},
-        {"quota": "lots"},
-        {"special_small_blocks": "3K"},
-        {"sync": "sometimes"},
-    ],
-)
-def test_bad_filesystem_property_values_are_rejected_by_the_model(prop):
-    """A bad -O value must never reach the binding, since the disks are formatted first."""
-    with pytest.raises(ValidationErrors):
-        request(filesystem_properties=prop)
-
-
-@pytest.mark.parametrize(
-    "prop",
-    [
         {"compression": "zstd-fast-500"},
         {"compression": "gzip-9"},
         {"dedup": "sha256,verify"},
         {"recordsize": "128K"},
-        {"recordsize": 131072},
-        {"recordsize": "16M"},
         {"quota": "none"},
-        {"quota": "10G"},
-        {"refreservation": "1TB"},
-        {"special_small_blocks": 0},
         {"special_small_blocks": "64K"},
         {"copies": "2"},
+        # values ZFS accepts but a hand-kept vocabulary would not know; the binding's dry run judges them
+        {"acltype": "disabled"},
+        {"aclinherit": "secure"},
     ],
 )
-def test_native_filesystem_property_values_are_accepted(prop):
+def test_filesystem_property_values_pass_through_the_model(prop):
     data = request(filesystem_properties=prop)
-    assert properties_to_zfs(data.filesystem_properties) == {k: str(v) for k, v in prop.items()}
+    assert properties_to_zfs(data.filesystem_properties) == prop
 
 
 def test_public_properties_are_accepted():
@@ -208,24 +182,26 @@ def test_dedup_requested(dedup, expected):
 
 
 # ---------------------------------------------------------------------------
-# default_draid_ndata
+# binding_location
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize(
-    "children,parity,nspares,expected",
+    "argument,index,expected",
     [
-        (5, 1, 1, 3),
-        (4, 1, 0, 3),
-        (20, 1, 1, 8),
-        (10, 2, 0, 8),
-        # too few disks: 1 rather than 0 or negative, so the binding reports the shortage
-        (3, 1, 3, 1),
-        (2, 2, 0, 1),
+        ("storage_vdevs", 1, "topology.data.1"),
+        ("storage_vdevs", None, "topology.data"),
+        ("spare_vdevs", 0, "topology.spares.0"),
+        ("log_vdevs", 2, "topology.log.2"),
+        ("name", None, "name"),
+        ("filesystem_properties", None, "filesystem_properties"),
+        ("properties", None, "properties"),
+        ("feature_properties", None, None),
+        ("", None, None),
     ],
 )
-def test_default_draid_ndata(children, parity, nspares, expected):
-    assert default_draid_ndata(children, parity, nspares) == expected
+def test_binding_location(argument, index, expected):
+    assert binding_location(argument, index) == expected
 
 
 # ---------------------------------------------------------------------------
@@ -302,12 +278,12 @@ def test_build_vdev_spec_and_assemble():
     assert len(kwargs["spare_vdevs"]) == 1
 
 
-def test_build_vdev_spec_defaults_draid_ndata():
+def test_build_vdev_spec_leaves_draid_ndata_to_the_binding():
     vdev = {"root": "data", "type": "draid2", "disks": list("abcdefghijklm"), "draid_data_disks": None,
             "draid_spare_disks": 1}
-    assert build_vdev_spec(vdev, "disks").name == "8d:1s"
-    vdev["disks"] = list("abcde")
-    assert build_vdev_spec(vdev, "disks").name == "2d:1s"
+    assert build_vdev_spec(vdev, "disks").name == "1s"
+    vdev["draid_data_disks"] = 4
+    assert build_vdev_spec(vdev, "disks").name == "4d:1s"
 
 
 def test_assemble_locates_a_draid_config_the_binding_refuses():
@@ -316,9 +292,9 @@ def test_assemble_locates_a_draid_config_the_binding_refuses():
         {"root": "data", "type": "draid1", "disks": ["c", "d"], "devices": [], "draid_data_disks": 5,
          "draid_spare_disks": 0},
     ]
-    with pytest.raises(ZpoolTopologyRejected) as e:
+    with pytest.raises(ZpoolCreateRejected) as e:
         assemble_create_pool_vdev_kwargs(vdevs, "disks")
-    assert e.value.location == "data.1"
+    assert e.value.location == "topology.data.1"
     assert e.value.message.startswith("dRAID requires at least 6 children")
 
 

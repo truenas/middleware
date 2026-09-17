@@ -120,7 +120,8 @@ def test_create_bad_filesystem_property_fails_before_formatting():
     disks = _unused_devnames(1)
     topology = {"data": [{"type": "disk", "disks": disks[0:1]}]}
     errors = _create_fails(topology, filesystem_properties={"compression": "bogus"})
-    assert any("filesystem_properties.compression" in e.attribute for e in errors)
+    # libzfs's own verdict, located at the argument the binding judged
+    assert any(e.attribute == "zpool.create.filesystem_properties" and "compression" in e.errmsg for e in errors)
     assert set(disks) <= {d["devname"] for d in call("disk.get_unused")}
 
 
@@ -154,7 +155,7 @@ def test_create_topology_policy_violation_fails_before_formatting():
     errors = _create_fails(topology)
     # the binding's verdict, located at the topology root it judged
     assert [(e.attribute, e.errmsg) for e in errors] == [
-        ("zpool.create.topology.data", 'all vdevs must share the same type; got "mirror" and "raidz1"')
+        ("zpool.create.topology.data.1", 'all vdevs must share the same type; got "mirror" and "raidz1"')
     ]
 
     # validation ran before any disk was touched
@@ -166,7 +167,7 @@ def test_create_structural_violation_fails_even_when_forced():
     disks = _unused_devnames(5)
     topology = {"data": [{"type": "mirror", "disks": disks[0:2]}], "log": [{"type": "raidz1", "disks": disks[2:5]}]}
     errors = _create_fails(topology, force_topology=True)
-    assert any(e.attribute == "zpool.create.topology.log" and "leaf or mirror" in e.errmsg for e in errors)
+    assert any(e.attribute == "zpool.create.topology.log.0" and "leaf or mirror" in e.errmsg for e in errors)
     assert set(disks) <= {d["devname"] for d in call("disk.get_unused")}
 
 
@@ -175,6 +176,15 @@ def test_create_bad_draid_config_fails_before_formatting():
     topology = {"data": [{"type": "draid1", "disks": disks[0:3], "draid_data_disks": 4}]}
     errors = _create_fails(topology)
     assert any(e.attribute == "zpool.create.topology.data.0" and "dRAID requires at least" in e.errmsg for e in errors)
+    assert set(disks) <= {d["devname"] for d in call("disk.get_unused")}
+
+
+def test_create_reserved_name_fails_before_formatting():
+    disks = _unused_devnames(1)
+    topology = {"data": [{"type": "disk", "disks": disks[0:1]}]}
+    with pytest.raises(ValidationErrors) as ve:
+        call("zpool.create", {"name": "mirror", "topology": topology}, job=True)
+    assert [(e.attribute, e.errmsg) for e in ve.value.errors] == [("zpool.create.name", "name is reserved")]
     assert set(disks) <= {d["devname"] for d in call("disk.get_unused")}
 
 

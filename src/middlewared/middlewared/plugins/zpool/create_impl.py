@@ -6,12 +6,11 @@ and ``create_impl``, the two calls into ``truenas_pylibzfs``.
 
 from __future__ import annotations
 
-import re
 from typing import TYPE_CHECKING, Any
 
-from truenas_pylibzfs import VDevType, ZFSException, ZFSProperty, ZPOOLProperty, create_vdev_spec
+from truenas_pylibzfs import ValidationError, VDevType, ZFSException, ZFSProperty, ZPOOLProperty, create_vdev_spec
 
-from .exceptions import ZpoolCreateException, ZpoolTopologyRejected
+from .exceptions import ZpoolCreateException, ZpoolCreateRejected
 
 if TYPE_CHECKING:
     from truenas_pylibzfs import libzfs_types
@@ -22,10 +21,10 @@ if TYPE_CHECKING:
 __all__ = (
     "MIN_DISKS_PER_VDEV",
     "assemble_create_pool_vdev_kwargs",
+    "binding_location",
     "build_vdev_spec",
     "convert_topology_to_vdevs",
     "create_impl",
-    "default_draid_ndata",
     "properties_to_zfs",
     "validate_impl",
 )
@@ -44,8 +43,6 @@ MIN_DISKS_PER_VDEV = {
     "raidz3": 5,
 }
 
-DRAID_DEFAULT_NDATA = 8
-
 # Maps a converted-topology root to the matching create_pool() keyword argument.
 ROOT_TO_KWARG = {
     "data": "storage_vdevs",
@@ -57,18 +54,22 @@ ROOT_TO_KWARG = {
 }
 KWARG_TO_ROOT = {kwarg: root for root, kwarg in ROOT_TO_KWARG.items()}
 
-_FORCE_HINT = re.compile(r"(pass|use) force=True to override")
+# create_pool() arguments that are request fields of the same name
+DIRECT_ARGUMENTS = ("name", "properties", "filesystem_properties")
 
 
-def default_draid_ndata(children: int, parity: int, nspares: int) -> int:
-    """Data disks per dRAID redundancy group when the caller leaves it unset.
+def binding_location(argument: str, index: int | None) -> str | None:
+    """Translate where the binding located a refusal into a ``zpool.create`` attribute suffix.
 
-    Every disk left after parity and spares, capped at 8, as ``zpool create``
-    defaults it. Never below 1, so a vdev too small for its parity and spares
-    is reported by the binding as short of disks rather than as a zero data
-    count.
+    A vdev argument maps to its topology root, with the vdev position when the
+    binding knew it; ``name`` and the two property arguments map to themselves;
+    anything else (an argument the request does not expose) maps to None.
     """
-    return max(min(children - nspares - parity, DRAID_DEFAULT_NDATA), 1)
+    if (root := KWARG_TO_ROOT.get(argument)) is not None:
+        return f"topology.{root}" if index is None else f"topology.{root}.{index}"
+    if argument in DIRECT_ARGUMENTS:
+        return argument
+    return None
 
 
 def convert_topology_to_vdevs(topology: ZpoolCreateTopology) -> tuple[dict[str, Any], list[dict[str, Any]]]:
@@ -113,7 +114,9 @@ def build_vdev_spec(vdev: dict[str, Any], names: str = "devices") -> Any:
     a dry run, which never opens them). ``disk`` vdevs expand to a flat ``list``
     of leaf specs (no parent vdev); every other type returns a single parent
     spec wrapping its leaf children. dRAID encodes its config in the spec name
-    as ``"<ndata>d:<nspares>s"``; the binding validates it as the spec is built.
+    as ``"<ndata>d:<nspares>s"``, or ``"<nspares>s"`` when the data disks per
+    group are left to the ``zpool create`` default; the binding validates it as
+    the spec is built.
     """
     leaves = [create_vdev_spec(vdev_type=VDevType.DISK, name=name) for name in vdev[names]]
     vtype = vdev["type"]
@@ -122,9 +125,8 @@ def build_vdev_spec(vdev: dict[str, Any], names: str = "devices") -> Any:
     if vtype.startswith("draid"):
         nspares = vdev["draid_spare_disks"]
         ndata = vdev["draid_data_disks"]
-        if ndata is None:
-            ndata = default_draid_ndata(len(leaves), int(vtype[-1]), nspares)
-        return create_vdev_spec(vdev_type=VDevType(vtype), name=f"{ndata}d:{nspares}s", children=leaves)
+        config = f"{nspares}s" if ndata is None else f"{ndata}d:{nspares}s"
+        return create_vdev_spec(vdev_type=VDevType(vtype), name=config, children=leaves)
     return create_vdev_spec(vdev_type=VDevType(vtype), children=leaves)
 
 
@@ -132,7 +134,7 @@ def assemble_create_pool_vdev_kwargs(vdevs: list[dict[str, Any]], names: str = "
     """Group converted-topology vdevs into the six create_pool() vdev keyword args.
 
     A vdev the binding refuses to build (a dRAID configuration its disks
-    cannot satisfy) raises ``ZpoolTopologyRejected`` located at that vdev.
+    cannot satisfy) raises ``ZpoolCreateRejected`` located at that vdev.
     """
     kwargs: dict[str, list[Any]] = {}
     position = {root: 0 for root in ROOT_TO_KWARG}
@@ -140,9 +142,9 @@ def assemble_create_pool_vdev_kwargs(vdevs: list[dict[str, Any]], names: str = "
         root = vdev["root"]
         try:
             spec = build_vdev_spec(vdev, names)
-        except ValueError as e:
-            location = root if root in ("cache", "spares") else f"{root}.{position[root]}"
-            raise ZpoolTopologyRejected(location, _strip_context(str(e))) from e
+        except ValidationError as e:
+            location = f"topology.{root}" if root in ("cache", "spares") else f"topology.{root}.{position[root]}"
+            raise ZpoolCreateRejected(location, e.reason) from e
         position[root] += 1
         bucket = kwargs.setdefault(ROOT_TO_KWARG[root], [])
         if isinstance(spec, list):
@@ -158,13 +160,6 @@ def properties_to_zfs(properties: BaseModel) -> dict[str, str]:
     A field left as None is not sent so ZFS applies its own default.
     """
     return {name: str(value) for name, value in properties.model_dump(exclude_none=True).items()}
-
-
-def _strip_context(message: str) -> str:
-    """Drop the ``<argument>: `` prefix the binding puts on its messages and
-    point the force hint at the API field instead of the binding's parameter."""
-    _, sep, rest = message.partition(": ")
-    return _FORCE_HINT.sub("set force_topology to override", rest if sep else message)
 
 
 def _create_pool(
@@ -203,17 +198,16 @@ def validate_impl(
 
     The leaf names are the disk names rather than partition paths, which the
     dry run never opens, so this can run before any disk is formatted. The
-    binding judges the vdev types each root accepts, the dRAID configuration,
-    the property names and, unless ``force``, the topology policy. A refusal
-    raises ``ZpoolTopologyRejected`` located at the topology root the binding
-    named, or unlocated when it faulted something else.
+    binding judges everything ``zpool_create()`` would before its ioctl: the
+    vdev types each root accepts, the dRAID configuration, the pool name, the
+    property names and values and, unless ``force``, the topology policy. A
+    refusal raises ``ZpoolCreateRejected`` located where the binding placed it.
     """
     specs = assemble_create_pool_vdev_kwargs(vdevs, "disks")
     try:
         _create_pool(lzh, name, specs, properties, filesystem_properties, force, dry_run=True)
-    except ValueError as e:
-        kwarg, sep, _ = str(e).partition(": ")
-        raise ZpoolTopologyRejected(KWARG_TO_ROOT.get(kwarg) if sep else None, _strip_context(str(e))) from e
+    except ValidationError as e:
+        raise ZpoolCreateRejected(binding_location(e.argument, e.index), e.reason) from e
 
 
 def create_impl(
