@@ -1,10 +1,12 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, overload
+from typing import TYPE_CHECKING, Any
 
 from middlewared.api import api_method
 from middlewared.api.current import (
+    PoolProcess,
     QueryFilters,
+    QueryOptions,
     ZFSResourceChecksumChoicesArgs,
     ZFSResourceChecksumChoicesResult,
     ZFSResourceCompressionChoicesArgs,
@@ -27,8 +29,6 @@ from middlewared.api.current import (
     ZFSResourceQuery,
     ZFSResourceQueryArgs,
     ZFSResourceQueryOptions,
-    ZFSResourceQueryOptionsCount,
-    ZFSResourceQueryOptionsGet,
     ZFSResourceQueryResult,
     ZFSResourceRecommendedZvolBlocksizeArgs,
     ZFSResourceRecommendedZvolBlocksizeResult,
@@ -38,9 +38,8 @@ from middlewared.api.current import (
     ZFSResourceRenameArgsData,
     ZFSResourceRenameResult,
 )
-from middlewared.service import CRUDService, private
+from middlewared.service import GenericCRUDService, private
 from middlewared.service.decorators import pass_thread_local_storage
-from middlewared.service_exception import InstanceNotFound
 
 from . import resource_create as _create
 from . import resource_destroy as _destroy
@@ -49,6 +48,7 @@ from . import resource_ops as _ops
 from . import resource_processes as _processes
 from . import resource_query as _query
 from .prefetch import ZFSResourcePoolPrefetchService
+from .resource_part import ZFSResourceServicePart
 from .snapshot import ZFSResourceSnapshotService
 
 if TYPE_CHECKING:
@@ -57,21 +57,22 @@ if TYPE_CHECKING:
 __all__ = ("ZFSResourceService",)
 
 
-class ZFSResourceService(CRUDService[ZFSResourceEntry]):
+class ZFSResourceService(GenericCRUDService[ZFSResourceEntry, str]):
     class Config:
         namespace = "zfs.resource"
         cli_private = True
         entry = ZFSResourceEntry
+        generic = True
         role_prefix = "ZFS_RESOURCE"
         role_separate_delete = True
         event_send = False
-        datastore_primary_key_type = "string"
-        verbose_name = "ZFS resource"
+        verbose_name = ZFSResourceServicePart._verbose_name
 
     def __init__(self, middleware: Middleware):
         super().__init__(middleware)
         self.snapshot = ZFSResourceSnapshotService(middleware)
         self.pool = ZFSResourcePoolPrefetchService(middleware)
+        self._svc_part = ZFSResourceServicePart(self.context)
 
     @api_method(
         ZFSResourceChecksumChoicesArgs,
@@ -144,7 +145,7 @@ class ZFSResourceService(CRUDService[ZFSResourceEntry]):
         roles=["ZFS_RESOURCE_READ"],
         check_annotations=True,
     )
-    async def processes(self, id_: str) -> list[dict[str, Any]]:
+    async def processes(self, id_: str) -> list[PoolProcess]:
         """
         Retrieve the processes holding open files on the ZFS resource named by ``id`` or on any of its
         descendants.
@@ -545,7 +546,9 @@ class ZFSResourceService(CRUDService[ZFSResourceEntry]):
         """
         _destroy.delete(self.context, id_, options)
 
-    async def get_instance(self, id_: str, options: dict[str, Any] | None = None) -> ZFSResourceEntry:
+    # The base's `get_instance` resolves its type variables in the module that declares `query`; declaring
+    # `query` here means they land in this module, so the inherited one cannot resolve them.
+    async def get_instance(self, id_: str, options: QueryOptions | None = None) -> ZFSResourceEntry:
         """
         Retrieve the ZFS resource named by ``id``, which may be any filesystem or volume, not only a pool
         root. An ``ENOENT`` error is raised when it does not exist or is an internal dataset.
@@ -553,30 +556,7 @@ class ZFSResourceService(CRUDService[ZFSResourceEntry]):
         Only ``options.extra`` is honoured; every other query option would be meaningless for a single
         resource. See :method:`zfs.resource.query` for what ``extra`` accepts.
         """
-        instance = await self.middleware.call(
-            "zfs.resource.query",
-            [["id", "=", id_]],
-            {"extra": (options or {}).get("extra", {})},
-        )
-        if not instance:
-            raise InstanceNotFound(f"{self._config.verbose_name} {id_} does not exist")
-
-        return instance[0]  # type: ignore[no-any-return]
-
-    @overload  # type: ignore[override]
-    def query(  # type: ignore[overload-overlap]
-        self, filters: QueryFilters, options: ZFSResourceQueryOptionsCount
-    ) -> int: ...
-
-    @overload
-    def query(  # type: ignore[overload-overlap]
-        self, filters: QueryFilters, options: ZFSResourceQueryOptionsGet
-    ) -> ZFSResourceEntry: ...
-
-    @overload
-    def query(
-        self, filters: QueryFilters, options: ZFSResourceQueryOptions = ...
-    ) -> list[ZFSResourceEntry]: ...
+        return await self._svc_part.get_instance(id_, extra=(options or QueryOptions()).extra)
 
     @api_method(
         ZFSResourceQueryArgs,
@@ -584,7 +564,7 @@ class ZFSResourceService(CRUDService[ZFSResourceEntry]):
         roles=["ZFS_RESOURCE_READ"],
         check_annotations=True,
     )
-    def query(
+    async def query(  # type: ignore[override]
         self, filters: QueryFilters, options: ZFSResourceQueryOptions = ZFSResourceQueryOptions()
     ) -> list[ZFSResourceEntry] | ZFSResourceEntry | int:
         """
@@ -648,6 +628,4 @@ class ZFSResourceService(CRUDService[ZFSResourceEntry]):
 
             [[["properties.compression.value", "=", "lz4"]], {"extra": {"get_children": true}}]
         """
-        return self._handle_generic_query_result(
-            _query.query(self.context, filters, options), options.count, options.get
-        )
+        return await self._svc_part.query(filters, options)

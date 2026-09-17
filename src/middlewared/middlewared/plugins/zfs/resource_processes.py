@@ -6,7 +6,7 @@ import os
 import re
 from typing import TYPE_CHECKING, Any
 
-from middlewared.api.current import ZFSResourceQuery
+from middlewared.api.current import PoolProcess, ZFSResourceQuery
 from middlewared.service_exception import CallError, ValidationError
 
 from .resource_processes_utils import processes_using_dataset_tree
@@ -19,7 +19,7 @@ __all__ = ("kill_processes", "processes", "processes_using_paths")
 RE_ZD = re.compile(r"^/dev/zd[0-9]+$")
 
 
-async def processes(context: ServiceContext, id_: str) -> list[dict[str, Any]]:
+async def processes(context: ServiceContext, id_: str) -> list[PoolProcess]:
     rows = await context.call2(
         context.s.zfs.resource.query_impl,
         ZFSResourceQuery(paths=[id_], properties=None, get_crypto=True),
@@ -29,7 +29,7 @@ async def processes(context: ServiceContext, id_: str) -> list[dict[str, Any]]:
     if rows[0]["crypto"]["locked"]:
         return []
 
-    return await processes_using_dataset_tree(context, id_)
+    return [PoolProcess(**proc) for proc in await processes_using_dataset_tree(context, id_)]
 
 
 async def kill_processes(context: ServiceContext, oid: str, control_services: bool, max_tries: int = 5) -> None:
