@@ -44,7 +44,7 @@ class WebUIEnclosureService(Service):
         enclosures = self.middleware.call_sync('enclosure2.query')
         if enclosures:
             disk_deets = self.middleware.call_sync('device.get_disks')
-            disks_to_pools = self.middleware.call_sync('zpool.status', {'real_paths': True})
+            disks_to_pools = self.call_sync2(self.s.zpool.status, real_paths=True)
             for enc in enclosures:
                 for disk_slot, slot_info in enc['elements']['Array Device Slot'].items():
                     for to_pop in ('original', 'value', 'value_raw'):

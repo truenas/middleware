@@ -10,6 +10,7 @@ from typing import TypedDict
 
 from truenas_pylicensed.features import LicenseFeature
 
+from middlewared.api.current import ZPoolQuery
 from middlewared.plugins.zfs_.utils import TNUserProp
 from middlewared.service_exception import CallError
 from middlewared.utils.filesystem.directory import directory_is_empty
@@ -123,9 +124,9 @@ async def pool_has_special_vdev(middleware: 'Middleware', pool_name: str) -> boo
     """Whether the pool has a SPECIAL allocation class vdev. Returns False when the
     pool cannot be inspected."""
     try:
-        pools = await middleware.call(
-            'zpool.query_impl',
-            {'pool_names': [pool_name], 'properties': ['class_special_size']},
+        pools = await middleware.call2(
+            middleware.services.zpool.query_impl,
+            ZPoolQuery(pool_names=[pool_name], properties=['class_special_size']),
         )
         if not pools:
             return False

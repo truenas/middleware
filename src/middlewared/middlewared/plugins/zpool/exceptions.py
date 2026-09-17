@@ -29,7 +29,7 @@ class ZpoolNotFoundException(ZpoolException):
         self.message = f"{pool!r} not found"
         super().__init__(pool)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.message
 
 
@@ -40,7 +40,7 @@ class ZpoolPoolUnhealthyException(ZpoolException):
         self.message = f"{pool!r}: pool is {health}"
         super().__init__(pool, health)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.message
 
 
@@ -51,7 +51,7 @@ class ZpoolScanInvalidActionException(ZpoolException):
         self.message = f"{action!r} is not a valid scan action (expected: start, pause, cancel)"
         super().__init__(action)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.message
 
 
@@ -62,7 +62,7 @@ class ZpoolScanInvalidTypeException(ZpoolException):
         self.message = f"{scan_type!r} is not a valid scan type (expected: scrub, errorscrub)"
         super().__init__(scan_type)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.message
 
 
@@ -73,7 +73,7 @@ class ZpoolScrubAlreadyRunningException(ZpoolException):
         self.message = f"{pool!r}: scrub already in progress"
         super().__init__(pool)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.message
 
 
@@ -84,7 +84,7 @@ class ZpoolScrubPausedException(ZpoolException):
         self.message = f"{pool!r}: scrub is paused"
         super().__init__(pool)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.message
 
 
@@ -95,7 +95,7 @@ class ZpoolScrubPausedToCancelException(ZpoolException):
         self.message = f"{pool!r}: scrub is paused and must be canceled before starting error scrub"
         super().__init__(pool)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.message
 
 
@@ -106,7 +106,7 @@ class ZpoolErrorScrubAlreadyRunningException(ZpoolException):
         self.message = f"{pool!r}: error scrub already in progress"
         super().__init__(pool)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.message
 
 
@@ -117,7 +117,7 @@ class ZpoolErrorScrubPausedException(ZpoolException):
         self.message = f"{pool!r}: error scrub is paused"
         super().__init__(pool)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.message
 
 
@@ -128,7 +128,7 @@ class ZpoolNotMasterNodeException(ZpoolException):
         self.message = f"{pool!r}: scrub skipped because this node is not the active controller"
         super().__init__(pool)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.message
 
 
@@ -139,7 +139,7 @@ class ZpoolScrubNotDueException(ZpoolException):
         self.message = f"{pool!r}: scrub not due yet"
         super().__init__(pool)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.message
 
 
@@ -150,7 +150,7 @@ class ZpoolResiliverInProgressException(ZpoolException):
         self.message = f"{pool!r}: resilver in progress"
         super().__init__(pool)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.message
 
 
@@ -164,5 +164,6 @@ class ZpoolTooManyScrubsException(ZpoolException):
         )
         super().__init__(running)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.message
+

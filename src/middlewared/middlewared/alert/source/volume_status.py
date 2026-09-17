@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from middlewared.api.current import ZPoolQuery
 from typing import Any
 
 from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertClassConfig, AlertLevel, AlertSource
@@ -59,7 +60,9 @@ class VolumeStatusAlertSource(AlertSource):
         if alerts is None:
             alerts = []
             boot_pool = await self.middleware.call2(self.middleware.services.boot.pool_name)
-            for pool in await self.middleware.call("zpool.query_impl", {"pool_names": [boot_pool]}):
+            for pool in await self.middleware.call2(
+                self.middleware.services.zpool.query_impl, ZPoolQuery(pool_names=[boot_pool])
+            ):
                 if not pool["healthy"]:
                     alerts.append([
                         "BootPoolStatusAlert",

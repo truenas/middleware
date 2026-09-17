@@ -2,7 +2,7 @@ from typing import Literal
 
 from pydantic import Field
 
-from middlewared.api.base import BaseModel
+from middlewared.api.base import BaseModel, Private
 
 __all__ = (
     "ZPoolScan",
@@ -172,6 +172,8 @@ class ZPoolQuery(BaseModel):
     scan: bool = Field(default=False, description="Include scan/scrub information.")
     expand: bool = Field(default=False, description="Include expansion information.")
     features: bool = Field(default=False, description="Include feature flags.")
+    follow_links: Private[bool] = Field(default=True, description="Resolve device symlinks in the topology.")
+    full_path: Private[bool] = Field(default=True, description="Report full device paths in the topology.")
 
 
 class ZPoolQueryArgs(BaseModel):

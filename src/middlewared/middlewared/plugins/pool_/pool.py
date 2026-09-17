@@ -9,6 +9,7 @@ from truenas_pylicensed.features import LicenseFeature
 from middlewared.api import api_method
 from middlewared.api.base import BaseModel, Excluded, excluded_field
 from middlewared.api.current import (
+    ZPoolQuery,
     PoolCreateArgs,
     PoolCreateResult,
     PoolEntry,
@@ -147,15 +148,15 @@ class PoolService(CRUDService):
             },
         }
 
-        if info := await self.middleware.call('zpool.query_impl', {
-            'pool_names': [pool_name],
-            'properties': [
+        if info := await self.call2(self.s.zpool.query_impl, ZPoolQuery(
+            pool_names=[pool_name],
+            properties=[
                 'size', 'allocated', 'free', 'freeing', 'fragmentation',
                 'autotrim', 'dedup_table_quota', 'dedup_table_size', 'health',
             ],
-            'topology': True, 'scan': True, 'expand': True,
-            'follow_links': False, 'full_path': True,
-        }):
+            topology=True, scan=True, expand=True,
+            follow_links=False, full_path=True,
+        )):
             info = info[0]
 
             # `zpool.c` uses `zpool_get_state_str` to print pool status.
@@ -656,9 +657,7 @@ class PoolService(CRUDService):
 
             job.set_progress(95, 'Setting pool options')
 
-            z_pool = (await self.middleware.call(
-                'zpool.query_impl', {'pool_names': [data['name']]}
-            ))[0]
+            z_pool = (await self.call2(self.s.zpool.query_impl, ZPoolQuery(pool_names=[data['name']])))[0]
 
             # Inherit mountpoint after create because we set mountpoint on creation
             # making it a "local" source.
@@ -715,7 +714,7 @@ class PoolService(CRUDService):
             'dataset.post_create', {'encrypted': bool(encryption_dict), **encrypted_dataset_data}
         )
         self.middleware.send_event('pool.query', 'ADDED', id=pool_id, fields=pool)
-        await self.middleware.call('zpool.send_change_event', pool['name'], 'ADDED')
+        await self.call2(self.s.zpool.send_change_event, pool['name'], 'ADDED')
         return pool
 
     @private
@@ -794,8 +793,8 @@ class PoolService(CRUDService):
         if dedup_table_quota_value is not None:
             properties['dedup_table_quota'] = {'value': dedup_table_quota_value}
 
-        zfs_pool = await self.middleware.call(
-            'zpool.query_impl', {'pool_names': [pool['name']], 'properties': ['ashift']}
+        zfs_pool = await self.call2(
+            self.s.zpool.query_impl, ZPoolQuery(pool_names=[pool['name']], properties=['ashift'])
         )
         if zfs_pool and zfs_pool[0]['properties']['ashift']['source'] == 'DEFAULT':
             # https://ixsystems.atlassian.net/browse/NAS-112093
@@ -827,7 +826,7 @@ class PoolService(CRUDService):
 
     @private
     async def is_draid_pool(self, pool_name):
-        if pool := await self.middleware.call('zpool.query_impl', {'pool_names': [pool_name], 'topology': True}):
+        if pool := await self.call2(self.s.zpool.query_impl, ZPoolQuery(pool_names=[pool_name], topology=True)):
             if any(
                 group['vdev_type'].startswith('draid')
                 for group in pool[0]['topology']['data'] + pool[0]['topology'].get('special', [])
