@@ -31,6 +31,15 @@ __all__ = (
 )
 
 
+def _guids_to_int(vdev: dict) -> None:
+    """Older API versions carried vdev guids as integers."""
+    vdev["guid"] = int(vdev["guid"])
+    if vdev.get("top_guid") is not None:
+        vdev["top_guid"] = int(vdev["top_guid"])
+    for child in vdev.get("children") or []:
+        _guids_to_int(child)
+
+
 class ZPoolPropertyValue(BaseModel):
     raw: str = Field(description="The raw string representation of the property.")
     source: str | None = Field(
@@ -71,11 +80,14 @@ class ZPoolVdevStats(BaseModel):
 class ZPoolVdev(BaseModel):
     name: str = Field(description="Vdev name (e.g., 'mirror-0', '/dev/sda1').")
     vdev_type: str = Field(description="Vdev type (e.g., 'mirror', 'raidz1', 'disk').")
-    guid: int = Field(description="Globally unique identifier for this vdev.")
+    guid: str = Field(description="Globally unique identifier for this vdev, a 64-bit integer as a decimal string.")
     state: str = Field(description="Current state (ONLINE, DEGRADED, FAULTED, OFFLINE, UNAVAIL, etc.).")
     stats: ZPoolVdevStats = Field(description="Vdev I/O statistics.")
     children: list["ZPoolVdev"] = Field(description="Child vdevs.")
-    top_guid: int | None = Field(default=None, description="GUID of the top-level vdev this belongs to.")
+    top_guid: str | None = Field(
+        default=None,
+        description="GUID of the top-level vdev this belongs to, a 64-bit integer as a decimal string.",
+    )
     path: str | None = Field(
         default=None,
         description=(
@@ -85,6 +97,11 @@ class ZPoolVdev(BaseModel):
             "no config path."
         ),
     )
+
+    @classmethod
+    def to_previous(cls, value):
+        _guids_to_int(value)
+        return value
 
 
 class ZPoolTopology(BaseModel):
@@ -139,7 +156,7 @@ class ZPoolEntry(BaseModel):
         ),
     )
     name: str = Field(description="Name of the zpool.")
-    guid: int = Field(description="Globally unique identifier for the pool.")
+    guid: str = Field(description="Globally unique identifier for the pool, a 64-bit integer as a decimal string.")
     status: str = Field(description="Current pool status (ONLINE, DEGRADED, FAULTED, OFFLINE, etc.).")
     healthy: bool = Field(description="Whether the pool is in a healthy state.")
     warning: bool = Field(description="Whether the pool has warning conditions.")
@@ -166,6 +183,14 @@ class ZPoolEntry(BaseModel):
     scan: ZPoolScan | None = Field(default=None, description="Most recent scrub or resilver information.")
     expand: ZPoolExpand | None = Field(default=None, description="RAIDZ expansion information.")
     features: list[ZPoolFeature] | None = Field(default=None, description="Pool feature flags.")
+
+    @classmethod
+    def to_previous(cls, value):
+        value["guid"] = int(value["guid"])
+        for vdevs in (value.get("topology") or {}).values():
+            for vdev in vdevs:
+                _guids_to_int(vdev)
+        return value
 
 
 class ZPoolQuery(BaseModel):
@@ -218,8 +243,8 @@ class ZPoolCreateVdev(BaseModel):
     draid_data_disks: int | None = Field(
         default=None,
         description=(
-            "Distributed RAID only: data disks per redundancy group. `null` uses every disk left after parity and spares, "
-            "at most 8."
+            "Distributed RAID only: data disks per redundancy group. `null` uses every disk left after parity "
+            "and spares, at most 8."
         ),
     )
     draid_spare_disks: int = Field(default=0, description="Distributed RAID only: number of distributed spare disks.")
@@ -253,8 +278,8 @@ class ZPoolCreateTopology(BaseModel):
 
 class ZPoolCreateProperties(BaseModel):
     """Pool properties set at creation, as `zpool create -o property=value`. Each field is the native `zpool` \
-    property name and values are handed to ZFS verbatim. A field left as null is not sent, so ZFS applies its own \
-    default. Fields marked `Private` carry a TrueNAS default that only internal callers may override."""
+    property name and values are handed to ZFS verbatim. A field left as null is not sent, so ZFS applies its \
+    own default. Fields marked `Private` carry a TrueNAS default that only internal callers may override."""
 
     autotrim: Literal["on", "off"] | None = Field(
         default=None,

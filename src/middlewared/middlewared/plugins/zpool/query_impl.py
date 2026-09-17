@@ -12,8 +12,15 @@ __all__ = ("query_impl",)
 
 
 def _convert_vdev_state(vdev: dict[str, typing.Any]) -> None:
-    """Recursively convert VDevState enums to strings and children tuples to lists."""
+    """Recursively convert VDevState enums and guids to strings and children tuples to lists.
+
+    Guids are 64-bit and JSON consumers such as the web UI read numbers as IEEE
+    doubles, which round anything above 2**53, so they travel as decimal strings.
+    """
     vdev["state"] = vdev["state"].name
+    vdev["guid"] = str(vdev["guid"])
+    if vdev.get("top_guid") is not None:
+        vdev["top_guid"] = str(vdev["top_guid"])
     if vdev["children"]:
         vdev["children"] = list(vdev["children"])
         for child in vdev["children"]:
@@ -206,7 +213,7 @@ def _build_pool_dict(
     health = health_prop.value if health_prop is not None else None
     result: dict[str, typing.Any] = {
         "name": pool.name,
-        "guid": status_dict["guid"],
+        "guid": str(status_dict["guid"]),
         "status": health,
         "healthy": not is_nonrecoverable and health == "ONLINE",
         "warning": zpool_status in property_sets.ZPOOL_STATUS_RECOVERABLE,
