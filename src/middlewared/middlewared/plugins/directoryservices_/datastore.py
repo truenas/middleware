@@ -27,6 +27,7 @@ from middlewared.service_exception import CallError, MatchNotFound, ValidationEr
 import middlewared.sqlalchemy as sa
 from middlewared.utils.directoryservices.ad import get_domain_info, lookup_dc
 from middlewared.utils.directoryservices.ad_constants import MACHINE_ACCOUNT_KT_NAME
+from middlewared.utils.directoryservices.common import ds_config_to_fqdn
 from middlewared.utils.directoryservices.constants import DEF_SVC_OPTS, DomainJoinResponse, DSCredType, DSStatus, DSType
 from middlewared.utils.directoryservices.credential import (
     validate_credential,
@@ -456,7 +457,7 @@ class DirectoryServices(ConfigService):
             return
 
         # Check whether forward lookup of our name works
-        dns_name = f'{new["configuration"]["hostname"]}.{new["configuration"]["domain"]}'
+        dns_name = ds_config_to_fqdn(new)
         try:
             dns_addresses = {
                 x.address
