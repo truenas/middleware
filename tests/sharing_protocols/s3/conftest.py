@@ -176,7 +176,14 @@ def s3_deployment(s3_accounts):
         # `BUCKET_OWNER_ENFORCED`, because enforced ownership disables
         # the S3 ACL surface outright — the record is neither minted nor
         # consulted — and every ACL module here needs it live.
-        "attached": {"object_ownership": "OBJECT_WRITER", "owner": MAIN_USER, "grants": mine},
+        # `COMPOSITE` is pinned because the multipart tests assert the
+        # AWS form of the ETag.
+        "attached": {
+            "object_ownership": "OBJECT_WRITER",
+            "owner": MAIN_USER,
+            "grants": mine,
+            "multipart_etag": "COMPOSITE",
+        },
         # Versioned and locked: the latch is stamped on the dataset root
         # at registration, so it cannot be a bucket anything else uses.
         "locked": {

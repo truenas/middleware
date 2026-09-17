@@ -7,12 +7,11 @@ anywhere in the value, rclone matches the whole value against
 `^[0-9a-f]{32}$`, and a token has to fail both tests for a client to
 know it is not an MD5.
 
-A *multipart* object's ETag is AWS's composite by default: the MD5 of
-the part MD5s with the part count appended, which costs an MD5 pass over
-every part at ingest. `multipart_etag = MINTED` is a bucket-level
-assertion that nothing writing the bucket reads its ETags, and that row
-is proved beside one that does not carry it — the answer is per bucket
-and a single row cannot show both.
+A *multipart* object's ETag follows the bucket's `multipart_etag`.
+`MINTED`, the default, is an opaque token. `COMPOSITE` is the AWS form,
+the MD5 of the part MD5s with the part count appended. The `bucket`
+fixture pins `COMPOSITE` and the `minted` fixture pins `MINTED`, so each
+is tested beside the other.
 """
 
 import base64
@@ -71,7 +70,7 @@ def test_a_plain_write_mints_a_token_rather_than_a_digest(s3, bucket):
     assert etag != hashlib.md5(b"x").hexdigest(), "not a content digest"
 
 
-def test_the_default_bucket_composes_a_multipart_etag(s3, bucket):
+def test_a_composite_bucket_composes_a_multipart_etag(s3, bucket):
     """The control for the minted row below: real part digests and AWS's
     own composite, so what that row changes is the row and not the
     build."""
