@@ -18,7 +18,6 @@ from .create_rules import (
     check_disks_unique,
     check_force_entitlement,
     check_min_disks,
-    check_name_valid,
     check_pool_absent,
     check_sed_entitlement,
     check_spare_sizes,
@@ -26,7 +25,7 @@ from .create_rules import (
     dedup_requested,
     resolve_create_request,
 )
-from .exceptions import ZpoolException, ZpoolTopologyRejected
+from .exceptions import ZpoolCreateRejected, ZpoolException
 
 if TYPE_CHECKING:
     from middlewared.job import Job
@@ -141,14 +140,6 @@ def create(context: ServiceContext, job: Job, data: ZpoolCreate) -> ZpoolEntry:
     ctx = CreateContext(properties=properties, filesystem_properties=filesystem_properties)
 
     verrors = ValidationErrors()
-    collect(verrors, check_name_valid, data, ctx)
-    # an imported pool of that name, registered or not, or a registered but
-    # exported one both take the name
-    ctx.pool_exists = bool(
-        context.call_sync2(context.s.zpool.query_impl, ZpoolQuery(pool_names=[name]))
-        or context.call_sync2(context.s.zpool.query, ZpoolQuery(pool_names=[name]))
-    )
-    collect(verrors, check_pool_absent, data, ctx)
     collect(verrors, check_disks_unique, data, ctx)
     collect(verrors, check_min_disks, data, ctx)
 
@@ -163,11 +154,11 @@ def create(context: ServiceContext, job: Job, data: ZpoolCreate) -> ZpoolEntry:
     if data.force_topology:
         ctx.support_entitlement = context.call_sync2(context.s.truenas.entitlements.check, LicenseFeature.SUPPORT)
         collect(verrors, check_force_entitlement, data, ctx)
-    verrors.check()
 
-    # The binding judges the rest of the layout and the property names on the
-    # disk names alone, so a topology it would refuse is caught here rather
-    # than after the disks have been formatted for it.
+    # The binding judges the rest of the layout, the pool name and the
+    # properties on the disk names alone, so a request it would refuse is
+    # caught here rather than after the disks have been formatted for it.
+    # It runs before the name is looked up, since the lookup needs a valid one.
     disks, vdevs = convert_topology_to_vdevs(data.topology)
     pool_properties = properties_to_zfs(ctx.properties)
     fs_properties = properties_to_zfs(ctx.filesystem_properties)
@@ -180,10 +171,17 @@ def create(context: ServiceContext, job: Job, data: ZpoolCreate) -> ZpoolEntry:
             fs_properties,
             data.force_topology,
         )
-    except ZpoolTopologyRejected as e:
-        verrors.add(f"{SCHEMA}.topology.{e.location}" if e.location else SCHEMA, e.message, e.errno)
+    except ZpoolCreateRejected as e:
+        verrors.add(f"{SCHEMA}.{e.location}" if e.location else SCHEMA, e.message, e.errno)
     verrors.check()
 
+    # an imported pool of that name, registered or not, or a registered but
+    # exported one both take the name
+    ctx.pool_exists = bool(
+        context.call_sync2(context.s.zpool.query_impl, ZpoolQuery(pool_names=[name]))
+        or context.call_sync2(context.s.zpool.query, ZpoolQuery(pool_names=[name]))
+    )
+    collect(verrors, check_pool_absent, data, ctx)
     verrors.add_child(
         SCHEMA,
         context.middleware.call_sync("disk.check_disks_availability", list(disks), data.allow_duplicate_serials),

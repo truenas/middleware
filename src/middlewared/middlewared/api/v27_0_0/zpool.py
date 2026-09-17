@@ -1,7 +1,7 @@
-import re
 from typing import Annotated, Literal
 
-from pydantic import AfterValidator, Field, PositiveInt
+from pydantic import Field, PositiveInt
+from truenas_pylibzfs import constants
 
 from middlewared.api.base import BaseModel, Excluded, NonEmptyString, Private, excluded_field
 
@@ -233,129 +233,6 @@ class ZpoolQueryRemovedEvent(BaseModel):
     id: int = Field(description="Database id of the pool.")
 
 
-# Native value vocabularies of the root filesystem properties that may be set at creation. `zfs.resource.create`
-# hands values to ZFS verbatim because a bad value costs nothing there; here it would cost a disk wipe, since the
-# disks are formatted before ZFS sees the properties, so the enumerated ones are typed and the sizes are parsed.
-ZFS_ON_OFF = Literal["on", "off"]
-ZFS_CHECKSUMS = Literal["on", "off", "fletcher2", "fletcher4", "sha256", "sha512", "skein", "edonr", "blake3"]
-ZFS_DEDUP = Literal[
-    "on",
-    "off",
-    "verify",
-    "sha256",
-    "sha256,verify",
-    "sha512",
-    "sha512,verify",
-    "skein",
-    "skein,verify",
-    "edonr,verify",
-    "blake3",
-    "blake3,verify",
-]
-ZFS_COMPRESSION = Literal[
-    "on",
-    "off",
-    "lzjb",
-    "gzip",
-    "gzip-1",
-    "gzip-2",
-    "gzip-3",
-    "gzip-4",
-    "gzip-5",
-    "gzip-6",
-    "gzip-7",
-    "gzip-8",
-    "gzip-9",
-    "zle",
-    "lz4",
-    "zstd",
-    "zstd-fast",
-    "zstd-1",
-    "zstd-2",
-    "zstd-3",
-    "zstd-4",
-    "zstd-5",
-    "zstd-6",
-    "zstd-7",
-    "zstd-8",
-    "zstd-9",
-    "zstd-10",
-    "zstd-11",
-    "zstd-12",
-    "zstd-13",
-    "zstd-14",
-    "zstd-15",
-    "zstd-16",
-    "zstd-17",
-    "zstd-18",
-    "zstd-19",
-    "zstd-fast-1",
-    "zstd-fast-2",
-    "zstd-fast-3",
-    "zstd-fast-4",
-    "zstd-fast-5",
-    "zstd-fast-6",
-    "zstd-fast-7",
-    "zstd-fast-8",
-    "zstd-fast-9",
-    "zstd-fast-10",
-    "zstd-fast-20",
-    "zstd-fast-30",
-    "zstd-fast-40",
-    "zstd-fast-50",
-    "zstd-fast-60",
-    "zstd-fast-70",
-    "zstd-fast-80",
-    "zstd-fast-90",
-    "zstd-fast-100",
-    "zstd-fast-500",
-    "zstd-fast-1000",
-]
-
-_SIZE = re.compile(r"^(\d+)([kmgtpe]?)b?$", re.IGNORECASE)
-_SIZE_UNITS = {"": 1, "k": 1024, "m": 1024**2, "g": 1024**3, "t": 1024**4, "p": 1024**5, "e": 1024**6}
-
-
-def _size_bytes(value: str | int) -> int:
-    """Parse a ZFS size (`131072`, `128K`, `1M`, `10GB`) into bytes."""
-    if isinstance(value, int):
-        return value
-    if (m := _SIZE.match(value.strip())) is None:
-        raise ValueError(f"{value!r} is not a size (a number with an optional K, M, G, T, P or E suffix)")
-    return int(m.group(1)) * _SIZE_UNITS[m.group(2).lower()]
-
-
-def _validate_size(value: str | int) -> str | int:
-    _size_bytes(value)
-    return value
-
-
-def _validate_size_or_none(value: str | int) -> str | int:
-    if isinstance(value, str) and value.strip().lower() == "none":
-        return value
-    return _validate_size(value)
-
-
-def _validate_recordsize(value: str | int) -> str | int:
-    size = _size_bytes(value)
-    if size < 512 or size > 16 * 1024**2 or size & (size - 1):
-        raise ValueError("recordsize must be a power of two between 512 and 16M")
-    return value
-
-
-def _validate_special_small_blocks(value: str | int) -> str | int:
-    size = _size_bytes(value)
-    if size and (size < 512 or size > 16 * 1024**2 or size & (size - 1)):
-        raise ValueError("special_small_blocks must be 0 or a power of two between 512 and 16M")
-    return value
-
-
-ZfsSize = Annotated[str | int, AfterValidator(_validate_size)]
-ZfsSizeOrNone = Annotated[str | int, AfterValidator(_validate_size_or_none)]
-ZfsRecordsize = Annotated[str | int, AfterValidator(_validate_recordsize)]
-ZfsSpecialSmallBlocks = Annotated[str | int, AfterValidator(_validate_special_small_blocks)]
-
-
 class ZpoolCreateVdev(BaseModel):
     type: Literal["disk", "mirror", "raidz1", "raidz2", "raidz3", "draid1", "draid2", "draid3"] = Field(
         description=(
@@ -381,7 +258,7 @@ class ZpoolCreateTopology(BaseModel):
         min_length=1,
         description=(
             "Storage vdevs. Unless `force_topology` is set they must share one type and width, and mirrors are "
-            "capped at 4 disks and RAIDZ at 15."
+            f"capped at {constants.MAX_MIRROR_WIDTH} disks and RAIDZ at {constants.MAX_RAIDZ_WIDTH}."
         ),
     )
     log: list[ZpoolCreateVdev] = Field(default=[], description="ZFS Intent Log (SLOG) vdevs: `disk` or `mirror`.")
@@ -435,75 +312,11 @@ class ZpoolCreateProperties(BaseModel):
 
 class ZpoolCreateFilesystemProperties(ZFSResourceCreateProperties):
     """Root filesystem properties set at creation, as `zpool create -O property=value`. The same native property \
-    names and values :method:`zfs.resource.create` accepts, minus the volume-only ones. Values are checked before \
-    any disk is formatted. A field left as null is not sent, so the TrueNAS defaults apply (`atime=off`, \
+    names and values :method:`zfs.resource.create` accepts, minus the volume-only ones. ZFS judges the values \
+    before any disk is formatted. A field left as null is not sent, so the TrueNAS defaults apply (`atime=off`, \
     `acltype=posix`, `aclmode=discard`, `aclinherit=discard`, `compression=lz4`, `xattr=sa`, and `recordsize=1M` on \
     dRAID pools)."""
 
-    aclinherit: Literal["discard", "noallow", "restricted", "passthrough", "passthrough-x"] | None = Field(
-        default=None,
-        description="ACL inheritance behavior for new files and directories.",
-    )
-    aclmode: Literal["discard", "groupmask", "passthrough", "restricted"] | None = Field(
-        default=None,
-        description="How ACLs are modified during chmod operations.",
-    )
-    acltype: Literal["off", "noacl", "nfsv4", "posix", "posixacl"] | None = Field(
-        default=None,
-        description="The type of ACL to use (off, posix, or nfsv4).",
-    )
-    atime: ZFS_ON_OFF | None = Field(default=None, description="Whether file access times are updated on read.")
-    casesensitivity: Literal["sensitive", "insensitive", "mixed"] | None = Field(
-        default=None,
-        description="Filename matching sensitivity. Settable at creation time only.",
-    )
-    checksum: ZFS_CHECKSUMS | None = Field(
-        default=None,
-        description="Checksum algorithm used to verify data integrity.",
-    )
-    compression: ZFS_COMPRESSION | None = Field(default=None, description="Compression algorithm for the resource.")
-    copies: Literal[1, 2, 3, "1", "2", "3"] | None = Field(
-        default=None,
-        description="Number of copies of data blocks to store.",
-    )
-    dedup: ZFS_DEDUP | None = Field(default=None, description="Deduplication setting for the resource.")
-    exec: ZFS_ON_OFF | None = Field(
-        default=None,
-        description="Whether programs can be executed from the filesystem.",
-    )
-    quota: ZfsSizeOrNone | None = Field(
-        default=None,
-        description="Maximum space the dataset and its descendants may consume.",
-    )
-    readonly: ZFS_ON_OFF | None = Field(default=None, description="Whether the resource can be modified.")
-    recordsize: ZfsRecordsize | None = Field(
-        default=None,
-        description="Suggested block size for files in the filesystem.",
-    )
-    refquota: ZfsSizeOrNone | None = Field(
-        default=None,
-        description="Maximum space the dataset itself may consume.",
-    )
-    refreservation: ZfsSizeOrNone | None = Field(
-        default=None,
-        description="Minimum space reserved for the resource itself.",
-    )
-    reservation: ZfsSizeOrNone | None = Field(
-        default=None,
-        description="Minimum space reserved for the dataset and its descendants.",
-    )
-    special_small_blocks: ZfsSpecialSmallBlocks | None = Field(
-        default=None,
-        description="Size threshold below which blocks are stored on the SPECIAL vdev.",
-    )
-    sync: Literal["standard", "always", "disabled"] | None = Field(
-        default=None,
-        description="Synchronous write behavior.",
-    )
-    xattr: Literal["on", "off", "sa"] | None = Field(
-        default=None,
-        description="Extended attribute storage mode. Defaults to 'sa' for performance.",
-    )
     snapdev: Excluded = excluded_field()
     volblocksize: Excluded = excluded_field()
     volsize: Excluded = excluded_field()

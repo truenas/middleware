@@ -17,7 +17,6 @@ import errno
 import typing
 
 from middlewared.plugins.pool_.utils import ZPOOL_CACHE_FILE
-from middlewared.plugins.zfs_.validation_utils import validate_pool_name
 from middlewared.service_exception import ValidationError, ValidationErrors
 from middlewared.utils.size import format_size
 
@@ -38,7 +37,6 @@ __all__ = (
     "check_disks_unique",
     "check_force_entitlement",
     "check_min_disks",
-    "check_name_valid",
     "check_pool_absent",
     "check_sed_entitlement",
     "check_spare_sizes",
@@ -145,12 +143,6 @@ def resolve_create_request(data: ZpoolCreate) -> tuple[ZpoolCreateProperties, Zp
         # small blocks perform poorly on dRAID vdevs
         fs.recordsize = "1M"
     return properties, fs
-
-
-def check_name_valid(data: ZpoolCreate, ctx: CreateContext) -> None:
-    """The name must be acceptable to ZFS and not reserved by TrueNAS."""
-    if not validate_pool_name(data.name):
-        raise ValidationError(f"{SCHEMA}.name", "Invalid pool name", errno.EINVAL)
 
 
 def check_pool_absent(data: ZpoolCreate, ctx: CreateContext) -> None:

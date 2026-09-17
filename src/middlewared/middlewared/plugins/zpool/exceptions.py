@@ -16,7 +16,7 @@ __all__ = (
     "ZpoolResiliverInProgressException",
     "ZpoolTooManyScrubsException",
     "ZpoolCreateException",
-    "ZpoolTopologyRejected",
+    "ZpoolCreateRejected",
 )
 
 
@@ -181,15 +181,16 @@ class ZpoolCreateException(ZpoolException):
         return self.message
 
 
-class ZpoolTopologyRejected(ZpoolException):
-    """The binding refused a pool topology or its properties before anything was created."""
+class ZpoolCreateRejected(ZpoolException):
+    """The binding refused a pool creation request before anything was created."""
 
     errno = errno.EINVAL
 
     def __init__(self, location: str | None, error: str):
         self.location = location
-        """The topology root the binding judged (``data``, ``special``, ...), with the
-        vdev index when known (``data.1``), or None when it faulted something else."""
+        """The request field the binding judged, as a ``zpool.create`` attribute suffix
+        (``topology.data.1``, ``name``, ``filesystem_properties``), or None when it
+        faulted something the request does not expose."""
         self.message = error
         super().__init__(location, error)
 
