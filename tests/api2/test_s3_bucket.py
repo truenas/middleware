@@ -138,7 +138,7 @@ def test_create_owns_the_dataset(owner):
             "permissions_model": "s3",
             "object_ownership": "bucket_owner_enforced",
             "versioning": "off",
-            "multipart_etag": "composite",
+            "multipart_etag": "minted",
             "object_lock": "off",
         }
 
@@ -549,7 +549,7 @@ def test_registry_changes_reload_and_consumed_fields_restart(owner):
             )
             assert service()["pids"] == pid, "a grant change is a reload"
 
-            call("sharing.s3.update", b["id"], {"multipart_etag": "MINTED"})
+            call("sharing.s3.update", b["id"], {"multipart_etag": "COMPOSITE"})
             after_etag = service()["pids"]
             assert after_etag != pid, "the ETag mode is registered, so a restart"
 

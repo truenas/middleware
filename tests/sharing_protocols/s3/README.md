@@ -38,7 +38,7 @@ test object lock is worse than a red one.
 
 | leaf | configuration |
 |---|---|
-| `attached` | `OBJECT_WRITER` — the default bucket (`bucket` fixture) |
+| `attached` | `OBJECT_WRITER`, `multipart_etag=COMPOSITE`. The default bucket (`bucket` fixture) |
 | `locked` | `versioning=ENABLED`, `object_lock` |
 | `defaulted` | as `locked`, plus a `GOVERNANCE`/1-day rule |
 | `history` | `versioning=SUSPENDED`, `snapshot_versions` |

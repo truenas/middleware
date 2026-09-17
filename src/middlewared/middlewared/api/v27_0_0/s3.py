@@ -436,14 +436,11 @@ class SharingS3Entry(BaseModel):
         ),
     )
     multipart_etag: Literal["COMPOSITE", "MINTED"] = Field(
-        default="COMPOSITE",
+        default="MINTED",
         description=(
-            "What the ETag of an object assembled from a multipart upload is. `COMPOSITE` is the S3 construction: "
-            "each part's ETag is the MD5 of its bytes and the object's is the MD5 of those digests with the part "
-            "count appended, which costs an MD5 pass over every part. `MINTED` skips that pass for a part whose "
-            "upload carried no `Content-MD5` and gives the object an opaque token instead. Choose it only where "
-            "nothing writing the bucket reads its ETags, such as a backup target that declares its own checksums: "
-            "a client that recomputes the composite to verify or resume an upload sees a value it cannot match."
+            "ETag format for objects created by multipart upload. `MINTED` gives the object an opaque token. "
+            "`COMPOSITE` gives it the standard S3 multipart ETag, built from the MD5 of each part. Choose "
+            "`COMPOSITE` if a client verifies or resumes uploads by computing that ETag itself and comparing."
         ),
     )
     object_lock: bool = Field(
