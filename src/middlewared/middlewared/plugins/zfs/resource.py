@@ -5,6 +5,10 @@ from typing import TYPE_CHECKING, Any, overload
 from middlewared.api import api_method
 from middlewared.api.current import (
     QueryFilters,
+    ZFSResourceChecksumChoicesArgs,
+    ZFSResourceChecksumChoicesResult,
+    ZFSResourceCompressionChoicesArgs,
+    ZFSResourceCompressionChoicesResult,
     ZFSResourceCreateArgs,
     ZFSResourceCreateArgsData,
     ZFSResourceCreateResult,
@@ -15,6 +19,8 @@ from middlewared.api.current import (
     ZFSResourceDestroyArgsData,
     ZFSResourceDestroyResult,
     ZFSResourceEntry,
+    ZFSResourceProcessesArgs,
+    ZFSResourceProcessesResult,
     ZFSResourcePromoteArgs,
     ZFSResourcePromoteArgsData,
     ZFSResourcePromoteResult,
@@ -24,6 +30,10 @@ from middlewared.api.current import (
     ZFSResourceQueryOptionsCount,
     ZFSResourceQueryOptionsGet,
     ZFSResourceQueryResult,
+    ZFSResourceRecommendedZvolBlocksizeArgs,
+    ZFSResourceRecommendedZvolBlocksizeResult,
+    ZFSResourceRecordsizeChoicesArgs,
+    ZFSResourceRecordsizeChoicesResult,
     ZFSResourceRenameArgs,
     ZFSResourceRenameArgsData,
     ZFSResourceRenameResult,
@@ -34,7 +44,9 @@ from middlewared.service_exception import InstanceNotFound
 
 from . import resource_create as _create
 from . import resource_destroy as _destroy
+from . import resource_info as _info
 from . import resource_ops as _ops
+from . import resource_processes as _processes
 from . import resource_query as _query
 from .prefetch import ZFSResourcePoolPrefetchService
 from .snapshot import ZFSResourceSnapshotService
@@ -60,6 +72,101 @@ class ZFSResourceService(CRUDService[ZFSResourceEntry]):
         super().__init__(middleware)
         self.snapshot = ZFSResourceSnapshotService(middleware)
         self.pool = ZFSResourcePoolPrefetchService(middleware)
+
+    @api_method(
+        ZFSResourceChecksumChoicesArgs,
+        ZFSResourceChecksumChoicesResult,
+        roles=["ZFS_RESOURCE_READ"],
+        check_annotations=True,
+    )
+    async def checksum_choices(self) -> dict[str, str]:
+        """
+        Retrieve the checksum algorithms a ZFS resource may use.
+        """
+        return _info.checksum_choices()
+
+    @api_method(
+        ZFSResourceCompressionChoicesArgs,
+        ZFSResourceCompressionChoicesResult,
+        roles=["ZFS_RESOURCE_READ"],
+        check_annotations=True,
+    )
+    async def compression_choices(self) -> dict[str, str]:
+        """
+        Retrieve the compression algorithms a ZFS resource may use.
+        """
+        return _info.compression_choices()
+
+    @api_method(
+        ZFSResourceRecordsizeChoicesArgs,
+        ZFSResourceRecordsizeChoicesResult,
+        roles=["ZFS_RESOURCE_READ"],
+        check_annotations=True,
+    )
+    def recordsize_choices(self, pool_name: str | None) -> list[str]:
+        """
+        Retrieve the record sizes a filesystem may be given.
+
+        The upper bound is the running kernel's ``zfs_max_recordsize``. Naming a pool narrows the lower
+        bound too, since a dRAID pool needs a minimum of 128K to avoid wasting space on padding.
+        """
+        return _info.recordsize_choices(self.context, pool_name)
+
+    @api_method(
+        ZFSResourceRecommendedZvolBlocksizeArgs,
+        ZFSResourceRecommendedZvolBlocksizeResult,
+        roles=["ZFS_RESOURCE_READ"],
+        check_annotations=True,
+    )
+    async def recommended_zvol_blocksize(self, pool: str) -> str:
+        """
+        Retrieve the recommended ``volblocksize`` for a new volume on the given pool.
+
+        The recommendation follows the widest data vdev of the pool, so a pool created with mismatched
+        vdev geometry is sized for its largest one.
+
+        Get the block size for pool "tank":
+
+        .. code:: json
+
+            {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "zfs.resource.recommended_zvol_blocksize",
+                "params": ["tank"]
+            }
+        """
+        return await _info.recommended_zvol_blocksize(self.context, pool)
+
+    @api_method(
+        ZFSResourceProcessesArgs,
+        ZFSResourceProcessesResult,
+        roles=["ZFS_RESOURCE_READ"],
+        check_annotations=True,
+    )
+    async def processes(self, id_: str) -> list[dict[str, Any]]:
+        """
+        Retrieve the processes holding open files on the ZFS resource named by ``id`` or on any of its
+        descendants.
+
+        A locked resource reports no processes, since nothing can have its contents open. An ``ENOENT``
+        error is raised when the resource does not exist.
+        """
+        return await _processes.processes(self.context, id_)
+
+    @private
+    async def kill_processes(self, oid: str, control_services: bool, max_tries: int = 5) -> None:
+        await _processes.kill_processes(self.context, oid, control_services, max_tries)
+
+    @private
+    def processes_using_paths(
+        self,
+        paths: list[str],
+        include_paths: bool = False,
+        include_middleware: bool = False,
+        devices: list[int] | None = None,
+    ) -> list[dict[str, Any]]:
+        return _processes.processes_using_paths(self.context, paths, include_paths, include_middleware, devices)
 
     @private
     def unlocked_zvols_fast(

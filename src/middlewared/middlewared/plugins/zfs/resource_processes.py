@@ -1,0 +1,228 @@
+from __future__ import annotations
+
+import contextlib
+import errno
+import os
+import re
+from typing import TYPE_CHECKING, Any
+
+from middlewared.api.current import ZFSResourceQuery
+from middlewared.service_exception import CallError, ValidationError
+
+from .resource_processes_utils import processes_using_dataset_tree
+
+if TYPE_CHECKING:
+    from middlewared.service import ServiceContext
+
+__all__ = ("kill_processes", "processes", "processes_using_paths")
+
+RE_ZD = re.compile(r"^/dev/zd[0-9]+$")
+
+
+async def processes(context: ServiceContext, id_: str) -> list[dict[str, Any]]:
+    rows = await context.call2(
+        context.s.zfs.resource.query_impl,
+        ZFSResourceQuery(paths=[id_], properties=None, get_crypto=True),
+    )
+    if not rows:
+        raise ValidationError("zfs.resource.processes.id", f"{id_!r} does not exist", errno.ENOENT)
+    if rows[0]["crypto"]["locked"]:
+        return []
+
+    return await processes_using_dataset_tree(context, id_)
+
+
+async def kill_processes(context: ServiceContext, oid: str, control_services: bool, max_tries: int = 5) -> None:
+    need_restart_services = []
+    need_stop_services = []
+    midpid = os.getpid()
+    # a service usually owns many of the matched processes (e.g. one smbd per
+    # client), so each one is only worth classifying once
+    restartable = {
+        attachment_delegate.service
+        for attachment_delegate in await context.middleware.call("pool.dataset.get_attachment_delegates")
+    }
+    seen_services = set()
+    for process in await processes_using_dataset_tree(context, oid):
+        service = process.get("service")
+        if service is not None and service not in seen_services:
+            seen_services.add(service)
+            if service in restartable:
+                need_restart_services.append(service)
+            else:
+                need_stop_services.append(service)
+    if (need_restart_services or need_stop_services) and not control_services:
+        raise CallError(
+            "Some services have open files and need to be restarted or stopped",
+            errno.EBUSY,
+            {
+                "code": "control_services",
+                "restart_services": need_restart_services,
+                "stop_services": need_stop_services,
+                "services": need_restart_services + need_stop_services,
+            },
+        )
+
+    for i in range(max_tries):
+        found = await processes_using_dataset_tree(context, oid)
+        if not found:
+            return
+
+        # likewise control a service once per pass rather than once per PID
+        controlled_services = set()
+        for process in found:
+            if process["pid"] == midpid:
+                context.logger.warning(
+                    "The main middleware process %r (%r) currently is holding dataset %r",
+                    process["pid"],
+                    process["cmdline"],
+                    oid,
+                )
+                continue
+
+            service = process.get("service")
+            if service is not None:
+                if service in controlled_services:
+                    continue
+                controlled_services.add(service)
+                if service in restartable:
+                    context.logger.info("Restarting service %r that holds dataset %r", service, oid)
+                    await (await context.call2(context.s.service.control, "RESTART", service)).wait(raise_error=True)
+                else:
+                    context.logger.info("Stopping service %r that holds dataset %r", service, oid)
+                    await (await context.call2(context.s.service.control, "STOP", service)).wait(raise_error=True)
+            else:
+                context.logger.info(
+                    "Killing process %r (%r) that holds dataset %r", process["pid"], process["cmdline"], oid
+                )
+                try:
+                    await context.call2(context.s.service.terminate_process, process["pid"])
+                except CallError as e:
+                    context.logger.warning("Error killing process: %r", e)
+
+    found = await processes_using_dataset_tree(context, oid)
+    if not found:
+        return
+
+    context.logger.info("The following processes don't want to stop: %r", found)
+    raise CallError(
+        "Unable to stop processes that have open files",
+        errno.EBUSY,
+        {
+            "code": "unstoppable_processes",
+            "processes": found,
+        },
+    )
+
+
+def processes_using_paths(
+    context: ServiceContext,
+    paths: list[str],
+    include_paths: bool = False,
+    include_middleware: bool = False,
+    devices: list[int] | None = None,
+) -> list[dict[str, Any]]:
+    """
+    Find processes using paths supplied via `paths`. Path may be an absolute path for
+    a directory (e.g. /var/db/system) or a path in /dev/zvol or /dev/zd*
+
+    `include_paths`: include paths that are open by the process in output. By default
+    this is not included in output for performance reasons.
+
+    `include_middleware`: include files opened by the middlewared process in output.
+    These are not included by default.
+
+    `devices`: device ids to match directly, for callers that already know them.
+    Preferred over passing a mountpoint, which has to be stat'ed and so resolves
+    whatever is mounted topmost at that path rather than the filesystem intended.
+    """
+    exact_matches = set()
+    # A pool-wide scan passes one entry per dataset, and this is tested against every
+    # open file descriptor on the system, so keep the lookup O(1)
+    include_devs: set[int] = set(devices or ())
+    for path in paths:
+        if RE_ZD.match(path):
+            exact_matches.add(path)
+        else:
+            try:
+                if path.startswith("/dev/zvol/"):
+                    if os.path.isdir(path):
+                        for root, dirs, files in os.walk(path):
+                            for f in files:
+                                exact_matches.add(os.path.realpath(os.path.join(root, f)))
+                    else:
+                        exact_matches.add(os.path.realpath(path))
+                else:
+                    include_devs.add(os.stat(path).st_dev)
+            except FileNotFoundError:
+                # the path went away while we were looking at it, nothing holds it
+                continue
+            except OSError:
+                # e.g. EIO from a faulted pool. Skip the path rather than abort the
+                # whole scan, but say so: holders on it are now invisible, and the
+                # caller would otherwise read the result as "nothing is using this"
+                context.logger.warning("%s: cannot scan path for open files", path, exc_info=True)
+                continue
+
+    result = []
+    if include_devs or exact_matches:
+        for pid in os.listdir("/proc"):
+            if not pid.isdigit() or (not include_middleware and (int(pid) == os.getpid())):
+                continue
+
+            with contextlib.suppress(FileNotFoundError, ProcessLookupError):
+                # FileNotFoundError for when a process is killed/exits
+                # while we're iterating
+                found = False
+                found_paths: set[str] = set()
+                for f in os.listdir(f"/proc/{pid}/fd"):
+                    fd = f"/proc/{pid}/fd/{f}"
+                    is_link = False
+                    realpath = ""
+                    # stat(2) from host may fail with EACCES if file is inside private mount
+                    # namespace in a container. An example of why this can happen is if file is
+                    # in snap installed in an Ubuntu container.
+                    with contextlib.suppress(FileNotFoundError, PermissionError):
+                        # Have second suppression here so that we don't lose list of files
+                        # if we have TOCTOU issue on one of files.
+                        #
+                        # We want to include file in list of paths in the following
+                        # situations:
+                        #
+                        # 1. File is regular file and has same device id as specified path
+                        # 2. File is a symbolic link and exactly matches a provided /dev/zvol or /dev/zd path
+                        if (include_devs and os.stat(fd).st_dev in include_devs) or (
+                            exact_matches
+                            and (is_link := os.path.islink(fd))
+                            and (realpath := os.path.realpath(fd)) in exact_matches
+                        ):
+                            found = True
+                            if include_paths:
+                                if is_link:
+                                    # This is a path in `/dev/zvol` or `/dev/zd*`
+                                    found_paths.add(realpath)
+                                else:
+                                    # We need to readlink to convert `/proc/<pid>/fd/<fd>` to
+                                    # the file's path name.
+                                    found_paths.add(os.readlink(fd))
+
+                if found:
+                    with open(f"/proc/{pid}/comm") as comm:
+                        name = comm.read().strip()
+
+                    proc = {"pid": int(pid), "name": name, "service": None, "cmdline": None}
+
+                    if svc := context.call_sync2(context.s.service.identify_process, name):
+                        proc["service"] = svc
+                    else:
+                        with open(f"/proc/{pid}/cmdline") as cmd:
+                            cmdline = cmd.read().replace("\u0000", " ").strip()
+
+                        proc["cmdline"] = cmdline
+
+                    if include_paths:
+                        proc["paths"] = sorted(found_paths)
+
+                    result.append(proc)
+
+    return result

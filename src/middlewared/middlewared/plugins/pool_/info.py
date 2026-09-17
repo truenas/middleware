@@ -16,10 +16,9 @@ from middlewared.api.current import (
     PoolProcessesResult,
     ZFSResourceQuery,
 )
+from middlewared.plugins.zfs.resource_processes_utils import processes_using_dataset_tree
 from middlewared.plugins.zpool import get_zpool_disks_impl, get_zpool_features_impl, is_upgraded_impl
 from middlewared.service import Service, ValidationError, private
-
-from .dataset_processes_utils import processes_using_dataset_tree
 
 
 class PoolService(Service):

@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import os
+from typing import Any
 
 from truenas_os_pyutils.mount import StatmountResultDict, iter_mountinfo
 
-from middlewared.plugins.zfs.utils import has_internal_path
-from middlewared.plugins.zfs_.utils import zvol_name_to_path
 from middlewared.service import CallError, ServiceContext
+
+from .utils import has_internal_path
+from .zvol_utils import zvol_name_to_path
 
 __all__ = ("processes_using_dataset_tree",)
 
@@ -90,14 +92,13 @@ def pool_scan_targets(name: str) -> tuple[list[int], list[str]]:
     return devices, paths
 
 
-async def processes_using_dataset_tree(ctx: ServiceContext, name: str) -> list[dict]:
+async def processes_using_dataset_tree(ctx: ServiceContext, name: str) -> list[dict[str, Any]]:
     """Find processes with open files on a dataset or on any dataset beneath it.
 
-    `pool.dataset.processes` only covers the single dataset it is given. It matches
-    open files by the device id of the scanned mountpoint, and every ZFS dataset is a
-    separate filesystem with its own device id, so a process holding a child dataset
-    open is invisible to it. Anything acting on a whole pool has to scan the entire
-    tree, otherwise a busy child is missed and the pool fails to export.
+    Matching open files by the device id of a single mountpoint is not enough: every
+    ZFS dataset is a separate filesystem with its own device id, so a process holding a
+    child dataset open would be invisible. Anything acting on a whole subtree has to
+    scan all of it, otherwise a busy child is missed and the pool fails to export.
 
     Internal datasets are left out of the mount scan. Their consumers are shut down
     separately (the attachment delegates for apps, the `pool.pre_export` hook for
@@ -109,9 +110,12 @@ async def processes_using_dataset_tree(ctx: ServiceContext, name: str) -> list[d
         name: Dataset to scan along with all of its descendants
 
     Returns:
-        Processes as reported by `pool.dataset.processes_using_paths`
+        Processes with open files on any of them
     """
     devices, paths = await ctx.to_thread(pool_scan_targets, name)
 
     # positional args are paths, include_paths, include_middleware, devices
-    return await ctx.middleware.call("pool.dataset.processes_using_paths", paths, False, False, devices)
+    found: list[dict[str, Any]] = await ctx.middleware.call(
+        "zfs.resource.processes_using_paths", paths, False, False, devices
+    )
+    return found

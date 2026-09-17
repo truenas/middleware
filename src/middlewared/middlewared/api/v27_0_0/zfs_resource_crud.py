@@ -12,6 +12,7 @@ from middlewared.api.base import (
 )
 
 from .common import QueryArgs, QueryOptions
+from .pool import PoolProcess
 from .pool_dataset import DATASET_NAME
 from .zfs_resource_property import PropertyValue
 from .zfs_resource_snapshot import ZFSResourceSnapshotEntry
@@ -24,6 +25,10 @@ __all__ = (
     "ZFSResourceCreateEncryption",
     "ZFSResourceCreateProperties",
     "ZFSResourceCreateResult",
+    "ZFSResourceChecksumChoicesArgs",
+    "ZFSResourceChecksumChoicesResult",
+    "ZFSResourceCompressionChoicesArgs",
+    "ZFSResourceCompressionChoicesResult",
     "ZFSResourceCryptoInfo",
     "ZFSResourceDeleteArgs",
     "ZFSResourceDeleteOptions",
@@ -31,9 +36,15 @@ __all__ = (
     "ZFSResourceDestroyArgsData",
     "ZFSResourceDestroyArgs",
     "ZFSResourceDestroyResult",
+    "ZFSResourceProcessesArgs",
+    "ZFSResourceProcessesResult",
     "ZFSResourcePromoteArgsData",
     "ZFSResourcePromoteArgs",
     "ZFSResourcePromoteResult",
+    "ZFSResourceRecommendedZvolBlocksizeArgs",
+    "ZFSResourceRecommendedZvolBlocksizeResult",
+    "ZFSResourceRecordsizeChoicesArgs",
+    "ZFSResourceRecordsizeChoicesResult",
     "ZFSResourceRenameArgsData",
     "ZFSResourceRenameArgs",
     "ZFSResourceRenameResult",
@@ -768,6 +779,51 @@ class ZFSResourceDestroyArgs(BaseModel):
 
 class ZFSResourceDestroyResult(BaseModel):
     result: None
+
+
+class ZFSResourceChecksumChoicesArgs(BaseModel):
+    pass
+
+
+class ZFSResourceChecksumChoicesResult(BaseModel):
+    result: dict[str, str] = Field(description="Object mapping checksum algorithm names to their descriptions.")
+
+
+class ZFSResourceCompressionChoicesArgs(BaseModel):
+    pass
+
+
+class ZFSResourceCompressionChoicesResult(BaseModel):
+    result: dict[str, str] = Field(description="Object mapping compression algorithm names to their descriptions.")
+
+
+class ZFSResourceRecordsizeChoicesArgs(BaseModel):
+    pool_name: str | None = Field(
+        default=None,
+        description="Optional pool name to get record size choices for. If not provided, returns general choices.",
+    )
+
+
+class ZFSResourceRecordsizeChoicesResult(BaseModel):
+    result: list[str] = Field(description="Array of available record size options for filesystem datasets.")
+
+
+class ZFSResourceRecommendedZvolBlocksizeArgs(BaseModel):
+    pool: str = Field(description="The pool name to get the recommended volume block size for.")
+
+
+class ZFSResourceRecommendedZvolBlocksizeResult(BaseModel):
+    result: str = Field(description="The recommended block size for volumes on this pool.")
+
+
+class ZFSResourceProcessesArgs(BaseModel):
+    id: str = Field(description="Path of the zfs resource to list processes for.")
+
+
+class ZFSResourceProcessesResult(BaseModel):
+    result: list[PoolProcess] = Field(
+        description="Array of processes with open files on the resource or any of its descendants.",
+    )
 
 
 class ZFSResourceRenameArgsData(BaseModel):
