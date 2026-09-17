@@ -15,6 +15,7 @@ __all__ = (
     "ZpoolScrubNotDueException",
     "ZpoolResiliverInProgressException",
     "ZpoolTooManyScrubsException",
+    "ZpoolCreateException",
 )
 
 
@@ -167,3 +168,13 @@ class ZpoolTooManyScrubsException(ZpoolException):
     def __str__(self) -> str:
         return self.message
 
+
+class ZpoolCreateException(ZpoolException):
+    errno = errno.EFAULT
+
+    def __init__(self, pool: str, error: str):
+        self.message = f"{pool!r}: failed to create pool: {error}"
+        super().__init__(pool, error)
+
+    def __str__(self) -> str:
+        return self.message

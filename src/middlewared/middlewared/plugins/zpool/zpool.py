@@ -4,6 +4,9 @@ from typing import TYPE_CHECKING, Any
 
 from middlewared.api import Event, api_method
 from middlewared.api.current import (
+    ZPoolCreate,
+    ZPoolCreateArgs,
+    ZPoolCreateResult,
     ZPoolEntry,
     ZPoolQuery,
     ZPoolQueryAddedEvent,
@@ -12,10 +15,12 @@ from middlewared.api.current import (
     ZPoolQueryRemovedEvent,
     ZPoolQueryResult,
 )
-from middlewared.service import Service, private
+from middlewared.service import Service, job, private
 from middlewared.service.decorators import pass_thread_local_storage
 
+from . import zpool_create as _create
 from . import zpool_query as _query
+from .create_impl import create_impl
 from .get_zpool_disks_impl import get_zpool_disks_impl
 from .get_zpool_features_impl import get_zpool_features_impl
 from .is_upgraded_impl import is_upgraded_impl
@@ -24,6 +29,7 @@ from .status_impl import status_impl
 from .upgrade_zpool_impl import upgrade_zpool_impl
 
 if TYPE_CHECKING:
+    from middlewared.job import Job
     from middlewared.main import Middleware
     from middlewared.utils.types import EventType
 
@@ -113,6 +119,65 @@ class ZPoolService(Service):
     def send_removed_event(self, pool_id: int) -> None:
         """Emit a ``zpool.query`` REMOVED event for the given database id."""
         self.middleware.send_event("zpool.query", "REMOVED", id=pool_id)
+
+    @private
+    @pass_thread_local_storage
+    def create_impl(
+        self,
+        tls: Any,
+        name: str,
+        vdevs: list[dict[str, Any]],
+        properties: dict[str, str],
+        filesystem_properties: dict[str, str],
+        force: bool,
+    ) -> None:
+        create_impl(tls.lzh, name, vdevs, properties, filesystem_properties, force)
+
+    @api_method(
+        ZPoolCreateArgs,
+        ZPoolCreateResult,
+        roles=["POOL_WRITE"],
+        audit="Pool create",
+        audit_extended=lambda data: data["name"],
+        check_annotations=True,
+    )
+    @job(lock="pool_createupdate")
+    def create(self, job: Job, data: ZPoolCreate) -> ZPoolEntry:
+        """
+        Create a ZFS pool, as ``zpool create`` does.
+
+        ``topology`` is the vdev grammar of ``zpool create`` keyed the way :method:`zpool.query` reports it,
+        ``properties`` are ``-o`` pool properties and ``filesystem_properties`` are ``-O`` root filesystem
+        properties, all given by native name and handed to ZFS as-is. Fields left null take the TrueNAS
+        defaults. The pool is created through ``truenas_pylibzfs`` and returned as :method:`zpool.query`
+        reports it, so the entry reflects the values as canonicalized by ZFS, not the input.
+
+        Every disk referenced by the topology is formatted first, so a disk that is currently in use fails
+        validation before any disk is touched. On an HA system this must run on the active controller.
+
+        Encrypted pool roots are not created here; use :method:`zfs.resource.create` to add encrypted datasets
+        to the pool afterwards.
+
+        .. versionadded:: 27.0.0
+
+        Create a pool named "tank": RAIDZ1 with three disks, one cache disk, one log disk, and one hot spare,
+        with periodic TRIM enabled and deduplication on its root filesystem:
+
+        .. code:: json
+
+            {
+                "name": "tank",
+                "topology": {
+                    "data": [{"type": "raidz1", "disks": ["sda", "sdb", "sdc"]}],
+                    "log": [{"type": "disk", "disks": ["sdd"]}],
+                    "cache": ["sde"],
+                    "spares": ["sdf"]
+                },
+                "properties": {"autotrim": "on"},
+                "filesystem_properties": {"dedup": "on"}
+            }
+        """
+        return _create.create(self.context, job, data)
 
     @private
     def status(self, name: str | None = None, real_paths: bool = False) -> dict[str, Any]:

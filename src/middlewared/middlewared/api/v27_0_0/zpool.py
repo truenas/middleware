@@ -1,8 +1,10 @@
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import Field
+from pydantic import Field, PositiveInt
 
-from middlewared.api.base import BaseModel, Private
+from middlewared.api.base import BaseModel, Excluded, NonEmptyString, Private, excluded_field
+
+from .zfs_resource_crud import ZFSResourceCreateProperties
 
 __all__ = (
     "ZPoolScan",
@@ -19,6 +21,13 @@ __all__ = (
     "ZPoolQueryAddedEvent",
     "ZPoolQueryChangedEvent",
     "ZPoolQueryRemovedEvent",
+    "ZPoolCreateVdev",
+    "ZPoolCreateTopology",
+    "ZPoolCreateProperties",
+    "ZPoolCreateFilesystemProperties",
+    "ZPoolCreate",
+    "ZPoolCreateArgs",
+    "ZPoolCreateResult",
 )
 
 
@@ -196,3 +205,142 @@ class ZPoolQueryChangedEvent(BaseModel):
 
 class ZPoolQueryRemovedEvent(BaseModel):
     id: int = Field(description="Database id of the pool.")
+
+
+class ZPoolCreateVdev(BaseModel):
+    type: Literal["disk", "mirror", "raidz1", "raidz2", "raidz3", "draid1", "draid2", "draid3"] = Field(
+        description=(
+            "Vdev type, as `zpool create` names it and as `vdev_type` reports it. `disk` makes every listed disk "
+            "its own top-level vdev (a stripe)."
+        ),
+    )
+    disks: list[NonEmptyString] = Field(min_length=1, description="Disk names (e.g. `sda`) making up this vdev.")
+    draid_data_disks: int | None = Field(
+        default=None,
+        description=(
+            "Distributed RAID only: data disks per redundancy group. `null` uses every disk left after parity and spares, "
+            "at most 8."
+        ),
+    )
+    draid_spare_disks: int = Field(default=0, description="Distributed RAID only: number of distributed spare disks.")
+
+
+class ZPoolCreateTopology(BaseModel):
+    """The vdev grammar of `zpool create`, keyed the way :method:`zpool.query` reports `topology`."""
+
+    data: list[ZPoolCreateVdev] = Field(
+        min_length=1,
+        description=(
+            "Storage vdevs. Unless `force_topology` is set they must share one type and width, and mirrors are "
+            "capped at 4 disks and RAIDZ at 15."
+        ),
+    )
+    log: list[ZPoolCreateVdev] = Field(default=[], description="ZFS Intent Log (SLOG) vdevs: `disk` or `mirror`.")
+    cache: list[NonEmptyString] = Field(default=[], description="L2ARC cache disks.")
+    spares: list[NonEmptyString] = Field(default=[], description="Hot spare disks.")
+    special: list[ZPoolCreateVdev] = Field(
+        default=[],
+        description=(
+            "Special allocation class vdevs for metadata and small blocks. dRAID is not permitted, and unless "
+            "`force_topology` is set they must be redundant when the data vdevs are."
+        ),
+    )
+    dedup: list[ZPoolCreateVdev] = Field(
+        default=[],
+        description="Deduplication table vdevs. Same rules as `special`.",
+    )
+
+
+class ZPoolCreateProperties(BaseModel):
+    """Pool properties set at creation, as `zpool create -o property=value`. Each field is the native `zpool` \
+    property name and values are handed to ZFS verbatim. A field left as null is not sent, so ZFS applies its own \
+    default. Fields marked `Private` carry a TrueNAS default that only internal callers may override."""
+
+    autotrim: Literal["on", "off"] | None = Field(
+        default=None,
+        description="Whether freed blocks are periodically TRIMmed on the pool's disks.",
+    )
+    comment: str | None = Field(default=None, description="Free-form comment stored with the pool.")
+    dedup_table_quota: Literal["auto", "none"] | PositiveInt | None = Field(
+        default=None,
+        description=(
+            "Maximum size of the deduplication table: `auto` sizes it to the dedup vdevs, `none` leaves it "
+            "unbounded, or a size in bytes."
+        ),
+    )
+    ashift: Private[Annotated[int, Field(ge=9, le=16)] | None] = Field(
+        default=None,
+        description="Sector size shift. TrueNAS pins this to 12 (4K sectors).",
+    )
+    altroot: Private[str | None] = Field(default=None, description="Alternate root under which the pool mounts.")
+    cachefile: Private[str | None] = Field(default=None, description="Pool configuration cache file.")
+    failmode: Private[Literal["wait", "continue", "panic"] | None] = Field(
+        default=None,
+        description="Behavior on catastrophic pool failure.",
+    )
+    autoexpand: Private[Literal["on", "off"] | None] = Field(
+        default=None,
+        description="Whether the pool grows automatically when its disks are replaced by larger ones.",
+    )
+
+
+class ZPoolCreateFilesystemProperties(ZFSResourceCreateProperties):
+    """Root filesystem properties set at creation, as `zpool create -O property=value`. The same native property \
+    names :method:`zfs.resource.create` accepts, minus the volume-only ones. A field left as null is not sent, so \
+    the TrueNAS defaults apply (`atime=off`, `acltype=posix`, `compression=lz4`, `xattr=sa`, and `recordsize=1M` \
+    on dRAID pools)."""
+
+    snapdev: Excluded = excluded_field()
+    volblocksize: Excluded = excluded_field()
+    volsize: Excluded = excluded_field()
+
+
+class ZPoolCreate(BaseModel):
+    name: NonEmptyString = Field(description="Name for the new pool.")
+    topology: ZPoolCreateTopology = Field(
+        examples=[
+            {
+                "data": [{"type": "raidz1", "disks": ["sda", "sdb", "sdc"]}],
+                "log": [{"type": "disk", "disks": ["sdd"]}],
+                "cache": ["sde"],
+                "spares": ["sdf"],
+            }
+        ],
+        description="Physical layout of the pool's vdevs.",
+    )
+    properties: ZPoolCreateProperties = Field(
+        default_factory=ZPoolCreateProperties,
+        description="Pool properties to set at creation.",
+    )
+    filesystem_properties: ZPoolCreateFilesystemProperties = Field(
+        default_factory=ZPoolCreateFilesystemProperties,
+        description="Properties to set on the pool's root filesystem at creation.",
+    )
+    force_topology: bool = Field(
+        default=False,
+        description=(
+            "Bypass topology policy validation, like `zpool create -f`. Allows data vdevs that differ in type "
+            "or width from the rest of the pool, RAIDZ/mirror vdevs wider than the recommended maximum, and "
+            "special or dedup vdevs whose redundancy does not match the data vdevs. Structural requirements "
+            "(minimum disks per vdev type, dRAID configuration) and the disk availability checks still apply. "
+            "Not permitted on systems with a support entitlement."
+        ),
+    )
+    allow_duplicate_serials: bool = Field(
+        default=False,
+        description="Whether to allow disks with duplicate serial numbers in the pool.",
+    )
+    all_sed: bool = Field(
+        default=False,
+        description="When set, every disk in the pool must be a Self-Encrypting Drive and is provisioned as one.",
+    )
+
+
+class ZPoolCreateArgs(BaseModel):
+    data: ZPoolCreate = Field(description="Configuration for the new pool.")
+
+
+class ZPoolCreateResult(BaseModel):
+    result: ZPoolEntry = Field(
+        description="The new pool, queried after creation with its topology and the pool properties that were set.",
+    )
