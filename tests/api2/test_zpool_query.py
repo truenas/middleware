@@ -33,8 +33,9 @@ class TestZpoolQueryMinimal:
         assert zpool_minimal["name"] == pool
 
     def test_guid(self, zpool_minimal):
-        assert isinstance(zpool_minimal["guid"], int)
-        assert zpool_minimal["guid"] != 0
+        # 64-bit guids travel as decimal strings so JSON consumers do not round them
+        assert isinstance(zpool_minimal["guid"], str)
+        assert int(zpool_minimal["guid"]) != 0
 
     def test_status(self, zpool_minimal):
         assert zpool_minimal["status"] == "ONLINE"
@@ -86,7 +87,8 @@ class TestZpoolQueryFull:
         vdev = vdevs[0]
         assert "name" in vdev
         assert "vdev_type" in vdev
-        assert "guid" in vdev
+        assert isinstance(vdev["guid"], str)
+        assert int(vdev["guid"]) != 0
         assert "state" in vdev
         assert "stats" in vdev
         assert "children" in vdev
@@ -138,7 +140,8 @@ class TestZpoolQueryBootPool:
     def test_boot_pool_guid(self):
         boot_pool_name = call("boot.pool_name")
         results = call("zpool.query", {"pool_names": [boot_pool_name]})
-        assert isinstance(results[0]["guid"], int)
+        assert isinstance(results[0]["guid"], str)
+        assert int(results[0]["guid"]) != 0
 
 
 class TestZpoolQueryNonexistent:

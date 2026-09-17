@@ -77,7 +77,7 @@ def offline_entries(
             {
                 "id": pool_info["id"] if pool_info else None,
                 "name": name,
-                "guid": int(pool_info["guid"]) if pool_info else 0,
+                "guid": str(pool_info["guid"]) if pool_info else "0",
                 "status": "OFFLINE",
                 "healthy": False,
                 "warning": False,
