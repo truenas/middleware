@@ -1870,6 +1870,13 @@ class SMBFSAttachmentDelegate(LockableFSAttachmentDelegate):
 
     async def restart_reload_services(self, attachments):
         """
+        Regenerate smb4.conf and tell smbd to reload it. A bare `etc.generate` is not
+        enough here: an established smbd child only re-reads smb4.conf on its periodic
+        housekeeping check (every 180 seconds), so a client whose session predates the
+        change would keep getting STATUS_BAD_NETWORK_NAME on tree connect after an
+        unlock. `service.control RELOAD` regenerates the config and then sends
+        `smbcontrol smbd reload-config`, which the smbd parent forwards to every child.
+
         mDNS may need to be reloaded if a time machine share is located on
         the share being attached.
         """
@@ -1881,7 +1888,7 @@ class SMBFSAttachmentDelegate(LockableFSAttachmentDelegate):
             )
             return
 
-        await self.middleware.call('etc.generate', 'smb')
+        await (await self.call2(self.s.service.control, 'RELOAD', 'cifs')).wait(raise_error=True)
         await (await self.call2(self.s.service.control, 'RELOAD', 'discovery')).wait(raise_error=True)
 
     async def is_child_of_path(self, resource, path, check_parent, exact_match):
@@ -1915,10 +1922,6 @@ def create_samba_directories(middleware):
                 os.chown(p.path, 0, 0)
 
 
-async def hook_post_generic(middleware, datasets):
-    await (await middleware.call2(middleware.services.service.control, 'RELOAD', 'cifs')).wait()
-
-
 class SMBLicenseReconcileDelegate(LicenseReconcileDelegate):
     name = 'smb'
     etc_groups = ('smb',)
@@ -1935,7 +1938,6 @@ async def setup(middleware):
     # We need to ensure that required state directories exist in order to startup winbindd
     await middleware.run_in_thread(create_samba_directories, middleware)
     await middleware.call('pool.dataset.register_attachment_delegate', SMBFSAttachmentDelegate(middleware))
-    middleware.register_hook('dataset.post_lock', hook_post_generic, sync=True)
     middleware.register_hook('pool.post_import', pool_post_import, sync=True)
     await middleware.call2(
         middleware.services.truenas.license.register_reconcile_delegate,
