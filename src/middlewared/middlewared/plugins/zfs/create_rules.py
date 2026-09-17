@@ -275,6 +275,24 @@ def check_volume_has_volsize(data: ZFSResourceCreateArgsData, ctx: CreateContext
         )
 
 
+def check_parent_is_filesystem(data: ZFSResourceCreateArgsData, ctx: CreateContext) -> None:
+    """The nearest existing ancestor must be a filesystem.
+
+    Only a filesystem can hold children. The rules that follow read
+    filesystem-only properties from that ancestor, so a volume is refused here
+    before they run.
+
+    The service calls this after the ancestor entries have been gathered.
+    """
+    parent = _nearest_ancestor_entry(data, ctx)
+    if parent is not None and parent["type"] != "FILESYSTEM":
+        raise ValidationError(
+            SCHEMA,
+            f"{parent['name']!r} is a volume and cannot hold {data.path!r}.",
+            errno.EINVAL,
+        )
+
+
 def check_parent_not_readonly(data: ZFSResourceCreateArgsData, ctx: CreateContext) -> None:
     """The nearest existing ancestor must not be readonly.
 
