@@ -152,11 +152,30 @@ def test_create_topology_policy_violation_fails_before_formatting():
     disks = _unused_devnames(5)
     topology = {"data": [{"type": "mirror", "disks": disks[0:2]}, {"type": "raidz1", "disks": disks[2:5]}]}
     errors = _create_fails(topology)
-    assert any(e.attribute == "zpool.create.topology.data.1.type" for e in errors)
+    # the binding's verdict, located at the topology root it judged
+    assert [(e.attribute, e.errmsg) for e in errors] == [
+        ("zpool.create.topology.data", 'all vdevs must share the same type; got "mirror" and "raidz1"')
+    ]
 
     # validation ran before any disk was touched
     assert set(disks) <= {d["devname"] for d in call("disk.get_unused")}
     assert not call("zpool.query", {"pool_names": [POOL]})
+
+
+def test_create_structural_violation_fails_even_when_forced():
+    disks = _unused_devnames(5)
+    topology = {"data": [{"type": "mirror", "disks": disks[0:2]}], "log": [{"type": "raidz1", "disks": disks[2:5]}]}
+    errors = _create_fails(topology, force_topology=True)
+    assert any(e.attribute == "zpool.create.topology.log" and "leaf or mirror" in e.errmsg for e in errors)
+    assert set(disks) <= {d["devname"] for d in call("disk.get_unused")}
+
+
+def test_create_bad_draid_config_fails_before_formatting():
+    disks = _unused_devnames(3)
+    topology = {"data": [{"type": "draid1", "disks": disks[0:3], "draid_data_disks": 4}]}
+    errors = _create_fails(topology)
+    assert any(e.attribute == "zpool.create.topology.data.0" and "dRAID requires at least" in e.errmsg for e in errors)
+    assert set(disks) <= {d["devname"] for d in call("disk.get_unused")}
 
 
 def test_create_legacy_vocabulary_is_rejected():
