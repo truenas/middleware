@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any
 from fenced.fence import ExitCode as FencedExitCodes
 from truenas_pylicensed.features import LicenseFeature
 
-from middlewared.api.current import ZPoolCreate, ZPoolEntry, ZPoolQuery
+from middlewared.api.current import ZpoolCreate, ZpoolEntry, ZpoolQuery
 from middlewared.plugins.pool_.utils import UpdateImplArgs
 from middlewared.service_exception import CallError, ValidationErrors
 
@@ -51,7 +51,7 @@ def _start_fenced(context: ServiceContext) -> None:
     raise CallError(err)
 
 
-def create(context: ServiceContext, job: Job, data: ZPoolCreate) -> ZPoolEntry:
+def create(context: ServiceContext, job: Job, data: ZpoolCreate) -> ZpoolEntry:
     name = data.name
     properties, filesystem_properties = resolve_create_request(data)
     ctx = CreateContext(properties=properties, filesystem_properties=filesystem_properties)
@@ -61,8 +61,8 @@ def create(context: ServiceContext, job: Job, data: ZPoolCreate) -> ZPoolEntry:
     # an imported pool of that name, registered or not, or a registered but
     # exported one both take the name
     ctx.pool_exists = bool(
-        context.call_sync2(context.s.zpool.query_impl, ZPoolQuery(pool_names=[name]))
-        or context.call_sync2(context.s.zpool.query, ZPoolQuery(pool_names=[name]))
+        context.call_sync2(context.s.zpool.query_impl, ZpoolQuery(pool_names=[name]))
+        or context.call_sync2(context.s.zpool.query, ZpoolQuery(pool_names=[name]))
     )
     collect(verrors, check_pool_absent, data, ctx)
     collect(verrors, check_layout, data, ctx)
@@ -128,7 +128,7 @@ def create(context: ServiceContext, job: Job, data: ZPoolCreate) -> ZPoolEntry:
         created = True
 
         job.set_progress(95, "Setting pool options")
-        guid = context.call_sync2(context.s.zpool.query_impl, ZPoolQuery(pool_names=[name]))[0]["guid"]
+        guid = context.call_sync2(context.s.zpool.query_impl, ZpoolQuery(pool_names=[name]))[0]["guid"]
 
         # Inherit mountpoint after create because we set mountpoint on creation
         # making it a "local" source.
@@ -167,5 +167,5 @@ def create(context: ServiceContext, job: Job, data: ZPoolCreate) -> ZPoolEntry:
     context.call_sync2(context.s.zpool.send_change_event, name, "ADDED")
     return context.call_sync2(
         context.s.zpool.query,
-        ZPoolQuery(pool_names=[name], topology=True, properties=list(pool_properties)),
+        ZpoolQuery(pool_names=[name], topology=True, properties=list(pool_properties)),
     )[0]

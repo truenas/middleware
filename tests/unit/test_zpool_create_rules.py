@@ -8,7 +8,7 @@ from types import SimpleNamespace
 import pytest
 
 from middlewared.api.base.handler.accept import accept_params
-from middlewared.api.current import ZPoolCreate, ZPoolCreateArgs
+from middlewared.api.current import ZpoolCreate, ZpoolCreateArgs
 from middlewared.plugins.zpool.create_impl import (
     DraidConfigError,
     assemble_create_pool_vdev_kwargs,
@@ -34,18 +34,18 @@ from middlewared.service_exception import ValidationError, ValidationErrors
 RAIDZ1 = {"data": [{"type": "raidz1", "disks": ["sda", "sdb", "sdc"]}]}
 
 
-def request(**overrides) -> ZPoolCreate:
-    """Build a ZPoolCreate the way the API does, so Private fields are enforced."""
+def request(**overrides) -> ZpoolCreate:
+    """Build a ZpoolCreate the way the API does, so Private fields are enforced."""
     payload = {"name": "tank", "topology": RAIDZ1} | overrides
-    return ZPoolCreate(**accept_params(ZPoolCreateArgs, [payload])[0])
+    return ZpoolCreate(**accept_params(ZpoolCreateArgs, [payload])[0])
 
 
-def context(data: ZPoolCreate) -> CreateContext:
+def context(data: ZpoolCreate) -> CreateContext:
     properties, filesystem_properties = resolve_create_request(data)
     return CreateContext(properties=properties, filesystem_properties=filesystem_properties)
 
 
-def run(rule, data: ZPoolCreate, ctx: CreateContext) -> list[tuple[str, str]]:
+def run(rule, data: ZpoolCreate, ctx: CreateContext) -> list[tuple[str, str]]:
     verrors = ValidationErrors()
     collect(verrors, rule, data, ctx)
     return [(e.attribute.removeprefix("zpool.create."), e.errmsg) for e in verrors.errors]

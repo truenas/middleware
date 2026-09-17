@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Any
 
 import truenas_pylibzfs
 
-from middlewared.api.current import ZPoolQuery
+from middlewared.api.current import ZpoolQuery
 from middlewared.service_exception import CallError, ValidationError
 from middlewared.utils.boot.pool import BOOT_POOL_NAME_VALID
 
@@ -182,7 +182,7 @@ def get_encryption_info(data: dict[str, dict[str, Any]]) -> EncryptionInfo:
 
 
 def pool_is_draid(context: ServiceContext, pool_name: str) -> bool:
-    if pool := context.call_sync2(context.s.zpool.query_impl, ZPoolQuery(pool_names=[pool_name], topology=True)):
+    if pool := context.call_sync2(context.s.zpool.query_impl, ZpoolQuery(pool_names=[pool_name], topology=True)):
         for group in pool[0]["topology"]["data"] + pool[0]["topology"].get("special", []):
             if group["vdev_type"].startswith("draid"):
                 return True
@@ -194,7 +194,7 @@ async def pool_has_special_vdev(middleware: Middleware, pool_name: str) -> bool:
     try:
         pools = await middleware.call2(
             middleware.services.zpool.query_impl,
-            ZPoolQuery(pool_names=[pool_name], properties=["class_special_size"]),
+            ZpoolQuery(pool_names=[pool_name], properties=["class_special_size"]),
         )
         if not pools:
             return False

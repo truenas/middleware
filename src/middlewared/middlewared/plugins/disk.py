@@ -4,7 +4,7 @@ from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.api import Event, api_method
 from middlewared.api.current import (
-    ZPoolQuery,
+    ZpoolQuery,
     DiskEntry,
     DiskQueryAddedEvent,
     DiskQueryChangedEvent,
@@ -158,7 +158,7 @@ class DiskService(CRUDService):
             context['boot_pool_disks'] = await self.call2(self.s.boot.get_disks)
             context['boot_pool_name'] = await self.call2(self.s.boot.pool_name)
 
-            for pool in await self.call2(self.s.zpool.query_impl, ZPoolQuery(topology=True)):
+            for pool in await self.call2(self.s.zpool.query_impl, ZpoolQuery(topology=True)):
                 topology = await self.middleware.call('pool.transform_topology_lightweight', pool['topology'])
                 for vdev in await self.middleware.call('pool.flatten_topology', topology):
                     if vdev['type'] == 'DISK':
