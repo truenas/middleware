@@ -172,6 +172,7 @@ class SharingWebshareService(SharingService[SharingWebshareEntry]):
         await self.validate_share_name(data.name, schema_name, verrors, old)
 
         await self.validate_path_field(data, schema_name, verrors, split_path=True)
+        await self.validate_s3_export(data, schema_name, verrors)
 
         if data.is_home_base:
             filters = [['is_home_base', '=', True]]
