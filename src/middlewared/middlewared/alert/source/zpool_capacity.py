@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from middlewared.api.current import ZPoolQuery
+from middlewared.api.current import ZpoolQuery
 from datetime import timedelta
 from typing import Any
 
@@ -77,11 +77,11 @@ class ZpoolCapacityAlertSource(AlertSource):
         # query_impl with pool_names=None skips boot pools, so we query
         # the boot pool explicitly to ensure capacity alerts still fire.
         pools = await self.middleware.call2(
-            self.middleware.services.zpool.query_impl, ZPoolQuery(properties=["capacity"])
+            self.middleware.services.zpool.query_impl, ZpoolQuery(properties=["capacity"])
         )
         boot_pool = await self.middleware.call2(self.middleware.services.boot.pool_name)
         pools.extend(await self.middleware.call2(
-            self.middleware.services.zpool.query_impl, ZPoolQuery(pool_names=[boot_pool], properties=["capacity"])
+            self.middleware.services.zpool.query_impl, ZpoolQuery(pool_names=[boot_pool], properties=["capacity"])
         ))
         for pool in pools:
             try:

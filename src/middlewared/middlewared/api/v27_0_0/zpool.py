@@ -7,27 +7,27 @@ from middlewared.api.base import BaseModel, Excluded, NonEmptyString, Private, e
 from .zfs_resource_crud import ZFSResourceCreateProperties
 
 __all__ = (
-    "ZPoolScan",
-    "ZPoolExpand",
-    "ZPoolPropertyValue",
-    "ZPoolVdevStats",
-    "ZPoolVdev",
-    "ZPoolTopology",
-    "ZPoolFeature",
-    "ZPoolEntry",
-    "ZPoolQuery",
-    "ZPoolQueryArgs",
-    "ZPoolQueryResult",
-    "ZPoolQueryAddedEvent",
-    "ZPoolQueryChangedEvent",
-    "ZPoolQueryRemovedEvent",
-    "ZPoolCreateVdev",
-    "ZPoolCreateTopology",
-    "ZPoolCreateProperties",
-    "ZPoolCreateFilesystemProperties",
-    "ZPoolCreate",
-    "ZPoolCreateArgs",
-    "ZPoolCreateResult",
+    "ZpoolScan",
+    "ZpoolExpand",
+    "ZpoolPropertyValue",
+    "ZpoolVdevStats",
+    "ZpoolVdev",
+    "ZpoolTopology",
+    "ZpoolFeature",
+    "ZpoolEntry",
+    "ZpoolQuery",
+    "ZpoolQueryArgs",
+    "ZpoolQueryResult",
+    "ZpoolQueryAddedEvent",
+    "ZpoolQueryChangedEvent",
+    "ZpoolQueryRemovedEvent",
+    "ZpoolCreateVdev",
+    "ZpoolCreateTopology",
+    "ZpoolCreateProperties",
+    "ZpoolCreateFilesystemProperties",
+    "ZpoolCreate",
+    "ZpoolCreateArgs",
+    "ZpoolCreateResult",
 )
 
 
@@ -40,7 +40,7 @@ def _guids_to_int(vdev: dict) -> None:
         _guids_to_int(child)
 
 
-class ZPoolPropertyValue(BaseModel):
+class ZpoolPropertyValue(BaseModel):
     raw: str = Field(description="The raw string representation of the property.")
     source: str | None = Field(
         description="The source from where this property received its value (DEFAULT, LOCAL, NONE, etc.).",
@@ -48,7 +48,7 @@ class ZPoolPropertyValue(BaseModel):
     value: int | float | str | bool | None = Field(description="The native Python value of the property.")
 
 
-class ZPoolVdevStats(BaseModel):
+class ZpoolVdevStats(BaseModel):
     timestamp: int = Field(default=0, description="High-resolution timestamp (nanoseconds).")
     allocated: int = Field(default=0, description="Allocated space in bytes.")
     space: int = Field(default=0, description="Total space in bytes.")
@@ -77,13 +77,13 @@ class ZPoolVdevStats(BaseModel):
     physical_ashift: int | None = Field(default=None, description="Physical ashift value.")
 
 
-class ZPoolVdev(BaseModel):
+class ZpoolVdev(BaseModel):
     name: str = Field(description="Vdev name (e.g., 'mirror-0', '/dev/sda1').")
     vdev_type: str = Field(description="Vdev type (e.g., 'mirror', 'raidz1', 'disk').")
     guid: str = Field(description="Globally unique identifier for this vdev, a 64-bit integer as a decimal string.")
     state: str = Field(description="Current state (ONLINE, DEGRADED, FAULTED, OFFLINE, UNAVAIL, etc.).")
-    stats: ZPoolVdevStats = Field(description="Vdev I/O statistics.")
-    children: list["ZPoolVdev"] = Field(description="Child vdevs.")
+    stats: ZpoolVdevStats = Field(description="Vdev I/O statistics.")
+    children: list["ZpoolVdev"] = Field(description="Child vdevs.")
     top_guid: str | None = Field(
         default=None,
         description="GUID of the top-level vdev this belongs to, a 64-bit integer as a decimal string.",
@@ -104,16 +104,16 @@ class ZPoolVdev(BaseModel):
         return value
 
 
-class ZPoolTopology(BaseModel):
-    data: list[ZPoolVdev] = Field(description="Array of data vdev configurations.")
-    log: list[ZPoolVdev] = Field(description="Array of ZFS Intent Log (ZIL) vdev configurations.")
-    cache: list[ZPoolVdev] = Field(description="Array of L2ARC cache vdev configurations.")
-    spares: list[ZPoolVdev] = Field(description="Array of spare disk configurations.")
-    special: list[ZPoolVdev] = Field(description="Array of special vdev configurations for metadata.")
-    dedup: list[ZPoolVdev] = Field(description="Array of deduplication table vdev configurations.")
+class ZpoolTopology(BaseModel):
+    data: list[ZpoolVdev] = Field(description="Array of data vdev configurations.")
+    log: list[ZpoolVdev] = Field(description="Array of ZFS Intent Log (ZIL) vdev configurations.")
+    cache: list[ZpoolVdev] = Field(description="Array of L2ARC cache vdev configurations.")
+    spares: list[ZpoolVdev] = Field(description="Array of spare disk configurations.")
+    special: list[ZpoolVdev] = Field(description="Array of special vdev configurations for metadata.")
+    dedup: list[ZpoolVdev] = Field(description="Array of deduplication table vdev configurations.")
 
 
-class ZPoolScan(BaseModel):
+class ZpoolScan(BaseModel):
     function: Literal["RESILVER", "SCRUB"] = Field(description="Type of ZFS pool scan.")
     state: Literal["SCANNING", "FINISHED", "CANCELED"] = Field(description="Current lifecycle state of the scan.")
     start_time: int = Field(description="Scan start time (unix timestamp).")
@@ -129,7 +129,7 @@ class ZPoolScan(BaseModel):
     total_secs_left: int | None = Field(description="Number of seconds left (`null` if the scan is not running).")
 
 
-class ZPoolExpand(BaseModel):
+class ZpoolExpand(BaseModel):
     state: str = Field(description="Expansion state (e.g., SCANNING, FINISHED).")
     expanding_vdev: int = Field(description="Index of the vdev being expanded.")
     start_time: int = Field(description="Expansion start time (unix timestamp).")
@@ -141,14 +141,14 @@ class ZPoolExpand(BaseModel):
     percentage: float = Field(description="Expansion progress (between 0 and 100%).")
 
 
-class ZPoolFeature(BaseModel):
+class ZpoolFeature(BaseModel):
     name: str = Field(description="Feature name.")
     guid: str = Field(description="Feature GUID.")
     description: str = Field(description="Feature description.")
     state: str = Field(description="Feature state.")
 
 
-class ZPoolEntry(BaseModel):
+class ZpoolEntry(BaseModel):
     id: int | None = Field(
         default=None,
         description=(
@@ -175,14 +175,14 @@ class ZPoolEntry(BaseModel):
             "`null` when the SED status of the pool has not yet been determined or does not apply."
         ),
     )
-    properties: dict[str, ZPoolPropertyValue] | None = Field(
+    properties: dict[str, ZpoolPropertyValue] | None = Field(
         default=None,
         description="Pool properties, keyed by property name.",
     )
-    topology: ZPoolTopology | None = Field(default=None, description="Pool vdev topology.")
-    scan: ZPoolScan | None = Field(default=None, description="Most recent scrub or resilver information.")
-    expand: ZPoolExpand | None = Field(default=None, description="RAIDZ expansion information.")
-    features: list[ZPoolFeature] | None = Field(default=None, description="Pool feature flags.")
+    topology: ZpoolTopology | None = Field(default=None, description="Pool vdev topology.")
+    scan: ZpoolScan | None = Field(default=None, description="Most recent scrub or resilver information.")
+    expand: ZpoolExpand | None = Field(default=None, description="RAIDZ expansion information.")
+    features: list[ZpoolFeature] | None = Field(default=None, description="Pool feature flags.")
 
     @classmethod
     def to_previous(cls, value):
@@ -193,7 +193,7 @@ class ZPoolEntry(BaseModel):
         return value
 
 
-class ZPoolQuery(BaseModel):
+class ZpoolQuery(BaseModel):
     pool_names: list[str] | None = Field(
         default=None,
         description="Pool names to query. `null` queries all imported pools.",
@@ -210,29 +210,29 @@ class ZPoolQuery(BaseModel):
     full_path: Private[bool] = Field(default=True, description="Report full device paths in the topology.")
 
 
-class ZPoolQueryArgs(BaseModel):
-    data: ZPoolQuery = Field(default=ZPoolQuery(), description="Query parameters.")
+class ZpoolQueryArgs(BaseModel):
+    data: ZpoolQuery = Field(default=ZpoolQuery(), description="Query parameters.")
 
 
-class ZPoolQueryResult(BaseModel):
-    result: list[ZPoolEntry]
+class ZpoolQueryResult(BaseModel):
+    result: list[ZpoolEntry]
 
 
-class ZPoolQueryAddedEvent(BaseModel):
+class ZpoolQueryAddedEvent(BaseModel):
     id: int = Field(description="Database id of the pool.")
-    fields: ZPoolEntry = Field(description="Event fields.")
+    fields: ZpoolEntry = Field(description="Event fields.")
 
 
-class ZPoolQueryChangedEvent(BaseModel):
+class ZpoolQueryChangedEvent(BaseModel):
     id: int = Field(description="Database id of the pool.")
-    fields: ZPoolEntry = Field(description="Event fields.")
+    fields: ZpoolEntry = Field(description="Event fields.")
 
 
-class ZPoolQueryRemovedEvent(BaseModel):
+class ZpoolQueryRemovedEvent(BaseModel):
     id: int = Field(description="Database id of the pool.")
 
 
-class ZPoolCreateVdev(BaseModel):
+class ZpoolCreateVdev(BaseModel):
     type: Literal["disk", "mirror", "raidz1", "raidz2", "raidz3", "draid1", "draid2", "draid3"] = Field(
         description=(
             "Vdev type, as `zpool create` names it and as `vdev_type` reports it. `disk` makes every listed disk "
@@ -250,33 +250,33 @@ class ZPoolCreateVdev(BaseModel):
     draid_spare_disks: int = Field(default=0, description="Distributed RAID only: number of distributed spare disks.")
 
 
-class ZPoolCreateTopology(BaseModel):
+class ZpoolCreateTopology(BaseModel):
     """The vdev grammar of `zpool create`, keyed the way :method:`zpool.query` reports `topology`."""
 
-    data: list[ZPoolCreateVdev] = Field(
+    data: list[ZpoolCreateVdev] = Field(
         min_length=1,
         description=(
             "Storage vdevs. Unless `force_topology` is set they must share one type and width, and mirrors are "
             "capped at 4 disks and RAIDZ at 15."
         ),
     )
-    log: list[ZPoolCreateVdev] = Field(default=[], description="ZFS Intent Log (SLOG) vdevs: `disk` or `mirror`.")
+    log: list[ZpoolCreateVdev] = Field(default=[], description="ZFS Intent Log (SLOG) vdevs: `disk` or `mirror`.")
     cache: list[NonEmptyString] = Field(default=[], description="L2ARC cache disks.")
     spares: list[NonEmptyString] = Field(default=[], description="Hot spare disks.")
-    special: list[ZPoolCreateVdev] = Field(
+    special: list[ZpoolCreateVdev] = Field(
         default=[],
         description=(
             "Special allocation class vdevs for metadata and small blocks. dRAID is not permitted, and unless "
             "`force_topology` is set they must be redundant when the data vdevs are."
         ),
     )
-    dedup: list[ZPoolCreateVdev] = Field(
+    dedup: list[ZpoolCreateVdev] = Field(
         default=[],
         description="Deduplication table vdevs. Same rules as `special`.",
     )
 
 
-class ZPoolCreateProperties(BaseModel):
+class ZpoolCreateProperties(BaseModel):
     """Pool properties set at creation, as `zpool create -o property=value`. Each field is the native `zpool` \
     property name and values are handed to ZFS verbatim. A field left as null is not sent, so ZFS applies its \
     own default. Fields marked `Private` carry a TrueNAS default that only internal callers may override."""
@@ -309,7 +309,7 @@ class ZPoolCreateProperties(BaseModel):
     )
 
 
-class ZPoolCreateFilesystemProperties(ZFSResourceCreateProperties):
+class ZpoolCreateFilesystemProperties(ZFSResourceCreateProperties):
     """Root filesystem properties set at creation, as `zpool create -O property=value`. The same native property \
     names :method:`zfs.resource.create` accepts, minus the volume-only ones. A field left as null is not sent, so \
     the TrueNAS defaults apply (`atime=off`, `acltype=posix`, `compression=lz4`, `xattr=sa`, and `recordsize=1M` \
@@ -320,9 +320,9 @@ class ZPoolCreateFilesystemProperties(ZFSResourceCreateProperties):
     volsize: Excluded = excluded_field()
 
 
-class ZPoolCreate(BaseModel):
+class ZpoolCreate(BaseModel):
     name: NonEmptyString = Field(description="Name for the new pool.")
-    topology: ZPoolCreateTopology = Field(
+    topology: ZpoolCreateTopology = Field(
         examples=[
             {
                 "data": [{"type": "raidz1", "disks": ["sda", "sdb", "sdc"]}],
@@ -333,12 +333,12 @@ class ZPoolCreate(BaseModel):
         ],
         description="Physical layout of the pool's vdevs.",
     )
-    properties: ZPoolCreateProperties = Field(
-        default_factory=ZPoolCreateProperties,
+    properties: ZpoolCreateProperties = Field(
+        default_factory=ZpoolCreateProperties,
         description="Pool properties to set at creation.",
     )
-    filesystem_properties: ZPoolCreateFilesystemProperties = Field(
-        default_factory=ZPoolCreateFilesystemProperties,
+    filesystem_properties: ZpoolCreateFilesystemProperties = Field(
+        default_factory=ZpoolCreateFilesystemProperties,
         description="Properties to set on the pool's root filesystem at creation.",
     )
     force_topology: bool = Field(
@@ -361,11 +361,11 @@ class ZPoolCreate(BaseModel):
     )
 
 
-class ZPoolCreateArgs(BaseModel):
-    data: ZPoolCreate = Field(description="Configuration for the new pool.")
+class ZpoolCreateArgs(BaseModel):
+    data: ZpoolCreate = Field(description="Configuration for the new pool.")
 
 
-class ZPoolCreateResult(BaseModel):
-    result: ZPoolEntry = Field(
+class ZpoolCreateResult(BaseModel):
+    result: ZpoolEntry = Field(
         description="The new pool, queried after creation with its topology and the pool properties that were set.",
     )

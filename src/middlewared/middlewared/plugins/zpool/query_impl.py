@@ -201,7 +201,7 @@ def _build_pool_dict(
         data: Query parameters (pool_names, properties, topology, scan, expand, features).
 
     Returns:
-        A dict matching the ZPoolEntry schema.
+        A dict matching the ZpoolEntry schema.
     """
     # Single status() call — used for both health info and topology
     follow_links = data.get("follow_links", True)
@@ -279,11 +279,11 @@ def query_impl(lzh: libzfs_types.ZFS, data: dict[str, typing.Any]) -> list[dict[
 
     Args:
         lzh: pylibzfs handle (from tls.lzh or truenas_pylibzfs.open_handle()).
-        data: dict with keys matching ZPoolQuery fields:
+        data: dict with keys matching ZpoolQuery fields:
             pool_names, properties, topology, scan, expand, features.
 
     Returns:
-        list[dict] matching ZPoolEntry schema.
+        list[dict] matching ZpoolEntry schema.
     """
     pool_names = data.get("pool_names")
     if pool_names is None:

@@ -32,10 +32,10 @@ from .create_impl import (
 if typing.TYPE_CHECKING:
     from middlewared.api.current import (
         EntitlementEntry,
-        ZPoolCreate,
-        ZPoolCreateFilesystemProperties,
-        ZPoolCreateProperties,
-        ZPoolCreateVdev,
+        ZpoolCreate,
+        ZpoolCreateFilesystemProperties,
+        ZpoolCreateProperties,
+        ZpoolCreateVdev,
     )
 
 __all__ = (
@@ -55,17 +55,17 @@ __all__ = (
 
 SCHEMA = "zpool.create"
 
-Rule = typing.Callable[["ZPoolCreate", "CreateContext"], None]
+Rule = typing.Callable[["ZpoolCreate", "CreateContext"], None]
 
 
 @dataclasses.dataclass(slots=True, kw_only=True)
 class CreateContext:
     """Resolved values and gathered facts that the rules read."""
 
-    properties: ZPoolCreateProperties
+    properties: ZpoolCreateProperties
     """Effective pool properties after the TrueNAS defaults are applied. A
     field left as None is not sent to ZFS."""
-    filesystem_properties: ZPoolCreateFilesystemProperties
+    filesystem_properties: ZpoolCreateFilesystemProperties
     """Effective root filesystem properties after the TrueNAS defaults are
     applied."""
     pool_exists: bool = False
@@ -85,7 +85,7 @@ class CreateContext:
     the request bypasses topology policy."""
 
 
-def collect(verrors: ValidationErrors, rule: Rule, data: ZPoolCreate, ctx: CreateContext) -> None:
+def collect(verrors: ValidationErrors, rule: Rule, data: ZpoolCreate, ctx: CreateContext) -> None:
     """Run one rule and fold what it raises into ``verrors``."""
     try:
         rule(data, ctx)
@@ -95,16 +95,16 @@ def collect(verrors: ValidationErrors, rule: Rule, data: ZPoolCreate, ctx: Creat
         verrors.add(e.attribute, e.errmsg, e.errno)
 
 
-def dedup_requested(data: ZPoolCreate) -> bool:
+def dedup_requested(data: ZpoolCreate) -> bool:
     """Any value other than off (on, verify, a checksum) enables dedup."""
     return str(data.filesystem_properties.dedup or "off").lower() != "off"
 
 
-def has_draid(data: ZPoolCreate) -> bool:
+def has_draid(data: ZpoolCreate) -> bool:
     return any(vdev.type.startswith("draid") for vdev in data.topology.data)
 
 
-def resolve_create_request(data: ZPoolCreate) -> tuple[ZPoolCreateProperties, ZPoolCreateFilesystemProperties]:
+def resolve_create_request(data: ZpoolCreate) -> tuple[ZpoolCreateProperties, ZpoolCreateFilesystemProperties]:
     """Apply the TrueNAS creation defaults.
 
     Returns copies of the requested pool and root filesystem properties with
@@ -148,19 +148,19 @@ def resolve_create_request(data: ZPoolCreate) -> tuple[ZPoolCreateProperties, ZP
     return properties, fs
 
 
-def check_name_valid(data: ZPoolCreate, ctx: CreateContext) -> None:
+def check_name_valid(data: ZpoolCreate, ctx: CreateContext) -> None:
     """The name must be acceptable to ZFS and not reserved by TrueNAS."""
     if not validate_pool_name(data.name):
         raise ValidationError(f"{SCHEMA}.name", "Invalid pool name", errno.EINVAL)
 
 
-def check_pool_absent(data: ZPoolCreate, ctx: CreateContext) -> None:
+def check_pool_absent(data: ZpoolCreate, ctx: CreateContext) -> None:
     """The name must not belong to an imported or registered pool."""
     if ctx.pool_exists:
         raise ValidationError(f"{SCHEMA}.name", "A pool with this name already exists.", errno.EEXIST)
 
 
-def _check_vdev_structure(root: str, i: int, vdev: ZPoolCreateVdev, verrors: ValidationErrors) -> None:
+def _check_vdev_structure(root: str, i: int, vdev: ZpoolCreateVdev, verrors: ValidationErrors) -> None:
     """Structural checks that apply whether or not the topology policy is bypassed."""
     numdisks = len(vdev.disks)
     if root == "log" and vdev.type not in ("disk", "mirror"):
@@ -185,7 +185,7 @@ def _check_vdev_structure(root: str, i: int, vdev: ZPoolCreateVdev, verrors: Val
             verrors.add(f"{SCHEMA}.topology.{root}.{i}.type", str(e), errno.EINVAL)
 
 
-def check_layout(data: ZPoolCreate, ctx: CreateContext) -> None:
+def check_layout(data: ZpoolCreate, ctx: CreateContext) -> None:
     """Validate the topology before any disk is touched.
 
     Structural checks always apply: the minimum disk count per vdev type, the
@@ -250,7 +250,7 @@ def check_layout(data: ZPoolCreate, ctx: CreateContext) -> None:
     verrors.check()
 
 
-def check_spare_sizes(data: ZPoolCreate, ctx: CreateContext) -> None:
+def check_spare_sizes(data: ZpoolCreate, ctx: CreateContext) -> None:
     """A hot spare must be able to replace the smallest data disk.
 
     The service calls this only after the disks are known to be available,
@@ -273,7 +273,7 @@ def check_spare_sizes(data: ZPoolCreate, ctx: CreateContext) -> None:
     verrors.check()
 
 
-def check_dedup_entitlement(data: ZPoolCreate, ctx: CreateContext) -> None:
+def check_dedup_entitlement(data: ZpoolCreate, ctx: CreateContext) -> None:
     """Deduplication may only be enabled on a system entitled to it.
 
     The entitlement engine decides and supplies the message. Matches the gate
@@ -287,7 +287,7 @@ def check_dedup_entitlement(data: ZPoolCreate, ctx: CreateContext) -> None:
         raise ValidationError(f"{SCHEMA}.filesystem_properties.dedup", ctx.dedup_entitlement.message, errno.EPERM)
 
 
-def check_sed_entitlement(data: ZPoolCreate, ctx: CreateContext) -> None:
+def check_sed_entitlement(data: ZpoolCreate, ctx: CreateContext) -> None:
     """An all-SED pool may only be created on a system entitled to SED.
 
     The service calls this only for requests with ``all_sed`` set and after the
@@ -298,7 +298,7 @@ def check_sed_entitlement(data: ZPoolCreate, ctx: CreateContext) -> None:
         raise ValidationError(f"{SCHEMA}.all_sed", ctx.sed_entitlement.message, errno.EPERM)
 
 
-def check_force_entitlement(data: ZPoolCreate, ctx: CreateContext) -> None:
+def check_force_entitlement(data: ZpoolCreate, ctx: CreateContext) -> None:
     """Bypassing the topology policy is a footgun and is not permitted on
     systems with a support entitlement, which are expected to use supported
     topologies.

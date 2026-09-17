@@ -1,4 +1,4 @@
-from middlewared.api.current import ZPoolQuery
+from middlewared.api.current import ZpoolQuery
 from middlewared.service import Service, private
 from middlewared.service_exception import MatchNotFound
 from middlewared.utils.zfs.event import ZfsConfigSyncEvent, ZfsEvent
@@ -44,7 +44,7 @@ class DiskService(Service):
     @private
     async def sync_all_zfs_guid(self):
         boot_pool = await self.call2(self.s.boot.pool_name)
-        for pool in await self.call2(self.s.zpool.query_impl, ZPoolQuery(topology=True)):
+        for pool in await self.call2(self.s.zpool.query_impl, ZpoolQuery(topology=True)):
             if pool["name"] == boot_pool:
                 continue
             try:
@@ -62,7 +62,7 @@ class DiskService(Service):
             topology = pool_id_or_pool["topology"]
         elif isinstance(pool_id_or_pool, str):
             results = await self.call2(
-                self.s.zpool.query_impl, ZPoolQuery(pool_names=[pool_id_or_pool], topology=True)
+                self.s.zpool.query_impl, ZpoolQuery(pool_names=[pool_id_or_pool], topology=True)
             )
             if not results:
                 raise MatchNotFound()

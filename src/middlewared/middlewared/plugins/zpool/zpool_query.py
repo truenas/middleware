@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Iterable
 
-from middlewared.api.current import ZPoolEntry, ZPoolQuery
+from middlewared.api.current import ZpoolEntry, ZpoolQuery
 
 from .query_impl import query_impl as _raw_query
 
@@ -27,14 +27,14 @@ EVENT_PROPERTIES = (
 )
 
 
-def query_impl(tls: Any, data: ZPoolQuery) -> list[dict[str, Any]]:
+def query_impl(tls: Any, data: ZpoolQuery) -> list[dict[str, Any]]:
     return _raw_query(tls.lzh, data.model_dump())
 
 
 def offline_entries(
     context: ServiceContext, db_pools: dict[str, dict[str, Any]], offline_names: Iterable[str]
 ) -> list[dict[str, Any]]:
-    """Build OFFLINE ZPoolEntry dicts for pools not currently imported.
+    """Build OFFLINE ZpoolEntry dicts for pools not currently imported.
 
     For pools flagged as all-SED in the database, checks whether locked
     SED disks may explain the import failure and sets status_code and
@@ -90,7 +90,7 @@ def offline_entries(
     return entries
 
 
-def query(context: ServiceContext, data: ZPoolQuery) -> list[ZPoolEntry]:
+def query(context: ServiceContext, data: ZpoolQuery) -> list[ZpoolEntry]:
     boot_pool_name = context.call_sync2(context.s.boot.pool_name)
     requested_names = data.pool_names
 
@@ -116,7 +116,7 @@ def query(context: ServiceContext, data: ZPoolQuery) -> list[ZPoolEntry]:
     offline_names = [name for name in pool_names if name not in imported_names]
     results.extend(offline_entries(context, db_pools, offline_names))
 
-    return [ZPoolEntry(**pool) for pool in results]
+    return [ZpoolEntry(**pool) for pool in results]
 
 
 def send_change_event(context: ServiceContext, pool_name: str, event_type: EventType = "CHANGED") -> None:
@@ -130,7 +130,7 @@ def send_change_event(context: ServiceContext, pool_name: str, event_type: Event
     """
     pools = context.call_sync2(
         context.s.zpool.query,
-        ZPoolQuery(pool_names=[pool_name], topology=True, scan=True, properties=list(EVENT_PROPERTIES)),
+        ZpoolQuery(pool_names=[pool_name], topology=True, scan=True, properties=list(EVENT_PROPERTIES)),
     )
     if not pools:
         return

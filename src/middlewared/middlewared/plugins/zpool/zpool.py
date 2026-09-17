@@ -4,16 +4,16 @@ from typing import TYPE_CHECKING, Any
 
 from middlewared.api import Event, api_method
 from middlewared.api.current import (
-    ZPoolCreate,
-    ZPoolCreateArgs,
-    ZPoolCreateResult,
-    ZPoolEntry,
-    ZPoolQuery,
-    ZPoolQueryAddedEvent,
-    ZPoolQueryArgs,
-    ZPoolQueryChangedEvent,
-    ZPoolQueryRemovedEvent,
-    ZPoolQueryResult,
+    ZpoolCreate,
+    ZpoolCreateArgs,
+    ZpoolCreateResult,
+    ZpoolEntry,
+    ZpoolQuery,
+    ZpoolQueryAddedEvent,
+    ZpoolQueryArgs,
+    ZpoolQueryChangedEvent,
+    ZpoolQueryRemovedEvent,
+    ZpoolQueryResult,
 )
 from middlewared.service import Service, job, private
 from middlewared.service.decorators import pass_thread_local_storage
@@ -33,23 +33,23 @@ if TYPE_CHECKING:
     from middlewared.main import Middleware
     from middlewared.utils.types import EventType
 
-__all__ = ("ZPoolService",)
+__all__ = ("ZpoolService",)
 
 
-class ZPoolService(Service):
+class ZpoolService(Service):
     class Config:
         namespace = "zpool"
         cli_private = True
-        entry = ZPoolEntry
+        entry = ZpoolEntry
         events = [
             Event(
                 name="zpool.query",
                 description="Sent on zpool changes.",
                 roles=["POOL_READ"],
                 models={
-                    "ADDED": ZPoolQueryAddedEvent,
-                    "CHANGED": ZPoolQueryChangedEvent,
-                    "REMOVED": ZPoolQueryRemovedEvent,
+                    "ADDED": ZpoolQueryAddedEvent,
+                    "CHANGED": ZpoolQueryChangedEvent,
+                    "REMOVED": ZpoolQueryRemovedEvent,
                 },
             )
         ]
@@ -60,11 +60,11 @@ class ZPoolService(Service):
 
     @private
     @pass_thread_local_storage
-    def query_impl(self, tls: Any, data: ZPoolQuery) -> list[dict[str, Any]]:
+    def query_impl(self, tls: Any, data: ZpoolQuery) -> list[dict[str, Any]]:
         return _query.query_impl(tls, data)
 
-    @api_method(ZPoolQueryArgs, ZPoolQueryResult, roles=["POOL_READ"], check_annotations=True)
-    def query(self, data: ZPoolQuery) -> list[ZPoolEntry]:
+    @api_method(ZpoolQueryArgs, ZpoolQueryResult, roles=["POOL_READ"], check_annotations=True)
+    def query(self, data: ZpoolQuery) -> list[ZpoolEntry]:
         """
         Query ZFS pools with flexible options for properties, topology, scan, and features.
 
@@ -134,15 +134,15 @@ class ZPoolService(Service):
         create_impl(tls.lzh, name, vdevs, properties, filesystem_properties, force)
 
     @api_method(
-        ZPoolCreateArgs,
-        ZPoolCreateResult,
+        ZpoolCreateArgs,
+        ZpoolCreateResult,
         roles=["POOL_WRITE"],
         audit="Pool create",
         audit_extended=lambda data: data["name"],
         check_annotations=True,
     )
     @job(lock="pool_createupdate")
-    def create(self, job: Job, data: ZPoolCreate) -> ZPoolEntry:
+    def create(self, job: Job, data: ZpoolCreate) -> ZpoolEntry:
         """
         Create a ZFS pool, as ``zpool create`` does.
 

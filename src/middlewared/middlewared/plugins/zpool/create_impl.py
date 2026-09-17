@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from truenas_pylibzfs import libzfs_types
 
     from middlewared.api.base import BaseModel
-    from middlewared.api.current import ZPoolCreateTopology
+    from middlewared.api.current import ZpoolCreateTopology
 
 __all__ = (
     "DraidConfigError",
@@ -121,7 +121,7 @@ def resolve_draid_ndata(children: int, parity: int, nspares: int, ndata: int | N
     return ndata
 
 
-def convert_topology_to_vdevs(topology: ZPoolCreateTopology) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+def convert_topology_to_vdevs(topology: ZpoolCreateTopology) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     """Flatten an API topology into a disk map and a vdev list.
 
     Returns ``(disks, vdevs)`` where ``disks`` maps each disk name to ``{'vdev':

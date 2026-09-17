@@ -5,24 +5,24 @@ from pydantic import Field
 from middlewared.api.base import BaseModel
 
 __all__ = (
-    "ZPoolScan",
-    "ZPoolExpand",
-    "ZPoolPropertyValue",
-    "ZPoolVdevStats",
-    "ZPoolVdev",
-    "ZPoolTopology",
-    "ZPoolFeature",
-    "ZPoolEntry",
-    "ZPoolQuery",
-    "ZPoolQueryArgs",
-    "ZPoolQueryResult",
-    "ZPoolQueryAddedEvent",
-    "ZPoolQueryChangedEvent",
-    "ZPoolQueryRemovedEvent",
+    "ZpoolScan",
+    "ZpoolExpand",
+    "ZpoolPropertyValue",
+    "ZpoolVdevStats",
+    "ZpoolVdev",
+    "ZpoolTopology",
+    "ZpoolFeature",
+    "ZpoolEntry",
+    "ZpoolQuery",
+    "ZpoolQueryArgs",
+    "ZpoolQueryResult",
+    "ZpoolQueryAddedEvent",
+    "ZpoolQueryChangedEvent",
+    "ZpoolQueryRemovedEvent",
 )
 
 
-class ZPoolPropertyValue(BaseModel):
+class ZpoolPropertyValue(BaseModel):
     raw: str = Field(description="The raw string representation of the property.")
     source: str | None = Field(
         description="The source from where this property received its value (DEFAULT, LOCAL, NONE, etc.).",
@@ -30,7 +30,7 @@ class ZPoolPropertyValue(BaseModel):
     value: int | float | str | bool | None = Field(description="The native Python value of the property.")
 
 
-class ZPoolVdevStats(BaseModel):
+class ZpoolVdevStats(BaseModel):
     timestamp: int = Field(default=0, description="High-resolution timestamp (nanoseconds).")
     allocated: int = Field(default=0, description="Allocated space in bytes.")
     space: int = Field(default=0, description="Total space in bytes.")
@@ -59,13 +59,13 @@ class ZPoolVdevStats(BaseModel):
     physical_ashift: int | None = Field(default=None, description="Physical ashift value.")
 
 
-class ZPoolVdev(BaseModel):
+class ZpoolVdev(BaseModel):
     name: str = Field(description="Vdev name (e.g., 'mirror-0', '/dev/sda1').")
     vdev_type: str = Field(description="Vdev type (e.g., 'mirror', 'raidz1', 'disk').")
     guid: int = Field(description="Globally unique identifier for this vdev.")
     state: str = Field(description="Current state (ONLINE, DEGRADED, FAULTED, OFFLINE, UNAVAIL, etc.).")
-    stats: ZPoolVdevStats = Field(description="Vdev I/O statistics.")
-    children: list["ZPoolVdev"] = Field(description="Child vdevs.")
+    stats: ZpoolVdevStats = Field(description="Vdev I/O statistics.")
+    children: list["ZpoolVdev"] = Field(description="Child vdevs.")
     top_guid: int | None = Field(default=None, description="GUID of the top-level vdev this belongs to.")
     path: str | None = Field(
         default=None,
@@ -78,16 +78,16 @@ class ZPoolVdev(BaseModel):
     )
 
 
-class ZPoolTopology(BaseModel):
-    data: list[ZPoolVdev] = Field(description="Array of data vdev configurations.")
-    log: list[ZPoolVdev] = Field(description="Array of ZFS Intent Log (ZIL) vdev configurations.")
-    cache: list[ZPoolVdev] = Field(description="Array of L2ARC cache vdev configurations.")
-    spares: list[ZPoolVdev] = Field(description="Array of spare disk configurations.")
-    special: list[ZPoolVdev] = Field(description="Array of special vdev configurations for metadata.")
-    dedup: list[ZPoolVdev] = Field(description="Array of deduplication table vdev configurations.")
+class ZpoolTopology(BaseModel):
+    data: list[ZpoolVdev] = Field(description="Array of data vdev configurations.")
+    log: list[ZpoolVdev] = Field(description="Array of ZFS Intent Log (ZIL) vdev configurations.")
+    cache: list[ZpoolVdev] = Field(description="Array of L2ARC cache vdev configurations.")
+    spares: list[ZpoolVdev] = Field(description="Array of spare disk configurations.")
+    special: list[ZpoolVdev] = Field(description="Array of special vdev configurations for metadata.")
+    dedup: list[ZpoolVdev] = Field(description="Array of deduplication table vdev configurations.")
 
 
-class ZPoolScan(BaseModel):
+class ZpoolScan(BaseModel):
     function: Literal["RESILVER", "SCRUB"] = Field(description="Type of ZFS pool scan.")
     state: Literal["SCANNING", "FINISHED", "CANCELED"] = Field(description="Current lifecycle state of the scan.")
     start_time: int = Field(description="Scan start time (unix timestamp).")
@@ -103,7 +103,7 @@ class ZPoolScan(BaseModel):
     total_secs_left: int | None = Field(description="Number of seconds left (`null` if the scan is not running).")
 
 
-class ZPoolExpand(BaseModel):
+class ZpoolExpand(BaseModel):
     state: str = Field(description="Expansion state (e.g., SCANNING, FINISHED).")
     expanding_vdev: int = Field(description="Index of the vdev being expanded.")
     start_time: int = Field(description="Expansion start time (unix timestamp).")
@@ -115,14 +115,14 @@ class ZPoolExpand(BaseModel):
     percentage: float = Field(description="Expansion progress (between 0 and 100%).")
 
 
-class ZPoolFeature(BaseModel):
+class ZpoolFeature(BaseModel):
     name: str = Field(description="Feature name.")
     guid: str = Field(description="Feature GUID.")
     description: str = Field(description="Feature description.")
     state: str = Field(description="Feature state.")
 
 
-class ZPoolEntry(BaseModel):
+class ZpoolEntry(BaseModel):
     id: int | None = Field(
         default=None,
         description=(
@@ -149,17 +149,17 @@ class ZPoolEntry(BaseModel):
             "`null` when the SED status of the pool has not yet been determined or does not apply."
         ),
     )
-    properties: dict[str, ZPoolPropertyValue] | None = Field(
+    properties: dict[str, ZpoolPropertyValue] | None = Field(
         default=None,
         description="Pool properties, keyed by property name.",
     )
-    topology: ZPoolTopology | None = Field(default=None, description="Pool vdev topology.")
-    scan: ZPoolScan | None = Field(default=None, description="Most recent scrub or resilver information.")
-    expand: ZPoolExpand | None = Field(default=None, description="RAIDZ expansion information.")
-    features: list[ZPoolFeature] | None = Field(default=None, description="Pool feature flags.")
+    topology: ZpoolTopology | None = Field(default=None, description="Pool vdev topology.")
+    scan: ZpoolScan | None = Field(default=None, description="Most recent scrub or resilver information.")
+    expand: ZpoolExpand | None = Field(default=None, description="RAIDZ expansion information.")
+    features: list[ZpoolFeature] | None = Field(default=None, description="Pool feature flags.")
 
 
-class ZPoolQuery(BaseModel):
+class ZpoolQuery(BaseModel):
     pool_names: list[str] | None = Field(
         default=None,
         description="Pool names to query. None queries all imported pools.",
@@ -174,23 +174,23 @@ class ZPoolQuery(BaseModel):
     features: bool = Field(default=False, description="Include feature flags.")
 
 
-class ZPoolQueryArgs(BaseModel):
-    data: ZPoolQuery = Field(default=ZPoolQuery(), description="Query parameters.")
+class ZpoolQueryArgs(BaseModel):
+    data: ZpoolQuery = Field(default=ZpoolQuery(), description="Query parameters.")
 
 
-class ZPoolQueryResult(BaseModel):
-    result: list[ZPoolEntry]
+class ZpoolQueryResult(BaseModel):
+    result: list[ZpoolEntry]
 
 
-class ZPoolQueryAddedEvent(BaseModel):
+class ZpoolQueryAddedEvent(BaseModel):
     id: int = Field(description="Database id of the pool.")
-    fields: ZPoolEntry = Field(description="Event fields.")
+    fields: ZpoolEntry = Field(description="Event fields.")
 
 
-class ZPoolQueryChangedEvent(BaseModel):
+class ZpoolQueryChangedEvent(BaseModel):
     id: int = Field(description="Database id of the pool.")
-    fields: ZPoolEntry = Field(description="Event fields.")
+    fields: ZpoolEntry = Field(description="Event fields.")
 
 
-class ZPoolQueryRemovedEvent(BaseModel):
+class ZpoolQueryRemovedEvent(BaseModel):
     id: int = Field(description="Database id of the pool.")

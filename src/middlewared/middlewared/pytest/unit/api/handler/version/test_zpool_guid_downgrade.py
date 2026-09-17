@@ -3,12 +3,12 @@
 import pytest
 
 from middlewared.api.base.handler.version import APIVersion, APIVersionsAdapter
-from middlewared.api.v26_0_0.zpool_query import ZPoolQueryResult as ZPoolQueryResult_v26_0_0
-from middlewared.api.v27_0_0.zpool import ZPoolQueryResult as ZPoolQueryResult_v27_0_0
+from middlewared.api.v26_0_0.zpool_query import ZpoolQueryResult as ZpoolQueryResult_v26_0_0
+from middlewared.api.v27_0_0.zpool import ZpoolQueryResult as ZpoolQueryResult_v27_0_0
 
 from .utils import TestModelProvider
 
-MODEL_NAME = "ZPoolQueryResult"
+MODEL_NAME = "ZpoolQueryResult"
 # above 2**53, which is where a JSON consumer reading a number as a double starts rounding
 POOL_GUID = 13849128093487261283
 VDEV_GUID = 17303962713598463910
@@ -18,8 +18,8 @@ LEAF_GUID = 9223372036854775809
 def _build_adapter():
     return APIVersionsAdapter(
         [
-            APIVersion("v26.0.0", TestModelProvider({MODEL_NAME: ZPoolQueryResult_v26_0_0})),
-            APIVersion("v27.0.0", TestModelProvider({MODEL_NAME: ZPoolQueryResult_v27_0_0})),
+            APIVersion("v26.0.0", TestModelProvider({MODEL_NAME: ZpoolQueryResult_v26_0_0})),
+            APIVersion("v27.0.0", TestModelProvider({MODEL_NAME: ZpoolQueryResult_v27_0_0})),
         ]
     )
 

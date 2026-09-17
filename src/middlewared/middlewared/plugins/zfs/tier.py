@@ -27,7 +27,7 @@ from truenas_zfstierd_common import (
 
 from middlewared.api import api_method
 from middlewared.api.current import (
-    ZPoolQuery,
+    ZpoolQuery,
     ZFSResourceQuery,
     ZfsTierDatasetSetTierArgs,
     ZfsTierDatasetSetTierResult,
@@ -692,7 +692,7 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
         try:
             pools = await self.call2(
                 self.s.zpool.query_impl,
-                ZPoolQuery(
+                ZpoolQuery(
                     pool_names=[pool_name],
                     properties=[
                         "class_special_usable",
