@@ -1838,6 +1838,13 @@ class SMBFSAttachmentDelegate(LockableFSAttachmentDelegate):
 
     async def restart_reload_services(self, attachments):
         """
+        Regenerate smb4.conf and tell smbd to reload it. A bare `etc.generate` is not
+        enough here: an established smbd child only re-reads smb4.conf on its periodic
+        housekeeping check (every 180 seconds), so a client whose session predates the
+        change would keep getting STATUS_BAD_NETWORK_NAME on tree connect after an
+        unlock. `service.control RELOAD` regenerates the config and then sends
+        `smbcontrol smbd reload-config`, which the smbd parent forwards to every child.
+
         mDNS may need to be reloaded if a time machine share is located on
         the share being attached.
         """
@@ -1849,7 +1856,7 @@ class SMBFSAttachmentDelegate(LockableFSAttachmentDelegate):
             )
             return
 
-        await self.middleware.call('etc.generate', 'smb')
+        await (await self.middleware.call('service.control', 'RELOAD', 'cifs')).wait(raise_error=True)
         await (await self.middleware.call('service.control', 'RELOAD', 'discovery')).wait(raise_error=True)
 
     async def is_child_of_path(self, resource, path, check_parent, exact_match):
