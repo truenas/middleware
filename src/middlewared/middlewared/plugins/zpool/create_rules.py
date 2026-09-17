@@ -42,6 +42,7 @@ __all__ = (
     "SCHEMA",
     "CreateContext",
     "check_dedup_entitlement",
+    "check_disks_unique",
     "check_force_entitlement",
     "check_layout",
     "check_name_valid",
@@ -51,6 +52,7 @@ __all__ = (
     "collect",
     "dedup_requested",
     "resolve_create_request",
+    "topology_disks",
 )
 
 SCHEMA = "zpool.create"
@@ -123,6 +125,10 @@ def resolve_create_request(data: ZpoolCreate) -> tuple[ZpoolCreateProperties, Zp
         properties.failmode = "continue"
     if properties.autoexpand is None:
         properties.autoexpand = "on"
+    if properties.dedup_table_quota is None and dedup_requested(data):
+        # size the table to the dedup vdevs rather than ZFS's unbounded
+        # default, matching pool.create
+        properties.dedup_table_quota = "auto"
 
     fs = data.filesystem_properties.model_copy()
     if fs.atime is None:
@@ -158,6 +164,40 @@ def check_pool_absent(data: ZpoolCreate, ctx: CreateContext) -> None:
     """The name must not belong to an imported or registered pool."""
     if ctx.pool_exists:
         raise ValidationError(f"{SCHEMA}.name", "A pool with this name already exists.", errno.EEXIST)
+
+
+def topology_disks(data: ZpoolCreate) -> list[tuple[str, str]]:
+    """Every disk the topology names, as ``(disk, location)`` pairs in request order."""
+    found = []
+    for root in ("data", "log", "special", "dedup"):
+        for i, vdev in enumerate(getattr(data.topology, root)):
+            for disk in vdev.disks:
+                found.append((disk, f"{root}.{i}"))
+    for root in ("cache", "spares"):
+        for disk in getattr(data.topology, root):
+            found.append((disk, root))
+    return found
+
+
+def check_disks_unique(data: ZpoolCreate, ctx: CreateContext) -> None:
+    """A disk may appear once in the whole topology.
+
+    The topology is flattened into one device list per vdev before the disks
+    are formatted, so a disk named twice would silently vanish from the first
+    vdev and only fail inside the binding after the wipe.
+    """
+    seen: dict[str, str] = {}
+    verrors = ValidationErrors()
+    for disk, location in topology_disks(data):
+        if disk in seen:
+            verrors.add(
+                f"{SCHEMA}.topology.{location}",
+                f"Disk {disk!r} is already used by {seen[disk]}.",
+                errno.EINVAL,
+            )
+        else:
+            seen[disk] = location
+    verrors.check()
 
 
 def _check_vdev_structure(root: str, i: int, vdev: ZpoolCreateVdev, verrors: ValidationErrors) -> None:

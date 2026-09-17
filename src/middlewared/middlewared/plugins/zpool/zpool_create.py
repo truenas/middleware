@@ -15,6 +15,7 @@ from .create_rules import (
     SCHEMA,
     CreateContext,
     check_dedup_entitlement,
+    check_disks_unique,
     check_force_entitlement,
     check_layout,
     check_name_valid,
@@ -148,6 +149,7 @@ def create(context: ServiceContext, job: Job, data: ZpoolCreate) -> ZpoolEntry:
         or context.call_sync2(context.s.zpool.query, ZpoolQuery(pool_names=[name]))
     )
     collect(verrors, check_pool_absent, data, ctx)
+    collect(verrors, check_disks_unique, data, ctx)
     collect(verrors, check_layout, data, ctx)
 
     # The entitlements are settled before any disk is looked at so an
