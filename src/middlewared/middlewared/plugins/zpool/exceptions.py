@@ -16,6 +16,7 @@ __all__ = (
     "ZpoolResiliverInProgressException",
     "ZpoolTooManyScrubsException",
     "ZpoolCreateException",
+    "ZpoolTopologyRejected",
 )
 
 
@@ -175,6 +176,22 @@ class ZpoolCreateException(ZpoolException):
     def __init__(self, pool: str, error: str):
         self.message = f"{pool!r}: failed to create pool: {error}"
         super().__init__(pool, error)
+
+    def __str__(self) -> str:
+        return self.message
+
+
+class ZpoolTopologyRejected(ZpoolException):
+    """The binding refused a pool topology or its properties before anything was created."""
+
+    errno = errno.EINVAL
+
+    def __init__(self, location: str | None, error: str):
+        self.location = location
+        """The topology root the binding judged (``data``, ``special``, ...), with the
+        vdev index when known (``data.1``), or None when it faulted something else."""
+        self.message = error
+        super().__init__(location, error)
 
     def __str__(self) -> str:
         return self.message

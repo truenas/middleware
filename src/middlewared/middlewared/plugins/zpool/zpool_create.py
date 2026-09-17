@@ -17,7 +17,7 @@ from .create_rules import (
     check_dedup_entitlement,
     check_disks_unique,
     check_force_entitlement,
-    check_layout,
+    check_min_disks,
     check_name_valid,
     check_pool_absent,
     check_sed_entitlement,
@@ -26,7 +26,7 @@ from .create_rules import (
     dedup_requested,
     resolve_create_request,
 )
-from .exceptions import ZpoolException
+from .exceptions import ZpoolException, ZpoolTopologyRejected
 
 if TYPE_CHECKING:
     from middlewared.job import Job
@@ -150,7 +150,7 @@ def create(context: ServiceContext, job: Job, data: ZpoolCreate) -> ZpoolEntry:
     )
     collect(verrors, check_pool_absent, data, ctx)
     collect(verrors, check_disks_unique, data, ctx)
-    collect(verrors, check_layout, data, ctx)
+    collect(verrors, check_min_disks, data, ctx)
 
     # The entitlements are settled before any disk is looked at so an
     # unlicensed request fails without further work.
@@ -165,7 +165,25 @@ def create(context: ServiceContext, job: Job, data: ZpoolCreate) -> ZpoolEntry:
         collect(verrors, check_force_entitlement, data, ctx)
     verrors.check()
 
+    # The binding judges the rest of the layout and the property names on the
+    # disk names alone, so a topology it would refuse is caught here rather
+    # than after the disks have been formatted for it.
     disks, vdevs = convert_topology_to_vdevs(data.topology)
+    pool_properties = properties_to_zfs(ctx.properties)
+    fs_properties = properties_to_zfs(ctx.filesystem_properties)
+    try:
+        context.call_sync2(
+            context.s.zpool.validate_impl,
+            name,
+            vdevs,
+            pool_properties,
+            fs_properties,
+            data.force_topology,
+        )
+    except ZpoolTopologyRejected as e:
+        verrors.add(f"{SCHEMA}.topology.{e.location}" if e.location else SCHEMA, e.message, e.errno)
+    verrors.check()
+
     verrors.add_child(
         SCHEMA,
         context.middleware.call_sync("disk.check_disks_availability", list(disks), data.allow_duplicate_serials),
@@ -179,7 +197,6 @@ def create(context: ServiceContext, job: Job, data: ZpoolCreate) -> ZpoolEntry:
     log_disks = [disk for vdev in data.topology.log for disk in vdev.disks]
     prepare_disks(context, job, disks, log_disks, data.all_sed, SCHEMA)
 
-    pool_properties = properties_to_zfs(ctx.properties)
     pool_id: int | None = None
     created = False
     try:
@@ -189,7 +206,7 @@ def create(context: ServiceContext, job: Job, data: ZpoolCreate) -> ZpoolEntry:
             name,
             vdevs,
             pool_properties,
-            properties_to_zfs(ctx.filesystem_properties),
+            fs_properties,
             data.force_topology,
         )
         created = True

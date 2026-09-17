@@ -10,19 +10,18 @@ import pytest
 from middlewared.api.base.handler.accept import accept_params
 from middlewared.api.current import ZpoolCreate, ZpoolCreateArgs
 from middlewared.plugins.zpool.create_impl import (
-    DraidConfigError,
     assemble_create_pool_vdev_kwargs,
     build_vdev_spec,
     convert_topology_to_vdevs,
+    default_draid_ndata,
     properties_to_zfs,
-    resolve_draid_ndata,
 )
 from middlewared.plugins.zpool.create_rules import (
     CreateContext,
     check_dedup_entitlement,
     check_disks_unique,
     check_force_entitlement,
-    check_layout,
+    check_min_disks,
     check_pool_absent,
     check_sed_entitlement,
     check_spare_sizes,
@@ -30,6 +29,7 @@ from middlewared.plugins.zpool.create_rules import (
     dedup_requested,
     resolve_create_request,
 )
+from middlewared.plugins.zpool.exceptions import ZpoolTopologyRejected
 from middlewared.service_exception import ValidationError, ValidationErrors
 
 RAIDZ1 = {"data": [{"type": "raidz1", "disks": ["sda", "sdb", "sdc"]}]}
@@ -208,37 +208,24 @@ def test_dedup_requested(dedup, expected):
 
 
 # ---------------------------------------------------------------------------
-# resolve_draid_ndata
+# default_draid_ndata
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize(
-    "children,parity,nspares,ndata,expected",
+    "children,parity,nspares,expected",
     [
-        (5, 1, 0, 1, 1),
-        (10, 2, 1, 4, 4),
-        (5, 1, 1, None, 3),
-        (4, 1, 0, None, 3),
-        (20, 1, 1, None, 8),
+        (5, 1, 1, 3),
+        (4, 1, 0, 3),
+        (20, 1, 1, 8),
+        (10, 2, 0, 8),
+        # too few disks: 1 rather than 0 or negative, so the binding reports the shortage
+        (3, 1, 3, 1),
+        (2, 2, 0, 1),
     ],
 )
-def test_resolve_draid_ndata_ok(children, parity, nspares, ndata, expected):
-    assert resolve_draid_ndata(children, parity, nspares, ndata) == expected
-
-
-@pytest.mark.parametrize(
-    "children,parity,nspares,ndata",
-    [
-        (3, 1, 3, None),
-        (3, 1, 0, 3),
-        (5, 4, 0, 1),
-        (5, 1, 4, 1),
-        (2, 1, 0, 2),
-    ],
-)
-def test_resolve_draid_ndata_invalid(children, parity, nspares, ndata):
-    with pytest.raises(DraidConfigError):
-        resolve_draid_ndata(children, parity, nspares, ndata)
+def test_default_draid_ndata(children, parity, nspares, expected):
+    assert default_draid_ndata(children, parity, nspares) == expected
 
 
 # ---------------------------------------------------------------------------
@@ -259,14 +246,15 @@ def test_convert_topology_to_vdevs():
     )
     disks, vdevs = convert_topology_to_vdevs(data.topology)
     assert sorted(disks) == [f"sd{c}" for c in "abcdefghijkl"]
-    assert [(v["root"], v["type"]) for v in vdevs] == [
-        ("data", "raidz1"),
-        ("log", "mirror"),
-        ("special", "mirror"),
-        ("dedup", "mirror"),
-        ("cache", "disk"),
-        ("spares", "disk"),
+    assert [(v["root"], v["type"], v["disks"]) for v in vdevs] == [
+        ("data", "raidz1", ["sda", "sdb", "sdc"]),
+        ("log", "mirror", ["sdd", "sde"]),
+        ("special", "mirror", ["sdi", "sdj"]),
+        ("dedup", "mirror", ["sdk", "sdl"]),
+        ("cache", "disk", ["sdf"]),
+        ("spares", "disk", ["sdg", "sdh"]),
     ]
+    assert all(v["devices"] == [] for v in vdevs)
     # the device lists are shared so format_disks fills them in place
     disks["sdg"]["vdev"].append("/dev/g")
     disks["sdh"]["vdev"].append("/dev/h")
@@ -286,14 +274,15 @@ def test_convert_topology_carries_draid_parameters():
 
 def test_build_vdev_spec_and_assemble():
     vdevs = [
-        {"root": "data", "type": "mirror", "devices": ["/dev/a", "/dev/b"]},
-        {"root": "data", "type": "mirror", "devices": ["/dev/c", "/dev/d"]},
-        {"root": "cache", "type": "disk", "devices": ["/dev/e", "/dev/f"]},
-        {"root": "log", "type": "disk", "devices": ["/dev/g"]},
-        {"root": "spares", "type": "disk", "devices": ["/dev/h"]},
+        {"root": "data", "type": "mirror", "disks": ["a", "b"], "devices": ["/dev/a", "/dev/b"]},
+        {"root": "data", "type": "mirror", "disks": ["c", "d"], "devices": ["/dev/c", "/dev/d"]},
+        {"root": "cache", "type": "disk", "disks": ["e", "f"], "devices": ["/dev/e", "/dev/f"]},
+        {"root": "log", "type": "disk", "disks": ["g"], "devices": ["/dev/g"]},
+        {"root": "spares", "type": "disk", "disks": ["h"], "devices": ["/dev/h"]},
         {
-            "root": "special",
+            "root": "data",
             "type": "draid1",
+            "disks": ["i", "j", "k"],
             "devices": ["/dev/i", "/dev/j", "/dev/k"],
             "draid_data_disks": 1,
             "draid_spare_disks": 0,
@@ -301,14 +290,36 @@ def test_build_vdev_spec_and_assemble():
     ]
     leaves = build_vdev_spec(vdevs[2])
     assert isinstance(leaves, list) and len(leaves) == 2
+    assert [leaf.name for leaf in leaves] == ["/dev/e", "/dev/f"]
+    assert [leaf.name for leaf in build_vdev_spec(vdevs[2], "disks")] == ["e", "f"]
     draid = build_vdev_spec(vdevs[5])
     assert draid.name == "1d:0s"
     assert len(draid.children) == 3
     kwargs = assemble_create_pool_vdev_kwargs(vdevs)
-    assert sorted(kwargs) == ["cache_vdevs", "log_vdevs", "spare_vdevs", "special_vdevs", "storage_vdevs"]
-    assert len(kwargs["storage_vdevs"]) == 2
+    assert sorted(kwargs) == ["cache_vdevs", "log_vdevs", "spare_vdevs", "storage_vdevs"]
+    assert len(kwargs["storage_vdevs"]) == 3
     assert len(kwargs["cache_vdevs"]) == 2
     assert len(kwargs["spare_vdevs"]) == 1
+
+
+def test_build_vdev_spec_defaults_draid_ndata():
+    vdev = {"root": "data", "type": "draid2", "disks": list("abcdefghijklm"), "draid_data_disks": None,
+            "draid_spare_disks": 1}
+    assert build_vdev_spec(vdev, "disks").name == "8d:1s"
+    vdev["disks"] = list("abcde")
+    assert build_vdev_spec(vdev, "disks").name == "2d:1s"
+
+
+def test_assemble_locates_a_draid_config_the_binding_refuses():
+    vdevs = [
+        {"root": "data", "type": "mirror", "disks": ["a", "b"], "devices": []},
+        {"root": "data", "type": "draid1", "disks": ["c", "d"], "devices": [], "draid_data_disks": 5,
+         "draid_spare_disks": 0},
+    ]
+    with pytest.raises(ZpoolTopologyRejected) as e:
+        assemble_create_pool_vdev_kwargs(vdevs, "disks")
+    assert e.value.location == "data.1"
+    assert e.value.message.startswith("dRAID requires at least 6 children")
 
 
 def test_properties_to_zfs_stringifies_and_skips_unset():
@@ -323,85 +334,28 @@ def test_properties_to_zfs_stringifies_and_skips_unset():
 
 
 @pytest.mark.parametrize(
-    "topology,plain,forced",
+    "topology,errors",
     [
+        ({"data": [{"type": "raidz2", "disks": ["a", "b", "c"]}]}, ["topology.data.0.disks"]),
+        ({"data": [{"type": "raidz1", "disks": ["a", "b"]}]}, ["topology.data.0.disks"]),
         (
-            {"data": [{"type": "mirror", "disks": ["a", "b"]}, {"type": "raidz1", "disks": ["c", "d", "e"]}]},
-            ["topology.data.1.type"],
-            [],
+            {"data": [{"type": "mirror", "disks": ["a"]}], "special": [{"type": "raidz3", "disks": ["b", "c", "d"]}]},
+            ["topology.data.0.disks", "topology.special.0.disks"],
         ),
-        (
-            {"data": [{"type": "raidz1", "disks": ["a", "b", "c"]}, {"type": "raidz1", "disks": ["d", "e", "f", "g"]}]},
-            ["topology.data.1.disks"],
-            [],
-        ),
-        ({"data": [{"type": "mirror", "disks": ["a", "b", "c", "d", "e"]}]}, ["topology.data.0.disks"], []),
-        ({"data": [{"type": "raidz2", "disks": list("abcdefghijklmnop")}]}, ["topology.data.0.disks"], []),
-        (
-            {"data": [{"type": "mirror", "disks": ["a", "b"]}], "special": [{"type": "disk", "disks": ["c"]}]},
-            ["topology.special.0.type"],
-            [],
-        ),
-        (
-            {"data": [{"type": "raidz1", "disks": ["a", "b", "c"]}], "dedup": [{"type": "disk", "disks": ["d"]}]},
-            ["topology.dedup.0.type"],
-            [],
-        ),
-        # structural checks hold even when forced
-        (
-            {"data": [{"type": "mirror", "disks": ["a", "b"]}], "special": [{"type": "draid1", "disks": ["c", "d"]}]},
-            ["topology.special.0.type"],
-            ["topology.special.0.type"],
-        ),
-        (
-            {"data": [{"type": "mirror", "disks": ["a", "b"]}], "log": [{"type": "raidz1", "disks": ["c", "d", "e"]}]},
-            ["topology.log.0.type"],
-            ["topology.log.0.type"],
-        ),
-        (
-            {"data": [{"type": "raidz2", "disks": ["a", "b", "c"]}]},
-            ["topology.data.0.disks"],
-            ["topology.data.0.disks"],
-        ),
-        (
-            {"data": [{"type": "draid1", "disks": ["a", "b", "c"], "draid_data_disks": 5}]},
-            ["topology.data.0.type"],
-            ["topology.data.0.type"],
-        ),
-        # acceptable layouts
-        ({"data": [{"type": "disk", "disks": ["a", "b", "c"]}], "special": [{"type": "disk", "disks": ["d"]}]}, [], []),
-        ({"data": [{"type": "draid1", "disks": ["a", "b", "c"], "draid_data_disks": 1}]}, [], []),
-        (
-            {
-                "data": [{"type": "mirror", "disks": ["a", "b"]}, {"type": "mirror", "disks": ["c", "d"]}],
-                "log": [{"type": "mirror", "disks": ["e", "f"]}, {"type": "mirror", "disks": ["g", "h"]}],
-            },
-            [],
-            [],
-        ),
+        ({"data": [{"type": "draid1", "disks": ["a"]}]}, ["topology.data.0.disks"]),
+        # the rest of the layout is the binding's call, not this rule's
+        ({"data": [{"type": "mirror", "disks": ["a", "b"]}, {"type": "raidz1", "disks": ["c", "d", "e"]}]}, []),
+        ({"data": [{"type": "mirror", "disks": ["a", "b"]}], "log": [{"type": "raidz1", "disks": ["c", "d", "e"]}]}, []),
+        ({"data": [{"type": "mirror", "disks": ["a", "b"]}], "special": [{"type": "disk", "disks": ["c"]}]}, []),
+        ({"data": [{"type": "draid1", "disks": ["a", "b"], "draid_data_disks": 5}]}, []),
     ],
 )
-def test_check_layout(topology, plain, forced):
+def test_check_min_disks(topology, errors):
     data = request(topology=topology)
-    assert [attr for attr, _ in run(check_layout, data, context(data))] == plain
+    assert [attr for attr, _ in run(check_min_disks, data, context(data))] == errors
+    # product minimums hold even when the topology policy is bypassed
     data = request(topology=topology, force_topology=True)
-    assert [attr for attr, _ in run(check_layout, data, context(data))] == forced
-
-
-def test_check_layout_reports_every_vdev():
-    data = request(
-        topology={
-            "data": [{"type": "raidz2", "disks": ["a", "b"]}, {"type": "mirror", "disks": ["c"]}],
-            "special": [{"type": "draid1", "disks": ["d", "e"]}],
-        }
-    )
-    attrs = [attr for attr, _ in run(check_layout, data, context(data))]
-    assert attrs == [
-        "topology.data.0.disks",
-        "topology.data.1.disks",
-        "topology.data.1.type",
-        "topology.special.0.type",
-    ]
+    assert [attr for attr, _ in run(check_min_disks, data, context(data))] == errors
 
 
 def test_check_disks_unique():

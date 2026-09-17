@@ -21,13 +21,7 @@ from middlewared.plugins.zfs_.validation_utils import validate_pool_name
 from middlewared.service_exception import ValidationError, ValidationErrors
 from middlewared.utils.size import format_size
 
-from .create_impl import (
-    MAX_DISKS_PER_VDEV,
-    MIN_DISKS_PER_VDEV,
-    VDEV_PARITY,
-    DraidConfigError,
-    resolve_draid_ndata,
-)
+from .create_impl import MIN_DISKS_PER_VDEV
 
 if typing.TYPE_CHECKING:
     from middlewared.api.current import (
@@ -35,7 +29,6 @@ if typing.TYPE_CHECKING:
         ZpoolCreate,
         ZpoolCreateFilesystemProperties,
         ZpoolCreateProperties,
-        ZpoolCreateVdev,
     )
 
 __all__ = (
@@ -44,7 +37,7 @@ __all__ = (
     "check_dedup_entitlement",
     "check_disks_unique",
     "check_force_entitlement",
-    "check_layout",
+    "check_min_disks",
     "check_name_valid",
     "check_pool_absent",
     "check_sed_entitlement",
@@ -200,93 +193,26 @@ def check_disks_unique(data: ZpoolCreate, ctx: CreateContext) -> None:
     verrors.check()
 
 
-def _check_vdev_structure(root: str, i: int, vdev: ZpoolCreateVdev, verrors: ValidationErrors) -> None:
-    """Structural checks that apply whether or not the topology policy is bypassed."""
-    numdisks = len(vdev.disks)
-    if root == "log" and vdev.type not in ("disk", "mirror"):
-        verrors.add(f"{SCHEMA}.topology.{root}.{i}.type", "Log vdevs must be disk or mirror.", errno.EINVAL)
-        return
-    if root != "data" and vdev.type.startswith("draid"):
-        verrors.add(f"{SCHEMA}.topology.{root}.{i}.type", f"dRAID is not supported for {root} vdevs.", errno.EINVAL)
-        return
+def check_min_disks(data: ZpoolCreate, ctx: CreateContext) -> None:
+    """Every vdev has at least the number of disks TrueNAS requires for its type.
 
-    mindisks = MIN_DISKS_PER_VDEV[vdev.type]
-    if numdisks < mindisks:
-        verrors.add(
-            f"{SCHEMA}.topology.{root}.{i}.disks",
-            f"You need at least {mindisks} disk(s) for this vdev type.",
-            errno.EINVAL,
-        )
-
-    if vdev.type.startswith("draid"):
-        try:
-            resolve_draid_ndata(numdisks, int(vdev.type[-1]), vdev.draid_spare_disks, vdev.draid_data_disks)
-        except DraidConfigError as e:
-            verrors.add(f"{SCHEMA}.topology.{root}.{i}.type", str(e), errno.EINVAL)
-
-
-def check_layout(data: ZpoolCreate, ctx: CreateContext) -> None:
-    """Validate the topology before any disk is touched.
-
-    Structural checks always apply: the minimum disk count per vdev type, the
-    dRAID configuration, no dRAID special or dedup vdevs, and log vdevs being
-    disk or mirror. The policy checks mirror what ``truenas_pylibzfs.create_pool()``
-    enforces unless ``force=True``: data vdevs must share one type and width,
-    mirror and RAIDZ data vdevs are capped in width, and special and dedup vdevs
-    need some redundancy when the data vdevs are redundant. ``force_topology``
-    skips the policy checks the same way ``force`` does in the binding, so the
-    disks are only formatted for a topology the binding will accept.
+    These minimums are product policy, stricter than what ZFS accepts (a
+    two-disk RAIDZ1 is legal), so they hold whether or not the topology policy
+    is bypassed. Everything else about the layout (the vdev types each root
+    accepts, the dRAID configuration, the width caps and the redundancy floor)
+    is judged by the binding's dry run once these pass, so the message the
+    caller sees is the binding's own.
     """
     verrors = ValidationErrors()
-    force = data.force_topology
-    data_redundant = any(VDEV_PARITY[vdev.type] >= 1 for vdev in data.topology.data)
-
     for root in ("data", "log", "special", "dedup"):
-        last_type = None
-        last_numdisks = None
         for i, vdev in enumerate(getattr(data.topology, root)):
-            _check_vdev_structure(root, i, vdev, verrors)
-            if force:
-                continue
-
-            numdisks = len(vdev.disks)
-            if root == "data":
-                if vdev.type in MAX_DISKS_PER_VDEV and numdisks > MAX_DISKS_PER_VDEV[vdev.type]:
-                    verrors.add(
-                        f"{SCHEMA}.topology.{root}.{i}.disks",
-                        f"You can have at most {MAX_DISKS_PER_VDEV[vdev.type]} disk(s) for this vdev type.",
-                        errno.EINVAL,
-                    )
-                elif last_type and last_type != vdev.type:
-                    verrors.add(
-                        f"{SCHEMA}.topology.{root}.{i}.type",
-                        f"You are not allowed to create a pool with different {root} vdev types "
-                        f"({last_type} and {vdev.type}).",
-                        errno.EINVAL,
-                    )
-                elif last_type and vdev.type != "disk" and numdisks != last_numdisks:
-                    # Mixing widths (for example a 7-wide and a 30-wide RAIDZ2)
-                    # leaves capacity and fault tolerance uneven across the pool
-                    # and cannot be corrected without recreating it. disk is
-                    # exempt as it has no geometry to match.
-                    verrors.add(
-                        f"{SCHEMA}.topology.{root}.{i}.disks",
-                        f"You are not allowed to create a pool with {root} vdevs of different widths "
-                        f"({last_numdisks} and {numdisks} disks).",
-                        errno.EINVAL,
-                    )
-            elif root in ("special", "dedup") and data_redundant and VDEV_PARITY[vdev.type] < 1:
-                # losing a non-redundant special vdev would otherwise be fatal to
-                # an otherwise-redundant pool
+            mindisks = MIN_DISKS_PER_VDEV[vdev.type]
+            if len(vdev.disks) < mindisks:
                 verrors.add(
-                    f"{SCHEMA}.topology.{root}.{i}.type",
-                    f"A {root} vdev with no redundancy is not allowed when data vdevs are redundant.",
+                    f"{SCHEMA}.topology.{root}.{i}.disks",
+                    f"You need at least {mindisks} disk(s) for this vdev type.",
                     errno.EINVAL,
                 )
-
-            last_type = vdev.type
-            last_numdisks = numdisks
-
     verrors.check()
 
 
