@@ -180,6 +180,34 @@ class ZpoolService(Service):
         return _create.create(self.context, job, data)
 
     @private
+    def prepare_disks(
+        self,
+        job: Job,
+        disks: dict[str, Any],
+        log_disks: list[str],
+        all_sed: bool,
+        schema: str,
+        base_percentage: int = 0,
+        upper_percentage: int = 30,
+    ) -> None:
+        """SED provisioning, fencing on HA, log overprovisioning and formatting, in that order."""
+        _create.prepare_disks(self.context, job, disks, log_disks, all_sed, schema, base_percentage, upper_percentage)
+
+    @private
+    def register(self, name: str, all_sed: bool) -> int:
+        """Mount a freshly created pool and add its database rows; returns the pool id."""
+        return _create.register(self.context, name, all_sed)
+
+    @private
+    def rollback_create(self, name: str, destroy: bool, pool_id: int | None) -> None:
+        _create.rollback(self.context, name, destroy, pool_id)
+
+    @private
+    def finish_create(self, name: str, pool_id: int) -> dict[str, Any]:
+        """Post-creation hooks and events; returns the ``pool.query`` entry."""
+        return _create.finish(self.context, name, pool_id)
+
+    @private
     def status(self, name: str | None = None, real_paths: bool = False) -> dict[str, Any]:
         """The equivalent of running 'zpool status' from the cli.
 

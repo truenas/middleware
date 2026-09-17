@@ -7,7 +7,7 @@ from fenced.fence import ExitCode as FencedExitCodes
 from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.api.current import ZpoolCreate, ZpoolEntry, ZpoolQuery
-from middlewared.plugins.pool_.utils import UpdateImplArgs
+from middlewared.plugins.pool_.utils import ZPOOL_CACHE_FILE, UpdateImplArgs
 from middlewared.service_exception import CallError, ValidationErrors
 
 from .create_impl import convert_topology_to_vdevs, properties_to_zfs
@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     from middlewared.job import Job
     from middlewared.service import ServiceContext
 
-__all__ = ("create",)
+__all__ = ("create", "finish", "prepare_disks", "register", "rollback")
 
 
 def _start_fenced(context: ServiceContext) -> None:
@@ -49,6 +49,89 @@ def _start_fenced(context: ServiceContext) -> None:
     for i in filter(lambda x: x.value[0] == rc, FencedExitCodes):
         err = i.value[1]
     raise CallError(err)
+
+
+def prepare_disks(
+    context: ServiceContext,
+    job: Job,
+    disks: dict[str, Any],
+    log_disks: list[str],
+    all_sed: bool,
+    schema: str,
+    base_percentage: int = 0,
+    upper_percentage: int = 30,
+) -> None:
+    """Take the disks a new pool will be built on, in the only safe order.
+
+    ``disks`` is the map ``convert_topology_to_vdevs`` produced; ``pool.format_disks``
+    fills each vdev's device list in place with the formatted ``/dev/<gptid>``
+    paths. Shared by ``pool.create`` and ``zpool.create``.
+    """
+    if all_sed:
+        context.middleware.call_sync("disk.setup_sed_disks_for_pool", list(disks), f"{schema}.topology", True)
+
+    # WARNING: Fenced MUST NOT start (or reload) until SED provisioning above
+    # has completed. Its persistent reservation register/acquire burst racing
+    # the TCG Security Send/Receive session corrupts controller state on some
+    # SED drive firmware (observed on TCG Ruby 1.0 NVMe). SED setup writes no
+    # user data, so fencing is only required before disks are written to
+    # (resize, format, zpool create), all of which happen below.
+    if context.middleware.call_sync("failover.licensed"):
+        _start_fenced(context)
+
+    if log_disks and (osize := context.call_sync2(context.s.system.advanced.config).overprovision):
+        # will log errors if there are any so it won't crash here (this matches CORE behavior)
+        context.middleware.call_sync("disk.resize", {disk: osize for disk in log_disks}, True).wait_sync()
+
+    context.middleware.call_sync("pool.format_disks", job, disks, base_percentage, upper_percentage)
+    os.makedirs(os.path.dirname(ZPOOL_CACHE_FILE), exist_ok=True)
+
+
+def register(context: ServiceContext, name: str, all_sed: bool) -> int:
+    """Make a freshly created pool a TrueNAS pool and return its database id.
+
+    Inherits the mountpoint again (creation sets it, which makes the source
+    "local"), mounts the root, and adds the ``storage.volume`` and default
+    ``storage.scrub`` rows. Shared by ``pool.create`` and ``zpool.create``.
+    """
+    guid = context.call_sync2(context.s.zpool.query_impl, ZpoolQuery(pool_names=[name]))[0]["guid"]
+    context.middleware.call_sync("pool.dataset.update_impl", UpdateImplArgs(name=name, iprops={"mountpoint"}))
+    context.call_sync2(context.s.zfs.resource.mount, name)
+    pool_id: int = context.middleware.call_sync(
+        "datastore.insert",
+        "storage.volume",
+        {"name": name, "guid": str(guid), "all_sed": all_sed},
+        {"prefix": "vol_"},
+    )
+    context.middleware.call_sync("datastore.insert", "storage.scrub", {"volume": pool_id}, {"prefix": "scrub_"})
+    return pool_id
+
+
+def rollback(context: ServiceContext, name: str, destroy: bool, pool_id: int | None) -> None:
+    """Undo a failed creation: destroy the pool if it got created, drop its row if it got one."""
+    if destroy:
+        try:
+            context.middleware.call_sync("zfs.pool.delete", name)
+        except Exception:
+            context.logger.warning(
+                "%s: failed to destroy the pool while rolling back its creation", name, exc_info=True
+            )
+    if pool_id:
+        context.middleware.call_sync("datastore.delete", "storage.volume", pool_id)
+
+
+def finish(context: ServiceContext, name: str, pool_id: int) -> dict[str, Any]:
+    """Run the post-creation hooks and events and return the ``pool.query`` entry."""
+    # There is really no point in waiting for all these services to reload so do
+    # them in the background.
+    context.middleware.call_sync("pool.restart_services", background=True)
+
+    pool: dict[str, Any] = context.middleware.call_sync("pool.get_instance", pool_id)
+    context.middleware.call_hook_sync("pool.post_create", pool=pool)
+    context.middleware.call_hook_sync("pool.post_create_or_update", pool=pool)
+    context.middleware.send_event("pool.query", "ADDED", id=pool_id, fields=pool)
+    context.call_sync2(context.s.zpool.send_change_event, name, "ADDED")
+    return pool
 
 
 def create(context: ServiceContext, job: Job, data: ZpoolCreate) -> ZpoolEntry:
@@ -91,28 +174,10 @@ def create(context: ServiceContext, job: Job, data: ZpoolCreate) -> ZpoolEntry:
     collect(verrors, check_spare_sizes, data, ctx)
     verrors.check()
 
-    if data.all_sed:
-        context.middleware.call_sync("disk.setup_sed_disks_for_pool", list(disks), f"{SCHEMA}.topology", True)
-
-    # WARNING: Fenced MUST NOT start (or reload) until SED provisioning above
-    # has completed. Its persistent reservation register/acquire burst racing
-    # the TCG Security Send/Receive session corrupts controller state on some
-    # SED drive firmware (observed on TCG Ruby 1.0 NVMe). SED setup writes no
-    # user data, so fencing is only required before disks are written to
-    # (resize, format, zpool create), all of which happen below.
-    if context.middleware.call_sync("failover.licensed"):
-        _start_fenced(context)
-
-    if osize := context.call_sync2(context.s.system.advanced.config).overprovision:
-        if log_disks := {disk: osize for vdev in data.topology.log for disk in vdev.disks}:
-            # will log errors if there are any so it won't crash here (this matches CORE behavior)
-            context.middleware.call_sync("disk.resize", log_disks, True).wait_sync()
-
-    context.middleware.call_sync("pool.format_disks", job, disks, 0, 30)
+    log_disks = [disk for vdev in data.topology.log for disk in vdev.disks]
+    prepare_disks(context, job, disks, log_disks, data.all_sed, SCHEMA)
 
     pool_properties = properties_to_zfs(ctx.properties)
-    os.makedirs(os.path.dirname(ctx.properties.cachefile or ""), exist_ok=True)
-
     pool_id: int | None = None
     created = False
     try:
@@ -126,45 +191,16 @@ def create(context: ServiceContext, job: Job, data: ZpoolCreate) -> ZpoolEntry:
             data.force_topology,
         )
         created = True
-
         job.set_progress(95, "Setting pool options")
-        guid = context.call_sync2(context.s.zpool.query_impl, ZpoolQuery(pool_names=[name]))[0]["guid"]
-
-        # Inherit mountpoint after create because we set mountpoint on creation
-        # making it a "local" source.
-        context.middleware.call_sync("pool.dataset.update_impl", UpdateImplArgs(name=name, iprops={"mountpoint"}))
-        context.call_sync2(context.s.zfs.resource.mount, name)
-
-        pool_id = context.middleware.call_sync(
-            "datastore.insert",
-            "storage.volume",
-            {"name": name, "guid": str(guid), "all_sed": data.all_sed},
-            {"prefix": "vol_"},
-        )
-        context.middleware.call_sync("datastore.insert", "storage.scrub", {"volume": pool_id}, {"prefix": "scrub_"})
+        pool_id = register(context, name, data.all_sed)
     except Exception as e:
-        # Something went wrong, roll back and destroy the pool.
         context.logger.debug("Pool %r failed to create with topology %r", name, data.topology.model_dump())
-        if created:
-            try:
-                context.middleware.call_sync("zfs.pool.delete", name)
-            except Exception:
-                context.logger.warning("Failed to delete pool on zpool.create rollback", exc_info=True)
-        if pool_id:
-            context.middleware.call_sync("datastore.delete", "storage.volume", pool_id)
+        rollback(context, name, created, pool_id)
         if isinstance(e, ZpoolException):
             raise CallError(str(e), e.errno) from e
         raise
 
-    # There is really no point in waiting for all these services to reload so do
-    # them in the background.
-    context.middleware.call_sync("pool.restart_services", background=True)
-
-    pool: dict[str, Any] = context.middleware.call_sync("pool.get_instance", pool_id)
-    context.middleware.call_hook_sync("pool.post_create", pool=pool)
-    context.middleware.call_hook_sync("pool.post_create_or_update", pool=pool)
-    context.middleware.send_event("pool.query", "ADDED", id=pool_id, fields=pool)
-    context.call_sync2(context.s.zpool.send_change_event, name, "ADDED")
+    finish(context, name, pool_id)
     return context.call_sync2(
         context.s.zpool.query,
         ZpoolQuery(pool_names=[name], topology=True, properties=list(pool_properties)),
