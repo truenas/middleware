@@ -377,7 +377,7 @@ async def gather_sharing(service: Service, context: GatherContext) -> dict[str, 
             elif share_service == "nfs":
                 sharing_list.append({"type": service_upper, "readonly": s["ro"]})
             elif share_service == "webshare":
-                sharing_list.append({"type": service_upper, "enabled": s["enabled"], "is_home_base": s["is_home_base"]})
+                sharing_list.append({"type": service_upper, "enabled": s.enabled, "is_home_base": s.is_home_base})
             elif share_service == "iscsi":
                 tar = await service.middleware.call("iscsi.target.query", [("id", "=", s["target"])], {"get": True})
                 ext = await service.middleware.call(
