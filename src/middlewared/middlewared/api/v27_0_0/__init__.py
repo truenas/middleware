@@ -2,6 +2,7 @@ from .acl import *
 from .acme_dns_authenticator import *
 from .alert import *
 from .alertservice import *
+from .alertservice_attributes import *
 from .api_key import *
 from .app import *
 from .app_image import *

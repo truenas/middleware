@@ -1,40 +1,45 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, TypedDict
 
 import truenas_pysnmp
 
 from middlewared.alert.base import Alert, ThreadedAlertService
+from middlewared.api.current import SNMPTrapServiceModel
 
 
-class SNMPTrapAlertService(ThreadedAlertService):
+class SNMPAuth(TypedDict):
+    host: str
+    port: int
+    v3: bool
+    community: str | None
+    v3_username: str | None
+    v3_authprotocol: str | None
+    v3_authkey: str | None
+    v3_privprotocol: str | None
+    v3_privkey: str | None
+
+
+class SNMPTrapAlertService(ThreadedAlertService[SNMPTrapServiceModel]):
     title = "SNMP Trap"
 
     def send_sync(self, alerts: list[Alert[Any]], gone_alerts: list[Alert[Any]], new_alerts: list[Alert[Any]]) -> None:
-        if self.attributes["host"] in ("localhost", "127.0.0.1", "::1"):
+        if self.attributes.host in ("localhost", "127.0.0.1", "::1"):
             if not self.call_sync2(self.s.service.started, "snmp"):
                 self.logger.trace("Local SNMP service not started, not sending traps")  # type: ignore[attr-defined]
                 return
 
-        auth = {
-            "host": self.attributes["host"],
-            "port": self.attributes["port"],
-            "v3": self.attributes["v3"],
+        auth: SNMPAuth = {
+            "host": self.attributes.host,
+            "port": self.attributes.port,
+            "v3": self.attributes.v3,
+            "community": self.attributes.community,
+            "v3_username": self.attributes.v3_username,
+            "v3_authprotocol": self.attributes.v3_authprotocol,
+            "v3_authkey": self.attributes.v3_authkey.get_secret_value(),
+            "v3_privprotocol": self.attributes.v3_privprotocol,
+            "v3_privkey": self.attributes.v3_privkey.get_secret_value(),
         }
-        if self.attributes["v3"]:
-            auth = {
-                **auth,
-                "v3_username": self.attributes["v3_username"],
-                "v3_authprotocol": self.attributes["v3_authprotocol"],
-                "v3_authkey": self.attributes["v3_authkey"],
-                "v3_privprotocol": self.attributes["v3_privprotocol"],
-                "v3_privkey": self.attributes["v3_privkey"],
-            }
-        else:
-            auth = {
-                **auth,
-                "community": self.attributes["community"],
-            }
 
         classes = self.call_sync2(self.s.alertclasses.config).classes
 
