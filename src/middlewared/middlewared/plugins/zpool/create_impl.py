@@ -1,7 +1,7 @@
 """Pure helpers for zpool.create: topology translation and property flattening.
 
-Nothing here touches middleware or the libzfs handle except ``validate_impl``
-and ``create_impl``, the two calls into ``truenas_pylibzfs``.
+Nothing here touches middleware or the libzfs handle except ``validate_impl``,
+``create_impl`` and ``destroy_impl``, the calls into ``truenas_pylibzfs``.
 """
 
 from __future__ import annotations
@@ -25,6 +25,7 @@ __all__ = (
     "build_vdev_spec",
     "convert_topology_to_vdevs",
     "create_impl",
+    "destroy_impl",
     "properties_to_zfs",
     "validate_impl",
 )
@@ -243,3 +244,12 @@ def create_impl(
         _create_pool(lzh, name, specs, properties, filesystem_properties, force, dry_run=False)
     except ZFSException as e:
         raise ZpoolCreateException(name, str(e)) from e
+
+
+def destroy_impl(lzh: libzfs_types.ZFS, name: str) -> None:
+    """Destroy a pool through ``truenas_pylibzfs``, unmounting it by force first.
+
+    Used to roll back a creation that failed after the pool existed, so the
+    new namespace never falls back to the legacy binding.
+    """
+    lzh.destroy_pool(name=name, force=True)

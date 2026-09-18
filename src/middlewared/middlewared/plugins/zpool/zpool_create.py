@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+import errno
 import os
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Iterable
 
 from fenced.fence import ExitCode as FencedExitCodes
 from truenas_pylicensed.features import LicenseFeature
@@ -111,7 +112,7 @@ def rollback(context: ServiceContext, name: str, destroy: bool, pool_id: int | N
     """Undo a failed creation: destroy the pool if it got created, drop its row if it got one."""
     if destroy:
         try:
-            context.middleware.call_sync("zfs.pool.delete", name)
+            context.call_sync2(context.s.zpool.destroy_impl, name)
         except Exception:
             context.logger.warning(
                 "%s: failed to destroy the pool while rolling back its creation", name, exc_info=True
@@ -120,8 +121,15 @@ def rollback(context: ServiceContext, name: str, destroy: bool, pool_id: int | N
         context.middleware.call_sync("datastore.delete", "storage.volume", pool_id)
 
 
-def finish(context: ServiceContext, name: str, pool_id: int) -> dict[str, Any]:
-    """Run the post-creation hooks and events and return the ``pool.query`` entry."""
+def finish(
+    context: ServiceContext, name: str, pool_id: int, properties: Iterable[str] = ()
+) -> tuple[dict[str, Any], ZpoolEntry | None]:
+    """Run the post-creation hooks and events.
+
+    Returns the ``pool.query`` entry and the ``zpool.query`` entry the ADDED
+    event carried, read with ``properties`` included so a caller that wants
+    them does not open the pool again.
+    """
     # There is really no point in waiting for all these services to reload so do
     # them in the background.
     context.middleware.call_sync("pool.restart_services", background=True)
@@ -130,8 +138,8 @@ def finish(context: ServiceContext, name: str, pool_id: int) -> dict[str, Any]:
     context.middleware.call_hook_sync("pool.post_create", pool=pool)
     context.middleware.call_hook_sync("pool.post_create_or_update", pool=pool)
     context.middleware.send_event("pool.query", "ADDED", id=pool_id, fields=pool)
-    context.call_sync2(context.s.zpool.send_change_event, name, "ADDED")
-    return pool
+    entry = context.call_sync2(context.s.zpool.send_change_event, name, "ADDED", properties)
+    return pool, entry
 
 
 def create(context: ServiceContext, job: Job, data: ZpoolCreate) -> ZpoolEntry:
@@ -182,7 +190,7 @@ def create(context: ServiceContext, job: Job, data: ZpoolCreate) -> ZpoolEntry:
     # exported one both take the name
     ctx.pool_exists = bool(
         context.call_sync2(context.s.zpool.query_impl, ZpoolQuery(pool_names=[name]))
-        or context.call_sync2(context.s.zpool.query, ZpoolQuery(pool_names=[name]))
+        or context.middleware.call_sync("datastore.query", "storage.volume", [["name", "=", name]], {"prefix": "vol_"})
     )
     collect(verrors, check_pool_absent, data, ctx)
     verrors.add_child(
@@ -191,7 +199,7 @@ def create(context: ServiceContext, job: Job, data: ZpoolCreate) -> ZpoolEntry:
     )
     verrors.check()
 
-    ctx.disk_sizes = {i.name: i.size_bytes for i in context.middleware.call_sync("disk.get_disks") if i.name in disks}
+    ctx.disk_sizes = {i.name: i.size_bytes for i in context.middleware.call_sync("disk.get_disks", list(disks))}
     collect(verrors, check_spare_sizes, data, ctx)
     verrors.check()
 
@@ -220,8 +228,7 @@ def create(context: ServiceContext, job: Job, data: ZpoolCreate) -> ZpoolEntry:
             raise CallError(str(e), e.errno) from e
         raise
 
-    finish(context, name, pool_id)
-    return context.call_sync2(
-        context.s.zpool.query,
-        ZpoolQuery(pool_names=[name], topology=True, properties=list(pool_properties)),
-    )[0]
+    _, entry = finish(context, name, pool_id, pool_properties)
+    if entry is None:
+        raise CallError(f"{name!r} was created but is no longer registered", errno.ENOENT)
+    return entry
