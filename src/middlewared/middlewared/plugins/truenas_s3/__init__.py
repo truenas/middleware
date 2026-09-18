@@ -11,7 +11,7 @@ from __future__ import annotations
 import ipaddress
 from typing import Any, TYPE_CHECKING
 
-from middlewared.api.current import S3Entry, ServiceEntry
+from middlewared.api.current import S3Entry
 from middlewared.common.attachment.certificate import CertificateServiceAttachmentDelegate
 from middlewared.common.license_reconcile import LicenseReconcileAction, LicenseReconcileDelegate
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
@@ -108,8 +108,8 @@ class S3LicenseReconcileDelegate(LicenseReconcileDelegate):
     order = 30
 
     async def should_run(self, middleware: Middleware) -> bool:
-        svc: ServiceEntry = await middleware.call("service.query", [["service", "=", SERVICE]], {"get": True})
-        return svc.state.lower() == "running"
+        svc = await middleware.call("service.query", [["service", "=", SERVICE]], {"get": True})
+        return svc["state"].lower() == "running"  # type: ignore[no-any-return]
 
 
 class S3CertificateAttachment(CertificateServiceAttachmentDelegate):
