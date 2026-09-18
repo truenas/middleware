@@ -122,6 +122,36 @@ class DockerSetupService(Service):
                     )
                 )
 
+        self.set_canmount_noauto_impl(docker_ds)
+
+    @private
+    def enforce_canmount_noauto_impl(self, pool_name):
+        config = self.middleware.call_sync('docker.config')
+        if config['pool'] != pool_name or config['dataset'] is None:
+            return
+
+        self.set_canmount_noauto_impl(config['dataset'])
+
+    @private
+    async def enforce_canmount_noauto(self, pool_name):
+        await self.middleware.run_in_thread(self.enforce_canmount_noauto_impl, pool_name)
+
+    @private
+    def set_canmount_noauto_impl(self, docker_ds):
+        # canmount cannot be inherited in zfs and its default is `on`, so every dataset of the
+        # tree has to be set individually instead of picking the value up from the apps root
+        for ds in self.call_sync2(
+            self.s.zfs.resource.query_impl,
+            ZFSResourceQuery(paths=[docker_ds], get_children=True, properties=['canmount'])
+        ):
+            if ds['type'] != 'FILESYSTEM' or ds['properties']['canmount']['raw'] == 'noauto':
+                continue
+
+            self.middleware.call_sync(
+                'pool.dataset.update_impl',
+                UpdateImplArgs(name=ds['name'], zprops={'canmount': 'noauto'})
+            )
+
     @private
     async def create_update_docker_datasets(self, docker_ds):
         """The following logic applies:
