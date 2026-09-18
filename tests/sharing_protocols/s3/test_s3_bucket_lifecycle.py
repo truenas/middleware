@@ -164,7 +164,7 @@ def test_a_recreated_name_does_not_land_on_the_old_data(admin_s3, managed_root):
 
         admin_s3.delete_bucket(Bucket=name)
         assert row_for(name) is None
-        assert call("zfs.resource.query", [], {"extra": {"paths": [first], "properties": None}}), "the dataset is kept"
+        assert call("zfs.resource.list", {"paths": [first], "properties": None}), "the dataset is kept"
 
         admin_s3.create_bucket(Bucket=name)
         second = row_for(name)["dataset"]

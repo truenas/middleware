@@ -13,4 +13,4 @@ class PoolDatasetService(Service):
         """
         Retrieve recordsize choices for datasets.
         """
-        return self.middleware.call_sync('zfs.resource.recordsize_choices', pool_name)
+        return self.call_sync2(self.s.zfs.resource.recordsize_choices, pool_name)

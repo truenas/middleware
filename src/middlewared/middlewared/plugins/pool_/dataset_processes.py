@@ -28,14 +28,14 @@ class PoolDatasetService(Service):
               }
             ]
         """
-        return await self.middleware.call('zfs.resource.processes', oid)
+        return await self.call2(self.s.zfs.resource.processes, oid)
 
     @private
     async def kill_processes(self, oid, control_services, max_tries=5):
-        return await self.middleware.call('zfs.resource.kill_processes', oid, control_services, max_tries)
+        return await self.call2(self.s.zfs.resource.kill_processes, oid, control_services, max_tries)
 
     @private
     def processes_using_paths(self, paths, include_paths=False, include_middleware=False, devices=None):
-        return self.middleware.call_sync(
-            'zfs.resource.processes_using_paths', paths, include_paths, include_middleware, devices
+        return self.call_sync2(
+            self.s.zfs.resource.processes_using_paths, paths, include_paths, include_middleware, devices
         )

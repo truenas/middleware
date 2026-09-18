@@ -35,16 +35,16 @@ def target_pool():
 def test_docker_backup_to_another_pool(docker_pool, target_pool):
     call('docker.backup_to_pool', TARGET_POOL_NAME, job=True)
     assert call(
-        'zfs.resource.query',
-        [], {"extra": {
+        'zfs.resource.list',
+        {
             'paths': [f'{TARGET_POOL_NAME}/ix-apps/app_mounts/{APP_NAME}'],
             'properties': None,
-        }}
+        }
     ) != []
     # Verify backup target's ix-apps has inherited mountpoint (not /.ix-apps)
     target_ix_apps = call(
-        'zfs.resource.query',
-        [], {"extra": {'paths': [f'{TARGET_POOL_NAME}/ix-apps'], 'properties': ['mountpoint']}}
+        'zfs.resource.list',
+        {'paths': [f'{TARGET_POOL_NAME}/ix-apps'], 'properties': ['mountpoint']}
     )
     assert target_ix_apps[0]['properties']['mountpoint']['value'] != IX_APPS_MOUNT_PATH
 
@@ -61,18 +61,18 @@ def test_docker_incremental_backup(docker_pool, target_pool):
     assert call('app.query', [['name', '=', APP_NAME]]) == []
     call('docker.backup_to_pool', TARGET_POOL_NAME, job=True)
     assert call(
-        'zfs.resource.query',
-        [], {"extra": {
+        'zfs.resource.list',
+        {
             'paths': [f'{TARGET_POOL_NAME}/ix-apps/app_mounts/{APP_NAME}'],
             'properties': None,
-        }}
+        }
     ) == []
     assert call(
-        'zfs.resource.query',
-        [], {"extra": {
+        'zfs.resource.list',
+        {
             'paths': [f'{TARGET_POOL_NAME}/ix-apps/app_mounts/{APP2_NAME}'],
             'properties': None,
-        }}
+        }
     ) != []
 
 

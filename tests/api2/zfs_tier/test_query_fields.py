@@ -1,7 +1,7 @@
 """The `tier` field on dataset and resource query namespaces.
 
 This is the headline claim of commit cfef5e8053: pool.dataset.query and
-zfs.resource.query (the latter requires get_tier=True) both expose the
+zfs.resource.list (the latter requires get_tier=True) both expose the
 underlying dataset's tier as a read-only TierInfo struct, or null when
 unsupported.
 
@@ -133,7 +133,7 @@ def test_pool_dataset_query_volume_has_null_tier(tier_pool):
 
 
 # ----------------------------------------------------------------------------
-# zfs.resource.query
+# zfs.resource.list
 # ----------------------------------------------------------------------------
 
 
@@ -141,15 +141,15 @@ def test_zfs_resource_query_tier_requires_get_tier_flag(tier_ds_performance):
     """Without get_tier=True, the resource query doesn't compute tier (tier
     is None / absent). With get_tier=True, the field carries TierInfo."""
     rows_default = call(
-        "zfs.resource.query",
-        [], {"extra": {"paths": [tier_ds_performance]}},
+        "zfs.resource.list",
+        {"paths": [tier_ds_performance]},
     )
     assert rows_default
     assert rows_default[0].get("tier") is None
 
     rows_with_tier = call(
-        "zfs.resource.query",
-        [], {"extra": {"paths": [tier_ds_performance], "get_tier": True}},
+        "zfs.resource.list",
+        {"paths": [tier_ds_performance], "get_tier": True},
     )
     assert rows_with_tier
     assert rows_with_tier[0]["tier"] is not None
@@ -160,8 +160,8 @@ def test_zfs_resource_query_get_tier_returns_null_when_disabled(tier_ds_performa
     """get_tier=True still returns None when zfs.tier.config.enabled is False."""
     with _temporarily_disabled():
         rows = call(
-            "zfs.resource.query",
-            [], {"extra": {"paths": [tier_ds_performance], "get_tier": True}},
+            "zfs.resource.list",
+            {"paths": [tier_ds_performance], "get_tier": True},
         )
         assert rows
         assert rows[0]["tier"] is None
@@ -171,8 +171,8 @@ def test_zfs_resource_query_get_tier_returns_null_on_pool_without_special(tier_p
     """get_tier=True returns None for datasets on a pool without a SPECIAL vdev."""
     with dataset("tier_resource_no_special") as ds:
         rows = call(
-            "zfs.resource.query",
-            [], {"extra": {"paths": [ds], "get_tier": True}},
+            "zfs.resource.list",
+            {"paths": [ds], "get_tier": True},
         )
         assert rows
         assert rows[0]["tier"] is None

@@ -10,7 +10,7 @@ from middlewared.api.base import (
     UniqueList,
 )
 
-from .zfs_resource_property import PropertyValue
+from .zfs_resource_crud import PropertyValue
 
 __all__ = (
     "ZFSResourceSnapshotEntry",

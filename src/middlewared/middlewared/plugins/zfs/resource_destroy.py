@@ -5,7 +5,6 @@ import os
 from typing import TYPE_CHECKING, Any
 
 from middlewared.api.current import (
-    ZFSResourceDeleteOptions,
     ZFSResourceDestroyArgsData,
     ZFSResourceQuery,
     ZFSResourceSnapshotCountQuery,
@@ -74,30 +73,22 @@ def destroy_impl(
     return _raw_destroy(tls, path, recursive, all_snapshots, bypass, defer)
 
 
-def destroy(context: ServiceContext, data: ZFSResourceDestroyArgsData, schema: str = SCHEMA) -> None:
+def destroy(context: ServiceContext, data: ZFSResourceDestroyArgsData) -> None:
     try:
         failed, errnum = context.call_sync2(context.s.zfs.resource.destroy_impl, data.path, data.recursive)
     except ZFSPathHasClonesException as e:
         raise ValidationError(
-            f"{schema}.defer",
+            f"{SCHEMA}.defer",
             f"Snapshot {e.path!r} has dependent clones: {', '.join(e.clones)}",
             errno.ENOTEMPTY,
         )
     except ZFSPathHasHoldsException as e:
-        raise ValidationError(schema, e.message, errno.ENOTEMPTY)
+        raise ValidationError(SCHEMA, e.message, errno.ENOTEMPTY)
     except ZFSPathNotFoundException as e:
-        raise ValidationError(schema, e.message, errno.ENOENT)
+        raise ValidationError(SCHEMA, e.message, errno.ENOENT)
     else:
         if failed:
             # A recursive destroy runs as a channel program, which executes atomically behind
             # the scenes and so reports its failure as a return value rather than an exception.
             assert errnum is not None
-            raise ValidationError(schema, failed, errnum)
-
-
-def delete(context: ServiceContext, id_: str, options: ZFSResourceDeleteOptions) -> None:
-    destroy(
-        context,
-        ZFSResourceDestroyArgsData(path=id_, recursive=options.recursive),
-        schema="zfs.resource.delete",
-    )
+            raise ValidationError(SCHEMA, failed, errnum)

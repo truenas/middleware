@@ -39,11 +39,7 @@ def test_002_firstboot_checks(ws_client):
         'boot-pool/grub'
     ]
     # first make sure our expected datasets actually exist
-    datasets = [
-        i['name'] for i in ws_client.call(
-            'zfs.resource.query', [], {"extra": {'paths': expected_ds, 'properties': None}}
-        )
-    ]
+    datasets = [i['name'] for i in ws_client.call('zfs.resource.list', {'paths': expected_ds, 'properties': None})]
     assert all(ds in datasets for ds in expected_ds)
 
     # now verify that they are mounted with the expected options

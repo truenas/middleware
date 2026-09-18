@@ -22,7 +22,7 @@ def test_zfs_resource_destroy_non_recursive_filesystem():
     """Test basic non-recursive filesystem deletion"""
     fs = create_resource("test_fs_basic")
     call("zfs.resource.destroy", {"path": fs})
-    result = call("zfs.resource.query", [], {"extra": {"paths": [fs], "properties": None}})
+    result = call("zfs.resource.list", {"paths": [fs], "properties": None})
     assert len(result) == 0, result
 
 
@@ -34,7 +34,7 @@ def test_zfs_resource_destroy_non_recursive_with_children_fails():
         call("zfs.resource.destroy", {"path": root, "recursive": False})
     estr = str(exc_info.value).lower()
     assert "children" in estr or "busy" in estr
-    result = call("zfs.resource.query", [], {"extra": {"paths": [root]}})
+    result = call("zfs.resource.list", {"paths": [root]})
     assert len(result) == 1
 
     # cleanup
@@ -49,12 +49,12 @@ def test_zfs_resource_destroy_recursive_filesystem():
         os.path.join(root_name, "lvl0/lvl1/lvl2/lvl3"), {"create_ancestors": True}
     )
     result = call(
-        "zfs.resource.query",
-        [], {"extra": {"paths": [root], "get_children": True, "properties": None}},
+        "zfs.resource.list",
+        {"paths": [root], "get_children": True, "properties": None},
     )
     assert len(result) == 5
     call("zfs.resource.destroy", {"path": root, "recursive": True})
-    result = call("zfs.resource.query", [], {"extra": {"paths": [root]}})
+    result = call("zfs.resource.list", {"paths": [root]})
     assert len(result) == 0
 
 
@@ -63,11 +63,11 @@ def test_zfs_resource_destroy_volume():
     vol = "test_zvol"
     args = {"type": "VOLUME", "sparse": True, "volsize": 1024**3}
     zvol = create_resource(vol, args)
-    result = call("zfs.resource.query", [], {"extra": {"paths": [zvol]}})
+    result = call("zfs.resource.list", {"paths": [zvol]})
     assert len(result) == 1
     assert result[0]["type"] == "VOLUME"
     call("zfs.resource.destroy", {"path": zvol})
-    result = call("zfs.resource.query", [], {"extra": {"paths": [zvol]}})
+    result = call("zfs.resource.list", {"paths": [zvol]})
     assert len(result) == 0
 
 
@@ -104,9 +104,9 @@ def test_zfs_resource_destroy_with_clone():
 
     call("zfs.resource.destroy", {"path": source, "recursive": True})
     # Verify both dataset and clone are gone
-    result = call("zfs.resource.query", [], {"extra": {"paths": [source], "properties": None}})
+    result = call("zfs.resource.list", {"paths": [source], "properties": None})
     assert len(result) == 0
-    result = call("zfs.resource.query", [], {"extra": {"paths": [clone_name]}})
+    result = call("zfs.resource.list", {"paths": [clone_name]})
     assert len(result) == 0
 
 
@@ -129,7 +129,7 @@ def test_zfs_resource_snapshot_destroy_all_snapshots():
     assert counts[source] == 0
 
     # cleanup - dataset should still exist
-    result = call("zfs.resource.query", [], {"extra": {"paths": [source], "properties": None}})
+    result = call("zfs.resource.list", {"paths": [source], "properties": None})
     assert len(result) == 1
     call("zfs.resource.destroy", {"path": source})
 
@@ -206,26 +206,11 @@ def test_zfs_resource_destroy_complex_hierarchy():
 
     call("zfs.resource.destroy", {"path": root, "recursive": True})
     result = call(
-        "zfs.resource.query",
-        [], {"extra": {
+        "zfs.resource.list",
+        {
             "paths": [root],
             "properties": None,
             "get_children": True,
-        }},
+        },
     )
     assert len(result) == 0
-
-
-def test_zfs_resource_delete_leaf():
-    """`delete` is the CRUD spelling of `destroy` over the same helper"""
-    rsrc = create_resource("test_delete_leaf")
-    call("zfs.resource.delete", rsrc)
-    assert call("zfs.resource.query", [["id", "=", rsrc]], {}) == []
-
-
-def test_zfs_resource_delete_recursive():
-    """`delete` removes a whole tree when asked to recurse"""
-    parent = create_resource("test_delete_tree")
-    create_resource("test_delete_tree/child")
-    call("zfs.resource.delete", parent, {"recursive": True})
-    assert call("zfs.resource.query", [], {"extra": {"paths": [parent], "get_children": True}}) == []

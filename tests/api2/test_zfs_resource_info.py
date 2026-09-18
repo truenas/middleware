@@ -27,41 +27,36 @@ def test_zfs_resource_processes_idle_dataset():
 
 
 def test_zfs_resource_processes_volume():
-    """A volume is scanned as a block device, not as a mountpoint under /mnt."""
+    """A volume is scanned as a block device."""
     with dataset("test_processes_zvol", {"type": "VOLUME", "volsize": 100 * 1024 * 1024}) as zvol:
         assert call("zfs.resource.processes", zvol) == []
 
 
-def holder(path):
-    """Start a background process holding `path` open and return its pid."""
-    pid = ssh(f"( tail -f {path} >/dev/null 2>&1 & echo $! )").strip()
-    return int(pid)
+def test_zfs_resource_processes_holder_is_reported():
+    """A process holding a file on the dataset open is reported with its pid."""
+    with dataset("test_processes_held") as ds:
+        ssh(f"touch /mnt/{ds}/holdme")
+        pid = int(ssh(f"( tail -f /mnt/{ds}/holdme >/dev/null 2>&1 & echo $! )").strip())
+        try:
+            assert pid in [p["pid"] for p in call("zfs.resource.processes", ds)]
+        finally:
+            ssh(f"kill {pid}")
 
 
-def test_zfs_resource_processes_unmounted_ignores_parent():
-    """An unmounted child does not inherit the processes of whatever is mounted above it."""
-    with dataset("test_processes_parent") as parent:
-        with dataset("test_processes_parent/child") as child:
-            ssh(f"touch /mnt/{parent}/holdme")
-            pid = holder(f"/mnt/{parent}/holdme")
-            try:
-                ssh(f"zfs unmount {child}")
-                try:
-                    assert call("zfs.resource.processes", child) == []
-                    assert pid in [p["pid"] for p in call("zfs.resource.processes", parent)]
-                finally:
-                    ssh(f"zfs mount {child}")
-            finally:
-                ssh(f"kill {pid}")
-
-
-def test_zfs_resource_processes_includes_descendants():
-    """A process holding a child dataset open shows up on the parent."""
-    with dataset("test_processes_tree") as parent:
-        with dataset("test_processes_tree/child") as child:
-            ssh(f"touch /mnt/{child}/holdme")
-            pid = holder(f"/mnt/{child}/holdme")
-            try:
-                assert pid in [p["pid"] for p in call("zfs.resource.processes", parent)]
-            finally:
-                ssh(f"kill {pid}")
+def test_zfs_resource_processes_locked_dataset():
+    """A locked dataset reports no processes rather than failing."""
+    encrypted = f"{pool_name}/test_processes_locked"
+    call(
+        "pool.dataset.create",
+        {
+            "name": encrypted,
+            "encryption": True,
+            "inherit_encryption": False,
+            "encryption_options": {"passphrase": "abcd1234"},
+        },
+    )
+    try:
+        call("pool.dataset.lock", encrypted, job=True)
+        assert call("zfs.resource.processes", encrypted) == []
+    finally:
+        call("pool.dataset.delete", encrypted, {"recursive": True})

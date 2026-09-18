@@ -42,12 +42,10 @@ def __query_impl_callback(hdl: Any, state: CallbackState) -> bool:
             ),
             get_user_properties=state.query_args["get_user_properties"],
             get_source=state.query_args["get_source"],
-            get_crypto=state.query_args["get_crypto"],
         ),
         normalize_source=state.query_args["get_source"],
-        get_crypto=state.query_args["get_crypto"],
     )
-    info["id"] = info["name"]
+    info["children"] = None
 
     if state.tier_enabled and info.get('type') == 'FILESYSTEM':
         info['tier'] = get_dataset_tier_info_cached(hdl, state.pool_special_cache)
@@ -65,6 +63,7 @@ def __query_impl_callback(hdl: Any, state: CallbackState) -> bool:
         should_get_children = True
 
     if should_get_children:
+        info["children"] = list()
         child_state = CallbackState(
             results=state.results,
             query_args=state.query_args,
@@ -93,12 +92,11 @@ def __query_impl_paths(hdl: Any, state: CallbackState) -> None:
 
 
 def __should_exclude_internal_paths(data: dict[str, Any]) -> bool:
-    if data.get("allow_internal_paths", True):
-        for path in data["paths"]:
-            if has_internal_path(path):
-                # somone is explicilty querying an
-                # internal path
-                return False
+    for path in data["paths"]:
+        if has_internal_path(path):
+            # somone is explicilty querying an
+            # internal path
+            return False
     # 1. no paths specified are internal path
     # 2. no paths specified at all (empty query)
     # 3. or someone exclusively asks for internal paths

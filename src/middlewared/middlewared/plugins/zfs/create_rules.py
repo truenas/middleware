@@ -9,6 +9,11 @@ top to bottom in one place. When a rule needs a new fact the service
 gathers it and the context grows a field. The draid and dedup tiering
 functions also take a ServiceContext since they must inspect the pool
 themselves.
+
+The checks that update shares with create are the `reject_*` functions.
+They take the schema and the values they judge, so each caller resolves
+"effective" its own way (create from the nearest ancestor, update from
+the resource itself) and the rule stays one function.
 """
 
 from __future__ import annotations
@@ -25,14 +30,18 @@ from middlewared.service_exception import ValidationError
 from middlewared.utils.crypto import generate_token
 
 from .create_impl import ZFS_TYPE_MAP
+from .utils import pool_is_draid
 
 if typing.TYPE_CHECKING:
+    from collections.abc import Collection, Iterable
+
     from middlewared.api.current import EntitlementEntry, ZFSResourceCreateArgsData, ZFSResourceCreateProperties
     from middlewared.service import ServiceContext
 
 __all__ = (
     "CreateContext",
     "ancestor_chain",
+    "apply_acl_defaults",
     "apply_draid_recordsize",
     "apply_draid_volblocksize",
     "apply_tier_snap",
@@ -48,7 +57,13 @@ __all__ = (
     "check_user_property_names",
     "check_volume_capacity",
     "check_volume_has_volsize",
+    "reject_bad_acl_combination",
+    "reject_bad_user_property_names",
+    "reject_dedup_on_special_vdev",
+    "reject_tier_managed_ssb",
+    "reject_unentitled_dedup",
     "resolve_create_request",
+    "size_bytes",
 )
 
 SCHEMA = "zfs.resource.create"
@@ -87,7 +102,7 @@ def _secret_value(value: typing.Any) -> str | None:
     return value.get_secret_value() if value else None
 
 
-def _size_bytes(value: str | int) -> int | None:
+def size_bytes(value: str | int) -> int | None:
     """Parse a zfs block size value into bytes. Returns None when the
     value is not understood so the library can judge it instead."""
     if isinstance(value, int):
@@ -122,15 +137,6 @@ def _pool_has_special_vdev(context: ServiceContext, pool_name: str) -> bool:
     return False
 
 
-def pool_is_draid(context: ServiceContext, pool_name: str) -> bool:
-    """Return whether the pool stores data on dRAID vdevs."""
-    if pool := context.middleware.call_sync("zpool.query_impl", {"pool_names": [pool_name], "topology": True}):
-        for group in pool[0]["topology"]["data"] + pool[0]["topology"].get("special", []):
-            if group["vdev_type"].startswith("draid"):
-                return True
-    return False
-
-
 def apply_draid_recordsize(context: ServiceContext, data: ZFSResourceCreateArgsData, ctx: CreateContext) -> None:
     """Default a filesystem on a dRAID pool to a 1M recordsize.
 
@@ -157,12 +163,32 @@ def apply_draid_volblocksize(context: ServiceContext, data: ZFSResourceCreateArg
         return
     if ctx.properties.volblocksize is None:
         ctx.properties.volblocksize = "128K"
-    elif (parsed := _size_bytes(ctx.properties.volblocksize)) is not None and parsed < 32768:
+    elif (parsed := size_bytes(ctx.properties.volblocksize)) is not None and parsed < 32768:
         raise ValidationError(
             f"{SCHEMA}.properties",
             "Volume block size must be greater than or equal to 32K for dRAID pools.",
             errno.EINVAL,
         )
+
+
+def apply_acl_defaults(properties: ZFSResourceCreateProperties, leave: Collection[str] = ()) -> None:
+    """Fill in the acl properties an explicit acltype couples with.
+
+    Only companions the caller left as None are filled, and a name in
+    `leave` is never filled (update passes the names being inherited).
+    """
+    acltype = str(properties.acltype or "").lower()
+    if acltype == "nfsv4":
+        # inherited ACL entries must pass through or chmod strips them
+        if properties.aclinherit is None and "aclinherit" not in leave:
+            properties.aclinherit = "passthrough"
+    elif acltype in _POSIX_OR_OFF_ACLTYPES:
+        # a non discard aclmode can prevent the ZFS_ACL_TRIVIAL flag from
+        # being set which results in spurious permission errors
+        if properties.aclmode is None and "aclmode" not in leave:
+            properties.aclmode = "discard"
+        if properties.aclinherit is None and "aclinherit" not in leave:
+            properties.aclinherit = "discard"
 
 
 def resolve_create_request(
@@ -188,18 +214,7 @@ def resolve_create_request(
         if properties.xattr is None:
             # its important to set this as "sa" for performance reasons
             properties.xattr = "sa"
-        acltype = str(properties.acltype or "").lower()
-        if acltype == "nfsv4":
-            # inherited ACL entries must pass through or chmod strips them
-            if properties.aclinherit is None:
-                properties.aclinherit = "passthrough"
-        elif acltype in _POSIX_OR_OFF_ACLTYPES:
-            # a non discard aclmode can prevent the ZFS_ACL_TRIVIAL flag from
-            # being set which results in spurious permission errors
-            if properties.aclmode is None:
-                properties.aclmode = "discard"
-            if properties.aclinherit is None:
-                properties.aclinherit = "discard"
+        apply_acl_defaults(properties)
 
     encrypt = None
     if data.encryption:
@@ -251,15 +266,20 @@ def check_name_valid(data: ZFSResourceCreateArgsData, ctx: CreateContext) -> Non
         raise ValidationError(SCHEMA, "Trailing spaces are not permitted in resource names.", errno.EINVAL)
 
 
-def check_user_property_names(data: ZFSResourceCreateArgsData, ctx: CreateContext) -> None:
+def reject_bad_user_property_names(schema: str, names: Iterable[str]) -> None:
     """User property names must contain a colon."""
-    for key in data.user_properties:
+    for key in names:
         if ":" not in key:
             raise ValidationError(
-                f"{SCHEMA}.user_properties",
+                f"{schema}.user_properties",
                 f"{key!r} is not a valid user property name (must contain a colon).",
                 errno.EINVAL,
             )
+
+
+def check_user_property_names(data: ZFSResourceCreateArgsData, ctx: CreateContext) -> None:
+    """User property names must contain a colon."""
+    reject_bad_user_property_names(SCHEMA, data.user_properties)
 
 
 def check_volume_has_volsize(data: ZFSResourceCreateArgsData, ctx: CreateContext) -> None:
@@ -298,17 +318,25 @@ def check_parent_not_readonly(data: ZFSResourceCreateArgsData, ctx: CreateContex
         return
 
 
+def reject_tier_managed_ssb(schema: str, special_small_blocks: str | int | None) -> None:
+    """The tier manager owns special_small_blocks while tiering is enabled.
+
+    Callers apply this only when tiering is enabled.
+    """
+    if special_small_blocks is not None:
+        raise ValidationError(
+            f"{schema}.properties",
+            "ZFS tiering is enabled. Use `zfs.tier.dataset_set_tier` to manage 'special_small_blocks'.",
+            errno.EINVAL,
+        )
+
+
 def check_tier_managed_ssb(data: ZFSResourceCreateArgsData, ctx: CreateContext) -> None:
     """The tier manager owns special_small_blocks while tiering is enabled.
 
     The service calls this only when tiering is enabled.
     """
-    if data.properties.special_small_blocks is not None:
-        raise ValidationError(
-            f"{SCHEMA}.properties",
-            "ZFS tiering is enabled. Use `zfs.tier.dataset_set_tier` to manage 'special_small_blocks'.",
-            errno.EINVAL,
-        )
+    reject_tier_managed_ssb(SCHEMA, data.properties.special_small_blocks)
 
 
 def apply_tier_snap(data: ZFSResourceCreateArgsData, ctx: CreateContext) -> None:
@@ -346,18 +374,25 @@ def apply_volume_ssb_pin(data: ZFSResourceCreateArgsData, ctx: CreateContext) ->
     if parent is None:
         return
     parent_ssb = parent["properties"]["special_small_blocks"]["value"] or 0
-    volblocksize = _size_bytes(ctx.properties.volblocksize or 16384) or 16384
+    volblocksize = size_bytes(ctx.properties.volblocksize or 16384) or 16384
     if parent_ssb and volblocksize < parent_ssb:
         ctx.properties.special_small_blocks = 0
 
 
-def check_dedup_entitlement(data: ZFSResourceCreateArgsData, ctx: CreateContext) -> None:
+def reject_unentitled_dedup(schema: str, entitlement: EntitlementEntry) -> None:
     """Deduplication may only be enabled on a system entitled to it.
 
     Licensed systems must carry the DEDUP feature; unlicensed iX hardware
     is blocked; Community Edition may use it freely. The entitlement
     engine decides and supplies the message. Matches the gate
     pool.dataset applies.
+    """
+    if not entitlement.entitled:
+        raise ValidationError(f"{schema}.properties", entitlement.message, errno.EINVAL)
+
+
+def check_dedup_entitlement(data: ZFSResourceCreateArgsData, ctx: CreateContext) -> None:
+    """Deduplication may only be enabled on a system entitled to it.
 
     The service calls this only for requests with a dedup value other
     than off and after the entitlement has been gathered.
@@ -366,17 +401,35 @@ def check_dedup_entitlement(data: ZFSResourceCreateArgsData, ctx: CreateContext)
     # after gathering the entitlement
     assert ctx.dedup_entitlement is not None
 
-    if not ctx.dedup_entitlement.entitled:
-        raise ValidationError(f"{SCHEMA}.properties", ctx.dedup_entitlement.message, errno.EINVAL)
+    reject_unentitled_dedup(SCHEMA, ctx.dedup_entitlement)
+
+
+def reject_dedup_on_special_vdev(context: ServiceContext, schema: str, pool_name: str, ssb: int) -> None:
+    """Deduplication may not be enabled on a PERFORMANCE tier filesystem.
+
+    With tiering enabled a filesystem whose effective special_small_blocks
+    (`ssb`, in bytes) is above zero has its data placed on the special
+    vdev and such data may not be deduplicated. The pool topology is only
+    inspected once the cheaper condition has passed.
+    """
+    if not ssb:
+        return
+    if not _pool_has_special_vdev(context, pool_name):
+        return
+    raise ValidationError(
+        f"{schema}.properties",
+        "ZFS deduplication is incompatible with tiering and cannot be enabled on a "
+        "dataset assigned to the PERFORMANCE tier (its data is placed on the SPECIAL "
+        "vdev). Switch it to the REGULAR tier first.",
+        errno.EINVAL,
+    )
 
 
 def check_dedup_tiering(context: ServiceContext, data: ZFSResourceCreateArgsData, ctx: CreateContext) -> None:
     """Deduplication may not be enabled on a PERFORMANCE tier filesystem.
 
-    With tiering enabled a filesystem whose effective special_small_blocks
-    is above zero has its data placed on the special vdev and such data
-    may not be deduplicated. The pool topology is only inspected once the
-    cheaper conditions have passed.
+    The effective special_small_blocks is the requested value or the one
+    inherited from the nearest existing ancestor.
 
     The service calls this only for filesystems that request a dedup
     value other than off while tiering is enabled and after the tier
@@ -387,18 +440,8 @@ def check_dedup_tiering(context: ServiceContext, data: ZFSResourceCreateArgsData
         parent = _nearest_ancestor_entry(data, ctx)
         ssb = (parent["properties"]["special_small_blocks"]["value"] or 0) if parent else 0
     else:
-        ssb = _size_bytes(ssb) or 0
-    if not ssb:
-        return
-    if not _pool_has_special_vdev(context, data.path.split("/")[0]):
-        return
-    raise ValidationError(
-        f"{SCHEMA}.properties",
-        "ZFS deduplication is incompatible with tiering and cannot be enabled on a "
-        "dataset assigned to the PERFORMANCE tier (its data is placed on the SPECIAL "
-        "vdev). Switch it to the REGULAR tier first.",
-        errno.EINVAL,
-    )
+        ssb = size_bytes(ssb) or 0
+    reject_dedup_on_special_vdev(context, SCHEMA, data.path.split("/")[0], ssb)
 
 
 def _effective_value(name: str, data: ZFSResourceCreateArgsData, ctx: CreateContext) -> str | None:
@@ -415,31 +458,38 @@ def _effective_value(name: str, data: ZFSResourceCreateArgsData, ctx: CreateCont
     return str(value).lower() if value is not None else None
 
 
-def check_acl_combination(data: ZFSResourceCreateArgsData, ctx: CreateContext) -> None:
-    """The requested acl properties must form a usable combination.
-
-    The effective acltype and aclmode (the requested value or the value
-    inherited from the nearest existing ancestor) are checked together.
-    A posix or off acltype requires a discard aclmode and a discard
-    aclmode strips nfsv4 acls on chmod.
-
-    The service calls this only for filesystems that request acltype or
-    aclmode and after the ancestor entries have been gathered.
-    """
-    acltype = _effective_value("acltype", data, ctx)
-    aclmode = _effective_value("aclmode", data, ctx)
+def reject_bad_acl_combination(schema: str, acltype: str | None, aclmode: str | None) -> None:
+    """The effective (lowercased) acltype and aclmode must form a usable
+    combination. A posix or off acltype requires a discard aclmode and a
+    discard aclmode strips nfsv4 acls on chmod."""
     if acltype in _POSIX_OR_OFF_ACLTYPES and aclmode != "discard":
         raise ValidationError(
-            f"{SCHEMA}.properties",
+            f"{schema}.properties",
             "'aclmode' must be discard when the effective 'acltype' is posix or off.",
             errno.EINVAL,
         )
     elif acltype == "nfsv4" and aclmode == "discard":
         raise ValidationError(
-            f"{SCHEMA}.properties",
+            f"{schema}.properties",
             "A discard 'aclmode' may not be used with the nfsv4 'acltype'.",
             errno.EINVAL,
         )
+
+
+def check_acl_combination(data: ZFSResourceCreateArgsData, ctx: CreateContext) -> None:
+    """The requested acl properties must form a usable combination.
+
+    The effective acltype and aclmode are the requested value or the
+    value inherited from the nearest existing ancestor.
+
+    The service calls this only for filesystems that request acltype or
+    aclmode and after the ancestor entries have been gathered.
+    """
+    reject_bad_acl_combination(
+        SCHEMA,
+        _effective_value("acltype", data, ctx),
+        _effective_value("aclmode", data, ctx),
+    )
 
 
 def check_volume_capacity(data: ZFSResourceCreateArgsData, ctx: CreateContext) -> None:

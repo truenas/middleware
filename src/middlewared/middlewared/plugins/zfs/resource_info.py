@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 from .property_choices import ZFS_CHECKSUM_CHOICES, ZFS_COMPRESSION_ALGORITHM_CHOICES
 from .property_choices import recommended_zvol_blocksize as _recommended_zvol_blocksize
 from .property_choices import recordsize_choices as _recordsize_choices
+from .utils import pool_is_draid
 
 if TYPE_CHECKING:
     from middlewared.service import ServiceContext
@@ -28,7 +29,9 @@ def compression_choices() -> dict[str, str]:
 
 
 def recordsize_choices(context: ServiceContext, pool_name: str | None) -> list[str]:
-    draid = bool(pool_name) and context.middleware.call_sync("pool.is_draid_pool", pool_name)
+    draid = False
+    if pool_name:
+        draid = pool_is_draid(context, pool_name)
     with open(ZFS_MAX_RECORDSIZE) as f:
         return _recordsize_choices(int(f.read().strip()), draid)
 

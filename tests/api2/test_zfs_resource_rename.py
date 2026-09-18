@@ -1,8 +1,6 @@
-import errno
-
 import pytest
 
-from middlewared.service_exception import ValidationError, ValidationErrors
+from middlewared.service_exception import ValidationError
 from middlewared.test.integration.assets.pool import another_pool
 from middlewared.test.integration.utils import call, ssh
 
@@ -179,16 +177,14 @@ def test_zfs_resource_rename_public(rename_test_pool):
     call("pool.dataset.create", {"name": original})
 
     try:
-        with pytest.raises(ValidationErrors) as ve:
+        with pytest.raises(ValidationError) as ve:
             call("zfs.resource.rename", {"current_name": original, "new_name": new})
-        assert ve.value.errors[0].attribute == "zfs.resource.rename.force"
+        assert ve.value.attribute == "zfs.resource.rename.force"
 
         call("zfs.resource.rename", {"current_name": original, "new_name": new, "force": True})
 
-        assert call("zfs.resource.get_instance", new)["id"] == new
-        with pytest.raises(ValidationError) as ve:
-            call("zfs.resource.get_instance", original)
-        assert ve.value.errno == errno.ENOENT
+        assert call("zfs.resource.list", {"paths": [new]})[0]["name"] == new
+        assert call("zfs.resource.list", {"paths": [original]}) == []
     finally:
         for path in (new, original):
             try:
@@ -208,16 +204,12 @@ def test_zfs_resource_promote(rename_test_pool):
     ssh(f"zfs clone {origin}@base {clone}")
 
     try:
-        before = call(
-            "zfs.resource.query", [["id", "=", clone]], {"extra": {"properties": ["origin"]}}
-        )[0]
+        before = call("zfs.resource.list", {"paths": [clone], "properties": ["origin"]})[0]
         assert before["properties"]["origin"]["value"] == f"{origin}@base"
 
         call("zfs.resource.promote", {"path": clone})
 
-        after = call(
-            "zfs.resource.query", [["id", "=", clone]], {"extra": {"properties": ["origin"]}}
-        )[0]
+        after = call("zfs.resource.list", {"paths": [clone], "properties": ["origin"]})[0]
         assert after["properties"]["origin"]["value"] != f"{origin}@base"
     finally:
         for path in (clone, origin):

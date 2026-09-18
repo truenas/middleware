@@ -49,7 +49,6 @@ from .utils import (
     CreateImplArgs,
     CreateImplArgsDataclass,
     UpdateImplArgs,
-    UpdateImplArgsDataclass,
     ZFSKeyFormat,
     dataset_mountpoint,
     get_dataset_parents,
@@ -807,23 +806,16 @@ class PoolDatasetService(CRUDService):
         return created_ds
 
     @private
-    @pass_thread_local_storage
-    def update_impl(self, tls, data: UpdateImplArgs):
-        # Convert TypedDict to dataclass to handle defaults for missing fields
-        args = UpdateImplArgsDataclass(
-            name=data['name'],
-            zprops=data.get('zprops', {}),
-            uprops=data.get('uprops', {}),
-            iprops=data.get('iprops', set())
+    async def update_impl(self, data: UpdateImplArgs):
+        # The dict shape is also what a controller sends its peer over `failover.call_remote`, so it is kept as
+        # the entry point for callers outside `zfs.resource` and unpacked onto the primitive here.
+        await self.call2(
+            self.s.zfs.resource.update_impl,
+            data['name'],
+            properties=data.get('zprops'),
+            user_properties=data.get('uprops'),
+            inherit=data.get('iprops'),
         )
-
-        ds = tls.lzh.open_resource(name=args.name)
-        if args.zprops:
-            ds.set_properties(properties=args.zprops)
-        if args.uprops:
-            ds.set_user_properties(user_properties=args.uprops)
-        for i in args.iprops:
-            ds.inherit_property(property=i)
 
     @api_method(PoolDatasetUpdateArgs, PoolDatasetUpdateResult, audit='Pool dataset update', audit_callback=True)
     async def do_update(self, audit_callback, id_, data):

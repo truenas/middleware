@@ -62,6 +62,7 @@ GATES = [
     ("plugins/vm/info.py", "LicenseFeature.VMS"),
     ("plugins/webshare/sharing.py", "LicenseFeature.WEBSHARE"),
     ("plugins/zfs/resource_create.py", "LicenseFeature.DEDUP"),
+    ("plugins/zfs/resource_update.py", "LicenseFeature.DEDUP"),
     ("plugins/zfs/tier.py", "LicenseFeature.ZFSTIER"),
     ("test/integration/assets/entitlements.py", None),
     ("utils/service/entitlement.py", "LicenseFeature.SED"),

@@ -9,6 +9,7 @@ from typing import TypedDict
 
 from truenas_pylicensed.features import LicenseFeature
 
+from middlewared.plugins.zfs.utils import pool_has_special_vdev
 from middlewared.plugins.zfs_.utils import TNUserProp
 from middlewared.service_exception import CallError
 from middlewared.utils.filesystem.directory import directory_is_empty
@@ -74,24 +75,12 @@ class CreateImplArgsDataclass:
 
 class UpdateImplArgs(TypedDict, total=False):
     name: str
-    """The name of the resource being created."""
+    """The name of the resource being updated."""
     zprops: dict[str, str]
-    """ZFS data properties to be applied during creation."""
+    """ZFS data properties to be set."""
     uprops: dict[str, str]
-    """ZFS user properties to be applied during creation."""
+    """ZFS user properties to be set."""
     iprops: set
-    """ZFS properties to be inherited from parent."""
-
-
-@dataclasses.dataclass(slots=True, kw_only=True)
-class UpdateImplArgsDataclass:
-    name: str
-    """The name of the resource being created."""
-    zprops: dict[str, str] = dataclasses.field(default_factory=dict)
-    """ZFS data properties to be applied during creation."""
-    uprops: dict[str, str] = dataclasses.field(default_factory=dict)
-    """ZFS user properties to be applied during creation."""
-    iprops: set = dataclasses.field(default_factory=set)
     """ZFS properties to be inherited from parent."""
 
 
@@ -110,23 +99,6 @@ async def validate_dedup_license(
     entitlement = await middleware.call2(middleware.services.truenas.entitlements.check, LicenseFeature.DEDUP)
     if not entitlement.entitled:
         verrors.add(f'{schema}.deduplication', entitlement.message)
-
-
-async def pool_has_special_vdev(middleware: 'Middleware', pool_name: str) -> bool:
-    """Whether the pool has a SPECIAL allocation class vdev. Returns False when the
-    pool cannot be inspected."""
-    try:
-        pools = await middleware.call(
-            'zpool.query_impl',
-            {'pool_names': [pool_name], 'properties': ['class_special_size']},
-        )
-        if not pools:
-            return False
-        special_size = ((pools[0].get('properties') or {}).get('class_special_size') or {}).get('value')
-    except Exception:
-        middleware.logger.debug('%s: failed to query pool SPECIAL vdev size', pool_name, exc_info=True)
-        return False
-    return isinstance(special_size, int) and special_size > 0
 
 
 async def _dedup_inheriting_performance_descendants(middleware, dataset_name):

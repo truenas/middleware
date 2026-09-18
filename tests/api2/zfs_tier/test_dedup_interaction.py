@@ -13,7 +13,8 @@ Implementation under test:
     (get_dataset_tier_info_cached dedup gate, _dataset_dedup_enabled,
     dataset_set_tier / rewrite_job_create rejection messages)
   - src/middlewared/middlewared/plugins/pool_/utils.py (validate_dedup_tiering,
-    _dedup_inheriting_performance_descendants, pool_has_special_vdev)
+    _dedup_inheriting_performance_descendants)
+  - src/middlewared/middlewared/plugins/zfs/utils.py (pool_has_special_vdev)
 """
 
 import contextlib
@@ -56,7 +57,7 @@ def test_dedup_dataset_tier_is_none_in_queries(tier_pool):
         row = call("pool.dataset.query", [["name", "=", ds]], {"get": True})
         assert row.get("tier") is None
 
-        rows = call("zfs.resource.query", [], {"extra": {"paths": [ds], "get_tier": True}})
+        rows = call("zfs.resource.list", {"paths": [ds], "get_tier": True})
         assert rows
         assert rows[0].get("tier") is None
 

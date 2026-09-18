@@ -82,7 +82,7 @@ def s3_clean_slate():
     for row in call("user.query", [["username", "^", PREFIX]]):
         with contextlib.suppress(Exception):
             call("user.delete", row["id"])
-    for row in call("zfs.resource.query", [], {"extra": {"paths": [pool], "properties": None, "get_children": True}}):
+    for row in call("zfs.resource.list", {"paths": [pool], "properties": None, "get_children": True}):
         if row["name"].startswith(f"{pool}/{PREFIX}-"):
             with contextlib.suppress(Exception):
                 call("zfs.resource.destroy", {"path": row["name"], "recursive": True})

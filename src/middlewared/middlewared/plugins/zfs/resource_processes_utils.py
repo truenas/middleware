@@ -113,9 +113,4 @@ async def processes_using_dataset_tree(ctx: ServiceContext, name: str) -> list[d
         Processes with open files on any of them
     """
     devices, paths = await ctx.to_thread(pool_scan_targets, name)
-
-    # positional args are paths, include_paths, include_middleware, devices
-    found: list[dict[str, Any]] = await ctx.middleware.call(
-        "zfs.resource.processes_using_paths", paths, False, False, devices
-    )
-    return found
+    return await ctx.call2(ctx.s.zfs.resource.processes_using_paths, paths, devices=devices)

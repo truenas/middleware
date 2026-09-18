@@ -10,6 +10,8 @@ from middlewared.api.current import PoolProcess, ZFSResourceQuery
 from middlewared.service_exception import CallError, ValidationError
 
 from .resource_processes_utils import processes_using_dataset_tree
+from .utils import get_encryption_info
+from .zvol_utils import zvol_name_to_path
 
 if TYPE_CHECKING:
     from middlewared.service import ServiceContext
@@ -19,17 +21,28 @@ __all__ = ("kill_processes", "processes", "processes_using_paths")
 RE_ZD = re.compile(r"^/dev/zd[0-9]+$")
 
 
-async def processes(context: ServiceContext, id_: str) -> list[PoolProcess]:
+async def processes(context: ServiceContext, path: str) -> list[PoolProcess]:
     rows = await context.call2(
         context.s.zfs.resource.query_impl,
-        ZFSResourceQuery(paths=[id_], properties=None, get_crypto=True),
+        ZFSResourceQuery(
+            paths=[path],
+            properties=["encryption", "keystatus", "keyformat", "keylocation", "mountpoint"],
+        ),
     )
     if not rows:
-        raise ValidationError("zfs.resource.processes.id", f"{id_!r} does not exist", errno.ENOENT)
-    if rows[0]["crypto"]["locked"]:
+        raise ValidationError("zfs.resource.processes.path", f"{path!r} does not exist", errno.ENOENT)
+
+    row = rows[0]
+    if get_encryption_info(row["properties"]).locked:
         return []
 
-    return [PoolProcess(**proc) for proc in await processes_using_dataset_tree(context, id_)]
+    paths = [zvol_name_to_path(row["name"])]
+    mountpoint = row["properties"].get("mountpoint", {}).get("raw")
+    if mountpoint != "legacy":
+        paths.append(mountpoint or os.path.join("/mnt", row["name"]))
+
+    found = await context.call2(context.s.zfs.resource.processes_using_paths, paths)
+    return [PoolProcess(**proc) for proc in found]
 
 
 async def kill_processes(context: ServiceContext, oid: str, control_services: bool, max_tries: int = 5) -> None:

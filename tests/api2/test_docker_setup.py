@@ -53,12 +53,12 @@ def test_docker_datasets_properties(docker_pool):
     datasets = {
         ds['name']: ds['properties']
         for ds in call(
-            'zfs.resource.query',
-            [], {"extra": {
+            'zfs.resource.list',
+            {
                 'paths': [docker_config['dataset']],
                 'properties': list(DOCKER_DATASET_PROPS.keys()),
                 'get_children': True,
-            }}
+            }
         )
     }
     for ds_name, current_props in datasets.items():
@@ -166,8 +166,8 @@ def test_ix_apps_mountpoint_inherited_on_pool_unset():
 
         # Verify ix-apps has /.ix-apps mountpoint while active
         ix_apps = call(
-            'zfs.resource.query',
-            [], {"extra": {'paths': [docker_ds], 'properties': ['mountpoint']}}
+            'zfs.resource.list',
+            {'paths': [docker_ds], 'properties': ['mountpoint']}
         )
         assert ix_apps[0]['properties']['mountpoint']['value'] == IX_APPS_MOUNT_PATH
 
@@ -176,7 +176,7 @@ def test_ix_apps_mountpoint_inherited_on_pool_unset():
 
         # Verify ix-apps mountpoint is now inherited (not /.ix-apps)
         ix_apps = call(
-            'zfs.resource.query',
-            [], {"extra": {'paths': [docker_ds], 'properties': ['mountpoint']}}
+            'zfs.resource.list',
+            {'paths': [docker_ds], 'properties': ['mountpoint']}
         )
         assert ix_apps[0]['properties']['mountpoint']['value'] != IX_APPS_MOUNT_PATH
