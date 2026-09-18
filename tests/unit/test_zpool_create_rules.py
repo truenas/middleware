@@ -186,13 +186,18 @@ def test_dedup_requested(dedup, expected):
 # ---------------------------------------------------------------------------
 
 
+ORIGINS = {"storage_vdevs": [0, 0, 1], "log_vdevs": [0, 0, 1], "spare_vdevs": [0, 1]}
+
+
 @pytest.mark.parametrize(
     "argument,index,expected",
     [
-        ("storage_vdevs", 1, "topology.data.1"),
+        # a two-disk "disk" entry became specs 0 and 1, so spec 2 is request vdev 1
+        ("storage_vdevs", 2, "topology.data.1"),
+        ("storage_vdevs", 1, "topology.data.0"),
         ("storage_vdevs", None, "topology.data"),
-        ("spare_vdevs", 0, "topology.spares.0"),
-        ("log_vdevs", 2, "topology.log.2"),
+        ("log_vdevs", 2, "topology.log.1"),
+        ("spare_vdevs", 1, "topology.spares.1"),
         ("name", None, "name"),
         ("filesystem_properties", None, "filesystem_properties"),
         ("properties", None, "properties"),
@@ -201,7 +206,7 @@ def test_dedup_requested(dedup, expected):
     ],
 )
 def test_binding_location(argument, index, expected):
-    assert binding_location(argument, index) == expected
+    assert binding_location(argument, index, ORIGINS) == expected
 
 
 # ---------------------------------------------------------------------------
@@ -271,11 +276,28 @@ def test_build_vdev_spec_and_assemble():
     draid = build_vdev_spec(vdevs[5])
     assert draid.name == "1d:0s"
     assert len(draid.children) == 3
-    kwargs = assemble_create_pool_vdev_kwargs(vdevs)
+    kwargs, origins = assemble_create_pool_vdev_kwargs(vdevs)
     assert sorted(kwargs) == ["cache_vdevs", "log_vdevs", "spare_vdevs", "storage_vdevs"]
     assert len(kwargs["storage_vdevs"]) == 3
     assert len(kwargs["cache_vdevs"]) == 2
     assert len(kwargs["spare_vdevs"]) == 1
+    assert origins == {"storage_vdevs": [0, 1, 2], "cache_vdevs": [0, 1], "log_vdevs": [0], "spare_vdevs": [0]}
+
+
+def test_assemble_records_which_request_vdev_each_spec_came_from():
+    data = request(
+        topology={
+            "data": [{"type": "disk", "disks": ["a", "b"]}, {"type": "mirror", "disks": ["c", "d"]}],
+            "log": [{"type": "disk", "disks": ["e", "f"]}, {"type": "mirror", "disks": ["g", "h"]}],
+            "spares": ["i", "j"],
+        }
+    )
+    _, vdevs = convert_topology_to_vdevs(data.topology)
+    kwargs, origins = assemble_create_pool_vdev_kwargs(vdevs, "disks")
+    assert [len(kwargs[k]) for k in ("storage_vdevs", "log_vdevs", "spare_vdevs")] == [3, 3, 2]
+    assert origins == {"storage_vdevs": [0, 0, 1], "log_vdevs": [0, 0, 1], "spare_vdevs": [0, 1]}
+    # the binding's spec index 2 is the request's second vdev
+    assert binding_location("log_vdevs", 2, origins) == "topology.log.1"
 
 
 def test_build_vdev_spec_leaves_draid_ndata_to_the_binding():

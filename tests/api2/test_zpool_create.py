@@ -164,10 +164,16 @@ def test_create_topology_policy_violation_fails_before_formatting():
 
 
 def test_create_structural_violation_fails_even_when_forced():
-    disks = _unused_devnames(5)
-    topology = {"data": [{"type": "mirror", "disks": disks[0:2]}], "log": [{"type": "raidz1", "disks": disks[2:5]}]}
+    disks = _unused_devnames(6)
+    # the two-disk "disk" entry becomes two specs, so the raidz1 is the binding's third log spec
+    topology = {
+        "data": [{"type": "disk", "disks": disks[0:1]}],
+        "log": [{"type": "disk", "disks": disks[1:3]}, {"type": "raidz1", "disks": disks[3:6]}],
+    }
     errors = _create_fails(topology, force_topology=True)
-    assert any(e.attribute == "zpool.create.topology.log.0" and "leaf or mirror" in e.errmsg for e in errors)
+    assert [(e.attribute, e.errmsg) for e in errors] == [
+        ("zpool.create.topology.log.1", 'log vdev must be leaf or mirror, got "raidz1"')
+    ]
     assert set(disks) <= {d["devname"] for d in call("disk.get_unused")}
 
 
