@@ -260,12 +260,14 @@ class iSCSITargetService(Service):
         )
 
     def delete_fc_lun(self, wwpn, lun):
-        pathlib.Path(f'{SCST_BASE}/targets/qla2x00t/{wwpn}/luns/mgmt').write_text(
+        pathlib.Path(
+            f'{SCST_BASE}/targets/qla2x00t/{wwpn}/ini_groups/security_group/luns/mgmt'
+        ).write_text(
             f'del {lun}\n'
         )
 
     def replace_fc_lun(self, wwpn, extent, lun, prstate_save):
-        luns_path = pathlib.Path(f'{SCST_BASE}/targets/qla2x00t/{wwpn}/luns')
+        luns_path = pathlib.Path(f'{SCST_BASE}/targets/qla2x00t/{wwpn}/ini_groups/security_group/luns')
         if prstate_save:
             op = self._xfer_prstate(luns_path, extent, lun)
         else:
