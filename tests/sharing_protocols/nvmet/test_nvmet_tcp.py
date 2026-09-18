@@ -94,6 +94,17 @@ def basenqn():
     return call('nvmet.global.config')['basenqn']
 
 
+def get_zvol_property(zvolid, property_name):
+    return call(
+        'zfs.resource.query',
+        {'paths': [zvolid], 'properties': [property_name]}
+    )[0]['properties'][property_name]['value']
+
+
+def get_volthreading(zvolid):
+    return get_zvol_property(zvolid, 'volthreading')
+
+
 @pytest.fixture(scope='module')
 def zvol1():
     with zvol(ZVOL1_NAME, ZVOL1_MB, pool_name) as config:
@@ -875,6 +886,19 @@ class TestNVMe(NVMeRunning):
                         self.assert_subsys_namespaces(
                             devices, subsys_nqn, [(1, ZVOL_RESIZE_END_MB)]
                         )
+
+    def test__zvol_namespace_volthreading(self, fixture_port):
+        """
+        Ensure that volthreading is on for regular zvols and off when they are being
+        used as an NVMe-oF namespace.
+        """
+        zvol_name = f'NVMET_ZVOL_VOLTHREADING_{digits}'
+        with self.subsys(SUBSYS_NAME1, fixture_port, allow_any_host=True) as subsys:
+            with zvol(zvol_name, 100, pool_name) as zvol_config:
+                assert get_volthreading(zvol_config['name']) == 'on'
+                with nvmet_namespace(subsys['id'], f'zvol/{zvol_config["name"]}'):
+                    assert get_volthreading(zvol_config['name']) == 'off'
+                assert get_volthreading(zvol_config['name']) == 'on'
 
     def test__file_namespaces(self, fixture_port, loopback_client: NVMeCLIClient):
         """
