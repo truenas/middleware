@@ -119,22 +119,34 @@ def query(context: ServiceContext, data: ZpoolQuery) -> list[ZpoolEntry]:
     return [ZpoolEntry(**pool) for pool in results]
 
 
-def send_change_event(context: ServiceContext, pool_name: str, event_type: EventType = "CHANGED") -> None:
-    """Emit a ``zpool.query`` event with a Pool-shaped payload.
+def send_change_event(
+    context: ServiceContext,
+    pool_name: str,
+    event_type: EventType = "CHANGED",
+    properties: Iterable[str] = (),
+) -> ZpoolEntry | None:
+    """Emit a ``zpool.query`` event with a Pool-shaped payload and return that payload.
 
     Re-queries ``zpool.query`` with topology, scan, and the standard
-    property set so subscribers receive the same fields they would
-    from a direct call. No-ops when the pool is not in the database
-    (boot pool, or a pool that has been exported between the trigger
-    and the emit).
+    property set (plus any ``properties`` the caller wants in the same
+    read) so subscribers receive the same fields they would from a
+    direct call. Returns None without emitting when the pool is not in
+    the database (boot pool, or a pool that has been exported between
+    the trigger and the emit).
     """
     pools = context.call_sync2(
         context.s.zpool.query,
-        ZpoolQuery(pool_names=[pool_name], topology=True, scan=True, properties=list(EVENT_PROPERTIES)),
+        ZpoolQuery(
+            pool_names=[pool_name],
+            topology=True,
+            scan=True,
+            properties=list(dict.fromkeys((*EVENT_PROPERTIES, *properties))),
+        ),
     )
     if not pools:
-        return
+        return None
     pool = pools[0].model_dump()
     if pool["id"] is None:
-        return
+        return None
     context.middleware.send_event("zpool.query", event_type, id=pool["id"], fields=pool)
+    return pools[0]

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Iterable
 
 from middlewared.api import Event, api_method
 from middlewared.api.current import (
@@ -20,7 +20,7 @@ from middlewared.service.decorators import pass_thread_local_storage
 
 from . import zpool_create as _create
 from . import zpool_query as _query
-from .create_impl import create_impl, validate_impl
+from .create_impl import create_impl, destroy_impl, validate_impl
 from .get_zpool_disks_impl import get_zpool_disks_impl
 from .get_zpool_features_impl import get_zpool_features_impl
 from .is_upgraded_impl import is_upgraded_impl
@@ -112,8 +112,10 @@ class ZpoolService(Service):
         return _query.query(self.context, data)
 
     @private
-    def send_change_event(self, pool_name: str, event_type: EventType = "CHANGED") -> None:
-        _query.send_change_event(self.context, pool_name, event_type)
+    def send_change_event(
+        self, pool_name: str, event_type: EventType = "CHANGED", properties: Iterable[str] = ()
+    ) -> ZpoolEntry | None:
+        return _query.send_change_event(self.context, pool_name, event_type, properties)
 
     @private
     def send_removed_event(self, pool_id: int) -> None:
@@ -132,6 +134,11 @@ class ZpoolService(Service):
         force: bool,
     ) -> None:
         validate_impl(tls.lzh, name, vdevs, properties, filesystem_properties, force)
+
+    @private
+    @pass_thread_local_storage
+    def destroy_impl(self, tls: Any, name: str) -> None:
+        destroy_impl(tls.lzh, name)
 
     @private
     @pass_thread_local_storage
@@ -218,7 +225,7 @@ class ZpoolService(Service):
     @private
     def finish_create(self, name: str, pool_id: int) -> dict[str, Any]:
         """Post-creation hooks and events; returns the ``pool.query`` entry."""
-        return _create.finish(self.context, name, pool_id)
+        return _create.finish(self.context, name, pool_id)[0]
 
     @private
     def status(self, name: str | None = None, real_paths: bool = False) -> dict[str, Any]:
