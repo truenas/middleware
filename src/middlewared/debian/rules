@@ -8,6 +8,8 @@ export PYBUILD_NAME=middlewared
 
 override_dh_auto_build:
 	python3 -m middlewared.scripts.generate_s3_providers
+	python3 -m middlewared.test.linter.api_import_check
+	python3 -m middlewared.test.linter.etc_check
 	dh_auto_build
 	sqlite3 freenas-v1.db < middlewared/alembic/initial.sql
 	cd middlewared && env PYTHONPATH=.. FAKE_ENV=1 FREENAS_DATABASE=../freenas-v1.db alembic upgrade head
