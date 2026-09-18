@@ -52,6 +52,7 @@ from .state_management import (
 from .state_management import (
     set_status as docker_set_status,
 )
+from .state_setup import enforce_canmount_noauto
 from .state_utils import Status
 
 if typing.TYPE_CHECKING:
@@ -188,6 +189,10 @@ class DockerService(GenericConfigService[DockerEntry]):
     @private
     async def before_start_check(self) -> None:
         await before_start_check(self.context)
+
+    @private
+    def enforce_canmount_noauto(self, pool_name: str) -> None:
+        enforce_canmount_noauto(self.context, pool_name)
 
     @private
     async def initialize_state(self) -> None:
