@@ -12,6 +12,7 @@ import html2text
 
 from middlewared.alert.applicability.engine import Rule
 from middlewared.alert.schedule import BaseSchedule, CrontabSchedule, IntervalSchedule
+from middlewared.api.base import BaseModel
 from middlewared.api.current import MailSendMessage
 from middlewared.utils import ProductName
 from middlewared.utils.service.call_mixin import CallMixin
@@ -435,8 +436,8 @@ class ThreadedAlertSource(AlertSource):
         ...
 
 
-class AlertService(CallMixin, ABC):
-    by_name: dict[str, type[AlertService]] = {}
+class AlertService[T: BaseModel](CallMixin, ABC):
+    by_name: dict[str, type[AlertService[Any]]] = {}
 
     title: str
     html: bool = False
@@ -455,7 +456,7 @@ class AlertService(CallMixin, ABC):
 
             AlertService.by_name[name] = cls
 
-    def __init__(self, middleware: Middleware, attributes: dict[str, Any]):
+    def __init__(self, middleware: Middleware, attributes: T):
         self.middleware = middleware
         self.attributes = attributes
 
@@ -494,7 +495,7 @@ class AlertService(CallMixin, ABC):
         return html2text.html2text(html).rstrip()
 
 
-class ThreadedAlertService(AlertService):
+class ThreadedAlertService[T: BaseModel](AlertService[T]):
     async def send(
         self,
         alerts: list[Alert[Any]],
@@ -532,7 +533,7 @@ class ThreadedAlertService(AlertService):
         return html2text.html2text(html).rstrip()
 
 
-class ProThreadedAlertService(ThreadedAlertService):
+class ProThreadedAlertService[T: BaseModel](ThreadedAlertService[T]):
     def send_sync(
         self,
         alerts: list[Alert[Any]],

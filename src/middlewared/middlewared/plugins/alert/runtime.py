@@ -183,10 +183,7 @@ async def _dispatch_policy_to_services(
             continue
 
         factory = _AlertService.by_name[alert_service_desc.attributes.type]
-        alert_service = factory(
-            context.middleware,
-            alert_service_desc.attributes.model_dump(expose_secrets=True),
-        )
+        alert_service = factory(context.middleware, alert_service_desc.attributes)
 
         alerts = _undismissed(service_alerts)
         service_gone_alerts = _undismissed(service_gone_alerts)

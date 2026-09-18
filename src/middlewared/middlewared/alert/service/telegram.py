@@ -7,16 +7,16 @@ from typing import Any
 import requests
 
 from middlewared.alert.base import Alert, ThreadedAlertService
+from middlewared.api.current import TelegramServiceModel
 from middlewared.utils.network import INTERNET_TIMEOUT
 
 
-class TelegramAlertService(ThreadedAlertService):
+class TelegramAlertService(ThreadedAlertService[TelegramServiceModel]):
     title = "Telegram"
 
     def send_sync(self, alerts: list[Alert[Any]], gone_alerts: list[Alert[Any]], new_alerts: list[Alert[Any]]) -> None:
-        token = self.attributes["bot_token"]
-        chat_ids = self.attributes["chat_ids"]
-        for chat_id in chat_ids:
+        token = self.attributes.bot_token.get_secret_value()
+        for chat_id in self.attributes.chat_ids:
             r = requests.post(
                 f"https://api.telegram.org/bot{token}/sendMessage",
                 headers={"Content-type": "application/json"},

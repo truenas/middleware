@@ -4,7 +4,11 @@ from pydantic import Discriminator, Field, Secret
 
 from middlewared.api.base import BaseModel, HttpUrl, NonEmptyString, TcpPort
 
-__all__ = ["AlertServiceAttributes"]
+__all__ = [
+    "AlertServiceAttributes", "AWSSNSServiceModel", "InfluxDBServiceModel", "MailServiceModel",
+    "MattermostServiceModel", "OpsGenieServiceModel", "PagerDutyServiceModel", "SlackServiceModel",
+    "SNMPTrapServiceModel", "TelegramServiceModel", "VictorOpsServiceModel",
+]
 
 
 class AWSSNSServiceModel(BaseModel):
