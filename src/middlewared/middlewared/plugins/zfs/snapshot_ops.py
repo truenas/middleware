@@ -23,6 +23,7 @@ from middlewared.service_exception import CallError, ValidationError
 
 from .destroy_impl import destroy_impl as _raw_destroy
 from .exceptions import (
+    ZFSDestroyFailedException,
     ZFSPathAlreadyExistsException,
     ZFSPathHasClonesException,
     ZFSPathHasHoldsException,
@@ -88,9 +89,9 @@ def count(context: ServiceContext, data: ZFSResourceSnapshotCountQuery) -> dict[
         raise ValidationError("zfs.resource.snapshot.count", e.message, errno.ENOENT)
 
 
-def destroy_impl(tls: Any, data: ZFSResourceSnapshotDestroyQuery) -> tuple[str | None, int | None]:
+def destroy_impl(tls: Any, data: ZFSResourceSnapshotDestroyQuery) -> None:
     reject_protected_path("zfs.resource.snapshot.destroy", data.path, data.bypass)
-    return _raw_destroy(tls, data.path, data.recursive, data.all_snapshots, data.bypass, data.defer)
+    _raw_destroy(tls, data.path, data.recursive, data.all_snapshots, data.bypass, data.defer)
 
 
 def destroy(context: ServiceContext, data: ZFSResourceSnapshotDestroyQuery) -> None:
@@ -106,16 +107,15 @@ def destroy(context: ServiceContext, data: ZFSResourceSnapshotDestroyQuery) -> N
         )
 
     try:
-        failed, errnum = context.call_sync2(context.s.zfs.resource.snapshot.destroy_impl, data)
+        context.call_sync2(context.s.zfs.resource.snapshot.destroy_impl, data)
     except ZFSPathNotFoundException as e:
         raise ValidationError(schema, e.message, errno.ENOENT)
     except ZFSPathHasClonesException as e:
         raise ValidationError(schema, e.message, errno.EBUSY)
     except ZFSPathHasHoldsException as e:
         raise ValidationError(schema, e.message, errno.EBUSY)
-
-    if failed:
-        raise ValidationError(schema, failed, errnum or errno.EFAULT)
+    except ZFSDestroyFailedException as e:
+        raise ValidationError(schema, e.message, e.errnum)
 
 
 def rename_impl(tls: Any, data: ZFSResourceSnapshotRenameQuery) -> None:

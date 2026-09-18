@@ -13,6 +13,7 @@ from middlewared.service_exception import ValidationError
 
 from .destroy_impl import destroy_impl as _raw_destroy
 from .exceptions import (
+    ZFSDestroyFailedException,
     ZFSPathHasClonesException,
     ZFSPathHasHoldsException,
     ZFSPathNotFoundException,
@@ -33,7 +34,7 @@ def destroy_impl(
     all_snapshots: bool = False,
     bypass: bool = False,
     defer: bool = False,
-) -> tuple[str | None, int | None]:
+) -> None:
     if os.path.isabs(path):
         raise ValidationError(
             SCHEMA,
@@ -70,12 +71,12 @@ def destroy_impl(
             if snap_counts.get(path, 0) > 0:
                 raise ValidationError(SCHEMA, f"{path!r} has snapshots. {extra}", errno.ENOTEMPTY)
 
-    return _raw_destroy(tls, path, recursive, all_snapshots, bypass, defer)
+    _raw_destroy(tls, path, recursive, all_snapshots, bypass, defer)
 
 
 def destroy(context: ServiceContext, data: ZFSResourceDestroyArgsData) -> None:
     try:
-        failed, errnum = context.call_sync2(context.s.zfs.resource.destroy_impl, data.path, data.recursive)
+        context.call_sync2(context.s.zfs.resource.destroy_impl, data.path, data.recursive)
     except ZFSPathHasClonesException as e:
         raise ValidationError(
             f"{SCHEMA}.defer",
@@ -86,9 +87,5 @@ def destroy(context: ServiceContext, data: ZFSResourceDestroyArgsData) -> None:
         raise ValidationError(SCHEMA, e.message, errno.ENOTEMPTY)
     except ZFSPathNotFoundException as e:
         raise ValidationError(SCHEMA, e.message, errno.ENOENT)
-    else:
-        if failed:
-            # A recursive destroy runs as a channel program, which executes atomically behind
-            # the scenes and so reports its failure as a return value rather than an exception.
-            assert errnum is not None
-            raise ValidationError(SCHEMA, failed, errnum)
+    except ZFSDestroyFailedException as e:
+        raise ValidationError(SCHEMA, e.message, e.errnum)

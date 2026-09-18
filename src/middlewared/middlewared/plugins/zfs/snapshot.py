@@ -146,8 +146,8 @@ class ZFSResourceSnapshotService(Service):
 
     @private
     @pass_thread_local_storage
-    def destroy_impl(self, tls: Any, data: ZFSResourceSnapshotDestroyQuery) -> tuple[str | None, int | None]:
-        return _ops.destroy_impl(tls, data)
+    def destroy_impl(self, tls: Any, data: ZFSResourceSnapshotDestroyQuery) -> None:
+        _ops.destroy_impl(tls, data)
 
     @api_method(
         ZFSResourceSnapshotDestroyArgs,

@@ -8,6 +8,7 @@ import truenas_pylibzfs
 
 from .destroy_impl import destroy_impl
 from .exceptions import (
+    ZFSDestroyFailedException,
     ZFSPathNotASnapshotException,
     ZFSPathNotFoundException,
     ZFSRollbackBlockedException,
@@ -100,12 +101,13 @@ def _destroy_clones_of(tls: Any, snap_path: str, force: bool) -> None:
             except truenas_pylibzfs.ZFSException:
                 pass  # The destroy below reports why the unmount was needed.
 
-        failed, errnum = destroy_impl(tls, clone, recursive=True, all_snapshots=False, bypass=True, defer=False)
-        if failed:
+        try:
+            destroy_impl(tls, clone, recursive=True, all_snapshots=False, bypass=True, defer=False)
+        except ZFSDestroyFailedException as e:
             raise ZFSRollbackFailedException(
-                f"{failed}. It is a clone of {snap_path!r}, which has to be destroyed for the rollback.",
-                errnum or errno.EFAULT,
-            )
+                f"{e.message}. It is a clone of {snap_path!r}, which has to be destroyed for the rollback.",
+                e.errnum,
+            ) from None
 
 
 def _destroy_newer_snapshots(
