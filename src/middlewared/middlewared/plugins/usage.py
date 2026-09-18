@@ -363,7 +363,7 @@ class UsageService(Service):
                     sharing_list.append({'type': service_upper, 'readonly': s['ro']})
                 elif service == 'webshare':
                     sharing_list.append({
-                        'type': service_upper, 'enabled': s['enabled'], 'is_home_base': s['is_home_base'],
+                        'type': service_upper, 'enabled': s.enabled, 'is_home_base': s.is_home_base,
                     })
                 elif service == 'iscsi':
                     tar = await self.middleware.call('iscsi.target.query', [('id', '=', s['target'])], {'get': True})
