@@ -26,6 +26,7 @@ __all__ = [
     "S3AccesskeyDeleteResult",
     "S3Access",
     "S3AuditAction",
+    "S3AuditMask",
     "S3Listener",
     "S3PrincipalType",
     "S3PermissionsModel",

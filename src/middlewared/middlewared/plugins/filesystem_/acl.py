@@ -160,14 +160,14 @@ class FilesystemService(Service):
         directory is the administrator's to manage; the rest of the dataset is the S3 service's, and a
         change over all of it may leave the bucket in a state the service does not expect.
         """
-        path = os.path.realpath(st.realpath)
+        path = os.path.realpath(st['realpath'])
         # dataset -> mountpoint of every mount the change covers in full: the target's own when it is a
         # mount root, and each one beneath it when the recursion crosses mounts
         covered = {}
-        if st.is_mountpoint:
+        if st['is_mountpoint']:
             covered[statmount(path=path, as_dict=True)["mount_source"]] = path
         if traverse:
-            for entry in iter_mountinfo(target_mnt_id=st.mount_id, as_dict=True):
+            for entry in iter_mountinfo(target_mnt_id=st['mount_id'], as_dict=True):
                 if entry["mountpoint"].startswith(f"{path}/"):
                     covered[entry["mount_source"]] = entry["mountpoint"]
         if not covered:
