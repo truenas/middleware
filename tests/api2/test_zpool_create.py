@@ -152,12 +152,16 @@ def test_create_log_cache_and_spares():
 
 
 def test_create_special_and_dedup_vdevs():
-    """Several special vdevs, of mixed types, beside a dedup vdev; the special class has no same-type rule."""
-    disks = _unused_devnames(9)
+    """Several special vdevs, of mixed types, beside a dedup vdev; the special class has no same-type rule.
+
+    A single data disk keeps this within a CI box's disks; the redundancy floor
+    has its own refusal and striped-data creation elsewhere.
+    """
+    disks = _unused_devnames(8)
     topology = {
-        "data": [{"type": "mirror", "disks": disks[0:2]}],
-        "special": [{"type": "raidz1", "disks": disks[2:5]}, {"type": "mirror", "disks": disks[5:7]}],
-        "dedup": [{"type": "mirror", "disks": disks[7:9]}],
+        "data": [{"type": "disk", "disks": disks[0:1]}],
+        "special": [{"type": "raidz1", "disks": disks[1:4]}, {"type": "mirror", "disks": disks[4:6]}],
+        "dedup": [{"type": "mirror", "disks": disks[6:8]}],
     }
     with _zpool(topology) as pool:
         assert [v["vdev_type"] for v in pool["topology"]["special"]] == ["raidz1", "mirror"]
