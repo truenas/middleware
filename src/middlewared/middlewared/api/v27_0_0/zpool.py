@@ -369,5 +369,9 @@ class ZpoolCreateArgs(BaseModel):
 
 class ZpoolCreateResult(BaseModel):
     result: ZpoolEntry = Field(
-        description="The new pool, queried after creation with its topology and the pool properties that were set.",
+        description=(
+            "The new pool as :method:`zpool.query` reports it, read once for both the `zpool.query` ADDED event "
+            "and this result: with its topology, scan state, the pool properties that were set, and the usage "
+            "properties the event carries."
+        ),
     )

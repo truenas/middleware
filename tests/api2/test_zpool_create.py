@@ -9,6 +9,7 @@ from middlewared.test.integration.assets.disk import fake_disks
 from middlewared.test.integration.assets.entitlements import entitled
 from middlewared.test.integration.utils import call, mock, ssh
 from middlewared.test.integration.utils.audit import expect_audit_method_calls
+from middlewared.test.integration.utils.event import wait_for_event
 
 POOL = "test_zpool_create"
 
@@ -48,9 +49,21 @@ def _create_fails(topology, **data):
     return [(e.attribute, e.errmsg, e.errcode) for e in ve.value.errors]
 
 
-def _still_unused(disks):
+def _partitions(disks):
+    """The partition tables of the disks; formatting rewrites them with new PARTUUIDs."""
+    return {d: call("disk.list_partitions", d) for d in disks}
+
+
+def _untouched(disks, partitions):
+    """The disks were never formatted: their partition tables are as they were, and no pool took them."""
+    assert _partitions(disks) == partitions
     assert set(disks) <= {d["devname"] for d in call("disk.get_unused")}
     assert not call("zpool.query", {"pool_names": [POOL]})
+
+
+def _unlicensed_for_force():
+    """force_topology is refused on a SUPPORT-entitled box, so pin the gate off while testing what it lifts."""
+    return entitled("SUPPORT", False)
 
 
 # ---------------------------------------------------------------------------
@@ -97,7 +110,7 @@ def test_create_draid_vdevs():
         ],
         "spares": disks[7:8],
     }
-    with _zpool(topology, force_topology=True) as pool:
+    with _unlicensed_for_force(), _zpool(topology, force_topology=True) as pool:
         assert [v["vdev_type"] for v in pool["topology"]["data"]] == ["draid1:1d:3c:1s", "draid2:2d:4c:0s"]
         # the dedicated spare sits beside the draid1's distributed spare
         spares = [v["name"] for v in pool["topology"]["spares"]]
@@ -120,16 +133,22 @@ def test_create_log_cache_and_spares():
         "cache": disks[3:4],
         "spares": disks[4:5],
     }
-    with _zpool(topology) as pool:
-        topology = pool["topology"]
-        assert topology["data"][0]["vdev_type"] == "mirror"
-        assert len(topology["log"]) == 1
-        assert len(topology["cache"]) == 1
-        assert len(topology["spares"]) == 1
+    with wait_for_event("zpool.query", expected_collection_type="added") as event:
+        with _zpool(topology) as pool:
+            topology = pool["topology"]
+            assert topology["data"][0]["vdev_type"] == "mirror"
+            assert len(topology["log"]) == 1
+            assert len(topology["cache"]) == 1
+            assert len(topology["spares"]) == 1
 
-        # while it exists, the name is taken
-        errors = _create_fails({"data": [{"type": "disk", "disks": disks[0:1]}]})
-        assert any(attr == "zpool.create.name" and code == errno.EEXIST for attr, _, code in errors)
+            # while it exists, the name is taken
+            errors = _create_fails({"data": [{"type": "disk", "disks": disks[0:1]}]})
+            assert any(attr == "zpool.create.name" and code == errno.EEXIST for attr, _, code in errors)
+
+    # the result is the payload of the ADDED event, read once for both
+    assert event["result"]["fields"]["id"] == pool["id"]
+    assert event["result"]["fields"]["guid"] == pool["guid"]
+    assert event["result"]["fields"]["topology"]["data"][0]["vdev_type"] == "mirror"
 
 
 def test_create_special_and_dedup_vdevs():
@@ -143,6 +162,33 @@ def test_create_special_and_dedup_vdevs():
     with _zpool(topology) as pool:
         assert [v["vdev_type"] for v in pool["topology"]["special"]] == ["raidz1", "mirror"]
         assert [v["vdev_type"] for v in pool["topology"]["dedup"]] == ["mirror"]
+
+
+def test_create_width_policy_and_force_topology():
+    """The width cap and the same-width rule refuse, and force_topology lifts the cap.
+
+    The RAIDZ cap of 15 needs more disks than a CI box has, so the mirror cap
+    of 4 stands in for both.
+    """
+    disks = _unused_devnames(7)
+    with _unlicensed_for_force():
+        before = _partitions(disks)
+        errors = _create_fails({"data": [{"type": "mirror", "disks": disks[0:5]}]})
+        assert errors == [("zpool.create.topology.data.0", "mirror width 5 exceeds limit of 4", errno.EINVAL)]
+        errors = _create_fails({"data": [{"type": "raidz1", "disks": disks[0:3]}, {"type": "raidz1", "disks": disks[3:7]}]})
+        assert errors == [
+            (
+                "zpool.create.topology.data.1",
+                'all "raidz1" vdevs must have the same number of children; got 3 and 4',
+                errno.EINVAL,
+            )
+        ]
+        _untouched(disks, before)
+
+        with _zpool({"data": [{"type": "mirror", "disks": disks[0:5]}]}, force_topology=True) as pool:
+            vdev = pool["topology"]["data"][0]
+            assert vdev["vdev_type"] == "mirror"
+            assert len(vdev["children"]) == 5
 
 
 def test_create_non_redundant_special_on_striped_data():
@@ -268,11 +314,36 @@ REJECTED = [
 @pytest.mark.parametrize("count,topology_fn,data,expected", REJECTED)
 def test_create_rejected_before_formatting(count, topology_fn, data, expected):
     disks = _unused_devnames(count)
-    errors = _create_fails(topology_fn(disks), **data)
+    before = _partitions(disks)
+    with _unlicensed_for_force() if data.get("force_topology") else contextlib.nullcontext():
+        errors = _create_fails(topology_fn(disks), **data)
     expected = [(attr, msg.format(d1=disks[1] if count > 1 else None)) for attr, msg in expected]
     assert [(attr, msg[: len(want_msg)]) for (attr, msg, _), (_, want_msg) in zip(errors, expected)] == expected
     assert len(errors) == len(expected)
-    _still_unused(disks)
+    _untouched(disks, before)
+
+
+def test_create_name_taken_by_an_unregistered_pool():
+    """A pool that is imported but unknown to the database still owns its name; pool.create only asks the database."""
+    disks = _unused_devnames(2)
+    ssh(f"zpool create -m none {POOL} /dev/{disks[0]}")
+    try:
+        before = _partitions(disks[1:2])
+        errors = _create_fails({"data": [{"type": "disk", "disks": disks[1:2]}]})
+        assert [(attr, code) for attr, _, code in errors] == [("zpool.create.name", errno.EEXIST)]
+        assert _partitions(disks[1:2]) == before
+    finally:
+        ssh(f"zpool destroy -f {POOL}")
+
+
+def test_create_refuses_a_disk_in_use():
+    taken = call("disk.get_reserved")[0]
+    before = _partitions([taken])
+    errors = _create_fails({"data": [{"type": "disk", "disks": [taken]}]})
+    assert [(attr, msg) for attr, msg, _ in errors] == [
+        ("zpool.create.topology", f"The following disks are already in use: {taken}.")
+    ]
+    assert _partitions([taken]) == before
 
 
 @pytest.mark.parametrize(
@@ -294,11 +365,12 @@ def test_create_rejects_what_the_model_does_not_expose(data, attribute):
 
 def test_create_spare_too_small():
     disks = _unused_devnames(1)
+    before = _partitions(disks)
     with fake_disks({"sdz": {"size_bytes": 1024 * 1024 * 1024}}):
         errors = _create_fails({"data": [{"type": "disk", "disks": disks[0:1]}], "spares": ["sdz"]})
     assert errors[0][0] == "zpool.create.topology.spares"
     assert errors[0][1].startswith("Spare sdz (1 GiB) is smaller than the smallest data disk")
-    _still_unused(disks)
+    _untouched(disks, before)
 
 
 def test_create_force_topology_rejected_when_support_entitled():
@@ -322,6 +394,12 @@ def test_create_dedup_rejected_without_entitlement():
     assert [(attr, code) for attr, _, code in errors] == [("zpool.create.filesystem_properties.dedup", errno.EPERM)]
 
 
+def test_create_all_sed_rejected_without_entitlement():
+    with entitled("SED", False):
+        errors = _create_fails({"data": [{"type": "disk", "disks": ["nosuchdisk"]}]}, all_sed=True)
+    assert [(attr, code) for attr, _, code in errors] == [("zpool.create.all_sed", errno.EPERM)]
+
+
 # ---------------------------------------------------------------------------
 # Rollback
 # ---------------------------------------------------------------------------
@@ -342,4 +420,4 @@ def test_create_rolls_back_when_registration_fails(method, payload_fn):
             call(method, payload_fn(disks[0:1]), job=True)
     assert POOL not in ssh("zpool list -H -o name").split()
     assert not call("datastore.query", "storage.volume", [["vol_name", "=", POOL]])
-    _still_unused(disks)
+    assert set(disks) <= {d["devname"] for d in call("disk.get_unused")}
