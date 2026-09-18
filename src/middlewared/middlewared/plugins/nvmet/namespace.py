@@ -13,7 +13,9 @@ from middlewared.api.current import (
     NVMetNamespaceEntry,
     NVMetNamespaceUpdateArgs,
     NVMetNamespaceUpdateResult,
+    ZFSResourceQuery,
 )
+from middlewared.plugins.pool_.utils import UpdateImplArgs
 from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
 from middlewared.plugins.zfs_.validation_utils import validate_dataset_name
 from middlewared.service import SharingService, ValidationErrors, private
@@ -28,6 +30,8 @@ from middlewared.utils.nvmet.spdk import resize_namespace as spdk_resize_namespa
 from middlewared.utils.nvmet.spdk import unlock_namespace as spdk_unlock_namespace
 
 from .constants import NAMESPACE_DEVICE_TYPE
+
+DISABLE_VOLTHREADING_FOR_NVMET = True
 
 UUID_GENERATE_RETRIES = 10
 NSID_SEARCH_RANGE = 0xFFFF  # This is much less than NSID, but good enough for practical purposes.
@@ -105,6 +109,18 @@ class NVMetNamespaceService(SharingService):
         await self.middleware.call('nvmet.namespace.save_file', data, 'nvmet_namespace_create', verrors)
         verrors.check()
 
+        if DISABLE_VOLTHREADING_FOR_NVMET:
+            if data['device_type'] == 'ZVOL' and data['device_path'].startswith('zvol/'):
+                zvolname = zvol_path_to_name(os.path.join('/dev', data['device_path']))
+                if '@' not in zvolname:  # Snapshots don't support volthreading property
+                    await self.middleware.call(
+                        'pool.dataset.update_impl',
+                        UpdateImplArgs(
+                            name=zvolname,
+                            zprops={'volthreading': 'off'}
+                        )
+                    )
+
         async with NSID_LOCK:
             if not data.get('nsid'):
                 data['nsid'] = await self.__get_next_nsid(data['subsys_id'])
@@ -139,6 +155,18 @@ class NVMetNamespaceService(SharingService):
         await self.middleware.call('nvmet.namespace.save_file', new, 'nvmet_namespace_update', verrors, old)
         verrors.check()
 
+        if DISABLE_VOLTHREADING_FOR_NVMET:
+            if new['device_type'] == 'ZVOL' and new['device_path'].startswith('zvol/'):
+                zvolname = zvol_path_to_name(os.path.join('/dev', new['device_path']))
+                if '@' not in zvolname:  # Snapshots don't support volthreading property
+                    await self.middleware.call(
+                        'pool.dataset.update_impl',
+                        UpdateImplArgs(
+                            name=zvolname,
+                            zprops={'volthreading': 'off'}
+                        )
+                    )
+
         await self.compress(new)
         await self.middleware.call(
             'datastore.update', self._config.datastore, id_, new,
@@ -168,6 +196,30 @@ class NVMetNamespaceService(SharingService):
                 # exception type is caught and returned in the
                 # event an unexpected error happens
                 raise CallError(f'Failed to remove namespace file: {delete!r}')
+
+        if DISABLE_VOLTHREADING_FOR_NVMET:
+            if data['device_type'] == 'ZVOL' and data['device_path'].startswith('zvol/'):
+                zvolname = zvol_path_to_name(os.path.join('/dev', data['device_path']))
+                if '@' not in zvolname:  # Snapshots don't support volthreading property
+                    if zvol := await self.call2(
+                        self.s.zfs.resource.query_impl,
+                        ZFSResourceQuery(paths=[zvolname], properties=['volthreading'])
+                    ):
+                        if (
+                            zvol[0]['type'] == 'VOLUME'
+                            and zvol[0]['properties']['volthreading']['raw'] == 'off'
+                        ):
+                            # Only try to set volthreading if:
+                            # 1. volume still exists
+                            # 2. is a volume
+                            # 3. volthreading is currently off
+                            await self.middleware.call(
+                                'pool.dataset.update_impl',
+                                UpdateImplArgs(
+                                    name=zvolname,
+                                    zprops={'volthreading': 'on'}
+                                )
+                            )
 
         rv = await self.middleware.call('datastore.delete', self._config.datastore, id_)
 
@@ -459,3 +511,47 @@ class NVMetNamespaceService(SharingService):
         except Exception:
             self.logger.warning('Failed to resync lun size for subnqn %r nsid %r (ID %r)',
                                 ns['subsys']['subnqn'], ns['nsid'], ns['id'], exc_info=True)
+
+    @private
+    async def pool_import(self, pool=None):
+        """
+        On pool import we will ensure that any ZVOLs used as NVMe-oF namespaces have the
+        necessary properties set (i.e. turn off volthreading).
+        """
+        if not DISABLE_VOLTHREADING_FOR_NVMET:
+            return
+
+        filters = [['device_type', '=', 'ZVOL']]
+        if pool is not None:
+            filters.append(['device_path', '^', f'zvol/{pool["name"]}/'])
+
+        zvols = [
+            namespace['device_path'][5:] for namespace in await self.middleware.call(
+                'nvmet.namespace.query',
+                filters,
+                {'select': ['device_path']}
+            )
+        ]
+        if not zvols:
+            return
+
+        for zvol in await self.call2(
+            self.s.zfs.resource.query_impl,
+            ZFSResourceQuery(paths=zvols, properties=['volthreading']),
+        ):
+            if zvol['properties']['volthreading']['raw'] == 'on':
+                await self.middleware.call(
+                    'pool.dataset.update_impl',
+                    UpdateImplArgs(
+                        name=zvol['name'],
+                        zprops={'volthreading': 'off'}
+                    )
+                )
+
+
+async def pool_post_import(middleware, pool):
+    await middleware.call('nvmet.namespace.pool_import', pool)
+
+
+async def setup(middleware):
+    middleware.register_hook('pool.post_import', pool_post_import, sync=True)
