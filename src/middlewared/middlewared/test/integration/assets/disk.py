@@ -6,7 +6,7 @@ from middlewared.test.integration.utils import call, mock
 @contextlib.contextmanager
 def fake_disks(disks):
     with mock("disk.get_disks", """
-        def mock(self):
+        def mock(self, name_filters=None):
             from dataclasses import asdict
             from functools import cached_property
             import inspect
@@ -39,9 +39,13 @@ def fake_disks(disks):
         get_disks.append(disk)
 
     with mock("disk.get_disks", f"""
-        def mock(self):
+        def mock(self, name_filters=None):
             from types import SimpleNamespace
 
-            return [SimpleNamespace(**disk) for disk in {get_disks!r}]
+            wanted = None if name_filters is None else {{name.removeprefix("/dev/") for name in name_filters}}
+            return [
+                SimpleNamespace(**disk) for disk in {get_disks!r}
+                if wanted is None or disk["name"] in wanted
+            ]
     """):
         yield
