@@ -4,9 +4,12 @@ import time
 import pytest
 
 from auto_config import pool_name
+from middlewared.test.integration.assets.account import user
+from middlewared.test.integration.assets.entitlements import entitled
 from middlewared.test.integration.assets.ftp import ftp_server
 from middlewared.test.integration.assets.nfs import nfs_server
 from middlewared.test.integration.assets.pool import dataset as nfs_dataset
+from middlewared.test.integration.assets.s3 import s3_bucket
 from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.utils.client import truenas_server, client
 from middlewared.test.integration.utils.shell import webshell_exec
@@ -105,6 +108,45 @@ def test_ftp_reporting(get_usage_sample):
             with ftp_connection(truenas_server.ip):
                 usage_sample = call('usage.gather')
                 assert usage_sample['FTP']['num_connections'] == 2
+
+
+def test_s3_reporting():
+    """ Confirm S3 buckets are reported in shares by their settings alone """
+    def s3_shares():
+        return [s for s in call('usage.gather', ['gather_sharing'])['shares'] if s['type'] == 'S3']
+
+    # Setting an audit mask is licensed, hence the entitlement
+    with user(
+        {'username': 's3usageowner', 'full_name': 's3 usage owner', 'group_create': True, 'password': 'test1234'}
+    ), entitled('S3_AUDIT'), s3_bucket(
+        'usage-bucket',
+        dataset=f'{pool_name}/usage-s3-bucket',
+        owner='s3usageowner',
+        multipart_etag='COMPOSITE',
+        snapshot_versions=['auto-*'],
+        audit='ALL',
+    ) as bucket:
+        expected = {
+            'type': 'S3',
+            'enabled': True,
+            'permissions_model': 'S3',
+            'object_ownership': 'BUCKET_OWNER_ENFORCED',
+            'versioning': 'OFF',
+            'object_lock': False,
+            'snapshot_versions': True,
+            'multipart_etag': 'COMPOSITE',
+            'audit': True,
+        }
+        shares = s3_shares()
+        assert len(shares) == call('sharing.s3.query', [], {'count': True})
+        assert expected in shares
+        # Nothing that names the system leaves with the sample
+        assert not any({'name', 'dataset', 'owner', 'owner_uid', 'grants'} & s.keys() for s in shares)
+
+        # A bucket without a mask of its own audits what the service default says
+        call('sharing.s3.update', bucket['id'], {'audit': None})
+        expected['audit'] = bool(call('s3.config')['default_audit'])
+        assert expected in s3_shares()
 
 
 def test_count_method_calls():
