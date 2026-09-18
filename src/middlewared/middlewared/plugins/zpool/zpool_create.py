@@ -139,9 +139,12 @@ def create(context: ServiceContext, job: Job, data: ZpoolCreate) -> ZpoolEntry:
     properties, filesystem_properties = resolve_create_request(data)
     ctx = CreateContext(properties=properties, filesystem_properties=filesystem_properties)
 
+    # The two structural product rules first, on their own, so a vdev short of
+    # disks is reported once rather than by both TrueNAS and the binding.
     verrors = ValidationErrors()
     collect(verrors, check_disks_unique, data, ctx)
     collect(verrors, check_min_disks, data, ctx)
+    verrors.check()
 
     # The entitlements are settled before any disk is looked at so an
     # unlicensed request fails without further work.

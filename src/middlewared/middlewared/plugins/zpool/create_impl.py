@@ -58,15 +58,18 @@ KWARG_TO_ROOT = {kwarg: root for root, kwarg in ROOT_TO_KWARG.items()}
 DIRECT_ARGUMENTS = ("name", "properties", "filesystem_properties")
 
 
-def binding_location(argument: str, index: int | None) -> str | None:
+def binding_location(argument: str, index: int | None, origins: dict[str, list[int]]) -> str | None:
     """Translate where the binding located a refusal into a ``zpool.create`` attribute suffix.
 
-    A vdev argument maps to its topology root, with the vdev position when the
-    binding knew it; ``name`` and the two property arguments map to themselves;
-    anything else (an argument the request does not expose) maps to None.
+    A vdev argument maps to its topology root, with the request position the
+    offending spec came from when the binding knew which spec it was (``origins``
+    is what ``assemble_create_pool_vdev_kwargs`` returned: the binding indexes
+    specs, and a ``disk`` request vdev becomes one spec per disk); ``name`` and
+    the two property arguments map to themselves; anything else (an argument the
+    request does not expose) maps to None.
     """
     if (root := KWARG_TO_ROOT.get(argument)) is not None:
-        return f"topology.{root}" if index is None else f"topology.{root}.{index}"
+        return f"topology.{root}" if index is None else f"topology.{root}.{origins[argument][index]}"
     if argument in DIRECT_ARGUMENTS:
         return argument
     return None
@@ -130,28 +133,39 @@ def build_vdev_spec(vdev: dict[str, Any], names: str = "devices") -> Any:
     return create_vdev_spec(vdev_type=VDevType(vtype), children=leaves)
 
 
-def assemble_create_pool_vdev_kwargs(vdevs: list[dict[str, Any]], names: str = "devices") -> dict[str, list[Any]]:
+def assemble_create_pool_vdev_kwargs(
+    vdevs: list[dict[str, Any]], names: str = "devices"
+) -> tuple[dict[str, list[Any]], dict[str, list[int]]]:
     """Group converted-topology vdevs into the six create_pool() vdev keyword args.
 
-    A vdev the binding refuses to build (a dRAID configuration its disks
-    cannot satisfy) raises ``ZpoolCreateRejected`` located at that vdev.
+    Returns the keyword arguments and, per argument, the request position each
+    spec came from: the vdev index within its topology root, or the disk index
+    for ``cache`` and ``spares``. The two differ because a ``disk`` request vdev
+    becomes one spec per disk. A vdev the binding refuses to build (a dRAID
+    configuration its disks cannot satisfy) raises ``ZpoolCreateRejected``
+    located at that vdev.
     """
     kwargs: dict[str, list[Any]] = {}
+    origins: dict[str, list[int]] = {}
     position = {root: 0 for root in ROOT_TO_KWARG}
     for vdev in vdevs:
         root = vdev["root"]
+        kwarg = ROOT_TO_KWARG[root]
         try:
             spec = build_vdev_spec(vdev, names)
         except ValidationError as e:
             location = f"topology.{root}" if root in ("cache", "spares") else f"topology.{root}.{position[root]}"
             raise ZpoolCreateRejected(location, e.reason) from e
-        position[root] += 1
-        bucket = kwargs.setdefault(ROOT_TO_KWARG[root], [])
+        bucket = kwargs.setdefault(kwarg, [])
+        sources = origins.setdefault(kwarg, [])
         if isinstance(spec, list):
             bucket.extend(spec)
+            sources.extend(range(len(spec)) if root in ("cache", "spares") else [position[root]] * len(spec))
         else:
             bucket.append(spec)
-    return kwargs
+            sources.append(position[root])
+        position[root] += 1
+    return kwargs, origins
 
 
 def properties_to_zfs(properties: BaseModel) -> dict[str, str]:
@@ -203,11 +217,11 @@ def validate_impl(
     property names and values and, unless ``force``, the topology policy. A
     refusal raises ``ZpoolCreateRejected`` located where the binding placed it.
     """
-    specs = assemble_create_pool_vdev_kwargs(vdevs, "disks")
+    specs, origins = assemble_create_pool_vdev_kwargs(vdevs, "disks")
     try:
         _create_pool(lzh, name, specs, properties, filesystem_properties, force, dry_run=True)
     except ValidationError as e:
-        raise ZpoolCreateRejected(binding_location(e.argument, e.index), e.reason) from e
+        raise ZpoolCreateRejected(binding_location(e.argument, e.index, origins), e.reason) from e
 
 
 def create_impl(
@@ -224,7 +238,7 @@ def create_impl(
     has populated with ``/dev/<gptid>`` paths; the property dicts are keyed by
     native name; ``force`` skips the binding's topology policy.
     """
-    specs = assemble_create_pool_vdev_kwargs(vdevs)
+    specs, _ = assemble_create_pool_vdev_kwargs(vdevs)
     try:
         _create_pool(lzh, name, specs, properties, filesystem_properties, force, dry_run=False)
     except ZFSException as e:
