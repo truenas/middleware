@@ -12,6 +12,7 @@ from middlewared.api.current import (
     ZFSResourceQuery,
 )
 from middlewared.plugins.container.utils import CONTAINER_DS_NAME
+from middlewared.plugins.zfs.exceptions import ZFSDestroyFailedException
 from middlewared.plugins.zfs_.validation_utils import validate_dataset_name
 from middlewared.plugins.zfs.utils import has_internal_path
 from middlewared.service import (
@@ -964,10 +965,13 @@ class PoolDatasetService(CRUDService):
                 {'immutable': False},
             )
 
-        async with self.s.truesearch.remove_mountpoint(mountpoint):
-            await self.call2(
-                self.s.zfs.resource.destroy_impl, id_, recursive=options['recursive']
-            )
+        try:
+            async with self.s.truesearch.remove_mountpoint(mountpoint):
+                await self.call2(
+                    self.s.zfs.resource.destroy_impl, id_, recursive=options['recursive']
+                )
+        except ZFSDestroyFailedException as e:
+            raise CallError(e.message, e.errnum)
 
         return True
 

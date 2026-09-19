@@ -318,9 +318,11 @@ class ZFSResourceService(Service):
         all_snapshots: bool = False,
         bypass: bool = False,
         defer: bool = False,
-    ) -> tuple[str | None, int | None]:
+    ) -> None:
         """
         Internal implementation for destroying a ZFS resource.
+
+        Raises `ZFSDestroyFailedException` when the destroy itself fails.
 
         Args:
             path: The path of the zfs resource to destroy.
@@ -335,7 +337,7 @@ class ZFSResourceService(Service):
             defer: Rather than returning error if the given snapshot is ineligible for immediate destruction,
                 mark it for deferred, automatic destruction once it becomes eligible.
         """
-        return _destroy.destroy_impl(self.context, tls, path, recursive, all_snapshots, bypass, defer)
+        _destroy.destroy_impl(self.context, tls, path, recursive, all_snapshots, bypass, defer)
 
     @api_method(
         ZFSResourceDestroyArgs,

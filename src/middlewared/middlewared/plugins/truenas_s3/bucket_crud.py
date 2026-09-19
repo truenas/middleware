@@ -43,7 +43,11 @@ from middlewared.api.current import (
     ZFSResourceQuery,
 )
 from middlewared.common.attachment import LockableFSAttachmentDelegate
-from middlewared.plugins.zfs.exceptions import ZFSPathAlreadyExistsException, ZFSPathNotFoundException
+from middlewared.plugins.zfs.exceptions import (
+    ZFSDestroyFailedException,
+    ZFSPathAlreadyExistsException,
+    ZFSPathNotFoundException,
+)
 from middlewared.service import CallError, SharingService, ValidationError, ValidationErrors, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils.path import FSLocation
@@ -433,9 +437,10 @@ class SharingS3Service(SharingService[SharingS3Entry]):
 
     @private
     async def destroy_dataset(self, name: str) -> None:
-        failed, errnum = await self.call2(self.s.zfs.resource.destroy_impl, name)
-        if failed:
-            self.logger.warning("%s: failed to remove the bucket dataset: %s", name, failed)
+        try:
+            await self.call2(self.s.zfs.resource.destroy_impl, name)
+        except ZFSDestroyFailedException as e:
+            self.logger.warning("%s: failed to remove the bucket dataset: %s", name, e.message)
 
     @api_method(
         SharingS3CreateArgs,

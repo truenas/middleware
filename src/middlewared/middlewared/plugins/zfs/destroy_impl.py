@@ -8,7 +8,7 @@ import truenas_pylibzfs
 
 from middlewared.utils.filesystem import attrs as fs_attrs
 
-from .exceptions import ZFSPathHasClonesException, ZFSPathHasHoldsException
+from .exceptions import ZFSDestroyFailedException, ZFSPathHasClonesException, ZFSPathHasHoldsException
 from .utils import open_resource
 
 __all__ = ("destroy_impl",)
@@ -124,7 +124,7 @@ def _remove_mountpoint_dirs(mountpoints: Iterable[str]) -> None:
         _remove_mountpoint_dir(mountpoint)
 
 
-def destroy_nonrecursive_impl(tls: Any, path: str, defer: bool) -> tuple[str | None, int | None]:
+def destroy_nonrecursive_impl(tls: Any, path: str, defer: bool) -> None:
     """
     Destroy a single ZFS resource non-recursively.
 
@@ -134,9 +134,7 @@ def destroy_nonrecursive_impl(tls: Any, path: str, defer: bool) -> tuple[str | N
             mark it for deferred, automatic destruction once it becomes eligible.
     """
     rsrc = open_resource(tls, path)
-    a_snapshot = rsrc.type == truenas_pylibzfs.ZFSType.ZFS_TYPE_SNAPSHOT
-    failed, errnum = None, None
-    if a_snapshot:
+    if rsrc.type == truenas_pylibzfs.ZFSType.ZFS_TYPE_SNAPSHOT:
         holds = rsrc.get_holds()
         if holds:
             raise ZFSPathHasHoldsException(path, holds)
@@ -149,18 +147,18 @@ def destroy_nonrecursive_impl(tls: Any, path: str, defer: bool) -> tuple[str | N
             truenas_pylibzfs.lzc.destroy_snapshots(snapshot_names=(path,), defer_destroy=defer)
         except truenas_pylibzfs.lzc.ZFSCoreException as e:
             # ZFSCoreException is a RuntimeError, not a ZFSException
-            failed = f"Failed to destroy {path!r}: {os.strerror(e.code)}"
-            errnum = e.code
+            raise ZFSDestroyFailedException(f"Failed to destroy {path!r}: {os.strerror(e.code)}", e.code) from None
         except truenas_pylibzfs.ZFSException as e:
-            failed = f"Failed to destroy {path!r}: {e}"
-            errnum = e.code
-        return failed, errnum
+            raise ZFSDestroyFailedException(f"Failed to destroy {path!r}: {e}", e.code) from None
+        return
     elif rsrc.type == truenas_pylibzfs.ZFSType.ZFS_TYPE_FILESYSTEM:
         try:
             rsrc.unmount()
-        except truenas_pylibzfs.ZFSException as e:
-            failed = f"Failed to unmount {path!r}: {e}"
-            errnum = e.code
+        except truenas_pylibzfs.ZFSException:
+            # Not fatal on its own. The destroy below runs either way, and it is
+            # the one that says whether `path` is gone. A destroy that succeeds
+            # after a failed unmount is a successful destroy.
+            pass
         else:
             # `path` has no children: a non-recursive destroy of a filesystem
             # that has any is rejected before it reaches here
@@ -174,10 +172,7 @@ def destroy_nonrecursive_impl(tls: Any, path: str, defer: bool) -> tuple[str | N
         else:
             tls.lzh.destroy_resource(name=path)
     except truenas_pylibzfs.ZFSException as e:
-        failed = f"Failed to destroy {path!r}: {e}"
-        errnum = e.code
-
-    return failed, errnum
+        raise ZFSDestroyFailedException(f"Failed to destroy {path!r}: {e}", e.code) from None
 
 
 def destroy_impl(
@@ -187,7 +182,7 @@ def destroy_impl(
     all_snapshots: bool,
     bypass: bool,
     defer: bool,
-) -> tuple[str | None, int | None]:
+) -> None:
     """
     Destroy a ZFS resource with optional recursive and snapshot handling.
 
@@ -205,7 +200,8 @@ def destroy_impl(
             mark it for deferred, automatic destruction once it becomes eligible.
     """
     if not recursive and not all_snapshots:
-        return destroy_nonrecursive_impl(tls, path, defer)
+        destroy_nonrecursive_impl(tls, path, defer)
+        return
 
     target = path.split("@")[0]
     pool_name = target.split("/")[0]
@@ -269,7 +265,6 @@ def destroy_impl(
                 readonly=readonly,
             )
 
-    failed, errnum = None, None
     if res["return"]["failed"]:
         failed = f"Failed to destroy {path!r}"
         if res["return"]["clones"]:
@@ -281,7 +276,6 @@ def destroy_impl(
         else:
             cause, errnum = _root_cause(res["return"]["failed"])
             failed += f" ({cause!r}: {os.strerror(errnum)})"
-    else:
-        _remove_mountpoint_dirs(mntpnts)
+        raise ZFSDestroyFailedException(failed, errnum)
 
-    return failed, errnum
+    _remove_mountpoint_dirs(mntpnts)
