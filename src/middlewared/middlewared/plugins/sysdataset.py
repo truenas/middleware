@@ -137,9 +137,7 @@ Action semantics:
         Some destinations the kernel refuses to overwrite even with -F
         (top-level snapshots, clones). In those cases the receive fails
         with EZFS_EXISTS; we fall back to an explicit recursive destroy
-        of `<target>/.system` (with hard return-value checking, since
-        destroy_impl reports logical failures via tuple return rather
-        than raising) and retry the receive once.
+        of `<target>/.system` and retry the receive once.
 
     ABANDON_AND_REMOUNT
         With daemon quiesce, umount SYSDATASET_PATH and mount target_pool's
@@ -252,7 +250,7 @@ from middlewared.plugins.system_dataset.mount import (
     replicate,
 )
 from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH, dataset_mountpoint
-from middlewared.plugins.zfs.exceptions import ZFSPathNotFoundException
+from middlewared.plugins.zfs.exceptions import ZFSDestroyFailedException, ZFSPathNotFoundException
 from middlewared.plugins.zfs.utils import get_encryption_info
 from middlewared.service import CallError, ConfigService, ValidationError, ValidationErrors, job, private
 import middlewared.sqlalchemy as sa
@@ -867,9 +865,8 @@ class SystemDatasetService(ConfigService):
           aren't in the stream.
         - libzfs refuses -F when the dest has top-level snapshots or is
           a clone (EZFS_EXISTS). In that case, recursive-destroy the dest
-          (hard-failing if destroy_impl reports a logical error, since
-          retrying without the dataset gone is pointless) and replicate
-          again.
+          (hard-failing if the destroy fails, since retrying without the
+          dataset gone is pointless) and replicate again.
         """
         # Set before entering the CM -- release_system_dataset() stops the
         # services as its first act, so the message is live while it does.
@@ -912,9 +909,7 @@ class SystemDatasetService(ConfigService):
         """Recursively destroy `<pool>/.system` with explicit status
         handling.
 
-        destroy_impl reports logical failures via `(failed_msg, errnum)`
-        without raising, so the result has to be checked. `ZFSPathNotFoundException`
-        ("nothing to do") is always benign.
+        `ZFSPathNotFoundException` ("nothing to do") is always benign.
 
         must_succeed=True raises CallError on any failure -- used by the
         MIGRATE_DATA fallback where leaving the dataset behind would
@@ -927,24 +922,21 @@ class SystemDatasetService(ConfigService):
         """
         path = f'{pool}/.system'
         try:
-            failed, errnum = self.call_sync2(
+            self.call_sync2(
                 self.s.zfs.resource.destroy_impl, path,
                 recursive=True, bypass=True,
             )
         except ZFSPathNotFoundException:
             return
+        except ZFSDestroyFailedException as e:
+            msg = f'{path}: recursive destroy failed: {e.message} (errno={e.errnum})'
+            if must_succeed:
+                raise CallError(msg, errno=e.errnum or errno.EIO)
+            self.logger.warning(msg)
         except Exception:
             if must_succeed:
                 raise
             self.logger.warning('%s: destroy raised', path, exc_info=True)
-            return
-
-        if not failed:
-            return
-        msg = f'{path}: recursive destroy failed: {failed} (errno={errnum})'
-        if must_succeed:
-            raise CallError(msg, errno=errnum or errno.EIO)
-        self.logger.warning(msg)
 
     def _action_abandon_and_remount(self, target_pool, uid, job=None):
         """ABANDON_AND_REMOUNT: mount target's existing .system over the

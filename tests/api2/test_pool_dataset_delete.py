@@ -1,8 +1,23 @@
+import contextlib
+
 import pytest
 
-from auto_config import pool_name
+from middlewared.service_exception import CallError
 from middlewared.test.integration.assets.pool import dataset
-from middlewared.test.integration.utils import ssh, wait_for_event
+from middlewared.test.integration.utils import call, ssh, wait_for_event
+
+
+@contextlib.contextmanager
+def pinned_mountpoint(mountpoint):
+    """Make `mountpoint` impossible to unmount from outside middleware."""
+    pin = f"{mountpoint}/pin"
+    ssh(f"mkdir {pin}")
+    ssh(f"mount -t tmpfs tmpfs {pin}")
+    try:
+        yield pin
+    finally:
+        ssh(f"umount {pin}")
+        ssh(f"rmdir {pin}")
 
 
 def test_pool_dataset_external_delete_sends_event():
@@ -15,3 +30,13 @@ def test_pool_dataset_external_delete_sends_event():
             "collection": "pool.dataset.query",
             "id": ds,
         }
+
+
+def test_pool_dataset_delete_reports_failed_destroy():
+    with dataset("delete_busy") as ds:
+        with pinned_mountpoint(f"/mnt/{ds}"):
+            with pytest.raises(CallError) as e:
+                call("pool.dataset.delete", ds)
+
+        assert f"Failed to destroy {ds!r}" in e.value.errmsg
+        assert call("pool.dataset.query", [["id", "=", ds]])

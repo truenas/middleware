@@ -1,6 +1,7 @@
 from collections.abc import Sequence
 
 __all__ = (
+    "ZFSDestroyFailedException",
     "ZFSKeyAlreadyLoadedException",
     "ZFSNotEncryptedException",
     "ZFSPathAlreadyExistsException",
@@ -26,6 +27,22 @@ class ZFSPathException(Exception):
         self.path = path
         self.message = f"{path!r} {self.reason}"
         super().__init__(path, *args)
+
+    def __str__(self) -> str:
+        return self.message
+
+
+class ZFSDestroyFailedException(Exception):
+    """A destroy failed for an operational reason, such as a busy dataset.
+
+    ``errnum`` is a POSIX errno for a recursive destroy, which runs as a channel
+    program, and a ``truenas_pylibzfs.ZFSError`` code for a non-recursive one.
+    """
+
+    def __init__(self, message: str, errnum: int):
+        self.errnum = errnum
+        self.message = message
+        super().__init__(message, errnum)
 
     def __str__(self) -> str:
         return self.message
