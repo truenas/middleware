@@ -1,8 +1,11 @@
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import Field
+from pydantic import Field, PositiveInt
+from truenas_pylibzfs import constants
 
-from middlewared.api.base import BaseModel
+from middlewared.api.base import BaseModel, Excluded, NonEmptyString, Private, excluded_field
+
+from .zfs_resource_crud import ZFSResourceCreateProperties
 
 __all__ = (
     "ZpoolScan",
@@ -19,7 +22,23 @@ __all__ = (
     "ZpoolQueryAddedEvent",
     "ZpoolQueryChangedEvent",
     "ZpoolQueryRemovedEvent",
+    "ZpoolCreateVdev",
+    "ZpoolCreateTopology",
+    "ZpoolCreateProperties",
+    "ZpoolCreateFilesystemProperties",
+    "ZpoolCreate",
+    "ZpoolCreateArgs",
+    "ZpoolCreateResult",
 )
+
+
+def _guids_to_int(vdev: dict) -> None:
+    """Older API versions carried vdev guids as integers."""
+    vdev["guid"] = int(vdev["guid"])
+    if vdev.get("top_guid") is not None:
+        vdev["top_guid"] = int(vdev["top_guid"])
+    for child in vdev.get("children") or []:
+        _guids_to_int(child)
 
 
 class ZpoolPropertyValue(BaseModel):
@@ -62,11 +81,14 @@ class ZpoolVdevStats(BaseModel):
 class ZpoolVdev(BaseModel):
     name: str = Field(description="Vdev name (e.g., 'mirror-0', '/dev/sda1').")
     vdev_type: str = Field(description="Vdev type (e.g., 'mirror', 'raidz1', 'disk').")
-    guid: int = Field(description="Globally unique identifier for this vdev.")
+    guid: str = Field(description="Globally unique identifier for this vdev, a 64-bit integer as a decimal string.")
     state: str = Field(description="Current state (ONLINE, DEGRADED, FAULTED, OFFLINE, UNAVAIL, etc.).")
     stats: ZpoolVdevStats = Field(description="Vdev I/O statistics.")
     children: list["ZpoolVdev"] = Field(description="Child vdevs.")
-    top_guid: int | None = Field(default=None, description="GUID of the top-level vdev this belongs to.")
+    top_guid: str | None = Field(
+        default=None,
+        description="GUID of the top-level vdev this belongs to, a 64-bit integer as a decimal string.",
+    )
     path: str | None = Field(
         default=None,
         description=(
@@ -76,6 +98,11 @@ class ZpoolVdev(BaseModel):
             "no config path."
         ),
     )
+
+    @classmethod
+    def to_previous(cls, value):
+        _guids_to_int(value)
+        return value
 
 
 class ZpoolTopology(BaseModel):
@@ -130,7 +157,7 @@ class ZpoolEntry(BaseModel):
         ),
     )
     name: str = Field(description="Name of the zpool.")
-    guid: int = Field(description="Globally unique identifier for the pool.")
+    guid: str = Field(description="Globally unique identifier for the pool, a 64-bit integer as a decimal string.")
     status: str = Field(description="Current pool status (ONLINE, DEGRADED, FAULTED, OFFLINE, etc.).")
     healthy: bool = Field(description="Whether the pool is in a healthy state.")
     warning: bool = Field(description="Whether the pool has warning conditions.")
@@ -158,20 +185,30 @@ class ZpoolEntry(BaseModel):
     expand: ZpoolExpand | None = Field(default=None, description="RAIDZ expansion information.")
     features: list[ZpoolFeature] | None = Field(default=None, description="Pool feature flags.")
 
+    @classmethod
+    def to_previous(cls, value):
+        value["guid"] = int(value["guid"])
+        for vdevs in (value.get("topology") or {}).values():
+            for vdev in vdevs:
+                _guids_to_int(vdev)
+        return value
+
 
 class ZpoolQuery(BaseModel):
     pool_names: list[str] | None = Field(
         default=None,
-        description="Pool names to query. None queries all imported pools.",
+        description="Pool names to query. `null` queries all imported pools.",
     )
     properties: list[str] | None = Field(
         default=None,
-        description="Property names to retrieve. None returns no properties.",
+        description="Property names to retrieve. `null` returns no properties.",
     )
     topology: bool = Field(default=False, description="Include vdev topology.")
     scan: bool = Field(default=False, description="Include scan/scrub information.")
     expand: bool = Field(default=False, description="Include expansion information.")
     features: bool = Field(default=False, description="Include feature flags.")
+    follow_links: Private[bool] = Field(default=True, description="Resolve device symlinks in the topology.")
+    full_path: Private[bool] = Field(default=True, description="Report full device paths in the topology.")
 
 
 class ZpoolQueryArgs(BaseModel):
@@ -194,3 +231,147 @@ class ZpoolQueryChangedEvent(BaseModel):
 
 class ZpoolQueryRemovedEvent(BaseModel):
     id: int = Field(description="Database id of the pool.")
+
+
+class ZpoolCreateVdev(BaseModel):
+    type: Literal["disk", "mirror", "raidz1", "raidz2", "raidz3", "draid1", "draid2", "draid3"] = Field(
+        description=(
+            "Vdev type, as `zpool create` names it and as `vdev_type` reports it. `disk` makes every listed disk "
+            "its own top-level vdev (a stripe)."
+        ),
+    )
+    disks: list[NonEmptyString] = Field(min_length=1, description="Disk names (e.g. `sda`) making up this vdev.")
+    draid_data_disks: int | None = Field(
+        default=None,
+        description=(
+            "Distributed RAID only: data disks per redundancy group. `null` uses every disk left after parity "
+            "and spares, at most 8."
+        ),
+    )
+    draid_spare_disks: int = Field(default=0, description="Distributed RAID only: number of distributed spare disks.")
+
+
+class ZpoolCreateTopology(BaseModel):
+    """The vdev grammar of `zpool create`, keyed the way :method:`zpool.query` reports `topology`."""
+
+    data: list[ZpoolCreateVdev] = Field(
+        min_length=1,
+        description=(
+            "Storage vdevs. Unless `force_topology` is set they must share one type and width, and mirrors are "
+            f"capped at {constants.MAX_MIRROR_WIDTH} disks and RAIDZ at {constants.MAX_RAIDZ_WIDTH}."
+        ),
+    )
+    log: list[ZpoolCreateVdev] = Field(default=[], description="ZFS Intent Log (SLOG) vdevs: `disk` or `mirror`.")
+    cache: list[NonEmptyString] = Field(default=[], description="L2ARC cache disks.")
+    spares: list[NonEmptyString] = Field(default=[], description="Hot spare disks.")
+    special: list[ZpoolCreateVdev] = Field(
+        default=[],
+        description=(
+            "Special allocation class vdevs for metadata and small blocks. dRAID is not permitted, and unless "
+            "`force_topology` is set they must be redundant when the data vdevs are."
+        ),
+    )
+    dedup: list[ZpoolCreateVdev] = Field(
+        default=[],
+        description="Deduplication table vdevs. Same rules as `special`.",
+    )
+
+
+class ZpoolCreateProperties(BaseModel):
+    """Pool properties set at creation, as `zpool create -o property=value`. Each field is the native `zpool` \
+    property name and values are handed to ZFS verbatim. A field left as null is not sent, so ZFS applies its \
+    own default. Fields marked `Private` carry a TrueNAS default that only internal callers may override."""
+
+    autotrim: Literal["on", "off"] | None = Field(
+        default=None,
+        description="Whether freed blocks are periodically TRIMmed on the pool's disks.",
+    )
+    comment: str | None = Field(default=None, description="Free-form comment stored with the pool.")
+    dedup_table_quota: Literal["auto", "none"] | PositiveInt | None = Field(
+        default=None,
+        description=(
+            "Maximum size of the deduplication table: `auto` sizes it to the dedup vdevs, `none` leaves it "
+            "unbounded, or a size in bytes. Defaults to `auto` when deduplication is enabled on the root filesystem."
+        ),
+    )
+    ashift: Private[Annotated[int, Field(ge=9, le=16)] | None] = Field(
+        default=None,
+        description="Sector size shift. TrueNAS pins this to 12 (4K sectors).",
+    )
+    altroot: Private[str | None] = Field(default=None, description="Alternate root under which the pool mounts.")
+    cachefile: Private[str | None] = Field(default=None, description="Pool configuration cache file.")
+    failmode: Private[Literal["wait", "continue", "panic"] | None] = Field(
+        default=None,
+        description="Behavior on catastrophic pool failure.",
+    )
+    autoexpand: Private[Literal["on", "off"] | None] = Field(
+        default=None,
+        description="Whether the pool grows automatically when its disks are replaced by larger ones.",
+    )
+
+
+class ZpoolCreateFilesystemProperties(ZFSResourceCreateProperties):
+    """Root filesystem properties set at creation, as `zpool create -O property=value`. The same native property \
+    names and values :method:`zfs.resource.create` accepts, minus the volume-only ones. ZFS judges the values \
+    before any disk is formatted. A field left as null is not sent, so the TrueNAS defaults apply (`atime=off`, \
+    `acltype=posix`, `aclmode=discard`, `aclinherit=discard`, `compression=lz4`, `xattr=sa`, and `recordsize=1M` on \
+    dRAID pools)."""
+
+    snapdev: Excluded = excluded_field()
+    volblocksize: Excluded = excluded_field()
+    volsize: Excluded = excluded_field()
+
+
+class ZpoolCreate(BaseModel):
+    name: NonEmptyString = Field(description="Name for the new pool.")
+    topology: ZpoolCreateTopology = Field(
+        examples=[
+            {
+                "data": [{"type": "raidz1", "disks": ["sda", "sdb", "sdc"]}],
+                "log": [{"type": "disk", "disks": ["sdd"]}],
+                "cache": ["sde"],
+                "spares": ["sdf"],
+            }
+        ],
+        description="Physical layout of the pool's vdevs.",
+    )
+    properties: ZpoolCreateProperties = Field(
+        default_factory=ZpoolCreateProperties,
+        description="Pool properties to set at creation.",
+    )
+    filesystem_properties: ZpoolCreateFilesystemProperties = Field(
+        default_factory=ZpoolCreateFilesystemProperties,
+        description="Properties to set on the pool's root filesystem at creation.",
+    )
+    force_topology: bool = Field(
+        default=False,
+        description=(
+            "Bypass the TrueNAS topology policy: data vdevs that differ in type or width from the rest of the "
+            "pool, mirror and RAIDZ vdevs wider than the recommended maximum, and special or dedup vdevs with less "
+            "redundancy than the data vdevs. Unlike `zpool create -f` it never bypasses the disk availability "
+            "checks, and the structural requirements (minimum disks per vdev type, dRAID configuration) still "
+            "apply. Not permitted on systems with a support entitlement."
+        ),
+    )
+    allow_duplicate_serials: bool = Field(
+        default=False,
+        description="Whether to allow disks with duplicate serial numbers in the pool.",
+    )
+    all_sed: bool = Field(
+        default=False,
+        description="When set, every disk in the pool must be a Self-Encrypting Drive and is provisioned as one.",
+    )
+
+
+class ZpoolCreateArgs(BaseModel):
+    data: ZpoolCreate = Field(description="Configuration for the new pool.")
+
+
+class ZpoolCreateResult(BaseModel):
+    result: ZpoolEntry = Field(
+        description=(
+            "The new pool as :method:`zpool.query` reports it, read once for both the `zpool.query` ADDED event "
+            "and this result: with its topology, scan state, the pool properties that were set, and the usage "
+            "properties the event carries."
+        ),
+    )

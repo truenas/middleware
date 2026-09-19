@@ -4,6 +4,7 @@ import asyncio
 from typing import TYPE_CHECKING
 
 from middlewared.service import CallError
+from middlewared.api.current import ZpoolQuery
 from middlewared.utils import run
 from middlewared.utils.boot.models import BootFormatOptions, BootUpdateInitramfsOptions
 from middlewared.utils.boot.pool import boot_pool
@@ -19,8 +20,8 @@ if TYPE_CHECKING:
 
 async def check_update_ashift_property(context: ServiceContext) -> None:
     boot_pool_name = boot_pool.get_name()
-    zfs_pool = await context.middleware.call(
-        "zpool.query_impl", {"pool_names": [boot_pool_name], "properties": ["ashift"]}
+    zfs_pool = await context.call2(
+        context.s.zpool.query_impl, ZpoolQuery(pool_names=[boot_pool_name], properties=["ashift"])
     )
     if zfs_pool and zfs_pool[0]["properties"]["ashift"]["source"] == "DEFAULT":
         await context.middleware.call("zfs.pool.update", boot_pool_name, {"properties": {"ashift": {"value": "12"}}})
@@ -48,7 +49,7 @@ async def attach(context: ServiceContext, job: Job, dev: str, options: BootAttac
     schema = await legacy_schema(context, disks[0])
     await format_disk(context, dev, BootFormatOptions(size=size, legacy_schema=schema))
 
-    pool = (await context.middleware.call("zpool.query_impl", {"pool_names": [boot_pool_name], "topology": True}))[0]
+    pool = (await context.call2(context.s.zpool.query_impl, ZpoolQuery(pool_names=[boot_pool_name], topology=True)))[0]
     boot_vdev = pool["topology"]["data"][0]
     zfs_dev_part = await context.middleware.call("disk.get_partition", dev)
     extend_pool_job = await context.middleware.call(

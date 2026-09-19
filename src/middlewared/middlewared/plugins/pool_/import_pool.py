@@ -357,7 +357,7 @@ class PoolService(Service):
                 pass
 
         self.middleware.send_event('pool.query', event_type, id=pool['id'], fields=pool)
-        await self.middleware.call('zpool.send_change_event', pool['name'], event_type)
+        await self.call2(self.s.zpool.send_change_event, pool['name'], event_type)
 
     @private
     def recursive_mount(self, name):

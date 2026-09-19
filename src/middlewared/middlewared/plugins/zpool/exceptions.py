@@ -15,6 +15,8 @@ __all__ = (
     "ZpoolScrubNotDueException",
     "ZpoolResiliverInProgressException",
     "ZpoolTooManyScrubsException",
+    "ZpoolCreateException",
+    "ZpoolCreateRejected",
 )
 
 
@@ -29,7 +31,7 @@ class ZpoolNotFoundException(ZpoolException):
         self.message = f"{pool!r} not found"
         super().__init__(pool)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.message
 
 
@@ -40,7 +42,7 @@ class ZpoolPoolUnhealthyException(ZpoolException):
         self.message = f"{pool!r}: pool is {health}"
         super().__init__(pool, health)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.message
 
 
@@ -51,7 +53,7 @@ class ZpoolScanInvalidActionException(ZpoolException):
         self.message = f"{action!r} is not a valid scan action (expected: start, pause, cancel)"
         super().__init__(action)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.message
 
 
@@ -62,7 +64,7 @@ class ZpoolScanInvalidTypeException(ZpoolException):
         self.message = f"{scan_type!r} is not a valid scan type (expected: scrub, errorscrub)"
         super().__init__(scan_type)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.message
 
 
@@ -73,7 +75,7 @@ class ZpoolScrubAlreadyRunningException(ZpoolException):
         self.message = f"{pool!r}: scrub already in progress"
         super().__init__(pool)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.message
 
 
@@ -84,7 +86,7 @@ class ZpoolScrubPausedException(ZpoolException):
         self.message = f"{pool!r}: scrub is paused"
         super().__init__(pool)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.message
 
 
@@ -95,7 +97,7 @@ class ZpoolScrubPausedToCancelException(ZpoolException):
         self.message = f"{pool!r}: scrub is paused and must be canceled before starting error scrub"
         super().__init__(pool)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.message
 
 
@@ -106,7 +108,7 @@ class ZpoolErrorScrubAlreadyRunningException(ZpoolException):
         self.message = f"{pool!r}: error scrub already in progress"
         super().__init__(pool)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.message
 
 
@@ -117,7 +119,7 @@ class ZpoolErrorScrubPausedException(ZpoolException):
         self.message = f"{pool!r}: error scrub is paused"
         super().__init__(pool)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.message
 
 
@@ -128,7 +130,7 @@ class ZpoolNotMasterNodeException(ZpoolException):
         self.message = f"{pool!r}: scrub skipped because this node is not the active controller"
         super().__init__(pool)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.message
 
 
@@ -139,7 +141,7 @@ class ZpoolScrubNotDueException(ZpoolException):
         self.message = f"{pool!r}: scrub not due yet"
         super().__init__(pool)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.message
 
 
@@ -150,7 +152,7 @@ class ZpoolResiliverInProgressException(ZpoolException):
         self.message = f"{pool!r}: resilver in progress"
         super().__init__(pool)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.message
 
 
@@ -164,5 +166,33 @@ class ZpoolTooManyScrubsException(ZpoolException):
         )
         super().__init__(running)
 
-    def __str__(self):
+    def __str__(self) -> str:
+        return self.message
+
+
+class ZpoolCreateException(ZpoolException):
+    errno = errno.EFAULT
+
+    def __init__(self, pool: str, error: str):
+        self.message = f"{pool!r}: failed to create pool: {error}"
+        super().__init__(pool, error)
+
+    def __str__(self) -> str:
+        return self.message
+
+
+class ZpoolCreateRejected(ZpoolException):
+    """The binding refused a pool creation request before anything was created."""
+
+    errno = errno.EINVAL
+
+    def __init__(self, location: str | None, error: str):
+        self.location = location
+        """The request field the binding judged, as a ``zpool.create`` attribute suffix
+        (``topology.data.1``, ``name``, ``filesystem_properties``), or None when it
+        faulted something the request does not expose."""
+        self.message = error
+        super().__init__(location, error)
+
+    def __str__(self) -> str:
         return self.message

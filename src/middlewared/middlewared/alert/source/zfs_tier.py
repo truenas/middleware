@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from middlewared.api.current import ZpoolQuery
 from typing import Any
 
 from truenas_zfstierd_client import enum_jobs, get_info
@@ -232,14 +233,9 @@ class TierJobAlertSource(ThreadedAlertSource):
         return alerts
 
     def _check_special_vdev_usage(self, warning_pct: int, critical_pct: int) -> list[Alert[Any]]:
-        pools = self.middleware.call_sync(
-            "zpool.query_impl",
-            {
-                "properties": [
-                    "class_special_usable",
-                    "class_special_used",
-                ],
-            },
+        pools = self.middleware.call_sync2(
+            self.middleware.services.zpool.query_impl,
+            ZpoolQuery(properties=["class_special_usable", "class_special_used"]),
         )
 
         alerts: list[Alert[Any]] = []

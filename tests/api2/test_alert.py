@@ -98,7 +98,7 @@ def db_alert():
 
 
 def test_verify_the_pool_is_degraded(degraded_pool_gptid):
-    status = call("zpool.status", {"name": pool_name})
+    status = call("zpool.status", pool_name)
     disk_status = status["pools"][pool_name]["data"][ID_PATH + degraded_pool_gptid]["disk_status"]
     assert disk_status == "DEGRADED"
 
@@ -133,7 +133,7 @@ def test_expired_alert_source_lock_is_released(alert_id):
 
 def test_clear_the_pool_degradation(degraded_pool_gptid):
     ssh(f"zpool clear {pool_name}")
-    status = call("zpool.status", {"name": pool_name})
+    status = call("zpool.status", pool_name)
     disk_status = status["pools"][pool_name]["data"][ID_PATH + degraded_pool_gptid]["disk_status"]
     assert disk_status != "DEGRADED"
 
