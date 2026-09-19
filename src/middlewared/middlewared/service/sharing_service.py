@@ -284,6 +284,9 @@ class SharingTaskService[E](CRUDService[E]):
 class SharingService[E](SharingTaskService[E]):
     locked_alert_class = ShareLockedAlert
     include_tier_info = False
+    readonly_field: str | None = None
+    """The share's read-only flag, or None for a protocol that has no read-only mode. Another protocol may
+    export an S3 bucket only read-only, so a protocol without the flag may not export one at all."""
 
     @private
     async def human_identifier(self, share_task):
@@ -292,6 +295,28 @@ class SharingService[E](SharingTaskService[E]):
             return share_task['name']
         else:
             return share_task.name
+
+    @private
+    async def validate_s3_export(self, data, schema: str, verrors: 'ValidationErrors') -> None:
+        """An S3 bucket's dataset may be exported by another protocol only read-only and only its `s3data`
+        directory, which holds the objects; `sharing.s3` refuses anything else on the dataset. Call once the
+        path has been split into `dataset` and `relative_path`, which is what the bucket is matched by."""
+        path = await self.get_path_field(data)
+        if path_location(path) is not FSLocation.LOCAL:
+            return
+        if isinstance(data, dict):
+            # FIXME: Remove all the cases where this is dict
+            dataset, relative_path = data['dataset'], data['relative_path']
+            readonly = data[self.readonly_field] if self.readonly_field else None
+        else:
+            dataset, relative_path = data.dataset, data.relative_path
+            readonly = getattr(data, self.readonly_field) if self.readonly_field else None
+        readonly_field = f'{schema}.{self.readonly_field}' if self.readonly_field else None
+        await self.call2(
+            self.s.sharing.s3.validate_export,
+            verrors, self.share_task_type, f'{schema}.{self.path_field}', path, dataset, relative_path,
+            readonly_field, readonly,
+        )
 
 
 class TaskPathService[E](SharingTaskService[E]):
