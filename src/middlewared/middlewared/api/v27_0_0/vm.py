@@ -8,8 +8,8 @@ from middlewared.api.base import (
     ForUpdateMetaclass,
     FullAdmin,
     IPvAnyAddress,
+    LibvirtUUID,
     NonEmptyString,
-    UUIDv4String,
     excluded_field,
 )
 
@@ -171,7 +171,7 @@ class VMEntry(BaseModel):
         default=None,
         description="Virtual machine type/chipset. `null` to use hypervisor default.",
     )
-    uuid: UUIDv4String = Field(
+    uuid: str = Field(
         description="Unique UUID for the VM. Assigned when the VM is created and cannot be changed afterwards.",
     )
     devices: list[VMDeviceEntry] = Field(description="Array of virtual devices attached to this VM.")
@@ -189,9 +189,12 @@ class VMCreate(VMEntry):
     id: Excluded = excluded_field()
     display_available: Excluded = excluded_field()
     devices: Excluded = excluded_field()
-    uuid: UUIDv4String | None = Field(
+    uuid: LibvirtUUID | None = Field(
         default=None,
-        description="Unique UUID for the VM. `null` to auto-generate. It cannot be changed after creation.",
+        description=(
+            "Unique UUID for the VM. `null` to auto-generate. It cannot be changed after creation. Normalized to "
+            "lowercase hyphenated form."
+        ),
     )
     bootloader_ovmf: str | None = Field(
         default=None,

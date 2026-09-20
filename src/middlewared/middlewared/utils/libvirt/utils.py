@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from typing import Any
+import uuid
 
 from truenas_pylibvirt.utils.usb import find_usb_device_by_ids
 
@@ -10,6 +11,19 @@ from middlewared.plugins.zfs.zvol_utils import zvol_name_to_path
 ACTIVE_STATES = ('RUNNING', 'SUSPENDED')
 LIBVIRT_USER = 'libvirt-qemu'
 NGINX_PREFIX = '/vm/display'
+
+
+def same_uuid(a: str, b: str) -> bool:
+    """Compare two UUIDs by value rather than spelling.
+
+    Values stored before this was validated include spellings `uuid.UUID` cannot parse at all: an
+    empty string reaches the column through its `server_default`, and `config.upload` installs a
+    database whose rows never passed API validation.
+    """
+    try:
+        return uuid.UUID(a) == uuid.UUID(b)
+    except ValueError:
+        return a == b
 
 
 def translate_device(dev: dict[str, Any]) -> str:
