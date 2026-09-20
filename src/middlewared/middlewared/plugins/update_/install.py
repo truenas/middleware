@@ -156,6 +156,6 @@ def ensure_free_space(context: ServiceContext, pool_name: str, size: int) -> Non
 
 def _space_left(context: ServiceContext, pool_name: str) -> int:
     space_left: int = context.call_sync2(
-        context.s.zfs.resource.query_impl, ZFSResourceQuery(paths=[pool_name], properties=['available'])
+        context.s.zfs.resource.list_impl, ZFSResourceQuery(paths=[pool_name], properties=['available'])
     )[0]['properties']['available']['value']
     return space_left

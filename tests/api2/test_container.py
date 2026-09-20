@@ -151,7 +151,7 @@ def test_container_rename(ubuntu_container):
     assert updated["dataset"] == expected_dataset
     # Verify ZFS dataset actually exists at new path
     result = call(
-        "zfs.resource.query",
+        "zfs.resource.list",
         {"paths": [expected_dataset], "properties": ["mountpoint"]},
     )
     assert result, f"ZFS dataset {expected_dataset!r} does not exist after rename"
@@ -166,7 +166,7 @@ def test_container_delete_running_refused(started_ubuntu_container):
     container = call("container.get_instance", started_ubuntu_container["id"])
     assert container["status"]["state"] == "RUNNING"
     assert call(
-        "zfs.resource.query", {"paths": [container["dataset"]], "properties": None}
+        "zfs.resource.list", {"paths": [container["dataset"]], "properties": None}
     )
 
 
@@ -177,7 +177,7 @@ def test_container_delete_running_force(started_ubuntu_container):
 
     assert not call("container.query", [["id", "=", container["id"]]])
     assert not call(
-        "zfs.resource.query", {"paths": [container["dataset"]], "properties": None}
+        "zfs.resource.list", {"paths": [container["dataset"]], "properties": None}
     )
     assert container["uuid"] not in ssh(f"{VIRSH} list --all")
 

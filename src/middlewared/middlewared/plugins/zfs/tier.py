@@ -52,14 +52,13 @@ from middlewared.api.current import (
 )
 from middlewared.common.license_reconcile import LicenseReconcileAction, LicenseReconcileDelegate
 from middlewared.event import TypedEventSource
-from middlewared.plugins.pool_.utils import UpdateImplArgs, pool_has_special_vdev
 from middlewared.plugins.tunable.utils import set_zfs_parameter, zfs_parameter_value
 from middlewared.service import CallError, ConfigServicePart, GenericConfigService, ValidationError, private
 from middlewared.service.decorators import pass_thread_local_storage
 import middlewared.sqlalchemy as sa
 from middlewared.utils.filter_list import filter_list
 
-from .utils import special_vdev_thresholds
+from .utils import pool_has_special_vdev, special_vdev_thresholds
 
 SPECIAL_SMALL_BLOCKS_PERFORMANCE = str(16 * 1024 * 1024)  # 16 MiB
 SPECIAL_SMALL_BLOCKS_REGULAR = "0"
@@ -242,7 +241,7 @@ class ZfsTierRewriteJobStatusEventSource(TypedEventSource[ZfsTierRewriteJobStatu
 
     args = ZfsTierRewriteJobStatusEventSourceArgs
     event = ZfsTierRewriteJobStatusEventSourceEvent
-    roles = ["DATASET_READ"]
+    roles = ["ZFS_RESOURCE_READ"]
 
     def _poll_job_info(self, tier_job_id: str) -> dict[str, typing.Any] | None:
         """Return a status entry for the given tier job id, or None if it no longer exists."""
@@ -281,7 +280,7 @@ class ZfsTierRewriteJobQueryEventSource(TypedEventSource[ZfsTierRewriteJobQueryE
 
     args = ZfsTierRewriteJobQueryEventSourceArgs
     event = ZfsTierRewriteJobQueryEventSourceEvent
-    roles = ["DATASET_READ"]
+    roles = ["ZFS_RESOURCE_READ"]
 
     def run_sync(self) -> None:
         known: dict[str, str] = {}
@@ -334,7 +333,7 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
     class Config:
         namespace = "zfs.tier"
         cli_private = True
-        role_prefix = "DATASET"
+        role_prefix = "ZFS_RESOURCE"
         entry = ZfsTierEntry
         generic = True
         event_sources = {
@@ -349,7 +348,7 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
     @api_method(
         ZfsTierUpdateArgs,
         ZfsTierUpdateResult,
-        roles=["DATASET_WRITE"],
+        roles=["ZFS_RESOURCE_WRITE"],
         audit="ZFS tier config update",
     )
     async def do_update(self, data: dict[str, typing.Any]) -> ZfsTierEntry:
@@ -388,7 +387,7 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
     @api_method(
         ZfsTierRewriteJobCreateArgs,
         ZfsTierRewriteJobCreateResult,
-        roles=["DATASET_WRITE"],
+        roles=["ZFS_RESOURCE_WRITE"],
         audit="ZFS tier rewrite job create",
         audit_extended=lambda data: data["dataset_name"],
     )
@@ -436,7 +435,7 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
 
         return _map_result_common(result)
 
-    @api_method(ZfsTierRewriteJobQueryArgs, ZfsTierRewriteJobQueryResult, roles=["DATASET_READ"])
+    @api_method(ZfsTierRewriteJobQueryArgs, ZfsTierRewriteJobQueryResult, roles=["ZFS_RESOURCE_READ"])
     async def rewrite_job_query(self, data: dict[str, typing.Any]) -> typing.Any:
         """Query rewrite jobs, optionally filtered by status."""
         status_filter = set(data.get("status") or [])
@@ -457,7 +456,7 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
     @api_method(
         ZfsTierRewriteJobStatusArgs,
         ZfsTierRewriteJobStatusResult,
-        roles=["DATASET_READ"],
+        roles=["ZFS_RESOURCE_READ"],
     )
     async def rewrite_job_status(self, data: dict[str, typing.Any]) -> dict[str, typing.Any]:
         """Get detailed status and statistics for a specific rewrite job."""
@@ -471,7 +470,7 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
     @api_method(
         ZfsTierRewriteJobFailuresArgs,
         ZfsTierRewriteJobFailuresResult,
-        roles=["DATASET_READ"],
+        roles=["ZFS_RESOURCE_READ"],
     )
     async def rewrite_job_failures(self, data: dict[str, typing.Any]) -> typing.Any:
         """List files that failed to be rewritten during a rewrite job."""
@@ -496,7 +495,7 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
     @api_method(
         ZfsTierRewriteJobCancelArgs,
         ZfsTierRewriteJobCancelResult,
-        roles=["DATASET_WRITE"],
+        roles=["ZFS_RESOURCE_WRITE"],
         audit="ZFS tier rewrite job cancel",
         audit_extended=lambda data: data["tier_job_id"],
     )
@@ -512,7 +511,7 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
     @api_method(
         ZfsTierRewriteJobRecoverArgs,
         ZfsTierRewriteJobRecoverResult,
-        roles=["DATASET_WRITE"],
+        roles=["ZFS_RESOURCE_WRITE"],
         audit="ZFS tier rewrite job recover",
         audit_extended=lambda data: data["tier_job_id"],
     )
@@ -532,7 +531,7 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
     async def _validate_dataset_writable(self, dataset_name: str, field: str) -> None:
         """Raise ValidationError if the dataset is not mounted or is read-only."""
         results = await self.call2(
-            self.s.zfs.resource.query_impl,
+            self.s.zfs.resource.list_impl,
             ZFSResourceQuery(paths=[dataset_name], properties=["mounted", "readonly"]),
         )
         if not results:
@@ -550,7 +549,7 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
         """Return True when the dataset has an effective deduplication value other than off."""
         try:
             results = await self.call2(
-                self.s.zfs.resource.query_impl,
+                self.s.zfs.resource.list_impl,
                 ZFSResourceQuery(paths=[dataset_name], properties=["dedup"]),
             )
         except Exception:
@@ -600,7 +599,7 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
     @api_method(
         ZfsTierDatasetSetTierArgs,
         ZfsTierDatasetSetTierResult,
-        roles=["DATASET_WRITE"],
+        roles=["ZFS_RESOURCE_WRITE"],
         audit="ZFS tier dataset set tier",
         audit_extended=lambda data: f"{data['dataset_name']} -> {data['tier_type']}",
     )
@@ -664,9 +663,8 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
         else:
             new_ssb = SPECIAL_SMALL_BLOCKS_REGULAR
 
-        await self.middleware.call(
-            "pool.dataset.update_impl",
-            UpdateImplArgs(name=dataset_name, zprops={"special_small_blocks": new_ssb}),
+        await self.call2(
+            self.s.zfs.resource.update_impl, dataset_name, properties={"special_small_blocks": new_ssb}, bypass=True
         )
 
         job_entry = None
@@ -706,7 +704,7 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
             props = pools[0]["properties"]
 
             results = await self.call2(
-                self.s.zfs.resource.query_impl,
+                self.s.zfs.resource.list_impl,
                 ZFSResourceQuery(paths=[dataset_name], properties=["used"]),
             )
             if not results:

@@ -20,6 +20,7 @@ from middlewared.api.current import (
     ContainerUpdate,
     QueryOptions,
     ZFSResourceQuery,
+    ZFSResourceRenameArgsData,
     ZFSResourceSnapshotCountQuery,
     ZFSResourceSnapshotDestroyQuery,
 )
@@ -263,7 +264,10 @@ class ContainerServicePart(CRUDServicePart[ContainerEntry]):
 
             old_dataset = old.dataset
             new_dataset = old_dataset[:old_dataset.rfind('/') + 1] + new.name
-            await self.call2(self.s.zfs.resource.rename, old_dataset, new_dataset)
+            await self.call2(
+                self.s.zfs.resource.rename_impl,
+                ZFSResourceRenameArgsData(current_name=old_dataset, new_name=new_dataset),
+            )
             new = new.model_copy(update={'dataset': new_dataset})
 
         entry = await self._update(id_, new.model_dump(exclude={'id', 'devices', 'status'}))
@@ -288,7 +292,7 @@ class ContainerServicePart(CRUDServicePart[ContainerEntry]):
         # A dataset that is already missing - a victim of a legacy .ix-virt deletion,
         # say - is not an error; the dangling records are still cleaned up below.
         resources = self.call_sync2(
-            self.s.zfs.resource.query_impl,
+            self.s.zfs.resource.list_impl,
             ZFSResourceQuery(paths=[container.dataset], properties=None, get_children=True),
         )
         dataset_exists = bool(resources)

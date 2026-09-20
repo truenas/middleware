@@ -99,7 +99,7 @@ class DiskDelegate(StorageDelegate):
             device['attributes']['path'] = zvol_name_to_path(device['attributes']['zvol_name'])
 
             zvol = self.middleware.call_sync2(
-                self.middleware.services.zfs.resource.query_impl,
+                self.middleware.services.zfs.resource.list_impl,
                 ZFSResourceQuery(paths=[device['attributes']['zvol_name']], properties=None)
             )
             if zvol:
@@ -109,7 +109,7 @@ class DiskDelegate(StorageDelegate):
                 # message that is more intuitive for end-user
                 parentzvol = device['attributes']['zvol_name'].rsplit('/', 1)[0]
                 if parentzvol and not self.middleware.call_sync2(
-                    self.middleware.services.zfs.resource.query_impl,
+                    self.middleware.services.zfs.resource.list_impl,
                     ZFSResourceQuery(paths=[parentzvol], properties=None),
                 ):
                     verrors.add(
@@ -129,7 +129,7 @@ class DiskDelegate(StorageDelegate):
             else:
                 zvol_name = zvol_path_to_name(path)
                 zvol = self.middleware.call_sync2(
-                    self.middleware.services.zfs.resource.query_impl,
+                    self.middleware.services.zfs.resource.list_impl,
                     ZFSResourceQuery(paths=[zvol_name], properties=None),
                 )
                 if not zvol:

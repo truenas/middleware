@@ -44,7 +44,7 @@ def list_backups(context: ServiceContext) -> DockerBackupMap:
     backups: dict[str, DockerBackupEntry] = {}
     # Check if the dataset exists
     ds = context.call_sync2(
-        context.s.zfs.resource.query_impl,
+        context.s.zfs.resource.list_impl,
         ZFSResourceQuery(paths=[docker_config.dataset], properties=None)
     )
     if not ds:

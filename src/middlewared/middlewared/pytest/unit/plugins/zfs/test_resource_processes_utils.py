@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 import pytest
 
-from middlewared.plugins.pool_ import dataset_processes_utils as utils
+from middlewared.plugins.zfs import resource_processes_utils as utils
 from middlewared.service import CallError
 
 

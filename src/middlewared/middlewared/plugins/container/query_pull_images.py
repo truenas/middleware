@@ -37,7 +37,7 @@ def pull(context: ServiceContext, job: Job, pool: str, image: dict[str, typing.A
     dataset_name = os.path.join(container_dataset(pool), suffix)
     snapshot_name = f'{dataset_name}@image'
     if context.call_sync2(
-        context.s.zfs.resource.query_impl,
+        context.s.zfs.resource.list_impl,
         ZFSResourceQuery(paths=[dataset_name], properties=None)
     ):
         # Check if the snapshot exists

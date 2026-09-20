@@ -1,6 +1,5 @@
 import dataclasses
 import enum
-import itertools
 import json
 import os
 from pathlib import Path
@@ -10,6 +9,7 @@ from typing import TypedDict
 
 from truenas_pylicensed.features import LicenseFeature
 
+from middlewared.plugins.zfs.utils import pool_has_special_vdev
 from middlewared.plugins.zfs_.utils import TNUserProp
 from middlewared.service_exception import CallError
 from middlewared.utils.filesystem.directory import directory_is_empty
@@ -25,12 +25,6 @@ RE_DRAID_SPARE_DISKS = re.compile(r':\d*s')
 RE_DRAID_NAME = re.compile(r'draid\d:\d+d:\d+c:\d+s-\d+')
 RE_ZFS_USER_PROP = re.compile(r'[a-z0-9:._-]+')
 ZFS_USER_PROP_MAX_LEN = 255
-ZFS_CHECKSUM_CHOICES = ['ON', 'OFF', 'FLETCHER2', 'FLETCHER4', 'SHA256', 'SHA512', 'SKEIN', 'EDONR', 'BLAKE3']
-ZFS_COMPRESSION_ALGORITHM_CHOICES = [
-    'ON', 'OFF', 'LZ4', 'GZIP', 'GZIP-1', 'GZIP-9', 'ZSTD', 'ZSTD-FAST', 'ZLE', 'LZJB',
-] + [f'ZSTD-{i}' for i in range(1, 20)] + [
-    f'ZSTD-FAST-{i}' for i in itertools.chain(range(1, 11), range(20, 110, 10), range(500, 1500, 500))
-]
 ZFS_ENCRYPTION_ALGORITHM = 'aes-256-gcm'
 ZFS_VOLUME_BLOCK_SIZE_CHOICES = {
     '512': 512,
@@ -81,24 +75,9 @@ class CreateImplArgsDataclass:
 
 class UpdateImplArgs(TypedDict, total=False):
     name: str
-    """The name of the resource being created."""
     zprops: dict[str, str]
-    """ZFS data properties to be applied during creation."""
     uprops: dict[str, str]
-    """ZFS user properties to be applied during creation."""
     iprops: set
-    """ZFS properties to be inherited from parent."""
-
-
-@dataclasses.dataclass(slots=True, kw_only=True)
-class UpdateImplArgsDataclass:
-    name: str
-    """The name of the resource being created."""
-    zprops: dict[str, str] = dataclasses.field(default_factory=dict)
-    """ZFS data properties to be applied during creation."""
-    uprops: dict[str, str] = dataclasses.field(default_factory=dict)
-    """ZFS user properties to be applied during creation."""
-    iprops: set = dataclasses.field(default_factory=set)
     """ZFS properties to be inherited from parent."""
 
 
@@ -117,23 +96,6 @@ async def validate_dedup_license(
     entitlement = await middleware.call2(middleware.services.truenas.entitlements.check, LicenseFeature.DEDUP)
     if not entitlement.entitled:
         verrors.add(f'{schema}.deduplication', entitlement.message)
-
-
-async def pool_has_special_vdev(middleware: 'Middleware', pool_name: str) -> bool:
-    """Whether the pool has a SPECIAL allocation class vdev. Returns False when the
-    pool cannot be inspected."""
-    try:
-        pools = await middleware.call(
-            'zpool.query_impl',
-            {'pool_names': [pool_name], 'properties': ['class_special_size']},
-        )
-        if not pools:
-            return False
-        special_size = ((pools[0].get('properties') or {}).get('class_special_size') or {}).get('value')
-    except Exception:
-        middleware.logger.debug('%s: failed to query pool SPECIAL vdev size', pool_name, exc_info=True)
-        return False
-    return isinstance(special_size, int) and special_size > 0
 
 
 async def _dedup_inheriting_performance_descendants(middleware, dataset_name):

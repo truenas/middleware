@@ -1,30 +1,32 @@
 from __future__ import annotations
 
-import errno
 import pathlib
 from typing import TYPE_CHECKING, Any
 
 from middlewared.api.current import ZFSResourceEntry, ZFSResourceQuery
 from middlewared.service_exception import ValidationError
 
-from .exceptions import ZFSPathNotFoundException
 from .query_impl import query_impl as _raw_query
 from .utils import reject_overlapping_paths
 
 if TYPE_CHECKING:
     from middlewared.service import ServiceContext
 
+SCHEMA = "zfs.resource.list"
+
 
 def validate_query_args(data: ZFSResourceQuery) -> None:
     for path in data.paths:
         if "@" in path:
             raise ValidationError(
-                "zfs.resource.query",
+                SCHEMA,
                 "Use `zfs.resource.snapshot.query` to query snapshot information.",
             )
 
-    if data.get_children:
-        reject_overlapping_paths("zfs.resource.query", data.paths, "get_children")
+    # `max_depth > 0` turns the walk on later, so the overlap must be rejected here or the same
+    # resource is returned twice.
+    if data.get_children or data.max_depth > 0:
+        reject_overlapping_paths(SCHEMA, data.paths, "get_children" if data.get_children else "max_depth")
 
 
 def nest_paths(flat_list: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -47,6 +49,10 @@ def nest_paths(flat_list: list[dict[str, Any]]) -> list[dict[str, Any]]:
         for parent in pathlib.PosixPath(item["name"]).parents:
             pap = parent.as_posix()
             if pap in node_map:
+                # An ancestor the walk did not descend into carries `None`, yet a descendant may still
+                # have been named explicitly.
+                if node_map[pap]["children"] is None:
+                    node_map[pap]["children"] = []
                 node_map[pap]["children"].append(item)
                 break
         else:
@@ -54,7 +60,7 @@ def nest_paths(flat_list: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return roots
 
 
-def query_impl(context: ServiceContext, tls: Any, data: ZFSResourceQuery) -> list[dict[str, Any]]:
+def list_impl(context: ServiceContext, tls: Any, data: ZFSResourceQuery) -> list[dict[str, Any]]:
     validate_query_args(data)
 
     tier_enabled = False
@@ -68,10 +74,5 @@ def query_impl(context: ServiceContext, tls: Any, data: ZFSResourceQuery) -> lis
         return results
 
 
-def query(context: ServiceContext, data: ZFSResourceQuery) -> list[ZFSResourceEntry]:
-    try:
-        return [
-            ZFSResourceEntry(**resource) for resource in context.call_sync2(context.s.zfs.resource.query_impl, data)
-        ]
-    except ZFSPathNotFoundException as e:
-        raise ValidationError("zfs.resource.query", e.message, errno.ENOENT)
+def list_resources(context: ServiceContext, data: ZFSResourceQuery) -> list[ZFSResourceEntry]:
+    return [ZFSResourceEntry(**resource) for resource in context.call_sync2(context.s.zfs.resource.list_impl, data)]

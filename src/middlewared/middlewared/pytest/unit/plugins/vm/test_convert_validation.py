@@ -83,7 +83,7 @@ def _zvol_context(state, logical_sectorsize=None):
     context = Mock()
 
     def fake_call_sync2(target, *args, **kwargs):
-        if target is context.s.zfs.resource.query_impl:
+        if target is context.s.zfs.resource.list_impl:
             return zv
         if target is context.s.vm.device.query:
             return [device]

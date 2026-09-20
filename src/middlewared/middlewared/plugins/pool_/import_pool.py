@@ -41,7 +41,7 @@ class PoolService(Service):
         container_mnt = container_dataset_mountpoint(pool_name)
         container_ds = container_dataset(pool_name)
         for i in await self.call2(
-            self.s.zfs.resource.query_impl,
+            self.s.zfs.resource.list_impl,
             ZFSResourceQuery(paths=[pool_name], properties=['mountpoint'], max_depth=1, get_source=True)
         ):
             if i['type'] != 'FILESYSTEM':
@@ -87,22 +87,21 @@ class PoolService(Service):
                 to_inherit.append(i["name"])
 
         if to_inherit:
-            # NOTE: we use zfs.resource.query which will hide internal
-            # paths. This is important so don't change it unless you
-            # understand the implications fully.
+            # Internal datasets are deliberately left out; the services that own them manage their
+            # mountpoints.
             for i in await self.call2(
-                self.s.zfs.resource.query,
+                self.s.zfs.resource.list_impl,
                 ZFSResourceQuery(paths=to_inherit, properties=None, get_children=True)
             ):
-                if i.type != 'FILESYSTEM':
+                if i['type'] != 'FILESYSTEM':
                     continue
                 try:
                     await self.middleware.call(
                         'pool.dataset.update_impl',
-                        UpdateImplArgs(name=i.name, iprops={'mountpoint'})
+                        UpdateImplArgs(name=i['name'], iprops={'mountpoint'})
                     )
                 except Exception:
-                    self.logger.exception('Failed inheriting mountpoint property for %r', i.name)
+                    self.logger.exception('Failed inheriting mountpoint property for %r', i['name'])
 
     @api_method(PoolImportFindArgs, PoolImportFindResult, roles=['POOL_READ'])
     @job()
@@ -415,16 +414,16 @@ class PoolService(Service):
     @private
     def normalize_root_dataset_properties(self, vol_name, vol_guid):
         try:
-            self.logger.debug('Calling zfs.resource.query_impl on %r with guid %r', vol_name, vol_guid)
+            self.logger.debug('Calling zfs.resource.list_impl on %r with guid %r', vol_name, vol_guid)
             ds = self.call_sync2(
-                self.s.zfs.resource.query_impl,
+                self.s.zfs.resource.list_impl,
                 ZFSResourceQuery(paths=[vol_name], properties=['acltype', 'aclinherit', 'aclmode'])
             )[0]['properties']
         except Exception:
             self.logger.warning('Unexpected failure querying root-level properties for %r', vol_name, exc_info=True)
             return True
         else:
-            self.logger.debug('Done calling zfs.resource.query_impl on %r with guid %r', vol_name, vol_guid)
+            self.logger.debug('Done calling zfs.resource.list_impl on %r with guid %r', vol_name, vol_guid)
 
         opts = dict()
         if ds['acltype']['value'] == 'nfsv4':

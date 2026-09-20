@@ -21,7 +21,7 @@ def test_prefetch_pools_skips_boot_pool():
     boot_pool = call("boot.pool_name")
     call("zfs.resource.pool.prefetch_pools")
 
-    logged = call("zfs.resource.query", {"paths": [boot_pool], "properties": None})
+    logged = call("zfs.resource.list", {"paths": [boot_pool], "properties": None})
     assert logged, "the boot pool must still be queryable after prefetch_pools"
 
 
@@ -33,7 +33,7 @@ def test_prefetch_runs_after_a_pool_is_imported():
         call("pool.import_pool", {"guid": pool["guid"], "name": pool["name"]}, job=True)
 
         result = call(
-            "zfs.resource.query",
+            "zfs.resource.list",
             {"paths": [pool["name"]], "get_children": True, "properties": None},
         )
         assert f"{pool['name']}/ds" in [r["name"] for r in result]

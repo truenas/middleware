@@ -202,7 +202,7 @@ class NVMetNamespaceService(SharingService):
                 zvolname = zvol_path_to_name(os.path.join('/dev', data['device_path']))
                 if '@' not in zvolname:  # Snapshots don't support volthreading property
                     if zvol := await self.call2(
-                        self.s.zfs.resource.query_impl,
+                        self.s.zfs.resource.list_impl,
                         ZFSResourceQuery(paths=[zvolname], properties=['volthreading'])
                     ):
                         if (
@@ -536,7 +536,7 @@ class NVMetNamespaceService(SharingService):
             return
 
         for zvol in await self.call2(
-            self.s.zfs.resource.query_impl,
+            self.s.zfs.resource.list_impl,
             ZFSResourceQuery(paths=zvols, properties=['volthreading']),
         ):
             if zvol['properties']['volthreading']['raw'] == 'on':

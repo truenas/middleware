@@ -53,7 +53,7 @@ def get_encrypted_datasets(context: ServiceContext, filters: list[Any]) -> list[
         return rv
 
     for i in context.call_sync2(
-        context.s.zfs.resource.query_impl,
+        context.s.zfs.resource.list_impl,
         ZFSResourceQuery(paths=list(ds_in_db), get_children=True, properties=None)
     ):
         if i['name'] in ds_in_db:
