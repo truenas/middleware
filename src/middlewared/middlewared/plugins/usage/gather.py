@@ -368,7 +368,10 @@ async def gather_ftp(service: Service, context: GatherContext) -> dict[str, Any]
 @gather_stat
 async def gather_sharing(service: Service, context: GatherContext) -> dict[str, Any]:
     sharing_list = []
-    for share_service in {"iscsi", "nfs", "smb", "webshare"}:
+    # a bucket audits what its own mask says, or the service's default when it
+    # sets none
+    s3_config = await service.call2(service.s.s3.config)
+    for share_service in {"iscsi", "nfs", "s3", "smb", "webshare"}:
         service_upper = share_service.upper()
         namespace = f"sharing.{share_service}" if share_service != "iscsi" else "iscsi.targetextent"
         for s in await service.middleware.call(f"{namespace}.query"):
@@ -378,6 +381,24 @@ async def gather_sharing(service: Service, context: GatherContext) -> dict[str, 
                 sharing_list.append({"type": service_upper, "readonly": s["ro"]})
             elif share_service == "webshare":
                 sharing_list.append({"type": service_upper, "enabled": s.enabled, "is_home_base": s.is_home_base})
+            elif share_service == "s3":
+                # typesafe like webshare, so attribute access. Only the bucket's
+                # settings are reported: its name, dataset, owner and grants would
+                # identify the system
+                audit = s.audit if s.audit is not None else s3_config.default_audit
+                sharing_list.append(
+                    {
+                        "type": service_upper,
+                        "enabled": s.enabled,
+                        "permissions_model": s.permissions_model,
+                        "object_ownership": s.object_ownership,
+                        "versioning": s.versioning,
+                        "object_lock": s.object_lock,
+                        "snapshot_versions": bool(s.snapshot_versions),
+                        "multipart_etag": s.multipart_etag,
+                        "audit": bool(audit),
+                    }
+                )
             elif share_service == "iscsi":
                 tar = await service.middleware.call("iscsi.target.query", [("id", "=", s["target"])], {"get": True})
                 ext = await service.middleware.call(
