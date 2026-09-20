@@ -25,7 +25,7 @@ async def ensure_ix_apps_mount_point(context: ServiceContext, docker_ds: str) ->
     properly.
     """
     ds = await context.call2(
-        context.s.zfs.resource.query_impl, ZFSResourceQuery(paths=[docker_ds], properties=["mountpoint"])
+        context.s.zfs.resource.list_impl, ZFSResourceQuery(paths=[docker_ds], properties=["mountpoint"])
     )
     if not ds:
         return

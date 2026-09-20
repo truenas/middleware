@@ -115,7 +115,7 @@ class VMDeviceServicePart(CRUDServicePart[VMDeviceEntry]):
                 raise CallError('Unable to destroy zvol as disk device has misconfigured path')
             zvol_id = zvol_path_to_name(path)
             if await self.call2(
-                self.s.zfs.resource.query_impl, ZFSResourceQuery(paths=[zvol_id], properties=None)
+                self.s.zfs.resource.list_impl, ZFSResourceQuery(paths=[zvol_id], properties=None)
             ):
                 # FIXME: What about FS attachment? Also should we be stopping the vm only when
                 # deleting an attachment ?

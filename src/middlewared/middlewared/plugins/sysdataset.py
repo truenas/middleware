@@ -478,7 +478,7 @@ class SystemDatasetService(ConfigService):
         config = await self.config()
         existing_dataset = new_dataset = None
         for i in await self.call2(
-            self.s.zfs.resource.query_impl,
+            self.s.zfs.resource.list_impl,
             ZFSResourceQuery(paths=[config['basename'], new_pool], properties=['used', 'available']),
         ):
             if i['name'] == config['basename']:
@@ -648,7 +648,7 @@ class SystemDatasetService(ConfigService):
                 continue
 
             ds = self.call_sync2(
-                self.s.zfs.resource.query_impl,
+                self.s.zfs.resource.list_impl,
                 ZFSResourceQuery(paths=[i['name']], properties=['encryption']),
             )
             if not ds:
@@ -708,7 +708,7 @@ class SystemDatasetService(ConfigService):
                 return True
 
         ds = self.call_sync2(
-            self.s.zfs.resource.query_impl,
+            self.s.zfs.resource.list_impl,
             ZFSResourceQuery(paths=[pool], properties=['encryption']),
         )
         if not ds:
@@ -732,7 +732,7 @@ class SystemDatasetService(ConfigService):
         root_dataset_is_passphrase_encrypted = False
         if pool != boot_pool:
             p = await self.call2(
-                self.s.zfs.resource.query_impl,
+                self.s.zfs.resource.list_impl,
                 ZFSResourceQuery(paths=[pool], properties=['encryption']),
             )
             if not p:
@@ -748,7 +748,7 @@ class SystemDatasetService(ConfigService):
         datasets_prop = {
             i['name']: i['properties']
             for i in await self.call2(
-                self.s.zfs.resource.query_impl,
+                self.s.zfs.resource.list_impl,
                 ZFSResourceQuery(
                     paths=list(datasets),
                     properties=['encryption', 'quota', 'used'] + list(SystemDatasetZfsProperties)

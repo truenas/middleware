@@ -308,7 +308,7 @@ SAME_SECOND_SNAPSHOT_COUNT = """\
     def mock(self, dataset):
         def query(prop):
             return self.middleware.call_sync(
-                "zfs.resource.query", {"paths": [dataset], "properties": [prop]}
+                "zfs.resource.list", {"paths": [dataset], "properties": [prop]}
             )[0]
 
         def snapshots_changed():

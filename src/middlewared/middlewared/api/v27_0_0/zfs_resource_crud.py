@@ -4,12 +4,16 @@ from pydantic import Field, Secret
 
 from middlewared.api.base import (
     BaseModel,
+    Excluded,
     NonEmptyString,
     NotRequired,
     Private,
     UniqueList,
+    excluded_field,
 )
 
+from .pool import PoolProcess
+from .pool_dataset import DATASET_NAME
 from .zfs_tier import TierInfo
 
 __all__ = (
@@ -19,12 +23,34 @@ __all__ = (
     "ZFSResourceCreateEncryption",
     "ZFSResourceCreateProperties",
     "ZFSResourceCreateResult",
+    "ZFSResourceChecksumChoicesArgs",
+    "ZFSResourceChecksumChoicesResult",
+    "ZFSResourceCompressionChoicesArgs",
+    "ZFSResourceCompressionChoicesResult",
     "ZFSResourceDestroyArgsData",
     "ZFSResourceDestroyArgs",
     "ZFSResourceDestroyResult",
+    "ZFSResourceListArgs",
+    "ZFSResourceListResult",
+    "ZFSResourceProcessesArgs",
+    "ZFSResourceProcessesResult",
+    "ZFSResourcePromoteArgsData",
+    "ZFSResourcePromoteArgs",
+    "ZFSResourcePromoteResult",
+    "ZFSResourceRecommendedZvolBlocksizeArgs",
+    "ZFSResourceRecommendedZvolBlocksizeResult",
+    "ZFSResourceRecordsizeChoicesArgs",
+    "ZFSResourceRecordsizeChoicesResult",
+    "ZFSResourceRenameArgsData",
+    "ZFSResourceRenameArgs",
+    "ZFSResourceRenameResult",
     "ZFSResourceQuery",
     "ZFSResourceQueryArgs",
     "ZFSResourceQueryResult",
+    "ZFSResourceUpdateArgsData",
+    "ZFSResourceUpdateArgs",
+    "ZFSResourceUpdateProperties",
+    "ZFSResourceUpdateResult",
 )
 
 PROP_SRC = Literal["NONE", "DEFAULT", "TEMPORARY", "LOCAL", "INHERITED", "RECEIVED"]
@@ -315,7 +341,8 @@ class ZFSResourceQuery(BaseModel):
         description=(
             "A list of zfs filesystem or volume paths to be queried. In almost all scenarios, you should provide a path"
             " of what you want to query. By providing path(s) here, it allows the API to apply optimizations so that "
-            "the requested information is retrieved as efficiently and quickly as possible.\n"
+            "the requested information is retrieved as efficiently and quickly as possible. A path that does not "
+            "exist is skipped rather than reported as an error.\n"
             "\n"
             "Example 1:\n"
             '    {"paths": ["tank/foo"]} will query the relevant information for this resource only.\n'
@@ -324,7 +351,7 @@ class ZFSResourceQuery(BaseModel):
             "only.\n"
             "\n"
             "NOTE:\n"
-            "    paths must be non-overlapping if `get_children` is True.\n"
+            "    paths must be non-overlapping if `get_children` is True or `max_depth` is greater than 0.\n"
             "    (i.e. this won't work and will raise a validation error)\n"
             "        {\n"
             '            "paths": ["tank/foo1", "tank/foo1/foo2"],\n'
@@ -352,6 +379,7 @@ class ZFSResourceQuery(BaseModel):
     get_children: bool = Field(default=False, description="Retrieve children information for the zfs resource.")
     max_depth: int = Field(
         default=0,
+        ge=0,
         description=(
             "Maximum depth to recurse when retrieving children. A value of 0 means unlimited recursion (default "
             "behavior). A value greater than 0 limits the recursion to that many levels deep.\n"
@@ -376,6 +404,28 @@ class ZFSResourceQuery(BaseModel):
             " license with ZFS tiering enabled."
         ),
     )
+
+
+class ZFSResourceListArgs(BaseModel):
+    data: ZFSResourceQuery = Field(
+        default_factory=ZFSResourceQuery,
+        description="Query parameters for retrieving ZFS resource information.",
+    )
+
+
+class ZFSResourceListResult(BaseModel):
+    result: list[ZFSResourceEntry]
+
+
+class ZFSResourceQueryArgs(BaseModel):
+    data: ZFSResourceQuery = Field(
+        default_factory=ZFSResourceQuery,
+        description="Query parameters for retrieving ZFS resource information.",
+    )
+
+
+class ZFSResourceQueryResult(BaseModel):
+    result: list[ZFSResourceEntry]
 
 
 class ZFSResourceCreateEncryption(BaseModel):
@@ -594,6 +644,64 @@ class ZFSResourceCreateResult(BaseModel):
     result: ZFSResourceEntry
 
 
+class ZFSResourceUpdateProperties(ZFSResourceCreateProperties):
+    """ZFS properties that may be changed on an existing resource."""
+
+    casesensitivity: Excluded = excluded_field()
+    volblocksize: Excluded = excluded_field()
+    normalization: Excluded = excluded_field()
+    utf8only: Excluded = excluded_field()
+    encryption: Excluded = excluded_field()
+
+
+class ZFSResourceUpdateArgsData(BaseModel):
+    path: NonEmptyString = Field(
+        description=(
+            "Path of the zfs resource (dataset or volume) to be updated. Must be of the form 'pool/name'. Snapshot "
+            "paths (containing '@') are not accepted."
+        ),
+    )
+    properties: ZFSResourceUpdateProperties = Field(
+        default_factory=ZFSResourceUpdateProperties,
+        description=(
+            "ZFS properties to set. Values are handed to ZFS verbatim and canonicalized by ZFS itself. Read the "
+            "returned entry for the effective values. A property left as null is not touched. Any property not in "
+            "this model may not be changed here.\n"
+            "\n"
+            "An explicit 'acltype' also defaults the coupled acl properties unless they are given. An nfsv4 acltype "
+            "defaults 'aclinherit' to 'passthrough' while a posix or off acltype defaults both 'aclmode' and "
+            "'aclinherit' to 'discard'.\n"
+            "\n"
+            "A volume's 'volsize' may only grow. Encryption is managed with the `pool.dataset` key methods and "
+            "shares with the `sharing.nfs` and `sharing.smb` APIs. Neither may be configured through these "
+            "properties."
+        ),
+    )
+    user_properties: dict[str, str] = Field(
+        default={},
+        description=(
+            "User properties to set or overwrite, keyed by their full name. Property names must contain a colon "
+            "(e.g. 'org.truenas:custom')."
+        ),
+    )
+    inherit: list[str] = Field(
+        default=[],
+        description=(
+            "Native or user property names to reset to their inherited value. Any property that may be set through "
+            "`properties` may be inherited. Inheriting a user property removes it from the resource. Inheriting "
+            "'acltype' also inherits 'aclmode' and 'aclinherit' unless those are given in `properties`."
+        ),
+    )
+
+
+class ZFSResourceUpdateArgs(BaseModel):
+    data: ZFSResourceUpdateArgsData = Field(description="Update parameters for changing a ZFS resource.")
+
+
+class ZFSResourceUpdateResult(BaseModel):
+    result: ZFSResourceEntry
+
+
 class ZFSResourceDestroyArgsData(BaseModel):
     path: NonEmptyString = Field(
         description=(
@@ -619,12 +727,99 @@ class ZFSResourceDestroyResult(BaseModel):
     result: None
 
 
-class ZFSResourceQueryArgs(BaseModel):
-    data: ZFSResourceQuery = Field(
-        default=ZFSResourceQuery(),
-        description="Query parameters for retrieving ZFS resource information.",
+class ZFSResourceChecksumChoicesArgs(BaseModel):
+    pass
+
+
+class ZFSResourceChecksumChoicesResult(BaseModel):
+    result: dict[str, str] = Field(description="Object mapping checksum algorithm names to their descriptions.")
+
+
+class ZFSResourceCompressionChoicesArgs(BaseModel):
+    pass
+
+
+class ZFSResourceCompressionChoicesResult(BaseModel):
+    result: dict[str, str] = Field(description="Object mapping compression algorithm names to their descriptions.")
+
+
+class ZFSResourceRecordsizeChoicesArgs(BaseModel):
+    pool_name: str | None = Field(
+        default=None,
+        description="Optional pool name to get record size choices for. If not provided, returns general choices.",
     )
 
 
-class ZFSResourceQueryResult(BaseModel):
-    result: list[ZFSResourceEntry]
+class ZFSResourceRecordsizeChoicesResult(BaseModel):
+    result: list[str] = Field(description="Array of available record size options for filesystem datasets.")
+
+
+class ZFSResourceRecommendedZvolBlocksizeArgs(BaseModel):
+    pool: str = Field(description="The pool name to get the recommended volume block size for.")
+
+
+class ZFSResourceRecommendedZvolBlocksizeResult(BaseModel):
+    result: str = Field(description="The recommended block size for volumes on this pool.")
+
+
+class ZFSResourceProcessesArgs(BaseModel):
+    path: str = Field(description="Path of the zfs resource to list processes for.")
+
+
+class ZFSResourceProcessesResult(BaseModel):
+    result: list[PoolProcess] = Field(description="Array of processes with open files on the resource.")
+
+
+class ZFSResourceRenameArgsData(BaseModel):
+    current_name: DATASET_NAME = Field(
+        description=(
+            "The existing name of the zfs resource to be renamed. Snapshot paths (containing '@') are not accepted; "
+            "use `zfs.resource.snapshot.rename` instead."
+        ),
+    )
+    new_name: DATASET_NAME = Field(
+        description=(
+            "The new name for the zfs resource. It must stay within the same pool and may contain alphanumeric "
+            "characters along with underscore, hyphen, colon and period."
+        ),
+    )
+    no_unmount: bool = Field(
+        default=False,
+        description=(
+            "Do not remount filesystems during the rename. A filesystem whose mountpoint property is legacy or none "
+            "is never unmounted regardless of this setting."
+        ),
+    )
+    force_unmount: bool = Field(
+        default=True,
+        description="Force unmount any filesystem that has to be unmounted in the process.",
+    )
+    force: bool = Field(
+        default=False,
+        description=(
+            "This operation does not check whether the resource is currently in use. Renaming an active resource may "
+            "disrupt SMB shares, iSCSI targets, snapshots, replication, and other services.\n"
+            "\n"
+            "Set Force only if you understand and accept the risks."
+        ),
+    )
+
+
+class ZFSResourceRenameArgs(BaseModel):
+    data: ZFSResourceRenameArgsData = Field(description="Rename parameters for renaming a ZFS resource.")
+
+
+class ZFSResourceRenameResult(BaseModel):
+    result: None
+
+
+class ZFSResourcePromoteArgsData(BaseModel):
+    path: NonEmptyString = Field(description="Path of the cloned zfs resource to be promoted.")
+
+
+class ZFSResourcePromoteArgs(BaseModel):
+    data: ZFSResourcePromoteArgsData = Field(description="Promote parameters for promoting a ZFS clone.")
+
+
+class ZFSResourcePromoteResult(BaseModel):
+    result: None

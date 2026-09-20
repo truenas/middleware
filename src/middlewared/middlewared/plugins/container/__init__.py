@@ -235,7 +235,7 @@ async def pool_post_import(middleware: Middleware, pool: dict[str, Any] | None =
             continue
 
         if not await middleware.call2(
-            middleware.services.zfs.resource.query_impl,
+            middleware.services.zfs.resource.list_impl,
             ZFSResourceQuery(paths=[dataset], properties=None),
         ):
             continue

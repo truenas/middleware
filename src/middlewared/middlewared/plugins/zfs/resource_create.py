@@ -80,7 +80,7 @@ def create_impl(context: ServiceContext, tls: Any, data: ZFSResourceCreateArgsDa
     ctx.ancestors = {
         rv["name"]: rv
         for rv in context.call_sync2(
-            context.s.zfs.resource.query_impl,
+            context.s.zfs.resource.list_impl,
             ZFSResourceQuery(paths=ancestor_chain(path), properties=ancestor_props),
         )
     }
@@ -155,7 +155,7 @@ def create_impl(context: ServiceContext, tls: Any, data: ZFSResourceCreateArgsDa
     if encrypt:
         report_props.append("encryption")
     return context.call_sync2(
-        context.s.zfs.resource.query_impl,
+        context.s.zfs.resource.list_impl,
         ZFSResourceQuery(
             paths=[path],
             properties=report_props,

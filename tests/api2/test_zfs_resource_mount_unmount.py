@@ -12,7 +12,7 @@ from auto_config import pool_name
 
 
 def mounted(path: str) -> bool:
-    rv = call("zfs.resource.query", {"paths": [path], "properties": ["mounted"]})
+    rv = call("zfs.resource.list", {"paths": [path], "properties": ["mounted"]})
     return rv[0]["properties"]["mounted"]["value"] is True
 
 
@@ -139,7 +139,7 @@ def test_unload_key_empty_filesystem_is_rejected():
 
 
 def keystatus(path: str) -> str:
-    rv = call("zfs.resource.query", {"paths": [path], "properties": ["keystatus"]})
+    rv = call("zfs.resource.list", {"paths": [path], "properties": ["keystatus"]})
     return rv[0]["properties"]["keystatus"]["raw"]
 
 

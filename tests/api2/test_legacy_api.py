@@ -55,6 +55,7 @@ def misc_methods() -> list[tuple[tuple, str]]:
         (("fcport.status",), APIVersions.FT.value[0]),
         (("audit.query", {"query-options": {"count": True}}), APIVersions.GE.value[0]),
         (("webui.crypto.csr_profiles",), APIVersions.FT.value[0]),
+        (("zfs.resource.query", {"properties": []}), APIVersions.GE.value[0]),
     ]
 
 

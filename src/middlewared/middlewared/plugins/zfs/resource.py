@@ -1,9 +1,17 @@
 from __future__ import annotations
 
+# `ZFSResourceService.list` shadows the builtin `list` within the class body, so annotations after it
+# must qualify the type as `builtins.list` to refer to the type rather than the method.
+import builtins
 from typing import TYPE_CHECKING, Any
 
 from middlewared.api import api_method
 from middlewared.api.current import (
+    PoolProcess,
+    ZFSResourceChecksumChoicesArgs,
+    ZFSResourceChecksumChoicesResult,
+    ZFSResourceCompressionChoicesArgs,
+    ZFSResourceCompressionChoicesResult,
     ZFSResourceCreateArgs,
     ZFSResourceCreateArgsData,
     ZFSResourceCreateResult,
@@ -11,21 +19,43 @@ from middlewared.api.current import (
     ZFSResourceDestroyArgsData,
     ZFSResourceDestroyResult,
     ZFSResourceEntry,
+    ZFSResourceListArgs,
+    ZFSResourceListResult,
+    ZFSResourceProcessesArgs,
+    ZFSResourceProcessesResult,
+    ZFSResourcePromoteArgs,
+    ZFSResourcePromoteArgsData,
+    ZFSResourcePromoteResult,
     ZFSResourceQuery,
     ZFSResourceQueryArgs,
     ZFSResourceQueryResult,
+    ZFSResourceRecommendedZvolBlocksizeArgs,
+    ZFSResourceRecommendedZvolBlocksizeResult,
+    ZFSResourceRecordsizeChoicesArgs,
+    ZFSResourceRecordsizeChoicesResult,
+    ZFSResourceRenameArgs,
+    ZFSResourceRenameArgsData,
+    ZFSResourceRenameResult,
+    ZFSResourceUpdateArgs,
+    ZFSResourceUpdateArgsData,
+    ZFSResourceUpdateResult,
 )
 from middlewared.service import Service, private
 from middlewared.service.decorators import pass_thread_local_storage
 
 from . import resource_create as _create
 from . import resource_destroy as _destroy
+from . import resource_info as _info
 from . import resource_ops as _ops
+from . import resource_processes as _processes
 from . import resource_query as _query
+from . import resource_update as _update
 from .prefetch import ZFSResourcePoolPrefetchService
 from .snapshot import ZFSResourceSnapshotService
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from middlewared.main import Middleware
 
 __all__ = ("ZFSResourceService",)
@@ -42,25 +72,196 @@ class ZFSResourceService(Service):
         self.snapshot = ZFSResourceSnapshotService(middleware)
         self.pool = ZFSResourcePoolPrefetchService(middleware)
 
+    @api_method(
+        ZFSResourceListArgs,
+        ZFSResourceListResult,
+        roles=["ZFS_RESOURCE_READ"],
+        check_annotations=True,
+    )
+    def list(self, data: ZFSResourceQuery) -> builtins.list[ZFSResourceEntry]:
+        """
+        List ZFS resources (datasets and volumes) with flexible filtering options.
+
+        To query snapshots, use :method:`zfs.resource.snapshot.query` instead.
+
+        A validation error is raised when:
+
+        - a snapshot path is supplied (use :method:`zfs.resource.snapshot.query`)
+        - overlapping paths are supplied with ``get_children`` enabled or ``max_depth`` greater than 0
+
+        Examples:
+
+        List all resources with default properties:
+
+        .. code:: json
+
+            {}
+
+        List specific resources:
+
+        .. code:: json
+
+            {"paths": ["tank/documents", "tank/media"]}
+
+        List specific properties with children:
+
+        .. code:: json
+
+            {"paths": ["tank"], "properties": ["mounted", "compression", "used"], "get_children": true}
+
+        Get a hierarchical view of resources:
+
+        .. code:: json
+
+            {"paths": ["tank"], "nest_results": true, "get_children": true}
+        """
+        return _query.list_resources(self.context, data)
+
+    @api_method(
+        ZFSResourceQueryArgs,
+        ZFSResourceQueryResult,
+        roles=["ZFS_RESOURCE_READ"],
+        check_annotations=True,
+        removed_in="v27",
+    )
+    def query(self, data: ZFSResourceQuery) -> builtins.list[ZFSResourceEntry]:
+        """
+        List ZFS resources (datasets and volumes) with flexible filtering options.
+        """
+        return _query.list_resources(self.context, data)
+
+    @api_method(
+        ZFSResourceChecksumChoicesArgs,
+        ZFSResourceChecksumChoicesResult,
+        roles=["ZFS_RESOURCE_READ"],
+        check_annotations=True,
+    )
+    async def checksum_choices(self) -> dict[str, str]:
+        """
+        Retrieve the checksum algorithms a ZFS resource may use.
+        """
+        return _info.checksum_choices()
+
+    @api_method(
+        ZFSResourceCompressionChoicesArgs,
+        ZFSResourceCompressionChoicesResult,
+        roles=["ZFS_RESOURCE_READ"],
+        check_annotations=True,
+    )
+    async def compression_choices(self) -> dict[str, str]:
+        """
+        Retrieve the compression algorithms a ZFS resource may use.
+        """
+        return _info.compression_choices()
+
+    @api_method(
+        ZFSResourceRecordsizeChoicesArgs,
+        ZFSResourceRecordsizeChoicesResult,
+        roles=["ZFS_RESOURCE_READ"],
+        check_annotations=True,
+    )
+    def recordsize_choices(self, pool_name: str | None) -> builtins.list[str]:
+        """
+        Retrieve the record sizes a filesystem may be given.
+
+        The upper bound is the running kernel's ``zfs_max_recordsize``. Naming a pool narrows the lower
+        bound too, since a dRAID pool needs a minimum of 128K to avoid wasting space on padding.
+        """
+        return _info.recordsize_choices(self.context, pool_name)
+
+    @api_method(
+        ZFSResourceRecommendedZvolBlocksizeArgs,
+        ZFSResourceRecommendedZvolBlocksizeResult,
+        roles=["ZFS_RESOURCE_READ"],
+        check_annotations=True,
+    )
+    async def recommended_zvol_blocksize(self, pool: str) -> str:
+        """
+        Retrieve the recommended ``volblocksize`` for a new volume on the given pool.
+
+        The recommendation follows the widest data vdev of the pool, so a pool created with mismatched
+        vdev geometry is sized for its largest one.
+
+        Get the block size for pool "tank":
+
+        .. code:: json
+
+            {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "zfs.resource.recommended_zvol_blocksize",
+                "params": ["tank"]
+            }
+        """
+        return await _info.recommended_zvol_blocksize(self.context, pool)
+
+    @api_method(
+        ZFSResourceProcessesArgs,
+        ZFSResourceProcessesResult,
+        roles=["ZFS_RESOURCE_READ"],
+        check_annotations=True,
+    )
+    async def processes(self, path: str) -> builtins.list[PoolProcess]:
+        """
+        Retrieve the processes holding open files on the ZFS resource named by ``path``.
+
+        A locked resource reports no processes, since nothing can have its contents open. An ``ENOENT``
+        error is raised when the resource does not exist.
+        """
+        return await _processes.processes(self.context, path)
+
+    @private
+    async def kill_processes(self, oid: str, control_services: bool, max_tries: int = 5) -> None:
+        await _processes.kill_processes(self.context, oid, control_services, max_tries)
+
+    @private
+    def processes_using_paths(
+        self,
+        paths: builtins.list[str],
+        include_paths: bool = False,
+        include_middleware: bool = False,
+        devices: builtins.list[int] | None = None,
+    ) -> builtins.list[dict[str, Any]]:
+        return _processes.processes_using_paths(self.context, paths, include_paths, include_middleware, devices)
+
     @private
     def unlocked_zvols_fast(
         self,
-        filters: list[list[Any]] | None = None,
+        filters: builtins.list[builtins.list[Any]] | None = None,
         options: dict[str, Any] | None = None,
-        additional_information: list[str] | None = None,
-    ) -> list[dict[str, Any]] | dict[str, Any] | int:
+        additional_information: builtins.list[str] | None = None,
+    ) -> builtins.list[dict[str, Any]] | dict[str, Any] | int:
         return _ops.unlocked_zvols_fast(self.context, filters, options, additional_information)
 
     @private
     @pass_thread_local_storage
-    def promote(self, tls: Any, current_name: str) -> None:
-        """
-        Promote a ZFS clone to be independent of its origin snapshot.
+    def promote_impl(self, tls: Any, data: ZFSResourcePromoteArgsData) -> None:
+        _ops.promote_impl(tls, data)
 
-        Args:
-            current_name: The name of the zfs resource to be promoted.
+    @api_method(
+        ZFSResourcePromoteArgs,
+        ZFSResourcePromoteResult,
+        roles=["ZFS_RESOURCE_WRITE"],
+        check_annotations=True,
+    )
+    def promote(self, data: ZFSResourcePromoteArgsData) -> None:
         """
-        _ops.promote(tls, current_name)
+        Promote a cloned ZFS resource so that it no longer depends on the snapshot it was cloned from.
+
+        The origin snapshot and every snapshot older than it move to the promoted resource, which makes the
+        resource it was cloned from the dependent one instead. This is how a clone is made destroyable
+        independently of its origin.
+
+        A validation error is raised when the resource does not exist (``ENOENT``) or is not a clone
+        (``EINVAL``).
+
+        Example:
+
+        .. code:: json
+
+            {"path": "tank/clone"}
+        """
+        _ops.promote(self.context, data)
 
     @private
     @pass_thread_local_storage
@@ -70,7 +271,7 @@ class ZFSResourceService(Service):
         filesystem: str,
         mountpoint: str | None = None,
         recursive: bool = False,
-        mount_options: list[str] | None = None,
+        mount_options: builtins.list[str] | None = None,
         force: bool = False,
         load_encryption_key: bool = False,
     ) -> None:
@@ -150,45 +351,48 @@ class ZFSResourceService(Service):
 
     @private
     @pass_thread_local_storage
-    def rename(
-        self,
-        tls: Any,
-        current_name: str,
-        new_name: str,
-        recursive: bool = False,
-        no_unmount: bool = False,
-        force_unmount: bool = True,
-    ) -> None:
+    def rename_impl(self, tls: Any, data: ZFSResourceRenameArgsData) -> None:
+        _ops.rename_impl(tls, data)
+
+    @api_method(
+        ZFSResourceRenameArgs,
+        ZFSResourceRenameResult,
+        roles=["ZFS_RESOURCE_WRITE"],
+        check_annotations=True,
+    )
+    def rename(self, data: ZFSResourceRenameArgsData) -> None:
         """
-        Rename a ZFS resource.
+        Rename a ZFS resource (filesystem or volume), remounting it at its new location.
 
-        Args:
-            current_name: The existing name of the zfs resource to be renamed.
-            new_name: New name for ZFS object. The new name may not change the
-                pool name component of the original name and contain
-                alphanumeric characters and the following special characters:
+        To rename snapshots, use :method:`zfs.resource.snapshot.rename` instead. A dataset rename can never
+        be recursive; renaming a resource renames its descendants along with it.
 
-                * Underscore (_)
-                * Hyphen (-)
-                * Colon (:)
-                * Period (.)
+        .. warning::
 
-                The name length may not exceed 255 bytes, but it is generally advisable
-                to limit the length to something significantly less than the absolute
-                name length limit.
-            recursive: Recursively rename the snapshots of all descendant resources. Snapshots
-                are the only resource that can be renamed recursively.
-            no_unmount: Do not remount file systems during rename. If a filesystem's mountpoint
-                property is set to legacy or none, the file system is not unmounted even
-                if this option is False (default).
-            force_unmount: Force unmount any file systems that need to be unmounted in the process.
+            No safety checks are performed. If the resource is in use by services such as SMB, iSCSI,
+            snapshot tasks, replication, or cloud sync, renaming it may cause disruptions or service
+            failures. Proceed only if you are certain the resource is not in use, and set ``force`` to
+            acknowledge that.
+
+        A validation error is raised when:
+
+        - ``force`` was not set
+        - a snapshot path (containing ``@``) is supplied
+        - the resource does not exist (``ENOENT``)
+        - the new name is already taken (``EEXIST``)
+
+        Example:
+
+        .. code:: json
+
+            {"current_name": "tank/documents", "new_name": "tank/archive", "force": true}
         """
-        _ops.rename(tls, current_name, new_name, recursive, no_unmount, force_unmount)
+        _ops.rename(self.context, data)
 
     @private
     @pass_thread_local_storage
-    def query_impl(self, tls: Any, data: ZFSResourceQuery) -> list[dict[str, Any]]:
-        return _query.query_impl(self.context, tls, data)
+    def list_impl(self, tls: Any, data: ZFSResourceQuery) -> builtins.list[dict[str, Any]]:
+        return _query.list_impl(self.context, tls, data)
 
     @private
     @pass_thread_local_storage
@@ -206,7 +410,7 @@ class ZFSResourceService(Service):
         Create a ZFS resource (filesystem or volume) and mount it.
 
         Properties are given by native ZFS property name - exactly the names
-        :method:`zfs.resource.query` returns - and are handed to ZFS as-is. The created
+        :method:`zfs.resource.list` returns - and are handed to ZFS as-is. The created
         resource is re-queried after creation and returned, so the entry reflects the
         values as canonicalized by ZFS, not the input.
 
@@ -310,6 +514,91 @@ class ZFSResourceService(Service):
 
     @private
     @pass_thread_local_storage
+    def update_impl(
+        self,
+        tls: Any,
+        path: str,
+        properties: dict[str, Any] | None = None,
+        user_properties: dict[str, str] | None = None,
+        inherit: Iterable[str] | None = None,
+        bypass: bool = False,
+    ) -> None:
+        """
+        Set native properties, set user properties and inherit properties, in that order, on one open handle.
+
+        Names are handed to ZFS as given; the public ``update`` validates the vocabulary. ``bypass`` lets internal
+        callers write to protected paths and is never exposed to the public API. A change to ``mountpoint`` or a
+        native share property remounts the filesystem, the library's default for ``set_properties``. Inheriting a
+        user property removes it.
+        """
+        _update.update_impl(tls, path, properties, user_properties, inherit, bypass)
+
+    @api_method(
+        ZFSResourceUpdateArgs,
+        ZFSResourceUpdateResult,
+        roles=["ZFS_RESOURCE_WRITE"],
+        check_annotations=True,
+    )
+    def update(self, data: ZFSResourceUpdateArgsData) -> ZFSResourceEntry:
+        """
+        Change the properties of a ZFS resource (filesystem or volume).
+
+        One request sets native properties, sets user properties and resets properties to their inherited
+        value. Properties are given by native ZFS property name - exactly the names
+        :method:`zfs.resource.list` returns - and are handed to ZFS as-is. The resource is re-queried
+        afterwards and returned with the properties that were touched, so the entry reflects the values as
+        canonicalized by ZFS, not the input.
+
+        Inheriting a user property removes it. Inheriting ``acltype`` also inherits ``aclmode`` and
+        ``aclinherit`` unless the request sets them, and setting ``acltype`` defaults them the way
+        :method:`zfs.resource.create` does.
+
+        A validation error is raised when:
+
+        - a snapshot path (containing ``@``) is supplied (``EINVAL``)
+        - the path references a protected internal resource (``EACCES``)
+        - the resource does not exist (``ENOENT``)
+        - nothing is set or inherited (``EINVAL``)
+        - the same name is both set and inherited (``EINVAL``)
+        - a name in ``inherit`` is neither a settable native property nor a user property name with a
+          colon, or a user property name lacks a colon (``EINVAL``)
+        - ``volsize`` is smaller than the volume's current size (``EINVAL``)
+        - the effective ``acltype`` and ``aclmode`` combination is unusable - a posix or off acltype requires
+          a discard aclmode and a discard aclmode may not be combined with the nfsv4 acltype (``EINVAL``)
+        - ``special_small_blocks`` is set or inherited while ZFS tiering is enabled - placement is managed
+          with :method:`zfs.tier.dataset_set_tier` (``EINVAL``)
+        - deduplication is requested on a system that is not entitled to it, or for a filesystem whose data
+          is placed on the SPECIAL vdev (the PERFORMANCE tier) while ZFS tiering is enabled (``EINVAL``)
+        - a property is invalid for the resource type, is read-only, or has an invalid value (``EINVAL``)
+
+        Examples:
+
+        Set a property:
+
+        .. code:: json
+
+            {"path": "tank/documents", "properties": {"compression": "zstd"}}
+
+        Reset a property to its inherited value:
+
+        .. code:: json
+
+            {"path": "tank/documents", "inherit": ["compression"]}
+
+        Set one user property and remove another:
+
+        .. code:: json
+
+            {
+                "path": "tank/documents",
+                "user_properties": {"org.truenas:custom": "value"},
+                "inherit": ["org.truenas:obsolete"]
+            }
+        """
+        return _update.update(self.context, data)
+
+    @private
+    @pass_thread_local_storage
     def destroy_impl(
         self,
         tls: Any,
@@ -384,53 +673,3 @@ class ZFSResourceService(Service):
             - Datasets with snapshots require ``recursive`` to be ``true``
         """
         _destroy.destroy(self.context, data)
-
-    @api_method(
-        ZFSResourceQueryArgs,
-        ZFSResourceQueryResult,
-        roles=["ZFS_RESOURCE_READ"],
-        check_annotations=True,
-    )
-    def query(self, data: ZFSResourceQuery) -> list[ZFSResourceEntry]:
-        """
-        Query ZFS resources (datasets and volumes) with flexible filtering options.
-
-        This method provides a high-performance interface for retrieving information about ZFS
-        resources, including their properties, hierarchical relationships, and metadata. The query
-        can be customized to retrieve specific resources, properties, and control the output format.
-
-        To query snapshots, use :method:`zfs.resource.snapshot.query` instead.
-
-        A validation error is raised when:
-
-        - a snapshot path is supplied (use :method:`zfs.resource.snapshot.query`)
-        - overlapping paths are supplied with ``get_children`` enabled
-        - a requested path does not exist (``ENOENT``)
-
-        Examples:
-
-        Query all resources with default properties:
-
-        .. code:: json
-
-            {}
-
-        Query specific resources:
-
-        .. code:: json
-
-            {"paths": ["tank/documents", "tank/media"]}
-
-        Query specific properties with children:
-
-        .. code:: json
-
-            {"paths": ["tank"], "properties": ["mounted", "compression", "used"], "get_children": true}
-
-        Get a hierarchical view of resources:
-
-        .. code:: json
-
-            {"paths": ["tank"], "nest_results": true, "get_children": true}
-        """
-        return _query.query(self.context, data)

@@ -17,7 +17,9 @@ from middlewared.api.current import (
     PoolDatasetRenameResult,
     PoolDatasetUpdateArgs,
     PoolDatasetUpdateResult,
+    ZFSResourcePromoteArgsData,
     ZFSResourceQuery,
+    ZFSResourceRenameArgsData,
 )
 from middlewared.plugins.container.utils import CONTAINER_DS_NAME
 from middlewared.plugins.zfs.exceptions import ZFSDestroyFailedException
@@ -48,7 +50,6 @@ from .utils import (
     CreateImplArgs,
     CreateImplArgsDataclass,
     UpdateImplArgs,
-    UpdateImplArgsDataclass,
     ZFSKeyFormat,
     dataset_mountpoint,
     get_dataset_parents,
@@ -806,23 +807,18 @@ class PoolDatasetService(CRUDService):
         return created_ds
 
     @private
-    @pass_thread_local_storage
-    def update_impl(self, tls, data: UpdateImplArgs):
-        # Convert TypedDict to dataclass to handle defaults for missing fields
-        args = UpdateImplArgsDataclass(
-            name=data['name'],
-            zprops=data.get('zprops', {}),
-            uprops=data.get('uprops', {}),
-            iprops=data.get('iprops', set())
+    async def update_impl(self, data: UpdateImplArgs):
+        # The dict shape is also what a controller sends its peer over `failover.call_remote`, so it is kept as
+        # the entry point for callers outside `zfs.resource` and unpacked onto the primitive here, bypassing the
+        # protected-path guard because the system dataset, apps and pool-import writers are among those callers.
+        await self.call2(
+            self.s.zfs.resource.update_impl,
+            data['name'],
+            properties=data.get('zprops'),
+            user_properties=data.get('uprops'),
+            inherit=data.get('iprops'),
+            bypass=True,
         )
-
-        ds = tls.lzh.open_resource(name=args.name)
-        if args.zprops:
-            ds.set_properties(properties=args.zprops)
-        if args.uprops:
-            ds.set_user_properties(user_properties=args.uprops)
-        for i in args.iprops:
-            ds.inherit_property(property=i)
 
     @api_method(PoolDatasetUpdateArgs, PoolDatasetUpdateResult, audit='Pool dataset update', audit_callback=True)
     async def do_update(self, audit_callback, id_, data):
@@ -960,7 +956,7 @@ class PoolDatasetService(CRUDService):
 
         if not options['recursive']:
             ds = await self.call2(
-                self.s.zfs.resource.query_impl,
+                self.s.zfs.resource.list_impl,
                 ZFSResourceQuery(paths=[id_], properties=None, get_children=True)
             )
             if len(ds) > 1:
@@ -999,7 +995,7 @@ class PoolDatasetService(CRUDService):
     @api_method(PoolDatasetPromoteArgs, PoolDatasetPromoteResult, roles=['DATASET_WRITE'])
     async def promote(self, id_):
         """Promote a cloned dataset."""
-        return await self.call2(self.s.zfs.resource.promote, id_)
+        return await self.call2(self.s.zfs.resource.promote_impl, ZFSResourcePromoteArgsData(path=id_))
 
     @api_method(
         PoolDatasetRenameArgs,
@@ -1029,11 +1025,9 @@ class PoolDatasetService(CRUDService):
                 'No safety checks are performed when renaming ZFS resources; this may break existing usages. '
                 'If you understand the risks, please set force and proceed.'
             )
+        if options['recursive']:
+            raise ValidationError('pool.dataset.rename.recursive', 'recursive is only valid for snapshots')
         return await self.call2(
-            self.s.zfs.resource.rename,
-            id_,
-            options['new_name'],
-            options['recursive'],
-            False,  # no_unmount
-            options['force'],
+            self.s.zfs.resource.rename_impl,
+            ZFSResourceRenameArgsData(current_name=id_, new_name=options['new_name']),
         )

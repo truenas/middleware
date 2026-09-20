@@ -344,7 +344,7 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
         field = "s3_update.managed_root_dataset"
         try:
             rows = await self.call2(
-                self.s.zfs.resource.query_impl, ZFSResourceQuery(paths=[dataset], properties=None)
+                self.s.zfs.resource.list_impl, ZFSResourceQuery(paths=[dataset], properties=None)
             )
         except ZFSPathNotFoundException:
             rows = []
@@ -407,7 +407,7 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
             {
                 row["name"]: row
                 for row in await self.call2(
-                    self.s.zfs.resource.query_impl,
+                    self.s.zfs.resource.list_impl,
                     ZFSResourceQuery(paths=[b.dataset for b in buckets], properties=["mountpoint"]),
                 )
             }

@@ -12,7 +12,7 @@ def destroy_zfs_resource(path: str) -> None:
     A resource without children is destroyed non-recursively. Only that path
     retries while udev still holds a new zvol open; the recursive one does not.
     """
-    tree = call("zfs.resource.query", {"paths": [path], "get_children": True, "properties": None})
+    tree = call("zfs.resource.list", {"paths": [path], "get_children": True, "properties": None})
     call("zfs.resource.destroy", {"path": path, "recursive": len(tree) > 1})
 
 
@@ -27,7 +27,7 @@ def _topmost_missing_ancestor(path: str) -> str | None:
     if not ancestors:
         return None
 
-    existing = {resource["name"] for resource in call("zfs.resource.query", {"paths": ancestors, "properties": None})}
+    existing = {resource["name"] for resource in call("zfs.resource.list", {"paths": ancestors, "properties": None})}
     return next((a for a in ancestors if a not in existing), None)
 
 

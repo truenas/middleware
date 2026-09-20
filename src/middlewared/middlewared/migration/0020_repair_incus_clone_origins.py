@@ -65,7 +65,7 @@ async def migrate(middleware: Middleware) -> None:
         # Skipped when the pool is not imported or the legacy tree is already gone,
         # so this does not log a failure for every dataset it cannot reach.
         if not await middleware.call2(
-            middleware.services.zfs.resource.query_impl,
+            middleware.services.zfs.resource.list_impl,
             ZFSResourceQuery(paths=[f"{pool}/.ix-virt"], properties=None),
         ):
             continue

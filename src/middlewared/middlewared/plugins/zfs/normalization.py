@@ -91,7 +91,7 @@ def normalize_asdict_result(result: dict[str, Any], *, normalize_source: bool) -
 
     result["type"] = result["type"].removeprefix("ZFS_TYPE_")
 
-    if normalize_source:
+    if normalize_source and result["properties"]:
         # update zfs properties
         for i in result["properties"].values():
             # looks like:

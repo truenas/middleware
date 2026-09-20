@@ -50,7 +50,7 @@ async def validate_fs(context: ServiceContext) -> None:
     ds = {
         i['name']
         for i in await context.call2(
-            context.s.zfs.resource.query_impl,
+            context.s.zfs.resource.list_impl,
             ZFSResourceQuery(paths=docker_datasets(config.dataset), properties=None)
         )
     }
@@ -86,7 +86,7 @@ def create_update_docker_datasets(context: ServiceContext, docker_ds: str) -> No
     expected_docker_datasets = docker_datasets(docker_ds)
     actual_docker_datasets = {
         i['name']: i['properties'] for i in context.call_sync2(
-            context.s.zfs.resource.query_impl,
+            context.s.zfs.resource.list_impl,
             ZFSResourceQuery(
                 paths=expected_docker_datasets,
                 properties=list(DatasetDefaults.update_only(skip_ds_name_check=True).keys()),
@@ -128,7 +128,7 @@ def set_canmount_noauto(context: ServiceContext, docker_ds: str) -> None:
     # canmount cannot be inherited in zfs and its default is `on`, so every dataset of the
     # tree has to be set individually instead of picking the value up from the apps root
     for ds in context.call_sync2(
-        context.s.zfs.resource.query_impl,
+        context.s.zfs.resource.list_impl,
         ZFSResourceQuery(paths=[docker_ds], get_children=True, properties=['canmount'])
     ):
         if ds['type'] != 'FILESYSTEM' or ds['properties']['canmount']['raw'] == 'noauto':

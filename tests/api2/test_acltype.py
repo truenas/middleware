@@ -20,7 +20,7 @@ def test_default_acltype_on_zpool():
 
 
 def test_acltype_inheritance(temp_ds):
-    tds = call('zfs.resource.query', {'paths': [temp_ds], 'properties': ['acltype']})
+    tds = call('zfs.resource.list', {'paths': [temp_ds], 'properties': ['acltype']})
     assert tds
     assert tds[0]['properties']['acltype']['raw'] == 'posix'
 
@@ -41,7 +41,7 @@ def test_acltype_inheritance(temp_ds):
 def test_change_acltype_and_aclmode_to_(temp_ds, change, expected):
     call('pool.dataset.update', temp_ds, change)
     props = call(
-        'zfs.resource.query',
+        'zfs.resource.list',
         {'paths': [temp_ds], 'properties': ['acltype', 'aclmode', 'aclinherit']}
     )[0]['properties']
     for tkey, skey, value in expected:

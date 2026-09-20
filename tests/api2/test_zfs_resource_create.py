@@ -19,7 +19,7 @@ def test_zfs_resource_create_basic_filesystem():
         assert entry["pool"] == pool_name
         assert entry["type"] == "FILESYSTEM"
 
-        result = call("zfs.resource.query", {"paths": [path], "properties": ["mounted", "xattr"]})
+        result = call("zfs.resource.list", {"paths": [path], "properties": ["mounted", "xattr"]})
         assert len(result) == 1
         assert result[0]["properties"]["mounted"]["raw"] == "yes"
         # TrueNAS defaults xattr to sa on filesystems
@@ -65,7 +65,7 @@ def test_zfs_resource_create_volume_sparse():
 def test_zfs_resource_create_volume_capacity_guardrail():
     """Test that a thick volume reserving over 80% of the available space is
     rejected while a sparse volume of the same size is allowed"""
-    avail = call("zfs.resource.query", {"paths": [pool_name], "properties": ["available"]})
+    avail = call("zfs.resource.list", {"paths": [pool_name], "properties": ["available"]})
     volsize = (int(avail[0]["properties"]["available"]["value"] * 0.9) // 16384) * 16384
     path = os.path.join(pool_name, "test_create_zvol_capacity")
     with pytest.raises(Exception) as exc_info:
@@ -121,7 +121,7 @@ def test_zfs_resource_create_ancestors():
         assert entry["name"] == path
 
         result = call(
-            "zfs.resource.query",
+            "zfs.resource.list",
             {"paths": [root], "get_children": True, "properties": ["mounted"]},
         )
         assert len(result) == 4
@@ -285,7 +285,7 @@ def test_zfs_resource_create_encryption_root_passphrase():
         props = entry["properties"]
         assert props["keyformat"]["raw"] == "passphrase", props
         assert props["encryptionroot"]["raw"] == path, props
-        res = call("zfs.resource.query", {"paths": [path], "properties": ["pbkdf2iters"]})
+        res = call("zfs.resource.list", {"paths": [path], "properties": ["pbkdf2iters"]})
         assert res[0]["properties"]["pbkdf2iters"]["value"] == 1300000, res[0]["properties"]
         assert call("pool.dataset.lock", path, job=True) is True
 
@@ -378,7 +378,7 @@ def test_zfs_resource_create_under_encrypted_parent():
     with zfs_resource(parent, {"encryption": {"passphrase": "passphrase123"}}):
         child = f"{parent}/child"
         call("zfs.resource.create", {"path": child})
-        props = call("zfs.resource.query", {"paths": [child], "properties": ["encryption"]})[0]["properties"]
+        props = call("zfs.resource.list", {"paths": [child], "properties": ["encryption"]})[0]["properties"]
         assert props["encryption"]["raw"] != "off", props
         assert props["encryptionroot"]["raw"] == parent, props
         assert props["keystatus"]["raw"] == "available", props
@@ -431,7 +431,7 @@ def test_zfs_resource_create_draid_filesystem_recordsize_default(draid_pool):
     """Test that a filesystem on a dRAID pool defaults to a 1M recordsize"""
     path = f"{draid_pool['name']}/fs"
     call("zfs.resource.create", {"path": path})
-    result = call("zfs.resource.query", {"paths": [path], "properties": ["recordsize"]})
+    result = call("zfs.resource.list", {"paths": [path], "properties": ["recordsize"]})
     assert result[0]["properties"]["recordsize"]["value"] == 1024**2, result[0]["properties"]
 
 
@@ -446,7 +446,7 @@ def test_zfs_resource_create_draid_volume_volblocksize_default(draid_pool):
             "properties": {"volsize": 128 * 1024**2, "refreservation": "none"},
         },
     )
-    result = call("zfs.resource.query", {"paths": [path], "properties": ["volblocksize"]})
+    result = call("zfs.resource.list", {"paths": [path], "properties": ["volblocksize"]})
     assert result[0]["properties"]["volblocksize"]["value"] == 128 * 1024, result[0]["properties"]
 
 
@@ -596,7 +596,7 @@ def test_zfs_resource_create_ssb_behavior_without_tiering():
             },
         )
         result = call(
-            "zfs.resource.query",
+            "zfs.resource.list",
             {
                 "paths": [vol],
                 "properties": ["special_small_blocks"],
@@ -622,7 +622,7 @@ def test_zfs_resource_create_ssb_behavior_without_tiering():
             },
         )
         result = call(
-            "zfs.resource.query",
+            "zfs.resource.list",
             {
                 "paths": [vol2],
                 "properties": ["special_small_blocks"],
@@ -637,7 +637,7 @@ def test_zfs_resource_create_ssb_behavior_without_tiering():
         fs = f"{parent}/fs"
         call("zfs.resource.create", {"path": fs})
         result = call(
-            "zfs.resource.query",
+            "zfs.resource.list",
             {"paths": [fs], "properties": ["special_small_blocks"], "get_source": True},
         )
         prop = result[0]["properties"]["special_small_blocks"]
@@ -685,7 +685,7 @@ def test_zfs_resource_create_tier_snaps_filesystem_placement(tier_pool):
     fs = f"{tier_pool}/tier_fs"
     call("zfs.resource.create", {"path": fs})
     result = call(
-        "zfs.resource.query",
+        "zfs.resource.list",
         {"paths": [fs], "properties": ["special_small_blocks"], "get_source": True},
     )
     prop = result[0]["properties"]["special_small_blocks"]
@@ -697,7 +697,7 @@ def test_zfs_resource_create_tier_snaps_filesystem_placement(tier_pool):
     child = f"{fs}/child"
     call("zfs.resource.create", {"path": child})
     result = call(
-        "zfs.resource.query",
+        "zfs.resource.list",
         {"paths": [child], "properties": ["special_small_blocks"], "get_source": True},
     )
     prop = result[0]["properties"]["special_small_blocks"]
@@ -735,7 +735,7 @@ def test_zfs_resource_create_ancestors_skips_the_ones_that_exist():
         assert entry["name"] == path
 
         result = call(
-            "zfs.resource.query",
+            "zfs.resource.list",
             {"paths": [root], "properties": None, "get_user_properties": True},
         )
         assert result[0]["user_properties"]["org.test:keep"] == "keepme"
@@ -765,7 +765,7 @@ def test_zfs_resource_create_encryption_root_skips_missing_ancestors():
         assert entry["name"] == path
 
         result = call(
-            "zfs.resource.query", {"paths": [path], "properties": ["encryption"]}
+            "zfs.resource.list", {"paths": [path], "properties": ["encryption"]}
         )
         assert result[0]["properties"]["encryption"]["raw"] != "off"
 
@@ -780,7 +780,7 @@ def test_zfs_resource_create_rejects_a_property_value_zfs_refuses():
         )
     assert ve.value.attribute == "zfs.resource.create"
     assert ve.value.errno == errno.EINVAL
-    assert call("zfs.resource.query", {"paths": [path], "properties": None}) == []
+    assert call("zfs.resource.list", {"paths": [path], "properties": None}) == []
 
 
 @pytest.mark.parametrize("tier_enabled", [False, True], ids=["tiering off", "tiering on"])

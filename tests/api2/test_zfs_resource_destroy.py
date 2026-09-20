@@ -51,7 +51,7 @@ def test_zfs_resource_destroy_non_recursive_filesystem():
     """Test basic non-recursive filesystem deletion"""
     fs = create_resource("test_fs_basic")
     call("zfs.resource.destroy", {"path": fs})
-    result = call("zfs.resource.query", {"paths": [fs], "properties": None})
+    result = call("zfs.resource.list", {"paths": [fs], "properties": None})
     assert len(result) == 0, result
 
 
@@ -63,7 +63,7 @@ def test_zfs_resource_destroy_non_recursive_with_children_fails():
         call("zfs.resource.destroy", {"path": root, "recursive": False})
     estr = str(exc_info.value).lower()
     assert "children" in estr or "busy" in estr
-    result = call("zfs.resource.query", {"paths": [root]})
+    result = call("zfs.resource.list", {"paths": [root]})
     assert len(result) == 1
 
     # cleanup
@@ -78,12 +78,12 @@ def test_zfs_resource_destroy_recursive_filesystem():
         os.path.join(root_name, "lvl0/lvl1/lvl2/lvl3"), {"create_ancestors": True}
     )
     result = call(
-        "zfs.resource.query",
+        "zfs.resource.list",
         {"paths": [root], "get_children": True, "properties": None},
     )
     assert len(result) == 5
     call("zfs.resource.destroy", {"path": root, "recursive": True})
-    result = call("zfs.resource.query", {"paths": [root]})
+    result = call("zfs.resource.list", {"paths": [root]})
     assert len(result) == 0
 
 
@@ -92,11 +92,11 @@ def test_zfs_resource_destroy_volume():
     vol = "test_zvol"
     args = {"type": "VOLUME", "sparse": True, "volsize": 1024**3}
     zvol = create_resource(vol, args)
-    result = call("zfs.resource.query", {"paths": [zvol]})
+    result = call("zfs.resource.list", {"paths": [zvol]})
     assert len(result) == 1
     assert result[0]["type"] == "VOLUME"
     call("zfs.resource.destroy", {"path": zvol})
-    result = call("zfs.resource.query", {"paths": [zvol]})
+    result = call("zfs.resource.list", {"paths": [zvol]})
     assert len(result) == 0
 
 
@@ -133,9 +133,9 @@ def test_zfs_resource_destroy_with_clone():
 
     call("zfs.resource.destroy", {"path": source, "recursive": True})
     # Verify both dataset and clone are gone
-    result = call("zfs.resource.query", {"paths": [source], "properties": None})
+    result = call("zfs.resource.list", {"paths": [source], "properties": None})
     assert len(result) == 0
-    result = call("zfs.resource.query", {"paths": [clone_name]})
+    result = call("zfs.resource.list", {"paths": [clone_name]})
     assert len(result) == 0
 
 
@@ -158,7 +158,7 @@ def test_zfs_resource_snapshot_destroy_all_snapshots():
     assert counts[source] == 0
 
     # cleanup - dataset should still exist
-    result = call("zfs.resource.query", {"paths": [source], "properties": None})
+    result = call("zfs.resource.list", {"paths": [source], "properties": None})
     assert len(result) == 1
     call("zfs.resource.destroy", {"path": source})
 
@@ -235,7 +235,7 @@ def test_zfs_resource_destroy_complex_hierarchy():
 
     call("zfs.resource.destroy", {"path": root, "recursive": True})
     result = call(
-        "zfs.resource.query",
+        "zfs.resource.list",
         {
             "paths": [root],
             "properties": None,
@@ -255,7 +255,7 @@ def test_zfs_resource_destroy_unmount_failure_is_reported():
         with pytest.raises(ValidationError) as ve:
             call("zfs.resource.destroy", {"path": fs})
         assert fs in ve.value.errmsg
-        assert call("zfs.resource.query", {"paths": [fs], "properties": None})
+        assert call("zfs.resource.list", {"paths": [fs], "properties": None})
     finally:
         ssh(f"umount {sub}")
         ssh(f"rmdir {sub}")
@@ -276,7 +276,7 @@ def test_zfs_resource_destroy_recursive_with_undestroyable_clone_is_reported():
             call("zfs.resource.destroy", {"path": fs, "recursive": True})
         assert ve.value.errno == errno.EBUSY
         assert "There are clones" in ve.value.errmsg
-        assert call("zfs.resource.query", {"paths": [fs], "properties": None})
+        assert call("zfs.resource.list", {"paths": [fs], "properties": None})
     finally:
         for path in (clone_b, clone_a, fs):
             ssh(f"zfs destroy -r {path} 2>/dev/null || true")
@@ -345,7 +345,7 @@ def test_zfs_resource_destroy_recursive_waits_for_udev_to_release_new_volumes():
             failures = call("test.test1", parent, 20)
 
         assert failures == []
-        remaining = call("zfs.resource.query", {"paths": [parent], "get_children": True, "properties": None})
+        remaining = call("zfs.resource.list", {"paths": [parent], "get_children": True, "properties": None})
         assert [r["name"] for r in remaining] == [parent]
 
 
@@ -360,6 +360,6 @@ def test_zfs_resource_destroy_recursive_still_fails_for_a_volume_in_use():
                 call("zfs.resource.destroy", {"path": parent, "recursive": True})
             assert ve.value.errno == errno.EBUSY
             assert ve.value.errmsg == f"Failed to destroy {parent!r} ({vol!r}: Device or resource busy)"
-            assert call("zfs.resource.query", {"paths": [vol], "properties": None})
+            assert call("zfs.resource.list", {"paths": [vol], "properties": None})
         finally:
             ssh(f"kill {pid}", check=False)

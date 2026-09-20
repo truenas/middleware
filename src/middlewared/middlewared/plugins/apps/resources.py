@@ -143,7 +143,7 @@ def get_app_volume_ds(context: ServiceContext, app_name: str) -> str | None:
 
     apps_volume_ds = get_app_parent_volume_ds(docker_ds, app_name)
     rv = context.call_sync2(
-        context.s.zfs.resource.query_impl, ZFSResourceQuery(paths=[apps_volume_ds], properties=None)
+        context.s.zfs.resource.list_impl, ZFSResourceQuery(paths=[apps_volume_ds], properties=None)
     )
     if rv:
         return cast(str, rv[0]['name'])

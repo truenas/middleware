@@ -17,8 +17,8 @@ def make_svc_part(m):
     return DockerConfigServicePart(context)
 
 
-def mock_zfs_resource_query_impl(system_state):
-    """Create a mock function for zfs.resource.query_impl."""
+def mock_zfs_resource_list_impl(system_state):
+    """Create a mock function for zfs.resource.list_impl."""
     def _query_impl(args):
         paths = args.paths
         if not paths:
@@ -301,7 +301,7 @@ async def test_docker_update_validation(system_state, new_config, old_config, mi
     m = Middleware()
     m['interface.ip_in_use'] = lambda *arg: []
     m['datastore.query'] = lambda *arg: system_state['available_keys']
-    m.services.zfs.resource.query_impl = mock_zfs_resource_query_impl(system_state)
+    m.services.zfs.resource.list_impl = mock_zfs_resource_list_impl(system_state)
     install_entitlements_for_column(m, LicenseFeature.APPS, 'CE')
     svc_part = make_svc_part(m)
     with patch('middlewared.plugins.docker.config.query_imported_fast_impl') as run:

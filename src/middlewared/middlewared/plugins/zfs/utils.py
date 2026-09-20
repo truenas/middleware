@@ -15,14 +15,19 @@ from .exceptions import ZFSPathNotFoundException, ZFSPathNotProvidedException
 
 if TYPE_CHECKING:
     from middlewared.api.current import ZfsTierEntry
+    from middlewared.main import Middleware
+    from middlewared.service import ServiceContext
 
 __all__ = (
     "get_encryption_info",
     "group_paths_by_parents",
     "has_internal_path",
     "open_resource",
+    "pool_has_special_vdev",
+    "pool_is_draid",
     "reject_overlapping_paths",
     "reject_protected_path",
+    "reject_snapshot_path",
     "special_vdev_thresholds",
 )
 
@@ -98,6 +103,30 @@ def get_encryption_info(data: dict[str, dict[str, Any]]) -> EncryptionInfo:
         )
 
 
+def pool_is_draid(context: ServiceContext, pool_name: str) -> bool:
+    if pool := context.middleware.call_sync("zpool.query_impl", {"pool_names": [pool_name], "topology": True}):
+        for group in pool[0]["topology"]["data"] + pool[0]["topology"].get("special", []):
+            if group["vdev_type"].startswith("draid"):
+                return True
+    return False
+
+
+async def pool_has_special_vdev(middleware: Middleware, pool_name: str) -> bool:
+    """False when the pool cannot be inspected."""
+    try:
+        pools = await middleware.call(
+            "zpool.query_impl",
+            {"pool_names": [pool_name], "properties": ["class_special_size"]},
+        )
+        if not pools:
+            return False
+        special_size = ((pools[0].get("properties") or {}).get("class_special_size") or {}).get("value")
+    except Exception:
+        middleware.logger.debug("%s: failed to query pool SPECIAL vdev size", pool_name, exc_info=True)
+        return False
+    return isinstance(special_size, int) and special_size > 0
+
+
 def group_paths_by_parents(paths: Collection[str]) -> dict[str, list[str]]:
     """
     Group paths by their parent directories, mapping each parent to
@@ -140,12 +169,21 @@ def reject_protected_path(schema: str, path: str, bypass: bool = False) -> None:
         raise ValidationError(schema, f"{path!r} is a protected path.", errno.EACCES)
 
 
+def reject_snapshot_path(schema: str, path: str) -> None:
+    if "@" in path:
+        raise ValidationError(
+            schema,
+            "Snapshot paths are not accepted. Use the `zfs.resource.snapshot` methods to manage snapshots.",
+            errno.EINVAL,
+        )
+
+
 def reject_overlapping_paths(schema: str, paths: Collection[str], option: str) -> None:
     """Raise if any path is relative to another. A recursive walk must not overlap."""
     if group_paths_by_parents(paths):
         raise ValidationError(
             schema,
-            f"Paths must be non-overlapping - no path can be relative to another when {option} is set to True.",
+            f"Paths must be non-overlapping - no path can be relative to another when {option} is set.",
         )
 
 

@@ -21,7 +21,7 @@ async def update_volumes(context: ServiceContext, app_name: str, volumes: list[d
     user_wants = {app_volume_ds: {'properties': {}}} | {os.path.join(app_volume_ds, v['name']): v for v in volumes}
     existing_datasets = {
         d['name'] for d in await context.call2(
-            context.s.zfs.resource.query_impl, ZFSResourceQuery(paths=list(user_wants), properties=None)
+            context.s.zfs.resource.list_impl, ZFSResourceQuery(paths=list(user_wants), properties=None)
         )
     }
     for create_ds in sorted(set(user_wants) - existing_datasets):

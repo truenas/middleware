@@ -18,7 +18,7 @@ async def ensure_datasets(context: ServiceContext, pool: str) -> None:
 
     existing_datasets = set()
     for dataset in await context.call2(
-        context.s.zfs.resource.query_impl, ZFSResourceQuery(paths=[main_dataset] + datasets, properties=["mountpoint"])
+        context.s.zfs.resource.list_impl, ZFSResourceQuery(paths=[main_dataset] + datasets, properties=["mountpoint"])
     ):
         if dataset["type"] != "FILESYSTEM":
             raise CallError(f"Expected dataset {dataset['name']!r} to be FILESYSTEM, but it is {dataset['type']}")

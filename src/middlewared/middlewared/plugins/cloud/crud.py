@@ -180,7 +180,7 @@ class CloudTaskServiceMixin[
             entry.dataset = None
             entry.relative_path = None
             zvol = zvol_path_to_name(path)
-            zz = self.call_sync2(self.s.zfs.resource.query_impl, ZFSResourceQuery(paths=[zvol], properties=None))
+            zz = self.call_sync2(self.s.zfs.resource.list_impl, ZFSResourceQuery(paths=[zvol], properties=None))
             if not zz:
                 verrors.add(f"{name}.{self.path_field}", "Volume does not exist")
             elif not zz[0]["type"] == "VOLUME":
@@ -202,7 +202,7 @@ class CloudTaskServiceMixin[
         if entry.snapshot:
             dataset_name = entry.path.removeprefix("/mnt/")
             for i in self.call_sync2(
-                self.s.zfs.resource.query_impl,
+                self.s.zfs.resource.list_impl,
                 ZFSResourceQuery(paths=[dataset_name], properties=None, get_children=True),
             ):
                 if i["name"] == dataset_name:

@@ -165,7 +165,7 @@ def pylibvirt_container(
     data["root"] = f"/mnt/{container_instance_dataset_mountpoint(pool, data['name'])}"
     if check_ds:
         datasets = context.call_sync2(
-            context.s.zfs.resource.query_impl,
+            context.s.zfs.resource.list_impl,
             ZFSResourceQuery(paths=[dataset], properties=None),
         )
         if not datasets:

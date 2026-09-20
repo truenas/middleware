@@ -55,7 +55,7 @@ def destroy_impl(
 
     if not recursive:
         rv = context.call_sync2(
-            context.s.zfs.resource.query,
+            context.s.zfs.resource.list_impl,
             ZFSResourceQuery(paths=[path], properties=None, get_children=True),
         )
         extra = "Set recursive=True to remove them."

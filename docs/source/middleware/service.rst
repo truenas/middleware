@@ -164,7 +164,7 @@ To call other services in a type-safe manner, use ``call2``/``call_sync2`` with 
         config = await context.call2(context.s.update.config)
 
         # Type-safe sync call with arguments
-        result = context.call_sync2(context.s.zfs.resource.query_impl, query_params)
+        result = context.call_sync2(context.s.zfs.resource.list_impl, query_params)
 
         return {'name': name, 'config': config}
 

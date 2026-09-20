@@ -454,7 +454,7 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         is gone. Read from ZFS whenever it is needed rather than kept: the
         dataset is the bucket's identity and its mount point follows it."""
         rows = await self.call2(
-            self.s.zfs.resource.query_impl, ZFSResourceQuery(paths=[dataset], properties=["mountpoint"])
+            self.s.zfs.resource.list_impl, ZFSResourceQuery(paths=[dataset], properties=["mountpoint"])
         )
         mountpoint = rows[0]["properties"]["mountpoint"]["value"] if rows else None
         return mountpoint if mountpoint and mountpoint.startswith("/") else None
@@ -490,7 +490,7 @@ class SharingS3Service(SharingService[SharingS3Entry]):
             return None
         try:
             rows = await self.call2(
-                self.s.zfs.resource.query_impl,
+                self.s.zfs.resource.list_impl,
                 ZFSResourceQuery(paths=[root], properties=None, max_depth=1),
             )
         except ZFSPathNotFoundException:

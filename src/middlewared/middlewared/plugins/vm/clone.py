@@ -50,7 +50,7 @@ async def _clone_zvol(
     context: ServiceContext, name: str, zvol: str, created_snaps: list[str], created_clones: list[str],
 ) -> str:
     zz = await context.call2(
-        context.s.zfs.resource.query_impl,
+        context.s.zfs.resource.list_impl,
         ZFSResourceQuery(paths=[zvol], properties=None),
     )
     if not zz:
@@ -86,7 +86,7 @@ async def _clone_zvol(
     while True:
         clone_dst = f'{zvol}_{clone_suffix}'
         if await context.call2(
-            context.s.zfs.resource.query_impl, ZFSResourceQuery(paths=[clone_dst], properties=None)
+            context.s.zfs.resource.list_impl, ZFSResourceQuery(paths=[clone_dst], properties=None)
         ):
             if ZVOL_CLONE_RE.search(clone_suffix):
                 clone_suffix = ZVOL_CLONE_RE.sub(rf'\1{ZVOL_CLONE_SUFFIX}{i}', clone_suffix)

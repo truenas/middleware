@@ -8,7 +8,7 @@ BASE_ARGS = {"type": "VOLUME", "volsize": _1GiB}
 
 def query_zvol(zvol):
     result = call(
-        "zfs.resource.query",
+        "zfs.resource.list",
         {"paths": [zvol], "properties": ["refreservation", "volsize"]},
     )
     assert result and len(result) == 1
