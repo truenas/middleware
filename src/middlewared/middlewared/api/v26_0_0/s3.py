@@ -13,6 +13,8 @@ from middlewared.api.base import (
     excluded_field,
 )
 
+from .zfs_tier import TierInfo
+
 __all__ = [
     "S3AccesskeyEntry",
     "S3AccesskeyCreate",
@@ -473,6 +475,14 @@ class SharingS3Entry(BaseModel):
         description="Overflow behavior for this bucket's audit records, or `null` to inherit the service's default.",
     )
     locked: bool | None = Field(default=None, description="Whether the bucket's dataset is locked. Read only.")
+    tier: TierInfo | None = Field(
+        default=None,
+        description=(
+            "Storage tier in which the bucket's dataset is located. This field is read-only; configure the "
+            "dataset's tier via `zfs.tier.dataset_set_tier`. NOTE: this is a licensed feature. Will be `null` if "
+            "TrueNAS is unlicensed, if tiering is disabled, or if the pool has no SPECIAL vdev."
+        ),
+    )
 
 
 class SharingS3Create(SharingS3Entry):
@@ -489,6 +499,7 @@ class SharingS3Create(SharingS3Entry):
     )
     grants: list[S3Grant] = Field(default=[], description="Who may access the bucket and how, beyond its owner.")
     locked: Excluded = excluded_field()
+    tier: Excluded = excluded_field()
 
 
 class SharingS3Update(SharingS3Create, metaclass=ForUpdateMetaclass):

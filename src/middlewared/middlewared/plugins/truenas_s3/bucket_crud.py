@@ -159,6 +159,7 @@ def has_latch(mount: str) -> bool:
 
 
 class SharingS3Service(SharingService[SharingS3Entry]):
+    include_tier_info = True
     share_task_type = "S3"
     allowed_path_types = [FSLocation.LOCAL]
 
@@ -316,7 +317,7 @@ class SharingS3Service(SharingService[SharingS3Entry]):
 
     @private
     def compress(self, data: SharingS3Entry, owner_uid: int) -> dict[str, Any]:
-        row = data.model_dump(exclude={"id", "locked", "owner"})
+        row = data.model_dump(exclude={"id", "locked", "owner", "tier"})
         row["grants"] = [g.model_dump(exclude={"name"}) for g in data.grants]
         row["owner_uid"] = owner_uid
         # Set semantics with the given order kept: the S3 service refuses a
