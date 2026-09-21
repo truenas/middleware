@@ -33,7 +33,6 @@ def _features(names, *, support_type=None, start=date(2026, 4, 8), end=date(2026
             name=name,
             start_date=start if name == "SUPPORT" else None,
             expires_at=end if name == "SUPPORT" else None,
-            source="enterprise",
             type=support_type if name == "SUPPORT" else None,
         )
         for name in names

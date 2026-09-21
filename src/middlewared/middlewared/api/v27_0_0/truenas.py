@@ -121,7 +121,6 @@ class LicenseFeatureEntry(BaseModel):
         description="Date the feature became active, or `null` when the license records no start date.",
     )
     expires_at: date | None = Field(description="Date the feature expires, or `null` when it is perpetual.")
-    source: str = Field(description="How the feature was granted, for example `enterprise`.")
     type: str | None = Field(
         description="Tier qualifier the feature carries, for example `GOLD`. `null` when it carries none.",
     )

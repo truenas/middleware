@@ -42,8 +42,6 @@ class FeatureInfo:
     """Feature start date or None."""
     expires_at: date | None
     """Feature expiration date or None for perpetual."""
-    source: str
-    """How the feature was granted (e.g. "enterprise")."""
     type: str | None = None
     """Per-feature tier qualifier (e.g. SUPPORT type=GOLD), read by the proactive-support tier gate."""
 
