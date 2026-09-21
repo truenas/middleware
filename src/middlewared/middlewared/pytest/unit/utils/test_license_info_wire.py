@@ -33,7 +33,6 @@ def _legacy_feature(name, type_=None, expires_at=None):
         "name": name,
         "start_date": START if name == "SUPPORT" else None,
         "expires_at": expires_at,
-        "source": "enterprise",
         "type": type_,
     }
 
@@ -43,8 +42,8 @@ V2_EXPECTED = {
     "type": "ENTERPRISE",
     "model": "H10",
     "features": [
-        {"name": "VMS", "start_date": START, "expires_at": END, "source": "enterprise", "type": None},
-        {"name": "SUPPORT", "start_date": START, "expires_at": END, "source": "enterprise", "type": "GOLD"},
+        {"name": "VMS", "start_date": START, "expires_at": END, "type": None},
+        {"name": "SUPPORT", "start_date": START, "expires_at": END, "type": "GOLD"},
     ],
     "serials": ["TEST-000001", "TEST-000002"],
     "enclosures": {"E24": 3},
@@ -93,10 +92,9 @@ def _v2_license():
         type=LicenseType.ENTERPRISE,
         model="H10",
         features={
-            "VM": FeatureEntry(name="VM", source="enterprise", start_date="2026-04-08", expires_at="2026-04-30"),
+            "VM": FeatureEntry(name="VM", start_date="2026-04-08", expires_at="2026-04-30"),
             "SUPPORT": FeatureEntry(
                 name="SUPPORT",
-                source="enterprise",
                 start_date="2026-04-08",
                 expires_at="2026-04-30",
                 type="GOLD",

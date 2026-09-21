@@ -39,10 +39,9 @@ def _license(**overrides) -> LicenseInfo:
 def test__from_license_status__renames_vm_to_vms():
     status = _make_status(
         {
-            "VM": FeatureEntry(name="VM", source="enterprise", start_date="2026-04-08", expires_at="2026-04-30"),
+            "VM": FeatureEntry(name="VM", start_date="2026-04-08", expires_at="2026-04-30"),
             "SUPPORT": FeatureEntry(
                 name="SUPPORT",
-                source="enterprise",
                 start_date="2026-04-08",
                 expires_at="2026-04-30",
                 type="GOLD",
@@ -62,13 +61,11 @@ def test__from_license_status__renames_vm_to_vms():
                 name="VMS",
                 start_date=date(2026, 4, 8),
                 expires_at=date(2026, 4, 30),
-                source="enterprise",
             ),
             "SUPPORT": FeatureInfo(
                 name="SUPPORT",
                 start_date=date(2026, 4, 8),
                 expires_at=date(2026, 4, 30),
-                source="enterprise",
                 type="GOLD",
             ),
         },
@@ -91,7 +88,7 @@ def test__from_license_status__returns_none_for_invalid_license(status):
 
 
 def test__from_license_status__no_support_feature_leaves_support_expiry_unset():
-    info = from_license_status(_make_status({"DEDUP": FeatureEntry(name="DEDUP", source="enterprise")}))
+    info = from_license_status(_make_status({"DEDUP": FeatureEntry(name="DEDUP")}))
 
     assert info is not None
     assert info.support_expires_at is None

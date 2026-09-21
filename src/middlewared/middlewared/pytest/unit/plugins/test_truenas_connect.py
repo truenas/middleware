@@ -604,7 +604,6 @@ def _license_info(id_='LIC-1'):
                 name='SUPPORT',
                 start_date=date(2026, 4, 8),
                 expires_at=date(2026, 4, 30),
-                source='enterprise',
                 type='GOLD',
             ),
         },

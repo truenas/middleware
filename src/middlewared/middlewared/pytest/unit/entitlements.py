@@ -28,7 +28,6 @@ def make_license(
             name=name,
             start_date=None,
             expires_at=expires_at,
-            source="enterprise",
             type=support_type if name == "SUPPORT" else None,
         )
         for name in feature_names
