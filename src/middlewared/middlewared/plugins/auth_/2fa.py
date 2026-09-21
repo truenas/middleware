@@ -103,6 +103,12 @@ class TwoFactorAuthService(ConfigService):
             await (await self.middleware.call('service.control', 'RELOAD', svc)).wait(raise_error=True)
 
         await self.middleware.call('etc.generate', 'pam')
+        if await self.middleware.call('failover.licensed'):
+            try:
+                await self.middleware.call('failover.call_remote', 'etc.generate', ['pam'])
+            except Exception:
+                self.logger.warning('Failed to generate pam configuration on standby controller', exc_info=True)
+
 
         return await self.config()
 
