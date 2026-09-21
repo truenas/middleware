@@ -5,7 +5,6 @@ import pytest
 from middlewared.service_exception import CallError
 from middlewared.test.integration.assets.account import user, unprivileged_user_client
 from middlewared.test.integration.utils import call
-from middlewared.test.integration.utils.job import assert_creates_job
 
 
 def twofactor_record(user):
@@ -110,7 +109,7 @@ def test_2fa_without_database_record(twofactor_user):
         )
 
 
-def test_renew_2fa_secret_reloads_ssh(twofactor_user):
+def test_renew_2fa_secret_reloads_ssh_and_users_file(twofactor_user):
     config = call("datastore.query", "system.twofactorauthentication", [], {"get": True})
     assert config["services"] == {}
 
@@ -121,11 +120,22 @@ def test_renew_2fa_secret_reloads_ssh(twofactor_user):
         {"services": {"ssh": True}},
     )
     try:
-        with assert_creates_job("service.control") as job:
-            assert call("user.renew_2fa_secret", "cov2fa", {})["twofactor_config"]["secret_configured"] is True
+        newest_job_id = max([j["id"] for j in call("core.get_jobs")], default=0)
 
-        # the new secret only reaches sshd once its configuration is reloaded
-        assert call("core.get_jobs", [["id", "=", job.id]], {"get": True})["arguments"] == ["RELOAD", "ssh"]
+        assert call("user.renew_2fa_secret", "cov2fa", {})["twofactor_config"]["secret_configured"] is True
+
+        reloads = [
+            j["arguments"]
+            for j in call(
+                "core.get_jobs",
+                [["method", "=", "service.control"], ["id", ">", newest_job_id]],
+            )
+        ]
+        # the new secret only reaches sshd once its configuration is reloaded, and only reaches
+        # /etc/users.oath once `user` is reloaded. `user` goes through service.control rather
+        # than etc.generate so that the regeneration also reaches an HA standby controller.
+        assert ["RELOAD", "ssh"] in reloads, reloads
+        assert ["RELOAD", "user"] in reloads, reloads
     finally:
         call(
             "datastore.update",
