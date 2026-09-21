@@ -21,6 +21,7 @@ from middlewared.api.current import (
     ZFSResourceSnapshotCountQuery,
     ZFSResourceSnapshotDestroyQuery,
 )
+from middlewared.plugins.zfs.exceptions import ZFSDestroyFailedException
 from middlewared.plugins.zfs.utils import get_encryption_info
 from middlewared.pylibvirt import gather_pylibvirt_domains_states, get_pylibvirt_domain_state
 from middlewared.service import CallError, CRUDService, job, private, ValidationError, ValidationErrors
@@ -423,12 +424,13 @@ class ContainerService(CRUDService):
         if dataset_exists:
             # bypass, because the container plugin owns everything under its own dataset and
             # must keep being able to destroy it if that tree is ever marked a protected path.
-            failed = self.call_sync2(
-                self.s.zfs.resource.destroy_impl, container['dataset'], recursive=options['recursive'],
-                bypass=True,
-            )[0]
-            if failed is not None:
-                raise CallError(f'Failed to delete container {container["name"]!r} dataset: {failed}')
+            try:
+                self.call_sync2(
+                    self.s.zfs.resource.destroy_impl, container['dataset'], recursive=options['recursive'],
+                    bypass=True,
+                )
+            except ZFSDestroyFailedException as e:
+                raise CallError(f'Failed to delete container {container["name"]!r} dataset: {e.message}')
 
         self.delete_container_from_db(container)
         self.middleware.call_sync('etc.generate', 'libvirt_guests')
