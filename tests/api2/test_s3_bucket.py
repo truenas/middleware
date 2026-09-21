@@ -599,7 +599,6 @@ def test_nothing_beside_the_service_writes_a_bucket(owner):
         finally:
             call("rsynctask.delete", task["id"])
 
-        # the credential is never contacted: a pull is refused before the task exists
         with cloud_credential(
             {"provider": {"type": "FTP", "host": "localhost", "port": 21, "user": "anonymous", "pass": ""}}
         ) as c:

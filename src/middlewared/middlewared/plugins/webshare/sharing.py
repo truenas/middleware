@@ -44,7 +44,6 @@ class SharingWebshareService(SharingService[SharingWebshareEntry]):
     include_tier_info = True
     share_task_type = 'Webshare'
     allowed_path_types = [FSLocation.LOCAL]
-    # no read-only mode: a Webshare share writes its path
     path_consumer = 'a Webshare share'
 
     class Config:
