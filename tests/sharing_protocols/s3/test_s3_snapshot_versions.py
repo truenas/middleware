@@ -14,12 +14,14 @@ versioning document.
 which is a registry field and therefore a restart, on a bucket of its
 own. The rest of the file is the layer's conformance.
 
-**The name cache shapes this module.** A bucket's snapshot set is cached
-for minutes once a `?versions` listing reads it, so every snapshot a
-listing case relies on is made by the module fixture *before* the first
-listing, and the destroy probe — which is the drop-and-invalidate path —
-runs last. A point read by id is gated by the row's pattern alone and
-never consults the cache.
+A version id is `zfs.<created>.<hex(name)>`: the snapshot's ZFS
+`creation` in unix seconds, which the daemon reads at the crossing into
+the snapshot, then its name in lowercase hex. `take` reads the same
+instant through `zfs get`, so every id here comes from a witness
+independent of the daemon. The daemon's snapshot-name cache is keyed on
+`.zfs/snapshot`'s change time, so a snapshot made or destroyed under the
+running daemon is what the next listing answers; the fixtures make the
+module's history up front only because the cases share it.
 """
 
 import contextlib
@@ -34,57 +36,54 @@ DATASET = f"{pool}/s3proto-snapcap"
 BUCKET = "s3proto-snapcap"
 
 
-def snapshot_id(name: str) -> str:
-    """The wire id of a snapshot-derived version: `zfs.` then the name in
-    lowercase hex.
+def hexed(name: str) -> str:
+    return name.encode().hex()
 
-    The name is the whole of it. A creation instant would say when a
-    state was frozen, but it is readable only from the *unmounted* stub —
-    once anything crosses into a snapshot the path answers from the
-    frozen root — so an id carrying one would depend on what happens to
-    be mounted.
-    """
-    return "zfs." + name.encode().hex()
+
+def snapshot_id(name: str, created: int) -> str:
+    """The wire id of a snapshot-derived version."""
+    return f"zfs.{created}.{hexed(name)}"
+
+
+def creation_of(dataset: str, name: str) -> int:
+    """The snapshot's `creation` in unix seconds, from `zfs get`."""
+    return int(ssh(f"zfs get -Hp -o value creation {dataset}@{name}").strip())
 
 
 def dataset_of(bucket: str) -> str:
     return call("sharing.s3.query", [["name", "=", bucket]], {"get": True})["dataset"]
 
 
-def take(dataset: str, name: str) -> None:
+def take(dataset: str, name: str) -> str:
+    """Take the snapshot and return its wire id."""
     call("zfs.resource.snapshot.create", {"dataset": dataset, "name": name})
+    return snapshot_id(name, creation_of(dataset, name))
 
 
-#: How long a destroy will wait out the mount a reader left behind.
-#: Generous on purpose: the alternative to waiting is a flaky case, and
-#: the automount this contends with is released on the kernel's schedule
-#: rather than on the daemon's.
-DESTROY_ATTEMPTS = 30
+def wait_past(created: int) -> None:
+    """Block until the server's clock has left the second `created` names.
+
+    ZFS stamps `creation` in whole seconds, so a snapshot remade under a
+    destroyed one's name inside the same second gets the same id. Waiting
+    this out keeps a recreate case from depending on how fast the destroy
+    ran.
+    """
+    while int(ssh("date +%s").strip()) <= created:
+        time.sleep(0.2)
 
 
 def destroy(dataset: str, name: str) -> None:
-    """Destroy one snapshot, riding out the mount a reader left behind.
+    call("zfs.resource.snapshot.destroy", {"path": f"{dataset}@{name}"})
 
-    **A listing that crossed into a snapshot leaves it mounted**, and ZFS
-    refuses to destroy a mounted snapshot with `EBUSY` — so the case that
-    reads a frozen version and then destroys it races its own automount.
-    Retention middleware meets the same thing and retries the same way.
 
-    The lazy unmount comes in only after the first few tries: detaching a
-    tree the daemon still holds a descriptor on is the bigger hammer, and
-    where the mount is simply idling the retry alone is enough.
-    """
-    target = f"{dataset}@{name}"
-    for attempt in range(DESTROY_ATTEMPTS):
-        try:
-            call("zfs.resource.snapshot.destroy", {"path": target, "recursive": True})
-            return
-        except Exception:
-            if attempt == DESTROY_ATTEMPTS - 1:
-                raise
-            if attempt >= 3:
-                ssh(f"umount -l /mnt/{dataset}/.zfs/snapshot/{name} 2>/dev/null || true", check=False)
-            time.sleep(1)
+def rename(dataset: str, name: str, new_name: str) -> None:
+    call("zfs.resource.snapshot.rename", {"current_name": f"{dataset}@{name}", "new_name": f"{dataset}@{new_name}"})
+
+
+def ids_of(s3, bucket: str, key: str) -> list[str]:
+    """The version ids `ListObjectVersions` carries for `key`."""
+    rows = s3.list_object_versions(Bucket=bucket, Prefix=key).get("Versions", [])
+    return [row["VersionId"] for row in rows if row["Key"] == key]
 
 
 # ── the suspended row ────────────────────────────────────────────────
@@ -99,7 +98,7 @@ def history(buckets, s3):
 
 @pytest.fixture(scope="module")
 def frozen(s3, history):
-    """The module's history, made before any listing can cache it.
+    """The module's history.
 
     Three snapshots: `s3-alpha` and `s3-beta` are selected by the row's
     `s3-*`, `manual-keep` is not. Between them: `k1` changes per
@@ -110,23 +109,24 @@ def frozen(s3, history):
     bucket, dataset = history
     drain(s3, bucket)
     made = []
+    ids = {}
     try:
         s3.put_object(Bucket=bucket, Key="k1", Body=b"alpha state")
         s3.put_object(Bucket=bucket, Key="k-stable", Body=b"stable frozen")
         s3.put_object(Bucket=bucket, Key="gone.txt", Body=b"gone bytes")
         s3.put_object(Bucket=bucket, Key="old/x.txt", Body=b"x frozen")
-        take(dataset, "s3-alpha")
+        ids["s3-alpha"] = take(dataset, "s3-alpha")
         made.append("s3-alpha")
         s3.put_object(Bucket=bucket, Key="k1", Body=b"beta state")
-        take(dataset, "s3-beta")
+        ids["s3-beta"] = take(dataset, "s3-beta")
         made.append("s3-beta")
-        take(dataset, "manual-keep")
+        ids["manual-keep"] = take(dataset, "manual-keep")
         made.append("manual-keep")
         s3.put_object(Bucket=bucket, Key="k1", Body=b"live state")
         s3.put_object(Bucket=bucket, Key="k-stable", Body=b"stable live")
         s3.delete_object(Bucket=bucket, Key="gone.txt")
         s3.delete_object(Bucket=bucket, Key="old/x.txt")
-        yield {"bucket": bucket, "dataset": dataset, "snapshots": made}
+        yield {"bucket": bucket, "dataset": dataset, "snapshots": made, "ids": ids}
     finally:
         # The snapshots first: leaving them would make the next run's
         # `s3-*` set ambiguous.
@@ -138,7 +138,7 @@ def frozen(s3, history):
 
 def test_a_frozen_state_serves_by_its_id(s3, frozen):
     bucket = frozen["bucket"]
-    alpha, beta = snapshot_id("s3-alpha"), snapshot_id("s3-beta")
+    alpha, beta = frozen["ids"]["s3-alpha"], frozen["ids"]["s3-beta"]
 
     got = s3.get_object(Bucket=bucket, Key="k1", VersionId=alpha)
     assert got["Body"].read() == b"alpha state"
@@ -152,19 +152,64 @@ def test_a_frozen_state_serves_by_its_id(s3, frozen):
     assert s3.get_object(Bucket=bucket, Key="k1")["Body"].read() == b"live state"
 
 
-@pytest.mark.parametrize(
-    "vid,why",
-    [
-        ("zfs.6D", "a malformed payload could name no version"),
-        (snapshot_id("manual-keep"), "the pattern is the authority"),
-        (snapshot_id("s3-never-made"), "a snapshot that does not exist"),
-    ],
-)
-def test_screens_answer_no_such_version(s3, frozen, vid, why):
-    with pytest.raises(Exception) as caught:
-        s3.get_object(Bucket=frozen["bucket"], Key="k1", VersionId=vid)
-    assert status_of(caught.value) == 404, why
-    assert code_of(caught.value) == "NoSuchVersion", why
+def test_listed_ids_carry_the_snapshot_name_and_creation(s3, frozen):
+    """Every `zfs.` row decodes to a selected snapshot and the instant
+    `zfs get creation` reports for it."""
+    dataset = frozen["dataset"]
+    rows = s3.list_object_versions(Bucket=frozen["bucket"]).get("Versions", [])
+    seen = set()
+    for row in rows:
+        if not row["VersionId"].startswith("zfs."):
+            continue
+        _, created, payload = row["VersionId"].split(".")
+        name = bytes.fromhex(payload).decode()
+        assert name in ("s3-alpha", "s3-beta"), row
+        assert int(created) == creation_of(dataset, name), row
+        assert row["VersionId"] == frozen["ids"][name]
+        seen.add(name)
+    assert seen == {"s3-alpha", "s3-beta"}, seen
+
+
+def test_a_malformed_id_is_no_version(s3, frozen):
+    """One spelling per version: the old `zfs.<hex>` form and every
+    non-canonical instant or payload are refused."""
+    created = creation_of(frozen["dataset"], "s3-alpha")
+    payload = hexed("s3-alpha")
+    for vid in (
+        f"zfs.{payload}",
+        f"zfs..{payload}",
+        f"zfs.0.{payload}",
+        f"zfs.0{created}.{payload}",
+        f"zfs.+{created}.{payload}",
+        f"zfs.{created}.{payload.upper()}",
+        f"zfs.{created}.{payload[:-1]}",
+        f"zfs.{created}.s3-alpha",
+    ):
+        with pytest.raises(Exception) as caught:
+            s3.get_object(Bucket=frozen["bucket"], Key="k1", VersionId=vid)
+        assert status_of(caught.value) == 404, vid
+        assert code_of(caught.value) == "NoSuchVersion", vid
+
+
+def test_a_right_name_with_a_wrong_instant_is_no_version(s3, frozen):
+    """The instant is compared against the snapshot the crossing found."""
+    created = creation_of(frozen["dataset"], "s3-alpha")
+    for vid in (snapshot_id("s3-alpha", created + 1), snapshot_id("s3-alpha", created - 1)):
+        with pytest.raises(Exception) as caught:
+            s3.get_object(Bucket=frozen["bucket"], Key="k1", VersionId=vid)
+        assert status_of(caught.value) == 404, vid
+        assert code_of(caught.value) == "NoSuchVersion", vid
+
+
+def test_an_unselected_or_absent_snapshot_is_no_version(s3, frozen):
+    for vid, why in (
+        (frozen["ids"]["manual-keep"], "the pattern is the authority"),
+        (snapshot_id("s3-never-made", 1_700_000_000), "a snapshot that does not exist"),
+    ):
+        with pytest.raises(Exception) as caught:
+            s3.get_object(Bucket=frozen["bucket"], Key="k1", VersionId=vid)
+        assert status_of(caught.value) == 404, why
+        assert code_of(caught.value) == "NoSuchVersion", why
 
 
 @pytest.mark.parametrize("bypass", [False, True])
@@ -176,7 +221,7 @@ def test_destroying_a_frozen_state_is_denied(s3, frozen, bypass):
         s3.delete_object(
             Bucket=frozen["bucket"],
             Key="k1",
-            VersionId=snapshot_id("s3-alpha"),
+            VersionId=frozen["ids"]["s3-alpha"],
             BypassGovernanceRetention=bypass,
         )
     assert status_of(caught.value) == 403
@@ -186,7 +231,7 @@ def test_destroying_a_frozen_state_is_denied(s3, frozen, bypass):
 def test_a_named_delete_of_an_absent_key_in_a_snapshot_is_gone(s3, frozen):
     """Gone is the honest answer, not a refusal."""
     with pytest.raises(Exception) as caught:
-        s3.delete_object(Bucket=frozen["bucket"], Key="never-existed", VersionId=snapshot_id("s3-alpha"))
+        s3.delete_object(Bucket=frozen["bucket"], Key="never-existed", VersionId=frozen["ids"]["s3-alpha"])
     assert code_of(caught.value) == "NoSuchVersion"
 
 
@@ -196,7 +241,7 @@ def test_writing_a_frozen_state_is_denied(s3, frozen):
     refusal needs no frozen-record read. A selected-but-absent snapshot
     is `NoSuchVersion`, exactly as the destroy answers."""
     bucket = frozen["bucket"]
-    alpha = snapshot_id("s3-alpha")
+    alpha = frozen["ids"]["s3-alpha"]
 
     for write in (
         lambda vid: s3.put_object_tagging(
@@ -213,7 +258,7 @@ def test_writing_a_frozen_state_is_denied(s3, frozen):
         s3.put_object_tagging(
             Bucket=bucket,
             Key="k1",
-            VersionId=snapshot_id("s3-never-made"),
+            VersionId=snapshot_id("s3-never-made", 1_700_000_000),
             Tagging={"TagSet": [{"Key": "k", "Value": "v"}]},
         )
     assert code_of(caught.value) == "NoSuchVersion"
@@ -221,7 +266,7 @@ def test_writing_a_frozen_state_is_denied(s3, frozen):
 
 def test_the_listing_interleaves_frozen_history(s3, frozen):
     bucket = frozen["bucket"]
-    alpha, beta = snapshot_id("s3-alpha"), snapshot_id("s3-beta")
+    alpha, beta = frozen["ids"]["s3-alpha"], frozen["ids"]["s3-beta"]
     page = s3.list_object_versions(Bucket=bucket)
     rows = page.get("Versions", [])
     markers = page.get("DeleteMarkers", [])
@@ -236,7 +281,7 @@ def test_the_listing_interleaves_frozen_history(s3, frozen):
     assert beta in ids, ids
 
     # The unselected snapshot contributes nothing anywhere.
-    assert not any(row["VersionId"] == snapshot_id("manual-keep") for row in rows)
+    assert not any(row["VersionId"] == frozen["ids"]["manual-keep"] for row in rows)
 
     # k-stable is identical in both snapshots, so the collapse names one
     # row, under the oldest holder.
@@ -260,26 +305,80 @@ def test_a_snapshot_only_prefix_still_lists(s3, frozen):
     assert "old/x.txt" in [row["Key"] for row in page.get("Versions", [])]
 
 
-def test_a_destroyed_snapshot_drops_from_the_listing(s3, frozen):
-    """Last on purpose: it invalidates the module's cached set.
+# ── the name cache ───────────────────────────────────────────────────
 
-    The destroy force-unmounts the snapshot a listing just crossed into,
-    the next page meets the absence, drops the snapshot and the cache
-    entry with it, and the one after lists from the refreshed set — never
-    an error, and never a page claiming the rows still stand.
+
+def test_a_snapshot_made_under_the_daemon_lists_at_the_next_touch(s3, frozen):
+    """The name cache is keyed on `.zfs/snapshot`'s change time, which
+    ZFS stamps when a snapshot is made or destroyed, so neither waits out
+    a cache lifetime. `cache-k` is overwritten after the freeze so the
+    frozen copy is a row of its own rather than the live file."""
+    bucket, dataset = frozen["bucket"], frozen["dataset"]
+    s3.list_object_versions(Bucket=bucket)  # the set is cached before the snapshot exists
+    s3.put_object(Bucket=bucket, Key="cache-k", Body=b"frozen")
+    made = take(dataset, "s3-cache")
+    try:
+        s3.put_object(Bucket=bucket, Key="cache-k", Body=b"live")
+        assert made in ids_of(s3, bucket, "cache-k")
+        assert s3.get_object(Bucket=bucket, Key="cache-k", VersionId=made)["Body"].read() == b"frozen"
+    finally:
+        destroy(dataset, "s3-cache")
+    assert made not in ids_of(s3, bucket, "cache-k")
+
+
+def test_a_renamed_snapshot_moves_at_the_next_touch(s3, frozen):
+    """A rename stamps the change time too. The creation is unchanged, so
+    the new id differs from the old in its name half alone, and the old
+    id names nothing. Renamed out of the row's pattern, the snapshot
+    leaves the listing and the point read together."""
+    bucket, dataset = frozen["bucket"], frozen["dataset"]
+    s3.put_object(Bucket=bucket, Key="ren-k", Body=b"frozen")
+    name = "s3-ren"
+    old = take(dataset, name)
+    created = creation_of(dataset, name)
+    try:
+        s3.put_object(Bucket=bucket, Key="ren-k", Body=b"live")
+        assert old in ids_of(s3, bucket, "ren-k")
+
+        rename(dataset, name, "s3-ren2")
+        name = "s3-ren2"
+        assert creation_of(dataset, name) == created
+        new = snapshot_id(name, created)
+        ids = ids_of(s3, bucket, "ren-k")
+        assert new in ids, ids
+        assert old not in ids, ids
+        assert s3.get_object(Bucket=bucket, Key="ren-k", VersionId=new)["Body"].read() == b"frozen"
+        with pytest.raises(Exception) as caught:
+            s3.get_object(Bucket=bucket, Key="ren-k", VersionId=old)
+        assert code_of(caught.value) == "NoSuchVersion"
+
+        rename(dataset, name, "manual-ren")
+        name = "manual-ren"
+        assert not any(vid.startswith("zfs.") for vid in ids_of(s3, bucket, "ren-k"))
+        for vid in (new, snapshot_id(name, created)):
+            with pytest.raises(Exception) as caught:
+                s3.get_object(Bucket=bucket, Key="ren-k", VersionId=vid)
+            assert code_of(caught.value) == "NoSuchVersion", vid
+    finally:
+        destroy(dataset, name)
+
+
+def test_a_destroyed_snapshot_drops_from_the_listing(s3, frozen):
+    """Last in the section: it replaces `s3-beta` with a new incarnation.
+
+    The destroy unmounts the snapshot a listing crossed into, and the
+    listing after it must not carry the rows: the name cache is re-read
+    when `.zfs/snapshot`'s change time moves, and a crossing that meets
+    the absence drops the snapshot from the page regardless.
     """
     bucket, dataset = frozen["bucket"], frozen["dataset"]
-    alpha, beta = snapshot_id("s3-alpha"), snapshot_id("s3-beta")
+    alpha, beta = frozen["ids"]["s3-alpha"], frozen["ids"]["s3-beta"]
+    beta_created = creation_of(dataset, "s3-beta")
     destroy(dataset, "s3-beta")
     frozen["snapshots"].remove("s3-beta")
 
-    deadline = time.monotonic() + 30
-    while True:
-        ids = [row["VersionId"] for row in s3.list_object_versions(Bucket=bucket).get("Versions", [])]
-        if beta not in ids:
-            break
-        assert time.monotonic() < deadline, ids
-        time.sleep(1)
+    ids = [row["VersionId"] for row in s3.list_object_versions(Bucket=bucket).get("Versions", [])]
+    assert beta not in ids, ids
 
     # The survivor still serves, list and point read both.
     assert alpha in ids, ids
@@ -290,13 +389,29 @@ def test_a_destroyed_snapshot_drops_from_the_listing(s3, frozen):
         s3.get_object(Bucket=bucket, Key="k1", VersionId=beta)
     assert code_of(caught.value) == "NoSuchVersion"
 
-    # **The aliasing a name-only id accepts**, pinned rather than left to
-    # be discovered: remade under the same name the snapshot is a
-    # different point in time, and the id that named the destroyed one
-    # now serves the new one.
-    take(dataset, "s3-beta")
+    # Remade under the same name, the snapshot is a different incarnation
+    # and its id carries the later creation. The old id must not serve
+    # the new bytes: the instant is read after the crossing, since the
+    # unmounted entry's dentry is never revalidated and still reports the
+    # destroyed incarnation's.
+    wait_past(beta_created)
+    remade = take(dataset, "s3-beta")
     frozen["snapshots"].append("s3-beta")
-    assert s3.get_object(Bucket=bucket, Key="k1", VersionId=beta)["Body"].read() == b"live state"
+    frozen["ids"]["s3-beta"] = remade
+    assert remade != beta
+    with pytest.raises(Exception) as caught:
+        s3.get_object(Bucket=bucket, Key="k1", VersionId=beta)
+    assert code_of(caught.value) == "NoSuchVersion"
+    assert s3.get_object(Bucket=bucket, Key="k1", VersionId=remade)["Body"].read() == b"live state"
+
+    # The listing mints its ids at the crossing as well. Overwritten once
+    # more, k1's copy in the remade snapshot differs from live and lists
+    # under the new id.
+    s3.put_object(Bucket=bucket, Key="k1", Body=b"after remake")
+    ids = [row["VersionId"] for row in s3.list_object_versions(Bucket=bucket).get("Versions", [])]
+    assert remade in ids, ids
+    assert beta not in ids, ids
+    assert alpha in ids, ids
 
 
 # ── the never-versioned selecting row ────────────────────────────────
@@ -317,16 +432,17 @@ def attic_frozen(s3, attic):
     bucket, dataset = attic
     drain(s3, bucket)
     made = []
+    ids = {}
     try:
         s3.put_object(Bucket=bucket, Key="k1", Body=b"first")
         s3.put_object(Bucket=bucket, Key="doomed", Body=b"was here")
-        take(dataset, "s3-one")
+        ids["s3-one"] = take(dataset, "s3-one")
         made.append("s3-one")
-        take(dataset, "manual-x")
+        ids["manual-x"] = take(dataset, "manual-x")
         made.append("manual-x")
         s3.put_object(Bucket=bucket, Key="k1", Body=b"second")
         s3.delete_object(Bucket=bucket, Key="doomed")
-        yield {"bucket": bucket, "dataset": dataset}
+        yield {"bucket": bucket, "dataset": dataset, "ids": ids}
     finally:
         for name in made:
             with contextlib.suppress(Exception):
@@ -343,7 +459,7 @@ def test_the_attic_reports_the_empty_document(s3, attic):
 
 def test_the_attic_lists_zfs_history_alone(s3, attic_frozen):
     bucket = attic_frozen["bucket"]
-    one = snapshot_id("s3-one")
+    one = attic_frozen["ids"]["s3-one"]
     page = s3.list_object_versions(Bucket=bucket)
     rows = page.get("Versions", [])
 
@@ -359,12 +475,12 @@ def test_the_attic_lists_zfs_history_alone(s3, attic_frozen):
     assert [row["VersionId"] for row in doomed] == [one], doomed
     assert not doomed[0]["IsLatest"], "the key currently has no latest"
 
-    assert not any(row["VersionId"] == snapshot_id("manual-x") for row in rows)
+    assert not any(row["VersionId"] == attic_frozen["ids"]["manual-x"] for row in rows)
 
 
 def test_the_attic_serves_and_guards_frozen_state(s3, attic_frozen):
     bucket = attic_frozen["bucket"]
-    one = snapshot_id("s3-one")
+    one = attic_frozen["ids"]["s3-one"]
 
     got = s3.get_object(Bucket=bucket, Key="k1", VersionId=one)
     assert got["Body"].read() == b"first"
@@ -423,14 +539,13 @@ def test_the_listing_cap_bounds_the_listing_and_not_the_id(capped_owner, daemon)
         try:
             s3 = client_for(capped_owner.key, daemon)
             s3.put_object(Bucket=BUCKET, Key="k1", Body=b"alpha state")
-            take(DATASET, "s3-alpha")
+            alpha = take(DATASET, "s3-alpha")
             made.append("s3-alpha")
             s3.put_object(Bucket=BUCKET, Key="k1", Body=b"beta state")
-            take(DATASET, "s3-beta")
+            beta = take(DATASET, "s3-beta")
             made.append("s3-beta")
             s3.put_object(Bucket=BUCKET, Key="k1", Body=b"live state")
 
-            alpha, beta = snapshot_id("s3-alpha"), snapshot_id("s3-beta")
             assert entry["snapshot_versions_max"] == 64
             ids = [v["VersionId"] for v in s3.list_object_versions(Bucket=BUCKET).get("Versions", [])]
             assert alpha in ids and beta in ids, ids
