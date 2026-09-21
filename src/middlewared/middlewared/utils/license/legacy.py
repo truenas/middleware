@@ -224,7 +224,6 @@ def parse_legacy_license(text: str) -> LicenseInfo:
                     name=name,
                     start_date=lic.contract_start if name == "SUPPORT" else None,
                     expires_at=lic.contract_end if name == "SUPPORT" else None,
-                    source="enterprise",
                     type=_support_tier(lic.contract_type.name) if name == "SUPPORT" else None,
                 )
                 for name in feature_names

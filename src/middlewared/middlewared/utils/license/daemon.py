@@ -166,7 +166,6 @@ def from_license_status(status: LicenseStatus | None = None) -> LicenseInfo | No
             name=key,
             start_date=date.fromisoformat(f.start_date) if f.start_date else None,
             expires_at=date.fromisoformat(f.expires_at) if f.expires_at else None,
-            source=f.source,
             type=f.type,
         )
 
