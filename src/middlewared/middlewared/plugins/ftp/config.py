@@ -96,6 +96,10 @@ class FTPServicePart(SystemServicePart[FTPEntry]):
             await check_path_resides_within_volume(
                 verrors, self.middleware, "ftp_update.anonpath", anonpath, must_be_dir=True
             )
+            # anonymous users upload as well as download
+            await self.call2(
+                self.s.sharing.s3.validate_writable_path, verrors, "ftp_update.anonpath", anonpath, "anonymous FTP"
+            )
 
         if new.tls:
             cert_id = new.ssltls_certificate

@@ -193,7 +193,9 @@ class CloudTaskServiceMixin[
                 except CallError as e:
                     verrors.add(f"{name}.{self.path_field}", e.errmsg)
         else:
-            path_data: dict[str, Any] = {self.path_field: entry.path}
+            # a throwaway row for validate_path_field: the split lands in it, and local_path_readonly reads the
+            # direction a cloud sync task has and a cloud backup does not
+            path_data: dict[str, Any] = {self.path_field: entry.path, "direction": getattr(entry, "direction", None)}
             self.middleware.run_coroutine(self.validate_path_field(path_data, name, verrors, split_path=True))
             entry.dataset = path_data.get("dataset")
             entry.relative_path = path_data.get("relative_path")

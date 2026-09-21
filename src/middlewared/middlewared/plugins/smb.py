@@ -753,6 +753,7 @@ class SharingSMBService(SharingService):
     include_tier_info = True
     share_task_type = 'SMB'
     allowed_path_types = [FSLocation.EXTERNAL, FSLocation.LOCAL]
+    path_consumer = 'an SMB share'
     readonly_field = share_field.RO
     path_resolution_filters = [['cifs_purpose', '!=', SMBSharePurpose.EXTERNAL_SHARE]]
 
@@ -1337,7 +1338,6 @@ class SharingSMBService(SharingService):
             verrors.add(f'{schema_name}.name', 'Share names are case-insensitive and must be unique')
 
         await self.validate_path_field(data, schema_name, verrors, split_path=True)
-        await self.validate_s3_export(data, schema_name, verrors)
         timemachine = is_time_machine_share(data)
 
         if data.get(share_field.PATH) and data[share_field.PURPOSE] != SMBSharePurpose.EXTERNAL_SHARE:
