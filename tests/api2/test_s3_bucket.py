@@ -17,6 +17,7 @@ from configparser import RawConfigParser
 import pytest
 from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.test.integration.assets.account import unprivileged_user_client, user
+from middlewared.test.integration.assets.cloud_sync import credential as cloud_credential
 from middlewared.test.integration.assets.entitlements import entitled
 from middlewared.test.integration.assets.pool import dataset, pool
 from middlewared.test.integration.utils import call, ssh
@@ -532,6 +533,16 @@ def test_recursive_permissions_changes_stop_at_the_bucket(owner):
             permissions_change("filesystem.chown", f"/mnt/{parent}", recursive=True)
 
 
+def refused(method, *args):
+    """The attribute the one validation error of `method` names, which must
+    name the bucket."""
+    with pytest.raises(ValidationErrors) as ve:
+        call(method, *args)
+    (error,) = ve.value.errors
+    assert "test-bucket" in error.errmsg, method
+    return error.attribute
+
+
 def test_another_protocol_exports_the_share_root_read_only(owner):
     """Another protocol may export a bucket only read-only and only its
     `s3data` directory, which holds the objects: a share of the mountpoint
@@ -539,14 +550,6 @@ def test_another_protocol_exports_the_share_root_read_only(owner):
     read-only flag, and a read-only one of `s3data` or of a prefix under it
     goes through, on an update as on a create. Webshare has no read-only
     mode and may not export a bucket at all."""
-
-    def refused(method, *args):
-        with pytest.raises(ValidationErrors) as ve:
-            call(method, *args)
-        (error,) = ve.value.errors
-        assert "test-bucket" in error.errmsg, method
-        return error.attribute
-
     with bucket() as b:
         mountpoint = f"/mnt/{b['dataset']}"
         share_root = f"{mountpoint}/s3data"
@@ -572,6 +575,67 @@ def test_another_protocol_exports_the_share_root_read_only(owner):
                 refused("sharing.webshare.create", {"name": "s3-export", "path": share_root})
                 == "sharing_webshare_create.path"
             )
+
+
+def test_nothing_beside_the_service_writes_a_bucket(owner):
+    """A bucket is written only through the S3 service: a task that pulls
+    into it is refused on its direction, and a home directory or the
+    anonymous FTP root on it on the path, wherever on the dataset. A task
+    that pushes reads like a share does: from `s3data` and nothing else."""
+    with bucket() as b:
+        mountpoint = f"/mnt/{b['dataset']}"
+        share_root = f"{mountpoint}/s3data"
+        ssh(f"mkdir -p {share_root}")
+
+        rsync = {"user": "root", "mode": "MODULE", "remotehost": "127.0.0.1", "remotemodule": "test"}
+        assert refused("rsynctask.create", {**rsync, "path": share_root, "direction": "PULL"}) == (
+            "rsync_task_create.direction"
+        )
+        assert refused("rsynctask.create", {**rsync, "path": mountpoint, "direction": "PUSH"}) == (
+            "rsync_task_create.path"
+        )
+        task = call("rsynctask.create", {**rsync, "path": share_root, "direction": "PUSH"})
+        try:
+            assert refused("rsynctask.update", task["id"], {"direction": "PULL"}) == "rsync_task_update.direction"
+        finally:
+            call("rsynctask.delete", task["id"])
+
+        # the credential is never contacted: a pull is refused before the task exists
+        with cloud_credential(
+            {"provider": {"type": "FTP", "host": "localhost", "port": 21, "user": "anonymous", "pass": ""}}
+        ) as c:
+            sync = {
+                "description": "s3 pull",
+                "credentials": c["id"],
+                "attributes": {"folder": ""},
+                "transfer_mode": "COPY",
+                "schedule": {"minute": "00", "hour": "00", "dom": "1", "month": "1", "dow": "1"},
+            }
+            assert refused("cloudsync.create", {**sync, "path": share_root, "direction": "PULL"}) == (
+                "cloud_sync_create.direction"
+            )
+            assert refused("cloudsync.create", {**sync, "path": mountpoint, "direction": "PUSH"}) == (
+                "cloud_sync_create.path"
+            )
+
+        assert refused(
+            "user.create",
+            {
+                "username": "s3homeuser",
+                "full_name": "s3 home user",
+                "group_create": True,
+                "password": "test1234",
+                "home": share_root,
+                "home_create": False,
+            },
+        ) == "user_create.home"
+        assert not call("user.query", [["username", "=", "s3homeuser"]])
+
+        ftp = call("ftp.config")
+        try:
+            assert refused("ftp.update", {"onlyanonymous": True, "anonpath": share_root}) == "ftp_update.anonpath"
+        finally:
+            call("ftp.update", {"onlyanonymous": ftp["onlyanonymous"], "anonpath": ftp["anonpath"]})
 
 
 def test_registry_changes_reload_and_consumed_fields_restart(owner):

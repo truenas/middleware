@@ -11,9 +11,46 @@ from .crud_service_part import CRUDServicePart
 
 if TYPE_CHECKING:
     from middlewared.service_exception import ValidationErrors
+    from middlewared.utils.service.call_mixin import CallMixin
 
 
-__all__ = ("SharingTaskServicePart",)
+__all__ = ("SharingTaskServicePart", "validate_s3_bucket_path")
+
+
+async def validate_s3_bucket_path(
+    caller: CallMixin,
+    verrors: ValidationErrors,
+    schema: str,
+    path_field: str,
+    path: str,
+    dataset: str | None,
+    relative_path: str | None,
+    consumer: str,
+    readonly: tuple[str, bool] | None,
+) -> None:
+    """What `validate_path_field` asks of `sharing.s3` for a local path, for both service hierarchies.
+
+    An S3 bucket is written only through the S3 service, so a share or task that writes its path -- one that is
+    not read-only, or that has no read-only mode -- may not have it on a bucket's dataset at all, and one that only
+    reads it may read the bucket's objects, under its `s3data` directory, and nothing else on the dataset.
+    `readonly` is what `local_path_readonly` answered: the field that decides and whether it is read-only, or None
+    where it always writes. A write refused for want of the read-only flag is reported on that flag, since setting
+    it is the fix; the rest on the path.
+    """
+    if readonly is None:
+        field, writes = path_field, True
+    else:
+        field, writes = readonly[0], not readonly[1]
+    if writes:
+        await caller.call2(
+            caller.s.sharing.s3.validate_writable_path,
+            verrors, f"{schema}.{field}", path, consumer, dataset, relative_path,
+        )
+    else:
+        await caller.call2(
+            caller.s.sharing.s3.validate_readonly_path,
+            verrors, f"{schema}.{path_field}", path, consumer, dataset, relative_path,
+        )
 
 
 class SharingTaskServicePart[E, PK = int](CRUDServicePart[E, PK]):
@@ -34,6 +71,11 @@ class SharingTaskServicePart[E, PK = int](CRUDServicePart[E, PK]):
     enabled_field: str = "enabled"
     locked_field: str = "locked"
     include_tier_info: bool = False
+    path_consumer: str
+    """What uses the local path, as the errors of `validate_path_field` name it: "an rsync task"."""
+    readonly_field: str | None = None
+    """The flag that makes the share or task read-only for its local path, or None where nothing does: what
+    `local_path_readonly` reads unless overridden."""
 
     async def sharing_task_extend(self, data: dict[str, Any], service_context: Any) -> dict[str, Any]:
         """Per-row transform for this specific service (replaces legacy ``datastore_extend``).
@@ -105,13 +147,23 @@ class SharingTaskServicePart[E, PK = int](CRUDServicePart[E, PK]):
     async def validate_local_path(self, verrors: ValidationErrors, name: str, path: str) -> None:
         await check_path_resides_within_volume(verrors, self.middleware, name, path)
 
+    async def local_path_readonly(self, data: dict[str, Any]) -> tuple[str, bool] | None:
+        """Whether the share or task only reads its local path, and the field that decides it -- a share's
+        read-only flag, a task's direction -- or None where it always writes there. What `validate_path_field`
+        tells `sharing.s3`, which lets a bucket be read from beside the S3 service, under its objects, and never
+        written (`validate_s3_bucket_path`)."""
+        if self.readonly_field is None:
+            return None
+        return self.readonly_field, bool(data[self.readonly_field])
+
     async def validate_path_field(
         self, data: dict[str, Any], schema: str, verrors: ValidationErrors, *, split_path: bool = False
     ) -> ValidationErrors:
         """Validate the path field and optionally split it into dataset and relative_path components.
 
         Performs path validation based on location type (LOCAL/EXTERNAL/ZVOL) and optionally
-        resolves the path to its ZFS dataset components."""
+        resolves the path to its ZFS dataset components. A local path on an S3 bucket's dataset is
+        allowed only as `local_path_readonly` and `sharing.s3` agree."""
         name = f"{schema}.{self.path_field}"
         path = data[self.path_field]
         await self.validate_zvol_path(verrors, name, path)
@@ -130,6 +182,12 @@ class SharingTaskServicePart[E, PK = int](CRUDServicePart[E, PK]):
             if split_path:
                 ds, rel_path = await self.middleware.run_in_thread(resolve_dataset_path, path, self.middleware)
                 data.update(dataset=ds, relative_path=rel_path)
+            else:
+                ds, rel_path = data.get("dataset"), data.get("relative_path")
+            await validate_s3_bucket_path(
+                self, verrors, schema, self.path_field, path, ds, rel_path, self.path_consumer,
+                await self.local_path_readonly(data),
+            )
 
         else:
             self.logger.error("%s: unknown location type", loc.name)

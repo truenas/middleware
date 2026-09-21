@@ -9,6 +9,7 @@ from middlewared.utils.path import FSLocation, path_location
 
 from .crud_service import CRUDService
 from .decorators import pass_app, private
+from .sharing_task_service_part import validate_s3_bucket_path
 
 if TYPE_CHECKING:
     from middlewared.main import Middleware
@@ -34,6 +35,11 @@ class SharingTaskService[E](CRUDService[E]):
     """Describe which share entries should attempt to resolve their dataset field from path when dataset=None. By
     default, all entries will attempt to resolve their datasets. Filters must use the field names found in the database
     table (including `datastore_prefix`)."""
+    path_consumer: str
+    """What uses the local path, as the errors of `validate_path_field` name it: "an SMB share"."""
+    readonly_field: str | None = None
+    """The flag that makes the share or task read-only for its local path, or None where nothing does: what
+    `local_path_readonly` reads unless overridden."""
 
     def __init__(self, middleware: 'Middleware'):
         super().__init__(middleware)
@@ -151,13 +157,27 @@ class SharingTaskService[E](CRUDService[E]):
         await check_path_resides_within_volume(verrors, self.middleware, name, path)
 
     @private
+    async def local_path_readonly(self, data) -> tuple[str, bool] | None:
+        """Whether the share or task only reads its local path, and the field that decides it -- a share's
+        read-only flag, a task's direction -- or None where it always writes there. What `validate_path_field`
+        tells `sharing.s3`, which lets a bucket be read from beside the S3 service, under its objects, and never
+        written (`validate_s3_bucket_path`)."""
+        if self.readonly_field is None:
+            return None
+        if isinstance(data, dict):
+            # FIXME: Remove all the cases where this is dict
+            return self.readonly_field, bool(data[self.readonly_field])
+        return self.readonly_field, bool(getattr(data, self.readonly_field))
+
+    @private
     async def validate_path_field(
         self, data: PathModel | dict, schema: str, verrors: 'ValidationErrors', *, split_path: bool = False
     ) -> 'ValidationErrors':
         """Validate the path field and optionally split it into dataset and relative_path components.
 
         Performs path validation based on location type (LOCAL/EXTERNAL/ZVOL) and optionally
-        resolves the path to its ZFS dataset components."""
+        resolves the path to its ZFS dataset components. A local path on an S3 bucket's dataset is
+        allowed only as `local_path_readonly` and `sharing.s3` agree."""
         name = f'{schema}.{self.path_field}'
         path = await self.get_path_field(data)
         await self.validate_zvol_path(verrors, name, path)
@@ -187,6 +207,15 @@ class SharingTaskService[E](CRUDService[E]):
                 else:
                     data.dataset = ds
                     data.relative_path = rel_path
+            elif isinstance(data, dict):
+                # FIXME: Remove when this method no longer passed a dict
+                ds, rel_path = data.get('dataset'), data.get('relative_path')
+            else:
+                ds, rel_path = getattr(data, 'dataset', None), getattr(data, 'relative_path', None)
+            await validate_s3_bucket_path(
+                self, verrors, schema, self.path_field, path, ds, rel_path, self.path_consumer,
+                await self.local_path_readonly(data),
+            )
 
         else:
             self.logger.error('%s: unknown location type', loc.name)
@@ -284,9 +313,6 @@ class SharingTaskService[E](CRUDService[E]):
 class SharingService[E](SharingTaskService[E]):
     locked_alert_class = ShareLockedAlert
     include_tier_info = False
-    readonly_field: str | None = None
-    """The share's read-only flag, or None for a protocol that has no read-only mode. Another protocol may
-    export an S3 bucket only read-only, so a protocol without the flag may not export one at all."""
 
     @private
     async def human_identifier(self, share_task):
@@ -295,28 +321,6 @@ class SharingService[E](SharingTaskService[E]):
             return share_task['name']
         else:
             return share_task.name
-
-    @private
-    async def validate_s3_export(self, data, schema: str, verrors: 'ValidationErrors') -> None:
-        """An S3 bucket's dataset may be exported by another protocol only read-only and only its `s3data`
-        directory, which holds the objects; `sharing.s3` refuses anything else on the dataset. Call once the
-        path has been split into `dataset` and `relative_path`, which is what the bucket is matched by."""
-        path = await self.get_path_field(data)
-        if path_location(path) is not FSLocation.LOCAL:
-            return
-        if isinstance(data, dict):
-            # FIXME: Remove all the cases where this is dict
-            dataset, relative_path = data['dataset'], data['relative_path']
-            readonly = data[self.readonly_field] if self.readonly_field else None
-        else:
-            dataset, relative_path = data.dataset, data.relative_path
-            readonly = getattr(data, self.readonly_field) if self.readonly_field else None
-        readonly_field = f'{schema}.{self.readonly_field}' if self.readonly_field else None
-        await self.call2(
-            self.s.sharing.s3.validate_export,
-            verrors, self.share_task_type, f'{schema}.{self.path_field}', path, dataset, relative_path,
-            readonly_field, readonly,
-        )
 
 
 class TaskPathService[E](SharingTaskService[E]):
