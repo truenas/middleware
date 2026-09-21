@@ -132,7 +132,7 @@ class UserService(Service):
 
         # We need to regenerate the users.oath file in order to remove
         # 2FA requirement for the user
-        await self.middleware.call('etc.generate', 'user')
+        await (await self.middleware.call('service.control', 'RELOAD', 'user')).wait(raise_error=True)
 
     @api_method(
         UserRenew2faSecretArgs,
@@ -193,5 +193,5 @@ class UserService(Service):
 
         user_entry = await self.translate_username(username)
         twofactor_config = await self.twofactor_config(username)
-        await self.middleware.call('etc.generate', 'user')
+        await (await self.middleware.call('service.control', 'RELOAD', 'user')).wait(raise_error=True)
         return user_entry | {'twofactor_config': twofactor_config}
