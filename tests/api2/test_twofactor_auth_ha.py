@@ -62,9 +62,7 @@ def authenticate_on_standby(ip, otp_token=None):
         args.append(otp_token)
 
     argv = " ".join(shlex.quote(arg) for arg in args)
-    return json.loads(
-        ssh(f"python3 - {argv} <<'PROBE_EOF'\n{PAM_PROBE}PROBE_EOF", ip=ip)
-    )
+    return json.loads(ssh(f"python3 - {argv} <<'PROBE_EOF'\n{PAM_PROBE}PROBE_EOF", ip=ip))
 
 
 def test_standby_demands_second_factor():
@@ -91,9 +89,7 @@ def test_standby_demands_second_factor():
         )
         assert "One-time password (OATH)" in resp["reason"], resp
 
-        resp = authenticate_on_standby(
-            standby_ip, get_2fa_totp_token(get_user_secret(user_obj["id"]))
-        )
+        resp = authenticate_on_standby(standby_ip, get_2fa_totp_token(get_user_secret(user_obj["id"])))
         assert resp["oath_code"] == "PAM_SUCCESS", resp
 
         call("user.unset_2fa_secret", TEST_USERNAME)
