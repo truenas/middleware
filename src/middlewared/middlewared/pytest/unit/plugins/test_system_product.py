@@ -24,8 +24,8 @@ def _info(**overrides) -> LicenseInfo:
         "model": "H10",
         "support_expires_at": END,
         "features": {
-            "SUPPORT": FeatureInfo(name="SUPPORT", start_date=START, expires_at=END, source="enterprise", type="GOLD"),
-            "VMS": FeatureInfo(name="VMS", start_date=START, expires_at=None, source="enterprise"),
+            "SUPPORT": FeatureInfo(name="SUPPORT", start_date=START, expires_at=END, type="GOLD"),
+            "VMS": FeatureInfo(name="VMS", start_date=START, expires_at=None),
         },
         "serials": ("TEST-000001", "TEST-000002"),
         "enclosures": {"E24": 3},
@@ -60,7 +60,7 @@ def test_license_matches_the_recorded_wire():
 def test_license_contract_dates_are_null_without_a_support_feature():
     info = _info(
         support_expires_at=None,
-        features={"VMS": FeatureInfo(name="VMS", start_date=START, expires_at=None, source="enterprise")},
+        features={"VMS": FeatureInfo(name="VMS", start_date=START, expires_at=None)},
     )
     result = _license_service(info).license()
 

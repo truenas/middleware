@@ -43,7 +43,7 @@ def _license(feature_names):
         model="H10",
         support_expires_at=None,
         features={
-            name: FeatureInfo(name=name, start_date=None, expires_at=None, source="enterprise")
+            name: FeatureInfo(name=name, start_date=None, expires_at=None)
             for name in feature_names
         },
         serials=("TEST-000001",),

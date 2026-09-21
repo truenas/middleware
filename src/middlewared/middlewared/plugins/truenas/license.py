@@ -57,7 +57,6 @@ def _license_entry(info: LicenseInfo) -> LicenseInfoEntry:
                 name=feature.name,
                 start_date=feature.start_date,
                 expires_at=feature.expires_at,
-                source=feature.source,
                 type=feature.type,
             )
             for feature in info.features.values()
