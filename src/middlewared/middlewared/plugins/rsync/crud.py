@@ -53,7 +53,6 @@ class RsyncTaskServicePart(SharingTaskServicePart[RsyncTaskEntry]):
     path_consumer = "an rsync task"
 
     async def local_path_readonly(self, data: dict[str, Any]) -> tuple[str, bool] | None:
-        # a push reads the path; a pull writes it
         return "direction", data["direction"] == "PUSH"
 
     async def sharing_task_extend_context(self, rows: list[dict[str, Any]], extra: dict[str, Any]) -> Any:

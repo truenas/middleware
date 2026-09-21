@@ -57,7 +57,6 @@ class CloudBackupServicePart(CloudTaskServiceMixin[CloudBackupEntry, CloudBackup
     path_consumer = "a cloud backup task"
 
     async def local_path_readonly(self, data: dict[str, Any]) -> tuple[str, bool] | None:
-        # a backup only reads its path; a restore names its own destination
         return self.path_field, True
 
     async def sharing_task_extend_context(self, rows: list[dict[str, Any]], extra: dict[str, Any]) -> Any:
