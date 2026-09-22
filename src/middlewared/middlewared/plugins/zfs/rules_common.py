@@ -149,11 +149,10 @@ def reject_insufficient_headroom(
     requested: int,
     current: int,
     base: int,
-    refquota: int,
     *,
     volume: bool,
 ) -> None:
-    """A reservation may not grow by more than 80% of the space available to it, nor exceed the refquota.
+    """A reservation may not grow by more than 80% of the space available to it.
 
     `base` is the space the kernel measures a new reservation against: `available - usedbyrefreservation` of the
     resource itself, or of the nearest existing ancestor for a resource that does not exist yet. All figures are
@@ -168,11 +167,5 @@ def reject_insufficient_headroom(
         verrors.add(
             attribute,
             f"Reserving another {delta} would consume more than 80% of the {base} available to {path!r}. {advice}.",
-            errno.EINVAL,
-        )
-    if refquota > 0 and requested > refquota:
-        verrors.add(
-            attribute,
-            f"A refreservation of {requested} exceeds the refquota of {refquota} on {path!r}.",
             errno.EINVAL,
         )

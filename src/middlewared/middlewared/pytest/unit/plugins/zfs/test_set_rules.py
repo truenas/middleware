@@ -843,7 +843,7 @@ def test_headroom_base_excludes_the_space_the_reservation_itself_holds(usedbyref
 
 
 def test_headroom_rejects_a_filesystem_refreservation_over_its_refquota():
-    st = state(properties={"refreservation": 2 * GiB}, current={"refquota": GiB})
+    st = state(properties={"refreservation": 2 * GiB}, current={"refquota": GiB, "available": GiB})
     assert headroom_errors(st) == [
         (
             "zfs.resource.set.properties.refreservation",
@@ -853,8 +853,34 @@ def test_headroom_rejects_a_filesystem_refreservation_over_its_refquota():
 
 
 def test_headroom_judges_a_filesystem_refreservation_against_the_requested_refquota():
-    st = state(properties={"refreservation": 2 * GiB, "refquota": 3 * GiB}, current={"refquota": GiB})
+    st = state(properties={"refreservation": 2 * GiB, "refquota": 3 * GiB}, current={"refquota": GiB, "available": GiB})
     assert headroom_errors(st) == []
+
+
+def test_headroom_is_exact_when_a_refquota_is_introduced_in_the_request():
+    st = state(
+        properties={"refreservation": 2 * GiB, "refquota": 3 * GiB},
+        current={"refquota": 0, "available": 2 * GiB},
+    )
+    [(attribute, errmsg)] = headroom_errors(st)
+    assert attribute == "zfs.resource.set.properties.refreservation"
+    assert "would consume more than 80%" in errmsg
+
+
+def test_headroom_is_skipped_when_the_request_drops_the_refquota():
+    st = state(properties={"refreservation": 2 * GiB, "refquota": 0}, current={"refquota": GiB, "available": GiB})
+    assert headroom_errors(st) == []
+
+
+def test_headroom_reports_both_kernel_legs_on_an_unclamped_filesystem():
+    st = state(
+        properties={"refreservation": 4 * GiB, "refquota": 3 * GiB},
+        current={"refquota": 0, "available": 2 * GiB},
+    )
+    [(refquota_attribute, refquota), (headroom_attribute, headroom)] = sorted(headroom_errors(st), key=lambda e: e[1])
+    assert headroom_attribute == refquota_attribute == "zfs.resource.set.properties.refreservation"
+    assert refquota == f"A refreservation of {4 * GiB} exceeds the refquota of {3 * GiB} on 'tank/a'."
+    assert "would consume more than 80%" in headroom
 
 
 def test_headroom_of_a_thick_grow_does_not_read_refquota_on_a_volume():
@@ -968,7 +994,6 @@ CELL_FIXTURES = {
             "refreservation": GiB,
             "available": 10 * GiB,
             "usedbyrefreservation": 0,
-            "refquota": 2 * GiB,
         },
         "request": {"volsize": 2 * GiB, "refreservation": 50 * GiB, "refquota": GiB},
         "parent": {},

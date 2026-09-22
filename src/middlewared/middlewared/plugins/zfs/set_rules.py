@@ -321,15 +321,24 @@ def check_reservation_headroom(context: ServiceContext, state: SetContext, verro
         requested = state.effective("volsize")
     if requested == 0:
         return
-    refquota = state.effective("refquota") if state.type == "FILESYSTEM" else 0
+    attribute = f"{SCHEMA}.properties.{'volsize' if 'refreservation' in state.derived else 'refreservation'}"
+    if state.type == "FILESYSTEM":
+        refquota = state.effective("refquota")
+        if refquota > 0 and requested > refquota:
+            verrors.add(
+                attribute,
+                f"A refreservation of {requested} exceeds the refquota of {refquota} on {state.path!r}.",
+                errno.EINVAL,
+            )
+        if state.current["refquota"] > 0:
+            return
     reject_insufficient_headroom(
         verrors,
-        f"{SCHEMA}.properties.{'volsize' if 'refreservation' in state.derived else 'refreservation'}",
+        attribute,
         state.path,
         requested,
         state.current["refreservation"],
         state.current["available"] - state.current["usedbyrefreservation"],
-        refquota,
         volume=state.type == "VOLUME",
     )
 
