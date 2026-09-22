@@ -25,7 +25,6 @@ async def validate_s3_bucket_path(
     path: str,
     dataset: str | None,
     relative_path: str | None,
-    consumer: str,
     readonly: tuple[str, bool] | None,
 ) -> None:
     """What `validate_path_field` asks of `sharing.s3` for a local path, for both service hierarchies.
@@ -44,12 +43,12 @@ async def validate_s3_bucket_path(
     if writes:
         await caller.call2(
             caller.s.sharing.s3.validate_writable_path,
-            verrors, f"{schema}.{field}", path, consumer, dataset, relative_path,
+            verrors, f"{schema}.{field}", path, dataset, relative_path,
         )
     else:
         await caller.call2(
             caller.s.sharing.s3.validate_readonly_path,
-            verrors, f"{schema}.{path_field}", path, consumer, dataset, relative_path,
+            verrors, f"{schema}.{path_field}", path, dataset, relative_path,
         )
 
 
@@ -71,8 +70,6 @@ class SharingTaskServicePart[E, PK = int](CRUDServicePart[E, PK]):
     enabled_field: str = "enabled"
     locked_field: str = "locked"
     include_tier_info: bool = False
-    path_consumer: str
-    """What uses the local path, as the errors of `validate_path_field` name it: "an rsync task"."""
     readonly_field: str | None = None
     """The flag that makes the share or task read-only for its local path, or None where nothing does: what
     `local_path_readonly` reads unless overridden."""
@@ -185,8 +182,7 @@ class SharingTaskServicePart[E, PK = int](CRUDServicePart[E, PK]):
             else:
                 ds, rel_path = data.get("dataset"), data.get("relative_path")
             await validate_s3_bucket_path(
-                self, verrors, schema, self.path_field, path, ds, rel_path, self.path_consumer,
-                await self.local_path_readonly(data),
+                self, verrors, schema, self.path_field, path, ds, rel_path, await self.local_path_readonly(data),
             )
 
         else:

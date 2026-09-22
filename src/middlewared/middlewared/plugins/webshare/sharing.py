@@ -44,7 +44,6 @@ class SharingWebshareService(SharingService[SharingWebshareEntry]):
     include_tier_info = True
     share_task_type = 'Webshare'
     allowed_path_types = [FSLocation.LOCAL]
-    path_consumer = 'a Webshare share'
 
     class Config:
         namespace = 'sharing.webshare'

@@ -27,10 +27,7 @@ def do_restore(
     context.middleware.run_coroutine(
         check_path_resides_within_volume(verrors, context.middleware, "destination_path", destination_path)
     )
-    context.call_sync2(
-        context.s.sharing.s3.validate_writable_path, verrors, "destination_path", destination_path,
-        "a cloud backup restore",
-    )
+    context.call_sync2(context.s.sharing.s3.validate_writable_path, verrors, "destination_path", destination_path)
     verrors.check()
 
     entry = context.call_sync2(context.s.cloud_backup.get_instance, id_)

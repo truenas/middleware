@@ -332,7 +332,6 @@ class SharingNFSService(SharingService):
 
     include_tier_info = True
     share_task_type = 'NFS'
-    path_consumer = 'an NFS share'
     readonly_field = 'ro'
 
     @private

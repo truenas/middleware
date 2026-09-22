@@ -35,8 +35,6 @@ class SharingTaskService[E](CRUDService[E]):
     """Describe which share entries should attempt to resolve their dataset field from path when dataset=None. By
     default, all entries will attempt to resolve their datasets. Filters must use the field names found in the database
     table (including `datastore_prefix`)."""
-    path_consumer: str
-    """What uses the local path, as the errors of `validate_path_field` name it: "an SMB share"."""
     readonly_field: str | None = None
     """The flag that makes the share or task read-only for its local path, or None where nothing does: what
     `local_path_readonly` reads unless overridden."""
@@ -213,8 +211,7 @@ class SharingTaskService[E](CRUDService[E]):
             else:
                 ds, rel_path = getattr(data, 'dataset', None), getattr(data, 'relative_path', None)
             await validate_s3_bucket_path(
-                self, verrors, schema, self.path_field, path, ds, rel_path, self.path_consumer,
-                await self.local_path_readonly(data),
+                self, verrors, schema, self.path_field, path, ds, rel_path, await self.local_path_readonly(data),
             )
 
         else:

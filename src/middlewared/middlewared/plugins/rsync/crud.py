@@ -50,7 +50,6 @@ class RsyncTaskServicePart(SharingTaskServicePart[RsyncTaskEntry]):
     _datastore = "tasks.rsync"
     _datastore_prefix = "rsync_"
     _entry = RsyncTaskEntry
-    path_consumer = "an rsync task"
 
     async def local_path_readonly(self, data: dict[str, Any]) -> tuple[str, bool] | None:
         return "direction", data["direction"] == "PUSH"

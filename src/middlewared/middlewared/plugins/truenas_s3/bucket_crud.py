@@ -335,24 +335,22 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         verrors: ValidationErrors,
         field: str,
         path: str,
-        consumer: str,
         dataset: str | None = None,
         relative_path: str | None = None,
     ) -> None:
-        """Refuse `path` where `consumer` -- what would write there, as the
-        error names it: "an SMB share", "a home directory", "anonymous FTP"
-        -- would write into an S3 bucket through it: any path on a bucket's
-        dataset. A bucket is written only through the S3 service: its
-        versioning, object lock and audit are the daemon's, and a write from
-        beside it bypasses all three, whether under the objects or in the
-        daemon's own state. `bucket_of_path` says how the path is matched.
+        """Refuse any path on an S3 bucket's dataset to a caller that writes
+        it. A bucket's versioning, object lock and audit are the S3
+        service's, and a write from beside it bypasses all three, whether
+        under the objects or in the daemon's own state. `bucket_of_path`
+        says how the path is matched.
         """
         if (bucket := await self.bucket_of_path(path, dataset, relative_path)) is None:
             return
         verrors.add(
             field,
-            f"{path} is on the dataset of S3 bucket {bucket.name!r}, which {consumer} may not write to: a bucket is "
-            "written only through the S3 service.",
+            f"{path} is on the dataset of S3 bucket {bucket.name!r}. Only the S3 service may write to a bucket. "
+            f"Bucket contents must be accessed through the /mnt/{bucket.dataset}/{SHARE_ROOT} directory in a "
+            "read-only manner.",
         )
 
     @private
@@ -361,16 +359,14 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         verrors: ValidationErrors,
         field: str,
         path: str,
-        consumer: str,
         dataset: str | None = None,
         relative_path: str | None = None,
     ) -> None:
-        """Refuse `path` where `consumer`, which only reads there, would
-        read an S3 bucket's own state: a path on a bucket's dataset must be
-        its `s3data` directory or under it. `s3data` holds the objects and
-        is the one part of the dataset another protocol or a task may hand
-        on; the rest is the daemon's. `bucket_of_path` says how the path is
-        matched.
+        """Refuse a path on an S3 bucket's dataset that is not its `s3data`
+        directory or under it, to a caller that only reads it. `s3data`
+        holds the objects and is the one part of the dataset another
+        protocol or a task may hand on; the rest is the daemon's.
+        `bucket_of_path` says how the path is matched.
 
         A path above a bucket is not refused here: smbd declines to enter a
         bucket's dataset by the daemon's root marker, and NFS does not cross
@@ -381,9 +377,8 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         if bucket.within != SHARE_ROOT and not bucket.within.startswith(f"{SHARE_ROOT}/"):
             verrors.add(
                 field,
-                f"{path} is on the dataset of S3 bucket {bucket.name!r} but not under its objects: {consumer} may "
-                f"read the bucket's objects, under /mnt/{bucket.dataset}/{SHARE_ROOT}, and nothing else on the "
-                "dataset, which is the S3 service's own state.",
+                f"{path} exposes private state of S3 bucket {bucket.name!r}. Bucket contents must be accessed "
+                f"through the /mnt/{bucket.dataset}/{SHARE_ROOT} directory in a read-only manner.",
             )
 
     @private
