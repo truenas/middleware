@@ -1,5 +1,8 @@
+import errno
+
 import pytest
 
+from middlewared.service_exception import ValidationError
 from middlewared.test.integration.assets.pool import dataset, snapshot
 from middlewared.test.integration.utils import call, ssh
 
@@ -71,15 +74,26 @@ def test_zfs_resource_snapshot_rename_recursive():
 def test_zfs_resource_snapshot_rename_nonexistent():
     """Test renaming non-existent snapshot returns error"""
     with dataset("test_snap_rename_noent") as ds:
-        with pytest.raises(Exception) as exc_info:
+        with pytest.raises(ValidationError) as ve:
             call(
                 "zfs.resource.snapshot.rename",
                 {"current_name": f"{ds}@nonexistent", "new_name": f"{ds}@new_name"},
             )
-        assert (
-            "not found" in str(exc_info.value).lower()
-            or "noent" in str(exc_info.value).lower()
-        )
+        assert ve.value.attribute == "zfs.resource.snapshot.rename"
+        assert ve.value.errmsg == f"{ds + '@nonexistent'!r} not found"
+        assert ve.value.errno == errno.ENOENT
+
+
+def test_pool_snapshot_rename_nonexistent():
+    with dataset("test_pool_snap_rename_noent") as ds:
+        with pytest.raises(ValidationError) as ve:
+            call(
+                "pool.snapshot.rename",
+                f"{ds}@nonexistent",
+                {"new_name": f"{ds}@new_name", "force": True},
+            )
+        assert ve.value.attribute == "pool.snapshot.rename.new_name"
+        assert ve.value.errno == errno.ENOENT
 
 
 def test_zfs_resource_snapshot_rename_already_exists():
@@ -91,12 +105,14 @@ def test_zfs_resource_snapshot_rename_already_exists():
 
         try:
             # Try to rename snap1 to snap2 (should fail)
-            with pytest.raises(Exception) as exc_info:
+            with pytest.raises(ValidationError) as ve:
                 call(
                     "zfs.resource.snapshot.rename",
                     {"current_name": f"{ds}@snap1", "new_name": f"{ds}@snap2"},
                 )
-            assert "already exists" in str(exc_info.value).lower()
+            assert ve.value.attribute == "zfs.resource.snapshot.rename"
+            assert ve.value.errmsg == f"{ds + '@snap2'!r} already exists"
+            assert ve.value.errno == errno.EEXIST
         finally:
             # Cleanup
             ssh(f"zfs destroy {ds}@snap1")

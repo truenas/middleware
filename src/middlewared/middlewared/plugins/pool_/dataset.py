@@ -17,13 +17,12 @@ from middlewared.api.current import (
     PoolDatasetRenameResult,
     PoolDatasetUpdateArgs,
     PoolDatasetUpdateResult,
+    ZFSResourceDestroyArgsData,
     ZFSResourcePromoteArgsData,
     ZFSResourceQuery,
     ZFSResourceRenameArgsData,
 )
 from middlewared.plugins.container.utils import CONTAINER_DS_NAME
-from middlewared.plugins.zfs.exceptions import ZFSDestroyFailedException
-from middlewared.plugins.zfs.name_utils import last_component_space_padded
 from middlewared.plugins.zfs.utils import has_internal_path
 from middlewared.plugins.zfs_.validation_utils import validate_dataset_name
 from middlewared.service import (
@@ -545,8 +544,11 @@ class PoolDatasetService(CRUDService):
             verrors.add('pool_dataset_create.name', 'You need a full name, e.g. pool/newdataset')
         elif not validate_dataset_name(data['name']):
             verrors.add('pool_dataset_create.name', 'Invalid dataset name')
-        elif last_component_space_padded(data['name']):
-            verrors.add('pool_dataset_create.name', 'Dataset names may not begin or end with a space')
+        elif data['name'][-1] == ' ':
+            verrors.add(
+                'pool_dataset_create.name',
+                'Trailing spaces are not permitted in dataset names'
+            )
         else:
             parent_name = data['name'].rsplit('/', 1)[0]
             if data['create_ancestors']:
@@ -560,11 +562,6 @@ class PoolDatasetService(CRUDService):
                     if '/' not in parent_name:
                         # Root dataset / pool does not exist
                         break
-                    if last_component_space_padded(parent_name):
-                        verrors.add(
-                            'pool_dataset_create.name',
-                            f'Cannot create {parent_name!r}: dataset names may not begin or end with a space'
-                        )
                     parent_name = parent_name.rsplit('/', 1)[0]
 
             parent_ds = await self.middleware.call(
@@ -1007,20 +1004,18 @@ class PoolDatasetService(CRUDService):
                 {'immutable': False},
             )
 
-        try:
-            async with self.s.truesearch.remove_mountpoint(mountpoint):
-                await self.call2(
-                    self.s.zfs.resource.destroy_impl, id_, recursive=options['recursive']
-                )
-        except ZFSDestroyFailedException as e:
-            raise CallError(e.message, e.errnum)
+        async with self.s.truesearch.remove_mountpoint(mountpoint):
+            await self.call2(
+                self.s.zfs.resource.destroy,
+                ZFSResourceDestroyArgsData(path=id_, recursive=options['recursive']),
+            )
 
         return True
 
     @api_method(PoolDatasetPromoteArgs, PoolDatasetPromoteResult, roles=['DATASET_WRITE'])
     async def promote(self, id_):
         """Promote a cloned dataset."""
-        return await self.call2(self.s.zfs.resource.promote_impl, ZFSResourcePromoteArgsData(path=id_))
+        return await self.call2(self.s.zfs.resource.promote, ZFSResourcePromoteArgsData(path=id_))
 
     @api_method(
         PoolDatasetRenameArgs,
@@ -1044,8 +1039,6 @@ class PoolDatasetService(CRUDService):
         snapshot is renamed recursively for all children -- for example, ``dozer/a@now`` and ``dozer/a/b@now``
         are renamed to ``dozer/a@new`` and ``dozer/a/b@new``. Renaming snapshots is likewise not recommended.
         """
-        if last_component_space_padded(options['new_name']):
-            raise ValidationError('pool.dataset.rename.new_name', 'Dataset names may not begin or end with a space')
         if not options['force']:
             raise ValidationError(
                 'pool.dataset.rename.force',
@@ -1055,6 +1048,6 @@ class PoolDatasetService(CRUDService):
         if options['recursive']:
             raise ValidationError('pool.dataset.rename.recursive', 'recursive is only valid for snapshots')
         return await self.call2(
-            self.s.zfs.resource.rename_impl,
+            self.s.zfs.resource.rename,
             ZFSResourceRenameArgsData(current_name=id_, new_name=options['new_name']),
         )

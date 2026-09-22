@@ -2,6 +2,7 @@ import errno
 
 import pytest
 
+from auto_config import pool_name
 from middlewared.service_exception import ValidationError
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call
@@ -54,3 +55,19 @@ def test_already_exists():
             call('pool.snapshot.create', {'dataset': test_dataset, 'name': 'snap'})
 
         assert ve.value.errno == errno.EEXIST
+
+
+def test_create_nonexistent_dataset():
+    with pytest.raises(ValidationError) as ve:
+        call('pool.snapshot.create', {'dataset': f'{pool_name}/does-not-exist', 'name': 'snap'})
+
+    assert ve.value.errno == errno.ENOENT
+    assert ve.value.attribute == 'pool.snapshot.create'
+
+
+def test_create_rejects_at_in_dataset():
+    with dataset('test') as test_dataset:
+        with pytest.raises(ValidationError) as ve:
+            call('pool.snapshot.create', {'dataset': f'{test_dataset}@x', 'name': 'snap'})
+
+        assert ve.value.attribute == 'pool.snapshot.create'
