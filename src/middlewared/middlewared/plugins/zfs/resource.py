@@ -53,6 +53,7 @@ from . import resource_ops as _ops
 from . import resource_processes as _processes
 from . import resource_query as _query
 from . import resource_set as _set
+from .delegates import ZFSResourceDelegate, validate_delegate
 from .prefetch import ZFSResourcePoolPrefetchService
 from .snapshot import ZFSResourceSnapshotService, audit_target
 
@@ -98,6 +99,18 @@ class ZFSResourceService(Service):
         super().__init__(middleware)
         self.snapshot = ZFSResourceSnapshotService(middleware)
         self.pool = ZFSResourcePoolPrefetchService(middleware)
+        self._delegates: dict[str, ZFSResourceDelegate] = {}
+
+    @private
+    def register_delegate(self, delegate: ZFSResourceDelegate) -> None:
+        validate_delegate(delegate)
+        if delegate.name in self._delegates:
+            raise ValueError(f"A zfs.resource delegate named {delegate.name!r} is already registered")
+        self._delegates[delegate.name] = delegate
+
+    @private
+    def delegates(self) -> builtins.list[str]:
+        return sorted(self._delegates)
 
     @api_method(
         ZFSResourceListArgs,
@@ -654,7 +667,7 @@ class ZFSResourceService(Service):
                 "inherit": ["org.truenas:obsolete"]
             }
         """
-        return _set.set(self.context, data)
+        return _set.set(self.context, data, builtins.list(self._delegates.values()))
 
     @private
     @pass_thread_local_storage
