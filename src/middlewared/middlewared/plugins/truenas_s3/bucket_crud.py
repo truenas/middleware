@@ -355,7 +355,7 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         )
 
     @private
-    async def validate_readonly_path(
+    async def validate_objects_path(
         self,
         verrors: ValidationErrors,
         field: str,
@@ -364,10 +364,12 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         relative_path: str | None = None,
     ) -> None:
         """Refuse a path on an S3 bucket's dataset that is not its `s3data`
-        directory or under it, to a caller that only reads it. `s3data`
-        holds the objects and is the one part of the dataset another
-        protocol or a task may hand on; the rest is the daemon's.
-        `bucket_of_path` says how the path is matched.
+        directory or under it. `s3data` holds the objects; everything else
+        on the dataset is the daemon's own state, which a share would hand
+        to everyone it reaches. Only shares ask this: what a backup or sync
+        task copies goes to the administrator, not to clients, so a task may
+        read the whole dataset. `bucket_of_path` says how the path is
+        matched.
 
         A path above a bucket is not refused here: smbd declines to enter a
         bucket's dataset by the daemon's root marker, and NFS does not cross

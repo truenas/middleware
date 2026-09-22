@@ -534,22 +534,23 @@ def test_recursive_permissions_changes_stop_at_the_bucket(owner):
 
 
 def refused(method, *args):
-    """The attribute the one validation error of `method` names, which must
-    name the bucket."""
+    """The attributes the validation errors of `method` name, in the order
+    raised. Each error must name the bucket."""
     with pytest.raises(ValidationErrors) as ve:
         call(method, *args)
-    (error,) = ve.value.errors
-    assert "test-bucket" in error.errmsg, method
-    return error.attribute
+    for error in ve.value.errors:
+        assert "test-bucket" in error.errmsg, method
+    return [error.attribute for error in ve.value.errors]
 
 
 def test_another_protocol_exports_the_share_root_read_only(owner):
     """Another protocol may export a bucket only read-only and only its
     `s3data` directory, which holds the objects: a share of the mountpoint
     is refused on its path, one of `s3data` that is not read-only on its
-    read-only flag, and a read-only one of `s3data` or of a prefix under it
-    goes through, on an update as on a create. Webshare has no read-only
-    mode and may not export a bucket at all."""
+    read-only flag, one that is both at once on both, and a read-only one of
+    `s3data` or of a prefix under it goes through, on an update as on a
+    create. Webshare has no read-only mode and may not export a bucket at
+    all."""
     with bucket() as b:
         mountpoint = f"/mnt/{b['dataset']}"
         share_root = f"{mountpoint}/s3data"
@@ -559,12 +560,17 @@ def test_another_protocol_exports_the_share_root_read_only(owner):
             ("sharing.smb", "sharingsmb", "readonly", {"name": "s3-export"}),
             ("sharing.nfs", "sharingnfs", "ro", {}),
         ):
-            assert refused(f"{api}.create", {**data, "path": mountpoint, ro: True}) == f"{schema}_create.path"
-            assert refused(f"{api}.create", {**data, "path": share_root, ro: False}) == f"{schema}_create.{ro}"
+            assert refused(f"{api}.create", {**data, "path": mountpoint, ro: True}) == [f"{schema}_create.path"]
+            assert refused(f"{api}.create", {**data, "path": share_root, ro: False}) == [f"{schema}_create.{ro}"]
+            # the two rules are independent: a share that breaks both is told both
+            assert refused(f"{api}.create", {**data, "path": mountpoint, ro: False}) == [
+                f"{schema}_create.{ro}",
+                f"{schema}_create.path",
+            ]
             share = call(f"{api}.create", {**data, "path": share_root, ro: True})
             try:
-                assert refused(f"{api}.update", share["id"], {"path": mountpoint}) == f"{schema}_update.path"
-                assert refused(f"{api}.update", share["id"], {ro: False}) == f"{schema}_update.{ro}"
+                assert refused(f"{api}.update", share["id"], {"path": mountpoint}) == [f"{schema}_update.path"]
+                assert refused(f"{api}.update", share["id"], {ro: False}) == [f"{schema}_update.{ro}"]
                 prefix = f"{share_root}/prefix"
                 assert call(f"{api}.update", share["id"], {"path": prefix})["path"] == prefix
             finally:
@@ -573,7 +579,7 @@ def test_another_protocol_exports_the_share_root_read_only(owner):
         with entitled("WEBSHARE"):
             assert (
                 refused("sharing.webshare.create", {"name": "s3-export", "path": share_root})
-                == "sharing_webshare_create.path"
+                == ["sharing_webshare_create.path"]
             )
 
 
@@ -581,22 +587,22 @@ def test_nothing_beside_the_service_writes_a_bucket(owner):
     """A bucket is written only through the S3 service: a task that pulls
     into it is refused on its direction, and a home directory or the
     anonymous FTP root on it on the path, wherever on the dataset. A task
-    that pushes reads like a share does: from `s3data` and nothing else."""
+    that only reads may copy the whole dataset, the daemon's state included:
+    what it reads goes to the administrator, not to clients, which is what
+    confines a share to `s3data`."""
     with bucket() as b:
         mountpoint = f"/mnt/{b['dataset']}"
         share_root = f"{mountpoint}/s3data"
         ssh(f"mkdir -p {share_root}")
 
         rsync = {"user": "root", "mode": "MODULE", "remotehost": "127.0.0.1", "remotemodule": "test"}
-        assert refused("rsynctask.create", {**rsync, "path": share_root, "direction": "PULL"}) == (
+        assert refused("rsynctask.create", {**rsync, "path": share_root, "direction": "PULL"}) == [
             "rsync_task_create.direction"
-        )
-        assert refused("rsynctask.create", {**rsync, "path": mountpoint, "direction": "PUSH"}) == (
-            "rsync_task_create.path"
-        )
-        task = call("rsynctask.create", {**rsync, "path": share_root, "direction": "PUSH"})
+        ]
+        # a push only reads, so it may take the whole dataset
+        task = call("rsynctask.create", {**rsync, "path": mountpoint, "direction": "PUSH"})
         try:
-            assert refused("rsynctask.update", task["id"], {"direction": "PULL"}) == "rsync_task_update.direction"
+            assert refused("rsynctask.update", task["id"], {"direction": "PULL"}) == ["rsync_task_update.direction"]
         finally:
             call("rsynctask.delete", task["id"])
 
@@ -610,12 +616,11 @@ def test_nothing_beside_the_service_writes_a_bucket(owner):
                 "transfer_mode": "COPY",
                 "schedule": {"minute": "00", "hour": "00", "dom": "1", "month": "1", "dow": "1"},
             }
-            assert refused("cloudsync.create", {**sync, "path": share_root, "direction": "PULL"}) == (
+            assert refused("cloudsync.create", {**sync, "path": share_root, "direction": "PULL"}) == [
                 "cloud_sync_create.direction"
-            )
-            assert refused("cloudsync.create", {**sync, "path": mountpoint, "direction": "PUSH"}) == (
-                "cloud_sync_create.path"
-            )
+            ]
+            task = call("cloudsync.create", {**sync, "path": mountpoint, "direction": "PUSH"})
+            call("cloudsync.delete", task["id"])
 
         assert refused(
             "user.create",
@@ -627,12 +632,12 @@ def test_nothing_beside_the_service_writes_a_bucket(owner):
                 "home": share_root,
                 "home_create": False,
             },
-        ) == "user_create.home"
+        ) == ["user_create.home"]
         assert not call("user.query", [["username", "=", "s3homeuser"]])
 
         ftp = call("ftp.config")
         try:
-            assert refused("ftp.update", {"onlyanonymous": True, "anonpath": share_root}) == "ftp_update.anonpath"
+            assert refused("ftp.update", {"onlyanonymous": True, "anonpath": share_root}) == ["ftp_update.anonpath"]
         finally:
             call("ftp.update", {"onlyanonymous": ftp["onlyanonymous"], "anonpath": ftp["anonpath"]})
 
