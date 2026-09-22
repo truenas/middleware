@@ -45,6 +45,12 @@ from .snapshot_count_impl import count_snapshots_impl
 __all__ = ("ZFSResourceSnapshotService",)
 
 
+def audit_target(target: object, data: dict[str, Any], *flags: str) -> str:
+    if present := [flag for flag in flags if data.get(flag)]:
+        return f"{target} ({', '.join(present)})"
+    return f"{target}"
+
+
 class ZFSResourceSnapshotService(Service):
     class Config:
         namespace = "zfs.resource.snapshot"
@@ -153,6 +159,8 @@ class ZFSResourceSnapshotService(Service):
         ZFSResourceSnapshotDestroyArgs,
         ZFSResourceSnapshotDestroyResult,
         roles=["SNAPSHOT_DELETE"],
+        audit="ZFS snapshot destroy",
+        audit_extended=lambda data: audit_target(data.get("path"), data, "recursive", "defer", "all_snapshots"),
         check_annotations=True,
     )
     def destroy(self, data: ZFSResourceSnapshotDestroyQuery) -> None:
@@ -209,6 +217,8 @@ class ZFSResourceSnapshotService(Service):
         ZFSResourceSnapshotRenameArgs,
         ZFSResourceSnapshotRenameResult,
         roles=["SNAPSHOT_WRITE"],
+        audit="ZFS snapshot rename from",
+        audit_extended=lambda data: f"{data.get('current_name')!r} to {data.get('new_name')!r}",
         check_annotations=True,
     )
     def rename(self, data: ZFSResourceSnapshotRenameQuery) -> None:
@@ -246,6 +256,8 @@ class ZFSResourceSnapshotService(Service):
         ZFSResourceSnapshotCloneArgs,
         ZFSResourceSnapshotCloneResult,
         roles=["SNAPSHOT_WRITE"],
+        audit="ZFS snapshot clone",
+        audit_extended=lambda data: f"{data.get('snapshot')!r} to {data.get('dataset')!r}",
         check_annotations=True,
     )
     def clone(self, data: ZFSResourceSnapshotCloneQuery) -> None:
@@ -287,6 +299,8 @@ class ZFSResourceSnapshotService(Service):
         ZFSResourceSnapshotCreateArgs,
         ZFSResourceSnapshotCreateResult,
         roles=["SNAPSHOT_WRITE"],
+        audit="ZFS snapshot create",
+        audit_extended=lambda data: audit_target(f"{data.get('dataset')}@{data.get('name')}", data, "recursive"),
         check_annotations=True,
     )
     def create(self, data: ZFSResourceSnapshotCreateQuery) -> ZFSResourceSnapshotEntry:
@@ -329,6 +343,8 @@ class ZFSResourceSnapshotService(Service):
         ZFSResourceSnapshotHoldArgs,
         ZFSResourceSnapshotHoldResult,
         roles=["SNAPSHOT_WRITE"],
+        audit="ZFS snapshot hold",
+        audit_extended=lambda data: audit_target(data.get("path"), data, "recursive"),
         check_annotations=True,
     )
     def hold(self, data: ZFSResourceSnapshotHoldQuery) -> None:
@@ -399,6 +415,8 @@ class ZFSResourceSnapshotService(Service):
         ZFSResourceSnapshotReleaseArgs,
         ZFSResourceSnapshotReleaseResult,
         roles=["SNAPSHOT_WRITE"],
+        audit="ZFS snapshot release",
+        audit_extended=lambda data: audit_target(data.get("path"), data, "recursive"),
         check_annotations=True,
     )
     def release(self, data: ZFSResourceSnapshotReleaseQuery) -> None:
@@ -441,6 +459,10 @@ class ZFSResourceSnapshotService(Service):
         ZFSResourceSnapshotRollbackArgs,
         ZFSResourceSnapshotRollbackResult,
         roles=["SNAPSHOT_WRITE"],
+        audit="ZFS snapshot rollback",
+        audit_extended=lambda data: audit_target(
+            data.get("path"), data, "recursive", "recursive_clones", "recursive_rollback", "force"
+        ),
         check_annotations=True,
     )
     def rollback(self, data: ZFSResourceSnapshotRollbackQuery) -> None:

@@ -51,7 +51,7 @@ from . import resource_processes as _processes
 from . import resource_query as _query
 from . import resource_set as _set
 from .prefetch import ZFSResourcePoolPrefetchService
-from .snapshot import ZFSResourceSnapshotService
+from .snapshot import ZFSResourceSnapshotService, audit_target
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -59,6 +59,15 @@ if TYPE_CHECKING:
     from middlewared.main import Middleware
 
 __all__ = ("ZFSResourceService",)
+
+
+def _audit_set(data: dict[str, Any]) -> str:
+    names = sorted(
+        {k for k, v in (data.get("properties") or {}).items() if v is not None}
+        | set(data.get("user_properties") or {})
+        | set(data.get("inherit") or [])
+    )
+    return f"{data.get('path')} ({', '.join(names)})"
 
 
 class ZFSResourceService(Service):
@@ -242,6 +251,8 @@ class ZFSResourceService(Service):
         ZFSResourcePromoteArgs,
         ZFSResourcePromoteResult,
         roles=["ZFS_RESOURCE_WRITE"],
+        audit="ZFS resource promote",
+        audit_extended=lambda data: data.get("path"),
         check_annotations=True,
     )
     def promote(self, data: ZFSResourcePromoteArgsData) -> None:
@@ -358,6 +369,8 @@ class ZFSResourceService(Service):
         ZFSResourceRenameArgs,
         ZFSResourceRenameResult,
         roles=["ZFS_RESOURCE_WRITE"],
+        audit="ZFS resource rename from",
+        audit_extended=lambda data: f"{data.get('current_name')!r} to {data.get('new_name')!r}",
         check_annotations=True,
     )
     def rename(self, data: ZFSResourceRenameArgsData) -> None:
@@ -402,6 +415,8 @@ class ZFSResourceService(Service):
         ZFSResourceCreateArgs,
         ZFSResourceCreateResult,
         roles=["ZFS_RESOURCE_WRITE"],
+        audit="ZFS resource create",
+        audit_extended=lambda data: data.get("path"),
         check_annotations=True,
     )
     def create(self, data: ZFSResourceCreateArgsData) -> ZFSResourceEntry:
@@ -536,6 +551,8 @@ class ZFSResourceService(Service):
         ZFSResourceSetArgs,
         ZFSResourceSetResult,
         roles=["ZFS_RESOURCE_WRITE"],
+        audit="ZFS resource set",
+        audit_extended=_audit_set,
         check_annotations=True,
     )
     def set(self, data: ZFSResourceSetArgsData) -> ZFSResourceEntry:
@@ -631,6 +648,8 @@ class ZFSResourceService(Service):
         ZFSResourceDestroyArgs,
         ZFSResourceDestroyResult,
         roles=["ZFS_RESOURCE_DELETE"],
+        audit="ZFS resource destroy",
+        audit_extended=lambda data: audit_target(data.get("path"), data, "recursive"),
         check_annotations=True,
     )
     def destroy(self, data: ZFSResourceDestroyArgsData) -> None:
