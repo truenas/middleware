@@ -1,5 +1,5 @@
 """Validation rules for zfs.resource.set, in the shape create_rules describes. Shared checks come from
-create_rules as `reject_*` functions taking plain values; "effective" here is read from the resource being
+rules_common as `reject_*` functions taking plain values; "effective" here is read from the resource being
 updated rather than from an ancestor.
 """
 
@@ -10,9 +10,9 @@ import errno
 import typing
 
 from middlewared.api.current import ZFSResourceSetProperties
-from middlewared.service_exception import ValidationError
+from middlewared.service_exception import ValidationError, ValidationErrors
 
-from .create_rules import (
+from .rules_common import (
     apply_acl_defaults,
     reject_bad_acl_combination,
     reject_bad_user_property_names,
@@ -124,8 +124,15 @@ def check_inherit_names(data: ZFSResourceSetArgsData, ctx: SetContext) -> None:
         )
 
 
+def _raise_first(verrors: ValidationErrors) -> None:
+    if verrors:
+        raise verrors.errors[0]
+
+
 def check_user_property_names(data: ZFSResourceSetArgsData, ctx: SetContext) -> None:
-    reject_bad_user_property_names(SCHEMA, data.user_properties)
+    verrors = ValidationErrors()
+    reject_bad_user_property_names(verrors, f"{SCHEMA}.user_properties", data.user_properties)
+    _raise_first(verrors)
 
 
 def check_resource_exists(data: ZFSResourceSetArgsData, ctx: SetContext) -> None:
@@ -167,7 +174,11 @@ def _effective_value(name: str, ctx: SetContext) -> str | None:
 def check_acl_combination(data: ZFSResourceSetArgsData, ctx: SetContext) -> None:
     """The service calls this only for filesystems that request acltype or aclmode and after the resource has
     been read."""
-    reject_bad_acl_combination(SCHEMA, _effective_value("acltype", ctx), _effective_value("aclmode", ctx))
+    verrors = ValidationErrors()
+    reject_bad_acl_combination(
+        verrors, f"{SCHEMA}.properties", _effective_value("acltype", ctx), _effective_value("aclmode", ctx)
+    )
+    _raise_first(verrors)
 
 
 def check_tier_managed_ssb(data: ZFSResourceSetArgsData, ctx: SetContext) -> None:
@@ -182,14 +193,19 @@ def check_tier_managed_ssb(data: ZFSResourceSetArgsData, ctx: SetContext) -> Non
             "ZFS tiering is enabled. Use `zfs.tier.dataset_set_tier` to manage 'special_small_blocks'.",
             errno.EINVAL,
         )
-    reject_tier_managed_ssb(SCHEMA, data.properties.special_small_blocks)
+    if data.properties.special_small_blocks is not None:
+        verrors = ValidationErrors()
+        reject_tier_managed_ssb(verrors, f"{SCHEMA}.properties")
+        _raise_first(verrors)
 
 
 def check_dedup_entitlement(data: ZFSResourceSetArgsData, ctx: SetContext) -> None:
     """The service calls this only for requests with a dedup value other than off and after the entitlement has
     been gathered."""
     assert ctx.dedup_entitlement is not None
-    reject_unentitled_dedup(SCHEMA, ctx.dedup_entitlement)
+    verrors = ValidationErrors()
+    reject_unentitled_dedup(verrors, f"{SCHEMA}.properties", ctx.dedup_entitlement)
+    _raise_first(verrors)
 
 
 def check_dedup_tiering(context: ServiceContext, data: ZFSResourceSetArgsData, ctx: SetContext) -> None:
@@ -199,4 +215,6 @@ def check_dedup_tiering(context: ServiceContext, data: ZFSResourceSetArgsData, c
     ssb = ctx.properties.special_small_blocks
     if ssb is None:
         ssb = ctx.current["properties"]["special_small_blocks"]["value"] or 0
-    reject_dedup_on_special_vdev(context, SCHEMA, data.path.split("/")[0], ssb)
+    verrors = ValidationErrors()
+    reject_dedup_on_special_vdev(verrors, f"{SCHEMA}.properties", context, data.path.split("/")[0], ssb)
+    _raise_first(verrors)
