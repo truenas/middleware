@@ -121,13 +121,13 @@ class WebSocketApplication(RpcWebSocketApp):
             methodobj = mock
 
         try:
-            # For any legacy websocket API method call not defined in 24.10 models we assume its made using the most
-            # recent API.
+            # For any legacy websocket API method call not defined in the oldest supported API version's models we
+            # assume its made using the most recent API.
             # If the method is defined there, we perform conversion to the recent API.
             lam = LegacyAPIMethod(
                 self.middleware,
                 message["method"],
-                "v24.10",
+                self.middleware.api_versions[0].version,
                 self.middleware.api_versions_adapter,
                 passthrough_nonexistent_methods=True,
             )

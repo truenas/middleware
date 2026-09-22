@@ -12,7 +12,7 @@ from middlewared.api.base import (
 )
 from middlewared.api.base.handler.accept import accept_params, validate_model
 from middlewared.api.base.handler.result import serialize_result
-from middlewared.api.v25_04_0.pool_snapshottask import PoolSnapshotTaskCron
+from middlewared.api.v25_10_0.pool_snapshottask import PoolSnapshotTaskCron
 from middlewared.service_exception import ValidationErrors
 
 

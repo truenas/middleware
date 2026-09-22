@@ -41,8 +41,8 @@ def test_alertservice():
     assert call("alertservice.query", [["id", "=", alertservice_id]]) == []
 
 
-def test_alertservice_2504():
-    with client(version="v25.04.0") as c:
+def test_alertservice_2510():
+    with client(version="v25.10.0") as c:
         c.call("alertservice.query")
 
         data = ["name", "type", "attributes", "level", "enabled"]
