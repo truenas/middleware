@@ -45,8 +45,8 @@ OWNER_ID_SEED_BYTES = 28
 MAX_LISTENERS = 8
 """The daemon's ceiling on listen addresses, plaintext and TLS together."""
 
-MAX_SERVERS = 8
-"""The daemon's ceiling on reactor threads, its credential broker's ring limit."""
+MAX_SERVERS = 12
+"""The daemon's ceiling on reactor threads, held under its credential broker's ring limit."""
 
 BASE_HOST_CHARS = frozenset(string.ascii_lowercase + string.digits + ".-")
 """The daemon's base-host grammar: lowercase DNS name bytes and nothing else."""
