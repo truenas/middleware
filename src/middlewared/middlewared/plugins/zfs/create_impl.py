@@ -21,8 +21,10 @@ ZFS_INVALID_INPUT_ERRORS = frozenset(
     {
         truenas_pylibzfs.ZFSError.EZFS_BADPROP,
         truenas_pylibzfs.ZFSError.EZFS_BADTYPE,
+        truenas_pylibzfs.ZFSError.EZFS_BADVERSION,
         truenas_pylibzfs.ZFSError.EZFS_INVALIDNAME,
         truenas_pylibzfs.ZFSError.EZFS_NAMETOOLONG,
+        truenas_pylibzfs.ZFSError.EZFS_NOTSUP,
         truenas_pylibzfs.ZFSError.EZFS_PROPNONINHERIT,
         truenas_pylibzfs.ZFSError.EZFS_PROPREADONLY,
         truenas_pylibzfs.ZFSError.EZFS_PROPSPACE,

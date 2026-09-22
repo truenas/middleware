@@ -683,7 +683,18 @@ class ZFSResourceSetProperties(ZFSResourceCreateProperties):
         description=(
             "Minimum space reserved for the resource itself. Takes a size as described for 'volsize'. 'none' or 0 "
             "removes the reservation. 'auto' reserves the space the volume's size requires and is accepted for "
-            "volumes only."
+            "volumes only. Giving it together with a 'volsize' grow replaces the automatic re-reservation "
+            "described for 'volsize'."
+        ),
+    )
+    volsize: ZFSSize | None = Field(
+        default=None,
+        description=(
+            "Logical size of the volume. A byte count, or a string with a binary suffix (K, M, G, T, P or E, "
+            "optionally followed by B or iB) such as '128K'. A fractional value such as '1.5M' is accepted only when "
+            "it is a whole number of bytes. It may only grow. A grow on a volume whose 'refreservation' covers the "
+            "current size but not the new one re-reserves the volume automatically, as 'refreservation' 'auto' "
+            "does, unless 'refreservation' is given in the same request."
         ),
     )
     normalization: Excluded = excluded_field()
@@ -692,7 +703,7 @@ class ZFSResourceSetProperties(ZFSResourceCreateProperties):
 
 
 class ZFSResourceSetArgsData(BaseModel):
-    path: NonEmptyString = Field(
+    path: DATASET_NAME = Field(
         description=(
             "Path of the zfs resource (dataset or volume) to be updated. Must be of the form 'pool/name'. Snapshot "
             "paths (containing '@') are not accepted."
@@ -717,16 +728,22 @@ class ZFSResourceSetArgsData(BaseModel):
     user_properties: dict[str, str] = Field(
         default={},
         description=(
-            "User properties to set or overwrite, keyed by their full name. Property names must contain a colon "
-            "(e.g. 'org.truenas:custom')."
+            "User properties to set or overwrite, keyed by their full name (e.g. 'org.truenas:custom'). A name must "
+            "contain a colon, may consist only of lowercase letters, digits and the characters ':', '.', '_' and "
+            "'-', and must be shorter than 256 characters. A value must be shorter than 8192 bytes and must be a "
+            "single line."
         ),
     )
     inherit: list[str] = Field(
         default=[],
         description=(
-            "Native or user property names to reset to their inherited value. Any property that may be set through "
-            "`properties` may be inherited. Inheriting a user property removes it from the resource. Inheriting "
-            "'acltype' also inherits 'aclmode' and 'aclinherit' unless those are given in `properties`."
+            "Property names to reset to their inherited value, as `zfs inherit` does. A native property must be one "
+            "of those settable through `properties` except `quota`, `refquota`, `reservation`, `refreservation` and "
+            "`volsize`, which have no inherited value. A user property name must contain a colon; inheriting one "
+            "removes it from this resource. On a filesystem, inheriting `acltype` also inherits `aclmode` and "
+            "`aclinherit` unless those are given in `properties`. On a pool's root dataset the property returns to "
+            "its ZFS default. A property whose value was received through replication cannot be inherited; set it "
+            "explicitly instead."
         ),
     )
 
