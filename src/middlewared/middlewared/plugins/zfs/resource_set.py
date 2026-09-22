@@ -13,6 +13,7 @@ from .create_impl import ZFS_INVALID_INPUT_ERRORS
 from .normalization import normalize_asdict_result
 from .property_management import DeterminedProperties, build_set_of_zfs_props
 from .set_rules import (
+    NON_INHERITABLE_PROPERTIES,
     SET_READ_PROPERTIES,
     PropertyView,
     SetContext,
@@ -83,6 +84,31 @@ def _phase_error(
     return CallError(other_message + values, _ZFS_ERRNO.get(e.code, errno.EFAULT))
 
 
+def touched_names(
+    properties: dict[str, Any] | None, user_properties: dict[str, str] | None, inherit: list[str]
+) -> tuple[list[str], list[str]]:
+    """The native and user property names a `set_impl` call writes or inherits."""
+    natives = sorted((properties or {}).keys() | {name for name in inherit if ":" not in name})
+    user_names = sorted((user_properties or {}).keys() | {name for name in inherit if ":" in name})
+    return natives, user_names
+
+
+def changed_fields(
+    entry: dict[str, Any],
+    properties: dict[str, Any] | None,
+    user_properties: dict[str, str] | None,
+    inherit: list[str],
+) -> dict[str, Any]:
+    """The `fields` of the `zfs.resource.list` CHANGED event for a `set_impl` call that returned `entry`."""
+    natives, user_names = touched_names(properties, user_properties, inherit)
+    return {
+        "properties": entry["properties"],
+        "user_properties": entry["user_properties"],
+        "inherited": sorted(inherit),
+        "descendants_affected": any(name not in NON_INHERITABLE_PROPERTIES for name in natives) or bool(user_names),
+    }
+
+
 def set_impl(
     tls: Any,
     path: str,
@@ -100,8 +126,7 @@ def set_impl(
     }
     user_properties = dict(user_properties or {})
     inherit = list(inherit or ())
-    natives = sorted(properties.keys() | {name for name in inherit if ":" not in name})
-    user_names = sorted(user_properties.keys() | {name for name in inherit if ":" in name})
+    natives, user_names = touched_names(properties, user_properties, inherit)
 
     native_attribute = f"{SCHEMA}.properties"
     if len(properties) == 1:

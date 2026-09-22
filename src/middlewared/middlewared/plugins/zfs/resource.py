@@ -5,7 +5,7 @@ from __future__ import annotations
 import builtins
 from typing import TYPE_CHECKING, Any
 
-from middlewared.api import api_method
+from middlewared.api import Event, api_method
 from middlewared.api.current import (
     PoolProcess,
     ZFSResourceChecksumChoicesArgs,
@@ -19,7 +19,10 @@ from middlewared.api.current import (
     ZFSResourceDestroyArgsData,
     ZFSResourceDestroyResult,
     ZFSResourceEntry,
+    ZFSResourceListAddedEvent,
     ZFSResourceListArgs,
+    ZFSResourceListChangedEvent,
+    ZFSResourceListRemovedEvent,
     ZFSResourceListResult,
     ZFSResourceProcessesArgs,
     ZFSResourceProcessesResult,
@@ -75,6 +78,21 @@ class ZFSResourceService(Service):
         namespace = "zfs.resource"
         cli_private = True
         entry = ZFSResourceEntry
+        events = [
+            Event(
+                name="zfs.resource.list",
+                description=(
+                    "Changes made to filesystems and volumes through this API or the zfs command. Destroying or "
+                    "exporting a whole pool emits nothing for its datasets."
+                ),
+                roles=["ZFS_RESOURCE_READ"],
+                models={
+                    "ADDED": ZFSResourceListAddedEvent,
+                    "CHANGED": ZFSResourceListChangedEvent,
+                    "REMOVED": ZFSResourceListRemovedEvent,
+                },
+            )
+        ]
 
     def __init__(self, middleware: Middleware):
         super().__init__(middleware)
@@ -246,6 +264,18 @@ class ZFSResourceService(Service):
     @pass_thread_local_storage
     def promote_impl(self, tls: Any, data: ZFSResourcePromoteArgsData) -> None:
         _ops.promote_impl(tls, data)
+        for entry in _query.list_impl(self.context, tls, ZFSResourceQuery(paths=[data.path], properties=["origin"])):
+            self.middleware.send_event(
+                "zfs.resource.list",
+                "CHANGED",
+                id=data.path,
+                fields={
+                    "properties": entry["properties"],
+                    "user_properties": None,
+                    "inherited": [],
+                    "descendants_affected": False,
+                },
+            )
 
     @api_method(
         ZFSResourcePromoteArgs,
@@ -364,6 +394,9 @@ class ZFSResourceService(Service):
     @pass_thread_local_storage
     def rename_impl(self, tls: Any, data: ZFSResourceRenameArgsData) -> None:
         _ops.rename_impl(tls, data)
+        self.middleware.send_event("zfs.resource.list", "REMOVED", id=data.current_name)
+        for entry in _query.list_impl(self.context, tls, ZFSResourceQuery(paths=[data.new_name], properties=None)):
+            self.middleware.send_event("zfs.resource.list", "ADDED", id=data.new_name, fields=entry)
 
     @api_method(
         ZFSResourceRenameArgs,
@@ -409,7 +442,9 @@ class ZFSResourceService(Service):
     @private
     @pass_thread_local_storage
     def create_impl(self, tls: Any, data: ZFSResourceCreateArgsData) -> dict[str, Any]:
-        return _create.create_impl(self.context, tls, data)
+        entry = _create.create_impl(self.context, tls, data)
+        self.middleware.send_event("zfs.resource.list", "ADDED", id=data.path, fields=entry)
+        return entry
 
     @api_method(
         ZFSResourceCreateArgs,
@@ -545,7 +580,15 @@ class ZFSResourceService(Service):
         native share property remounts the filesystem, the library's default for ``set_properties``. Inheriting a
         user property removes it.
         """
-        return _set.set_impl(tls, path, properties, user_properties, inherit, bypass)
+        names = builtins.list(inherit or ())
+        entry = _set.set_impl(tls, path, properties, user_properties, names, bypass)
+        self.middleware.send_event(
+            "zfs.resource.list",
+            "CHANGED",
+            id=path,
+            fields=_set.changed_fields(entry, properties, user_properties, names),
+        )
+        return entry
 
     @api_method(
         ZFSResourceSetArgs,
