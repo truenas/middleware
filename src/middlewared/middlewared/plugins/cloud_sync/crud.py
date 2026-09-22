@@ -85,7 +85,6 @@ class CloudSyncServicePart(CloudTaskServiceMixin[CloudSyncEntry, CloudSyncCreate
     allow_zvol = False
     allowed_path_types = [FSLocation.LOCAL]
     path_field = "path"
-    path_consumer = "a cloud sync task"
 
     async def local_path_readonly(self, data: dict[str, Any]) -> tuple[str, bool] | None:
         return "direction", data["direction"] == "PUSH"

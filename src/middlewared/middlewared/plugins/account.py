@@ -1761,8 +1761,7 @@ class UserService(CRUDService):
             if await self.middleware.run_in_thread(self.validate_homedir_path, verrors, schema, data, users):
                 await check_path_resides_within_volume(verrors, self.middleware, schema, data['home'])
                 await self.call2(
-                    self.s.sharing.s3.validate_writable_path, verrors, f'{schema}.home', data['home'],
-                    'a home directory',
+                    self.s.sharing.s3.validate_writable_path, verrors, f'{schema}.home', data['home']
                 )
             elif combined['ssh_password_enabled']:
                 verrors.add(f'{schema}.home', 'SSH password login requires a valid home path.')

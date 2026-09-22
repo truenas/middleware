@@ -54,7 +54,6 @@ class CloudBackupServicePart(CloudTaskServiceMixin[CloudBackupEntry, CloudBackup
     allow_zvol = True
     allowed_path_types = [FSLocation.LOCAL]
     path_field = "path"
-    path_consumer = "a cloud backup task"
 
     async def local_path_readonly(self, data: dict[str, Any]) -> tuple[str, bool] | None:
         return self.path_field, True
