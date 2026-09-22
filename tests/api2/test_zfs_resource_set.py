@@ -296,15 +296,18 @@ def test_pool_root_inherit_acltype_with_local_aclmode_is_accepted():
 
 
 def test_inherit_dedup_from_dedup_parent_requires_entitlement():
-    with entitled("DEDUP"):
-        with resource("test_set_inherit_dedup", properties={"dedup": "on"}) as parent:
-            child = os.path.join(parent, "child")
-            call("zfs.resource.create", {"path": child, "properties": {"dedup": "off"}})
-            with entitled("DEDUP", False):
-                with pytest.raises(ValidationErrors) as exc_info:
-                    call("zfs.resource.set", {"path": child, "inherit": ["dedup"]})
-            assert [e.attribute for e in exc_info.value.errors] == ["zfs.resource.set.inherit.dedup"]
-            assert read(child, ["dedup"])["properties"]["dedup"]["source"]["type"] == "LOCAL"
+    with resource("test_set_inherit_dedup") as parent:
+        ssh(f"zfs set dedup=on {parent}")
+        child = os.path.join(parent, "child")
+        call("zfs.resource.create", {"path": child, "properties": {"dedup": "off"}})
+        with entitled("DEDUP", False):
+            with pytest.raises(ValidationErrors) as exc_info:
+                call("zfs.resource.set", {"path": child, "inherit": ["dedup"]})
+        assert [e.attribute for e in exc_info.value.errors] == ["zfs.resource.set.inherit.dedup"]
+        assert read(child, ["dedup"])["properties"]["dedup"]["source"]["type"] == "LOCAL"
+        with entitled("DEDUP"):
+            call("zfs.resource.set", {"path": child, "inherit": ["dedup"]})
+        assert read(child, ["dedup"])["properties"]["dedup"]["source"]["type"] == "INHERITED"
 
 
 @pytest.mark.parametrize(
