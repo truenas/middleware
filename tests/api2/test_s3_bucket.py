@@ -97,6 +97,7 @@ def test_create_owns_the_dataset(owner):
         assert b["enabled"] is True
         assert b["grants"] == []
         assert b["locked"] is False
+        assert b["tier"] is None
         assert zfs_props(
             DATASET,
             [
