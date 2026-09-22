@@ -3,10 +3,9 @@
 # Licensed under the terms of the TrueNAS Enterprise License Agreement
 # See the file LICENSE.IX for complete terms and conditions
 
-import errno
-
 from middlewared.alert.applicability import APPLIANCE_OR_HA_LICENSED, HA_LICENSED
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource, UnavailableException
+from middlewared.plugins.failover_.remote import NETWORK_ERRORS
 from middlewared.service_exception import CallError
 
 
@@ -78,7 +77,9 @@ class FailoverAlertSource(AlertSource):
             if err := await self.middleware.call('failover.vip.check_states', local, remote):
                 return [Alert(VRRPStatesDoNotAgreeAlertClass, {'error': i}) for i in err]
         except CallError as e:
-            if e.errno != errno.ECONNREFUSED:
+            # Any NETWORK_ERRORS errno means the peer is unreachable. This alert reports misbehaving peers.
+            # Do not report unreachable peers here, they will be reported by `FailoverRemoteSystemInaccessible`.
+            if e.errno not in NETWORK_ERRORS:
                 return [Alert(FailoverStatusCheckFailedAlertClass, [str(e)])]
 
         if await self.middleware.call('failover.status') in ('ERROR', 'UNKNOWN'):

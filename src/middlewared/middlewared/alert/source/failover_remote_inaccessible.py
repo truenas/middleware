@@ -15,6 +15,8 @@ class FailoverRemoteSystemInaccessibleAlertClass(AlertClass):
     level = AlertLevel.CRITICAL
     title = 'Other Controller is Inaccessible'
     text = 'Other TrueNAS controller is inaccessible. Contact support. Incident ID: %s.'
+    # Hide it from the settings UI because they show "Immediately" next to it, and it gets confusing
+    exclude_from_list = True
     applies_to = APPLIANCE_OR_HA_LICENSED
     listed_only_when = HA_LICENSED
     proactive_support = True
