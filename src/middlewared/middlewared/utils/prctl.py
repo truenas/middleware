@@ -64,5 +64,6 @@ def set_pdeath_sig(sig: signal.Signals = signal.SIGKILL) -> None:
     libc.prctl(PR_SET_PDEATHSIG, signal.Signals(sig).value, 0, 0, 0)
 
 
+# Only use this for processes forked from the main loop, or from a thread that outlives them.
 def die_with_parent() -> None:
     set_pdeath_sig()
