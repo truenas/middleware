@@ -812,7 +812,7 @@ class PoolDatasetService(CRUDService):
         # the entry point for callers outside `zfs.resource` and unpacked onto the primitive here, bypassing the
         # protected-path guard because the system dataset, apps and pool-import writers are among those callers.
         await self.call2(
-            self.s.zfs.resource.update_impl,
+            self.s.zfs.resource.set_impl,
             data['name'],
             properties=data.get('zprops'),
             user_properties=data.get('uprops'),

@@ -2,9 +2,9 @@ import errno
 
 import pytest
 
-from middlewared.api.current import ZFSResourceUpdateArgsData
-from middlewared.plugins.zfs.update_rules import (
-    UpdateContext,
+from middlewared.api.current import ZFSResourceSetArgsData
+from middlewared.plugins.zfs.set_rules import (
+    SetContext,
     check_acl_combination,
     check_has_work,
     check_inherit_names,
@@ -12,18 +12,18 @@ from middlewared.plugins.zfs.update_rules import (
     check_set_inherit_conflict,
     check_tier_managed_ssb,
     check_volsize_not_shrunk,
-    resolve_update_request,
+    resolve_set_request,
 )
 from middlewared.service_exception import ValidationError
 
 
 def request(**kwargs):
-    return ZFSResourceUpdateArgsData(path="tank/a", **kwargs)
+    return ZFSResourceSetArgsData(path="tank/a", **kwargs)
 
 
 def context(data, current=None):
-    properties, inherit = resolve_update_request(data)
-    return UpdateContext(properties=properties, inherit=inherit, current=current)
+    properties, inherit = resolve_set_request(data)
+    return SetContext(properties=properties, inherit=inherit, current=current)
 
 
 def row(type_="FILESYSTEM", **props):
@@ -39,7 +39,7 @@ def test_has_work_rejects_an_empty_request():
     with pytest.raises(ValidationError) as exc_info:
         check_has_work(data, context(data))
     assert exc_info.value.errno == errno.EINVAL
-    assert exc_info.value.attribute == "zfs.resource.update"
+    assert exc_info.value.attribute == "zfs.resource.set"
 
 
 @pytest.mark.parametrize(
@@ -66,7 +66,7 @@ def test_set_inherit_conflict_is_rejected(kwargs):
     data = request(**kwargs)
     with pytest.raises(ValidationError) as exc_info:
         check_set_inherit_conflict(data, context(data))
-    assert exc_info.value.attribute == "zfs.resource.update.inherit"
+    assert exc_info.value.attribute == "zfs.resource.set.inherit"
     assert "both set and inherited" in exc_info.value.errmsg
 
 
@@ -80,7 +80,7 @@ def test_inherit_rejects_names_outside_the_settable_set(name):
     data = request(inherit=[name])
     with pytest.raises(ValidationError) as exc_info:
         check_inherit_names(data, context(data))
-    assert exc_info.value.attribute == "zfs.resource.update.inherit"
+    assert exc_info.value.attribute == "zfs.resource.set.inherit"
     assert exc_info.value.errno == errno.EINVAL
 
 
@@ -101,7 +101,7 @@ def test_volsize_shrink_is_rejected():
     data = request(properties={"volsize": 512})
     with pytest.raises(ValidationError) as exc_info:
         check_volsize_not_shrunk(data, context(data, row("VOLUME", volsize=1024)))
-    assert exc_info.value.attribute == "zfs.resource.update.properties"
+    assert exc_info.value.attribute == "zfs.resource.set.properties"
     assert exc_info.value.errno == errno.EINVAL
 
 
@@ -112,38 +112,38 @@ def test_volsize_equal_larger_or_unparsed_is_left_to_the_library(volsize):
 
 
 def test_setting_posix_acltype_fills_discard_companions():
-    properties, inherit = resolve_update_request(request(properties={"acltype": "posix"}))
+    properties, inherit = resolve_set_request(request(properties={"acltype": "posix"}))
     assert properties.aclmode == "discard"
     assert properties.aclinherit == "discard"
     assert inherit == set()
 
 
 def test_setting_nfsv4_acltype_fills_passthrough_aclinherit_only():
-    properties, _ = resolve_update_request(request(properties={"acltype": "nfsv4"}))
+    properties, _ = resolve_set_request(request(properties={"acltype": "nfsv4"}))
     assert properties.aclinherit == "passthrough"
     assert properties.aclmode is None
 
 
 def test_acltype_fill_in_keeps_explicit_companions():
-    properties, _ = resolve_update_request(request(properties={"acltype": "posix", "aclinherit": "restricted"}))
+    properties, _ = resolve_set_request(request(properties={"acltype": "posix", "aclinherit": "restricted"}))
     assert properties.aclmode == "discard"
     assert properties.aclinherit == "restricted"
 
 
 def test_acltype_fill_in_skips_a_companion_being_inherited():
-    properties, inherit = resolve_update_request(request(properties={"acltype": "posix"}, inherit=["aclmode"]))
+    properties, inherit = resolve_set_request(request(properties={"acltype": "posix"}, inherit=["aclmode"]))
     assert properties.aclmode is None
     assert properties.aclinherit == "discard"
     assert inherit == {"aclmode"}
 
 
 def test_inheriting_acltype_fans_out_to_companions():
-    _, inherit = resolve_update_request(request(inherit=["acltype"]))
+    _, inherit = resolve_set_request(request(inherit=["acltype"]))
     assert inherit == {"acltype", "aclmode", "aclinherit"}
 
 
 def test_inheriting_acltype_leaves_a_companion_the_request_sets():
-    properties, inherit = resolve_update_request(request(inherit=["acltype"], properties={"aclmode": "passthrough"}))
+    properties, inherit = resolve_set_request(request(inherit=["acltype"], properties={"aclmode": "passthrough"}))
     assert inherit == {"acltype", "aclinherit"}
     assert properties.aclmode == "passthrough"
 
@@ -168,8 +168,8 @@ def test_acl_combination_accepts_a_consistent_request():
 @pytest.mark.parametrize(
     "kwargs, attribute",
     [
-        ({"properties": {"special_small_blocks": "16M"}}, "zfs.resource.update.properties"),
-        ({"inherit": ["special_small_blocks"]}, "zfs.resource.update.inherit"),
+        ({"properties": {"special_small_blocks": "16M"}}, "zfs.resource.set.properties"),
+        ({"inherit": ["special_small_blocks"]}, "zfs.resource.set.inherit"),
     ],
 )
 def test_tier_owns_special_small_blocks_on_both_halves(kwargs, attribute):

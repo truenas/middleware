@@ -278,6 +278,7 @@ READ_RESOURCE_BLACKLIST = (
     '.create', '.do_create',
     '.update', '.do_update',
     '.delete', '.do_delete',
+    '.set', '.destroy',
 )
 
 

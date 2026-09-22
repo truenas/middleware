@@ -10,8 +10,8 @@ from middlewared.api.current import ZFSResourceEntry, ZFSResourceQuery
 from middlewared.service_exception import CallError, ValidationError
 
 from .create_impl import ZFS_INVALID_INPUT_ERRORS
-from .update_rules import (
-    UpdateContext,
+from .set_rules import (
+    SetContext,
     check_acl_combination,
     check_dedup_entitlement,
     check_dedup_tiering,
@@ -23,20 +23,20 @@ from .update_rules import (
     check_tier_managed_ssb,
     check_user_property_names,
     check_volsize_not_shrunk,
-    resolve_update_request,
+    resolve_set_request,
 )
 from .utils import reject_protected_path, reject_snapshot_path
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-    from middlewared.api.current import ZFSResourceUpdateArgsData
+    from middlewared.api.current import ZFSResourceSetArgsData
     from middlewared.service import ServiceContext
 
-SCHEMA = "zfs.resource.update"
+SCHEMA = "zfs.resource.set"
 
 
-def update_impl(
+def set_impl(
     tls: Any,
     path: str,
     properties: dict[str, Any] | None = None,
@@ -55,10 +55,10 @@ def update_impl(
         ds.inherit_property(property=name)
 
 
-def update(context: ServiceContext, data: ZFSResourceUpdateArgsData) -> ZFSResourceEntry:
+def set(context: ServiceContext, data: ZFSResourceSetArgsData) -> ZFSResourceEntry:
     path = data.path
-    properties, inherit = resolve_update_request(data)
-    ctx = UpdateContext(properties=properties, inherit=inherit)
+    properties, inherit = resolve_set_request(data)
+    ctx = SetContext(properties=properties, inherit=inherit)
 
     check_path_shape(data, ctx)
     reject_protected_path(SCHEMA, path)
@@ -108,7 +108,7 @@ def update(context: ServiceContext, data: ZFSResourceUpdateArgsData) -> ZFSResou
     props = properties.model_dump(exclude_none=True)
     try:
         context.call_sync2(
-            context.s.zfs.resource.update_impl,
+            context.s.zfs.resource.set_impl,
             path,
             properties=props,
             user_properties=data.user_properties,
