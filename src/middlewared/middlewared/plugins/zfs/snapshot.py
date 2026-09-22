@@ -162,8 +162,8 @@ class ZFSResourceSnapshotService(Service):
         A validation error is raised when:
 
         - the snapshot does not exist (``ENOENT``)
-        - it has dependent clones and ``defer`` is ``false`` (``ENOTEMPTY``)
-        - it has active holds (``ENOTEMPTY``)
+        - it has dependent clones and ``defer`` is ``false`` (``EBUSY``)
+        - it has active holds (``EBUSY``)
         - a protected path is targeted without ``bypass`` (``EACCES``)
 
         Examples:
@@ -239,7 +239,7 @@ class ZFSResourceSnapshotService(Service):
 
     @private
     @pass_thread_local_storage
-    def clone_impl(self, tls: Any, data: ZFSResourceSnapshotCloneQuery) -> None:
+    def clone_impl(self, tls: Any, data: ZFSResourceSnapshotCloneQuery) -> bool:
         return _ops.clone_impl(self.context, tls, data)
 
     @api_method(

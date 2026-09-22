@@ -831,13 +831,10 @@ class ZFSResourceRenameArgsData(BaseModel):
         default=True,
         description="Force unmount any filesystem that has to be unmounted in the process.",
     )
-    force: bool = Field(
+    bypass: Private[bool] = Field(
         default=False,
         description=(
-            "This operation does not check whether the resource is currently in use. Renaming an active resource may "
-            "disrupt SMB shares, iSCSI targets, snapshots, replication, and other services.\n"
-            "\n"
-            "Set Force only if you understand and accept the risks."
+            'If true, will bypass the safety checks that prevent renaming zfs resources to or from "protected" paths.'
         ),
     )
 
@@ -851,7 +848,13 @@ class ZFSResourceRenameResult(BaseModel):
 
 
 class ZFSResourcePromoteArgsData(BaseModel):
-    path: NonEmptyString = Field(description="Path of the cloned zfs resource to be promoted.")
+    path: DATASET_NAME = Field(description="Path of the cloned zfs resource to be promoted.")
+    bypass: Private[bool] = Field(
+        default=False,
+        description=(
+            'If true, will bypass the safety checks that prevent promoting zfs resources under "protected" paths.'
+        ),
+    )
 
 
 class ZFSResourcePromoteArgs(BaseModel):

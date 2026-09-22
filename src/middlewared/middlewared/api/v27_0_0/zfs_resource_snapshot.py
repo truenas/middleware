@@ -281,6 +281,10 @@ class ZFSResourceSnapshotCloneQuery(BaseModel):
     snapshot: NonEmptyString = Field(description="Source snapshot path to clone (e.g., 'pool/dataset@snapshot').")
     dataset: NonEmptyString = Field(description="Destination dataset path for the clone (e.g., 'pool/clone').")
     properties: dict[str, str | int] = Field(default={}, description="ZFS properties to set on the cloned dataset.")
+    no_mount: bool = Field(
+        default=False,
+        description="Do not mount the clone after creating it. Volume clones are never mounted.",
+    )
     bypass: Private[bool] = Field(
         default=False,
         description=(

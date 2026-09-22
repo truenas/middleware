@@ -17,6 +17,7 @@ from .load_unload_impl import unload_key_impl
 from .mount_unmount_impl import mount_impl, unmount_impl
 from .rename_promote_clone_impl import promote_impl as _raw_promote
 from .rename_promote_clone_impl import rename_impl as _raw_rename
+from .utils import reject_protected_path
 from .zvol_utils import get_zvol_attachments_impl, unlocked_zvols_fast_impl
 
 if TYPE_CHECKING:
@@ -49,12 +50,11 @@ def unlocked_zvols_fast(
 
 def promote_impl(tls: Any, data: ZFSResourcePromoteArgsData) -> None:
     schema = "zfs.resource.promote"
+    reject_protected_path(schema, data.path, data.bypass)
     try:
         _raw_promote(tls, data.path)
     except ZFSPathInvalidException as e:
         raise ValidationError(schema, e.message, errno.EINVAL)
-    except ZFSPathNotProvidedException:
-        raise ValidationError(schema, "'path' key is required")
     except ZFSPathNotFoundException as e:
         raise ValidationError(schema, e.message, errno.ENOENT)
 
@@ -111,23 +111,15 @@ def unload_key(tls: Any, filesystem: str, recursive: bool = False, force_unmount
 
 def rename_impl(tls: Any, data: ZFSResourceRenameArgsData) -> None:
     schema = "zfs.resource.rename"
-    if "@" in data.current_name:
-        raise ValidationError(schema, "Use `zfs.resource.snapshot.rename` to rename snapshots.")
+    reject_protected_path(schema, data.current_name, data.bypass)
+    reject_protected_path(schema, data.new_name, data.bypass)
     try:
         _raw_rename(tls, data.current_name, data.new_name, False, data.no_unmount, data.force_unmount)
     except ZFSPathAlreadyExistsException as e:
         raise ValidationError(schema, e.message, errno.EEXIST)
-    except ZFSPathNotProvidedException:
-        raise ValidationError(schema, "'current_name' key is required")
     except ZFSPathNotFoundException as e:
         raise ValidationError(schema, e.message, errno.ENOENT)
 
 
 def rename(context: ServiceContext, data: ZFSResourceRenameArgsData) -> None:
-    if not data.force:
-        raise ValidationError(
-            "zfs.resource.rename.force",
-            "No safety checks are performed when renaming ZFS resources; this may break existing usages. "
-            "If you understand the risks, please set force and proceed.",
-        )
     context.call_sync2(context.s.zfs.resource.rename_impl, data)

@@ -252,8 +252,8 @@ class ZFSResourceService(Service):
         resource it was cloned from the dependent one instead. This is how a clone is made destroyable
         independently of its origin.
 
-        A validation error is raised when the resource does not exist (``ENOENT``) or is not a clone
-        (``EINVAL``).
+        A validation error is raised when the resource does not exist (``ENOENT``), is not a clone
+        (``EINVAL``) or is a protected path (``EACCES``).
 
         Example:
 
@@ -369,23 +369,22 @@ class ZFSResourceService(Service):
 
         .. warning::
 
-            No safety checks are performed. If the resource is in use by services such as SMB, iSCSI,
+            No check is made whether the resource is in use. If it is used by services such as SMB, iSCSI,
             snapshot tasks, replication, or cloud sync, renaming it may cause disruptions or service
-            failures. Proceed only if you are certain the resource is not in use, and set ``force`` to
-            acknowledge that.
+            failures. Proceed only if you are certain the resource is not in use.
 
         A validation error is raised when:
 
-        - ``force`` was not set
         - a snapshot path (containing ``@``) is supplied
         - the resource does not exist (``ENOENT``)
         - the new name is already taken (``EEXIST``)
+        - either name is a protected path (``EACCES``)
 
         Example:
 
         .. code:: json
 
-            {"current_name": "tank/documents", "new_name": "tank/archive", "force": true}
+            {"current_name": "tank/documents", "new_name": "tank/archive"}
         """
         _ops.rename(self.context, data)
 
