@@ -58,6 +58,7 @@ from middlewared.plugins.smb_.util_param import (
 )
 from middlewared.plugins.smb_.util_smbconf import generate_smb_conf_dict
 from middlewared.plugins.smb_.utils import get_share_name, is_time_machine_share, smb_strip_comments
+from middlewared.plugins.smb_.zfs_delegate import SMBShareDelegate
 from middlewared.service import ConfigService, SharingService, ValidationError, ValidationErrors, job, private
 from middlewared.service_exception import CallError, MatchNotFound
 import middlewared.sqlalchemy as sa
@@ -1944,3 +1945,4 @@ async def setup(middleware):
         middleware.services.truenas.license.register_reconcile_delegate,
         SMBLicenseReconcileDelegate(),
     )
+    await middleware.call2(middleware.services.zfs.resource.register_delegate, SMBShareDelegate(middleware))

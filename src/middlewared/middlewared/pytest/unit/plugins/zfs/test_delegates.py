@@ -8,6 +8,10 @@ from unittest.mock import Mock
 import pytest
 
 from middlewared.api.current import ZFSResourceSetArgsData
+from middlewared.plugins.iscsi_.zfs_delegate import ISCSIExtentDelegate
+from middlewared.plugins.nvmet.zfs_delegate import NVMetNamespaceDelegate
+from middlewared.plugins.smb_.zfs_delegate import SMBShareDelegate
+from middlewared.plugins.vm.attachments import VMDeviceDelegate
 from middlewared.plugins.zfs import resource_set, set_rules, zvol_utils
 from middlewared.plugins.zfs.delegates import (
     ZFSResourceDelegate,
@@ -291,6 +295,15 @@ def test_validate_delegate_accepts_a_well_formed_delegate():
 def test_validate_delegate_rejects_a_malformed_delegate(name, types, triggers):
     with pytest.raises(ValueError):
         validate_delegate(fake(name, triggers=triggers, types=types))
+
+
+def test_concrete_delegates_validate():
+    delegates = [
+        cls(Mock()) for cls in (ISCSIExtentDelegate, NVMetNamespaceDelegate, SMBShareDelegate, VMDeviceDelegate)
+    ]
+    for delegate in delegates:
+        validate_delegate(delegate)
+    assert sorted(d.name for d in delegates) == ["iscsi.extent", "nvmet.namespace", "smb.share", "vm.device"]
 
 
 @pytest.fixture

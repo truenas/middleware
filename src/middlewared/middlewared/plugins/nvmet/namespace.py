@@ -30,6 +30,7 @@ from middlewared.utils.nvmet.spdk import resize_namespace as spdk_resize_namespa
 from middlewared.utils.nvmet.spdk import unlock_namespace as spdk_unlock_namespace
 
 from .constants import NAMESPACE_DEVICE_TYPE
+from .zfs_delegate import NVMetNamespaceDelegate
 
 DISABLE_VOLTHREADING_FOR_NVMET = True
 
@@ -555,3 +556,4 @@ async def pool_post_import(middleware, pool):
 
 async def setup(middleware):
     middleware.register_hook('pool.post_import', pool_post_import, sync=True)
+    await middleware.call2(middleware.services.zfs.resource.register_delegate, NVMetNamespaceDelegate(middleware))
