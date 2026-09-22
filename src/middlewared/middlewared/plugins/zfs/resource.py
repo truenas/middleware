@@ -536,7 +536,7 @@ class ZFSResourceService(Service):
         user_properties: dict[str, str] | None = None,
         inherit: Iterable[str] | None = None,
         bypass: bool = False,
-    ) -> None:
+    ) -> dict[str, Any]:
         """
         Set native properties, set user properties and inherit properties, in that order, on one open handle.
 
@@ -545,7 +545,7 @@ class ZFSResourceService(Service):
         native share property remounts the filesystem, the library's default for ``set_properties``. Inheriting a
         user property removes it.
         """
-        _set.set_impl(tls, path, properties, user_properties, inherit, bypass)
+        return _set.set_impl(tls, path, properties, user_properties, inherit, bypass)
 
     @api_method(
         ZFSResourceSetArgs,
