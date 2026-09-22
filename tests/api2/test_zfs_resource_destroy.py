@@ -2,9 +2,8 @@ import errno
 import os
 
 import pytest
-from truenas_api_client import ClientException
 
-from middlewared.service_exception import ValidationError
+from middlewared.service_exception import CallError, ValidationError
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call, mock, ssh
 
@@ -253,9 +252,9 @@ def test_zfs_resource_destroy_unmount_failure_is_reported():
     ssh(f"mkdir -p {sub}")
     ssh(f"mount -t tmpfs tmpfs {sub}")
     try:
-        with pytest.raises(ClientException) as ce:
+        with pytest.raises(CallError) as ce:
             call("zfs.resource.destroy", {"path": fs})
-        assert fs in ce.value.error
+        assert fs in ce.value.errmsg
         assert call("zfs.resource.list", {"paths": [fs], "properties": None})
     finally:
         ssh(f"umount {sub}")
@@ -273,10 +272,10 @@ def test_zfs_resource_destroy_recursive_with_undestroyable_clone_is_reported():
     ssh(f"zfs snapshot {clone_a}@snap_a")
     ssh(f"zfs clone {clone_a}@snap_a {clone_b}")
     try:
-        with pytest.raises(ClientException) as ce:
+        with pytest.raises(CallError) as ce:
             call("zfs.resource.destroy", {"path": fs, "recursive": True})
         assert ce.value.errno == errno.EBUSY
-        assert "There are clones" in ce.value.error
+        assert "There are clones" in ce.value.errmsg
         assert call("zfs.resource.list", {"paths": [fs], "properties": None})
     finally:
         for path in (clone_b, clone_a, fs):
@@ -357,10 +356,10 @@ def test_zfs_resource_destroy_recursive_still_fails_for_a_volume_in_use():
         call("zfs.resource.create", {"path": vol, "type": "VOLUME", "properties": {"volsize": 1024 * 1024}})
         pid = ssh(f"nohup sleep 120 < /dev/zvol/{vol} >/dev/null 2>&1 & echo $!").split()[-1]
         try:
-            with pytest.raises(ClientException) as ce:
+            with pytest.raises(CallError) as ce:
                 call("zfs.resource.destroy", {"path": parent, "recursive": True})
             assert ce.value.errno == errno.EBUSY
-            assert ce.value.error == f"[EBUSY] Failed to destroy {parent!r} ({vol!r}: Device or resource busy)"
+            assert ce.value.errmsg == f"Failed to destroy {parent!r} ({vol!r}: Device or resource busy)"
             assert call("zfs.resource.list", {"paths": [vol], "properties": None})
         finally:
             ssh(f"kill {pid}", check=False)

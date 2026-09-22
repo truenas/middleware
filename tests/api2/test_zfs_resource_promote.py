@@ -55,7 +55,7 @@ def test_promote_empty_path_is_rejected():
     with pytest.raises(ValidationErrors) as ve:
         call("zfs.resource.promote", {"path": ""})
     assert ve.value.errors[0].attribute == "data.path"
-    assert "at least 1 character" in ve.value.errors[0].errmsg
+    assert "Please provide a valid dataset name according to ZFS standards" in ve.value.errors[0].errmsg
 
 
 def test_promote_protected_path_is_rejected():
