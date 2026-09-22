@@ -9,7 +9,9 @@ from truenas_pylicensed.features import LicenseFeature
 from middlewared.api.current import ZFSResourceEntry, ZFSResourceQuery
 from middlewared.service_exception import CallError, ValidationError, ValidationErrors
 
+from . import zvol_utils
 from .create_impl import ZFS_INVALID_INPUT_ERRORS
+from .delegates import participating, run_after, run_validate
 from .normalization import normalize_asdict_result
 from .property_management import DeterminedProperties, build_set_of_zfs_props
 from .set_rules import (
@@ -30,6 +32,8 @@ if TYPE_CHECKING:
 
     from middlewared.api.current import ZFSResourceSetArgsData
     from middlewared.service import ServiceContext
+
+    from .delegates import ZFSResourceDelegate
 
 SCHEMA = "zfs.resource.set"
 
@@ -184,7 +188,14 @@ def _sources(path: str, row: dict[str, Any]) -> PropertyView:
     return PropertyView(path, {name: (prop["source"] or {}).get("type") for name, prop in props.items()})
 
 
-def set(context: ServiceContext, data: ZFSResourceSetArgsData) -> ZFSResourceEntry:
+def snapshot_devices(path: str) -> frozenset[str]:
+    """The names of the snapshot devices of the volume `path` that are present now."""
+    return frozenset(name for name in zvol_utils.unlocked_zvols_fast_impl() if name.startswith(f"{path}@"))
+
+
+def set(
+    context: ServiceContext, data: ZFSResourceSetArgsData, delegates: Iterable[ZFSResourceDelegate] = ()
+) -> ZFSResourceEntry:
     path = data.path
     reject_protected_path(SCHEMA, path)
     verrors = ValidationErrors()
@@ -192,6 +203,7 @@ def set(context: ServiceContext, data: ZFSResourceSetArgsData) -> ZFSResourceEnt
     verrors.check()
 
     touched = touched_natives(data.properties, data.inherit)
+    active = participating(delegates, touched)
     pool_root = "/" not in path
     parent_path = path.rsplit("/", 1)[0]
     fetch_parent = any(":" not in name for name in data.inherit) and not pool_root
@@ -220,6 +232,7 @@ def set(context: ServiceContext, data: ZFSResourceSetArgsData) -> ZFSResourceEnt
         if (parent_row := rows.get(parent_path)) is None:
             raise CallError(f"The parent of {path!r} was removed while its properties were being set.", errno.ENOENT)
         parent = _values(parent_path, parent_row)
+    active = [delegate for delegate in active if target["type"] in delegate.types]
 
     state = SetContext(
         path=path,
@@ -233,9 +246,14 @@ def set(context: ServiceContext, data: ZFSResourceSetArgsData) -> ZFSResourceEnt
         pool_root=pool_root,
         tier_enabled=tier_enabled,
         dedup_entitlement=dedup_entitlement,
+        snapshot_devices=(
+            snapshot_devices(path) if target["type"] == "VOLUME" and "snapdev" in touched else frozenset()
+        ),
     )
     state = apply_thick_follow(apply_acl_coupling(state))
     failures = validate_set(context, state, verrors, context.logger)
+    if active:
+        failures.extend(context.middleware.run_coroutine(run_validate(active, state, verrors, context.logger)))
     verrors.check()
     if failures:
         name, error = failures[0]
@@ -248,7 +266,7 @@ def set(context: ServiceContext, data: ZFSResourceSetArgsData) -> ZFSResourceEnt
             **{**target, "properties": projected or None, "user_properties": None, "children": None}
         )
 
-    return ZFSResourceEntry(
+    entry = ZFSResourceEntry(
         **context.call_sync2(
             context.s.zfs.resource.set_impl,
             path,
@@ -257,3 +275,6 @@ def set(context: ServiceContext, data: ZFSResourceSetArgsData) -> ZFSResourceEnt
             inherit=sorted(state.inherit),
         )
     )
+    if active:
+        context.middleware.run_coroutine(run_after(active, state, entry, context.logger))
+    return entry
