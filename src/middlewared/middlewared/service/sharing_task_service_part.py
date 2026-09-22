@@ -14,42 +14,44 @@ if TYPE_CHECKING:
     from middlewared.utils.service.call_mixin import CallMixin
 
 
-__all__ = ("SharingTaskServicePart", "validate_s3_bucket_path")
+__all__ = ("SharingTaskServicePart", "dataset_split", "validate_s3_bucket_write")
 
 
-async def validate_s3_bucket_path(
+def dataset_split(data: Any) -> tuple[str | None, str | None]:
+    """The dataset a path resolved to and the path within it, from a row or a model, `None` for both where the
+    path has not been resolved."""
+    if isinstance(data, dict):
+        return data.get("dataset"), data.get("relative_path")
+    return data.dataset, data.relative_path
+
+
+async def validate_s3_bucket_write(
     caller: CallMixin,
     verrors: ValidationErrors,
     schema: str,
     path_field: str,
     path: str,
-    dataset: str | None,
-    relative_path: str | None,
+    data: Any,
     readonly: tuple[str, bool] | None,
 ) -> None:
-    """What `validate_path_field` asks of `sharing.s3` for a local path, for both service hierarchies.
+    """Refuse a local path on an S3 bucket's dataset to anything that writes it. A bucket is written only
+    through the S3 service, whoever holds the path and wherever on the dataset it points.
 
-    An S3 bucket is written only through the S3 service, so a share or task that writes its path -- one that is
-    not read-only, or that has no read-only mode -- may not have it on a bucket's dataset at all, and one that only
-    reads it may read the bucket's objects, under its `s3data` directory, and nothing else on the dataset.
-    `readonly` is what `local_path_readonly` answered: the field that decides and whether it is read-only, or None
-    where it always writes. A write refused for want of the read-only flag is reported on that flag, since setting
-    it is the fix; the rest on the path.
+    `readonly` is what `local_path_readonly` answered: the field that decides and whether it is read-only, or
+    None where it always writes. A write refused for want of the read-only flag is reported on that flag,
+    since setting it is the fix.
     """
     if readonly is None:
         field, writes = path_field, True
     else:
         field, writes = readonly[0], not readonly[1]
-    if writes:
-        await caller.call2(
-            caller.s.sharing.s3.validate_writable_path,
-            verrors, f"{schema}.{field}", path, dataset, relative_path,
-        )
-    else:
-        await caller.call2(
-            caller.s.sharing.s3.validate_readonly_path,
-            verrors, f"{schema}.{path_field}", path, dataset, relative_path,
-        )
+    if not writes:
+        return
+    dataset, relative_path = dataset_split(data)
+    await caller.call2(
+        caller.s.sharing.s3.validate_writable_path,
+        verrors, f"{schema}.{field}", path, dataset, relative_path,
+    )
 
 
 class SharingTaskServicePart[E, PK = int](CRUDServicePart[E, PK]):
@@ -147,8 +149,7 @@ class SharingTaskServicePart[E, PK = int](CRUDServicePart[E, PK]):
     async def local_path_readonly(self, data: dict[str, Any]) -> tuple[str, bool] | None:
         """Whether the share or task only reads its local path, and the field that decides it -- a share's
         read-only flag, a task's direction -- or None where it always writes there. What `validate_path_field`
-        tells `sharing.s3`, which lets a bucket be read from beside the S3 service, under its objects, and never
-        written (`validate_s3_bucket_path`)."""
+        tells `sharing.s3`, which never lets a bucket be written from beside the S3 service."""
         if self.readonly_field is None:
             return None
         return self.readonly_field, bool(data[self.readonly_field])
@@ -179,10 +180,8 @@ class SharingTaskServicePart[E, PK = int](CRUDServicePart[E, PK]):
             if split_path:
                 ds, rel_path = await self.middleware.run_in_thread(resolve_dataset_path, path, self.middleware)
                 data.update(dataset=ds, relative_path=rel_path)
-            else:
-                ds, rel_path = data.get("dataset"), data.get("relative_path")
-            await validate_s3_bucket_path(
-                self, verrors, schema, self.path_field, path, ds, rel_path, await self.local_path_readonly(data),
+            await validate_s3_bucket_write(
+                self, verrors, schema, self.path_field, path, data, await self.local_path_readonly(data)
             )
 
         else:
