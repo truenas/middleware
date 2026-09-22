@@ -179,9 +179,11 @@ def resolve_create_request(
     if data.type == "VOLUME":
         if properties.volsize is not None and properties.refreservation is None:
             # thick provision unless told otherwise, like `zfs create -V`.
-            # NOTE the CLI sets refreservation=auto (volsize plus metadata
-            # overhead) but libzfs cannot resolve "auto" through our create
-            # path, so reserve the volsize itself
+            # TODO: reserve refreservation=auto (volsize plus metadata
+            # overhead) once libzfs zfs_create() resolves it; today only zfs
+            # set and zfs clone do, so create fails with "out of space".
+            # Until then reserve the volsize itself; pool.dataset.update
+            # switches these zvols to auto when they are grown
             properties.refreservation = properties.volsize
     else:
         if properties.xattr is None:
