@@ -97,16 +97,17 @@ def test_missing_resource_is_enoent():
     assert exc_info.value.errno == errno.ENOENT
 
 
-def test_volsize_shrink_is_rejected():
-    data = request(properties={"volsize": 512})
+@pytest.mark.parametrize("volsize", [512, "512", "0.5K"])
+def test_volsize_shrink_is_rejected(volsize):
+    data = request(properties={"volsize": volsize})
     with pytest.raises(ValidationError) as exc_info:
         check_volsize_not_shrunk(data, context(data, row("VOLUME", volsize=1024)))
     assert exc_info.value.attribute == "zfs.resource.set.properties"
     assert exc_info.value.errno == errno.EINVAL
 
 
-@pytest.mark.parametrize("volsize", [1024, 2048, "1024", "2G"])
-def test_volsize_equal_larger_or_unparsed_is_left_to_the_library(volsize):
+@pytest.mark.parametrize("volsize", [1024, 2048, "1024", "1K"])
+def test_volsize_equal_or_larger_is_left_to_the_library(volsize):
     data = request(properties={"volsize": volsize})
     check_volsize_not_shrunk(data, context(data, row("VOLUME", volsize=1024)))
 

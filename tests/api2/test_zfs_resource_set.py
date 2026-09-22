@@ -128,6 +128,40 @@ def test_zfs_resource_set_volsize_may_grow_but_not_shrink():
         assert entry["properties"]["volsize"]["value"] == 2 * GiB
 
 
+def test_set_volsize_shrink_with_suffix_is_rejected():
+    with resource(
+        "test_set_volsize_suffix", type="VOLUME", properties={"volsize": GiB, "refreservation": "none"}
+    ) as path:
+        with pytest.raises(ValidationError) as exc_info:
+            call("zfs.resource.set", {"path": path, "properties": {"volsize": "512M"}})
+        assert exc_info.value.attribute == "zfs.resource.set.properties"
+        assert "may not be reduced" in exc_info.value.errmsg
+
+        assert read(path, ["volsize"])["properties"]["volsize"]["value"] == GiB
+
+
+def test_set_quota_none_clears_it():
+    with resource("test_set_quota_none") as path:
+        call("zfs.resource.set", {"path": path, "properties": {"quota": "1G"}})
+        assert read(path, ["quota"])["properties"]["quota"]["value"] == GiB
+
+        call("zfs.resource.set", {"path": path, "properties": {"quota": "none"}})
+        assert read(path, ["quota"])["properties"]["quota"]["value"] in (0, None)
+
+
+def test_set_quota_zero_clears_it():
+    with resource("test_set_quota_zero") as path:
+        call("zfs.resource.set", {"path": path, "properties": {"quota": GiB, "refquota": GiB}})
+        props = read(path, ["quota", "refquota"])["properties"]
+        assert props["quota"]["value"] == GiB
+        assert props["refquota"]["value"] == GiB
+
+        call("zfs.resource.set", {"path": path, "properties": {"quota": 0, "refquota": 0}})
+        props = read(path, ["quota", "refquota"])["properties"]
+        assert props["quota"]["value"] in (0, None)
+        assert props["refquota"]["value"] in (0, None)
+
+
 @pytest.mark.parametrize("prop", ["mountpoint", "canmount", "casesensitivity", "volblocksize", "encryption"])
 def test_zfs_resource_set_rejects_property_outside_the_public_set(prop):
     with resource("test_update_hidden_prop") as path:
