@@ -1,7 +1,11 @@
 import pytest
 
 from middlewared.test.integration.assets.pool import dataset, snapshot
-from middlewared.test.integration.utils import call
+from middlewared.test.integration.utils import call, ssh
+
+
+def mounted(path):
+    return call("zfs.resource.list", {"paths": [path], "properties": ["mounted"]})[0]["properties"]["mounted"]["raw"]
 
 
 def test_zfs_resource_snapshot_clone_basic():
@@ -179,3 +183,38 @@ def test_zfs_resource_snapshot_clone_protected_destination():
                     {"snapshot": snap, "dataset": "boot-pool/test_clone"},
                 )
             assert "protected" in str(exc_info.value).lower()
+
+
+def test_zfs_resource_snapshot_clone_mounts_filesystem():
+    with dataset("test_snap_clone_mount_src") as ds:
+        with snapshot(ds, "snap") as snap:
+            clone_path = f"{ds.split('/')[0]}/test_snap_clone_mount_dest"
+            call("zfs.resource.snapshot.clone", {"snapshot": snap, "dataset": clone_path})
+            try:
+                assert mounted(clone_path) == "yes"
+            finally:
+                call("zfs.resource.destroy", {"path": clone_path, "recursive": True})
+
+
+def test_zfs_resource_snapshot_clone_no_mount():
+    with dataset("test_snap_clone_nomount_src") as ds:
+        with snapshot(ds, "snap") as snap:
+            clone_path = f"{ds.split('/')[0]}/test_snap_clone_nomount_dest"
+            call("zfs.resource.snapshot.clone", {"snapshot": snap, "dataset": clone_path, "no_mount": True})
+            try:
+                assert mounted(clone_path) == "no"
+            finally:
+                call("zfs.resource.destroy", {"path": clone_path, "recursive": True})
+
+
+def test_zfs_resource_snapshot_clone_zvol_is_not_mounted():
+    with dataset("test_snap_clone_zvol_nomount", {"type": "VOLUME", "volsize": 1048576}) as zvol:
+        with snapshot(zvol, "snap") as snap:
+            clone_path = f"{zvol.split('/')[0]}/test_snap_clone_zvol_nomount_dest"
+            call("zfs.resource.snapshot.clone", {"snapshot": snap, "dataset": clone_path})
+            try:
+                result = call("zfs.resource.list", {"paths": [clone_path], "properties": None})
+                assert result[0]["type"] == "VOLUME"
+                assert ssh(f"findmnt -rn -S {clone_path}", check=False).strip() == ""
+            finally:
+                call("zfs.resource.destroy", {"path": clone_path, "recursive": True})

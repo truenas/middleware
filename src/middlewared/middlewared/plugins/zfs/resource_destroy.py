@@ -9,7 +9,7 @@ from middlewared.api.current import (
     ZFSResourceQuery,
     ZFSResourceSnapshotCountQuery,
 )
-from middlewared.service_exception import ValidationError
+from middlewared.service_exception import CallError, ValidationError
 
 from .destroy_impl import destroy_impl as _raw_destroy
 from .exceptions import (
@@ -79,7 +79,7 @@ def destroy(context: ServiceContext, data: ZFSResourceDestroyArgsData) -> None:
         context.call_sync2(context.s.zfs.resource.destroy_impl, data.path, data.recursive)
     except ZFSPathHasClonesException as e:
         raise ValidationError(
-            f"{SCHEMA}.defer",
+            SCHEMA,
             f"Snapshot {e.path!r} has dependent clones: {', '.join(e.clones)}",
             errno.ENOTEMPTY,
         )
@@ -88,4 +88,4 @@ def destroy(context: ServiceContext, data: ZFSResourceDestroyArgsData) -> None:
     except ZFSPathNotFoundException as e:
         raise ValidationError(SCHEMA, e.message, errno.ENOENT)
     except ZFSDestroyFailedException as e:
-        raise ValidationError(SCHEMA, e.message, e.errnum)
+        raise CallError(e.message, e.errnum)

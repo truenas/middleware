@@ -56,3 +56,21 @@ def test_promote_empty_path_is_rejected():
         call("zfs.resource.promote", {"path": ""})
     assert ve.value.errors[0].attribute == "data.path"
     assert "at least 1 character" in ve.value.errors[0].errmsg
+
+
+def test_promote_protected_path_is_rejected():
+    path = os.path.join(pool_name, ".system", "test_promote_protected")
+    with pytest.raises(ValidationError) as ve:
+        call("zfs.resource.promote", {"path": path})
+    assert ve.value.attribute == "zfs.resource.promote"
+    assert ve.value.errmsg == f"{path!r} is a protected path."
+    assert ve.value.errno == errno.EACCES
+
+
+def test_promote_bypass_is_not_settable():
+    with pytest.raises(Exception) as exc_info:
+        call("zfs.resource.promote", {"path": os.path.join(pool_name, ".system"), "bypass": True})
+
+    error = str(exc_info.value)
+    assert "bypass" in error, error
+    assert "Extra inputs are not permitted" in error, error

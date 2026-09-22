@@ -120,6 +120,7 @@ def destroy(context: ServiceContext, data: ZFSResourceSnapshotDestroyQuery) -> N
 
 def rename_impl(tls: Any, data: ZFSResourceSnapshotRenameQuery) -> None:
     reject_protected_path("zfs.resource.snapshot.rename", data.current_name, data.bypass)
+    reject_protected_path("zfs.resource.snapshot.rename", data.new_name, data.bypass)
     return _raw_rename(tls, data.current_name, data.new_name, data.recursive, False, False)
 
 
@@ -145,7 +146,7 @@ def rename(context: ServiceContext, data: ZFSResourceSnapshotRenameQuery) -> Non
         raise ValidationError(schema, e.message, errno.EEXIST)
 
 
-def clone_impl(context: ServiceContext, tls: Any, data: ZFSResourceSnapshotCloneQuery) -> None:
+def clone_impl(context: ServiceContext, tls: Any, data: ZFSResourceSnapshotCloneQuery) -> bool:
     schema = "zfs.resource.snapshot.clone"
     if "special_small_blocks" in data.properties:
         if context.call_sync2(context.s.zfs.tier.config).enabled:
@@ -158,7 +159,8 @@ def clone_impl(context: ServiceContext, tls: Any, data: ZFSResourceSnapshotClone
     reject_protected_path(schema, data.snapshot, data.bypass)
     reject_protected_path(schema, data.dataset, data.bypass)
 
-    return _raw_clone(tls, current_name=data.snapshot, new_name=data.dataset, properties=data.properties)
+    _raw_clone(tls, current_name=data.snapshot, new_name=data.dataset, properties=data.properties)
+    return bool(tls.lzh.open_resource(name=data.dataset).type == truenas_pylibzfs.ZFSType.ZFS_TYPE_FILESYSTEM)
 
 
 def clone(context: ServiceContext, data: ZFSResourceSnapshotCloneQuery) -> None:
@@ -169,13 +171,19 @@ def clone(context: ServiceContext, data: ZFSResourceSnapshotCloneQuery) -> None:
         raise ValidationError(schema, "dataset must be a dataset path (not containing '@').")
 
     try:
-        context.call_sync2(context.s.zfs.resource.snapshot.clone_impl, data)
+        is_filesystem = context.call_sync2(context.s.zfs.resource.snapshot.clone_impl, data)
     except ZFSPathNotFoundException as e:
         raise ValidationError(schema, e.message, errno.ENOENT)
     except ZFSPathAlreadyExistsException as e:
         raise ValidationError(schema, e.message, errno.EEXIST)
     except ZFSPathNotASnapshotException:
         raise ValidationError(schema, f"'{data.snapshot}' is not a snapshot.")
+
+    if is_filesystem and not data.no_mount:
+        try:
+            context.call_sync2(context.s.zfs.resource.mount, data.dataset)
+        except Exception:
+            context.logger.warning("%s: failed to mount clone", data.dataset, exc_info=True)
 
 
 def create_impl(tls: Any, data: ZFSResourceSnapshotCreateQuery) -> Any:
