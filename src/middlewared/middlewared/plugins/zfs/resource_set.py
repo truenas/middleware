@@ -12,11 +12,12 @@ from middlewared.service_exception import CallError, ValidationError, Validation
 from .create_impl import ZFS_INVALID_INPUT_ERRORS
 from .normalization import normalize_asdict_result
 from .property_management import DeterminedProperties, build_set_of_zfs_props
-from .rules_common import apply_acl_defaults
 from .set_rules import (
     SET_READ_PROPERTIES,
     PropertyView,
     SetContext,
+    apply_acl_coupling,
+    apply_thick_follow,
     touched_natives,
     validate_request,
     validate_set,
@@ -26,7 +27,7 @@ from .utils import reject_protected_path, reject_snapshot_path
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-    from middlewared.api.current import ZFSResourceSetArgsData, ZFSResourceSetProperties
+    from middlewared.api.current import ZFSResourceSetArgsData
     from middlewared.service import ServiceContext
 
 SCHEMA = "zfs.resource.set"
@@ -149,16 +150,6 @@ def set_impl(
     return info
 
 
-def _couple_acl_request(data: ZFSResourceSetArgsData) -> tuple[ZFSResourceSetProperties, frozenset[str]]:
-    """Setting acltype fills the companions the caller left alone; inheriting it also inherits them."""
-    properties = data.properties.model_copy()
-    inherit = {*data.inherit}
-    apply_acl_defaults(properties, leave=inherit)
-    if "acltype" in inherit:
-        inherit.update(name for name in ("aclmode", "aclinherit") if getattr(data.properties, name) is None)
-    return properties, frozenset(inherit)
-
-
 def _values(path: str, row: dict[str, Any]) -> PropertyView:
     return PropertyView(path, {name: prop["value"] for name, prop in (row["properties"] or {}).items()})
 
@@ -175,11 +166,10 @@ def set(context: ServiceContext, data: ZFSResourceSetArgsData) -> ZFSResourceEnt
     validate_request(data, verrors)
     verrors.check()
 
-    properties, inherit = _couple_acl_request(data)
-    touched = touched_natives(properties, inherit)
+    touched = touched_natives(data.properties, data.inherit)
     pool_root = "/" not in path
     parent_path = path.rsplit("/", 1)[0]
-    fetch_parent = any(":" not in name for name in inherit) and not pool_root
+    fetch_parent = any(":" not in name for name in data.inherit) and not pool_root
 
     tier_enabled = None
     if touched & {"special_small_blocks", "dedup"}:
@@ -209,9 +199,9 @@ def set(context: ServiceContext, data: ZFSResourceSetArgsData) -> ZFSResourceEnt
     state = SetContext(
         path=path,
         type=target["type"],
-        properties=properties,
+        properties=data.properties,
         user_properties=data.user_properties,
-        inherit=inherit,
+        inherit=frozenset(data.inherit),
         current=_values(path, target),
         source=_sources(path, target),
         parent=parent,
@@ -219,6 +209,7 @@ def set(context: ServiceContext, data: ZFSResourceSetArgsData) -> ZFSResourceEnt
         tier_enabled=tier_enabled,
         dedup_entitlement=dedup_entitlement,
     )
+    state = apply_thick_follow(apply_acl_coupling(state))
     failures = validate_set(context, state, verrors, context.logger)
     verrors.check()
     if failures:
@@ -227,7 +218,7 @@ def set(context: ServiceContext, data: ZFSResourceSetArgsData) -> ZFSResourceEnt
 
     if data.dry_run:
         current = target["properties"] or {}
-        projected = {name: current[name] for name in sorted(touched) if name in current}
+        projected = {name: current[name] for name in sorted(state.touched()) if name in current}
         return ZFSResourceEntry(
             **{**target, "properties": projected or None, "user_properties": None, "children": None}
         )
@@ -236,8 +227,8 @@ def set(context: ServiceContext, data: ZFSResourceSetArgsData) -> ZFSResourceEnt
         **context.call_sync2(
             context.s.zfs.resource.set_impl,
             path,
-            properties=properties.model_dump(exclude_none=True),
+            properties=state.properties.model_dump(exclude_none=True),
             user_properties=data.user_properties,
-            inherit=sorted(inherit),
+            inherit=sorted(state.inherit),
         )
     )

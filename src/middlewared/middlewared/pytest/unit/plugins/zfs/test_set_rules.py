@@ -17,6 +17,8 @@ from middlewared.plugins.zfs.set_rules import (
     PropertyView,
     SetContext,
     SetRule,
+    apply_acl_coupling,
+    apply_thick_follow,
     check_acl_combination,
     check_has_work,
     check_inherit_names,
@@ -27,6 +29,7 @@ from middlewared.plugins.zfs.set_rules import (
 )
 from middlewared.service_exception import CallError, ValidationError, ValidationErrors
 
+MiB = 1024**2
 GiB = 1024**3
 PATH = "tank/a"
 
@@ -104,20 +107,90 @@ BENIGN = {
     "volsize": GiB,
     "xattr": "sa",
 }
+FILESYSTEM_NATIVES = (SETTABLE | PRIVATE_NATIVES) - {"volsize"}
+VOLUME_NATIVES = frozenset(
+    {
+        "checksum",
+        "compression",
+        "copies",
+        "dedup",
+        "prefetch",
+        "primarycache",
+        "readonly",
+        "refreservation",
+        "reservation",
+        "secondarycache",
+        "snapdev",
+        "special_small_blocks",
+        "sync",
+        "volsize",
+    }
+)
+EVERY_NATIVE = {
+    **{name: value for name, value in BENIGN.items() if name in SETTABLE},
+    "canmount": "on",
+    "mountpoint": "/mnt/tank/a",
+    "overlay": "on",
+    "prefetch": "all",
+    "primarycache": "all",
+    "secondarycache": "all",
+    "setuid": "on",
+}
 DENIED = SimpleNamespace(entitled=False, message="SENTINEL entitlement denial")
 ALLOWED = SimpleNamespace(entitled=True, message="")
 
 
+@pytest.fixture(autouse=True)
+def type_masks(monkeypatch):
+    monkeypatch.setattr(set_rules, "ZFSProperty", {name.upper(): name for name in SETTABLE | PRIVATE_NATIVES})
+    monkeypatch.setattr(set_rules, "PROPERTY_TEMPLATES", SimpleNamespace(fs=FILESYSTEM_NATIVES, vol=VOLUME_NATIVES))
+
+
+@pytest.fixture(autouse=True)
+def max_recordsize(monkeypatch, tmp_path):
+    path = tmp_path / "zfs_max_recordsize"
+    path.write_text(f"{16 * MiB}\n")
+    monkeypatch.setattr(set_rules, "ZFS_MAX_RECORDSIZE", str(path))
+    return path
+
+
+def descendant(name, ssb, dedup_source, inherited_from=None, type_="FILESYSTEM"):
+    return {
+        "name": name,
+        "type": type_,
+        "properties": {
+            "dedup": {"value": "off", "source": {"type": dedup_source, "value": inherited_from}},
+            "special_small_blocks": {"value": ssb, "source": {"type": "LOCAL", "value": None}},
+        },
+    }
+
+
+PERFORMANCE_CHILD = descendant(f"{PATH}/b", 131072, "INHERITED", "tank")
+
+
 class RecordingContext:
-    def __init__(self, special_vdev=True):
+    def __init__(self, special_vdev=True, draid=False, descendants=()):
         self.special_vdev = special_vdev
+        self.draid = draid
+        self.descendants = list(descendants)
         self.calls = []
         self.middleware = SimpleNamespace(call_sync=self.call_sync)
+        self.s = SimpleNamespace(zfs=SimpleNamespace(resource=SimpleNamespace(list_impl="zfs.resource.list_impl")))
 
     def call_sync(self, method, *args):
-        self.calls.append(method)
+        if method == "zpool.query_impl" and args[0].get("topology"):
+            self.calls.append("topology")
+            vdev_type = "draid1:1d:3c:0s" if self.draid else "mirror"
+            return [{"topology": {"data": [{"vdev_type": vdev_type}], "special": []}}]
         if method == "zpool.query_impl":
+            self.calls.append("class_special_size")
             return [{"properties": {"class_special_size": {"value": GiB if self.special_vdev else 0}}}]
+        raise AssertionError(f"unexpected call {method}")
+
+    def call_sync2(self, method, query):
+        self.calls.append(method)
+        if method == "zfs.resource.list_impl" and query.get_children:
+            return [descendant(query.paths[0], 0, "LOCAL"), *self.descendants]
         raise AssertionError(f"unexpected call {method}")
 
 
@@ -225,11 +298,18 @@ def test_index_properties_are_settable():
 
 
 RULE_TRIGGERS = {
+    "check_names_valid_for_type": SETTABLE | PRIVATE_NATIVES,
+    "check_inherit_not_received": SETTABLE | PRIVATE_NATIVES,
     "check_volsize_not_shrunk": {"volsize"},
+    "check_volsize_multiple_of_volblocksize": {"volsize"},
+    "check_reservation_headroom": {"volsize", "refreservation", "refquota"},
     "check_acl_combination": {"acltype", "aclmode"},
     "check_tier_managed_ssb": {"special_small_blocks"},
     "check_dedup_entitlement": {"dedup"},
     "check_dedup_tiering": {"dedup", "special_small_blocks"},
+    "check_dedup_descendants": {"dedup"},
+    "check_recordsize": {"recordsize"},
+    "check_special_small_blocks_range": {"special_small_blocks"},
 }
 
 
@@ -391,50 +471,97 @@ def test_pool_root_inherit_outside_the_default_table_is_a_call_error():
 
 
 SEMANTIC_CASES = {
+    "check_names_valid_for_type": (
+        dict(type_="VOLUME", properties={"atime": "off"}),
+        {},
+        "zfs.resource.set.properties.atime",
+        "is not valid for a VOLUME",
+    ),
+    "check_inherit_not_received": (
+        dict(inherit=["compression"], source="RECEIVED", parent={}),
+        {},
+        "zfs.resource.set.inherit.compression",
+        "has a received value on",
+    ),
     "check_volsize_not_shrunk": (
-        dict(type_="VOLUME", properties={"volsize": 512}, current={"volsize": GiB}),
+        dict(type_="VOLUME", properties={"volsize": 512 * MiB}, current={"volsize": GiB}),
+        {},
         "zfs.resource.set.properties.volsize",
         "may not be reduced below the current size",
     ),
+    "check_volsize_multiple_of_volblocksize": (
+        dict(type_="VOLUME", properties={"volsize": GiB + 512}, current={"volsize": GiB, "volblocksize": 16384}),
+        {},
+        "zfs.resource.set.properties.volsize",
+        "must be a multiple of the volblocksize",
+    ),
+    "check_reservation_headroom": (
+        dict(type_="VOLUME", properties={"refreservation": 90 * GiB}),
+        {},
+        "zfs.resource.set.properties.refreservation",
+        "would consume more than 80%",
+    ),
     "check_acl_combination": (
         dict(properties={"acltype": "posix", "aclmode": "passthrough"}),
+        {},
         "zfs.resource.set.properties.aclmode",
         "must be discard when the effective",
     ),
     "check_tier_managed_ssb": (
         dict(properties={"special_small_blocks": 262144}, tier_enabled=True),
+        {},
         "zfs.resource.set.properties.special_small_blocks",
         "ZFS tiering is enabled",
     ),
     "check_dedup_entitlement": (
         dict(properties={"dedup": "on"}, entitlement=DENIED),
+        {},
         "zfs.resource.set.properties.dedup",
         "SENTINEL entitlement denial",
     ),
     "check_dedup_tiering": (
         dict(properties={"dedup": "on"}, current={"special_small_blocks": 131072}, tier_enabled=True),
+        {},
         "zfs.resource.set.properties.dedup",
         "cannot be enabled on a dataset assigned to",
+    ),
+    "check_dedup_descendants": (
+        dict(properties={"dedup": "on"}, tier_enabled=True),
+        {"descendants": [PERFORMANCE_CHILD]},
+        "zfs.resource.set.properties.dedup",
+        "cannot be enabled here: descendant dataset",
+    ),
+    "check_recordsize": (
+        dict(properties={"recordsize": 3000}),
+        {},
+        "zfs.resource.set.properties.recordsize",
+        "must be a power of two",
+    ),
+    "check_special_small_blocks_range": (
+        dict(properties={"special_small_blocks": 32 * MiB}),
+        {},
+        "zfs.resource.set.properties.special_small_blocks",
+        "'special_small_blocks' must be between",
     ),
 }
 
 
 @pytest.mark.parametrize("name", list(SEMANTIC_CASES))
 def test_each_rule_reports_its_violation(name):
-    kwargs, attribute, substring = SEMANTIC_CASES[name]
-    verrors, failures = run(state(**kwargs))
+    kwargs, context, attribute, substring = SEMANTIC_CASES[name]
+    verrors, failures = run(state(**kwargs), RecordingContext(**context))
     assert failures == []
     assert [(e.attribute, substring in e.errmsg) for e in verrors.errors] == [(attribute, True)]
 
 
 def test_rule_messages_are_distinguishable(monkeypatch):
     messages = {}
-    for name, (kwargs, _, _) in SEMANTIC_CASES.items():
+    for name, (kwargs, context, _, _) in SEMANTIC_CASES.items():
         with monkeypatch.context() as m:
             only(m, name)
-            verrors, _ = run(state(**kwargs))
+            verrors, _ = run(state(**kwargs), RecordingContext(**context))
         messages[name] = [e.errmsg for e in verrors.errors]
-    for name, (_, _, substring) in SEMANTIC_CASES.items():
+    for name, (_, _, _, substring) in SEMANTIC_CASES.items():
         for other, found in messages.items():
             assert any(substring in message for message in found) is (other == name), (name, other)
 
@@ -474,13 +601,20 @@ def test_setting_dedup_to_its_current_value_needs_no_entitlement():
     assert run(st)[0].errors == []
 
 
-def test_a_valid_request_reads_the_topology_and_passes():
-    context = RecordingContext(special_vdev=False)
-    st = state(properties={"dedup": "on"}, current={"special_small_blocks": 131072}, tier_enabled=True)
+def test_a_valid_request_reads_the_topology_and_the_descendants_and_passes():
+    context = RecordingContext(
+        special_vdev=True,
+        draid=False,
+        descendants=[
+            descendant(f"{PATH}/local", 131072, "LOCAL"),
+            descendant(f"{PATH}/regular", 0, "INHERITED", PATH),
+        ],
+    )
+    st = state(properties={"dedup": "on", "recordsize": 65536}, tier_enabled=True)
     verrors, failures = run(st, context)
     assert failures == []
     assert verrors.errors == []
-    assert context.calls == ["zpool.query_impl"]
+    assert context.calls == ["class_special_size", "zfs.resource.list_impl", "topology"]
 
 
 def test_rules_report_together_in_registry_order():
@@ -561,15 +695,285 @@ def test_inheriting_only_user_properties_runs_no_rule(monkeypatch):
     assert (calls, failures, verrors.errors) == ([], [], [])
 
 
+def test_acl_coupling_fills_the_companions_of_a_set_acltype_on_a_filesystem():
+    st = apply_acl_coupling(state(properties={"acltype": "posix"}))
+    assert (st.properties.aclmode, st.properties.aclinherit) == ("discard", "discard")
+    assert st.derived == {"aclmode", "aclinherit"}
+
+
+def test_acl_coupling_inherits_the_companions_of_an_inherited_acltype_on_a_filesystem():
+    st = apply_acl_coupling(state(inherit=["acltype"], parent={}))
+    assert st.inherit == {"acltype", "aclmode", "aclinherit"}
+    assert st.derived == {"aclmode", "aclinherit"}
+
+
+def test_acl_coupling_leaves_a_companion_the_caller_inherits():
+    st = apply_acl_coupling(state(properties={"acltype": "posix"}, inherit=["aclmode"], parent={}))
+    assert st.properties.aclmode is None
+    assert st.inherit == {"aclmode"}
+    assert st.derived == {"aclinherit"}
+
+
+@pytest.mark.parametrize("kwargs", [{"properties": {"acltype": "posix"}}, {"inherit": ["acltype"]}])
+def test_acl_coupling_adds_nothing_on_a_volume(kwargs):
+    before = state(type_="VOLUME", **kwargs)
+    after = apply_acl_coupling(before)
+    assert (after.properties, after.inherit, after.derived) == (before.properties, before.inherit, frozenset())
+
+
+def test_acltype_on_a_volume_is_one_error():
+    verrors, failures = run(apply_acl_coupling(state(type_="VOLUME", properties={"acltype": "posix"})))
+    assert failures == []
+    assert [e.attribute for e in verrors.errors] == ["zfs.resource.set.properties.acltype"]
+
+
+def test_pool_root_inherit_of_acltype_resolves_the_coupled_aclinherit_to_the_registered_default():
+    st = state(inherit=["acltype"], current={"aclinherit": "passthrough"}, pool_root=True, path="tank")
+    st = apply_acl_coupling(st)
+    assert st.effective("aclinherit") == "restricted"
+
+
+def test_acl_combination_blames_the_inherited_acltype_for_its_coupled_aclmode():
+    st = apply_acl_coupling(
+        state(
+            inherit=["acltype"],
+            current={"acltype": "nfsv4", "aclmode": "passthrough"},
+            parent={"acltype": "posix", "aclmode": "passthrough"},
+        )
+    )
+    verrors, failures = run(st)
+    assert failures == []
+    assert [e.attribute for e in verrors.errors] == ["zfs.resource.set.inherit.acltype"]
+
+
+def test_inherit_of_a_received_acltype_is_rejected():
+    st = state(inherit=["acltype"], source="RECEIVED", parent={}, current={"aclmode": "passthrough"})
+    verrors, failures = run(st)
+    assert failures == []
+    assert [(e.attribute, "has a received value on 'tank/a'" in e.errmsg) for e in verrors.errors] == [
+        ("zfs.resource.set.inherit.acltype", True)
+    ]
+
+
+def volume(properties, refreservation, volsize=GiB, source="LOCAL", **current):
+    return state(
+        type_="VOLUME",
+        properties=properties,
+        current={"volsize": volsize, "refreservation": refreservation, **current},
+        source=source,
+    )
+
+
+@pytest.mark.parametrize(
+    "refreservation, volsize",
+    [
+        (GiB, 2 * GiB),
+        (GiB + 32 * MiB, 2 * GiB),
+        (GiB + 512 * MiB, 2 * GiB),
+    ],
+    ids=["exact", "canonical", "outrun-over-reservation"],
+)
+def test_thick_follow_re_reserves_a_grow_the_reservation_no_longer_covers(refreservation, volsize):
+    st = apply_thick_follow(volume({"volsize": volsize}, refreservation))
+    assert st.properties.refreservation == "auto"
+    assert st.derived == {"refreservation"}
+
+
+@pytest.mark.parametrize(
+    "properties, refreservation, source",
+    [
+        ({"volsize": 2 * GiB}, 5 * GiB, "LOCAL"),
+        ({"volsize": GiB + 16 * MiB}, GiB + 32 * MiB, "LOCAL"),
+        ({"volsize": 2 * GiB}, 0, "LOCAL"),
+        ({"volsize": 2 * GiB}, 512 * MiB, "LOCAL"),
+        ({"volsize": 2 * GiB, "refreservation": 3 * GiB}, GiB, "LOCAL"),
+        ({"volsize": 512 * MiB}, GiB, "LOCAL"),
+        ({"volsize": 2 * GiB}, GiB, "RECEIVED"),
+    ],
+    ids=["over-reserved", "still-covering", "sparse", "partial", "explicit", "shrink", "received"],
+)
+def test_thick_follow_leaves_the_reservation_alone(properties, refreservation, source):
+    st = apply_thick_follow(volume(properties, refreservation, source=source))
+    assert st.properties.refreservation == properties.get("refreservation")
+    assert st.derived == frozenset()
+
+
+def test_thick_follow_does_not_touch_a_filesystem():
+    st = apply_thick_follow(state(properties={"volsize": 2 * GiB}, current={"refreservation": GiB}))
+    assert (st.properties.refreservation, st.derived) == (None, frozenset())
+
+
+def headroom_errors(st):
+    verrors, failures = run(st)
+    assert failures == []
+    return [(e.attribute, e.errmsg) for e in verrors.errors]
+
+
+def test_headroom_of_a_followed_grow_blames_volsize():
+    st = apply_thick_follow(volume({"volsize": 100 * GiB}, GiB, available=50 * GiB))
+    [(attribute, errmsg)] = headroom_errors(st)
+    assert attribute == "zfs.resource.set.properties.volsize"
+    assert "would consume more than 80%" in errmsg
+
+
+def test_headroom_of_an_explicit_refreservation_blames_refreservation():
+    st = apply_thick_follow(volume({"volsize": 100 * GiB, "refreservation": 100 * GiB}, GiB, available=50 * GiB))
+    assert [attribute for attribute, _ in headroom_errors(st)] == ["zfs.resource.set.properties.refreservation"]
+
+
+def test_headroom_escape_is_an_explicit_zero_refreservation():
+    st = apply_thick_follow(volume({"volsize": 2 * GiB, "refreservation": 0}, GiB, available=MiB))
+    assert headroom_errors(st) == []
+
+
+def test_headroom_rejects_auto_on_a_filesystem():
+    st = state(properties={"refreservation": "auto"})
+    assert headroom_errors(st) == [("zfs.resource.set.properties.refreservation", "'auto' is only valid on volumes.")]
+
+
+@pytest.mark.parametrize("usedbyrefreservation, rejected", [(100 * GiB, True), (0, False)])
+def test_headroom_base_excludes_the_space_the_reservation_itself_holds(usedbyrefreservation, rejected):
+    st = volume(
+        {"refreservation": 100 * GiB},
+        10 * GiB,
+        available=200 * GiB,
+        usedbyrefreservation=usedbyrefreservation,
+    )
+    assert bool(headroom_errors(st)) is rejected
+
+
+def test_headroom_rejects_a_filesystem_refreservation_over_its_refquota():
+    st = state(properties={"refreservation": 2 * GiB}, current={"refquota": GiB})
+    assert headroom_errors(st) == [
+        (
+            "zfs.resource.set.properties.refreservation",
+            f"A refreservation of {2 * GiB} exceeds the refquota of {GiB} on 'tank/a'.",
+        )
+    ]
+
+
+def test_headroom_judges_a_filesystem_refreservation_against_the_requested_refquota():
+    st = state(properties={"refreservation": 2 * GiB, "refquota": 3 * GiB}, current={"refquota": GiB})
+    assert headroom_errors(st) == []
+
+
+def test_headroom_of_a_thick_grow_does_not_read_refquota_on_a_volume():
+    st = apply_thick_follow(volume({"volsize": 2 * GiB}, GiB))
+    assert "refquota" not in st.current
+    assert headroom_errors(st) == []
+
+
+def test_dedup_descendants_names_only_the_descendants_that_would_inherit_it():
+    context = RecordingContext(
+        descendants=[
+            descendant(f"{PATH}/from_ancestor", 131072, "INHERITED", "tank"),
+            descendant(f"{PATH}/local", 131072, "LOCAL"),
+            descendant(f"{PATH}/regular", 0, "DEFAULT"),
+            descendant(f"{PATH}/mid/leaf", 131072, "INHERITED", f"{PATH}/mid"),
+            descendant(f"{PATH}/vol", 131072, "DEFAULT", type_="VOLUME"),
+        ]
+    )
+    verrors, failures = run(state(properties={"dedup": "on"}, tier_enabled=True), context)
+    assert failures == []
+    [error] = verrors.errors
+    assert "descendant dataset 'tank/a/from_ancestor' is assigned" in error.errmsg
+
+
+def test_dedup_descendants_counts_every_affected_descendant():
+    context = RecordingContext(
+        descendants=[
+            descendant(f"{PATH}/b", 131072, "DEFAULT"),
+            descendant(f"{PATH}/c", 131072, "INHERITED", PATH),
+        ]
+    )
+    [error] = run(state(properties={"dedup": "on"}, tier_enabled=True), context)[0].errors
+    assert "descendant dataset 'tank/a/b' (and 1 more) is assigned" in error.errmsg
+
+
+def test_dedup_descendants_skips_the_walk_without_a_special_vdev():
+    context = RecordingContext(special_vdev=False, descendants=[PERFORMANCE_CHILD])
+    verrors, failures = run(state(properties={"dedup": "on"}, tier_enabled=True), context)
+    assert (verrors.errors, failures) == ([], [])
+    assert "zfs.resource.list_impl" not in context.calls
+
+
+def recordsize_errors(recordsize, context=None):
+    verrors, failures = run(state(properties={"recordsize": recordsize}), context)
+    assert failures == []
+    return [e.errmsg for e in verrors.errors]
+
+
+def test_recordsize_above_the_module_maximum_is_rejected(max_recordsize):
+    max_recordsize.write_text(f"{MiB}\n")
+    assert recordsize_errors(2 * MiB) == [f"'recordsize' must be a power of two from 512 to {MiB} bytes."]
+    assert recordsize_errors(MiB) == []
+
+
+def test_recordsize_is_capped_at_the_largest_block_size(max_recordsize):
+    max_recordsize.write_text(f"{64 * MiB}\n")
+    assert recordsize_errors(32 * MiB) == [f"'recordsize' must be a power of two from 512 to {16 * MiB} bytes."]
+
+
+def test_recordsize_below_512_is_rejected():
+    assert recordsize_errors(256) == [f"'recordsize' must be a power of two from 512 to {16 * MiB} bytes."]
+
+
+@pytest.mark.parametrize(
+    "draid, errors", [(True, ["'recordsize' must be at least 131072 bytes on a dRAID pool."]), (False, [])]
+)
+def test_small_recordsize_is_rejected_only_on_draid(draid, errors):
+    assert recordsize_errors(65536, RecordingContext(draid=draid)) == errors
+
+
+def test_special_small_blocks_range_includes_the_largest_block_size():
+    verrors, failures = run(state(properties={"special_small_blocks": 16 * MiB}))
+    assert (verrors.errors, failures) == ([], [])
+
+
 TYPES = ("FILESYSTEM", "VOLUME")
 VARIANTS = ("set", "inherit", "pool_root")
 CELL_FIXTURES = {
+    "check_names_valid_for_type": {
+        "current": {},
+        "request": EVERY_NATIVE,
+        "parent": {},
+        "pool_current": {},
+        "substring": "is not valid for a",
+    },
+    "check_inherit_not_received": {
+        "current": {},
+        "request": EVERY_NATIVE,
+        "parent": {},
+        "pool_current": {},
+        "source": "RECEIVED",
+        "substring": "has a received value",
+    },
     "check_volsize_not_shrunk": {
         "current": {"volsize": GiB},
         "request": {"volsize": 512},
         "parent": {},
         "pool_current": {"volsize": GiB},
         "substring": "may not be reduced",
+    },
+    "check_volsize_multiple_of_volblocksize": {
+        "current": {"volsize": GiB, "volblocksize": 16384},
+        "request": {"volsize": GiB + 512},
+        "parent": {},
+        "pool_current": {"volsize": GiB, "volblocksize": 16384},
+        "substring": "must be a multiple of the volblocksize",
+    },
+    "check_reservation_headroom": {
+        "current": {
+            "volsize": GiB,
+            "refreservation": GiB,
+            "available": 10 * GiB,
+            "usedbyrefreservation": 0,
+            "refquota": 2 * GiB,
+        },
+        "request": {"volsize": 2 * GiB, "refreservation": 50 * GiB, "refquota": GiB},
+        "parent": {},
+        "pool_current": {"volsize": GiB, "refreservation": GiB, "available": 10 * GiB, "refquota": 2 * GiB},
+        "substring": "Reserving another",
     },
     "check_acl_combination": {
         "current": {"acltype": "posix", "aclmode": "passthrough"},
@@ -599,14 +1003,51 @@ CELL_FIXTURES = {
         "pool_current": {"dedup": "on", "special_small_blocks": 131072},
         "substring": "cannot be enabled on a dataset assigned to",
     },
+    "check_dedup_descendants": {
+        "current": {"dedup": "off"},
+        "request": {"dedup": "on"},
+        "parent": {"dedup": "on"},
+        "pool_current": {"dedup": "on"},
+        "substring": "cannot be enabled here: descendant dataset",
+    },
+    "check_recordsize": {
+        "current": {"recordsize": 131072},
+        "request": {"recordsize": 3000},
+        "parent": {"recordsize": 3000},
+        "pool_current": {"recordsize": 131072},
+        "substring": "must be a power of two",
+    },
+    "check_special_small_blocks_range": {
+        "current": {"special_small_blocks": 0},
+        "request": {"special_small_blocks": 32 * MiB},
+        "parent": {"special_small_blocks": 32 * MiB},
+        "pool_current": {"special_small_blocks": 0},
+        "substring": "'special_small_blocks' must be between",
+    },
 }
 VIOLATION_CONSTRUCTIBLE = {
     ("check_volsize_not_shrunk", "VOLUME", "set"),
+    ("check_volsize_multiple_of_volblocksize", "VOLUME", "set"),
     *(("check_acl_combination", "FILESYSTEM", variant) for variant in VARIANTS),
     *(("check_tier_managed_ssb", type_, variant) for type_ in TYPES for variant in VARIANTS),
     *(("check_dedup_entitlement", type_, variant) for type_ in TYPES for variant in ("set", "inherit")),
     *(("check_dedup_tiering", "FILESYSTEM", variant) for variant in ("set", "inherit")),
+    *(("check_dedup_descendants", "FILESYSTEM", variant) for variant in ("set", "inherit")),
+    ("check_recordsize", "FILESYSTEM", "set"),
+    *(("check_special_small_blocks_range", type_, "set") for type_ in TYPES),
 }
+VALID_NATIVES = {"FILESYSTEM": FILESYSTEM_NATIVES, "VOLUME": VOLUME_NATIVES}
+READ_NAMES = {"FILESYSTEM": FILESYSTEM_NAMES, "VOLUME": VOLUME_NAMES}
+
+
+def violation_constructible(name, type_, variant, names):
+    if name == "check_names_valid_for_type":
+        return bool(names - VALID_NATIVES[type_])
+    if name == "check_inherit_not_received":
+        return variant != "set" and bool(names & READ_NAMES[type_])
+    if name == "check_reservation_headroom":
+        return variant == "set" and "refreservation" in names
+    return (name, type_, variant) in VIOLATION_CONSTRUCTIBLE
 
 
 def cells():
@@ -615,15 +1056,14 @@ def cells():
         for names in sorted(subsets, key=sorted):
             for type_ in TYPES:
                 for variant in VARIANTS:
-                    yield pytest.param(
-                        name, type_, variant, names, id=f"{name}-{type_}-{variant}-{'+'.join(sorted(names))}"
-                    )
+                    label = "ALL" if len(names) > 3 else "+".join(sorted(names))
+                    yield pytest.param(name, type_, variant, names, id=f"{name}-{type_}-{variant}-{label}")
 
 
 @pytest.mark.parametrize("name, type_, variant, names", list(cells()))
 def test_rule_reads_only_what_its_type_gate_guarantees(monkeypatch, caplog, name, type_, variant, names):
     fixture = CELL_FIXTURES[name]
-    common = dict(type_=type_, tier_enabled=True, entitlement=DENIED)
+    common = dict(type_=type_, tier_enabled=True, entitlement=DENIED, source=fixture.get("source", "LOCAL"))
     if variant == "set":
         st = state(properties={n: fixture["request"][n] for n in names}, current=fixture["current"], **common)
     elif variant == "inherit":
@@ -632,10 +1072,10 @@ def test_rule_reads_only_what_its_type_gate_guarantees(monkeypatch, caplog, name
         st = state(inherit=names, current=fixture["pool_current"], pool_root=True, path="tank", **common)
     only(monkeypatch, name)
     with caplog.at_level(logging.ERROR):
-        verrors, failures = run(st)
+        verrors, failures = run(st, RecordingContext(descendants=[PERFORMANCE_CHILD]))
     assert failures == []
     assert caplog.records == []
-    if (name, type_, variant) in VIOLATION_CONSTRUCTIBLE:
+    if violation_constructible(name, type_, variant, names):
         assert any(fixture["substring"] in e.errmsg for e in verrors.errors)
     else:
         assert verrors.errors == []
