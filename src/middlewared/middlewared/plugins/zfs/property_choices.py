@@ -1,4 +1,3 @@
-import itertools
 from typing import Any
 
 __all__ = (
@@ -10,22 +9,58 @@ __all__ = (
 )
 
 ZFS_CHECKSUM_CHOICES = ["ON", "OFF", "FLETCHER2", "FLETCHER4", "SHA256", "SHA512", "SKEIN", "EDONR", "BLAKE3"]
-ZFS_COMPRESSION_ALGORITHM_CHOICES = (
-    [
-        "ON",
-        "OFF",
-        "LZ4",
-        "GZIP",
-        "GZIP-1",
-        "GZIP-9",
-        "ZSTD",
-        "ZSTD-FAST",
-        "ZLE",
-        "LZJB",
-    ]
-    + [f"ZSTD-{i}" for i in range(1, 20)]
-    + [f"ZSTD-FAST-{i}" for i in itertools.chain(range(1, 11), range(20, 110, 10), range(500, 1500, 500))]
-)
+ZFS_COMPRESSION_ALGORITHM_CHOICES = [
+    "ON",
+    "OFF",
+    "LZ4",
+    "GZIP",
+    "GZIP-1",
+    "GZIP-9",
+    "ZSTD",
+    "ZSTD-FAST",
+    "ZLE",
+    "LZJB",
+    "ZSTD-1",
+    "ZSTD-2",
+    "ZSTD-3",
+    "ZSTD-4",
+    "ZSTD-5",
+    "ZSTD-6",
+    "ZSTD-7",
+    "ZSTD-8",
+    "ZSTD-9",
+    "ZSTD-10",
+    "ZSTD-11",
+    "ZSTD-12",
+    "ZSTD-13",
+    "ZSTD-14",
+    "ZSTD-15",
+    "ZSTD-16",
+    "ZSTD-17",
+    "ZSTD-18",
+    "ZSTD-19",
+    "ZSTD-FAST-1",
+    "ZSTD-FAST-2",
+    "ZSTD-FAST-3",
+    "ZSTD-FAST-4",
+    "ZSTD-FAST-5",
+    "ZSTD-FAST-6",
+    "ZSTD-FAST-7",
+    "ZSTD-FAST-8",
+    "ZSTD-FAST-9",
+    "ZSTD-FAST-10",
+    "ZSTD-FAST-20",
+    "ZSTD-FAST-30",
+    "ZSTD-FAST-40",
+    "ZSTD-FAST-50",
+    "ZSTD-FAST-60",
+    "ZSTD-FAST-70",
+    "ZSTD-FAST-80",
+    "ZSTD-FAST-90",
+    "ZSTD-FAST-100",
+    "ZSTD-FAST-500",
+    "ZSTD-FAST-1000",
+]
 
 # https://openzfs.github.io/openzfs-docs/Performance%20and%20Tuning/Module%20Parameters.html#zfs-max-recordsize
 RECORDSIZE_MAPPING = [

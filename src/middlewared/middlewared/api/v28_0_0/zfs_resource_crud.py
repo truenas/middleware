@@ -417,15 +417,12 @@ class ZFSResourceListResult(BaseModel):
     result: list[ZFSResourceEntry]
 
 
-class ZFSResourceQueryArgs(BaseModel):
-    data: ZFSResourceQuery = Field(
-        default_factory=ZFSResourceQuery,
-        description="Query parameters for retrieving ZFS resource information.",
-    )
+class ZFSResourceQueryArgs(ZFSResourceListArgs):
+    pass
 
 
-class ZFSResourceQueryResult(BaseModel):
-    result: list[ZFSResourceEntry]
+class ZFSResourceQueryResult(ZFSResourceListResult):
+    pass
 
 
 class ZFSResourceCreateEncryption(BaseModel):
