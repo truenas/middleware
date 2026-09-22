@@ -20,6 +20,6 @@ class PoolDatasetService(Service):
     def snapshot_count(self, dataset: str) -> int:
         """Returns snapshot count for specified ``dataset``."""
         return self.call_sync2(
-            self.s.zfs.resource.snapshot.count_impl,
+            self.s.zfs.resource.snapshot.count,
             ZFSResourceSnapshotCountQuery(paths=[dataset])
-        )[dataset]
+        ).get(dataset, 0)
