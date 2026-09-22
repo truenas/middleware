@@ -417,7 +417,12 @@ class PoolDatasetService(CRUDService):
                 # requests it
                 args.zprops["refreservation"] = "none"
             else:
-                # otherwise, we always create "thick" provisioned volumes
+                # otherwise, we always create "thick" provisioned volumes.
+                # TODO: reserve refreservation=auto (volsize plus metadata
+                # overhead, like `zfs create -V`) once libzfs zfs_create()
+                # resolves it; today only zfs set and zfs clone do, so create
+                # fails with "out of space". Until then pool.dataset.update
+                # switches these zvols to auto when they are grown.
                 args.zprops.setdefault("refreservation", args.zprops["volsize"])
         else:
             raise CallError(f"Invalid dataset type: {args.ztype!r}")
@@ -891,6 +896,23 @@ class PoolDatasetService(CRUDService):
                 uia['uprops'][up['key']] = up['value']
             elif up.get('remove'):
                 uia['iprops'].add(up['key'])
+
+        if (
+            data['type'] == 'VOLUME'
+            and 'volsize' in data
+            and data['volsize'] > dataset[0]['volsize']['parsed']
+            and 'refreservation' not in uia['zprops']
+            and dataset[0]['refreservation']['parsed'] == dataset[0]['volsize']['parsed']
+            and not dataset[0]['readonly']['parsed']
+            and not dataset[0]['locked']
+        ):
+            # thick zvols are created reserving exactly their volsize, but libzfs
+            # only grows a refreservation along with the volsize when it is the
+            # one libzfs computes itself (refreservation=auto). Ask for that so
+            # the zvol stays thick; libzfs rolls back the volsize if the new
+            # reservation can't be satisfied. Read-only and locked zvols can't be
+            # resized and ZFS would still apply the new reservation on its own.
+            uia['zprops']['refreservation'] = 'auto'
 
         try:
             await self.middleware.call('pool.dataset.update_impl', uia)
