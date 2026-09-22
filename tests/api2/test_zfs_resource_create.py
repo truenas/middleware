@@ -73,7 +73,7 @@ def test_zfs_resource_create_volume_capacity_guardrail():
             "zfs.resource.create",
             {"path": path, "type": "VOLUME", "properties": {"volsize": volsize}},
         )
-    assert "create a sparse volume" in str(exc_info.value)
+    assert "for a sparse volume" in str(exc_info.value)
 
     with zfs_resource(
         path,
@@ -90,16 +90,50 @@ def test_create_over_budget_refreservation_with_suffix_is_rejected():
     refreservation = f"{int(avail[0]['properties']['available']['value'] * 0.9) // 1024}K"
     path = os.path.join(pool_name, "test_create_zvol_suffix_budget")
     try:
-        with pytest.raises(ValidationError) as exc_info:
+        with pytest.raises(ValidationErrors) as exc_info:
             call(
                 "zfs.resource.create",
                 {"path": path, "type": "VOLUME", "properties": {"volsize": GiB, "refreservation": refreservation}},
             )
-        assert exc_info.value.attribute == "zfs.resource.create.properties"
-        assert "create a sparse volume" in exc_info.value.errmsg
+        [error] = exc_info.value.errors
+        assert error.attribute == "zfs.resource.create.properties.refreservation"
+        assert "for a sparse volume" in error.errmsg
     finally:
         if call("zfs.resource.list", {"paths": [path]}):
             destroy_zfs_resource(path)
+
+
+def test_create_headroom_attribute_and_aggregation():
+    parent = os.path.join(pool_name, "test_create_headroom_parent")
+    pool_available = call("zfs.resource.list", {"paths": [pool_name], "properties": ["available"]})[0]
+    with zfs_resource(
+        parent, {"properties": {"refreservation": pool_available["properties"]["available"]["value"] // 2}}
+    ):
+        props = call(
+            "zfs.resource.list", {"paths": [parent], "properties": ["available", "usedbyrefreservation"]}
+        )[0]["properties"]
+        available = props["available"]["value"]
+        usedbyrefreservation = props["usedbyrefreservation"]["value"]
+        assert usedbyrefreservation > 0
+        refreservation = int(0.4 * available + 0.4 * (available - usedbyrefreservation))
+        assert 0.8 * (available - usedbyrefreservation) < refreservation < 0.8 * available
+
+        path = f"{parent}/vol"
+        with pytest.raises(ValidationErrors) as exc_info:
+            call(
+                "zfs.resource.create",
+                {
+                    "path": path,
+                    "type": "VOLUME",
+                    "properties": {"volsize": 16 * 1024**2, "refreservation": refreservation},
+                    "user_properties": {"nocolon": "x"},
+                },
+            )
+        assert sorted(e.attribute for e in exc_info.value.errors) == [
+            "zfs.resource.create.properties.refreservation",
+            "zfs.resource.create.user_properties",
+        ]
+        assert call("zfs.resource.list", {"paths": [path], "properties": None}) == []
 
 
 def test_zfs_resource_create_quota_none_is_accepted():
@@ -318,16 +352,15 @@ def test_zfs_resource_create_encryption_root_passphrase():
 @pytest.mark.parametrize(
     "encryption,exc",
     [
-        # the exactly-one-of rule lives in the plugin and raises a single ValidationError
-        pytest.param({}, ValidationError, id="nothing provided"),
+        pytest.param({}, ValidationErrors, id="nothing provided"),
         pytest.param(
             {"key": "0" * 64, "passphrase": "passphrase123"},
-            ValidationError,
+            ValidationErrors,
             id="key and passphrase",
         ),
         pytest.param(
             {"generate_key": True, "passphrase": "passphrase123"},
-            ValidationError,
+            ValidationErrors,
             id="generate_key and passphrase",
         ),
         # per-field shape constraints live on the model and are rejected by the schema
@@ -826,7 +859,8 @@ def test_zfs_resource_create_under_a_volume_parent_is_rejected(tier_enabled, chi
         vol, {"type": "VOLUME", "properties": {"volsize": 100 * 1024 * 1024}}
     ):
         with mock("zfs.tier.config", return_value={**call("zfs.tier.config"), "enabled": tier_enabled}):
-            with pytest.raises(ValidationError) as ve:
+            with pytest.raises(ValidationErrors) as ve:
                 call("zfs.resource.create", data)
-        assert ve.value.errno == errno.EINVAL
-        assert ve.value.errmsg == f"{vol!r} is a volume and cannot hold {child!r}."
+        [error] = ve.value.errors
+        assert error.errno == errno.EINVAL
+        assert error.errmsg == f"{vol!r} is a volume and cannot hold {child!r}."

@@ -11,7 +11,7 @@ from middlewared.api.current import (
     ZFSResourceEntry,
     ZFSResourceQuery,
 )
-from middlewared.service_exception import CallError, ValidationError
+from middlewared.service_exception import CallError, ValidationError, ValidationErrors
 
 from .create_impl import ZFS_INVALID_INPUT_ERRORS
 from .create_impl import create_impl as _raw_create
@@ -30,13 +30,12 @@ from .create_rules import (
     check_parent_is_filesystem,
     check_parent_not_readonly,
     check_path_shape,
-    check_tier_managed_ssb,
-    check_user_property_names,
     check_volume_capacity,
     check_volume_has_volsize,
     resolve_create_request,
 )
 from .exceptions import ZFSPathAlreadyExistsException, ZFSPathNotFoundException
+from .rules_common import reject_bad_user_property_names, reject_bad_user_property_values, reject_tier_managed_ssb
 from .utils import reject_protected_path
 
 if TYPE_CHECKING:
@@ -52,10 +51,12 @@ def create_impl(context: ServiceContext, tls: Any, data: ZFSResourceCreateArgsDa
 
     check_path_shape(data, ctx)
     reject_protected_path(SCHEMA, data.path, data.bypass)
-    check_name_valid(data, ctx)
-    check_user_property_names(data, ctx)
 
-    ctx.tier_enabled = context.call_sync2(context.s.zfs.tier.config).enabled
+    verrors = ValidationErrors()
+    check_name_valid(data, ctx, verrors)
+
+    if data.type == "FILESYSTEM" or properties.special_small_blocks is not None or properties.dedup is not None:
+        ctx.tier_enabled = context.call_sync2(context.s.zfs.tier.config).enabled
 
     # any value other than off (on, verify, a checksum) enables dedup.
     # The entitlement is settled before anything is gathered from the
@@ -63,51 +64,56 @@ def create_impl(context: ServiceContext, tls: Any, data: ZFSResourceCreateArgsDa
     dedup_requested = str(properties.dedup or "off").lower() != "off"
     if dedup_requested:
         ctx.dedup_entitlement = context.call_sync2(context.s.truenas.entitlements.check, LicenseFeature.DEDUP)
-        check_dedup_entitlement(data, ctx)
+        check_dedup_entitlement(data, ctx, verrors)
 
-    # one query serves the readonly, tier, acl, capacity and encryption
-    # rules. Only the properties the rules below will read are requested.
-    ancestor_props = ["readonly"]
+    if not verrors:
+        # one query serves the readonly, tier, acl, capacity and encryption
+        # rules. Only the properties the rules below will read are requested.
+        ancestor_props = ["readonly"]
+        if data.type == "VOLUME":
+            ancestor_props.extend(["available", "usedbyrefreservation", "special_small_blocks"])
+        else:
+            if properties.acltype is not None or properties.aclmode is not None:
+                ancestor_props.extend(["acltype", "aclmode"])
+            if ctx.tier_enabled and data.properties.special_small_blocks is None:
+                ancestor_props.extend(["special_small_blocks", "recordsize"])
+        if data.encryption:
+            ancestor_props.append("encryption")
+        ctx.ancestors = {
+            rv["name"]: rv
+            for rv in context.call_sync2(
+                context.s.zfs.resource.list_impl,
+                ZFSResourceQuery(paths=ancestor_chain(path), properties=ancestor_props),
+            )
+        }
+        check_parent_is_filesystem(data, ctx, verrors)
+    verrors.check()
+
+    check_parent_not_readonly(data, ctx, verrors)
+    reject_bad_user_property_names(verrors, f"{SCHEMA}.user_properties", data.user_properties)
+    reject_bad_user_property_values(verrors, f"{SCHEMA}.user_properties", data.user_properties)
+    if ctx.tier_enabled and data.properties.special_small_blocks is not None:
+        reject_tier_managed_ssb(verrors, f"{SCHEMA}.properties.special_small_blocks")
+
     if data.type == "VOLUME":
-        ancestor_props.extend(["available", "special_small_blocks"])
-    else:
-        if properties.acltype is not None or properties.aclmode is not None:
-            ancestor_props.extend(["acltype", "aclmode"])
-        if ctx.tier_enabled and data.properties.special_small_blocks is None:
-            ancestor_props.extend(["special_small_blocks", "recordsize"])
-    if data.encryption:
-        ancestor_props.append("encryption")
-    ctx.ancestors = {
-        rv["name"]: rv
-        for rv in context.call_sync2(
-            context.s.zfs.resource.list_impl,
-            ZFSResourceQuery(paths=ancestor_chain(path), properties=ancestor_props),
-        )
-    }
-
-    check_parent_is_filesystem(data, ctx)
-    check_parent_not_readonly(data, ctx)
-    if ctx.tier_enabled:
-        check_tier_managed_ssb(data, ctx)
-
-    if data.type == "VOLUME":
-        check_volume_has_volsize(data, ctx)
-        apply_draid_volblocksize(context, data, ctx)
+        check_volume_has_volsize(data, ctx, verrors)
+        apply_draid_volblocksize(context, data, ctx, verrors)
         if properties.special_small_blocks is None:
             apply_volume_ssb_pin(data, ctx)
-        check_volume_capacity(data, ctx)
+        check_volume_capacity(data, ctx, verrors)
     else:
         if properties.recordsize is None:
             apply_draid_recordsize(context, data, ctx)
         if ctx.tier_enabled and properties.special_small_blocks is None:
             apply_tier_snap(data, ctx)
         if ctx.tier_enabled and dedup_requested:
-            check_dedup_tiering(context, data, ctx)
+            check_dedup_tiering(context, data, ctx, verrors)
         if properties.acltype is not None or properties.aclmode is not None:
-            check_acl_combination(data, ctx)
+            check_acl_combination(data, ctx, verrors)
 
     if data.encryption:
-        check_encryption(data, ctx)
+        check_encryption(data, ctx, verrors)
+    verrors.check()
 
     props = dict()
     for k, v in properties:
@@ -154,14 +160,18 @@ def create_impl(context: ServiceContext, tls: Any, data: ZFSResourceCreateArgsDa
     report_props = list(props) if requested else []
     if encrypt:
         report_props.append("encryption")
-    return context.call_sync2(
+    rows = context.call_sync2(
         context.s.zfs.resource.list_impl,
         ZFSResourceQuery(
             paths=[path],
             properties=report_props,
             get_user_properties=bool(data.user_properties),
         ),
-    )[0]
+    )
+    for row in rows:
+        if row["name"] == path:
+            return row
+    raise CallError(f"{path!r} was created but could not be read back.", errno.ENOENT)
 
 
 def create(context: ServiceContext, data: ZFSResourceCreateArgsData) -> ZFSResourceEntry:
