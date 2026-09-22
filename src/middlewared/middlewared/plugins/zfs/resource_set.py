@@ -7,32 +7,26 @@ import truenas_pylibzfs
 from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.api.current import ZFSResourceEntry, ZFSResourceQuery
-from middlewared.service_exception import CallError, ValidationError
+from middlewared.service_exception import CallError, ValidationError, ValidationErrors
 
 from .create_impl import ZFS_INVALID_INPUT_ERRORS
 from .normalization import normalize_asdict_result
 from .property_management import DeterminedProperties, build_set_of_zfs_props
+from .rules_common import apply_acl_defaults
 from .set_rules import (
+    SET_READ_PROPERTIES,
+    PropertyView,
     SetContext,
-    check_acl_combination,
-    check_dedup_entitlement,
-    check_dedup_tiering,
-    check_has_work,
-    check_inherit_names,
-    check_path_shape,
-    check_resource_exists,
-    check_set_inherit_conflict,
-    check_tier_managed_ssb,
-    check_user_property_names,
-    check_volsize_not_shrunk,
-    resolve_set_request,
+    touched_natives,
+    validate_request,
+    validate_set,
 )
 from .utils import reject_protected_path, reject_snapshot_path
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-    from middlewared.api.current import ZFSResourceSetArgsData
+    from middlewared.api.current import ZFSResourceSetArgsData, ZFSResourceSetProperties
     from middlewared.service import ServiceContext
 
 SCHEMA = "zfs.resource.set"
@@ -155,62 +149,94 @@ def set_impl(
     return info
 
 
+def _couple_acl_request(data: ZFSResourceSetArgsData) -> tuple[ZFSResourceSetProperties, frozenset[str]]:
+    """Setting acltype fills the companions the caller left alone; inheriting it also inherits them."""
+    properties = data.properties.model_copy()
+    inherit = {*data.inherit}
+    apply_acl_defaults(properties, leave=inherit)
+    if "acltype" in inherit:
+        inherit.update(name for name in ("aclmode", "aclinherit") if getattr(data.properties, name) is None)
+    return properties, frozenset(inherit)
+
+
+def _values(path: str, row: dict[str, Any]) -> PropertyView:
+    return PropertyView(path, {name: prop["value"] for name, prop in (row["properties"] or {}).items()})
+
+
+def _sources(path: str, row: dict[str, Any]) -> PropertyView:
+    props = row["properties"] or {}
+    return PropertyView(path, {name: (prop["source"] or {}).get("type") for name, prop in props.items()})
+
+
 def set(context: ServiceContext, data: ZFSResourceSetArgsData) -> ZFSResourceEntry:
     path = data.path
-    properties, inherit = resolve_set_request(data)
-    ctx = SetContext(properties=properties, inherit=inherit)
-
-    check_path_shape(data, ctx)
     reject_protected_path(SCHEMA, path)
-    check_has_work(data, ctx)
-    check_set_inherit_conflict(data, ctx)
-    check_inherit_names(data, ctx)
-    check_user_property_names(data, ctx)
+    verrors = ValidationErrors()
+    validate_request(data, verrors)
+    verrors.check()
 
-    ctx.tier_enabled = context.call_sync2(context.s.zfs.tier.config).enabled
-    if ctx.tier_enabled:
-        check_tier_managed_ssb(data, ctx)
+    properties, inherit = _couple_acl_request(data)
+    touched = touched_natives(properties, inherit)
+    pool_root = "/" not in path
+    parent_path = path.rsplit("/", 1)[0]
+    fetch_parent = any(":" not in name for name in inherit) and not pool_root
 
-    # any value other than off (on, verify, a checksum) enables dedup.
-    # The entitlement is settled before the resource is read so an
-    # unlicensed request fails without further work.
-    dedup_requested = str(properties.dedup or "off").lower() != "off"
-    if dedup_requested:
-        ctx.dedup_entitlement = context.call_sync2(context.s.truenas.entitlements.check, LicenseFeature.DEDUP)
-        check_dedup_entitlement(data, ctx)
+    tier_enabled = None
+    if touched & {"special_small_blocks", "dedup"}:
+        tier_enabled = context.call_sync2(context.s.zfs.tier.config).enabled
+    dedup_entitlement = None
+    if "dedup" in touched:
+        dedup_entitlement = context.call_sync2(context.s.truenas.entitlements.check, LicenseFeature.DEDUP)
 
-    # one read serves existence, the type and every rule below.
-    acl_requested = properties.acltype is not None or properties.aclmode is not None
-    wanted = []
-    if properties.volsize is not None:
-        wanted.append("volsize")
-    if acl_requested:
-        wanted.extend(["acltype", "aclmode"])
-    if dedup_requested and ctx.tier_enabled and properties.special_small_blocks is None:
-        wanted.append("special_small_blocks")
-    rows = context.call_sync2(
-        context.s.zfs.resource.list_impl,
-        ZFSResourceQuery(paths=[path], properties=wanted or None),
+    paths = [path, parent_path] if fetch_parent else [path]
+    rows = {
+        row["name"]: row
+        for row in context.call_sync2(
+            context.s.zfs.resource.list_impl,
+            ZFSResourceQuery(
+                paths=paths, properties=sorted(SET_READ_PROPERTIES), get_user_properties=False, get_source=True
+            ),
+        )
+    }
+    if (target := rows.get(path)) is None:
+        raise ValidationError(f"{SCHEMA}.path", f"{path!r} does not exist.", errno.ENOENT)
+    parent = None
+    if fetch_parent:
+        if (parent_row := rows.get(parent_path)) is None:
+            raise CallError(f"The parent of {path!r} was removed while its properties were being set.", errno.ENOENT)
+        parent = _values(parent_path, parent_row)
+
+    state = SetContext(
+        path=path,
+        type=target["type"],
+        properties=properties,
+        user_properties=data.user_properties,
+        inherit=inherit,
+        current=_values(path, target),
+        source=_sources(path, target),
+        parent=parent,
+        pool_root=pool_root,
+        tier_enabled=tier_enabled,
+        dedup_entitlement=dedup_entitlement,
     )
-    ctx.current = rows[0] if rows else None
-    check_resource_exists(data, ctx)
-    assert ctx.current is not None
+    failures = validate_set(context, state, verrors, context.logger)
+    verrors.check()
+    if failures:
+        name, error = failures[0]
+        raise CallError(f"{name}: validation failed: {error}")
 
-    if ctx.current["type"] == "VOLUME":
-        if properties.volsize is not None:
-            check_volsize_not_shrunk(data, ctx)
-    else:
-        if acl_requested:
-            check_acl_combination(data, ctx)
-        if dedup_requested and ctx.tier_enabled:
-            check_dedup_tiering(context, data, ctx)
+    if data.dry_run:
+        current = target["properties"] or {}
+        projected = {name: current[name] for name in sorted(touched) if name in current}
+        return ZFSResourceEntry(
+            **{**target, "properties": projected or None, "user_properties": None, "children": None}
+        )
 
-    props = properties.model_dump(exclude_none=True)
     return ZFSResourceEntry(
         **context.call_sync2(
             context.s.zfs.resource.set_impl,
             path,
-            properties=props,
+            properties=properties.model_dump(exclude_none=True),
             user_properties=data.user_properties,
             inherit=sorted(inherit),
         )
