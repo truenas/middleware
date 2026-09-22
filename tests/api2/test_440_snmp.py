@@ -8,7 +8,7 @@ import pytest
 from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.pool import dataset, snapshot
 from middlewared.test.integration.assets.filesystem import directory, mkfile
-from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.utils import call, poll, ssh
 from middlewared.test.integration.utils.client import truenas_server
 from middlewared.test.integration.utils.system import reset_systemd_svcs
 from auto_config import ha, hostname, interface, password, user, pool_name
@@ -486,10 +486,17 @@ class TestSNMP:
         is_running, config = init_and_start
         assert is_running
 
-        # The expectation is that the snmp agent should list exactly the six zvols.
+        # The expectation is that the snmp agent should list the six zvols.
         created_items = create_nested_structure
 
         # Include a snapshot of one of the zvols
         with snapshot(created_items['zv'][0], "snmpsnap01"):
-            snmp_res = v2c_snmpwalk('1.3.6.1.4.1.50536.1.2.1.1.2')
-            assert all(v in created_items['zv'] for v in snmp_res), f"expected {created_items['zv']}, but found {snmp_res}"
+            # The agent refreshes its tables after serving a request or on its AgentX ping,
+            # so the first walk after a service restart can be answered before the zvols
+            # created above have been picked up.
+            poll(
+                lambda: v2c_snmpwalk('1.3.6.1.4.1.50536.1.2.1.1.2'),
+                condition=lambda res: all(zv in res for zv in created_items['zv']),
+                timeout=30,
+                message=f"expected {created_items['zv']} in zvolTable",
+            )
