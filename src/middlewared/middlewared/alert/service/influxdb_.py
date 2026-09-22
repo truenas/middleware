@@ -5,17 +5,18 @@ from typing import Any
 from influxdb import InfluxDBClient
 
 from middlewared.alert.base import Alert, ThreadedAlertService
+from middlewared.api.current import InfluxDBServiceModel
 
 
-class InfluxDBAlertService(ThreadedAlertService):
+class InfluxDBAlertService(ThreadedAlertService[InfluxDBServiceModel]):
     title = "InfluxDB"
 
     def send_sync(self, alerts: list[Alert[Any]], gone_alerts: list[Alert[Any]], new_alerts: list[Alert[Any]]) -> None:
-        client = InfluxDBClient(self.attributes["host"], 8086, self.attributes["username"], self.attributes["password"],
-                                self.attributes["database"])
+        client = InfluxDBClient(self.attributes.host, 8086, self.attributes.username,
+                                self.attributes.password.get_secret_value(), self.attributes.database)
         client.write_points([
             {
-                "measurement": self.attributes["series_name"],
+                "measurement": self.attributes.series_name,
                 "tags": {},
                 "time": alert.datetime.isoformat(),
                 "fields": {
