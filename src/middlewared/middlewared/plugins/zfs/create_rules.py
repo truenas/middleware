@@ -63,7 +63,6 @@ __all__ = (
     "reject_tier_managed_ssb",
     "reject_unentitled_dedup",
     "resolve_create_request",
-    "size_bytes",
 )
 
 SCHEMA = "zfs.resource.create"
@@ -102,22 +101,6 @@ def _secret_value(value: typing.Any) -> str | None:
     return value.get_secret_value() if value else None
 
 
-def size_bytes(value: str | int) -> int | None:
-    """Parse a zfs block size value into bytes. Returns None when the
-    value is not understood so the library can judge it instead."""
-    if isinstance(value, int):
-        return value
-    value = value.strip().upper().removesuffix("B")
-    multiplier = 1
-    if value and value[-1] in ("K", "M"):
-        multiplier = 1024 if value[-1] == "K" else 1024 * 1024
-        value = value[:-1]
-    try:
-        return int(value) * multiplier
-    except ValueError:
-        return None
-
-
 def _nearest_ancestor_entry(data: ZFSResourceCreateArgsData, ctx: CreateContext) -> typing.Any | None:
     """Return the gathered entry of the nearest existing ancestor."""
     for ancestor in ancestor_chain(data.path):
@@ -147,7 +130,7 @@ def apply_draid_recordsize(context: ServiceContext, data: ZFSResourceCreateArgsD
     recordsize.
     """
     if pool_is_draid(context, data.path.split("/")[0]):
-        ctx.properties.recordsize = "1M"
+        ctx.properties.recordsize = 1024 * 1024
 
 
 def apply_draid_volblocksize(context: ServiceContext, data: ZFSResourceCreateArgsData, ctx: CreateContext) -> None:
@@ -162,8 +145,8 @@ def apply_draid_volblocksize(context: ServiceContext, data: ZFSResourceCreateArg
     if not pool_is_draid(context, data.path.split("/")[0]):
         return
     if ctx.properties.volblocksize is None:
-        ctx.properties.volblocksize = "128K"
-    elif (parsed := size_bytes(ctx.properties.volblocksize)) is not None and parsed < 32768:
+        ctx.properties.volblocksize = 128 * 1024
+    elif ctx.properties.volblocksize < 32768:
         raise ValidationError(
             f"{SCHEMA}.properties",
             "Volume block size must be greater than or equal to 32K for dRAID pools.",
@@ -196,9 +179,15 @@ def resolve_create_request(
     defaults applied and the resolved encryption config. The encryption
     config is None when no encryption root is requested or when the
     request provides no key material at all. The rules judge the request
-    afterwards so nothing here raises.
+    afterwards so nothing here raises. A zero quota or refquota is not
+    sent at all since a new resource has no limit by default and ZFS
+    refuses a zero for either.
     """
     properties = data.properties.model_copy()
+    if properties.quota == 0:
+        properties.quota = None
+    if properties.refquota == 0:
+        properties.refquota = None
     if data.type == "VOLUME":
         if properties.volsize is not None and properties.refreservation is None:
             # thick provision unless told otherwise, like `zfs create -V`.
@@ -331,7 +320,7 @@ def check_parent_not_readonly(data: ZFSResourceCreateArgsData, ctx: CreateContex
         return
 
 
-def reject_tier_managed_ssb(schema: str, special_small_blocks: str | int | None) -> None:
+def reject_tier_managed_ssb(schema: str, special_small_blocks: int | None) -> None:
     """The tier manager owns special_small_blocks while tiering is enabled.
 
     Callers apply this only when tiering is enabled.
@@ -387,7 +376,7 @@ def apply_volume_ssb_pin(data: ZFSResourceCreateArgsData, ctx: CreateContext) ->
     if parent is None:
         return
     parent_ssb = parent["properties"]["special_small_blocks"]["value"] or 0
-    volblocksize = size_bytes(ctx.properties.volblocksize or 16384) or 16384
+    volblocksize = ctx.properties.volblocksize or 16384
     if parent_ssb and volblocksize < parent_ssb:
         ctx.properties.special_small_blocks = 0
 
@@ -452,8 +441,6 @@ def check_dedup_tiering(context: ServiceContext, data: ZFSResourceCreateArgsData
     if ssb is None:
         parent = _nearest_ancestor_entry(data, ctx)
         ssb = (parent["properties"]["special_small_blocks"]["value"] or 0) if parent else 0
-    else:
-        ssb = size_bytes(ssb) or 0
     reject_dedup_on_special_vdev(context, SCHEMA, data.path.split("/")[0], ssb)
 
 
@@ -510,18 +497,12 @@ def check_volume_capacity(data: ZFSResourceCreateArgsData, ctx: CreateContext) -
     compared against the available space of the nearest existing
     ancestor. Sparse volumes reserve nothing so they are exempt, which
     makes oversubscription a deliberate request rather than a force
-    flag. The check is skipped when the reservation is not expressed in
-    bytes since the library validates values itself.
+    flag.
 
     The service calls this only for volumes and after the ancestor
     entries have been gathered.
     """
-    try:
-        reservation = int(ctx.properties.refreservation or 0)
-    except ValueError:
-        # a word value like none means the volume is sparse and reserves nothing
-        return
-
+    reservation = ctx.properties.refreservation or 0
     for ancestor in ancestor_chain(data.path):
         rv = ctx.ancestors.get(ancestor)
         if rv is None:

@@ -12,3 +12,4 @@ from .nvmet import *  # noqa
 from .string import *  # noqa
 from .urls import *  # noqa
 from .user import *  # noqa
+from .zfs import *  # noqa

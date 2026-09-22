@@ -48,6 +48,11 @@ def set_impl(
     reject_protected_path(SCHEMA, path, bypass)
     ds = tls.lzh.open_resource(name=path)
     if properties:
+        # libzfs refuses a numeric 0 for quota and refquota and requires the word none; the other limits accept 0
+        properties = {
+            name: "none" if name in ("quota", "refquota") and value in (0, "0", "none") else value
+            for name, value in properties.items()
+        }
         ds.set_properties(properties=properties)
     if user_properties:
         ds.set_user_properties(user_properties=user_properties)

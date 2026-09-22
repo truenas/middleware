@@ -19,7 +19,6 @@ from .create_rules import (
     reject_dedup_on_special_vdev,
     reject_tier_managed_ssb,
     reject_unentitled_dedup,
-    size_bytes,
 )
 from .utils import reject_snapshot_path
 
@@ -142,18 +141,14 @@ def check_volsize_not_shrunk(data: ZFSResourceSetArgsData, ctx: SetContext) -> N
     """A volume may only grow.
 
     The library drops a volsize equal to the current one before it
-    reaches ZFS, so only a smaller value is refused. A value that is not
-    a byte count is left for the library to judge.
+    reaches ZFS, so only a smaller value is refused.
 
     The service calls this only for volumes that request volsize and
     after the resource has been read.
     """
     assert ctx.current is not None
-    try:
-        requested = int(str(ctx.properties.volsize))
-    except ValueError:
-        return
-    if requested < ctx.current["properties"]["volsize"]["value"]:
+    assert ctx.properties.volsize is not None
+    if ctx.properties.volsize < ctx.current["properties"]["volsize"]["value"]:
         raise ValidationError(
             f"{SCHEMA}.properties",
             f"'volsize' may not be reduced below the current size of {data.path!r}.",
@@ -204,6 +199,4 @@ def check_dedup_tiering(context: ServiceContext, data: ZFSResourceSetArgsData, c
     ssb = ctx.properties.special_small_blocks
     if ssb is None:
         ssb = ctx.current["properties"]["special_small_blocks"]["value"] or 0
-    else:
-        ssb = size_bytes(ssb) or 0
     reject_dedup_on_special_vdev(context, SCHEMA, data.path.split("/")[0], ssb)

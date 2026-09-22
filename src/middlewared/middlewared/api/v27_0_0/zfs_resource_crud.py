@@ -9,6 +9,8 @@ from middlewared.api.base import (
     NotRequired,
     Private,
     UniqueList,
+    ZFSSize,
+    ZFSSpaceLimit,
     excluded_field,
 )
 
@@ -475,38 +477,68 @@ class ZFSResourceCreateProperties(BaseModel):
     )
     checksum: str | None = Field(default=None, description="Checksum algorithm used to verify data integrity.")
     compression: str | None = Field(default=None, description="Compression algorithm for the resource.")
-    copies: str | int | None = Field(default=None, description="Number of copies of data blocks to store.")
+    copies: Annotated[int, Field(ge=1, le=3)] | None = Field(
+        default=None,
+        description="Number of copies of data blocks to store (1, 2, or 3).",
+    )
     dedup: str | None = Field(default=None, description="Deduplication setting for the resource.")
     exec: str | None = Field(default=None, description="Whether programs can be executed from the filesystem.")
-    quota: str | int | None = Field(
+    quota: ZFSSpaceLimit | None = Field(
         default=None,
-        description="Maximum space the dataset and its descendants may consume.",
+        description=(
+            "Maximum space the dataset and its descendants may consume. Takes a size as described for 'volsize'. "
+            "'none' or 0 removes the limit."
+        ),
     )
     readonly: str | None = Field(default=None, description="Whether the resource can be modified.")
-    recordsize: str | int | None = Field(default=None, description="Suggested block size for files in the filesystem.")
-    refquota: str | int | None = Field(default=None, description="Maximum space the dataset itself may consume.")
-    refreservation: str | int | None = Field(
+    recordsize: ZFSSize | None = Field(
         default=None,
-        description="Minimum space reserved for the resource itself. Set to 'none' to create a sparse volume.",
+        description="Suggested block size for files in the filesystem. Takes a size as described for 'volsize'.",
     )
-    reservation: str | int | None = Field(
+    refquota: ZFSSpaceLimit | None = Field(
         default=None,
-        description="Minimum space reserved for the dataset and its descendants.",
+        description=(
+            "Maximum space the dataset itself may consume. Takes a size as described for 'volsize'. 'none' or 0 "
+            "removes the limit."
+        ),
+    )
+    refreservation: ZFSSpaceLimit | None = Field(
+        default=None,
+        description=(
+            "Minimum space reserved for the resource itself. Takes a size as described for 'volsize'. Set to "
+            "'none' or 0 to create a sparse volume."
+        ),
+    )
+    reservation: ZFSSpaceLimit | None = Field(
+        default=None,
+        description=(
+            "Minimum space reserved for the dataset and its descendants. Takes a size as described for 'volsize'. "
+            "'none' or 0 removes the reservation."
+        ),
     )
     snapdev: str | None = Field(default=None, description="Snapshot device visibility under /dev/zvol.")
     snapdir: str | None = Field(default=None, description="Visibility of the .zfs/snapshot directory.")
-    special_small_blocks: str | int | None = Field(
+    special_small_blocks: ZFSSize | None = Field(
         default=None,
-        description="Size threshold below which blocks are stored on the SPECIAL vdev.",
+        description=(
+            "Size threshold below which blocks are stored on the SPECIAL vdev. Takes a size as described for "
+            "'volsize'. 0 stores no data blocks on the SPECIAL vdev."
+        ),
     )
     sync: str | None = Field(default=None, description="Synchronous write behavior.")
-    volblocksize: str | int | None = Field(
+    volblocksize: ZFSSize | None = Field(
         default=None,
-        description="Block size of the volume. Settable at creation time only.",
+        description=(
+            "Block size of the volume. Takes a size as described for 'volsize'. Settable at creation time only."
+        ),
     )
-    volsize: str | int | None = Field(
+    volsize: ZFSSize | None = Field(
         default=None,
-        description="Logical size of the volume in bytes. Required when creating a VOLUME.",
+        description=(
+            "Logical size of the volume. Required when creating a VOLUME. A byte count, or a string with a binary "
+            "suffix (K, M, G, T, P or E, optionally followed by B or iB) such as '128K'. A fractional value such as "
+            "'1.5M' is accepted only when it is a whole number of bytes."
+        ),
     )
     xattr: str | None = Field(
         default=None,
@@ -646,6 +678,14 @@ class ZFSResourceSetProperties(ZFSResourceCreateProperties):
 
     casesensitivity: Excluded = excluded_field()
     volblocksize: Excluded = excluded_field()
+    refreservation: ZFSSpaceLimit | Literal["auto"] | None = Field(
+        default=None,
+        description=(
+            "Minimum space reserved for the resource itself. Takes a size as described for 'volsize'. 'none' or 0 "
+            "removes the reservation. 'auto' reserves the space the volume's size requires and is accepted for "
+            "volumes only."
+        ),
+    )
     normalization: Excluded = excluded_field()
     utf8only: Excluded = excluded_field()
     encryption: Excluded = excluded_field()

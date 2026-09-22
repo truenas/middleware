@@ -85,6 +85,31 @@ def test_zfs_resource_create_volume_capacity_guardrail():
         assert entry["properties"]["volsize"]["value"] == volsize
 
 
+def test_create_over_budget_refreservation_with_suffix_is_rejected():
+    avail = call("zfs.resource.list", {"paths": [pool_name], "properties": ["available"]})
+    refreservation = f"{int(avail[0]['properties']['available']['value'] * 0.9) // 1024}K"
+    path = os.path.join(pool_name, "test_create_zvol_suffix_budget")
+    try:
+        with pytest.raises(ValidationError) as exc_info:
+            call(
+                "zfs.resource.create",
+                {"path": path, "type": "VOLUME", "properties": {"volsize": GiB, "refreservation": refreservation}},
+            )
+        assert exc_info.value.attribute == "zfs.resource.create.properties"
+        assert "create a sparse volume" in exc_info.value.errmsg
+    finally:
+        if call("zfs.resource.list", {"paths": [path]}):
+            destroy_zfs_resource(path)
+
+
+def test_zfs_resource_create_quota_none_is_accepted():
+    path = os.path.join(pool_name, "test_create_fs_quota_none")
+    with zfs_resource(path, {"properties": {"quota": "none", "refquota": 0}}):
+        props = call("zfs.resource.list", {"paths": [path], "properties": ["quota", "refquota"]})[0]["properties"]
+        assert props["quota"]["value"] in (0, None)
+        assert props["refquota"]["value"] in (0, None)
+
+
 def test_zfs_resource_create_volume_requires_volsize():
     """Test that creating a VOLUME without volsize fails"""
     path = os.path.join(pool_name, "test_create_zvol_novolsize")
