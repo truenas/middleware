@@ -3,7 +3,7 @@ import errno
 import pytest
 from auto_config import pool_name
 
-from middlewared.service_exception import ValidationErrors
+from middlewared.service_exception import ValidationError
 from middlewared.test.integration.assets.pool import _4_disk_raidz2_topology, another_pool, dataset
 from middlewared.test.integration.utils import call, ssh
 
@@ -14,11 +14,12 @@ def test_recommended_zvol_blocksize_raidz2_pool():
 
 
 def test_recommended_zvol_blocksize_nonexistent_pool():
-    with pytest.raises(ValidationErrors) as ve:
+    with pytest.raises(ValidationError) as ve:
         call("zfs.resource.recommended_zvol_blocksize", "nonexistent_pool")
 
-    assert ve.value.errors[0].attribute == "zfs.resource.recommended_zvol_blocksize.pool"
-    assert ve.value.errors[0].errno == errno.ENOENT
+    assert ve.value.attribute == "zfs.resource.recommended_zvol_blocksize.pool"
+    assert ve.value.errmsg == "'nonexistent_pool' does not exist"
+    assert ve.value.errno == errno.ENOENT
 
 
 def test_zfs_resource_processes_idle_dataset():
