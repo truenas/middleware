@@ -17,7 +17,7 @@ from middlewared.alert.base import (
     NonDataclassAlertClass,
     UnavailableException,
 )
-from middlewared.plugins.failover_.remote import NETWORK_ERRORS
+from middlewared.plugins.failover_.constants import NETWORK_ERRORS
 from middlewared.service_exception import CallError
 
 
