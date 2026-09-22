@@ -18,14 +18,12 @@ import requests
 from truenas_api_client import CALL_TIMEOUT, Client, ClientException
 from websocket._exceptions import WebSocketBadStatusException
 
+from middlewared.plugins.failover_.constants import NETWORK_ERRORS
 from middlewared.service import CallError, Service, private
 from middlewared.service_exception import ValidationError
 from middlewared.utils.threading import set_thread_name, start_daemon_thread
 
 logger = logging.getLogger('failover.remote')
-
-NETWORK_ERRORS = (errno.ETIMEDOUT, errno.ECONNABORTED, errno.ECONNREFUSED, errno.ECONNRESET, errno.EHOSTDOWN,
-                  errno.EHOSTUNREACH)
 
 
 class CallRemoteOptions(TypedDict):
