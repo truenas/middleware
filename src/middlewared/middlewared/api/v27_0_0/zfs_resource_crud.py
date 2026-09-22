@@ -746,6 +746,10 @@ class ZFSResourceSetArgsData(BaseModel):
             "explicitly instead."
         ),
     )
+    dry_run: Private[bool] = Field(
+        default=False,
+        description="Validate the request and return without changing anything.",
+    )
 
 
 class ZFSResourceSetArgs(BaseModel):

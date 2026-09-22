@@ -1,6 +1,7 @@
 import copy
 import errno
 import inspect
+import logging
 from types import SimpleNamespace
 from unittest.mock import Mock
 
@@ -8,14 +9,15 @@ import pytest
 import truenas_pylibzfs
 
 from middlewared.api.current import ZFSResourceSetArgsData
-from middlewared.plugins.zfs import resource_set
+from middlewared.plugins.zfs import resource_set, set_rules
 from middlewared.plugins.zfs.property_management import (
     PROPERTY_TEMPLATES,
     DeterminedProperties,
     build_set_of_zfs_props,
 )
 from middlewared.plugins.zfs.resource import ZFSResourceService
-from middlewared.service_exception import CallError, ValidationError
+from middlewared.plugins.zfs.set_rules import SetRule, check_acl_combination
+from middlewared.service_exception import CallError, ValidationError, ValidationErrors
 
 
 def prop(value):
@@ -220,58 +222,311 @@ def test_set_impl_open_failure_has_no_values_on_disk_suffix(zfs_exception):
     assert ei.value.errmsg == f"Failed to set properties on 'tank/a': [{code}]: permission denied"
 
 
-def volume_context(set_impl_calls, list_impl_calls):
-    context = Mock()
+GiB = 1024**3
+EXPECTED_READ = [
+    "aclinherit",
+    "aclmode",
+    "acltype",
+    "atime",
+    "available",
+    "checksum",
+    "compression",
+    "copies",
+    "dedup",
+    "exec",
+    "quota",
+    "readonly",
+    "recordsize",
+    "refquota",
+    "refreservation",
+    "reservation",
+    "snapdev",
+    "snapdir",
+    "special_small_blocks",
+    "sync",
+    "usedbyrefreservation",
+    "volblocksize",
+    "volsize",
+    "xattr",
+]
+FS_VALUES = {
+    "acltype": "nfsv4",
+    "aclmode": "passthrough",
+    "aclinherit": "passthrough",
+    "compression": "lz4",
+    "dedup": "off",
+    "special_small_blocks": 0,
+}
+DENIED = SimpleNamespace(entitled=False, message="SENTINEL entitlement denial")
 
-    def call_sync2(method, *args, **kwargs):
-        if method is context.s.zfs.tier.config:
-            return SimpleNamespace(enabled=False)
-        if method is context.s.zfs.resource.set_impl:
-            set_impl_calls.append(kwargs)
-            return {
-                "name": "tank/vol",
-                "pool": "tank",
-                "type": "VOLUME",
-                "createtxg": 10,
-                "guid": 20,
-                "properties": {"volsize": prop(3221225472)},
-                "user_properties": None,
-                "children": None,
-            }
-        if method is context.s.zfs.resource.list_impl:
-            list_impl_calls.append(args)
-            return [{"name": "tank/vol", "type": "VOLUME", "properties": {"volsize": {"value": 1073741824}}}]
+
+def row(name, type_="FILESYSTEM", **values):
+    return {
+        "name": name,
+        "pool": name.split("/")[0],
+        "type": type_,
+        "createtxg": 10,
+        "guid": 20,
+        "properties": {
+            n: {"value": v, "raw": str(v), "source": {"type": "LOCAL", "value": None}} for n, v in values.items()
+        },
+        "user_properties": None,
+        "children": [],
+    }
+
+
+class StubContext:
+    def __init__(self, *rows, tier_enabled=False, entitlement=None, set_impl_result=None):
+        self.rows = {r["name"]: r for r in rows}
+        self.tier_enabled = tier_enabled
+        self.entitlement = entitlement or SimpleNamespace(entitled=True, message="")
+        self.set_impl_result = set_impl_result
+        self.calls = []
+        self.logger = logging.getLogger("test_resource_set")
+        self.middleware = SimpleNamespace(call_sync=self.call_sync, run_coroutine=Mock())
+        self.s = SimpleNamespace(
+            zfs=SimpleNamespace(
+                tier=SimpleNamespace(config="zfs.tier.config"),
+                resource=SimpleNamespace(list_impl="zfs.resource.list_impl", set_impl="zfs.resource.set_impl"),
+            ),
+            truenas=SimpleNamespace(entitlements=SimpleNamespace(check="truenas.entitlements.check")),
+        )
+
+    def names(self):
+        return [method for method, _, _ in self.calls]
+
+    def calls_to(self, method):
+        return [(args, kwargs) for name, args, kwargs in self.calls if name == method]
+
+    def call_sync(self, method, *args):
+        self.calls.append((method, args, {}))
+        if method == "zpool.query_impl":
+            return [{"properties": {"class_special_size": {"value": 0}}}]
         raise AssertionError(method)
 
-    context.call_sync2.side_effect = call_sync2
-    return context
+    def call_sync2(self, method, *args, **kwargs):
+        self.calls.append((method, args, kwargs))
+        if method == "zfs.tier.config":
+            return SimpleNamespace(enabled=self.tier_enabled)
+        if method == "truenas.entitlements.check":
+            return self.entitlement
+        if method == "zfs.resource.list_impl":
+            return [self.rows[path] for path in args[0].paths if path in self.rows]
+        if method == "zfs.resource.set_impl":
+            if self.set_impl_result is not None:
+                return self.set_impl_result
+            return {**self.rows[args[0]], "properties": None, "user_properties": None, "children": None}
+        raise AssertionError(method)
+
+
+def tree(**target_values):
+    return (
+        row("tank", **FS_VALUES),
+        row("tank/a", **{**FS_VALUES, "dedup": "on"}),
+        row("tank/a/b", **{**FS_VALUES, **target_values}),
+    )
+
+
+def set_(context, path="tank/a/b", **kwargs):
+    return resource_set.set(context, ZFSResourceSetArgsData(path=path, **kwargs))
+
+
+@pytest.mark.parametrize(
+    "path, kwargs, paths",
+    [
+        ("tank/a/b", {"properties": {"compression": "gzip"}}, ["tank/a/b"]),
+        ("tank/a/b", {"inherit": ["compression"]}, ["tank/a/b", "tank/a"]),
+        ("tank", {"inherit": ["compression"]}, ["tank"]),
+        ("tank/a/b", {"inherit": ["org.truenas:x"]}, ["tank/a/b"]),
+    ],
+)
+def test_set_reads_the_target_and_only_the_parent_it_inherits_from(path, kwargs, paths):
+    context = StubContext(*tree())
+    set_(context, path, **kwargs)
+    [(args, _)] = context.calls_to("zfs.resource.list_impl")
+    query = args[0]
+    assert (query.paths, query.properties, query.get_source, query.get_user_properties) == (
+        paths,
+        EXPECTED_READ,
+        True,
+        False,
+    )
+
+
+def test_set_rejects_an_invalid_request_before_reading_anything():
+    context = StubContext(*tree())
+    with pytest.raises(ValidationErrors) as ei:
+        set_(context, properties={"compression": "gzip"}, inherit=["volsize"])
+    assert [e.attribute for e in ei.value.errors] == ["zfs.resource.set.inherit.volsize"]
+    assert context.calls == []
+
+
+def test_set_on_a_missing_resource_is_enoent_on_path():
+    context = StubContext(*tree())
+    with pytest.raises(ValidationError) as ei:
+        set_(context, "tank/gone", properties={"compression": "gzip"})
+    assert (ei.value.attribute, ei.value.errmsg, ei.value.errno) == (
+        "zfs.resource.set.path",
+        "'tank/gone' does not exist.",
+        errno.ENOENT,
+    )
+
+
+def test_set_whose_parent_vanished_is_a_call_error():
+    context = StubContext(row("tank/a/b", **FS_VALUES))
+    with pytest.raises(CallError) as ei:
+        set_(context, inherit=["compression"])
+    assert ei.value.errno == errno.ENOENT
+    assert context.calls_to("zfs.resource.set_impl") == []
+
+
+@pytest.mark.parametrize(
+    "kwargs, tier_read, entitlement_read",
+    [
+        ({"properties": {"compression": "gzip"}}, False, False),
+        ({"properties": {"dedup": "on"}}, True, True),
+        ({"inherit": ["special_small_blocks"]}, True, False),
+    ],
+)
+def test_set_reads_tier_and_entitlement_only_when_touched(kwargs, tier_read, entitlement_read):
+    context = StubContext(*tree())
+    set_(context, **kwargs)
+    assert ("zfs.tier.config" in context.names(), "truenas.entitlements.check" in context.names()) == (
+        tier_read,
+        entitlement_read,
+    )
+
+
+def test_set_inheriting_dedup_from_a_dedup_parent_needs_the_entitlement():
+    context = StubContext(*tree(), entitlement=DENIED)
+    with pytest.raises(ValidationErrors) as ei:
+        set_(context, inherit=["dedup"])
+    assert [(e.attribute, e.errmsg) for e in ei.value.errors] == [
+        ("zfs.resource.set.inherit.dedup", "SENTINEL entitlement denial")
+    ]
+    assert context.calls_to("zfs.resource.set_impl") == []
+
+
+def test_set_dedup_to_its_current_value_needs_no_entitlement():
+    context = StubContext(*tree(dedup="on"), entitlement=DENIED)
+    set_(context, properties={"dedup": "on"})
+    assert len(context.calls_to("zfs.resource.set_impl")) == 1
+
+
+def test_set_inheriting_only_a_user_property_reads_the_target_and_writes():
+    context = StubContext(*tree())
+    set_(context, inherit=["org.truenas:x"])
+    assert context.names() == ["zfs.resource.list_impl", "zfs.resource.set_impl"]
+    assert context.calls_to("zfs.resource.set_impl")[0][1]["inherit"] == ["org.truenas:x"]
+
+
+def broken(context, state, verrors):
+    raise KeyError("boom")
+
+
+def test_set_reports_validation_errors_alongside_a_broken_rule(monkeypatch):
+    monkeypatch.setattr(
+        set_rules,
+        "SET_RULES",
+        (SetRule(broken, frozenset({"compression"})), SetRule(check_acl_combination, frozenset({"acltype"}))),
+    )
+    context = StubContext(*tree())
+    with pytest.raises(ValidationErrors) as ei:
+        set_(context, properties={"compression": "gzip", "acltype": "posix", "aclmode": "passthrough"})
+    assert [e.attribute for e in ei.value.errors] == ["zfs.resource.set.properties.aclmode"]
+    assert context.calls_to("zfs.resource.set_impl") == []
+
+
+def test_set_refuses_a_request_a_broken_rule_could_not_judge(monkeypatch):
+    monkeypatch.setattr(set_rules, "SET_RULES", (SetRule(broken, frozenset({"compression"})),))
+    context = StubContext(*tree())
+    with pytest.raises(CallError) as ei:
+        set_(context, properties={"compression": "gzip"})
+    assert ei.value.errmsg == "broken: validation failed: 'boom'"
+    assert context.calls_to("zfs.resource.set_impl") == []
+
+
+def test_set_reports_every_rule_violation_together():
+    context = StubContext(*tree(), entitlement=DENIED)
+    with pytest.raises(ValidationErrors) as ei:
+        set_(context, properties={"acltype": "posix", "aclmode": "passthrough", "dedup": "on"})
+    assert [e.attribute for e in ei.value.errors] == [
+        "zfs.resource.set.properties.aclmode",
+        "zfs.resource.set.properties.dedup",
+    ]
+
+
+def test_set_dry_run_raises_what_a_write_would():
+    context = StubContext(*tree(), entitlement=DENIED)
+    with pytest.raises(ValidationErrors):
+        set_(context, properties={"dedup": "on"}, dry_run=True)
+    assert context.calls_to("zfs.resource.set_impl") == []
+
+
+def test_set_dry_run_returns_the_current_values_without_writing():
+    context = StubContext(*tree())
+    entry = set_(context, properties={"compression": "gzip"}, user_properties={"org.truenas:x": "1"}, dry_run=True)
+    assert entry.properties.model_dump(exclude_unset=True) == {
+        "compression": {"raw": "lz4", "source": {"type": "LOCAL", "value": None}, "value": "lz4"}
+    }
+    assert entry.user_properties is None
+    assert context.calls_to("zfs.resource.set_impl") == []
+    context.middleware.run_coroutine.assert_not_called()
+
+
+def test_set_inherit_on_a_pool_root_resolves_to_the_registered_default():
+    context = StubContext(row("tank", **{**FS_VALUES, "acltype": "posix", "aclmode": "passthrough"}))
+    set_(context, "tank", inherit=["acltype"], properties={"aclmode": "passthrough"})
+    assert context.calls_to("zfs.resource.set_impl")[0][1]["inherit"] == ["aclinherit", "acltype"]
+
+
+def test_set_acltype_fills_its_companions():
+    context = StubContext(*tree())
+    set_(context, properties={"acltype": "posix"})
+    assert context.calls_to("zfs.resource.set_impl")[0][1]["properties"] == {
+        "acltype": "posix",
+        "aclmode": "discard",
+        "aclinherit": "discard",
+    }
+
+
+def test_set_inheriting_acltype_also_inherits_its_companions():
+    context = StubContext(*tree())
+    set_(context, inherit=["acltype"])
+    assert context.calls_to("zfs.resource.set_impl")[0][1]["inherit"] == ["aclinherit", "aclmode", "acltype"]
+
+
+def volume():
+    return row("tank/vol", "VOLUME", volsize=GiB, refreservation=0, dedup="off", special_small_blocks=0)
+
+
+def test_set_rejects_a_volsize_shrink():
+    context = StubContext(volume())
+    with pytest.raises(ValidationErrors) as ei:
+        set_(context, "tank/vol", properties={"volsize": "512M"})
+    assert [e.attribute for e in ei.value.errors] == ["zfs.resource.set.properties.volsize"]
 
 
 def test_set_hands_set_impl_volsize_as_int_bytes():
-    set_impl_calls = []
-    context = volume_context(set_impl_calls, [])
-    resource_set.set(context, ZFSResourceSetArgsData(path="tank/vol", properties={"volsize": "2G"}))
-    assert type(set_impl_calls[0]["properties"]["volsize"]) is int
-    assert set_impl_calls[0]["properties"]["volsize"] == 2147483648
+    context = StubContext(volume())
+    set_(context, "tank/vol", properties={"volsize": "2G"})
+    volsize = context.calls_to("zfs.resource.set_impl")[0][1]["properties"]["volsize"]
+    assert type(volsize) is int
+    assert volsize == 2147483648
 
 
 def test_set_writes_volsize_and_refreservation_in_one_set_impl_call():
-    set_impl_calls = []
-    context = volume_context(set_impl_calls, [])
-    resource_set.set(
-        context,
-        ZFSResourceSetArgsData(path="tank/vol", properties={"volsize": "2G", "refreservation": "auto"}),
-    )
-    assert len(set_impl_calls) == 1
-    assert set_impl_calls[0]["properties"] == {"volsize": 2147483648, "refreservation": "auto"}
+    context = StubContext(volume())
+    set_(context, "tank/vol", properties={"volsize": "2G", "refreservation": "auto"})
+    [(_, kwargs)] = context.calls_to("zfs.resource.set_impl")
+    assert kwargs["properties"] == {"volsize": 2147483648, "refreservation": "auto"}
 
 
 def test_set_returns_the_entry_set_impl_read():
-    list_impl_calls = []
-    context = volume_context([], list_impl_calls)
-    entry = resource_set.set(context, ZFSResourceSetArgsData(path="tank/vol", properties={"volsize": "2G"}))
+    result = {**volume(), "properties": {"volsize": prop(3221225472)}, "user_properties": None, "children": None}
+    context = StubContext(volume(), set_impl_result=result)
+    entry = set_(context, "tank/vol", properties={"volsize": "2G"})
     assert entry.properties.volsize.value == 3221225472
-    assert len(list_impl_calls) == 1
 
 
 @pytest.mark.parametrize("name", ["set_impl", "list_impl", "processes_using_paths"])

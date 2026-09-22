@@ -1,6 +1,8 @@
-"""Validation rules for zfs.resource.set, in the shape create_rules describes. Shared checks come from
-rules_common as `reject_*` functions taking plain values; "effective" here is read from the resource being
-updated rather than from an ancestor.
+"""Validation rules for zfs.resource.set.
+
+Request rules judge the request alone and run before anything is read. Post-read rules are listed once in
+`SET_RULES` and judge a `SetContext`, whose `effective()` resolves each property to the value it will have once the
+request is applied. Shared checks come from rules_common as `reject_*` functions taking plain values.
 """
 
 from __future__ import annotations
@@ -10,211 +12,299 @@ import errno
 import typing
 
 from middlewared.api.current import ZFSResourceSetProperties
-from middlewared.service_exception import ValidationError, ValidationErrors
+from middlewared.service_exception import CallError, ValidationError, ValidationErrors
 
 from .rules_common import (
-    apply_acl_defaults,
     reject_bad_acl_combination,
     reject_bad_user_property_names,
+    reject_bad_user_property_values,
     reject_dedup_on_special_vdev,
     reject_tier_managed_ssb,
     reject_unentitled_dedup,
 )
-from .utils import reject_snapshot_path
 
 if typing.TYPE_CHECKING:
+    from collections.abc import Callable, Collection, Mapping
+    import logging
+
     from middlewared.api.current import EntitlementEntry, ZFSResourceSetArgsData
     from middlewared.service import ServiceContext
 
 __all__ = (
+    "INDEX_PROPERTIES",
+    "INHERITABLE_PROPERTIES",
+    "MODEL_NATIVES",
+    "NON_INHERITABLE_PROPERTIES",
+    "POOL_ROOT_INHERIT_VALUES",
     "SETTABLE_PROPERTIES",
+    "SET_READ_PROPERTIES",
+    "SET_RULES",
+    "PropertyView",
     "SetContext",
+    "SetRule",
     "check_acl_combination",
     "check_dedup_entitlement",
     "check_dedup_tiering",
     "check_has_work",
     "check_inherit_names",
-    "check_path_shape",
-    "check_resource_exists",
     "check_set_inherit_conflict",
     "check_tier_managed_ssb",
-    "check_user_property_names",
+    "check_user_properties",
     "check_volsize_not_shrunk",
-    "resolve_set_request",
+    "touched_natives",
+    "validate_request",
+    "validate_set",
 )
 
 SCHEMA = "zfs.resource.set"
 
-_ACL_COMPANIONS = ("aclmode", "aclinherit")
-
 SETTABLE_PROPERTIES: frozenset[str] = frozenset(ZFSResourceSetProperties.model_json_schema()["properties"])
-"""The native property names an API caller may set, and therefore inherit.
-Derived from the published schema so the `Private` and creation-only
-fields drop out without a second list to maintain."""
+"""The native property names an API caller may set. Derived from the published schema so the `Private` and
+creation-only fields drop out without a second list to maintain."""
+
+NON_INHERITABLE_PROPERTIES = frozenset({"quota", "refquota", "reservation", "refreservation", "volsize"})
+INHERITABLE_PROPERTIES = SETTABLE_PROPERTIES - NON_INHERITABLE_PROPERTIES
+MODEL_NATIVES = frozenset(name for name, field in ZFSResourceSetProperties.model_fields.items() if not field.exclude)
+"""Every native the set model carries, the `Private` ones included."""
+INDEX_PROPERTIES = frozenset(
+    {
+        "aclinherit",
+        "aclmode",
+        "acltype",
+        "atime",
+        "checksum",
+        "compression",
+        "dedup",
+        "exec",
+        "readonly",
+        "snapdev",
+        "snapdir",
+        "sync",
+        "xattr",
+    }
+)
+SET_READ_PROPERTIES = SETTABLE_PROPERTIES | {"available", "volblocksize", "usedbyrefreservation"}
+POOL_ROOT_INHERIT_VALUES: Mapping[str, typing.Any] = {  # registered ZFS defaults; pylibzfs has no accessor for them
+    "acltype": "nfsv4",
+    "aclmode": "discard",
+    "aclinherit": "restricted",
+    "dedup": "off",
+    "special_small_blocks": 0,
+}
 
 
-@dataclasses.dataclass(slots=True, kw_only=True)
+class PropertyView(dict[str, typing.Any]):
+    """Property values read for one resource. A name that was not read, or was read without a value, raises
+    `CallError` when indexed; `.get()` is a plain lookup."""
+
+    __slots__ = ("path",)
+
+    def __init__(self, path: str, values: Mapping[str, typing.Any]) -> None:
+        super().__init__(values)
+        self.path = path
+
+    def __missing__(self, key: str) -> typing.NoReturn:
+        raise CallError(f"{key!r} was not read for {self.path!r}")
+
+    def __getitem__(self, key: str) -> typing.Any:
+        value = super().__getitem__(key)
+        if value is None:
+            self.__missing__(key)
+        return value
+
+
+def touched_natives(properties: ZFSResourceSetProperties, inherit: Collection[str]) -> frozenset[str]:
+    """The native properties a request sets or inherits."""
+    return frozenset(name for name in MODEL_NATIVES if getattr(properties, name) is not None) | {
+        name for name in inherit if ":" not in name
+    }
+
+
+@dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
 class SetContext:
+    path: str
+    type: typing.Literal["FILESYSTEM", "VOLUME"]
     properties: ZFSResourceSetProperties
-    """Effective zfs properties after the acl companions are filled in. A
-    field left as None is not sent to ZFS."""
-    inherit: set[str]
-    """Effective names to inherit after the acltype fan-out."""
-    current: dict[str, typing.Any] | None = None
-    """The resource as it is now, with the properties the active rules
-    read. Populated by the service; None when the resource does not
-    exist."""
-    tier_enabled: bool = False
-    dedup_entitlement: EntitlementEntry | None = None
-    """The DEDUP entitlement decision for this system. Populated by the
-    service only when the request enables deduplication."""
+    """What will be sent to ZFS. A field left as None is not touched."""
+    user_properties: Mapping[str, str]
+    inherit: frozenset[str]
+    """Names to inherit, user property names included."""
+    current: PropertyView
+    """Values on the resource now. A name absent here is not valid for the resource's type."""
+    source: PropertyView
+    """The source type of each value in `current`."""
+    parent: PropertyView | None
+    """Values on the parent; None when no native is inherited or the resource is a pool root."""
+    pool_root: bool
+    tier_enabled: bool | None
+    """None when the request touches nothing the tier manager owns, so the tier config was not read."""
+    dedup_entitlement: EntitlementEntry | None
+    """None when the request does not touch dedup."""
+    derived: frozenset[str] = frozenset()
+    """Names middleware added to the request on the caller's behalf."""
+    snapshot_devices: frozenset[str] = frozenset()
+
+    def set_names(self) -> frozenset[str]:
+        return frozenset(name for name in MODEL_NATIVES if getattr(self.properties, name) is not None)
+
+    def inherited_natives(self) -> frozenset[str]:
+        return frozenset(name for name in self.inherit if ":" not in name)
+
+    def touched(self) -> frozenset[str]:
+        return touched_natives(self.properties, self.inherit)
+
+    def changed(self, name: str) -> bool:
+        return bool(self.effective(name) != self.current.get(name))
+
+    def attribute(self, name: str) -> str:
+        if name in self.set_names():
+            return f"{SCHEMA}.properties.{name}"
+        return f"{SCHEMA}.inherit.{name}"
+
+    def effective(self, name: str) -> typing.Any:
+        """The value `name` will have once the request is applied."""
+        if name in self.set_names():
+            value = getattr(self.properties, name)
+            return str(value).lower() if name in INDEX_PROPERTIES else value
+        if name in self.inherited_natives():
+            if self.parent is not None and name in self.parent:
+                return self.parent[name]
+            if self.pool_root and name in POOL_ROOT_INHERIT_VALUES:
+                return POOL_ROOT_INHERIT_VALUES[name]
+            raise CallError(f"{name!r} has no source to inherit from on {self.path!r}")
+        return self.current[name]
 
 
-def resolve_set_request(data: ZFSResourceSetArgsData) -> tuple[ZFSResourceSetProperties, set[str]]:
-    """Apply the acltype coupling to both halves of the request.
-
-    Setting acltype fills the companions the caller left alone (the
-    creation defaults); inheriting acltype also inherits the companions
-    the caller did not set. Nothing here raises.
-    """
-    properties = data.properties.model_copy()
-    inherit = set(data.inherit)
-    apply_acl_defaults(properties, leave=inherit)
-    if "acltype" in inherit:
-        inherit.update(name for name in _ACL_COMPANIONS if getattr(data.properties, name) is None)
-    return properties, inherit
-
-
-def check_path_shape(data: ZFSResourceSetArgsData, ctx: SetContext) -> None:
-    reject_snapshot_path(SCHEMA, data.path)
-
-
-def check_has_work(data: ZFSResourceSetArgsData, ctx: SetContext) -> None:
+def check_has_work(data: ZFSResourceSetArgsData, verrors: ValidationErrors) -> None:
     if not (data.properties.model_dump(exclude_none=True) or data.user_properties or data.inherit):
-        raise ValidationError(
+        verrors.add(
             SCHEMA,
             "Nothing to update. Supply at least one of 'properties', 'user_properties' or 'inherit'.",
             errno.EINVAL,
         )
 
 
-def check_set_inherit_conflict(data: ZFSResourceSetArgsData, ctx: SetContext) -> None:
+def check_set_inherit_conflict(data: ZFSResourceSetArgsData, verrors: ValidationErrors) -> None:
     setting = set(data.properties.model_dump(exclude_none=True)) | set(data.user_properties)
     for name in data.inherit:
         if name in setting:
-            raise ValidationError(
-                f"{SCHEMA}.inherit",
+            verrors.add(
+                f"{SCHEMA}.inherit.{name}",
                 f"{name!r} cannot be both set and inherited in the same request.",
                 errno.EINVAL,
             )
 
 
-def check_inherit_names(data: ZFSResourceSetArgsData, ctx: SetContext) -> None:
-    """A name to inherit is a user property or one of the settable native
-    properties. Anything else would let a caller reset a property the
-    public surface does not let it set."""
+def check_inherit_names(data: ZFSResourceSetArgsData, verrors: ValidationErrors) -> None:
+    user_names = []
     for name in data.inherit:
-        if ":" in name or name in SETTABLE_PROPERTIES:
-            continue
-        raise ValidationError(
-            f"{SCHEMA}.inherit",
-            f"{name!r} is not a property that may be inherited here. Native properties must be one of the "
-            "settable properties and user property names must contain a colon.",
-            errno.EINVAL,
-        )
+        if ":" in name:
+            user_names.append(name)
+        elif name in NON_INHERITABLE_PROPERTIES:
+            verrors.add(f"{SCHEMA}.inherit.{name}", f"{name!r} has no inherited value.", errno.EINVAL)
+        elif name not in INHERITABLE_PROPERTIES:
+            verrors.add(f"{SCHEMA}.inherit.{name}", f"{name!r} is not a settable property.", errno.EINVAL)
+    reject_bad_user_property_names(verrors, f"{SCHEMA}.inherit", user_names)
 
 
-def _raise_first(verrors: ValidationErrors) -> None:
-    if verrors:
-        raise verrors.errors[0]
-
-
-def check_user_property_names(data: ZFSResourceSetArgsData, ctx: SetContext) -> None:
-    verrors = ValidationErrors()
+def check_user_properties(data: ZFSResourceSetArgsData, verrors: ValidationErrors) -> None:
     reject_bad_user_property_names(verrors, f"{SCHEMA}.user_properties", data.user_properties)
-    _raise_first(verrors)
+    reject_bad_user_property_values(verrors, f"{SCHEMA}.user_properties", data.user_properties)
 
 
-def check_resource_exists(data: ZFSResourceSetArgsData, ctx: SetContext) -> None:
-    """The resource must exist.
+def validate_request(data: ZFSResourceSetArgsData, verrors: ValidationErrors) -> None:
+    """Judge what the request alone decides. Reads nothing."""
+    check_has_work(data, verrors)
+    check_set_inherit_conflict(data, verrors)
+    check_inherit_names(data, verrors)
+    check_user_properties(data, verrors)
 
-    The service calls this after the resource has been read.
-    """
-    if ctx.current is None:
-        raise ValidationError(SCHEMA, f"{data.path!r} does not exist.", errno.ENOENT)
 
-
-def check_volsize_not_shrunk(data: ZFSResourceSetArgsData, ctx: SetContext) -> None:
-    """A volume may only grow.
-
-    The library drops a volsize equal to the current one before it
-    reaches ZFS, so only a smaller value is refused.
-
-    The service calls this only for volumes that request volsize and
-    after the resource has been read.
-    """
-    assert ctx.current is not None
-    assert ctx.properties.volsize is not None
-    if ctx.properties.volsize < ctx.current["properties"]["volsize"]["value"]:
-        raise ValidationError(
-            f"{SCHEMA}.properties",
-            f"'volsize' may not be reduced below the current size of {data.path!r}.",
+def check_volsize_not_shrunk(context: ServiceContext, state: SetContext, verrors: ValidationErrors) -> None:
+    if state.type != "VOLUME" or "volsize" not in state.set_names():
+        return
+    if state.effective("volsize") < state.current["volsize"]:
+        verrors.add(
+            state.attribute("volsize"),
+            f"'volsize' may not be reduced below the current size of {state.path!r}.",
             errno.EINVAL,
         )
 
 
-def _effective_value(name: str, ctx: SetContext) -> str | None:
-    assert ctx.current is not None
-    value = getattr(ctx.properties, name)
-    if value is None:
-        value = ctx.current["properties"][name]["raw"]
-    return str(value).lower() if value is not None else None
+def check_acl_combination(context: ServiceContext, state: SetContext, verrors: ValidationErrors) -> None:
+    if state.type != "FILESYSTEM":
+        return
+    attribute = state.attribute("aclmode" if "aclmode" in state.touched() else "acltype")
+    reject_bad_acl_combination(verrors, attribute, state.effective("acltype"), state.effective("aclmode"))
 
 
-def check_acl_combination(data: ZFSResourceSetArgsData, ctx: SetContext) -> None:
-    """The service calls this only for filesystems that request acltype or aclmode and after the resource has
-    been read."""
-    verrors = ValidationErrors()
-    reject_bad_acl_combination(
-        verrors, f"{SCHEMA}.properties", _effective_value("acltype", ctx), _effective_value("aclmode", ctx)
-    )
-    _raise_first(verrors)
+def check_tier_managed_ssb(context: ServiceContext, state: SetContext, verrors: ValidationErrors) -> None:
+    if not state.tier_enabled:
+        return
+    if "special_small_blocks" in state.set_names():
+        if state.effective("special_small_blocks") == state.current["special_small_blocks"]:
+            return
+    elif state.source["special_small_blocks"] in ("INHERITED", "DEFAULT", "NONE"):
+        return
+    reject_tier_managed_ssb(verrors, state.attribute("special_small_blocks"))
 
 
-def check_tier_managed_ssb(data: ZFSResourceSetArgsData, ctx: SetContext) -> None:
-    """The tier manager owns special_small_blocks while tiering is enabled,
-    so it may be neither set nor inherited.
+def check_dedup_entitlement(context: ServiceContext, state: SetContext, verrors: ValidationErrors) -> None:
+    if state.effective("dedup") == "off" or not state.changed("dedup"):
+        return
+    if state.dedup_entitlement is None:
+        raise CallError(f"The DEDUP entitlement was not read for {state.path!r}")
+    reject_unentitled_dedup(verrors, state.attribute("dedup"), state.dedup_entitlement)
 
-    The service calls this only when tiering is enabled.
+
+def check_dedup_tiering(context: ServiceContext, state: SetContext, verrors: ValidationErrors) -> None:
+    if state.type != "FILESYSTEM" or not state.tier_enabled:
+        return
+    ssb = state.effective("special_small_blocks")
+    if state.effective("dedup") == "off" or ssb <= 0:
+        return
+    if not (state.changed("dedup") or state.changed("special_small_blocks")):
+        return
+    attribute = state.attribute("dedup" if "dedup" in state.touched() else "special_small_blocks")
+    reject_dedup_on_special_vdev(verrors, attribute, context, state.path.split("/")[0], ssb)
+
+
+class SetRule(typing.NamedTuple):
+    check: Callable[[ServiceContext, SetContext, ValidationErrors], None]
+    triggers: frozenset[str]
+
+
+SET_RULES: tuple[SetRule, ...] = (
+    SetRule(check_volsize_not_shrunk, frozenset({"volsize"})),
+    SetRule(check_acl_combination, frozenset({"acltype", "aclmode"})),
+    SetRule(check_tier_managed_ssb, frozenset({"special_small_blocks"})),
+    SetRule(check_dedup_entitlement, frozenset({"dedup"})),
+    SetRule(check_dedup_tiering, frozenset({"dedup", "special_small_blocks"})),
+)
+
+
+def validate_set(
+    context: ServiceContext, state: SetContext, verrors: ValidationErrors, logger: logging.Logger
+) -> list[tuple[str, Exception]]:
+    """Run every rule the request triggers, adding what they find to `verrors`. Never raises.
+
+    A rule that fails with anything but a validation error is logged and returned as `(rule name, exception)` so
+    the caller can refuse the request once every other rule has had its say.
     """
-    if "special_small_blocks" in data.inherit:
-        raise ValidationError(
-            f"{SCHEMA}.inherit",
-            "ZFS tiering is enabled. Use `zfs.tier.dataset_set_tier` to manage 'special_small_blocks'.",
-            errno.EINVAL,
-        )
-    if data.properties.special_small_blocks is not None:
-        verrors = ValidationErrors()
-        reject_tier_managed_ssb(verrors, f"{SCHEMA}.properties")
-        _raise_first(verrors)
-
-
-def check_dedup_entitlement(data: ZFSResourceSetArgsData, ctx: SetContext) -> None:
-    """The service calls this only for requests with a dedup value other than off and after the entitlement has
-    been gathered."""
-    assert ctx.dedup_entitlement is not None
-    verrors = ValidationErrors()
-    reject_unentitled_dedup(verrors, f"{SCHEMA}.properties", ctx.dedup_entitlement)
-    _raise_first(verrors)
-
-
-def check_dedup_tiering(context: ServiceContext, data: ZFSResourceSetArgsData, ctx: SetContext) -> None:
-    """The service calls this only for filesystems that request a dedup value other than off while tiering is
-    enabled and after the resource has been read."""
-    assert ctx.current is not None
-    ssb = ctx.properties.special_small_blocks
-    if ssb is None:
-        ssb = ctx.current["properties"]["special_small_blocks"]["value"] or 0
-    verrors = ValidationErrors()
-    reject_dedup_on_special_vdev(verrors, f"{SCHEMA}.properties", context, data.path.split("/")[0], ssb)
-    _raise_first(verrors)
+    failures: list[tuple[str, Exception]] = []
+    touched = state.touched()
+    for rule in SET_RULES:
+        if not rule.triggers & touched:
+            continue
+        name = rule.check.__name__
+        try:
+            rule.check(context, state, verrors)
+        except ValidationError as e:
+            verrors.add_validation_error(e)
+        except ValidationErrors as e:
+            for error in e.errors:
+                verrors.add_validation_error(error)
+        except Exception as e:
+            logger.error("%s: rule %s failed", state.path, name, exc_info=True)
+            failures.append((name, e))
+    return failures
