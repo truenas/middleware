@@ -32,7 +32,10 @@ __all__ = (
     "ZFSResourceDestroyArgsData",
     "ZFSResourceDestroyArgs",
     "ZFSResourceDestroyResult",
+    "ZFSResourceListAddedEvent",
     "ZFSResourceListArgs",
+    "ZFSResourceListChangedEvent",
+    "ZFSResourceListRemovedEvent",
     "ZFSResourceListResult",
     "ZFSResourceProcessesArgs",
     "ZFSResourceProcessesResult",
@@ -51,6 +54,7 @@ __all__ = (
     "ZFSResourceQueryResult",
     "ZFSResourceSetArgsData",
     "ZFSResourceSetArgs",
+    "ZFSResourceSetChange",
     "ZFSResourceSetProperties",
     "ZFSResourceSetResult",
 )
@@ -730,7 +734,7 @@ class ZFSResourceSetArgsData(BaseModel):
         description=(
             "User properties to set or overwrite, keyed by their full name (e.g. 'org.truenas:custom'). A name must "
             "contain a colon, may consist only of lowercase letters, digits and the characters ':', '.', '_' and "
-            "'-', and must be shorter than 256 characters. A value must be shorter than 8192 bytes and must be a "
+            "'-', and must be shorter than 256 characters. A value may be at most 1024 characters long and must be a "
             "single line."
         ),
     )
@@ -884,3 +888,41 @@ class ZFSResourcePromoteArgs(BaseModel):
 
 class ZFSResourcePromoteResult(BaseModel):
     result: None
+
+
+class ZFSResourceSetChange(BaseModel):
+    properties: dict[str, PropertyValue] | None = Field(
+        description=(
+            "The native properties the operation set, inherited or derived, with their values as read back after the "
+            "write. Properties it did not touch are absent."
+        ),
+    )
+    user_properties: dict[str, str] | None = Field(
+        description=(
+            "The user properties as read back after the write, named as `zfs.resource.list` names them. Null when "
+            "the operation touched no user property."
+        ),
+    )
+    inherited: list[str] = Field(description="The property names the operation reset to their inherited value.")
+    descendants_affected: bool = Field(
+        description=(
+            "Means an inherited property value below `id` may have changed. It does not cover space accounting: a "
+            "quota set here changes the space available to every descendant without setting this flag."
+        ),
+    )
+
+
+class ZFSResourceListAddedEvent(BaseModel):
+    id: str = Field(description="Path of the filesystem or volume that was created or renamed into place.")
+    fields: ZFSResourceEntry = Field(description="The resource as read back after the operation.")
+
+
+class ZFSResourceListChangedEvent(BaseModel):
+    id: str = Field(description="Path of the filesystem or volume that changed.")
+    fields: ZFSResourceSetChange = Field(
+        description="What the operation changed. Only the properties it touched are present.",
+    )
+
+
+class ZFSResourceListRemovedEvent(BaseModel):
+    id: str = Field(description="Path of the filesystem or volume that was destroyed or renamed away.")
