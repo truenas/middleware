@@ -184,9 +184,7 @@ class PoolDatasetService(CRUDService):
             tier_enabled=tier_enabled,
         )
 
-    async def __common_validation(self, verrors, schema, data, mode, parent=None, cur_dataset=None):
-        assert mode in ('CREATE', 'UPDATE')
-
+    async def __create_validation(self, verrors, schema, data, parent):
         parents = get_dataset_parents(data['name'])
         parent_name = None
         if not parents:
@@ -225,7 +223,7 @@ class PoolDatasetService(CRUDService):
                 verrors.add(f'{schema}.name', msg)
         else:
             parent = parent[0]
-            if mode == 'CREATE' and parent['readonly']['rawvalue'] == 'on':
+            if parent['readonly']['rawvalue'] == 'on':
                 # creating a zvol/dataset when the parent object is set to readonly=on
                 # is allowed via ZFS. However, if it's a dataset an error will be raised
                 # stating that it was unable to be mounted. If it's a zvol, then the service
@@ -242,38 +240,15 @@ class PoolDatasetService(CRUDService):
         verrors.check()
 
         await validate_dedup_license(self.middleware, verrors, schema, data.get('deduplication'))
-        ssb_ref = cur_dataset or parent
-        special_small_blocks = (ssb_ref.get('special_small_block_size') or {}).get('parsed') or 0
+        special_small_blocks = (parent.get('special_small_block_size') or {}).get('parsed') or 0
         await validate_dedup_tiering(
             self.middleware, verrors, schema, data.get('deduplication'), parent['pool'],
-            data['type'], special_small_blocks, cur_dataset.get('deduplication') if cur_dataset else None,
-            cur_dataset['name'] if cur_dataset else None,
+            data['type'], special_small_blocks, None, None,
         )
 
         dataset_pool_is_draid = await self.middleware.call('pool.is_draid_pool', parent['pool'])
         if data['type'] == 'FILESYSTEM':
             to_check = {'acltype': None, 'aclmode': None}
-
-            if mode == 'UPDATE':
-                # Prevent users from changing acltype settings underneath an active SMB share
-                # If this dataset hosts an SMB share, then prompt the user to first delete the share,
-                # make the dataset change, the recreate the share.
-                acltype = data.get('acltype')
-                if acltype == 'INHERIT':
-                    acltype = parent['acltype']['value']
-
-                if acltype and acltype != cur_dataset['acltype']['value']:
-                    ds_attachments = await self.middleware.call('pool.dataset.attachments', data['name'])
-                    if smb_attachments := [share for share in ds_attachments if share['type'] == "SMB Share"]:
-                        share_names = [smb_share['attachments'] for smb_share in smb_attachments]
-
-                        verrors.add(
-                            f'{schema}.acltype',
-                            'This dataset is hosting SMB shares. '
-                            f'Before acltype can be updated the following shares must be disabled: '
-                            f'{share_names[0]}. '
-                            'The shares may be re-enabled after the change.'
-                        )
 
             # Prevent users from setting incorrect combinations of aclmode and acltype parameters
             # The final value to be set may have one of several different possible origins
@@ -289,7 +264,7 @@ class PoolDatasetService(CRUDService):
             # POSIX / OFF + non-DISCARD (this will potentially prevent ZFS_ACL_TRIVAL ZFS pflag from being
             # set and may result in spurious permissions errors.
             for key in ('acltype', 'aclmode'):
-                match (val := data.get(key) or (cur_dataset[key]['value'] if cur_dataset else 'INHERIT')):
+                match (val := data.get(key) or 'INHERIT'):
                     case 'INHERIT':
                         to_check[key] = parent[key]['value']
                     case 'NFSV4' | 'POSIX' | 'OFF' | 'PASSTHROUGH' | 'RESTRICTED' | 'DISCARD':
@@ -312,12 +287,12 @@ class PoolDatasetService(CRUDService):
                     'pool.dataset.recordsize_choices', parent['pool']
                 ):
                     verrors.add(f'{schema}.recordsize', f'{rs!r} is an invalid recordsize.')
-            elif mode == 'CREATE' and dataset_pool_is_draid:
+            elif dataset_pool_is_draid:
                 # We set recordsize to 1M by default on dataset creation if not explicitly specified
                 data['recordsize'] = '1M'
 
         elif data['type'] == 'VOLUME':
-            if mode == 'CREATE' and 'volblocksize' not in data:
+            if 'volblocksize' not in data:
                 # with openzfs 2.2, zfs sets 16k as default https://github.com/openzfs/zfs/pull/12406
                 data['volblocksize'] = '128K' if dataset_pool_is_draid else '16K'
 
@@ -337,9 +312,6 @@ class PoolDatasetService(CRUDService):
             if 'volsize' in data and parent:
 
                 avail_mem = int(parent['available']['rawvalue'])
-
-                if mode == 'UPDATE':
-                    avail_mem += int((await self.get_instance(data['name']))['used']['rawvalue'])
 
                 if (
                     data['volsize'] > (avail_mem * 0.80) and
@@ -366,18 +338,9 @@ class PoolDatasetService(CRUDService):
         if (c_value := data.get('special_small_block_size')) is not None:
             tier_config = await self.middleware.call('zfs.tier.config')
             if tier_config.enabled:
-                if mode == 'UPDATE':
-                    # Allow no-op resubmissions (effective value unchanged)
-                    cur_ssb = cur_dataset['special_small_block_size']
-                    reject = not (
-                        (c_value == 'INHERIT' and cur_ssb['source'] in ('INHERITED', 'DEFAULT', 'NONE'))
-                        or (c_value != 'INHERIT' and c_value == cur_ssb['parsed'])
-                    )
-                else:
-                    # CREATE: INHERIT is allowed (snapped to a canonical tier
-                    # value in do_create); numeric values are rejected.
-                    reject = c_value != 'INHERIT'
-                if reject:
+                # CREATE: INHERIT is allowed (snapped to a canonical tier
+                # value in do_create); numeric values are rejected.
+                if c_value != 'INHERIT':
                     verrors.add(
                         f'{schema}.special_small_block_size',
                         'ZFS tiering is enabled; use zfs.tier.dataset_set_tier to manage this property.'
@@ -388,39 +351,194 @@ class PoolDatasetService(CRUDService):
                     'This field must be from zero to 16M'
                 )
 
-        if mode == 'CREATE':
-            validate_user_properties(verrors, f'{schema}.user_properties', data.get('user_properties', []))
-        elif mode == 'UPDATE':
-            if data.get('user_properties_update') and not data.get('user_properties'):
-                validate_user_properties(
-                    verrors, f'{schema}.user_properties_update', data['user_properties_update']
-                )
-                for index, prop in enumerate(data['user_properties_update']):
-                    prop_schema = f'{schema}.user_properties_update.{index}'
-                    if 'value' in prop and prop.get('remove'):
-                        verrors.add(f'{prop_schema}.remove', 'When "value" is specified, this cannot be set')
-                    elif not any(k in prop for k in ('value', 'remove')):
-                        verrors.add(f'{prop_schema}.value', 'Either "value" or "remove" must be specified')
-            elif data.get('user_properties') and data.get('user_properties_update'):
+        validate_user_properties(verrors, f'{schema}.user_properties', data.get('user_properties', []))
+
+    async def __update_validation(self, verrors, schema, data, cur_dataset):
+        parents = get_dataset_parents(data['name'])
+        parent_name = None
+        if not parents:
+            # happens when someone is making
+            # changes to the root dataset (zpool)
+            parent_name = data['name']
+        else:
+            parent_name = parents[0]
+
+        parent = await self.middleware.call(
+            'pool.dataset.query',
+            [('id', '=', parent_name)],
+            {'extra': {'retrieve_children': False}}
+        )
+
+        if await self.is_internal_dataset(data['name']):
+            verrors.add(
+                f'{schema}.name',
+                f'{data["name"]!r} is using system internal managed dataset. Please specify a different parent.'
+            )
+
+        parent = parent[0]
+
+        # We raise validation errors here as parent could be used down to validate other aspects of the dataset
+        verrors.check()
+
+        await validate_dedup_license(self.middleware, verrors, schema, data.get('deduplication'))
+        special_small_blocks = (cur_dataset.get('special_small_block_size') or {}).get('parsed') or 0
+        await validate_dedup_tiering(
+            self.middleware, verrors, schema, data.get('deduplication'), parent['pool'],
+            data['type'], special_small_blocks, cur_dataset.get('deduplication'), cur_dataset['name'],
+        )
+
+        dataset_pool_is_draid = await self.middleware.call('pool.is_draid_pool', parent['pool'])
+        if data['type'] == 'FILESYSTEM':
+            to_check = {'acltype': None, 'aclmode': None}
+
+            # Prevent users from changing acltype settings underneath an active SMB share
+            # If this dataset hosts an SMB share, then prompt the user to first delete the share,
+            # make the dataset change, the recreate the share.
+            acltype = data.get('acltype')
+            if acltype == 'INHERIT':
+                acltype = parent['acltype']['value']
+
+            if acltype and acltype != cur_dataset['acltype']['value']:
+                ds_attachments = await self.middleware.call('pool.dataset.attachments', data['name'])
+                if smb_attachments := [share for share in ds_attachments if share['type'] == "SMB Share"]:
+                    share_names = [smb_share['attachments'] for smb_share in smb_attachments]
+
+                    verrors.add(
+                        f'{schema}.acltype',
+                        'This dataset is hosting SMB shares. '
+                        f'Before acltype can be updated the following shares must be disabled: '
+                        f'{share_names[0]}. '
+                        'The shares may be re-enabled after the change.'
+                    )
+
+            # Prevent users from setting incorrect combinations of aclmode and acltype parameters
+            # The final value to be set may have one of several different possible origins
+            # 1. The parameter may be provided in `data` (explicit creation or update)
+            # 2. The parameter may be original value stored in dataset and not touched by update payload
+            # 3. The parameter may be omitted from payload (data) in creation (defaulted to INHERIT)
+            #
+            # If result of 1-3 above for aclmode is INHERIT, then value will be retrieved from parent
+            #
+            # The configuration options we want to avoid are:
+            # NFSV4 + DISCARD (this will result in ACL being stripped on chmod operation)
+            #
+            # POSIX / OFF + non-DISCARD (this will potentially prevent ZFS_ACL_TRIVAL ZFS pflag from being
+            # set and may result in spurious permissions errors.
+            for key in ('acltype', 'aclmode'):
+                match (val := data.get(key) or cur_dataset[key]['value']):
+                    case 'INHERIT':
+                        to_check[key] = parent[key]['value']
+                    case 'NFSV4' | 'POSIX' | 'OFF' | 'PASSTHROUGH' | 'RESTRICTED' | 'DISCARD':
+                        to_check[key] = val
+                    case _:
+                        raise CallError(f'{val}: unexpected value for {key}')
+
+            if to_check['acltype'] in ('POSIX', 'OFF') and to_check['aclmode'] != 'DISCARD':
+                verrors.add(f'{schema}.aclmode', 'Must be set to DISCARD when acltype is POSIX or OFF')
+
+            elif to_check['acltype'] == 'NFSV4' and to_check['aclmode'] == 'DISCARD':
+                verrors.add(f'{schema}.aclmode', 'DISCARD aclmode may not be set for NFSv4 acl type')
+
+            for i in ('force_size', 'sparse', 'volsize', 'volblocksize'):
+                if i in data:
+                    verrors.add(f'{schema}.{i}', 'This field is not valid for FILESYSTEM')
+
+            if rs := data.get('recordsize'):
+                if rs != 'INHERIT' and rs not in await self.middleware.call(
+                    'pool.dataset.recordsize_choices', parent['pool']
+                ):
+                    verrors.add(f'{schema}.recordsize', f'{rs!r} is an invalid recordsize.')
+
+        elif data['type'] == 'VOLUME':
+            if dataset_pool_is_draid and 'volblocksize' in data:
+                if ZFS_VOLUME_BLOCK_SIZE_CHOICES[data['volblocksize']] < 32 * 1024:
+                    verrors.add(
+                        f'{schema}.volblocksize',
+                        'Volume block size must be greater than or equal to 32K for dRAID pools'
+                    )
+
+            for i in (
+                'aclmode', 'acltype', 'atime', 'casesensitivity', 'quota', 'refquota', 'recordsize',
+            ):
+                if i in data:
+                    verrors.add(f'{schema}.{i}', 'This field is not valid for VOLUME')
+
+            if 'volsize' in data and parent:
+
+                avail_mem = int(parent['available']['rawvalue'])
+                avail_mem += int((await self.get_instance(data['name']))['used']['rawvalue'])
+
+                if (
+                    data['volsize'] > (avail_mem * 0.80) and
+                    not data.get('force_size', False)
+                ):
+                    verrors.add(
+                        f'{schema}.volsize',
+                        'It is not recommended to use more than 80% of your available space for VOLUME'
+                    )
+
+                if 'volblocksize' in data:
+
+                    if data['volblocksize'][:3] == '512':
+                        block_size = 512
+                    else:
+                        block_size = int(data['volblocksize'][:-1]) * 1024
+
+                    if data['volsize'] % block_size:
+                        verrors.add(
+                            f'{schema}.volsize',
+                            'Volume size should be a multiple of volume block size'
+                        )
+
+        if (c_value := data.get('special_small_block_size')) is not None:
+            tier_config = await self.middleware.call('zfs.tier.config')
+            if tier_config.enabled:
+                # Allow no-op resubmissions (effective value unchanged)
+                cur_ssb = cur_dataset['special_small_block_size']
+                if not (
+                    (c_value == 'INHERIT' and cur_ssb['source'] in ('INHERITED', 'DEFAULT', 'NONE'))
+                    or (c_value != 'INHERIT' and c_value == cur_ssb['parsed'])
+                ):
+                    verrors.add(
+                        f'{schema}.special_small_block_size',
+                        'ZFS tiering is enabled; use zfs.tier.dataset_set_tier to manage this property.'
+                    )
+            elif c_value != 'INHERIT' and not (0 <= c_value <= 16 * 1048576):
                 verrors.add(
-                    f'{schema}.user_properties_update',
-                    'Should not be specified when "user_properties" are explicitly specified'
+                    f'{schema}.special_small_block_size',
+                    'This field must be from zero to 16M'
                 )
-            elif data.get('user_properties'):
-                validate_user_properties(verrors, f'{schema}.user_properties', data['user_properties'])
-                # Let's normalize this so that we create/update/remove user props accordingly.
-                # The properties TrueNAS manages are reported under their API names (`comments`
-                # and friends), which are not property names ZFS would accept, and they are owned
-                # by their own fields, so they are never removed here.
-                managed_user_props = set(user_property_names_to_be_renamed().values())
-                user_props = {p['key'] for p in data['user_properties']}
-                data['user_properties_update'] = data['user_properties']
-                for prop_key in cur_dataset['user_properties']:
-                    if prop_key not in user_props and prop_key not in managed_user_props:
-                        data['user_properties_update'].append({
-                            'key': prop_key,
-                            'remove': True,
-                        })
+
+        if data.get('user_properties_update') and not data.get('user_properties'):
+            validate_user_properties(
+                verrors, f'{schema}.user_properties_update', data['user_properties_update']
+            )
+            for index, prop in enumerate(data['user_properties_update']):
+                prop_schema = f'{schema}.user_properties_update.{index}'
+                if 'value' in prop and prop.get('remove'):
+                    verrors.add(f'{prop_schema}.remove', 'When "value" is specified, this cannot be set')
+                elif not any(k in prop for k in ('value', 'remove')):
+                    verrors.add(f'{prop_schema}.value', 'Either "value" or "remove" must be specified')
+        elif data.get('user_properties') and data.get('user_properties_update'):
+            verrors.add(
+                f'{schema}.user_properties_update',
+                'Should not be specified when "user_properties" are explicitly specified'
+            )
+        elif data.get('user_properties'):
+            validate_user_properties(verrors, f'{schema}.user_properties', data['user_properties'])
+            # Let's normalize this so that we create/update/remove user props accordingly.
+            # The properties TrueNAS manages are reported under their API names (`comments`
+            # and friends), which are not property names ZFS would accept, and they are owned
+            # by their own fields, so they are never removed here.
+            managed_user_props = set(user_property_names_to_be_renamed().values())
+            user_props = {p['key'] for p in data['user_properties']}
+            data['user_properties_update'] = data['user_properties']
+            for prop_key in cur_dataset['user_properties']:
+                if prop_key not in user_props and prop_key not in managed_user_props:
+                    data['user_properties_update'].append({
+                        'key': prop_key,
+                        'remove': True,
+                    })
 
     @private
     @pass_thread_local_storage
@@ -576,7 +694,7 @@ class PoolDatasetService(CRUDService):
                     data['acltype'] = 'NFSV4'
                     data['aclmode'] = 'PASSTHROUGH'
 
-            await self.__common_validation(verrors, 'pool_dataset_create', data, 'CREATE', parent_ds)
+            await self.__create_validation(verrors, 'pool_dataset_create', data, parent_ds)
 
         verrors.check()
 
@@ -847,7 +965,7 @@ class PoolDatasetService(CRUDService):
             audit_callback(data['name'])
             if data['type'] == 'VOLUME':
                 data['volblocksize'] = dataset[0]['volblocksize']['value']
-            await self.__common_validation(verrors, 'pool_dataset_update', data, 'UPDATE', cur_dataset=dataset[0])
+            await self.__update_validation(verrors, 'pool_dataset_update', data, dataset[0])
             if 'volsize' in data:
                 if data['volsize'] < dataset[0]['volsize']['parsed']:
                     verrors.add('pool_dataset_update.volsize',
