@@ -267,11 +267,11 @@ class S3Entry(BaseModel):
             "service."
         ),
     )
-    servers: Annotated[int, Field(ge=1, le=8)] = Field(
+    servers: Annotated[int, Field(ge=1, le=12)] = Field(
         default=1,
         description=(
             "Reactor threads serving the listen addresses, each with its own io_uring ring and every address shared "
-            "between them. At most eight, and no more than the system has CPUs. Each thread carries its own "
+            "between them. At most twelve, and no more than the system has CPUs. Each thread carries its own "
             "connection pool and buffering, so more of them cost memory. Changing it restarts the service."
         ),
     )
