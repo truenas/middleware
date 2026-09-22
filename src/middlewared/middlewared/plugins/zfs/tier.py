@@ -664,7 +664,7 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
             new_ssb = SPECIAL_SMALL_BLOCKS_REGULAR
 
         await self.call2(
-            self.s.zfs.resource.update_impl, dataset_name, properties={"special_small_blocks": new_ssb}, bypass=True
+            self.s.zfs.resource.set_impl, dataset_name, properties={"special_small_blocks": new_ssb}, bypass=True
         )
 
         job_entry = None

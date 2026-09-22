@@ -96,9 +96,10 @@ def test__roles_have_correct_allowlist(role_manager, role, method, enabled_stig_
     assert allowlist_resources == resources
 
 
-def test__role_manager_reject_read_role_on_write_method(tmp_role_manager):
+@pytest.mark.parametrize('method_name', ['canary.update', 'canary.set', 'canary.destroy'])
+def test__role_manager_reject_read_role_on_write_method(tmp_role_manager, method_name):
     with pytest.raises(ValueError, match='resource may not be granted to'):
-        tmp_role_manager.register_method(method_name='canary.update', roles=['DOCKER_READ'])
+        tmp_role_manager.register_method(method_name=method_name, roles=['DOCKER_READ'])
 
 
 def test__role_manager_reject_unknown_role(tmp_role_manager):

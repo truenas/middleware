@@ -47,10 +47,10 @@ __all__ = (
     "ZFSResourceQuery",
     "ZFSResourceQueryArgs",
     "ZFSResourceQueryResult",
-    "ZFSResourceUpdateArgsData",
-    "ZFSResourceUpdateArgs",
-    "ZFSResourceUpdateProperties",
-    "ZFSResourceUpdateResult",
+    "ZFSResourceSetArgsData",
+    "ZFSResourceSetArgs",
+    "ZFSResourceSetProperties",
+    "ZFSResourceSetResult",
 )
 
 PROP_SRC = Literal["NONE", "DEFAULT", "TEMPORARY", "LOCAL", "INHERITED", "RECEIVED"]
@@ -644,7 +644,7 @@ class ZFSResourceCreateResult(BaseModel):
     result: ZFSResourceEntry
 
 
-class ZFSResourceUpdateProperties(ZFSResourceCreateProperties):
+class ZFSResourceSetProperties(ZFSResourceCreateProperties):
     """ZFS properties that may be changed on an existing resource."""
 
     casesensitivity: Excluded = excluded_field()
@@ -654,15 +654,15 @@ class ZFSResourceUpdateProperties(ZFSResourceCreateProperties):
     encryption: Excluded = excluded_field()
 
 
-class ZFSResourceUpdateArgsData(BaseModel):
+class ZFSResourceSetArgsData(BaseModel):
     path: NonEmptyString = Field(
         description=(
             "Path of the zfs resource (dataset or volume) to be updated. Must be of the form 'pool/name'. Snapshot "
             "paths (containing '@') are not accepted."
         ),
     )
-    properties: ZFSResourceUpdateProperties = Field(
-        default_factory=ZFSResourceUpdateProperties,
+    properties: ZFSResourceSetProperties = Field(
+        default_factory=ZFSResourceSetProperties,
         description=(
             "ZFS properties to set. Values are handed to ZFS verbatim and canonicalized by ZFS itself. Read the "
             "returned entry for the effective values. A property left as null is not touched. Any property not in "
@@ -694,11 +694,11 @@ class ZFSResourceUpdateArgsData(BaseModel):
     )
 
 
-class ZFSResourceUpdateArgs(BaseModel):
-    data: ZFSResourceUpdateArgsData = Field(description="Update parameters for changing a ZFS resource.")
+class ZFSResourceSetArgs(BaseModel):
+    data: ZFSResourceSetArgsData = Field(description="Set parameters for changing a ZFS resource.")
 
 
-class ZFSResourceUpdateResult(BaseModel):
+class ZFSResourceSetResult(BaseModel):
     result: ZFSResourceEntry
 
 

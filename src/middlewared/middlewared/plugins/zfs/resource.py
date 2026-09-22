@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-# `ZFSResourceService.list` shadows the builtin `list` within the class body, so annotations after it
-# must qualify the type as `builtins.list` to refer to the type rather than the method.
+# Methods named after builtins shadow them within the class body, so annotations after such a method
+# must qualify the type through `builtins` to refer to the type rather than the method.
 import builtins
 from typing import TYPE_CHECKING, Any
 
@@ -36,9 +36,9 @@ from middlewared.api.current import (
     ZFSResourceRenameArgs,
     ZFSResourceRenameArgsData,
     ZFSResourceRenameResult,
-    ZFSResourceUpdateArgs,
-    ZFSResourceUpdateArgsData,
-    ZFSResourceUpdateResult,
+    ZFSResourceSetArgs,
+    ZFSResourceSetArgsData,
+    ZFSResourceSetResult,
 )
 from middlewared.service import Service, private
 from middlewared.service.decorators import pass_thread_local_storage
@@ -49,7 +49,7 @@ from . import resource_info as _info
 from . import resource_ops as _ops
 from . import resource_processes as _processes
 from . import resource_query as _query
-from . import resource_update as _update
+from . import resource_set as _set
 from .prefetch import ZFSResourcePoolPrefetchService
 from .snapshot import ZFSResourceSnapshotService
 
@@ -514,7 +514,7 @@ class ZFSResourceService(Service):
 
     @private
     @pass_thread_local_storage
-    def update_impl(
+    def set_impl(
         self,
         tls: Any,
         path: str,
@@ -526,20 +526,20 @@ class ZFSResourceService(Service):
         """
         Set native properties, set user properties and inherit properties, in that order, on one open handle.
 
-        Names are handed to ZFS as given; the public ``update`` validates the vocabulary. ``bypass`` lets internal
+        Names are handed to ZFS as given; the public ``set`` validates the vocabulary. ``bypass`` lets internal
         callers write to protected paths and is never exposed to the public API. A change to ``mountpoint`` or a
         native share property remounts the filesystem, the library's default for ``set_properties``. Inheriting a
         user property removes it.
         """
-        _update.update_impl(tls, path, properties, user_properties, inherit, bypass)
+        _set.set_impl(tls, path, properties, user_properties, inherit, bypass)
 
     @api_method(
-        ZFSResourceUpdateArgs,
-        ZFSResourceUpdateResult,
+        ZFSResourceSetArgs,
+        ZFSResourceSetResult,
         roles=["ZFS_RESOURCE_WRITE"],
         check_annotations=True,
     )
-    def update(self, data: ZFSResourceUpdateArgsData) -> ZFSResourceEntry:
+    def set(self, data: ZFSResourceSetArgsData) -> ZFSResourceEntry:
         """
         Change the properties of a ZFS resource (filesystem or volume).
 
@@ -595,7 +595,7 @@ class ZFSResourceService(Service):
                 "inherit": ["org.truenas:obsolete"]
             }
         """
-        return _update.update(self.context, data)
+        return _set.set(self.context, data)
 
     @private
     @pass_thread_local_storage
