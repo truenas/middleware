@@ -24,7 +24,7 @@ from middlewared.alert.base import (
     AlertService as _AlertService,
 )
 from middlewared.api.current import SupportNewTicketEnterprise
-from middlewared.plugins.failover_.remote import NETWORK_ERRORS
+from middlewared.plugins.failover_.constants import NETWORK_ERRORS
 from middlewared.service import ServiceContext
 from middlewared.service_exception import CallError, NetworkActivityDisabled
 from middlewared.utils.entitlements import get_facts
