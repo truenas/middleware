@@ -21,8 +21,8 @@ __all__ = ("kill_processes", "processes", "processes_using_paths")
 RE_ZD = re.compile(r"^/dev/zd[0-9]+$")
 
 
-async def processes(context: ServiceContext, path: str) -> list[PoolProcess]:
-    rows = await context.call2(
+def processes(context: ServiceContext, path: str) -> list[PoolProcess]:
+    rows = context.call_sync2(
         context.s.zfs.resource.list_impl,
         ZFSResourceQuery(
             paths=[path],
@@ -41,7 +41,7 @@ async def processes(context: ServiceContext, path: str) -> list[PoolProcess]:
     if mountpoint != "legacy":
         paths.append(mountpoint or os.path.join("/mnt", row["name"]))
 
-    found = await context.call2(context.s.zfs.resource.processes_using_paths, paths)
+    found = context.call_sync2(context.s.zfs.resource.processes_using_paths, paths)
     return [PoolProcess(**proc) for proc in found]
 
 

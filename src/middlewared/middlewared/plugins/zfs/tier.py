@@ -436,7 +436,7 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
         return _map_result_common(result)
 
     @api_method(ZfsTierRewriteJobQueryArgs, ZfsTierRewriteJobQueryResult, roles=["ZFS_RESOURCE_READ"])
-    async def rewrite_job_query(self, data: dict[str, typing.Any]) -> typing.Any:
+    def rewrite_job_query(self, data: dict[str, typing.Any]) -> typing.Any:
         """Query rewrite jobs, optionally filtered by status."""
         status_filter = set(data.get("status") or [])
         jobs = []
@@ -458,7 +458,7 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
         ZfsTierRewriteJobStatusResult,
         roles=["ZFS_RESOURCE_READ"],
     )
-    async def rewrite_job_status(self, data: dict[str, typing.Any]) -> dict[str, typing.Any]:
+    def rewrite_job_status(self, data: dict[str, typing.Any]) -> dict[str, typing.Any]:
         """Get detailed status and statistics for a specific rewrite job."""
         dataset_name, job_uuid = _parse_tier_job_id(data["tier_job_id"])
         try:
