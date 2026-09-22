@@ -1,17 +1,44 @@
 import base64
 import contextlib
 import errno
+import time
 import uuid
 from unittest.mock import ANY
 
 import pytest
 
-from middlewared.service_exception import ValidationErrors, ValidationError
+from middlewared.service_exception import InstanceNotFound, ValidationErrors, ValidationError
 from middlewared.test.integration.assets.account import user
 from middlewared.test.integration.assets.keychain import localhost_ssh_credentials
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.utils.unittest import RegexString
+
+ALT_SSH_PORT = 10022
+
+PORT_FORWARDER = f"""\
+import socket
+import threading
+
+
+def pipe(src, dst):
+    try:
+        while data := src.recv(65536):
+            dst.sendall(data)
+    except OSError:
+        pass
+    finally:
+        src.close()
+        dst.close()
+
+
+listener = socket.create_server(("", {ALT_SSH_PORT}), family=socket.AF_INET6, dualstack_ipv6=True)
+while True:
+    client = listener.accept()[0]
+    server = socket.create_connection(("127.0.0.1", 22))
+    for src, dst in ((client, server), (server, client)):
+        threading.Thread(target=pipe, args=(src, dst), daemon=True).start()
+"""
 
 
 @contextlib.contextmanager
@@ -83,6 +110,57 @@ def ssh_credentials(remoteuser):
 def ipv6_ssh_credentials(remoteuser):
     with localhost_ssh_credentials(url="http://[::1]", username="remoteuser") as c:
         yield c
+
+
+@pytest.fixture(scope="module")
+def alt_ssh_port():
+    """A non-standard port that forwards to the SSH server, so its host key is stored as `[host]:port`."""
+    script = "/tmp/rsync_test_port_forwarder.py"
+    call(
+        "filesystem.file_receive",
+        script,
+        base64.b64encode(PORT_FORWARDER.encode("ascii")).decode("ascii"),
+        {"mode": 0o700},
+    )
+    ssh(f"setsid python3 {script} < /dev/null > /dev/null 2>&1 &")
+    try:
+        for _ in range(50):
+            if "LISTEN" in ssh(f"ss -ltn sport = :{ALT_SSH_PORT}", check=False):
+                break
+
+            time.sleep(0.1)
+        else:
+            pytest.fail(f"Port forwarder did not start listening on port {ALT_SSH_PORT}")
+
+        yield ALT_SSH_PORT
+    finally:
+        ssh(f"pkill -f {script}", check=False)
+        ssh(f"rm -f {script}", check=False)
+
+
+@pytest.fixture(scope="module")
+def alt_port_ssh_credentials(ssh_credentials, alt_ssh_port):
+    """The `ssh_credentials` key pair, reaching the same SSH server through a non-standard port."""
+    credentials = call("keychaincredential.create", {
+        "name": str(uuid.uuid4()),
+        "type": "SSH_CREDENTIALS",
+        "attributes": {
+            "host": "localhost",
+            "port": alt_ssh_port,
+            "username": "remoteuser",
+            "private_key": ssh_credentials["keypair"]["id"],
+            "remote_host_key": call("keychaincredential.remote_ssh_host_key_scan", {
+                "host": "localhost",
+                "port": alt_ssh_port,
+            }),
+        },
+    })
+
+    try:
+        yield {"keypair": ssh_credentials["keypair"], "credentials": credentials}
+    finally:
+        with contextlib.suppress(InstanceNotFound):
+            call("keychaincredential.delete", credentials["id"], {"cascade": True})
 
 
 @pytest.fixture(scope="function")
@@ -786,6 +864,69 @@ def test_ssh_connection_refused(cleanup, localuser, remoteuser, src, dst, ssh_cr
     assert e.value.errors == [
         ValidationError("rsync_task_create.remotehost", ANY, errno.EINVAL),
     ]
+
+
+# ---------------------------------------------------------------------------
+# Non-standard SSH port
+# ---------------------------------------------------------------------------
+
+
+def test_alt_port_ssh_credentials_without_rpath_validation(cleanup, localuser, remoteuser, src, dst,
+                                                           alt_port_ssh_credentials):
+    """The host key of a credential that uses a non-standard port is stored as `[host]:port`.
+
+    The lookup must use the port, otherwise the task is rejected with "Host key not found".
+    """
+    with task({
+        "path": f"{src}/",
+        "user": "localuser",
+        "ssh_credentials": alt_port_ssh_credentials["credentials"]["id"],
+        "mode": "SSH",
+        "remotepath": dst,
+        "validate_rpath": False,
+    }):
+        pass
+
+
+def test_alt_port_home_directory_key_without_rpath_validation(cleanup, localuser, remoteuser, src, dst,
+                                                              ssh_credentials, alt_ssh_port):
+    install_home_directory_key(localuser, ssh_credentials)
+    ssh(f"ssh-keyscan -p {alt_ssh_port} localhost > {localuser['home']}/.ssh/known_hosts")
+    ssh(f"chown localuser:localuser {localuser['home']}/.ssh/known_hosts")
+
+    with task({
+        "path": f"{src}/",
+        "user": "localuser",
+        "remotehost": "remoteuser@localhost",
+        "remoteport": alt_ssh_port,
+        "mode": "SSH",
+        "remotepath": dst,
+        "validate_rpath": False,
+    }):
+        pass
+
+
+def test_alt_port_ssh_keyscan_does_not_duplicate_host_keys(cleanup, localuser, remoteuser, src, dst,
+                                                           ssh_credentials, alt_ssh_port):
+    install_home_directory_key(localuser, ssh_credentials)
+    ssh(f"ssh-keyscan -p {alt_ssh_port} localhost > {localuser['home']}/.ssh/known_hosts")
+    ssh(f"chown localuser:localuser {localuser['home']}/.ssh/known_hosts")
+
+    known_hosts = ssh(f"cat {localuser['home']}/.ssh/known_hosts")
+
+    with task({
+        "path": f"{src}/",
+        "user": "localuser",
+        "remotehost": "remoteuser@localhost",
+        "remoteport": alt_ssh_port,
+        "mode": "SSH",
+        "remotepath": dst,
+        "ssh_keyscan": True,
+        "validate_rpath": False,
+    }):
+        pass
+
+    assert ssh(f"cat {localuser['home']}/.ssh/known_hosts") == known_hosts
 
 
 # ---------------------------------------------------------------------------
