@@ -243,8 +243,9 @@ def test_zfs_resource_set_rejects_property_invalid_for_the_type():
     with resource(
         "test_update_wrong_type", type="VOLUME", properties={"volsize": GiB, "refreservation": "none"}
     ) as path:
-        with pytest.raises(ValidationError):
+        with pytest.raises(ValidationErrors) as exc_info:
             call("zfs.resource.set", {"path": path, "properties": {"atime": "off"}})
+        assert [e.attribute for e in exc_info.value.errors] == ["zfs.resource.set.properties.atime"]
 
 
 @contextlib.contextmanager
@@ -376,18 +377,166 @@ def test_dry_run_is_rejected_from_the_api():
         assert read(path, ["compression"])["properties"]["compression"]["raw"] != "gzip"
 
 
-def test_multiple_violations_reported_together():
+@pytest.mark.parametrize(
+    "second, attribute",
+    [
+        ({"dedup": "on"}, "zfs.resource.set.properties.dedup"),
+        ({"recordsize": 3000}, "zfs.resource.set.properties.recordsize"),
+    ],
+)
+def test_multiple_violations_reported_together(second, attribute):
+    names = ["acltype", "aclmode", *second]
     with resource("test_set_multiple_violations") as path:
-        before = read(path, ["acltype", "aclmode", "dedup"])["properties"]
+        before = read(path, names)["properties"]
         with entitled("DEDUP", False):
             with pytest.raises(ValidationErrors) as exc_info:
                 call(
                     "zfs.resource.set",
-                    {"path": path, "properties": {"acltype": "posix", "aclmode": "passthrough", "dedup": "on"}},
+                    {"path": path, "properties": {"acltype": "posix", "aclmode": "passthrough", **second}},
                 )
         assert sorted(e.attribute for e in exc_info.value.errors) == [
             "zfs.resource.set.properties.aclmode",
-            "zfs.resource.set.properties.dedup",
+            attribute,
         ]
-        after = read(path, ["acltype", "aclmode", "dedup"])["properties"]
+        after = read(path, names)["properties"]
         assert {name: after[name]["raw"] for name in after} == {name: before[name]["raw"] for name in before}
+
+
+def volume(name, **properties):
+    return resource(name, type="VOLUME", properties={"volsize": GiB, **properties})
+
+
+def reservation(path):
+    props = read(path, ["volsize", "refreservation"])["properties"]
+    return props["volsize"]["value"], props["refreservation"]["value"]
+
+
+def test_grow_thick_volume_keeps_it_thick():
+    with volume("test_set_grow_thick") as path:
+        assert reservation(path) == (GiB, GiB)
+
+        entry = call("zfs.resource.set", {"path": path, "properties": {"volsize": 2 * GiB}})
+        refreservation = entry["properties"]["refreservation"]["value"]
+        assert refreservation > 2 * GiB
+        assert reservation(path) == (2 * GiB, refreservation)
+
+        entry = call("zfs.resource.set", {"path": path, "properties": {"volsize": 3 * GiB}})
+        assert entry["properties"]["refreservation"]["value"] > 3 * GiB
+
+
+def test_grow_sparse_volume_stays_sparse():
+    with volume("test_set_grow_sparse", refreservation="none") as path:
+        call("zfs.resource.set", {"path": path, "properties": {"volsize": 2 * GiB}})
+        assert reservation(path) == (2 * GiB, 0)
+
+
+def test_grow_partially_reserved_volume_leaves_reservation():
+    with volume("test_set_grow_partial", refreservation=512 * MiB) as path:
+        call("zfs.resource.set", {"path": path, "properties": {"volsize": 2 * GiB}})
+        assert reservation(path) == (2 * GiB, 512 * MiB)
+
+
+def test_grow_over_reserved_volume_never_lowers_reservation():
+    with volume("test_set_grow_over_reserved", refreservation=5 * GiB) as path:
+        call("zfs.resource.set", {"path": path, "properties": {"volsize": 2 * GiB}})
+        assert reservation(path) == (2 * GiB, 5 * GiB)
+
+        call("zfs.resource.set", {"path": path, "properties": {"volsize": 6 * GiB}})
+        volsize, refreservation = reservation(path)
+        assert volsize == 6 * GiB
+        assert refreservation > 6 * GiB
+
+
+def test_grow_over_headroom_is_rejected_and_escapable():
+    with volume("test_set_grow_over_headroom") as path:
+        props = read(path, ["available", "usedbyrefreservation"])["properties"]
+        base = props["available"]["value"] - props["usedbyrefreservation"]["value"]
+        volsize = GiB + (base // MiB + 1) * MiB
+        with pytest.raises(ValidationErrors) as exc_info:
+            call("zfs.resource.set", {"path": path, "properties": {"volsize": volsize}})
+        [error] = exc_info.value.errors
+        assert error.attribute == "zfs.resource.set.properties.volsize"
+        assert "would consume more than 80%" in error.errmsg
+        assert reservation(path) == (GiB, GiB)
+
+        call("zfs.resource.set", {"path": path, "properties": {"volsize": volsize, "refreservation": 0}})
+        assert reservation(path) == (volsize, 0)
+
+
+def test_filesystem_refreservation_over_refquota_is_rejected():
+    with resource("test_set_refres_over_refquota", properties={"refquota": GiB}) as path:
+        with pytest.raises(ValidationErrors) as exc_info:
+            call("zfs.resource.set", {"path": path, "properties": {"refreservation": 2 * GiB}})
+        assert [e.attribute for e in exc_info.value.errors] == ["zfs.resource.set.properties.refreservation"]
+        assert read(path, ["refreservation"])["properties"]["refreservation"]["value"] == 0
+
+
+def test_filesystem_refreservation_with_raised_refquota_in_one_request():
+    with resource("test_set_refres_raised_refquota", properties={"refquota": GiB}) as path:
+        call("zfs.resource.set", {"path": path, "properties": {"refquota": 3 * GiB, "refreservation": 2 * GiB}})
+        props = read(path, ["refquota", "refreservation"])["properties"]
+        assert (props["refquota"]["value"], props["refreservation"]["value"]) == (3 * GiB, 2 * GiB)
+
+
+def test_inherit_acltype_fans_out_and_reads_parent():
+    parent_props = {"acltype": "posix", "aclmode": "discard", "aclinherit": "discard"}
+    with resource("test_set_inherit_acltype_fan_out", properties=parent_props) as parent:
+        child = os.path.join(parent, "child")
+        call(
+            "zfs.resource.create",
+            {"path": child, "properties": {"acltype": "nfsv4", "aclmode": "passthrough", "aclinherit": "restricted"}},
+        )
+        call("zfs.resource.set", {"path": child, "inherit": ["acltype"]})
+        after = read(child, ["acltype", "aclmode", "aclinherit"])["properties"]
+        assert {name: (after[name]["raw"], after[name]["source"]["type"]) for name in after} == {
+            "acltype": ("posix", "INHERITED"),
+            "aclmode": ("discard", "INHERITED"),
+            "aclinherit": ("discard", "INHERITED"),
+        }
+
+
+def test_set_rejects_type_invalid_inherit_before_write():
+    with volume("test_set_type_invalid_inherit", refreservation="none", compression="zstd") as path:
+        with pytest.raises(ValidationErrors) as exc_info:
+            call("zfs.resource.set", {"path": path, "properties": {"compression": "lz4"}, "inherit": ["recordsize"]})
+        assert [e.attribute for e in exc_info.value.errors] == ["zfs.resource.set.inherit.recordsize"]
+        assert read(path, ["compression"])["properties"]["compression"]["raw"] == "zstd"
+
+
+def test_set_acltype_on_volume_is_a_validation_error():
+    with volume("test_set_acltype_on_volume", refreservation="none") as path:
+        with pytest.raises(ValidationErrors) as exc_info:
+            call("zfs.resource.set", {"path": path, "properties": {"acltype": "posix"}})
+        assert [e.attribute for e in exc_info.value.errors] == ["zfs.resource.set.properties.acltype"]
+
+
+def test_inherit_received_property_is_rejected():
+    with resource("test_set_received_src", properties={"compression": "lz4"}) as source:
+        target = os.path.join(pool_name, "test_set_received_dst")
+        ssh(f"zfs snapshot {source}@snap")
+        ssh(f"zfs send -p {source}@snap | zfs recv {target}")
+        try:
+            assert read(target, ["compression"])["properties"]["compression"]["source"]["type"] == "RECEIVED"
+            with pytest.raises(ValidationErrors) as exc_info:
+                call("zfs.resource.set", {"path": target, "inherit": ["compression"]})
+            assert [e.attribute for e in exc_info.value.errors] == ["zfs.resource.set.inherit.compression"]
+        finally:
+            ssh(f"zfs destroy -r {target}")
+
+
+def test_inherit_recordsize_alone_is_accepted():
+    with resource("test_set_inherit_recordsize", properties={"recordsize": "1M"}) as path:
+        call("zfs.resource.set", {"path": path, "inherit": ["recordsize"]})
+        assert read(path, ["recordsize"])["properties"]["recordsize"]["source"]["type"] != "LOCAL"
+
+
+def test_volsize_not_multiple_of_volblocksize_is_rejected():
+    with resource(
+        "test_set_volsize_alignment",
+        type="VOLUME",
+        properties={"volsize": 16384, "volblocksize": 16384, "refreservation": "none"},
+    ) as path:
+        with pytest.raises(ValidationErrors) as exc_info:
+            call("zfs.resource.set", {"path": path, "properties": {"volsize": 16385}})
+        assert [e.attribute for e in exc_info.value.errors] == ["zfs.resource.set.properties.volsize"]
+        assert read(path, ["volsize"])["properties"]["volsize"]["value"] == 16384

@@ -11,17 +11,26 @@ import dataclasses
 import errno
 import typing
 
-from middlewared.api.current import ZFSResourceSetProperties
+from truenas_pylibzfs import ZFSProperty
+
+from middlewared.api.current import ZFSResourceQuery, ZFSResourceSetProperties
 from middlewared.service_exception import CallError, ValidationError, ValidationErrors
 
+from .property_choices import DRAID_MINIMUM_RECORDSIZE
+from .property_management import PROPERTY_TEMPLATES
+from .resource_info import ZFS_MAX_RECORDSIZE
 from .rules_common import (
+    apply_acl_defaults,
+    pool_has_special_vdev_sync,
     reject_bad_acl_combination,
     reject_bad_user_property_names,
     reject_bad_user_property_values,
     reject_dedup_on_special_vdev,
+    reject_insufficient_headroom,
     reject_tier_managed_ssb,
     reject_unentitled_dedup,
 )
+from .utils import pool_is_draid
 
 if typing.TYPE_CHECKING:
     from collections.abc import Callable, Collection, Mapping
@@ -42,14 +51,23 @@ __all__ = (
     "PropertyView",
     "SetContext",
     "SetRule",
+    "apply_acl_coupling",
+    "apply_thick_follow",
     "check_acl_combination",
+    "check_dedup_descendants",
     "check_dedup_entitlement",
     "check_dedup_tiering",
     "check_has_work",
     "check_inherit_names",
+    "check_inherit_not_received",
+    "check_names_valid_for_type",
+    "check_recordsize",
+    "check_reservation_headroom",
     "check_set_inherit_conflict",
+    "check_special_small_blocks_range",
     "check_tier_managed_ssb",
     "check_user_properties",
+    "check_volsize_multiple_of_volblocksize",
     "check_volsize_not_shrunk",
     "touched_natives",
     "validate_request",
@@ -57,6 +75,7 @@ __all__ = (
 )
 
 SCHEMA = "zfs.resource.set"
+SPA_MAXBLOCKSIZE = 1 << 24
 
 SETTABLE_PROPERTIES: frozenset[str] = frozenset(ZFSResourceSetProperties.model_json_schema()["properties"])
 """The native property names an API caller may set. Derived from the published schema so the `Private` and
@@ -220,6 +239,51 @@ def validate_request(data: ZFSResourceSetArgsData, verrors: ValidationErrors) ->
     check_user_properties(data, verrors)
 
 
+def apply_acl_coupling(state: SetContext) -> SetContext:
+    """On a filesystem, add the acl companions a set or inherited acltype brings along, recorded in `derived`."""
+    if state.type != "FILESYSTEM":
+        return state
+    properties = state.properties.model_copy()
+    apply_acl_defaults(properties, leave=state.inherit)
+    inherit = set(state.inherit)
+    if "acltype" in inherit:
+        inherit.update(name for name in ("aclmode", "aclinherit") if getattr(properties, name) is None)
+    added = touched_natives(properties, inherit) - state.touched()
+    return dataclasses.replace(state, properties=properties, inherit=frozenset(inherit), derived=state.derived | added)
+
+
+def apply_thick_follow(state: SetContext) -> SetContext:
+    """Re-reserve a volume whose refreservation covers its current size but not the requested one."""
+    if state.type != "VOLUME" or "volsize" not in state.set_names() or "refreservation" in state.set_names():
+        return state
+    if state.source.get("refreservation") == "RECEIVED":
+        return state
+    if not state.current["volsize"] <= state.current["refreservation"] < state.effective("volsize"):
+        return state
+    return dataclasses.replace(
+        state,
+        properties=state.properties.model_copy(update={"refreservation": "auto"}),
+        derived=state.derived | {"refreservation"},
+    )
+
+
+def check_names_valid_for_type(context: ServiceContext, state: SetContext, verrors: ValidationErrors) -> None:
+    valid = PROPERTY_TEMPLATES.vol if state.type == "VOLUME" else PROPERTY_TEMPLATES.fs
+    for name in sorted(state.touched()):
+        if ZFSProperty[name.upper()] not in valid:
+            verrors.add(state.attribute(name), f"{name!r} is not valid for a {state.type}.", errno.EINVAL)
+
+
+def check_inherit_not_received(context: ServiceContext, state: SetContext, verrors: ValidationErrors) -> None:
+    for name in sorted(state.inherited_natives()):
+        if state.source.get(name) == "RECEIVED":
+            verrors.add(
+                state.attribute(name),
+                f"{name!r} has a received value on {state.path!r}; set an explicit value instead.",
+                errno.EINVAL,
+            )
+
+
 def check_volsize_not_shrunk(context: ServiceContext, state: SetContext, verrors: ValidationErrors) -> None:
     if state.type != "VOLUME" or "volsize" not in state.set_names():
         return
@@ -231,10 +295,49 @@ def check_volsize_not_shrunk(context: ServiceContext, state: SetContext, verrors
         )
 
 
+def check_volsize_multiple_of_volblocksize(
+    context: ServiceContext, state: SetContext, verrors: ValidationErrors
+) -> None:
+    if state.type != "VOLUME" or "volsize" not in state.set_names():
+        return
+    volblocksize = state.current["volblocksize"]
+    if state.effective("volsize") % volblocksize:
+        verrors.add(
+            state.attribute("volsize"),
+            f"'volsize' must be a multiple of the volblocksize of {state.path!r} ({volblocksize}).",
+            errno.EINVAL,
+        )
+
+
+def check_reservation_headroom(context: ServiceContext, state: SetContext, verrors: ValidationErrors) -> None:
+    set_names = state.set_names()
+    if "refreservation" not in set_names and "volsize" not in set_names:
+        return
+    if state.type == "FILESYSTEM" and state.properties.refreservation == "auto":
+        verrors.add(f"{SCHEMA}.properties.refreservation", "'auto' is only valid on volumes.", errno.EINVAL)
+        return
+    requested = state.effective("refreservation")
+    if requested == "auto":
+        requested = state.effective("volsize")
+    if requested == 0:
+        return
+    refquota = state.effective("refquota") if state.type == "FILESYSTEM" else 0
+    reject_insufficient_headroom(
+        verrors,
+        f"{SCHEMA}.properties.{'volsize' if 'refreservation' in state.derived else 'refreservation'}",
+        state.path,
+        requested,
+        state.current["refreservation"],
+        state.current["available"] - state.current["usedbyrefreservation"],
+        refquota,
+        volume=state.type == "VOLUME",
+    )
+
+
 def check_acl_combination(context: ServiceContext, state: SetContext, verrors: ValidationErrors) -> None:
     if state.type != "FILESYSTEM":
         return
-    attribute = state.attribute("aclmode" if "aclmode" in state.touched() else "acltype")
+    attribute = state.attribute("aclmode" if "aclmode" in state.touched() - state.derived else "acltype")
     reject_bad_acl_combination(verrors, attribute, state.effective("acltype"), state.effective("aclmode"))
 
 
@@ -269,17 +372,93 @@ def check_dedup_tiering(context: ServiceContext, state: SetContext, verrors: Val
     reject_dedup_on_special_vdev(verrors, attribute, context, state.path.split("/")[0], ssb)
 
 
+def check_dedup_descendants(context: ServiceContext, state: SetContext, verrors: ValidationErrors) -> None:
+    if state.type != "FILESYSTEM":
+        return
+    if state.effective("dedup") == "off" or not state.changed("dedup") or not state.tier_enabled:
+        return
+    if not pool_has_special_vdev_sync(context, state.path.split("/")[0]):
+        return
+    rows = context.call_sync2(
+        context.s.zfs.resource.list_impl,
+        ZFSResourceQuery(
+            paths=[state.path], properties=["dedup", "special_small_blocks"], get_source=True, get_children=True
+        ),
+    )
+    affected = []
+    for row in rows:
+        if row["name"] == state.path or row["type"] != "FILESYSTEM":
+            continue
+        props = row["properties"]
+        if not props["special_small_blocks"]["value"]:
+            continue
+        source = props["dedup"]["source"]
+        if source["type"] in ("DEFAULT", "NONE") or (
+            source["type"] == "INHERITED"
+            and (source["value"] == state.path or state.path.startswith(f"{source['value']}/"))
+        ):
+            affected.append(row["name"])
+    if affected:
+        affected.sort()
+        others = f" (and {len(affected) - 1} more)" if len(affected) > 1 else ""
+        verrors.add(
+            state.attribute("dedup"),
+            "ZFS deduplication is incompatible with tiering and cannot be enabled here: descendant dataset "
+            f"{affected[0]!r}{others} is assigned to the PERFORMANCE tier (its data is placed on the SPECIAL vdev) "
+            "and would inherit deduplication; switch it to the REGULAR tier first.",
+            errno.EINVAL,
+        )
+
+
+def check_recordsize(context: ServiceContext, state: SetContext, verrors: ValidationErrors) -> None:
+    if state.type != "FILESYSTEM" or "recordsize" not in state.set_names():
+        return
+    recordsize = state.effective("recordsize")
+    with open(ZFS_MAX_RECORDSIZE) as f:
+        maximum = min(SPA_MAXBLOCKSIZE, int(f.read().strip()))
+    if recordsize < 512 or recordsize > maximum or recordsize & (recordsize - 1):
+        verrors.add(
+            state.attribute("recordsize"),
+            f"'recordsize' must be a power of two from 512 to {maximum} bytes.",
+            errno.EINVAL,
+        )
+    elif recordsize < DRAID_MINIMUM_RECORDSIZE and pool_is_draid(context, state.path.split("/")[0]):
+        verrors.add(
+            state.attribute("recordsize"),
+            f"'recordsize' must be at least {DRAID_MINIMUM_RECORDSIZE} bytes on a dRAID pool.",
+            errno.EINVAL,
+        )
+
+
+def check_special_small_blocks_range(context: ServiceContext, state: SetContext, verrors: ValidationErrors) -> None:
+    if "special_small_blocks" not in state.set_names():
+        return
+    if not 0 <= state.effective("special_small_blocks") <= SPA_MAXBLOCKSIZE:
+        verrors.add(
+            state.attribute("special_small_blocks"),
+            f"'special_small_blocks' must be between 0 and {SPA_MAXBLOCKSIZE} bytes.",
+            errno.EINVAL,
+        )
+
+
 class SetRule(typing.NamedTuple):
     check: Callable[[ServiceContext, SetContext, ValidationErrors], None]
     triggers: frozenset[str]
 
 
 SET_RULES: tuple[SetRule, ...] = (
+    SetRule(check_names_valid_for_type, MODEL_NATIVES),
+    SetRule(check_inherit_not_received, MODEL_NATIVES),
     SetRule(check_volsize_not_shrunk, frozenset({"volsize"})),
+    SetRule(check_volsize_multiple_of_volblocksize, frozenset({"volsize"})),
+    SetRule(check_reservation_headroom, frozenset({"volsize", "refreservation", "refquota"})),
     SetRule(check_acl_combination, frozenset({"acltype", "aclmode"})),
     SetRule(check_tier_managed_ssb, frozenset({"special_small_blocks"})),
     SetRule(check_dedup_entitlement, frozenset({"dedup"})),
     SetRule(check_dedup_tiering, frozenset({"dedup", "special_small_blocks"})),
+    SetRule(check_dedup_descendants, frozenset({"dedup"})),
+    SetRule(check_recordsize, frozenset({"recordsize"})),
+    SetRule(check_special_small_blocks_range, frozenset({"special_small_blocks"})),
 )
 
 

@@ -258,6 +258,28 @@ FS_VALUES = {
     "special_small_blocks": 0,
 }
 DENIED = SimpleNamespace(entitled=False, message="SENTINEL entitlement denial")
+VOLUME_NATIVES = frozenset(
+    {
+        "checksum",
+        "compression",
+        "copies",
+        "dedup",
+        "readonly",
+        "refreservation",
+        "reservation",
+        "snapdev",
+        "special_small_blocks",
+        "sync",
+        "volsize",
+    }
+)
+
+
+@pytest.fixture(autouse=True)
+def type_masks(monkeypatch):
+    names = set_rules.MODEL_NATIVES
+    monkeypatch.setattr(set_rules, "ZFSProperty", {name.upper(): name for name in names})
+    monkeypatch.setattr(set_rules, "PROPERTY_TEMPLATES", SimpleNamespace(fs=names - {"volsize"}, vol=VOLUME_NATIVES))
 
 
 def row(name, type_="FILESYSTEM", **values):
@@ -496,8 +518,18 @@ def test_set_inheriting_acltype_also_inherits_its_companions():
     assert context.calls_to("zfs.resource.set_impl")[0][1]["inherit"] == ["aclinherit", "aclmode", "acltype"]
 
 
-def volume():
-    return row("tank/vol", "VOLUME", volsize=GiB, refreservation=0, dedup="off", special_small_blocks=0)
+def volume(refreservation=0):
+    return row(
+        "tank/vol",
+        "VOLUME",
+        volsize=GiB,
+        volblocksize=16384,
+        refreservation=refreservation,
+        available=100 * GiB,
+        usedbyrefreservation=refreservation,
+        dedup="off",
+        special_small_blocks=0,
+    )
 
 
 def test_set_rejects_a_volsize_shrink():
@@ -520,6 +552,21 @@ def test_set_writes_volsize_and_refreservation_in_one_set_impl_call():
     set_(context, "tank/vol", properties={"volsize": "2G", "refreservation": "auto"})
     [(_, kwargs)] = context.calls_to("zfs.resource.set_impl")
     assert kwargs["properties"] == {"volsize": 2147483648, "refreservation": "auto"}
+
+
+def test_set_writes_a_followed_refreservation_with_the_volsize_it_follows():
+    context = StubContext(volume(refreservation=GiB))
+    set_(context, "tank/vol", properties={"volsize": "2G"})
+    [(_, kwargs)] = context.calls_to("zfs.resource.set_impl")
+    assert kwargs["properties"] == {"volsize": 2147483648, "refreservation": "auto"}
+
+
+def test_set_acltype_on_a_volume_is_one_error():
+    context = StubContext(volume())
+    with pytest.raises(ValidationErrors) as ei:
+        set_(context, "tank/vol", properties={"acltype": "posix"})
+    assert [e.attribute for e in ei.value.errors] == ["zfs.resource.set.properties.acltype"]
+    assert context.calls_to("zfs.resource.set_impl") == []
 
 
 def test_set_returns_the_entry_set_impl_read():
