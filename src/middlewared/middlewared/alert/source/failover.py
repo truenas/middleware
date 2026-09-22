@@ -5,7 +5,7 @@
 
 from middlewared.alert.applicability import APPLIANCE_OR_HA_LICENSED, HA_LICENSED
 from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource, UnavailableException
-from middlewared.plugins.failover_.remote import NETWORK_ERRORS
+from middlewared.plugins.failover_.constants import NETWORK_ERRORS
 from middlewared.service_exception import CallError
 
 
