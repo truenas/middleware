@@ -175,7 +175,7 @@ class ZFSResourceService(Service):
         roles=["ZFS_RESOURCE_READ"],
         check_annotations=True,
     )
-    async def recommended_zvol_blocksize(self, pool: str) -> str:
+    def recommended_zvol_blocksize(self, pool: str) -> str:
         """
         Retrieve the recommended ``volblocksize`` for a new volume on the given pool.
 
@@ -193,7 +193,7 @@ class ZFSResourceService(Service):
                 "params": ["tank"]
             }
         """
-        return await _info.recommended_zvol_blocksize(self.context, pool)
+        return _info.recommended_zvol_blocksize(self.context, pool)
 
     @api_method(
         ZFSResourceProcessesArgs,
@@ -201,14 +201,14 @@ class ZFSResourceService(Service):
         roles=["ZFS_RESOURCE_READ"],
         check_annotations=True,
     )
-    async def processes(self, path: str) -> builtins.list[PoolProcess]:
+    def processes(self, path: str) -> builtins.list[PoolProcess]:
         """
         Retrieve the processes holding open files on the ZFS resource named by ``path``.
 
         A locked resource reports no processes, since nothing can have its contents open. An ``ENOENT``
         error is raised when the resource does not exist.
         """
-        return await _processes.processes(self.context, path)
+        return _processes.processes(self.context, path)
 
     @private
     async def kill_processes(self, oid: str, control_services: bool, max_tries: int = 5) -> None:

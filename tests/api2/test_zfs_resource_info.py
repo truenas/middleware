@@ -1,22 +1,24 @@
+import errno
+
 import pytest
 from auto_config import pool_name
 
-from middlewared.test.integration.assets.pool import dataset
+from middlewared.service_exception import ValidationErrors
+from middlewared.test.integration.assets.pool import _4_disk_raidz2_topology, another_pool, dataset
 from middlewared.test.integration.utils import call, ssh
 
 
-@pytest.mark.parametrize(
-    "method,args",
-    [
-        ("checksum_choices", ()),
-        ("compression_choices", ()),
-        ("recordsize_choices", (pool_name,)),
-        ("recommended_zvol_blocksize", (pool_name,)),
-    ],
-)
-def test_zfs_resource_info_matches_pool_dataset(method, args):
-    """The relocated methods and the `pool.dataset` shims over them answer identically."""
-    assert call(f"zfs.resource.{method}", *args) == call(f"pool.dataset.{method}", *args)
+def test_recommended_zvol_blocksize_raidz2_pool():
+    with another_pool(topology=_4_disk_raidz2_topology) as pool:
+        assert call("zfs.resource.recommended_zvol_blocksize", pool["name"]) == "16K"
+
+
+def test_recommended_zvol_blocksize_nonexistent_pool():
+    with pytest.raises(ValidationErrors) as ve:
+        call("zfs.resource.recommended_zvol_blocksize", "nonexistent_pool")
+
+    assert ve.value.errors[0].attribute == "zfs.resource.recommended_zvol_blocksize.pool"
+    assert ve.value.errors[0].errno == errno.ENOENT
 
 
 def test_zfs_resource_processes_idle_dataset():

@@ -106,13 +106,13 @@ def recommended_zvol_blocksize(data_vdevs: list[dict[str, Any]]) -> str:
     """
     maxdisks = 1
     for vdev in data_vdevs:
-        if vdev["type"] == "RAIDZ1":
+        if vdev["vdev_type"] == "raidz1":
             disks = len(vdev["children"]) - 1
-        elif vdev["type"] == "RAIDZ2":
+        elif vdev["vdev_type"] == "raidz2":
             disks = len(vdev["children"]) - 2
-        elif vdev["type"] == "RAIDZ3":
+        elif vdev["vdev_type"] == "raidz3":
             disks = len(vdev["children"]) - 3
-        elif vdev["type"] == "MIRROR":
+        elif vdev["vdev_type"] == "mirror":
             disks = maxdisks
         else:
             disks = len(vdev["children"])

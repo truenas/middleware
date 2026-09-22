@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import errno
 from typing import TYPE_CHECKING
+
+from middlewared.service_exception import ValidationError
 
 from .property_choices import ZFS_CHECKSUM_CHOICES, ZFS_COMPRESSION_ALGORITHM_CHOICES
 from .property_choices import recommended_zvol_blocksize as _recommended_zvol_blocksize
@@ -36,6 +39,8 @@ def recordsize_choices(context: ServiceContext, pool_name: str | None) -> list[s
         return _recordsize_choices(int(f.read().strip()), draid)
 
 
-async def recommended_zvol_blocksize(context: ServiceContext, pool: str) -> str:
-    entry = await context.middleware.call("pool.query", [["name", "=", pool]], {"get": True})
-    return _recommended_zvol_blocksize(entry["topology"]["data"])
+def recommended_zvol_blocksize(context: ServiceContext, pool: str) -> str:
+    entries = context.middleware.call_sync("zpool.query_impl", {"pool_names": [pool], "topology": True})
+    if not entries:
+        raise ValidationError("zfs.resource.recommended_zvol_blocksize.pool", f"{pool!r} does not exist", errno.ENOENT)
+    return _recommended_zvol_blocksize(entries[0]["topology"]["data"])
