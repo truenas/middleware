@@ -82,11 +82,11 @@ def test_listener_validation():
 
 
 def test_servers_is_bounded_by_the_daemon_and_the_cpus():
-    for bad in (0, 9):
+    for bad in (0, 13):
         with pytest.raises(ValidationErrors):
             call("s3.update", {"servers": bad})
     cpus = int(ssh("nproc"))
-    if cpus < 8:
+    if cpus < 12:
         with pytest.raises(ValidationErrors) as ve:
             call("s3.update", {"servers": cpus + 1})
         assert f"at most {cpus}" in ve.value.errors[0].errmsg
