@@ -22,6 +22,7 @@ from middlewared.api.v26_0_0.zfs_tier import (
 )
 from middlewared.api.v26_0_0.smb import SharingSMBUpdateArgs
 from middlewared.api.v26_0_0.nfs import SharingNFSUpdateArgs
+from middlewared.api.v26_0_0.s3 import SharingS3UpdateArgs
 
 
 # ----------------------------------------------------------------------------
@@ -396,6 +397,15 @@ def test_sharing_nfs_update_excludes_tier():
     """NfsShareUpdate rejects a `tier` field — Excluded() at api/v26_0_0/nfs.py:191."""
     with pytest.raises(ValidationError):
         SharingNFSUpdateArgs(
+            id=1,
+            data={"tier": {"tier_type": "PERFORMANCE", "tier_job": None}},
+        )
+
+
+def test_sharing_s3_update_excludes_tier():
+    """SharingS3Update rejects a `tier` field — Excluded() in api/v27_0_0/s3.py."""
+    with pytest.raises(ValidationError):
+        SharingS3UpdateArgs(
             id=1,
             data={"tier": {"tier_type": "PERFORMANCE", "tier_job": None}},
         )
