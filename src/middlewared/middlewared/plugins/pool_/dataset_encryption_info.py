@@ -232,6 +232,7 @@ class PoolDatasetService(Service):
                 - '/mnt/<dataset>': True if the dataset in which the path
                   resides, or any of its parent datasets, is locked.
                 - '<dataset>': True if the named dataset is locked.
+                - '<dataset>@<snapshot>' (in any of the forms above): True iff the dataset is locked.
 
         Returns:
             bool: True if a locked component is found, False otherwise.
@@ -249,6 +250,8 @@ class PoolDatasetService(Service):
         elif os.path.isabs(path):
             path = path.removeprefix('/mnt/')
             path_authoritative = False
+
+        path = path.partition('@')[0]
 
         # Check if this path is in a dataset that's about to be locked.
         # This allows services to see the dataset as locked during delegate.stop()
