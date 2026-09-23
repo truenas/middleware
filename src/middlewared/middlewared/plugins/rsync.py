@@ -31,6 +31,11 @@ from middlewared.utils.service.task_state import TaskStateMixin
 RSYNC_PATH_LIMIT = 1023
 
 
+def host_key_is_known(known_hosts: asyncssh.SSHKnownHosts, host: str, port: int) -> bool:
+    """`known_hosts` stores a non-default port as a `[host]:port` entry, so the port is a part of the lookup."""
+    return bool(known_hosts.match(host, '', port)[0])
+
+
 class RsyncReturnCode(enum.Enum):
     # from rsync's "errcode.h"
     OK = 0
@@ -220,7 +225,7 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
         ssh_dir_path: pathlib.Path,
         ssh_keyscan: bool,
         host: str,
-        port: str,
+        port: int,
         pw_uid: int,
         pw_gid: int
     ) -> asyncssh.SSHKnownHosts | None:
@@ -238,14 +243,14 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
             )
             return
 
-        if not ssh_keyscan or known_hosts.match(host, '', None)[0]:
+        if not ssh_keyscan or host_key_is_known(known_hosts, host, port):
             return known_hosts
 
         if known_hosts_text and not known_hosts_text.endswith("\n"):
             known_hosts_text += '\n'
 
         known_hosts_text += (await run(
-            ['ssh-keyscan', '-p', port, host],
+            ['ssh-keyscan', '-p', str(port), host],
             encoding='utf-8',
             errors='ignore',
         )).stdout
@@ -349,7 +354,7 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
                 ssh_dir_path,
                 data['ssh_keyscan'],
                 connect_kwargs['host'],
-                str(connect_kwargs['port']),
+                int(connect_kwargs['port']),
                 user['pw_uid'],
                 user['pw_gid']
             ):
@@ -360,7 +365,9 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
 
         if data['validate_rpath']:
             await self.validate_remote_path(verrors, schema, connect_kwargs, remote_path)
-        elif not connect_kwargs['known_hosts'].match(connect_kwargs['host'], '', None)[0]:
+        elif not host_key_is_known(
+            connect_kwargs['known_hosts'], connect_kwargs['host'], int(connect_kwargs['port'])
+        ):
             verrors.add(
                 f'{schema}.remotehost',
                 f'Host key not found in {known_hosts_location}',
