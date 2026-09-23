@@ -3,7 +3,7 @@ from typing import Annotated, Literal, Union
 from pydantic import Discriminator, Field, PositiveInt
 
 from middlewared.api.base import (
-    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString, single_argument_args, UUIDv4String,
+    BaseModel, Excluded, excluded_field, ForUpdateMetaclass, NonEmptyString, single_argument_args, LibvirtUUID,
 )
 
 from .container_device import ContainerDeviceEntry
@@ -56,7 +56,7 @@ class ContainerStatus(BaseModel):
 
 class ContainerEntry(BaseModel):
     id: int = Field(description="Container ID.")
-    uuid: UUIDv4String = Field(description="Container UUID (for libvirt).")
+    uuid: str = Field(description="Container UUID (for libvirt).")
     name: NonEmptyString = Field(description="Container name.")
     description: str = Field(default="", description="Container description.")
     devices: list[ContainerDeviceEntry] = Field(default=[], description="Container's devices.")
@@ -121,9 +121,11 @@ class ContainerCreate(ContainerEntry):
     status: Excluded = excluded_field()
     devices: Excluded = excluded_field()
     default_network: Excluded = excluded_field()
-    uuid: UUIDv4String | None = Field(
+    uuid: LibvirtUUID | None = Field(
         default=None,
-        description="Container UUID (for libvirt). Auto-generated if not provided.",
+        description=(
+            "Container UUID (for libvirt). Auto-generated if not provided. Normalized to lowercase hyphenated form."
+        ),
     )
     pool: str | None = Field(
         default=None,
