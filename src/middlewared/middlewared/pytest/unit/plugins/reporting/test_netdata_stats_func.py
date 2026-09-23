@@ -75,70 +75,46 @@ NETDATA_ALL_METRICS = {
         }
     },
 
-    'net.enp1s0': {
-        'name': 'net.enp1s0',
+    'truenas_net_stats.traffic.enp1s0': {
+        'name': 'truenas_net_stats.traffic.enp1s0',
         'family': 'enp1s0',
-        'context': 'net.net',
+        'context': 'truenas_net_stats.traffic',
         'units': 'kilobits/s',
         'last_updated': 1691150349,
         'dimensions': {
-            'received': {
+            'enp1s0.received': {
                 'name': 'received',
                 'value': 4.0394645
             },
-            'sent': {
+            'enp1s0.sent': {
                 'name': 'sent',
                 'value': -5.8688266
             }
         }
     },
-    'net_speed.enp1s0': {
-        'name': 'net_speed.enp1s0',
+    'truenas_net_stats.speed.enp1s0': {
+        'name': 'truenas_net_stats.speed.enp1s0',
         'family': 'enp1s0',
-        'context': 'net.speed',
-        'units': 'kilobits/s',
+        'context': 'truenas_net_stats.speed',
+        'units': 'Mbit/s',
         'last_updated': 1691150349,
         'dimensions': {
-            'speed': {
+            'enp1s0.speed': {
                 'name': 'speed',
-                'value': 0
+                'value': 1000
             }
         }
     },
-    'net_operstate.enp1s0': {
-        'name': 'net_operstate.enp1s0',
+    'truenas_net_stats.operstate.enp1s0': {
+        'name': 'truenas_net_stats.operstate.enp1s0',
         'family': 'enp1s0',
-        'context': 'net.operstate',
+        'context': 'truenas_net_stats.operstate',
         'units': 'state',
         'last_updated': 1691150349,
         'dimensions': {
-            'up': {
+            'enp1s0.up': {
                 'name': 'up',
                 'value': 1
-            },
-            'down': {
-                'name': 'down',
-                'value': 0
-            },
-            'notpresent': {
-                'name': 'notpresent',
-                'value': 0
-            },
-            'lowerlayerdown': {
-                'name': 'lowerlayerdown',
-                'value': 0
-            },
-            'testing': {
-                'name': 'testing',
-                'value': 0
-            },
-            'dormant': {
-                'name': 'dormant',
-                'value': 0
-            },
-            'unknown': {
-                'name': 'unknown',
-                'value': 0
             }
         }
     },
@@ -850,17 +826,21 @@ def test_network_stats():
     interfaces = ['enp1s0']
     for interface_name, metrics in get_interface_stats(NETDATA_ALL_METRICS, interfaces).items():
         send_bytes_rate = normalize_value(
-            safely_retrieve_dimension(NETDATA_ALL_METRICS, f'net.{interface_name}', 'sent', 0),
+            safely_retrieve_dimension(
+                NETDATA_ALL_METRICS, f'truenas_net_stats.traffic.{interface_name}', f'{interface_name}.sent', 0
+            ),
             multiplier=1000, divisor=8
         )
         received_bytes_rate = normalize_value(
-            safely_retrieve_dimension(NETDATA_ALL_METRICS, f'net.{interface_name}', 'received', 0),
+            safely_retrieve_dimension(
+                NETDATA_ALL_METRICS, f'truenas_net_stats.traffic.{interface_name}', f'{interface_name}.received', 0
+            ),
             multiplier=1000, divisor=8
         )
         assert metrics['received_bytes_rate'] == received_bytes_rate
         assert metrics['sent_bytes_rate'] == send_bytes_rate
         assert metrics['speed'] == normalize_value(safely_retrieve_dimension(
-            NETDATA_ALL_METRICS, f'net_speed.{interface_name}', 'speed', 0), divisor=1000
+            NETDATA_ALL_METRICS, f'truenas_net_stats.speed.{interface_name}', f'{interface_name}.speed', 0)
         )
         assert metrics['link_state'] == 'LINK_STATE_UP'
 

@@ -9,10 +9,12 @@ def get_interface_stats(
 ) -> dict[str, dict[str, typing.Any]]:
     data: dict[str, dict[str, typing.Any]] = collections.defaultdict(dict)
     for interface_name in interfaces:
-        link_state = bool(safely_retrieve_dimension(netdata_metrics, f'net_operstate.{interface_name}', 'up', 0))
+        link_state = bool(safely_retrieve_dimension(
+            netdata_metrics, f'truenas_net_stats.operstate.{interface_name}', f'{interface_name}.up', 0
+        ))
         data[interface_name]['link_state'] = 'LINK_STATE_UP' if link_state else 'LINK_STATE_DOWN'
         data[interface_name]['speed'] = normalize_value(safely_retrieve_dimension(
-            netdata_metrics, f'net_speed.{interface_name}', 'speed', 0), divisor=1000
+            netdata_metrics, f'truenas_net_stats.speed.{interface_name}', f'{interface_name}.speed', 0)
         )
         if link_state:
             # In Bluefin, `received_bytes` and `sent_bytes` represent bytes per interval,
@@ -29,11 +31,15 @@ def get_interface_stats(
 
             data[interface_name].update({
                 'received_bytes_rate': normalize_value(
-                    safely_retrieve_dimension(netdata_metrics, f'net.{interface_name}', 'received', 0),
+                    safely_retrieve_dimension(
+                        netdata_metrics, f'truenas_net_stats.traffic.{interface_name}', f'{interface_name}.received', 0
+                    ),
                     multiplier=1000, divisor=8
                 ),
                 'sent_bytes_rate': normalize_value(
-                    safely_retrieve_dimension(netdata_metrics, f'net.{interface_name}', 'sent', 0),
+                    safely_retrieve_dimension(
+                        netdata_metrics, f'truenas_net_stats.traffic.{interface_name}', f'{interface_name}.sent', 0
+                    ),
                     multiplier=1000, divisor=8
                 ),
             })
