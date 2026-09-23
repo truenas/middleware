@@ -4,8 +4,9 @@ from typing import Any
 
 import pyudev
 
-from .disks_.disk_class import VALID_WHOLE_DISK
+from .disks_.disk_class import VALID_WHOLE_DISK, DiskEntry
 from .disks_.identifier import build_identifier, join_serial_lunid
+from .disks_.udev import lunid_from_udev, serial_from_udev
 
 DISKS_TO_IGNORE = ('sr', 'md', 'dm-', 'loop', 'zd')
 RE_IS_PART = re.compile(r'p\d{1,3}$')
@@ -24,11 +25,17 @@ def safe_retrieval(prop: dict[str, Any], key: str, default: str, as_int: bool = 
 
 
 def get_disk_serial_from_block_device(block_device: pyudev.Device) -> str:
-    return str(
-        safe_retrieval(block_device.properties, 'ID_SCSI_SERIAL', '') or
-        safe_retrieval(block_device.properties, 'ID_SERIAL_SHORT', '') or
-        safe_retrieval(block_device.properties, 'ID_SERIAL', '')
-    )
+    return serial_from_udev(block_device.properties) or ''
+
+
+def get_disk_lunid_from_block_device(block_device: pyudev.Device) -> str | None:
+    # Try udev ID_WWN first (for NAA format WWIDs)
+    if lunid := lunid_from_udev(block_device.properties):
+        return lunid
+
+    # NAS-137807: Fallback to sysfs wwid for EUI-64 format WWIDs not exposed in udev properties
+    # Uses DiskEntry.lunid which handles sysfs wwid retrieval and normalization
+    return DiskEntry(name=block_device.sys_name, devpath=f'/dev/{block_device.sys_name}').lunid
 
 
 def valid_zfs_partition_uuids() -> tuple[str, str]:
@@ -96,9 +103,7 @@ def get_disks_with_identifiers(
                 serial, lunid = block_device_data['serial'], block_device_data['lunid']
             else:
                 serial = get_disk_serial_from_block_device(block_device)
-                lunid = str(
-                    safe_retrieval(block_device.properties, 'ID_WWN', '')
-                ).removeprefix('0x').removeprefix('eui.')
+                lunid = get_disk_lunid_from_block_device(block_device)
 
             parts = []
             for partition in filter(
