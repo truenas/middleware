@@ -222,6 +222,46 @@ def test_a_recreated_bucket_does_not_land_on_the_old_data(owner):
             call("sharing.s3.delete", second["id"])
 
 
+def test_concurrent_creates_of_one_name_leave_one_bucket(owner):
+    """One wins, the rest are refused by name. Unserialized, each passes
+    the name check before any of them inserts and the second insert
+    reaches the unique `name` column. S3 protocol `CreateBucket` arrives
+    as one of these calls, so the race is routine."""
+    racers = 4
+    with dataset("s3-concurrent") as root, managed_root(root):
+        c = truenas_server.client
+        # all on the wire before the first answer comes back
+        pending = [
+            c.call(
+                "sharing.s3.create",
+                {"name": "contested", "owner": OWNER},
+                background=True,
+                register_call=True,
+            )
+            for _ in range(racers)
+        ]
+        created, refused = [], []
+        for pending_call in pending:
+            try:
+                created.append(c.wait(pending_call))
+            except Exception as e:
+                refused.append(e)
+
+        try:
+            assert len(created) == 1, [repr(e) for e in refused]
+            for e in refused:
+                assert isinstance(e, ValidationErrors), repr(e)
+                assert any("name" in (err.attribute or "") for err in e.errors), e.errors
+            assert [b["id"] for b in call("sharing.s3.query", [["name", "=", "contested"]])] == [created[0]["id"]]
+            # no loser left a dataset behind
+            children = call("zfs.resource.query", {"paths": [root], "max_depth": 1, "properties": None})
+            assert [r["name"] for r in children] == [root, created[0]["dataset"]]
+        finally:
+            # by query: a racer whose answer was lost still registered one
+            for entry in call("sharing.s3.query", [["name", "=", "contested"]]):
+                call("sharing.s3.delete", entry["id"])
+
+
 def test_no_managed_root_refuses_a_bucket_with_no_dataset(owner):
     with managed_root(""):
         with pytest.raises(ValidationErrors) as ve:
