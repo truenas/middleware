@@ -1,6 +1,7 @@
 from middlewared.async_validators import check_path_resides_within_volume, resolve_hostname, validate_port
 from middlewared.service import private, SystemServiceService, ValidationErrors
 import middlewared.sqlalchemy as sa
+from middlewared.utils.service.path import check_path_service_write_allowed
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -160,6 +161,7 @@ class FTPService(SystemServiceService):
             await check_path_resides_within_volume(
                 verrors, self.middleware, "ftp_update.anonpath", new["anonpath"], must_be_dir=True
             )
+            await check_path_service_write_allowed(verrors, self.middleware, "ftp_update.anonpath", new["anonpath"])
 
         if new["tls"]:
             if not new["ssltls_certificate"]:

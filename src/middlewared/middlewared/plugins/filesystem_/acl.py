@@ -182,20 +182,17 @@ class FilesystemService(Service):
             if mountpoint == path:
                 verrors.add(
                     f"{schema}.path",
-                    f"{path} is the mountpoint of the dataset consumed by S3 bucket {bucket.name!r}. "
-                    "Recursive permissions changes on the whole bucket are rejected because they may have "
-                    "undefined behavior and expose security risks. Apply the change to the s3data directory "
-                    f"inside the bucket ({path}/s3data) instead.",
+                    f"{path} is the mountpoint of S3 bucket {bucket.name!r}. Recursive permissions changes are "
+                    f"not supported on a whole bucket. Apply the change to {path}/s3data instead.",
                 )
             else:
                 crossed.append(f"{bucket.name!r} ({mountpoint})")
         if crossed:
             verrors.add(
                 f"{schema}.options.traverse",
-                f"Traversing from {path} would recursively change permissions on the whole of S3 "
-                f"bucket(s) {', '.join(crossed)}. This is rejected because recursive permissions changes "
-                "on a whole bucket may have undefined behavior and expose security risks. Apply the "
-                "change to the s3data directory inside each bucket instead.",
+                f"Traversing from {path} would change permissions on the whole of S3 bucket(s) "
+                f"{', '.join(crossed)}. Recursive permissions changes are not supported on a whole bucket. "
+                "Apply the change to the s3data directory inside each bucket instead.",
             )
 
     @private

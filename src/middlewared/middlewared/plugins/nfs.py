@@ -18,7 +18,7 @@ from middlewared.api.current import (
     SharingNFSDeleteArgs, SharingNFSDeleteResult
 )
 from middlewared.common.listen import SystemServiceListenMultipleDelegate
-from middlewared.async_validators import check_path_resides_within_volume, validate_port
+from middlewared.async_validators import validate_port
 from middlewared.service import private, SharingService, SystemServiceService
 from middlewared.service import CallError, ValidationError, ValidationErrors
 import middlewared.sqlalchemy as sa
@@ -29,7 +29,6 @@ from middlewared.plugins.nfs_.validators import (
     confirm_unique, sanitize_networks, sanitize_hosts, validate_bind_ip
 )
 from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
-from middlewared.utils.mount import resolve_dataset_path
 
 
 class NFSServicePathInfo(enum.Enum):
@@ -418,6 +417,7 @@ class SharingNFSService(SharingService):
 
     include_tier_info = True
     share_task_type = 'NFS'
+    readonly_field = 'ro'
 
     @private
     async def human_identifier(self, share_task):
@@ -564,15 +564,7 @@ class SharingNFSService(SharingService):
         # User must clean these up before proceeding
         verrors.check()
 
-        # need to make sure that the nfs share is within the zpool mountpoint
-        await check_path_resides_within_volume(
-            verrors, self.middleware, f'{schema_name}.path', data['path'],
-        )
-
-        # Split path into dataset and relative_path components
-        data['dataset'], data['relative_path'] = await self.middleware.run_in_thread(
-            resolve_dataset_path, data['path'], self.middleware
-        )
+        await self.validate_path_field(data, schema_name, verrors, split_path=True)
 
         filters = []
         if old:
