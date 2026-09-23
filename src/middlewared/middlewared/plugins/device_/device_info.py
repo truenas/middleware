@@ -31,14 +31,6 @@ class DeviceService(Service):
     DISK_ROTATION_ERROR_LOG_CACHE = set()
 
     @private
-    def get_disk_serial(self, dev):
-        return get_disk_serial_from_block_device(dev)
-
-    @private
-    def get_lunid(self, dev):
-        return get_disk_lunid_from_block_device(dev)
-
-    @private
     def get_disks(self, get_partitions=False, serial_only=False):
         ctx = pyudev.Context()
         disks = {}
@@ -50,7 +42,7 @@ class DeviceService(Service):
 
             try:
                 if serial_only:
-                    disks[dev.sys_name] = self.get_disk_serial(dev)
+                    disks[dev.sys_name] = get_disk_serial_from_block_device(dev)
                 else:
                     disks[dev.sys_name] = self.get_disk_details(ctx, dev, get_partitions)
             except Exception:
@@ -96,7 +88,7 @@ class DeviceService(Service):
     @private
     def get_disk_details(self, ctx, dev, get_partitions=False):
         blocks = self.safe_retrieval(dev.attributes, 'size', None, asint=True)
-        ident = serial = self.get_disk_serial(dev)
+        ident = serial = get_disk_serial_from_block_device(dev)
         model = descr = self.safe_retrieval(dev.properties, 'ID_MODEL', None)
         vendor = self.safe_retrieval(dev.properties, 'ID_VENDOR', None)
         is_nvme = dev.sys_name.startswith('nvme') or (vendor and vendor.lower().strip() == 'nvme')
@@ -121,7 +113,7 @@ class DeviceService(Service):
             'serial': serial,
             'model': model,
             'descr': descr,
-            'lunid': self.get_lunid(dev),
+            'lunid': get_disk_lunid_from_block_device(dev),
             'bus': self.safe_retrieval(dev.properties, 'ID_BUS', 'UNKNOWN').upper(),
             'type': 'UNKNOWN',
             'blocks': blocks,
@@ -191,7 +183,7 @@ class DeviceService(Service):
         try:
             block_device = pyudev.Devices.from_name(context, 'block', name)
             if serial_only:
-                return {'serial': self.get_disk_serial(block_device)}
+                return {'serial': get_disk_serial_from_block_device(block_device)}
             else:
                 return self.get_disk_details(context, block_device, get_partitions)
         except pyudev.DeviceNotFoundByNameError:

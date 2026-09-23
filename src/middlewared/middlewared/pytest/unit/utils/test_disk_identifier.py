@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, Mock, patch
 import pytest
 
 from middlewared.plugins.device_.device_info import DeviceService
-from middlewared.utils.disks import dev_to_ident
+from middlewared.utils.disks import dev_to_ident, get_disk_lunid_from_block_device
 from middlewared.utils.disks_.disk_class import DiskEntry
 from middlewared.utils.disks_.gpt_parts import PART_TYPES
 from middlewared.utils.disks_.udev import lunid_from_udev, serial_from_udev
@@ -135,17 +135,17 @@ def test_lunid_from_udev_strips_prefixes(properties, expected):
     assert lunid_from_udev(properties) == expected
 
 
-def test_device_get_lunid_prefers_udev(mock_sysfs):
+def test_lunid_from_block_device_prefers_udev(mock_sysfs):
     device = udev_device("sda", {"ID_WWN": "0x5000ccaffffffffe"})
     with mock_sysfs({"sda/device/wwid": "naa.5000cca2b00d6cdc"}):
-        assert DeviceService(Mock()).get_lunid(device) == "5000ccaffffffffe"
+        assert get_disk_lunid_from_block_device(device) == "5000ccaffffffffe"
 
 
-def test_device_get_lunid_falls_back_to_sysfs(mock_sysfs):
+def test_lunid_from_block_device_falls_back_to_sysfs(mock_sysfs):
     """NAS-137807: an EUI-64 wwid that udev did not expose as ID_WWN."""
     device = udev_device("sda", {"ID_BUS": "scsi", "ID_SCSI_SERIAL": "S1"})
     with mock_sysfs({"sda/device/wwid": "eui.0011223344556677"}):
-        assert DeviceService(Mock()).get_lunid(device) == "0011223344556677"
+        assert get_disk_lunid_from_block_device(device) == "0011223344556677"
 
 
 @pytest.mark.parametrize(
