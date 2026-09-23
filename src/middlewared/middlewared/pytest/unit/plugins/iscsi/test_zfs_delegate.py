@@ -18,15 +18,15 @@ HIDDEN_MESSAGE = (
 )
 
 
-def volume(properties=None, inherit=(), parent=None, snapshot_devices=(), **current):
+def volume(properties=None, inherit=(), parent=None, snapshot_devices=(), path="tank/vol", **current):
     return SetContext(
-        path="tank/vol",
+        path=path,
         type="VOLUME",
         properties=ZFSResourceSetProperties(**(properties or {})),
         user_properties={},
         inherit=frozenset(inherit),
-        current=PropertyView("tank/vol", {"volsize": GiB, "readonly": "off", "snapdev": "visible", **current}),
-        source=PropertyView("tank/vol", {}),
+        current=PropertyView(path, {"volsize": GiB, "readonly": "off", "snapdev": "visible", **current}),
+        source=PropertyView(path, {}),
         parent=None if parent is None else PropertyView("tank", parent),
         pool_root=False,
         tier_enabled=None,
@@ -70,6 +70,44 @@ async def test_hiding_snapshot_devices_backing_an_extent_is_rejected(kwargs, att
     state = volume(snapshot_devices={"tank/vol@a", "tank/vol@b"}, **kwargs)
 
     assert await validate(extents_on("tank/vol@b"), state) == [(attribute, HIDDEN_MESSAGE, errno.EINVAL)]
+
+
+@pytest.mark.parametrize(
+    "path, device, stored",
+    [
+        ("tank/tpv sp", "tank/tpv sp@s1", "zvol/tank/tpv+sp@s1"),
+        ("tank/vol", "tank/vol@s 1", "zvol/tank/vol@s+1"),
+        ("tank/a b c", "tank/a b c@x y", "zvol/tank/a+b+c@x+y"),
+    ],
+    ids=["space-in-volume", "space-in-snapshot", "several-spaces"],
+)
+@pytest.mark.asyncio
+async def test_hiding_a_snapshot_device_with_an_encoded_extent_path_is_rejected(path, device, stored):
+    m = Middleware()
+    m["iscsi.extent.query"] = m._query_filter([{"id": 1, "path": stored}])
+    state = volume(path=path, snapshot_devices={device}, properties={"snapdev": "hidden"})
+
+    assert await validate(m, state) == [
+        (
+            "zfs.resource.set.properties.snapdev",
+            f"{path!r} has snapshots which have attachments being used. Before marking it as HIDDEN, remove "
+            "attachment usages.",
+            errno.EINVAL,
+        )
+    ]
+
+
+@pytest.mark.asyncio
+async def test_snapshot_devices_are_looked_up_by_their_encoded_extent_path():
+    filters = []
+    m = Middleware()
+    m["iscsi.extent.query"] = lambda *args: filters.append(args[0]) or []
+    state = volume(
+        path="tank/tpv sp", snapshot_devices={"tank/tpv sp@s2", "tank/tpv sp@s1"}, properties={"snapdev": "hidden"}
+    )
+
+    assert await validate(m, state) == []
+    assert filters == [[["path", "in", ["zvol/tank/tpv+sp@s1", "zvol/tank/tpv+sp@s2"]]]]
 
 
 @pytest.mark.parametrize(

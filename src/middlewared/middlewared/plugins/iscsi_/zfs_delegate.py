@@ -3,6 +3,7 @@ from __future__ import annotations
 import typing
 
 from middlewared.plugins.zfs.delegates import ZFSResourceDelegate
+from middlewared.plugins.zfs.zvol_utils import zvol_name_to_path
 
 if typing.TYPE_CHECKING:
     from middlewared.api.current import ZFSResourceEntry
@@ -22,7 +23,7 @@ class ISCSIExtentDelegate(ZFSResourceDelegate):
         if not state.snapshot_devices or not state.changed("snapdev") or state.effective("snapdev") != "hidden":
             return
 
-        paths = [f"zvol/{name}" for name in sorted(state.snapshot_devices)]
+        paths = [zvol_name_to_path(name).removeprefix("/dev/") for name in sorted(state.snapshot_devices)]
         if await self.middleware.call("iscsi.extent.query", [["path", "in", paths]], {"select": ["path"]}):
             verrors.add(
                 state.attribute("snapdev"),
