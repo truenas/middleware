@@ -30,6 +30,7 @@ __all__ = [
     "S3AuditMask",
     "S3Listener",
     "S3PrincipalType",
+    "S3BucketName",
     "S3PermissionsModel",
     "S3ObjectOwnership",
     "S3Grant",
@@ -51,6 +52,13 @@ __all__ = [
     "SharingS3DeleteResult",
     "SharingS3ForceDisableVersioningArgs",
     "SharingS3ForceDisableVersioningResult",
+    "SharingS3RecoverBucket",
+    "SharingS3RecoverableBucket",
+    "SharingS3RecoveredBucket",
+    "SharingS3RecoverableBucketsArgs",
+    "SharingS3RecoverableBucketsResult",
+    "SharingS3RecoverArgs",
+    "SharingS3RecoverResult",
     "SharingS3AuditChoicesArgs",
     "SharingS3AuditChoicesResult",
 ]
@@ -96,6 +104,10 @@ tree."""
 S3ObjectOwnership = Literal["BUCKET_OWNER_ENFORCED", "BUCKET_OWNER_PREFERRED", "OBJECT_WRITER"]
 """S3 Object Ownership: the bucket-level setting that controls ownership
 of objects uploaded to a bucket and disables or enables ACLs."""
+
+S3BucketName = Annotated[str, Field(min_length=3, max_length=63, pattern=r"^[a-z0-9][a-z0-9.-]*[a-z0-9]$")]
+"""Bucket names may be 3-63 characters including lowercase letters, numbers, hyphens, and dots. Adjacent
+dots (..) and names shaped like an IPv4 address are not permitted."""
 
 S3AccessKeyId = Annotated[str, Field(pattern=r"^[A-Z0-9]{16,128}$")]
 """An S3 access key id. Uppercase alphanumerics only, so it is safe inside
@@ -351,7 +363,7 @@ class S3BindipChoicesResult(BaseModel):
 
 class SharingS3Entry(BaseModel):
     id: int = Field(description="Unique identifier for the bucket.")
-    name: Annotated[str, Field(min_length=3, max_length=63, pattern=r"^[a-z0-9][a-z0-9.-]*[a-z0-9]$")] = Field(
+    name: S3BucketName = Field(
         description=(
             "Bucket name, following the S3 rules. Three to 63 characters of lowercase letters, digits, dots and "
             "hyphens, starting and ending with a letter or digit, no adjacent dots, and never an IPv4 address."
@@ -537,6 +549,56 @@ class SharingS3ForceDisableVersioningArgs(BaseModel):
 
 class SharingS3ForceDisableVersioningResult(BaseModel):
     result: SharingS3Entry = Field(description="The updated bucket, with versioning `OFF`.")
+
+
+class SharingS3RecoverableBucket(SharingS3Entry):
+    """Configuration of a bucket that is no longer registered, read from the backup on its dataset."""
+
+    id: Excluded = excluded_field()
+    locked: Excluded = excluded_field()
+    tier: Excluded = excluded_field()
+
+
+class SharingS3RecoverableBucketsArgs(BaseModel):
+    pass
+
+
+class SharingS3RecoverableBucketsResult(BaseModel):
+    result: list[SharingS3RecoverableBucket] = Field(
+        description="Array of datasets containing S3 data and configuration that can be recovered.",
+    )
+
+
+class SharingS3RecoverBucket(BaseModel):
+    dataset: NonEmptyString = Field(description="The dataset from which to recover the bucket.")
+    name_override: S3BucketName | None = Field(
+        default=None,
+        description="Manual override for bucket name. Replaces stored configuration. Use `null` to keep original.",
+    )
+    owner_override: NonEmptyString | None = Field(
+        default=None,
+        description="Manual override for bucket owner. Replaces stored configuration. Use `null` to keep original.",
+    )
+
+
+class SharingS3RecoverArgs(BaseModel):
+    buckets: Annotated[list[SharingS3RecoverBucket], Field(min_length=1)] = Field(
+        description="Array of datasets to recover. Each dataset gets a separate success / failure answer.",
+    )
+
+
+class SharingS3RecoveredBucket(BaseModel):
+    dataset: NonEmptyString = Field(description="The dataset this answer is for.")
+    bucket: SharingS3Entry | None = Field(
+        description="Recovered bucket configuration or `null` when not recovered.",
+    )
+    error: str | None = Field(description="Reason why bucket restore failed. `null` on success.")
+
+
+class SharingS3RecoverResult(BaseModel):
+    result: list[SharingS3RecoveredBucket] = Field(
+        description="One answer per requested dataset in the order requested.",
+    )
 
 
 class SharingS3AuditChoicesArgs(BaseModel):
