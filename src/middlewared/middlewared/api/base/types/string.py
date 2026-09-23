@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from typing import TYPE_CHECKING, Annotated
 import uuid
 
@@ -20,8 +21,10 @@ from middlewared.utils.smb import validate_smb_share_name
 __all__ = [
     "HttpUrl", "LongString", "NonEmptyString", "LongNonEmptyString", "SECRET_VALUE", "TimeString", "NetbiosDomain",
     "NetbiosName", "SnapshotNameSchema", "EmailString", "SmbShareName", "SingleLineString", "SingleLineNonEmptyString",
-    "UUIDv4String",
+    "LibvirtUUID",
 ]
+
+_UUID_HEX = re.compile(r'[0-9a-fA-F]{32}')
 
 
 def validate_single_line(value: str) -> str:
@@ -36,13 +39,23 @@ def validate_single_line(value: str) -> str:
     return value
 
 
-def uuidv4_validator(value: str) -> str:
-    try:
-        uuid.UUID(value, version=4)
-    except ValueError:
-        raise ValueError('UUID is not valid version 4')
+def normalize_libvirt_uuid(value: str) -> str:
+    """Accept what libvirt accepts, and store it the way libvirt will report it.
 
-    return value
+    `virUUIDParse` takes 32 hexadecimal digits with hyphens ignored, so it rejects the braced and
+    `urn:uuid:` forms that `uuid.UUID` strips -- a domain spelled either way can never be defined.
+    Only a create model may use this: an entry model has to read back whatever is stored, and the
+    stored string is the libvirt domain name, so normalizing on the way out would rewrite the name
+    libvirt knows a defined domain by.
+    """
+    hexed = value.replace('-', '')
+    if not _UUID_HEX.fullmatch(hexed):
+        raise ValueError(
+            'UUID must be 32 hexadecimal digits, optionally hyphenated '
+            '(e.g. 550e8400-e29b-41d4-a716-446655440000)'
+        )
+
+    return str(uuid.UUID(hexed))
 
 
 if TYPE_CHECKING:
@@ -65,4 +78,4 @@ NetbiosName = Annotated[str, AfterValidator(validate_netbios_name)]
 SmbShareName = Annotated[str, AfterValidator(validate_smb_share_name)]
 SnapshotNameSchema = Annotated[str, AfterValidator(lambda val: validate_snapshot_naming_schema(val) or val)]
 SECRET_VALUE = "********"
-UUIDv4String = Annotated[str, AfterValidator(uuidv4_validator)]
+LibvirtUUID = Annotated[str, AfterValidator(normalize_libvirt_uuid)]

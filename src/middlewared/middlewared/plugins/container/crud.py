@@ -27,7 +27,7 @@ from middlewared.plugins.zfs.exceptions import ZFSDestroyFailedException
 from middlewared.pylibvirt import gather_pylibvirt_domains_states, get_pylibvirt_domain_state
 from middlewared.service import CallError, CRUDServicePart, ValidationError, ValidationErrors
 import middlewared.sqlalchemy as sa
-from middlewared.utils.libvirt.utils import ACTIVE_STATES
+from middlewared.utils.libvirt.utils import ACTIVE_STATES, same_uuid
 
 from .bridge import container_bridge_name
 from .dataset import ensure_datasets
@@ -367,11 +367,12 @@ class ContainerServicePart(CRUDServicePart[ContainerEntry]):
         if data.uuid is None:
             data = data.model_copy(update={'uuid': str(uuid.uuid4())})
 
-        if not old or data.uuid != old.uuid:
-            uuid_filters: list[tuple[str, str, Any]] = [('uuid', '=', data.uuid)]
-            if old:
-                uuid_filters.append(('id', '!=', old.id))
-            if await self.middleware.call('datastore.query', 'container.container', uuid_filters):
+        if old is None or data.uuid != old.uuid:
+            rows = await self.middleware.call('datastore.query', 'container.container', [])
+            if any(
+                (old is None or row['id'] != old.id) and row['uuid'] and same_uuid(data.uuid, row['uuid'])
+                for row in rows
+            ):
                 verrors.add(f'{schema_name}.uuid', 'A container with this UUID already exists.', errno.EEXIST)
 
         if data.idmap is not None:

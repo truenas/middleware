@@ -6,8 +6,8 @@ from middlewared.api.base import (
     BaseModel,
     Excluded,
     ForUpdateMetaclass,
+    LibvirtUUID,
     NonEmptyString,
-    UUIDv4String,
     excluded_field,
 )
 
@@ -60,7 +60,7 @@ class ContainerStatus(BaseModel):
 
 class ContainerEntry(BaseModel):
     id: int = Field(description="Container ID.")
-    uuid: UUIDv4String = Field(
+    uuid: str = Field(
         description=(
             "Container UUID (for libvirt). Assigned when the container is created and cannot be changed afterwards."
         ),
@@ -129,10 +129,11 @@ class ContainerCreate(ContainerEntry):
     status: Excluded = excluded_field()
     devices: Excluded = excluded_field()
     default_network: Excluded = excluded_field()
-    uuid: UUIDv4String | None = Field(
+    uuid: LibvirtUUID | None = Field(
         default=None,
         description=(
-            "Container UUID (for libvirt). Auto-generated if not provided. It cannot be changed after creation."
+            "Container UUID (for libvirt). Auto-generated if not provided. It cannot be changed after creation. "
+            "Normalized to lowercase hyphenated form."
         ),
     )
     pool: str | None = Field(
