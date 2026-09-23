@@ -11,7 +11,9 @@ that drove boto3 against the running daemon moved to
 conformance: what a bucket's stored options mean is only observable over
 the wire, and that is not an api2 test."""
 
+import base64
 import contextlib
+import json
 from configparser import RawConfigParser
 
 import pytest
@@ -29,6 +31,7 @@ BUCKETS_CONF = "/etc/truenas_s3/buckets.conf"
 POLICIES_CONF = "/etc/truenas_s3/policies.conf"
 OWNER = "s3bucketowner"
 DATASET = f"{pool}/s3-bucket-test"
+CONFIG_BACKUP = ".truenas_s3/config_backup.json"
 
 
 def parse(path):
@@ -39,6 +42,37 @@ def parse(path):
 
 def service():
     return call("service.query", [["service", "=", SERVICE]], {"get": True})
+
+
+def backup_of(dataset):
+    """The bucket row middleware keeps in the dataset's side tree, or
+    None."""
+    raw = ssh(f"cat /mnt/{dataset}/{CONFIG_BACKUP} 2>/dev/null || true")
+    return json.loads(raw) if raw.strip() else None
+
+
+def write_backup(dataset, row):
+    blob = base64.b64encode(json.dumps(row).encode()).decode()
+    script = (
+        f"import base64, pathlib; "
+        f"pathlib.Path('/mnt/{dataset}/{CONFIG_BACKUP}').write_bytes(base64.b64decode('{blob}'))"
+    )
+    ssh(f'python3 -c "{script}"')
+
+
+def recover(dataset, **stated):
+    """The bucket one dataset came back as, which must be one."""
+    answer = call("sharing.s3.recover", [{"dataset": dataset, **stated}])[0]
+    assert answer["error"] is None, answer["error"]
+    return answer["bucket"]
+
+
+def refuse(dataset, **stated):
+    """Why one dataset did not come back, which must be some reason."""
+    answer = call("sharing.s3.recover", [{"dataset": dataset, **stated}])[0]
+    assert answer["bucket"] is None, answer["bucket"]
+    assert answer["error"], "a dataset that did not come back says why"
+    return answer["error"]
 
 
 def zfs_props(name, props):
@@ -189,6 +223,263 @@ def managed_root(value):
         yield value
     finally:
         call("s3.update", {"managed_root_dataset": was})
+
+
+@contextlib.contextmanager
+def deregistered_bucket(**overrides):
+    """A dataset holding a bucket's objects that no bucket row uses.
+
+    The service starts once so the bucket is one that really served:
+    `s3data/` is registration's to make, and the object below is what a
+    recovery has to hand back.
+    """
+    entry = call("sharing.s3.create", {"name": "recover-me", "dataset": DATASET, "owner": OWNER, **overrides})
+    try:
+        with running_service():
+            ssh(f"touch /mnt/{DATASET}/s3data/marker")
+        call("sharing.s3.delete", entry["id"])
+        yield entry
+    finally:
+        for row in call("sharing.s3.query", [["dataset", "=", DATASET]]):
+            with contextlib.suppress(Exception):
+                call("sharing.s3.delete", row["id"])
+        call("zfs.resource.destroy", {"path": DATASET, "recursive": True})
+
+
+def test_create_and_update_back_up_the_row_on_the_dataset(owner):
+    """Nothing the S3 service writes on a dataset carries the bucket's
+    configuration, so the row kept here is what a recovery reads."""
+    with bucket(multipart_etag="COMPOSITE") as b:
+        row = backup_of(DATASET)
+        assert row["version_number"] == 1
+        assert row["name"] == "test-bucket"
+        assert row["owner_uid"] == owner["uid"]
+        assert row["multipart_etag"] == "COMPOSITE"
+        # the datastore row: no id, nothing read back rather than stored
+        assert not {"id", "locked", "tier", "owner"} & set(row)
+
+        call("sharing.s3.update", b["id"], {"multipart_etag": "MINTED"})
+        assert backup_of(DATASET)["multipart_etag"] == "MINTED"
+
+
+def test_the_side_tree_is_made_for_the_backup_and_left_as_the_service_wants_it(owner):
+    """A bucket is backed up from creation, before registration has made
+    the directory. Registration refuses one owned by anyone else."""
+    with bucket():
+        side = call("filesystem.stat", f"/mnt/{DATASET}/.truenas_s3")
+        assert (side["uid"], side["gid"]) == (0, 0)
+        assert side["mode"] & 0o777 == 0o700
+        with running_service():
+            assert backup_of(DATASET)["name"] == "test-bucket", "and registration leaves it alone"
+
+
+def test_delete_keeps_the_backup_with_the_objects(owner):
+    entry = call("sharing.s3.create", {"name": "kept", "dataset": DATASET, "owner": OWNER})
+    try:
+        assert backup_of(DATASET)["name"] == "kept"
+        call("sharing.s3.delete", entry["id"])
+        assert backup_of(DATASET)["name"] == "kept", "the backup is what recovers the bucket"
+    finally:
+        call("zfs.resource.destroy", {"path": DATASET, "recursive": True})
+
+
+def test_recover_restores_the_bucket_from_its_backup(owner):
+    grants = [{"principal_type": "EVERYONE", "access": "READONLY"}]
+    with deregistered_bucket(grants=grants, multipart_etag="COMPOSITE") as gone:
+        back = recover(DATASET)
+        assert back["id"] != gone["id"], "a new row over the objects the old one had"
+        assert back["name"] == gone["name"]
+        assert back["dataset"] == DATASET
+        assert back["owner"] == OWNER
+        assert back["owner_uid"] == owner["uid"]
+        assert back["multipart_etag"] == "COMPOSITE"
+        assert [g["access"] for g in back["grants"]] == ["READONLY"]
+        with running_service():
+            assert ssh(f"ls /mnt/{DATASET}/s3data").split() == ["marker"]
+
+
+def test_only_the_two_overrides_may_be_stated(owner):
+    """One for when another bucket has taken the old name, the other for
+    a dataset restored where its uid means someone else. Nothing else is
+    the caller's to state: the backup is the bucket."""
+    with deregistered_bucket(multipart_etag="COMPOSITE") as gone:
+        back = recover(DATASET, name_override="renamed")
+        assert back["name"] == "renamed"
+        assert back["multipart_etag"] == "COMPOSITE", "the rest is the backup's"
+        assert back["owner"] == OWNER
+        assert gone["name"] != "renamed"
+
+        for refused in ({"multipart_etag": "MINTED"}, {"versioning": "OFF"}, {"grants": []}):
+            with pytest.raises(ValidationErrors) as ve:
+                recover(DATASET, **refused)
+            assert "not permitted" in ve.value.errors[0].errmsg, ve.value.errors
+
+
+def test_recover_without_a_backup_is_refused(owner):
+    """The backup is the whole of what a recovery reads."""
+    with deregistered_bucket():
+        ssh(f"rm -f /mnt/{DATASET}/{CONFIG_BACKUP}")
+        assert backup_of(DATASET) is None
+
+        assert "no bucket config backup" in refuse(DATASET)
+        assert not call("sharing.s3.query", [["dataset", "=", DATASET]])
+
+
+def test_an_owner_uid_no_account_holds_is_asked_for(owner):
+    """A backup that arrived on a restored dataset names a uid of the
+    system that wrote it, which no account here need hold. Stating the
+    owner is the way through, and the only reason it may be stated."""
+    with deregistered_bucket():
+        row = backup_of(DATASET)
+        row["owner_uid"] = 65123
+        write_backup(DATASET, row)
+
+        assert "65123" in refuse(DATASET)
+        assert not call("sharing.s3.query", [["dataset", "=", DATASET]])
+
+        back = recover(DATASET, owner_override=OWNER)
+        assert back["owner"] == OWNER
+        assert back["owner_uid"] == owner["uid"]
+        assert back["name"] == "recover-me", "the rest of the backup still stands"
+
+
+def test_the_one_way_fields_come_back_as_they_were(owner, versioning_licensed):
+    """Neither can be weakened by a recovery, because neither is the
+    caller's to state."""
+    with deregistered_bucket(versioning="ENABLED", object_lock=True):
+        back = recover(DATASET)
+        assert back["object_lock"] is True
+        assert back["versioning"] == "ENABLED"
+
+
+def test_one_that_cannot_be_recovered_does_not_hold_back_the_rest(owner):
+    """A restore is a set of buckets and each is answered for itself:
+    what lands stays, and what did not says why."""
+    second = f"{pool}/s3-recover-second"
+    pair = [{"dataset": DATASET}, {"dataset": second}]
+    for name, ds in (("first", DATASET), ("second", second)):
+        call("sharing.s3.delete", call("sharing.s3.create", {"name": name, "dataset": ds, "owner": OWNER})["id"])
+    try:
+        ssh(f"rm -f /mnt/{second}/{CONFIG_BACKUP}")
+        answers = call("sharing.s3.recover", pair)
+        assert [a["dataset"] for a in answers] == [DATASET, second], "answered in the order asked for"
+        assert answers[0]["bucket"]["name"] == "first"
+        assert answers[0]["error"] is None
+        assert answers[1]["bucket"] is None
+        assert "no bucket config backup" in answers[1]["error"]
+        assert [b["dataset"] for b in call("sharing.s3.query", [])] == [DATASET], "and the one that landed stays"
+
+        # the other is recovered once what stopped it is put right
+        write_backup(second, {**backup_of(DATASET), "name": "second"})
+        assert recover(second)["name"] == "second"
+    finally:
+        for row in call("sharing.s3.query", [["dataset", "in", [DATASET, second]]]):
+            call("sharing.s3.delete", row["id"])
+        for ds in (DATASET, second):
+            call("zfs.resource.destroy", {"path": ds, "recursive": True})
+
+
+def test_a_dataset_named_twice_reads_as_the_duplicate_it_is(owner):
+    """The claim is made whether or not the entry that made it worked, so
+    the second mention is answered as a duplicate rather than refused all
+    over again for the same reasons."""
+    with deregistered_bucket():
+        ssh(f"rm -f /mnt/{DATASET}/{CONFIG_BACKUP}")
+        answers = call("sharing.s3.recover", [{"dataset": DATASET}, {"dataset": DATASET}])
+        assert "no bucket config backup" in answers[0]["error"]
+        assert "named twice" in answers[1]["error"]
+        assert not call("sharing.s3.query", [["dataset", "=", DATASET]])
+
+
+def test_a_backup_written_by_something_else_resolves_either_way(owner):
+    """A dataset can arrive carrying a backup this version did not write.
+    Every shape of one has to come back a recovery or a refusal."""
+    with deregistered_bucket():
+        good = backup_of(DATASET)
+
+        # a display-only key the row never holds: the uid is the identity
+        write_backup(DATASET, {**good, "owner": "someone-else"})
+        back = recover(DATASET)
+        assert back["owner"] == OWNER
+        call("sharing.s3.delete", back["id"])
+
+        # no owner at all, and none stated
+        write_backup(DATASET, {k: v for k, v in good.items() if k != "owner_uid"})
+        assert "names no owner" in refuse(DATASET)
+        back = recover(DATASET, owner_override=OWNER)
+        assert back["owner"] == OWNER
+        call("sharing.s3.delete", back["id"])
+
+        # a value this version does not know
+        write_backup(DATASET, {**good, "multipart_etag": "NONSENSE"})
+        assert "not a row this version can read" in refuse(DATASET)
+        assert not call("sharing.s3.query", [["dataset", "=", DATASET]])
+
+
+def test_recover_refuses_a_dataset_that_never_held_a_bucket(owner):
+    with dataset("s3-never-a-bucket") as ds:
+        assert "no bucket config backup" in refuse(ds, name_override="nope")
+        assert not call("sharing.s3.query", [["dataset", "=", ds]])
+
+
+def test_recover_refuses_a_dataset_a_bucket_already_uses(owner):
+    with bucket():
+        assert "already uses this dataset" in refuse(DATASET)
+
+
+def test_a_refusal_registers_nothing(owner):
+    """A recovery that will not work costs an error and no state, which
+    is what makes trying one safe."""
+    with deregistered_bucket():
+        other = f"{pool}/s3-name-taken"
+        taken = call("sharing.s3.create", {"name": "taken", "dataset": other, "owner": OWNER})
+        try:
+            assert "already exists" in refuse(DATASET, name_override="taken")
+        finally:
+            call("sharing.s3.delete", taken["id"])
+            call("zfs.resource.destroy", {"path": other, "recursive": True})
+
+        assert not call("sharing.s3.query", [["dataset", "=", DATASET]])
+        assert recover(DATASET)["dataset"] == DATASET
+
+
+def test_a_refusal_names_what_would_refuse_the_dataset(owner):
+    """Each refusal mirrors a check the S3 service makes at registration
+    and answers 503 for."""
+    with deregistered_bucket():
+        ssh(f"zfs set readonly=on {DATASET}")
+        try:
+            assert "read-only" in refuse(DATASET)
+        finally:
+            ssh(f"zfs set readonly=off {DATASET}")
+        assert recover(DATASET)["dataset"] == DATASET
+
+
+def test_recoverable_buckets_reads_as_the_buckets_they_would_come_back_as(owner):
+    """The listing and the recovery answer from the same backup, so what
+    it reports is what registering it gives."""
+    grants = [{"principal_type": "EVERYONE", "access": "READONLY"}]
+    with deregistered_bucket(grants=grants, multipart_etag="COMPOSITE") as gone:
+        found = [b for b in call("sharing.s3.recoverable_buckets") if b["dataset"] == DATASET]
+        assert len(found) == 1, found
+        row = found[0]
+        assert row["name"] == gone["name"]
+        assert row["owner"] == OWNER, "resolved for display, as a registered bucket's is"
+        assert row["owner_uid"] == owner["uid"]
+        assert row["multipart_etag"] == "COMPOSITE"
+        assert [g["access"] for g in row["grants"]] == ["READONLY"]
+        assert [g["name"] for g in row["grants"]] == [""], "and its grants are labelled the same way"
+        assert not {"id", "locked", "tier"} & set(row)
+
+        back = recover(DATASET)
+        assert {k: v for k, v in back.items() if k in row} == row
+
+        assert DATASET not in [b["dataset"] for b in call("sharing.s3.recoverable_buckets")]
+
+
+def test_a_dataset_with_no_backup_is_not_recoverable(owner):
+    with dataset("s3-never-a-bucket") as ds:
+        assert ds not in [b["dataset"] for b in call("sharing.s3.recoverable_buckets")]
 
 
 def test_a_bucket_with_no_dataset_lands_under_the_managed_root(owner):
