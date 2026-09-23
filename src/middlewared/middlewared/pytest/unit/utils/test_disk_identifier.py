@@ -8,13 +8,13 @@ from unittest.mock import MagicMock, Mock, patch
 import pytest
 
 from middlewared.plugins.device_.device_info import DeviceService
-from middlewared.utils.disks import dev_to_ident, get_disk_serial_from_block_device
+from middlewared.utils.disks import dev_to_ident
 from middlewared.utils.disks_.disk_class import DiskEntry
 from middlewared.utils.disks_.gpt_parts import PART_TYPES
-from middlewared.utils.disks_.identifier import build_identifier, join_serial_lunid
 from middlewared.utils.disks_.udev import lunid_from_udev, serial_from_udev
 
 ZFS_GUID = next(guid for guid, name in PART_TYPES.items() if name == "ZFS")
+EFI_GUID = "c12a7328-f81f-11d2-ba4b-00a0c93ec93b"
 PART_UUID = "b9253137-a0a4-11ec-b194-3cecef615fde"
 
 # udev properties and sysfs contents as measured on the named systems
@@ -57,62 +57,16 @@ SCSI_DEBUG_SYSFS = {
 }
 
 
-def block_device(name: str, properties: dict[str, str]) -> MagicMock:
-    """What `pyudev.Devices.from_name` returns, as far as the identity code reads it."""
+def udev_device(name: str, properties: dict[str, str]) -> MagicMock:
+    """A pyudev block device, as far as `get_disk_details` reads it."""
     device = MagicMock()
     device.sys_name = name
+    device.device_number = 2048
     device.properties = properties
+    device.attributes = {"size": "20971520", "queue/logical_block_size": "512", "queue/rotational": "0"}
+    device.parent.properties = {"SUBSYSTEM": "pci", "DRIVER": "ahci", "DEVPATH": "/devices/pci0000:00/0000:00:1f.2"}
     device.children = []
     return device
-
-
-@pytest.mark.parametrize(
-    "serial_lunid,serial,uuid,expected",
-    [
-        ("5QG7BWGF_5000cca2b00d6cdc", "5QG7BWGF", None, "{serial_lunid}5QG7BWGF_5000cca2b00d6cdc"),
-        (None, "5QG7BWGF", None, "{serial}5QG7BWGF"),
-        (None, None, PART_UUID, f"{{uuid}}{PART_UUID}"),
-        (None, None, None, "{devicename}sda"),
-        ("", "", None, "{devicename}sda"),
-    ],
-)
-def test_build_identifier_ladder(serial_lunid, serial, uuid, expected):
-    assert build_identifier("sda", serial_lunid, serial, lambda: uuid) == expected
-
-
-@pytest.mark.parametrize(
-    "serial,lunid,expected",
-    [
-        ("5QG7BWGF", "5000cca2b00d6cdc", "5QG7BWGF_5000cca2b00d6cdc"),
-        ("5QG7BWGF", None, None),
-        (None, "5000cca2b00d6cdc", None),
-        ("", "5000cca2b00d6cdc", None),
-        (None, None, None),
-    ],
-)
-def test_join_serial_lunid(serial, lunid, expected):
-    assert join_serial_lunid(serial, lunid) == expected
-
-
-@pytest.mark.parametrize(
-    "serial_lunid,serial",
-    [
-        ("5QG7BWGF_5000cca2b00d6cdc", "5QG7BWGF"),
-        (None, "5QG7BWGF"),
-    ],
-)
-def test_partitions_not_read_when_serial_known(serial_lunid, serial):
-    """Reading partitions opens the block device, which would happen on every
-    disk-stats tick if the identifier did it needlessly."""
-    zfs_partition_uuid = Mock()
-    build_identifier("sda", serial_lunid, serial, zfs_partition_uuid)
-    zfs_partition_uuid.assert_not_called()
-
-
-def test_partitions_read_once_when_no_serial():
-    zfs_partition_uuid = Mock(return_value=PART_UUID)
-    assert build_identifier("sda", None, None, zfs_partition_uuid) == f"{{uuid}}{PART_UUID}"
-    zfs_partition_uuid.assert_called_once_with()
 
 
 @pytest.mark.parametrize(
@@ -123,6 +77,8 @@ def test_partitions_read_once_when_no_serial():
     ],
 )
 def test_disk_entry_does_not_read_partitions_when_serial_known(mock_sysfs, files, expected):
+    """Reading partitions opens the block device, which would happen on every
+    disk-stats tick if the identifier did it needlessly."""
     with mock_sysfs(files):
         with patch.object(DiskEntry, "partitions") as partitions:
             assert DiskEntry(name="sda", devpath="/dev/sda").identifier == expected
@@ -131,9 +87,11 @@ def test_disk_entry_does_not_read_partitions_when_serial_known(mock_sysfs, files
 
 
 def test_disk_entry_reads_partitions_when_no_serial(mock_sysfs):
-    part = SimpleNamespace(partition_type_guid=ZFS_GUID, unique_partition_guid=PART_UUID)
+    """Only a ZFS partition identifies the disk, whatever sits ahead of it."""
+    efi = SimpleNamespace(partition_type_guid=EFI_GUID, unique_partition_guid="0f3b7a52-1c2d-4e6f-8a9b-0c1d2e3f4a5b")
+    zfs = SimpleNamespace(partition_type_guid=ZFS_GUID, unique_partition_guid=PART_UUID)
     with mock_sysfs({}):
-        with patch.object(DiskEntry, "partitions", return_value=(part,)) as partitions:
+        with patch.object(DiskEntry, "partitions", return_value=(efi, zfs)) as partitions:
             assert DiskEntry(name="sda", devpath="/dev/sda").identifier == f"{{uuid}}{PART_UUID}"
 
     partitions.assert_called_once()
@@ -178,14 +136,14 @@ def test_lunid_from_udev_strips_prefixes(properties, expected):
 
 
 def test_device_get_lunid_prefers_udev(mock_sysfs):
-    device = block_device("sda", {"ID_WWN": "0x5000ccaffffffffe"})
+    device = udev_device("sda", {"ID_WWN": "0x5000ccaffffffffe"})
     with mock_sysfs({"sda/device/wwid": "naa.5000cca2b00d6cdc"}):
         assert DeviceService(Mock()).get_lunid(device) == "5000ccaffffffffe"
 
 
 def test_device_get_lunid_falls_back_to_sysfs(mock_sysfs):
     """NAS-137807: an EUI-64 wwid that udev did not expose as ID_WWN."""
-    device = block_device("sda", {"ID_BUS": "scsi", "ID_SCSI_SERIAL": "S1"})
+    device = udev_device("sda", {"ID_BUS": "scsi", "ID_SCSI_SERIAL": "S1"})
     with mock_sysfs({"sda/device/wwid": "eui.0011223344556677"}):
         assert DeviceService(Mock()).get_lunid(device) == "0011223344556677"
 
@@ -207,16 +165,12 @@ def test_sync_path_and_disk_entry_agree_on_shipped_hardware(mock_sysfs, name, ud
     but they agree on every disk class we ship: libata synthesizes VPD page
     0x80 from the same ATA serial `ata_id` reads, scsi_id and the kernel read
     the same VPD pages, and the NVMe rules copy the sysfs attributes verbatim.
-    The sync path is assembled here the way `get_disk_details` builds the
-    dict `dev_to_ident` reads.
+    The sync path is `device.get_disks` building a dict with `get_disk_details`
+    and `dev_to_ident` reading it, so that is what runs here.
     """
-    device = block_device(name, udev)
+    device = udev_device(name, udev)
     with mock_sysfs(sysfs):
-        serial = get_disk_serial_from_block_device(device)
-        lunid = DeviceService(Mock()).get_lunid(device)
-        sys_disks = {
-            name: {"serial": serial, "lunid": lunid, "serial_lunid": join_serial_lunid(serial, lunid), "parts": []}
-        }
+        sys_disks = {name: DeviceService(Mock()).get_disk_details(None, device)}
         via_sync_path = dev_to_ident(name, sys_disks)
         via_disk_entry = DiskEntry(name=name, devpath=f"/dev/{name}").identifier
 
