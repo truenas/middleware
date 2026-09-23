@@ -19,5 +19,5 @@ def test_versions():
         assert isinstance(versions, list)
         assert len(versions) > 0
         assert all(
-            v == 'v24.10' or OLD_VER.match(v) or new_version(v) for v in versions
+            OLD_VER.match(v) or new_version(v) for v in versions
         ), versions

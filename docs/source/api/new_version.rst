@@ -10,7 +10,7 @@ The first step will be to use the files of the recently released version as a ba
 
 .. code-block:: bash
 
-    cp -R src/middlewared/middlewared/api/v25_04_0 src/middlewared/middlewared/api/v25_10_0
+    cp -R src/middlewared/middlewared/api/v26_0_0 src/middlewared/middlewared/api/v27_0_0
 
 Then we need to remove all `from_previous` and `to_previous` class method declarations in the new version. This needs
 to be done manually.
@@ -20,4 +20,4 @@ importing from the previously used one:
 
 .. code-block:: python
 
-    from .v25_04_0 import *  # noqa
+    from .v26_0_0 import *  # noqa
