@@ -12,6 +12,7 @@ live on the bucket, so they can never outlive it.
 
 from __future__ import annotations
 
+import asyncio
 import errno
 import ipaddress
 import os
@@ -62,6 +63,13 @@ if TYPE_CHECKING:
 __all__ = ("SharingS3Service", "S3FSAttachmentDelegate")
 
 AUDIT_ACTIONS: tuple[str, ...] = typing.get_args(S3AuditAction)
+
+BUCKET_LOCK = asyncio.Lock()
+"""Serializes bucket registry mutations. Create's validate-then-insert
+and the read-modify-writes in update and force_disable_versioning
+otherwise interleave, losing an update or reaching the unique `name` and
+`dataset` columns with an integrity error. Taken before lifecycle's
+render lock."""
 
 
 # a whole bucket row, whichever of the two shapes the caller sent one in
@@ -587,41 +595,44 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         Grants may be given in the same call. Creating a bucket reloads a
         running S3 service rather than restarting it.
         """
-        verrors = ValidationErrors()
-        data = self.normalize_ownership(data)
-        await self.validate(data, "sharing_s3_create", verrors)
-        owner_uid = await self.resolve_owner("sharing_s3_create", data.owner, verrors)
-        if data.dataset is None:
-            data.dataset = await self.derive_dataset("sharing_s3_create", data.name, verrors)
-        elif await self.query([["dataset", "=", data.dataset]], {"select": ["id"]}):
-            verrors.add("sharing_s3_create.dataset", "Another bucket already uses this dataset.")
-        verrors.check()
-        assert owner_uid is not None
-        assert data.dataset is not None
+        async with BUCKET_LOCK:
+            verrors = ValidationErrors()
+            data = self.normalize_ownership(data)
+            await self.validate(data, "sharing_s3_create", verrors)
+            owner_uid = await self.resolve_owner("sharing_s3_create", data.owner, verrors)
+            if data.dataset is None:
+                data.dataset = await self.derive_dataset("sharing_s3_create", data.name, verrors)
+            elif await self.query([["dataset", "=", data.dataset]], {"select": ["id"]}):
+                verrors.add("sharing_s3_create.dataset", "Another bucket already uses this dataset.")
+            verrors.check()
+            assert owner_uid is not None
+            assert data.dataset is not None
 
-        await self.create_dataset("sharing_s3_create", data.dataset)
-        id_: int | None = None
-        try:
-            id_ = await self.middleware.call("datastore.insert", self._config.datastore, self.compress(data, owner_uid))
-            await render_and_apply(self.middleware)
-        except Exception:
-            # Unwind to "no bucket": the row goes first, and the dataset only
-            # with it — a row that cannot be removed keeps its dataset, which
-            # is a consistent bucket, rather than a registered name with no
-            # storage behind it.
-            if id_ is not None:
-                try:
-                    await self.middleware.call("datastore.delete", self._config.datastore, id_)
-                except Exception:
-                    self.logger.warning(
-                        "%s: failed to remove the bucket row after a failed create", data.name, exc_info=True
-                    )
+            await self.create_dataset("sharing_s3_create", data.dataset)
+            id_: int | None = None
+            try:
+                id_ = await self.middleware.call(
+                    "datastore.insert", self._config.datastore, self.compress(data, owner_uid)
+                )
+                await render_and_apply(self.middleware)
+            except Exception:
+                # Unwind to "no bucket": the row goes first, and the dataset only
+                # with it — a row that cannot be removed keeps its dataset, which
+                # is a consistent bucket, rather than a registered name with no
+                # storage behind it.
+                if id_ is not None:
+                    try:
+                        await self.middleware.call("datastore.delete", self._config.datastore, id_)
+                    except Exception:
+                        self.logger.warning(
+                            "%s: failed to remove the bucket row after a failed create", data.name, exc_info=True
+                        )
+                    else:
+                        await self.destroy_dataset(data.dataset)
                 else:
                     await self.destroy_dataset(data.dataset)
-            else:
-                await self.destroy_dataset(data.dataset)
-            raise
-        return await self.get_instance(id_)
+                raise
+            return await self.get_instance(id_)
 
     @api_method(
         SharingS3UpdateArgs,
@@ -647,44 +658,45 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         value on such a bucket is its ``OBJECT_WRITER`` fold, which would
         otherwise take effect and enable S3 ACLs.
         """
-        old = await self.get_instance(id_)
-        audit_callback(old.name)
+        async with BUCKET_LOCK:
+            old = await self.get_instance(id_)
+            audit_callback(old.name)
 
-        new = old.updated(data)
-        given = data.model_dump(exclude_unset=True)
-        verrors = ValidationErrors()
-        new = self.normalize_ownership(new)
-        # Leaving MULTIPROTOCOL must name the ownership. The stored value
-        # on such a row is its OBJECT_WRITER fold, so a merge that kept it
-        # would land the flip on the loosest model — live S3 ACLs,
-        # writer-owned objects — when the bucket's creator never chose it.
-        if (
-            old.permissions_model == "MULTIPROTOCOL"
-            and new.permissions_model != "MULTIPROTOCOL"
-            and "object_ownership" not in given
-        ):
-            verrors.add(
-                "sharing_s3_update.object_ownership",
-                "State object_ownership when moving permissions_model off MULTIPROTOCOL. The stored value on a "
-                "MULTIPROTOCOL bucket is its OBJECT_WRITER fold, which would otherwise take effect and enable "
-                "S3 ACLs.",
-            )
-        await self.validate(new, "sharing_s3_update", verrors, old)
-        # an owner given by name is compared by the uid it resolves to: a
-        # renamed account is the same owner, a deleted and recreated one
-        # under the old name is not
-        owner_uid = old.owner_uid
-        if "owner" in given:
-            resolved = await self.resolve_owner("sharing_s3_update", new.owner, verrors)
-            if resolved is not None:
-                owner_uid = resolved
-        verrors.check()
+            new = old.updated(data)
+            given = data.model_dump(exclude_unset=True)
+            verrors = ValidationErrors()
+            new = self.normalize_ownership(new)
+            # Leaving MULTIPROTOCOL must name the ownership. The stored value
+            # on such a row is its OBJECT_WRITER fold, so a merge that kept it
+            # would land the flip on the loosest model — live S3 ACLs,
+            # writer-owned objects — when the bucket's creator never chose it.
+            if (
+                old.permissions_model == "MULTIPROTOCOL"
+                and new.permissions_model != "MULTIPROTOCOL"
+                and "object_ownership" not in given
+            ):
+                verrors.add(
+                    "sharing_s3_update.object_ownership",
+                    "State object_ownership when moving permissions_model off MULTIPROTOCOL. The stored value on a "
+                    "MULTIPROTOCOL bucket is its OBJECT_WRITER fold, which would otherwise take effect and enable "
+                    "S3 ACLs.",
+                )
+            await self.validate(new, "sharing_s3_update", verrors, old)
+            # an owner given by name is compared by the uid it resolves to: a
+            # renamed account is the same owner, a deleted and recreated one
+            # under the old name is not
+            owner_uid = old.owner_uid
+            if "owner" in given:
+                resolved = await self.resolve_owner("sharing_s3_update", new.owner, verrors)
+                if resolved is not None:
+                    owner_uid = resolved
+            verrors.check()
 
-        # a new owner takes the grants, not the directory: the share root is
-        # the deployment's once it exists, as it would be under any share
-        await self.middleware.call("datastore.update", self._config.datastore, id_, self.compress(new, owner_uid))
-        await render_and_apply(self.middleware)
-        return await self.get_instance(id_)
+            # a new owner takes the grants, not the directory: the share root is
+            # the deployment's once it exists, as it would be under any share
+            await self.middleware.call("datastore.update", self._config.datastore, id_, self.compress(new, owner_uid))
+            await render_and_apply(self.middleware)
+            return await self.get_instance(id_)
 
     @api_method(
         SharingS3DeleteArgs,
@@ -701,12 +713,13 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         objects included; the S3 service simply stops serving them. Restarts
         the S3 service.
         """
-        bucket = await self.get_instance(id_)
-        audit_callback(bucket.name)
-        await self.middleware.call("datastore.delete", self._config.datastore, id_)
-        await self.call2(self.s.alert.oneshot_delete, MISSING_ALERT, id_)
-        await render_and_apply(self.middleware)
-        return True
+        async with BUCKET_LOCK:
+            bucket = await self.get_instance(id_)
+            audit_callback(bucket.name)
+            await self.middleware.call("datastore.delete", self._config.datastore, id_)
+            await self.call2(self.s.alert.oneshot_delete, MISSING_ALERT, id_)
+            await render_and_apply(self.middleware)
+            return True
 
     @api_method(
         SharingS3ForceDisableVersioningArgs,
@@ -746,37 +759,38 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         background cleanup has not yet removed reappear in the bucket's
         history until it finishes.
         """
-        bucket = await self.get_instance(id_)
-        audit_callback(bucket.name)
-        # the row, then the latch: the daemon never clears the latch, so a
-        # root carrying one is a locked bucket even under a row that
-        # (historically) stopped saying so
-        locked = bucket.object_lock
-        if not locked and (mount := await self.mountpoint(bucket.dataset)) is not None:
-            locked = await self.middleware.run_in_thread(has_latch, mount)
-        if locked:
-            raise ValidationError(
-                "sharing_s3_force_disable_versioning.id",
-                "Versioning cannot be disabled on a bucket with object lock enabled: a locked bucket keeps its "
-                "version history for as long as it exists.",
-                errno.EPERM,
-            )
+        async with BUCKET_LOCK:
+            bucket = await self.get_instance(id_)
+            audit_callback(bucket.name)
+            # the row, then the latch: the daemon never clears the latch, so a
+            # root carrying one is a locked bucket even under a row that
+            # (historically) stopped saying so
+            locked = bucket.object_lock
+            if not locked and (mount := await self.mountpoint(bucket.dataset)) is not None:
+                locked = await self.middleware.run_in_thread(has_latch, mount)
+            if locked:
+                raise ValidationError(
+                    "sharing_s3_force_disable_versioning.id",
+                    "Versioning cannot be disabled on a bucket with object lock enabled: a locked bucket keeps its "
+                    "version history for as long as it exists.",
+                    errno.EPERM,
+                )
 
-        changed = bucket.versioning != "OFF" or bool(bucket.snapshot_versions)
-        if changed:
-            new = bucket.model_copy(update={"versioning": "OFF", "snapshot_versions": []})
-            await self.middleware.call(
-                "datastore.update", self._config.datastore, id_, self.compress(new, bucket.owner_uid)
-            )
-        # rendered and applied even when the row did not move, so a call that
-        # failed between the row write and the apply can be retried
-        await render_and_apply(self.middleware)
-        entry = await self.get_instance(id_)
-        if changed:
-            # the CRUD wrapper emits CHANGED for create/update/delete; a
-            # custom row mutation owes sharing.s3.query subscribers the same
-            self.middleware.send_event("sharing.s3.query", "CHANGED", id=id_, fields=entry.model_dump())
-        return entry
+            changed = bucket.versioning != "OFF" or bool(bucket.snapshot_versions)
+            if changed:
+                new = bucket.model_copy(update={"versioning": "OFF", "snapshot_versions": []})
+                await self.middleware.call(
+                    "datastore.update", self._config.datastore, id_, self.compress(new, bucket.owner_uid)
+                )
+            # rendered and applied even when the row did not move, so a call that
+            # failed between the row write and the apply can be retried
+            await render_and_apply(self.middleware)
+            entry = await self.get_instance(id_)
+            if changed:
+                # the CRUD wrapper emits CHANGED for create/update/delete; a
+                # custom row mutation owes sharing.s3.query subscribers the same
+                self.middleware.send_event("sharing.s3.query", "CHANGED", id=id_, fields=entry.model_dump())
+            return entry
 
     @api_method(SharingS3AuditChoicesArgs, SharingS3AuditChoicesResult, check_annotations=True)
     async def audit_choices(self) -> dict[str, str]:
