@@ -19,13 +19,13 @@ import truenas_pylibsed as sed
 
 from .disk_io import create_gpt_partition, read_gpt, wipe_disk_quick
 from .gpt_parts import PART_TYPES, GptPartEntry
+from .identifier import build_identifier, join_serial_lunid, sanitize_serial
 
 logger = logging.getLogger(__name__)
 
 __all__ = ("DiskEntry", "iterate_disks", "VALID_WHOLE_DISK")
 
 
-RE_SERIAL_STRIP = re.compile(r'[\x00-\x1f\x7f\x22\x5c]')
 # sedutil-cli PBKDF2 parameters for legacy password compatibility
 SEDUTIL_ITERATIONS = 75000
 SEDUTIL_HASH_LEN = 32
@@ -197,7 +197,7 @@ class DiskEntry:
                     #   appears as UTF-16LE descriptor type byte from buggy USB firmware
                     # - 0x5C (\): valid per SPC-4 but never used in real serials;
                     #   would break JSON string escaping
-                    serial = RE_SERIAL_STRIP.sub('', serial_txt).strip()
+                    serial = sanitize_serial(serial_txt)
                 else:
                     serial = ""
 
@@ -284,29 +284,21 @@ class DiskEntry:
 
     @functools.cached_property
     def identifier(self) -> str:
-        """Return, ideally, a unique identifier for the disk.
+        """Return, ideally, a unique identifier for the disk."""
+        return build_identifier(
+            self.name, join_serial_lunid(self.serial, self.lunid), self.serial, self.__zfs_partition_uuid
+        )
 
-        NOTE: If someone is using a usb 'hub', for example, then
-            all bets are off the table. Those devices will often
-            report duplicate serial numbers for all disks attached
-            to it AND will report the same lunid. It's impossible
-            for us to handle that and this is a scenario that isn't
-            supported."""
-        if self.serial and self.lunid:
-            return f"{{serial_lunid}}{self.serial}_{self.lunid}"
-        elif self.serial:
-            return f"{{serial}}{self.serial}"
-        elif partitions := self.partitions():
-            with contextlib.suppress(Exception):
-                # We don't want to crash if we can't read partitions
-                for part in filter(
-                    lambda p: PART_TYPES.get(p.partition_type_guid, "UNKNOWN") == "ZFS",
-                    partitions
-                ):
-                    return f"{{uuid}}{part.unique_partition_guid}"
+    def __zfs_partition_uuid(self) -> str | None:
+        with contextlib.suppress(Exception):
+            # We don't want to crash if we can't read partitions
+            for part in filter(
+                lambda p: PART_TYPES.get(p.partition_type_guid, "UNKNOWN") == "ZFS",
+                self.partitions() or (),
+            ):
+                return part.unique_partition_guid
 
-        # If we reach here, we have no serial or partitions
-        return f"{{devicename}}{self.name}"
+        return None
 
     @functools.cached_property
     def translation(self) -> typing.Literal["SATL", "SNTL", None]:

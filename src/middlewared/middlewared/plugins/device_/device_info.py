@@ -8,6 +8,7 @@ from middlewared.plugins.disk_.disk_info import get_partition_size_info
 from middlewared.service import Service, private
 from middlewared.utils.disks import DISKS_TO_IGNORE, get_disk_serial_from_block_device, safe_retrieval
 from middlewared.utils.disks_.disk_class import DiskEntry
+from middlewared.utils.disks_.identifier import join_serial_lunid
 
 RE_NVME_PRIV = re.compile(r'nvme[0-9]+c')
 ISCSI_DEV_PATH = re.compile(
@@ -144,8 +145,7 @@ class DeviceService(Service):
             disk['type'] = 'SSD'
             disk['rotationrate'] = None
 
-        if disk['serial'] and disk['lunid']:
-            disk['serial_lunid'] = f'{disk["serial"]}_{disk["lunid"]}'
+        disk['serial_lunid'] = join_serial_lunid(disk['serial'], disk['lunid'])
 
         disk['dif'] = self.is_dif_formatted(ctx, {'subsystem': disk['subsystem'], 'hctl': disk['hctl']})
 

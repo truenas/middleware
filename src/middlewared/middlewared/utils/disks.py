@@ -5,6 +5,7 @@ from typing import Any
 import pyudev
 
 from .disks_.disk_class import VALID_WHOLE_DISK
+from .disks_.identifier import build_identifier, join_serial_lunid
 
 DISKS_TO_IGNORE = ('sr', 'md', 'dm-', 'loop', 'zd')
 RE_IS_PART = re.compile(r'p\d{1,3}$')
@@ -46,17 +47,15 @@ def dev_to_ident(name: str, sys_disks: dict[str, dict[str, Any]]) -> str:
         dev = sys_disks[name]
     except KeyError:
         return ''
-    else:
-        if dev['serial_lunid']:
-            return f'{{serial_lunid}}{dev["serial_lunid"]}'
-        elif dev['serial']:
-            return f'{{serial}}{dev["serial"]}'
-        elif dev.get('parts'):
-            part: dict[str, Any]
-            for part in filter(lambda x: x['partition_type'] in valid_zfs_partition_uuids(), dev['parts']):
-                return f'{{uuid}}{part["partition_uuid"]}'
 
-    return f'{{devicename}}{name}'
+    def zfs_partition_uuid() -> str | None:
+        part: dict[str, Any]
+        for part in filter(lambda x: x['partition_type'] in valid_zfs_partition_uuids(), dev.get('parts') or ()):
+            return str(part['partition_uuid'])
+
+        return None
+
+    return build_identifier(name, dev['serial_lunid'], dev['serial'], zfs_partition_uuid)
 
 
 def get_disk_names() -> list[str]:
@@ -120,7 +119,7 @@ def get_disks_with_identifiers(
             block_device_data = {
                 'serial': serial,
                 'lunid': lunid or None,
-                'serial_lunid': f'{serial}_{lunid}' if serial and lunid else None,
+                'serial_lunid': join_serial_lunid(serial, lunid),
                 'parts': parts,
             }
 
