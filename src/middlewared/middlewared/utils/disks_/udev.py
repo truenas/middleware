@@ -5,7 +5,7 @@ import typing
 
 import pyudev
 
-__all__ = ("lunid_from_udev", "serial_from_udev", "udev_fallback_serial")
+__all__ = ("serial_from_udev", "udev_fallback_serial")
 
 # udev resolves a disk's serial with a different helper depending on the
 # transport (scsi_id, ata_id or usb_id, see 60-persistent-storage.rules) and
@@ -35,14 +35,6 @@ def serial_from_udev(properties: typing.Mapping[str, typing.Any]) -> str | None:
             return serial
 
     return None
-
-
-def lunid_from_udev(properties: typing.Mapping[str, typing.Any]) -> str | None:
-    """The disk's lunid as udev resolved it, or None."""
-    if (lunid := _clean(properties.get("ID_WWN"))) is None:
-        return None
-
-    return lunid.removeprefix("0x").removeprefix("eui.") or None
 
 
 def udev_fallback_serial(name: str) -> str | None:

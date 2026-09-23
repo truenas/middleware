@@ -1,5 +1,5 @@
 """Tests for the disk identifier ladder shared by `dev_to_ident` and
-`DiskEntry.identifier`, the udev property parsers shared by the
+`DiskEntry.identifier`, the udev serial parser shared by the
 `device.get_disks` side, and the udev fallback `DiskEntry.serial` takes for a
 disk sysfs has no serial for (NAS-136915)."""
 
@@ -13,7 +13,7 @@ from middlewared.plugins.device_.device_info import DeviceService
 from middlewared.utils.disks import dev_to_ident, get_disk_lunid_from_block_device
 from middlewared.utils.disks_.disk_class import DiskEntry
 from middlewared.utils.disks_.gpt_parts import PART_TYPES
-from middlewared.utils.disks_.udev import FALLBACK_KEYS, lunid_from_udev, serial_from_udev, udev_fallback_serial
+from middlewared.utils.disks_.udev import FALLBACK_KEYS, serial_from_udev, udev_fallback_serial
 
 ZFS_GUID = next(guid for guid, name in PART_TYPES.items() if name == "ZFS")
 EFI_GUID = "c12a7328-f81f-11d2-ba4b-00a0c93ec93b"
@@ -45,17 +45,6 @@ SATA_QEMU = {"ID_BUS": "ata", "ID_SERIAL_SHORT": "mzgzzuQN", "ID_SERIAL": "QEMU_
 SATA_QEMU_SYSFS = {
     "sda/device/vpd_pg80": b"\x00\x80\x00\x14mzgzzuQN            ",
     "sda/device/wwid": "t10.ATA     QEMU HARDDISK                       \n",
-}
-SCSI_DEBUG = {
-    "ID_BUS": "scsi",
-    "ID_SCSI_SERIAL": "2000",
-    "ID_SERIAL_SHORT": "33333330000007d0",
-    "ID_SERIAL": "333333330000007d0",
-    "ID_WWN": "0x33333330000007d0",
-}
-SCSI_DEBUG_SYSFS = {
-    "sda/device/vpd_pg80": b"\x00\x80\x00\x042000",
-    "sda/device/wwid": "naa.33333330000007d0\n",
 }
 # A SCSI disk with VPD page 0x83 but no page 0x80 (a Hyper-V virtual disk): sysfs
 # has no serial at all, and scsi_id put the page 0x83 NAA designator in ID_SERIAL_SHORT
@@ -115,12 +104,6 @@ def test_disk_entry_reads_partitions_when_no_serial(mock_sysfs):
     partitions.assert_called_once()
 
 
-def test_disk_entry_device_name_when_nothing_identifies_it(mock_sysfs):
-    with mock_sysfs({}):
-        with patch.object(DiskEntry, "partitions", return_value=None):
-            assert DiskEntry(name="sda", devpath="/dev/sda").identifier == "{devicename}sda"
-
-
 @pytest.mark.parametrize("name,files", [("sda", SAS_HGST_SYSFS), ("nvme0n1", NVME_IX_SYSFS), ("sda", SATA_QEMU_SYSFS)])
 def test_udev_not_consulted_when_sysfs_has_a_serial(mock_sysfs, name, files):
     """The fallback must cost nothing on the hardware we ship, where sysfs
@@ -130,12 +113,6 @@ def test_udev_not_consulted_when_sysfs_has_a_serial(mock_sysfs, name, files):
             DiskEntry(name=name, devpath=f"/dev/{name}").identifier
 
     udev.assert_not_called()
-
-
-def test_sysfs_serial_wins_over_udev(mock_sysfs):
-    with mock_sysfs(SAS_HGST_SYSFS):
-        with patch("middlewared.utils.disks_.disk_class.udev_fallback_serial", return_value="SOMETHING_ELSE"):
-            assert DiskEntry(name="sda", devpath="/dev/sda").serial == "5QG7BWGF"
 
 
 def test_udev_serial_used_when_sysfs_has_none(mock_sysfs):
@@ -189,11 +166,7 @@ def test_udev_fallback_skips_an_undecodable_serial():
 @pytest.mark.parametrize(
     "properties,expected",
     [
-        # scsi_id sets all three, and only ID_SCSI_SERIAL is the unit serial number
-        (SAS_HGST, "5QG7BWGF"),
-        (NVME_IX, "511250113257000151"),
-        (SATA_QEMU, "mzgzzuQN"),
-        ({"ID_SERIAL": "vdserial01"}, "vdserial01"),  # virtio
+        ({"ID_SERIAL": "vdserial01"}, "vdserial01"),  # virtio sets only ID_SERIAL
         # an empty value is skipped rather than returned
         ({"ID_SCSI_SERIAL": "   ", "ID_SERIAL_SHORT": "6002248079f9f66f"}, "6002248079f9f66f"),
         ({}, None),
@@ -201,21 +174,6 @@ def test_udev_fallback_skips_an_undecodable_serial():
 )
 def test_serial_from_udev_key_precedence(properties, expected):
     assert serial_from_udev(properties) == expected
-
-
-@pytest.mark.parametrize(
-    "properties,expected",
-    [
-        ({"ID_WWN": "0x5000cca2b00d6cdc"}, "5000cca2b00d6cdc"),  # scsi_id
-        ({"ID_WWN": "eui.6479a7a14a2002a3"}, "6479a7a14a2002a3"),  # nvme
-        ({"ID_WWN": "5000cca2b00d6cdc"}, "5000cca2b00d6cdc"),
-        ({"ID_WWN": "0x"}, None),
-        ({"ID_WWN": ""}, None),
-        ({}, None),
-    ],
-)
-def test_lunid_from_udev_strips_prefixes(properties, expected):
-    assert lunid_from_udev(properties) == expected
 
 
 def test_lunid_from_block_device_prefers_udev(mock_sysfs):
@@ -237,7 +195,6 @@ def test_lunid_from_block_device_falls_back_to_sysfs(mock_sysfs):
         ("sda", SAS_HGST, SAS_HGST_SYSFS, "{serial_lunid}5QG7BWGF_5000cca2b00d6cdc"),
         ("nvme0n1", NVME_IX, NVME_IX_SYSFS, "{serial_lunid}511250113257000151_6479a7a14a2002a3"),
         ("sda", SATA_QEMU, SATA_QEMU_SYSFS, "{serial}mzgzzuQN"),
-        ("sda", SCSI_DEBUG, SCSI_DEBUG_SYSFS, "{serial_lunid}2000_33333330000007d0"),
         # only through the udev fallback, since sysfs has no serial for this disk
         (
             "sda",

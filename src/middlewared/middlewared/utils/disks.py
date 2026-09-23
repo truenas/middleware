@@ -6,7 +6,7 @@ import pyudev
 
 from .disks_.disk_class import VALID_WHOLE_DISK, DiskEntry
 from .disks_.identifier import build_identifier, join_serial_lunid
-from .disks_.udev import lunid_from_udev, serial_from_udev
+from .disks_.udev import serial_from_udev
 
 DISKS_TO_IGNORE = ('sr', 'md', 'dm-', 'loop', 'zd')
 RE_IS_PART = re.compile(r'p\d{1,3}$')
@@ -30,7 +30,7 @@ def get_disk_serial_from_block_device(block_device: pyudev.Device) -> str:
 
 def get_disk_lunid_from_block_device(block_device: pyudev.Device) -> str | None:
     # Try udev ID_WWN first (for NAA format WWIDs)
-    if lunid := lunid_from_udev(block_device.properties):
+    if lunid := str(safe_retrieval(block_device.properties, 'ID_WWN', '')).removeprefix('0x').removeprefix('eui.'):
         return lunid
 
     # NAS-137807: Fallback to sysfs wwid for EUI-64 format WWIDs not exposed in udev properties

@@ -19,7 +19,7 @@ import truenas_pylibsed as sed
 
 from .disk_io import create_gpt_partition, read_gpt, wipe_disk_quick
 from .gpt_parts import PART_TYPES, GptPartEntry
-from .identifier import build_identifier, join_serial_lunid, sanitize_serial
+from .identifier import build_identifier, join_serial_lunid
 from .udev import udev_fallback_serial
 
 logger = logging.getLogger(__name__)
@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 __all__ = ("DiskEntry", "iterate_disks", "VALID_WHOLE_DISK")
 
 
+RE_SERIAL_STRIP = re.compile(r'[\x00-\x1f\x7f\x22\x5c]')
 # sedutil-cli PBKDF2 parameters for legacy password compatibility
 SEDUTIL_ITERATIONS = 75000
 SEDUTIL_HASH_LEN = 32
@@ -199,7 +200,7 @@ class DiskEntry:
                     #   appears as UTF-16LE descriptor type byte from buggy USB firmware
                     # - 0x5C (\): valid per SPC-4 but never used in real serials;
                     #   would break JSON string escaping
-                    serial = sanitize_serial(serial_txt)
+                    serial = RE_SERIAL_STRIP.sub('', serial_txt).strip()
                 else:
                     serial = ""
 
