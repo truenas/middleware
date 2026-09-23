@@ -70,6 +70,7 @@ from middlewared.utils.security import (
     MAX_PASSWORD_HISTORY,
     PASSWORD_PROMPT_AGE,
 )
+from middlewared.utils.service.path import check_path_service_write_allowed
 from middlewared.utils.sid import db_id_to_rid, DomainRid
 from middlewared.utils.time_utils import utc_now, UTC
 from middlewared.plugins.account_.constants import (
@@ -1786,6 +1787,7 @@ class UserService(CRUDService):
         if 'home' in data:
             if await self.middleware.run_in_thread(self.validate_homedir_path, verrors, schema, data, users):
                 await check_path_resides_within_volume(verrors, self.middleware, schema, data['home'])
+                await check_path_service_write_allowed(verrors, self.middleware, f'{schema}.home', data['home'])
             elif combined['ssh_password_enabled']:
                 verrors.add(f'{schema}.home', 'SSH password login requires a valid home path.')
 

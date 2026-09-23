@@ -17,7 +17,7 @@ from .decorators import (
 from .service import Service
 from .service_mixin import ServiceChangeMixin
 from .service_part import ServicePartBase
-from .sharing_service import SharingService, SharingTaskService, TaskPathService
+from .sharing_service import LocalPathInfo, SharingService, SharingTaskService, TaskPathService
 from .system_service import SystemServiceService
 from .system_service_part import SystemServicePart
 
@@ -39,6 +39,7 @@ __all__ = [
     'ConfigServicePart',
     'CRUDService',
     'CRUDServicePart',
+    'LocalPathInfo',
     'job',
     'no_auth_required',
     'no_authz_required',
