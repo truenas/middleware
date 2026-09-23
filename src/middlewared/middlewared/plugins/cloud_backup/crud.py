@@ -9,7 +9,7 @@ from middlewared.api.current import (
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.plugins.cloud.crud import CloudTaskServiceMixin
 from middlewared.plugins.cloud.model import CloudTaskModelMixin
-from middlewared.service import private, TaskPathService, ValidationErrors
+from middlewared.service import LocalPathInfo, private, TaskPathService, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.cron import convert_db_format_to_schedule, convert_schedule_to_db_format
 from middlewared.utils.path import FSLocation
@@ -43,6 +43,10 @@ class CloudBackupService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin)
         namespace = "cloud_backup"
         role_prefix = "CLOUD_BACKUP"
         entry = CloudBackupEntry
+
+    @private
+    async def local_path_info(self, data) -> LocalPathInfo | None:
+        return LocalPathInfo(readonly_field=self.path_field, readonly=True)
 
     @private
     def transfer_setting_args(self):

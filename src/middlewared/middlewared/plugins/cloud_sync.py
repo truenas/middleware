@@ -56,7 +56,7 @@ from middlewared.plugins.cloud.snapshot import create_snapshot
 from middlewared.rclone.remote.s3_providers import S3_PROVIDERS
 from middlewared.rclone.remote.storjix import StorjIxError
 from middlewared.service import (
-    CallError, CRUDService, ValidationError, ValidationErrors, job, private, TaskPathService,
+    CallError, CRUDService, LocalPathInfo, ValidationError, ValidationErrors, job, private, TaskPathService,
 )
 import middlewared.sqlalchemy as sa
 from middlewared.utils.cron import convert_db_format_to_schedule, convert_schedule_to_db_format
@@ -764,6 +764,10 @@ class CloudSyncService(TaskPathService, CloudTaskServiceMixin, TaskStateMixin):
         cli_namespace = "task.cloud_sync"
         entry = CloudSyncEntry
         role_prefix = "CLOUD_SYNC"
+
+    @private
+    async def local_path_info(self, data) -> LocalPathInfo | None:
+        return LocalPathInfo(readonly_field="direction", readonly=data["direction"] == "PUSH")
 
     @private
     def extend_context(self, rows, extra):
