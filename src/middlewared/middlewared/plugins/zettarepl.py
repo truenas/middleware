@@ -346,8 +346,7 @@ class ZettareplService(Service):
                     startup_error,
                 )
                 self.process = multiprocessing.Process(name="zettarepl", target=zettarepl_process)
-                self.process.start()
-                start_daemon_thread(name="zr_proc_join", target=self._join, args=(self.process, startup_error))
+                self._spawn(self.process, startup_error)
 
                 if self.observer_queue_reader is None:
                     self.observer_queue_reader = start_daemon_thread(
@@ -375,6 +374,27 @@ class ZettareplService(Service):
                     os.kill(self.process.pid, signal.SIGKILL)
 
                 self.process = None
+
+    def _spawn(self, process, startup_error):
+        spawned = threading.Event()
+        errors = []
+
+        def target():
+            try:
+                process.start()
+            except Exception as e:
+                errors.append(e)
+                return
+            finally:
+                spawned.set()
+
+            self._join(process, startup_error)
+
+        start_daemon_thread(name="zr_proc_join", target=target)
+        spawned.wait()
+
+        if errors:
+            raise errors[0]
 
     def _join(self, process, startup_error):
         process.join()
