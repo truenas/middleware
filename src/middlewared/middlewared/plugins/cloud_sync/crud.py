@@ -14,7 +14,7 @@ from middlewared.api.current import CloudSyncCreate, CloudSyncEntry, CloudSyncLi
 from middlewared.plugins.cloud.crud import CloudTaskServiceMixin
 from middlewared.plugins.cloud.model import CloudTaskModelMixin
 from middlewared.plugins.cloud.remotes import REMOTES
-from middlewared.service import ValidationErrors
+from middlewared.service import LocalPathInfo, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.cron import convert_db_format_to_schedule, convert_schedule_to_db_format
 from middlewared.utils.path import FSLocation
@@ -86,8 +86,8 @@ class CloudSyncServicePart(CloudTaskServiceMixin[CloudSyncEntry, CloudSyncCreate
     allowed_path_types = [FSLocation.LOCAL]
     path_field = "path"
 
-    async def local_path_readonly(self, data: dict[str, Any]) -> tuple[str, bool] | None:
-        return "direction", data["direction"] == "PUSH"
+    async def local_path_info(self, data: dict[str, Any]) -> LocalPathInfo | None:
+        return LocalPathInfo(readonly_field="direction", readonly=data["direction"] == "PUSH")
 
     async def sharing_task_extend_context(self, rows: list[dict[str, Any]], extra: dict[str, Any]) -> Any:
         return {

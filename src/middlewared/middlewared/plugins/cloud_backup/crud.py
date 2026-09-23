@@ -9,7 +9,7 @@ from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.cloud.crud import CloudTaskServiceMixin
 from middlewared.plugins.cloud.model import CloudTaskModelMixin
 from middlewared.plugins.zfs.zvol_utils import zvol_path_to_name
-from middlewared.service import CallError, ValidationErrors
+from middlewared.service import CallError, LocalPathInfo, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.cron import convert_db_format_to_schedule, convert_schedule_to_db_format
 from middlewared.utils.path import FSLocation
@@ -55,8 +55,8 @@ class CloudBackupServicePart(CloudTaskServiceMixin[CloudBackupEntry, CloudBackup
     allowed_path_types = [FSLocation.LOCAL]
     path_field = "path"
 
-    async def local_path_readonly(self, data: dict[str, Any]) -> tuple[str, bool] | None:
-        return self.path_field, True
+    async def local_path_info(self, data: dict[str, Any]) -> LocalPathInfo | None:
+        return LocalPathInfo(readonly_field=self.path_field, readonly=True)
 
     async def sharing_task_extend_context(self, rows: list[dict[str, Any]], extra: dict[str, Any]) -> Any:
         return {
