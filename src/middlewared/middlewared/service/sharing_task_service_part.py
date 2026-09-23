@@ -6,15 +6,16 @@ from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.zfs_.validation_utils import check_zvol_in_boot_pool_using_path
 from middlewared.utils.mount import resolve_dataset_path
 from middlewared.utils.path import FSLocation, path_location
+from middlewared.utils.service.path import check_path_service_write_allowed
 
 from .crud_service_part import CRUDServicePart
 
 if TYPE_CHECKING:
+    from middlewared.main import Middleware
     from middlewared.service_exception import ValidationErrors
-    from middlewared.utils.service.call_mixin import CallMixin
 
 
-__all__ = ("SharingTaskServicePart", "dataset_split", "validate_s3_bucket_write")
+__all__ = ("SharingTaskServicePart", "dataset_split", "validate_path_service_write")
 
 
 def dataset_split(data: Any) -> tuple[str | None, str | None]:
@@ -25,8 +26,8 @@ def dataset_split(data: Any) -> tuple[str | None, str | None]:
     return data.dataset, data.relative_path
 
 
-async def validate_s3_bucket_write(
-    caller: CallMixin,
+async def validate_path_service_write(
+    middleware: Middleware,
     verrors: ValidationErrors,
     schema: str,
     path_field: str,
@@ -34,8 +35,8 @@ async def validate_s3_bucket_write(
     data: Any,
     readonly: tuple[str, bool] | None,
 ) -> None:
-    """Refuse a local path on an S3 bucket's dataset to anything that writes it. A bucket is written only
-    through the S3 service, whoever holds the path and wherever on the dataset it points.
+    """Ask `check_path_service_write_allowed` about a share or task's local path, where it is the one writing there.
+    A path whose writes belong to another service is refused wherever on that service's dataset it points.
 
     `readonly` is what `local_path_readonly` answered: the field that decides and whether it is read-only, or
     None where it always writes. A write refused for want of the read-only flag is reported on that flag,
@@ -48,10 +49,7 @@ async def validate_s3_bucket_write(
     if not writes:
         return
     dataset, relative_path = dataset_split(data)
-    await caller.call2(
-        caller.s.sharing.s3.validate_writable_path,
-        verrors, f"{schema}.{field}", path, dataset, relative_path,
-    )
+    await check_path_service_write_allowed(verrors, middleware, f"{schema}.{field}", path, dataset, relative_path)
 
 
 class SharingTaskServicePart[E, PK = int](CRUDServicePart[E, PK]):
@@ -149,7 +147,7 @@ class SharingTaskServicePart[E, PK = int](CRUDServicePart[E, PK]):
     async def local_path_readonly(self, data: dict[str, Any]) -> tuple[str, bool] | None:
         """Whether the share or task only reads its local path, and the field that decides it -- a share's
         read-only flag, a task's direction -- or None where it always writes there. What `validate_path_field`
-        tells `sharing.s3`, which never lets a bucket be written from beside the S3 service."""
+        passes to `validate_path_service_write`."""
         if self.readonly_field is None:
             return None
         return self.readonly_field, bool(data[self.readonly_field])
@@ -160,8 +158,8 @@ class SharingTaskServicePart[E, PK = int](CRUDServicePart[E, PK]):
         """Validate the path field and optionally split it into dataset and relative_path components.
 
         Performs path validation based on location type (LOCAL/EXTERNAL/ZVOL) and optionally
-        resolves the path to its ZFS dataset components. A local path on an S3 bucket's dataset is
-        allowed only as `local_path_readonly` and `sharing.s3` agree."""
+        resolves the path to its ZFS dataset components. A local path whose writes belong to another
+        service is refused unless `local_path_readonly` says this share or task only reads it."""
         name = f"{schema}.{self.path_field}"
         path = data[self.path_field]
         await self.validate_zvol_path(verrors, name, path)
@@ -180,8 +178,8 @@ class SharingTaskServicePart[E, PK = int](CRUDServicePart[E, PK]):
             if split_path:
                 ds, rel_path = await self.middleware.run_in_thread(resolve_dataset_path, path, self.middleware)
                 data.update(dataset=ds, relative_path=rel_path)
-            await validate_s3_bucket_write(
-                self, verrors, schema, self.path_field, path, data, await self.local_path_readonly(data)
+            await validate_path_service_write(
+                self.middleware, verrors, schema, self.path_field, path, data, await self.local_path_readonly(data)
             )
 
         else:

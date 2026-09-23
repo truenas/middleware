@@ -6,10 +6,11 @@ from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.zfs_.validation_utils import check_zvol_in_boot_pool_using_path
 from middlewared.utils.mount import resolve_dataset_path
 from middlewared.utils.path import FSLocation, path_location
+from middlewared.utils.service.path import check_path_service_share_allowed
 
 from .crud_service import CRUDService
 from .decorators import pass_app, private
-from .sharing_task_service_part import dataset_split, validate_s3_bucket_write
+from .sharing_task_service_part import dataset_split, validate_path_service_write
 
 if TYPE_CHECKING:
     from middlewared.main import Middleware
@@ -158,7 +159,7 @@ class SharingTaskService[E](CRUDService[E]):
     async def local_path_readonly(self, data) -> tuple[str, bool] | None:
         """Whether the share or task only reads its local path, and the field that decides it -- a share's
         read-only flag, a task's direction -- or None where it always writes there. What `validate_path_field`
-        tells `sharing.s3`, which never lets a bucket be written from beside the S3 service."""
+        passes to `validate_path_service_write`."""
         if self.readonly_field is None:
             return None
         if isinstance(data, dict):
@@ -173,8 +174,8 @@ class SharingTaskService[E](CRUDService[E]):
         """Validate the path field and optionally split it into dataset and relative_path components.
 
         Performs path validation based on location type (LOCAL/EXTERNAL/ZVOL) and optionally
-        resolves the path to its ZFS dataset components. A local path on an S3 bucket's dataset is
-        allowed only as `local_path_readonly` and `sharing.s3` agree."""
+        resolves the path to its ZFS dataset components. A local path whose writes belong to another
+        service is refused unless `local_path_readonly` says this share or task only reads it."""
         name = f'{schema}.{self.path_field}'
         path = await self.get_path_field(data)
         await self.validate_zvol_path(verrors, name, path)
@@ -204,8 +205,8 @@ class SharingTaskService[E](CRUDService[E]):
                 else:
                     data.dataset = ds
                     data.relative_path = rel_path
-            await validate_s3_bucket_write(
-                self, verrors, schema, self.path_field, path, data, await self.local_path_readonly(data)
+            await validate_path_service_write(
+                self.middleware, verrors, schema, self.path_field, path, data, await self.local_path_readonly(data)
             )
 
         else:
@@ -309,19 +310,18 @@ class SharingService[E](SharingTaskService[E]):
     async def validate_path_field(
         self, data: PathModel | dict, schema: str, verrors: 'ValidationErrors', *, split_path: bool = False
     ) -> 'ValidationErrors':
-        """As the base, and then: a share serves its path to clients, so on an S3 bucket's dataset it may serve
-        the bucket's objects, under `s3data`, and nothing else -- the rest of the dataset is the S3 service's own
-        state. A task is not held to this; what it copies goes to the administrator."""
+        """As the base, and then: a share serves its path to clients, so where another service keeps private
+        state on the path's dataset the share may serve only what that service keeps for clients --
+        `check_path_service_share_allowed`. A task is not held to this; what it copies goes to the administrator."""
         await super().validate_path_field(data, schema, verrors, split_path=split_path)
         path = await self.get_path_field(data)
-        # a share with no read-only mode writes whatever it is given, so the base has already refused every
-        # path on a bucket, on this same field
+        # a share with no read-only mode writes whatever it is given, so the base has already refused the
+        # whole of such a dataset, on this same field
         if self.readonly_field is None or path_location(path) is not FSLocation.LOCAL:
             return verrors
         dataset, relative_path = dataset_split(data)
-        await self.call2(
-            self.s.sharing.s3.validate_objects_path,
-            verrors, f'{schema}.{self.path_field}', path, dataset, relative_path,
+        await check_path_service_share_allowed(
+            verrors, self.middleware, f'{schema}.{self.path_field}', path, dataset, relative_path
         )
         return verrors
 

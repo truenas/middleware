@@ -7,6 +7,7 @@ from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.cloud_backup.restic import get_restic_config, run_restic
 from middlewared.plugins.cloud_backup.utils import resolve_credentials
 from middlewared.service import ServiceContext, ValidationErrors
+from middlewared.utils.service.path import check_path_service_write_allowed
 
 if TYPE_CHECKING:
     from middlewared.job import Job
@@ -27,7 +28,9 @@ def do_restore(
     context.middleware.run_coroutine(
         check_path_resides_within_volume(verrors, context.middleware, "destination_path", destination_path)
     )
-    context.call_sync2(context.s.sharing.s3.validate_writable_path, verrors, "destination_path", destination_path)
+    context.middleware.run_coroutine(
+        check_path_service_write_allowed(verrors, context.middleware, "destination_path", destination_path)
+    )
     verrors.check()
 
     entry = context.call_sync2(context.s.cloud_backup.get_instance, id_)

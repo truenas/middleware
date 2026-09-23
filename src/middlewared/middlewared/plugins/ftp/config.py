@@ -4,6 +4,7 @@ from middlewared.api.current import FTPEntry, FTPUpdate
 from middlewared.async_validators import check_path_resides_within_volume, resolve_hostname, validate_port
 from middlewared.service import SystemServicePart, ValidationErrors
 import middlewared.sqlalchemy as sa
+from middlewared.utils.service.path import check_path_service_write_allowed
 
 
 class FTPModel(sa.Model):
@@ -96,7 +97,7 @@ class FTPServicePart(SystemServicePart[FTPEntry]):
             await check_path_resides_within_volume(
                 verrors, self.middleware, "ftp_update.anonpath", anonpath, must_be_dir=True
             )
-            await self.call2(self.s.sharing.s3.validate_writable_path, verrors, "ftp_update.anonpath", anonpath)
+            await check_path_service_write_allowed(verrors, self.middleware, "ftp_update.anonpath", anonpath)
 
         if new.tls:
             cert_id = new.ssltls_certificate
