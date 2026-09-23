@@ -613,6 +613,14 @@ class PoolDatasetUpdate(PoolDatasetCreateFilesystem, PoolDatasetCreateVolume, me
     encryption: Excluded = excluded_field()
     encryption_options: Excluded = excluded_field()
     inherit_encryption: Excluded = excluded_field()
+    force_size: bool = Field(
+        default=NotRequired,
+        description=(
+            "No effect on update. Growing a volume whose reservation covers its current size is refused when the new "
+            "reservation would consume more than 80% of the space available to it; lower refreservation in the same "
+            "request to proceed. A sparse volume may grow without limit."
+        ),
+    )
     user_properties_update: list[PoolDatasetUpdateUserProperty] = Field(
         description="Array of user property updates to apply to the dataset.",
     )

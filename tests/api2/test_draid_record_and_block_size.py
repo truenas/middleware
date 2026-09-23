@@ -84,7 +84,7 @@ def test_draid_root_dataset_valid_recordsize(draid_pool, update_recordsize, vali
             call('pool.dataset.update', draid_pool['name'], {'recordsize': update_recordsize})
 
         assert ve.value.errors[0].attribute == 'pool_dataset_update.recordsize'
-        assert ve.value.errors[0].errmsg == f"'{update_recordsize}' is an invalid recordsize."
+        assert ve.value.errors[0].errmsg == "'recordsize' must be at least 131072 bytes on a dRAID pool."
 
 
 @pytest.mark.usefixtures('check_unused_disks')
