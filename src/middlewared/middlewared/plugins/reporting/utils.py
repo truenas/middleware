@@ -68,15 +68,9 @@ def get_metrics_approximation(
             'truenas_disk_stats.busy': 1 * disk_count,
 
             # net
-            'system.net': 2,
-            'net': 2 * interface_count,
-            'net_speed': interface_count,
-            'net_duplex': 3 * interface_count,
-            'net_operstate': 7 * interface_count,
-            'net_mtu': interface_count,
-            'net_packets': 3 * interface_count,
-            'net_drops': 2 * interface_count,
-            'net_carrier': 2 * interface_count,
+            'truenas_net_stats.traffic': 2 * interface_count,
+            'truenas_net_stats.speed': interface_count,
+            'truenas_net_stats.operstate': interface_count,
 
             # meminfo
             'truenas_meminfo': 2,

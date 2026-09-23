@@ -76,11 +76,11 @@ class InterfacePlugin(GraphBase):
         return 'Interface Traffic ({identifier})'
 
     async def get_identifiers(self) -> list[str] | None:
-        ifaces = {f'net.{i["name"]}' for i in await self.middleware.call('interface.query')}
+        ifaces = {f'truenas_net_stats.traffic.{i["name"]}' for i in await self.middleware.call('interface.query')}
         return [iface.split('.')[-1] for iface in (ifaces & set(await self.all_charts()))]
 
     def get_chart_name(self, identifier: typing.Optional[str] = None) -> str:
-        return f'net.{identifier}'
+        return f'truenas_net_stats.traffic.{identifier}'
 
     def normalize_metrics(self, metrics: dict[str, typing.Any]) -> dict[str, typing.Any]:
         metrics = super().normalize_metrics(metrics)

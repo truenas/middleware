@@ -69,7 +69,7 @@
 	netdata server resources = yes
 	/proc/diskstats = no
 	/proc/meminfo = no
-	/proc/net/dev = yes
+	/proc/net/dev = no
 	/proc/pagetypeinfo = no
 	/proc/stat = no
 	/proc/uptime = yes
@@ -103,25 +103,6 @@
 	/sys/fs/btrfs = no
 	ipc = no
 	/sys/class/power_supply = no
-
-[plugin:proc:/proc/net/dev]
-	filename to monitor = /proc/net/dev
-	path to get virtual interfaces = /sys/devices/virtual/net/%s
-	path to get net device speed = /sys/class/net/%s/speed
-	path to get net device duplex = /sys/class/net/%s/duplex
-	path to get net device operstate = /sys/class/net/%s/operstate
-	enable new interfaces detected at runtime = auto
-	bandwidth for all interfaces = auto
-	packets for all interfaces = auto
-	errors for all interfaces = auto
-	drops for all interfaces = auto
-	fifo for all interfaces = no
-	compressed packets for all interfaces = auto
-	frames, collisions, carrier counters for all interfaces = auto
-	disable by default interfaces matching = lo fireqos* *-ifb veth*
-	refresh interface speed every seconds = 1
-	refresh interface duplex every seconds = 1
-	refresh interface operstate every seconds = 1
 
 [plugin:cgroups]
         enable by default cgroups names matching = !*udev* *
