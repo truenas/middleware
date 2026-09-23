@@ -19,7 +19,7 @@ from middlewared.api.current import (
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.plugins.rsync_.utils import get_host_key_file_contents_from_ssh_credentials
 from middlewared.service import (
-    CallError, ValidationErrors, job, private, TaskPathService,
+    CallError, LocalPathInfo, ValidationErrors, job, private, TaskPathService,
 )
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
@@ -113,6 +113,10 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
         cli_namespace = 'task.rsync'
         entry = RsyncTaskEntry
         role_prefix = 'SNAPSHOT_TASK'
+
+    @private
+    async def local_path_info(self, data) -> LocalPathInfo | None:
+        return LocalPathInfo(readonly_field='direction', readonly=data['direction'] == 'PUSH')
 
     @private
     async def rsync_task_extend(self, data, context):

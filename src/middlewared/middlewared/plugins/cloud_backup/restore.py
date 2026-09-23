@@ -3,6 +3,7 @@ from middlewared.api.current import CloudBackupRestoreArgs, CloudBackupRestoreRe
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.cloud_backup.restic import get_restic_config, run_restic
 from middlewared.service import job, Service, ValidationErrors
+from middlewared.utils.service.path import check_path_service_write_allowed
 
 
 class CloudBackupService(Service):
@@ -24,6 +25,9 @@ class CloudBackupService(Service):
 
         self.middleware.run_coroutine(
             check_path_resides_within_volume(verrors, self.middleware, "destination_path", destination_path)
+        )
+        self.middleware.run_coroutine(
+            check_path_service_write_allowed(verrors, self.middleware, "destination_path", destination_path)
         )
 
         verrors.check()
