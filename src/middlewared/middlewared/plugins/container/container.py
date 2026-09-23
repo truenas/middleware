@@ -27,6 +27,7 @@ from middlewared.pylibvirt import gather_pylibvirt_domains_states, get_pylibvirt
 from middlewared.service import CallError, CRUDService, job, private, ValidationError, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils import BOOT_POOL_NAME_VALID
+from middlewared.utils.libvirt.utils import same_uuid
 from middlewared.utils.zfs import query_imported_fast_impl
 
 from .bridge import container_bridge_name
@@ -174,11 +175,12 @@ class ContainerService(CRUDService):
         if data['uuid'] is None:
             data['uuid'] = str(uuid.uuid4())
 
-        if not old or data['uuid'] != old['uuid']:
-            uuid_filters = [('uuid', '=', data['uuid'])]
-            if old:
-                uuid_filters.append(('id', '!=', old['id']))
-            if await self.middleware.call('datastore.query', 'container.container', uuid_filters):
+        if old is None or data['uuid'] != old['uuid']:
+            rows = await self.middleware.call('datastore.query', 'container.container', [])
+            if any(
+                (old is None or row['id'] != old['id']) and row['uuid'] and same_uuid(data['uuid'], row['uuid'])
+                for row in rows
+            ):
                 verrors.add(f'{schema_name}.uuid', 'A container with this UUID already exists.', errno.EEXIST)
 
         if data['idmap'] is not None:

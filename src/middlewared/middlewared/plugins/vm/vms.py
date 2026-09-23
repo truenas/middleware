@@ -20,7 +20,7 @@ from middlewared.api.current import (
 from middlewared.plugins.zfs_.utils import zvol_path_to_name
 from middlewared.pylibvirt import gather_pylibvirt_domains_states, get_pylibvirt_domain_state
 from middlewared.service import CallError, CRUDService, job, private, ValidationErrors
-from middlewared.utils.libvirt.utils import ACTIVE_STATES
+from middlewared.utils.libvirt.utils import ACTIVE_STATES, same_uuid
 
 from .utils import delete_vm_state, rename_vm_state, vm_state_missing_sources
 
@@ -217,11 +217,12 @@ class VMService(CRUDService):
         if not data.get('uuid'):
             data['uuid'] = str(uuid.uuid4())
 
-        if not old or data['uuid'] != old['uuid']:
-            uuid_filters = [('uuid', '=', data['uuid'])]
-            if old:
-                uuid_filters.append(('id', '!=', old['id']))
-            if await self.middleware.call('datastore.query', 'vm.vm', uuid_filters):
+        if old is None or data['uuid'] != old['uuid']:
+            rows = await self.middleware.call('datastore.query', 'vm.vm', [])
+            if any(
+                (old is None or row['id'] != old['id']) and row['uuid'] and same_uuid(data['uuid'], row['uuid'])
+                for row in rows
+            ):
                 verrors.add(f'{schema_name}.uuid', 'A VM with this UUID already exists.', errno.EEXIST)
 
         if not await self.middleware.call('vm.license_active'):
