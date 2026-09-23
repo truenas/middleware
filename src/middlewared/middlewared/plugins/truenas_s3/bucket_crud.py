@@ -73,6 +73,21 @@ managed root are the name of the bucket, then that name with `_1` to `_10`.
 The limit stops an endless loop and gives an error the administrator can
 read."""
 
+SHARE_ROOT = "s3data"
+"""The directory under a bucket's mount point that holds its objects. The
+daemon creates it at registration, and it is the one part of the dataset
+the administrator manages and another protocol may export; the rest of the
+dataset is the daemon's own state."""
+
+
+class BucketPath(typing.NamedTuple):
+    """Where on a bucket's dataset a path is: `bucket_of_path`'s answer."""
+
+    name: str
+    dataset: str
+    within: str
+    """The path within the bucket's dataset, empty at its mount point."""
+
 
 def bucket_dataset_properties() -> ZFSResourceCreateProperties:
     """What the S3 on-disk format requires of a bucket's dataset. A fresh
@@ -270,6 +285,104 @@ class SharingS3Service(SharingService[SharingS3Entry]):
                 verrors.add(f"{schema}.audit", entitlement.message)
 
         await validate_grants(self.middleware, f"{schema}.grants", data.grants, verrors)
+
+    @private
+    async def bucket_of_path(
+        self, path: str, dataset: str | None = None, relative_path: str | None = None
+    ) -> BucketPath | None:
+        """The bucket whose dataset holds `path`, and where in it, or None
+        when none does.
+
+        The path is matched by the dataset the kernel resolved it to where
+        the caller has one (`dataset` and `relative_path`, as the shares and
+        tasks store them), which a case-insensitive parent, a symlink or a
+        bind mount cannot disguise; the deepest bucket answers where one
+        bucket's dataset sits inside another's. A path the kernel could not
+        resolve -- one below a locked bucket's mount point -- is matched
+        against `/mnt/<dataset>`, where every dataset middleware makes is
+        mounted (`get_path_field`).
+        """
+        real = path if dataset is not None else await self.middleware.run_in_thread(os.path.realpath, path)
+
+        def within(bucket: str) -> str | None:
+            """The path within `bucket` that `path` names, or None when it
+            is not in it."""
+            if dataset is not None:
+                if dataset != bucket and not dataset.startswith(f"{bucket}/"):
+                    return None
+                # a child dataset of the bucket mounts at <bucket>/<its leaf path>
+                return "/".join(part for part in (dataset[len(bucket) + 1:], relative_path) if part)
+            mountpoint = f"/mnt/{bucket}"
+            if real != mountpoint and not real.startswith(f"{mountpoint}/"):
+                return None
+            return real[len(mountpoint) + 1:]
+
+        # the rows rather than the entries: this runs on every path change
+        # of every share and task, and the extend resolves each owner
+        # through NSS
+        rows = await self.middleware.call(
+            "datastore.query", self._config.datastore, [], {"select": ["name", "dataset"]}
+        )
+        found: BucketPath | None = None
+        for row in rows:
+            rel = within(row["dataset"])
+            if rel is not None and (found is None or len(row["dataset"]) > len(found.dataset)):
+                found = BucketPath(row["name"], row["dataset"], rel)
+        return found
+
+    @private
+    async def validate_writable_path(
+        self,
+        verrors: ValidationErrors,
+        field: str,
+        path: str,
+        dataset: str | None = None,
+        relative_path: str | None = None,
+    ) -> None:
+        """Refuse any path on an S3 bucket's dataset to a caller that writes
+        it. A bucket's versioning, object lock and audit are the S3
+        service's, and a write from beside it bypasses all three, whether
+        under the objects or in the daemon's own state. `bucket_of_path`
+        says how the path is matched.
+        """
+        if (bucket := await self.bucket_of_path(path, dataset, relative_path)) is None:
+            return
+        verrors.add(
+            field,
+            f"{path} is on the dataset of S3 bucket {bucket.name!r}. Only the S3 service may write to a bucket. "
+            f"Bucket contents must be accessed through the /mnt/{bucket.dataset}/{SHARE_ROOT} directory in a "
+            "read-only manner.",
+        )
+
+    @private
+    async def validate_objects_path(
+        self,
+        verrors: ValidationErrors,
+        field: str,
+        path: str,
+        dataset: str | None = None,
+        relative_path: str | None = None,
+    ) -> None:
+        """Refuse a path on an S3 bucket's dataset that is not its `s3data`
+        directory or under it. `s3data` holds the objects; everything else
+        on the dataset is the daemon's own state, which a share would hand
+        to everyone it reaches. Only shares ask this: what a backup or sync
+        task copies goes to the administrator, not to clients, so a task may
+        read the whole dataset. `bucket_of_path` says how the path is
+        matched.
+
+        A path above a bucket is not refused here: smbd declines to enter a
+        bucket's dataset by the daemon's root marker, and NFS does not cross
+        a mount.
+        """
+        if (bucket := await self.bucket_of_path(path, dataset, relative_path)) is None:
+            return
+        if bucket.within != SHARE_ROOT and not bucket.within.startswith(f"{SHARE_ROOT}/"):
+            verrors.add(
+                field,
+                f"{path} exposes private state of S3 bucket {bucket.name!r}. Bucket contents must be accessed "
+                f"through the /mnt/{bucket.dataset}/{SHARE_ROOT} directory in a read-only manner.",
+            )
 
     @private
     def normalize_ownership(self, data: EntryT) -> EntryT:

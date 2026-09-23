@@ -753,6 +753,7 @@ class SharingSMBService(SharingService):
     include_tier_info = True
     share_task_type = 'SMB'
     allowed_path_types = [FSLocation.EXTERNAL, FSLocation.LOCAL]
+    readonly_field = share_field.RO
     path_resolution_filters = [['cifs_purpose', '!=', SMBSharePurpose.EXTERNAL_SHARE]]
 
     class Config:

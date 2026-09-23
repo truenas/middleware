@@ -20,7 +20,7 @@ from .service import Service
 from .service_mixin import ServiceChangeMixin
 from .service_part import ServicePartBase
 from .sharing_service import SharingService, SharingTaskService, TaskPathService
-from .sharing_task_service_part import SharingTaskServicePart
+from .sharing_task_service_part import LocalPathInfo, SharingTaskServicePart
 from .system_service import SystemServiceService
 from .system_service_part import SystemServicePart
 
@@ -53,6 +53,7 @@ __all__ = [
     'GenericSharingTaskService',
     'GenericTaskPathService',
     'CRUDServicePart',
+    'LocalPathInfo',
     'SharingTaskServicePart',
     'job',
     'no_auth_required',

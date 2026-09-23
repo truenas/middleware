@@ -1,19 +1,67 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.zfs_.validation_utils import check_zvol_in_boot_pool_using_path
 from middlewared.utils.mount import resolve_dataset_path
 from middlewared.utils.path import FSLocation, path_location
+from middlewared.utils.service.path import check_path_service_write_allowed
 
 from .crud_service_part import CRUDServicePart
 
 if TYPE_CHECKING:
+    from middlewared.main import Middleware
     from middlewared.service_exception import ValidationErrors
 
 
-__all__ = ("SharingTaskServicePart",)
+__all__ = ("LocalPathInfo", "SharingTaskServicePart", "dataset_split", "validate_path_service_write")
+
+
+@dataclass(slots=True, frozen=True, kw_only=True)
+class LocalPathInfo:
+    """What a share or task's read-only mode says about the local path it holds.
+
+    `readonly_field` is the field that decides -- a share's read-only flag, a task's direction. `readonly`
+    is what that field currently says.
+    """
+
+    readonly_field: str
+    readonly: bool
+
+
+def dataset_split(data: Any) -> tuple[str | None, str | None]:
+    """The dataset a path resolved to and the path within it, from a row or a model, `None` for both where the
+    path has not been resolved."""
+    if isinstance(data, dict):
+        return data.get("dataset"), data.get("relative_path")
+    return data.dataset, data.relative_path
+
+
+async def validate_path_service_write(
+    middleware: Middleware,
+    verrors: ValidationErrors,
+    schema: str,
+    path_field: str,
+    path: str,
+    data: Any,
+    local_path_info: LocalPathInfo | None,
+) -> None:
+    """Ask `check_path_service_write_allowed` about a share or task's local path, where it is the one writing there.
+    A path whose writes belong to another service is refused wherever on that service's dataset it points.
+
+    `local_path_info` is what the share or task answered, None where it always writes its local path. A
+    write refused for want of the read-only flag is reported on that flag, since setting it is the fix.
+    """
+    if local_path_info is None:
+        field, writes = path_field, True
+    else:
+        field, writes = local_path_info.readonly_field, not local_path_info.readonly
+    if not writes:
+        return
+    dataset, relative_path = dataset_split(data)
+    await check_path_service_write_allowed(verrors, middleware, f"{schema}.{field}", path, dataset, relative_path)
 
 
 class SharingTaskServicePart[E, PK = int](CRUDServicePart[E, PK]):
@@ -34,6 +82,9 @@ class SharingTaskServicePart[E, PK = int](CRUDServicePart[E, PK]):
     enabled_field: str = "enabled"
     locked_field: str = "locked"
     include_tier_info: bool = False
+    readonly_field: str | None = None
+    """The flag that makes the share or task read-only for its local path, or None where nothing does: what
+    `local_path_info` reads unless overridden."""
 
     async def sharing_task_extend(self, data: dict[str, Any], service_context: Any) -> dict[str, Any]:
         """Per-row transform for this specific service (replaces legacy ``datastore_extend``).
@@ -105,13 +156,22 @@ class SharingTaskServicePart[E, PK = int](CRUDServicePart[E, PK]):
     async def validate_local_path(self, verrors: ValidationErrors, name: str, path: str) -> None:
         await check_path_resides_within_volume(verrors, self.middleware, name, path)
 
+    async def local_path_info(self, data: dict[str, Any]) -> LocalPathInfo | None:
+        """Whether the share or task only reads its local path, and the field that decides it -- a share's
+        read-only flag, a task's direction -- or None where it always writes there. What `validate_path_field`
+        passes to `validate_path_service_write`."""
+        if self.readonly_field is None:
+            return None
+        return LocalPathInfo(readonly_field=self.readonly_field, readonly=bool(data[self.readonly_field]))
+
     async def validate_path_field(
         self, data: dict[str, Any], schema: str, verrors: ValidationErrors, *, split_path: bool = False
     ) -> ValidationErrors:
         """Validate the path field and optionally split it into dataset and relative_path components.
 
         Performs path validation based on location type (LOCAL/EXTERNAL/ZVOL) and optionally
-        resolves the path to its ZFS dataset components."""
+        resolves the path to its ZFS dataset components. A local path whose writes belong to another
+        service is refused unless `local_path_info` says this share or task only reads it."""
         name = f"{schema}.{self.path_field}"
         path = data[self.path_field]
         await self.validate_zvol_path(verrors, name, path)
@@ -130,6 +190,9 @@ class SharingTaskServicePart[E, PK = int](CRUDServicePart[E, PK]):
             if split_path:
                 ds, rel_path = await self.middleware.run_in_thread(resolve_dataset_path, path, self.middleware)
                 data.update(dataset=ds, relative_path=rel_path)
+            await validate_path_service_write(
+                self.middleware, verrors, schema, self.path_field, path, data, await self.local_path_info(data)
+            )
 
         else:
             self.logger.error("%s: unknown location type", loc.name)

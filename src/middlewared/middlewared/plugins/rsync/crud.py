@@ -4,7 +4,7 @@ import shlex
 from typing import Any
 
 from middlewared.api.current import RsyncTaskCreate, RsyncTaskEntry, RsyncTaskUpdate
-from middlewared.service import SharingTaskServicePart
+from middlewared.service import LocalPathInfo, SharingTaskServicePart
 import middlewared.sqlalchemy as sa
 from middlewared.utils.cron import convert_db_format_to_schedule, convert_schedule_to_db_format
 
@@ -50,6 +50,9 @@ class RsyncTaskServicePart(SharingTaskServicePart[RsyncTaskEntry]):
     _datastore = "tasks.rsync"
     _datastore_prefix = "rsync_"
     _entry = RsyncTaskEntry
+
+    async def local_path_info(self, data: dict[str, Any]) -> LocalPathInfo | None:
+        return LocalPathInfo(readonly_field="direction", readonly=data["direction"] == "PUSH")
 
     async def sharing_task_extend_context(self, rows: list[dict[str, Any]], extra: dict[str, Any]) -> Any:
         return {
