@@ -5,6 +5,14 @@ from unittest.mock import patch
 import pytest
 
 
+@pytest.fixture(autouse=True)
+def no_udev():
+    """`DiskEntry.serial` falls back to udev when sysfs has no serial. Keep the
+    host's udev database out of these tests; a test that wants udev patches it."""
+    with patch("middlewared.utils.disks_.disk_class.udev_fallback_serial", return_value=None):
+        yield
+
+
 @pytest.fixture
 def mock_sysfs(tmp_path):
     """

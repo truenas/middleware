@@ -1,17 +1,19 @@
 """Tests for the disk identifier ladder shared by `dev_to_ident` and
-`DiskEntry.identifier`, and for the udev property parsers shared by the
-`device.get_disks` side (NAS-136915)."""
+`DiskEntry.identifier`, the udev property parsers shared by the
+`device.get_disks` side, and the udev fallback `DiskEntry.serial` takes for a
+disk sysfs has no serial for (NAS-136915)."""
 
 from types import SimpleNamespace
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
+import pyudev
 
 from middlewared.plugins.device_.device_info import DeviceService
 from middlewared.utils.disks import dev_to_ident, get_disk_lunid_from_block_device
 from middlewared.utils.disks_.disk_class import DiskEntry
 from middlewared.utils.disks_.gpt_parts import PART_TYPES
-from middlewared.utils.disks_.udev import lunid_from_udev, serial_from_udev
+from middlewared.utils.disks_.udev import FALLBACK_KEYS, lunid_from_udev, serial_from_udev, udev_fallback_serial
 
 ZFS_GUID = next(guid for guid, name in PART_TYPES.items() if name == "ZFS")
 EFI_GUID = "c12a7328-f81f-11d2-ba4b-00a0c93ec93b"
@@ -55,6 +57,22 @@ SCSI_DEBUG_SYSFS = {
     "sda/device/vpd_pg80": b"\x00\x80\x00\x042000",
     "sda/device/wwid": "naa.33333330000007d0\n",
 }
+# A SCSI disk with VPD page 0x83 but no page 0x80 (a Hyper-V virtual disk): sysfs
+# has no serial at all, and scsi_id put the page 0x83 NAA designator in ID_SERIAL_SHORT
+SCSI_NO_PAGE_80 = {
+    "ID_BUS": "scsi",
+    "ID_SERIAL_SHORT": "6002248079f9f66f426ea82fb0957801",
+    "ID_SERIAL": "36002248079f9f66f426ea82fb0957801",
+    "ID_WWN": "0x6002248079f9f66f",
+}
+SCSI_NO_PAGE_80_SYSFS = {"sda/device/wwid": "naa.6002248079f9f66f426ea82fb0957801\n"}
+# ata_id on a drive with no serial prints the bare model and no ID_SERIAL_SHORT
+SATA_NO_SERIAL = {"ID_BUS": "ata", "ID_SERIAL": "QEMU_HARDDISK"}
+
+
+def fallback_serial(properties: dict[str, str]) -> str | None:
+    """What `udev_fallback_serial` returns for these clean udev properties."""
+    return next((properties[key] for key in FALLBACK_KEYS if key in properties), None)
 
 
 def udev_device(name: str, properties: dict[str, str]) -> MagicMock:
@@ -101,6 +119,71 @@ def test_disk_entry_device_name_when_nothing_identifies_it(mock_sysfs):
     with mock_sysfs({}):
         with patch.object(DiskEntry, "partitions", return_value=None):
             assert DiskEntry(name="sda", devpath="/dev/sda").identifier == "{devicename}sda"
+
+
+@pytest.mark.parametrize("name,files", [("sda", SAS_HGST_SYSFS), ("nvme0n1", NVME_IX_SYSFS), ("sda", SATA_QEMU_SYSFS)])
+def test_udev_not_consulted_when_sysfs_has_a_serial(mock_sysfs, name, files):
+    """The fallback must cost nothing on the hardware we ship, where sysfs
+    always has a serial: udev is not looked up at all."""
+    with mock_sysfs(files):
+        with patch("middlewared.utils.disks_.disk_class.udev_fallback_serial") as udev:
+            DiskEntry(name=name, devpath=f"/dev/{name}").identifier
+
+    udev.assert_not_called()
+
+
+def test_sysfs_serial_wins_over_udev(mock_sysfs):
+    with mock_sysfs(SAS_HGST_SYSFS):
+        with patch("middlewared.utils.disks_.disk_class.udev_fallback_serial", return_value="SOMETHING_ELSE"):
+            assert DiskEntry(name="sda", devpath="/dev/sda").serial == "5QG7BWGF"
+
+
+def test_udev_serial_used_when_sysfs_has_none(mock_sysfs):
+    """A disk with no VPD page 0x80 gets the serial udev resolved, and so a
+    stable identifier without reading its partition table."""
+    with mock_sysfs(SCSI_NO_PAGE_80_SYSFS):
+        with patch(
+            "middlewared.utils.disks_.disk_class.udev_fallback_serial", return_value=fallback_serial(SCSI_NO_PAGE_80)
+        ):
+            with patch.object(DiskEntry, "partitions") as partitions:
+                disk = DiskEntry(name="sda", devpath="/dev/sda")
+                assert disk.serial == "6002248079f9f66f426ea82fb0957801"
+                assert disk.identifier == "{serial_lunid}6002248079f9f66f426ea82fb0957801_6002248079f9f66f"
+
+    partitions.assert_not_called()
+
+
+def test_udev_fallback_ignores_a_model_only_id_serial():
+    """ID_SERIAL is the bare model for a drive with no serial, so it must not
+    reach the fallback, or every serial-less drive of one model would share
+    an identifier."""
+    device = MagicMock()
+    device.properties = SATA_NO_SERIAL
+    with patch("middlewared.utils.disks_.udev.pyudev.Devices.from_name", return_value=device):
+        assert udev_fallback_serial("sda") is None
+
+
+def test_udev_fallback_none_when_udev_has_no_record():
+    with patch(
+        "middlewared.utils.disks_.udev.pyudev.Devices.from_name",
+        side_effect=pyudev.DeviceNotFoundByNameError("block", "sda"),
+    ):
+        assert udev_fallback_serial("sda") is None
+
+
+def test_udev_fallback_skips_an_undecodable_serial():
+    """pyudev decodes strictly, so a serial holding a byte that is not UTF-8
+    raises from `get`. One such disk must not take down the disk-stats tick."""
+
+    def get(key, default=None):
+        if key == "ID_SCSI_SERIAL":
+            raise UnicodeDecodeError("utf-8", b"\xff", 0, 1, "invalid start byte")
+        return {"ID_SERIAL_SHORT": "5000cca2b00d6cdc"}.get(key, default)
+
+    device = MagicMock()
+    device.properties.get.side_effect = get
+    with patch("middlewared.utils.disks_.udev.pyudev.Devices.from_name", return_value=device):
+        assert udev_fallback_serial("sda") == "5000cca2b00d6cdc"
 
 
 @pytest.mark.parametrize(
@@ -155,9 +238,16 @@ def test_lunid_from_block_device_falls_back_to_sysfs(mock_sysfs):
         ("nvme0n1", NVME_IX, NVME_IX_SYSFS, "{serial_lunid}511250113257000151_6479a7a14a2002a3"),
         ("sda", SATA_QEMU, SATA_QEMU_SYSFS, "{serial}mzgzzuQN"),
         ("sda", SCSI_DEBUG, SCSI_DEBUG_SYSFS, "{serial_lunid}2000_33333330000007d0"),
+        # only through the udev fallback, since sysfs has no serial for this disk
+        (
+            "sda",
+            SCSI_NO_PAGE_80,
+            SCSI_NO_PAGE_80_SYSFS,
+            "{serial_lunid}6002248079f9f66f426ea82fb0957801_6002248079f9f66f",
+        ),
     ],
 )
-def test_sync_path_and_disk_entry_agree_on_shipped_hardware(mock_sysfs, name, udev, sysfs, expected):
+def test_sync_path_and_disk_entry_agree(mock_sysfs, name, udev, sysfs, expected):
     """The identifier `disk.sync_all` stores must equal the one
     `DiskEntry.identifier` computes for the same disk.
 
@@ -170,8 +260,9 @@ def test_sync_path_and_disk_entry_agree_on_shipped_hardware(mock_sysfs, name, ud
     """
     device = udev_device(name, udev)
     with mock_sysfs(sysfs):
-        sys_disks = {name: DeviceService(Mock()).get_disk_details(None, device)}
-        via_sync_path = dev_to_ident(name, sys_disks)
-        via_disk_entry = DiskEntry(name=name, devpath=f"/dev/{name}").identifier
+        with patch("middlewared.utils.disks_.disk_class.udev_fallback_serial", return_value=fallback_serial(udev)):
+            sys_disks = {name: DeviceService(Mock()).get_disk_details(None, device)}
+            via_sync_path = dev_to_ident(name, sys_disks)
+            via_disk_entry = DiskEntry(name=name, devpath=f"/dev/{name}").identifier
 
     assert via_sync_path == via_disk_entry == expected
