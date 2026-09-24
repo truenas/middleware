@@ -61,9 +61,7 @@ def renew_certs(context: ServiceContext, job: Job) -> None:
         # renew cert
         context.logger.debug(f"Renewing certificate {cert.name}")
         if cert.id == tnc_config.certificate:
-            context.create_task(
-                context.call2(context.s.tn_connect.acme.renew_cert)
-            )
+            context.call_sync2(context.s.tn_connect.acme.renew_cert, background=True)
             continue
         elif not cert.acme:
             cert_str, key = generate_self_signed_certificate()
