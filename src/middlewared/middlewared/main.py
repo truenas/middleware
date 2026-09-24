@@ -406,10 +406,16 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         return serviceobj, methodobj
 
     def create_task[T](self, coro: Coroutine[typing.Any, typing.Any, T], *, name: str | None = None) -> asyncio.Task[T]:
+        if threading.get_ident() != self.__thread_id:
+            raise RuntimeError("You can only use create_task from main thread")
+
         task = self.loop.create_task(coro, name=name)
         self.tasks.add(task)
         task.add_done_callback(self.tasks.discard)
         return task
+
+    def create_task_threadsafe[T](self, coro: Coroutine[typing.Any, typing.Any, T], *, name: str | None = None) -> None:
+        self.loop.call_soon_threadsafe(lambda: self.create_task(coro, name=name))
 
     def _load_apis(self) -> dict[str, API]:
         api_versions = self._load_api_versions()
