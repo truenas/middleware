@@ -59,7 +59,7 @@ class CertificateService(Service):
             # renew cert
             self.logger.debug(f'Renewing certificate {cert["name"]}')
             if cert['id'] == tnc_config['certificate']:
-                self.middleware.create_task(self.middleware.call('tn_connect.acme.renew_cert'))
+                self.middleware.call_sync('tn_connect.acme.renew_cert', background=True)
                 continue
             elif not cert.get('acme'):
                 cert_str, key = generate_self_signed_certificate()
