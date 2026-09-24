@@ -76,7 +76,7 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate[dict[str, Any]]):
         # True if any DISK/RAW disk the VM needs is on a dataset that is still locked (or has a
         # locked parent).
         for disk in self.disk_paths(vm):
-            if await self.middleware.call('pool.dataset.path_in_locked_datasets', disk):
+            if await self.call2(self.s.zfs.resource.path_is_locked, disk):
                 return True
 
         return False

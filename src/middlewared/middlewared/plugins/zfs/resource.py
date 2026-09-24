@@ -46,6 +46,7 @@ from middlewared.api.current import (
 from middlewared.service import Service, private
 from middlewared.service.decorators import pass_thread_local_storage
 
+from . import path_is_locked_impl as _path_is_locked
 from . import resource_create as _create
 from . import resource_destroy as _destroy
 from . import resource_info as _info
@@ -402,6 +403,16 @@ class ZFSResourceService(Service):
             force_unmount: Forcefully unmount the resource before unloading the encryption key.
         """
         _ops.unload_key(tls, filesystem, recursive, force_unmount)
+
+    @private
+    @pass_thread_local_storage
+    def path_is_locked(self, tls: Any, path: str) -> bool:
+        """
+        Whether `path` lies in a locked dataset or zvol. `path` may be `/dev/zvol/<zvol>`, `/mnt/<path>`
+        (any parent dataset being locked counts) or a bare `<dataset>`, and a snapshot in any of those
+        forms is locked when its dataset is.
+        """
+        return _path_is_locked.path_is_locked_impl(self.context, tls, path)
 
     @private
     @pass_thread_local_storage

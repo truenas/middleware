@@ -142,9 +142,8 @@ class SharingTaskServicePart[E, PK = int](CRUDServicePart[E, PK]):
 
         # When the dataset is resolved, pass it directly to avoid iterating over
         # relative_path subdirectory components, which are not datasets and always
-        # produce spurious EZFS_NOENT lookups. path_in_locked_datasets accepts bare
-        # dataset names (e.g. docker and KMIP already call it this way).
-        return bool(await self.middleware.call("pool.dataset.path_in_locked_datasets", data.get("dataset") or path))
+        # produce spurious EZFS_NOENT lookups. path_is_locked accepts bare dataset names.
+        return await self.call2(self.s.zfs.resource.path_is_locked, data.get("dataset") or path)
 
     async def validate_external_path(self, verrors: ValidationErrors, name: str, path: str) -> None:
         raise NotImplementedError

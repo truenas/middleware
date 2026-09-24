@@ -60,7 +60,7 @@ async def validate_fs(context: ServiceContext) -> None:
     await context.to_thread(create_update_docker_datasets, context, config.dataset)
 
     for i in (config.dataset, config.pool):
-        if await context.middleware.call('pool.dataset.path_in_locked_datasets', i):
+        if await context.call2(context.s.zfs.resource.path_is_locked, i):
             raise CallError(
                 f'Cannot start docker because {i!r} is located in a locked dataset.',
                 errno=CallError.EDATASETISLOCKED,

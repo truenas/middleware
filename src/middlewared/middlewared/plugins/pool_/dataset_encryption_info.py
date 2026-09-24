@@ -6,8 +6,6 @@ import json
 import os
 import shutil
 
-from truenas_pylibzfs import ZFSError, ZFSException
-
 from middlewared.api import api_method
 from middlewared.api.current import (
     PoolDatasetEncryptionSummaryArgs,
@@ -19,7 +17,6 @@ from middlewared.api.current import (
     PoolDatasetExportKeysForReplicationResult,
     PoolDatasetExportKeysResult,
 )
-from middlewared.plugins.pool_.utils import get_dataset_parents
 from middlewared.plugins.zfs.encryption import check_key
 from middlewared.service import CallError, Service, ValidationErrors, job, periodic, private
 from middlewared.service.decorators import pass_thread_local_storage
@@ -218,78 +215,8 @@ class PoolDatasetService(Service):
         self.middleware.call_sync('pool.dataset.delete_encrypted_datasets_from_db', [['name', 'in', to_remove]])
 
     @private
-    @pass_thread_local_storage
-    def path_in_locked_datasets(self, tls, path):
-        """
-        This method checks whether the path or any
-        parent components of said path are locked.
-        It returns True if a locked component is
-        found, otherwise False.
-
-        Parameters:
-            path (str): Path to check. Accepted forms:
-                - '/dev/zvol/<dataset>': True if the zvol is locked.
-                - '/mnt/<dataset>': True if the dataset in which the path
-                  resides, or any of its parent datasets, is locked.
-                - '<dataset>': True if the named dataset is locked.
-                - '<dataset>@<snapshot>' (in any of the forms above): True iff the dataset is locked.
-
-        Returns:
-            bool: True if a locked component is found, False otherwise.
-
-        Raises:
-            ZFSException: If an unexpected ZFS error occurs (any error
-                other than EZFS_NOENT).
-        """
-        # WARNING: _EXTREMELY_ hot code path. Do not add more
-        # things here unless you fully understand the side-effects.
-        path_authoritative = True
-        if path.startswith('/dev/zvol/'):
-            # 10 comes from len("/dev/zvol/")
-            path = path[10:].replace('+', ' ')
-        elif os.path.isabs(path):
-            path = path.removeprefix('/mnt/')
-            path_authoritative = False
-
-        path = path.partition('@')[0]
-
-        # Check if this path is in a dataset that's about to be locked.
-        # This allows services to see the dataset as locked during delegate.stop()
-        # even though the key hasn't been unloaded yet.
-        try:
-            about_to_lock = self.middleware.call_sync('cache.get', 'about_to_lock_dataset')
-            if about_to_lock:
-                dataset_name = path.removesuffix('/')
-                if dataset_name == about_to_lock or dataset_name.startswith(f'{about_to_lock}/'):
-                    return True
-        except KeyError:
-            pass
-
-        if path_authoritative:
-            # Optimized lookup for when we know that the path in question
-            # is a ZFS resource name. We don't need O(<depth>) lookups.
-            try:
-                crypto = tls.lzh.open_resource(name=path).crypto()
-            except ZFSException as e:
-                if e.code != ZFSError.EZFS_NOENT:
-                    raise
-
-                # For this case we'll treat missing dataset as unlocked
-                crypto = None
-
-            return crypto is not None and not crypto.info().key_is_loaded
-
-        for i in [path.removesuffix('/')] + get_dataset_parents(path):
-            try:
-                crypto = tls.lzh.open_resource(name=i).crypto()
-                if crypto and not crypto.info().key_is_loaded:
-                    return True
-            except ZFSException as e:
-                if e.code in (ZFSError.EZFS_NOENT, ZFSError.EZFS_INVALIDNAME):
-                    continue
-                else:
-                    raise
-        return False
+    def path_in_locked_datasets(self, path):
+        return self.call_sync2(self.s.zfs.resource.path_is_locked, path)
 
     @private
     def query_encrypted_roots_keys(self, filters):
