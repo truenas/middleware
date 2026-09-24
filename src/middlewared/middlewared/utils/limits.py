@@ -11,6 +11,7 @@ from truenas_api_client import json as ejson
 MSG_SIZE_EXTENDED_METHODS = frozenset({
     'filesystem.file_receive',
     'failover.datastore.sql',
+    'failover.jobs_copy.receive_job',
 })
 
 
