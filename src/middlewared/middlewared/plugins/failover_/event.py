@@ -911,7 +911,12 @@ class FailoverEventsService(Service):
         self.start_apps()
 
         logger.info('Migrating interface information (if required)')
-        self.run_call('interface.persist_link_addresses')
+        self.run_call('interface.persist_link_addresses', {
+            # The remote node might be not accessible; don't make a big deal of it, it's `vrrp_backup` will call
+            # `interface.persist_link_addresses` on us after it (re)boots.
+            'raise_connect_error': False,
+            'timeout': 5,
+        })
         logger.info('Done migrating interface information (if required)')
 
         try:
