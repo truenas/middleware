@@ -1022,7 +1022,7 @@ CELL_FIXTURES = {
         "substring": "SENTINEL entitlement denial",
     },
     "check_dedup_tiering": {
-        "current": {"dedup": "on", "special_small_blocks": 131072},
+        "current": {"dedup": "off", "special_small_blocks": 131072},
         "request": {"dedup": "verify", "special_small_blocks": 262144},
         "parent": {"dedup": "verify", "special_small_blocks": 262144},
         "pool_current": {"dedup": "on", "special_small_blocks": 131072},
@@ -1072,6 +1072,8 @@ def violation_constructible(name, type_, variant, names):
         return variant != "set" and bool(names & READ_NAMES[type_])
     if name == "check_reservation_headroom":
         return variant == "set" and "refreservation" in names
+    if name == "check_dedup_tiering" and "dedup" not in names:
+        return False
     return (name, type_, variant) in VIOLATION_CONSTRUCTIBLE
 
 

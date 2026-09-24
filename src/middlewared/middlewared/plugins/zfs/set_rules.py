@@ -375,7 +375,7 @@ def check_dedup_tiering(context: ServiceContext, state: SetContext, verrors: Val
     ssb = state.effective("special_small_blocks")
     if state.effective("dedup") == "off" or ssb <= 0:
         return
-    if not (state.changed("dedup") or state.changed("special_small_blocks")):
+    if state.current["dedup"] != "off" and not state.changed("special_small_blocks"):
         return
     attribute = state.attribute("dedup" if "dedup" in state.touched() else "special_small_blocks")
     reject_dedup_on_special_vdev(verrors, attribute, context, state.path.split("/")[0], ssb)
@@ -384,7 +384,7 @@ def check_dedup_tiering(context: ServiceContext, state: SetContext, verrors: Val
 def check_dedup_descendants(context: ServiceContext, state: SetContext, verrors: ValidationErrors) -> None:
     if state.type != "FILESYSTEM":
         return
-    if state.effective("dedup") == "off" or not state.changed("dedup") or not state.tier_enabled:
+    if state.effective("dedup") == "off" or state.current["dedup"] != "off" or not state.tier_enabled:
         return
     if not pool_has_special_vdev_sync(context, state.path.split("/")[0]):
         return
