@@ -26,7 +26,7 @@ class InterfaceService(Service):
         namespace_alias = "interfaces"
 
     @private
-    async def persist_link_addresses(self, ha_options=None):
+    async def persist_link_addresses(self):
         try:
             local_key, remote_key = await self._get_keys()
 
@@ -37,14 +37,9 @@ class InterfaceService(Service):
             real_interfaces_remote = None
             if await self.middleware.call("failover.status") == "MASTER":
                 try:
-                    remote_interfaces = await self.middleware.call(
-                        "failover.call_remote",
-                        "interface.query",
-                        [INTERFACE_FILTERS],
-                        ha_options,
+                    real_interfaces_remote = RealInterfaceCollection(
+                        await self.middleware.call("failover.call_remote", "interface.query", [INTERFACE_FILTERS]),
                     )
-                    if remote_interfaces is not None:
-                        real_interfaces_remote = RealInterfaceCollection(remote_interfaces)
                 except Exception as e:
                     self.middleware.logger.warning(f"Exception while retrieving remote network interfaces: {e!r}")
 
