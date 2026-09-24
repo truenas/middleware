@@ -911,8 +911,9 @@ class FailoverEventsService(Service):
         self.start_apps()
 
         logger.info('Migrating interface information (if required)')
-        self.run_call('interface.persist_link_addresses')
-        logger.info('Done migrating interface information (if required)')
+        # We run this in the background because there's a high chance that the remote node is not available yet,
+        # and it will take some time to execute. The results are not needed immediately, so it's fine.
+        self.middleware.create_task(self.middleware.call('interface.persist_link_addresses'))
 
         try:
             logger.info('Consuming local DB reboot reasons')
