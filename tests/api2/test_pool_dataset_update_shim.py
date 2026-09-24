@@ -43,7 +43,7 @@ def test_compression_uppercase_value_round_trips():
 def test_copies_is_passed_as_an_integer():
     with dataset("shim_copies") as path:
         call("pool.dataset.update", path, {"copies": 2})
-        assert read(path, ["copies"])["copies"]["value"] == 2
+        assert read(path, ["copies"])["copies"]["raw"] == "2"
 
 
 def test_quota_zero_clears_a_quota():
