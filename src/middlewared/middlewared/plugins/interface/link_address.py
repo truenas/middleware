@@ -1,3 +1,4 @@
+import asyncio
 import re
 
 from sqlalchemy.exc import IntegrityError
@@ -7,6 +8,8 @@ from middlewared.service import Service, private
 INTERFACE_FILTERS = [["type", "=", "PHYSICAL"]]
 RE_FREEBSD_BRIDGE = re.compile(r"bridge([0-9]+)$")
 RE_FREEBSD_LAGG = re.compile(r"lagg([0-9]+)$")
+
+INTERFACE_LINK_ADDRESS_LOCK = asyncio.Lock()
 
 
 class DuplicateHardwareInterfaceLinkAddresses(Exception):
@@ -43,25 +46,27 @@ class InterfaceService(Service):
                 except Exception as e:
                     self.middleware.logger.warning(f"Exception while retrieving remote network interfaces: {e!r}")
 
-            db_interfaces = DatabaseInterfaceCollection(
-                await self.middleware.call("datastore.query", "network.interface_link_address"),
-            )
+            async with INTERFACE_LINK_ADDRESS_LOCK:
+                db_interfaces = DatabaseInterfaceCollection(
+                    await self.middleware.call("datastore.query", "network.interface_link_address"),
+                )
 
-            for real_interface in real_interfaces:
-                name = real_interfaces.get_name(real_interface)
-                await self.__handle_interface(db_interfaces, name, local_key,
-                                              real_interface["state"]["hardware_link_address"])
-                if real_interfaces_remote is not None:
-                    real_interface_remote = real_interfaces_remote.by_name.get(name)
-                    if real_interface_remote is None:
-                        self.middleware.logger.warning(f"Interface {name!r} is only present on the local system")
-                    else:
-                        try:
-                            remote_hardware_link_address = real_interface_remote["state"]["hardware_link_address"]
-                        except KeyError:
-                            pass
+                for real_interface in real_interfaces:
+                    name = real_interfaces.get_name(real_interface)
+                    await self.__handle_interface(db_interfaces, name, local_key,
+                                                  real_interface["state"]["hardware_link_address"])
+                    if real_interfaces_remote is not None:
+                        real_interface_remote = real_interfaces_remote.by_name.get(name)
+                        if real_interface_remote is None:
+                            self.middleware.logger.warning(f"Interface {name!r} is only present on the local system")
                         else:
-                            await self.__handle_interface(db_interfaces, name, remote_key, remote_hardware_link_address)
+                            try:
+                                remote_hardware_link_address = real_interface_remote["state"]["hardware_link_address"]
+                            except KeyError:
+                                pass
+                            else:
+                                await self.__handle_interface(db_interfaces, name, remote_key,
+                                                              remote_hardware_link_address)
         except DuplicateHardwareInterfaceLinkAddresses as e:
             self.middleware.logger.error(f"Not persisting network interfaces link addresses: {e}")
         except Exception:
