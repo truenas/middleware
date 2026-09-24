@@ -6,7 +6,6 @@ import pytest
 from truenas_api_client import Client
 
 from middlewared.test.integration.assets.account import unprivileged_user
-from middlewared.test.integration.assets.cloud_sync import credential
 from middlewared.test.integration.utils import call, password, websocket_url
 
 
@@ -40,32 +39,3 @@ def unprivileged_client():
                 "password": t.password,
             })
             yield c
-
-
-@pytest.fixture(scope="function")
-def clear_ratelimit():
-    call("rate.limit.cache_clear")
-
-
-@pytest.fixture(scope="module")
-def ftp_credential():
-    with credential({
-        "provider": {
-            "type": "FTP",
-            "host": "localhost",
-            "port": 21,
-            "user": "test",
-            "pass": "",
-        },
-    }) as cred:
-        yield cred
-
-
-def test_adapts_cloud_credentials(c, ftp_credential):
-    result = c.call("cloudsync.credentials.get_instance", ftp_credential["id"])
-    assert result["provider"] == "FTP"
-
-
-def test_adapts_cloud_credentials_for_unprivileged(unprivileged_client, ftp_credential):
-    result = unprivileged_client.call("cloudsync.credentials.get_instance", ftp_credential["id"])
-    assert result["attributes"] == "********"

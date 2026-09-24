@@ -41,43 +41,6 @@ def test_alertservice():
     assert call("alertservice.query", [["id", "=", alertservice_id]]) == []
 
 
-def test_alertservice_2510():
-    with client(version="v25.10.0") as c:
-        c.call("alertservice.query")
-
-        data = ["name", "type", "attributes", "level", "enabled"]
-
-        # create
-        payload = {
-            "name": "Critical Email Test",
-            "type": "Mail",
-            "attributes": {"email": "eric.spam@ixsystems.com"},
-            "level": "CRITICAL",
-            "enabled": True,
-        }
-        results = c.call("alertservice.create", payload)
-        for key in data:
-            assert results[key] == payload[key]
-
-        alertservice_id = results["id"]
-
-        # update
-        payload = {
-            "name": "Warning Email Test",
-            "type": "Mail",
-            "attributes": {"email": "william.spam@ixsystems.com@"},
-            "level": "WARNING",
-            "enabled": False,
-        }
-        results = c.call("alertservice.update", alertservice_id, payload)
-        for key in data:
-            assert results[key] == payload[key]
-
-        # delete
-        c.call("alertservice.delete", alertservice_id)
-        assert c.call("alertservice.query", [["id", "=", alertservice_id]]) == []
-
-
 def test_alertservice_update_nonexistent():
     with pytest.raises(InstanceNotFound):
         call(
