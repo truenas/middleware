@@ -528,7 +528,7 @@ class UserService(CRUDService):
                 f'The path for the home directory "({data["home"]})" '
                 'must include a volume or dataset.'
             )
-        elif self.middleware.call_sync('pool.dataset.path_in_locked_datasets', data['home']):
+        elif self.call_sync2(self.s.zfs.resource.path_is_locked, data['home']):
             verrors.add(
                 f'{schema}.home',
                 'Path component for "Home Directory" is currently encrypted and locked'

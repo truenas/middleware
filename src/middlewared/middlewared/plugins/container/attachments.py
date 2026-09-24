@@ -116,7 +116,7 @@ class ContainerFSAttachmentDelegate(FSAttachmentDelegate[dict[str, Any]]):
         # the name-derived form:
         # - `filesystem.is_child` is asked whether the container lives under `/mnt/<pool>`, which
         #   the real mountpoint is not a child of.
-        # - `pool.dataset.path_in_locked_datasets` strips `/mnt/` and re-parses the remainder as a
+        # - `zfs.resource.path_is_locked` strips `/mnt/` and re-parses the remainder as a
         #   dataset name.
         # Switching this to the real mountpoint would silently stop matching containers on pool
         # export and pool lock.
@@ -138,7 +138,7 @@ class ContainerFSAttachmentDelegate(FSAttachmentDelegate[dict[str, Any]]):
         # True if any dataset the container needs to run -- its root dataset or a FILESYSTEM device
         # source -- is still locked (or has a locked parent).
         for path in self.storage_paths(container):
-            if await self.middleware.call('pool.dataset.path_in_locked_datasets', path):
+            if await self.middleware.call2(self.s.zfs.resource.path_is_locked, path):
                 return True
 
         return False

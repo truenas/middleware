@@ -107,7 +107,7 @@ async def test_vm_on_paths_no_disks_does_not_call_is_child():
 async def test_storage_locked_only_considers_disk_and_raw():
     m = Middleware()
     locked = set()
-    m["pool.dataset.path_in_locked_datasets"] = lambda path: path in locked
+    m.services.zfs.resource.path_is_locked = lambda path: path in locked
     delegate = VMFSAttachmentDelegate(m)
     test_vm = vm([disk("DISK", "/mnt/tank/a"), disk("RAW", "/mnt/other/b.img")])
 
@@ -135,7 +135,7 @@ class StartOnUnlockDriver:
         self.vm = vm(devices or [disk("RAW", "/mnt/tank/ds/disk.img")], state=state, autostart=autostart)
         self.middleware = Middleware()
         self.middleware["filesystem.is_child"] = lambda child, parent: True
-        self.middleware["pool.dataset.path_in_locked_datasets"] = lambda path: path in locked_paths
+        self.middleware.services.zfs.resource.path_is_locked = lambda path: path in locked_paths
         self.middleware.services.vm.query = self._query
         self.middleware.services.vm.status = lambda *args: self.vm.status
         self.middleware.services.vm.start = self._record("start")

@@ -473,9 +473,7 @@ class NVMetNamespaceService(SharingService):
         path = await self.get_path_field(data)
         if data['device_type'] == 'FILE':
             if dataset := data.get('dataset'):
-                return await self.middleware.call(
-                    'pool.dataset.path_in_locked_datasets', dataset
-                )
+                return await self.call2(self.s.zfs.resource.path_is_locked, dataset)
             for component in pathlib.Path(path.removeprefix('/mnt/')).parents:
                 c = component.as_posix()
                 # walk up the path starting from right to left
@@ -484,14 +482,8 @@ class NVMetNamespaceService(SharingService):
                 # assumption that it _CANT_ be a filesystem
                 # and so we move up to the next path.
                 if validate_dataset_name(c):
-                    return await self.middleware.call(
-                        'pool.dataset.path_in_locked_datasets',
-                        c
-                    )
-        return await self.middleware.call(
-            'pool.dataset.path_in_locked_datasets',
-            path
-        )
+                    return await self.call2(self.s.zfs.resource.path_is_locked, c)
+        return await self.call2(self.s.zfs.resource.path_is_locked, path)
 
     @private
     async def resync_lun_size_for_zvol(self, zvol_id):

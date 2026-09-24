@@ -964,7 +964,7 @@ class SharingSMBService(SharingService):
 
         old_is_locked = (await self.get_instance(id_))[share_field.LOCKED]
         if old[share_field.PATH] != new[share_field.PATH]:
-            new_is_locked = await self.middleware.call('pool.dataset.path_in_locked_datasets', new[share_field.PATH])
+            new_is_locked = await self.call2(self.s.zfs.resource.path_is_locked, new[share_field.PATH])
         else:
             new_is_locked = old_is_locked
 
