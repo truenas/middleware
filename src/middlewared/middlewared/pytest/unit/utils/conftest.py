@@ -9,7 +9,7 @@ import pytest
 def no_udev():
     """`DiskEntry.serial` falls back to udev when sysfs has no serial. Keep the
     host's udev database out of these tests; a test that wants udev patches it."""
-    with patch("middlewared.utils.disks_.disk_class.udev_fallback_serial", return_value=None):
+    with patch("middlewared.utils.disks_.disk_class.udev_fallback_identity", return_value=(None, None)):
         yield
 
 

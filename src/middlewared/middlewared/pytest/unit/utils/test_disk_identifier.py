@@ -1,8 +1,9 @@
 """Tests for the disk identifier ladder shared by `dev_to_ident` and
 `DiskEntry.identifier`, the udev serial parser shared by the
-`device.get_disks` side, and the udev fallback `DiskEntry.serial` takes for a
-disk sysfs has no serial for (NAS-136915)."""
+`device.get_disks` side, and the udev fallback `DiskEntry` takes for a disk
+sysfs has no serial for (NAS-136915)."""
 
+from contextlib import contextmanager
 from types import SimpleNamespace
 from unittest.mock import MagicMock, Mock, patch
 
@@ -13,7 +14,7 @@ from middlewared.plugins.device_.device_info import DeviceService
 from middlewared.utils.disks import dev_to_ident, get_disk_lunid_from_block_device
 from middlewared.utils.disks_.disk_class import DiskEntry
 from middlewared.utils.disks_.gpt_parts import PART_TYPES
-from middlewared.utils.disks_.udev import FALLBACK_KEYS, serial_from_udev, udev_fallback_serial
+from middlewared.utils.disks_.udev import serial_from_udev, udev_fallback_identity
 
 ZFS_GUID = next(guid for guid, name in PART_TYPES.items() if name == "ZFS")
 EFI_GUID = "c12a7328-f81f-11d2-ba4b-00a0c93ec93b"
@@ -55,13 +56,34 @@ SCSI_NO_PAGE_80 = {
     "ID_WWN": "0x6002248079f9f66f",
 }
 SCSI_NO_PAGE_80_SYSFS = {"sda/device/wwid": "naa.6002248079f9f66f426ea82fb0957801\n"}
+# A SATA drive in a usb-storage enclosure whose bridge passes ATA commands through:
+# usb-storage skips VPD pages, so sysfs has neither serial nor wwid, while ata_id
+# read both the serial and the WWN from the drive itself
+USB_ATA = {
+    "ID_BUS": "ata",
+    "ID_SERIAL_SHORT": "WD-WCC4N5PL7XKV",
+    "ID_SERIAL": "WDC_WD40EFRX-68N32N0_WD-WCC4N5PL7XKV",
+    "ID_WWN": "0x50014ee2b3a4b5c6",
+}
+# A single-disk USB enclosure whose bridge does not pass ATA commands through:
+# usb_id's serial is the bridge's, which is how the disk table has always
+# identified such a disk
+USB_BRIDGE = {
+    "ID_BUS": "usb",
+    "ID_SERIAL_SHORT": "2HC015KJ",
+    "ID_SERIAL": "WD_Elements_25A3_2HC015KJ-0:0",
+    "ID_INSTANCE": "0:0",
+}
+# The second slot of a USB card reader: usb_id gives every LUN of one bridge the
+# same ID_SERIAL_SHORT and only tells them apart in ID_SERIAL and ID_INSTANCE
+USB_CARD_READER_SLOT = {
+    "ID_BUS": "usb",
+    "ID_SERIAL_SHORT": "000000000101",
+    "ID_SERIAL": "Generic_USB_SD_Reader_000000000101-0:1",
+    "ID_INSTANCE": "0:1",
+}
 # ata_id on a drive with no serial prints the bare model and no ID_SERIAL_SHORT
 SATA_NO_SERIAL = {"ID_BUS": "ata", "ID_SERIAL": "QEMU_HARDDISK"}
-
-
-def fallback_serial(properties: dict[str, str]) -> str | None:
-    """What `udev_fallback_serial` returns for these clean udev properties."""
-    return next((properties[key] for key in FALLBACK_KEYS if key in properties), None)
 
 
 def udev_device(name: str, properties: dict[str, str]) -> MagicMock:
@@ -74,6 +96,17 @@ def udev_device(name: str, properties: dict[str, str]) -> MagicMock:
     device.parent.properties = {"SUBSYSTEM": "pci", "DRIVER": "ahci", "DEVPATH": "/devices/pci0000:00/0000:00:1f.2"}
     device.children = []
     return device
+
+
+@contextmanager
+def real_udev_fallback(properties: dict[str, str]):
+    """Let DiskEntry run the real udev fallback against these properties."""
+    device = MagicMock()
+    device.properties = properties
+    with patch("middlewared.utils.disks_.disk_class.udev_fallback_identity", udev_fallback_identity):
+        with patch("middlewared.utils.disks_.udev.pyudev.Context"):
+            with patch("middlewared.utils.disks_.udev.pyudev.Devices.from_name", return_value=device):
+                yield
 
 
 @pytest.mark.parametrize(
@@ -107,9 +140,10 @@ def test_disk_entry_reads_partitions_when_no_serial(mock_sysfs):
 @pytest.mark.parametrize("name,files", [("sda", SAS_HGST_SYSFS), ("nvme0n1", NVME_IX_SYSFS), ("sda", SATA_QEMU_SYSFS)])
 def test_udev_not_consulted_when_sysfs_has_a_serial(mock_sysfs, name, files):
     """The fallback must cost nothing on the hardware we ship, where sysfs
-    always has a serial: udev is not looked up at all."""
+    always has a serial: udev is not looked up at all, not even for a lunid
+    sysfs lacks (the t10 wwid of the SATA case)."""
     with mock_sysfs(files):
-        with patch("middlewared.utils.disks_.disk_class.udev_fallback_serial") as udev:
+        with patch("middlewared.utils.disks_.disk_class.udev_fallback_identity") as udev:
             DiskEntry(name=name, devpath=f"/dev/{name}").identifier
 
     udev.assert_not_called()
@@ -119,9 +153,7 @@ def test_udev_serial_used_when_sysfs_has_none(mock_sysfs):
     """A disk with no VPD page 0x80 gets the serial udev resolved, and so a
     stable identifier without reading its partition table."""
     with mock_sysfs(SCSI_NO_PAGE_80_SYSFS):
-        with patch(
-            "middlewared.utils.disks_.disk_class.udev_fallback_serial", return_value=fallback_serial(SCSI_NO_PAGE_80)
-        ):
+        with real_udev_fallback(SCSI_NO_PAGE_80):
             with patch.object(DiskEntry, "partitions") as partitions:
                 disk = DiskEntry(name="sda", devpath="/dev/sda")
                 assert disk.serial == "6002248079f9f66f426ea82fb0957801"
@@ -130,14 +162,33 @@ def test_udev_serial_used_when_sysfs_has_none(mock_sysfs):
     partitions.assert_not_called()
 
 
+def test_udev_wwn_used_when_the_serial_came_from_udev(mock_sysfs):
+    """usb-storage skips VPD pages, so such a disk has no wwid in sysfs either;
+    the WWN ata_id read from the drive comes from the same udev lookup."""
+    with mock_sysfs({}):
+        with real_udev_fallback(USB_ATA):
+            disk = DiskEntry(name="sda", devpath="/dev/sda")
+            assert disk.lunid == "50014ee2b3a4b5c6"
+            assert disk.identifier == "{serial_lunid}WD-WCC4N5PL7XKV_50014ee2b3a4b5c6"
+
+
 def test_udev_fallback_ignores_a_model_only_id_serial():
     """ID_SERIAL is the bare model for a drive with no serial, so it must not
     reach the fallback, or every serial-less drive of one model would share
     an identifier."""
-    device = MagicMock()
-    device.properties = SATA_NO_SERIAL
-    with patch("middlewared.utils.disks_.udev.pyudev.Devices.from_name", return_value=device):
-        assert udev_fallback_serial("sda") is None
+    with real_udev_fallback(SATA_NO_SERIAL):
+        assert udev_fallback_identity("sda") == (None, None)
+
+
+def test_udev_fallback_keeps_a_bridge_serial_for_its_first_lun_only():
+    """usb_id's serial is the bridge's, shared by every LUN behind it. The
+    first LUN keeps it, as the disk table always has for a single-disk
+    enclosure; a card reader's further slots must not collapse into it."""
+    with real_udev_fallback(USB_BRIDGE):
+        assert udev_fallback_identity("sda") == ("2HC015KJ", None)
+
+    with real_udev_fallback(USB_CARD_READER_SLOT):
+        assert udev_fallback_identity("sdb") == (None, None)
 
 
 def test_udev_fallback_none_when_udev_has_no_record():
@@ -145,7 +196,7 @@ def test_udev_fallback_none_when_udev_has_no_record():
         "middlewared.utils.disks_.udev.pyudev.Devices.from_name",
         side_effect=pyudev.DeviceNotFoundByNameError("block", "sda"),
     ):
-        assert udev_fallback_serial("sda") is None
+        assert udev_fallback_identity("sda") == (None, None)
 
 
 def test_udev_fallback_skips_an_undecodable_serial():
@@ -155,12 +206,12 @@ def test_udev_fallback_skips_an_undecodable_serial():
     def get(key, default=None):
         if key == "ID_SCSI_SERIAL":
             raise UnicodeDecodeError("utf-8", b"\xff", 0, 1, "invalid start byte")
-        return {"ID_SERIAL_SHORT": "5000cca2b00d6cdc"}.get(key, default)
+        return {"ID_BUS": "scsi", "ID_SERIAL_SHORT": "5000cca2b00d6cdc"}.get(key, default)
 
     device = MagicMock()
     device.properties.get.side_effect = get
     with patch("middlewared.utils.disks_.udev.pyudev.Devices.from_name", return_value=device):
-        assert udev_fallback_serial("sda") == "5000cca2b00d6cdc"
+        assert udev_fallback_identity("sda") == ("5000cca2b00d6cdc", None)
 
 
 @pytest.mark.parametrize(
@@ -195,13 +246,15 @@ def test_lunid_from_block_device_falls_back_to_sysfs(mock_sysfs):
         ("sda", SAS_HGST, SAS_HGST_SYSFS, "{serial_lunid}5QG7BWGF_5000cca2b00d6cdc"),
         ("nvme0n1", NVME_IX, NVME_IX_SYSFS, "{serial_lunid}511250113257000151_6479a7a14a2002a3"),
         ("sda", SATA_QEMU, SATA_QEMU_SYSFS, "{serial}mzgzzuQN"),
-        # only through the udev fallback, since sysfs has no serial for this disk
+        # only through the udev fallback, since sysfs has no serial for these disks
         (
             "sda",
             SCSI_NO_PAGE_80,
             SCSI_NO_PAGE_80_SYSFS,
             "{serial_lunid}6002248079f9f66f426ea82fb0957801_6002248079f9f66f",
         ),
+        ("sda", USB_ATA, {}, "{serial_lunid}WD-WCC4N5PL7XKV_50014ee2b3a4b5c6"),
+        ("sda", USB_BRIDGE, {}, "{serial}2HC015KJ"),
     ],
 )
 def test_sync_path_and_disk_entry_agree(mock_sysfs, name, udev, sysfs, expected):
@@ -217,7 +270,7 @@ def test_sync_path_and_disk_entry_agree(mock_sysfs, name, udev, sysfs, expected)
     """
     device = udev_device(name, udev)
     with mock_sysfs(sysfs):
-        with patch("middlewared.utils.disks_.disk_class.udev_fallback_serial", return_value=fallback_serial(udev)):
+        with real_udev_fallback(udev):
             sys_disks = {name: DeviceService(Mock()).get_disk_details(None, device)}
             via_sync_path = dev_to_ident(name, sys_disks)
             via_disk_entry = DiskEntry(name=name, devpath=f"/dev/{name}").identifier

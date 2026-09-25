@@ -20,7 +20,7 @@ import truenas_pylibsed as sed
 from .disk_io import create_gpt_partition, read_gpt, wipe_disk_quick
 from .gpt_parts import PART_TYPES, GptPartEntry
 from .identifier import build_identifier, join_serial_lunid
-from .udev import udev_fallback_serial
+from .udev import udev_fallback_identity
 
 logger = logging.getLogger(__name__)
 
@@ -166,9 +166,28 @@ class DiskEntry:
         return 512 * self.size_sectors
 
     @functools.cached_property
+    def _udev_identity(self) -> tuple[str | None, str | None]:
+        # only ever reached for a disk sysfs has no serial for, see `serial`
+        return udev_fallback_identity(self.name)
+
+    @functools.cached_property
     def serial(self) -> str | None:
         """The disk's serial number as reported by sysfs, or failing that as
         udev resolved it."""
+        if serial := self._sysfs_serial:
+            return serial
+
+        # sysfs has a serial for every disk we ship, so this only runs for a
+        # disk with no VPD page 0x80: usb-storage sets skip_vpd_pages, and a
+        # SCSI device may implement page 0x83 without page 0x80. udev usually
+        # still has one for those, and using it gives netdata, which runs as
+        # its own user and cannot read the partition table, the same identifier
+        # middlewared computes. It costs about 150us per such disk each time
+        # it runs, so on the disk-stats tick as well.
+        return self._udev_identity[0]
+
+    @functools.cached_property
+    def _sysfs_serial(self) -> str | None:
         # nvme devices
         serial = self.__opener(relative_path="device/serial")
         if not serial:
@@ -210,20 +229,27 @@ class DiskEntry:
 
         # strip is required because we see these cases otherwise
         # >>> d.serial reported as '        3FJ1U1HT'
-        if serial and (serial := serial.strip()):
-            return serial
-
-        # sysfs has a serial for every disk we ship, so this only runs for a
-        # disk with no VPD page 0x80: usb-storage sets skip_vpd_pages, and a
-        # SCSI device may implement page 0x83 without page 0x80. udev usually
-        # still has one for those, and using it gives netdata, which runs as
-        # its own user and cannot read the partition table, the same identifier
-        # middlewared computes. It costs about 150us per such disk each time
-        # it runs, so on the disk-stats tick as well.
-        return udev_fallback_serial(self.name)
+        return serial.strip() if serial else None
 
     @functools.cached_property
     def lunid(self) -> str | None:
+        """The disk's lunid as presented in sysfs, or failing that as udev
+        resolved it, but only for a disk whose serial came from udev too."""
+        if (lunid := self._sysfs_lunid) is not None:
+            return lunid
+
+        if self._sysfs_serial:
+            # sysfs had the serial, so udev was never consulted, and a wwid it
+            # does not carry (a t10 designator) stays None as it always has
+            return None
+
+        # usb-storage skips VPD pages entirely, so a disk whose serial came from
+        # udev has no wwid in sysfs either, while ata_id recorded the WWN it read
+        # from the drive. This is the lookup the serial already paid for.
+        return self._udev_identity[1]
+
+    @functools.cached_property
+    def _sysfs_lunid(self) -> str | None:
         """The disk's 'wwid' as presented in sysfs.
 
         NOTE: 'lunid' might be a bit of a misnomer since
