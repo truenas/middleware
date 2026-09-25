@@ -13,6 +13,10 @@ BY_UUID = (
             "serial": None,
             "serial_lunid": None,
             "parts": [{
+                # an EFI partition ahead of the ZFS one must not be picked
+                "partition_type": "c12a7328-f81f-11d2-ba4b-00a0c93ec93b",
+                "partition_uuid": "0f3b7a52-1c2d-4e6f-8a9b-0c1d2e3f4a5b",
+            }, {
                 "partition_type": "516e7cba-6ecf-11d6-8ff8-00022d09712b",
                 "partition_uuid": "b9253137-a0a4-11ec-b194-3cecef615fde",
             }],
@@ -65,10 +69,23 @@ BY_XEN_DEVICENAME = (
     },
     "{devicename}xvdc",
 )
+# get_disk_serial_from_block_device returns '' rather than None, and the
+# not-found branch of get_disks_with_identifiers fills both fields with ''
+BY_EMPTY_STRINGS = (
+    "sdb",
+    {
+        "sdb": {
+            "serial": "",
+            "serial_lunid": "",
+            "parts": []
+        }
+    },
+    "{devicename}sdb",
+)
 
 
 @pytest.mark.parametrize('disk_name, sys_disks, result', [
-    BY_UUID, BY_SERIAL_LUNID, BY_DEVICENAME, BY_SERIAL, BY_XEN_DEVICENAME
+    BY_UUID, BY_SERIAL_LUNID, BY_DEVICENAME, BY_SERIAL, BY_XEN_DEVICENAME, BY_EMPTY_STRINGS
 ])
 def test_dev_to_ident(disk_name, sys_disks, result):
     assert result == OBJ.dev_to_ident(disk_name, sys_disks)

@@ -5,48 +5,11 @@ to match udev's ID_WWN behavior. For NAA/0x/eui WWNs we strip the prefix
 and return first 16 hex chars if applicable. For t10 identifiers lunid
 is None (udev doesn't use them for ID_WWN).
 """
-from contextlib import contextmanager
 from unittest.mock import patch
 
 import pytest
 
 from middlewared.utils.disks_.disk_class import DiskEntry
-
-
-@pytest.fixture
-def mock_sysfs(tmp_path):
-    """
-    Build an in-memory /sys/block tree and patch `open`
-    so DiskEntry reads from it transparently.
-    """
-    @contextmanager
-    def _mock(files: dict[str, bytes | str]):
-        # Write files to temporary directory
-        for rel_path, data in files.items():
-            fpath = tmp_path / "sys" / "block" / rel_path
-            fpath.parent.mkdir(parents=True, exist_ok=True)
-
-            if isinstance(data, (bytes, bytearray)):
-                fpath.write_bytes(data)
-            else:
-                fpath.write_text(data)
-
-        # Patch builtins.open to redirect /sys/block reads to our temp dir
-        import builtins
-        original_open = builtins.open
-
-        def mock_open(path, mode='r', *args, **kwargs):
-            if "/sys/block/" in str(path):
-                # Extract relative path after /sys/block/
-                rel_path = str(path).split("/sys/block/", 1)[1]
-                test_path = tmp_path / "sys" / "block" / rel_path
-                return original_open(str(test_path), mode, *args, **kwargs)
-            return original_open(path, mode, *args, **kwargs)
-
-        with patch('builtins.open', side_effect=mock_open):
-            yield
-
-    return _mock
 
 
 @pytest.mark.parametrize(
