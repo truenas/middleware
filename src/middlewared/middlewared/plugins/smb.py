@@ -400,16 +400,13 @@ class SMBService(ConfigService):
         # If samba is clustered, we only want the cluster leader doing the
         # synchronization between the DB and ctdb files.
         clustered = (await self.middleware.call('smb.config'))['stateful_failover']
-        if clustered and await self.middleware.call('failover.is_single_master_node'):
+        if clustered and not await self.middleware.call('failover.is_single_master_node'):
             await self.middleware.call('smb.set_configured')
             config_job.set_progress(100, 'Finished configuring SMB.')
             return
 
-        await self.middleware.call('smb.apply_account_policy')
-        pdb_job = await self.middleware.call("smb.synchronize_passdb")
-        grp_job = await self.middleware.call("smb.synchronize_group_mappings", True)
-        await pdb_job.wait()
-        await grp_job.wait()
+        sync_job = await self.middleware.call('smb.synchronize_local_accounts', True)
+        await sync_job.wait()
 
         # Our share_info.tdb file should already be synchronized with the configuration
         # database since the former resides in persistent storage on the system dataset.
@@ -420,6 +417,66 @@ class SMBService(ConfigService):
         await self.middleware.call('smb.sharesec.flush_share_info')
         await self.middleware.call('smb.set_configured')
         config_job.set_progress(100, 'Finished configuring SMB.')
+
+    @private
+    @job(lock='smb_sync_local_accounts', lock_queue_size=1)
+    async def synchronize_local_accounts(self, accounts_job, bypass_sentinel_check=False):
+        """
+        Reconcile the SMB account policy, passdb.tdb and group_mapping.tdb with the
+        local configuration database.
+
+        All three are node-local derived state. On an HA standby controller this is
+        the only thing that updates them, since the standby receives the replicated
+        configuration database but none of the incremental passdb and groupmap
+        operations performed on the active controller.
+        """
+        # The account policy is applied first because it drives pdbedit against the
+        # same file that synchronize_passdb takes a transaction lock on.
+        await self.middleware.call('smb.apply_account_policy')
+
+        pdb_job = await self.middleware.call('smb.synchronize_passdb')
+        grp_job = await self.middleware.call('smb.synchronize_group_mappings', bypass_sentinel_check)
+        await pdb_job.wait(raise_error=True)
+        await grp_job.wait(raise_error=True)
+
+    @private
+    @job(lock='smb_push_local_accounts', lock_queue_size=1)
+    def push_local_accounts_to_standby(self, push_job):
+        """
+        Have the HA standby controller reconcile its SMB account databases.
+
+        The standby has no delta information for the account policy, passdb.tdb or
+        group_mapping.tdb and so performs a full reconcile against the replicated
+        configuration database.
+
+        This is a job so that callers are not blocked: they receive the job and
+        discard it rather than waiting. It matters because the underlying client
+        blocks for `connect_timeout` when the remote node is unreachable, which
+        would otherwise be charged to every account change. The lock additionally
+        coalesces bursts, so bulk account operations produce at most one running
+        and one queued push rather than one per account.
+        """
+        if not self.middleware.call_sync('failover.licensed'):
+            return
+
+        if self.middleware.call_sync('datastore.config', 'services.cifs')['cifs_srv_stateful_failover']:
+            # ctdbd replicates the persistent databases, and only the master node
+            # is permitted to write them
+            return
+
+        if self.middleware.call_sync('failover.status') != 'MASTER':
+            return
+
+        try:
+            self.middleware.call_sync(
+                'failover.call_remote', 'smb.synchronize_local_accounts', [],
+                {'job': True, 'job_return': True, 'raise_connect_error': False, 'timeout': 10}
+            )
+        except Exception:
+            self.logger.warning(
+                'Failed to synchronize SMB account databases on standby controller',
+                exc_info=True
+            )
 
     @private
     async def validate_smb(self, new, verrors):
@@ -640,8 +697,9 @@ class SMBService(ConfigService):
         if old['netbiosname'] != new_config['netbiosname']:
             await self.middleware.call('smb.set_system_sid')
             # we need to update domain field in passdb.tdb
-            pdb_job = await self.middleware.call('smb.synchronize_passdb')
-            await pdb_job.wait()
+            sync_job = await self.middleware.call('smb.synchronize_local_accounts')
+            await sync_job.wait()
+            await self.middleware.call('smb.push_local_accounts_to_standby')
 
             await self.middleware.call('idmap.gencache.flush')
 
@@ -652,8 +710,9 @@ class SMBService(ConfigService):
             )).wait(raise_error=True)
 
         if new['admin_group'] and new['admin_group'] != old['admin_group']:
-            grp_job = await self.middleware.call('smb.synchronize_group_mappings')
-            await grp_job.wait()
+            sync_job = await self.middleware.call('smb.synchronize_local_accounts')
+            await sync_job.wait()
+            await self.middleware.call('smb.push_local_accounts_to_standby')
 
         if (
             (SearchProtocol.SPOTLIGHT in old['search_protocols']) !=
