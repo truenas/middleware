@@ -20,9 +20,15 @@ from middlewared.api.current import (
     ConfigUploadResult,
 )
 from middlewared.service import CallError, Service, job, private
-from middlewared.utils.db import FREENAS_DATABASE, UPLOADED_DB_PATH
+from middlewared.utils.db import FREENAS_DATABASE, UPLOADED_DB_PATH, query_config_table
 from middlewared.utils.privilege import credential_has_full_admin
-from middlewared.utils.pwenc import PWENC_FILE_SECRET, PWENC_FILE_SECRET_MODE, pwenc_generate_secret, pwenc_rename
+from middlewared.utils.pwenc import (
+    PWENC_FILE_SECRET,
+    PWENC_FILE_SECRET_MODE,
+    pwenc_generate_secret,
+    pwenc_rename,
+    pwenc_secret_matches,
+)
 
 CONFIG_FILES = {
     'pwenc_secret': PWENC_FILE_SECRET,
@@ -41,6 +47,34 @@ DATABASE_NAME = os.path.basename(FREENAS_DATABASE)
 PWENC_SECRET_NAME = os.path.basename(PWENC_FILE_SECRET)
 CONFIGURATION_UPLOAD_REBOOT_REASON = 'Configuration upload'
 CONFIGURATION_RESET_REBOOT_REASON = 'Configuration reset'
+
+
+def _check_uploaded_secret(secret_path, db_path):
+    if not os.path.exists(secret_path):
+        raise CallError(
+            'The uploaded configuration file does not include the password secret seed. Without it every password, '
+            'private key and API key it contains is unrecoverable. Save the configuration again with "Export Password '
+            'Secret Seed" selected and upload that file instead.'
+        )
+
+    try:
+        pwenc_check = query_config_table('system_settings', db_path)['stg_pwenc_check']
+    except (sqlite3.Error, LookupError) as e:
+        raise CallError(
+            f'Uploaded TrueNAS database file is not valid: unable to read the password secret seed check value: {e}'
+        ) from e
+
+    if not isinstance(pwenc_check, str) or not pwenc_check:
+        raise CallError(
+            'Uploaded TrueNAS database file is not valid: the password secret seed check value is missing or is '
+            'not text.'
+        )
+
+    if not pwenc_secret_matches(secret_path, pwenc_check):
+        raise CallError(
+            'The password secret seed in the uploaded configuration file is not the one that encrypted its database. '
+            'Upload the configuration file and the password secret seed that were saved together.'
+        )
 
 
 @contextlib.contextmanager
@@ -112,6 +146,10 @@ class ConfigService(Service):
     def upload(self, app, job):
         """
         Accepts a configuration file via job pipe.
+
+        The file must be an archive saved by :method:`config.save` that carries the password secret seed belonging to
+        the database it contains. A bare database, or one accompanied by a different seed, is rejected before anything
+        on this system is replaced.
         """
         self._check_access(job, "upload")
 
@@ -130,8 +168,13 @@ class ConfigService(Service):
                     if f.tell() > max_size:
                         raise CallError(f'Uploaded config is greater than maximum allowed size ({max_size} Bytes)')
 
-            is_tar = tarfile.is_tarfile(stf.name)
-            self.upload_impl(job, stf.name, is_tar_file=is_tar)
+            if not tarfile.is_tarfile(stf.name):
+                raise CallError(
+                    'The uploaded file is not a configuration archive. Save the configuration again with "Export '
+                    'Password Secret Seed" selected and upload that file instead.'
+                )
+
+            self.upload_impl(job, stf.name)
 
         self.middleware.run_coroutine(
             self.middleware.call('system.reboot', CONFIGURATION_UPLOAD_REBOOT_REASON, {'delay': 10}, app=app),
@@ -139,21 +182,11 @@ class ConfigService(Service):
         )
 
     @private
-    def upload_impl(self, job, file_or_tar, is_tar_file=False):
+    def upload_impl(self, job, tar_path):
         job.set_progress(15, 'Replacing database file')
         with tempfile.TemporaryDirectory() as temp_dir:
-            if is_tar_file:
-                with tarfile.open(file_or_tar, 'r') as tar:
-                    tar.extractall(temp_dir, filter='tar')
-            else:
-                # if it's just the db then copy it to the same
-                # temp directory to keep the logic simple(ish).
-                # it's also important that we add a '.db' suffix
-                # since we're assuming (since this is a single file)
-                # that this is the database only and our logic below
-                # assumes the name of the file is freenas-v1.db OR a
-                # file that has a '.db' suffix
-                shutil.copy2(file_or_tar, f'{temp_dir}/{DATABASE_NAME}')
+            with tarfile.open(tar_path, 'r') as tar:
+                tar.extractall(temp_dir, filter='tar')
 
             pathobj = pathlib.Path(temp_dir)
             found_db_file = None
@@ -171,7 +204,9 @@ class ConfigService(Service):
                     break
 
             if found_db_file is None:
-                raise CallError('Neither a valid tar or TrueNAS database file was provided.')
+                raise CallError('The uploaded configuration archive does not contain a TrueNAS database.')
+
+            _check_uploaded_secret(f'{temp_dir}/{PWENC_SECRET_NAME}', str(found_db_file.absolute()))
 
             p = subprocess.run([
                 'migrate',
@@ -189,7 +224,6 @@ class ConfigService(Service):
                 abspath = str(i.absolute())
                 if i.name == found_db_file.name:
                     shutil.move(abspath, UPLOADED_DB_PATH)
-                    send_to_remote.append(UPLOADED_DB_PATH)
 
                 if i.name == 'pwenc_secret':
                     shutil.move(abspath, PWENC_UPLOADED)
@@ -212,6 +246,10 @@ class ConfigService(Service):
                 if i.name == 'snmp_engine_id':
                     shutil.move(abspath, SNMP_ENGINE_ID_UPLOADED)
                     send_to_remote.append(SNMP_ENGINE_ID_UPLOADED)
+
+            # The standby applies the uploaded database at its next boot even if the files that
+            # accompany it never arrived, so it has to be the last thing we send.
+            send_to_remote.append(UPLOADED_DB_PATH)
 
         job.set_progress(25, 'Running database upload hooks')
         self.middleware.call_hook_sync('config.on_upload', UPLOADED_DB_PATH)
