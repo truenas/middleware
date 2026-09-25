@@ -1,9 +1,7 @@
 from datetime import datetime, timezone
 import errno
-import os
 from types import MappingProxyType
 
-from fenced.fence import ExitCode as FencedExitCodes
 from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.api import api_method
@@ -16,8 +14,8 @@ from middlewared.api.current import (
     PoolUpdateResult,
     PoolValidateNameArgs,
     PoolValidateNameResult,
+    ZpoolQuery,
 )
-from middlewared.plugins.pool_.utils import UpdateImplArgs
 from middlewared.plugins.zfs_.validation_utils import validate_pool_name
 from middlewared.service import CallError, CRUDService, ValidationErrors, job, private
 import middlewared.sqlalchemy as sa
@@ -147,15 +145,15 @@ class PoolService(CRUDService):
             },
         }
 
-        if info := await self.middleware.call('zpool.query_impl', {
-            'pool_names': [pool_name],
-            'properties': [
+        if info := await self.call2(self.s.zpool.query_impl, ZpoolQuery(
+            pool_names=[pool_name],
+            properties=[
                 'size', 'allocated', 'free', 'freeing', 'fragmentation',
                 'autotrim', 'dedup_table_quota', 'dedup_table_size', 'health',
             ],
-            'topology': True, 'scan': True, 'expand': True,
-            'follow_links': False, 'full_path': True,
-        }):
+            topology=True, scan=True, expand=True,
+            follow_links=False, full_path=True,
+        )):
             info = info[0]
 
             # `zpool.c` uses `zpool_get_state_str` to print pool status.
@@ -572,35 +570,9 @@ class PoolService(CRUDService):
 
         verrors.check()
 
-        disks, vdevs = await self._process_topology('pool_create', data, None, data['all_sed'])
-
-        # WARNING: Fenced MUST NOT start (or reload) until SED provisioning inside
-        # self._process_topology() has completed. Its persistent reservation
-        # register/acquire burst racing the TCG Security Send/Receive session
-        # corrupts controller state on some SED drive firmware (observed on
-        # TCG Ruby 1.0 NVMe). SED setup writes no user data, so fencing is
-        # only required before disks are written to (resize, format, zpool
-        # create), all of which happen below.
-        is_ha = await self.middleware.call('failover.licensed')
-        if is_ha and (rc := await self.middleware.call('failover.fenced.start')):
-            if rc == FencedExitCodes.ALREADY_RUNNING.value[0]:
-                try:
-                    await self.middleware.call('failover.fenced.signal', {'reload': True})
-                except Exception:
-                    self.logger.error('Unhandled exception reloading fenced', exc_info=True)
-            else:
-                err = 'Unexpected error starting fenced'
-                for i in filter(lambda x: x.value[0] == rc, FencedExitCodes):
-                    err = i.value[1]
-                raise CallError(err)
-
-        if osize := (await self.call2(self.s.system.advanced.config)).overprovision:
-            if log_disks := {disk: osize
-                             for disk in sum([vdev['disks'] for vdev in data['topology'].get('log', [])], [])}:
-                # will log errors if there are any so it won't crash here (this matches CORE behavior)
-                await (await self.middleware.call('disk.resize', log_disks, True)).wait()
-
-        await self.middleware.call('pool.format_disks', job, disks, 0, 30)
+        disks, vdevs = await self._process_topology('pool_create', data)
+        log_disks = [disk for vdev in data['topology'].get('log', []) for disk in vdev['disks']]
+        await self.call2(self.s.zpool.prepare_disks, job, disks, log_disks, data['all_sed'], 'pool_create')
 
         options = {
             'feature@lz4_compress': 'enabled',
@@ -640,10 +612,8 @@ class PoolService(CRUDService):
         if data['checksum'] is not None:
             fsoptions['checksum'] = data['checksum'].lower()
 
-        cachefile_dir = os.path.dirname(ZPOOL_CACHE_FILE)
-        await self.middleware.run_in_thread(os.makedirs, cachefile_dir, exist_ok=True)
-
-        pool_id = z_pool = encrypted_dataset_pk = None
+        pool_id = encrypted_dataset_pk = None
+        created = False
         try:
             job.set_progress(90, 'Creating ZFS Pool')
 
@@ -653,32 +623,10 @@ class PoolService(CRUDService):
                 'options': options,
                 'fsoptions': fsoptions,
             })
+            created = True
 
             job.set_progress(95, 'Setting pool options')
-
-            z_pool = (await self.middleware.call(
-                'zpool.query_impl', {'pool_names': [data['name']]}
-            ))[0]
-
-            # Inherit mountpoint after create because we set mountpoint on creation
-            # making it a "local" source.
-            await self.middleware.call(
-                'pool.dataset.update_impl',
-                UpdateImplArgs(name=data['name'], iprops={'mountpoint'})
-            )
-            await self.call2(self.s.zfs.resource.mount, data['name'])
-
-            pool = {
-                'name': data['name'],
-                'guid': str(z_pool['guid']),
-                'all_sed': data['all_sed'],
-            }
-            pool_id = await self.middleware.call(
-                'datastore.insert',
-                'storage.volume',
-                pool,
-                {'prefix': 'vol_'},
-            )
+            pool_id = await self.call2(self.s.zpool.register, data['name'], data['all_sed'])
 
             encrypted_dataset_data = {
                 'name': data['name'], 'encryption_key': encryption_dict.get('key'),
@@ -687,35 +635,20 @@ class PoolService(CRUDService):
             encrypted_dataset_pk = await self.middleware.call(
                 'pool.dataset.insert_or_update_encrypted_record', encrypted_dataset_data
             )
-            await self.middleware.call('datastore.insert', 'storage.scrub', {'volume': pool_id}, {'prefix': 'scrub_'})
         except Exception as e:
             # Something wrong happened, we need to rollback and destroy pool.
             self.logger.debug('Pool %s failed to create with topology %s', data['name'], data['topology'])
-            if z_pool:
-                try:
-                    await self.middleware.call('zfs.pool.delete', data['name'])
-                except Exception:
-                    self.logger.warning('Failed to delete pool on pool.create rollback', exc_info=True)
-            if pool_id:
-                await self.middleware.call('datastore.delete', 'storage.volume', pool_id)
+            await self.call2(self.s.zpool.rollback_create, data['name'], created, pool_id)
             if encrypted_dataset_pk:
                 await self.middleware.call(
                     'pool.dataset.delete_encrypted_datasets_from_db', [['id', '=', encrypted_dataset_pk]]
                 )
             raise e
 
-        # There is really no point in waiting all these services to reload so do them
-        # in background.
-        self.middleware.create_task(self.middleware.call('pool.restart_services'))
-
-        pool = await self.get_instance(pool_id)
-        await self.middleware.call_hook('pool.post_create', pool=pool)
-        await self.middleware.call_hook('pool.post_create_or_update', pool=pool)
+        pool = await self.call2(self.s.zpool.finish_create, data['name'], pool_id)
         await self.middleware.call_hook(
             'dataset.post_create', {'encrypted': bool(encryption_dict), **encrypted_dataset_data}
         )
-        self.middleware.send_event('pool.query', 'ADDED', id=pool_id, fields=pool)
-        await self.middleware.call('zpool.send_change_event', pool['name'], 'ADDED')
         return pool
 
     @private
@@ -794,8 +727,8 @@ class PoolService(CRUDService):
         if dedup_table_quota_value is not None:
             properties['dedup_table_quota'] = {'value': dedup_table_quota_value}
 
-        zfs_pool = await self.middleware.call(
-            'zpool.query_impl', {'pool_names': [pool['name']], 'properties': ['ashift']}
+        zfs_pool = await self.call2(
+            self.s.zpool.query_impl, ZpoolQuery(pool_names=[pool['name']], properties=['ashift'])
         )
         if zfs_pool and zfs_pool[0]['properties']['ashift']['source'] == 'DEFAULT':
             # https://ixsystems.atlassian.net/browse/NAS-112093
@@ -827,7 +760,7 @@ class PoolService(CRUDService):
 
     @private
     async def is_draid_pool(self, pool_name):
-        if pool := await self.middleware.call('zpool.query_impl', {'pool_names': [pool_name], 'topology': True}):
+        if pool := await self.call2(self.s.zpool.query_impl, ZpoolQuery(pool_names=[pool_name], topology=True)):
             if any(
                 group['vdev_type'].startswith('draid')
                 for group in pool[0]['topology']['data'] + pool[0]['topology'].get('special', [])

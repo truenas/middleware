@@ -76,6 +76,7 @@ jobs:
             middlewared/plugins/usage/ \
             middlewared/plugins/vm/ \
             middlewared/plugins/zfs/ \
+            middlewared/plugins/zpool/ \
             middlewared/plugins/dns_client.py \
             middlewared/plugins/filesystem.py \
             middlewared/plugins/keyvalue.py \

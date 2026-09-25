@@ -245,7 +245,7 @@ def test_pool():
 
 @pytest.mark.parametrize('real_path', [True, False])
 def test_zpool_status_format(test_pool, real_path):
-    assert call('zpool.status', {'name': POOL_NAME, 'real_paths': real_path}) == get_pool_status(
+    assert call('zpool.status', POOL_NAME, real_path) == get_pool_status(
         [disk['name'] for disk in test_pool[1]], real_path
     )
 
@@ -261,8 +261,6 @@ def test_replaced_disk_zpool_status_format(test_pool):
         f'{os.path.basename(disk_mapping[spare_disk])}',
     )
     for real_path in (True, False):
-        assert call(
-            'zpool.status', {"name": POOL_NAME, "real_paths": real_path}
-        ) == get_pool_status(
+        assert call('zpool.status', POOL_NAME, real_path) == get_pool_status(
             [disk['name'] for disk in test_pool[1]], real_path, True
         )

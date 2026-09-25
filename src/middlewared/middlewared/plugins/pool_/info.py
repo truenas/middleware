@@ -16,7 +16,6 @@ from middlewared.api.current import (
     PoolProcessesResult,
     ZFSResourceQuery,
 )
-from middlewared.plugins.zpool import get_zpool_disks_impl, get_zpool_features_impl, is_upgraded_impl
 from middlewared.service import Service, ValidationError, private
 
 from .dataset_processes_utils import processes_using_dataset_tree
@@ -75,13 +74,8 @@ class PoolService(Service):
         pool = await self.middleware.call('pool.get_instance', oid)
         return await processes_using_dataset_tree(self.context, pool['name'])
 
-    @api_method(
-        PoolGetDisksArgs,
-        PoolGetDisksResult,
-        pass_thread_local_storage=True,
-        roles=['POOL_READ']
-    )
-    def get_disks(self, tls, oid):
+    @api_method(PoolGetDisksArgs, PoolGetDisksResult, roles=['POOL_READ'])
+    def get_disks(self, oid):
         """
         Return the device names of all disks belonging to a pool.
 
@@ -108,7 +102,7 @@ class PoolService(Service):
         disks = list()
         for i in pools:
             try:
-                disks.extend(get_zpool_disks_impl(tls.lzh, i['vol_name']))
+                disks.extend(self.call_sync2(self.s.zpool.get_disks, i['vol_name']))
             except ZFSException as e:
                 if e.code == ZFSError.EZFS_NOENT:
                     continue
@@ -127,14 +121,8 @@ class PoolService(Service):
                 info.append(i['name'])
         return info
 
-    @api_method(
-        PoolIsUpgradedArgs,
-        PoolIsUpgradedResult,
-        pass_thread_local_storage=True,
-        roles=['POOL_READ'],
-        removed_in="v26",
-    )
-    def is_upgraded(self, tls, oid):
+    @api_method(PoolIsUpgradedArgs, PoolIsUpgradedResult, roles=['POOL_READ'], removed_in="v26")
+    def is_upgraded(self, oid):
         """
         Returns whether the pool of ``id`` is on the latest version
         and with all feature flags enabled.
@@ -157,4 +145,4 @@ class PoolService(Service):
             )
 
         pname = pool[0]['vol_name']
-        return is_upgraded_impl(get_zpool_features_impl(tls.lzh, pname))
+        return self.call_sync2(self.s.zpool.is_upgraded, pname)

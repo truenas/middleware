@@ -21,6 +21,7 @@ import typing
 
 import truenas_pylibzfs
 
+from middlewared.api.current import ZpoolQuery
 from middlewared.service_exception import ValidationError
 from middlewared.utils.crypto import generate_token
 
@@ -114,8 +115,8 @@ def _nearest_ancestor_entry(data: ZFSResourceCreateArgsData, ctx: CreateContext)
 
 def _pool_has_special_vdev(context: ServiceContext, pool_name: str) -> bool:
     """Return whether the pool has a SPECIAL allocation class vdev."""
-    if pool := context.middleware.call_sync(
-        "zpool.query_impl", {"pool_names": [pool_name], "properties": ["class_special_size"]}
+    if pool := context.call_sync2(
+        context.s.zpool.query_impl, ZpoolQuery(pool_names=[pool_name], properties=["class_special_size"])
     ):
         size = ((pool[0].get("properties") or {}).get("class_special_size") or {}).get("value")
         return isinstance(size, int) and size > 0
@@ -124,7 +125,7 @@ def _pool_has_special_vdev(context: ServiceContext, pool_name: str) -> bool:
 
 def pool_is_draid(context: ServiceContext, pool_name: str) -> bool:
     """Return whether the pool stores data on dRAID vdevs."""
-    if pool := context.middleware.call_sync("zpool.query_impl", {"pool_names": [pool_name], "topology": True}):
+    if pool := context.call_sync2(context.s.zpool.query_impl, ZpoolQuery(pool_names=[pool_name], topology=True)):
         for group in pool[0]["topology"]["data"] + pool[0]["topology"].get("special", []):
             if group["vdev_type"].startswith("draid"):
                 return True

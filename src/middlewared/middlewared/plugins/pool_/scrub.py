@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Literal
 
 from middlewared.api import Event, api_method
 from middlewared.api.current import (
+    ZpoolScrubRun,
     PoolScanChangedEvent,
     PoolScrubCreateArgs,
     PoolScrubCreateResult,
@@ -229,4 +230,4 @@ class PoolScrubService(CRUDService):
         .. deprecated:: 26.0.0
             Use :doc:`zpool.scrub.run <api_methods_zpool.scrub.run>` instead.
         """
-        self.middleware.call_sync('zpool.scrub.run', {'pool_name': name, 'threshold': threshold})
+        self.call_sync2(self.s.zpool.scrub.run, ZpoolScrubRun(pool_name=name, threshold=threshold))

@@ -5,16 +5,22 @@ from truenas_pylibzfs import ZFSError, ZFSException, ZPOOLProperty, libzfs_types
 
 from middlewared.utils.boot.pool import BOOT_POOL_NAME_VALID
 
-from .exceptions import ZpoolNotFoundException
 from .get_zpool_features_impl import get_zpool_features_impl
 from .is_upgraded_impl import is_upgraded_impl
 
 __all__ = ("query_impl",)
 
 
-def _convert_vdev_state(vdev: dict) -> None:
-    """Recursively convert VDevState enums to strings and children tuples to lists."""
+def _convert_vdev_state(vdev: dict[str, typing.Any]) -> None:
+    """Recursively convert VDevState enums and guids to strings and children tuples to lists.
+
+    Guids are 64-bit and JSON consumers such as the web UI read numbers as IEEE
+    doubles, which round anything above 2**53, so they travel as decimal strings.
+    """
     vdev["state"] = vdev["state"].name
+    vdev["guid"] = str(vdev["guid"])
+    if vdev.get("top_guid") is not None:
+        vdev["top_guid"] = str(vdev["top_guid"])
     if vdev["children"]:
         vdev["children"] = list(vdev["children"])
         for child in vdev["children"]:
@@ -23,7 +29,7 @@ def _convert_vdev_state(vdev: dict) -> None:
         vdev["children"] = []
 
 
-def _format_topology(status_dict: dict) -> dict:
+def _format_topology(status_dict: dict[str, typing.Any]) -> dict[str, typing.Any]:
     """Organize vdevs from a pylibzfs status dict into a topology dict.
 
     Places storage vdevs into 'data' and support vdevs (cache,
@@ -40,7 +46,7 @@ def _format_topology(status_dict: dict) -> dict:
         dict with keys: cache, data, dedup, log, spares, special.
         Each value is a list of vdev dicts.
     """
-    top = {
+    top: dict[str, list[dict[str, typing.Any]]] = {
         "cache": [],
         "data": [],
         "dedup": [],
@@ -64,7 +70,7 @@ def _format_topology(status_dict: dict) -> dict:
     return top
 
 
-def _format_scan(s: libzfs_types.struct_zpool_scrub | None) -> dict | None:
+def _format_scan(s: libzfs_types.struct_zpool_scrub | None) -> dict[str, typing.Any] | None:
     """Transform a struct_zpool_scrub into a scan dict, or None.
 
     Args:
@@ -114,7 +120,7 @@ def _format_scan(s: libzfs_types.struct_zpool_scrub | None) -> dict | None:
     }
 
 
-def _format_expand(e: libzfs_types.struct_zpool_expand | None) -> dict | None:
+def _format_expand(e: libzfs_types.struct_zpool_expand | None) -> dict[str, typing.Any] | None:
     """Transform a struct_zpool_expand into an expansion dict, or None.
 
     Args:
@@ -153,7 +159,9 @@ def _format_expand(e: libzfs_types.struct_zpool_expand | None) -> dict | None:
     }
 
 
-def _format_properties(props_struct: libzfs_types.struct_zpool_property, requested_names: list[str]) -> dict:
+def _format_properties(
+    props_struct: libzfs_types.struct_zpool_property, requested_names: list[str]
+) -> dict[str, typing.Any]:
     """Transform struct_zpool_property to a dict of property value dicts."""
     result = {}
     for name in requested_names:
@@ -167,7 +175,7 @@ def _format_properties(props_struct: libzfs_types.struct_zpool_property, request
     return result
 
 
-def _format_features(features_dict: dict[str, libzfs_types.struct_zpool_feature]) -> list[dict]:
+def _format_features(features_dict: dict[str, libzfs_types.struct_zpool_feature]) -> list[dict[str, typing.Any]]:
     """Transform dict[str, struct_zpool_feature] to a list of feature dicts."""
     rv = list()
     for name, feat in features_dict.items():
@@ -182,7 +190,9 @@ def _format_features(features_dict: dict[str, libzfs_types.struct_zpool_feature]
     return rv
 
 
-def _build_pool_dict(pool: libzfs_types.ZFSPool, lzh: libzfs_types.ZFS, data: dict) -> dict:
+def _build_pool_dict(
+    pool: libzfs_types.ZFSPool, lzh: libzfs_types.ZFS, data: dict[str, typing.Any]
+) -> dict[str, typing.Any]:
     """Build a pool dict from pylibzfs pool object.
 
     Args:
@@ -191,7 +201,7 @@ def _build_pool_dict(pool: libzfs_types.ZFSPool, lzh: libzfs_types.ZFS, data: di
         data: Query parameters (pool_names, properties, topology, scan, expand, features).
 
     Returns:
-        A dict matching the ZPoolEntry schema.
+        A dict matching the ZpoolEntry schema.
     """
     # Single status() call — used for both health info and topology
     follow_links = data.get("follow_links", True)
@@ -199,10 +209,11 @@ def _build_pool_dict(pool: libzfs_types.ZFSPool, lzh: libzfs_types.ZFS, data: di
     status_dict = pool.status(asdict=True, follow_links=follow_links, full_path=full_path)
     zpool_status = status_dict["status"]
     is_nonrecoverable = zpool_status in property_sets.ZPOOL_STATUS_NONRECOVERABLE
-    health = pool.get_properties(properties={ZPOOLProperty.HEALTH}).health.value
+    health_prop = pool.get_properties(properties={ZPOOLProperty.HEALTH}).health
+    health = health_prop.value if health_prop is not None else None
     result: dict[str, typing.Any] = {
         "name": pool.name,
-        "guid": status_dict["guid"],
+        "guid": str(status_dict["guid"]),
         "status": health,
         "healthy": not is_nonrecoverable and health == "ONLINE",
         "warning": zpool_status in property_sets.ZPOOL_STATUS_RECOVERABLE,
@@ -248,7 +259,7 @@ def _build_pool_dict(pool: libzfs_types.ZFSPool, lzh: libzfs_types.ZFS, data: di
     return result
 
 
-def _get_zpools_cb(pool, state: list):
+def _get_zpools_cb(pool: libzfs_types.ZFSPool, state: list[str]) -> bool:
     """Callback for iter_pools that collects non-boot pool names.
 
     Appends pool names to `state`, skipping any pool whose name matches
@@ -263,16 +274,16 @@ def _get_zpools_cb(pool, state: list):
     return True
 
 
-def query_impl(lzh: libzfs_types.ZFS, data: dict) -> list[dict]:
+def query_impl(lzh: libzfs_types.ZFS, data: dict[str, typing.Any]) -> list[dict[str, typing.Any]]:
     """Query zpools status.
 
     Args:
         lzh: pylibzfs handle (from tls.lzh or truenas_pylibzfs.open_handle()).
-        data: dict with keys matching ZPoolQuery fields:
+        data: dict with keys matching ZpoolQuery fields:
             pool_names, properties, topology, scan, expand, features.
 
     Returns:
-        list[dict] matching ZPoolEntry schema.
+        list[dict] matching ZpoolEntry schema.
     """
     pool_names = data.get("pool_names")
     if pool_names is None:
@@ -288,9 +299,8 @@ def query_impl(lzh: libzfs_types.ZFS, data: dict) -> list[dict]:
             # status collection (e.g. an error log entry whose dataset was
             # destroyed) must not drop a healthy pool from the results.
             if e.code == ZFSError.EZFS_NOENT:
-                if data.get("raise_on_noent", False):
-                    raise ZpoolNotFoundException(name) from e
                 continue
             raise
         results.append(_build_pool_dict(pool, lzh, data))
     return results
+
