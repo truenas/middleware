@@ -30,6 +30,25 @@ class WebshareEntry(BaseModel):
     groups: list[str] = Field(
         description="A list of AD/LDAP group names whose members will be granted access to Webshare.",
     )
+    mcp_enabled: bool = Field(
+        description=(
+            "Enable the Webshare Model Context Protocol (MCP) server, which lets users connect an AI assistant to their"
+            " Webshare files."
+        ),
+    )
+    mcp_allowed_groups: list[NonEmptyString] = Field(
+        description=(
+            "Groups whose members may connect an AI assistant to Webshare. Each group must also grant Webshare access:"
+            " `truenas_webshare` or a group listed in `groups`. At least one group is required when `mcp_enabled` is"
+            " set."
+        ),
+    )
+    mcp_allow_write: bool = Field(
+        description=(
+            "Allow the AI assistant to create new files and directories. It can never overwrite, delete, or rename"
+            " existing files. When unset, access is read-only."
+        ),
+    )
 
 
 class WebshareUpdate(WebshareEntry, metaclass=ForUpdateMetaclass):

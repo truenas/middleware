@@ -2,7 +2,7 @@ import json
 import os
 
 from middlewared.plugins.etc import FileShouldNotExist
-from middlewared.utils.webshare import WEBSHARE_BULK_DOWNLOAD_PATH, WEBSHARE_PATH
+from middlewared.utils.webshare import WEBSHARE_BULK_DOWNLOAD_PATH, WEBSHARE_GROUP, WEBSHARE_PATH
 
 
 def render(service, middleware):
@@ -18,7 +18,7 @@ def render(service, middleware):
     os.makedirs("/etc/webshare-auth", exist_ok=True, mode=0o700)
     return json.dumps({
         "pam_service_name": "webshare",
-        "allowed_groups": ["truenas_webshare"] + config.groups,
+        "allowed_groups": [WEBSHARE_GROUP] + config.groups,
         "webshare_config_path": "/etc/webshare/config.json",
         "log_level": "info",
         "data_directory": WEBSHARE_PATH,
@@ -36,6 +36,11 @@ def render(service, middleware):
         },
         "truesearch": {
             "enabled": config.search,
+        },
+        "mcp": {
+            "enabled": config.mcp_enabled,
+            "allowed_groups": config.mcp_allowed_groups,
+            "allow_write": config.mcp_allow_write,
         },
         "proxy": {
             "enabled": True,
