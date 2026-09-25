@@ -240,7 +240,7 @@ def write_config_backups(work: list[tuple[str, dict[str, Any]]]) -> list[tuple[s
 
 def recovery_blockers(properties: dict[str, Any], mounted_children: list[str]) -> list[str]:
     """Why the S3 service could not serve this dataset. Each mirrors a
-    check it makes at registration and answers `503` for."""
+    check it makes when it registers a bucket."""
     def value(name: str) -> str | None:
         prop = properties.get(name)
         return prop["value"] if prop else None

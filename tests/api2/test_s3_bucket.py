@@ -444,8 +444,8 @@ def test_a_refusal_registers_nothing(owner):
 
 
 def test_a_refusal_names_what_would_refuse_the_dataset(owner):
-    """Each refusal mirrors a check the S3 service makes at registration
-    and answers 503 for."""
+    """Each refusal mirrors a check the S3 service makes when it
+    registers a bucket."""
     with deregistered_bucket():
         ssh(f"zfs set readonly=on {DATASET}")
         try:
