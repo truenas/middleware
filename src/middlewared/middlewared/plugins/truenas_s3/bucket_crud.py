@@ -108,33 +108,35 @@ class BucketPath(typing.NamedTuple):
     """The path within the bucket's dataset, empty at its mount point."""
 
 
-BUCKET_DATASET_PROPERTIES: Mapping[str, str] = MappingProxyType({
-    # the first three are create-time only and would otherwise inherit
-    # from the parent; the daemon never re-checks any of them
-    "casesensitivity": "sensitive",
-    "normalization": "none",
-    "utf8only": "off",
-    "xattr": "sa",
-    # the daemon passes a directory's inheritable NFSv4 ACEs to every
-    # object it stages, and a POSIX ACL parent has none to pass.
-    # restricted keeps a chmod from another protocol from stripping them
-    "acltype": "nfsv4",
-    "aclmode": "restricted",
-    "aclinherit": "passthrough",
-})
-"""What the S3 on-disk format requires of a bucket's dataset: what a
-create sets and what a recover checks. A proxy because a create unpacks
-it into a model the ZFS rules then write into."""
+def bucket_dataset_properties() -> ZFSResourceCreateProperties:
+    """What the S3 on-disk format requires of a bucket's dataset. A fresh
+    model per call, since the create rules write into the one they are
+    given."""
+    return ZFSResourceCreateProperties(
+        # the first three are create-time only and would otherwise inherit
+        # from the parent; the daemon never re-checks any of them
+        casesensitivity="sensitive",
+        normalization="none",
+        utf8only="off",
+        xattr="sa",
+        # the daemon passes a directory's inheritable NFSv4 ACEs to every
+        # object it stages, and a POSIX ACL parent has none to pass.
+        # restricted keeps a chmod from another protocol from stripping them
+        acltype="nfsv4",
+        aclmode="restricted",
+        aclinherit="passthrough",
+    )
+
+
+BUCKET_DATASET_PROPERTIES: Mapping[str, str] = MappingProxyType(
+    bucket_dataset_properties().model_dump(exclude_unset=True)
+)
+"""The same properties as a mapping, read off what a create sets so that
+a recover cannot come to check something else."""
 
 CREATE_TIME_PROPERTIES = frozenset({"casesensitivity", "normalization", "utf8only"})
 """The three that take no later `zfs set`, so a dataset holding the
 wrong value can never be a bucket's."""
-
-
-def bucket_dataset_properties() -> ZFSResourceCreateProperties:
-    """A fresh model per call, since the create rules write into the one
-    they are given."""
-    return ZFSResourceCreateProperties(**BUCKET_DATASET_PROPERTIES)
 
 
 class SharingS3Model(sa.Model):
@@ -554,7 +556,8 @@ class SharingS3Service(SharingService[SharingS3Entry]):
                 f"holds. Create that account, or state owner.",
             )
             return None
-        return user["pw_name"]
+        pw_name: str = user["pw_name"]
+        return pw_name
 
     @private
     def config_backup_row(self, entry: SharingS3Entry) -> dict[str, Any]:
@@ -1056,7 +1059,7 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         try:
             backup = await self.middleware.run_in_thread(read_config_backup, mount)
         except OSError as e:
-            verrors.add(f"{schema}.dataset", f"{SIDE_TREE}/{CONFIG_BACKUP}: {e.strerror}", e.errno)
+            verrors.add(f"{schema}.dataset", f"{SIDE_TREE}/{CONFIG_BACKUP}: {e.strerror}", e.errno or errno.EIO)
             return None
         if backup is None:
             verrors.add(
