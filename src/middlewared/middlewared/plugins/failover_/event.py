@@ -225,7 +225,6 @@ class FailoverEventsService(Service):
             raise
 
     def event(self, ifname, event):
-
         refresh, job = True, None
         try:
             job = self._event(ifname, event)
@@ -238,7 +237,7 @@ class FailoverEventsService(Service):
             # refreshing the failover status can cause delays in failover
             # there is no reason to refresh it if the event has been ignored
             if refresh and job is not None:
-                self.middleware.create_task(self.refresh_failover_status(job.id, event))
+                self.middleware.create_task_threadsafe(self.refresh_failover_status(job.id, event))
 
     def fence_if_pools_still_imported(self, volumes):
         """
@@ -737,7 +736,7 @@ class FailoverEventsService(Service):
         # This is to scan any such pools which might be based off all disks being sed capable
         # and to mark them and others appropriately
         logger.info('Starting background task to scan all SED based pools (if any)')
-        self.middleware.create_task(self.middleware.call('pool.ha_update_all_sed_attr'))
+        self.middleware.call_sync('pool.ha_update_all_sed_attr', background=True)
 
         # need to make sure failover status is updated in the middleware cache
         logger.info('Refreshing failover status')
@@ -782,7 +781,7 @@ class FailoverEventsService(Service):
         logger.info('Done starting background job for directoryservices.setup')
 
         logger.info('Starting background job for prefetching DDT/BRT for zpools')
-        self.middleware.create_task(self.middleware.call('zfs.resource.pool.prefetch_pools'))
+        self.middleware.call_sync('zfs.resource.pool.prefetch_pools', background=True)
 
         logger.info('Allowing network traffic.')
         fw_accept_job = self.run_call('failover.firewall.accept_all')
@@ -864,7 +863,7 @@ class FailoverEventsService(Service):
         logger.info('Done temporarily blocking failover alerts')
 
         logger.info('Initializing task to renew certs if necessary')
-        self.middleware.create_task(self.middleware.call('certificate.renew_certs'))
+        self.middleware.call_sync('certificate.renew_certs', background=True)
         logger.info('Done initializing task to renew certs if necessary')
 
         logger.info('Starting truecommand service (if necessary)')
@@ -872,7 +871,7 @@ class FailoverEventsService(Service):
         logger.info('Done starting truecommand service (if necessary)')
 
         logger.info('Configuring TrueNAS Connect Service (if necessary)')
-        self.middleware.create_task(self.middleware.call('tn_connect.state.check', True))
+        self.middleware.call_sync('tn_connect.state.check', True, background=True)
         logger.info('Done configuring TrueNAS Connect Service (if necessary)')
 
         logger.info('Configuring TrueSearch (if necessary)')
@@ -1150,7 +1149,7 @@ class FailoverEventsService(Service):
 
     def start_vms(self):
         logger.info('Starting VMs which are set to start on boot')
-        self.middleware.create_task(self.middleware.call('vm.start_on_boot'))
+        self.middleware.call_sync('vm.start_on_boot', background=True)
 
     def stop_vms(self):
         logger.info('Trying to gracefully stop VMs')
@@ -1161,7 +1160,7 @@ class FailoverEventsService(Service):
 
     def start_containers(self):
         logger.info('Starting Containers which are set to start on boot')
-        self.middleware.create_task(self.middleware.call('container.migrate_and_start_on_boot'))
+        self.middleware.call_sync('container.migrate_and_start_on_boot', background=True)
 
     def stop_containers(self):
         logger.info('Trying to gracefully stop Containers')
