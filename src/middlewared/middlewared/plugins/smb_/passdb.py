@@ -47,11 +47,13 @@ class SMBService(Service):
         )
 
         update_passdb_entry(passdb_entry, clustered)
+        self.middleware.call_sync('smb.push_local_accounts_to_standby')
 
     @private
     def remove_passdb_user(self, username, sid):
         clustered = self.middleware.call_sync('datastore.config', 'services.cifs')['cifs_srv_stateful_failover']
         delete_passdb_entry(username, get_domain_rid(sid), clustered)
+        self.middleware.call_sync('smb.push_local_accounts_to_standby')
 
     @private
     def apply_account_policy(self):
