@@ -76,6 +76,13 @@ class ZPoolVdev(BaseModel):
             "no config path."
         ),
     )
+    stats_ex: dict[str, int | list[int]] | None = Field(
+        default=None,
+        description=(
+            "Extended vdev statistics: raw queue depths and latency and request size histograms. Always `null` in "
+            "`zpool.query` results."
+        ),
+    )
 
 
 class ZPoolTopology(BaseModel):
