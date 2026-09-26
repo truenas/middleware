@@ -408,7 +408,7 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
                 row["name"]: row
                 for row in await self.call2(
                     self.s.zfs.resource.query_impl,
-                    ZFSResourceQuery(paths=[b.dataset for b in buckets], properties=["mountpoint"]),
+                    ZFSResourceQuery(paths=[b.dataset for b in buckets], properties=["mountpoint", "mounted"]),
                 )
             }
             if buckets
@@ -416,11 +416,17 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
         )
 
         rendered_buckets = []
+        # for the config backup below. `mounted` rather than a mount point
+        # alone: an unmounted dataset still reports one, and a write there
+        # lands on the parent filesystem
+        backed_up: dict[str, str] = {}
         for bucket in buckets:
             live = datasets.get(bucket.dataset)
             mountpoint = live["properties"]["mountpoint"]["value"] if live else None
             if not mountpoint or not mountpoint.startswith("/"):
                 mountpoint = f"/mnt/{bucket.dataset}"
+            elif live is not None and live["properties"]["mounted"]["value"] == "yes":
+                backed_up[bucket.dataset] = mountpoint
             if bucket.enabled and live is None:
                 await self.call2(
                     self.s.alert.oneshot_create,
@@ -431,6 +437,8 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
             rendered_buckets.append(
                 RenderedBucket(entry=bucket, mountpoint=mountpoint, grants=_rendered_grants(bucket.grants, bucket.name))
             )
+
+        await self.middleware.call("sharing.s3.reconcile_config_backups", backed_up)
 
         accesskeys: list[S3AccesskeyEntry] = await self.middleware.call("s3.accesskey.query")
         for key in accesskeys:

@@ -13,10 +13,12 @@ live on the bucket, so they can never outlive it.
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Mapping
 import errno
 import ipaddress
 import os
 import string
+from types import MappingProxyType
 import typing
 from typing import TYPE_CHECKING, Any, Literal, TypeVar
 
@@ -36,6 +38,13 @@ from middlewared.api.current import (
     SharingS3Entry,
     SharingS3ForceDisableVersioningArgs,
     SharingS3ForceDisableVersioningResult,
+    SharingS3RecoverableBucket,
+    SharingS3RecoverableBucketsArgs,
+    SharingS3RecoverableBucketsResult,
+    SharingS3RecoverArgs,
+    SharingS3RecoverBucket,
+    SharingS3RecoveredBucket,
+    SharingS3RecoverResult,
     SharingS3Update,
     SharingS3UpdateArgs,
     SharingS3UpdateResult,
@@ -51,11 +60,13 @@ from middlewared.plugins.zfs.exceptions import (
 )
 from middlewared.service import CallError, SharingService, ValidationError, ValidationErrors, private
 import middlewared.sqlalchemy as sa
+from middlewared.utils.filter_list import filter_list
 from middlewared.utils.path import FSLocation
 from middlewared.utils.types import AuditCallback
 
 from .grants import PrincipalNames, Principals, grant_principals, label_grants, principal_names, validate_grants
 from .lifecycle import MISSING_ALERT, render_and_apply
+from .on_disk import CONFIG_BACKUP, SIDE_TREE, has_latch, read_config_backup, write_config_backup
 
 if TYPE_CHECKING:
     from middlewared.main import Middleware
@@ -65,9 +76,9 @@ __all__ = ("SharingS3Service", "S3FSAttachmentDelegate")
 AUDIT_ACTIONS: tuple[str, ...] = typing.get_args(S3AuditAction)
 
 BUCKET_LOCK = asyncio.Lock()
-"""Serializes bucket registry mutations. Create's validate-then-insert
-and the read-modify-writes in update and force_disable_versioning
-otherwise interleave, losing an update or reaching the unique `name` and
+"""Serializes bucket registry mutations. Interleaved, create's
+validate-then-insert and the read-modify-writes in update and
+force_disable_versioning lose an update or reach the unique `name` and
 `dataset` columns with an integrity error. Taken before lifecycle's
 render lock."""
 
@@ -99,7 +110,7 @@ class BucketPath(typing.NamedTuple):
 
 def bucket_dataset_properties() -> ZFSResourceCreateProperties:
     """What the S3 on-disk format requires of a bucket's dataset. A fresh
-    instance per call, since the create rules write into the one they are
+    model per call, since the create rules write into the one they are
     given."""
     return ZFSResourceCreateProperties(
         # the first three are create-time only and would otherwise inherit
@@ -115,6 +126,17 @@ def bucket_dataset_properties() -> ZFSResourceCreateProperties:
         aclmode="restricted",
         aclinherit="passthrough",
     )
+
+
+BUCKET_DATASET_PROPERTIES: Mapping[str, str] = MappingProxyType(
+    bucket_dataset_properties().model_dump(exclude_unset=True)
+)
+"""The same properties as a mapping, read off what a create sets so that
+a recover cannot come to check something else."""
+
+CREATE_TIME_PROPERTIES = frozenset({"casesensitivity", "normalization", "utf8only"})
+"""The three that take no later `zfs set`, so a dataset holding the
+wrong value can never be a bucket's."""
 
 
 class SharingS3Model(sa.Model):
@@ -166,19 +188,80 @@ def is_ipv4_shaped(name: str) -> bool:
     return True
 
 
-def has_latch(mount: str) -> bool:
-    """Whether the dataset root carries the S3 service's Object Lock latch.
-    Presence is the whole test: the record is the daemon's to decode, and
-    the daemon never clears or weakens it, so a root carrying it is a
-    locked bucket whatever the row says (`trusted.tns3_latch`,
-    ARCHITECTURE.METADATA.md in the truenas_s3 repository)."""
-    try:
-        os.getxattr(mount, "trusted.tns3_latch")
-    except OSError as e:
-        if e.errno in (errno.ENODATA, errno.ENOENT, errno.ENOTDIR):
-            return False
-        raise
-    return True
+MOUNTED_FILESYSTEM = (
+    ("type", "=", "FILESYSTEM"),
+    ("properties.mounted.value", "=", "yes"),
+    ("properties.mountpoint.value", "^", "/"),
+)
+"""A dataset a bucket can be on: never a zvol, and mounted somewhere a
+path reaches. `zfs.resource.query` takes no filter of its own and yields
+volumes as well as filesystems, so this is applied to what it returns."""
+
+RECOVER_PROPERTIES = (
+    "mountpoint",
+    "mounted",
+    "readonly",
+    "snapdir",
+    *BUCKET_DATASET_PROPERTIES,
+)
+"""What a recovery reads off a dataset before it will take it."""
+
+
+def read_config_backups(mounts: dict[str, str]) -> list[dict[str, Any]]:
+    """Every dataset's backed-up row, under the dataset it was found on
+    rather than the one it names: a restored dataset carries the name it
+    had where it was written."""
+    found = []
+    for dataset, mount in sorted(mounts.items()):
+        try:
+            row = read_config_backup(mount)
+        except OSError:
+            continue
+        if row is not None:
+            found.append({k: v for k, v in row.items() if k != "version_number"} | {"dataset": dataset})
+    return found
+
+
+def write_config_backups(work: list[tuple[str, dict[str, Any]]]) -> list[tuple[str, Exception]]:
+    """Write each backup that differs from the row it should hold.
+    Returns failures rather than raising: on the render path, one
+    unwritable dataset must not take the deployment down."""
+    failures = []
+    for mount, row in work:
+        try:
+            stored = read_config_backup(mount)
+            if stored is not None and {k: v for k, v in stored.items() if k != "version_number"} == row:
+                continue
+            write_config_backup(mount, row)
+        except Exception as e:
+            failures.append((mount, e))
+    return failures
+
+
+def recovery_blockers(properties: dict[str, Any], mounted_children: list[str]) -> list[str]:
+    """Why the S3 service could not serve this dataset. Each mirrors a
+    check it makes when it registers a bucket."""
+    def value(name: str) -> str | None:
+        prop = properties.get(name)
+        return prop["value"] if prop else None
+
+    blockers: list[str] = []
+    if value("readonly") == "on":
+        blockers.append("The dataset is read-only, which every write path would answer EROFS to.")
+    for name, wanted in BUCKET_DATASET_PROPERTIES.items():
+        found = value(name)
+        if found == wanted:
+            continue
+        if name in CREATE_TIME_PROPERTIES:
+            blockers.append(
+                f"{name} is {found!r} rather than {wanted!r}, and is set only at creation: this dataset cannot "
+                f"hold the S3 on-disk format."
+            )
+        else:
+            blockers.append(f"{name} is {found!r} rather than {wanted!r}. Set it and retry.")
+    if mounted_children:
+        blockers.append("A dataset is mounted beneath it: " + ", ".join(sorted(mounted_children)))
+    return blockers
 
 
 class SharingS3Service(SharingService[SharingS3Entry]):
@@ -458,6 +541,56 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         )
         mountpoint = rows[0]["properties"]["mountpoint"]["value"] if rows else None
         return mountpoint if mountpoint and mountpoint.startswith("/") else None
+
+    @private
+    async def owner_of_uid(self, schema: str, uid: int, verrors: ValidationErrors) -> str | None:
+        """The account a backed-up uid belongs to. The backup holds the
+        uid because the row does: an account renamed since is still the
+        owner, the name it was written under is not."""
+        try:
+            user = await self.middleware.call("user.get_user_obj", {"uid": uid})
+        except KeyError:
+            verrors.add(
+                f"{schema}.dataset",
+                f"The config backup on this dataset names uid {uid} as the bucket's owner, which no account "
+                f"holds. Create that account, or state owner.",
+            )
+            return None
+        pw_name: str = user["pw_name"]
+        return pw_name
+
+    @private
+    def config_backup_row(self, entry: SharingS3Entry) -> dict[str, Any]:
+        """The row as it goes onto its dataset: the datastore row, the
+        one shape a recovery can insert back."""
+        return self.compress(entry, entry.owner_uid)
+
+    @private
+    async def reconcile_config_backups(self, mounts: dict[str, str]) -> None:
+        """Bring every config backup up to date with its row.
+
+        On the render rather than beside each row write: every change to
+        a bucket renders, including the attachment delegate's `enabled`
+        toggle, which never passes `sharing.s3.update`. It also backfills
+        a bucket made before backups existed and repairs a failed write.
+        """
+        if not mounts:
+            return
+        try:
+            entries: list[SharingS3Entry] = await self.middleware.call("sharing.s3.query")
+            work = [
+                (mounts[entry.dataset], self.config_backup_row(entry))
+                for entry in entries
+                if entry.dataset in mounts
+            ]
+            failures = await self.middleware.run_in_thread(write_config_backups, work)
+        except Exception:
+            # a backup is only what a later recovery reads, so it never
+            # gets to refuse a render
+            self.logger.warning("s3: failed to reconcile the bucket config backups", exc_info=True)
+            return
+        for mount, error in failures:
+            self.logger.warning("%s: failed to write the bucket config backup: %r", mount, error)
 
     @private
     async def derive_dataset(self, schema: str, name: str, verrors: ValidationErrors) -> str | None:
@@ -791,6 +924,285 @@ class SharingS3Service(SharingService[SharingS3Entry]):
                 # custom row mutation owes sharing.s3.query subscribers the same
                 self.middleware.send_event("sharing.s3.query", "CHANGED", id=id_, fields=entry.model_dump())
             return entry
+
+    @api_method(
+        SharingS3RecoverArgs,
+        SharingS3RecoverResult,
+        audit="S3 bucket recover",
+        audit_extended=lambda buckets: ", ".join(b["dataset"] for b in buckets),
+        roles=["SHARING_S3_WRITE"],
+        check_annotations=True,
+    )
+    async def recover(self, buckets: list[SharingS3RecoverBucket]) -> list[SharingS3RecoveredBucket]:
+        """
+        Recover buckets from datasets that already hold their objects.
+
+        :method:`sharing.s3.delete` leaves the dataset and its objects in
+        place, and :method:`sharing.s3.create` will not adopt an existing
+        dataset, so this is the only way to register one again.
+        :method:`sharing.s3.recoverable_buckets` lists what can be recovered.
+
+        Middleware writes the bucket row to
+        ``.truenas_s3/config_backup.json`` whenever it changes, and the bucket
+        is restored from that backup unchanged. A dataset with no backup is
+        refused. Only ``name_override`` and ``owner_override`` may be given:
+        the first for when another bucket has taken the old name, the second
+        for a dataset restored onto a system where its uid belongs to someone
+        else. Change anything else with :method:`sharing.s3.update` after
+        recovering, where the one-way fields are checked against the row.
+
+        Each dataset gets its own answer, in the order requested. A dataset
+        that cannot be recovered does not stop the others, and buckets that
+        were registered stay registered. The S3 service is reloaded once at
+        the end.
+
+        .. warning::
+
+            A recovered bucket is the same bucket as before, so its grants
+            come back as they were. Stored S3 ACLs also survive on the
+            dataset, so under an ``S3`` permissions model with
+            ``object_ownership`` other than ``BUCKET_OWNER_ENFORCED`` those
+            take effect again, against uids that may since have been reused.
+        """
+        async with BUCKET_LOCK:
+            # a name or a dataset an earlier entry claimed is not in the
+            # registry yet, so `validate` cannot see it. Claimed whether or
+            # not that entry went on to work, so the second mention of one
+            # reads as the duplicate it is
+            claimed_names: set[str] = set()
+            claimed_datasets: set[str] = set()
+            rows: list[dict[str, Any] | None] = []
+            failures: list[str | None] = []
+            for i, wanted in enumerate(buckets):
+                verrors = ValidationErrors()
+                rows.append(
+                    await self.recovered_row(
+                        f"sharing_s3_recover.buckets.{i}", wanted, claimed_names, claimed_datasets, verrors
+                    )
+                )
+                # one reason per dataset, so several read as one sentence
+                failures.append(" ".join(error.errmsg for error in verrors.errors) or None)
+
+            ids: list[int | None] = []
+            for i, row in enumerate(rows):
+                if row is None:
+                    ids.append(None)
+                    continue
+                try:
+                    ids.append(await self.middleware.call("datastore.insert", self._config.datastore, row))
+                except Exception as e:
+                    # validation held the unique columns under this lock, so
+                    # there is little left to fail here; what does is this
+                    # bucket's answer and not the others'
+                    self.logger.warning("%s: failed to insert the recovered bucket row", row["dataset"], exc_info=True)
+                    ids.append(None)
+                    failures[i] = str(e)
+
+            if any(id_ is not None for id_ in ids):
+                # what landed is in force, and stays whether or not the rest
+                # of the request did: nothing is unwound, so the registry and
+                # the rendered files never disagree
+                await render_and_apply(self.middleware)
+
+            recovered = []
+            for wanted, id_, failure in zip(buckets, ids, failures):
+                entry = None
+                if id_ is not None:
+                    entry = await self.get_instance(id_)
+                    # the CRUD wrapper emits ADDED for create; these inserts
+                    # owe sharing.s3.query subscribers the same
+                    self.middleware.send_event("sharing.s3.query", "ADDED", id=id_, fields=entry.model_dump())
+                recovered.append(SharingS3RecoveredBucket(dataset=wanted.dataset, bucket=entry, error=failure))
+            return recovered
+
+    @private
+    async def recovered_row(
+        self,
+        schema: str,
+        wanted: SharingS3RecoverBucket,
+        claimed_names: set[str],
+        claimed_datasets: set[str],
+        verrors: ValidationErrors,
+    ) -> dict[str, Any] | None:
+        """The datastore row one dataset would be recovered as, or None
+        with everything wrong with it on `verrors`.
+
+        `verrors` is this entry's alone, so what it holds is this entry's
+        answer.
+        """
+        dataset = wanted.dataset
+        if dataset in claimed_datasets:
+            verrors.add(f"{schema}.dataset", "This dataset is named twice in the same recovery.")
+            return None
+        claimed_datasets.add(dataset)
+        if await self.query([["dataset", "=", dataset]], {"select": ["id"]}):
+            verrors.add(f"{schema}.dataset", "Another bucket already uses this dataset.")
+            return None
+        try:
+            zfs_rows = await self.call2(
+                self.s.zfs.resource.query_impl,
+                ZFSResourceQuery(paths=[dataset], properties=list(RECOVER_PROPERTIES), get_children=True),
+            )
+        except ZFSPathNotFoundException as e:
+            verrors.add(f"{schema}.dataset", e.message, errno.ENOENT)
+            return None
+        itself = filter_list(zfs_rows, [*MOUNTED_FILESYSTEM, ["name", "=", dataset]])
+        if not itself:
+            verrors.add(
+                f"{schema}.dataset",
+                f"{dataset!r} is not a mounted ZFS filesystem, so what it holds cannot be read.",
+            )
+            return None
+        properties = itself[0]["properties"]
+        mount = properties["mountpoint"]["value"]
+
+        try:
+            backup = await self.middleware.run_in_thread(read_config_backup, mount)
+        except OSError as e:
+            verrors.add(f"{schema}.dataset", f"{SIDE_TREE}/{CONFIG_BACKUP}: {e.strerror}", e.errno or errno.EIO)
+            return None
+        if backup is None:
+            verrors.add(
+                f"{schema}.dataset",
+                f"{dataset!r} holds no bucket config backup, which is the whole of what a bucket is recovered "
+                f"from. Either it never held a bucket, or it held one this version did not back up.",
+                errno.ENOENT,
+            )
+            return None
+
+        beneath = [
+            row["name"] for row in filter_list(zfs_rows, [*MOUNTED_FILESYSTEM, ["name", "^", f"{dataset}/"]])
+        ]
+        for blocker in recovery_blockers(properties, beneath):
+            verrors.add(f"{schema}.dataset", blocker)
+
+        new = await self.row_from_backup(schema, dataset, backup, wanted, verrors)
+        if new is None:
+            return None
+        new = self.normalize_ownership(new)
+        await self.validate(new, schema, verrors)
+        if new.name in claimed_names:
+            verrors.add(f"{schema}.name", "Another bucket in the same recovery takes this name.")
+        claimed_names.add(new.name)
+        owner_uid = await self.resolve_owner(schema, new.owner, verrors)
+        self.check_against_dataset(schema, new, properties, verrors)
+        if verrors or owner_uid is None:
+            return None
+        return self.compress(new, owner_uid)
+
+    @private
+    async def row_from_backup(
+        self,
+        schema: str,
+        dataset: str,
+        backup: dict[str, Any],
+        wanted: SharingS3RecoverBucket,
+        verrors: ValidationErrors,
+    ) -> SharingS3Create | None:
+        """The row a recovery will insert: the backup, under the name and
+        owner stated where they were. The backup names its owner by uid
+        because the row does, so an account renamed since is still the
+        owner and one on another appliance is not."""
+        # what this method supplies itself, and so may not take from the
+        # backup: the two it passes by keyword, the uid the owner is
+        # resolved from, and the envelope's own field
+        supplied = ("dataset", "owner", "owner_uid", "version_number")
+
+        owner = wanted.owner_override
+        if owner is None:
+            uid = backup.get("owner_uid")
+            if not isinstance(uid, int):
+                verrors.add(
+                    f"{schema}.dataset",
+                    f"The bucket config backup on {dataset!r} names no owner, and none was stated.",
+                )
+                return None
+            owner = await self.owner_of_uid(schema, uid, verrors)
+            if owner is None:
+                return None
+        row = {k: v for k, v in backup.items() if k not in supplied}
+        if wanted.name_override is not None:
+            row["name"] = wanted.name_override
+        try:
+            return SharingS3Create(**row, dataset=dataset, owner=owner)
+        except ValueError as e:
+            verrors.add(
+                f"{schema}.dataset",
+                f"The bucket config backup on {dataset!r} is not a row this version can read: {e}",
+            )
+            return None
+
+    @private
+    def check_against_dataset(
+        self,
+        schema: str,
+        new: SharingS3Create,
+        properties: dict[str, Any],
+        verrors: ValidationErrors,
+    ) -> None:
+        """What the row needs of the dataset and cannot be told by it.
+
+        The one-way fields need no check here: the backup is inserted as
+        it stands, so nothing can weaken them. A backup edited by hand to
+        unlock a latched dataset costs the bucket its service, since the
+        S3 service checks object lock against the latch as well.
+        """
+        if new.snapshot_versions and (properties.get("snapdir") or {}).get("value") == "disabled":
+            verrors.add(
+                f"{schema}.dataset",
+                "This dataset has snapdir disabled, so the .zfs/snapshot directory the backed-up snapshot "
+                "selection is served through does not open.",
+            )
+
+    @api_method(
+        SharingS3RecoverableBucketsArgs,
+        SharingS3RecoverableBucketsResult,
+        roles=["SHARING_S3_READ"],
+        check_annotations=True,
+    )
+    async def recoverable_buckets(self) -> list[SharingS3RecoverableBucket]:
+        """
+        Returns buckets that are no longer registered but whose datasets still
+        exist.
+
+        :method:`sharing.s3.delete` leaves the dataset, its objects and the
+        config backup in place. This scans every mounted dataset that no
+        bucket uses and returns the configuration each backup holds.
+        :method:`sharing.s3.recover` registers exactly that.
+
+        Unmounted datasets are skipped, as are backups this version cannot
+        read.
+        """
+        used = {
+            row["dataset"]
+            for row in await self.middleware.call(
+                "datastore.query", self._config.datastore, [], {"select": ["dataset"]}
+            )
+        }
+        rows = await self.call2(
+            self.s.zfs.resource.query_impl,
+            ZFSResourceQuery(paths=[], properties=["mountpoint", "mounted"], get_children=True),
+        )
+        mounts = {
+            row["name"]: row["properties"]["mountpoint"]["value"]
+            for row in filter_list(rows, [*MOUNTED_FILESYSTEM, ["name", "nin", list(used)]])
+        }
+        found = await self.middleware.run_in_thread(read_config_backups, mounts)
+
+        # through the same extend the registry's own rows take, so a
+        # recoverable bucket reads as the bucket it is. Per row rather
+        # than over all of them: one backup that will not read must not
+        # take the listing down, and there are never many
+        buckets = []
+        for row in found:
+            try:
+                names = await self.bucket_extend_context([row], {})
+                buckets.append(SharingS3RecoverableBucket(**await self.bucket_extend(row, names)))
+            except Exception:
+                self.logger.warning(
+                    "%s: the bucket config backup is not a row this version can read", row["dataset"], exc_info=True
+                )
+        return buckets
 
     @api_method(SharingS3AuditChoicesArgs, SharingS3AuditChoicesResult, check_annotations=True)
     async def audit_choices(self) -> dict[str, str]:
