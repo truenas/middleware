@@ -18,6 +18,19 @@ branch_labels = None
 depends_on = None
 
 
+def split_ldap_hostnames(value):
+    """ Split an `ldap_hostname` column value into its component hostnames.
+
+    The column holds a comma-separated list. Whitespace is treated as a separator
+    as well because neither character is legal within a hostname, and a
+    hand-edited value may use either.
+    """
+    if not value:
+        return []
+
+    return value.replace(',', ' ').split()
+
+
 def ds_migrate_ldap(conn, ldap):
     """ Convert LDAP table into the directory services table. """
     service_type = 'LDAP'
@@ -25,11 +38,17 @@ def ds_migrate_ldap(conn, ldap):
     kerberos_realm_id = ldap.pop('ldap_kerberos_realm_id')
     cert_id = ldap.pop('ldap_certificate_id')
     krb_princ = ldap.pop('ldap_kerberos_principal')
-    ssl = ldap.pop('ldap_ssl')
+    # The legacy table stored `ldap_ssl` and `ldap_schema` lowercased (ldap_compress
+    # applied .lower() on write and ldap_extend applied .upper() on read), so both
+    # have to be normalized here rather than compared or copied verbatim.
+    ssl = (ldap.pop('ldap_ssl') or '').upper()
     ldap_starttls = ssl == 'START_TLS'
     prefix = 'ldaps://' if ssl == 'ON' else 'ldap://'
     anon = ldap.pop('ldap_anonbind')
-    ldap_server_urls = dumps([f'{prefix}{uri}' for uri in ldap.pop('ldap_hostname').split()])
+    # `ldap_hostname` is a comma-separated list of hostnames, not whitespace-separated
+    ldap_server_urls = dumps([
+        f'{prefix}{host}' for host in split_ldap_hostnames(ldap.pop('ldap_hostname'))
+    ])
     cred_type = None
     cred_krb5 = None
     cred_plain = None
@@ -128,7 +147,9 @@ def ds_migrate_ldap(conn, ldap):
             'starttls': ldap_starttls,
             'basedn': ldap['ldap_basedn'],
             'validate_certs': ldap['ldap_validate_certificates'],
-            'schema': ldap['ldap_schema'],
+            # Stored lowercased by the legacy plugin; the new API model declares
+            # Literal['RFC2307', 'RFC2307BIS'] and rejects anything else.
+            'schema': (ldap['ldap_schema'] or 'RFC2307').upper(),
             'aux': ldap['ldap_auxiliary_parameters'],
             'baseuser': ldap['ldap_base_user'],
             'basegroup': ldap['ldap_base_group'],
@@ -201,7 +222,11 @@ def ds_migrate_ipa(conn, ldap):
             return ds_migrate_ldap(conn, ldap)
 
     cred_krb5 = encrypt(dumps({'credential_type': 'KERBEROS_PRINCIPAL', 'principal': krb_princ}))
-    target_server = ldap['ldap_hostname'].split()[0]
+    if not (hostnames := split_ldap_hostnames(ldap['ldap_hostname'])):
+        # No server to target, so there is nothing to join. Fall back to plain LDAP.
+        return ds_migrate_ldap(conn, ldap)
+
+    target_server = hostnames[0]
 
     # initialize our directoryservices row
     conn.execute(text("INSERT INTO directoryservices (enable, service_type) VALUES (1, 'IPA')"))
