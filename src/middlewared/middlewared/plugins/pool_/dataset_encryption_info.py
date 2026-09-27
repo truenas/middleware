@@ -261,7 +261,8 @@ class PoolDatasetService(Service):
         ):
             ds = pool_dataset_view(row)
             datasets[ds['name']] = ds
-            if (parent := datasets.get(ds['name'].rsplit('/', 1)[0])) is not None:
+            parent_name, sep, _ = ds['name'].rpartition('/')
+            if sep and (parent := datasets.get(parent_name)) is not None:
                 parent['children'].append(ds)
 
         return dict(map(

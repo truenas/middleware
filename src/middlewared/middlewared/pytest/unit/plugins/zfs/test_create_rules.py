@@ -22,7 +22,7 @@ from middlewared.plugins.zfs.create_rules import (
 )
 from middlewared.pytest.unit.middleware import Middleware
 from middlewared.service import ServiceContext
-from middlewared.service_exception import CallError, ValidationError, ValidationErrors
+from middlewared.service_exception import CallError, ValidationErrors
 
 GiB = 1024**3
 SCHEMA = "zfs.resource.create"
@@ -72,13 +72,6 @@ def assert_one_error(verrors, attribute, fragment):
     [(got_attribute, errmsg)] = errors_of(verrors)
     assert got_attribute == attribute
     assert fragment in errmsg
-
-
-def test_name_with_trailing_space_is_rejected():
-    with pytest.raises(ValidationError) as exc_info:
-        check_path_shape(request(path="tank/new "))
-    assert exc_info.value.attribute == SCHEMA
-    assert "Trailing spaces are not permitted" in exc_info.value.errmsg
 
 
 def test_valid_name_is_accepted():

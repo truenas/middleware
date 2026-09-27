@@ -34,7 +34,7 @@ def passphrase_encrypted_pool(passphrase_encrypted_pool_session):
     if call("pool.dataset.get_instance", passphrase_encrypted_pool_session)["locked"]:
         call("pool.dataset.unlock", passphrase_encrypted_pool_session, {
             "datasets": [{"name": passphrase_encrypted_pool_session, "passphrase": PASSPHRASE}],
-        })
+        }, job=True)
 
     yield passphrase_encrypted_pool_session
 

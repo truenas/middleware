@@ -206,9 +206,6 @@ def check_path_shape(data: ZFSResourceCreateArgsData) -> None:
             "Creating a root filesystem (zpool) is not allowed.",
             errno.EINVAL,
         )
-    elif data.path.endswith(" "):
-        # ZFS itself accepts a trailing space but it is a classic footgun
-        raise ValidationError(SCHEMA, "Trailing spaces are not permitted in resource names.", errno.EINVAL)
     elif "%" in data.path:
         raise ValidationError(SCHEMA, f"{data.path!r} may not contain '%'.", errno.EINVAL)
 

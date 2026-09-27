@@ -17,6 +17,7 @@ encrypted_pool_name = 'test_encrypted'
 dataset = f'{encrypted_pool_name}/encrypted'
 child_dataset = f'{dataset}/child'
 passphrase = 'my_passphrase'
+pool_passphrase = 'my_pool_passphrase'
 
 
 def check_log_for(*phrases, should_find=False):
@@ -52,7 +53,6 @@ def normal_pool():
 
 @pytest.fixture(scope='class')
 def passphrase_pool():
-    pool_passphrase = 'my_pool_passphrase'
     with another_pool({
         'name': encrypted_pool_name,
         'encryption': True,
@@ -266,6 +266,17 @@ class TestPassphraseEncryptedPool:
 
     def test_try_to_create_invalid_encrypted_dataset_does_not_leak_encryption_key_into_middleware_log(self):
         check_log_for(dataset_token_hex)
+
+    def test_unlock_pool_root(self):
+        assert call('pool.dataset.lock', encrypted_pool_name, {'force_umount': True}, job=True)
+        verify_lock_status(encrypted_pool_name, locked=True)
+
+        job_status = call('pool.dataset.unlock', encrypted_pool_name, {
+            'recursive': True,
+            'datasets': [{'name': encrypted_pool_name, 'passphrase': pool_passphrase}],
+        }, job=True)
+        assert encrypted_pool_name in job_status['unlocked'], job_status
+        verify_lock_status(encrypted_pool_name, locked=False)
 
 
 @pytest.mark.usefixtures('key_pool')

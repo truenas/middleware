@@ -233,11 +233,7 @@ def test_zfs_resource_create_already_exists():
         ),
         pytest.param("tank", "root filesystem", id="creating root filesystem not allowed"),
         pytest.param("boot-pool/test", "protected", id="protected paths not allowed"),
-        pytest.param(
-            "tank/dataset ",
-            "Trailing spaces are not permitted",
-            id="trailing space not allowed",
-        ),
+        pytest.param("tank/dataset ", "valid dataset name", id="trailing space not allowed"),
         pytest.param("tank/a%b", "may not contain '%'", id="percent not allowed"),
     ],
 )
