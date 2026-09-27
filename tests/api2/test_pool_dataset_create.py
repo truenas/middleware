@@ -13,7 +13,7 @@ def test_create_dataset_nonexistent_pool():
     bad = "does_not_exist_zpool"
     with pytest.raises(
         ValidationErrors,
-        match=escape(f"[EINVAL] pool_dataset_create.name: zpool ({bad}) does not exist.\n")
+        match=escape(f"[ENOENT] pool_dataset_create.name: Pool '{bad}' does not exist.\n")
     ):
         with dataset("zz", pool=bad):
             pass
@@ -23,7 +23,10 @@ def test_create_dataset_nonexistent_parent_ds():
     bad = "zz"
     with pytest.raises(
         ValidationErrors,
-        match=escape(f"[EINVAL] pool_dataset_create.name: Parent dataset ({pool}/{bad}) does not exist.\n")
+        match=escape(
+            f"[ENOENT] pool_dataset_create.name: Parent dataset '{pool}/{bad}' does not exist. "
+            "Set create_ancestors to create it.\n"
+        )
     ):
         with dataset(f"{bad}/bleh"):
             pass

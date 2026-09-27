@@ -5,8 +5,7 @@ import os
 import shutil
 import uuid
 
-from middlewared.api.current import ZFSResourceQuery
-from middlewared.plugins.pool_.utils import CreateImplArgs, UpdateImplArgs
+from middlewared.api.current import ZFSResourceCreateArgsData, ZFSResourceCreateProperties, ZFSResourceQuery
 from middlewared.service import CallError, ServiceContext
 from middlewared.utils.interface import wait_for_default_interface_link_state_up
 
@@ -98,19 +97,18 @@ def create_update_docker_datasets(context: ServiceContext, docker_ds: str) -> No
             update_props = DatasetDefaults.update_only(os.path.basename(dataset_name))
             if any(val['raw'] != update_props[name] for name, val in existing_dataset.items()):
                 # if any of the zfs properties don't match what we expect we'll update all properties
-                context.middleware.call_sync(
-                    'pool.dataset.update_impl',
-                    UpdateImplArgs(name=dataset_name, zprops=update_props)
-                )
+                context.call_sync2(context.s.zfs.resource.set_impl, dataset_name, properties=update_props, bypass=True)
         else:
             move_conflicting_dir(dataset_name)
-            context.middleware.call_sync(
-                'pool.dataset.create_impl',
-                CreateImplArgs(
-                    name=dataset_name,
-                    ztype='FILESYSTEM',
-                    zprops=DatasetDefaults.create_time_props(os.path.basename(dataset_name))
-                )
+            context.call_sync2(
+                context.s.zfs.resource.create_impl,
+                ZFSResourceCreateArgsData(
+                    path=dataset_name,
+                    properties=ZFSResourceCreateProperties.model_validate(
+                        DatasetDefaults.create_time_props(os.path.basename(dataset_name))
+                    ),
+                    bypass=True,
+                ),
             )
 
     set_canmount_noauto(context, docker_ds)
@@ -134,10 +132,7 @@ def set_canmount_noauto(context: ServiceContext, docker_ds: str) -> None:
         if ds['type'] != 'FILESYSTEM' or ds['properties']['canmount']['raw'] == 'noauto':
             continue
 
-        context.middleware.call_sync(
-            'pool.dataset.update_impl',
-            UpdateImplArgs(name=ds['name'], zprops={'canmount': 'noauto'})
-        )
+        context.call_sync2(context.s.zfs.resource.set_impl, ds['name'], properties={'canmount': 'noauto'}, bypass=True)
 
 
 def move_conflicting_dir(ds_name: str) -> None:

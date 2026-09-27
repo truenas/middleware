@@ -4,7 +4,6 @@ import errno
 import typing
 
 from middlewared.api.current import ZFSResourceQuery
-from middlewared.plugins.pool_.utils import UpdateImplArgs
 from middlewared.service import CallError, ServiceContext, ValidationError
 from middlewared.utils.filesystem.perms import enforce_mountpoint_perms
 
@@ -33,9 +32,7 @@ async def ensure_ix_apps_mount_point(context: ServiceContext, docker_ds: str) ->
     # If the mount point is not at the expected location, fix it
     if ds[0]["properties"]["mountpoint"]["value"] != IX_APPS_MOUNT_PATH:
         mp = docker_dataset_custom_props(docker_ds.split("/")[-1])["mountpoint"]
-        await context.middleware.call(
-            "pool.dataset.update_impl", UpdateImplArgs(name=docker_ds, zprops={"mountpoint": mp})
-        )
+        await context.call2(context.s.zfs.resource.set_impl, docker_ds, properties={"mountpoint": mp}, bypass=True)
 
 
 async def ix_apps_is_mounted(context: ServiceContext, dataset_to_check: str | None = None) -> bool:
@@ -91,9 +88,7 @@ async def common_func(context: ServiceContext, mount: bool) -> Job | None:
                     return None
                 raise
 
-            await context.middleware.call(
-                "pool.dataset.update_impl", UpdateImplArgs(name=docker_ds, iprops={"mountpoint"})
-            )
+            await context.call2(context.s.zfs.resource.set_impl, docker_ds, inherit=["mountpoint"], bypass=True)
         try:
             return await context.middleware.call("catalog.sync")  # type: ignore[no-any-return]
         except CallError as e:

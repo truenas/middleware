@@ -881,7 +881,10 @@ def is_internal_dataset(hdl):
         bool: True if the dataset is internal and should be filtered out,
               False if it should be included in results
     """
-    name = hdl.name
+    return is_internal_dataset_name(hdl.name)
+
+
+def is_internal_dataset_name(name):
     for i in BOOT_POOL_NAME_VALID:
         if name == i or name.startswith(f"{i}/"):
             return True

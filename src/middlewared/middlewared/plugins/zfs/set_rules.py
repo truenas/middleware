@@ -16,21 +16,21 @@ from truenas_pylibzfs import ZFSProperty
 from middlewared.api.current import ZFSResourceQuery, ZFSResourceSetProperties
 from middlewared.service_exception import CallError, ValidationError, ValidationErrors
 
-from .property_choices import DRAID_MINIMUM_RECORDSIZE
 from .property_management import PROPERTY_TEMPLATES
-from .resource_info import ZFS_MAX_RECORDSIZE
 from .rules_common import (
     apply_acl_defaults,
     pool_has_special_vdev_sync,
     reject_bad_acl_combination,
+    reject_bad_recordsize,
     reject_bad_user_property_names,
     reject_bad_user_property_values,
     reject_dedup_on_special_vdev,
     reject_insufficient_headroom,
+    reject_ssb_out_of_range,
     reject_tier_managed_ssb,
     reject_unentitled_dedup,
+    reject_volsize_not_multiple,
 )
-from .utils import pool_is_draid
 
 if typing.TYPE_CHECKING:
     from collections.abc import Callable, Collection, Mapping
@@ -76,7 +76,6 @@ __all__ = (
 )
 
 SCHEMA = "zfs.resource.set"
-SPA_MAXBLOCKSIZE = 1 << 24
 
 SETTABLE_PROPERTIES: frozenset[str] = frozenset(ZFSResourceSetProperties.model_json_schema()["properties"])
 """The native property names an API caller may set. Derived from the published schema so the `Private` and
@@ -320,13 +319,9 @@ def check_volsize_multiple_of_volblocksize(
 ) -> None:
     if state.type != "VOLUME" or "volsize" not in state.set_names():
         return
-    volblocksize = state.current["volblocksize"]
-    if state.effective("volsize") % volblocksize:
-        verrors.add(
-            state.attribute("volsize"),
-            f"'volsize' must be a multiple of the volblocksize of {state.path!r} ({volblocksize}).",
-            errno.EINVAL,
-        )
+    reject_volsize_not_multiple(
+        verrors, state.attribute("volsize"), state.path, state.effective("volsize"), state.current["volblocksize"]
+    )
 
 
 def check_reservation_headroom(context: ServiceContext, state: SetContext, verrors: ValidationErrors) -> None:
@@ -442,32 +437,15 @@ def check_dedup_descendants(context: ServiceContext, state: SetContext, verrors:
 def check_recordsize(context: ServiceContext, state: SetContext, verrors: ValidationErrors) -> None:
     if state.type != "FILESYSTEM" or "recordsize" not in state.set_names():
         return
-    recordsize = state.effective("recordsize")
-    with open(ZFS_MAX_RECORDSIZE) as f:
-        maximum = min(SPA_MAXBLOCKSIZE, int(f.read().strip()))
-    if recordsize < 512 or recordsize > maximum or recordsize & (recordsize - 1):
-        verrors.add(
-            state.attribute("recordsize"),
-            f"'recordsize' must be a power of two from 512 to {maximum} bytes.",
-            errno.EINVAL,
-        )
-    elif recordsize < DRAID_MINIMUM_RECORDSIZE and pool_is_draid(context, state.path.split("/")[0]):
-        verrors.add(
-            state.attribute("recordsize"),
-            f"'recordsize' must be at least {DRAID_MINIMUM_RECORDSIZE} bytes on a dRAID pool.",
-            errno.EINVAL,
-        )
+    reject_bad_recordsize(
+        verrors, state.attribute("recordsize"), context, state.path.split("/")[0], state.effective("recordsize")
+    )
 
 
 def check_special_small_blocks_range(context: ServiceContext, state: SetContext, verrors: ValidationErrors) -> None:
     if "special_small_blocks" not in state.set_names():
         return
-    if not 0 <= state.effective("special_small_blocks") <= SPA_MAXBLOCKSIZE:
-        verrors.add(
-            state.attribute("special_small_blocks"),
-            f"'special_small_blocks' must be between 0 and {SPA_MAXBLOCKSIZE} bytes.",
-            errno.EINVAL,
-        )
+    reject_ssb_out_of_range(verrors, state.attribute("special_small_blocks"), state.effective("special_small_blocks"))
 
 
 class SetRule(typing.NamedTuple):

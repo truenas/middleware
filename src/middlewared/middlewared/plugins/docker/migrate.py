@@ -4,8 +4,13 @@ from datetime import datetime
 import os
 import typing
 
-from middlewared.api.current import DockerEntry, ZFSResourceSnapshotCreateQuery, ZFSResourceSnapshotDestroyQuery
-from middlewared.plugins.pool_.utils import CreateImplArgs
+from middlewared.api.current import (
+    DockerEntry,
+    ZFSResourceCreateArgsData,
+    ZFSResourceCreateProperties,
+    ZFSResourceSnapshotCreateQuery,
+    ZFSResourceSnapshotDestroyQuery,
+)
 from middlewared.service import CallError, ServiceContext
 from middlewared.service_exception import InstanceNotFound
 
@@ -43,13 +48,15 @@ async def migrate_ix_apps_dataset(
     try:
         job.set_progress(40, f'Replicating datasets from {old_config.pool!r} to {new_pool!r} pool')
         dsname = applications_ds_name(new_config.pool)
-        await context.middleware.call(
-            'pool.dataset.create_impl',
-            CreateImplArgs(
-                name=dsname,
-                ztype='FILESYSTEM',
-                zprops=DatasetDefaults.create_time_props(os.path.basename(dsname))
-            )
+        await context.call2(
+            context.s.zfs.resource.create_impl,
+            ZFSResourceCreateArgsData(
+                path=dsname,
+                properties=ZFSResourceCreateProperties.model_validate(
+                    DatasetDefaults.create_time_props(os.path.basename(dsname))
+                ),
+                bypass=True,
+            ),
         )
         if umount_job := await umount_docker_ds(context):
             await umount_job.wait()

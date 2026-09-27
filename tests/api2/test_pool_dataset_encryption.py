@@ -152,7 +152,7 @@ class TestNormalPool:
                 },
                 'inherit_encryption': False
             },
-            'Must be disabled when dataset is to be encrypted with passphrase'
+            'Exactly one of'
         )
     ])
     def test_try_to_create_invalid_encrypted_dataset(self, payload: dict, message: str):
@@ -261,7 +261,7 @@ class TestPassphraseEncryptedPool:
             'encryption': True,
             'inherit_encryption': False
         })
-        with pytest.raises(ValidationErrors, match='Passphrase encrypted datasets cannot have children encrypted with a key'):
+        with pytest.raises(ValidationErrors, match='is encrypted with a passphrase; a key-encrypted child cannot be created'):
             with create_dataset(payload): pass
 
     def test_try_to_create_invalid_encrypted_dataset_does_not_leak_encryption_key_into_middleware_log(self):

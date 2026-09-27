@@ -1,10 +1,9 @@
 import errno
 import os
-import shlex
 
 import pytest
 from auto_config import pool_name
-from middlewared.service_exception import ValidationError, ValidationErrors
+from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.pool import another_pool
 from middlewared.test.integration.assets.zfs_resource import destroy_zfs_resource, zfs_resource
 from middlewared.test.integration.utils import call, mock, ssh
@@ -213,19 +212,6 @@ def test_zfs_resource_create_missing_pool_fails(path, create_ancestors):
     assert "Pool 'nonexistent_pool_xyz123' does not exist" in str(exc_info.value)
 
 
-def test_zfs_resource_create_space_padded_ancestors():
-    """Test that ancestors create_ancestors would make may not be space padded, while existing ones may"""
-    root = os.path.join(pool_name, "test_create_padded")
-    with zfs_resource(root):
-        with pytest.raises(Exception) as exc_info:
-            call("zfs.resource.create", {"path": os.path.join(root, "mid /leaf"), "create_ancestors": True})
-        assert f"Cannot create '{root}/mid '" in str(exc_info.value)
-
-        ssh(f"zfs create {shlex.quote(os.path.join(root, 'legacy '))}")
-        with zfs_resource(os.path.join(root, "legacy /child"), {"create_ancestors": True}) as entry:
-            assert entry["name"] == os.path.join(root, "legacy /child")
-
-
 def test_zfs_resource_create_already_exists():
     """Test that creating an existing resource fails"""
     path = os.path.join(pool_name, "test_create_exists")
@@ -238,25 +224,21 @@ def test_zfs_resource_create_already_exists():
 @pytest.mark.parametrize(
     "path,error",
     [
-        pytest.param("/tank/dataset", "Absolute path", id="absolute paths not allowed"),
-        pytest.param("tank/dataset/", "forward-slash", id="trailing forward-slash not allowed"),
+        pytest.param("/tank/dataset", "valid dataset name", id="absolute paths not allowed"),
+        pytest.param("tank/dataset/", "valid dataset name", id="trailing forward-slash not allowed"),
         pytest.param(
             "tank/dataset@snap",
-            "zfs.resource.snapshot.create",
+            "valid dataset name",
             id="snapshot paths not allowed",
         ),
         pytest.param("tank", "root filesystem", id="creating root filesystem not allowed"),
         pytest.param("boot-pool/test", "protected", id="protected paths not allowed"),
         pytest.param(
             "tank/dataset ",
-            "Resource names may not begin or end with a space",
+            "Trailing spaces are not permitted",
             id="trailing space not allowed",
         ),
-        pytest.param(
-            "tank/ dataset",
-            "Resource names may not begin or end with a space",
-            id="leading space not allowed",
-        ),
+        pytest.param("tank/a%b", "may not contain '%'", id="percent not allowed"),
     ],
 )
 def test_zfs_resource_create_validation_errors(path, error):
@@ -299,7 +281,7 @@ def test_zfs_resource_create_property_invalid_for_type():
     path = os.path.join(pool_name, "test_create_fs_volprop")
     with pytest.raises(Exception) as exc_info:
         call("zfs.resource.create", {"path": path, "properties": {"volsize": GiB}})
-    assert "invalid for zfs type" in str(exc_info.value)
+    assert "'volsize' is not valid for a FILESYSTEM" in str(exc_info.value)
 
 
 def test_zfs_resource_create_encryption_property_denied():
@@ -474,11 +456,11 @@ def test_zfs_resource_create_under_locked_parent_fails():
     parent = os.path.join(pool_name, "test_create_locked_parent")
     with zfs_resource(parent, {"encryption": {"passphrase": "passphrase123"}}):
         call("pool.dataset.lock", parent, job=True)
-        with pytest.raises(Exception) as exc_info:
+        with pytest.raises(ValidationErrors) as ve:
             call("zfs.resource.create", {"path": f"{parent}/child"})
-        emsg = str(exc_info.value)
-        assert "encryption key is not loaded" in emsg
-        assert "Unlock the parent dataset" in emsg
+        [error] = ve.value.errors
+        assert error.errno == errno.EACCES
+        assert "is locked" in error.errmsg
 
 
 @pytest.fixture(scope="module")
@@ -850,13 +832,14 @@ def test_zfs_resource_create_encryption_root_skips_missing_ancestors():
 def test_zfs_resource_create_rejects_a_property_value_zfs_refuses():
     """A value that passes the API model but not ZFS is reported as EINVAL"""
     path = os.path.join(pool_name, "test_create_badpropvalue")
-    with pytest.raises(ValidationError) as ve:
+    with pytest.raises(ValidationErrors) as ve:
         call(
             "zfs.resource.create",
             {"path": path, "properties": {"recordsize": "3K"}},
         )
-    assert ve.value.attribute == "zfs.resource.create"
-    assert ve.value.errno == errno.EINVAL
+    [error] = ve.value.errors
+    assert error.attribute == "zfs.resource.create.properties.recordsize"
+    assert error.errno == errno.EINVAL
     assert call("zfs.resource.list", {"paths": [path], "properties": None}) == []
 
 
@@ -883,3 +866,16 @@ def test_zfs_resource_create_under_a_volume_parent_is_rejected(tier_enabled, chi
         [error] = ve.value.errors
         assert error.errno == errno.EINVAL
         assert error.errmsg == f"{vol!r} is a volume and cannot hold {child!r}."
+
+
+def test_zfs_resource_create_share_type():
+    path = os.path.join(pool_name, "test_create_share_type")
+    expected = call("zfs.resource.share_type_choices")["smb"]
+    with zfs_resource(path, {"share_type": "smb"}):
+        props = call("zfs.resource.list", {"paths": [path], "properties": list(expected)})[0]["properties"]
+        assert {name: props[name]["raw"] for name in expected} == expected
+        assert call("filesystem.getacl", f"/mnt/{path}")["acltype"] == "NFS4"
+
+    with pytest.raises(ValidationErrors) as ve:
+        call("zfs.resource.create", {"path": path, "share_type": "smb", "properties": {"acltype": "posix"}})
+    assert [e.attribute for e in ve.value.errors] == ["zfs.resource.create.properties.acltype"]

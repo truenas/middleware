@@ -3,10 +3,12 @@ import os
 import shutil
 
 from middlewared.api import api_method
-from middlewared.api.current import PoolExportArgs, PoolExportResult
+from middlewared.api.current import PoolExportArgs, PoolExportResult, ZFSResourceQuery
 from middlewared.service import CallError, Service, job, private
 from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.utils.filesystem import attrs as fs_attrs
+
+from .utils import pool_dataset_view
 
 
 class PoolService(Service):
@@ -91,7 +93,12 @@ class PoolService(Service):
         """
         pool = await self.middleware.call('pool.get_instance', oid)
         audit_callback(pool['name'])
-        root_ds = await self.middleware.call('pool.dataset.query', [['id', '=', pool['name']]])
+        root_ds = [
+            pool_dataset_view(r) for r in await self.call2(
+                self.s.zfs.resource.list_impl,
+                ZFSResourceQuery(paths=[pool['name']], properties=['mountpoint', 'encryption']),
+            )
+        ]
         if (
                 root_ds and
                 root_ds[0]['locked'] and
@@ -139,7 +146,7 @@ class PoolService(Service):
             await self.call2(self.s.keyvalue.delete, enable_on_import_key)
 
         job.set_progress(20, 'Terminating processes that are using this pool')
-        await self.middleware.call('pool.dataset.kill_processes', pool['name'], options.get('restart_services', False))
+        await self.call2(self.s.zfs.resource.kill_processes, pool['name'], options.get('restart_services', False))
 
         await self.middleware.call('iscsi.global.terminate_luns_for_pool', pool['name'])
 

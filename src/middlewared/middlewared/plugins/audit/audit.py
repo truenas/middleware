@@ -403,7 +403,9 @@ class AuditService(ConfigService):
             return
 
         args = UpdateImplArgs(name=ds['name'], zprops=zprops, uprops=uprops)
-        await self.middleware.call('pool.dataset.update_impl', args)
+        await self.call2(
+            self.s.zfs.resource.set_impl, ds['name'], properties=zprops, user_properties=uprops, bypass=True
+        )
         if await self.middleware.call('failover.status') == 'MASTER':
             try:
                 await self.middleware.call(
@@ -492,10 +494,7 @@ class AuditService(ConfigService):
         zprops = {'refreservation': 'none'}
         for ds_name in to_remove:
             try:
-                await self.middleware.call(
-                    'pool.dataset.update_impl',
-                    UpdateImplArgs(name=ds_name, zprops=zprops)
-                )
+                await self.call2(self.s.zfs.resource.set_impl, ds_name, properties=zprops, bypass=True)
             except Exception:
                 self.logger.error(
                     '%s: failed to remove refreservation from dataset. Manual '

@@ -14,6 +14,8 @@ from middlewared.api.current import (
     VMDeviceUpdate,
     VMDiskDevice,
     VMRAWDevice,
+    ZFSResourceCreateArgsData,
+    ZFSResourceCreateProperties,
     ZFSResourceQuery,
 )
 from middlewared.plugins.zfs.zvol_utils import zvol_path_to_name
@@ -174,16 +176,17 @@ class VMDeviceServicePart(CRUDServicePart[VMDeviceEntry]):
         if device_dtype == 'DISK':
             create_zvol = data['attributes'].pop('create_zvol', False)
             if create_zvol:
-                ds_options: dict[str, Any] = {
-                    'name': data['attributes'].pop('zvol_name'),
-                    'type': 'VOLUME',
-                    'volsize': data['attributes'].pop('zvol_volsize'),
-                }
-                zvol_blocksize = await self.middleware.call(
-                    'pool.dataset.recommended_zvol_blocksize', ds_options['name'].split('/', 1)[0]
-                )
-                ds_options['volblocksize'] = zvol_blocksize
-                await self.middleware.call('pool.dataset.create', ds_options)
+                zvol_name = data['attributes'].pop('zvol_name')
+                await self.call2(self.s.zfs.resource.create, ZFSResourceCreateArgsData(
+                    path=zvol_name,
+                    type='VOLUME',
+                    properties=ZFSResourceCreateProperties.model_validate({
+                        'volsize': data['attributes'].pop('zvol_volsize'),
+                        'volblocksize': await self.call2(
+                            self.s.zfs.resource.recommended_zvol_blocksize, zvol_name.split('/', 1)[0]
+                        ),
+                    }),
+                ))
         elif device_dtype == 'RAW' and (
             not data['attributes'].pop('exists', True) or (
                 old and old['attributes']['size'] != data['attributes']['size']

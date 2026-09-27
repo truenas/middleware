@@ -120,7 +120,7 @@ def test_draid_dataset_valid_recordsize(draid_pool, recordsize, validation_error
                                          'recordsize': recordsize})
 
         assert ve.value.errors[0].attribute == 'pool_dataset_create.recordsize'
-        assert ve.value.errors[0].errmsg == f"'{recordsize}' is an invalid recordsize."
+        assert ve.value.errors[0].errmsg == "'recordsize' must be at least 131072 bytes on a dRAID pool."
 
 
 @pytest.mark.usefixtures('check_unused_disks')
@@ -158,7 +158,7 @@ def test_draid_zvol_valid_blocksize(draid_pool, blocksize, validation_error):
             )
 
         assert ve.value.errors[0].attribute == 'pool_dataset_create.volblocksize'
-        assert ve.value.errors[0].errmsg == 'Volume block size must be greater than or equal to 32K for dRAID pools'
+        assert ve.value.errors[0].errmsg == 'Volume block size must be greater than or equal to 32K for dRAID pools.'
 
 
 @pytest.mark.usefixtures('check_unused_disks')

@@ -241,9 +241,9 @@ from middlewared.api.current import (
     SystemDatasetPoolChoicesResult,
     SystemDatasetUpdateArgs,
     SystemDatasetUpdateResult,
+    ZFSResourceCreateArgsData,
     ZFSResourceQuery,
 )
-from middlewared.plugins.pool_.utils import CreateImplArgs, UpdateImplArgs
 from middlewared.plugins.system_dataset.hierarchy import SystemDatasetZfsProperties, get_system_dataset_spec
 from middlewared.plugins.system_dataset.mount import (
     mount_hierarchy,
@@ -768,9 +768,9 @@ class SystemDatasetService(ConfigService):
                 props['quota'] = '1073741824'
 
             if dataset not in datasets_prop:
-                await self.middleware.call(
-                    'pool.dataset.create_impl',
-                    CreateImplArgs(name=dataset, ztype='FILESYSTEM', zprops=props),
+                await self.call2(
+                    self.s.zfs.resource.create_impl,
+                    ZFSResourceCreateArgsData(path=dataset, properties=props, bypass=True),
                 )
             elif is_cores_ds and datasets_prop[dataset]['used']['value'] >= 1024 ** 3:
                 try:
@@ -779,9 +779,9 @@ class SystemDatasetService(ConfigService):
                         self.s.zfs.resource.destroy_impl, dataset,
                         recursive=True, bypass=True,
                     )
-                    await self.middleware.call(
-                        'pool.dataset.create_impl',
-                        CreateImplArgs(name=dataset, ztype='FILESYSTEM', zprops=props),
+                    await self.call2(
+                        self.s.zfs.resource.create_impl,
+                        ZFSResourceCreateArgsData(path=dataset, properties=props, bypass=True),
                     )
                 except Exception:
                     self.logger.warning("Failed to replace dataset [%s].", dataset, exc_info=True)
@@ -792,10 +792,7 @@ class SystemDatasetService(ConfigService):
                     k: v for k, v in props.items() if datasets_prop[dataset][k]['raw'] != v
                 }
                 if update_props:
-                    await self.middleware.call(
-                        'pool.dataset.update_impl',
-                        UpdateImplArgs(name=dataset, zprops=update_props),
-                    )
+                    await self.call2(self.s.zfs.resource.set_impl, dataset, properties=update_props, bypass=True)
 
         return list(datasets.values())
 
@@ -978,9 +975,7 @@ class SystemDatasetService(ConfigService):
         try:
             umount(SYSDATASET_PATH, recursive=True)
         except OSError:
-            procs = self.middleware.call_sync(
-                'pool.dataset.processes_using_paths', [SYSDATASET_PATH], True, True,
-            )
+            procs = self.call_sync2(self.s.zfs.resource.processes_using_paths, [SYSDATASET_PATH], True, True)
             self.logger.warning(
                 '%s: busy during swap (%r); falling back to lazy umount',
                 SYSDATASET_PATH, procs,
@@ -1084,9 +1079,8 @@ class SystemDatasetService(ConfigService):
 
         # System dataset must be a plain legacy mount -- kill any ACL state.
         if 'POSIXACL' in sysds_mntinfo['super_opts'] or 'NFSV4ACL' in sysds_mntinfo['super_opts']:
-            self.middleware.call_sync(
-                'pool.dataset.update_impl',
-                UpdateImplArgs(name=config['basename'], zprops={'acltype': 'off'}),
+            self.call_sync2(
+                self.s.zfs.resource.set_impl, config['basename'], properties={'acltype': 'off'}, bypass=True,
             )
 
         self._bind_cores_to_coredump()

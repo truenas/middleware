@@ -15,7 +15,6 @@ from middlewared.api.current import (
     NVMetNamespaceUpdateResult,
     ZFSResourceQuery,
 )
-from middlewared.plugins.pool_.utils import UpdateImplArgs
 from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
 from middlewared.plugins.zfs_.validation_utils import validate_dataset_name
 from middlewared.service import SharingService, ValidationErrors, private
@@ -114,12 +113,8 @@ class NVMetNamespaceService(SharingService):
             if data['device_type'] == 'ZVOL' and data['device_path'].startswith('zvol/'):
                 zvolname = zvol_path_to_name(os.path.join('/dev', data['device_path']))
                 if '@' not in zvolname:  # Snapshots don't support volthreading property
-                    await self.middleware.call(
-                        'pool.dataset.update_impl',
-                        UpdateImplArgs(
-                            name=zvolname,
-                            zprops={'volthreading': 'off'}
-                        )
+                    await self.call2(
+                        self.s.zfs.resource.set_impl, zvolname, properties={'volthreading': 'off'}, bypass=True,
                     )
 
         async with NSID_LOCK:
@@ -160,12 +155,8 @@ class NVMetNamespaceService(SharingService):
             if new['device_type'] == 'ZVOL' and new['device_path'].startswith('zvol/'):
                 zvolname = zvol_path_to_name(os.path.join('/dev', new['device_path']))
                 if '@' not in zvolname:  # Snapshots don't support volthreading property
-                    await self.middleware.call(
-                        'pool.dataset.update_impl',
-                        UpdateImplArgs(
-                            name=zvolname,
-                            zprops={'volthreading': 'off'}
-                        )
+                    await self.call2(
+                        self.s.zfs.resource.set_impl, zvolname, properties={'volthreading': 'off'}, bypass=True,
                     )
 
         await self.compress(new)
@@ -214,12 +205,8 @@ class NVMetNamespaceService(SharingService):
                             # 1. volume still exists
                             # 2. is a volume
                             # 3. volthreading is currently off
-                            await self.middleware.call(
-                                'pool.dataset.update_impl',
-                                UpdateImplArgs(
-                                    name=zvolname,
-                                    zprops={'volthreading': 'on'}
-                                )
+                            await self.call2(
+                                self.s.zfs.resource.set_impl, zvolname, properties={'volthreading': 'on'}, bypass=True,
                             )
 
         rv = await self.middleware.call('datastore.delete', self._config.datastore, id_)
@@ -533,12 +520,8 @@ class NVMetNamespaceService(SharingService):
             ZFSResourceQuery(paths=zvols, properties=['volthreading']),
         ):
             if zvol['properties']['volthreading']['raw'] == 'on':
-                await self.middleware.call(
-                    'pool.dataset.update_impl',
-                    UpdateImplArgs(
-                        name=zvol['name'],
-                        zprops={'volthreading': 'off'}
-                    )
+                await self.call2(
+                    self.s.zfs.resource.set_impl, zvol['name'], properties={'volthreading': 'off'}, bypass=True,
                 )
 
 

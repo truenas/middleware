@@ -689,6 +689,11 @@ class SharingS3Service(SharingService[SharingS3Entry]):
             verrors.add(f"{schema}.dataset", e.message, errno.EEXIST)
         except ZFSPathNotFoundException as e:
             verrors.add(f"{schema}.dataset", e.message, errno.ENOENT)
+        except ValidationError as e:
+            verrors.add(f"{schema}.dataset", e.errmsg, e.errno)
+        except ValidationErrors as e:
+            for _, errmsg, errno_ in e:
+                verrors.add(f"{schema}.dataset", errmsg, errno_)
         except ValueError as e:
             verrors.add(f"{schema}.dataset", str(e), errno.EINVAL)
         verrors.check()

@@ -29,12 +29,12 @@ from middlewared.api.current import (
     VMWareMatchDatastoresWithDatasetsResult,
     VMWareUpdateArgs,
     VMWareUpdateResult,
+    ZFSResourceQuery,
 )
 from middlewared.async_validators import resolve_hostname
 from middlewared.service import CallError, CRUDService, ValidationErrors, job, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils.time_utils import utc_now
-from middlewared.utils.zfs import query_imported_fast_impl
 
 NFS_VOLUME_TYPES = ('NFS', 'NFS41')
 
@@ -219,15 +219,16 @@ class VMWareService(CRUDService):
                 zvol = extent["path"][len("zvol/"):]
                 iscsi_extents[zvol].append(f"naa.{extent['naa'][2:]}")
         filesystems = []
-        zpools = [i["name"] for i in query_imported_fast_impl().values()]
-        options = {"extra": {"retrieve_properties": False}}
-        for fs in self.middleware.call_sync("pool.dataset.query", [("pool", "in", zpools)], options):
+        for fs in self.call_sync2(
+            self.s.zfs.resource.list_impl, ZFSResourceQuery(properties=['mountpoint'], get_children=True)
+        ):
             if fs["type"] == "FILESYSTEM":
+                mountpoint = fs['properties']['mountpoint']['raw']
                 filesystems.append({
                     "type": "FILESYSTEM",
                     "name": fs["name"],
-                    "description": f"NFS mount {fs['mountpoint']!r} on {' or '.join(ip_addresses)}",
-                    "matches": [f"{ip_address}:{fs['mountpoint']}" for ip_address in ip_addresses],
+                    "description": f"NFS mount {mountpoint!r} on {' or '.join(ip_addresses)}",
+                    "matches": [f"{ip_address}:{mountpoint}" for ip_address in ip_addresses],
                 })
 
             if fs["type"] == "VOLUME":

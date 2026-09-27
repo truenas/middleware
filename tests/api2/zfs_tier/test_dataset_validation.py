@@ -183,7 +183,7 @@ def test_disabled_tiering_falls_back_to_legacy_validation(tier_pool):
                 },
             )
         msg = ve.value.errors[0].errmsg
-        assert "zero to 16M" in msg or "0 to 16M" in msg or "from zero to 16M" in msg
+        assert "must be between 0 and" in msg
         assert "tiering" not in msg.lower()
 
         # In-range value (8 KiB) accepted.

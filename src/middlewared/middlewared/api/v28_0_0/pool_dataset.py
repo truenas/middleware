@@ -392,7 +392,13 @@ class PoolDatasetCreateFilesystem(PoolDatasetCreate):
 
 class PoolDatasetCreateVolume(PoolDatasetCreate):
     type: Literal["VOLUME"] = Field(default="VOLUME", description="Type of dataset to create - volume (zvol).")
-    force_size: bool = Field(default=NotRequired, description="Force creation even if the size is not optimal.")
+    force_size: bool = Field(
+        default=NotRequired,
+        description=(
+            "No effect. A thick volume whose reservation would use more than 80% of the space available to it is "
+            "refused; set `sparse` to create it anyway."
+        ),
+    )
     sparse: bool = Field(default=NotRequired, description="Whether to use sparse (thin) provisioning for the volume.")
     volsize: int = Field(description="The volume size in bytes; supposed to be a multiple of the block size.")
     volblocksize: Literal["512", "512B", "1K", "2K", "4K", "8K", "16K", "32K", "64K", "128K"] = Field(

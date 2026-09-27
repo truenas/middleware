@@ -1,9 +1,7 @@
 import errno
 import os
-import pathlib
 
 from pydantic import ValidationError as PydanticValidationError
-from truenas_pylibzfs import ZFSError, ZFSException, ZFSType
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -18,15 +16,15 @@ from middlewared.api.current import (
     PoolDatasetRenameResult,
     PoolDatasetUpdateArgs,
     PoolDatasetUpdateResult,
+    ZFSResourceCreateArgsData,
     ZFSResourceDestroyArgsData,
     ZFSResourcePromoteArgsData,
     ZFSResourceQuery,
     ZFSResourceRenameArgsData,
     ZFSResourceSetArgsData,
 )
-from middlewared.plugins.container.utils import CONTAINER_DS_NAME
+from middlewared.plugins.zfs.share_presets import SHARE_PRESETS
 from middlewared.plugins.zfs.utils import has_internal_path
-from middlewared.plugins.zfs_.validation_utils import validate_dataset_name
 from middlewared.service import (
     CallError,
     CRUDService,
@@ -36,27 +34,21 @@ from middlewared.service import (
     filterable_api_method,
     private,
 )
-from middlewared.service.decorators import pass_thread_local_storage
 import middlewared.sqlalchemy as sa
 from middlewared.utils.boot.pool import BOOT_POOL_NAME_VALID
 from middlewared.utils.filesystem import attrs as fs_attrs
 from middlewared.utils.filter_list import filter_list
 
-from .dataset_query_utils import generic_query, user_property_names_to_be_renamed
+from .dataset_query_utils import generic_query, is_internal_dataset_name, user_property_names_to_be_renamed
 from .utils import (
     POOL_DS_CREATE_PROPERTIES,
     POOL_DS_UPDATE_PROPERTIES,
     RE_ZFS_USER_PROP,
     ZFS_USER_PROP_MAX_LEN,
-    ZFS_VOLUME_BLOCK_SIZE_CHOICES,
-    CreateImplArgs,
-    CreateImplArgsDataclass,
     UpdateImplArgs,
-    ZFSKeyFormat,
     dataset_mountpoint,
     get_dataset_parents,
-    validate_dedup_license,
-    validate_dedup_tiering,
+    pool_dataset_view,
 )
 
 
@@ -94,6 +86,27 @@ class PoolDatasetEncryptionModel(sa.Model):
     kmip_uid = sa.Column(sa.String(255), nullable=True, default=None)
 
 
+def _native_value(prop, value):
+    if prop.is_user_prop:
+        return prop.transform(value) if prop.transform else value
+    elif prop.transform is str.lower:
+        return value.lower()
+    else:
+        return 0 if value is None else value
+
+
+def _pool_field(api_names, sent, name):
+    if api_names.get(name) in sent:
+        return api_names[name]
+    if name in ('aclmode', 'aclinherit'):
+        return 'acltype'
+    if name == 'refreservation' and 'volsize' in sent:
+        return 'volsize'
+    if name not in api_names:
+        return 'user_properties_update' if 'user_properties_update' in sent else 'user_properties'
+    return None
+
+
 def translate_update(data):
     """Split a `pool.dataset.update` payload into the `properties`, `user_properties` and `inherit` of
     `zfs.resource.set`."""
@@ -105,11 +118,9 @@ def translate_update(data):
         if prop.inheritable and value == 'INHERIT':
             inherit.append(prop.real_name)
         elif prop.is_user_prop:
-            user_properties[prop.real_name] = prop.transform(value) if prop.transform else value
-        elif prop.transform is str.lower:
-            properties[prop.real_name] = value.lower()
+            user_properties[prop.real_name] = _native_value(prop, value)
         else:
-            properties[prop.real_name] = 0 if value is None else value
+            properties[prop.real_name] = _native_value(prop, value)
 
     for up in data.get('user_properties_update', []):
         if 'value' in up:
@@ -124,28 +135,51 @@ def rekey_update_errors(verrors, sent, errors):
     """Add `zfs.resource.set` errors to `verrors` under the `pool_dataset_update` field the caller sent."""
     api_names = {prop.real_name: prop.api_name for prop in POOL_DS_UPDATE_PROPERTIES}
 
-    def property_field(name):
-        if api_names.get(name) in sent:
-            return api_names[name]
-        if name in ('aclmode', 'aclinherit'):
-            return 'acltype'
-        if name == 'refreservation' and 'volsize' in sent:
-            return 'volsize'
-        if name not in api_names:
-            return 'user_properties_update' if 'user_properties_update' in sent else 'user_properties'
-        return None
-
     for attribute, errmsg, errno_ in errors:
         section, _, name = attribute.removeprefix('zfs.resource.set.').partition('.')
         if section == 'properties' and name:
-            field = property_field(name.split('.', 1)[0])
+            field = _pool_field(api_names, sent, name.split('.', 1)[0])
         elif section == 'inherit' and name:
-            field = property_field(name)
+            field = _pool_field(api_names, sent, name)
         elif section == 'user_properties':
             field = next((f for f in ('user_properties_update', 'user_properties') if f in sent), None)
         else:
             field = None
         verrors.add(f'pool_dataset_update.{field}' if field else 'pool_dataset_update', errmsg, errno_)
+
+
+def translate_create(data):
+    properties, user_properties = {}, {}
+    for prop in POOL_DS_CREATE_PROPERTIES:
+        value = data.get(prop.api_name, 'INHERIT')
+        if value == 'INHERIT':
+            continue
+        if prop.is_user_prop:
+            user_properties[prop.real_name] = _native_value(prop, value)
+        else:
+            properties[prop.real_name] = _native_value(prop, value)
+    if data.get('sparse'):
+        properties['refreservation'] = 0
+    for up in data['user_properties']:
+        user_properties[up['key']] = up['value']
+    return properties, user_properties
+
+
+def rekey_create_errors(verrors, sent, errors):
+    api_names = {prop.real_name: prop.api_name for prop in POOL_DS_CREATE_PROPERTIES}
+    for attribute, errmsg, errno_ in errors:
+        section, _, name = attribute.removeprefix('zfs.resource.create').removeprefix('.').partition('.')
+        if section in ('', 'path'):
+            field = 'name'
+        elif section == 'properties' and name:
+            field = _pool_field(api_names, sent, name.split('.', 1)[0])
+        elif section == 'encryption':
+            field = f'encryption_options.{name}' if name else 'encryption'
+        elif section in ('share_type', 'user_properties'):
+            field = section
+        else:
+            field = None
+        verrors.add(f'pool_dataset_create.{field}' if field else 'pool_dataset_create', errmsg, errno_)
 
 
 class PoolDatasetService(CRUDService):
@@ -161,20 +195,14 @@ class PoolDatasetService(CRUDService):
 
     @private
     async def get_instance_quick(self, name, options=None):
-        options = options or {}
-        properties = set(options.get('properties') or [])
-        properties.add('mountpoint')
-        if options.get('encryption'):
-            properties.update(['encryption', 'keystatus', 'mountpoint', 'keyformat', 'encryptionroot'])
-
-        return await self.middleware.call(
-            'pool.dataset.get_instance', name, {
-                'extra': {
-                    'retrieve_children': options.get('retrieve_children', False),
-                    'properties': list(properties),
-                }
-            }
+        if is_internal_dataset_name(name):
+            raise InstanceNotFound(f'PoolDataset {name} does not exist')
+        rows = await self.call2(
+            self.s.zfs.resource.list_impl, ZFSResourceQuery(paths=[name], properties=['mountpoint', 'encryption'])
         )
+        if not rows:
+            raise InstanceNotFound(f'PoolDataset {name} does not exist')
+        return pool_dataset_view(rows[0])
 
     @private
     async def internal_datasets_filters(self):
@@ -240,175 +268,6 @@ class PoolDatasetService(CRUDService):
             tier_enabled=tier_enabled,
         )
 
-    async def __create_validation(self, verrors, schema, data, parent):
-        parents = get_dataset_parents(data['name'])
-        parent_name = None
-        if not parents:
-            # happens when someone is making
-            # changes to the root dataset (zpool)
-            parent_name = data['name']
-        else:
-            parent_name = parents[0]
-
-        if not parent:
-            parent = await self.middleware.call(
-                'pool.dataset.query',
-                [('id', '=', parent_name)],
-                {'extra': {'retrieve_children': False}}
-            )
-
-        if await self.is_internal_dataset(data['name']):
-            verrors.add(
-                f'{schema}.name',
-                f'{data["name"]!r} is using system internal managed dataset. Please specify a different parent.'
-            )
-
-        if not parent:
-            # This will only be true on dataset creation
-            if data['create_ancestors']:
-                verrors.add(
-                    f'{schema}.name',
-                    'Please specify a pool which exists for the dataset/volume to be created'
-                )
-            else:
-                msg = f'({parent_name}) does not exist.'
-                if len(parents) == 1:
-                    msg = f'zpool {msg}'
-                else:
-                    msg = f'Parent dataset {msg}'
-                verrors.add(f'{schema}.name', msg)
-        else:
-            parent = parent[0]
-            if parent['readonly']['rawvalue'] == 'on':
-                # creating a zvol/dataset when the parent object is set to readonly=on
-                # is allowed via ZFS. However, if it's a dataset an error will be raised
-                # stating that it was unable to be mounted. If it's a zvol, then the service
-                # that tries to open the zvol device will get read only related errors.
-                # Currently, there is no way to mount a dataset in the webUI so we will
-                # prevent this scenario from occuring by preventing creation if the parent
-                # is set to readonly=on.
-                verrors.add(
-                    f'{schema}.readonly',
-                    f'Turn off readonly mode on {parent["id"]} to create {data["name"].rsplit("/")[0]}'
-                )
-
-        # We raise validation errors here as parent could be used down to validate other aspects of the dataset
-        verrors.check()
-
-        await validate_dedup_license(self.middleware, verrors, schema, data.get('deduplication'))
-        special_small_blocks = (parent.get('special_small_block_size') or {}).get('parsed') or 0
-        await validate_dedup_tiering(
-            self.middleware, verrors, schema, data.get('deduplication'), parent['pool'],
-            data['type'], special_small_blocks, None, None,
-        )
-
-        dataset_pool_is_draid = await self.middleware.call('pool.is_draid_pool', parent['pool'])
-        if data['type'] == 'FILESYSTEM':
-            to_check = {'acltype': None, 'aclmode': None}
-
-            # Prevent users from setting incorrect combinations of aclmode and acltype parameters
-            # The final value to be set may have one of several different possible origins
-            # 1. The parameter may be provided in `data` (explicit creation or update)
-            # 2. The parameter may be original value stored in dataset and not touched by update payload
-            # 3. The parameter may be omitted from payload (data) in creation (defaulted to INHERIT)
-            #
-            # If result of 1-3 above for aclmode is INHERIT, then value will be retrieved from parent
-            #
-            # The configuration options we want to avoid are:
-            # NFSV4 + DISCARD (this will result in ACL being stripped on chmod operation)
-            #
-            # POSIX / OFF + non-DISCARD (this will potentially prevent ZFS_ACL_TRIVAL ZFS pflag from being
-            # set and may result in spurious permissions errors.
-            for key in ('acltype', 'aclmode'):
-                match (val := data.get(key) or 'INHERIT'):
-                    case 'INHERIT':
-                        to_check[key] = parent[key]['value']
-                    case 'NFSV4' | 'POSIX' | 'OFF' | 'PASSTHROUGH' | 'RESTRICTED' | 'DISCARD':
-                        to_check[key] = val
-                    case _:
-                        raise CallError(f'{val}: unexpected value for {key}')
-
-            if to_check['acltype'] in ('POSIX', 'OFF') and to_check['aclmode'] != 'DISCARD':
-                verrors.add(f'{schema}.aclmode', 'Must be set to DISCARD when acltype is POSIX or OFF')
-
-            elif to_check['acltype'] == 'NFSV4' and to_check['aclmode'] == 'DISCARD':
-                verrors.add(f'{schema}.aclmode', 'DISCARD aclmode may not be set for NFSv4 acl type')
-
-            for i in ('force_size', 'sparse', 'volsize', 'volblocksize'):
-                if i in data:
-                    verrors.add(f'{schema}.{i}', 'This field is not valid for FILESYSTEM')
-
-            if rs := data.get('recordsize'):
-                if rs != 'INHERIT' and rs not in await self.middleware.call(
-                    'pool.dataset.recordsize_choices', parent['pool']
-                ):
-                    verrors.add(f'{schema}.recordsize', f'{rs!r} is an invalid recordsize.')
-            elif dataset_pool_is_draid:
-                # We set recordsize to 1M by default on dataset creation if not explicitly specified
-                data['recordsize'] = '1M'
-
-        elif data['type'] == 'VOLUME':
-            if 'volblocksize' not in data:
-                # with openzfs 2.2, zfs sets 16k as default https://github.com/openzfs/zfs/pull/12406
-                data['volblocksize'] = '128K' if dataset_pool_is_draid else '16K'
-
-            if dataset_pool_is_draid and 'volblocksize' in data:
-                if ZFS_VOLUME_BLOCK_SIZE_CHOICES[data['volblocksize']] < 32 * 1024:
-                    verrors.add(
-                        f'{schema}.volblocksize',
-                        'Volume block size must be greater than or equal to 32K for dRAID pools'
-                    )
-
-            for i in (
-                'aclmode', 'acltype', 'atime', 'casesensitivity', 'quota', 'refquota', 'recordsize',
-            ):
-                if i in data:
-                    verrors.add(f'{schema}.{i}', 'This field is not valid for VOLUME')
-
-            if 'volsize' in data and parent:
-
-                avail_mem = int(parent['available']['rawvalue'])
-
-                if (
-                    data['volsize'] > (avail_mem * 0.80) and
-                    not data.get('force_size', False)
-                ):
-                    verrors.add(
-                        f'{schema}.volsize',
-                        'It is not recommended to use more than 80% of your available space for VOLUME'
-                    )
-
-                if 'volblocksize' in data:
-
-                    if data['volblocksize'][:3] == '512':
-                        block_size = 512
-                    else:
-                        block_size = int(data['volblocksize'][:-1]) * 1024
-
-                    if data['volsize'] % block_size:
-                        verrors.add(
-                            f'{schema}.volsize',
-                            'Volume size should be a multiple of volume block size'
-                        )
-
-        if (c_value := data.get('special_small_block_size')) is not None:
-            tier_config = await self.middleware.call('zfs.tier.config')
-            if tier_config.enabled:
-                # CREATE: INHERIT is allowed (snapped to a canonical tier
-                # value in do_create); numeric values are rejected.
-                if c_value != 'INHERIT':
-                    verrors.add(
-                        f'{schema}.special_small_block_size',
-                        'ZFS tiering is enabled; use zfs.tier.dataset_set_tier to manage this property.'
-                    )
-            elif c_value != 'INHERIT' and not (0 <= c_value <= 16 * 1048576):
-                verrors.add(
-                    f'{schema}.special_small_block_size',
-                    'This field must be from zero to 16M'
-                )
-
-        validate_user_properties(verrors, f'{schema}.user_properties', data.get('user_properties', []))
-
     async def __update_validation(self, verrors, schema, data, cur_dataset):
         if data['type'] == 'FILESYSTEM':
             for i in ('force_size', 'sparse', 'volsize', 'volblocksize'):
@@ -453,99 +312,6 @@ class PoolDatasetService(CRUDService):
                         'remove': True,
                     })
 
-    @private
-    @pass_thread_local_storage
-    def create_impl(self, tls, data: CreateImplArgs):
-        # Convert TypedDict to dataclass to handle defaults for missing fields
-        args = CreateImplArgsDataclass(
-            name=data['name'],
-            ztype=data['ztype'],
-            zprops=data.get('zprops', {}),
-            uprops=data.get('uprops', None),
-            encrypt=data.get('encrypt', None),
-            create_ancestors=data.get('create_ancestors', False)
-        )
-
-        kwargs = {"name": args.name, "type": None}
-        if args.ztype == "FILESYSTEM":
-            kwargs["type"] = ZFSType.ZFS_TYPE_FILESYSTEM
-            if "xattr" not in args.zprops:
-                # its important to set this as "sa"
-                # for performance reasons
-                args.zprops["xattr"] = "sa"
-        elif args.ztype == "VOLUME":
-            kwargs["type"] = ZFSType.ZFS_TYPE_VOLUME
-            sparse = args.zprops.pop("sparse", None)  # not a real zfs property
-            if sparse is True:
-                # sparse volume is only created if user explicitly
-                # requests it
-                args.zprops["refreservation"] = "none"
-            else:
-                # otherwise, we always create "thick" provisioned volumes.
-                # TODO: reserve refreservation=auto (volsize plus metadata
-                # overhead, like `zfs create -V`) once libzfs zfs_create()
-                # resolves it; today only zfs set and zfs clone do, so create
-                # fails with "out of space". Until then pool.dataset.update
-                # switches these zvols to auto when they are grown.
-                args.zprops.setdefault("refreservation", args.zprops["volsize"])
-        else:
-            raise CallError(f"Invalid dataset type: {args.ztype!r}")
-
-        if args.zprops:
-            kwargs["properties"] = args.zprops
-
-        if args.uprops:
-            kwargs["user_properties"] = args.uprops
-
-        if args.encrypt:
-            try:
-                kwargs["crypto"] = tls.lzh.resource_cryptography_config(
-                    keyformat=args.encrypt["keyformat"],
-                    key=args.encrypt["key"],
-                    pbkdf2iters=args.encrypt.get("pbkdf2iters"),
-                )
-            except (TypeError, ValueError) as e:
-                raise CallError(f"Failed to create dataset {args.name}: {e}")
-
-        if args.create_ancestors:
-            # If we need to create ancestors, we need to handle this differently
-            # truenas_pylibzfs doesn't have a direct create_ancestors flag
-            # So we'll create parent datasets first if needed
-            for parent in reversed(pathlib.Path(kwargs["name"]).parents):
-                pp = parent.as_posix()
-                if pp == "." or "/" not in pp:
-                    # cwd or root dataset
-                    continue
-                try:
-                    tls.lzh.create_resource(name=pp, type=ZFSType.ZFS_TYPE_FILESYSTEM)
-                except ZFSException as e:
-                    if e.code == ZFSError.EZFS_EXISTS:
-                        continue
-                    else:
-                        raise e from None
-
-        try:
-            tls.lzh.create_resource(**kwargs)
-        except Exception as e:
-            raise CallError(f"Failed to create dataset {kwargs['name']}: {e}")
-
-        mntpnt = args.zprops.get('mountpoint', '')
-        if mntpnt == 'legacy' or args.zprops.get('canmount', 'on') != 'on':
-            return
-        elif args.name == CONTAINER_DS_NAME and mntpnt.startswith(f'/{CONTAINER_DS_NAME}'):
-            self.call_sync2(
-                self.s.zfs.resource.mount,
-                args.name,
-                mountpoint=f'/mnt{mntpnt}',  # FIXME: altroot not respected cf. NAS-138287
-                recursive=args.create_ancestors,
-            )
-        else:
-            self.call_sync2(
-                self.s.zfs.resource.mount,
-                args.name,
-                recursive=args.create_ancestors,
-            )
-
     @api_method(
         PoolDatasetCreateArgs,
         PoolDatasetCreateResult,
@@ -569,277 +335,51 @@ class PoolDatasetService(CRUDService):
             }
         """
         verrors = ValidationErrors()
-        acl_to_set = None
-
-        if '/' not in data['name']:
-            verrors.add('pool_dataset_create.name', 'You need a full name, e.g. pool/newdataset')
-        elif not validate_dataset_name(data['name']):
-            verrors.add('pool_dataset_create.name', 'Invalid dataset name')
-        elif data['name'][-1] == ' ':
+        name = data['name']
+        if await self.is_internal_dataset(name):
             verrors.add(
                 'pool_dataset_create.name',
-                'Trailing spaces are not permitted in dataset names'
+                f'{name!r} is using system internal managed dataset. Please specify a different parent.'
             )
-        else:
-            parent_name = data['name'].rsplit('/', 1)[0]
-            if data['create_ancestors']:
-                # If we want to create ancestors, let's just ensure that we have at least one parent which exists
-                while not await self.middleware.call(
-                    'pool.dataset.query',
-                    [['id', '=', parent_name]], {
-                        'extra': {'retrieve_children': False, 'properties': []}
-                    }
-                ):
-                    if '/' not in parent_name:
-                        # Root dataset / pool does not exist
-                        break
-                    parent_name = parent_name.rsplit('/', 1)[0]
-
-            parent_ds = await self.middleware.call(
-                'pool.dataset.query',
-                [('id', '=', parent_name)],
-                {'extra': {'retrieve_children': False}}
+        validate_user_properties(verrors, 'pool_dataset_create.user_properties', data['user_properties'])
+        if data['encryption'] and data['inherit_encryption']:
+            verrors.add('pool_dataset_create.inherit_encryption', 'Must be disabled when encryption is enabled.')
+        elif not data['encryption'] and not data['inherit_encryption']:
+            rows = await self.call2(
+                self.s.zfs.resource.list_impl,
+                ZFSResourceQuery(paths=get_dataset_parents(name), properties=['encryption']),
             )
-
-            match data['share_type']:
-                case 'SMB':
-                    data['casesensitivity'] = 'INSENSITIVE'
-                    data['acltype'] = 'NFSV4'
-                    data['aclmode'] = 'RESTRICTED'
-                case 'APPS' | 'MULTIPROTOCOL' | 'NFS':
-                    data['casesensitivity'] = 'SENSITIVE'
-                    data['atime'] = 'OFF'
-                    data['acltype'] = 'NFSV4'
-                    data['aclmode'] = 'PASSTHROUGH'
-
-            await self.__create_validation(verrors, 'pool_dataset_create', data, parent_ds)
-
-        verrors.check()
-
-        parent_ds = parent_ds[0]
-        if parent_ds['type'] == 'VOLUME':
-            verrors.add(
-                'pool_dataset_create.name',
-                f'{parent_ds["name"]}: parent may not be a ZFS volume'
-            )
-
-        parent_mp = parent_ds['mountpoint']
-        if parent_ds['locked'] or not parent_mp:
-            parent_st_acltype = None
-        else:
-            parent_st_acltype = await self.middleware.call('filesystem.path_get_acltype', parent_mp)
-            if not (await self.middleware.call('filesystem.stat', parent_mp)).acl:
-                parent_st_acltype = None
-
-        mountpoint = os.path.join('/mnt', data['name'])
-
-        try:
-            await self.middleware.call('filesystem.stat', mountpoint)
-            verrors.add('pool_dataset_create.name', f'Path {mountpoint} already exists')
-        except CallError as e:
-            if e.errno != errno.ENOENT:
-                raise
-
-        if data['share_type'] == 'SMB':
-            if parent_st_acltype == 'NFS4':
-                acl_to_set = await self.middleware.call('filesystem.get_inherited_acl', {
-                    'path': os.path.join('/mnt', parent_name),
-                })
-            else:
-                acl_to_set = (await self.middleware.call('filesystem.acltemplate.by_path', {
-                    'query-filters': [('name', '=', 'NFS4_RESTRICTED')],
-                    'format-options': {'ensure_builtins': True},
-                }))[0]['acl']
-        elif data['share_type'] == 'APPS':
-            must_add_apps = True
-            if parent_st_acltype == 'NFS4':
-                acl_to_set = await self.middleware.call('filesystem.get_inherited_acl', {
-                    'path': os.path.join('/mnt', parent_name),
-                })
-
-                # The inherited ACL may already contain an entry granting MODIFY permissions.
-                # if it does, then we can skip adding the apps entry.
-                for entry in acl_to_set:
-                    if entry['id'] == 568 and entry['tag'] == 'USER' and entry['type'] == 'ALLOW':
-                        if entry['flags']['FILE_INHERIT'] and entry['flags']['DIRECTORY_INHERIT']:
-                            if all(
-                                entry['perms'][role]
-                                for role in (
-                                    'READ_DATA', 'WRITE_DATA', 'DELETE', 'DELETE_CHILD', 'READ_ACL', 'APPEND_DATA',
-                                    'READ_NAMED_ATTRS', 'WRITE_NAMED_ATTRS', 'READ_ATTRIBUTES', 'WRITE_ATTRIBUTES'
-                                )
-                            ):
-                                must_add_apps = False
-                                break
-            else:
-                acl_to_set = (await self.middleware.call('filesystem.acltemplate.by_path', {
-                    'query-filters': [('name', '=', 'NFS4_RESTRICTED')],
-                    'format-options': {'ensure_builtins': True},
-                }))[0]['acl']
-
-            if must_add_apps:
-                acl_to_set.append({
-                    'tag': 'USER',
-                    'id': 568,
-                    'perms': {'BASIC': 'MODIFY'},
-                    'flags': {'BASIC': 'INHERIT'},
-                    'type': 'ALLOW'
-                })
-        elif data['share_type'] in ('MULTIPROTOCOL', 'NFS'):
-            if parent_st_acltype == 'NFS4':
-                acl_to_set = await self.middleware.call('filesystem.get_inherited_acl', {
-                    'path': os.path.join('/mnt', parent_name),
-                })
-
-        if acl_to_set:
-            try:
-                await self.middleware.call(
-                    'filesystem.check_acl_execute',
-                    mountpoint, acl_to_set, -1, -1
+            if rows and rows[0]['properties']['encryption']['raw'] != 'off':
+                verrors.add(
+                    'pool_dataset_create.encryption',
+                    f'Cannot create an unencrypted dataset within an encrypted dataset ({rows[0]["name"]}).'
                 )
-            except CallError as e:
-                if e.errno != errno.EPERM:
-                    raise
-
-                verrors.add('pool_dataset_create.share_type', e.errmsg)
-
-        if data['type'] == 'FILESYSTEM' and data.get('acltype', 'INHERIT') != 'INHERIT':
-            data['aclinherit'] = 'PASSTHROUGH' if data['acltype'] == 'NFSV4' else 'DISCARD'
-
-        if parent_ds['locked']:
-            verrors.add(
-                'pool_dataset_create.name',
-                f'{data["name"].rsplit("/", 1)[0]} must be unlocked to create {data["name"]}.'
-            )
-
-        inherit_encryption_properties = data.pop('inherit_encryption')
-
-        unencrypted_parent = False
-        for parent in get_dataset_parents(data['name']):
-            try:
-                check_ds = await self.middleware.call('pool.dataset.get_instance_quick', parent, {'encryption': True})
-            except InstanceNotFound:
-                continue
-
-            if check_ds['encrypted']:
-                if unencrypted_parent:
-                    verrors.add(
-                        'pool_dataset_create.name',
-                        'Creating an encrypted dataset within an unencrypted dataset is not allowed. '
-                        f'In this case, {unencrypted_parent!r} must be moved to an unencrypted dataset.'
-                    )
-                    break
-                elif data['encryption'] is False and not inherit_encryption_properties:
-                    # This was a design decision when native zfs encryption support was added to provide
-                    # a simple straight workflow not allowing end users to create unencrypted datasets
-                    # within an encrypted dataset.
-                    verrors.add(
-                        'pool_dataset_create.encryption',
-                        f'Cannot create an unencrypted dataset within an encrypted dataset ({parent}).'
-                    )
-                    break
-            else:
-                # The unencrypted parent story is pool/encrypted/unencrypted/new_ds so in this case
-                # we want to make sure user does not specify inherit encryption as it will lead to new_ds
-                # not getting encryption props from pool/encrypted.
-                unencrypted_parent = parent
-
-        if data['encryption']:
-            if inherit_encryption_properties:
-                verrors.add('pool_dataset_create.inherit_encryption', 'Must be disabled when encryption is enabled.')
-
-            if not data['encryption_options']['passphrase']:
-                # We want to ensure that we don't have any parent for this dataset which is encrypted with PASSPHRASE
-                # because we don't allow children to be unlocked while parent is locked
-                parent_encryption_root = parent_ds['encryption_root']
-                if (
-                    parent_encryption_root and ZFSKeyFormat(
-                        (await self.get_instance(parent_encryption_root))['key_format']['value']
-                    ) == ZFSKeyFormat.PASSPHRASE
-                ):
-                    verrors.add(
-                        'pool_dataset_create.encryption',
-                        'Passphrase encrypted datasets cannot have children encrypted with a key.'
-                    )
-
-        encryption_dict = await self.middleware.call(
-            'pool.dataset.validate_encryption_data', None, verrors,
-            {'enabled': data.pop('encryption'), **data.pop('encryption_options'), 'key_file': False},
-            'pool_dataset_create.encryption_options',
-        )
         verrors.check()
 
-        if (
-            data['type'] == 'FILESYSTEM'
-            and data.get('special_small_block_size', 'INHERIT') == 'INHERIT'
-        ):
-            tier_config = await self.middleware.call('zfs.tier.config')
-            if tier_config.enabled:
-                parent_ssb = parent_ds['special_small_block_size']['parsed'] or 0
-                parent_rs = parent_ds['recordsize']['parsed'] or 0
-                if parent_rs > 0 and parent_ssb >= parent_rs:
-                    data['special_small_block_size'] = 16 * 1024 * 1024
-                else:
-                    data['special_small_block_size'] = 0
-
-        if data['type'] == 'VOLUME':
-            p_special_small_block_size = parent_ds['special_small_block_size']['parsed']
-            if (
-                p_special_small_block_size and data.get('special_small_block_size', 'INHERIT') == 'INHERIT'
-                and ZFS_VOLUME_BLOCK_SIZE_CHOICES[data['volblocksize']] < p_special_small_block_size
-            ):
-                data['special_small_block_size'] = 0
-
-        zprops, uprops = {}, {}
-        for i in POOL_DS_CREATE_PROPERTIES:
-            if i.api_name not in data or data[i.api_name] == 'INHERIT':
-                continue
-            if i.transform:
-                transformed = i.transform(data[i.api_name])
-            else:
-                transformed = data[i.api_name]
-
-            if i.is_user_prop:
-                uprops[i.real_name] = transformed
-            else:
-                zprops[i.real_name] = transformed
-
-        for up in data['user_properties']:
-            uprops[up['key']] = up['value']
-
-        await self.middleware.call(
-            'pool.dataset.create_impl',
-            CreateImplArgs(
-                name=data["name"],
-                ztype=data["type"],
-                zprops=zprops,
-                uprops=uprops,
-                encrypt=encryption_dict,
-                create_ancestors=data["create_ancestors"]
+        sent = {k for k, v in data.items() if v != 'INHERIT'}
+        properties, user_properties = translate_create(data)
+        share_type = None if data['share_type'] == 'GENERIC' else data['share_type'].lower()
+        if share_type:
+            for key in SHARE_PRESETS[share_type]:
+                properties.pop(key, None)
+        try:
+            await self.call2(self.s.zfs.resource.create, ZFSResourceCreateArgsData(
+                path=name, type=data['type'], properties=properties, user_properties=user_properties,
+                create_ancestors=data['create_ancestors'], share_type=share_type,
+                encryption=data['encryption_options'] if data['encryption'] else None,
+            ))
+        except PydanticValidationError as e:
+            rekey_create_errors(
+                verrors, sent, [('.'.join(map(str, err['loc'])), err['msg'], errno.EINVAL) for err in e.errors()]
             )
-        )
-        dataset_data = {
-            'name': data['name'], 'encryption_key': encryption_dict.get('key'),
-            'key_format': encryption_dict.get('keyformat')
-        }
-        await self.middleware.call('pool.dataset.insert_or_update_encrypted_record', dataset_data)
-        await self.middleware.call_hook('dataset.post_create', {'encrypted': bool(encryption_dict), **dataset_data})
+        except ValidationError as e:
+            rekey_create_errors(verrors, sent, [(e.attribute, e.errmsg, e.errno)])
+        except ValidationErrors as e:
+            rekey_create_errors(verrors, sent, list(e))
+        verrors.check()
 
-        data['id'] = data['name']
-
-        created_ds = await self.get_instance(data['id'])
-
-        if acl_to_set:
-            # We're potentially auto-inheriting an ACL containing nested
-            # security groups and so we need to skip the ACL validation
-            acl_job = await self.middleware.call('filesystem.setacl', {
-                'path': mountpoint,
-                'dacl': acl_to_set,
-                'options': {'validate_effective_acl': False}
-            })
-            await acl_job.wait(raise_error=True)
-
-        self.middleware.send_event('pool.dataset.query', 'ADDED', id=data['id'], fields=created_ds)
+        created_ds = await self.get_instance(name)
+        self.middleware.send_event('pool.dataset.query', 'ADDED', id=name, fields=created_ds)
         return created_ds
 
     @private
@@ -939,7 +479,7 @@ class PoolDatasetService(CRUDService):
                     f'Failed to delete dataset: cannot destroy {id_!r}: filesystem has children', errno.ENOTEMPTY
                 )
 
-        dataset = await self.get_instance(id_)
+        dataset = await self.get_instance_quick(id_)
         audit_callback(dataset['name'])
 
         if mountpoint := dataset_mountpoint(dataset):

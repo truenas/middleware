@@ -12,7 +12,6 @@ import yaml
 
 from middlewared.alert.base import AlertCategory, AlertClassConfig, AlertLevel, OneShotAlertClass
 from middlewared.api.current import ContainerEntry, ZFSResourceQuery, ZFSResourceRenameArgsData
-from middlewared.plugins.pool_.utils import UpdateImplArgs
 from middlewared.service import CallError, ServiceContext
 import middlewared.sqlalchemy as sa
 from middlewared.utils.libvirt.nic import normalize_mac, random_mac
@@ -470,25 +469,21 @@ def migrate_specific_pool(
                 # before the second one fails.
                 processed_parents_mountpoints = True
                 for ds in (f'{pool}/.ix-virt', f'{pool}/.ix-virt/containers'):
-                    context.middleware.call_sync(
-                        'pool.dataset.update_impl',
-                        UpdateImplArgs(
-                            name=ds,
-                            zprops={'readonly': 'off'},
-                            iprops={'mountpoint'}
-                        )
+                    context.call_sync2(
+                        context.s.zfs.resource.set_impl, ds,
+                        properties={'readonly': 'off'},
+                        inherit=['mountpoint'],
+                        bypass=True,
                     )
 
             # Armed before the properties are touched: a partial apply has to be
-            # reverted too, and update_impl can fail between the two of them.
+            # reverted too, and the write can fail between the two of them.
             needs_mount_revert = True
-            context.middleware.call_sync(
-                'pool.dataset.update_impl',
-                UpdateImplArgs(
-                    name=dataset['name'],
-                    zprops={'canmount': 'on'},
-                    iprops={'mountpoint'},
-                )
+            context.call_sync2(
+                context.s.zfs.resource.set_impl, dataset['name'],
+                properties={'canmount': 'on'},
+                inherit=['mountpoint'],
+                bypass=True,
             )
             context.call_sync2(context.s.zfs.resource.mount, dataset['name'])
 
@@ -601,12 +596,10 @@ def revert_incus_mount_properties(context: ServiceContext, job: Job, container_d
         job.logs_fd.write(f'Failed to unmount {container_ds!r} after skipping it.\n'.encode())
 
     try:
-        context.middleware.call_sync(
-            'pool.dataset.update_impl',
-            UpdateImplArgs(
-                name=container_ds,
-                zprops={'canmount': 'noauto', 'mountpoint': 'legacy'},
-            ),
+        context.call_sync2(
+            context.s.zfs.resource.set_impl, container_ds,
+            properties={'canmount': 'noauto', 'mountpoint': 'legacy'},
+            bypass=True,
         )
     except Exception:
         context.logger.warning(
@@ -628,10 +621,7 @@ def restore_legacy_parent_mountpoints(context: ServiceContext, pool: str) -> Non
     """
     for ds in (f'{pool}/.ix-virt/containers', f'{pool}/.ix-virt'):
         try:
-            context.middleware.call_sync(
-                'pool.dataset.update_impl',
-                UpdateImplArgs(name=ds, zprops={'mountpoint': 'legacy'}),
-            )
+            context.call_sync2(context.s.zfs.resource.set_impl, ds, properties={'mountpoint': 'legacy'}, bypass=True)
         except Exception:
             context.logger.warning('%s: failed to restore mountpoint after migration', ds, exc_info=True)
 
@@ -727,9 +717,8 @@ def relocate_container_origin(context: ServiceContext, container_ds: str) -> str
     # canmount is set before the rename so the atomic rename is the last step:
     # either the image is still wholly in .ix-virt, or it is fully relocated.
     try:
-        context.middleware.call_sync(
-            'pool.dataset.update_impl',
-            UpdateImplArgs(name=origin_dataset, zprops={'canmount': 'noauto'}),
+        context.call_sync2(
+            context.s.zfs.resource.set_impl, origin_dataset, properties={'canmount': 'noauto'}, bypass=True,
         )
         context.call_sync2(
             context.s.zfs.resource.rename_impl,

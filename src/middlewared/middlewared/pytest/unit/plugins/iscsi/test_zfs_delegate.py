@@ -1,5 +1,5 @@
 import errno
-from unittest.mock import Mock
+from unittest.mock import AsyncMock, Mock
 
 import pytest
 
@@ -133,7 +133,7 @@ async def test_snapdev_change_without_an_attached_hidden_device_is_accepted(exte
         ({"properties": {"volsize": 2 * GiB}}, [("resync_lun_size_for_zvol", ("tank/vol",))]),
         ({"properties": {"volsize": GiB}}, []),
         (
-            {"properties": {"readonly": "ON"}, "readonly": "on"},
+            {"properties": {"readonly": "on"}, "readonly": "on"},
             [("resync_readonly_property_for_zvol", ("tank/vol", "on"))],
         ),
         (
@@ -165,10 +165,11 @@ async def test_after_set_resyncs_the_extent(kwargs, expected):
 def extent_service():
     calls = []
     m = Middleware()
-    for name in ("iscsi.extent.validate", "iscsi.extent.save", "pool.dataset.update_impl", "datastore.update"):
+    for name in ("iscsi.extent.validate", "iscsi.extent.save", "datastore.update"):
         m[name] = lambda *args, name=name: calls.append((name, args))
     m.register_hook = Mock()
     svc = iSCSITargetExtentService(m)
+    svc.call2 = AsyncMock()
     extent = {"id": 7, "name": "lun", "path": "zvol/tank/vol", "ro": False, "enabled": True, "locked": False}
 
     async def get_instance(id_):
@@ -193,7 +194,7 @@ async def test_update_internal_without_zfs_sync_only_updates_the_extent():
 
     await svc.update_internal(7, {"ro": True}, sync_zfs=False)
 
-    assert called(calls, "pool.dataset.update_impl") == []
+    svc.call2.assert_not_awaited()
     assert called(calls, "datastore.update")[0][2]["ro"] is True
 
 
@@ -203,7 +204,9 @@ async def test_update_internal_with_zfs_sync_writes_readonly_to_the_zvol():
 
     await svc.update_internal(7, {"ro": True}, sync_zfs=True)
 
-    assert called(calls, "pool.dataset.update_impl") == [({"name": "tank/vol", "zprops": {"readonly": "on"}},)]
+    svc.call2.assert_awaited_once_with(
+        svc.s.zfs.resource.set_impl, "tank/vol", properties={"readonly": "on"}, bypass=True
+    )
 
 
 def test_readonly_resync_updates_the_extent_without_writing_back_to_zfs():
@@ -226,4 +229,6 @@ async def test_do_update_audits_and_writes_readonly_to_the_zvol():
     await svc.do_update(audit_callback, 7, {"ro": True})
 
     audit_callback.assert_called_once_with("lun")
-    assert called(calls, "pool.dataset.update_impl") == [({"name": "tank/vol", "zprops": {"readonly": "on"}},)]
+    svc.call2.assert_awaited_once_with(
+        svc.s.zfs.resource.set_impl, "tank/vol", properties={"readonly": "on"}, bypass=True
+    )

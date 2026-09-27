@@ -12,8 +12,8 @@ Implementation under test:
   - src/middlewared/middlewared/plugins/zfs/tier.py
     (get_dataset_tier_info_cached dedup gate, _dataset_dedup_enabled,
     dataset_set_tier / rewrite_job_create rejection messages)
-  - src/middlewared/middlewared/plugins/pool_/utils.py (validate_dedup_tiering,
-    _dedup_inheriting_performance_descendants)
+  - src/middlewared/middlewared/plugins/zfs/create_rules.py (check_dedup_tiering) and
+    src/middlewared/middlewared/plugins/zfs/set_rules.py (check_dedup_tiering, check_dedup_descendants)
   - src/middlewared/middlewared/plugins/zfs/utils.py (pool_has_special_vdev)
 """
 

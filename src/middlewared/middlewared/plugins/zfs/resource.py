@@ -42,6 +42,8 @@ from middlewared.api.current import (
     ZFSResourceSetArgs,
     ZFSResourceSetArgsData,
     ZFSResourceSetResult,
+    ZFSResourceShareTypeChoicesArgs,
+    ZFSResourceShareTypeChoicesResult,
 )
 from middlewared.service import Service, private
 from middlewared.service.decorators import pass_thread_local_storage
@@ -54,9 +56,11 @@ from . import resource_ops as _ops
 from . import resource_processes as _processes
 from . import resource_query as _query
 from . import resource_set as _set
+from . import share_presets as _share_presets
 from .delegates import ZFSResourceDelegate, validate_delegate
 from .prefetch import ZFSResourcePoolPrefetchService
 from .snapshot import ZFSResourceSnapshotService, audit_target
+from .utils import has_internal_path
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -196,6 +200,23 @@ class ZFSResourceService(Service):
         return _info.compression_choices()
 
     @api_method(
+        ZFSResourceShareTypeChoicesArgs,
+        ZFSResourceShareTypeChoicesResult,
+        roles=["ZFS_RESOURCE_READ"],
+        check_annotations=True,
+    )
+    async def share_type_choices(self) -> dict[str, dict[str, str]]:
+        """
+        Retrieve the ``share_type`` presets :method:`zfs.resource.create` accepts and the native properties
+        each one sets.
+
+        A preset fills only the properties a request leaves unset. Sending one of them with a different value
+        is refused. The preset is not stored, so compare the live properties returned by
+        :method:`zfs.resource.list` to tell whether a filesystem still matches it.
+        """
+        return _share_presets.share_type_choices()
+
+    @api_method(
         ZFSResourceRecordsizeChoicesArgs,
         ZFSResourceRecordsizeChoicesResult,
         roles=["ZFS_RESOURCE_READ"],
@@ -278,18 +299,21 @@ class ZFSResourceService(Service):
     @pass_thread_local_storage
     def promote_impl(self, tls: Any, data: ZFSResourcePromoteArgsData) -> None:
         _ops.promote_impl(tls, data)
-        for entry in _query.list_impl(self.context, tls, ZFSResourceQuery(paths=[data.path], properties=["origin"])):
-            self.middleware.send_event(
-                "zfs.resource.list",
-                "CHANGED",
-                id=data.path,
-                fields={
-                    "properties": entry["properties"],
-                    "user_properties": None,
-                    "inherited": [],
-                    "descendants_affected": False,
-                },
-            )
+        if not has_internal_path(data.path):
+            for entry in _query.list_impl(
+                self.context, tls, ZFSResourceQuery(paths=[data.path], properties=["origin"])
+            ):
+                self.middleware.send_event(
+                    "zfs.resource.list",
+                    "CHANGED",
+                    id=data.path,
+                    fields={
+                        "properties": entry["properties"],
+                        "user_properties": None,
+                        "inherited": [],
+                        "descendants_affected": False,
+                    },
+                )
 
     @api_method(
         ZFSResourcePromoteArgs,
@@ -419,8 +443,9 @@ class ZFSResourceService(Service):
     def rename_impl(self, tls: Any, data: ZFSResourceRenameArgsData) -> None:
         _ops.rename_impl(tls, data)
         self.middleware.send_event("zfs.resource.list", "REMOVED", id=data.current_name)
-        for entry in _query.list_impl(self.context, tls, ZFSResourceQuery(paths=[data.new_name], properties=None)):
-            self.middleware.send_event("zfs.resource.list", "ADDED", id=data.new_name, fields=entry)
+        if not has_internal_path(data.new_name):
+            for entry in _query.list_impl(self.context, tls, ZFSResourceQuery(paths=[data.new_name], properties=None)):
+                self.middleware.send_event("zfs.resource.list", "ADDED", id=data.new_name, fields=entry)
 
     @api_method(
         ZFSResourceRenameArgs,
@@ -466,9 +491,7 @@ class ZFSResourceService(Service):
     @private
     @pass_thread_local_storage
     def create_impl(self, tls: Any, data: ZFSResourceCreateArgsData) -> dict[str, Any]:
-        entry = _create.create_impl(self.context, tls, data)
-        self.middleware.send_event("zfs.resource.list", "ADDED", id=data.path, fields=entry)
-        return entry
+        return _create.create_impl(self.context, tls, data)
 
     @api_method(
         ZFSResourceCreateArgs,
@@ -496,12 +519,15 @@ class ZFSResourceService(Service):
         - the resource already exists (``EEXIST``)
         - the pool, or the parent dataset when ``create_ancestors`` is ``false``, does
           not exist (``ENOENT``)
-        - the target is a pool root filesystem, the path is absolute, ends with ``/``,
-          or is not a valid ZFS name (``EINVAL``)
-        - the path references a protected internal resource (``EACCES``)
+        - the target is a pool root filesystem, the path is not a valid ZFS name,
+          contains ``%`` or ends with a space (``EINVAL``)
+        - the path references a protected internal resource, or the nearest existing
+          ancestor is locked (``EACCES``)
         - a property outside the allowed creation set is supplied, or an allowed
-          property is invalid for the resource type or has an invalid value
-          (``EINVAL``)
+          property is invalid for the resource type or has an invalid value, including
+          a ``recordsize`` or ``volblocksize`` that is not a power of two within the
+          supported range and a ``volsize`` that is not a multiple of the
+          ``volblocksize`` (``EINVAL``)
         - an encryption or ZFS native sharing property is supplied through
           ``properties``, ``volsize`` is missing for a VOLUME, or a user property name
           lacks a colon (``EINVAL``)
@@ -522,6 +548,13 @@ class ZFSResourceService(Service):
           is managed with :method:`zfs.tier.dataset_set_tier` (``EINVAL``)
         - deduplication is requested for a filesystem whose data would be placed on the
           SPECIAL vdev (the PERFORMANCE tier) while ZFS tiering is enabled (``EINVAL``)
+        - ``/mnt/<path>`` already exists (``EEXIST``)
+        - ``share_type`` is sent for a VOLUME, conflicts with a sent property, or its ACL
+          would be written to a readonly filesystem (``EINVAL``)
+
+        A resource whose encryption key cannot be stored is removed. A resource that
+        cannot be mounted, or whose ACL cannot be applied, is kept, and the error names
+        it. Ancestors created by the call are kept.
 
         Examples:
 
@@ -563,6 +596,13 @@ class ZFSResourceService(Service):
 
             {"path": "tank/private", "encryption": {"passphrase": "correct horse battery staple"}}
 
+        Create a filesystem prepared for SMB sharing; :method:`zfs.resource.share_type_choices`
+        lists the properties each ``share_type`` sets:
+
+        .. code:: json
+
+            {"path": "tank/smb", "share_type": "smb"}
+
         .. note::
 
             Volumes are thick-provisioned by default (``refreservation`` defaults to
@@ -572,14 +612,8 @@ class ZFSResourceService(Service):
         .. note::
 
             A resource created under an encrypted parent inherits that encryption
-            unless ``encryption`` makes it its own encryption root - an unencrypted
-            child cannot be created beneath an encrypted parent. The parent's
-            encryption key must be loaded (unlocked) or the creation fails with
-            ``EACCES``.
-
-        .. note::
-
-            Hex keys (provided or generated) are stored by the system and may be
+            unless ``encryption`` makes it its own encryption root. Hex keys
+            (provided or generated) are stored by the system and may be
             retrieved with :method:`pool.dataset.export_key`; passphrases are never
             stored.
         """
@@ -606,12 +640,13 @@ class ZFSResourceService(Service):
         """
         names = builtins.list(inherit or ())
         entry = _set.set_impl(tls, path, properties, user_properties, names, bypass)
-        self.middleware.send_event(
-            "zfs.resource.list",
-            "CHANGED",
-            id=path,
-            fields=_set.changed_fields(entry, properties, user_properties, names),
-        )
+        if not has_internal_path(path):
+            self.middleware.send_event(
+                "zfs.resource.list",
+                "CHANGED",
+                id=path,
+                fields=_set.changed_fields(entry, properties, user_properties, names),
+            )
         return entry
 
     @api_method(

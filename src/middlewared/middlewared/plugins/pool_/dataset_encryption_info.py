@@ -16,13 +16,20 @@ from middlewared.api.current import (
     PoolDatasetExportKeysForReplicationArgs,
     PoolDatasetExportKeysForReplicationResult,
     PoolDatasetExportKeysResult,
+    ZFSResourceQuery,
 )
 from middlewared.plugins.zfs.encryption import check_key
 from middlewared.service import CallError, Service, ValidationErrors, job, periodic, private
 from middlewared.service.decorators import pass_thread_local_storage
 from middlewared.utils.filter_list import filter_list
 
-from .utils import DATASET_DATABASE_MODEL_NAME, ZFSKeyFormat, dataset_can_be_mounted, retrieve_keys_from_file
+from .utils import (
+    DATASET_DATABASE_MODEL_NAME,
+    ZFSKeyFormat,
+    dataset_can_be_mounted,
+    pool_dataset_view,
+    retrieve_keys_from_file,
+)
 
 
 class PoolDatasetService(Service):
@@ -173,30 +180,26 @@ class PoolDatasetService(Service):
         # remove the encryption keys from the database.
         pool_names = {pool['name'] for pool in self.middleware.call_sync('pool.query')}
         ds_names = {
-            ds['id']
-            for ds in self.middleware.call_sync(
-                'pool.dataset.query', [], {'extra': {'retrieve_children': False, 'properties': []}}
-            )
+            ds['name'] for ds in self.call_sync2(self.s.zfs.resource.list_impl, ZFSResourceQuery(properties=None))
         }
         for root_ds in pool_names - ds_names:
             filters.extend([['name', '!=', root_ds], ['name', '!^', f'{root_ds}/']])
 
         db_datasets = self.query_encrypted_roots_keys(filters)
         encrypted_roots = {
-            d['name']: d
-            for d in self.middleware.call_sync(
-                'pool.dataset.query',
-                filters,
-                {'extra': {'properties': ['encryptionroot', 'keyformat']}}
+            r['name']: r
+            for r in self.call_sync2(
+                self.s.zfs.resource.list_impl,
+                ZFSResourceQuery(paths=[name] if name else [], properties=['encryption'], get_children=True),
             )
-            if d['name'] == d['encryption_root']
+            if r['properties']['encryptionroot']['value'] == r['name']
         }
 
         to_remove = []
         try:
             for ds_name, key in db_datasets.items():
                 ds = encrypted_roots.get(ds_name)
-                if ds and ZFSKeyFormat(ds['key_format']['value']) == ZFSKeyFormat.RAW and key:
+                if ds and ds['properties']['keyformat']['raw'] == 'raw' and key:
                     with contextlib.suppress(ValueError):
                         key = bytes.fromhex(key)
 
@@ -249,15 +252,23 @@ class PoolDatasetService(Service):
         def check_key(ds):
             return options.get('all') or (ds['key_loaded'] and key_loaded) or (not ds['key_loaded'] and not key_loaded)
 
+        datasets = {}
+        for row in self.call_sync2(
+            self.s.zfs.resource.list_impl,
+            ZFSResourceQuery(
+                paths=[name], properties=['mountpoint', 'encryption'], get_children=True, exclude_internal_paths=False
+            ),
+        ):
+            ds = pool_dataset_view(row)
+            datasets[ds['name']] = ds
+            if (parent := datasets.get(ds['name'].rsplit('/', 1)[0])) is not None:
+                parent['children'].append(ds)
+
         return dict(map(
             normalize,
             filter(
-                lambda d: (
-                    d['name'] == d['encryption_root'] and d['encrypted'] and f'{d["name"]}/'.startswith(
-                        f'{name}/'
-                    ) and check_key(d)
-                ),
-                self.middleware.call_sync('pool.dataset.query', [], {'extra': {'exclude_internal_datasets': False}})
+                lambda d: d['name'] == d['encryption_root'] and d['encrypted'] and check_key(d),
+                datasets.values(),
             )
         ))
 
@@ -317,12 +328,11 @@ class PoolDatasetService(Service):
 
         mapping = {}
         for source_ds in task.source_datasets:
-            source_ds_details = await self.middleware.call('pool.dataset.query', [['id', '=', source_ds]], {'extra': {
-                'properties': ['encryptionroot'],
-                'retrieve_children': False,
-            }})
-            if source_ds_details and source_ds_details[0]['encryption_root'] != source_ds:
-                filters = ['name', '=', source_ds_details[0]['encryption_root']]
+            rows = await self.call2(
+                self.s.zfs.resource.list_impl, ZFSResourceQuery(paths=[source_ds], properties=['encryption'])
+            )
+            if rows and (root := rows[0]['properties']['encryptionroot']['value']) != source_ds:
+                filters = ['name', '=', root]
             else:
                 if task.recursive:
                     filters = ['OR', [['name', '=', source_ds], ['name', '^', f'{source_ds}/']]]
@@ -354,9 +364,9 @@ class PoolDatasetService(Service):
 
         for source_ds in task.source_datasets:
             for ds_name, key in mapping[source_ds].items():
-                for dataset in (dataset_mapping[ds_name] if include_encryption_root_children else [{'id': ds_name}]):
-                    result[dataset['id'].replace(
-                        source_ds if len(source_ds) <= len(dataset['id']) else dataset['id'],
+                for dataset_name in (dataset_mapping[ds_name] if include_encryption_root_children else [ds_name]):
+                    result[dataset_name.replace(
+                        source_ds if len(source_ds) <= len(dataset_name) else dataset_name,
                         source_mapping[source_ds], 1
                     )] = key
 
@@ -365,10 +375,10 @@ class PoolDatasetService(Service):
     @private
     async def dataset_encryption_root_mapping(self):
         dataset_encryption_root_mapping = collections.defaultdict(list)
-        for dataset in await self.middleware.call(
-            'pool.dataset.query', [], {'extra': {'properties': ['encryptionroot']}}
+        for dataset in await self.call2(
+            self.s.zfs.resource.list_impl, ZFSResourceQuery(properties=['encryption'], get_children=True)
         ):
-            dataset_encryption_root_mapping[dataset['encryption_root']].append(dataset)
+            dataset_encryption_root_mapping[dataset['properties']['encryptionroot']['value']].append(dataset['name'])
 
         return dataset_encryption_root_mapping
 

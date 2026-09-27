@@ -4,7 +4,7 @@ import collections
 import os
 import typing
 
-from middlewared.api.current import VMCDROMDevice, VMDeviceEntry, VMDiskDevice, VMRAWDevice
+from middlewared.api.current import VMCDROMDevice, VMDeviceEntry, VMDiskDevice, VMRAWDevice, ZFSResourceQuery
 from middlewared.plugins.zfs.zvol_utils import zvol_path_to_name
 from middlewared.service import ServiceContext
 from middlewared.utils.libvirt.utils import ACTIVE_STATES
@@ -49,9 +49,10 @@ async def query_snapshot_begin(
 ) -> dict[int, list[dict[str, typing.Any]]]:
     vms = collections.defaultdict(list)
     datasets = {
-        d['id']: d for d in await context.middleware.call(
-            'pool.dataset.query', [['id', '^', f'{dataset}/']], {'extra': {'properties': []}}
-        )
+        d['name']: d for d in await context.call2(
+            context.s.zfs.resource.list_impl,
+            ZFSResourceQuery(paths=[dataset], properties=None, get_children=True),
+        ) if d['name'] != dataset
     }
     to_ignore_vms = await get_vms_to_ignore_for_querying_attachments(
         context, True, [['suspend_on_snapshot', '=', False]]

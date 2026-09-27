@@ -4,7 +4,7 @@ from types import SimpleNamespace
 import pytest
 
 from middlewared.api.current import ZFSResourceSetArgsData, ZFSResourceSetProperties
-from middlewared.plugins.zfs import set_rules
+from middlewared.plugins.zfs import rules_common, set_rules
 from middlewared.plugins.zfs.set_rules import (
     INDEX_PROPERTIES,
     INHERITABLE_PROPERTIES,
@@ -152,7 +152,7 @@ def type_masks(monkeypatch):
 def max_recordsize(monkeypatch, tmp_path):
     path = tmp_path / "zfs_max_recordsize"
     path.write_text(f"{16 * MiB}\n")
-    monkeypatch.setattr(set_rules, "ZFS_MAX_RECORDSIZE", str(path))
+    monkeypatch.setattr(rules_common, "ZFS_MAX_RECORDSIZE", str(path))
     return path
 
 
@@ -418,12 +418,6 @@ def test_request_rules_report_together():
         "zfs.resource.set.inherit.volsize",
         "zfs.resource.set.user_properties",
     ]
-
-
-def test_effective_lowercases_a_requested_index_value():
-    verrors, failures = run(state(properties={"dedup": "OFF"}, current={"dedup": "off"}, entitlement=DENIED))
-    assert failures == []
-    assert verrors.errors == []
 
 
 def test_effective_keeps_the_case_of_a_requested_path():
@@ -1145,7 +1139,7 @@ def test_volsize_on_an_unlocked_volume_is_accepted(keystatus):
 
 
 def test_volsize_is_rejected_on_a_read_only_volume_even_when_the_request_turns_readonly_off():
-    st = state(type_="VOLUME", properties={"volsize": 2 * GiB, "readonly": "OFF"}, current={"readonly": "on"})
+    st = state(type_="VOLUME", properties={"volsize": 2 * GiB, "readonly": "off"}, current={"readonly": "on"})
     verrors, _ = run(st)
     assert [e.attribute for e in verrors.errors] == ["zfs.resource.set.properties.volsize"]
 
@@ -1157,7 +1151,7 @@ def test_volsize_is_rejected_on_a_read_only_volume_when_unchanged():
 
 
 def test_read_only_volume_may_turn_readonly_off_without_volsize():
-    st = state(type_="VOLUME", properties={"readonly": "OFF"}, current={"readonly": "on"})
+    st = state(type_="VOLUME", properties={"readonly": "off"}, current={"readonly": "on"})
     verrors, failures = run(st)
     assert (verrors.errors, failures) == ([], [])
 

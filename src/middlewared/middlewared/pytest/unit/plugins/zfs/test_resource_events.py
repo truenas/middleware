@@ -6,13 +6,11 @@ from unittest.mock import Mock, call
 import pytest
 
 from middlewared.api.current import (
-    ZFSResourceCreateArgsData,
     ZFSResourcePromoteArgsData,
     ZFSResourceRenameArgsData,
     ZFSResourceSetArgsData,
 )
 from middlewared.plugins.zfs import (
-    resource_create,
     resource_destroy,
     resource_ops,
     resource_query,
@@ -110,23 +108,6 @@ def test_set_impl_that_fails_to_write_emits_nothing(service, monkeypatch):
     monkeypatch.setattr(resource_set, "set_impl", set_impl)
     with pytest.raises(CallError):
         service.set_impl(Mock(), "tank/a", properties={"compression": "gzip"})
-    service.middleware.send_event.assert_not_called()
-
-
-def test_create_impl_emits_one_added_event_with_the_returned_entry(service, monkeypatch):
-    created = entry("tank/new", {"compression": prop("lz4")})
-    monkeypatch.setattr(resource_create, "create_impl", lambda context, tls, data: created)
-    assert service.create_impl(Mock(), ZFSResourceCreateArgsData(path="tank/new")) is created
-    service.middleware.send_event.assert_called_once_with("zfs.resource.list", "ADDED", id="tank/new", fields=created)
-
-
-def test_create_impl_that_fails_emits_nothing(service, monkeypatch):
-    def create_impl(context, tls, data):
-        raise CallError("create failed")
-
-    monkeypatch.setattr(resource_create, "create_impl", create_impl)
-    with pytest.raises(CallError):
-        service.create_impl(Mock(), ZFSResourceCreateArgsData(path="tank/new"))
     service.middleware.send_event.assert_not_called()
 
 

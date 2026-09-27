@@ -10,6 +10,10 @@ import errno
 import re
 import typing
 
+from .property_choices import DRAID_MINIMUM_RECORDSIZE
+from .resource_info import ZFS_MAX_RECORDSIZE
+from .utils import pool_is_draid
+
 if typing.TYPE_CHECKING:
     from collections.abc import Collection, Iterable, Mapping
 
@@ -18,18 +22,25 @@ if typing.TYPE_CHECKING:
     from middlewared.service_exception import ValidationErrors
 
 __all__ = (
+    "SPA_MAXBLOCKSIZE",
     "apply_acl_defaults",
     "pool_has_special_vdev_sync",
     "reject_bad_acl_combination",
+    "reject_bad_block_size",
+    "reject_bad_recordsize",
     "reject_bad_user_property_names",
     "reject_bad_user_property_values",
     "reject_dedup_on_special_vdev",
     "reject_insufficient_headroom",
+    "reject_ssb_out_of_range",
     "reject_tier_managed_ssb",
     "reject_unentitled_dedup",
+    "reject_volsize_not_multiple",
 )
 
-_POSIX_OR_OFF_ACLTYPES = frozenset({"posix", "posixacl", "off", "noacl"})
+SPA_MAXBLOCKSIZE = 1 << 24
+
+_POSIX_OR_OFF_ACLTYPES = frozenset({"posix", "posixacl", "off", "noacl", "disabled"})
 """The native acltype values (aliases included) that are not nfsv4."""
 
 _USER_PROPERTY_NAME = re.compile(r"[a-z0-9:._-]+")
@@ -167,5 +178,52 @@ def reject_insufficient_headroom(
         verrors.add(
             attribute,
             f"Reserving another {delta} would consume more than 80% of the {base} available to {path!r}. {advice}.",
+            errno.EINVAL,
+        )
+
+
+def reject_bad_block_size(verrors: ValidationErrors, attribute: str, name: str, size: int, maximum: int) -> bool:
+    if size < 512 or size > maximum or size & (size - 1):
+        verrors.add(attribute, f"{name!r} must be a power of two from 512 to {maximum} bytes.", errno.EINVAL)
+        return True
+    return False
+
+
+def reject_bad_recordsize(
+    verrors: ValidationErrors,
+    attribute: str,
+    context: ServiceContext,
+    pool_name: str,
+    recordsize: int,
+    draid_floor: bool = True,
+) -> None:
+    with open(ZFS_MAX_RECORDSIZE) as f:
+        maximum = min(SPA_MAXBLOCKSIZE, int(f.read().strip()))
+    if reject_bad_block_size(verrors, attribute, "recordsize", recordsize, maximum):
+        return
+    if draid_floor and recordsize < DRAID_MINIMUM_RECORDSIZE and pool_is_draid(context, pool_name):
+        verrors.add(
+            attribute,
+            f"'recordsize' must be at least {DRAID_MINIMUM_RECORDSIZE} bytes on a dRAID pool.",
+            errno.EINVAL,
+        )
+
+
+def reject_volsize_not_multiple(
+    verrors: ValidationErrors, attribute: str, path: str, volsize: int, volblocksize: int
+) -> None:
+    if volsize % volblocksize:
+        verrors.add(
+            attribute,
+            f"'volsize' must be a multiple of the volblocksize of {path!r} ({volblocksize}).",
+            errno.EINVAL,
+        )
+
+
+def reject_ssb_out_of_range(verrors: ValidationErrors, attribute: str, ssb: int) -> None:
+    if not 0 <= ssb <= SPA_MAXBLOCKSIZE:
+        verrors.add(
+            attribute,
+            f"'special_small_blocks' must be between 0 and {SPA_MAXBLOCKSIZE} bytes.",
             errno.EINVAL,
         )
