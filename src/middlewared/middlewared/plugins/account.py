@@ -16,6 +16,7 @@ from threading import Lock
 from sqlalchemy.orm import relationship
 from truenas_os_pyutils.io import atomic_write
 from truenas_os_pyutils.truenas_shutil import CopyTreeConfig, copytree
+from truenas_pylicensed.features import LicenseFeature
 from truenas_pypam import PAMCode
 import wbclient
 
@@ -2773,6 +2774,7 @@ class GroupService(CRUDService):
 class UserLicenseReconcileDelegate(LicenseReconcileDelegate):
     name = 'user'
     etc_groups = ('user',)
+    features = frozenset({LicenseFeature.SUPPORT})
     service = 'user'
     action = LicenseReconcileAction.RELOAD
     order = 20

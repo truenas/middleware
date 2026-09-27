@@ -2003,6 +2003,7 @@ async def __activate_service_announcements(middleware, event_type, args):
 class DiscoveryLicenseReconcileDelegate(LicenseReconcileDelegate):
     name = 'discovery'
     etc_groups = ('discovery',)
+    features = frozenset({LicenseFeature.HA})
     service = 'discovery'
     action = LicenseReconcileAction.RELOAD
     order = 20

@@ -5,6 +5,8 @@ import errno
 import os
 from typing import TYPE_CHECKING, Any, Literal, overload
 
+from truenas_pylicensed.features import LicenseFeature
+
 from middlewared.alert.source.deprecated_service import DeprecatedServiceAlert
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -655,6 +657,7 @@ class ServiceService(CRUDService[ServiceEntry]):
 class RcLicenseReconcileDelegate(LicenseReconcileDelegate):
     name = 'rc'
     etc_groups = ('rc',)
+    features = frozenset({LicenseFeature.HA})
     service = None
     action = LicenseReconcileAction.RENDER
     order = -50

@@ -10,6 +10,8 @@ import shutil
 import stat
 import time
 
+from truenas_pylicensed.features import LicenseFeature
+
 from middlewared.alert.source.failover_sync import FailoverKeysSyncFailedAlert, FailoverKMIPKeysSyncFailedAlert
 from middlewared.api import Event, api_method
 from middlewared.api.current import (
@@ -373,6 +375,16 @@ class FailoverService(ConfigService):
         self.middleware.call_sync('failover.sync_keys_to_remote_node')
 
         self.logger.debug('Syncing zpool cachefile, license, pwenc and authorized_keys files to' + standby)
+        try:
+            previous_entitlements = {
+                key: entry['entitled']
+                for key, entry in self.middleware.call_sync(
+                    'failover.call_remote', 'truenas.entitlements.info'
+                )['features'].items()
+            }
+        except Exception:
+            # Without a snapshot the peer reconciles every delegate.
+            previous_entitlements = None
         self.send_license()
         self.send_pwenc_secret()
         self.send_small_file('/home/admin/.ssh/authorized_keys')
@@ -388,7 +400,8 @@ class FailoverService(ConfigService):
         )
 
         self.middleware.call_sync(
-            'failover.call_remote', 'core.call_hook', ['system.post_license_update', [True]]
+            'failover.call_remote', 'core.call_hook',
+            ['system.post_license_update', [True], {'previous_entitlements': previous_entitlements}],
         )
 
         if options['reboot']:
@@ -1329,11 +1342,15 @@ def mismatch_nics(
 class CtdbLicenseReconcileDelegate(LicenseReconcileDelegate):
     name = 'ctdb'
     etc_groups = ('ctdb',)
+    features = frozenset({LicenseFeature.HA})
     service = 'ctdb'
-    # RESTART, not RELOAD: the reload path regenerates config but returns without starting a unit
-    # that is not running, and ctdb is stopped on a node that has only just become licensed.
-    action = LicenseReconcileAction.RESTART
+    action = LicenseReconcileAction.START
     order = 0
+
+    async def resolve_action(self, middleware):
+        if await middleware.call('failover.licensed'):
+            return LicenseReconcileAction.START
+        return LicenseReconcileAction.STOP
 
 
 async def setup(middleware):

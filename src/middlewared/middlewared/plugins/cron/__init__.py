@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Literal
 
+from truenas_pylicensed.features import LicenseFeature
+
 from middlewared.api import api_method
 from middlewared.api.current import (
     CronJobCreate,
@@ -90,6 +92,7 @@ class CronJobService(GenericCRUDService[CronJobEntry]):
 class CronLicenseReconcileDelegate(LicenseReconcileDelegate):
     name = 'cron'
     etc_groups = ('cron',)
+    features = frozenset({LicenseFeature.HA})
     service = None
     action = LicenseReconcileAction.RENDER
     order = 20

@@ -3,6 +3,8 @@ import ipaddress
 import re
 import socket
 
+from truenas_pylicensed.features import LicenseFeature
+
 from middlewared.api import api_method
 from middlewared.api.current import (
     ISCSIGlobalAluaEnabledArgs,
@@ -353,6 +355,7 @@ class ISCSIGlobalService(SystemServiceService):
 class ISCSILicenseReconcileDelegate(LicenseReconcileDelegate):
     name = 'iscsi'
     etc_groups = ('scst', 'lio', 'scst_targets')
+    features = frozenset({LicenseFeature.HA, LicenseFeature.FIBRECHANNEL, LicenseFeature.RDMA})
     service = 'iscsitarget'
     action = LicenseReconcileAction.RENDER
     order = 30

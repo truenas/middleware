@@ -11,6 +11,8 @@ from __future__ import annotations
 import ipaddress
 from typing import TYPE_CHECKING, Any
 
+from truenas_pylicensed.features import LicenseFeature
+
 from middlewared.api.current import S3Entry, ServiceEntry
 from middlewared.common.attachment.certificate import CertificateServiceAttachmentDelegate
 from middlewared.common.license_reconcile import LicenseReconcileAction, LicenseReconcileDelegate
@@ -81,7 +83,7 @@ class S3ListenDelegate(
 
 
 class S3LicenseReconcileDelegate(LicenseReconcileDelegate):
-    """What a license change does to a running S3 service: a restart.
+    """What a change to the S3 entitlements does to a running S3 service: a restart.
 
     The daemon asks `truenas.entitlements.check` for `S3_VERSIONING` and
     `S3_AUDIT` once, before it registers a bucket, and holds the answer
@@ -100,6 +102,7 @@ class S3LicenseReconcileDelegate(LicenseReconcileDelegate):
 
     name = "s3"
     etc_groups = (ETC_GROUP,)
+    features = frozenset({LicenseFeature.S3_AUDIT, LicenseFeature.S3_VERSIONING})
     service = SERVICE
     action = LicenseReconcileAction.RESTART
     # after `user`: the credentials file the restart renders resolves

@@ -101,9 +101,11 @@ def render(service, middleware, render_ctx):
 
 If what your file renders depends on the license -- `failover.licensed`, `failover.status`, an
 entitlement check, or any ctx method that consults one of those internally -- the owning group
-needs a `LicenseReconcileDelegate`. Nothing regenerates a group when a license is uploaded,
-replaced or expires unless a delegate claims it, so the file keeps whatever it was rendered with
-until some unrelated event happens to regenerate the group or the system reboots.
+needs a `LicenseReconcileDelegate`. A delegate is processed only when an entitlement in its
+`features` changes, so add any entitlement your file starts depending on. Nothing regenerates a
+group when a license is uploaded, replaced or expires unless a delegate claims it, so the file
+keeps whatever it was rendered with until some unrelated event happens to regenerate the group
+or the system reboots.
 
 Delegates live in the plugin that owns the subsystem and are registered from its `setup()`; see
 `middlewared/common/license_reconcile/` for the base class and

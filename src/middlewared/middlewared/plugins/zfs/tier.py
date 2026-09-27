@@ -762,6 +762,7 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
 class ZfsTierLicenseReconcileDelegate(LicenseReconcileDelegate):
     name = "zfs_tier"
     etc_groups = ("truenas_zfstierd",)
+    features = frozenset({LicenseFeature.ZFSTIER})
     service = "truenas_zfstierd"
     # RELOAD, not RENDER: the SIGHUP is the point, since the daemon has to be told to drop
     # active jobs when the entitlement goes away. service.control renders the service's own
