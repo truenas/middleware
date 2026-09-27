@@ -369,6 +369,7 @@ async def pool_post_import(middleware, pool):
 class NVMeTargetLicenseReconcileDelegate(LicenseReconcileDelegate):
     name = 'nvmet'
     etc_groups = ('nvmet',)
+    features = frozenset({LicenseFeature.HA, LicenseFeature.RDMA})
     service = NVMET_SERVICE_NAME
     action = LicenseReconcileAction.RENDER
     order = 30

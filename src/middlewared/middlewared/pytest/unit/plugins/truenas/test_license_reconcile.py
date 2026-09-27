@@ -1,9 +1,12 @@
 import pytest
+from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.common.license_reconcile import LicenseReconcileAction, LicenseReconcileDelegate
+from middlewared.plugins.truenas import license_reconcile
 from middlewared.plugins.truenas.license import TrueNASLicenseService
 from middlewared.pytest.unit.helpers import create_service
 from middlewared.pytest.unit.middleware import FakeJob, Middleware, fake_service_control
+from middlewared.utils.entitlements import POLICY
 
 
 def make_delegate(name, etc_groups, order=0, **attrs):
@@ -14,6 +17,7 @@ def make_delegate(name, etc_groups, order=0, **attrs):
             "name": name,
             "etc_groups": etc_groups,
             "order": order,
+            "features": frozenset({LicenseFeature.HA}),
             **attrs,
         },
     )()
@@ -21,6 +25,13 @@ def make_delegate(name, etc_groups, order=0, **attrs):
 
 def get_service():
     return create_service(Middleware(), TrueNASLicenseService)
+
+
+@pytest.fixture(autouse=True)
+def entitlements(monkeypatch):
+    current = {key: True for key in POLICY}
+    monkeypatch.setattr(license_reconcile, "entitlement_snapshot", lambda: current)
+    return current
 
 
 @pytest.mark.asyncio
@@ -198,3 +209,32 @@ async def test_reconcile_progress_survives_a_service_delegate():
         "License state reconciled",
     ]
     assert control_job.progress == []
+
+
+@pytest.mark.asyncio
+async def test_reconcile_processes_only_delegates_whose_features_changed(entitlements):
+    service, middleware, rendered = reconcile_service()
+
+    await service.register_reconcile_delegate(make_delegate("ha", ("ha",), features=frozenset({LicenseFeature.HA})))
+    await service.register_reconcile_delegate(
+        make_delegate("rdma", ("rdma",), features=frozenset({LicenseFeature.RDMA}))
+    )
+
+    await service.reconcile(FakeJob(), {**entitlements, LicenseFeature.RDMA: False})
+
+    assert rendered == ["rdma"]
+
+
+@pytest.mark.asyncio
+async def test_reconcile_renders_after_stop():
+    service, middleware, rendered = reconcile_service()
+    control_calls = fake_service_control(middleware)
+
+    await service.register_reconcile_delegate(
+        make_delegate("ctdb", ("ctdb",), service="ctdb", action=LicenseReconcileAction.STOP)
+    )
+
+    await service.reconcile(FakeJob())
+
+    assert control_calls == [("STOP", "ctdb", {"ha_propagate": False})]
+    assert rendered == ["ctdb"]

@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from middlewared.main import Middleware
+    from middlewared.utils.entitlements import EntitlementKey
 
 
 class LicenseReconcileAction(enum.StrEnum):
@@ -15,6 +16,10 @@ class LicenseReconcileAction(enum.StrEnum):
     RELOAD = "RELOAD"
     # Restart the service, which regenerates its config first, because a reload is not enough
     RESTART = "RESTART"
+    # Start the service, which regenerates its config first
+    START = "START"
+    # Stop the service, then regenerate its config
+    STOP = "STOP"
 
 
 class LicenseReconcileDelegate:
@@ -30,16 +35,19 @@ class LicenseReconcileDelegate:
     declarable without making any call, because it is what uniqueness checking is written
     against.
 
-    Only `RENDER` delegates are rendered by the reconcile runner, from `resolve_groups()`.
-    `RELOAD` and `RESTART` delegates are rendered by `service.control` from the service's own
-    `select_etc()`, so the runner does not render them as well; for those, `etc_groups` is a
-    declaration of ownership rather than a list anyone renders from.
+    The reconcile runner renders `RENDER` delegates, and `STOP` delegates once the service is
+    stopped, from `resolve_groups()`. `RELOAD`, `RESTART` and `START` delegates are rendered by
+    `service.control` from the service's own `select_etc()`, so the runner does not render them
+    as well; for those, `etc_groups` is a declaration of ownership rather than a list anyone
+    renders from.
     """
 
     name: str
     # Static union of every `etc` group this delegate may own. No two delegates may claim
-    # the same group. Only rendered from when `action` is RENDER; see the class docstring.
+    # the same group. Only rendered from when the action is RENDER or STOP; see the class docstring.
     etc_groups: tuple[str, ...] = ()
+    # Entitlements this delegate's config depends on; it is processed only when one of them changes.
+    features: frozenset[EntitlementKey]
     # Service to act on, or None when this delegate only renders config
     service: str | None = None
     action: LicenseReconcileAction = LicenseReconcileAction.RENDER
@@ -54,6 +62,14 @@ class LicenseReconcileDelegate:
         mutually exclusive groups at runtime, and the choice needs a call to determine.
         """
         return list(self.etc_groups)
+
+    async def resolve_action(self, middleware: Middleware) -> LicenseReconcileAction:
+        """
+        Return what to do on this system.
+
+        Defaults to `action`. Override when the choice needs a call to determine.
+        """
+        return self.action
 
     async def should_run(self, middleware: Middleware) -> bool:
         """

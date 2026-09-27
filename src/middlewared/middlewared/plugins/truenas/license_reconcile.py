@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any
 
 from middlewared.common.license_reconcile import LicenseReconcileAction, LicenseReconcileDelegate
 from middlewared.service import Service, job, private
+from middlewared.utils.entitlements import POLICY, check_entitlement, get_facts
 
 if TYPE_CHECKING:
     from middlewared.job import Job
@@ -16,6 +17,12 @@ RENDER_TIMEOUT = 30
 # Must exceed `service.control`'s own timeout, or this fires first and the verb's more
 # informative error never surfaces.
 SERVICE_TIMEOUT = 180
+
+
+def entitlement_snapshot() -> dict[str, bool]:
+    # Plain bools, so the snapshot can be passed as a job argument.
+    facts = get_facts()
+    return {key: check_entitlement(key, facts).entitled for key in POLICY}
 
 
 class TrueNASLicenseReconcileService(Service):
@@ -39,6 +46,9 @@ class TrueNASLicenseReconcileService(Service):
 
     @private
     async def register_reconcile_delegate(self, delegate: LicenseReconcileDelegate) -> None:
+        if missing := delegate.features.difference(POLICY):
+            raise ValueError(f"{delegate.name!r} delegate depends on entitlements with no policy: {sorted(missing)}")
+
         if any(registered.name == delegate.name for registered in self.reconcile_delegates_list):
             raise ValueError(f"{delegate.name!r} delegate is already registered with license reconcile")
 
@@ -61,25 +71,36 @@ class TrueNASLicenseReconcileService(Service):
 
     @private
     @job(lock="license_reconcile", lock_queue_size=1)
-    async def reconcile(self, job: Job) -> None:
+    async def reconcile(self, job: Job, previous_entitlements: dict[str, bool] | None = None) -> None:
         """
         Bring the registered subsystems back in line with the current license.
 
         A job rather than a plain method because the pass is bounded in minutes rather than
         seconds.
         """
+        # A queued pass also covers the license changes of passes the queue dropped, so diff against live entitlements.
+        entitlements = await self.middleware.run_in_thread(entitlement_snapshot)
+        changed = {
+            key
+            for key, entitled in entitlements.items()
+            if previous_entitlements is None or previous_entitlements.get(key) != entitled
+        }
         delegates = await self.reconcile_delegates()
         for index, delegate in enumerate(delegates):
+            if changed.isdisjoint(delegate.features):
+                continue
+
             # Reported before the delegate runs rather than after, so that a delegate sitting on
             # its timeout is the one named in `core.get_jobs` for as long as it sits there.
             job.set_progress(int(index / len(delegates) * 100), f"Reconciling {delegate.name}")
             try:
-                timeout = SERVICE_TIMEOUT if delegate.action is not LicenseReconcileAction.RENDER else RENDER_TIMEOUT
+                action = await delegate.resolve_action(self.middleware)
+                timeout = SERVICE_TIMEOUT if action is not LicenseReconcileAction.RENDER else RENDER_TIMEOUT
                 async with asyncio.timeout(timeout):
                     if not await delegate.should_run(self.middleware):
                         continue
 
-                    if delegate.action is LicenseReconcileAction.RENDER:
+                    if action is LicenseReconcileAction.RENDER:
                         for group in await delegate.resolve_groups(self.middleware):
                             await self.middleware.call("etc.generate", group)
                     else:
@@ -87,11 +108,14 @@ class TrueNASLicenseReconcileService(Service):
                         # hook, so there is nothing to propagate.
                         service_job = await self.middleware.call(
                             "service.control",
-                            delegate.action.value,
+                            action.value,
                             delegate.service,
                             {"ha_propagate": False},
                         )
                         await service_job.wait(raise_error=True)
+                        if action is LicenseReconcileAction.STOP:
+                            for group in await delegate.resolve_groups(self.middleware):
+                                await self.middleware.call("etc.generate", group)
             except TimeoutError:
                 # The underlying job keeps running; we simply stop waiting on it so that one slow
                 # subsystem cannot hold every subsystem behind it out of convergence indefinitely.
@@ -104,7 +128,7 @@ class TrueNASLicenseReconcileService(Service):
 
 
 async def _post_license_update(middleware: Middleware, *args: Any, **kwargs: Any) -> None:
-    await middleware.call("truenas.license.reconcile")
+    await middleware.call("truenas.license.reconcile", kwargs.get("previous_entitlements"))
 
 
 async def setup(middleware: Middleware) -> None:

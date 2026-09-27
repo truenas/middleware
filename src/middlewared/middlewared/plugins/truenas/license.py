@@ -19,7 +19,7 @@ from middlewared.api.current import (
     TrueNASLicenseUploadOptions,
     TrueNASLicenseUploadResult,
 )
-from middlewared.plugins.truenas.license_reconcile import TrueNASLicenseReconcileService
+from middlewared.plugins.truenas.license_reconcile import TrueNASLicenseReconcileService, entitlement_snapshot
 from middlewared.plugins.truenas.tn import EULA_PENDING_PATH
 from middlewared.service import Service, ValidationError, private
 from middlewared.utils.license import (
@@ -83,6 +83,7 @@ class TrueNASLicenseService(TrueNASLicenseReconcileService, Service):
         """Upload a PEM-wrapped license file."""
         current = self.info_private()
         had_license = current is not None and current.origin is LicenseOrigin.ISSUED
+        previous_entitlements = entitlement_snapshot()
 
         # `check_annotations` hands the method the undumped model value, so the PEM arrives still
         # boxed in the Secret that keeps it off the audit trail.
@@ -110,7 +111,10 @@ class TrueNASLicenseService(TrueNASLicenseReconcileService, Service):
                     os.fchmod(f.fileno(), 0o600)
 
         self.middleware.run_coroutine(
-            self.middleware.call_hook('system.post_license_update', had_license=had_license), wait=False,
+            self.middleware.call_hook(
+                'system.post_license_update', had_license=had_license, previous_entitlements=previous_entitlements,
+            ),
+            wait=False,
         )
 
     def _configure_ha_license(self) -> None:

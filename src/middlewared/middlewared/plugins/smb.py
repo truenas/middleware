@@ -1926,6 +1926,7 @@ def create_samba_directories(middleware):
 class SMBLicenseReconcileDelegate(LicenseReconcileDelegate):
     name = 'smb'
     etc_groups = ('smb',)
+    features = frozenset({LicenseFeature.HA, LicenseFeature.SMB_FASTPATH})
     service = 'cifs'
     action = LicenseReconcileAction.RELOAD
     order = 20
