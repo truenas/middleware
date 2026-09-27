@@ -28,31 +28,31 @@ from middlewared.utils.license import LicenseInfo
 # that share a shape are pinned here instead of being swept there.
 def test_target_vectors_match_the_product_matrix():
     assert TARGET_VECTORS == {
-        LicenseFeature.APPS: Vector(ce=1, hw=1, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
-        LicenseFeature.AUTOTUNE: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=0),
-        LicenseFeature.CATALOG_ENTERPRISE_TRAIN: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=0),
-        LicenseFeature.CONTAINERS: Vector(ce=1, hw=1, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
-        LicenseFeature.DEDUP: Vector(ce=1, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
-        LicenseFeature.DIRECTORY_SERVICES_AUTH: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
-        LicenseFeature.FIBRECHANNEL: Vector(ce=0, hw=0, hw_l=1, hw_k=1, ce_l=0, ce_k=1),
-        LicenseFeature.HA: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=0),
-        LicenseFeature.KMIP: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
-        LicenseFeature.MISSION_CRITICAL: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
-        LicenseFeature.NETWORK_FEC: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
-        LicenseFeature.NFS_SNAPSHOT: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
-        LicenseFeature.NVMEOF_SPDK: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
-        LicenseFeature.RDMA: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
-        LicenseFeature.S3_AUDIT: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
-        LicenseFeature.S3_VERSIONING: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
-        LicenseFeature.SED: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=0),
-        LicenseFeature.SMB_FASTPATH: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
-        LicenseFeature.SMB_VEEAM: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
-        LicenseFeature.STIG: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
-        LicenseFeature.SUPPORT: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
-        LicenseFeature.TRUESEARCH: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
-        LicenseFeature.VMS: Vector(ce=1, hw=1, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
-        LicenseFeature.WEBSHARE: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
-        LicenseFeature.ZFSTIER: Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
+        LicenseFeature.APPS: Vector(ce=1, hw=1, hw_k=1, ce_k=1),
+        LicenseFeature.AUTOTUNE: Vector(ce=0, hw=0, hw_k=1, ce_k=0),
+        LicenseFeature.CATALOG_ENTERPRISE_TRAIN: Vector(ce=0, hw=0, hw_k=1, ce_k=0),
+        LicenseFeature.CONTAINERS: Vector(ce=1, hw=1, hw_k=1, ce_k=1),
+        LicenseFeature.DEDUP: Vector(ce=1, hw=0, hw_k=1, ce_k=1),
+        LicenseFeature.DIRECTORY_SERVICES_AUTH: Vector(ce=0, hw=0, hw_k=1, ce_k=1),
+        LicenseFeature.FIBRECHANNEL: Vector(ce=0, hw=0, hw_k=1, ce_k=1),
+        LicenseFeature.HA: Vector(ce=0, hw=0, hw_k=1, ce_k=0),
+        LicenseFeature.KMIP: Vector(ce=0, hw=0, hw_k=1, ce_k=1),
+        LicenseFeature.MISSION_CRITICAL: Vector(ce=0, hw=0, hw_k=1, ce_k=1),
+        LicenseFeature.NETWORK_FEC: Vector(ce=0, hw=0, hw_k=1, ce_k=1),
+        LicenseFeature.NFS_SNAPSHOT: Vector(ce=0, hw=0, hw_k=1, ce_k=1),
+        LicenseFeature.NVMEOF_SPDK: Vector(ce=0, hw=0, hw_k=1, ce_k=1),
+        LicenseFeature.RDMA: Vector(ce=0, hw=0, hw_k=1, ce_k=1),
+        LicenseFeature.S3_AUDIT: Vector(ce=0, hw=0, hw_k=1, ce_k=1),
+        LicenseFeature.S3_VERSIONING: Vector(ce=0, hw=0, hw_k=1, ce_k=1),
+        LicenseFeature.SED: Vector(ce=0, hw=0, hw_k=1, ce_k=0),
+        LicenseFeature.SMB_FASTPATH: Vector(ce=0, hw=0, hw_k=1, ce_k=1),
+        LicenseFeature.SMB_VEEAM: Vector(ce=0, hw=0, hw_k=1, ce_k=1),
+        LicenseFeature.STIG: Vector(ce=0, hw=0, hw_k=1, ce_k=1),
+        LicenseFeature.SUPPORT: Vector(ce=0, hw=0, hw_k=1, ce_k=1),
+        LicenseFeature.TRUESEARCH: Vector(ce=0, hw=0, hw_k=1, ce_k=1),
+        LicenseFeature.VMS: Vector(ce=1, hw=1, hw_k=1, ce_k=1),
+        LicenseFeature.WEBSHARE: Vector(ce=0, hw=0, hw_k=1, ce_k=1),
+        LicenseFeature.ZFSTIER: Vector(ce=0, hw=0, hw_k=1, ce_k=1),
     }
 
 
@@ -144,10 +144,8 @@ def test_declared_tiers_cover_tier_rules():
 @pytest.mark.parametrize(
     "vector",
     [
-        Vector(ce=1, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
-        Vector(ce=0, hw=1, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
-        Vector(ce=0, hw=0, hw_l=1, hw_k=1, ce_l=0, ce_k=1),
-        Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=1, ce_k=1),
+        Vector(ce=1, hw=0, hw_k=1, ce_k=1),
+        Vector(ce=0, hw=1, hw_k=1, ce_k=1),
     ],
 )
 def test_tier_rule_rejects_a_cell_outside_the_key_columns(vector):
@@ -170,44 +168,36 @@ def _license_for(feature: str, state: str) -> LicenseInfo | None:
 # Vector resolution, once per distinct live vector shape.
 # The features sharing a shape are pinned by the matrix test above, so sweeping them would repeat it.
 VECTOR_TABLE = [
-    # APPS/CONTAINERS/VMS (1,1,0,1,0,1): granted unlicensed on either side, and a license
+    # APPS/CONTAINERS/VMS (1,1,1,1): granted unlicensed on either side, and a license
     # without the key revokes it.
     (LicenseFeature.APPS, HardwareClass.TRUENAS_HW, "none", True, "ENTITLED", "HW"),
-    (LicenseFeature.APPS, HardwareClass.TRUENAS_HW, "nokey", False, "KEY_MISSING", "HW+L"),
+    (LicenseFeature.APPS, HardwareClass.TRUENAS_HW, "nokey", False, "KEY_MISSING", None),
     (LicenseFeature.APPS, HardwareClass.TRUENAS_HW, "key", True, "ENTITLED", "HW+K"),
     (LicenseFeature.APPS, HardwareClass.GENERIC, "none", True, "ENTITLED", "CE"),
-    (LicenseFeature.APPS, HardwareClass.GENERIC, "nokey", False, "KEY_MISSING", "CE+L"),
+    (LicenseFeature.APPS, HardwareClass.GENERIC, "nokey", False, "KEY_MISSING", None),
     (LicenseFeature.APPS, HardwareClass.GENERIC, "key", True, "ENTITLED", "CE+K"),
     # CATALOG_ENTERPRISE_TRAIN, and SED which shares its shape: a shape whose CE key cell is 0, so
     # a key on the community side still denies.
     (LicenseFeature.CATALOG_ENTERPRISE_TRAIN, HardwareClass.TRUENAS_HW, "none", False, "NO_LICENSE", "HW"),
-    (LicenseFeature.CATALOG_ENTERPRISE_TRAIN, HardwareClass.TRUENAS_HW, "nokey", False, "KEY_MISSING", "HW+L"),
+    (LicenseFeature.CATALOG_ENTERPRISE_TRAIN, HardwareClass.TRUENAS_HW, "nokey", False, "KEY_MISSING", None),
     (LicenseFeature.CATALOG_ENTERPRISE_TRAIN, HardwareClass.TRUENAS_HW, "key", True, "ENTITLED", "HW+K"),
     (LicenseFeature.CATALOG_ENTERPRISE_TRAIN, HardwareClass.GENERIC, "none", False, "WRONG_HARDWARE", "CE"),
-    (LicenseFeature.CATALOG_ENTERPRISE_TRAIN, HardwareClass.GENERIC, "nokey", False, "WRONG_HARDWARE", "CE+L"),
+    (LicenseFeature.CATALOG_ENTERPRISE_TRAIN, HardwareClass.GENERIC, "nokey", False, "WRONG_HARDWARE", None),
     (LicenseFeature.CATALOG_ENTERPRISE_TRAIN, HardwareClass.GENERIC, "key", False, "WRONG_HARDWARE", "CE+K"),
-    # DEDUP (1,0,0,1,0,1): free on the community side, keyed on appliance hardware.
+    # DEDUP (1,0,1,1): free on the community side, keyed on appliance hardware.
     (LicenseFeature.DEDUP, HardwareClass.TRUENAS_HW, "none", False, "NO_LICENSE", "HW"),
-    (LicenseFeature.DEDUP, HardwareClass.TRUENAS_HW, "nokey", False, "KEY_MISSING", "HW+L"),
+    (LicenseFeature.DEDUP, HardwareClass.TRUENAS_HW, "nokey", False, "KEY_MISSING", None),
     (LicenseFeature.DEDUP, HardwareClass.TRUENAS_HW, "key", True, "ENTITLED", "HW+K"),
     (LicenseFeature.DEDUP, HardwareClass.GENERIC, "none", True, "ENTITLED", "CE"),
-    (LicenseFeature.DEDUP, HardwareClass.GENERIC, "nokey", False, "KEY_MISSING", "CE+L"),
+    (LicenseFeature.DEDUP, HardwareClass.GENERIC, "nokey", False, "KEY_MISSING", None),
     (LicenseFeature.DEDUP, HardwareClass.GENERIC, "key", True, "ENTITLED", "CE+K"),
-    # ZFSTIER, and the other features sharing (0,0,0,1,0,1): key-only on either side.
+    # ZFSTIER, and the other features sharing (0,0,1,1): key-only on either side.
     (LicenseFeature.ZFSTIER, HardwareClass.TRUENAS_HW, "none", False, "NO_LICENSE", "HW"),
-    (LicenseFeature.ZFSTIER, HardwareClass.TRUENAS_HW, "nokey", False, "KEY_MISSING", "HW+L"),
+    (LicenseFeature.ZFSTIER, HardwareClass.TRUENAS_HW, "nokey", False, "KEY_MISSING", None),
     (LicenseFeature.ZFSTIER, HardwareClass.TRUENAS_HW, "key", True, "ENTITLED", "HW+K"),
     (LicenseFeature.ZFSTIER, HardwareClass.GENERIC, "none", False, "NO_LICENSE", "CE"),
-    (LicenseFeature.ZFSTIER, HardwareClass.GENERIC, "nokey", False, "KEY_MISSING", "CE+L"),
+    (LicenseFeature.ZFSTIER, HardwareClass.GENERIC, "nokey", False, "KEY_MISSING", None),
     (LicenseFeature.ZFSTIER, HardwareClass.GENERIC, "key", True, "ENTITLED", "CE+K"),
-    # FIBRECHANNEL (0,0,1,1,0,1): any license grants it on appliance hardware; the community
-    # side needs the key.
-    (LicenseFeature.FIBRECHANNEL, HardwareClass.TRUENAS_HW, "none", False, "NO_LICENSE", "HW"),
-    (LicenseFeature.FIBRECHANNEL, HardwareClass.TRUENAS_HW, "nokey", True, "ENTITLED", "HW+L"),
-    (LicenseFeature.FIBRECHANNEL, HardwareClass.TRUENAS_HW, "key", True, "ENTITLED", "HW+K"),
-    (LicenseFeature.FIBRECHANNEL, HardwareClass.GENERIC, "none", False, "NO_LICENSE", "CE"),
-    (LicenseFeature.FIBRECHANNEL, HardwareClass.GENERIC, "nokey", False, "KEY_MISSING", "CE+L"),
-    (LicenseFeature.FIBRECHANNEL, HardwareClass.GENERIC, "key", True, "ENTITLED", "CE+K"),
     # A Mini is iX-built hardware that reads the CE half of every row, so unlicensed DEDUP is
     # granted here and denied on the appliance row above.
     (LicenseFeature.DEDUP, HardwareClass.MINI, "none", True, "ENTITLED", "CE"),
@@ -226,7 +216,7 @@ def test_vector_behavior(feature, hardware_class, state, entitled, reason, colum
 # Where a denial's wording comes from. A feature may register bespoke wording that has to
 # win over the generic template on every reason it registers, and a feature with no display
 # name has to fall back to its raw key rather than emitting an empty phrase.
-_CE_KEY_DROPPED = Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=0)
+_CE_KEY_DROPPED = Vector(ce=0, hw=0, hw_k=1, ce_k=0)
 
 MESSAGE_TABLE = [
     # An override replaces the generic template on a live denial.
@@ -244,7 +234,7 @@ MESSAGE_TABLE = [
     (
         "SYNTHETIC_UNNAMED",
         "HW",
-        Vector(ce=0, hw=0, hw_l=0, hw_k=1, ce_l=0, ce_k=1),
+        Vector(ce=0, hw=0, hw_k=1, ce_k=1),
         "This system is not licensed to use the SYNTHETIC_UNNAMED feature.",
     ),
 ]
@@ -282,7 +272,7 @@ PROACTIVE_SUPPORT_TIER = "This system's support tier does not include the proact
 # emit "the support feature" here, which is a different entitlement.
 TIER_TABLE = [
     (HardwareClass.TRUENAS_HW, "none", None, False, "NO_LICENSE", "HW", PROACTIVE_SUPPORT_NO_LICENSE),
-    (HardwareClass.TRUENAS_HW, "nokey", None, False, "KEY_MISSING", "HW+L", PROACTIVE_SUPPORT_KEY_MISSING),
+    (HardwareClass.TRUENAS_HW, "nokey", None, False, "KEY_MISSING", None, PROACTIVE_SUPPORT_KEY_MISSING),
     (HardwareClass.TRUENAS_HW, "key", "GOLD", True, "ENTITLED", "HW+K", ""),
     (HardwareClass.TRUENAS_HW, "key", "SILVER", True, "ENTITLED", "HW+K", ""),
     (HardwareClass.TRUENAS_HW, "key", "SILVERINTERNATIONAL", True, "ENTITLED", "HW+K", ""),
@@ -292,7 +282,7 @@ TIER_TABLE = [
     # The SUPPORT key is present but carries no tier at all.
     (HardwareClass.TRUENAS_HW, "key", None, False, "TIER_INSUFFICIENT", "HW+K", PROACTIVE_SUPPORT_TIER),
     (HardwareClass.GENERIC, "none", None, False, "NO_LICENSE", "CE", PROACTIVE_SUPPORT_NO_LICENSE),
-    (HardwareClass.GENERIC, "nokey", None, False, "KEY_MISSING", "CE+L", PROACTIVE_SUPPORT_KEY_MISSING),
+    (HardwareClass.GENERIC, "nokey", None, False, "KEY_MISSING", None, PROACTIVE_SUPPORT_KEY_MISSING),
     (HardwareClass.GENERIC, "key", "GOLD", True, "ENTITLED", "CE+K", ""),
 ]
 
@@ -314,7 +304,7 @@ def test_tier_rule_behavior(hardware_class, state, support_type, entitled, reaso
 # whose hardware probe degraded.
 HA_TABLE = [
     (HardwareClass.TRUENAS_HW, (LicenseFeature.HA,), True, "ENTITLED", "HW+K"),
-    (HardwareClass.TRUENAS_HW, (), False, "KEY_MISSING", "HW+L"),
+    (HardwareClass.TRUENAS_HW, (), False, "KEY_MISSING", None),
     (HardwareClass.TRUENAS_HW, None, False, "NO_LICENSE", "HW"),
     (HardwareClass.GENERIC, (LicenseFeature.HA,), False, "WRONG_HARDWARE", "CE+K"),
     (HardwareClass.MINI, (LicenseFeature.HA,), False, "WRONG_HARDWARE", "CE+K"),
