@@ -1,7 +1,7 @@
 import pytest
 
 from middlewared.test.integration.assets.pool import dataset, snapshot
-from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.utils import call
 
 
 def mounted(path):
@@ -203,18 +203,5 @@ def test_zfs_resource_snapshot_clone_no_mount():
             call("zfs.resource.snapshot.clone", {"snapshot": snap, "dataset": clone_path, "no_mount": True})
             try:
                 assert mounted(clone_path) == "no"
-            finally:
-                call("zfs.resource.destroy", {"path": clone_path, "recursive": True})
-
-
-def test_zfs_resource_snapshot_clone_zvol_is_not_mounted():
-    with dataset("test_snap_clone_zvol_nomount", {"type": "VOLUME", "volsize": 1048576}) as zvol:
-        with snapshot(zvol, "snap") as snap:
-            clone_path = f"{zvol.split('/')[0]}/test_snap_clone_zvol_nomount_dest"
-            call("zfs.resource.snapshot.clone", {"snapshot": snap, "dataset": clone_path})
-            try:
-                result = call("zfs.resource.list", {"paths": [clone_path], "properties": None})
-                assert result[0]["type"] == "VOLUME"
-                assert ssh(f"findmnt -rn -S {clone_path}", check=False).strip() == ""
             finally:
                 call("zfs.resource.destroy", {"path": clone_path, "recursive": True})

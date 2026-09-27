@@ -383,7 +383,6 @@ class PoolSnapshotService(CRUDService):
             if vmware_context:
                 self.middleware.call_sync('vmware.snapshot_end', vmware_context)
 
-        # An internal call returns the public method's pydantic model, and the transform reads dict keys.
         entry = self._transform_snapshot_entry(result.model_dump(), include_holds=False)
         self.middleware.send_event(
             f'{self._config.namespace}.query', 'ADDED', id=entry['id'], fields=entry

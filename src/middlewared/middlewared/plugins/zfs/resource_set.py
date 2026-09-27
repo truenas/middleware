@@ -91,7 +91,6 @@ def _phase_error(
 def touched_names(
     properties: dict[str, Any] | None, user_properties: dict[str, str] | None, inherit: list[str]
 ) -> tuple[list[str], list[str]]:
-    """The native and user property names a `set_impl` call writes or inherits."""
     natives = sorted((properties or {}).keys() | {name for name in inherit if ":" not in name})
     user_names = sorted((user_properties or {}).keys() | {name for name in inherit if ":" in name})
     return natives, user_names
@@ -103,7 +102,6 @@ def changed_fields(
     user_properties: dict[str, str] | None,
     inherit: list[str],
 ) -> dict[str, Any]:
-    """The `fields` of the `zfs.resource.list` CHANGED event for a `set_impl` call that returned `entry`."""
     natives, user_names = touched_names(properties, user_properties, inherit)
     return {
         "properties": entry["properties"],

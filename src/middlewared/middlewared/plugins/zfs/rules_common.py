@@ -1,7 +1,7 @@
 """Checks shared by the zfs.resource.create and zfs.resource.set rules.
 
 Every `reject_*` function takes the `ValidationErrors` to append to and the attribute to report on, followed by the
-values it judges, so each caller resolves "effective" its own way and reports on its own schema. None of them raises.
+values it judges, so each caller resolves "effective" its own way and reports on its own schema.
 """
 
 from __future__ import annotations
@@ -102,10 +102,7 @@ def reject_bad_user_property_values(verrors: ValidationErrors, attribute: str, v
 
 
 def reject_tier_managed_ssb(verrors: ValidationErrors, attribute: str) -> None:
-    """The tier manager owns special_small_blocks while tiering is enabled.
-
-    Callers apply this only when tiering is enabled and the request touches special_small_blocks.
-    """
+    """The tier manager owns special_small_blocks while tiering is enabled."""
     verrors.add(
         attribute,
         "ZFS tiering is enabled. Use `zfs.tier.dataset_set_tier` to manage 'special_small_blocks'.",
@@ -114,11 +111,7 @@ def reject_tier_managed_ssb(verrors: ValidationErrors, attribute: str) -> None:
 
 
 def reject_unentitled_dedup(verrors: ValidationErrors, attribute: str, entitlement: EntitlementEntry) -> None:
-    """Deduplication may only be enabled on a system entitled to it.
-
-    Licensed systems must carry the DEDUP feature; unlicensed iX hardware is blocked; Community Edition may use it
-    freely. The entitlement engine decides and supplies the message. Matches the gate pool.dataset applies.
-    """
+    """Deduplication may only be enabled on a system entitled to it; the entitlement supplies the refusal message."""
     if not entitlement.entitled:
         verrors.add(attribute, entitlement.message, errno.EINVAL)
 
@@ -129,8 +122,7 @@ def reject_dedup_on_special_vdev(
     """Deduplication may not be enabled on a PERFORMANCE tier filesystem.
 
     With tiering enabled a filesystem whose effective special_small_blocks (`ssb`, in bytes) is above zero has its
-    data placed on the special vdev and such data may not be deduplicated. The pool topology is only inspected once
-    the cheaper condition has passed.
+    data placed on the special vdev and such data may not be deduplicated.
     """
     if not ssb or not pool_has_special_vdev_sync(context, pool_name):
         return

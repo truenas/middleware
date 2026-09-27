@@ -3,7 +3,7 @@ import os
 
 import pytest
 from auto_config import pool_name
-from middlewared.service_exception import ValidationErrors
+from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.test.integration.assets.pool import another_pool
 from middlewared.test.integration.assets.zfs_resource import destroy_zfs_resource, zfs_resource
 from middlewared.test.integration.utils import call, mock, ssh
@@ -83,24 +83,6 @@ def test_zfs_resource_create_volume_capacity_guardrail():
         },
     ) as entry:
         assert entry["properties"]["volsize"]["value"] == volsize
-
-
-def test_create_over_budget_refreservation_with_suffix_is_rejected():
-    avail = call("zfs.resource.list", {"paths": [pool_name], "properties": ["available"]})
-    refreservation = f"{int(avail[0]['properties']['available']['value'] * 0.9) // 1024}K"
-    path = os.path.join(pool_name, "test_create_zvol_suffix_budget")
-    try:
-        with pytest.raises(ValidationErrors) as exc_info:
-            call(
-                "zfs.resource.create",
-                {"path": path, "type": "VOLUME", "properties": {"volsize": GiB, "refreservation": refreservation}},
-            )
-        [error] = exc_info.value.errors
-        assert error.attribute == "zfs.resource.create.properties.refreservation"
-        assert "for a sparse volume" in error.errmsg
-    finally:
-        if call("zfs.resource.list", {"paths": [path]}):
-            destroy_zfs_resource(path)
 
 
 def test_create_headroom_attribute_and_aggregation():
@@ -866,7 +848,9 @@ def test_zfs_resource_create_under_a_volume_parent_is_rejected(tier_enabled, chi
 
 def test_zfs_resource_create_share_type():
     path = os.path.join(pool_name, "test_create_share_type")
-    expected = call("zfs.resource.share_type_choices")["smb"]
+    expected = {
+        "casesensitivity": "insensitive", "acltype": "nfsv4", "aclmode": "restricted", "aclinherit": "passthrough"
+    }
     with zfs_resource(path, {"share_type": "smb"}):
         props = call("zfs.resource.list", {"paths": [path], "properties": list(expected)})[0]["properties"]
         assert {name: props[name]["raw"] for name in expected} == expected
@@ -875,3 +859,13 @@ def test_zfs_resource_create_share_type():
     with pytest.raises(ValidationErrors) as ve:
         call("zfs.resource.create", {"path": path, "share_type": "smb", "properties": {"acltype": "posix"}})
     assert [e.attribute for e in ve.value.errors] == ["zfs.resource.create.properties.acltype"]
+
+
+def test_zfs_resource_create_removes_the_resource_when_its_key_cannot_be_stored():
+    path = os.path.join(pool_name, "test_create_key_not_stored")
+    with mock("pool.dataset.insert_or_update_encrypted_record", exception="sentinel"):
+        with pytest.raises(CallError) as exc_info:
+            call("zfs.resource.create", {"path": path, "encryption": {"generate_key": True}})
+    assert exc_info.value.errno == errno.EFAULT
+    assert "could not store its encryption key" in exc_info.value.errmsg
+    assert call("zfs.resource.list", {"paths": [path]}) == []

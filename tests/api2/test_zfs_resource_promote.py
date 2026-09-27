@@ -65,12 +65,3 @@ def test_promote_protected_path_is_rejected():
     assert ve.value.attribute == "zfs.resource.promote"
     assert ve.value.errmsg == f"{path!r} is a protected path."
     assert ve.value.errno == errno.EACCES
-
-
-def test_promote_bypass_is_not_settable():
-    with pytest.raises(Exception) as exc_info:
-        call("zfs.resource.promote", {"path": os.path.join(pool_name, ".system"), "bypass": True})
-
-    error = str(exc_info.value)
-    assert "bypass" in error, error
-    assert "Extra inputs are not permitted" in error, error

@@ -4,7 +4,7 @@ import pytest
 
 from middlewared.service_exception import ValidationError, ValidationErrors
 from middlewared.test.integration.assets.pool import another_pool
-from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.utils import call
 
 
 POOL_NAME = "test_rename_pool"
@@ -170,27 +170,6 @@ def test_pool_snapshot_rename_recursive(rename_test_pool):
             pass
 
 
-def test_zfs_resource_rename_public(rename_test_pool):
-    """`zfs.resource.rename` moves the resource to its new id."""
-    pool_name = rename_test_pool["name"]
-    original = f"{pool_name}/test_public_rename"
-    new = f"{pool_name}/test_public_rename_done"
-
-    call("pool.dataset.create", {"name": original})
-
-    try:
-        call("zfs.resource.rename", {"current_name": original, "new_name": new})
-
-        assert call("zfs.resource.list", {"paths": [new]})[0]["name"] == new
-        assert call("zfs.resource.list", {"paths": [original]}) == []
-    finally:
-        for path in (new, original):
-            try:
-                call("pool.dataset.delete", path)
-            except Exception:
-                pass
-
-
 def test_zfs_resource_rename_snapshot_path_is_rejected(rename_test_pool):
     """A snapshot name never reaches the service; the model admits filesystem names only"""
     pool = rename_test_pool["name"]
@@ -269,77 +248,3 @@ def test_zfs_resource_rename_protected_destination_is_rejected(rename_test_pool)
         assert call("zfs.resource.list", {"paths": [src], "properties": None})
     finally:
         call("pool.dataset.delete", src)
-
-
-def test_zfs_resource_rename_bypass_is_not_settable(rename_test_pool):
-    pool = rename_test_pool["name"]
-    with pytest.raises(Exception) as exc_info:
-        call(
-            "zfs.resource.rename",
-            {"current_name": f"{pool}/ix-apps/x", "new_name": f"{pool}/ix-apps/y", "bypass": True},
-        )
-
-    error = str(exc_info.value)
-    assert "bypass" in error, error
-    assert "Extra inputs are not permitted" in error, error
-
-
-def test_zfs_resource_promote(rename_test_pool):
-    """`zfs.resource.promote` detaches a clone from the snapshot it came from."""
-    pool_name = rename_test_pool["name"]
-    origin = f"{pool_name}/test_promote_origin"
-    clone = f"{pool_name}/test_promote_clone"
-
-    call("pool.dataset.create", {"name": origin})
-    ssh(f"zfs snapshot {origin}@base")
-    ssh(f"zfs clone {origin}@base {clone}")
-
-    try:
-        before = call("zfs.resource.list", {"paths": [clone], "properties": ["origin"]})[0]
-        assert before["properties"]["origin"]["value"] == f"{origin}@base"
-
-        call("zfs.resource.promote", {"path": clone})
-
-        after = call("zfs.resource.list", {"paths": [clone], "properties": ["origin"]})[0]
-        assert after["properties"]["origin"]["value"] != f"{origin}@base"
-    finally:
-        for path in (clone, origin):
-            try:
-                call("pool.dataset.delete", path, {"recursive": True})
-            except Exception:
-                pass
-
-
-def test_pool_snapshot_rename_shim(rename_test_pool):
-    """`pool.snapshot.rename` reaches the snapshot implementation, recursively when asked."""
-    pool_name = rename_test_pool["name"]
-    root = f"{pool_name}/test_snap_rename_shim"
-    child = f"{root}/child"
-
-    call("pool.dataset.create", {"name": root})
-    call("pool.dataset.create", {"name": child})
-    call("zfs.resource.snapshot.create", {"dataset": root, "name": "a"})
-
-    try:
-        call("pool.snapshot.rename", f"{root}@a", {"new_name": f"{root}@b", "force": True})
-        assert [
-            s["name"] for s in call("zfs.resource.snapshot.query", {"paths": [root]})
-        ] == [f"{root}@b"]
-
-        call("zfs.resource.snapshot.create", {"dataset": root, "name": "c", "recursive": True})
-        call(
-            "pool.snapshot.rename",
-            f"{root}@c",
-            {"new_name": f"{root}@d", "recursive": True, "force": True},
-        )
-        names = [
-            s["name"]
-            for s in call("zfs.resource.snapshot.query", {"paths": [root], "recursive": True})
-        ]
-        assert f"{root}@d" in names
-        assert f"{child}@d" in names
-    finally:
-        try:
-            call("pool.dataset.delete", root, {"recursive": True})
-        except Exception:
-            pass

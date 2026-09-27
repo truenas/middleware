@@ -99,10 +99,6 @@ def recommended_zvol_blocksize(data_vdevs: list[dict[str, Any]]) -> str:
     4w/5wZ1, 5w/6wZ2, 6w/7wZ3 = 32K
     6w/7w/8w/9wZ1, 7w/8w/9w/10wZ2, 8w/9w/10w/11wZ3 = 64K
     10w+Z1, 11w+Z2, 12w+Z3 = 128K
-
-    If the zpool was forcefully created with mismatched
-    vdev geometry (i.e. 3wZ1 and a 5wZ1) then we calculate
-    the blocksize based on the largest vdev of the zpool.
     """
     maxdisks = 1
     for vdev in data_vdevs:

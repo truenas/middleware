@@ -142,3 +142,28 @@ def test_replication_receive_emits_no_removed():
             ssh(f"zfs send -i @s1 {source}@s2 | zfs recv -u -F {target}")
 
         assert [e for e in summary(events) if e[1] == "REMOVED"] == [], pprint.pformat(events)
+
+
+def test_create_announces_created_ancestors_then_the_leaf():
+    with resource("zre_events_create_ancestors") as parent:
+        with collect(parent) as events:
+            call("zfs.resource.create", {"path": f"{parent}/a/b", "create_ancestors": True})
+
+        assert summary(events) == [
+            ("zfs.resource.list", "ADDED", f"{parent}/a"),
+            ("zfs.resource.list", "ADDED", f"{parent}/a/b"),
+        ], pprint.pformat(events)
+
+
+def test_promote_emits_one_changed_holding_only_origin():
+    with resource("zre_events_promote") as parent:
+        src = f"{parent}/src"
+        clone = f"{parent}/clone"
+        call("zfs.resource.create", {"path": src})
+        call("zfs.resource.snapshot.create", {"dataset": src, "name": "s"})
+        call("zfs.resource.snapshot.clone", {"snapshot": f"{src}@s", "dataset": clone})
+        with collect(clone) as events:
+            call("zfs.resource.promote", {"path": clone})
+
+        assert summary(events) == [("zfs.resource.list", "CHANGED", clone)], pprint.pformat(events)
+        assert set(events[0][3]["fields"]["properties"]) == {"origin"}

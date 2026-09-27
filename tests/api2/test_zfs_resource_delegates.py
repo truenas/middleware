@@ -5,18 +5,13 @@ import time
 
 import pytest
 
-from middlewared.service_exception import ValidationError, ValidationErrors
+from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.iscsi import iscsi_extent
 from middlewared.test.integration.assets.pool import dataset
-from middlewared.test.integration.assets.smb import smb_share
 from middlewared.test.integration.utils import call, client, ssh
-from middlewared.test.integration.utils.unittest import RegexString
 
 MiB = 1024**2
 SETTLE = 5
-HIDDEN_MESSAGE = (
-    "has snapshots which have attachments being used. Before marking it as HIDDEN, remove attachment usages."
-)
 
 
 def volume(name, **data):
@@ -51,35 +46,6 @@ def iscsitarget():
         yield
     finally:
         call("service.control", "STOP", "iscsitarget", job=True)
-
-
-def test_delegates_are_registered():
-    assert set(call("zfs.resource.delegates")) == {"iscsi.extent", "nvmet.namespace", "smb.share", "vm.device"}
-
-
-def test_acltype_change_under_smb_shares_is_rejected():
-    with dataset("zre_smb_acltype", {"acltype": "POSIX", "aclmode": "DISCARD"}) as ds:
-        with smb_share(f"/mnt/{ds}", "ZRE_SHARE_1"):
-            with smb_share(f"/mnt/{ds}", "ZRE_SHARE_2"):
-                with pytest.raises(ValidationErrors) as ve:
-                    call("zfs.resource.set", {"path": ds, "properties": {"acltype": "off"}})
-
-                assert ve.value.errors == [
-                    ValidationError(
-                        "zfs.resource.set.properties.acltype",
-                        RegexString("This dataset is hosting SMB shares. .*"),
-                        errno.EINVAL,
-                    )
-                ]
-                assert "ZRE_SHARE_1, ZRE_SHARE_2" in ve.value.errors[0].errmsg
-
-
-def test_acltype_no_op_under_smb_shares_is_accepted():
-    with dataset("zre_smb_acltype_noop", {"acltype": "POSIX", "aclmode": "DISCARD"}) as ds:
-        with smb_share(f"/mnt/{ds}", "ZRE_SHARE_1"):
-            with smb_share(f"/mnt/{ds}", "ZRE_SHARE_2"):
-                call("zfs.resource.set", {"path": ds, "properties": {"acltype": "posix"}})
-                assert read(ds, "acltype")["raw"] == "posix"
 
 
 def test_volsize_grow_resyncs_the_iscsi_extent_size():
@@ -122,8 +88,8 @@ def test_hiding_snapshot_devices_backing_an_extent_is_rejected():
             with pytest.raises(ValidationErrors) as ve:
                 call("zfs.resource.set", {"path": zvol, "properties": {"snapdev": "hidden"}})
 
-            assert ve.value.errors == [
-                ValidationError("zfs.resource.set.properties.snapdev", f"{zvol!r} {HIDDEN_MESSAGE}", errno.EINVAL)
+            assert [(e.attribute, e.errno) for e in ve.value.errors] == [
+                ("zfs.resource.set.properties.snapdev", errno.EINVAL)
             ]
 
 

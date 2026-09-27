@@ -108,8 +108,6 @@ def _pool_field(api_names, sent, name):
 
 
 def translate_update(data):
-    """Split a `pool.dataset.update` payload into the `properties`, `user_properties` and `inherit` of
-    `zfs.resource.set`."""
     properties, user_properties, inherit = {}, {}, []
     for prop in POOL_DS_UPDATE_PROPERTIES:
         if prop.api_name not in data:
@@ -384,9 +382,6 @@ class PoolDatasetService(CRUDService):
 
     @private
     async def update_impl(self, data: UpdateImplArgs):
-        # The dict shape is also what a controller sends its peer over `failover.call_remote`, so it is kept as
-        # the entry point for callers outside `zfs.resource` and unpacked onto the primitive here, bypassing the
-        # protected-path guard because the system dataset, apps and pool-import writers are among those callers.
         await self.call2(
             self.s.zfs.resource.set_impl,
             data['name'],

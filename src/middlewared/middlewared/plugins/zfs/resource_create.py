@@ -62,11 +62,7 @@ SCHEMA = "zfs.resource.create"
 
 
 def _record_key(context: ServiceContext, path: str, encrypt: dict[str, Any]) -> None:
-    # Hex keys are stored by the system (passphrases deliberately are
-    # not) so unlock/export/KMIP flows work; the post_create hook syncs
-    # key material to the standby controller on HA systems. The
-    # storage_encrypteddataset table remains the system of record for
-    # dataset keys.
+    # Hex keys are stored so unlock, export and KMIP work; passphrases deliberately are not.
     context.middleware.call_sync(
         "pool.dataset.insert_or_update_encrypted_record",
         {"name": path, "encryption_key": encrypt["key"], "key_format": encrypt["keyformat"]},
@@ -106,8 +102,6 @@ def create_impl(context: ServiceContext, tls: Any, data: ZFSResourceCreateArgsDa
         check_dedup_entitlement(data, ctx, verrors)
 
     if not verrors:
-        # one query serves the readonly, tier, acl, capacity and encryption
-        # rules. Only the properties the rules below will read are requested.
         ancestor_props = ["readonly", "mountpoint", "encryption"]
         if data.type == "VOLUME":
             ancestor_props.extend(["available", "usedbyrefreservation", "special_small_blocks", "refquota"])

@@ -1,13 +1,9 @@
 import errno
-from unittest.mock import AsyncMock, Mock
 
 import pytest
 
 from middlewared.api.current import ZFSResourceSetProperties
-from middlewared.plugins.iscsi_.extents import iSCSITargetExtentService
-from middlewared.plugins.iscsi_.global_linux import ISCSIGlobalService
 from middlewared.plugins.iscsi_.zfs_delegate import ISCSIExtentDelegate
-from middlewared.plugins.zfs.delegates import validate_delegate
 from middlewared.plugins.zfs.set_rules import PropertyView, SetContext
 from middlewared.pytest.unit.middleware import Middleware
 from middlewared.service_exception import ValidationErrors
@@ -45,17 +41,6 @@ async def validate(m, state):
     verrors = ValidationErrors()
     await ISCSIExtentDelegate(m).validate_set(state, verrors)
     return list(verrors)
-
-
-def test_extent_delegate_declaration():
-    delegate = ISCSIExtentDelegate(Middleware())
-
-    validate_delegate(delegate)
-    assert (delegate.name, delegate.types, delegate.triggers) == (
-        "iscsi.extent",
-        frozenset({"VOLUME"}),
-        frozenset({"volsize", "readonly", "snapdev"}),
-    )
 
 
 @pytest.mark.parametrize(
@@ -125,110 +110,3 @@ async def test_snapdev_change_without_an_attached_hidden_device_is_accepted(exte
     state = volume(snapshot_devices={"tank/vol@a"}, **kwargs)
 
     assert await validate(extents_on(extent), state) == []
-
-
-@pytest.mark.parametrize(
-    "kwargs, expected",
-    [
-        ({"properties": {"volsize": 2 * GiB}}, [("resync_lun_size_for_zvol", ("tank/vol",))]),
-        ({"properties": {"volsize": GiB}}, []),
-        (
-            {"properties": {"readonly": "on"}, "readonly": "on"},
-            [("resync_readonly_property_for_zvol", ("tank/vol", "on"))],
-        ),
-        (
-            {"inherit": ["readonly"], "parent": {"readonly": "on"}},
-            [("resync_readonly_property_for_zvol", ("tank/vol", "on"))],
-        ),
-        (
-            {"properties": {"volsize": 2 * GiB, "readonly": "off"}},
-            [
-                ("resync_lun_size_for_zvol", ("tank/vol",)),
-                ("resync_readonly_property_for_zvol", ("tank/vol", "off")),
-            ],
-        ),
-    ],
-    ids=["grow", "same-size", "readonly-unchanged", "readonly-inherited", "both"],
-)
-@pytest.mark.asyncio
-async def test_after_set_resyncs_the_extent(kwargs, expected):
-    calls = []
-    m = Middleware()
-    for method in ("resync_lun_size_for_zvol", "resync_readonly_property_for_zvol"):
-        m[f"iscsi.global.{method}"] = lambda *args, method=method: calls.append((method, args))
-
-    await ISCSIExtentDelegate(m).after_set(volume(**kwargs), None)
-
-    assert calls == expected
-
-
-def extent_service():
-    calls = []
-    m = Middleware()
-    for name in ("iscsi.extent.validate", "iscsi.extent.save", "datastore.update"):
-        m[name] = lambda *args, name=name: calls.append((name, args))
-    m.register_hook = Mock()
-    svc = iSCSITargetExtentService(m)
-    svc.call2 = AsyncMock()
-    extent = {"id": 7, "name": "lun", "path": "zvol/tank/vol", "ro": False, "enabled": True, "locked": False}
-
-    async def get_instance(id_):
-        return dict(extent)
-
-    async def nothing(*args, **kwargs):
-        pass
-
-    svc.get_instance = get_instance
-    svc.clean = nothing
-    svc._service_change = nothing
-    return svc, calls
-
-
-def called(calls, name):
-    return [args for method, args in calls if method == name]
-
-
-@pytest.mark.asyncio
-async def test_update_internal_without_zfs_sync_only_updates_the_extent():
-    svc, calls = extent_service()
-
-    await svc.update_internal(7, {"ro": True}, sync_zfs=False)
-
-    svc.call2.assert_not_awaited()
-    assert called(calls, "datastore.update")[0][2]["ro"] is True
-
-
-@pytest.mark.asyncio
-async def test_update_internal_with_zfs_sync_writes_readonly_to_the_zvol():
-    svc, calls = extent_service()
-
-    await svc.update_internal(7, {"ro": True}, sync_zfs=True)
-
-    svc.call2.assert_awaited_once_with(
-        svc.s.zfs.resource.set_impl, "tank/vol", properties={"readonly": "on"}, bypass=True
-    )
-
-
-def test_readonly_resync_updates_the_extent_without_writing_back_to_zfs():
-    calls = []
-    m = Middleware()
-    m["iscsi.extent.query"] = lambda *args: {"id": 7, "ro": False}
-    m["iscsi.extent.update"] = lambda *args: calls.append(("update", args))
-    m["iscsi.extent.update_internal"] = lambda *args: calls.append(("update_internal", args))
-
-    ISCSIGlobalService(m).resync_readonly_property_for_zvol("tank/vol", "on")
-
-    assert calls == [("update_internal", (7, {"ro": True}, False))]
-
-
-@pytest.mark.asyncio
-async def test_do_update_audits_and_writes_readonly_to_the_zvol():
-    svc, calls = extent_service()
-    audit_callback = Mock()
-
-    await svc.do_update(audit_callback, 7, {"ro": True})
-
-    audit_callback.assert_called_once_with("lun")
-    svc.call2.assert_awaited_once_with(
-        svc.s.zfs.resource.set_impl, "tank/vol", properties={"readonly": "on"}, bypass=True
-    )

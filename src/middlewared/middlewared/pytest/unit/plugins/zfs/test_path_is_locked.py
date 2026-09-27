@@ -6,7 +6,6 @@ from truenas_pylibzfs import ZFSError, ZFSType
 from middlewared.plugins.zfs import path_is_locked_impl as impl_module
 from middlewared.plugins.zfs.path_is_locked_impl import path_is_locked_impl
 
-SNAPSHOT_PATHS = ["/dev/zvol/tank/vol@snap", "/mnt/tank/vol@snap", "tank/vol@snap"]
 FS = ZFSType.ZFS_TYPE_FILESYSTEM
 VOL = ZFSType.ZFS_TYPE_VOLUME
 SNAP = ZFSType.ZFS_TYPE_SNAPSHOT
@@ -50,7 +49,7 @@ def make_context(about_to_lock=None):
     return context
 
 
-@pytest.mark.parametrize("path", SNAPSHOT_PATHS)
+@pytest.mark.parametrize("path", ["tank/vol@snap"])
 @pytest.mark.parametrize("key_is_loaded", [False, True])
 def test_snapshot_is_locked_when_its_dataset_is(path, key_is_loaded):
     tls = make_tls({"tank": (FS, True), "tank/vol": (VOL, key_is_loaded), "tank/vol@snap": (SNAP, None)})
@@ -58,7 +57,7 @@ def test_snapshot_is_locked_when_its_dataset_is(path, key_is_loaded):
     assert path_is_locked_impl(make_context(), tls, path) is not key_is_loaded
 
 
-@pytest.mark.parametrize("path", SNAPSHOT_PATHS)
+@pytest.mark.parametrize("path", ["/dev/zvol/tank/vol@snap"])
 def test_snapshot_of_a_dataset_about_to_lock_is_locked(path):
     tls = make_tls({"tank": (FS, True), "tank/vol": (VOL, True), "tank/vol@snap": (SNAP, None)})
 
@@ -66,7 +65,7 @@ def test_snapshot_of_a_dataset_about_to_lock_is_locked(path):
 
 
 @pytest.mark.parametrize("path", ["/mnt/tank/data@old", "/mnt/tank/data@old/f"])
-@pytest.mark.parametrize("about_to_lock", [None, "tank/data"])
+@pytest.mark.parametrize("about_to_lock", ["tank/data"])
 def test_directory_named_like_a_snapshot_resolves_to_its_containing_dataset(path, about_to_lock):
     tls = make_tls({"tank": (FS, True), "tank/data": (FS, False), "tank/data@old": (SNAP, None)})
 

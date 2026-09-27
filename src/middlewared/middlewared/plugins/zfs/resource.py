@@ -506,9 +506,8 @@ class ZFSResourceService(Service):
         Create a ZFS resource (filesystem or volume) and mount it.
 
         Properties are given by native ZFS property name - exactly the names
-        :method:`zfs.resource.list` returns - and are handed to ZFS as-is. The created
-        resource is re-queried after creation and returned, so the entry reflects the
-        values as canonicalized by ZFS, not the input.
+        :method:`zfs.resource.list` returns - and are handed to ZFS as-is. The returned
+        entry holds the values as canonicalized by ZFS, not the input.
 
         To create snapshots, use :method:`zfs.resource.snapshot.create` instead.
 
@@ -631,12 +630,8 @@ class ZFSResourceService(Service):
         bypass: bool = False,
     ) -> dict[str, Any]:
         """
-        Set native properties, set user properties and inherit properties, in that order, on one open handle.
-
-        Names are handed to ZFS as given; the public ``set`` validates the vocabulary. ``bypass`` lets internal
-        callers write to protected paths and is never exposed to the public API. A change to ``mountpoint`` or a
-        native share property remounts the filesystem, the library's default for ``set_properties``. Inheriting a
-        user property removes it.
+        Writes without validation. Changing ``mountpoint`` or a native share property remounts the filesystem;
+        inheriting a user property removes it.
         """
         names = builtins.list(inherit or ())
         entry = _set.set_impl(tls, path, properties, user_properties, names, bypass)
@@ -663,9 +658,8 @@ class ZFSResourceService(Service):
 
         One request sets native properties, sets user properties and resets properties to their inherited
         value. Properties are given by native ZFS property name - exactly the names
-        :method:`zfs.resource.list` returns - and are handed to ZFS as-is. The resource is re-queried
-        afterwards and returned with the properties that were touched, so the entry reflects the values as
-        canonicalized by ZFS, not the input.
+        :method:`zfs.resource.list` returns - and are handed to ZFS as-is. The returned entry holds the
+        values as canonicalized by ZFS, not the input.
 
         Inheriting a user property removes it. Inheriting ``acltype`` also inherits ``aclmode`` and
         ``aclinherit`` unless the request sets them, and setting ``acltype`` defaults them the way
