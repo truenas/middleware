@@ -310,9 +310,7 @@ def test__legacy_bitmask_is_the_other_route_onto_a_legacy_license():
 
 
 def test__legacy_fibrechannel_bit_is_observable_end_to_end():
-    # The positive control for the route above. The CE side is where a key is visible:
-    # FIBRECHANNEL's vector grants CE+K and denies CE+L, whereas appliance hardware is
-    # granted by any license at all and so cannot tell the two apart.
+    # The positive control for the route above.
     with_bit = parse_legacy_license(H10_HA_BLOB)
     without_bit = parse_legacy_license(X10_BLOB)
     assert with_bit.has_feature(LicenseFeature.FIBRECHANNEL)
