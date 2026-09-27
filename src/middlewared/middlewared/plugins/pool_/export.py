@@ -59,7 +59,7 @@ class PoolService(Service):
         if not (options['cascade'] and destroyed):
             return
 
-        for delegate in await self.middleware.call('pool.dataset.get_attachment_delegates_for_stop'):
+        for delegate in await self.call2(self.s.zfs.resource.attachment_delegates_for_stop):
             # The pool is already gone, so a delegate failure here must not fail the export job
             try:
                 await delegate.destroy(path)
@@ -122,7 +122,7 @@ class PoolService(Service):
             if await self.call2(self.s.keyvalue.has_key, enable_on_import_key):
                 enable_on_import = await self.call2(self.s.keyvalue.get, enable_on_import_key)
 
-        for i, delegate in enumerate(await self.middleware.call('pool.dataset.get_attachment_delegates_for_stop')):
+        for i, delegate in enumerate(await self.call2(self.s.zfs.resource.attachment_delegates_for_stop)):
             job.set_progress(
                 i, f'{"Deleting" if options["cascade"] else "Disabling"} pool attachments: {delegate.title}')
 

@@ -26,7 +26,7 @@ __all__ = [
     "PoolRemoveArgs", "PoolRemoveArgs", "PoolRemoveResult", "PoolReplaceArgs", "PoolReplaceResult", "PoolScrubArgs",
     "PoolScrubResult", "PoolUpdateArgs", "PoolUpdateResult", "PoolUpgradeArgs", "PoolUpgradeResult",
     "PoolValidateNameArgs", "PoolValidateNameResult", "PoolCreateEncryptionOptions", "PoolPrefetchArgs",
-    "PoolPrefetchResult",
+    "PoolPrefetchResult", "PoolAttachment",
 ]
 
 

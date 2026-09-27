@@ -40,7 +40,7 @@ class PeriodicSnapshotTaskFSAttachmentDelegate(FSAttachmentDelegate[PeriodicSnap
 
 
 async def register(middleware: Middleware) -> None:
-    await middleware.call(
-        'pool.dataset.register_attachment_delegate',
+    await middleware.call2(
+        middleware.services.zfs.resource.register_attachment_delegate,
         PeriodicSnapshotTaskFSAttachmentDelegate(middleware),
     )

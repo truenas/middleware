@@ -65,7 +65,7 @@ class PoolDatasetService(Service):
             # during delegate.stop() even though the key hasn't been unloaded yet
             await self.middleware.call('cache.put', 'about_to_lock_dataset', id_)
 
-            await self.middleware.call('pool.dataset.stop_attachment_delegates', mountpoint)
+            await self.call2(self.s.zfs.resource.stop_attachment_delegates, mountpoint)
 
             # recursive doesn't apply to zvols
             recursive = ds['type'] != 'VOLUME'
@@ -405,7 +405,7 @@ class PoolDatasetService(Service):
             return
 
         datasets = [(dataset, dataset_mountpoint(dataset)) for dataset in datasets]
-        for delegate in await self.middleware.call('pool.dataset.get_attachment_delegates_for_start'):
+        for delegate in await self.call2(self.s.zfs.resource.attachment_delegates_for_start):
             # The datasets are already unlocked and mounted, so a delegate failure here must not abort
             # the unlock job before its encryption records are persisted
             try:

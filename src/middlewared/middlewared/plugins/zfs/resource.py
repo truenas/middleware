@@ -7,7 +7,10 @@ from typing import TYPE_CHECKING, Any
 
 from middlewared.api import Event, api_method
 from middlewared.api.current import (
+    PoolAttachment,
     PoolProcess,
+    ZFSResourceAttachmentsArgs,
+    ZFSResourceAttachmentsResult,
     ZFSResourceChecksumChoicesArgs,
     ZFSResourceChecksumChoicesResult,
     ZFSResourceCompressionChoicesArgs,
@@ -49,6 +52,7 @@ from middlewared.service import Service, private
 from middlewared.service.decorators import pass_thread_local_storage
 
 from . import path_is_locked_impl as _path_is_locked
+from . import resource_attachments as _attachments
 from . import resource_create as _create
 from . import resource_destroy as _destroy
 from . import resource_info as _info
@@ -57,7 +61,6 @@ from . import resource_processes as _processes
 from . import resource_query as _query
 from . import resource_set as _set
 from . import share_presets as _share_presets
-from .delegates import ZFSResourceDelegate, validate_delegate
 from .prefetch import ZFSResourcePoolPrefetchService
 from .snapshot import ZFSResourceSnapshotService, audit_target
 from .utils import has_internal_path
@@ -65,6 +68,7 @@ from .utils import has_internal_path
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
+    from middlewared.common.attachment import FSAttachmentDelegate
     from middlewared.main import Middleware
 
 __all__ = ("ZFSResourceService",)
@@ -104,18 +108,6 @@ class ZFSResourceService(Service):
         super().__init__(middleware)
         self.snapshot = ZFSResourceSnapshotService(middleware)
         self.pool = ZFSResourcePoolPrefetchService(middleware)
-        self._delegates: dict[str, ZFSResourceDelegate] = {}
-
-    @private
-    def register_delegate(self, delegate: ZFSResourceDelegate) -> None:
-        validate_delegate(delegate)
-        if delegate.name in self._delegates:
-            raise ValueError(f"A zfs.resource delegate named {delegate.name!r} is already registered")
-        self._delegates[delegate.name] = delegate
-
-    @private
-    def delegates(self) -> builtins.list[str]:
-        return sorted(self._delegates)
 
     @api_method(
         ZFSResourceListArgs,
@@ -272,6 +264,27 @@ class ZFSResourceService(Service):
         """
         return _processes.processes(self.context, path)
 
+    @api_method(ZFSResourceAttachmentsArgs, ZFSResourceAttachmentsResult, roles=["ZFS_RESOURCE_READ"],
+                check_annotations=True)
+    async def attachments(self, path: str) -> builtins.list[PoolAttachment]:
+        """
+        Retrieve the shares, tasks and services that depend on the ZFS resource named by ``path``.
+
+        A filesystem reports the consumers of it and its descendants; one whose mountpoint is ``legacy`` or
+        ``none`` reports nothing. A validation error is raised when the resource does not exist or is a
+        protected internal resource (``ENOENT``).
+
+        .. code:: json
+
+            {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "zfs.resource.attachments",
+                "params": ["tank/work"]
+            }
+        """
+        return await _attachments.attachments(self.context, path)
+
     @private
     async def kill_processes(self, oid: str, control_services: bool, max_tries: int = 5) -> None:
         await _processes.kill_processes(self.context, oid, control_services, max_tries)
@@ -285,6 +298,28 @@ class ZFSResourceService(Service):
         devices: builtins.list[int] | None = None,
     ) -> builtins.list[dict[str, Any]]:
         return _processes.processes_using_paths(self.context, paths, include_paths, include_middleware, devices)
+
+    @private
+    async def register_attachment_delegate(self, delegate: FSAttachmentDelegate[Any]) -> None:
+        _attachments.register(delegate)
+
+    @private
+    async def attachment_delegates_for_start(self) -> builtins.list[FSAttachmentDelegate[Any]]:
+        return _attachments.for_start()
+
+    @private
+    async def attachment_delegates_for_stop(self) -> builtins.list[FSAttachmentDelegate[Any]]:
+        return _attachments.for_stop()
+
+    @private
+    async def stop_attachment_delegates(self, path: str | None) -> None:
+        await _attachments.stop(path)
+
+    @private
+    async def attachments_with_path(
+        self, path: str | None, check_parent: bool = False, exact_match: bool = False
+    ) -> builtins.list[dict[str, Any]]:
+        return await _attachments.attachments_with_path(self.context, path, check_parent, exact_match)
 
     @private
     def unlocked_zvols_fast(
@@ -682,6 +717,11 @@ class ZFSResourceService(Service):
         - deduplication is requested on a system that is not entitled to it, or for a filesystem whose data
           is placed on the SPECIAL vdev (the PERFORMANCE tier) while ZFS tiering is enabled (``EINVAL``)
         - a property is invalid for the resource type, is read-only, or has an invalid value (``EINVAL``)
+        - ``acltype`` is changed on a filesystem hosting an enabled SMB share (``EINVAL``)
+        - ``snapdev`` would hide a snapshot device backing an iSCSI extent, NVMe-oF namespace or VM disk (``EINVAL``)
+
+        .. important:: A dependent service that fails to follow a ``volsize`` or ``readonly`` change fails the
+           call, but the properties stay written.
 
         Examples:
 
@@ -707,7 +747,7 @@ class ZFSResourceService(Service):
                 "inherit": ["org.truenas:obsolete"]
             }
         """
-        return _set.set(self.context, data, builtins.list(self._delegates.values()))
+        return _set.set(self.context, data)
 
     @private
     @pass_thread_local_storage

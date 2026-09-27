@@ -64,7 +64,7 @@ class PoolService(Service):
         share, asking for confirmation.
         """
         pool = await self.middleware.call('pool.get_instance', oid)
-        return await self.middleware.call('pool.dataset.attachments_with_path', pool['path'])
+        return await self.call2(self.s.zfs.resource.attachments_with_path, pool['path'])
 
     @api_method(PoolProcessesArgs, PoolProcessesResult, roles=['POOL_READ'])
     async def processes(self, oid):

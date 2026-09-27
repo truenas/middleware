@@ -285,5 +285,9 @@ class ContainerFSAttachmentDelegate(FSAttachmentDelegate[dict[str, Any]]):
 
 
 async def setup(middleware: Middleware) -> None:
-    await middleware.call('pool.dataset.register_attachment_delegate', LXCFSAttachmentDelegate(middleware))
-    await middleware.call('pool.dataset.register_attachment_delegate', ContainerFSAttachmentDelegate(middleware))
+    await middleware.call2(
+        middleware.services.zfs.resource.register_attachment_delegate, LXCFSAttachmentDelegate(middleware)
+    )
+    await middleware.call2(
+        middleware.services.zfs.resource.register_attachment_delegate, ContainerFSAttachmentDelegate(middleware)
+    )

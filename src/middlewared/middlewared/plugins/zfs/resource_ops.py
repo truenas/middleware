@@ -50,7 +50,7 @@ def unlocked_zvols_fast(
 
 def promote_impl(tls: Any, data: ZFSResourcePromoteArgsData) -> None:
     schema = "zfs.resource.promote"
-    reject_protected_path(schema, data.path, data.bypass)
+    reject_protected_path(schema, data.path)
     try:
         _raw_promote(tls, data.path)
     except ZFSPathInvalidException as e:
@@ -111,8 +111,8 @@ def unload_key(tls: Any, filesystem: str, recursive: bool = False, force_unmount
 
 def rename_impl(tls: Any, data: ZFSResourceRenameArgsData) -> None:
     schema = "zfs.resource.rename"
-    reject_protected_path(schema, data.current_name, data.bypass)
-    reject_protected_path(schema, data.new_name, data.bypass)
+    reject_protected_path(schema, data.current_name)
+    reject_protected_path(schema, data.new_name)
     try:
         _raw_rename(tls, data.current_name, data.new_name, False, data.no_unmount, data.force_unmount)
     except ZFSPathAlreadyExistsException as e:

@@ -8,7 +8,7 @@ import pytest
 from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.iscsi import iscsi_extent
 from middlewared.test.integration.assets.pool import dataset
-from middlewared.test.integration.utils import call, client, ssh
+from middlewared.test.integration.utils import call, client, mock, ssh
 
 MiB = 1024**2
 SETTLE = 5
@@ -63,7 +63,7 @@ def test_volsize_grow_resyncs_the_iscsi_extent_size():
                 assert int(ssh(f"cat {size}").split()[0]) == 128 * MiB
 
 
-def test_readonly_on_an_extent_zvol_emits_one_changed_and_syncs_the_extent():
+def test_readonly_on_an_extent_zvol_syncs_the_extent():
     with volume("zre_iscsi_readonly") as zvol:
         with iscsi_extent({"name": "zre_readonly_extent", "type": "DISK", "disk": f"zvol/{zvol}"}) as extent:
             assert extent["ro"] is False
@@ -78,7 +78,7 @@ def test_readonly_on_an_extent_zvol_emits_one_changed_and_syncs_the_extent():
                 call("zfs.resource.set", {"path": zvol, "properties": {"readonly": "on"}})
                 time.sleep(SETTLE)
 
-            assert [mtype for mtype, _ in events] == ["CHANGED"], pprint.pformat(events)
+            assert [mtype for mtype, _ in events] == ["CHANGED", "CHANGED"], pprint.pformat(events)
             assert call("iscsi.extent.get_instance", extent["id"])["ro"] is True
 
 
@@ -103,3 +103,11 @@ def test_inheriting_visible_snapdev_under_an_extent_is_accepted():
                 snapdev = read(zvol, "snapdev")
                 assert snapdev["raw"] == "visible"
                 assert snapdev["source"]["type"] == "INHERITED"
+
+
+def test_a_failing_after_hook_fails_the_set():
+    with volume("zre_after_hook") as zvol:
+        with mock("iscsi.global.resync_readonly_property_for_zvol", exception="zre after-hook failure"):
+            with pytest.raises(Exception, match="zre after-hook failure"):
+                call("zfs.resource.set", {"path": zvol, "properties": {"readonly": "on"}})
+        assert read(zvol, "readonly")["raw"] == "on"

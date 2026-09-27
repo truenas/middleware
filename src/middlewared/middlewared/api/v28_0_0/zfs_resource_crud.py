@@ -14,7 +14,7 @@ from middlewared.api.base import (
     excluded_field,
 )
 
-from .pool import PoolProcess
+from .pool import PoolAttachment, PoolProcess
 from .pool_dataset import DATASET_NAME
 from .zfs_tier import TierInfo
 
@@ -25,6 +25,8 @@ __all__ = (
     "ZFSResourceCreateEncryption",
     "ZFSResourceCreateProperties",
     "ZFSResourceCreateResult",
+    "ZFSResourceAttachmentsArgs",
+    "ZFSResourceAttachmentsResult",
     "ZFSResourceChecksumChoicesArgs",
     "ZFSResourceChecksumChoicesResult",
     "ZFSResourceCompressionChoicesArgs",
@@ -801,10 +803,6 @@ class ZFSResourceSetArgsData(BaseModel):
             "explicitly instead."
         ),
     )
-    dry_run: Private[bool] = Field(
-        default=False,
-        description="Validate the request and return without changing anything.",
-    )
 
 
 class ZFSResourceSetArgs(BaseModel):
@@ -885,6 +883,16 @@ class ZFSResourceRecommendedZvolBlocksizeResult(BaseModel):
     result: str = Field(description="The recommended block size for volumes on this pool.")
 
 
+class ZFSResourceAttachmentsArgs(BaseModel):
+    path: str = Field(description="Path of the zfs resource (filesystem or volume) whose dependents to list.")
+
+
+class ZFSResourceAttachmentsResult(BaseModel):
+    result: list[PoolAttachment] = Field(
+        description="Array of the shares, tasks and services using the resource, grouped by kind."
+    )
+
+
 class ZFSResourceProcessesArgs(BaseModel):
     path: str = Field(description="Path of the zfs resource to list processes for.")
 
@@ -917,12 +925,6 @@ class ZFSResourceRenameArgsData(BaseModel):
         default=True,
         description="Force unmount any filesystem that has to be unmounted in the process.",
     )
-    bypass: Private[bool] = Field(
-        default=False,
-        description=(
-            'If true, will bypass the safety checks that prevent renaming zfs resources to or from "protected" paths.'
-        ),
-    )
 
 
 class ZFSResourceRenameArgs(BaseModel):
@@ -935,12 +937,6 @@ class ZFSResourceRenameResult(BaseModel):
 
 class ZFSResourcePromoteArgsData(BaseModel):
     path: DATASET_NAME = Field(description="Path of the cloned zfs resource to be promoted.")
-    bypass: Private[bool] = Field(
-        default=False,
-        description=(
-            'If true, will bypass the safety checks that prevent promoting zfs resources under "protected" paths.'
-        ),
-    )
 
 
 class ZFSResourcePromoteArgs(BaseModel):

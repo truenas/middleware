@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Any
 from middlewared.api.current import PoolProcess, ZFSResourceQuery
 from middlewared.service_exception import CallError, ValidationError
 
+from .resource_attachments import DELEGATES
 from .resource_processes_utils import processes_using_dataset_tree
 from .utils import get_encryption_info
 from .zvol_utils import zvol_name_to_path
@@ -51,10 +52,7 @@ async def kill_processes(context: ServiceContext, oid: str, control_services: bo
     midpid = os.getpid()
     # a service usually owns many of the matched processes (e.g. one smbd per
     # client), so each one is only worth classifying once
-    restartable = {
-        attachment_delegate.service
-        for attachment_delegate in await context.middleware.call("pool.dataset.get_attachment_delegates")
-    }
+    restartable = {delegate.service for delegate in DELEGATES}
     seen_services = set()
     for process in await processes_using_dataset_tree(context, oid):
         service = process.get("service")

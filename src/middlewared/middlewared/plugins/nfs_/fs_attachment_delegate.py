@@ -22,4 +22,6 @@ class NFSFSAttachmentDelegate(LockableFSAttachmentDelegate[SharingNFSEntry]):
 
 
 async def setup(middleware: Middleware) -> None:
-    await middleware.call('pool.dataset.register_attachment_delegate', NFSFSAttachmentDelegate(middleware))
+    await middleware.call2(
+        middleware.services.zfs.resource.register_attachment_delegate, NFSFSAttachmentDelegate(middleware)
+    )

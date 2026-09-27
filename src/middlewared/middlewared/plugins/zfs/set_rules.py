@@ -1,9 +1,5 @@
-"""Validation rules for zfs.resource.set.
-
-Request rules judge the request alone and run before anything is read. Post-read rules are listed once in
-`SET_RULES` and judge a `SetContext`, whose `effective()` resolves each property to the value it will have once the
-request is applied. Shared checks come from rules_common as `reject_*` functions taking plain values.
-"""
+"""Validation rules for zfs.resource.set. Request rules run before anything is read; post-read rules judge a
+SetContext."""
 
 from __future__ import annotations
 
@@ -14,7 +10,7 @@ import typing
 from truenas_pylibzfs import ZFSProperty
 
 from middlewared.api.current import ZFSResourceQuery, ZFSResourceSetProperties
-from middlewared.service_exception import CallError, ValidationError, ValidationErrors
+from middlewared.service_exception import CallError, ValidationErrors
 
 from .property_management import PROPERTY_TEMPLATES
 from .rules_common import (
@@ -33,8 +29,7 @@ from .rules_common import (
 )
 
 if typing.TYPE_CHECKING:
-    from collections.abc import Callable, Collection, Mapping
-    import logging
+    from collections.abc import Collection, Mapping
 
     from middlewared.api.current import EntitlementEntry, ZFSResourceSetArgsData
     from middlewared.service import ServiceContext
@@ -47,10 +42,8 @@ __all__ = (
     "POOL_ROOT_INHERIT_VALUES",
     "SETTABLE_PROPERTIES",
     "SET_READ_PROPERTIES",
-    "SET_RULES",
     "PropertyView",
     "SetContext",
-    "SetRule",
     "apply_acl_coupling",
     "apply_thick_follow",
     "check_acl_combination",
@@ -359,14 +352,14 @@ def check_reservation_headroom(context: ServiceContext, state: SetContext, verro
 
 
 def check_acl_combination(context: ServiceContext, state: SetContext, verrors: ValidationErrors) -> None:
-    if state.type != "FILESYSTEM":
+    if state.type != "FILESYSTEM" or not state.touched() & {"acltype", "aclmode"}:
         return
     attribute = state.attribute("aclmode" if "aclmode" in state.touched() - state.derived else "acltype")
     reject_bad_acl_combination(verrors, attribute, state.effective("acltype"), state.effective("aclmode"))
 
 
 def check_tier_managed_ssb(context: ServiceContext, state: SetContext, verrors: ValidationErrors) -> None:
-    if not state.tier_enabled:
+    if "special_small_blocks" not in state.touched() or not state.tier_enabled:
         return
     if "special_small_blocks" in state.set_names():
         if state.effective("special_small_blocks") == state.current["special_small_blocks"]:
@@ -448,50 +441,17 @@ def check_special_small_blocks_range(context: ServiceContext, state: SetContext,
     reject_ssb_out_of_range(verrors, state.attribute("special_small_blocks"), state.effective("special_small_blocks"))
 
 
-class SetRule(typing.NamedTuple):
-    check: Callable[[ServiceContext, SetContext, ValidationErrors], None]
-    triggers: frozenset[str]
-
-
-SET_RULES: tuple[SetRule, ...] = (
-    SetRule(check_names_valid_for_type, MODEL_NATIVES),
-    SetRule(check_inherit_not_received, MODEL_NATIVES),
-    SetRule(check_volsize_writable, frozenset({"volsize"})),
-    SetRule(check_volsize_not_shrunk, frozenset({"volsize"})),
-    SetRule(check_volsize_multiple_of_volblocksize, frozenset({"volsize"})),
-    SetRule(check_reservation_headroom, frozenset({"volsize", "refreservation", "refquota"})),
-    SetRule(check_acl_combination, frozenset({"acltype", "aclmode"})),
-    SetRule(check_tier_managed_ssb, frozenset({"special_small_blocks"})),
-    SetRule(check_dedup_entitlement, frozenset({"dedup"})),
-    SetRule(check_dedup_tiering, frozenset({"dedup", "special_small_blocks"})),
-    SetRule(check_dedup_descendants, frozenset({"dedup"})),
-    SetRule(check_recordsize, frozenset({"recordsize"})),
-    SetRule(check_special_small_blocks_range, frozenset({"special_small_blocks"})),
-)
-
-
-def validate_set(
-    context: ServiceContext, state: SetContext, verrors: ValidationErrors, logger: logging.Logger
-) -> list[tuple[str, Exception]]:
-    """Run every rule the request triggers, adding what they find to `verrors`. Never raises.
-
-    A rule that fails with anything but a validation error is logged and returned as `(rule name, exception)` so
-    the caller can refuse the request once every other rule has had its say.
-    """
-    failures: list[tuple[str, Exception]] = []
-    touched = state.touched()
-    for rule in SET_RULES:
-        if not rule.triggers & touched:
-            continue
-        name = rule.check.__name__
-        try:
-            rule.check(context, state, verrors)
-        except ValidationError as e:
-            verrors.add_validation_error(e)
-        except ValidationErrors as e:
-            for error in e.errors:
-                verrors.add_validation_error(error)
-        except Exception as e:
-            logger.error("%s: rule %s failed", state.path, name, exc_info=True)
-            failures.append((name, e))
-    return failures
+def validate_set(context: ServiceContext, state: SetContext, verrors: ValidationErrors) -> None:
+    check_names_valid_for_type(context, state, verrors)
+    check_inherit_not_received(context, state, verrors)
+    check_volsize_writable(context, state, verrors)
+    check_volsize_not_shrunk(context, state, verrors)
+    check_volsize_multiple_of_volblocksize(context, state, verrors)
+    check_reservation_headroom(context, state, verrors)
+    check_acl_combination(context, state, verrors)
+    check_tier_managed_ssb(context, state, verrors)
+    check_dedup_entitlement(context, state, verrors)
+    check_dedup_tiering(context, state, verrors)
+    check_dedup_descendants(context, state, verrors)
+    check_recordsize(context, state, verrors)
+    check_special_small_blocks_range(context, state, verrors)

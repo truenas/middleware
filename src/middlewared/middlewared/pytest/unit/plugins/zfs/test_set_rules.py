@@ -1,4 +1,3 @@
-import logging
 from types import SimpleNamespace
 
 import pytest
@@ -219,8 +218,8 @@ def state(
 
 def run(st, context=None):
     verrors = ValidationErrors()
-    failures = validate_set(context or RecordingContext(), st, verrors, logging.getLogger("test_set_rules"))
-    return verrors, failures
+    validate_set(context or RecordingContext(), st, verrors)
+    return verrors
 
 
 def test_set_read_properties_avoid_names_with_their_own_read_cost():
@@ -244,12 +243,12 @@ def test_set_read_properties_avoid_names_with_their_own_read_cost():
 @pytest.mark.parametrize("source", ["INHERITED", "DEFAULT"])
 def test_tier_rule_tolerates_inheriting_a_value_that_is_not_local(source):
     st = state(inherit=["special_small_blocks"], source=source, parent={}, tier_enabled=True)
-    assert run(st)[0].errors == []
+    assert run(st).errors == []
 
 
 def test_setting_dedup_to_its_current_value_needs_no_entitlement():
     st = state(properties={"dedup": "on"}, current={"dedup": "on"}, entitlement=DENIED)
-    assert run(st)[0].errors == []
+    assert run(st).errors == []
 
 
 def test_acl_coupling_leaves_a_companion_the_caller_inherits():
@@ -280,9 +279,7 @@ def test_thick_follow_leaves_the_reservation_alone(properties, refreservation, s
 
 
 def headroom_errors(st):
-    verrors, failures = run(st)
-    assert failures == []
-    return [(e.attribute, e.errmsg) for e in verrors.errors]
+    return [(e.attribute, e.errmsg) for e in run(st).errors]
 
 
 @pytest.mark.parametrize("usedbyrefreservation, rejected", [(100 * GiB, True), (0, False)])
@@ -316,12 +313,21 @@ def test_dedup_descendants_names_only_the_descendants_that_would_inherit_it():
             descendant(f"{PATH}/vol", 131072, "DEFAULT", type_="VOLUME"),
         ]
     )
-    verrors, failures = run(state(properties={"dedup": "on"}, tier_enabled=True), context)
-    assert failures == []
+    verrors = run(state(properties={"dedup": "on"}, tier_enabled=True), context)
     [error] = verrors.errors
     assert "descendant dataset 'tank/a/from_ancestor' is assigned" in error.errmsg
 
 
 def test_special_small_blocks_range_includes_the_largest_block_size():
-    verrors, failures = run(state(properties={"special_small_blocks": 16 * MiB}))
-    assert (verrors.errors, failures) == ([], [])
+    assert run(state(properties={"special_small_blocks": 16 * MiB})).errors == []
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        dict(properties={"compression": "gzip"}, current={"acltype": "posix", "aclmode": "passthrough"}),
+        dict(properties={"compression": "gzip"}, tier_enabled=True, current={"special_small_blocks": 131072}),
+    ],
+)
+def test_rules_gated_on_their_trigger_ignore_untouched_state(kwargs):
+    assert run(state(**kwargs)).errors == []

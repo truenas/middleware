@@ -23,7 +23,7 @@ def test_compression_uppercase_value_round_trips():
         assert read(path, ["compression"])["compression"]["raw"] == "lz4"
 
 
-def test_shim_error_and_zfs_side_error_arrive_together():
+def test_shim_errors_are_reported_before_zfs_side_errors():
     with dataset("shim_mixed_errors") as path:
         with pytest.raises(ValidationErrors) as exc_info:
             call(
@@ -35,10 +35,7 @@ def test_shim_error_and_zfs_side_error_arrive_together():
                     "recordsize": "3000",
                 },
             )
-        assert attributes(exc_info) == [
-            "pool_dataset_update.user_properties_update",
-            "pool_dataset_update.recordsize",
-        ]
+        assert attributes(exc_info) == ["pool_dataset_update.user_properties_update"]
         assert read(path, ["recordsize"])["recordsize"]["source"]["type"] != "LOCAL"
 
 

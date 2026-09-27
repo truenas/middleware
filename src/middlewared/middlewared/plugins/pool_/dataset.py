@@ -421,6 +421,7 @@ class PoolDatasetService(CRUDService):
         data['name'] = dataset[0]['name']
         audit_callback(data['name'])
         await self.__update_validation(verrors, 'pool_dataset_update', data, dataset[0])
+        verrors.check()
 
         properties, user_properties, inherit = translate_update(data)
         if properties or user_properties or inherit:
@@ -428,10 +429,7 @@ class PoolDatasetService(CRUDService):
                 args = ZFSResourceSetArgsData(
                     path=data['name'], properties=properties, user_properties=user_properties, inherit=inherit,
                 )
-                if verrors:
-                    await self.call2(self.s.zfs.resource.set, args.model_copy(update={'dry_run': True}))
-                else:
-                    await self.call2(self.s.zfs.resource.set, args)
+                await self.call2(self.s.zfs.resource.set, args)
             except PydanticValidationError as e:
                 rekey_update_errors(
                     verrors, sent, [('.'.join(map(str, err['loc'])), err['msg'], errno.EINVAL) for err in e.errors()]
@@ -478,7 +476,7 @@ class PoolDatasetService(CRUDService):
         audit_callback(dataset['name'])
 
         if mountpoint := dataset_mountpoint(dataset):
-            for delegate in await self.middleware.call('pool.dataset.get_attachment_delegates_for_stop'):
+            for delegate in await self.call2(self.s.zfs.resource.attachment_delegates_for_stop):
                 attachments = await delegate.query(mountpoint, True)
                 if attachments:
                     await delegate.delete(attachments)

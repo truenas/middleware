@@ -58,7 +58,6 @@ from middlewared.plugins.smb_.util_param import (
 )
 from middlewared.plugins.smb_.util_smbconf import generate_smb_conf_dict
 from middlewared.plugins.smb_.utils import get_share_name, is_time_machine_share, smb_strip_comments
-from middlewared.plugins.smb_.zfs_delegate import SMBShareDelegate
 from middlewared.service import ConfigService, SharingService, ValidationError, ValidationErrors, job, private
 from middlewared.service_exception import CallError, MatchNotFound
 import middlewared.sqlalchemy as sa
@@ -1855,6 +1854,18 @@ class SMBFSAttachmentDelegate(LockableFSAttachmentDelegate):
     title = 'SMB Share'
     service = 'cifs'
     service_class = SharingSMBService
+    set_triggers = frozenset({'acltype'})
+
+    async def validate_set(self, state, verrors):
+        if state.type != 'FILESYSTEM' or not state.changed('acltype'):
+            return
+        attachments = await self.call2(self.s.zfs.resource.attachments, state.path)
+        if names := [name for a in attachments if a.type == self.title for name in a.attachments]:
+            verrors.add(
+                state.attribute('acltype'),
+                "This dataset is hosting SMB shares. Before acltype can be updated the following shares must be "
+                f"disabled: {', '.join(names)}. The shares may be re-enabled after the change.",
+            )
 
     async def delete(self, attachments):
         for attachment in attachments:
@@ -1939,10 +1950,11 @@ async def setup(middleware):
     )
     # We need to ensure that required state directories exist in order to startup winbindd
     await middleware.run_in_thread(create_samba_directories, middleware)
-    await middleware.call('pool.dataset.register_attachment_delegate', SMBFSAttachmentDelegate(middleware))
+    await middleware.call2(
+        middleware.services.zfs.resource.register_attachment_delegate, SMBFSAttachmentDelegate(middleware)
+    )
     middleware.register_hook('pool.post_import', pool_post_import, sync=True)
     await middleware.call2(
         middleware.services.truenas.license.register_reconcile_delegate,
         SMBLicenseReconcileDelegate(),
     )
-    await middleware.call2(middleware.services.zfs.resource.register_delegate, SMBShareDelegate(middleware))

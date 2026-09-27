@@ -16,7 +16,6 @@ from middlewared.api.current import (
 )
 from middlewared.common.attachment import FSAttachmentDelegate, UnlockedDataset
 from middlewared.common.ports import PortDelegate, PortDetail
-from middlewared.plugins.zfs.delegates import ZFSResourceDelegate
 from middlewared.plugins.zfs.zvol_utils import zvol_path_to_name
 from middlewared.utils.libvirt.utils import ACTIVE_STATES
 
@@ -29,6 +28,7 @@ if TYPE_CHECKING:
 class VMFSAttachmentDelegate(FSAttachmentDelegate[dict[str, Any]]):
     name = 'vm'
     title = 'VM'
+    set_triggers = frozenset({'snapdev'})
 
     async def query(self, path: str, enabled: bool, options: dict[str, Any] | None = None) -> list[dict[str, Any]]:
         vms_attached: list[dict[str, Any]] = []
@@ -185,6 +185,23 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate[dict[str, Any]]):
         disks = self.disk_paths(vm)
         return bool(disks) and await self.middleware.call('filesystem.is_child', disks, list(paths))
 
+    async def validate_set(self, state: SetContext, verrors: ValidationErrors) -> None:
+        if not state.snapshot_devices or not state.changed('snapdev') or state.effective('snapdev') != 'hidden':
+            return
+
+        disks = await self.call2(self.s.vm.device.query, [['attributes.dtype', '=', 'DISK']])
+        if any(
+            isinstance(disk.attributes, VMDiskDevice)
+            and disk.attributes.path is not None
+            and zvol_path_to_name(disk.attributes.path) in state.snapshot_devices
+            for disk in disks
+        ):
+            verrors.add(
+                state.attribute('snapdev'),
+                f'{state.path!r} has snapshots which have attachments being used. Before marking it '
+                'as HIDDEN, remove attachment usages.',
+            )
+
 
 class VMPortDelegate(PortDelegate):
 
@@ -214,35 +231,10 @@ class VMPortDelegate(PortDelegate):
         return ports
 
 
-class VMDeviceDelegate(ZFSResourceDelegate):
-    name = 'vm.device'
-    types = frozenset({'VOLUME'})
-    triggers = frozenset({'snapdev'})
-
-    async def validate_set(self, state: SetContext, verrors: ValidationErrors) -> None:
-        """Refuse to hide snapshot devices that back a VM disk."""
-        if not state.snapshot_devices or not state.changed('snapdev') or state.effective('snapdev') != 'hidden':
-            return
-
-        disks = await self.middleware.call2(
-            self.middleware.services.vm.device.query, [['attributes.dtype', '=', 'DISK']]
-        )
-        if any(
-            isinstance(disk.attributes, VMDiskDevice)
-            and disk.attributes.path is not None
-            and zvol_path_to_name(disk.attributes.path) in state.snapshot_devices
-            for disk in disks
-        ):
-            verrors.add(
-                state.attribute('snapdev'),
-                f'{state.path!r} has snapshots which have attachments being used. Before marking it '
-                'as HIDDEN, remove attachment usages.',
-            )
-
-
 async def setup(middleware: Middleware) -> None:
     middleware.create_task(
-        middleware.call('pool.dataset.register_attachment_delegate', VMFSAttachmentDelegate(middleware))
+        middleware.call2(
+            middleware.services.zfs.resource.register_attachment_delegate, VMFSAttachmentDelegate(middleware)
+        )
     )
     await middleware.call('port.register_attachment_delegate', VMPortDelegate(middleware))
-    await middleware.call2(middleware.services.zfs.resource.register_delegate, VMDeviceDelegate(middleware))

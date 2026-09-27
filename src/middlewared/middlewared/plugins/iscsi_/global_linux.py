@@ -34,7 +34,9 @@ class ISCSIGlobalService(Service):
             )
             ro = True if read_only_value.lower() == 'on' else False
             if extent['ro'] != ro:
-                self.middleware.call_sync('iscsi.extent.update_internal', extent['id'], {'ro': ro}, False)
+                self.middleware.call_sync(
+                    'iscsi.extent.update', extent['id'], {'ro': ro}
+                )
         except MatchNotFound:
             return
 

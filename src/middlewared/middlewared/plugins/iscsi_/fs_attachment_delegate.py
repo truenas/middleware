@@ -1,4 +1,5 @@
 from middlewared.common.attachment import LockableFSAttachmentDelegate
+from middlewared.plugins.zfs.zvol_utils import zvol_name_to_path
 from middlewared.service_exception import MatchNotFound
 
 from .extents import iSCSITargetExtentService
@@ -9,6 +10,7 @@ class ISCSIFSAttachmentDelegate(LockableFSAttachmentDelegate):
     title = 'iSCSI Extent'
     service = 'iscsitarget'
     service_class = iSCSITargetExtentService
+    set_triggers = frozenset({'volsize', 'readonly', 'snapdev'})
 
     async def get_query_filters(self, enabled, options=None):
         return [['type', '=', 'DISK']] + (await super().get_query_filters(enabled, options))
@@ -148,6 +150,30 @@ class ISCSIFSAttachmentDelegate(LockableFSAttachmentDelegate):
             else:
                 await super().start(attachments)
 
+    async def validate_set(self, state, verrors):
+        if not state.snapshot_devices or not state.changed('snapdev') or state.effective('snapdev') != 'hidden':
+            return
+
+        paths = [zvol_name_to_path(name).removeprefix('/dev/') for name in sorted(state.snapshot_devices)]
+        if await self.middleware.call('iscsi.extent.query', [['path', 'in', paths]], {'select': ['path']}):
+            verrors.add(
+                state.attribute('snapdev'),
+                f'{state.path!r} has snapshots which have attachments being used. Before marking it '
+                'as HIDDEN, remove attachment usages.',
+            )
+
+    async def after_set(self, state):
+        if state.type != 'VOLUME':
+            return
+        if state.changed('volsize'):
+            await self.middleware.call('iscsi.global.resync_lun_size_for_zvol', state.path)
+        if 'readonly' in state.touched():
+            await self.middleware.call(
+                'iscsi.global.resync_readonly_property_for_zvol', state.path, state.effective('readonly')
+            )
+
 
 async def setup(middleware):
-    await middleware.call('pool.dataset.register_attachment_delegate', ISCSIFSAttachmentDelegate(middleware))
+    await middleware.call2(
+        middleware.services.zfs.resource.register_attachment_delegate, ISCSIFSAttachmentDelegate(middleware)
+    )

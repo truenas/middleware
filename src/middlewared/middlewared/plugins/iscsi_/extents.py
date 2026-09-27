@@ -29,7 +29,6 @@ from middlewared.utils.mount import resolve_dataset_path
 from middlewared.utils.size import format_size
 
 from .utils import sanitize_extent
-from .zfs_delegate import ISCSIExtentDelegate
 
 EXTENT_DEFAULT_VENDOR = 'TrueNAS'
 EXTENT_DEFAULT_PRODUCT_ID = 'iSCSI Disk'
@@ -149,13 +148,9 @@ class iSCSITargetExtentService(SharingService):
         """
         Update iSCSI Extent of ``id``.
         """
-        audit_callback((await self.get_instance(id_))['name'])
-        return await self.update_internal(id_, data, sync_zfs=True)
-
-    @private
-    async def update_internal(self, id_, data, sync_zfs: bool):
         verrors = ValidationErrors()
         old = await self.get_instance(id_)
+        audit_callback(old['name'])
 
         new = old.copy()
         new.update(data)
@@ -169,7 +164,7 @@ class iSCSITargetExtentService(SharingService):
         new.pop(self.locked_field)
 
         zvolpath = new.get('path')
-        if sync_zfs and zvolpath is not None and zvolpath.startswith('zvol/'):
+        if zvolpath is not None and zvolpath.startswith('zvol/'):
             zvolname = zvol_path_to_name(os.path.join('/dev', zvolpath))
             if '@' not in zvolname:  # Snapshots don't support readonly property
                 await self.call2(
@@ -760,4 +755,3 @@ async def pool_post_import(middleware, pool):
 
 async def setup(middleware):
     middleware.register_hook('pool.post_import', pool_post_import, sync=True)
-    await middleware.call2(middleware.services.zfs.resource.register_delegate, ISCSIExtentDelegate(middleware))

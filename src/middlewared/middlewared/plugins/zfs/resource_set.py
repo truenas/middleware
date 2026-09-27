@@ -11,9 +11,9 @@ from middlewared.service_exception import CallError, ValidationError, Validation
 
 from . import zvol_utils
 from .create_impl import ZFS_INVALID_INPUT_ERRORS
-from .delegates import participating, run_after, run_validate
 from .normalization import normalize_asdict_result
 from .property_management import DeterminedProperties, build_set_of_zfs_props
+from .resource_attachments import DELEGATES
 from .set_rules import (
     NON_INHERITABLE_PROPERTIES,
     SET_READ_PROPERTIES,
@@ -32,8 +32,6 @@ if TYPE_CHECKING:
 
     from middlewared.api.current import ZFSResourceSetArgsData
     from middlewared.service import ServiceContext
-
-    from .delegates import ZFSResourceDelegate
 
 SCHEMA = "zfs.resource.set"
 
@@ -55,37 +53,14 @@ def _read(ds: Any, natives: list[str], user: bool) -> dict[str, Any]:
     return row
 
 
-def _values_on_disk(ds: Any, natives: list[str], user_names: list[str]) -> str:
-    if ds is None:
-        return ""
-    try:
-        ds.refresh_properties()
-        row = _read(ds, natives, bool(user_names))
-    except truenas_pylibzfs.ZFSException:
-        return ""
-    props = row["properties"] or {}
-    user_props = row["user_properties"] or {}
-    values = [f"{name}={props.get(name, {}).get('value')}" for name in natives]
-    values.extend(f"{name}={user_props.get(name)}" for name in user_names)
-    return f" Values now on disk: {', '.join(values)}."
-
-
 def _phase_error(
-    ds: Any,
-    path: str,
-    e: Any,
-    attribute: str,
-    invalid_message: str,
-    other_message: str,
-    natives: list[str],
-    user_names: list[str],
+    path: str, e: Any, attribute: str, invalid_message: str, other_message: str
 ) -> CallError | ValidationError:
     if e.code == truenas_pylibzfs.ZFSError.EZFS_NOENT:
         return CallError(f"{path!r} was removed while its properties were being set.", errno.ENOENT)
-    values = _values_on_disk(ds, natives, user_names)
     if e.code in ZFS_INVALID_INPUT_ERRORS:
-        return ValidationError(attribute, invalid_message + values, errno.EINVAL)
-    return CallError(other_message + values, _ZFS_ERRNO.get(e.code, errno.EFAULT))
+        return ValidationError(attribute, invalid_message, errno.EINVAL)
+    return CallError(other_message, _ZFS_ERRNO.get(e.code, errno.EFAULT))
 
 
 def touched_names(
@@ -136,37 +111,26 @@ def set_impl(
     try:
         ds = tls.lzh.open_resource(name=path)
     except truenas_pylibzfs.ZFSException as e:
-        raise _phase_error(
-            None, path, e, native_attribute, e.err_str, f"Failed to set properties on {path!r}: {e}", [], []
-        ) from e
+        raise _phase_error(path, e, native_attribute, e.err_str, f"Failed to set properties on {path!r}: {e}") from e
     try:
         if properties:
             try:
                 ds.set_properties(properties=properties)
             except truenas_pylibzfs.ZFSException as e:
                 raise _phase_error(
-                    ds,
-                    path,
-                    e,
-                    native_attribute,
-                    e.err_str,
-                    f"Failed to set properties on {path!r}: {e}",
-                    natives,
-                    user_names,
+                    path, e, native_attribute, e.err_str, f"Failed to set properties on {path!r}: {e}"
                 ) from e
         if user_properties:
             try:
                 ds.set_user_properties(user_properties=user_properties)
             except truenas_pylibzfs.ZFSException as e:
-                raise _phase_error(ds, path, e, f"{SCHEMA}.user_properties", f"{e}", f"{e}", natives, user_names) from e
+                raise _phase_error(path, e, f"{SCHEMA}.user_properties", f"{e}", f"{e}") from e
         for name in inherit:
             try:
                 ds.inherit_property(property=name)
             except truenas_pylibzfs.ZFSException as e:
                 message = f"Failed to inherit {name!r} on {path!r}: {e}"
-                raise _phase_error(
-                    ds, path, e, f"{SCHEMA}.inherit.{name}", message, message, natives, user_names
-                ) from e
+                raise _phase_error(path, e, f"{SCHEMA}.inherit.{name}", message, message) from e
     except ValueError as e:
         raise CallError(
             f"ZFS rejected a property name or value for {path!r} that middleware accepted: {e}", errno.EINVAL
@@ -191,9 +155,7 @@ def snapshot_devices(path: str) -> frozenset[str]:
     return frozenset(name for name in zvol_utils.unlocked_zvols_fast_impl() if name.startswith(f"{path}@"))
 
 
-def set(
-    context: ServiceContext, data: ZFSResourceSetArgsData, delegates: Iterable[ZFSResourceDelegate] = ()
-) -> ZFSResourceEntry:
+def set(context: ServiceContext, data: ZFSResourceSetArgsData) -> ZFSResourceEntry:
     path = data.path
     reject_protected_path(SCHEMA, path)
     verrors = ValidationErrors()
@@ -201,7 +163,7 @@ def set(
     verrors.check()
 
     touched = touched_natives(data.properties, data.inherit)
-    active = participating(delegates, touched)
+    active = [delegate for delegate in DELEGATES if delegate.set_triggers & touched]
     pool_root = "/" not in path
     parent_path = path.rsplit("/", 1)[0]
     fetch_parent = any(":" not in name for name in data.inherit) and not pool_root
@@ -230,7 +192,6 @@ def set(
         if (parent_row := rows.get(parent_path)) is None:
             raise CallError(f"The parent of {path!r} was removed while its properties were being set.", errno.ENOENT)
         parent = _values(parent_path, parent_row)
-    active = [delegate for delegate in active if target["type"] in delegate.types]
 
     state = SetContext(
         path=path,
@@ -249,20 +210,10 @@ def set(
         ),
     )
     state = apply_thick_follow(apply_acl_coupling(state))
-    failures = validate_set(context, state, verrors, context.logger)
-    if active:
-        failures.extend(context.middleware.run_coroutine(run_validate(active, state, verrors, context.logger)))
+    validate_set(context, state, verrors)
+    for delegate in active:
+        context.run_coroutine(delegate.validate_set(state, verrors))
     verrors.check()
-    if failures:
-        name, error = failures[0]
-        raise CallError(f"{name}: validation failed: {error}")
-
-    if data.dry_run:
-        current = target["properties"] or {}
-        projected = {name: current[name] for name in sorted(state.touched()) if name in current}
-        return ZFSResourceEntry(
-            **{**target, "properties": projected or None, "user_properties": None, "children": None}
-        )
 
     entry = ZFSResourceEntry(
         **context.call_sync2(
@@ -273,6 +224,6 @@ def set(
             inherit=sorted(state.inherit),
         )
     )
-    if active:
-        context.middleware.run_coroutine(run_after(active, state, entry, context.logger))
+    for delegate in active:
+        context.run_coroutine(delegate.after_set(state))
     return entry

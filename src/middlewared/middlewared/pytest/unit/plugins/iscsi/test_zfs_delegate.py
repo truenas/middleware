@@ -3,7 +3,7 @@ import errno
 import pytest
 
 from middlewared.api.current import ZFSResourceSetProperties
-from middlewared.plugins.iscsi_.zfs_delegate import ISCSIExtentDelegate
+from middlewared.plugins.iscsi_.fs_attachment_delegate import ISCSIFSAttachmentDelegate
 from middlewared.plugins.zfs.set_rules import PropertyView, SetContext
 from middlewared.pytest.unit.middleware import Middleware
 from middlewared.service_exception import ValidationErrors
@@ -39,7 +39,7 @@ def extents_on(*paths):
 
 async def validate(m, state):
     verrors = ValidationErrors()
-    await ISCSIExtentDelegate(m).validate_set(state, verrors)
+    await ISCSIFSAttachmentDelegate(m).validate_set(state, verrors)
     return list(verrors)
 
 
