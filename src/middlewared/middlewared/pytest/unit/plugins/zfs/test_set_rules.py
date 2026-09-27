@@ -61,7 +61,7 @@ SETTABLE = frozenset(
 PRIVATE_NATIVES = frozenset(
     {"canmount", "mountpoint", "overlay", "prefetch", "primarycache", "secondarycache", "setuid"}
 )
-READ = SETTABLE | {"available", "volblocksize", "usedbyrefreservation"}
+READ = SETTABLE | {"available", "keystatus", "volblocksize", "usedbyrefreservation"}
 FILESYSTEM_NAMES = READ - {"volsize", "volblocksize"}
 VOLUME_NAMES = frozenset(
     {
@@ -70,6 +70,7 @@ VOLUME_NAMES = frozenset(
         "compression",
         "copies",
         "dedup",
+        "keystatus",
         "readonly",
         "refreservation",
         "reservation",
@@ -92,6 +93,7 @@ BENIGN = {
     "copies": 1,
     "dedup": "off",
     "exec": "on",
+    "keystatus": None,
     "quota": 0,
     "readonly": "off",
     "recordsize": 131072,
@@ -300,6 +302,7 @@ def test_index_properties_are_settable():
 RULE_TRIGGERS = {
     "check_names_valid_for_type": SETTABLE | PRIVATE_NATIVES,
     "check_inherit_not_received": SETTABLE | PRIVATE_NATIVES,
+    "check_volsize_writable": {"volsize"},
     "check_volsize_not_shrunk": {"volsize"},
     "check_volsize_multiple_of_volblocksize": {"volsize"},
     "check_reservation_headroom": {"volsize", "refreservation", "refquota"},
@@ -482,6 +485,12 @@ SEMANTIC_CASES = {
         {},
         "zfs.resource.set.inherit.compression",
         "has a received value on",
+    ),
+    "check_volsize_writable": (
+        dict(type_="VOLUME", properties={"volsize": 2 * GiB}, current={"readonly": "on"}),
+        {},
+        "zfs.resource.set.properties.volsize",
+        "while it is read-only",
     ),
     "check_volsize_not_shrunk": (
         dict(type_="VOLUME", properties={"volsize": 512 * MiB}, current={"volsize": GiB}),
@@ -974,6 +983,13 @@ CELL_FIXTURES = {
         "source": "RECEIVED",
         "substring": "has a received value",
     },
+    "check_volsize_writable": {
+        "current": {"readonly": "on"},
+        "request": {"volsize": 2 * GiB},
+        "parent": {},
+        "pool_current": {"readonly": "on"},
+        "substring": "while it is read-only",
+    },
     "check_volsize_not_shrunk": {
         "current": {"volsize": GiB},
         "request": {"volsize": 512},
@@ -1051,6 +1067,7 @@ CELL_FIXTURES = {
     },
 }
 VIOLATION_CONSTRUCTIBLE = {
+    ("check_volsize_writable", "VOLUME", "set"),
     ("check_volsize_not_shrunk", "VOLUME", "set"),
     ("check_volsize_multiple_of_volblocksize", "VOLUME", "set"),
     *(("check_acl_combination", "FILESYSTEM", variant) for variant in VARIANTS),
@@ -1106,3 +1123,47 @@ def test_rule_reads_only_what_its_type_gate_guarantees(monkeypatch, caplog, name
         assert any(fixture["substring"] in e.errmsg for e in verrors.errors)
     else:
         assert verrors.errors == []
+
+
+def test_volsize_on_a_locked_volume_is_rejected():
+    st = state(type_="VOLUME", properties={"volsize": 2 * GiB}, current={"keystatus": "unavailable"})
+    verrors, failures = run(st)
+    assert failures == []
+    assert [(e.attribute, e.errmsg) for e in verrors.errors] == [
+        (
+            "zfs.resource.set.properties.volsize",
+            "'volsize' cannot be set on 'tank/a' while it is locked. Unlock it first.",
+        )
+    ]
+
+
+@pytest.mark.parametrize("keystatus", [None, "available"])
+def test_volsize_on_an_unlocked_volume_is_accepted(keystatus):
+    st = state(type_="VOLUME", properties={"volsize": 2 * GiB}, current={"keystatus": keystatus})
+    verrors, failures = run(st)
+    assert (verrors.errors, failures) == ([], [])
+
+
+def test_volsize_is_rejected_on_a_read_only_volume_even_when_the_request_turns_readonly_off():
+    st = state(type_="VOLUME", properties={"volsize": 2 * GiB, "readonly": "OFF"}, current={"readonly": "on"})
+    verrors, _ = run(st)
+    assert [e.attribute for e in verrors.errors] == ["zfs.resource.set.properties.volsize"]
+
+
+def test_volsize_is_rejected_on_a_read_only_volume_when_unchanged():
+    st = state(type_="VOLUME", properties={"volsize": GiB}, current={"readonly": "on"})
+    verrors, _ = run(st)
+    assert [e.attribute for e in verrors.errors] == ["zfs.resource.set.properties.volsize"]
+
+
+def test_read_only_volume_may_turn_readonly_off_without_volsize():
+    st = state(type_="VOLUME", properties={"readonly": "OFF"}, current={"readonly": "on"})
+    verrors, failures = run(st)
+    assert (verrors.errors, failures) == ([], [])
+
+
+def test_followed_grow_of_a_read_only_volume_is_rejected_before_writing():
+    st = apply_thick_follow(volume({"volsize": 2 * GiB}, GiB, readonly="on"))
+    assert st.properties.refreservation == "auto"
+    verrors, _ = run(st)
+    assert "zfs.resource.set.properties.volsize" in [e.attribute for e in verrors.errors]

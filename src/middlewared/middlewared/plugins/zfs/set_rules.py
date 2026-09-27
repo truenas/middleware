@@ -69,6 +69,7 @@ __all__ = (
     "check_user_properties",
     "check_volsize_multiple_of_volblocksize",
     "check_volsize_not_shrunk",
+    "check_volsize_writable",
     "touched_natives",
     "validate_request",
     "validate_set",
@@ -102,7 +103,7 @@ INDEX_PROPERTIES = frozenset(
         "xattr",
     }
 )
-SET_READ_PROPERTIES = SETTABLE_PROPERTIES | {"available", "volblocksize", "usedbyrefreservation"}
+SET_READ_PROPERTIES = SETTABLE_PROPERTIES | {"available", "keystatus", "volblocksize", "usedbyrefreservation"}
 POOL_ROOT_INHERIT_VALUES: Mapping[str, typing.Any] = {  # registered ZFS defaults; pylibzfs has no accessor for them
     "acltype": "nfsv4",
     "aclmode": "discard",
@@ -284,6 +285,25 @@ def check_inherit_not_received(context: ServiceContext, state: SetContext, verro
             )
 
 
+def check_volsize_writable(context: ServiceContext, state: SetContext, verrors: ValidationErrors) -> None:
+    # ZFS refuses the volsize but still applies the rest of the request, a follow-up refreservation included.
+    # It judges readonly as stored before the request, so turning it off in the same request does not help.
+    if state.type != "VOLUME" or "volsize" not in state.set_names():
+        return
+    if state.current["readonly"] == "on":
+        verrors.add(
+            state.attribute("volsize"),
+            f"'volsize' cannot be set on {state.path!r} while it is read-only. Set 'readonly' to off first.",
+            errno.EROFS,
+        )
+    elif state.current.get("keystatus") == "unavailable":
+        verrors.add(
+            state.attribute("volsize"),
+            f"'volsize' cannot be set on {state.path!r} while it is locked. Unlock it first.",
+            errno.EACCES,
+        )
+
+
 def check_volsize_not_shrunk(context: ServiceContext, state: SetContext, verrors: ValidationErrors) -> None:
     if state.type != "VOLUME" or "volsize" not in state.set_names():
         return
@@ -458,6 +478,7 @@ class SetRule(typing.NamedTuple):
 SET_RULES: tuple[SetRule, ...] = (
     SetRule(check_names_valid_for_type, MODEL_NATIVES),
     SetRule(check_inherit_not_received, MODEL_NATIVES),
+    SetRule(check_volsize_writable, frozenset({"volsize"})),
     SetRule(check_volsize_not_shrunk, frozenset({"volsize"})),
     SetRule(check_volsize_multiple_of_volblocksize, frozenset({"volsize"})),
     SetRule(check_reservation_headroom, frozenset({"volsize", "refreservation", "refquota"})),

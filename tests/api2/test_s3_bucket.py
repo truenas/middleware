@@ -552,7 +552,7 @@ def test_concurrent_creates_of_one_name_leave_one_bucket(owner):
                 assert any("name" in (err.attribute or "") for err in e.errors), e.errors
             assert [b["id"] for b in call("sharing.s3.query", [["name", "=", "contested"]])] == [created[0]["id"]]
             # no loser left a dataset behind
-            children = call("zfs.resource.query", {"paths": [root], "max_depth": 1, "properties": None})
+            children = call("zfs.resource.list", {"paths": [root], "max_depth": 1, "properties": None})
             assert [r["name"] for r in children] == [root, created[0]["dataset"]]
         finally:
             # by query: a racer whose answer was lost still registered one
