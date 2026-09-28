@@ -280,6 +280,10 @@ def test_delete_keeps_the_backup_with_the_objects(owner):
         call("sharing.s3.delete", entry["id"])
         assert backup_of(DATASET)["name"] == "kept", "the backup is what recovers the bucket"
     finally:
+        # a failure above leaves the row, and destroying the dataset does
+        # not take it along; every later test creates on this dataset
+        with contextlib.suppress(Exception):
+            call("sharing.s3.delete", entry["id"])
         call("zfs.resource.destroy", {"path": DATASET, "recursive": True})
 
 

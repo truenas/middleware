@@ -190,12 +190,16 @@ def is_ipv4_shaped(name: str) -> bool:
 
 MOUNTED_FILESYSTEM = (
     ("type", "=", "FILESYSTEM"),
-    ("properties.mounted.value", "=", "yes"),
-    ("properties.mountpoint.value", "^", "/"),
+    ("properties.mounted.raw", "=", "yes"),
+    ("properties.mountpoint.raw", "^", "/"),
 )
 """A dataset a bucket can be on: never a zvol, and mounted somewhere a
 path reaches. `zfs.resource.query` takes no filter of its own and yields
-volumes as well as filesystems, so this is applied to what it returns."""
+volumes as well as filesystems, so this is applied to what it returns.
+
+Properties are read raw here and wherever a recovery looks at one: the
+parsed `value` is a bool for `mounted` and None for a literal `none`,
+while raw is the string ZFS prints, which is what a create sends."""
 
 RECOVER_PROPERTIES = (
     "mountpoint",
@@ -241,15 +245,15 @@ def write_config_backups(work: list[tuple[str, dict[str, Any]]]) -> list[tuple[s
 def recovery_blockers(properties: dict[str, Any], mounted_children: list[str]) -> list[str]:
     """Why the S3 service could not serve this dataset. Each mirrors a
     check it makes when it registers a bucket."""
-    def value(name: str) -> str | None:
+    def raw(name: str) -> str | None:
         prop = properties.get(name)
-        return prop["value"] if prop else None
+        return prop["raw"] if prop else None
 
     blockers: list[str] = []
-    if value("readonly") == "on":
+    if raw("readonly") == "on":
         blockers.append("The dataset is read-only, which every write path would answer EROFS to.")
     for name, wanted in BUCKET_DATASET_PROPERTIES.items():
-        found = value(name)
+        found = raw(name)
         if found == wanted:
             continue
         if name in CREATE_TIME_PROPERTIES:
@@ -1054,7 +1058,7 @@ class SharingS3Service(SharingService[SharingS3Entry]):
             )
             return None
         properties = itself[0]["properties"]
-        mount = properties["mountpoint"]["value"]
+        mount = properties["mountpoint"]["raw"]
 
         try:
             backup = await self.middleware.run_in_thread(read_config_backup, mount)
@@ -1147,7 +1151,7 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         unlock a latched dataset costs the bucket its service, since the
         S3 service checks object lock against the latch as well.
         """
-        if new.snapshot_versions and (properties.get("snapdir") or {}).get("value") == "disabled":
+        if new.snapshot_versions and (properties.get("snapdir") or {}).get("raw") == "disabled":
             verrors.add(
                 f"{schema}.dataset",
                 "This dataset has snapdir disabled, so the .zfs/snapshot directory the backed-up snapshot "
@@ -1184,7 +1188,7 @@ class SharingS3Service(SharingService[SharingS3Entry]):
             ZFSResourceQuery(paths=[], properties=["mountpoint", "mounted"], get_children=True),
         )
         mounts = {
-            row["name"]: row["properties"]["mountpoint"]["value"]
+            row["name"]: row["properties"]["mountpoint"]["raw"]
             for row in filter_list(rows, [*MOUNTED_FILESYSTEM, ["name", "nin", list(used)]])
         }
         found = await self.middleware.run_in_thread(read_config_backups, mounts)

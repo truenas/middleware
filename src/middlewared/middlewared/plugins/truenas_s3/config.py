@@ -418,14 +418,14 @@ class S3ConfigPart(SystemServicePart[S3Entry]):
         rendered_buckets = []
         # for the config backup below. `mounted` rather than a mount point
         # alone: an unmounted dataset still reports one, and a write there
-        # lands on the parent filesystem
+        # lands on the parent filesystem. Read raw: the parsed value is a bool
         backed_up: dict[str, str] = {}
         for bucket in buckets:
             live = datasets.get(bucket.dataset)
             mountpoint = live["properties"]["mountpoint"]["value"] if live else None
             if not mountpoint or not mountpoint.startswith("/"):
                 mountpoint = f"/mnt/{bucket.dataset}"
-            elif live is not None and live["properties"]["mounted"]["value"] == "yes":
+            elif live is not None and live["properties"]["mounted"]["raw"] == "yes":
                 backed_up[bucket.dataset] = mountpoint
             if bucket.enabled and live is None:
                 await self.call2(
