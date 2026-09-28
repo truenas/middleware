@@ -177,7 +177,7 @@ class FSAttachmentDelegate[E](ServiceChangeMixin):
         pass
 
     async def after_set(self, state: SetContext) -> None:
-        """Raising fails the set and skips later delegates; the write is not undone."""
+        """Raising fails the set once every delegate has run; the write is not undone."""
 
 
 class LockableFSAttachmentDelegate[E: Entry](FSAttachmentDelegate[E]):

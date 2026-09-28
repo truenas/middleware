@@ -225,6 +225,13 @@ def set(context: ServiceContext, data: ZFSResourceSetArgsData) -> ZFSResourceEnt
             inherit=sorted(state.inherit),
         )
     )
+    failures = []
     for delegate in active:
-        context.run_coroutine(delegate.after_set(state))
+        try:
+            context.run_coroutine(delegate.after_set(state))
+        except Exception as e:
+            context.logger.error("%s: %s failed to follow the change", path, delegate.title, exc_info=True)
+            failures.append(f"{delegate.title}: {e}")
+    if failures:
+        raise CallError(f"{path!r} was updated, but dependent services failed to follow it: {'; '.join(failures)}")
     return entry
