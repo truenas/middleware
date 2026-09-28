@@ -40,7 +40,6 @@ from .create_rules import (
     check_volume_has_volsize,
     resolve_create_request,
 )
-from .destroy_impl import destroy_nonrecursive_impl
 from .exceptions import ZFSPathAlreadyExistsException, ZFSPathNotFoundException
 from .mount_unmount_impl import mount_impl
 from .rules_common import (
@@ -249,21 +248,7 @@ def create_impl(context: ServiceContext, tls: Any, data: ZFSResourceCreateArgsDa
         except Exception as e:
             mount_error = e
     if encrypt:
-        try:
-            _record_key(context, path, encrypt)
-        except Exception as e:
-            try:
-                destroy_nonrecursive_impl(tls, path, False)
-            except Exception as d:
-                raise CallError(
-                    f"{path!r} was created but its encryption key could not be stored: {e}. "
-                    f"Removing it also failed: {d}. Destroy it manually.",
-                    errno.EBUSY,
-                ) from e
-            raise CallError(
-                f"Failed to create {path!r}: could not store its encryption key: {e}. It was removed.",
-                errno.EFAULT,
-            ) from e
+        _record_key(context, path, encrypt)
 
     requested = False
     for _, v in data.properties:

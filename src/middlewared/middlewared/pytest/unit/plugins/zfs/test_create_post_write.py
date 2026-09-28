@@ -1,4 +1,3 @@
-import errno
 import logging
 from types import SimpleNamespace
 from unittest.mock import Mock, call
@@ -38,11 +37,9 @@ class Stand:
         self.middleware = middleware
         self.context = ServiceContext(middleware, logging.getLogger("test"))
         self.mount = Mock()
-        self.destroy = Mock()
         monkeypatch.setattr(resource_create, "create_ancestors", self.create_ancestors)
         monkeypatch.setattr(resource_create, "create_leaf", self.create_leaf)
         monkeypatch.setattr(resource_create, "mount_impl", self.mount)
-        monkeypatch.setattr(resource_create, "destroy_nonrecursive_impl", self.destroy)
 
     def zpool_query_impl(self, args):
         self.zpool_reads.append(args)
@@ -79,33 +76,16 @@ def test_create_announces_created_ancestors_then_the_leaf(monkeypatch, path, kwa
     assert all(c.args == ("zfs.resource.list", "ADDED") for c in stand.middleware.send_event.call_args_list)
 
 
-@pytest.mark.parametrize(
-    "mount_fails, record_fails, destroy_fails, expected_errno, destroyed",
-    [
-        (True, False, False, None, False),
-        (False, True, True, errno.EBUSY, True),
-    ],
-)
-def test_create_keeps_or_removes_the_leaf_on_post_write_failure(
-    monkeypatch, mount_fails, record_fails, destroy_fails, expected_errno, destroyed
-):
+def test_create_stores_the_key_and_keeps_the_leaf_when_mount_fails(monkeypatch):
     fs = {"mountpoint": "/mnt/tank", "encryption": "off", "acltype": "nfsv4", "aclmode": "passthrough"}
     stand = Stand([row("tank", readonly="off", **fs)], monkeypatch)
-    failure = RuntimeError("sentinel failure")
-    if mount_fails:
-        stand.mount.side_effect = failure
-    if destroy_fails:
-        stand.destroy.side_effect = failure
-    record = Mock(side_effect=failure if record_fails else None)
+    stand.mount.side_effect = RuntimeError("sentinel failure")
+    record = Mock()
     stand.middleware["pool.dataset.insert_or_update_encrypted_record"] = record
     with pytest.raises(CallError) as exc_info:
         stand.create(request(path="tank/enc", encryption={"generate_key": True}))
     assert "'tank/enc'" in exc_info.value.errmsg
-    if expected_errno is not None:
-        assert exc_info.value.errno == expected_errno
     record.assert_called_once()
-    assert stand.destroy.called is destroyed
-    if mount_fails:
-        assert stand.middleware.send_event.call_args_list == [
-            call("zfs.resource.list", "ADDED", id="tank/enc", fields=stand.rows["tank/enc"])
-        ]
+    assert stand.middleware.send_event.call_args_list == [
+        call("zfs.resource.list", "ADDED", id="tank/enc", fields=stand.rows["tank/enc"])
+    ]

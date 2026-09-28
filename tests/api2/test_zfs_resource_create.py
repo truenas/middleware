@@ -3,7 +3,7 @@ import os
 
 import pytest
 from auto_config import pool_name
-from middlewared.service_exception import CallError, ValidationErrors
+from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.pool import another_pool
 from middlewared.test.integration.assets.zfs_resource import destroy_zfs_resource, zfs_resource
 from middlewared.test.integration.utils import call, mock, ssh
@@ -855,12 +855,3 @@ def test_zfs_resource_create_share_type():
         call("zfs.resource.create", {"path": path, "share_type": "smb", "properties": {"acltype": "posix"}})
     assert [e.attribute for e in ve.value.errors] == ["zfs.resource.create.properties.acltype"]
 
-
-def test_zfs_resource_create_removes_the_resource_when_its_key_cannot_be_stored():
-    path = os.path.join(pool_name, "test_create_key_not_stored")
-    with mock("pool.dataset.insert_or_update_encrypted_record", exception="sentinel"):
-        with pytest.raises(CallError) as exc_info:
-            call("zfs.resource.create", {"path": path, "encryption": {"generate_key": True}})
-    assert exc_info.value.errno == errno.EFAULT
-    assert "could not store its encryption key" in exc_info.value.errmsg
-    assert call("zfs.resource.list", {"paths": [path]}) == []

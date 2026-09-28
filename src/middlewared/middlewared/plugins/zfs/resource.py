@@ -589,9 +589,9 @@ class ZFSResourceService(Service):
         - ``share_type`` is sent for a VOLUME, conflicts with a sent property, or its ACL
           would be written to a readonly filesystem (``EINVAL``)
 
-        A resource whose encryption key cannot be stored is removed. A resource that
-        cannot be mounted, or whose ACL cannot be applied, is kept, and the error names
-        it. Ancestors created by the call are kept.
+        A resource that cannot be mounted, or whose ACL cannot be applied, is kept, and
+        the error names it; its encryption key is stored either way. Ancestors created by
+        the call are kept.
 
         Examples:
 
