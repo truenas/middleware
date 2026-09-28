@@ -10,6 +10,7 @@ from middlewared.api.current import (
     ZFSResourceSnapshotCountQuery,
 )
 from middlewared.service_exception import CallError, ValidationError
+from middlewared.utils.filesystem import attrs as fs_attrs
 
 from .destroy_impl import destroy_impl as _raw_destroy
 from .exceptions import (
@@ -18,7 +19,8 @@ from .exceptions import (
     ZFSPathHasHoldsException,
     ZFSPathNotFoundException,
 )
-from .utils import reject_protected_path
+from .resource_attachments import for_stop
+from .utils import get_encryption_info, reject_protected_path
 
 if TYPE_CHECKING:
     from middlewared.service import ServiceContext
@@ -26,15 +28,7 @@ if TYPE_CHECKING:
 SCHEMA = "zfs.resource.destroy"
 
 
-def destroy_impl(
-    context: ServiceContext,
-    tls: Any,
-    path: str,
-    recursive: bool = False,
-    all_snapshots: bool = False,
-    bypass: bool = False,
-    defer: bool = False,
-) -> None:
+def _validate(context: ServiceContext, path: str, recursive: bool, bypass: bool) -> None:
     if os.path.isabs(path):
         raise ValidationError(
             SCHEMA,
@@ -71,12 +65,55 @@ def destroy_impl(
             if snap_counts.get(path, 0) > 0:
                 raise ValidationError(SCHEMA, f"{path!r} has snapshots. {extra}", errno.ENOTEMPTY)
 
+
+def destroy_impl(
+    context: ServiceContext,
+    tls: Any,
+    path: str,
+    recursive: bool = False,
+    all_snapshots: bool = False,
+    bypass: bool = False,
+    defer: bool = False,
+) -> None:
+    _validate(context, path, recursive, bypass)
     _raw_destroy(tls, path, recursive, all_snapshots, bypass, defer)
 
 
+def _mountpoint(row: dict[str, Any]) -> str | None:
+    if row["type"] == "VOLUME":
+        return os.path.join("/mnt", row["name"])
+    mountpoint: str = row["properties"]["mountpoint"]["raw"]
+    if mountpoint in ("legacy", "none"):
+        return None
+    return mountpoint
+
+
+async def _destroy_with_truesearch_paused(
+    context: ServiceContext, mountpoint: str | None, path: str, recursive: bool
+) -> None:
+    async with context.s.truesearch.remove_mountpoint(mountpoint):
+        await context.call2(context.s.zfs.resource.destroy_impl, path, recursive)
+
+
 def destroy(context: ServiceContext, data: ZFSResourceDestroyArgsData) -> None:
+    _validate(context, data.path, data.recursive, False)
+    rows = context.call_sync2(
+        context.s.zfs.resource.list_impl,
+        ZFSResourceQuery(
+            paths=[data.path], properties=["mountpoint", "encryption", "keystatus", "keyformat", "keylocation"]
+        ),
+    )
+    mountpoint = _mountpoint(rows[0]) if rows else None
+    if mountpoint:
+        for delegate in for_stop():
+            if attachments := context.run_coroutine(delegate.query(mountpoint, True)):
+                context.run_coroutine(delegate.delete(attachments))
+        if get_encryption_info(rows[0]["properties"]).locked and os.path.exists(mountpoint):
+            # a locked dataset's mountpoint is immutable, which would keep the destroy from removing it
+            fs_attrs.set_zfs_file_attributes_dict(mountpoint, {"immutable": False})
+
     try:
-        context.call_sync2(context.s.zfs.resource.destroy_impl, data.path, data.recursive)
+        context.run_coroutine(_destroy_with_truesearch_paused(context, mountpoint, data.path, data.recursive))
     except ZFSPathHasClonesException as e:
         raise ValidationError(
             SCHEMA,

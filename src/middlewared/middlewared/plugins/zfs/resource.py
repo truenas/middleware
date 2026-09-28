@@ -804,6 +804,11 @@ class ZFSResourceService(Service):
         To destroy snapshots, use
         :method:`zfs.resource.snapshot.destroy` instead.
 
+        .. warning::
+
+            The shares, tasks, iSCSI extents, NVMe-oF namespaces, VM devices and apps that use the resource or
+            any of its descendants are deleted before it is destroyed, once the request has passed validation.
+
         A validation error is raised when:
 
         - a snapshot path (containing ``@``) is supplied

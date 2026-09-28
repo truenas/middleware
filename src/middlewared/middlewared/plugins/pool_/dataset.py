@@ -1,5 +1,4 @@
 import errno
-import os
 
 from pydantic import ValidationError as PydanticValidationError
 
@@ -36,7 +35,6 @@ from middlewared.service import (
 )
 import middlewared.sqlalchemy as sa
 from middlewared.utils.boot.pool import BOOT_POOL_NAME_VALID
-from middlewared.utils.filesystem import attrs as fs_attrs
 from middlewared.utils.filter_list import filter_list
 
 from .dataset_query_utils import generic_query, is_internal_dataset_name, user_property_names_to_be_renamed
@@ -46,7 +44,6 @@ from .utils import (
     RE_ZFS_USER_PROP,
     ZFS_USER_PROP_MAX_LEN,
     UpdateImplArgs,
-    dataset_mountpoint,
     get_dataset_parents,
     pool_dataset_view,
 )
@@ -477,27 +474,10 @@ class PoolDatasetService(CRUDService):
         dataset = await self.get_instance_quick(id_)
         audit_callback(dataset['name'])
 
-        if mountpoint := dataset_mountpoint(dataset):
-            for delegate in await self.call2(self.s.zfs.resource.attachment_delegates_for_stop):
-                attachments = await delegate.query(mountpoint, True)
-                if attachments:
-                    await delegate.delete(attachments)
-
-        if dataset['locked'] and mountpoint and await self.middleware.run_in_thread(os.path.exists, mountpoint):
-            # We would like to remove the immutable flag in this case so that it's mountpoint can be
-            # cleaned automatically when we delete the dataset
-            await self.middleware.run_in_thread(
-                fs_attrs.set_zfs_file_attributes_dict,
-                mountpoint,
-                {'immutable': False},
-            )
-
-        async with self.s.truesearch.remove_mountpoint(mountpoint):
-            await self.call2(
-                self.s.zfs.resource.destroy,
-                ZFSResourceDestroyArgsData(path=id_, recursive=options['recursive']),
-            )
-
+        await self.call2(
+            self.s.zfs.resource.destroy,
+            ZFSResourceDestroyArgsData(path=id_, recursive=options['recursive']),
+        )
         return True
 
     @api_method(PoolDatasetPromoteArgs, PoolDatasetPromoteResult, roles=['DATASET_WRITE'])
