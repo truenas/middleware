@@ -122,4 +122,10 @@ def rename_impl(tls: Any, data: ZFSResourceRenameArgsData) -> None:
 
 
 def rename(context: ServiceContext, data: ZFSResourceRenameArgsData) -> None:
+    if not data.force:
+        raise ValidationError(
+            "zfs.resource.rename.force",
+            "No safety checks are performed when renaming ZFS resources; this may break existing usages. "
+            "If you understand the risks, please set force and proceed.",
+        )
     context.call_sync2(context.s.zfs.resource.rename_impl, data)

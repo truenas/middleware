@@ -27,8 +27,10 @@ __all__ = (
     "ZFSResourceCreateResult",
     "ZFSResourceAttachmentsArgs",
     "ZFSResourceAttachmentsResult",
+    "ZFSResourceChecksum",
     "ZFSResourceChecksumChoicesArgs",
     "ZFSResourceChecksumChoicesResult",
+    "ZFSResourceCompression",
     "ZFSResourceCompressionChoicesArgs",
     "ZFSResourceCompressionChoicesResult",
     "ZFSResourceDestroyArgsData",
@@ -72,10 +74,8 @@ _ACLINHERIT = Literal["discard", "noallow", "restricted", "passthrough", "passth
 _ACLMODE = Literal["discard", "groupmask", "passthrough", "restricted"]
 _ACLTYPE = Literal["off", "posix", "nfsv4", "disabled", "noacl", "posixacl"]
 _CASESENSITIVITY = Literal["sensitive", "insensitive", "mixed"]
-_CHECKSUM = Literal[
-    "on", "off", "fletcher2", "fletcher4", "sha256", "noparity", "sha512", "skein", "edonr", "blake3"
-]
-_COMPRESSION = Literal[
+ZFSResourceChecksum = Literal["on", "off", "fletcher2", "fletcher4", "sha256", "sha512", "skein", "edonr", "blake3"]
+ZFSResourceCompression = Literal[
     "on", "off", "lzjb", "gzip",
     "gzip-1", "gzip-2", "gzip-3", "gzip-4", "gzip-5", "gzip-6", "gzip-7", "gzip-8", "gzip-9",
     "zle", "lz4", "zstd",
@@ -515,8 +515,12 @@ class ZFSResourceCreateProperties(BaseModel):
         default=None,
         description="Filename matching sensitivity. Settable at creation time only.",
     )
-    checksum: _CHECKSUM | None = Field(default=None, description="Checksum algorithm used to verify data integrity.")
-    compression: _COMPRESSION | None = Field(default=None, description="Compression algorithm for the resource.")
+    checksum: ZFSResourceChecksum | None = Field(
+        default=None, description="Checksum algorithm used to verify data integrity."
+    )
+    compression: ZFSResourceCompression | None = Field(
+        default=None, description="Compression algorithm for the resource."
+    )
     copies: Annotated[int, Field(ge=1, le=3)] | None = Field(
         default=None,
         description="Number of copies of data blocks to store (1, 2, or 3).",
@@ -723,8 +727,9 @@ class ZFSResourceCreateArgsData(BaseModel):
         description=(
             'If true, will bypass the safety checks that prevent creating zfs resources under "protected" paths. '
             "It also skips the existing-mountpoint check, the refusal to create beneath an unencrypted dataset "
-            "inside an encrypted one, the refusal of an inherited nfsv4/discard pair, and the dRAID recordsize "
-            "default and floor."
+            "inside an encrypted one, the refusal of an inherited nfsv4/discard pair, the dRAID recordsize "
+            "default and floor, the tier pin of `special_small_blocks` and the `aclmode`/`aclinherit` defaults "
+            "that follow an explicit `acltype`."
         ),
     )
 
@@ -938,6 +943,14 @@ class ZFSResourceRenameArgsData(BaseModel):
     force_unmount: bool = Field(
         default=True,
         description="Force unmount any filesystem that has to be unmounted in the process.",
+    )
+    force: bool = Field(
+        default=False,
+        description=(
+            "Acknowledge that no check is made whether the resource is in use. Renaming an active resource may "
+            "disrupt SMB shares, iSCSI targets, snapshot tasks, replication and other services. The rename is "
+            "refused unless this is set."
+        ),
     )
 
 

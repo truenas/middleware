@@ -11,7 +11,7 @@ if typing.TYPE_CHECKING:
     from middlewared.service import ServiceContext
     from middlewared.service_exception import ValidationErrors
 
-__all__ = ("SHARE_PRESETS", "apply_share_acl", "share_acl", "share_type_choices")
+__all__ = ("SHARE_PRESETS", "apply_share_acl", "share_acl", "share_mountpoint", "share_type_choices")
 
 SCHEMA = "zfs.resource.create"
 
@@ -46,8 +46,20 @@ def share_type_choices() -> dict[str, dict[str, str]]:
     return {st: dict(props) for st, props in SHARE_PRESETS.items()}
 
 
+def share_mountpoint(path: str, parent: dict[str, typing.Any]) -> str:
+    """Where `path` mounts when it inherits its mountpoint from `parent`, its nearest existing ancestor."""
+    parent_mp = parent["properties"]["mountpoint"]["raw"]
+    if parent_mp in ("none", "legacy"):
+        return os.path.join("/mnt", path)
+    return os.path.join(parent_mp, path.removeprefix(f"{parent['name']}/"))
+
+
 def share_acl(
-    context: ServiceContext, share_type: str, path: str, parent: dict[str, typing.Any], verrors: ValidationErrors
+    context: ServiceContext,
+    share_type: str,
+    mountpoint: str,
+    parent: dict[str, typing.Any],
+    verrors: ValidationErrors,
 ) -> list[dict[str, typing.Any]] | None:
     parent_mp = parent["properties"]["mountpoint"]["raw"]
     if (
@@ -89,7 +101,7 @@ def share_acl(
         )
 
     try:
-        context.middleware.call_sync("filesystem.check_acl_execute", os.path.join("/mnt", path), acl, -1, -1)
+        context.middleware.call_sync("filesystem.check_acl_execute", mountpoint, acl, -1, -1)
     except CallError as e:
         if e.errno != errno.EPERM:
             raise
@@ -97,10 +109,10 @@ def share_acl(
     return acl
 
 
-def apply_share_acl(context: ServiceContext, path: str, acl: list[dict[str, typing.Any]]) -> None:
+def apply_share_acl(context: ServiceContext, mountpoint: str, acl: list[dict[str, typing.Any]]) -> None:
     # We're potentially auto-inheriting an ACL containing nested
     # security groups and so we need to skip the ACL validation
     context.middleware.call_sync(
         "filesystem.setacl",
-        {"path": os.path.join("/mnt", path), "dacl": acl, "options": {"validate_effective_acl": False}},
+        {"path": mountpoint, "dacl": acl, "options": {"validate_effective_acl": False}},
     ).wait_sync(raise_error=True)

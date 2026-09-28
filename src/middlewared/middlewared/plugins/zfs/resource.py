@@ -509,12 +509,13 @@ class ZFSResourceService(Service):
         - the resource does not exist (``ENOENT``)
         - the new name is already taken (``EEXIST``)
         - either name is a protected path (``EACCES``)
+        - ``force`` is not set
 
         Example:
 
         .. code:: json
 
-            {"current_name": "tank/documents", "new_name": "tank/archive"}
+            {"current_name": "tank/documents", "new_name": "tank/archive", "force": true}
         """
         _ops.rename(self.context, data)
 

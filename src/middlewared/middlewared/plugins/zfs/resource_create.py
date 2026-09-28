@@ -53,7 +53,7 @@ from .rules_common import (
     reject_tier_managed_ssb,
     reject_volsize_not_multiple,
 )
-from .share_presets import apply_share_acl, share_acl
+from .share_presets import apply_share_acl, share_acl, share_mountpoint
 from .utils import has_internal_path, reject_protected_path
 
 if TYPE_CHECKING:
@@ -106,7 +106,7 @@ def create_impl(context: ServiceContext, tls: Any, data: ZFSResourceCreateArgsDa
     if not verrors:
         ancestor_props = ["readonly", "mountpoint", "encryption"]
         if data.type == "VOLUME":
-            ancestor_props.extend(["available", "usedbyrefreservation", "special_small_blocks", "refquota"])
+            ancestor_props.extend(["available", "usedbyrefreservation", "special_small_blocks"])
         else:
             ancestor_props.extend(["acltype", "aclmode", "mounted"])
             if ctx.tier_enabled and data.properties.special_small_blocks is None:
@@ -166,7 +166,7 @@ def create_impl(context: ServiceContext, tls: Any, data: ZFSResourceCreateArgsDa
                 properties.recordsize,
                 draid_floor=not data.bypass,
             )
-        if ctx.tier_enabled and properties.special_small_blocks is None:
+        if ctx.tier_enabled and properties.special_small_blocks is None and not data.bypass:
             apply_tier_snap(data, ctx)
         if ctx.tier_enabled and dedup_requested:
             check_dedup_tiering(context, data, ctx, verrors)
@@ -195,7 +195,8 @@ def create_impl(context: ServiceContext, tls: Any, data: ZFSResourceCreateArgsDa
 
     acl = None
     if data.share_type and parent is not None:
-        acl = share_acl(context, data.share_type, path, parent, verrors)
+        share_mp = share_mountpoint(path, parent)
+        acl = share_acl(context, data.share_type, share_mp, parent, verrors)
         if acl is not None and properties.readonly == "on":
             verrors.add(
                 f"{SCHEMA}.properties.readonly",
@@ -293,7 +294,7 @@ def create_impl(context: ServiceContext, tls: Any, data: ZFSResourceCreateArgsDa
         raise CallError(f"{path!r} was created but could not be mounted: {mount_error}") from mount_error
     if acl is not None:
         try:
-            apply_share_acl(context, path, acl)
+            apply_share_acl(context, share_mp, acl)
         except Exception as e:
             raise CallError(f"{path!r} was created, but its {data.share_type!r} ACL could not be applied: {e}") from e
     return entry

@@ -148,7 +148,8 @@ def resolve_create_request(
         if properties.xattr is None:
             # its important to set this as "sa" for performance reasons
             properties.xattr = "sa"
-        apply_acl_defaults(properties)
+        if not data.bypass:
+            apply_acl_defaults(properties)
 
     encrypt = None
     if data.encryption:
@@ -326,8 +327,6 @@ def check_volume_capacity(data: ZFSResourceCreateArgsData, ctx: CreateContext, v
         return
     parent = _nearest_ancestor_entry(data, ctx)
     if parent is None:
-        return
-    if parent["properties"]["refquota"]["value"]:
         return
     reject_insufficient_headroom(
         verrors,

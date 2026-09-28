@@ -537,5 +537,5 @@ class PoolDatasetService(CRUDService):
             raise ValidationError('pool.dataset.rename.recursive', 'recursive is only valid for snapshots')
         return await self.call2(
             self.s.zfs.resource.rename,
-            ZFSResourceRenameArgsData(current_name=id_, new_name=options['new_name']),
+            ZFSResourceRenameArgsData(current_name=id_, new_name=options['new_name'], force=True),
         )

@@ -80,7 +80,7 @@ def test_rename_emits_removed_then_added():
     with resource("zre_events_rename") as parent:
         call("zfs.resource.create", {"path": f"{parent}/a"})
         with collect(parent) as events:
-            call("zfs.resource.rename", {"current_name": f"{parent}/a", "new_name": f"{parent}/b"})
+            call("zfs.resource.rename", {"current_name": f"{parent}/a", "new_name": f"{parent}/b", "force": True})
 
         assert summary(events) == [
             ("zfs.resource.list", "REMOVED", f"{parent}/a"),

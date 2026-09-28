@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import errno
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, get_args
 
+from middlewared.api.current import ZFSResourceChecksum, ZFSResourceCompression
 from middlewared.service_exception import ValidationError
 
-from .property_choices import ZFS_CHECKSUM_CHOICES, ZFS_COMPRESSION_ALGORITHM_CHOICES
 from .property_choices import recommended_zvol_blocksize as _recommended_zvol_blocksize
 from .property_choices import recordsize_choices as _recordsize_choices
 from .utils import pool_is_draid
@@ -24,11 +24,11 @@ ZFS_MAX_RECORDSIZE = "/sys/module/zfs/parameters/zfs_max_recordsize"
 
 
 def checksum_choices() -> dict[str, str]:
-    return {v: v for v in ZFS_CHECKSUM_CHOICES if v != "OFF"}
+    return {v: v for v in get_args(ZFSResourceChecksum)}
 
 
 def compression_choices() -> dict[str, str]:
-    return {v: v for v in ZFS_COMPRESSION_ALGORITHM_CHOICES}
+    return {v: v for v in get_args(ZFSResourceCompression)}
 
 
 def recordsize_choices(context: ServiceContext, pool_name: str | None) -> list[str]:

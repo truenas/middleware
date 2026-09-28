@@ -20,14 +20,14 @@ class PoolDatasetService(Service):
         """
         Retrieve checksums supported for ZFS dataset.
         """
-        return await self.call2(self.s.zfs.resource.checksum_choices)
+        return {v.upper(): v.upper() for v in await self.call2(self.s.zfs.resource.checksum_choices)}
 
     @api_method(PoolDatasetCompressionChoicesArgs, PoolDatasetCompressionChoicesResult, roles=['DATASET_READ'])
     async def compression_choices(self):
         """
         Retrieve compression algorithm supported by ZFS.
         """
-        return await self.call2(self.s.zfs.resource.compression_choices)
+        return {v.upper(): v.upper() for v in await self.call2(self.s.zfs.resource.compression_choices)}
 
     @api_method(
         PoolDatasetRecommendedZvolBlocksizeArgs,
