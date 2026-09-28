@@ -182,8 +182,8 @@ def clone(context: ServiceContext, data: ZFSResourceSnapshotCloneQuery) -> None:
     if is_filesystem and not data.no_mount:
         try:
             context.call_sync2(context.s.zfs.resource.mount, data.dataset)
-        except Exception:
-            context.logger.warning("%s: failed to mount clone", data.dataset, exc_info=True)
+        except Exception as e:
+            raise CallError(f"{data.dataset!r} was created but could not be mounted: {e}") from e
 
 
 def create_impl(tls: Any, data: ZFSResourceSnapshotCreateQuery) -> Any:

@@ -488,7 +488,6 @@ class ZFSResourceCreateEncryption(BaseModel):
     )
     pbkdf2iters: int = Field(
         ge=1_300_000,
-        le=10_000_000,
         default=1_300_000,
         description=(
             "Number of PBKDF2 iterations for key derivation from the passphrase. Only meaningful together with "
@@ -787,8 +786,7 @@ class ZFSResourceSetArgsData(BaseModel):
         description=(
             "User properties to set or overwrite, keyed by their full name (e.g. 'org.truenas:custom'). A name must "
             "contain a colon, may consist only of lowercase letters, digits and the characters ':', '.', '_' and "
-            "'-', and must be shorter than 256 characters. A value may be at most 1024 characters long and must be a "
-            "single line."
+            "'-', and must be shorter than 256 characters. A value may be at most 1024 characters long."
         ),
     )
     inherit: list[str] = Field(
@@ -799,8 +797,7 @@ class ZFSResourceSetArgsData(BaseModel):
             "`volsize`, which have no inherited value. A user property name must contain a colon; inheriting one "
             "removes it from this resource. On a filesystem, inheriting `acltype` also inherits `aclmode` and "
             "`aclinherit` unless those are given in `properties`. On a pool's root dataset the property returns to "
-            "its ZFS default. A property whose value was received through replication cannot be inherited; set it "
-            "explicitly instead."
+            "its ZFS default."
         ),
     )
 

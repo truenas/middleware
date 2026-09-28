@@ -260,7 +260,7 @@ class ZFSResourceService(Service):
         Retrieve the processes holding open files on the ZFS resource named by ``path``.
 
         A locked resource reports no processes, since nothing can have its contents open. An ``ENOENT``
-        error is raised when the resource does not exist.
+        error is raised when the resource does not exist or is a protected internal resource.
         """
         return _processes.processes(self.context, path)
 

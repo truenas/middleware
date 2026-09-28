@@ -89,7 +89,7 @@ def reject_bad_user_property_names(verrors: ValidationErrors, attribute: str, na
 
 
 def reject_bad_user_property_values(verrors: ValidationErrors, attribute: str, values: Mapping[str, str]) -> None:
-    """User property values must fit in ZFS and stay on one line."""
+    """User property values must fit in ZFS."""
     for name, value in values.items():
         if len(value.encode()) >= _USER_PROPERTY_VALUE_MAX:
             verrors.add(
@@ -97,8 +97,6 @@ def reject_bad_user_property_values(verrors: ValidationErrors, attribute: str, v
                 f"The value of {name!r} must be shorter than {_USER_PROPERTY_VALUE_MAX} bytes.",
                 errno.EINVAL,
             )
-        elif "\n" in value or "\r" in value:
-            verrors.add(attribute, f"The value of {name!r} may not contain a line break.", errno.EINVAL)
 
 
 def reject_tier_managed_ssb(verrors: ValidationErrors, attribute: str) -> None:
@@ -152,10 +150,8 @@ def reject_insufficient_headroom(
     requested: int,
     current: int,
     base: int,
-    *,
-    volume: bool,
 ) -> None:
-    """A reservation may not grow by more than 80% of the space available to it.
+    """A volume reservation may not grow by more than 80% of the space available to it.
 
     `base` is the space the kernel measures a new reservation against: `available - usedbyrefreservation` of the
     resource itself, or of the nearest existing ancestor for a resource that does not exist yet. All figures are
@@ -164,12 +160,10 @@ def reject_insufficient_headroom(
     base = max(base, 0)
     delta = requested - current
     if delta > 0.8 * base:
-        advice = "Lower refreservation or set it to none"
-        if volume:
-            advice += " for a sparse volume"
         verrors.add(
             attribute,
-            f"Reserving another {delta} would consume more than 80% of the {base} available to {path!r}. {advice}.",
+            f"Reserving another {delta} would consume more than 80% of the {base} available to {path!r}. "
+            "Lower refreservation or set it to none for a sparse volume.",
             errno.EINVAL,
         )
 

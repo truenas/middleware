@@ -293,16 +293,6 @@ def test_headroom_base_excludes_the_space_the_reservation_itself_holds(usedbyref
     assert bool(headroom_errors(st)) is rejected
 
 
-def test_headroom_is_exact_when_a_refquota_is_introduced_in_the_request():
-    st = state(
-        properties={"refreservation": 2 * GiB, "refquota": 3 * GiB},
-        current={"refquota": 0, "available": 2 * GiB},
-    )
-    [(attribute, errmsg)] = headroom_errors(st)
-    assert attribute == "zfs.resource.set.properties.refreservation"
-    assert "would consume more than 80%" in errmsg
-
-
 def test_dedup_descendants_names_only_the_descendants_that_would_inherit_it():
     context = RecordingContext(
         descendants=[

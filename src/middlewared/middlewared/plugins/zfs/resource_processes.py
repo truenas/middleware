@@ -11,7 +11,7 @@ from middlewared.service_exception import CallError, ValidationError
 
 from .resource_attachments import DELEGATES
 from .resource_processes_utils import processes_using_dataset_tree
-from .utils import get_encryption_info
+from .utils import get_encryption_info, has_internal_path
 from .zvol_utils import zvol_name_to_path
 
 if TYPE_CHECKING:
@@ -23,13 +23,15 @@ RE_ZD = re.compile(r"^/dev/zd[0-9]+$")
 
 
 def processes(context: ServiceContext, path: str) -> list[PoolProcess]:
-    rows = context.call_sync2(
-        context.s.zfs.resource.list_impl,
-        ZFSResourceQuery(
-            paths=[path],
-            properties=["encryption", "keystatus", "keyformat", "keylocation", "mountpoint"],
-        ),
-    )
+    rows: list[dict[str, Any]] = []
+    if not has_internal_path(path):
+        rows = context.call_sync2(
+            context.s.zfs.resource.list_impl,
+            ZFSResourceQuery(
+                paths=[path],
+                properties=["encryption", "keystatus", "keyformat", "keylocation", "mountpoint"],
+            ),
+        )
     if not rows:
         raise ValidationError("zfs.resource.processes.path", f"{path!r} does not exist", errno.ENOENT)
 

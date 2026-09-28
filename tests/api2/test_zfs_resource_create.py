@@ -351,11 +351,6 @@ def test_zfs_resource_create_encryption_root_passphrase():
             ValidationErrors,
             id="pbkdf2iters too low",
         ),
-        pytest.param(
-            {"passphrase": "passphrase123", "pbkdf2iters": 100_000_000},
-            ValidationErrors,
-            id="pbkdf2iters too high",
-        ),
     ],
 )
 def test_zfs_resource_create_encryption_shape_errors(encryption, exc):

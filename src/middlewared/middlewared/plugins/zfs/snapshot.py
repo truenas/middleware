@@ -270,6 +270,8 @@ class ZFSResourceSnapshotService(Service):
         - the destination dataset already exists
         - the source is not a snapshot
 
+        A filesystem clone that cannot be mounted is kept, and the error names it.
+
         Examples:
 
         Clone a snapshot to a new dataset:

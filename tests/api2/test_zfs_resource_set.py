@@ -294,7 +294,6 @@ def test_pool_root_inherit_yields_registered_default(name, setup, extra, expecte
         {"ORG.Foo:x": "1"},
         {"nocolon": "1"},
         {"org.truenas:" + "x" * 245: "1"},
-        {"org.truenas:x": "a\nb"},
     ],
 )
 def test_bad_user_property_is_rejected(user_properties):
@@ -424,20 +423,6 @@ def test_set_acltype_on_volume_is_a_validation_error():
         with pytest.raises(ValidationErrors) as exc_info:
             call("zfs.resource.set", {"path": path, "properties": {"acltype": "posix"}})
         assert [e.attribute for e in exc_info.value.errors] == ["zfs.resource.set.properties.acltype"]
-
-
-def test_inherit_received_property_is_rejected():
-    with resource("test_set_received_src", properties={"compression": "lz4"}) as source:
-        target = os.path.join(pool_name, "test_set_received_dst")
-        ssh(f"zfs snapshot {source}@snap")
-        ssh(f"zfs send -p {source}@snap | zfs recv {target}")
-        try:
-            assert read(target, ["compression"])["properties"]["compression"]["source"]["type"] == "RECEIVED"
-            with pytest.raises(ValidationErrors) as exc_info:
-                call("zfs.resource.set", {"path": target, "inherit": ["compression"]})
-            assert [e.attribute for e in exc_info.value.errors] == ["zfs.resource.set.inherit.compression"]
-        finally:
-            ssh(f"zfs destroy -r {target}")
 
 
 def test_inherit_recordsize_alone_is_accepted():

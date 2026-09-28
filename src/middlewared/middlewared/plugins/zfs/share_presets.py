@@ -49,9 +49,11 @@ def share_type_choices() -> dict[str, dict[str, str]]:
 def share_acl(
     context: ServiceContext, share_type: str, path: str, parent: dict[str, typing.Any], verrors: ValidationErrors
 ) -> list[dict[str, typing.Any]] | None:
-    parent_mp = os.path.join("/mnt", parent["name"])
+    parent_mp = parent["properties"]["mountpoint"]["raw"]
     if (
-        context.middleware.call_sync("filesystem.path_get_acltype", parent_mp) == "NFS4"
+        parent["properties"]["mounted"]["raw"] == "yes"
+        and parent_mp not in ("none", "legacy")
+        and context.middleware.call_sync("filesystem.path_get_acltype", parent_mp) == "NFS4"
         and context.middleware.call_sync("filesystem.stat", parent_mp).acl
     ):
         acl: list[dict[str, typing.Any]] = context.middleware.call_sync(

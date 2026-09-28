@@ -52,7 +52,6 @@ __all__ = (
     "check_dedup_tiering",
     "check_has_work",
     "check_inherit_names",
-    "check_inherit_not_received",
     "check_names_valid_for_type",
     "check_recordsize",
     "check_reservation_headroom",
@@ -267,20 +266,10 @@ def check_names_valid_for_type(context: ServiceContext, state: SetContext, verro
             verrors.add(state.attribute(name), f"{name!r} is not valid for a {state.type}.", errno.EINVAL)
 
 
-def check_inherit_not_received(context: ServiceContext, state: SetContext, verrors: ValidationErrors) -> None:
-    for name in sorted(state.inherited_natives()):
-        if state.source.get(name) == "RECEIVED":
-            verrors.add(
-                state.attribute(name),
-                f"{name!r} has a received value on {state.path!r}; set an explicit value instead.",
-                errno.EINVAL,
-            )
-
-
 def check_volsize_writable(context: ServiceContext, state: SetContext, verrors: ValidationErrors) -> None:
     # ZFS refuses the volsize but still applies the rest of the request, a follow-up refreservation included.
     # It judges readonly as stored before the request, so turning it off in the same request does not help.
-    if state.type != "VOLUME" or "volsize" not in state.set_names():
+    if state.type != "VOLUME" or "volsize" not in state.set_names() or not state.changed("volsize"):
         return
     if state.current["readonly"] == "on":
         verrors.add(
@@ -338,8 +327,7 @@ def check_reservation_headroom(context: ServiceContext, state: SetContext, verro
                 f"A refreservation of {requested} exceeds the refquota of {refquota} on {state.path!r}.",
                 errno.EINVAL,
             )
-        if state.current["refquota"] > 0:
-            return
+        return
     reject_insufficient_headroom(
         verrors,
         attribute,
@@ -347,7 +335,6 @@ def check_reservation_headroom(context: ServiceContext, state: SetContext, verro
         requested,
         state.current["refreservation"],
         state.current["available"] - state.current["usedbyrefreservation"],
-        volume=state.type == "VOLUME",
     )
 
 
@@ -443,7 +430,6 @@ def check_special_small_blocks_range(context: ServiceContext, state: SetContext,
 
 def validate_set(context: ServiceContext, state: SetContext, verrors: ValidationErrors) -> None:
     check_names_valid_for_type(context, state, verrors)
-    check_inherit_not_received(context, state, verrors)
     check_volsize_writable(context, state, verrors)
     check_volsize_not_shrunk(context, state, verrors)
     check_volsize_multiple_of_volblocksize(context, state, verrors)

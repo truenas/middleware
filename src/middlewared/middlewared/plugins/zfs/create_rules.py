@@ -336,7 +336,6 @@ def check_volume_capacity(data: ZFSResourceCreateArgsData, ctx: CreateContext, v
         ctx.properties.refreservation or 0,
         0,
         parent["properties"]["available"]["value"] - parent["properties"]["usedbyrefreservation"]["value"],
-        volume=True,
     )
 
 
