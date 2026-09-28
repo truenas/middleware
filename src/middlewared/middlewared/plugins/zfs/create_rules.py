@@ -318,11 +318,11 @@ def check_volume_capacity(data: ZFSResourceCreateArgsData, ctx: CreateContext, v
     The effective refreservation (the volsize for a thick volume) is
     measured against the space the nearest existing ancestor leaves to a
     new child, which excludes the unused part of that ancestor's own
-    refreservation. Sparse volumes reserve nothing so they are exempt,
-    which makes oversubscription a deliberate request rather than a force
-    flag.
+    refreservation. Sparse volumes reserve nothing so they are exempt.
+    `force_size` skips the check and leaves the limit to ZFS, which refuses
+    a reservation it cannot back and removes the new volume in the same step.
     """
-    if ctx.properties.volsize is None:
+    if ctx.properties.volsize is None or data.force_size:
         return
     parent = _nearest_ancestor_entry(data, ctx)
     if parent is None:
@@ -433,6 +433,11 @@ def check_names_valid_for_type(data: ZFSResourceCreateArgsData, verrors: Validat
     for name, value in data.properties:
         if value is not None and ZFSProperty[name.upper()] not in valid:
             verrors.add(f"{SCHEMA}.properties.{name}", f"{name!r} is not valid for a {data.type}.", errno.EINVAL)
+
+
+def check_force_size(data: ZFSResourceCreateArgsData, verrors: ValidationErrors) -> None:
+    if data.force_size and data.type == "FILESYSTEM":
+        verrors.add(f"{SCHEMA}.force_size", "force_size applies only to a VOLUME.", errno.EINVAL)
 
 
 def check_share_type(data: ZFSResourceCreateArgsData, verrors: ValidationErrors) -> None:

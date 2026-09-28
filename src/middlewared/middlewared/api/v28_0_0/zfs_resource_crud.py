@@ -710,6 +710,14 @@ class ZFSResourceCreateArgsData(BaseModel):
             "Applies to a FILESYSTEM only. The preset is not stored."
         ),
     )
+    force_size: bool = Field(
+        default=False,
+        description=(
+            "Create a thick VOLUME even when its reservation would use more than 80% of the space available to it. "
+            "ZFS still refuses a reservation larger than that space, and the volume is then not created. A sparse "
+            "volume reserves nothing and never needs this. Applies to a VOLUME only."
+        ),
+    )
     bypass: Private[bool] = Field(
         default=False,
         description=(
@@ -798,6 +806,15 @@ class ZFSResourceSetArgsData(BaseModel):
             "removes it from this resource. On a filesystem, inheriting `acltype` also inherits `aclmode` and "
             "`aclinherit` unless those are given in `properties`. On a pool's root dataset the property returns to "
             "its ZFS default."
+        ),
+    )
+    force_size: bool = Field(
+        default=False,
+        description=(
+            "Let a VOLUME's reservation grow by up to all of the space available to it instead of 80%. This covers "
+            "the re-reservation that follows a 'volsize' grow as well as an explicit 'refreservation'. A request "
+            "that would reserve more than the available space is refused before anything is written. Applies to a "
+            "VOLUME only."
         ),
     )
 

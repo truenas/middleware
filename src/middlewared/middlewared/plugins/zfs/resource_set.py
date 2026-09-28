@@ -208,6 +208,7 @@ def set(context: ServiceContext, data: ZFSResourceSetArgsData) -> ZFSResourceEnt
         snapshot_devices=(
             snapshot_devices(path) if target["type"] == "VOLUME" and "snapdev" in touched else frozenset()
         ),
+        force_size=data.force_size,
     )
     state = apply_thick_follow(apply_acl_coupling(state))
     validate_set(context, state, verrors)

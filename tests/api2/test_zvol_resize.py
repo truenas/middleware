@@ -104,6 +104,6 @@ def test_grow_thick_zvol_beyond_available_space():
     with dataset(f"{BASE_NAME}_nospace", BASE_ARGS) as ds:
         before = query_zvol(ds)
         too_big = pool_available() // 65536 * 65536 * 2
-        with pytest.raises(ValidationError, match="would consume more than 80%"):
+        with pytest.raises(ValidationError, match="would exceed"):
             call("pool.dataset.update", ds, {"volsize": too_big, "force_size": True})
         assert query_zvol(ds) == before

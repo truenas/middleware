@@ -199,6 +199,7 @@ def state(
     tier_enabled=False,
     entitlement=ALLOWED,
     path=PATH,
+    force_size=False,
 ):
     names = FILESYSTEM_NAMES if type_ == "FILESYSTEM" else VOLUME_NAMES
     return SetContext(
@@ -213,6 +214,7 @@ def state(
         pool_root=pool_root,
         tier_enabled=tier_enabled,
         dedup_entitlement=entitlement,
+        force_size=force_size,
     )
 
 
@@ -258,12 +260,13 @@ def test_acl_coupling_leaves_a_companion_the_caller_inherits():
     assert st.derived == {"aclinherit"}
 
 
-def volume(properties, refreservation, volsize=GiB, source="LOCAL", **current):
+def volume(properties, refreservation, volsize=GiB, source="LOCAL", force_size=False, **current):
     return state(
         type_="VOLUME",
         properties=properties,
         current={"volsize": volsize, "refreservation": refreservation, **current},
         source=source,
+        force_size=force_size,
     )
 
 
@@ -282,13 +285,17 @@ def headroom_errors(st):
     return [(e.attribute, e.errmsg) for e in run(st).errors]
 
 
-@pytest.mark.parametrize("usedbyrefreservation, rejected", [(100 * GiB, True), (0, False)])
-def test_headroom_base_excludes_the_space_the_reservation_itself_holds(usedbyrefreservation, rejected):
+@pytest.mark.parametrize(
+    "usedbyrefreservation, force_size, rejected",
+    [(100 * GiB, False, True), (0, False, False), (100 * GiB, True, False), (150 * GiB, True, True)],
+)
+def test_headroom_base_excludes_the_space_the_reservation_itself_holds(usedbyrefreservation, force_size, rejected):
     st = volume(
         {"refreservation": 100 * GiB},
         10 * GiB,
         available=200 * GiB,
         usedbyrefreservation=usedbyrefreservation,
+        force_size=force_size,
     )
     assert bool(headroom_errors(st)) is rejected
 

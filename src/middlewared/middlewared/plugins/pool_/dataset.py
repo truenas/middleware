@@ -365,6 +365,7 @@ class PoolDatasetService(CRUDService):
                 path=name, type=data['type'], properties=properties, user_properties=user_properties,
                 create_ancestors=data['create_ancestors'], share_type=share_type,
                 encryption=data['encryption_options'] if data['encryption'] else None,
+                force_size=data.get('force_size', False),
             ))
         except PydanticValidationError as e:
             rekey_create_errors(
@@ -428,6 +429,7 @@ class PoolDatasetService(CRUDService):
             try:
                 args = ZFSResourceSetArgsData(
                     path=data['name'], properties=properties, user_properties=user_properties, inherit=inherit,
+                    force_size=data.get('force_size', False),
                 )
                 await self.call2(self.s.zfs.resource.set, args)
             except PydanticValidationError as e:

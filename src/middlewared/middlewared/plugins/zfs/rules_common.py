@@ -150,8 +150,11 @@ def reject_insufficient_headroom(
     requested: int,
     current: int,
     base: int,
+    *,
+    forced: bool = False,
 ) -> None:
-    """A volume reservation may not grow by more than 80% of the space available to it.
+    """A volume reservation may not grow by more than 80% of the space available to it, or by more than all of it
+    when `forced`.
 
     `base` is the space the kernel measures a new reservation against: `available - usedbyrefreservation` of the
     resource itself, or of the nearest existing ancestor for a resource that does not exist yet. All figures are
@@ -159,11 +162,18 @@ def reject_insufficient_headroom(
     """
     base = max(base, 0)
     delta = requested - current
-    if delta > 0.8 * base:
+    if forced and delta > base:
+        verrors.add(
+            attribute,
+            f"Reserving another {delta} would exceed the {base} available to {path!r}. "
+            "Lower refreservation or set it to none for a sparse volume.",
+            errno.EINVAL,
+        )
+    elif not forced and delta > 0.8 * base:
         verrors.add(
             attribute,
             f"Reserving another {delta} would consume more than 80% of the {base} available to {path!r}. "
-            "Lower refreservation or set it to none for a sparse volume.",
+            "Lower refreservation, set it to none for a sparse volume, or set force_size.",
             errno.EINVAL,
         )
 

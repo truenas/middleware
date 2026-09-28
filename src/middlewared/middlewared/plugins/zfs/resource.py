@@ -80,7 +80,7 @@ def _audit_set(data: dict[str, Any]) -> str:
         | set(data.get("user_properties") or {})
         | set(data.get("inherit") or [])
     )
-    return f"{data.get('path')} ({', '.join(names)})"
+    return audit_target(f"{data.get('path')} ({', '.join(names)})", data, "force_size")
 
 
 class ZFSResourceService(Service):
@@ -533,7 +533,7 @@ class ZFSResourceService(Service):
         ZFSResourceCreateResult,
         roles=["ZFS_RESOURCE_WRITE"],
         audit="ZFS resource create",
-        audit_extended=lambda data: data.get("path"),
+        audit_extended=lambda data: audit_target(data.get("path"), data, "force_size"),
         check_annotations=True,
     )
     def create(self, data: ZFSResourceCreateArgsData) -> ZFSResourceEntry:
@@ -569,8 +569,10 @@ class ZFSResourceService(Service):
           would create an encryption root beneath an unencrypted dataset that itself
           sits inside an encrypted one (``EINVAL``)
         - a thick volume's reservation would consume more than 80% of the available
-          space - create a sparse volume (``refreservation`` of ``none``) to
-          deliberately oversubscribe (``EINVAL``)
+          space and ``force_size`` is not set - create a sparse volume
+          (``refreservation`` of ``none``) to oversubscribe, or set ``force_size``
+          (``EINVAL``)
+        - ``force_size`` is set for a FILESYSTEM (``EINVAL``)
         - the effective ``acltype`` and ``aclmode`` combination is unusable - a posix
           or off acltype requires a discard aclmode and a discard aclmode may not be
           combined with the nfsv4 acltype (``EINVAL``)
@@ -710,6 +712,12 @@ class ZFSResourceService(Service):
         - a name in ``inherit`` is neither a settable native property nor a user property name with a
           colon, or a user property name lacks a colon (``EINVAL``)
         - ``volsize`` is smaller than the volume's current size (``EINVAL``)
+        - ``volsize`` is changed on a read-only (``EROFS``) or locked (``EACCES``) volume
+        - ``volsize`` is not a multiple of the volume's ``volblocksize`` (``EINVAL``)
+        - a volume's reservation would grow by more than 80% of the space available to it, or by more than all of
+          it with ``force_size``; growing a thick volume re-reserves it (``EINVAL``)
+        - a filesystem's ``refreservation`` would exceed its ``refquota``, or is ``auto`` (``EINVAL``)
+        - ``force_size`` is set for a FILESYSTEM (``EINVAL``)
         - the effective ``acltype`` and ``aclmode`` combination is unusable - a posix or off acltype requires
           a discard aclmode and a discard aclmode may not be combined with the nfsv4 acltype (``EINVAL``)
         - ``special_small_blocks`` is set or inherited while ZFS tiering is enabled - placement is managed

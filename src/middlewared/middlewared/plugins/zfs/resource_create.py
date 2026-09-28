@@ -29,6 +29,7 @@ from .create_rules import (
     check_dedup_tiering,
     check_encryption,
     check_encryption_ancestry,
+    check_force_size,
     check_names_valid_for_type,
     check_parent_is_filesystem,
     check_parent_not_readonly,
@@ -88,6 +89,7 @@ def create_impl(context: ServiceContext, tls: Any, data: ZFSResourceCreateArgsDa
     verrors = ValidationErrors()
 
     check_share_type(data, verrors)
+    check_force_size(data, verrors)
     check_names_valid_for_type(data, verrors)
 
     if data.type == "FILESYSTEM" or properties.special_small_blocks is not None or properties.dedup is not None:

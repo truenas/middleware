@@ -395,8 +395,8 @@ class PoolDatasetCreateVolume(PoolDatasetCreate):
     force_size: bool = Field(
         default=NotRequired,
         description=(
-            "No effect. A thick volume whose reservation would use more than 80% of the space available to it is "
-            "refused; set `sparse` to create it anyway."
+            "Create a thick volume even when its reservation would use more than 80% of the space available to it. "
+            "ZFS still refuses a reservation larger than that space. A sparse volume never needs this."
         ),
     )
     sparse: bool = Field(default=NotRequired, description="Whether to use sparse (thin) provisioning for the volume.")
@@ -622,9 +622,9 @@ class PoolDatasetUpdate(PoolDatasetCreateFilesystem, PoolDatasetCreateVolume, me
     force_size: bool = Field(
         default=NotRequired,
         description=(
-            "No effect on update. Growing a volume whose reservation covers its current size is refused when the new "
-            "reservation would consume more than 80% of the space available to it; lower refreservation in the same "
-            "request to proceed. A sparse volume may grow without limit."
+            "Let the volume's reservation grow by up to all of the space available to it instead of 80%. A request "
+            "that would reserve more than that is refused before anything is written. A sparse volume may grow "
+            "without limit. Not valid for a FILESYSTEM."
         ),
     )
     user_properties_update: list[PoolDatasetUpdateUserProperty] = Field(

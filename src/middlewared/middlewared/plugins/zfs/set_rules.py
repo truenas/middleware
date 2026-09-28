@@ -50,6 +50,7 @@ __all__ = (
     "check_dedup_descendants",
     "check_dedup_entitlement",
     "check_dedup_tiering",
+    "check_force_size",
     "check_has_work",
     "check_inherit_names",
     "check_names_valid_for_type",
@@ -154,6 +155,7 @@ class SetContext:
     derived: frozenset[str] = frozenset()
     """Names middleware added to the request on the caller's behalf."""
     snapshot_devices: frozenset[str] = frozenset()
+    force_size: bool = False
 
     def set_names(self) -> frozenset[str]:
         return frozenset(name for name in MODEL_NATIVES if getattr(self.properties, name) is not None)
@@ -335,7 +337,13 @@ def check_reservation_headroom(context: ServiceContext, state: SetContext, verro
         requested,
         state.current["refreservation"],
         state.current["available"] - state.current["usedbyrefreservation"],
+        forced=state.force_size,
     )
+
+
+def check_force_size(context: ServiceContext, state: SetContext, verrors: ValidationErrors) -> None:
+    if state.force_size and state.type == "FILESYSTEM":
+        verrors.add(f"{SCHEMA}.force_size", "force_size applies only to a VOLUME.", errno.EINVAL)
 
 
 def check_acl_combination(context: ServiceContext, state: SetContext, verrors: ValidationErrors) -> None:
@@ -434,6 +442,7 @@ def validate_set(context: ServiceContext, state: SetContext, verrors: Validation
     check_volsize_not_shrunk(context, state, verrors)
     check_volsize_multiple_of_volblocksize(context, state, verrors)
     check_reservation_headroom(context, state, verrors)
+    check_force_size(context, state, verrors)
     check_acl_combination(context, state, verrors)
     check_tier_managed_ssb(context, state, verrors)
     check_dedup_entitlement(context, state, verrors)
