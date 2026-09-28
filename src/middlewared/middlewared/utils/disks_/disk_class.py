@@ -174,20 +174,6 @@ class DiskEntry:
     def serial(self) -> str | None:
         """The disk's serial number as reported by sysfs, or failing that as
         udev resolved it."""
-        if serial := self._sysfs_serial:
-            return serial
-
-        # sysfs has a serial for every disk we ship, so this only runs for a
-        # disk with no VPD page 0x80: usb-storage sets skip_vpd_pages, and a
-        # SCSI device may implement page 0x83 without page 0x80. udev usually
-        # still has one for those, and using it gives netdata, which runs as
-        # its own user and cannot read the partition table, the same identifier
-        # middlewared computes. It costs about 150us per such disk each time
-        # it runs, so on the disk-stats tick as well.
-        return self._udev_identity[0]
-
-    @functools.cached_property
-    def _sysfs_serial(self) -> str | None:
         # nvme devices
         serial = self.__opener(relative_path="device/serial")
         if not serial:
@@ -229,16 +215,28 @@ class DiskEntry:
 
         # strip is required because we see these cases otherwise
         # >>> d.serial reported as '        3FJ1U1HT'
-        return serial.strip() if serial else None
+        if serial and (serial := serial.strip()):
+            return serial
+
+        # sysfs has a serial for every disk we ship, so this only runs for a
+        # disk with no VPD page 0x80: usb-storage sets skip_vpd_pages, and a
+        # SCSI device may implement page 0x83 without page 0x80. udev usually
+        # still has one for those, and using it gives netdata, which runs as
+        # its own user and cannot read the partition table, the same identifier
+        # middlewared computes. It costs about 150us per such disk each time
+        # it runs, so on the disk-stats tick as well.
+        return self._udev_identity[0]
 
     @functools.cached_property
     def lunid(self) -> str | None:
         """The disk's lunid as presented in sysfs, or failing that as udev
         resolved it, but only for a disk whose serial came from udev too."""
-        if (lunid := self._sysfs_lunid) is not None:
+        if (lunid := self._sysfs_lunid()) is not None:
             return lunid
 
-        if self._sysfs_serial:
+        # `serial` is cached, and only a disk without a sysfs serial made it
+        # look udev up
+        if self.serial and "_udev_identity" not in self.__dict__:
             # sysfs had the serial, so udev was never consulted, and a wwid it
             # does not carry (a t10 designator) stays None as it always has
             return None
@@ -248,7 +246,6 @@ class DiskEntry:
         # from the drive. This is the lookup the serial already paid for.
         return self._udev_identity[1]
 
-    @functools.cached_property
     def _sysfs_lunid(self) -> str | None:
         """The disk's 'wwid' as presented in sysfs.
 

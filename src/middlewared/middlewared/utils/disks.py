@@ -34,8 +34,9 @@ def get_disk_lunid_from_block_device(block_device: pyudev.Device) -> str | None:
         return lunid
 
     # NAS-137807: Fallback to sysfs wwid for EUI-64 format WWIDs not exposed in udev properties
-    # Uses DiskEntry.lunid which handles sysfs wwid retrieval and normalization
-    return DiskEntry(name=block_device.sys_name, devpath=f'/dev/{block_device.sys_name}').lunid
+    # Uses DiskEntry._sysfs_lunid which handles sysfs wwid retrieval and normalization, not DiskEntry.lunid,
+    # whose own udev fallback would repeat the lookup just done
+    return DiskEntry(name=block_device.sys_name, devpath=f'/dev/{block_device.sys_name}')._sysfs_lunid()
 
 
 def valid_zfs_partition_uuids() -> tuple[str, str]:
