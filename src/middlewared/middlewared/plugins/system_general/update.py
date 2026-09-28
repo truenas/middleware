@@ -248,10 +248,11 @@ class SystemGeneralService(ConfigService):
             config['ui_certificate'] != new_config['ui_certificate']
         ):
             await self.middleware.call('etc.generate', 'pam')
-            try:
-                await self.middleware.call('failover.call_remote', 'etc.generate', ['pam'])
-            except Exception:
-                self.logger.warning('Failed to generate pam configuration on standby controller', exc_info=True)
+            if await self.middleware.call('failover.licensed'):
+                try:
+                    await self.middleware.call('failover.call_remote', 'etc.generate', ['pam'])
+                except Exception:
+                    self.logger.warning('Failed to generate pam configuration on standby controller', exc_info=True)
 
         # If self._changed_https_port[0] is True, this means this method was called after the port was updated and
         # before https_port_changed was called. We want to leave the flag set to show that the port still needs to be
