@@ -233,4 +233,5 @@ def parse_legacy_license(text: str) -> LicenseInfo:
         enclosures=MappingProxyType(enclosures),
         contract_type=lic.contract_type.name.upper(),
         origin=LicenseOrigin.SYSTEM_GENERATED if hw_only else LicenseOrigin.ISSUED,
+        issued_at=None if hw_only else lic.contract_start.isoformat(),
     )
