@@ -143,6 +143,12 @@ class LicenseInfoEntry(BaseModel):
     contract_type: str | None = Field(
         description="Support contract tier, or `null` when the license carries no support entitlement.",
     )
+    issued_at: str | None = Field(
+        description=(
+            "When the license was issued, exactly as recorded in the license: an RFC 3339 UTC timestamp, or for a "
+            "legacy-format license the `YYYY-MM-DD` start date of its support contract. `null` when not recorded."
+        ),
+    )
 
 
 class TrueNASLicenseInfoArgs(BaseModel):

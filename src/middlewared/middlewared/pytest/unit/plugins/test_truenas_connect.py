@@ -702,6 +702,7 @@ def _license_info(id_='LIC-1'):
         enclosures={'E24': 3},
         contract_type='GOLD',
         origin=LicenseOrigin.ISSUED,
+        issued_at='2026-04-08T12:34:56Z',
     )
 
 
@@ -737,6 +738,7 @@ async def test_build_payload_reports_fingerprint_and_license_id():
     payload = await hb._build_payload(ctx, {})
     assert payload['fingerprint'] == 'FP-XYZ'
     assert payload['license_id'] == 'LIC-1'
+    assert payload['issued_at'] == '2026-04-08T12:34:56Z'
 
 
 @pytest.mark.asyncio
@@ -745,6 +747,7 @@ async def test_build_payload_license_id_null_when_unlicensed():
     ctx = _payload_ctx(license_info=None)
     payload = await hb._build_payload(ctx, {})
     assert payload['license_id'] is None
+    assert payload['issued_at'] is None
 
 
 @pytest.mark.asyncio

@@ -64,6 +64,7 @@ def _license_entry(info: LicenseInfo) -> LicenseInfoEntry:
         serials=list(info.serials),
         enclosures=dict(info.enclosures),
         contract_type=info.contract_type,
+        issued_at=info.issued_at,
     )
 
 

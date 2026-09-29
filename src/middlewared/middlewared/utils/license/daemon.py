@@ -179,4 +179,5 @@ def from_license_status(status: LicenseStatus | None = None) -> LicenseInfo | No
         enclosures=MappingProxyType({model: entry["count"] for model, entry in (status.enclosures or {}).items()}),
         contract_type=contract_type,
         origin=LicenseOrigin.ISSUED,
+        issued_at=status.issued_at,
     )
