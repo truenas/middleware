@@ -8,6 +8,8 @@ import uuid
 from middlewared.api import api_method
 from middlewared.api.current import (
     ZFSResourceQuery,
+    ZFSResourceSetArgsData,
+    ZFSResourceSetProperties,
     iSCSITargetExtentCreateArgs,
     iSCSITargetExtentCreateResult,
     iSCSITargetExtentDeleteArgs,
@@ -126,9 +128,12 @@ class iSCSITargetExtentService(SharingService):
             zvolname = zvol_path_to_name(os.path.join('/dev', data['path']))
             if '@' not in zvolname:  # Snapshots don't support volthreading/readonly properties
                 await self.call2(
-                    self.s.zfs.resource.set_impl, zvolname,
-                    properties={'volthreading': 'off', 'readonly': 'on' if data['ro'] else 'off'},
-                    bypass=True,
+                    self.s.zfs.resource.set_impl,
+                    ZFSResourceSetArgsData(
+                        path=zvolname,
+                        properties=ZFSResourceSetProperties(volthreading='off', readonly='on' if data['ro'] else 'off'),
+                        bypass=True,
+                    ),
                 )
 
         data['id'] = await self.middleware.call(
@@ -168,9 +173,12 @@ class iSCSITargetExtentService(SharingService):
             zvolname = zvol_path_to_name(os.path.join('/dev', zvolpath))
             if '@' not in zvolname:  # Snapshots don't support readonly property
                 await self.call2(
-                    self.s.zfs.resource.set_impl, zvolname,
-                    properties={'readonly': 'on' if new['ro'] else 'off'},
-                    bypass=True,
+                    self.s.zfs.resource.set_impl,
+                    ZFSResourceSetArgsData(
+                        path=zvolname,
+                        properties=ZFSResourceSetProperties(readonly='on' if new['ro'] else 'off'),
+                        bypass=True,
+                    ),
                 )
 
         await self.middleware.call(
@@ -316,7 +324,10 @@ class iSCSITargetExtentService(SharingService):
                         # 2. is a volume
                         # 3. volthreading is currently off
                         await self.call2(
-                            self.s.zfs.resource.set_impl, zvolname, properties={'volthreading': 'on'}, bypass=True,
+                            self.s.zfs.resource.set_impl,
+                            ZFSResourceSetArgsData(
+                                path=zvolname, properties=ZFSResourceSetProperties(volthreading='on'), bypass=True,
+                            ),
                         )
 
         try:
@@ -745,7 +756,10 @@ class iSCSITargetExtentService(SharingService):
         ):
             if zvol['properties']['volthreading']['raw'] == 'on':
                 await self.call2(
-                    self.s.zfs.resource.set_impl, zvol['name'], properties={'volthreading': 'off'}, bypass=True,
+                    self.s.zfs.resource.set_impl,
+                    ZFSResourceSetArgsData(
+                        path=zvol['name'], properties=ZFSResourceSetProperties(volthreading='off'), bypass=True,
+                    ),
                 )
 
 

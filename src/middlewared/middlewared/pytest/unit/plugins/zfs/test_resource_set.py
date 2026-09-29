@@ -5,6 +5,7 @@ from unittest.mock import Mock
 import pytest
 import truenas_pylibzfs
 
+from middlewared.api.current import ZFSResourceSetArgsData
 from middlewared.plugins.zfs import resource_set
 from middlewared.service_exception import CallError, ValidationError
 
@@ -59,7 +60,7 @@ def test_set_impl_native_invalid_input_is_a_field_error(zfs_exception, code):
     tls, ds = fake_tls(on_disk={"compression": prop("lz4")})
     failing(ds, "set_properties", getattr(truenas_pylibzfs.ZFSError, code))
     with pytest.raises(ValidationError) as ei:
-        resource_set.set_impl(tls, "tank/a", properties={"compression": "bogus"})
+        resource_set.set_impl(tls, ZFSResourceSetArgsData(path="tank/a", properties={"compression": "zstd"}))
     assert ei.value.attribute == "zfs.resource.set.properties.compression"
     assert ei.value.errno == errno.EINVAL
     assert ei.value.errmsg == "bad input"
@@ -69,7 +70,9 @@ def test_set_impl_native_invalid_input_with_several_names_blames_properties(zfs_
     tls, ds = fake_tls(on_disk={"atime": prop("off"), "compression": prop("lz4")})
     failing(ds, "set_properties", truenas_pylibzfs.ZFSError.EZFS_BADPROP)
     with pytest.raises(ValidationError) as ei:
-        resource_set.set_impl(tls, "tank/a", properties={"compression": "bogus", "atime": "on"})
+        resource_set.set_impl(
+            tls, ZFSResourceSetArgsData(path="tank/a", properties={"compression": "zstd", "atime": "on"})
+        )
     assert ei.value.attribute == "zfs.resource.set.properties"
     assert ei.value.errmsg == "bad input"
 
@@ -80,7 +83,7 @@ def test_set_impl_native_operational_failure_is_a_call_error(zfs_exception, code
     zfs_code = getattr(truenas_pylibzfs.ZFSError, code)
     failing(ds, "set_properties", zfs_code, "busy")
     with pytest.raises(CallError) as ei:
-        resource_set.set_impl(tls, "tank/vol", properties={"volsize": 2147483648})
+        resource_set.set_impl(tls, ZFSResourceSetArgsData(path="tank/vol", properties={"volsize": 2147483648}))
     assert ei.value.errno == expected_errno
     assert ei.value.errmsg == f"Failed to set properties on 'tank/vol': [{zfs_code}]: busy"
 
@@ -91,7 +94,10 @@ def test_set_impl_user_property_failure_blames_user_properties(zfs_exception):
     failing(ds, "set_user_properties", code)
     with pytest.raises(ValidationError) as ei:
         resource_set.set_impl(
-            tls, "tank/a", properties={"compression": "zstd"}, user_properties={"org.truenas:x": "new"}
+            tls,
+            ZFSResourceSetArgsData(
+                path="tank/a", properties={"compression": "zstd"}, user_properties={"org.truenas:x": "new"}
+            ),
         )
     assert ei.value.attribute == "zfs.resource.set.user_properties"
     assert ei.value.errmsg == f"[{code}]: bad input"
@@ -102,6 +108,8 @@ def test_set_impl_inherit_failure_blames_the_inherited_name(zfs_exception):
     code = truenas_pylibzfs.ZFSError.EZFS_PROPNONINHERIT
     failing(ds, "inherit_property", code)
     with pytest.raises(ValidationError) as ei:
-        resource_set.set_impl(tls, "tank/a", properties={"atime": "on"}, inherit=["compression"])
+        resource_set.set_impl(
+            tls, ZFSResourceSetArgsData(path="tank/a", properties={"atime": "on"}, inherit=["compression"])
+        )
     assert ei.value.attribute == "zfs.resource.set.inherit.compression"
     assert ei.value.errmsg == f"Failed to inherit 'compression' on 'tank/a': [{code}]: bad input"

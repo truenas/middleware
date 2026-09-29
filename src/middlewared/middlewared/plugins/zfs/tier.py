@@ -28,6 +28,8 @@ from truenas_zfstierd_common import (
 from middlewared.api import api_method
 from middlewared.api.current import (
     ZFSResourceQuery,
+    ZFSResourceSetArgsData,
+    ZFSResourceSetProperties,
     ZfsTierDatasetSetTierArgs,
     ZfsTierDatasetSetTierResult,
     ZfsTierEntry,
@@ -60,8 +62,8 @@ from middlewared.utils.filter_list import filter_list
 
 from .utils import pool_has_special_vdev, special_vdev_thresholds
 
-SPECIAL_SMALL_BLOCKS_PERFORMANCE = str(16 * 1024 * 1024)  # 16 MiB
-SPECIAL_SMALL_BLOCKS_REGULAR = "0"
+SPECIAL_SMALL_BLOCKS_PERFORMANCE = 16 * 1024 * 1024  # 16 MiB
+SPECIAL_SMALL_BLOCKS_REGULAR = 0
 _ZFS_METADATA_RESERVE_PARAM = "zfs_special_class_metadata_reserve_pct"
 
 _DATASET_NOT_FOUND = object()  # sentinel: dataset does not exist (distinct from None = pool has no SPECIAL vdev)
@@ -664,7 +666,10 @@ class ZfsTierService(GenericConfigService[ZfsTierEntry]):
             new_ssb = SPECIAL_SMALL_BLOCKS_REGULAR
 
         await self.call2(
-            self.s.zfs.resource.set_impl, dataset_name, properties={"special_small_blocks": new_ssb}, bypass=True
+            self.s.zfs.resource.set_impl,
+            ZFSResourceSetArgsData(
+                path=dataset_name, properties=ZFSResourceSetProperties(special_small_blocks=new_ssb), bypass=True
+            ),
         )
 
         job_entry = None

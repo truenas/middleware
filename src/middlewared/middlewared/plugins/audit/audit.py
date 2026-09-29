@@ -18,6 +18,7 @@ from middlewared.api.current import (
     AuditUpdateArgs,
     AuditUpdateResult,
     ZFSResourceQuery,
+    ZFSResourceSetArgsData,
 )
 from middlewared.plugins.pool_.utils import UpdateImplArgs
 from middlewared.plugins.zfs_.utils import LEGACY_USERPROP_PREFIX, TNUserProp
@@ -404,7 +405,8 @@ class AuditService(ConfigService):
 
         args = UpdateImplArgs(name=ds['name'], zprops=zprops, uprops=uprops)
         await self.call2(
-            self.s.zfs.resource.set_impl, ds['name'], properties=zprops, user_properties=uprops, bypass=True
+            self.s.zfs.resource.set_impl,
+            ZFSResourceSetArgsData(path=ds['name'], properties=zprops, user_properties=uprops, bypass=True),
         )
         if await self.middleware.call('failover.status') == 'MASTER':
             try:
@@ -494,7 +496,9 @@ class AuditService(ConfigService):
         zprops = {'refreservation': 'none'}
         for ds_name in to_remove:
             try:
-                await self.call2(self.s.zfs.resource.set_impl, ds_name, properties=zprops, bypass=True)
+                await self.call2(
+                    self.s.zfs.resource.set_impl, ZFSResourceSetArgsData(path=ds_name, properties=zprops, bypass=True),
+                )
             except Exception:
                 self.logger.error(
                     '%s: failed to remove refreservation from dataset. Manual '

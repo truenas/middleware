@@ -243,6 +243,8 @@ from middlewared.api.current import (
     SystemDatasetUpdateResult,
     ZFSResourceCreateArgsData,
     ZFSResourceQuery,
+    ZFSResourceSetArgsData,
+    ZFSResourceSetProperties,
 )
 from middlewared.plugins.system_dataset.hierarchy import SystemDatasetZfsProperties, get_system_dataset_spec
 from middlewared.plugins.system_dataset.mount import (
@@ -788,11 +790,16 @@ class SystemDatasetService(ConfigService):
             else:
                 # Compare via raw values; `value` does some
                 # property-specific translation (e.g. raw "on" -> True).
+                # encryption cannot be changed once a dataset exists
                 update_props = {
-                    k: v for k, v in props.items() if datasets_prop[dataset][k]['raw'] != v
+                    k: v for k, v in props.items()
+                    if k != 'encryption' and datasets_prop[dataset][k]['raw'] != v
                 }
                 if update_props:
-                    await self.call2(self.s.zfs.resource.set_impl, dataset, properties=update_props, bypass=True)
+                    await self.call2(
+                        self.s.zfs.resource.set_impl,
+                        ZFSResourceSetArgsData(path=dataset, properties=update_props, bypass=True),
+                    )
 
         return list(datasets.values())
 
@@ -1080,7 +1087,10 @@ class SystemDatasetService(ConfigService):
         # System dataset must be a plain legacy mount -- kill any ACL state.
         if 'POSIXACL' in sysds_mntinfo['super_opts'] or 'NFSV4ACL' in sysds_mntinfo['super_opts']:
             self.call_sync2(
-                self.s.zfs.resource.set_impl, config['basename'], properties={'acltype': 'off'}, bypass=True,
+                self.s.zfs.resource.set_impl,
+                ZFSResourceSetArgsData(
+                    path=config['basename'], properties=ZFSResourceSetProperties(acltype='off'), bypass=True,
+                ),
             )
 
         self._bind_cores_to_coredump()

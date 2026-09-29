@@ -382,11 +382,13 @@ class PoolDatasetService(CRUDService):
     async def update_impl(self, data: UpdateImplArgs):
         await self.call2(
             self.s.zfs.resource.set_impl,
-            data['name'],
-            properties=data.get('zprops'),
-            user_properties=data.get('uprops'),
-            inherit=data.get('iprops'),
-            bypass=True,
+            ZFSResourceSetArgsData(
+                path=data['name'],
+                properties=data.get('zprops') or {},
+                user_properties=data.get('uprops') or {},
+                inherit=list(data.get('iprops') or ()),
+                bypass=True,
+            ),
         )
 
     @api_method(PoolDatasetUpdateArgs, PoolDatasetUpdateResult, audit='Pool dataset update', audit_callback=True)

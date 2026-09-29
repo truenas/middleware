@@ -769,6 +769,10 @@ class ZFSResourceSetProperties(ZFSResourceCreateProperties):
     normalization: Excluded = excluded_field()
     utf8only: Excluded = excluded_field()
     encryption: Excluded = excluded_field()
+    volthreading: Private[_ON_OFF | None] = Field(
+        default=None,
+        description="Whether a volume's I/O is handed to ZFS worker threads. Accepted for volumes only.",
+    )
 
 
 class ZFSResourceSetArgsData(BaseModel):
@@ -820,6 +824,12 @@ class ZFSResourceSetArgsData(BaseModel):
             "of 80%. This covers the re-reservation that follows the grow as well as an explicit 'refreservation' "
             "sent with it. A request that would reserve more than the available space is refused before anything "
             "is written. Applies to a VOLUME only."
+        ),
+    )
+    bypass: Private[bool] = Field(
+        default=False,
+        description=(
+            'If true, will bypass the safety check that prevents changing zfs resources under "protected" paths.'
         ),
     )
 

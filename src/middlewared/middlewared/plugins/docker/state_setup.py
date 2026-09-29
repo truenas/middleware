@@ -5,7 +5,13 @@ import os
 import shutil
 import uuid
 
-from middlewared.api.current import ZFSResourceCreateArgsData, ZFSResourceCreateProperties, ZFSResourceQuery
+from middlewared.api.current import (
+    ZFSResourceCreateArgsData,
+    ZFSResourceCreateProperties,
+    ZFSResourceQuery,
+    ZFSResourceSetArgsData,
+    ZFSResourceSetProperties,
+)
 from middlewared.service import CallError, ServiceContext
 from middlewared.utils.interface import wait_for_default_interface_link_state_up
 
@@ -97,7 +103,14 @@ def create_update_docker_datasets(context: ServiceContext, docker_ds: str) -> No
             update_props = DatasetDefaults.update_only(os.path.basename(dataset_name))
             if any(val['raw'] != update_props[name] for name, val in existing_dataset.items()):
                 # if any of the zfs properties don't match what we expect we'll update all properties
-                context.call_sync2(context.s.zfs.resource.set_impl, dataset_name, properties=update_props, bypass=True)
+                context.call_sync2(
+                    context.s.zfs.resource.set_impl,
+                    ZFSResourceSetArgsData(
+                        path=dataset_name,
+                        properties=ZFSResourceSetProperties.model_validate(update_props),
+                        bypass=True,
+                    ),
+                )
         else:
             move_conflicting_dir(dataset_name)
             context.call_sync2(
@@ -132,7 +145,12 @@ def set_canmount_noauto(context: ServiceContext, docker_ds: str) -> None:
         if ds['type'] != 'FILESYSTEM' or ds['properties']['canmount']['raw'] == 'noauto':
             continue
 
-        context.call_sync2(context.s.zfs.resource.set_impl, ds['name'], properties={'canmount': 'noauto'}, bypass=True)
+        context.call_sync2(
+            context.s.zfs.resource.set_impl,
+            ZFSResourceSetArgsData(
+                path=ds['name'], properties=ZFSResourceSetProperties(canmount='noauto'), bypass=True,
+            ),
+        )
 
 
 def move_conflicting_dir(ds_name: str) -> None:

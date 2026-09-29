@@ -28,8 +28,6 @@ from .set_rules import (
 from .utils import reject_protected_path, reject_snapshot_path
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
-
     from middlewared.api.current import ZFSResourceSetArgsData
     from middlewared.service import ServiceContext
 
@@ -63,47 +61,32 @@ def _phase_error(
     return CallError(other_message, _ZFS_ERRNO.get(e.code, errno.EFAULT))
 
 
-def touched_names(
-    properties: dict[str, Any] | None, user_properties: dict[str, str] | None, inherit: list[str]
-) -> tuple[list[str], list[str]]:
-    natives = sorted((properties or {}).keys() | {name for name in inherit if ":" not in name})
-    user_names = sorted((user_properties or {}).keys() | {name for name in inherit if ":" in name})
+def touched_names(data: ZFSResourceSetArgsData) -> tuple[list[str], list[str]]:
+    natives = sorted(touched_natives(data.properties, data.inherit))
+    user_names = sorted(data.user_properties.keys() | {name for name in data.inherit if ":" in name})
     return natives, user_names
 
 
-def changed_fields(
-    entry: dict[str, Any],
-    properties: dict[str, Any] | None,
-    user_properties: dict[str, str] | None,
-    inherit: list[str],
-) -> dict[str, Any]:
-    natives, user_names = touched_names(properties, user_properties, inherit)
+def changed_fields(entry: dict[str, Any], data: ZFSResourceSetArgsData) -> dict[str, Any]:
+    natives, user_names = touched_names(data)
     return {
         "properties": entry["properties"],
         "user_properties": entry["user_properties"],
-        "inherited": sorted(inherit),
+        "inherited": sorted(data.inherit),
         "descendants_affected": any(name not in NON_INHERITABLE_PROPERTIES for name in natives) or bool(user_names),
     }
 
 
-def set_impl(
-    tls: Any,
-    path: str,
-    properties: dict[str, Any] | None = None,
-    user_properties: dict[str, str] | None = None,
-    inherit: Iterable[str] | None = None,
-    bypass: bool = False,
-) -> dict[str, Any]:
+def set_impl(tls: Any, data: ZFSResourceSetArgsData) -> dict[str, Any]:
+    path = data.path
     reject_snapshot_path(SCHEMA, path)
-    reject_protected_path(SCHEMA, path, bypass)
+    reject_protected_path(SCHEMA, path, data.bypass)
     # libzfs refuses a numeric 0 for quota and refquota and requires the word none; the other limits accept 0
     properties = {
-        name: "none" if name in ("quota", "refquota") and value in (0, "0", "none") else value
-        for name, value in (properties or {}).items()
+        name: "none" if name in ("quota", "refquota") and value == 0 else value
+        for name, value in data.properties.model_dump(exclude_none=True).items()
     }
-    user_properties = dict(user_properties or {})
-    inherit = list(inherit or ())
-    natives, user_names = touched_names(properties, user_properties, inherit)
+    natives, user_names = touched_names(data)
 
     native_attribute = f"{SCHEMA}.properties"
     if len(properties) == 1:
@@ -120,12 +103,12 @@ def set_impl(
                 raise _phase_error(
                     path, e, native_attribute, e.err_str, f"Failed to set properties on {path!r}: {e}"
                 ) from e
-        if user_properties:
+        if data.user_properties:
             try:
-                ds.set_user_properties(user_properties=user_properties)
+                ds.set_user_properties(user_properties=data.user_properties)
             except truenas_pylibzfs.ZFSException as e:
                 raise _phase_error(path, e, f"{SCHEMA}.user_properties", f"{e}", f"{e}") from e
-        for name in inherit:
+        for name in data.inherit:
             try:
                 ds.inherit_property(property=name)
             except truenas_pylibzfs.ZFSException as e:
@@ -157,7 +140,7 @@ def snapshot_devices(path: str) -> frozenset[str]:
 
 def set(context: ServiceContext, data: ZFSResourceSetArgsData) -> ZFSResourceEntry:
     path = data.path
-    reject_protected_path(SCHEMA, path)
+    reject_protected_path(SCHEMA, path, data.bypass)
     verrors = ValidationErrors()
     validate_request(data, verrors)
     verrors.check()
@@ -219,10 +202,7 @@ def set(context: ServiceContext, data: ZFSResourceSetArgsData) -> ZFSResourceEnt
     entry = ZFSResourceEntry(
         **context.call_sync2(
             context.s.zfs.resource.set_impl,
-            path,
-            properties=state.properties.model_dump(exclude_none=True),
-            user_properties=data.user_properties,
-            inherit=sorted(state.inherit),
+            data.model_copy(update={"properties": state.properties, "inherit": sorted(state.inherit)}),
         )
     )
     failures = []

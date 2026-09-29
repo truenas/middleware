@@ -66,8 +66,6 @@ from .snapshot import ZFSResourceSnapshotService, audit_target
 from .utils import has_internal_path
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
-
     from middlewared.common.attachment import FSAttachmentDelegate
     from middlewared.main import Middleware
 
@@ -658,27 +656,18 @@ class ZFSResourceService(Service):
 
     @private
     @pass_thread_local_storage
-    def set_impl(
-        self,
-        tls: Any,
-        path: str,
-        properties: dict[str, Any] | None = None,
-        user_properties: dict[str, str] | None = None,
-        inherit: Iterable[str] | None = None,
-        bypass: bool = False,
-    ) -> dict[str, Any]:
+    def set_impl(self, tls: Any, data: ZFSResourceSetArgsData) -> dict[str, Any]:
         """
         Writes without validation. Changing ``mountpoint`` or a native share property remounts the filesystem;
         inheriting a user property removes it.
         """
-        names = builtins.list(inherit or ())
-        entry = _set.set_impl(tls, path, properties, user_properties, names, bypass)
-        if not has_internal_path(path):
+        entry = _set.set_impl(tls, data)
+        if not has_internal_path(data.path):
             self.middleware.send_event(
                 "zfs.resource.list",
                 "CHANGED",
-                id=path,
-                fields=_set.changed_fields(entry, properties, user_properties, names),
+                id=data.path,
+                fields=_set.changed_fields(entry, data),
             )
         return entry
 

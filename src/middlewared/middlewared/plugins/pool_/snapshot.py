@@ -20,6 +20,7 @@ from middlewared.api.current import (
     PoolSnapshotRollbackResult,
     PoolSnapshotUpdateArgs,
     PoolSnapshotUpdateResult,
+    ZFSResourceSetArgsData,
     ZFSResourceSnapshotCloneQuery,
     ZFSResourceSnapshotCreateQuery,
     ZFSResourceSnapshotDestroyQuery,
@@ -372,7 +373,10 @@ class PoolSnapshotService(CRUDService):
 
             # Set vmsynced property if applicable
             if vmware_context and vmware_context['vmsynced']:
-                self.call_sync2(self.s.zfs.resource.set_impl, dataset, user_properties={'freenas:vmsynced': 'Y'})
+                self.call_sync2(
+                    self.s.zfs.resource.set_impl,
+                    ZFSResourceSetArgsData(path=dataset, user_properties={'freenas:vmsynced': 'Y'}),
+                )
 
             self.logger.info(f"Snapshot taken: {dataset}@{name}")
         except ValidationError as e:
