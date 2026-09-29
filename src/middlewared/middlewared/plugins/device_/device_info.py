@@ -6,8 +6,13 @@ from truenas_pylibvirt.utils.gpu import get_gpus
 
 from middlewared.plugins.disk_.disk_info import get_partition_size_info
 from middlewared.service import Service, private
-from middlewared.utils.disks import DISKS_TO_IGNORE, get_disk_serial_from_block_device, safe_retrieval
-from middlewared.utils.disks_.disk_class import DiskEntry
+from middlewared.utils.disks import (
+    DISKS_TO_IGNORE,
+    get_disk_lunid_from_block_device,
+    get_disk_serial_from_block_device,
+    safe_retrieval,
+)
+from middlewared.utils.disks_.identifier import join_serial_lunid
 
 RE_NVME_PRIV = re.compile(r'nvme[0-9]+c')
 ISCSI_DEV_PATH = re.compile(
@@ -26,22 +31,6 @@ class DeviceService(Service):
     DISK_ROTATION_ERROR_LOG_CACHE = set()
 
     @private
-    def get_disk_serial(self, dev):
-        return get_disk_serial_from_block_device(dev)
-
-    @private
-    def get_lunid(self, dev):
-        # Try udev ID_WWN first (for NAA format WWIDs)
-        lunid = self.safe_retrieval(dev.properties, 'ID_WWN', '').removeprefix('0x').removeprefix('eui.')
-        if lunid:
-            return lunid
-
-        # NAS-137807: Fallback to sysfs wwid for EUI-64 format WWIDs not exposed in udev properties
-        # Uses DiskEntry.lunid which handles sysfs wwid retrieval and normalization
-        disk_entry = DiskEntry(name=dev.sys_name, devpath=f'/dev/{dev.sys_name}')
-        return disk_entry.lunid
-
-    @private
     def get_disks(self, get_partitions=False, serial_only=False):
         ctx = pyudev.Context()
         disks = {}
@@ -53,7 +42,7 @@ class DeviceService(Service):
 
             try:
                 if serial_only:
-                    disks[dev.sys_name] = self.get_disk_serial(dev)
+                    disks[dev.sys_name] = get_disk_serial_from_block_device(dev)
                 else:
                     disks[dev.sys_name] = self.get_disk_details(ctx, dev, get_partitions)
             except Exception:
@@ -99,7 +88,7 @@ class DeviceService(Service):
     @private
     def get_disk_details(self, ctx, dev, get_partitions=False):
         blocks = self.safe_retrieval(dev.attributes, 'size', None, asint=True)
-        ident = serial = self.get_disk_serial(dev)
+        ident = serial = get_disk_serial_from_block_device(dev)
         model = descr = self.safe_retrieval(dev.properties, 'ID_MODEL', None)
         vendor = self.safe_retrieval(dev.properties, 'ID_VENDOR', None)
         is_nvme = dev.sys_name.startswith('nvme') or (vendor and vendor.lower().strip() == 'nvme')
@@ -124,7 +113,7 @@ class DeviceService(Service):
             'serial': serial,
             'model': model,
             'descr': descr,
-            'lunid': self.get_lunid(dev),
+            'lunid': get_disk_lunid_from_block_device(dev),
             'bus': self.safe_retrieval(dev.properties, 'ID_BUS', 'UNKNOWN').upper(),
             'type': 'UNKNOWN',
             'blocks': blocks,
@@ -144,8 +133,7 @@ class DeviceService(Service):
             disk['type'] = 'SSD'
             disk['rotationrate'] = None
 
-        if disk['serial'] and disk['lunid']:
-            disk['serial_lunid'] = f'{disk["serial"]}_{disk["lunid"]}'
+        disk['serial_lunid'] = join_serial_lunid(disk['serial'], disk['lunid'])
 
         disk['dif'] = self.is_dif_formatted(ctx, {'subsystem': disk['subsystem'], 'hctl': disk['hctl']})
 
@@ -195,7 +183,7 @@ class DeviceService(Service):
         try:
             block_device = pyudev.Devices.from_name(context, 'block', name)
             if serial_only:
-                return {'serial': self.get_disk_serial(block_device)}
+                return {'serial': get_disk_serial_from_block_device(block_device)}
             else:
                 return self.get_disk_details(context, block_device, get_partitions)
         except pyudev.DeviceNotFoundByNameError:
