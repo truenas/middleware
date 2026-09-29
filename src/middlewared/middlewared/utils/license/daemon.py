@@ -181,4 +181,5 @@ def from_license_status(status: LicenseStatus | None = None) -> LicenseInfo | No
         ),
         contract_type=contract_type,
         origin=LicenseOrigin.ISSUED,
+        issued_at=status.issued_at,
     )

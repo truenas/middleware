@@ -196,4 +196,5 @@ class TNCHeartbeatService(Service, TNCAPIMixin):
             'stats': stats,
             'fingerprint': fingerprint,
             'license_id': license_info.id if issued else None,
+            'issued_at': license_info.issued_at if issued else None,
         }
