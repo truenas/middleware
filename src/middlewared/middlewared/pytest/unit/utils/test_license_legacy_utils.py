@@ -104,6 +104,7 @@ FREENAS_MINI_BLOB = (
                 enclosures={"E24": 3, "E16": 2},
                 contract_type="GOLD",
                 origin=LicenseOrigin.ISSUED,
+                issued_at=date(2026, 4, 8).isoformat(),
             ),
         ),
         # Enterprise single license (X10, STANDARD contract): the jails->APPS bit is
@@ -121,6 +122,7 @@ FREENAS_MINI_BLOB = (
                 enclosures={},
                 contract_type="STANDARD",
                 origin=LicenseOrigin.ISSUED,
+                issued_at=date(2026, 4, 8).isoformat(),
             ),
         ),
     ],
@@ -275,6 +277,10 @@ def test__legacy_ha_key_comes_from_the_second_serial():
     assert parse_legacy_license(H10_HA_BLOB).has_feature(LicenseFeature.HA)
     assert not parse_legacy_license(X10_BLOB).has_feature(LicenseFeature.HA)
     assert not parse_legacy_license(_hw_only_blob("TEST-000002")).has_feature(LicenseFeature.HA)
+
+
+def test__hw_only_record_has_no_issued_at():
+    assert parse_legacy_license(_hw_only_blob("")).issued_at is None
 
 
 # The point of the injection: a flag put on the license has to survive the engine, or the

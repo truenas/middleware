@@ -74,6 +74,9 @@ class LicenseInfo:
     """Support contract type."""
     origin: LicenseOrigin
     """Whether an issuer signed this record or the system wrote it for itself."""
+    issued_at: str | None = None
+    """Issue date exactly as the license records it: the minted RFC3339 timestamp, or a legacy
+    license's contract start date. None for a system-generated record."""
 
     def has_feature(self, name: str) -> bool:
         return name in self.features  # membership only; the feature's own expiry is not consulted

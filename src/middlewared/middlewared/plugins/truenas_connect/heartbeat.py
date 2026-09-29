@@ -68,13 +68,16 @@ async def _build_payload(
     # license_id is the delivery acknowledgement: once we report the id of an installed license,
     # TNC marks it accepted and stops resending the PEM. Null when we hold no valid license.
     license_info = await context.call2(context.s.truenas.license.info_private)
-    license_id = license_info.id if license_info is not None and license_info.origin is LicenseOrigin.ISSUED else None
+    issued = license_info if license_info is not None and license_info.origin is LicenseOrigin.ISSUED else None
+    license_id = issued.id if issued is not None else None
+    issued_at = issued.issued_at if issued is not None else None
 
     return {
         'alerts': [alert.model_dump() for alert in await context.call2(context.s.alert.list)],
         'stats': stats,
         'fingerprint': fingerprint,
         'license_id': license_id,
+        'issued_at': issued_at,
     }
 
 
