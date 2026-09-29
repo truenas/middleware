@@ -86,36 +86,26 @@ def test_zfs_resource_create_volume_capacity_guardrail():
 
 
 def test_create_headroom_attribute_and_aggregation():
-    parent = os.path.join(pool_name, "test_create_headroom_parent")
-    pool_available = call("zfs.resource.list", {"paths": [pool_name], "properties": ["available"]})[0]
-    with zfs_resource(
-        parent, {"properties": {"refreservation": pool_available["properties"]["available"]["value"] // 2}}
-    ):
-        props = call(
-            "zfs.resource.list", {"paths": [parent], "properties": ["available", "usedbyrefreservation"]}
-        )[0]["properties"]
-        available = props["available"]["value"]
-        usedbyrefreservation = props["usedbyrefreservation"]["value"]
-        assert usedbyrefreservation > 0
-        refreservation = int(0.4 * available + 0.4 * (available - usedbyrefreservation))
-        assert 0.8 * (available - usedbyrefreservation) < refreservation < 0.8 * available
-
-        path = f"{parent}/vol"
-        with pytest.raises(ValidationErrors) as exc_info:
-            call(
-                "zfs.resource.create",
-                {
-                    "path": path,
-                    "type": "VOLUME",
-                    "properties": {"volsize": 16 * 1024**2, "refreservation": refreservation},
-                    "user_properties": {"nocolon": "x"},
+    available = call("zfs.resource.list", {"paths": [pool_name], "properties": ["available"]})[0]
+    path = os.path.join(pool_name, "test_create_headroom_vol")
+    with pytest.raises(ValidationErrors) as exc_info:
+        call(
+            "zfs.resource.create",
+            {
+                "path": path,
+                "type": "VOLUME",
+                "properties": {
+                    "volsize": 16 * 1024**2,
+                    "refreservation": int(0.9 * available["properties"]["available"]["value"]),
                 },
-            )
-        assert sorted(e.attribute for e in exc_info.value.errors) == [
-            "zfs.resource.create.properties.refreservation",
-            "zfs.resource.create.user_properties",
-        ]
-        assert call("zfs.resource.list", {"paths": [path], "properties": None}) == []
+                "user_properties": {"nocolon": "x"},
+            },
+        )
+    assert sorted(e.attribute for e in exc_info.value.errors) == [
+        "zfs.resource.create.properties.refreservation",
+        "zfs.resource.create.user_properties",
+    ]
+    assert call("zfs.resource.list", {"paths": [path], "properties": None}) == []
 
 
 def test_zfs_resource_create_quota_none_is_accepted():

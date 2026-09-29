@@ -317,9 +317,8 @@ def check_volume_capacity(data: ZFSResourceCreateArgsData, ctx: CreateContext, v
     available to it.
 
     The effective refreservation (the volsize for a thick volume) is
-    measured against the space the nearest existing ancestor leaves to a
-    new child, which excludes the unused part of that ancestor's own
-    refreservation. Sparse volumes reserve nothing so they are exempt.
+    measured against the `available` space of the nearest existing
+    ancestor. Sparse volumes reserve nothing so they are exempt.
     `force_size` skips the check and leaves the limit to ZFS, which refuses
     a reservation it cannot back and removes the new volume in the same step.
     """
@@ -334,7 +333,7 @@ def check_volume_capacity(data: ZFSResourceCreateArgsData, ctx: CreateContext, v
         data.path,
         ctx.properties.refreservation or 0,
         0,
-        parent["properties"]["available"]["value"] - parent["properties"]["usedbyrefreservation"]["value"],
+        parent["properties"]["available"]["value"],
     )
 
 

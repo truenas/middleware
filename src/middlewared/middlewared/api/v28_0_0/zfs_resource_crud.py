@@ -816,10 +816,10 @@ class ZFSResourceSetArgsData(BaseModel):
     force_size: bool = Field(
         default=False,
         description=(
-            "Let a VOLUME's reservation grow by up to all of the space available to it instead of 80%. This covers "
-            "the re-reservation that follows a 'volsize' grow as well as an explicit 'refreservation'. A request "
-            "that would reserve more than the available space is refused before anything is written. Applies to a "
-            "VOLUME only."
+            "Let a 'volsize' change grow a VOLUME's reservation by up to all of the space available to it instead "
+            "of 80%. This covers the re-reservation that follows the grow as well as an explicit 'refreservation' "
+            "sent with it. A request that would reserve more than the available space is refused before anything "
+            "is written. Applies to a VOLUME only."
         ),
     )
 

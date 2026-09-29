@@ -715,8 +715,8 @@ class ZFSResourceService(Service):
         - ``volsize`` is smaller than the volume's current size (``EINVAL``)
         - ``volsize`` is changed on a read-only (``EROFS``) or locked (``EACCES``) volume
         - ``volsize`` is not a multiple of the volume's ``volblocksize`` (``EINVAL``)
-        - a volume's reservation would grow by more than 80% of the space available to it, or by more than all of
-          it with ``force_size``; growing a thick volume re-reserves it (``EINVAL``)
+        - a ``volsize`` change would grow the volume's reservation by more than 80% of the space available to it,
+          or by more than all of it with ``force_size``; growing a thick volume re-reserves it (``EINVAL``)
         - a filesystem's ``refreservation`` would exceed its ``refquota``, or is ``auto`` (``EINVAL``)
         - ``force_size`` is set for a FILESYSTEM (``EINVAL``)
         - the effective ``acltype`` and ``aclmode`` combination is unusable - a posix or off acltype requires

@@ -291,7 +291,7 @@ def headroom_errors(st):
 )
 def test_headroom_base_excludes_the_space_the_reservation_itself_holds(usedbyrefreservation, force_size, rejected):
     st = volume(
-        {"refreservation": 100 * GiB},
+        {"volsize": 2 * GiB, "refreservation": 100 * GiB},
         10 * GiB,
         available=200 * GiB,
         usedbyrefreservation=usedbyrefreservation,

@@ -156,9 +156,7 @@ def reject_insufficient_headroom(
     """A volume reservation may not grow by more than 80% of the space available to it, or by more than all of it
     when `forced`.
 
-    `base` is the space the kernel measures a new reservation against: `available - usedbyrefreservation` of the
-    resource itself, or of the nearest existing ancestor for a resource that does not exist yet. All figures are
-    bytes.
+    `base` is the space the reservation is measured against. All figures are bytes.
     """
     base = max(base, 0)
     delta = requested - current

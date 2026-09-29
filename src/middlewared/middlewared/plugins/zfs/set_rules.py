@@ -330,6 +330,8 @@ def check_reservation_headroom(context: ServiceContext, state: SetContext, verro
                 errno.EINVAL,
             )
         return
+    if not state.changed("volsize"):
+        return
     reject_insufficient_headroom(
         verrors,
         attribute,

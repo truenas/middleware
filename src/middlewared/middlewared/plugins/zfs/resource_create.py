@@ -105,7 +105,7 @@ def create_impl(context: ServiceContext, tls: Any, data: ZFSResourceCreateArgsDa
     if not verrors:
         ancestor_props = ["readonly", "mountpoint", "encryption"]
         if data.type == "VOLUME":
-            ancestor_props.extend(["available", "usedbyrefreservation", "special_small_blocks"])
+            ancestor_props.extend(["available", "special_small_blocks"])
         else:
             ancestor_props.extend(["acltype", "aclmode", "mounted"])
             if ctx.tier_enabled and data.properties.special_small_blocks is None:
