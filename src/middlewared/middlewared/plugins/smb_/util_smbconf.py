@@ -385,7 +385,7 @@ def generate_smb_conf_dict(
     smb_service_config: dict,
     smb_shares: list,
     smb_bind_choices: dict,
-    smb_fastpath: bool,
+    smb_block_cloning: bool,
     security_config: SystemSecurityEntry,
     tiering_enabled: bool = False
 ):
@@ -714,8 +714,8 @@ def generate_smb_conf_dict(
     # The following parameters must come after processing includes in order to
     # prevent auxiliary parameters from overriding them
     smbconf.update({
-        'zfs_core:zfs_integrity_streams': smb_fastpath,
-        'zfs_core:zfs_block_cloning': smb_fastpath,
+        'zfs_core:zfs_integrity_streams': smb_block_cloning,
+        'zfs_core:zfs_block_cloning': smb_block_cloning,
         'registry shares': True,
         'include': 'registry',
         'SHARES': {}

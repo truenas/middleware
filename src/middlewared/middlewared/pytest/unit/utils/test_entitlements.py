@@ -45,8 +45,7 @@ def test_target_vectors_match_the_product_matrix():
         LicenseFeature.S3_AUDIT: Vector(ce=0, hw=0, hw_k=1, ce_k=1),
         LicenseFeature.S3_VERSIONING: Vector(ce=0, hw=0, hw_k=1, ce_k=1),
         LicenseFeature.SED: Vector(ce=0, hw=0, hw_k=1, ce_k=0),
-        LicenseFeature.SMB_FASTPATH: Vector(ce=0, hw=0, hw_k=1, ce_k=1),
-        LicenseFeature.SMB_VEEAM: Vector(ce=0, hw=0, hw_k=1, ce_k=1),
+        LicenseFeature.SMB_BLOCK_CLONING: Vector(ce=0, hw=0, hw_k=1, ce_k=1),
         LicenseFeature.STIG: Vector(ce=0, hw=0, hw_k=1, ce_k=1),
         LicenseFeature.SUPPORT: Vector(ce=0, hw=0, hw_k=1, ce_k=1),
         LicenseFeature.TRUESEARCH: Vector(ce=0, hw=0, hw_k=1, ce_k=1),
@@ -72,8 +71,7 @@ def test_live_policy_shape():
         LicenseFeature.VMS,
         LicenseFeature.WEBSHARE,
         LicenseFeature.SED,
-        LicenseFeature.SMB_FASTPATH,
-        LicenseFeature.SMB_VEEAM,
+        LicenseFeature.SMB_BLOCK_CLONING,
         LicenseFeature.STIG,
         LicenseFeature.SUPPORT,
         LicenseFeature.TRUESEARCH,
@@ -223,10 +221,10 @@ MESSAGE_TABLE = [
     (LicenseFeature.NVMEOF_SPDK, "HW+L", None, "SPDK is limited to enterprise licensed systems only."),
     # ... and holds on WRONG_HARDWARE too, which no live vector with an override can reach.
     (
-        LicenseFeature.SMB_VEEAM,
+        LicenseFeature.NVMEOF_SPDK,
         "CE+K",
         _CE_KEY_DROPPED,
-        "Veeam repository shares require a TrueNAS enterprise license.",
+        "SPDK is limited to enterprise licensed systems only.",
     ),
     # No override: the generic template is filled from the display name, not the key.
     (LicenseFeature.DEDUP, "HW+L", None, "This system's license does not include the ZFS deduplication feature."),
