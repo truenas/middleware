@@ -73,13 +73,19 @@ def dataset_mountpoint(dataset):
     return dataset['mountpoint'] or os.path.join('/mnt', dataset['name'])
 
 
-def pool_dataset_view(row):
+def pool_dataset_view(row, encryption=True):
     props = row['properties']
-    enc = get_encryption_info(props)
-    return {
+    view = {
         'name': row['name'],
         'type': row['type'],
         'mountpoint': props['mountpoint']['raw'] if row['type'] == 'FILESYSTEM' else None,
+        'children': [],
+    }
+    if not encryption:
+        return view
+
+    enc = get_encryption_info(props)
+    return view | {
         'encrypted': enc.encrypted,
         'locked': enc.locked,
         'key_loaded': enc.encrypted and not enc.locked,
@@ -88,7 +94,6 @@ def pool_dataset_view(row):
             'value': enc.encryption_type.upper() if enc.encryption_type else None,
             'parsed': props['keyformat']['raw'],
         },
-        'children': [],
     }
 
 

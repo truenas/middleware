@@ -1,7 +1,8 @@
 import collections
-import dataclasses
 import enum
 import os
+
+from middlewared.api.current import ZFSResourceCreateProperties, ZFSResourceSetProperties
 
 APPS_STATUS = collections.namedtuple('APPS_STATUS', ['status', 'description'])
 CATALOG_DATASET_NAME: str = 'truenas_catalog'
@@ -10,43 +11,33 @@ IX_APPS_DIR_NAME = '.ix-apps'
 IX_APPS_MOUNT_PATH: str = os.path.join('/mnt', IX_APPS_DIR_NAME)
 
 
-@dataclasses.dataclass(slots=True, frozen=True)
-class DatasetProp:
-    value: str
-    create_time_only: bool
-    ds_name: str | None = None
-
-
-@dataclasses.dataclass(slots=True, frozen=True)
 class DatasetDefaults:
-    aclmode: DatasetProp = DatasetProp('discard', False)
-    acltype: DatasetProp = DatasetProp('posix', False)
-    atime: DatasetProp = DatasetProp('off', False)
-    casesensitivity: DatasetProp = DatasetProp('sensitive', True)
-    canmount: DatasetProp = DatasetProp('noauto', False)
-    dedup: DatasetProp = DatasetProp('off', False)
-    encryption: DatasetProp = DatasetProp('off', True, DOCKER_DATASET_NAME)
-    exec: DatasetProp = DatasetProp('on', False)
-    mountpoint: DatasetProp = DatasetProp(f'/{IX_APPS_DIR_NAME}', True, DOCKER_DATASET_NAME)
-    normalization: DatasetProp = DatasetProp('none', True)
-    overlay: DatasetProp = DatasetProp('on', False)
-    setuid: DatasetProp = DatasetProp('on', False)
-    snapdir: DatasetProp = DatasetProp('hidden', False)
-    xattr: DatasetProp = DatasetProp('sa', False)
+    @staticmethod
+    def update_only() -> ZFSResourceSetProperties:
+        return ZFSResourceSetProperties(
+            aclmode='discard',
+            acltype='posix',
+            atime='off',
+            canmount='noauto',
+            dedup='off',
+            exec='on',
+            overlay='on',
+            setuid='on',
+            snapdir='hidden',
+            xattr='sa',
+        )
 
-    @classmethod
-    def create_time_props(cls, ds_name: str | None = None) -> dict[str, str]:
-        return {
-            k: v['value'] for k, v in dataclasses.asdict(cls()).items()
-            if v['ds_name'] in (ds_name, None)
-        }
-
-    @classmethod
-    def update_only(cls, ds_name: str | None = None, skip_ds_name_check: bool = False) -> dict[str, str]:
-        return {
-            k: v['value'] for k, v in dataclasses.asdict(cls()).items()
-            if v['create_time_only'] is False and (skip_ds_name_check or v['ds_name'] in (ds_name, None))
-        }
+    @staticmethod
+    def create_time_props(ds_name: str | None = None) -> ZFSResourceCreateProperties:
+        props = ZFSResourceCreateProperties(
+            casesensitivity='sensitive',
+            normalization='none',
+            **DatasetDefaults.update_only().model_dump(exclude_none=True),
+        )
+        if ds_name == DOCKER_DATASET_NAME:
+            props.encryption = 'off'
+            props.mountpoint = f'/{IX_APPS_DIR_NAME}'
+        return props
 
 
 class Status(enum.Enum):

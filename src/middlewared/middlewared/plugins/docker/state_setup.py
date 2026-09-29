@@ -7,7 +7,6 @@ import uuid
 
 from middlewared.api.current import (
     ZFSResourceCreateArgsData,
-    ZFSResourceCreateProperties,
     ZFSResourceQuery,
     ZFSResourceSetArgsData,
     ZFSResourceSetProperties,
@@ -89,27 +88,21 @@ def create_update_docker_datasets(context: ServiceContext, docker_ds: str) -> No
         dataset
     """
     expected_docker_datasets = docker_datasets(docker_ds)
+    update_props = DatasetDefaults.update_only()
+    expected_values = update_props.model_dump(exclude_none=True)
     actual_docker_datasets = {
         i['name']: i['properties'] for i in context.call_sync2(
             context.s.zfs.resource.list_impl,
-            ZFSResourceQuery(
-                paths=expected_docker_datasets,
-                properties=list(DatasetDefaults.update_only(skip_ds_name_check=True).keys()),
-            )
+            ZFSResourceQuery(paths=expected_docker_datasets, properties=list(expected_values)),
         )
     }
     for dataset_name in expected_docker_datasets:
         if existing_dataset := actual_docker_datasets.get(dataset_name):
-            update_props = DatasetDefaults.update_only(os.path.basename(dataset_name))
-            if any(val['raw'] != update_props[name] for name, val in existing_dataset.items()):
+            if any(val['raw'] != expected_values[name] for name, val in existing_dataset.items()):
                 # if any of the zfs properties don't match what we expect we'll update all properties
                 context.call_sync2(
                     context.s.zfs.resource.set_impl,
-                    ZFSResourceSetArgsData(
-                        path=dataset_name,
-                        properties=ZFSResourceSetProperties.model_validate(update_props),
-                        bypass=True,
-                    ),
+                    ZFSResourceSetArgsData(path=dataset_name, properties=update_props, bypass=True),
                 )
         else:
             move_conflicting_dir(dataset_name)
@@ -117,9 +110,7 @@ def create_update_docker_datasets(context: ServiceContext, docker_ds: str) -> No
                 context.s.zfs.resource.create_impl,
                 ZFSResourceCreateArgsData(
                     path=dataset_name,
-                    properties=ZFSResourceCreateProperties.model_validate(
-                        DatasetDefaults.create_time_props(os.path.basename(dataset_name))
-                    ),
+                    properties=DatasetDefaults.create_time_props(os.path.basename(dataset_name)),
                     bypass=True,
                 ),
             )

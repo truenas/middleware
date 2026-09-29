@@ -63,6 +63,10 @@ def path_is_locked_impl(context: ServiceContext, tls: Any, path: str) -> bool:
     if _locked(tls, path, about_to_lock, False):
         return True
     # The mount tree never passes through a snapshot, so a parent containing "@" is a directory.
-    return any(
-        _locked(tls, p.as_posix(), about_to_lock, False) for p in Path(path).parents[:-1] if "@" not in p.as_posix()
-    )
+    for p in Path(path).parents[:-1]:
+        parent = p.as_posix()
+        if "@" in parent:
+            continue
+        if _locked(tls, parent, about_to_lock, False):
+            return True
+    return False

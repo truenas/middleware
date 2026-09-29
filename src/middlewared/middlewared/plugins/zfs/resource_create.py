@@ -223,11 +223,11 @@ def create_impl(context: ServiceContext, tls: Any, data: ZFSResourceCreateArgsDa
         if v is not None:
             props[k] = v
     try:
-        missing = (
-            [a for a in reversed(ancestor_chain(path)) if "/" in a and a not in ctx.ancestors]
-            if data.create_ancestors
-            else []
-        )
+        missing = []
+        if data.create_ancestors:
+            for a in reversed(ancestor_chain(path)):
+                if "/" in a and a not in ctx.ancestors:
+                    missing.append(a)
         created = create_ancestors(tls, missing, mount_ancestors)
         create_leaf(tls, path, data.type, props, data.user_properties, crypto)
     except truenas_pylibzfs.ZFSException as e:

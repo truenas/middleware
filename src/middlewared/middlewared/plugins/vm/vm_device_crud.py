@@ -177,16 +177,19 @@ class VMDeviceServicePart(CRUDServicePart[VMDeviceEntry]):
             create_zvol = data['attributes'].pop('create_zvol', False)
             if create_zvol:
                 zvol_name = data['attributes'].pop('zvol_name')
-                await self.call2(self.s.zfs.resource.create, ZFSResourceCreateArgsData(
-                    path=zvol_name,
-                    type='VOLUME',
-                    properties=ZFSResourceCreateProperties.model_validate({
-                        'volsize': data['attributes'].pop('zvol_volsize'),
-                        'volblocksize': await self.call2(
-                            self.s.zfs.resource.recommended_zvol_blocksize, zvol_name.split('/', 1)[0]
-                        ),
-                    }),
-                ))
+                await self.call2(
+                    self.s.zfs.resource.create,
+                    ZFSResourceCreateArgsData(
+                        path=zvol_name,
+                        type='VOLUME',
+                        properties=ZFSResourceCreateProperties(**{
+                            'volsize': data['attributes'].pop('zvol_volsize'),
+                            'volblocksize': await self.call2(
+                                self.s.zfs.resource.recommended_zvol_blocksize, zvol_name.split('/', 1)[0]
+                            ),
+                        }),
+                    ),
+                )
         elif device_dtype == 'RAW' and (
             not data['attributes'].pop('exists', True) or (
                 old and old['attributes']['size'] != data['attributes']['size']

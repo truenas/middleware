@@ -192,12 +192,14 @@ class PoolDatasetService(CRUDService):
     async def get_instance_quick(self, name, options=None):
         if is_internal_dataset_name(name):
             raise InstanceNotFound(f'PoolDataset {name} does not exist')
+        encryption = bool((options or {}).get('encryption'))
+        properties = ['mountpoint', 'encryption'] if encryption else ['mountpoint']
         rows = await self.call2(
-            self.s.zfs.resource.list_impl, ZFSResourceQuery(paths=[name], properties=['mountpoint', 'encryption'])
+            self.s.zfs.resource.list_impl, ZFSResourceQuery(paths=[name], properties=properties)
         )
         if not rows:
             raise InstanceNotFound(f'PoolDataset {name} does not exist')
-        return pool_dataset_view(rows[0])
+        return pool_dataset_view(rows[0], encryption)
 
     @private
     async def internal_datasets_filters(self):
@@ -358,12 +360,19 @@ class PoolDatasetService(CRUDService):
             for key in SHARE_PRESETS[share_type]:
                 properties.pop(key, None)
         try:
-            await self.call2(self.s.zfs.resource.create, ZFSResourceCreateArgsData(
-                path=name, type=data['type'], properties=properties, user_properties=user_properties,
-                create_ancestors=data['create_ancestors'], share_type=share_type,
-                encryption=data['encryption_options'] if data['encryption'] else None,
-                force_size=data.get('force_size', False),
-            ))
+            await self.call2(
+                self.s.zfs.resource.create,
+                ZFSResourceCreateArgsData(
+                    path=name,
+                    type=data['type'],
+                    properties=properties,
+                    user_properties=user_properties,
+                    create_ancestors=data['create_ancestors'],
+                    share_type=share_type,
+                    encryption=data['encryption_options'] if data['encryption'] else None,
+                    force_size=data.get('force_size', False),
+                ),
+            )
         except PydanticValidationError as e:
             rekey_create_errors(
                 verrors, sent, [('.'.join(map(str, err['loc'])), err['msg'], errno.EINVAL) for err in e.errors()]
@@ -427,7 +436,10 @@ class PoolDatasetService(CRUDService):
         if properties or user_properties or inherit:
             try:
                 args = ZFSResourceSetArgsData(
-                    path=data['name'], properties=properties, user_properties=user_properties, inherit=inherit,
+                    path=data['name'],
+                    properties=properties,
+                    user_properties=user_properties,
+                    inherit=inherit,
                     force_size=data.get('force_size', False),
                 )
                 await self.call2(self.s.zfs.resource.set, args)

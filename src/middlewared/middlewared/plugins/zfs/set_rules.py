@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import dataclasses
 import errno
+from types import MappingProxyType
 import typing
 
 from truenas_pylibzfs import ZFSProperty
@@ -96,13 +97,15 @@ INDEX_PROPERTIES = frozenset(
     }
 )
 SET_READ_PROPERTIES = SETTABLE_PROPERTIES | {"available", "keystatus", "volblocksize", "usedbyrefreservation"}
-POOL_ROOT_INHERIT_VALUES: Mapping[str, typing.Any] = {  # registered ZFS defaults; pylibzfs has no accessor for them
-    "acltype": "nfsv4",
-    "aclmode": "discard",
-    "aclinherit": "restricted",
-    "dedup": "off",
-    "special_small_blocks": 0,
-}
+POOL_ROOT_INHERIT_VALUES: Mapping[str, typing.Any] = MappingProxyType(
+    {  # registered ZFS defaults; pylibzfs has no accessor for them
+        "acltype": "nfsv4",
+        "aclmode": "discard",
+        "aclinherit": "restricted",
+        "dedup": "off",
+        "special_small_blocks": 0,
+    }
+)
 
 
 class PropertyView(dict[str, typing.Any]):

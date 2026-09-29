@@ -117,7 +117,7 @@ class PoolDatasetService(Service):
         2. Specify a key or a passphrase for each unlocked dataset using ``unlock_options.datasets``.
         """
         verrors = ValidationErrors()
-        dataset = self.middleware.call_sync('pool.dataset.get_instance_quick', id_)
+        dataset = self.middleware.call_sync('pool.dataset.get_instance_quick', id_, {'encryption': True})
         keys_supplied = {}
 
         if options['key_file']:

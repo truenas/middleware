@@ -73,12 +73,15 @@ __all__ = ("ZFSResourceService",)
 
 
 def _audit_set(data: dict[str, Any]) -> str:
-    names = sorted(
-        {k for k, v in (data.get("properties") or {}).items() if v is not None}
-        | set(data.get("user_properties") or {})
-        | set(data.get("inherit") or [])
-    )
-    return audit_target(f"{data.get('path')} ({', '.join(names)})", data, "force_size")
+    names = set()
+    for k, v in (data.get("properties") or {}).items():
+        if v is not None:
+            names.add(k)
+    for k in data.get("user_properties") or {}:
+        names.add(k)
+    for k in data.get("inherit") or []:
+        names.add(k)
+    return audit_target(f"{data.get('path')} ({', '.join(sorted(names))})", data, "force_size")
 
 
 class ZFSResourceService(Service):
@@ -115,9 +118,9 @@ class ZFSResourceService(Service):
     )
     def list(self, data: ZFSResourceQuery) -> builtins.list[ZFSResourceEntry]:
         """
-        List ZFS resources (datasets and volumes) with flexible filtering options.
+        List ZFS resources (datasets and volumes).
 
-        To query snapshots, use :method:`zfs.resource.snapshot.query` instead.
+        To list snapshots, use :method:`zfs.resource.snapshot.query` instead.
 
         A validation error is raised when:
 
@@ -171,7 +174,7 @@ class ZFSResourceService(Service):
         roles=["ZFS_RESOURCE_READ"],
         check_annotations=True,
     )
-    async def checksum_choices(self) -> dict[str, str]:
+    def checksum_choices(self) -> dict[str, str]:
         """
         Retrieve the checksum algorithms a ZFS resource may use.
         """
@@ -183,7 +186,7 @@ class ZFSResourceService(Service):
         roles=["ZFS_RESOURCE_READ"],
         check_annotations=True,
     )
-    async def compression_choices(self) -> dict[str, str]:
+    def compression_choices(self) -> dict[str, str]:
         """
         Retrieve the compression algorithms a ZFS resource may use.
         """
@@ -195,7 +198,7 @@ class ZFSResourceService(Service):
         roles=["ZFS_RESOURCE_READ"],
         check_annotations=True,
     )
-    async def share_type_choices(self) -> dict[str, dict[str, str]]:
+    def share_type_choices(self) -> dict[str, dict[str, str]]:
         """
         Retrieve the ``share_type`` presets :method:`zfs.resource.create` accepts and the native properties
         each one sets.
@@ -262,8 +265,13 @@ class ZFSResourceService(Service):
         """
         return _processes.processes(self.context, path)
 
-    @api_method(ZFSResourceAttachmentsArgs, ZFSResourceAttachmentsResult, roles=["ZFS_RESOURCE_READ"],
-                check_annotations=True)
+    @api_method(
+        ZFSResourceAttachmentsArgs,
+        ZFSResourceAttachmentsResult,
+        roles=["ZFS_RESOURCE_READ"],
+        check_annotations=True,
+    )
+    # TODO: make this sync, running the delegate coroutines through context.run_coroutine like set and destroy
     async def attachments(self, path: str) -> builtins.list[PoolAttachment]:
         """
         Retrieve the shares, tasks and services that depend on the ZFS resource named by ``path``.

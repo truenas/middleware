@@ -37,14 +37,14 @@ class NVMetNamespaceAttachmentDelegate(LockableFSAttachmentDelegate):
         namespaces = await self.middleware.call(
             'nvmet.namespace.query', [['device_type', '=', 'ZVOL']], {'select': ['device_path']}
         )
-        if any(
-            zvol_path_to_name(os.path.join('/dev', ns['device_path'])) in state.snapshot_devices for ns in namespaces
-        ):
-            verrors.add(
-                state.attribute('snapdev'),
-                f'{state.path!r} has snapshots which have attachments being used. Before marking it '
-                'as HIDDEN, remove attachment usages.',
-            )
+        for ns in namespaces:
+            if zvol_path_to_name(os.path.join('/dev', ns['device_path'])) in state.snapshot_devices:
+                verrors.add(
+                    state.attribute('snapdev'),
+                    f'{state.path!r} has snapshots which have attachments being used. Before marking it '
+                    'as HIDDEN, remove attachment usages.',
+                )
+                break
 
     async def after_set(self, state):
         if state.type != 'VOLUME':

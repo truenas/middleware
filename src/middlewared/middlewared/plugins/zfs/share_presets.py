@@ -2,12 +2,15 @@ from __future__ import annotations
 
 import errno
 import os
+from types import MappingProxyType
 import typing
 
 from middlewared.service_exception import CallError
 from middlewared.utils.privilege_constants import LocalBuiltinUsers
 
 if typing.TYPE_CHECKING:
+    from collections.abc import Mapping
+
     from middlewared.service import ServiceContext
     from middlewared.service_exception import ValidationErrors
 
@@ -15,20 +18,31 @@ __all__ = ("SHARE_PRESETS", "apply_share_acl", "share_acl", "share_mountpoint", 
 
 SCHEMA = "zfs.resource.create"
 
-_NFS = {
-    "casesensitivity": "sensitive",
-    "atime": "off",
-    "acltype": "nfsv4",
-    "aclmode": "passthrough",
-    "aclinherit": "passthrough",
-}
-SHARE_PRESETS: dict[str, dict[str, str]] = {
-    "smb": {"casesensitivity": "insensitive", "acltype": "nfsv4", "aclmode": "restricted", "aclinherit": "passthrough"},
-    "multiprotocol": _NFS,
-    "nfs": _NFS,
-    "apps": _NFS,
-}
-_APPS_PERMS = (
+NFS = MappingProxyType(
+    {
+        "casesensitivity": "sensitive",
+        "atime": "off",
+        "acltype": "nfsv4",
+        "aclmode": "passthrough",
+        "aclinherit": "passthrough",
+    }
+)
+SHARE_PRESETS: Mapping[str, Mapping[str, str]] = MappingProxyType(
+    {
+        "smb": MappingProxyType(
+            {
+                "casesensitivity": "insensitive",
+                "acltype": "nfsv4",
+                "aclmode": "restricted",
+                "aclinherit": "passthrough",
+            }
+        ),
+        "multiprotocol": NFS,
+        "nfs": NFS,
+        "apps": NFS,
+    }
+)
+APPS_PERMS = (
     "READ_DATA",
     "WRITE_DATA",
     "DELETE",
@@ -77,7 +91,7 @@ def share_acl(
             and entry["type"] == "ALLOW"
             and entry["flags"]["FILE_INHERIT"]
             and entry["flags"]["DIRECTORY_INHERIT"]
-            and all(entry["perms"][role] for role in _APPS_PERMS)
+            and all(entry["perms"][role] for role in APPS_PERMS)
             for entry in acl
         )
     elif share_type in ("smb", "apps"):

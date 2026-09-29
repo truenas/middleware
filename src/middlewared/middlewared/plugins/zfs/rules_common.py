@@ -40,12 +40,12 @@ __all__ = (
 
 SPA_MAXBLOCKSIZE = 1 << 24
 
-_POSIX_OR_OFF_ACLTYPES = frozenset({"posix", "posixacl", "off", "noacl", "disabled"})
+POSIX_OR_OFF_ACLTYPES = frozenset({"posix", "posixacl", "off", "noacl", "disabled"})
 """The native acltype values (aliases included) that are not nfsv4."""
 
-_USER_PROPERTY_NAME = re.compile(r"[a-z0-9:._-]+")
-_USER_PROPERTY_NAME_MAX = 256
-_USER_PROPERTY_VALUE_MAX = 8192
+USER_PROPERTY_NAME = re.compile(r"[a-z0-9:._-]+")
+USER_PROPERTY_NAME_MAX = 256
+USER_PROPERTY_VALUE_MAX = 8192
 
 
 def apply_acl_defaults(properties: ZFSResourceCreateProperties, leave: Collection[str] = ()) -> None:
@@ -55,7 +55,7 @@ def apply_acl_defaults(properties: ZFSResourceCreateProperties, leave: Collectio
         # inherited ACL entries must pass through or chmod strips them
         if properties.aclinherit is None and "aclinherit" not in leave:
             properties.aclinherit = "passthrough"
-    elif acltype in _POSIX_OR_OFF_ACLTYPES:
+    elif acltype in POSIX_OR_OFF_ACLTYPES:
         # a non discard aclmode can prevent the ZFS_ACL_TRIVIAL flag from
         # being set which results in spurious permission errors
         if properties.aclmode is None and "aclmode" not in leave:
@@ -79,10 +79,10 @@ def reject_bad_user_property_names(verrors: ValidationErrors, attribute: str, na
     for name in names:
         if ":" not in name:
             reason = "must contain a colon"
-        elif not _USER_PROPERTY_NAME.fullmatch(name):
+        elif not USER_PROPERTY_NAME.fullmatch(name):
             reason = "may only contain lowercase letters, digits, ':', '.', '_' and '-'"
-        elif len(name) >= _USER_PROPERTY_NAME_MAX:
-            reason = f"must be shorter than {_USER_PROPERTY_NAME_MAX} characters"
+        elif len(name) >= USER_PROPERTY_NAME_MAX:
+            reason = f"must be shorter than {USER_PROPERTY_NAME_MAX} characters"
         else:
             continue
         verrors.add(attribute, f"{name!r} is not a valid user property name ({reason}).", errno.EINVAL)
@@ -91,10 +91,10 @@ def reject_bad_user_property_names(verrors: ValidationErrors, attribute: str, na
 def reject_bad_user_property_values(verrors: ValidationErrors, attribute: str, values: Mapping[str, str]) -> None:
     """User property values must fit in ZFS."""
     for name, value in values.items():
-        if len(value.encode()) >= _USER_PROPERTY_VALUE_MAX:
+        if len(value.encode()) >= USER_PROPERTY_VALUE_MAX:
             verrors.add(
                 attribute,
-                f"The value of {name!r} must be shorter than {_USER_PROPERTY_VALUE_MAX} bytes.",
+                f"The value of {name!r} must be shorter than {USER_PROPERTY_VALUE_MAX} bytes.",
                 errno.EINVAL,
             )
 
@@ -137,7 +137,7 @@ def reject_bad_acl_combination(
     verrors: ValidationErrors, attribute: str, acltype: str | None, aclmode: str | None
 ) -> None:
     """A discard aclmode strips nfsv4 acls on chmod."""
-    if acltype in _POSIX_OR_OFF_ACLTYPES and aclmode != "discard":
+    if acltype in POSIX_OR_OFF_ACLTYPES and aclmode != "discard":
         verrors.add(attribute, "'aclmode' must be discard when the effective 'acltype' is posix or off.", errno.EINVAL)
     elif acltype == "nfsv4" and aclmode == "discard":
         verrors.add(attribute, "A discard 'aclmode' may not be used with the nfsv4 'acltype'.", errno.EINVAL)

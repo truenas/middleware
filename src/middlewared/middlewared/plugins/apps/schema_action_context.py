@@ -23,12 +23,13 @@ async def update_volumes(context: ServiceContext, app_name: str, volumes: list[d
             context.s.zfs.resource.list_impl, ZFSResourceQuery(paths=list(user_wants), properties=None)
         )
     }
+    defaults = DatasetDefaults.create_time_props().model_dump(exclude_none=True)
     for create_ds in sorted(set(user_wants) - existing_datasets):
         await context.call2(
             context.s.zfs.resource.create_impl,
             ZFSResourceCreateArgsData(
                 path=create_ds,
-                properties=user_wants[create_ds]['properties'] | DatasetDefaults.create_time_props(),
+                properties=user_wants[create_ds]['properties'] | defaults,
                 bypass=True,
             ),
         )

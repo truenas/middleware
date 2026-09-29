@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import errno
+from types import MappingProxyType
 from typing import TYPE_CHECKING, Any
 
 import truenas_pylibzfs
@@ -34,12 +35,14 @@ if TYPE_CHECKING:
 SCHEMA = "zfs.resource.set"
 
 
-_ZFS_ERRNO = {
-    truenas_pylibzfs.ZFSError.EZFS_BUSY: errno.EBUSY,
-    truenas_pylibzfs.ZFSError.EZFS_IO: errno.EIO,
-    truenas_pylibzfs.ZFSError.EZFS_NOSPC: errno.ENOSPC,
-    truenas_pylibzfs.ZFSError.EZFS_PERM: errno.EPERM,
-}
+ZFS_ERRNO = MappingProxyType(
+    {
+        truenas_pylibzfs.ZFSError.EZFS_BUSY: errno.EBUSY,
+        truenas_pylibzfs.ZFSError.EZFS_IO: errno.EIO,
+        truenas_pylibzfs.ZFSError.EZFS_NOSPC: errno.ENOSPC,
+        truenas_pylibzfs.ZFSError.EZFS_PERM: errno.EPERM,
+    }
+)
 
 
 def _read(ds: Any, natives: list[str], user: bool) -> dict[str, Any]:
@@ -58,7 +61,7 @@ def _phase_error(
         return CallError(f"{path!r} was removed while its properties were being set.", errno.ENOENT)
     if e.code in ZFS_INVALID_INPUT_ERRORS:
         return ValidationError(attribute, invalid_message, errno.EINVAL)
-    return CallError(other_message, _ZFS_ERRNO.get(e.code, errno.EFAULT))
+    return CallError(other_message, ZFS_ERRNO.get(e.code, errno.EFAULT))
 
 
 def touched_names(data: ZFSResourceSetArgsData) -> tuple[list[str], list[str]]:

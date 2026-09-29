@@ -137,8 +137,8 @@ def resolve_create_request(
         properties.refquota = None
     if data.type == "VOLUME":
         if properties.volsize is not None and properties.refreservation is None:
-            # thick provision unless told otherwise, like `zfs create -V`. zfs_create() does not resolve
-            # refreservation=auto, so reserve the volsize itself.
+            # thick provision unless told otherwise, like `zfs create -V`, reserving the volsize itself
+            # TODO: Investigate using refreservation=auto once libzfs zfs_create() resolves it
             properties.refreservation = properties.volsize
     else:
         if data.share_type is not None:

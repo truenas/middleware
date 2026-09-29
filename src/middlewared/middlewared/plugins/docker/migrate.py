@@ -7,7 +7,6 @@ import typing
 from middlewared.api.current import (
     DockerEntry,
     ZFSResourceCreateArgsData,
-    ZFSResourceCreateProperties,
     ZFSResourceSnapshotCreateQuery,
     ZFSResourceSnapshotDestroyQuery,
 )
@@ -52,9 +51,7 @@ async def migrate_ix_apps_dataset(
             context.s.zfs.resource.create_impl,
             ZFSResourceCreateArgsData(
                 path=dsname,
-                properties=ZFSResourceCreateProperties.model_validate(
-                    DatasetDefaults.create_time_props(os.path.basename(dsname))
-                ),
+                properties=DatasetDefaults.create_time_props(os.path.basename(dsname)),
                 bypass=True,
             ),
         )

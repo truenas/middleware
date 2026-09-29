@@ -44,7 +44,7 @@ def processes(context: ServiceContext, path: str) -> list[PoolProcess]:
     if mountpoint != "legacy":
         paths.append(mountpoint or os.path.join("/mnt", row["name"]))
 
-    found = context.call_sync2(context.s.zfs.resource.processes_using_paths, paths)
+    found = processes_using_paths(context, paths)
     return [PoolProcess(**proc) for proc in found]
 
 
@@ -179,6 +179,7 @@ def processes_using_paths(
 
     result = []
     if include_devs or exact_matches:
+        # TODO: replace os.listdir() with os.scandir() for /proc and /proc/<pid>/fd
         for pid in os.listdir("/proc"):
             if not pid.isdigit() or (not include_middleware and (int(pid) == os.getpid())):
                 continue

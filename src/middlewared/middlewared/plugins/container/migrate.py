@@ -738,7 +738,9 @@ def relocate_container_origin(context: ServiceContext, container_ds: str) -> str
         context.call_sync2(
             context.s.zfs.resource.set_impl,
             ZFSResourceSetArgsData(
-                path=origin_dataset, properties=ZFSResourceSetProperties(canmount='noauto'), bypass=True,
+                path=origin_dataset,
+                properties=ZFSResourceSetProperties(canmount='noauto'),
+                bypass=True,
             ),
         )
         context.call_sync2(

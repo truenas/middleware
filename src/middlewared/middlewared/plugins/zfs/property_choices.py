@@ -7,7 +7,7 @@ __all__ = (
 )
 
 # https://openzfs.github.io/openzfs-docs/Performance%20and%20Tuning/Module%20Parameters.html#zfs-max-recordsize
-RECORDSIZE_MAPPING = [
+RECORDSIZE_MAPPING = (
     (1 << 9, "512"),
     (1 << 9, "512B"),
     (1 << 10, "1K"),
@@ -25,7 +25,7 @@ RECORDSIZE_MAPPING = [
     (1 << 22, "4M"),
     (1 << 23, "8M"),
     (1 << 24, "16M"),
-]
+)
 
 DRAID_MINIMUM_RECORDSIZE = 1 << 17
 

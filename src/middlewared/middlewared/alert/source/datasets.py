@@ -27,17 +27,16 @@ class UnencryptedDatasetsAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(hours=12))
 
     async def check(self) -> list[Alert[Any]] | Alert[Any] | None:
-        encrypted = {
-            ds['name']: ds['properties']['encryption']['raw'] != 'off'
-            for ds in await self.call2(
-                self.s.zfs.resource.list_impl, ZFSResourceQuery(properties=['encryption'], get_children=True)
-            )
-        }
-        unencrypted_datasets = [
-            n for n, enc in encrypted.items() if not enc and '/' in n and encrypted.get(n.rsplit('/', 1)[0])
-        ]
+        encrypted, unencrypted = set(), []
+        for ds in await self.call2(
+            self.s.zfs.resource.list_impl, ZFSResourceQuery(properties=['encryption'], get_children=True)
+        ):
+            if ds['properties']['encryption']['raw'] != 'off':
+                encrypted.add(ds['name'])
+            elif ds['name'].rsplit('/', 1)[0] in encrypted:
+                unencrypted.append(ds['name'])
 
-        if unencrypted_datasets:
-            return Alert(EncryptedDatasetAlert(datasets=', '.join(unencrypted_datasets)))
+        if unencrypted:
+            return Alert(EncryptedDatasetAlert(datasets=', '.join(unencrypted)))
 
         return None
