@@ -48,6 +48,7 @@ V2_EXPECTED = {
     "serials": ["TEST-000001", "TEST-000002"],
     "enclosures": {"E24": 3},
     "contract_type": "GOLD",
+    "issued_at": "2026-04-08T12:34:56Z",
 }
 
 LEGACY_EXPECTED = {
@@ -80,6 +81,7 @@ LEGACY_EXPECTED = {
     "serials": ["TEST-000001", "TEST-000002"],
     "enclosures": {"E24": 3, "E16": 2},
     "contract_type": "GOLD",
+    "issued_at": "2026-04-08",
 }
 
 
@@ -102,6 +104,7 @@ def _v2_license():
         },
         system_id={"serials": ["TEST-000001", "TEST-000002"]},
         enclosures={"E24": {"count": 3}},
+        issued_at="2026-04-08T12:34:56Z",
     )
     info = from_license_status(status)
     assert info is not None
