@@ -663,6 +663,7 @@ class PoolDatasetChecksumChoicesArgs(BaseModel):
 @single_argument_result
 class PoolDatasetChecksumChoicesResult(BaseModel):
     ON: Literal["ON"]
+    OFF: Literal["OFF"]
     FLETCHER2: Literal["FLETCHER2"]
     FLETCHER4: Literal["FLETCHER4"]
     SHA256: Literal["SHA256"]

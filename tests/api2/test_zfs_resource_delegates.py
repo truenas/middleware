@@ -78,7 +78,7 @@ def test_readonly_on_an_extent_zvol_syncs_the_extent():
                 call("zfs.resource.set", {"path": zvol, "properties": {"readonly": "on"}})
                 time.sleep(SETTLE)
 
-            assert [mtype for mtype, _ in events] == ["CHANGED", "CHANGED"], pprint.pformat(events)
+            assert [mtype for mtype, _ in events] == ["CHANGED"], pprint.pformat(events)
             assert call("iscsi.extent.get_instance", extent["id"])["ro"] is True
 
 

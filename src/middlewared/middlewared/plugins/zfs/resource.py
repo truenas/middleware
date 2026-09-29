@@ -585,7 +585,7 @@ class ZFSResourceService(Service):
           is managed with :method:`zfs.tier.dataset_set_tier` (``EINVAL``)
         - deduplication is requested for a filesystem whose data would be placed on the
           SPECIAL vdev (the PERFORMANCE tier) while ZFS tiering is enabled (``EINVAL``)
-        - ``/mnt/<path>`` already exists (``EEXIST``)
+        - the path the new filesystem would mount at already exists (``EEXIST``)
         - ``share_type`` is sent for a VOLUME, conflicts with a sent property, or its ACL
           would be written to a readonly filesystem (``EINVAL``)
 

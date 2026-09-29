@@ -187,7 +187,7 @@ def create_impl(context: ServiceContext, tls: Any, data: ZFSResourceCreateArgsDa
         mount_leaf
         and not data.bypass
         and properties.mountpoint is None
-        and os.path.lexists(mp := os.path.join("/mnt", path))
+        and os.path.lexists(mp := share_mountpoint(path, parent) if parent else os.path.join("/mnt", path))
     ):
         verrors.add(SCHEMA, f"Path {mp!r} already exists.", errno.EEXIST)
     verrors.check()
