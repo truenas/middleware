@@ -597,7 +597,6 @@ class EtcService(Service):
         'ssh': EtcGroup(
             ctx=(
                 CtxMethod(method='ssh.config'),
-                CtxMethod(method='auth.twofactor.config'),
                 CtxMethod(method='interface.query'),
                 CtxMethod(method='system.advanced.login_banner'),
             ),
