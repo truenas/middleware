@@ -6,6 +6,12 @@ import pyotp
 from middlewared.api import api_method
 from middlewared.api.current import TwoFactorAuthEntry, TwoFactorAuthUpdateArgs, TwoFactorAuthUpdateResult
 from middlewared.service import CallError, ConfigService, periodic, private
+from middlewared.service.ha_synchronization import (
+    ha_synchronization,
+    ControlServiceAction,
+    EtcGenerateAction,
+    HaSynchronizationActions,
+)
 from middlewared.service_exception import ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.directoryservices.constants import DSStatus, DSType
@@ -53,7 +59,7 @@ class TwoFactorAuthService(ConfigService):
         TwoFactorAuthUpdateResult,
         audit='Update two-factor authentication service configuration'
     )
-    async def do_update(self, data):
+    async def do_update(self, data, force):
         """
         ``window`` extends the validity to ``window`` many counter ticks before and after the current one.
 
@@ -84,31 +90,30 @@ class TwoFactorAuthService(ConfigService):
         if config == old_config:
             return config
 
-        await self.middleware.call(
-            'datastore.update',
-            self._config.datastore,
-            config['id'],
-            config
-        )
+        async with ha_synchronization(
+            HaSynchronizationActions(
+                self.context,
+                [
+                    ControlServiceAction("RELOAD", "ssh"),
+                    ControlServiceAction("RELOAD", "user"),
+                    EtcGenerateAction("pam"),
+                ],
+            ),
+            force,
+        ):
+            await self.middleware.call(
+                'datastore.update',
+                self._config.datastore,
+                config['id'],
+                config,
+            )
 
-        # It's possible we have stale authenticator assurance level. An example is
-        # we were standby controller and for some reason a reboot failed after disabling
-        # STIG, then the admin chooses to fail over manually to server in unclean state
-        # We know that AAL has to be level 1 when 2FA is disabled
-        if not config['enabled']:
-            await self.middleware.call('auth.set_authenticator_assurance_level', 'LEVEL_1')
-
-        for svc in ('ssh', 'user'):
-            # Going through service.control ensures HA is handled.
-            await (await self.call2(self.s.service.control, 'RELOAD', svc)).wait(raise_error=True)
-
-        await self.middleware.call('etc.generate', 'pam')
-        if await self.middleware.call('failover.licensed'):
-            try:
-                await self.middleware.call('failover.call_remote', 'etc.generate', ['pam'])
-            except Exception:
-                self.logger.warning('Failed to generate pam configuration on standby controller', exc_info=True)
-
+            # It's possible we have stale authenticator assurance level. An example is
+            # we were standby controller and for some reason a reboot failed after disabling
+            # STIG, then the admin chooses to fail over manually to server in unclean state
+            # We know that AAL has to be level 1 when 2FA is disabled
+            if not config['enabled']:
+                await self.middleware.call('auth.set_authenticator_assurance_level', 'LEVEL_1')
 
         return await self.config()
 
