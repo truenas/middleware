@@ -129,8 +129,16 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
         if local_license.support_expires_at is None:
             return alerts
 
+        today = date.today()
         for days in [0, 14, 30, 90, 180]:
-            if local_license.support_expires_at <= date.today() + timedelta(days=days):
+            # `days == 0` is the lapsed bucket, and a contract is in force through its end date,
+            # so it asks the license rather than comparing against today inclusively.
+            if days == 0:
+                reached = local_license.support_lapsed(today)
+            else:
+                reached = local_license.support_expires_at <= today + timedelta(days=days)
+
+            if reached:
                 serial_numbers = ", ".join(list(filter(None, local_license.serials)))
                 contract_expiration = local_license.support_expires_at.strftime("%B %-d, %Y")
 
@@ -158,8 +166,14 @@ class LicenseStatusAlertSource(ThreadedAlertSource):
                         on {contract_expiration}. Renewal options may be available — contact your authorized
                         reseller or TrueNAS: sales@TrueNAS.com, 1-855-473-7449.
                     """)
-                    days_left = (local_license.support_expires_at - date.today()).days
-                    subject = f"Your TrueNAS support contract will expire in {days_left} days"
+                    days_left = (local_license.support_expires_at - today).days
+                    if days_left == 0:
+                        subject = "Your TrueNAS support contract expires today"
+                    elif days_left == 1:
+                        subject = "Your TrueNAS support contract will expire in 1 day"
+                    else:
+                        subject = f"Your TrueNAS support contract will expire in {days_left} days"
+
                     if days == 14:
                         opening = textwrap.dedent("""\
                             Your TrueNAS support contract is approaching its expiration date.
