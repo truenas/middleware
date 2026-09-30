@@ -14,9 +14,9 @@ from middlewared.api.current import (
 )
 from middlewared.service import CallError, Service, private
 from middlewared.service.ha_synchronization import (
-    ha_synchronization,
     ControlServiceAction,
     HaSynchronizationActions,
+    ha_synchronization,
 )
 from middlewared.utils import ProductName
 from middlewared.utils.privilege import app_credential_full_admin_or_user

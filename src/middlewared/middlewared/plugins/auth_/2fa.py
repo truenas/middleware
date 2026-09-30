@@ -7,10 +7,10 @@ from middlewared.api import api_method
 from middlewared.api.current import TwoFactorAuthEntry, TwoFactorAuthUpdateArgs, TwoFactorAuthUpdateResult
 from middlewared.service import CallError, ConfigService, periodic, private
 from middlewared.service.ha_synchronization import (
-    ha_synchronization,
     ControlServiceAction,
     EtcGenerateAction,
     HaSynchronizationActions,
+    ha_synchronization,
 )
 from middlewared.service_exception import ValidationErrors
 import middlewared.sqlalchemy as sa
