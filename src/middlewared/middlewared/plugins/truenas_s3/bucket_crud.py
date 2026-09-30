@@ -194,7 +194,7 @@ MOUNTED_FILESYSTEM = (
     ("properties.mountpoint.raw", "^", "/"),
 )
 """A dataset a bucket can be on: never a zvol, and mounted somewhere a
-path reaches. `zfs.resource.query` takes no filter of its own and yields
+path reaches. `zfs.resource.list` takes no filter of its own and yields
 volumes as well as filesystems, so this is applied to what it returns.
 
 Properties are read raw here and wherever a recovery looks at one: the
@@ -1049,7 +1049,7 @@ class SharingS3Service(SharingService[SharingS3Entry]):
             return None
         try:
             zfs_rows = await self.call2(
-                self.s.zfs.resource.query_impl,
+                self.s.zfs.resource.list_impl,
                 ZFSResourceQuery(paths=[dataset], properties=list(RECOVER_PROPERTIES), get_children=True),
             )
         except ZFSPathNotFoundException as e:
@@ -1189,7 +1189,7 @@ class SharingS3Service(SharingService[SharingS3Entry]):
             )
         }
         rows = await self.call2(
-            self.s.zfs.resource.query_impl,
+            self.s.zfs.resource.list_impl,
             ZFSResourceQuery(paths=[], properties=["mountpoint", "mounted"], get_children=True),
         )
         mounts = {
