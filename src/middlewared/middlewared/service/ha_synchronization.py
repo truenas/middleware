@@ -29,18 +29,21 @@ class ControlServiceAction(HaSynchronizationBaseAction):
         return f"{self.verb.title()} {self.service} service"
 
     async def perform(self, context: ServiceContext) -> None:
-        await (await context.call2(
-            context.s.service.control,
-            self.verb,
-            self.service,
-            ServiceOptions(ha_propagate=False),
-        )).wait(raise_error=True)
+        await (
+            await context.call2(
+                context.s.service.control,
+                self.verb,
+                self.service,
+                ServiceOptions(ha_propagate=False),
+            )
+        ).wait(raise_error=True)
 
     async def perform_backup(self, context: ServiceContext) -> None:
         await context.middleware.call(
             "failover.call_remote",
-            "core.bulk",
-            ["service.control", [[self.verb, self.service]]],
+            "service.control",
+            [self.verb, self.service],
+            {"job": True},
         )
 
 
@@ -99,7 +102,9 @@ async def ha_synchronization(actions: HaSynchronizationActions, force: bool) -> 
         if status == "MASTER":
             try:
                 rem_status = await context.middleware.call(
-                    "failover.call_remote", "failover.status", [],
+                    "failover.call_remote",
+                    "failover.status",
+                    [],
                     {"raise_connect_error": False, "timeout": 2, "connect_timeout": 2},
                 )
                 if rem_status != "BACKUP":
@@ -110,8 +115,8 @@ async def ha_synchronization(actions: HaSynchronizationActions, force: bool) -> 
                     )
             except Exception as e:
                 raise CallError(
-                    "Changing security settings requires HA to be healthy. An error occurred while contacting the remote "
-                    f"node: {e!r}.",
+                    "Changing security settings requires HA to be healthy. An error occurred while contacting the "
+                    f"remote node: {e!r}.",
                     errno.ENOLINK,
                 )
 
@@ -126,7 +131,6 @@ async def ha_synchronization(actions: HaSynchronizationActions, force: bool) -> 
         if failed_backup_actions:
             raise CallError(
                 "Security settings were successfully changed on active HA controller, but were not replicated to "
-                "standby controller. The following actions failed:\n\n" + "\n".join([
-                    f"* {action}" for action in failed_backup_actions
-                ]),
+                "standby controller. The following actions failed:\n\n"
+                + "\n".join([f"* {action}" for action in failed_backup_actions]),
             )
