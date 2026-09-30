@@ -8,7 +8,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from truenas_pylibzfs import ValidationError, VDevType, ZFSException, ZFSProperty, ZPOOLProperty, create_vdev_spec
+from truenas_pylibzfs import (
+    VDevType,
+    ZFSException,
+    ZFSProperty,
+    ZPOOLProperty,
+    ZPOOLValidationError,
+    create_vdev_spec,
+)
 
 from .exceptions import ZpoolCreateException, ZpoolCreateRejected
 
@@ -154,7 +161,7 @@ def assemble_create_pool_vdev_kwargs(
         kwarg = ROOT_TO_KWARG[root]
         try:
             spec = build_vdev_spec(vdev, names)
-        except ValidationError as e:
+        except ZPOOLValidationError as e:
             location = f"topology.{root}" if root in ("cache", "spares") else f"topology.{root}.{position[root]}"
             raise ZpoolCreateRejected(location, e.reason) from e
         bucket = kwargs.setdefault(kwarg, [])
@@ -221,7 +228,7 @@ def validate_impl(
     specs, origins = assemble_create_pool_vdev_kwargs(vdevs, "disks")
     try:
         _create_pool(lzh, name, specs, properties, filesystem_properties, force, dry_run=True)
-    except ValidationError as e:
+    except ZPOOLValidationError as e:
         raise ZpoolCreateRejected(binding_location(e.argument, e.index, origins), e.reason) from e
 
 
