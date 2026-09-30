@@ -303,7 +303,7 @@ def test_bad_user_property_is_rejected(user_properties):
 
 def test_overlong_user_property_value_is_rejected():
     with resource("test_set_long_user_prop") as path:
-        with pytest.raises(ValidationError):
+        with pytest.raises(ValidationErrors):
             call("zfs.resource.set", {"path": path, "user_properties": {"org.truenas:x": "x" * 8192}})
         assert "org.truenas:x" not in read(path, None, get_user_properties=True)["user_properties"]
 
