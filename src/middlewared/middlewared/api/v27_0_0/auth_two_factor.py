@@ -28,6 +28,7 @@ class TwoFactorAuthUpdateArgs(BaseModel):
     auth_twofactor_update: TwoFactorAuthUpdate = Field(
         description="Updated two-factor authentication configuration settings.",
     )
+    force: bool = Field(default=False, description="Allow updating security settings even if HA standby node is down.")
 
 
 class TwoFactorAuthUpdateResult(BaseModel):

@@ -13,6 +13,11 @@ from middlewared.api.current import (
     UserUnset2faSecretResult,
 )
 from middlewared.service import CallError, Service, private
+from middlewared.service.ha_synchronization import (
+    ha_synchronization,
+    ControlServiceAction,
+    HaSynchronizationActions,
+)
 from middlewared.utils import ProductName
 from middlewared.utils.privilege import app_credential_full_admin_or_user
 
@@ -112,7 +117,7 @@ class UserService(Service):
                 audit='Unset two-factor authentication secret:',
                 audit_extended=lambda username: username,
                 roles=['ACCOUNT_WRITE'])
-    async def unset_2fa_secret(self, username):
+    async def unset_2fa_secret(self, username, force):
         """
         Unset two-factor authentication secret for ``username``.
         """
@@ -125,17 +130,18 @@ class UserService(Service):
             # in this case we don't do anything and the secret is already unset
             return
 
-        await self.middleware.call(
-            'datastore.update',
-            'account.twofactor_user_auth',
-            twofactor_auth['id'], {
-                'secret': None,
-            }
-        )
-
-        # We need to regenerate the users.oath file in order to remove
-        # 2FA requirement for the user
-        await (await self.call2(self.s.service.control, 'RELOAD', 'user')).wait(raise_error=True)
+        async with ha_synchronization(
+            # We need to regenerate the users.oath file in order to remove 2FA requirement for the user
+            HaSynchronizationActions(self.context, [ControlServiceAction("RELOAD", "user")]),
+            force,
+        ):
+            await self.middleware.call(
+                'datastore.update',
+                'account.twofactor_user_auth',
+                twofactor_auth['id'], {
+                    'secret': None,
+                }
+            )
 
     @api_method(
         UserRenew2faSecretArgs,
@@ -145,7 +151,7 @@ class UserService(Service):
         authorization_required=False,
         pass_app=True,
     )
-    async def renew_2fa_secret(self, app, username, twofactor_options):
+    async def renew_2fa_secret(self, app, username, twofactor_options, force):
         """
         Renew ``username`` user's two-factor authentication secret.
 
@@ -173,30 +179,34 @@ class UserService(Service):
             raise CallError(f'Unable to locate two factor authentication configuration for {username!r} user')
 
         secret = await self.middleware.call('auth.twofactor.generate_base32_secret')
-        if twofactor_auth['exists']:
-            await self.middleware.call(
-                'datastore.update',
-                'account.twofactor_user_auth',
-                twofactor_auth['id'], {
-                    'secret': secret,
-                    **twofactor_options,
-                }
-            )
-        else:
-            await self.middleware.call(
-                'datastore.insert', 'account.twofactor_user_auth', {
-                    'secret': secret,
-                    'user': None,
-                    'user_sid': user['sid'],
-                    **twofactor_options,
-                }
-            )
 
+        actions = []
         if (await self.middleware.call('auth.twofactor.config'))['services']['ssh']:
             # This needs to be reloaded so that user's new secret can be reflected in sshd configuration
-            await (await self.call2(self.s.service.control, 'RELOAD', 'ssh')).wait(raise_error=True)
+            actions.append(ControlServiceAction("RELOAD", "ssh"))
+
+        actions.append(ControlServiceAction("RELOAD", "user"))
+
+        async with ha_synchronization(HaSynchronizationActions(self.context, actions), force):
+            if twofactor_auth['exists']:
+                await self.middleware.call(
+                    'datastore.update',
+                    'account.twofactor_user_auth',
+                    twofactor_auth['id'], {
+                        'secret': secret,
+                        **twofactor_options,
+                    }
+                )
+            else:
+                await self.middleware.call(
+                    'datastore.insert', 'account.twofactor_user_auth', {
+                        'secret': secret,
+                        'user': None,
+                        'user_sid': user['sid'],
+                        **twofactor_options,
+                    }
+                )
 
         user_entry = await self.translate_username(username)
         twofactor_config = await self.twofactor_config(username)
-        await (await self.call2(self.s.service.control, 'RELOAD', 'user')).wait(raise_error=True)
         return user_entry | {'twofactor_config': twofactor_config}
