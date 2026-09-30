@@ -1856,12 +1856,12 @@ class SMBFSAttachmentDelegate(LockableFSAttachmentDelegate):
     service_class = SharingSMBService
     set_triggers = frozenset({'acltype'})
 
-    async def validate_set(self, state, verrors):
+    async def validate_set(self, state):
         if state.type != 'FILESYSTEM' or not state.changed('acltype'):
             return
         attachments = await self.call2(self.s.zfs.resource.attachments, state.path)
         if names := [name for a in attachments if a.type == self.title for name in a.attachments]:
-            verrors.add(
+            raise ValidationError(
                 state.attribute('acltype'),
                 "This dataset is hosting SMB shares. Before acltype can be updated the following shares must be "
                 f"disabled: {', '.join(names)}. The shares may be re-enabled after the change.",

@@ -3,7 +3,7 @@ import os
 
 import pytest
 from auto_config import pool_name
-from middlewared.service_exception import ValidationErrors
+from middlewared.service_exception import ValidationError, ValidationErrors
 from middlewared.test.integration.assets.pool import another_pool
 from middlewared.test.integration.assets.zfs_resource import destroy_zfs_resource, zfs_resource
 from middlewared.test.integration.utils import call, mock, ssh
@@ -85,10 +85,10 @@ def test_zfs_resource_create_volume_capacity_guardrail():
         assert entry["properties"]["volsize"]["value"] == volsize
 
 
-def test_create_headroom_attribute_and_aggregation():
+def test_create_headroom_attribute():
     available = call("zfs.resource.list", {"paths": [pool_name], "properties": ["available"]})[0]
     path = os.path.join(pool_name, "test_create_headroom_vol")
-    with pytest.raises(ValidationErrors) as exc_info:
+    with pytest.raises(ValidationError) as exc_info:
         call(
             "zfs.resource.create",
             {
@@ -98,13 +98,9 @@ def test_create_headroom_attribute_and_aggregation():
                     "volsize": 16 * 1024**2,
                     "refreservation": int(0.9 * available["properties"]["available"]["value"]),
                 },
-                "user_properties": {"nocolon": "x"},
             },
         )
-    assert sorted(e.attribute for e in exc_info.value.errors) == [
-        "zfs.resource.create.properties.refreservation",
-        "zfs.resource.create.user_properties",
-    ]
+    assert exc_info.value.attribute == "zfs.resource.create.properties.refreservation"
     assert call("zfs.resource.list", {"paths": [path], "properties": None}) == []
 
 
@@ -321,15 +317,15 @@ def test_zfs_resource_create_encryption_root_passphrase():
 @pytest.mark.parametrize(
     "encryption,exc",
     [
-        pytest.param({}, ValidationErrors, id="nothing provided"),
+        pytest.param({}, ValidationError, id="nothing provided"),
         pytest.param(
             {"key": "0" * 64, "passphrase": "passphrase123"},
-            ValidationErrors,
+            ValidationError,
             id="key and passphrase",
         ),
         pytest.param(
             {"generate_key": True, "passphrase": "passphrase123"},
-            ValidationErrors,
+            ValidationError,
             id="generate_key and passphrase",
         ),
         # per-field shape constraints live on the model and are rejected by the schema
@@ -419,11 +415,10 @@ def test_zfs_resource_create_under_locked_parent_fails():
     parent = os.path.join(pool_name, "test_create_locked_parent")
     with zfs_resource(parent, {"encryption": {"passphrase": "passphrase123"}}):
         call("pool.dataset.lock", parent, job=True)
-        with pytest.raises(ValidationErrors) as ve:
+        with pytest.raises(ValidationError) as ve:
             call("zfs.resource.create", {"path": f"{parent}/child"})
-        [error] = ve.value.errors
-        assert error.errno == errno.EACCES
-        assert "is locked" in error.errmsg
+        assert ve.value.errno == errno.EACCES
+        assert "is locked" in ve.value.errmsg
 
 
 @pytest.fixture(scope="module")
@@ -795,14 +790,13 @@ def test_zfs_resource_create_encryption_root_skips_missing_ancestors():
 def test_zfs_resource_create_rejects_a_property_value_zfs_refuses():
     """A value that passes the API model but not ZFS is reported as EINVAL"""
     path = os.path.join(pool_name, "test_create_badpropvalue")
-    with pytest.raises(ValidationErrors) as ve:
+    with pytest.raises(ValidationError) as ve:
         call(
             "zfs.resource.create",
             {"path": path, "properties": {"recordsize": "3K"}},
         )
-    [error] = ve.value.errors
-    assert error.attribute == "zfs.resource.create.properties.recordsize"
-    assert error.errno == errno.EINVAL
+    assert ve.value.attribute == "zfs.resource.create.properties.recordsize"
+    assert ve.value.errno == errno.EINVAL
     assert call("zfs.resource.list", {"paths": [path], "properties": None}) == []
 
 
@@ -824,11 +818,10 @@ def test_zfs_resource_create_under_a_volume_parent_is_rejected(tier_enabled, chi
         vol, {"type": "VOLUME", "properties": {"volsize": 100 * 1024 * 1024}}
     ):
         with mock("zfs.tier.config", return_value={**call("zfs.tier.config"), "enabled": tier_enabled}):
-            with pytest.raises(ValidationErrors) as ve:
+            with pytest.raises(ValidationError) as ve:
                 call("zfs.resource.create", data)
-        [error] = ve.value.errors
-        assert error.errno == errno.EINVAL
-        assert error.errmsg == f"{vol!r} is a volume and cannot hold {child!r}."
+        assert ve.value.errno == errno.EINVAL
+        assert ve.value.errmsg == f"{vol!r} is a volume and cannot hold {child!r}."
 
 
 def test_zfs_resource_create_share_type():
@@ -841,7 +834,7 @@ def test_zfs_resource_create_share_type():
         assert {name: props[name]["raw"] for name in expected} == expected
         assert call("filesystem.getacl", f"/mnt/{path}")["acltype"] == "NFS4"
 
-    with pytest.raises(ValidationErrors) as ve:
+    with pytest.raises(ValidationError) as ve:
         call("zfs.resource.create", {"path": path, "share_type": "smb", "properties": {"acltype": "posix"}})
-    assert [e.attribute for e in ve.value.errors] == ["zfs.resource.create.properties.acltype"]
+    assert ve.value.attribute == "zfs.resource.create.properties.acltype"
 

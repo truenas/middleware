@@ -8,7 +8,7 @@ import truenas_pylibzfs
 from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.api.current import ZFSResourceEntry, ZFSResourceQuery
-from middlewared.service_exception import CallError, ValidationError, ValidationErrors
+from middlewared.service_exception import CallError, ValidationError
 
 from . import zvol_utils
 from .create_impl import ZFS_INVALID_INPUT_ERRORS
@@ -144,9 +144,7 @@ def snapshot_devices(path: str) -> frozenset[str]:
 def set(context: ServiceContext, data: ZFSResourceSetArgsData) -> ZFSResourceEntry:
     path = data.path
     reject_protected_path(SCHEMA, path, data.bypass)
-    verrors = ValidationErrors()
-    validate_request(data, verrors)
-    verrors.check()
+    validate_request(data)
 
     touched = touched_natives(data.properties, data.inherit)
     active = [delegate for delegate in DELEGATES if delegate.set_triggers & touched]
@@ -197,10 +195,9 @@ def set(context: ServiceContext, data: ZFSResourceSetArgsData) -> ZFSResourceEnt
         force_size=data.force_size,
     )
     state = apply_thick_follow(apply_acl_coupling(state))
-    validate_set(context, state, verrors)
+    validate_set(context, state)
     for delegate in active:
-        context.run_coroutine(delegate.validate_set(state, verrors))
-    verrors.check()
+        context.run_coroutine(delegate.validate_set(state))
 
     entry = ZFSResourceEntry(
         **context.call_sync2(

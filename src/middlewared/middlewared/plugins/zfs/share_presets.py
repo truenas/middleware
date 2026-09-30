@@ -5,14 +5,13 @@ import os
 from types import MappingProxyType
 import typing
 
-from middlewared.service_exception import CallError
+from middlewared.service_exception import CallError, ValidationError
 from middlewared.utils.privilege_constants import LocalBuiltinUsers
 
 if typing.TYPE_CHECKING:
     from collections.abc import Mapping
 
     from middlewared.service import ServiceContext
-    from middlewared.service_exception import ValidationErrors
 
 __all__ = ("SHARE_PRESETS", "apply_share_acl", "share_acl", "share_mountpoint", "share_type_choices")
 
@@ -73,7 +72,6 @@ def share_acl(
     share_type: str,
     mountpoint: str,
     parent: dict[str, typing.Any],
-    verrors: ValidationErrors,
 ) -> list[dict[str, typing.Any]] | None:
     parent_mp = parent["properties"]["mountpoint"]["raw"]
     if (
@@ -119,7 +117,7 @@ def share_acl(
     except CallError as e:
         if e.errno != errno.EPERM:
             raise
-        verrors.add(f"{SCHEMA}.share_type", e.errmsg)
+        raise ValidationError(f"{SCHEMA}.share_type", e.errmsg)
     return acl
 
 

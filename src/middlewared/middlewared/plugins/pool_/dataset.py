@@ -379,8 +379,6 @@ class PoolDatasetService(CRUDService):
             )
         except ValidationError as e:
             rekey_create_errors(verrors, sent, [(e.attribute, e.errmsg, e.errno)])
-        except ValidationErrors as e:
-            rekey_create_errors(verrors, sent, list(e))
         verrors.check()
 
         created_ds = await self.get_instance(name)
@@ -449,8 +447,6 @@ class PoolDatasetService(CRUDService):
                 )
             except ValidationError as e:
                 rekey_update_errors(verrors, sent, [(e.attribute, e.errmsg, e.errno)])
-            except ValidationErrors as e:
-                rekey_update_errors(verrors, sent, list(e))
 
         verrors.check()
 

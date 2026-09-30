@@ -12,7 +12,7 @@ from middlewared.plugins.zfs.set_rules import (
     apply_thick_follow,
     validate_set,
 )
-from middlewared.service_exception import ValidationErrors
+from middlewared.service_exception import ValidationError
 
 MiB = 1024**2
 
@@ -219,9 +219,11 @@ def state(
 
 
 def run(st, context=None):
-    verrors = ValidationErrors()
-    validate_set(context or RecordingContext(), st, verrors)
-    return verrors
+    try:
+        validate_set(context or RecordingContext(), st)
+    except ValidationError as e:
+        return [e]
+    return []
 
 
 def test_set_read_properties_avoid_names_with_their_own_read_cost():
@@ -245,12 +247,12 @@ def test_set_read_properties_avoid_names_with_their_own_read_cost():
 @pytest.mark.parametrize("source", ["INHERITED", "DEFAULT"])
 def test_tier_rule_tolerates_inheriting_a_value_that_is_not_local(source):
     st = state(inherit=["special_small_blocks"], source=source, parent={}, tier_enabled=True)
-    assert run(st).errors == []
+    assert run(st) == []
 
 
 def test_setting_dedup_to_its_current_value_needs_no_entitlement():
     st = state(properties={"dedup": "on"}, current={"dedup": "on"}, entitlement=DENIED)
-    assert run(st).errors == []
+    assert run(st) == []
 
 
 def test_acl_coupling_leaves_a_companion_the_caller_inherits():
@@ -282,7 +284,7 @@ def test_thick_follow_leaves_the_reservation_alone(properties, refreservation, s
 
 
 def headroom_errors(st):
-    return [(e.attribute, e.errmsg) for e in run(st).errors]
+    return [(e.attribute, e.errmsg) for e in run(st)]
 
 
 @pytest.mark.parametrize(
@@ -310,13 +312,12 @@ def test_dedup_descendants_names_only_the_descendants_that_would_inherit_it():
             descendant(f"{PATH}/vol", 131072, "DEFAULT", type_="VOLUME"),
         ]
     )
-    verrors = run(state(properties={"dedup": "on"}, tier_enabled=True), context)
-    [error] = verrors.errors
+    [error] = run(state(properties={"dedup": "on"}, tier_enabled=True), context)
     assert "descendant dataset 'tank/a/from_ancestor' is assigned" in error.errmsg
 
 
 def test_special_small_blocks_range_includes_the_largest_block_size():
-    assert run(state(properties={"special_small_blocks": 16 * MiB})).errors == []
+    assert run(state(properties={"special_small_blocks": 16 * MiB})) == []
 
 
 @pytest.mark.parametrize(
@@ -327,4 +328,4 @@ def test_special_small_blocks_range_includes_the_largest_block_size():
     ],
 )
 def test_rules_gated_on_their_trigger_ignore_untouched_state(kwargs):
-    assert run(state(**kwargs)).errors == []
+    assert run(state(**kwargs)) == []

@@ -12,7 +12,7 @@ from middlewared.api.current import (
     ZFSResourceEntry,
     ZFSResourceQuery,
 )
-from middlewared.service_exception import CallError, ValidationError, ValidationErrors
+from middlewared.service_exception import CallError, ValidationError
 
 from .create_impl import ZFS_INVALID_INPUT_ERRORS, create_ancestors, create_leaf
 from .create_rules import (
@@ -85,11 +85,10 @@ def create_impl(context: ServiceContext, tls: Any, data: ZFSResourceCreateArgsDa
 
     properties, encrypt = resolve_create_request(data)
     ctx = CreateContext(properties=properties, encrypt=encrypt)
-    verrors = ValidationErrors()
 
-    check_share_type(data, verrors)
-    check_force_size(data, verrors)
-    check_names_valid_for_type(data, verrors)
+    check_share_type(data)
+    check_force_size(data)
+    check_names_valid_for_type(data)
 
     if data.type == "FILESYSTEM" or properties.special_small_blocks is not None or properties.dedup is not None:
         ctx.tier_enabled = context.call_sync2(context.s.zfs.tier.config).enabled
@@ -100,65 +99,59 @@ def create_impl(context: ServiceContext, tls: Any, data: ZFSResourceCreateArgsDa
     dedup_requested = str(properties.dedup or "off").lower() != "off"
     if dedup_requested:
         ctx.dedup_entitlement = context.call_sync2(context.s.truenas.entitlements.check, LicenseFeature.DEDUP)
-        check_dedup_entitlement(data, ctx, verrors)
+        check_dedup_entitlement(data, ctx)
 
-    if not verrors:
-        ancestor_props = ["readonly", "mountpoint", "encryption"]
-        if data.type == "VOLUME":
-            ancestor_props.extend(["available", "special_small_blocks"])
-        else:
-            ancestor_props.extend(["acltype", "aclmode", "mounted"])
-            if ctx.tier_enabled and data.properties.special_small_blocks is None:
-                ancestor_props.extend(["special_small_blocks", "recordsize"])
-        ctx.ancestors = {
-            rv["name"]: rv
-            for rv in context.call_sync2(
-                context.s.zfs.resource.list_impl,
-                ZFSResourceQuery(paths=[path, *ancestor_chain(path)], properties=ancestor_props),
-            )
-        }
-        if ctx.ancestors.pop(path, None) is not None:
-            raise ZFSPathAlreadyExistsException(path)
-        check_parent_is_filesystem(data, ctx, verrors)
-    verrors.check()
+    ancestor_props = ["readonly", "mountpoint", "encryption"]
+    if data.type == "VOLUME":
+        ancestor_props.extend(["available", "special_small_blocks"])
+    else:
+        ancestor_props.extend(["acltype", "aclmode", "mounted"])
+        if ctx.tier_enabled and data.properties.special_small_blocks is None:
+            ancestor_props.extend(["special_small_blocks", "recordsize"])
+    ctx.ancestors = {
+        rv["name"]: rv
+        for rv in context.call_sync2(
+            context.s.zfs.resource.list_impl,
+            ZFSResourceQuery(paths=[path, *ancestor_chain(path)], properties=ancestor_props),
+        )
+    }
+    if ctx.ancestors.pop(path, None) is not None:
+        raise ZFSPathAlreadyExistsException(path)
+    check_parent_is_filesystem(data, ctx)
 
-    check_parent_unlocked(data, ctx, verrors)
-    check_parent_not_readonly(data, ctx, verrors)
-    reject_bad_user_property_names(verrors, f"{SCHEMA}.user_properties", data.user_properties)
-    reject_bad_user_property_values(verrors, f"{SCHEMA}.user_properties", data.user_properties)
+    check_parent_unlocked(data, ctx)
+    check_parent_not_readonly(data, ctx)
+    reject_bad_user_property_names(f"{SCHEMA}.user_properties", data.user_properties)
+    reject_bad_user_property_values(f"{SCHEMA}.user_properties", data.user_properties)
     if data.properties.special_small_blocks is not None:
         if ctx.tier_enabled:
-            reject_tier_managed_ssb(verrors, f"{SCHEMA}.properties.special_small_blocks")
+            reject_tier_managed_ssb(f"{SCHEMA}.properties.special_small_blocks")
         else:
-            reject_ssb_out_of_range(
-                verrors, f"{SCHEMA}.properties.special_small_blocks", data.properties.special_small_blocks
-            )
+            reject_ssb_out_of_range(f"{SCHEMA}.properties.special_small_blocks", data.properties.special_small_blocks)
 
     if data.type == "VOLUME":
-        check_volume_has_volsize(data, ctx, verrors)
+        check_volume_has_volsize(data, ctx)
         if properties.volblocksize is not None:
             reject_bad_block_size(
-                verrors, f"{SCHEMA}.properties.volblocksize", "volblocksize", properties.volblocksize, SPA_MAXBLOCKSIZE
+                f"{SCHEMA}.properties.volblocksize", "volblocksize", properties.volblocksize, SPA_MAXBLOCKSIZE
             )
-        apply_draid_volblocksize(context, data, ctx, verrors)
+        apply_draid_volblocksize(context, data, ctx)
         if properties.special_small_blocks is None:
             apply_volume_ssb_pin(data, ctx)
         if properties.volsize is not None:
             reject_volsize_not_multiple(
-                verrors,
                 f"{SCHEMA}.properties.volsize",
                 path,
                 properties.volsize,
                 properties.volblocksize or DEFAULT_VOLBLOCKSIZE,
             )
-        check_volume_capacity(data, ctx, verrors)
+        check_volume_capacity(data, ctx)
     else:
         if properties.recordsize is None:
             if not data.bypass:
                 apply_draid_recordsize(context, data, ctx)
         else:
             reject_bad_recordsize(
-                verrors,
                 f"{SCHEMA}.properties.recordsize",
                 context,
                 path.split("/")[0],
@@ -168,12 +161,12 @@ def create_impl(context: ServiceContext, tls: Any, data: ZFSResourceCreateArgsDa
         if ctx.tier_enabled and properties.special_small_blocks is None and not data.bypass:
             apply_tier_snap(data, ctx)
         if ctx.tier_enabled and dedup_requested:
-            check_dedup_tiering(context, data, ctx, verrors)
-        check_acl_combination(data, ctx, verrors)
+            check_dedup_tiering(context, data, ctx)
+        check_acl_combination(data, ctx)
 
-    check_encryption_ancestry(data, ctx, verrors)
+    check_encryption_ancestry(data, ctx)
     if data.encryption:
-        check_encryption(data, ctx, verrors)
+        check_encryption(data, ctx)
 
     parent = _nearest_ancestor_entry(data, ctx)
     inherited = parent["properties"]["mountpoint"]["raw"] if parent else None
@@ -189,21 +182,19 @@ def create_impl(context: ServiceContext, tls: Any, data: ZFSResourceCreateArgsDa
         and properties.mountpoint is None
         and os.path.lexists(mp := share_mountpoint(path, parent) if parent else os.path.join("/mnt", path))
     ):
-        verrors.add(SCHEMA, f"Path {mp!r} already exists.", errno.EEXIST)
-    verrors.check()
+        raise ValidationError(SCHEMA, f"Path {mp!r} already exists.", errno.EEXIST)
 
     acl = None
     if data.share_type and parent is not None:
         share_mp = share_mountpoint(path, parent)
-        acl = share_acl(context, data.share_type, share_mp, parent, verrors)
+        acl = share_acl(context, data.share_type, share_mp, parent)
         if acl is not None and properties.readonly == "on":
-            verrors.add(
+            raise ValidationError(
                 f"{SCHEMA}.properties.readonly",
                 f"share_type {data.share_type!r} writes an ACL to {path!r}, "
                 "which a readonly filesystem refuses. Leave 'readonly' unset.",
                 errno.EINVAL,
             )
-        verrors.check()
 
     crypto = None
     if encrypt:

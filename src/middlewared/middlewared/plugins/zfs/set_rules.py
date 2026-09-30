@@ -11,7 +11,7 @@ import typing
 from truenas_pylibzfs import ZFSProperty
 
 from middlewared.api.current import ZFSResourceQuery, ZFSResourceSetProperties
-from middlewared.service_exception import CallError, ValidationErrors
+from middlewared.service_exception import CallError, ValidationError
 
 from .property_management import PROPERTY_TEMPLATES
 from .rules_common import (
@@ -191,49 +191,49 @@ class SetContext:
         return self.current[name]
 
 
-def check_has_work(data: ZFSResourceSetArgsData, verrors: ValidationErrors) -> None:
+def check_has_work(data: ZFSResourceSetArgsData) -> None:
     if not (data.properties.model_dump(exclude_none=True) or data.user_properties or data.inherit):
-        verrors.add(
+        raise ValidationError(
             SCHEMA,
             "Nothing to update. Supply at least one of 'properties', 'user_properties' or 'inherit'.",
             errno.EINVAL,
         )
 
 
-def check_set_inherit_conflict(data: ZFSResourceSetArgsData, verrors: ValidationErrors) -> None:
+def check_set_inherit_conflict(data: ZFSResourceSetArgsData) -> None:
     setting = set(data.properties.model_dump(exclude_none=True)) | set(data.user_properties)
     for name in data.inherit:
         if name in setting:
-            verrors.add(
+            raise ValidationError(
                 f"{SCHEMA}.inherit.{name}",
                 f"{name!r} cannot be both set and inherited in the same request.",
                 errno.EINVAL,
             )
 
 
-def check_inherit_names(data: ZFSResourceSetArgsData, verrors: ValidationErrors) -> None:
+def check_inherit_names(data: ZFSResourceSetArgsData) -> None:
     user_names = []
     for name in data.inherit:
         if ":" in name:
             user_names.append(name)
         elif name in NON_INHERITABLE_PROPERTIES:
-            verrors.add(f"{SCHEMA}.inherit.{name}", f"{name!r} has no inherited value.", errno.EINVAL)
+            raise ValidationError(f"{SCHEMA}.inherit.{name}", f"{name!r} has no inherited value.", errno.EINVAL)
         elif name not in INHERITABLE_PROPERTIES:
-            verrors.add(f"{SCHEMA}.inherit.{name}", f"{name!r} is not a settable property.", errno.EINVAL)
-    reject_bad_user_property_names(verrors, f"{SCHEMA}.inherit", user_names)
+            raise ValidationError(f"{SCHEMA}.inherit.{name}", f"{name!r} is not a settable property.", errno.EINVAL)
+    reject_bad_user_property_names(f"{SCHEMA}.inherit", user_names)
 
 
-def check_user_properties(data: ZFSResourceSetArgsData, verrors: ValidationErrors) -> None:
-    reject_bad_user_property_names(verrors, f"{SCHEMA}.user_properties", data.user_properties)
-    reject_bad_user_property_values(verrors, f"{SCHEMA}.user_properties", data.user_properties)
+def check_user_properties(data: ZFSResourceSetArgsData) -> None:
+    reject_bad_user_property_names(f"{SCHEMA}.user_properties", data.user_properties)
+    reject_bad_user_property_values(f"{SCHEMA}.user_properties", data.user_properties)
 
 
-def validate_request(data: ZFSResourceSetArgsData, verrors: ValidationErrors) -> None:
+def validate_request(data: ZFSResourceSetArgsData) -> None:
     """Judge what the request alone decides. Reads nothing."""
-    check_has_work(data, verrors)
-    check_set_inherit_conflict(data, verrors)
-    check_inherit_names(data, verrors)
-    check_user_properties(data, verrors)
+    check_has_work(data)
+    check_set_inherit_conflict(data)
+    check_inherit_names(data)
+    check_user_properties(data)
 
 
 def apply_acl_coupling(state: SetContext) -> SetContext:
@@ -264,60 +264,57 @@ def apply_thick_follow(state: SetContext) -> SetContext:
     )
 
 
-def check_names_valid_for_type(context: ServiceContext, state: SetContext, verrors: ValidationErrors) -> None:
+def check_names_valid_for_type(context: ServiceContext, state: SetContext) -> None:
     valid = PROPERTY_TEMPLATES.vol if state.type == "VOLUME" else PROPERTY_TEMPLATES.fs
     for name in sorted(state.touched()):
         if ZFSProperty[name.upper()] not in valid:
-            verrors.add(state.attribute(name), f"{name!r} is not valid for a {state.type}.", errno.EINVAL)
+            raise ValidationError(state.attribute(name), f"{name!r} is not valid for a {state.type}.", errno.EINVAL)
 
 
-def check_volsize_writable(context: ServiceContext, state: SetContext, verrors: ValidationErrors) -> None:
+def check_volsize_writable(context: ServiceContext, state: SetContext) -> None:
     # ZFS refuses the volsize but still applies the rest of the request, a follow-up refreservation included.
     # It judges readonly as stored before the request, so turning it off in the same request does not help.
     if state.type != "VOLUME" or "volsize" not in state.set_names() or not state.changed("volsize"):
         return
     if state.current["readonly"] == "on":
-        verrors.add(
+        raise ValidationError(
             state.attribute("volsize"),
             f"'volsize' cannot be set on {state.path!r} while it is read-only. Set 'readonly' to off first.",
             errno.EROFS,
         )
     elif state.current.get("keystatus") == "unavailable":
-        verrors.add(
+        raise ValidationError(
             state.attribute("volsize"),
             f"'volsize' cannot be set on {state.path!r} while it is locked. Unlock it first.",
             errno.EACCES,
         )
 
 
-def check_volsize_not_shrunk(context: ServiceContext, state: SetContext, verrors: ValidationErrors) -> None:
+def check_volsize_not_shrunk(context: ServiceContext, state: SetContext) -> None:
     if state.type != "VOLUME" or "volsize" not in state.set_names():
         return
     if state.effective("volsize") < state.current["volsize"]:
-        verrors.add(
+        raise ValidationError(
             state.attribute("volsize"),
             f"'volsize' may not be reduced below the current size of {state.path!r}.",
             errno.EINVAL,
         )
 
 
-def check_volsize_multiple_of_volblocksize(
-    context: ServiceContext, state: SetContext, verrors: ValidationErrors
-) -> None:
+def check_volsize_multiple_of_volblocksize(context: ServiceContext, state: SetContext) -> None:
     if state.type != "VOLUME" or "volsize" not in state.set_names():
         return
     reject_volsize_not_multiple(
-        verrors, state.attribute("volsize"), state.path, state.effective("volsize"), state.current["volblocksize"]
+        state.attribute("volsize"), state.path, state.effective("volsize"), state.current["volblocksize"]
     )
 
 
-def check_reservation_headroom(context: ServiceContext, state: SetContext, verrors: ValidationErrors) -> None:
+def check_reservation_headroom(context: ServiceContext, state: SetContext) -> None:
     set_names = state.set_names()
     if "refreservation" not in set_names and "volsize" not in set_names:
         return
     if state.type == "FILESYSTEM" and state.properties.refreservation == "auto":
-        verrors.add(f"{SCHEMA}.properties.refreservation", "'auto' is only valid on volumes.", errno.EINVAL)
-        return
+        raise ValidationError(f"{SCHEMA}.properties.refreservation", "'auto' is only valid on volumes.", errno.EINVAL)
     requested = state.effective("refreservation")
     if requested == "auto":
         requested = state.effective("volsize")
@@ -327,7 +324,7 @@ def check_reservation_headroom(context: ServiceContext, state: SetContext, verro
     if state.type == "FILESYSTEM":
         refquota = state.effective("refquota")
         if refquota > 0 and requested > refquota:
-            verrors.add(
+            raise ValidationError(
                 attribute,
                 f"A refreservation of {requested} exceeds the refquota of {refquota} on {state.path!r}.",
                 errno.EINVAL,
@@ -336,7 +333,6 @@ def check_reservation_headroom(context: ServiceContext, state: SetContext, verro
     if not state.changed("volsize"):
         return
     reject_insufficient_headroom(
-        verrors,
         attribute,
         state.path,
         requested,
@@ -346,19 +342,19 @@ def check_reservation_headroom(context: ServiceContext, state: SetContext, verro
     )
 
 
-def check_force_size(context: ServiceContext, state: SetContext, verrors: ValidationErrors) -> None:
+def check_force_size(context: ServiceContext, state: SetContext) -> None:
     if state.force_size and state.type == "FILESYSTEM":
-        verrors.add(f"{SCHEMA}.force_size", "force_size applies only to a VOLUME.", errno.EINVAL)
+        raise ValidationError(f"{SCHEMA}.force_size", "force_size applies only to a VOLUME.", errno.EINVAL)
 
 
-def check_acl_combination(context: ServiceContext, state: SetContext, verrors: ValidationErrors) -> None:
+def check_acl_combination(context: ServiceContext, state: SetContext) -> None:
     if state.type != "FILESYSTEM" or not state.touched() & {"acltype", "aclmode"}:
         return
     attribute = state.attribute("aclmode" if "aclmode" in state.touched() - state.derived else "acltype")
-    reject_bad_acl_combination(verrors, attribute, state.effective("acltype"), state.effective("aclmode"))
+    reject_bad_acl_combination(attribute, state.effective("acltype"), state.effective("aclmode"))
 
 
-def check_tier_managed_ssb(context: ServiceContext, state: SetContext, verrors: ValidationErrors) -> None:
+def check_tier_managed_ssb(context: ServiceContext, state: SetContext) -> None:
     if "special_small_blocks" not in state.touched() or not state.tier_enabled:
         return
     if "special_small_blocks" in state.set_names():
@@ -366,18 +362,18 @@ def check_tier_managed_ssb(context: ServiceContext, state: SetContext, verrors: 
             return
     elif state.source["special_small_blocks"] in ("INHERITED", "DEFAULT", "NONE"):
         return
-    reject_tier_managed_ssb(verrors, state.attribute("special_small_blocks"))
+    reject_tier_managed_ssb(state.attribute("special_small_blocks"))
 
 
-def check_dedup_entitlement(context: ServiceContext, state: SetContext, verrors: ValidationErrors) -> None:
+def check_dedup_entitlement(context: ServiceContext, state: SetContext) -> None:
     if state.effective("dedup") == "off" or not state.changed("dedup"):
         return
     if state.dedup_entitlement is None:
         raise CallError(f"The DEDUP entitlement was not read for {state.path!r}")
-    reject_unentitled_dedup(verrors, state.attribute("dedup"), state.dedup_entitlement)
+    reject_unentitled_dedup(state.attribute("dedup"), state.dedup_entitlement)
 
 
-def check_dedup_tiering(context: ServiceContext, state: SetContext, verrors: ValidationErrors) -> None:
+def check_dedup_tiering(context: ServiceContext, state: SetContext) -> None:
     if state.type != "FILESYSTEM" or not state.tier_enabled:
         return
     ssb = state.effective("special_small_blocks")
@@ -386,10 +382,10 @@ def check_dedup_tiering(context: ServiceContext, state: SetContext, verrors: Val
     if state.current["dedup"] != "off" and not state.changed("special_small_blocks"):
         return
     attribute = state.attribute("dedup" if "dedup" in state.touched() else "special_small_blocks")
-    reject_dedup_on_special_vdev(verrors, attribute, context, state.path.split("/")[0], ssb)
+    reject_dedup_on_special_vdev(attribute, context, state.path.split("/")[0], ssb)
 
 
-def check_dedup_descendants(context: ServiceContext, state: SetContext, verrors: ValidationErrors) -> None:
+def check_dedup_descendants(context: ServiceContext, state: SetContext) -> None:
     if state.type != "FILESYSTEM":
         return
     if state.effective("dedup") == "off" or state.current["dedup"] != "off" or not state.tier_enabled:
@@ -418,7 +414,7 @@ def check_dedup_descendants(context: ServiceContext, state: SetContext, verrors:
     if affected:
         affected.sort()
         others = f" (and {len(affected) - 1} more)" if len(affected) > 1 else ""
-        verrors.add(
+        raise ValidationError(
             state.attribute("dedup"),
             "ZFS deduplication is incompatible with tiering and cannot be enabled here: descendant dataset "
             f"{affected[0]!r}{others} is assigned to the PERFORMANCE tier (its data is placed on the SPECIAL vdev) "
@@ -427,31 +423,31 @@ def check_dedup_descendants(context: ServiceContext, state: SetContext, verrors:
         )
 
 
-def check_recordsize(context: ServiceContext, state: SetContext, verrors: ValidationErrors) -> None:
+def check_recordsize(context: ServiceContext, state: SetContext) -> None:
     if state.type != "FILESYSTEM" or "recordsize" not in state.set_names():
         return
     reject_bad_recordsize(
-        verrors, state.attribute("recordsize"), context, state.path.split("/")[0], state.effective("recordsize")
+        state.attribute("recordsize"), context, state.path.split("/")[0], state.effective("recordsize")
     )
 
 
-def check_special_small_blocks_range(context: ServiceContext, state: SetContext, verrors: ValidationErrors) -> None:
+def check_special_small_blocks_range(context: ServiceContext, state: SetContext) -> None:
     if "special_small_blocks" not in state.set_names():
         return
-    reject_ssb_out_of_range(verrors, state.attribute("special_small_blocks"), state.effective("special_small_blocks"))
+    reject_ssb_out_of_range(state.attribute("special_small_blocks"), state.effective("special_small_blocks"))
 
 
-def validate_set(context: ServiceContext, state: SetContext, verrors: ValidationErrors) -> None:
-    check_names_valid_for_type(context, state, verrors)
-    check_volsize_writable(context, state, verrors)
-    check_volsize_not_shrunk(context, state, verrors)
-    check_volsize_multiple_of_volblocksize(context, state, verrors)
-    check_reservation_headroom(context, state, verrors)
-    check_force_size(context, state, verrors)
-    check_acl_combination(context, state, verrors)
-    check_tier_managed_ssb(context, state, verrors)
-    check_dedup_entitlement(context, state, verrors)
-    check_dedup_tiering(context, state, verrors)
-    check_dedup_descendants(context, state, verrors)
-    check_recordsize(context, state, verrors)
-    check_special_small_blocks_range(context, state, verrors)
+def validate_set(context: ServiceContext, state: SetContext) -> None:
+    check_names_valid_for_type(context, state)
+    check_volsize_writable(context, state)
+    check_volsize_not_shrunk(context, state)
+    check_volsize_multiple_of_volblocksize(context, state)
+    check_reservation_headroom(context, state)
+    check_force_size(context, state)
+    check_acl_combination(context, state)
+    check_tier_managed_ssb(context, state)
+    check_dedup_entitlement(context, state)
+    check_dedup_tiering(context, state)
+    check_dedup_descendants(context, state)
+    check_recordsize(context, state)
+    check_special_small_blocks_range(context, state)

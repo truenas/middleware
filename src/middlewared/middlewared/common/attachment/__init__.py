@@ -8,7 +8,6 @@ from middlewared.service import GenericSharingTaskService, ServiceChangeMixin, S
 if TYPE_CHECKING:
     from middlewared.main import Middleware
     from middlewared.plugins.zfs.set_rules import SetContext
-    from middlewared.service_exception import ValidationErrors
 
 
 # A dataset that was unlocked, paired with the mountpoint its filesystem lives at. `dataset` is in
@@ -173,7 +172,7 @@ class FSAttachmentDelegate[E](ServiceChangeMixin):
         while the pool was still there.
         """
 
-    async def validate_set(self, state: SetContext, verrors: ValidationErrors) -> None:
+    async def validate_set(self, state: SetContext) -> None:
         pass
 
     async def after_set(self, state: SetContext) -> None:

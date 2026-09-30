@@ -1,7 +1,7 @@
 """Checks shared by the zfs.resource.create and zfs.resource.set rules.
 
-Every `reject_*` function takes the `ValidationErrors` to append to and the attribute to report on, followed by the
-values it judges, so each caller resolves "effective" its own way and reports on its own schema.
+Every `reject_*` function takes the attribute to report on, followed by the values it judges, and raises a single
+`ValidationError`, so each caller resolves "effective" its own way and reports on its own schema.
 """
 
 from __future__ import annotations
@@ -9,6 +9,8 @@ from __future__ import annotations
 import errno
 import re
 import typing
+
+from middlewared.service_exception import ValidationError
 
 from .property_choices import DRAID_MINIMUM_RECORDSIZE
 from .resource_info import ZFS_MAX_RECORDSIZE
@@ -19,7 +21,6 @@ if typing.TYPE_CHECKING:
 
     from middlewared.api.current import EntitlementEntry, ZFSResourceCreateProperties
     from middlewared.service import ServiceContext
-    from middlewared.service_exception import ValidationErrors
 
 __all__ = (
     "SPA_MAXBLOCKSIZE",
@@ -74,7 +75,7 @@ def pool_has_special_vdev_sync(context: ServiceContext, pool_name: str) -> bool:
     return False
 
 
-def reject_bad_user_property_names(verrors: ValidationErrors, attribute: str, names: Iterable[str]) -> None:
+def reject_bad_user_property_names(attribute: str, names: Iterable[str]) -> None:
     """User property names must follow the grammar ZFS itself enforces."""
     for name in names:
         if ":" not in name:
@@ -85,38 +86,36 @@ def reject_bad_user_property_names(verrors: ValidationErrors, attribute: str, na
             reason = f"must be shorter than {USER_PROPERTY_NAME_MAX} characters"
         else:
             continue
-        verrors.add(attribute, f"{name!r} is not a valid user property name ({reason}).", errno.EINVAL)
+        raise ValidationError(attribute, f"{name!r} is not a valid user property name ({reason}).", errno.EINVAL)
 
 
-def reject_bad_user_property_values(verrors: ValidationErrors, attribute: str, values: Mapping[str, str]) -> None:
+def reject_bad_user_property_values(attribute: str, values: Mapping[str, str]) -> None:
     """User property values must fit in ZFS."""
     for name, value in values.items():
         if len(value.encode()) >= USER_PROPERTY_VALUE_MAX:
-            verrors.add(
+            raise ValidationError(
                 attribute,
                 f"The value of {name!r} must be shorter than {USER_PROPERTY_VALUE_MAX} bytes.",
                 errno.EINVAL,
             )
 
 
-def reject_tier_managed_ssb(verrors: ValidationErrors, attribute: str) -> None:
+def reject_tier_managed_ssb(attribute: str) -> None:
     """The tier manager owns special_small_blocks while tiering is enabled."""
-    verrors.add(
+    raise ValidationError(
         attribute,
         "ZFS tiering is enabled. Use `zfs.tier.dataset_set_tier` to manage 'special_small_blocks'.",
         errno.EINVAL,
     )
 
 
-def reject_unentitled_dedup(verrors: ValidationErrors, attribute: str, entitlement: EntitlementEntry) -> None:
+def reject_unentitled_dedup(attribute: str, entitlement: EntitlementEntry) -> None:
     """Deduplication may only be enabled on a system entitled to it; the entitlement supplies the refusal message."""
     if not entitlement.entitled:
-        verrors.add(attribute, entitlement.message, errno.EINVAL)
+        raise ValidationError(attribute, entitlement.message, errno.EINVAL)
 
 
-def reject_dedup_on_special_vdev(
-    verrors: ValidationErrors, attribute: str, context: ServiceContext, pool_name: str, ssb: int
-) -> None:
+def reject_dedup_on_special_vdev(attribute: str, context: ServiceContext, pool_name: str, ssb: int) -> None:
     """Deduplication may not be enabled on a PERFORMANCE tier filesystem.
 
     With tiering enabled a filesystem whose effective special_small_blocks (`ssb`, in bytes) is above zero has its
@@ -124,7 +123,7 @@ def reject_dedup_on_special_vdev(
     """
     if not ssb or not pool_has_special_vdev_sync(context, pool_name):
         return
-    verrors.add(
+    raise ValidationError(
         attribute,
         "ZFS deduplication is incompatible with tiering and cannot be enabled on a "
         "dataset assigned to the PERFORMANCE tier (its data is placed on the SPECIAL "
@@ -133,18 +132,17 @@ def reject_dedup_on_special_vdev(
     )
 
 
-def reject_bad_acl_combination(
-    verrors: ValidationErrors, attribute: str, acltype: str | None, aclmode: str | None
-) -> None:
+def reject_bad_acl_combination(attribute: str, acltype: str | None, aclmode: str | None) -> None:
     """A discard aclmode strips nfsv4 acls on chmod."""
     if acltype in POSIX_OR_OFF_ACLTYPES and aclmode != "discard":
-        verrors.add(attribute, "'aclmode' must be discard when the effective 'acltype' is posix or off.", errno.EINVAL)
+        raise ValidationError(
+            attribute, "'aclmode' must be discard when the effective 'acltype' is posix or off.", errno.EINVAL
+        )
     elif acltype == "nfsv4" and aclmode == "discard":
-        verrors.add(attribute, "A discard 'aclmode' may not be used with the nfsv4 'acltype'.", errno.EINVAL)
+        raise ValidationError(attribute, "A discard 'aclmode' may not be used with the nfsv4 'acltype'.", errno.EINVAL)
 
 
 def reject_insufficient_headroom(
-    verrors: ValidationErrors,
     attribute: str,
     path: str,
     requested: int,
@@ -161,14 +159,14 @@ def reject_insufficient_headroom(
     base = max(base, 0)
     delta = requested - current
     if forced and delta > base:
-        verrors.add(
+        raise ValidationError(
             attribute,
             f"Reserving another {delta} would exceed the {base} available to {path!r}. "
             "Lower refreservation or set it to none for a sparse volume.",
             errno.EINVAL,
         )
     elif not forced and delta > 0.8 * base:
-        verrors.add(
+        raise ValidationError(
             attribute,
             f"Reserving another {delta} would consume more than 80% of the {base} available to {path!r}. "
             "Lower refreservation, set it to none for a sparse volume, or set force_size.",
@@ -176,15 +174,12 @@ def reject_insufficient_headroom(
         )
 
 
-def reject_bad_block_size(verrors: ValidationErrors, attribute: str, name: str, size: int, maximum: int) -> bool:
+def reject_bad_block_size(attribute: str, name: str, size: int, maximum: int) -> None:
     if size < 512 or size > maximum or size & (size - 1):
-        verrors.add(attribute, f"{name!r} must be a power of two from 512 to {maximum} bytes.", errno.EINVAL)
-        return True
-    return False
+        raise ValidationError(attribute, f"{name!r} must be a power of two from 512 to {maximum} bytes.", errno.EINVAL)
 
 
 def reject_bad_recordsize(
-    verrors: ValidationErrors,
     attribute: str,
     context: ServiceContext,
     pool_name: str,
@@ -193,30 +188,27 @@ def reject_bad_recordsize(
 ) -> None:
     with open(ZFS_MAX_RECORDSIZE) as f:
         maximum = min(SPA_MAXBLOCKSIZE, int(f.read().strip()))
-    if reject_bad_block_size(verrors, attribute, "recordsize", recordsize, maximum):
-        return
+    reject_bad_block_size(attribute, "recordsize", recordsize, maximum)
     if draid_floor and recordsize < DRAID_MINIMUM_RECORDSIZE and pool_is_draid(context, pool_name):
-        verrors.add(
+        raise ValidationError(
             attribute,
             f"'recordsize' must be at least {DRAID_MINIMUM_RECORDSIZE} bytes on a dRAID pool.",
             errno.EINVAL,
         )
 
 
-def reject_volsize_not_multiple(
-    verrors: ValidationErrors, attribute: str, path: str, volsize: int, volblocksize: int
-) -> None:
+def reject_volsize_not_multiple(attribute: str, path: str, volsize: int, volblocksize: int) -> None:
     if volsize % volblocksize:
-        verrors.add(
+        raise ValidationError(
             attribute,
             f"'volsize' must be a multiple of the volblocksize of {path!r} ({volblocksize}).",
             errno.EINVAL,
         )
 
 
-def reject_ssb_out_of_range(verrors: ValidationErrors, attribute: str, ssb: int) -> None:
+def reject_ssb_out_of_range(attribute: str, ssb: int) -> None:
     if not 0 <= ssb <= SPA_MAXBLOCKSIZE:
-        verrors.add(
+        raise ValidationError(
             attribute,
             f"'special_small_blocks' must be between 0 and {SPA_MAXBLOCKSIZE} bytes.",
             errno.EINVAL,

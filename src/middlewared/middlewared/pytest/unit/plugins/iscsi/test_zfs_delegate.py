@@ -6,7 +6,7 @@ from middlewared.api.current import ZFSResourceSetProperties
 from middlewared.plugins.iscsi_.fs_attachment_delegate import ISCSIFSAttachmentDelegate
 from middlewared.plugins.zfs.set_rules import PropertyView, SetContext
 from middlewared.pytest.unit.middleware import Middleware
-from middlewared.service_exception import ValidationErrors
+from middlewared.service_exception import ValidationError
 
 GiB = 1024**3
 HIDDEN_MESSAGE = (
@@ -38,9 +38,11 @@ def extents_on(*paths):
 
 
 async def validate(m, state):
-    verrors = ValidationErrors()
-    await ISCSIFSAttachmentDelegate(m).validate_set(state, verrors)
-    return list(verrors)
+    try:
+        await ISCSIFSAttachmentDelegate(m).validate_set(state)
+    except ValidationError as e:
+        return [(e.attribute, e.errmsg, e.errno)]
+    return []
 
 
 @pytest.mark.parametrize(

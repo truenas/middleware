@@ -17,12 +17,12 @@ from middlewared.api.current import (
 from middlewared.common.attachment import FSAttachmentDelegate, UnlockedDataset
 from middlewared.common.ports import PortDelegate, PortDetail
 from middlewared.plugins.zfs.zvol_utils import zvol_path_to_name
+from middlewared.service_exception import ValidationError
 from middlewared.utils.libvirt.utils import ACTIVE_STATES
 
 if TYPE_CHECKING:
     from middlewared.main import Middleware
     from middlewared.plugins.zfs.set_rules import SetContext
-    from middlewared.service_exception import ValidationErrors
 
 
 class VMFSAttachmentDelegate(FSAttachmentDelegate[dict[str, Any]]):
@@ -185,7 +185,7 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate[dict[str, Any]]):
         disks = self.disk_paths(vm)
         return bool(disks) and await self.middleware.call('filesystem.is_child', disks, list(paths))
 
-    async def validate_set(self, state: SetContext, verrors: ValidationErrors) -> None:
+    async def validate_set(self, state: SetContext) -> None:
         if not state.snapshot_devices or not state.changed('snapdev') or state.effective('snapdev') != 'hidden':
             return
 
@@ -196,7 +196,7 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate[dict[str, Any]]):
             and zvol_path_to_name(disk.attributes.path) in state.snapshot_devices
             for disk in disks
         ):
-            verrors.add(
+            raise ValidationError(
                 state.attribute('snapdev'),
                 f'{state.path!r} has snapshots which have attachments being used. Before marking it '
                 'as HIDDEN, remove attachment usages.',

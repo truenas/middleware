@@ -5,7 +5,7 @@ import time
 
 import pytest
 
-from middlewared.service_exception import ValidationErrors
+from middlewared.service_exception import ValidationError
 from middlewared.test.integration.assets.iscsi import iscsi_extent
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call, client, mock, ssh
@@ -85,12 +85,10 @@ def test_readonly_on_an_extent_zvol_syncs_the_extent():
 def test_hiding_snapshot_devices_backing_an_extent_is_rejected():
     with volume("zre_iscsi_snapdev") as zvol:
         with snapshot_extent(zvol):
-            with pytest.raises(ValidationErrors) as ve:
+            with pytest.raises(ValidationError) as ve:
                 call("zfs.resource.set", {"path": zvol, "properties": {"snapdev": "hidden"}})
 
-            assert [(e.attribute, e.errno) for e in ve.value.errors] == [
-                ("zfs.resource.set.properties.snapdev", errno.EINVAL)
-            ]
+            assert (ve.value.attribute, ve.value.errno) == ("zfs.resource.set.properties.snapdev", errno.EINVAL)
 
 
 def test_inheriting_visible_snapdev_under_an_extent_is_accepted():

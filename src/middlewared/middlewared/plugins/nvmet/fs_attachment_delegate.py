@@ -3,6 +3,7 @@ import os
 from middlewared.common.attachment import LockableFSAttachmentDelegate
 from middlewared.plugins.nvmet.namespace import NVMetNamespaceService
 from middlewared.plugins.zfs.zvol_utils import zvol_path_to_name
+from middlewared.service_exception import ValidationError
 
 
 class NVMetNamespaceAttachmentDelegate(LockableFSAttachmentDelegate):
@@ -30,7 +31,7 @@ class NVMetNamespaceAttachmentDelegate(LockableFSAttachmentDelegate):
     async def start(self, attachments):
         await self.toggle(attachments, True)
 
-    async def validate_set(self, state, verrors):
+    async def validate_set(self, state):
         if not state.snapshot_devices or not state.changed('snapdev') or state.effective('snapdev') != 'hidden':
             return
 
@@ -39,12 +40,11 @@ class NVMetNamespaceAttachmentDelegate(LockableFSAttachmentDelegate):
         )
         for ns in namespaces:
             if zvol_path_to_name(os.path.join('/dev', ns['device_path'])) in state.snapshot_devices:
-                verrors.add(
+                raise ValidationError(
                     state.attribute('snapdev'),
                     f'{state.path!r} has snapshots which have attachments being used. Before marking it '
                     'as HIDDEN, remove attachment usages.',
                 )
-                break
 
     async def after_set(self, state):
         if state.type != 'VOLUME':
