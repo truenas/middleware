@@ -63,8 +63,8 @@ def test_zfs_resource_create_volume_sparse():
 
 
 def test_zfs_resource_create_volume_capacity_guardrail():
-    """Test that a thick volume reserving over 80% of the available space is
-    rejected while a sparse volume of the same size is allowed"""
+    """Test that a volume over 80% of the available space is rejected, sparse
+    or not, and that force_size lets a sparse volume of that size through"""
     avail = call("zfs.resource.list", {"paths": [pool_name], "properties": ["available"]})
     volsize = (int(avail[0]["properties"]["available"]["value"] * 0.9) // 16384) * 16384
     path = os.path.join(pool_name, "test_create_zvol_capacity")
@@ -73,35 +73,24 @@ def test_zfs_resource_create_volume_capacity_guardrail():
             "zfs.resource.create",
             {"path": path, "type": "VOLUME", "properties": {"volsize": volsize}},
         )
-    assert "for a sparse volume" in str(exc_info.value)
+    assert "more than 80%" in str(exc_info.value)
+
+    with pytest.raises(Exception) as exc_info:
+        call(
+            "zfs.resource.create",
+            {"path": path, "type": "VOLUME", "properties": {"volsize": volsize, "refreservation": "none"}},
+        )
+    assert "more than 80%" in str(exc_info.value)
 
     with zfs_resource(
         path,
         {
             "type": "VOLUME",
             "properties": {"volsize": volsize, "refreservation": "none"},
+            "force_size": True,
         },
     ) as entry:
         assert entry["properties"]["volsize"]["value"] == volsize
-
-
-def test_create_headroom_attribute():
-    available = call("zfs.resource.list", {"paths": [pool_name], "properties": ["available"]})[0]
-    path = os.path.join(pool_name, "test_create_headroom_vol")
-    with pytest.raises(ValidationError) as exc_info:
-        call(
-            "zfs.resource.create",
-            {
-                "path": path,
-                "type": "VOLUME",
-                "properties": {
-                    "volsize": 16 * 1024**2,
-                    "refreservation": int(0.9 * available["properties"]["available"]["value"]),
-                },
-            },
-        )
-    assert exc_info.value.attribute == "zfs.resource.create.properties.refreservation"
-    assert call("zfs.resource.list", {"paths": [path], "properties": None}) == []
 
 
 def test_zfs_resource_create_quota_none_is_accepted():

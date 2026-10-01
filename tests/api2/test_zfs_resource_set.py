@@ -355,23 +355,24 @@ def test_grow_over_reserved_volume_never_lowers_reservation():
         assert reservation(path) == (2 * GiB, 5 * GiB)
 
         call("zfs.resource.set", {"path": path, "properties": {"volsize": 6 * GiB}})
-        volsize, refreservation = reservation(path)
-        assert volsize == 6 * GiB
-        assert refreservation > 6 * GiB
+        assert reservation(path) == (6 * GiB, 5 * GiB)
 
 
 def test_grow_over_headroom_is_rejected_and_escapable():
     with volume("test_set_grow_over_headroom") as path:
-        props = read(path, ["available", "usedbyrefreservation"])["properties"]
-        base = props["available"]["value"] - props["usedbyrefreservation"]["value"]
-        volsize = GiB + (base // MiB + 1) * MiB
+        base = read(pool_name, ["available"])["properties"]["available"]["value"]
+        base += read(path, ["used"])["properties"]["used"]["value"]
+        volsize = int(0.9 * base) // MiB * MiB
         with pytest.raises(ValidationError) as exc_info:
-            call("zfs.resource.set", {"path": path, "properties": {"volsize": volsize}})
+            call("zfs.resource.set", {"path": path, "properties": {"volsize": volsize, "refreservation": 0}})
         assert exc_info.value.attribute == "zfs.resource.set.properties.volsize"
-        assert "would consume more than 80%" in exc_info.value.errmsg
+        assert "more than 80%" in exc_info.value.errmsg
         assert reservation(path) == (GiB, GiB)
 
-        call("zfs.resource.set", {"path": path, "properties": {"volsize": volsize, "refreservation": 0}})
+        call(
+            "zfs.resource.set",
+            {"path": path, "properties": {"volsize": volsize, "refreservation": 0}, "force_size": True},
+        )
         assert reservation(path) == (volsize, 0)
 
 

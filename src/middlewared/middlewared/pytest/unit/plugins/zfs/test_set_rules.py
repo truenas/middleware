@@ -55,7 +55,7 @@ PRIVATE_NATIVES = frozenset(
 )
 
 
-READ = SETTABLE | {"available", "keystatus", "volblocksize", "usedbyrefreservation"}
+READ = SETTABLE | {"available", "keystatus", "used", "volblocksize"}
 
 
 FILESYSTEM_NAMES = READ - {"volsize", "volblocksize"}
@@ -75,7 +75,7 @@ VOLUME_NAMES = frozenset(
         "snapdev",
         "special_small_blocks",
         "sync",
-        "usedbyrefreservation",
+        "used",
         "volblocksize",
         "volsize",
     }
@@ -104,7 +104,7 @@ BENIGN = {
     "snapdir": "hidden",
     "special_small_blocks": 0,
     "sync": "standard",
-    "usedbyrefreservation": 0,
+    "used": 0,
     "volblocksize": 16384,
     "volsize": GiB,
     "xattr": "sa",
@@ -262,23 +262,23 @@ def test_acl_coupling_leaves_a_companion_the_caller_inherits():
     assert st.derived == {"aclinherit"}
 
 
-def volume(properties, refreservation, volsize=GiB, source="LOCAL", force_size=False, **current):
+def volume(properties, refreservation, volsize=GiB, parent=None, force_size=False, **current):
     return state(
         type_="VOLUME",
         properties=properties,
         current={"volsize": volsize, "refreservation": refreservation, **current},
-        source=source,
+        parent=parent,
         force_size=force_size,
     )
 
 
 @pytest.mark.parametrize(
-    "properties, refreservation, source",
-    [({"volsize": 2 * GiB}, GiB, "RECEIVED")],
-    ids=["received"],
+    "properties, refreservation",
+    [({"volsize": 2 * GiB}, GiB + GiB // 2)],
+    ids=["over_reserved"],
 )
-def test_thick_follow_leaves_the_reservation_alone(properties, refreservation, source):
-    st = apply_thick_follow(volume(properties, refreservation, source=source))
+def test_thick_follow_leaves_the_reservation_alone(properties, refreservation):
+    st = apply_thick_follow(volume(properties, refreservation))
     assert st.properties.refreservation == properties.get("refreservation")
     assert st.derived == frozenset()
 
@@ -288,16 +288,22 @@ def headroom_errors(st):
 
 
 @pytest.mark.parametrize(
-    "usedbyrefreservation, force_size, rejected",
-    [(100 * GiB, False, True), (0, False, False), (100 * GiB, True, False), (150 * GiB, True, True)],
+    "volsize, current_volsize, force_size, rejected",
+    [
+        (81 * GiB, GiB, False, True),
+        (80 * GiB, GiB, False, False),
+        (81 * GiB, 81 * GiB, False, True),
+        (81 * GiB, GiB, True, False),
+    ],
 )
-def test_headroom_base_excludes_the_space_the_reservation_itself_holds(usedbyrefreservation, force_size, rejected):
+def test_headroom_base_is_the_parent_available_plus_the_volume_used(volsize, current_volsize, force_size, rejected):
     st = volume(
-        {"volsize": 2 * GiB, "refreservation": 100 * GiB},
-        10 * GiB,
-        available=200 * GiB,
-        usedbyrefreservation=usedbyrefreservation,
+        {"volsize": volsize},
+        0,
+        volsize=current_volsize,
+        parent={"available": 90 * GiB},
         force_size=force_size,
+        used=10 * GiB,
     )
     assert bool(headroom_errors(st)) is rejected
 

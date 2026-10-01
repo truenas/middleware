@@ -671,7 +671,7 @@ class ZFSResourceCreateArgsData(BaseModel):
             "creation time.\n"
             "\n"
             "Creating a VOLUME requires 'volsize'. Volumes are thick-provisioned by default ('refreservation' "
-            "defaults to the volsize, like `zfs create -V`). Set 'refreservation' to 'none' to create a sparse "
+            "defaults to the volsize). Set 'refreservation' to 'none' to create a sparse "
             "(thin) volume.\n"
             "\n"
             "A FILESYSTEM defaults 'xattr' to 'sa' (a TrueNAS performance default) unless explicitly specified. An "
@@ -717,9 +717,9 @@ class ZFSResourceCreateArgsData(BaseModel):
     force_size: bool = Field(
         default=False,
         description=(
-            "Create a thick VOLUME even when its reservation would use more than 80% of the space available to it. "
-            "ZFS still refuses a reservation larger than that space, and the volume is then not created. A sparse "
-            "volume reserves nothing and never needs this. Applies to a VOLUME only."
+            "Skip the check that refuses a VOLUME whose 'volsize' exceeds 80% of the space available to it. ZFS "
+            "still refuses a thick volume whose reservation it cannot back, and the volume is then not created. "
+            "Applies to a VOLUME only."
         ),
     )
     bypass: Private[bool] = Field(
@@ -761,9 +761,9 @@ class ZFSResourceSetProperties(ZFSResourceCreateProperties):
         description=(
             "Logical size of the volume. A byte count, or a string with a binary suffix (K, M, G, T, P or E, "
             "optionally followed by B or iB) such as '128K'. A fractional value such as '1.5M' is accepted only when "
-            "it is a whole number of bytes. It may only grow. A grow on a volume whose 'refreservation' covers the "
-            "current size but not the new one re-reserves the volume automatically, as 'refreservation' 'auto' "
-            "does, unless 'refreservation' is given in the same request."
+            "it is a whole number of bytes. It may only grow. A grow on a volume whose 'refreservation' equals its "
+            "current size, or is what 'auto' computes for it, re-reserves the volume automatically, as "
+            "'refreservation' 'auto' does, unless 'refreservation' is given in the same request."
         ),
     )
     normalization: Excluded = excluded_field()
@@ -820,10 +820,8 @@ class ZFSResourceSetArgsData(BaseModel):
     force_size: bool = Field(
         default=False,
         description=(
-            "Let a 'volsize' change grow a VOLUME's reservation by up to all of the space available to it instead "
-            "of 80%. This covers the re-reservation that follows the grow as well as an explicit 'refreservation' "
-            "sent with it. A request that would reserve more than the available space is refused before anything "
-            "is written. Applies to a VOLUME only."
+            "Skip the check that refuses a 'volsize' above 80% of the space available to the VOLUME. ZFS still "
+            "refuses a grow whose reservation it cannot back. Applies to a VOLUME only."
         ),
     )
     bypass: Private[bool] = Field(

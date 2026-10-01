@@ -150,7 +150,8 @@ def set(context: ServiceContext, data: ZFSResourceSetArgsData) -> ZFSResourceEnt
     active = [delegate for delegate in DELEGATES if delegate.set_triggers & touched]
     pool_root = "/" not in path
     parent_path = path.rsplit("/", 1)[0]
-    fetch_parent = any(":" not in name for name in data.inherit) and not pool_root
+    volsize_checked = data.properties.volsize is not None and not data.force_size
+    fetch_parent = (volsize_checked or any(":" not in name for name in data.inherit)) and not pool_root
 
     tier_enabled = None
     if touched & {"special_small_blocks", "dedup"}:

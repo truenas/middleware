@@ -307,26 +307,20 @@ def check_acl_combination(data: ZFSResourceCreateArgsData, ctx: CreateContext) -
 
 
 def check_volume_capacity(data: ZFSResourceCreateArgsData, ctx: CreateContext) -> None:
-    """A volume reservation may not consume more than 80% of the space
-    available to it.
-
-    The effective refreservation (the volsize for a thick volume) is
-    measured against the `available` space of the nearest existing
-    ancestor. Sparse volumes reserve nothing so they are exempt.
-    `force_size` skips the check and leaves the limit to ZFS, which refuses
-    a reservation it cannot back and removes the new volume in the same step.
+    """A volume's volsize may not exceed 80% of the `available` space of the
+    nearest existing ancestor, whether the volume is thick or sparse.
+    `force_size` skips the check and leaves the limit to ZFS.
     """
     if ctx.properties.volsize is None or data.force_size:
+        return
+    if not data.create_ancestors and ancestor_chain(data.path)[0] not in ctx.ancestors:
+        # creation reports the missing parent, which is the more useful error
         return
     parent = _nearest_ancestor_entry(data, ctx)
     if parent is None:
         return
     reject_insufficient_headroom(
-        f"{SCHEMA}.properties.refreservation",
-        data.path,
-        ctx.properties.refreservation or 0,
-        0,
-        parent["properties"]["available"]["value"],
+        f"{SCHEMA}.properties.volsize", ctx.properties.volsize, parent["properties"]["available"]["value"]
     )
 
 

@@ -575,10 +575,8 @@ class ZFSResourceService(Service):
         - ``encryption`` provides a hex key beneath a passphrase-encrypted parent, or
           would create an encryption root beneath an unencrypted dataset that itself
           sits inside an encrypted one (``EINVAL``)
-        - a thick volume's reservation would consume more than 80% of the available
-          space and ``force_size`` is not set - create a sparse volume
-          (``refreservation`` of ``none``) to oversubscribe, or set ``force_size``
-          (``EINVAL``)
+        - a volume's ``volsize`` exceeds 80% of the available space and
+          ``force_size`` is not set (``EINVAL``)
         - ``force_size`` is set for a FILESYSTEM (``EINVAL``)
         - the effective ``acltype`` and ``aclmode`` combination is unusable - a posix
           or off acltype requires a discard aclmode and a discard aclmode may not be
@@ -712,8 +710,7 @@ class ZFSResourceService(Service):
         - ``volsize`` is smaller than the volume's current size (``EINVAL``)
         - ``volsize`` is changed on a read-only (``EROFS``) or locked (``EACCES``) volume
         - ``volsize`` is not a multiple of the volume's ``volblocksize`` (``EINVAL``)
-        - a ``volsize`` change would grow the volume's reservation by more than 80% of the space available to it,
-          or by more than all of it with ``force_size``; growing a thick volume re-reserves it (``EINVAL``)
+        - ``volsize`` exceeds 80% of the space available to the volume and ``force_size`` is not set (``EINVAL``)
         - a filesystem's ``refreservation`` would exceed its ``refquota``, or is ``auto`` (``EINVAL``)
         - ``force_size`` is set for a FILESYSTEM (``EINVAL``)
         - the effective ``acltype`` and ``aclmode`` combination is unusable - a posix or off acltype requires

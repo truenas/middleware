@@ -96,7 +96,7 @@ INDEX_PROPERTIES = frozenset(
         "xattr",
     }
 )
-SET_READ_PROPERTIES = SETTABLE_PROPERTIES | {"available", "keystatus", "volblocksize", "usedbyrefreservation"}
+SET_READ_PROPERTIES = SETTABLE_PROPERTIES | {"available", "keystatus", "used", "volblocksize"}
 POOL_ROOT_INHERIT_VALUES: Mapping[str, typing.Any] = MappingProxyType(
     {  # registered ZFS defaults; pylibzfs has no accessor for them
         "acltype": "nfsv4",
@@ -149,7 +149,8 @@ class SetContext:
     source: PropertyView
     """The source type of each value in `current`."""
     parent: PropertyView | None
-    """Values on the parent; None when no native is inherited or the resource is a pool root."""
+    """Values on the parent; None when no native is inherited and no volsize is checked, or the resource is a pool
+    root."""
     pool_root: bool
     tier_enabled: bool | None
     """None when the request touches nothing the tier manager owns, so the tier config was not read."""
@@ -250,12 +251,10 @@ def apply_acl_coupling(state: SetContext) -> SetContext:
 
 
 def apply_thick_follow(state: SetContext) -> SetContext:
-    """Re-reserve a volume whose refreservation covers its current size but not the requested one."""
+    """Re-reserve a growing volume whose refreservation equals its volsize; libzfs only grows an `auto` one."""
     if state.type != "VOLUME" or "volsize" not in state.set_names() or "refreservation" in state.set_names():
         return state
-    if state.source.get("refreservation") == "RECEIVED":
-        return state
-    if not state.current["volsize"] <= state.current["refreservation"] < state.effective("volsize"):
+    if not state.current["refreservation"] == state.current["volsize"] < state.effective("volsize"):
         return state
     return dataclasses.replace(
         state,
@@ -315,30 +314,20 @@ def check_reservation_headroom(context: ServiceContext, state: SetContext) -> No
         return
     if state.type == "FILESYSTEM" and state.properties.refreservation == "auto":
         raise ValidationError(f"{SCHEMA}.properties.refreservation", "'auto' is only valid on volumes.", errno.EINVAL)
-    requested = state.effective("refreservation")
-    if requested == "auto":
-        requested = state.effective("volsize")
-    if requested == 0:
-        return
-    attribute = f"{SCHEMA}.properties.{'volsize' if 'refreservation' in state.derived else 'refreservation'}"
     if state.type == "FILESYSTEM":
+        requested = state.effective("refreservation")
         refquota = state.effective("refquota")
         if refquota > 0 and requested > refquota:
             raise ValidationError(
-                attribute,
+                f"{SCHEMA}.properties.refreservation",
                 f"A refreservation of {requested} exceeds the refquota of {refquota} on {state.path!r}.",
                 errno.EINVAL,
             )
         return
-    if not state.changed("volsize"):
+    if "volsize" not in set_names or state.force_size or state.parent is None:
         return
     reject_insufficient_headroom(
-        attribute,
-        state.path,
-        requested,
-        state.current["refreservation"],
-        state.current["available"] - state.current["usedbyrefreservation"],
-        forced=state.force_size,
+        state.attribute("volsize"), state.effective("volsize"), state.parent["available"] + state.current["used"]
     )
 
 

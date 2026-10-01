@@ -141,35 +141,11 @@ def reject_bad_acl_combination(attribute: str, acltype: str | None, aclmode: str
         raise ValidationError(attribute, "A discard 'aclmode' may not be used with the nfsv4 'acltype'.", errno.EINVAL)
 
 
-def reject_insufficient_headroom(
-    attribute: str,
-    path: str,
-    requested: int,
-    current: int,
-    base: int,
-    *,
-    forced: bool = False,
-) -> None:
-    """A volume reservation may not grow by more than 80% of the space available to it, or by more than all of it
-    when `forced`.
-
-    `base` is the space the reservation is measured against. All figures are bytes.
-    """
-    base = max(base, 0)
-    delta = requested - current
-    if forced and delta > base:
+def reject_insufficient_headroom(attribute: str, volsize: int, base: int) -> None:
+    """A volume's volsize may not exceed 80% of the space it can draw on (`base`, in bytes)."""
+    if volsize > 0.8 * base:
         raise ValidationError(
-            attribute,
-            f"Reserving another {delta} would exceed the {base} available to {path!r}. "
-            "Lower refreservation or set it to none for a sparse volume.",
-            errno.EINVAL,
-        )
-    elif not forced and delta > 0.8 * base:
-        raise ValidationError(
-            attribute,
-            f"Reserving another {delta} would consume more than 80% of the {base} available to {path!r}. "
-            "Lower refreservation, set it to none for a sparse volume, or set force_size.",
-            errno.EINVAL,
+            attribute, "It is not recommended to use more than 80% of your available space for VOLUME", errno.EINVAL
         )
 
 
