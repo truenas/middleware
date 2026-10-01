@@ -21,6 +21,7 @@ import typing
 
 import truenas_pylibzfs
 
+from middlewared.plugins.zfs_.validation_utils import last_component_space_padded
 from middlewared.service_exception import ValidationError
 from middlewared.utils.crypto import generate_token
 
@@ -42,6 +43,7 @@ __all__ = (
     "check_dedup_tiering",
     "check_encryption",
     "check_name_valid",
+    "check_new_ancestor_names",
     "check_parent_not_readonly",
     "check_path_shape",
     "check_tier_managed_ssb",
@@ -245,12 +247,25 @@ def check_path_shape(data: ZFSResourceCreateArgsData, ctx: CreateContext) -> Non
 
 def check_name_valid(data: ZFSResourceCreateArgsData, ctx: CreateContext) -> None:
     """The name must be acceptable to ZFS for the requested type and may
-    not end with a space."""
-    if not truenas_pylibzfs.name_is_valid(name=data.path, type=ZFS_TYPE_MAP[data.type]):
+    not begin or end with a space."""
+    if last_component_space_padded(data.path):
+        raise ValidationError(SCHEMA, "Resource names may not begin or end with a space.", errno.EINVAL)
+    elif not truenas_pylibzfs.name_is_valid(name=data.path, type=ZFS_TYPE_MAP[data.type]):
         raise ValidationError(SCHEMA, f"{data.path!r} is not a valid ZFS resource name.", errno.EINVAL)
-    elif data.path.endswith(" "):
-        # ZFS itself accepts a trailing space but it is a classic footgun
-        raise ValidationError(SCHEMA, "Trailing spaces are not permitted in resource names.", errno.EINVAL)
+
+
+def check_new_ancestor_names(data: ZFSResourceCreateArgsData, ctx: CreateContext) -> None:
+    """An ancestor that create_ancestors would create may not begin or end
+    with a space. Existing ancestors keep whatever name they have."""
+    if not data.create_ancestors:
+        return
+    for ancestor in ancestor_chain(data.path):
+        if "/" in ancestor and ancestor not in ctx.ancestors and last_component_space_padded(ancestor):
+            raise ValidationError(
+                SCHEMA,
+                f"Cannot create {ancestor!r}: resource names may not begin or end with a space.",
+                errno.EINVAL,
+            )
 
 
 def check_user_property_names(data: ZFSResourceCreateArgsData, ctx: CreateContext) -> None:

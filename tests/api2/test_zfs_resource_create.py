@@ -1,5 +1,6 @@
 import errno
 import os
+import shlex
 
 import pytest
 from auto_config import pool_name
@@ -153,6 +154,19 @@ def test_zfs_resource_create_missing_pool_fails(path, create_ancestors):
     assert "Pool 'nonexistent_pool_xyz123' does not exist" in str(exc_info.value)
 
 
+def test_zfs_resource_create_space_padded_ancestors():
+    """Test that ancestors create_ancestors would make may not be space padded, while existing ones may"""
+    root = os.path.join(pool_name, "test_create_padded")
+    with zfs_resource(root):
+        with pytest.raises(Exception) as exc_info:
+            call("zfs.resource.create", {"path": os.path.join(root, "mid /leaf"), "create_ancestors": True})
+        assert f"Cannot create '{root}/mid '" in str(exc_info.value)
+
+        ssh(f"zfs create {shlex.quote(os.path.join(root, 'legacy '))}")
+        with zfs_resource(os.path.join(root, "legacy /child"), {"create_ancestors": True}) as entry:
+            assert entry["name"] == os.path.join(root, "legacy /child")
+
+
 def test_zfs_resource_create_already_exists():
     """Test that creating an existing resource fails"""
     path = os.path.join(pool_name, "test_create_exists")
@@ -176,8 +190,13 @@ def test_zfs_resource_create_already_exists():
         pytest.param("boot-pool/test", "protected", id="protected paths not allowed"),
         pytest.param(
             "tank/dataset ",
-            "not a valid ZFS resource name",
+            "Resource names may not begin or end with a space",
             id="trailing space not allowed",
+        ),
+        pytest.param(
+            "tank/ dataset",
+            "Resource names may not begin or end with a space",
+            id="leading space not allowed",
         ),
     ],
 )
