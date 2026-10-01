@@ -3,13 +3,12 @@ from __future__ import annotations
 import asyncio
 import errno
 from itertools import groupby
-import os
 from typing import TYPE_CHECKING, Any
 
 from middlewared.api.current import PoolAttachment, ZFSResourceQuery
 from middlewared.service_exception import ValidationError
 
-from .utils import has_internal_path
+from .utils import has_internal_path, resource_mountpoint
 
 if TYPE_CHECKING:
     from middlewared.common.attachment import FSAttachmentDelegate
@@ -67,8 +66,6 @@ async def attachments(context: ServiceContext, path: str) -> list[PoolAttachment
         )
     if not rows:
         raise ValidationError("zfs.resource.attachments.path", f"{path!r} does not exist", errno.ENOENT)
-    if rows[0]["type"] == "VOLUME":
-        mountpoint = os.path.join("/mnt", path)
-    elif (mountpoint := rows[0]["properties"]["mountpoint"]["raw"]) in ("legacy", "none"):
+    if (mountpoint := resource_mountpoint(rows[0])) is None:
         return []
     return [PoolAttachment(**entry) for entry in await attachments_with_path(context, mountpoint)]

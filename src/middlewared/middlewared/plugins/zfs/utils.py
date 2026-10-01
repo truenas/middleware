@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Collection
 from dataclasses import dataclass
 import errno
+import os
 import pathlib
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -28,6 +29,7 @@ __all__ = (
     "reject_overlapping_paths",
     "reject_protected_path",
     "reject_snapshot_path",
+    "resource_mountpoint",
     "special_vdev_thresholds",
 )
 
@@ -74,6 +76,18 @@ def has_internal_path(path: str) -> bool:
     if components[0] in BOOT_POOL_NAME_VALID:
         return True
     return len(components) > 1 and components[1] in INTERNAL_PATHS
+
+
+def resource_mountpoint(row: dict[str, Any]) -> str | None:
+    if row["type"] == "VOLUME":
+        return os.path.join("/mnt", row["name"])
+    mountpoint: str = row["properties"]["mountpoint"]["raw"]
+    if mountpoint == "legacy":
+        return None
+    if mountpoint == "none":
+        # not mounted, but shares, tasks and mounted descendants can still sit under its default path
+        return os.path.join("/mnt", row["name"])
+    return mountpoint
 
 
 def get_encryption_info(data: dict[str, dict[str, Any]]) -> EncryptionInfo:

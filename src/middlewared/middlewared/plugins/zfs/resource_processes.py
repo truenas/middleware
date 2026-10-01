@@ -11,7 +11,7 @@ from middlewared.service_exception import CallError, ValidationError
 
 from .resource_attachments import DELEGATES
 from .resource_processes_utils import processes_using_dataset_tree
-from .utils import get_encryption_info, has_internal_path
+from .utils import get_encryption_info, has_internal_path, resource_mountpoint
 from .zvol_utils import zvol_name_to_path
 
 if TYPE_CHECKING:
@@ -40,9 +40,8 @@ def processes(context: ServiceContext, path: str) -> list[PoolProcess]:
         return []
 
     paths = [zvol_name_to_path(row["name"])]
-    mountpoint = row["properties"].get("mountpoint", {}).get("raw")
-    if mountpoint != "legacy":
-        paths.append(mountpoint or os.path.join("/mnt", row["name"]))
+    if mountpoint := resource_mountpoint(row):
+        paths.append(mountpoint)
 
     found = processes_using_paths(context, paths)
     return [PoolProcess(**proc) for proc in found]

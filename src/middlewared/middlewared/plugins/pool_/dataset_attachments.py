@@ -2,8 +2,6 @@ from middlewared.api import api_method
 from middlewared.api.current import PoolDatasetAttachmentsArgs, PoolDatasetAttachmentsResult
 from middlewared.service import Service
 
-from .utils import dataset_mountpoint
-
 
 class PoolDatasetService(Service):
 
@@ -28,7 +26,4 @@ class PoolDatasetService(Service):
               }
             ]
         """
-        dataset = await self.middleware.call('pool.dataset.get_instance_quick', oid)
-        if mountpoint := dataset_mountpoint(dataset):
-            return await self.call2(self.s.zfs.resource.attachments_with_path, mountpoint)
-        return []
+        return await self.call2(self.s.zfs.resource.attachments, oid)

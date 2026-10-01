@@ -20,7 +20,7 @@ from .exceptions import (
     ZFSPathNotFoundException,
 )
 from .resource_attachments import for_stop
-from .utils import get_encryption_info, reject_protected_path
+from .utils import get_encryption_info, reject_protected_path, resource_mountpoint
 
 if TYPE_CHECKING:
     from middlewared.service import ServiceContext
@@ -79,18 +79,6 @@ def destroy_impl(
     _raw_destroy(tls, path, recursive, all_snapshots, bypass, defer)
 
 
-def _mountpoint(row: dict[str, Any]) -> str | None:
-    if row["type"] == "VOLUME":
-        return os.path.join("/mnt", row["name"])
-    mountpoint: str = row["properties"]["mountpoint"]["raw"]
-    if mountpoint == "legacy":
-        return None
-    if mountpoint == "none":
-        # not mounted, but shares, tasks and mounted descendants can still sit under its default path
-        return os.path.join("/mnt", row["name"])
-    return mountpoint
-
-
 async def _destroy_with_truesearch_paused(
     context: ServiceContext, mountpoint: str | None, path: str, recursive: bool
 ) -> None:
@@ -106,7 +94,7 @@ def destroy(context: ServiceContext, data: ZFSResourceDestroyArgsData) -> None:
             paths=[data.path], properties=["mountpoint", "encryption", "keystatus", "keyformat", "keylocation"]
         ),
     )
-    mountpoint = _mountpoint(rows[0]) if rows else None
+    mountpoint = resource_mountpoint(rows[0]) if rows else None
     if mountpoint:
         for delegate in for_stop():
             if attachments := context.run_coroutine(delegate.query(mountpoint, True)):

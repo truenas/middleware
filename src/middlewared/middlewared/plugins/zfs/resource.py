@@ -276,8 +276,8 @@ class ZFSResourceService(Service):
         """
         Retrieve the shares, tasks and services that depend on the ZFS resource named by ``path``.
 
-        A filesystem reports the consumers of it and its descendants; one whose mountpoint is ``legacy`` or
-        ``none`` reports nothing. A validation error is raised when the resource does not exist or is a
+        A filesystem reports the consumers of it and its descendants; one whose mountpoint is ``legacy``
+        reports nothing. A validation error is raised when the resource does not exist or is a
         protected internal resource (``ENOENT``).
 
         .. code:: json
