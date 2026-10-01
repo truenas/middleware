@@ -1,70 +1,32 @@
 from typing import Annotated, Literal, TypeAlias
 
-from pydantic import Discriminator, Field, RootModel, Secret, model_validator
+from pydantic import ConfigDict, Discriminator, Field, RootModel, Secret, model_validator
 
 from middlewared.api.base import (
     BaseModel,
     Excluded,
     ForUpdateMetaclass,
-    IPvAnyAddress,
     MACAddress,
     NonEmptyString,
     excluded_field,
+    single_argument_args,
+    single_argument_result,
 )
 
 __all__ = [
-    "VMCDROMDevice",
-    "VMDisplayDevice",
-    "VMISCSIDiskDevice",
-    "VMISCSIDiskTarget",
-    "VMNICDevice",
-    "VMNICPciAddress",
-    "VMPCIDevice",
-    "VMRAWDevice",
-    "VMDiskDevice",
-    "VMUSBDevice",
-    "VMDeviceType",
-    "VMDeviceEntry",
-    "VMDeviceCreateArgs",
-    "VMDeviceCreateResult",
-    "VMDeviceUpdateArgs",
-    "VMDeviceUpdateResult",
-    "VMDeviceDeleteArgs",
-    "VMDeviceDeleteResult",
-    "VMDeviceDiskChoicesArgs",
-    "VMDeviceDiskChoicesResult",
-    "VMDeviceIotypeChoicesArgs",
-    "VMDeviceIotypeChoicesResult",
-    "VMDeviceNicAttachChoicesArgs",
-    "VMDevicePassthroughDevice",
-    "VMDevicePassthroughInfo",
-    "VMDeviceNicAttachChoicesResult",
-    "VMDeviceBindChoicesArgs",
-    "VMDeviceBindChoicesResult",
-    "VMDevicePassthroughDeviceArgs",
-    "VMDevicePassthroughDeviceResult",
-    "VMDeviceIommuEnabledArgs",
-    "VMDeviceIommuEnabledResult",
-    "VMDevicePassthroughDeviceChoicesArgs",
-    "VMDevicePassthroughDeviceChoicesResult",
-    "VMDeviceUsbPassthroughDeviceArgs",
-    "VMDeviceUsbPassthroughDeviceResult",
-    "VMDeviceUsbPassthroughChoicesArgs",
-    "VMDeviceUsbPassthroughChoicesResult",
-    "VMDeviceUsbControllerChoicesArgs",
-    "VMDeviceUsbControllerChoicesResult",
-    "VMDeviceConvertArgs",
-    "VMDeviceConvertResult",
-    "USBPassthroughInfo",
-    "VMDeviceCreate",
-    "VMDeviceVirtualSize",
-    "VMDeviceVirtualSizeArgs",
-    "VMDeviceVirtualSizeResult",
-    "VMDeviceDeleteOptions",
-    "VMDeviceUpdate",
-    "VMDeviceNicAttachChoices",
-    "VMDeviceIotypeChoices",
-    "VMDeviceConvert",
+    'VMCDROMDevice', 'VMDisplayDevice', 'VMNICDevice', 'VMPCIDevice', 'VMRAWDevice', 'VMDiskDevice', 'VMUSBDevice',
+    'VMDeviceType', 'VMDeviceEntry', 'VMDeviceCreateArgs', 'VMDeviceCreateResult', 'VMDeviceUpdateArgs',
+    'VMDeviceUpdateResult', 'VMDeviceDeleteArgs', 'VMDeviceDeleteResult', 'VMDeviceDiskChoicesArgs',
+    'VMDeviceDiskChoicesResult', 'VMDeviceIotypeChoicesArgs', 'VMDeviceIotypeChoicesResult',
+    'VMDeviceNicAttachChoicesArgs',
+    'VMDeviceNicAttachChoicesResult', 'VMDeviceBindChoicesArgs', 'VMDeviceBindChoicesResult',
+    'VMDevicePassthroughDeviceArgs', 'VMDevicePassthroughDeviceResult', 'VMDeviceIommuEnabledArgs',
+    'VMDeviceIommuEnabledResult', 'VMDevicePassthroughDeviceChoicesArgs', 'VMDevicePassthroughDeviceChoicesResult',
+    'VMDeviceUsbPassthroughDeviceArgs', 'VMDeviceUsbPassthroughDeviceResult',
+    'VMDeviceUsbPassthroughChoicesArgs', 'VMDeviceUsbPassthroughChoicesResult',
+    'VMDeviceUsbControllerChoicesArgs', 'VMDeviceUsbControllerChoicesResult',
+    'VMDeviceConvertArgs', 'VMDeviceConvertResult',
+    'VMDeviceVirtualSizeArgs', 'VMDeviceVirtualSizeResult'
 ]
 
 
@@ -100,19 +62,6 @@ class VMDisplayDevice(BaseModel):
     type_: Literal['SPICE', 'VNC'] = Field(alias='type', default='SPICE', description="Display protocol type.")
 
 
-class VMNICPciAddress(BaseModel):
-    bus: int = Field(ge=1, le=255, description="PCI bus number. Must be >= 1; bus 0 is the root complex.")
-    slot: int = Field(
-        ge=0, le=31,
-        description="PCI slot number (0-31). No default: correct value depends on machine type.",
-    )
-    function: int = Field(default=0, ge=0, le=7, description="PCI function number (0-7).")
-    domain: int = Field(
-        default=0, ge=0, le=0,
-        description="PCI domain number. Must be 0; multi-segment topologies are not supported.",
-    )
-
-
 class VMNICDevice(BaseModel):
     dtype: Literal['NIC'] = Field(description="Device type identifier for network interface cards.")
     trust_guest_rx_filters: bool = Field(
@@ -131,13 +80,6 @@ class VMNICDevice(BaseModel):
     mac: MACAddress | None = Field(
         default=None,
         description="MAC address for the virtual network interface. `null` for auto-generation.",
-    )
-    pci_address: VMNICPciAddress | None = Field(
-        default=None,
-        description=(
-            "Pin this NIC to a specific PCI controller bus rather than letting libvirt auto-assign an address. "
-            "`null` for automatic assignment."
-        ),
     )
 
 
@@ -257,42 +199,8 @@ class VMUSBDevice(BaseModel):
     )
 
 
-class VMISCSIDiskTarget(BaseModel):
-    iqn: NonEmptyString = Field(description="iSCSI Qualified Name of the target.")
-    luns: list[int] = Field(
-        default=[0],
-        min_length=1,
-        description="LUN numbers to access on this target.",
-    )
-
-
-class VMISCSIDiskDevice(BaseModel):
-    dtype: Literal['ISCSI_DISK'] = Field(description="Device type identifier for iSCSI disk devices.")
-    portal_address: IPvAnyAddress = Field(
-        description="IP address of the iSCSI target portal.",
-    )
-    targets: list[VMISCSIDiskTarget] = Field(
-        min_length=1,
-        description="iSCSI targets to attach, one entry per target IQN.",
-    )
-    initiator_iqn: NonEmptyString = Field(
-        description="IQN identifying this VM as an iSCSI initiator.",
-    )
-    controller_slot: int = Field(
-        default=0x15,
-        ge=1,
-        le=30,
-        description=(
-            "PCI slot for the virtio-scsi-pci controller on the root bus (pcie.0 on q35/aarch64, "
-            "pci.0 on i440fx). Conflicts with other explicitly-placed devices are detected at "
-            "device creation time."
-        ),
-    )
-
-
 VMDeviceType: TypeAlias = Annotated[
-    VMCDROMDevice | VMDisplayDevice | VMISCSIDiskDevice | VMNICDevice
-    | VMPCIDevice | VMRAWDevice | VMDiskDevice | VMUSBDevice,
+    VMCDROMDevice | VMDisplayDevice | VMNICDevice | VMPCIDevice | VMRAWDevice | VMDiskDevice | VMUSBDevice,
     Discriminator('dtype')
 ]
 
@@ -315,8 +223,9 @@ class VMDeviceCreate(VMDeviceEntry):
     id: Excluded = excluded_field()
 
 
-class VMDeviceCreateArgs(BaseModel):
-    vm_device_create: VMDeviceCreate = Field(description="VM device creation parameters.")
+@single_argument_args('vm_device_create')
+class VMDeviceCreateArgs(VMDeviceCreate):
+    pass
 
 
 class VMDeviceCreateResult(BaseModel):
@@ -360,43 +269,43 @@ class VMDeviceDiskChoicesArgs(BaseModel):
     pass
 
 
+class VMDeviceDiskChoices(BaseModel):
+    model_config = ConfigDict(extra='allow')
+
+
 class VMDeviceDiskChoicesResult(BaseModel):
-    result: dict[str, str] = Field(description="Available disk devices and storage volumes for VM attachment.")
+    result: VMDeviceDiskChoices = Field(description="Available disk devices and storage volumes for VM attachment.")
 
 
 class VMDeviceIotypeChoicesArgs(BaseModel):
     pass
 
 
-class VMDeviceIotypeChoices(BaseModel):
+@single_argument_result
+class VMDeviceIotypeChoicesResult(BaseModel):
     NATIVE: str = Field(default='NATIVE', description="Native asynchronous I/O for best performance with NVMe.")
     THREADS: str = Field(default='THREADS', description="Thread-based I/O suitable for most storage types.")
     IO_URING: str = Field(default='IO_URING', description="Linux io_uring interface for high-performance async I/O.")
-
-
-class VMDeviceIotypeChoicesResult(BaseModel):
-    result: VMDeviceIotypeChoices = Field(description="IO-type choices for storage devices.")
 
 
 class VMDeviceNicAttachChoicesArgs(BaseModel):
     pass
 
 
-class VMDeviceNicAttachChoices(BaseModel):
+@single_argument_result
+class VMDeviceNicAttachChoicesResult(BaseModel):
     BRIDGE: list[str] = Field(description="Available bridge interfaces for NIC attachment.")
     MACVLAN: list[str] = Field(description="Available parent interfaces for creating MACVLAN NIC devices.")
-
-
-class VMDeviceNicAttachChoicesResult(BaseModel):
-    result: VMDeviceNicAttachChoices = Field(description="Available NIC attach choices.")
 
 
 class VMDeviceBindChoicesArgs(BaseModel):
     pass
 
 
+@single_argument_result
 class VMDeviceBindChoicesResult(BaseModel):
-    result: dict[str, str] = Field(description="Available IP addresses for VM display server binding.")
+    model_config = ConfigDict(extra='allow')
+    """Available IP addresses for VM display server binding."""
 
 
 class VMDeviceIommuEnabledArgs(BaseModel):
@@ -523,27 +432,21 @@ class VMDeviceUsbControllerChoicesResult(BaseModel):
     result: dict[str, str] = Field(description="Available USB controller types for virtual machines.")
 
 
-class VMDeviceConvert(BaseModel):
+@single_argument_args('vm_convert')
+class VMDeviceConvertArgs(BaseModel):
     source: NonEmptyString = Field(description="Source path for the conversion (disk image file or ZFS volume).")
     destination: NonEmptyString = Field(
         description="Destination path for the conversion (disk image file or ZFS volume).",
     )
 
 
-class VMDeviceConvertArgs(BaseModel):
-    vm_convert: VMDeviceConvert = Field(description="VM device conversion parameters.")
-
-
 class VMDeviceConvertResult(BaseModel):
     result: bool = Field(description="Whether the conversion operation was successful.")
 
 
-class VMDeviceVirtualSize(BaseModel):
-    path: str = Field(description="Absolute path to the disk image.")
-
-
+@single_argument_args('vm_virtual_size')
 class VMDeviceVirtualSizeArgs(BaseModel):
-    vm_virtual_size: VMDeviceVirtualSize = Field(description="VM device virtual size parameters.")
+    path: str = Field(description="Absolute path to the disk image.")
 
 
 class VMDeviceVirtualSizeResult(BaseModel):

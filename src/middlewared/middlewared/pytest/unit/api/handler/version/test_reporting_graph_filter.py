@@ -5,11 +5,11 @@ from middlewared.api.base.handler.version import APIVersion, APIVersionsAdapter
 from middlewared.api.v25_10_2.reporting import (
     ReportingNetdataGetDataArgs as ReportingNetdataGetDataArgs_v25_10_2,
 )
-from middlewared.api.v26_0_0.reporting import (
-    ReportingNetdataGetDataArgs as ReportingNetdataGetDataArgs_v26_0_0,
-)
 from middlewared.api.v27_0_0.reporting import (
     ReportingNetdataGetDataArgs as ReportingNetdataGetDataArgs_v27_0_0,
+)
+from middlewared.api.v28_0_0.reporting import (
+    ReportingNetdataGetDataArgs as ReportingNetdataGetDataArgs_v28_0_0,
 )
 from middlewared.service_exception import ValidationErrors
 
@@ -31,7 +31,7 @@ def _build_adapter():
                 "v26.0.0",
                 TestModelProvider(
                     {
-                        "ReportingNetdataGetDataArgs": ReportingNetdataGetDataArgs_v26_0_0,
+                        "ReportingNetdataGetDataArgs": ReportingNetdataGetDataArgs_v27_0_0,
                     }
                 ),
             ),
@@ -39,7 +39,7 @@ def _build_adapter():
                 "v27.0.0",
                 TestModelProvider(
                     {
-                        "ReportingNetdataGetDataArgs": ReportingNetdataGetDataArgs_v27_0_0,
+                        "ReportingNetdataGetDataArgs": ReportingNetdataGetDataArgs_v28_0_0,
                     }
                 ),
             ),
@@ -72,7 +72,7 @@ async def test_all_removed_graphs_triggers_validation_error():
     adapted = await adapter.adapt(value, "ReportingNetdataGetDataArgs", "v25.10.2", "v27.0.0")
     assert adapted["graphs"] == []
     with pytest.raises(ValidationErrors):
-        validate_model(ReportingNetdataGetDataArgs_v27_0_0, adapted)
+        validate_model(ReportingNetdataGetDataArgs_v28_0_0, adapted)
 
 
 @pytest.mark.asyncio
@@ -80,6 +80,6 @@ async def test_all_removed_graphs_triggers_validation_error():
 async def test_current_v27_rejects_removed_names_directly(removed_name):
     with pytest.raises(ValidationErrors):
         validate_model(
-            ReportingNetdataGetDataArgs_v27_0_0,
+            ReportingNetdataGetDataArgs_v28_0_0,
             {"graphs": [{"name": removed_name, "identifier": None}], "query": {}},
         )

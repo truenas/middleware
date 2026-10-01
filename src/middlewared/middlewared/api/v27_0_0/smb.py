@@ -87,10 +87,9 @@ class SMBShareAclEntry(BaseModel):
     You can identify the principal by a SID (`ae_who_sid`), or Unix ID (`ae_who_id`). """
     ae_perm: Literal['FULL', 'CHANGE', 'READ', 'CUSTOM'] = Field(
         description=(
-            "Permissions granted or denied to the principal: `FULL` grants read, write, execute, delete, write ACL, "
-            "and change owner; `CHANGE` grants read, write, execute, and delete; `READ` grants read and execute. "
-            "NOTE: this may appear as CUSTOM on read if user has manually edited the share ACL through unsupported "
-            "means. In this case users will be required to set it to a supported value on update."
+            "Permissions granted or denied to the principal. NOTE: this may appear as CUSTOM on read if user has "
+            "manually edited the share ACL through unsupported means. In this case users will be required to set it to "
+            "a supported value on update."
         ),
     )
     ae_type: Literal['ALLOWED', 'DENIED'] = Field(
@@ -157,20 +156,17 @@ SMBSearchProtocol = Literal[SearchProtocol.SPOTLIGHT]
 class SMBEntry(BaseModel):
     """ TrueNAS SMB server configuration. """
     id: int = Field(description="Unique identifier for the SMB service configuration.")
-    netbiosname: NetbiosName = Field(
-        description="The NetBIOS name of this server. Defaults to the original hostname of the system."
-    )
+    netbiosname: NetbiosName = Field(description="The NetBIOS name of this server.")
     netbiosalias: list[NetbiosName] = Field(
         description=(
             "Alternative netbios names of the TrueNAS server. These names are announced through NetBIOS name server and"
-            " registered in Active Directory when TrueNAS joins the domain. When the server is joined to an AD domain,"
-            " additional Kerberos Service Principal Names are generated for these aliases."
+            " registered in Active Directory when TrueNAS joins the domain."
         ),
     )
     workgroup: NetbiosDomain = Field(
         description=(
             "Workgroup name. When TrueNAS joins active directory, it automatically changes this value to match the "
-            "NetBIOS domain of the Active Directory domain. This must differ from `netbiosname`."
+            "NetBIOS domain of the Active Directory domain."
         ),
     )
     description: str = Field(
@@ -209,8 +205,8 @@ class SMBEntry(BaseModel):
     aapl_extensions: bool = Field(
         description=(
             "Enable support for SMB2/3 AAPL protocol extensions. This setting makes the TrueNAS server advertise "
-            "support for Apple protocol extensions as a MacOS server. This is not required for MacOS support "
-            "generally but is currently required for Time Machine support."
+            "support for Apple protocol extensions as a MacOS server. Enabling this is required for Time Machine "
+            "support."
         ),
     )
     search_protocols: list[SMBSearchProtocol] = Field(
@@ -227,7 +223,7 @@ class SMBEntry(BaseModel):
     guest: NonEmptyString = Field(
         description=(
             "SMB guest account username. This username provides access to legacy SMB shares with guest access enabled. "
-            "It must be a valid, existing local user account. Defaults to \"nobody\"."
+            "It must be a valid, existing local user account."
         ),
     )
     filemask: UnixPerm | Literal['DEFAULT'] = Field(
@@ -252,8 +248,7 @@ class SMBEntry(BaseModel):
             "* `DESIRED`: Enable negotiation of data encryption. Encrypt data on sessions and share connections for "
             "clients that support it.\n"
             "* `REQUIRED`: Require data encryption for sessions and share connections.\n"
-            "  NOTE: Clients that do not support encryption cannot access SMB shares. Mandatory encryption "
-            "(`REQUIRED`) is not compatible with SMB1 server support.\n"
+            "  NOTE: Clients that do not support encryption cannot access SMB shares.\n"
             "* `DEFAULT`: Use the TrueNAS SMB server default encryption settings. Currently, this is the same as "
             "`NEGOTIATE`."
         ),
@@ -296,6 +291,18 @@ class SMBEntry(BaseModel):
         returns a dictionary of addresses without the netmask info.
         (i.e. {'192.168.1.150': '192.168.1.150'})."""
         return [str(i.ip) for i in values]
+
+    @classmethod
+    def from_previous(cls, value):
+        enable_smb1 = value.pop('enable_smb1', False)
+        value['minimum_protocol'] = 'SMB1' if enable_smb1 else 'SMB2'
+        return value
+
+    @classmethod
+    def to_previous(cls, value):
+        minimum_protocol = value.pop('minimum_protocol', 'SMB2')
+        value['enable_smb1'] = minimum_protocol == 'SMB1'
+        return value
 
 
 class SMBStatusOptions(BaseModel):
@@ -1060,8 +1067,10 @@ class SharingSMBEntry(BaseModel):
         default=None,
         description=(
             "Storage tier in which the share's underlying dataset is located. This field is read-only; configure the "
-            "dataset's tier via `zfs.tier.dataset_set_tier`. NOTE: this is a licensed feature. Will be `null` if "
-            "TrueNAS is unlicensed, if tiering is disabled, or if the pool has no SPECIAL vdev."
+            "dataset's tier via `zfs.tier.dataset_set_tier`.\n"
+            "\n"
+            "NOTE: this is a licensed feature. Will be `null` if TrueNAS is unlicensed, if tiering is disabled, or if "
+            "the pool has no SPECIAL vdev."
         ),
     )
 

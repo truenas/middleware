@@ -19,10 +19,7 @@ class iSCSITargetAuthorizedInitiatorEntry(BaseModel):
     id: int = Field(description="Unique identifier for the authorized initiator group.")
     initiators: list[str] = Field(
         default=[],
-        description=(
-            "Array of iSCSI Qualified Names (IQNs) or IP addresses of authorized initiators. An empty list allows all "
-            "initiators."
-        ),
+        description="Array of iSCSI Qualified Names (IQNs) or IP addresses of authorized initiators.",
     )
     comment: str = Field(default='', description="Optional comment describing the authorized initiator group.")
 

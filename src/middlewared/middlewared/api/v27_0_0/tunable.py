@@ -5,11 +5,8 @@ from pydantic import Field
 from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, excluded_field
 
 __all__ = [
-    "TunableCreate", "TunableEntry", "TunableUpdate",
-    "TunableCreateArgs", "TunableCreateResult",
-    "TunableDeleteArgs", "TunableDeleteResult",
-    "TunableUpdateArgs", "TunableUpdateResult",
-    "TunableTunableTypeChoices", "TunableTunableTypeChoicesArgs", "TunableTunableTypeChoicesResult",
+    "TunableEntry", "TunableCreateArgs", "TunableCreateResult", "TunableDeleteArgs", "TunableDeleteResult",
+    "TunableUpdateArgs", "TunableUpdateResult", "TunableTunableTypeChoicesArgs", "TunableTunableTypeChoicesResult",
 ]
 
 
@@ -41,7 +38,6 @@ class TunableCreate(BaseModel):
 class TunableEntry(TunableCreate):
     id: int = Field(description="Unique identifier for the tunable configuration.")
     orig_value: str = Field(description="Original system value of the parameter before this tunable was applied.")
-    update_initramfs: Excluded = excluded_field()
 
 
 class TunableTunableTypeChoices(BaseModel):

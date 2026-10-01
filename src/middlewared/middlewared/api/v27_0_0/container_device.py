@@ -9,17 +9,17 @@ from middlewared.api.base import (
     MACAddress,
     NonEmptyString,
     excluded_field,
+    single_argument_args,
+    single_argument_result,
 )
 
 __all__ = [
     'ContainerNICDevice', 'ContainerUSBDevice', 'ContainerDeviceType',
     'ContainerFilesystemDevice', 'ContainerGPUDevice',
-    'ContainerDeviceEntry', 'ContainerDeviceCreate', 'ContainerDeviceUpdate', 'ContainerDeviceDeleteOptions',
-    'ContainerDeviceCreateArgs', 'ContainerDeviceCreateResult', 'ContainerDeviceUpdateArgs',
+    'ContainerDeviceEntry', 'ContainerDeviceCreateArgs', 'ContainerDeviceCreateResult', 'ContainerDeviceUpdateArgs',
     'ContainerDeviceUpdateResult', 'ContainerDeviceDeleteArgs', 'ContainerDeviceDeleteResult',
     'ContainerDeviceDiskChoicesArgs', 'ContainerDeviceDiskChoicesResult', 'ContainerDeviceNicAttachChoicesArgs',
-    'ContainerDeviceNicAttachChoices', 'ContainerDeviceNicAttachChoicesResult',
-    'ContainerDeviceUsbChoicesArgs', 'ContainerDeviceUsbChoicesResult', 'USBPassthroughDevice',
+    'ContainerDeviceNicAttachChoicesResult', 'ContainerDeviceUsbChoicesArgs', 'ContainerDeviceUsbChoicesResult',
     'ContainerDeviceGpuChoicesArgs', 'ContainerDeviceGpuChoicesResult',
 ]
 
@@ -103,8 +103,9 @@ class ContainerDeviceCreate(ContainerDeviceEntry):
     id: Excluded = excluded_field()
 
 
-class ContainerDeviceCreateArgs(BaseModel):
-    container_device_create: ContainerDeviceCreate = Field(description="Container device creation parameters.")
+@single_argument_args('container_device_create')
+class ContainerDeviceCreateArgs(ContainerDeviceCreate):
+    pass
 
 
 class ContainerDeviceCreateResult(BaseModel):
@@ -164,13 +165,10 @@ class ContainerDeviceNicAttachChoicesArgs(BaseModel):
     pass
 
 
-class ContainerDeviceNicAttachChoices(BaseModel):
+@single_argument_result
+class ContainerDeviceNicAttachChoicesResult(BaseModel):
     BRIDGE: list[str] = Field(description="Available bridge interfaces for NIC attachment.")
     MACVLAN: list[str] = Field(description="Available parent interfaces for creating MACVLAN NIC devices.")
-
-
-class ContainerDeviceNicAttachChoicesResult(BaseModel):
-    result: ContainerDeviceNicAttachChoices = Field(description="Available NIC attach choices.")
 
 
 class USBCapability(BaseModel):
@@ -206,4 +204,4 @@ class ContainerDeviceGpuChoicesArgs(BaseModel):
 
 
 class ContainerDeviceGpuChoicesResult(BaseModel):
-    result: dict[str, str] = Field(description="Available GPU(s) for container attachment.")
+    result: dict = Field(description="Available GPU(s) for container attachment.")

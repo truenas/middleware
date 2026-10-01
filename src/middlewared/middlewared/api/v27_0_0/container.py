@@ -9,18 +9,19 @@ from middlewared.api.base import (
     LibvirtUUID,
     NonEmptyString,
     excluded_field,
+    single_argument_args,
 )
 
 from .container_device import ContainerDeviceEntry
 
 __all__ = [
-    "ContainerEntry", "ContainerStatus",
-    "ContainerCreateArgs", "ContainerCreateResult", "ContainerCreate",
-    "ContainerUpdateArgs", "ContainerUpdateResult", "ContainerUpdate",
+    "ContainerEntry",
+    "ContainerCreateArgs", "ContainerCreateResult",
+    "ContainerUpdateArgs", "ContainerUpdateResult",
     "ContainerDeleteArgs", "ContainerDeleteResult", "ContainerDeleteOptions",
     "ContainerPoolChoicesArgs", "ContainerPoolChoicesResult",
     "ContainerStartArgs", "ContainerStartResult",
-    "ContainerStopArgs", "ContainerStopResult", "ContainerStopOptions",
+    "ContainerStopArgs", "ContainerStopResult",
     "ContainerMigrateArgs", "ContainerMigrateResult",
     "ContainersMetricsEventSourceArgs", "ContainersMetricsEventSourceEvent"
 ]
@@ -60,11 +61,7 @@ class ContainerStatus(BaseModel):
 
 class ContainerEntry(BaseModel):
     id: int = Field(description="Container ID.")
-    uuid: str = Field(
-        description=(
-            "Container UUID (for libvirt). Assigned when the container is created and cannot be changed afterwards."
-        ),
-    )
+    uuid: str = Field(description="Container UUID (for libvirt).")
     name: NonEmptyString = Field(description="Container name.")
     description: str = Field(default="", description="Container description.")
     devices: list[ContainerDeviceEntry] = Field(default=[], description="Container's devices.")
@@ -132,8 +129,7 @@ class ContainerCreate(ContainerEntry):
     uuid: LibvirtUUID | None = Field(
         default=None,
         description=(
-            "Container UUID (for libvirt). Auto-generated if not provided. It cannot be changed after creation. "
-            "Normalized to lowercase hyphenated form."
+            "Container UUID (for libvirt). Auto-generated if not provided. Normalized to lowercase hyphenated form."
         ),
     )
     pool: str | None = Field(
@@ -150,8 +146,9 @@ class ContainerCreateImage(BaseModel):
     )
 
 
-class ContainerCreateArgs(BaseModel):
-    container_create: ContainerCreate = Field(description="Container creation parameters.")
+@single_argument_args("container_create")
+class ContainerCreateArgs(ContainerCreate):
+    pass
 
 
 class ContainerCreateResult(BaseModel):
@@ -209,9 +206,7 @@ class ContainerPoolChoicesArgs(BaseModel):
 
 
 class ContainerPoolChoicesResult(BaseModel):
-    result: dict[str, str] = Field(
-        description="Object of available ZFS pools that can be used for container root filesystem.",
-    )
+    result: dict = Field(description="Object of available ZFS pools that can be used for container root filesystem.")
 
 
 class ContainerStartArgs(BaseModel):

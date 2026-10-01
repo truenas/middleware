@@ -1,4 +1,4 @@
-from typing import Any, Literal
+from typing import Literal
 
 from pydantic import Field, NonNegativeInt, PositiveInt, Secret
 
@@ -7,7 +7,6 @@ from middlewared.api.base import (
     EmptyDict,
     Excluded,
     ForUpdateMetaclass,
-    FullAdmin,
     NonEmptyString,
     NotRequired,
     excluded_field,
@@ -20,8 +19,8 @@ __all__ = [
     "SystemAdvancedSedGlobalPasswordIsSetResult", "SystemAdvancedSerialPortChoicesArgs",
     "SystemAdvancedSerialPortChoicesResult", "SystemAdvancedSyslogCertificateAuthorityChoicesArgs",
     "SystemAdvancedSyslogCertificateAuthorityChoicesResult", "SystemAdvancedSyslogCertificateChoicesArgs",
-    "SystemAdvancedSyslogCertificateChoicesResult", "SystemAdvancedUpdate", "SystemAdvancedUpdateArgs",
-    "SystemAdvancedUpdateResult", "SystemAdvancedUpdateGpuPciIdsArgs", "SystemAdvancedUpdateGpuPciIdsResult",
+    "SystemAdvancedSyslogCertificateChoicesResult", "SystemAdvancedUpdateArgs", "SystemAdvancedUpdateResult",
+    "SystemAdvancedUpdateGpuPciIdsArgs", "SystemAdvancedUpdateGpuPciIdsResult",
     "SystemAdvancedNvidiaPresentArgs", "SystemAdvancedNvidiaPresentResult",
 ]
 
@@ -102,9 +101,7 @@ class SystemAdvancedEntry(BaseModel):
     isolated_gpu_pci_ids: list[str] = Field(
         description="List of GPU PCI IDs to isolate from the host system for VM passthrough.",
     )
-    kernel_extra_options: FullAdmin[str] = Field(
-        description="Additional kernel boot parameters to pass to the Linux kernel.",
-    )
+    kernel_extra_options: str = Field(description="Additional kernel boot parameters to pass to the Linux kernel.")
     nvidia: bool = Field(description="Whether NVIDIA GPU support is enabled.")
 
 
@@ -129,7 +126,7 @@ class SystemAdvancedGetGpuPciChoicesArgs(BaseModel):
 
 
 class SystemAdvancedGetGpuPciChoicesResult(BaseModel):
-    result: dict[str, Any] = Field(description="Available GPU PCI devices that can be isolated for VM passthrough.")
+    result: dict = Field(description="Available GPU PCI devices that can be isolated for VM passthrough.")
 
 
 class SystemAdvancedLoginBannerArgs(BaseModel):

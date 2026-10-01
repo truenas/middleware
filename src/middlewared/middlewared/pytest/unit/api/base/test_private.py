@@ -15,7 +15,7 @@ from middlewared.api.base import (
 )
 from middlewared.api.base.handler.accept import accept_params, validate_model
 from middlewared.api.base.private import is_private_guard
-from middlewared.api.v27_0_0.common import QueryArgs
+from middlewared.api.v28_0_0.common import QueryArgs
 from middlewared.service_exception import ValidationErrors
 
 ERRMSG = "Extra inputs are not permitted"

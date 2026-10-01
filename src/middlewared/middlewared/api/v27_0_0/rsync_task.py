@@ -2,24 +2,16 @@ from typing import Literal
 
 from pydantic import Field
 
-from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, FullAdmin, excluded_field
+from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, excluded_field
 
 from .common import CronModel
 from .keychain import KeychainCredentialEntry
 
-__all__ = [
-    "RsyncTaskEntry",
-    "RsyncTaskCreate",
-    "RsyncTaskUpdate",
-    "RsyncTaskCreateArgs",
-    "RsyncTaskCreateResult",
-    "RsyncTaskUpdateArgs",
-    "RsyncTaskUpdateResult",
-    "RsyncTaskDeleteArgs",
-    "RsyncTaskDeleteResult",
-    "RsyncTaskRunArgs",
-    "RsyncTaskRunResult",
-]
+__all__ = ["RsyncTaskEntry",
+           "RsyncTaskCreateArgs", "RsyncTaskCreateResult",
+           "RsyncTaskUpdateArgs", "RsyncTaskUpdateResult",
+           "RsyncTaskDeleteArgs", "RsyncTaskDeleteResult",
+           "RsyncTaskRunArgs", "RsyncTaskRunResult"]
 
 RSYNC_PATH_LIMIT = 1023
 
@@ -104,10 +96,7 @@ class RsyncTaskEntry(BaseModel):
         default=True,
         description="Delay updating destination files until all transfers are complete.",
     )
-    extra: FullAdmin[list[str]] = Field(
-        default_factory=list,
-        description="Array of additional rsync command-line options.",
-    )
+    extra: list[str] = Field(default_factory=list, description="Array of additional rsync command-line options.")
     enabled: bool = Field(default=True, description="Whether this rsync task is enabled.")
     locked: bool = Field(description="Whether this rsync task is currently locked (running).")
     job: dict | None = Field(description="Information about the currently running job. `null` if no job is running.")

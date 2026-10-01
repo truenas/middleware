@@ -169,73 +169,12 @@ class InterfaceEntryState(BaseModel):
     )
 
 
-class InterfaceCommonOptions(BaseModel):
-    bridge_members: list[str] = Field(
-        default=[],
-        description="Interface names that are members of this bridge. Only relevant for BRIDGE interfaces.",
-    )
-    enable_learning: bool = Field(
-        default=NotRequired,
-        description=(
-            "Whether MAC address learning is enabled for bridge interfaces. When enabled, the bridge learns MAC "
-            "addresses from incoming frames and builds a forwarding table to optimize traffic flow."
-        ),
-    )
-    stp: bool = Field(
-        default=NotRequired,
-        description=(
-            "Whether Spanning Tree Protocol is enabled for bridge interfaces. STP prevents network loops by blocking "
-            "redundant paths and enables automatic failover when the primary path fails."
-        ),
-    )
-    lag_ports: list[str] = Field(
-        default=[],
-        description="Interface names that are members of this link aggregation group.",
-    )
-    xmit_hash_policy: Literal["LAYER2", "LAYER2+3", "LAYER3+4", None] = Field(
-        default=NotRequired,
-        description=(
-            "Transmit hash policy for load balancing in link aggregation. LAYER2 uses MAC addresses, LAYER2+3 adds IP "
-            "addresses, and LAYER3+4 includes TCP/UDP ports for distribution. Only relevant for LACP and LOADBALANCE "
-            "link aggregations."
-        ),
-    )
-    lacpdu_rate: Literal["SLOW", "FAST", None] = Field(
-        default=NotRequired,
-        description=(
-            "LACP data unit transmission rate. SLOW sends LACPDUs every 30 seconds, FAST sends every 1 second for "
-            "quicker link failure detection. Only relevant for LACP link aggregations."
-        ),
-    )
-    failover_critical: bool = Field(
-        default=NotRequired,
-        description=(
-            "Whether this interface is critical for failover. Critical interfaces are monitored for failover events "
-            "and can trigger failover when they fail. Only relevant on HA-capable systems."
-        ),
-    )
-    failover_group: int | None = Field(
-        default=NotRequired,
-        description=(
-            "Failover group identifier for clustering. Interfaces in the same group fail over together during "
-            "failover events. Only relevant on HA-capable systems."
-        ),
-    )
-
-
-class InterfaceEntry(InterfaceCommonOptions):
+class InterfaceEntry(BaseModel):
     id: str = Field(description="Unique identifier for the network interface.")
     name: str = Field(description="Name of the network interface.")
     fake: bool = Field(description="Whether this is a fake/simulated interface for testing purposes.")
     type: str = Field(description="Type of interface (PHYSICAL, BRIDGE, LINK_AGGREGATION, VLAN, etc.).")
-    state: InterfaceEntryState = Field(
-        description=(
-            "Current runtime state of the interface as reported by the OS kernel. This reflects what is actually "
-            "configured in the kernel at query time and may differ from the top-level fields, which represent the "
-            "persisted database configuration. Pending changes (after `interface.update` but before `interface.commit`)"
-            " will not be visible here until the commit is applied and the interface is synchronized."
-        ),
-    )
+    state: InterfaceEntryState = Field(description="Current runtime state information for the interface.")
     aliases: list[InterfaceEntryAlias] = Field(description="List of IP address aliases configured on the interface.")
     ipv4_dhcp: bool = Field(description="Whether IPv4 DHCP is enabled for automatic IP address assignment.")
     ipv6_auto: bool = Field(description="Whether IPv6 autoconfiguration is enabled.")
@@ -266,26 +205,21 @@ class InterfaceEntry(InterfaceCommonOptions):
         default=NotRequired,
         description="Link aggregation protocol (LACP, FAILOVER, LOADBALANCE, etc.).",
     )
-    failover_vhid: int | None = Field(
-        default=NotRequired,
-        description="VRRP Virtual Host ID for failover. Only present on HA-capable systems.",
+    lag_ports: list[str] = Field(
+        default=[],
+        description="List of interface names that are members of this link aggregation group.",
     )
-    failover_aliases: list[InterfaceEntryAlias] = Field(
+    bridge_members: list[str] = Field(
+        default=[],
+        description="List of interface names that are members of this bridge.",
+    )  # FIXME: Please document fields for HA Hardware
+    enable_learning: bool = Field(
         default=NotRequired,
-        description=(
-            "Standby node IP aliases for failover. Only present on HA-capable systems. Unlike the "
-            "`failover_aliases` accepted by `interface.create` and `interface.update`, each entry here also "
-            "includes a `netmask`."
-        ),
+        description="Whether MAC address learning is enabled for bridge interfaces.",
     )
-    failover_virtual_aliases: list[InterfaceEntryAlias] = Field(
-        default=NotRequired,
-        description=(
-            "Virtual (floating) IP aliases shared between nodes during failover. Only present on HA-capable "
-            "systems. Unlike the `failover_virtual_aliases` accepted by `interface.create` and "
-            "`interface.update`, each entry here also includes a `netmask`."
-        ),
-    )
+
+    class Config:
+        extra = "allow"
 
 
 class InterfaceChoicesOptions(BaseModel):
@@ -329,7 +263,7 @@ class InterfaceCreateAlias(InterfaceCreateFailoverAlias):
     netmask: int = Field(description="The network mask in CIDR notation.")
 
 
-class InterfaceCreate(InterfaceCommonOptions):
+class InterfaceCreate(BaseModel):
     name: str = Field(
         default=NotRequired,
         description="Generate a name if not provided based on `type`, e.g. \"br0\", \"bond1\", \"vlan0\".",
@@ -347,6 +281,13 @@ class InterfaceCreate(InterfaceCommonOptions):
         description=(
             "Whether this interface is critical for failover functionality. Critical interfaces are monitored for "
             "failover events and can trigger failover when they fail."
+        ),
+    )
+    failover_group: int | None = Field(
+        default=NotRequired,
+        description=(
+            "Failover group identifier for clustering. Interfaces in the same group fail over together during failover "
+            "events."
         ),
     )
     failover_vhid: Annotated[int, Field(ge=1, le=255)] | None = Field(
@@ -370,6 +311,7 @@ class InterfaceCreate(InterfaceCommonOptions):
             "during failover events."
         ),
     )
+    bridge_members: list = Field(default=[], description="List of interfaces to add as members of this bridge.")
     enable_learning: bool = Field(
         default=True,
         description=(
@@ -404,6 +346,10 @@ class InterfaceCreate(InterfaceCommonOptions):
             "LACP data unit transmission rate. SLOW sends LACPDUs every 30 seconds, FAST sends every 1 second for "
             "quicker link failure detection."
         ),
+    )
+    lag_ports: list[str] = Field(
+        default=[],
+        description="List of interface names to include in the link aggregation group.",
     )
     vlan_parent_interface: str = Field(default=NotRequired, description="Parent interface for VLAN configuration.")
     vlan_tag: int = Field(ge=1, le=4094, default=NotRequired, description="VLAN tag number (1-4094).")

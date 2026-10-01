@@ -204,6 +204,22 @@ class CSRProfilesModel(BaseModel):
         ),
     )
 
+    @classmethod
+    def to_previous(cls, value):
+        # Older API versions declare a different set of profiles, which the adapter has already back-filled
+        # from their own defaults. Our keys are aliases, so the adapter's field-name based cleanup will not
+        # remove them; drop them here so the caller only sees the profiles its version knows about.
+        for name, field in cls.model_fields.items():
+            value.pop(field.alias or name, None)
+
+        # Back-filled defaults arrive as model instances, and the adapter only descends into dicts and lists.
+        # Left as instances they reach the next version down unconverted and fail validation against its own
+        # equally named classes, so flatten them here.
+        return {
+            key: profile.model_dump() if isinstance(profile, BaseModel) else profile
+            for key, profile in value.items()
+        }
+
 
 class WebUICryptoCsrProfilesArgs(BaseModel):
     pass

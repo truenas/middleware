@@ -1,28 +1,25 @@
-from __future__ import annotations
-
 from datetime import datetime, time
-from typing import Annotated, Any, Literal
+from typing import Annotated, Literal
 
 from pydantic import AfterValidator, Field, model_validator
 
 from middlewared.api.base import (
     BaseModel,
     JsonSchemaExtra,
-    Private,
     TimeString,
     croniter_for_schedule,
     validate_filters,
 )
 
-__all__ = ["QueryFilters", "QueryOptions", "QueryOptionsGet", "QueryOptionsCount", "QueryArgs", "GenericQueryResult",
-           "CronModel", "TimeCronModel", "StorageTier"]
+__all__ = ["QueryFilters", "QueryOptions", "QueryArgs", "GenericQueryResult", "CronModel", "TimeCronModel",
+           "StorageTier"]
 
 StorageTier = Literal['REGULAR', 'PERFORMANCE']
 """Storage performance tier. `REGULAR` uses standard-capacity drives; `PERFORMANCE` uses fast media (e.g. NVMe)."""
 
 QF_DOC = 'List of filters for query results. See API documentation for "Query Methods" for more guidance.'
 QueryFilters = Annotated[
-    list[Any],
+    list,
     JsonSchemaExtra(description=QF_DOC, examples=[
         [["name", "=", "bob"]],
         [["OR", [["name", "=", "bob"], ["name", "=", "larry"]]]],
@@ -34,7 +31,7 @@ QueryFilters = Annotated[
 class QueryOptions(BaseModel):
     """ Query options customize the results returned by a query method. More complete documentation with examples \
     are covered in the "Query methods" section of the TrueNAS API documentation. """
-    extra: dict[str, Any] = Field(
+    extra: dict = Field(
         default={},
         description=(
             "Extra options are defined on a per-endpoint basis and are described in the documentation for the "
@@ -51,7 +48,7 @@ class QueryOptions(BaseModel):
             "of the results list)."
         ),
     )
-    select: list[str | list[Any]] = Field(
+    select: list[str | list] = Field(
         default=[],
         examples=[['username', 'Authentication.status']],
         description=(
@@ -96,20 +93,6 @@ class QueryOptions(BaseModel):
         default=False,
         description="Force use of SQL for result filtering to reduce response time. May not work for all methods.",
     )
-    delete_invalid_rows: Private[bool] = Field(
-        default=False,
-        description="If any row fails validation during loading, delete it from the database and log a message.",
-    )
-
-
-class QueryOptionsGet(QueryOptions):
-    get: Literal[True]
-    count: Literal[False]
-
-
-class QueryOptionsCount(QueryOptions):
-    count: Literal[True]
-    get: Literal[False]
 
 
 class QueryArgs(BaseModel):

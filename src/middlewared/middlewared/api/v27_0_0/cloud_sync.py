@@ -1,4 +1,4 @@
-from typing import Any, Literal
+from typing import Literal
 
 from pydantic import Field, PositiveInt, Secret
 
@@ -6,7 +6,6 @@ from middlewared.api.base import (
     BaseModel,
     Excluded,
     ForUpdateMetaclass,
-    FullAdmin,
     LongNonEmptyString,
     NonEmptyString,
     TimeString,
@@ -19,12 +18,6 @@ from .cloud import BaseCloudEntry, CloudTaskAttributes
 __all__ = [
     "CloudTaskAttributes",
     "CloudSyncEntry",
-    "CloudSyncCreate",
-    "CloudSyncUpdate",
-    "CloudSyncSyncOptions",
-    "CloudSyncProvider",
-    "CloudSyncProviderTaskSchemaItem",
-    "RestoreOpts",
     "CloudSyncCreateArgs",
     "CloudSyncCreateResult",
     "CloudSyncRestoreArgs",
@@ -37,7 +30,6 @@ __all__ = [
     "CloudSyncCreateBucketResult",
     "CloudSyncListBucketsArgs",
     "CloudSyncListBucketsResult",
-    "CloudSyncListDirectory",
     "CloudSyncListDirectoryArgs",
     "CloudSyncListDirectoryResult",
     "CloudSyncSyncArgs",
@@ -50,7 +42,6 @@ __all__ = [
     "CloudSyncProvidersResult",
     "CloudSyncOneDriveListDrivesArgs",
     "CloudSyncOneDriveListDrivesResult",
-    "CloudSyncOneDriveListDrivesDrive",
 ]
 
 
@@ -175,28 +166,22 @@ class CloudSyncListBucketsArgs(BaseModel):
 
 
 class CloudSyncListBucketsResult(BaseModel):
-    result: list[dict[str, Any]] = Field(description="Array of bucket information objects.")
+    result: list[dict] = Field(description="Array of bucket information objects.")
 
 
-class CloudSyncListDirectory(BaseModel):
+@single_argument_args("cloud_sync_ls")
+class CloudSyncListDirectoryArgs(BaseModel):
     credentials: int = Field(description="ID of the cloud credential to use for directory listing.")
     encryption: bool = Field(default=False, description="Whether files are encrypted in cloud storage.")
     filename_encryption: bool = Field(default=False, description="Whether filenames are encrypted in cloud storage.")
     encryption_password: Secret[str] = Field(default="", description="Password for decrypting files and filenames.")
     encryption_salt: Secret[str] = Field(default="", description="Salt value for encryption key derivation.")
     attributes: CloudTaskAttributes = Field(description="Cloud provider-specific attributes for the listing operation.")
-    args: FullAdmin[str] = Field(
-        default="",
-        description="Additional arguments for the directory listing command.",
-    )
-
-
-class CloudSyncListDirectoryArgs(BaseModel):
-    cloud_sync_ls: CloudSyncListDirectory = Field(description="Parameters describing the remote directory to list.")
+    args: str = Field(default="", description="Additional arguments for the directory listing command.")
 
 
 class CloudSyncListDirectoryResult(BaseModel):
-    result: list[dict[str, Any]] = Field(description="Array of file and directory information objects.")
+    result: list[dict] = Field(description="Array of file and directory information objects.")
 
 
 class CloudSyncSyncOptions(BaseModel):

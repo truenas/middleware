@@ -21,7 +21,6 @@ from .keychain import KeychainCredentialEntry
 from .pool_snapshottask import PoolSnapshotTaskDBEntry
 
 __all__ = ["ReplicationEntry",
-           "ReplicationCreate", "ReplicationUpdate",
            "ReplicationCreateArgs", "ReplicationCreateResult",
            "ReplicationUpdateArgs", "ReplicationUpdateResult",
            "ReplicationDeleteArgs", "ReplicationDeleteResult",
@@ -310,6 +309,14 @@ class ReplicationRunArgs(BaseModel):
         default_factory=ReplicationRunOptions,
         description="Options for running the replication task.",
     )
+
+    @classmethod
+    def from_previous(cls, value):
+        # `really_run` was a top-level parameter until this version.
+        if (really_run := value.pop("really_run", None)) is not None:
+            value["options"] = {"really_run": really_run}
+
+        return value
 
 
 class ReplicationRunResult(BaseModel):

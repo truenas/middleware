@@ -12,7 +12,6 @@ from middlewared.api.base import (
 )
 
 __all__ = [
-    'ACMEDNSAuthenticatorCreate', 'ACMEDNSAuthenticatorSchema', 'ACMEDNSAuthenticatorUpdate',
     'DNSAuthenticatorEntry', 'DNSAuthenticatorCreateArgs', 'DNSAuthenticatorCreateResult',
     'DNSAuthenticatorUpdateArgs', 'DNSAuthenticatorUpdateResult', 'DNSAuthenticatorDeleteArgs',
     'DNSAuthenticatorDeleteResult', 'DNSAuthenticatorAuthenticatorSchemasArgs',
@@ -125,8 +124,9 @@ class ACMEDNSAuthenticatorCreate(BaseModel):
     name: str = Field(description="Human-readable name for the DNS authenticator.")
 
 
-class DNSAuthenticatorCreateArgs(BaseModel):
-    dns_authenticator_create: ACMEDNSAuthenticatorCreate = Field(description="DNS authenticator creation parameters.")
+@single_argument_args('dns_authenticator_create')
+class DNSAuthenticatorCreateArgs(ACMEDNSAuthenticatorCreate):
+    pass
 
 
 class DNSAuthenticatorCreateResult(BaseModel):

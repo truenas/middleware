@@ -161,6 +161,11 @@ class PoolCreateEncryptionOptions(BaseModel):
         description="A hex-encoded key specified as an alternative to using `passphrase`.",
     )
 
+    @classmethod
+    def from_previous(cls, value):
+        value['pbkdf2iters'] = max(1300000, value['pbkdf2iters'])
+        return value
+
 
 class PoolCreateTopologyVdevDRAID(BaseModel):
     type: Literal["DRAID1", "DRAID2", "DRAID3"] = Field(description="Type of distributed RAID configuration.")

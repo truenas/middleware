@@ -2,7 +2,6 @@ from .acl import *
 from .acme_dns_authenticator import *
 from .alert import *
 from .alertservice import *
-from .alertservice_attributes import *
 from .api_key import *
 from .app import *
 from .app_image import *
@@ -18,7 +17,6 @@ from .certificate import *
 from .cloud_backup import *
 from .cloud_credential import *
 from .cloud_sync import *
-from .cloud_sync_providers import *
 from .common import *
 from .config import *
 from .container import *

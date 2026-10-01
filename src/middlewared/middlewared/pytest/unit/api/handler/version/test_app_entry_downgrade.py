@@ -2,23 +2,23 @@ import pytest
 
 from middlewared.api.base.handler.accept import validate_model
 from middlewared.api.base.handler.version import APIVersion, APIVersionsAdapter
-from middlewared.api.v26_0_0.app import AppEntry as AppEntry_v26_0_0
 from middlewared.api.v27_0_0.app import AppEntry as AppEntry_v27_0_0
+from middlewared.api.v28_0_0.app import AppEntry as AppEntry_v28_0_0
 from middlewared.service.crud_service import get_instance_result
 from middlewared.service_exception import ValidationErrors
 
 from .utils import TestModelProvider
 
 MODEL_NAME = "AppGetInstanceResult"
-AppGetInstanceResult_v26_0_0 = get_instance_result(AppEntry_v26_0_0)
 AppGetInstanceResult_v27_0_0 = get_instance_result(AppEntry_v27_0_0)
+AppGetInstanceResult_v28_0_0 = get_instance_result(AppEntry_v28_0_0)
 
 
 def _build_adapter():
     return APIVersionsAdapter(
         [
-            APIVersion("v26.0.0", TestModelProvider({MODEL_NAME: AppGetInstanceResult_v26_0_0})),
-            APIVersion("v27.0.0", TestModelProvider({MODEL_NAME: AppGetInstanceResult_v27_0_0})),
+            APIVersion("v26.0.0", TestModelProvider({MODEL_NAME: AppGetInstanceResult_v27_0_0})),
+            APIVersion("v27.0.0", TestModelProvider({MODEL_NAME: AppGetInstanceResult_v28_0_0})),
         ]
     )
 
@@ -98,7 +98,7 @@ async def test_downgraded_error_app_is_valid_for_the_older_version():
     # logged and the newer shape handed to the client anyway
     adapted = await adapt(error_app_entry())
 
-    validate_model(AppGetInstanceResult_v26_0_0, adapted)
+    validate_model(AppGetInstanceResult_v27_0_0, adapted)
 
 
 @pytest.mark.asyncio
@@ -113,7 +113,7 @@ async def test_healthy_app_is_unchanged():
 def test_partial_entry_is_tolerated():
     # `app.query` supports `select`, and its result items have every field optional, so the
     # conversion has to cope with only a subset of them being present
-    result = AppEntry_v27_0_0.to_previous({"state": "ERROR"})
+    result = AppEntry_v28_0_0.to_previous({"state": "ERROR"})
 
     assert result["state"] == "CRASHED"
     assert "version" not in result
@@ -123,4 +123,4 @@ def test_partial_entry_is_tolerated():
 @pytest.mark.asyncio
 async def test_error_state_is_rejected_by_the_older_version_directly():
     with pytest.raises(ValidationErrors):
-        validate_model(AppGetInstanceResult_v26_0_0, {"result": error_app_entry()})
+        validate_model(AppGetInstanceResult_v27_0_0, {"result": error_app_entry()})

@@ -2,8 +2,8 @@ import pytest
 
 from middlewared.api.base import BaseModel, LibvirtUUID
 from middlewared.api.base.handler.accept import accept_params
-from middlewared.api.v27_0_0.container import ContainerCreate, ContainerEntry
-from middlewared.api.v27_0_0.vm import VMCreate, VMEntry
+from middlewared.api.v28_0_0.container import ContainerCreate, ContainerEntry
+from middlewared.api.v28_0_0.vm import VMCreate, VMEntry
 from middlewared.service_exception import ValidationErrors
 from middlewared.utils.libvirt.utils import same_uuid
 

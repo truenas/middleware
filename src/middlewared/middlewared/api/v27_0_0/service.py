@@ -8,8 +8,7 @@ __all__ = [
     "ServiceEntry", "ServiceReloadArgs", "ServiceReloadResult", "ServiceRestartArgs", "ServiceRestartResult",
     "ServiceStartArgs", "ServiceStartResult", "ServiceStartedArgs", "ServiceStartedResult",
     "ServiceStartedOrEnabledArgs", "ServiceStartedOrEnabledResult", "ServiceStopArgs", "ServiceStopResult",
-    "ServiceUpdate", "ServiceUpdateArgs", "ServiceUpdateResult",
-    "ServiceOptions", "ServiceControlArgs", "ServiceControlResult",
+    "ServiceUpdateArgs", "ServiceUpdateResult", "ServiceControlArgs", "ServiceControlResult",
 ]
 
 

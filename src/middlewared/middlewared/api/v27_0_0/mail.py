@@ -5,6 +5,7 @@ from pydantic import Field, Secret
 from middlewared.api.base import (
     BaseModel,
     EmailString,
+    EmptyDict,
     Excluded,
     ForUpdateMetaclass,
     LongString,
@@ -12,8 +13,8 @@ from middlewared.api.base import (
     excluded_field,
 )
 
-__all__ = ["MailEntry", "MailUpdate", "MailUpdateArgs", "MailUpdateResult", "MailSendMessage", "MailSendArgs",
-           "MailSendResult", "MailLocalAdministratorEmailArgs", "MailLocalAdministratorEmailResult"]
+__all__ = ["MailEntry", "MailUpdateArgs", "MailUpdateResult", "MailSendArgs", "MailSendResult",
+           "MailLocalAdministratorEmailArgs", "MailLocalAdministratorEmailResult"]
 
 
 class MailEntryOAuth(BaseModel):
@@ -34,7 +35,7 @@ class MailEntry(BaseModel):
     smtp: bool = Field(description="Whether SMTP authentication is enabled and `user`, `pass` are required.")
     user: str | None = Field(description="SMTP username.")
     pass_: Secret[str | None] = Field(alias="pass", description="SMTP password.")
-    oauth: Secret[MailEntryOAuth | None] = Field(
+    oauth: Secret[MailEntryOAuth | EmptyDict | None] = Field(
         description="OAuth configuration for email providers that support it or `null` for basic authentication.",
     )
     id: int = Field(description="Unique identifier for this mail configuration.")
@@ -56,6 +57,8 @@ class MailSendMessage(BaseModel):
     )
     to: list[str] = Field(default=NotRequired, description="Email recipients. Defaults to all local administrators.")
     cc: list[str] = Field(default=NotRequired, description="Email CC recipients, if any.")
+    interval: int | None = Field(default=NotRequired, description="In seconds.")
+    channel: str | None = Field(default=NotRequired, description="Defaults to \"truenas\".")
     timeout: int = Field(default=300, description="Time limit for connecting to the SMTP server in seconds.")
     attachments: bool = Field(
         default=False,
@@ -115,6 +118,10 @@ class MailSendArgs(BaseModel):
 
 class MailSendResult(BaseModel):
     result: None = Field(description="The message was sent successfully.")
+
+    @classmethod
+    def to_previous(cls, value):
+        return {"result": True}
 
 
 class MailLocalAdministratorEmailArgs(BaseModel):

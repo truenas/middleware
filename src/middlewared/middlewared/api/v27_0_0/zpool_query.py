@@ -169,11 +169,11 @@ class ZPoolEntry(BaseModel):
 class ZPoolQuery(BaseModel):
     pool_names: list[str] | None = Field(
         default=None,
-        description="Pool names to query. `null` queries all imported pools.",
+        description="Pool names to query. None queries all imported pools.",
     )
     properties: list[str] | None = Field(
         default=None,
-        description="Property names to retrieve. `null` returns no properties.",
+        description="Property names to retrieve. None returns no properties.",
     )
     topology: bool = Field(default=False, description="Include vdev topology.")
     scan: bool = Field(default=False, description="Include scan/scrub information.")

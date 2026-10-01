@@ -1,4 +1,4 @@
-from typing import Any, Literal
+from typing import Literal
 
 from pydantic import Field
 
@@ -7,14 +7,16 @@ from middlewared.api.base import (
     ForUpdateMetaclass,
     HttpsOnlyURL,
     NonEmptyString,
+    single_argument_args,
 )
 
 __all__ = [
     'TrueNASConnectEntry', 'TrueNASConnectGetRegistrationUriArgs',
     'TrueNASConnectGetRegistrationUriResult',
-    'TrueNASConnectUpdate', 'TrueNASConnectUpdateArgs', 'TrueNASConnectUpdateResult',
+    'TrueNASConnectUpdateArgs', 'TrueNASConnectUpdateResult',
     'TrueNASConnectGenerateClaimTokenArgs',
     'TrueNASConnectGenerateClaimTokenResult',
+    'TrueNASConnectIpChoicesArgs', 'TrueNASConnectIpChoicesResult',
     'TrueNASConnectConfigChangedEvent',
     'TrueNASConnectIpsWithHostnamesArgs', 'TrueNASConnectIpsWithHostnamesResult',
 ]
@@ -23,7 +25,7 @@ __all__ = [
 class TrueNASConnectEntry(BaseModel):
     id: int = Field(description="Unique identifier for the TrueNAS Connect configuration.")
     enabled: bool = Field(description="Whether TrueNAS Connect service is enabled.")
-    registration_details: dict[str, Any] = Field(
+    registration_details: dict = Field(
         description="Object containing registration information and credentials for TrueNAS Connect.",
     )
     status: NonEmptyString = Field(description="Current operational status of the TrueNAS Connect service.")
@@ -48,13 +50,18 @@ class TrueNASConnectEntry(BaseModel):
         ),
     )
 
+    @classmethod
+    def to_previous(cls, value):
+        value.setdefault('ips', [])
+        value.setdefault('interfaces', [])
+        value.setdefault('interfaces_ips', [])
+        value.setdefault('use_all_interfaces', False)
+        return value
 
-class TrueNASConnectUpdate(BaseModel, metaclass=ForUpdateMetaclass):
+
+@single_argument_args('tn_connect_update')
+class TrueNASConnectUpdateArgs(BaseModel, metaclass=ForUpdateMetaclass):
     enabled: bool = Field(description="Whether to enable the TrueNAS Connect service.")
-
-
-class TrueNASConnectUpdateArgs(BaseModel):
-    tn_connect_update: TrueNASConnectUpdate = Field(description="Updated TrueNAS Connect configuration.")
 
 
 class TrueNASConnectUpdateResult(BaseModel):
@@ -78,6 +85,16 @@ class TrueNASConnectGenerateClaimTokenArgs(BaseModel):
 class TrueNASConnectGenerateClaimTokenResult(BaseModel):
     result: NonEmptyString = Field(
         description="Generated claim token for authenticating with TrueNAS Connect services.",
+    )
+
+
+class TrueNASConnectIpChoicesArgs(BaseModel):
+    pass
+
+
+class TrueNASConnectIpChoicesResult(BaseModel):
+    result: dict[str, str] = Field(
+        description="Object of available IP addresses and their associated interface descriptions.",
     )
 
 

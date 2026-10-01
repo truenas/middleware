@@ -2,7 +2,7 @@ from typing import Literal
 
 from pydantic import Field
 
-from middlewared.api.base import BaseModel, ForUpdateMetaclass, FullAdmin, LongString, NonEmptyString
+from middlewared.api.base import BaseModel, ForUpdateMetaclass, LongString, NonEmptyString
 
 from .cloud_credential import CredentialsEntry
 from .common import CronModel
@@ -94,11 +94,8 @@ class BaseCloudEntry(BaseModel):
         default_factory=CloudCron,
         description="Cron schedule dictating when the task should run.",
     )
-    pre_script: FullAdmin[LongString] = Field(
-        default="",
-        description="A Bash script to run immediately before every backup.",
-    )
-    post_script: FullAdmin[LongString] = Field(
+    pre_script: LongString = Field(default="", description="A Bash script to run immediately before every backup.")
+    post_script: LongString = Field(
         default="",
         description="A Bash script to run immediately after every backup if it succeeds.",
     )
@@ -114,7 +111,7 @@ class BaseCloudEntry(BaseModel):
         default_factory=list,
         description="Paths to pass to `restic backup --exclude`.",
     )
-    args: FullAdmin[LongString] = Field(default="", description="(Slated for removal).")
+    args: LongString = Field(default="", description="(Slated for removal).")
     enabled: bool = Field(default=True, description="Can enable/disable the task.")
     job: dict | None = Field(description="Information regarding the task's job state, e.g. progress.")
     locked: bool = Field(description="A locked task cannot run.")

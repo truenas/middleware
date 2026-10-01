@@ -1,4 +1,4 @@
-from typing import Any, Literal, Self, TypeAlias
+from typing import Any, Literal, Self
 
 from pydantic import Field, model_validator
 
@@ -6,31 +6,31 @@ from middlewared.api.base import (
     BaseModel,
     NonEmptyString,
     UnixPerm,
-    query_result_from_item,
-    query_result_item,
+    query_result,
     single_argument_args,
     single_argument_result,
 )
 from middlewared.utils.filesystem.acl import (
     ACL_UNDEFINED_ID,
 )
+from middlewared.utils.filesystem.stat_x import (
+    StatxEtype,
+)
 
 from .acl import AceWhoId
 from .common import QueryFilters, QueryOptions
 
 __all__ = [
-    'FilesystemDirEntry',
     'FilesystemChownArgs', 'FilesystemChownResult',
     'FilesystemSetpermArgs', 'FilesystemSetpermResult',
-    'FilesystemListdirResultItem', 'FilesystemListdirArgs', 'FilesystemListdirResult',
-    'FilesystemMkdirData', 'FilesystemMkdirOptions', 'FilesystemMkdirArgs', 'FilesystemMkdirResult',
-    'FilesystemStatData', 'FilesystemStatArgs', 'FilesystemStatResult',
-    'FilesystemStatfsData', 'FilesystemStatfsArgs', 'FilesystemStatfsResult',
-    'ZFSFileAttrsData',
-    'FilesystemSetZfsAttributesData', 'FilesystemSetZfsAttributesArgs', 'FilesystemSetZfsAttributesResult',
+    'FilesystemListdirArgs', 'FilesystemListdirResult',
+    'FilesystemMkdirArgs', 'FilesystemMkdirResult',
+    'FilesystemStatArgs', 'FilesystemStatResult',
+    'FilesystemStatfsArgs', 'FilesystemStatfsResult',
+    'FilesystemSetZfsAttributesArgs', 'FilesystemSetZfsAttributesResult',
     'FilesystemGetZfsAttributesArgs', 'FilesystemGetZfsAttributesResult',
     'FilesystemGetArgs', 'FilesystemGetResult',
-    'FilesystemPutOptions', 'FilesystemPutArgs', 'FilesystemPutResult',
+    'FilesystemPutArgs', 'FilesystemPutResult',
     'FileFollowTailEventSourceArgs', 'FileFollowTailEventSourceEvent',
 ]
 
@@ -50,11 +50,7 @@ class FilesystemChownOptions(FilesystemRecursionOptions):
 class FilesystemSetpermOptions(FilesystemRecursionOptions):
     stripacl: bool = Field(
         default=False,
-        description=(
-            "Whether to remove existing Access Control Lists when setting permissions. `filesystem.setperm` fails if "
-            "an extended ACL is present on the path unless this is set. When no `mode` is set and this is `true`, "
-            "non-trivial ACLs are converted to trivial ACLs."
-        ),
+        description="Whether to remove existing Access Control Lists when setting permissions.",
     )
 
 
@@ -158,17 +154,17 @@ FILESYSTEM_ZFS_ATTRS = Literal[
 
 
 FileType = Literal[
-    'DIRECTORY',
-    'FILE',
-    'SYMLINK',
-    'OTHER',
+    StatxEtype.DIRECTORY,
+    StatxEtype.FILE,
+    StatxEtype.SYMLINK,
+    StatxEtype.OTHER,
 ]
 
 
 class FilesystemDirEntry(BaseModel):
     name: NonEmptyString = Field(description="Entry's base name.")
     path: NonEmptyString = Field(description="Entry's full path.")
-    realpath: NonEmptyString | None = Field(description="Canonical path of the entry, eliminating any symbolic links.")
+    realpath: NonEmptyString = Field(description="Canonical path of the entry, eliminating any symbolic links.")
     type: FileType = Field(
         description=(
             "Type of filesystem entry.\n"
@@ -197,7 +193,7 @@ class FilesystemDirEntry(BaseModel):
             "/proc/self/mountinfo and stx_mnt_id."
         ),
     )
-    acl: bool | None = Field(
+    acl: bool = Field(
         description=(
             "Specifies whether ACL is present on the entry. If this is the case then file permission bits as reported "
             "in `mode` may not be representative of the actual permissions."
@@ -206,13 +202,13 @@ class FilesystemDirEntry(BaseModel):
     uid: int = Field(description="User ID of the entry's owner. This corresponds with stx_uid.")
     gid: int = Field(description="Group ID of the entry's owner. This corresponds with stx_gid.")
     is_mountpoint: bool = Field(description="Specifies whether the entry is also the mountpoint of a filesystem.")
-    is_ctldir: bool | None = Field(
+    is_ctldir: bool = Field(
         description="Specifies whether the entry is located within the ZFS ctldir (for example a snapshot).",
     )
     attributes: list[FILESYSTEM_STATX_ATTRS] = Field(
         description="Extra file attribute indicators for entry as returned by statx. Expanded from stx_attributes.",
     )
-    xattrs: list[NonEmptyString] | None = Field(description="List of xattr names of extended attributes on file.")
+    xattrs: list[NonEmptyString] = Field(description="List of xattr names of extended attributes on file.")
     zfs_attrs: list[FILESYSTEM_ZFS_ATTRS] | None = Field(
         description=(
             "List of extra ZFS-related file attribute indicators on file. Will be None type if filesystem is not ZFS."
@@ -226,31 +222,21 @@ class FilesystemListdirArgs(BaseModel):
     query_options: QueryOptions = Field(default=QueryOptions(), description="Query options for sorting and pagination.")
 
 
-FilesystemListdirResultItem: TypeAlias = query_result_item(FilesystemDirEntry)
-FilesystemListdirResult = query_result_from_item(FilesystemListdirResultItem, "FilesystemListdirResult")
+FilesystemListdirResult = query_result(FilesystemDirEntry, "FilesystemListdirResult")
 
 
 class FilesystemMkdirOptions(BaseModel):
     mode: UnixPerm = Field(default='755', description="Unix permissions for the new directory.")
-    raise_chmod_error: bool = Field(
-        default=True,
-        description=(
-            "Whether to raise an error if chmod fails. When it does, the newly created directory is removed to "
-            "prevent its use with unintended permissions."
-        ),
-    )
+    raise_chmod_error: bool = Field(default=True, description="Whether to raise an error if chmod fails.")
 
 
-class FilesystemMkdirData(BaseModel):
+@single_argument_args('filesystem_mkdir')
+class FilesystemMkdirArgs(BaseModel):
     path: NonEmptyString = Field(description="Path where the new directory should be created.")
     options: FilesystemMkdirOptions = Field(
         default=FilesystemMkdirOptions(),
         description="Options controlling directory creation behavior.",
     )
-
-
-class FilesystemMkdirArgs(BaseModel):
-    data: FilesystemMkdirData = Field(description="Directory creation options.")
 
 
 class FilesystemMkdirResult(BaseModel):
@@ -270,9 +256,7 @@ class FilesystemStatData(BaseModel):
     mount_id: int = Field(
         description=(
             "The mount ID of the mount containing the entry. This corresponds to the number in first field of "
-            "/proc/self/mountinfo and stx_mnt_id. Bind mounts share the same device ID but have different mount IDs, "
-            "so this value uniquely identifies the particular mount and can be used to identify children of a given "
-            "mountpoint."
+            "/proc/self/mountinfo and stx_mnt_id."
         ),
     )
     uid: int = Field(description="User ID of the entry's owner. This corresponds with stx_uid.")
@@ -282,26 +266,15 @@ class FilesystemStatData(BaseModel):
         description="Time of last modification. Corresponds with stx_mtime. This is mutable from userspace.",
     )
     ctime: float = Field(description="Time of last status change. Corresponds with stx_ctime.")
-    btime: float = Field(
-        description=(
-            "Time of creation. Corresponds with stx_btime. Depending on the platform, this may be mutable from "
-            "userspace."
-        ),
-    )
+    btime: float = Field(description="Time of creation. Corresponds with stx_btime.")
     dev: int = Field(
         description=(
-            "The ID of the device containing the filesystem where the file resides. Within the TrueNAS API this is "
-            "sufficient to uniquely identify a given dataset, but it is not sufficient to uniquely identify a "
-            "particular filesystem mount (bind mounts of the same dataset share a dev). mount_id must be used for "
-            "that purpose. This corresponds with st_dev."
+            "The ID of the device containing the filesystem where the file resides. This is not sufficient to uniquely "
+            "identify a particular filesystem mount. mount_id must be used for that purpose. This corresponds with "
+            "st_dev."
         ),
     )
-    inode: int = Field(
-        description=(
-            "The inode number of the file. This corresponds with stx_ino. It uniquely identifies the file on the "
-            "given device, but once a file is deleted its inode number may be reused."
-        ),
-    )
+    inode: int = Field(description="The inode number of the file. This corresponds with stx_ino.")
     nlink: int = Field(description="Number of hard links. Corresponds with stx_nlinks.")
     acl: bool = Field(
         description=(
@@ -442,23 +415,19 @@ class FilesystemSetZfsAttributesOptions(BaseModel):
         description=(
             "If set, walk the tree under `path` and apply attributes to entries whose type appears in the list "
             "(`FILES`, `DIRECTORIES`, or both). The root `path` is included only if its type matches the filter. `null`"
-            " means no recursion (operate on `path` only). An empty list is rejected. Recursion stops at dataset "
-            "boundaries."
+            " means no recursion (operate on `path` only). An empty list is rejected."
         ),
     )
 
 
-class FilesystemSetZfsAttributesData(BaseModel):
+@single_argument_args('set_zfs_file_attributes')
+class FilesystemSetZfsAttributesArgs(BaseModel):
     path: NonEmptyString = Field(description="Path to the file or directory to set ZFS attributes on.")
     zfs_file_attributes: ZFSFileAttrsData = Field(description="ZFS file attributes to set.")
     options: FilesystemSetZfsAttributesOptions = Field(
         default=FilesystemSetZfsAttributesOptions(),
         description="Additional options including recursion behavior.",
     )
-
-
-class FilesystemSetZfsAttributesArgs(BaseModel):
-    data: FilesystemSetZfsAttributesData = Field(description="ZFS attribute set parameters.")
 
 
 class FilesystemSetZfsAttributesResult(BaseModel):
