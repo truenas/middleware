@@ -4,7 +4,6 @@ from typing import Any
 
 from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertClassConfig, AlertLevel, AlertSource
 from middlewared.alert.schedule import IntervalSchedule
-from middlewared.plugins.ntp.peers import NTPPeer
 
 
 @dataclass(kw_only=True)
@@ -28,7 +27,7 @@ class NTPHealthCheckAlertSource(AlertSource):
             return None
 
         try:
-            peers = [NTPPeer(p) for p in (await self.middleware.call("system.ntpserver.peers"))]
+            peers = await self.middleware.call("system.ntpserver.peers")
         except Exception:
             self.middleware.logger.warning("Failed to retrieve peers.", exc_info=True)
             peers = []
@@ -36,15 +35,14 @@ class NTPHealthCheckAlertSource(AlertSource):
         if not peers:
             return None
 
-        active_peer = [x for x in peers if x.is_active()]
+        active_peer = [x for x in peers if x["active"]]
         if not active_peer:
-            return Alert(
-                NTPHealthCheckAlert(reason=f'No Active NTP peers: {[{str(x)} for x in peers]}')
-            )
+            names = [{f'{x["mode"]}: {x["state"]} [{x["remote"]}]'} for x in peers]
+            return Alert(NTPHealthCheckAlert(reason=f'No Active NTP peers: {names}'))
 
         peer = active_peer[0]
-        if peer.offset_in_secs < 300:
+        if peer["offset"] < 300:
             return None
 
-        msg = f'{peer.remote} has an offset of {peer.offset_in_secs}, which exceeds permitted value of 5 minutes.'
+        msg = f'{peer["remote"]} has an offset of {peer["offset"]}, which exceeds permitted value of 5 minutes.'
         return Alert(NTPHealthCheckAlert(reason=msg))
