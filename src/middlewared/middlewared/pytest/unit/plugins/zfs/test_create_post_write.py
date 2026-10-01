@@ -62,18 +62,13 @@ class Stand:
         return resource_create.create_impl(self.context, Mock(), data)
 
 
-@pytest.mark.parametrize(
-    "path, kwargs, announced",
-    [("tank/ix-apps/x", {"bypass": True}, [])],
-)
-def test_create_announces_created_ancestors_then_the_leaf(monkeypatch, path, kwargs, announced):
+def test_create_announces_nothing_for_an_internal_path(monkeypatch):
     fs = {"readonly": "off", "encryption": "off", "acltype": "nfsv4", "aclmode": "passthrough"}
     stand = Stand(
         [row("tank", mountpoint="/mnt/tank", **fs), row("tank/ix-apps", mountpoint="/mnt/.ix-apps", **fs)], monkeypatch
     )
-    stand.create(request(path=path, **kwargs))
-    assert [c.kwargs["id"] for c in stand.middleware.send_event.call_args_list] == announced
-    assert all(c.args == ("zfs.resource.list", "ADDED") for c in stand.middleware.send_event.call_args_list)
+    stand.create(request(path="tank/ix-apps/x", bypass=True))
+    stand.middleware.send_event.assert_not_called()
 
 
 def test_create_stores_the_key_and_keeps_the_leaf_when_mount_fails(monkeypatch):

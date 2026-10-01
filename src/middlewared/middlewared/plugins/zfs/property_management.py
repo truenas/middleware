@@ -131,14 +131,16 @@ def build_set_of_zfs_props(
     Args:
         hdl_type: The ZFS resource type (filesystem, volume, or snapshot)
         det_props: DeterminedProperties instance used for caching results
-        req_props: List of requested property names as strings, or None
-            for no properties. An empty list (default) requests space
-            related properties.
+        req_props: List of requested property names as strings. None fetches
+            no properties and an empty list fetches the space related ones.
+            The cache in det_props is per type and ignores req_props once
+            filled, so use one instance per property list.
 
     Returns:
-        frozenset[ZFSProperty] | None: Set of valid ZFS properties to retrieve,
-            default properties if req_props is None, or None if no properties
-            should be retrieved (empty req_props list or unsupported type).
+        frozenset[ZFSProperty] | None: None when req_props is None, the space
+            related properties for an empty list or a type other than
+            filesystem or volume, otherwise the requested properties valid
+            for the type.
     """
     if req_props is None:
         # If the req_props (requested properties) is None, then

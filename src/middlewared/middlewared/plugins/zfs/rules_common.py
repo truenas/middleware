@@ -32,6 +32,7 @@ __all__ = (
     "reject_bad_user_property_names",
     "reject_bad_user_property_values",
     "reject_dedup_on_special_vdev",
+    "reject_force_size_on_filesystem",
     "reject_insufficient_headroom",
     "reject_ssb_out_of_range",
     "reject_tier_managed_ssb",
@@ -97,6 +98,10 @@ def reject_bad_user_property_values(attribute: str, values: Mapping[str, str]) -
                 f"The value of {name!r} must be shorter than {USER_PROPERTY_VALUE_MAX} bytes.",
                 errno.EINVAL,
             )
+
+
+def reject_force_size_on_filesystem(attribute: str) -> None:
+    raise ValidationError(attribute, "force_size applies only to a VOLUME.", errno.EINVAL)
 
 
 def reject_tier_managed_ssb(attribute: str) -> None:

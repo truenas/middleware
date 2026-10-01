@@ -218,10 +218,6 @@ class PoolDatasetService(Service):
         self.middleware.call_sync('pool.dataset.delete_encrypted_datasets_from_db', [['name', 'in', to_remove]])
 
     @private
-    def path_in_locked_datasets(self, path):
-        return self.call_sync2(self.s.zfs.resource.path_is_locked, path)
-
-    @private
     def query_encrypted_roots_keys(self, filters):
         # We query database first - if we are able to find an encryption key, we assume it's the correct one.
         # If we are unable to find the key in database, we see if we have it in memory with the KMIP server, if not,

@@ -339,8 +339,8 @@ def test_grow_thick_volume_keeps_it_thick():
         assert refreservation > 2 * GiB
         assert reservation(path) == (2 * GiB, refreservation)
 
-        entry = call("zfs.resource.set", {"path": path, "properties": {"volsize": 3 * GiB}})
-        assert entry["properties"]["refreservation"]["value"] > 3 * GiB
+        call("zfs.resource.set", {"path": path, "properties": {"volsize": 3 * GiB}})
+        assert reservation(path)[1] > 3 * GiB
 
 
 def test_grow_sparse_volume_stays_sparse():

@@ -17,6 +17,7 @@ from .rules_common import (
     apply_acl_defaults,
     reject_bad_acl_combination,
     reject_dedup_on_special_vdev,
+    reject_force_size_on_filesystem,
     reject_insufficient_headroom,
     reject_unentitled_dedup,
 )
@@ -40,6 +41,7 @@ __all__ = (
     "check_dedup_tiering",
     "check_encryption",
     "check_encryption_ancestry",
+    "check_force_size",
     "check_names_valid_for_type",
     "check_parent_is_filesystem",
     "check_parent_not_readonly",
@@ -134,8 +136,9 @@ def resolve_create_request(
         properties.refquota = None
     if data.type == "VOLUME":
         if properties.volsize is not None and properties.refreservation is None:
-            # thick provision unless told otherwise, like `zfs create -V`, reserving the volsize itself
-            # TODO: Investigate using refreservation=auto once libzfs zfs_create() resolves it
+            # TODO: reserve refreservation=auto (volsize plus metadata overhead) once libzfs zfs_create()
+            # resolves it; only zfs set and zfs clone do, so create fails with "out of space". A grow
+            # switches these volumes to auto.
             properties.refreservation = properties.volsize
     else:
         if data.share_type is not None:
@@ -423,7 +426,7 @@ def check_names_valid_for_type(data: ZFSResourceCreateArgsData) -> None:
 
 def check_force_size(data: ZFSResourceCreateArgsData) -> None:
     if data.force_size and data.type == "FILESYSTEM":
-        raise ValidationError(f"{SCHEMA}.force_size", "force_size applies only to a VOLUME.", errno.EINVAL)
+        reject_force_size_on_filesystem(f"{SCHEMA}.force_size")
 
 
 def check_share_type(data: ZFSResourceCreateArgsData) -> None:

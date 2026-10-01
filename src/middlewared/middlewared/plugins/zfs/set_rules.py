@@ -22,6 +22,7 @@ from .rules_common import (
     reject_bad_user_property_names,
     reject_bad_user_property_values,
     reject_dedup_on_special_vdev,
+    reject_force_size_on_filesystem,
     reject_insufficient_headroom,
     reject_ssb_out_of_range,
     reject_tier_managed_ssb,
@@ -333,7 +334,7 @@ def check_reservation_headroom(context: ServiceContext, state: SetContext) -> No
 
 def check_force_size(context: ServiceContext, state: SetContext) -> None:
     if state.force_size and state.type == "FILESYSTEM":
-        raise ValidationError(f"{SCHEMA}.force_size", "force_size applies only to a VOLUME.", errno.EINVAL)
+        reject_force_size_on_filesystem(f"{SCHEMA}.force_size")
 
 
 def check_acl_combination(context: ServiceContext, state: SetContext) -> None:
