@@ -8,7 +8,7 @@ the JSON-RPC gateway will enforce on inputs and outputs.
 import pytest
 from pydantic import ValidationError
 
-from middlewared.api.v26_0_0.zfs_tier import (
+from middlewared.api.v27_0_0.zfs_tier import (
     TierInfo,
     ZfsTierDatasetSetTierArgs,
     ZfsTierEntry,
@@ -20,9 +20,9 @@ from middlewared.api.v26_0_0.zfs_tier import (
     ZfsTierRewriteJobStatusEventSourceArgs,
     ZfsTierUpdateArgs,
 )
-from middlewared.api.v26_0_0.smb import SharingSMBUpdateArgs
-from middlewared.api.v26_0_0.nfs import SharingNFSUpdateArgs
-from middlewared.api.v26_0_0.s3 import SharingS3UpdateArgs
+from middlewared.api.v27_0_0.smb import SharingSMBUpdateArgs
+from middlewared.api.v27_0_0.nfs import SharingNFSUpdateArgs
+from middlewared.api.v27_0_0.s3 import SharingS3UpdateArgs
 
 
 # ----------------------------------------------------------------------------

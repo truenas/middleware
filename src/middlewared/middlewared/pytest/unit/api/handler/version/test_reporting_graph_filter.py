@@ -11,8 +11,8 @@ from middlewared.api.v25_10_3.reporting import (
 from middlewared.api.v25_10_4.reporting import (
     ReportingNetdataGetDataArgs as ReportingNetdataGetDataArgs_v25_10_4,
 )
-from middlewared.api.v26_0_0.reporting import (
-    ReportingNetdataGetDataArgs as ReportingNetdataGetDataArgs_v26_0_0,
+from middlewared.api.v27_0_0.reporting import (
+    ReportingNetdataGetDataArgs as ReportingNetdataGetDataArgs_v27_0_0,
 )
 from middlewared.service_exception import ValidationErrors
 
@@ -47,10 +47,10 @@ def _build_adapter():
                 ),
             ),
             APIVersion(
-                "v26.0.0",
+                "v27.0.0",
                 TestModelProvider(
                     {
-                        "ReportingNetdataGetDataArgs": ReportingNetdataGetDataArgs_v26_0_0,
+                        "ReportingNetdataGetDataArgs": ReportingNetdataGetDataArgs_v27_0_0,
                     }
                 ),
             ),
@@ -67,7 +67,7 @@ async def test_removed_graph_names_are_filtered_when_upgrading(removed_name):
         "query": {},
     }
 
-    result = await adapter.adapt(value, "ReportingNetdataGetDataArgs", "v25.10.2", "v26.0.0")
+    result = await adapter.adapt(value, "ReportingNetdataGetDataArgs", "v25.10.2", "v27.0.0")
 
     assert [g["name"] for g in result["graphs"]] == ["cpu"]
 
@@ -80,10 +80,10 @@ async def test_all_removed_graphs_triggers_validation_error():
         "query": {},
     }
 
-    adapted = await adapter.adapt(value, "ReportingNetdataGetDataArgs", "v25.10.2", "v26.0.0")
+    adapted = await adapter.adapt(value, "ReportingNetdataGetDataArgs", "v25.10.2", "v27.0.0")
     assert adapted["graphs"] == []
     with pytest.raises(ValidationErrors):
-        validate_model(ReportingNetdataGetDataArgs_v26_0_0, adapted)
+        validate_model(ReportingNetdataGetDataArgs_v27_0_0, adapted)
 
 
 @pytest.mark.asyncio
@@ -91,6 +91,6 @@ async def test_all_removed_graphs_triggers_validation_error():
 async def test_current_v26_rejects_removed_names_directly(removed_name):
     with pytest.raises(ValidationErrors):
         validate_model(
-            ReportingNetdataGetDataArgs_v26_0_0,
+            ReportingNetdataGetDataArgs_v27_0_0,
             {"graphs": [{"name": removed_name, "identifier": None}], "query": {}},
         )
