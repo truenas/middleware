@@ -39,7 +39,7 @@ class FailoverEntry(BaseModel):
 
 
 class FailoverSyncToPeer(BaseModel):
-    reboot: bool = Field(default=False, description="Reboot the other controller after syncing.")
+    reboot: bool = Field(default=False, description="Reboot the other controller.")
 
 
 class FailoverUpdate(FailoverEntry, metaclass=ForUpdateMetaclass):
@@ -69,10 +69,10 @@ class FailoverUpgrade(BaseModel):
     resume: bool = Field(
         default=False,
         description=(
-            "Should be set to `true` if a previous call to this method returned a `CallError` with `errno=EAGAIN` "
-            "meaning that an upgrade can be performed with a warning and that warning is accepted. In that case, you "
-            "also have to set `resume_manual` to `true` if a previous call to this method was performed using update "
-            "file upload."
+            "Should be set to true if a previous call to this method returned a `CallError` with `errno=EAGAIN` meaning"
+            " that an upgrade can be performed with a warning and that warning is accepted. In that case, you also have"
+            " to set `resume_manual` to `true` if a previous call to this method was performed using update file "
+            "upload."
         ),
     )
     resume_manual: bool = Field(default=False, description="Whether to resume a manual upgrade operation.")

@@ -6,9 +6,9 @@ from .alert import AlertLevel
 from .alertservice_attributes import AlertServiceAttributes
 
 __all__ = [
-    'AlertServiceCreate', 'AlertServiceEntry', 'AlertServiceCreateArgs', 'AlertServiceUpdateArgs',
-    'AlertServiceDeleteArgs', 'AlertServiceTestArgs', 'AlertServiceCreateResult', 'AlertServiceUpdateResult',
-    'AlertServiceDeleteResult', 'AlertServiceTestResult',
+    'AlertServiceEntry', 'AlertServiceCreateArgs', 'AlertServiceUpdateArgs', 'AlertServiceDeleteArgs',
+    'AlertServiceTestArgs', 'AlertServiceCreateResult', 'AlertServiceUpdateResult', 'AlertServiceDeleteResult',
+    'AlertServiceTestResult',
 ]
 
 

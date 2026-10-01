@@ -12,12 +12,12 @@ from middlewared.api.base import (
     LongString,
     NonEmptyString,
     match_validator,
+    single_argument_args,
 )
 
 __all__ = [
-    'CertificateEntry', 'CertificateCreate', 'CertificateCreateArgs', 'CertificateCreateResult',
-    'CertificateUpdate', 'CertificateUpdateArgs', 'CertificateUpdateResult',
-    'CertificateDeleteArgs', 'CertificateDeleteResult',
+    'CertificateEntry', 'CertificateCreateArgs', 'CertificateCreateResult',
+    'CertificateUpdateArgs', 'CertificateUpdateResult', 'CertificateDeleteArgs', 'CertificateDeleteResult',
     'ECCurves', 'EKU_OID',
 ]
 
@@ -301,7 +301,8 @@ class CertificateExtensions(BaseModel):
     )
 
 
-class CertificateCreate(BaseModel):
+@single_argument_args('certificate_create')
+class CertificateCreateArgs(BaseModel):
     name: CERT_NAME = Field(description="Certificate name.")
     create_type: Literal[
         'CERTIFICATE_CREATE_IMPORTED',
@@ -394,10 +395,6 @@ class CertificateCreate(BaseModel):
             "renewal fails, renewal will be reattempted every day until expiration."
         ),
     )
-
-
-class CertificateCreateArgs(BaseModel):
-    certificate_create: CertificateCreate = Field(description="Certificate create parameters.")
 
 
 class CertificateCreateResult(BaseModel):

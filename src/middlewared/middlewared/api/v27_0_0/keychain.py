@@ -12,21 +12,17 @@ from middlewared.api.base import (
     NonEmptyString,
     excluded_field,
     single_argument_args,
+    single_argument_result,
 )
 
-__all__ = ["KeychainCredentialEntry",
-           "SSHKeyPair", "SSHKeyPairEntry", "SSHCredentials", "SSHCredentialsEntry",
-           "KeychainCredentialCreateSSHCredentialsEntry", "KeychainCredentialCreateSSHKeyPairEntry",
-           "KeychainCredentialCreate", "KeychainCredentialUpdate",
+__all__ = ["KeychainCredentialEntry", "SSHKeyPairEntry", "SSHCredentialsEntry",
            "KeychainCredentialCreateArgs", "KeychainCredentialCreateResult",
            "KeychainCredentialUpdateArgs", "KeychainCredentialUpdateResult",
-           "KeychainCredentialDeleteOptions", "KeychainCredentialDeleteArgs", "KeychainCredentialDeleteResult",
-           "KeychainCredentialUsedByArgs", "KeychainCredentialUsedByResult", "UsedKeychainCredential",
+           "KeychainCredentialDeleteArgs", "KeychainCredentialDeleteResult",
+           "KeychainCredentialUsedByArgs", "KeychainCredentialUsedByResult",
            "KeychainCredentialGenerateSshKeyPairArgs", "KeychainCredentialGenerateSshKeyPairResult",
            "KeychainCredentialRemoteSshHostKeyScanArgs", "KeychainCredentialRemoteSshHostKeyScanResult",
-           "KeychainCredentialRemoteSSHSemiautomaticSetup",
            "KeychainCredentialRemoteSshSemiautomaticSetupArgs", "KeychainCredentialRemoteSshSemiautomaticSetupResult",
-           "SetupSSHConnectionManual", "SetupSSHConnectionSemiautomatic",
            "KeychainCredentialSetupSshConnectionArgs", "KeychainCredentialSetupSshConnectionResult"]
 
 
@@ -111,7 +107,7 @@ class KeychainCredentialCreateArgs(BaseModel):
 
 
 class KeychainCredentialCreateResult(BaseModel):
-    result: KeychainCredentialEntry = Field(description="The newly created keychain credential entry.")
+    result: SSHKeyPairEntry | SSHCredentialsEntry = Field(description="The newly created keychain credential entry.")
 
 
 class KeychainCredentialUpdateArgs(BaseModel):
@@ -120,7 +116,7 @@ class KeychainCredentialUpdateArgs(BaseModel):
 
 
 class KeychainCredentialUpdateResult(BaseModel):
-    result: KeychainCredentialEntry = Field(description="The updated keychain credential entry.")
+    result: SSHKeyPairEntry | SSHCredentialsEntry = Field(description="The updated keychain credential entry.")
 
 
 class KeychainCredentialDeleteOptions(BaseModel):
@@ -168,8 +164,10 @@ class KeychainCredentialGenerateSshKeyPairArgs(BaseModel):
     pass
 
 
+@single_argument_result
 class KeychainCredentialGenerateSshKeyPairResult(BaseModel):
-    result: SSHKeyPair
+    private_key: LongString = Field(description="Generated SSH private key in PEM format.")
+    public_key: LongString = Field(description="Generated SSH public key in OpenSSH format.")
 
 
 @single_argument_args("keychain_remote_ssh_host_key_scan")
@@ -192,18 +190,12 @@ class KeychainCredentialRemoteSSHSemiautomaticSetup(BaseModel):
     )
     token: Secret[str | None] = Field(
         default=None,
-        validate_default=True,
         description="API token for authentication with the remote system or `null`.",
     )
     admin_username: str = Field(default="root", description="Administrative username for the remote system.")
-    password: Secret[str | None] = Field(
-        default=None,
-        validate_default=True,
-        description="Password for the administrative user or `null`.",
-    )
+    password: Secret[str | None] = Field(default=None, description="Password for the administrative user or `null`.")
     otp_token: Secret[str | None] = Field(
         default=None,
-        validate_default=True,
         description="One-time password token for 2FA authentication or `null`.",
     )
     username: str = Field(default="root", description="Username for the SSH connection.")

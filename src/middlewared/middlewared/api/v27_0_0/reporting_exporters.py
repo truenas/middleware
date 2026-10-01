@@ -8,13 +8,13 @@ from middlewared.api.base import (
     ForUpdateMetaclass,
     NonEmptyString,
     excluded_field,
+    single_argument_args,
 )
 
 __all__ = [
-    'ReportingExportsEntry', 'ReportingExportsCreate', 'ReportingExportsCreateArgs', 'ReportingExportsCreateResult',
-    'GraphiteExporter', 'ReportingExporterUpdate', 'ReportingExportsUpdateArgs', 'ReportingExportsUpdateResult',
-    'ReportingExportsDeleteArgs', 'ReportingExportsDeleteResult', 'ReportingExportsExporterSchemasArgs',
-    'ReportingExportsExporterSchemasResult', 'ReportingExporterSchema',
+    'ReportingExportsEntry', 'ReportingExportsCreateArgs', 'ReportingExportsCreateResult', 'GraphiteExporter',
+    'ReportingExportsUpdateArgs', 'ReportingExportsUpdateResult', 'ReportingExportsDeleteArgs',
+    'ReportingExportsDeleteResult', 'ReportingExportsExporterSchemasArgs', 'ReportingExportsExporterSchemasResult',
 ]
 
 
@@ -54,14 +54,9 @@ class ReportingExportsEntry(BaseModel):
     name: str = Field(description="User defined name of exporter configuration.")
 
 
-class ReportingExportsCreate(ReportingExportsEntry):
+@single_argument_args('reporting_exporter_create')
+class ReportingExportsCreateArgs(ReportingExportsEntry):
     id: Excluded = excluded_field()
-
-
-class ReportingExportsCreateArgs(BaseModel):
-    reporting_exporter_create: ReportingExportsCreate = Field(
-        description="Configuration for the new reporting exporter.",
-    )
 
 
 class ReportingExportsCreateResult(BaseModel):

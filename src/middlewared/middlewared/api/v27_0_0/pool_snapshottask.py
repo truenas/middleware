@@ -42,10 +42,7 @@ class PeriodicSnapshotTaskEntry(BaseModel):
     exclude: list[str] = Field(default=[], description="Array of dataset patterns to exclude from recursive snapshots.")
     naming_schema: SnapshotNameSchema = Field(
         default="auto-%Y-%m-%d_%H-%M",
-        description=(
-            "Naming pattern for generated snapshots using strftime format. Must contain `%Y`, `%m`, `%d`, `%H`, and "
-            "`%M` (unless `%s` is used)."
-        ),
+        description="Naming pattern for generated snapshots using strftime format.",
     )
     allow_empty: bool = Field(default=True, description="Whether to take snapshots even if no data has changed.")
     schedule: PoolSnapshotTaskCron = Field(

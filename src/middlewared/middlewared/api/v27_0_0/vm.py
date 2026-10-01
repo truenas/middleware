@@ -1,44 +1,37 @@
 from typing import Literal
 
-from pydantic import Field
+from pydantic import ConfigDict, Field
 
 from middlewared.api.base import (
     BaseModel,
     Excluded,
     ForUpdateMetaclass,
-    FullAdmin,
-    IPvAnyAddress,
     LibvirtUUID,
     NonEmptyString,
     excluded_field,
+    single_argument_args,
+    single_argument_result,
 )
 
 from .vm_device import VMDeviceEntry, VMDisplayDevice
 
 __all__ = [
     'VMEntry', 'VMCreateArgs', 'VMCreateResult', 'VMUpdateArgs', 'VMUpdateResult', 'VMDeleteArgs', 'VMDeleteResult',
-    'VMBootloaderOvmfChoicesArgs', 'VMBootloaderOvmfChoicesResult',
-    'VMBootloaderAavmfChoicesArgs', 'VMBootloaderAavmfChoicesResult',
-    'VMBootloaderOptionsArgs',
+    'VMBootloaderOvmfChoicesArgs', 'VMBootloaderOvmfChoicesResult', 'VMBootloaderOptionsArgs',
     'VMBootloaderOptionsResult', 'VMStatusArgs', 'VMStatusResult', 'VMLogFilePathArgs', 'VMLogFilePathResult',
     'VMLogFileDownloadArgs', 'VMLogFileDownloadResult', 'VMGuestArchitectureAndMachineChoicesArgs',
     'VMGuestArchitectureAndMachineChoicesResult', 'VMCloneArgs', 'VMCloneResult',
-    'VMSupportsVirtualizationArgs', 'VMDisplayDeviceInfo', 'VMGetDisplayWebUri', 'VMDisplayWebURIOptions',
+    'VMSupportsVirtualizationArgs',
     'VMSupportsVirtualizationResult', 'VMVirtualizationDetailsArgs', 'VMVirtualizationDetailsResult',
     'VMMaximumSupportedVcpusArgs', 'VMMaximumSupportedVcpusResult', 'VMFlagsArgs', 'VMFlagsResult', 'VMGetConsoleArgs',
     'VMGetConsoleResult', 'VMCpuModelChoicesArgs', 'VMCpuModelChoicesResult', 'VMGetMemoryUsageArgs',
     'VMGetMemoryUsageResult', 'VMPortWizardArgs', 'VMPortWizardResult', 'VMResolutionChoicesArgs',
     'VMResolutionChoicesResult', 'VMGetDisplayDevicesArgs', 'VMGetDisplayDevicesResult', 'VMGetDisplayWebUriArgs',
     'VMGetDisplayWebUriResult', 'VMStartArgs', 'VMStartResult', 'VMStopArgs', 'VMStopResult', 'VMRestartArgs',
-    'VMRestartResult', 'VMResumeArgs', 'VMResumeResult', 'VMPoweroffArgs', 'VMPoweroffResult', 'VMResetArgs',
-    'VMResetResult', 'VMSuspendArgs', 'VMSuspendResult', 'VMGetVmemoryInUseArgs',
-    'VMGetVmemoryInUseResult', 'VMGetAvailableMemoryArgs',
+    'VMRestartResult', 'VMResumeArgs', 'VMResumeResult', 'VMPoweroffArgs', 'VMPoweroffResult', 'VMSuspendArgs',
+    'VMSuspendResult', 'VMGetVmemoryInUseArgs', 'VMGetVmemoryInUseResult', 'VMGetAvailableMemoryArgs',
     'VMGetAvailableMemoryResult', 'VMGetVmMemoryInfoArgs', 'VMGetVmMemoryInfoResult', 'VMRandomMacArgs',
-    'VMRandomMacResult', 'VMCreate', 'VMUpdate', 'VMDeleteOptions', 'VMVirtualizationDetails', 'VMFlags',
-    'VMGetVmemoryInUse', 'VMStatus', 'VMGetVmMemoryInfo', 'VMStartOptions', 'VMStopOptions', 'VMPortWizard',
-    'VMBootloaderOptions',
-    'VMGuestNetworkInterfaceIPAddress', 'VMGuestNetworkInterface',
-    'VMGetGuestNetworkInterfacesArgs', 'VMGetGuestNetworkInterfacesResult',
+    'VMRandomMacResult',
 ]
 
 
@@ -50,9 +43,13 @@ class VMStatus(BaseModel):
     pid: int | None = Field(description="Process ID of the running VM. `null` if not running.")
     domain_state: NonEmptyString | None = Field(description="Hypervisor-specific domain state.")
 
+    @classmethod
+    def to_previous(cls, value):
+        return {**value, "domain_state": value["domain_state"] or "ERROR"}
+
 
 class VMEntry(BaseModel):
-    command_line_args: FullAdmin[str] = Field(
+    command_line_args: str = Field(
         default='',
         description="Additional command line arguments passed to the VM hypervisor.",
     )
@@ -72,14 +69,7 @@ class VMEntry(BaseModel):
     )
     name: NonEmptyString = Field(description="Display name of the virtual machine.")
     description: str = Field(default='', description="Optional description or notes about the virtual machine.")
-    vcpus: int = Field(
-        ge=1,
-        default=1,
-        description=(
-            "Number of virtual CPU sockets. The total number of guest vCPUs is `vcpus` * `cores` * `threads` "
-            "(maximum 16)."
-        ),
-    )
+    vcpus: int = Field(ge=1, default=1, description="Number of virtual CPUs allocated to the VM.")
     cores: int = Field(ge=1, default=1, description="Number of CPU cores per socket.")
     threads: int = Field(ge=1, default=1, description="Number of threads per CPU core.")
     cpuset: str | None = Field(
@@ -100,13 +90,7 @@ class VMEntry(BaseModel):
             "Whether to pin virtual CPUs to specific host CPU cores. Improves performance but reduces host flexibility."
         ),
     )
-    suspend_on_snapshot: bool = Field(
-        default=True,
-        description=(
-            "Whether to automatically suspend the VM when a periodic snapshot task runs. For manual snapshots, "
-            "the VM is suspended only if explicitly included in the snapshot's VM pause list."
-        ),
-    )
+    suspend_on_snapshot: bool = Field(default=True, description="Whether to suspend the VM when taking snapshots.")
     trusted_platform_module: bool = Field(
         default=False,
         description="Whether to enable virtual Trusted Platform Module (TPM) for the VM.",
@@ -139,16 +123,11 @@ class VMEntry(BaseModel):
     )
     hide_from_msr: bool = Field(
         default=False,
-        description=(
-            "Whether to hide the KVM hypervisor from standard MSR-based discovery. Useful when doing GPU passthrough."
-        ),
+        description="Whether to hide hypervisor signatures from guest OS MSR access.",
     )
     ensure_display_device: bool = Field(
         default=True,
-        description=(
-            "Whether to ensure the guest always has access to a video device. Required for headless OS installations "
-            "(e.g. Ubuntu Server). Set to `false` when using GPU passthrough without a separate display device."
-        ),
+        description="Whether to ensure at least one display device is configured for the VM.",
     )
     time: Literal['LOCAL', 'UTC'] = Field(
         default='LOCAL',
@@ -171,9 +150,7 @@ class VMEntry(BaseModel):
         default=None,
         description="Virtual machine type/chipset. `null` to use hypervisor default.",
     )
-    uuid: str = Field(
-        description="Unique UUID for the VM. Assigned when the VM is created and cannot be changed afterwards.",
-    )
+    uuid: str | None = Field(default=None, description="Unique UUID for the VM. `null` to auto-generate.")
     devices: list[VMDeviceEntry] = Field(description="Array of virtual devices attached to this VM.")
     display_available: bool = Field(description="Whether at least one display device is available for this VM.")
     id: int = Field(description="Unique identifier for the virtual machine.")
@@ -191,10 +168,7 @@ class VMCreate(VMEntry):
     devices: Excluded = excluded_field()
     uuid: LibvirtUUID | None = Field(
         default=None,
-        description=(
-            "Unique UUID for the VM. `null` to auto-generate. It cannot be changed after creation. Normalized to "
-            "lowercase hyphenated form."
-        ),
+        description="Unique UUID for the VM. `null` to auto-generate. Normalized to lowercase hyphenated form.",
     )
     bootloader_ovmf: str | None = Field(
         default=None,
@@ -203,8 +177,9 @@ class VMCreate(VMEntry):
     )
 
 
-class VMCreateArgs(BaseModel):
-    vm_create: VMCreate = Field(description="VM creation parameters.")
+@single_argument_args('vm_create')
+class VMCreateArgs(VMCreate):
+    pass
 
 
 class VMCreateResult(BaseModel):
@@ -228,12 +203,7 @@ class VMUpdateResult(BaseModel):
 
 class VMDeleteOptions(BaseModel):
     zvols: bool = Field(default=False, description="Delete associated ZFS volumes when deleting the VM.")
-    force: bool = Field(
-        default=False,
-        description="Delete a running or suspended VM by stopping it first. Without this, deleting an active VM is "
-                    "rejected. Also causes failures to destroy associated ZFS volumes to be logged and ignored rather "
-                    "than aborting the deletion."
-    )
+    force: bool = Field(default=False, description="Force deletion even if the VM is currently running.")
 
 
 class VMDeleteArgs(BaseModel):
@@ -247,37 +217,32 @@ class VMDeleteArgs(BaseModel):
 class VMDeleteResult(BaseModel):
     result: None
 
+    @classmethod
+    def to_previous(cls, value):
+        return {"result": True}
+
 
 class VMBootloaderOvmfChoicesArgs(BaseModel):
     pass
 
 
+@single_argument_result
 class VMBootloaderOvmfChoicesResult(BaseModel):
-    result: dict[str, str] = Field(description="Available OVMF firmware files for UEFI booting.")
-
-
-class VMBootloaderAavmfChoicesArgs(BaseModel):
-    pass
-
-
-class VMBootloaderAavmfChoicesResult(BaseModel):
-    result: dict[str, str] = Field(description="Available AAVMF firmware files for aarch64 UEFI booting.")
+    model_config = ConfigDict(extra='allow')
+    """Available OVMF firmware files for UEFI booting."""
 
 
 class VMBootloaderOptionsArgs(BaseModel):
     pass
 
 
-class VMBootloaderOptions(BaseModel):
+@single_argument_result
+class VMBootloaderOptionsResult(BaseModel):
     UEFI: Literal['UEFI'] = Field(default='UEFI', description="Modern UEFI firmware with secure boot support.")
     UEFI_CSM: Literal['Legacy BIOS'] = Field(
         default='Legacy BIOS',
         description="UEFI with Compatibility Support Module for legacy BIOS compatibility.",
     )
-
-
-class VMBootloaderOptionsResult(BaseModel):
-    result: VMBootloaderOptions = Field(description="Supported motherboard firmware options.")
 
 
 class VMStatusArgs(BaseModel):
@@ -308,18 +273,16 @@ class VMGuestArchitectureAndMachineChoicesArgs(BaseModel):
     pass
 
 
+@single_argument_result
 class VMGuestArchitectureAndMachineChoicesResult(BaseModel):
-    result: dict[str, list[str]] = Field(description="VM Guest architecture and machine choices.")
+    model_config = ConfigDict(extra='allow')
 
 
 class VMCloneArgs(BaseModel):
     id: int = Field(description="ID of the virtual machine to clone.")
     name: NonEmptyString | None = Field(
         default=None,
-        description=(
-            "Name for the cloned virtual machine. "
-            "`null` to append the next available number to the original VM name."
-        ),
+        description="Name for the cloned virtual machine. `null` to auto-generate.",
     )
 
 
@@ -339,13 +302,10 @@ class VMVirtualizationDetailsArgs(BaseModel):
     pass
 
 
-class VMVirtualizationDetails(BaseModel):
+@single_argument_result
+class VMVirtualizationDetailsResult(BaseModel):
     supported: bool = Field(description="Whether hardware virtualization is supported and available.")
     error: str | None = Field(description="Error message if virtualization is not available. `null` if supported.")
-
-
-class VMVirtualizationDetailsResult(BaseModel):
-    result: VMVirtualizationDetails = Field(description="VM Virtualization details.")
 
 
 class VMMaximumSupportedVcpusArgs(BaseModel):
@@ -360,15 +320,12 @@ class VMFlagsArgs(BaseModel):
     pass
 
 
-class VMFlags(BaseModel):
+@single_argument_result
+class VMFlagsResult(BaseModel):
     intel_vmx: bool = Field(description="Whether Intel VT-x (VMX) virtualization is available.")
     unrestricted_guest: bool = Field(description="Whether Intel unrestricted guest mode is supported.")
     amd_rvi: bool = Field(description="Whether AMD Rapid Virtualization Indexing (RVI/NPT) is available.")
     amd_asids: bool = Field(description="Whether AMD Address Space Identifiers (ASIDs) are supported.")
-
-
-class VMFlagsResult(BaseModel):
-    result: VMFlags = Field(description="VM Flags.")
 
 
 class VMGetConsoleArgs(BaseModel):
@@ -380,14 +337,13 @@ class VMGetConsoleResult(BaseModel):
 
 
 class VMCpuModelChoicesArgs(BaseModel):
-    arch: str = Field(
-        default='x86_64',
-        description="Guest architecture to return CPU model choices for (e.g. 'x86_64', 'aarch64').",
-    )
+    pass
 
 
+@single_argument_result
 class VMCpuModelChoicesResult(BaseModel):
-    result: dict[str, str] = Field(description="Available CPU models for virtual machine emulation.")
+    """Available CPU models for virtual machine emulation."""
+    model_config = ConfigDict(extra='allow')
 
 
 class VMGetMemoryUsageArgs(BaseModel):
@@ -402,13 +358,10 @@ class VMPortWizardArgs(BaseModel):
     pass
 
 
-class VMPortWizard(BaseModel):
-    port: int = Field(description="Available server port.")
-    web: int = Field(description="Web port to be used based on available port.")
-
-
+@single_argument_result
 class VMPortWizardResult(BaseModel):
-    result: VMPortWizard = Field(description="VM port wizard.")
+    port: int = Field(description="Available server port")
+    web: int = Field(description="Web port to be used based on available port")
 
 
 class VMResolutionChoicesArgs(BaseModel):
@@ -427,19 +380,17 @@ class GetDisplayDevice(VMDisplayDevice):
     password_configured: bool = Field(description="Whether a password has been configured for display access.")
 
 
-class VMDisplayDeviceInfo(VMDeviceEntry):
+class DisplayDevice(VMDeviceEntry):
     attributes: GetDisplayDevice = Field(
         description="Display device attributes including password configuration status.",
     )
 
 
 class VMGetDisplayDevicesResult(BaseModel):
-    result: list[VMDisplayDeviceInfo] = Field(
-        description="Array of display devices configured for the virtual machine.",
-    )
+    result: list[DisplayDevice] = Field(description="Array of display devices configured for the virtual machine.")
 
 
-class VMDisplayWebURIOptions(BaseModel):
+class DisplayWebURIOptions(BaseModel):
     protocol: Literal['HTTP', 'HTTPS'] = Field(
         default='HTTP',
         description="Protocol to use for the web display URI (HTTP or HTTPS).",
@@ -452,19 +403,16 @@ class VMGetDisplayWebUriArgs(BaseModel):
         default='',
         description="Hostname or IP address to use in the URI. Empty string for automatic detection.",
     )
-    options: VMDisplayWebURIOptions = Field(
-        default=VMDisplayWebURIOptions(),
+    options: DisplayWebURIOptions = Field(
+        default=DisplayWebURIOptions(),
         description="Options for generating the web display URI.",
     )
 
 
-class VMGetDisplayWebUri(BaseModel):
+@single_argument_result
+class VMGetDisplayWebUriResult(BaseModel):
     error: str | None = Field(description="Error message if URI generation failed. `null` on success.")
     uri: str | None = Field(description="Generated web URI for accessing the VM display. `null` on error.")
-
-
-class VMGetDisplayWebUriResult(BaseModel):
-    result: VMGetDisplayWebUri = Field(description="VM display web URI for accessing the VM display.")
 
 
 class VMStartOptions(BaseModel):
@@ -516,14 +464,6 @@ class VMRestartResult(BaseModel):
     result: None = Field(description="Returns `null` on successful VM restart initiation.")
 
 
-class VMResetArgs(BaseModel):
-    id: int = Field(description="ID of the virtual machine to reset.")
-
-
-class VMResetResult(BaseModel):
-    result: None = Field(description="Returns `null` on successful VM reset.")
-
-
 class VMSuspendArgs(BaseModel):
     id: int = Field(description="ID of the virtual machine to suspend.")
 
@@ -544,14 +484,11 @@ class VMGetVmemoryInUseArgs(BaseModel):
     pass
 
 
-class VMGetVmemoryInUse(BaseModel):
-    RNP: int = Field(description="Running but not provisioned, in bytes.")
-    PRD: int = Field(description="Provisioned but not running, in bytes.")
-    RPRD: int = Field(description="Running and provisioned, in bytes.")
-
-
+@single_argument_result
 class VMGetVmemoryInUseResult(BaseModel):
-    result: VMGetVmemoryInUse = Field(description="VM get vmemory inuse details.")
+    RNP: int = Field(description="Running but not provisioned, in bytes")
+    PRD: int = Field(description="Provisioned but not running, in bytes")
+    RPRD: int = Field(description="Running and provisioned, in bytes")
 
 
 class VMGetAvailableMemoryArgs(BaseModel):
@@ -569,17 +506,18 @@ class VMGetVmMemoryInfoArgs(BaseModel):
     id: int = Field(description="ID of the virtual machine to get memory information for.")
 
 
-class VMGetVmMemoryInfo(BaseModel):
-    minimum_memory_requested: int | None = Field(description="Minimum memory requested by the VM.")
-    total_memory_requested: int = Field(description="Maximum / total memory requested by the VM.")
-    overcommit_required: bool = Field(description="Overcommit of memory is required to start VM.")
+@single_argument_result
+class VMGetVmMemoryInfoResult(BaseModel):
+    minimum_memory_requested: int | None = Field(description="Minimum memory requested by the VM")
+    total_memory_requested: int = Field(description="Maximum / total memory requested by the VM")
+    overcommit_required: bool = Field(description="Overcommit of memory is required to start VM")
     memory_req_fulfilled_after_overcommit: bool = Field(
-        description="Memory requirements of VM are fulfilled if over-committing memory is specified.",
+        description="Memory requirements of VM are fulfilled if over-committing memory is specified",
     )
-    arc_to_shrink: int | None = Field(description="Size of ARC to shrink in bytes.")
-    current_arc_max: int = Field(description="Current size of max ARC in bytes.")
-    arc_min: int = Field(description="Minimum size of ARC in bytes.")
-    arc_max_after_shrink: int = Field(description="Size of max ARC in bytes after shrinking.")
+    arc_to_shrink: int | None = Field(description="Size of ARC to shrink in bytes")
+    current_arc_max: int = Field(description="Current size of max ARC in bytes")
+    arc_min: int = Field(description="Minimum size of ARC in bytes")
+    arc_max_after_shrink: int = Field(description="Size of max ARC in bytes after shrinking")
     actual_vm_requested_memory: int = Field(
         description=(
             "VM memory in bytes to consider when making calculations for available/required memory. If VM ballooning is"
@@ -589,37 +527,9 @@ class VMGetVmMemoryInfo(BaseModel):
     )
 
 
-class VMGetVmMemoryInfoResult(BaseModel):
-    result: VMGetVmMemoryInfo = Field(description="VM memory info.")
-
-
 class VMRandomMacArgs(BaseModel):
     pass
 
 
 class VMRandomMacResult(BaseModel):
     result: str = Field(description="Randomly generated MAC address suitable for virtual machine network interfaces.")
-
-
-class VMGuestNetworkInterfaceIPAddress(BaseModel):
-    ip_address: IPvAnyAddress = Field(description="IP address assigned to the interface.")
-    prefix: int = Field(description="Prefix length (subnet mask bits).")
-    ip_address_type: Literal["IPV4", "IPV6"] = Field(description="Address family: 'IPV4' or 'IPV6'.")
-
-
-class VMGuestNetworkInterface(BaseModel):
-    name: str = Field(description="Interface name as seen in the guest OS (e.g. 'eth0', 'ens3').")
-    hardware_address: str = Field(description="MAC address of the interface.")
-    ip_addresses: list[VMGuestNetworkInterfaceIPAddress] = Field(
-        description="IP addresses currently assigned to this interface."
-    )
-
-
-class VMGetGuestNetworkInterfacesArgs(BaseModel):
-    id: int = Field(description="ID of the virtual machine.")
-
-
-class VMGetGuestNetworkInterfacesResult(BaseModel):
-    result: list[VMGuestNetworkInterface] = Field(
-        description="Network interfaces reported by the QEMU guest agent."
-    )

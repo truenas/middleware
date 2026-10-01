@@ -4,8 +4,6 @@ from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, NonEmp
 
 __all__ = [
     "StaticRouteEntry",
-    "StaticRouteCreate",
-    "StaticRouteUpdate",
     "StaticRouteUpdateArgs",
     "StaticRouteUpdateResult",
     "StaticRouteCreateArgs",

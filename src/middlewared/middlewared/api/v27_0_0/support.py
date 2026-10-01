@@ -8,15 +8,15 @@ from middlewared.api.base import (
     ForUpdateMetaclass,
     LongString,
     NotRequired,
+    single_argument_args,
 )
 
 __all__ = [
-    "SupportEntry", "SupportUpdate", "SupportAttachTicket", "SupportAttachTicketArgs", "SupportAttachTicketResult",
-    "SupportAttachTicketMaxSizeArgs", "SupportAttachTicketMaxSizeResult", "SupportFieldsArgs", "SupportFieldsResult",
-    "SupportIsAvailableArgs", "SupportIsAvailableResult", "SupportIsAvailableAndEnabledArgs",
-    "SupportIsAvailableAndEnabledResult", "SupportNewTicketArgs", "SupportNewTicketResult", "SupportNewTicket",
-    "SupportNewTicketCommunity", "SupportNewTicketEnterprise", "SupportSimilarIssuesArgs", "SupportSimilarIssuesResult",
-    "SupportSimilarIssue", "SupportUpdateArgs", "SupportUpdateResult",
+    "SupportEntry", "SupportAttachTicketArgs", "SupportAttachTicketResult", "SupportAttachTicketMaxSizeArgs",
+    "SupportAttachTicketMaxSizeResult", "SupportFieldsArgs", "SupportFieldsResult", "SupportIsAvailableArgs",
+    "SupportIsAvailableResult", "SupportIsAvailableAndEnabledArgs", "SupportIsAvailableAndEnabledResult",
+    "SupportNewTicketArgs", "SupportNewTicketResult", "SupportSimilarIssuesArgs", "SupportSimilarIssuesResult",
+    "SupportUpdateArgs", "SupportUpdateResult", "SupportNewTicket"
 ]
 
 
@@ -67,14 +67,11 @@ class SupportUpdate(SupportEntry, metaclass=ForUpdateMetaclass):
     pass
 
 
-class SupportAttachTicket(BaseModel):
+@single_argument_args('data')
+class SupportAttachTicketArgs(BaseModel):
     ticket: int = Field(description="Ticket number to attach the file to.")
     filename: LongString = Field(description="Path to the file to attach to the ticket.")
     token: Secret[str] = Field(default=NotRequired, description="Authentication token for attaching files.")
-
-
-class SupportAttachTicketArgs(BaseModel):
-    data: SupportAttachTicket = Field(description="File attachment details for an existing ticket.")
 
 
 class SupportAttachTicketResult(BaseModel):
@@ -115,11 +112,7 @@ class SupportIsAvailableAndEnabledResult(BaseModel):
 
 class SupportNewTicketArgs(BaseModel):
     data: SupportNewTicketEnterprise | SupportNewTicketCommunity = Field(
-        description=(
-            "Support ticket data for either Enterprise or Community Edition. Community Edition tickets do "
-            "not require `criticality`, `environment`, `phone`, `name`, or `email`; Enterprise tickets do "
-            "not require `token` or `type`."
-        ),
+        description="Support ticket data for either enterprise or community support.",
     )
 
 

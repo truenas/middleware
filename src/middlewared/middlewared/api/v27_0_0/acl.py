@@ -303,11 +303,7 @@ class FilesystemGetaclArgs(BaseModel):
     path: NonEmptyString = Field(description="Absolute filesystem path to get ACL information for.")
     simplified: bool = Field(
         default=True,
-        description=(
-            "Whether to return simplified permission sets. For NFSv4 ACLs, simplified mode returns only basic "
-            "ALLOW entries, stripping DENY entries and inheritance flags. For POSIX ACLs, returns only the "
-            "access ACL without default entries."
-        ),
+        description="Whether to return simplified/basic permission sets instead of advanced permissions.",
     )
     resolve_ids: bool = Field(
         default=False,
@@ -350,7 +346,7 @@ class FilesystemSetAclOptions(BaseModel):
     )
     traverse: bool = Field(
         default=False,
-        description="Whether to traverse filesystem boundaries (ZFS datasets) during recursive operations.",
+        description="Whether to traverse filesystem boundaries during recursive operations.",
     )
     validate_effective_acl: bool = Field(
         default=True,
@@ -365,10 +361,7 @@ class FilesystemSetAclOptions(BaseModel):
 class FilesystemSetaclArgs(BaseModel):
     path: NonEmptyString = Field(description="Absolute filesystem path to set ACL on.")
     dacl: list[NFS4ACE] | list[POSIXACE] = Field(
-        description=(
-            "Array of Access Control Entries to apply to the filesystem object. Formatting depends on the underlying "
-            "`acltype`: an NFS4 ACL requires NFSv4 entries, while a POSIX1e ACL requires POSIX1e entries."
-        ),
+        description="Array of Access Control Entries to apply to the filesystem object.",
     )
     options: FilesystemSetAclOptions = Field(
         default=FilesystemSetAclOptions(),
@@ -380,30 +373,14 @@ class FilesystemSetaclArgs(BaseModel):
     )
     uid: AceWhoId | None = Field(
         default=ACL_UNDEFINED_ID,
-        description=(
-            "Numeric user ID to set as owner or `null` to preserve existing. Set one and only one of `uid`/`user`, and "
-            "only to change the owning user."
-        ),
+        description="Numeric user ID to set as owner or `null` to preserve existing.",
     )
-    user: str | None = Field(
-        default=None,
-        description=(
-            "Username to set as owner or `null` to preserve existing. Set one and only one of `uid`/`user`."
-        ),
-    )
+    user: str | None = Field(default=None, description="Username to set as owner or `null` to preserve existing.")
     gid: AceWhoId | None = Field(
         default=ACL_UNDEFINED_ID,
-        description=(
-            "Numeric group ID to set as group or `null` to preserve existing. Set one and only one of `gid`/`group`, "
-            "and only to change the owning group."
-        ),
+        description="Numeric group ID to set as group or `null` to preserve existing.",
     )
-    group: str | None = Field(
-        default=None,
-        description=(
-            "Group name to set as group or `null` to preserve existing. Set one and only one of `gid`/`group`."
-        ),
-    )
+    group: str | None = Field(default=None, description="Group name to set as group or `null` to preserve existing.")
 
     # acltype is explicitly added to preserve compatibility with older setacl API
     acltype: Literal[FS_ACL_Type.NFS4, FS_ACL_Type.POSIX1E] | None = Field(
@@ -471,10 +448,7 @@ class ACLTemplateDeleteResult(BaseModel):
 class AclTemplateFormatOptions(BaseModel):
     ensure_builtins: bool = Field(
         default=False,
-        description=(
-            "Whether to ensure every result contains ACL entries for the `builtin_users` and "
-            "`builtin_administrators` groups."
-        ),
+        description="Whether to ensure built-in templates are included in the response.",
     )
     resolve_names: bool = Field(
         default=False,

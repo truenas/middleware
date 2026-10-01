@@ -3,8 +3,8 @@ import pytest
 
 from middlewared.api.base import BaseModel, MACAddress
 from middlewared.api.base.handler.accept import accept_params
-from middlewared.api.v27_0_0.container_device import ContainerNICDevice
-from middlewared.api.v27_0_0.vm_device import VMNICDevice
+from middlewared.api.v28_0_0.container_device import ContainerNICDevice
+from middlewared.api.v28_0_0.vm_device import VMNICDevice
 from middlewared.service_exception import ValidationErrors
 
 

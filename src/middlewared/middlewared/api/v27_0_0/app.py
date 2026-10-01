@@ -1,30 +1,27 @@
-from typing import Any, Literal, TypeAlias
+from typing import Literal, TypeAlias
 
 from pydantic import ConfigDict, Field, RootModel, Secret
 
-from middlewared.api.base import BaseModel, FullAdmin, LongString, NonEmptyString, single_argument_result
+from middlewared.api.base import BaseModel, LongString, NonEmptyString, single_argument_args, single_argument_result
 
 from .catalog import CatalogAppInfo
 
 __all__ = [
     'AppCategoriesArgs', 'AppCategoriesResult', 'AppSimilarArgs', 'AppSimilarResult', 'AppAvailableItem',
-    'AppEntry', 'AppCreate', 'AppCreateArgs', 'AppCreateResult', 'AppUpdateArgs', 'AppUpdateResult', 'AppDeleteArgs',
+    'AppEntry', 'AppCreateArgs', 'AppCreateResult', 'AppUpdateArgs', 'AppUpdateResult', 'AppDeleteArgs',
     'AppDeleteResult', 'AppConfigArgs', 'AppConfigResult', 'AppConvertToCustomArgs', 'AppConvertToCustomResult',
     'AppStopArgs', 'AppStopResult', 'AppStartArgs', 'AppStartResult', 'AppRedeployArgs', 'AppRedeployResult',
-    'AppOutdatedDockerImagesArgs', 'AppOutdatedDockerImagesResult',
-    'AppPullImages', 'AppPullImagesArgs', 'AppPullImagesResult',
-    'AppCertificate', 'AppCertificateChoices', 'AppCertificateChoicesArgs', 'AppCertificateChoicesResult',
-    'AppContainerIDOptions', 'AppContainerIdsArgs', 'AppContainerIdsResult',
-    'AppContainerConsoleChoicesArgs', 'AppContainerConsoleChoicesResult', 'AppContainerResponse',
-    'AppGPUResponse', 'AppGpuChoicesArgs', 'AppGpuChoicesResult', 'ContainerDetails', 'GPU',
-    'AppIpChoices', 'AppIpChoicesArgs', 'AppIpChoicesResult', 'AppRollbackOptions',
+    'AppOutdatedDockerImagesArgs', 'AppOutdatedDockerImagesResult', 'AppPullImagesArgs', 'AppPullImagesResult',
+    'AppContainerIdsArgs', 'AppContainerIdsResult', 'AppContainerConsoleChoicesArgs',
+    'AppContainerConsoleChoicesResult', 'AppCertificateChoicesArgs', 'AppCertificateChoicesResult',
     'AppUsedPortsArgs', 'AppUsedPortsResult', 'AppUsedHostIpsArgs', 'AppUsedHostIpsResult',
-    'AppAvailableSpaceArgs', 'AppAvailableSpaceResult', 'AppUpgradeSummary', 'AppVersionInfo',
-    'AppRollbackArgs', 'AppDelete', 'AppUpdate', 'AppUpgradeBulkEntry', 'AppBulkUpgradeJobResult',
+    'AppIpChoicesArgs', 'AppIpChoicesResult', 'AppIpChoices', 'AppCertificateChoices',
+    'AppAvailableSpaceArgs', 'AppAvailableSpaceResult',
+    'AppGpuChoicesArgs', 'AppGpuChoicesResult', 'AppRollbackArgs',
     'AppRollbackResult', 'AppRollbackVersionsArgs', 'AppRollbackVersionsResult', 'AppUpgradeArgs', 'AppUpgradeResult',
     'AppUpgradeSummaryArgs', 'AppUpgradeSummaryResult', 'AppContainerLogsFollowTailEventSourceArgs',
     'AppContainerLogsFollowTailEventSourceEvent', 'AppStatsEventSourceArgs', 'AppStatsEventSourceEvent',
-    'AppLatestItem', 'AppUpgradeBulkArgs', 'AppUpgradeBulkResult', 'AppUpgradeOptions', 'AppUpgradeSummaryOptions',
+    'AppLatestItem', 'AppUpgradeBulkArgs', 'AppUpgradeBulkResult',
 ]
 
 
@@ -81,20 +78,8 @@ class AppActiveWorkloads(BaseModel):
 class AppEntry(BaseModel):
     name: NonEmptyString = Field(description="The display name of the application.")
     id: NonEmptyString = Field(description="Unique identifier for the application instance.")
-    state: Literal['CRASHED', 'DEPLOYING', 'ERROR', 'RUNNING', 'STOPPED', 'STOPPING'] = Field(
-        description=(
-            "Current operational state of the application. `ERROR` means the application's on-disk data could "
-            "not be read, in which case the only operation it supports is deletion."
-        ),
-    )
-    error_reason: Literal['METADATA_MISSING', 'METADATA_UNREADABLE', 'METADATA_INCOMPLETE'] | None = Field(
-        default=None,
-        description=(
-            "Why the application is in the `ERROR` state, or `null` if it is not. `METADATA_MISSING` means its "
-            "metadata file is absent, `METADATA_UNREADABLE` that the file could not be read or parsed, and "
-            "`METADATA_INCOMPLETE` that it was read but does not describe the application - a key it cannot "
-            "be rendered without is absent, or one it holds cannot be interpreted."
-        ),
+    state: Literal['CRASHED', 'DEPLOYING', 'RUNNING', 'STOPPED', 'STOPPING'] = Field(
+        description="Current operational state of the application.",
     )
     upgrade_available: bool = Field(description="Whether a newer version of the application is available for upgrade.")
     latest_version: NonEmptyString | None = Field(
@@ -108,14 +93,8 @@ class AppEntry(BaseModel):
     )
     custom_app: bool = Field(description="Whether this is a custom application (`true`) or from a catalog (`false`).")
     migrated: bool = Field(description="Whether this application has been migrated from kubernetes.")
-    human_version: NonEmptyString | None = Field(
-        description="Human-readable version string for display purposes. `null` if the state is `ERROR`.",
-    )
-    version: NonEmptyString | None = Field(
-        description=(
-            "Technical version identifier of the currently installed application. `null` if the state is `ERROR`."
-        ),
-    )
+    human_version: NonEmptyString = Field(description="Human-readable version string for display purposes.")
+    version: NonEmptyString = Field(description="Technical version identifier of the currently installed application.")
     metadata: dict = Field(
         description="Application metadata including description, category, and other catalog information.",
     )
@@ -138,38 +117,23 @@ class AppEntry(BaseModel):
         description="Current configuration values for the application. `null` if configuration is not requested.",
     )
 
-    @classmethod
-    def to_previous(cls, value):
-        # Neither the `ERROR` state nor a null version existed before this version, so an app whose
-        # metadata cannot be read is reported to older clients the way any other broken app is
-        if value.get("state") == "ERROR":
-            value["state"] = "CRASHED"
 
-        for key in ("version", "human_version"):
-            if value.get(key) is None and key in value:
-                value[key] = "unknown"
-
-        return value
-
-
-class AppCreate(BaseModel):
+@single_argument_args('app_create')
+class AppCreateArgs(BaseModel):
     custom_app: bool = Field(
         default=False,
         description="Whether to create a custom application (`true`) or install from catalog (`false`).",
     )
     values: Secret[dict] = Field(
         default_factory=dict,
-        validate_default=True,
         description="Configuration values for the application installation.",
     )
-    custom_compose_config: FullAdmin[Secret[dict]] = Field(
+    custom_compose_config: Secret[dict] = Field(
         default_factory=dict,
-        validate_default=True,
         description="Docker Compose configuration as a structured object for custom applications.",
     )
-    custom_compose_config_string: FullAdmin[Secret[LongString]] = Field(
+    custom_compose_config_string: Secret[LongString] = Field(
         default='',
-        validate_default=True,
         description="Docker Compose configuration as a YAML string for custom applications.",
     )
     catalog_app: str | None = Field(
@@ -201,28 +165,18 @@ class AppCreate(BaseModel):
     )
 
 
-class AppCreateArgs(BaseModel):
-    app_create: AppCreate = Field(description="AppCreate parameters.")
-
-
 class AppCreateResult(BaseModel):
     result: AppEntry = Field(description="The newly created application entry with all configuration details.")
 
 
 class AppUpdate(BaseModel):
-    values: Secret[dict] = Field(
+    values: Secret[dict] = Field(default_factory=dict, description="Updated configuration values for the application.")
+    custom_compose_config: Secret[dict] = Field(
         default_factory=dict,
-        validate_default=True,
-        description="Updated configuration values for the application.",
-    )
-    custom_compose_config: FullAdmin[Secret[dict]] = Field(
-        default_factory=dict,
-        validate_default=True,
         description="Updated Docker Compose configuration as a structured object.",
     )
-    custom_compose_config_string: FullAdmin[Secret[LongString]] = Field(
+    custom_compose_config_string: Secret[LongString] = Field(
         default='',
-        validate_default=True,
         description="Updated Docker Compose configuration as a YAML string.",
     )
 
@@ -268,7 +222,7 @@ class AppConfigArgs(BaseModel):
 
 
 class AppConfigResult(BaseModel):
-    result: dict[str, Any] = Field(description="The current configuration object for the application.")
+    result: dict = Field(description="The current configuration object for the application.")
 
 
 class AppConvertToCustomArgs(BaseModel):
@@ -480,16 +434,12 @@ class AppRollbackVersionsResult(BaseModel):
     result: list[NonEmptyString] = Field(description="Array of version strings available for rollback.")
 
 
-class AppUpgradeOptions(BaseModel):
+class UpgradeOptions(BaseModel):
     app_version: NonEmptyString = Field(
         default='latest',
         description="Target version to upgrade to. Use 'latest' for the newest available version.",
     )
-    values: Secret[dict] = Field(
-        default_factory=dict,
-        validate_default=True,
-        description="Configuration values to apply during the upgrade.",
-    )
+    values: Secret[dict] = Field(default_factory=dict, description="Configuration values to apply during the upgrade.")
     snapshot_hostpaths: bool = Field(
         default=False,
         description="Whether to create snapshots of host path volumes before upgrade.",
@@ -498,8 +448,8 @@ class AppUpgradeOptions(BaseModel):
 
 class AppUpgradeArgs(BaseModel):
     app_name: NonEmptyString = Field(description="Name of the application to upgrade.")
-    options: AppUpgradeOptions = Field(
-        default=AppUpgradeOptions(),
+    options: UpgradeOptions = Field(
+        default=UpgradeOptions(),
         description="Options controlling the upgrade process including target version and snapshot behavior.",
     )
 
@@ -510,8 +460,8 @@ class AppUpgradeResult(BaseModel):
 
 class AppUpgradeBulkEntry(BaseModel):
     app_name: NonEmptyString = Field(description="Name of the application to upgrade.")
-    options: AppUpgradeOptions = Field(
-        default=AppUpgradeOptions(),
+    options: UpgradeOptions = Field(
+        default=UpgradeOptions(),
         description="Upgrade options for this specific application.",
     )
 
@@ -532,7 +482,7 @@ class AppUpgradeBulkResult(BaseModel):
     )
 
 
-class AppUpgradeSummaryOptions(BaseModel):
+class UpgradeSummaryOptions(BaseModel):
     app_version: NonEmptyString = Field(
         default='latest',
         description="Target version to generate upgrade summary for. Use 'latest' for the newest available version.",
@@ -541,8 +491,8 @@ class AppUpgradeSummaryOptions(BaseModel):
 
 class AppUpgradeSummaryArgs(BaseModel):
     app_name: NonEmptyString = Field(description="Name of the application to get upgrade summary for.")
-    options: AppUpgradeSummaryOptions = Field(
-        default=AppUpgradeSummaryOptions(),
+    options: UpgradeSummaryOptions = Field(
+        default=UpgradeSummaryOptions(),
         description="Options specifying the target version for the summary.",
     )
 
@@ -552,7 +502,8 @@ class AppVersionInfo(BaseModel):
     human_version: str = Field(description="Human-readable version of the app.")
 
 
-class AppUpgradeSummary(BaseModel):
+@single_argument_result
+class AppUpgradeSummaryResult(BaseModel):
     latest_version: str = Field(description="Latest version available for the app.")
     latest_human_version: str = Field(description="Latest human readable version available for the app.")
     upgrade_version: str = Field(description="Version user has requested to be upgraded at.")
@@ -561,10 +512,6 @@ class AppUpgradeSummary(BaseModel):
     changelog: LongString | None = Field(
         description="Changelog or release notes for the upgrade version. `null` if not available.",
     )
-
-
-class AppUpgradeSummaryResult(BaseModel):
-    result: AppUpgradeSummary = Field(description="App upgrade summary.")
 
 
 class AppAvailableItem(CatalogAppInfo):

@@ -5,20 +5,14 @@ from middlewared.api.base import BaseModel, Excluded, excluded_field
 from .pool import PoolEntry
 
 __all__ = [
-    "BootGetDisksArgs", "BootGetDisksResult", "BootAttachArgs", "BootAttachOptions", "BootAttachResult",
-    "BootDetachArgs", "BootDetachResult", "BootReplaceArgs", "BootReplaceResult", "BootScrubArgs", "BootScrubResult",
-    "BootSetScrubIntervalArgs", "BootSetScrubIntervalResult", "BootGetState", "BootGetStateArgs", "BootGetStateResult",
+    "BootGetDisksArgs", "BootGetDisksResult", "BootAttachArgs", "BootAttachResult", "BootDetachArgs",
+    "BootDetachResult", "BootReplaceArgs", "BootReplaceResult", "BootScrubArgs", "BootScrubResult",
+    "BootSetScrubIntervalArgs", "BootSetScrubIntervalResult", "BootGetStateArgs", "BootGetStateResult",
 ]
 
 
 class BootAttachOptions(BaseModel):
-    expand: bool = Field(
-        default=False,
-        description=(
-            "When `true`, size the new disk's partition to the maximum available space. When `false`, size it to "
-            "match the existing boot pool partition to avoid a size mismatch if a disk later fails."
-        ),
-    )
+    expand: bool = Field(default=False, description="Whether to expand the boot pool after attaching the disk.")
 
 
 class BootGetState(PoolEntry):

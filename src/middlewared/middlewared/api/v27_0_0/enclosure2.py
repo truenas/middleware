@@ -12,7 +12,7 @@ class Enclosure2Entry(BaseModel):
         extra = "allow"
 
 
-@single_argument_args("enclosure2_set_slot_status")
+@single_argument_args("Enclosure2SetSlotStatus")
 class Enclosure2SetSlotStatusArgs(BaseModel):
     enclosure_id: str = Field(description="Logical identifier of the enclosure.")
     slot: int = Field(description="Number of the drive bay whose status should change.")

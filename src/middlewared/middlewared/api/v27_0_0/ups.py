@@ -6,11 +6,8 @@ from middlewared.api.base import (
     BaseModel,
     Excluded,
     ForUpdateMetaclass,
-    FullAdmin,
     LongString,
     NonEmptyString,
-    SingleLineNonEmptyString,
-    SingleLineString,
     excluded_field,
 )
 
@@ -32,16 +29,11 @@ class UPSEntry(BaseModel):
         le=65535,
         description="Network port for communicating with remote UPS monitoring systems.",
     )
-    shutdowntimer: int = Field(
-        description=(
-            "Seconds to wait after initiating shutdown before forcing power off. "
-            "Only applies when `shutdown` is `BATT`."
-        ),
-    )
+    shutdowntimer: int = Field(description="Seconds to wait after initiating shutdown before forcing power off.")
     hostsync: int = Field(ge=0, description="Maximum seconds to wait for other systems to shutdown before continuing.")
     description: str = Field(description="Human-readable description of this UPS configuration.")
     driver: str = Field(description="UPS driver name that handles communication with the specific UPS hardware model.")
-    extrausers: FullAdmin[LongString] = Field(description="Additional user configurations for UPS monitoring access.")
+    extrausers: LongString = Field(description="Additional user configurations for UPS monitoring access.")
     identifier: NonEmptyString = Field(
         description="Unique identifier name for this UPS device within the monitoring system.",
     )
@@ -54,37 +46,23 @@ class UPSEntry(BaseModel):
     )
     monpwd: str = Field(description="Password for UPS monitoring authentication.")
     monuser: NonEmptyString = Field(description="Username for UPS monitoring authentication.")
-    options: FullAdmin[LongString] = Field(description="Additional configuration options passed to the UPS driver.")
-    optionsupsd: FullAdmin[LongString] = Field(description="Additional configuration options for the UPS daemon.")
+    options: LongString = Field(description="Additional configuration options passed to the UPS driver.")
+    optionsupsd: LongString = Field(description="Additional configuration options for the UPS daemon.")
     port: str = Field(description="Serial port or device path for UPS communication.")
     remotehost: str = Field(description="Hostname or IP address of remote UPS server when operating in SLAVE mode.")
     shutdown: Literal['LOWBATT', 'BATT'] = Field(
         description="Shutdown trigger condition: LOWBATT on low battery, BATT when on battery power.",
     )
-    shutdowncmd: FullAdmin[str | None] = Field(
-        description="Custom command to execute during UPS shutdown sequence. `null` to use the default (`poweroff`).",
+    shutdowncmd: str | None = Field(
+        description="Custom command to execute during UPS shutdown sequence. `null` for default.",
     )
     complete_identifier: str = Field(description="Complete UPS identifier including hostname for network monitoring.")
 
 
 class UPSUpdate(UPSEntry, metaclass=ForUpdateMetaclass):
-    """Changes to the UPS configuration.
-
-    Line breaks are rejected on every field interpolated bare into a NUT configuration file.
-    Such a break would let the caller append directives that the `FullAdmin` fields here exist to deny.
-    The constraint is on this model rather than `UPSEntry`, so a value stored before it existed stays readable.
-    """
     id: Excluded = excluded_field()
     complete_identifier: Excluded = excluded_field()
-    description: SingleLineString
-    driver: SingleLineString
-    identifier: SingleLineNonEmptyString
-    monpwd: SingleLineNonEmptyString = Field(
-        description="Password for UPS monitoring authentication (required for updates).",
-    )
-    monuser: SingleLineNonEmptyString
-    port: SingleLineString
-    remotehost: SingleLineString
+    monpwd: NonEmptyString = Field(description="Password for UPS monitoring authentication (required for updates).")
 
 
 class UPSUpdateArgs(BaseModel):

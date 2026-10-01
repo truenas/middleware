@@ -1,0 +1,216 @@
+import ipaddress
+from typing import Annotated, Literal
+from urllib.parse import urlparse
+
+from pydantic import Field, IPvAnyInterface, RootModel, field_serializer, field_validator, model_validator
+from pydantic.json_schema import SkipJsonSchema
+
+from middlewared.api.base import (
+    BaseModel,
+    Excluded,
+    ForUpdateMetaclass,
+    HttpUrl,
+    NonEmptyString,
+    excluded_field,
+)
+
+__all__ = [
+    'DockerAddressPool', 'DockerBackupAppInfo', 'DockerBackupEntry', 'DockerBackupMap',
+    'DockerEntry', 'DockerRegistryMirror', 'DockerUpdateArgs', 'DockerUpdateResult',
+    'DockerStatusArgs', 'DockerStatusResult',
+    'DockerNvidiaPresentArgs', 'DockerNvidiaPresentResult', 'DockerBackupArgs', 'DockerBackupResult',
+    'DockerListBackupsArgs', 'DockerListBackupsResult', 'DockerRestoreBackupArgs', 'DockerRestoreBackupResult',
+    'DockerDeleteBackupArgs', 'DockerDeleteBackupResult', 'DockerBackupToPoolArgs', 'DockerBackupToPoolResult',
+    'DockerEventsAddedEvent', 'DockerStateChangedEvent', 'DockerUpdate', 'DockerStatusInfo',
+]
+
+
+class DockerAddressPool(BaseModel):
+    base: IPvAnyInterface = Field(
+        description="Base network for the pool. Host bits are ignored, and the value is stored as its "
+        "canonical network address (e.g. `172.17.0.0/12` is stored as `172.16.0.0/12`) which is the "
+        "range subnets are actually allocated from."
+    )
+    size: Annotated[int, Field(ge=1)] = Field(description="Subnet size for networks allocated from this pool.")
+
+    @field_serializer('base')
+    def serialize_base(self, v):
+        return str(v)
+
+    @field_validator('base')
+    @classmethod
+    def normalize_base(cls, v):
+        if v.network.prefixlen in (32, 128):
+            raise ValueError('Prefix length of base network cannot be 32 or 128.')
+        # Normalize to the canonical network address (host bits masked off) so the value we store,
+        # display and hand to Docker matches the network Docker actually allocates from. Docker ignores
+        # host bits in a pool base, e.g. 172.17.0.0/12 is treated as 172.16.0.0/12. Normalizing at the
+        # model boundary (before docker.update validation and change detection) also prevents a spurious
+        # address_pools change when the same pool is re-submitted in a non-canonical form.
+        return ipaddress.ip_interface(v.network)
+
+    @model_validator(mode='after')
+    def validate_attrs(self):
+        if self.base.version == 4 and self.size > 32:
+            raise ValueError('Size must be <= 32 for IPv4.')
+        elif self.base.version == 6 and self.size > 128:
+            raise ValueError('Size must be <= 128 for IPv6.')
+        return self
+
+
+class DockerRegistryMirror(BaseModel):
+    url: HttpUrl = Field(description="URL of the registry mirror.")
+    insecure: bool = Field(description="Whether the registry mirror uses an insecure (HTTP) connection.")
+
+
+class DockerEntry(BaseModel):
+    id: int = Field(description="Unique identifier for the Docker configuration.")
+    enable_image_updates: bool = Field(description="Whether automatic Docker image updates are enabled.")
+    dataset: NonEmptyString | None = Field(description="ZFS dataset used for Docker data storage or `null`.")
+    pool: NonEmptyString | None = Field(description="Storage pool used for Docker or `null` if not configured.")
+    nvidia: SkipJsonSchema[bool] = Field(description="Whether NVIDIA GPU support is enabled for containers.")
+    address_pools: list[DockerAddressPool] = Field(
+        description="Array of network address pools for container networking.",
+    )
+    cidr_v6: str = Field(description="IPv6 CIDR block for Docker container networking.")
+    registry_mirrors: list[DockerRegistryMirror] = Field(description="Array of registry mirrors.")
+
+
+class DockerUpdate(DockerEntry, metaclass=ForUpdateMetaclass):
+    id: Excluded = excluded_field()
+    dataset: Excluded = excluded_field()
+    address_pools: list[DockerAddressPool] = Field(
+        description="Array of network address pools for container networking.",
+    )
+    cidr_v6: IPvAnyInterface = Field(description="IPv6 CIDR block for Docker container networking.")
+    migrate_applications: bool = Field(description="Whether to migrate existing applications when changing pools.")
+    registry_mirrors: list[DockerRegistryMirror] = Field(description="Array of registry mirrors.")
+
+    @field_validator('cidr_v6')
+    @classmethod
+    def validate_ipv6(cls, v):
+        if v.version != 6:
+            raise ValueError('cidr_v6 must be an IPv6 address.')
+        if v.network.prefixlen == 128:
+            raise ValueError('Prefix length of cidr_v6 network cannot be 128.')
+        return v
+
+    @field_validator('registry_mirrors')
+    @classmethod
+    def validate_registry_mirrors(cls, v):
+        for mirror in v:
+            if urlparse(mirror.url).scheme == 'http' and not mirror.insecure:
+                raise ValueError(
+                    f'Registry mirror URL that starts with "http://" must be marked as insecure: {mirror.url}'
+                )
+        return v
+
+    @model_validator(mode='after')
+    def validate_attrs(self):
+        if self.migrate_applications is True and not self.pool:
+            raise ValueError('Pool is required when migrating applications.')
+        return self
+
+
+class DockerUpdateArgs(BaseModel):
+    docker_update: DockerUpdate = Field(description="Docker update arguments.")
+
+
+class DockerUpdateResult(BaseModel):
+    result: DockerEntry = Field(description="The updated Docker configuration.")
+
+
+class DockerStatusArgs(BaseModel):
+    pass
+
+
+class DockerStatusInfo(BaseModel):
+    description: str = Field(description="Human-readable description of the current Docker service status.")
+    status: Literal[
+        'PENDING', 'RUNNING', 'STOPPED', 'INITIALIZING', 'STOPPING', 'UNCONFIGURED',
+        'FAILED', 'MIGRATING', 'MIGRATION_FAILED'
+    ] = Field(description="Current state of the Docker service.")
+
+
+class DockerStatusResult(BaseModel):
+    result: DockerStatusInfo = Field(description="Current Docker service status information.")
+
+
+class DockerNvidiaPresentArgs(BaseModel):
+    pass
+
+
+class DockerNvidiaPresentResult(BaseModel):
+    result: bool = Field(
+        description="Returns `true` if NVIDIA GPU hardware is present and supported, `false` otherwise.",
+    )
+
+
+class DockerBackupArgs(BaseModel):
+    backup_name: NonEmptyString | None = Field(
+        default=None,
+        description="Name for the backup or `null` to generate a timestamp-based name.",
+    )
+
+
+class DockerBackupResult(BaseModel):
+    result: NonEmptyString = Field(description="Name of the created backup.")
+
+
+class DockerListBackupsArgs(BaseModel):
+    pass
+
+
+class DockerBackupAppInfo(BaseModel):
+    id: NonEmptyString = Field(description="Unique identifier of the application.")
+    name: NonEmptyString = Field(description="Human-readable name of the application.")
+    state: NonEmptyString = Field(description="Current running state of the application.")
+
+
+class DockerBackupEntry(BaseModel):
+    name: NonEmptyString = Field(description="Name of the backup.")
+    apps: list[DockerBackupAppInfo] = Field(description="Array of applications included in this backup.")
+    snapshot_name: NonEmptyString = Field(description="ZFS snapshot name associated with this backup.")
+    created_on: NonEmptyString = Field(description="Timestamp when the backup was created.")
+    backup_path: NonEmptyString = Field(description="Filesystem path where the backup is stored.")
+
+
+class DockerBackupMap(RootModel[dict[str, DockerBackupEntry]]):
+    root: dict[str, DockerBackupEntry]
+
+
+class DockerListBackupsResult(BaseModel):
+    result: DockerBackupMap = Field(description="Object mapping backup names to their detailed information.")
+
+
+class DockerRestoreBackupArgs(BaseModel):
+    backup_name: NonEmptyString = Field(description="Name of the backup to restore.")
+
+
+class DockerRestoreBackupResult(BaseModel):
+    result: None = Field(description="Returns `null` when the backup restore is successfully started.")
+
+
+class DockerDeleteBackupArgs(BaseModel):
+    backup_name: NonEmptyString = Field(description="Name of the backup to delete.")
+
+
+class DockerDeleteBackupResult(BaseModel):
+    result: None = Field(description="Returns `null` when the backup is successfully deleted.")
+
+
+class DockerBackupToPoolArgs(BaseModel):
+    target_pool: NonEmptyString = Field(description="Name of the storage pool to backup Docker data to.")
+
+
+class DockerBackupToPoolResult(BaseModel):
+    result: None = Field(description="Returns `null` when the pool backup is successfully started.")
+
+
+class DockerEventsAddedEvent(BaseModel):
+    id: str = Field(description="App name.")
+    fields: dict = Field(description="Event fields.")
+
+
+class DockerStateChangedEvent(BaseModel):
+    fields: DockerStatusInfo = Field(description="Event fields.")

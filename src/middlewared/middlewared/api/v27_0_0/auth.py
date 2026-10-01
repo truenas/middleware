@@ -47,12 +47,7 @@ class TokenCredentialData(BaseCredentialData):
 class AuthSessionsEntry(BaseModel):
     id: str = Field(description="Unique identifier for the authentication session.")
     current: bool = Field(description="Whether this is the current active session.")
-    internal: bool = Field(
-        description=(
-            "Whether this is an internal system session. Pass `[[\"internal\", \"=\", false]]` as "
-            "`query-filters` to exclude internal sessions from the list."
-        ),
-    )
+    internal: bool = Field(description="Whether this is an internal system session.")
     origin: str = Field(description="Origin information for the session (IP address, hostname, etc.).")
     credentials: Literal[
         'UNIX_SOCKET',
@@ -87,9 +82,7 @@ class AuthSessionsEntry(BaseModel):
 class AuthCommonOptions(BaseModel):
     user_info: bool = Field(
         default=True,
-        description=(
-            "Whether to include detailed user information (the output of `auth.me`) in the authentication response."
-        ),
+        description="Whether to include detailed user information in the authentication response.",
     )  # include auth.me in successful result
     reconnect_token: bool = Field(
         default=False,
@@ -225,9 +218,7 @@ class AuthUserInfo(UserGetUserObj):
 
 class AuthRespSuccess(BaseModel):
     response_type: Literal["SUCCESS"] = Field(description="Authentication response type indicating successful login.")
-    user_info: AuthUserInfo | None = Field(
-        description="Authenticated user information (the output of `auth.me`), or `null` if not requested.",
-    )
+    user_info: AuthUserInfo | None = Field(description="Authenticated user information or `null` if not available.")
     authenticator: Literal['LEVEL_1', 'LEVEL_2'] = Field(
         description="Authentication level achieved (LEVEL_1 for password, LEVEL_2 for two-factor).",
     )
@@ -339,6 +330,13 @@ class AuthLoginExResult(BaseModel):
         discriminator='response_type',
         description="Authentication response indicating success, failure, or additional steps required.",
     )
+
+    @classmethod
+    def to_previous(cls, value: Any) -> Any:
+        if value["result"]["response_type"] in ["SCRAM_RESPONSE", "DENIED"]:
+            return {"result": {"response_type": "AUTH_ERR"}}
+
+        return value
 
 
 class AuthLoginExContinueArgs(BaseModel):

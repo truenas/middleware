@@ -78,6 +78,13 @@ class SystemGeneralEntry(BaseModel):
         description="Name of the certificate used for HTTPS access. `null` if no certificate is configured.",
     )
 
+    @classmethod
+    def to_previous(cls, value):
+        value.pop('ui_certificate_name', None)
+        if (cert_id := value.get('ui_certificate')) is not None:
+            value['ui_certificate'] = {'id': cert_id}
+        return value
+
 
 @single_argument_args("general_settings")
 class SystemGeneralUpdateArgs(SystemGeneralEntry, metaclass=ForUpdateMetaclass):

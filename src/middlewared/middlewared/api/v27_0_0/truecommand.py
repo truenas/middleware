@@ -3,14 +3,13 @@ from typing import Annotated, Literal
 
 from pydantic import Field, Secret
 
-from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, excluded_field
+from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, excluded_field, single_argument_args
 
 __all__ = [
     'TRUECOMMAND_CONNECTING_STATUS_REASON',
     'TRUECOMMAND_DISABLED_ON_STANDBY_STATUS_REASON',
     'TruecommandStatus', 'TruecommandStatusReason',
-    'TruecommandEntry', 'TruecommandUpdate', 'TruecommandUpdateArgs', 'TruecommandUpdateResult',
-    'TruecommandConfigChangedEvent',
+    'TruecommandEntry', 'TruecommandUpdateArgs', 'TruecommandUpdateResult', 'TruecommandConfigChangedEvent',
 ]
 
 TRUECOMMAND_CONNECTING_STATUS_REASON = 'Waiting for connection from Truecommand.'
@@ -62,18 +61,12 @@ class TruecommandEntry(BaseModel):
     enabled: bool = Field(description="Whether TrueCommand integration is enabled.")
 
 
-class TruecommandUpdate(BaseModel, metaclass=ForUpdateMetaclass):
+@single_argument_args('truecommand_update')
+class TruecommandUpdateArgs(BaseModel, metaclass=ForUpdateMetaclass):
     enabled: bool = Field(description="Whether to enable TrueCommand integration.")
     api_key: Secret[Annotated[str, Field(min_length=16, max_length=16)] | None] = Field(
-        description=(
-            "16-character API key for TrueCommand authentication, obtained from iX Portal. "
-            "`null` to disable integration."
-        ),
+        description="16-character API key for TrueCommand authentication. `null` to disable integration.",
     )
-
-
-class TruecommandUpdateArgs(BaseModel):
-    truecommand_update: TruecommandUpdate = Field(description="TrueCommand configuration changes to apply.")
 
 
 class TruecommandUpdateResult(BaseModel):

@@ -3,7 +3,7 @@ import pytest
 
 from middlewared.api.base import BaseModel, SingleLineNonEmptyString, SingleLineString
 from middlewared.api.base.handler.full_admin import full_admin_payload_fields
-from middlewared.api.v27_0_0.ups import UPSEntry, UPSUpdate, UPSUpdateArgs
+from middlewared.api.v28_0_0.ups import UPSEntry, UPSUpdate, UPSUpdateArgs
 
 # Every UPS field that a template interpolates bare into `ups.conf`, `upsd.users` or `upsmon.conf`. A line
 # break in one lets the caller append directives of their own -- including the `SHUTDOWNCMD` that

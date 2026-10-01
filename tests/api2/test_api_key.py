@@ -99,8 +99,8 @@ def test_api_key_session(sharing_admin_user, endpoint):
     with api_key(sharing_admin_user.username) as key:
         match endpoint:
             case 'LEGACY':
-                # auth.login_with_api_key was removed in v27; exercise it via an older API version.
-                client_kwargs = {'auth': None, 'version': 'v26.0.0'}
+                # auth.login_with_api_key was removed in v28; exercise it via an older API version.
+                client_kwargs = {'auth': None, 'version': 'v27.0.0'}
             case 'CURRENT':
                 client_kwargs = {'auth': None}
             case _:

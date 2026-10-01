@@ -20,6 +20,10 @@ class RemoteInfo(BaseModel):
     uptime_seconds: float = Field(description="System uptime in seconds since last boot.")
     datetime_: datetime = Field(alias="datetime", description="Current system date and time.")
 
+    @classmethod
+    def to_previous(cls, value):
+        value["codename"] = "<DEPRECATED>"
+
 
 class SysInfo(RemoteInfo):
     remote_info: RemoteInfo | None = Field(

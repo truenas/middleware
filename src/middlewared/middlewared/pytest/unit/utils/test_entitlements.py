@@ -3,7 +3,7 @@ import typing
 import pytest
 from truenas_pylicensed.features import FEATURE_TIERS, LicenseFeature, SupportTier
 
-from middlewared.api.v27_0_0.truenas import EntitlementEntry
+from middlewared.api.v28_0_0.truenas import EntitlementEntry
 from middlewared.pytest.unit.entitlements import facts_for_column, make_facts, make_license
 from middlewared.utils.entitlements import (
     COLUMNS,

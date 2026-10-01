@@ -24,6 +24,7 @@ __all__ = [
     "CorePingRemoteArgs", "CorePingRemoteResult",
     "CoreArpArgs", "CoreArpResult",
     "CoreDownloadArgs", "CoreDownloadResult",
+    "CoreDebugArgs", "CoreDebugResult",
     "CoreBulkArgs", "CoreBulkResult",
     "CoreSetOptionsArgs", "CoreSetOptionsResult",
     "CoreSubscribeArgs", "CoreSubscribeResult",
@@ -249,6 +250,17 @@ class CoreDownloadResult(BaseModel):
             "* Second element: Download URL in the format `/_download/{job_id}?auth_token={token}`"
         ),
     )
+
+
+@single_argument_args("options")
+class CoreDebugArgs(BaseModel):
+    bind_address: str = Field(default="0.0.0.0", description="IP address to bind the debug server to.")
+    bind_port: int = Field(default=3000, description="Port number to bind the debug server to.")
+    threaded: bool = Field(default=False, description="Whether to enable threaded debugging support.")
+
+
+class CoreDebugResult(BaseModel):
+    result: None = Field(description="Returns `null` when the debug server is successfully started.")
 
 
 class CoreBulkArgs(BaseModel):

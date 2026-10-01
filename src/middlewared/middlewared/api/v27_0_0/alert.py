@@ -6,35 +6,17 @@ from pydantic import Field
 from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, LongString, NotRequired, excluded_field
 
 __all__ = [
-    "AlertDismissArgs",
-    "AlertListArgs",
-    "AlertDismissResult",
-    "AlertListResult",
-    "AlertListCategoriesArgs",
-    "AlertListCategoriesOptions",
-    "AlertCategory",
-    "AlertCategoryClass",
-    "AlertListCategoriesResult",
-    "AlertListPoliciesArgs",
-    "AlertListPoliciesResult",
-    "AlertRestoreArgs",
-    "AlertRestoreResult",
-    "AlertClassConfiguration",
-    "AlertClassesEntry",
-    "AlertClassesUpdate",
-    "AlertClassesUpdateArgs",
-    "AlertClassesUpdateResult",
-    "Alert",
-    "AlertListAddedEvent",
-    "AlertListChangedEvent",
-    "AlertListRemovedEvent",
-    "AlertLevel",
+    'AlertDismissArgs', 'AlertListArgs', 'AlertDismissResult', 'AlertListResult', 'AlertListCategoriesArgs',
+    'AlertListCategoriesResult', 'AlertListPoliciesArgs', 'AlertListPoliciesResult', 'AlertRestoreArgs',
+    'AlertRestoreResult', 'AlertClassesEntry', 'AlertClassesUpdateArgs', 'AlertClassesUpdateResult', 'Alert',
+    'AlertListAddedEvent', 'AlertListChangedEvent', 'AlertListRemovedEvent', 'AlertLevel',
 ]
 
 AlertLevel: TypeAlias = Literal['INFO', 'NOTICE', 'WARNING', 'ERROR', 'CRITICAL', 'ALERT', 'EMERGENCY']
 
 
 class Alert(BaseModel):
+    id: str = Field(description="Alert identifier used for API operations.")
     uuid: str = Field(description="Unique identifier for the alert.")
     source: str = Field(description="Source component that generated the alert.")
     klass: str = Field(description="Alert class identifier for categorization.")
@@ -46,7 +28,6 @@ class Alert(BaseModel):
     dismissed: bool = Field(description="Whether the alert has been manually dismissed by a user.")
     mail: Any = Field(description="Email notification configuration and status for this alert.")
     text: LongString = Field(description="Human-readable description of the alert.")
-    id: str = Field(description="Alert identifier used for API operations.")
     level: str = Field(description="Severity level of the alert (INFO, WARNING, ERROR, etc.).")
     formatted: LongString | None = Field(description="Formatted alert message with HTML.")
     one_shot: bool = Field(description="Whether this alert will not be dismissed automatically.")
