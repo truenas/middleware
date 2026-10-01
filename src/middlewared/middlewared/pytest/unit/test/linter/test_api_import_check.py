@@ -18,7 +18,7 @@ def test_discovery_finds_the_versions_on_disk():
 
     assert versions
     assert all(v.startswith("v") for v in versions)
-    assert "v26_0_0" in versions
+    assert "v27_0_0" in versions
 
 
 def test_discovery_matches_the_directories_the_server_scans():
