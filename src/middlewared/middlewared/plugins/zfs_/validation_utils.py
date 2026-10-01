@@ -20,12 +20,5 @@ def validate_dataset_name(name: str) -> bool:
     return truenas_pylibzfs.name_is_valid(name=name, type=truenas_pylibzfs.ZFSType.ZFS_TYPE_FILESYSTEM)
 
 
-def last_component_space_padded(name: str) -> bool:
-    # ZFS itself accepts a leading or trailing space but it is a classic footgun. Only components a request creates are
-    # checked, so existing datasets with such names stay usable.
-    component = name.rsplit('/', 1)[-1]
-    return component != component.strip(' ')
-
-
 def validate_snapshot_name(name: str) -> bool:
     return truenas_pylibzfs.name_is_valid(name=name, type=truenas_pylibzfs.ZFSType.ZFS_TYPE_SNAPSHOT)

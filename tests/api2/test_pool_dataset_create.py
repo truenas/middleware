@@ -4,7 +4,7 @@ import shlex
 
 import pytest
 
-from middlewared.service_exception import ValidationErrors
+from middlewared.service_exception import ValidationError, ValidationErrors
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call, pool, ssh
 
@@ -48,7 +48,7 @@ def test_pool_dataset_create_space_padded_names():
         ssh(f"zfs create {shlex.quote(f'{ds}/legacy ')}")
         call("pool.dataset.create", {"name": f"{ds}/legacy /child", "create_ancestors": True})
 
-        with pytest.raises(ValidationErrors, match="Dataset names may not begin or end with a space"):
+        with pytest.raises(ValidationError, match="Dataset names may not begin or end with a space"):
             call("pool.dataset.rename", f"{ds}/legacy /child", {"new_name": f"{ds}/legacy / child", "force": True})
 
 

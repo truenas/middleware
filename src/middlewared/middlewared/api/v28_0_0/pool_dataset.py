@@ -12,7 +12,7 @@ from middlewared.api.base import (
     single_argument_args,
     single_argument_result,
 )
-from middlewared.plugins.zfs_.validation_utils import last_component_space_padded, validate_dataset_name
+from middlewared.plugins.zfs_.validation_utils import validate_dataset_name
 
 from .common import QueryFilters, QueryOptions
 from .pool import PoolAttachment, PoolCreateEncryptionOptions, PoolProcess
@@ -39,8 +39,6 @@ __all__ = [
 
 
 def _validate_dataset_name(v: str) -> str:
-    if last_component_space_padded(v):
-        raise ValueError('Dataset names may not begin or end with a space')
     if not validate_dataset_name(v):
         raise ValueError('Please provide a valid dataset name according to ZFS standards')
     return v

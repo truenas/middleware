@@ -21,8 +21,9 @@ from middlewared.api.current import (
 )
 from middlewared.plugins.container.utils import CONTAINER_DS_NAME
 from middlewared.plugins.zfs.exceptions import ZFSDestroyFailedException
+from middlewared.plugins.zfs.name_utils import last_component_space_padded
 from middlewared.plugins.zfs.utils import has_internal_path
-from middlewared.plugins.zfs_.validation_utils import last_component_space_padded, validate_dataset_name
+from middlewared.plugins.zfs_.validation_utils import validate_dataset_name
 from middlewared.service import (
     CallError,
     CRUDService,
@@ -543,6 +544,8 @@ class PoolDatasetService(CRUDService):
             verrors.add('pool_dataset_create.name', 'You need a full name, e.g. pool/newdataset')
         elif not validate_dataset_name(data['name']):
             verrors.add('pool_dataset_create.name', 'Invalid dataset name')
+        elif last_component_space_padded(data['name']):
+            verrors.add('pool_dataset_create.name', 'Dataset names may not begin or end with a space')
         else:
             parent_name = data['name'].rsplit('/', 1)[0]
             if data['create_ancestors']:
@@ -1045,6 +1048,8 @@ class PoolDatasetService(CRUDService):
         snapshot is renamed recursively for all children -- for example, ``dozer/a@now`` and ``dozer/a/b@now``
         are renamed to ``dozer/a@new`` and ``dozer/a/b@new``. Renaming snapshots is likewise not recommended.
         """
+        if last_component_space_padded(options['new_name']):
+            raise ValidationError('pool.dataset.rename.new_name', 'Dataset names may not begin or end with a space')
         if not options['force']:
             raise ValidationError(
                 'pool.dataset.rename.force',

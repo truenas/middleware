@@ -21,11 +21,11 @@ import typing
 
 import truenas_pylibzfs
 
-from middlewared.plugins.zfs_.validation_utils import last_component_space_padded
 from middlewared.service_exception import ValidationError
 from middlewared.utils.crypto import generate_token
 
 from .create_impl import ZFS_TYPE_MAP
+from .name_utils import last_component_space_padded
 
 if typing.TYPE_CHECKING:
     from middlewared.api.current import EntitlementEntry, ZFSResourceCreateArgsData, ZFSResourceCreateProperties

@@ -34,3 +34,10 @@ def is_valid_bmark_name(name: str) -> bool:
         and is_valid_fs_name(parts[0])
         and is_valid_name_component(parts[1])
     )
+
+
+def last_component_space_padded(name: str) -> bool:
+    # ZFS itself accepts a leading or trailing space but it is a classic footgun. Only components a request creates are
+    # checked, so existing datasets with such names stay usable.
+    component = name.rsplit('/', 1)[-1]
+    return component != component.strip(' ')
