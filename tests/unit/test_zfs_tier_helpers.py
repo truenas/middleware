@@ -194,7 +194,7 @@ def test_map_info_result_all_statuses_round_trip(status):
 def test_map_info_result_stats_dict_keys_match_pydantic_model():
     """The dict keys in `stats` must match ZfsTierRewriteJobStats.model_fields
     so the API gateway can validate the response without missing/extra keys."""
-    from middlewared.api.v26_0_0.zfs_tier import ZfsTierRewriteJobStats
+    from middlewared.api.v27_0_0.zfs_tier import ZfsTierRewriteJobStats
 
     info = InfoResult(
         dataset_name="tank/data",
@@ -240,7 +240,7 @@ def test_map_result_common_recover_result():
 
 def test_map_result_common_dict_keys_match_pydantic_entry():
     """Output shape matches ZfsTierRewriteJobEntry."""
-    from middlewared.api.v26_0_0.zfs_tier import ZfsTierRewriteJobEntry
+    from middlewared.api.v27_0_0.zfs_tier import ZfsTierRewriteJobEntry
 
     result = CreateJobResult(
         dataset_name="tank/data",

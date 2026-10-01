@@ -12,7 +12,7 @@ from middlewared.test.integration.assets.two_factor_auth import (
 from middlewared.test.integration.utils import call, client, password
 
 
-LEGACY_VERSION = "v26.0.0"
+LEGACY_VERSION = "v27.0.0"
 
 
 @pytest.fixture(scope="function")
