@@ -14,6 +14,7 @@ from truenas_pynetif.utils import INTERNAL_INTERFACES
 
 from middlewared.api import api_method
 from middlewared.api.current import (
+    ContainerNICDevice,
     InterfaceAvailableFecModesArgs,
     InterfaceAvailableFecModesResult,
     InterfaceBridgeMembersChoicesArgs,
@@ -57,6 +58,8 @@ from middlewared.api.current import (
     InterfaceWebsocketLocalIpResult,
     InterfaceXmitHashPolicyChoicesArgs,
     InterfaceXmitHashPolicyChoicesResult,
+    QueryOptions,
+    VMNICDevice,
 )
 from middlewared.common.license_reconcile import LicenseReconcileAction, LicenseReconcileDelegate
 from middlewared.plugins.interface.dhcp import dhcp_reload, dhcp_start
@@ -1649,13 +1652,18 @@ class InterfaceService(CRUDService):
         names of those VMs and containers. Such an interface cannot also be a bridge member: the kernel lets a
         NIC carry either macvlan/macvtap ports or a bridge port, not both.
         """
+        # Only persisted NIC config is read, so skip the per-instance libvirt status lookup
+        options = QueryOptions(extra={'retrieve_status': False})
         users = {}
-        for kind, method in (('VM', 'vm.query'), ('container', 'container.query')):
-            for instance in await self.middleware.call(method):
-                for device in instance['devices']:
-                    nic = device['attributes'].get('nic_attach')
-                    if device['attributes']['dtype'] == 'NIC' and nic and not nic.startswith('br'):
-                        users.setdefault(nic, []).append(f'{kind} {instance["name"]!r}')
+        for kind, method, nic_model in (
+            ('VM', self.s.vm.query, VMNICDevice),
+            ('container', self.s.container.query, ContainerNICDevice),
+        ):
+            for instance in await self.call2(method, [], options):
+                for device in instance.devices:
+                    attrs = device.attributes
+                    if isinstance(attrs, nic_model) and attrs.nic_attach and not attrs.nic_attach.startswith('br'):
+                        users.setdefault(attrs.nic_attach, []).append(f'{kind} {instance.name!r}')
         return users
 
     @api_method(InterfaceLagPortsChoicesArgs, InterfaceLagPortsChoicesResult, roles=['NETWORK_INTERFACE_READ'])

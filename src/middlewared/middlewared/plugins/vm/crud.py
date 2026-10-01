@@ -24,7 +24,7 @@ from middlewared.plugins.zfs.zvol_utils import zvol_path_to_name
 from middlewared.pylibvirt import gather_pylibvirt_domains_states, get_pylibvirt_domain_state
 from middlewared.service import CallError, CRUDServicePart, ValidationErrors
 import middlewared.sqlalchemy as sa
-from middlewared.utils.libvirt.utils import ACTIVE_STATES, same_uuid
+from middlewared.utils.libvirt.utils import ACTIVE_STATES, retrieve_status, same_uuid
 
 from .capabilities import guest_architecture_and_machine_choices
 from .constants import VMGuestArch
@@ -105,7 +105,7 @@ class VMServicePart(CRUDServicePart[VMEntry]):
                 rows,
                 self.middleware.libvirt_domains_manager.vms_connection,
                 lambda vm: pylibvirt_vm(self, self.state_entry(vm)),
-            ),
+            ) if retrieve_status(extra) else None,
         }
 
     def devices_by_vm(self, rows: list[dict[str, Any]]) -> dict[int, list[Any]]:
@@ -137,7 +137,7 @@ class VMServicePart(CRUDServicePart[VMEntry]):
         data.update({
             'devices': vm_devices,
             'display_available': any(device.attributes.dtype == 'DISPLAY' for device in vm_devices),
-            'status': get_pylibvirt_domain_state(context['states'], data)
+            'status': None if context['states'] is None else get_pylibvirt_domain_state(context['states'], data),
         })
         return data
 
@@ -251,7 +251,9 @@ class VMServicePart(CRUDServicePart[VMEntry]):
                 )
 
         try:
-            entry = await self._update(id_, new.model_dump(exclude={'id', 'devices', 'display_available', 'status'}))
+            entry = await self._update(id_, new.model_dump(
+                exclude={'id', 'devices', 'display_available', 'status_or_null'}
+            ))
         except Exception:
             if renamed:
                 try:

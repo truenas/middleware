@@ -10,6 +10,7 @@ from middlewared.api.base import (
     NonEmptyString,
     excluded_field,
 )
+from middlewared.utils.lang import undefined
 
 from .container_device import ContainerDeviceEntry
 
@@ -120,13 +121,25 @@ class ContainerEntry(BaseModel):
             "in the `devices` list."
         ),
     )
-    status: ContainerStatus = Field(description="Container state.")
+    status_or_null: ContainerStatus | None = Field(
+        alias="status",
+        description="Container state. `null` if `query-options.extra.retrieve_status` is `false`.",
+    )
+
+    @property
+    def status(self) -> ContainerStatus:
+        # Query result items leave unselected fields `undefined`.
+        if self.status_or_null is None or self.status_or_null is undefined:
+            raise ValueError(
+                "Status was not retrieved; the query set `retrieve_status` to false or did not select `status`"
+            )
+        return self.status_or_null
 
 
 class ContainerCreate(ContainerEntry):
     id: Excluded = excluded_field()
     dataset: Excluded = excluded_field()
-    status: Excluded = excluded_field()
+    status_or_null: Excluded = excluded_field()
     devices: Excluded = excluded_field()
     default_network: Excluded = excluded_field()
     uuid: LibvirtUUID | None = Field(
