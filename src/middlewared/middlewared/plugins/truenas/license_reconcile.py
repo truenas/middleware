@@ -79,17 +79,30 @@ class TrueNASLicenseReconcileService(Service):
                     if not await delegate.should_run(self.middleware):
                         continue
 
-                    if delegate.action is LicenseReconcileAction.RENDER:
+                    action = await delegate.resolve_action(self.middleware)
+                    if action is None:
+                        continue
+
+                    if action is LicenseReconcileAction.RENDER:
                         for group in await delegate.resolve_groups(self.middleware):
                             await self.middleware.call("etc.generate", group)
                     else:
+                        options = {"ha_propagate": False}
+                        if action in (LicenseReconcileAction.START, LicenseReconcileAction.STOP):
+                            # A delegate only returns START or STOP once it has decided the service needs it,
+                            # so a failure must raise rather than read as a quiet False
+                            options["silent"] = False
+                            self.logger.info(
+                                "%s: %s service %s after license change", delegate.name, action, delegate.service
+                            )
+
                         # The peer runs its own reconcile pass off its own `system.post_license_update`
                         # hook, so there is nothing to propagate.
                         service_job = await self.middleware.call(
                             "service.control",
-                            delegate.action.value,
+                            action.value,
                             delegate.service,
-                            {"ha_propagate": False},
+                            options,
                         )
                         await service_job.wait(raise_error=True)
             except TimeoutError:

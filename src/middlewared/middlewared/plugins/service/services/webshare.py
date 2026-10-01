@@ -1,3 +1,6 @@
+from middlewared.plugins.webshare.utils import run_blocker
+from middlewared.service_exception import CallError
+
 from .base import SimpleService
 
 
@@ -10,6 +13,10 @@ class WebShareService(SimpleService):
 
     systemd_unit = "truenas-webshare-auth"
     systemd_async_start = True
+
+    async def before_start(self) -> None:
+        if reason := await run_blocker(self.middleware):
+            raise CallError(reason)
 
     async def after_start(self) -> None:
         await self.call2(self.s.truesearch.configure)

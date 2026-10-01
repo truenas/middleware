@@ -33,6 +33,7 @@ from .private_models import (
 )
 from .register import generate_claim_token_impl, get_registration_uri_impl
 from .state import state_check_impl
+from .utils import is_tnc_configured
 
 if TYPE_CHECKING:
     from middlewared.job import Job
@@ -126,6 +127,10 @@ class TrueNASConnectService(GenericConfigService[TrueNASConnectEntry]):
     @private
     async def state_check(self, restart_ui: bool = False) -> None:
         return await state_check_impl(self.context, restart_ui)
+
+    @private
+    async def is_configured(self) -> bool:
+        return is_tnc_configured(await self.config())
 
     @private
     async def heartbeat_start(self) -> None:

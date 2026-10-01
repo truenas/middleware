@@ -15,6 +15,8 @@ class LicenseReconcileAction(enum.StrEnum):
     RELOAD = "RELOAD"
     # Restart the service, which regenerates its config first, because a reload is not enough
     RESTART = "RESTART"
+    START = "START"
+    STOP = "STOP"
 
 
 class LicenseReconcileDelegate:
@@ -31,9 +33,9 @@ class LicenseReconcileDelegate:
     against.
 
     Only `RENDER` delegates are rendered by the reconcile runner, from `resolve_groups()`.
-    `RELOAD` and `RESTART` delegates are rendered by `service.control` from the service's own
-    `select_etc()`, so the runner does not render them as well; for those, `etc_groups` is a
-    declaration of ownership rather than a list anyone renders from.
+    `RELOAD`, `RESTART` and `START` delegates are rendered by `service.control` from the
+    service's own `select_etc()`, so the runner does not render them as well; for those, and for
+    `STOP`, `etc_groups` is a declaration of ownership rather than a list anyone renders from.
     """
 
     name: str
@@ -66,3 +68,14 @@ class LicenseReconcileDelegate:
         e.g. a delegate that reloads a service which is not currently running.
         """
         return True
+
+    async def resolve_action(self, middleware: Middleware) -> LicenseReconcileAction | None:
+        """
+        Return the action to take on this system, or `None` to take none.
+
+        Defaults to `action`. Override when the verb depends on what the license now allows,
+        e.g. `STOP` when the new license no longer entitles the service and `START` when it does.
+        The returned verb is issued as is, so the delegate is the one that has to check the
+        service is in a state where it makes sense (enabled, not already running, and so on).
+        """
+        return self.action

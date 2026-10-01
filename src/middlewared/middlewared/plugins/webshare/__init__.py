@@ -11,12 +11,16 @@ from middlewared.api.current import (
     WebshareUpdateArgs,
     WebshareUpdateResult,
 )
+from middlewared.common.license_reconcile import LicenseReconcileAction, LicenseReconcileDelegate
 from middlewared.service import GenericConfigService, private
 
 from .config import WebshareConfigPart
 from .utils import (
     bindip_choices,
     get_urls,
+    required_action,
+    system_ready,
+    tn_connect_config_changed,
     tn_connect_hostname_updated,
 )
 from .utils import (
@@ -74,5 +78,23 @@ class WebshareService(GenericConfigService[WebshareEntry]):
         return await get_urls(self.context)
 
 
+class WebshareLicenseReconcileDelegate(LicenseReconcileDelegate):
+    name = "webshare"
+    etc_groups = ("webshare",)
+    service = "webshare"
+    action = LicenseReconcileAction.START
+
+    async def resolve_action(self, middleware: Middleware) -> LicenseReconcileAction | None:
+        if action := await required_action(middleware):
+            return LicenseReconcileAction(action)
+        return None
+
+
 async def setup(middleware: Middleware) -> None:
     middleware.register_hook("tn_connect.hostname.updated", tn_connect_hostname_updated)
+    middleware.event_subscribe("tn_connect.config", tn_connect_config_changed)
+    middleware.event_subscribe("system.ready", system_ready)
+    await middleware.call2(
+        middleware.services.truenas.license.register_reconcile_delegate,
+        WebshareLicenseReconcileDelegate(),
+    )

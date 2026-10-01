@@ -1,9 +1,14 @@
+from __future__ import annotations
+
 import datetime
 import math
 import typing
 
 import jwt
 from truenas_connect_utils.status import Status
+
+if typing.TYPE_CHECKING:
+    from middlewared.api.current import TrueNASConnectEntry
 
 CERT_RENEW_DAYS = 5
 CLAIM_TOKEN_CACHE_KEY = 'truenas_connect_claim_token'
@@ -35,6 +40,10 @@ def decode_and_validate_token(token: str) -> dict[str, typing.Any]:
         raise ValueError(f'JWT token does not contain required fields: {diff}')
 
     return decoded_token
+
+
+def is_tnc_configured(config: TrueNASConnectEntry) -> bool:
+    return config.enabled and config.status in CONFIGURED_TNC_STATES and config.certificate is not None
 
 
 def get_unset_payload() -> dict[str, typing.Any]:
