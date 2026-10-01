@@ -1650,12 +1650,12 @@ class InterfaceService(CRUDService):
         NIC carry either macvlan/macvtap ports or a bridge port, not both.
         """
         users = {}
-        for kind, method in (('VM', 'vm.query'), ('container', 'container.query')):
-            for instance in await self.middleware.call(method):
-                for device in instance['devices']:
-                    nic = device['attributes'].get('nic_attach')
-                    if device['attributes']['dtype'] == 'NIC' and nic and not nic.startswith('br'):
-                        users.setdefault(nic, []).append(f'{kind} {instance["name"]!r}')
+        for kind, table, owner in (('VM', 'vm.device', 'vm'), ('container', 'container.device', 'container')):
+            for device in await self.middleware.call('datastore.query', table):
+                attrs = device['attributes']
+                nic = attrs.get('nic_attach')
+                if attrs.get('dtype') == 'NIC' and nic and not nic.startswith('br') and device[owner]:
+                    users.setdefault(nic, []).append(f'{kind} {device[owner]["name"]!r}')
         return users
 
     @api_method(InterfaceLagPortsChoicesArgs, InterfaceLagPortsChoicesResult, roles=['NETWORK_INTERFACE_READ'])
