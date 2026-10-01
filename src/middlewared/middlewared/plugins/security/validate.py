@@ -43,6 +43,15 @@ async def validate_security(
             )
 
 
+async def validate_require_nts(context: ServiceContext) -> None:
+    # chronyd would otherwise have nothing it may synchronize the clock to
+    if not await context.call2(context.s.system.ntpserver.query, [["nts", "=", True]]):
+        raise ValidationError(
+            "system_security_update.require_nts",
+            "At least one NTP server with NTS enabled must be configured first.",
+        )
+
+
 async def validate_stig(context: ServiceContext, current_cred: Any) -> None:
     # The following validation steps ensure that users have the ability to
     # manage the TrueNAS server after enabling STIG compatibility.

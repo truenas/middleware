@@ -1,8 +1,9 @@
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import Field
+from pydantic.types import StringConstraints
 
-from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, excluded_field
+from middlewared.api.base import BaseModel, Excluded, ForUpdateMetaclass, SingleLineNonEmptyString, excluded_field
 
 __all__ = [
     'NTPServerEntry',
@@ -21,11 +22,37 @@ class NTPServerEntry(BaseModel):
     prefer: bool = Field(default=False, description="Mark this server as preferred for time synchronization.")
     minpoll: int = Field(default=6, description="Minimum polling interval (log2 seconds).")
     maxpoll: int = Field(default=10, description="Maximum polling interval (log2 seconds).")
+    nts: bool = Field(
+        default=False,
+        description=(
+            "Use Network Time Security (NTS) to authenticate this server.\n\n"
+            "The server must support NTS key establishment on TCP port 4460. This system must trust the TLS "
+            "certificate of the server. The certificate must match `address`. If `address` is an IP address, the "
+            "certificate must include that IP address. The system clock must be approximately correct for the "
+            "certificate check.\n\n"
+            "When at least one NTS server is configured, the system ignores servers without NTS. This includes "
+            "servers from DHCP. If no NTS server is reachable, the system does not adjust the clock."
+        ),
+    )
 
 
 class NTPServerCreate(NTPServerEntry):
+    """A new NTP server.
+
+    The system writes `address` unchanged into a `server` line of `chrony.conf`. chronyd reads that file as root.
+    A line break in `address` lets the caller add chrony directives, so `address` must not contain one.
+    A space in `address` lets the caller add options to the `server` line, so `address` must not contain one.
+    These rules apply to this model and not to `NTPServerEntry`, so that older stored values stay readable.
+    """
     id: Excluded = excluded_field()
-    force: bool = Field(default=False, description="Force creation even if the server is unreachable.")
+    address: Annotated[SingleLineNonEmptyString, StringConstraints(pattern=r'^\S+$')]
+    force: bool = Field(
+        default=False,
+        description=(
+            "Skip the connection checks before saving. Without this option, the server must be reachable. If `nts` "
+            "is set, NTS key establishment with the server must also succeed."
+        ),
+    )
 
 
 class NTPServerUpdate(NTPServerCreate, metaclass=ForUpdateMetaclass):
