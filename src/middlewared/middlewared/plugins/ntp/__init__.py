@@ -14,11 +14,12 @@ from middlewared.api.current import (
     NTPServerUpdateArgs,
     NTPServerUpdateResult,
 )
-from middlewared.service import GenericCRUDService, filterable_api_method
+from middlewared.service import GenericCRUDService, filterable_api_method, private
 from middlewared.utils.filter_list import filter_list
+from middlewared.utils.types import AuditCallback
 
 from .crud import NTPServerServicePart
-from .peers import NTPPeerEntry, get_peers
+from .peers import NTPPeerEntry, NTSAuthData, get_nts_authdata, get_peers
 
 if TYPE_CHECKING:
     from middlewared.main import Middleware
@@ -40,24 +41,50 @@ class NTPServerService(GenericCRUDService[NTPServerEntry]):
         super().__init__(middleware)
         self._svc_part = NTPServerServicePart(self.context)
 
-    @api_method(NTPServerCreateArgs, NTPServerCreateResult, check_annotations=True)
+    @api_method(
+        NTPServerCreateArgs,
+        NTPServerCreateResult,
+        audit='NTP server create',
+        audit_extended=lambda data: data['address'],
+        check_annotations=True,
+    )
     async def do_create(self, data: NTPServerCreate) -> NTPServerEntry:
         """
         Add an NTP Server.
         """
         return await self._svc_part.do_create(data)
 
-    @api_method(NTPServerUpdateArgs, NTPServerUpdateResult, check_annotations=True)
-    async def do_update(self, id_: int, data: NTPServerUpdate) -> NTPServerEntry:
+    @api_method(
+        NTPServerUpdateArgs,
+        NTPServerUpdateResult,
+        audit='NTP server update',
+        audit_callback=True,
+        check_annotations=True,
+    )
+    async def do_update(self, audit_callback: AuditCallback, id_: int, data: NTPServerUpdate) -> NTPServerEntry:
         """Update NTP server of ``id``."""
-        return await self._svc_part.do_update(id_, data)
+        return await self._svc_part.do_update(audit_callback, id_, data)
 
-    @api_method(NTPServerDeleteArgs, NTPServerDeleteResult, check_annotations=True)
-    async def do_delete(self, id_: int) -> Literal[True]:
+    @api_method(
+        NTPServerDeleteArgs,
+        NTPServerDeleteResult,
+        audit='NTP server delete',
+        audit_callback=True,
+        check_annotations=True,
+    )
+    async def do_delete(self, audit_callback: AuditCallback, id_: int) -> Literal[True]:
         """Delete NTP server of ``id``."""
-        await self._svc_part.do_delete(id_)
+        await self._svc_part.do_delete(audit_callback, id_)
         return True
 
     @filterable_api_method(item=NTPPeerEntry, private=True)
     def peers(self, filters: list[Any], options: dict[str, Any]) -> Any:
         return filter_list(get_peers(self.context), filters, options)
+
+    @private
+    def nts_authdata(self) -> list[NTSAuthData]:
+        return get_nts_authdata(self.context)
+
+    @private
+    async def domain_clock_advice(self) -> str:
+        return await self._svc_part.domain_clock_advice()

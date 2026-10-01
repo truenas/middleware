@@ -13,7 +13,7 @@ from middlewared.utils.directoryservices.ad_constants import (
     MAX_SERVER_TIME_OFFSET,
 )
 from middlewared.utils.directoryservices.constants import DEF_SVC_OPTS
-from middlewared.utils.directoryservices.credential import kinit_with_cred
+from middlewared.utils.directoryservices.credential import get_time_advice, kinit_with_cred, with_time_advice
 from middlewared.utils.directoryservices.health import (
     ADHealthCheckFailReason,
     ADHealthError,
@@ -246,10 +246,12 @@ class ADHealthMixin:
         workgroup = smb_config['workgroup']
 
         if domain_info:
-            if domain_info['server_time_offset'] > MAX_SERVER_TIME_OFFSET:
-                faulted_reason = (
+            # Either clock may be the one ahead, so the offset can be negative
+            if abs(domain_info['server_time_offset']) > MAX_SERVER_TIME_OFFSET:
+                faulted_reason = with_time_advice(
                     'Time offset from Active Directory domain exceeds maximum '
-                    'permitted value. This may indicate an NTP misconfiguration.'
+                    'permitted value. This may indicate an NTP misconfiguration.',
+                    get_time_advice(self.middleware),
                 )
                 raise ADHealthError(
                     ADHealthCheckFailReason.NTP_EXCESSIVE_SLEW,
