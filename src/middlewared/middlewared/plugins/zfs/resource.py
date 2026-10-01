@@ -381,7 +381,7 @@ class ZFSResourceService(Service):
 
             {"path": "tank/clone"}
         """
-        _ops.promote(self.context, data)
+        self.call_sync2(self.s.zfs.resource.promote_impl, data)
 
     @private
     @pass_thread_local_storage

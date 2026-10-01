@@ -59,10 +59,6 @@ def promote_impl(tls: Any, data: ZFSResourcePromoteArgsData) -> None:
         raise ValidationError(schema, e.message, errno.ENOENT)
 
 
-def promote(context: ServiceContext, data: ZFSResourcePromoteArgsData) -> None:
-    context.call_sync2(context.s.zfs.resource.promote_impl, data)
-
-
 def mount(
     tls: Any,
     filesystem: str,
