@@ -12,6 +12,7 @@ from middlewared.api.current import (
     ReplicationUpdate,
 )
 from middlewared.auth import fake_app
+from middlewared.plugins.zettarepl_.state import REPLICATION_TASK_STATE
 from middlewared.service import CallError, CRUDServicePart, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.cron import convert_db_format_to_schedule, convert_schedule_to_db_format
@@ -137,7 +138,7 @@ class ReplicationServicePart(CRUDServicePart[ReplicationEntry]):
             data["state"] = context["state"]["error"]
         else:
             data["state"] = context["state"]["tasks"].get(
-                f"replication_task_{data['id']}",
+                REPLICATION_TASK_STATE.task_id(data["id"]),
                 {
                     "state": "PENDING",
                 },
@@ -250,7 +251,7 @@ class ReplicationServicePart(CRUDServicePart[ReplicationEntry]):
         response: bool = await self.middleware.call("datastore.delete", self._datastore, id_)
 
         # Remove task state from zettarepl before updating tasks
-        await self.middleware.call("zettarepl.remove_task", f"replication_task_{id_}")
+        await self.middleware.call("zettarepl.remove_task", REPLICATION_TASK_STATE.task_id(id_))
 
         await self.middleware.call("zettarepl.update_tasks")
 

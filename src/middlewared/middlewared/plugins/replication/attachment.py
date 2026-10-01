@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any
 
 from middlewared.api.current import ReplicationEntry
 from middlewared.common.attachment import FSAttachmentDelegate
+from middlewared.plugins.zettarepl_.state import REPLICATION_TASK_STATE
 
 if TYPE_CHECKING:
     from middlewared.main import Middleware
@@ -51,8 +52,7 @@ class ReplicationFSAttachmentDelegate(FSAttachmentDelegate[ReplicationEntry]):
 
 
 async def on_zettarepl_state_changed(middleware: Middleware, id_: str, fields: dict[str, Any]) -> None:
-    if id_.startswith("replication_task_"):
-        task_id = int(id_.split("_")[-1])
+    if (task_id := REPLICATION_TASK_STATE.task_id_number(id_)) is not None:
         middleware.send_event("replication.query", "CHANGED", id=task_id, fields={"state": fields})
 
 

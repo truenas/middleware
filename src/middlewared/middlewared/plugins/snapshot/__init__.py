@@ -27,6 +27,7 @@ from middlewared.api.current import (
     PoolSnapshotTaskUpdateWillChangeRetentionFor,
 )
 from middlewared.job import Job
+from middlewared.plugins.zettarepl_.state import PERIODIC_SNAPSHOT_TASK_STATE
 from middlewared.service import GenericCRUDService, job, private
 from middlewared.utils.types import AuditCallback
 
@@ -196,8 +197,7 @@ class PeriodicSnapshotTaskService(GenericCRUDService[PeriodicSnapshotTaskEntry])
 
 
 async def on_zettarepl_state_changed(middleware: Middleware, id_: str, fields: dict[str, typing.Any]) -> None:
-    if id_.startswith('periodic_snapshot_task_'):
-        task_id = int(id_.split('_')[-1])
+    if (task_id := PERIODIC_SNAPSHOT_TASK_STATE.task_id_number(id_)) is not None:
         middleware.send_event('pool.snapshottask.query', 'CHANGED', id=task_id, fields={'state': fields})
 
 
