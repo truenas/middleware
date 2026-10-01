@@ -83,8 +83,11 @@ def _mountpoint(row: dict[str, Any]) -> str | None:
     if row["type"] == "VOLUME":
         return os.path.join("/mnt", row["name"])
     mountpoint: str = row["properties"]["mountpoint"]["raw"]
-    if mountpoint in ("legacy", "none"):
+    if mountpoint == "legacy":
         return None
+    if mountpoint == "none":
+        # not mounted, but shares, tasks and mounted descendants can still sit under its default path
+        return os.path.join("/mnt", row["name"])
     return mountpoint
 
 

@@ -41,8 +41,7 @@ __all__ = (
 
 SPA_MAXBLOCKSIZE = 1 << 24
 
-POSIX_OR_OFF_ACLTYPES = frozenset({"posix", "posixacl", "off", "noacl", "disabled"})
-"""The native acltype values (aliases included) that are not nfsv4."""
+POSIX_OR_OFF_ACLTYPES = frozenset({"posix", "off"})
 
 USER_PROPERTY_NAME = re.compile(r"[a-z0-9:._-]+")
 USER_PROPERTY_NAME_MAX = 256

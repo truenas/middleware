@@ -70,9 +70,9 @@ PROP_SRC = Literal["NONE", "DEFAULT", "TEMPORARY", "LOCAL", "INHERITED", "RECEIV
 
 ON_OFF = Literal["off", "on"]
 CACHE = Literal["none", "metadata", "all"]
-ACLINHERIT = Literal["discard", "noallow", "restricted", "passthrough", "passthrough-x", "secure"]
+ACLINHERIT = Literal["discard", "noallow", "restricted", "passthrough", "passthrough-x"]
 ACLMODE = Literal["discard", "groupmask", "passthrough", "restricted"]
-ACLTYPE = Literal["off", "posix", "nfsv4", "disabled", "noacl", "posixacl"]
+ACLTYPE = Literal["off", "posix", "nfsv4"]
 CASESENSITIVITY = Literal["sensitive", "insensitive", "mixed"]
 ZFSResourceChecksum = Literal["on", "off", "fletcher2", "fletcher4", "sha256", "sha512", "skein", "edonr", "blake3"]
 ZFSResourceCompression = Literal[
@@ -94,7 +94,7 @@ DEDUP = Literal[
 SNAPDEV = Literal["hidden", "visible"]
 SNAPDIR = Literal["hidden", "visible", "disabled"]
 SYNC = Literal["standard", "always", "disabled"]
-XATTR = Literal["off", "sa", "on", "dir"]
+XATTR = Literal["off", "sa", "dir"]
 CANMOUNT = Literal["off", "on", "noauto"]
 NORMALIZATION = Literal["none", "formD", "formKC", "formC", "formKD"]
 

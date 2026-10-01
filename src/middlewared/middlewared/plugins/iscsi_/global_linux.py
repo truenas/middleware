@@ -43,6 +43,10 @@ class ISCSIGlobalService(Service):
                     # scstadmin can have issues when modifying an existing extent, so reload twice as extent update does
                     for _ in range(2):
                         self.call_sync2(self.s.service.control, 'RELOAD', 'iscsitarget').wait_sync(raise_error=True)
+                self.middleware.send_event(
+                    'iscsi.extent.query', 'CHANGED', id=extent['id'],
+                    fields=self.middleware.call_sync('iscsi.extent.get_instance', extent['id']),
+                )
         except MatchNotFound:
             return
 
