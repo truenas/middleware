@@ -76,6 +76,7 @@ class SMBService(Service):
             comment=''
         )
         insert_groupmap_entries(GroupmapFile.DEFAULT if not clustered else GroupmapFile.CLUSTERED, [entry])
+        self.middleware.call_sync('smb.push_local_accounts_to_standby')
 
     @private
     def del_groupmap(self, db_id):
@@ -87,6 +88,7 @@ class SMBService(Service):
             GroupmapEntryType.GROUP_MAPPING,
             entry_sid=f'{server_sid}-{rid}',
         )
+        self.middleware.call_sync('smb.push_local_accounts_to_standby')
 
     @private
     def sync_foreign_groups(self):

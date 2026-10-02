@@ -96,6 +96,9 @@ class SystemSecurityConfigServicePart(ConfigServicePart[SystemSecurityEntry]):
 
         if must_update_account_policy:
             await self.middleware.call("etc.generate", "shadow")
-            await self.middleware.call("smb.apply_account_policy")
+            # The SMB account policy lives inside passdb.tdb, which is node-local
+            sync_job = await self.middleware.call("smb.synchronize_local_accounts")
+            await sync_job.wait(raise_error=True)
+            await self.middleware.call("smb.push_local_accounts_to_standby")
 
         return await self.config()
