@@ -688,6 +688,7 @@ class DiskEntry:
                     try:
                         uninitialized = sed.is_uninitialized(fd, device_info=info)
                     except Exception:
+                        logger.exception("SED initial setup failed for %r", self.devpath)
                         return "SETUP_FAILED"
                     if not uninitialized:
                         try:
@@ -696,6 +697,7 @@ class DiskEntry:
                                 return "ACCESS_GRANTED"
                             return "LOCKING_DISABLED"
                         except Exception:
+                            logger.exception("SED initial setup failed for %r", self.devpath)
                             return "SETUP_FAILED"
                 elif info["locking"]["enabled"]:
                     try:
@@ -704,14 +706,19 @@ class DiskEntry:
                             return "ACCESS_GRANTED"
                         return "LOCKING_DISABLED"
                     except Exception:
+                        logger.exception("SED initial setup failed for %r", self.devpath)
                         return "SETUP_FAILED"
 
                 try:
                     sed.initial_setup(fd, pw_bytes, device_info=info)
                     return "SUCCESS"
                 except Exception:
+                    logger.exception("SED initial setup failed for %r", self.devpath)
                     return "SETUP_FAILED"
         except Exception:
+            # FIXME: A SED whose device node is gone also lands here and is reported
+            # as not being a SED disk. This happens when the disk drops off the bus.
+            logger.exception("SED discovery failed for %r", self.devpath)
             return "NO_SED"
 
     def sed_factory_reset(self, psid: str, dev_fd: int | None = None) -> tuple[bool, str]:
