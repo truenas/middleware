@@ -1,5 +1,9 @@
+import errno
 from typing import Any
 
+import pytest
+
+from middlewared.alert.base import UnavailableException
 from middlewared.alert.source.mseries_nvdimm_and_bios import (
     NVDIMMAlert,
     NVDIMMAndBIOSAlertSource,
@@ -104,3 +108,14 @@ def test_old_bios_flag_alert():
     alerts = _produce(_nvdimm(old_bios=True), old_bios=False)
     assert len(alerts) == 1, alerts
     assert isinstance(alerts[0].instance, OldBiosVersionAlert)
+
+
+def test_failed_nvdimm_read_keeps_previous_alerts():
+    """``UnavailableException`` tells the alert runtime to leave this source's alerts as they are."""
+    m = Middleware()
+    m["truenas.get_chassis_hardware"] = lambda: "TRUENAS-M60"
+    m.services.mseries.bios.is_old_version.return_value = False
+    m.services.mseries.nvdimm.info.side_effect = OSError(errno.EINVAL, "Invalid argument")
+
+    with pytest.raises(UnavailableException):
+        NVDIMMAndBIOSAlertSource(m).check_sync()
