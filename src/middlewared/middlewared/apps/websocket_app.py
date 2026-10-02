@@ -24,7 +24,6 @@ from middlewared.service_exception import (
     ValidationErrors,
     get_errname,
 )
-from middlewared.utils.debug import get_frame_details
 from middlewared.utils.lock import SoftHardSemaphore, SoftHardSemaphoreLimit
 from middlewared.utils.origin import ConnectionOrigin
 from middlewared.utils.threading import run_coro_threadsafe
@@ -61,20 +60,10 @@ class WebSocketApplication(RpcWebSocketApp):
     def _send(self, data: dict[str, Any]):
         run_coro_threadsafe(self.response.send_str(json.dumps(data)), loop=self.loop)
 
-    def _tb_error(self, exc_info: ExcInfoType) -> dict[str, str | list[dict]]:
-        klass, exc, trace = exc_info
-        frames = []
-        cur_tb = trace
-        while cur_tb:
-            tb_frame = cur_tb.tb_frame
-            cur_tb = cur_tb.tb_next
-            cur_frame = get_frame_details(tb_frame, self.logger)
-            if cur_frame:
-                frames.append(cur_frame)
-
+    def _tb_error(self, exc_info: ExcInfoType) -> dict[str, str]:
+        klass = exc_info[0]
         return {
             "class": klass.__name__,
-            "frames": frames,
             "formatted": "".join(format_exception(*exc_info)),
             "repr": repr(exc_info[1]),
         }
