@@ -105,8 +105,9 @@ class IPAJoinMixin:
         job.set_progress(description='Deleting NFS and SMB service principals.')
         self._ipa_del_spn()
 
-        job.set_progress(description='Removing DNS entries.')
-        self.unregister_dns(ds_config_to_fqdn(ds_config), False)
+        if ds_config['enable_dns_updates']:
+            job.set_progress(description='Removing DNS entries.')
+            self.unregister_dns(ds_config_to_fqdn(ds_config), False)
 
         # now leave IPA
         job.set_progress(description='Leaving IPA domain.')
@@ -661,7 +662,8 @@ class IPAJoinMixin:
         elif not cred['name'].startswith('host/'):
             raise CallError(f'{cred}: not host principal.')
 
-        self.register_dns(ds_config_to_fqdn(ds_config))
+        if ds_config['enable_dns_updates']:
+            self.register_dns(ds_config_to_fqdn(ds_config))
         self._ipa_setup_services(job)
         job.set_progress(description='Activating IPA service.')
         self._ipa_activate()
