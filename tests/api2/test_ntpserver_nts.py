@@ -5,6 +5,8 @@ import pytest
 
 from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.test.integration.utils import call, mock, ssh
+from middlewared.test.integration.utils.system import reset_systemd_svcs
+from truenas_api_client import ValidationErrors as ClientValidationErrors
 
 CONFIG_FILE = "/etc/chrony/chrony.conf"
 # The NTS servers the database migration 04a6293d595a adds to a stock configuration
@@ -21,17 +23,22 @@ def ntp_servers_removed():
 
     While an NTS server is configured, chronyd only adjusts the clock while one is reachable, so nothing a test adds
     may outlive it. The originals are restored with `force` so that the restore does not depend on reaching them.
+
+    Every change restarts chronyd, and systemd refuses a sixth start within ten seconds, which leaves chronyd stopped.
+    The count is cleared before the test and before the restore, so that chronyd runs for both.
     """
     original = call("system.ntpserver.query")
     for server in original:
         call("system.ntpserver.delete", server["id"])
 
     try:
+        reset_systemd_svcs("chronyd")
         yield
     finally:
         for server in call("system.ntpserver.query"):
             call("system.ntpserver.delete", server["id"])
 
+        reset_systemd_svcs("chronyd")
         for server in original:
             call("system.ntpserver.create", {k: v for k, v in server.items() if k != "id"} | {"force": True})
 
@@ -138,7 +145,8 @@ def test_require_nts_needs_an_nts_server():
     with ntp_servers_removed():
         call("system.ntpserver.create", {"address": "127.0.0.1", "force": True})
 
-        with pytest.raises(ValidationErrors) as ve:
+        # A job's validation errors reach the caller as the client's exception, not the middleware's
+        with pytest.raises(ClientValidationErrors) as ve:
             call("system.security.update", {"require_nts": True}, job=True)
 
         assert [error.attribute for error in ve.value.errors] == ["system_security_update.require_nts"]
