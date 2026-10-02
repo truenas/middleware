@@ -1,10 +1,59 @@
 import errno
+import time
 
 import pytest
 
+from auto_config import ha
 from middlewared.service_exception import CallError
-from middlewared.test.integration.assets.account import user, unprivileged_user_client
-from middlewared.test.integration.utils import call
+from middlewared.test.integration.assets.account import temporary_update, user, unprivileged_user_client
+from middlewared.test.integration.assets.pool import dataset
+from middlewared.test.integration.assets.two_factor_auth import (
+    enabled_twofactor_auth,
+    get_2fa_totp_token,
+    get_user_secret,
+)
+from middlewared.test.integration.utils import (
+    OATH_PROMPT,
+    PASSWORD_PROMPT,
+    call,
+    ssh_auth_with_otp,
+    truenas_server,
+)
+
+
+STANDBY_LAG = 5
+
+
+def assert_ssh_auth(password_prompt, oath_prompt, login, secret=None, standby_sleep=False):
+    """Assert which prompts sshd asks for, and whether the login succeeds.
+
+    Checks the active controller, and the standby too when HA is set up. The active controller
+    rebuilds /etc/users.oath and pam.d/sshd on the standby before it returns, so the standby needs
+    no wait: a stale standby is the failure this asserts against.
+
+    `secret` supplies the token to answer the OATH prompt with. Pass the superseded record to check
+    that a token from it no longer authenticates.
+
+    `standby_sleep` waits for a change that does not reach the standby synchronously.
+    """
+    ips = [None]
+    if ha:
+        ips.append(truenas_server.ha_ips()["standby"])
+
+    for ip in ips:
+        if ip and standby_sleep:
+            # FIXME(vladv3458): drop `standby_sleep` once `ssh.update` and `user.update` replicate
+            # through `ha_synchronization` instead of the detached `service.pre_action` hook.
+            time.sleep(STANDBY_LAG)
+
+        otp_token = ""
+        if oath_prompt:
+            otp_token = get_2fa_totp_token(secret)
+
+        result = ssh_auth_with_otp("cov2fa", "test1234", otp_token, ip=ip)
+        assert any(PASSWORD_PROMPT in prompt for prompt in result.prompts) is password_prompt, (ip, result)
+        assert any(OATH_PROMPT in prompt for prompt in result.prompts) is oath_prompt, (ip, result)
+        assert result.authenticated is login, (ip, result)
 
 
 def twofactor_record(user):
@@ -18,16 +67,21 @@ def twofactor_record(user):
 
 @pytest.fixture(scope="module")
 def twofactor_user():
-    with user(
-        {
-            "username": "cov2fa",
-            "full_name": "cov 2fa",
-            "group_create": True,
-            "smb": False,
-            "password": "test1234",
-        }
-    ) as u:
-        yield u
+    with dataset("cov2fa_homedir") as homedir:
+        with user(
+            {
+                "username": "cov2fa",
+                "full_name": "cov 2fa",
+                "group_create": True,
+                "smb": False,
+                "password": "test1234",
+                # `ssh_password_enabled` is what earns the user a `Match` block in sshd_config,
+                # and it is rejected while the home directory is still the default
+                "home": f"/mnt/{homedir}",
+                "ssh_password_enabled": True,
+            }
+        ) as u:
+            yield u
 
 
 def test_twofactor_config_without_secret(twofactor_user):
@@ -109,40 +163,62 @@ def test_2fa_without_database_record(twofactor_user):
         )
 
 
-def test_renew_2fa_secret_reloads_ssh_and_users_file(twofactor_user):
-    config = call("datastore.query", "system.twofactorauthentication", [], {"get": True})
-    assert config["services"] == {}
+def test_2fa_secret_over_ssh(twofactor_user):
+    assert call("user.renew_2fa_secret", "cov2fa", {})["twofactor_config"]["secret_configured"] is True
+    secret = get_user_secret(twofactor_user["id"])
 
-    call(
-        "datastore.update",
-        "system.twofactorauthentication",
-        config["id"],
-        {"services": {"ssh": True}},
-    )
+    # the secret exists, but 2FA for ssh is off, so pam.d/sshd has no pam_oath yet
+    assert_ssh_auth(password_prompt=True, oath_prompt=False, login=True)
+
+    with enabled_twofactor_auth(ssh=True):
+        # enabling 2FA for ssh regenerated pam.d/sshd, so sshd now asks for the token
+        assert_ssh_auth(password_prompt=True, oath_prompt=True, login=True, secret=secret)
+
+        # a renewal replaces the secret, so a token from the previous one stops working
+        call("user.renew_2fa_secret", "cov2fa", {})
+        renewed_secret = get_user_secret(twofactor_user["id"])
+        assert_ssh_auth(password_prompt=True, oath_prompt=True, login=False, secret=secret)
+        assert_ssh_auth(password_prompt=True, oath_prompt=True, login=True, secret=renewed_secret)
+
+        call("user.unset_2fa_secret", "cov2fa")
+
+        # unsetting dropped the user from /etc/users.oath, so pam_oath no longer knows them
+        assert_ssh_auth(password_prompt=True, oath_prompt=False, login=False)
+
+
+@pytest.mark.parametrize(
+    "passwordauth,twofactor_ssh,ssh_password_enabled,expect_login,expect_oath",
+    [
+        (True, False, True, True, False),
+        (True, True, True, True, True),
+        (False, False, True, False, False),
+        # 2FA for ssh must not grant a password login that `passwordauth` denies
+        (False, True, True, False, False),
+        (True, False, False, False, False),
+        (True, True, False, False, False),
+        (False, False, False, False, False),
+        (False, True, False, False, False),
+    ],
+)
+def test_ssh_auth_combinations(
+    twofactor_user, passwordauth, twofactor_ssh, ssh_password_enabled, expect_login, expect_oath
+):
+    call("user.renew_2fa_secret", "cov2fa", {})
+    secret = get_user_secret(twofactor_user["id"])
+    original_passwordauth = call("ssh.config")["passwordauth"]
     try:
-        newest_job_id = max([j["id"] for j in call("core.get_jobs")], default=0)
-
-        assert call("user.renew_2fa_secret", "cov2fa", {})["twofactor_config"]["secret_configured"] is True
-
-        reloads = [
-            j["arguments"]
-            for j in call(
-                "core.get_jobs",
-                [["method", "=", "service.control"], ["id", ">", newest_job_id]],
-            )
-        ]
-        # the new secret only reaches sshd once its configuration is reloaded, and only reaches
-        # /etc/users.oath once `user` is reloaded. `user` goes through service.control rather
-        # than etc.generate so that the regeneration also reaches an HA standby controller.
-        assert ["RELOAD", "ssh"] in reloads, reloads
-        assert ["RELOAD", "user"] in reloads, reloads
+        call("ssh.update", {"passwordauth": passwordauth})
+        with temporary_update(twofactor_user, {"ssh_password_enabled": ssh_password_enabled}):
+            with enabled_twofactor_auth(ssh=twofactor_ssh):
+                assert_ssh_auth(
+                    password_prompt=expect_login,
+                    oath_prompt=expect_oath,
+                    login=expect_login,
+                    secret=secret,
+                    standby_sleep=True,
+                )
     finally:
-        call(
-            "datastore.update",
-            "system.twofactorauthentication",
-            config["id"],
-            {"services": {}},
-        )
+        call("ssh.update", {"passwordauth": original_passwordauth})
         call("user.unset_2fa_secret", "cov2fa")
 
 

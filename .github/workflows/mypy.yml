@@ -80,8 +80,9 @@ jobs:
             middlewared/plugins/filesystem.py \
             middlewared/plugins/keyvalue.py \
             middlewared/plugins/pwenc.py \
-            middlewared/service/sharing_task_service_part.py \
             middlewared/service/generic_sharing_service.py \
+            middlewared/service/ha_synchronization.py \
+            middlewared/service/sharing_task_service_part.py \
             middlewared/utils/ \
             middlewared/test/integration/runner/ \
             middlewared/test/linter/ \
