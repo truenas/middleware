@@ -212,7 +212,6 @@ class FailoverEventsService(Service):
             raise
 
     def event(self, ifname, event):
-
         refresh, job = True, None
         try:
             job = self._event(ifname, event)
@@ -225,7 +224,7 @@ class FailoverEventsService(Service):
             # refreshing the failover status can cause delays in failover
             # there is no reason to refresh it if the event has been ignored
             if refresh and job is not None:
-                self.middleware.create_task(self.refresh_failover_status(job.id, event))
+                self.middleware.create_task_threadsafe(self.refresh_failover_status(job.id, event))
 
     def force_reboot(self, reason):
         """
@@ -758,7 +757,7 @@ class FailoverEventsService(Service):
         logger.info('Done starting background job for directoryservices.setup')
 
         logger.info('Starting background job for prefetching DDT for zpools')
-        self.middleware.create_task(self.middleware.call('zfs.pool.ddt_prefetch_pools'))
+        self.middleware.call_sync('zfs.pool.ddt_prefetch_pools', background=True)
 
         logger.info('Allowing network traffic.')
         fw_accept_job = self.run_call('failover.firewall.accept_all')
@@ -835,7 +834,7 @@ class FailoverEventsService(Service):
         logger.info('Done initializing alert system')
 
         logger.info('Initializing task to renew certs if necessary')
-        self.middleware.create_task(self.middleware.call('certificate.renew_certs'))
+        self.middleware.call_sync('certificate.renew_certs', background=True)
         logger.info('Done initializing task to renew certs if necessary')
 
         logger.info('Starting truecommand service (if necessary)')
@@ -843,7 +842,7 @@ class FailoverEventsService(Service):
         logger.info('Done starting truecommand service (if necessary)')
 
         logger.info('Configuring TrueNAS Connect Service (if necessary)')
-        self.middleware.create_task(self.middleware.call('tn_connect.state.check', True))
+        self.middleware.call_sync('tn_connect.state.check', True, background=True)
         logger.info('Done configuring TrueNAS Connect Service (if necessary)')
 
         # The system, while it was in BACKUP state, might have failed to contact the remote node and reached a
@@ -1119,7 +1118,7 @@ class FailoverEventsService(Service):
 
     def start_vms(self):
         logger.info('Starting VMs which are set to start on boot')
-        self.middleware.create_task(self.middleware.call('vm.start_on_boot'))
+        self.middleware.call_sync('vm.start_on_boot', background=True)
 
     def stop_vms(self):
         logger.info('Trying to gracefully stop VMs')
