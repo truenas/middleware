@@ -5,7 +5,9 @@
 
 import datetime
 
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
+from middlewared.alert.base import (
+    AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource, UnavailableException,
+)
 from middlewared.alert.schedule import IntervalSchedule
 from middlewared.utils import ProductType
 
@@ -153,7 +155,13 @@ class NVDIMMAndBIOSAlertSource(ThreadedAlertSource):
             if old_bios:
                 alerts.append(Alert(OldBiosVersionAlertClass))
 
-            for nvdimm in self.middleware.call_sync('mseries.nvdimm.info'):
+            try:
+                nvdimms = self.middleware.call_sync('mseries.nvdimm.info')
+            except OSError:
+                # A failed read says nothing about the NVDIMM, so keep the alerts we already have
+                raise UnavailableException()
+
+            for nvdimm in nvdimms:
                 try:
                     self.produce_alerts(nvdimm, alerts, old_bios)
                 except Exception:
