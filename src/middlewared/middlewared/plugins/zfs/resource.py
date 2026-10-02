@@ -515,6 +515,7 @@ class ZFSResourceService(Service):
         - the resource does not exist (``ENOENT``)
         - the new name is already taken (``EEXIST``)
         - either name is a protected path (``EACCES``)
+        - the last component of the new name begins or ends with a space (``EINVAL``)
         - ``force`` is not set
 
         Example:

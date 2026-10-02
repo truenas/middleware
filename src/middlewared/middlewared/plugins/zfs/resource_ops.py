@@ -15,6 +15,7 @@ from .exceptions import (
 )
 from .load_unload_impl import unload_key_impl
 from .mount_unmount_impl import mount_impl, unmount_impl
+from .name_utils import last_component_space_padded
 from .rename_promote_clone_impl import promote_impl as _raw_promote
 from .rename_promote_clone_impl import rename_impl as _raw_rename
 from .utils import reject_protected_path
@@ -118,6 +119,10 @@ def rename_impl(tls: Any, data: ZFSResourceRenameArgsData) -> None:
 
 
 def rename(context: ServiceContext, data: ZFSResourceRenameArgsData) -> None:
+    if last_component_space_padded(data.new_name):
+        raise ValidationError(
+            "zfs.resource.rename.new_name", "Resource names may not begin or end with a space.", errno.EINVAL
+        )
     if not data.force:
         raise ValidationError(
             "zfs.resource.rename.force",

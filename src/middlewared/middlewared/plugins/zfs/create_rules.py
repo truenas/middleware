@@ -12,6 +12,7 @@ from truenas_pylibzfs import ZFSProperty
 from middlewared.service_exception import ValidationError
 from middlewared.utils.crypto import generate_token
 
+from .name_utils import last_component_space_padded
 from .property_management import PROPERTY_TEMPLATES
 from .rules_common import (
     apply_acl_defaults,
@@ -43,6 +44,7 @@ __all__ = (
     "check_encryption_ancestry",
     "check_force_size",
     "check_names_valid_for_type",
+    "check_new_ancestor_names",
     "check_parent_is_filesystem",
     "check_parent_not_readonly",
     "check_parent_unlocked",
@@ -177,6 +179,22 @@ def check_path_shape(data: ZFSResourceCreateArgsData) -> None:
         )
     elif "%" in data.path:
         raise ValidationError(SCHEMA, f"{data.path!r} may not contain '%'.", errno.EINVAL)
+    elif last_component_space_padded(data.path):
+        raise ValidationError(SCHEMA, "Resource names may not begin or end with a space.", errno.EINVAL)
+
+
+def check_new_ancestor_names(data: ZFSResourceCreateArgsData, ctx: CreateContext) -> None:
+    """An ancestor that create_ancestors would create may not begin or end
+    with a space. Existing ancestors keep whatever name they have."""
+    if not data.create_ancestors:
+        return
+    for ancestor in ancestor_chain(data.path):
+        if "/" in ancestor and ancestor not in ctx.ancestors and last_component_space_padded(ancestor):
+            raise ValidationError(
+                SCHEMA,
+                f"Cannot create {ancestor!r}: resource names may not begin or end with a space.",
+                errno.EINVAL,
+            )
 
 
 def check_volume_has_volsize(data: ZFSResourceCreateArgsData, ctx: CreateContext) -> None:

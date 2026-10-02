@@ -42,7 +42,7 @@ def test_pool_dataset_create_ancestors(child):
 
 def test_pool_dataset_create_space_padded_names():
     with dataset("space_names") as ds:
-        with pytest.raises(ValidationErrors, match="Dataset names may not begin or end with a space"):
+        with pytest.raises(ValidationErrors, match="names may not begin or end with a space"):
             call("pool.dataset.create", {"name": f"{ds}/ leading"})
         with pytest.raises(ValidationErrors, match=escape(f"Cannot create '{ds}/mid '")):
             call("pool.dataset.create", {"name": f"{ds}/mid /leaf", "create_ancestors": True})
@@ -51,7 +51,7 @@ def test_pool_dataset_create_space_padded_names():
         ssh(f"zfs create {shlex.quote(f'{ds}/legacy ')}")
         call("pool.dataset.create", {"name": f"{ds}/legacy /child", "create_ancestors": True})
 
-        with pytest.raises(ValidationError, match="Dataset names may not begin or end with a space"):
+        with pytest.raises(ValidationError, match="names may not begin or end with a space"):
             call("pool.dataset.rename", f"{ds}/legacy /child", {"new_name": f"{ds}/legacy / child", "force": True})
 
 

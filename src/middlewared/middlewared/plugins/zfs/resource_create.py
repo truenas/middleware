@@ -31,6 +31,7 @@ from .create_rules import (
     check_encryption_ancestry,
     check_force_size,
     check_names_valid_for_type,
+    check_new_ancestor_names,
     check_parent_is_filesystem,
     check_parent_not_readonly,
     check_parent_unlocked,
@@ -117,6 +118,7 @@ def create_impl(context: ServiceContext, tls: Any, data: ZFSResourceCreateArgsDa
     }
     if ctx.ancestors.pop(path, None) is not None:
         raise ZFSPathAlreadyExistsException(path)
+    check_new_ancestor_names(data, ctx)
     check_parent_is_filesystem(data, ctx)
 
     check_parent_unlocked(data, ctx)
