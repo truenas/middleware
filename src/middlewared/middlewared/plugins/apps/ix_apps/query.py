@@ -381,7 +381,10 @@ def translate_resources_to_desired_workflow(app_resources: dict[str, Any]) -> di
                 state = ContainerState.RUNNING.value
         elif container_status == 'created':
             state = ContainerState.CREATED.value
-        elif container_status == 'exited' and container['State']['ExitCode'] not in KNOWN_NORMAL_EXIT_CODES:
+        elif (
+            (container_status == 'exited' and container['State']['ExitCode'] not in KNOWN_NORMAL_EXIT_CODES)
+            or (container_status == 'restarting' and container['State']['ExitCode'] != 0)
+        ):
             state = ContainerState.CRASHED.value
         else:
             state = ContainerState.EXITED.value
