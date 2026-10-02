@@ -37,15 +37,10 @@ class NTPServerEntry(BaseModel):
 
 
 class NTPServerCreate(NTPServerEntry):
-    """A new NTP server.
-
-    The system writes `address` unchanged into a `server` line of `chrony.conf`. chronyd reads that file as root.
-    A line break in `address` lets the caller add chrony directives, so `address` must not contain one.
-    A space in `address` lets the caller add options to the `server` line, so `address` must not contain one.
-    These rules apply to this model and not to `NTPServerEntry`, so that older stored values stay readable.
-    """
     id: Excluded = excluded_field()
-    address: Annotated[SingleLineNonEmptyString, StringConstraints(pattern=r'^\S+$')]
+    address: Annotated[SingleLineNonEmptyString, StringConstraints(pattern=r'^\S+$')] = Field(
+        description="Hostname or IP address of the NTP server."
+    )
     force: bool = Field(
         default=False,
         description=(

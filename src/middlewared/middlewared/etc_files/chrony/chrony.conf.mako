@@ -7,13 +7,14 @@ confdir /etc/chrony/conf.d
 # Use Debian vendor zone.
 # pool 2.debian.pool.ntp.org iburst
 <%
-	ntp_query = middleware.call_sync2(middleware.services.system.ntpserver.query)
-	for ntp in ntp_query:
-		if ntp.address.split() != [ntp.address]:
+	ntp_query = []
+	for ntp in middleware.call_sync2(middleware.services.system.ntpserver.query):
+		if not ntp.address or any(c.isspace() for c in ntp.address):
 			# Stored before the API rejected whitespace in an address. Written out, it would append options or
 			# directives of its own to this file.
 			middleware.logger.warning('ntp: skipping server %r: address must be a single word', ntp.address)
-	ntp_query = [ntp for ntp in ntp_query if ntp.address.split() == [ntp.address]]
+		else:
+			ntp_query.append(ntp)
 	require_nts = middleware.call_sync2(middleware.services.system.security.config).require_nts
 %>\
 % for ntp in ntp_query:
