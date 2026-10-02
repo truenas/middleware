@@ -27,6 +27,7 @@ from .create_rules import (
     check_dedup_tiering,
     check_encryption,
     check_name_valid,
+    check_new_ancestor_names,
     check_parent_is_filesystem,
     check_parent_not_readonly,
     check_path_shape,
@@ -85,6 +86,7 @@ def create_impl(context: ServiceContext, tls: Any, data: ZFSResourceCreateArgsDa
         )
     }
 
+    check_new_ancestor_names(data, ctx)
     check_parent_is_filesystem(data, ctx)
     check_parent_not_readonly(data, ctx)
     if ctx.tier_enabled:

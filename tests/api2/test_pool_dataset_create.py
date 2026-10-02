@@ -1,11 +1,12 @@
 from itertools import product
 from re import escape
+import shlex
 
 import pytest
 
-from middlewared.service_exception import ValidationErrors
+from middlewared.service_exception import ValidationError, ValidationErrors
 from middlewared.test.integration.assets.pool import dataset
-from middlewared.test.integration.utils import call, pool
+from middlewared.test.integration.utils import call, pool, ssh
 
 
 def test_create_dataset_nonexistent_pool():
@@ -34,6 +35,21 @@ def test_pool_dataset_create_ancestors(child):
         name = f"{test_ds}/{child}"
         call("pool.dataset.create", {"name": name, "create_ancestors": True})
         call("pool.dataset.get_instance", name)
+
+
+def test_pool_dataset_create_space_padded_names():
+    with dataset("space_names") as ds:
+        with pytest.raises(ValidationErrors, match="Dataset names may not begin or end with a space"):
+            call("pool.dataset.create", {"name": f"{ds}/ leading"})
+        with pytest.raises(ValidationErrors, match=escape(f"Cannot create '{ds}/mid '")):
+            call("pool.dataset.create", {"name": f"{ds}/mid /leaf", "create_ancestors": True})
+
+        # an existing padded name, as on older pools, still takes children
+        ssh(f"zfs create {shlex.quote(f'{ds}/legacy ')}")
+        call("pool.dataset.create", {"name": f"{ds}/legacy /child", "create_ancestors": True})
+
+        with pytest.raises(ValidationError, match="Dataset names may not begin or end with a space"):
+            call("pool.dataset.rename", f"{ds}/legacy /child", {"new_name": f"{ds}/legacy / child", "force": True})
 
 
 def test_pool_dataset_query():
