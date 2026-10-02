@@ -7,7 +7,7 @@ IMPORTS
     TEXTUAL-CONVENTION, DisplayString         FROM SNMPv2-TC;
 
 trueNas MODULE-IDENTITY
-    LAST-UPDATED "202604211800Z"
+    LAST-UPDATED "202610021800Z"
     ORGANIZATION "www.truenas.com"
     CONTACT-INFO
         "postal:   541 Division Street
@@ -16,6 +16,9 @@ trueNas MODULE-IDENTITY
          email:    support@TrueNAS.com"
     DESCRIPTION
         "TrueNAS Specific MIBs"
+    REVISION     "202610021800Z"
+    DESCRIPTION
+        "Changed MAX-ACCESS of hddTempIndex to not-accessible."
     REVISION     "202604211800Z"
     DESCRIPTION
         "Added datasetTable covering both ZFS filesystems and zvols."
@@ -510,7 +513,7 @@ HDDTempEntry ::= SEQUENCE {
 
 hddTempIndex OBJECT-TYPE
     SYNTAX      Integer32 (0..65535)
-    MAX-ACCESS  read-only
+    MAX-ACCESS  not-accessible
     STATUS      current
     DESCRIPTION
         "Reference index for each observed HDD."
