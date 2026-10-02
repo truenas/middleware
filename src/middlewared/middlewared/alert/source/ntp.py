@@ -38,11 +38,29 @@ class NTPHealthCheckAlertSource(AlertSource):
         active_peer = [x for x in peers if x["active"]]
         if not active_peer:
             names = [{f'{x["mode"]}: {x["state"]} [{x["remote"]}]'} for x in peers]
-            return Alert(NTPHealthCheckAlert(reason=f'No Active NTP peers: {names}'))
+            reason = f'No Active NTP peers: {names}'
+            if failing := await self._failing_nts_sources():
+                reason += (
+                    f'. NTS key establishment is failing for: {", ".join(failing)}. Check that TCP port 4460 is '
+                    'reachable, that the server certificate is trusted and that the system clock is roughly correct, '
+                    'or disable NTS for these servers'
+                )
+            return Alert(NTPHealthCheckAlert(reason=reason))
 
         peer = active_peer[0]
-        if peer["offset"] < 300:
+        # Either clock may be the one ahead, so the offset can be negative
+        if abs(peer["offset"]) < 300:
             return None
 
         msg = f'{peer["remote"]} has an offset of {peer["offset"]}, which exceeds permitted value of 5 minutes.'
         return Alert(NTPHealthCheckAlert(reason=msg))
+
+    async def _failing_nts_sources(self) -> list[str]:
+        """Names of the NTS sources that hold no keys, sorted so that the alert text stays the same between runs."""
+        try:
+            sources = await self.call2(self.s.system.ntpserver.nts_authdata)
+        except Exception:
+            self.middleware.logger.warning('ntp: failed to retrieve NTS authentication data', exc_info=True)
+            return []
+
+        return sorted({source['name'] for source in sources if not source['key_length'] or not source['cookies']})

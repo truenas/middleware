@@ -8,7 +8,7 @@ from middlewared.service import ConfigServicePart, ValidationError
 import middlewared.sqlalchemy as sa
 
 from .stig import configure_reboot_reason_on_ha, configure_stig
-from .validate import validate_password_security, validate_security, validate_stig
+from .validate import validate_password_security, validate_require_nts, validate_security, validate_stig
 
 if typing.TYPE_CHECKING:
     from middlewared.job import Job
@@ -20,6 +20,7 @@ class SystemSecurityModel(sa.Model):
     id = sa.Column(sa.Integer(), primary_key=True)
     enable_fips = sa.Column(sa.Boolean(), default=False)
     enable_gpos_stig = sa.Column(sa.Boolean(), default=False)
+    require_nts = sa.Column(sa.Boolean(), default=False)
     min_password_age = sa.Column(sa.Integer(), nullable=True)
     max_password_age = sa.Column(sa.Integer(), nullable=True)
     password_complexity_ruleset = sa.Column(sa.JSON(set), nullable=True)
@@ -53,7 +54,13 @@ class SystemSecurityConfigServicePart(ConfigServicePart[SystemSecurityEntry]):
 
             await validate_stig(self, job.credentials)
 
+        if new.require_nts and not old_config.require_nts:
+            await validate_require_nts(self)
+
         await self._update(new)
+
+        if new.require_nts != old_config.require_nts:
+            await self._restart_chronyd(is_ha)
 
         reboot_reason = None
         reboot_other_node = False
@@ -99,3 +106,14 @@ class SystemSecurityConfigServicePart(ConfigServicePart[SystemSecurityEntry]):
             await self.middleware.call("smb.apply_account_policy")
 
         return await self.config()
+
+    async def _restart_chronyd(self, is_ha: bool) -> None:
+        """Apply `require_nts` (chrony's `authselectmode`) on this controller and, on HA, on the other one too."""
+        await (await self.call2(self.s.service.control, "RESTART", "ntpd")).wait(raise_error=True)
+        if is_ha:
+            try:
+                await self.middleware.call(
+                    "failover.call_remote", "service.control", ["RESTART", "ntpd"], {"job": True}
+                )
+            except Exception:
+                self.logger.warning("ntp: failed to apply the NTS requirement on the other controller", exc_info=True)
