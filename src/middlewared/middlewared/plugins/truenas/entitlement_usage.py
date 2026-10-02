@@ -127,7 +127,7 @@ async def _sed(context: ServiceContext) -> bool:
     )
 
 
-async def _smb_veeam(context: ServiceContext) -> bool:
+async def _smb_block_cloning(context: ServiceContext) -> bool:
     return bool(
         await context.middleware.call(
             "sharing.smb.query", [["purpose", "=", "VEEAM_REPOSITORY_SHARE"]], {"count": True}
@@ -184,9 +184,7 @@ PROBES: dict[str, Callable[[ServiceContext], Awaitable[bool]] | None] = {
     LicenseFeature.S3_AUDIT: _s3_audit,
     LicenseFeature.S3_VERSIONING: _s3_versioning,
     LicenseFeature.SED: _sed,
-    # The entitlement is written straight into `smb.conf`; no stored setting records it.
-    LicenseFeature.SMB_FASTPATH: None,
-    LicenseFeature.SMB_VEEAM: _smb_veeam,
+    LicenseFeature.SMB_BLOCK_CLONING: _smb_block_cloning,
     LicenseFeature.STIG: _stig,
     # Gates ticket submission and an alert, neither of which leaves a configuration field behind.
     LicenseFeature.SUPPORT: None,

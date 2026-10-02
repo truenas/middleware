@@ -252,7 +252,9 @@ class SMBService(ConfigService):
                 share[share_field.AUDIT][field] = sids
 
         bind_ip_choices = self.middleware.call_sync('smb.bindip_choices')
-        smb_fastpath = self.call_sync2(self.s.truenas.entitlements.check, LicenseFeature.SMB_FASTPATH).entitled
+        smb_block_cloning = self.call_sync2(
+            self.s.truenas.entitlements.check, LicenseFeature.SMB_BLOCK_CLONING
+        ).entitled
         security_config = self.call_sync2(self.s.system.security.config)
         tiering_enabled = self.call_sync2(self.s.zfs.tier.config).enabled
         veeam_repo_errors = []
@@ -293,7 +295,7 @@ class SMBService(ConfigService):
             smb_config,
             smb_shares,
             bind_ip_choices,
-            smb_fastpath,
+            smb_block_cloning,
             security_config,
             tiering_enabled,
         )
@@ -1355,7 +1357,7 @@ class SharingSMBService(SharingService):
                     )
 
             if data[share_field.PURPOSE] == SMBSharePurpose.VEEAM_REPOSITORY_SHARE:
-                entitlement = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.SMB_VEEAM)
+                entitlement = await self.call2(self.s.truenas.entitlements.check, LicenseFeature.SMB_BLOCK_CLONING)
                 if not entitlement.entitled:
                     verrors.add(
                         f'{schema_name}.{share_field.PURPOSE}',
