@@ -19,8 +19,10 @@ class NetworkCommonService(Service):
             verrors.add(schema, 'Failover must be disabled.')
 
     async def check_dhcp_or_aliases(self, schema, verrors):
-        keys = ('ipv4_dhcp', 'ipv6_auto', 'aliases')
-        if not any([i[key] for key in keys] for i in await self.middleware.call('interface.query')):
-            verrors.add(
-                schema, 'At least one interface must be configured with IPv4 DHCP, IPv6 Autoconfig or a static IP.'
-            )
+        for iface in await self.middleware.call('interface.query'):
+            if iface['ipv4_dhcp'] or iface['ipv6_auto'] or iface['aliases']:
+                return
+
+        verrors.add(
+            schema, 'At least one interface must be configured with IPv4 DHCP, IPv6 Autoconfig or a static IP.'
+        )
