@@ -53,7 +53,7 @@ def get_encrypted_datasets(context: ServiceContext, filters: list[Any]) -> list[
         return rv
 
     for i in context.call_sync2(
-        context.s.zfs.resource.query_impl,
+        context.s.zfs.resource.list_impl,
         ZFSResourceQuery(paths=list(ds_in_db), get_children=True, properties=None)
     ):
         if i['name'] in ds_in_db:
@@ -183,7 +183,7 @@ def initialize_zfs_keys(context: ServiceContext, store: KMIPKeyStore, connection
             else:
                 store.zfs_keys[ds['name']] = key
         if ds['name'] in store.zfs_keys:
-            if context.middleware.call_sync('pool.dataset.path_in_locked_datasets', ds['name']):
+            if context.call_sync2(context.s.zfs.resource.path_is_locked, ds['name']):
                 context.middleware.call_sync('pool.dataset.unlock', ds['name'])
 
 

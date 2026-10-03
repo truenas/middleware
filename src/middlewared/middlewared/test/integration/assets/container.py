@@ -31,7 +31,7 @@ def configure_bridge():
 
 
 def get_mountpoint(dataset):
-    rv = call("zfs.resource.query", {"paths": [dataset], "properties": ["mountpoint"]})
+    rv = call("zfs.resource.list", {"paths": [dataset], "properties": ["mountpoint"]})
     return rv[0]["properties"]["mountpoint"]["value"]
 
 

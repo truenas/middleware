@@ -5,8 +5,12 @@ import os
 import shutil
 import uuid
 
-from middlewared.api.current import ZFSResourceQuery
-from middlewared.plugins.pool_.utils import CreateImplArgs, UpdateImplArgs
+from middlewared.api.current import (
+    ZFSResourceCreateArgsData,
+    ZFSResourceQuery,
+    ZFSResourceSetArgsData,
+    ZFSResourceSetProperties,
+)
 from middlewared.service import CallError, ServiceContext
 from middlewared.utils.interface import wait_for_default_interface_link_state_up
 
@@ -50,7 +54,7 @@ async def validate_fs(context: ServiceContext) -> None:
     ds = {
         i['name']
         for i in await context.call2(
-            context.s.zfs.resource.query_impl,
+            context.s.zfs.resource.list_impl,
             ZFSResourceQuery(paths=docker_datasets(config.dataset), properties=None)
         )
     }
@@ -60,7 +64,7 @@ async def validate_fs(context: ServiceContext) -> None:
     await context.to_thread(create_update_docker_datasets, context, config.dataset)
 
     for i in (config.dataset, config.pool):
-        if await context.middleware.call('pool.dataset.path_in_locked_datasets', i):
+        if await context.call2(context.s.zfs.resource.path_is_locked, i):
             raise CallError(
                 f'Cannot start docker because {i!r} is located in a locked dataset.',
                 errno=CallError.EDATASETISLOCKED,
@@ -84,33 +88,31 @@ def create_update_docker_datasets(context: ServiceContext, docker_ds: str) -> No
         dataset
     """
     expected_docker_datasets = docker_datasets(docker_ds)
+    update_props = DatasetDefaults.update_only()
+    expected_values = update_props.model_dump(exclude_none=True)
     actual_docker_datasets = {
         i['name']: i['properties'] for i in context.call_sync2(
-            context.s.zfs.resource.query_impl,
-            ZFSResourceQuery(
-                paths=expected_docker_datasets,
-                properties=list(DatasetDefaults.update_only(skip_ds_name_check=True).keys()),
-            )
+            context.s.zfs.resource.list_impl,
+            ZFSResourceQuery(paths=expected_docker_datasets, properties=list(expected_values)),
         )
     }
     for dataset_name in expected_docker_datasets:
         if existing_dataset := actual_docker_datasets.get(dataset_name):
-            update_props = DatasetDefaults.update_only(os.path.basename(dataset_name))
-            if any(val['raw'] != update_props[name] for name, val in existing_dataset.items()):
+            if any(val['raw'] != expected_values[name] for name, val in existing_dataset.items()):
                 # if any of the zfs properties don't match what we expect we'll update all properties
-                context.middleware.call_sync(
-                    'pool.dataset.update_impl',
-                    UpdateImplArgs(name=dataset_name, zprops=update_props)
+                context.call_sync2(
+                    context.s.zfs.resource.set_impl,
+                    ZFSResourceSetArgsData(path=dataset_name, properties=update_props, bypass=True),
                 )
         else:
             move_conflicting_dir(dataset_name)
-            context.middleware.call_sync(
-                'pool.dataset.create_impl',
-                CreateImplArgs(
-                    name=dataset_name,
-                    ztype='FILESYSTEM',
-                    zprops=DatasetDefaults.create_time_props(os.path.basename(dataset_name))
-                )
+            context.call_sync2(
+                context.s.zfs.resource.create_impl,
+                ZFSResourceCreateArgsData(
+                    path=dataset_name,
+                    properties=DatasetDefaults.create_time_props(os.path.basename(dataset_name)),
+                    bypass=True,
+                ),
             )
 
     set_canmount_noauto(context, docker_ds)
@@ -128,15 +130,17 @@ def set_canmount_noauto(context: ServiceContext, docker_ds: str) -> None:
     # canmount cannot be inherited in zfs and its default is `on`, so every dataset of the
     # tree has to be set individually instead of picking the value up from the apps root
     for ds in context.call_sync2(
-        context.s.zfs.resource.query_impl,
+        context.s.zfs.resource.list_impl,
         ZFSResourceQuery(paths=[docker_ds], get_children=True, properties=['canmount'])
     ):
         if ds['type'] != 'FILESYSTEM' or ds['properties']['canmount']['raw'] == 'noauto':
             continue
 
-        context.middleware.call_sync(
-            'pool.dataset.update_impl',
-            UpdateImplArgs(name=ds['name'], zprops={'canmount': 'noauto'})
+        context.call_sync2(
+            context.s.zfs.resource.set_impl,
+            ZFSResourceSetArgsData(
+                path=ds['name'], properties=ZFSResourceSetProperties(canmount='noauto'), bypass=True,
+            ),
         )
 
 

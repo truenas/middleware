@@ -149,7 +149,7 @@ def validate_convert_zvol(
     ptn = zvp.removeprefix('/dev/zvol/').replace('+', ' ')
     ntp = os.path.join('/dev/zvol', ptn.replace(' ', '+'))
     zv = context.call_sync2(
-        context.s.zfs.resource.query_impl,
+        context.s.zfs.resource.list_impl,
         ZFSResourceQuery(paths=[ptn], properties=['volsize'])
     )
     if not zv:

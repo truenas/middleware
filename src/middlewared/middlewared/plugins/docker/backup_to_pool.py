@@ -23,7 +23,7 @@ async def backup_to_pool(context: ServiceContext, job: Job, target_pool: str) ->
     verrors.check()
 
     target_root_ds = await context.call2(
-        context.s.zfs.resource.query_impl,
+        context.s.zfs.resource.list_impl,
         ZFSResourceQuery(paths=[target_pool], properties=['encryption'])
     )
     if not target_root_ds:

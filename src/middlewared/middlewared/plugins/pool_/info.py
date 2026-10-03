@@ -16,10 +16,9 @@ from middlewared.api.current import (
     PoolProcessesResult,
     ZFSResourceQuery,
 )
+from middlewared.plugins.zfs.resource_processes_utils import processes_using_dataset_tree
 from middlewared.plugins.zpool import get_zpool_disks_impl, get_zpool_features_impl, is_upgraded_impl
 from middlewared.service import Service, ValidationError, private
-
-from .dataset_processes_utils import processes_using_dataset_tree
 
 
 class PoolService(Service):
@@ -65,7 +64,7 @@ class PoolService(Service):
         share, asking for confirmation.
         """
         pool = await self.middleware.call('pool.get_instance', oid)
-        return await self.middleware.call('pool.dataset.attachments_with_path', pool['path'])
+        return await self.call2(self.s.zfs.resource.attachments_with_path, pool['path'])
 
     @api_method(PoolProcessesArgs, PoolProcessesResult, roles=['POOL_READ'])
     async def processes(self, oid):
@@ -120,7 +119,7 @@ class PoolService(Service):
         """Returns all available zfs resources based on ``types``."""
         info = []
         for i in await self.call2(
-            self.s.zfs.resource.query_impl,
+            self.s.zfs.resource.list_impl,
             ZFSResourceQuery(get_children=True, properties=None)
         ):
             if i['type'] in types:

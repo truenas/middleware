@@ -3,10 +3,12 @@ import os
 import shutil
 
 from middlewared.api import api_method
-from middlewared.api.current import PoolExportArgs, PoolExportResult
+from middlewared.api.current import PoolExportArgs, PoolExportResult, ZFSResourceQuery
 from middlewared.service import CallError, Service, job, private
 from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.utils.filesystem import attrs as fs_attrs
+
+from .utils import pool_dataset_view
 
 
 class PoolService(Service):
@@ -57,7 +59,7 @@ class PoolService(Service):
         if not (options['cascade'] and destroyed):
             return
 
-        for delegate in await self.middleware.call('pool.dataset.get_attachment_delegates_for_stop'):
+        for delegate in await self.call2(self.s.zfs.resource.attachment_delegates_for_stop):
             # The pool is already gone, so a delegate failure here must not fail the export job
             try:
                 await delegate.destroy(path)
@@ -91,7 +93,12 @@ class PoolService(Service):
         """
         pool = await self.middleware.call('pool.get_instance', oid)
         audit_callback(pool['name'])
-        root_ds = await self.middleware.call('pool.dataset.query', [['id', '=', pool['name']]])
+        root_ds = [
+            pool_dataset_view(r) for r in await self.call2(
+                self.s.zfs.resource.list_impl,
+                ZFSResourceQuery(paths=[pool['name']], properties=['mountpoint', 'encryption']),
+            )
+        ]
         if (
                 root_ds and
                 root_ds[0]['locked'] and
@@ -115,7 +122,7 @@ class PoolService(Service):
             if await self.call2(self.s.keyvalue.has_key, enable_on_import_key):
                 enable_on_import = await self.call2(self.s.keyvalue.get, enable_on_import_key)
 
-        for i, delegate in enumerate(await self.middleware.call('pool.dataset.get_attachment_delegates_for_stop')):
+        for i, delegate in enumerate(await self.call2(self.s.zfs.resource.attachment_delegates_for_stop)):
             job.set_progress(
                 i, f'{"Deleting" if options["cascade"] else "Disabling"} pool attachments: {delegate.title}')
 
@@ -139,7 +146,7 @@ class PoolService(Service):
             await self.call2(self.s.keyvalue.delete, enable_on_import_key)
 
         job.set_progress(20, 'Terminating processes that are using this pool')
-        await self.middleware.call('pool.dataset.kill_processes', pool['name'], options.get('restart_services', False))
+        await self.call2(self.s.zfs.resource.kill_processes, pool['name'], options.get('restart_services', False))
 
         await self.middleware.call('iscsi.global.terminate_luns_for_pool', pool['name'])
 

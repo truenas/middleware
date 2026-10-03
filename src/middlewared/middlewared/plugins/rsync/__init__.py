@@ -87,6 +87,8 @@ class RsyncFSAttachmentDelegate(LockableFSAttachmentDelegate[RsyncTaskEntry]):
 
 
 async def setup(middleware: Middleware) -> None:
-    await middleware.call("pool.dataset.register_attachment_delegate", RsyncFSAttachmentDelegate(middleware))
+    await middleware.call2(
+        middleware.services.zfs.resource.register_attachment_delegate, RsyncFSAttachmentDelegate(middleware)
+    )
     await middleware.call("network.general.register_activity", "rsync", "Rsync")
     await middleware.call("rsynctask.persist_task_state_on_job_complete")

@@ -65,7 +65,7 @@ class TrueSearchService(Service):
         pools = {directory.removeprefix('/mnt/').split('/')[0] for directory in directories}
 
         mountpoints = {}
-        for dataset in await self.call2(self.s.zfs.resource.query_impl, ZFSResourceQuery(
+        for dataset in await self.call2(self.s.zfs.resource.list_impl, ZFSResourceQuery(
             paths=pools,
             properties=['encryption', 'mountpoint'],
             get_children=True,

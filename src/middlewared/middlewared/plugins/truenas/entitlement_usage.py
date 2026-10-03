@@ -24,7 +24,7 @@ async def _containers(context: ServiceContext) -> bool:
 
 async def _dedup(context: ServiceContext) -> bool:
     for resource in await context.call2(
-        context.s.zfs.resource.query_impl,
+        context.s.zfs.resource.list_impl,
         ZFSResourceQuery(properties=["dedup"], get_children=True),
     ):
         dedup = (resource["properties"] or {}).get("dedup") or {}

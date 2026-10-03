@@ -18,6 +18,7 @@ from middlewared.api.current import (
     AuditUpdateArgs,
     AuditUpdateResult,
     ZFSResourceQuery,
+    ZFSResourceSetArgsData,
 )
 from middlewared.plugins.pool_.utils import UpdateImplArgs
 from middlewared.plugins.zfs_.utils import LEGACY_USERPROP_PREFIX, TNUserProp
@@ -85,7 +86,7 @@ class AuditService(ConfigService):
     def get_audit_dataset(self):
         ds_name = self.audit_dataset_name()
         ds = self.call_sync2(
-            self.s.zfs.resource.query_impl,
+            self.s.zfs.resource.list_impl,
             ZFSResourceQuery(
                 paths=[ds_name],
                 properties=[
@@ -403,7 +404,10 @@ class AuditService(ConfigService):
             return
 
         args = UpdateImplArgs(name=ds['name'], zprops=zprops, uprops=uprops)
-        await self.middleware.call('pool.dataset.update_impl', args)
+        await self.call2(
+            self.s.zfs.resource.set_impl,
+            ZFSResourceSetArgsData(path=ds['name'], properties=zprops, user_properties=uprops, bypass=True),
+        )
         if await self.middleware.call('failover.status') == 'MASTER':
             try:
                 await self.middleware.call(
@@ -473,7 +477,7 @@ class AuditService(ConfigService):
         # activated boot environment.
         to_remove = set()
         for i in await self.call2(
-            self.s.zfs.resource.query_impl,
+            self.s.zfs.resource.list_impl,
             ZFSResourceQuery(paths=[boot_pool], properties=['refreservation'], get_children=True)
         ):
             if i['name'] == cur['name'] or i['name'] == parent or i['name'].startswith(f'{parent}/'):
@@ -492,9 +496,8 @@ class AuditService(ConfigService):
         zprops = {'refreservation': 'none'}
         for ds_name in to_remove:
             try:
-                await self.middleware.call(
-                    'pool.dataset.update_impl',
-                    UpdateImplArgs(name=ds_name, zprops=zprops)
+                await self.call2(
+                    self.s.zfs.resource.set_impl, ZFSResourceSetArgsData(path=ds_name, properties=zprops, bypass=True),
                 )
             except Exception:
                 self.logger.error(

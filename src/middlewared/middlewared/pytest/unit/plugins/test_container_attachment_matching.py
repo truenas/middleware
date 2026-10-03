@@ -75,7 +75,7 @@ async def test_container_on_paths_matches_in_a_single_is_child_call():
 async def test_storage_locked_considers_root_and_filesystem_sources():
     m = Middleware()
     locked = set()
-    m["pool.dataset.path_in_locked_datasets"] = lambda path: path in locked
+    m.services.zfs.resource.path_is_locked = lambda path: path in locked
     delegate = ContainerFSAttachmentDelegate(m)
     c = container("tank/.truenas_containers/containers/c", [fs_device("/mnt/other/data")])
 
@@ -99,7 +99,7 @@ class StartOnUnlockDriver:
         self.container = container("tank/ds", devices, state=state, autostart=autostart)
         self.middleware = Middleware()
         self.middleware["filesystem.is_child"] = lambda child, parent: True
-        self.middleware["pool.dataset.path_in_locked_datasets"] = lambda path: path in locked_paths
+        self.middleware.services.zfs.resource.path_is_locked = lambda path: path in locked_paths
         self.middleware.services.container.query = self._query
         self.middleware.services.container.get_instance = lambda *args: self.container
         self.middleware.services.container.start = self._record("start")

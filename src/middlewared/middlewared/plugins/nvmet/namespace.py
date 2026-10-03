@@ -14,8 +14,9 @@ from middlewared.api.current import (
     NVMetNamespaceUpdateArgs,
     NVMetNamespaceUpdateResult,
     ZFSResourceQuery,
+    ZFSResourceSetArgsData,
+    ZFSResourceSetProperties,
 )
-from middlewared.plugins.pool_.utils import UpdateImplArgs
 from middlewared.plugins.zfs_.utils import zvol_name_to_path, zvol_path_to_name
 from middlewared.plugins.zfs_.validation_utils import validate_dataset_name
 from middlewared.service import SharingService, ValidationErrors, private
@@ -113,12 +114,11 @@ class NVMetNamespaceService(SharingService):
             if data['device_type'] == 'ZVOL' and data['device_path'].startswith('zvol/'):
                 zvolname = zvol_path_to_name(os.path.join('/dev', data['device_path']))
                 if '@' not in zvolname:  # Snapshots don't support volthreading property
-                    await self.middleware.call(
-                        'pool.dataset.update_impl',
-                        UpdateImplArgs(
-                            name=zvolname,
-                            zprops={'volthreading': 'off'}
-                        )
+                    await self.call2(
+                        self.s.zfs.resource.set_impl,
+                        ZFSResourceSetArgsData(
+                            path=zvolname, properties=ZFSResourceSetProperties(volthreading='off'), bypass=True,
+                        ),
                     )
 
         async with NSID_LOCK:
@@ -159,12 +159,11 @@ class NVMetNamespaceService(SharingService):
             if new['device_type'] == 'ZVOL' and new['device_path'].startswith('zvol/'):
                 zvolname = zvol_path_to_name(os.path.join('/dev', new['device_path']))
                 if '@' not in zvolname:  # Snapshots don't support volthreading property
-                    await self.middleware.call(
-                        'pool.dataset.update_impl',
-                        UpdateImplArgs(
-                            name=zvolname,
-                            zprops={'volthreading': 'off'}
-                        )
+                    await self.call2(
+                        self.s.zfs.resource.set_impl,
+                        ZFSResourceSetArgsData(
+                            path=zvolname, properties=ZFSResourceSetProperties(volthreading='off'), bypass=True,
+                        ),
                     )
 
         await self.compress(new)
@@ -202,7 +201,7 @@ class NVMetNamespaceService(SharingService):
                 zvolname = zvol_path_to_name(os.path.join('/dev', data['device_path']))
                 if '@' not in zvolname:  # Snapshots don't support volthreading property
                     if zvol := await self.call2(
-                        self.s.zfs.resource.query_impl,
+                        self.s.zfs.resource.list_impl,
                         ZFSResourceQuery(paths=[zvolname], properties=['volthreading'])
                     ):
                         if (
@@ -213,12 +212,11 @@ class NVMetNamespaceService(SharingService):
                             # 1. volume still exists
                             # 2. is a volume
                             # 3. volthreading is currently off
-                            await self.middleware.call(
-                                'pool.dataset.update_impl',
-                                UpdateImplArgs(
-                                    name=zvolname,
-                                    zprops={'volthreading': 'on'}
-                                )
+                            await self.call2(
+                                self.s.zfs.resource.set_impl,
+                                ZFSResourceSetArgsData(
+                                    path=zvolname, properties=ZFSResourceSetProperties(volthreading='on'), bypass=True,
+                                ),
                             )
 
         rv = await self.middleware.call('datastore.delete', self._config.datastore, id_)
@@ -472,9 +470,7 @@ class NVMetNamespaceService(SharingService):
         path = await self.get_path_field(data)
         if data['device_type'] == 'FILE':
             if dataset := data.get('dataset'):
-                return await self.middleware.call(
-                    'pool.dataset.path_in_locked_datasets', dataset
-                )
+                return await self.call2(self.s.zfs.resource.path_is_locked, dataset)
             for component in pathlib.Path(path.removeprefix('/mnt/')).parents:
                 c = component.as_posix()
                 # walk up the path starting from right to left
@@ -483,14 +479,8 @@ class NVMetNamespaceService(SharingService):
                 # assumption that it _CANT_ be a filesystem
                 # and so we move up to the next path.
                 if validate_dataset_name(c):
-                    return await self.middleware.call(
-                        'pool.dataset.path_in_locked_datasets',
-                        c
-                    )
-        return await self.middleware.call(
-            'pool.dataset.path_in_locked_datasets',
-            path
-        )
+                    return await self.call2(self.s.zfs.resource.path_is_locked, c)
+        return await self.call2(self.s.zfs.resource.path_is_locked, path)
 
     @private
     async def resync_lun_size_for_zvol(self, zvol_id):
@@ -536,16 +526,15 @@ class NVMetNamespaceService(SharingService):
             return
 
         for zvol in await self.call2(
-            self.s.zfs.resource.query_impl,
+            self.s.zfs.resource.list_impl,
             ZFSResourceQuery(paths=zvols, properties=['volthreading']),
         ):
             if zvol['properties']['volthreading']['raw'] == 'on':
-                await self.middleware.call(
-                    'pool.dataset.update_impl',
-                    UpdateImplArgs(
-                        name=zvol['name'],
-                        zprops={'volthreading': 'off'}
-                    )
+                await self.call2(
+                    self.s.zfs.resource.set_impl,
+                    ZFSResourceSetArgsData(
+                        path=zvol['name'], properties=ZFSResourceSetProperties(volthreading='off'), bypass=True,
+                    ),
                 )
 
 

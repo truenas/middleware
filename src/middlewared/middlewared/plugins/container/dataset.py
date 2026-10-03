@@ -1,7 +1,6 @@
 import os
 
-from middlewared.api.current import ZFSResourceQuery
-from middlewared.plugins.pool_.utils import CreateImplArgs
+from middlewared.api.current import ZFSResourceCreateArgsData, ZFSResourceCreateProperties, ZFSResourceQuery
 from middlewared.service import CallError, ServiceContext
 from middlewared.utils.filesystem.perms import enforce_dir_perms
 
@@ -18,7 +17,7 @@ async def ensure_datasets(context: ServiceContext, pool: str) -> None:
 
     existing_datasets = set()
     for dataset in await context.call2(
-        context.s.zfs.resource.query_impl, ZFSResourceQuery(paths=[main_dataset] + datasets, properties=["mountpoint"])
+        context.s.zfs.resource.list_impl, ZFSResourceQuery(paths=[main_dataset] + datasets, properties=["mountpoint"])
     ):
         if dataset["type"] != "FILESYSTEM":
             raise CallError(f"Expected dataset {dataset['name']!r} to be FILESYSTEM, but it is {dataset['type']}")
@@ -34,17 +33,17 @@ async def ensure_datasets(context: ServiceContext, pool: str) -> None:
         existing_datasets.add(dataset["name"])
 
     if main_dataset not in existing_datasets:
-        await context.middleware.call(
-            "pool.dataset.create_impl",
-            CreateImplArgs(
-                name=main_dataset,
-                ztype="FILESYSTEM",
-                zprops={
-                    "mountpoint": main_dataset_mountpoint,
-                    "acltype": "posix",
-                    "aclmode": "discard",
-                    "snapdir": "hidden",
-                },
+        await context.call2(
+            context.s.zfs.resource.create_impl,
+            ZFSResourceCreateArgsData(
+                path=main_dataset,
+                properties=ZFSResourceCreateProperties(
+                    mountpoint=main_dataset_mountpoint,
+                    acltype="posix",
+                    aclmode="discard",
+                    snapdir="hidden",
+                ),
+                bypass=True,
             ),
         )
 
@@ -53,7 +52,9 @@ async def ensure_datasets(context: ServiceContext, pool: str) -> None:
 
     for ds_name in datasets:
         if ds_name not in existing_datasets:
-            await context.middleware.call("pool.dataset.create_impl", CreateImplArgs(name=ds_name, ztype="FILESYSTEM"))
+            await context.call2(
+                context.s.zfs.resource.create_impl, ZFSResourceCreateArgsData(path=ds_name, bypass=True)
+            )
         await context.call2(context.s.zfs.resource.mount, ds_name)
 
     # ZFS auto-creates CONTAINER_DS_PARENT_DIR as a side effect of mounting the

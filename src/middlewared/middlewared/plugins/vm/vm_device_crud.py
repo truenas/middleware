@@ -14,6 +14,8 @@ from middlewared.api.current import (
     VMDeviceUpdate,
     VMDiskDevice,
     VMRAWDevice,
+    ZFSResourceCreateArgsData,
+    ZFSResourceCreateProperties,
     ZFSResourceQuery,
 )
 from middlewared.plugins.zfs.zvol_utils import zvol_path_to_name
@@ -115,7 +117,7 @@ class VMDeviceServicePart(CRUDServicePart[VMDeviceEntry]):
                 raise CallError('Unable to destroy zvol as disk device has misconfigured path')
             zvol_id = zvol_path_to_name(path)
             if await self.call2(
-                self.s.zfs.resource.query_impl, ZFSResourceQuery(paths=[zvol_id], properties=None)
+                self.s.zfs.resource.list_impl, ZFSResourceQuery(paths=[zvol_id], properties=None)
             ):
                 # FIXME: What about FS attachment? Also should we be stopping the vm only when
                 # deleting an attachment ?
@@ -174,16 +176,20 @@ class VMDeviceServicePart(CRUDServicePart[VMDeviceEntry]):
         if device_dtype == 'DISK':
             create_zvol = data['attributes'].pop('create_zvol', False)
             if create_zvol:
-                ds_options: dict[str, Any] = {
-                    'name': data['attributes'].pop('zvol_name'),
-                    'type': 'VOLUME',
-                    'volsize': data['attributes'].pop('zvol_volsize'),
-                }
-                zvol_blocksize = await self.middleware.call(
-                    'pool.dataset.recommended_zvol_blocksize', ds_options['name'].split('/', 1)[0]
+                zvol_name = data['attributes'].pop('zvol_name')
+                await self.call2(
+                    self.s.zfs.resource.create,
+                    ZFSResourceCreateArgsData(
+                        path=zvol_name,
+                        type='VOLUME',
+                        properties=ZFSResourceCreateProperties(**{
+                            'volsize': data['attributes'].pop('zvol_volsize'),
+                            'volblocksize': await self.call2(
+                                self.s.zfs.resource.recommended_zvol_blocksize, zvol_name.split('/', 1)[0]
+                            ),
+                        }),
+                    ),
                 )
-                ds_options['volblocksize'] = zvol_blocksize
-                await self.middleware.call('pool.dataset.create', ds_options)
         elif device_dtype == 'RAW' and (
             not data['attributes'].pop('exists', True) or (
                 old and old['attributes']['size'] != data['attributes']['size']

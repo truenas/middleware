@@ -96,7 +96,7 @@ def basenqn():
 
 def get_zvol_property(zvolid, property_name):
     return call(
-        'zfs.resource.query',
+        'zfs.resource.list',
         {'paths': [zvolid], 'properties': [property_name]}
     )[0]['properties'][property_name]['value']
 
@@ -872,7 +872,7 @@ class TestNVMe(NVMeRunning):
                         # Try to shrink the volume aagain, ensure that fails
                         with assert_validation_errors(
                             'pool_dataset_update.volsize',
-                            'You cannot shrink a zvol from GUI, this may lead to data loss.',
+                            "'volsize' may not be reduced below the current size of",
                         ):
                             call(
                                 'pool.dataset.update',

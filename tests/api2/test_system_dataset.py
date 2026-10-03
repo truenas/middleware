@@ -34,7 +34,7 @@ def passphrase_encrypted_pool(passphrase_encrypted_pool_session):
     if call("pool.dataset.get_instance", passphrase_encrypted_pool_session)["locked"]:
         call("pool.dataset.unlock", passphrase_encrypted_pool_session, {
             "datasets": [{"name": passphrase_encrypted_pool_session, "passphrase": PASSPHRASE}],
-        })
+        }, job=True)
 
     yield passphrase_encrypted_pool_session
 
@@ -52,7 +52,7 @@ def test_migrate_to_a_pool_with_passphrase_encrypted_root_dataset(passphrase_enc
         "paths": [f"{passphrase_encrypted_pool}/.system"],
         "properties": ["encryption"]
     }
-    ds = call("zfs.resource.query", query_args)[0]
+    ds = call("zfs.resource.list", query_args)[0]
     assert ds["properties"]["encryption"]["value"] == "off"
 
     call("systemdataset.update", {"pool": pool}, job=True)
@@ -67,7 +67,7 @@ def test_lock_passphrase_encrypted_pool_with_system_dataset(passphrase_encrypted
         "paths": [f"{passphrase_encrypted_pool}/.system"],
         "properties": ["mounted"]
     }
-    ds = call("zfs.resource.query", query_args)[0]
+    ds = call("zfs.resource.list", query_args)[0]
     assert ds["properties"]["mounted"]["raw"] == "yes"
 
     call("systemdataset.update", {"pool": pool}, job=True)

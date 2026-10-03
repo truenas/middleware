@@ -194,7 +194,7 @@ MOUNTED_FILESYSTEM = (
     ("properties.mountpoint.raw", "^", "/"),
 )
 """A dataset a bucket can be on: never a zvol, and mounted somewhere a
-path reaches. `zfs.resource.query` takes no filter of its own and yields
+path reaches. `zfs.resource.list` takes no filter of its own and yields
 volumes as well as filesystems, so this is applied to what it returns.
 
 Properties are read raw here and wherever a recovery looks at one: the
@@ -541,7 +541,7 @@ class SharingS3Service(SharingService[SharingS3Entry]):
         is gone. Read from ZFS whenever it is needed rather than kept: the
         dataset is the bucket's identity and its mount point follows it."""
         rows = await self.call2(
-            self.s.zfs.resource.query_impl, ZFSResourceQuery(paths=[dataset], properties=["mountpoint"])
+            self.s.zfs.resource.list_impl, ZFSResourceQuery(paths=[dataset], properties=["mountpoint"])
         )
         mountpoint = rows[0]["properties"]["mountpoint"]["value"] if rows else None
         return mountpoint if mountpoint and mountpoint.startswith("/") else None
@@ -627,7 +627,7 @@ class SharingS3Service(SharingService[SharingS3Entry]):
             return None
         try:
             rows = await self.call2(
-                self.s.zfs.resource.query_impl,
+                self.s.zfs.resource.list_impl,
                 ZFSResourceQuery(paths=[root], properties=None, max_depth=1),
             )
         except ZFSPathNotFoundException:
@@ -689,6 +689,8 @@ class SharingS3Service(SharingService[SharingS3Entry]):
             verrors.add(f"{schema}.dataset", e.message, errno.EEXIST)
         except ZFSPathNotFoundException as e:
             verrors.add(f"{schema}.dataset", e.message, errno.ENOENT)
+        except ValidationError as e:
+            verrors.add(f"{schema}.dataset", e.errmsg, e.errno)
         except ValueError as e:
             verrors.add(f"{schema}.dataset", str(e), errno.EINVAL)
         verrors.check()
@@ -1044,7 +1046,7 @@ class SharingS3Service(SharingService[SharingS3Entry]):
             return None
         try:
             zfs_rows = await self.call2(
-                self.s.zfs.resource.query_impl,
+                self.s.zfs.resource.list_impl,
                 ZFSResourceQuery(paths=[dataset], properties=list(RECOVER_PROPERTIES), get_children=True),
             )
         except ZFSPathNotFoundException as e:
@@ -1184,7 +1186,7 @@ class SharingS3Service(SharingService[SharingS3Entry]):
             )
         }
         rows = await self.call2(
-            self.s.zfs.resource.query_impl,
+            self.s.zfs.resource.list_impl,
             ZFSResourceQuery(paths=[], properties=["mountpoint", "mounted"], get_children=True),
         )
         mounts = {
@@ -1253,7 +1255,7 @@ class S3FSAttachmentDelegate(LockableFSAttachmentDelegate[SharingS3Entry]):
 
 
 async def setup(middleware: Middleware) -> None:
-    await middleware.call(
-        "pool.dataset.register_attachment_delegate",
+    await middleware.call2(
+        middleware.services.zfs.resource.register_attachment_delegate,
         S3FSAttachmentDelegate(middleware),
     )

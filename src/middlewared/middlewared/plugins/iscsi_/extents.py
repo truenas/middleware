@@ -8,6 +8,8 @@ import uuid
 from middlewared.api import api_method
 from middlewared.api.current import (
     ZFSResourceQuery,
+    ZFSResourceSetArgsData,
+    ZFSResourceSetProperties,
     iSCSITargetExtentCreateArgs,
     iSCSITargetExtentCreateResult,
     iSCSITargetExtentDeleteArgs,
@@ -19,7 +21,6 @@ from middlewared.api.current import (
     iSCSITargetExtentUpdateResult,
 )
 from middlewared.async_validators import check_path_resides_within_volume
-from middlewared.plugins.pool_.utils import UpdateImplArgs
 from middlewared.plugins.zfs_.utils import zvol_path_to_name
 from middlewared.plugins.zfs_.validation_utils import validate_dataset_name
 from middlewared.service import CallError, SharingService, ValidationErrors, private
@@ -93,9 +94,7 @@ class iSCSITargetExtentService(SharingService):
         path = await self.get_path_field(data)
         if data['type'] == 'FILE':
             if dataset := data.get('dataset'):
-                return await self.middleware.call(
-                    'pool.dataset.path_in_locked_datasets', dataset
-                )
+                return await self.call2(self.s.zfs.resource.path_is_locked, dataset)
             for component in pathlib.Path(path.removeprefix('/mnt/')).parents:
                 c = component.as_posix()
                 # walk up the path starting from right to left
@@ -104,14 +103,8 @@ class iSCSITargetExtentService(SharingService):
                 # assumption that it _CANT_ be a filesystem
                 # and so we move up to the next path.
                 if validate_dataset_name(c):
-                    return await self.middleware.call(
-                        'pool.dataset.path_in_locked_datasets',
-                        c
-                    )
-        return await self.middleware.call(
-            'pool.dataset.path_in_locked_datasets',
-            path
-        )
+                    return await self.call2(self.s.zfs.resource.path_is_locked, c)
+        return await self.call2(self.s.zfs.resource.path_is_locked, path)
 
     @api_method(
         iSCSITargetExtentCreateArgs,
@@ -134,12 +127,13 @@ class iSCSITargetExtentService(SharingService):
         if data['type'] == 'DISK' and data['path'].startswith('zvol/'):
             zvolname = zvol_path_to_name(os.path.join('/dev', data['path']))
             if '@' not in zvolname:  # Snapshots don't support volthreading/readonly properties
-                await self.middleware.call(
-                    'pool.dataset.update_impl',
-                    UpdateImplArgs(
-                        name=zvolname,
-                        zprops={'volthreading': 'off', 'readonly': 'on' if data['ro'] else 'off'}
-                    )
+                await self.call2(
+                    self.s.zfs.resource.set_impl,
+                    ZFSResourceSetArgsData(
+                        path=zvolname,
+                        properties=ZFSResourceSetProperties(volthreading='off', readonly='on' if data['ro'] else 'off'),
+                        bypass=True,
+                    ),
                 )
 
         data['id'] = await self.middleware.call(
@@ -178,12 +172,13 @@ class iSCSITargetExtentService(SharingService):
         if zvolpath is not None and zvolpath.startswith('zvol/'):
             zvolname = zvol_path_to_name(os.path.join('/dev', zvolpath))
             if '@' not in zvolname:  # Snapshots don't support readonly property
-                await self.middleware.call(
-                    'pool.dataset.update_impl',
-                    UpdateImplArgs(
-                        name=zvolname,
-                        zprops={'readonly': 'on' if new['ro'] else 'off'}
-                    )
+                await self.call2(
+                    self.s.zfs.resource.set_impl,
+                    ZFSResourceSetArgsData(
+                        path=zvolname,
+                        properties=ZFSResourceSetProperties(readonly='on' if new['ro'] else 'off'),
+                        bypass=True,
+                    ),
                 )
 
         await self.middleware.call(
@@ -317,7 +312,7 @@ class iSCSITargetExtentService(SharingService):
             zvolname = zvol_path_to_name(os.path.join('/dev', data['path']))
             if '@' not in zvolname:  # Snapshots don't support volthreading property
                 if zvol := await self.call2(
-                    self.s.zfs.resource.query_impl,
+                    self.s.zfs.resource.list_impl,
                     ZFSResourceQuery(paths=[zvolname], properties=['volthreading'])
                 ):
                     if (
@@ -328,12 +323,11 @@ class iSCSITargetExtentService(SharingService):
                         # 1. volume still exists
                         # 2. is a volume
                         # 3. volthreading is currently off
-                        await self.middleware.call(
-                            'pool.dataset.update_impl',
-                            UpdateImplArgs(
-                                name=zvolname,
-                                zprops={'volthreading': 'on'}
-                            )
+                        await self.call2(
+                            self.s.zfs.resource.set_impl,
+                            ZFSResourceSetArgsData(
+                                path=zvolname, properties=ZFSResourceSetProperties(volthreading='on'), bypass=True,
+                            ),
                         )
 
         try:
@@ -757,16 +751,15 @@ class iSCSITargetExtentService(SharingService):
             return
 
         for zvol in await self.call2(
-            self.s.zfs.resource.query_impl,
+            self.s.zfs.resource.list_impl,
             ZFSResourceQuery(paths=zvols, properties=['volthreading']),
         ):
             if zvol['properties']['volthreading']['raw'] == 'on':
-                await self.middleware.call(
-                    'pool.dataset.update_impl',
-                    UpdateImplArgs(
-                        name=zvol['name'],
-                        zprops={'volthreading': 'off'}
-                    )
+                await self.call2(
+                    self.s.zfs.resource.set_impl,
+                    ZFSResourceSetArgsData(
+                        path=zvol['name'], properties=ZFSResourceSetProperties(volthreading='off'), bypass=True,
+                    ),
                 )
 
 

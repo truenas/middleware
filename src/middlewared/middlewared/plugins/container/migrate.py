@@ -11,8 +11,13 @@ from truenas_pylibvirt.utils.usb import get_all_usb_devices
 import yaml
 
 from middlewared.alert.base import AlertCategory, AlertClassConfig, AlertLevel, OneShotAlertClass
-from middlewared.api.current import ContainerEntry, ZFSResourceQuery
-from middlewared.plugins.pool_.utils import UpdateImplArgs
+from middlewared.api.current import (
+    ContainerEntry,
+    ZFSResourceQuery,
+    ZFSResourceRenameArgsData,
+    ZFSResourceSetArgsData,
+    ZFSResourceSetProperties,
+)
 from middlewared.service import CallError, ServiceContext
 import middlewared.sqlalchemy as sa
 from middlewared.utils.libvirt.nic import normalize_mac, random_mac
@@ -189,7 +194,7 @@ async def maybe_migrate_legacy(context: ServiceContext) -> None:
         if datasets := {
             dataset["name"].split("/")[-1].removesuffix(".block")
             for dataset in await context.call2(
-                context.s.zfs.resource.query_impl,
+                context.s.zfs.resource.list_impl,
                 ZFSResourceQuery(paths=[vm_dataset], max_depth=1, properties=None)
             )
             if dataset["name"] != vm_dataset
@@ -429,7 +434,7 @@ def migrate_specific_pool(
     assert job.logs_fd is not None
     processed_parents_mountpoints = False
     datasets = context.call_sync2(
-        context.s.zfs.resource.query_impl,
+        context.s.zfs.resource.list_impl,
         ZFSResourceQuery(
             paths=[f'{pool}/.ix-virt/containers'],
             get_children=True,
@@ -470,25 +475,27 @@ def migrate_specific_pool(
                 # before the second one fails.
                 processed_parents_mountpoints = True
                 for ds in (f'{pool}/.ix-virt', f'{pool}/.ix-virt/containers'):
-                    context.middleware.call_sync(
-                        'pool.dataset.update_impl',
-                        UpdateImplArgs(
-                            name=ds,
-                            zprops={'readonly': 'off'},
-                            iprops={'mountpoint'}
-                        )
+                    context.call_sync2(
+                        context.s.zfs.resource.set_impl,
+                        ZFSResourceSetArgsData(
+                            path=ds,
+                            properties=ZFSResourceSetProperties(readonly='off'),
+                            inherit=['mountpoint'],
+                            bypass=True,
+                        ),
                     )
 
             # Armed before the properties are touched: a partial apply has to be
-            # reverted too, and update_impl can fail between the two of them.
+            # reverted too, and the write can fail between the two of them.
             needs_mount_revert = True
-            context.middleware.call_sync(
-                'pool.dataset.update_impl',
-                UpdateImplArgs(
-                    name=dataset['name'],
-                    zprops={'canmount': 'on'},
-                    iprops={'mountpoint'},
-                )
+            context.call_sync2(
+                context.s.zfs.resource.set_impl,
+                ZFSResourceSetArgsData(
+                    path=dataset['name'],
+                    properties=ZFSResourceSetProperties(canmount='on'),
+                    inherit=['mountpoint'],
+                    bypass=True,
+                ),
             )
             context.call_sync2(context.s.zfs.resource.mount, dataset['name'])
 
@@ -529,7 +536,10 @@ def migrate_specific_pool(
             os.chown(parent_path, rootfs_stats.st_uid, rootfs_stats.st_gid)
             os.rmdir(rootfs_path)
 
-            context.call_sync2(context.s.zfs.resource.rename, dataset['name'], dst_dataset)
+            context.call_sync2(
+                context.s.zfs.resource.rename_impl,
+                ZFSResourceRenameArgsData(current_name=dataset['name'], new_name=dst_dataset),
+            )
             # From here on the dataset lives in its native location, where the mount
             # properties set above are the correct ones to keep.
             needs_mount_revert = False
@@ -555,7 +565,10 @@ def migrate_specific_pool(
                 # native tree is hidden from dataset queries. Move it back so it stays
                 # something the user can see and act on.
                 try:
-                    context.call_sync2(context.s.zfs.resource.rename, dst_dataset, dataset['name'])
+                    context.call_sync2(
+                        context.s.zfs.resource.rename_impl,
+                        ZFSResourceRenameArgsData(current_name=dst_dataset, new_name=dataset['name']),
+                    )
                 except Exception:
                     context.logger.error(
                         '%s: failed to move back after an incomplete migration', dst_dataset,
@@ -595,11 +608,12 @@ def revert_incus_mount_properties(context: ServiceContext, job: Job, container_d
         job.logs_fd.write(f'Failed to unmount {container_ds!r} after skipping it.\n'.encode())
 
     try:
-        context.middleware.call_sync(
-            'pool.dataset.update_impl',
-            UpdateImplArgs(
-                name=container_ds,
-                zprops={'canmount': 'noauto', 'mountpoint': 'legacy'},
+        context.call_sync2(
+            context.s.zfs.resource.set_impl,
+            ZFSResourceSetArgsData(
+                path=container_ds,
+                properties=ZFSResourceSetProperties(canmount='noauto', mountpoint='legacy'),
+                bypass=True,
             ),
         )
     except Exception:
@@ -622,9 +636,9 @@ def restore_legacy_parent_mountpoints(context: ServiceContext, pool: str) -> Non
     """
     for ds in (f'{pool}/.ix-virt/containers', f'{pool}/.ix-virt'):
         try:
-            context.middleware.call_sync(
-                'pool.dataset.update_impl',
-                UpdateImplArgs(name=ds, zprops={'mountpoint': 'legacy'}),
+            context.call_sync2(
+                context.s.zfs.resource.set_impl,
+                ZFSResourceSetArgsData(path=ds, properties=ZFSResourceSetProperties(mountpoint='legacy'), bypass=True),
             )
         except Exception:
             context.logger.warning('%s: failed to restore mountpoint after migration', ds, exc_info=True)
@@ -652,7 +666,7 @@ def relocate_container_origin(context: ServiceContext, container_ds: str) -> str
     """
     try:
         resources = context.call_sync2(
-            context.s.zfs.resource.query_impl,
+            context.s.zfs.resource.list_impl,
             ZFSResourceQuery(paths=[container_ds], properties=['origin']),
         )
     except Exception:
@@ -712,7 +726,7 @@ def relocate_container_origin(context: ServiceContext, container_ds: str) -> str
     final_target = target
     attempt = 0
     while context.call_sync2(
-        context.s.zfs.resource.query_impl,
+        context.s.zfs.resource.list_impl,
         ZFSResourceQuery(paths=[final_target], properties=None),
     ):
         attempt += 1
@@ -721,11 +735,18 @@ def relocate_container_origin(context: ServiceContext, container_ds: str) -> str
     # canmount is set before the rename so the atomic rename is the last step:
     # either the image is still wholly in .ix-virt, or it is fully relocated.
     try:
-        context.middleware.call_sync(
-            'pool.dataset.update_impl',
-            UpdateImplArgs(name=origin_dataset, zprops={'canmount': 'noauto'}),
+        context.call_sync2(
+            context.s.zfs.resource.set_impl,
+            ZFSResourceSetArgsData(
+                path=origin_dataset,
+                properties=ZFSResourceSetProperties(canmount='noauto'),
+                bypass=True,
+            ),
         )
-        context.call_sync2(context.s.zfs.resource.rename, origin_dataset, final_target)
+        context.call_sync2(
+            context.s.zfs.resource.rename_impl,
+            ZFSResourceRenameArgsData(current_name=origin_dataset, new_name=final_target),
+        )
     except Exception:
         context.logger.error(
             '%s: failed to relocate origin image %r out of .ix-virt',

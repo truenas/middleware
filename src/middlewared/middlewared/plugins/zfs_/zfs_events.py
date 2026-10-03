@@ -204,6 +204,8 @@ async def zfs_events(middleware, event: ZfsEvent):
         # we need to send events for dataset creation/updating/deletion in case it's done via cli
         event_type = event.history_internal_name
         ds_id = event.history_dsname
+        if event_type == 'destroy' and '@' not in ds_id and not ds_id.split('/')[-1].startswith('%'):
+            middleware.send_event('zfs.resource.list', 'REMOVED', id=ds_id)
         if await middleware.call('pool.dataset.is_internal_dataset', ds_id):
             # We should not raise any event for system internal datasets
             return

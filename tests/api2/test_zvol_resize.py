@@ -1,5 +1,5 @@
 from auto_config import pool_name
-from middlewared.service_exception import ValidationError
+from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call, ssh
 import pytest
@@ -12,7 +12,7 @@ BASE_ARGS = {"type": "VOLUME", "volsize": _256MiB, "volblocksize": "64K"}
 
 def query_zvol(zvol):
     result = call(
-        "zfs.resource.query",
+        "zfs.resource.list",
         {"paths": [zvol], "properties": ["refreservation", "volsize"]},
     )
     assert result and len(result) == 1
@@ -35,7 +35,7 @@ def thick_refreservation(zvol):
 
 
 def pool_available():
-    result = call("zfs.resource.query", {"paths": [pool_name], "properties": ["available"]})
+    result = call("zfs.resource.list", {"paths": [pool_name], "properties": ["available"]})
     return result[0]["properties"]["available"]["value"]
 
 
@@ -74,9 +74,19 @@ def test_grow_readonly_zvol_keeps_refreservation():
     # leave a reservation for the new size behind
     with dataset(f"{BASE_NAME}_readonly", BASE_ARGS | {"readonly": "ON"}) as ds:
         before = query_zvol(ds)
-        with pytest.raises(ValidationError, match="Failed to update properties"):
+        with pytest.raises(ValidationErrors, match="while it is read-only"):
             grow_zvol(ds)
         assert query_zvol(ds) == before
+
+
+def test_grow_readonly_zvol_while_turning_readonly_off_changes_nothing():
+    with dataset(f"{BASE_NAME}_readonly_off", BASE_ARGS | {"readonly": "ON"}) as ds:
+        before = query_zvol(ds)
+        with pytest.raises(ValidationErrors, match="while it is read-only"):
+            grow_zvol(ds, readonly="OFF")
+        assert query_zvol(ds) == before
+        result = call("zfs.resource.list", {"paths": [ds], "properties": ["readonly"]})
+        assert result[0]["properties"]["readonly"]["value"] == "on"
 
 
 def test_grow_locked_zvol_keeps_refreservation():
@@ -84,7 +94,7 @@ def test_grow_locked_zvol_keeps_refreservation():
     with dataset(f"{BASE_NAME}_locked", BASE_ARGS | encryption) as ds:
         call("pool.dataset.lock", ds, job=True)
         before = query_zvol(ds)
-        with pytest.raises(ValidationError, match="Failed to update properties"):
+        with pytest.raises(ValidationErrors, match="while it is locked"):
             grow_zvol(ds)
         assert query_zvol(ds) == before
 
@@ -94,6 +104,6 @@ def test_grow_thick_zvol_beyond_available_space():
     with dataset(f"{BASE_NAME}_nospace", BASE_ARGS) as ds:
         before = query_zvol(ds)
         too_big = pool_available() // 65536 * 65536 * 2
-        with pytest.raises(ValidationError, match="Failed to update properties"):
+        with pytest.raises(ValidationErrors, match="greater than available space"):
             call("pool.dataset.update", ds, {"volsize": too_big, "force_size": True})
         assert query_zvol(ds) == before

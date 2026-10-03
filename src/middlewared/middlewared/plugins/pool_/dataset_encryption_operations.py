@@ -6,6 +6,7 @@ from middlewared.api.current import (
     PoolDatasetInheritParentEncryptionPropertiesResult,
     PoolDatasetInsertOrUpdateEncryptedRecordArgs,
     PoolDatasetInsertOrUpdateEncryptedRecordResult,
+    ZFSResourceQuery,
 )
 from middlewared.plugins.zfs.encryption import change_encryption_root, change_key
 from middlewared.service import CallError, Service, ValidationErrors, job, private
@@ -146,12 +147,12 @@ class PoolDatasetService(Service):
                         f'Must not be specified when passphrase for {id_} is supplied.'
                     )
                 elif any(
-                    d['name'] == d['encryption_root']
-                    for d in self.middleware.call_sync(
-                        'pool.dataset.query', [
-                            ['id', '^', f'{id_}/'], ['encrypted', '=', True],
-                            ['key_format.value', '!=', ZFSKeyFormat.PASSPHRASE.value]
-                        ]
+                    r['name'] != id_
+                    and r['properties']['encryptionroot']['value'] == r['name']
+                    and r['properties']['keyformat']['raw'] != 'passphrase'
+                    for r in self.call_sync2(
+                        self.s.zfs.resource.list_impl,
+                        ZFSResourceQuery(paths=[id_], properties=['encryption'], get_children=True),
                     )
                 ):
                     verrors.add(
@@ -172,11 +173,15 @@ class PoolDatasetService(Service):
                             f'change_key_options.{k}',
                             'Either Key or passphrase must be provided.'
                         )
-                elif id_.count('/') and self.middleware.call_sync(
-                        'pool.dataset.query', [
-                            ['id', 'in', [id_.rsplit('/', i)[0] for i in range(1, id_.count('/') + 1)]],
-                            ['key_format.value', '=', ZFSKeyFormat.PASSPHRASE.value], ['encrypted', '=', True]
-                        ]
+                elif id_.count('/') and any(
+                    r['properties']['keyformat']['raw'] == 'passphrase'
+                    for r in self.call_sync2(
+                        self.s.zfs.resource.list_impl,
+                        ZFSResourceQuery(
+                            paths=[id_.rsplit('/', i)[0] for i in range(1, id_.count('/') + 1)],
+                            properties=['encryption'],
+                        ),
+                    )
                 ):
                     verrors.add(
                         'change_key_options.key',
@@ -248,12 +253,12 @@ class PoolDatasetService(Service):
                 )
                 if parent_encrypted_root['key_format']['value'] == ZFSKeyFormat.PASSPHRASE.value:
                     if any(
-                        d['name'] == d['encryption_root']
-                        for d in self.middleware.call_sync(
-                            'pool.dataset.query', [
-                                ['id', '^', f'{id_}/'], ['encrypted', '=', True],
-                                ['key_format.value', '!=', ZFSKeyFormat.PASSPHRASE.value]
-                            ]
+                        r['name'] != id_
+                        and r['properties']['encryptionroot']['value'] == r['name']
+                        and r['properties']['keyformat']['raw'] != 'passphrase'
+                        for r in self.call_sync2(
+                            self.s.zfs.resource.list_impl,
+                            ZFSResourceQuery(paths=[id_], properties=['encryption'], get_children=True),
                         )
                     ):
                         raise CallError(

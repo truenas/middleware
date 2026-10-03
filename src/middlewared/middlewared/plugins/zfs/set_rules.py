@@ -1,0 +1,443 @@
+"""Validation rules for zfs.resource.set. Request rules run before anything is read; post-read rules judge a
+SetContext."""
+
+from __future__ import annotations
+
+import dataclasses
+import errno
+from types import MappingProxyType
+import typing
+
+from truenas_pylibzfs import ZFSProperty
+
+from middlewared.api.current import ZFSResourceQuery, ZFSResourceSetProperties
+from middlewared.service_exception import CallError, ValidationError
+
+from .property_management import PROPERTY_TEMPLATES
+from .rules_common import (
+    apply_acl_defaults,
+    pool_has_special_vdev_sync,
+    reject_bad_acl_combination,
+    reject_bad_recordsize,
+    reject_bad_user_property_names,
+    reject_bad_user_property_values,
+    reject_dedup_on_special_vdev,
+    reject_force_size_on_filesystem,
+    reject_insufficient_headroom,
+    reject_ssb_out_of_range,
+    reject_tier_managed_ssb,
+    reject_unentitled_dedup,
+    reject_volsize_not_multiple,
+)
+
+if typing.TYPE_CHECKING:
+    from collections.abc import Collection, Mapping
+
+    from middlewared.api.current import EntitlementEntry, ZFSResourceSetArgsData
+    from middlewared.service import ServiceContext
+
+__all__ = (
+    "INDEX_PROPERTIES",
+    "INHERITABLE_PROPERTIES",
+    "MODEL_NATIVES",
+    "NON_INHERITABLE_PROPERTIES",
+    "POOL_ROOT_INHERIT_VALUES",
+    "SETTABLE_PROPERTIES",
+    "SET_READ_PROPERTIES",
+    "PropertyView",
+    "SetContext",
+    "apply_acl_coupling",
+    "apply_thick_follow",
+    "check_acl_combination",
+    "check_dedup_descendants",
+    "check_dedup_entitlement",
+    "check_dedup_tiering",
+    "check_force_size",
+    "check_has_work",
+    "check_inherit_names",
+    "check_names_valid_for_type",
+    "check_recordsize",
+    "check_reservation_headroom",
+    "check_set_inherit_conflict",
+    "check_special_small_blocks_range",
+    "check_tier_managed_ssb",
+    "check_user_properties",
+    "check_volsize_multiple_of_volblocksize",
+    "check_volsize_not_shrunk",
+    "check_volsize_writable",
+    "touched_natives",
+    "validate_request",
+    "validate_set",
+)
+
+SCHEMA = "zfs.resource.set"
+
+SETTABLE_PROPERTIES: frozenset[str] = frozenset(ZFSResourceSetProperties.model_json_schema()["properties"])
+"""The native property names an API caller may set. Derived from the published schema so the `Private` and
+creation-only fields drop out without a second list to maintain."""
+
+NON_INHERITABLE_PROPERTIES = frozenset({"quota", "refquota", "reservation", "refreservation", "volsize"})
+INHERITABLE_PROPERTIES = SETTABLE_PROPERTIES - NON_INHERITABLE_PROPERTIES
+MODEL_NATIVES = frozenset(name for name, field in ZFSResourceSetProperties.model_fields.items() if not field.exclude)
+"""Every native the set model carries, the `Private` ones included."""
+INDEX_PROPERTIES = frozenset(
+    {
+        "aclinherit",
+        "aclmode",
+        "acltype",
+        "atime",
+        "checksum",
+        "compression",
+        "dedup",
+        "exec",
+        "readonly",
+        "snapdev",
+        "snapdir",
+        "sync",
+        "xattr",
+    }
+)
+SET_READ_PROPERTIES = SETTABLE_PROPERTIES | {"available", "keystatus", "used", "volblocksize"}
+POOL_ROOT_INHERIT_VALUES: Mapping[str, typing.Any] = MappingProxyType(
+    {  # registered ZFS defaults; pylibzfs has no accessor for them
+        "acltype": "nfsv4",
+        "aclmode": "discard",
+        "aclinherit": "restricted",
+        "dedup": "off",
+        "special_small_blocks": 0,
+    }
+)
+
+
+class PropertyView(dict[str, typing.Any]):
+    """Property values read for one resource. A name that was not read, or was read without a value, raises
+    `CallError` when indexed; `.get()` is a plain lookup."""
+
+    __slots__ = ("path",)
+
+    def __init__(self, path: str, values: Mapping[str, typing.Any]) -> None:
+        super().__init__(values)
+        self.path = path
+
+    def __missing__(self, key: str) -> typing.NoReturn:
+        raise CallError(f"{key!r} was not read for {self.path!r}")
+
+    def __getitem__(self, key: str) -> typing.Any:
+        value = super().__getitem__(key)
+        if value is None:
+            self.__missing__(key)
+        return value
+
+
+def touched_natives(properties: ZFSResourceSetProperties, inherit: Collection[str]) -> frozenset[str]:
+    """The native properties a request sets or inherits."""
+    return frozenset(name for name in MODEL_NATIVES if getattr(properties, name) is not None) | {
+        name for name in inherit if ":" not in name
+    }
+
+
+@dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
+class SetContext:
+    path: str
+    type: typing.Literal["FILESYSTEM", "VOLUME"]
+    properties: ZFSResourceSetProperties
+    """What will be sent to ZFS. A field left as None is not touched."""
+    user_properties: Mapping[str, str]
+    inherit: frozenset[str]
+    """Names to inherit, user property names included."""
+    current: PropertyView
+    """Values on the resource now. A name absent here is not valid for the resource's type."""
+    source: PropertyView
+    """The source type of each value in `current`."""
+    parent: PropertyView | None
+    """Values on the parent; None when no native is inherited and no volsize is checked, or the resource is a pool
+    root."""
+    pool_root: bool
+    tier_enabled: bool | None
+    """None when the request touches nothing the tier manager owns, so the tier config was not read."""
+    dedup_entitlement: EntitlementEntry | None
+    """None when the request does not touch dedup."""
+    derived: frozenset[str] = frozenset()
+    """Names middleware added to the request on the caller's behalf."""
+    snapshot_devices: frozenset[str] = frozenset()
+    force_size: bool = False
+
+    def set_names(self) -> frozenset[str]:
+        return frozenset(name for name in MODEL_NATIVES if getattr(self.properties, name) is not None)
+
+    def inherited_natives(self) -> frozenset[str]:
+        return frozenset(name for name in self.inherit if ":" not in name)
+
+    def touched(self) -> frozenset[str]:
+        return touched_natives(self.properties, self.inherit)
+
+    def changed(self, name: str) -> bool:
+        return bool(self.effective(name) != self.current.get(name))
+
+    def attribute(self, name: str) -> str:
+        if name in self.set_names():
+            return f"{SCHEMA}.properties.{name}"
+        return f"{SCHEMA}.inherit.{name}"
+
+    def effective(self, name: str) -> typing.Any:
+        """The value `name` will have once the request is applied."""
+        if name in self.set_names():
+            value = getattr(self.properties, name)
+            return str(value).lower() if name in INDEX_PROPERTIES else value
+        if name in self.inherited_natives():
+            if self.parent is not None and name in self.parent:
+                return self.parent[name]
+            if self.pool_root and name in POOL_ROOT_INHERIT_VALUES:
+                return POOL_ROOT_INHERIT_VALUES[name]
+            raise CallError(f"{name!r} has no source to inherit from on {self.path!r}")
+        return self.current[name]
+
+
+def check_has_work(data: ZFSResourceSetArgsData) -> None:
+    if not (data.properties.model_dump(exclude_none=True) or data.user_properties or data.inherit):
+        raise ValidationError(
+            SCHEMA,
+            "Nothing to update. Supply at least one of 'properties', 'user_properties' or 'inherit'.",
+            errno.EINVAL,
+        )
+
+
+def check_set_inherit_conflict(data: ZFSResourceSetArgsData) -> None:
+    setting = set(data.properties.model_dump(exclude_none=True)) | set(data.user_properties)
+    for name in data.inherit:
+        if name in setting:
+            raise ValidationError(
+                f"{SCHEMA}.inherit.{name}",
+                f"{name!r} cannot be both set and inherited in the same request.",
+                errno.EINVAL,
+            )
+
+
+def check_inherit_names(data: ZFSResourceSetArgsData) -> None:
+    user_names = []
+    for name in data.inherit:
+        if ":" in name:
+            user_names.append(name)
+        elif name in NON_INHERITABLE_PROPERTIES:
+            raise ValidationError(f"{SCHEMA}.inherit.{name}", f"{name!r} has no inherited value.", errno.EINVAL)
+        elif name not in INHERITABLE_PROPERTIES:
+            raise ValidationError(f"{SCHEMA}.inherit.{name}", f"{name!r} is not a settable property.", errno.EINVAL)
+    reject_bad_user_property_names(f"{SCHEMA}.inherit", user_names)
+
+
+def check_user_properties(data: ZFSResourceSetArgsData) -> None:
+    reject_bad_user_property_names(f"{SCHEMA}.user_properties", data.user_properties)
+    reject_bad_user_property_values(f"{SCHEMA}.user_properties", data.user_properties)
+
+
+def validate_request(data: ZFSResourceSetArgsData) -> None:
+    """Judge what the request alone decides. Reads nothing."""
+    check_has_work(data)
+    check_set_inherit_conflict(data)
+    check_inherit_names(data)
+    check_user_properties(data)
+
+
+def apply_acl_coupling(state: SetContext) -> SetContext:
+    """On a filesystem, add the acl companions a set or inherited acltype brings along, recorded in `derived`."""
+    if state.type != "FILESYSTEM":
+        return state
+    properties = state.properties.model_copy()
+    apply_acl_defaults(properties, leave=state.inherit)
+    inherit = set(state.inherit)
+    if "acltype" in inherit:
+        inherit.update(name for name in ("aclmode", "aclinherit") if getattr(properties, name) is None)
+    added = touched_natives(properties, inherit) - state.touched()
+    return dataclasses.replace(state, properties=properties, inherit=frozenset(inherit), derived=state.derived | added)
+
+
+def apply_thick_follow(state: SetContext) -> SetContext:
+    """Re-reserve a growing volume whose refreservation equals its volsize; libzfs only grows an `auto` one."""
+    if state.type != "VOLUME" or "volsize" not in state.set_names() or "refreservation" in state.set_names():
+        return state
+    if not state.current["refreservation"] == state.current["volsize"] < state.effective("volsize"):
+        return state
+    return dataclasses.replace(
+        state,
+        properties=state.properties.model_copy(update={"refreservation": "auto"}),
+        derived=state.derived | {"refreservation"},
+    )
+
+
+def check_names_valid_for_type(context: ServiceContext, state: SetContext) -> None:
+    valid = PROPERTY_TEMPLATES.vol if state.type == "VOLUME" else PROPERTY_TEMPLATES.fs
+    for name in sorted(state.touched()):
+        if ZFSProperty[name.upper()] not in valid:
+            raise ValidationError(state.attribute(name), f"{name!r} is not valid for a {state.type}.", errno.EINVAL)
+
+
+def check_volsize_writable(context: ServiceContext, state: SetContext) -> None:
+    # ZFS refuses the volsize but still applies the rest of the request, a follow-up refreservation included.
+    # It judges readonly as stored before the request, so turning it off in the same request does not help.
+    if state.type != "VOLUME" or "volsize" not in state.set_names() or not state.changed("volsize"):
+        return
+    if state.current["readonly"] == "on":
+        raise ValidationError(
+            state.attribute("volsize"),
+            f"'volsize' cannot be set on {state.path!r} while it is read-only. Set 'readonly' to off first.",
+            errno.EROFS,
+        )
+    elif state.current.get("keystatus") == "unavailable":
+        raise ValidationError(
+            state.attribute("volsize"),
+            f"'volsize' cannot be set on {state.path!r} while it is locked. Unlock it first.",
+            errno.EACCES,
+        )
+
+
+def check_volsize_not_shrunk(context: ServiceContext, state: SetContext) -> None:
+    if state.type != "VOLUME" or "volsize" not in state.set_names():
+        return
+    if state.effective("volsize") < state.current["volsize"]:
+        raise ValidationError(
+            state.attribute("volsize"),
+            f"'volsize' may not be reduced below the current size of {state.path!r}.",
+            errno.EINVAL,
+        )
+
+
+def check_volsize_multiple_of_volblocksize(context: ServiceContext, state: SetContext) -> None:
+    if state.type != "VOLUME" or "volsize" not in state.set_names():
+        return
+    reject_volsize_not_multiple(
+        state.attribute("volsize"), state.path, state.effective("volsize"), state.current["volblocksize"]
+    )
+
+
+def check_reservation_headroom(context: ServiceContext, state: SetContext) -> None:
+    set_names = state.set_names()
+    if "refreservation" not in set_names and "volsize" not in set_names:
+        return
+    if state.type == "FILESYSTEM" and state.properties.refreservation == "auto":
+        raise ValidationError(f"{SCHEMA}.properties.refreservation", "'auto' is only valid on volumes.", errno.EINVAL)
+    if state.type == "FILESYSTEM":
+        requested = state.effective("refreservation")
+        refquota = state.effective("refquota")
+        if refquota > 0 and requested > refquota:
+            raise ValidationError(
+                f"{SCHEMA}.properties.refreservation",
+                f"A refreservation of {requested} exceeds the refquota of {refquota} on {state.path!r}.",
+                errno.EINVAL,
+            )
+        return
+    if "volsize" not in set_names or state.force_size or state.parent is None:
+        return
+    reject_insufficient_headroom(
+        state.attribute("volsize"), state.effective("volsize"), state.parent["available"] + state.current["used"]
+    )
+
+
+def check_force_size(context: ServiceContext, state: SetContext) -> None:
+    if state.force_size and state.type == "FILESYSTEM":
+        reject_force_size_on_filesystem(f"{SCHEMA}.force_size")
+
+
+def check_acl_combination(context: ServiceContext, state: SetContext) -> None:
+    if state.type != "FILESYSTEM" or not state.touched() & {"acltype", "aclmode"}:
+        return
+    attribute = state.attribute("aclmode" if "aclmode" in state.touched() - state.derived else "acltype")
+    reject_bad_acl_combination(attribute, state.effective("acltype"), state.effective("aclmode"))
+
+
+def check_tier_managed_ssb(context: ServiceContext, state: SetContext) -> None:
+    if "special_small_blocks" not in state.touched() or not state.tier_enabled:
+        return
+    if "special_small_blocks" in state.set_names():
+        if state.effective("special_small_blocks") == state.current["special_small_blocks"]:
+            return
+    elif state.source["special_small_blocks"] in ("INHERITED", "DEFAULT", "NONE"):
+        return
+    reject_tier_managed_ssb(state.attribute("special_small_blocks"))
+
+
+def check_dedup_entitlement(context: ServiceContext, state: SetContext) -> None:
+    if state.effective("dedup") == "off" or not state.changed("dedup"):
+        return
+    if state.dedup_entitlement is None:
+        raise CallError(f"The DEDUP entitlement was not read for {state.path!r}")
+    reject_unentitled_dedup(state.attribute("dedup"), state.dedup_entitlement)
+
+
+def check_dedup_tiering(context: ServiceContext, state: SetContext) -> None:
+    if state.type != "FILESYSTEM" or not state.tier_enabled:
+        return
+    ssb = state.effective("special_small_blocks")
+    if state.effective("dedup") == "off" or ssb <= 0:
+        return
+    if state.current["dedup"] != "off" and not state.changed("special_small_blocks"):
+        return
+    attribute = state.attribute("dedup" if "dedup" in state.touched() else "special_small_blocks")
+    reject_dedup_on_special_vdev(attribute, context, state.path.split("/")[0], ssb)
+
+
+def check_dedup_descendants(context: ServiceContext, state: SetContext) -> None:
+    if state.type != "FILESYSTEM":
+        return
+    if state.effective("dedup") == "off" or state.current["dedup"] != "off" or not state.tier_enabled:
+        return
+    if not pool_has_special_vdev_sync(context, state.path.split("/")[0]):
+        return
+    rows = context.call_sync2(
+        context.s.zfs.resource.list_impl,
+        ZFSResourceQuery(
+            paths=[state.path], properties=["dedup", "special_small_blocks"], get_source=True, get_children=True
+        ),
+    )
+    affected = []
+    for row in rows:
+        if row["name"] == state.path or row["type"] != "FILESYSTEM":
+            continue
+        props = row["properties"]
+        if not props["special_small_blocks"]["value"]:
+            continue
+        source = props["dedup"]["source"]
+        if source["type"] in ("DEFAULT", "NONE") or (
+            source["type"] == "INHERITED"
+            and (source["value"] == state.path or state.path.startswith(f"{source['value']}/"))
+        ):
+            affected.append(row["name"])
+    if affected:
+        affected.sort()
+        others = f" (and {len(affected) - 1} more)" if len(affected) > 1 else ""
+        raise ValidationError(
+            state.attribute("dedup"),
+            "ZFS deduplication is incompatible with tiering and cannot be enabled here: descendant dataset "
+            f"{affected[0]!r}{others} is assigned to the PERFORMANCE tier (its data is placed on the SPECIAL vdev) "
+            "and would inherit deduplication; switch it to the REGULAR tier first.",
+            errno.EINVAL,
+        )
+
+
+def check_recordsize(context: ServiceContext, state: SetContext) -> None:
+    if state.type != "FILESYSTEM" or "recordsize" not in state.set_names():
+        return
+    reject_bad_recordsize(
+        state.attribute("recordsize"), context, state.path.split("/")[0], state.effective("recordsize")
+    )
+
+
+def check_special_small_blocks_range(context: ServiceContext, state: SetContext) -> None:
+    if "special_small_blocks" not in state.set_names():
+        return
+    reject_ssb_out_of_range(state.attribute("special_small_blocks"), state.effective("special_small_blocks"))
+
+
+def validate_set(context: ServiceContext, state: SetContext) -> None:
+    check_names_valid_for_type(context, state)
+    check_volsize_writable(context, state)
+    check_volsize_not_shrunk(context, state)
+    check_volsize_multiple_of_volblocksize(context, state)
+    check_reservation_headroom(context, state)
+    check_force_size(context, state)
+    check_acl_combination(context, state)
+    check_tier_managed_ssb(context, state)
+    check_dedup_entitlement(context, state)
+    check_dedup_tiering(context, state)
+    check_dedup_descendants(context, state)
+    check_recordsize(context, state)
+    check_special_small_blocks_range(context, state)

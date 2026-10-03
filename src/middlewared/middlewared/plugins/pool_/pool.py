@@ -16,8 +16,8 @@ from middlewared.api.current import (
     PoolUpdateResult,
     PoolValidateNameArgs,
     PoolValidateNameResult,
+    ZFSResourceSetArgsData,
 )
-from middlewared.plugins.pool_.utils import UpdateImplArgs
 from middlewared.plugins.zfs_.validation_utils import validate_pool_name
 from middlewared.service import CallError, CRUDService, ValidationErrors, job, private
 import middlewared.sqlalchemy as sa
@@ -662,9 +662,9 @@ class PoolService(CRUDService):
 
             # Inherit mountpoint after create because we set mountpoint on creation
             # making it a "local" source.
-            await self.middleware.call(
-                'pool.dataset.update_impl',
-                UpdateImplArgs(name=data['name'], iprops={'mountpoint'})
+            await self.call2(
+                self.s.zfs.resource.set_impl,
+                ZFSResourceSetArgsData(path=data['name'], inherit=['mountpoint'], bypass=True),
             )
             await self.call2(self.s.zfs.resource.mount, data['name'])
 

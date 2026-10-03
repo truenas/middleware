@@ -1,0 +1,218 @@
+from __future__ import annotations
+
+import errno
+from types import MappingProxyType
+from typing import TYPE_CHECKING, Any
+
+import truenas_pylibzfs
+from truenas_pylicensed.features import LicenseFeature
+
+from middlewared.api.current import ZFSResourceEntry, ZFSResourceQuery
+from middlewared.service_exception import CallError, ValidationError
+
+from . import zvol_utils
+from .create_impl import ZFS_INVALID_INPUT_ERRORS
+from .normalization import normalize_asdict_result
+from .property_management import DeterminedProperties, build_set_of_zfs_props
+from .resource_attachments import DELEGATES
+from .set_rules import (
+    NON_INHERITABLE_PROPERTIES,
+    SET_READ_PROPERTIES,
+    PropertyView,
+    SetContext,
+    apply_acl_coupling,
+    apply_thick_follow,
+    touched_natives,
+    validate_request,
+    validate_set,
+)
+from .utils import reject_protected_path, reject_snapshot_path
+
+if TYPE_CHECKING:
+    from middlewared.api.current import ZFSResourceSetArgsData
+    from middlewared.service import ServiceContext
+
+SCHEMA = "zfs.resource.set"
+
+
+ZFS_ERRNO = MappingProxyType(
+    {
+        truenas_pylibzfs.ZFSError.EZFS_BUSY: errno.EBUSY,
+        truenas_pylibzfs.ZFSError.EZFS_IO: errno.EIO,
+        truenas_pylibzfs.ZFSError.EZFS_NOSPC: errno.ENOSPC,
+        truenas_pylibzfs.ZFSError.EZFS_PERM: errno.EPERM,
+    }
+)
+
+
+def _read(ds: Any, natives: list[str], user: bool) -> dict[str, Any]:
+    row: dict[str, Any] = ds.asdict(
+        properties=build_set_of_zfs_props(ds.type, DeterminedProperties(), natives or None),
+        get_user_properties=user,
+        get_source=False,
+    )
+    return row
+
+
+def _phase_error(
+    path: str, e: Any, attribute: str, invalid_message: str, other_message: str
+) -> CallError | ValidationError:
+    if e.code == truenas_pylibzfs.ZFSError.EZFS_NOENT:
+        return CallError(f"{path!r} was removed while its properties were being set.", errno.ENOENT)
+    if e.code in ZFS_INVALID_INPUT_ERRORS:
+        return ValidationError(attribute, invalid_message, errno.EINVAL)
+    return CallError(other_message, ZFS_ERRNO.get(e.code, errno.EFAULT))
+
+
+def touched_names(data: ZFSResourceSetArgsData) -> tuple[list[str], list[str]]:
+    natives = sorted(touched_natives(data.properties, data.inherit))
+    user_names = sorted(data.user_properties.keys() | {name for name in data.inherit if ":" in name})
+    return natives, user_names
+
+
+def changed_fields(entry: dict[str, Any], data: ZFSResourceSetArgsData) -> dict[str, Any]:
+    natives, user_names = touched_names(data)
+    return {
+        "properties": entry["properties"],
+        "user_properties": entry["user_properties"],
+        "inherited": sorted(data.inherit),
+        "descendants_affected": any(name not in NON_INHERITABLE_PROPERTIES for name in natives) or bool(user_names),
+    }
+
+
+def set_impl(tls: Any, data: ZFSResourceSetArgsData) -> dict[str, Any]:
+    path = data.path
+    reject_snapshot_path(SCHEMA, path)
+    reject_protected_path(SCHEMA, path, data.bypass)
+    # libzfs refuses a numeric 0 for quota and refquota and requires the word none; the other limits accept 0
+    properties = {
+        name: "none" if name in ("quota", "refquota") and value == 0 else value
+        for name, value in data.properties.model_dump(exclude_none=True).items()
+    }
+    natives, user_names = touched_names(data)
+
+    native_attribute = f"{SCHEMA}.properties"
+    if len(properties) == 1:
+        native_attribute = f"{native_attribute}.{next(iter(properties))}"
+    try:
+        ds = tls.lzh.open_resource(name=path)
+    except truenas_pylibzfs.ZFSException as e:
+        raise _phase_error(path, e, native_attribute, e.err_str, f"Failed to set properties on {path!r}: {e}") from e
+    try:
+        if properties:
+            try:
+                ds.set_properties(properties=properties)
+            except truenas_pylibzfs.ZFSException as e:
+                raise _phase_error(
+                    path, e, native_attribute, e.err_str, f"Failed to set properties on {path!r}: {e}"
+                ) from e
+        if data.user_properties:
+            try:
+                ds.set_user_properties(user_properties=data.user_properties)
+            except truenas_pylibzfs.ZFSException as e:
+                raise _phase_error(path, e, f"{SCHEMA}.user_properties", f"{e}", f"{e}") from e
+        for name in data.inherit:
+            try:
+                ds.inherit_property(property=name)
+            except truenas_pylibzfs.ZFSException as e:
+                message = f"Failed to inherit {name!r} on {path!r}: {e}"
+                raise _phase_error(path, e, f"{SCHEMA}.inherit.{name}", message, message) from e
+    except ValueError as e:
+        raise CallError(
+            f"ZFS rejected a property name or value for {path!r} that middleware accepted: {e}", errno.EINVAL
+        ) from e
+
+    info = normalize_asdict_result(_read(ds, natives, bool(user_names)), normalize_source=False)
+    info["children"] = None
+    return info
+
+
+def _values(path: str, row: dict[str, Any]) -> PropertyView:
+    return PropertyView(path, {name: prop["value"] for name, prop in (row["properties"] or {}).items()})
+
+
+def _sources(path: str, row: dict[str, Any]) -> PropertyView:
+    props = row["properties"] or {}
+    return PropertyView(path, {name: (prop["source"] or {}).get("type") for name, prop in props.items()})
+
+
+def snapshot_devices(path: str) -> frozenset[str]:
+    """The names of the snapshot devices of the volume `path` that are present now."""
+    return frozenset(name for name in zvol_utils.unlocked_zvols_fast_impl() if name.startswith(f"{path}@"))
+
+
+def set(context: ServiceContext, data: ZFSResourceSetArgsData) -> ZFSResourceEntry:
+    path = data.path
+    reject_protected_path(SCHEMA, path, data.bypass)
+    validate_request(data)
+
+    touched = touched_natives(data.properties, data.inherit)
+    active = [delegate for delegate in DELEGATES if delegate.set_triggers & touched]
+    pool_root = "/" not in path
+    parent_path = path.rsplit("/", 1)[0]
+    volsize_checked = data.properties.volsize is not None and not data.force_size
+    fetch_parent = (volsize_checked or any(":" not in name for name in data.inherit)) and not pool_root
+
+    tier_enabled = None
+    if touched & {"special_small_blocks", "dedup"}:
+        tier_enabled = context.call_sync2(context.s.zfs.tier.config).enabled
+    dedup_entitlement = None
+    if "dedup" in touched:
+        dedup_entitlement = context.call_sync2(context.s.truenas.entitlements.check, LicenseFeature.DEDUP)
+
+    paths = [path, parent_path] if fetch_parent else [path]
+    rows = {
+        row["name"]: row
+        for row in context.call_sync2(
+            context.s.zfs.resource.list_impl,
+            ZFSResourceQuery(
+                paths=paths, properties=sorted(SET_READ_PROPERTIES), get_user_properties=False, get_source=True
+            ),
+        )
+    }
+    if (target := rows.get(path)) is None:
+        raise ValidationError(f"{SCHEMA}.path", f"{path!r} does not exist.", errno.ENOENT)
+    parent = None
+    if fetch_parent:
+        if (parent_row := rows.get(parent_path)) is None:
+            raise CallError(f"The parent of {path!r} was removed while its properties were being set.", errno.ENOENT)
+        parent = _values(parent_path, parent_row)
+
+    state = SetContext(
+        path=path,
+        type=target["type"],
+        properties=data.properties,
+        user_properties=data.user_properties,
+        inherit=frozenset(data.inherit),
+        current=_values(path, target),
+        source=_sources(path, target),
+        parent=parent,
+        pool_root=pool_root,
+        tier_enabled=tier_enabled,
+        dedup_entitlement=dedup_entitlement,
+        snapshot_devices=(
+            snapshot_devices(path) if target["type"] == "VOLUME" and "snapdev" in touched else frozenset()
+        ),
+        force_size=data.force_size,
+    )
+    state = apply_thick_follow(apply_acl_coupling(state))
+    validate_set(context, state)
+    for delegate in active:
+        context.run_coroutine(delegate.validate_set(state))
+
+    entry = ZFSResourceEntry(
+        **context.call_sync2(
+            context.s.zfs.resource.set_impl,
+            data.model_copy(update={"properties": state.properties, "inherit": sorted(state.inherit)}),
+        )
+    )
+    failures = []
+    for delegate in active:
+        try:
+            context.run_coroutine(delegate.after_set(state))
+        except Exception as e:
+            context.logger.error("%s: %s failed to follow the change", path, delegate.title, exc_info=True)
+            failures.append(f"{delegate.title}: {e}")
+    if failures:
+        raise CallError(f"{path!r} was updated, but dependent services failed to follow it: {'; '.join(failures)}")
+    return entry

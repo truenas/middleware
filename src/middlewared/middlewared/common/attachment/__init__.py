@@ -7,6 +7,7 @@ from middlewared.service import GenericSharingTaskService, ServiceChangeMixin, S
 
 if TYPE_CHECKING:
     from middlewared.main import Middleware
+    from middlewared.plugins.zfs.set_rules import SetContext
 
 
 # A dataset that was unlocked, paired with the mountpoint its filesystem lives at. `dataset` is in
@@ -49,6 +50,7 @@ class FSAttachmentDelegate[E](ServiceChangeMixin):
     # On stop: delegates are processed low-to-high priority (dependent services stop first)
     # Delegates with same priority maintain registration order among themselves.
     priority = 0
+    set_triggers: frozenset[str] = frozenset()
 
     def __init__(self, middleware: Middleware) -> None:
         self.middleware = middleware
@@ -169,6 +171,12 @@ class FSAttachmentDelegate[E](ServiceChangeMixin):
         The default is a no-op: `delete` already disposed of the share/task style attachments
         while the pool was still there.
         """
+
+    async def validate_set(self, state: SetContext) -> None:
+        pass
+
+    async def after_set(self, state: SetContext) -> None:
+        """Raising fails the set once every delegate has run; the write is not undone."""
 
 
 class LockableFSAttachmentDelegate[E: Entry](FSAttachmentDelegate[E]):

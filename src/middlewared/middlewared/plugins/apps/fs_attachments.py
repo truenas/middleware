@@ -67,5 +67,7 @@ class AppFSAttachmentDelegate(FSAttachmentDelegate[dict[str, str]]):
 
 async def setup(middleware: Middleware) -> None:
     middleware.create_task(
-        middleware.call('pool.dataset.register_attachment_delegate', AppFSAttachmentDelegate(middleware))
+        middleware.call2(
+            middleware.services.zfs.resource.register_attachment_delegate, AppFSAttachmentDelegate(middleware)
+        )
     )

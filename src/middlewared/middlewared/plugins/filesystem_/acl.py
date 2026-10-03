@@ -144,7 +144,7 @@ class FilesystemService(Service):
                     f'The specified path is a ZFS pool mountpoint "({path})" '
                 )
 
-        elif self.middleware.call_sync('pool.dataset.path_in_locked_datasets', st.realpath):
+        elif self.call_sync2(self.s.zfs.resource.path_is_locked, st.realpath):
             verrors.add(
                 f'{schema}.path',
                 'Path component is currently encrypted and locked'

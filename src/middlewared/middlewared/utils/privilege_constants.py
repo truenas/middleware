@@ -16,3 +16,8 @@ class LocalBuiltinGroups(enum.IntEnum):
     FTP = 14
     BUILTIN_USERS = 545
     APPS = 568
+
+
+class LocalBuiltinUsers(enum.IntEnum):
+    """Single point of reference for builtin users"""
+    APPS = 568

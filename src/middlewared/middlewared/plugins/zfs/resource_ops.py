@@ -3,19 +3,22 @@ from __future__ import annotations
 import errno
 from typing import TYPE_CHECKING, Any
 
+from middlewared.api.current import ZFSResourcePromoteArgsData, ZFSResourceRenameArgsData
 from middlewared.service_exception import ValidationError
 from middlewared.utils.filter_list import filter_list
 
 from .exceptions import (
     ZFSPathAlreadyExistsException,
     ZFSPathInvalidException,
-    ZFSPathNotASnapshotException,
     ZFSPathNotFoundException,
     ZFSPathNotProvidedException,
 )
 from .load_unload_impl import unload_key_impl
 from .mount_unmount_impl import mount_impl, unmount_impl
-from .rename_promote_clone_impl import promote_impl, rename_impl
+from .name_utils import last_component_space_padded
+from .rename_promote_clone_impl import promote_impl as _raw_promote
+from .rename_promote_clone_impl import rename_impl as _raw_rename
+from .utils import reject_protected_path
 from .zvol_utils import get_zvol_attachments_impl, unlocked_zvols_fast_impl
 
 if TYPE_CHECKING:
@@ -46,14 +49,13 @@ def unlocked_zvols_fast(
     )
 
 
-def promote(tls: Any, current_name: str) -> None:
+def promote_impl(tls: Any, data: ZFSResourcePromoteArgsData) -> None:
     schema = "zfs.resource.promote"
+    reject_protected_path(schema, data.path)
     try:
-        promote_impl(tls, current_name)
+        _raw_promote(tls, data.path)
     except ZFSPathInvalidException as e:
         raise ValidationError(schema, e.message, errno.EINVAL)
-    except ZFSPathNotProvidedException:
-        raise ValidationError(schema, "'current_name' key is required")
     except ZFSPathNotFoundException as e:
         raise ValidationError(schema, e.message, errno.ENOENT)
 
@@ -104,24 +106,27 @@ def unload_key(tls: Any, filesystem: str, recursive: bool = False, force_unmount
         raise ValidationError(schema, e.message, errno.ENOENT)
 
 
-def rename(
-    tls: Any,
-    current_name: str,
-    new_name: str,
-    recursive: bool = False,
-    no_unmount: bool = False,
-    force_unmount: bool = True,
-) -> None:
+def rename_impl(tls: Any, data: ZFSResourceRenameArgsData) -> None:
     schema = "zfs.resource.rename"
-    if "@" in current_name:
-        raise ValidationError(schema, "Use `zfs.resource.snapshot.rename` to rename snapshots.")
+    reject_protected_path(schema, data.current_name)
+    reject_protected_path(schema, data.new_name)
     try:
-        rename_impl(tls, current_name, new_name, recursive, no_unmount, force_unmount)
-    except ZFSPathNotASnapshotException:
-        raise ValidationError(schema, "recursive is only valid for snapshots")
+        _raw_rename(tls, data.current_name, data.new_name, False, data.no_unmount, data.force_unmount)
     except ZFSPathAlreadyExistsException as e:
         raise ValidationError(schema, e.message, errno.EEXIST)
-    except ZFSPathNotProvidedException:
-        raise ValidationError(schema, "'current_name' key is required")
     except ZFSPathNotFoundException as e:
         raise ValidationError(schema, e.message, errno.ENOENT)
+
+
+def rename(context: ServiceContext, data: ZFSResourceRenameArgsData) -> None:
+    if last_component_space_padded(data.new_name):
+        raise ValidationError(
+            "zfs.resource.rename.new_name", "Resource names may not begin or end with a space.", errno.EINVAL
+        )
+    if not data.force:
+        raise ValidationError(
+            "zfs.resource.rename.force",
+            "No safety checks are performed when renaming ZFS resources; this may break existing usages. "
+            "If you understand the risks, please set force and proceed.",
+        )
+    context.call_sync2(context.s.zfs.resource.rename_impl, data)

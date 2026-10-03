@@ -258,7 +258,7 @@ def test_create_replication(ssh_credentials, periodic_snapshot_tasks, req, error
     ({"direction": "PULL", "target_dataset": "data/child"}, "/mnt/data/child", True),
     ({"direction": "PULL", "target_dataset": "data/child"}, "/mnt/data/child/work", False),
 ])
-def test_query_attachment_delegate(ssh_credentials, data, path, include):
+def test_replication_attachments_with_path(ssh_credentials, data, path, include):
     data = {
         "name": "Test",
         "transport": "SSH",
@@ -274,12 +274,13 @@ def test_query_attachment_delegate(ssh_credentials, data, path, include):
         data["ssh_credentials"] = ssh_credentials["credentials"]["id"]
 
     with replication_task(data) as t:
-        result = call("pool.dataset.query_attachment_delegate", "replication", path, True)
-        if include:
-            assert len(result) == 1
-            assert result[0]["id"] == t["id"]
-        else:
-            assert len(result) == 0
+        names = [
+            n
+            for a in call("zfs.resource.attachments_with_path", path)
+            if a["type"] == "Replication"
+            for n in a["attachments"]
+        ]
+        assert names == ([t["name"]] if include else [])
 
 
 @pytest.mark.parametrize("exclude_mountpoint_property", [True, False])

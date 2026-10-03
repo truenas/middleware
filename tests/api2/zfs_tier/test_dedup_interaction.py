@@ -7,13 +7,6 @@ vdev: the dataset itself is (or inherits) the PERFORMANCE tier
 (special_small_blocks > 0), or a descendant that would inherit the new
 deduplication value is. REGULAR datasets (data on the normal vdev), volumes,
 and datasets on pools without a SPECIAL vdev may be deduplicated freely.
-
-Implementation under test:
-  - src/middlewared/middlewared/plugins/zfs/tier.py
-    (get_dataset_tier_info_cached dedup gate, _dataset_dedup_enabled,
-    dataset_set_tier / rewrite_job_create rejection messages)
-  - src/middlewared/middlewared/plugins/pool_/utils.py (validate_dedup_tiering,
-    _dedup_inheriting_performance_descendants, pool_has_special_vdev)
 """
 
 import contextlib
@@ -56,7 +49,7 @@ def test_dedup_dataset_tier_is_none_in_queries(tier_pool):
         row = call("pool.dataset.query", [["name", "=", ds]], {"get": True})
         assert row.get("tier") is None
 
-        rows = call("zfs.resource.query", {"paths": [ds], "get_tier": True})
+        rows = call("zfs.resource.list", {"paths": [ds], "get_tier": True})
         assert rows
         assert rows[0].get("tier") is None
 

@@ -2,7 +2,7 @@ import errno
 
 import pytest
 
-from middlewared.service_exception import ValidationError
+from middlewared.service_exception import ValidationError, ValidationErrors
 from middlewared.test.integration.assets.pool import another_pool
 from middlewared.test.integration.utils import call
 
@@ -171,14 +171,14 @@ def test_pool_snapshot_rename_recursive(rename_test_pool):
 
 
 def test_zfs_resource_rename_snapshot_path_is_rejected(rename_test_pool):
-    """A snapshot must go through zfs.resource.snapshot.rename"""
+    """A snapshot name never reaches the service; the model admits filesystem names only"""
     pool = rename_test_pool["name"]
-    with pytest.raises(ValidationError) as ve:
-        call("zfs.resource.rename", f"{pool}@snap", f"{pool}@snap2")
-    assert ve.value.attribute == "zfs.resource.rename"
-    assert ve.value.errmsg == (
-        "Use `zfs.resource.snapshot.rename` to rename snapshots."
-    )
+    with pytest.raises(ValidationErrors) as ve:
+        call(
+            "zfs.resource.rename",
+            {"current_name": f"{pool}@snap", "new_name": f"{pool}/snap2", "force": True},
+        )
+    assert ve.value.errors[0].attribute == "data.current_name"
 
 
 def test_zfs_resource_rename_onto_existing_name_is_rejected(rename_test_pool):
@@ -190,7 +190,8 @@ def test_zfs_resource_rename_onto_existing_name_is_rejected(rename_test_pool):
     call("pool.dataset.create", {"name": dst})
     try:
         with pytest.raises(ValidationError) as ve:
-            call("zfs.resource.rename", src, dst)
+            call("zfs.resource.rename", {"current_name": src, "new_name": dst, "force": True})
+        assert ve.value.attribute == "zfs.resource.rename"
         assert ve.value.errmsg == f"{dst!r} already exists"
         assert ve.value.errno == errno.EEXIST
     finally:
@@ -202,7 +203,11 @@ def test_zfs_resource_rename_nonexistent_raises_enoent(rename_test_pool):
     pool = rename_test_pool["name"]
     src = f"{pool}/test_rename_missing"
     with pytest.raises(ValidationError) as ve:
-        call("zfs.resource.rename", src, f"{pool}/test_rename_missing_new")
+        call(
+            "zfs.resource.rename",
+            {"current_name": src, "new_name": f"{pool}/test_rename_missing_new", "force": True},
+        )
+    assert ve.value.attribute == "zfs.resource.rename"
     assert ve.value.errmsg == f"{src!r} not found"
     assert ve.value.errno == errno.ENOENT
 
@@ -212,8 +217,37 @@ def test_zfs_resource_rename_empty_new_name_is_rejected(rename_test_pool):
     src = f"{pool}/test_rename_empty_new"
     call("pool.dataset.create", {"name": src})
     try:
+        with pytest.raises(ValidationErrors) as ve:
+            call("zfs.resource.rename", {"current_name": src, "new_name": "", "force": True})
+        assert ve.value.errors[0].attribute == "data.new_name"
+    finally:
+        call("pool.dataset.delete", src)
+
+
+def test_zfs_resource_rename_protected_source_is_rejected(rename_test_pool):
+    pool = rename_test_pool["name"]
+    src = f"{pool}/ix-apps/x"
+    with pytest.raises(ValidationError) as ve:
+        call(
+            "zfs.resource.rename",
+            {"current_name": src, "new_name": f"{pool}/test_rename_from_protected", "force": True},
+        )
+    assert ve.value.attribute == "zfs.resource.rename"
+    assert ve.value.errmsg == f"{src!r} is a protected path."
+    assert ve.value.errno == errno.EACCES
+
+
+def test_zfs_resource_rename_protected_destination_is_rejected(rename_test_pool):
+    pool = rename_test_pool["name"]
+    src = f"{pool}/test_rename_to_protected"
+    dst = f"{pool}/ix-apps/x"
+    call("pool.dataset.create", {"name": src})
+    try:
         with pytest.raises(ValidationError) as ve:
-            call("zfs.resource.rename", src, "")
-        assert ve.value.errmsg == "'current_name' key is required"
+            call("zfs.resource.rename", {"current_name": src, "new_name": dst, "force": True})
+        assert ve.value.attribute == "zfs.resource.rename"
+        assert ve.value.errmsg == f"{dst!r} is a protected path."
+        assert ve.value.errno == errno.EACCES
+        assert call("zfs.resource.list", {"paths": [src], "properties": None})
     finally:
         call("pool.dataset.delete", src)

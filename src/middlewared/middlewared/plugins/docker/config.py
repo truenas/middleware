@@ -208,7 +208,7 @@ class DockerConfigServicePart(ConfigServicePart[DockerEntry]):
                 assert new_config.pool is not None
                 assert old_config.pool is not None
                 if await self.call2(
-                    self.s.zfs.resource.query_impl,
+                    self.s.zfs.resource.list_impl,
                     ZFSResourceQuery(paths=[applications_ds_name(new_config.pool)], properties=None)
                 ):
                     verrors.add(
@@ -218,7 +218,7 @@ class DockerConfigServicePart(ConfigServicePart[DockerEntry]):
                     )
 
                 ix_apps_ds = await self.call2(
-                    self.s.zfs.resource.query_impl,
+                    self.s.zfs.resource.list_impl,
                     ZFSResourceQuery(
                         paths=[applications_ds_name(old_config.pool)],
                         properties=['encryption']
@@ -236,7 +236,7 @@ class DockerConfigServicePart(ConfigServicePart[DockerEntry]):
                     )
 
                 destination_root_ds = await self.call2(
-                    self.s.zfs.resource.query_impl,
+                    self.s.zfs.resource.list_impl,
                     ZFSResourceQuery(paths=[new_config.pool], properties=['encryption'])
                 )
                 enc = get_encryption_info(destination_root_ds[0]['properties'])

@@ -20,7 +20,7 @@ def test_zfs_resource_create_basic_filesystem():
         assert entry["pool"] == pool_name
         assert entry["type"] == "FILESYSTEM"
 
-        result = call("zfs.resource.query", {"paths": [path], "properties": ["mounted", "xattr"]})
+        result = call("zfs.resource.list", {"paths": [path], "properties": ["mounted", "xattr"]})
         assert len(result) == 1
         assert result[0]["properties"]["mounted"]["raw"] == "yes"
         # TrueNAS defaults xattr to sa on filesystems
@@ -64,9 +64,9 @@ def test_zfs_resource_create_volume_sparse():
 
 
 def test_zfs_resource_create_volume_capacity_guardrail():
-    """Test that a thick volume reserving over 80% of the available space is
-    rejected while a sparse volume of the same size is allowed"""
-    avail = call("zfs.resource.query", {"paths": [pool_name], "properties": ["available"]})
+    """Test that a volume over 80% of the available space is rejected, sparse
+    or not, and that force_size lets a sparse volume of that size through"""
+    avail = call("zfs.resource.list", {"paths": [pool_name], "properties": ["available"]})
     volsize = (int(avail[0]["properties"]["available"]["value"] * 0.9) // 16384) * 16384
     path = os.path.join(pool_name, "test_create_zvol_capacity")
     with pytest.raises(Exception) as exc_info:
@@ -74,16 +74,32 @@ def test_zfs_resource_create_volume_capacity_guardrail():
             "zfs.resource.create",
             {"path": path, "type": "VOLUME", "properties": {"volsize": volsize}},
         )
-    assert "create a sparse volume" in str(exc_info.value)
+    assert "more than 80%" in str(exc_info.value)
+
+    with pytest.raises(Exception) as exc_info:
+        call(
+            "zfs.resource.create",
+            {"path": path, "type": "VOLUME", "properties": {"volsize": volsize, "refreservation": "none"}},
+        )
+    assert "more than 80%" in str(exc_info.value)
 
     with zfs_resource(
         path,
         {
             "type": "VOLUME",
             "properties": {"volsize": volsize, "refreservation": "none"},
+            "force_size": True,
         },
     ) as entry:
         assert entry["properties"]["volsize"]["value"] == volsize
+
+
+def test_zfs_resource_create_quota_none_is_accepted():
+    path = os.path.join(pool_name, "test_create_fs_quota_none")
+    with zfs_resource(path, {"properties": {"quota": "none", "refquota": 0}}):
+        props = call("zfs.resource.list", {"paths": [path], "properties": ["quota", "refquota"]})[0]["properties"]
+        assert props["quota"]["value"] in (0, None)
+        assert props["refquota"]["value"] in (0, None)
 
 
 def test_zfs_resource_create_volume_requires_volsize():
@@ -122,7 +138,7 @@ def test_zfs_resource_create_ancestors():
         assert entry["name"] == path
 
         result = call(
-            "zfs.resource.query",
+            "zfs.resource.list",
             {"paths": [root], "get_children": True, "properties": ["mounted"]},
         )
         assert len(result) == 4
@@ -179,20 +195,17 @@ def test_zfs_resource_create_already_exists():
 @pytest.mark.parametrize(
     "path,error",
     [
-        pytest.param("/tank/dataset", "Absolute path", id="absolute paths not allowed"),
-        pytest.param("tank/dataset/", "forward-slash", id="trailing forward-slash not allowed"),
+        pytest.param("/tank/dataset", "valid dataset name", id="absolute paths not allowed"),
+        pytest.param("tank/dataset/", "valid dataset name", id="trailing forward-slash not allowed"),
         pytest.param(
             "tank/dataset@snap",
-            "zfs.resource.snapshot.create",
+            "valid dataset name",
             id="snapshot paths not allowed",
         ),
         pytest.param("tank", "root filesystem", id="creating root filesystem not allowed"),
         pytest.param("boot-pool/test", "protected", id="protected paths not allowed"),
-        pytest.param(
-            "tank/dataset ",
-            "Resource names may not begin or end with a space",
-            id="trailing space not allowed",
-        ),
+        pytest.param("tank/dataset ", "valid dataset name", id="trailing space not allowed"),
+        pytest.param("tank/a%b", "may not contain '%'", id="percent not allowed"),
         pytest.param(
             "tank/ dataset",
             "Resource names may not begin or end with a space",
@@ -240,7 +253,7 @@ def test_zfs_resource_create_property_invalid_for_type():
     path = os.path.join(pool_name, "test_create_fs_volprop")
     with pytest.raises(Exception) as exc_info:
         call("zfs.resource.create", {"path": path, "properties": {"volsize": GiB}})
-    assert "invalid for zfs type" in str(exc_info.value)
+    assert "'volsize' is not valid for a FILESYSTEM" in str(exc_info.value)
 
 
 def test_zfs_resource_create_encryption_property_denied():
@@ -304,7 +317,7 @@ def test_zfs_resource_create_encryption_root_passphrase():
         props = entry["properties"]
         assert props["keyformat"]["raw"] == "passphrase", props
         assert props["encryptionroot"]["raw"] == path, props
-        res = call("zfs.resource.query", {"paths": [path], "properties": ["pbkdf2iters"]})
+        res = call("zfs.resource.list", {"paths": [path], "properties": ["pbkdf2iters"]})
         assert res[0]["properties"]["pbkdf2iters"]["value"] == 1300000, res[0]["properties"]
         assert call("pool.dataset.lock", path, job=True) is True
 
@@ -312,7 +325,6 @@ def test_zfs_resource_create_encryption_root_passphrase():
 @pytest.mark.parametrize(
     "encryption,exc",
     [
-        # the exactly-one-of rule lives in the plugin and raises a single ValidationError
         pytest.param({}, ValidationError, id="nothing provided"),
         pytest.param(
             {"key": "0" * 64, "passphrase": "passphrase123"},
@@ -332,11 +344,6 @@ def test_zfs_resource_create_encryption_root_passphrase():
             {"passphrase": "passphrase123", "pbkdf2iters": 1000},
             ValidationErrors,
             id="pbkdf2iters too low",
-        ),
-        pytest.param(
-            {"passphrase": "passphrase123", "pbkdf2iters": 100_000_000},
-            ValidationErrors,
-            id="pbkdf2iters too high",
         ),
     ],
 )
@@ -397,7 +404,7 @@ def test_zfs_resource_create_under_encrypted_parent():
     with zfs_resource(parent, {"encryption": {"passphrase": "passphrase123"}}):
         child = f"{parent}/child"
         call("zfs.resource.create", {"path": child})
-        props = call("zfs.resource.query", {"paths": [child], "properties": ["encryption"]})[0]["properties"]
+        props = call("zfs.resource.list", {"paths": [child], "properties": ["encryption"]})[0]["properties"]
         assert props["encryption"]["raw"] != "off", props
         assert props["encryptionroot"]["raw"] == parent, props
         assert props["keystatus"]["raw"] == "available", props
@@ -416,11 +423,10 @@ def test_zfs_resource_create_under_locked_parent_fails():
     parent = os.path.join(pool_name, "test_create_locked_parent")
     with zfs_resource(parent, {"encryption": {"passphrase": "passphrase123"}}):
         call("pool.dataset.lock", parent, job=True)
-        with pytest.raises(Exception) as exc_info:
+        with pytest.raises(ValidationError) as ve:
             call("zfs.resource.create", {"path": f"{parent}/child"})
-        emsg = str(exc_info.value)
-        assert "encryption key is not loaded" in emsg
-        assert "Unlock the parent dataset" in emsg
+        assert ve.value.errno == errno.EACCES
+        assert "is locked" in ve.value.errmsg
 
 
 @pytest.fixture(scope="module")
@@ -450,7 +456,7 @@ def test_zfs_resource_create_draid_filesystem_recordsize_default(draid_pool):
     """Test that a filesystem on a dRAID pool defaults to a 1M recordsize"""
     path = f"{draid_pool['name']}/fs"
     call("zfs.resource.create", {"path": path})
-    result = call("zfs.resource.query", {"paths": [path], "properties": ["recordsize"]})
+    result = call("zfs.resource.list", {"paths": [path], "properties": ["recordsize"]})
     assert result[0]["properties"]["recordsize"]["value"] == 1024**2, result[0]["properties"]
 
 
@@ -465,7 +471,7 @@ def test_zfs_resource_create_draid_volume_volblocksize_default(draid_pool):
             "properties": {"volsize": 128 * 1024**2, "refreservation": "none"},
         },
     )
-    result = call("zfs.resource.query", {"paths": [path], "properties": ["volblocksize"]})
+    result = call("zfs.resource.list", {"paths": [path], "properties": ["volblocksize"]})
     assert result[0]["properties"]["volblocksize"]["value"] == 128 * 1024, result[0]["properties"]
 
 
@@ -615,7 +621,7 @@ def test_zfs_resource_create_ssb_behavior_without_tiering():
             },
         )
         result = call(
-            "zfs.resource.query",
+            "zfs.resource.list",
             {
                 "paths": [vol],
                 "properties": ["special_small_blocks"],
@@ -641,7 +647,7 @@ def test_zfs_resource_create_ssb_behavior_without_tiering():
             },
         )
         result = call(
-            "zfs.resource.query",
+            "zfs.resource.list",
             {
                 "paths": [vol2],
                 "properties": ["special_small_blocks"],
@@ -656,7 +662,7 @@ def test_zfs_resource_create_ssb_behavior_without_tiering():
         fs = f"{parent}/fs"
         call("zfs.resource.create", {"path": fs})
         result = call(
-            "zfs.resource.query",
+            "zfs.resource.list",
             {"paths": [fs], "properties": ["special_small_blocks"], "get_source": True},
         )
         prop = result[0]["properties"]["special_small_blocks"]
@@ -704,7 +710,7 @@ def test_zfs_resource_create_tier_snaps_filesystem_placement(tier_pool):
     fs = f"{tier_pool}/tier_fs"
     call("zfs.resource.create", {"path": fs})
     result = call(
-        "zfs.resource.query",
+        "zfs.resource.list",
         {"paths": [fs], "properties": ["special_small_blocks"], "get_source": True},
     )
     prop = result[0]["properties"]["special_small_blocks"]
@@ -716,7 +722,7 @@ def test_zfs_resource_create_tier_snaps_filesystem_placement(tier_pool):
     child = f"{fs}/child"
     call("zfs.resource.create", {"path": child})
     result = call(
-        "zfs.resource.query",
+        "zfs.resource.list",
         {"paths": [child], "properties": ["special_small_blocks"], "get_source": True},
     )
     prop = result[0]["properties"]["special_small_blocks"]
@@ -754,7 +760,7 @@ def test_zfs_resource_create_ancestors_skips_the_ones_that_exist():
         assert entry["name"] == path
 
         result = call(
-            "zfs.resource.query",
+            "zfs.resource.list",
             {"paths": [root], "properties": None, "get_user_properties": True},
         )
         assert result[0]["user_properties"]["org.test:keep"] == "keepme"
@@ -784,7 +790,7 @@ def test_zfs_resource_create_encryption_root_skips_missing_ancestors():
         assert entry["name"] == path
 
         result = call(
-            "zfs.resource.query", {"paths": [path], "properties": ["encryption"]}
+            "zfs.resource.list", {"paths": [path], "properties": ["encryption"]}
         )
         assert result[0]["properties"]["encryption"]["raw"] != "off"
 
@@ -797,9 +803,9 @@ def test_zfs_resource_create_rejects_a_property_value_zfs_refuses():
             "zfs.resource.create",
             {"path": path, "properties": {"recordsize": "3K"}},
         )
-    assert ve.value.attribute == "zfs.resource.create"
+    assert ve.value.attribute == "zfs.resource.create.properties.recordsize"
     assert ve.value.errno == errno.EINVAL
-    assert call("zfs.resource.query", {"paths": [path], "properties": None}) == []
+    assert call("zfs.resource.list", {"paths": [path], "properties": None}) == []
 
 
 @pytest.mark.parametrize("tier_enabled", [False, True], ids=["tiering off", "tiering on"])
@@ -824,3 +830,19 @@ def test_zfs_resource_create_under_a_volume_parent_is_rejected(tier_enabled, chi
                 call("zfs.resource.create", data)
         assert ve.value.errno == errno.EINVAL
         assert ve.value.errmsg == f"{vol!r} is a volume and cannot hold {child!r}."
+
+
+def test_zfs_resource_create_share_type():
+    path = os.path.join(pool_name, "test_create_share_type")
+    expected = {
+        "casesensitivity": "insensitive", "acltype": "nfsv4", "aclmode": "restricted", "aclinherit": "passthrough"
+    }
+    with zfs_resource(path, {"share_type": "smb"}):
+        props = call("zfs.resource.list", {"paths": [path], "properties": list(expected)})[0]["properties"]
+        assert {name: props[name]["raw"] for name in expected} == expected
+        assert call("filesystem.getacl", f"/mnt/{path}")["acltype"] == "NFS4"
+
+    with pytest.raises(ValidationError) as ve:
+        call("zfs.resource.create", {"path": path, "share_type": "smb", "properties": {"acltype": "posix"}})
+    assert ve.value.attribute == "zfs.resource.create.properties.acltype"
+

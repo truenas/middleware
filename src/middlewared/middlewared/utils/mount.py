@@ -9,6 +9,8 @@ from typing import TYPE_CHECKING
 
 import truenas_os
 
+from middlewared.api.current import ZFSResourceQuery
+
 if TYPE_CHECKING:
     from middlewared.main import Middleware
 
@@ -99,10 +101,12 @@ def resolve_dataset_path(path: str, middleware: Middleware | None = None) -> tup
 
         try:
             # Use libzfs via middleware to look up dataset by mountpoint
-            datasets = middleware.call_sync('pool.dataset.query', [['mountpoint', '=', path]])
-            if datasets:
-                dataset_name = datasets[0]['id']
-                return dataset_name, ''
+            for ds in middleware.call_sync2(
+                middleware.services.zfs.resource.list_impl,
+                ZFSResourceQuery(properties=['mountpoint'], get_children=True),
+            ):
+                if ds['type'] == 'FILESYSTEM' and ds['properties']['mountpoint']['raw'] == path:
+                    return ds['name'], ''
         except Exception as e:
             logger.debug(f"libzfs lookup failed for {path}: {e}")
 

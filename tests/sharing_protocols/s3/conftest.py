@@ -82,7 +82,7 @@ def s3_clean_slate():
     for row in call("user.query", [["username", "^", PREFIX]]):
         with contextlib.suppress(Exception):
             call("user.delete", row["id"])
-    for row in call("zfs.resource.query", {"paths": [pool], "properties": None, "get_children": True}):
+    for row in call("zfs.resource.list", {"paths": [pool], "properties": None, "get_children": True}):
         if row["name"].startswith(f"{pool}/{PREFIX}-"):
             with contextlib.suppress(Exception):
                 call("zfs.resource.destroy", {"path": row["name"], "recursive": True})
@@ -266,10 +266,10 @@ def s3_deployment(s3_accounts):
             for leaf, options in rows.items()
         }
 
-        # Not `pool.dataset.delete`, which runs the share attachment
+        # Not `zfs.resource.destroy`, which runs the share attachment
         # delegates and would deregister the bucket with it. The row has
         # to stand while its storage does not.
-        call("zfs.resource.destroy", {"path": made["excluded"]["dataset"], "recursive": True})
+        call("zfs.resource.destroy_impl", made["excluded"]["dataset"], True)
 
         with s3_service():
             wait_for_listener(DEFAULT_S3_PORT)

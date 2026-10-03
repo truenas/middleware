@@ -1,3 +1,4 @@
+from fractions import Fraction
 import re
 import types
 
@@ -42,6 +43,10 @@ BINARY_UNITS = types.MappingProxyType(
 MB = 1048576
 UNITS = ("KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB")
 RE_SIZE = re.compile(r"([\d\.]+)\s*([A-Za-z]*)")
+ZFS_SIZE_UNITS = types.MappingProxyType(
+    {"": 1, "K": 2**10, "M": 2**20, "G": 2**30, "T": 2**40, "P": 2**50, "E": 2**60}
+)
+RE_ZFS_SIZE = re.compile(r"(\d+(?:\.\d*)?|\.\d+)(?:([KMGTPE])(?:I?B)?|B)?", re.IGNORECASE)
 
 
 def format_size(size: int) -> str:
@@ -101,3 +106,31 @@ def normalize_size(size: str, raise_exception: bool = True) -> int | None:
     if raise_exception:
         raise ValueError(f"Invalid size format: {size}")
     return None
+
+
+def zfs_size_bytes(value: str | int) -> int:
+    """
+    Convert a ZFS size (e.g. '128K', '1.5M', '10GiB', '512B', 4096) into bytes.
+
+    Suffixes are binary, the way ZFS reads them: K, M, G, T, P and E, each optionally followed by B or iB and
+    matched case-insensitively. A fractional mantissa is accepted only when it yields a whole number of bytes.
+    Anything else, including a negative number, raises ValueError.
+    """
+    if isinstance(value, bool):
+        raise ValueError(f"Invalid size: {value!r}")
+    if isinstance(value, int):
+        if value < 0:
+            raise ValueError(f"Size may not be negative: {value}")
+        return value
+    if not isinstance(value, str):
+        raise ValueError(f"Invalid size: {value!r}")
+
+    match = RE_ZFS_SIZE.fullmatch(value.strip())
+    if not match:
+        raise ValueError(f"Invalid size: {value!r}")
+
+    mantissa, unit = match.groups()
+    size = Fraction(mantissa) * ZFS_SIZE_UNITS[(unit or "").upper()]
+    if size.denominator != 1:
+        raise ValueError(f"Size {value!r} is not a whole number of bytes")
+    return size.numerator

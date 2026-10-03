@@ -4,6 +4,10 @@ from middlewared.test.integration.assets.pool import dataset, snapshot
 from middlewared.test.integration.utils import call
 
 
+def mounted(path):
+    return call("zfs.resource.list", {"paths": [path], "properties": ["mounted"]})[0]["properties"]["mounted"]["raw"]
+
+
 def test_zfs_resource_snapshot_clone_basic():
     """Test cloning a snapshot to a new dataset"""
     with dataset("test_snap_clone_src") as ds:
@@ -15,7 +19,7 @@ def test_zfs_resource_snapshot_clone_basic():
                     "zfs.resource.snapshot.clone",
                     {"snapshot": snap, "dataset": clone_path},
                 )
-                result = call("zfs.resource.query", {"paths": [clone_path]})
+                result = call("zfs.resource.list", {"paths": [clone_path]})
                 assert result[0]["name"] == clone_path
                 assert result[0]["type"] == "FILESYSTEM"
             finally:
@@ -44,7 +48,7 @@ def test_zfs_resource_snapshot_clone_with_properties():
                     },
                 )
                 result = call(
-                    "zfs.resource.query",
+                    "zfs.resource.list",
                     {"paths": [clone_path], "properties": ["compression"]},
                 )
                 assert result[0]["properties"]["compression"]["value"] == "zstd"
@@ -122,7 +126,7 @@ def test_zfs_resource_snapshot_clone_zvol():
                     "zfs.resource.snapshot.clone",
                     {"snapshot": snap, "dataset": clone_path},
                 )
-                result = call("zfs.resource.query", {"paths": [clone_path]})
+                result = call("zfs.resource.list", {"paths": [clone_path]})
                 assert result[0]["name"] == clone_path
                 assert result[0]["type"] == "VOLUME"
             finally:
@@ -148,7 +152,7 @@ def test_zfs_resource_snapshot_clone_nested():
                     "zfs.resource.snapshot.clone",
                     {"snapshot": snap, "dataset": clone_path},
                 )
-                result = call("zfs.resource.query", {"paths": [clone_path]})
+                result = call("zfs.resource.list", {"paths": [clone_path]})
                 assert len(result) == 1
             finally:
                 call(
@@ -179,3 +183,25 @@ def test_zfs_resource_snapshot_clone_protected_destination():
                     {"snapshot": snap, "dataset": "boot-pool/test_clone"},
                 )
             assert "protected" in str(exc_info.value).lower()
+
+
+def test_zfs_resource_snapshot_clone_mounts_filesystem():
+    with dataset("test_snap_clone_mount_src") as ds:
+        with snapshot(ds, "snap") as snap:
+            clone_path = f"{ds.split('/')[0]}/test_snap_clone_mount_dest"
+            call("zfs.resource.snapshot.clone", {"snapshot": snap, "dataset": clone_path})
+            try:
+                assert mounted(clone_path) == "yes"
+            finally:
+                call("zfs.resource.destroy", {"path": clone_path, "recursive": True})
+
+
+def test_zfs_resource_snapshot_clone_no_mount():
+    with dataset("test_snap_clone_nomount_src") as ds:
+        with snapshot(ds, "snap") as snap:
+            clone_path = f"{ds.split('/')[0]}/test_snap_clone_nomount_dest"
+            call("zfs.resource.snapshot.clone", {"snapshot": snap, "dataset": clone_path, "no_mount": True})
+            try:
+                assert mounted(clone_path) == "no"
+            finally:
+                call("zfs.resource.destroy", {"path": clone_path, "recursive": True})

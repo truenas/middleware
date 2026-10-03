@@ -43,7 +43,7 @@ def query_ix_volumes(
         return to_entries(filter_list([], filters, options.model_dump()), AppsIxVolumeEntry)
 
     datasets = context.call_sync2(
-        context.s.zfs.resource.query_impl,
+        context.s.zfs.resource.list_impl,
         ZFSResourceQuery(
             paths=[get_app_mounts_ds(docker_config.dataset)],
             get_children=True,

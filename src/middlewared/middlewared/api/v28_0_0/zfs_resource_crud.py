@@ -4,12 +4,18 @@ from pydantic import Field, Secret
 
 from middlewared.api.base import (
     BaseModel,
+    Excluded,
     NonEmptyString,
     NotRequired,
     Private,
     UniqueList,
+    ZFSSize,
+    ZFSSpaceLimit,
+    excluded_field,
 )
 
+from .pool import PoolAttachment, PoolProcess
+from .pool_dataset import DATASET_NAME
 from .zfs_tier import TierInfo
 
 __all__ = (
@@ -19,15 +25,78 @@ __all__ = (
     "ZFSResourceCreateEncryption",
     "ZFSResourceCreateProperties",
     "ZFSResourceCreateResult",
+    "ZFSResourceAttachmentsArgs",
+    "ZFSResourceAttachmentsResult",
+    "ZFSResourceChecksum",
+    "ZFSResourceChecksumChoicesArgs",
+    "ZFSResourceChecksumChoicesResult",
+    "ZFSResourceCompression",
+    "ZFSResourceCompressionChoicesArgs",
+    "ZFSResourceCompressionChoicesResult",
     "ZFSResourceDestroyArgsData",
     "ZFSResourceDestroyArgs",
     "ZFSResourceDestroyResult",
+    "ZFSResourceListAddedEvent",
+    "ZFSResourceListArgs",
+    "ZFSResourceListChangedEvent",
+    "ZFSResourceListRemovedEvent",
+    "ZFSResourceListResult",
+    "ZFSResourceProcessesArgs",
+    "ZFSResourceProcessesResult",
+    "ZFSResourcePromoteArgsData",
+    "ZFSResourcePromoteArgs",
+    "ZFSResourcePromoteResult",
+    "ZFSResourceRecommendedZvolBlocksizeArgs",
+    "ZFSResourceRecommendedZvolBlocksizeResult",
+    "ZFSResourceRecordsizeChoicesArgs",
+    "ZFSResourceRecordsizeChoicesResult",
+    "ZFSResourceRenameArgsData",
+    "ZFSResourceRenameArgs",
+    "ZFSResourceRenameResult",
     "ZFSResourceQuery",
     "ZFSResourceQueryArgs",
     "ZFSResourceQueryResult",
+    "ZFSResourceSetArgsData",
+    "ZFSResourceSetArgs",
+    "ZFSResourceSetChange",
+    "ZFSResourceSetProperties",
+    "ZFSResourceSetResult",
+    "ZFSResourceShareType",
+    "ZFSResourceShareTypeChoicesArgs",
+    "ZFSResourceShareTypeChoicesResult",
 )
 
 PROP_SRC = Literal["NONE", "DEFAULT", "TEMPORARY", "LOCAL", "INHERITED", "RECEIVED"]
+
+ON_OFF = Literal["off", "on"]
+CACHE = Literal["none", "metadata", "all"]
+ACLINHERIT = Literal["discard", "noallow", "restricted", "passthrough", "passthrough-x"]
+ACLMODE = Literal["discard", "groupmask", "passthrough", "restricted"]
+ACLTYPE = Literal["off", "posix", "nfsv4"]
+CASESENSITIVITY = Literal["sensitive", "insensitive", "mixed"]
+ZFSResourceChecksum = Literal["on", "off", "fletcher2", "fletcher4", "sha256", "sha512", "skein", "edonr", "blake3"]
+ZFSResourceCompression = Literal[
+    "on", "off", "lzjb", "gzip",
+    "gzip-1", "gzip-2", "gzip-3", "gzip-4", "gzip-5", "gzip-6", "gzip-7", "gzip-8", "gzip-9",
+    "zle", "lz4", "zstd",
+    "zstd-1", "zstd-2", "zstd-3", "zstd-4", "zstd-5", "zstd-6", "zstd-7", "zstd-8", "zstd-9", "zstd-10",
+    "zstd-11", "zstd-12", "zstd-13", "zstd-14", "zstd-15", "zstd-16", "zstd-17", "zstd-18", "zstd-19",
+    "zstd-fast",
+    "zstd-fast-1", "zstd-fast-2", "zstd-fast-3", "zstd-fast-4", "zstd-fast-5", "zstd-fast-6", "zstd-fast-7",
+    "zstd-fast-8", "zstd-fast-9", "zstd-fast-10", "zstd-fast-20", "zstd-fast-30", "zstd-fast-40", "zstd-fast-50",
+    "zstd-fast-60", "zstd-fast-70", "zstd-fast-80", "zstd-fast-90", "zstd-fast-100", "zstd-fast-500",
+    "zstd-fast-1000",
+]
+DEDUP = Literal[
+    "on", "off", "verify", "sha256", "sha256,verify", "sha512", "sha512,verify", "skein", "skein,verify",
+    "edonr,verify", "blake3", "blake3,verify",
+]
+SNAPDEV = Literal["hidden", "visible"]
+SNAPDIR = Literal["hidden", "visible", "disabled"]
+SYNC = Literal["standard", "always", "disabled"]
+XATTR = Literal["off", "sa", "dir"]
+CANMOUNT = Literal["off", "on", "noauto"]
+NORMALIZATION = Literal["none", "formD", "formKC", "formC", "formKD"]
 
 
 class SourceValue(BaseModel):
@@ -315,7 +384,8 @@ class ZFSResourceQuery(BaseModel):
         description=(
             "A list of zfs filesystem or volume paths to be queried. In almost all scenarios, you should provide a path"
             " of what you want to query. By providing path(s) here, it allows the API to apply optimizations so that "
-            "the requested information is retrieved as efficiently and quickly as possible.\n"
+            "the requested information is retrieved as efficiently and quickly as possible. A path that does not "
+            "exist is skipped rather than reported as an error.\n"
             "\n"
             "Example 1:\n"
             '    {"paths": ["tank/foo"]} will query the relevant information for this resource only.\n'
@@ -324,7 +394,7 @@ class ZFSResourceQuery(BaseModel):
             "only.\n"
             "\n"
             "NOTE:\n"
-            "    paths must be non-overlapping if `get_children` is True.\n"
+            "    paths must be non-overlapping if `get_children` is True or `max_depth` is greater than 0.\n"
             "    (i.e. this won't work and will raise a validation error)\n"
             "        {\n"
             '            "paths": ["tank/foo1", "tank/foo1/foo2"],\n'
@@ -352,6 +422,7 @@ class ZFSResourceQuery(BaseModel):
     get_children: bool = Field(default=False, description="Retrieve children information for the zfs resource.")
     max_depth: int = Field(
         default=0,
+        ge=0,
         description=(
             "Maximum depth to recurse when retrieving children. A value of 0 means unlimited recursion (default "
             "behavior). A value greater than 0 limits the recursion to that many levels deep.\n"
@@ -378,6 +449,25 @@ class ZFSResourceQuery(BaseModel):
     )
 
 
+class ZFSResourceListArgs(BaseModel):
+    data: ZFSResourceQuery = Field(
+        default_factory=ZFSResourceQuery,
+        description="Query parameters for retrieving ZFS resource information.",
+    )
+
+
+class ZFSResourceListResult(BaseModel):
+    result: list[ZFSResourceEntry]
+
+
+class ZFSResourceQueryArgs(ZFSResourceListArgs):
+    pass
+
+
+class ZFSResourceQueryResult(ZFSResourceListResult):
+    pass
+
+
 class ZFSResourceCreateEncryption(BaseModel):
     """Exactly one of `key`, `passphrase`, or `generate_key` must be provided."""
 
@@ -398,7 +488,6 @@ class ZFSResourceCreateEncryption(BaseModel):
     )
     pbkdf2iters: int = Field(
         ge=1_300_000,
-        le=10_000_000,
         default=1_300_000,
         description=(
             "Number of PBKDF2 iterations for key derivation from the passphrase. Only meaningful together with "
@@ -415,53 +504,87 @@ class ZFSResourceCreateProperties(BaseModel):
     Fields marked `Private` are settable by internal callers only.
     """
 
-    aclinherit: str | None = Field(
+    aclinherit: ACLINHERIT | None = Field(
         default=None,
         description="ACL inheritance behavior for new files and directories.",
     )
-    aclmode: str | None = Field(default=None, description="How ACLs are modified during chmod operations.")
-    acltype: str | None = Field(default=None, description="The type of ACL to use (off, posix, or nfsv4).")
-    atime: str | None = Field(default=None, description="Whether file access times are updated on read.")
-    casesensitivity: str | None = Field(
+    aclmode: ACLMODE | None = Field(default=None, description="How ACLs are modified during chmod operations.")
+    acltype: ACLTYPE | None = Field(default=None, description="The type of ACL to use (off, posix, or nfsv4).")
+    atime: ON_OFF | None = Field(default=None, description="Whether file access times are updated on read.")
+    casesensitivity: CASESENSITIVITY | None = Field(
         default=None,
         description="Filename matching sensitivity. Settable at creation time only.",
     )
-    checksum: str | None = Field(default=None, description="Checksum algorithm used to verify data integrity.")
-    compression: str | None = Field(default=None, description="Compression algorithm for the resource.")
-    copies: str | int | None = Field(default=None, description="Number of copies of data blocks to store.")
-    dedup: str | None = Field(default=None, description="Deduplication setting for the resource.")
-    exec: str | None = Field(default=None, description="Whether programs can be executed from the filesystem.")
-    quota: str | int | None = Field(
-        default=None,
-        description="Maximum space the dataset and its descendants may consume.",
+    checksum: ZFSResourceChecksum | None = Field(
+        default=None, description="Checksum algorithm used to verify data integrity."
     )
-    readonly: str | None = Field(default=None, description="Whether the resource can be modified.")
-    recordsize: str | int | None = Field(default=None, description="Suggested block size for files in the filesystem.")
-    refquota: str | int | None = Field(default=None, description="Maximum space the dataset itself may consume.")
-    refreservation: str | int | None = Field(
-        default=None,
-        description="Minimum space reserved for the resource itself. Set to 'none' to create a sparse volume.",
+    compression: ZFSResourceCompression | None = Field(
+        default=None, description="Compression algorithm for the resource."
     )
-    reservation: str | int | None = Field(
+    copies: Annotated[int, Field(ge=1, le=3)] | None = Field(
         default=None,
-        description="Minimum space reserved for the dataset and its descendants.",
+        description="Number of copies of data blocks to store (1, 2, or 3).",
     )
-    snapdev: str | None = Field(default=None, description="Snapshot device visibility under /dev/zvol.")
-    snapdir: str | None = Field(default=None, description="Visibility of the .zfs/snapshot directory.")
-    special_small_blocks: str | int | None = Field(
+    dedup: DEDUP | None = Field(default=None, description="Deduplication setting for the resource.")
+    exec: ON_OFF | None = Field(default=None, description="Whether programs can be executed from the filesystem.")
+    quota: ZFSSpaceLimit | None = Field(
         default=None,
-        description="Size threshold below which blocks are stored on the SPECIAL vdev.",
+        description=(
+            "Maximum space the dataset and its descendants may consume. Takes a size as described for 'volsize'. "
+            "'none' or 0 removes the limit."
+        ),
     )
-    sync: str | None = Field(default=None, description="Synchronous write behavior.")
-    volblocksize: str | int | None = Field(
+    readonly: ON_OFF | None = Field(default=None, description="Whether the resource can be modified.")
+    recordsize: ZFSSize | None = Field(
         default=None,
-        description="Block size of the volume. Settable at creation time only.",
+        description="Suggested block size for files in the filesystem. Takes a size as described for 'volsize'.",
     )
-    volsize: str | int | None = Field(
+    refquota: ZFSSpaceLimit | None = Field(
         default=None,
-        description="Logical size of the volume in bytes. Required when creating a VOLUME.",
+        description=(
+            "Maximum space the dataset itself may consume. Takes a size as described for 'volsize'. 'none' or 0 "
+            "removes the limit."
+        ),
     )
-    xattr: str | None = Field(
+    refreservation: ZFSSpaceLimit | None = Field(
+        default=None,
+        description=(
+            "Minimum space reserved for the resource itself. Takes a size as described for 'volsize'. Set to "
+            "'none' or 0 to create a sparse volume."
+        ),
+    )
+    reservation: ZFSSpaceLimit | None = Field(
+        default=None,
+        description=(
+            "Minimum space reserved for the dataset and its descendants. Takes a size as described for 'volsize'. "
+            "'none' or 0 removes the reservation."
+        ),
+    )
+    snapdev: SNAPDEV | None = Field(default=None, description="Snapshot device visibility under /dev/zvol.")
+    snapdir: SNAPDIR | None = Field(default=None, description="Visibility of the .zfs/snapshot directory.")
+    special_small_blocks: ZFSSize | None = Field(
+        default=None,
+        description=(
+            "Size threshold below which blocks are stored on the SPECIAL vdev. Takes a size as described for "
+            "'volsize'. 0 stores no data blocks on the SPECIAL vdev."
+        ),
+    )
+    sync: SYNC | None = Field(default=None, description="Synchronous write behavior.")
+    volblocksize: ZFSSize | None = Field(
+        default=None,
+        description=(
+            "Block size of the volume. Takes a size as described for 'volsize'. Settable at creation time only."
+        ),
+    )
+    volsize: Annotated[ZFSSize, Field(gt=0)] | None = Field(
+        default=None,
+        description=(
+            "Logical size of the volume. Required when creating a VOLUME. A byte count, or a string with a binary "
+            "suffix (K, M, G, T, P or E, optionally followed by B or iB) such as '128K'. A fractional value such as "
+            "'1.5M' is accepted only when it is a whole number of bytes. Must be greater than zero."
+        ),
+    )
+    xattr: XATTR | None = Field(
         default=None,
         description="Extended attribute storage mode. Defaults to 'sa' for performance.",
     )
@@ -469,7 +592,7 @@ class ZFSResourceCreateProperties(BaseModel):
     # API callers exactly like an unknown property (see `Private`). Internal callers
     # construct this model directly. Each is a foot-gun for API users but a
     # requirement for system-managed datasets (.system, ix-apps, containers).
-    canmount: Private[str | None] = Field(
+    canmount: Private[CANMOUNT | None] = Field(
         default=None,
         description=(
             "Whether the filesystem is mounted after creation (on, off, or noauto). Anything but on leaves the "
@@ -491,42 +614,45 @@ class ZFSResourceCreateProperties(BaseModel):
             "beneath /mnt/<pool>; system datasets need legacy or a fixed location."
         ),
     )
-    normalization: Private[str | None] = Field(
+    normalization: Private[NORMALIZATION | None] = Field(
         default=None,
         description="Unicode normalization applied to filenames. Settable at creation time only.",
     )
-    overlay: Private[str | None] = Field(
+    overlay: Private[ON_OFF | None] = Field(
         default=None,
         description="Whether the filesystem may be mounted over a non-empty directory.",
     )
-    prefetch: Private[str | None] = Field(
+    prefetch: Private[CACHE | None] = Field(
         default=None,
         description="Prefetch behavior for the resource (all, metadata, or none).",
     )
-    primarycache: Private[str | None] = Field(
+    primarycache: Private[CACHE | None] = Field(
         default=None,
         description="What the ARC caches for this resource (all, metadata, or none).",
     )
-    secondarycache: Private[str | None] = Field(
+    secondarycache: Private[CACHE | None] = Field(
         default=None,
         description="What the L2ARC caches for this resource (all, metadata, or none).",
     )
-    setuid: Private[str | None] = Field(
+    setuid: Private[ON_OFF | None] = Field(
         default=None,
         description="Whether the setuid and setgid bits are honored on the filesystem.",
     )
-    utf8only: Private[str | None] = Field(
+    utf8only: Private[ON_OFF | None] = Field(
         default=None,
         description="Whether only UTF-8 filenames are allowed. Settable at creation time only.",
     )
 
 
+ZFSResourceShareType = Literal["smb", "multiprotocol", "nfs", "apps"]
+
+
 class ZFSResourceCreateArgsData(BaseModel):
-    path: NonEmptyString = Field(
+    path: DATASET_NAME = Field(
         description=(
-            "Path of the zfs resource (dataset or volume) to be created. Must be of the form 'pool/name'. It cannot "
-            "be an absolute path or end with '/'. Snapshot paths (containing '@') are not accepted one must use "
-            "`zfs.resource.snapshot.create` instead."
+            "Path of the zfs resource (dataset or volume) to be created, of the form 'pool/name'. It must be a valid "
+            "ZFS name and may not contain '%' or end in a space. Snapshot paths are not accepted; use "
+            "`zfs.resource.snapshot.create`."
         ),
     )
     type: Literal["FILESYSTEM", "VOLUME"] = Field(
@@ -545,7 +671,7 @@ class ZFSResourceCreateArgsData(BaseModel):
             "creation time.\n"
             "\n"
             "Creating a VOLUME requires 'volsize'. Volumes are thick-provisioned by default ('refreservation' "
-            "defaults to the volsize, like `zfs create -V`). Set 'refreservation' to 'none' to create a sparse "
+            "defaults to the volsize). Set 'refreservation' to 'none' to create a sparse "
             "(thin) volume.\n"
             "\n"
             "A FILESYSTEM defaults 'xattr' to 'sa' (a TrueNAS performance default) unless explicitly specified. An "
@@ -578,10 +704,32 @@ class ZFSResourceCreateArgsData(BaseModel):
             "not be unlocked while its parent is locked."
         ),
     )
+    share_type: ZFSResourceShareType | None = Field(
+        default=None,
+        description=(
+            "Prepare a FILESYSTEM for sharing. The preset fills the unset properties listed by "
+            "`zfs.resource.share_type_choices`; sending one of those properties with a different value is an error. "
+            "The new filesystem gets the parent's inheritable NFSv4 ACL or, for `smb` and `apps`, the "
+            "NFS4_RESTRICTED template when the parent has none. `apps` also grants the apps user modify access. "
+            "Applies to a FILESYSTEM only. The preset is not stored."
+        ),
+    )
+    force_size: bool = Field(
+        default=False,
+        description=(
+            "Skip the check that refuses a VOLUME whose 'volsize' exceeds 80% of the space available to it. ZFS "
+            "still refuses a thick volume whose reservation it cannot back, and the volume is then not created. "
+            "Applies to a VOLUME only."
+        ),
+    )
     bypass: Private[bool] = Field(
         default=False,
         description=(
-            'If true, will bypass the safety checks that prevent creating zfs resources under "protected" paths.'
+            'If true, will bypass the safety checks that prevent creating zfs resources under "protected" paths. '
+            "It also skips the existing-mountpoint check, the refusal to create beneath an unencrypted dataset "
+            "inside an encrypted one, the refusal of an inherited nfsv4/discard pair, the dRAID recordsize "
+            "default and floor, the tier pin of `special_small_blocks` and the `aclmode`/`aclinherit` defaults "
+            "that follow an explicit `acltype`."
         ),
     )
 
@@ -591,6 +739,104 @@ class ZFSResourceCreateArgs(BaseModel):
 
 
 class ZFSResourceCreateResult(BaseModel):
+    result: ZFSResourceEntry
+
+
+class ZFSResourceSetProperties(ZFSResourceCreateProperties):
+    """ZFS properties that may be changed on an existing resource."""
+
+    casesensitivity: Excluded = excluded_field()
+    volblocksize: Excluded = excluded_field()
+    refreservation: ZFSSpaceLimit | Literal["auto"] | None = Field(
+        default=None,
+        description=(
+            "Minimum space reserved for the resource itself. Takes a size as described for 'volsize'. 'none' or 0 "
+            "removes the reservation. 'auto' reserves the space the volume's size requires and is accepted for "
+            "volumes only. Giving it together with a 'volsize' grow replaces the automatic re-reservation "
+            "described for 'volsize'."
+        ),
+    )
+    volsize: ZFSSize | None = Field(
+        default=None,
+        description=(
+            "Logical size of the volume. A byte count, or a string with a binary suffix (K, M, G, T, P or E, "
+            "optionally followed by B or iB) such as '128K'. A fractional value such as '1.5M' is accepted only when "
+            "it is a whole number of bytes. It may only grow. A grow on a volume whose 'refreservation' equals its "
+            "current size, or is what 'auto' computes for it, re-reserves the volume automatically, as "
+            "'refreservation' 'auto' does, unless 'refreservation' is given in the same request."
+        ),
+    )
+    normalization: Excluded = excluded_field()
+    utf8only: Excluded = excluded_field()
+    encryption: Excluded = excluded_field()
+    volthreading: Private[ON_OFF | None] = Field(
+        default=None,
+        description="Whether a volume's I/O is handed to ZFS worker threads. Accepted for volumes only.",
+    )
+
+
+class ZFSResourceSetArgsData(BaseModel):
+    path: DATASET_NAME = Field(
+        description=(
+            "Path of the zfs resource (dataset or volume) to be updated. Must be of the form 'pool/name'. Snapshot "
+            "paths (containing '@') are not accepted."
+        ),
+    )
+    properties: ZFSResourceSetProperties = Field(
+        default_factory=ZFSResourceSetProperties,
+        description=(
+            "ZFS properties to set. Values are handed to ZFS verbatim and canonicalized by ZFS itself. Read the "
+            "returned entry for the effective values. A property left as null is not touched. Any property not in "
+            "this model may not be changed here.\n"
+            "\n"
+            "An explicit 'acltype' also defaults the coupled acl properties unless they are given. An nfsv4 acltype "
+            "defaults 'aclinherit' to 'passthrough' while a posix or off acltype defaults both 'aclmode' and "
+            "'aclinherit' to 'discard'.\n"
+            "\n"
+            "A volume's 'volsize' may only grow. Encryption is managed with the `pool.dataset` key methods and "
+            "shares with the `sharing.nfs` and `sharing.smb` APIs. Neither may be configured through these "
+            "properties."
+        ),
+    )
+    user_properties: dict[str, str] = Field(
+        default={},
+        description=(
+            "User properties to set or overwrite, keyed by their full name (e.g. 'org.truenas:custom'). A name must "
+            "contain a colon, may consist only of lowercase letters, digits and the characters ':', '.', '_' and "
+            "'-', and must be shorter than 256 characters. A value may be at most 1024 characters long."
+        ),
+    )
+    inherit: list[str] = Field(
+        default=[],
+        description=(
+            "Property names to reset to their inherited value, as `zfs inherit` does. A native property must be one "
+            "of those settable through `properties` except `quota`, `refquota`, `reservation`, `refreservation` and "
+            "`volsize`, which have no inherited value. A user property name must contain a colon; inheriting one "
+            "removes it from this resource. On a filesystem, inheriting `acltype` also inherits `aclmode` and "
+            "`aclinherit` unless those are given in `properties`. On a pool's root dataset the property returns to "
+            "its ZFS default."
+        ),
+    )
+    force_size: bool = Field(
+        default=False,
+        description=(
+            "Skip the check that refuses a 'volsize' above 80% of the space available to the VOLUME. ZFS still "
+            "refuses a grow whose reservation it cannot back. Applies to a VOLUME only."
+        ),
+    )
+    bypass: Private[bool] = Field(
+        default=False,
+        description=(
+            'If true, will bypass the safety check that prevents changing zfs resources under "protected" paths.'
+        ),
+    )
+
+
+class ZFSResourceSetArgs(BaseModel):
+    data: ZFSResourceSetArgsData = Field(description="Set parameters for changing a ZFS resource.")
+
+
+class ZFSResourceSetResult(BaseModel):
     result: ZFSResourceEntry
 
 
@@ -619,12 +865,156 @@ class ZFSResourceDestroyResult(BaseModel):
     result: None
 
 
-class ZFSResourceQueryArgs(BaseModel):
-    data: ZFSResourceQuery = Field(
-        default=ZFSResourceQuery(),
-        description="Query parameters for retrieving ZFS resource information.",
+class ZFSResourceChecksumChoicesArgs(BaseModel):
+    pass
+
+
+class ZFSResourceChecksumChoicesResult(BaseModel):
+    result: dict[str, str] = Field(description="Object mapping checksum algorithm names to their descriptions.")
+
+
+class ZFSResourceCompressionChoicesArgs(BaseModel):
+    pass
+
+
+class ZFSResourceCompressionChoicesResult(BaseModel):
+    result: dict[str, str] = Field(description="Object mapping compression algorithm names to their descriptions.")
+
+
+class ZFSResourceShareTypeChoicesArgs(BaseModel):
+    pass
+
+
+class ZFSResourceShareTypeChoicesResult(BaseModel):
+    result: dict[str, dict[str, str]] = Field(
+        description="Object mapping each share_type to the native properties it sets and their values."
     )
 
 
-class ZFSResourceQueryResult(BaseModel):
-    result: list[ZFSResourceEntry]
+class ZFSResourceRecordsizeChoicesArgs(BaseModel):
+    pool_name: str | None = Field(
+        default=None,
+        description="Optional pool name to get record size choices for. If not provided, returns general choices.",
+    )
+
+
+class ZFSResourceRecordsizeChoicesResult(BaseModel):
+    result: list[str] = Field(description="Array of available record size options for filesystem datasets.")
+
+
+class ZFSResourceRecommendedZvolBlocksizeArgs(BaseModel):
+    pool: str = Field(description="The pool name to get the recommended volume block size for.")
+
+
+class ZFSResourceRecommendedZvolBlocksizeResult(BaseModel):
+    result: str = Field(description="The recommended block size for volumes on this pool.")
+
+
+class ZFSResourceAttachmentsArgs(BaseModel):
+    path: str = Field(description="Path of the zfs resource (filesystem or volume) whose dependents to list.")
+
+
+class ZFSResourceAttachmentsResult(BaseModel):
+    result: list[PoolAttachment] = Field(
+        description="Array of the shares, tasks and services using the resource, grouped by kind."
+    )
+
+
+class ZFSResourceProcessesArgs(BaseModel):
+    path: str = Field(description="Path of the zfs resource to list processes for.")
+
+
+class ZFSResourceProcessesResult(BaseModel):
+    result: list[PoolProcess] = Field(description="Array of processes with open files on the resource.")
+
+
+class ZFSResourceRenameArgsData(BaseModel):
+    current_name: DATASET_NAME = Field(
+        description=(
+            "The existing name of the zfs resource to be renamed. Snapshot paths (containing '@') are not accepted; "
+            "use `zfs.resource.snapshot.rename` instead."
+        ),
+    )
+    new_name: DATASET_NAME = Field(
+        description=(
+            "The new name for the zfs resource. It must stay within the same pool and may contain alphanumeric "
+            "characters along with underscore, hyphen, colon and period."
+        ),
+    )
+    no_unmount: bool = Field(
+        default=False,
+        description=(
+            "Do not remount filesystems during the rename. A filesystem whose mountpoint property is legacy or none "
+            "is never unmounted regardless of this setting."
+        ),
+    )
+    force_unmount: bool = Field(
+        default=True,
+        description="Force unmount any filesystem that has to be unmounted in the process.",
+    )
+    force: bool = Field(
+        default=False,
+        description=(
+            "Acknowledge that no check is made whether the resource is in use. Renaming an active resource may "
+            "disrupt SMB shares, iSCSI targets, snapshot tasks, replication and other services. The rename is "
+            "refused unless this is set."
+        ),
+    )
+
+
+class ZFSResourceRenameArgs(BaseModel):
+    data: ZFSResourceRenameArgsData = Field(description="Rename parameters for renaming a ZFS resource.")
+
+
+class ZFSResourceRenameResult(BaseModel):
+    result: None
+
+
+class ZFSResourcePromoteArgsData(BaseModel):
+    path: DATASET_NAME = Field(description="Path of the cloned zfs resource to be promoted.")
+
+
+class ZFSResourcePromoteArgs(BaseModel):
+    data: ZFSResourcePromoteArgsData = Field(description="Promote parameters for promoting a ZFS clone.")
+
+
+class ZFSResourcePromoteResult(BaseModel):
+    result: None
+
+
+class ZFSResourceSetChange(BaseModel):
+    properties: dict[str, PropertyValue] | None = Field(
+        description=(
+            "The native properties the operation set, inherited or derived, with their values as read back after the "
+            "write. Properties it did not touch are absent."
+        ),
+    )
+    user_properties: dict[str, str] | None = Field(
+        description=(
+            "The user properties as read back after the write, named as `zfs.resource.list` names them. Null when "
+            "the operation touched no user property."
+        ),
+    )
+    inherited: list[str] = Field(description="The property names the operation reset to their inherited value.")
+    descendants_affected: bool = Field(
+        description=(
+            "Means an inherited property value below `id` may have changed. It does not cover space accounting: a "
+            "quota set here changes the space available to every descendant without setting this flag."
+        ),
+    )
+
+
+class ZFSResourceListAddedEvent(BaseModel):
+    id: str = Field(description="Path of the filesystem or volume that was created or renamed into place.")
+    fields: ZFSResourceEntry = Field(description="The resource as read back after the operation.")
+
+
+class ZFSResourceListChangedEvent(BaseModel):
+    id: str = Field(description="Path of the filesystem or volume that changed.")
+    fields: ZFSResourceSetChange = Field(
+        description="What the operation changed. Only the properties it touched are present.",
+    )
+
+
+class ZFSResourceListRemovedEvent(BaseModel):
+    id: str = Field(description="Path of the filesystem or volume that was destroyed or renamed away.")

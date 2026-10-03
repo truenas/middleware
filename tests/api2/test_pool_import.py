@@ -14,7 +14,7 @@ def test_does_not_touch_normal_pool():
     with another_pool({'name': POOL_NAME}) as pool:
         # Will fail if we try to call this method
         with mock(
-            'pool.dataset.update_impl',
+            'zfs.resource.set_impl',
             exception='The imported pool is already ok, this method should not be called',
         ):
             # Export and import the pool

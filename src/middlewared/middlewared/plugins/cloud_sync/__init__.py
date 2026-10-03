@@ -229,7 +229,9 @@ class CloudSyncFSAttachmentDelegate(LockableFSAttachmentDelegate[CloudSyncEntry]
 
 
 async def setup(middleware: Middleware) -> None:
-    await middleware.call("pool.dataset.register_attachment_delegate", CloudSyncFSAttachmentDelegate(middleware))
+    await middleware.call2(
+        middleware.services.zfs.resource.register_attachment_delegate, CloudSyncFSAttachmentDelegate(middleware)
+    )
     await middleware.call("network.general.register_activity", "cloud_sync", "Cloud sync")
     await middleware.call2(middleware.services.cloudsync.persist_task_state_on_job_complete)
     await middleware.call2(middleware.services.cloudsync.credentials.query, [], QueryOptions(delete_invalid_rows=True))

@@ -13,9 +13,10 @@ from middlewared.api.current import (
     PoolReimportArgs,
     PoolReimportResult,
     ZFSResourceQuery,
+    ZFSResourceSetArgsData,
+    ZFSResourceSetProperties,
 )
 from middlewared.plugins.container.utils import container_dataset, container_dataset_mountpoint
-from middlewared.plugins.pool_.utils import UpdateImplArgs
 from middlewared.service import CallError, InstanceNotFound, Service, ValidationError, job, private
 from middlewared.utils.filesystem import attrs as fs_attrs
 from middlewared.utils.zfs import query_imported_fast_impl
@@ -41,7 +42,7 @@ class PoolService(Service):
         container_mnt = container_dataset_mountpoint(pool_name)
         container_ds = container_dataset(pool_name)
         for i in await self.call2(
-            self.s.zfs.resource.query_impl,
+            self.s.zfs.resource.list_impl,
             ZFSResourceQuery(paths=[pool_name], properties=['mountpoint'], max_depth=1, get_source=True)
         ):
             if i['type'] != 'FILESYSTEM':
@@ -56,9 +57,9 @@ class PoolService(Service):
                     # much of anything will work on our side. Furthermore,
                     # there is no reason to continue the iteration since
                     # we'll need iterate all children no matter what.
-                    await self.middleware.call(
-                        'pool.dataset.update_impl',
-                        UpdateImplArgs(name=i['name'], iprops={'mountpoint'})
+                    await self.call2(
+                        self.s.zfs.resource.set_impl,
+                        ZFSResourceSetArgsData(path=i['name'], inherit=['mountpoint'], bypass=True),
                     )
                     to_inherit.append(pool_name)
                     break
@@ -77,9 +78,11 @@ class PoolService(Service):
                     # and non-obvious.
                     # This dataset gets a custom mountpoint so user cannot
                     # unintentionally share it via SMB, NFS, etc.
-                    await self.middleware.call(
-                        'pool.dataset.update_impl',
-                        UpdateImplArgs(name=i['name'], zprops={'mountpoint': container_mnt})
+                    await self.call2(
+                        self.s.zfs.resource.set_impl,
+                        ZFSResourceSetArgsData(
+                            path=i['name'], properties=ZFSResourceSetProperties(mountpoint=container_mnt), bypass=True,
+                        ),
                     )
 
                 # We do not do anything if the mountpoint is already correct
@@ -87,22 +90,21 @@ class PoolService(Service):
                 to_inherit.append(i["name"])
 
         if to_inherit:
-            # NOTE: we use zfs.resource.query which will hide internal
-            # paths. This is important so don't change it unless you
-            # understand the implications fully.
+            # Internal datasets are deliberately left out; the services that own them manage their
+            # mountpoints.
             for i in await self.call2(
-                self.s.zfs.resource.query,
+                self.s.zfs.resource.list_impl,
                 ZFSResourceQuery(paths=to_inherit, properties=None, get_children=True)
             ):
-                if i.type != 'FILESYSTEM':
+                if i['type'] != 'FILESYSTEM':
                     continue
                 try:
-                    await self.middleware.call(
-                        'pool.dataset.update_impl',
-                        UpdateImplArgs(name=i.name, iprops={'mountpoint'})
+                    await self.call2(
+                        self.s.zfs.resource.set_impl,
+                        ZFSResourceSetArgsData(path=i['name'], inherit=['mountpoint'], bypass=True),
                     )
                 except Exception:
-                    self.logger.exception('Failed inheriting mountpoint property for %r', i.name)
+                    self.logger.exception('Failed inheriting mountpoint property for %r', i['name'])
 
     @api_method(PoolImportFindArgs, PoolImportFindResult, roles=['POOL_READ'])
     @job()
@@ -227,7 +229,7 @@ class PoolService(Service):
         key = f'pool:{pool["name"]}:enable_on_import'
         if await self.call2(self.s.keyvalue.has_key, key):
             for name, ids in (await self.call2(self.s.keyvalue.get, key)).items():
-                for delegate in await self.middleware.call('pool.dataset.get_attachment_delegates_for_start'):
+                for delegate in await self.call2(self.s.zfs.resource.attachment_delegates_for_start):
                     if delegate.name == name:
                         attachments = await delegate.query(pool['path'], False)
                         attachments = [
@@ -319,7 +321,7 @@ class PoolService(Service):
 
         job.set_progress(80, 'Re-enabling services')
 
-        for delegate in await self.middleware.call('pool.dataset.get_attachment_delegates_for_start'):
+        for delegate in await self.call2(self.s.zfs.resource.attachment_delegates_for_start):
             # The pool is already imported, so a delegate failure here must not abort the reimport
             try:
                 await delegate.start_on_import(pool['path'])
@@ -415,16 +417,16 @@ class PoolService(Service):
     @private
     def normalize_root_dataset_properties(self, vol_name, vol_guid):
         try:
-            self.logger.debug('Calling zfs.resource.query_impl on %r with guid %r', vol_name, vol_guid)
+            self.logger.debug('Calling zfs.resource.list_impl on %r with guid %r', vol_name, vol_guid)
             ds = self.call_sync2(
-                self.s.zfs.resource.query_impl,
+                self.s.zfs.resource.list_impl,
                 ZFSResourceQuery(paths=[vol_name], properties=['acltype', 'aclinherit', 'aclmode'])
             )[0]['properties']
         except Exception:
             self.logger.warning('Unexpected failure querying root-level properties for %r', vol_name, exc_info=True)
             return True
         else:
-            self.logger.debug('Done calling zfs.resource.query_impl on %r with guid %r', vol_name, vol_guid)
+            self.logger.debug('Done calling zfs.resource.list_impl on %r with guid %r', vol_name, vol_guid)
 
         opts = dict()
         if ds['acltype']['value'] == 'nfsv4':
@@ -440,12 +442,14 @@ class PoolService(Service):
 
         if opts:
             try:
-                self.logger.debug('Calling pool.dateset.update_impl on %r with opts %r', vol_name, opts)
-                self.middleware.call_sync('pool.dataset.update_impl', UpdateImplArgs(name=vol_name, zprops=opts))
+                self.logger.debug('Calling zfs.resource.set_impl on %r with opts %r', vol_name, opts)
+                self.call_sync2(
+                    self.s.zfs.resource.set_impl, ZFSResourceSetArgsData(path=vol_name, properties=opts, bypass=True),
+                )
             except Exception:
                 self.logger.warning('%r: failed to normalize properties of root-level dataset', vol_name, exc_info=True)
             else:
-                self.logger.debug('Done calling pool.dataset.update_impl on %r', vol_name)
+                self.logger.debug('Done calling zfs.resource.set_impl on %r', vol_name)
 
     @private
     def import_on_boot_impl(self, vol_name, vol_guid, set_cachefile=False):

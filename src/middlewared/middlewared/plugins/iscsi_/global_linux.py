@@ -34,8 +34,18 @@ class ISCSIGlobalService(Service):
             )
             ro = True if read_only_value.lower() == 'on' else False
             if extent['ro'] != ro:
+                # iscsi.extent.update would write readonly back onto the zvol this change came from
                 self.middleware.call_sync(
-                    'iscsi.extent.update', extent['id'], {'ro': ro}
+                    'datastore.update', 'services.iscsitargetextent', extent['id'], {'ro': ro},
+                    {'prefix': 'iscsi_target_extent_'},
+                )
+                if self.call_sync2(self.s.service.started, 'iscsitarget'):
+                    # scstadmin can have issues when modifying an existing extent, so reload twice as extent update does
+                    for _ in range(2):
+                        self.call_sync2(self.s.service.control, 'RELOAD', 'iscsitarget').wait_sync(raise_error=True)
+                self.middleware.send_event(
+                    'iscsi.extent.query', 'CHANGED', id=extent['id'],
+                    fields=self.middleware.call_sync('iscsi.extent.get_instance', extent['id']),
                 )
         except MatchNotFound:
             return

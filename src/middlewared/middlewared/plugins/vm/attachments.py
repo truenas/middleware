@@ -17,15 +17,18 @@ from middlewared.api.current import (
 from middlewared.common.attachment import FSAttachmentDelegate, UnlockedDataset
 from middlewared.common.ports import PortDelegate, PortDetail
 from middlewared.plugins.zfs.zvol_utils import zvol_path_to_name
+from middlewared.service_exception import ValidationError
 from middlewared.utils.libvirt.utils import ACTIVE_STATES
 
 if TYPE_CHECKING:
     from middlewared.main import Middleware
+    from middlewared.plugins.zfs.set_rules import SetContext
 
 
 class VMFSAttachmentDelegate(FSAttachmentDelegate[dict[str, Any]]):
     name = 'vm'
     title = 'VM'
+    set_triggers = frozenset({'snapdev'})
 
     async def query(self, path: str, enabled: bool, options: dict[str, Any] | None = None) -> list[dict[str, Any]]:
         vms_attached: list[dict[str, Any]] = []
@@ -73,7 +76,7 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate[dict[str, Any]]):
         # True if any DISK/RAW disk the VM needs is on a dataset that is still locked (or has a
         # locked parent).
         for disk in self.disk_paths(vm):
-            if await self.middleware.call('pool.dataset.path_in_locked_datasets', disk):
+            if await self.call2(self.s.zfs.resource.path_is_locked, disk):
                 return True
 
         return False
@@ -182,6 +185,23 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate[dict[str, Any]]):
         disks = self.disk_paths(vm)
         return bool(disks) and await self.middleware.call('filesystem.is_child', disks, list(paths))
 
+    async def validate_set(self, state: SetContext) -> None:
+        if not state.snapshot_devices or not state.changed('snapdev') or state.effective('snapdev') != 'hidden':
+            return
+
+        disks = await self.call2(self.s.vm.device.query, [['attributes.dtype', '=', 'DISK']])
+        if any(
+            isinstance(disk.attributes, VMDiskDevice)
+            and disk.attributes.path is not None
+            and zvol_path_to_name(disk.attributes.path) in state.snapshot_devices
+            for disk in disks
+        ):
+            raise ValidationError(
+                state.attribute('snapdev'),
+                f'{state.path!r} has snapshots which have attachments being used. Before marking it '
+                'as HIDDEN, remove attachment usages.',
+            )
+
 
 class VMPortDelegate(PortDelegate):
 
@@ -213,6 +233,8 @@ class VMPortDelegate(PortDelegate):
 
 async def setup(middleware: Middleware) -> None:
     middleware.create_task(
-        middleware.call('pool.dataset.register_attachment_delegate', VMFSAttachmentDelegate(middleware))
+        middleware.call2(
+            middleware.services.zfs.resource.register_attachment_delegate, VMFSAttachmentDelegate(middleware)
+        )
     )
     await middleware.call('port.register_attachment_delegate', VMPortDelegate(middleware))

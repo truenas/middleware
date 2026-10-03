@@ -6,8 +6,7 @@ import typing
 
 import requests
 
-from middlewared.api.current import ZFSResourceQuery, ZFSResourceSnapshotCreateQuery
-from middlewared.plugins.pool_.utils import CreateImplArgs
+from middlewared.api.current import ZFSResourceCreateArgsData, ZFSResourceQuery, ZFSResourceSnapshotCreateQuery
 from middlewared.service import CallError, ServiceContext, ValidationErrors
 from middlewared.utils.network import INTERNET_TIMEOUT
 
@@ -37,7 +36,7 @@ def pull(context: ServiceContext, job: Job, pool: str, image: dict[str, typing.A
     dataset_name = os.path.join(container_dataset(pool), suffix)
     snapshot_name = f'{dataset_name}@image'
     if context.call_sync2(
-        context.s.zfs.resource.query_impl,
+        context.s.zfs.resource.list_impl,
         ZFSResourceQuery(paths=[dataset_name], properties=None)
     ):
         # Check if the snapshot exists
@@ -51,13 +50,9 @@ def pull(context: ServiceContext, job: Job, pool: str, image: dict[str, typing.A
             return snapshot_name
 
     context.run_coroutine(ensure_datasets(context, pool))
-    context.middleware.call_sync(
-        'pool.dataset.create_impl',
-        CreateImplArgs(
-            name=dataset_name,
-            create_ancestors=True,
-            ztype='FILESYSTEM',
-        ),
+    context.call_sync2(
+        context.s.zfs.resource.create_impl,
+        ZFSResourceCreateArgsData(path=dataset_name, create_ancestors=True, bypass=True),
     )
     try:
         verrors = ValidationErrors()

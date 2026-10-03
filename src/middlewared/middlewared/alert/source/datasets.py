@@ -4,6 +4,7 @@ from typing import Any
 
 from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertClassConfig, AlertLevel, AlertSource
 from middlewared.alert.schedule import IntervalSchedule
+from middlewared.api.current import ZFSResourceQuery
 
 
 @dataclass(kw_only=True)
@@ -26,20 +27,16 @@ class UnencryptedDatasetsAlertSource(AlertSource):
     schedule = IntervalSchedule(timedelta(hours=12))
 
     async def check(self) -> list[Alert[Any]] | Alert[Any] | None:
-        unencrypted_datasets = []
-        for dataset in await self.middleware.call('pool.dataset.query', [['encrypted', '=', True]]):
-            for child in dataset['children']:
-                if child['name'] in (
-                    f'{child["pool"]}/ix-applications', f'{child["pool"]}/ix-apps'
-                ) or child['name'].startswith((
-                    f'{child["pool"]}/ix-applications/', f'{child["pool"]}/ix-apps/'
-                )):
-                    continue
+        encrypted, unencrypted = set(), []
+        for ds in await self.call2(
+            self.s.zfs.resource.list_impl, ZFSResourceQuery(properties=['encryption'], get_children=True)
+        ):
+            if ds['properties']['encryption']['raw'] != 'off':
+                encrypted.add(ds['name'])
+            elif ds['name'].rsplit('/', 1)[0] in encrypted:
+                unencrypted.append(ds['name'])
 
-                if not child['encrypted']:
-                    unencrypted_datasets.append(child['name'])
-
-        if unencrypted_datasets:
-            return Alert(EncryptedDatasetAlert(datasets=', '.join(unencrypted_datasets)))
+        if unencrypted:
+            return Alert(EncryptedDatasetAlert(datasets=', '.join(unencrypted)))
 
         return None

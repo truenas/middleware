@@ -3,8 +3,7 @@ from __future__ import annotations
 import os
 import typing
 
-from middlewared.api.current import ZFSResourceQuery
-from middlewared.plugins.pool_.utils import CreateImplArgs
+from middlewared.api.current import ZFSResourceCreateArgsData, ZFSResourceQuery
 from middlewared.service import CallError, ServiceContext
 
 from .ix_apps.path import get_app_parent_volume_ds_name
@@ -21,17 +20,18 @@ async def update_volumes(context: ServiceContext, app_name: str, volumes: list[d
     user_wants = {app_volume_ds: {'properties': {}}} | {os.path.join(app_volume_ds, v['name']): v for v in volumes}
     existing_datasets = {
         d['name'] for d in await context.call2(
-            context.s.zfs.resource.query_impl, ZFSResourceQuery(paths=list(user_wants), properties=None)
+            context.s.zfs.resource.list_impl, ZFSResourceQuery(paths=list(user_wants), properties=None)
         )
     }
+    defaults = DatasetDefaults.create_time_props().model_dump(exclude_none=True)
     for create_ds in sorted(set(user_wants) - existing_datasets):
-        await context.middleware.call(
-            'pool.dataset.create_impl',
-            CreateImplArgs(
-                name=create_ds,
-                ztype='FILESYSTEM',
-                zprops=user_wants[create_ds]['properties'] | DatasetDefaults.create_time_props(),
-            )
+        await context.call2(
+            context.s.zfs.resource.create_impl,
+            ZFSResourceCreateArgsData(
+                path=create_ds,
+                properties=user_wants[create_ds]['properties'] | defaults,
+                bypass=True,
+            ),
         )
         await context.call2(context.s.zfs.resource.mount, create_ds)
 

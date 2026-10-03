@@ -19,7 +19,7 @@ class Delegate:
 
 def service(delegate):
     m = Middleware()
-    m["pool.dataset.get_attachment_delegates_for_stop"] = lambda *args: [delegate]
+    m.services.zfs.resource.attachment_delegates_for_stop = lambda: [delegate]
     return PoolService(m)
 
 

@@ -18,7 +18,7 @@ async def pool_choices(context: ServiceContext) -> dict[str, str]:
     pools = {}
     imported_pools = await context.to_thread(query_imported_fast_impl)
     for ds in await context.call2(
-        context.s.zfs.resource.query_impl,
+        context.s.zfs.resource.list_impl,
         ZFSResourceQuery(
             paths=[
                 p['name']

@@ -1,4 +1,5 @@
 import threading
+from typing import Any
 
 from middlewared.api import Event, api_method
 from middlewared.api.current import (
@@ -49,7 +50,7 @@ class ZPoolService(Service):
 
     @private
     @pass_thread_local_storage
-    def query_impl(self, tls: threading.local, data: dict | None = None) -> list[ZPoolEntry]:
+    def query_impl(self, tls: threading.local, data: dict | None = None) -> list[dict[str, Any]]:
         if data is None:
             data = dict()
         return query_impl(tls.lzh, data)
