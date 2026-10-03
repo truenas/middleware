@@ -1033,13 +1033,11 @@ async def hook_setup_ha(middleware, *args, **kwargs):
     await middleware.call('failover.status_refresh')
 
     try:
-        ha_configured = await middleware.call(
-            'failover.call_remote', 'failover.status'
-        ) != 'SINGLE'
+        remote_status = await middleware.call('failover.call_remote', 'failover.status')
     except Exception:
-        ha_configured = False
+        remote_status = None
 
-    if ha_configured:
+    if remote_status not in (None, 'SINGLE'):
         # Perform basic initialization of DLM, in case it is needed by iSCSI ALUA
         middleware.logger.debug('[HA] Initialize DLM')
         await middleware.call('dlm.create')
@@ -1066,6 +1064,12 @@ async def hook_setup_ha(middleware, *args, **kwargs):
         cur_status = await middleware.call('failover.status')
         config = await middleware.call('failover.config')
         if cur_status == 'MASTER' or (config['master'] and config['disabled']):
+            if remote_status == 'MASTER':
+                # The other controller thinks it is MASTER too (VIPs on both controllers, or failover disabled with
+                # the VIP on the controller not marked as master). Syncing to it would make it sync straight back
+                # to us forever and could overwrite its newer database with ours.
+                middleware.logger.warning('[HA] Other controller reports MASTER, not syncing to it')
+                return
 
             # In the event HA is configured and the end-user deletes
             # an interface, we need to sync the database over to the
