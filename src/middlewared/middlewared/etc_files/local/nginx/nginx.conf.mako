@@ -66,8 +66,7 @@
     # Check if FIPS mode is enabled
     fips_enabled = middleware.call_sync('system.security.info.fips_enabled')
 
-    # HSTS max-age calculation (730 days = 63072000 seconds)
-    max_age = 63072000 if general_settings['ui_httpsredirect'] else 0
+    sts_max_age = 31536000 if general_settings['ui_httpsredirect'] else 0
 
     if not any(i in general_settings['ui_httpsprotocols'] for i in ('TLSv1', 'TLSv1.1')):
         disabled_ciphers = ':!SHA1:!SHA256:!SHA384'
@@ -234,7 +233,7 @@ http {
 <%def name="security_headers(indent=8)">
 <% spaces = ' ' * indent %>
 ${spaces}# Security Headers
-${spaces}add_header Strict-Transport-Security "max-age=${max_age}; includeSubDomains; preload" always;
+${spaces}add_header Strict-Transport-Security "max-age=${sts_max_age}; includeSubDomains" always;
 ${spaces}add_header X-Content-Type-Options "nosniff" always;
 ${spaces}add_header X-XSS-Protection "1; mode=block" always;
 ${spaces}add_header Permissions-Policy "geolocation=(),midi=(),sync-xhr=(),microphone=(),camera=(),magnetometer=(),gyroscope=(),fullscreen=(self),payment=()" always;
