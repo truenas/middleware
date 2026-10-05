@@ -96,7 +96,7 @@ class RsyncTaskModel(sa.Model):
     rsync_quiet = sa.Column(sa.Boolean())
     rsync_preserveperm = sa.Column(sa.Boolean())
     rsync_preserveattr = sa.Column(sa.Boolean())
-    rsync_extra = sa.Column(sa.Text())
+    rsync_extra = sa.Column(sa.JSON(list))
     rsync_enabled = sa.Column(sa.Boolean())
     rsync_mode = sa.Column(sa.String(20))
     rsync_remotepath = sa.Column(sa.String(255))
@@ -125,13 +125,6 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
 
     @private
     async def rsync_task_extend(self, data, context):
-        try:
-            data['extra'] = shlex.split(data['extra'].replace('"', r'"\"').replace("'", r'"\"'))
-        except ValueError:
-            # This is to handle the case where the extra value is misconfigured for old cases
-            # Moving on, we are going to verify that it can be split successfully using shlex
-            data['extra'] = data['extra'].split()
-
         convert_db_format_to_schedule(data)
         if job := await self.get_task_state_job(context['task_state'], data['id']):
             data['job'] = job
@@ -401,11 +394,11 @@ class RsyncTaskService(TaskPathService, TaskStateMixin):
 
         await self.validate_path_field(data, schema, verrors, split_path=True)
 
-        data['extra'] = ' '.join(data['extra'])
-        try:
-            shlex.split(data['extra'].replace('"', r'"\"').replace("'", r'"\"'))
-        except ValueError as e:
-            verrors.add(f'{schema}.extra', f'Please specify valid value: {e}')
+        for i, arg in enumerate(data['extra']):
+            try:
+                shlex.split(arg)
+            except ValueError as e:
+                verrors.add(f'{schema}.extra.{i}', f'Please specify valid value: {e}')
 
         match data['mode']:
             case 'MODULE':

@@ -1,4 +1,7 @@
 import functools
+import importlib.util
+import os.path
+from types import ModuleType
 from typing import TYPE_CHECKING, Callable
 from unittest.mock import Mock
 
@@ -33,6 +36,15 @@ def _compound_service_wrapper(service: 'CompoundService', fake_middleware: 'Midd
 
 def create_service(middleware: 'Middleware', cls: 'type[Service]') -> 'Service':
     return cls(middleware)
+
+
+def load_migration(name: str) -> ModuleType:
+    """Import an alembic revision by its path under `alembic/versions`, without its suffix."""
+    path = os.path.join(os.path.dirname(__file__), '..', '..', 'alembic', 'versions', f'{name}.py')
+    spec = importlib.util.spec_from_file_location(os.path.basename(name), path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 class TestModelProvider(ModelProvider):
