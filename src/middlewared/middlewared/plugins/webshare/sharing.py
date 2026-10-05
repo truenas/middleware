@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import errno
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from truenas_pylicensed.features import LicenseFeature
 
@@ -161,12 +161,16 @@ class SharingWebshareService(SharingService[SharingWebshareEntry]):
         verrors: ValidationErrors,
         old: SharingWebshareEntry | None = None,
     ) -> None:
-        filters: list[list[int | str | bool]] = [['enabled', '=', True]]
+        filters: list[list[int | str]] = [['enabled', '=', True]]
         if old:
             filters.append(['id', '!=', old.id])
 
+        others = cast(
+            list[SharingWebshareEntry], await self.query(filters, {'select': ['name', 'path']})
+        )
+
         schema_path = f'{schema_name}.{self.path_field}'
-        for other in await self.query(filters, {'select': ['name', 'path']}):
+        for other in others:
             if await self.middleware.call('filesystem.is_child', data.path, other.path):
                 verrors.add(
                     schema_path,

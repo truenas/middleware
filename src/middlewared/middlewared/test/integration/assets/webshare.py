@@ -8,11 +8,7 @@ __all__ = ["webshare_share"]
 
 @contextlib.contextmanager
 def webshare_share(path, name, options=None):
-    share = call("sharing.webshare.create", {
-        "path": path,
-        "name": name,
-        **(options or {})
-    })
+    share = call("sharing.webshare.create", {"path": path, "name": name, **(options or {})})
 
     try:
         yield share
