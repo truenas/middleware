@@ -33,7 +33,6 @@ from middlewared.service import (
     filterable_api_method,
     private,
 )
-import middlewared.sqlalchemy as sa
 from middlewared.utils.boot.pool import BOOT_POOL_NAME_VALID
 from middlewared.utils.filter_list import filter_list
 
@@ -72,15 +71,6 @@ def validate_user_properties(verrors, schema, user_properties):
             verrors.add(prop_schema, f'{key!r} is specified more than once.')
         else:
             seen.add(key)
-
-
-class PoolDatasetEncryptionModel(sa.Model):
-    __tablename__ = 'storage_encrypteddataset'
-
-    id = sa.Column(sa.Integer(), primary_key=True)
-    name = sa.Column(sa.String(255))
-    encryption_key = sa.Column(sa.EncryptedText(), nullable=True)
-    kmip_uid = sa.Column(sa.String(255), nullable=True, default=None)
 
 
 def _native_value(prop, value):

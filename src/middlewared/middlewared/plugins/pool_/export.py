@@ -207,8 +207,8 @@ class PoolService(Service):
         await self.middleware.run_in_thread(self.cleanup_after_export, pool, options)
 
         await self.middleware.call('datastore.delete', 'storage.volume', oid)
-        await self.middleware.call(
-            'pool.dataset.delete_encrypted_datasets_from_db',
+        await self.call2(
+            self.s.zfs.resource.encryption.delete_keys,
             [['OR', [['name', '=', pool['name']], ['name', '^', f'{pool["name"]}/']]]],
         )
         await self.middleware.call_hook('dataset.post_delete', pool['name'])
