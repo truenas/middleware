@@ -413,16 +413,12 @@ class iSCSITargetService(Service):
 
     @private
     def resync_lun_size_for_zvol(self, name):
-        # CORE ctl device names are incompatible with SCALE SCST
-        # so (similarly to scst.mako.conf) replace period with underscore, slash with dash
-        extent_name = name.replace('.', '_').replace('/', '-')
-        with open(f'{SCST_DEVICES}/{extent_name}/resync_size', 'w') as f:
+        with open(f'{SCST_DEVICES}/{sanitize_extent(name)}/resync_size', 'w') as f:
             f.write('1')
 
     @private
     def resync_lun_size_for_file(self, name):
-        extent_name = name.replace('.', '_')
-        with open(f'{SCST_DEVICES}/{extent_name}/resync_size', 'w') as f:
+        with open(f'{SCST_DEVICES}/{sanitize_extent(name)}/resync_size', 'w') as f:
             f.write('1')
 
     @private
