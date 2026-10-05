@@ -3,7 +3,7 @@ import unittest
 
 import pytest
 
-from middlewared.plugins.apps.ix_apps.query import list_apps
+from middlewared.plugins.apps.ix_apps.query import list_apps, translate_resources_to_desired_workflow
 
 
 AVAILABLE_MAPPING = {
@@ -501,3 +501,14 @@ def test_app_event_stopped(
         mock_get_collective_metadata, mock_list_resources_by_project, mock_translate_resources_to_desired_workflow,
         mock_upgrade_available_for_app, scandir, workload, 'STOPPED',
     )
+
+
+@pytest.mark.parametrize('docker_state,expected', [
+    ({'Status': 'restarting', 'ExitCode': 137}, 'crashed'),
+    ({'Status': 'restarting', 'ExitCode': 0}, 'exited'),
+    ({'Status': 'exited', 'ExitCode': 1}, 'crashed'),
+])
+def test_container_state_from_docker_status(docker_state, expected):
+    container = {'Config': {'Labels': {}, 'Image': 'img'}, 'State': docker_state, 'Id': 'id'}
+    workloads = translate_resources_to_desired_workflow({'containers': [container], 'networks': []})
+    assert workloads['container_details'][0]['state'] == expected
