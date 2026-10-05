@@ -90,7 +90,7 @@ class CloudTaskServiceMixin:
         else:
             self.middleware.run_coroutine(self.validate_path_field(data, name, verrors, split_path=True))
 
-        if data["snapshot"]:
+        if data["snapshot"] and data["path"].startswith("/mnt/"):
             dataset_name = data["path"].removeprefix("/mnt/")
             for i in self.call_sync2(
                 self.s.zfs.resource.query_impl,

@@ -341,6 +341,24 @@ def test_zvol_cloud_backup_runtime_validation(s3_credential, zvol):
             m.__exit__(None, None, None)
 
 
+def test_zvol_cloud_backup_snapshot_option(s3_credential, zvol):
+    clean()
+
+    with mock("cloud_backup.validate_zvol", return_value=None):
+        with task({
+            "path": zvol,
+            "credentials": s3_credential["id"],
+            "attributes": {
+                "bucket": AWS_BUCKET,
+                "folder": "cloud_backup",
+            },
+            "password": "test",
+            "keep_last": 100,
+            "snapshot": True,
+        }) as t:
+            assert call("cloud_backup.update", t["id"], {"keep_last": 50})["keep_last"] == 50
+
+
 def test_create_to_backend_with_a_different_password(cloud_backup_task):
     with pytest.raises(ValidationErrors) as ve:
         with task({
