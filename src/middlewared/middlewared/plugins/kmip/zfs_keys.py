@@ -184,7 +184,7 @@ def initialize_zfs_keys(context: ServiceContext, store: KMIPKeyStore, connection
                 store.zfs_keys[ds['name']] = key
         if ds['name'] in store.zfs_keys:
             if context.call_sync2(context.s.zfs.resource.path_is_locked, ds['name']):
-                context.middleware.call_sync('pool.dataset.unlock', ds['name'])
+                context.call_sync2(context.s.zfs.resource.encryption.unlock_impl, {'path': ds['name']}, True)
 
 
 async def reset_zfs_key(context: ServiceContext, store: KMIPKeyStore, dataset: str, kmip_uid: str | None) -> None:

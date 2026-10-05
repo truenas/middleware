@@ -195,8 +195,8 @@ class PoolService(Service):
             )
 
         # We want to set immutable flag on all of locked datasets
-        for encrypted_ds in await self.middleware.call(
-            'pool.dataset.query_encrypted_datasets', pool_name, {'key_loaded': False}
+        for encrypted_ds in await self.call2(
+            self.s.zfs.resource.encryption.encryption_roots, pool_name, 'locked'
         ):
             encrypted_mountpoint = os.path.join('/mnt', encrypted_ds)
             if await self.middleware.run_in_thread(os.path.exists, encrypted_mountpoint):
@@ -343,7 +343,7 @@ class PoolService(Service):
     @private
     async def _post_import_actions(self, pool, event_type):
         await self.middleware.call_hook('pool.post_import', pool)
-        await self.middleware.call('pool.dataset.sync_db_keys', pool['name'])
+        await self.call2(self.s.zfs.resource.encryption.sync_keys, pool['name'])
 
         # ZFS import events fire before the DB entry exists so the
         # PoolUpgraded alert cannot be created at that time. Check
@@ -503,7 +503,7 @@ class PoolService(Service):
             return
 
         umount_root_short_circuit = False
-        if zpool_info['key_format']['parsed'] == 'passphrase':
+        if zpool_info['key_format'] == 'passphrase':
             # passphrase encrypted zpools will _always_ fail to be unlocked at
             # boot time because we don't store the users passphrase on disk
             # anywhere.
@@ -524,8 +524,9 @@ class PoolService(Service):
             # those datasets (including the parent if necessary).
             # If we fail to unlock the parent, then the method short-circuits and exits
             # early.
-            opts = {'recursive': True, 'toggle_attachments': False}
-            uj = self.middleware.call_sync('pool.dataset.unlock', vol_name, opts)
+            uj = self.call_sync2(
+                self.s.zfs.resource.encryption.unlock_impl, {'path': vol_name, 'recursive': True}, False
+            )
             uj.wait_sync()
             if uj.error:
                 self.logger.error('FAILED unlocking encrypted dataset(s) for %r with error %r', vol_name, uj.error)
@@ -539,9 +540,7 @@ class PoolService(Service):
 
         if any((
             umount_root_short_circuit,
-            self.middleware.call_sync(
-                'pool.dataset.get_instance_quick', vol_name, {'encryption': True}
-            )['locked']
+            self.call_sync2(self.s.zfs.resource.encryption.encryption_state, vol_name)['locked']
         )):
             # We umount the zpool in the following scenarios:
             # 1. we came across a passphrase encrypted root dataset (i.e. /mnt/tank)
@@ -671,9 +670,7 @@ class PoolService(Service):
     @private
     async def handle_unencrypted_datasets_on_import(self, pool_name):
         try:
-            root_ds = await self.middleware.call('pool.dataset.get_instance_quick', pool_name, {
-                'encryption': True,
-            })
+            root_ds = await self.call2(self.s.zfs.resource.encryption.encryption_state, pool_name)
         except InstanceNotFound:
             # We don't really care about this case, it means that pool did not get imported for some reason
             return

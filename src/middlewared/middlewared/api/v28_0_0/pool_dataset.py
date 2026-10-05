@@ -9,7 +9,6 @@ from middlewared.api.base import (
     NonEmptyString,
     NotRequired,
     excluded_field,
-    single_argument_args,
     single_argument_result,
 )
 from middlewared.plugins.zfs_.validation_utils import validate_dataset_name
@@ -25,7 +24,6 @@ __all__ = [
     "PoolDatasetExportKeysResult", "PoolDatasetExportKeysForReplicationArgs",
     "PoolDatasetExportKeysForReplicationResult", "PoolDatasetExportKeyArgs", "PoolDatasetExportKeyResult",
     "PoolDatasetLockArgs", "PoolDatasetLockResult", "PoolDatasetUnlockArgs", "PoolDatasetUnlockResult",
-    "PoolDatasetInsertOrUpdateEncryptedRecordArgs", "PoolDatasetInsertOrUpdateEncryptedRecordResult",
     "PoolDatasetChangeKeyArgs", "PoolDatasetChangeKeyResult", "PoolDatasetInheritParentEncryptionPropertiesArgs",
     "PoolDatasetInheritParentEncryptionPropertiesResult", "PoolDatasetChecksumChoicesArgs",
     "PoolDatasetChecksumChoicesResult", "PoolDatasetCompressionChoicesArgs", "PoolDatasetCompressionChoicesResult",
@@ -775,21 +773,6 @@ class PoolDatasetInheritParentEncryptionPropertiesArgs(BaseModel):
 
 class PoolDatasetInheritParentEncryptionPropertiesResult(BaseModel):
     result: None = Field(description="Returns `null` on successful inheritance of parent encryption properties.")
-
-
-@single_argument_args("data")
-class PoolDatasetInsertOrUpdateEncryptedRecordArgs(BaseModel):
-    encryption_key: Any = Field(default=None, description="The encryption key data to insert or update.")
-    id: int | None = Field(default=None, description="The record ID for updates, or null for new records.")
-    name: NonEmptyString = Field(description="The dataset name for the encryption record.")
-    key_format: str | None = Field(
-        examples=['hex', 'raw', 'passphrase'],
-        description="The format of the encryption key.",
-    )
-
-
-class PoolDatasetInsertOrUpdateEncryptedRecordResult(BaseModel):
-    result: int | None = Field(description="Returns inserted or updated record ID, or `null` otherwise.")
 
 
 class PoolDatasetLockArgs(BaseModel):

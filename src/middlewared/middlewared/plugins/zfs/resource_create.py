@@ -65,10 +65,7 @@ SCHEMA = "zfs.resource.create"
 
 def _record_key(context: ServiceContext, path: str, encrypt: dict[str, Any]) -> None:
     # Hex keys are stored so unlock, export and KMIP work; passphrases deliberately are not.
-    context.middleware.call_sync(
-        "pool.dataset.insert_or_update_encrypted_record",
-        {"name": path, "encryption_key": encrypt["key"], "key_format": encrypt["keyformat"]},
-    )
+    context.call_sync2(context.s.zfs.resource.encryption.store_key, path, encrypt["key"], encrypt["keyformat"])
     context.middleware.call_hook_sync(
         "dataset.post_create",
         {
