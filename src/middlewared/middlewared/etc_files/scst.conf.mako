@@ -242,6 +242,7 @@
     missing_extents = []
     extents_io = {'vdisk_fileio': [], 'vdisk_blockio': []}
     for extent in extents.values():
+        extent['orig_name'] = extent['name']
         extent['name'] = extent['name'].replace('.', '_').replace('/', '-')  # CORE ctl device names are incompatible with SCALE SCST
         if extent['locked']:
             middleware.logger.debug(
@@ -402,7 +403,7 @@ HANDLER ${handler} {
         t10_vend_id ${extent['vendor']}
         t10_dev_id ${extent['t10_dev_id']}
 %       if failover_status == "MASTER" and alua_enabled and dlm_ready:
-%       if set_active_lun_to_cluster_mode(extent['name']):
+%       if set_active_lun_to_cluster_mode(extent['orig_name']):
         cluster_mode 1
 %       else:
         cluster_mode 0
