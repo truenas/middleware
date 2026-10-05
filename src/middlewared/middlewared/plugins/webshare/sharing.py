@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import errno
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
 
 from truenas_pylicensed.features import LicenseFeature
 
@@ -138,6 +138,37 @@ class SharingWebshareService(SharingService[SharingWebshareEntry]):
             )
 
     @private
+    async def validate_share_path(
+        self,
+        data: SharingWebshareEntry,
+        schema_name: str,
+        verrors: ValidationErrors,
+        old: SharingWebshareEntry | None = None,
+    ) -> None:
+        filters: list[list[int | str]] = [['enabled', '=', True]]
+        if old:
+            filters.append(['id', '!=', old.id])
+
+        others = cast(
+            list[SharingWebshareEntry], await self.query(filters, {'select': ['name', 'path']})
+        )
+
+        schema_path = f'{schema_name}.{self.path_field}'
+        for other in others:
+            if await self.middleware.call('filesystem.is_child', data.path, other.path):
+                verrors.add(
+                    schema_path,
+                    f'This path is already covered by the Webshare {other.name!r} at {other.path}.',
+                    errno.EEXIST,
+                )
+            elif await self.middleware.call('filesystem.is_child', other.path, data.path):
+                verrors.add(
+                    schema_path,
+                    f'This path contains the Webshare {other.name!r} at {other.path}.',
+                    errno.EEXIST,
+                )
+
+    @private
     async def validate(
         self,
         data: SharingWebshareEntry,
@@ -156,6 +187,9 @@ class SharingWebshareService(SharingService[SharingWebshareEntry]):
         await self.validate_share_name(data.name, schema_name, verrors, old)
 
         await self.validate_path_field(data, schema_name, verrors, split_path=True)
+
+        if data.enabled:
+            await self.validate_share_path(data, schema_name, verrors, old)
 
         if data.is_home_base:
             filters = [['is_home_base', '=', True]]
