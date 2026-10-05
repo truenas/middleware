@@ -12,9 +12,17 @@ def test_set_parses_refreservation_size():
     assert ZFSResourceSetProperties(refreservation="1G").refreservation == 1073741824
 
 
+def test_create_accepts_auto_refreservation():
+    assert ZFSResourceCreateProperties(refreservation="auto").refreservation == "auto"
+
+
+def test_create_parses_refreservation_size():
+    assert ZFSResourceCreateProperties(refreservation="1G").refreservation == 1073741824
+
+
 @pytest.mark.parametrize(
     "properties",
-    [{"refreservation": "auto"}],
+    [{"refreservation": "bogus"}, {"refreservation": -1}],
 )
 def test_create_rejects(properties):
     with pytest.raises(ValidationError) as exc_info:

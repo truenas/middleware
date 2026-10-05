@@ -1,9 +1,21 @@
 import contextlib
 from typing import Any
 
-from middlewared.test.integration.utils import call
+from middlewared.test.integration.utils import call, ssh
 
-__all__ = ("destroy_zfs_resource", "zfs_resource")
+__all__ = ("destroy_zfs_resource", "thick_refreservation", "zfs_resource")
+
+
+def thick_refreservation(path: str) -> int:
+    """The refreservation `zfs create -V` gives a volume of the same size and
+    block size as `path`: the volsize plus metadata and raidz/draid overhead."""
+    ref = f"{path}_ref"
+    volsize, volblocksize = ssh(f"zfs get -Hpo value volsize,volblocksize {path}").split()
+    ssh(f"zfs create -V {volsize} -o volblocksize={volblocksize} {ref}")
+    try:
+        return int(ssh(f"zfs get -Hpo value refreservation {ref}"))
+    finally:
+        ssh(f"zfs destroy {ref}")
 
 
 def destroy_zfs_resource(path: str) -> None:

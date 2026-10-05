@@ -546,10 +546,11 @@ class ZFSResourceCreateProperties(BaseModel):
             "removes the limit."
         ),
     )
-    refreservation: ZFSSpaceLimit | None = Field(
+    refreservation: ZFSSpaceLimit | Literal["auto"] | None = Field(
         default=None,
         description=(
-            "Minimum space reserved for the resource itself. Takes a size as described for 'volsize'. Set to "
+            "Minimum space reserved for the resource itself. Takes a size as described for 'volsize'. For a "
+            "VOLUME, 'auto' (the default) reserves the volsize plus metadata and raidz/draid overhead. Set to "
             "'none' or 0 to create a sparse volume."
         ),
     )
@@ -671,8 +672,8 @@ class ZFSResourceCreateArgsData(BaseModel):
             "creation time.\n"
             "\n"
             "Creating a VOLUME requires 'volsize'. Volumes are thick-provisioned by default ('refreservation' "
-            "defaults to the volsize). Set 'refreservation' to 'none' to create a sparse "
-            "(thin) volume.\n"
+            "defaults to 'auto', which reserves the volsize plus metadata and raidz/draid overhead, like `zfs "
+            "create -V`). Set 'refreservation' to 'none' to create a sparse (thin) volume.\n"
             "\n"
             "A FILESYSTEM defaults 'xattr' to 'sa' (a TrueNAS performance default) unless explicitly specified. An "
             "explicit 'acltype' also defaults the coupled acl properties. An nfsv4 acltype defaults 'aclinherit' to "

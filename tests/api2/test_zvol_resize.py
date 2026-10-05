@@ -1,7 +1,8 @@
 from auto_config import pool_name
 from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.pool import dataset
-from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.assets.zfs_resource import thick_refreservation
+from middlewared.test.integration.utils import call
 import pytest
 
 _256MiB = 268435456
@@ -22,18 +23,6 @@ def query_zvol(zvol):
     )
 
 
-def thick_refreservation(zvol):
-    # the refreservation `zfs create -V` gives a volume of the same
-    # size and block size (volsize plus metadata and raidz overhead)
-    ref = f"{zvol}_ref"
-    volsize, volblocksize = ssh(f"zfs get -Hpo value volsize,volblocksize {zvol}").split()
-    ssh(f"zfs create -V {volsize} -o volblocksize={volblocksize} {ref}")
-    try:
-        return int(ssh(f"zfs get -Hpo value refreservation {ref}"))
-    finally:
-        ssh(f"zfs destroy {ref}")
-
-
 def pool_available():
     result = call("zfs.resource.list", {"paths": [pool_name], "properties": ["available"]})
     return result[0]["properties"]["available"]["value"]
@@ -45,6 +34,17 @@ def grow_zvol(zvol, **kwargs):
 
 def test_grow_thick_zvol_stays_thick():
     with dataset(f"{BASE_NAME}_thick", BASE_ARGS) as ds:
+        grow_zvol(ds)
+        rr, vs = query_zvol(ds)
+        assert vs == _512MiB
+        assert rr == thick_refreservation(ds)
+
+
+def test_grow_legacy_thick_zvol_becomes_auto():
+    # earlier releases created thick zvols reserving exactly the volsize,
+    # which libzfs does not grow; a grow must switch them to auto
+    with dataset(f"{BASE_NAME}_legacy", BASE_ARGS | {"refreservation": _256MiB}) as ds:
+        assert query_zvol(ds) == (_256MiB, _256MiB)
         grow_zvol(ds)
         rr, vs = query_zvol(ds)
         assert vs == _512MiB
