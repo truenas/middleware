@@ -1,6 +1,5 @@
 import contextlib
 import errno
-import time
 
 from truenas_api_client import ValidationErrors
 
@@ -86,9 +85,6 @@ def dataset(name, data=None, pool=pool, **kwargs):
         yield dataset
     finally:
         if kwargs.get('delete', True):
-            if 'delete_delay' in kwargs:
-                time.sleep(kwargs['delete_delay'])
-
             try:
                 call("pool.dataset.delete", dataset, {"recursive": True})
             except InstanceNotFound:
