@@ -644,6 +644,8 @@ class DiskEntry:
                 try:
                     sed.unlock(fd, pw_bytes, device_info=info)
                     return True, None
+                except TimeoutError:
+                    raise
                 except Exception:
                     pass
 
@@ -651,6 +653,8 @@ class DiskEntry:
                 try:
                     sed.unlock(fd, sedutil_hash_password(password, info["lnx_serial"]), device_info=info)
                     return True, None
+                except TimeoutError:
+                    raise
                 except Exception:
                     pass
 
