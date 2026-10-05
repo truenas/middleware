@@ -35,15 +35,18 @@ class NftablesService(Service):
                 rules.append(f'add rule {i} filter INPUT tcp dport {sshport} counter accept')
                 rules.append(f'add rule {i} filter INPUT tcp dport {web["ui_port"]} counter accept')
                 rules.append(f'add rule {i} filter INPUT tcp dport {web["ui_httpsport"]} counter accept')
+                # only tcp and udp are dropped so that icmp (ping, path MTU
+                # discovery, IPv6 neighbor discovery) keeps working on the VIPs
+                drop = 'meta l4proto { tcp, udp } counter drop'
                 for j in data['vips']:
                     # only block the VIPs because there is the possibility of
                     # running MPIO for iSCSI which uses the non-VIP addresses of
                     # each controller on an HA system. We, obviously, dont want
                     # to block traffic there.
                     if j['type'] == 'INET' and i == 'ip':
-                        rules.append(f'add rule {i} filter INPUT {i} saddr {j["address"]}/32 counter drop')
+                        rules.append(f'add rule {i} filter INPUT {i} daddr {j["address"]}/32 {drop}')
                     elif j['type'] == 'INET6' and i == 'ip6':
-                        rules.append(f'add rule {i} filter INPUT {i} saddr {j["address"]}/128 counter drop')
+                        rules.append(f'add rule {i} filter INPUT {i} daddr {j["address"]}/128 {drop}')
 
             if i == 'ip':
                 v4 = rules
@@ -73,8 +76,8 @@ class NftablesService(Service):
     @job(lock=JOB_LOCK)
     def drop_all(self, job):
         """
-        Drops (silently) all v4/v6 inbound traffic destined for the
-        VIP addresses on a TrueNAS SCALE HA system. SSH and webUI
+        Drops (silently) all v4/v6 inbound TCP/UDP traffic destined for
+        the VIP addresses on a TrueNAS SCALE HA system. SSH and webUI
         mgmt traffic is always allowed.
 
         NOTE:
