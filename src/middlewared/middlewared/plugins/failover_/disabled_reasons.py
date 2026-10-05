@@ -175,7 +175,16 @@ class FailoverDisabledService(Service):
             remote = self.middleware.call_sync(
                 "failover.call_remote", "failover.vip.get_states"
             )
-            if self.middleware.call_sync("failover.vip.check_states", local, remote):
+            # the remote node reports every interface with a VIP so narrow
+            # it down to the critical ones, same as what was checked locally
+            critical = {i["name"] for i in ifaces}
+            remote_critical = []
+            for states in remote:
+                names = []
+                for name in filter(lambda x: x in critical, states):
+                    names.append(name)
+                remote_critical.append(names)
+            if self.middleware.call_sync("failover.vip.check_states", local, remote_critical):
                 reasons.add(DisabledReasonsEnum.DISAGREE_VIP.name)
 
             mismatch_disks = self.middleware.call_sync("failover.mismatch_disks")
