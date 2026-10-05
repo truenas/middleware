@@ -36,6 +36,7 @@ from .create_rules import (
     check_parent_not_readonly,
     check_parent_unlocked,
     check_path_shape,
+    check_refreservation_auto,
     check_share_type,
     check_volume_capacity,
     check_volume_has_volsize,
@@ -90,6 +91,7 @@ def create_impl(context: ServiceContext, tls: Any, data: ZFSResourceCreateArgsDa
     check_share_type(data)
     check_force_size(data)
     check_names_valid_for_type(data)
+    check_refreservation_auto(data)
 
     if data.type == "FILESYSTEM" or properties.special_small_blocks is not None or properties.dedup is not None:
         ctx.tier_enabled = context.call_sync2(context.s.zfs.tier.config).enabled
