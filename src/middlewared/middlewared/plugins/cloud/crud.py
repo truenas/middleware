@@ -199,7 +199,7 @@ class CloudTaskServiceMixin[
             entry.dataset = path_data.get("dataset")
             entry.relative_path = path_data.get("relative_path")
 
-        if entry.snapshot:
+        if entry.snapshot and entry.path.startswith("/mnt/"):
             dataset_name = entry.path.removeprefix("/mnt/")
             for i in self.call_sync2(
                 self.s.zfs.resource.list_impl,
