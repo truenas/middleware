@@ -128,7 +128,7 @@ class CRUDServiceMetabase(ServiceBase):
                  query_result_item, entry.__name__),
                 (get_instance_args_model, get_instance_args, entry.__name__),
                 (get_instance_result_model, get_instance_result, entry.__name__),
-            ]
+            ] + klass._register_models
 
         return klass
 
