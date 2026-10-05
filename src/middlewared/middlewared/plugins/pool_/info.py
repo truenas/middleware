@@ -132,7 +132,7 @@ class PoolService(Service):
         PoolIsUpgradedResult,
         pass_thread_local_storage=True,
         roles=['POOL_READ'],
-        removed_in="v26",
+        removed_in="v27",
     )
     def is_upgraded(self, tls, oid):
         """
