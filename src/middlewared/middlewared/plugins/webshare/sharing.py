@@ -154,6 +154,33 @@ class SharingWebshareService(SharingService[SharingWebshareEntry]):
             )
 
     @private
+    async def validate_share_path(
+        self,
+        data: SharingWebshareEntry,
+        schema_name: str,
+        verrors: ValidationErrors,
+        old: SharingWebshareEntry | None = None,
+    ) -> None:
+        filters: list[list[int | str | bool]] = [['enabled', '=', True]]
+        if old:
+            filters.append(['id', '!=', old.id])
+
+        schema_path = f'{schema_name}.{self.path_field}'
+        for other in await self.query(filters, {'select': ['name', 'path']}):
+            if await self.middleware.call('filesystem.is_child', data.path, other.path):
+                verrors.add(
+                    schema_path,
+                    f'This path is already covered by the Webshare {other.name!r} at {other.path}.',
+                    errno.EEXIST,
+                )
+            elif await self.middleware.call('filesystem.is_child', other.path, data.path):
+                verrors.add(
+                    schema_path,
+                    f'This path contains the Webshare {other.name!r} at {other.path}.',
+                    errno.EEXIST,
+                )
+
+    @private
     async def validate(
         self,
         data: SharingWebshareEntry,
@@ -172,6 +199,9 @@ class SharingWebshareService(SharingService[SharingWebshareEntry]):
         await self.validate_share_name(data.name, schema_name, verrors, old)
 
         await self.validate_path_field(data, schema_name, verrors, split_path=True)
+
+        if data.enabled:
+            await self.validate_share_path(data, schema_name, verrors, old)
 
         if data.is_home_base:
             filters = [['is_home_base', '=', True]]
