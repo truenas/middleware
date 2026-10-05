@@ -418,12 +418,10 @@ class PoolDatasetService(CRUDService):
                 args.zprops["refreservation"] = "none"
             else:
                 # otherwise, we always create "thick" provisioned volumes.
-                # TODO: reserve refreservation=auto (volsize plus metadata
-                # overhead, like `zfs create -V`) once libzfs zfs_create()
-                # resolves it; today only zfs set and zfs clone do, so create
-                # fails with "out of space". Until then pool.dataset.update
-                # switches these zvols to auto when they are grown.
-                args.zprops.setdefault("refreservation", args.zprops["volsize"])
+                # like `zfs create -V`, "auto" reserves the volsize plus
+                # metadata and raidz/draid overhead, and libzfs grows it
+                # along with the volsize.
+                args.zprops.setdefault("refreservation", "auto")
         else:
             raise CallError(f"Invalid dataset type: {args.ztype!r}")
 
@@ -906,7 +904,8 @@ class PoolDatasetService(CRUDService):
             and not dataset[0]['readonly']['parsed']
             and not dataset[0]['locked']
         ):
-            # thick zvols are created reserving exactly their volsize, but libzfs
+            # thick zvols created by earlier releases reserve exactly their
+            # volsize, but libzfs
             # only grows a refreservation along with the volsize when it is the
             # one libzfs computes itself (refreservation=auto). Ask for that so
             # the zvol stays thick; libzfs rolls back the volsize if the new

@@ -44,6 +44,7 @@ __all__ = (
     "check_name_valid",
     "check_parent_not_readonly",
     "check_path_shape",
+    "check_refreservation_auto",
     "check_tier_managed_ssb",
     "check_user_property_names",
     "check_volume_capacity",
@@ -179,13 +180,10 @@ def resolve_create_request(
     properties = data.properties.model_copy()
     if data.type == "VOLUME":
         if properties.volsize is not None and properties.refreservation is None:
-            # thick provision unless told otherwise, like `zfs create -V`.
-            # TODO: reserve refreservation=auto (volsize plus metadata
-            # overhead) once libzfs zfs_create() resolves it; today only zfs
-            # set and zfs clone do, so create fails with "out of space".
-            # Until then reserve the volsize itself; pool.dataset.update
-            # switches these zvols to auto when they are grown
-            properties.refreservation = properties.volsize
+            # thick provision like `zfs create -V`: auto reserves the volsize
+            # plus metadata and raidz/draid overhead, and libzfs grows it
+            # along with the volsize
+            properties.refreservation = "auto"
     else:
         if properties.xattr is None:
             # its important to set this as "sa" for performance reasons
@@ -462,6 +460,12 @@ def check_acl_combination(data: ZFSResourceCreateArgsData, ctx: CreateContext) -
         )
 
 
+def check_refreservation_auto(data: ZFSResourceCreateArgsData) -> None:
+    """ZFS only accepts refreservation=auto on a volume."""
+    if data.type == "FILESYSTEM" and data.properties.refreservation == "auto":
+        raise ValidationError(f"{SCHEMA}.properties.refreservation", "'auto' is only valid on volumes.", errno.EINVAL)
+
+
 def check_volume_capacity(data: ZFSResourceCreateArgsData, ctx: CreateContext) -> None:
     """A volume reservation may not consume more than 80% of the available space.
 
@@ -469,14 +473,20 @@ def check_volume_capacity(data: ZFSResourceCreateArgsData, ctx: CreateContext) -
     compared against the available space of the nearest existing
     ancestor. Sparse volumes reserve nothing so they are exempt, which
     makes oversubscription a deliberate request rather than a force
-    flag. The check is skipped when the reservation is not expressed in
-    bytes since the library validates values itself.
+    flag. A thick volume reserves "auto" by default, which ZFS resolves to
+    the volsize plus metadata and raidz/draid overhead; the volsize stands
+    in for it here since only ZFS knows the overhead. The check is skipped
+    when the reservation is not expressed in bytes since the library
+    validates values itself.
 
     The service calls this only for volumes and after the ancestor
     entries have been gathered.
     """
+    refreservation = ctx.properties.refreservation
+    if refreservation == "auto":
+        refreservation = ctx.properties.volsize
     try:
-        reservation = int(ctx.properties.refreservation or 0)
+        reservation = int(refreservation or 0)
     except ValueError:
         # a word value like none means the volume is sparse and reserves nothing
         return

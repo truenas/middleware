@@ -32,6 +32,7 @@ from .create_rules import (
     check_path_shape,
     check_tier_managed_ssb,
     check_user_property_names,
+    check_refreservation_auto,
     check_volume_capacity,
     check_volume_has_volsize,
     resolve_create_request,
@@ -87,6 +88,7 @@ def create_impl(context: ServiceContext, tls: Any, data: ZFSResourceCreateArgsDa
 
     check_parent_is_filesystem(data, ctx)
     check_parent_not_readonly(data, ctx)
+    check_refreservation_auto(data)
     if ctx.tier_enabled:
         check_tier_managed_ssb(data, ctx)
 
