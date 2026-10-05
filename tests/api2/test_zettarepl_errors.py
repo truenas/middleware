@@ -1,5 +1,3 @@
-import time
-
 import pytest
 
 from middlewared.test.integration.assets.keychain import localhost_ssh_credentials
@@ -61,8 +59,8 @@ def test_observer_queue_reader_survives_exceptions():
                     )
 
 
-def test_zettarepl_process_abnormal_termination(ssh_credentials):
-    """Killing the zettarepl process fails running tasks and the process is restarted."""
+def test_zettarepl_daemon_abnormal_termination(ssh_credentials):
+    """Killing the zettarepl daemon fails running tasks, and systemd restarts it."""
     with dataset("kill_src") as src, dataset("kill_dst") as dst:
         ssh(f"dd if=/dev/urandom of=/mnt/{src}/blob bs=1M count=6")
         call("pool.snapshot.create", {"dataset": src, "name": "kill-1"})
@@ -92,9 +90,7 @@ def test_zettarepl_process_abnormal_termination(ssh_credentials):
                 message="The replication task never started running",
             )
 
-            # `-x` matches the process name only; `-f` would also match (and kill) the SSH login
-            # shell that runs this very command.
-            ssh("pkill -9 -x mw-zettarepl")
+            ssh("systemctl kill --signal=SIGKILL zettarepl.service")
 
             def finished_job():
                 job = call("core.get_jobs", [["id", "=", job_id]], {"get": True})
@@ -104,25 +100,24 @@ def test_zettarepl_process_abnormal_termination(ssh_credentials):
 
             job = poll(
                 finished_job,
-                timeout=60,
-                message="The replication job never finished after the zettarepl process was killed",
+                timeout=120,
+                message="The replication job never finished after the zettarepl daemon was killed",
             )
             assert job["state"] == "FAILED"
-            assert "Abnormal zettarepl process termination" in job["error"]
+            assert "zettarepl service restarted" in job["error"]
 
             state = call("replication.get_instance", task["id"])["state"]
             assert state["state"] == "ERROR"
-            assert "Abnormal zettarepl process termination" in state["error"]
+            assert "zettarepl service restarted" in state["error"]
 
-            # The zettarepl process is automatically restarted.
+            # systemd restarts the daemon, and it reattaches on its own.
             poll(
                 lambda: call("zettarepl.is_running"),
-                timeout=60,
-                message="The zettarepl process was never restarted",
+                timeout=120,
+                message="The zettarepl daemon never reattached",
             )
 
-            # The killed zettarepl process leaves its send/recv pipeline orphaned. Kill it, or it
-            # would finish the transfer later and re-create the target dataset after this test
-            # deletes it. (The `[e]` keeps the pattern from matching its own SSH login shell.)
+            # SIGKILL cannot run zettarepl's `atexit` cleanup, so its send/recv pipeline is orphaned. Kill it,
+            # or it would finish the transfer later and re-create the target after this test deletes it. (The
+            # `[e]` keeps the pattern from matching its own SSH login shell.)
             ssh("pkill -9 -f 'zfs r[e]cv.*kill_dst'", check=False)
-            time.sleep(2)

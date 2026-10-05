@@ -41,7 +41,7 @@ def test_zettarepl_definition_options():
             "encryption_inherit": True,
         }
     ) as task:
-        definition, hold_tasks = call("zettarepl.get_definition")
+        definition, hold_tasks = call("zettarepl.build_definition")
         d = definition["replication-tasks"][f"task_{task['id']}"]
 
         assert f"{pool}/.system" in d["exclude"]
@@ -82,7 +82,7 @@ def test_zettarepl_definition_ssh_netcat(ssh_credentials):
                 "encryption_key_location": "/tmp/test_definition_ssh_netcat.key",
             }
         ) as task:
-            definition, hold_tasks = call("zettarepl.get_definition")
+            definition, hold_tasks = call("zettarepl.build_definition")
             d = definition["replication-tasks"][f"task_{task['id']}"]
 
             assert d["transport"]["type"] == "ssh+netcat"
@@ -116,7 +116,7 @@ def test_zettarepl_definition_ssh_netcat_defaults(ssh_credentials):
                 "retention_policy": "NONE",
             }
         ) as task:
-            definition, hold_tasks = call("zettarepl.get_definition")
+            definition, hold_tasks = call("zettarepl.build_definition")
             d = definition["replication-tasks"][f"task_{task['id']}"]
 
             assert d["transport"]["type"] == "ssh+netcat"
@@ -130,7 +130,7 @@ def test_zettarepl_definition_ssh_netcat_defaults(ssh_credentials):
                 assert key not in d["transport"]
 
 
-RAISE_GET_DEFINITION_ERROR = """\
+RAISE_BUILD_DEFINITION_ERROR = """\
     async def mock(self):
         raise Exception("Simulated definition generation failure")
 """
@@ -153,7 +153,7 @@ def test_zettarepl_definition_generation_error():
             }
         ) as task:
             try:
-                with mock("zettarepl.get_definition", RAISE_GET_DEFINITION_ERROR):
+                with mock("zettarepl.build_definition", RAISE_BUILD_DEFINITION_ERROR):
                     with pytest.raises(CallError, match="Internal error"):
                         call("zettarepl.start")
 
