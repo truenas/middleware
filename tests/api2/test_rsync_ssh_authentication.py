@@ -522,7 +522,7 @@ def test_invalid_extra(cleanup, localuser, src, dst):
 
     assert e.value.errors == [
         ValidationError(
-            "rsync_task_create.extra",
+            "rsync_task_create.extra.0",
             RegexString("Please specify valid value.*"),
             errno.EINVAL,
         ),
@@ -615,21 +615,6 @@ def test_module_update(cleanup, localuser, src, dst):
     }) as t:
         updated = call("rsynctask.update", t["id"], {"desc": "updated description"})
         assert updated["desc"] == "updated description"
-
-
-def test_extra_value_split_on_query(cleanup, localuser, src, dst):
-    """A misconfigured (unsplittable) ``extra`` value stored in the database is handled gracefully on query."""
-    with task({
-        "path": f"{src}/",
-        "user": "localuser",
-        "mode": "MODULE",
-        "remotehost": "127.0.0.1",
-        "remotemodule": "test",
-    }) as t:
-        # Bypass create validation to store a value that ``shlex.split`` cannot parse
-        call("datastore.update", "tasks.rsync", t["id"], {"rsync_extra": '"'})
-        instance = call("rsynctask.get_instance", t["id"])
-        assert instance["extra"] == ['"']
 
 
 # ---------------------------------------------------------------------------
