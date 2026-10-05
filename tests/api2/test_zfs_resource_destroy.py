@@ -1,5 +1,6 @@
 import errno
 import os
+import time
 
 import pytest
 
@@ -280,6 +281,34 @@ def test_zfs_resource_destroy_recursive_with_undestroyable_clone_is_reported():
     finally:
         for path in (clone_b, clone_a, fs):
             ssh(f"zfs destroy -r {path} 2>/dev/null || true")
+
+
+def test_zfs_resource_destroy_recursive_with_interrupted_receive():
+    """A recursive destroy must take the leftovers of an aborted receive with it"""
+    with dataset("test_fs_recv_src") as src, dataset("test_fs_recv_dst") as dst:
+        ssh(f"dd if=/dev/urandom of=/mnt/{src}/data bs=1M count=16 status=none")
+        ssh(f"zfs snapshot {src}@send")
+        slow_pipe = "mbuffer -q -m 1M -r 100k"
+        ssh(f"nohup sh -c 'zfs send {src}@send | {slow_pipe} | zfs recv -s -F {dst}' >/dev/null 2>&1 &")
+
+        # The receive parks its partial stream in `<dst>/%recv`. That dataset is
+        # hidden: nothing that enumerates children sees it, and only a lookup by
+        # name finds it.
+        hidden = f"{dst}/%recv"
+        for _ in range(300):
+            if ssh(f"zfs list -H -o name '{hidden}'", check=False, complete_response=True)["result"]:
+                break
+            time.sleep(0.1)
+        else:
+            pytest.fail(f"The receive never created {hidden!r}")
+
+        ssh(f"pkill -f 'zfs recv -s -F {dst}'", check=False)
+        ssh(f"pkill -f '{slow_pipe}'", check=False)
+        assert ssh(f"zfs list -H -o name '{hidden}'").strip() == hidden
+
+        call("zfs.resource.destroy", {"path": dst, "recursive": True})
+
+        assert call("zfs.resource.query", {"paths": [dst], "properties": None}) == []
 
 
 def test_zfs_resource_destroy_absolute_path_is_rejected():
