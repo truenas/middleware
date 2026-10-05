@@ -4,6 +4,7 @@ import shutil
 
 from middlewared.api import api_method
 from middlewared.api.current import PoolExportArgs, PoolExportResult, ZFSResourceQuery
+from middlewared.plugins.zfs import resource_attachments
 from middlewared.service import CallError, Service, job, private
 from middlewared.utils.asyncio_ import asyncio_map
 from middlewared.utils.filesystem import attrs as fs_attrs
@@ -59,15 +60,7 @@ class PoolService(Service):
         if not (options['cascade'] and destroyed):
             return
 
-        for delegate in await self.call2(self.s.zfs.resource.attachment_delegates_for_stop):
-            # The pool is already gone, so a delegate failure here must not fail the export job
-            try:
-                await delegate.destroy(path)
-            except Exception:
-                self.logger.error(
-                    '%s: failed to clean up attachments after the pool was destroyed',
-                    delegate.name, exc_info=True,
-                )
+        await resource_attachments.cleanup_all_after_pool_destroy(self.context, path)
 
     @api_method(PoolExportArgs, PoolExportResult, audit="Pool Export", audit_callback=True, roles=['POOL_WRITE'])
     @job(lock='pool_export')
@@ -122,7 +115,7 @@ class PoolService(Service):
             if await self.call2(self.s.keyvalue.has_key, enable_on_import_key):
                 enable_on_import = await self.call2(self.s.keyvalue.get, enable_on_import_key)
 
-        for i, delegate in enumerate(await self.call2(self.s.zfs.resource.attachment_delegates_for_stop)):
+        for i, delegate in enumerate(resource_attachments.delegates_in_stop_order()):
             job.set_progress(
                 i, f'{"Deleting" if options["cascade"] else "Disabling"} pool attachments: {delegate.title}')
 

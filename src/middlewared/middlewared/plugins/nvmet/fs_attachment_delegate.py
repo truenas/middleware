@@ -31,11 +31,11 @@ class NVMetNamespaceAttachmentDelegate(LockableFSAttachmentDelegate):
     async def start(self, attachments):
         await self.toggle(attachments, True)
 
-    async def validate_set(self, state):
+    def validate_set(self, state):
         if not state.snapshot_devices or not state.changed('snapdev') or state.effective('snapdev') != 'hidden':
             return
 
-        namespaces = await self.middleware.call(
+        namespaces = self.middleware.call_sync(
             'nvmet.namespace.query', [['device_type', '=', 'ZVOL']], {'select': ['device_path']}
         )
         for ns in namespaces:
@@ -46,11 +46,11 @@ class NVMetNamespaceAttachmentDelegate(LockableFSAttachmentDelegate):
                     'as HIDDEN, remove attachment usages.',
                 )
 
-    async def after_set(self, state):
+    def after_set(self, state):
         if state.type != 'VOLUME':
             return
         if state.changed('volsize'):
-            await self.middleware.call('nvmet.namespace.resync_lun_size_for_zvol', state.path)
+            self.middleware.call_sync('nvmet.namespace.resync_lun_size_for_zvol', state.path)
 
 
 async def setup(middleware):

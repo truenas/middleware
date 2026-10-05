@@ -1,11 +1,13 @@
 import pytest
 
 from middlewared.plugins.pool_.export import PoolService
+from middlewared.plugins.zfs import resource_attachments
 from middlewared.pytest.unit.middleware import Middleware
 
 
 class Delegate:
     name = "test"
+    priority = 0
 
     def __init__(self, raises=False):
         self.destroyed = []
@@ -17,10 +19,9 @@ class Delegate:
             raise Exception("delegate blew up")
 
 
-def service(delegate):
-    m = Middleware()
-    m.services.zfs.resource.attachment_delegates_for_stop = lambda: [delegate]
-    return PoolService(m)
+def service(delegate, monkeypatch):
+    monkeypatch.setattr(resource_attachments, "DELEGATES", [delegate])
+    return PoolService(Middleware())
 
 
 @pytest.mark.asyncio
@@ -38,15 +39,19 @@ def service(delegate):
         (False, False, []),
     ),
 )
-async def test_destroy_is_gated_on_cascade_and_destroyed(cascade, destroyed, expected):
+async def test_destroy_is_gated_on_cascade_and_destroyed(cascade, destroyed, expected, monkeypatch):
     delegate = Delegate()
-    await service(delegate)._destroy_pool_attachments("/mnt/tank", {"cascade": cascade, "destroy": True}, destroyed)
+    await service(delegate, monkeypatch)._destroy_pool_attachments(
+        "/mnt/tank", {"cascade": cascade, "destroy": True}, destroyed
+    )
     assert delegate.destroyed == expected
 
 
 @pytest.mark.asyncio
-async def test_destroy_failure_does_not_abort_the_export():
+async def test_destroy_failure_does_not_abort_the_export(monkeypatch):
     # The pool is already gone by this point; the rest of the export job still has to run
     delegate = Delegate(raises=True)
-    await service(delegate)._destroy_pool_attachments("/mnt/tank", {"cascade": True, "destroy": True}, True)
+    await service(delegate, monkeypatch)._destroy_pool_attachments(
+        "/mnt/tank", {"cascade": True, "destroy": True}, True
+    )
     assert delegate.destroyed == ["/mnt/tank"]

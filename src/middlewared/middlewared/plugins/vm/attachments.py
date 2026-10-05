@@ -185,11 +185,11 @@ class VMFSAttachmentDelegate(FSAttachmentDelegate[dict[str, Any]]):
         disks = self.disk_paths(vm)
         return bool(disks) and await self.middleware.call('filesystem.is_child', disks, list(paths))
 
-    async def validate_set(self, state: SetContext) -> None:
+    def validate_set(self, state: SetContext) -> None:
         if not state.snapshot_devices or not state.changed('snapdev') or state.effective('snapdev') != 'hidden':
             return
 
-        disks = await self.call2(self.s.vm.device.query, [['attributes.dtype', '=', 'DISK']])
+        disks = self.call_sync2(self.s.vm.device.query, [['attributes.dtype', '=', 'DISK']])
         if any(
             isinstance(disk.attributes, VMDiskDevice)
             and disk.attributes.path is not None
