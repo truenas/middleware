@@ -54,6 +54,7 @@ from zettarepl.zettarepl import create_zettarepl
 
 from middlewared.api.current import PeriodicSnapshotTaskEntry, ReplicationRunOptions
 from middlewared.logger import setup_logging
+from middlewared.plugins.zettarepl_.state import PERIODIC_SNAPSHOT_TASK_STATE, REPLICATION_TASK_STATE
 from middlewared.service.service import Service
 from middlewared.service_exception import CallError
 from middlewared.utils.cgroups import move_to_root_cgroups
@@ -694,7 +695,7 @@ class ZettareplService(Service):
         for periodic_snapshot_task in await self.call2(self.s.pool.snapshottask.query, [["enabled", "=", True]]):
             hold_task_reason = self._hold_task_reason(pools, periodic_snapshot_task.dataset)
             if hold_task_reason:
-                hold_tasks[f"periodic_snapshot_task_{periodic_snapshot_task.id}"] = hold_task_reason
+                hold_tasks[PERIODIC_SNAPSHOT_TASK_STATE.task_id(periodic_snapshot_task.id)] = hold_task_reason
                 continue
 
             periodic_snapshot_tasks[f"task_{periodic_snapshot_task.id}"] = self.periodic_snapshot_task_definition(
@@ -712,7 +713,7 @@ class ZettareplService(Service):
                     pools, replication_task
                 )
             except HoldReplicationTaskException as e:
-                hold_tasks[f"replication_task_{replication_task['id']}"] = e.reason
+                hold_tasks[REPLICATION_TASK_STATE.task_id(replication_task["id"])] = e.reason
 
         for job_id, replication_task in self.onetime_replication_tasks.items():
             try:

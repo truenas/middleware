@@ -10,6 +10,7 @@ from middlewared.api.current import (
     PoolSnapshotTaskUpdate,
     PoolSnapshotTaskUpdateWillChangeRetentionFor,
 )
+from middlewared.plugins.zettarepl_.state import PERIODIC_SNAPSHOT_TASK_STATE
 from middlewared.service import CallError, CRUDServicePart, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.cron import convert_db_format_to_schedule, convert_schedule_to_db_format
@@ -65,7 +66,7 @@ class PeriodicSnapshotTaskServicePart(CRUDServicePart[PeriodicSnapshotTaskEntry]
         if 'error' in context['state']:
             data['state'] = context['state']['error']
         else:
-            data['state'] = context['state']['tasks'].get(f'periodic_snapshot_task_{data["id"]}', {
+            data['state'] = context['state']['tasks'].get(PERIODIC_SNAPSHOT_TASK_STATE.task_id(data['id']), {
                 'state': 'PENDING',
             })
 
@@ -158,6 +159,10 @@ class PeriodicSnapshotTaskServicePart(CRUDServicePart[PeriodicSnapshotTaskEntry]
                 await self.call2(self.s.pool.snapshottask.fixate_removal_date, will_change_retention_for, task)
 
         await self._delete(id_)
+
+        # Remove task state from zettarepl before updating tasks
+        await self.middleware.call('zettarepl.remove_task', PERIODIC_SNAPSHOT_TASK_STATE.task_id(id_))
+
         await self.middleware.call('zettarepl.update_tasks')
 
     async def _validate(self, data: PeriodicSnapshotTaskEntry | PoolSnapshotTaskCreate) -> ValidationErrors:
