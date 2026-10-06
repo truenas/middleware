@@ -18,6 +18,7 @@ from middlewared.service import ConfigService, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils import run
 from middlewared.utils.boot.models import BootUpdateInitramfsOptions
+from middlewared.utils.security import GPOS_STIG_DEPRECATED_TLS_PROTOCOLS
 from middlewared.utils.service.settings import SettingsHelper
 from middlewared.utils.timezone_choices import effective_timezone
 
@@ -179,6 +180,38 @@ class SystemGeneralService(ConfigService):
             verrors.add(
                 'usage_collection',
                 'Usage collection is not allowed in GPOS STIG mode',
+            )
+
+    @settings.fields_validator('ui_httpsredirect')
+    async def _validate_ui_httpsredirect(self, verrors, ui_httpsredirect):
+        """ Cannot disable the HTTPS redirect when STIG is enabled """
+        if ui_httpsredirect:
+            return
+
+        security_config = await self.middleware.call('system.security.config')
+        if security_config['enable_gpos_stig']:
+            verrors.add(
+                'ui_httpsredirect',
+                'Redirection of HTTP requests to HTTPS may not be disabled in GPOS STIG mode',
+            )
+
+    @settings.fields_validator('ui_httpsprotocols')
+    async def _validate_ui_httpsprotocols(self, verrors, ui_httpsprotocols):
+        """ Cannot enable deprecated HTTPS protocols when STIG is enabled """
+        security_config = await self.middleware.call('system.security.config')
+        if not security_config['enable_gpos_stig']:
+            return
+
+        if deprecated := GPOS_STIG_DEPRECATED_TLS_PROTOCOLS & set(ui_httpsprotocols):
+            verrors.add(
+                'ui_httpsprotocols',
+                'The following HTTPS protocols are deprecated and may not be enabled in GPOS STIG '
+                f'mode: {", ".join(sorted(deprecated))}',
+            )
+        elif not ui_httpsprotocols:
+            verrors.add(
+                'ui_httpsprotocols',
+                'At least one HTTPS protocol must be enabled in GPOS STIG mode',
             )
 
     @api_method(SystemGeneralUpdateArgs, SystemGeneralUpdateResult, audit='System general update')

@@ -4,6 +4,7 @@ import pytest
 from middlewared.service_exception import CallError
 from middlewared.service_exception import ValidationErrors as Verr
 from middlewared.test.integration.assets.product import set_fips_available
+from middlewared.test.integration.assets.system_general import http_server_settings, SECURE_HTTP_SERVER
 from middlewared.test.integration.assets.two_factor_auth import (
     enabled_twofactor_auth, get_user_secret, get_2fa_totp_token
 )
@@ -46,6 +47,18 @@ def user_and_config_cleanup():
     ])
     for user in two_factor_users:
         call('user.delete', user['id'])
+
+
+@pytest.fixture(scope='module', autouse=True)
+def secure_http_server():
+    """ STIG requires an HTTPS-only web interface, so every test here needs one.
+
+    This is autouse because the shipped defaults (no HTTPS redirect, deprecated TLS
+    versions enabled) make `system.security.update` reject STIG before it reaches any
+    of the other validation steps the tests below assert on.
+    """
+    with http_server_settings(SECURE_HTTP_SERVER):
+        yield
 
 
 @pytest.fixture(scope='module')
@@ -182,8 +195,13 @@ def wait_for_failover_disabled_reasons(reasons, delay=5, retries=60, /, call_fn=
 
 
 @pytest.fixture(scope='module')
-def setup_stig(full_admin_w_2fa_builtin_admin, module_stig_enabled, root_non_stig_client):
-    """ Configure STIG and yield admin user object and an authenticated session """
+def setup_stig(secure_http_server, full_admin_w_2fa_builtin_admin, module_stig_enabled, root_non_stig_client):
+    """ Configure STIG and yield admin user object and an authenticated session
+
+    `secure_http_server` is requested explicitly so that it tears down after STIG is
+    disabled. Restoring the insecure HTTP server defaults while STIG is still active is
+    rejected by `system.general.update`.
+    """
     user_obj, secret = full_admin_w_2fa_builtin_admin
     global STIG_ACTIVE
 
@@ -298,6 +316,27 @@ def test_no_twofactor_fail(enterprise_product):
 def test_no_ssh_twofactor_fail(enterprise_product, two_factor_enabled_without_SSH):
     with pytest.raises(ValidationErrors, match='Two factor authentication for SSH access must be enabled'):
         call('system.security.update', {'enable_fips': True, 'enable_gpos_stig': True}, job=True)
+
+
+@pytest.mark.parametrize('insecure_settings, error', [
+    pp({'ui_httpsredirect': False},
+       'Redirection of HTTP requests to HTTPS must be enabled before enabling',
+       id='No HTTPS redirect'),
+    pp({'ui_httpsprotocols': ['TLSv1', 'TLSv1.1', 'TLSv1.2', 'TLSv1.3']},
+       'must be disabled before enabling General Purpose OS STIG compatibility mode: TLSv1, TLSv1.1',
+       id='Deprecated TLS versions'),
+    pp({'ui_httpsprotocols': ['TLSv1.1', 'TLSv1.2']},
+       'must be disabled before enabling General Purpose OS STIG compatibility mode: TLSv1.1',
+       id='Single deprecated TLS version'),
+    pp({'ui_httpsprotocols': []},
+       'At least one HTTPS protocol must be enabled before enabling',
+       id='No TLS version'),
+])
+def test_insecure_http_server_fail(enterprise_product, two_factor_enabled, insecure_settings, error):
+    """ STIG may not be enabled while the web interface accepts insecure connections """
+    with http_server_settings(insecure_settings):
+        with pytest.raises(ValidationErrors, match=error):
+            call('system.security.update', {'enable_fips': True, 'enable_gpos_stig': True}, job=True)
 
 
 def test_no_twofactor_users_fail(enterprise_product, two_factor_enabled):
@@ -440,6 +479,44 @@ def test_stig_usage_collection_disabled(setup_stig):
         # Under STIG mode we should not be able to enable usage_collection
         with pytest.raises(Verr, match='Usage collection is not allowed in GPOS STIG mode'):
             c.call('system.general.update', {'usage_collection': True})
+
+
+@pytest.mark.timeout(900)
+@pytest.mark.parametrize('insecure_settings, error', [
+    pp({'ui_httpsredirect': False},
+       'Redirection of HTTP requests to HTTPS may not be disabled in GPOS STIG mode',
+       id='No HTTPS redirect'),
+    pp({'ui_httpsprotocols': ['TLSv1', 'TLSv1.1', 'TLSv1.2', 'TLSv1.3']},
+       'may not be enabled in GPOS STIG mode: TLSv1, TLSv1.1',
+       id='Deprecated TLS versions'),
+    pp({'ui_httpsprotocols': ['TLSv1.1', 'TLSv1.2']},
+       'may not be enabled in GPOS STIG mode: TLSv1.1',
+       id='Single deprecated TLS version'),
+    pp({'ui_httpsprotocols': []},
+       'At least one HTTPS protocol must be enabled in GPOS STIG mode',
+       id='No TLS version'),
+])
+def test_stig_insecure_http_server_disabled(setup_stig, insecure_settings, error):
+    """ In GPOS STIG mode the web interface may not be made to accept insecure connections """
+    assert setup_stig['aal'] == "LEVEL_2"
+
+    c = setup_stig['connection']
+    with pytest.raises(Verr, match=error):
+        c.call('system.general.update', insecure_settings)
+
+    config = c.call('system.general.config')
+    assert config['ui_httpsredirect'] is True
+    assert set(config['ui_httpsprotocols']) == {'TLSv1.2', 'TLSv1.3'}
+
+
+@pytest.mark.timeout(900)
+def test_stig_secure_http_server_allowed(setup_stig):
+    """ In GPOS STIG mode a secure HTTP server configuration is still editable """
+    assert setup_stig['aal'] == "LEVEL_2"
+
+    c = setup_stig['connection']
+    with http_server_settings({'ui_httpsprotocols': ['TLSv1.2']}, call_fn=c.call):
+        assert c.call('system.general.config')['ui_httpsprotocols'] == ['TLSv1.2']
 
 
 @pytest.mark.timeout(900)
