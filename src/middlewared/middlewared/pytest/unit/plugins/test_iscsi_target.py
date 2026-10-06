@@ -43,9 +43,7 @@ async def test_target_mode_rejected_when_not_entitled(mode):
 
 @pytest.mark.asyncio
 async def test_target_mode_allowed_when_entitled():
-    # HW+L rather than a key column: Fibre Channel is granted by any license on appliance
-    # hardware, without needing a key of its own.
-    m, checked = target_middleware("HW+L")
+    m, checked = target_middleware("HW+K")
 
     verrors = await validate(m, "FC")
 

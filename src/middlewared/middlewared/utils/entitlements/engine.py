@@ -12,7 +12,7 @@ if typing.TYPE_CHECKING:
     from collections.abc import Callable, Mapping
 
 
-Column = typing.Literal["CE", "HW", "HW+L", "HW+K", "CE+L", "CE+K"]
+Column = typing.Literal["CE", "HW", "HW+K", "CE+K"]
 
 COLUMNS: tuple[Column, ...] = typing.get_args(Column)
 
@@ -116,30 +116,26 @@ def _format_message(reason: Reason, feature: str) -> str:
 class Entitlement:
     entitled: bool
     reason: Reason
-    column: Column
+    column: Column | None
     message: str
 
 
 class Vector(typing.NamedTuple):
-    """One row of the product feature matrix: six cells, where ``1`` grants and ``0`` denies.
+    """One row of the product feature matrix: one cell per column, where ``1`` grants and ``0`` denies.
 
     Field order is ``COLUMNS`` order, which is what lets the engine index a row by the column
     the facts resolved to (``vector[COLUMNS.index(column)]``).
 
-    A license that does not carry this feature's key is its own population, not a superset of
-    the unlicensed one.
+    A license that does not carry this feature's key resolves to no column and is denied: it is
+    not a superset of the unlicensed population.
     """
 
     ce: int
     """Community Edition: anything that is not an iX appliance -- Mini, whitebox, VM -- and unlicensed."""
     hw: int
     """iX appliance hardware, Minis excluded, and unlicensed."""
-    hw_l: int
-    """iX appliance hardware holding a license that does not carry this feature's key."""
     hw_k: int
     """iX appliance hardware holding a license that carries this feature's key."""
-    ce_l: int
-    """Community Edition hardware holding a license that does not carry this feature's key."""
     ce_k: int
     """Community Edition hardware holding a license that carries this feature's key."""
 
@@ -164,7 +160,7 @@ class TierRule:
 
     def __post_init__(self) -> None:
         vector = self.vector
-        if vector.ce or vector.hw or vector.hw_l or vector.ce_l:
+        if vector.ce or vector.hw:
             raise ValueError(
                 f"TierRule({self.feature}): a tier is read off a feature key, so it cannot be "
                 f"evaluated without one. Only hw_k/ce_k may be set; got {vector}."
@@ -181,7 +177,7 @@ def has_key(feature: str, facts: EntitlementFacts) -> bool:
     return facts.license is not None and facts.license.has_feature(feature)
 
 
-def resolve_column(key_feature: str, facts: EntitlementFacts) -> Column:
+def resolve_column(key_feature: str, facts: EntitlementFacts) -> Column | None:
     """Return the matrix column `facts` resolves to, keyed off `key_feature`.
 
     `key_feature` is the license feature whose *key presence* decides the K axis, which
@@ -194,7 +190,7 @@ def resolve_column(key_feature: str, facts: EntitlementFacts) -> Column:
         return "HW" if hw_side else "CE"
     if has_key(key_feature, facts):
         return "HW+K" if hw_side else "CE+K"
-    return "HW+L" if hw_side else "CE+L"
+    return None
 
 
 def _vector_deny_reason(vector: Vector, facts: EntitlementFacts) -> Reason:
@@ -212,7 +208,7 @@ def _vector_deny_reason(vector: Vector, facts: EntitlementFacts) -> Reason:
 
 def _check_vector(feature: str, vector: Vector, facts: EntitlementFacts) -> Entitlement:
     column = resolve_column(feature, facts)
-    if vector[COLUMNS.index(column)]:
+    if column is not None and vector[COLUMNS.index(column)]:
         return Entitlement(entitled=True, reason=Reason.ENTITLED, column=column, message="")
 
     reason = _vector_deny_reason(vector, facts)
@@ -227,7 +223,7 @@ def _check_tier(policy_key: str, rule: TierRule, facts: EntitlementFacts) -> Ent
     by the SUPPORT key, and "support" is not its wording.
     """
     column = resolve_column(rule.feature, facts)
-    if not rule.vector[COLUMNS.index(column)]:
+    if column is None or not rule.vector[COLUMNS.index(column)]:
         reason = _vector_deny_reason(rule.vector, facts)
         return Entitlement(entitled=False, reason=reason, column=column, message=_format_message(reason, policy_key))
 
