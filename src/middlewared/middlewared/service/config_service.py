@@ -74,7 +74,7 @@ class ConfigServiceMetabase(ServiceBase):
             klass._register_models = [
                 (accepts_model, config_args, entry.__name__),
                 (result_model, config_result, entry.__name__),
-            ]
+            ] + klass._register_models
 
         return klass
 
