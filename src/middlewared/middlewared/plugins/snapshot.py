@@ -13,6 +13,7 @@ from middlewared.api.current import (
     PoolSnapshotTaskUpdateWillChangeRetentionFor,
 )
 from middlewared.common.attachment import FSAttachmentDelegate
+from middlewared.plugins.zettarepl_.state import PERIODIC_SNAPSHOT_TASK_STATE
 from middlewared.service import CallError, CRUDService, private, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.cron import convert_db_format_to_schedule, convert_schedule_to_db_format
@@ -81,7 +82,7 @@ class PeriodicSnapshotTaskService(RemovalDateService, TaskRetentionService, CRUD
         if 'error' in context['state']:
             data['state'] = context['state']['error']
         else:
-            data['state'] = context['state']['tasks'].get(f'periodic_snapshot_task_{data["id"]}', {
+            data['state'] = context['state']['tasks'].get(PERIODIC_SNAPSHOT_TASK_STATE.task_id(data['id']), {
                 'state': 'PENDING',
             })
 
@@ -243,6 +244,9 @@ class PeriodicSnapshotTaskService(RemovalDateService, TaskRetentionService, CRUD
             id_
         )
 
+        # Remove task state from zettarepl before updating tasks
+        await self.middleware.call('zettarepl.remove_task', PERIODIC_SNAPSHOT_TASK_STATE.task_id(id_))
+
         await self.middleware.call('zettarepl.update_tasks')
 
         return response
@@ -349,8 +353,7 @@ class PeriodicSnapshotTaskFSAttachmentDelegate(FSAttachmentDelegate):
 
 
 async def on_zettarepl_state_changed(middleware, id_, fields):
-    if id_.startswith('periodic_snapshot_task_'):
-        task_id = int(id_.split('_')[-1])
+    if (task_id := PERIODIC_SNAPSHOT_TASK_STATE.task_id_number(id_)) is not None:
         middleware.send_event('pool.snapshottask.query', 'CHANGED', id=task_id, fields={'state': fields})
 
 
