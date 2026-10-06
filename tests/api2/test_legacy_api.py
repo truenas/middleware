@@ -32,8 +32,21 @@ def get_methods(name: str | None = None):
     return methods
 
 
+def get_filterable_methods():
+    """Methods that accept `filters` and `options`, excluding the `query` methods of CRUD services."""
+    with client() as c:
+        methods = c.call("core.get_methods")
+
+    return [name for name, method in methods.items() if method["filterable"] and not name.endswith(".query")]
+
+
 @pytest.fixture(scope="module", params=get_methods("query"), ids=lambda m: f"query_method={m}")
 def query_method(request):
+    yield request.param
+
+
+@pytest.fixture(scope="module", params=get_filterable_methods(), ids=lambda m: f"filterable_method={m}")
+def filterable_method(request):
     yield request.param
 
 
@@ -172,6 +185,14 @@ def test_config_method(legacy_api_client, config_method):
         return
 
     client.call(config_method)
+
+
+def test_filterable_method(legacy_api_client, filterable_method, misc_method_names):
+    client, _ = legacy_api_client
+    if filterable_method in misc_method_names:
+        return
+
+    assert isinstance(client.call(filterable_method, [], {"limit": 1}), list)
 
 
 def test_misc_methods(legacy_api_client, misc_methods):
