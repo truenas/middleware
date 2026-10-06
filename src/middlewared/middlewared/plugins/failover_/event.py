@@ -854,6 +854,10 @@ class FailoverEventsService(Service):
         self.run_call('service.control', 'RESTART', 'truenas_zfstierd', job=True)
         logger.info('Done restarting ZFS tier daemon')
 
+        logger.info('Loading replication task state')
+        self.run_call('zettarepl.load_state')
+        logger.info('Done loading replication task state')
+
         logger.info('Updating replication tasks')
         self.run_call('zettarepl.update_tasks')
         logger.info('Done updating replication tasks')
