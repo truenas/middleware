@@ -42,7 +42,7 @@ class ControlServiceAction(HaSynchronizationBaseAction):
         await context.middleware.call(
             "failover.call_remote",
             "service.control",
-            [self.verb, self.service],
+            [self.verb, self.service, {"ha_propagate": False}],
             {"job": True},
         )
 
@@ -107,16 +107,24 @@ async def ha_synchronization(actions: HaSynchronizationActions, force: bool) -> 
                     [],
                     {"raise_connect_error": False, "timeout": 2, "connect_timeout": 2},
                 )
+            except Exception as e:
+                raise CallError(
+                    "Changing security settings requires HA to be healthy. An error occurred while contacting the "
+                    f"remote node: {e!r}.",
+                    errno.ENOLINK,
+                )
+            else:
                 if rem_status != "BACKUP":
                     raise CallError(
                         f"Changing security settings requires HA to be healthy. Standby node reported {rem_status} "
                         "status.",
                         errno.ENOLINK,
                     )
-            except Exception as e:
+
+            if await context.middleware.call("failover.datastore.is_failure"):
                 raise CallError(
-                    "Changing security settings requires HA to be healthy. An error occurred while contacting the "
-                    f"remote node: {e!r}.",
+                    "Changing security settings requires HA to be healthy. Configuration database is not "
+                    "replicated to standby controller.",
                     errno.ENOLINK,
                 )
 
