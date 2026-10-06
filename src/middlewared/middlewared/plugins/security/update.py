@@ -10,6 +10,7 @@ from middlewared.service import ConfigService, ValidationError, job, private
 import middlewared.sqlalchemy as sa
 from middlewared.utils.io import set_io_uring_enabled
 from middlewared.utils.security import (
+    GPOS_STIG_DEPRECATED_TLS_PROTOCOLS,
     GPOS_STIG_MIN_PASSWORD_AGE,
     GPOS_STIG_MAX_PASSWORD_AGE,
     GPOS_STIG_PASSWORD_COMPLEXITY,
@@ -118,6 +119,29 @@ class SystemSecurityService(ConfigService):
                 'system_security_update.enable_gpos_stig',
                 'Two factor authentication for SSH access must be enabled before '
                 'enabling General Purpose OS STIG compatibility mode.'
+            )
+
+        general_config = await self.middleware.call('system.general.config')
+        if not general_config['ui_httpsredirect']:
+            raise ValidationError(
+                'system_security_update.enable_gpos_stig',
+                'Redirection of HTTP requests to HTTPS must be enabled before enabling General '
+                'Purpose OS STIG compatibility mode. Please enable it in the HTTP server settings.'
+            )
+
+        if deprecated := GPOS_STIG_DEPRECATED_TLS_PROTOCOLS & set(general_config['ui_httpsprotocols']):
+            raise ValidationError(
+                'system_security_update.enable_gpos_stig',
+                'The following HTTPS protocols are deprecated and must be disabled before enabling '
+                f'General Purpose OS STIG compatibility mode: {", ".join(sorted(deprecated))}. '
+                'Please disable them in the HTTP server settings.'
+            )
+
+        if not general_config['ui_httpsprotocols']:
+            raise ValidationError(
+                'system_security_update.enable_gpos_stig',
+                'At least one HTTPS protocol must be enabled before enabling General Purpose OS '
+                'STIG compatibility mode. Please enable one in the HTTP server settings.'
             )
 
         tc_config = await self.middleware.call('truecommand.config')

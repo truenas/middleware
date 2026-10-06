@@ -15,6 +15,11 @@ GPOS_STIG_PASSWORD_REUSE_LIMIT = 5  # SRG-OS-000077-GPOS-00045
 GPOS_STIG_PASSWORD_LENGTH = 15  # SRG-OS-000078-GPOS-00046
 GPOS_STIG_MAX_USER_LOGINS = 10  # SRG-OS-000027-GPOS-00008
 
+# SRG-OS-000250-GPOS-00093 requires DoD-approved encryption for remote management
+# sessions. TLS 1.0 and TLS 1.1 are deprecated by RFC 8996, and enabling either one
+# also enables legacy SHA1 ciphers in our nginx configuration.
+GPOS_STIG_DEPRECATED_TLS_PROTOCOLS = frozenset(['TLSv1', 'TLSv1.1'])
+
 # The security plugin contains many options that are only
 # available for enterprise-licensed users
 ENTERPRISE_OPTIONS = frozenset([
