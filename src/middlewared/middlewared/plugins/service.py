@@ -167,7 +167,7 @@ class ServiceService(CRUDService):
         ServiceStartResult,
         roles=['SERVICE_WRITE', 'SHARING_NFS_WRITE', 'SHARING_SMB_WRITE', 'SHARING_ISCSI_WRITE', 'SHARING_FTP_WRITE'],
         pass_app=True,
-        removed_in="v26",
+        removed_in="v27",
         audit='Service Control: START',
         audit_extended=lambda service, options=None: service,
     )
@@ -264,7 +264,7 @@ class ServiceService(CRUDService):
         ServiceStopResult,
         roles=['SERVICE_WRITE', 'SHARING_NFS_WRITE', 'SHARING_SMB_WRITE', 'SHARING_ISCSI_WRITE', 'SHARING_FTP_WRITE'],
         pass_app=True,
-        removed_in="v26",
+        removed_in="v27",
         audit='Service Control: STOP',
         audit_extended=lambda service, options=None: service,
     )
@@ -312,7 +312,7 @@ class ServiceService(CRUDService):
         ServiceRestartResult,
         roles=['SERVICE_WRITE', 'SHARING_NFS_WRITE', 'SHARING_SMB_WRITE', 'SHARING_ISCSI_WRITE', 'SHARING_FTP_WRITE'],
         pass_app=True,
-        removed_in="v26",
+        removed_in="v27",
         audit='Service Control: RESTART',
         audit_extended=lambda service, options=None: service,
     )
@@ -414,7 +414,7 @@ class ServiceService(CRUDService):
         ServiceReloadResult,
         roles=['SERVICE_WRITE', 'SHARING_NFS_WRITE', 'SHARING_SMB_WRITE', 'SHARING_ISCSI_WRITE', 'SHARING_FTP_WRITE'],
         pass_app=True,
-        removed_in="v26",
+        removed_in="v27",
         audit='Service Control: RELOAD',
         audit_extended=lambda service, options=None: service,
     )

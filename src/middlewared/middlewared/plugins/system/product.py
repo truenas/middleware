@@ -156,7 +156,7 @@ class SystemService(Service):
         SystemFeatureEnabledArgs,
         SystemFeatureEnabledResult,
         roles=["SYSTEM_PRODUCT_READ"],
-        removed_in="v26",
+        removed_in="v27",
     )
     async def feature_enabled(self, name):
         """
