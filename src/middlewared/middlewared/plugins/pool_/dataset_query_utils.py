@@ -695,9 +695,19 @@ def normalize_zfs_asdict_result(raw_data, hdl, include_user_properties=True):
 
     # Conditionally add normalized user properties
     if include_user_properties:
-        result["user_properties"] = normalize_user_properties(
-            raw_data.get("user_properties")
-        )
+        user_properties = normalize_user_properties(raw_data.get("user_properties"))
+
+        # TrueNAS-internal user properties (e.g. `org.truenas:managedby`) are not user properties: the API exposes
+        # them as top-level fields of their own (`managedby`, `comments`, ...). `normalize_user_properties()` has
+        # already renamed them to those API names, so surface them at the top level and keep them out of
+        # `user_properties`. Left in there, `pool.dataset.update` would treat them as user properties that are
+        # missing from a `user_properties` update and try to remove (INHERIT) them under their API names, which
+        # ZFS does not know, failing with "Property does not exist and cannot be inherited".
+        for api_name in user_property_names_to_be_renamed().values():
+            if api_name in user_properties:
+                result[api_name] = user_properties.pop(api_name)
+
+        result["user_properties"] = user_properties
 
     return result
 
@@ -759,7 +769,9 @@ def build_info(hdl, state: QueryFiltersCallbackState):
     if info.get("type") == "VOLUME":
         info["mountpoint"] = None
 
-    # Filter out internal user properties from user_properties dict
+    # Filter out the remaining internal user properties from user_properties dict. The ones that are exposed as
+    # top-level fields were already moved out by `normalize_zfs_asdict_result()` (it has to be done there, after they
+    # have been renamed, since this check compares against the original ZFS names).
     if "user_properties" in info and isinstance(info["user_properties"], dict):
         internal_props = {prop.value for prop in TNUserProp}
         info["user_properties"] = {
