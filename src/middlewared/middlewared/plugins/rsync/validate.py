@@ -289,10 +289,11 @@ async def validate_rsync_task(
 
     await part.validate_path_field(data, schema, verrors, split_path=True)
 
-    try:
-        shlex.split(" ".join(data["extra"]).replace('"', r'"\"').replace("'", r'"\"'))
-    except ValueError as e:
-        verrors.add(f"{schema}.extra", f"Please specify valid value: {e}")
+    for i, arg in enumerate(data["extra"]):
+        try:
+            shlex.split(arg)
+        except ValueError as e:
+            verrors.add(f"{schema}.extra.{i}", f"Please specify valid value: {e}")
 
     match data["mode"]:
         case "MODULE":
