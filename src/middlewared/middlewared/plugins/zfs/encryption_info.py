@@ -55,12 +55,11 @@ def dataset_can_be_mounted(ds_name: str, ds_mountpoint: str) -> str:
         mount_error_check = f"A file exists at {ds_mountpoint!r} and {ds_name} cannot be mounted"
     elif os.path.isdir(ds_mountpoint) and not directory_is_empty(ds_mountpoint):
         mount_error_check = f"{ds_mountpoint!r} directory is not empty"
-    mount_error_check += (
-        ' (please provide "force" flag to override this error and file/directory '
-        "will be renamed once the dataset is unlocked)"
-        if mount_error_check
-        else ""
-    )
+    if mount_error_check:
+        mount_error_check += (
+            ' (please provide "force" flag to override this error and file/directory '
+            "will be renamed once the dataset is unlocked)"
+        )
     return mount_error_check
 
 
@@ -80,15 +79,21 @@ def encryption_root_children(
 def encryption_view(row: dict[str, Any]) -> dict[str, Any]:
     props = row["properties"]
     enc = get_encryption_info(props)
+    mountpoint = None
+    if row["type"] == "FILESYSTEM":
+        mountpoint = props["mountpoint"]["raw"]
+    encryption_root = None
+    if enc.encrypted:
+        encryption_root = props["encryptionroot"]["value"]
     return {
         "name": row["name"],
         "type": row["type"],
-        "mountpoint": props["mountpoint"]["raw"] if row["type"] == "FILESYSTEM" else None,
+        "mountpoint": mountpoint,
         "children": [],
         "encrypted": enc.encrypted,
         "locked": enc.locked,
         "key_loaded": enc.encrypted and not enc.locked,
-        "encryption_root": props["encryptionroot"]["value"] if enc.encrypted else None,
+        "encryption_root": encryption_root,
         "key_format": enc.encryption_type,
     }
 
@@ -96,7 +101,10 @@ def encryption_view(row: dict[str, Any]) -> dict[str, Any]:
 def is_internal_dataset_name(path: str) -> bool:
     if path.split("/")[0] in BOOT_POOL_NAME_VALID:
         return True
-    return any(f"/{i}" in path for i in (*INTERNAL_PATHS, CONTAINER_DS_NAME))
+    for i in (*INTERNAL_PATHS, CONTAINER_DS_NAME):
+        if f"/{i}" in path:
+            return True
+    return False
 
 
 def encryption_state(context: ServiceContext, tls: Any, path: str) -> dict[str, Any]:
@@ -104,7 +112,7 @@ def encryption_state(context: ServiceContext, tls: Any, path: str) -> dict[str, 
     if not is_internal_dataset_name(path):
         rows = _query.list_impl(context, tls, ZFSResourceQuery(paths=[path], properties=["mountpoint", "encryption"]))
     if not rows:
-        raise InstanceNotFound(f"PoolDataset {path} does not exist")
+        raise InstanceNotFound(f"Dataset {path} does not exist")
     return encryption_view(rows[0])
 
 
@@ -133,7 +141,9 @@ def encryption_roots(
             continue
         if state == "locked" and ds["key_loaded"] or state == "unlocked" and not ds["key_loaded"]:
             continue
-        key = db_results.get(name) if ds["key_format"] != "passphrase" else None
+        key = None
+        if ds["key_format"] != "passphrase":
+            key = db_results.get(name)
         result[name] = {"encryption_key": key, **ds}
     return result
 
@@ -162,9 +172,10 @@ def replication_keys(
         raise CallError("Only push replication tasks are supported.", errno.EINVAL)
 
     if not skip_sync:
-        context.middleware.call_sync(
-            "core.bulk", "zfs.resource.encryption.sync_keys", [[source] for source in task.source_datasets]
-        ).wait_sync()
+        sync_args: list[list[str]] = []
+        for source in task.source_datasets:
+            sync_args.append([source])
+        context.middleware.call_sync("core.bulk", "zfs.resource.encryption.sync_keys", sync_args).wait_sync()
 
     source_keys: dict[str, dict[str, str]] = {}
     for source_ds in task.source_datasets:
@@ -196,14 +207,16 @@ def replication_keys(
 
     for source_ds in task.source_datasets:
         for ds_name, key in source_keys[source_ds].items():
-            for dataset_name in dataset_mapping[ds_name] if include_encryption_root_children else [ds_name]:
-                result[
-                    dataset_name.replace(
-                        source_ds if len(source_ds) <= len(dataset_name) else dataset_name,
-                        source_mapping[source_ds],
-                        1,
-                    )
-                ] = key
+            if include_encryption_root_children:
+                dataset_names = dataset_mapping[ds_name]
+            else:
+                dataset_names = [ds_name]
+            for dataset_name in dataset_names:
+                if len(source_ds) <= len(dataset_name):
+                    replaced = source_ds
+                else:
+                    replaced = dataset_name
+                result[dataset_name.replace(replaced, source_mapping[source_ds], 1)] = key
 
     return result
 

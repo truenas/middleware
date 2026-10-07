@@ -28,14 +28,16 @@ KEY_CHILDREN_ERROR = (
 
 
 def has_key_encrypted_child_roots(context: ServiceContext, tls: Any, path: str) -> bool:
-    return any(
-        r["name"] != path
-        and r["properties"]["encryptionroot"]["value"] == r["name"]
-        and r["properties"]["keyformat"]["raw"] != "passphrase"
-        for r in _query.list_impl(
-            context, tls, ZFSResourceQuery(paths=[path], properties=["encryption"], get_children=True)
-        )
-    )
+    for r in _query.list_impl(
+        context, tls, ZFSResourceQuery(paths=[path], properties=["encryption"], get_children=True)
+    ):
+        if (
+            r["name"] != path
+            and r["properties"]["encryptionroot"]["value"] == r["name"]
+            and r["properties"]["keyformat"]["raw"] != "passphrase"
+        ):
+            return True
+    return False
 
 
 def change_key(context: ServiceContext, job: Job, tls: Any, data: ZFSResourceEncryptionChangeKeyArgsData) -> None:
@@ -65,27 +67,26 @@ def change_key(context: ServiceContext, job: Job, tls: Any, data: ZFSResourceEnc
             if not data.generate_key and not key:
                 for k in ("key", "passphrase", "generate_key"):
                     verrors.add(k, "Either Key or passphrase must be provided.")
-            elif path.count("/") and any(
-                r["properties"]["keyformat"]["raw"] == "passphrase"
+            elif path.count("/"):
+                parent_paths: list[str] = []
+                for i in range(1, path.count("/") + 1):
+                    parent_paths.append(path.rsplit("/", i)[0])
                 for r in _query.list_impl(
-                    context,
-                    tls,
-                    ZFSResourceQuery(
-                        paths=[path.rsplit("/", i)[0] for i in range(1, path.count("/") + 1)],
-                        properties=["encryption"],
-                    ),
-                )
-            ):
-                verrors.add(
-                    "key",
-                    f"{path} has parent(s) which are encrypted with a passphrase. It is not allowed to have "
-                    "encrypted roots which are encrypted with a key as children for passphrase encrypted datasets.",
-                )
+                    context, tls, ZFSResourceQuery(paths=parent_paths, properties=["encryption"])
+                ):
+                    if r["properties"]["keyformat"]["raw"] == "passphrase":
+                        verrors.add(
+                            "key",
+                            f"{path} has parent(s) which are encrypted with a passphrase. It is not allowed to have "
+                            "encrypted roots which are encrypted with a key as children for passphrase encrypted "
+                            "datasets.",
+                        )
+                        break
 
     verrors.check()
 
     key_from_file = None
-    if data.key_file and not any((key, data.generate_key, passphrase)):
+    if data.key_file and not (key or data.generate_key or passphrase):
         key_from_file = read_hex_key_from_pipe(job, verrors, "")
 
     encryption_dict = resolve_key_options(
@@ -106,7 +107,10 @@ def change_key(context: ServiceContext, job: Job, tls: Any, data: ZFSResourceEnc
     new_key = encryption_dict.pop("key")
     zfs_change_key(tls, path, cast(EncryptionProperties, encryption_dict), new_key)
 
-    key_format = "PASSPHRASE" if passphrase else "HEX"
+    if passphrase:
+        key_format = "PASSPHRASE"
+    else:
+        key_format = "HEX"
     store_key(context, path, new_key, key_format)
     if passphrase and ds["key_format"] != "passphrase":
         context.call_sync2(context.s.zfs.resource.encryption.sync_keys, path)

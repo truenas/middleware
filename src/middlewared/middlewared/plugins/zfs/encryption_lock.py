@@ -47,12 +47,9 @@ __all__ = (
 
 
 def normalize_unlock_data(data: dict[str, Any]) -> dict[str, Any]:
-    return {
-        "path": data["path"],
-        "recursive": data.get("recursive", False),
-        "force": data.get("force", False),
-        "key_file": data.get("key_file", False),
-        "keys": [
+    keys: list[dict[str, Any]] = []
+    for entry in data.get("keys", []):
+        keys.append(
             {
                 "path": entry["path"],
                 "key": entry.get("key"),
@@ -60,15 +57,22 @@ def normalize_unlock_data(data: dict[str, Any]) -> dict[str, Any]:
                 "force": entry.get("force", False),
                 "recursive": entry.get("recursive", False),
             }
-            for entry in data.get("keys", [])
-        ],
+        )
+    return {
+        "path": data["path"],
+        "recursive": data.get("recursive", False),
+        "force": data.get("force", False),
+        "key_file": data.get("key_file", False),
+        "keys": keys,
     }
 
 
 def assign_supplied_recursive_keys(
     request_keys: list[dict[str, Any]], keys_supplied: dict[str, Any], queried_datasets: list[str]
 ) -> None:
-    by_path = {entry["path"]: entry for entry in request_keys}
+    by_path: dict[str, dict[str, Any]] = {}
+    for entry in request_keys:
+        by_path[entry["path"]] = entry
     for name in queried_datasets:
         if name not in keys_supplied:
             for parent_path in Path(name).parents:
@@ -116,7 +120,9 @@ async def start_attachments_on_unlock(context: ServiceContext, datasets: list[di
     if not datasets:
         return
 
-    unlocked = [(dataset, dataset_mountpoint(dataset)) for dataset in datasets]
+    unlocked: list[tuple[dict[str, Any], str | None]] = []
+    for dataset in datasets:
+        unlocked.append((dataset, dataset_mountpoint(dataset)))
     for delegate in await context.call2(context.s.zfs.resource.attachment_delegates_for_start):
         # The datasets are already unlocked and mounted, so a delegate failure here must not abort
         # the unlock job before its encryption records are persisted
@@ -139,12 +145,12 @@ def unlock(
         keys_supplied = retrieve_keys_from_file(job)
 
     for i, entry in enumerate(data["keys"]):
-        if all(entry.get(k) for k in ("key", "passphrase")):
+        if entry.get("key") and entry.get("passphrase"):
             verrors.add(
                 f"keys.{i}.key",
                 f"Must not be specified when passphrase for {entry['path']} is supplied",
             )
-        elif not any(entry.get(k) for k in ("key", "passphrase")):
+        elif not (entry.get("key") or entry.get("passphrase")):
             verrors.add(f"keys.{i}", f"Passphrase or key must be specified for {entry['path']}")
 
         if not data["force"] and not entry["force"]:
@@ -193,13 +199,15 @@ def unlock(
 
     failed: defaultdict[str, dict[str, Any]] = defaultdict(lambda: {"error": None, "skipped": []})
     unlocked: list[str] = []
-    names = sorted(
-        filter(
-            lambda n: n and f"{n}/".startswith(f"{path}/") and datasets[n]["locked"],
-            (datasets if data["recursive"] else [path]),
-        ),
-        key=lambda v: v.count("/"),
-    )
+    if data["recursive"]:
+        candidates: list[str] = list(datasets)
+    else:
+        candidates = [path]
+    names: list[str] = []
+    for n in candidates:
+        if n and f"{n}/".startswith(f"{path}/") and datasets[n]["locked"]:
+            names.append(n)
+    names.sort(key=lambda v: v.count("/"))
 
     for name_i, name in enumerate(names):
         skip = False
@@ -294,7 +302,9 @@ def unlock(
 
         # A loaded key with nothing mounted under its encryption root is unloaded again, so the root
         # is left cleanly locked instead of with an orphaned key.
-        to_mount_names = {d["name"] for d in to_mount}
+        to_mount_names: set[str] = set()
+        for d in to_mount:
+            to_mount_names.add(d["name"])
         if not to_mount_names.intersection(unlocked):
             try:
                 context.call_sync2(context.s.zfs.resource.unload_key, name)
@@ -316,8 +326,11 @@ def unlock(
                     failed_datasets[ds_name] = str(e)
 
         if failed_datasets:
+            failed_lines: list[str] = []
+            for i, ds_name in enumerate(failed_datasets):
+                failed_lines.append(f"{i + 1}) {ds_name!r}: {failed_datasets[ds_name]}")
             failed[failed_ds]["error"] += "\n\nFailed to set immutable flag on following datasets:\n" + "\n".join(
-                f"{i + 1}) {ds_name!r}: {failed_datasets[ds_name]}" for i, ds_name in enumerate(failed_datasets)
+                failed_lines
             )
 
     if unlocked:
@@ -325,11 +338,15 @@ def unlock(
             job.set_progress(91, "Handling attachments")
             # Delegates match attachments against the real mountpoint of every dataset that mounted,
             # not against the requested root's subtree.
-            unlocked_datasets = {ds["name"]: ds for root in datasets.values() for ds in (root, *root["children"])}
-            context.call_sync2(
-                context.s.zfs.resource.encryption.start_attachments_on_unlock,
-                [unlocked_datasets[name] for name in unlocked if name in unlocked_datasets],
-            )
+            unlocked_datasets: dict[str, dict[str, Any]] = {}
+            for root in datasets.values():
+                for ds in (root, *root["children"]):
+                    unlocked_datasets[ds["name"]] = ds
+            to_start: list[dict[str, Any]] = []
+            for name in unlocked:
+                if name in unlocked_datasets:
+                    to_start.append(unlocked_datasets[name])
+            context.call_sync2(context.s.zfs.resource.encryption.start_attachments_on_unlock, to_start)
 
         job.set_progress(92, "Updating database")
 
@@ -340,18 +357,19 @@ def unlock(
                 "key_format": datasets[unlocked_dataset]["key_format"].upper(),
             }
 
-        for unlocked_dataset in filter(lambda d: d in keys_supplied, unlocked):
-            if unlocked_dataset not in datasets:
+        for unlocked_dataset in unlocked:
+            if unlocked_dataset not in keys_supplied or unlocked_dataset not in datasets:
                 continue
 
             record = dataset_data(unlocked_dataset)
             store_key(context, record["name"], record["encryption_key"], record["key_format"])
 
         job.set_progress(94, "Running post-unlock tasks")
-        context.middleware.call_hook_sync(
-            "dataset.post_unlock",
-            datasets=[dataset_data(ds) for ds in unlocked if ds in datasets],
-        )
+        post_unlock_datasets: list[dict[str, Any]] = []
+        for ds_name in unlocked:
+            if ds_name in datasets:
+                post_unlock_datasets.append(dataset_data(ds_name))
+        context.middleware.call_hook_sync("dataset.post_unlock", datasets=post_unlock_datasets)
 
     return {"unlocked": unlocked, "failed": dict(failed)}
 
@@ -362,7 +380,8 @@ def unlock_summary(
     keys_supplied: dict[str, dict[str, Any]] = {}
     verrors = ValidationErrors()
     if data.key_file:
-        keys_supplied = {k: {"key": v, "force": False} for k, v in retrieve_keys_from_file(job).items()}
+        for k, v in retrieve_keys_from_file(job).items():
+            keys_supplied[k] = {"key": v, "force": False}
 
     for i, entry in enumerate(data.keys):
         key = secret_value(entry.key)
@@ -430,4 +449,7 @@ def unlock_summary(
                 ds["unlock_error"] = "Key not provided"
             failed.add(ds_name)
 
-    return [ZFSResourceEncryptionUnlockSummaryEntry(**ds) for ds in results]
+    entries: list[ZFSResourceEncryptionUnlockSummaryEntry] = []
+    for ds in results:
+        entries.append(ZFSResourceEncryptionUnlockSummaryEntry(**ds))
+    return entries
