@@ -28,7 +28,7 @@ from middlewared.plugins.zfs.exceptions import ZFSDestroyFailedException
 from middlewared.pylibvirt import gather_pylibvirt_domains_states, get_pylibvirt_domain_state
 from middlewared.service import CallError, CRUDServicePart, ValidationError, ValidationErrors
 import middlewared.sqlalchemy as sa
-from middlewared.utils.libvirt.utils import ACTIVE_STATES, same_uuid
+from middlewared.utils.libvirt.utils import ACTIVE_STATES, retrieve_status, same_uuid
 
 from .bridge import container_bridge_name
 from .dataset import ensure_datasets
@@ -109,7 +109,7 @@ class ContainerServicePart(CRUDServicePart[ContainerEntry]):
                 rows,
                 self.middleware.libvirt_domains_manager.containers_connection,
                 lambda container: pylibvirt_container(self, self.state_entry(container)),
-            ),
+            ) if retrieve_status(extra) else None,
             'bridge_name': container_bridge_name(self),
         }
 
@@ -141,7 +141,7 @@ class ContainerServicePart(CRUDServicePart[ContainerEntry]):
         has_nic = any(d.attributes.dtype == 'NIC' for d in devices)
 
         data.update({
-            'status': get_pylibvirt_domain_state(context['states'], data),
+            'status': None if context['states'] is None else get_pylibvirt_domain_state(context['states'], data),
             'devices': devices,
             'default_network': None if has_nic else context['bridge_name'],
         })
@@ -270,7 +270,7 @@ class ContainerServicePart(CRUDServicePart[ContainerEntry]):
             )
             new = new.model_copy(update={'dataset': new_dataset})
 
-        entry = await self._update(id_, new.model_dump(exclude={'id', 'devices', 'status'}))
+        entry = await self._update(id_, new.model_dump(exclude={'id', 'devices', 'status_or_null'}))
 
         if old.shutdown_timeout != new.shutdown_timeout:
             await self.middleware.call('etc.generate', 'libvirt_guests')

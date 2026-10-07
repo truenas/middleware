@@ -13,6 +13,18 @@ LIBVIRT_USER = 'libvirt-qemu'
 NGINX_PREFIX = '/vm/display'
 
 
+def retrieve_status(extra: dict[str, Any]) -> bool:
+    if not extra.get('retrieve_status', True):
+        return False
+    if select := extra.get('select'):
+        for entry in select:
+            field = entry[0] if isinstance(entry, list) and entry else entry
+            if isinstance(field, str) and field.split('.', 1)[0] == 'status':
+                return True
+        return False
+    return True
+
+
 def same_uuid(a: str, b: str) -> bool:
     """Compare two UUIDs by value rather than spelling.
 

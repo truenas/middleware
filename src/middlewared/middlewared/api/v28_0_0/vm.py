@@ -12,6 +12,7 @@ from middlewared.api.base import (
     NonEmptyString,
     excluded_field,
 )
+from middlewared.utils.lang import undefined
 
 from .vm_device import VMDeviceEntry, VMDisplayDevice
 
@@ -177,15 +178,30 @@ class VMEntry(BaseModel):
     devices: list[VMDeviceEntry] = Field(description="Array of virtual devices attached to this VM.")
     display_available: bool = Field(description="Whether at least one display device is available for this VM.")
     id: int = Field(description="Unique identifier for the virtual machine.")
-    status: VMStatus = Field(description="Current runtime status information for the VM.")
+    status_or_null: VMStatus | None = Field(
+        alias='status',
+        description=(
+            "Current runtime status information for the VM. `null` if `query-options.extra.retrieve_status` is "
+            "`false`."
+        )
+    )
     enable_secure_boot: bool = Field(
         default=False,
         description="Whether to enable UEFI Secure Boot for enhanced security.",
     )
 
+    @property
+    def status(self) -> VMStatus:
+        # Query result items leave unselected fields `undefined`.
+        if self.status_or_null is None or self.status_or_null is undefined:
+            raise ValueError(
+                'Status was not retrieved; the query set `retrieve_status` to false or did not select `status`'
+            )
+        return self.status_or_null
+
 
 class VMCreate(VMEntry):
-    status: Excluded = excluded_field()
+    status_or_null: Excluded = excluded_field()
     id: Excluded = excluded_field()
     display_available: Excluded = excluded_field()
     devices: Excluded = excluded_field()
