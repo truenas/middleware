@@ -13,7 +13,8 @@ from . import resource_query as _query
 from .encryption import EncryptionProperties, change_encryption_root
 from .encryption import change_key as zfs_change_key
 from .encryption_info import encryption_state
-from .encryption_keys import read_hex_key_from_pipe, resolve_key_options, secret_value, store_key
+from .encryption_keys import read_hex_key_from_pipe, resolve_key_options, store_key
+from .utils import ancestor_chain, secret_value
 
 if TYPE_CHECKING:
     from middlewared.job import Job
@@ -68,11 +69,8 @@ def change_key(context: ServiceContext, job: Job, tls: Any, data: ZFSResourceEnc
                 for k in ("key", "passphrase", "generate_key"):
                     verrors.add(k, "Either Key or passphrase must be provided.")
             elif path.count("/"):
-                parent_paths: list[str] = []
-                for i in range(1, path.count("/") + 1):
-                    parent_paths.append(path.rsplit("/", i)[0])
                 for r in _query.list_impl(
-                    context, tls, ZFSResourceQuery(paths=parent_paths, properties=["encryption"])
+                    context, tls, ZFSResourceQuery(paths=ancestor_chain(path), properties=["encryption"])
                 ):
                     if r["properties"]["keyformat"]["raw"] == "passphrase":
                         verrors.add(
@@ -87,7 +85,7 @@ def change_key(context: ServiceContext, job: Job, tls: Any, data: ZFSResourceEnc
 
     key_from_file = None
     if data.key_file and not (key or data.generate_key or passphrase):
-        key_from_file = read_hex_key_from_pipe(job, verrors, "")
+        key_from_file = read_hex_key_from_pipe(job, verrors)
 
     encryption_dict = resolve_key_options(
         verrors,
@@ -108,9 +106,9 @@ def change_key(context: ServiceContext, job: Job, tls: Any, data: ZFSResourceEnc
     zfs_change_key(tls, path, cast(EncryptionProperties, encryption_dict), new_key)
 
     if passphrase:
-        key_format = "PASSPHRASE"
+        key_format = "passphrase"
     else:
-        key_format = "HEX"
+        key_format = "hex"
     store_key(context, path, new_key, key_format)
     if passphrase and ds["key_format"] != "passphrase":
         context.call_sync2(context.s.zfs.resource.encryption.sync_keys, path)
@@ -119,7 +117,7 @@ def change_key(context: ServiceContext, job: Job, tls: Any, data: ZFSResourceEnc
         "dataset.change_key",
         {
             "encryption_key": new_key,
-            "key_format": key_format,
+            "key_format": key_format.upper(),
             "name": path,
             "old_key_format": ds["key_format"].upper(),
         },

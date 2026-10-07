@@ -19,7 +19,6 @@ from .create_rules import (
     DEFAULT_VOLBLOCKSIZE,
     CreateContext,
     _nearest_ancestor_entry,
-    ancestor_chain,
     apply_draid_recordsize,
     apply_draid_volblocksize,
     apply_tier_snap,
@@ -55,7 +54,7 @@ from .rules_common import (
     reject_volsize_not_multiple,
 )
 from .share_presets import apply_share_acl, share_acl, share_mountpoint
-from .utils import has_internal_path, reject_protected_path
+from .utils import ancestor_chain, has_internal_path, reject_protected_path
 
 if TYPE_CHECKING:
     from middlewared.service import ServiceContext
@@ -72,7 +71,7 @@ def _record_key(context: ServiceContext, path: str, encrypt: dict[str, Any]) -> 
             "encrypted": True,
             "name": path,
             "encryption_key": encrypt["key"],
-            "key_format": encrypt["keyformat"],
+            "key_format": encrypt["keyformat"].upper(),
         },
     )
 

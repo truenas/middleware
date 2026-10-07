@@ -1,12 +1,17 @@
+from __future__ import annotations
+
 import threading
-from typing import Literal, TypedDict, cast
+from typing import TYPE_CHECKING, TypedDict, cast
 
 from .exceptions import ZFSKeyAlreadyLoadedException, ZFSNotEncryptedException
 from .utils import open_resource
 
+if TYPE_CHECKING:
+    from middlewared.api.current import ZFSResourceEncryptionKeyFormat
+
 
 class EncryptionProperties(TypedDict, total=False):
-    keyformat: Literal['hex', 'passphrase', 'raw']
+    keyformat: ZFSResourceEncryptionKeyFormat
     keylocation: str
     pbkdf2iters: int | None
 

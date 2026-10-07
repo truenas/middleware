@@ -14,6 +14,9 @@ from truenas_pylibzfs import ZFSError, ZFSException
 
 from middlewared.api.current import (
     ZFSResourceEncryptionLockArgsData,
+    ZFSResourceEncryptionUnlockArgsData,
+    ZFSResourceEncryptionUnlockEntry,
+    ZFSResourceEncryptionUnlockFailure,
     ZFSResourceEncryptionUnlockSummaryArgsData,
     ZFSResourceEncryptionUnlockSummaryEntry,
 )
@@ -29,8 +32,9 @@ from .encryption_info import (
     encryption_roots,
     encryption_state,
 )
-from .encryption_keys import retrieve_keys_from_file, secret_value, store_key, stored_keys
+from .encryption_keys import retrieve_keys_from_file, store_key, stored_keys
 from .resource_ops import unload_key
+from .utils import ancestor_chain, secret_value
 
 if TYPE_CHECKING:
     from middlewared.job import Job
@@ -39,32 +43,10 @@ if TYPE_CHECKING:
 __all__ = (
     "assign_supplied_recursive_keys",
     "lock",
-    "normalize_unlock_data",
     "start_attachments_on_unlock",
     "unlock",
     "unlock_summary",
 )
-
-
-def normalize_unlock_data(data: dict[str, Any]) -> dict[str, Any]:
-    keys: list[dict[str, Any]] = []
-    for entry in data.get("keys", []):
-        keys.append(
-            {
-                "path": entry["path"],
-                "key": entry.get("key"),
-                "passphrase": entry.get("passphrase"),
-                "force": entry.get("force", False),
-                "recursive": entry.get("recursive", False),
-            }
-        )
-    return {
-        "path": data["path"],
-        "recursive": data.get("recursive", False),
-        "force": data.get("force", False),
-        "key_file": data.get("key_file", False),
-        "keys": keys,
-    }
 
 
 def assign_supplied_recursive_keys(
@@ -133,35 +115,35 @@ async def start_attachments_on_unlock(context: ServiceContext, datasets: list[di
 
 
 def unlock(
-    context: ServiceContext, job: Job, tls: Any, data: dict[str, Any], toggle_attachments: bool
-) -> dict[str, Any]:
-    data = normalize_unlock_data(data)
-    path = data["path"]
+    context: ServiceContext, job: Job, tls: Any, data: ZFSResourceEncryptionUnlockArgsData
+) -> ZFSResourceEncryptionUnlockEntry:
+    keys: list[dict[str, Any]] = data.model_dump(expose_secrets=True)["keys"]
+    path = data.path
     verrors = ValidationErrors()
     dataset = encryption_state(context, tls, path)
     keys_supplied: dict[str, Any] = {}
 
-    if data["key_file"]:
+    if data.key_file:
         keys_supplied = retrieve_keys_from_file(job)
 
-    for i, entry in enumerate(data["keys"]):
-        if entry.get("key") and entry.get("passphrase"):
+    for i, entry in enumerate(keys):
+        if entry["key"] and entry["passphrase"]:
             verrors.add(
                 f"keys.{i}.key",
                 f"Must not be specified when passphrase for {entry['path']} is supplied",
             )
-        elif not (entry.get("key") or entry.get("passphrase")):
+        elif not (entry["key"] or entry["passphrase"]):
             verrors.add(f"keys.{i}", f"Passphrase or key must be specified for {entry['path']}")
 
-        if not data["force"] and not entry["force"]:
+        if not data.force and not entry["force"]:
             # Only a dataset that is still locked can collide with what sits at its mount path
             if encryption_state(context, tls, entry["path"])["locked"]:
                 if err := dataset_can_be_mounted(entry["path"], os.path.join("/mnt", entry["path"])):
                     verrors.add(f"keys.{i}.force", err)
 
-        keys_supplied[entry["path"]] = entry.get("key") or entry.get("passphrase")
+        keys_supplied[entry["path"]] = entry["key"] or entry["passphrase"]
 
-    if "/" in path or not data["recursive"]:
+    if "/" in path or not data.recursive:
         if not dataset["locked"]:
             verrors.add("path", f"{path} dataset is not locked")
         elif dataset["encryption_root"] != path:
@@ -173,7 +155,7 @@ def unlock(
 
     locked_datasets = []
     datasets = encryption_roots(context, tls, path.split("/", 1)[0], "locked")
-    assign_supplied_recursive_keys(data["keys"], keys_supplied, list(datasets.keys()))
+    assign_supplied_recursive_keys(keys, keys_supplied, list(datasets.keys()))
 
     # Encryption roots end up at the top level, each with a flat "children" list holding only the
     # descendants that share its encryption root, so unlock-then-mount walks [root, child1, child2, ...].
@@ -199,7 +181,7 @@ def unlock(
 
     failed: defaultdict[str, dict[str, Any]] = defaultdict(lambda: {"error": None, "skipped": []})
     unlocked: list[str] = []
-    if data["recursive"]:
+    if data.recursive:
         candidates: list[str] = list(datasets)
     else:
         candidates = [path]
@@ -334,7 +316,7 @@ def unlock(
             )
 
     if unlocked:
-        if toggle_attachments:
+        if data.start_attachments:
             job.set_progress(91, "Handling attachments")
             # Delegates match attachments against the real mountpoint of every dataset that mounted,
             # not against the requested root's subtree.
@@ -361,8 +343,9 @@ def unlock(
             if unlocked_dataset not in keys_supplied or unlocked_dataset not in datasets:
                 continue
 
-            record = dataset_data(unlocked_dataset)
-            store_key(context, record["name"], record["encryption_key"], record["key_format"])
+            store_key(
+                context, unlocked_dataset, keys_supplied[unlocked_dataset], datasets[unlocked_dataset]["key_format"]
+            )
 
         job.set_progress(94, "Running post-unlock tasks")
         post_unlock_datasets: list[dict[str, Any]] = []
@@ -371,7 +354,10 @@ def unlock(
                 post_unlock_datasets.append(dataset_data(ds_name))
         context.middleware.call_hook_sync("dataset.post_unlock", datasets=post_unlock_datasets)
 
-    return {"unlocked": unlocked, "failed": dict(failed)}
+    failures: dict[str, ZFSResourceEncryptionUnlockFailure] = {}
+    for failed_name, failure in failed.items():
+        failures[failed_name] = ZFSResourceEncryptionUnlockFailure(error=failure["error"], skipped=failure["skipped"])
+    return ZFSResourceEncryptionUnlockEntry(unlocked=unlocked, failed=failures)
 
 
 def unlock_summary(
@@ -420,8 +406,7 @@ def unlock_summary(
     failed = set()
     for ds in sorted(results, key=lambda d: d["path"].count("/")):
         ds_name = ds["path"]
-        for i in range(1, ds_name.count("/") + 1):
-            check = ds_name.rsplit("/", i)[0]
+        for check in ancestor_chain(ds_name):
             if check in failed:
                 failed.add(ds_name)
                 ds["unlock_error"] = f'Child cannot be unlocked when parent "{check}" is locked'

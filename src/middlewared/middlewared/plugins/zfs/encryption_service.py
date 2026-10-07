@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING, Any, Literal
 from pydantic import Secret
 
 from middlewared.api import api_method
-from middlewared.api.base import BaseModel
 from middlewared.api.current import (
     ZFSResourceEncryptionChangeKeyArgs,
     ZFSResourceEncryptionChangeKeyArgsData,
@@ -48,6 +47,7 @@ from .encryption_job_locks import (
     dataset_encryption_sync_keys_lock,
     dataset_encryption_unlock_lock,
     dataset_encryption_unlock_summary_lock,
+    job_args_path,
 )
 
 if TYPE_CHECKING:
@@ -55,15 +55,6 @@ if TYPE_CHECKING:
     from middlewared.job import Job
 
 __all__ = ("ZFSResourceEncryptionService",)
-
-
-class ZFSResourceEncryptionUnlockImplArgs(BaseModel):
-    data: ZFSResourceEncryptionUnlockArgsData
-    toggle_attachments: bool
-
-
-class ZFSResourceEncryptionUnlockImplResult(BaseModel):
-    result: ZFSResourceEncryptionUnlockEntry
 
 
 class ZFSResourceEncryptionService(Service):
@@ -105,7 +96,7 @@ class ZFSResourceEncryptionService(Service):
         check_annotations=True,
     )
     @job(
-        lock=lambda args: dataset_encryption_unlock_lock(args[0]["path"]),
+        lock=lambda args: dataset_encryption_unlock_lock(job_args_path(args)),
         pipes=["input"],
         check_pipes=False,
     )
@@ -127,9 +118,7 @@ class ZFSResourceEncryptionService(Service):
 
             {"path": "tank/secure", "keys": [{"path": "tank/secure", "passphrase": "correct horse battery staple"}]}
         """
-        return ZFSResourceEncryptionUnlockEntry.model_validate(
-            self.call_sync2(self.s.zfs.resource.encryption.unlock_body_impl, job, data.model_dump(expose_secrets=True))
-        )
+        return self.call_sync2(self.s.zfs.resource.encryption.unlock_impl, job, data)
 
     @api_method(
         ZFSResourceEncryptionUnlockSummaryArgs,
@@ -138,7 +127,7 @@ class ZFSResourceEncryptionService(Service):
         check_annotations=True,
     )
     @job(
-        lock=lambda args: dataset_encryption_unlock_summary_lock(args[0]["path"]),
+        lock=lambda args: dataset_encryption_unlock_summary_lock(job_args_path(args)),
         pipes=["input"],
         check_pipes=False,
     )
@@ -219,7 +208,7 @@ class ZFSResourceEncryptionService(Service):
         check_annotations=True,
     )
     @job(
-        lock=lambda args: dataset_encryption_change_key_lock(args[0]["path"]),
+        lock=lambda args: dataset_encryption_change_key_lock(job_args_path(args)),
         pipes=["input"],
         check_pipes=False,
     )
@@ -259,22 +248,12 @@ class ZFSResourceEncryptionService(Service):
         """
         self.call_sync2(self.s.zfs.resource.encryption.inherit_impl, data)
 
-    @api_method(ZFSResourceEncryptionUnlockImplArgs, ZFSResourceEncryptionUnlockImplResult, private=True)
-    @pass_thread_local_storage
-    @job(
-        lock=lambda args: dataset_encryption_unlock_lock(args[0]["path"]),
-        pipes=["input"],
-        check_pipes=False,
-    )
-    def unlock_impl(self, job: Job, tls: Any, data: dict[str, Any], toggle_attachments: bool) -> dict[str, Any]:
-        return _lock.unlock(self.context, job, tls, data, toggle_attachments)
-
     @private
     @pass_thread_local_storage
-    def unlock_body_impl(
-        self, tls: Any, job: Job, data: dict[str, Any], toggle_attachments: bool = True
-    ) -> dict[str, Any]:
-        return _lock.unlock(self.context, job, tls, data, toggle_attachments)
+    def unlock_impl(
+        self, tls: Any, job: Job, data: ZFSResourceEncryptionUnlockArgsData
+    ) -> ZFSResourceEncryptionUnlockEntry:
+        return _lock.unlock(self.context, job, tls, data)
 
     @private
     @pass_thread_local_storage

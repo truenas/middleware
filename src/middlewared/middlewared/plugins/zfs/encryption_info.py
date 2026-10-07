@@ -9,7 +9,6 @@ import shutil
 from typing import TYPE_CHECKING, Any, Literal
 
 from middlewared.api.current import (
-    ReplicationEntry,
     ZFSResourceEncryptionExportKeyArgsData,
     ZFSResourceEncryptionExportKeysArgsData,
     ZFSResourceEncryptionExportReplicationKeysArgsData,
@@ -25,6 +24,7 @@ from .encryption_keys import path_filters, stored_keys
 from .utils import INTERNAL_PATHS, get_encryption_info
 
 if TYPE_CHECKING:
+    from middlewared.api.current import ReplicationEntry
     from middlewared.job import Job
     from middlewared.service import ServiceContext
 

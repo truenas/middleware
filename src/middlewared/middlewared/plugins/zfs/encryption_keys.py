@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import contextlib
 import json
+import re
 from typing import TYPE_CHECKING, Any
 
 from middlewared.api.current import ZFSResourceQuery
@@ -19,20 +20,18 @@ if TYPE_CHECKING:
     from middlewared.service import ServiceContext
 
 __all__ = (
-    "DATASET_DATABASE_MODEL_NAME",
-    "EncryptedDatasetModel",
     "delete_keys",
     "path_filters",
     "read_hex_key_from_pipe",
     "resolve_key_options",
     "retrieve_keys_from_file",
-    "secret_value",
     "store_key",
     "stored_keys",
     "sync_keys",
 )
 
 DATASET_DATABASE_MODEL_NAME = "storage.encrypteddataset"
+HEX_KEY_PATTERN = re.compile(r"[0-9a-fA-F]{64}")
 
 
 class EncryptedDatasetModel(sa.Model):
@@ -44,18 +43,12 @@ class EncryptedDatasetModel(sa.Model):
     kmip_uid = sa.Column(sa.String(255), nullable=True, default=None)
 
 
-def secret_value(value: Any) -> Any:
-    if value:
-        return value.get_secret_value()
-    return None
-
-
 def path_filters(path: str) -> list[Any]:
     return ["OR", [["name", "=", path], ["name", "^", f"{path}/"]]]
 
 
 def store_key(context: ServiceContext, name: str, encryption_key: str | None, key_format: str | None) -> int | None:
-    if not encryption_key or not key_format or key_format.lower() == "passphrase":
+    if not encryption_key or not key_format or key_format == "passphrase":
         # Passphrases are only known to the user and are never persisted.
         return None
 
@@ -140,8 +133,8 @@ def sync_keys(context: ServiceContext, tls: Any, name: str | None = None) -> Non
             if should_remove:
                 to_remove.append(ds_name)
 
-    except Exception as exc:
-        context.logger.error(f"Failed to sync database keys: {exc}")
+    except Exception:
+        context.logger.error("%s: failed to sync stored encryption keys", name or "all datasets", exc_info=True)
         return
 
     delete_keys(context, [["name", "in", to_remove]])
@@ -169,16 +162,13 @@ def _attribute(schema: str, name: str) -> str:
     return name
 
 
-def read_hex_key_from_pipe(job: Job, verrors: ValidationErrors, schema: str) -> str | None:
+def read_hex_key_from_pipe(job: Job, verrors: ValidationErrors) -> str | None:
     job.check_pipe("input")
-    try:
-        key = hex(int(job.pipes.input.r.read(64), 16))[2:]
-        if len(key) != 64:
-            raise ValueError("Invalid key")
-    except ValueError:
-        verrors.add(_attribute(schema, "key_file"), "Please specify a valid key")
+    key: str = job.pipes.input.r.read(64).decode("ascii", errors="replace")
+    if not HEX_KEY_PATTERN.fullmatch(key):
+        verrors.add("key_file", "Please specify a valid key")
         return None
-    return key
+    return key.lower()
 
 
 def resolve_key_options(

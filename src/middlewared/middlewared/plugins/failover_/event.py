@@ -710,8 +710,8 @@ class FailoverEventsService(Service):
             unlock_job.wait_sync()
             if unlock_job.error:
                 logger.error(f'Error unlocking ZFS encrypted datasets: {unlock_job.error}')
-            elif unlock_job.result['failed']:
-                logger.error('Failed to unlock %s ZFS encrypted dataset(s)', ','.join(unlock_job.result['failed']))
+            elif unlock_job.result.failed:
+                logger.error('Failed to unlock %s ZFS encrypted dataset(s)', ','.join(unlock_job.result.failed))
             else:
                 logger.info('Successfully completed unlock for %r', vol['name'])
 

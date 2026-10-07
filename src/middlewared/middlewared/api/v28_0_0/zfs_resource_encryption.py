@@ -39,6 +39,7 @@ __all__ = (
 
 ZFSResourceEncryptionKeyFormat = Literal["hex", "raw", "passphrase"]
 HEX_KEY = Annotated[str, Field(min_length=64, max_length=64)]
+CHANGE_KEY_HEX_KEY = Annotated[str, Field(pattern=r"^[0-9a-fA-F]{64}$")]
 
 
 class ZFSResourceEncryptionLockArgsData(BaseModel):
@@ -110,6 +111,14 @@ class ZFSResourceEncryptionUnlockArgsData(BaseModel):
     keys: list[ZFSResourceEncryptionUnlockKey] = Field(
         default=[],
         description="Keys or passphrases for individual encryption roots.",
+    )
+    start_attachments: bool = Field(
+        default=True,
+        description=(
+            "Start the services, shares and other consumers of the unlocked resources once they are mounted. "
+            "The system keeps no record of resources unlocked without their attachments, so disable this only "
+            "when the caller restarts services itself."
+        ),
     )
 
 
@@ -234,11 +243,13 @@ class ZFSResourceEncryptionChangeKeyArgsData(BaseModel):
             "`passphrase`. Higher values improve resistance to brute force attacks but increase unlock time."
         ),
     )
-    passphrase: Secret[NonEmptyString | None] = Field(
+    passphrase: Secret[Annotated[str, Field(min_length=8, max_length=512)] | None] = Field(
         default=None,
-        description="A new passphrase. Passphrases are never stored by the system.",
+        description="A new passphrase of 8 to 512 characters. Passphrases are never stored by the system.",
     )
-    key: Secret[HEX_KEY | None] = Field(default=None, description="A new 64-character hex-encoded key.")
+    key: Secret[CHANGE_KEY_HEX_KEY | None] = Field(
+        default=None, description="A new key of exactly 64 hexadecimal characters."
+    )
 
 
 class ZFSResourceEncryptionChangeKeyArgs(BaseModel):
