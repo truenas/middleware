@@ -648,7 +648,8 @@ class ZFSResourceService(Service):
         .. note::
 
             Volumes are thick-provisioned by default (``refreservation`` defaults to
-            the volsize); set ``refreservation`` to ``none`` for a sparse volume.
+            ``auto``, the volsize plus metadata and raidz/draid overhead, like ``zfs
+            create -V``); set ``refreservation`` to ``none`` for a sparse volume.
             Filesystems default ``xattr`` to ``sa``.
 
         .. note::

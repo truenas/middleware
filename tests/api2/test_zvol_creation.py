@@ -1,4 +1,5 @@
 from middlewared.test.integration.assets.pool import dataset
+from middlewared.test.integration.assets.zfs_resource import thick_refreservation
 from middlewared.test.integration.utils import call
 
 _1GiB = 1073741824
@@ -24,7 +25,7 @@ def test_create_thick_provisioned_zvol_sparse_false():
     args = BASE_ARGS | {"sparse": False}
     with dataset(f"{BASE_NAME}1", args) as ds:
         rr, vs = query_zvol(ds)
-        assert rr == _1GiB
+        assert rr == thick_refreservation(ds)
         assert vs == _1GiB
 
 
@@ -32,7 +33,7 @@ def test_create_thick_provisioned_zvol_sparse_not_provided():
     # sparse not explicitly provided so API should default to thick
     with dataset(f"{BASE_NAME}2", BASE_ARGS) as ds:
         rr, vs = query_zvol(ds)
-        assert rr == _1GiB
+        assert rr == thick_refreservation(ds)
         assert vs == _1GiB
 
 

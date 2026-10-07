@@ -6,7 +6,7 @@ import pytest
 from auto_config import pool_name
 from middlewared.service_exception import ValidationError, ValidationErrors
 from middlewared.test.integration.assets.pool import another_pool
-from middlewared.test.integration.assets.zfs_resource import destroy_zfs_resource, zfs_resource
+from middlewared.test.integration.assets.zfs_resource import destroy_zfs_resource, thick_refreservation, zfs_resource
 from middlewared.test.integration.utils import call, mock, ssh
 
 GiB = 1024**3
@@ -49,7 +49,24 @@ def test_zfs_resource_create_volume_thick_by_default():
     ) as entry:
         assert entry["type"] == "VOLUME"
         assert entry["properties"]["volsize"]["value"] == GiB
-        assert entry["properties"]["refreservation"]["value"] == GiB
+        assert entry["properties"]["refreservation"]["value"] == thick_refreservation(path)
+
+
+def test_zfs_resource_create_volume_refreservation_auto():
+    """Test an explicit refreservation=auto gives the default thick reservation"""
+    path = os.path.join(pool_name, "test_create_zvol_auto")
+    with zfs_resource(
+        path, {"type": "VOLUME", "properties": {"volsize": GiB, "refreservation": "auto"}}
+    ) as entry:
+        assert entry["properties"]["refreservation"]["value"] == thick_refreservation(path)
+
+
+def test_zfs_resource_create_filesystem_rejects_refreservation_auto():
+    """Test refreservation=auto is rejected for a filesystem"""
+    path = os.path.join(pool_name, "test_create_fs_auto")
+    with pytest.raises(Exception) as exc_info:
+        call("zfs.resource.create", {"path": path, "properties": {"refreservation": "auto"}})
+    assert "only valid on volumes" in str(exc_info.value)
 
 
 def test_zfs_resource_create_volume_sparse():

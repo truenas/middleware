@@ -252,7 +252,8 @@ def apply_acl_coupling(state: SetContext) -> SetContext:
 
 
 def apply_thick_follow(state: SetContext) -> SetContext:
-    """Re-reserve a growing volume whose refreservation equals its volsize; libzfs only grows an `auto` one."""
+    """Re-reserve a growing volume whose refreservation equals its volsize, as earlier releases created thick
+    volumes; libzfs only grows an `auto` one."""
     if state.type != "VOLUME" or "volsize" not in state.set_names() or "refreservation" in state.set_names():
         return state
     if not state.current["refreservation"] == state.current["volsize"] < state.effective("volsize"):

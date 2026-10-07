@@ -49,6 +49,7 @@ __all__ = (
     "check_parent_not_readonly",
     "check_parent_unlocked",
     "check_path_shape",
+    "check_refreservation_auto",
     "check_share_type",
     "check_volume_capacity",
     "check_volume_has_volsize",
@@ -138,10 +139,9 @@ def resolve_create_request(
         properties.refquota = None
     if data.type == "VOLUME":
         if properties.volsize is not None and properties.refreservation is None:
-            # TODO: reserve refreservation=auto (volsize plus metadata overhead) once libzfs zfs_create()
-            # resolves it; only zfs set and zfs clone do, so create fails with "out of space". A grow
-            # switches these volumes to auto.
-            properties.refreservation = properties.volsize
+            # thick provision like `zfs create -V`: auto reserves the volsize plus metadata and
+            # raidz/draid overhead, and libzfs grows it along with the volsize
+            properties.refreservation = "auto"
     else:
         if data.share_type is not None:
             for name, value in SHARE_PRESETS[data.share_type].items():
@@ -440,6 +440,12 @@ def check_names_valid_for_type(data: ZFSResourceCreateArgsData) -> None:
             raise ValidationError(
                 f"{SCHEMA}.properties.{name}", f"{name!r} is not valid for a {data.type}.", errno.EINVAL
             )
+
+
+def check_refreservation_auto(data: ZFSResourceCreateArgsData) -> None:
+    """ZFS only accepts refreservation=auto on a volume."""
+    if data.type == "FILESYSTEM" and data.properties.refreservation == "auto":
+        raise ValidationError(f"{SCHEMA}.properties.refreservation", "'auto' is only valid on volumes.", errno.EINVAL)
 
 
 def check_force_size(data: ZFSResourceCreateArgsData) -> None:
