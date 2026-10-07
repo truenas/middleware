@@ -5,7 +5,7 @@ from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.utils import call
 
 
-def test_pool_dataset_create_applies_user_props():
+def test_pool_dataset_create_and_update_user_props():
     user_props = [
         {'key': 'org.truenas.test:first', 'value': 'one'},
         {'key': 'org.truenas.test:second', 'value': 'two'},
@@ -18,6 +18,20 @@ def test_pool_dataset_create_applies_user_props():
         )
         for prop in user_props:
             assert result['user_properties'].get(prop['key'], {}).get('value') == prop['value'], result
+
+        # `comments` defaults to "INHERIT", which must not be written out as a property
+        # (`org.freenas:description` is reported under its API name)
+        raw = call('zfs.resource.query', {'paths': [ds], 'get_user_properties': True})[0]
+        assert 'comments' not in raw['user_properties'], raw
+
+        # replacing the set must drop only the properties the caller owns, and must not
+        # trip over a TrueNAS-managed property that is reported under its API name
+        call('pool.dataset.update', ds, {'comments': 'a comment'})
+        call('pool.dataset.update', ds, {'user_properties': user_props[:1]})
+        raw = call('zfs.resource.query', {'paths': [ds], 'get_user_properties': True})[0]
+        assert raw['user_properties'].get('org.truenas.test:first') == 'one', raw
+        assert 'org.truenas.test:second' not in raw['user_properties'], raw
+        assert raw['user_properties'].get('comments') == 'a comment', raw
 
 
 @pytest.mark.parametrize('user_props, error', [

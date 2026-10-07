@@ -380,14 +380,19 @@ class PoolDatasetService(CRUDService):
                     'Should not be specified when "user_properties" are explicitly specified'
                 )
             elif data.get('user_properties'):
-                # Let's normalize this so that we create/update/remove user props accordingly
+                # Let's normalize this so that we create/update/remove user props accordingly.
+                # The properties TrueNAS manages are reported under their API names (`comments`
+                # and friends), which are not property names ZFS would accept, and they are owned
+                # by their own fields, so they are never removed here.
+                managed_user_props = set(user_property_names_to_be_renamed().values())
                 user_props = {p['key'] for p in data['user_properties']}
                 data['user_properties_update'] = data['user_properties']
-                for prop_key in [k for k in cur_dataset['user_properties'] if k not in user_props]:
-                    data['user_properties_update'].append({
-                        'key': prop_key,
-                        'remove': True,
-                    })
+                for prop_key in cur_dataset['user_properties']:
+                    if prop_key not in user_props and prop_key not in managed_user_props:
+                        data['user_properties_update'].append({
+                            'key': prop_key,
+                            'remove': True,
+                        })
 
     @private
     @pass_thread_local_storage
@@ -730,10 +735,7 @@ class PoolDatasetService(CRUDService):
 
         zprops, uprops = {}, {}
         for i in POOL_DS_CREATE_PROPERTIES:
-            if (
-                i.api_name not in data
-                or (i.inheritable and data[i.api_name] == 'INHERIT')
-            ):
+            if i.api_name not in data or data[i.api_name] == 'INHERIT':
                 continue
             if i.transform:
                 transformed = i.transform(data[i.api_name])
