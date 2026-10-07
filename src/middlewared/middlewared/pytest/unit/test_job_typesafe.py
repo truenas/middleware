@@ -1,6 +1,7 @@
 import asyncio
 from unittest.mock import MagicMock
 
+from pydantic import Secret
 import pytest
 
 from middlewared.job import Job
@@ -170,6 +171,18 @@ class TestJobResult:
         j = _make_job()
         j.set_result([1, 2, 3])
         assert j.result == [1, 2, 3]
+
+
+@pytest.mark.asyncio
+async def test_run_body_unwraps_secret_result():
+    async def method(job_arg):
+        return Secret('x')
+
+    j = _make_job()
+    j.method = method
+    j.set_state('RUNNING')
+    await j._Job__run_body()
+    assert j.result == 'x'
 
 
 # ---------------------------------------------------------------------------
