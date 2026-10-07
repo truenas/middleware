@@ -1,5 +1,6 @@
 boto3
 junitparser
+paramiko
 pytest
 pytest-dependency
 pytest-rerunfailures

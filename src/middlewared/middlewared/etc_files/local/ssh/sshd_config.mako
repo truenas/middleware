@@ -32,8 +32,11 @@
 	if bind_ifaces:
 		bind_ifaces.insert(0, '127.0.0.1')
 
-	twofactor_auth = render_ctx['auth.twofactor.config']
-	twofactor_enabled = twofactor_auth['enabled'] and twofactor_auth['services']['ssh']
+	# sshd keeps the first value it reads for a keyword, and aux params come last in this file.
+	# `ChallengeResponseAuthentication` is the deprecated alias for the same keyword.
+	kbdinteractive_override = any(
+		opt in ssh_config.options for opt in ('KbdInteractiveAuthentication', 'ChallengeResponseAuthentication')
+	)
 
 	users = middleware.call_sync('user.query', [['local', '=', True]])
 	root_user = filter_list(users, [['username', '=', 'root']], {'get': True})
@@ -46,8 +49,8 @@ Protocol 2
 % if 'UseDNS' not in ssh_config.options:
 UseDNS no
 % endif
-% if 'ChallengeResponseAuthentication' not in ssh_config.options and not twofactor_enabled:
-ChallengeResponseAuthentication no
+% if not kbdinteractive_override:
+KbdInteractiveAuthentication no
 % endif
 % if 'ClientAliveCountMax' not in ssh_config.options:
 ClientAliveCountMax 3
@@ -100,12 +103,12 @@ SetEnv LC_ALL=C.UTF-8
 % for user in filter_list(users, [['ssh_password_enabled', '=', True]]):
 Match User "${user['username']}"
 	PasswordAuthentication yes
-	ChallengeResponseAuthentication yes
+	KbdInteractiveAuthentication yes
 % endfor
 % for group in ssh_config.password_login_groups:
 Match Group "${group}"
 	PasswordAuthentication yes
-	ChallengeResponseAuthentication yes
+	KbdInteractiveAuthentication yes
 % endfor
 % endif
 % if login_banner != '':
