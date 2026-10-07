@@ -12,6 +12,7 @@ from middlewared.api.current import (
     PoolImportPoolResult,
     PoolReimportArgs,
     PoolReimportResult,
+    ZFSResourceEncryptionUnlockArgsData,
     ZFSResourceQuery,
     ZFSResourceSetArgsData,
     ZFSResourceSetProperties,
@@ -525,15 +526,16 @@ class PoolService(Service):
             # If we fail to unlock the parent, then the method short-circuits and exits
             # early.
             uj = self.call_sync2(
-                self.s.zfs.resource.encryption.unlock_impl, {'path': vol_name, 'recursive': True}, False
+                self.s.zfs.resource.encryption.unlock,
+                ZFSResourceEncryptionUnlockArgsData(path=vol_name, recursive=True, start_attachments=False),
             )
             uj.wait_sync()
             if uj.error:
                 self.logger.error('FAILED unlocking encrypted dataset(s) for %r with error %r', vol_name, uj.error)
-            elif uj.result['failed']:
+            elif uj.result.failed:
                 self.logger.error(
                     'FAILED unlocking the following datasets: %r for pool %r',
-                    ', '.join(uj.result['failed']), vol_name
+                    ', '.join(uj.result.failed), vol_name
                 )
             else:
                 self.logger.debug('SUCCESS unlocking encrypted dataset(s) (if any) for %r', vol_name)

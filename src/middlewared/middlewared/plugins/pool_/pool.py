@@ -679,9 +679,11 @@ class PoolService(CRUDService):
                 {'prefix': 'vol_'},
             )
 
+            key_format = encryption_dict.get('keyformat')
+            if key_format is not None:
+                key_format = key_format.upper()
             encrypted_dataset_data = {
-                'name': data['name'], 'encryption_key': encryption_dict.get('key'),
-                'key_format': encryption_dict.get('keyformat')
+                'name': data['name'], 'encryption_key': encryption_dict.get('key'), 'key_format': key_format,
             }
             encrypted_dataset_pk = await self.call2(
                 self.s.zfs.resource.encryption.store_key,

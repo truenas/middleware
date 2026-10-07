@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from middlewared.alert.source.kmip import KMIPZFSDatasetsSyncFailureAlert
-from middlewared.api.current import ZFSResourceQuery
+from middlewared.api.current import ZFSResourceEncryptionUnlockArgsData, ZFSResourceQuery
 from middlewared.plugins.zfs.encryption import check_key
 
 from .connection import (
@@ -184,7 +184,10 @@ def initialize_zfs_keys(context: ServiceContext, store: KMIPKeyStore, connection
                 store.zfs_keys[ds['name']] = key
         if ds['name'] in store.zfs_keys:
             if context.call_sync2(context.s.zfs.resource.path_is_locked, ds['name']):
-                context.call_sync2(context.s.zfs.resource.encryption.unlock_impl, {'path': ds['name']}, True)
+                context.call_sync2(
+                    context.s.zfs.resource.encryption.unlock,
+                    ZFSResourceEncryptionUnlockArgsData(path=ds['name'], start_attachments=True),
+                )
 
 
 async def reset_zfs_key(context: ServiceContext, store: KMIPKeyStore, dataset: str, kmip_uid: str | None) -> None:

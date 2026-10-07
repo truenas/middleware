@@ -108,16 +108,12 @@ class PoolDatasetService(Service):
                 "recursive": options["recursive"],
                 "force": options["force"],
                 "key_file": options["key_file"],
+                "start_attachments": options["toggle_attachments"],
                 "keys": keys,
             },
             dump_models=False,
         )
-        return self.call_sync2(
-            self.s.zfs.resource.encryption.unlock_body_impl,
-            job,
-            data.model_dump(expose_secrets=True),
-            options["toggle_attachments"],
-        )
+        return self.call_sync2(self.s.zfs.resource.encryption.unlock_impl, job, data).model_dump()
 
     @api_method(
         PoolDatasetEncryptionSummaryArgs,
@@ -308,6 +304,6 @@ class PoolDatasetService(Service):
         can only be done where ``id`` has an encrypted parent and ``id`` itself is an encryption root.
         """
         self.call_sync2(
-            self.s.zfs.resource.encryption.inherit,
+            self.s.zfs.resource.encryption.inherit_impl,
             validate_model(ZFSResourceEncryptionInheritArgsData, {"path": id_}, dump_models=False),
         )

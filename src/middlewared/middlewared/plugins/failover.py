@@ -12,6 +12,7 @@ import time
 
 from middlewared.alert.source.failover_sync import FailoverKeysSyncFailedAlert, FailoverKMIPKeysSyncFailedAlert
 from middlewared.api import Event, api_method
+from middlewared.api.base.handler.accept import validate_model
 from middlewared.api.current import (
     FailoverBecomePassiveArgs,
     FailoverBecomePassiveResult,
@@ -33,6 +34,7 @@ from middlewared.api.current import (
     FailoverUpdateResult,
     FailoverUpgradeArgs,
     FailoverUpgradeResult,
+    ZFSResourceEncryptionUnlockArgsData,
 )
 from middlewared.auth import TruenasNodeSessionManagerCredentials
 from middlewared.common.license_reconcile import LicenseReconcileAction, LicenseReconcileDelegate
@@ -563,12 +565,14 @@ class FailoverService(ConfigService):
         for name, passphrase in (await self.encryption_keys())['zfs'].items():
             if name == pool_name or name.startswith(f'{pool_name}/'):
                 zfs_keys.append({'path': name, 'passphrase': passphrase})
+        # validate_model reports a bad cached passphrase without echoing its value into the job error.
         # Attachments are left alone: the failover process restarts services and regenerates configs itself
-        unlock_job = await self.call2(
-            self.s.zfs.resource.encryption.unlock_impl,
-            {'path': pool_name, 'recursive': True, 'keys': zfs_keys},
-            False,
+        data = validate_model(
+            ZFSResourceEncryptionUnlockArgsData,
+            {'path': pool_name, 'recursive': True, 'start_attachments': False, 'keys': zfs_keys},
+            dump_models=False,
         )
+        unlock_job = await self.call2(self.s.zfs.resource.encryption.unlock, data)
         return await job.wrap(unlock_job)
 
     @private
@@ -1198,8 +1202,9 @@ async def hook_pool_dataset_post_delete_lock(middleware, dataset):
 
 
 async def hook_pool_dataset_change_key(middleware, dataset_data):
-    if dataset_data['key_format'] == 'PASSPHRASE' or dataset_data['old_key_format'] == 'PASSPHRASE':
-        if dataset_data['key_format'] == 'PASSPHRASE':
+    key_format = dataset_data['key_format'].upper()
+    if key_format == 'PASSPHRASE' or dataset_data['old_key_format'].upper() == 'PASSPHRASE':
+        if key_format == 'PASSPHRASE':
             await middleware.call(
                 'failover.update_encryption_keys', {
                     'datasets': [{'name': dataset_data['name'], 'passphrase': dataset_data['encryption_key']}]

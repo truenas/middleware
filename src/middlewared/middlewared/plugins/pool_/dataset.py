@@ -22,6 +22,7 @@ from middlewared.api.current import (
     ZFSResourceRenameArgsData,
     ZFSResourceSetArgsData,
 )
+from middlewared.plugins.zfs.encryption_info import is_internal_dataset_name
 from middlewared.plugins.zfs.share_presets import SHARE_PRESETS
 from middlewared.plugins.zfs.utils import has_internal_path
 from middlewared.service import (
@@ -36,7 +37,7 @@ from middlewared.service import (
 from middlewared.utils.boot.pool import BOOT_POOL_NAME_VALID
 from middlewared.utils.filter_list import filter_list
 
-from .dataset_query_utils import generic_query, is_internal_dataset_name, user_property_names_to_be_renamed
+from .dataset_query_utils import generic_query, user_property_names_to_be_renamed
 from .utils import (
     POOL_DS_CREATE_PROPERTIES,
     POOL_DS_UPDATE_PROPERTIES,
