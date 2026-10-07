@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
 __all__ = (
     "DATASET_DATABASE_MODEL_NAME",
-    "PoolDatasetEncryptionModel",
+    "EncryptedDatasetModel",
     "delete_keys",
     "path_filters",
     "read_hex_key_from_pipe",
@@ -35,7 +35,7 @@ __all__ = (
 DATASET_DATABASE_MODEL_NAME = "storage.encrypteddataset"
 
 
-class PoolDatasetEncryptionModel(sa.Model):
+class EncryptedDatasetModel(sa.Model):
     __tablename__ = "storage_encrypteddataset"
 
     id = sa.Column(sa.Integer(), primary_key=True)
@@ -45,7 +45,9 @@ class PoolDatasetEncryptionModel(sa.Model):
 
 
 def secret_value(value: Any) -> Any:
-    return value.get_secret_value() if value else None
+    if value:
+        return value.get_secret_value()
+    return None
 
 
 def path_filters(path: str) -> list[Any]:
@@ -96,24 +98,30 @@ def stored_keys(context: ServiceContext, filters: list[Any]) -> dict[str, str]:
 def sync_keys(context: ServiceContext, tls: Any, name: str | None = None) -> None:
     if not context.middleware.call_sync("failover.is_single_master_node"):
         return
-    filters: list[Any] = [path_filters(name)] if name else []
+    filters: list[Any] = []
+    if name:
+        filters.append(path_filters(name))
 
     # A configured pool that failed to import (e.g. booted with its disks missing) must keep its keys.
-    pool_names = {pool["name"] for pool in context.middleware.call_sync("pool.query")}
-    ds_names = {ds["name"] for ds in _query.list_impl(context, tls, ZFSResourceQuery(properties=None))}
+    pool_names: set[str] = set()
+    for pool in context.middleware.call_sync("pool.query"):
+        pool_names.add(pool["name"])
+    ds_names: set[str] = set()
+    for row in _query.list_impl(context, tls, ZFSResourceQuery(properties=None)):
+        ds_names.add(row["name"])
     for root_ds in pool_names - ds_names:
         filters.extend([["name", "!=", root_ds], ["name", "!^", f"{root_ds}/"]])
 
     db_datasets = stored_keys(context, filters)
-    encrypted_roots = {
-        r["name"]: r
-        for r in _query.list_impl(
-            context,
-            tls,
-            ZFSResourceQuery(paths=[name] if name else [], properties=["encryption"], get_children=True),
-        )
-        if r["properties"]["encryptionroot"]["value"] == r["name"]
-    }
+    paths: list[str] = []
+    if name:
+        paths.append(name)
+    encrypted_roots: dict[str, dict[str, Any]] = {}
+    for r in _query.list_impl(
+        context, tls, ZFSResourceQuery(paths=paths, properties=["encryption"], get_children=True)
+    ):
+        if r["properties"]["encryptionroot"]["value"] == r["name"]:
+            encrypted_roots[r["name"]] = r
 
     to_remove = []
     try:
@@ -146,14 +154,19 @@ def retrieve_keys_from_file(job: Job) -> dict[str, str]:
     except json.JSONDecodeError:
         raise CallError("Input file must be a valid JSON file")
 
-    if not isinstance(data, dict) or any(not isinstance(v, str) for v in data.values()):
+    if not isinstance(data, dict):
         raise CallError("Please specify correct format for input file")
+    for v in data.values():
+        if not isinstance(v, str):
+            raise CallError("Please specify correct format for input file")
 
     return data
 
 
 def _attribute(schema: str, name: str) -> str:
-    return f"{schema}.{name}" if schema else name
+    if schema:
+        return f"{schema}.{name}"
+    return name
 
 
 def read_hex_key_from_pipe(job: Job, verrors: ValidationErrors, schema: str) -> str | None:
@@ -180,10 +193,14 @@ def resolve_key_options(
     passphrase_key_format = bool(passphrase)
 
     if passphrase_key_format:
-        for f in filter(lambda k: data[k], ("key", "key_file", "generate_key")):
-            verrors.add(_attribute(schema, f), "Must be disabled when dataset is to be encrypted with passphrase.")
+        for f in ("key", "key_file", "generate_key"):
+            if data[f]:
+                verrors.add(_attribute(schema, f), "Must be disabled when dataset is to be encrypted with passphrase.")
     else:
-        provided_opts = [k for k in ("key", "key_file", "generate_key") if data[k]]
+        provided_opts: list[str] = []
+        for k in ("key", "key_file", "generate_key"):
+            if data[k]:
+                provided_opts.append(k)
         if not provided_opts:
             verrors.add(
                 _attribute(schema, "key"),
@@ -201,10 +218,11 @@ def resolve_key_options(
         elif not key and key_from_file is not None:
             key = key_from_file
 
-        opts = {
-            "keyformat": "passphrase" if passphrase_key_format else "hex",
-            "keylocation": "prompt",
-            "key": key,
-            **({"pbkdf2iters": data["pbkdf2iters"]} if passphrase_key_format else {}),
-        }
+        if passphrase_key_format:
+            keyformat = "passphrase"
+        else:
+            keyformat = "hex"
+        opts = {"keyformat": keyformat, "keylocation": "prompt", "key": key}
+        if passphrase_key_format:
+            opts["pbkdf2iters"] = data["pbkdf2iters"]
     return opts

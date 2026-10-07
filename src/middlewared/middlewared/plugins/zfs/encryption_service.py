@@ -41,6 +41,14 @@ from . import encryption_info as _info
 from . import encryption_keys as _keys
 from . import encryption_lock as _lock
 from . import encryption_ops as _ops
+from .encryption_job_locks import (
+    DATASET_ENCRYPTION_EXPORT_KEYS_LOCK,
+    DATASET_ENCRYPTION_LOCK,
+    dataset_encryption_change_key_lock,
+    dataset_encryption_sync_keys_lock,
+    dataset_encryption_unlock_lock,
+    dataset_encryption_unlock_summary_lock,
+)
 
 if TYPE_CHECKING:
     from middlewared.api.current import ReplicationEntry
@@ -72,7 +80,7 @@ class ZFSResourceEncryptionService(Service):
         audit_extended=lambda data: data.get("path"),
         check_annotations=True,
     )
-    @job(lock="zfs_resource_encryption_lock")
+    @job(lock=DATASET_ENCRYPTION_LOCK)
     def lock(self, job: Job, data: ZFSResourceEncryptionLockArgsData) -> None:
         """
         Lock an encryption root that is encrypted with a passphrase.
@@ -98,7 +106,7 @@ class ZFSResourceEncryptionService(Service):
         check_annotations=True,
     )
     @job(
-        lock=lambda args: f"zfs_resource_encryption_unlock_{args[0]['path']}",
+        lock=lambda args: dataset_encryption_unlock_lock(args[0]["path"]),
         pipes=["input"],
         check_pipes=False,
     )
@@ -131,7 +139,7 @@ class ZFSResourceEncryptionService(Service):
         check_annotations=True,
     )
     @job(
-        lock=lambda args: f"zfs_resource_encryption_unlock_summary_{args[0]['path']}",
+        lock=lambda args: dataset_encryption_unlock_summary_lock(args[0]["path"]),
         pipes=["input"],
         check_pipes=False,
     )
@@ -156,7 +164,7 @@ class ZFSResourceEncryptionService(Service):
         audit_extended=lambda data: data.get("path"),
         check_annotations=True,
     )
-    @job(lock="zfs_resource_encryption_export_keys", pipes=["output"], check_pipes=False)
+    @job(lock=DATASET_ENCRYPTION_EXPORT_KEYS_LOCK, pipes=["output"], check_pipes=False)
     def export_key(self, job: Job, data: ZFSResourceEncryptionExportKeyArgsData) -> Secret[str | None]:
         """
         Export the hex key the system stores for an encryption root.
@@ -174,7 +182,7 @@ class ZFSResourceEncryptionService(Service):
         audit_extended=lambda data: data.get("path"),
         check_annotations=True,
     )
-    @job(lock="zfs_resource_encryption_export_keys", pipes=["output"])
+    @job(lock=DATASET_ENCRYPTION_EXPORT_KEYS_LOCK, pipes=["output"])
     def export_keys(self, job: Job, data: ZFSResourceEncryptionExportKeysArgsData) -> None:
         """
         Export the hex keys the system stores for ``path`` and its descendants.
@@ -212,7 +220,7 @@ class ZFSResourceEncryptionService(Service):
         check_annotations=True,
     )
     @job(
-        lock=lambda args: f"zfs_resource_encryption_change_key_{args[0]['path']}",
+        lock=lambda args: dataset_encryption_change_key_lock(args[0]["path"]),
         pipes=["input"],
         check_pipes=False,
     )
@@ -255,7 +263,7 @@ class ZFSResourceEncryptionService(Service):
     @api_method(ZFSResourceEncryptionUnlockImplArgs, ZFSResourceEncryptionUnlockImplResult, private=True)
     @pass_thread_local_storage
     @job(
-        lock=lambda args: f"zfs_resource_encryption_unlock_{args[0]['path']}",
+        lock=lambda args: dataset_encryption_unlock_lock(args[0]["path"]),
         pipes=["input"],
         check_pipes=False,
     )
@@ -336,7 +344,7 @@ class ZFSResourceEncryptionService(Service):
     @periodic(86400)
     @private
     @pass_thread_local_storage
-    @job(lock=lambda args: f"zfs_resource_encryption_sync_keys_{args}")
+    @job(lock=dataset_encryption_sync_keys_lock)
     def sync_keys(self, job: Job, tls: Any, name: str | None = None) -> None:
         _keys.sync_keys(self.context, tls, name)
 
