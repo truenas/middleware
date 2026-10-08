@@ -465,6 +465,7 @@ class UserTwofactorConfigEntry(BaseModel):
 
 class UserUnset2faSecretArgs(BaseModel):
     username: str = Field(description="Username to disable two-factor authentication for.")
+    force: bool = Field(default=False, description="Allow updating security settings even if HA standby node is down.")
 
 
 class UserUnset2faSecretResult(BaseModel):
@@ -486,6 +487,7 @@ class UserRenew2faSecretArgs(BaseModel):
     twofactor_options: TwofactorOptions = Field(
         description="Configuration options for the new two-factor authentication setup.",
     )
+    force: bool = Field(default=False, description="Allow updating security settings even if HA standby node is down.")
 
 
 @single_argument_result

@@ -115,7 +115,7 @@ class UserService(Service):
 
     @api_method(UserUnset2faSecretArgs, UserUnset2faSecretResult,
                 audit='Unset two-factor authentication secret:',
-                audit_extended=lambda username: username,
+                audit_extended=lambda username, force=False: username,
                 roles=['ACCOUNT_WRITE'])
     async def unset_2fa_secret(self, username, force):
         """
@@ -147,7 +147,7 @@ class UserService(Service):
         UserRenew2faSecretArgs,
         UserRenew2faSecretResult,
         audit='Renew two-factor authentication secret:',
-        audit_extended=lambda username, options: username,
+        audit_extended=lambda username, options, force=False: username,
         authorization_required=False,
         pass_app=True,
     )
