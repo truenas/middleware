@@ -93,8 +93,7 @@ FREENAS_MINI_BLOB = (
                         "NVMEOF_SPDK",
                         "RDMA",
                         "SED",
-                        "SMB_FASTPATH",
-                        "SMB_VEEAM",
+                        "SMB_BLOCK_CLONING",
                         "STIG",
                         "TRUESEARCH",
                         "WEBSHARE",
@@ -223,8 +222,7 @@ def test__get_legacy_license_info_keeps_model_less_blob():
     info = _legacy_info_for(blob)
     assert info is not None
     assert info.model is None
-    assert info.has_feature(LicenseFeature.SMB_VEEAM)
-    assert info.has_feature(LicenseFeature.SMB_FASTPATH)
+    assert info.has_feature(LicenseFeature.SMB_BLOCK_CLONING)
 
 
 def test__legacy_injection_set_is_pinned():
@@ -241,8 +239,7 @@ def test__legacy_injection_set_is_pinned():
         "NVMEOF_SPDK",
         "RDMA",
         "SED",
-        "SMB_FASTPATH",
-        "SMB_VEEAM",
+        "SMB_BLOCK_CLONING",
         "STIG",
         "SUPPORT",
         "TRUESEARCH",
