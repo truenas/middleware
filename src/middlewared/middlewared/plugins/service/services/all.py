@@ -43,6 +43,7 @@ from .truenas_zfstierd import TruenasZfstierdService
 from .truesearch import TruesearchService
 from .ups import UPSService
 from .webshare import WebShareService
+from .zettarepl import ZettareplService
 
 all_services = [
     CIFSService,
@@ -89,4 +90,5 @@ all_services = [
     UserService,
     TrueNASS3Service,
     WebShareService,
+    ZettareplService,
 ]

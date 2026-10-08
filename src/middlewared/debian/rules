@@ -14,6 +14,10 @@ override_dh_auto_build:
 	sqlite3 freenas-v1.db < middlewared/alembic/initial.sql
 	cd middlewared && env PYTHONPATH=.. FAKE_ENV=1 FREENAS_DATABASE=../freenas-v1.db alembic upgrade head
 
+override_dh_installsystemd:
+	dh_installsystemd --name=zettarepl --no-enable --no-start
+	dh_installsystemd
+
 override_dh_install:
 	dh_install
 	mkdir -p debian/middlewared/data

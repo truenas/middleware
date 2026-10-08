@@ -5,7 +5,7 @@ import pytest
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.replication import replication_task
 from middlewared.test.integration.assets.snapshot_task import snapshot_task
-from middlewared.test.integration.utils import call, mock
+from middlewared.test.integration.utils import call, mock, poll
 
 from truenas_api_client import ClientException
 
@@ -276,9 +276,13 @@ def test_deleting_task_forgets_its_state():
 
 
 def test_zettarepl_terminate_and_restart():
-    """`zettarepl.terminate` flushes the task states and stops the zettarepl process."""
+    """`zettarepl.terminate` flushes the task states and stops the zettarepl service."""
     call("zettarepl.terminate")
     assert call("zettarepl.is_running") is False
 
     call("zettarepl.start")
-    assert call("zettarepl.is_running") is True
+    poll(
+        lambda: call("zettarepl.is_running"),
+        timeout=60,
+        message="The zettarepl service never started",
+    )
