@@ -59,12 +59,13 @@ class TwoFactorAuthService(ConfigService):
         TwoFactorAuthUpdateResult,
         audit='Update two-factor authentication service configuration'
     )
-    async def do_update(self, data, force):
+    async def do_update(self, data):
         """
         ``window`` extends the validity to ``window`` many counter ticks before and after the current one.
 
         Update Two-Factor Authentication Service Configuration.
         """
+        force = data.pop('force', False)
         verrors = ValidationErrors()
         security = await self.call2(self.s.system.security.config)
 

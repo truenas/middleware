@@ -22,6 +22,10 @@ class TwoFactorAuthEntry(BaseModel):
 
 class TwoFactorAuthUpdate(TwoFactorAuthEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
+    force: bool = Field(
+        default=False,
+        description="Allow updating security settings even if HA standby node is down. This option is not stored.",
+    )
 
 
 class TwoFactorAuthUpdateArgs(BaseModel):
