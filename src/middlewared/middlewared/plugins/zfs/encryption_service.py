@@ -105,12 +105,9 @@ class ZFSResourceEncryptionService(Service):
         Unlock an encryption root, and the locked encryption roots below it when ``recursive`` is set.
 
         Keys and passphrases are given per encryption root in ``keys``, or uploaded to the input pipe as the JSON
-        file :method:`zfs.resource.encryption.export_keys` writes when ``key_file`` is set. A hex key the system has
-        stored is used when none is given. Only a resource that is unlocked with a supplied hex key has that key
-        stored.
-
-        Something already present at a mount path fails the unlock unless ``force`` is set, in which case it is
-        renamed aside. :method:`zfs.resource.encryption.unlock_summary` reports what an unlock would do.
+        file :method:`zfs.resource.encryption.export_keys` writes when ``key_file`` is set. A key the system has
+        stored is used when none is given, and a supplied key that unlocks its encryption root is stored.
+        :method:`zfs.resource.encryption.unlock_summary` reports what an unlock would do.
 
         Example:
 
@@ -138,9 +135,8 @@ class ZFSResourceEncryptionService(Service):
         Report, for every encryption root at or below ``path``, whether an unlock with the given keys would succeed.
 
         Keys and passphrases are supplied as for :method:`zfs.resource.encryption.unlock` and are only checked;
-        nothing is unlocked. ``valid_key`` tells whether the supplied or stored key opens the encryption root, while
-        ``unlock_successful`` also accounts for a locked parent and for something already present at the mount
-        path. An encryption root that is already unlocked always reports ``unlock_successful``.
+        nothing is unlocked. ``unlock_successful`` accounts for a locked parent and for something already present at
+        the mount path, and is always set for an encryption root that is already unlocked.
         """
         return self.call_sync2(self.s.zfs.resource.encryption.unlock_summary_impl, job, data)
 
@@ -157,8 +153,7 @@ class ZFSResourceEncryptionService(Service):
         """
         Export the hex key the system stores for an encryption root.
 
-        The key is returned, or written to the output pipe as a JSON file when ``download`` is set. Passphrases are
-        never stored, so they cannot be exported.
+        Passphrases are never stored, so they cannot be exported.
         """
         return Secret[str | None](self.call_sync2(self.s.zfs.resource.encryption.export_key_impl, job, data))
 
@@ -216,8 +211,7 @@ class ZFSResourceEncryptionService(Service):
         """
         Change the key or passphrase of an unlocked encryption root.
 
-        A hex key is stored by the system; a passphrase never is. With ``key_file`` the hex key is read from the
-        input pipe.
+        A new hex key is stored by the system.
 
         Switching to a passphrase is refused when an encryption root below ``path`` uses a hex key, or when ``path``
         is a pool holding the system dataset. Switching to a hex key is refused when a parent is encrypted with a
