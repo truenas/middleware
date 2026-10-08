@@ -13,6 +13,8 @@ from middlewared.api.current import (
     PoolDatasetExportKeysResult,
     PoolDatasetInheritParentEncryptionPropertiesArgs,
     PoolDatasetInheritParentEncryptionPropertiesResult,
+    PoolDatasetInsertOrUpdateEncryptedRecordArgs,
+    PoolDatasetInsertOrUpdateEncryptedRecordResult,
     PoolDatasetLockArgs,
     PoolDatasetLockResult,
     PoolDatasetUnlockArgs,
@@ -33,7 +35,7 @@ from middlewared.plugins.zfs.encryption_job_locks import (
     dataset_encryption_unlock_lock,
     dataset_encryption_unlock_summary_lock,
 )
-from middlewared.service import Service, job
+from middlewared.service import Service, job, private
 
 
 class PoolDatasetService(Service):
@@ -306,4 +308,17 @@ class PoolDatasetService(Service):
         self.call_sync2(
             self.s.zfs.resource.encryption.inherit_impl,
             validate_model(ZFSResourceEncryptionInheritArgsData, {"path": id_}, dump_models=False),
+        )
+
+    # Replication sources call this on the target over midclt, so it must keep accepting this payload.
+    @private
+    @api_method(
+        PoolDatasetInsertOrUpdateEncryptedRecordArgs,
+        PoolDatasetInsertOrUpdateEncryptedRecordResult,
+        roles=["DATASET_WRITE"],
+    )
+    def insert_or_update_encrypted_record(self, data):
+        key_format = data["key_format"].lower() if data["key_format"] else None
+        return self.call_sync2(
+            self.s.zfs.resource.encryption.store_key, data["name"], data["encryption_key"], key_format
         )

@@ -190,7 +190,6 @@ def replication_keys(
             filters = ["name", "=", source_ds]
         source_keys[source_ds] = stored_keys(context, [filters])
 
-    # With no encrypted sources there is nothing to export.
     if not any(source_keys.values()):
         return {}
 
