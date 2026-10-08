@@ -24,6 +24,7 @@ class RemoteInfo(BaseModel):
     @classmethod
     def to_previous(cls, value):
         value["codename"] = "<DEPRECATED>"
+        return value
 
 
 class SysInfo(RemoteInfo):
