@@ -13,7 +13,7 @@ VEEAM_BLOCKSIZE = 131072
 
 @pytest.fixture(autouse=True)
 def veeam_entitled():
-    with entitled("SMB_VEEAM"):
+    with entitled("SMB_BLOCK_CLONING"):
         yield
 
 

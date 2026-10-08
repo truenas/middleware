@@ -60,8 +60,7 @@ FEATURE_DISPLAY_NAMES: Mapping[str, str] = {
     LicenseFeature.S3_AUDIT: "S3 audit logging",
     LicenseFeature.S3_VERSIONING: "S3 object versioning",
     LicenseFeature.SED: "SED",
-    LicenseFeature.SMB_FASTPATH: "SMB ZFS fastpath",
-    LicenseFeature.SMB_VEEAM: "Veeam repository shares",
+    LicenseFeature.SMB_BLOCK_CLONING: "SMB block cloning",
     LicenseFeature.STIG: "STIG and FIPS",
     LicenseFeature.SUPPORT: "support",
     LicenseFeature.TRUESEARCH: "TrueSearch",
@@ -95,11 +94,6 @@ FEATURE_MESSAGES: Mapping[str, Mapping[Reason, str]] = {
         Reason.NO_LICENSE: "SPDK is limited to enterprise licensed systems only.",
         Reason.KEY_MISSING: "SPDK is limited to enterprise licensed systems only.",
         Reason.WRONG_HARDWARE: "SPDK is limited to enterprise licensed systems only.",
-    },
-    LicenseFeature.SMB_VEEAM: {
-        Reason.NO_LICENSE: "Veeam repository shares require a TrueNAS enterprise license.",
-        Reason.KEY_MISSING: "Veeam repository shares require a TrueNAS enterprise license.",
-        Reason.WRONG_HARDWARE: "Veeam repository shares require a TrueNAS enterprise license.",
     },
 }
 

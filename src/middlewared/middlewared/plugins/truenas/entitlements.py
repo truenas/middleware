@@ -182,10 +182,10 @@ class TrueNASEntitlementsService(Service):
     @private
     async def usage(self) -> dict[str, Any]:
         """Report every gated feature's entitlement alongside whether this system is configured to
-        use it. `in_use` mirrors `entitled` for `SMB_FASTPATH` and `SUPPORT`, which leave no
-        configuration behind to observe, and for any feature whose probe failed, which also carries
-        an `error`. `CATALOG_ENTERPRISE_TRAIN` and `MISSION_CRITICAL` are set by the licensing hooks
-        themselves, so they read as in use on almost every licensed system."""
+        use it. `in_use` mirrors `entitled` for `SUPPORT`, which leaves no configuration behind to
+        observe, and for any feature whose probe failed, which also carries an `error`.
+        `CATALOG_ENTERPRISE_TRAIN` and `MISSION_CRITICAL` are set by the licensing hooks themselves, so
+        they read as in use on almost every licensed system."""
         daemon_error: str | None = None
         try:
             features = (await self.call2(self.s.truenas.entitlements.info)).features
