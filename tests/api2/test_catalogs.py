@@ -2,6 +2,7 @@ import os.path
 
 import pytest
 
+from middlewared.test.integration.assets.docker import sync_catalog
 from middlewared.test.integration.assets.pool import another_pool
 from middlewared.test.integration.utils import call
 from middlewared.test.integration.utils.docker import IX_APPS_CATALOG_PATH
@@ -40,6 +41,7 @@ def test_apps_are_being_reported():
 def test_docker_setup(docker_pool):
     config = call('docker.update', {'pool': docker_pool}, job=True)
     assert config['pool'] == docker_pool, config
+    sync_catalog()
 
 
 @pytest.mark.dependency(depends=['docker_setup'])
