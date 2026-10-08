@@ -10,7 +10,6 @@ from dataclasses import dataclass, field
 import errno
 import functools
 import inspect
-import multiprocessing
 import os
 import pathlib
 import re
@@ -2119,23 +2118,6 @@ def main():
     pidpath = os.path.join(MIDDLEWARE_RUN_DIR, 'middlewared.pid')
 
     setup_logging('middleware', args.debug_level, args.log_handler)
-
-    # Use 'spawn' instead of the Linux default 'fork' for multiprocessing. Using 'fork' in
-    # multithreaded processes is highly discouraged by the Python docs and may lead to deadlocks.
-    #
-    # middlewared is multithreaded (asyncio event loop, ThreadPoolExecutor workers, etc.). With 'fork', only
-    # the calling thread is duplicated in the child — but all mutexes are copied in their current
-    # state. Locks held by other threads at the moment of fork become permanently locked in the
-    # child (the owning threads don't exist there), causing deadlocks. For example, `disk.retaste`
-    # uses multiprocessing.Pool whose forked workers can deadlock and never exit, hanging
-    # `os.waitpid` forever during pool cleanup.
-    #
-    # Forked children also inherit the parent's signal handlers and logging handlers. This causes
-    # zettarepl (which runs as a multiprocessing child) to inherit the asyncio SIGTERM handler
-    # (making it unkillable without SIGKILL) and duplicate log output.
-    #
-    # 'spawn' starts a fresh Python interpreter via fork+exec, avoiding all inherited state issues.
-    multiprocessing.set_start_method('spawn')
 
     middleware = Middleware(
         loop_debug=args.loop_debug,
