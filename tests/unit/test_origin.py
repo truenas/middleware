@@ -2,6 +2,8 @@ import struct
 from socket import AF_INET, AF_UNIX
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from middlewared.utils import MIDDLEWARE_NGINX_SOCK
 from middlewared.utils.origin import ConnectionOrigin, get_tcp_ip_info
 
@@ -56,6 +58,27 @@ def test_local_unix_socket_uses_peer_credentials():
     assert origin.pid == 4321
     assert origin.uid == 1000
     assert origin.gid == 1000
+
+
+@pytest.mark.parametrize("overrides,expected", [
+    # The genuine peer: from the other controller, onto our heartbeat listener.
+    ({}, True),
+    # Proxied by nginx from a UI address, as on a non-HA system.
+    ({"loc_addr": "192.168.0.10", "loc_port": 443}, False),
+    # Addressed to the heartbeat IP, but accepted by nginx on a UI port.
+    ({"loc_port": 443}, False),
+    # A local process dialing this node's own heartbeat IP.
+    ({"rem_addr": "169.254.10.1"}, False),
+    # Source port above the privileged range.
+    ({"rem_port": 1025}, False),
+])
+def test_is_ha_connection_requires_heartbeat_listener(overrides, expected):
+    """A heartbeat source address and privileged port are chosen by the peer,
+    so they are only trusted on a connection from the other controller that
+    terminated on our own heartbeat listener."""
+    peer = dict(rem_addr="169.254.10.2", rem_port=1000, loc_addr="169.254.10.1", loc_port=6000)
+    origin = ConnectionOrigin(family=AF_INET, **peer | overrides)
+    assert origin.is_ha_connection is expected
 
 
 def test_get_tcp_ip_info_rejects_headerless_non_ip_socket():
