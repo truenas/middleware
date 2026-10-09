@@ -24,14 +24,20 @@ class MailModel(sa.Model):
     em_oauth = sa.Column(sa.JSON(dict, encrypted=True), nullable=True)
 
 
+def sender_configured(data: MailEntry) -> bool:
+    oauth = data.oauth.get_secret_value()
+    if oauth and oauth.provider != "outlook":
+        return True
+
+    return bool(data.fromemail)
+
+
 def validate_config(data: MailEntry) -> None:
     if data.smtp and not data.user:
         raise ValidationError("user", "This field is required when SMTP authentication is enabled")
 
-    oauth = data.oauth.get_secret_value()
-    if not oauth or oauth.provider == "outlook":
-        if not data.fromemail:
-            raise ValidationError("fromemail", "This field is required")
+    if not sender_configured(data):
+        raise ValidationError("fromemail", "This field is required")
 
     password = data.pass_.get_secret_value()
     if password:
