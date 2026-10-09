@@ -74,3 +74,6 @@ def init_test_environment():
     if not STIG_ENABLED:
         truenas_server.client.call("test.init")
     yield
+
+import logging
+logging.getLogger("truenas_api_client").setLevel(logging.DEBUG)
