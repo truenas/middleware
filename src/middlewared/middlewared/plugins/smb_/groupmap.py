@@ -4,7 +4,7 @@ import struct
 import tdb
 
 from middlewared.plugins.idmap_.idmap_constants import IDType
-from middlewared.plugins.smb_.constants import SMBBuiltin, SMBPath
+from middlewared.plugins.smb_.constants import SMB_ACCOUNT_METADATA_LOCK, SMBBuiltin, SMBPath
 from middlewared.plugins.smb_.util_groupmap import (
     GroupmapEntryType,
     GroupmapFile,
@@ -427,9 +427,10 @@ class SMBService(Service):
         return self.validate_groupmap_hwm(low_range, clustered)
 
     @private
-    @job(lock="groupmap_sync", lock_queue_size=1)
-    def synchronize_group_mappings(self, group_job, bypass_sentinel_check=False):
+    def reconcile_group_mappings(self, bypass_sentinel_check=False):
         """
+        The caller must hold SMB_ACCOUNT_METADATA_LOCK; synchronize_group_mappings is this as a job.
+
         This method does the following:
         1) ensures that group_mapping.tdb has all required groupmap entries
         2) ensures that builtin SIDs S-1-5-32-544, S-1-5-32-545, and S-1-5-32-546
@@ -490,6 +491,12 @@ class SMBService(Service):
                 self.middleware.call_sync('idmap.gencache.flush')
             except Exception:
                 self.logger.warning('Failed to flush caches after groupmap changes.', exc_info=True)
+
+    @private
+    @job(lock=SMB_ACCOUNT_METADATA_LOCK, lock_queue_size=None)
+    def synchronize_group_mappings(self, group_job):
+        """ reconcile_group_mappings under SMB_ACCOUNT_METADATA_LOCK, for callers that do not hold it """
+        self.reconcile_group_mappings()
 
     @private
     def migrate_share_groupmap(self):

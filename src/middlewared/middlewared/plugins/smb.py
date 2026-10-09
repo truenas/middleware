@@ -42,6 +42,7 @@ from middlewared.common.listen import SystemServiceListenMultipleDelegate
 from middlewared.plugins.idmap_.idmap_constants import SID_LOCAL_GROUP_PREFIX, SID_LOCAL_USER_PREFIX
 from middlewared.plugins.smb_.constants import (
     CONFIGURED_SENTINEL,
+    SMB_ACCOUNT_METADATA_LOCK,
     SMB_AUDIT_DEFAULTS,
     VEEAM_REPO_BLOCKSIZE,
     SMBCmd,
@@ -371,7 +372,7 @@ class SMBService(ConfigService):
                 await asyncio.sleep(1)
 
     @private
-    @job(lock="smb_configure")
+    @job(lock=SMB_ACCOUNT_METADATA_LOCK, lock_queue_size=None)
     async def configure(self, config_job):
         """
         We may have failed over and changed our netbios name, which would also
@@ -405,8 +406,7 @@ class SMBService(ConfigService):
             config_job.set_progress(100, 'Finished configuring SMB.')
             return
 
-        sync_job = await self.middleware.call('smb.synchronize_local_accounts', True)
-        await sync_job.wait()
+        await self.reconcile_local_accounts(bypass_sentinel_check=True)
 
         # Our share_info.tdb file should already be synchronized with the configuration
         # database since the former resides in persistent storage on the system dataset.
@@ -419,11 +419,11 @@ class SMBService(ConfigService):
         config_job.set_progress(100, 'Finished configuring SMB.')
 
     @private
-    @job(lock='smb_sync_local_accounts', lock_queue_size=1)
-    async def synchronize_local_accounts(self, accounts_job, bypass_sentinel_check=False):
+    async def reconcile_local_accounts(self, bypass_sentinel_check=False):
         """
         Reconcile the SMB account policy, passdb.tdb and group_mapping.tdb with the
-        local configuration database.
+        local configuration database. The caller must hold SMB_ACCOUNT_METADATA_LOCK;
+        synchronize_local_accounts is this as a job.
 
         All three are node-local derived state. On an HA standby controller this is
         the only thing that updates them, since the standby receives the replicated
@@ -431,13 +431,16 @@ class SMBService(ConfigService):
         operations performed on the active controller.
         """
         # The account policy is applied first because it drives pdbedit against the
-        # same file that synchronize_passdb takes a transaction lock on.
+        # same file that reconcile_passdb takes a transaction lock on.
         await self.middleware.call('smb.apply_account_policy')
+        await self.middleware.call('smb.reconcile_passdb')
+        await self.middleware.call('smb.reconcile_group_mappings', bypass_sentinel_check)
 
-        pdb_job = await self.middleware.call('smb.synchronize_passdb')
-        grp_job = await self.middleware.call('smb.synchronize_group_mappings', bypass_sentinel_check)
-        await pdb_job.wait(raise_error=True)
-        await grp_job.wait(raise_error=True)
+    @private
+    @job(lock=SMB_ACCOUNT_METADATA_LOCK, lock_queue_size=None)
+    async def synchronize_local_accounts(self, accounts_job):
+        """ reconcile_local_accounts under SMB_ACCOUNT_METADATA_LOCK, for callers that do not hold it """
+        await self.reconcile_local_accounts()
 
     @private
     @job(lock='smb_push_local_accounts', lock_queue_size=1)
