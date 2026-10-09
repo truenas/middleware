@@ -9,6 +9,14 @@ SMB_AUDIT_DEFAULTS = {'enable': False, 'watch_list': [], 'ignore_list': []}
 VEEAM_REPO_BLOCKSIZE = 131072
 SAMBA_BOOTENV_DIR = '/var/lib/truenas-samba'
 
+# Job lock for smb.configure and the jobs that reconcile passdb.tdb,
+# group_mapping.tdb and the account policy with the configuration database.
+# directoryservices.setup waits for smb.configure, so nothing that runs under
+# this lock may wait for a job. The jobs take lock_queue_size=None: when a
+# bounded queue is full the caller is handed whichever job is queued, which
+# may be another method's.
+SMB_ACCOUNT_METADATA_LOCK = 'smb_account_metadata'
+
 
 class SMBCmd(enum.Enum):
     """ Shell commands related to samba that may be used by backend. """
