@@ -21,7 +21,28 @@ def initiator_name_supported():
     return 'initiator_name' in inspect.signature(init_device).parameters
 
 
-def iscsi_scsi_connect(host, iqn, lun=0, user=None, secret=None, target_user=None, target_secret=None, initiator_name=None):
+def context_params_supported():
+    """
+    Returns whether a context_params dict may be supplied.
+
+    context_params carries extra iscsi.Context settings applied before
+    login, e.g. {'isid_en': (enterprise_number, qualifier)} to set an
+    explicit ISID so that a later reconnect can reuse it.
+    """
+    return 'context_params' in inspect.signature(init_device).parameters
+
+
+def iscsi_scsi_connect(
+    host,
+    iqn,
+    lun=0,
+    user=None,
+    secret=None,
+    target_user=None,
+    target_secret=None,
+    initiator_name=None,
+    context_params=None,
+):
     """
     Connect to the specified target, returning a SCSI object from python-scsi.
 
@@ -49,19 +70,33 @@ def iscsi_scsi_connect(host, iqn, lun=0, user=None, secret=None, target_user=Non
             raise ValueError("If either of target_user and target_secret is set, then both should be set.")
     else:
         raise ValueError("If either of user and secret is set, then both should be set.")
+    init_kwargs = {}
     if initiator_name:
         if not initiator_name_supported():
             raise ValueError("Initiator name supplied, but not supported.")
-        device = init_device(device_str, initiator_name=initiator_name)
-    else:
-        device = init_device(device_str)
+        init_kwargs['initiator_name'] = initiator_name
+    if context_params:
+        if not context_params_supported():
+            raise ValueError("context_params supplied, but not supported.")
+        init_kwargs['context_params'] = context_params
+    device = init_device(device_str, **init_kwargs)
     s = SCSI(device)
     s.blocksize = 512
     return s
 
 
 @contextlib.contextmanager
-def iscsi_scsi_connection(host, iqn, lun=0, user=None, secret=None, target_user=None, target_secret=None, initiator_name=None):
+def iscsi_scsi_connection(
+    host,
+    iqn,
+    lun=0,
+    user=None,
+    secret=None,
+    target_user=None,
+    target_secret=None,
+    initiator_name=None,
+    context_params=None,
+):
     """
     Factory function to connect to the specified target, returning a SCSI
     object from python-scsi.
@@ -76,7 +111,7 @@ def iscsi_scsi_connection(host, iqn, lun=0, user=None, secret=None, target_user=
         inqdata = s.inquiry().result
     """
 
-    s = iscsi_scsi_connect(host, iqn, lun, user, secret, target_user, target_secret, initiator_name)
+    s = iscsi_scsi_connect(host, iqn, lun, user, secret, target_user, target_secret, initiator_name, context_params)
 
     try:
         yield s
