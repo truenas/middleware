@@ -6,7 +6,7 @@ import contextlib
 import copy
 import enum
 import errno
-from functools import partial
+from functools import cache, partial
 import logging
 import os
 import shutil
@@ -71,18 +71,15 @@ def send_job_event(
         return
 
     # A job result may contain `Secret` values, and this event reaches every subscriber that may
-    # read the job. Each subscriber gets the encoding its credential may see. Only two encodings
-    # exist, so each one is built at most once.
-    encoded: dict[bool, dict[str, typing.Any]] = {}
-    if fields is not None:
-        encoded[True] = fields
+    # read the job. Each subscriber gets the encoding its credential may see.
+    @cache
+    def encode(with_secrets: bool) -> dict[str, typing.Any]:
+        if with_secrets and fields is not None:
+            return fields
+        return job.__encode__(raw_result=with_secrets)
 
     def fields_factory(app: App | None) -> dict[str, typing.Any]:
-        expose_secrets = app_can_see_secrets(app, job.serviceobj._config.role_prefix)
-        if expose_secrets not in encoded:
-            encoded[expose_secrets] = job.__encode__(raw_result=expose_secrets)
-
-        return encoded[expose_secrets]
+        return encode(app_can_see_secrets(app, job.serviceobj._config.role_prefix))
 
     middleware.send_event(
         'core.get_jobs',
