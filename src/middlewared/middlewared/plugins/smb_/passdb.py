@@ -1,6 +1,7 @@
 from middlewared.api.current import UserEntry
 from middlewared.service import filterable_api_method, Service, job, private
 from middlewared.utils.sid import get_domain_rid
+from .constants import SMB_ACCOUNT_METADATA_LOCK
 from .util_account_policy import sync_account_policy
 from .util_passdb import (
     add_version_info,
@@ -45,11 +46,13 @@ class SMBService(Service):
         )
 
         update_passdb_entry(passdb_entry, clustered)
+        self.middleware.call_sync('smb.push_local_accounts_to_standby')
 
     @private
     def remove_passdb_user(self, username, sid):
         clustered = self.middleware.call_sync('datastore.config', 'services.cifs')['cifs_srv_stateful_failover']
         delete_passdb_entry(username, get_domain_rid(sid), clustered)
+        self.middleware.call_sync('smb.push_local_accounts_to_standby')
 
     @private
     def apply_account_policy(self):
@@ -57,15 +60,12 @@ class SMBService(Service):
         sync_account_policy(security)
 
     @private
-    @job(lock="passdb_sync", lock_queue_size=1)
-    def synchronize_passdb(self, passdb_job):
+    def reconcile_passdb(self):
         """ Sync user configuration from our user table with Samba's passdb.tdb file
 
-        Params:
-            force - force resync by deleting the existing passdb.tdb file
+        The caller must hold SMB_ACCOUNT_METADATA_LOCK; synchronize_passdb is this as a job.
 
         Raises:
-            PassdbMustReinit - the synchronize job must be rerun with force command
             RuntimeError - TDB library error
         """
         smb_config = self.middleware.call_sync('smb.config')
@@ -112,3 +112,9 @@ class SMBService(Service):
                                       {'entries': ','.join(broken_entries)})
         else:
             self.middleware.call_sync("alert.oneshot_delete", "SMBUserMissingHash")
+
+    @private
+    @job(lock=SMB_ACCOUNT_METADATA_LOCK, lock_queue_size=None)
+    def synchronize_passdb(self, passdb_job):
+        """ reconcile_passdb under SMB_ACCOUNT_METADATA_LOCK, for callers that do not hold it """
+        self.reconcile_passdb()
