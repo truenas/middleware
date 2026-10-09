@@ -1,6 +1,7 @@
+from concurrent.futures import ThreadPoolExecutor
+import errno
 import fcntl
 import logging
-import multiprocessing
 import os
 
 from middlewared.service import Service, job, private
@@ -9,24 +10,20 @@ from middlewared.utils.disks_.disk_class import iterate_disks
 logger = logging.getLogger(__name__)
 
 
-def taste_it(disk, errors):
+def taste_it(disk):
     BLKRRPART = 0x125f  # force reread partition table
 
-    fd = None
-    errors[disk] = []
     try:
         fd = os.open(disk, os.O_WRONLY)
-    except Exception as e:
-        errors[disk].append(str(e))
-        # can't open, no reason to continue
-    else:
         try:
             fcntl.ioctl(fd, BLKRRPART)
-        except Exception as e:
-            errors[disk].append(str(e))
-    finally:
-        if fd is not None:
+        finally:
             os.close(fd)
+    except OSError as e:
+        # EBUSY means the disk is in use, so the kernel will not
+        # reread its partition table. That is expected, not a failure.
+        if e.errno != errno.EBUSY:
+            logger.error('%s: failed to retaste disk: %s', disk, e)
 
 
 def retaste_disks_impl(disk_serials: set = None):
@@ -37,19 +34,12 @@ def retaste_disks_impl(disk_serials: set = None):
         for i in filter(lambda x: x.serial in disk_serials, iterate_disks()):
             disks.add(i.devpath)
 
-    with multiprocessing.Manager() as m:
-        errors = m.dict()
-        with multiprocessing.Pool() as p:
-            # we use processes so that these operations are truly
-            # "parallel" (side-step the GIL) since we have systems
-            # with 1k+ disks. Since this runs, potentially, on failover
-            # event we need to squeeze out every bit of perf we can get
-            p.starmap(taste_it, [(disk, errors) for disk in disks])
-
-        for disk, errors in filter(lambda x: len(x[1]) > 0, errors.items()):
-            logger.error('Failed to retaste %r with error(s): %s', disk, ', '.join(errors))
-
-    del errors
+    # Retasting is two blocking system calls per disk and both release
+    # the GIL, so threads run them in parallel. We have systems with 1k+
+    # disks and this runs, potentially, on failover event, hence more
+    # threads than the default (they only wait on the kernel).
+    with ThreadPoolExecutor(max_workers=64) as executor:
+        list(executor.map(taste_it, disks))
 
 
 class DiskService(Service):
