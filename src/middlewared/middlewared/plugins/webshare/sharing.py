@@ -222,6 +222,9 @@ class SharingWebshareService(SharingService[SharingWebshareEntry]):
     @private
     def compress(self, data: SharingWebshareEntry) -> dict[str, Any]:
         compressed = data.model_dump()
+        # On the create model these are excluded fields, so `model_dump` drops what `validate_path_field` set.
+        compressed['dataset'] = data.dataset
+        compressed['relative_path'] = data.relative_path
         compressed.pop(self.locked_field, None)
         compressed.pop('tier', None)
         return compressed
