@@ -514,22 +514,27 @@ class IPAJoinMixin:
         if not hostname:
             hostname = ngc.get('hostname_virtual') or ngc['hostname_local']
 
+        # The IPA hostname may be a complete FQDN, which permits registering the host
+        # account in a DNS zone other than the IPA domain. Only the leading label is a
+        # hostname in the sense that network configuration and NetBIOS understand.
+        short_hostname = hostname.split('.')[0]
+
         # If user has specified a hostname to use for join, then overwrite other parts of config if needed
-        elif hostname != (ngc.get('hostname_virtual') or ngc['hostname_local']):
+        if short_hostname != (ngc.get('hostname_virtual') or ngc['hostname_local']):
             if ngc.get('hostname_virtual'):
-                self.middleware.call_sync('network.configuration.update', {'hostname_virtual': hostname})
+                self.middleware.call_sync('network.configuration.update', {'hostname_virtual': short_hostname})
             else:
-                self.middleware.call_sync('network.configuration.update', {'hostname': hostname})
+                self.middleware.call_sync('network.configuration.update', {'hostname': short_hostname})
 
         # Update the netbiosname to something reasonably related to our hostname
         # There are probably some legacy users who have "truenas" as the name of their server
         # because that was the default netbiosname. This isn't a great choice because if another device
         # joins AD with same generic name then it will clobber this one's computer account in AD, and so
         # we want to discourage that.
-        if smb['netbiosname'] != hostname and smb['netbiosname'] == 'truenas':
+        if smb['netbiosname'] != short_hostname and smb['netbiosname'] == 'truenas':
             # Default netbiosname. We *really* don't want to collide with other servers.
             # We'll start by trying to truncate to max netbiosname length
-            smb['netbiosname'] = hostname[:NETBIOSNAME_MAX_LEN - 1]
+            smb['netbiosname'] = short_hostname[:NETBIOSNAME_MAX_LEN - 1]
 
             # Allow job failure if our best guess at a valid netbiosname fails
             validate_netbios_name(smb['netbiosname'])

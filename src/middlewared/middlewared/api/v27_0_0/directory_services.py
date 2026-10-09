@@ -607,7 +607,12 @@ class IPAConfig(BaseModel):
         ),
     )
     hostname: NonEmptyString = Field(
-        description="Hostname of TrueNAS server to register in IPA during the join process. Example: \"truenasnyc\".",
+        description=(
+            "Hostname of the TrueNAS server to register in IPA during the join process. Example: \"truenasnyc\". A "
+            "bare hostname is qualified with `domain` to form the host's fully-qualified domain name. Supply a "
+            "complete FQDN instead to register the host in a DNS zone other than the IPA domain, for example a "
+            "subdomain of it or an unrelated zone. Example: \"truenasnyc.nyc.example.internal\"."
+        ),
     )
     domain: NonEmptyString = Field(description="The domain of the IPA server. Example \"ipa.internal\".")
     basedn: LDAP_DN = Field(
