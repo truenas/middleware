@@ -58,6 +58,24 @@ def test_local_unix_socket_uses_peer_credentials():
     assert origin.gid == 1000
 
 
+def test_is_ha_connection_requires_heartbeat_listener():
+    """A heartbeat source address and privileged port are chosen by the peer,
+    so they are only trusted on a connection from the other controller that
+    terminated on our own heartbeat listener."""
+    def is_ha(**kwargs):
+        peer = dict(rem_addr="169.254.10.2", rem_port=1000, loc_addr="169.254.10.1", loc_port=6000)
+        return ConnectionOrigin(family=AF_INET, **peer | kwargs).is_ha_connection
+
+    assert is_ha() is True
+    # Proxied by nginx from a UI address, as in a non-HA system.
+    assert is_ha(loc_addr="192.168.0.10", loc_port=443) is False
+    # Addressed to the heartbeat IP, but accepted by nginx.
+    assert is_ha(loc_port=443) is False
+    # A local process dialing its own heartbeat IP.
+    assert is_ha(rem_addr="169.254.10.1") is False
+    assert is_ha(rem_port=1025) is False
+
+
 def test_get_tcp_ip_info_rejects_headerless_non_ip_socket():
     """Without the X-Real-Remote-* headers we cannot determine an origin for a
     non-TCP/IP socket (such as the nginx unix socket reached unexpectedly); it
