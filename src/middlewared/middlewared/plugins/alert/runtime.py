@@ -26,7 +26,7 @@ from middlewared.alert.base import (
 from middlewared.api.current import SupportNewTicketEnterprise
 from middlewared.plugins.failover_.constants import NETWORK_ERRORS
 from middlewared.service import ServiceContext
-from middlewared.service_exception import CallError, NetworkActivityDisabled
+from middlewared.service_exception import CallError
 from middlewared.utils.entitlements import get_facts
 from middlewared.utils.time_utils import utc_now
 
@@ -235,10 +235,7 @@ async def _emit_alert_events(
 async def _send_alert_mail(context: ServiceContext, new_alerts: list[Alert[Any]]) -> None:
     for alert in new_alerts:
         if alert.mail:
-            try:
-                await context.call2(context.s.mail.send, alert.mail)
-            except NetworkActivityDisabled:
-                pass
+            await context.call2(context.s.mail.send, alert.mail)
 
 
 async def _maybe_open_proactive_support_ticket(

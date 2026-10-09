@@ -4,7 +4,7 @@ from typing import Any
 
 from middlewared.alert.base import Alert, AlertService
 from middlewared.api.current import MailSendMessage, MailServiceModel
-from middlewared.service_exception import NetworkActivityDisabled
+from middlewared.plugins.mail.config import sender_configured
 
 
 class MailAlertService(AlertService[MailServiceModel]):
@@ -20,11 +20,11 @@ class MailAlertService(AlertService[MailServiceModel]):
             if not emails:
                 return
 
-        try:
-            await self.call2(self.s.mail.send, MailSendMessage(
-                subject="Alerts",
-                html=await self._format_alerts(alerts, gone_alerts, new_alerts),
-                to=emails,
-            ))
-        except NetworkActivityDisabled:
-            pass
+        if not sender_configured(await self.call2(self.s.mail.config)):
+            return
+
+        await self.call2(self.s.mail.send, MailSendMessage(
+            subject="Alerts",
+            html=await self._format_alerts(alerts, gone_alerts, new_alerts),
+            to=emails,
+        ))
