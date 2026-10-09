@@ -34,11 +34,6 @@ def user(data: dict):
         yield user_obj
 
 
-@pytest.fixture(scope='function')
-def clear_ratelimit():
-    call('rate.limit.cache_clear')
-
-
 @pytest.fixture(scope='module', autouse=True)
 def ensure_small_time_difference():
     nas_time = call('system.info')['datetime']
@@ -86,7 +81,7 @@ def do_login(username, password, otp=None, expected=True):
             assert resp['response_type'] == 'AUTH_ERR'
 
 
-def test_login_without_2fa(clear_ratelimit):
+def test_login_without_2fa():
     with user({
         'username': TEST_USERNAME,
         'password': TEST_PASSWORD,
@@ -100,7 +95,7 @@ def test_login_without_2fa(clear_ratelimit):
     ('test_user2', 'test_password2', {'interval': 60, 'otp_digits': 7}),
     ('test_user3', 'test_password3', {'interval': 30, 'otp_digits': 8}),
 ])
-def test_secret_generation_for_user(user_name, password, renew_options, clear_ratelimit):
+def test_secret_generation_for_user(user_name, password, renew_options):
     with user({
         'username': user_name,
         'password': password,
@@ -118,7 +113,7 @@ def test_secret_generation_for_user(user_name, password, renew_options, clear_ra
 
 
 @pytest.mark.parametrize("bad_interval", [5, 15, 40, 45, 50, 90, 120])
-def test_renew_2fa_secret_rejects_unsupported_interval(bad_interval, clear_ratelimit):
+def test_renew_2fa_secret_rejects_unsupported_interval(bad_interval):
     with user({
         'username': TEST_USERNAME,
         'password': TEST_PASSWORD,
@@ -130,7 +125,7 @@ def test_renew_2fa_secret_rejects_unsupported_interval(bad_interval, clear_ratel
         assert get_user_secret(user_obj['id'])['secret'] is None
 
 
-def test_secret_generation_for_multiple_users(clear_ratelimit):
+def test_secret_generation_for_multiple_users():
     with user({
         'username': TEST_USERNAME,
         'password': TEST_PASSWORD,
@@ -150,7 +145,7 @@ def test_secret_generation_for_multiple_users(clear_ratelimit):
                     assert user_secret_obj[k] == USERS_2FA_CONF[user_obj['username']][k]
 
 
-def test_login_without_otp_for_user_without_2fa(clear_ratelimit):
+def test_login_without_otp_for_user_without_2fa():
     with user({
         'username': TEST_USERNAME_2,
         'password': TEST_PASSWORD_2,
@@ -160,7 +155,7 @@ def test_login_without_otp_for_user_without_2fa(clear_ratelimit):
             do_login(TEST_USERNAME_2, TEST_PASSWORD_2)
 
 
-def test_login_with_otp_for_user_with_2fa(clear_ratelimit):
+def test_login_with_otp_for_user_with_2fa():
     with user({
         'username': TEST_USERNAME_2,
         'password': TEST_PASSWORD_2,
@@ -171,7 +166,7 @@ def test_login_with_otp_for_user_with_2fa(clear_ratelimit):
             do_login(TEST_USERNAME_2, TEST_PASSWORD_2, get_2fa_totp_token(get_user_secret(user_obj['id'])))
 
 
-def test_user_2fa_secret_renewal(clear_ratelimit):
+def test_user_2fa_secret_renewal():
     with user({
         'username': TEST_USERNAME_2,
         'password': TEST_PASSWORD_2,
@@ -188,7 +183,7 @@ def test_user_2fa_secret_renewal(clear_ratelimit):
             do_login(TEST_USERNAME_2, TEST_PASSWORD_2, get_2fa_totp_token(get_user_secret(user_obj['id'])))
 
 
-def test_restricted_user_2fa_secret_renewal(clear_ratelimit):
+def test_restricted_user_2fa_secret_renewal():
     with unprivileged_user(
         username=TEST_USERNAME,
         group_name='TEST_2FA_GROUP',
@@ -216,7 +211,7 @@ def test_restricted_user_2fa_secret_renewal(clear_ratelimit):
                 do_login(acct.username, acct.password, get_2fa_totp_token(get_user_secret(user_obj['id'])))
 
 
-def test_multiple_users_login_with_otp(clear_ratelimit):
+def test_multiple_users_login_with_otp():
     with user({
         'username': TEST_USERNAME,
         'password': TEST_PASSWORD,
@@ -244,7 +239,7 @@ def test_multiple_users_login_with_otp(clear_ratelimit):
                 do_login(TEST_USERNAME, TEST_PASSWORD, get_2fa_totp_token(get_user_secret(first_user['id'])))
 
 
-def test_login_with_otp_failure(clear_ratelimit):
+def test_login_with_otp_failure():
     """ simulate continually fat-fingering OTP token until eventual failure """
     with user({
         'username': TEST_USERNAME,
@@ -269,7 +264,7 @@ def test_login_with_otp_failure(clear_ratelimit):
                 assert resp['response_type'] == 'AUTH_ERR'
 
 
-def test_login_with_otp_switch_account(clear_ratelimit):
+def test_login_with_otp_switch_account():
     """ Validate we can abandon a login attempt with 2FA """
     with user({
         'username': TEST_USERNAME,
@@ -300,7 +295,7 @@ def test_login_with_otp_switch_account(clear_ratelimit):
                     assert resp['response_type'] == 'SUCCESS'
 
 
-def test_login_with_ad_otp(clear_ratelimit, enterprise_ad):
+def test_login_with_ad_otp(enterprise_ad):
     """ Validate AD account can use 2FA """
     with enabled_twofactor_auth():
         username = enterprise_ad['account'].user_obj['pw_name']

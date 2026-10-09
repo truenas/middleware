@@ -15,11 +15,6 @@ from middlewared.test.integration.utils import call, client, password
 LEGACY_VERSION = "v27.0.0"
 
 
-@pytest.fixture(scope="function")
-def clear_ratelimit():
-    call("rate.limit.cache_clear")
-
-
 def test_otp_token_without_login_in_progress():
     """Submitting an OTP token with no authentication in progress is rejected with EINVAL."""
     with client(auth=None) as c:
@@ -84,7 +79,7 @@ def test_password_plain_no_api_access_denied():
             assert resp["response_type"] == "DENIED"
 
 
-def test_twofactor_login_no_api_access_denied(clear_ratelimit):
+def test_twofactor_login_no_api_access_denied():
     """A 2FA user with no API privilege is refused with DENIED after a valid OTP token."""
     with create_user(
         {
@@ -130,7 +125,7 @@ def test_legacy_login_bad_password():
         assert c.call("auth.login", "root", "wrong-password") is False
 
 
-def test_legacy_login_with_twofactor(clear_ratelimit):
+def test_legacy_login_with_twofactor():
     """auth.login honors the OTP second factor: no token fails, the right token succeeds."""
     with create_user(
         {
