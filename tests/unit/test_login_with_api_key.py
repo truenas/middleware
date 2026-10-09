@@ -7,13 +7,6 @@ from configparser import ConfigParser
 from truenas_api_client import Client
 
 
-@pytest.fixture(autouse=True)
-def clear_ratelimit():
-    """Clear rate limit cache before each test to avoid rate limiting."""
-    with Client() as c:
-        c.call('rate.limit.cache_clear')
-
-
 @pytest.fixture(scope='module')
 def api_key_data():
     """Create an API key and return all its data for testing."""

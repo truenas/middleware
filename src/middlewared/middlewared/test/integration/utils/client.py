@@ -162,10 +162,13 @@ truenas_server = TrueNAS_Server()
 
 
 @contextlib.contextmanager
-def client(*, auth=undefined, auth_required=True, py_exceptions=True, log_py_exceptions=True, host_ip=None, ssl=True,
-           version="current"):
+def client(*, auth=undefined, auth_required=True, py_exceptions=True, log_py_exceptions=True, host_ip=None,
+           reset_rate_limit=True, ssl=True, version="current"):
     if auth is undefined:
         auth = ("root", password())
+
+    if truenas_server.ip and host_ip in [None, truenas_server.ip] and reset_rate_limit:
+        truenas_server.client.call("rate.limit.cache_clear")
 
     uri = host_websocket_uri(host_ip, ssl, version)
     try:

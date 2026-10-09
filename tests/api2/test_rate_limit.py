@@ -24,7 +24,7 @@ def test_unauth_requests_are_rate_limited():
 
     """Test that middleware's rate limit plugin for interacting
     with the global cache behaves as intended."""
-    cache = call('rate.limit.cache_get')
+    cache = call('rate.limit.cache_get', reset_rate_limit=False)
     # the mechanism by which the rate limit chooses a unique key
     # for inserting into the dictionary is by using the api endpoint
     # name as part of the string
@@ -33,12 +33,12 @@ def test_unauth_requests_are_rate_limited():
     # now let's pop the last entry of the cache
     len_cache_before_pop = len(cache)
     popped_method, popped_ip = list(cache)[-1].split(SEP)
-    call('rate.limit.cache_pop', popped_method, popped_ip)
-    new_cache = call('rate.limit.cache_get')
+    call('rate.limit.cache_pop', popped_method, popped_ip, reset_rate_limit=False)
+    new_cache = call('rate.limit.cache_get', reset_rate_limit=False)
     assert len(new_cache) != len_cache_before_pop, new_cache
 
     # finally, let's clear the cache
-    call('rate.limit.cache_clear')
+    call('rate.limit.cache_clear', reset_rate_limit=False)
     new_new_cache = call('rate.limit.cache_get')
     assert len(new_new_cache) == 0, new_new_cache
 
