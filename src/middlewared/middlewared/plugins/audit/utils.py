@@ -1,4 +1,5 @@
 import os
+import subprocess
 
 from truenas_verify import mtree_verify
 
@@ -129,7 +130,12 @@ def setup_truenas_verify(sysver: str) -> int:
     # of its rebuild. Reading /usr while that overlay is mounted captures the
     # overlay's dpkg files instead of the installed ones (spurious discrepancies),
     # so take the same lock boot.update_initramfs holds across the rebuild.
+    #
+    # Run it as a separate program instead of calling mtree_verify.do_verify()
+    # in this process. It uses multiprocessing.Pool, whose forked workers
+    # inherit middlewared's SIGTERM handler and cannot be terminated by the
+    # pool. This thread then deadlocks with a worker while holding the lock.
     with rootfs_protection_lock():
-        verify_rc = mtree_verify.do_verify(['init', sysver])
+        verify_rc = subprocess.run(['truenas_verify', 'init', sysver]).returncode
 
     return verify_rc
