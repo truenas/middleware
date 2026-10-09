@@ -59,12 +59,13 @@ from .service_exception import CallError, ErrnoMixin
 from .utils import MIDDLEWARE_NGINX_SOCK, MIDDLEWARE_RUN_DIR, MIDDLEWARE_STARTED_SENTINEL_PATH, sw_version
 from .utils.audit import audit_username_from_session
 from .utils.debug import get_threads_stacks
+from .utils.lang import undefined
 from .utils.limits import MsgSizeError, MsgSizeLimit, parse_message
 from .utils.mock import coerce_mock_result, get_mock_return_model
 from .utils.nss.pwd import getpwnam
 from .utils.plugins import LoadPluginsMixin
 from .utils.prctl import set_cmdline, set_name
-from .utils.privilege import credential_has_full_admin
+from .utils.privilege import app_can_see_secrets
 from .utils.profile import profile_wrap
 from .utils.rate_limit.cache import RateLimitCache
 from .utils.service.call import ServiceCallMixin
@@ -1134,18 +1135,8 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
             pydantic.ValidationError: The result contains values that are not permitted according
             to the pydantic model. This means the return value or the model is wrong.
         """
-        if app and app.authenticated_credentials:
-            # Authenticated session is _always_ presented unredacted results in the following cases:
-            # 1. credential is a full_admin
-            # 2. credential has the WRITE role corresponding with the plugin's governing privilege.
-            if app.authenticated_credentials.is_user_session and not (
-                credential_has_full_admin(app.authenticated_credentials) or
-                (
-                    serviceobj._config.role_prefix and
-                    app.authenticated_credentials.has_role(f'{serviceobj._config.role_prefix}_WRITE')
-                )
-            ):
-                expose_secrets = False
+        if not app_can_see_secrets(app, serviceobj._config.role_prefix):
+            expose_secrets = False
 
         if isinstance(result, Job):
             return result
@@ -1609,7 +1600,27 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
         self.events.register(name, description, private, models, no_auth_required, no_authz_required, roles)
 
     def send_event(self, name: str, event_type: EventType, **kwargs):
+        """
+        Send the `name` event to every subscriber of it.
+
+        Any keyword argument other than the ones below becomes part of the event payload: `id`
+        identifies the object the event is about, and anything else reaches the subscriber as `extra`.
+
+        :param name: name of the event.
+        :param event_type: one of `ADDED`, `CHANGED` or `REMOVED`.
+        :param should_send_event: called with each subscribed app, which receives the event only if
+            the call returns true. Every subscriber receives the event when this is omitted.
+        :param fields: the new value of the object, identical for every recipient. Mutually exclusive
+            with `fields_factory`.
+        :param fields_factory: builds the new value of the object for a single recipient. Called with
+            the app that receives the event, or with `None` for an internally subscribed plugin, once
+            per recipient. Mutually exclusive with `fields`.
+        """
         should_send_event = kwargs.pop('should_send_event', None)
+        fields = kwargs.pop('fields', undefined)
+        fields_factory = kwargs.pop('fields_factory', None)
+        if fields is not undefined and fields_factory is not None:
+            raise ValueError('Specify either `fields` or `fields_factory`, not both.')
 
         if name not in self.events:
             # We should eventually deny events that are not registered to ensure every event is
@@ -1618,18 +1629,29 @@ class Middleware(LoadPluginsMixin, ServiceCallMixin, CallMixin):
 
         assert event_type in ('ADDED', 'CHANGED', 'REMOVED')
 
-        self.logger.trace('Sending event %r:%r:%r', name, event_type, kwargs)
+        def payload(app: App | None) -> dict[str, typing.Any]:
+            if fields_factory is not None:
+                return dict(kwargs, fields=fields_factory(app))
+
+            if fields is not undefined:
+                return dict(kwargs, fields=fields)
+
+            return kwargs
+
+        internal_payload = payload(None)
+
+        self.logger.trace('Sending event %r:%r:%r', name, event_type, internal_payload)
 
         for session_id, wsclient in list(self.__wsclients.items()):
             try:
                 if should_send_event is None or should_send_event(wsclient):
-                    wsclient.send_event(name, event_type, **kwargs)
+                    wsclient.send_event(name, event_type, **payload(wsclient))
             except Exception:
                 self.logger.warning('Failed to send event %s to %s', name, session_id, exc_info=True)
 
         async def wrap(handler: _SubHandler):
             try:
-                await handler(self, event_type, kwargs)
+                await handler(self, event_type, internal_payload)
             except Exception:
                 self.logger.error('%s: Unhandled exception in event handler', name, exc_info=True)
 

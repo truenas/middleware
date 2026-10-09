@@ -3,12 +3,13 @@ import types
 
 import pytest
 
-from middlewared.auth import UserSessionManagerCredentials
+from middlewared.auth import SessionManagerCredentials, UserSessionManagerCredentials
 from middlewared.plugins.service.utils import app_has_write_privilege_for_service
 from middlewared.utils.account.authenticator import UserPamAuthenticator
 from middlewared.utils.auth import AA_LEVEL1
 from middlewared.utils.origin import ConnectionOrigin
 from middlewared.utils.privilege import (
+    app_can_see_secrets,
     app_credential_full_admin_or_user,
     credential_full_admin_or_user,
     credential_has_full_admin,
@@ -91,3 +92,30 @@ def test_privilege_has_write_to_service(service, credential, expected):
     user_cred = UserSessionManagerCredentials({'username': 'BOB'} | credential, AA_LEVEL1, pam_hdl)
     assert app_has_write_privilege_for_service(types.SimpleNamespace(authenticated_credentials=user_cred),
                                                service) == expected
+
+
+@pytest.mark.parametrize('roles,role_prefix,expected', [
+    (['FULL_ADMIN'], None, True),
+    (['FULL_ADMIN'], 'SHARING_SMB', True),
+    (['SHARING_SMB_WRITE'], 'SHARING_SMB', True),
+    (['SHARING_SMB_WRITE'], 'SHARING_NFS', False),
+    (['SHARING_SMB_READ'], 'SHARING_SMB', False),
+    (['READONLY_ADMIN'], 'SHARING_SMB', False),
+    (['READONLY_ADMIN'], None, False),
+])
+def test_app_can_see_secrets_for_user_session(roles, role_prefix, expected):
+    user_cred = UserSessionManagerCredentials(
+        {'username': 'BOB', 'privilege': {'allowlist': [], 'roles': roles}}, AA_LEVEL1, pam_hdl,
+    )
+    app = types.SimpleNamespace(authenticated_credentials=user_cred)
+    assert app_can_see_secrets(app, role_prefix) == expected
+
+
+@pytest.mark.parametrize('app', [
+    None,
+    types.SimpleNamespace(authenticated_credentials=None),
+    # Not a user session, i.e. an API key, which whitelists the methods it may call
+    types.SimpleNamespace(authenticated_credentials=SessionManagerCredentials()),
+])
+def test_app_can_see_secrets_without_user_session(app):
+    assert app_can_see_secrets(app, 'SHARING_SMB')

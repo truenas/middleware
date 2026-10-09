@@ -19,7 +19,11 @@ import typing
 from middlewared.pipe import Pipes
 from middlewared.service_exception import CallError, ValidationError, ValidationErrors, adapt_exception
 from middlewared.utils.asyncio_ import ThreadsafeTimer
-from middlewared.utils.privilege import credential_has_full_admin, credential_is_limited_to_own_jobs
+from middlewared.utils.privilege import (
+    app_can_see_secrets,
+    credential_has_full_admin,
+    credential_is_limited_to_own_jobs,
+)
 from middlewared.utils.threading import thread_local_storage
 from middlewared.utils.time_utils import utc_now
 
@@ -52,16 +56,39 @@ class JobCancelledException(Exception):
 
 
 def send_job_event(
-    middleware: Middleware, event_type: EventType, job: Job, fields: dict[str, typing.Any]
+    middleware: Middleware, event_type: EventType, job: Job, fields: dict[str, typing.Any] | None = None
 ) -> None:
+    """
+    Report a change of `job` to every subscriber that may read it.
+
+    :param middleware: `Middleware` instance.
+    :param event_type: `core.get_jobs` event type, either `ADDED` or `CHANGED`.
+    :param job: the job that changed.
+    :param fields: the job already encoded with its secrets exposed, when the caller needed that
+        encoding anyway. Encoded on demand when omitted.
+    """
     if job.options['transient']:
         return
+
+    # A job result may contain `Secret` values, and this event reaches every subscriber that may
+    # read the job. Each subscriber gets the encoding its credential may see. Only two encodings
+    # exist, so each one is built at most once.
+    encoded: dict[bool, dict[str, typing.Any]] = {}
+    if fields is not None:
+        encoded[True] = fields
+
+    def fields_factory(app: App | None) -> dict[str, typing.Any]:
+        expose_secrets = app_can_see_secrets(app, job.serviceobj._config.role_prefix)
+        if expose_secrets not in encoded:
+            encoded[expose_secrets] = job.__encode__(raw_result=expose_secrets)
+
+        return encoded[expose_secrets]
 
     middleware.send_event(
         'core.get_jobs',
         event_type,
         id=job.id,
-        fields=fields,
+        fields_factory=fields_factory,
         should_send_event=partial(should_send_job_event, job),
     )
 
@@ -188,7 +215,7 @@ class JobsQueue:
 
         self.deque.add(job)
         self.queue.append(job)
-        send_job_event(self.middleware, 'ADDED', job, job.__encode__())
+        send_job_event(self.middleware, 'ADDED', job)
 
         # A job has been added to the queue, let the queue scheduler run
         self.queue_event.set()
@@ -464,7 +491,7 @@ class Job[T = typing.Any]:
             self.time_finished = utc_now()
 
     def send_changed_event(self) -> None:
-        send_job_event(self.middleware, 'CHANGED', self, self.__encode__())
+        send_job_event(self.middleware, 'CHANGED', self)
 
     def set_description(self, description: str | None) -> None:
         """
@@ -633,7 +660,7 @@ class Job[T = typing.Any]:
             queue.release_lock(self)
             self._finished.set()
             await self.call_on_finish_cb()
-            send_job_event(self.middleware, 'CHANGED', self, self.__encode__())
+            send_job_event(self.middleware, 'CHANGED', self)
             if self.options['transient']:
                 assert self.id is not None
                 queue.remove(self.id)
@@ -713,7 +740,16 @@ class Job[T = typing.Any]:
 
         await self.middleware.run_in_thread(close_pipes)
 
-    def __encode__(self, raw_result: bool = True) -> dict[str, typing.Any]:
+    def __encode__(self, raw_result: bool = True, app: App | None = None) -> dict[str, typing.Any]:
+        """
+        Serialize this job for external consumption, as a `core.get_jobs` item.
+
+        :param raw_result: if false, `Secret` values in the result are redacted regardless of `app`.
+            `core.get_jobs` passes false when generating debug files.
+        :param app: app that receives the encoded job, or `None` for an internal call. A credential
+            that may not see secrets gets them redacted even when `raw_result` is true.
+        :return: the encoded job.
+        """
         exc_info = None
         if self.exc_info:
             etype_cls = self.exc_info[0]
@@ -749,30 +785,25 @@ class Job[T = typing.Any]:
 
         result_encoding_error = None
 
-        # Depending on the situation we either need to encode the raw result or a
-        # redacted result:
+        # The result goes through the method's return model, exactly like a non-job result does.
+        # `self.result` is a raw python value for middleware itself (see `Job.wait`). It can hold
+        # objects that JSON encoding rejects, such as a `Secret`.
         #
-        # raw - return value to caller of method
-        # redacted - core.get_jobs output when the extra output option "raw_result" is False
-        #
-        # Changes to how we generate results must be validated against both of these
-        # situations. Redaction is critically important because we include core.get_jobs
+        # Changes to how we generate results must be validated against both the raw and the
+        # redacted case. Redaction is critically important because we include core.get_jobs
         # output in our debug files.
         if self.state == State.SUCCESS:
-            if raw_result:
-                result = self.result
-            else:
-                try:
-                    result = self.middleware.dump_result(
-                        self.serviceobj,
-                        self.method,
-                        self.app,
-                        self.result,
-                        expose_secrets=False,
-                    )
-                except Exception as e:
-                    result = None
-                    result_encoding_error = repr(e)
+            try:
+                result = self.middleware.dump_result(
+                    self.serviceobj,
+                    self.method,
+                    app,
+                    self.result,
+                    expose_secrets=raw_result,
+                )
+            except Exception as e:
+                result = None
+                result_encoding_error = repr(e)
         else:
             result = None
 
