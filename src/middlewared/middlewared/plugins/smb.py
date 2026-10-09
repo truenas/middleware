@@ -410,8 +410,10 @@ class SMBService(ConfigService):
 
         await self.reconcile_local_accounts(bypass_sentinel_check=True)
 
-        # Our share_info.tdb file should already be synchronized with the configuration
-        # database since the former resides in persistent storage on the system dataset.
+        # share_info.tdb is node-local state on the boot pool. It does not exist on a freshly
+        # installed standby controller or in a new boot environment after an upgrade, and the
+        # standby does not run smbd, so this flush is what recreates the share ACLs from the
+        # configuration database before cifs is started.
         #
         # Flushing here carries some minor risk that changes via SMB protocol by a system
         # administrator will be lost, but this is significantly less than the risk that
