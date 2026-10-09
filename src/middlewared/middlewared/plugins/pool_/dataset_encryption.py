@@ -1,9 +1,19 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Literal
+
+from pydantic import Secret
+
 from middlewared.api import api_method
+from middlewared.api.base import NotRequired
 from middlewared.api.base.handler.accept import validate_model
 from middlewared.api.current import (
     PoolDatasetChangeKeyArgs,
+    PoolDatasetChangeKeyOptions,
     PoolDatasetChangeKeyResult,
+    PoolDatasetEncryptionSummary,
     PoolDatasetEncryptionSummaryArgs,
+    PoolDatasetEncryptionSummaryOptions,
     PoolDatasetEncryptionSummaryResult,
     PoolDatasetExportKeyArgs,
     PoolDatasetExportKeyResult,
@@ -16,8 +26,11 @@ from middlewared.api.current import (
     PoolDatasetInsertOrUpdateEncryptedRecordArgs,
     PoolDatasetInsertOrUpdateEncryptedRecordResult,
     PoolDatasetLockArgs,
+    PoolDatasetLockOptions,
     PoolDatasetLockResult,
+    PoolDatasetUnlock,
     PoolDatasetUnlockArgs,
+    PoolDatasetUnlockOptions,
     PoolDatasetUnlockResult,
     ZFSResourceEncryptionChangeKeyArgsData,
     ZFSResourceEncryptionExportKeyArgsData,
@@ -37,6 +50,9 @@ from middlewared.plugins.zfs.encryption_job_locks import (
 )
 from middlewared.service import Service, job, private
 
+if TYPE_CHECKING:
+    from middlewared.job import Job
+
 
 class PoolDatasetService(Service):
     class Config:
@@ -48,9 +64,10 @@ class PoolDatasetService(Service):
         roles=["DATASET_WRITE"],
         audit="Pool dataset lock",
         audit_extended=lambda id_, options=None: id_,
+        check_annotations=True,
     )
     @job(lock=DATASET_ENCRYPTION_LOCK)
-    def lock(self, job, id_, options):
+    def lock(self, job: Job, id_: str, options: PoolDatasetLockOptions) -> Literal[True]:
         """
         Locks ``id`` dataset. It will unmount the dataset and its children before locking.
 
@@ -62,7 +79,7 @@ class PoolDatasetService(Service):
             self.s.zfs.resource.encryption.lock_impl,
             validate_model(
                 ZFSResourceEncryptionLockArgsData,
-                {"path": id_, "force_unmount": options["force_umount"]},
+                {"path": id_, "force_unmount": options.force_umount},
                 dump_models=False,
             ),
         )
@@ -74,9 +91,10 @@ class PoolDatasetService(Service):
         roles=["DATASET_WRITE"],
         audit="Pool dataset unlock",
         audit_extended=lambda id_, options=None: id_,
+        check_annotations=True,
     )
     @job(lock=lambda args: dataset_encryption_unlock_lock(args[0]), pipes=["input"], check_pipes=False)
-    def unlock(self, job, id_, options):
+    def unlock(self, job: Job, id_: str, options: PoolDatasetUnlockOptions) -> PoolDatasetUnlock:
         """
         Unlock dataset ``id`` (and its children if ``unlock_options.recursive`` is ``true``).
 
@@ -93,37 +111,41 @@ class PoolDatasetService(Service):
         2. Specify a key or a passphrase for each unlocked dataset using ``unlock_options.datasets``.
         """
         keys = []
-        for ds in options["datasets"]:
+        for ds in options.datasets:
             keys.append(
                 {
-                    "path": ds["name"],
-                    "key": ds.get("key"),
-                    "passphrase": ds.get("passphrase"),
-                    "force": ds["force"],
-                    "recursive": ds["recursive"],
+                    "path": ds.name,
+                    "key": None if ds.key is NotRequired else ds.key,
+                    "passphrase": None if ds.passphrase is NotRequired else ds.passphrase,
+                    "force": ds.force,
+                    "recursive": ds.recursive,
                 }
             )
         data = validate_model(
             ZFSResourceEncryptionUnlockArgsData,
             {
                 "path": id_,
-                "recursive": options["recursive"],
-                "force": options["force"],
-                "key_file": options["key_file"],
-                "start_attachments": options["toggle_attachments"],
+                "recursive": options.recursive,
+                "force": options.force,
+                "key_file": options.key_file,
+                "start_attachments": options.toggle_attachments,
                 "keys": keys,
             },
             dump_models=False,
         )
-        return self.call_sync2(self.s.zfs.resource.encryption.unlock_impl, job, data).model_dump()
+        result = self.call_sync2(self.s.zfs.resource.encryption.unlock_impl, job, data)
+        return PoolDatasetUnlock(**result.model_dump())
 
     @api_method(
         PoolDatasetEncryptionSummaryArgs,
         PoolDatasetEncryptionSummaryResult,
         roles=["DATASET_READ"],
+        check_annotations=True,
     )
     @job(lock=lambda args: dataset_encryption_unlock_summary_lock(args[0]), pipes=["input"], check_pipes=False)
-    def encryption_summary(self, job, id_, options):
+    def encryption_summary(
+        self, job: Job, id_: str, options: PoolDatasetEncryptionSummaryOptions
+    ) -> list[PoolDatasetEncryptionSummary]:
         """
         Retrieve summary of all encrypted roots under ``id``.
 
@@ -171,27 +193,33 @@ class PoolDatasetService(Service):
             ]
         """
         keys = []
-        for ds in options["datasets"]:
+        for ds in options.datasets:
             keys.append(
                 {
-                    "path": ds["name"],
-                    "key": ds.get("key"),
-                    "passphrase": ds.get("passphrase"),
-                    "force": ds["force"],
+                    "path": ds.name,
+                    "key": None if ds.key is NotRequired else ds.key,
+                    "passphrase": None if ds.passphrase is NotRequired else ds.passphrase,
+                    "force": ds.force,
                 }
             )
         data = validate_model(
             ZFSResourceEncryptionUnlockSummaryArgsData,
-            {"path": id_, "force": options["force"], "key_file": options["key_file"], "keys": keys},
+            {"path": id_, "force": options.force, "key_file": options.key_file, "keys": keys},
             dump_models=False,
         )
         results = []
         for entry in self.call_sync2(self.s.zfs.resource.encryption.unlock_summary_impl, job, data):
-            result = entry.model_dump()
-            row = {"name": result.pop("path")}
-            row.update(result)
-            row["key_format"] = result["key_format"].upper()
-            results.append(row)
+            results.append(
+                PoolDatasetEncryptionSummary(
+                    name=entry.path,
+                    key_format=entry.key_format.upper(),
+                    key_present_in_database=entry.key_present_in_database,
+                    valid_key=entry.valid_key,
+                    locked=entry.locked,
+                    unlock_error=entry.unlock_error,
+                    unlock_successful=entry.unlock_successful,
+                )
+            )
         return results
 
     @api_method(
@@ -200,9 +228,10 @@ class PoolDatasetService(Service):
         roles=["DATASET_WRITE", "REPLICATION_TASK_WRITE"],
         audit="Pool dataset export keys",
         audit_extended=lambda id_: id_,
+        check_annotations=True,
     )
     @job(lock=DATASET_ENCRYPTION_EXPORT_KEYS_LOCK, pipes=["output"])
-    def export_keys(self, job, id_):
+    def export_keys(self, job: Job, id_: str) -> None:
         """
         Export keys for ``id`` and its children which are stored in the system. The exported file is a JSON file
         which has a dictionary containing dataset names as keys and their keys as the value.
@@ -221,9 +250,10 @@ class PoolDatasetService(Service):
         roles=["DATASET_WRITE", "REPLICATION_TASK_WRITE"],
         audit="Pool dataset export keys for replication",
         audit_extended=lambda task_id: task_id,
+        check_annotations=True,
     )
     @job(pipes=["output"])
-    def export_keys_for_replication(self, job, task_id):
+    def export_keys_for_replication(self, job: Job, task_id: int) -> None:
         """
         Export keys for replication task ``id`` for source dataset(s) which are stored in the system. The exported file
         is a JSON file which has a dictionary containing dataset names as keys and their keys as the value.
@@ -242,22 +272,24 @@ class PoolDatasetService(Service):
         roles=["DATASET_WRITE"],
         audit="Pool dataset export key",
         audit_extended=lambda id_, download=False: id_,
+        check_annotations=True,
     )
     @job(lock=DATASET_ENCRYPTION_EXPORT_KEYS_LOCK, pipes=["output"], check_pipes=False)
-    def export_key(self, job, id_, download):
+    def export_key(self, job: Job, id_: str, download: bool) -> Secret[str | None]:
         """
         Export own encryption key for dataset ``id``. If ``download`` is ``true``, key will be downloaded in a json file
         where the same file can be used to unlock the dataset, otherwise it will be returned as string.
 
         Please refer to websocket documentation for downloading the file.
         """
-        return self.call_sync2(
+        key = self.call_sync2(
             self.s.zfs.resource.encryption.export_key_impl,
             job,
             validate_model(
                 ZFSResourceEncryptionExportKeyArgsData, {"path": id_, "download": download}, dump_models=False
             ),
         )
+        return Secret[str | None](key)
 
     @api_method(
         PoolDatasetChangeKeyArgs,
@@ -265,9 +297,10 @@ class PoolDatasetService(Service):
         roles=["DATASET_WRITE"],
         audit="Pool dataset change key",
         audit_extended=lambda id_, options=None: id_,
+        check_annotations=True,
     )
     @job(lock=lambda args: dataset_encryption_change_key_lock(args[0]), pipes=["input"], check_pipes=False)
-    def change_key(self, job, id_, options):
+    def change_key(self, job: Job, id_: str, options: PoolDatasetChangeKeyOptions) -> None:
         """
         Change encryption properties for the ``id`` encrypted dataset.
 
@@ -283,11 +316,11 @@ class PoolDatasetService(Service):
                 ZFSResourceEncryptionChangeKeyArgsData,
                 {
                     "path": id_,
-                    "generate_key": options["generate_key"],
-                    "key_file": options["key_file"],
-                    "pbkdf2iters": options["pbkdf2iters"],
-                    "passphrase": options["passphrase"],
-                    "key": options["key"],
+                    "generate_key": options.generate_key,
+                    "key_file": options.key_file,
+                    "pbkdf2iters": options.pbkdf2iters,
+                    "passphrase": options.passphrase,
+                    "key": options.key,
                 },
                 dump_models=False,
             ),
@@ -299,8 +332,9 @@ class PoolDatasetService(Service):
         roles=["DATASET_WRITE"],
         audit="Pool dataset inherit parent encryption properties",
         audit_extended=lambda id_: id_,
+        check_annotations=True,
     )
-    def inherit_parent_encryption_properties(self, id_):
+    def inherit_parent_encryption_properties(self, id_: str) -> None:
         """
         Allows inheriting parent's encryption root discarding its current encryption settings. This
         can only be done where ``id`` has an encrypted parent and ``id`` itself is an encryption root.
@@ -316,9 +350,8 @@ class PoolDatasetService(Service):
         PoolDatasetInsertOrUpdateEncryptedRecordArgs,
         PoolDatasetInsertOrUpdateEncryptedRecordResult,
         roles=["DATASET_WRITE"],
+        check_annotations=True,
     )
-    def insert_or_update_encrypted_record(self, data):
-        key_format = data["key_format"].lower() if data["key_format"] else None
-        return self.call_sync2(
-            self.s.zfs.resource.encryption.store_key, data["name"], data["encryption_key"], key_format
-        )
+    def insert_or_update_encrypted_record(self, data: PoolDatasetInsertOrUpdateEncryptedRecordArgs) -> int | None:
+        key_format = data.key_format.lower() if data.key_format else None
+        return self.call_sync2(self.s.zfs.resource.encryption.store_key, data.name, data.encryption_key, key_format)
