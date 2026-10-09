@@ -38,6 +38,11 @@
 		opt in ssh_config.options for opt in ('KbdInteractiveAuthentication', 'ChallengeResponseAuthentication')
 	)
 
+	# The `password` method cannot send a one-time code, so it always fails when 2FA is enabled for SSH.
+	# That failed attempt also makes sshd reject a correct keyboard-interactive login on the same connection.
+	twofactor_auth = middleware.call_sync('auth.twofactor.config')
+	password_method = 'no' if twofactor_auth['enabled'] and twofactor_auth['services']['ssh'] else 'yes'
+
 	users = middleware.call_sync('user.query', [['local', '=', True]])
 	root_user = filter_list(users, [['username', '=', 'root']], {'get': True})
 	login_banner = render_ctx['system.advanced.login_banner']
@@ -102,12 +107,12 @@ SetEnv LC_ALL=C.UTF-8
 % if ssh_config.passwordauth:
 % for user in filter_list(users, [['ssh_password_enabled', '=', True]]):
 Match User "${user['username']}"
-	PasswordAuthentication yes
+	PasswordAuthentication ${password_method}
 	KbdInteractiveAuthentication yes
 % endfor
 % for group in ssh_config.password_login_groups:
 Match Group "${group}"
-	PasswordAuthentication yes
+	PasswordAuthentication ${password_method}
 	KbdInteractiveAuthentication yes
 % endfor
 % endif
