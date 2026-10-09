@@ -232,6 +232,16 @@ def test_restore_via_synchronize(setup_smb_share):
         acl = call('sharing.smb.getacl', {'share_name': setup_smb_share['name']})
         assert acl['share_acl'][0]['ae_who_sid'] == sid
 
+        # smb.sharesec.entries above created the file before anything stored an ACL in
+        # it. smbd deletes every record from a share_info.tdb that has no INFO/version
+        # when it starts, so the key must be there and the ACL must survive a restart.
+        assert 'INFO/version' in ssh('tdbdump /var/lib/truenas-samba/share_info.tdb')
+
+        call('service.control', 'RESTART', 'cifs', job=True)
+
+        acl = call('sharing.smb.getacl', {'share_name': setup_smb_share['name']})
+        assert acl['share_acl'][0]['ae_who_sid'] == sid
+
 
 @pytest.fixture(scope="module")
 def legacy_acl_share():
