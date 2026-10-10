@@ -127,8 +127,15 @@ class ConnectionOrigin:
     def is_ha_connection(self) -> bool:
         return (
             self.family in (AF_INET, AF_INET6) and
-            self.rem_port and self.rem_port <= 1024 and
-            self.rem_addr and self.rem_addr in HA_HEARTBEAT_IPS
+            self.rem_port is not None and self.rem_port <= 1024 and
+            self.rem_addr in HA_HEARTBEAT_IPS and
+            # The peer picks its own source address and port, so also require
+            # that the connection terminated on our heartbeat listener. That
+            # listener is only bound on HA hardware and nginx never proxies to
+            # it, so nothing arriving on a UI address can qualify.
+            self.loc_port == 6000 and self.loc_addr in HA_HEARTBEAT_IPS and
+            # and that it came from the other controller, not from this one.
+            self.loc_addr != self.rem_addr
         )
 
     @property
