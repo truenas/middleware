@@ -57,6 +57,7 @@ from middlewared.service_exception import CallError, InstanceNotFound, Validatio
 from middlewared.utils import BOOTREADY, MIDDLEWARE_STARTED_SENTINEL_PATH
 from middlewared.utils.debug import get_frame_details, get_threads_stacks
 from middlewared.utils.filter_list import filter_list
+from middlewared.utils.privilege import app_can_see_secrets
 
 from .compound_service import CompoundService
 from .config_service import ConfigService
@@ -159,14 +160,17 @@ class CoreService(Service):
 
         raw_result_default = False if app else True
 
+        raw_result = options['extra'].get('raw_result', raw_result_default)
+        if raw_result and not app_can_see_secrets(app, role_prefix=None):
+            raise CallError('Unredacted job results require full administrative privileges.', errno.EPERM)
+
         if app:
             jobs = list(self.middleware.jobs.for_credential(app.authenticated_credentials, JobAccess.READ).values())
         else:
             jobs = list(self.middleware.jobs.all().values())
 
-        raw_result = options['extra'].get('raw_result', raw_result_default)
         jobs = filter_list([
-            i.__encode__(raw_result) for i in jobs
+            i.__encode__(raw_result, app) for i in jobs
         ], filters, options)
         return jobs
 
@@ -196,7 +200,8 @@ class CoreService(Service):
         """
         target_job = self.__job_by_credential_and_id(job.credentials, id_, JobAccess.READ)
 
-        return await job.wrap(target_job)
+        result = await job.wrap(target_job)
+        return self.middleware.dump_result(target_job.serviceobj, target_job.method, job.app, result)
 
     @private
     def job_update(self, id_, data):
@@ -719,7 +724,7 @@ class CoreService(Service):
                 if isinstance(msg, Job):
                     b_job = msg
                     status["job_id"] = b_job.id
-                    status["result"] = await msg.wait()
+                    status["result"] = self.middleware.dump_result(serviceobj, methodobj, app, await msg.wait())
                     status["error"] = b_job.error
                 else:
                     status["result"] = self.middleware.dump_result(serviceobj, methodobj, app, msg)

@@ -355,7 +355,8 @@ def check_model_module(model: type[BaseModel], private: bool) -> None:
 
     # CRUDService and ConfigService dynamically generate models.
     if module_name in (
-        "middlewared.plugins.test.pipes", "middlewared.service.crud_service", "middlewared.service.config_service"
+        "middlewared.plugins.test.pipes", "middlewared.plugins.test.secret", "middlewared.service.crud_service",
+        "middlewared.service.config_service"
     ):
         return
 

@@ -80,6 +80,29 @@ def app_credential_full_admin_or_user(
     return credential_full_admin_or_user(app.authenticated_credentials, username)
 
 
+def app_can_see_secrets(app: App | None, role_prefix: str | None) -> bool:
+    """Whether `app` may see unredacted `Secret` values in the result of a method call.
+
+    :param app: app that receives the result, or `None` for an internal call.
+    :param role_prefix: `role_prefix` of the service that produced the result, from its `Config`.
+    """
+
+    if app is None or app.authenticated_credentials is None:
+        # Internal call
+        return True
+
+    if not app.authenticated_credentials.is_user_session:
+        return True
+
+    if credential_has_full_admin(app.authenticated_credentials):
+        return True
+
+    if role_prefix:
+        return app.authenticated_credentials.has_role(f'{role_prefix}_WRITE')
+
+    return False
+
+
 def privileges_group_mapping(
     privileges: list[dict[str, Any]],
     group_ids: list[int],
