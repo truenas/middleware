@@ -271,8 +271,7 @@ class ZFSResourceService(Service):
         roles=["ZFS_RESOURCE_READ"],
         check_annotations=True,
     )
-    # TODO: make this sync, running the delegate coroutines through context.run_coroutine like set and destroy
-    async def attachments(self, path: str) -> builtins.list[PoolAttachment]:
+    def attachments(self, path: str) -> builtins.list[PoolAttachment]:
         """
         Retrieve the shares, tasks and services that depend on the ZFS resource named by ``path``.
 
@@ -289,11 +288,11 @@ class ZFSResourceService(Service):
                 "params": ["tank/work"]
             }
         """
-        return await _attachments.attachments(self.context, path)
+        return _attachments.attachments(self.context, path)
 
     @private
-    async def kill_processes(self, oid: str, control_services: bool, max_tries: int = 5) -> None:
-        await _processes.kill_processes(self.context, oid, control_services, max_tries)
+    def kill_processes(self, oid: str, control_services: bool, max_tries: int = 5) -> None:
+        _processes.kill_processes(self.context, oid, control_services, max_tries)
 
     @private
     def processes_using_paths(
@@ -306,26 +305,26 @@ class ZFSResourceService(Service):
         return _processes.processes_using_paths(self.context, paths, include_paths, include_middleware, devices)
 
     @private
-    async def register_attachment_delegate(self, delegate: FSAttachmentDelegate[Any]) -> None:
+    def register_attachment_delegate(self, delegate: FSAttachmentDelegate[Any]) -> None:
         _attachments.register(delegate)
 
     @private
-    async def attachment_delegates_for_start(self) -> builtins.list[FSAttachmentDelegate[Any]]:
+    def attachment_delegates_for_start(self) -> builtins.list[FSAttachmentDelegate[Any]]:
         return _attachments.for_start()
 
     @private
-    async def attachment_delegates_for_stop(self) -> builtins.list[FSAttachmentDelegate[Any]]:
+    def attachment_delegates_for_stop(self) -> builtins.list[FSAttachmentDelegate[Any]]:
         return _attachments.for_stop()
 
     @private
-    async def stop_attachment_delegates(self, path: str | None) -> None:
-        await _attachments.stop(path)
+    def stop_attachment_delegates(self, path: str | None) -> None:
+        self.context.run_coroutine(_attachments.stop(path))
 
     @private
-    async def attachments_with_path(
+    def attachments_with_path(
         self, path: str | None, check_parent: bool = False, exact_match: bool = False
     ) -> builtins.list[dict[str, Any]]:
-        return await _attachments.attachments_with_path(self.context, path, check_parent, exact_match)
+        return _attachments.attachments_with_path(self.context, path, check_parent, exact_match)
 
     @private
     def unlocked_zvols_fast(

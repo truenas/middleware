@@ -43,29 +43,33 @@ async def stop(path: str | None) -> None:
         await asyncio.gather(*(_stop(d, path) for d in group))
 
 
-async def attachments_with_path(
-    context: ServiceContext, path: str | None, check_parent: bool = False, exact_match: bool = False
-) -> list[dict[str, Any]]:
+async def _attachments_for(path: str, options: dict[str, Any]) -> list[dict[str, Any]]:
     result: list[dict[str, Any]] = []
-    if isinstance(path, str) and not path.startswith("/mnt/"):
-        context.logger.warning("%s: unexpected path not located within pool mountpoint", path)
-    if not path:
-        return result
-    options = {"check_parent": check_parent, "exact_match": exact_match}
     for delegate in DELEGATES:
         if names := [await delegate.get_attachment_name(a) for a in await delegate.query(path, True, options)]:
             result.append({"type": delegate.title, "service": delegate.service, "attachments": names})
     return result
 
 
-async def attachments(context: ServiceContext, path: str) -> list[PoolAttachment]:
+def attachments_with_path(
+    context: ServiceContext, path: str | None, check_parent: bool = False, exact_match: bool = False
+) -> list[dict[str, Any]]:
+    if isinstance(path, str) and not path.startswith("/mnt/"):
+        context.logger.warning("%s: unexpected path not located within pool mountpoint", path)
+    if not path:
+        return []
+    options = {"check_parent": check_parent, "exact_match": exact_match}
+    return context.run_coroutine(_attachments_for(path, options))
+
+
+def attachments(context: ServiceContext, path: str) -> list[PoolAttachment]:
     rows: list[dict[str, Any]] = []
     if not has_internal_path(path):
-        rows = await context.call2(
+        rows = context.call_sync2(
             context.s.zfs.resource.list_impl, ZFSResourceQuery(paths=[path], properties=["mountpoint"])
         )
     if not rows:
         raise ValidationError("zfs.resource.attachments.path", f"{path!r} does not exist", errno.ENOENT)
     if (mountpoint := resource_mountpoint(rows[0])) is None:
         return []
-    return [PoolAttachment(**entry) for entry in await attachments_with_path(context, mountpoint)]
+    return [PoolAttachment(**entry) for entry in attachments_with_path(context, mountpoint)]

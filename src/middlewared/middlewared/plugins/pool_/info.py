@@ -72,7 +72,7 @@ class PoolService(Service):
         Returns a list of running processes using this pool.
         """
         pool = await self.middleware.call('pool.get_instance', oid)
-        return await processes_using_dataset_tree(self.context, pool['name'])
+        return await self.context.to_thread(processes_using_dataset_tree, self.context, pool['name'])
 
     @api_method(
         PoolGetDisksArgs,

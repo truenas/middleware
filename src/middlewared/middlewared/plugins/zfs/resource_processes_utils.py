@@ -92,7 +92,7 @@ def pool_scan_targets(name: str) -> tuple[list[int], list[str]]:
     return devices, paths
 
 
-async def processes_using_dataset_tree(ctx: ServiceContext, name: str) -> list[dict[str, Any]]:
+def processes_using_dataset_tree(ctx: ServiceContext, name: str) -> list[dict[str, Any]]:
     """Find processes with open files on a dataset or on any dataset beneath it.
 
     Matching open files by the device id of a single mountpoint is not enough: every
@@ -112,5 +112,5 @@ async def processes_using_dataset_tree(ctx: ServiceContext, name: str) -> list[d
     Returns:
         Processes with open files on any of them
     """
-    devices, paths = await ctx.to_thread(pool_scan_targets, name)
-    return await ctx.call2(ctx.s.zfs.resource.processes_using_paths, paths, devices=devices)
+    devices, paths = pool_scan_targets(name)
+    return ctx.call_sync2(ctx.s.zfs.resource.processes_using_paths, paths, devices=devices)
