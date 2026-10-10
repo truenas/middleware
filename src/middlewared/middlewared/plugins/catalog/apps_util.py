@@ -2,6 +2,7 @@ import errno
 import json
 import os
 import re
+from copy import deepcopy
 from typing import Any
 
 from apps_ci.names import CACHED_VERSION_FILE_NAME
@@ -16,6 +17,39 @@ from middlewared.service import CallError
 from middlewared.utils import sw_info
 
 RE_VERSION_PATTERN = re.compile(r'(\d{2}\.\d{1,2}(?:\.\d+)*)')  # We are only interested in XX.XX or XX.X here
+
+IMAGE_OVERRIDE_QUESTION = {
+    'variable': 'image_overrides',
+    'label': 'Image overrides',
+    'description': 'Optional per-image registry, repository, tag, or digest overrides.',
+    'schema': {
+        'type': 'list',
+        'default': [],
+        'items': [{
+            'variable': 'override',
+            'schema': {
+                'type': 'dict',
+                'attrs': [
+                    {'variable': 'selector', 'label': 'Image selector', 'schema': {'type': 'string'}},
+                    {'variable': 'registry', 'label': 'Registry', 'schema': {'type': 'string', 'default': ''}},
+                    {'variable': 'repository', 'label': 'Repository', 'schema': {'type': 'string', 'default': ''}},
+                    {'variable': 'tag', 'label': 'Tag', 'schema': {'type': 'string', 'default': ''}},
+                    {'variable': 'digest', 'label': 'Digest', 'schema': {'type': 'string', 'default': ''}},
+                ],
+            },
+        }],
+    },
+}
+
+
+def add_framework_questions(version_details: dict[str, Any]) -> dict[str, Any]:
+    """Expose framework-owned settings without changing catalog app files."""
+    schema = version_details.get('schema')
+    if isinstance(schema, dict):
+        questions = schema.setdefault('questions', [])
+        if not any(q.get('variable') == 'image_overrides' for q in questions):
+            questions.append(deepcopy(IMAGE_OVERRIDE_QUESTION))
+    return version_details
 
 
 def get_app_default_values(version_details: dict[str, Any]) -> dict[str, Any]:
@@ -87,9 +121,10 @@ def minimum_scale_version_check_update(version_details: dict[str, Any]) -> dict[
 
 
 def get_app_version_details(version_path: str, questions_context: dict[str, Any]) -> dict[str, Any]:
-    return minimum_scale_version_check_update(get_catalog_app_version_details(version_path, questions_context, {
+    details = get_catalog_app_version_details(version_path, questions_context, {
         'default_values_callable': get_app_default_values,
-    }))
+    })
+    return minimum_scale_version_check_update(add_framework_questions(details))
 
 
 def get_app_details(app_location: str, app_data: dict[str, Any], questions_context: dict[str, Any]) -> dict[str, Any]:
@@ -107,6 +142,7 @@ def get_app_details(app_location: str, app_data: dict[str, Any], questions_conte
             'values': get_app_default_values(version_data),
         })
         normalize_questions(version_data, questions_context)
+        add_framework_questions(version_data)
 
     return app_data
 

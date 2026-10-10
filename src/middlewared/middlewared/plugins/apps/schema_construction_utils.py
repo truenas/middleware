@@ -240,6 +240,35 @@ def generate_pydantic_model(
     """
     Generate a Pydantic model from a list of dictionary attributes.
     """
+    # Image overrides are a framework capability, rather than an app-specific
+    # question.  Keep the field in the normalized app config so the renderer
+    # can apply it to any catalog image while preserving catalog defaults.
+    # The API/UI layer should expose the same field with a documented schema.
+    if model_name in {'app_create', 'app_update'} and not any(
+        attr.get('variable') == 'image_overrides' for attr in dict_attrs
+    ):
+        dict_attrs = [*dict_attrs, {
+            'variable': 'image_overrides',
+            'label': 'Image overrides',
+            'description': 'Optional per-image registry, repository, tag, or digest overrides.',
+            'schema': {
+                'type': 'list',
+                'default': [],
+                'items': [{
+                    'variable': 'override',
+                    'schema': {
+                        'type': 'dict',
+                        'attrs': [
+                            {'variable': 'selector', 'schema': {'type': 'string'}},
+                            {'variable': 'registry', 'schema': {'type': 'string', 'default': ''}},
+                            {'variable': 'repository', 'schema': {'type': 'string', 'default': ''}},
+                            {'variable': 'tag', 'schema': {'type': 'string', 'default': ''}},
+                            {'variable': 'digest', 'schema': {'type': 'string', 'default': ''}},
+                        ],
+                    },
+                }],
+            },
+        }]
     fields: dict[str, Any] = {}
     nested_models: dict[str, Any] = {}
     show_if_attrs: dict[str, Any] = {}
