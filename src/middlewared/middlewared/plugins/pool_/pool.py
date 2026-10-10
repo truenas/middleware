@@ -18,6 +18,7 @@ from middlewared.api.current import (
     PoolValidateNameResult,
     ZFSResourceSetArgsData,
 )
+from middlewared.plugins.zfs.encryption_keys import resolve_key_options
 from middlewared.plugins.zfs_.validation_utils import validate_pool_name
 from middlewared.service import CallError, CRUDService, ValidationErrors, job, private
 import middlewared.sqlalchemy as sa
@@ -555,11 +556,9 @@ class PoolService(CRUDService):
         elif not validate_pool_name(data['name']):
             verrors.add('pool_create.name', 'Invalid pool name', errno.EINVAL)
 
-        encryption_dict = await self.middleware.call(
-            'pool.dataset.validate_encryption_data', None, verrors, {
-                'enabled': data.pop('encryption'), **data.pop('encryption_options'), 'key_file': False,
-            }, 'pool_create.encryption_options',
-        )
+        encryption_dict = resolve_key_options(verrors, {
+            'enabled': data.pop('encryption'), **data.pop('encryption_options'), 'key_file': False,
+        }, 'pool_create.encryption_options')
 
         dedup_table_quota_value = None
         if data['deduplication'] == 'ON':
@@ -680,12 +679,15 @@ class PoolService(CRUDService):
                 {'prefix': 'vol_'},
             )
 
+            key_format = encryption_dict.get('keyformat')
+            if key_format is not None:
+                key_format = key_format.upper()
             encrypted_dataset_data = {
-                'name': data['name'], 'encryption_key': encryption_dict.get('key'),
-                'key_format': encryption_dict.get('keyformat')
+                'name': data['name'], 'encryption_key': encryption_dict.get('key'), 'key_format': key_format,
             }
-            encrypted_dataset_pk = await self.middleware.call(
-                'pool.dataset.insert_or_update_encrypted_record', encrypted_dataset_data
+            encrypted_dataset_pk = await self.call2(
+                self.s.zfs.resource.encryption.store_key,
+                data['name'], encryption_dict.get('key'), encryption_dict.get('keyformat'),
             )
             await self.middleware.call('datastore.insert', 'storage.scrub', {'volume': pool_id}, {'prefix': 'scrub_'})
         except Exception as e:
@@ -699,9 +701,7 @@ class PoolService(CRUDService):
             if pool_id:
                 await self.middleware.call('datastore.delete', 'storage.volume', pool_id)
             if encrypted_dataset_pk:
-                await self.middleware.call(
-                    'pool.dataset.delete_encrypted_datasets_from_db', [['id', '=', encrypted_dataset_pk]]
-                )
+                await self.call2(self.s.zfs.resource.encryption.delete_keys, [['id', '=', encrypted_dataset_pk]])
             raise e
 
         # There is really no point in waiting all these services to reload so do them

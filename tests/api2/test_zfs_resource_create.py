@@ -313,6 +313,7 @@ def test_zfs_resource_create_encryption_root_with_key():
         assert props["keyformat"]["raw"] == "hex", props
         assert props["keystatus"]["raw"] == "available", props
         assert call("pool.dataset.export_key", path, job=True) == key
+        assert call("zfs.resource.encryption.export_key", {"path": path}, job=True) == key
 
 
 def test_zfs_resource_create_encryption_root_generate_key():

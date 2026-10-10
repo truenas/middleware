@@ -219,8 +219,8 @@ async def zfs_events(middleware, event: ZfsEvent):
 
             middleware.send_event('pool.dataset.query', 'REMOVED', id=ds_id)
 
-            await middleware.call(
-                'pool.dataset.delete_encrypted_datasets_from_db', [
+            await middleware.call2(
+                middleware.services.zfs.resource.encryption.delete_keys, [
                     ['OR', [['name', '=', event.history_dsname], ['name', '^', f'{event.history_dsname}/']]]
                 ]
             )

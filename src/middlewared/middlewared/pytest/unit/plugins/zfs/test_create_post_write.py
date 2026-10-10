@@ -76,7 +76,7 @@ def test_create_stores_the_key_and_keeps_the_leaf_when_mount_fails(monkeypatch):
     stand = Stand([row("tank", readonly="off", **fs)], monkeypatch)
     stand.mount.side_effect = RuntimeError("sentinel failure")
     record = Mock()
-    stand.middleware["pool.dataset.insert_or_update_encrypted_record"] = record
+    stand.middleware.services.zfs.resource.encryption.store_key = record
     with pytest.raises(CallError) as exc_info:
         stand.create(request(path="tank/enc", encryption={"generate_key": True}))
     assert "'tank/enc'" in exc_info.value.errmsg

@@ -22,6 +22,7 @@ from middlewared.api.current import (
     ZFSResourceRenameArgsData,
     ZFSResourceSetArgsData,
 )
+from middlewared.plugins.zfs.encryption_info import is_internal_dataset_name
 from middlewared.plugins.zfs.share_presets import SHARE_PRESETS
 from middlewared.plugins.zfs.utils import has_internal_path
 from middlewared.service import (
@@ -33,11 +34,10 @@ from middlewared.service import (
     filterable_api_method,
     private,
 )
-import middlewared.sqlalchemy as sa
 from middlewared.utils.boot.pool import BOOT_POOL_NAME_VALID
 from middlewared.utils.filter_list import filter_list
 
-from .dataset_query_utils import generic_query, is_internal_dataset_name, user_property_names_to_be_renamed
+from .dataset_query_utils import generic_query, user_property_names_to_be_renamed
 from .utils import (
     POOL_DS_CREATE_PROPERTIES,
     POOL_DS_UPDATE_PROPERTIES,
@@ -72,15 +72,6 @@ def validate_user_properties(verrors, schema, user_properties):
             verrors.add(prop_schema, f'{key!r} is specified more than once.')
         else:
             seen.add(key)
-
-
-class PoolDatasetEncryptionModel(sa.Model):
-    __tablename__ = 'storage_encrypteddataset'
-
-    id = sa.Column(sa.Integer(), primary_key=True)
-    name = sa.Column(sa.String(255))
-    encryption_key = sa.Column(sa.EncryptedText(), nullable=True)
-    kmip_uid = sa.Column(sa.String(255), nullable=True, default=None)
 
 
 def _native_value(prop, value):

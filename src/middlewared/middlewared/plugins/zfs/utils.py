@@ -5,7 +5,7 @@ from dataclasses import dataclass
 import errno
 import os
 import pathlib
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any
 
 import truenas_pylibzfs
 
@@ -15,11 +15,12 @@ from middlewared.utils.boot.pool import BOOT_POOL_NAME_VALID
 from .exceptions import ZFSPathNotFoundException, ZFSPathNotProvidedException
 
 if TYPE_CHECKING:
-    from middlewared.api.current import ZfsTierEntry
+    from middlewared.api.current import ZFSResourceEncryptionKeyFormat, ZfsTierEntry
     from middlewared.main import Middleware
     from middlewared.service import ServiceContext
 
 __all__ = (
+    "ancestor_chain",
     "get_encryption_info",
     "group_paths_by_parents",
     "has_internal_path",
@@ -30,6 +31,7 @@ __all__ = (
     "reject_protected_path",
     "reject_snapshot_path",
     "resource_mountpoint",
+    "secret_value",
     "special_vdev_thresholds",
 )
 
@@ -45,7 +47,7 @@ INTERNAL_PATHS = (
 class EncryptionInfo:
     encrypted: bool = False
     """Whether the zfs resource is encrypted"""
-    encryption_type: Literal[None, "raw", "hex", "passphrase"] = None
+    encryption_type: ZFSResourceEncryptionKeyFormat | None = None
     """Controls what format the user's encryption key will be provided as.
     NOTE: This property is only set when the dataset is encrypted."""
     locked: bool = False
@@ -88,6 +90,16 @@ def resource_mountpoint(row: dict[str, Any]) -> str | None:
         # not mounted, but shares, tasks and mounted descendants can still sit under its default path
         return os.path.join("/mnt", row["name"])
     return mountpoint
+
+
+def ancestor_chain(path: str) -> list[str]:
+    """Return the ancestors of `path` ordered nearest first."""
+    return [i.as_posix() for i in pathlib.PurePosixPath(path).parents if i.as_posix() != "."]
+
+
+def secret_value(value: Any) -> str | None:
+    # an unset Secret field holds Secret(None), not None
+    return value.get_secret_value() if value else None
 
 
 def get_encryption_info(data: dict[str, dict[str, Any]]) -> EncryptionInfo:

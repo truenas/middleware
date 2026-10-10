@@ -16,6 +16,8 @@ import time
 import traceback
 import typing
 
+from pydantic import Secret
+
 from middlewared.pipe import Pipes
 from middlewared.service_exception import CallError, ValidationError, ValidationErrors, adapt_exception
 from middlewared.utils.asyncio_ import ThreadsafeTimer
@@ -659,6 +661,10 @@ class Job[T = typing.Any]:
         else:
             rv = await self.middleware.run_in_thread(self.method, *args)
 
+        # The finished-job event sends the raw result to the caller and cannot serialize a Secret;
+        # masking for job listings and debugs is applied from the result model instead.
+        if isinstance(rv, Secret):
+            rv = rv.get_secret_value()
         self.set_result(rv)
         self.set_state('SUCCESS')
         if self.progress['percent'] != 100:

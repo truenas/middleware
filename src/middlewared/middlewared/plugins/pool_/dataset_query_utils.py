@@ -5,30 +5,16 @@ from typing import TypeAlias
 import truenas_pyfilter as _tf
 import truenas_pylibzfs
 
-from middlewared.plugins.container.utils import CONTAINER_DS_NAME
+from middlewared.plugins.zfs.encryption_info import is_internal_dataset_name
 from middlewared.plugins.zfs.tier import get_dataset_tier_info_cached
 from middlewared.plugins.zfs_.utils import TNUserProp
 from middlewared.service_exception import MatchNotFound
-from middlewared.utils.boot.pool import BOOT_POOL_NAME_VALID
 from middlewared.utils.filter_list import compile_filters, compile_options
 from middlewared.utils.size import format_size
 
 __all__ = ("generic_query",)
 
 
-INTERNAL_DATASETS = (
-    ".system",
-    "ix-applications",
-    "ix-apps",
-    CONTAINER_DS_NAME,
-)
-"""
-Tuple of internal dataset name patterns that should be filtered out by default.
-
-These patterns represent system-managed datasets that are typically hidden
-from user interfaces. Used by is_internal_dataset() to perform efficient
-string prefix matching.
-"""
 # String type annotations to prevent github CI
 # from exploding since truenas_pylibzfs module
 # isn't installed
@@ -130,7 +116,7 @@ class QueryFiltersCallbackState:
     """the count of objects if count_only == True"""
     exclude_internal_datasets: bool = True
     """Flag to control whether internal datasets should be filtered out.
-    When True, system datasets matching INTERNAL_DATASETS patterns and boot
+    When True, system datasets matching internal dataset patterns and boot
     pools will be excluded from query results. Allows for flexible control
     over when system datasets should be included in results."""
     tier_enabled: bool = False
@@ -872,7 +858,7 @@ def is_internal_dataset(hdl):
     Check if a dataset is an internal system dataset that should be filtered out.
 
     Detects system datasets by checking against known boot pool names and
-    internal dataset patterns defined in INTERNAL_DATASETS.
+    internal dataset patterns.
 
     Args:
         hdl: ZFS handle from truenas_pylibzfs
@@ -882,16 +868,6 @@ def is_internal_dataset(hdl):
               False if it should be included in results
     """
     return is_internal_dataset_name(hdl.name)
-
-
-def is_internal_dataset_name(name):
-    for i in BOOT_POOL_NAME_VALID:
-        if name == i or name.startswith(f"{i}/"):
-            return True
-    for i in INTERNAL_DATASETS:
-        if f"/{i}" in name:
-            return True
-    return False
 
 
 def generic_query_callback(hdl, state: QueryFiltersCallbackState):

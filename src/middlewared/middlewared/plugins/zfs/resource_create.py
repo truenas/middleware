@@ -19,7 +19,6 @@ from .create_rules import (
     DEFAULT_VOLBLOCKSIZE,
     CreateContext,
     _nearest_ancestor_entry,
-    ancestor_chain,
     apply_draid_recordsize,
     apply_draid_volblocksize,
     apply_tier_snap,
@@ -55,7 +54,7 @@ from .rules_common import (
     reject_volsize_not_multiple,
 )
 from .share_presets import apply_share_acl, share_acl, share_mountpoint
-from .utils import has_internal_path, reject_protected_path
+from .utils import ancestor_chain, has_internal_path, reject_protected_path
 
 if TYPE_CHECKING:
     from middlewared.service import ServiceContext
@@ -65,17 +64,14 @@ SCHEMA = "zfs.resource.create"
 
 def _record_key(context: ServiceContext, path: str, encrypt: dict[str, Any]) -> None:
     # Hex keys are stored so unlock, export and KMIP work; passphrases deliberately are not.
-    context.middleware.call_sync(
-        "pool.dataset.insert_or_update_encrypted_record",
-        {"name": path, "encryption_key": encrypt["key"], "key_format": encrypt["keyformat"]},
-    )
+    context.call_sync2(context.s.zfs.resource.encryption.store_key, path, encrypt["key"], encrypt["keyformat"])
     context.middleware.call_hook_sync(
         "dataset.post_create",
         {
             "encrypted": True,
             "name": path,
             "encryption_key": encrypt["key"],
-            "key_format": encrypt["keyformat"],
+            "key_format": encrypt["keyformat"].upper(),
         },
     )
 
