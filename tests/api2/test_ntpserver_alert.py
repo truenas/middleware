@@ -3,6 +3,7 @@ import copy
 import time
 
 from middlewared.test.integration.utils import call, mock, ssh
+from middlewared.test.integration.utils.system import reset_systemd_svcs
 
 CONFIG_FILE = "/etc/chrony/chrony.conf"
 BAD_NTP = "172.16.0.0"
@@ -15,11 +16,16 @@ def temp_remove_ntp_config():
         for i in orig:
             _id = i.pop("id")
             assert call("system.ntpserver.delete", _id)
+        # every change restarts chronyd, and systemd refuses a sixth start within ten seconds (leaving chronyd
+        # stopped), so clear the count before the test and before the restore
+        reset_systemd_svcs("chronyd")
         yield copy.deepcopy(orig[0])  # arbitrarily yield first entry
     finally:
+        reset_systemd_svcs("chronyd")
         for i in orig:
-            # finally update with original (functional) config
-            assert call("system.ntpserver.create", i)
+            # finally update with original (functional) config, without probing the servers again (NTS ones
+            # would need TCP port 4460 to be reachable)
+            assert call("system.ntpserver.create", i | {"force": True})
 
 
 def test_verify_ntp_alert_is_raised():

@@ -11,11 +11,23 @@ class ChronyPacketType(enum.IntEnum):
 class ChronyRequest(enum.IntEnum):
     N_SOURCES = 14
     SOURCE_DATA = 15
+    NTP_SOURCE_NAME = 65
+    AUTH_DATA = 67
 
 
 class ChronyReply(enum.IntEnum):
     N_SOURCES = 2
     SOURCE_DATA = 3
+    NTP_SOURCE_NAME = 19
+    AUTH_DATA = 20
+
+
+class ChronyAuthMode(enum.IntEnum):
+    """How chronyd authenticates the packets of a source (RPY_AD_MD_*)"""
+
+    NONE = 0
+    SYMMETRIC = 1
+    NTS = 2
 
 
 class ChronyAddressFamily(enum.IntEnum):
