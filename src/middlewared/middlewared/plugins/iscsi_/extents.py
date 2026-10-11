@@ -763,6 +763,7 @@ class iSCSITargetExtentService(SharingService):
                 filters,
                 {'select': ['path']}
             )
+            if '@' not in extent['path']  # Snapshots don't support volthreading property
         ]
         if not zvols:
             return
