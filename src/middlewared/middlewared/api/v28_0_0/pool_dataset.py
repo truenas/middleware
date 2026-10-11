@@ -34,7 +34,9 @@ __all__ = [
     "PoolDatasetSetQuotaResult", "PoolDatasetRecordsizeChoicesArgs", "PoolDatasetRecordsizeChoicesResult",
     "PoolDatasetUpdateArgs", "PoolDatasetUpdateResult", "PoolDatasetDeleteArgs", "PoolDatasetDeleteResult",
     "PoolDatasetDestroySnapshotsArgs", "PoolDatasetDestroySnapshotsResult", "PoolDatasetPromoteArgs",
-    "PoolDatasetPromoteResult", "PoolDatasetRenameArgs", "PoolDatasetRenameResult",
+    "PoolDatasetPromoteResult", "PoolDatasetRenameArgs", "PoolDatasetRenameResult", "PoolDatasetChangeKeyOptions",
+    "PoolDatasetEncryptionSummary", "PoolDatasetEncryptionSummaryOptions", "PoolDatasetLockOptions",
+    "PoolDatasetUnlock", "PoolDatasetUnlockOptions",
 ]
 
 

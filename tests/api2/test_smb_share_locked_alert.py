@@ -58,7 +58,7 @@ def test_share_locked_alert_lifecycle():
 def test_stale_locked_alert_cleared_on_smb_regen():
     """Regression guard for the boot path (the generate_smb_configuration fix).
 
-    At boot the encrypted pool is unlocked with toggle_attachments=False, so the
+    At boot the encrypted pool is unlocked with start_attachments=False, so the
     attachment-delegate path that normally clears a ShareLocked alert never runs.
     The stale alert must instead be cleared when smb.conf is regenerated (the
     post-unlock pool.post_import -> etc.generate('smb')) now that the share is no

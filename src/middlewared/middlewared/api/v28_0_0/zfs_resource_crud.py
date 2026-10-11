@@ -794,7 +794,7 @@ class ZFSResourceSetArgsData(BaseModel):
             "defaults 'aclinherit' to 'passthrough' while a posix or off acltype defaults both 'aclmode' and "
             "'aclinherit' to 'discard'.\n"
             "\n"
-            "A volume's 'volsize' may only grow. Encryption is managed with the `pool.dataset` key methods and "
+            "A volume's 'volsize' may only grow. Encryption is managed with the `zfs.resource.encryption` methods and "
             "shares with the `sharing.nfs` and `sharing.smb` APIs. Neither may be configured through these "
             "properties."
         ),

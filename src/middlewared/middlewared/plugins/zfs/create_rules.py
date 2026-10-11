@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import dataclasses
 import errno
-import pathlib
 import typing
 
 from truenas_pylibzfs import ZFSProperty
@@ -23,7 +22,7 @@ from .rules_common import (
     reject_unentitled_dedup,
 )
 from .share_presets import SHARE_PRESETS
-from .utils import get_encryption_info, pool_is_draid
+from .utils import ancestor_chain, get_encryption_info, pool_is_draid, secret_value
 
 if typing.TYPE_CHECKING:
     from middlewared.api.current import EntitlementEntry, ZFSResourceCreateArgsData, ZFSResourceCreateProperties
@@ -32,7 +31,6 @@ if typing.TYPE_CHECKING:
 __all__ = (
     "DEFAULT_VOLBLOCKSIZE",
     "CreateContext",
-    "ancestor_chain",
     "apply_draid_recordsize",
     "apply_draid_volblocksize",
     "apply_tier_snap",
@@ -78,16 +76,6 @@ class CreateContext:
     dedup_entitlement: EntitlementEntry | None = None
     """The DEDUP entitlement decision for this system. Populated by the
     service only when the request enables deduplication."""
-
-
-def ancestor_chain(path: str) -> list[str]:
-    """Return the ancestors of `path` ordered nearest first."""
-    return [i.as_posix() for i in pathlib.PurePosixPath(path).parents if i.as_posix() != "."]
-
-
-def _secret_value(value: typing.Any) -> str | None:
-    # an unset Secret field holds Secret(None), not None
-    return value.get_secret_value() if value else None
 
 
 def _nearest_ancestor_entry(data: ZFSResourceCreateArgsData, ctx: CreateContext) -> typing.Any | None:
@@ -155,8 +143,8 @@ def resolve_create_request(
 
     encrypt = None
     if data.encryption:
-        passphrase = _secret_value(data.encryption.passphrase)
-        key = _secret_value(data.encryption.key)
+        passphrase = secret_value(data.encryption.passphrase)
+        key = secret_value(data.encryption.key)
         if passphrase is not None:
             encrypt = {
                 "keyformat": "passphrase",
@@ -366,8 +354,8 @@ def check_encryption(data: ZFSResourceCreateArgsData, ctx: CreateContext) -> Non
     provided = [
         name
         for name, value in (
-            ("key", _secret_value(data.encryption.key)),
-            ("passphrase", _secret_value(data.encryption.passphrase)),
+            ("key", secret_value(data.encryption.key)),
+            ("passphrase", secret_value(data.encryption.passphrase)),
         )
         if value is not None
     ]

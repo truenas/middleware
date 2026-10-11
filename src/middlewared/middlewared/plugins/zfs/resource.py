@@ -61,6 +61,7 @@ from . import resource_processes as _processes
 from . import resource_query as _query
 from . import resource_set as _set
 from . import share_presets as _share_presets
+from .encryption_service import ZFSResourceEncryptionService
 from .prefetch import ZFSResourcePoolPrefetchService
 from .snapshot import ZFSResourceSnapshotService, audit_target
 from .utils import has_internal_path
@@ -108,6 +109,7 @@ class ZFSResourceService(Service):
     def __init__(self, middleware: Middleware):
         super().__init__(middleware)
         self.snapshot = ZFSResourceSnapshotService(middleware)
+        self.encryption = ZFSResourceEncryptionService(middleware)
         self.pool = ZFSResourcePoolPrefetchService(middleware)
 
     @api_method(
@@ -657,7 +659,7 @@ class ZFSResourceService(Service):
             A resource created under an encrypted parent inherits that encryption
             unless ``encryption`` makes it its own encryption root. Hex keys
             (provided or generated) are stored by the system and may be
-            retrieved with :method:`pool.dataset.export_key`; passphrases are never
+            retrieved with :method:`zfs.resource.encryption.export_key`; passphrases are never
             stored.
         """
         return _create.create(self.context, data)

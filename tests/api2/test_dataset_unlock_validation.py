@@ -40,7 +40,7 @@ def test_encrypted_dataset_unlock_mount_validation(nested_dir, lock_dataset):
                     {'datasets': [{'passphrase': PASSPHRASE, 'name': encrypted_ds}], 'recursive': True}, job=True
                 )
 
-            assert ve.value.errors[0].attribute == 'unlock_options.datasets.0.force'
+            assert ve.value.errors[0].attribute == 'keys.0.force'
             assert ve.value.errors[0].errmsg == f'\'{mount_point}\' directory is not empty (please provide' \
                                                 ' "force" flag to override this error and file/directory will be' \
                                                 ' renamed once the dataset is unlocked)'

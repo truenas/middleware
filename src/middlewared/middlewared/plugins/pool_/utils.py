@@ -1,6 +1,3 @@
-import enum
-import json
-import os
 from pathlib import Path
 import re
 import typing
@@ -10,15 +7,11 @@ from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.plugins.zfs.utils import get_encryption_info
 from middlewared.plugins.zfs_.utils import TNUserProp
-from middlewared.service_exception import CallError
-from middlewared.utils.filesystem.directory import directory_is_empty
-from middlewared.utils.size import MB
 
 if typing.TYPE_CHECKING:
     from middlewared.main import Middleware
     from middlewared.service_exception import ValidationErrors
 
-DATASET_DATABASE_MODEL_NAME = 'storage.encrypteddataset'
 RE_DRAID_DATA_DISKS = re.compile(r':\d*d')
 RE_DRAID_SPARE_DISKS = re.compile(r':\d*s')
 RE_DRAID_NAME = re.compile(r'draid\d:\d+d:\d+c:\d+s-\d+')
@@ -66,13 +59,6 @@ def _null(x):
     return x
 
 
-def dataset_mountpoint(dataset):
-    if dataset['mountpoint'] == 'legacy':
-        return None
-
-    return dataset['mountpoint'] or os.path.join('/mnt', dataset['name'])
-
-
 def pool_dataset_view(row, encryption=True):
     props = row['properties']
     view = {
@@ -97,56 +83,8 @@ def pool_dataset_view(row, encryption=True):
     }
 
 
-def dataset_can_be_mounted(ds_name, ds_mountpoint):
-    mount_error_check = ''
-    if os.path.isfile(ds_mountpoint):
-        mount_error_check = f'A file exists at {ds_mountpoint!r} and {ds_name} cannot be mounted'
-    elif os.path.isdir(ds_mountpoint) and not directory_is_empty(ds_mountpoint):
-        mount_error_check = f'{ds_mountpoint!r} directory is not empty'
-    mount_error_check += (
-        ' (please provide "force" flag to override this error and file/directory '
-        'will be renamed once the dataset is unlocked)' if mount_error_check else ''
-    )
-    return mount_error_check
-
-
-def retrieve_keys_from_file(job):
-    job.check_pipe('input')
-    try:
-        data = json.loads(job.pipes.input.r.read(10 * MB))
-    except json.JSONDecodeError:
-        raise CallError('Input file must be a valid JSON file')
-
-    if not isinstance(data, dict) or any(not isinstance(v, str) for v in data.values()):
-        raise CallError('Please specify correct format for input file')
-
-    return data
-
-
 def get_dataset_parents(dataset: str) -> list:
     return [parent.as_posix() for parent in Path(dataset).parents][:-1]
-
-
-def encryption_root_children(child_list_out: list[dict], encryption_root: str, dataset: dict) -> None:
-    """ helper function for generating list of children sharing same encryption root
-    that are mount candidates in `pool.dataset.unlock`. """
-    for child in dataset['children']:
-        if child['mountpoint'] in ('legacy', 'none'):
-            # We don't want to forcibly mount a legacy mountpoint here. If we're
-            # using these in a plugin we should have logic there to handle where
-            # it's supposed to be mounted.
-            continue
-
-        if child['encryption_root'] == encryption_root:
-            child_list_out.append(child)
-            # recursion is OK here since we'll never exceed max ZFS recursion depth
-            encryption_root_children(child_list_out, encryption_root, child)
-
-
-class ZFSKeyFormat(enum.Enum):
-    HEX = 'HEX'
-    PASSPHRASE = 'PASSPHRASE'
-    RAW = 'RAW'
 
 
 class PropertyDef(typing.NamedTuple):
