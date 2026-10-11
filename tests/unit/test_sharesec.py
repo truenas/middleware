@@ -1,3 +1,4 @@
+import os
 from base64 import b64encode
 from unittest.mock import Mock
 
@@ -23,21 +24,32 @@ def share_info_tdb(tmp_path, monkeypatch):
     return path
 
 
-def share_sec_service(stored_acl):
-    """Build a ShareSec service backed by a single share holding `stored_acl` in the config database."""
+def share_sec_service_for(shares):
+    """Build a ShareSec service whose config database holds `shares`, a list of
+    (name, stored_acl) pairs in the order the database returns them."""
 
     def call_sync(method, *args, **kwargs):
         match method:
             case "datastore.config":
                 return {"cifs_srv_stateful_failover": False}
             case "datastore.query":
-                return [{"name": SHARE_NAME, "home": False, "share_acl": stored_acl}]
+                return [{"name": name, "home": False, "share_acl": acl} for name, acl in shares]
             case _:
                 raise AssertionError(f"{method}: unexpected middleware call")
 
     middleware = Mock()
     middleware.call_sync = call_sync
     return sharesec.ShareSec(middleware)
+
+
+def share_sec_service(stored_acl):
+    """Build a ShareSec service backed by a single share holding `stored_acl` in the config database."""
+    return share_sec_service_for([(SHARE_NAME, stored_acl)])
+
+
+def stored_version_key(path):
+    with get_tdb_handle(path, sharesec.SHARE_INFO_TDB_OPTIONS) as hdl:
+        return hdl.get(sharesec.SHARE_INFO_VERSION_KEY)
 
 
 @pytest.mark.parametrize(
@@ -110,3 +122,47 @@ def test__flush_removes_unusable_record(share_info_tdb):
 
     with pytest.raises(MatchNotFound):
         sharesec.fetch_share_acl(SHARE_NAME, False)
+
+
+def test__flush_writes_version_key_after_share_without_acl(share_info_tdb):
+    """Test that a flush still writes INFO/version when a share with no ACL comes first.
+
+    flush_share_info reads share_info.tdb for every share that has no stored ACL, and
+    that read creates the file when it is missing. The store for a later share must not
+    take the file's existence to mean the version key is present: samba treats a share
+    database without INFO/version as a pre-V2 database and share_info_db_init() deletes
+    every record in it when smbd starts.
+    """
+    sd_bytes = share_acl_to_sd_bytes(
+        [
+            {"ae_who_sid": SAMPLE_DOM_SID, "ae_perm": "CHANGE", "ae_type": "ALLOWED"},
+        ]
+    )
+
+    share_sec_service_for([
+        ("unrestricted", ""),
+        (SHARE_NAME, b64encode(sd_bytes).decode()),
+    ]).flush_share_info()
+
+    assert stored_version_key(share_info_tdb) == sharesec.SHARE_INFO_VERSION_DATA
+    assert sharesec.fetch_share_acl(SHARE_NAME, False) == sd_bytes
+
+
+def test__store_writes_version_key_into_file_created_by_read(share_info_tdb):
+    """Test that store_share_acl writes INFO/version into a file that a read created."""
+    with pytest.raises(MatchNotFound):
+        sharesec.fetch_share_acl(SHARE_NAME, False)
+
+    assert os.path.exists(share_info_tdb)
+
+    sharesec.store_share_acl(
+        SHARE_NAME,
+        share_acl_to_sd_bytes(
+            [
+                {"ae_who_sid": SAMPLE_BUILTIN_SID, "ae_perm": "READ", "ae_type": "ALLOWED"},
+            ]
+        ),
+        False,
+    )
+
+    assert stored_version_key(share_info_tdb) == sharesec.SHARE_INFO_VERSION_DATA

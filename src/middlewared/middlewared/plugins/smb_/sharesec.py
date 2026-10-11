@@ -46,15 +46,15 @@ def set_version_share_info(cluster: bool):
 
 def store_share_acl(share_name: str, val: bytes, cluster: bool) -> None:
     """ write packed NT security descriptor for SMB share to server running configuration """
-    if cluster:
-        set_version_key = True
-    else:
-        set_version_key = not os.path.exists(LOCAL_SHARE_INFO_FILE)
-
     with get_tdb_handle(*_share_info_db_config(cluster)) as hdl:
-        if set_version_key:
-            hdl.store(SHARE_INFO_VERSION_KEY, SHARE_INFO_VERSION_DATA)
-
+        # The version key is written on every store, not only when the file is created.
+        # Reading a missing share_info.tdb creates it (the handle is opened with O_CREAT),
+        # so the file existing does not mean the key is present, and samba deletes every
+        # record from a share database that has no INFO/version when smbd starts
+        # (share_info_db_init() in source3/lib/sharesec.c). The key goes first so that a
+        # failure between the two stores leaves a well-formed file without this ACL rather
+        # than a versionless file with it.
+        hdl.store(SHARE_INFO_VERSION_KEY, SHARE_INFO_VERSION_DATA)
         hdl.store(f'{SHARE_INFO_SD_PREFIX}{share_name.lower()}', val)
         hdl.flush()
 
