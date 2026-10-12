@@ -65,6 +65,11 @@ class PoolScrubService(CRUDService):
         ]
 
     @private
+    async def alert_threshold(self) -> int:
+        """Hours a scrub may stay paused before `ScrubPaused` alerts."""
+        return 8
+
+    @private
     async def pool_scrub_extend(self, data):
         pool = data.pop('volume')
         data['pool'] = pool['id']
