@@ -52,6 +52,10 @@ class WebshareService(ConfigService[WebshareEntry]):
             if bindip not in bindip_choices:
                 raise ValidationError(f'bindip.{i}', f'Cannot use {bindip}. Please provide a valid ip address.')
 
+        if new.search:
+            if reasons := await self.call2(self.s.truesearch.unavailable_reasons):
+                raise ValidationError('search', 'Share indexing service is not available. ' + ' '.join(reasons))
+
         if new.groups:
             if not (await self.middleware.call('system.general.config'))['ds_auth']:
                 raise ValidationError('groups', 'Directory Service authentication is disabled.')
