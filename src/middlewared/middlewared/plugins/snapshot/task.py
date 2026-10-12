@@ -30,4 +30,4 @@ async def run(ctx: ServiceContext, id_: int) -> None:
     if not task.enabled:
         raise CallError("Task is not enabled")
 
-    await ctx.middleware.call("zettarepl.run_periodic_snapshot_task", task.id)
+    await ctx.call2(ctx.s.zettarepl.run_periodic_snapshot_task, task.id)

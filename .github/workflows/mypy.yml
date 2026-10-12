@@ -75,6 +75,7 @@ jobs:
             middlewared/plugins/ups/ \
             middlewared/plugins/usage/ \
             middlewared/plugins/vm/ \
+            middlewared/plugins/zettarepl/ \
             middlewared/plugins/zfs/ \
             middlewared/plugins/dns_client.py \
             middlewared/plugins/filesystem.py \

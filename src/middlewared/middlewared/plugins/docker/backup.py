@@ -132,8 +132,8 @@ def backup(context: ServiceContext, job: Job, backup_name: str | None) -> str:
     job.set_progress(95, 'Taking snapshot of ix-applications')
 
     assert docker_config.dataset is not None
-    context.middleware.call_sync(
-        'zettarepl.create_recursive_snapshot_with_exclude', docker_config.dataset,
+    context.call_sync2(
+        context.s.zettarepl.create_recursive_snapshot_with_exclude, docker_config.dataset,
         snap_name, datasets_to_skip_for_snapshot_on_backup(docker_config.dataset)
     )
 

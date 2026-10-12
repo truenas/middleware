@@ -265,7 +265,7 @@ class SystemGeneralService(ConfigService):
             await self.set_kbdlayout()
 
         if config['timezone'] != new_config['timezone']:
-            await self.middleware.call('zettarepl.update_config', {'timezone': new_config['timezone']})
+            await self.call2(self.s.zettarepl.update_config, {'timezone': new_config['timezone']})
             await self.apply_timezone_to_running_system(new_config['timezone'])
             if await self.middleware.call('failover.licensed'):
                 try:

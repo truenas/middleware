@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any
 
 from middlewared.api.current import ReplicationEntry
 from middlewared.common.attachment import FSAttachmentDelegate
-from middlewared.plugins.zettarepl_.state import REPLICATION_TASK_STATE
+from middlewared.plugins.zettarepl.state import REPLICATION_TASK_STATE
 
 if TYPE_CHECKING:
     from middlewared.main import Middleware
@@ -40,7 +40,7 @@ class ReplicationFSAttachmentDelegate(FSAttachmentDelegate[ReplicationEntry]):
         for attachment in attachments:
             await self.middleware.call("datastore.delete", "storage.replication", attachment.id)
 
-        await self.middleware.call("zettarepl.update_tasks")
+        await self.middleware.call2(self.middleware.services.zettarepl.update_tasks)
 
     async def toggle(self, attachments: list[ReplicationEntry], enabled: bool) -> None:
         for attachment in attachments:
@@ -48,7 +48,7 @@ class ReplicationFSAttachmentDelegate(FSAttachmentDelegate[ReplicationEntry]):
                 "datastore.update", "storage.replication", attachment.id, {"repl_enabled": enabled}
             )
 
-        await self.middleware.call("zettarepl.update_tasks")
+        await self.middleware.call2(self.middleware.services.zettarepl.update_tasks)
 
 
 async def on_zettarepl_state_changed(middleware: Middleware, id_: str, fields: dict[str, Any]) -> None:

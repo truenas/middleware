@@ -12,7 +12,7 @@ from middlewared.api.current import (
     ReplicationUpdate,
 )
 from middlewared.auth import fake_app
-from middlewared.plugins.zettarepl_.state import REPLICATION_TASK_STATE
+from middlewared.plugins.zettarepl.state import REPLICATION_TASK_STATE
 from middlewared.service import CallError, CRUDServicePart, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.cron import convert_db_format_to_schedule, convert_schedule_to_db_format
@@ -112,7 +112,7 @@ class ReplicationServicePart(CRUDServicePart[ReplicationEntry]):
             dataset_mapping = {}
 
         return {
-            "state": await self.middleware.call("zettarepl.get_state"),
+            "state": await self.call2(self.s.zettarepl.get_state),
             "dataset_encryption_root_mapping": dataset_mapping,
             "check_dataset_encryption_keys": extra.get("check_dataset_encryption_keys", False),
         }
@@ -190,7 +190,7 @@ class ReplicationServicePart(CRUDServicePart[ReplicationEntry]):
 
         await self._set_periodic_snapshot_tasks(id_, periodic_snapshot_tasks)
 
-        await self.middleware.call("zettarepl.update_tasks")
+        await self.call2(self.s.zettarepl.update_tasks)
 
         return await self.get_instance(id_)
 
@@ -240,7 +240,7 @@ class ReplicationServicePart(CRUDServicePart[ReplicationEntry]):
 
         await self._set_periodic_snapshot_tasks(id_, periodic_snapshot_tasks)
 
-        await self.middleware.call("zettarepl.update_tasks")
+        await self.call2(self.s.zettarepl.update_tasks)
 
         return await self.get_instance(id_)
 
@@ -251,9 +251,9 @@ class ReplicationServicePart(CRUDServicePart[ReplicationEntry]):
         response: bool = await self.middleware.call("datastore.delete", self._datastore, id_)
 
         # Remove task state from zettarepl before updating tasks
-        await self.middleware.call("zettarepl.remove_task", REPLICATION_TASK_STATE.task_id(id_))
+        await self.call2(self.s.zettarepl.remove_task, REPLICATION_TASK_STATE.task_id(id_))
 
-        await self.middleware.call("zettarepl.update_tasks")
+        await self.call2(self.s.zettarepl.update_tasks)
 
         return response
 
@@ -302,7 +302,7 @@ class ReplicationServicePart(CRUDServicePart[ReplicationEntry]):
             )
             payload["ssh_credentials"] = ssh_credentials.model_dump(expose_secrets=True)
 
-        await self.middleware.call("zettarepl.run_onetime_replication_task", job, payload)
+        await self.call2(self.s.zettarepl.run_onetime_replication_task, job, payload)
 
     async def validate(
         self,

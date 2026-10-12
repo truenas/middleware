@@ -196,8 +196,8 @@ def replication_keys(
     result = {}
     include_encryption_root_children = not task.replicate and task.recursive
 
-    source_mapping = context.middleware.call_sync(
-        "zettarepl.get_source_target_datasets_mapping", task.source_datasets, task.target_dataset
+    source_mapping = context.call_sync2(
+        context.s.zettarepl.get_source_target_datasets_mapping, task.source_datasets, task.target_dataset
     )
     if include_encryption_root_children:
         dataset_mapping = mapping or encryption_root_mapping(context)

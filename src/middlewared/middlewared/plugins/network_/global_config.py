@@ -339,7 +339,7 @@ class NetworkConfigurationService(ConfigService):
                 service_actions.add(('docker', 'RESTART'))
         # allowing outbound network activity has been changed
         if new_config['activity'] != config['activity']:
-            await self.middleware.call('zettarepl.update_tasks')
+            await self.call2(self.s.zettarepl.update_tasks)
 
         for service, verb in service_actions:
             await (await self.call2(self.s.service.control, verb, service)).wait(raise_error=True)

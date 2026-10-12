@@ -313,9 +313,9 @@ class PoolSnapshotService(CRUDService):
         # Add retention info if requested
         if retention:
             if isinstance(result, list):
-                result = self.middleware.call_sync('zettarepl.annotate_snapshots', result)
+                result = self.call_sync2(self.s.zettarepl.annotate_snapshots, result)
             elif isinstance(result, dict):
-                result = self.middleware.call_sync('zettarepl.annotate_snapshots', [result])[0]
+                result = self.call_sync2(self.s.zettarepl.annotate_snapshots, [result])[0]
 
         # Apply select if specified
         if select:

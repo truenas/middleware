@@ -30,13 +30,13 @@ class PeriodicSnapshotTaskFSAttachmentDelegate(FSAttachmentDelegate[PeriodicSnap
         for attachment in attachments:
             await self.middleware.call('datastore.delete', 'storage.task', attachment.id)
 
-        await self.middleware.call('zettarepl.update_tasks')
+        await self.middleware.call2(self.middleware.services.zettarepl.update_tasks)
 
     async def toggle(self, attachments: list[PeriodicSnapshotTaskEntry], enabled: bool) -> None:
         for attachment in attachments:
             await self.middleware.call('datastore.update', 'storage.task', attachment.id, {'task_enabled': enabled})
 
-        await self.middleware.call('zettarepl.update_tasks')
+        await self.middleware.call2(self.middleware.services.zettarepl.update_tasks)
 
 
 async def register(middleware: Middleware) -> None:

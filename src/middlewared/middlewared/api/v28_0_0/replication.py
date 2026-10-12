@@ -13,7 +13,6 @@ from middlewared.api.base import (
     UniqueList,
     excluded_field,
     single_argument_args,
-    single_argument_result,
 )
 
 from .common import CronModel, TimeCronModel
@@ -31,6 +30,7 @@ __all__ = ["ReplicationEntry",
            "ReplicationCreateDatasetArgs", "ReplicationCreateDatasetResult",
            "ReplicationListNamingSchemasArgs", "ReplicationListNamingSchemasResult",
            "ReplicationCountEligibleManualSnapshotsArgs", "ReplicationCountEligibleManualSnapshotsResult",
+           "ReplicationEligibleManualSnapshots",
            "ReplicationTargetUnmatchedSnapshotsArgs", "ReplicationTargetUnmatchedSnapshotsResult"]
 
 
@@ -395,10 +395,15 @@ class ReplicationCountEligibleManualSnapshotsArgs(BaseModel):
     )
 
 
-@single_argument_result
-class ReplicationCountEligibleManualSnapshotsResult(BaseModel):
+class ReplicationEligibleManualSnapshots(BaseModel):
     total: int = Field(description="Total number of snapshots found.")
     eligible: int = Field(description="Number of snapshots eligible for replication.")
+
+
+class ReplicationCountEligibleManualSnapshotsResult(BaseModel):
+    result: ReplicationEligibleManualSnapshots = Field(
+        description="ReplicationCountEligibleManualSnapshotsResult return fields.",
+    )
 
 
 class ReplicationTargetUnmatchedSnapshotsArgs(BaseModel):

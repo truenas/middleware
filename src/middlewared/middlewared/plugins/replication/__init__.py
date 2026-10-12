@@ -13,6 +13,7 @@ from middlewared.api.current import (
     ReplicationCreateResult,
     ReplicationDeleteArgs,
     ReplicationDeleteResult,
+    ReplicationEligibleManualSnapshots,
     ReplicationEntry,
     ReplicationListDatasetsArgs,
     ReplicationListDatasetsResult,
@@ -191,7 +192,7 @@ class ReplicationService(GenericCRUDService[ReplicationEntry]):
     async def count_eligible_manual_snapshots(
         self,
         data: ReplicationCountEligibleManualSnapshotsArgs,
-    ) -> ReplicationCountEligibleManualSnapshotsResult:
+    ) -> ReplicationEligibleManualSnapshots:
         """
         Count how many existing snapshots of ``dataset`` match ``naming_schema``.
         """

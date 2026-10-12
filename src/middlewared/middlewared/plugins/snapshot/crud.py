@@ -10,7 +10,7 @@ from middlewared.api.current import (
     PoolSnapshotTaskUpdate,
     PoolSnapshotTaskUpdateWillChangeRetentionFor,
 )
-from middlewared.plugins.zettarepl_.state import PERIODIC_SNAPSHOT_TASK_STATE
+from middlewared.plugins.zettarepl.state import PERIODIC_SNAPSHOT_TASK_STATE
 from middlewared.service import CallError, CRUDServicePart, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.cron import convert_db_format_to_schedule, convert_schedule_to_db_format
@@ -48,7 +48,7 @@ class PeriodicSnapshotTaskServicePart(CRUDServicePart[PeriodicSnapshotTaskEntry]
 
     async def extend_context(self, rows: list[dict[str, Any]], extra: dict[str, Any]) -> dict[str, Any]:
         return {
-            'state': await self.middleware.call('zettarepl.get_state'),
+            'state': await self.call2(self.s.zettarepl.get_state),
             'vmware': await self.middleware.call('vmware.query'),
         }
 
@@ -84,7 +84,7 @@ class PeriodicSnapshotTaskServicePart(CRUDServicePart[PeriodicSnapshotTaskEntry]
         verrors.check()
 
         entry = await self._create(data.model_dump())
-        await self.middleware.call('zettarepl.update_tasks')
+        await self.call2(self.s.zettarepl.update_tasks)
         return entry
 
     async def do_update(
@@ -127,7 +127,7 @@ class PeriodicSnapshotTaskServicePart(CRUDServicePart[PeriodicSnapshotTaskEntry]
         if will_change_retention_for:
             await self.call2(self.s.pool.snapshottask.fixate_removal_date, will_change_retention_for, old)
 
-        await self.middleware.call('zettarepl.update_tasks')
+        await self.call2(self.s.zettarepl.update_tasks)
         return entry
 
     async def do_delete(
@@ -161,9 +161,9 @@ class PeriodicSnapshotTaskServicePart(CRUDServicePart[PeriodicSnapshotTaskEntry]
         await self._delete(id_)
 
         # Remove task state from zettarepl before updating tasks
-        await self.middleware.call('zettarepl.remove_task', PERIODIC_SNAPSHOT_TASK_STATE.task_id(id_))
+        await self.call2(self.s.zettarepl.remove_task, PERIODIC_SNAPSHOT_TASK_STATE.task_id(id_))
 
-        await self.middleware.call('zettarepl.update_tasks')
+        await self.call2(self.s.zettarepl.update_tasks)
 
     async def _validate(self, data: PeriodicSnapshotTaskEntry | PoolSnapshotTaskCreate) -> ValidationErrors:
         verrors = ValidationErrors()

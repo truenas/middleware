@@ -36,7 +36,7 @@ class ReplicationConfigServicePart(ConfigServicePart[ReplicationConfigEntry]):
             if getattr(new_config, k) != getattr(old_config, k)
         }
         if update:
-            await self.middleware.call("zettarepl.update_config", update)
+            await self.call2(self.s.zettarepl.update_config, update)
 
         return await self.config()
 

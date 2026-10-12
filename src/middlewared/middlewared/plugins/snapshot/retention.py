@@ -22,7 +22,7 @@ async def removal_date_property(ctx: ServiceContext) -> str:
 async def fixate_removal_date(
     ctx: ServiceContext, datasets: dict[str, list[str]], task: PeriodicSnapshotTaskEntry,
 ) -> None:
-    await ctx.middleware.call("zettarepl.fixate_removal_date", datasets, task)
+    await ctx.call2(ctx.s.zettarepl.fixate_removal_date, datasets, task)
 
 
 async def update_will_change_retention_for(
@@ -36,14 +36,14 @@ async def update_will_change_retention_for(
     result: dict[str, list[str]] = defaultdict(list)
     if old != new:
         try:
-            old_snapshots = await ctx.middleware.call("zettarepl.periodic_snapshot_task_snapshots", old)
+            old_snapshots = await ctx.call2(ctx.s.zettarepl.periodic_snapshot_task_snapshots, old)
         except CallError as e:
             if e.errno == errno.ENOENT:
                 return result
 
             raise
 
-        new_snapshots = await ctx.middleware.call("zettarepl.periodic_snapshot_task_snapshots", new)
+        new_snapshots = await ctx.call2(ctx.s.zettarepl.periodic_snapshot_task_snapshots, new)
         if diff := old_snapshots - new_snapshots:
             for snapshot in sorted(diff):
                 dataset, snapshot = snapshot.split("@", 1)
@@ -60,7 +60,7 @@ async def delete_will_change_retention_for(
 
     result: dict[str, list[str]] = defaultdict(list)
     try:
-        snapshots = await ctx.middleware.call("zettarepl.periodic_snapshot_task_snapshots", task)
+        snapshots = await ctx.call2(ctx.s.zettarepl.periodic_snapshot_task_snapshots, task)
     except CallError as e:
         if e.errno == errno.ENOENT:
             return result
