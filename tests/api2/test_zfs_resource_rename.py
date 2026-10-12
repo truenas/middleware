@@ -4,7 +4,7 @@ import pytest
 
 from middlewared.service_exception import ValidationError, ValidationErrors
 from middlewared.test.integration.assets.pool import another_pool
-from middlewared.test.integration.utils import call
+from middlewared.test.integration.utils import call, ssh
 
 
 POOL_NAME = "test_rename_pool"
@@ -251,3 +251,30 @@ def test_zfs_resource_rename_protected_destination_is_rejected(rename_test_pool)
         assert call("zfs.resource.list", {"paths": [src], "properties": None})
     finally:
         call("pool.dataset.delete", src)
+
+
+def test_zfs_resource_rename_no_unmount(rename_test_pool):
+    pool = rename_test_pool["name"]
+    src, dst = f"{pool}/test_rename_no_unmount", f"{pool}/test_rename_no_unmount_new"
+    call("pool.dataset.create", {"name": src})
+    try:
+        call(
+            "zfs.resource.rename",
+            {"current_name": src, "new_name": dst, "no_unmount": True, "force_unmount": False, "force": True},
+        )
+        ssh(f"mountpoint -q /mnt/{src}")
+    finally:
+        for path in (src, dst):
+            if call("zfs.resource.list", {"paths": [path], "properties": None}):
+                call("pool.dataset.delete", path)
+
+
+def test_zfs_resource_rename_no_unmount_with_force_unmount_is_rejected(rename_test_pool):
+    pool = rename_test_pool["name"]
+    with pytest.raises(ValidationError) as ve:
+        call("zfs.resource.rename", {
+            "current_name": f"{pool}/test_rename_flags", "new_name": f"{pool}/test_rename_flags_new",
+            "no_unmount": True, "force": True,
+        })
+    assert ve.value.attribute == "zfs.resource.rename"
+    assert ve.value.errno == errno.EINVAL

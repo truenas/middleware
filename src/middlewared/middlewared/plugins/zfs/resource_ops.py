@@ -110,6 +110,8 @@ def rename_impl(tls: Any, data: ZFSResourceRenameArgsData) -> None:
     schema = "zfs.resource.rename"
     reject_protected_path(schema, data.current_name)
     reject_protected_path(schema, data.new_name)
+    if data.no_unmount and data.force_unmount:
+        raise ValidationError(schema, "force_unmount must be disabled when no_unmount is set", errno.EINVAL)
     try:
         _raw_rename(tls, data.current_name, data.new_name, False, data.no_unmount, data.force_unmount)
     except ZFSPathAlreadyExistsException as e:

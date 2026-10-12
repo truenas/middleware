@@ -951,7 +951,10 @@ class ZFSResourceRenameArgsData(BaseModel):
     )
     force_unmount: bool = Field(
         default=True,
-        description="Force unmount any filesystem that has to be unmounted in the process.",
+        description=(
+            "Force unmount any filesystem that has to be unmounted in the process. Must be set to false when "
+            "`no_unmount` is set."
+        ),
     )
     force: bool = Field(
         default=False,
