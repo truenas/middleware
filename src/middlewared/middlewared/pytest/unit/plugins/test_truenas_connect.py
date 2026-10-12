@@ -281,7 +281,7 @@ class TestTNCHostnameService:
             'middlewared.plugins.truenas_connect.hostname.register_update_ips',
             new_callable=AsyncMock,
         ) as mock_register:
-            mock_register.return_value = {}
+            mock_register.return_value = {'response': {}}
             await service.register_update_ips()
 
             mock_register.assert_called_once()
@@ -307,7 +307,7 @@ class TestTNCHostnameService:
             'middlewared.plugins.truenas_connect.hostname.register_update_ips',
             new_callable=AsyncMock,
         ) as mock_register:
-            mock_register.return_value = {}
+            mock_register.return_value = {'response': {}}
             explicit_ips = ['1.2.3.4', '5.6.7.8']
             await service.register_update_ips(explicit_ips)
 
@@ -340,12 +340,67 @@ class TestTNCHostnameService:
             'middlewared.plugins.truenas_connect.hostname.register_update_ips',
             new_callable=AsyncMock,
         ) as mock_register:
-            mock_register.return_value = {}
+            mock_register.return_value = {'response': {}}
             await service.register_update_ips()
 
             called_ips = mock_register.call_args[0][1]
             # VIPs should be first
             assert called_ips == ['10.0.0.100', '192.168.1.10']
+
+    def _hostname_details_store(self, service, initial):
+        store = dict(initial)
+
+        async def mock_call2(f, *args, **kwargs):
+            if f is service.middleware.services.keyvalue.get:
+                return dict(store)
+            elif f is service.middleware.services.keyvalue.set:
+                store.clear()
+                store.update(args[1])
+                return None
+            raise ValueError(f'Unexpected: {f}')
+
+        service.middleware.call2 = AsyncMock(side_effect=mock_call2)
+        service.middleware.call_hook = AsyncMock()
+        return store
+
+    @pytest.mark.asyncio
+    async def test_register_update_ips_stores_returned_details(self):
+        """The hostname details from the update response get persisted and consumers notified."""
+        service = TNCHostnameService(MagicMock())
+        store = self._hostname_details_store(service, {})
+
+        async def mock_middleware_call(method, *args, **kwargs):
+            if method == 'system.is_ha_capable':
+                return False
+            return None
+
+        service.middleware.call = AsyncMock(side_effect=mock_middleware_call)
+
+        with patch(
+            'middlewared.plugins.truenas_connect.hostname.config_internal',
+            new_callable=AsyncMock, return_value={'jwt_token': 'test_token'},
+        ), patch(
+            'middlewared.plugins.truenas_connect.hostname.get_effective_ips',
+            new_callable=AsyncMock, return_value=['1.2.3.4'],
+        ), patch(
+            'middlewared.plugins.truenas_connect.hostname.register_update_ips',
+            new_callable=AsyncMock, return_value={'response': {'nas.acc.truenas.direct': '1.2.3.4'}},
+        ):
+            await service.register_update_ips()
+
+        assert store == {'nas.acc.truenas.direct': '1.2.3.4'}
+        service.middleware.call_hook.assert_called_once_with('tn_connect.hostname.updated')
+
+    @pytest.mark.asyncio
+    async def test_store_details_skips_unchanged_details(self):
+        """Unchanged details must not trigger a reload of the consumers."""
+        service = TNCHostnameService(MagicMock())
+        details = {'nas.acc.truenas.direct': '1.2.3.4'}
+        self._hostname_details_store(service, details)
+
+        await service.store_details(details)
+
+        service.middleware.call_hook.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_sync_ips_skips_when_no_wildcards(self):
@@ -677,8 +732,9 @@ async def test_state_check_failure_triggers_renew_and_heartbeat():
 
     await state_mod.state_check_impl(ctx, restart_ui=False)
 
-    # One task for renew_cert (recovery branch) + one for heartbeat_start (CONFIGURED_TNC_STATES).
-    assert ctx.middleware.create_task.call_count == 2
+    # One task for renew_cert (recovery branch) + heartbeat_start and refresh_details
+    # (CONFIGURED_TNC_STATES).
+    assert ctx.middleware.create_task.call_count == 3
 
 
 # --- Heartbeat request payload --------------------------------------------------------------------

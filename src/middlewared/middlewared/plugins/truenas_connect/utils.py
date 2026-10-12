@@ -21,6 +21,7 @@ HEARTBEAT_INTERVAL = 120
 # alerts. The alert text states this figure in prose, so keep the two in step.
 HEARTBEAT_MAX_ELAPSED_DAYS = 7
 TNC_CERT_PREFIX = 'truenas_connect_'
+TNC_HOSTNAME_DETAILS_KEY = 'truenas_connect_hostname_details'
 TNC_IPS_CACHE_KEY = 'truenas_connect_sync_ips'
 
 

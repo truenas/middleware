@@ -42,6 +42,7 @@ async def state_check_impl(context: ServiceContext, restart_ui: bool = False) ->
     if tnc_config.status in CONFIGURED_TNC_STATES:
         logger.debug('Triggering heartbeat start')
         context.middleware.create_task(context.call2(context.s.tn_connect.heartbeat_start))
+        context.middleware.create_task(context.call2(context.s.tn_connect.hostname.refresh_details))
         if restart_ui:
             logger.debug('Restarting UI')
             await context.middleware.call('system.general.ui_restart', 2)

@@ -107,10 +107,13 @@ class TrueNASConnectService(GenericConfigService[TrueNASConnectEntry]):
     )
     async def ips_with_hostnames(self) -> dict[str, str]:
         """Returns current mapping of ips configured with truenas connect against their hostnames."""
-        hostname_config = await self.call2(self.s.tn_connect.hostname.config)
-        if hostname_config['error'] is None and hostname_config['hostname_configured']:
-            return {v: k for k, v in hostname_config['hostname_details'].items()}
-        return {}
+        hostname_details = await self.call2(self.s.tn_connect.hostname.details)
+        if not hostname_details:
+            hostname_config = await self.call2(self.s.tn_connect.hostname.config)
+            if hostname_config['error'] is None and hostname_config['hostname_configured']:
+                hostname_details = hostname_config['hostname_details']
+
+        return {ip: hostname for hostname, ip in hostname_details.items()}
 
     @api_method(
         TrueNASConnectUpdateEnvironmentArgs, TrueNASConnectUpdateEnvironmentResult,
