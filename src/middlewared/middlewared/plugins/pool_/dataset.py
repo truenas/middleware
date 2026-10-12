@@ -457,6 +457,8 @@ class PoolDatasetService(CRUDService):
                     else:
                         raise e from None
 
+                self.call_sync2(self.s.zfs.resource.mount, pp)
+
         try:
             tls.lzh.create_resource(**kwargs)
         except Exception as e:

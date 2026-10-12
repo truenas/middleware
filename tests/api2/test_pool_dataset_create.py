@@ -5,7 +5,7 @@ import pytest
 
 from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.pool import dataset
-from middlewared.test.integration.utils import call, pool
+from middlewared.test.integration.utils import call, pool, ssh
 
 
 def test_create_dataset_nonexistent_pool():
@@ -34,6 +34,20 @@ def test_pool_dataset_create_ancestors(child):
         name = f"{test_ds}/{child}"
         call("pool.dataset.create", {"name": name, "create_ancestors": True})
         call("pool.dataset.get_instance", name)
+
+
+@pytest.mark.parametrize("child_opts", [
+    pytest.param({"type": "FILESYSTEM"}, id="filesystem"),
+    pytest.param({"type": "VOLUME", "volsize": 256 * 1024 * 1024, "sparse": True}, id="volume"),
+])
+def test_pool_dataset_create_ancestors_are_mounted(child_opts):
+    with dataset("ancestors_mount_test") as test_ds:
+        call("pool.dataset.create", {"name": f"{test_ds}/a/b/first", "create_ancestors": True, **child_opts})
+
+        for ancestor in (f"{test_ds}/a", f"{test_ds}/a/b"):
+            assert ssh(f"zfs get -H -o value mounted {ancestor}").strip() == "yes"
+
+        call("pool.dataset.create", {"name": f"{test_ds}/a/b/second", "create_ancestors": True, **child_opts})
 
 
 def test_pool_dataset_query():
