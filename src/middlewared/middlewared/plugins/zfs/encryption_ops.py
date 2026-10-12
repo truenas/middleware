@@ -65,9 +65,9 @@ def change_key(context: ServiceContext, job: Job, tls: Any, data: ZFSResourceEnc
                     "different pool before changing key_format.",
                 )
         else:
-            if not data.generate_key and not key:
-                for k in ("key", "passphrase", "generate_key"):
-                    verrors.add(k, "Either Key or passphrase must be provided.")
+            if not (data.generate_key or key or data.key_file):
+                for k in ("key", "passphrase", "generate_key", "key_file"):
+                    verrors.add(k, "One of key, passphrase, generate_key or key_file must be provided.")
             elif path.count("/"):
                 for r in _query.list_impl(
                     context, tls, ZFSResourceQuery(paths=ancestor_chain(path), properties=["encryption"])
