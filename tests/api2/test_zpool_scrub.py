@@ -4,7 +4,7 @@ import pytest
 
 from truenas_api_client import ClientException
 from middlewared.test.integration.assets.pool import another_pool
-from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.utils import call, mock, ssh
 
 
 # ---------------------------------------------------------------------------
@@ -201,6 +201,16 @@ class TestZpoolScrubActions:
         scan = _get_scan(name)
         assert scan["state"] == "SCANNING"
         assert scan["pause"] is not None
+
+        # The ScrubPaused source reports nothing while the pause is younger
+        # than the alert threshold.
+        assert call("alert.run_source", "ScrubPaused") == []
+
+        # A zero threshold makes the pause old enough to alert.
+        with mock("pool.scrub.alert_threshold", return_value=0):
+            alerts = call("alert.run_source", "ScrubPaused")
+
+        assert [a["args"] for a in alerts if a["klass"] == "ScrubPaused"] == [name], alerts
 
         # Resume — the job blocks until the resumed scrub finishes.
         call("zpool.scrub.run", {"pool_name": name, "action": "START", "threshold": 0}, job=True)
