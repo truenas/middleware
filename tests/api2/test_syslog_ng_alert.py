@@ -1,5 +1,4 @@
 import contextlib
-import time
 
 from middlewared.test.integration.utils import call, ssh
 
