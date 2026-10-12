@@ -33,6 +33,7 @@ class WebshareConfigPart(ConfigServicePart[WebshareEntry]):
         verrors = ValidationErrors()
 
         await self._validate_bindip(new, verrors)
+        await self._validate_search(new, verrors)
         login_groups = await self._resolve_login_groups(new, verrors)
         mcp_groups = await self._resolve_mcp_groups(new, login_groups, verrors)
 
@@ -50,6 +51,13 @@ class WebshareConfigPart(ConfigServicePart[WebshareEntry]):
         for i, bindip in enumerate(new.bindip):
             if bindip not in bindip_choices:
                 verrors.add(f'bindip.{i}', f'Cannot use {bindip}. Please provide a valid ip address.')
+
+    async def _validate_search(self, new: WebshareEntry, verrors: ValidationErrors) -> None:
+        if not new.search:
+            return
+
+        if reasons := await self.call2(self.s.truesearch.unavailable_reasons):
+            verrors.add('search', 'Share indexing service is not available. ' + ' '.join(reasons))
 
     async def _resolve_login_groups(self, new: WebshareEntry, verrors: ValidationErrors) -> list[dict[str, Any]]:
         if not new.groups:
