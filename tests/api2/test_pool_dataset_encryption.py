@@ -1,11 +1,13 @@
 import contextlib
+import io
+import json
 import secrets
 
 import pytest
 
 from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.pool import another_pool
-from middlewared.test.integration.utils import call, ssh
+from middlewared.test.integration.utils import call, session, ssh, url
 from truenas_api_client.exc import ClientException
 
 
@@ -109,6 +111,30 @@ class TestNormalPool:
             call('pool.dataset.change_key', dataset, {'key': dataset_token_hex}, job=True)
             ds = call('pool.dataset.get_instance', dataset)
             assert ds['key_format']['value'] == 'HEX'
+
+    def test_change_key_with_key_file(self):
+        new_key = secrets.token_hex(32)
+        payload = {
+            'name': dataset,
+            'encryption_options': {'generate_key': True},
+            'encryption': True,
+            'inherit_encryption': False
+        }
+        with create_dataset(payload):
+            data = {'method': 'pool.dataset.change_key', 'params': [dataset, {'key_file': True}]}
+            with session() as s:
+                r = s.post(
+                    f'{url()}/_upload',
+                    files={'data': (None, json.dumps(data)), 'file': (None, io.BytesIO(new_key.encode()))},
+                )
+                r.raise_for_status()
+            call('core.job_wait', r.json()['job_id'], job=True)
+
+            assert call('pool.dataset.export_key', dataset, job=True) == new_key
+            summary = call('pool.dataset.encryption_summary', dataset, {
+                'datasets': [{'name': dataset, 'key': new_key}],
+            }, job=True)
+            assert [ds['valid_key'] for ds in summary if ds['name'] == dataset] == [True], summary
 
     def test_encrypted_root_uses_requested_pbkdf2iters(self):
         payload = {
