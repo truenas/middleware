@@ -17,7 +17,7 @@ import json
 from configparser import RawConfigParser
 
 import pytest
-from middlewared.service_exception import CallError, ValidationErrors
+from middlewared.service_exception import CallError, ValidationError, ValidationErrors
 from middlewared.test.integration.assets.account import unprivileged_user_client, user
 from middlewared.test.integration.assets.cloud_sync import credential as cloud_credential
 from middlewared.test.integration.assets.entitlements import entitled
@@ -1135,17 +1135,20 @@ def test_force_disable_versioning_refuses_object_lock(owner, versioning_licensed
     exists: the on-disk lock latch never clears, so a forced disable
     could only take the bucket out of service."""
     with bucket(name="locked", versioning="ENABLED", object_lock=True) as b:
-        with pytest.raises(ValidationErrors) as ve:
+        with pytest.raises(ValidationError) as ve:
             call("sharing.s3.force_disable_versioning", b["id"])
-        assert "object lock" in ve.value.errors[0].errmsg
+        assert "object lock" in ve.value.errmsg
 
     # the latch outlives the config: a dataset root carrying it is a
     # locked bucket whatever the row says, and is refused the same way
     with bucket(name="latched") as b:
-        ssh(f"setfattr -n trusted.tns3_latch -v 0x5453334200000001 /mnt/{DATASET}")
-        with pytest.raises(ValidationErrors) as ve:
+        ssh(
+            "python3 -c 'import os; "
+            f"os.setxattr(\"/mnt/{DATASET}\", \"trusted.tns3_latch\", bytes.fromhex(\"5453334200000001\"))'"
+        )
+        with pytest.raises(ValidationError) as ve:
             call("sharing.s3.force_disable_versioning", b["id"])
-        assert "object lock" in ve.value.errors[0].errmsg
+        assert "object lock" in ve.value.errmsg
 
 
 def test_force_disable_versioning_clears_the_snapshot_selection(owner, versioning_licensed):
