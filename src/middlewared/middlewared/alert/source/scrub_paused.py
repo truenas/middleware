@@ -15,10 +15,11 @@ class ScrubPausedAlertSource(ThreadedAlertSource):
     run_on_backup_node = False
 
     async def check(self):
+        threshold = await self.middleware.call("pool.scrub.alert_threshold")
         alerts = []
         for pool in await self.middleware.call("pool.query"):
             if pool["scan"] is not None:
                 if pool["scan"]["pause"] is not None:
-                    if pool["scan"]["pause"] < utc_now() - timedelta(hours=8):
+                    if pool["scan"]["pause"] <= utc_now(naive=False) - timedelta(hours=threshold):
                         alerts.append(Alert(ScrubPausedAlertClass, pool["name"]))
         return alerts
