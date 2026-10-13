@@ -54,7 +54,10 @@ class ConfigServiceListenDelegate[ListenState](ListenDelegate[ListenState]):
 
     async def get_listen_state(self, ips: list[str]) -> ListenState:
         config = await self.middleware.call(f"{self.plugin}.config")
-        return config[self.field]  # type: ignore[no-any-return]
+        if isinstance(config, dict):
+            # FIXME: Remove this when all services are converted
+            return config[self.field]  # type: ignore[no-any-return]
+        return getattr(config, self.field)  # type: ignore[no-any-return]
 
     async def set_listen_state(self, state: ListenState) -> None:
         await self.middleware.call(f"{self.plugin}.update", {self.field: state})

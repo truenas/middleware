@@ -78,7 +78,7 @@ filter f_${tnlog.name or "middleware"} { program("${tnlog.get_ident()[:-2]}"); }
 % endfor
 
 filter f_truenas_exclude {
-% if not nfs_conf['mountd_log']:
+% if not nfs_conf.mountd_log:
   not filter(f_nfs_mountd) and
 % endif
   not filter(f_tnaudit_all) and
@@ -120,7 +120,7 @@ filter f_cron {
 
 filter f_daemon {
   facility(daemon) and 
-% if not nfs_conf['mountd_log']:
+% if not nfs_conf.mountd_log:
   not filter(f_nfs_mountd) and
 % endif
   not filter(f_dbg);

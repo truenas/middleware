@@ -129,6 +129,7 @@ from middlewared.plugins.keyvalue import KeyValueService
 from middlewared.plugins.kmip import KMIPService
 from middlewared.plugins.mail import MailService
 from middlewared.plugins.network_routes import RouteService, StaticRouteService
+from middlewared.plugins.nfs_ import NFSService
 from middlewared.plugins.ntp import NTPServerService
 from middlewared.plugins.ports import PortService
 from middlewared.plugins.pwenc import PWEncService
@@ -291,6 +292,7 @@ class ServiceContainer(BaseServiceContainer):
         self.lxc = LXCConfigService(middleware)
         self.mail = MailService(middleware)
         self.mseries = MseriesServicesContainer(middleware)
+        self.nfs = NFSService(middleware)
         self.pool = PoolServicesContainer(middleware)
         self.port = PortService(middleware)
         self.pwenc = PWEncService(middleware)

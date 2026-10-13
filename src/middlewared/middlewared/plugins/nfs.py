@@ -1,20 +1,12 @@
-import enum
 import errno
 import ipaddress
 import itertools
-import os
-import shutil
 
 from truenas_pylicensed.features import LicenseFeature
 
 from middlewared.alert.source.nfs_host import NFSHostListExcessiveAlert, NFSNetworkListExcessiveAlert
 from middlewared.api import api_method
 from middlewared.api.current import (
-    NFSBindipChoicesArgs,
-    NFSBindipChoicesResult,
-    NFSEntry,
-    NFSUpdateArgs,
-    NFSUpdateResult,
     SharingNFSCreateArgs,
     SharingNFSCreateResult,
     SharingNFSDeleteArgs,
@@ -23,288 +15,22 @@ from middlewared.api.current import (
     SharingNFSUpdateArgs,
     SharingNFSUpdateResult,
 )
-from middlewared.async_validators import validate_port
-from middlewared.common.listen import SystemServiceListenMultipleDelegate
 from middlewared.plugins.dns_client import DNSClientForwardLookupData
-from middlewared.plugins.nfs_.utils import get_domain, get_wildcard_domain, leftmost_has_wildcards
+from middlewared.plugins.nfs_.utils import (
+    NFSProtocol,
+    get_domain,
+    get_wildcard_domain,
+    leftmost_has_wildcards,
+)
 from middlewared.plugins.nfs_.validators import confirm_unique, sanitize_hosts, sanitize_networks
-from middlewared.plugins.rdma.constants import RDMAprotocols
-from middlewared.plugins.system_dataset.utils import SYSDATASET_PATH
 from middlewared.service import (
     CallError,
     SharingService,
-    SystemServiceService,
-    ValidationError,
     ValidationErrors,
     private,
 )
 import middlewared.sqlalchemy as sa
 from middlewared.utils.asyncio_ import asyncio_map
-
-
-class NFSServicePathInfo(enum.Enum):
-    # nfs conf sections that use STATEDIR: exportd, mountd, statd
-    STATEDIR = (os.path.join(SYSDATASET_PATH, 'nfs'), 0o755, True, {'uid': 0, 'gid': 0})
-    CLDDIR = (os.path.join(SYSDATASET_PATH, 'nfs', 'nfsdcld'), 0o700, True, {'uid': 0, 'gid': 0})
-    CLDTRKDIR = (os.path.join(SYSDATASET_PATH, 'nfs', 'nfsdcltrack'), 0o700, True, {'uid': 0, 'gid': 0})
-    # Fix up the uid and gid in setup_directories
-    SMDIR = (os.path.join(SYSDATASET_PATH, 'nfs', 'sm'), 0o755, True, {'uid': 'statd', 'gid': 'nogroup'})
-    SMBAKDIR = (os.path.join(SYSDATASET_PATH, 'nfs', 'sm.bak'), 0o755, True, {'uid': 'statd', 'gid': 'nogroup'})
-    V4RECOVERYDIR = (os.path.join(SYSDATASET_PATH, 'nfs', 'v4recovery'), 0o755, True, {'uid': 0, 'gid': 0})
-
-    def path(self) -> str:
-        return self.value[0]
-
-    def mode(self):
-        return self.value[1]
-
-    def is_dir(self):
-        return self.value[2]
-
-    def owner(self):
-        return self.value[3]
-
-
-class NFSProtocol(str, enum.Enum):
-    NFSv3 = 'NFSV3'
-    NFSv4 = 'NFSV4'
-
-
-class NFSModel(sa.Model):
-    __tablename__ = 'services_nfs'
-
-    id = sa.Column(sa.Integer(), primary_key=True)
-    nfs_srv_servers = sa.Column(sa.Integer(), nullable=True)
-    nfs_srv_allow_nonroot = sa.Column(sa.Boolean(), default=False)
-    nfs_srv_protocols = sa.Column(sa.JSON(list), default=[NFSProtocol.NFSv3, NFSProtocol.NFSv4])
-    nfs_srv_v4_krb = sa.Column(sa.Boolean(), default=False)
-    nfs_srv_bindip = sa.Column(sa.MultiSelectField())
-    nfs_srv_mountd_port = sa.Column(sa.SmallInteger(), nullable=True)
-    nfs_srv_rpcstatd_port = sa.Column(sa.SmallInteger(), nullable=True)
-    nfs_srv_rpclockd_port = sa.Column(sa.SmallInteger(), nullable=True)
-    nfs_srv_16 = sa.Column(sa.Boolean(), default=False)
-    nfs_srv_mountd_log = sa.Column(sa.Boolean(), default=True)
-    nfs_srv_statd_lockd_log = sa.Column(sa.Boolean(), default=False)
-    nfs_srv_v4_domain = sa.Column(sa.String(120))
-    nfs_srv_rdma = sa.Column(sa.Boolean(), default=False)
-
-
-class NFSService(SystemServiceService):
-
-    class Config:
-        service = "nfs"
-        service_verb = "restart"
-        datastore = "services.nfs"
-        datastore_prefix = "nfs_srv_"
-        datastore_extend = 'nfs.nfs_extend'
-        cli_namespace = "service.nfs"
-        role_prefix = "SHARING_NFS"
-
-        entry = NFSEntry
-
-    @private
-    def name_to_id_conversion(self, name, name_type='user'):
-        """ Convert built-in user or group name to associated UID or GID """
-        if any((not isinstance(name, str), isinstance(name, int))):
-            # it's not a string (NoneType, float, w/e) or it's an int
-            # so there is nothing to do
-            return name
-
-        if name_type == 'user':
-            method = 'user.get_builtin_user_id'
-        elif name_type == 'group':
-            method = 'group.get_builtin_group_id'
-        else:
-            self.logger.error('Unexpected name_type (%r)', name_type)
-            return name
-        try:
-            return self.middleware.call_sync(method, name)
-        except Exception as e:
-            if hasattr(e, 'errno') and e.errno == errno.ENOENT:
-                self.logger.error('Failed to resolve builtin %s %r', name_type, name)
-            else:
-                self.logger.error('Unexpected error resolving builtin %s %r', name_type, name, exc_info=True)
-            return name
-
-    @private
-    def setup_directories(self):
-        """
-        We are moving the NFS state directory from /var/lib/nfs to
-        the system dataset: /var/db/system/nfs.
-        When setup_directories is called /var/db/system/nfs is expected to exist.
-
-        If STATEDIR is empty, then this might be an initialization
-        and there might be current info in /var/lib/nfs.
-
-        We always make sure the expected directories are present
-        """
-
-        # Initialize the system dataset NFS state directory
-        state_dir = NFSServicePathInfo.STATEDIR.path()
-        try:
-            shutil.copytree('/var/lib/nfs', state_dir)
-        except FileExistsError:
-            # destination file/dir already exists so ignore error
-            pass
-        except Exception:
-            self.logger.error('Unexpected error initializing %r', state_dir, exc_info=True)
-
-        # Make sure we have the necessary directories
-        for i in NFSServicePathInfo:
-            uid = self.name_to_id_conversion(i.owner()['uid'], name_type='user')
-            gid = self.name_to_id_conversion(i.owner()['gid'], name_type='group')
-            path = i.path()
-            if i.is_dir():
-                os.makedirs(path, exist_ok=True)
-
-            try:
-                os.chmod(path, i.mode())
-                os.chown(path, uid, gid)
-            except Exception:
-                self.logger.error('Unexpected failure initializing %r', path, exc_info=True)
-
-        # Clear rmtab on boot.
-        # We call this here because /var/db/system/nfs is not yet available
-        # in a middleware 'setup' hook.  See NAS-131762
-        if not self.middleware.call_sync('system.ready'):
-            self.middleware.call_sync('nfs.clear_nfs3_rmtab')
-
-    @private
-    async def rdma_capable(self):
-        """Whether NFS over RDMA is available on this system, ignoring whether it is currently enabled.
-
-        Deliberately does not read the NFS config: this is called from nfs_extend, which is the
-        datastore_extend for nfs.config, so consulting the config here would recurse.
-        """
-        return RDMAprotocols.NFS.value in await self.middleware.call('rdma.capable_protocols')
-
-    @private
-    async def nfs_extend(self, nfs):
-        keytab_has_nfs = await self.middleware.call("kerberos.keytab.has_nfs_principal")
-        nfs["v4_krb_enabled"] = (nfs["v4_krb"] or keytab_has_nfs)
-        nfs["userd_manage_gids"] = nfs.pop("16")
-        nfs["keytab_has_nfs_spn"] = keytab_has_nfs
-
-        # 'None' indicates we are to dynamically manage the number of nfsd
-        if nfs['servers'] is None:
-            nfs['managed_nfsd'] = True
-            cpu_info = await self.middleware.call("system.cpu_info")
-
-            # Default calculation:
-            #     Number of nfsd == number of cores, but not zero or greater than 32
-            nfs['servers'] = min(max(cpu_info['core_count'], 1), 32)
-        else:
-            nfs['managed_nfsd'] = False
-
-        # Repair inconsistencies
-        nfs['rdma'] = nfs['rdma'] and await self.rdma_capable()
-
-        return nfs
-
-    @private
-    async def nfs_compress(self, nfs):
-        nfs.pop('managed_nfsd')
-        nfs.pop("v4_krb_enabled")
-        nfs.pop("keytab_has_nfs_spn")
-        nfs["16"] = nfs.pop("userd_manage_gids")
-
-        return nfs
-
-    @api_method(NFSBindipChoicesArgs, NFSBindipChoicesResult)
-    async def bindip_choices(self):
-        """
-        Returns ip choices for NFS service to use.
-        """
-        return {
-            d['address']: d['address'] for d in await self.middleware.call(
-                'interface.ip_in_use', {'static': True}
-            )
-        }
-
-    @api_method(NFSUpdateArgs, NFSUpdateResult, audit='Update NFS configuration')
-    async def do_update(self, data):
-        """
-        Update the NFS service configuration.
-
-        At least one protocol must remain enabled in ``protocols``; the ``showmount`` command is available only
-        while NFSv3 is enabled. When ``servers`` is ``null``, the number of nfsd is determined automatically from
-        the system's capabilities (between 1 and 32); otherwise it is set to the requested value (1 to 256). The
-        number of mountd processes is always one quarter of the number of nfsd. When ``bindip`` is empty, NFS
-        listens on all active server addresses. NFS over RDMA, enabled with ``rdma``, is only available on
-        supported platforms with an RDMA-capable NIC and uses port 20049.
-        """
-        if 'protocols' in data:
-            if not data['protocols']:
-                raise ValidationError(
-                    'nfs_update.protocols',
-                    'Must specify at least one value ("NFSV3", "NFSV4") in the "protocols" list.'
-                )
-
-        old = await self.config()
-
-        # Fixup old 'servers' entry before processing changes
-        if old['managed_nfsd']:
-            old['servers'] = None
-
-        new = old.copy()
-        new.update(data)
-
-        verrors = ValidationErrors()
-
-        keytab_has_nfs = await self.middleware.call("kerberos.keytab.has_nfs_principal")
-        new_v4_krb_enabled = new["v4_krb"] or keytab_has_nfs
-
-        for k in ['mountd_port', 'rpcstatd_port', 'rpclockd_port']:
-            for bindip in (new['bindip'] or ['0.0.0.0']):
-                verrors.extend(await validate_port(self.middleware, f'nfs_update.{k}', new[k], 'nfs', bindip))
-
-        if (
-            await self.middleware.call("failover.licensed") and
-            NFSProtocol.NFSv4 in new["protocols"] and new_v4_krb_enabled
-        ):
-            gc = await self.middleware.call("datastore.config", "network.globalconfiguration")
-            if not gc["gc_hostname_virtual"] or not gc["gc_domain"]:
-                verrors.add(
-                    "nfs_update.v4",
-                    "Enabling kerberos authentication on TrueNAS HA requires setting the virtual hostname and "
-                    "domain"
-                )
-
-        bindip_choices = await self.bindip_choices()
-        for i, bindip in enumerate(new['bindip']):
-            if bindip not in bindip_choices:
-                verrors.add(
-                    f"nfs_update.bindip.{i}",
-                    f"Cannot use {bindip}. Please provide a valid ip address."
-                )
-
-        if NFSProtocol.NFSv4 in new["protocols"] and new_v4_krb_enabled:
-            # If we're using KRB5 + NFS then we need a v4_domain defined
-            # We can get this from the configured `kerberos_realm`.
-            ds_config = await self.middleware.call('directoryservices.config')
-            if ds_config["enable"] and ds_config["kerberos_realm"] and not new["v4_domain"]:
-                new["v4_domain"] = ds_config["kerberos_realm"]
-
-        if NFSProtocol.NFSv4 not in new["protocols"] and new["v4_domain"]:
-            verrors.add("nfs_update.v4_domain", "This option does not apply to NFSv3")
-
-        if new["rdma"]:
-            if not await self.rdma_capable():
-                verrors.add(
-                    "nfs_update.rdma",
-                    "This platform cannot support NFS over RDMA or is missing an RDMA capable NIC."
-                )
-
-        verrors.check()
-
-        await self.nfs_compress(new)
-
-        await self._update_service(old, new, "restart")
-
-        if old['mountd_log'] != new['mountd_log']:
-            await (await self.call2(self.s.service.control, 'RELOAD', 'syslogd')).wait(raise_error=True)
-
-        return await self.config()
 
 
 class NFSShareModel(sa.Model):
@@ -519,8 +245,8 @@ class SharingNFSService(SharingService):
 
         v4_sec = list(filter(lambda sec: sec != "SYS", data.get("security", [])))
         if v4_sec:
-            nfs_config = await self.middleware.call("nfs.config")
-            if NFSProtocol.NFSv4 not in nfs_config["protocols"]:
+            nfs_config = await self.call2(self.s.nfs.config)
+            if NFSProtocol.NFSv4 not in nfs_config.protocols:
                 verrors.add(
                     f"{schema_name}.security",
                     f"The following security flavor(s) require NFSv4 to be enabled: {','.join(v4_sec)}."
@@ -872,9 +598,4 @@ async def pool_post_import(middleware, pool):
 
 
 async def setup(middleware):
-    await middleware.call(
-        'interface.register_listen_delegate',
-        SystemServiceListenMultipleDelegate(middleware, 'nfs', 'bindip'),
-    )
-
     middleware.register_hook('pool.post_import', pool_post_import, sync=True)

@@ -345,12 +345,12 @@ async def gather_services(service: Service, context: GatherContext) -> dict[str,
 
 @gather_stat
 async def gather_nfs(service: Service, context: GatherContext) -> dict[str, Any]:
-    num_clients = await service.middleware.call("nfs.client_count")
-    nfs_config = await service.middleware.call("nfs.config")
+    num_clients = await service.call2(service.s.nfs.client_count)
+    nfs_config = await service.call2(service.s.nfs.config)
     return {
         "NFS": {
-            "enabled_protocols": nfs_config["protocols"],
-            "kerberos": nfs_config["v4_krb_enabled"],
+            "enabled_protocols": nfs_config.protocols,
+            "kerberos": nfs_config.v4_krb_enabled,
             "num_clients": num_clients,
         }
     }
