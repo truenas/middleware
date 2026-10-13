@@ -11,7 +11,6 @@ import pytest
 from middlewared.service_exception import CallError
 from middlewared.test.integration.assets.directory_service import directoryservice
 from middlewared.test.integration.utils import call
-from middlewared.test.integration.utils.system import reset_systemd_svcs
 
 
 def twofactor_records(sid):
@@ -25,8 +24,6 @@ def delete_twofactor_records(sid):
 
 @pytest.fixture(scope="module")
 def ad_user():
-    reset_systemd_svcs("winbind")
-
     with directoryservice("ACTIVEDIRECTORY") as ad:
         entry = call(
             "user.query",

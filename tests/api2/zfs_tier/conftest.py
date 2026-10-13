@@ -15,7 +15,6 @@ import pytest
 from middlewared.service_exception import CallError
 from middlewared.test.integration.assets.pool import another_pool
 from middlewared.test.integration.utils import call, ssh
-from middlewared.test.integration.utils.system import reset_systemd_svcs
 
 # Daemon test hook: while this file exists, rewrite jobs wait the number of
 # milliseconds it contains after each regular file. The daemon reads it once
@@ -55,7 +54,10 @@ def tier_pool(zfstier_entitlement):
     ) as pool:
         original_config = call("zfs.tier.config")
         call("zfs.tier.update", {"enabled": True})
-        reset_systemd_svcs("truenas_zfstierd")
+        # This start bypasses middleware, which would otherwise clear the
+        # unit's start rate limit for us. A unit never started in this boot
+        # is not loaded and cannot be reset, hence the `|| true`.
+        ssh("systemctl reset-failed truenas_zfstierd || true")
         ssh("systemctl start truenas_zfstierd")
         for _ in range(20):
             if (
@@ -286,13 +288,3 @@ def wait_for_job_status():
     don't need to import from conftest.py (relative imports break when
     pytest loads each test file as a top-level module)."""
     return _wait_for_job_status
-
-
-@pytest.fixture(autouse=True)
-def _reset_zfstierd_rate_limit(request):
-    """Clear systemd's StartLimitBurst counter on truenas_zfstierd before each
-    test that touches it, so cascading restarts across tests can't hit the
-    unit's ``StartLimitBurst=5 / StartLimitIntervalSec=300``."""
-    if "tier_pool" not in request.fixturenames:
-        return
-    reset_systemd_svcs("truenas_zfstierd")

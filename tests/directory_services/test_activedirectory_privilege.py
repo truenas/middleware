@@ -13,13 +13,11 @@ from middlewared.service_exception import ValidationErrors
 from middlewared.test.integration.assets.directory_service import directoryservice
 from middlewared.test.integration.assets.privilege import privilege, raw_privilege
 from middlewared.test.integration.utils import call
-from middlewared.test.integration.utils.system import reset_systemd_svcs
 
 
 @pytest.fixture(scope="module")
 def ad_group():
     """The primary group of the domain account, resolvable by both GID and SID."""
-    reset_systemd_svcs("winbind")
 
     with directoryservice("ACTIVEDIRECTORY") as ad:
         gid = ad["account"].user_obj["pw_gid"]
