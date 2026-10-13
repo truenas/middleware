@@ -58,6 +58,8 @@ async def unset_registration_details(
         with contextlib.suppress(KeyError):
             await context.middleware.call("cache.pop", k)
 
+    await context.call2(context.s.tn_connect.hostname.store_details, {})
+
     logger.debug("TNC is being disabled, removing any stale TNC heartbeat failure alert")
     await context.call2(context.s.alert.oneshot_delete, "TNCHeartbeatConnectionFailure")
 

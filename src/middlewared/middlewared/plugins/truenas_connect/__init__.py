@@ -23,7 +23,7 @@ from .cert_attachment import TNCCertificateAttachment
 from .config import TrueNASConnectConfigServicePart
 from .finalize_registration import finalize_registration_impl
 from .heartbeat import heartbeat_start_impl
-from .hostname import TNCHostnameService, on_general_config_update, update_ips
+from .hostname import TNCHostnameService, ips_with_hostnames_impl, on_general_config_update, update_ips
 from .internal import handle_tnc_deregistration
 from .post_install import post_install_process_impl
 from .private_models import (
@@ -107,10 +107,7 @@ class TrueNASConnectService(GenericConfigService[TrueNASConnectEntry]):
     )
     async def ips_with_hostnames(self) -> dict[str, str]:
         """Returns current mapping of ips configured with truenas connect against their hostnames."""
-        hostname_config = await self.call2(self.s.tn_connect.hostname.config)
-        if hostname_config['error'] is None and hostname_config['hostname_configured']:
-            return {v: k for k, v in hostname_config['hostname_details'].items()}
-        return {}
+        return await ips_with_hostnames_impl(self.context)
 
     @api_method(
         TrueNASConnectUpdateEnvironmentArgs, TrueNASConnectUpdateEnvironmentResult,
