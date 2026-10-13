@@ -3,6 +3,34 @@ from time import sleep
 from .call import call
 
 
+def get_alerts_by_class(klass):
+    return [alert for alert in call("alert.list") if alert["klass"] == klass]
+
+
+def wait_for_alerts_by_class(klass):
+    """`alert.oneshot_create` is a queued job, so its alert does not appear instantly."""
+    for _ in range(30):
+        if alerts := get_alerts_by_class(klass):
+            return alerts
+        sleep(1)
+
+    return []
+
+
+def wait_for_alerts_by_class_cleared(klass):
+    """`alert.oneshot_delete` is a queued job, so its alert does not disappear instantly.
+
+    The job also shares the `process_alerts` lock, so it waits for a periodic alert run that is
+    already in flight.
+    """
+    for _ in range(30):
+        if not get_alerts_by_class(klass):
+            return True
+        sleep(1)
+
+    return False
+
+
 def process_alerts():
     call("alert.initialize")
     call("core.bulk", "alert.process_alerts", [[]], job=True)

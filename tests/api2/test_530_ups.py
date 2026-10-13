@@ -9,6 +9,7 @@ from auto_config import password, user
 from functions import send_file
 
 from middlewared.test.integration.utils import call, mock, ssh
+from middlewared.test.integration.utils.alert import get_alerts_by_class, wait_for_alerts_by_class
 from middlewared.test.integration.utils.client import truenas_server
 
 DUMMY_FAKEDATA_DEV = '/tmp/fakedata.dev'
@@ -69,17 +70,6 @@ def write_fake_data(data=None):
         os.fchmod(f.fileno(), 0o644)
         results = send_file(f.name, DUMMY_FAKEDATA_DEV, user, password, truenas_server.ip)
         assert results['result'], str(results['output'])
-
-
-def wait_for_alert(klass, retries=10):
-    assert retries > 0
-    while retries:
-        alerts = call('alert.list')
-        for alert in alerts:
-            if alert['klass'] == klass:
-                return alert
-        sleep(1)
-        retries -= 1
 
 
 @pytest.fixture(scope='module')
@@ -192,40 +182,40 @@ def test__ups_online_to_online_lowbattery(ups_running, dummy_ups_driver_configur
     results = get_service_state()
     assert results['state'] == 'RUNNING', results
     sleep(2)
-    assert 'UPSBatteryLow' not in [alert['klass'] for alert in call('alert.list')]
+    assert not get_alerts_by_class('UPSBatteryLow')
     write_fake_data({'battery.charge': 20, 'ups.status': 'OL LB'})
-    alert = wait_for_alert('UPSBatteryLow')
-    assert alert
-    assert 'battery.charge: 20' in alert['formatted'], alert
+    alerts = wait_for_alerts_by_class('UPSBatteryLow')
+    assert alerts
+    assert 'battery.charge: 20' in alerts[0]['formatted'], alerts
     assert not did_shutdown()
 
 
 def test__ups_online_to_onbatt(ups_running, dummy_ups_driver_configured):
-    assert 'UPSOnBattery' not in [alert['klass'] for alert in call('alert.list')]
+    assert not get_alerts_by_class('UPSOnBattery')
     write_fake_data({'battery.charge': 40, 'ups.status': 'OB'})
-    alert = wait_for_alert('UPSOnBattery')
-    assert alert
-    assert 'battery.charge: 40' in alert['formatted'], alert
+    alerts = wait_for_alerts_by_class('UPSOnBattery')
+    assert alerts
+    assert 'battery.charge: 40' in alerts[0]['formatted'], alerts
     assert not did_shutdown()
 
 
 def test__ups_onbatt_to_online(ups_running, dummy_ups_driver_configured):
-    assert 'UPSOnline' not in [alert['klass'] for alert in call('alert.list')]
+    assert not get_alerts_by_class('UPSOnline')
     write_fake_data({'battery.charge': 100, 'ups.status': 'OL'})
-    alert = wait_for_alert('UPSOnline')
-    assert alert
-    assert 'battery.charge: 100' in alert['formatted'], alert
+    alerts = wait_for_alerts_by_class('UPSOnline')
+    assert alerts
+    assert 'battery.charge: 100' in alerts[0]['formatted'], alerts
     assert not did_shutdown()
 
 
 def test__ups_online_to_onbatt_lowbattery(ups_running, dummy_ups_driver_configured):
-    assert 'UPSOnBattery' not in [alert['klass'] for alert in call('alert.list')]
+    assert not get_alerts_by_class('UPSOnBattery')
     write_fake_data({'battery.charge': 90, 'ups.status': 'OB'})
-    alert = wait_for_alert('UPSOnBattery')
-    assert alert
-    assert 'battery.charge: 90' in alert['formatted'], alert
+    alerts = wait_for_alerts_by_class('UPSOnBattery')
+    assert alerts
+    assert 'battery.charge: 90' in alerts[0]['formatted'], alerts
     write_fake_data({'battery.charge': 10, 'ups.status': 'OB LB'})
-    alert = wait_for_alert('UPSBatteryLow')
-    assert alert
-    assert 'battery.charge: 10' in alert['formatted'], alert
+    alerts = wait_for_alerts_by_class('UPSBatteryLow')
+    assert alerts
+    assert 'battery.charge: 10' in alerts[0]['formatted'], alerts
     assert did_shutdown()
