@@ -34,6 +34,20 @@ def wait_for_alerts_by_class(klass):
     return []
 
 
+def wait_for_alerts_by_class_cleared(klass):
+    """`alert.oneshot_delete` is a queued job, so its alert does not disappear instantly.
+
+    The job also shares the `process_alerts` lock, so it waits for a periodic alert run that is
+    already in flight.
+    """
+    for _ in range(30):
+        if not get_alerts_by_class(klass):
+            return True
+        sleep(1)
+
+    return False
+
+
 def source_run_count():
     return call("alert.sources_stats").get(PROBE_SOURCE, {}).get("total_count", 0)
 
