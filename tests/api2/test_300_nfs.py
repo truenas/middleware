@@ -16,7 +16,6 @@ from middlewared.test.integration.assets.pool import another_pool
 from middlewared.test.integration.utils import call, mock, ssh
 from middlewared.test.integration.utils.client import truenas_server
 from middlewared.test.integration.utils.failover import wait_for_standby
-from middlewared.test.integration.utils.system import reset_systemd_svcs as reset_svcs
 
 from auto_config import hostname, password, pool_name, user, ha
 from functions import async_SSH_done, async_SSH_start
@@ -1413,9 +1412,6 @@ class TestNFSops:
         """
         assert start_nfs is True
 
-        # Multiple restarts cause systemd failures.  Reset the systemd counters.
-        reset_svcs("nfs-idmapd nfs-mountd nfs-server rpcbind rpc-statd")
-
         with nfs_config() as nfs_conf_orig:
             # Check existing config (both NFSv3 & NFSv4 configured)
             assert "NFSV3" in nfs_conf_orig['protocols'], nfs_conf_orig
@@ -1509,9 +1505,6 @@ class TestNFSops:
         This also tests the port range and exclude.
         """
         assert start_nfs is True
-        # Multiple restarts cause systemd failures.  Reset the systemd counters.
-        reset_svcs("nfs-idmapd nfs-mountd nfs-server rpcbind rpc-statd")
-
         # Friendly index names
         name = 0
         value = 1
@@ -1598,9 +1591,6 @@ class TestNFSops:
         assert start_nfs is True
 
         if errmsg is None:
-            # Multiple restarts cause systemd failures.  Reset the systemd counters.
-            reset_svcs("nfs-idmapd nfs-mountd nfs-server rpcbind rpc-statd")
-
             choices = call("nfs.bindip_choices")
             assert truenas_server.ip in choices
 
@@ -1654,9 +1644,6 @@ class TestNFSops:
         assert start_nfs is True
 
         if errmsg is None:
-            # Multiple restarts cause systemd failures.  Reset the systemd counters.
-            reset_svcs("nfs-idmapd nfs-mountd nfs-server rpcbind rpc-statd")
-
             call("nfs.bindip", {"bindip": [truenas_server.ip]})
             call("nfs.bindip", {"bindip": []})
 

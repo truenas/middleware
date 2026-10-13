@@ -14,7 +14,6 @@ from middlewared.test.integration.assets.account import user
 from middlewared.test.integration.assets.smb import smb_share
 from middlewared.test.integration.assets.pool import dataset as make_dataset
 from middlewared.test.integration.utils import call, ssh
-from middlewared.test.integration.utils.system import reset_systemd_svcs
 
 
 AUDIT_WAIT = 10
@@ -62,7 +61,6 @@ def enable_guest(smb_info):
 
 @pytest.fixture(scope='function')
 def enable_aapl():
-    reset_systemd_svcs('smbd')
     call('smb.update', {'aapl_extensions': True})
 
     try:
@@ -73,7 +71,6 @@ def enable_aapl():
 
 @pytest.fixture(scope='function')
 def enable_smb1():
-    reset_systemd_svcs('smbd')
     call('smb.update', {'minimum_protocol': 'SMB1'})
 
     try:
@@ -133,7 +130,6 @@ def test__basic_smb_ops(enable_smb1, enable_guest, proto, runas):
 @pytest.mark.parametrize('path_suffix', ['%m/%u', '%u', '%m'])
 def test__legacy_share_path_suffix_lowercase_vars(smb_info, path_suffix):
     """ Verify that LEGACY_SHARE accepts various samba macros. """
-    reset_systemd_svcs('smbd')
     smb_id = smb_info['share']['id']
     share = call('sharing.smb.update', smb_id, {
         'purpose': 'LEGACY_SHARE',
@@ -151,7 +147,6 @@ def test__legacy_share_path_suffix_lowercase_vars(smb_info, path_suffix):
 
 
 def test__change_sharing_smd_home_to_true(smb_info):
-    reset_systemd_svcs('smbd')
     smb_id = smb_info['share']['id']
     share = call('sharing.smb.update', smb_id, {'purpose': 'LEGACY_SHARE', 'options': {'home': True}})
     try:
@@ -238,7 +233,6 @@ def test__recyclebin_functional_test_subdir(smb_info, smb_config):
     tmp_ds_path = f'/mnt/{tmp_ds}/subdir'
     tmp_share_name = 'recycle_test'
 
-    reset_systemd_svcs('smbd')
     call('smb.update', smb_config['global'])
     # basic tests of recyclebin operations
     with create_dataset(tmp_ds, {'share_type': 'SMB'}):
