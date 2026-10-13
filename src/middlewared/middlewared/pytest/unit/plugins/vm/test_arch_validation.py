@@ -46,6 +46,7 @@ _AARCH64_BASE = {
     "pin_vcpus": False,
     "hide_from_msr": False,
     "ensure_display_device": True,
+    "video_model": "VIRTIO",
     "arch_type": "aarch64",
     "machine_type": None,
     "uuid": "64e31dd7-8c76-4dca-8b4b-0126b8853c5b",
@@ -78,6 +79,11 @@ def _make_svc():
             {"hide_from_msr": True},
             "vm_create.hide_from_msr",
             "x86-specific",
+        ),
+        (
+            {"video_model": "QXL"},
+            "vm_create.video_model",
+            "VIRTIO",
         ),
     ],
 )

@@ -5,7 +5,7 @@ import os
 import typing
 
 from truenas_pylibvirt import Error as PyLibvirtError
-from truenas_pylibvirt import Time, VmBootloader, VmCpuMode
+from truenas_pylibvirt import Time, VmBootloader, VmCpuMode, VmVideoModel
 
 from middlewared.api.current import QueryOptions, VMEntry, VMStartOptions, VMStopOptions
 from middlewared.service import CallError, ServiceContext
@@ -119,6 +119,7 @@ def pylibvirt_vm(
 
     data.update({
         'bootloader': VmBootloader(data['bootloader']),
+        'video_model': VmVideoModel(data['video_model']),
         'cpu_mode': VmCpuMode(data['cpu_mode']),
         'time': Time(data['time']),
         'nvram_path': os.path.join(SYSTEM_NVRAM_FOLDER_PATH, get_vm_nvram_file_name(data['id'], data['name'])),
