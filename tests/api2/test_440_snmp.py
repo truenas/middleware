@@ -12,7 +12,6 @@ from middlewared.test.integration.assets.filesystem import directory, mkfile
 from middlewared.test.integration.utils import call, poll, ssh
 from middlewared.test.integration.utils.client import truenas_server
 from middlewared.test.integration.utils.legacy_functions import async_SSH_done, async_SSH_start
-from middlewared.test.integration.utils.system import reset_systemd_svcs
 from auto_config import ha, hostname, interface, password, user, pool_name
 
 
@@ -87,9 +86,6 @@ def init_and_start():
 
 @pytest.fixture(scope='class')
 def add_SNMPv3_user():
-    # Reset the systemd restart counter
-    reset_systemd_svcs("snmpd snmp-agent")
-
     call('snmp.update', SNMP_USER_CONFIG)
     assert get_systemctl_status('snmp-agent') == "RUNNING"
 
@@ -351,9 +347,6 @@ class TestSNMP:
         """
         The SNMP system user should always be available
         """
-        # Reset the systemd restart counter
-        reset_systemd_svcs("snmpd snmp-agent")
-
         # Make sure the createUser command is not present
         res = ssh("tail -2 /var/lib/snmp/snmpd.conf")
         assert 'createUser' not in res
@@ -401,9 +394,6 @@ class TestSNMP:
             assert SNMP_USER_NAME in res, f"Expected to find {SNMP_USER_NAME} in {res}"
 
         def test_SNMPv3_user_retained_across_service_restart(self):
-            # Reset the systemd restart counter
-            reset_systemd_svcs("snmpd snmp-agent")
-
             res = call('service.control', 'STOP', 'snmp', job=True)
             assert res is True
             res = call('service.control', 'START', 'snmp', job=True)
@@ -427,11 +417,9 @@ class TestSNMP:
             assert SNMP_USER_NAME in res
 
         @pytest.mark.parametrize('key,value', [
-            ('reset', ''),  # Reset systemd counters
             ('v3_username', 'ixUser'),
             ('v3_authtype', 'SHA'),
             ('v3_password', 'SimplePassword'),
-            ('reset', ''),  # Reset systemd counters
             ('v3_privproto', 'DES'),
             ('v3_privpassphrase', 'Pass phrase with spaces'),
             # Restore original user name
@@ -441,20 +429,15 @@ class TestSNMP:
             """
             Make changes to the SNMPv3 user name, password, etc. and confirm user function.
             This also tests a pass phrase that includes spaces.
-            NOTE: We include systemd counter resets because these calls require the most restarts.
             """
-            if key == 'reset':
-                # Reset the systemd restart counter
-                reset_systemd_svcs("snmpd snmp-agent")
-            else:
-                res = call('snmp.update', {key: value})
-                assert value in res[key]
-                assert get_systemctl_status('snmp-agent') == "RUNNING"
+            res = call('snmp.update', {key: value})
+            assert value in res[key]
+            assert get_systemctl_status('snmp-agent') == "RUNNING"
 
-                # Confirm user function after change
-                user_config = call('snmp.config')
-                res = user_list_users(user_config)
-                assert user_config['v3_username'] in res
+            # Confirm user function after change
+            user_config = call('snmp.config')
+            res = user_list_users(user_config)
+            assert user_config['v3_username'] in res
 
         def test_SNMPv3_user_delete(self):
 

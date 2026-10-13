@@ -2,7 +2,6 @@ import pytest
 
 from middlewared.test.integration.assets.directory_service import directoryservice
 from middlewared.test.integration.utils import call, ssh
-from middlewared.test.integration.utils.system import reset_systemd_svcs
 
 GROUP_MAPPING_TDB = '/var/lib/truenas-samba/group_mapping.tdb'
 
@@ -26,7 +25,6 @@ def test_ad_foreign_group_recovery():
     Domain Users  (RID 513) must be a member of BUILTIN\\Users (S-1-5-32-545).
     Domain Guests (RID 514) must be a member of BUILTIN\\Guests (S-1-5-32-546).
     """
-    reset_systemd_svcs('winbind')
 
     with directoryservice('ACTIVEDIRECTORY') as ad:
         short_name = ad['domain_info']['domain_controller']['pre-win2k_domain']

@@ -12,30 +12,7 @@ try:
 except ImportError:
     ha = False
 
-__all__ = ["reset_systemd_svcs", "restart_systemd_svc", "get_gssproxy_state"]
-
-
-def reset_systemd_svcs(svcs_to_reset):
-    """
-    Systemd services can get disabled if they restart too
-    many times or too quickly.   This can happen during testing.
-    Input a space delimited string of systemd services to reset.
-    Example usage:
-        reset_systemd_svcs("nfs-idmapd nfs-mountd nfs-server rpcbind rpc-statd")
-
-    A unit that has never been started in this boot is not loaded by
-    systemd and cannot be reset; that specific case is treated as a
-    benign no-op so any other failure is still surfaced.
-    """
-    result = ssh(
-        f"systemctl reset-failed {svcs_to_reset}",
-        check=False,
-        complete_response=True,
-    )
-    if result["result"] or "not loaded" in result["output"]:
-        return
-
-    assert False, result["output"]
+__all__ = ["restart_systemd_svc", "get_gssproxy_state"]
 
 
 def restart_systemd_svc(svc_to_restart: str, remote_node: bool = False):
