@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any
 from truenas_connect_utils.exceptions import CallError as TNCCallError
 from truenas_connect_utils.hostname import hostname_config, register_system_config, register_update_ips
 
-from middlewared.service import CallError, Service, private
+from middlewared.service import CallError, Service, ServiceContext, private
 
 from .internal import config_internal, get_effective_ips, ha_vips
 from .utils import CONFIGURED_TNC_STATES, TNC_HOSTNAME_DETAILS_KEY, TNC_IPS_CACHE_KEY
@@ -159,6 +159,16 @@ class TNCHostnameService(Service):
             await self.sync_ips({'type': event_type, 'iface': args['fields']['iface']})
         except Exception:
             logger.error('Failed to sync IPs for TrueNAS Connect', exc_info=True)
+
+
+async def ips_with_hostnames_impl(context: ServiceContext) -> dict[str, str]:
+    hostname_details = await context.call2(context.s.tn_connect.hostname.details)
+    if not hostname_details:
+        config = await context.call2(context.s.tn_connect.hostname.config)
+        if config['error'] is None and config['hostname_configured']:
+            hostname_details = config['hostname_details']
+
+    return {ip: hostname for hostname, ip in hostname_details.items()}
 
 
 async def update_ips(middleware: Middleware, event_type: str, args: dict[str, Any]) -> None:
