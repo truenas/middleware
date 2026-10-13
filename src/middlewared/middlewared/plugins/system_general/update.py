@@ -189,7 +189,7 @@ class SystemGeneralService(ConfigService):
             return
 
         security_config = await self.middleware.call('system.security.config')
-        if security_config['enable_gpos_stig']:
+        if security_config.enable_gpos_stig:
             verrors.add(
                 'ui_httpsredirect',
                 'Redirection of HTTP requests to HTTPS may not be disabled in GPOS STIG mode',
@@ -199,7 +199,7 @@ class SystemGeneralService(ConfigService):
     async def _validate_ui_httpsprotocols(self, verrors, ui_httpsprotocols):
         """ Cannot enable deprecated HTTPS protocols when STIG is enabled """
         security_config = await self.middleware.call('system.security.config')
-        if not security_config['enable_gpos_stig']:
+        if not security_config.enable_gpos_stig:
             return
 
         if deprecated := GPOS_STIG_DEPRECATED_TLS_PROTOCOLS & set(ui_httpsprotocols):
