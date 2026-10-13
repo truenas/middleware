@@ -78,6 +78,9 @@ _VERB_TO_ACTION = types.MappingProxyType(
     }
 )
 
+# Actions that spend a unit's start rate-limit budget (StartLimitBurst within StartLimitIntervalSec).
+_RATE_LIMITED_ACTIONS = frozenset(("Start", "Restart"))
+
 # systemd's compiled-in default timeout (90 seconds)
 _SYSTEMD_DEFAULT_TIMEOUT_SEC = 90.0
 
@@ -697,6 +700,20 @@ class CachedSystemDBusRouter:
         reload_msg = new_method_call(_SYSTEMD_MANAGER, "Reload", "", ())
         await self._send(reload_msg)
 
+    async def reset_failed_unit(self, service_name: str | bytes) -> None:
+        """
+        Clear a unit's failed state and its start rate-limit counter. The same as ``systemctl reset-failed``.
+        """
+        service_name = self._normalize_unit_name(service_name)
+        msg = new_method_call(_SYSTEMD_MANAGER, "ResetFailedUnit", "s", (service_name,))
+        try:
+            unwrap_msg(await self._send(msg))
+        except Exception as e:
+            if isinstance(e, DBusErrorResponse) and e.name == "org.freedesktop.systemd1.NoSuchUnit":
+                return
+
+            logger.warning("%s: failed to reset start rate limit", service_name, exc_info=True)
+
     async def call_unit_action(self, service_name: str | bytes, action: str) -> str:
         """
         Call a unit action (Start, Stop, Restart, Reload) and return the job path.
@@ -705,6 +722,8 @@ class CachedSystemDBusRouter:
             Job object path
         """
         service_name = self._normalize_unit_name(service_name)
+        if action in _RATE_LIMITED_ACTIONS:
+            await self.reset_failed_unit(service_name)
         unit_path = await self._load_unit_path(service_name)
 
         unit = DBusAddress(
@@ -736,6 +755,9 @@ class CachedSystemDBusRouter:
         start_time = time.monotonic()
 
         router = await self._ensure_router()
+
+        if action in _RATE_LIMITED_ACTIONS:
+            await self.reset_failed_unit(service_name)
 
         unit_path = await self._load_unit_path(service_name)
 
