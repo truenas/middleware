@@ -1,14 +1,19 @@
 import os
-import time
 import pytest
 
 from middlewared.test.integration.assets.entitlements import entitled
 from middlewared.test.integration.assets.pool import dataset
 from middlewared.test.integration.assets.smb import smb_share
 from middlewared.test.integration.utils import call
+from middlewared.test.integration.utils.alert import (
+    get_alerts_by_class,
+    wait_for_alerts_by_class,
+    wait_for_alerts_by_class_cleared,
+)
 
 SHARE_NAME = 'offset_test'
 VEEAM_BLOCKSIZE = 131072
+ALERT_CLASS = 'SMBVeeamFastClone'
 
 
 @pytest.fixture(autouse=True)
@@ -17,30 +22,13 @@ def veeam_entitled():
         yield
 
 
-def check_veeam_alert(expected, timeout=10):
-    # Alert creation/deletion is handled by background jobs; poll until the expected state is reached.
-    alert = None
-    deadline = time.monotonic() + timeout
-    while True:
-        alert = None
-        for a in call('alert.list'):
-            if a['klass'] == 'SMBVeeamFastClone':
-                alert = a
-                break
-
-        if bool(alert) is expected:
-            if expected:
-                assert SHARE_NAME in alert['formatted']
-            return
-
-        if time.monotonic() >= deadline:
-            break
-
-        time.sleep(1)
-
-    assert bool(alert) is expected, str(alert)
+def check_veeam_alert(expected):
     if expected:
-        assert SHARE_NAME in alert['formatted']
+        alerts = wait_for_alerts_by_class(ALERT_CLASS)
+        assert alerts, f'{ALERT_CLASS} alert was not created'
+        assert SHARE_NAME in alerts[0]['formatted'], alerts
+    else:
+        assert wait_for_alerts_by_class_cleared(ALERT_CLASS), get_alerts_by_class(ALERT_CLASS)
 
 
 def test_record_size_smb_create_verror():
