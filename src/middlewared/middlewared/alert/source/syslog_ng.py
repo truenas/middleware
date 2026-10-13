@@ -1,19 +1,16 @@
-import subprocess
-
-from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, ThreadedAlertSource
+from middlewared.alert.base import AlertClass, AlertCategory, AlertLevel, Alert, AlertSource
 
 
 class SyslogNgAlertClass(AlertClass):
     category = AlertCategory.REPORTING
     level = AlertLevel.WARNING
     title = "syslog-ng Is Not Running"
-    text = "%s"
+    text = "The syslog-ng service is not running. The system does not record log messages or audit events."
 
 
-class SyslogNgAlertSource(ThreadedAlertSource):
-    def check_sync(self):
-        p1 = subprocess.Popen(["/usr/sbin/service", "syslog-ng", "status"], stdout=subprocess.PIPE,
-                              stderr=subprocess.STDOUT, encoding="utf8")
-        status = p1.communicate()[0]
-        if p1.returncode == 1:
-            return Alert(SyslogNgAlertClass, status)
+class SyslogNgAlertSource(AlertSource):
+    async def check(self):
+        if await self.call2(self.s.service.started, "syslogd"):
+            return None
+
+        return Alert(SyslogNgAlertClass)
