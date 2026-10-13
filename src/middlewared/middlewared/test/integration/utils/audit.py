@@ -14,17 +14,16 @@ def expect_audit_log(entries, *, include_logins=False):
     with client() as c:
         time.sleep(5)  # FIXME: proper audit log flush
 
-        existing = c.call("audit.query", {"services": ["MIDDLEWARE"], "query-options": {"limit": DEFLIMIT}})
+        existing_count = c.call("audit.query", {"services": ["MIDDLEWARE"], "query-options": {"count": True}})
 
         yield
 
         time.sleep(5)
 
-        new = c.call("audit.query", {"services": ["MIDDLEWARE"], "query-options": {"limit": DEFLIMIT}})
-
-    assert new[:len(existing)] == existing
-
-    new = new[len(existing):]
+        new = c.call("audit.query", {
+            "services": ["MIDDLEWARE"],
+            "query-options": {"offset": existing_count, "limit": DEFLIMIT},
+        })
 
     if not include_logins:
         new = [entry for entry in new if entry["event"] != "AUTHENTICATION"]
