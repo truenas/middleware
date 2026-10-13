@@ -6,7 +6,7 @@ from truenas_connect_utils.hostname import hostname_config, register_update_ips,
 
 from middlewared.service import CallError, Service
 
-from .utils import CONFIGURED_TNC_STATES, TNC_IPS_CACHE_KEY
+from .utils import CONFIGURED_TNC_STATES, TNC_HOSTNAME_DETAILS_KEY, TNC_IPS_CACHE_KEY
 
 
 logger = logging.getLogger('truenas_connect')
@@ -29,6 +29,25 @@ class TNCHostnameService(Service):
     async def config(self):
         return await hostname_config(await self.middleware.call('tn_connect.config_internal'))
 
+    async def details(self):
+        """Return the cached mapping of TNC hostnames against their ips."""
+        return await self.call2(self.s.keyvalue.get, TNC_HOSTNAME_DETAILS_KEY, {})
+
+    async def store_details(self, hostname_details):
+        if await self.details() == hostname_details:
+            return
+
+        await self.call2(self.s.keyvalue.set, TNC_HOSTNAME_DETAILS_KEY, hostname_details)
+        await self.middleware.call_hook('tn_connect.hostname.updated')
+
+    async def refresh_details(self):
+        config = await self.config()
+        if config['error'] or not config['hostname_configured']:
+            logger.debug('Not refreshing stored TNC hostname details: %r', config['error'])
+            return
+
+        await self.store_details(config['hostname_details'])
+
     async def register_update_ips(self, ips=None, create_wildcard=False):
         tnc_config = await self.middleware.call('tn_connect.config_internal')
         if ips is None:
@@ -39,9 +58,14 @@ class TNCHostnameService(Service):
             ips = (await self.middleware.call('tn_connect.ha_vips')) + ips
 
         try:
-            return await register_update_ips(tnc_config, ips, create_wildcard)
+            resp = await register_update_ips(tnc_config, ips, create_wildcard)
         except TNCCallError as e:
             raise CallError(str(e))
+
+        if resp['response']:
+            await self.store_details(resp['response'])
+
+        return resp
 
     async def register_system_config(self, websocket_port: int) -> dict:
         """Register system configuration with TrueNAS Connect, including websocket port."""
@@ -103,7 +127,6 @@ class TNCHostnameService(Service):
                 logger.error('Failed to update IPs with TrueNAS Connect', exc_info=True)
             else:
                 await self.middleware.call('cache.put', TNC_IPS_CACHE_KEY, effective_ips, 60 * 60)
-                await self.middleware.call_hook('tn_connect.hostname.updated', await self.config())
 
     async def handle_update_ips(self, event_type, args):
         """
