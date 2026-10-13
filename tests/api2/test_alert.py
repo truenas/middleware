@@ -30,7 +30,7 @@ def wait_for_alert(timeout=120):
     for _ in range(timeout):
         for alert in call("alert.list"):
             if (
-                alert["source"] == "VolumeStatus"
+                alert["klass"] == "VolumeStatus"
                 and alert["args"]["volume"] == pool_name
                 and alert["args"]["state"] == "DEGRADED"
             ):
