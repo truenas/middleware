@@ -46,6 +46,7 @@ class TrueNASConnectStateService(Service):
         if tnc_config['status'] in CONFIGURED_TNC_STATES:
             logger.debug('Triggering heartbeat start')
             self.middleware.create_task(self.middleware.call('tn_connect.heartbeat.start'))
+            self.middleware.create_task(self.middleware.call('tn_connect.hostname.refresh_details'))
             if restart_ui:
                 logger.debug('Restarting UI')
                 await self.middleware.call('system.general.ui_restart', 2)

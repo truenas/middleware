@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from middlewared.api import api_method
 from middlewared.api.current import (
@@ -14,8 +14,6 @@ from middlewared.utils.webshare import WEBSHARE_BULK_DOWNLOAD_PATH, WEBSHARE_DAT
 
 if TYPE_CHECKING:
     from middlewared.main import Middleware
-
-HOSTNAMES_KEY = "webshare_hostnames"
 
 
 class WebshareModel(sa.Model):
@@ -101,24 +99,12 @@ class WebshareService(ConfigService[WebshareEntry]):
 
     @private
     async def urls(self) -> list[str]:
-        try:
-            hostnames = await self.call2(self.s.keyvalue.get, HOSTNAMES_KEY)
-        except KeyError:
-            hostnames = hostnames_from_config(await self.middleware.call("tn_connect.hostname.config"))
-
-        return [f"https://{hostname}:755" for hostname in hostnames]
+        hostnames = await self.middleware.call("tn_connect.hostname.details")
+        return [f"https://{hostname}:755" for hostname in sorted(hostnames)]
 
 
-def hostnames_from_config(tn_connect_hostname_config: dict[str, Any]) -> list[str]:
-    return sorted(list(tn_connect_hostname_config["hostname_details"].keys()))
-
-
-async def tn_connect_hostname_updated(middleware: Middleware, tn_connect_hostname_config: dict[str, Any]) -> None:
-    hostnames = hostnames_from_config(tn_connect_hostname_config)
-    await middleware.call2(middleware.services.keyvalue.set, HOSTNAMES_KEY, hostnames)
+async def tn_connect_hostname_updated(middleware: Middleware) -> None:
     if not await middleware.call("service.started", "webshare"):
-        # We do not want to reload webshare if it's not running
-        # but we still however do want the hostnames key to be set
         return
 
     await middleware.call("service.control", "RELOAD", "webshare")

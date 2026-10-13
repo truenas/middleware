@@ -223,6 +223,8 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
             with contextlib.suppress(KeyError):
                 await self.middleware.call('cache.pop', k)
 
+        await self.middleware.call('tn_connect.hostname.store_details', {})
+
         logger.debug('TNC is being disabled, removing any stale TNC heartbeat failure alert')
         await self.middleware.call('alert.oneshot_delete', 'TNCHeartbeatConnectionFailure')
 
@@ -311,10 +313,13 @@ class TrueNASConnectService(ConfigService, TNCAPIMixin):
         """
         Returns current mapping of ips configured with truenas connect against their hostnames.
         """
-        hostname_config = await self.middleware.call('tn_connect.hostname.config')
-        return {
-            v: k for k, v in hostname_config['hostname_details'].items()
-        } if hostname_config['error'] is None and hostname_config['hostname_configured'] else {}
+        hostname_details = await self.middleware.call('tn_connect.hostname.details')
+        if not hostname_details:
+            hostname_config = await self.middleware.call('tn_connect.hostname.config')
+            if hostname_config['error'] is None and hostname_config['hostname_configured']:
+                hostname_details = hostname_config['hostname_details']
+
+        return {ip: hostname for hostname, ip in hostname_details.items()}
 
     @private
     async def set_status(self, new_status, db_payload=None):
