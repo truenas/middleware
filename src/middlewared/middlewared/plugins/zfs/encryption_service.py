@@ -287,10 +287,6 @@ class ZFSResourceEncryptionService(Service):
         _ops.inherit(self.context, tls, data)
 
     @private
-    async def start_attachments_on_unlock(self, datasets: list[dict[str, Any]]) -> None:
-        await _lock.start_attachments_on_unlock(self.context, datasets)
-
-    @private
     def store_key(self, name: str, encryption_key: str | None, key_format: str | None) -> int | None:
         return _keys.store_key(self.context, name, encryption_key, key_format)
 

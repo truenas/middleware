@@ -198,7 +198,7 @@ def set(context: ServiceContext, data: ZFSResourceSetArgsData) -> ZFSResourceEnt
     state = apply_thick_follow(apply_acl_coupling(state))
     validate_set(context, state)
     for delegate in active:
-        context.run_coroutine(delegate.validate_set(state))
+        delegate.validate_set(state)
 
     entry = ZFSResourceEntry(
         **context.call_sync2(
@@ -209,7 +209,7 @@ def set(context: ServiceContext, data: ZFSResourceSetArgsData) -> ZFSResourceEnt
     failures = []
     for delegate in active:
         try:
-            context.run_coroutine(delegate.after_set(state))
+            delegate.after_set(state)
         except Exception as e:
             context.logger.error("%s: %s failed to follow the change", path, delegate.title, exc_info=True)
             failures.append(f"{delegate.title}: {e}")

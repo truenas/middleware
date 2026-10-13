@@ -16,6 +16,7 @@ from middlewared.api.current import (
     PoolProcessesResult,
     ZFSResourceQuery,
 )
+from middlewared.plugins.zfs import resource_attachments
 from middlewared.plugins.zfs.resource_processes_utils import processes_using_dataset_tree
 from middlewared.plugins.zpool import get_zpool_disks_impl, get_zpool_features_impl, is_upgraded_impl
 from middlewared.service import Service, ValidationError, private
@@ -64,7 +65,7 @@ class PoolService(Service):
         share, asking for confirmation.
         """
         pool = await self.middleware.call('pool.get_instance', oid)
-        return await self.call2(self.s.zfs.resource.attachments_with_path, pool['path'])
+        return await resource_attachments.query_all(self.context, pool['path'])
 
     @api_method(PoolProcessesArgs, PoolProcessesResult, roles=['POOL_READ'])
     async def processes(self, oid):
@@ -72,7 +73,7 @@ class PoolService(Service):
         Returns a list of running processes using this pool.
         """
         pool = await self.middleware.call('pool.get_instance', oid)
-        return await processes_using_dataset_tree(self.context, pool['name'])
+        return await self.context.to_thread(processes_using_dataset_tree, self.context, pool['name'])
 
     @api_method(
         PoolGetDisksArgs,

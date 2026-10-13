@@ -1922,10 +1922,10 @@ class SMBFSAttachmentDelegate(LockableFSAttachmentDelegate):
     service_class = SharingSMBService
     set_triggers = frozenset({'acltype'})
 
-    async def validate_set(self, state):
+    def validate_set(self, state):
         if state.type != 'FILESYSTEM' or not state.changed('acltype'):
             return
-        attachments = await self.call2(self.s.zfs.resource.attachments, state.path)
+        attachments = self.call_sync2(self.s.zfs.resource.attachments, state.path)
         if names := [name for a in attachments if a.type == self.title for name in a.attachments]:
             raise ValidationError(
                 state.attribute('acltype'),

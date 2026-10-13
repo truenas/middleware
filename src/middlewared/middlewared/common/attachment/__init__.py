@@ -172,10 +172,10 @@ class FSAttachmentDelegate[E](ServiceChangeMixin):
         while the pool was still there.
         """
 
-    async def validate_set(self, state: SetContext) -> None:
+    def validate_set(self, state: SetContext) -> None:
         pass
 
-    async def after_set(self, state: SetContext) -> None:
+    def after_set(self, state: SetContext) -> None:
         """Raising fails the set once every delegate has run; the write is not undone."""
 
 

@@ -47,7 +47,7 @@ def processes(context: ServiceContext, path: str) -> list[PoolProcess]:
     return [PoolProcess(**proc) for proc in found]
 
 
-async def kill_processes(context: ServiceContext, oid: str, control_services: bool, max_tries: int = 5) -> None:
+def kill_processes(context: ServiceContext, oid: str, control_services: bool, max_tries: int = 5) -> None:
     need_restart_services = []
     need_stop_services = []
     midpid = os.getpid()
@@ -55,7 +55,7 @@ async def kill_processes(context: ServiceContext, oid: str, control_services: bo
     # client), so each one is only worth classifying once
     restartable = {delegate.service for delegate in DELEGATES}
     seen_services = set()
-    for process in await processes_using_dataset_tree(context, oid):
+    for process in processes_using_dataset_tree(context, oid):
         service = process.get("service")
         if service is not None and service not in seen_services:
             seen_services.add(service)
@@ -76,7 +76,7 @@ async def kill_processes(context: ServiceContext, oid: str, control_services: bo
         )
 
     for i in range(max_tries):
-        found = await processes_using_dataset_tree(context, oid)
+        found = processes_using_dataset_tree(context, oid)
         if not found:
             return
 
@@ -99,20 +99,20 @@ async def kill_processes(context: ServiceContext, oid: str, control_services: bo
                 controlled_services.add(service)
                 if service in restartable:
                     context.logger.info("Restarting service %r that holds dataset %r", service, oid)
-                    await (await context.call2(context.s.service.control, "RESTART", service)).wait(raise_error=True)
+                    context.call_sync2(context.s.service.control, "RESTART", service).wait_sync(raise_error=True)
                 else:
                     context.logger.info("Stopping service %r that holds dataset %r", service, oid)
-                    await (await context.call2(context.s.service.control, "STOP", service)).wait(raise_error=True)
+                    context.call_sync2(context.s.service.control, "STOP", service).wait_sync(raise_error=True)
             else:
                 context.logger.info(
                     "Killing process %r (%r) that holds dataset %r", process["pid"], process["cmdline"], oid
                 )
                 try:
-                    await context.call2(context.s.service.terminate_process, process["pid"])
+                    context.call_sync2(context.s.service.terminate_process, process["pid"])
                 except CallError as e:
                     context.logger.warning("Error killing process: %r", e)
 
-    found = await processes_using_dataset_tree(context, oid)
+    found = processes_using_dataset_tree(context, oid)
     if not found:
         return
 

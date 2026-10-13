@@ -18,6 +18,7 @@ from middlewared.api.current import (
     ZFSResourceSetProperties,
 )
 from middlewared.plugins.container.utils import container_dataset, container_dataset_mountpoint
+from middlewared.plugins.zfs import resource_attachments
 from middlewared.service import CallError, InstanceNotFound, Service, ValidationError, job, private
 from middlewared.utils.filesystem import attrs as fs_attrs
 from middlewared.utils.zfs import query_imported_fast_impl
@@ -230,7 +231,7 @@ class PoolService(Service):
         key = f'pool:{pool["name"]}:enable_on_import'
         if await self.call2(self.s.keyvalue.has_key, key):
             for name, ids in (await self.call2(self.s.keyvalue.get, key)).items():
-                for delegate in await self.call2(self.s.zfs.resource.attachment_delegates_for_start):
+                for delegate in resource_attachments.delegates_in_start_order():
                     if delegate.name == name:
                         attachments = await delegate.query(pool['path'], False)
                         attachments = [
@@ -322,14 +323,7 @@ class PoolService(Service):
 
         job.set_progress(80, 'Re-enabling services')
 
-        for delegate in await self.call2(self.s.zfs.resource.attachment_delegates_for_start):
-            # The pool is already imported, so a delegate failure here must not abort the reimport
-            try:
-                await delegate.start_on_import(pool['path'])
-            except Exception:
-                self.logger.error(
-                    '%s: failed to start attachments after pool reimport', delegate.name, exc_info=True
-                )
+        await resource_attachments.start_all_after_reimport(self.context, pool['path'])
 
         job.set_progress(90, 'Running post-import tasks')
 

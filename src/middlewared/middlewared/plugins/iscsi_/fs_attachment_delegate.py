@@ -150,25 +150,25 @@ class ISCSIFSAttachmentDelegate(LockableFSAttachmentDelegate):
             else:
                 await super().start(attachments)
 
-    async def validate_set(self, state):
+    def validate_set(self, state):
         if not state.snapshot_devices or not state.changed('snapdev') or state.effective('snapdev') != 'hidden':
             return
 
         paths = [zvol_name_to_path(name).removeprefix('/dev/') for name in sorted(state.snapshot_devices)]
-        if await self.middleware.call('iscsi.extent.query', [['path', 'in', paths]], {'select': ['path']}):
+        if self.middleware.call_sync('iscsi.extent.query', [['path', 'in', paths]], {'select': ['path']}):
             raise ValidationError(
                 state.attribute('snapdev'),
                 f'{state.path!r} has snapshots which have attachments being used. Before marking it '
                 'as HIDDEN, remove attachment usages.',
             )
 
-    async def after_set(self, state):
+    def after_set(self, state):
         if state.type != 'VOLUME':
             return
         if state.changed('volsize'):
-            await self.middleware.call('iscsi.global.resync_lun_size_for_zvol', state.path)
+            self.middleware.call_sync('iscsi.global.resync_lun_size_for_zvol', state.path)
         if 'readonly' in state.touched():
-            await self.middleware.call(
+            self.middleware.call_sync(
                 'iscsi.global.resync_readonly_property_for_zvol', state.path, state.effective('readonly')
             )
 

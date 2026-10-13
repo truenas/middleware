@@ -12,6 +12,7 @@ from middlewared.api.current import (
 from middlewared.service_exception import CallError, ValidationError
 from middlewared.utils.filesystem import attrs as fs_attrs
 
+from . import resource_attachments as _attachments
 from .destroy_impl import destroy_impl as _raw_destroy
 from .exceptions import (
     ZFSDestroyFailedException,
@@ -19,7 +20,6 @@ from .exceptions import (
     ZFSPathHasHoldsException,
     ZFSPathNotFoundException,
 )
-from .resource_attachments import for_stop
 from .utils import get_encryption_info, reject_protected_path, resource_mountpoint
 
 if TYPE_CHECKING:
@@ -96,9 +96,7 @@ def destroy(context: ServiceContext, data: ZFSResourceDestroyArgsData) -> None:
     )
     mountpoint = resource_mountpoint(rows[0]) if rows else None
     if mountpoint:
-        for delegate in for_stop():
-            if attachments := context.run_coroutine(delegate.query(mountpoint, True)):
-                context.run_coroutine(delegate.delete(attachments))
+        context.run_coroutine(_attachments.delete_all(mountpoint))
         if get_encryption_info(rows[0]["properties"]).locked and os.path.exists(mountpoint):
             # a locked dataset's mountpoint is immutable, which would keep the destroy from removing it
             fs_attrs.set_zfs_file_attributes_dict(mountpoint, {"immutable": False})

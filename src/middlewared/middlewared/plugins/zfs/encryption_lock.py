@@ -24,6 +24,7 @@ from middlewared.service_exception import CallError, ValidationErrors
 from middlewared.utils.filesystem import attrs as fs_attrs
 from middlewared.utils.filesystem.directory import directory_is_empty
 
+from . import resource_attachments as _attachments
 from .encryption import check_key, load_key
 from .encryption_info import (
     dataset_can_be_mounted,
@@ -37,13 +38,13 @@ from .resource_ops import unload_key
 from .utils import ancestor_chain, secret_value
 
 if TYPE_CHECKING:
+    from middlewared.common.attachment import UnlockedDataset
     from middlewared.job import Job
     from middlewared.service import ServiceContext
 
 __all__ = (
     "assign_supplied_recursive_keys",
     "lock",
-    "start_attachments_on_unlock",
     "unlock",
     "unlock_summary",
 )
@@ -82,7 +83,7 @@ def lock(context: ServiceContext, tls: Any, data: ZFSResourceEncryptionLockArgsD
         # Services consult this while their delegates stop, so they treat the dataset as locked before its key is
         # actually unloaded.
         context.middleware.call_sync("cache.put", "about_to_lock_dataset", path)
-        context.call_sync2(context.s.zfs.resource.stop_attachment_delegates, dataset_mountpoint(ds))
+        context.run_coroutine(_attachments.stop_all(dataset_mountpoint(ds)))
         unload_key(tls, path, recursive=ds["type"] != "VOLUME", force_unmount=data.force_unmount)
     finally:
         context.middleware.call_sync("cache.pop", "about_to_lock_dataset")
@@ -96,22 +97,6 @@ def lock(context: ServiceContext, tls: Any, data: ZFSResourceEncryptionLockArgsD
                 raise
 
     context.middleware.call_hook_sync("dataset.post_lock", path)
-
-
-async def start_attachments_on_unlock(context: ServiceContext, datasets: list[dict[str, Any]]) -> None:
-    if not datasets:
-        return
-
-    unlocked: list[tuple[dict[str, Any], str | None]] = []
-    for dataset in datasets:
-        unlocked.append((dataset, dataset_mountpoint(dataset)))
-    for delegate in await context.call2(context.s.zfs.resource.attachment_delegates_for_start):
-        # The datasets are already unlocked and mounted, so a delegate failure here must not abort
-        # the unlock job before its encryption records are persisted
-        try:
-            await delegate.start_on_unlock(unlocked)
-        except Exception:
-            context.logger.error("%s: failed to start attachments after unlock", delegate.name, exc_info=True)
 
 
 def unlock(
@@ -324,11 +309,11 @@ def unlock(
             for root in datasets.values():
                 for ds in (root, *root["children"]):
                     unlocked_datasets[ds["name"]] = ds
-            to_start: list[dict[str, Any]] = []
+            to_start: list[UnlockedDataset] = []
             for name in unlocked:
                 if name in unlocked_datasets:
-                    to_start.append(unlocked_datasets[name])
-            context.call_sync2(context.s.zfs.resource.encryption.start_attachments_on_unlock, to_start)
+                    to_start.append((unlocked_datasets[name], dataset_mountpoint(unlocked_datasets[name])))
+            context.run_coroutine(_attachments.start_all_after_unlock(context, to_start))
 
         job.set_progress(92, "Updating database")
 
