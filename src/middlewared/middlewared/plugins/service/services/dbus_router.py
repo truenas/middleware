@@ -203,6 +203,23 @@ class CachedSystemDBusRouter:
         reply = await self._send(msg)
         return unwrap_msg(reply)[0]  # type: ignore[no-any-return]
 
+    async def _get_loaded_unit_path(self, service_name: str) -> str | None:
+        """
+        Return the D-Bus object path of a unit that systemd has loaded, or None.
+
+        Unlike LoadUnit, GetUnit does not make systemd load a unit that is not
+        in memory. systemd only unloads units that are inactive or failed, so a
+        unit that is not loaded is not running.
+        """
+        msg = new_method_call(_SYSTEMD_MANAGER, "GetUnit", "s", (service_name,))
+        try:
+            reply = await self._send(msg)
+            return unwrap_msg(reply)[0]  # type: ignore[no-any-return]
+        except DBusErrorResponse as e:
+            if e.name == "org.freedesktop.systemd1.NoSuchUnit":
+                return None
+            raise
+
     async def _get_unit_property(self, unit_path: str, interface: str, prop: str) -> Any:
         """Get a property from a systemd unit via D-Bus."""
         props = DBusAddress(
@@ -627,7 +644,12 @@ class CachedSystemDBusRouter:
             Tuple of (active_state as bytes, main_pid as int)
         """
         service_name = self._normalize_unit_name(service_name)
-        unit_path = await self._load_unit_path(service_name)
+        # Asking about a unit that is not loaded with LoadUnit makes systemd load
+        # it and its dependencies only to free them again, which is expensive
+        # when there are many units, for example one mount unit per dataset.
+        unit_path = await self._get_loaded_unit_path(service_name)
+        if unit_path is None:
+            return b"inactive", 0
         active_state = await self._get_unit_property(
             unit_path, "org.freedesktop.systemd1.Unit", "ActiveState"
         )
@@ -644,7 +666,9 @@ class CachedSystemDBusRouter:
             Active state as string (e.g., "active", "inactive", "activating")
         """
         service_name = self._normalize_unit_name(service_name)
-        unit_path = await self._load_unit_path(service_name)
+        unit_path = await self._get_loaded_unit_path(service_name)
+        if unit_path is None:
+            return "inactive"
         return await self._get_unit_property(  # type: ignore[no-any-return]
             unit_path, "org.freedesktop.systemd1.Unit", "ActiveState"
         )
