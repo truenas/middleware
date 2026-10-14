@@ -1,4 +1,4 @@
-from middlewared.alert.base import AlertCategory, AlertClass, AlertLevel, SimpleOneShotAlertClass
+from middlewared.alert.base import Alert, AlertCategory, AlertClass, AlertLevel, SimpleOneShotAlertClass
 
 
 class NFSHostnameLookupFailAlertClass(AlertClass, SimpleOneShotAlertClass):
@@ -21,9 +21,10 @@ class NFSHostListExcessiveAlertClass(AlertClass, SimpleOneShotAlertClass):
         "Consider using directory services, netgroups, network ranges, "
         "or other configurations to reduce the host list length."
     )
+    keys = ["sharePath"]
 
-    async def delete(self, alerts, query):
-        return []
+    async def create(self, args):
+        return Alert(self.__class__, args, key=args["sharePath"])
 
 
 class NFSNetworkListExcessiveAlertClass(AlertClass, SimpleOneShotAlertClass):
@@ -36,6 +37,7 @@ class NFSNetworkListExcessiveAlertClass(AlertClass, SimpleOneShotAlertClass):
         "Consider using directory services, netgroups, wider network ranges, "
         "or other configurations to reduce the network list length."
     )
+    keys = ["sharePath"]
 
-    async def delete(self, alerts, query):
-        return []
+    async def create(self, args):
+        return Alert(self.__class__, args, key=args["sharePath"])
