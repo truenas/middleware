@@ -237,21 +237,6 @@ def _nfs_client(vers, **kwargs):
     return PynfsClient(truenas_server.ip, NFS_PATH, vers=vers, **kwargs)
 
 
-def get_client_nfs_port():
-    '''
-    Output from netstat -nt looks like:
-        tcp        0      0 127.0.0.1:50664         127.0.0.1:6000          ESTABLISHED
-    The client port is the number after the ':' in the 5th column
-    '''
-    rv = (None, None)
-    res = ssh("netstat -nt")
-    for line in str(res).splitlines():
-        # The server will listen on port 2049
-        if f"{truenas_server.ip}:2049" == line.split()[3]:
-            rv = (line, line.split()[4].split(':')[1])
-    return rv
-
-
 def set_immutable_state(path: str, want_immutable=True):
     '''
     Used by exportsd test
@@ -586,12 +571,9 @@ def start_nfs():
 
 @pytest.fixture
 def nfs_allow_nonroot():
-    """Set allow_nonroot=True for the test duration so pynfs's
-    ephemeral source ports are accepted at the RPC layer (export
-    line gets 'insecure').  Pynfs runs in the test process as the
-    test user without CAP_NET_BIND_SERVICE; without this, mountd
-    returns ACCES on v3 and nfsd squashes uid=0 to nobody on v4.
-    SSH_NFS didn't need this because mount.nfs is SETUID-root."""
+    """Set allow_nonroot=True for the test duration so pynfs's non-privileged source ports are accepted at the RPC
+    layer (export line gets 'insecure'); without it, mountd returns ACCES on v3 and nfsd squashes uid=0 to nobody on
+    v4."""
     prev = call("nfs.config")["allow_nonroot"]
     if not prev:
         call("nfs.update", {"allow_nonroot": True})
@@ -1193,9 +1175,16 @@ class TestNFSops:
         Sample:
         "/mnt/dozer/NFSV4"\
             *(sec=sys,rw,insecure,no_subtree_check)
+
+        Mounts from localhost (SSH_NFS) as NAT between the CI test runner and the appliance rewrites the privileged
+        source port.
         """
         assert start_nfs is True
         assert nfs_dataset_and_share['nfsid'] is not None
+
+        def mount_loopback(options=None):
+            return SSH_NFS(truenas_server.ip, NFS_PATH, vers=4, options=options, user=user, password=password,
+                           ip=truenas_server.ip)
 
         # Verify that NFS server configuration is as expected
         with nfs_config() as nfs_conf_orig:
@@ -1208,27 +1197,15 @@ class TestNFSops:
             assert len(parsed) == 1, str(parsed)
             assert 'insecure' not in parsed[0]['opts'][0]['parameters'], str(parsed)
 
-            # Confirm we allow connections from privileged ports.
-            # ``secure=True`` makes pynfs bind a port < 1024 (same
-            # source-port range the kernel client picks by default).
-            with _nfs_client(4, secure=True):
-                client_port = get_client_nfs_port()
-                assert client_port[1] is not None, f"Failed to get client port: f{client_port[0]}"
-                assert int(client_port[1]) < 1024, \
-                    f"client_port is not in 'root' range: {client_port[1]}\n{client_port[0]}"
+            # Confirm we allow mounts from 'root' ports
+            with mount_loopback() as n:
+                n.ls('.')
 
-            # Confirm we block FH access from non-privileged ports.
-            # ``secure=False`` makes pynfs use an ephemeral source
-            # port (>= 1024).  The kernel only enforces
-            # source-port-must-be-privileged inside fh_verify (see
-            # nfsd_originating_port_ok in fs/nfsd/nfsfh.c), so the
-            # RPC-layer EXCHANGE_ID/CREATE_SESSION/RECLAIM_COMPLETE
-            # still go through -- the rejection lands on the first
-            # op that walks an FH (here, READDIR via ls), which
-            # comes back as NFS4ERR_PERM (status=1).
-            with pytest.raises(AssertionError, match=r"status=1\b"):
-                with _nfs_client(4, secure=False) as n:
-                    n.ls(".")
+            # Confirm we block mounts from 'non-root' ports: fh_verify rejects them (nfsd_originating_port_ok in
+            # fs/nfsd/nfsfh.c), so mount.nfs fails with EPERM
+            with pytest.raises(RuntimeError, match='Operation not permitted'):
+                with mount_loopback(options=['noresvport']):
+                    assert False, "Unexpected success with mount"
 
             # --- Test: allow_nonroot is True ---
             new_nfs_conf = call('nfs.update', {"allow_nonroot": True})
@@ -1238,20 +1215,13 @@ class TestNFSops:
             assert len(parsed) == 1, str(parsed)
             assert 'insecure' in parsed[0]['opts'][0]['parameters'], str(parsed)
 
-            # Confirm we allow connections from privileged ports.
-            with _nfs_client(4, secure=True):
-                client_port = get_client_nfs_port()
-                assert client_port[1] is not None, "Failed to get client port"
-                assert int(client_port[1]) < 1024, \
-                    f"client_port is not in 'root' range: {client_port[1]}\n{client_port[0]}"
+            # Confirm we allow mounts from 'root' ports
+            with mount_loopback() as n:
+                n.ls('.')
 
-            # Confirm we allow connections from non-privileged
-            # ports.
-            with _nfs_client(4, secure=False):
-                client_port = get_client_nfs_port()
-                assert client_port[1] is not None, "Failed to get client port"
-                assert int(client_port[1]) >= 1024, \
-                    f"client_port is not in 'non-root' range: {client_port[1]}\n{client_port[0]}"
+            # Confirm we allow mounts from 'non-root' ports
+            with mount_loopback(options=['noresvport']) as n:
+                n.ls('.')
 
         # Confirm setting was returned to original state
         parsed = parse_exports()
