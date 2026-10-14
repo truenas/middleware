@@ -84,6 +84,7 @@ class VMModel(sa.Model):
     suspend_on_snapshot = sa.Column(sa.Boolean(), default=True)
     ensure_display_device = sa.Column(sa.Boolean(), default=True)
     arch_type = sa.Column(sa.String(255), default=None, nullable=True)
+    video_model = sa.Column(sa.String(50))
     machine_type = sa.Column(sa.String(255), default=None, nullable=True)
     uuid = sa.Column(sa.String(255))
     command_line_args = sa.Column(sa.Text(), default='', nullable=False)
@@ -142,6 +143,9 @@ class VMServicePart(CRUDServicePart[VMEntry]):
         return data
 
     async def do_create(self, data: VMCreate) -> VMEntry:
+        if data.video_model is None:
+            data.video_model = 'VIRTIO' if data.arch_type == VMGuestArch.AARCH64 else 'VGA'
+
         verrors = ValidationErrors()
         data = await self.validate(verrors, 'vm_create', data)
 
@@ -405,6 +409,11 @@ class VMServicePart(CRUDServicePart[VMEntry]):
                 verrors.add(
                     f'{schema_name}.hide_from_msr',
                     'hide_from_msr is x86-specific and not supported for aarch64 guests'
+                )
+            if data.video_model != 'VIRTIO':
+                verrors.add(
+                    f'{schema_name}.video_model',
+                    'Only the VIRTIO video model is supported for aarch64 guests'
                 )
 
         # KVM accelerates same-ISA guests only; HOST-PASSTHROUGH / HOST-MODEL
