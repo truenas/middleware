@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any, Sequence
 
 from truenas_pylicensed.features import LicenseFeature
 
-from middlewared.api.current import QueryOptions, SharingNFSEntry
+from middlewared.api.current import GroupGetGroupObj, QueryOptions, SharingNFSEntry
 from middlewared.service import ValidationErrors
 
 from .share_hosts import resolve_hostnames, share_realpath, validate_hosts_and_networks, validate_share_networks
@@ -185,7 +185,7 @@ async def validate_mappings(
 
         if map_group:
             try:
-                await part.middleware.call("group.get_group_obj", {"groupname": map_group})
+                await part.call2(part.s.group.get_group_obj, GroupGetGroupObj(groupname=map_group))
             except KeyError:
                 verrors.add(f"{schema_name}.{k}_group", f"Group not found: {map_group}")
 

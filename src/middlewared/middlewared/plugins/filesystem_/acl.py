@@ -20,6 +20,7 @@ from middlewared.api.current import (
     FilesystemSetaclResult,
     FilesystemSetpermArgs,
     FilesystemSetpermResult,
+    QueryOptions,
 )
 from middlewared.service import Service, ValidationErrors, job, private
 from middlewared.service_exception import CallError, MatchNotFound, ValidationError
@@ -259,9 +260,9 @@ class FilesystemService(Service):
                 verrors.add('filesystem.chown.user', f'{data["user"]}: user does not exist')
 
         if data['group']:
-            group = self.middleware.call_sync('group.query', [['group', '=', data['group']]])
+            group = self.call_sync2(self.s.group.query, [['group', '=', data['group']]])
             if group:
-                gid = group[0]['gid']
+                gid = group[0].gid
             else:
                 verrors.add('filesystem.chown.group', f'{data["group"]}: group does not exist')
 
@@ -322,9 +323,9 @@ class FilesystemService(Service):
                 verrors.add('filesystem.setperm.user', f'{data["user"]}: user does not exist')
 
         if data['group']:
-            group = self.middleware.call_sync('group.query', [['group', '=', data['group']]])
+            group = self.call_sync2(self.s.group.query, [['group', '=', data['group']]])
             if group:
-                gid = group[0]['gid']
+                gid = group[0].gid
             else:
                 verrors.add('filesystem.setperm.group', f'{data["group"]}: group does not exist')
 
@@ -462,8 +463,8 @@ class FilesystemService(Service):
             if user := self.middleware.call_sync('user.query', [['uid', '=', ret['uid']]]):
                 ret['user'] = user[0]['username']
 
-            if group := self.middleware.call_sync('group.query', [['gid', '=', ret['gid']]]):
-                ret['group'] = group[0]['group']
+            if group := self.call_sync2(self.s.group.query, [['gid', '=', ret['gid']]]):
+                ret['group'] = group[0].group
 
         return ret
 
@@ -725,8 +726,8 @@ class FilesystemService(Service):
                 )
 
         if data['group']:
-            if group := self.middleware.call_sync('group.query', [['group', '=', data['group']]]):
-                data['gid'] = group[0]['gid']
+            if group := self.call_sync2(self.s.group.query, [['group', '=', data['group']]]):
+                data['gid'] = group[0].gid
             else:
                 verrors.add(
                     'filesystem.setacl.group',
@@ -759,13 +760,11 @@ class FilesystemService(Service):
             # We're using user.query and group.query to intialize cache entries if required
             match entry['tag']:
                 case 'USER':
-                    method = 'user.query'
-                    filters = [['username', '=', entry['who']]]
-                    key = 'uid'
+                    who_filters = [['username', '=', entry['who']]]
+                    who_is_group = False
                 case 'GROUP':
-                    method = 'group.query'
-                    filters = [['group', '=', entry['who']]]
-                    key = 'gid'
+                    who_filters = [['group', '=', entry['who']]]
+                    who_is_group = True
                 case POSIXACE_Tag.USER_OBJ | POSIXACE_Tag.GROUP_OBJ:
                     # We currently allow these because we're populating in getacl response
                     # This may need to be re-evaluated. These tags don't require an explicit uid/gid
@@ -782,7 +781,13 @@ class FilesystemService(Service):
                         'Name may only be specified for USER and GROUP entries'
                     )
             try:
-                entry['id'] = self.middleware.call_sync(method, filters, {'get': True})[key]
+                if who_is_group:
+                    entry['id'] = self.call_sync2(
+                        self.s.group.query, who_filters, QueryOptions(get=True),
+                    ).gid
+                else:
+                    entry['id'] = self.middleware.call_sync('user.query', who_filters, {'get': True})['uid']
+
                 entry['who'] = None
             except MatchNotFound:
                 raise ValidationError(f'filesystem.setacl.{idx}.who', f'{entry["who"]}: account does not exist')

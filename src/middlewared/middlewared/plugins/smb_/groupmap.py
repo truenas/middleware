@@ -3,6 +3,7 @@ import struct
 
 import tdb
 
+from middlewared.api.current import QueryOptions
 from middlewared.plugins.idmap_.idmap_constants import IDType
 from middlewared.plugins.smb_.constants import SMB_ACCOUNT_METADATA_LOCK, SMBBuiltin, SMBPath
 from middlewared.plugins.smb_.util_groupmap import (
@@ -131,12 +132,12 @@ class SMBService(Service):
         groupmap_file = GroupmapFile.DEFAULT if not smb_config['stateful_failover'] else GroupmapFile.CLUSTERED
 
         if (admin_group := smb_config['admin_group']):
-            if (found := self.middleware.call_sync('group.query', [('group', '=', admin_group)])):
+            if (found := self.call_sync2(self.s.group.query, [('group', '=', admin_group)])):
                 entries.append(SMBGroupMembership(
-                    sid=found[0]['sid'],
+                    sid=found[0].sid,
                     groups=(SMBBuiltin.ADMINISTRATORS.sid,)
                 ))
-                admins.append(found[0]['sid'])
+                admins.append(found[0].sid)
             else:
                 self.logger.warning('%s: SMB admin group does not exist', admin_group)
 
@@ -449,18 +450,20 @@ class SMBService(Service):
 
         groupmap = self.groupmap_list()
 
-        groups = self.middleware.call_sync('group.query', [('local', '=', True), ('smb', '=', True)])
-        groups.append(self.middleware.call_sync('group.query', [
-            ('gid', '=', SMBBuiltin.ADMINISTRATORS.rid), ('local', '=', True)
-        ], {'get': True}))
-        gid_set = {x["gid"] for x in groups}
+        groups = self.call_sync2(self.s.group.query, [('local', '=', True), ('smb', '=', True)])
+        groups.append(self.call_sync2(
+            self.s.group.query,
+            [('gid', '=', SMBBuiltin.ADMINISTRATORS.rid), ('local', '=', True)],
+            QueryOptions(get=True),
+        ))
+        gid_set = {group.gid for group in groups}
 
         for group in groups:
             entries.append(SMBGroupMap(
-                sid=group['sid'],
-                gid=group['gid'],
+                sid=group.sid,
+                gid=group.gid,
                 sid_type=lsa_sidtype.ALIAS,
-                name=group['group'],
+                name=group.group,
                 comment=''
             ))
 
@@ -527,7 +530,7 @@ class SMBService(Service):
         set_reject_sids = set(list(rejects.keys()))
 
         # generate dictionary for current valid groups that have SIDs in the rejects list
-        current = {g['gid']: g['sid'] for g in self.middleware.call_sync('group.query', [
+        current = {g.gid: g.sid for g in self.call_sync2(self.s.group.query, [
             ['gid', 'in', [g['gid'] for g in rejects.values()]], ['local', '=', True]
         ])}
 

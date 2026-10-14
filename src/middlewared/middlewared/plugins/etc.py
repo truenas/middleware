@@ -653,7 +653,10 @@ class EtcService(Service):
 
     def get_perms_and_ownership(self, entry: EtcEntry) -> dict:
         uid = self.middleware.call_sync('user.get_builtin_user_id', entry.owner) if entry.owner else DEFAULT_ETC_XID
-        gid = self.middleware.call_sync('group.get_builtin_group_id', entry.group) if entry.group else DEFAULT_ETC_XID
+        if entry.group:
+            gid = self.call_sync2(self.s.group.get_builtin_group_id, entry.group)
+        else:
+            gid = DEFAULT_ETC_XID
 
         return {'uid': uid, 'gid': gid, 'perms': entry.mode}
 

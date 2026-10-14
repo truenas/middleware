@@ -4,7 +4,13 @@ import errno
 import wbclient
 
 from middlewared.api import api_method
-from middlewared.api.current import IdmapDomainClearIdmapCacheArgs, IdmapDomainClearIdmapCacheResult, ServiceOptions
+from middlewared.api.current import (
+    GroupGetGroupObj,
+    IdmapDomainClearIdmapCacheArgs,
+    IdmapDomainClearIdmapCacheResult,
+    QueryOptions,
+    ServiceOptions,
+)
 from middlewared.plugins.account_.constants import CONTAINER_ROOT_UID
 from middlewared.plugins.idmap_.idmap_constants import (
     BASE_SYNTHETIC_DATASTORE_ID,
@@ -308,9 +314,9 @@ class IdmapDomainService(Service):
             }
 
         gid = int(sid[len(SID_LOCAL_GROUP_PREFIX):])
-        g = self.middleware.call_sync('group.get_group_obj', {'gid': gid})
+        g = self.call_sync2(self.s.group.get_group_obj, GroupGetGroupObj(gid=gid))
         return {
-            'name': f'Unix Group{separator}{g["gr_name"]}',
+            'name': f'Unix Group{separator}{g.gr_name}',
             'id': gid,
             'id_type': IDType.GROUP.name,
             'sid': sid
@@ -343,27 +349,23 @@ class IdmapDomainService(Service):
                 'sid': sid,
             }
         elif rid > BASE_RID_GROUP:
+            group = self.call_sync2(self.s.group.get_instance, rid - BASE_RID_GROUP)
             id_type = IDType.GROUP.name
-            method = 'group.get_instance'
-            xid_key = 'gid'
-            name_key = 'name'
-            db_id = rid - BASE_RID_GROUP
+            name = group.name
+            xid = group.gid
         elif rid > BASE_RID_USER:
+            user = self.middleware.call_sync('user.get_instance', rid - BASE_RID_USER)
             id_type = IDType.USER.name
-            method = 'user.get_instance'
-            xid_key = 'uid'
-            name_key = 'username'
-            db_id = rid - BASE_RID_USER
+            name = user['username']
+            xid = user['uid']
         else:
             # Log an error message and fall through to winbind or sssd to resolve it
             self.logger.warning('%s: unexpected local SID value', sid)
             return None
 
-        entry = self.middleware.call_sync(method, db_id)
-
         return {
-            'name': f'{netbiosname}{separator}{entry[name_key]}',
-            'id': entry[xid_key],
+            'name': f'{netbiosname}{separator}{name}',
+            'id': xid,
             'id_type': id_type,
             'sid': sid
         }
@@ -410,22 +412,16 @@ class IdmapDomainService(Service):
             # to both a user and a group. For most practical purposes it
             # can be treated interally as a group.
             case IDType.GROUP | IDType.BOTH:
-                method = 'group.query'
-                filters = [['gid', '=', xid]]
-                key = 'group'
+                coroutine = self._group_name(xid)
             case IDType.USER:
-                method = 'user.query'
-                filters = [['uid', '=', xid]]
-                key = 'username'
+                coroutine = self._user_name(xid)
             case _:
                 raise CallError(f"Unsupported id_type: [{idtype.name}]")
 
         try:
-            ret = await asyncio.wait_for(
-                self.middleware.create_task(self.middleware.call(method, filters, {'get': True, 'order_by': [key]})),
-                timeout=idmap_timeout
+            name = await asyncio.wait_for(
+                self.middleware.create_task(coroutine), timeout=idmap_timeout,
             )
-            name = ret[key]
         except asyncio.TimeoutError:
             self.logger.debug(
                 "timeout encountered while trying to convert %s id %d "
@@ -437,6 +433,18 @@ class IdmapDomainService(Service):
             name = None
 
         return name
+
+    async def _group_name(self, gid: int) -> str:
+        group = await self.call2(
+            self.s.group.query, [['gid', '=', gid]], QueryOptions(get=True, order_by=['group']),
+        )
+        return group.group
+
+    async def _user_name(self, uid: int) -> str:
+        user = await self.middleware.call(
+            'user.query', [['uid', '=', uid]], {'get': True, 'order_by': ['username']},
+        )
+        return user['username']
 
     @private
     async def synthetic_user(self, passwd: dict, sid: str | None) -> dict | None:
