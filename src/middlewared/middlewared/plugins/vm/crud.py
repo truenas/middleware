@@ -144,7 +144,7 @@ class VMServicePart(CRUDServicePart[VMEntry]):
 
     async def do_create(self, data: VMCreate) -> VMEntry:
         if data.video_model is None:
-            data = data.model_copy(update={'video_model': 'VIRTIO' if data.arch_type == VMGuestArch.AARCH64 else 'VGA'})
+            data.video_model = 'VIRTIO' if data.arch_type == VMGuestArch.AARCH64 else 'VGA'
 
         verrors = ValidationErrors()
         data = await self.validate(verrors, 'vm_create', data)
