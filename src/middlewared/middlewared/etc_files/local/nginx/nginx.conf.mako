@@ -28,7 +28,7 @@
 
         # Match owner and permissions to access.log: ['www-data','adm']
         nginx_uid = middleware.call_sync('user.get_builtin_user_id', 'www-data')
-        nginx_gid = middleware.call_sync('group.get_builtin_group_id', 'adm')
+        nginx_gid = middleware.call_sync2(middleware.services.group.get_builtin_group_id, 'adm')
         os.chown(nginx_error_log, nginx_uid, nginx_gid)
         os.chmod(nginx_error_log, 0o640)
 

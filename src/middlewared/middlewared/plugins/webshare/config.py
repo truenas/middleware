@@ -1,8 +1,11 @@
 from __future__ import annotations
 
-from typing import Any
-
-from middlewared.api.current import WebshareEntry, WebshareUpdate
+from middlewared.api.current import (
+    GroupGetGroupObj,
+    GroupGetGroupObjData,
+    WebshareEntry,
+    WebshareUpdate,
+)
 from middlewared.service import ConfigServicePart, ValidationErrors
 import middlewared.sqlalchemy as sa
 from middlewared.utils.webshare import WEBSHARE_GROUP
@@ -38,8 +41,8 @@ class WebshareConfigPart(ConfigServicePart[WebshareEntry]):
         mcp_groups = await self._resolve_mcp_groups(new, login_groups, verrors)
 
         verrors.check()
-        new.groups = [g['gr_name'] for g in login_groups]
-        new.mcp_allowed_groups = [g['gr_name'] for g in mcp_groups]
+        new.groups = [g.gr_name for g in login_groups]
+        new.mcp_allowed_groups = [g.gr_name for g in mcp_groups]
 
         await self.middleware.call(
             'datastore.update', self._datastore, new.id, new.model_dump()
@@ -59,7 +62,9 @@ class WebshareConfigPart(ConfigServicePart[WebshareEntry]):
         if reasons := await self.call2(self.s.truesearch.unavailable_reasons):
             verrors.add('search', 'Share indexing service is not available. ' + ' '.join(reasons))
 
-    async def _resolve_login_groups(self, new: WebshareEntry, verrors: ValidationErrors) -> list[dict[str, Any]]:
+    async def _resolve_login_groups(
+        self, new: WebshareEntry, verrors: ValidationErrors,
+    ) -> list[GroupGetGroupObjData]:
         if not new.groups:
             return []
 
@@ -67,15 +72,15 @@ class WebshareConfigPart(ConfigServicePart[WebshareEntry]):
             verrors.add('groups', 'Directory Service authentication is disabled.')
             return []
 
-        groups: list[dict[str, Any]] = []
+        groups: list[GroupGetGroupObjData] = []
         for i, group in enumerate(new.groups):
             try:
-                group_obj = await self.middleware.call('group.get_group_obj', {'groupname': group})
+                group_obj = await self.call2(self.s.group.get_group_obj, GroupGetGroupObj(groupname=group))
             except KeyError:
                 verrors.add(f'groups.{i}', f'{group}: group does not exist.')
                 continue
 
-            if group_obj['local']:
+            if group_obj.local:
                 verrors.add(f'groups.{i}', f'{group}: group must be a Directory Service group.')
                 continue
 
@@ -84,27 +89,29 @@ class WebshareConfigPart(ConfigServicePart[WebshareEntry]):
         return groups
 
     async def _resolve_mcp_groups(
-        self, new: WebshareEntry, login_groups: list[dict[str, Any]], verrors: ValidationErrors,
-    ) -> list[dict[str, Any]]:
+        self, new: WebshareEntry, login_groups: list[GroupGetGroupObjData], verrors: ValidationErrors,
+    ) -> list[GroupGetGroupObjData]:
         if new.mcp_enabled and not new.mcp_allowed_groups:
             verrors.add('mcp_allowed_groups', 'At least one group is required to enable MCP.')
 
         if not new.mcp_allowed_groups:
             return []
 
-        webshare_group = await self.middleware.call('group.get_group_obj', {'groupname': WEBSHARE_GROUP})
-        allowed_gids = {webshare_group['gr_gid']} | {g['gr_gid'] for g in login_groups}
+        webshare_group = await self.call2(
+            self.s.group.get_group_obj, GroupGetGroupObj(groupname=WEBSHARE_GROUP),
+        )
+        allowed_gids = {webshare_group.gr_gid} | {g.gr_gid for g in login_groups}
 
-        groups: list[dict[str, Any]] = []
+        groups: list[GroupGetGroupObjData] = []
         for i, group in enumerate(new.mcp_allowed_groups):
             try:
-                group_obj = await self.middleware.call('group.get_group_obj', {'groupname': group})
+                group_obj = await self.call2(self.s.group.get_group_obj, GroupGetGroupObj(groupname=group))
             except KeyError:
                 verrors.add(f'mcp_allowed_groups.{i}', f'{group}: group does not exist.')
                 continue
 
             # Webshare checks login groups only at consent, so this keeps MCP access from outliving Webshare access.
-            if group_obj['gr_gid'] not in allowed_gids:
+            if group_obj.gr_gid not in allowed_gids:
                 verrors.add(
                     f'mcp_allowed_groups.{i}',
                     f'{group}: group must also grant Webshare access ({WEBSHARE_GROUP} or a group in groups).',

@@ -98,6 +98,7 @@ if typing.TYPE_CHECKING:
     from .utils.origin import ConnectionOrigin
     from .utils.types import EventType
 
+from middlewared.plugins.account_.group import GroupService
 from middlewared.plugins.acme_dns_authenticator import DNSAuthenticatorService as ACMEDNSAuthenticatorService
 from middlewared.plugins.acme_protocol import ACMEProtocolService
 from middlewared.plugins.acme_registration import ACMERegistrationService
@@ -284,6 +285,7 @@ class ServiceContainer(BaseServiceContainer):
         self.dnsclient = DNSClientService(middleware)
         self.docker = DockerService(middleware)
         self.ftp = FTPService(middleware)
+        self.group = GroupService(middleware)
         self.hardware = HardwareServicesContainer(middleware)
         self.initshutdownscript = InitShutdownScriptService(middleware)
         self.keyvalue = KeyValueService(middleware)

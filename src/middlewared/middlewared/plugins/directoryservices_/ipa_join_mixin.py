@@ -6,7 +6,7 @@ import os
 import subprocess
 from tempfile import NamedTemporaryFile
 
-from middlewared.api.current import ServiceOptions
+from middlewared.api.current import GroupGetGroupObj, ServiceOptions
 from middlewared.job import Job
 from middlewared.service_exception import CallError
 from middlewared.utils.directoryservices import ipa, ipa_constants
@@ -167,10 +167,9 @@ class IPAJoinMixin:
             return
 
         try:
-            admins_grp = self.middleware.call_sync('group.get_group_obj', {
-                'groupname': 'admins',
-                'sid_info': True
-            })
+            admins_grp = self.call_sync2(
+                self.s.group.get_group_obj, GroupGetGroupObj(groupname='admins', sid_info=True),
+            )
         except Exception:
             self.logger.debug(
                 'Failed to look up admins group for IPA domain. API access for admin '
@@ -178,7 +177,7 @@ class IPAJoinMixin:
             )
             return
 
-        match admins_grp['source']:
+        match admins_grp.source:
             case 'LDAP':
                 pass
             case 'LOCAL':
@@ -192,14 +191,14 @@ class IPAJoinMixin:
                 self.logger.warning(
                     '%s: unexpected source for "admins" group, which prevents '
                     'the IPA group from being automatically granted API access.',
-                    admins_grp['source']
+                    admins_grp.source
                 )
                 return
 
         try:
             self.middleware.call_sync('privilege.create', {
                 'name': domain.upper(),
-                'ds_groups': [admins_grp['gr_gid']],
+                'ds_groups': [admins_grp.gr_gid],
                 'roles': ['FULL_ADMIN'],
                 'web_shell': True
             })

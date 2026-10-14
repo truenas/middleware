@@ -12,6 +12,8 @@ from middlewared.alert.source.smb_audit import SMBAuditShareDisabledAlert
 from middlewared.alert.source.smb_recordsize import SMBVeeamFastCloneAlert
 from middlewared.api import api_method
 from middlewared.api.current import (
+    GroupGetGroupObj,
+    QueryOptions,
     ServiceOptions,
     SharingSMBCreateArgs,
     SharingSMBCreateResult,
@@ -208,21 +210,21 @@ class SMBService(ConfigService):
                     # no entries in this list
                     continue
 
-                entries = self.middleware.call_sync('group.query', [['group', 'in', group_names]])
+                entries = self.call_sync2(self.s.group.query, [['group', 'in', group_names]])
                 for entry in entries:
-                    if not entry['smb']:
+                    if not entry.smb:
                         # We can't effectively audit non-SMB groups since it won't form
                         # a part of the security token
                         self.logger.error('%s: share auditing configuration contains group [%s] '
                                           'which is not a valid SMB group. Disabling share.',
-                                          share[share_field.NAME], entry['group'])
+                                          share[share_field.NAME], entry.group)
                         share[share_field.ENABLED] = False
                         disabled_shares.append(
-                            f'{share[share_field.NAME]}: {entry["group"]}: share group is not an SMB group'
+                            f'{share[share_field.NAME]}: {entry.group}: share group is not an SMB group'
                         )
                         break
 
-                    sids.append(entry['sid'])
+                    sids.append(entry.sid)
 
                 if not share[share_field.ENABLED]:
                     break
@@ -232,12 +234,12 @@ class SMBService(ConfigService):
                     share[share_field.AUDIT][field] = sids
                     continue
 
-                unresolved = set(group_names) - set(g['group'] for g in entries)
+                unresolved = set(group_names) - {g.group for g in entries}
                 for group_name in unresolved:
                     # We may not have a DS cache entry for this group and so we'll try a
                     # direct query for it. This bypasses our caching and goes directly to
                     # NSS modules, and when successful adds a new cache entry
-                    entry = self.middleware.call_sync('group.query', [['group', '=', group_name]])
+                    entry = self.call_sync2(self.s.group.query, [['group', '=', group_name]])
                     if not entry:
                         self.logger.error('%s: share auditing configuration contains unknown group [%s]. '
                                           'Disabling share.', share[share_field.NAME], group_name)
@@ -1465,14 +1467,14 @@ class SharingSMBService(SharingService):
             for key in [share_field.AUDIT_WATCH_LIST, share_field.AUDIT_IGNORE_LIST]:
                 for idx, group in enumerate(data[share_field.AUDIT][key]):
                     try:
-                        group_obj = await self.middleware.call(
-                            'group.get_group_obj', {'groupname': group, 'sid_info': True}
+                        group_obj = await self.call2(
+                            self.s.group.get_group_obj, GroupGetGroupObj(groupname=group, sid_info=True),
                         )
                     except KeyError:
                         verrors.add(f'{schema_name}.audit.{key}.{idx}', f'{group}: group does not exist.')
                         continue
 
-                    if not group_obj['sid']:
+                    if not group_obj.sid:
                         verrors.add(f'{schema_name}.audit.{key}.{idx}', f'{group}: not an SMB group.')
 
                     has_limit = True
@@ -1750,15 +1752,16 @@ class SharingSMBService(SharingService):
 
             match entry['ae_who_id']['id_type']:
                 case 'USER':
-                    method = 'user.query'
-                    key = 'uid'
+                    sid = (await self.middleware.call(
+                        'user.query', [['uid', '=', entry['ae_who_id']['id']]], {'get': True},
+                    ))['sid']
                 case 'GROUP' | 'BOTH':
-                    method = 'group.query'
-                    key = 'gid'
+                    sid = (await self.call2(
+                        self.s.group.query, [['gid', '=', entry['ae_who_id']['id']]], QueryOptions(get=True),
+                    )).sid
                 case _:
                     raise ValueError(f'{entry["ae_who_id"]["id_type"]}: unexpected ID type')
 
-            sid = (await self.middleware.call(method, [[key, '=', entry['ae_who_id']['id']]], {'get': True}))['sid']
             if sid is None:
                 verrors.add(
                     f'sharing_smb_setacl.share_acl.{idx}.ae_who_id',

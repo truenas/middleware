@@ -6,6 +6,7 @@ from typing import Any
 
 import truenas_os
 
+from middlewared.api.current import GroupGetGroupObj
 from middlewared.service import CallError, Service, private
 from middlewared.utils.filesystem.access import get_user_details
 
@@ -71,7 +72,7 @@ class FilesystemService(Service):
                 return None
 
         try:
-            grp = self.middleware.call_sync('group.get_group_obj', {'gid': xid})
+            grp = self.call_sync2(self.s.group.get_group_obj, GroupGetGroupObj(gid=xid))
         except KeyError:
             return None
 
@@ -98,12 +99,12 @@ class FilesystemService(Service):
         return {
             'pw_name': 'synthetic_user',
             'pw_uid': uid,
-            'pw_gid': grp['gr_gid'],
+            'pw_gid': grp.gr_gid,
             'pw_gecos': 'synthetic user',
             'pw_dir': '/var/empty',
             'pw_shell': '/usr/bin/zsh',
-            'grouplist': [grp['gr_gid']],
-            'id_name': grp['gr_name']
+            'grouplist': [grp.gr_gid],
+            'id_name': grp.gr_name
         }
 
     @private
