@@ -1,8 +1,9 @@
 <%
     import ipaddress
     import socket
+    from collections.abc import Sequence
     from pathlib import Path
-    from typing import Any
+    from middlewared.api.current import NFSEntry
     from middlewared.alert.source.nfs_host import NFSHostnameLookupFailAlert
     from middlewared.alert.source.nfs_exportsd import NFSexportMappingInvalidNamesAlert
     from middlewared.plugins.nfs_.utils import leftmost_has_wildcards
@@ -42,7 +43,7 @@
         return output
 
 
-    def generate_options(share: dict[str, str], global_sec: list[str], config: dict[str, Any], alert_shares: dict[str, list[str]]) -> str:
+    def generate_options(share: dict[str, str], global_sec: Sequence[str], config: NFSEntry, alert_shares: dict[str, list[str]]) -> str:
         params = []
         mapall = []
         maproot = []
@@ -78,7 +79,7 @@
         if maproot:
             params.extend(maproot)
 
-        if config['allow_nonroot']:
+        if config.allow_nonroot:
             params.append("insecure")
 
         return ','.join(params)
@@ -115,7 +116,7 @@
     shares = render_ctx["sharing.nfs.query"]
 
     has_nfs_principal = middleware.call_sync('kerberos.keytab.has_nfs_principal')
-    global_sec = middleware.call_sync("nfs.sec", config, has_nfs_principal) or ["sys"]
+    global_sec = middleware.call_sync2(middleware.services.nfs.sec, config, has_nfs_principal) or ["sys"]
 
     for share in shares:
         if share['locked']:

@@ -4,8 +4,8 @@
 
 [General]
 Verbosity = 0
-% if config['v4_domain']:
-Domain = ${config['v4_domain']}
+% if config.v4_domain:
+Domain = ${config.v4_domain}
 % endif
 
 [Mapping]

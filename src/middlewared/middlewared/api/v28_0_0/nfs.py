@@ -10,7 +10,6 @@ from middlewared.api.base import (
     TcpPort,
     exclude_tcp_ports,
     excluded_field,
-    single_argument_args,
 )
 
 from .zfs_tier import TierInfo
@@ -19,6 +18,7 @@ __all__ = [
     "NFSGetNfs3ClientsEntry",
     "NFSGetNfs4ClientsEntry",
     "NFSEntry",
+    "NFSUpdate",
     "NFSBindipChoicesArgs",
     "NFSBindipChoicesResult",
     "NFSClientCountArgs",
@@ -108,12 +108,15 @@ class NFSEntry(BaseModel):
     )
 
 
-@single_argument_args("nfs_update")
-class NFSUpdateArgs(NFSEntry, metaclass=ForUpdateMetaclass):
+class NFSUpdate(NFSEntry, metaclass=ForUpdateMetaclass):
     id: Excluded = excluded_field()
     managed_nfsd: Excluded = excluded_field()
     v4_krb_enabled: Excluded = excluded_field()
     keytab_has_nfs_spn: Excluded = excluded_field()
+
+
+class NFSUpdateArgs(BaseModel):
+    nfs_update: NFSUpdate = Field(description="Data to update the NFS service configuration.")
 
 
 class NFSUpdateResult(BaseModel):
