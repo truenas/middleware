@@ -22,7 +22,7 @@ from middlewared.api.current import (
     ZFSResourceQuery,
     ZFSResourceRenameArgsData,
     ZFSResourceSnapshotCountQuery,
-    ZFSResourceSnapshotDestroyQuery,
+    ZFSResourceSnapshotDestroyArgsData,
 )
 from middlewared.plugins.zfs.exceptions import ZFSDestroyFailedException
 from middlewared.pylibvirt import gather_pylibvirt_domains_states, get_pylibvirt_domain_state
@@ -239,7 +239,7 @@ class ContainerServicePart(CRUDServicePart[ContainerEntry]):
             ))
             await self.call2(
                 self.s.zfs.resource.snapshot.destroy_impl,
-                ZFSResourceSnapshotDestroyQuery(path=f'{dataset}@{source_snapshot}'),
+                ZFSResourceSnapshotDestroyArgsData(path=f'{dataset}@{source_snapshot}'),
             )
 
         entry = await self._create(data.model_dump(exclude={'pool', 'image'}) | {'dataset': dataset})

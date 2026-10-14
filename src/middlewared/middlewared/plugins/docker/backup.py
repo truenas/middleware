@@ -15,7 +15,7 @@ from middlewared.api.current import (
     DockerBackupEntry,
     DockerBackupMap,
     ZFSResourceQuery,
-    ZFSResourceSnapshotDestroyQuery,
+    ZFSResourceSnapshotDestroyArgsData,
     ZFSResourceSnapshotQuery,
 )
 from middlewared.plugins.apps.ix_apps.path import get_collective_config_path, get_collective_metadata_path
@@ -51,7 +51,7 @@ def list_backups(context: ServiceContext) -> DockerBackupMap:
         return DockerBackupMap(root=backups)
 
     # Get snapshots for the dataset (properties: None for efficiency)
-    snapshots = context.call_sync2(context.s.zfs.resource.snapshot.query, ZFSResourceSnapshotQuery(
+    snapshots = context.call_sync2(context.s.zfs.resource.snapshot.list, ZFSResourceSnapshotQuery(
         paths=[docker_config.dataset],
         properties=['creation'],
     ))
@@ -151,7 +151,7 @@ def delete_backup(context: ServiceContext, backup_name: str) -> None:
 
     context.call_sync2(
         context.s.zfs.resource.snapshot.destroy_impl,
-        ZFSResourceSnapshotDestroyQuery(
+        ZFSResourceSnapshotDestroyArgsData(
             path=backup.snapshot_name,
             recursive=True,
             bypass=True,

@@ -9,8 +9,8 @@ from middlewared.api.current import (
     CloudBackupEntry,
     CloudBackupSyncOptions,
     CredentialsEntry,
-    ZFSResourceSnapshotCloneQuery,
-    ZFSResourceSnapshotDestroyQuery,
+    ZFSResourceSnapshotCloneArgsData,
+    ZFSResourceSnapshotDestroyArgsData,
 )
 from middlewared.plugins.cloud.path import check_local_path
 from middlewared.plugins.cloud.script import env_mapping, run_script
@@ -65,7 +65,7 @@ def restic_backup(
             try:
                 context.call_sync2(
                     context.s.zfs.resource.snapshot.clone,
-                    ZFSResourceSnapshotCloneQuery(snapshot=snapshot, dataset=clone),
+                    ZFSResourceSnapshotCloneArgsData(snapshot=snapshot, dataset=clone),
                 )
             except Exception:
                 clone = None
@@ -147,7 +147,7 @@ def restic_backup(
             try:
                 context.call_sync2(
                     context.s.zfs.resource.snapshot.destroy_impl,
-                    ZFSResourceSnapshotDestroyQuery(path=snapshot),
+                    ZFSResourceSnapshotDestroyArgsData(path=snapshot),
                 )
             except Exception as e:
                 context.logger.warning(f"Error deleting snapshot {snapshot}: {e!r}")

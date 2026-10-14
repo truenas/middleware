@@ -13,7 +13,7 @@ def test_pool_snapshot_rollback_recursive():
         with snapshot(ds, "snap1"), snapshot(ds, "snap2"):
             call("pool.snapshot.rollback", f"{ds}@snap1", {"recursive": True})
 
-            result = call("zfs.resource.snapshot.query", {"paths": [ds]})
+            result = call("zfs.resource.snapshot.list", {"paths": [ds]})
             assert [snap["snapshot_name"] for snap in result] == ["snap1"]
 
 

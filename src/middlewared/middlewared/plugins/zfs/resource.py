@@ -122,11 +122,11 @@ class ZFSResourceService(Service):
         """
         List ZFS resources (datasets and volumes).
 
-        To list snapshots, use :method:`zfs.resource.snapshot.query` instead.
+        To list snapshots, use :method:`zfs.resource.snapshot.list` instead.
 
         A validation error is raised when:
 
-        - a snapshot path is supplied (use :method:`zfs.resource.snapshot.query`)
+        - a snapshot path is supplied (use :method:`zfs.resource.snapshot.list`)
         - overlapping paths are supplied with ``get_children`` enabled or ``max_depth`` greater than 0
 
         Examples:

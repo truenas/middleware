@@ -7,8 +7,8 @@ import typing
 from middlewared.api.current import (
     DockerEntry,
     ZFSResourceCreateArgsData,
-    ZFSResourceSnapshotCreateQuery,
-    ZFSResourceSnapshotDestroyQuery,
+    ZFSResourceSnapshotCreateArgsData,
+    ZFSResourceSnapshotDestroyArgsData,
 )
 from middlewared.service import CallError, ServiceContext
 from middlewared.service_exception import InstanceNotFound
@@ -88,7 +88,7 @@ async def replicate_apps_dataset(context: ServiceContext, new_pool: str, old_poo
     snap_name = await context.middleware.call(
         'replication.new_snapshot_name', MIGRATION_NAMING_SCHEMA
     )
-    snap_details = await context.call2(context.s.zfs.resource.snapshot.create_impl, ZFSResourceSnapshotCreateQuery(
+    snap_details = await context.call2(context.s.zfs.resource.snapshot.create_impl, ZFSResourceSnapshotCreateArgsData(
         dataset=applications_ds_name(old_pool),
         name=snap_name,
         recursive=True,
@@ -98,14 +98,14 @@ async def replicate_apps_dataset(context: ServiceContext, new_pool: str, old_poo
     try:
         await incrementally_replicate_apps_dataset(context, old_pool, new_pool, MIGRATION_NAMING_SCHEMA)
     finally:
-        await context.call2(context.s.zfs.resource.snapshot.destroy_impl, ZFSResourceSnapshotDestroyQuery(
+        await context.call2(context.s.zfs.resource.snapshot.destroy_impl, ZFSResourceSnapshotDestroyArgsData(
             path=snap_details['name'],
             recursive=True,
             bypass=True,
         ))
         target_snap_name = f'{applications_ds_name(new_pool)}@{snap_details["snapshot_name"]}'
         try:
-            await context.call2(context.s.zfs.resource.snapshot.destroy_impl, ZFSResourceSnapshotDestroyQuery(
+            await context.call2(context.s.zfs.resource.snapshot.destroy_impl, ZFSResourceSnapshotDestroyArgsData(
                 path=target_snap_name,
                 recursive=True,
                 bypass=True,

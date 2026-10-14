@@ -7,7 +7,7 @@ import truenas_pylibzfs
 
 from .exceptions import ZFSPathNotASnapshotException, ZFSPathNotFoundException
 
-__all__ = ("hold_impl", "release_impl",)
+__all__ = ("collect_recursive_snapshots", "hold_impl", "release_impl",)
 
 
 @dataclasses.dataclass(slots=True, kw_only=True)
@@ -31,7 +31,7 @@ def __collect_matching_snapshots_callback(ds_hdl: Any, state: CollectSnapshotsSt
     return True
 
 
-def _collect_recursive_snapshots(tls: Any, dataset: str, snap_name: str) -> list[str]:
+def collect_recursive_snapshots(tls: Any, dataset: str, snap_name: str) -> list[str]:
     """Collect all matching snapshot paths recursively.
 
     For recursive operations, finds all snapshots with the same name
@@ -71,7 +71,7 @@ def _collect_recursive_snapshots(tls: Any, dataset: str, snap_name: str) -> list
     return state.snapshots
 
 
-def hold_impl(tls: Any, path: str, tag: str = "truenas", recursive: bool = False) -> None:
+def hold_impl(tls: Any, path: str, tag: str = "truenas", recursive: bool = False) -> list[str]:
     """Create a hold on ZFS snapshot(s).
 
     Args:
@@ -79,6 +79,9 @@ def hold_impl(tls: Any, path: str, tag: str = "truenas", recursive: bool = False
         path: Snapshot path to hold (e.g., 'pool/dataset@snapshot').
         tag: Hold tag name to apply.
         recursive: Apply hold recursively to matching snapshots in child datasets.
+
+    Returns:
+        The snapshot paths the hold was placed on.
 
     Raises:
         ZFSPathNotFoundException: If the snapshot doesn't exist
@@ -94,7 +97,7 @@ def hold_impl(tls: Any, path: str, tag: str = "truenas", recursive: bool = False
 
     # Build list of snapshots to hold
     if recursive:
-        snapshot_paths = _collect_recursive_snapshots(tls, dataset, snap_name)
+        snapshot_paths = collect_recursive_snapshots(tls, dataset, snap_name)
     else:
         # Single snapshot - verify it exists
         try:
@@ -116,9 +119,10 @@ def hold_impl(tls: Any, path: str, tag: str = "truenas", recursive: bool = False
         truenas_pylibzfs.lzc.create_holds(holds=holds)
     except truenas_pylibzfs.lzc.ZFSCoreException:
         raise
+    return snapshot_paths
 
 
-def release_impl(tls: Any, path: str, tag: str | None = None, recursive: bool = False) -> None:
+def release_impl(tls: Any, path: str, tag: str | None = None, recursive: bool = False) -> list[str]:
     """Release hold(s) from ZFS snapshot(s).
 
     Args:
@@ -126,6 +130,9 @@ def release_impl(tls: Any, path: str, tag: str | None = None, recursive: bool = 
         path: Snapshot path to release holds from (e.g., 'pool/dataset@snapshot').
         tag: Specific tag to release. If None, releases all hold tags.
         recursive: Release holds recursively from matching snapshots in child datasets.
+
+    Returns:
+        The snapshot paths a hold was released from.
 
     Raises:
         ZFSPathNotFoundException: If the snapshot doesn't exist
@@ -141,7 +148,7 @@ def release_impl(tls: Any, path: str, tag: str | None = None, recursive: bool = 
 
     # Build list of snapshots to release holds from
     if recursive:
-        snapshot_paths = _collect_recursive_snapshots(tls, dataset, snap_name)
+        snapshot_paths = collect_recursive_snapshots(tls, dataset, snap_name)
     else:
         # Single snapshot - verify it exists
         try:
@@ -174,10 +181,11 @@ def release_impl(tls: Any, path: str, tag: str | None = None, recursive: bool = 
 
     if not holds_to_release:
         # No holds to release
-        return
+        return []
 
     try:
         # Returns tuple of holds that no longer exist (not a failure)
         truenas_pylibzfs.lzc.release_holds(holds=holds_to_release)
     except truenas_pylibzfs.lzc.ZFSCoreException:
         raise
+    return sorted({p for p, _ in holds_to_release})

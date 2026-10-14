@@ -1,7 +1,10 @@
+from collections.abc import Mapping
 import errno
+from types import MappingProxyType
 from typing import Any
 
 from middlewared.api import api_method
+from middlewared.api.base.handler.accept import validate_model
 from middlewared.api.current import (
     PoolSnapshotCloneArgs,
     PoolSnapshotCloneResult,
@@ -21,24 +24,58 @@ from middlewared.api.current import (
     PoolSnapshotUpdateArgs,
     PoolSnapshotUpdateResult,
     ZFSResourceSetArgsData,
-    ZFSResourceSnapshotCloneQuery,
-    ZFSResourceSnapshotCreateQuery,
-    ZFSResourceSnapshotDestroyQuery,
-    ZFSResourceSnapshotHoldQuery,
+    ZFSResourceSnapshotCloneArgsData,
+    ZFSResourceSnapshotCreateArgsData,
+    ZFSResourceSnapshotDestroyArgsData,
+    ZFSResourceSnapshotHoldArgsData,
     ZFSResourceSnapshotQuery,
-    ZFSResourceSnapshotReleaseQuery,
-    ZFSResourceSnapshotRenameQuery,
-    ZFSResourceSnapshotRollbackQuery,
+    ZFSResourceSnapshotReleaseArgsData,
+    ZFSResourceSnapshotRenameArgsData,
+    ZFSResourceSnapshotRollbackArgsData,
 )
 from middlewared.plugins.zfs.exceptions import ZFSPathNotFoundException
-from middlewared.service import CRUDService, InstanceNotFound, ValidationError, filterable_api_method
+from middlewared.service import (
+    CallError,
+    CRUDService,
+    InstanceNotFound,
+    ValidationError,
+    ValidationErrors,
+    filterable_api_method,
+)
 from middlewared.utils.filter_list import filter_list
 
 
-def rekey_validation_error(e: ValidationError, source: str, target: str) -> ValidationError:
-    if e.attribute and e.attribute.startswith(source):
-        return ValidationError(target + e.attribute.removeprefix(source), e.errmsg, e.errno)
-    return e
+def rekey_validation_error(
+    e: ValidationError, source: str, target: str, fields: Mapping[str, str] = MappingProxyType({}),
+) -> ValidationError:
+    """Report an error of `source` on the pool attribute. A field named in `fields` keeps the rest of its path under
+    the mapped attribute, any other attribute of `source` becomes `target`."""
+    attribute = e.attribute or ''
+    if attribute != source and not attribute.startswith(f'{source}.'):
+        return e
+    field, _, rest = attribute.removeprefix(source).removeprefix('.').partition('.')
+    if field in fields:
+        return ValidationError(f'{fields[field]}.{rest}' if rest else fields[field], e.errmsg, e.errno)
+    return ValidationError(target, e.errmsg, e.errno)
+
+
+def rekey_validation_errors(
+    e: ValidationErrors, source: str, target: str, fields: Mapping[str, str] = MappingProxyType({}),
+) -> ValidationErrors:
+    verrors = ValidationErrors()
+    for attribute, errmsg, errno_ in e:
+        verrors.add_validation_error(rekey_validation_error(
+            ValidationError(f'{source}.{attribute}' if attribute else source, errmsg, errno_), source, target, fields,
+        ))
+    return verrors
+
+
+CREATE_FIELDS = MappingProxyType({'exclude': 'pool.snapshot.create.exclude'})
+RENAME_FIELDS = MappingProxyType({'force': 'pool.snapshot.rename.force'})
+CLONE_FIELDS = MappingProxyType({
+    'properties': 'pool.snapshot.clone.dataset_properties',
+    'user_properties': 'pool.snapshot.clone.dataset_properties',
+})
 
 
 class PoolSnapshotService(CRUDService):
@@ -53,15 +90,27 @@ class PoolSnapshotService(CRUDService):
 
     @api_method(PoolSnapshotCloneArgs, PoolSnapshotCloneResult, roles=['SNAPSHOT_WRITE', 'DATASET_WRITE'])
     def clone(self, data):
-        """Clone a given snapshot to a new dataset."""
+        """
+        Clone a given snapshot to a new dataset.
+
+        ``dataset_properties`` takes the native properties :method:`zfs.resource.snapshot.clone` accepts and user
+        properties, whose names contain a colon.
+        """
+        source = 'zfs.resource.snapshot.clone'
+        properties = data['dataset_properties']
         try:
-            self.call_sync2(self.s.zfs.resource.snapshot.clone, ZFSResourceSnapshotCloneQuery(
-                snapshot=data['snapshot'],
-                dataset=data['dataset_dst'],
-                properties=data['dataset_properties'],
-            ))
+            args = validate_model(ZFSResourceSnapshotCloneArgsData, {
+                'snapshot': data['snapshot'],
+                'dataset': data['dataset_dst'],
+                'properties': {k: v for k, v in properties.items() if ':' not in k},
+                'user_properties': {k: str(v) for k, v in properties.items() if ':' in k},
+            }, dump_models=False, allow_private=False)
+        except ValidationErrors as e:
+            raise rekey_validation_errors(e, source, 'pool.snapshot.clone', CLONE_FIELDS)
+        try:
+            self.call_sync2(self.s.zfs.resource.snapshot.clone, args)
         except ValidationError as e:
-            raise rekey_validation_error(e, 'zfs.resource.snapshot.clone', 'pool.snapshot.clone')
+            raise rekey_validation_error(e, source, 'pool.snapshot.clone', CLONE_FIELDS)
         return True
 
     @api_method(
@@ -83,7 +132,7 @@ class PoolSnapshotService(CRUDService):
             error*, errno ``EBUSY``); release a hold with :method:`pool.snapshot.release` first.
         """
         try:
-            self.call_sync2(self.s.zfs.resource.snapshot.rollback, ZFSResourceSnapshotRollbackQuery(
+            self.call_sync2(self.s.zfs.resource.snapshot.rollback, ZFSResourceSnapshotRollbackArgsData(
                 path=id_,
                 **options,
             ))
@@ -98,7 +147,7 @@ class PoolSnapshotService(CRUDService):
 
         """
         try:
-            self.call_sync2(self.s.zfs.resource.snapshot.hold, ZFSResourceSnapshotHoldQuery(
+            self.call_sync2(self.s.zfs.resource.snapshot.hold, ZFSResourceSnapshotHoldArgsData(
                 path=id_,
                 tag='truenas',
                 recursive=options['recursive'],
@@ -114,7 +163,7 @@ class PoolSnapshotService(CRUDService):
 
         """
         try:
-            self.call_sync2(self.s.zfs.resource.snapshot.release, ZFSResourceSnapshotReleaseQuery(
+            self.call_sync2(self.s.zfs.resource.snapshot.release, ZFSResourceSnapshotReleaseArgsData(
                 path=id_,
                 tag=None,  # Release all hold tags
                 recursive=options['recursive'],
@@ -124,10 +173,10 @@ class PoolSnapshotService(CRUDService):
 
     def _transform_snapshot_entry(self, snap, *, include_holds=True, include_user_properties=False,
                                   requested_props=None):
-        """Transform zfs.resource.snapshot.query result to PoolSnapshotEntry format.
+        """Transform zfs.resource.snapshot.list_impl result to PoolSnapshotEntry format.
 
         Args:
-            snap: Snapshot dict from zfs.resource.snapshot.query
+            snap: Snapshot dict from zfs.resource.snapshot.list_impl
             include_holds: Whether to include holds field (False for create/update results)
             requested_props: Set of property names that were explicitly requested (for adding fast-path props)
         """
@@ -244,7 +293,7 @@ class PoolSnapshotService(CRUDService):
         options = options or {}
         extra = options.get('extra', {})
 
-        # Build query args for zfs.resource.snapshot.query
+        # Build query args for zfs.resource.snapshot.list_impl
         query_args: dict[str, Any] = {
             'min_txg': extra.get('min_txg', 0),
             'max_txg': extra.get('max_txg', 0),
@@ -290,11 +339,9 @@ class PoolSnapshotService(CRUDService):
             query_args["get_user_properties"] = True
             include_user_properties = True
 
-        # Query snapshots using the new efficient endpoint
-        # Handle ZFSPathNotFoundException gracefully - return empty results for invalid paths
         snapshots = []
         try:
-            for i in self.call_sync2(self.s.zfs.resource.snapshot.query_impl, ZFSResourceSnapshotQuery(**query_args)):
+            for i in self.call_sync2(self.s.zfs.resource.snapshot.list_impl, ZFSResourceSnapshotQuery(**query_args)):
                 # Transform to PoolSnapshotEntry format
                 # Pass requested_props so fast-path properties can be added when needed
                 snapshots.append(self._transform_snapshot_entry(
@@ -363,7 +410,7 @@ class PoolSnapshotService(CRUDService):
                 self.call_sync2(self.s.vm.suspend_vms, list(affected_vms))
 
         try:
-            result = self.call_sync2(self.s.zfs.resource.snapshot.create, ZFSResourceSnapshotCreateQuery(
+            result = self.call_sync2(self.s.zfs.resource.snapshot.create, ZFSResourceSnapshotCreateArgsData(
                 dataset=dataset,
                 name=name,
                 recursive=recursive,
@@ -380,7 +427,7 @@ class PoolSnapshotService(CRUDService):
 
             self.logger.info(f"Snapshot taken: {dataset}@{name}")
         except ValidationError as e:
-            raise rekey_validation_error(e, 'zfs.resource.snapshot.create', 'pool.snapshot.create')
+            raise rekey_validation_error(e, 'zfs.resource.snapshot.create', 'pool.snapshot.create', CREATE_FIELDS)
         finally:
             if affected_vms:
                 self.call_sync2(self.s.vm.resume_suspended_vms, list(affected_vms))
@@ -395,10 +442,8 @@ class PoolSnapshotService(CRUDService):
 
     @api_method(PoolSnapshotUpdateArgs, PoolSnapshotUpdateResult)
     def do_update(self, snap_id, data):
-        """Update the user properties of the snapshot identified by ``snap_id``."""
-        # TODO: add zfs.resource.snapshot.update (what is this even used for???)
-        data['user_properties_update'].extend({'key': k, 'remove': True} for k in data.pop('user_properties_remove'))
-        # return self.middleware.call_sync('zfs.snapshot.update', snap_id, data)
+        """Changing the user properties of a snapshot is not supported; the call always fails with ``EOPNOTSUPP``."""
+        raise CallError('Changing snapshot user properties is not supported.', errno.EOPNOTSUPP)
 
     @api_method(PoolSnapshotDeleteArgs, PoolSnapshotDeleteResult)
     def do_delete(self, id_, options):
@@ -412,7 +457,7 @@ class PoolSnapshotService(CRUDService):
             raise ValidationError('pool.snapshot.delete', f'Invalid snapshot name: {id_!r}')
 
         try:
-            self.call_sync2(self.s.zfs.resource.snapshot.destroy, ZFSResourceSnapshotDestroyQuery(
+            self.call_sync2(self.s.zfs.resource.snapshot.destroy, ZFSResourceSnapshotDestroyArgsData(
                 path=id_,
                 recursive=options['recursive'],
                 defer=options['defer'],
@@ -420,19 +465,15 @@ class PoolSnapshotService(CRUDService):
         except ValidationError as ve:
             if ve.errno == errno.ENOENT:
                 raise InstanceNotFound(ve.errmsg)
-            raise
+            raise rekey_validation_error(ve, 'zfs.resource.snapshot.destroy', 'pool.snapshot.delete')
 
-        # TODO: Events won't be sent for child snapshots in recursive delete
-        self.middleware.send_event(
-            f'{self._config.namespace}.query', 'REMOVED', id=id_, recursive=options['recursive']
-        )
         return True
 
     @api_method(
         PoolSnapshotRenameArgs,
         PoolSnapshotRenameResult,
         audit='Pool snapshot rename from',
-        audit_extended=lambda id_, new_name: f'{id_!r} to {new_name!r}',
+        audit_extended=lambda id_, options: f'{id_!r} to {options["new_name"]!r}',
         roles=['SNAPSHOT_WRITE']
     )
     async def rename(self, id_, options):
@@ -443,20 +484,17 @@ class PoolSnapshotService(CRUDService):
         as SMB, iSCSI, snapshot tasks, replication, or cloud sync, renaming may cause disruptions or service failures.
 
         Proceed only if you are certain the ZFS resource is not in use and fully understand the risks.
-        Set Force to continue.
+        Set ``force`` to continue.
         """
-        if not options['force']:
-            raise ValidationError(
-                'pool.snapshot.rename.force',
-                'No safety checks are performed when renaming ZFS resources; this may break existing usages. '
-                'If you understand the risks, please set force and proceed.'
-            )
         try:
             await self.call2(
                 self.s.zfs.resource.snapshot.rename,
-                ZFSResourceSnapshotRenameQuery(
+                ZFSResourceSnapshotRenameArgsData(
                     current_name=id_, new_name=options['new_name'], recursive=options['recursive'],
+                    force=options['force'],
                 ),
             )
         except ValidationError as e:
-            raise rekey_validation_error(e, 'zfs.resource.snapshot.rename', 'pool.snapshot.rename.new_name')
+            raise rekey_validation_error(
+                e, 'zfs.resource.snapshot.rename', 'pool.snapshot.rename.new_name', RENAME_FIELDS,
+            )

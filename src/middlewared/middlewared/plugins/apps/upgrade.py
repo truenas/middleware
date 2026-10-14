@@ -24,8 +24,8 @@ from middlewared.api.current import (
     AppVersionInfo,
     CatalogAppVersionDetails,
     QueryOptions,
-    ZFSResourceSnapshotCreateQuery,
-    ZFSResourceSnapshotDestroyQuery,
+    ZFSResourceSnapshotCreateArgsData,
+    ZFSResourceSnapshotDestroyArgsData,
 )
 from middlewared.plugins.catalog.utils import IX_APP_NAME, OFFICIAL_LABEL
 from middlewared.service import CallError, ServiceContext, ValidationErrors
@@ -223,7 +223,7 @@ def upgrade_impl(context: ServiceContext, job: Job, app_name: str, options: AppU
         if app_volume_ds := get_app_volume_ds(context, app_name):
             snap_name = f'{app_volume_ds}@{app_version(app)}'
             try:
-                context.call_sync2(context.s.zfs.resource.snapshot.destroy_impl, ZFSResourceSnapshotDestroyQuery(
+                context.call_sync2(context.s.zfs.resource.snapshot.destroy_impl, ZFSResourceSnapshotDestroyArgsData(
                     path=snap_name,
                     recursive=True,
                     bypass=True,
@@ -231,7 +231,7 @@ def upgrade_impl(context: ServiceContext, job: Job, app_name: str, options: AppU
             except InstanceNotFound:
                 pass
 
-            context.call_sync2(context.s.zfs.resource.snapshot.create_impl, ZFSResourceSnapshotCreateQuery(
+            context.call_sync2(context.s.zfs.resource.snapshot.create_impl, ZFSResourceSnapshotCreateArgsData(
                 dataset=app_volume_ds,
                 name=app_version(app),
                 recursive=True,
@@ -308,7 +308,7 @@ def take_snapshot_of_hostpath(
             logger.debug('Snapshot %r already exists for %r app', snap_name, app_info.name)
             continue
 
-        context.call_sync2(context.s.zfs.resource.snapshot.create_impl, ZFSResourceSnapshotCreateQuery(
+        context.call_sync2(context.s.zfs.resource.snapshot.create_impl, ZFSResourceSnapshotCreateArgsData(
             dataset=dataset,
             name=get_upgrade_snap_name(app_info.name, app_version(app_info)),
             bypass=True,

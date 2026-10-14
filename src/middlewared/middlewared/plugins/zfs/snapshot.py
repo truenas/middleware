@@ -1,39 +1,47 @@
 from __future__ import annotations
 
+# Methods named after builtins shadow them within the class body, so annotations after such a method
+# must qualify the type through `builtins` to refer to the type rather than the method.
+import builtins
 from typing import Any
 
-from middlewared.api import api_method
+from middlewared.api import Event, api_method
 from middlewared.api.current import (
     ZFSResourceSnapshotCloneArgs,
-    ZFSResourceSnapshotCloneQuery,
+    ZFSResourceSnapshotCloneArgsData,
     ZFSResourceSnapshotCloneResult,
     ZFSResourceSnapshotCountArgs,
     ZFSResourceSnapshotCountQuery,
     ZFSResourceSnapshotCountResult,
     ZFSResourceSnapshotCreateArgs,
-    ZFSResourceSnapshotCreateQuery,
+    ZFSResourceSnapshotCreateArgsData,
     ZFSResourceSnapshotCreateResult,
     ZFSResourceSnapshotDestroyArgs,
-    ZFSResourceSnapshotDestroyQuery,
+    ZFSResourceSnapshotDestroyArgsData,
     ZFSResourceSnapshotDestroyResult,
     ZFSResourceSnapshotEntry,
     ZFSResourceSnapshotHoldArgs,
-    ZFSResourceSnapshotHoldQuery,
+    ZFSResourceSnapshotHoldArgsData,
     ZFSResourceSnapshotHoldResult,
     ZFSResourceSnapshotHoldsArgs,
     ZFSResourceSnapshotHoldsQuery,
     ZFSResourceSnapshotHoldsResult,
+    ZFSResourceSnapshotListAddedEvent,
+    ZFSResourceSnapshotListArgs,
+    ZFSResourceSnapshotListChangedEvent,
+    ZFSResourceSnapshotListRemovedEvent,
+    ZFSResourceSnapshotListResult,
     ZFSResourceSnapshotQuery,
     ZFSResourceSnapshotQueryArgs,
     ZFSResourceSnapshotQueryResult,
     ZFSResourceSnapshotReleaseArgs,
-    ZFSResourceSnapshotReleaseQuery,
+    ZFSResourceSnapshotReleaseArgsData,
     ZFSResourceSnapshotReleaseResult,
     ZFSResourceSnapshotRenameArgs,
-    ZFSResourceSnapshotRenameQuery,
+    ZFSResourceSnapshotRenameArgsData,
     ZFSResourceSnapshotRenameResult,
     ZFSResourceSnapshotRollbackArgs,
-    ZFSResourceSnapshotRollbackQuery,
+    ZFSResourceSnapshotRollbackArgsData,
     ZFSResourceSnapshotRollbackResult,
 )
 from middlewared.service import Service, private
@@ -56,49 +64,99 @@ class ZFSResourceSnapshotService(Service):
         namespace = "zfs.resource.snapshot"
         cli_private = True
         entry = ZFSResourceSnapshotEntry
+        events = [
+            Event(
+                name="zfs.resource.snapshot.list",
+                description=(
+                    "Snapshots created, renamed, held or released through this API, and snapshots destroyed by any "
+                    "means. ADDED is sent for a snapshot created or renamed through this API. CHANGED carries the "
+                    "holds after a hold or release through this API. REMOVED is sent for the old name of a renamed "
+                    "snapshot and for every destroyed snapshot, including destroys by the zfs command, retention and "
+                    "rollback. A REMOVED for a destroy comes from ZFS history events: it arrives after the destroy "
+                    "returns, may follow an ADDED for a new snapshot of the same name, and can be lost when events "
+                    "are dropped under load. Snapshots created outside this API, such as by periodic snapshot tasks, "
+                    "replication or the zfs command, emit nothing, and neither does renaming or promoting a dataset or "
+                    "exporting or destroying a pool."
+                ),
+                roles=["SNAPSHOT_READ"],
+                models={
+                    "ADDED": ZFSResourceSnapshotListAddedEvent,
+                    "CHANGED": ZFSResourceSnapshotListChangedEvent,
+                    "REMOVED": ZFSResourceSnapshotListRemovedEvent,
+                },
+            )
+        ]
 
     @private
     @pass_thread_local_storage
-    def query_impl(self, tls: Any, data: ZFSResourceSnapshotQuery) -> list[dict[str, Any]]:
-        return _ops.query_impl(tls, data)
+    def list_impl(self, tls: Any, data: ZFSResourceSnapshotQuery) -> builtins.list[dict[str, Any]]:
+        return _ops.list_impl(tls, data)
+
+    @api_method(
+        ZFSResourceSnapshotListArgs,
+        ZFSResourceSnapshotListResult,
+        roles=["SNAPSHOT_READ"],
+        check_annotations=True,
+    )
+    def list(self, data: ZFSResourceSnapshotQuery) -> builtins.list[ZFSResourceSnapshotEntry]:
+        """
+        List ZFS snapshots and, on request, their properties, user properties and holds.
+
+        ``paths`` takes dataset paths, which select the snapshots of that dataset, and snapshot paths, which
+        select that one snapshot. A path that does not exist is skipped. Without ``paths`` the snapshots of
+        every pool's root filesystem are listed; set ``recursive`` to include the snapshots of descendants.
+        Snapshots of internal datasets are left out unless one is named in ``paths``. Snapshots have no
+        default properties, so request the ones needed in ``properties``.
+
+        A validation error is raised when ``recursive`` is set and one dataset path lies below another
+        (``EINVAL``).
+
+        Examples:
+
+        List the snapshots of every pool's root filesystem:
+
+        .. code:: json
+
+            {}
+
+        List every snapshot:
+
+        .. code:: json
+
+            {"recursive": true}
+
+        List the snapshots of a dataset:
+
+        .. code:: json
+
+            {"paths": ["tank/data"]}
+
+        Get one snapshot with its holds:
+
+        .. code:: json
+
+            {"paths": ["tank/data@backup"], "get_holds": true}
+
+        List the snapshots of a dataset and its descendants with selected properties:
+
+        .. code:: json
+
+            {"paths": ["tank"], "recursive": true, "properties": ["used", "referenced", "creation"]}
+        """
+        return _ops.list_snapshots(self.context, data)
 
     @api_method(
         ZFSResourceSnapshotQueryArgs,
         ZFSResourceSnapshotQueryResult,
         roles=["SNAPSHOT_READ"],
         check_annotations=True,
+        removed_in="v28",
     )
-    def query(self, data: ZFSResourceSnapshotQuery) -> list[ZFSResourceSnapshotEntry]:
+    def query(self, data: ZFSResourceSnapshotQuery) -> builtins.list[ZFSResourceSnapshotEntry]:
         """
         Retrieve information about ZFS snapshots, including their properties and user properties.
-
-        Examples:
-
-        Query all snapshots:
-
-        .. code:: json
-
-            {}
-
-        Query snapshots for a specific dataset:
-
-        .. code:: json
-
-            {"paths": ["tank/data"]}
-
-        Query a specific snapshot:
-
-        .. code:: json
-
-            {"paths": ["tank/data@backup"]}
-
-        Query with recursion and specific properties:
-
-        .. code:: json
-
-            {"paths": ["tank"], "recursive": true, "properties": ["used", "referenced", "creation"]}
         """
-        return _ops.query(self.context, data)
+        return _ops.list_snapshots(self.context, data)
 
     @private
     def exists(self, snap_name: str) -> bool:
@@ -121,6 +179,8 @@ class ZFSResourceSnapshotService(Service):
 
         This method provides a fast way to count snapshots without retrieving full snapshot
         information. Useful for UI displays and quota checks.
+
+        A snapshot path counts that snapshot toward its dataset. A path that does not exist is skipped.
 
         Examples:
 
@@ -152,7 +212,7 @@ class ZFSResourceSnapshotService(Service):
 
     @private
     @pass_thread_local_storage
-    def destroy_impl(self, tls: Any, data: ZFSResourceSnapshotDestroyQuery) -> None:
+    def destroy_impl(self, tls: Any, data: ZFSResourceSnapshotDestroyArgsData) -> None:
         _ops.destroy_impl(tls, data)
 
     @api_method(
@@ -163,16 +223,18 @@ class ZFSResourceSnapshotService(Service):
         audit_extended=lambda data: audit_target(data.get("path"), data, "recursive", "defer", "all_snapshots"),
         check_annotations=True,
     )
-    def destroy(self, data: ZFSResourceSnapshotDestroyQuery) -> None:
+    def destroy(self, data: ZFSResourceSnapshotDestroyArgsData) -> None:
         """
         Destroy ZFS snapshots.
 
         A validation error is raised when:
 
-        - the snapshot does not exist (``ENOENT``)
+        - ``path`` is not a snapshot path, or with ``all_snapshots`` is not a dataset path (``EINVAL``)
+        - ``path`` does not exist (``ENOENT``)
         - it has dependent clones and ``defer`` is ``false`` (``EBUSY``)
         - it has active holds (``EBUSY``)
-        - a protected path is targeted without ``bypass`` (``EACCES``)
+        - ``path`` is a protected path (``EACCES``)
+        - the kernel refuses the destroy, with the errno it reported
 
         Examples:
 
@@ -210,26 +272,37 @@ class ZFSResourceSnapshotService(Service):
 
     @private
     @pass_thread_local_storage
-    def rename_impl(self, tls: Any, data: ZFSResourceSnapshotRenameQuery) -> None:
-        return _ops.rename_impl(tls, data)
+    def rename_impl(self, tls: Any, data: ZFSResourceSnapshotRenameArgsData) -> None:
+        return _ops.rename_impl(self.context, tls, data)
 
     @api_method(
         ZFSResourceSnapshotRenameArgs,
         ZFSResourceSnapshotRenameResult,
         roles=["SNAPSHOT_WRITE"],
         audit="ZFS snapshot rename from",
-        audit_extended=lambda data: f"{data.get('current_name')!r} to {data.get('new_name')!r}",
+        audit_extended=lambda data: audit_target(
+            f"{data.get('current_name')!r} to {data.get('new_name')!r}", data, "recursive"
+        ),
         check_annotations=True,
     )
-    def rename(self, data: ZFSResourceSnapshotRenameQuery) -> None:
+    def rename(self, data: ZFSResourceSnapshotRenameArgsData) -> None:
         """
-        Rename a ZFS snapshot.
+        Rename a ZFS snapshot. The new name must stay on the same dataset.
+
+        .. warning::
+
+            No check is made whether the snapshot is in use. Replication, snapshot tasks and anything else
+            that finds snapshots by name may break when one is renamed. Proceed only if you are certain the
+            snapshot is not in use.
 
         A validation error is raised when:
 
-        - the snapshot does not exist
-        - the new name already exists
-        - a supplied path is invalid
+        - ``force`` is not set (``EINVAL``)
+        - ``current_name`` or ``new_name`` is not a snapshot path, or ``new_name`` is on a different dataset
+          (``EINVAL``)
+        - the snapshot does not exist (``ENOENT``)
+        - ``new_name`` already exists (``EEXIST``)
+        - either name is a protected path (``EACCES``)
 
         Examples:
 
@@ -237,19 +310,19 @@ class ZFSResourceSnapshotService(Service):
 
         .. code:: json
 
-            {"current_name": "tank/data@old", "new_name": "tank/data@new"}
+            {"current_name": "tank/data@old", "new_name": "tank/data@new", "force": true}
 
         Rename matching snapshots in child datasets:
 
         .. code:: json
 
-            {"current_name": "tank@old", "new_name": "tank@new", "recursive": true}
+            {"current_name": "tank@old", "new_name": "tank@new", "recursive": true, "force": true}
         """
         _ops.rename(self.context, data)
 
     @private
     @pass_thread_local_storage
-    def clone_impl(self, tls: Any, data: ZFSResourceSnapshotCloneQuery) -> bool:
+    def clone_impl(self, tls: Any, data: ZFSResourceSnapshotCloneArgsData) -> bool:
         return _ops.clone_impl(self.context, tls, data)
 
     @api_method(
@@ -260,15 +333,18 @@ class ZFSResourceSnapshotService(Service):
         audit_extended=lambda data: f"{data.get('snapshot')!r} to {data.get('dataset')!r}",
         check_annotations=True,
     )
-    def clone(self, data: ZFSResourceSnapshotCloneQuery) -> None:
+    def clone(self, data: ZFSResourceSnapshotCloneArgsData) -> None:
         """
-        Clone a ZFS snapshot to create a new dataset.
+        Clone a ZFS snapshot to create a new filesystem or volume, of the type the snapshot was taken of.
 
         A validation error is raised when:
 
-        - the source snapshot does not exist
-        - the destination dataset already exists
-        - the source is not a snapshot
+        - ``snapshot`` is not a snapshot path or ``dataset`` is one (``EINVAL``)
+        - a property does not apply to the type of the clone, or its value is refused (``EINVAL``)
+        - a user property name or value is invalid (``EINVAL``)
+        - the source snapshot does not exist (``ENOENT``)
+        - ``dataset`` already exists (``EEXIST``)
+        - either path is a protected path (``EACCES``)
 
         A filesystem clone that cannot be mounted is kept, and the error names it.
 
@@ -287,15 +363,16 @@ class ZFSResourceSnapshotService(Service):
             {
                 "snapshot": "tank/data@backup",
                 "dataset": "tank/data_clone",
-                "properties": {"compression": "lz4", "quota": "10G"}
+                "properties": {"compression": "lz4", "quota": "10G"},
+                "user_properties": {"org.truenas:origin": "backup"}
             }
         """
         _ops.clone(self.context, data)
 
     @private
     @pass_thread_local_storage
-    def create_impl(self, tls: Any, data: ZFSResourceSnapshotCreateQuery) -> Any:
-        return _ops.create_impl(tls, data)
+    def create_impl(self, tls: Any, data: ZFSResourceSnapshotCreateArgsData) -> dict[str, Any]:
+        return _ops.create_impl(self.context, tls, data)
 
     @api_method(
         ZFSResourceSnapshotCreateArgs,
@@ -305,14 +382,18 @@ class ZFSResourceSnapshotService(Service):
         audit_extended=lambda data: audit_target(f"{data.get('dataset')}@{data.get('name')}", data, "recursive"),
         check_annotations=True,
     )
-    def create(self, data: ZFSResourceSnapshotCreateQuery) -> ZFSResourceSnapshotEntry:
+    def create(self, data: ZFSResourceSnapshotCreateArgsData) -> ZFSResourceSnapshotEntry:
         """
-        Create a ZFS snapshot.
+        Create a ZFS snapshot, and with ``recursive`` the same-named snapshot of every descendant not listed in
+        ``exclude``. All of them are created atomically.
 
         A validation error is raised when:
 
-        - the dataset does not exist
-        - the snapshot already exists
+        - ``dataset`` or ``name`` contains ``@`` (``EINVAL``)
+        - ``exclude`` leaves nothing to snapshot (``EINVAL``)
+        - the dataset does not exist (``ENOENT``)
+        - the snapshot already exists (``EEXIST``)
+        - ``dataset`` is a protected path (``EACCES``)
 
         Examples:
 
@@ -338,8 +419,8 @@ class ZFSResourceSnapshotService(Service):
 
     @private
     @pass_thread_local_storage
-    def hold_impl(self, tls: Any, data: ZFSResourceSnapshotHoldQuery) -> None:
-        return _ops.hold_impl(tls, data)
+    def hold_impl(self, tls: Any, data: ZFSResourceSnapshotHoldArgsData) -> None:
+        return _ops.hold_impl(self.context, tls, data)
 
     @api_method(
         ZFSResourceSnapshotHoldArgs,
@@ -349,7 +430,7 @@ class ZFSResourceSnapshotService(Service):
         audit_extended=lambda data: audit_target(data.get("path"), data, "recursive"),
         check_annotations=True,
     )
-    def hold(self, data: ZFSResourceSnapshotHoldQuery) -> None:
+    def hold(self, data: ZFSResourceSnapshotHoldArgsData) -> None:
         """
         Create a hold on a ZFS snapshot.
 
@@ -358,8 +439,10 @@ class ZFSResourceSnapshotService(Service):
 
         A validation error is raised when:
 
-        - the snapshot does not exist
-        - the hold cannot be created
+        - ``path`` is not a snapshot path (``EINVAL``)
+        - the hold tag is refused (``EINVAL``)
+        - the snapshot does not exist (``ENOENT``)
+        - ``path`` is a protected path (``EACCES``)
 
         Examples:
 
@@ -393,25 +476,18 @@ class ZFSResourceSnapshotService(Service):
         ZFSResourceSnapshotHoldsResult,
         roles=["SNAPSHOT_READ"],
         check_annotations=True,
+        removed_in="v28",
     )
-    def holds(self, data: ZFSResourceSnapshotHoldsQuery) -> list[str]:
+    def holds(self, data: ZFSResourceSnapshotHoldsQuery) -> builtins.list[str]:
         """
         Get holds on a ZFS snapshot.
-
-        Examples:
-
-        Get the holds on a snapshot:
-
-        .. code:: json
-
-            {"path": "tank/data@backup"}
         """
         return _ops.holds(self.context, data)
 
     @private
     @pass_thread_local_storage
-    def release_impl(self, tls: Any, data: ZFSResourceSnapshotReleaseQuery) -> None:
-        return _ops.release_impl(tls, data)
+    def release_impl(self, tls: Any, data: ZFSResourceSnapshotReleaseArgsData) -> None:
+        return _ops.release_impl(self.context, tls, data)
 
     @api_method(
         ZFSResourceSnapshotReleaseArgs,
@@ -421,14 +497,15 @@ class ZFSResourceSnapshotService(Service):
         audit_extended=lambda data: audit_target(data.get("path"), data, "recursive"),
         check_annotations=True,
     )
-    def release(self, data: ZFSResourceSnapshotReleaseQuery) -> None:
+    def release(self, data: ZFSResourceSnapshotReleaseArgsData) -> None:
         """
         Release hold(s) from a ZFS snapshot.
 
         A validation error is raised when:
 
-        - the snapshot does not exist
-        - the hold cannot be released
+        - ``path`` is not a snapshot path (``EINVAL``)
+        - the snapshot does not exist (``ENOENT``)
+        - ``path`` is a protected path (``EACCES``)
 
         Examples:
 
@@ -454,7 +531,7 @@ class ZFSResourceSnapshotService(Service):
 
     @private
     @pass_thread_local_storage
-    def rollback_impl(self, tls: Any, data: ZFSResourceSnapshotRollbackQuery) -> None:
+    def rollback_impl(self, tls: Any, data: ZFSResourceSnapshotRollbackArgsData) -> None:
         return _ops.rollback_impl(tls, data)
 
     @api_method(
@@ -467,7 +544,7 @@ class ZFSResourceSnapshotService(Service):
         ),
         check_annotations=True,
     )
-    def rollback(self, data: ZFSResourceSnapshotRollbackQuery) -> None:
+    def rollback(self, data: ZFSResourceSnapshotRollbackArgsData) -> None:
         """
         Rollback a ZFS dataset to a snapshot.
 

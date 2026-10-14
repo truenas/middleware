@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import typing
 
-from middlewared.api.current import ZFSResourceSnapshotCreateQuery
+from middlewared.api.current import ZFSResourceSnapshotCreateArgsData
 from middlewared.utils.time_utils import utc_now
 
 if typing.TYPE_CHECKING:
@@ -75,7 +75,7 @@ def create_snapshot(
     snapshot_name = f"{name}-{utc_now().strftime('%Y%m%d%H%M%S')}"
     snapshot = middleware.call_sync2(
         middleware.services.zfs.resource.snapshot.create_impl,
-        ZFSResourceSnapshotCreateQuery(
+        ZFSResourceSnapshotCreateArgsData(
             dataset=st.source,
             name=snapshot_name,
             recursive=st.dest == path,

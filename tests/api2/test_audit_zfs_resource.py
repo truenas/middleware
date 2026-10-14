@@ -46,7 +46,7 @@ def test_snapshot_destroy_audit_records_all_snapshots():
         ):
             call("zfs.resource.snapshot.destroy", payload)
 
-        assert call("zfs.resource.snapshot.query", {"paths": [ds]}) == []
+        assert call("zfs.resource.snapshot.list", {"paths": [ds]}) == []
 
 
 def test_failed_destroy_is_audited_as_unsuccessful():

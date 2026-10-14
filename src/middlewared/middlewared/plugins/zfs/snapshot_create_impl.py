@@ -10,7 +10,6 @@ from .exceptions import (
     ZFSPathInvalidException,
     ZFSPathNotFoundException,
 )
-from .snapshot_query_impl import query_snapshots_impl
 
 __all__ = ("create_snapshots_impl",)
 
@@ -53,7 +52,7 @@ def create_snapshots_impl(
     recursive: bool = False,
     exclude: Collection[str] | None = None,
     user_properties: dict[str, str] | None = None,
-) -> dict[str, Any]:
+) -> list[str]:
     """Create ZFS snapshot(s).
 
     Args:
@@ -65,7 +64,7 @@ def create_snapshots_impl(
         user_properties: User properties to set on the snapshot.
 
     Returns:
-        Snapshot entry dict for the primary snapshot created
+        The snapshot paths created.
 
     Raises:
         ZFSPathNotFoundException: If the dataset doesn't exist
@@ -117,28 +116,4 @@ def create_snapshots_impl(
                 raise ZFSPathAlreadyExistsException(snap_path)
         raise
 
-    # Query and return the primary snapshot
-    # The requested properties are expected by UI
-    primary_snap_path = f"{dataset}@{snap_name}"
-    results = query_snapshots_impl(
-        tls.lzh,
-        {"paths": [primary_snap_path], "properties": ["creation", "createtxg"]},
-    )
-
-    # TODO: Consider returning list of all created snapshots for recursive=True
-    # Currently returns only the primary snapshot entry
-    if results:
-        return results[0]
-
-    # Shouldn't happen if create succeeded, but handle gracefully
-    return {
-        "name": primary_snap_path,
-        "pool": dataset.split("/")[0],
-        "dataset": dataset,
-        "snapshot_name": snap_name,
-        "type": "SNAPSHOT",
-        "createtxg": 0,
-        "guid": 0,
-        "properties": {},
-        "user_properties": {},
-    }
+    return snapshot_names

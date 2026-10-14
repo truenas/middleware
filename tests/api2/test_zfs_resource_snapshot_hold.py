@@ -279,7 +279,7 @@ def test_zfs_resource_snapshot_hold_recursive_skips_children_without_the_snapsho
                         "zfs.resource.snapshot.holds", {"path": f"{with_snap}@shared"}
                     ) == ["truenas"]
                     assert call(
-                        "zfs.resource.snapshot.query", {"paths": [without_snap]}
+                        "zfs.resource.snapshot.list", {"paths": [without_snap]}
                     ) == []
                 finally:
                     call(

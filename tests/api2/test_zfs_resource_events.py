@@ -111,13 +111,39 @@ def test_resource_destroy_emits_one_removed():
         assert summary(events) == [("zfs.resource.list", "REMOVED", child)], pprint.pformat(events)
 
 
-def test_snapshot_destroy_emits_nothing():
+def test_snapshot_destroy_reaches_only_snapshot_streams():
     with resource("zre_events_snapshot_destroy") as path:
         ssh(f"zfs snapshot {path}@snap")
-        with collect(path) as events:
+        collections = ("zfs.resource.list", "pool.dataset.query", "zfs.resource.snapshot.list", "pool.snapshot.query")
+        with collect(path, collections) as events:
             ssh(f"zfs destroy {path}@snap")
 
-        assert summary(events) == [], pprint.pformat(events)
+        assert sorted(summary(events)) == [
+            ("pool.snapshot.query", "REMOVED", f"{path}@snap"),
+            ("zfs.resource.snapshot.list", "REMOVED", f"{path}@snap"),
+        ], pprint.pformat(events)
+
+
+def test_snapshot_api_emits_snapshot_events():
+    with resource("zre_events_snapshot_api") as path:
+        with collect(path, ("zfs.resource.snapshot.list", "zfs.resource.list")) as events:
+            call("zfs.resource.snapshot.create", {"dataset": path, "name": "a"})
+            call("zfs.resource.snapshot.hold", {"path": f"{path}@a", "tag": "t"})
+            call("zfs.resource.snapshot.release", {"path": f"{path}@a", "tag": "t"})
+            call("zfs.resource.snapshot.rename", {"current_name": f"{path}@a", "new_name": f"{path}@b", "force": True})
+            call("zfs.resource.snapshot.clone", {"snapshot": f"{path}@b", "dataset": f"{path}/clone"})
+
+        assert summary(events) == [
+            ("zfs.resource.snapshot.list", "ADDED", f"{path}@a"),
+            ("zfs.resource.snapshot.list", "CHANGED", f"{path}@a"),
+            ("zfs.resource.snapshot.list", "CHANGED", f"{path}@a"),
+            ("zfs.resource.snapshot.list", "REMOVED", f"{path}@a"),
+            ("zfs.resource.snapshot.list", "ADDED", f"{path}@b"),
+            ("zfs.resource.list", "ADDED", f"{path}/clone"),
+        ], pprint.pformat(events)
+        assert events[1][3]["fields"] == {"holds": ["t"]}
+        assert events[2][3]["fields"] == {"holds": []}
+        call("zfs.resource.destroy", {"path": f"{path}/clone"})
 
 
 def test_internal_dataset_destroy_emits_removed():

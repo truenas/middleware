@@ -4,48 +4,58 @@ from pydantic import Field
 
 from middlewared.api.base import (
     BaseModel,
+    Excluded,
     NonEmptyString,
     NotRequired,
     Private,
     UniqueList,
+    ZFSSpaceLimit,
+    excluded_field,
 )
 
-from .zfs_resource_crud import PropertyValue
+from .zfs_resource_crud import PropertyValue, ZFSResourceSetProperties
 
 __all__ = (
     "ZFSResourceSnapshotEntry",
     "ZFSResourceSnapshotPropertiesEntry",
     "ZFSResourceSnapshotQueryBase",
     "ZFSResourceSnapshotQuery",
+    "ZFSResourceSnapshotListArgs",
+    "ZFSResourceSnapshotListResult",
     "ZFSResourceSnapshotQueryArgs",
     "ZFSResourceSnapshotQueryResult",
     "ZFSResourceSnapshotCountQuery",
     "ZFSResourceSnapshotCountArgs",
     "ZFSResourceSnapshotCountResult",
-    "ZFSResourceSnapshotDestroyQuery",
+    "ZFSResourceSnapshotDestroyArgsData",
     "ZFSResourceSnapshotDestroyArgs",
     "ZFSResourceSnapshotDestroyResult",
-    "ZFSResourceSnapshotRenameQuery",
+    "ZFSResourceSnapshotRenameArgsData",
     "ZFSResourceSnapshotRenameArgs",
     "ZFSResourceSnapshotRenameResult",
-    "ZFSResourceSnapshotCloneQuery",
+    "ZFSResourceSnapshotCloneProperties",
+    "ZFSResourceSnapshotCloneArgsData",
     "ZFSResourceSnapshotCloneArgs",
     "ZFSResourceSnapshotCloneResult",
-    "ZFSResourceSnapshotCreateQuery",
+    "ZFSResourceSnapshotCreateArgsData",
     "ZFSResourceSnapshotCreateArgs",
     "ZFSResourceSnapshotCreateResult",
-    "ZFSResourceSnapshotHoldQuery",
+    "ZFSResourceSnapshotHoldArgsData",
     "ZFSResourceSnapshotHoldArgs",
     "ZFSResourceSnapshotHoldResult",
     "ZFSResourceSnapshotHoldsQuery",
     "ZFSResourceSnapshotHoldsArgs",
     "ZFSResourceSnapshotHoldsResult",
-    "ZFSResourceSnapshotReleaseQuery",
+    "ZFSResourceSnapshotReleaseArgsData",
     "ZFSResourceSnapshotReleaseArgs",
     "ZFSResourceSnapshotReleaseResult",
-    "ZFSResourceSnapshotRollbackQuery",
+    "ZFSResourceSnapshotRollbackArgsData",
     "ZFSResourceSnapshotRollbackArgs",
     "ZFSResourceSnapshotRollbackResult",
+    "ZFSResourceSnapshotHoldsChange",
+    "ZFSResourceSnapshotListAddedEvent",
+    "ZFSResourceSnapshotListChangedEvent",
+    "ZFSResourceSnapshotListRemovedEvent",
 )
 
 
@@ -164,29 +174,48 @@ class ZFSResourceSnapshotPropertiesEntry(BaseModel):
 class ZFSResourceSnapshotEntry(BaseModel):
     createtxg: int = Field(description="The TXG in which the snapshot was created.")
     guid: int = Field(description="A GUID for the snapshot.")
-    name: str = Field(description="The zfs resource for the given snapshot.")
+    name: str = Field(description="Full snapshot path (`dataset@snapshot`).")
     pool: str = Field(description="The zpool of the snapshot.")
-    dataset: str = Field(description="The zfs resource for the given snapshot.")
+    dataset: str = Field(description="Path of the filesystem or volume the snapshot was taken of.")
     snapshot_name: str = Field(description="The name of the snapshot.")
     type: Literal["SNAPSHOT"] = Field(default="SNAPSHOT", description="The type of zfs resource.")
-    holds: tuple | None = Field(description="A list of tags that hold the snapshot.")
-    properties: ZFSResourceSnapshotPropertiesEntry | None = Field(description="Requested properties for the snapshot.")
-    user_properties: dict[str, str] | None = Field(description="User-defined properties for snapshots.")
+    holds: tuple | None = Field(
+        description=(
+            "Hold tags on the snapshot when `get_holds` is set. Null when it is not set or the snapshot has no holds."
+        ),
+    )
+    properties: ZFSResourceSnapshotPropertiesEntry | None = Field(
+        description="The properties requested through `properties`.",
+    )
+    user_properties: dict[str, str] | None = Field(
+        description="User properties of the snapshot when `get_user_properties` is set.",
+    )
 
 
 class ZFSResourceSnapshotQueryBase(BaseModel):
     paths: UniqueList[str] = Field(
         default=list(),
-        description="Dataset paths to count snapshots for. If empty, counts all snapshots.",
+        description=(
+            "Dataset paths, which select the snapshots of that dataset, and snapshot paths (`dataset@snapshot`), "
+            "which select that one snapshot. A path that does not exist is skipped. When empty, the root "
+            "filesystem of every imported pool is used."
+        ),
     )
-    recursive: bool = Field(default=False, description="Include snapshots from child datasets when counting.")
+    recursive: bool = Field(
+        default=False,
+        description=(
+            "Also include the snapshots of the descendants of each dataset path, or of every pool's root "
+            "filesystem when `paths` is empty."
+        ),
+    )
 
 
 class ZFSResourceSnapshotQuery(ZFSResourceSnapshotQueryBase):
     properties: list[str] | None = Field(
         default=list(),
         description=(
-            "List of ZFS properties to retrieve. Empty list returns default properties. None returns no properties."
+            "ZFS properties to retrieve for each snapshot. Snapshots have no default properties, so an empty list "
+            "or null retrieves none."
         ),
     )
     get_user_properties: bool = Field(default=False, description="Retrieve user-defined properties for snapshots.")
@@ -202,15 +231,23 @@ class ZFSResourceSnapshotQuery(ZFSResourceSnapshotQueryBase):
     )
 
 
-class ZFSResourceSnapshotQueryArgs(BaseModel):
+class ZFSResourceSnapshotListArgs(BaseModel):
     data: ZFSResourceSnapshotQuery = Field(
-        default=ZFSResourceSnapshotQuery(),
-        description="Query parameters for retrieving ZFS snapshot information.",
+        default_factory=ZFSResourceSnapshotQuery,
+        description="Parameters selecting the snapshots to list and the information to retrieve.",
     )
 
 
-class ZFSResourceSnapshotQueryResult(BaseModel):
+class ZFSResourceSnapshotListResult(BaseModel):
     result: list[ZFSResourceSnapshotEntry]
+
+
+class ZFSResourceSnapshotQueryArgs(ZFSResourceSnapshotListArgs):
+    pass
+
+
+class ZFSResourceSnapshotQueryResult(ZFSResourceSnapshotListResult):
+    pass
 
 
 class ZFSResourceSnapshotCountQuery(ZFSResourceSnapshotQueryBase):
@@ -228,7 +265,7 @@ class ZFSResourceSnapshotCountResult(BaseModel):
     result: dict[str, int] = Field(description="Mapping of dataset names to their snapshot counts.")
 
 
-class ZFSResourceSnapshotDestroyQuery(BaseModel):
+class ZFSResourceSnapshotDestroyArgsData(BaseModel):
     path: NonEmptyString = Field(
         description=(
             "Path to destroy. Either a snapshot path (e.g., 'pool/dataset@snapshot') or a dataset path when "
@@ -250,37 +287,89 @@ class ZFSResourceSnapshotDestroyQuery(BaseModel):
 
 
 class ZFSResourceSnapshotDestroyArgs(BaseModel):
-    data: ZFSResourceSnapshotDestroyQuery = Field(description="Destroy parameters for removing ZFS snapshots.")
+    data: ZFSResourceSnapshotDestroyArgsData = Field(description="Destroy parameters for removing ZFS snapshots.")
 
 
 class ZFSResourceSnapshotDestroyResult(BaseModel):
     result: None
 
 
-class ZFSResourceSnapshotRenameQuery(BaseModel):
+class ZFSResourceSnapshotRenameArgsData(BaseModel):
     current_name: NonEmptyString = Field(description="Current snapshot path (e.g., 'pool/dataset@old_name').")
     new_name: NonEmptyString = Field(description="New snapshot path (e.g., 'pool/dataset@new_name').")
     recursive: bool = Field(default=False, description="Recursively rename matching snapshots in child datasets.")
+    force: bool = Field(
+        default=False,
+        description=(
+            "Acknowledge that no check is made whether the snapshot is in use. Replication, snapshot tasks and "
+            "anything else that finds snapshots by name may break when one is renamed. The rename is refused "
+            "unless this is set."
+        ),
+    )
     bypass: Private[bool] = Field(
         default=False,
         description=(
-            "If true, will bypass the safety checks that prevent deleting zfs resources that are \"protected\"."
+            "If true, will bypass the safety checks that prevent renaming snapshots of \"protected\" zfs resources."
         ),
     )
 
 
 class ZFSResourceSnapshotRenameArgs(BaseModel):
-    data: ZFSResourceSnapshotRenameQuery = Field(description="Rename parameters for renaming ZFS snapshots.")
+    data: ZFSResourceSnapshotRenameArgsData = Field(description="Rename parameters for renaming ZFS snapshots.")
+
+    @classmethod
+    def from_previous(cls, value):
+        # Clients of the previous API had no `force` and were never refused.
+        value["data"]["force"] = True
+        return value
 
 
 class ZFSResourceSnapshotRenameResult(BaseModel):
     result: None
 
 
-class ZFSResourceSnapshotCloneQuery(BaseModel):
+class ZFSResourceSnapshotCloneProperties(ZFSResourceSetProperties):
+    """ZFS properties that may be set when cloning a snapshot.
+
+    Each field is the native ZFS property name and values are handed to ZFS verbatim.
+    A field left as null is not sent to ZFS, so the clone inherits it as usual.
+    Fields marked `Private` are settable by internal callers only.
+    """
+
+    volsize: Excluded = excluded_field()
+    refreservation: ZFSSpaceLimit | Literal["auto"] | None = Field(
+        default=None,
+        description=(
+            "Minimum space reserved for the clone itself, as a byte count or a size string such as '10G'. 'none' or "
+            "0 reserves nothing. 'auto' reserves the space a volume's size requires and is accepted for volume "
+            "clones only."
+        ),
+    )
+
+
+class ZFSResourceSnapshotCloneArgsData(BaseModel):
     snapshot: NonEmptyString = Field(description="Source snapshot path to clone (e.g., 'pool/dataset@snapshot').")
     dataset: NonEmptyString = Field(description="Destination dataset path for the clone (e.g., 'pool/clone').")
-    properties: dict[str, str | int] = Field(default={}, description="ZFS properties to set on the cloned dataset.")
+    properties: ZFSResourceSnapshotCloneProperties = Field(
+        default_factory=ZFSResourceSnapshotCloneProperties,
+        description=(
+            "ZFS properties to set on the clone. A property left as null is not sent to ZFS and inherits as usual. "
+            "Any property not in this model may not be set on a clone, and a property that applies only to a "
+            "filesystem or only to a volume is refused for the other type.\n"
+            "\n"
+            "On a filesystem clone an explicit 'acltype' also defaults the coupled acl properties. An nfsv4 acltype "
+            "defaults 'aclinherit' to 'passthrough' while a posix or off acltype defaults both 'aclmode' and "
+            "'aclinherit' to 'discard'."
+        ),
+    )
+    user_properties: dict[str, str] = Field(
+        default={},
+        description=(
+            "User properties to set on the clone, keyed by their full name (e.g. 'org.truenas:custom'). A name must "
+            "contain a colon, may consist only of lowercase letters, digits and the characters ':', '.', '_' and "
+            "'-', and must be shorter than 256 characters. A value must be shorter than 8192 bytes."
+        ),
+    )
     no_mount: bool = Field(
         default=False,
         description="Do not mount the clone after creating it. Volume clones are never mounted.",
@@ -288,20 +377,28 @@ class ZFSResourceSnapshotCloneQuery(BaseModel):
     bypass: Private[bool] = Field(
         default=False,
         description=(
-            "If true, will bypass the safety checks that prevent deleting zfs resources that are \"protected\"."
+            "If true, will bypass the safety checks that prevent cloning from or into \"protected\" zfs resources. "
+            "It also skips the `aclmode`/`aclinherit` defaults that follow an explicit `acltype`."
         ),
     )
 
 
 class ZFSResourceSnapshotCloneArgs(BaseModel):
-    data: ZFSResourceSnapshotCloneQuery = Field(description="Clone parameters for cloning ZFS snapshots.")
+    data: ZFSResourceSnapshotCloneArgsData = Field(description="Clone parameters for cloning ZFS snapshots.")
+
+    @classmethod
+    def from_previous(cls, value):
+        properties = value["data"].get("properties") or {}
+        value["data"]["properties"] = {k: v for k, v in properties.items() if ":" not in k}
+        value["data"]["user_properties"] = {k: str(v) for k, v in properties.items() if ":" in k}
+        return value
 
 
 class ZFSResourceSnapshotCloneResult(BaseModel):
     result: None
 
 
-class ZFSResourceSnapshotCreateQuery(BaseModel):
+class ZFSResourceSnapshotCreateArgsData(BaseModel):
     dataset: NonEmptyString = Field(description="Dataset path to snapshot (e.g., 'pool/dataset').")
     name: NonEmptyString = Field(description="Snapshot name (the part after @).")
     recursive: bool = Field(default=False, description="Create snapshots recursively for child datasets.")
@@ -316,20 +413,20 @@ class ZFSResourceSnapshotCreateQuery(BaseModel):
     bypass: Private[bool] = Field(
         default=False,
         description=(
-            "If true, will bypass the safety checks that prevent deleting zfs resources that are \"protected\"."
+            "If true, will bypass the safety checks that prevent snapshotting \"protected\" zfs resources."
         ),
     )
 
 
 class ZFSResourceSnapshotCreateArgs(BaseModel):
-    data: ZFSResourceSnapshotCreateQuery = Field(description="Create parameters for creating ZFS snapshots.")
+    data: ZFSResourceSnapshotCreateArgsData = Field(description="Create parameters for creating ZFS snapshots.")
 
 
 class ZFSResourceSnapshotCreateResult(BaseModel):
     result: ZFSResourceSnapshotEntry
 
 
-class ZFSResourceSnapshotHoldQuery(BaseModel):
+class ZFSResourceSnapshotHoldArgsData(BaseModel):
     path: NonEmptyString = Field(description="Snapshot path to hold (e.g., 'pool/dataset@snapshot').")
     tag: str = Field(default="truenas", description="Hold tag name to apply.")
     recursive: bool = Field(
@@ -339,13 +436,13 @@ class ZFSResourceSnapshotHoldQuery(BaseModel):
     bypass: Private[bool] = Field(
         default=False,
         description=(
-            "If true, will bypass the safety checks that prevent deleting zfs resources that are \"protected\"."
+            "If true, will bypass the safety checks that prevent holding snapshots of \"protected\" zfs resources."
         ),
     )
 
 
 class ZFSResourceSnapshotHoldArgs(BaseModel):
-    data: ZFSResourceSnapshotHoldQuery = Field(description="Hold parameters for holding ZFS snapshots.")
+    data: ZFSResourceSnapshotHoldArgsData = Field(description="Hold parameters for holding ZFS snapshots.")
 
 
 class ZFSResourceSnapshotHoldResult(BaseModel):
@@ -364,7 +461,7 @@ class ZFSResourceSnapshotHoldsResult(BaseModel):
     result: list[str] = Field(description="List of hold tag names on the snapshot.")
 
 
-class ZFSResourceSnapshotReleaseQuery(BaseModel):
+class ZFSResourceSnapshotReleaseArgsData(BaseModel):
     path: NonEmptyString = Field(description="Snapshot path to release holds from (e.g., 'pool/dataset@snapshot').")
     tag: str | None = Field(default=None, description="Specific tag to release. If None, releases all hold tags.")
     recursive: bool = Field(
@@ -374,13 +471,14 @@ class ZFSResourceSnapshotReleaseQuery(BaseModel):
     bypass: Private[bool] = Field(
         default=False,
         description=(
-            "If true, will bypass the safety checks that prevent deleting zfs resources that are \"protected\"."
+            "If true, will bypass the safety checks that prevent releasing holds on snapshots of \"protected\" zfs "
+            "resources."
         ),
     )
 
 
 class ZFSResourceSnapshotReleaseArgs(BaseModel):
-    data: ZFSResourceSnapshotReleaseQuery = Field(
+    data: ZFSResourceSnapshotReleaseArgsData = Field(
         description="Release parameters for releasing holds on ZFS snapshots.",
     )
 
@@ -389,7 +487,7 @@ class ZFSResourceSnapshotReleaseResult(BaseModel):
     result: None
 
 
-class ZFSResourceSnapshotRollbackQuery(BaseModel):
+class ZFSResourceSnapshotRollbackArgsData(BaseModel):
     path: NonEmptyString = Field(description="Snapshot path to rollback to (e.g., 'pool/dataset@snapshot').")
     recursive: bool = Field(
         default=False,
@@ -404,14 +502,34 @@ class ZFSResourceSnapshotRollbackQuery(BaseModel):
     bypass: Private[bool] = Field(
         default=False,
         description=(
-            "If true, will bypass the safety checks that prevent deleting zfs resources that are \"protected\"."
+            "If true, will bypass the safety checks that prevent rolling back \"protected\" zfs resources."
         ),
     )
 
 
 class ZFSResourceSnapshotRollbackArgs(BaseModel):
-    data: ZFSResourceSnapshotRollbackQuery = Field(description="Rollback parameters for rolling back to ZFS snapshots.")
+    data: ZFSResourceSnapshotRollbackArgsData = Field(
+        description="Rollback parameters for rolling back to ZFS snapshots.",
+    )
 
 
 class ZFSResourceSnapshotRollbackResult(BaseModel):
     result: None
+
+
+class ZFSResourceSnapshotHoldsChange(BaseModel):
+    holds: list[str] = Field(description="Hold tags on the snapshot after the operation.")
+
+
+class ZFSResourceSnapshotListAddedEvent(BaseModel):
+    id: str = Field(description="Path of the snapshot that was created or renamed into place.")
+    fields: ZFSResourceSnapshotEntry = Field(description="The snapshot as read back after the operation.")
+
+
+class ZFSResourceSnapshotListChangedEvent(BaseModel):
+    id: str = Field(description="Path of the snapshot whose holds changed.")
+    fields: ZFSResourceSnapshotHoldsChange = Field(description="The holds of the snapshot after a hold or release.")
+
+
+class ZFSResourceSnapshotListRemovedEvent(BaseModel):
+    id: str = Field(description="Path of the snapshot that was destroyed or renamed away.")

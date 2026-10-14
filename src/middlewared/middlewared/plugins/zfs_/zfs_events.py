@@ -13,6 +13,7 @@ from middlewared.alert.base import (
     OneShotAlertClass,
 )
 from middlewared.alert.source.pools import PoolUpgradedAlert
+from middlewared.plugins.zfs.utils import has_internal_path
 from middlewared.utils.threading import start_daemon_thread
 from middlewared.utils.zfs import query_imported_fast_impl
 from middlewared.utils.zfs.event import (
@@ -204,7 +205,16 @@ async def zfs_events(middleware, event: ZfsEvent):
         # we need to send events for dataset creation/updating/deletion in case it's done via cli
         event_type = event.history_internal_name
         ds_id = event.history_dsname
-        if event_type == 'destroy' and '@' not in ds_id and not ds_id.split('/')[-1].startswith('%'):
+        if '@' in ds_id:
+            dataset = ds_id.split('@', 1)[0]
+            if (
+                event_type == 'destroy' and not dataset.split('/')[-1].startswith('%')
+                and not has_internal_path(dataset)
+            ):
+                middleware.send_event('zfs.resource.snapshot.list', 'REMOVED', id=ds_id)
+                middleware.send_event('pool.snapshot.query', 'REMOVED', id=ds_id)
+            return
+        if event_type == 'destroy' and not ds_id.split('/')[-1].startswith('%'):
             middleware.send_event('zfs.resource.list', 'REMOVED', id=ds_id)
         if await middleware.call('pool.dataset.is_internal_dataset', ds_id):
             # We should not raise any event for system internal datasets

@@ -9,6 +9,7 @@ def test_rekey_keeps_the_attribute_suffix():
         ValidationError("zfs.resource.snapshot.create.exclude", "msg", errno.EINVAL),
         "zfs.resource.snapshot.create",
         "pool.snapshot.create",
+        {"exclude": "pool.snapshot.create.exclude"},
     )
     assert (e.attribute, e.errmsg, e.errno) == ("pool.snapshot.create.exclude", "msg", errno.EINVAL)
 

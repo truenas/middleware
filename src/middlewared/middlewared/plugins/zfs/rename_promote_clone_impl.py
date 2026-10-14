@@ -22,7 +22,8 @@ def clone_impl(
     tls: Any,
     current_name: str,
     new_name: str,
-    properties: dict[str, str | int] | None = None,
+    properties: dict[str, Any] | None = None,
+    user_properties: dict[str, str] | None = None,
 ) -> None:
     """
     Clone a ZFS snapshot.
@@ -31,6 +32,7 @@ def clone_impl(
         current_name: The name of the zfs snapshot that should be cloned.
         new_name: The new name to be given to the clone.
         properties: Optional set of properties to set on the cloned resource.
+        user_properties: Optional user properties to set on the cloned resource.
     """
     rsrc = open_resource(tls, current_name)
     if rsrc.type != ZFSType.ZFS_TYPE_SNAPSHOT:
@@ -46,10 +48,12 @@ def clone_impl(
     else:
         raise ZFSPathAlreadyExistsException(new_name)
 
+    kwargs: dict[str, Any] = {"name": new_name}
     if properties:
-        rsrc.clone(name=new_name, properties=properties)
-    else:
-        rsrc.clone(name=new_name)
+        kwargs["properties"] = properties
+    if user_properties:
+        kwargs["user_properties"] = user_properties
+    rsrc.clone(**kwargs)
 
 
 def promote_impl(tls: Any, current_name: str) -> None:

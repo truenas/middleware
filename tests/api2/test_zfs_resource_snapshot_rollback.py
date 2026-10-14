@@ -18,7 +18,7 @@ def test_zfs_resource_snapshot_rollback_basic():
             ssh(f"zfs snapshot {ds}@snap2")
 
             # Verify both exist
-            result = call("zfs.resource.snapshot.query", {"paths": [ds]})
+            result = call("zfs.resource.snapshot.list", {"paths": [ds]})
             assert len(result) == 2
 
             # Rollback to snap1 with recursive (to destroy snap2)
@@ -28,7 +28,7 @@ def test_zfs_resource_snapshot_rollback_basic():
             )
 
             # Verify snap2 is gone
-            result = call("zfs.resource.snapshot.query", {"paths": [ds]})
+            result = call("zfs.resource.snapshot.list", {"paths": [ds]})
             assert len(result) == 1
             assert result[0]["snapshot_name"] == "snap1"
         finally:
@@ -56,7 +56,7 @@ def test_zfs_resource_snapshot_rollback_more_recent_snapshots():
             assert f"{ds}@snap2" in ve.value.errmsg
             assert f"{ds}@snap3" in ve.value.errmsg
 
-            result = call("zfs.resource.snapshot.query", {"paths": [ds]})
+            result = call("zfs.resource.snapshot.list", {"paths": [ds]})
             assert {snap["snapshot_name"] for snap in result} == {"snap1", "snap2", "snap3"}
 
 
@@ -75,7 +75,7 @@ def test_zfs_resource_snapshot_rollback_newer_bookmark_fails_after_snapshots_are
 
         assert ce.value.errno == errno.EEXIST
         assert f"zfs destroy {ds}#<bookmark>" in ce.value.errmsg
-        result = call("zfs.resource.snapshot.query", {"paths": [ds]})
+        result = call("zfs.resource.snapshot.list", {"paths": [ds]})
         assert [snap["snapshot_name"] for snap in result] == ["snap1"]
 
 
@@ -141,7 +141,7 @@ def test_zfs_resource_snapshot_rollback_recursive_clones_without_force_destroys_
             # Destroying the clone takes its mountpoint directory with it, so the
             # name stays free for a later create
             assert ssh(f"test -d /mnt/{clone}", check=False, complete_response=True)["result"] is False
-            result = call("zfs.resource.snapshot.query", {"paths": [ds]})
+            result = call("zfs.resource.snapshot.list", {"paths": [ds]})
             assert [snap["snapshot_name"] for snap in result] == ["snap1"]
 
 
@@ -197,7 +197,7 @@ def test_zfs_resource_snapshot_rollback_reports_every_blocker_at_once():
             assert f"{ds}@snap3" in ce.value.errmsg
             assert "truenas" in ce.value.errmsg
 
-            result = call("zfs.resource.snapshot.query", {"paths": [ds]})
+            result = call("zfs.resource.snapshot.list", {"paths": [ds]})
             assert {snap["snapshot_name"] for snap in result} == {"snap1", "snap2", "snap3"}
 
 
@@ -260,7 +260,7 @@ def test_zfs_resource_snapshot_rollback_app_flag_combination():
             )
 
             assert ssh(f"zfs list -H -o name {clone}", check=False, complete_response=True)["result"] is False
-            result = call("zfs.resource.snapshot.query", {"paths": [ds]})
+            result = call("zfs.resource.snapshot.list", {"paths": [ds]})
             assert [snap["snapshot_name"] for snap in result] == ["snap1"]
         finally:
             ssh(f"zfs destroy -r {clone} || true")
