@@ -24,14 +24,21 @@ def get_alerts_by_class(klass):
     return [alert for alert in call("alert.list") if alert["klass"] == klass]
 
 
-def wait_for_alerts_by_class(klass):
-    """`alert.oneshot_create` is a queued job, so its alert does not appear instantly."""
+def wait_for_alerts_by_class(klass, count=None):
+    """`alert.oneshot_create` is a queued job, so its alert does not appear instantly.
+
+    Waits for any alert of `klass`, or for exactly `count` of them (if `count` is specified).
+    """
     for _ in range(30):
-        if alerts := get_alerts_by_class(klass):
+        alerts = get_alerts_by_class(klass)
+        if count is None:
+            if alerts:
+                return alerts
+        elif len(alerts) == count:
             return alerts
         sleep(1)
 
-    return []
+    return get_alerts_by_class(klass)
 
 
 def wait_for_alerts_by_class_cleared(klass):

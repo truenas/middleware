@@ -1,15 +1,14 @@
 from ipaddress import ip_address, ip_network
 import re
-from typing import Any
 
 from middlewared.service import ValidationErrors
 
 
-def confirm_unique(schema_name: str, item_name: str, data: dict[str, Any], verrors: ValidationErrors) -> None:
+def confirm_unique(schema_name: str, item_name: str, items: list[str], verrors: ValidationErrors) -> None:
     """ Generat validation errors if list includes non-unique items """
     s = set()
     not_unique = []
-    for v in data[item_name]:
+    for v in items:
         if v in s:
             not_unique.append(v)
         s.add(v)

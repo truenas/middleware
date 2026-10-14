@@ -4,7 +4,8 @@ from typing import TYPE_CHECKING
 
 from middlewared.api.current import SharingNFSEntry
 from middlewared.common.attachment import LockableFSAttachmentDelegate
-from middlewared.plugins.nfs import SharingNFSService
+
+from .share import SharingNFSService
 
 if TYPE_CHECKING:
     from middlewared.main import Middleware

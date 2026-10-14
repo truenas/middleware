@@ -3,16 +3,16 @@
     import socket
     from collections.abc import Sequence
     from pathlib import Path
-    from middlewared.api.current import NFSEntry
+    from middlewared.api.current import NFSEntry, SharingNFSEntry
     from middlewared.alert.source.nfs_host import NFSHostnameLookupFailAlert
     from middlewared.alert.source.nfs_exportsd import NFSexportMappingInvalidNamesAlert
     from middlewared.plugins.nfs_.utils import leftmost_has_wildcards
 
-    def do_map(share: dict[str, str], map_type: str, map_ids: dict[str, int | str], alert_shares: dict[str, list[str]]) -> list[str]:
+    def do_map(share: SharingNFSEntry, map_type: str, map_ids: dict[str, int | str], alert_shares: dict[str, list[str]]) -> list[str]:
         output = []
         invalid_name = []
 
-        if usrname := share[f'{map_type}_user']:
+        if usrname := getattr(share, f'{map_type}_user'):
             try:
                 uid = middleware.call_sync('user.get_user_obj', {'username': usrname})['pw_uid']
                 map_ids[f'{map_type}_user'] = uid
@@ -22,7 +22,7 @@
                 map_ids[f'{map_type}_user'] = usrname
                 invalid_name.append(usrname)
 
-        if grpname := share[f'{map_type}_group']:
+        if grpname := getattr(share, f'{map_type}_group'):
             try:
                 gid = middleware.call_sync('group.get_group_obj', {'groupname': grpname})['gr_gid']
                 map_ids[f'{map_type}_group'] = gid
@@ -34,16 +34,16 @@
 
         if invalid_name:
             try:
-                alert_shares[share['path']] += invalid_name
+                alert_shares[share.path] += invalid_name
             except KeyError:
-                alert_shares[share['path']] = invalid_name
+                alert_shares[share.path] = invalid_name
             # Raise KeyError For alert reporting and skip this share
             raise KeyError(f'Missing {invalid_name}') from None
 
         return output
 
 
-    def generate_options(share: dict[str, str], global_sec: Sequence[str], config: NFSEntry, alert_shares: dict[str, list[str]]) -> str:
+    def generate_options(share: SharingNFSEntry, global_sec: Sequence[str], config: NFSEntry, alert_shares: dict[str, list[str]]) -> str:
         params = []
         mapall = []
         maproot = []
@@ -54,14 +54,14 @@
             'mapall_group': -1,
         }
 
-        if share["security"]:
-            sec = f'sec={":".join(share["security"])}'
+        if share.security:
+            sec = f'sec={":".join(share.security)}'
             params.append(sec.lower())
         else:
             sec = f'sec={":".join(global_sec)}'
             params.append(sec)
 
-        if not share["ro"]:
+        if not share.ro:
             params.append("rw")
 
         # report and scrub out shares with invalid names
@@ -119,14 +119,14 @@
     global_sec = middleware.call_sync2(middleware.services.nfs.sec, config, has_nfs_principal) or ["sys"]
 
     for share in shares:
-        if share['locked']:
+        if share.locked:
             middleware.logger.debug(
-                'Skipping generation of share %r as the underlying resource is locked', share['path']
+                'Skipping generation of share %r as the underlying resource is locked', share.path
             )
-            middleware.call_sync('sharing.nfs.generate_locked_alert', share['id'])
+            middleware.call_sync('sharing.nfs.generate_locked_alert', share.id)
             continue
 
-        p = Path(share['path'])
+        p = Path(share.path)
         if not p.exists():
             middleware.logger.info("%s: path does not exist, omitting from NFS exports", p)
             continue
@@ -141,10 +141,10 @@
         options = []
         params += ",no_subtree_check" if p.is_mount() else ",subtree_check"
 
-        if share["expose_snapshots"]:
+        if share.expose_snapshots:
             params += ",zfs_snapdir"
 
-        for host in share["hosts"]:
+        for host in share.hosts:
             anonymous = False
             export_host = parse_host(host, gaierrors)
             if export_host is None:
@@ -152,7 +152,7 @@
 
             options.append(f'{host}({params})')
 
-        for network in share["networks"]:
+        for network in share.networks:
             options.append(f'{network}({params})')
             anonymous = False
 
@@ -163,7 +163,7 @@
             # this may happen if no hosts resolve
             continue
 
-        entries.append({"path": share["path"], "options": options})
+        entries.append({"path": share.path, "options": options})
 
     if gaierrors:
         middleware.call_sync2(

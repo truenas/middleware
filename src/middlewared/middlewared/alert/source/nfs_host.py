@@ -33,7 +33,7 @@ class NFSHostListExcessiveAlert(OneShotAlertClass):
             "Consider using directory services, netgroups, network ranges, "
             "or other configurations to reduce the host list length."
         ),
-        keys=[],
+        keys=["sharePath"],
     )
 
     sharePath: str
@@ -41,7 +41,7 @@ class NFSHostListExcessiveAlert(OneShotAlertClass):
 
     @classmethod
     def key_from_args(cls, args: Any) -> Any:
-        return None
+        return args["sharePath"]
 
 
 @dataclass(kw_only=True)
@@ -56,7 +56,7 @@ class NFSNetworkListExcessiveAlert(OneShotAlertClass):
             "Consider using directory services, netgroups, wider network ranges, "
             "or other configurations to reduce the network list length."
         ),
-        keys=[],
+        keys=["sharePath"],
     )
 
     sharePath: str
@@ -64,4 +64,4 @@ class NFSNetworkListExcessiveAlert(OneShotAlertClass):
 
     @classmethod
     def key_from_args(cls, args: Any) -> Any:
-        return None
+        return args["sharePath"]

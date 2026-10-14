@@ -130,6 +130,7 @@ from middlewared.plugins.kmip import KMIPService
 from middlewared.plugins.mail import MailService
 from middlewared.plugins.network_routes import RouteService, StaticRouteService
 from middlewared.plugins.nfs_ import NFSService
+from middlewared.plugins.nfs_.share import SharingNFSService
 from middlewared.plugins.ntp import NTPServerService
 from middlewared.plugins.ports import PortService
 from middlewared.plugins.pwenc import PWEncService
@@ -244,6 +245,7 @@ class PoolServicesContainer(BaseServiceContainer):
 class SharingServicesContainer(BaseServiceContainer):
     def __init__(self, middleware: "Middleware"):
         super().__init__(middleware)
+        self.nfs = SharingNFSService(middleware)
         self.s3 = SharingS3Service(middleware)
         self.webshare = SharingWebshareService(middleware)
 

@@ -7,7 +7,7 @@ from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.zfs_.validation_utils import check_zvol_in_boot_pool_using_path
 from middlewared.utils.mount import resolve_dataset_path
 from middlewared.utils.path import FSLocation, path_location
-from middlewared.utils.service.path import check_path_service_write_allowed
+from middlewared.utils.service.path import check_path_service_share_allowed, check_path_service_write_allowed
 
 from .crud_service_part import CRUDServicePart
 
@@ -16,7 +16,13 @@ if TYPE_CHECKING:
     from middlewared.service_exception import ValidationErrors
 
 
-__all__ = ("LocalPathInfo", "SharingTaskServicePart", "dataset_split", "validate_path_service_write")
+__all__ = (
+    "LocalPathInfo",
+    "SharingServicePart",
+    "SharingTaskServicePart",
+    "dataset_split",
+    "validate_path_service_write",
+)
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
@@ -197,4 +203,23 @@ class SharingTaskServicePart[E, PK = int](CRUDServicePart[E, PK]):
             self.logger.error("%s: unknown location type", loc.name)
             raise NotImplementedError
 
+        return verrors
+
+
+class SharingServicePart[E, PK = int](SharingTaskServicePart[E, PK]):
+    __slots__ = ()
+
+    async def validate_path_field(
+        self, data: dict[str, Any], schema: str, verrors: ValidationErrors, *, split_path: bool = False
+    ) -> ValidationErrors:
+        await super().validate_path_field(data, schema, verrors, split_path=split_path)
+
+        path = data[self.path_field]
+        if self.readonly_field is None or path_location(path) is not FSLocation.LOCAL:
+            return verrors
+
+        dataset, relative_path = dataset_split(data)
+        await check_path_service_share_allowed(
+            verrors, self.middleware, f"{schema}.{self.path_field}", path, dataset, relative_path
+        )
         return verrors
