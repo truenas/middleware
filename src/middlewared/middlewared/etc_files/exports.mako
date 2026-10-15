@@ -123,7 +123,7 @@
             middleware.logger.debug(
                 'Skipping generation of share %r as the underlying resource is locked', share.path
             )
-            middleware.call_sync('sharing.nfs.generate_locked_alert', share.id)
+            middleware.call_sync2(middleware.services.sharing.nfs.generate_locked_alert, share.id)
             continue
 
         p = Path(share.path)

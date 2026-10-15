@@ -6,11 +6,14 @@ from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.plugins.zfs_.validation_utils import check_zvol_in_boot_pool_using_path
 from middlewared.utils.mount import resolve_dataset_path
 from middlewared.utils.path import FSLocation, path_location
-from middlewared.utils.service.path import check_path_service_share_allowed
 
 from .crud_service import CRUDService
 from .decorators import pass_app, private
-from .sharing_task_service_part import LocalPathInfo, dataset_split, validate_path_service_write
+from .sharing_task_service_part import (
+    LocalPathInfo,
+    validate_path_service_share,
+    validate_path_service_write,
+)
 
 if TYPE_CHECKING:
     from middlewared.main import Middleware
@@ -309,18 +312,10 @@ class SharingService[E](SharingTaskService[E]):
     async def validate_path_field(
         self, data: PathModel | dict, schema: str, verrors: 'ValidationErrors', *, split_path: bool = False
     ) -> 'ValidationErrors':
-        """As the base, and then: a share serves its path to clients, so where another service keeps private
-        state on the path's dataset the share may serve only what that service keeps for clients --
-        `check_path_service_share_allowed`. A task is not held to this; what it copies goes to the administrator."""
         await super().validate_path_field(data, schema, verrors, split_path=split_path)
-        path = await self.get_path_field(data)
-        # a share with no read-only mode writes whatever it is given, so the base has already refused the
-        # whole of such a dataset, on this same field
-        if self.readonly_field is None or path_location(path) is not FSLocation.LOCAL:
-            return verrors
-        dataset, relative_path = dataset_split(data)
-        await check_path_service_share_allowed(
-            verrors, self.middleware, f'{schema}.{self.path_field}', path, dataset, relative_path
+        await validate_path_service_share(
+            self.middleware, verrors, schema, self.path_field, await self.get_path_field(data), data,
+            self.readonly_field,
         )
         return verrors
 
