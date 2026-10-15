@@ -740,6 +740,9 @@ class FailoverEventsService(Service):
         else:
             logger.info('Volume imports complete')
 
+        # Initializing the alert system above dropped one-shot alerts, this one included.
+        self.middleware.call_sync2(self.s.truenas.license.refresh_usage_alert, background=True)
+
         # We will now run a task in the background to update any pool in db which has all_sed = null
         # This is to scan any such pools which might be based off all disks being sed capable
         # and to mark them and others appropriately
@@ -1167,7 +1170,7 @@ class FailoverEventsService(Service):
     def stop_vms(self):
         logger.info('Trying to gracefully stop VMs')
         try:
-            self.call_sync2(self.s.vm.handle_shutdown)
+            self.call_sync2(self.s.vm.stop_active)
         except Exception:
             logger.error('Failed to gracefully stop VMs', exc_info=True)
 
@@ -1178,7 +1181,7 @@ class FailoverEventsService(Service):
     def stop_containers(self):
         logger.info('Trying to gracefully stop Containers')
         try:
-            self.run_call('container.handle_shutdown')
+            self.run_call('container.stop_active')
         except Exception:
             logger.error('Failed to gracefully stop Containers', exc_info=True)
 

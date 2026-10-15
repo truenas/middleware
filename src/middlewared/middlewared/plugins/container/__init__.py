@@ -43,9 +43,8 @@ from .crud import (
 )
 from .image import ContainerImageService
 from .info import pool_choices
-from .lifecycle import active_containers, start_on_boot, stop_active
-from .lifecycle import resume as resume_container
 from .lifecycle import start as start_container
+from .lifecycle import start_on_boot, stop_active
 from .lifecycle import stop as stop_container
 from .migrate import maybe_migrate_legacy, relocate_container_origin, restore_legacy_parent_mountpoints
 from .migrate import migrate as migrate_containers
@@ -177,20 +176,8 @@ class ContainerService(GenericCRUDService[ContainerEntry]):
         start_on_boot(self.context)
 
     @private
-    async def handle_shutdown(self) -> None:
-        await stop_active(self.context)
-
-    @private
     async def stop_active(self) -> None:
         await stop_active(self.context)
-
-    @private
-    async def active_instances(self) -> list[ContainerEntry]:
-        return await active_containers(self.context)
-
-    @private
-    def resume(self, id_: int) -> None:
-        resume_container(self.context, id_)
 
     @private
     async def nsenter(self, id_: int) -> list[str]:
@@ -228,7 +215,7 @@ async def __event_system_ready(middleware: Middleware, event_type: str, args: An
 
 
 async def __event_system_shutdown(middleware: Middleware, event_type: str, args: Any) -> None:
-    middleware.create_task(middleware.call2(middleware.services.container.handle_shutdown))
+    middleware.create_task(middleware.call2(middleware.services.container.stop_active))
 
 
 async def pool_post_import(middleware: Middleware, pool: dict[str, Any] | None = None, **kwargs: Any) -> None:

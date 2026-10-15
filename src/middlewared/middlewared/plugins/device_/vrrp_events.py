@@ -6,13 +6,9 @@ from math import floor
 from os import mkfifo
 from threading import Event, Thread
 from time import sleep, time
-from typing import TYPE_CHECKING
 
 from middlewared.service import Service
 from middlewared.utils.prctl import set_name
-
-if TYPE_CHECKING:
-    from middlewared.main import Middleware
 
 LOGGER = getLogger('failover')  # so logs show up in /var/log/failover.log
 
@@ -308,7 +304,7 @@ class VrrpFifoThread(Thread):
                     sleep(self._retry_timeout)
 
 
-async def _start_stop_vrrp_threads(middleware: "Middleware") -> None:
+async def _start_stop_vrrp_threads(middleware):
     while not await middleware.call('system.ready'):  # noqa: ASYNC110
         await asyncio_sleep(0.2)
 

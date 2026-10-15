@@ -362,11 +362,7 @@ class ContainerServicePart(CRUDServicePart[ContainerEntry]):
     async def validate(
         self, verrors: ValidationErrors, schema_name: str, data: ContainerDataT, old: ContainerEntry | None = None,
     ) -> ContainerDataT:
-        # Autostart decides what a license grant starts, so it stays editable while unlicensed.
-        autostart_only = old is not None and data.model_dump(exclude={'autostart'}) == old.model_dump(
-            exclude={'autostart'}
-        )
-        if not autostart_only and not await license_active(self):
+        if not await license_active(self):
             verrors.add(
                 f'{schema_name}.name',
                 'System is not licensed to use containers.'

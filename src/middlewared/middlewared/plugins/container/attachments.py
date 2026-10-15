@@ -12,7 +12,6 @@ from middlewared.api.current import (
 from middlewared.common.attachment import FSAttachmentDelegate, UnlockedDataset
 from middlewared.utils.libvirt.utils import ACTIVE_STATES
 
-from .info import license_active
 from .utils import container_dataset
 
 if TYPE_CHECKING:
@@ -238,9 +237,6 @@ class ContainerFSAttachmentDelegate(FSAttachmentDelegate[dict[str, Any]]):
     async def start_autostart_on_paths(self, paths: list[str]) -> None:
         # (Re)start the autostart containers whose storage lives on `paths`, now that those paths
         # have become available again.
-        if not await license_active(self):
-            return
-
         containers = await self.middleware.call2(
             self.s.container.query, [('autostart', '=', True)], QueryOptions(force_sql_filters=True)
         )

@@ -1,3 +1,4 @@
+import asyncio
 from collections.abc import Callable, Iterable
 import contextlib
 from datetime import datetime
@@ -13,6 +14,7 @@ from truenas_os_pyutils.io import atomic_write
 from truenas_pylicensed import LicenseStatus, LicenseType, verify
 from truenas_pylicensed.features import LicenseFeature
 
+from middlewared.alert.source.license_usage import UnlicensedFeaturesInUseAlert
 from middlewared.api import api_method
 from middlewared.api.base import LongNonEmptyString
 from middlewared.api.current import (
@@ -27,7 +29,7 @@ from middlewared.api.current import (
     TrueNASLicenseUploadResult,
 )
 from middlewared.auth import TruenasNodeSessionManagerCredentials
-from middlewared.common.license import LicenseDelegate
+from middlewared.common.license import LicenseDelegate, is_active_node
 from middlewared.plugins.truenas.tn import EULA_PENDING_PATH
 from middlewared.service import Service, ValidationError, job, periodic, private
 from middlewared.service_exception import CallError
@@ -74,6 +76,8 @@ ALERT_ONLY: frozenset[str] = frozenset(
 # queue in install order. Thread pool only: the holder waits on the event loop to enqueue.
 _upload_lock = threading.Lock()
 _journal_lock = threading.Lock()
+# Callers evaluate independently; a slower, older reading must not enqueue after a newer one.
+_usage_alert_lock = asyncio.Lock()
 
 
 class _JournalEntry(TypedDict):
@@ -412,7 +416,8 @@ class TrueNASLicenseService(Service):
         if journal_id is not None:
             await self.middleware.run_in_thread(journal_remove, journal_id)
 
-        await self.call2(self.s.alert.alert_source_clear_run, "UnlicensedFeaturesInUse")
+        if await is_active_node(self.middleware):
+            await self.refresh_usage_alert()
 
         if failed:
             raise CallError("License applied; steps failed: " + "; ".join(f"{k}: {v}" for k, v in failed.items()))
@@ -458,6 +463,36 @@ class TrueNASLicenseService(Service):
                 recovery = json.dumps({feature: False for feature in delegate.features})
                 lines.append(f"{names}: {pending}; retry with truenas.license.apply {recovery}")
         return lines
+
+    @private
+    async def refresh_usage_alert(self) -> None:
+        async with _usage_alert_lock:
+            try:
+                # Its snapshot refuses a daemon error, which would read as "nothing is licensed" and list
+                # every configured feature; the existing alert is left as it is until the daemon answers.
+                revokes = await self.revoke_pending()
+            except CallError as e:
+                if e.errno != errno.EAGAIN:
+                    self.logger.error("license: failed to refresh the unlicensed features alert", exc_info=True)
+                return
+            except Exception:
+                self.logger.error("license: failed to refresh the unlicensed features alert", exc_info=True)
+                return
+
+            try:
+                usage = await self.call2(self.s.truenas.entitlements.usage)
+                lines = [
+                    f"{FEATURE_DISPLAY_NAMES[key]}: {entry['message']}"
+                    for key, entry in usage.items()
+                    # HA's "use" is the hardware itself, which nobody can remove.
+                    if key != LicenseFeature.HA and not entry["entitled"] and entry["in_use"]
+                ] + revokes
+                if lines:
+                    await self.call2(self.s.alert.oneshot_create, UnlicensedFeaturesInUseAlert("\n".join(lines)))
+                else:
+                    await self.call2(self.s.alert.oneshot_delete, "UnlicensedFeaturesInUse", None)
+            except Exception:
+                self.logger.error("license: failed to refresh the unlicensed features alert", exc_info=True)
 
     @private
     def installed_pem(self) -> str | None:
@@ -509,6 +544,8 @@ async def on_system_ready(middleware: "Middleware", event_type: str, args: Any) 
         await middleware.call2(middleware.services.truenas.license.process_hw_license_error)
     except Exception:
         middleware.logger.error("Error processing hardware entitlement error file", exc_info=True)
+    if await is_active_node(middleware):
+        await middleware.call2(middleware.services.truenas.license.refresh_usage_alert)
 
 
 async def setup(middleware: "Middleware") -> None:

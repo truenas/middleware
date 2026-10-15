@@ -127,7 +127,6 @@ from .info import (
     get_display_web_uri as _get_display_web_uri,
 )
 from .lifecycle import (
-    active_vms,
     poweroff_vm,
     reset_vm,
     restart_vm,
@@ -546,14 +545,6 @@ class VMService(GenericCRUDService[VMEntry]):
         return await get_vms_to_ignore_for_querying_attachments(self.context, enabled, extra_filters)
 
     @private
-    async def active_instances(self) -> list[VMEntry]:
-        return await active_vms(self.context)
-
-    @private
-    async def handle_shutdown(self) -> None:
-        await stop_active(self.context)
-
-    @private
     async def init_guest_vmemory(self, vm_id: int, overcommit: bool) -> None:
         await init_guest_vmemory(self.context, vm_id, overcommit)
 
@@ -609,7 +600,7 @@ async def __event_system_ready(middleware: Middleware, event_type: str, args: ty
 
 
 async def __event_system_shutdown(middleware: Middleware, event_type: str, args: typing.Any) -> None:
-    await middleware.call2(middleware.services.vm.handle_shutdown)
+    await middleware.call2(middleware.services.vm.stop_active)
 
 
 async def setup(middleware: Middleware) -> None:
