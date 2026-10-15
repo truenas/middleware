@@ -35,7 +35,6 @@ from middlewared.api.current import (
 )
 from middlewared.plugins.zfs.exceptions import ZFSPathNotFoundException
 from middlewared.service import (
-    CallError,
     CRUDService,
     InstanceNotFound,
     ValidationError,
@@ -435,15 +434,18 @@ class PoolSnapshotService(CRUDService):
                 self.middleware.call_sync('vmware.snapshot_end', vmware_context)
 
         entry = self._transform_snapshot_entry(result.model_dump(), include_holds=False)
-        self.middleware.send_event(
-            f'{self._config.namespace}.query', 'ADDED', id=entry['id'], fields=entry
-        )
+        if result.guid:
+            self.middleware.send_event(
+                f'{self._config.namespace}.query', 'ADDED', id=entry['id'], fields=entry
+            )
         return entry
 
     @api_method(PoolSnapshotUpdateArgs, PoolSnapshotUpdateResult)
     def do_update(self, snap_id, data):
         """Changing the user properties of a snapshot is not supported; the call always fails with ``EOPNOTSUPP``."""
-        raise CallError('Changing snapshot user properties is not supported.', errno.EOPNOTSUPP)
+        raise ValidationError(
+            'pool.snapshot.update', 'Changing snapshot user properties is not supported.', errno.EOPNOTSUPP
+        )
 
     @api_method(PoolSnapshotDeleteArgs, PoolSnapshotDeleteResult)
     def do_delete(self, id_, options):

@@ -7,7 +7,7 @@ import truenas_pylibzfs
 
 from .exceptions import ZFSPathNotASnapshotException, ZFSPathNotFoundException
 
-__all__ = ("collect_recursive_snapshots", "hold_impl", "release_impl",)
+__all__ = ("hold_impl", "release_impl",)
 
 
 @dataclasses.dataclass(slots=True, kw_only=True)
@@ -31,7 +31,7 @@ def __collect_matching_snapshots_callback(ds_hdl: Any, state: CollectSnapshotsSt
     return True
 
 
-def collect_recursive_snapshots(tls: Any, dataset: str, snap_name: str) -> list[str]:
+def _collect_recursive_snapshots(tls: Any, dataset: str, snap_name: str) -> list[str]:
     """Collect all matching snapshot paths recursively.
 
     For recursive operations, finds all snapshots with the same name
@@ -97,7 +97,7 @@ def hold_impl(tls: Any, path: str, tag: str = "truenas", recursive: bool = False
 
     # Build list of snapshots to hold
     if recursive:
-        snapshot_paths = collect_recursive_snapshots(tls, dataset, snap_name)
+        snapshot_paths = _collect_recursive_snapshots(tls, dataset, snap_name)
     else:
         # Single snapshot - verify it exists
         try:
@@ -148,7 +148,7 @@ def release_impl(tls: Any, path: str, tag: str | None = None, recursive: bool = 
 
     # Build list of snapshots to release holds from
     if recursive:
-        snapshot_paths = collect_recursive_snapshots(tls, dataset, snap_name)
+        snapshot_paths = _collect_recursive_snapshots(tls, dataset, snap_name)
     else:
         # Single snapshot - verify it exists
         try:

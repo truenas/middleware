@@ -75,8 +75,8 @@ class ZFSResourceSnapshotService(Service):
                     "rollback. A REMOVED for a destroy comes from ZFS history events: it arrives after the destroy "
                     "returns, may follow an ADDED for a new snapshot of the same name, and can be lost when events "
                     "are dropped under load. Snapshots created outside this API, such as by periodic snapshot tasks, "
-                    "replication or the zfs command, emit nothing, and neither does renaming or promoting a dataset or "
-                    "exporting or destroying a pool."
+                    "replication or the zfs command, emit nothing, and neither do the descendants' snapshots in a "
+                    "recursive snapshot rename, renaming or promoting a dataset, or exporting or destroying a pool."
                 ),
                 roles=["SNAPSHOT_READ"],
                 models={

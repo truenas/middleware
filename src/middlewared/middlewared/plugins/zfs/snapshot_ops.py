@@ -52,7 +52,6 @@ from .rules_common import (
     reject_unentitled_dedup,
 )
 from .snapshot_create_impl import create_snapshots_impl
-from .snapshot_hold_release_impl import collect_recursive_snapshots
 from .snapshot_hold_release_impl import hold_impl as _raw_hold
 from .snapshot_hold_release_impl import release_impl as _raw_release
 from .snapshot_query_impl import query_snapshots_impl
@@ -171,19 +170,9 @@ def rename_impl(context: ServiceContext, tls: Any, data: ZFSResourceSnapshotRena
     reject_protected_path(f"{schema}.current_name", data.current_name, data.bypass)
     reject_protected_path(f"{schema}.new_name", data.new_name, data.bypass)
     _raw_rename(tls, data.current_name, data.new_name, data.recursive, False, False)
-    dataset, old_snap = data.current_name.split("@", 1)
-    new_snap = data.new_name.split("@", 1)[1]
-    try:
-        renamed = collect_recursive_snapshots(tls, dataset, new_snap) if data.recursive else [data.new_name]
-    except Exception:
-        context.logger.warning("%s: failed to collect renamed snapshots", data.new_name, exc_info=True)
-        return
-    for name in renamed:
-        if _visible(name):
-            context.middleware.send_event(
-                "zfs.resource.snapshot.list", "REMOVED", id=f"{name.split('@', 1)[0]}@{old_snap}",
-            )
-    _announce_added(context, tls, renamed)
+    if _visible(data.current_name):
+        context.middleware.send_event("zfs.resource.snapshot.list", "REMOVED", id=data.current_name)
+    _announce_added(context, tls, [data.new_name])
 
 
 def rename(context: ServiceContext, data: ZFSResourceSnapshotRenameArgsData) -> None:
