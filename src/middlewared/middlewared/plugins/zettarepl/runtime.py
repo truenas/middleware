@@ -47,8 +47,7 @@ class ZettareplRuntimePart(ServicePart):
             definition, hold_tasks = self.call_sync2(self.s.zettarepl.build_definition)
         except Exception as e:
             self.logger.error("Error generating zettarepl definition", exc_info=True)
-            self.call_sync2(
-                self.s.zettarepl.set_error,
+            self.s.zettarepl.state.set_error(
                 {
                     "state": "ERROR",
                     "datetime": utc_now(),
@@ -57,13 +56,13 @@ class ZettareplRuntimePart(ServicePart):
             )
             raise CallError(f"Internal error: {e!r}")
 
-        self.call_sync2(self.s.zettarepl.set_error, None)
+        self.s.zettarepl.state.set_error(None)
 
         with self.lock:
             self.generation += 1
             self.definition = definition
 
-        self.call_sync2(self.s.zettarepl.notify_definition, definition, hold_tasks)
+        self.s.zettarepl.state.notify_definition(definition, hold_tasks)
 
         return definition
 
@@ -132,8 +131,7 @@ class ZettareplRuntimePart(ServicePart):
                     if task_id in alive:
                         continue
 
-                    self.call_sync2(
-                        self.s.zettarepl.set_state,
+                    self.s.zettarepl.state.set_state(
                         k,
                         {
                             "state": "ERROR",
@@ -148,8 +146,8 @@ class ZettareplRuntimePart(ServicePart):
         return await build_definition_impl(self, self.onetime_replication_tasks)
 
     async def periodic_snapshot_task_start(self, task_id: str) -> dict[str, Any]:
-        await self.call2(
-            self.s.zettarepl.set_state,
+        await self.to_thread(
+            self.s.zettarepl.state.set_state,
             f"periodic_snapshot_{task_id}",
             {
                 "state": "RUNNING",

@@ -31,14 +31,12 @@ def process_notification(part: ZettareplRuntimePart, notification: dict[str, Any
     part.logger.trace("zettarepl notified %r", message)  # type: ignore[attr-defined]
 
     if isinstance(message, PeriodicSnapshotTaskSuccess):
-        part.call_sync2(
-            part.s.zettarepl.set_last_snapshot,
+        part.s.zettarepl.state.set_last_snapshot(
             f"periodic_snapshot_{message.task_id}",
             f"{message.dataset}@{message.snapshot}",
         )
 
-        part.call_sync2(
-            part.s.zettarepl.set_state,
+        part.s.zettarepl.state.set_state(
             f"periodic_snapshot_{message.task_id}",
             {
                 "state": "FINISHED",
@@ -50,8 +48,7 @@ def process_notification(part: ZettareplRuntimePart, notification: dict[str, Any
             channel.put(message)
 
     if isinstance(message, PeriodicSnapshotTaskError):
-        part.call_sync2(
-            part.s.zettarepl.set_state,
+        part.s.zettarepl.state.set_state(
             f"periodic_snapshot_{message.task_id}",
             {
                 "state": "ERROR",
@@ -64,10 +61,9 @@ def process_notification(part: ZettareplRuntimePart, notification: dict[str, Any
             channel.put(message)
 
     if isinstance(message, ReplicationTaskScheduled):
-        state = part.call_sync2(part.s.zettarepl.get_state_internal, f"replication_{message.task_id}")
+        state = part.s.zettarepl.state.get_state_internal(f"replication_{message.task_id}")
         if (state or {}).get("state") != "RUNNING":
-            part.call_sync2(
-                part.s.zettarepl.set_state,
+            part.s.zettarepl.state.set_state(
                 f"replication_{message.task_id}",
                 {
                     "state": "WAITING",
@@ -77,8 +73,7 @@ def process_notification(part: ZettareplRuntimePart, notification: dict[str, Any
             )
 
     if isinstance(message, ReplicationTaskStart):
-        part.call_sync2(
-            part.s.zettarepl.set_state,
+        part.s.zettarepl.state.set_state(
             f"replication_{message.task_id}",
             {
                 "state": "RUNNING",
@@ -95,8 +90,7 @@ def process_notification(part: ZettareplRuntimePart, notification: dict[str, Any
             channel.put(message)
 
     if isinstance(message, ReplicationTaskSnapshotStart):
-        part.call_sync2(
-            part.s.zettarepl.set_state,
+        part.s.zettarepl.state.set_state(
             f"replication_{message.task_id}",
             {
                 "state": "RUNNING",
@@ -119,8 +113,7 @@ def process_notification(part: ZettareplRuntimePart, notification: dict[str, Any
             channel.put(message)
 
     if isinstance(message, ReplicationTaskSnapshotProgress):
-        part.call_sync2(
-            part.s.zettarepl.set_state,
+        part.s.zettarepl.state.set_state(
             f"replication_{message.task_id}",
             {
                 "state": "RUNNING",
@@ -143,8 +136,7 @@ def process_notification(part: ZettareplRuntimePart, notification: dict[str, Any
             channel.put(message)
 
     if isinstance(message, ReplicationTaskSnapshotSuccess):
-        part.call_sync2(
-            part.s.zettarepl.set_last_snapshot,
+        part.s.zettarepl.state.set_last_snapshot(
             f"replication_{message.task_id}",
             f"{message.dataset}@{message.snapshot}",
         )
@@ -155,7 +147,7 @@ def process_notification(part: ZettareplRuntimePart, notification: dict[str, Any
     if isinstance(message, ReplicationTaskDataProgress):
         task_id = f"replication_{message.task_id}"
         try:
-            state = part.call_sync2(part.s.zettarepl.get_internal_task_state, task_id)
+            state = part.s.zettarepl.state.get_internal_task_state(task_id)
         except KeyError:
             pass
         else:
@@ -167,14 +159,13 @@ def process_notification(part: ZettareplRuntimePart, notification: dict[str, Any
                         "dst_size": message.dst_size,
                     }
                 )
-                part.call_sync2(part.s.zettarepl.set_state, task_id, state)
+                part.s.zettarepl.state.set_state(task_id, state)
 
         for channel in part.replication_jobs_channels[message.task_id]:
             channel.put(message)
 
     if isinstance(message, ReplicationTaskSuccess):
-        part.call_sync2(
-            part.s.zettarepl.set_state,
+        part.s.zettarepl.state.set_state(
             f"replication_{message.task_id}",
             {
                 "state": "FINISHED",
@@ -187,8 +178,7 @@ def process_notification(part: ZettareplRuntimePart, notification: dict[str, Any
             channel.put(message)
 
     if isinstance(message, ReplicationTaskError):
-        part.call_sync2(
-            part.s.zettarepl.set_state,
+        part.s.zettarepl.state.set_state(
             f"replication_{message.task_id}",
             {
                 "state": "ERROR",

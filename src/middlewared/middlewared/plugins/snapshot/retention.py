@@ -22,7 +22,7 @@ async def removal_date_property(ctx: ServiceContext) -> str:
 async def fixate_removal_date(
     ctx: ServiceContext, datasets: dict[str, list[str]], task: PeriodicSnapshotTaskEntry,
 ) -> None:
-    await ctx.call2(ctx.s.zettarepl.fixate_removal_date, datasets, task)
+    await ctx.to_thread(ctx.s.zettarepl.removal_date.fixate_removal_date, datasets, task)
 
 
 async def update_will_change_retention_for(

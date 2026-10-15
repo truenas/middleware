@@ -35,9 +35,9 @@ class ZettareplService(Service, TaskStateMixin):
     def __init__(self, middleware: Middleware) -> None:
         super().__init__(middleware)
 
-        self._removal_date = ZettareplRemovalDatePart(self.context)
+        self.removal_date = ZettareplRemovalDatePart(self.context)
         self._runtime = ZettareplRuntimePart(self.context)
-        self._state = ZettareplStatePart(self.context)
+        self.state = ZettareplStatePart(self.context)
 
     async def is_running(self) -> bool:
         return await self._runtime.is_running()
@@ -128,52 +128,28 @@ class ZettareplService(Service, TaskStateMixin):
         _snapshot_create.create_recursive_snapshot_with_exclude(dataset, snapshot, exclude)
 
     def get_state(self) -> dict[str, Any]:
-        return self._state.get_state()
-
-    def get_state_internal(self, task_id: str) -> dict[str, Any] | None:
-        return self._state.get_state_internal(task_id)
-
-    def get_internal_task_state(self, task_id: str) -> dict[str, Any]:
-        return self._state.get_internal_task_state(task_id)
-
-    def set_error(self, error: dict[str, Any] | None) -> None:
-        self._state.set_error(error)
+        return self.state.get_state()
 
     def set_definition_errors(self, definition_errors: dict[str, Any]) -> None:
-        self._state.set_definition_errors(definition_errors)
-
-    def notify_definition(self, definition: dict[str, Any], hold_tasks: dict[str, Any]) -> None:
-        self._state.notify_definition(definition, hold_tasks)
-
-    def set_state(self, task_id: str, state: dict[str, Any]) -> None:
-        self._state.set_state(task_id, state)
-
-    def set_last_snapshot(self, task_id: str, last_snapshot: str) -> None:
-        self._state.set_last_snapshot(task_id, last_snapshot)
+        self.state.set_definition_errors(definition_errors)
 
     def remove_task(self, task_id: str) -> None:
-        self._state.remove_task(task_id)
+        self.state.remove_task(task_id)
 
     async def load_state(self) -> None:
-        await self._state.load_state()
+        await self.state.load_state()
 
     async def flush_state(self) -> None:
-        await self._state.flush_state()
+        await self.state.flush_state()
 
     def load_removal_dates(self, pool: str | None = None) -> None:
-        self._removal_date.load_removal_dates(pool)
+        self.removal_date.load_removal_dates(pool)
 
     def get_removal_dates(self) -> dict[str, datetime] | None:
-        return self._removal_date.get_removal_dates()
+        return self.removal_date.get_removal_dates()
 
     def periodic_snapshot_task_snapshots(self, task: PeriodicSnapshotTaskEntry) -> set[str]:
-        return self._removal_date.periodic_snapshot_task_snapshots(task)
-
-    def fixate_removal_date(self, datasets: dict[str, list[str]], task: PeriodicSnapshotTaskEntry) -> None:
-        self._removal_date.fixate_removal_date(datasets, task)
-
-    def annotate_snapshots(self, snapshots: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        return self._removal_date.annotate_snapshots(snapshots)
+        return self.removal_date.periodic_snapshot_task_snapshots(task)
 
     async def terminate(self) -> None:
         await self._runtime.terminate()
