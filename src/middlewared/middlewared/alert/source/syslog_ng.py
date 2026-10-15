@@ -10,7 +10,7 @@ class SyslogNgAlertClass(AlertClass):
 
 class SyslogNgAlertSource(AlertSource):
     async def check(self):
-        if await self.call2(self.s.service.started, "syslogd"):
+        if await self.middleware.call("service.started", "syslogd"):
             return None
 
         return Alert(SyslogNgAlertClass)
