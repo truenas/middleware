@@ -165,7 +165,6 @@ class TrueSearchService(Service):
 
         return {share.path for share in shares}
 
-    RECONFIGURE_TIMER = None
     MOUNT_CHECK_DELAY = 1  # seconds
 
     async def schedule_mount_check(self, mountpoint: str) -> None:
@@ -193,8 +192,8 @@ class TrueSearchService(Service):
         try:
             directories = await self.raw_directories()
         except Exception:
-            self.logger.error(
-                'TrueSearch: failed to check %d mounted paths against indexed directories', len(mounted), exc_info=True
+            self.logger.exception(
+                'TrueSearch: failed to check %d mounted paths against indexed directories', len(mounted)
             )
             return
 
@@ -206,18 +205,15 @@ class TrueSearchService(Service):
                 if os.path.commonpath(list(paths)) in paths:
                     self.logger.info(
                         f"Mounted path {mountpoint!r} intersects with indexed directory {directory}. "
-                        "Scheduling TrueSearch reload."
+                        "Reconfiguring TrueSearch."
                     )
-                    await self.schedule_reconfigure()
+                    await self.configure()
                     return
 
     async def configure(self) -> None:
         """
         Start or stop the service based on whether it should be started or stopped.
         """
-        if self.RECONFIGURE_TIMER is not None:
-            self.RECONFIGURE_TIMER.cancel()
-
         enabled = await self.enabled()
         running = await self.call2(self.s.service.started, 'truesearch')
 
@@ -227,19 +223,6 @@ class TrueSearchService(Service):
             await (await self.call2(self.s.service.control, 'START', 'truesearch')).wait(raise_error=True)
         elif not enabled and running:
             await (await self.call2(self.s.service.control, 'STOP', 'truesearch')).wait(raise_error=True)
-
-    async def schedule_reconfigure(self) -> None:
-        """
-        Reconfigure TrueSearch in 5 seconds. This is to prevent it being reconfigured too often when too many datasets
-        are mounted at the time.
-        """
-        if self.RECONFIGURE_TIMER is not None:
-            self.RECONFIGURE_TIMER.cancel()
-
-        self.RECONFIGURE_TIMER = asyncio.get_running_loop().call_later(
-            5,
-            lambda: asyncio.create_task(self.configure())
-        )
 
     @contextlib.asynccontextmanager
     async def remove_mountpoint(self, mountpoint: str | None) -> AsyncGenerator[None, None]:
