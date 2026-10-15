@@ -371,7 +371,6 @@ USBStorage                                  source  .   .   .   Y   Y   .   Y
 UnencryptedDatasets                         source  Y   Y   Y   Y   Y   Y   Y
 UnlicensedFeaturesInUse                     class   Y   Y   Y   Y   Y   Y   Y
 UnlicensedFeaturesInUse                     listed  Y   Y   Y   Y   Y   Y   Y
-UnlicensedFeaturesInUse                     source  Y   Y   Y   Y   Y   Y   Y
 VMWareLoginFailed                           class   Y   Y   Y   Y   Y   Y   Y
 VMWareLoginFailed                           listed  Y   Y   Y   Y   Y   Y   Y
 VMWareSnapshotCreateFailed                  class   Y   Y   Y   Y   Y   Y   Y

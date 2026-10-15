@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, ClassVar, Literal
 
 from middlewared.service_exception import CallError
+from middlewared.utils.libvirt.utils import ACTIVE_STATES
 from middlewared.utils.service.call_mixin import CallMixin
 
 if TYPE_CHECKING:
@@ -11,6 +12,13 @@ if TYPE_CHECKING:
     from middlewared.plugins.vm import VMService
 
 Verb = Literal["START", "STOP", "RELOAD", "RESTART"]
+
+
+async def is_active_node(middleware: Middleware) -> bool:
+    if await middleware.call("failover.in_progress"):
+        return False
+    is_master: bool = await middleware.call("failover.is_single_master_node")
+    return is_master
 
 
 class LicenseDelegate(CallMixin):
@@ -49,15 +57,7 @@ class LicenseDelegate(CallMixin):
         return None
 
     async def is_active(self) -> bool:
-        if await self.middleware.call("failover.in_progress"):
-            return False
-        # Uncached: reads the live VIP state, so a demoting node reads BACKUP as soon as keepalived drops
-        # the VIPs. A configured standby reads SINGLE during a license daemon blip, which the VIP-row
-        # clause catches.
-        status: str = await self.middleware.call("failover.status.get_local", None)
-        if status == "SINGLE":
-            return not await self.middleware.call("interface.query", [["failover_virtual_aliases", "!=", []]])
-        return status == "MASTER"
+        return await is_active_node(self.middleware)
 
     async def render(self, *groups: str) -> None:
         for group in groups:
@@ -136,5 +136,5 @@ class WorkloadDelegate[S: (VMService, ContainerService)](LicenseDelegate):
             raise CallError(f"{self.namespace}s not started: " + "; ".join(failures))
 
     async def revoke_pending(self) -> str | None:
-        active = await self.call2(self.service.active_instances)
+        active = await self.call2(self.service.query, [["status.state", "in", ACTIVE_STATES]])
         return f"{len(active)} {self.namespace}(s) still active" if active else None

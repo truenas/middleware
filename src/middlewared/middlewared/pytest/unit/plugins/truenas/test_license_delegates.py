@@ -91,6 +91,8 @@ async def license_service(middleware):
     middleware.services.truenas.license = service
     middleware.event_subscribe = Mock()
     middleware["failover.status_refresh"] = AsyncMock()
+    middleware.setdefault("failover.in_progress", Mock(return_value=False))
+    middleware.setdefault("failover.is_single_master_node", Mock(return_value=False))
     await setup(middleware)
     return service
 
@@ -132,7 +134,7 @@ async def test_active_only_delegate_is_skipped_on_backup(registry):
     both_calls = make_delegate(LicenseFeature.SUPPORT)
     middleware = Middleware()
     middleware["failover.in_progress"] = Mock(return_value=False)
-    middleware["failover.status.get_local"] = Mock(return_value="BACKUP")
+    middleware["failover.is_single_master_node"] = Mock(return_value=False)
     service = await license_service(middleware)
 
     with live():
@@ -156,11 +158,44 @@ async def test_key_disagreeing_with_installed_license_is_skipped(registry):
     assert apps_calls == []
 
 
-def delegate(started, result=True, status="MASTER"):
+@pytest.mark.asyncio
+async def test_failed_revoke_check_leaves_the_usage_alert_alone(registry):
+    middleware = Middleware()
+    middleware.services.truenas.entitlements.usage = AsyncMock(
+        return_value={str(LicenseFeature.DEDUP): {"entitled": False, "in_use": True, "message": "x"}}
+    )
+    service = await license_service(middleware)
+
+    with patch(
+        "middlewared.plugins.truenas.license.snapshot",
+        Mock(side_effect=CallError("license daemon unavailable", errno.EAGAIN)),
+    ):
+        await service.refresh_usage_alert()
+
+    middleware.services.alert.oneshot_create.assert_not_called()
+    middleware.services.alert.oneshot_delete.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_ha_in_use_alone_clears_the_usage_alert(registry):
+    middleware = Middleware()
+    middleware.services.truenas.entitlements.usage = AsyncMock(
+        return_value={str(LicenseFeature.HA): {"entitled": False, "in_use": True, "message": "x"}}
+    )
+    service = await license_service(middleware)
+
+    with live():
+        await service.refresh_usage_alert()
+
+    middleware.services.alert.oneshot_delete.assert_called_once_with("UnlicensedFeaturesInUse", None)
+    middleware.services.alert.oneshot_create.assert_not_called()
+
+
+def delegate(started, result=True, active=True):
     middleware = Middleware()
     middleware.services.service.started = Mock(return_value=started)
     middleware["failover.in_progress"] = Mock(return_value=False)
-    middleware["failover.status.get_local"] = Mock(return_value=status)
+    middleware["failover.is_single_master_node"] = Mock(return_value=active)
     return LicenseDelegate(middleware), fake_service_control(middleware, result)
 
 
@@ -188,7 +223,7 @@ async def test_false_from_running_service_raises():
 
 @pytest.mark.asyncio
 async def test_start_on_standby_needs_standby_ok():
-    d, calls = delegate(started=False, status="BACKUP")
+    d, calls = delegate(started=False, active=False)
     await d.control("ctdb", "START")
     assert calls == []
 
@@ -202,25 +237,6 @@ async def test_running_override_restarts_a_unit_still_activating():
     d, calls = delegate(started=False)
     await d.control("s3", "RESTART", running=True)
     assert [call[0] for call in calls] == ["RESTART"]
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "in_progress,status,vip_rows,expected",
-    [
-        (True, "MASTER", [], False),
-        (False, "BACKUP", [], False),
-        # A configured standby reads SINGLE while the license daemon does not answer.
-        (False, "SINGLE", [{"id": 1}], False),
-        (False, "SINGLE", [], True),
-    ],
-)
-async def test_is_active(in_progress, status, vip_rows, expected):
-    middleware = Middleware()
-    middleware["failover.in_progress"] = Mock(return_value=in_progress)
-    middleware["failover.status.get_local"] = Mock(return_value=status)
-    middleware["interface.query"] = Mock(return_value=vip_rows)
-    assert await LicenseDelegate(middleware).is_active() is expected
 
 
 @pytest.mark.parametrize(
@@ -256,8 +272,7 @@ def workload(rows, start_errors=(), running_after_error=()):
 
     middleware = Middleware()
     middleware["failover.in_progress"] = Mock(return_value=False)
-    middleware["failover.status.get_local"] = Mock(return_value="SINGLE")
-    middleware["interface.query"] = Mock(return_value=[])
+    middleware["failover.is_single_master_node"] = Mock(return_value=True)
     middleware.services.vm.query = query
     middleware.services.vm.get_instance = lambda id_: query([["id", "=", id_]])[0]
     middleware.services.vm.start = start

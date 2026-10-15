@@ -1,5 +1,4 @@
 import asyncio
-import contextlib
 import errno
 import os
 import typing
@@ -29,7 +28,6 @@ from .info import license_active
 from .utils import container_instance_dataset_mountpoint, update_etc_hosts, write_etc_hostname
 
 IDMAPPED_ROOT_DIR = "/run/truenas_containers/root"
-LIBVIRT_PROBE_TIMEOUT = 30
 
 # The full enumeration of host UIDs any container's container-uid-0 ever
 # maps to: CONTAINER_ROOT_UID + slice*IDMAP_COUNT for slice in range(1000).
@@ -102,43 +100,15 @@ def start_on_boot(context: ServiceContext) -> None:
             context.logger.error(f"Failed to start {container.name!r} container: {e}")
 
 
-async def active_containers(context: ServiceContext) -> list[ContainerEntry]:
-    # Listing domains starts libvirtd, which container.query only does once a container exists.
-    if not await context.call2(context.s.container.query, [], QueryOptions(extra={"retrieve_status": False})):
-        return []
-
-    # container.query reports every container as STOPPED when libvirt does not answer.
-    try:
-        await asyncio.wait_for(
-            context.to_thread(context.middleware.libvirt_domains_manager.containers_connection.list_domains),
-            LIBVIRT_PROBE_TIMEOUT,
-        )
-    except Exception as e:
-        raise CallError(f"libvirt is unreachable: {e!r}") from e
-
-    return await context.call2(context.s.container.query, [("status.state", "in", ACTIVE_STATES)])
-
-
 async def _stop_container(context: ServiceContext, container: ContainerEntry) -> None:
-    state = container.status.state
-    if state == "SUSPENDED":
-        # A container that will not resume cannot shut down cleanly, so it is killed instead.
-        with contextlib.suppress(Exception):
-            await context.call2(context.s.container.resume, container.id)
-        state = (await context.call2(context.s.container.get_instance, container.id)).status.state
-        if state == "SUSPENDED":
-            await context.to_thread(stop, context, container.id, ContainerStopOptions(force=True))
-            return
-
-    if state == "RUNNING":
-        job = await context.call2(
-            context.s.container.stop, container.id, ContainerStopOptions(force_after_timeout=True),
-        )
-        await job.wait(raise_error=True)
+    # libvirt's graceful shutdown ignores a paused domain, so a suspended container is killed.
+    options = ContainerStopOptions(force=container.status.state == "SUSPENDED", force_after_timeout=True)
+    job = await context.call2(context.s.container.stop, container.id, options)
+    await job.wait(raise_error=True)
 
 
 async def stop_active(context: ServiceContext) -> None:
-    containers = await active_containers(context)
+    containers = await context.call2(context.s.container.query, [("status.state", "in", ACTIVE_STATES)])
     results = await asyncio.gather(*(_stop_container(context, c) for c in containers), return_exceptions=True)
     if failures := [
         f"{container.name}: {result}"
@@ -187,10 +157,6 @@ def stop(context: ServiceContext, id_: int, options: ContainerStopOptions) -> No
     ):
         context.middleware.libvirt_domains_manager.containers.destroy(pylibvirt_container_obj)
 
-
-def resume(context: ServiceContext, id_: int) -> None:
-    container = context.run_coroutine(context.call2(context.s.container.get_instance, id_))
-    context.middleware.libvirt_domains_manager.containers.resume(pylibvirt_container(context, container))
 
 
 def pylibvirt_container(

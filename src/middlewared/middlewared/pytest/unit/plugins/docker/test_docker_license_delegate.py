@@ -10,8 +10,7 @@ async def test_revoke_stops_docker_when_unit_is_up_but_status_is_failed():
     """A crash-looping dockerd reported FAILED must still be stopped on revoke."""
     m = Middleware()
     m["failover.in_progress"] = lambda: False
-    m["failover.status.get_local"] = lambda cached: "SINGLE"
-    m["interface.query"] = lambda filters: []
+    m["failover.is_single_master_node"] = lambda: True
     m.services.service.started = lambda service: True
     m.services.docker.status = lambda: DockerStatusInfo(status="FAILED", description="")
     calls = fake_service_control(m, True)
