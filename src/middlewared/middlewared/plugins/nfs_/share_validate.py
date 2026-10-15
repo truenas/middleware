@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING, Any, Sequence
 
 from truenas_pylicensed.features import LicenseFeature
 
-from middlewared.alert.source.nfs_host import NFSHostListExcessiveAlert, NFSNetworkListExcessiveAlert
 from middlewared.api.current import QueryOptions, SharingNFSEntry
 from middlewared.service import ValidationErrors
 
@@ -14,9 +13,6 @@ from .validators import confirm_unique, sanitize_hosts, sanitize_networks
 
 if TYPE_CHECKING:
     from .share_crud import SharingNFSServicePart
-
-NETWORKS_WARNING_THRESHOLD = 100
-HOSTS_WARNING_THRESHOLD = 100
 
 
 async def validate_nfs_share(
@@ -57,7 +53,7 @@ async def validate_nfs_share(
         data.aliases = []
 
     # Data validation and sanitization
-    await sanitize_share_networks_and_hosts(part, data, schema_name, verrors)
+    sanitize_share_networks_and_hosts(data, schema_name, verrors)
     # User must clean these up before proceeding
     verrors.check()
 
@@ -104,19 +100,15 @@ async def resolve_share_path(
     data.relative_path = path_data.get("relative_path")
 
 
-async def sanitize_share_networks_and_hosts(
-    part: SharingNFSServicePart,
-    data: SharingNFSEntry,
-    schema_name: str,
-    verrors: ValidationErrors,
-) -> None:
+def sanitize_share_networks_and_hosts(data: SharingNFSEntry, schema_name: str, verrors: ValidationErrors) -> None:
     """
     Perform input sanitation
         - Network and host must contain unique items.
         - Network must contain network types.
         - Host must not include quotes or spaces.
 
-    An excessively long host or network list raises a warning level alert.
+    An excessively long list is not refused here; `sync_share_alerts` raises an alert for it once
+    the share is stored.
     """
     confirm_unique(schema_name, "networks", data.networks, verrors)
     confirm_unique(schema_name, "hosts", data.hosts, verrors)
@@ -124,22 +116,8 @@ async def sanitize_share_networks_and_hosts(
     # Validate networks and sanitize: Convert IP addresses CIDR format
     data.networks = sanitize_networks(schema_name, data.networks, verrors)
 
-    if (netlen := len(data.networks)) >= NETWORKS_WARNING_THRESHOLD:
-        await part.call2(
-            part.s.alert.oneshot_create, NFSNetworkListExcessiveAlert(sharePath=data.path, numEntries=netlen)
-        )
-    else:
-        await part.call2(part.s.alert.oneshot_delete, "NFSNetworkListExcessive", {"sharePath": data.path})
-
     # Validate hosts: no spaces or quotes
     sanitize_hosts(schema_name, data.hosts, verrors)
-
-    if (hostlen := len(data.hosts)) >= HOSTS_WARNING_THRESHOLD:
-        await part.call2(
-            part.s.alert.oneshot_create, NFSHostListExcessiveAlert(sharePath=data.path, numEntries=hostlen)
-        )
-    else:
-        await part.call2(part.s.alert.oneshot_delete, "NFSHostListExcessive", {"sharePath": data.path})
 
 
 async def validate_share_path(

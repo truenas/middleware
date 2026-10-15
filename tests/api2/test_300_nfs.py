@@ -2353,6 +2353,76 @@ class TestNFSops:
                     call('sharing.nfs.update', two_id, {'hosts': ["192.168.51.1"]})
                     assert alerted_paths(1) == [one_path]
 
+    def test_share_alerts_on_shares_with_the_same_path(self, start_nfs):
+        """Two shares may export one path as long as their host lists do not overlap. Each keeps
+        its own alert, so neither clears the other's by being created, updated or deleted."""
+        assert start_nfs is True
+        assert wait_for_alerts_by_class_cleared("NFSHostListExcessive"), "Unexpectedly found NFS share alert."
+
+        def alerted_shares(count):
+            alerts = wait_for_alerts_by_class("NFSHostListExcessive", count=count)
+            return sorted(entry['args']['shareId'] for entry in alerts)
+
+        with nfs_dataset('nfs_alert_same_path') as ds:
+            path = f"/mnt/{ds}"
+            with nfs_share(path, {'hosts': [f"192.168.50.{i}" for i in range(1, 101)]}) as first:
+                assert alerted_shares(1) == [first]
+
+                with nfs_share(path, {'hosts': [f"192.168.51.{i}" for i in range(1, 101)]}) as second:
+                    # The second share's create must not have taken over the first share's alert
+                    assert alerted_shares(2) == sorted([first, second])
+
+                    # Nor may updating it
+                    call('sharing.nfs.update', second, {'comment': 'second'})
+                    assert alerted_shares(2) == sorted([first, second])
+
+                # Nor may deleting it
+                assert alerted_shares(1) == [first]
+
+    def test_share_alert_not_raised_by_a_rejected_create(self, start_nfs):
+        """A create the validation rejects must leave no alert: no share exports that path, so
+        nothing would ever clear it."""
+        assert start_nfs is True
+        assert wait_for_alerts_by_class_cleared("NFSHostListExcessive"), "Unexpectedly found NFS share alert."
+
+        with nfs_dataset('nfs_alert_rejected') as ds:
+            with pytest.raises(ValidationErrors):
+                call('sharing.nfs.create', {
+                    'path': f"/mnt/{ds}",
+                    'hosts': [f"192.168.50.{i}" for i in range(1, 101)],
+                    # A map group without a map user is refused, well after the host list is read
+                    'maproot_group': 'nogroup',
+                })
+
+            assert call('sharing.nfs.query', [['path', '=', f"/mnt/{ds}"]]) == []
+            assert wait_for_alerts_by_class_cleared("NFSHostListExcessive"), \
+                "A rejected create left an alert behind."
+
+    def test_share_alert_removed_with_the_dataset(self, start_nfs):
+        """Destroying the dataset removes the share through the attachment delegate rather than
+        `sharing.nfs.delete`, and has to take the share's alerts with it."""
+        assert start_nfs is True
+        assert wait_for_alerts_by_class_cleared("NFSHostListExcessive"), "Unexpectedly found NFS share alert."
+
+        nfsid = None
+        try:
+            with nfs_dataset('nfs_alert_attached') as ds:
+                nfsid = call('sharing.nfs.create', {
+                    'path': f"/mnt/{ds}",
+                    'hosts': [f"192.168.50.{i}" for i in range(1, 101)],
+                })['id']
+                assert [a['args']['shareId'] for a in wait_for_alerts_by_class("NFSHostListExcessive", 1)] == [nfsid]
+
+            # nfs_dataset deleted the dataset on exit, which takes the share with it
+            assert call('sharing.nfs.query', [['id', '=', nfsid]]) == []
+            assert wait_for_alerts_by_class_cleared("NFSHostListExcessive"), \
+                "Removing the dataset left the share's alert behind."
+        finally:
+            # Do not leave a stray export behind if the dataset could not be deleted
+            if nfsid is not None:
+                with contextlib.suppress(InstanceNotFound):
+                    call('sharing.nfs.delete', nfsid)
+
     def test_share_alert_on_share_delete(self, start_nfs):
         """Share alerts should be deleted when the share is deleted. Current threshold: 100"""
         assert start_nfs is True

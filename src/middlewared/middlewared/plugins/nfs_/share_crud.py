@@ -7,6 +7,7 @@ from middlewared.service import ServiceChangeMixin, SharingServicePart, Validati
 import middlewared.sqlalchemy as sa
 from middlewared.utils.types import AuditCallback
 
+from .share_alerts import remove_share_alerts, sync_share_alerts
 from .share_validate import validate_nfs_share
 
 
@@ -56,6 +57,7 @@ class SharingNFSServicePart(SharingServicePart[SharingNFSEntry], ServiceChangeMi
     async def do_create(self, data: NfsShareCreate) -> SharingNFSEntry:
         entry = await self._create(await self._validated_row("sharingnfs_create", data))
 
+        await sync_share_alerts(self.middleware, entry)
         await self._service_change("nfs", "reload")
 
         return entry
@@ -72,9 +74,7 @@ class SharingNFSServicePart(SharingServicePart[SharingNFSEntry], ServiceChangeMi
         new = old.updated(data)
         entry = await self._update(id_, await self._validated_row("sharingnfs_update", new, exclude_id=id_))
 
-        if entry.path != old.path:
-            await self._remove_share_alerts(old.path)
-
+        await sync_share_alerts(self.middleware, entry)
         await self._service_change("nfs", "reload")
 
         return entry
@@ -99,10 +99,6 @@ class SharingNFSServicePart(SharingServicePart[SharingNFSEntry], ServiceChangeMi
         audit_callback(share.path)
 
         await self._delete(id_)
-        await self._remove_share_alerts(share.path)
+        await remove_share_alerts(self.middleware, id_)
 
         await self._service_change("nfs", "reload")
-
-    async def _remove_share_alerts(self, path: str) -> None:
-        await self.call2(self.s.alert.oneshot_delete, "NFSNetworkListExcessive", {"sharePath": path})
-        await self.call2(self.s.alert.oneshot_delete, "NFSHostListExcessive", {"sharePath": path})

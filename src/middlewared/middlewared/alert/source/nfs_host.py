@@ -1,7 +1,17 @@
-from dataclasses import dataclass
-from typing import Any
+from __future__ import annotations
 
-from middlewared.alert.base import AlertCategory, AlertClassConfig, AlertLevel, OneShotAlertClass
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any, Self
+
+from middlewared.alert.base import Alert, AlertCategory, AlertClassConfig, AlertLevel, OneShotAlertClass
+
+if TYPE_CHECKING:
+    from middlewared.main import Middleware
+
+
+async def load[T: OneShotAlertClass](middleware: Middleware, alerts: list[Alert[T]]) -> list[Alert[T]]:
+    share_ids = {share["id"] for share in await middleware.call("datastore.query", "sharing.nfs_share")}
+    return [alert for alert in alerts if getattr(alert.instance, "shareId", None) in share_ids]
 
 
 @dataclass(kw_only=True)
@@ -33,15 +43,20 @@ class NFSHostListExcessiveAlert(OneShotAlertClass):
             "Consider using directory services, netgroups, network ranges, "
             "or other configurations to reduce the host list length."
         ),
-        keys=["sharePath"],
+        keys=["shareId"],
     )
 
+    shareId: int | None = None
     sharePath: str
     numEntries: int
 
     @classmethod
     def key_from_args(cls, args: Any) -> Any:
-        return args["sharePath"]
+        return args["shareId"]
+
+    @classmethod
+    async def load(cls, middleware: Middleware, alerts: list[Alert[Self]]) -> list[Alert[Self]]:
+        return await load(middleware, alerts)
 
 
 @dataclass(kw_only=True)
@@ -56,12 +71,17 @@ class NFSNetworkListExcessiveAlert(OneShotAlertClass):
             "Consider using directory services, netgroups, wider network ranges, "
             "or other configurations to reduce the network list length."
         ),
-        keys=["sharePath"],
+        keys=["shareId"],
     )
 
+    shareId: int | None = None
     sharePath: str
     numEntries: int
 
     @classmethod
     def key_from_args(cls, args: Any) -> Any:
-        return args["sharePath"]
+        return args["shareId"]
+
+    @classmethod
+    async def load(cls, middleware: Middleware, alerts: list[Alert[Self]]) -> list[Alert[Self]]:
+        return await load(middleware, alerts)
