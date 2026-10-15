@@ -1,17 +1,6 @@
 """Tier field exposure on sharing.smb.query, sharing.nfs.query and
 sharing.s3.query, plus integration of the SMB conf `shadow:no_dataset_traversal`
 setting that's triggered by tiering being enabled.
-
-Implementation under test:
-  - src/middlewared/middlewared/service/sharing_service.py:33-135
-    (include_tier_info → bulk_get_tier_info → tier injection in extend)
-  - src/middlewared/middlewared/plugins/smb.py:237, 278, 751
-  - src/middlewared/middlewared/plugins/nfs.py:421
-  - src/middlewared/middlewared/plugins/truenas_s3/bucket_crud.py
-  - src/middlewared/middlewared/plugins/smb_/util_smbconf.py:701-702
-  - src/middlewared/middlewared/api/v27_0_0/smb.py:761-840
-  - src/middlewared/middlewared/api/v27_0_0/nfs.py:180-191
-  - src/middlewared/middlewared/api/v27_0_0/s3.py
 """
 
 import contextlib
