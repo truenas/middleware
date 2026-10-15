@@ -7,9 +7,12 @@ from auto_config import pool_name
 from middlewared.test.integration.assets.account import user
 from middlewared.test.integration.assets.entitlements import entitled
 from middlewared.test.integration.assets.ftp import ftp_server
+from middlewared.test.integration.assets.iscsi import iscsi_extent, iscsi_target, iscsi_targetextent
 from middlewared.test.integration.assets.nfs import nfs_server
 from middlewared.test.integration.assets.pool import dataset as nfs_dataset
 from middlewared.test.integration.assets.s3 import s3_bucket
+from middlewared.test.integration.assets.smb import smb_share
+from middlewared.test.integration.assets.webshare import webshare_share
 from middlewared.test.integration.utils import call, ssh
 from middlewared.test.integration.utils.client import truenas_server, client
 from middlewared.test.integration.utils.shell import webshell_exec
@@ -110,10 +113,90 @@ def test_ftp_reporting(get_usage_sample):
                 assert usage_sample['FTP']['num_connections'] == 2
 
 
+def gathered_shares(share_type):
+    """The `shares` entries of the given type.
+
+    `usage.gather` logs and drops a gatherer that raises, so a missing `shares` key is how a broken
+    `gather_sharing` presents itself. Say so, rather than failing on the subscript.
+    """
+    sample = call('usage.gather', ['gather_sharing'])
+    assert 'shares' in sample, f"gather_sharing did not report; see middlewared.log. Got: {sample}"
+    return [s for s in sample['shares'] if s['type'] == share_type]
+
+
+def test_nfs_share_reporting():
+    """ Confirm NFS shares are reported in shares by their settings alone """
+    with nfs_dataset('usage_nfs_share') as ds, nfs_share(f'/mnt/{ds}', {'ro': True, 'hosts': ['127.0.0.1']}) as share:
+        shares = gathered_shares('NFS')
+        assert len(shares) == call('sharing.nfs.query', [], {'count': True})
+        assert {'type': 'NFS', 'readonly': True} in shares
+        # Nothing that names the system leaves with the sample
+        assert not any(
+            {'path', 'dataset', 'relative_path', 'hosts', 'networks', 'comment'} & s.keys() for s in shares
+        )
+
+        call('sharing.nfs.update', share, {'ro': False})
+        assert {'type': 'NFS', 'readonly': False} in gathered_shares('NFS')
+
+
+def test_smb_share_reporting():
+    """ Confirm SMB shares are reported in shares by their purpose alone """
+    with nfs_dataset('usage_smb_share') as ds, smb_share(f'/mnt/{ds}', 'usage_smb', {'purpose': 'MULTIPROTOCOL_SHARE'}):
+        shares = gathered_shares('SMB')
+        assert len(shares) == call('sharing.smb.query', [], {'count': True})
+        assert {'type': 'SMB', 'purpose': 'MULTIPROTOCOL_SHARE'} in shares
+        # Nothing that names the system leaves with the sample
+        assert not any({'name', 'path', 'comment'} & s.keys() for s in shares)
+
+
+def test_webshare_share_reporting():
+    """ Confirm Webshare shares are reported in shares by their settings alone """
+    with entitled('WEBSHARE'), nfs_dataset('usage_webshare_share') as ds, \
+            webshare_share(f'/mnt/{ds}', 'usage_webshare') as share:
+        shares = gathered_shares('WEBSHARE')
+        assert len(shares) == call('sharing.webshare.query', [], {'count': True})
+        assert {'type': 'WEBSHARE', 'enabled': True, 'is_home_base': False} in shares
+        # Nothing that names the system leaves with the sample
+        assert not any({'name', 'path', 'dataset', 'relative_path'} & s.keys() for s in shares)
+
+        call('sharing.webshare.update', share['id'], {'enabled': False})
+        assert {'type': 'WEBSHARE', 'enabled': False, 'is_home_base': False} in gathered_shares('WEBSHARE')
+
+
+def test_iscsi_share_reporting():
+    """ Confirm iSCSI target/extent associations are reported in shares by their settings alone """
+    extent = {'type': 'FILE', 'name': 'usage_extent', 'filesize': 512 * 1024 * 1024}
+    with nfs_dataset('usage_iscsi_share') as ds, iscsi_extent(
+        {**extent, 'path': f'/mnt/{ds}/extent'}, True
+    ) as ext, iscsi_target({'name': 'usagetarget', 'groups': []}) as tgt, iscsi_targetextent(
+        {'target': tgt['id'], 'extent': ext['id'], 'lunid': 0}
+    ):
+        shares = gathered_shares('ISCSI')
+        assert len(shares) == call('iscsi.targetextent.query', [], {'count': True})
+        assert {
+            'type': 'ISCSI',
+            'mode': 'ISCSI',
+            'groups': [],
+            'iscsi_type': 'FILE',
+            'filesize': ext['filesize'],
+            'blocksize': 512,
+            'pblocksize': False,
+            'avail_threshold': None,
+            'insecure_tpc': True,
+            'xen': False,
+            'rpm': 'SSD',
+            'readonly': False,
+            'legacy': False,
+            'vendor': 'TrueNAS',
+        } in shares
+        # Nothing that names the system leaves with the sample
+        assert not any({'name', 'path', 'dataset', 'relative_path', 'serial', 'naa'} & s.keys() for s in shares)
+
+
 def test_s3_reporting():
     """ Confirm S3 buckets are reported in shares by their settings alone """
     def s3_shares():
-        return [s for s in call('usage.gather', ['gather_sharing'])['shares'] if s['type'] == 'S3']
+        return gathered_shares('S3')
 
     # Setting an audit mask is licensed, hence the entitlement
     with user(

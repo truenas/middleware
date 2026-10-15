@@ -65,6 +65,16 @@ def iscsi_target(data):
         call("iscsi.target.delete", target["id"])
 
 
+@contextlib.contextmanager
+def iscsi_targetextent(data):
+    targetextent = call("iscsi.targetextent.create", data)
+
+    try:
+        yield targetextent
+    finally:
+        call("iscsi.targetextent.delete", targetextent["id"], True)
+
+
 def target_login_test(portal_ip, target_name, check_surfaced_luns=None):
     if IS_LINUX:
         return target_login_test_linux(portal_ip, target_name, check_surfaced_luns)
